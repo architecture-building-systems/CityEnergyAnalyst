@@ -14,6 +14,7 @@ import cea.config
 import cea.inputlocator
 from cea.datamanagement.databases_verification import COLUMNS_ZONE_OCCUPANCY
 from cea.utilities.schedule_reader import read_cea_schedule, save_cea_schedule
+from cea.datamanagement.constants import VARIABLE_CEA_SCHEDULE_RELATION, TEMPERATURE_VARIABLES, PEOPLE_DEPENDENT_VARIABLES
 
 __author__ = "Jimeno Fonseca"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -29,22 +30,6 @@ def calc_mixed_schedule(locator,
                         building_occupancy_df,
                         buildings,
                         model_schedule):
-    variable_schedule_map = {'Occ_m2pax': 'OCCUPANCY',
-                             'Qs_Wp': 'OCCUPANCY',
-                             'X_ghp': 'OCCUPANCY',
-                             'Ve_lps': 'OCCUPANCY',
-                             'Ea_Wm2': 'ELECTRICITY',
-                             'El_Wm2': 'ELECTRICITY',
-                             'Ed_Wm2': 'ELECTRICITY',
-                             'Vww_lpd': 'WATER',
-                             'Vw_lpd': 'WATER',
-                             'Ths_set_C': 'HEATING',
-                             'Tcs_set_C': 'COOLING',
-                             'Qcre_Wm2': 'PROCESSES',
-                             'Qhpro_Wm2': 'PROCESSES',
-                             'Qcpro_Wm2': 'PROCESSES',
-                             'Epro_Wm2': 'PROCESSES',
-                             }
 
     metadata = model_schedule
     schedules_DB = locator.get_database_standard_schedules(model_schedule)
@@ -71,17 +56,17 @@ def calc_mixed_schedule(locator,
         schedule_new_data = {}
         main_use_this_building = building_occupancy_df['mainuse'][building]
         monthly_multiplier = schedule_data_all_uses.schedule_complementray_data[main_use_this_building]['MONTHLY_MULTIPLIER']
-        for variable, schedule_type in variable_schedule_map.items():
+        for variable, schedule_type in VARIABLE_CEA_SCHEDULE_RELATION.items():
             current_schedule = np.zeros(len(schedule_data_all_uses.schedule_data['HOTEL'][schedule_type]))
             normalizing_value = 0.0
-            if variable in ['Ths_set_C', 'Tcs_set_C']:
+            if variable in TEMPERATURE_VARIABLES:
                 schedule_new_data[variable] = schedule_data_all_uses.schedule_data[main_use_this_building][
                     schedule_type]
             else:
                 for use in list_uses:
                     if building_occupancy_df[use][building] > 0.0 and internal_DB.ix[use, variable] != 0.0:
                         current_share_of_use = building_occupancy_df[use][building]
-                        if variable in ['Occ_m2pax', 'Ve_lps', 'Qs_Wp', 'X_ghp', 'Vww_lpd', 'Vw_lpd']:
+                        if variable in PEOPLE_DEPENDENT_VARIABLES:
                             # for variables that depend on the number of people, the schedule needs to be calculated by number
                             # of people for each use at each time step, not the share of the occupancy for each
                             share_time_occupancy_density = internal_DB.ix[use, variable] * current_share_of_use * \

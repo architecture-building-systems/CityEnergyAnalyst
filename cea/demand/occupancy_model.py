@@ -5,14 +5,14 @@ import random
 
 import numpy as np
 import pandas as pd
+from geopandas import GeoDataFrame as Gdf
 
 import cea.config
 import cea.inputlocator
 from cea.constants import HOURS_IN_YEAR
 from cea.datamanagement.schedule_helper import read_cea_schedule
-from cea.utilities.dbf import dbf_to_dataframe
-from geopandas import GeoDataFrame as Gdf
 from cea.demand.building_properties import calc_useful_areas
+from cea.utilities.dbf import dbf_to_dataframe
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -23,33 +23,33 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-# local constants
-DECIMALS_FOR_SCHEDULE_ROUNDING = 5
-# define schedules and codes
-OCCUPANT_SCHEDULES = ['ve', 'Qs', 'X']
-ELECTRICITY_SCHEDULES = ['Ea', 'El', 'Ed', 'Qcre']
-WATER_SCHEDULES = ['Vww', 'Vw']
-PROCESS_SCHEDULES = ['Epro', 'Qhpro', 'Qcpro']
-TEMPERATURE_SCHEDULES = ['Ths_set', 'Tcs_set']
-# map specific schedules to archetype schedules
-SCHEDULE_CODE_MAP = {'people': 'people',
-                     've': 'people',
-                     'Qs': 'people',
-                     'X': 'people',
-                     'Vww': 'hotwater',
-                     'Vw': 'hotwater',
-                     'Ea': 'appliance_light',
-                     'El': 'appliance_light',
-                     'Ed': 'appliance_light',
-                     'Qcre': 'appliance_light',
-                     'Epro': 'process',
-                     'Qhpro': 'process',
-                     'Qcpro': 'process',
-                     'Ths_set': 'heating_setpoint',
-                     'Tcs_set': 'cooling_setpoint'}
+
+# # local constants
+# DECIMALS_FOR_SCHEDULE_ROUNDING = 5
+# # define schedules and codes
+# OCCUPANT_SCHEDULES = ['ve', 'Qs', 'X']
+# ELECTRICITY_SCHEDULES = ['Ea', 'El', 'Ed', 'Qcre']
+# WATER_SCHEDULES = ['Vww', 'Vw']
+# PROCESS_SCHEDULES = ['Epro', 'Qhpro', 'Qcpro']
+# TEMPERATURE_SCHEDULES = ['Ths_set', 'Tcs_set']
+# # map specific schedules to archetype schedules
+# SCHEDULE_CODE_MAP = {'people': 'people',
+#                      've': 'people',
+#                      'Qs': 'people',
+#                      'X': 'people',
+#                      'Vww': 'hotwater',
+#                      'Vw': 'hotwater',
+#                      'Ea': 'appliance_light',
+#                      'El': 'appliance_light',
+#                      'Ed': 'appliance_light',
+#                      'Qcre': 'appliance_light',
+#                      'Epro': 'process',
+#                      'Qhpro': 'process',
+#                      'Qcpro': 'process',
+#                      'Ths_set': 'heating_setpoint',
+#                      'Tcs_set': 'cooling_setpoint'}
 
 def occupancy_main(locator, config):
-
     # local variables
     buildings = config.occupancy.buildings
     occupancy_model = config.occupancy.occupancy_model
@@ -57,17 +57,14 @@ def occupancy_main(locator, config):
     # get variables of indoor comfort and internal loads
     internal_loads = dbf_to_dataframe(locator.get_building_internal()).set_index('Name')
     indoor_comfort = dbf_to_dataframe(locator.get_building_comfort()).set_index('Name')
+    architecture = dbf_to_dataframe(locator.get_building_architecture()).set_index('Name')
 
+    # get building properties
     prop_geometry = Gdf.from_file(locator.get_zone_geometry())
     prop_geometry['footprint'] = prop_geometry.area
-    prop_geometry['GFA_m2'] = prop_geometry['footprint'] * (prop_geometry['floors_ag'] +prop_geometry['floors_bg'])
+    prop_geometry['GFA_m2'] = prop_geometry['footprint'] * (prop_geometry['floors_ag'] + prop_geometry['floors_bg'])
+    prop_geometry = prop_geometry.merge(architecture, on='Name').set_index('Name')
     prop_geometry = calc_useful_areas(prop_geometry)
-
-    def calc_useful_areas(df):
-        df['Aocc'] = df['GFA_m2'] * df['Ns']  # occupied floor area: all occupied areas in the building
-        df['Af'] = df['GFA_m2'] * df['Hs']  # conditioned area: areas that are heated/cooled
-        df['Aef'] = df['GFA_m2'] * df['Es']  # electrified area: share of gross floor area that is also electrified
-        return df
 
     if buildings == []:
         buildings = locator.get_zone_building_names()
@@ -75,19 +72,25 @@ def occupancy_main(locator, config):
     for building in buildings:
         internal_loads_building = internal_loads.ix[building]
         indoor_comfort_building = indoor_comfort.ix[building]
-        daily_schedule_building = read_cea_schedule(locator.get_building_schedules(building))
+        prop_geometry_building = prop_geometry.ix[building]
+        daily_schedule_building, daily_schedule_building_metadata = read_cea_schedule(
+            locator.get_building_schedules(building))
         if occupancy_model == 'deterministic':
             calc_deterministic_schedules(locator,
                                          building,
                                          daily_schedule_building,
+                                         daily_schedule_building_metadata,
                                          internal_loads_building,
-                                         indoor_comfort_building)
+                                         indoor_comfort_building,
+                                         prop_geometry_building)
         elif occupancy_model == 'stochaistic':
             calc_stochastic_schedules(locator,
                                       building,
                                       daily_schedule_building,
+                                      daily_schedule_building_metadata,
                                       internal_loads_building,
-                                      indoor_comfort_building)
+                                      indoor_comfort_building,
+                                      prop_geometry_building)
         else:
             Exception('there is no valid input for type of occupancy model')
 
@@ -128,7 +131,20 @@ def occupancy_main(locator, config):
     # for schedule_type in schedules.keys():
     #     schedules[schedule_type] = np.round(schedules[schedule_type], DECIMALS_FOR_SCHEDULE_ROUNDING)
 
-    return schedules
+
+def calc_deterministic_schedules(locator,
+                                 building,
+                                 daily_schedule_building,
+                                 daily_schedule_metadata,
+                                 internal_loads_building,
+                                 indoor_comfort_building,
+                                 prop_geometry_building):
+
+    variables_in_schedule = daily_schedule_building.keys()
+    for variable, arrays in daily_schedule_building.items():
+        if variable in []
+
+    return
 
 
 def convert_schedule_string_to_temperature(schedule_string, schedule_type, bpr):
@@ -175,7 +191,7 @@ def convert_schedule_string_to_temperature(schedule_string, schedule_type, bpr):
     return np.array(schedule_float)
 
 
-def calc_deterministic_schedules(archetype_schedules, archetype_values, bpr, list_uses, people_per_square_meter):
+def calc_determiniddstic_schedules(archetype_schedules, archetype_values, bpr, list_uses, people_per_square_meter):
     """
     Calculate the profile of deterministic occupancy for each each type of use in the building based on archetypal
     schedules. For variables that depend on the number of people, the schedule needs to be calculated by number of
@@ -818,6 +834,7 @@ def get_building_schedules(locator, bpr, date_range, config):
 def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
     occupancy_main(locator, config)
+
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
