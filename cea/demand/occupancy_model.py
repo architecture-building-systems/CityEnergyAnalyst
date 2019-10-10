@@ -12,8 +12,9 @@ import cea.inputlocator
 from cea.constants import HOURS_IN_YEAR
 from cea.datamanagement.schedule_helper import read_cea_schedule
 from cea.demand.building_properties import calc_useful_areas
+from cea.utilities import epwreader
+from cea.utilities.date import get_dates_from_year
 from cea.utilities.dbf import dbf_to_dataframe
-from cea.demand.constants import VARIABLE_CEA_SCHEDULE_RELATION, TEMPERATURE_VARIABLES, PEOPLE_DEPENDENT_VARIABLES,AREA_DEPENDENT_VARIABLES
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -50,6 +51,7 @@ __status__ = "Production"
 #                      'Ths_set': 'heating_setpoint',
 #                      'Tcs_set': 'cooling_setpoint'}
 
+
 def occupancy_main(locator, config):
     # local variables
     buildings = config.occupancy.buildings
@@ -66,7 +68,13 @@ def occupancy_main(locator, config):
     prop_geometry['GFA_m2'] = prop_geometry['footprint'] * (prop_geometry['floors_ag'] + prop_geometry['floors_bg'])
     prop_geometry = prop_geometry.merge(architecture, on='Name').set_index('Name')
     prop_geometry = calc_useful_areas(prop_geometry)
-    date_range = 
+
+    weather_path = locator.get_weather_file()
+    weather_data = epwreader.epw_reader(weather_path)[['year', 'drybulb_C', 'wetbulb_C',
+                                                       'relhum_percent', 'windspd_ms', 'skytemp_C']]
+    year = weather_data['year'][0]
+    # create date range for the calculation year
+    date_range = get_dates_from_year(year)
 
     if buildings == []:
         buildings = locator.get_zone_building_names()
@@ -144,24 +152,62 @@ def calc_deterministic_schedules(locator,
                                  internal_loads_building,
                                  indoor_comfort_building,
                                  prop_geometry_building):
-
     deterministic_schedule = {}
+    days_in_schedule = len(list(set(daily_schedule_building['DAY'])))
     for variable, array in daily_schedule_building.items():
-        if variable in TEMPERATURE_VARIABLES:
-            yearly_array = get_yearly_vectors(date_range, variable, array, monthly_multiplier)
-            deterministic_schedule[variable] = np.vectorize(convert_schedule_string_to_temperature)(yearly_array, variable, indoor_comfort_building)
+        if variable in ['Ths_set_C', 'Tcs_set_C']:
+            array = np.vectorize(convert_schedule_string_to_temperature)(array,
+                                                                         variable,
+                                                                         indoor_comfort_building['Ths_set_C'],
+                                                                         indoor_comfort_building['Ths_setb_C'],
+                                                                         indoor_comfort_building['Tcs_set_C'],
+                                                                         indoor_comfort_building['Tcs_setb_C'])
+            deterministic_schedule[variable] = get_yearly_vectors(date_range, days_in_schedule, array,
+                                                                  monthly_multiplier=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                                                                                      1])
         elif variable in ['Occ_m2pax']:
-            deterministic_schedule[variable] = yearly_array * (1/internal_loads_building[variable]) * prop_geometry_building['Aocc']
-        elif variable in ['Ve_lps', 'Qs_Wp', 'X_ghp', 'Vww_lpd', 'Vw_lpd']:
-            deterministic_schedule[variable] = yearly_array * internal_loads_building[variable] * prop_geometry_building['Aocc'] * 1/internal_loads_building['Occ_m2pax']
-        elif variable in ['Ea_Wm2', 'El_Wm2', 'Ed_Wm2', 'Epro_Wm2','Qcre_Wm2', 'Qhpro_Wm2', 'Qcpro_Wm2']:
-            deterministic_schedule[variable] = yearly_array * internal_loads_building[variable] * prop_geometry_building['Aef']
+            yearly_array = get_yearly_vectors(date_range, days_in_schedule, array, monthly_multiplier)
+            deterministic_schedule[variable] = yearly_array * (1 / internal_loads_building[variable]) * \
+                                               prop_geometry_building['Aocc']
+        elif variable in ['Vww_lpd', 'Vw_lpd']:
+            yearly_array = get_yearly_vectors(date_range, days_in_schedule, array, monthly_multiplier,
+                                              normalize_first_daily_profile=True)
+            deterministic_schedule[variable] = yearly_array * internal_loads_building[variable] * \
+                                               prop_geometry_building['Aocc'] * 1 / internal_loads_building['Occ_m2pax']
+        elif variable in ['Ve_lps', 'Qs_Wp', 'X_ghp']:
+            yearly_array = get_yearly_vectors(date_range, days_in_schedule, array, monthly_multiplier)
+            deterministic_schedule[variable] = yearly_array * internal_loads_building[variable] * \
+                                               prop_geometry_building['Aocc'] * 1 / internal_loads_building['Occ_m2pax']
+        elif variable in ['Ea_Wm2', 'El_Wm2', 'Ed_Wm2', 'Epro_Wm2', 'Qcre_Wm2', 'Qhpro_Wm2', 'Qcpro_Wm2']:
+            yearly_array = get_yearly_vectors(date_range, days_in_schedule, array, monthly_multiplier)
+            deterministic_schedule[variable] = yearly_array * internal_loads_building[variable] * \
+                                               prop_geometry_building['Aef']
 
+    final_dict = {
+        'DATE': date_range,
+        'Ths_set_C': deterministic_schedule['Ths_set_C'],
+        'Tcs_set_C': deterministic_schedule['Tcs_set_C'],
+        'people_pax': deterministic_schedule['Occ_m2pax'],
+        'Ve_lps': deterministic_schedule['Ve_lps'],
+        'Qs_W': deterministic_schedule['Qs_Wp'],
+        'X_gh': deterministic_schedule['X_ghp'],
+        'Vww_l': deterministic_schedule['Vww_lpd'],
+        'Vw_l': deterministic_schedule['Vw_lpd'],
+        'Ea_W': deterministic_schedule['Ea_Wm2'],
+        'El_W': deterministic_schedule['El_Wm2'],
+        'Ed_W': deterministic_schedule['Ed_Wm2'],
+        'Epro_W': deterministic_schedule['Epro_Wm2'],
+        'Qcre_W': deterministic_schedule['Qcre_Wm2'],
+        'Qhpro_W': deterministic_schedule['Qhpro_Wm2'],
+        'Qcpro_W': deterministic_schedule['Qcpro_Wm2'],
+    }
 
+    yearly_deterministic_schedule = pd.DataFrame(final_dict)
     yearly_deterministic_schedule.to_csv(locator.get_occupancy_model_file(building))
 
 
-def convert_schedule_string_to_temperature(schedule_string, schedule_type, indoor_comfort_building):
+def convert_schedule_string_to_temperature(schedule_string, schedule_type, Ths_set_C, Ths_setb_C, Tcs_set_C,
+                                           Tcs_setb_C):
     """
     converts an archetypal temperature schedule consisting of strings to building-specific temperatures
     :param schedule_string: list of strings containing codes : 'OFF', 'SETPOINT', 'SETBACK'
@@ -174,35 +220,29 @@ def convert_schedule_string_to_temperature(schedule_string, schedule_type, indoo
     :rtype: numpy.array
     """
 
-    schedule_float = []
+    if schedule_type == 'Ths_set_C':
+        if schedule_string == 'OFF':
+            schedule_float = np.nan
+        elif schedule_string == 'SETPOINT':
+            schedule_float = float(Ths_set_C)
+        elif schedule_string == 'SETBACK':
+            schedule_float = float(Ths_setb_C)
+        else:
+            print('Invalid value in temperature schedule detected. Setpoint temperature assumed: {}'.format(code))
+            schedule_float = float(Ths_set_C)
 
-    if schedule_type in ['Ths_set_C']:
+    elif schedule_type == 'Tcs_set_C':
+        if schedule_string == 'OFF':
+            schedule_float = np.nan
+        elif schedule_string == 'SETPOINT':
+            schedule_float = float(Tcs_set_C)
+        elif schedule_string == 'SETBACK':
+            schedule_float = float(Tcs_setb_C)
+        else:
+            print('Invalid value in temperature schedule detected. Setpoint temperature assumed: {}'.format(code))
+            schedule_float = float(Tcs_set_C)
 
-        for code in schedule_string:
-            if code in ['OFF']:
-                schedule_float.append(np.nan)
-            elif code in ['SETPOINT']:
-                schedule_float.append(float(indoor_comfort_building['Ths_set_C']))
-            elif code in ['SETBACK']:
-                schedule_float.append(float(indoor_comfort_building['Ths_setb_C']))
-            else:
-                print('Invalid value in temperature schedule detected. Setpoint temperature assumed: {}'.format(code))
-                schedule_float.append(float(indoor_comfort_building['Ths_set_C']))
-
-    elif schedule_type in ['Tcs_set_C']:
-
-        for code in schedule_string:
-            if code in ['OFF']:
-                schedule_float.append(np.nan)
-            elif code in ['SETPOINT']:
-                schedule_float.append(float(indoor_comfort_building['Tcs_set_C']))
-            elif code in ['SETBACK']:
-                schedule_float.append(float(indoor_comfort_building['Tcs_setb_C']))
-            else:
-                print('Invalid value in temperature schedule detected. Setpoint temperature assumed: {}'.format(code))
-                schedule_float.append(float(indoor_comfort_building['Tcs_set_C']))
-
-    return np.array(schedule_float)
+    return schedule_float
 
 
 def calc_stochastic_schedules(archetype_schedules, archetype_values, bpr, list_uses, people_per_square_meter):
@@ -454,83 +494,65 @@ def make_normalized_stochastic_schedule(stochastic_schedule, deterministic_sched
     return stochastic_schedule / (unoccupied_times + (1 - unoccupied_times) * deterministic_schedule)
 
 
-def get_yearly_vectors(dates, occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule,
-                       heating_setpoint, cooling_setpoint):
-    """
-    For a given use type, this script generates yearly schedules for occupancy, electricity demand,
-    hot water demand, process electricity demand based on the daily and monthly schedules obtained from the
-    archetype database.
+def get_yearly_vectors(date_range, days_in_schedule, schedule_array, monthly_multiplier,
+                       normalize_first_daily_profile=False):
+    # transform into arrays
+    # per weekday, saturday, sunday
+    array_per_day = schedule_array.reshape(3, int(len(schedule_array) / days_in_schedule))
+    array_week = array_per_day[0]
+    array_sat = array_per_day[1]
+    array_sun = array_per_day[2]
+    if normalize_first_daily_profile:
+        # for water consumption we need to normalize to the daily maximum
+        # this is to account for typical units of water consumption in lpd or litter per person per day.
 
-    :param dates: dates and times throughout the year
-    :type dates: DatetimeIndex
-    :param occ_schedules: occupancy schedules for a weekdays, Saturdays and Sundays from the archetype database
-    :type occ_schedules: list[array]
-    :param el_schedules: electricity schedules for a weekdays, Saturdays and Sundays from the archetype database
-    :type el_schedules: list[array]
-    :param dhw_schedules: domestic hot water schedules for a weekdays, Saturdays and Sundays from the archetype
-        database
-    :type dhw_schedules: list[array]
-    :param pro_schedules: process electricity schedules for a weekdays, Saturdays and Sundays from the archetype
-        database
-    :type pro_schedules: list[array]
-    :param month_schedule: monthly schedules from the archetype database
-    :type month_schedule: ndarray
+        if array_week.sum() != 0.0:
+            norm_weekday_max = array_week.sum() ** -1
+        else:
+            norm_weekday_max = 0.0
 
-    :return occ: occupancy schedule for each hour of the year
-    :rtype occ: list[float]
-    :return el: electricity schedule for each hour of the year
-    :rtype el: list[float]
-    :return dhw: domestic hot water schedule for each hour of the year
-    :rtype dhw: list[float]
-    :return pro: process electricity schedule for each hour of the year
-    :rtype pro: list[float]
-    """
+        if array_sat.sum() != 0.0:
+            norm_sat_max = array_sat.sum() ** -1
+        else:
+            norm_sat_max = 0.0
 
-    occ, el, dhw, pro, heating_setpoint_year, cooling_setpoint_year = ([] for i in range(6))
-
-    if dhw_schedules[0].sum() != 0:
-        dhw_weekday_max = dhw_schedules[0].sum() ** -1
+        if array_sun.sum() != 0.0:
+            norm_sun_max = array_sun.sum() ** -1
+        else:
+            norm_sun_max = 0.0
     else:
-        dhw_weekday_max = 0
+        norm_weekday_max = 1.0
+        norm_sat_max = 1.0
+        norm_sun_max = 1.0
 
-    if dhw_schedules[1].sum() != 0:
-        dhw_sat_max = dhw_schedules[1].sum() ** -1
-    else:
-        dhw_sat_max = 0
+    yearly_array = [
+        calc_hourly_value(date, array_week, array_sat, array_sun, norm_weekday_max, norm_sat_max, norm_sun_max,
+                          monthly_multiplier) for date in date_range]
+    # for date in date_range:
+    #     month_year = monthly_multiplier[date.month - 1]
+    #     hour_day = date.hour
+    #     dayofweek = date.dayofweek
+    #     if 0 <= dayofweek < 5:  # weekday
+    #         yearly_array.append(array_per_day[0][hour_day] * month_year * norm_weekday_max) # normalized dhw demand flow rates
+    #     elif dayofweek is 5:  # saturday
+    #         yearly_array.append(array_per_day[1][hour_day] * month_year * norm_sat_max) # normalized dhw demand flow rates
+    #     else:  # sunday
+    #         yearly_array.append(array_per_day[2][hour_day] * month_year * norm_sun_max) # normalized dhw demand flow rates
 
-    if dhw_schedules[2].sum() != 0:
-        dhw_sun_max = dhw_schedules[2].sum() ** -1
-    else:
-        dhw_sun_max = 0
+    return np.array(yearly_array)
 
-    for date in dates:
-        month_year = month_schedule[date.month - 1]
-        hour_day = date.hour
-        dayofweek = date.dayofweek
-        if 0 <= dayofweek < 5:  # weekday
-            occ.append(occ_schedules[0][hour_day] * month_year)
-            el.append(el_schedules[0][hour_day] * month_year)
-            dhw.append(dhw_schedules[0][hour_day] * month_year * dhw_weekday_max)  # normalized dhw demand flow rates
-            pro.append(pro_schedules[0][hour_day] * month_year)
-            heating_setpoint_year.append(heating_setpoint[0][hour_day])
-            cooling_setpoint_year.append(cooling_setpoint[0][hour_day])
-        elif dayofweek is 5:  # saturday
-            occ.append(occ_schedules[1][hour_day] * month_year)
-            el.append(el_schedules[1][hour_day] * month_year)
-            dhw.append(dhw_schedules[1][hour_day] * month_year * dhw_sat_max)  # normalized dhw demand flow rates
-            pro.append(pro_schedules[1][hour_day] * month_year)
-            heating_setpoint_year.append(heating_setpoint[1][hour_day])
-            cooling_setpoint_year.append(cooling_setpoint[1][hour_day])
-        else:  # sunday
-            occ.append(occ_schedules[2][hour_day] * month_year)
-            el.append(el_schedules[2][hour_day] * month_year)
-            dhw.append(dhw_schedules[2][hour_day] * month_year * dhw_sun_max)  # normalized dhw demand flow rates
-            pro.append(pro_schedules[2][hour_day] * month_year)
-            heating_setpoint_year.append(heating_setpoint[2][hour_day])
-            cooling_setpoint_year.append(cooling_setpoint[2][hour_day])
 
-    return {'people': occ, 'appliance_light': el, 'hotwater': dhw, 'process': pro,
-            'heating_setpoint': heating_setpoint_year, 'cooling_setpoint': cooling_setpoint_year}
+def calc_hourly_value(date, array_week, array_sat, array_sun, norm_weekday_max, norm_sat_max, norm_sun_max,
+                      monthly_multiplier):
+    month_year = monthly_multiplier[date.month - 1]
+    hour_day = date.hour
+    dayofweek = date.dayofweek
+    if 0 <= dayofweek < 5:  # weekday
+        return array_week[hour_day] * month_year * norm_weekday_max  # normalized dhw demand flow rates
+    elif dayofweek is 5:  # saturday
+        return array_sat[hour_day] * month_year * norm_sat_max  # normalized dhw demand flow rates
+    else:  # sunday
+        return array_sun[hour_day] * month_year * norm_sun_max  # normalized dhw demand flow rates
 
 
 def schedule_maker(dates, locator, list_uses):
@@ -674,6 +696,7 @@ def get_building_schedules(locator, bpr, date_range, config):
 def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
     occupancy_main(locator, config)
+
 
 if __name__ == '__main__':
     main(cea.config.Configuration())

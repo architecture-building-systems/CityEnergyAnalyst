@@ -16,7 +16,7 @@ import pandas as pd
 
 from cea.demand.thermal_loads import calc_thermal_loads
 from cea.demand.building_properties import BuildingProperties
-from cea.demand.demand_main import get_dates_from_year
+from cea.utilities.date import get_dates_from_year
 from cea.inputlocator import InputLocator
 from cea.utilities import epwreader
 

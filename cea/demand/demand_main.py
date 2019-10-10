@@ -8,8 +8,6 @@ import multiprocessing as mp
 import os
 import time
 
-import pandas as pd
-
 import cea.config
 import cea.inputlocator
 import demand_writers
@@ -17,7 +15,7 @@ from cea.demand import thermal_loads
 from cea.demand.building_properties import BuildingProperties
 from cea.utilities import epwreader
 import warnings
-from cea.constants import HOURS_IN_YEAR
+from cea.utilities.date import get_dates_from_year
 
 warnings.filterwarnings("ignore")
 
@@ -203,18 +201,6 @@ def radiation_files_exist(config, locator):
             locator.get_radiation_building(building_name))
 
     return all(daysim_results_exist(building_name) for building_name in locator.get_zone_building_names())
-
-
-def get_dates_from_year(year):
-    """
-    creates date range for the year of the calculation
-    :param year: year of first row in weather file
-    :type year: int
-    :return: pd.date_range with 8760 values
-    :rtype: pandas.data_range
-    """
-    return pd.date_range(str(year) + '/01/01', periods=HOURS_IN_YEAR, freq='H')
-
 
 
 if __name__ == '__main__':
