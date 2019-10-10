@@ -731,7 +731,7 @@ class InputLocator(object):
         :param building_name:
         :return:
         """
-        return os.path.join(self.get_building_properties_folder(), '{}_schedules.csv'.format(building_name))
+        return os.path.join(self.get_building_properties_folder(), 'schedules','{}.cea'.format(building_name))
 
     def get_building_schedules(self, building_name):
         """
