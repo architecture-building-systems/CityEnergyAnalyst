@@ -723,6 +723,12 @@ class InputLocator(object):
         """
         return os.path.join(self.get_building_properties_folder(), 'variables_overrides.csv')
 
+    def get_building_schedules_folder(self):
+        """scenario/outputs/data/optimization/slave`
+        Slave results folder (storage + operation pattern)
+        """
+        return self._ensure_folder(self.get_building_properties_folder(),'schedules')
+
     def get_building_schedules_predefined(self, building_name):
         """
         scenario/inputs/building-properties/{building_name}_schedules.csv
@@ -731,7 +737,7 @@ class InputLocator(object):
         :param building_name:
         :return:
         """
-        return os.path.join(self.get_building_properties_folder(), 'schedules','{}.cea'.format(building_name))
+        return os.path.join(self.get_building_schedules_folder(),'{}.cea'.format(building_name))
 
     def get_building_schedules(self, building_name):
         """
