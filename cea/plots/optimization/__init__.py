@@ -69,7 +69,7 @@ class GenerationPlotBase(cea.plots.PlotBase):
             data_processed = data_processed.apply(lambda x: x/normalizatioon_factor if x.name in analysis_fields else x)
         elif normalization == "net floor area":
             data = pd.read_csv(self.locator.get_total_demand())
-            normalizatioon_factor = sum(data['NFA_m2'])
+            normalizatioon_factor = sum(data['Aocc_m2'])
             data_processed = data_processed.apply(lambda x: x/normalizatioon_factor if x.name in analysis_fields else x)
         elif normalization == "air conditioned floor area":
             data = pd.read_csv(self.locator.get_total_demand())
