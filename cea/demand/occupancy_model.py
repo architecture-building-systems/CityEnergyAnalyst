@@ -9,7 +9,10 @@ import pandas as pd
 import cea.config
 import cea.inputlocator
 from cea.constants import HOURS_IN_YEAR
-from cea.utilities import epwreader
+from cea.datamanagement.schedule_helper import read_cea_schedule
+from cea.utilities.dbf import dbf_to_dataframe
+from geopandas import GeoDataFrame as Gdf
+from cea.demand.building_properties import calc_useful_areas
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -45,88 +48,85 @@ SCHEDULE_CODE_MAP = {'people': 'people',
                      'Ths_set': 'heating_setpoint',
                      'Tcs_set': 'cooling_setpoint'}
 
+def occupancy_main(locator, config):
 
-def calc_schedules(list_uses, archetype_schedules, bpr, archetype_values, stochastic_occupancy):
-    """
-    Given schedule data for archetypal building uses, `calc_schedule` calculates the schedule for a building
-    with possibly a mixed schedule as defined in `building_uses` using a weighted average approach. The schedules are
-    normalized such that the final demands and internal gains are calculated from the specified building properties and
-    not the archetype values. Depending on the value given to `stochastic_occupancy` either the deterministic or
-    stochastic model of occupancy will be used.
+    # local variables
+    buildings = config.occupancy.buildings
+    occupancy_model = config.occupancy.occupancy_model
 
-    The script generates the following schedules:
-    - ``people``: number of people at each hour [in p]
-    - ``ve``: ventilation demand schedule normalized by the archetypal ventilation demand per person [in (l/s)/(l/p/s)]
-    - ``Qs``: sensible heat gain due to occupancy normalized by the archetypal gains per person [in W/(Wp)]
-    - ``X``: moisture gain due to occupants normalized by the archetypal gains per person [in (g/h)/(g/p/h)]
-    - ``Ea``: electricity demand for appliances at each hour normalized by the archetypal demand per m2 [in W/(W/m2)]
-    - ``El``: electricity demand for lighting at each hour normalized by the archetypal demand per m2 [in W/(W/m2)]
-    - ``Epro``: electricity demand for process at each hour normalized by the archetypal demand per m2 [in W/(W/m2)]
-    - ``Ere``: electricity demand for refrigeration at each hour normalized by the archetypal demand per m2 [W/(W/m2)]
-    - ``Ed``: electricity demand for data centers at each hour normalized by the archetypal demand per m2 [in W/(W/m2)]
-    - ``Vww``: domestic hot water schedule at each hour normalized by the archetypal demand [in (l/h)/(l/p/d)]
-    - ``Vw``: total water schedule at each hour normalized by the archetypal demand [in (l/h)/(l/p/d)]
-    - ``Qhpro``: heating demand for process at each hour normalized by the archetypal demand per m2 [in W/(W/m2)]
-    - ``Qcpro``: cooling demand for process at each hour normalized by the archetypal demand per m2 [in W/(W/m2)]
+    # get variables of indoor comfort and internal loads
+    internal_loads = dbf_to_dataframe(locator.get_building_internal()).set_index('Name')
+    indoor_comfort = dbf_to_dataframe(locator.get_building_comfort()).set_index('Name')
 
-    :param list_uses: The list of uses used in the project
-    :type list_uses: list
+    prop_geometry = Gdf.from_file(locator.get_zone_geometry())
+    prop_geometry['footprint'] = prop_geometry.area
+    prop_geometry['GFA_m2'] = prop_geometry['footprint'] * (prop_geometry['floors_ag'] +prop_geometry['floors_bg'])
+    prop_geometry = calc_useful_areas(prop_geometry)
 
-    :param archetype_schedules: The list of schedules defined for the project - in the same order as `list_uses`
-    :type archetype_schedules: list[ndarray[float]]
+    def calc_useful_areas(df):
+        df['Aocc'] = df['GFA_m2'] * df['Ns']  # occupied floor area: all occupied areas in the building
+        df['Af'] = df['GFA_m2'] * df['Hs']  # conditioned area: areas that are heated/cooled
+        df['Aef'] = df['GFA_m2'] * df['Es']  # electrified area: share of gross floor area that is also electrified
+        return df
 
-    :param bpr: a collection of building properties for the building used for thermal loads calculation
-    :type bpr: BuildingPropertiesRow
+    if buildings == []:
+        buildings = locator.get_zone_building_names()
 
-    :param archetype_values: occupant density, ventilation and internal loads for each archetypal occupancy type
-    :type archetype_values: dict[str:array]
-    
-    :param stochastic_occupancy: a boolean that states whether the stochastic occupancy model (True) or the 
-        deterministic one (False) should be used
-    :type stochastic_occupancy: Boolean
-
-    :returns schedules: a dictionary containing the weighted average schedules for: occupancy; ventilation demand;
-        sensible heat and moisture gains due to occupancy; electricity demand for appliances, lighting, processes,
-        refrigeration and data centers; demand for water and domestic hot water
-    :rtype: dict[array]
-    """
-
-    # calculate average occupant density for the building
-    people_per_square_meter = 0
-    for num in range(len(list_uses)):
-        people_per_square_meter += bpr.occupancy[list_uses[num]] * archetype_values['people'][num]
-
-    # no need to calculate occupancy if people_per_square_meter == 0
-    if people_per_square_meter > 0:
-        if stochastic_occupancy:
-            schedules = calc_stochastic_schedules(archetype_schedules, archetype_values, bpr, list_uses,
-                                                  people_per_square_meter)
+    for building in buildings:
+        internal_loads_building = internal_loads.ix[building]
+        indoor_comfort_building = indoor_comfort.ix[building]
+        daily_schedule_building = read_cea_schedule(locator.get_building_schedules(building))
+        if occupancy_model == 'deterministic':
+            calc_deterministic_schedules(locator,
+                                         building,
+                                         daily_schedule_building,
+                                         internal_loads_building,
+                                         indoor_comfort_building)
+        elif occupancy_model == 'stochaistic':
+            calc_stochastic_schedules(locator,
+                                      building,
+                                      daily_schedule_building,
+                                      internal_loads_building,
+                                      indoor_comfort_building)
         else:
-            schedules = calc_deterministic_schedules(archetype_schedules, archetype_values, bpr, list_uses,
-                                                     people_per_square_meter)
-    else:
-        schedules = {}
-        # occupant-related schedules are 0 since there are no occupants
-        for schedule in ['people', 've', 'Qs', 'X', 'Vww', 'Vw']:
-            schedules[schedule] = np.zeros(HOURS_IN_YEAR)
-        # electricity and process schedules may be greater than 0
-        for schedule in ['Ea', 'El', 'Qcre', 'Ed', 'Epro', 'Qhpro', 'Qcpro']:
-            schedules[schedule] = bpr.rc_model['Aef'] * \
-                                  calc_remaining_schedules_deterministic(archetype_schedules,
-                                                                         archetype_values[schedule], list_uses,
-                                                                         bpr.occupancy, SCHEDULE_CODE_MAP[schedule],
-                                                                         archetype_values['people'])
+            Exception('there is no valid input for type of occupancy model')
 
-    # temperature set points are not mixed in mix-use buildings
-    for schedule_type in TEMPERATURE_SCHEDULES:
-        # use schedule of mainuse directly
-        schedule_string = archetype_schedules[list_uses.index(bpr.comfort['mainuse'])][SCHEDULE_CODE_MAP[schedule_type]]
-        # convert schedule to building-specific temperatures
-        schedules[schedule_type] = convert_schedule_string_to_temperature(schedule_string, schedule_type, bpr)
-
-    # round schedules to avoid rounding errors when saving and reading schedules from disk
-    for schedule_type in schedules.keys():
-        schedules[schedule_type] = np.round(schedules[schedule_type], DECIMALS_FOR_SCHEDULE_ROUNDING)
+    # # calculate average occupant density for the building
+    # people_per_square_meter = 0
+    # for num in range(len(list_uses)):
+    #     people_per_square_meter += bpr.occupancy[list_uses[num]] * archetype_values['people'][num]
+    #
+    # # no need to calculate occupancy if people_per_square_meter == 0
+    # if people_per_square_meter > 0:
+    #     if stochastic_occupancy:
+    #         schedules = calc_stochastic_schedules(archetype_schedules, archetype_values, bpr, list_uses,
+    #                                               people_per_square_meter)
+    #     else:
+    #         schedules = calc_deterministic_schedules(archetype_schedules, archetype_values, bpr, list_uses,
+    #                                                  people_per_square_meter)
+    # else:
+    #     schedules = {}
+    #     # occupant-related schedules are 0 since there are no occupants
+    #     for schedule in ['people', 've', 'Qs', 'X', 'Vww', 'Vw']:
+    #         schedules[schedule] = np.zeros(HOURS_IN_YEAR)
+    #     # electricity and process schedules may be greater than 0
+    #     for schedule in ['Ea', 'El', 'Qcre', 'Ed', 'Epro', 'Qhpro', 'Qcpro']:
+    #         schedules[schedule] = bpr.rc_model['Aef'] * \
+    #                               calc_remaining_schedules_deterministic(archetype_schedules,
+    #                                                                      archetype_values[schedule], list_uses,
+    #                                                                      bpr.occupancy, SCHEDULE_CODE_MAP[schedule],
+    #                                                                      archetype_values['people'])
+    #
+    # # temperature set points are not mixed in mix-use buildings
+    # for schedule_type in TEMPERATURE_SCHEDULES:
+    #     # use schedule of mainuse directly
+    #     schedule_string = archetype_schedules[list_uses.index(bpr.comfort['mainuse'])][SCHEDULE_CODE_MAP[schedule_type]]
+    #     # convert schedule to building-specific temperatures
+    #     schedules[schedule_type] = convert_schedule_string_to_temperature(schedule_string, schedule_type, bpr)
+    #
+    # # round schedules to avoid rounding errors when saving and reading schedules from disk
+    # for schedule_type in schedules.keys():
+    #     schedules[schedule_type] = np.round(schedules[schedule_type], DECIMALS_FOR_SCHEDULE_ROUNDING)
 
     return schedules
 
@@ -212,7 +212,7 @@ def calc_deterministic_schedules(archetype_schedules, archetype_values, bpr, lis
             if archetype_values['people'][num] != 0:  # do not consider when the value is 0
                 current_schedule = np.rint(
                     np.array(archetype_schedules[num]['people']) * archetype_values['people'][num] *
-                    current_share_of_use * bpr.rc_model['NFA_m2'])
+                    current_share_of_use * bpr.rc_model['Aocc_m2'])
                 # make sure there is at least one occupant per occupancy type in the building
                 if np.max(current_schedule) < 1.0:
                     current_schedule = np.round(np.array(archetype_schedules[num]['people']))
@@ -241,7 +241,7 @@ def calc_deterministic_schedules(archetype_schedules, archetype_values, bpr, lis
         schedules[schedule] = calc_remaining_schedules_deterministic(archetype_schedules, archetype_values[schedule],
                                                                      list_uses, bpr.occupancy, 'hotwater',
                                                                      archetype_values['people']) * \
-                              bpr.rc_model['NFA_m2'] * people_per_square_meter
+                              bpr.rc_model['Aocc'] * people_per_square_meter
     for schedule in PROCESS_SCHEDULES:
         schedules[schedule] = calc_remaining_schedules_deterministic(archetype_schedules, archetype_values[schedule],
                                                                      list_uses, bpr.occupancy,
@@ -294,7 +294,7 @@ def calc_stochastic_schedules(archetype_schedules, archetype_values, bpr, list_u
         current_stochastic_schedule = np.zeros(HOURS_IN_YEAR)
         if current_share_of_use > 0:
             occupants_in_current_use = int(
-                archetype_values['people'][num] * current_share_of_use * bpr.rc_model['NFA_m2'])
+                archetype_values['people'][num] * current_share_of_use * bpr.rc_model['Aocc'])
             archetype_schedule = archetype_schedules[num]['people']
             for occupant in range(occupants_in_current_use):
                 mu = mu_v[int(len_mu_v * random.random())]
@@ -335,7 +335,7 @@ def calc_stochastic_schedules(archetype_schedules, archetype_values, bpr, list_u
                 if archetype_values[label][num] != 0:
                     normalizing_values[label], schedules[label] = calc_remaining_schedules_stochastic(
                         normalizing_values[label], archetype_values[label][num], current_share_of_use,
-                        bpr.rc_model['NFA_m2'], schedules[label], archetype_schedules[num][SCHEDULE_CODE_MAP[label]],
+                        bpr.rc_model['Aocc'], schedules[label], archetype_schedules[num][SCHEDULE_CODE_MAP[label]],
                         share_time_occupancy_density * archetype_values['people'][num])
             for label in PROCESS_SCHEDULES:
                 if archetype_values[label][num] != 0:
@@ -808,7 +808,7 @@ def get_building_schedules(locator, bpr, date_range, config):
         # read archetypes database
         archetype_schedules, archetype_values = schedule_maker(date_range, locator, list_uses)
         # calculate mixed-use building schedules
-        building_schedules = calc_schedules(list_uses, archetype_schedules, bpr, archetype_values, stochastic_occupancy)
+        building_schedules = occupancy_main(list_uses, archetype_schedules, bpr, archetype_values, stochastic_occupancy)
         # write the building schedules to disc for the next simulation or manipulation by the user
         save_schedules_to_file(locator, building_schedules, building_name)
 
@@ -816,24 +816,8 @@ def get_building_schedules(locator, bpr, date_range, config):
 
 
 def main(config):
-    from cea.demand.building_properties import BuildingProperties
     locator = cea.inputlocator.InputLocator(config.scenario)
-    weather_path = locator.get_weather_file()
-    weather_data = epwreader.epw_reader(weather_path)[['year']]
-    year = weather_data['year'][0]
-    dates = pd.date_range(str(year) + '/01/01', periods=HOURS_IN_YEAR, freq='H')
-    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    config.demand.buildings = [locator.get_zone_building_names()[0]]
-    building_properties = BuildingProperties(locator=locator, override_variables=False)
-    bpr = building_properties[locator.get_zone_building_names()[0]]
-    list_uses = ['OFFICE', 'INDUSTRIAL']
-    bpr.occupancy = {'OFFICE': 0.5, 'INDUSTRIAL': 0.5}
-    use_stochastic_occupancy = config.demand.use_stochastic_occupancy
-
-    # calculate schedules
-    archetype_schedules, archetype_values = schedule_maker(dates, locator, list_uses)
-    return calc_schedules(list_uses, archetype_schedules, bpr, archetype_values, use_stochastic_occupancy)
-
+    occupancy_main(locator, config)
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
