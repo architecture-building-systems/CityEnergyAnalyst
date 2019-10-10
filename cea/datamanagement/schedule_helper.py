@@ -53,7 +53,12 @@ def matsim_model(locator, buildings, path_matsim_file_required1, path_matsim_fil
     return 'TEST'
 
 
-def model_with_standard_database(locator, building_occupancy_df, path_to_standard_schedule_database):
+def model_with_standard_database(locator,
+                                 building_occupancy_df,
+                                 buildings,
+                                 internal_DB,
+                                 comfort_DB.
+                                 path_to_standard_schedule_database):
 
     variable_schedule_map = {'Occ_m2pax': 'OCCUPANCY',
                              'Qs_Wp': 'OCCUPANCY',
@@ -80,7 +85,6 @@ def model_with_standard_database(locator, building_occupancy_df, path_to_standar
     # get list of uses only with a valid value in building_occupancy_df
     list_uses = get_short_list_of_uses_in_case_study(building_occupancy_df)
 
-    building_occupancy_df['mainuse'] = calc_mainuse(building_occupancy_df, list_uses)
     internal_DB = pd.read_excel(locator.get_archetypes_properties(), 'INTERNAL_LOADS')
     comfort_DB = pd.read_excel(locator.get_archetypes_properties(), 'INDOOR_COMFORT')
     internal_DB = internal_DB.merge(comfort_DB, left_on='Code', right_on='Code')
