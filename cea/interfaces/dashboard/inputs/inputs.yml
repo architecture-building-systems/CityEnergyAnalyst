@@ -196,14 +196,6 @@ indoor-comfort:
   fields:
   - name: Name
     type: str
-  - name: Tcs_set_C
-    type: float
-  - name: Tcs_setb_C
-    type: float
-  - name: Ths_set_C
-    type: float
-  - name: Ths_setb_C
-    type: float
   - name: Ve_lps
     type: float
   - name: rhum_max_pc
