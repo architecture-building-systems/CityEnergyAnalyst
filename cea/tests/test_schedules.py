@@ -37,12 +37,12 @@ class TestSavingLoadingSchedules(unittest.TestCase):
         bpr = building_properties["B01"]
 
         # run get_building_schedules on clean folder - they're created from scratch
-        if os.path.exists(locator.get_building_schedules("B01")):
-            os.remove(locator.get_building_schedules("B01"))
-        fresh_schedules = get_building_schedules(locator, bpr, date_range, config)
+        if os.path.exists(locator.get_occupancy_model_file("B01")):
+            os.remove(locator.get_occupancy_model_file("B01"))
+        fresh_schedules = occupancy_main(locator, bpr, date_range, config)
 
         # run again to get the frozen version
-        frozen_schedules = get_building_schedules(locator, bpr, date_range, config)
+        frozen_schedules = occupancy_main(locator, bpr, date_range, config)
 
         self.assertEqual(sorted(fresh_schedules.keys()), sorted(frozen_schedules.keys()))
         for schedule in fresh_schedules:
