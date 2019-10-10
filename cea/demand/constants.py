@@ -77,3 +77,28 @@ T_C_REF_RE_0 = 5  # (°C) refactored from refrigeration loads, without original 
 # SUPPLY AND RETURN TEMPERATURES OF DATA CENTER COOLING SYSTEM
 T_C_DATA_RE_0 = 15  # (°C) refactored from data center loads, without original source
 T_C_DATA_SUP_0 = 7  # (°C) refactored from data center loads, without original source
+
+VARIABLE_CEA_SCHEDULE_RELATION = {'Occ_m2pax': 'OCCUPANCY',
+                                  'Qs_Wp': 'OCCUPANCY',
+                                  'X_ghp': 'OCCUPANCY',
+                                  'Ve_lps': 'OCCUPANCY',
+                                  'Ea_Wm2': 'ELECTRICITY',
+                                  'El_Wm2': 'ELECTRICITY',
+                                  'Ed_Wm2': 'ELECTRICITY',
+                                  'Vww_lpd': 'WATER',
+                                  'Vw_lpd': 'WATER',
+                                  'Ths_set_C': 'HEATING',
+                                  'Tcs_set_C': 'COOLING',
+                                  'Qcre_Wm2': 'PROCESSES',
+                                  'Qhpro_Wm2': 'PROCESSES',
+                                  'Qcpro_Wm2': 'PROCESSES',
+                                  'Epro_Wm2': 'PROCESSES',
+                                  }
+
+TEMPERATURE_VARIABLES = ['Ths_set_C',
+                         'Tcs_set_C']
+
+PEOPLE_DEPENDENT_VARIABLES = ['Occ_m2pax', 'Ve_lps', 'Qs_Wp', 'X_ghp', 'Vww_lpd', 'Vw_lpd']
+
+AREA_DEPENDENT_VARIABLES = ['Ea_Wm2', 'El_Wm2', 'Ed_Wm2', 'Qcre_Wm2', 'Qhpro_Wm2', 'Qcpro_Wm2',
+                                          'Epro_Wm2']
