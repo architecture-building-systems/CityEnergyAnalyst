@@ -6,13 +6,13 @@ from __future__ import print_function
 
 import os
 
-from cea.datamanagement.data_helper import calc_mainuse
-import cea.config
-import pandas as pd
 import numpy as np
+import pandas as pd
+
+import cea
+import cea.config
 import cea.inputlocator
-from cea.datamanagement.data_helper import get_short_list_of_uses_in_case_study
-from cea.utilities.dbf import dbf_to_dataframe
+from cea.datamanagement.databases_verification import COLUMNS_ZONE_OCCUPANCY
 from cea.utilities.schedule_reader import read_cea_schedule, save_cea_schedule
 
 __author__ = "Jimeno Fonseca"
@@ -25,41 +25,10 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def schedule_helper(locator, config):
-    # local variables
-    model = config.data_helper.model_schedule
-    buildings = config.data_helper.buildings
-
-    # select which model to run and run it
-    if model == 'matsim':
-        path_matsim_file_required1 = config.data_helper.matsim_file1
-        path_matsim_file_required2 = config.data_helper.matsim_file2
-        if path_matsim_file_required1 == None or path_matsim_file_required2 == None:
-            Exception('There are not valid inputs to run the MATSIM model, please make sure to include the correct'
-                      'path to each file')
-        else:
-            matsim_model(locator, buildings, path_matsim_file_required1, path_matsim_file_required2)
-    elif model == 'CH-SIA-2014':
-        path_to_standard_schedule_database = locator.get_database_standard_schedules(model)
-        model_with_standard_database(locator, buildings, path_to_standard_schedule_database)
-    elif model == 'SG-ASHRAE-2009':
-        path_to_standard_schedule_database = locator.get_database_standard_schedules(model)
-        model_with_standard_database(locator, buildings, path_to_standard_schedule_database)
-    else:
-        Exception('There is no valid model for schedule helper')
-
-
-def matsim_model(locator, buildings, path_matsim_file_required1, path_matsim_file_required2):
-    return 'TEST'
-
-
-def model_with_standard_database(locator,
-                                 building_occupancy_df,
-                                 buildings,
-                                 internal_DB,
-                                 comfort_DB.
-                                 path_to_standard_schedule_database):
-
+def calc_mixed_schedule(locator,
+                        building_occupancy_df,
+                        buildings,
+                        model_schedule):
     variable_schedule_map = {'Occ_m2pax': 'OCCUPANCY',
                              'Qs_Wp': 'OCCUPANCY',
                              'X_ghp': 'OCCUPANCY',
@@ -77,10 +46,10 @@ def model_with_standard_database(locator,
                              'Epro_Wm2': 'PROCESSES',
                              }
 
-    metadata = path_to_standard_schedule_database
-    schedule_data_all_uses = ScheduleData(locator, path_to_standard_schedule_database)
-    building_occupancy_df = dbf_to_dataframe(locator.get_building_occupancy()).set_index('Name')
-    building_occupancy_df = building_occupancy_df.ix[buildings]
+    metadata = model_schedule
+    schedules_DB = locator.get_database_standard_schedules(model_schedule)
+    schedule_data_all_uses = ScheduleData(locator, schedules_DB)
+    building_occupancy_df = building_occupancy_df.loc[building_occupancy_df['Name'].isin(buildings)]
 
     # get list of uses only with a valid value in building_occupancy_df
     list_uses = get_short_list_of_uses_in_case_study(building_occupancy_df)
@@ -100,12 +69,14 @@ def model_with_standard_database(locator,
     for building in buildings:
         schedule_new_data = {}
         main_use_this_building = building_occupancy_df['mainuse'][building]
-        monthly_multiplier = schedule_data_all_uses.schedule_complementray_data[main_use_this_building]['MONTHLY_MULTIPLIER']
+        monthly_multiplier = schedule_data_all_uses.schedule_complementray_data[main_use_this_building][
+            'MONTHLY_MULTIPLIER']
         for variable, schedule_type in variable_schedule_map.items():
             current_schedule = np.zeros(len(schedule_data_all_uses.schedule_data['HOTEL'][schedule_type]))
             normalizing_value = 0.0
             if variable in ['Ths_set_C', 'Tcs_set_C']:
-                schedule_new_data[variable] = schedule_data_all_uses.schedule_data[main_use_this_building][schedule_type]
+                schedule_new_data[variable] = schedule_data_all_uses.schedule_data[main_use_this_building][
+                    schedule_type]
             else:
                 for use in list_uses:
                     if building_occupancy_df[use][building] > 0.0 and internal_DB.ix[use, variable] != 0.0:
@@ -116,12 +87,14 @@ def model_with_standard_database(locator,
                             share_time_occupancy_density = internal_DB.ix[use, variable] * current_share_of_use * \
                                                            occupant_densities[use]
 
-                        elif variable in ['Ea_Wm2','El_Wm2', 'Ed_Wm2', 'Qcre_Wm2', 'Qhpro_Wm2', 'Qcpro_Wm2', 'Epro_Wm2']:
+                        elif variable in ['Ea_Wm2', 'El_Wm2', 'Ed_Wm2', 'Qcre_Wm2', 'Qhpro_Wm2', 'Qcpro_Wm2',
+                                          'Epro_Wm2']:
                             share_time_occupancy_density = internal_DB.ix[use, variable] * current_share_of_use
 
                         normalizing_value += share_time_occupancy_density
                         current_schedule = np.vectorize(calc_average)(current_schedule,
-                                                                      schedule_data_all_uses.schedule_data[use][schedule_type],
+                                                                      schedule_data_all_uses.schedule_data[use][
+                                                                          schedule_type],
                                                                       share_time_occupancy_density)
                 if normalizing_value == 0:
                     schedule_new_data[variable] = current_schedule * 0
@@ -134,10 +107,10 @@ def model_with_standard_database(locator,
         schedule_new_data.update(DAY)
         schedule_new_data.update(HOUR)
 
-        #calcualate complementary_data
+        # calcualate complementary_data
         schedule_complementray_data = {'METADATA': metadata, 'MONTHLY_MULTIPLIER': monthly_multiplier}
 
-        #save cea schedule format
+        # save cea schedule format
         path_to_building_schedule = locator.get_building_schedules_predefined(building)
         save_cea_schedule(schedule_new_data, schedule_complementray_data, path_to_building_schedule)
 
@@ -148,13 +121,13 @@ def calc_average(last, current, share_of_use):
     """
     return last + current * share_of_use
 
+
 class ScheduleData(object):
 
     def __init__(self, locator, path_to_standard_schedule_database):
         self.locator = locator
         self.path_database = path_to_standard_schedule_database
         self.schedule_data, self.schedule_complementray_data = self.fill_in_data()
-
 
     def fill_in_data(self):
         get_list_uses_in_database = []
@@ -169,14 +142,32 @@ class ScheduleData(object):
             data_schedule, data_metadata = read_cea_schedule(path_to_schedule)
             data_schedules.append(data_schedule)
             data_schedules_complimentary.append(data_metadata)
-        return dict(zip(get_list_uses_in_database, data_schedules)), dict(zip(get_list_uses_in_database, data_schedules_complimentary))
+        return dict(zip(get_list_uses_in_database, data_schedules)), dict(
+            zip(get_list_uses_in_database, data_schedules_complimentary))
 
+def get_short_list_of_uses_in_case_study(building_occupancy_df):
+    """
+    gets only the list of land uses that all the building occupnacy dataset has
+    It avoids multiple iterations, when these landuises are not even selected in the database
+
+    :param building_occupancy_df: dataframe of occupancy.dbf input (can be read in data-helper or in building-properties)
+    :type building_occupancy_df: pandas.DataFrame
+    :return: list of uses in case study
+    :rtype: pandas.DataFrame.Index
+    """
+    columns = building_occupancy_df.columns
+    # validate list of uses
+    list_uses = []
+    for name in columns:
+        if name in COLUMNS_ZONE_OCCUPANCY:
+            if building_occupancy_df[name].sum() > 0.0:
+                list_uses.append(name)  # append valid uses
+    return list_uses
 
 def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    config.data_helper.model_schedule = 'SG-ASHRAE-2009'
-    config.data_helper.buildings = locator.get_zone_building_names()
-    schedule_helper(locator, config)
+    path_database = locator.get_database_standard_schedules('CH-SIA-2014')
+    path_to_building_schedule = locator.get_database_standard_schedules_use(path_database, 'MULTI_RES')
 
 
 if __name__ == '__main__':
