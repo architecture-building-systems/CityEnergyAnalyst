@@ -71,7 +71,7 @@ for region, standard in zip(['CH', 'SG'], ['CH-SIA-2014', 'SG-ASHRAE-2009']):
         PROFILE = [DAY, HOUR, occ, el, dhw, hset, cset, pro]
         PROFILE_NEW = map(list, zip(*PROFILE))
 
-        filename = os.path.join(path, 'schedules', standard, use + '.cea')
+        filename = os.path.join(path, 'schedules', standard, use + '.csv')
         with open(filename, "wb") as csvfile:
             csvwriter = csv.writer(csvfile, delimiter=',')
             csvwriter.writerow(METADATA)

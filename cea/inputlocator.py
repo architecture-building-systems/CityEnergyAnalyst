@@ -46,7 +46,7 @@ class InputLocator(object):
         return os.path.join(self.db_path, 'schedules', name_database)
 
     def get_database_standard_schedules_use(self, path_to_database, use):
-        return os.path.join(path_to_database, use + '.cea')
+        return os.path.join(path_to_database, use + '.csv')
 
     def get_project_path(self):
         """Returns the parent folder of a scenario - this is called a project or 'case-study'"""
@@ -737,7 +737,7 @@ class InputLocator(object):
         :param building_name:
         :return:
         """
-        return os.path.join(self.get_building_schedules_folder(),'{}.cea'.format(building_name))
+        return os.path.join(self.get_building_schedules_folder(),'{}.csv'.format(building_name))
 
     def get_building_schedules(self, building_name):
         """
