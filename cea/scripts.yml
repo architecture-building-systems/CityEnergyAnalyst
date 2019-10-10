@@ -1,70 +1,3 @@
-Analysis:
-
-  - name: multi-criteria-analysis
-    label: Multicriteria analysis
-    description: Multicriteria analysis
-    interfaces: [cli, arcgis, dashboard]
-    module: cea.analysis.multicriteria.main
-    parameters: ['general:scenario', multi-criteria]
-
-
-  - name: emissions
-    label: Life Cycle Analysis (zone)
-    description: Calculate emissions and primary energy due to building, construction, operation, dismantling and induced mobility
-    interfaces: [cli, arcgis, dashboard]
-    module: cea.analysis.lca.main
-    parameters: ['general:scenario', emissions]
-    input-files:
-      - [get_total_demand]
-      - [get_building_age]
-      - [get_building_architecture]
-      - [get_building_occupancy]
-      - [get_zone_geometry]
-      - [get_data_benchmark]
-      - [get_building_supply]
-      - [get_life_cycle_inventory_building_systems]
-      - [get_life_cycle_inventory_supply_systems]
-
-
-  - name: operation-costs
-    label: Costs Analysis (buildings)
-    description: Calculate energy costs due to building operation
-    interfaces: [cli, arcgis, dashboard]
-    module: cea.analysis.costs.operation_costs
-    parameters: ['general:scenario']
-    input-files:
-      - [get_total_demand]
-      - [get_building_supply]
-      - [get_life_cycle_inventory_supply_systems]
-
-
-  - name: sensitivity-demand-samples
-    label: Sensitivity Analysis I (DOE)
-    description: Create samples for sensitivity analysis
-    interfaces: [cli, arcgis, dashboard]
-    module: cea.analysis.sensitivity.sensitivity_demand_samples
-    parameters: ['general:scenario', 'sensitivity-demand:num-samples', 'sensitivity-demand:samples-folder',
-                 'sensitivity-demand:method', 'sensitivity-demand:calc-second-order',
-                 'sensitivity-demand:num-levels', 'sensitivity-demand:variable-groups']
-
-  - name: sensitivity-demand-simulate
-    label: Sensitivity Analysis II (simulation)
-    description: Simulate demand for sensitivity analysis samples
-    interfaces: [cli, arcgis, dashboard]
-    module: cea.analysis.sensitivity.sensitivity_demand_simulate
-    parameters: ['general:scenario', 'general:multiprocessing',
-                 'sensitivity-demand:samples-folder', 'sensitivity-demand:simulation-folder',
-                 'sensitivity-demand:output-parameters', 'sensitivity-demand:number-of-simulations',
-                 'sensitivity-demand:sample-index', 'demand']
-
-  - name: sensitivity-demand-analyze
-    label: Sensitivity Analysis III (analysis)
-    description: Analyze the results in the samples folder and write them out to an Excel file.
-    interfaces: [cli, arcgis, dashboard]
-    module: cea.analysis.sensitivity.sensitivity_demand_analyze
-    parameters: ['sensitivity-demand:samples-folder', 'sensitivity-demand:temporal-scale']
-
-
 Data Management:
 
   - name: terrain-helper
@@ -113,14 +46,40 @@ Data Management:
     parameters: ['general:scenario', weather-helper]
 
 Demand forecasting:
+  - name: radiation
+    label: Building Solar radiation
+    description: Use Daysim to calculate solar radiation for a scenario
+    interfaces: [cli, arcgis, dashboard]
+    module: cea.resources.radiation_daysim.radiation_main
+    parameters: ['general:scenario', 'general:multiprocessing', 'general:debug', radiation]
+    input-files:
+      - [get_envelope_systems]
+      - [get_district_geometry]
+      - [get_building_architecture]
+      - [get_zone_geometry]
+      - [get_terrain]
+      - [get_weather_file]
+
+  - name: occupancy
+    label: Building Occupancy
+    description: Use CEA models and input schedules to estimate the occupancy profile of buildings
+    interfaces: [dashboard]
+    module: cea.demand.occupancy_model
+    parameters: ['general:scenario', 'general:multiprocessing', 'general:debug', occupancy]
+    input-files:
+      - [get_envelope_systems]
+      - [get_district_geometry]
+      - [get_building_architecture]
+      - [get_zone_geometry]
+      - [get_terrain]
+      - [get_weather_file]
 
   - name: demand
     label: Building Energy demand
     description: Calculate the Demand
     interfaces: [cli, arcgis, dashboard]
     module: cea.demand.demand_main
-    parameters: ['general:scenario', 'general:multiprocessing',
-                 'general:number-of-cpus-to-keep-free', demand, 'general:debug']
+    parameters: ['general:scenario', 'general:multiprocessing','general:debug', demand]
     input-files:
       - [get_weather_file]
       - [get_envelope_systems]
@@ -139,7 +98,6 @@ Demand forecasting:
       - [get_technical_emission_systems]
       - [get_building_supply]
       - [get_life_cycle_inventory_supply_systems]
-
 
 Energy potentials:
   - name: shallow-geothermal-potential
@@ -220,18 +178,32 @@ Energy potentials:
       - [get_supply_systems]
       - [get_weather_file]
 
-  - name: radiation-daysim
-    label: Solar radiation
-    description: Use Daysim to calculate solar radiation for a scenario
+Networks:
+
+  - name: network-layout
+    label: Thermal Network I (Layout)
+    description: Create a potential layout of the network with the minimum spanning tree
     interfaces: [cli, arcgis, dashboard]
-    module: cea.resources.radiation_daysim.radiation_main
-    parameters: ['general:scenario', 'general:multiprocessing', 'general:debug', radiation-daysim]
+    module: cea.technologies.network_layout.main
+    parameters: ['general:scenario', network-layout]
     input-files:
-      - [get_envelope_systems]
-      - [get_district_geometry]
-      - [get_building_architecture]
+      - [get_street_network]
+      - [get_total_demand]
       - [get_zone_geometry]
-      - [get_terrain]
+
+  - name: thermal-network
+    label: Thermal Network II (simulation)
+    description: Solve the thermal hydraulic network
+    interfaces: [cli, arcgis, dashboard]
+    module: cea.technologies.thermal_network.thermal_network
+    parameters: ['general:scenario', 'general:multiprocessing',
+                 'general:number-of-cpus-to-keep-free', 'thermal-network',
+                 'thermal-network-optimization:use-representative-week-per-month']
+    input-files:
+      - [get_network_layout_nodes_shapefile, "thermal-network:network-type"]
+      - [get_demand_results_file, building_name]
+      - [get_thermal_networks]
+      - [get_supply_systems]
       - [get_weather_file]
 
 Optimization:
@@ -264,33 +236,71 @@ Optimization:
     module: cea.optimization.preprocessing.decentralized_building_main
     parameters: ['general:scenario', 'decentralized']
 
-Networks:
+Analysis:
 
-  - name: network-layout
-    label: Thermal Network I (Layout)
-    description: Create a potential layout of the network with the minimum spanning tree
+  - name: multi-criteria-analysis
+    label: Multicriteria analysis
+    description: Multicriteria analysis
     interfaces: [cli, arcgis, dashboard]
-    module: cea.technologies.network_layout.main
-    parameters: ['general:scenario', network-layout]
+    module: cea.analysis.multicriteria.main
+    parameters: ['general:scenario', multi-criteria]
+
+
+  - name: emissions
+    label: Life Cycle Analysis (zone)
+    description: Calculate emissions and primary energy due to building, construction, operation, dismantling and induced mobility
+    interfaces: [cli, arcgis, dashboard]
+    module: cea.analysis.lca.main
+    parameters: ['general:scenario', emissions]
     input-files:
-      - [get_street_network]
       - [get_total_demand]
+      - [get_building_age]
+      - [get_building_architecture]
+      - [get_building_occupancy]
       - [get_zone_geometry]
+      - [get_data_benchmark]
+      - [get_building_supply]
+      - [get_life_cycle_inventory_building_systems]
+      - [get_life_cycle_inventory_supply_systems]
 
-  - name: thermal-network
-    label: Thermal Network II (simulation)
-    description: Solve the thermal hydraulic network
+
+  - name: operation-costs
+    label: Costs Analysis (buildings)
+    description: Calculate energy costs due to building operation
     interfaces: [cli, arcgis, dashboard]
-    module: cea.technologies.thermal_network.thermal_network
-    parameters: ['general:scenario', 'general:multiprocessing',
-                 'general:number-of-cpus-to-keep-free', 'thermal-network',
-                 'thermal-network-optimization:use-representative-week-per-month']
+    module: cea.analysis.costs.operation_costs
+    parameters: ['general:scenario']
     input-files:
-      - [get_network_layout_nodes_shapefile, "thermal-network:network-type"]
-      - [get_demand_results_file, building_name]
-      - [get_thermal_networks]
-      - [get_supply_systems]
-      - [get_weather_file]
+      - [get_total_demand]
+      - [get_building_supply]
+      - [get_life_cycle_inventory_supply_systems]
+
+
+  - name: sensitivity-demand-samples
+    label: Sensitivity Analysis I (DOE)
+    description: Create samples for sensitivity analysis
+    interfaces: [cli, arcgis, dashboard]
+    module: cea.analysis.sensitivity.sensitivity_demand_samples
+    parameters: ['general:scenario', 'sensitivity-demand:num-samples', 'sensitivity-demand:samples-folder',
+                 'sensitivity-demand:method', 'sensitivity-demand:calc-second-order',
+                 'sensitivity-demand:num-levels', 'sensitivity-demand:variable-groups']
+
+  - name: sensitivity-demand-simulate
+    label: Sensitivity Analysis II (simulation)
+    description: Simulate demand for sensitivity analysis samples
+    interfaces: [cli, arcgis, dashboard]
+    module: cea.analysis.sensitivity.sensitivity_demand_simulate
+    parameters: ['general:scenario', 'general:multiprocessing',
+                 'sensitivity-demand:samples-folder', 'sensitivity-demand:simulation-folder',
+                 'sensitivity-demand:output-parameters', 'sensitivity-demand:number-of-simulations',
+                 'sensitivity-demand:sample-index', 'demand']
+
+  - name: sensitivity-demand-analyze
+    label: Sensitivity Analysis III (analysis)
+    description: Analyze the results in the samples folder and write them out to an Excel file.
+    interfaces: [cli, arcgis, dashboard]
+    module: cea.analysis.sensitivity.sensitivity_demand_analyze
+    parameters: ['sensitivity-demand:samples-folder', 'sensitivity-demand:temporal-scale']
 
 Utilities:
 
@@ -424,7 +434,6 @@ default:
     interfaces: [cli]
     module: cea.workflows.workflow
     parameters: [workflow]
-
 
 Documentation:
   - name: html
