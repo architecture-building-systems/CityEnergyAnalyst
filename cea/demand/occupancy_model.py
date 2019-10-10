@@ -1,12 +1,15 @@
 from __future__ import division
-import pandas as pd
-import numpy as np
-import random
+
 import os
-import cea.inputlocator
+import random
+
+import numpy as np
+import pandas as pd
+
 import cea.config
-from cea.utilities import epwreader
+import cea.inputlocator
 from cea.constants import HOURS_IN_YEAR
+from cea.utilities import epwreader
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -207,8 +210,9 @@ def calc_deterministic_schedules(archetype_schedules, archetype_values, bpr, lis
         if bpr.occupancy[list_uses[num]] > 0:
             current_share_of_use = bpr.occupancy[list_uses[num]]
             if archetype_values['people'][num] != 0:  # do not consider when the value is 0
-                current_schedule = np.rint(np.array(archetype_schedules[num]['people']) * archetype_values['people'][num] *
-                                           current_share_of_use * bpr.rc_model['NFA_m2'])
+                current_schedule = np.rint(
+                    np.array(archetype_schedules[num]['people']) * archetype_values['people'][num] *
+                    current_share_of_use * bpr.rc_model['NFA_m2'])
                 # make sure there is at least one occupant per occupancy type in the building
                 if np.max(current_schedule) < 1.0:
                     current_schedule = np.round(np.array(archetype_schedules[num]['people']))
@@ -464,7 +468,7 @@ def calc_remaining_schedules_deterministic(archetype_schedules, archetype_values
     current_schedule = np.zeros(HOURS_IN_YEAR)
     normalizing_value = 0.0
     for num in range(len(list_uses)):
-        if occupancy[list_uses[num]] > 0 and archetype_values[num] != 0: #do not consider when the value is 0
+        if occupancy[list_uses[num]] > 0 and archetype_values[num] != 0:  # do not consider when the value is 0
             current_share_of_use = occupancy[list_uses[num]]
             if schedule_code == 2:
                 # for variables that depend on the number of people, the schedule needs to be calculated by number
@@ -615,8 +619,8 @@ def get_yearly_vectors(dates, occ_schedules, el_schedules, dhw_schedules, pro_sc
             heating_setpoint_year.append(heating_setpoint[2][hour_day])
             cooling_setpoint_year.append(cooling_setpoint[2][hour_day])
 
-    return {'people': occ, 'appliance_light' :el, 'hotwater' : dhw, 'process' : pro,
-            'heating_setpoint' : heating_setpoint_year, 'cooling_setpoint' : cooling_setpoint_year}
+    return {'people': occ, 'appliance_light': el, 'hotwater': dhw, 'process': pro,
+            'heating_setpoint': heating_setpoint_year, 'cooling_setpoint': cooling_setpoint_year}
 
 
 def read_schedules(use, archetypes_schedules):
@@ -651,13 +655,13 @@ def read_schedules(use, archetypes_schedules):
     dhw = [archetypes_schedules['Weekday_3'].values[:24], archetypes_schedules['Saturday_3'].values[:24],
            archetypes_schedules['Sunday_3'].values[:24]]
     heating_setpoint = [archetypes_schedules['Weekday_5'].values[:24],
-                             archetypes_schedules['Saturday_5'].values[:24],
-                             archetypes_schedules['Sunday_5'].values[:24]]
+                        archetypes_schedules['Saturday_5'].values[:24],
+                        archetypes_schedules['Sunday_5'].values[:24]]
     cooling_setpoint = [archetypes_schedules['Weekday_4'].values[:24],
-                             archetypes_schedules['Saturday_4'].values[:24],
-                             archetypes_schedules['Sunday_4'].values[:24]]
-    #heating_setpoint = parse_setpoints(heating_setpoint_xlsx)
-    #cooling_setpoint = parse_setpoints(cooling_setpoint_xlsx)
+                        archetypes_schedules['Saturday_4'].values[:24],
+                        archetypes_schedules['Sunday_4'].values[:24]]
+    # heating_setpoint = parse_setpoints(heating_setpoint_xlsx)
+    # cooling_setpoint = parse_setpoints(cooling_setpoint_xlsx)
 
     month = archetypes_schedules['month'].values[:12]
 
@@ -673,7 +677,6 @@ def read_schedules(use, archetypes_schedules):
     return occ, el, dhw, pro, month, area_per_occupant, heating_setpoint, cooling_setpoint
 
 
-# read schedules and archetypal values from excel file
 def schedule_maker(dates, locator, list_uses):
     """
     Reads schedules from the archetype schedule Excel file along with the corresponding internal loads and ventilation
@@ -693,54 +696,17 @@ def schedule_maker(dates, locator, list_uses):
     :rtype archetype_values: dict[list[float]]
     """
 
-    # get internal loads and indoor comfort from archetypes
-    archetypes_internal_loads = pd.read_excel(locator.get_archetypes_properties(), 'INTERNAL_LOADS').set_index(
-        'Code')
-    archetypes_indoor_comfort = pd.read_excel(locator.get_archetypes_properties(), 'INDOOR_COMFORT').set_index(
-        'Code')
+    # read schedules of all buildings
+    from cea.datamanagement.schedule_helper import ScheduleData
+    schedules_DB = locator.get_building_schedules_folder()
+    schedule_data_all_buildings = ScheduleData(locator, schedules_DB)
 
-    # create empty lists of archetypal schedules, occupant densities and each archetype's ventilation and internal loads
-    schedules, occ_densities, Qs_Wm2, X_ghm2, Vww_ldm2, Vw_ldm2, Ve_lsm2, Ea_Wm2, El_Wm2, Qcre_Wm2, Ed_Wm2, Epro_Wm2, \
-    Qhpro_Wm2, Qcpro_Wm2 = ([] for i in range(14))
+    # get yearly schedules in a list
+    schedule_data_all_buildings_yearly = get_yearly_vectors(dates, occ_schedules, el_schedules, dhw_schedules,
+                                                            pro_schedules, month_schedule,
+                                                            heating_setpoint, cooling_setpoint)
 
-    for use in list_uses:
-        # read from archetypes_schedules and properties
-        archetypes_schedules = pd.read_excel(locator.get_archetypes_schedules(), use, index_col=0).T
-
-        # read lists of every daily profile
-        occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule, area_per_occupant, \
-        heating_setpoint, cooling_setpoint = read_schedules(use, archetypes_schedules)
-
-        # get occupancy density per schedule in a list
-        if area_per_occupant != 0:
-            occ_densities.append(1 / area_per_occupant)
-        else:
-            occ_densities.append(area_per_occupant)
-
-        # get internal loads per schedule in a list
-        Ea_Wm2.append(archetypes_internal_loads['Ea_Wm2'][use])
-        El_Wm2.append(archetypes_internal_loads['El_Wm2'][use])
-        Epro_Wm2.append(archetypes_internal_loads['Epro_Wm2'][use])
-        Qcre_Wm2.append(archetypes_internal_loads['Qcre_Wm2'][use])
-        Ed_Wm2.append(archetypes_internal_loads['Ed_Wm2'][use])
-        Qs_Wm2.append(archetypes_internal_loads['Qs_Wp'][use])
-        X_ghm2.append(archetypes_internal_loads['X_ghp'][use])
-        Vww_ldm2.append(archetypes_internal_loads['Vww_lpd'][use])
-        Vw_ldm2.append(archetypes_internal_loads['Vw_lpd'][use])
-        Ve_lsm2.append(archetypes_indoor_comfort['Ve_lps'][use])
-        Qhpro_Wm2.append(archetypes_internal_loads['Qhpro_Wm2'][use])
-        Qcpro_Wm2.append(archetypes_internal_loads['Qcpro_Wm2'][use])
-
-        # get yearly schedules in a list
-        schedule = get_yearly_vectors(dates, occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule,
-                                      heating_setpoint, cooling_setpoint)
-        schedules.append(schedule)
-
-    archetype_values = {'people': occ_densities, 'Qs': Qs_Wm2, 'X': X_ghm2, 'Ea': Ea_Wm2, 'El': El_Wm2,
-                        'Epro': Epro_Wm2, 'Qcre': Qcre_Wm2, 'Ed': Ed_Wm2, 'Vww': Vww_ldm2,
-                        'Vw': Vw_ldm2, 've': Ve_lsm2, 'Qhpro': Qhpro_Wm2, 'Qcpro': Qcpro_Wm2}
-
-    return schedules, archetype_values
+    return schedule_data_all_buildings_yearly
 
 
 def calc_average(last, current, share_of_use):
@@ -799,7 +765,7 @@ def save_schedules_to_file(locator, building_schedules, building_name):
     schedules_csv_file = locator.get_building_schedules(building_name)
     # convert to DataFrame to use pandas csv writing method
     df_building_schedules = pd.DataFrame.from_dict(building_schedules)
-    df_building_schedules.to_csv(schedules_csv_file, index=False, na_rep='OFF') # replace nan with 'OFF'
+    df_building_schedules.to_csv(schedules_csv_file, index=False, na_rep='OFF')  # replace nan with 'OFF'
     print("Saving schedules for building {} to outputs/data/demand directory.".format(building_name))
     print("Please copy (custom) schedules to inputs/building-properties to use them in the next run.")
 
@@ -829,9 +795,9 @@ def get_building_schedules(locator, bpr, date_range, config):
 
     # first the script checks if pre-defined schedules for the building exist
 
-    if os.path.isfile(locator.get_building_schedules_predefined(building_name)):
+    if os.path.isfile(locator.get_building_schedules(building_name)):
         print("Schedules for building {} detected. Using these schedules.".format(building_name))
-        building_schedules = read_schedules_from_file(locator.get_building_schedules_predefined(building_name))
+        building_schedules = read_schedules_from_file(locator.get_building_schedules(building_name))
     else:
         print(
             "No schedules detected for building {}. Creating schedules from archetypes database".format(building_name))
