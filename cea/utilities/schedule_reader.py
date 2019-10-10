@@ -4,9 +4,10 @@ from __future__ import print_function
 import csv
 
 import pandas as pd
+
+import cea
 import cea.config
 import cea.inputlocator
-import cea
 
 __author__ = "Jimeno Fonseca"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -55,14 +56,16 @@ def read_cea_schedule(path_to_cea_schedule):
 
 def save_cea_schedule(schedule_data, schedule_complementray_data, path_to_building_schedule):
 
-
-
+    METADATA = ['METADATA']+list(schedule_complementray_data['METADATA'])
+    MULTIPLIER = ['MONTHLY_MULTIPLIER']+list(schedule_complementray_data['MONTHLY_MULTIPLIER'])
+    COLUMNS_SCHEDULES = schedule_data.keys()
+    RECORDS_SCHEDULES = map(list, zip(*schedule_data.values()))
     with open(path_to_building_schedule, "wb") as csvfile:
         csvwriter = csv.writer(csvfile, delimiter=',')
         csvwriter.writerow(METADATA)
         csvwriter.writerow(MULTIPLIER)
         csvwriter.writerow(COLUMNS_SCHEDULES)
-        for row in PROFILE_NEW:
+        for row in RECORDS_SCHEDULES:
             csvwriter.writerow(row)
 
 def main(config):
@@ -70,6 +73,7 @@ def main(config):
     path_database = locator.get_database_standard_schedules('CH-SIA-2014')
     path_to_building_schedule = locator.get_database_standard_schedules_use(path_database, 'MULTI_RES')
     read_cea_schedule(path_to_building_schedule)
+
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
