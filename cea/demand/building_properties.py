@@ -277,9 +277,9 @@ class BuildingProperties(object):
                 df.loc[building, 'Hs'] = 0.0
                 print('Building {building} has no heating and cooling system, Hs corrected to 0.'.format(
                     building=building))
-        df['NFA_m2'] = df['GFA_m2'] * df['Ns']  # net floor area: all occupied areas in the building
-        df['Af'] = df['GFA_m2'] * df['Hs']  # conditioned area: areas that are heated/cooled
-        df['Aef'] = df['GFA_m2'] * df['Es']  # electrified area: share of gross floor area that is also electrified
+
+        df = calc_useful_areas(df)
+
         df['Atot'] = df['Af'] * LAMBDA_AT  # area of all surfaces facing the building zone
 
         if 'Cm_Af' in self.get_overrides_columns():
@@ -304,7 +304,7 @@ class BuildingProperties(object):
         df['Htr_is'] = H_IS * df['Atot']
 
         fields = ['Atot', 'Aw', 'Am', 'Aef', 'Af', 'Cm', 'Htr_is', 'Htr_em', 'Htr_ms', 'Htr_op', 'Hg',  'HD', 'Aroof',
-                  'U_wall', 'U_roof', 'U_win', 'U_base', 'Htr_w', 'GFA_m2', 'NFA_m2', 'surface_volume', 'Aop_sup',
+                  'U_wall', 'U_roof', 'U_win', 'U_base', 'Htr_w', 'GFA_m2', 'Aocc', 'surface_volume', 'Aop_sup',
                   'Aop_bel', 'footprint']
         result = df[fields]
 
@@ -436,6 +436,11 @@ class BuildingProperties(object):
             return list(self._overrides.columns)
         return []
 
+def calc_useful_areas(df):
+    df['Aocc'] = df['GFA_m2'] * df['Ns']  # occupied floor area: all occupied areas in the building
+    df['Af'] = df['GFA_m2'] * df['Hs']  # conditioned area: areas that are heated/cooled
+    df['Aef'] = df['GFA_m2'] * df['Es']  # electrified area: share of gross floor area that is also electrified
+    return df
 
 class BuildingPropertiesRow(object):
     """Encapsulate the data of a single row in the DataSets of BuildingProperties. This class meant to be
