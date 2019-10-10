@@ -6,11 +6,12 @@ from __future__ import print_function
 
 import os
 
+from cea.datamanagement.data_helper import calc_mainuse
 import cea.config
 import pandas as pd
 import numpy as np
 import cea.inputlocator
-from cea.datamanagement.data_helper import get_list_of_uses_in_case_study
+from cea.datamanagement.data_helper import get_short_list_of_uses_in_case_study
 from cea.utilities.dbf import dbf_to_dataframe
 from cea.utilities.schedule_reader import read_cea_schedule, save_cea_schedule
 
@@ -52,7 +53,7 @@ def matsim_model(locator, buildings, path_matsim_file_required1, path_matsim_fil
     return 'TEST'
 
 
-def model_with_standard_database(locator, buildings, path_to_standard_schedule_database):
+def model_with_standard_database(locator, building_occupancy_df, path_to_standard_schedule_database):
 
     variable_schedule_map = {'Occ_m2pax': 'OCCUPANCY',
                              'Qs_Wp': 'OCCUPANCY',
@@ -76,16 +77,21 @@ def model_with_standard_database(locator, buildings, path_to_standard_schedule_d
     building_occupancy_df = dbf_to_dataframe(locator.get_building_occupancy()).set_index('Name')
     building_occupancy_df = building_occupancy_df.ix[buildings]
 
-    # validate list of uses in case study
-    list_uses = get_list_of_uses_in_case_study(building_occupancy_df)
+    # get list of uses only with a valid value in building_occupancy_df
+    list_uses = get_short_list_of_uses_in_case_study(building_occupancy_df)
 
-    from cea.datamanagement.data_helper import calc_mainuse
     building_occupancy_df['mainuse'] = calc_mainuse(building_occupancy_df, list_uses)
     internal_DB = pd.read_excel(locator.get_archetypes_properties(), 'INTERNAL_LOADS')
     comfort_DB = pd.read_excel(locator.get_archetypes_properties(), 'INDOOR_COMFORT')
     internal_DB = internal_DB.merge(comfort_DB, left_on='Code', right_on='Code')
     internal_DB = internal_DB.set_index('Code')
 
+    occupant_densities = {}
+    for use in list_uses:
+        if internal_DB.ix[use, 'Occ_m2pax'] > 0.0:
+            occupant_densities[use] = 1 / internal_DB.ix[use, 'Occ_m2pax']
+        else:
+            occupant_densities[use] = 0.0
 
     for building in buildings:
         schedule_new_data = {}
@@ -98,30 +104,36 @@ def model_with_standard_database(locator, buildings, path_to_standard_schedule_d
                 schedule_new_data[variable] = schedule_data_all_uses.schedule_data[main_use_this_building][schedule_type]
             else:
                 for use in list_uses:
-                    if building_occupancy_df[use][building] > 0.0:
+                    if building_occupancy_df[use][building] > 0.0 and internal_DB.ix[use, variable] != 0.0:
                         current_share_of_use = building_occupancy_df[use][building]
                         if variable in ['Occ_m2pax', 'Ve_lps', 'Qs_Wp', 'X_ghp', 'Vww_lpd', 'Vw_lpd']:
                             # for variables that depend on the number of people, the schedule needs to be calculated by number
                             # of people for each use at each time step, not the share of the occupancy for each
                             share_time_occupancy_density = internal_DB.ix[use, variable] * current_share_of_use * \
-                                                           (1/internal_DB.ix[use, 'Occ_m2pax'])
+                                                           occupant_densities[use]
 
                         elif variable in ['Ea_Wm2','El_Wm2', 'Ed_Wm2', 'Qcre_Wm2', 'Qhpro_Wm2', 'Qcpro_Wm2', 'Epro_Wm2']:
                             share_time_occupancy_density = internal_DB.ix[use, variable] * current_share_of_use
 
                         normalizing_value += share_time_occupancy_density
-                        print(variable, building)
                         current_schedule = np.vectorize(calc_average)(current_schedule,
                                                                       schedule_data_all_uses.schedule_data[use][schedule_type],
                                                                       share_time_occupancy_density)
-
                 if normalizing_value == 0:
                     schedule_new_data[variable] = current_schedule * 0
                 else:
                     schedule_new_data[variable] = current_schedule / normalizing_value
 
-        # save schedule per buidling
+        # add hour and day of the week
+        DAY = {'DAY': ['WEEKDAY'] * 24 + ['SATURDAY'] * 24 + ['SUNDAY'] * 24}
+        HOUR = {'HOUR': range(1, 25) + range(1, 25) + range(1, 25)}
+        schedule_new_data.update(DAY)
+        schedule_new_data.update(HOUR)
+
+        #calcualate complementary_data
         schedule_complementray_data = {'METADATA': metadata, 'MONTHLY_MULTIPLIER': monthly_multiplier}
+
+        #save cea schedule format
         path_to_building_schedule = locator.get_building_schedules_predefined(building)
         save_cea_schedule(schedule_new_data, schedule_complementray_data, path_to_building_schedule)
 
