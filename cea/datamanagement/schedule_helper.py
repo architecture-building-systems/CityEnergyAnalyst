@@ -49,7 +49,8 @@ def calc_mixed_schedule(locator,
     metadata = model_schedule
     schedules_DB = locator.get_database_standard_schedules(model_schedule)
     schedule_data_all_uses = ScheduleData(locator, schedules_DB)
-    building_occupancy_df = building_occupancy_df.loc[building_occupancy_df['Name'].isin(buildings)]
+    building_occupancy_df = building_occupancy_df.set_index('Name')
+    building_occupancy_df = building_occupancy_df.ix[buildings]
 
     # get list of uses only with a valid value in building_occupancy_df
     list_uses = get_short_list_of_uses_in_case_study(building_occupancy_df)
@@ -69,8 +70,7 @@ def calc_mixed_schedule(locator,
     for building in buildings:
         schedule_new_data = {}
         main_use_this_building = building_occupancy_df['mainuse'][building]
-        monthly_multiplier = schedule_data_all_uses.schedule_complementray_data[main_use_this_building][
-            'MONTHLY_MULTIPLIER']
+        monthly_multiplier = schedule_data_all_uses.schedule_complementray_data[main_use_this_building]['MONTHLY_MULTIPLIER']
         for variable, schedule_type in variable_schedule_map.items():
             current_schedule = np.zeros(len(schedule_data_all_uses.schedule_data['HOTEL'][schedule_type]))
             normalizing_value = 0.0
@@ -132,7 +132,7 @@ class ScheduleData(object):
     def fill_in_data(self):
         get_list_uses_in_database = []
         for file in os.listdir(self.path_database):
-            if file.endswith(".cea"):
+            if file.endswith(".csv"):
                 get_list_uses_in_database.append(file.split('.')[0])
 
         data_schedules = []
@@ -142,8 +142,8 @@ class ScheduleData(object):
             data_schedule, data_metadata = read_cea_schedule(path_to_schedule)
             data_schedules.append(data_schedule)
             data_schedules_complimentary.append(data_metadata)
-        return dict(zip(get_list_uses_in_database, data_schedules)), dict(
-            zip(get_list_uses_in_database, data_schedules_complimentary))
+        return dict(zip(get_list_uses_in_database, data_schedules)),\
+               dict(zip(get_list_uses_in_database, data_schedules_complimentary))
 
 def get_short_list_of_uses_in_case_study(building_occupancy_df):
     """
