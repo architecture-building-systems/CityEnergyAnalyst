@@ -385,19 +385,23 @@ def initialize_inputs(bpr, weather_data, date_range, locator, config):
     """
     # TODO: documentation, this function is actually two functions
 
+    # get the building name
+    building_name = bpr.name
+
     # this is used in the NN please do not erase or change!!
     tsd = initialize_timestep_data(bpr, weather_data)
-    # get schedules
-    schedules = occupancy_model.get_building_schedules(locator, bpr, date_range, config)
+
+    # get occupancy file
+    occupancy_yearly_schedules = locator.get_occupancy_model_file(building_name)
 
     # calculate occupancy schedule and occupant-related parameters
-    tsd['people'] = np.floor(schedules['people'])
-    tsd['ve'] = schedules['ve'] * (bpr.comfort['Ve_lps'] * 3.6)  # in m3/h
-    tsd['Qs'] = schedules['Qs'] * bpr.internal_loads['Qs_Wp']  # in W
+    tsd['people'] = occupancy_yearly_schedules['people']
+    tsd['ve'] = occupancy_yearly_schedules['ve_m3h']
+    tsd['Qs'] = occupancy_yearly_schedules['Qs_W']
     # # latent heat gains
-    tsd['w_int'] = sensible_loads.calc_Qgain_lat(schedules, bpr)
+    tsd['w_int'] = sensible_loads.calc_Qgain_lat(occupancy_yearly_schedules, bpr)
 
-    return schedules, tsd
+    return occupancy_yearly_schedules, tsd
 
 
 TSD_KEYS_HEATING_LOADS = ['Qhs_sen_rc', 'Qhs_sen_shu', 'Qhs_sen_ahu', 'Qhs_lat_ahu', 'Qhs_sen_aru', 'Qhs_lat_aru',
