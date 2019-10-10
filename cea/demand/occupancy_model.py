@@ -13,6 +13,7 @@ from cea.constants import HOURS_IN_YEAR
 from cea.datamanagement.schedule_helper import read_cea_schedule
 from cea.demand.building_properties import calc_useful_areas
 from cea.utilities.dbf import dbf_to_dataframe
+from cea.demand.constants import VARIABLE_CEA_SCHEDULE_RELATION, TEMPERATURE_VARIABLES, PEOPLE_DEPENDENT_VARIABLES,AREA_DEPENDENT_VARIABLES
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -65,6 +66,7 @@ def occupancy_main(locator, config):
     prop_geometry['GFA_m2'] = prop_geometry['footprint'] * (prop_geometry['floors_ag'] + prop_geometry['floors_bg'])
     prop_geometry = prop_geometry.merge(architecture, on='Name').set_index('Name')
     prop_geometry = calc_useful_areas(prop_geometry)
+    date_range =
 
     if buildings == []:
         buildings = locator.get_zone_building_names()
@@ -73,13 +75,15 @@ def occupancy_main(locator, config):
         internal_loads_building = internal_loads.ix[building]
         indoor_comfort_building = indoor_comfort.ix[building]
         prop_geometry_building = prop_geometry.ix[building]
-        daily_schedule_building, daily_schedule_building_metadata = read_cea_schedule(
-            locator.get_building_schedules(building))
+        daily_schedule_building, \
+        daily_schedule_building_metadata = read_cea_schedule(locator.get_building_schedules(building))
+        monthly_multiplier = daily_schedule_building_metadata['MONTHLY_MULTIPLIER']
         if occupancy_model == 'deterministic':
             calc_deterministic_schedules(locator,
                                          building,
+                                         date_range,
                                          daily_schedule_building,
-                                         daily_schedule_building_metadata,
+                                         monthly_multiplier,
                                          internal_loads_building,
                                          indoor_comfort_building,
                                          prop_geometry_building)
@@ -87,7 +91,7 @@ def occupancy_main(locator, config):
             calc_stochastic_schedules(locator,
                                       building,
                                       daily_schedule_building,
-                                      daily_schedule_building_metadata,
+                                      monthly_multiplier,
                                       internal_loads_building,
                                       indoor_comfort_building,
                                       prop_geometry_building)
@@ -134,20 +138,30 @@ def occupancy_main(locator, config):
 
 def calc_deterministic_schedules(locator,
                                  building,
+                                 date_range,
                                  daily_schedule_building,
-                                 daily_schedule_metadata,
+                                 monthly_multiplier,
                                  internal_loads_building,
                                  indoor_comfort_building,
                                  prop_geometry_building):
 
-    variables_in_schedule = daily_schedule_building.keys()
-    for variable, arrays in daily_schedule_building.items():
-        if variable in []
+    deterministic_schedule = {}
+    for variable, array in daily_schedule_building.items():
+        if variable in TEMPERATURE_VARIABLES:
+            yearly_array = get_yearly_vectors(date_range, variable, array, monthly_multiplier)
+            deterministic_schedule[variable] = np.vectorize(convert_schedule_string_to_temperature)(yearly_array, variable, indoor_comfort_building)
+        elif variable in ['Occ_m2pax']:
+            deterministic_schedule[variable] = yearly_array * (1/internal_loads_building[variable]) * prop_geometry_building['Aocc']
+        elif variable in ['Ve_lps', 'Qs_Wp', 'X_ghp', 'Vww_lpd', 'Vw_lpd']:
+            deterministic_schedule[variable] = yearly_array * internal_loads_building[variable] * prop_geometry_building['Aocc'] * 1/internal_loads_building['Occ_m2pax']
+        elif variable in ['Ea_Wm2', 'El_Wm2', 'Ed_Wm2', 'Epro_Wm2','Qcre_Wm2', 'Qhpro_Wm2', 'Qcpro_Wm2']:
+            deterministic_schedule[variable] = yearly_array * internal_loads_building[variable] * prop_geometry_building['Aef']
 
-    return
+
+    yearly_deterministic_schedule.to_csv(locator.get_occupancy_model_file(building))
 
 
-def convert_schedule_string_to_temperature(schedule_string, schedule_type, bpr):
+def convert_schedule_string_to_temperature(schedule_string, schedule_type, indoor_comfort_building):
     """
     converts an archetypal temperature schedule consisting of strings to building-specific temperatures
     :param schedule_string: list of strings containing codes : 'OFF', 'SETPOINT', 'SETBACK'
@@ -162,109 +176,33 @@ def convert_schedule_string_to_temperature(schedule_string, schedule_type, bpr):
 
     schedule_float = []
 
-    if schedule_type in ['Ths_set']:
+    if schedule_type in ['Ths_set_C']:
 
         for code in schedule_string:
             if code in ['OFF']:
                 schedule_float.append(np.nan)
             elif code in ['SETPOINT']:
-                schedule_float.append(float(bpr.comfort['Ths_set_C']))
+                schedule_float.append(float(indoor_comfort_building['Ths_set_C']))
             elif code in ['SETBACK']:
-                schedule_float.append(float(bpr.comfort['Ths_setb_C']))
+                schedule_float.append(float(indoor_comfort_building['Ths_setb_C']))
             else:
                 print('Invalid value in temperature schedule detected. Setpoint temperature assumed: {}'.format(code))
-                schedule_float.append(float(bpr.comfort['Ths_set_C']))
+                schedule_float.append(float(indoor_comfort_building['Ths_set_C']))
 
-    elif schedule_type in ['Tcs_set']:
+    elif schedule_type in ['Tcs_set_C']:
 
         for code in schedule_string:
             if code in ['OFF']:
                 schedule_float.append(np.nan)
             elif code in ['SETPOINT']:
-                schedule_float.append(float(bpr.comfort['Tcs_set_C']))
+                schedule_float.append(float(indoor_comfort_building['Tcs_set_C']))
             elif code in ['SETBACK']:
-                schedule_float.append(float(bpr.comfort['Tcs_setb_C']))
+                schedule_float.append(float(indoor_comfort_building['Tcs_setb_C']))
             else:
                 print('Invalid value in temperature schedule detected. Setpoint temperature assumed: {}'.format(code))
-                schedule_float.append(float(bpr.comfort['Tcs_set_C']))
+                schedule_float.append(float(indoor_comfort_building['Tcs_set_C']))
 
     return np.array(schedule_float)
-
-
-def calc_determiniddstic_schedules(archetype_schedules, archetype_values, bpr, list_uses, people_per_square_meter):
-    """
-    Calculate the profile of deterministic occupancy for each each type of use in the building based on archetypal
-    schedules. For variables that depend on the number of people, the schedule needs to be calculated by number of
-    people for each use at each time step, not the share of the occupancy for each, so the schedules for humidity gains,
-    heat gains and ventilation demand are also calculated based on the archetypal values for these properties.
-    These are then normalized so that the user provided value and not the archetypal one is used for the demand
-    calculations.
-
-    e.g.
-        - For humidity gains, X, for each use i, sum of (schedule[i]*archetypal_X[i]*share_of_area[i])/sum of (X[i]*share_of_area[i])
-            (This generates a normalized schedule for X for a given building, which is then multiplied by the user-supplied value
-            for humidity gains in the building.)
-
-    :param archetype_schedules: defined in calc_schedules
-    :param archetype_values: defined in calc_schedules
-    :param bpr: defined in calc_schedules
-    :param list_uses: defined in calc_schedules
-    :param people_per_square_meter: defined in calc_schedules
-
-    :return schedules: dict containing the deterministic schedules for occupancy, humidity gains, ventilation and heat
-        gains due to occupants for a given building with single or mixed uses
-    :rtype schedules: dict
-    """
-
-    # start empty schedules
-    schedules = {}
-    normalizing_values = {}
-    for schedule in ['people'] + OCCUPANT_SCHEDULES + ELECTRICITY_SCHEDULES + WATER_SCHEDULES + PROCESS_SCHEDULES:
-        schedules[schedule] = np.zeros(HOURS_IN_YEAR, dtype=float)
-        normalizing_values[schedule] = 0.0
-    for num in range(len(list_uses)):
-        if bpr.occupancy[list_uses[num]] > 0:
-            current_share_of_use = bpr.occupancy[list_uses[num]]
-            if archetype_values['people'][num] != 0:  # do not consider when the value is 0
-                current_schedule = np.rint(
-                    np.array(archetype_schedules[num]['people']) * archetype_values['people'][num] *
-                    current_share_of_use * bpr.rc_model['Aocc_m2'])
-                # make sure there is at least one occupant per occupancy type in the building
-                if np.max(current_schedule) < 1.0:
-                    current_schedule = np.round(np.array(archetype_schedules[num]['people']))
-                schedules['people'] += current_schedule
-                for label in OCCUPANT_SCHEDULES:
-                    current_archetype_values = archetype_values[label]
-                    if current_archetype_values[num] != 0:  # do not consider when the value is 0
-                        normalizing_values[label] += current_archetype_values[num] * archetype_values['people'][
-                            num] * current_share_of_use / people_per_square_meter
-                        schedules[label] = np.vectorize(calc_average)(schedules[label], current_schedule,
-                                                                      current_archetype_values[num])
-
-    for label in OCCUPANT_SCHEDULES:
-        if normalizing_values[label] == 0:
-            schedules[label] = np.zeros(HOURS_IN_YEAR)
-        else:
-            schedules[label] = schedules[label] / normalizing_values[label]
-
-    # create remaining schedules
-    for schedule in ELECTRICITY_SCHEDULES:
-        schedules[schedule] = calc_remaining_schedules_deterministic(archetype_schedules, archetype_values[schedule],
-                                                                     list_uses, bpr.occupancy,
-                                                                     'appliance_light',
-                                                                     archetype_values['people']) * bpr.rc_model['Aef']
-    for schedule in WATER_SCHEDULES:
-        schedules[schedule] = calc_remaining_schedules_deterministic(archetype_schedules, archetype_values[schedule],
-                                                                     list_uses, bpr.occupancy, 'hotwater',
-                                                                     archetype_values['people']) * \
-                              bpr.rc_model['Aocc'] * people_per_square_meter
-    for schedule in PROCESS_SCHEDULES:
-        schedules[schedule] = calc_remaining_schedules_deterministic(archetype_schedules, archetype_values[schedule],
-                                                                     list_uses, bpr.occupancy,
-                                                                     'process',
-                                                                     archetype_values['people']) * bpr.rc_model['Aef']
-
-    return schedules
 
 
 def calc_stochastic_schedules(archetype_schedules, archetype_values, bpr, list_uses, people_per_square_meter):
@@ -461,50 +399,6 @@ def get_random_presence(p):
     return random.choice(population)
 
 
-def calc_remaining_schedules_deterministic(archetype_schedules, archetype_values, list_uses, occupancy, schedule_code,
-                                           archetype_occupants):
-    """
-    This script calculates the schedule for electricity, hot water or process energy demand. The resulted schedules are
-    normalized so that when multiplied by the user-given normalized demand for the entire building is given, the hourly
-    demand for each of these services at a given time t is calculated.
-
-    For a given demand type X (electricity/hot water/process energy demand) and occupancy type i, each schedule is
-    defined as (sum of schedule[i]*X[i]*share_of_area[i])/(sum of X[i]*share_of_area[i]).
-
-    :param archetype_schedules: defined in calc_schedules
-    :param archetype_values: defined in calc_schedules
-    :param list_uses: defined in calc_schedules
-    :param occupancy: defined in calc_schedules
-    :param schedule_code: defined in calc_schedules
-    :param archetype_occupants: occupants for the given building function according to archetype
-
-    :return: normalized schedule for a given occupancy type
-    """
-
-    current_schedule = np.zeros(HOURS_IN_YEAR)
-    normalizing_value = 0.0
-    for num in range(len(list_uses)):
-        if occupancy[list_uses[num]] > 0 and archetype_values[num] != 0:  # do not consider when the value is 0
-            current_share_of_use = occupancy[list_uses[num]]
-            if schedule_code == 2:
-                # for variables that depend on the number of people, the schedule needs to be calculated by number
-                # of people for each use at each time step, not the share of the occupancy for each
-                share_time_occupancy_density = archetype_values[num] * current_share_of_use * \
-                                               archetype_occupants[num]
-            else:
-                share_time_occupancy_density = archetype_values[num] * current_share_of_use
-
-            normalizing_value += share_time_occupancy_density
-
-            current_schedule = np.vectorize(calc_average)(current_schedule, archetype_schedules[num][schedule_code],
-                                                          share_time_occupancy_density)
-
-    if normalizing_value == 0:
-        return current_schedule * 0
-    else:
-        return current_schedule / normalizing_value
-
-
 def calc_remaining_schedules_stochastic(normalizing_value, archetype_value, current_share_of_use, reference_area,
                                         schedule, archetype_schedule, share_time_occupancy_density):
     """
@@ -637,60 +531,6 @@ def get_yearly_vectors(dates, occ_schedules, el_schedules, dhw_schedules, pro_sc
 
     return {'people': occ, 'appliance_light': el, 'hotwater': dhw, 'process': pro,
             'heating_setpoint': heating_setpoint_year, 'cooling_setpoint': cooling_setpoint_year}
-
-
-def read_schedules(use, archetypes_schedules):
-    """
-    This function reads the occupancy, electricity, domestic hot water, process electricity and monthly schedules for a
-    given use type from the schedules database.
-
-    :param use: occupancy type (e.g. 'SCHOOL')
-    :type use: str
-    :param archetypes_schedules: Excel worksheet containing the schedule database for a given occupancy type from the archetypes database
-    :type archetypes_schedules: DataFrame
-
-    :return occ: the daily occupancy schedule for the given occupancy type
-    :rtype occ: list[array]
-    :return el: the daily electricity schedule for the given occupancy type
-    :rtype el: list[array]
-    :return dhw: the daily domestic hot water schedule for the given occupancy type
-    :rtype dhw: list[array]
-    :return pro: the daily process electricity schedule for the given occupancy type
-    :rtype pro: list[array]
-    :return month: the monthly schedule for the given occupancy type
-    :rtype month: ndarray
-    :return area_per_occupant: the occupants per square meter for the given occupancy type
-    :rtype area_per_occupant: int
-    """
-
-    # read schedules from excel file
-    occ = [archetypes_schedules['Weekday_1'].values[:24], archetypes_schedules['Saturday_1'].values[:24],
-           archetypes_schedules['Sunday_1'].values[:24]]
-    el = [archetypes_schedules['Weekday_2'].values[:24], archetypes_schedules['Saturday_2'].values[:24],
-          archetypes_schedules['Sunday_2'].values[:24]]
-    dhw = [archetypes_schedules['Weekday_3'].values[:24], archetypes_schedules['Saturday_3'].values[:24],
-           archetypes_schedules['Sunday_3'].values[:24]]
-    heating_setpoint = [archetypes_schedules['Weekday_5'].values[:24],
-                        archetypes_schedules['Saturday_5'].values[:24],
-                        archetypes_schedules['Sunday_5'].values[:24]]
-    cooling_setpoint = [archetypes_schedules['Weekday_4'].values[:24],
-                        archetypes_schedules['Saturday_4'].values[:24],
-                        archetypes_schedules['Sunday_4'].values[:24]]
-    # heating_setpoint = parse_setpoints(heating_setpoint_xlsx)
-    # cooling_setpoint = parse_setpoints(cooling_setpoint_xlsx)
-
-    month = archetypes_schedules['month'].values[:12]
-
-    if use in {"INDUSTRIAL", "HOSPITAL", "LAB"}:
-        pro = [archetypes_schedules['Weekday_6'].values[:24], archetypes_schedules['Saturday_6'].values[:24],
-               archetypes_schedules['Sunday_6'].values[:24]]
-    else:
-        pro = [np.zeros(24), np.zeros(24), np.zeros(24)]
-
-    # read area per occupant
-    area_per_occupant = archetypes_schedules['density'].values[:1][0]
-
-    return occ, el, dhw, pro, month, area_per_occupant, heating_setpoint, cooling_setpoint
 
 
 def schedule_maker(dates, locator, list_uses):
@@ -834,7 +674,6 @@ def get_building_schedules(locator, bpr, date_range, config):
 def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
     occupancy_main(locator, config)
-
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
