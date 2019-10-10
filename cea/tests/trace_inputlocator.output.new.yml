@@ -1993,7 +1993,7 @@ get_costs_operation_file:
         GRID_cost_yr:
             sample_data: 1332201.0
             types_found: [float]
-        NFA_m2:
+        Aocc_m2:
             sample_data: 48914.39
             types_found: [float]
         NG_hs_cost_m2yr:
@@ -4755,7 +4755,7 @@ get_total_demand:
         GRID_MWhyr:
             sample_data: 8881.34
             types_found: [float]
-        NFA_m2:
+        Aocc_m2:
             sample_data: 48914.385
             types_found: [float]
         NG_hs0_kW:
