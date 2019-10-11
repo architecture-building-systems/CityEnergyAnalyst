@@ -21,11 +21,13 @@ __status__ = "Production"
 COLUMNS_SCHEDULES = ['DAY',
                      'HOUR',
                      'OCCUPANCY',
-                     'APPLIANCES_LIGHTING',
-                     'DOMESTIC_HOT_WATER',
-                     'SETPOINT_HEATING',
-                     'SETPOINT_COOLING',
-                     'PROCESSES']
+                     'APPLIANCES'
+                     'LIGHTING',
+                     'WATER',
+                     'HEATING',
+                     'COOLING',
+                     'PROCESSES',
+                     'SERVERS']
 
 DAY = ['WEEKDAY'] * 24 + ['SATURDAY'] * 24 + ['SUNDAY'] * 24
 HOUR = range(1, 25) + range(1, 25) + range(1, 25)
