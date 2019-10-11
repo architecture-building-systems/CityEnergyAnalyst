@@ -48,24 +48,6 @@ def calc_Qgain_sen(t, tsd, bpr):
     return tsd
 
 
-def calc_Qgain_lat(humidity_schedule):
-    # TODO: Documentation
-    # Refactored from CalcThermalLoads
-    """
-
-    :param schedules: The list of schedules defined for the project - in the same order as `list_uses`
-    :type schedules: list[ndarray[float]]
-
-    :return w_int: yearly schedule
-
-    """
-    # calc yearly humidity gains based on occupancy schedule and specific humidity gains for each occupancy type in the
-    # building
-    w_int = humidity_schedule / (1000 * 3600)  # kg/s
-
-    return w_int
-
-
 def calc_I_sol(t, bpr, tsd):
     """
     This function calculates the net solar radiation (incident - reflected - re-irradiated) according to ISO 13790

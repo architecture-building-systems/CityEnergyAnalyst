@@ -74,9 +74,7 @@ def demand_calculation(locator, config):
     loads_output = config.demand.loads_output
     massflows_output = config.demand.massflows_output
     temperatures_output = config.demand.temperatures_output
-    format_output = config.demand.format_output
     override_variables = config.demand.override_variables
-    write_detailed_output = config.demand.write_detailed_output
     debug = config.debug
     weather_path = locator.get_weather_file()
     weather_data = epwreader.epw_reader(weather_path)[['year', 'drybulb_C', 'wetbulb_C',
@@ -115,21 +113,16 @@ def demand_calculation(locator, config):
         calc_demand_multiprocessing(building_properties, date_range, locator, list_building_names,
                                     weather_data, use_dynamic_infiltration,
                                     resolution_output, loads_output, massflows_output, temperatures_output,
-                                    format_output, config, write_detailed_output, debug)
+                                    config, debug)
     else:
         calc_demand_singleprocessing(building_properties, date_range, locator, list_building_names,
                                      weather_data, use_dynamic_infiltration,
                                      resolution_output, loads_output, massflows_output, temperatures_output,
-                                     format_output, config, write_detailed_output, debug)
+                                     config, debug)
 
     # WRITE TOTAL YEARLY VALUES
     writer_totals = demand_writers.YearlyDemandWriter(loads_output, massflows_output, temperatures_output)
-    if format_output == 'csv':
-        totals, time_series = writer_totals.write_to_csv(list_building_names, locator)
-    elif format_output == 'hdf5':
-        totals, time_series = writer_totals.write_to_hdf5(list_building_names, locator)
-    else:
-        raise Exception('error')
+    totals, time_series = writer_totals.write_to_csv(list_building_names, locator)
 
     time_elapsed = time.clock() - t0
     print('done - time elapsed: %d.2f seconds' % time_elapsed)
@@ -140,21 +133,20 @@ def demand_calculation(locator, config):
 def calc_demand_singleprocessing(building_properties, date_range, locator, list_building_names,
                                  weather_data, use_dynamic_infiltration_calculation,
                                  resolution_outputs, loads_output, massflows_output, temperatures_output,
-                                 format_output, config, write_detailed_output, debug):
+                                 config, debug):
     num_buildings = len(list_building_names)
     for i, building in enumerate(list_building_names):
         bpr = building_properties[building]
         thermal_loads.calc_thermal_loads(building, bpr, weather_data, date_range, locator,
                                          use_dynamic_infiltration_calculation,
                                          resolution_outputs, loads_output, massflows_output, temperatures_output,
-                                         format_output, config, write_detailed_output, debug)
+                                         config, debug)
         print('Building No. %i completed out of %i: %s' % (i + 1, num_buildings, building))
-
 
 def calc_demand_multiprocessing(building_properties, date_range, locator, list_building_names,
                                 weather_data, use_dynamic_infiltration_calculation,
-                                resolution_outputs, loads_output, massflows_output, temperatures_output, format_output,
-                                config, write_detailed_output, debug):
+                                resolution_outputs, loads_output, massflows_output, temperatures_output,
+                                config, debug):
     number_of_processes = config.get_number_of_processes()
     print("Using %i CPU's" % number_of_processes)
     pool = mp.Pool(number_of_processes)
@@ -166,7 +158,7 @@ def calc_demand_multiprocessing(building_properties, date_range, locator, list_b
                                [building, bpr, weather_data, date_range, locator,
                                 use_dynamic_infiltration_calculation,
                                 resolution_outputs, loads_output, massflows_output, temperatures_output,
-                                format_output, config, write_detailed_output, debug])
+                                config, debug])
         joblist.append(job)
     for i, job in enumerate(joblist):
         job.get(240)

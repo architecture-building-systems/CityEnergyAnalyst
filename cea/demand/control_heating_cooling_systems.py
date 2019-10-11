@@ -345,10 +345,8 @@ def calc_simple_temp_control(tsd, bpr, schedules):
     :rtype: dict
     """
 
-    tsd['ta_hs_set'] = np.vectorize(get_heating_system_set_point, otypes=[float])\
-        (range(HOURS_IN_YEAR), bpr, schedules)
-    tsd['ta_cs_set'] = np.vectorize(get_cooling_system_set_point, otypes=[float])\
-        (range(HOURS_IN_YEAR), bpr, schedules)
+    tsd['ta_hs_set'] = np.vectorize(get_heating_system_set_point, otypes=[float])(range(HOURS_IN_YEAR), bpr, schedules)
+    tsd['ta_cs_set'] = np.vectorize(get_cooling_system_set_point, otypes=[float])(range(HOURS_IN_YEAR), bpr, schedules)
 
     return tsd
 
@@ -367,7 +365,7 @@ def get_heating_system_set_point(t, bpr, schedules):
     """
 
     if is_heating_season(t, bpr):
-        return schedules['Ths_set'][t]
+        return schedules['Ths_set_C'][t]
     else:
         return np.nan  # huge so the system will be off
 
@@ -386,6 +384,6 @@ def get_cooling_system_set_point(t, bpr, schedules):
     """
 
     if is_cooling_season(t, bpr):
-        return schedules['Tcs_set'][t]
+        return schedules['Tcs_set_C'][t]
     else:
         return np.nan  # huge so the system will be off

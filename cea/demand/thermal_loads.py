@@ -17,7 +17,7 @@ from cea.constants import HOURS_IN_YEAR
 
 def calc_thermal_loads(building_name, bpr, weather_data, date_range, locator,
                        use_dynamic_infiltration_calculation, resolution_outputs, loads_output, massflows_output,
-                       temperatures_output, format_output, config, write_detailed_output, debug):
+                       temperatures_output, config, debug):
     """
     Calculate thermal loads of a single building with mechanical or natural ventilation.
     Calculation procedure follows the methodology of ISO 13790
@@ -67,10 +67,10 @@ def calc_thermal_loads(building_name, bpr, weather_data, date_range, locator,
     :rtype: NoneType
 
 """
-    schedules, tsd = initialize_inputs(bpr, weather_data, date_range, locator, config)
+    schedules, tsd = initialize_inputs(bpr, weather_data, locator, config)
 
     # CALCULATE ELECTRICITY LOADS
-    tsd = electrical_loads.calc_Eal_Epro(tsd, bpr, schedules)
+    tsd = electrical_loads.calc_Eal_Epro(tsd, schedules)
 
     # CALCULATE REFRIGERATION LOADS
     if refrigeration_loads.has_refrigeration_load(bpr):
@@ -82,21 +82,19 @@ def calc_thermal_loads(building_name, bpr, weather_data, date_range, locator,
         tsd['E_cre'] = np.zeros(HOURS_IN_YEAR)
 
     if np.isclose(bpr.rc_model['Af'], 0.0):  # if building does not have conditioned area
-
         #UPDATE ALL VALUES TO 0
         tsd = update_timestep_data_no_conditioned_area(tsd)
-
     else:
 
         #CALCULATE PROCESS HEATING
-        tsd['Qhpro_sys'][:] = schedules['Qhpro'] * bpr.internal_loads['Qhpro_Wm2']  # in kWh
+        tsd['Qhpro_sys'] = schedules['Qhpro_W']  # in Wh
 
         #CALCULATE PROCESS COOLING
-        tsd['Qcpro_sys'][:] = schedules['Qcpro'] * bpr.internal_loads['Qcpro_Wm2']  # in kWh
+        tsd['Qcpro_sys'] = schedules['Qcpro_W']   # in Wh
 
         #CALCULATE DATA CENTER LOADS
         if datacenter_loads.has_data_load(bpr):
-            tsd = datacenter_loads.calc_Edata(bpr, tsd, schedules)  # end-use electricity
+            tsd = datacenter_loads.calc_Edata(tsd, schedules)  # end-use electricity
             tsd = datacenter_loads.calc_Qcdata_sys(bpr, tsd)  # system need for cooling
             tsd = datacenter_loads.calc_Qcdataf(locator, bpr, tsd)  # final need for cooling
         else:
@@ -105,6 +103,8 @@ def calc_thermal_loads(building_name, bpr, weather_data, date_range, locator,
             tsd['Edata'] = tsd['E_cdata'] = np.zeros(HOURS_IN_YEAR)
 
         #CALCULATE SPACE CONDITIONING DEMANDS
+        # # latent heat gains
+        tsd = latent_loads.calc_Qgain_lat(tsd, schedules)
         tsd = calc_set_points(bpr, date_range, tsd, building_name, config, locator, schedules)  # calculate the setpoints for every hour
         tsd = calc_Qhs_Qcs(bpr, tsd, use_dynamic_infiltration_calculation)  #end-use demand latent and sensible + ventilation
         tsd = sensible_loads.calc_Qhs_Qcs_loss(bpr, tsd) # losses
@@ -116,7 +116,6 @@ def calc_thermal_loads(building_name, bpr, weather_data, date_range, locator,
         tsd = calc_Qhs_sys(bpr, tsd) # final : including fuels and renewables
 
         #Positive loads
-        tsd = latent_loads.calc_latent_gains_from_people(tsd, bpr)
         tsd['Qcs_lat_sys'] = abs(tsd['Qcs_lat_sys'])
         tsd['DC_cs'] = abs(tsd['DC_cs'])
         tsd['Qcs_sys'] = abs(tsd['Qcs_sys'])
@@ -147,8 +146,8 @@ def calc_thermal_loads(building_name, bpr, weather_data, date_range, locator,
     tsd = electrical_loads.calc_Ef(bpr, tsd)  # final (incl. self. generated)
 
     #WRITE SOLAR RESULTS
-    write_results(bpr, building_name, date_range, format_output, loads_output, locator, massflows_output,
-                  resolution_outputs, temperatures_output, tsd, write_detailed_output, debug)
+    write_results(bpr, building_name, date_range, loads_output, locator, massflows_output,
+                  resolution_outputs, temperatures_output, tsd, debug)
 
     return
 
@@ -160,8 +159,8 @@ def calc_QH_sys_QC_sys(tsd):
     return tsd
 
 
-def write_results(bpr, building_name, date, format_output, loads_output, locator, massflows_output,
-                  resolution_outputs, temperatures_output, tsd, write_detailed_output, debug):
+def write_results(bpr, building_name, date, loads_output, locator, massflows_output,
+                  resolution_outputs, temperatures_output, tsd, debug):
 
     if resolution_outputs == 'hourly':
         writer = demand_writers.HourlyDemandWriter(loads_output, massflows_output, temperatures_output)
@@ -169,21 +168,15 @@ def write_results(bpr, building_name, date, format_output, loads_output, locator
         writer = demand_writers.MonthlyDemandWriter(loads_output, massflows_output, temperatures_output)
     else:
         raise Exception('error')
-    if format_output == 'csv':
-        writer.results_to_csv(tsd, bpr, locator, date, building_name)
-    elif format_output == 'hdf5':
-        writer.results_to_hdf5(tsd, bpr, locator, date, building_name)
-    else:
-        raise Exception('error')
-
-    if write_detailed_output:
-        print('Writing detailed demand results of {} to .xls file.'.format(building_name))
-        reporting.full_report_to_xls(tsd, locator.get_demand_results_folder(), building_name)
 
     if debug:
         print('Creating instant plotly visualizations of demand variable time series.')
         print('Behavior can be changed in cea.utilities.reporting code.')
+        print('Writing detailed demand results of {} to .xls file.'.format(building_name))
         reporting.quick_visualization_tsd(tsd, locator.get_demand_results_folder(), building_name)
+        reporting.full_report_to_xls(tsd, locator.get_demand_results_folder(), building_name)
+    else:
+        writer.results_to_csv(tsd, bpr, locator, date, building_name)
 
 
 def calc_Qcs_sys(bpr, tsd):
@@ -367,7 +360,7 @@ def calc_Qhs_Qcs(bpr, tsd, use_dynamic_infiltration_calculation):
     return tsd
 
 
-def initialize_inputs(bpr, weather_data, date_range, locator, config):
+def initialize_inputs(bpr, weather_data, locator, config):
     """
     :param bpr: a collection of building properties for the building used for thermal loads calculation
     :type bpr: BuildingPropertiesRow
@@ -416,9 +409,7 @@ def initialize_inputs(bpr, weather_data, date_range, locator, config):
     tsd['people'] = occupancy_yearly_schedules['people_pax']
     tsd['ve'] = occupancy_yearly_schedules['Ve_lps'] * 3.6 #to m3/h
     tsd['Qs'] = occupancy_yearly_schedules['Qs_W']
-    tsd['X'] = occupancy_yearly_schedules['X_gh']
-    # # latent heat gains
-    tsd['w_int'] = sensible_loads.calc_Qgain_lat(tsd['X'])
+
 
     return occupancy_yearly_schedules, tsd
 
