@@ -173,10 +173,10 @@ def calc_deterministic_schedules(locator,
                                                                          indoor_comfort_building['Ths_setb_C'],
                                                                          indoor_comfort_building['Tcs_set_C'],
                                                                          indoor_comfort_building['Tcs_setb_C'])
-            deterministic_schedule[variable] = get_yearly_vectors(date_range, days_in_schedule, array,
-                                                                  monthly_multiplier=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                                                                                      1])
-
+            deterministic_schedule[variable] = get_yearly_vectors(date_range,
+                                                                  days_in_schedule,
+                                                                  array,
+                                                                  monthly_multiplier=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1])
         elif variable in ['Vww_lpd', 'Vw_lpd']:
             yearly_array = get_yearly_vectors(date_range, days_in_schedule, array, monthly_multiplier,
                                               normalize_first_daily_profile=True)
@@ -211,7 +211,7 @@ def calc_deterministic_schedules(locator,
     }
 
     yearly_deterministic_schedule = pd.DataFrame(final_dict)
-    yearly_deterministic_schedule.to_csv(locator.get_occupancy_model_file(building), index=False, na_rep='OFF')
+    yearly_deterministic_schedule.to_csv(locator.get_occupancy_model_file(building), index=False, na_rep='OFF', float_format='%.3f')
 
 
 def convert_schedule_string_to_temperature(schedule_string, schedule_type, Ths_set_C, Ths_setb_C, Tcs_set_C,
@@ -236,8 +236,9 @@ def convert_schedule_string_to_temperature(schedule_string, schedule_type, Ths_s
         elif schedule_string == 'SETBACK':
             schedule_float = float(Ths_setb_C)
         else:
-            print('Invalid value in temperature schedule detected. Setpoint temperature assumed: {}'.format(code))
             schedule_float = float(Ths_set_C)
+            print('Invalid value in temperature schedule detected. Setpoint temperature assumed: {}'.format(schedule_float))
+
 
     elif schedule_type == 'Tcs_set_C':
         if schedule_string == 'OFF':
@@ -247,8 +248,9 @@ def convert_schedule_string_to_temperature(schedule_string, schedule_type, Ths_s
         elif schedule_string == 'SETBACK':
             schedule_float = float(Tcs_setb_C)
         else:
-            print('Invalid value in temperature schedule detected. Setpoint temperature assumed: {}'.format(code))
             schedule_float = float(Tcs_set_C)
+            print('Invalid value in temperature schedule detected. Setpoint temperature assumed: {}'.format(schedule_float))
+
 
     return schedule_float
 
