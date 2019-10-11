@@ -46,8 +46,6 @@ class TestCalcThermalLoads(unittest.TestCase):
         cls.loads_output = cls.config.demand.loads_output
         cls.massflows_output = cls.config.demand.massflows_output
         cls.temperatures_output = cls.config.demand.temperatures_output
-        cls.format_output = cls.config.demand.format_output
-        cls.write_detailed_output = cls.config.demand.write_detailed_output
         cls.debug = cls.config.debug
 
     def test_calc_thermal_loads(self):
@@ -55,15 +53,15 @@ class TestCalcThermalLoads(unittest.TestCase):
         result = calc_thermal_loads('B01', bpr, self.weather_data, self.date_range, self.locator,
                                     self.use_dynamic_infiltration_calculation, self.resolution_output,
                                     self.loads_output, self.massflows_output, self.temperatures_output,
-                                    self.format_output, self.config, self.write_detailed_output, self.debug)
+                                    self.config, self.debug)
         self.assertIsNone(result)
-        self.assertTrue(os.path.exists(self.locator.get_demand_results_file('B01', self.format_output)),
+        self.assertTrue(os.path.exists(self.locator.get_demand_results_file('B01')),
                         'Building csv not produced')
         self.assertTrue(os.path.exists(self.locator.get_temporary_file('B01T.csv')),
                         'Building temp file not produced')
 
         # test the building csv file (output of the `calc_thermal_loads` call above)
-        df = pd.read_csv(self.locator.get_demand_results_file('B01', self.format_output))
+        df = pd.read_csv(self.locator.get_demand_results_file('B01'))
 
         value_columns = json.loads(self.test_config.get('test_calc_thermal_loads', 'value_columns'))
         values = json.loads(self.test_config.get('test_calc_thermal_loads', 'values'))
@@ -86,8 +84,7 @@ class TestCalcThermalLoads(unittest.TestCase):
                                                                                self.loads_output,
                                                                                self.massflows_output,
                                                                                self.temperatures_output,
-                                                                               self.format_output, self.config,
-                                                                               self.write_detailed_output, self.debug)
+                                                                               self.config, self.debug)
             expected_qhs_sys_kwh = buildings[b][0]
             expected_qcs_sys_kwh = buildings[b][1]
             expected_qww_sys_kwh = buildings[b][2]
@@ -104,11 +101,11 @@ class TestCalcThermalLoads(unittest.TestCase):
 
 def run_for_single_building(building, bpr, weather_data, date, locator,
                             use_dynamic_infiltration_calculation, resolution_output, loads_output,
-                            massflows_output, temperatures_output, format_output, config, write_detailed_output, debug):
+                            massflows_output, temperatures_output, config, debug):
     calc_thermal_loads(building, bpr, weather_data, date, locator,
                        use_dynamic_infiltration_calculation, resolution_output, loads_output,
-                       massflows_output, temperatures_output, format_output, config, write_detailed_output, debug)
-    df = pd.read_csv(locator.get_demand_results_file(building, format_output))
+                       massflows_output, temperatures_output, config, debug)
+    df = pd.read_csv(locator.get_demand_results_file(building))
     return building, float(df['Qhs_sys_kWh'].sum()), df['Qcs_sys_kWh'].sum(), float(df['Qww_sys_kWh'].sum())
 
 
