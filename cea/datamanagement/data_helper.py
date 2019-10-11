@@ -16,8 +16,8 @@ import pandas as pd
 import cea.config
 import cea.inputlocator
 from cea import InvalidOccupancyNameException
-from cea.utilities.dbf import dbf_to_dataframe, dataframe_to_dbf
 from cea.datamanagement.databases_verification import COLUMNS_ZONE_OCCUPANCY
+from cea.utilities.dbf import dbf_to_dataframe, dataframe_to_dbf
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -73,22 +73,10 @@ def data_helper(locator, region, overwrite_technology_folder,
 
     # get occupancy and age files
     building_occupancy_df = dbf_to_dataframe(locator.get_building_occupancy())
-    columns = building_occupancy_df.columns
-
-    #validate list of uses
-    list_uses = []
-    for name in columns:
-        if name in COLUMNS_ZONE_OCCUPANCY:
-            list_uses.append(name)  # append valid uses
-        elif name in {'Name', 'REFERENCE'}:
-            pass  # do nothing with 'Name' and 'Reference'
-        else:
-            raise InvalidOccupancyNameException(
-                'occupancy.dbf has use "{}". This use is not part of the database. Change occupancy.dbf'
-                ' or customize archetypes database AND databases_verification.py.'.format(name))
-
     building_age_df = dbf_to_dataframe(locator.get_building_age())
 
+    # validate list of uses in case study
+    list_uses = get_list_of_uses_in_case_study(building_occupancy_df)
 
     # get occupant densities from archetypes schedules
     occupant_densities = {}
@@ -132,8 +120,9 @@ def data_helper(locator, region, overwrite_technology_folder,
     # get properties about types of HVAC systems
     if update_technical_systems_dbf:
         construction_properties_hvac = pd.read_excel(locator.get_archetypes_properties(), 'HVAC')
-        construction_properties_hvac['Code'] = construction_properties_hvac.apply(lambda x: calc_code(x['building_use'], x['year_start'],
-                                                            x['year_end'], x['standard']), axis=1)
+        construction_properties_hvac['Code'] = construction_properties_hvac.apply(
+            lambda x: calc_code(x['building_use'], x['year_start'],
+                                x['year_end'], x['standard']), axis=1)
 
         categories_df['cat_HVAC'] = calc_category(construction_properties_hvac, categories_df, 'HVAC', 'R')
 
@@ -189,11 +178,36 @@ def data_helper(locator, region, overwrite_technology_folder,
         dataframe_to_dbf(prop_supply_df_merged[fields], locator.get_building_supply())
 
     if update_restrictions_dbf:
-        new_names_df = names_df.copy() #this to avoid that the dataframe is reused
+        new_names_df = names_df.copy()  # this to avoid that the dataframe is reused
         COLUMNS_ZONE_RESTRICTIONS = ['SOLAR', 'GEOTHERMAL', 'WATERBODY', 'NATURALGAS', 'BIOGAS']
         for field in COLUMNS_ZONE_RESTRICTIONS:
             new_names_df[field] = 0
         dataframe_to_dbf(new_names_df[['Name'] + COLUMNS_ZONE_RESTRICTIONS], locator.get_building_restrictions())
+
+
+def get_list_of_uses_in_case_study(building_occupancy_df):
+    """
+    validates lists of uses in case study.
+    refactored from data_helper function
+
+    :param building_occupancy_df: dataframe of occupancy.dbf input (can be read in data-helper or in building-properties)
+    :type building_occupancy_df: pandas.DataFrame
+    :return: list of uses in case study
+    :rtype: pandas.DataFrame.Index
+    """
+    columns = building_occupancy_df.columns
+    # validate list of uses
+    list_uses = []
+    for name in columns:
+        if name in COLUMNS_ZONE_OCCUPANCY:
+            list_uses.append(name)  # append valid uses
+        elif name in {'Name', 'REFERENCE'}:
+            pass  # do nothing with 'Name' and 'Reference'
+        else:
+            raise InvalidOccupancyNameException(
+                'occupancy.dbf has use "{}". This use is not part of the database. Change occupancy.dbf'
+                ' or customize archetypes database AND databases_verification.py.'.format(name))
+    return list_uses
 
 
 def calc_code(code1, code2, code3, code4):
@@ -214,13 +228,22 @@ def calc_mainuse(uses_df, uses):
     """
 
     # print a warning if there are equal shares of more than one "main" use
-    indexed_df = uses_df.set_index('Name')
+    # check if 'Name' is already the index, this is necessary because the function is used in data-helper
+    #  and in building properties
+    if uses_df.index.name not in ['Name']:
+        # this is the behavior in data-helper
+        indexed_df = uses_df.set_index('Name')
+    else:
+        # this is the behavior in building-properties
+        indexed_df = uses_df.copy()
+        uses_df = uses_df.reset_index()
+
     for building in indexed_df.index:
         mainuses = [use for use in uses if
                     (indexed_df.loc[building, use] == indexed_df.max(axis=1)[building]) and (use != 'PARKING')]
         if len(mainuses) > 1:
             print '%s has equal share of %s; the construction properties and systems for %s will be used.' % (
-            building, ' and '.join(mainuses), mainuses[0])
+                building, ' and '.join(mainuses), mainuses[0])
 
     # get array of main use for each building
     databaseclean = uses_df[uses].transpose()
