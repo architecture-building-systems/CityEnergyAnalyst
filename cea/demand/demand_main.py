@@ -111,7 +111,7 @@ def demand_calculation(locator, config):
         building_names = building_properties.list_building_names()
         print('Running demand calculation for all buildings in the zone')
     else:
-        print('Running demand calculation for the next buildings=%s' % building_names)
+        print('Running demand calculation for the following buildings=%s' % building_names)
 
     # DEMAND CALCULATION
     n = len(building_names)
@@ -151,53 +151,6 @@ def demand_calculation(locator, config):
 
 def print_progress(i, n, args, result):
     print("Building No. {i} completed out of {n}: {building}".format(i=i + 1, n=n, building=args[0]))
-
-
-def calc_demand_singleprocessing(building_properties, date_range, locator, list_building_names,
-                                 weather_data, use_dynamic_infiltration_calculation,
-                                 resolution_outputs, loads_output, massflows_output, temperatures_output,
-                                 format_output, config, write_detailed_output, debug):
-    num_buildings = len(list_building_names)
-    for i, building in enumerate(list_building_names):
-        bpr = building_properties[building]
-        thermal_loads.calc_thermal_loads(building, bpr, weather_data, date_range, locator,
-                                         use_dynamic_infiltration_calculation,
-                                         resolution_outputs, loads_output, massflows_output, temperatures_output,
-                                         format_output, config, write_detailed_output, debug)
-        print('Building No. %i completed out of %i: %s' % (i + 1, num_buildings, building))
-
-
-def calc_demand_multiprocessing(building_properties, date_range, locator, list_building_names,
-                                weather_data, use_dynamic_infiltration_calculation,
-                                resolution_outputs, loads_output, massflows_output, temperatures_output, format_output,
-                                config, write_detailed_output, debug):
-    number_of_processes = config.get_number_of_processes()
-    print("Using %i CPU's" % number_of_processes)
-    pool = mp.Pool(number_of_processes)
-    joblist = []
-    num_buildings = len(list_building_names)
-    for building in list_building_names:
-        bpr = building_properties[building]
-        job = pool.apply_async(thermal_loads.calc_thermal_loads,
-                               [building, bpr, weather_data, date_range, locator,
-                                use_dynamic_infiltration_calculation,
-                                resolution_outputs, loads_output, massflows_output, temperatures_output,
-                                format_output, config, write_detailed_output, debug])
-        joblist.append(job)
-    for i, job in enumerate(joblist):
-        job.get(240)
-        print('Building No. %i completed out of %i' % (i + 1, num_buildings))
-    pool.close()
-
-    map_thermal_loads = cea.utilities.multiprocessing.Mapper(config, thermal_loads.calc_thermal_loads,
-                                                             "")
-    cea.utilities.multiprocessing.map(thermal_loads.calc_thermal_loads,
-                                      list_building_names,
-                                      (building_properties[b] for b in list_building_names),
-                                      repeat=(weather_data, weather_data, date_range, locator,
-                                use_dynamic_infiltration_calculation,
-                                resolution_outputs, loads_output, massflows_output, temperatures_output,
-                                format_output, config, write_detailed_output, debug))
 
 
 def main(config):
