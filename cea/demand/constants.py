@@ -79,14 +79,14 @@ T_C_DATA_RE_0 = 15  # (°C) refactored from data center loads, without original 
 T_C_DATA_SUP_0 = 7  # (°C) refactored from data center loads, without original source
 
 VARIABLE_CEA_SCHEDULE_RELATION = {'Occ_m2pax': 'OCCUPANCY',
-                                  'Qs_Wp': 'OCCUPANCY',
-                                  'X_ghp': 'OCCUPANCY',
-                                  'Ve_lps': 'OCCUPANCY',
+                                  'Qs_Wpax': 'OCCUPANCY',
+                                  'X_ghpax': 'OCCUPANCY',
+                                  'Ve_lpspax': 'OCCUPANCY',
                                   'Ea_Wm2': 'ELECTRICITY',
                                   'El_Wm2': 'ELECTRICITY',
                                   'Ed_Wm2': 'ELECTRICITY',
-                                  'Vww_lpd': 'WATER',
-                                  'Vw_lpd': 'WATER',
+                                  'Vww_lpdpax': 'WATER',
+                                  'Vw_lpdpax': 'WATER',
                                   'Ths_set_C': 'HEATING',
                                   'Tcs_set_C': 'COOLING',
                                   'Qcre_Wm2': 'PROCESSES',
@@ -96,5 +96,5 @@ VARIABLE_CEA_SCHEDULE_RELATION = {'Occ_m2pax': 'OCCUPANCY',
                                   }
 
 TEMPERATURE_VARIABLES = ['Ths_set_C', 'Tcs_set_C']
-PEOPLE_DEPENDENT_VARIABLES = ['Occ_m2pax', 'Ve_lps', 'Qs_Wp', 'X_ghp', 'Vww_lpd', 'Vw_lpd']
+PEOPLE_DEPENDENT_VARIABLES = ['Occ_m2pax', 'Ve_lpspax', 'Qs_Wpax', 'X_ghpax', 'Vww_lpdpax', 'Vw_lpdpax']
 AREA_DEPENDENT_VARIABLES = ['Ea_Wm2', 'El_Wm2', 'Ed_Wm2', 'Qcre_Wm2', 'Qhpro_Wm2', 'Qcpro_Wm2', 'Epro_Wm2']
