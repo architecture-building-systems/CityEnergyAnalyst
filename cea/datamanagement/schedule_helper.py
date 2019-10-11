@@ -41,6 +41,7 @@ def calc_mixed_schedule(locator,
                         building_occupancy_df,
                         buildings,
                         model_schedule):
+
     metadata = model_schedule
     schedules_DB = locator.get_database_standard_schedules(model_schedule)
     schedule_data_all_uses = ScheduleData(locator, schedules_DB)
