@@ -64,7 +64,7 @@ Demand forecasting:
     label: Building Occupancy
     description: Use CEA models and input schedules to estimate the occupancy profile of buildings
     interfaces: [dashboard]
-    module: cea.demand.occupancy_model
+    module: cea.demand.occupancy.occupancy_model
     parameters: ['general:scenario', 'general:multiprocessing', 'general:debug', occupancy]
     input-files:
       - [get_envelope_systems]
