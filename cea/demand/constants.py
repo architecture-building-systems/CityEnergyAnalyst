@@ -82,9 +82,9 @@ VARIABLE_CEA_SCHEDULE_RELATION = {'Occ_m2pax': 'OCCUPANCY',
                                   'Qs_Wpax': 'OCCUPANCY',
                                   'X_ghpax': 'OCCUPANCY',
                                   'Ve_lpspax': 'OCCUPANCY',
-                                  'Ea_Wm2': 'ELECTRICITY',
-                                  'El_Wm2': 'ELECTRICITY',
-                                  'Ed_Wm2': 'ELECTRICITY',
+                                  'Ea_Wm2': 'APPLIANCES',
+                                  'El_Wm2': 'LIGHTING',
+                                  'Ed_Wm2': 'SERVERS',
                                   'Vww_lpdpax': 'WATER',
                                   'Vw_lpdpax': 'WATER',
                                   'Ths_set_C': 'HEATING',
@@ -95,6 +95,6 @@ VARIABLE_CEA_SCHEDULE_RELATION = {'Occ_m2pax': 'OCCUPANCY',
                                   'Epro_Wm2': 'PROCESSES',
                                   }
 
-TEMPERATURE_VARIABLES = ['Ths_set_C', 'Tcs_set_C']
-PEOPLE_DEPENDENT_VARIABLES = ['Occ_m2pax', 'Ve_lpspax', 'Qs_Wpax', 'X_ghpax', 'Vww_lpdpax', 'Vw_lpdpax']
-AREA_DEPENDENT_VARIABLES = ['Ea_Wm2', 'El_Wm2', 'Ed_Wm2', 'Qcre_Wm2', 'Qhpro_Wm2', 'Qcpro_Wm2', 'Epro_Wm2']
+TEMPERATURE_VARIABLES = ['HEATING', 'COOLING']
+PEOPLE_DEPENDENT_VARIABLES = ['OCCUPANCY', 'WATER']
+AREA_DEPENDENT_VARIABLES = ['APPLIANCES', 'LIGHTING', 'PROCESSES', 'SERVERS']

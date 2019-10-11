@@ -13,8 +13,9 @@ import cea
 import cea.config
 import cea.inputlocator
 from cea.datamanagement.databases_verification import COLUMNS_ZONE_OCCUPANCY
+from cea.demand.constants import VARIABLE_CEA_SCHEDULE_RELATION, TEMPERATURE_VARIABLES, PEOPLE_DEPENDENT_VARIABLES, \
+    AREA_DEPENDENT_VARIABLES
 from cea.utilities.schedule_reader import read_cea_schedule, save_cea_schedule
-from cea.demand.constants import VARIABLE_CEA_SCHEDULE_RELATION, TEMPERATURE_VARIABLES, PEOPLE_DEPENDENT_VARIABLES,AREA_DEPENDENT_VARIABLES
 
 __author__ = "Jimeno Fonseca"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -30,7 +31,6 @@ def calc_mixed_schedule(locator,
                         building_occupancy_df,
                         buildings,
                         model_schedule):
-
     metadata = model_schedule
     schedules_DB = locator.get_database_standard_schedules(model_schedule)
     schedule_data_all_uses = ScheduleData(locator, schedules_DB)
@@ -41,8 +41,6 @@ def calc_mixed_schedule(locator,
     list_uses = get_short_list_of_uses_in_case_study(building_occupancy_df)
 
     internal_DB = pd.read_excel(locator.get_archetypes_properties(), 'INTERNAL_LOADS')
-    comfort_DB = pd.read_excel(locator.get_archetypes_properties(), 'INDOOR_COMFORT')
-    internal_DB = internal_DB.merge(comfort_DB, left_on='Code', right_on='Code')
     internal_DB = internal_DB.set_index('Code')
 
     occupant_densities = {}
@@ -55,34 +53,74 @@ def calc_mixed_schedule(locator,
     for building in buildings:
         schedule_new_data = {}
         main_use_this_building = building_occupancy_df['mainuse'][building]
-        monthly_multiplier = schedule_data_all_uses.schedule_complementray_data[main_use_this_building]['MONTHLY_MULTIPLIER']
-        for variable, schedule_type in VARIABLE_CEA_SCHEDULE_RELATION.items():
+        monthly_multiplier = schedule_data_all_uses.schedule_complementray_data[main_use_this_building][
+            'MONTHLY_MULTIPLIER']
+        for schedule_type in VARIABLE_CEA_SCHEDULE_RELATION.values():
             current_schedule = np.zeros(len(schedule_data_all_uses.schedule_data['HOTEL'][schedule_type]))
             normalizing_value = 0.0
-            if variable in TEMPERATURE_VARIABLES:
-                schedule_new_data[variable] = schedule_data_all_uses.schedule_data[main_use_this_building][
+            if schedule_type in ['HEATING', 'COOLING']:
+                schedule_new_data[schedule_type] = schedule_data_all_uses.schedule_data[main_use_this_building][
                     schedule_type]
             else:
                 for use in list_uses:
-                    if building_occupancy_df[use][building] > 0.0 and internal_DB.ix[use, variable] != 0.0:
+                    if building_occupancy_df[use][building] > 0.0:
                         current_share_of_use = building_occupancy_df[use][building]
-                        if variable in PEOPLE_DEPENDENT_VARIABLES:
+                        if schedule_type in ['OCCUPANCY'] and occupant_densities[use] > 0.0:
                             # for variables that depend on the number of people, the schedule needs to be calculated by number
                             # of people for each use at each time step, not the share of the occupancy for each
-                            share_time_occupancy_density = internal_DB.ix[use, variable] * current_share_of_use * \
-                                                           occupant_densities[use]
+                            share_time_occupancy_density = current_share_of_use * occupant_densities[use]
+                            normalizing_value += share_time_occupancy_density
+                            current_schedule = np.vectorize(calc_average)(current_schedule,
+                                                                          schedule_data_all_uses.schedule_data[use][
+                                                                              schedule_type],
+                                                                          share_time_occupancy_density)
 
-                        elif variable in AREA_DEPENDENT_VARIABLES:
-                            share_time_occupancy_density = internal_DB.ix[use, variable] * current_share_of_use
+                        if schedule_type in ['WATER'] and occupant_densities[use] > 0.0 and (internal_DB.ix[use, 'Vw_lpdpax']+internal_DB.ix[use, 'Vw_lpdpax'])>0.0:
+                            # for variables that depend on the number of people, the schedule needs to be calculated by number
+                            # of people for each use at each time step, not the share of the occupancy for each
+                            share_time_occupancy_density = current_share_of_use * occupant_densities[use] * (internal_DB.ix[use, 'Vw_lpdpax']+internal_DB.ix[use, 'Vw_lpdpax'])
+                            normalizing_value += share_time_occupancy_density
+                            current_schedule = np.vectorize(calc_average)(current_schedule,
+                                                                          schedule_data_all_uses.schedule_data[use][
+                                                                              schedule_type],
+                                                                          share_time_occupancy_density)
 
-                        normalizing_value += share_time_occupancy_density
-                        current_schedule = np.vectorize(calc_average)(current_schedule,
-                                                                      schedule_data_all_uses.schedule_data[use][schedule_type],
-                                                                      share_time_occupancy_density)
+                        elif schedule_type in ['APPLIANCES']and internal_DB.ix[use, 'Ea_Wm2'] > 0.0:
+                            share_time_occupancy_density = current_share_of_use * internal_DB.ix[use, 'Ea_Wm2']
+                            normalizing_value += share_time_occupancy_density
+                            current_schedule = np.vectorize(calc_average)(current_schedule,
+                                                                          schedule_data_all_uses.schedule_data[use][
+                                                                              schedule_type],
+                                                                          share_time_occupancy_density)
+
+                        elif schedule_type in ['LIGHTING']and internal_DB.ix[use, 'El_Wm2'] > 0.0:
+                            share_time_occupancy_density = current_share_of_use * internal_DB.ix[use, 'El_Wm2']
+                            normalizing_value += share_time_occupancy_density
+                            current_schedule = np.vectorize(calc_average)(current_schedule,
+                                                                          schedule_data_all_uses.schedule_data[use][
+                                                                              schedule_type],
+                                                                          share_time_occupancy_density)
+
+                        elif schedule_type in ['PROCESSES']and internal_DB.ix[use, 'Epro_Wm2'] > 0.0:
+                            share_time_occupancy_density = current_share_of_use * internal_DB.ix[use, 'Epro_Wm2']
+                            normalizing_value += share_time_occupancy_density
+                            current_schedule = np.vectorize(calc_average)(current_schedule,
+                                                                          schedule_data_all_uses.schedule_data[use][
+                                                                              schedule_type],
+                                                                          share_time_occupancy_density)
+
+                        elif schedule_type in ['SERVERS'] and internal_DB.ix[use, 'Ed_Wm2'] > 0.0:
+                            share_time_occupancy_density = current_share_of_use * internal_DB.ix[use, 'Ed_Wm2']
+
+                            normalizing_value += share_time_occupancy_density
+                            current_schedule = np.vectorize(calc_average)(current_schedule,
+                                                                          schedule_data_all_uses.schedule_data[use][
+                                                                              schedule_type],
+                                                                          share_time_occupancy_density)
                 if normalizing_value == 0.0:
-                    schedule_new_data[variable] = current_schedule * 0.0
+                    schedule_new_data[schedule_type] = current_schedule * 0.0
                 else:
-                    schedule_new_data[variable] = current_schedule / normalizing_value
+                    schedule_new_data[schedule_type] = current_schedule / normalizing_value
 
         # add hour and day of the week
         DAY = {'DAY': ['WEEKDAY'] * 24 + ['SATURDAY'] * 24 + ['SUNDAY'] * 24}
@@ -125,8 +163,9 @@ class ScheduleData(object):
             data_schedule, data_metadata = read_cea_schedule(path_to_schedule)
             data_schedules.append(data_schedule)
             data_schedules_complimentary.append(data_metadata)
-        return dict(zip(get_list_uses_in_database, data_schedules)),\
+        return dict(zip(get_list_uses_in_database, data_schedules)), \
                dict(zip(get_list_uses_in_database, data_schedules_complimentary))
+
 
 def get_short_list_of_uses_in_case_study(building_occupancy_df):
     """
@@ -146,6 +185,7 @@ def get_short_list_of_uses_in_case_study(building_occupancy_df):
             if building_occupancy_df[name].sum() > 0.0:
                 list_uses.append(name)  # append valid uses
     return list_uses
+
 
 def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
