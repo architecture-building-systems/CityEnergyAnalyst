@@ -35,7 +35,7 @@ def occupancy_main(locator, config):
 
     if occupancy_model == 'deterministic':
         stochaistic_schedule = False
-    elif occupancy_model == 'stochastic':
+    elif occupancy_model == 'stochaistic':
         stochaistic_schedule = True
     else:
         Exception('there is no valid input for type of occupancy model')
