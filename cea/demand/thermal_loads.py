@@ -4,6 +4,7 @@ Demand model of thermal loads
 """
 from __future__ import division
 import numpy as np
+import pandas as pd
 from cea.demand import demand_writers
 from cea.demand import latent_loads
 from cea.demand import hourly_procedure_heating_cooling_system_load, ventilation_air_flows_simple
@@ -67,7 +68,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, date_range, locator,
     :rtype: NoneType
 
 """
-    schedules, tsd = initialize_inputs(bpr, weather_data, locator, config)
+    schedules, tsd = initialize_inputs(bpr, weather_data, locator)
 
     # CALCULATE ELECTRICITY LOADS
     tsd = electrical_loads.calc_Eal_Epro(tsd, schedules)
@@ -318,7 +319,7 @@ def calc_set_points(bpr, date, tsd, building_name, config, locator, schedules):
     if config.demand.predefined_hourly_setpoints:
         tsd = calc_set_point_from_predefined_file(tsd, bpr, date.dayofweek, building_name, locator)
     else:
-        tsd = control_heating_cooling_systems.calc_simple_temp_control(tsd, bpr, schedules)
+        tsd = control_heating_cooling_systems.get_temperature_setpoints_incl_seasonality(tsd, bpr, schedules)
 
     t_prev = get_hours(bpr).next() - 1
     tsd['T_int'][t_prev] = tsd['T_ext'][t_prev]
@@ -360,7 +361,7 @@ def calc_Qhs_Qcs(bpr, tsd, use_dynamic_infiltration_calculation):
     return tsd
 
 
-def initialize_inputs(bpr, weather_data, locator, config):
+def initialize_inputs(bpr, weather_data, locator):
     """
     :param bpr: a collection of building properties for the building used for thermal loads calculation
     :type bpr: BuildingPropertiesRow
@@ -371,8 +372,6 @@ def initialize_inputs(bpr, weather_data, locator, config):
     :type date_range: pd.date_range
     :param locator: the input locator
     :type locator: cea.inpultlocator.InputLocator
-    :param config: the configuration for the calculation
-    :type config: cea.config.Configuration
     :returns: one dict of schedules, one dict of time step data
     :rtype: dict
     """
@@ -385,31 +384,11 @@ def initialize_inputs(bpr, weather_data, locator, config):
     tsd = initialize_timestep_data(bpr, weather_data)
 
     # get occupancy file
-    occupancy_yearly_schedules = locator.get_occupancy_model_file(building_name)
-
-    # calculate occupancy schedule and occupant-related parameters
-    # 'DATE': date_range,
-    # 'Ths_set_C': deterministic_schedule['Ths_set_C'],
-    # 'Tcs_set_C': deterministic_schedule['Tcs_set_C'],
-    # 'people_pax': deterministic_schedule['Occ_m2pax'],
-    # 'Ve_lps': deterministic_schedule['Ve_lps'],
-    # 'Qs_W': deterministic_schedule['Qs_Wp'],
-    # 'X_gh': deterministic_schedule['X_ghp'],
-    # 'Vww_l': deterministic_schedule['Vww_lpd'],
-    # 'Vw_l': deterministic_schedule['Vw_lpd'],
-    # 'Ea_W': deterministic_schedule['Ea_Wm2'],
-    # 'El_W': deterministic_schedule['El_Wm2'],
-    # 'Ed_W': deterministic_schedule['Ed_Wm2'],
-    # 'Epro_W': deterministic_schedule['Epro_Wm2'],
-    # 'Qcre_W': deterministic_schedule['Qcre_Wm2'],
-    # 'Qhpro_W': deterministic_schedule['Qhpro_Wm2'],
-    # 'Qcpro_W': deterministic_schedule['Qcpro_Wm2'],
-
+    occupancy_yearly_schedules = pd.read_csv(locator.get_occupancy_model_file(building_name))
 
     tsd['people'] = occupancy_yearly_schedules['people_pax']
-    tsd['ve'] = occupancy_yearly_schedules['Ve_lps'] * 3.6 #to m3/h
+    tsd['ve'] = occupancy_yearly_schedules['Ve_lps']
     tsd['Qs'] = occupancy_yearly_schedules['Qs_W']
-
 
     return occupancy_yearly_schedules, tsd
 
