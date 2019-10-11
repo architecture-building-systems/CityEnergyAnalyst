@@ -11,7 +11,6 @@ import cea.inputlocator
 from math import *
 import time
 import os
-import multiprocessing
 import cea.config
 from cea.utilities import epwreader
 from cea.utilities import solar_equations

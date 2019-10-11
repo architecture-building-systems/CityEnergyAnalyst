@@ -14,7 +14,6 @@ import numpy as np
 import pandas as pd
 from geopandas import GeoDataFrame as gdf
 from itertools import izip, repeat
-import multiprocessing
 import cea.utilities.workerstream
 import cea.inputlocator
 from cea.technologies.solar.photovoltaic import (calc_properties_PV_db, calc_PV_power, calc_diffuseground_comp,
