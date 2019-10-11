@@ -173,11 +173,9 @@ def main(config):
     print('Running demand calculation with dynamic infiltration=%s' %
           config.demand.use_dynamic_infiltration_calculation)
     print('Running demand calculation with multiprocessing=%s' % config.multiprocessing)
-    print('Running demand calculation with stochastic occupancy=%s' % config.demand.use_stochastic_occupancy)
-    if config.demand.write_detailed_output:
-        print('Running demand calculation with write detailed output=%s' % config.demand.write_detailed_output)
     if config.debug:
         print('Running demand in debug mode: Instant visulaization of tsd activated.')
+        print('Running demand calculation with write detailed output')
 
 
     if not radiation_files_exist(config, locator):
