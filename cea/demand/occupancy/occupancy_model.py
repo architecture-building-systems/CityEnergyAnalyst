@@ -159,12 +159,10 @@ def calc_deterministic_schedules(locator,
     days_in_schedule = len(list(set(daily_schedule_building['DAY'])))
 
     # SCHEDULE FOR PEOPLE OCCUPANCY
-
-    # SCHEDULE FOR ALL VARIABLES BUT PEOPLE SCHEDULE
     for variable, schedule_type in VARIABLE_CEA_SCHEDULE_RELATION.items():
         array = daily_schedule_building[schedule_type]
         if variable in ['Occ_m2pax']:
-            if internal_loads_building['Occ_m2pax'] > 0.0:
+            if internal_loads_building[variable] > 0.0:
                 yearly_array = get_yearly_vectors(date_range, days_in_schedule, array, monthly_multiplier)
                 deterministic_schedule['people_pax'] = (np.floor(yearly_array *
                                                                  (1 / internal_loads_building[variable]) *
@@ -184,7 +182,7 @@ def calc_deterministic_schedules(locator,
                                                                   monthly_multiplier=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
                                                                                       1])
         elif variable in ['Vww_lpdpax', 'Vw_lpdpax']:
-            if internal_loads_building['Occ_m2pax'] > 0.0:
+            if internal_loads_building[variable] > 0.0:
                 yearly_array = get_yearly_vectors(date_range,
                                                   days_in_schedule,
                                                   array,
@@ -195,7 +193,7 @@ def calc_deterministic_schedules(locator,
             else:
                 deterministic_schedule[variable] = np.zeros(HOURS_IN_YEAR)
         elif variable in ['Ve_lpspax']:
-            if internal_loads_building['Occ_m2pax'] > 0.0:
+            if internal_loads_building[variable] > 0.0:
                 yearly_array = get_yearly_vectors(date_range,
                                                   days_in_schedule,
                                                   array,
@@ -205,7 +203,7 @@ def calc_deterministic_schedules(locator,
             else:
                 deterministic_schedule[variable] = np.zeros(HOURS_IN_YEAR)
         elif variable in ['Qs_Wpax', 'X_ghpax']:
-            if internal_loads_building['Occ_m2pax'] > 0.0:
+            if internal_loads_building[variable] > 0.0:
                 yearly_array = get_yearly_vectors(date_range,
                                                   days_in_schedule,
                                                   array,
@@ -218,6 +216,12 @@ def calc_deterministic_schedules(locator,
             yearly_array = get_yearly_vectors(date_range, days_in_schedule, array, monthly_multiplier)
             deterministic_schedule[variable] = yearly_array * internal_loads_building[variable] * \
                                                prop_geometry_building['Aef']
+
+    mu_v = [0.18, 0.33, 0.54, 0.67, 0.82, 1.22, 1.50, 3.0, 5.67]
+    len_mu_v = len(mu_v)
+    mu = mu_v[int(len_mu_v * random.random())]
+    occupant_pattern = calc_individual_occupant_schedule(mu, archetype_schedule)
+
 
     final_dict = {
         'DATE': date_range,
@@ -327,8 +331,7 @@ def calc_stochastic_schedules(archetype_schedules, archetype_values, bpr, list_u
         current_share_of_use = bpr.occupancy[list_uses[num]]
         current_stochastic_schedule = np.zeros(HOURS_IN_YEAR)
         if current_share_of_use > 0:
-            occupants_in_current_use = int(
-                archetype_values['people'][num] * current_share_of_use * bpr.rc_model['Aocc'])
+            occupants_in_current_use = int(archetype_values['people'][num] * current_share_of_use * bpr.rc_model['Aocc'])
             archetype_schedule = archetype_schedules[num]['people']
             for occupant in range(occupants_in_current_use):
                 mu = mu_v[int(len_mu_v * random.random())]
@@ -568,16 +571,6 @@ def get_yearly_vectors(date_range, days_in_schedule, schedule_array, monthly_mul
     yearly_array = [
         calc_hourly_value(date, array_week, array_sat, array_sun, norm_weekday_max, norm_sat_max, norm_sun_max,
                           monthly_multiplier) for date in date_range]
-    # for date in date_range:
-    #     month_year = monthly_multiplier[date.month - 1]
-    #     hour_day = date.hour
-    #     dayofweek = date.dayofweek
-    #     if 0 <= dayofweek < 5:  # weekday
-    #         yearly_array.append(array_per_day[0][hour_day] * month_year * norm_weekday_max) # normalized dhw demand flow rates
-    #     elif dayofweek is 5:  # saturday
-    #         yearly_array.append(array_per_day[1][hour_day] * month_year * norm_sat_max) # normalized dhw demand flow rates
-    #     else:  # sunday
-    #         yearly_array.append(array_per_day[2][hour_day] * month_year * norm_sun_max) # normalized dhw demand flow rates
 
     return np.array(yearly_array)
 
