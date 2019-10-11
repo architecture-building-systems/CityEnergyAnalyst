@@ -15,6 +15,7 @@ from cea.demand.building_properties import calc_useful_areas
 from cea.utilities import epwreader
 from cea.utilities.date import get_dates_from_year
 from cea.utilities.dbf import dbf_to_dataframe
+from cea.demand.constants import VARIABLE_CEA_SCHEDULE_RELATION
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -25,31 +26,6 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-
-# # local constants
-# DECIMALS_FOR_SCHEDULE_ROUNDING = 5
-# # define schedules and codes
-# OCCUPANT_SCHEDULES = ['ve', 'Qs', 'X']
-# ELECTRICITY_SCHEDULES = ['Ea', 'El', 'Ed', 'Qcre']
-# WATER_SCHEDULES = ['Vww', 'Vw']
-# PROCESS_SCHEDULES = ['Epro', 'Qhpro', 'Qcpro']
-# TEMPERATURE_SCHEDULES = ['Ths_set', 'Tcs_set']
-# # map specific schedules to archetype schedules
-# SCHEDULE_CODE_MAP = {'people': 'people',
-#                      've': 'people',
-#                      'Qs': 'people',
-#                      'X': 'people',
-#                      'Vww': 'hotwater',
-#                      'Vw': 'hotwater',
-#                      'Ea': 'appliance_light',
-#                      'El': 'appliance_light',
-#                      'Ed': 'appliance_light',
-#                      'Qcre': 'appliance_light',
-#                      'Epro': 'process',
-#                      'Qhpro': 'process',
-#                      'Qcpro': 'process',
-#                      'Ths_set': 'heating_setpoint',
-#                      'Tcs_set': 'cooling_setpoint'}
 
 
 def occupancy_main(locator, config):
@@ -103,46 +79,6 @@ def occupancy_main(locator, config):
                                      prop_geometry_building,
                                      stochaistic_schedule)
 
-    # # calculate average occupant density for the building
-    # people_per_square_meter = 0
-    # for num in range(len(list_uses)):
-    #     people_per_square_meter += bpr.occupancy[list_uses[num]] * archetype_values['people'][num]
-    #
-    # # no need to calculate occupancy if people_per_square_meter == 0
-    # if people_per_square_meter > 0:
-    #     if stochastic_occupancy:
-    #         schedules = calc_stochastic_schedules(archetype_schedules, archetype_values, bpr, list_uses,
-    #                                               people_per_square_meter)
-    #     else:
-    #         schedules = calc_deterministic_schedules(archetype_schedules, archetype_values, bpr, list_uses,
-    #                                                  people_per_square_meter)
-    # else:
-    #     schedules = {}
-    #     # occupant-related schedules are 0 since there are no occupants
-    #     for schedule in ['people', 've', 'Qs', 'X', 'Vww', 'Vw']:
-    #         schedules[schedule] = np.zeros(HOURS_IN_YEAR)
-    #     # electricity and process schedules may be greater than 0
-    #     for schedule in ['Ea', 'El', 'Qcre', 'Ed', 'Epro', 'Qhpro', 'Qcpro']:
-    #         schedules[schedule] = bpr.rc_model['Aef'] * \
-    #                               calc_remaining_schedules_deterministic(archetype_schedules,
-    #                                                                      archetype_values[schedule], list_uses,
-    #                                                                      bpr.occupancy, SCHEDULE_CODE_MAP[schedule],
-    #                                                                      archetype_values['people'])
-    #
-    # # temperature set points are not mixed in mix-use buildings
-    # for schedule_type in TEMPERATURE_SCHEDULES:
-    #     # use schedule of mainuse directly
-    #     schedule_string = archetype_schedules[list_uses.index(bpr.comfort['mainuse'])][SCHEDULE_CODE_MAP[schedule_type]]
-    #     # convert schedule to building-specific temperatures
-    #     schedules[schedule_type] = convert_schedule_string_to_temperature(schedule_string, schedule_type, bpr)
-    #
-    # # round schedules to avoid rounding errors when saving and reading schedules from disk
-    # for schedule_type in schedules.keys():
-    #     schedules[schedule_type] = np.round(schedules[schedule_type], DECIMALS_FOR_SCHEDULE_ROUNDING)
-
-
-from cea.demand.constants import VARIABLE_CEA_SCHEDULE_RELATION
-
 
 def calc_deterministic_schedules(locator,
                                  building,
@@ -156,12 +92,21 @@ def calc_deterministic_schedules(locator,
     final_schedule = {}
     days_in_schedule = len(list(set(daily_schedule_building['DAY'])))
 
+    mu_v = [0.18, 0.33, 0.54, 0.67, 0.82, 1.22, 1.50, 3.0, 5.67]
+    len_mu_v = len(mu_v)
+    stochaistic_schedule=True
+
     # SCHEDULE FOR PEOPLE OCCUPANCY
     for variable, schedule_type in VARIABLE_CEA_SCHEDULE_RELATION.items():
         array = daily_schedule_building[schedule_type]
         if variable in ['Occ_m2pax']:
             if internal_loads_building[variable] > 0.0:
                 yearly_array = get_yearly_vectors(date_range, days_in_schedule, array, monthly_multiplier)
+
+                if stochaistic_schedule:
+                    mu = mu_v[int(len_mu_v * random.random())]
+                    yearly_array = calc_individual_occupant_schedule(mu, yearly_array)
+
                 final_schedule['Occ_m2pax'] = (np.floor(yearly_array *
                                                                  (1 / internal_loads_building[variable]) *
                                                                  prop_geometry_building['Aocc']))
@@ -186,6 +131,11 @@ def calc_deterministic_schedules(locator,
                                                   array,
                                                   monthly_multiplier,
                                                   normalize_first_daily_profile=True)
+                if stochaistic_schedule:
+                    mu = mu_v[int(len_mu_v * random.random())]
+                    yearly_array = calc_individual_occupant_schedule(mu, yearly_array)
+
+
                 final_schedule[variable] = yearly_array * internal_loads_building[variable] * (
                             1 / internal_loads_building['Occ_m2pax']) * prop_geometry_building['Aocc']
             else:
@@ -196,6 +146,10 @@ def calc_deterministic_schedules(locator,
                                                   days_in_schedule,
                                                   array,
                                                   monthly_multiplier)
+                if stochaistic_schedule:
+                    mu = mu_v[int(len_mu_v * random.random())]
+                    yearly_array = calc_individual_occupant_schedule(mu, yearly_array)
+
                 final_schedule[variable] = yearly_array * indoor_comfort_building[variable] * (
                             1 / internal_loads_building['Occ_m2pax']) * prop_geometry_building['Aocc']
             else:
@@ -206,23 +160,24 @@ def calc_deterministic_schedules(locator,
                                                   days_in_schedule,
                                                   array,
                                                   monthly_multiplier)
+                if stochaistic_schedule:
+                    mu = mu_v[int(len_mu_v * random.random())]
+                    yearly_array = calc_individual_occupant_schedule(mu, yearly_array)
+
                 final_schedule[variable] = yearly_array * internal_loads_building[variable] * (
                             1 / internal_loads_building['Occ_m2pax']) * prop_geometry_building['Aocc']
             else:
                 final_schedule[variable] = np.zeros(HOURS_IN_YEAR)
         elif variable in ['Ea_Wm2', 'El_Wm2', 'Ed_Wm2', 'Epro_Wm2', 'Qcre_Wm2', 'Qhpro_Wm2', 'Qcpro_Wm2']:
             yearly_array = get_yearly_vectors(date_range, days_in_schedule, array, monthly_multiplier)
+
+            if stochaistic_schedule:
+                mu = mu_v[int(len_mu_v * random.random())]
+                yearly_array = calc_individual_occupant_schedule(mu, yearly_array)
+
             final_schedule[variable] = yearly_array * internal_loads_building[variable] * \
                                                prop_geometry_building['Aef']
 
-    stochaistic_schedule=True
-    if stochaistic_schedule:
-        mu_v = [0.18, 0.33, 0.54, 0.67, 0.82, 1.22, 1.50, 3.0, 5.67]
-        len_mu_v = len(mu_v)
-        for variable in VARIABLE_CEA_SCHEDULE_RELATION.keys():
-            if variable not in ['Ths_set_C', 'Tcs_set_C']:
-                mu = mu_v[int(len_mu_v * random.random())]
-                final_schedule[variable] = calc_individual_occupant_schedule(mu, final_schedule[variable])
 
     final_dict = {
         'DATE': date_range,
@@ -426,7 +381,7 @@ def calc_individual_occupant_schedule(mu, archetype_schedule):
         pattern.append(next)
         state = next
 
-    return pattern
+    return np.array(pattern)
 
 
 def calculate_transition_probabilities(mu, P0, P1):
