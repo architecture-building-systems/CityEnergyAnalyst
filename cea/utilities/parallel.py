@@ -17,7 +17,7 @@ from __future__ import print_function
 
 import multiprocessing
 import sys
-from itertools import repeat
+from itertools import repeat, izip
 from cea.utilities.workerstream import stream_from_queue, QueueWorkerStream
 
 __author__ = "Daren Thomas"
@@ -30,7 +30,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def vectorize(func, processes=1):
+def vectorize(func, processes=1, on_complete=None):
     """
     Similar to ``numpy.vectorize``, this function wraps ``func`` so that it operates on sequences (of same length)
     of inputs and outputs a sequence of results, similar to ``map(func, *args)``.
@@ -39,26 +39,53 @@ def vectorize(func, processes=1):
     then multiprocessing is used and the function will be run on a pool of processes. STDOUT and STDERR of these
     processes are fed through a ``cea.workerstream.QueueWorkerStream`` so it can be shown in the dashboard job output.
 
-    Note: the if processes > 1, then the first argument to the vectorized ``func`` will be converted to a list before
+    The parameter ``on_complete`` is an optional callable that is called for each completed call of ``func``. It takes
+    4 arguments:
+
+    - i: the 0-based order in which this call was completed
+    - n: the total number of function calls to be made
+    - args: the arguments passed to this call to ``func``
+    - result: the return value of this call to ``func``
+
+    .. note: due to the way multiprocessing works, ``func`` and ``on_complete`` need to be module-level functions
+
+    .. note: the if processes > 1, then the first argument to the vectorized ``func`` will be converted to a list before
     running. This should not have any side effects, but is necessary if the args are constructed with ``itertools.repeat``.
+
+    :param func: The function to vectorize
+    :param int processes: The number of processes to use (use ``config.get_number_of_processes()``)
+    :param on_complete: An optional function to call for each completed call to ``func``.
     """
     if processes > 1:
-        return __multiprocess_wrapper(func, processes)
+        return __multiprocess_wrapper(func, processes, on_complete)
     else:
-        return single_process_wrapper(func)
+        return single_process_wrapper(func, on_complete)
 
 
-def __multiprocess_wrapper(func, processes):
+def __multiprocess_wrapper(func, processes, on_complete):
     """Create a worker pool to map the function, taking care to set up STDOUT and STDERR"""
     def wrapper(*args):
         print("Using {processes} CPU's".format(processes=processes))
         pool = multiprocessing.Pool(processes)
-        queue = multiprocessing.Manager().Queue()
+        manager = multiprocessing.Manager()
+
+        # a queue for STDOUT and STDERR output of sub-processes (see cea.utilities.workerstream.QueueWorkerStream)
+        queue = manager.Queue()
 
         # make sure the first arg is a list (not a generator) since we need the length of the sequence
         args = [list(a) for a in args]
         n = len(args[0])  # the number of iterations to map
-        args = [list(repeat(func, n)), list(repeat(queue, n))] + args
+
+        # set up the list of i-values for on_complete
+        i_queue = manager.Queue()
+        for i in range(n):
+            i_queue.put(i)
+
+        args = [repeat(func, n),
+                repeat(queue, n),
+                repeat(on_complete, n),
+                repeat(i_queue, n),
+                repeat(n, n)] + args
         args = zip(*args)
 
         map_result = pool.map_async(__apply_func_with_worker_stream, args)
@@ -84,18 +111,36 @@ def __apply_func_with_worker_stream(args):
 
     This function is called _inside_ a separate process.
     """
-    func, queue, args = args[0], args[1], args[2:]
+    # unpack the arguments
+    func, queue, on_complete, i_queue, n, args = args[0], args[1], args[2], args[3], args[4], args[5:]
+
     # set up printing to stderr and stdout to go through the queue
     sys.stdout = QueueWorkerStream('stdout', queue)
     sys.stderr = QueueWorkerStream('stderr', queue)
-    return func(*args)
+
+    # CALL
+    result = func(*args)
+
+    if on_complete:
+        on_complete(i_queue.get(), n, args, result)
+
+    return result
 
 
-def single_process_wrapper(func):
-    """The simplest form of vectorization: Just use the python builtin ``map``"""
+def single_process_wrapper(func, on_complete):
+    """The simplest form of vectorization: Just loop"""
     def wrapper(*args):
         print("Using single process")
-        return map(func, *args)
+
+        args = [list(a) for a in args]
+        n = len(args[0])
+        map_result = []
+        for i, instance_args in enumerate(izip(*args)):
+            result = func(*instance_args)
+            if on_complete:
+                on_complete(i, n, instance_args, result)
+            map_result.append(result)
+        return map_result
     return wrapper
 
 
