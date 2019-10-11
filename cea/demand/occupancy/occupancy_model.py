@@ -34,9 +34,9 @@ def occupancy_main(locator, config):
     occupancy_model = config.occupancy.occupancy_model
 
     if occupancy_model == 'deterministic':
-        stochaistic_schedule = False
+        stochastic_schedule = False
     elif occupancy_model == 'stochastic':
-        stochaistic_schedule = True
+        stochastic_schedule = True
     else:
         Exception('there is no valid input for type of occupancy model')
 
@@ -77,7 +77,7 @@ def occupancy_main(locator, config):
                                      internal_loads_building,
                                      indoor_comfort_building,
                                      prop_geometry_building,
-                                     stochaistic_schedule)
+                                     stochastic_schedule)
 
 
 def calc_deterministic_schedules(locator,
@@ -88,13 +88,12 @@ def calc_deterministic_schedules(locator,
                                  internal_loads_building,
                                  indoor_comfort_building,
                                  prop_geometry_building,
-                                 stochaistic_schedule):
+                                 stochastic_schedule):
     final_schedule = {}
     days_in_schedule = len(list(set(daily_schedule_building['DAY'])))
 
     mu_v = [0.18, 0.33, 0.54, 0.67, 0.82, 1.22, 1.50, 3.0, 5.67]
     len_mu_v = len(mu_v)
-    stochaistic_schedule=True
 
     # SCHEDULE FOR PEOPLE OCCUPANCY
     for variable, schedule_type in VARIABLE_CEA_SCHEDULE_RELATION.items():
@@ -103,7 +102,7 @@ def calc_deterministic_schedules(locator,
             if internal_loads_building[variable] > 0.0:
                 yearly_array = get_yearly_vectors(date_range, days_in_schedule, array, monthly_multiplier)
 
-                if stochaistic_schedule:
+                if stochastic_schedule:
                     mu = mu_v[int(len_mu_v * random.random())]
                     yearly_array = calc_individual_occupant_schedule(mu, yearly_array)
 
@@ -131,7 +130,7 @@ def calc_deterministic_schedules(locator,
                                                   array,
                                                   monthly_multiplier,
                                                   normalize_first_daily_profile=True)
-                if stochaistic_schedule:
+                if stochastic_schedule:
                     mu = mu_v[int(len_mu_v * random.random())]
                     yearly_array = calc_individual_occupant_schedule(mu, yearly_array)
 
@@ -146,7 +145,7 @@ def calc_deterministic_schedules(locator,
                                                   days_in_schedule,
                                                   array,
                                                   monthly_multiplier)
-                if stochaistic_schedule:
+                if stochastic_schedule:
                     mu = mu_v[int(len_mu_v * random.random())]
                     yearly_array = calc_individual_occupant_schedule(mu, yearly_array)
 
@@ -160,7 +159,7 @@ def calc_deterministic_schedules(locator,
                                                   days_in_schedule,
                                                   array,
                                                   monthly_multiplier)
-                if stochaistic_schedule:
+                if stochastic_schedule:
                     mu = mu_v[int(len_mu_v * random.random())]
                     yearly_array = calc_individual_occupant_schedule(mu, yearly_array)
 
@@ -171,7 +170,7 @@ def calc_deterministic_schedules(locator,
         elif variable in ['Ea_Wm2', 'El_Wm2', 'Ed_Wm2', 'Epro_Wm2', 'Qcre_Wm2', 'Qhpro_Wm2', 'Qcpro_Wm2']:
             yearly_array = get_yearly_vectors(date_range, days_in_schedule, array, monthly_multiplier)
 
-            if stochaistic_schedule:
+            if stochastic_schedule:
                 mu = mu_v[int(len_mu_v * random.random())]
                 yearly_array = calc_individual_occupant_schedule(mu, yearly_array)
 
