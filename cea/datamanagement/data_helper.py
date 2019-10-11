@@ -166,7 +166,7 @@ def data_helper(locator, region, overwrite_technology_folder,
                   'Ths_set_C',
                   'Tcs_setb_C',
                   'Ths_setb_C',
-                  'Ve_lps',
+                  'Ve_lpspax',
                   'rhum_min_pc',
                   'rhum_max_pc']
         prop_comfort_df_merged = names_df.merge(prop_comfort_df, on="Name")
@@ -187,14 +187,14 @@ def data_helper(locator, region, overwrite_technology_folder,
         # write to shapefile
         fields = ['Name',
                   'Occ_m2pax',
-                  'Qs_Wp',
-                  'X_ghp',
+                  'Qs_Wpax',
+                  'X_ghpax',
                   'Ea_Wm2',
                   'El_Wm2',
                   'Ed_Wm2',
                   'Qcre_Wm2',
-                  'Vww_lpd',
-                  'Vw_lpd',
+                  'Vww_lpdpax',
+                  'Vw_lpdpax',
                   'Qhpro_Wm2',
                   'Qcpro_Wm2',
                   'Epro_Wm2']
@@ -456,7 +456,7 @@ def calculate_average_multiuse(fields, properties_df, occupant_densities, list_u
     """
     properties_DB = properties_DB.set_index('Code')
     for column in fields:
-        if column in ['Ve_lps', 'Qs_Wp', 'X_ghp', 'Vww_lpd', 'Vw_lpd']:
+        if column in ['Ve_lpspax', 'Qs_Wpax', 'X_ghpax', 'Vww_lpdpax', 'Vw_lpdpax', 'Occ_m2pax']:
             # some properties are imported from the Excel files as int instead of float
             properties_df[column] = properties_df[column].astype(float)
             for building in properties_df.index:
@@ -473,7 +473,7 @@ def calculate_average_multiuse(fields, properties_df, occupant_densities, list_u
                 else:
                     properties_df.loc[building, column] = 0
 
-        elif column in ['Ea_Wm2', 'El_Wm2', 'Epro_Wm2', 'Qcre_Wm2', 'Ed_Wm2', 'Qhpro_Wm2', 'Qcpro_Wm2', 'Occ_m2pax']:
+        elif column in ['Ea_Wm2', 'El_Wm2', 'Epro_Wm2', 'Qcre_Wm2', 'Ed_Wm2', 'Qhpro_Wm2', 'Qcpro_Wm2']:
             for building in properties_df.index:
                 average = 0.0
                 for use in list_uses:

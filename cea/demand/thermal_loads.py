@@ -387,7 +387,7 @@ def initialize_inputs(bpr, weather_data, locator):
     occupancy_yearly_schedules = pd.read_csv(locator.get_occupancy_model_file(building_name))
 
     tsd['people'] = occupancy_yearly_schedules['people_pax']
-    tsd['ve'] = occupancy_yearly_schedules['Ve_lps']
+    tsd['ve'] = occupancy_yearly_schedules['Ve_lps'] * 3.6 #m3/h
     tsd['Qs'] = occupancy_yearly_schedules['Qs_W']
 
     return occupancy_yearly_schedules, tsd

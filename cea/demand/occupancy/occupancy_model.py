@@ -177,16 +177,34 @@ def calc_deterministic_schedules(locator,
                                                                   days_in_schedule,
                                                                   array,
                                                                   monthly_multiplier=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1])
-        elif variable in ['Vww_lpd', 'Vw_lpd']:
-            yearly_array = get_yearly_vectors(date_range, days_in_schedule, array, monthly_multiplier,
-                                              normalize_first_daily_profile=True)
-            deterministic_schedule[variable] = yearly_array * internal_loads_building[variable] * deterministic_schedule['people_pax']
-        elif variable in ['Ve_lps']:
-            yearly_array = get_yearly_vectors(date_range, days_in_schedule, array, monthly_multiplier)
-            deterministic_schedule[variable] = yearly_array * indoor_comfort_building[variable] * deterministic_schedule['people_pax']
-        elif variable in ['Qs_Wp', 'X_ghp']:
-            yearly_array = get_yearly_vectors(date_range, days_in_schedule, array, monthly_multiplier)
-            deterministic_schedule[variable] = yearly_array * internal_loads_building[variable] * deterministic_schedule['people_pax']
+        elif variable in ['Vww_lpdpax', 'Vw_lpdpax']:
+            if internal_loads_building['Occ_m2pax'] > 0.0:
+                yearly_array = get_yearly_vectors(date_range,
+                                                  days_in_schedule,
+                                                  array,
+                                                  monthly_multiplier,
+                                                  normalize_first_daily_profile=True)
+                deterministic_schedule[variable] = yearly_array * internal_loads_building[variable] * (1 / internal_loads_building['Occ_m2pax']) * prop_geometry_building['Aocc']
+            else:
+                deterministic_schedule[variable] = np.zeros(HOURS_IN_YEAR)
+        elif variable in ['Ve_lpspax', ]:
+            if internal_loads_building['Occ_m2pax'] > 0.0:
+                yearly_array = get_yearly_vectors(date_range,
+                                                  days_in_schedule,
+                                                  array,
+                                                  monthly_multiplier)
+                deterministic_schedule[variable] = yearly_array * indoor_comfort_building[variable] * (1 / internal_loads_building['Occ_m2pax']) * prop_geometry_building['Aocc']
+            else:
+                deterministic_schedule[variable] = np.zeros(HOURS_IN_YEAR)
+        elif variable in ['Qs_Wpax', 'X_ghpax']:
+            if internal_loads_building['Occ_m2pax'] > 0.0:
+                yearly_array = get_yearly_vectors(date_range,
+                                                  days_in_schedule,
+                                                  array,
+                                                  monthly_multiplier)
+                deterministic_schedule[variable] = yearly_array * internal_loads_building[variable] * (1 / internal_loads_building['Occ_m2pax']) * prop_geometry_building['Aocc']
+            else:
+                deterministic_schedule[variable] = np.zeros(HOURS_IN_YEAR)
         elif variable in ['Ea_Wm2', 'El_Wm2', 'Ed_Wm2', 'Epro_Wm2', 'Qcre_Wm2', 'Qhpro_Wm2', 'Qcpro_Wm2']:
             yearly_array = get_yearly_vectors(date_range, days_in_schedule, array, monthly_multiplier)
             deterministic_schedule[variable] = yearly_array * internal_loads_building[variable] * prop_geometry_building['Aef']
@@ -196,11 +214,11 @@ def calc_deterministic_schedules(locator,
         'Ths_set_C': deterministic_schedule['Ths_set_C'],
         'Tcs_set_C': deterministic_schedule['Tcs_set_C'],
         'people_pax': deterministic_schedule['people_pax'],
-        'Ve_lps': deterministic_schedule['Ve_lps'],
-        'Qs_W': deterministic_schedule['Qs_Wp'],
-        'X_gh': deterministic_schedule['X_ghp'],
-        'Vww_l': deterministic_schedule['Vww_lpd'],
-        'Vw_l': deterministic_schedule['Vw_lpd'],
+        'Ve_lps': deterministic_schedule['Ve_lpspax'],
+        'Qs_W': deterministic_schedule['Qs_Wpax'],
+        'X_gh': deterministic_schedule['X_ghpax'],
+        'Vww_lph': deterministic_schedule['Vww_lpdpax'],
+        'Vw_lph': deterministic_schedule['Vw_lpdpax'],
         'Ea_W': deterministic_schedule['Ea_Wm2'],
         'El_W': deterministic_schedule['El_Wm2'],
         'Ed_W': deterministic_schedule['Ed_Wm2'],

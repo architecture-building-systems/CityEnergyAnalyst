@@ -205,7 +205,7 @@ def calc_m_ve_required(bpr, tsd):
     :return: updates tsd
     """
 
-    m_ve_required_people = (tsd['ve']) * physics.calc_rho_air(tsd['T_ext'][:]) * 0.001  # kg/s
+    m_ve_required_people = (tsd['ve']/3.6) * physics.calc_rho_air(tsd['T_ext'][:]) * 0.001  # kg/s
 
     if control_heating_cooling_systems.has_3for2_cooling_system(bpr) \
             or control_heating_cooling_systems.has_central_ac_cooling_system(bpr):

@@ -112,7 +112,7 @@ def calc_Eaux(tsd):
 
 
 def calc_Eaux_fw(tsd, bpr, schedules):
-    tsd['vfw_m3perh'] = schedules['Vw_l'] / 1000  # m3/h
+    tsd['vfw_m3perh'] = schedules['Vw_lph'] / 1000  # m3/h
 
     nf_ag = bpr.geometry['floors_ag']
     if nf_ag > 5:  # up to 5th floor no pumping needs
