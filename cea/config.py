@@ -188,8 +188,8 @@ class Configuration(object):
         :param config: Configuration file.
         :return number_of_processes: Number of processes to use.
         """
-        import multiprocessing
         if self.multiprocessing:
+            import multiprocessing
             number_of_processes = multiprocessing.cpu_count() - self.number_of_CPUs_to_keep_free
             return max(1, number_of_processes)  # ensure that at least one process is being used
         else:
