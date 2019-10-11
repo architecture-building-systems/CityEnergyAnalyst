@@ -5,7 +5,6 @@ Photovoltaic thermal panels
 from __future__ import division
 from __future__ import print_function
 
-import sys
 import os
 import time
 from math import *
@@ -28,7 +27,7 @@ from cea.utilities import epwreader
 from cea.utilities import solar_equations
 from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile
 from cea.constants import HOURS_IN_YEAR
-from cea.utilities.workerstream import stream_from_queue
+import cea.utilities.parallel
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -38,23 +37,6 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
-
-
-def calc_PVT_wrapper(args):
-    """Wrap calc_PVT to accept a tuple of args because multiprocessing.Pool.map only accepts one argument for the
-    function"""
-    return calc_PVT(*args)
-
-def calc_PVT_mp_wrapper(args):
-    """Wrap calc_PVT to accept a tuple of args because multiprocessing.Pool.map only accepts one argument for the
-    function - expects the first argument to be a multiprocessing.Queue() which is used to write stdout and stderr to"""
-    queue, args = args[0], args[1:]
-
-    # set up printing to stderr and stdout to go through the queue
-    sys.stdout = cea.utilities.workerstream.QueueWorkerStream('stdout', queue)
-    sys.stderr = cea.utilities.workerstream.QueueWorkerStream('stderr', queue)
-
-    return calc_PVT(*args)
 
 
 def calc_PVT(locator, config, latitude, longitude, weather_data, date_local, building_name):
@@ -702,38 +684,14 @@ def main(config):
     date_local = solar_equations.calc_datetime_local_from_weather_file(weather_data, latitude, longitude)
     print('reading weather hourly_results_per_building done.')
 
-    num_buildings = len(building_names)
-    number_of_processes = config.get_number_of_processes()
-    if number_of_processes > 1:
-        print("Using %i CPU's" % number_of_processes)
-        pool = multiprocessing.Pool(number_of_processes)
-        queue = multiprocessing.Manager().Queue()
-        map_result = pool.map_async(calc_PVT_mp_wrapper, izip(repeat(queue, num_buildings),
-                                                              repeat(locator, num_buildings),
-                                                              repeat(config, num_buildings),
-                                                              repeat(latitude, num_buildings),
-                                                              repeat(longitude, num_buildings),
-                                                              repeat(weather_data, num_buildings),
-                                                              repeat(date_local, num_buildings),
-                                                              building_names))
-        while not map_result.ready():
-            stream_from_queue(queue)
-
-        pool.close()
-        pool.join()
-
-        # process the rest of the Queue
-        while not queue.empty():
-            stream_from_queue(queue)
-    else:
-        print("Using single process")
-        map(calc_PVT_wrapper, izip(repeat(locator, num_buildings),
-                                   repeat(config, num_buildings),
-                                   repeat(latitude, num_buildings),
-                                   repeat(longitude, num_buildings),
-                                   repeat(weather_data, num_buildings),
-                                   repeat(date_local, num_buildings),
-                                   building_names))
+    n = len(building_names)
+    cea.utilities.parallel.vectorize(calc_PVT, config.get_number_of_processes())(repeat(locator, n),
+                                                                                 repeat(config, n),
+                                                                                 repeat(latitude, n),
+                                                                                 repeat(longitude, n),
+                                                                                 repeat(weather_data, n),
+                                                                                 repeat(date_local, n),
+                                                                                 building_names)
 
     # aggregate results from all buildings
     aggregated_annual_results = {}
