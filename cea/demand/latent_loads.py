@@ -403,7 +403,8 @@ def calc_Qgain_lat(tsd, schedules):
     KG_PER_GRAM = 0.001
     HOURS_PER_SEC = 1 / 3600
 
-    tsd['w_int'] = schedules['X_gh'] * KG_PER_GRAM * H_WE # kg/s
-    tsd['Q_gain_lat_peop'] = schedules['X_gh'] * KG_PER_GRAM * H_WE * HOURS_PER_SEC  # (J/s = W)
+
+    tsd['w_int'] = schedules['X_gh'] * KG_PER_GRAM * HOURS_PER_SEC # kg/s
+    tsd['Q_gain_lat_peop'] = tsd['w_int'] * H_WE # (J/s = W)
 
     return tsd
