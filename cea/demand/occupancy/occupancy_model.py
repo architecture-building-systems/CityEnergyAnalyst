@@ -154,6 +154,17 @@ def calc_deterministic_schedules(locator,
                                  prop_geometry_building):
     deterministic_schedule = {}
     days_in_schedule = len(list(set(daily_schedule_building['DAY'])))
+
+    #SCHEDULE FOR PEOPLE OCCUPANCY
+    if internal_loads_building['Occ_m2pax'] > 0.0:
+        variable = 'Occ_m2pax'
+        array = daily_schedule_building[variable]
+        yearly_array = get_yearly_vectors(date_range, days_in_schedule, array, monthly_multiplier)
+        deterministic_schedule['people_pax'] = np.floor(yearly_array * (1 / internal_loads_building[variable]) * prop_geometry_building['Aocc'])
+    else:
+        deterministic_schedule['people_pax'] = np.zeros(HOURS_IN_YEAR)
+
+    #SCHEDULE FOR ALL VARIABLES BUT PEOPLE SCHEDULE
     for variable, array in daily_schedule_building.items():
         if variable in ['Ths_set_C', 'Tcs_set_C']:
             array = np.vectorize(convert_schedule_string_to_temperature)(array,
@@ -165,33 +176,26 @@ def calc_deterministic_schedules(locator,
             deterministic_schedule[variable] = get_yearly_vectors(date_range, days_in_schedule, array,
                                                                   monthly_multiplier=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
                                                                                       1])
-        elif variable in ['Occ_m2pax']:
-            yearly_array = get_yearly_vectors(date_range, days_in_schedule, array, monthly_multiplier)
-            deterministic_schedule[variable] = yearly_array * (1 / internal_loads_building[variable]) * \
-                                               prop_geometry_building['Aocc']
+
         elif variable in ['Vww_lpd', 'Vw_lpd']:
             yearly_array = get_yearly_vectors(date_range, days_in_schedule, array, monthly_multiplier,
                                               normalize_first_daily_profile=True)
-            deterministic_schedule[variable] = yearly_array * internal_loads_building[variable] * \
-                                               prop_geometry_building['Aocc'] * 1 / internal_loads_building['Occ_m2pax']
+            deterministic_schedule[variable] = yearly_array * internal_loads_building[variable] * deterministic_schedule['people_pax']
         elif variable in ['Ve_lps']:
             yearly_array = get_yearly_vectors(date_range, days_in_schedule, array, monthly_multiplier)
-            deterministic_schedule[variable] = yearly_array * indoor_comfort_building[variable] * \
-                                               prop_geometry_building['Aocc'] * 1 / internal_loads_building['Occ_m2pax']
+            deterministic_schedule[variable] = yearly_array * indoor_comfort_building[variable] * deterministic_schedule['people_pax']
         elif variable in ['Qs_Wp', 'X_ghp']:
             yearly_array = get_yearly_vectors(date_range, days_in_schedule, array, monthly_multiplier)
-            deterministic_schedule[variable] = yearly_array * internal_loads_building[variable] * \
-                                               prop_geometry_building['Aocc'] * 1 / internal_loads_building['Occ_m2pax']
+            deterministic_schedule[variable] = yearly_array * internal_loads_building[variable] * deterministic_schedule['people_pax']
         elif variable in ['Ea_Wm2', 'El_Wm2', 'Ed_Wm2', 'Epro_Wm2', 'Qcre_Wm2', 'Qhpro_Wm2', 'Qcpro_Wm2']:
             yearly_array = get_yearly_vectors(date_range, days_in_schedule, array, monthly_multiplier)
-            deterministic_schedule[variable] = yearly_array * internal_loads_building[variable] * \
-                                               prop_geometry_building['Aef']
+            deterministic_schedule[variable] = yearly_array * internal_loads_building[variable] * prop_geometry_building['Aef']
 
     final_dict = {
         'DATE': date_range,
         'Ths_set_C': deterministic_schedule['Ths_set_C'],
         'Tcs_set_C': deterministic_schedule['Tcs_set_C'],
-        'people_pax': np.floor(deterministic_schedule['Occ_m2pax']),
+        'people_pax': deterministic_schedule['people_pax'],
         'Ve_lps': deterministic_schedule['Ve_lps'],
         'Qs_W': deterministic_schedule['Qs_Wp'],
         'X_gh': deterministic_schedule['X_ghp'],
@@ -207,7 +211,7 @@ def calc_deterministic_schedules(locator,
     }
 
     yearly_deterministic_schedule = pd.DataFrame(final_dict)
-    yearly_deterministic_schedule.to_csv(locator.get_occupancy_model_file(building))
+    yearly_deterministic_schedule.to_csv(locator.get_occupancy_model_file(building), index=False, na_rep='OFF')
 
 
 def convert_schedule_string_to_temperature(schedule_string, schedule_type, Ths_set_C, Ths_setb_C, Tcs_set_C,
@@ -652,55 +656,12 @@ def save_schedules_to_file(locator, building_schedules, building_name):
     print("Please copy (custom) schedules to inputs/building-properties to use them in the next run.")
 
 
-def get_building_schedules(locator, bpr, date_range, config):
-    """
-    Gets building schedules either from (user-defined) csv files or from creates them from the archetypes database.
-    Schedules that are created, are saved to disc.
-    This is the main function of this script.
-    It includes two functions that were previously called in demand_main and in thermal_loads:
-    - schedule_maker: it was reading the archetyp schedules database and other archetypal values
-    - calc_schedules: it was creating schedules of mixed use buildings from the archetype schedules
-    :param locator: the input locator
-    :type locator: cea.inputlocator.InputLocator
-    :param bpr: the building properties object
-    :type bpr: cea.demand.building_properties.BuildingPropertiesRow
-    :param date_range: the data range for the year of th calculation
-    :type: pd.data_range
-    :param config: the configuration
-    :type config: cea.config.Configuration
-    :return: building_schedules, a dict containing the building schedules in form of np.array with 8760 elements
-    :rtype: dict
-    """
-
-    # get the building name
-    building_name = bpr.name
-
-    # first the script checks if pre-defined schedules for the building exist
-
-    if os.path.isfile(locator.get_building_schedules(building_name)):
-        print("Schedules for building {} detected. Using these schedules.".format(building_name))
-        building_schedules = read_schedules_from_file(locator.get_building_schedules(building_name))
-    else:
-        print(
-            "No schedules detected for building {}. Creating schedules from archetypes database".format(building_name))
-        # get list of uses in building
-        list_uses = [key for (key, value) in bpr.occupancy.items() if value > 0.0]
-        # get occupancy schedule config
-        stochastic_occupancy = config.demand.use_stochastic_occupancy
-        # read archetypes database
-        archetype_schedules, archetype_values = schedule_maker(date_range, locator, list_uses)
-        # calculate mixed-use building schedules
-        building_schedules = occupancy_main(list_uses, archetype_schedules, bpr, archetype_values, stochastic_occupancy)
-        # write the building schedules to disc for the next simulation or manipulation by the user
-        save_schedules_to_file(locator, building_schedules, building_name)
-
-    return building_schedules
-
-
 def main(config):
+    assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
+    print('Running occupancy model for scenario %s' % config.scenario)
+    print('Running occupancy model  with occupancy model=%s' % config.occupancy.occupancy_model)
     locator = cea.inputlocator.InputLocator(config.scenario)
     occupancy_main(locator, config)
-
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
