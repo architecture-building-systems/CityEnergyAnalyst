@@ -102,8 +102,7 @@ def calc_deterministic_schedules(locator,
                 yearly_array = get_yearly_vectors(date_range, days_in_schedule, array, monthly_multiplier)
 
                 if stochastic_schedule:
-                    mu = random.random(0,0.5)
-                    yearly_array = calc_individual_occupant_schedule(mu, yearly_array)
+                    yearly_array = calc_individual_occupant_schedule(yearly_array)
 
                 final_schedule['Occ_m2pax'] = (np.floor(yearly_array *
                                                         (1 / internal_loads_building[variable]) *
@@ -130,8 +129,7 @@ def calc_deterministic_schedules(locator,
                                                   monthly_multiplier,
                                                   normalize_first_daily_profile=True)
                 if stochastic_schedule:
-                    mu = random.random(0,0.5)
-                    yearly_array = calc_individual_occupant_schedule(mu, yearly_array)
+                    calc_individual_occupant_schedule(yearly_array)
 
                 final_schedule[variable] = yearly_array * internal_loads_building[variable] * (
                         1 / internal_loads_building['Occ_m2pax']) * prop_geometry_building['Aocc']
@@ -144,8 +142,7 @@ def calc_deterministic_schedules(locator,
                                                   array,
                                                   monthly_multiplier)
                 if stochastic_schedule:
-                    mu = random.random(0,0.5)
-                    yearly_array = calc_individual_occupant_schedule(mu, yearly_array)
+                    calc_individual_occupant_schedule(yearly_array)
 
                 final_schedule[variable] = yearly_array * indoor_comfort_building[variable] * (
                         1 / internal_loads_building['Occ_m2pax']) * prop_geometry_building['Aocc']
@@ -158,8 +155,7 @@ def calc_deterministic_schedules(locator,
                                                   array,
                                                   monthly_multiplier)
                 if stochastic_schedule:
-                    mu = random.random(0,0.5)
-                    yearly_array = calc_individual_occupant_schedule(mu, yearly_array)
+                    calc_individual_occupant_schedule(yearly_array)
 
                 final_schedule[variable] = yearly_array * internal_loads_building[variable] * (
                         1 / internal_loads_building['Occ_m2pax']) * prop_geometry_building['Aocc']
@@ -170,8 +166,7 @@ def calc_deterministic_schedules(locator,
                 yearly_array = get_yearly_vectors(date_range, days_in_schedule, array, monthly_multiplier)
 
                 if stochastic_schedule:
-                    mu = random.random(0,0.5)
-                    yearly_array = calc_individual_occupant_schedule(mu, yearly_array)
+                    calc_individual_occupant_schedule(yearly_array)
 
                 final_schedule[variable] = yearly_array * internal_loads_building[variable] * \
                                            prop_geometry_building['Aef']
@@ -346,7 +341,7 @@ def calc_stochastic_schedules(archetype_schedules, archetype_values, bpr, list_u
     return schedules
 
 
-def calc_individual_occupant_schedule(mu, archetype_schedule):
+def calc_individual_occupant_schedule(archetype_schedule):
     """
     Calculates the stochastic occupancy pattern for an individual based on Page et al. (2007).
 
@@ -358,7 +353,7 @@ def calc_individual_occupant_schedule(mu, archetype_schedule):
     :return pattern: yearly occupancy pattern for a given occupant in a given occupancy type
     :rtype pattern: list[int]
     """
-
+    mu = random.random(0, 0.5)
     # assign initial state: assume equal to the archetypal occupancy schedule at t = 0
     state = archetype_schedule[0]
 
