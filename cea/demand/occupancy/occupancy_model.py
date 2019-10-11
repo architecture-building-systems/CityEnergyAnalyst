@@ -12,10 +12,10 @@ import cea.inputlocator
 from cea.constants import HOURS_IN_YEAR
 from cea.datamanagement.schedule_helper import read_cea_schedule
 from cea.demand.building_properties import calc_useful_areas
+from cea.demand.constants import VARIABLE_CEA_SCHEDULE_RELATION
 from cea.utilities import epwreader
 from cea.utilities.date import get_dates_from_year
 from cea.utilities.dbf import dbf_to_dataframe
-from cea.demand.constants import VARIABLE_CEA_SCHEDULE_RELATION
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -25,7 +25,6 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
-
 
 
 def occupancy_main(locator, config):
@@ -103,12 +102,12 @@ def calc_deterministic_schedules(locator,
                 yearly_array = get_yearly_vectors(date_range, days_in_schedule, array, monthly_multiplier)
 
                 if stochastic_schedule:
-                    mu = mu_v[int(len_mu_v * random.random())]
+                    mu = random.random(0,0.5)
                     yearly_array = calc_individual_occupant_schedule(mu, yearly_array)
 
                 final_schedule['Occ_m2pax'] = (np.floor(yearly_array *
-                                                                 (1 / internal_loads_building[variable]) *
-                                                                 prop_geometry_building['Aocc']))
+                                                        (1 / internal_loads_building[variable]) *
+                                                        prop_geometry_building['Aocc']))
             else:
                 final_schedule['Occ_m2pax'] = np.zeros(HOURS_IN_YEAR)
         elif variable in ['Ths_set_C', 'Tcs_set_C']:
@@ -119,10 +118,10 @@ def calc_deterministic_schedules(locator,
                                                                          indoor_comfort_building['Tcs_set_C'],
                                                                          indoor_comfort_building['Tcs_setb_C'])
             final_schedule[variable] = get_yearly_vectors(date_range,
-                                                                  days_in_schedule,
-                                                                  array,
-                                                                  monthly_multiplier=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                                                                                      1])
+                                                          days_in_schedule,
+                                                          array,
+                                                          monthly_multiplier=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                                                                              1])
         elif variable in ['Vww_lpdpax', 'Vw_lpdpax']:
             if internal_loads_building[variable] > 0.0:
                 yearly_array = get_yearly_vectors(date_range,
@@ -131,12 +130,11 @@ def calc_deterministic_schedules(locator,
                                                   monthly_multiplier,
                                                   normalize_first_daily_profile=True)
                 if stochastic_schedule:
-                    mu = mu_v[int(len_mu_v * random.random())]
+                    mu = random.random(0,0.5)
                     yearly_array = calc_individual_occupant_schedule(mu, yearly_array)
 
-
                 final_schedule[variable] = yearly_array * internal_loads_building[variable] * (
-                            1 / internal_loads_building['Occ_m2pax']) * prop_geometry_building['Aocc']
+                        1 / internal_loads_building['Occ_m2pax']) * prop_geometry_building['Aocc']
             else:
                 final_schedule[variable] = np.zeros(HOURS_IN_YEAR)
         elif variable in ['Ve_lpspax']:
@@ -146,11 +144,11 @@ def calc_deterministic_schedules(locator,
                                                   array,
                                                   monthly_multiplier)
                 if stochastic_schedule:
-                    mu = mu_v[int(len_mu_v * random.random())]
+                    mu = random.random(0,0.5)
                     yearly_array = calc_individual_occupant_schedule(mu, yearly_array)
 
                 final_schedule[variable] = yearly_array * indoor_comfort_building[variable] * (
-                            1 / internal_loads_building['Occ_m2pax']) * prop_geometry_building['Aocc']
+                        1 / internal_loads_building['Occ_m2pax']) * prop_geometry_building['Aocc']
             else:
                 final_schedule[variable] = np.zeros(HOURS_IN_YEAR)
         elif variable in ['Qs_Wpax', 'X_ghpax']:
@@ -160,23 +158,25 @@ def calc_deterministic_schedules(locator,
                                                   array,
                                                   monthly_multiplier)
                 if stochastic_schedule:
-                    mu = mu_v[int(len_mu_v * random.random())]
+                    mu = random.random(0,0.5)
                     yearly_array = calc_individual_occupant_schedule(mu, yearly_array)
 
                 final_schedule[variable] = yearly_array * internal_loads_building[variable] * (
-                            1 / internal_loads_building['Occ_m2pax']) * prop_geometry_building['Aocc']
+                        1 / internal_loads_building['Occ_m2pax']) * prop_geometry_building['Aocc']
             else:
                 final_schedule[variable] = np.zeros(HOURS_IN_YEAR)
         elif variable in ['Ea_Wm2', 'El_Wm2', 'Ed_Wm2', 'Epro_Wm2', 'Qcre_Wm2', 'Qhpro_Wm2', 'Qcpro_Wm2']:
-            yearly_array = get_yearly_vectors(date_range, days_in_schedule, array, monthly_multiplier)
+            if internal_loads_building[variable] > 0.0:
+                yearly_array = get_yearly_vectors(date_range, days_in_schedule, array, monthly_multiplier)
 
-            if stochastic_schedule:
-                mu = mu_v[int(len_mu_v * random.random())]
-                yearly_array = calc_individual_occupant_schedule(mu, yearly_array)
+                if stochastic_schedule:
+                    mu = random.random(0,0.5)
+                    yearly_array = calc_individual_occupant_schedule(mu, yearly_array)
 
-            final_schedule[variable] = yearly_array * internal_loads_building[variable] * \
-                                               prop_geometry_building['Aef']
-
+                final_schedule[variable] = yearly_array * internal_loads_building[variable] * \
+                                           prop_geometry_building['Aef']
+            else:
+                final_schedule[variable] = np.zeros(HOURS_IN_YEAR)
 
     final_dict = {
         'DATE': date_range,
@@ -199,7 +199,7 @@ def calc_deterministic_schedules(locator,
 
     yearly_occupancy_schedules = pd.DataFrame(final_dict)
     yearly_occupancy_schedules.to_csv(locator.get_occupancy_model_file(building), index=False, na_rep='OFF',
-                                         float_format='%.3f')
+                                      float_format='%.3f')
 
 
 def convert_schedule_string_to_temperature(schedule_string, schedule_type, Ths_set_C, Ths_setb_C, Tcs_set_C,
@@ -286,7 +286,8 @@ def calc_stochastic_schedules(archetype_schedules, archetype_values, bpr, list_u
         current_share_of_use = bpr.occupancy[list_uses[num]]
         current_stochastic_schedule = np.zeros(HOURS_IN_YEAR)
         if current_share_of_use > 0:
-            occupants_in_current_use = int(archetype_values['people'][num] * current_share_of_use * bpr.rc_model['Aocc'])
+            occupants_in_current_use = int(
+                archetype_values['people'][num] * current_share_of_use * bpr.rc_model['Aocc'])
             archetype_schedule = archetype_schedules[num]['people']
             for occupant in range(occupants_in_current_use):
                 mu = mu_v[int(len_mu_v * random.random())]
