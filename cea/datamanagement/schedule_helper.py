@@ -77,11 +77,10 @@ def calc_mixed_schedule(locator,
 
                         normalizing_value += share_time_occupancy_density
                         current_schedule = np.vectorize(calc_average)(current_schedule,
-                                                                      schedule_data_all_uses.schedule_data[use][
-                                                                          schedule_type],
+                                                                      schedule_data_all_uses.schedule_data[use][schedule_type],
                                                                       share_time_occupancy_density)
-                if normalizing_value == 0:
-                    schedule_new_data[variable] = current_schedule * 0
+                if normalizing_value == 0.0:
+                    schedule_new_data[variable] = current_schedule * 0.0
                 else:
                     schedule_new_data[variable] = current_schedule / normalizing_value
 
