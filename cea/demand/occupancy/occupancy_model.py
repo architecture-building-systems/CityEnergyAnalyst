@@ -165,17 +165,19 @@ def calc_schedules(locator,
     variable = 'Ea_Wm2'
     if internal_loads_building[variable] > 0.0:
         array = daily_schedule_building[VARIABLE_CEA_SCHEDULE_RELATION[variable]]
+        # base load is independent of occupants
+        base_load = np.min(array)
+        occupant_load = array - base_load
         # adjust the demand for appliances based on the number of occupants
         if stochastic_schedule:
-            # base load is independent of occupants
-            base_load = np.min(array)
-            occupant_load = array - base_load
             # get yearly array for occupant-related loads
             yearly_array = get_yearly_vectors(date_range, days_in_schedule, occupant_load, monthly_multiplier)
             # adjust the yearly array based on the number of occupants produced by the stochastic occupancy model
             deterministic_occupancy_array = np.round(
-                get_yearly_vectors(date_range, days_in_schedule, array, monthly_multiplier) * 1 /
-                internal_loads_building['Occ_m2pax'] * prop_geometry_building['Aocc'])
+                get_yearly_vectors(date_range, days_in_schedule,
+                                   daily_schedule_building[VARIABLE_CEA_SCHEDULE_RELATION['Occ_m2pax']],
+                                   monthly_multiplier) * 1 / internal_loads_building['Occ_m2pax'] *
+                prop_geometry_building['Aocc'])
             adjusted_array = yearly_array * final_schedule['Occ_m2pax'] / deterministic_occupancy_array
             # nan values correspond to time steps where both occupant schedules are 0
             adjusted_array[np.isnan(adjusted_array)] = 0.0
@@ -189,7 +191,8 @@ def calc_schedules(locator,
             final_schedule[variable] = (adjusted_array + base_load) * internal_loads_building[variable] * \
                                        prop_geometry_building['Aef']
         else:
-            yearly_array = get_yearly_vectors(date_range, days_in_schedule, array, monthly_multiplier)
+            yearly_array = get_yearly_vectors(date_range, days_in_schedule, occupant_load,
+                                              monthly_multiplier) + base_load
             final_schedule[variable] = yearly_array * internal_loads_building[variable] * \
                                        prop_geometry_building['Aef']
     else:
