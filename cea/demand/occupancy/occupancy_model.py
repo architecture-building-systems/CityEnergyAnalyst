@@ -200,9 +200,12 @@ def calc_schedules(locator,
 
     # LIGHTING ELECTRICITY SCHEDULE
     variable = 'El_Wm2'
-    # this schedule is assumed to be independent of occupant presence
     array = daily_schedule_building[VARIABLE_CEA_SCHEDULE_RELATION[variable]]
-    yearly_array = get_yearly_vectors(date_range, days_in_schedule, array, monthly_multiplier)
+    # base load is independent of monthly variations
+    base_load = np.min(array)
+    occupant_load = array - base_load
+    # this schedule is assumed to be independent of occupant presence
+    yearly_array = get_yearly_vectors(date_range, days_in_schedule, occupant_load, monthly_multiplier) + base_load
     final_schedule[variable] = yearly_array * internal_loads_building[variable] * prop_geometry_building['Aef']
 
     # LIGHTING AND PROCESS ENERGY DEMAND SCHEDULES
