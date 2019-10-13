@@ -153,7 +153,6 @@ def calc_schedules(locator,
                                               monthly_multiplier,
                                               normalize_first_daily_profile=True)
             if stochastic_schedule:
-            #     yearly_array = calc_individual_occupant_schedule(yearly_array)
             # TODO: define how stochastic occupancy affects water schedules
             # currently MULTI_RES water schedules include water consumption at times of zero occupancy
                 final_schedule[variable] = yearly_array * internal_loads_building[variable] * number_of_occupants
@@ -289,116 +288,14 @@ def convert_schedule_string_to_temperature(schedule_string, schedule_type, Ths_s
     return schedule_float
 
 
-def calc_stochastic_schedules(archetype_schedules, archetype_values, bpr, list_uses, people_per_square_meter):
+def calc_individual_occupant_schedule(deterministic_schedule):
     """
-    Calculate the profile of random occupancy for each occupant in each type of use in the building. Each profile is
-    calculated individually with a randomly-selected mobility parameter mu.
+    Calculates the stochastic occupancy pattern for an individual based on Page et al. (2008). The parameter of mobility
+    is assumed to be a uniformly-distributed random number between 0 and 0.5 based on the range of values presented in
+    the aforementioned paper.
 
-    For each use in the building, occupant presence at each time t is calculated based on the stochastic occupancy model
-    by Page et al. (2008). Occupant presence is modeled based on the probability of occupant presence at the current and
-    next time step as given by the occupant schedules used in the deterministic model. The mobility parameter for each
-    occupant is selected at random from the vector of mobility parameters assumed by Sandoval et al. (2017). Based on
-    the type of activity and occupant presence, the
-
-    :param archetype_schedules: defined in calc_schedules
-    :param archetype_values: defined in calc_schedules
-    :param list_uses: defined in calc_schedules
-    :param bpr: defined in calc_schedules
-    :param people_per_square_meter: defined in calc_schedules
-
-    :return schedules: dict containing the stochastic schedules for occupancy, humidity gains, ventilation and heat
-        gains due to occupants for a given building with single or mixed uses
-    :rtype schedules: dict
-
-    .. [Page, J., et al., 2008] Page, J., et al. A generalised stochastic model for the simulation of occupant presence.
-        Energy and Buildings, Vol. 40, No. 2, 2008, pp 83-98.
-    .. [Sandoval, D., et al., 2017] Sandoval, D., et al. How low exergy buildings and distributed electricity storage
-        can contribute to flexibility within the demand side. Applied Energy, Vol. 187, No. 1, 2017, pp. 116-127.
-    """
-
-    # start empty schedules
-    schedules = {}
-    normalizing_values = {}
-    for schedule in ['people'] + OCCUPANT_SCHEDULES + ELECTRICITY_SCHEDULES + WATER_SCHEDULES + PROCESS_SCHEDULES:
-        schedules[schedule] = np.zeros(HOURS_IN_YEAR)
-        normalizing_values[schedule] = 0.0
-
-    # vector of mobility parameters
-    mu_v = [0.18, 0.33, 0.54, 0.67, 0.82, 1.22, 1.50, 3.0, 5.67]
-    len_mu_v = len(mu_v)
-
-    for num in range(len(list_uses)):
-        current_share_of_use = bpr.occupancy[list_uses[num]]
-        current_stochastic_schedule = np.zeros(HOURS_IN_YEAR)
-        if current_share_of_use > 0:
-            occupants_in_current_use = int(
-                archetype_values['people'][num] * current_share_of_use * bpr.rc_model['Aocc'])
-            archetype_schedule = archetype_schedules[num]['people']
-            for occupant in range(occupants_in_current_use):
-                mu = mu_v[int(len_mu_v * random.random())]
-                occupant_pattern = calc_individual_occupant_schedule(mu, archetype_schedule)
-                current_stochastic_schedule += occupant_pattern
-                schedules['people'] += occupant_pattern
-                for label in OCCUPANT_SCHEDULES:
-                    schedules[label] = np.vectorize(calc_average)(schedules[label], occupant_pattern,
-                                                                  archetype_values[label][num])
-
-            for label in OCCUPANT_SCHEDULES:
-                current_archetype_values = archetype_values[label]
-                if current_archetype_values[num] != 0:  # do not consider when the value is 0
-                    normalizing_values[label] += current_archetype_values[num] * archetype_values['people'][num] * \
-                                                 current_share_of_use / people_per_square_meter
-
-            # for all other schedules, the database schedule is normalized by the schedule for people and then 
-            # multiplied by the number of people from the stochastic calculation
-            if occupants_in_current_use > 0:
-                current_stochastic_schedule /= occupants_in_current_use
-            unoccupied_times = np.array([i == 0 for i in archetype_schedules[num][SCHEDULE_CODE_MAP[label]]])
-            normalized_schedule = make_normalized_stochastic_schedule(current_stochastic_schedule,
-                                                                      archetype_schedules[num][
-                                                                          SCHEDULE_CODE_MAP[label]],
-                                                                      unoccupied_times)
-            # since electricity demand is != 0 when the number of occupants is 0,
-            # share_time_occupancy_density = 1 if there are no occupants and equal to the normalized schedule otherwise
-            share_time_occupancy_density = unoccupied_times + (1 - unoccupied_times) * normalized_schedule
-
-            # calculate remaining schedules
-            for label in ELECTRICITY_SCHEDULES:
-                if archetype_values[label][num] != 0:
-                    normalizing_values[label], schedules[label] = calc_remaining_schedules_stochastic(
-                        normalizing_values[label], archetype_values[label][num], current_share_of_use,
-                        bpr.rc_model['Aef'], schedules[label], archetype_schedules[num][SCHEDULE_CODE_MAP[label]],
-                        share_time_occupancy_density)
-            for label in WATER_SCHEDULES:
-                if archetype_values[label][num] != 0:
-                    normalizing_values[label], schedules[label] = calc_remaining_schedules_stochastic(
-                        normalizing_values[label], archetype_values[label][num], current_share_of_use,
-                        bpr.rc_model['Aocc'], schedules[label], archetype_schedules[num][SCHEDULE_CODE_MAP[label]],
-                        share_time_occupancy_density * archetype_values['people'][num])
-            for label in PROCESS_SCHEDULES:
-                if archetype_values[label][num] != 0:
-                    normalizing_values[label], schedules[label] = calc_remaining_schedules_stochastic(
-                        normalizing_values[label], archetype_values[label][num], current_share_of_use,
-                        bpr.rc_model['Aef'], schedules[label], archetype_schedules[num][SCHEDULE_CODE_MAP[label]],
-                        share_time_occupancy_density)
-
-    for label in OCCUPANT_SCHEDULES + ELECTRICITY_SCHEDULES + PROCESS_SCHEDULES + WATER_SCHEDULES:
-        if normalizing_values[label] == 0:
-            schedules[label] = np.zeros(HOURS_IN_YEAR)
-        else:
-            schedules[label] /= normalizing_values[label]
-
-    return schedules
-
-
-def calc_individual_occupant_schedule(archetype_schedule):
-    """
-    Calculates the stochastic occupancy pattern for an individual based on Page et al. (2007).
-
-    :param mu: parameter of mobility
-    :type mu: float
-    :param archetype_schedule: schedule of occupancy for the corresponding archetype
-    :type archetype_schedule: list[float]
+    :param deterministic_schedule: deterministic schedule of occupancy provided in the user inputs
+    :type deterministic_schedule: array(float)
 
     :return pattern: yearly occupancy pattern for a given occupant in a given occupancy type
     :rtype pattern: list[int]
@@ -408,7 +305,7 @@ def calc_individual_occupant_schedule(archetype_schedule):
     mu = random.uniform(0, 0.5)
 
     # assign initial state by comparing a random number to the deterministic schedule's probability of occupant presence at t = 0
-    if random.random() <= archetype_schedule[0]:
+    if random.random() <= deterministic_schedule[0]:
         state = 1
     else:
         state = 0
@@ -417,10 +314,10 @@ def calc_individual_occupant_schedule(archetype_schedule):
     pattern = [state]
 
     # calculate probability of presence for each hour of the year
-    for i in range(len(archetype_schedule[:-1])):
+    for i in range(len(deterministic_schedule[:-1])):
         # get probability of presence at t and t+1 from archetypal schedule
-        p_0 = archetype_schedule[i]
-        p_1 = archetype_schedule[i + 1]
+        p_0 = deterministic_schedule[i]
+        p_1 = deterministic_schedule[i + 1]
         # calculate probability of transition from absence to presence (T01) and from presence to presence (T11)
         T01, T11 = calculate_transition_probabilities(mu, p_0, p_1)
 
@@ -437,9 +334,9 @@ def calc_individual_occupant_schedule(archetype_schedule):
 
 def calculate_transition_probabilities(mu, P0, P1):
     """
-    Calculates the transition probabilities at a given time step as defined by Page et al. (2007).
-    These are the probability of arriving (T01) and the probability of staying in (T11) given the parameter of mobility
-    mu, the probability of the present state (P0), and the probability of the next state t+1 (P1).
+    Calculates the transition probabilities at a given time step as defined by Page et al. (2008). These are the
+    probability of arriving (T01) and the probability of staying in (T11) given the parameter of mobility mu, the
+    probability of the present state (P0), and the probability of the next state t+1 (P1).
 
     :param mu: parameter of mobility
     :type mu: float
@@ -456,6 +353,7 @@ def calculate_transition_probabilities(mu, P0, P1):
 
     # Calculate mobility factor fraction from Page et al. equation 5
     m = (mu - 1) / (mu + 1)
+
     # Calculate transition probability of arriving and transition probability of staying
     T01 = (m) * P0 + P1
     if P0 != 0:
@@ -488,60 +386,6 @@ def get_random_presence(p):
 
     return random.choice(population)
 
-
-def calc_remaining_schedules_stochastic(normalizing_value, archetype_value, current_share_of_use, reference_area,
-                                        schedule, archetype_schedule, share_time_occupancy_density):
-    """
-    This script calculates the schedule for electricity, hot water or process energy demand when the stochastic model of
-    occupancy is used. The resulted schedules are normalized so that when multiplied by the user-given normalized demand
-    for the entire building is given, the hourly demand for each of these services at a given time t is calculated.
-
-    For a given demand type X (electricity/hot water/process energy demand) and occupancy type i, each schedule is
-    defined as (sum of schedule[i]*X[i]*share_of_area[i])/(sum of X[i]*share_of_area[i]).
-
-    Unlike calc_remaining_schedules_deterministic, the schedule for each of these services in this case is calculated
-    by multiplying the deterministic schedule for the given service by the normalized stochastic schedule of occupancy.
-
-    :param normalizing_value: normalizing value for the current schedule
-    :param archetype_value: defined in calc_schedules
-    :param current_share_of_use: share of the current use in the total area of the building
-    :param reference_area: area for the calculation of the given service, either 'Aef' or 'Af'
-    :param schedule: current schedule being calculated
-    :param archetype_schedule: archetypal schedule of the current service
-    :param share_time_occupancy_density: normalizing schedule to calculate the effect of stochastic occupancy on the
-        schedule for the current service; equals the number of people according to the stochastic model divided by the
-        number of people according to the deterministic schedule; equals 1 if there are no occupants in the building
-
-    :return normalizing_value: updated normalizing value for the current schedule
-    :return schedule: updated schedule for the current service
-    """
-
-    normalizing_value += archetype_value * current_share_of_use
-    schedule = np.vectorize(calc_average)(schedule, archetype_schedule, (current_share_of_use * reference_area) *
-                                          archetype_value * share_time_occupancy_density)
-
-    return normalizing_value, schedule
-
-
-def make_normalized_stochastic_schedule(stochastic_schedule, deterministic_schedule, unoccupied_times):
-    """
-    Creates a normalized stochastic schedule where for each time t the value is the number of people
-    generated by the stochastic schedule divided by the number of people according to the deterministic
-    schedule. At times when the building is unoccupied, the value is defined as 1 to avoid division errors.
-
-    :param stochastic_schedule: occupant schedule generated by the stochastic model
-    :type stochastic_schedule: ndarray[float]
-    :param deterministic_schedule: occupant schedule generated by the deterministic model
-    :type deterministic_schedule: ndarray[float]
-    :param unoccupied_times: array containing booleans that state whether the building is occupied or not
-    :type unoccupied_times: ndarray[Boolean]
-    :param current_share_of_use: percentage of the building area that corresponds to the current building function
-    :type current_share_of_use: float
-    :return: array containing the normalized stochastic schedule
-    :rtype: ndarray[float]
-    """
-
-    return stochastic_schedule / (unoccupied_times + (1 - unoccupied_times) * deterministic_schedule)
 
 
 def get_yearly_vectors(date_range, days_in_schedule, schedule_array, monthly_multiplier,
@@ -625,13 +469,6 @@ def schedule_maker(dates, locator, list_uses):
                                                             heating_setpoint, cooling_setpoint)
 
     return schedule_data_all_buildings_yearly
-
-
-def calc_average(last, current, share_of_use):
-    """
-    function to calculate the weighted average of schedules
-    """
-    return last + current * share_of_use
 
 
 def read_schedules_from_file(schedules_csv):
