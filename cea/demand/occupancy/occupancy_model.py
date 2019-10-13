@@ -290,9 +290,9 @@ def convert_schedule_string_to_temperature(schedule_string, schedule_type, Ths_s
 
 def calc_individual_occupant_schedule(deterministic_schedule):
     """
-    Calculates the stochastic occupancy pattern for an individual based on Page et al. (2008). The parameter of mobility
-    is assumed to be a uniformly-distributed random number between 0 and 0.5 based on the range of values presented in
-    the aforementioned paper.
+    Calculates the stochastic occupancy pattern for an individual based on Page et al. (2008). The so-called parameter
+    of mobility mu is assumed to be a uniformly-distributed random float between 0 and 0.5 based on the range of values
+    presented in the aforementioned paper.
 
     :param deterministic_schedule: deterministic schedule of occupancy provided in the user inputs
     :type deterministic_schedule: array(float)
