@@ -64,9 +64,9 @@ def calc_mixed_schedule(locator,
     for building in buildings:
         schedule_new_data = {}
         main_use_this_building = building_occupancy_df['mainuse'][building]
-        # TODO: change definition of monthly multiplier
-        monthly_multiplier = schedule_data_all_uses.schedule_complementary_data[main_use_this_building][
-            'MONTHLY_MULTIPLIER']
+        monthly_multiplier = np.sum([np.array(
+            schedule_data_all_uses.schedule_complementary_data[use]['MONTHLY_MULTIPLIER']) * building_occupancy_df.loc[
+                                         building, use] for use in list_uses], axis=0)
         for schedule_type in VARIABLE_CEA_SCHEDULE_RELATION.values():
             current_schedule = np.zeros(len(schedule_data_all_uses.schedule_data['HOTEL'][schedule_type]))
             normalizing_value = 0.0
