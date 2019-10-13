@@ -51,15 +51,15 @@ def read_cea_schedule(path_to_cea_schedule):
 
     schedule_data = pd.read_csv(path_to_cea_schedule, skiprows=2).T
     schedule_data = dict(zip(schedule_data.index, schedule_data.values))
-    schedule_complementray_data = {'METADATA': metadata, 'MONTHLY_MULTIPLIER': monthly_multiplier}
+    schedule_complementary_data = {'METADATA': metadata, 'MONTHLY_MULTIPLIER': monthly_multiplier}
 
-    return schedule_data, schedule_complementray_data
+    return schedule_data, schedule_complementary_data
 
 
-def save_cea_schedule(schedule_data, schedule_complementray_data, path_to_building_schedule):
+def save_cea_schedule(schedule_data, schedule_complementary_data, path_to_building_schedule):
 
-    METADATA = ['METADATA']+list(schedule_complementray_data['METADATA'])
-    MULTIPLIER = ['MONTHLY_MULTIPLIER']+list(schedule_complementray_data['MONTHLY_MULTIPLIER'])
+    METADATA = ['METADATA']+list(schedule_complementary_data['METADATA'])
+    MULTIPLIER = ['MONTHLY_MULTIPLIER']+list(schedule_complementary_data['MONTHLY_MULTIPLIER'])
     COLUMNS_SCHEDULES = schedule_data.keys()
     RECORDS_SCHEDULES = map(list, zip(*schedule_data.values()))
     with open(path_to_building_schedule, "wb") as csvfile:
