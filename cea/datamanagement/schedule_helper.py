@@ -64,7 +64,8 @@ def calc_mixed_schedule(locator,
     for building in buildings:
         schedule_new_data = {}
         main_use_this_building = building_occupancy_df['mainuse'][building]
-        monthly_multiplier = schedule_data_all_uses.schedule_complementray_data[main_use_this_building][
+        # TODO: change definition of monthly multiplier
+        monthly_multiplier = schedule_data_all_uses.schedule_complementary_data[main_use_this_building][
             'MONTHLY_MULTIPLIER']
         for schedule_type in VARIABLE_CEA_SCHEDULE_RELATION.values():
             current_schedule = np.zeros(len(schedule_data_all_uses.schedule_data['HOTEL'][schedule_type]))
@@ -142,11 +143,11 @@ def calc_mixed_schedule(locator,
         schedule_new_data.update(HOUR)
 
         # calcualate complementary_data
-        schedule_complementray_data = {'METADATA': metadata, 'MONTHLY_MULTIPLIER': monthly_multiplier}
+        schedule_complementary_data = {'METADATA': metadata, 'MONTHLY_MULTIPLIER': monthly_multiplier}
 
         # save cea schedule format
         path_to_building_schedule = locator.get_building_schedules(building)
-        save_cea_schedule(schedule_new_data, schedule_complementray_data, path_to_building_schedule)
+        save_cea_schedule(schedule_new_data, schedule_complementary_data, path_to_building_schedule)
 
 
 def calc_average(last, current, share_of_use):
@@ -161,7 +162,7 @@ class ScheduleData(object):
     def __init__(self, locator, path_to_standard_schedule_database):
         self.locator = locator
         self.path_database = path_to_standard_schedule_database
-        self.schedule_data, self.schedule_complementray_data = self.fill_in_data()
+        self.schedule_data, self.schedule_complementary_data = self.fill_in_data()
 
     def fill_in_data(self):
         get_list_uses_in_database = []
