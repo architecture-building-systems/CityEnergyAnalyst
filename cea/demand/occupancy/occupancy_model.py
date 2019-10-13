@@ -9,7 +9,7 @@ from geopandas import GeoDataFrame as Gdf
 
 import cea.config
 import cea.inputlocator
-from cea.constants import HOURS_IN_YEAR
+from cea.constants import HOURS_IN_YEAR, MONTHS_IN_YEAR
 from cea.datamanagement.schedule_helper import read_cea_schedule
 from cea.demand.building_properties import calc_useful_areas
 from cea.demand.constants import VARIABLE_CEA_SCHEDULE_RELATION
@@ -54,10 +54,12 @@ def occupancy_main(locator, config):
     prop_geometry = prop_geometry.merge(architecture, on='Name').set_index('Name')
     prop_geometry = calc_useful_areas(prop_geometry)
 
+    # get calculation year from weather file
     weather_path = locator.get_weather_file()
     weather_data = epwreader.epw_reader(weather_path)[['year', 'drybulb_C', 'wetbulb_C',
                                                        'relhum_percent', 'windspd_ms', 'skytemp_C']]
     year = weather_data['year'][0]
+
     # create date range for the calculation year
     date_range = get_dates_from_year(year)
 
@@ -65,10 +67,10 @@ def occupancy_main(locator, config):
         internal_loads_building = internal_loads.ix[building]
         indoor_comfort_building = indoor_comfort.ix[building]
         prop_geometry_building = prop_geometry.ix[building]
-        daily_schedule_building, \
-        daily_schedule_building_metadata = read_cea_schedule(locator.get_building_schedules(building))
+        daily_schedule_building, daily_schedule_building_metadata = read_cea_schedule(
+            locator.get_building_schedules(building))
         monthly_multiplier = daily_schedule_building_metadata['MONTHLY_MULTIPLIER']
-        calc_deterministic_schedules(locator,
+        calc_schedules(locator,
                                      building,
                                      date_range,
                                      daily_schedule_building,
@@ -79,99 +81,147 @@ def occupancy_main(locator, config):
                                      stochastic_schedule)
 
 
-def calc_deterministic_schedules(locator,
-                                 building,
-                                 date_range,
-                                 daily_schedule_building,
-                                 monthly_multiplier,
-                                 internal_loads_building,
-                                 indoor_comfort_building,
-                                 prop_geometry_building,
-                                 stochastic_schedule):
+def calc_schedules(locator,
+                   building,
+                   date_range,
+                   daily_schedule_building,
+                   monthly_multiplier,
+                   internal_loads_building,
+                   indoor_comfort_building,
+                   prop_geometry_building,
+                   stochastic_schedule):
+    """
+    Calculate the profile of occupancy, electricity demand and domestic hot water consumption from the input schedules.
+    For variables that depend on the number of people (humidity gains, heat gains and ventilation demand), additional
+    schedules are created given the the number of people present at each time.
+
+    Two occupant models are included: a deterministic one, which simply uses the schedules provided by the user; and a
+    stochastic one, which is based on the two-state Markov chain model of Page et al. (2008). In the latter case,
+    occupant presence is modeled based on the probability of occupant presence at the current and next time step as
+    given by the occupant schedules used in the deterministic model.
+
+    :param locator: InputLocator instance
+    :param building: name of current building
+    :param date_range: range of dates being considered
+    :type date_range: DatetimeIndex
+    :param daily_schedule_building: building schedules for occupancy, electricity demand, water consumption, and system operation
+    :type daily_schedule_building: {str: array}
+    :param monthly_multiplier: percentage of the total number of occupants present at each month of the year
+    :type monthly_multiplier: [float]
+    :param internal_loads_building: internal loads for the current building (from case study inputs)
+    :param indoor_comfort_building: indoor comfort properties for the current building (from case study inputs)
+    :param prop_geometry_building: building geometry (from case study inputs)
+    :param stochastic_schedule: Boolean that defines whether the stochastic occupancy model should be used
+
+    .. [Page, J., et al., 2008] Page, J., et al. A generalised stochastic model for the simulation of occupant presence.
+        Energy and Buildings, Vol. 40, No. 2, 2008, pp 83-98.
+
+    """
+
     final_schedule = {}
     days_in_schedule = len(list(set(daily_schedule_building['DAY'])))
 
-    mu_v = [0.18, 0.33, 0.54, 0.67, 0.82, 1.22, 1.50, 3.0, 5.67]
-    len_mu_v = len(mu_v)
-
     # SCHEDULE FOR PEOPLE OCCUPANCY
-    for variable, schedule_type in VARIABLE_CEA_SCHEDULE_RELATION.items():
-        array = daily_schedule_building[schedule_type]
-        if variable in ['Occ_m2pax']:
-            if internal_loads_building[variable] > 0.0:
-                yearly_array = get_yearly_vectors(date_range, days_in_schedule, array, monthly_multiplier)
+    array = daily_schedule_building[VARIABLE_CEA_SCHEDULE_RELATION['Occ_m2pax']]
+    if internal_loads_building['Occ_m2pax'] > 0.0:
+        yearly_array = get_yearly_vectors(date_range, days_in_schedule, array, monthly_multiplier)
+        number_of_occupants = np.int(1 / internal_loads_building['Occ_m2pax'] * prop_geometry_building['Aocc'])
+        if stochastic_schedule:
+            # if the stochastic schedules are used, the stochastic schedule generator is called once for every occupant
+            final_schedule['Occ_m2pax'] = np.zeros(HOURS_IN_YEAR)
+            for occupant in range(number_of_occupants):
+                final_schedule['Occ_m2pax'] += calc_individual_occupant_schedule(yearly_array)
+        else:
+            final_schedule['Occ_m2pax'] = np.round(yearly_array * number_of_occupants)
+    else:
+        final_schedule['Occ_m2pax'] = np.zeros(HOURS_IN_YEAR)
 
-                if stochastic_schedule:
-                    yearly_array = calc_individual_occupant_schedule(yearly_array)
+    # HEAT AND HUMIDITY GAINS FROM OCCUPANTS
+    for variable in ['Qs_Wpax', 'X_ghpax']:
+        final_schedule[variable] = final_schedule['Occ_m2pax'] * internal_loads_building[variable]
 
-                final_schedule['Occ_m2pax'] = (np.floor(yearly_array *
-                                                        (1 / internal_loads_building[variable]) *
-                                                        prop_geometry_building['Aocc']))
+    # VENTILATION SCHEDULE
+    final_schedule['Ve_lpspax'] = final_schedule['Occ_m2pax'] * indoor_comfort_building['Ve_lpspax']
+
+    # SCHEDULE FOR WATER CONSUMPTION
+    for variable in ['Vww_lpdpax', 'Vw_lpdpax']:
+        if internal_loads_building[variable] > 0.0:
+            array = daily_schedule_building[VARIABLE_CEA_SCHEDULE_RELATION[variable]]
+            yearly_array = get_yearly_vectors(date_range,
+                                              days_in_schedule,
+                                              array,
+                                              monthly_multiplier,
+                                              normalize_first_daily_profile=True)
+            if stochastic_schedule:
+            #     yearly_array = calc_individual_occupant_schedule(yearly_array)
+            # TODO: define how stochastic occupancy affects water schedules
+            # currently MULTI_RES water schedules include water consumption at times of zero occupancy
+                final_schedule[variable] = yearly_array * internal_loads_building[variable] * number_of_occupants
             else:
-                final_schedule['Occ_m2pax'] = np.zeros(HOURS_IN_YEAR)
-        elif variable in ['Ths_set_C', 'Tcs_set_C']:
-            array = np.vectorize(convert_schedule_string_to_temperature)(array,
-                                                                         variable,
-                                                                         indoor_comfort_building['Ths_set_C'],
-                                                                         indoor_comfort_building['Ths_setb_C'],
-                                                                         indoor_comfort_building['Tcs_set_C'],
-                                                                         indoor_comfort_building['Tcs_setb_C'])
-            final_schedule[variable] = get_yearly_vectors(date_range,
-                                                          days_in_schedule,
-                                                          array,
-                                                          monthly_multiplier=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                                                                              1])
-        elif variable in ['Vww_lpdpax', 'Vw_lpdpax']:
-            if internal_loads_building[variable] > 0.0:
-                yearly_array = get_yearly_vectors(date_range,
-                                                  days_in_schedule,
-                                                  array,
-                                                  monthly_multiplier,
-                                                  normalize_first_daily_profile=True)
-                if stochastic_schedule:
-                    yearly_array = calc_individual_occupant_schedule(yearly_array)
+                final_schedule[variable] = yearly_array * internal_loads_building[variable] * number_of_occupants
+        else:
+            final_schedule[variable] = np.zeros(HOURS_IN_YEAR)
 
-                final_schedule[variable] = yearly_array * internal_loads_building[variable] * (
-                        1 / internal_loads_building['Occ_m2pax']) * prop_geometry_building['Aocc']
-            else:
-                final_schedule[variable] = np.zeros(HOURS_IN_YEAR)
-        elif variable in ['Ve_lpspax']:
-            if indoor_comfort_building[variable] > 0.0:
-                yearly_array = get_yearly_vectors(date_range,
-                                                  days_in_schedule,
-                                                  array,
-                                                  monthly_multiplier)
-                if stochastic_schedule:
-                    yearly_array = calc_individual_occupant_schedule(yearly_array)
+    # APPLIANCE ELECTRICITY SCHEDULE
+    variable = 'Ea_Wm2'
+    if internal_loads_building[variable] > 0.0:
+        array = daily_schedule_building[VARIABLE_CEA_SCHEDULE_RELATION[variable]]
+        # adjust the demand for appliances based on the number of occupants
+        if stochastic_schedule:
+            # base load is independent of occupants
+            base_load = np.min(array)
+            occupant_load = array - base_load
+            # get yearly array for occupant-related loads
+            yearly_array = get_yearly_vectors(date_range, days_in_schedule, occupant_load, monthly_multiplier)
+            # adjust the yearly array based on the number of occupants produced by the stochastic occupancy model
+            deterministic_occupancy_array = np.round(
+                get_yearly_vectors(date_range, days_in_schedule, array, monthly_multiplier) * 1 /
+                internal_loads_building['Occ_m2pax'] * prop_geometry_building['Aocc'])
+            adjusted_array = yearly_array * final_schedule['Occ_m2pax'] / deterministic_occupancy_array
+            # nan values correspond to time steps where both occupant schedules are 0
+            adjusted_array[np.isnan(adjusted_array)] = 0.0
+            # inf values correspond to time steps where the stochastic schedule has at least one occupant and the
+            # deterministic one has none. In those cases, the peak hour is used as a reference value
+            peak_hour = np.argmax(yearly_array)
+            peak_load_occupancy = deterministic_occupancy_array[peak_hour]
+            for t in np.where(np.isinf(adjusted_array)):
+                adjusted_array[t] = final_schedule['Occ_m2pax'][t] * np.max(yearly_array) / peak_load_occupancy
 
-                final_schedule[variable] = yearly_array * indoor_comfort_building[variable] * (
-                        1 / internal_loads_building['Occ_m2pax']) * prop_geometry_building['Aocc']
-            else:
-                final_schedule[variable] = np.zeros(HOURS_IN_YEAR)
-        elif variable in ['Qs_Wpax', 'X_ghpax']:
-            if internal_loads_building[variable] > 0.0:
-                yearly_array = get_yearly_vectors(date_range,
-                                                  days_in_schedule,
-                                                  array,
-                                                  monthly_multiplier)
-                if stochastic_schedule:
-                    yearly_array = calc_individual_occupant_schedule(yearly_array)
+            final_schedule[variable] = (adjusted_array + base_load) * internal_loads_building[variable] * \
+                                       prop_geometry_building['Aef']
+        else:
+            yearly_array = get_yearly_vectors(date_range, days_in_schedule, array, monthly_multiplier)
+            final_schedule[variable] = yearly_array * internal_loads_building[variable] * \
+                                       prop_geometry_building['Aef']
+    else:
+        final_schedule[variable] = np.zeros(HOURS_IN_YEAR)
 
-                final_schedule[variable] = yearly_array * internal_loads_building[variable] * (
-                        1 / internal_loads_building['Occ_m2pax']) * prop_geometry_building['Aocc']
-            else:
-                final_schedule[variable] = np.zeros(HOURS_IN_YEAR)
-        elif variable in ['Ea_Wm2', 'El_Wm2', 'Ed_Wm2', 'Epro_Wm2', 'Qcre_Wm2', 'Qhpro_Wm2', 'Qcpro_Wm2']:
-            if internal_loads_building[variable] > 0.0:
-                yearly_array = get_yearly_vectors(date_range, days_in_schedule, array, monthly_multiplier)
+    # LIGHTING ELECTRICITY SCHEDULE
+    variable = 'El_Wm2'
+    # this schedule is assumed to be independent of occupant presence
+    array = daily_schedule_building[VARIABLE_CEA_SCHEDULE_RELATION[variable]]
+    yearly_array = get_yearly_vectors(date_range, days_in_schedule, array, monthly_multiplier)
+    final_schedule[variable] = yearly_array * internal_loads_building[variable] * prop_geometry_building['Aef']
 
-                if stochastic_schedule:
-                    yearly_array = calc_individual_occupant_schedule(yearly_array)
+    # LIGHTING AND PROCESS ENERGY DEMAND SCHEDULES
+    for variable in ['Ed_Wm2', 'Epro_Wm2', 'Qcre_Wm2', 'Qhpro_Wm2', 'Qcpro_Wm2']:
+        # these schedules are assumed to be independent of occupant presence and have no monthly variations
+        array = daily_schedule_building[VARIABLE_CEA_SCHEDULE_RELATION[variable]]
+        yearly_array = get_yearly_vectors(date_range, days_in_schedule, array,
+                                          monthly_multiplier=list(np.ones(MONTHS_IN_YEAR)))
+        final_schedule[variable] = yearly_array * internal_loads_building[variable] * prop_geometry_building['Aef']
 
-                final_schedule[variable] = yearly_array * internal_loads_building[variable] * \
-                                           prop_geometry_building['Aef']
-            else:
-                final_schedule[variable] = np.zeros(HOURS_IN_YEAR)
+    # SCHEDULE FOR HEATING/COOLING SET POINT TEMPERATURES
+    for variable in ['Ths_set_C', 'Tcs_set_C']:
+        array = daily_schedule_building[VARIABLE_CEA_SCHEDULE_RELATION[variable]]
+        array = np.vectorize(convert_schedule_string_to_temperature)(array,
+                                                                     variable,
+                                                                     indoor_comfort_building['Ths_set_C'],
+                                                                     indoor_comfort_building['Ths_setb_C'],
+                                                                     indoor_comfort_building['Tcs_set_C'],
+                                                                     indoor_comfort_building['Tcs_setb_C'])
+        final_schedule[variable] = get_yearly_vectors(date_range, days_in_schedule, array,
+                                                      monthly_multiplier=list(np.ones(MONTHS_IN_YEAR)))
 
     final_dict = {
         'DATE': date_range,
@@ -353,9 +403,15 @@ def calc_individual_occupant_schedule(archetype_schedule):
     :return pattern: yearly occupancy pattern for a given occupant in a given occupancy type
     :rtype pattern: list[int]
     """
+
+    # get a random mobility parameter mu between 0 and 0.5
     mu = random.uniform(0, 0.5)
-    # assign initial state: assume equal to the archetypal occupancy schedule at t = 0
-    state = archetype_schedule[0]
+
+    # assign initial state by comparing a random number to the deterministic schedule's probability of occupant presence at t = 0
+    if random.random() <= archetype_schedule[0]:
+        state = 1
+    else:
+        state = 0
 
     # start list of occupancy states throughout the year
     pattern = [state]
@@ -498,7 +554,7 @@ def get_yearly_vectors(date_range, days_in_schedule, schedule_array, monthly_mul
     array_sun = array_per_day[2]
     if normalize_first_daily_profile:
         # for water consumption we need to normalize to the daily maximum
-        # this is to account for typical units of water consumption in lpd or litter per person per day.
+        # this is to account for typical units of water consumption in liters per person per day (lpd).
 
         if array_week.sum() != 0.0:
             norm_weekday_max = array_week.sum() ** -1
