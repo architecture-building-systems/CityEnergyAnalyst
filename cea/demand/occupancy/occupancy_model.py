@@ -444,6 +444,92 @@ def calc_hourly_value(date, array_week, array_sat, array_sun, norm_weekday_max, 
         return array_sun[hour_day] * month_year * norm_sun_max  # normalized dhw demand flow rates
 
 
+def schedule_maker(dates, locator, list_uses):
+    """
+    Reads schedules from the archetype schedule Excel file along with the corresponding internal loads and ventilation
+    demands.
+
+    :param dates: dates and times throughout the year
+    :type dates: DatetimeIndex
+    :param locator: an instance of InputLocator set to the scenario
+    :type locator: InputLocator
+    :param list_uses: list of occupancy types used in the scenario
+    :type list_uses: list
+
+    :return schedules: yearly schedule for each occupancy type used in the project
+    :rtype schedules: list[tuple]
+    :return archetype_values: dict containing the values for occupant density  (in people/m2) internal loads and
+        ventilation demand for each occupancy type used in the project
+    :rtype archetype_values: dict[list[float]]
+    """
+
+    # read schedules of all buildings
+    from cea.datamanagement.schedule_helper import ScheduleData
+    schedules_DB = locator.get_building_schedules_folder()
+    schedule_data_all_buildings = ScheduleData(locator, schedules_DB)
+
+    # get yearly schedules in a list
+    schedule_data_all_buildings_yearly = get_yearly_vectors(dates, occ_schedules, el_schedules, dhw_schedules,
+                                                            pro_schedules, month_schedule,
+                                                            heating_setpoint, cooling_setpoint)
+
+    return schedule_data_all_buildings_yearly
+
+
+def read_schedules_from_file(schedules_csv):
+    """
+    A function to read building schedules from a csv file to a dict.
+    :param schedules_csv: the file path to the csv file
+    :type schedules_csv: os.path
+    :return: building_schedules, the building schedules
+    :rtype: dict
+    """
+
+    # read csv into dataframe
+    df_schedules = pd.read_csv(schedules_csv)
+    # convert to dataframe to dict
+    building_schedules = df_schedules.to_dict(orient='list')
+    # convert lists to np.arrays
+    for key, value in building_schedules.items():
+        try:
+            building_schedules[key] = np.round(np.array(value), DECIMALS_FOR_SCHEDULE_ROUNDING)
+            # round values to expected number of decimals of data created in calc_schedules()
+        except TypeError:
+            setpoint_array_float = np.zeros_like(np.array(value), dtype='f') + np.nan
+            # go through each element
+            for i in range(len(value)):
+                try:
+                    # try to add the temperature
+                    setpoint_array_float[i] = np.round(value[i], DECIMALS_FOR_SCHEDULE_ROUNDING)
+                except TypeError:
+                    # if string value can not be converted to float, it is considered "OFF", "off"
+                    # not necessary to do anything, because the array already contains np.nan
+                    pass
+            building_schedules[key] = setpoint_array_float
+
+    return building_schedules
+
+
+def save_schedules_to_file(locator, building_schedules, building_name):
+    """
+    A function to save schedules to csv files in the inputs/building-properties directory
+
+    :param locator: the input locator
+    :type locator: cea.inputlocator.InputLocator
+    :param building_schedules: the building schedules
+    :type building_schedules: dict
+    :param building_name: the building name
+    :type building_name: str
+    :return: this function returns nothing
+    """
+    schedules_csv_file = locator.get_building_schedules(building_name)
+    # convert to DataFrame to use pandas csv writing method
+    df_building_schedules = pd.DataFrame.from_dict(building_schedules)
+    df_building_schedules.to_csv(schedules_csv_file, index=False, na_rep='OFF')  # replace nan with 'OFF'
+    print("Saving schedules for building {} to outputs/data/demand directory.".format(building_name))
+    print("Please copy (custom) schedules to inputs/building-properties to use them in the next run.")
+
+
 def main(config):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     print('Running occupancy model for scenario %s' % config.scenario)
