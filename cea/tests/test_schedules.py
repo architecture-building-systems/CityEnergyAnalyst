@@ -14,13 +14,13 @@ import pandas as pd
 
 import cea.config
 from cea.constants import HOURS_IN_YEAR
-from cea.datamanagement.data_helper import calculate_average_multiuse
-from cea.datamanagement.data_helper import correct_archetype_areas
+from cea.datamanagement.data_helper import calculate_average_multiuse, correct_archetype_areas, data_helper
+from cea.datamanagement.schedule_helper import calc_mixed_schedule
 from cea.demand.building_properties import BuildingProperties
 from cea.demand.schedule_maker.schedule_maker import schedule_maker_main
 from cea.inputlocator import ReferenceCaseOpenLocator
 from cea.utilities import epwreader
-from cea.utilities.date import get_dates_from_year
+from cea.utilities.dbf import dbf_to_dataframe
 
 REFERENCE_TIME = 3456
 
@@ -30,28 +30,40 @@ class TestSavingLoadingSchedules(unittest.TestCase):
 
     def test_get_building_schedules(self):
         """Make sure running get_building_schedules for same case returns the same value"""
+        test_building = 'B01'
         config = cea.config.Configuration()
+        config.schedule_maker.schedule_model = 'deterministic'
+        config.schedule_maker.buildings = [test_building]
         config.demand.use_stochastic_occupancy = False
         locator = ReferenceCaseOpenLocator()
-        date_range = get_dates_from_year(2005)
-        building_properties = BuildingProperties(locator, override_variables=False)
-        bpr = building_properties["B01"]
+
+        # create archetypal schedules in scenario inputs
+        data_helper(locator, region='CH', overwrite_technology_folder=True,
+                    update_architecture_dbf=True, update_HVAC_systems_dbf=True, update_indoor_comfort_dbf=True,
+                    update_internal_loads_dbf=True, update_supply_systems_dbf=True,
+                    update_schedule_operation_cea=True, schedule_model='CH-SIA-2014',
+                    buildings=config.schedule_maker.buildings)
 
         # run get_building_schedules on clean folder - they're created from scratch
-        if os.path.exists(locator.get_occupancy_model_file("B01")):
-            os.remove(locator.get_occupancy_model_file("B01"))
-        fresh_schedules = schedule_maker_main(locator, bpr, date_range, config)
+        if os.path.exists(locator.get_occupancy_model_file(test_building)):
+            os.remove(locator.get_occupancy_model_file(test_building))
+        schedule_maker_main(locator, config)
+        fresh_schedules = pd.read_csv(locator.get_occupancy_model_file(test_building)).set_index('DATE')
 
         # run again to get the frozen version
-        frozen_schedules = schedule_maker_main(locator, bpr, date_range, config)
+        schedule_maker_main(locator, config)
+        frozen_schedules = pd.read_csv(locator.get_occupancy_model_file(test_building)).set_index('DATE')
 
         self.assertEqual(sorted(fresh_schedules.keys()), sorted(frozen_schedules.keys()))
         for schedule in fresh_schedules:
             for i in range(len(fresh_schedules[schedule])):
                 fresh = fresh_schedules[schedule][i]
                 frozen = frozen_schedules[schedule][i]
-                if np.isnan(fresh) and np.isnan(frozen):
-                    pass
+                if (not isinstance(fresh, str)) and (not isinstance(frozen, str)):
+                    if np.isnan(fresh) and np.isnan(frozen):
+                        pass
+                    else:
+                        self.assertEqual(fresh, frozen)
                 else:
                     self.assertEqual(fresh, frozen)
             self.assertIsNone(np.testing.assert_array_equal(fresh_schedules[schedule], frozen_schedules[schedule]))
@@ -136,10 +148,11 @@ def calculate_mixed_use_archetype_values_results(locator):
     calculated_results = calculate_average_multiuse(
         fields=['X_ghp', 'El_Wm2'],
         properties_df=pd.DataFrame(data=[['B1', 0.5, 0.5, 0.0, 0.0, 0.0], ['B2', 0.25, 0.75, 0.0, 0.0, 0.0]],
-                                   columns=['Name', 'OFFICE', 'GYM', 'X_ghp', 'El_Wm2', 'Occ_m2pax']),
+                                   columns=['Name', 'OFFICE', 'GYM', 'X_ghpax', 'El_Wm2', 'Occ_m2pax']),
         occupant_densities={'OFFICE': 1 / office_occ, 'GYM': 1 / gym_occ},
         list_uses=['OFFICE', 'GYM'],
         properties_DB=pd.read_excel(locator.get_archetypes_properties(), 'INTERNAL_LOADS')).set_index('Name')
+
     return calculated_results
 
 
