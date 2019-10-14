@@ -64,9 +64,9 @@ def occupancy_main(locator, config):
     date_range = get_dates_from_year(year)
 
     for building in buildings:
-        internal_loads_building = internal_loads.loc[building]
-        indoor_comfort_building = indoor_comfort.loc[building]
-        prop_geometry_building = prop_geometry.loc[building]
+        internal_loads_building = internal_loads.ix[building]
+        indoor_comfort_building = indoor_comfort.ix[building]
+        prop_geometry_building = prop_geometry.ix[building]
         daily_schedule_building, daily_schedule_building_metadata = read_cea_schedule(
             locator.get_building_schedules(building))
         monthly_multiplier = daily_schedule_building_metadata['MONTHLY_MULTIPLIER']
