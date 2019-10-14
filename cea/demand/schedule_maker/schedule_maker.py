@@ -27,14 +27,14 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def occupancy_main(locator, config):
+def schedule_maker_main(locator, config):
     # local variables
-    buildings = config.occupancy.buildings
-    occupancy_model = config.occupancy.occupancy_model
+    buildings = config.schedule_maker.buildings
+    schedule_model = config.schedule_maker.schedule_model
 
-    if occupancy_model == 'deterministic':
+    if schedule_model == 'deterministic':
         stochastic_schedule = False
-    elif occupancy_model == 'stochastic':
+    elif schedule_model == 'stochastic':
         stochastic_schedule = True
     else:
         Exception('there is no valid input for type of occupancy model')
@@ -447,9 +447,9 @@ def calc_hourly_value(date, array_week, array_sat, array_sun, norm_weekday_max, 
 def main(config):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     print('Running occupancy model for scenario %s' % config.scenario)
-    print('Running occupancy model  with occupancy model=%s' % config.occupancy.occupancy_model)
+    print('Running occupancy model  with schedule model=%s' % config.schedule_maker.schedule_model)
     locator = cea.inputlocator.InputLocator(config.scenario)
-    occupancy_main(locator, config)
+    schedule_maker_main(locator, config)
 
 
 if __name__ == '__main__':

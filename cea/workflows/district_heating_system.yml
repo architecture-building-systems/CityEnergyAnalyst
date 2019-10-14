@@ -16,7 +16,7 @@
   parameters:
     weather: Zuerich-Kloten_1990_2010_TMY
 - script: radiation
-- script: occupancy
+- script: schedule-maker
 - script: demand
 - script: emissions
 - script: operation-costs

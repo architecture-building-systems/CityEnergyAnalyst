@@ -60,12 +60,12 @@ Demand forecasting:
       - [get_terrain]
       - [get_weather_file]
 
-  - name: occupancy
-    label: Building Occupancy
+  - name: schedule-maker
+    label: Building Schedules
     description: Use CEA models and input schedules to estimate the occupancy profile of buildings
     interfaces: [dashboard]
-    module: cea.demand.occupancy.occupancy_model
-    parameters: ['general:scenario', 'general:multiprocessing', 'general:debug', occupancy]
+    module: cea.demand.schedule_maker.schedule_maker
+    parameters: ['general:scenario', 'general:multiprocessing', 'general:debug', schedule-maker]
     input-files:
       - [get_envelope_systems]
       - [get_district_geometry]
