@@ -17,7 +17,7 @@ from cea.constants import HOURS_IN_YEAR
 from cea.datamanagement.data_helper import calculate_average_multiuse
 from cea.datamanagement.data_helper import correct_archetype_areas
 from cea.demand.building_properties import BuildingProperties
-from cea.demand.occupancy.occupancy_model import occupancy_main
+from cea.demand.schedule_maker.schedule_maker import schedule_maker_main
 from cea.inputlocator import ReferenceCaseOpenLocator
 from cea.utilities import epwreader
 from cea.utilities.date import get_dates_from_year
@@ -40,10 +40,10 @@ class TestSavingLoadingSchedules(unittest.TestCase):
         # run get_building_schedules on clean folder - they're created from scratch
         if os.path.exists(locator.get_occupancy_model_file("B01")):
             os.remove(locator.get_occupancy_model_file("B01"))
-        fresh_schedules = occupancy_main(locator, bpr, date_range, config)
+        fresh_schedules = schedule_maker_main(locator, bpr, date_range, config)
 
         # run again to get the frozen version
-        frozen_schedules = occupancy_main(locator, bpr, date_range, config)
+        frozen_schedules = schedule_maker_main(locator, bpr, date_range, config)
 
         self.assertEqual(sorted(fresh_schedules.keys()), sorted(frozen_schedules.keys()))
         for schedule in fresh_schedules:
@@ -107,7 +107,7 @@ class TestScheduleCreation(unittest.TestCase):
         bpr.comfort['mainuse'] = 'OFFICE'
 
         # calculate schedules
-        calculated_schedules = occupancy_main(locator, config)
+        calculated_schedules = schedule_maker_main(locator, config)
 
         config = ConfigParser.SafeConfigParser()
         config.read(get_test_config_path())
@@ -168,7 +168,7 @@ def create_data():
     year = weather_data['year'][0]
     date = pd.date_range(str(year) + '/01/01', periods=HOURS_IN_YEAR, freq='H')
 
-    calculated_schedules = occupancy_main(locator, config)
+    calculated_schedules = schedule_maker_main(locator, config)
     if not test_config.has_section('test_mixed_use_schedules'):
         test_config.add_section('test_mixed_use_schedules')
     test_config.set('test_mixed_use_schedules', 'reference_results', json.dumps(
