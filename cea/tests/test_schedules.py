@@ -109,18 +109,28 @@ class TestScheduleCreation(unittest.TestCase):
         bpr.comfort['mainuse'] = 'OFFICE'
 
         # calculate schedules
-        calculated_schedules = schedule_maker_main(locator, config)
+        schedule_maker_main(locator, config)
+        calculated_schedules = pd.read_csv(locator.get_occupancy_model_file('B01')).set_index('DATE')
 
         config = ConfigParser.SafeConfigParser()
         config.read(get_test_config_path())
         reference_results = json.loads(config.get('test_mixed_use_schedules', 'reference_results'))
 
         for schedule in reference_results:
-            self.assertAlmostEqual(calculated_schedules[schedule][REFERENCE_TIME], reference_results[schedule],
-                                   places=4, msg="Schedule '%s' at time %s, %f != %f" % (
-                    schedule, str(REFERENCE_TIME), calculated_schedules[schedule][
-                        REFERENCE_TIME],
-                    reference_results[schedule]))
+            if (isinstance(calculated_schedules[schedule][REFERENCE_TIME], str)) and (isinstance(
+                    reference_results[schedule], unicode)):
+                self.assertEqual(calculated_schedules[schedule][REFERENCE_TIME], reference_results[schedule],
+                                 msg="Schedule '{}' at time {}, {} != {}".format(schedule, str(REFERENCE_TIME),
+                                                                                 calculated_schedules[schedule][
+                                                                                     REFERENCE_TIME],
+                                                                                 reference_results[schedule]))
+            else:
+                self.assertAlmostEqual(calculated_schedules[schedule][REFERENCE_TIME], reference_results[schedule],
+                                       places=4,
+                                       msg="Schedule '{}' at time {}, {} != {}".format(schedule, str(REFERENCE_TIME),
+                                                                                       calculated_schedules[schedule][
+                                                                                           REFERENCE_TIME],
+                                                                                       reference_results[schedule]))
 
 
 def get_test_config_path():
