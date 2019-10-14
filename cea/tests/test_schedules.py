@@ -4,22 +4,23 @@ file `test_schedules.config` that can be created by running this file. Note, how
 test data - you should only do this if you are sure that the new data is correct.
 """
 
+import ConfigParser
+import json
 import os
 import unittest
-import pandas as pd
+
 import numpy as np
-import json
-import ConfigParser
-from cea.inputlocator import ReferenceCaseOpenLocator
+import pandas as pd
+
+import cea.config
+from cea.constants import HOURS_IN_YEAR
 from cea.datamanagement.data_helper import calculate_average_multiuse
 from cea.datamanagement.data_helper import correct_archetype_areas
+from cea.demand.building_properties import BuildingProperties
 from cea.demand.occupancy.occupancy_model import occupancy_main
-from cea.demand.occupancy.occupancy_model import schedule_maker
+from cea.inputlocator import ReferenceCaseOpenLocator
 from cea.utilities import epwreader
 from cea.utilities.date import get_dates_from_year
-import cea.config
-from cea.demand.building_properties import BuildingProperties
-from cea.constants import HOURS_IN_YEAR
 
 REFERENCE_TIME = 3456
 
@@ -106,9 +107,7 @@ class TestScheduleCreation(unittest.TestCase):
         bpr.comfort['mainuse'] = 'OFFICE'
 
         # calculate schedules
-        archetype_schedules, archetype_values = schedule_maker(date, locator, list_uses)
-        calculated_schedules = occupancy_main(list_uses, archetype_schedules, bpr, archetype_values,
-                                              stochastic_occupancy)
+        calculated_schedules = occupancy_main(locator, config)
 
         config = ConfigParser.SafeConfigParser()
         config.read(get_test_config_path())
@@ -117,9 +116,9 @@ class TestScheduleCreation(unittest.TestCase):
         for schedule in reference_results:
             self.assertAlmostEqual(calculated_schedules[schedule][REFERENCE_TIME], reference_results[schedule],
                                    places=4, msg="Schedule '%s' at time %s, %f != %f" % (
-                schedule, str(REFERENCE_TIME), calculated_schedules[schedule][
-                    REFERENCE_TIME],
-                reference_results[schedule]))
+                    schedule, str(REFERENCE_TIME), calculated_schedules[schedule][
+                        REFERENCE_TIME],
+                    reference_results[schedule]))
 
 
 def get_test_config_path():
@@ -132,10 +131,10 @@ def calculate_mixed_use_archetype_values_results(locator):
     config file."""
 
     occ_densities = pd.read_excel(locator.get_archetypes_properties(), 'INTERNAL_LOADS').set_index('Code')
-    office_occ = float(occ_densities.ix['OFFICE','Occ_m2pax'])
-    gym_occ = float(occ_densities.ix['GYM','Occ_m2pax'])
+    office_occ = float(occ_densities.ix['OFFICE', 'Occ_m2pax'])
+    gym_occ = float(occ_densities.ix['GYM', 'Occ_m2pax'])
     calculated_results = calculate_average_multiuse(
-        fields= ['X_ghp', 'El_Wm2'],
+        fields=['X_ghp', 'El_Wm2'],
         properties_df=pd.DataFrame(data=[['B1', 0.5, 0.5, 0.0, 0.0, 0.0], ['B2', 0.25, 0.75, 0.0, 0.0, 0.0]],
                                    columns=['Name', 'OFFICE', 'GYM', 'X_ghp', 'El_Wm2', 'Occ_m2pax']),
         occupant_densities={'OFFICE': 1 / office_occ, 'GYM': 1 / gym_occ},
@@ -169,10 +168,7 @@ def create_data():
     year = weather_data['year'][0]
     date = pd.date_range(str(year) + '/01/01', periods=HOURS_IN_YEAR, freq='H')
 
-    archetype_schedules, archetype_values = schedule_maker('CH', date, locator, list_uses)
-    stochastic_occupancy = config.demand.use_stochastic_occupancy
-    calculated_schedules = occupancy_main(list_uses, archetype_schedules, bpr, archetype_values,
-                                          stochastic_occupancy)
+    calculated_schedules = occupancy_main(locator, config)
     if not test_config.has_section('test_mixed_use_schedules'):
         test_config.add_section('test_mixed_use_schedules')
     test_config.set('test_mixed_use_schedules', 'reference_results', json.dumps(
