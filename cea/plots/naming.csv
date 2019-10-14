@@ -62,6 +62,46 @@ demand,GRID_kWh,kWh,Grid electricity consumption,green
 demand,GRID_MWhyr,MWh/yr,Grid electricity consumption,green
 demand,GRID0_kW,kW,Nominal Grid electricity consumption,green
 
+demand,GRID_a_kWh,kWh,Grid electricity due to appliances,green
+demand,GRID_a_MWhyr,MWh/yr,Grid electricity due to appliances,green
+demand,GRID_a_kW,kW,Nominal Grid electricity due to appliances,green
+
+demand,GRID_l_kWh,kWh,Grid electricity due to lighting,green_light
+demand,GRID_l_MWhyr,MWh/yr,Grid electricity due to lighting,green_light
+demand,GRID_l_kW,kW,Nominal Grid electricity due to lighting,green_light
+
+demand,GRID_aux_kWh,kWh,Grid electricity due to auxiliary loads,green_lighter
+demand,GRID_aux_MWhyr,MWh/yr,Grid electricity due to auxiliary loads,green_lighter
+demand,GRID_aux_kW,kW,Nominal Grid electricity due to auxiliary loads,green_lighter
+
+demand,GRID_data_kWh,kWh,Grid electricity due to servers,blue
+demand,GRID_data_MWhyr,MWh/yr,Grid electricity due to servers,blue
+demand,GRID_data_kW,kW,Nominal Grid electricity due to servers,blue
+
+demand,GRID_pro_kWh,kWh,Grid electricity due to industrial processes,brown
+demand,GRID_pro_MWhyr,MWh/yr,Grid electricity due to industrial processes,brown
+demand,GRID_pro_kW,kW,Nominal Grid electricity due to industrial processes,brown
+
+demand,GRID_ww_kWh,kWh,Grid electricity due to hot water,orange
+demand,GRID_ww_MWhyr,MWh/yr,Grid electricity due to hot water,orange
+demand,GRID_ww_kW,kW,Nominal Grid electricity due to hot water,orange
+
+demand,GRID_hs_kWh,kWh,Grid electricity due to space heating,red
+demand,GRID_hs_MWhyr,MWh/yr,Grid electricity due to space heating,red
+demand,GRID_hs_kW,kW,Nominal Grid electricity due to  space heating,red
+
+demand,GRID_cdata_kWh,kWh,Grid electricity due to servers cooling,blue_light
+demand,GRID_cdata_MWhyr,MWh/yr,Grid electricity due to servers cooling,blue_light
+demand,GRID_cdata_kW,kW,Nominal Grid electricity due to servers cooling,blue_light
+
+demand,GRID_cre_kWh,kWh,Grid electricity due to refrigeration,blue_lighter
+demand,GRID_cre_MWhyr,MWh/yr,Grid electricity due to refrigeration,blue_lighter
+demand,GRID_cre_kW,kW,Nominal Grid electricity due to refrigeration,blue_lighter
+
+demand,GRID_cs_kWh,kWh,Grid electricity due to space cooling,blue
+demand,GRID_cs_MWhyr,MWh/yr,Grid electricity due to space cooling,blue
+demand,GRID_cs_kW,kW,Nominal Grid electricity due to space cooling,blue
+
 demand,PV_kWh,kWh,PV electricity consumption,yellow
 demand,PV_MWhyr,MWh/yr,PV electricity consumption,yellow
 demand,PV0_kW,kW,Nominal PV electricity consumption,yellow
