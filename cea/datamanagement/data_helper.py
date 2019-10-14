@@ -208,12 +208,9 @@ def data_helper(locator, region, overwrite_technology_folder,
         dataframe_to_dbf(prop_internal_df_merged[fields], locator.get_building_internal())
 
     if update_schedule_operation_cea:
-        if schedule_model == 'CH-SIA-2014' or schedule_model == 'SG-ASHRAE-2009':
-            if buildings == []:
-                buildings = locator.get_zone_building_names()
-            calc_mixed_schedule(locator, building_occupancy_df, buildings, schedule_model)
-        else:
-            Exception('There is no valid model for schedule helper')
+        if buildings == []:
+            buildings = locator.get_zone_building_names()
+        calc_mixed_schedule(locator, building_occupancy_df, buildings, schedule_model)
 
     if update_supply_systems_dbf:
         supply_DB = pd.read_excel(locator.get_archetypes_properties(), 'SUPPLY')
