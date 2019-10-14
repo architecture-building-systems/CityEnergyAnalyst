@@ -1733,7 +1733,7 @@ get_building_architecture:
     wwr_west:
       sample_data: 0.59
       types_found: [float]
-  used_by: [radiation-daysim, emissions, demand]
+  used_by: [radiation, emissions, demand]
 get_building_comfort:
   created_by: [data-helper]
   description: scenario/inputs/building-properties/indoor_comfort.dbf
@@ -2592,7 +2592,7 @@ get_district_geometry:
     height_bg:
       sample_data: !!python/long '0'
       types_found: [long]
-  used_by: [radiation-daysim]
+  used_by: [radiation]
 get_edge_mass_flow_csv_file:
   created_by: [thermal-network]
   file_path: outputs/data/optimization/network/layout/nominal_edgemassflow_at_design_dh__kgpers.csv
@@ -2698,7 +2698,7 @@ get_envelope_systems:
       e_win:
         sample_data: 0.89
         types_found: [float]
-  used_by: [radiation-daysim, demand]
+  used_by: [radiation, demand]
 get_lake_potential:
   created_by: [lake-potential]
   description: null
@@ -3482,7 +3482,7 @@ get_optimization_network_substation_ploss_file:
       types_found: [float]
   used_by: []
 get_radiation_building:
-  created_by: [radiation-daysim]
+  created_by: [radiation]
   description: scenario/outputs/data/solar-radiation/${building_name}_insolation_Whm2.json
   file_path: outputs/data/solar-radiation/b001_insolation_whm2.json
   file_type: json
@@ -3492,7 +3492,7 @@ get_radiation_building:
       types_found: [float]
   used_by: [photovoltaic, photovoltaic-thermal, solar-collector, demand]
 get_radiation_metadata:
-  created_by: [radiation-daysim]
+  created_by: [radiation]
   description: scenario/outputs/data/solar-radiation/{building_name}_geometrgy.csv
   file_path: outputs/data/solar-radiation/b001_geometry.csv
   file_type: csv
@@ -4578,7 +4578,7 @@ get_terrain:
     Mock_variable:
       sample_data: pixels
       types_found: [raster]
-  used_by: [radiation-daysim]
+  used_by: [radiation]
 get_thermal_demand_csv_file:
   created_by: [thermal-network]
   file_path: outputs/data/optimization/network/layout/aggregated_demand_dh__wh.csv
@@ -5191,7 +5191,7 @@ get_weather_file:
     zenlum_lux (index = 19):
       sample_data: !!python/long '9999'
       types_found: [long]
-  used_by: [radiation-daysim, photovoltaic, photovoltaic-thermal, solar-collector,
+  used_by: [radiation, photovoltaic, photovoltaic-thermal, solar-collector,
     demand, thermal-network]
 get_zone_geometry:
   created_by: []
@@ -5217,7 +5217,7 @@ get_zone_geometry:
     height_bg:
       sample_data: !!python/long '0'
       types_found: [long]
-  used_by: [photovoltaic, photovoltaic-thermal, emissions, network-layout, radiation-daysim,
+  used_by: [photovoltaic, photovoltaic-thermal, emissions, network-layout, radiation,
     demand, solar-collector]
 get_geothermal_potential:
     created_by: [shallow-geothermal-potential]

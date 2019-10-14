@@ -7,6 +7,7 @@ import pandas as pd
 
 import cea.config
 import cea.inputlocator
+from cea.demand.occupancy.occupancy_model import occupancy_main
 from cea.demand.building_properties import BuildingProperties
 from cea.demand.thermal_loads import calc_thermal_loads
 from cea.utilities.date import get_dates_from_year
@@ -37,7 +38,7 @@ class TestCalcThermalLoads(unittest.TestCase):
 
         # run properties script
         import cea.datamanagement.data_helper
-        cea.datamanagement.data_helper.data_helper(cls.locator, 'CH', True, True, True, True, True, True, True, 'CH-SIA-2014')
+        cea.datamanagement.data_helper.data_helper(cls.locator, 'CH', True, True, True, True, True, True, True, 'CH-SIA-2014', [])
 
         cls.building_properties = BuildingProperties(cls.locator, cls.config.demand.override_variables)
 
@@ -50,6 +51,9 @@ class TestCalcThermalLoads(unittest.TestCase):
 
     def test_calc_thermal_loads(self):
         bpr = self.building_properties['B01']
+        self.config.occupancy.occupancy_model = "deterministic"
+        occupancy_main(self.locator, self.config)
+
         result = calc_thermal_loads('B01', bpr, self.weather_data, self.date_range, self.locator,
                                     self.use_dynamic_infiltration_calculation, self.resolution_output,
                                     self.loads_output, self.massflows_output, self.temperatures_output,

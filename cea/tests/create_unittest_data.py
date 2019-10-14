@@ -14,6 +14,7 @@ import ConfigParser
 import json
 import pandas as pd
 
+from cea.demand.occupancy.occupancy_model import occupancy_main
 from cea.demand.thermal_loads import calc_thermal_loads
 from cea.demand.building_properties import BuildingProperties
 from cea.utilities.date import get_dates_from_year
@@ -36,7 +37,7 @@ def main(output_file):
 
     # run properties script
     import cea.datamanagement.data_helper
-    cea.datamanagement.data_helper.data_helper(locator, 'CH', True, True, True, True, True, True, True, 'CH-SIA-2014')
+    cea.datamanagement.data_helper.data_helper(locator, 'CH', True, True, True, True, True, True, True, 'CH-SIA-2014', [])
 
     year = weather_data['year'][0]
     date_range = get_dates_from_year(year)
@@ -44,12 +45,14 @@ def main(output_file):
     loads_output = config.demand.loads_output
     massflows_output = config.demand.massflows_output
     temperatures_output = config.demand.temperatures_output
-    use_dynamic_infiltration_calculation =  config.demand.use_dynamic_infiltration_calculation
+    use_dynamic_infiltration_calculation = config.demand.use_dynamic_infiltration_calculation
     debug = config.debug
     building_properties = BuildingProperties(locator, config.demand.override_variables)
 
     print("data for test_calc_thermal_loads:")
     print(building_properties.list_building_names())
+
+    occupancy_main(locator, config)
 
     bpr = building_properties['B01']
     result = calc_thermal_loads('B01', bpr, weather_data, date_range, locator,
