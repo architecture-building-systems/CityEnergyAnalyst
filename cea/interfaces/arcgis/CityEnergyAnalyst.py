@@ -71,7 +71,7 @@ class DemandTool(CeaTool):
 
 class RadiationDaysimTool(CeaTool):
     def __init__(self):
-        self.cea_tool = 'radiation-daysim'
+        self.cea_tool = 'radiation'
         self.label = 'Solar radiation (Daysim engine)'
         self.description = 'Use Daysim to calculate solar radiation for a scenario'
         self.category = 'Energy potentials'
