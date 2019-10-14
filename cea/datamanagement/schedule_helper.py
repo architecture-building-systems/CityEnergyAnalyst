@@ -40,10 +40,10 @@ COLUMN_NAMES_CEA_SCHEDULE = ['DAY',
 def calc_mixed_schedule(locator,
                         building_occupancy_df,
                         buildings,
-                        model_schedule):
+                        schedule_model):
 
-    metadata = model_schedule
-    schedules_DB = locator.get_database_standard_schedules(model_schedule)
+    metadata = schedule_model
+    schedules_DB = locator.get_database_standard_schedules(schedule_model)
     schedule_data_all_uses = ScheduleData(locator, schedules_DB)
     building_occupancy_df = building_occupancy_df.set_index('Name')
     building_occupancy_df = building_occupancy_df.loc[buildings]
