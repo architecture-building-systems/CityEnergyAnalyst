@@ -24,10 +24,10 @@ def dashboard_to_dict(dashboard):
 
 
 @api.route('/')
-class Dashboard(Resource):
+class Dashboards(Resource):
     def get(self):
         """
-        Get Dashboards from yaml file
+        Get list of Dashboards
         """
         config = current_app.cea_config
         plot_cache = cea.plots.cache.PlotCache(config)
@@ -39,10 +39,10 @@ class Dashboard(Resource):
 
         return out
 
-
-@api.route('/new')
-class DashboardNew(Resource):
     def post(self):
+        """
+        Create Dashboard
+        """
         form = api.payload
         config = current_app.cea_config
         plot_cache = cea.plots.cache.PlotCache(config)
@@ -70,19 +70,32 @@ class DashboardDuplicate(Resource):
         return {'new_dashboard_index': dashboard_index}
 
 
-@api.route('/delete/<int:dashboard_index>')
-class DashboardDelete(Resource):
-    def post(self, dashboard_index):
+@api.route('/<int:dashboard_index>')
+class Dashboard(Resource):
+    def get(self, dashboard_index):
+        """
+        Get Dashboard
+        """
+        config = current_app.cea_config
+        plot_cache = cea.plots.cache.PlotCache(config)
+        dashboards = cea.plots.read_dashboards(config, plot_cache)
+
+        return dashboard_to_dict(dashboards[dashboard_index])
+
+    def delete(self, dashboard_index):
+        """
+        Delete Dashboard
+        """
         form = api.payload
         config = current_app.cea_config
         cea.plots.delete_dashboard(config, dashboard_index)
 
         return {'message': 'deleted dashboard'}
 
-
-@api.route('/set-scenario/<int:dashboard_index>')
-class DashboardScenario(Resource):
-    def post(self, dashboard_index):
+    def patch(self, dashboard_index):
+        """
+        Update Dashboard properties
+        """
         form = api.payload
         config = current_app.cea_config
         plot_cache = cea.plots.cache.PlotCache(config)
@@ -100,10 +113,44 @@ class DashboardPlotCategories(Resource):
     def get(self):
         return CATEGORIES
 
+@api.route('/<int:dashboard_index>/plots/<int:plot_index>')
+class DashboardPlot(Resource):
+    def put(self, dashboard_index, plot_index):
+        """
+        Create/Replace a new Plot at specified index
+        """
+        form = api.payload
+        config = current_app.cea_config
+        plot_cache = cea.plots.cache.PlotCache(config)
+        dashboards = cea.plots.read_dashboards(config, plot_cache)
 
-@api.route('/plot-parameters/<int:dashboard_index>/<int:plot_index>')
+        dashboard = dashboards[dashboard_index]
+        dashboard.add_plot(form['category'], form['plot_id'], plot_index)
+        cea.plots.write_dashboards(config, dashboards)
+
+        return {'category': form['category'], 'plot_id': form['plot_id'], 'index': plot_index}
+
+    def delete(self, dashboard_index, plot_index):
+        """
+        Delete Plot
+        """
+        config = current_app.cea_config
+        plot_cache = cea.plots.cache.PlotCache(config)
+        dashboards = cea.plots.read_dashboards(config, plot_cache)
+
+        dashboard = dashboards[dashboard_index]
+        dashboard.remove_plot(plot_index)
+        cea.plots.write_dashboards(config, dashboards)
+
+        return dashboard_to_dict(dashboard)
+
+
+@api.route('/<int:dashboard_index>/plots/<int:plot_index>/parameters')
 class DashboardPlotParameters(Resource):
     def get(self, dashboard_index, plot_index):
+        """
+        Get Plot parameters
+        """
         config = current_app.cea_config
         plot_cache = cea.plots.cache.PlotCache(config)
         dashboards = cea.plots.read_dashboards(config, plot_cache)
@@ -118,7 +165,10 @@ class DashboardPlotParameters(Resource):
             parameters.append(deconstruct_parameters(parameter))
         return parameters
 
-    def post(self, dashboard_index, plot_index):
+    def put(self, dashboard_index, plot_index):
+        """
+        Save Plot parameters
+        """
         form = api.payload
         config = current_app.cea_config
         plot_cache = cea.plots.cache.PlotCache(config)
@@ -137,47 +187,3 @@ class DashboardPlotParameters(Resource):
         cea.plots.write_dashboards(config, dashboards)
 
         return plot.parameters
-
-
-@api.route('/change-plot/<int:dashboard_index>/<int:plot_index>')
-class DashboardChangePlot(Resource):
-    def post(self, dashboard_index, plot_index):
-        form = api.payload
-        config = current_app.cea_config
-        plot_cache = cea.plots.cache.PlotCache(config)
-        dashboards = cea.plots.read_dashboards(config, plot_cache)
-
-        dashboard = dashboards[dashboard_index]
-        dashboard.replace_plot(form['category'], form['plot_id'], plot_index)
-        cea.plots.write_dashboards(config, dashboards)
-
-        return {'category': form['category'], 'plot_id': form['plot_id'], 'index': plot_index}
-
-
-@api.route('/add-plot/<int:dashboard_index>/<int:plot_index>')
-class DashboardAddPlot(Resource):
-    def post(self, dashboard_index, plot_index):
-        form = api.payload
-        config = current_app.cea_config
-        plot_cache = cea.plots.cache.PlotCache(config)
-        dashboards = cea.plots.read_dashboards(config, plot_cache)
-
-        dashboard = dashboards[dashboard_index]
-        dashboard.add_plot(form['category'], form['plot_id'], plot_index)
-        cea.plots.write_dashboards(config, dashboards)
-
-        return {'category': form['category'], 'plot_id': form['plot_id'], 'index': plot_index}
-
-
-@api.route('/delete-plot/<int:dashboard_index>/<int:plot_index>')
-class DashboardDeletePlot(Resource):
-    def post(self, dashboard_index, plot_index):
-        config = current_app.cea_config
-        plot_cache = cea.plots.cache.PlotCache(config)
-        dashboards = cea.plots.read_dashboards(config, plot_cache)
-
-        dashboard = dashboards[dashboard_index]
-        dashboard.remove_plot(plot_index)
-        cea.plots.write_dashboards(config, dashboards)
-
-        return dashboard_to_dict(dashboard)
