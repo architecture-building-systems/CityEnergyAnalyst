@@ -4,8 +4,9 @@
 ## GENERAL ##
 T_b_CDD = 25.0
 # TECHS = ['HCS_LD', 'HCS_coil', 'HCS_ER0', 'HCS_3for2', 'HCS_IEHX']
-TECHS = ['HCS_base']
-timesteps = 24  # 168 (week)
+TECHS = ['HCS_base', 'HCS_base_coil', 'HCS_base_3for2', 'HCS_base_ER0', 'HCS_base_IEHX', 'HCS_base_LD']
+# TECHS = ['HCS_base']
+timesteps = 168  # 168 (week)
 # timesteps = "typical days"  # 168 (week)
 typical_days_path = "E:\\WP2"
 PLOTS = ['electricity_usages','air_flow','OAU_T_w_supply','exergy_usages', 'humidity_balance', 'humidity_storage', 'heat_balance']
@@ -13,29 +14,29 @@ new_calculation = False
 
 # GENERAL INPUTS
 season = 'Summer'
-specified_buildings = ["B005"]
-# specified_buildings = ["B001","B002","B005","B006","B009"]
+# specified_buildings = ["B005"]
+specified_buildings = ["B001","B002","B005","B006","B009"]
 # specified_buildings = ["B003","B008"]
 # specified_buildings = ["B001","B002","B003","B004","B005","B006","B007","B008","B009","B010"]
-# cases = ['WTP_CBD_m_WP1_RET','WTP_CBD_m_WP1_HOT','WTP_CBD_m_WP1_OFF']
-cases = ['WTP_CBD_m_WP1_OFF']
+cases = ['WTP_CBD_m_WP1_RET','WTP_CBD_m_WP1_HOT','WTP_CBD_m_WP1_OFF']
+# cases = ['WTP_CBD_m_WP1_RET']
 
 ## LAPTOP ##
 ampl_lic_path = "C:\\Users\\Shanshan\\Desktop\\ampl"
 
 # Branch mk
-osmose_project_path = "E:\\OSMOSE_projects\\HCS_mk\\Projects"
-osmose_outMsg_path = "\\s_001\\opt\\hc_outmsg.txt"
+# osmose_project_path = "E:\\OSMOSE_projects\\HCS_mk\\Projects"
+# osmose_outMsg_path = "\\s_001\\opt\\hc_outmsg.txt"
 
 # Branch master
 # osmose_project_path = "E:\\OSMOSE_projects\\HCS\\Projects"
 # osmose_outMsg_path = "\\scenario_1\\tmp\\OutMsg.txt"
 
-# osmose_project_path = "E:\\ipese_new\\osmose_mk\\Projects"
-# osmose_outMsg_path = "\\s_001\\opt\\hc_outmsg.txt"
+osmose_project_path = "E:\\ipese_new\\osmose_mk\\Projects"
+osmose_outMsg_path = "\\s_001\\opt\\hc_outmsg.txt"
 
 osmose_project_data_path = osmose_project_path + '\\data'
-result_destination = "E:\\HCS_results_0926"
+result_destination = "E:\\HCS_results_1008"
 
 ## WORK STATION ##
 # ampl_lic_path = "C:\\Users\\Zhongming\\Desktop\\SH\\ampl"
