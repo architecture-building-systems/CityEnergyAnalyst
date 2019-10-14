@@ -380,7 +380,7 @@ The following file is used by scripts: []
 get_building_architecture
 -------------------------
 
-The following file is used by scripts: ['radiation-daysim', 'emissions', 'demand']
+The following file is used by scripts: ['radiation', 'emissions', 'demand']
 
 
 

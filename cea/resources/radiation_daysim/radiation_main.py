@@ -174,7 +174,7 @@ def main(config):
     of interest. the number of sensor points depends on the size of the grid selected in the SETTINGS.py file and
     are generated automatically.
 
-    :param config: Configuration object with the settings (genera and radiation-daysim)
+    :param config: Configuration object with the settings (genera and radiation)
     :type config: cea.config.Configuartion
     :return:
     """
