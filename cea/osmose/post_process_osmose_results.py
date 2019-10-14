@@ -33,7 +33,7 @@ def main(folder_path):
 
     ## Calculation
     # exergy
-    exergy_req = calc_exergy(balance_df, output_df, folder_path)
+    exergy_req, exergy_reheat_req = calc_exergy(balance_df, output_df, folder_path)
     # Q
     Qsc_total, Qsc_dict = calc_Qsc(output_df, Q_sen_in_df, Q_sen_out_df, folder_path)
     Qh_reheat_dict = calc_Qh_reheat(output_df, folder_path)
@@ -50,6 +50,7 @@ def main(folder_path):
     ## Write total.csv
     total_dict = {'COP': cop_total,
                   'exergy_kWh': exergy_req,
+                  'exergy_reheat_kWh': exergy_reheat_req,
                   'electricity_kWh': el_usages,
                   'Q_chiller_kWh': Q_chiller_total,
                   'Q_r_chiller_kWh': Q_r_chiller_total,
@@ -83,7 +84,7 @@ def calc_layer_balance(balance_df, layer):
     layer_in_df = balance_df.filter(like= layer + '_in')
     layer_out_df = balance_df.filter(like= layer + '_out')
     layer_diff = (layer_in_df.sum(axis=1) - layer_out_df.sum(axis=1)).sum()
-    if layer_diff > 1E-3:
+    if abs(layer_diff) > 1E-3:
         print (layer, ' might not be balanced: ', layer_diff)
     else:
         print (layer, ' balanced!')
@@ -103,7 +104,16 @@ def calc_exergy(balance_df, output_df, folder_path):
     data_dict = {'Ex': Ex}
     timesteps = len(output_df.index)
     plot_stacked_bars(data_dict, timesteps, 'exergy', 'exergy [kW]', folder_path)
-    return Ex
+
+    # reheating electricity
+    Qh_reheat = output_df.filter(like='Qh_reheat_OAU').sum(axis=1) + output_df.filter(like='Qh_reheat_RAU').sum(axis=1)
+    T_reheat = 50 + 273.15
+    T_OA = output_df['T_OA'] + 273.15
+    carnot_reheat = 1 - T_OA/T_reheat
+    ex_Qh_reheat = Qh_reheat * carnot_reheat
+    Ex_reheat = Ex + ex_Qh_reheat
+
+    return Ex, Ex_reheat
 
 def calc_Q_chillers(streams_df):
     Q_chillers = streams_df.filter(like='chiller').filter(like='qt_cold_Hout').sum(axis=1)
@@ -448,30 +458,25 @@ def draw_percent_stacked_bar(df, folder_path, title='stacked bar'):
     return
 
 if __name__ == '__main__':
-    # buildings = ["B001", "B002", "B005", "B006", "B009"]
-    # # buildings = ["B001", "B002", "B003", "B004", "B005", "B006", "B007", "B008", "B009", "B010"]
-    # tech = ["HCS_coil"]
-    # cases = ["WTP_CBD_m_WP1_RET", "WTP_CBD_m_WP1_OFF", "WTP_CBD_m_WP1_HOT"]
+    ## Simple folder path input
 
-    # path to osmose result folders
-    result_path_folder = "E:\\ipese_new\\osmose_mk\\results\\HCS_base"
-    folders_list = os.listdir(result_path_folder)
-    # folders_list = ["E:\\ipese_new\\osmose_mk\\results\\HCS_base\\run_004"]
-    timesteps = 24
-    for folder in folders_list:
-        if 'run' in folder:
-            folder_path = os.path.join(result_path_folder, folder)
-            main(folder_path)
+    # folder_path = "E:\\ipese_new\\osmose_mk\\results\\HCS_base_coil\\run_011"
+    # main(folder_path)
 
+    ## Loop through different technologies
 
-    # for case in cases:
-    #     folder_path = os.path.join(result_path, case)
-    #     for building in buildings:
-    #         building_time = building + "_1_168"
-    #         # building_result_path = 'E:\\HCS_results_0920\\WTP_CBD_m_WP1_RET\\B005_1_168\\3for2_base'
-    #         building_result_path = os.path.join(folder_path, building_time)
-    #         sub_folder = 'three_units'
-    #         building_result_path = os.path.join(building_result_path, sub_folder)
-    #         print building_result_path
-    #         file_name = 'outputs.csv'
-    #         main(building, tech, file_name, building_result_path)
+    # result_path_folder = "E:\\HCS_results_1008\\WTP_CBD_m_WP1_HOT\\B005_1_24\\BATCH1"
+    result_path_folder = "E:\\ipese_new\\osmose_mk\\results"
+    # TECHS = ['HCS_base', 'HCS_base_coil', 'HCS_base_3for2', 'HCS_base_ER0', 'HCS_base_IEHX', 'HCS_base_LD']
+    TECHS = ['HCS_base_3for2']
+
+    for tech in TECHS:
+        tech_folder_path = os.path.join(result_path_folder, tech)
+        folders_list = os.listdir(tech_folder_path)
+        timesteps = 24
+        for folder in folders_list:
+            if 'run' in folder:
+                folder_path = os.path.join(tech_folder_path, folder)
+                file_list = os.listdir(folder_path)
+                # if 'total.csv' not in file_list:
+                main(folder_path)
