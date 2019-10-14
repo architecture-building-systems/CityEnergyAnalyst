@@ -337,8 +337,8 @@ SCRIPT,LOCATOR_METHOD,FILE_NAME,VARIABLE,DESCRIPTION,UNIT,VALUES,TYPE,COLOR
 -,get_data_benchmark,databases/sg/benchmarks/benchmark_2000w.xls:TOTAL,PEN_today,Present primary energy demand,[-],{0.0...n},float,black
 -,get_data_benchmark,databases/sg/benchmarks/benchmark_2000w.xls:TOTAL,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black
 -,get_district_geometry,inputs/building-geometry/district.shp,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black
--,get_district_geometry,inputs/building-geometry/district.shp,floors_ag,Number of floors above ground (incl. ground floor),[-],{0…n},int,black
--,get_district_geometry,inputs/building-geometry/district.shp,floors_bg,"Number of floors below ground (basement, etc)",[-],{0…n},int,black
+-,get_district_geometry,inputs/building-geometry/district.shp,floors_ag,Number of floors above ground (incl. ground floor),[-],{0ï¿½n},int,black
+-,get_district_geometry,inputs/building-geometry/district.shp,floors_bg,"Number of floors below ground (basement, etc)",[-],{0ï¿½n},int,black
 -,get_district_geometry,inputs/building-geometry/district.shp,geometry,TODO,TODO,TODO,TODO,black
 -,get_district_geometry,inputs/building-geometry/district.shp,height_ag,Height above ground (incl. ground floor),[m],{0.0...n},float,black
 -,get_district_geometry,inputs/building-geometry/district.shp,height_bg,"Height below ground (basement, etc)",[m],{0.0...n},float,black
@@ -834,13 +834,23 @@ demand,get_demand_results_file,outputs/data/demand/b001.csv,E_cdata_kWh,Data cen
 demand,get_demand_results_file,outputs/data/demand/b001.csv,E_cre_kWh,Refrigeration system electricity consumption.,[kWh],{0.0...n},float,black
 demand,get_demand_results_file,outputs/data/demand/b001.csv,E_cs_kWh,Cooling system electricity consumption.,[kWh],{0.0...n},float,black
 demand,get_demand_results_file,outputs/data/demand/b001.csv,E_hs_kWh,Heating system electricity consumption.,[kWh],{0.0...n},float,black
-demand,get_demand_results_file,outputs/data/demand/b001.csv,E_sys_kWh,End-use electricity demand,kWh,{0.0...n},float,green
-demand,get_demand_results_file,outputs/data/demand/b001.csv,E_ww_kWh,DHW electricity consumption.,[kWh],{0.0...n},float,black
-demand,get_demand_results_file,outputs/data/demand/b001.csv,Eal_kWh,Electricity consumption of appliances and lights,[kWh],{0.0...n},float,black
-demand,get_demand_results_file,outputs/data/demand/b001.csv,Eaux_kWh,Auxiliary electricity consumption.,[kWh],{0.0...n},float,black
-demand,get_demand_results_file,outputs/data/demand/b001.csv,Edata_kWh,Data centre electricity consumption.,[kWh],{0.0...n},float,black
-demand,get_demand_results_file,outputs/data/demand/b001.csv,Epro_kWh,Electricity consumption for industrial processes.,[kWh],{0.0...n},float,black
-demand,get_demand_results_file,outputs/data/demand/b001.csv,GRID_kWh,Grid electricity consumption,kWh,{0.0...n},float,green
+demand,get_demand_results_file,outputs/data/demand/b001.csv,E_sys_kWh,End-use total electricity system consumption = Ea + El + Edata + Epro + Eaux ,kWh,{0.0...n},float,green
+demand,get_demand_results_file,outputs/data/demand/b001.csv,E_ww_kWh,Hot water system electricity consumption.,[kWh],{0.0...n},float,black
+demand,get_demand_results_file,outputs/data/demand/b001.csv,Eal_kWh,End-use electricity consumption of appliances and lights,[kWh],{0.0...n},float,black
+demand,get_demand_results_file,outputs/data/demand/b001.csv,Eaux_kWh,End-use auxiliary electricity consumption.,[kWh],{0.0...n},float,black
+demand,get_demand_results_file,outputs/data/demand/b001.csv,Edata_kWh,Ebd-use Data centre electricity consumption.,[kWh],{0.0...n},float,black
+demand,get_demand_results_file,outputs/data/demand/b001.csv,Epro_kWh,End_use, Electricity consumption for industrial processes.,[kWh],{0.0...n},float,black
+demand,get_demand_results_file,outputs/data/demand/b001.csv,GRID_kWh,Grid total requirements of electricity = GRID_a + GRID_l + GRID_data + GRID_pro + GRID_aux + GRID_cdata + GRID_cre + GRID_hs + GRID_ww + GRID_cs,kWh,{0.0...n},float,green
+demand,get_demand_results_file,outputs/data/demand/b001.csv,GRID_a_kWh,kWh,Grid electricity requirements for appliances,{0.0...n},float,green
+demand,get_demand_results_file,outputs/data/demand/b001.csv,GRID_l_kWh,kWh,Grid electricity requirements for lights,{0.0...n},float,green_light
+demand,get_demand_results_file,outputs/data/demand/b001.csv,GRID_aux_kWh,kWh,Grid electricity requirements for auxiliary loads,{0.0...n},float,grey
+demand,get_demand_results_file,outputs/data/demand/b001.csv,GRID_data_kWh,kWh,Grid electricity requirements for servers,{0.0...n},float,blue
+demand,get_demand_results_file,outputs/data/demand/b001.csv,GRID_pro_kWh,kWh,Grid electricity requirements for industrial processes,{0.0...n},float,brown
+demand,get_demand_results_file,outputs/data/demand/b001.csv,GRID_ww_kWh,kWh,Grid electricity requirements for hot water supply,{0.0...n},float,orange
+demand,get_demand_results_file,outputs/data/demand/b001.csv,GRID_hs_kWh,kWh,Grid electricity requirements for space heating,{0.0...n},float,red
+demand,get_demand_results_file,outputs/data/demand/b001.csv,GRID_cdata_kWh,kWh,Grid electricity requirements for servers cooling,{0.0...n},float,blue_light
+demand,get_demand_results_file,outputs/data/demand/b001.csv,GRID_cre_kWh,kWh,Grid electricity requirements for refrigeration,{0.0...n},float,blue_lighter
+demand,get_demand_results_file,outputs/data/demand/b001.csv,GRID_cs_kWh,kWh,Grid electricity requirements for space cooling,{0.0...n},float,blue
 demand,get_demand_results_file,outputs/data/demand/b001.csv,I_rad_kWh,Radiative heat loss,kWh,{0.0...n},float,yellow_light
 demand,get_demand_results_file,outputs/data/demand/b001.csv,I_sol_and_I_rad_kWh,Net radiative heat gain,[kWh],{0.0...n},float,black
 demand,get_demand_results_file,outputs/data/demand/b001.csv,I_sol_kWh,Solar heat gain,kWh,{0.0...n},float,yellow
