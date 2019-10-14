@@ -71,14 +71,14 @@ def occupancy_main(locator, config):
             locator.get_building_schedules(building))
         monthly_multiplier = daily_schedule_building_metadata['MONTHLY_MULTIPLIER']
         calc_schedules(locator,
-                                     building,
-                                     date_range,
-                                     daily_schedule_building,
-                                     monthly_multiplier,
-                                     internal_loads_building,
-                                     indoor_comfort_building,
-                                     prop_geometry_building,
-                                     stochastic_schedule)
+                       building,
+                       date_range,
+                       daily_schedule_building,
+                       monthly_multiplier,
+                       internal_loads_building,
+                       indoor_comfort_building,
+                       prop_geometry_building,
+                       stochastic_schedule)
 
 
 def calc_schedules(locator,
@@ -153,8 +153,8 @@ def calc_schedules(locator,
                                               monthly_multiplier,
                                               normalize_first_daily_profile=True)
             if stochastic_schedule:
-            # TODO: define how stochastic occupancy affects water schedules
-            # currently MULTI_RES water schedules include water consumption at times of zero occupancy
+                # TODO: define how stochastic occupancy affects water schedules
+                # currently MULTI_RES water schedules include water consumption at times of zero occupancy
                 final_schedule[variable] = yearly_array * internal_loads_building[variable] * number_of_occupants
             else:
                 final_schedule[variable] = yearly_array * internal_loads_building[variable] * number_of_occupants
@@ -391,7 +391,6 @@ def get_random_presence(p):
     population = [val for val, cnt in weighted_choices for i in range(cnt)]
 
     return random.choice(population)
-
 
 
 def get_yearly_vectors(date_range, days_in_schedule, schedule_array, monthly_multiplier,
