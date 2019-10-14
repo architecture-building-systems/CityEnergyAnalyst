@@ -11,11 +11,12 @@
 - script: data-helper
   parameters:
     region: CH
-    schedule-model:CH-SIA-2014
+    schedule-model: CH-SIA-2014
 - script: weather-helper
   parameters:
     weather: Zuerich-Kloten_1990_2010_TMY
 - script: radiation
+- script: occupancy
 - script: demand
 - script: emissions
 - script: operation-costs
