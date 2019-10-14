@@ -85,8 +85,8 @@ def data_helper(locator, region, overwrite_technology_folder,
     occupant_densities = {}
     occ_densities = pd.read_excel(locator.get_archetypes_properties(), 'INTERNAL_LOADS').set_index('Code')
     for use in list_uses:
-        if occ_densities.ix[use, 'Occ_m2pax'] > 0.0:
-            occupant_densities[use] = 1 / occ_densities.ix[use, 'Occ_m2pax']
+        if occ_densities.loc[use, 'Occ_m2pax'] > 0.0:
+            occupant_densities[use] = 1 / occ_densities.loc[use, 'Occ_m2pax']
         else:
             occupant_densities[use] = 0.0
 
