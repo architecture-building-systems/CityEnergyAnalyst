@@ -137,10 +137,10 @@ def calc_Qww(bpr, tsd, schedules):
 
     # calc end-use demand
     tsd['vww_m3perh'] = schedules['Vww'] * bpr.internal_loads['Vww_lpd'] / 1000  # m3/h
-    tsd['mww'] = tsd['vww_m3perh'] * P_WATER / 3600  # kg/s
+    tsd['mww_kgs'] = tsd['vww_m3perh'] * P_WATER / 3600  # kg/s
     tsd['mcptw'] = (tsd['vfw_m3perh'] - tsd['vww_m3perh']) * CP_KJPERKGK * P_WATER / 3600  # kW_K tap water
 
-    tsd['Qww'] = np.vectorize(function)(tsd['mww'], Tww_sup_0_C, tsd['Tww_re'])
+    tsd['Qww'] = np.vectorize(function)(tsd['mww_kgs'], Tww_sup_0_C, tsd['Tww_re'])
 
     return tsd
 
