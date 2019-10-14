@@ -18,6 +18,8 @@ from cea.demand.building_properties import BuildingProperties
 from cea.utilities import epwreader
 import warnings
 from cea.constants import HOURS_IN_YEAR
+import cea.utilities.parallel
+from itertools import repeat
 
 warnings.filterwarnings("ignore")
 
@@ -69,8 +71,7 @@ def demand_calculation(locator, config):
     t0 = time.clock()
 
     # LOCAL VARIABLES
-    multiprocessing = config.multiprocessing
-    list_building_names = config.demand.buildings
+    building_names = config.demand.buildings
     use_dynamic_infiltration = config.demand.use_dynamic_infiltration_calculation
     resolution_output = config.demand.resolution_output
     loads_output = config.demand.loads_output
@@ -106,30 +107,39 @@ def demand_calculation(locator, config):
         print('Warning! The following list of buildings have less than 100 m2 of gross floor area, CEA might fail: %s' % list_buildings_less_100m2)
 
     # SPECIFY NUMBER OF BUILDINGS TO SIMULATE
-    if not list_building_names:
-        list_building_names = building_properties.list_building_names()
+    if not building_names:
+        building_names = building_properties.list_building_names()
         print('Running demand calculation for all buildings in the zone')
     else:
-        print('Running demand calculation for the next buildings=%s' % list_building_names)
+        print('Running demand calculation for the following buildings=%s' % building_names)
 
     # DEMAND CALCULATION
-    if multiprocessing and mp.cpu_count() > 1:
-        calc_demand_multiprocessing(building_properties, date_range, locator, list_building_names,
-                                    weather_data, use_dynamic_infiltration,
-                                    resolution_output, loads_output, massflows_output, temperatures_output,
-                                    format_output, config, write_detailed_output, debug)
-    else:
-        calc_demand_singleprocessing(building_properties, date_range, locator, list_building_names,
-                                     weather_data, use_dynamic_infiltration,
-                                     resolution_output, loads_output, massflows_output, temperatures_output,
-                                     format_output, config, write_detailed_output, debug)
+    n = len(building_names)
+    calc_thermal_loads = cea.utilities.parallel.vectorize(thermal_loads.calc_thermal_loads,
+                                                          config.get_number_of_processes(), on_complete=print_progress)
+
+    calc_thermal_loads(
+        building_names,
+        [building_properties[b] for b in building_names],
+        repeat(weather_data, n),
+        repeat(date_range, n),
+        repeat(locator, n),
+        repeat(use_dynamic_infiltration, n),
+        repeat(resolution_output, n),
+        repeat(loads_output, n),
+        repeat(massflows_output, n),
+        repeat(temperatures_output, n),
+        repeat(format_output, n),
+        repeat(config, n),
+        repeat(write_detailed_output, n),
+        repeat(debug, n))
 
     # WRITE TOTAL YEARLY VALUES
     writer_totals = demand_writers.YearlyDemandWriter(loads_output, massflows_output, temperatures_output)
     if format_output == 'csv':
-        totals, time_series = writer_totals.write_to_csv(list_building_names, locator)
+        totals, time_series = writer_totals.write_to_csv(building_names, locator)
     elif format_output == 'hdf5':
-        totals, time_series = writer_totals.write_to_hdf5(list_building_names, locator)
+        totals, time_series = writer_totals.write_to_hdf5(building_names, locator)
     else:
         raise Exception('error')
 
@@ -139,41 +149,8 @@ def demand_calculation(locator, config):
     return totals, time_series
 
 
-def calc_demand_singleprocessing(building_properties, date_range, locator, list_building_names,
-                                 weather_data, use_dynamic_infiltration_calculation,
-                                 resolution_outputs, loads_output, massflows_output, temperatures_output,
-                                 format_output, config, write_detailed_output, debug):
-    num_buildings = len(list_building_names)
-    for i, building in enumerate(list_building_names):
-        bpr = building_properties[building]
-        thermal_loads.calc_thermal_loads(building, bpr, weather_data, date_range, locator,
-                                         use_dynamic_infiltration_calculation,
-                                         resolution_outputs, loads_output, massflows_output, temperatures_output,
-                                         format_output, config, write_detailed_output, debug)
-        print('Building No. %i completed out of %i: %s' % (i + 1, num_buildings, building))
-
-
-def calc_demand_multiprocessing(building_properties, date_range, locator, list_building_names,
-                                weather_data, use_dynamic_infiltration_calculation,
-                                resolution_outputs, loads_output, massflows_output, temperatures_output, format_output,
-                                config, write_detailed_output, debug):
-    number_of_processes = config.get_number_of_processes()
-    print("Using %i CPU's" % number_of_processes)
-    pool = mp.Pool(number_of_processes)
-    joblist = []
-    num_buildings = len(list_building_names)
-    for building in list_building_names:
-        bpr = building_properties[building]
-        job = pool.apply_async(thermal_loads.calc_thermal_loads,
-                               [building, bpr, weather_data, date_range, locator,
-                                use_dynamic_infiltration_calculation,
-                                resolution_outputs, loads_output, massflows_output, temperatures_output,
-                                format_output, config, write_detailed_output, debug])
-        joblist.append(job)
-    for i, job in enumerate(joblist):
-        job.get(240)
-        print('Building No. %i completed out of %i' % (i + 1, num_buildings))
-    pool.close()
+def print_progress(i, n, args, result):
+    print("Building No. {i} completed out of {n}: {building}".format(i=i + 1, n=n, building=args[0]))
 
 
 def main(config):
