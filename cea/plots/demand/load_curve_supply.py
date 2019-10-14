@@ -4,9 +4,9 @@ Implements the Load Curve Supply plot.
 from __future__ import division
 from __future__ import print_function
 
-import cea.plots.demand
 import plotly.graph_objs as go
 
+import cea.plots.demand
 from cea.plots.variable_naming import NAMING, COLOR
 
 
@@ -22,8 +22,16 @@ class LoadCurveSupplyPlot(cea.plots.demand.DemandPlotBase):
     def __init__(self, project, parameters, cache):
         super(LoadCurveSupplyPlot, self).__init__(project, parameters, cache)
         self.analysis_fields = ["DH_hs_kWh", "DH_ww_kWh", 'SOLAR_ww_kWh', 'SOLAR_hs_kWh', "DC_cs_kWh", 'DC_cdata_kWh',
-                                'DC_cre_kWh', 'GRID_kWh', 'PV_kWh', 'NG_hs_kWh', 'COAL_hs_kWh', 'OIL_hs_kWh',
-                                'WOOD_hs_kWh', 'NG_ww_kWh', 'COAL_ww_kWh', 'OIL_ww_kWh', 'WOOD_ww_kWh']
+                                'DC_cre_kWh', 'PV_kWh', 'NG_hs_kWh', 'COAL_hs_kWh', 'OIL_hs_kWh',
+                                'WOOD_hs_kWh', 'NG_ww_kWh', 'COAL_ww_kWh', 'OIL_ww_kWh', 'WOOD_ww_kWh', 'GRID_a',
+                                'GRID_l',
+                                'GRID_data',
+                                'GRID_pro',
+                                'GRID_aux',
+                                'GRID_ww',
+                                'GRID_hs',
+                                'GRID_cdata',
+                                'GRID_cre']
         self.timeframe = self.parameters['timeframe']
 
     @property
@@ -46,7 +54,7 @@ class LoadCurveSupplyPlot(cea.plots.demand.DemandPlotBase):
         traces = []
         analysis_fields = self.remove_unused_fields(data, self.analysis_fields)
         for field in analysis_fields:
-            y = data[field].values / 1E3# to MW
+            y = data[field].values / 1E3  # to MW
             name = NAMING[field]
             trace = go.Scattergl(x=data.index, y=y, name=name, marker=dict(color=COLOR[field]))
             traces.append(trace)
@@ -70,13 +78,13 @@ if __name__ == '__main__':
     cache = cea.plots.cache.NullPlotCache()
 
     LoadCurveSupplyPlot(config.project,
-                  {'buildings': locator.get_zone_building_names(),
-                   'scenario-name': config.scenario_name,
-                   'timeframe': config.plots.timeframe},
-                  cache).plot(auto_open=True)
+                        {'buildings': locator.get_zone_building_names(),
+                         'scenario-name': config.scenario_name,
+                         'timeframe': config.plots.timeframe},
+                        cache).plot(auto_open=True)
 
     LoadCurveSupplyPlot(config.project,
-                  {'buildings': locator.get_zone_building_names()[1:2],
-                   'scenario-name': config.scenario_name,
-                   'timeframe': config.plots.timeframe},
-                  cache).plot(auto_open=True)
+                        {'buildings': locator.get_zone_building_names()[1:2],
+                         'scenario-name': config.scenario_name,
+                         'timeframe': config.plots.timeframe},
+                        cache).plot(auto_open=True)
