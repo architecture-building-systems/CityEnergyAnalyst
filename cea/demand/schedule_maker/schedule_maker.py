@@ -84,9 +84,9 @@ def schedule_maker_main(locator, config):
                                    repeat(date_range, n),
                                    daily_schedule_buildings,
                                    monthly_multipliers,
-                                   [internal_loads.ix[b] for b in buildings],
-                                   [indoor_comfort.ix[b] for b in buildings],
-                                   [prop_geometry.ix[b] for b in buildings],
+                                   [internal_loads.loc[b] for b in buildings],
+                                   [indoor_comfort.loc[b] for b in buildings],
+                                   [prop_geometry.loc[b] for b in buildings],
                                    repeat(stochastic_schedule, n))
 
 
