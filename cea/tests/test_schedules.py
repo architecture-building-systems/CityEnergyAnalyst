@@ -15,12 +15,10 @@ import pandas as pd
 import cea.config
 from cea.constants import HOURS_IN_YEAR
 from cea.datamanagement.data_helper import calculate_average_multiuse, correct_archetype_areas, data_helper
-from cea.datamanagement.schedule_helper import calc_mixed_schedule
 from cea.demand.building_properties import BuildingProperties
 from cea.demand.schedule_maker.schedule_maker import schedule_maker_main
 from cea.inputlocator import ReferenceCaseOpenLocator
 from cea.utilities import epwreader
-from cea.utilities.dbf import dbf_to_dataframe
 
 REFERENCE_TIME = 3456
 
@@ -104,17 +102,9 @@ class TestScheduleCreation(unittest.TestCase):
         locator = ReferenceCaseOpenLocator()
         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         config.scenario = locator.scenario
-        stochastic_occupancy = config.demand.use_stochastic_occupancy
-
-        # get year from weather file
-        weather_path = locator.get_weather_file()
-        weather_data = epwreader.epw_reader(weather_path)[['year']]
-        year = weather_data['year'][0]
-        date = pd.date_range(str(year) + '/01/01', periods=HOURS_IN_YEAR, freq='H')
 
         building_properties = BuildingProperties(locator, False)
         bpr = building_properties['B01']
-        list_uses = ['OFFICE', 'INDUSTRIAL']
         bpr.occupancy = {'OFFICE': 0.5, 'INDUSTRIAL': 0.5}
         bpr.comfort['mainuse'] = 'OFFICE'
 
@@ -146,7 +136,7 @@ def calculate_mixed_use_archetype_values_results(locator):
     office_occ = float(occ_densities.ix['OFFICE', 'Occ_m2pax'])
     gym_occ = float(occ_densities.ix['GYM', 'Occ_m2pax'])
     calculated_results = calculate_average_multiuse(
-        fields=['X_ghp', 'El_Wm2'],
+        fields=['X_ghpax', 'El_Wm2'],
         properties_df=pd.DataFrame(data=[['B1', 0.5, 0.5, 0.0, 0.0, 0.0], ['B2', 0.25, 0.75, 0.0, 0.0, 0.0]],
                                    columns=['Name', 'OFFICE', 'GYM', 'X_ghpax', 'El_Wm2', 'Occ_m2pax']),
         occupant_densities={'OFFICE': 1 / office_occ, 'GYM': 1 / gym_occ},
