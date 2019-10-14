@@ -10,7 +10,7 @@ cea-config data-helper --region SG
 cea trace-inputlocator --scripts data-helper
 if %errorlevel% neq 0 exit /b %errorlevel%
 
-cea trace-inputlocator --scripts radiation-daysim, demand
+cea trace-inputlocator --scripts radiation, demand
 if %errorlevel% neq 0 exit /b %errorlevel%
 
 cea trace-inputlocator --scripts emissions, operation-costs
