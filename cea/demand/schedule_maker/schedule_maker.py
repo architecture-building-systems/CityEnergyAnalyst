@@ -7,8 +7,12 @@ import numpy as np
 import pandas as pd
 from geopandas import GeoDataFrame as Gdf
 
+import warnings
+from itertools import repeat
+
 import cea.config
 import cea.inputlocator
+import cea.utilities.parallel
 from cea.constants import HOURS_IN_YEAR, MONTHS_IN_YEAR
 from cea.datamanagement.schedule_helper import read_cea_schedule
 from cea.demand.building_properties import calc_useful_areas
@@ -63,22 +67,31 @@ def schedule_maker_main(locator, config):
     # create date range for the calculation year
     date_range = get_dates_from_year(year)
 
-    for building in buildings:
-        internal_loads_building = internal_loads.ix[building]
-        indoor_comfort_building = indoor_comfort.ix[building]
-        prop_geometry_building = prop_geometry.ix[building]
-        daily_schedule_building, daily_schedule_building_metadata = read_cea_schedule(
-            locator.get_building_schedules(building))
-        monthly_multiplier = daily_schedule_building_metadata['MONTHLY_MULTIPLIER']
-        calc_schedules(locator,
-                       building,
-                       date_range,
-                       daily_schedule_building,
-                       monthly_multiplier,
-                       internal_loads_building,
-                       indoor_comfort_building,
-                       prop_geometry_building,
-                       stochastic_schedule)
+    #read building schedules input data:
+    schedules = [read_cea_schedule(locator.get_building_schedules(building)) for building in buildings]
+    daily_schedule_buildings = [schedule[0] for schedule in schedules]
+    monthly_multipliers = [schedule[1]['MONTHLY_MULTIPLIER'] for schedule in schedules]
+
+
+    # SCHEDULE MAKER
+    n = len(buildings)
+    calc_schedules_multiprocessing = cea.utilities.parallel.vectorize(calc_schedules,
+                                                                      config.get_number_of_processes(),
+                                                                      on_complete=print_progress)
+
+    calc_schedules_multiprocessing(repeat(locator, n),
+                                   buildings,
+                                   repeat(date_range, n),
+                                   daily_schedule_buildings,
+                                   monthly_multipliers,
+                                   [internal_loads.ix[b] for b in buildings],
+                                   [indoor_comfort.ix[b] for b in buildings],
+                                   [prop_geometry.ix[b] for b in buildings],
+                                   repeat(stochastic_schedule, n))
+
+
+def print_progress(i, n, args, result):
+    print("Building No. {i} completed out of {n}: {building}".format(i=i + 1, n=n, building=args[0]))
 
 
 def calc_schedules(locator,
