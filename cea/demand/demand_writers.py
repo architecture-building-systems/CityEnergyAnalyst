@@ -33,6 +33,7 @@ class DemandWriter(object):
                               'GRID_aux',
                               'GRID_ww',
                               'GRID_hs',
+                              'GRID_cs',
                               'GRID_cdata',
                               'GRID_cre',
                               'E_sys', 'Eal', 'Ea', 'El', 'Edata', 'Epro', 'Eaux',
