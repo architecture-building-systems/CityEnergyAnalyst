@@ -14,6 +14,7 @@ from cea.inputlocator import ReferenceCaseOpenLocator
 from cea.datamanagement.data_helper import calculate_average_multiuse
 from cea.datamanagement.data_helper import correct_archetype_areas
 from cea.demand.occupancy.occupancy_model import occupancy_main
+from cea.demand.occupancy.occupancy_model import schedule_maker
 from cea.utilities import epwreader
 from cea.utilities.date import get_dates_from_year
 import cea.config
@@ -105,7 +106,9 @@ class TestScheduleCreation(unittest.TestCase):
         bpr.comfort['mainuse'] = 'OFFICE'
 
         # calculate schedules
-        calculated_schedules = occupancy_main(locator, config)
+        archetype_schedules, archetype_values = schedule_maker(date, locator, list_uses)
+        calculated_schedules = occupancy_main(list_uses, archetype_schedules, bpr, archetype_values,
+                                              stochastic_occupancy)
 
         config = ConfigParser.SafeConfigParser()
         config.read(get_test_config_path())
@@ -166,8 +169,10 @@ def create_data():
     year = weather_data['year'][0]
     date = pd.date_range(str(year) + '/01/01', periods=HOURS_IN_YEAR, freq='H')
 
+    archetype_schedules, archetype_values = schedule_maker('CH', date, locator, list_uses)
     stochastic_occupancy = config.demand.use_stochastic_occupancy
-    calculated_schedules = occupancy_main(locator, config)
+    calculated_schedules = occupancy_main(list_uses, archetype_schedules, bpr, archetype_values,
+                                          stochastic_occupancy)
     if not test_config.has_section('test_mixed_use_schedules'):
         test_config.add_section('test_mixed_use_schedules')
     test_config.set('test_mixed_use_schedules', 'reference_results', json.dumps(

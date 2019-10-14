@@ -42,6 +42,12 @@ class InputLocator(object):
         """Use os.makedirs to ensure the folders exist"""
         self._ensure_folder(os.path.dirname(file_path))
 
+    def get_database_standard_schedules(self, name_database):
+        return os.path.join(self.db_path, 'schedules', name_database)
+
+    def get_database_standard_schedules_use(self, path_to_database, use):
+        return os.path.join(path_to_database, use + '.csv')
+
     def get_project_path(self):
         """Returns the parent folder of a scenario - this is called a project or 'case-study'"""
         return os.path.dirname(self.scenario)
@@ -564,14 +570,10 @@ class InputLocator(object):
         to the scenario if they are not yet present, based on the configured region for the scenario."""
         return os.path.join(self.get_technology_folder(), 'archetypes', 'construction_properties.xlsx')
 
-    def get_archetypes_schedules_folder(self):
+    def get_archetypes_schedules(self):
         """Returns the database of schedules to be used by the data-helper. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return os.path.join(self.get_technology_folder(), 'archetypes', 'schedules')
-
-    def get_archetypes_schedule(self, use='MULTI_RES'):
-        return os.path.join(self.get_archetypes_schedules_folder(), use + '.csv')
-
+        return os.path.join(self.get_technology_folder(), 'archetypes', 'occupancy_schedules.xlsx')
 
     def get_archetypes_system_controls(self):
         """ Returns the database of region-specific system control parameters. These are copied

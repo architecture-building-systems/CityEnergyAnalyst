@@ -43,7 +43,8 @@ def calc_mixed_schedule(locator,
                         model_schedule):
 
     metadata = model_schedule
-    schedule_data_all_uses = ScheduleData(locator)
+    schedules_DB = locator.get_database_standard_schedules(model_schedule)
+    schedule_data_all_uses = ScheduleData(locator, schedules_DB)
     building_occupancy_df = building_occupancy_df.set_index('Name')
     building_occupancy_df = building_occupancy_df.ix[buildings]
 
@@ -158,9 +159,9 @@ def calc_average(last, current, share_of_use):
 
 class ScheduleData(object):
 
-    def __init__(self, locator):
+    def __init__(self, locator, path_to_standard_schedule_database):
         self.locator = locator
-        self.path_database = locator.get_archetypes_schedules_folder()
+        self.path_database = path_to_standard_schedule_database
         self.schedule_data, self.schedule_complementary_data = self.fill_in_data()
 
     def fill_in_data(self):
@@ -172,7 +173,7 @@ class ScheduleData(object):
         data_schedules = []
         data_schedules_complimentary = []
         for use in get_list_uses_in_database:
-            path_to_schedule = self.locator.get_archetypes_schedule(self.path_database, use)
+            path_to_schedule = self.locator.get_database_standard_schedules_use(self.path_database, use)
             data_schedule, data_metadata = read_cea_schedule(path_to_schedule)
             data_schedules.append(data_schedule)
             data_schedules_complimentary.append(data_metadata)
@@ -202,6 +203,8 @@ def get_short_list_of_uses_in_case_study(building_occupancy_df):
 
 def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+    path_database = locator.get_database_standard_schedules('CH-SIA-2014')
+    path_to_building_schedule = locator.get_database_standard_schedules_use(path_database, 'MULTI_RES')
 
 
 if __name__ == '__main__':
