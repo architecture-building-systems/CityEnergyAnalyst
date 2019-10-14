@@ -14,7 +14,7 @@ import ConfigParser
 import json
 import pandas as pd
 
-from cea.demand.occupancy.occupancy_model import occupancy_main
+from cea.demand.schedule_maker.schedule_maker import schedule_maker_main
 from cea.demand.thermal_loads import calc_thermal_loads
 from cea.demand.building_properties import BuildingProperties
 from cea.utilities.date import get_dates_from_year
@@ -52,7 +52,7 @@ def main(output_file):
     print("data for test_calc_thermal_loads:")
     print(building_properties.list_building_names())
 
-    occupancy_main(locator, config)
+    schedule_maker_main(locator, config)
 
     bpr = building_properties['B01']
     result = calc_thermal_loads('B01', bpr, weather_data, date_range, locator,
