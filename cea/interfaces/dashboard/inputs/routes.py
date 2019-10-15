@@ -90,13 +90,12 @@ def route_get_building_properties():
         try:
             if db_info['type'] == 'shp':
 
-                from cea.utilities.standardize_coordinates import shapefile_to_WSG_and_UTM
+                from cea.utilities.standardize_coordinates import shapefile_to_WSG_and_UTM, get_geographic_coordinate_system
                 table_df, lat, lon = shapefile_to_WSG_and_UTM(location)
 
                 # save projected coordinate system
                 store['crs'][db] = get_projected_coordinate_system(lat, lon)
 
-                from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
                 store['geojsons'][db] = json.loads(table_df.to_crs(get_geographic_coordinate_system()).to_json(show_bbox=True))
 
                 table_df = pandas.DataFrame(table_df.drop(columns='geometry'))
