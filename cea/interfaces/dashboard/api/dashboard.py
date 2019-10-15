@@ -168,7 +168,6 @@ class DashboardPlot(Resource):
         if 'parameters' in form:
             plot = dashboard.plots[plot_index]
             print('expected_parameters: {}'.format(plot.expected_parameters.items()))
-            print('expected_parameters: {}'.format(plot.expected_parameters.items()))
             for pname, fqname in plot.expected_parameters.items():
                 parameter = config.get_parameter(fqname)
                 if isinstance(parameter, cea.config.MultiChoiceParameter):
