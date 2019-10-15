@@ -89,10 +89,11 @@ def route_get_building_properties():
         location = getattr(locator, db_info['location'])()
         try:
             if db_info['type'] == 'shp':
-                table_df = geopandas.GeoDataFrame.from_file(location)
+
+                from cea.utilities.standardize_coordinates import shapefile_to_WSG_and_UTM
+                table_df, lat, lon = shapefile_to_WSG_and_UTM(location)
 
                 # save projected coordinate system
-                lat, lon = get_lat_lon_projected_shapefile(table_df)
                 store['crs'][db] = get_projected_coordinate_system(lat, lon)
 
                 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system

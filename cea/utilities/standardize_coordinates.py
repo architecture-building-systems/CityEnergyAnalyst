@@ -2,7 +2,7 @@ from __future__ import division
 import utm
 import gdal
 import osr
-from geopandas import GeoDataFrame as gdf
+import geopandas
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -19,7 +19,7 @@ def shapefile_to_WSG_and_UTM(shapefile_path):
     ensure_cpg_file(shapefile_path)
 
     # get coordinate system and project to WSG 84
-    data = gdf.from_file(shapefile_path)
+    data = geopandas.read_file(shapefile_path)
     lat, lon = get_lat_lon_projected_shapefile(data)
 
     # get coordinate system and re project to UTM
@@ -55,9 +55,12 @@ def get_projected_coordinate_system(lat, lon):
     utm_data = utm.from_latlon(lat, lon)
     zone = utm_data[2]
     south_or_north = utm_data[3]
-    code_projection = "+proj=utm +zone=" + str(zone) + south_or_north + " +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
-    #"+proj=merc +a=6378137.0 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +ellps=WGS84 +datum=WGS84 +units=m +nadgrids=@null +wktext  +no_defs"
-    return code_projection
+    if south_or_north == 'N':
+        return "+proj=utm +zone=" + str(zone) + " +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
+    elif south_or_north == 'S':
+        return "+proj=utm +zone=" + str(zone) + " +ellps=WGS84 +datum=WGS84 +units=m +no_defs +south"
+    else:
+        Exception('The projected coordinate system is unknown, lon{}, lat{}').format(lat, lon)
 
 
 def get_lat_lon_projected_shapefile(data):
