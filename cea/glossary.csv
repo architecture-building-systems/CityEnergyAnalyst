@@ -10,7 +10,7 @@ SCRIPT,LOCATOR_METHOD,FILE_NAME,VARIABLE,DESCRIPTION,UNIT,VALUES,TYPE,COLOR
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:ARCHITECTURE,type_shade,Shading system type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:ARCHITECTURE,type_wall,Wall construction type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:ARCHITECTURE,type_win,Window type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:ARCHITECTURE,void_deck,Share of floors with an open envelope (default = 0),[floor/floor],{0.0...1},float,black
+-,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:ARCHITECTURE,void_deck,Number of floors (from the ground up) with an open envelope (default = 0),[-],{0...n},integer,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:ARCHITECTURE,wwr_east,Window to wall ratio in in facades facing east,[m2/m2],{0.0...1},float,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:ARCHITECTURE,wwr_north,Window to wall ratio in in facades facing north,[m2/m2],{0.0...1},float,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:ARCHITECTURE,wwr_south,Window to wall ratio in in facades facing south,[m2/m2],{0.0...1},float,black
@@ -780,7 +780,7 @@ data-helper,get_building_architecture,inputs/building-properties/architecture.db
 data-helper,get_building_architecture,inputs/building-properties/architecture.dbf,type_shade,Shading system type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black
 data-helper,get_building_architecture,inputs/building-properties/architecture.dbf,type_wall,Wall construction type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black
 data-helper,get_building_architecture,inputs/building-properties/architecture.dbf,type_win,Window type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black
-data-helper,get_building_architecture,inputs/building-properties/architecture.dbf,void_deck,Share of floors with an open envelope (default = 0),[floor/floor],{0.0...1},float,black
+data-helper,get_building_architecture,inputs/building-properties/architecture.dbf,void_deck,Number of floors (from the ground up) with an open envelope (default = 0),[-],{0...n},black
 data-helper,get_building_architecture,inputs/building-properties/architecture.dbf,wwr_east,Window to wall ratio in in facades facing east,[m2/m2],{0.0...1},float,black
 data-helper,get_building_architecture,inputs/building-properties/architecture.dbf,wwr_north,Window to wall ratio in in facades facing north,[m2/m2],{0.0...1},float,black
 data-helper,get_building_architecture,inputs/building-properties/architecture.dbf,wwr_south,Window to wall ratio in in facades facing south,[m2/m2],{0.0...1},float,black
