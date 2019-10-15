@@ -52,13 +52,11 @@ def get_geographic_coordinate_system():
 
 
 def get_projected_coordinate_system(lat, lon):
-    utm_data = utm.from_latlon(lat, lon)
-    zone = utm_data[2]
-    south_or_north = utm_data[3]
-    if south_or_north == 'N':
-        return "+proj=utm +zone=" + str(zone) + " +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
-    elif south_or_north == 'S':
-        return "+proj=utm +zone=" + str(zone) + " +ellps=WGS84 +datum=WGS84 +units=m +no_defs +south"
+    easting, northing, zone_number, zone_letter = utm.from_latlon(lat, lon)
+    if zone_letter in "NPQRSTUVWXX":
+        return "+proj=utm +zone=" + str(zone_number) + " +ellps=WGS84 +datum=WGS84 +units=m +no_defs +south"
+    elif zone_letter in "CDEFGHJKLM":
+        return "+proj=utm +zone=" + str(zone_number) + " +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
     else:
         Exception('The projected coordinate system is unknown, lon{}, lat{}').format(lat, lon)
 
