@@ -380,10 +380,12 @@ class BuildingProperties(object):
 
         df = envelope.merge(occupancy, left_index=True, right_index=True)
 
+        df['empty_envelope'] = df['void_deck'] * (df['height_ag'] / df['floors_ag'])
+
         # adjust envelope areas with PFloor
-        df['Aw'] = df['Awin'] * (1 - df['void_deck'])
+        df['Aw'] = df['Awin'] * (df['height_ag'] - df['empty_envelope'])
         # opaque areas (PFloor represents a factor according to the amount of floors heated)
-        df['Aop_sup'] = df['Awall'] * (1 - df['void_deck'])
+        df['Aop_sup'] = df['Awall'] * (df['height_ag'] - df['empty_envelope'])
         # Areas below ground
         df = df.merge(geometry, left_index=True, right_index=True)
         df['floors'] = df['floors_bg'] + df['floors_ag']
