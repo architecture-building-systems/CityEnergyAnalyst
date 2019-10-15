@@ -23,6 +23,16 @@ def dashboard_to_dict(dashboard):
     return out
 
 
+def get_plot_parameters(config, plot_class):
+    parameters = []
+    for pname, fqname in plot_class.expected_parameters.items():
+        parameter = config.get_parameter(fqname)
+        if hasattr(plot_class, 'parameters') and pname in plot_class.parameters:
+            parameter.set(plot_class.parameters[pname])
+        parameters.append(deconstruct_parameters(parameter))
+    return parameters
+
+
 @api.route('/')
 class Dashboards(Resource):
     def get(self):
@@ -110,11 +120,37 @@ class Dashboard(Resource):
 
 @api.route('/plot-categories')
 class DashboardPlotCategories(Resource):
+    """
+    Get Plot Categories
+    """
     def get(self):
         return CATEGORIES
 
+
+@api.route('/plot-categories/<string:category_name>/plots/<string:plot_id>/parameters')
+class DashboardPlotCategoriesParameters(Resource):
+    """
+    Get Plot Form Parameters from Config
+    """
+    def get(self, category_name, plot_id):
+        config = current_app.cea_config
+        plot_class = cea.plots.categories.load_plot_by_id(category_name, plot_id)
+
+        return get_plot_parameters(config, plot_class)
+
+
 @api.route('/<int:dashboard_index>/plots/<int:plot_index>')
 class DashboardPlot(Resource):
+    def get(self, dashboard_index, plot_index):
+        """
+        Get Dashboard Plot
+        """
+        config = current_app.cea_config
+        plot_cache = cea.plots.cache.PlotCache(config)
+        dashboards = cea.plots.read_dashboards(config, plot_cache)
+
+        return dashboard_to_dict(dashboards[dashboard_index])['plots'][plot_index]
+
     def put(self, dashboard_index, plot_index):
         """
         Create/Replace a new Plot at specified index
@@ -123,16 +159,30 @@ class DashboardPlot(Resource):
         config = current_app.cea_config
         plot_cache = cea.plots.cache.PlotCache(config)
         dashboards = cea.plots.read_dashboards(config, plot_cache)
-
         dashboard = dashboards[dashboard_index]
-        dashboard.add_plot(form['category'], form['plot_id'], plot_index)
+
+        if 'category' in form and 'plot_id' in form:
+            dashboard.add_plot(form['category'], form['plot_id'], plot_index)
+
+        # Set parameters if included in form and plot exists
+        if 'parameters' in form:
+            plot = dashboard.plots[plot_index]
+            print('expected_parameters: {}'.format(plot.expected_parameters.items()))
+            print('expected_parameters: {}'.format(plot.expected_parameters.items()))
+            for pname, fqname in plot.expected_parameters.items():
+                parameter = config.get_parameter(fqname)
+                if isinstance(parameter, cea.config.MultiChoiceParameter):
+                    plot.parameters[pname] = parameter.decode(','.join(form['parameters'][pname]))
+                else:
+                    plot.parameters[pname] = parameter.decode(form['parameters'][pname])
+
         cea.plots.write_dashboards(config, dashboards)
 
-        return {'category': form['category'], 'plot_id': form['plot_id'], 'index': plot_index}
+        return dashboard_to_dict(dashboards[dashboard_index])['plots'][plot_index]
 
     def delete(self, dashboard_index, plot_index):
         """
-        Delete Plot
+        Delete Plot from Dashboard
         """
         config = current_app.cea_config
         plot_cache = cea.plots.cache.PlotCache(config)
@@ -149,7 +199,7 @@ class DashboardPlot(Resource):
 class DashboardPlotParameters(Resource):
     def get(self, dashboard_index, plot_index):
         """
-        Get Plot parameters
+        Get Plot Form Parameters of Plot in Dashboard
         """
         config = current_app.cea_config
         plot_cache = cea.plots.cache.PlotCache(config)
@@ -157,33 +207,5 @@ class DashboardPlotParameters(Resource):
 
         dashboard = dashboards[dashboard_index]
         plot = dashboard.plots[plot_index]
-        parameters = []
-        for pname, fqname in plot.expected_parameters.items():
-            parameter = config.get_parameter(fqname)
-            if pname in plot.parameters:
-                parameter.set(plot.parameters[pname])
-            parameters.append(deconstruct_parameters(parameter))
-        return parameters
 
-    def put(self, dashboard_index, plot_index):
-        """
-        Save Plot parameters
-        """
-        form = api.payload
-        config = current_app.cea_config
-        plot_cache = cea.plots.cache.PlotCache(config)
-        dashboards = cea.plots.read_dashboards(config, plot_cache)
-
-        dashboard = dashboards[dashboard_index]
-        plot = dashboard.plots[plot_index]
-        print('route_post_plot_parameters: expected_parameters: {}'.format(plot.expected_parameters.items()))
-        for pname, fqname in plot.expected_parameters.items():
-            parameter = config.get_parameter(fqname)
-            print('route_post_plot_parameters: fqname={fqname}, pname={pname}'.format(fqname=fqname, pname=pname))
-            if isinstance(parameter, cea.config.MultiChoiceParameter):
-                plot.parameters[pname] = parameter.decode(','.join(form[pname]))
-            else:
-                plot.parameters[pname] = parameter.decode(form[pname])
-        cea.plots.write_dashboards(config, dashboards)
-
-        return plot.parameters
+        return get_plot_parameters(config, plot)
