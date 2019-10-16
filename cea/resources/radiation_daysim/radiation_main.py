@@ -183,7 +183,7 @@ def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     #  the selected buildings are the ones for which the individual radiation script is run for
     #  this is only activated when in default.config, run_all_buildings is set as 'False'
-    settings = config.radiation_daysim
+    settings = config.radiation
 
     # BUGFIX for PyCharm: the PATH variable might not include the daysim-bin-directory, so we add it here
     os.environ["PATH"] = settings.daysim_bin_directory + os.pathsep + os.environ["PATH"]
