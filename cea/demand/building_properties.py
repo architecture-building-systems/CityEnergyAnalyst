@@ -371,9 +371,7 @@ class BuildingProperties(object):
                     envelope.ix[building_name, 'Aroof'] = geometry_data_sum.ix['roofs', 'AREA_m2']
 
             else:
-                multiplier_win = 0.25 * (
-                        envelope.ix[building_name, 'wwr_south'] + envelope.ix[building_name, 'wwr_east'] +
-                        envelope.ix[building_name, 'wwr_north'] + envelope.ix[building_name, 'wwr_west'])
+                multiplier_win = 0.25 * (envelope.ix[building_name, 'wwr_south'] + envelope.ix[building_name, 'wwr_east'] +  envelope.ix[building_name, 'wwr_north'] + envelope.ix[building_name, 'wwr_west'])
                 envelope.ix[building_name, 'Awall'] = geometry_data_sum.ix['walls', 'AREA_m2'] * (1 - multiplier_win)
                 envelope.ix[building_name, 'Awin'] = geometry_data_sum.ix['walls', 'AREA_m2'] * multiplier_win
                 envelope.ix[building_name, 'Aroof'] = geometry_data_sum.ix['roofs', 'AREA_m2']
@@ -381,12 +379,13 @@ class BuildingProperties(object):
         df = envelope.merge(occupancy, left_index=True, right_index=True)
         df = df.merge(geometry, left_index=True, right_index=True)
 
-        df['empty_envelope'] = df['void_deck'] * (df['height_ag'] / df['floors_ag'])
+        df['empty_envelope_ratio'] = 1 - ((df['void_deck'] * (df['height_ag'] / df['floors_ag']))/ (df['Awall']+df['Awin']) )
 
-        # adjust envelope areas with PFloor
-        df['Aw'] = df['Awin'] * (df['height_ag'] - df['empty_envelope'])
-        # opaque areas (PFloor represents a factor according to the amount of floors heated)
-        df['Aop_sup'] = df['Awall'] * (df['height_ag'] - df['empty_envelope'])
+        # adjust envelope areas with Void_deck
+        df['Awin'] = df['Awin'] * df['empty_envelope_ratio']
+        df['Awall'] = df['Awall'] * df['empty_envelope_ratio']
+        # opaque areas (void_deck represents a factor according to the amount of floors heated)
+        df['Aop_sup'] = df['Awall'] + df['Awin']
         # Areas below ground
 
         df['floors'] = df['floors_bg'] + df['floors_ag']
