@@ -39,7 +39,7 @@ class TestSavingLoadingSchedules(unittest.TestCase):
         data_helper(locator, region='CH', overwrite_technology_folder=True,
                     update_architecture_dbf=True, update_HVAC_systems_dbf=True, update_indoor_comfort_dbf=True,
                     update_internal_loads_dbf=True, update_supply_systems_dbf=True,
-                    update_schedule_operation_cea=True, schedule_model='CH-SIA-2014',
+                    update_schedule_operation_cea=True, schedule_model='CH-SIA-2024',
                     buildings=config.schedule_maker.buildings)
 
         # run get_building_schedules on clean folder - they're created from scratch

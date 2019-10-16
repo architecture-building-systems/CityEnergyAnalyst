@@ -203,7 +203,7 @@ def get_short_list_of_uses_in_case_study(building_occupancy_df):
 
 def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    path_database = locator.get_database_standard_schedules('CH-SIA-2014')
+    path_database = locator.get_database_standard_schedules('CH-SIA-2024')
     path_to_building_schedule = locator.get_database_standard_schedules_use(path_database, 'MULTI_RES')
 
 

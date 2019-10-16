@@ -72,7 +72,7 @@ def save_cea_schedule(schedule_data, schedule_complementary_data, path_to_buildi
 
 def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    path_database = locator.get_database_standard_schedules('CH-SIA-2014')
+    path_database = locator.get_database_standard_schedules('CH-SIA-2024')
     path_to_building_schedule = locator.get_database_standard_schedules_use(path_database, 'MULTI_RES')
     read_cea_schedule(path_to_building_schedule)
 

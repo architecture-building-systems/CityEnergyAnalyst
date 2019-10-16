@@ -19,7 +19,7 @@ COLUMN_NAMES = ['DAY',
 
 path = r'C:\Users\JimenoF\Documents\CityEnergyAnalyst\CityEnergyAnalyst\cea\databases'
 
-for region, standard in zip(['CH', 'SG'], ['CH-SIA-2014', 'SG-ASHRAE-2009']):
+for region, standard in zip(['CH', 'SG'], ['CH-SIA-2024', 'SG-ASHRAE-2009']):
     path_to_database = os.path.join(path, region, 'archetypes/occupancy_schedules.xlsx')
     xls = pd.ExcelFile(path_to_database)
     uses = xls.sheet_names
