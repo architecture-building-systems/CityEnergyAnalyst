@@ -366,6 +366,7 @@ SCRIPT,LOCATOR_METHOD,FILE_NAME,VARIABLE,DESCRIPTION,UNIT,VALUES,TYPE,COLOR
 -,get_envelope_systems,databases/ch/systems/envelope_systems.xls:WALL,r_wall,Reflectance in the Red spectrum. Defined according Radiance. (long-wave),[-],{0.0...1},float,black
 -,get_envelope_systems,databases/ch/systems/envelope_systems.xls:WINDOW,Description,Describes the source of the benchmark standards.,[-],[-],string,black
 -,get_envelope_systems,databases/ch/systems/envelope_systems.xls:WINDOW,G_win,Solar heat gain coefficient. Defined according to ISO 13790.,[-],{0.0...1},float,black
+-,get_envelope_systems,databases/ch/systems/envelope_systems.xls:WINDOW,F_F,Window frame fraction coefficient. Defined according to ISO 13790.,[m2-frame/m2-window],{0.0...1},float,black
 -,get_envelope_systems,databases/ch/systems/envelope_systems.xls:WINDOW,U_win,Thermal transmittance of windows including linear losses (+10%). Defined according to ISO 13790.,[-],{0.1...n},float,black
 -,get_envelope_systems,databases/ch/systems/envelope_systems.xls:WINDOW,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black
 -,get_envelope_systems,databases/ch/systems/envelope_systems.xls:WINDOW,e_win,Emissivity of external surface. Defined according to ISO 13790.,[-],{0.0...1},float,black
