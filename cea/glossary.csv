@@ -838,8 +838,8 @@ demand,get_demand_results_file,outputs/data/demand/b001.csv,E_sys_kWh,End-use to
 demand,get_demand_results_file,outputs/data/demand/b001.csv,E_ww_kWh,Hot water system electricity consumption.,[kWh],{0.0...n},float,black
 demand,get_demand_results_file,outputs/data/demand/b001.csv,Eal_kWh,End-use electricity consumption of appliances and lights,[kWh],{0.0...n},float,black
 demand,get_demand_results_file,outputs/data/demand/b001.csv,Eaux_kWh,End-use auxiliary electricity consumption.,[kWh],{0.0...n},float,black
-demand,get_demand_results_file,outputs/data/demand/b001.csv,Edata_kWh,Ebd-use Data centre electricity consumption.,[kWh],{0.0...n},float,black
-demand,get_demand_results_file,outputs/data/demand/b001.csv,Epro_kWh,End_use, Electricity consumption for industrial processes.,[kWh],{0.0...n},float,black
+demand,get_demand_results_file,outputs/data/demand/b001.csv,Edata_kWh,End-use data centre electricity consumption.,[kWh],{0.0...n},float,black
+demand,get_demand_results_file,outputs/data/demand/b001.csv,Epro_kWh,End-use electricity consumption for industrial processes.,[kWh],{0.0...n},float,black
 demand,get_demand_results_file,outputs/data/demand/b001.csv,GRID_kWh,Grid total requirements of electricity = GRID_a + GRID_l + GRID_data + GRID_pro + GRID_aux + GRID_cdata + GRID_cre + GRID_hs + GRID_ww + GRID_cs,kWh,{0.0...n},float,green
 demand,get_demand_results_file,outputs/data/demand/b001.csv,GRID_a_kWh,kWh,Grid electricity requirements for appliances,{0.0...n},float,green
 demand,get_demand_results_file,outputs/data/demand/b001.csv,GRID_l_kWh,kWh,Grid electricity requirements for lights,{0.0...n},float,green_light
