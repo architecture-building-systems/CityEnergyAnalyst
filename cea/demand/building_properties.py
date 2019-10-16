@@ -304,7 +304,7 @@ class BuildingProperties(object):
         df['Htr_is'] = H_IS * df['Atot']
 
         fields = ['Atot', 'Aw', 'Am', 'Aef', 'Af', 'Cm', 'Htr_is', 'Htr_em', 'Htr_ms', 'Htr_op', 'Hg',  'HD', 'Aroof',
-                  'U_wall', 'U_roof', 'U_win', 'U_base', 'Htr_w', 'GFA_m2', 'NFA_m2', 'surface_volume', 'Aop_sup',
+                  'U_wall', 'U_roof', 'U_win', 'U_base', 'Htr_w', 'GFA_m2', 'NFA_m2', 'Aop_sup',
                   'Aop_bel', 'footprint']
         result = df[fields]
 
@@ -330,9 +330,8 @@ class BuildingProperties(object):
 
             - Name: Name of building.
             - Awall: Wall areas (length x height) multiplied by the FactorShade [m2]
-            - Awall_all: Sum of wall areas for each building (including windows and voids) [m2]
             - Aw: Area of windows for each building (using mean window to wall ratio for building, excluding voids) [m2]
-            - Aop_sup: Opaque wall areas above ground (excluding voids and windows) [m2]
+            - Aop_sup: Opaque wall areas above ground (excluding voids, windows and roof) [m2]
             - Aop_bel: Opaque areas below ground (including ground floor, excluding voids and windows) [m2]
             - Aroof: Area of the roof (considered flat and equal to the building footprint) [m2]
             - GFA_m2: Gross floor area [m2]
@@ -382,17 +381,14 @@ class BuildingProperties(object):
         df['empty_envelope_ratio'] = 1 - ((df['void_deck'] * (df['height_ag'] / df['floors_ag']))/ (df['Awall']+df['Awin']) )
 
         # adjust envelope areas with Void_deck
-        df['Awin'] = df['Awin'] * df['empty_envelope_ratio']
-        df['Awall'] = df['Awall'] * df['empty_envelope_ratio']
-        # opaque areas (void_deck represents a factor according to the amount of floors heated)
-        df['Aop_sup'] = df['Awall'] + df['Awin']
-        # Areas below ground
+        df['Aw'] = df['Awin'] * df['empty_envelope_ratio']
+        df['Aop_sup'] = df['Awall'] * df['empty_envelope_ratio']
 
+        # get other cuantities.
         df['floors'] = df['floors_bg'] + df['floors_ag']
         # opague areas in [m2] below ground including floor
         df['Aop_bel'] = df['height_bg'] * df['perimeter'] + df['footprint']
         df['GFA_m2'] = df['footprint'] * df['floors']  # gross floor area
-        df['surface_volume'] = (df['Awin'] + df['Awall'] + df['Aroof']) / (df['GFA_m2'] * floor_height)  # surface to volume ratio
 
         return df
 
