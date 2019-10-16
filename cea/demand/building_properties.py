@@ -379,6 +379,7 @@ class BuildingProperties(object):
                 envelope.ix[building_name, 'Aroof'] = geometry_data_sum.ix['roofs', 'AREA_m2']
 
         df = envelope.merge(occupancy, left_index=True, right_index=True)
+        df = df.merge(geometry, left_index=True, right_index=True)
 
         df['empty_envelope'] = df['void_deck'] * (df['height_ag'] / df['floors_ag'])
 
@@ -387,7 +388,7 @@ class BuildingProperties(object):
         # opaque areas (PFloor represents a factor according to the amount of floors heated)
         df['Aop_sup'] = df['Awall'] * (df['height_ag'] - df['empty_envelope'])
         # Areas below ground
-        df = df.merge(geometry, left_index=True, right_index=True)
+
         df['floors'] = df['floors_bg'] + df['floors_ag']
         # opague areas in [m2] below ground including floor
         df['Aop_bel'] = df['height_bg'] * df['perimeter'] + df['footprint']
