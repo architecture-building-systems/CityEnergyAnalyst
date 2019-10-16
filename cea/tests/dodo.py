@@ -193,9 +193,10 @@ def task_run_demand():
 
         # make sure weather file is copied to inputs first
         import cea.datamanagement.weather_helper
+        import cea.demand.schedule_maker.schedule_maker
         config.weather_helper.weather = weather
         cea.datamanagement.weather_helper.main(config)
-
+        cea.demand.schedule_maker.schedule_maker.main(config)
         cea.demand.demand_main.main(config)
 
     for reference_case, scenario_path in REFERENCE_CASES.items():
