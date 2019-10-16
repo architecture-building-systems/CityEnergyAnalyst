@@ -320,9 +320,9 @@ def task_run_sensitivity():
 def task_run_calibration():
     """run the calibration_sampling for the included reference case"""
     def run_calibration():
-        import cea.demand.calibration.bayesian_calibrator.calibration_sampling as calibration_sampling
-        import cea.demand.calibration.bayesian_calibrator.calibration_gaussian_emulator as calibration_gaussian_emulator
-        import cea.demand.calibration.bayesian_calibrator.calibration_main as calibration_main
+        import legacy.calibration.bayesian_calibrator.calibration_sampling as calibration_sampling
+        import legacy.calibration.bayesian_calibrator.calibration_gaussian_emulator as calibration_gaussian_emulator
+        import legacy.calibration.bayesian_calibrator.calibration_main as calibration_main
 
         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         locator = cea.inputlocator.ReferenceCaseOpenLocator()
@@ -359,7 +359,6 @@ def task_run_thermal_network():
     """run the thermal_network for the included reference case"""
     def run_thermal_network():
         import cea.technologies.thermal_network.thermal_network as thermal_network
-        import cea.technologies.network_layout.main as network_layout
         from cea.technologies.network_layout.main import NetworkLayout, layout_network
 
         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
