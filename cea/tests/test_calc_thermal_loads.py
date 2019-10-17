@@ -51,9 +51,9 @@ class TestCalcThermalLoads(unittest.TestCase):
 
     def test_calc_thermal_loads(self):
         bpr = self.building_properties['B01']
-        self.config.occupancy.occupancy_model = "deterministic"
-        schedule_maker_main(self.locator, self.config)
+        self.config.schedule_maker.schedule_model = "deterministic"
 
+        schedule_maker_main(self.locator, self.config)
         result = calc_thermal_loads('B01', bpr, self.weather_data, self.date_range, self.locator,
                                     self.use_dynamic_infiltration_calculation, self.resolution_output,
                                     self.loads_output, self.massflows_output, self.temperatures_output,
