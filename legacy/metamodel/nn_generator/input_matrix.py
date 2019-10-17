@@ -206,8 +206,6 @@ def get_array_geometry_variables(building):
     array_OProof = np.empty(HOURS_IN_YEAR)
     array_OProof.fill(building.rc_model['footprint'])
     #   surface to volume ratio
-    array_sv = np.empty(HOURS_IN_YEAR)
-    array_sv.fill(building.rc_model['surface_volume'])
     #   concatenate geometry arrays
     array_geom = np.column_stack((array_Af, array_OPwall, array_OPwallB, array_GLwin, array_OProof, array_sv))
 
