@@ -39,12 +39,10 @@ COLUMN_NAMES_CEA_SCHEDULE = ['DAY',
 
 def calc_mixed_schedule(locator,
                         building_occupancy_df,
-                        buildings,
-                        schedule_model):
+                        buildings):
 
-    metadata = schedule_model
-    schedules_DB = locator.get_database_standard_schedules(schedule_model)
-    schedule_data_all_uses = ScheduleData(locator, schedules_DB)
+    metadata = 'mixed-schedule'
+    schedule_data_all_uses = ScheduleData(locator)
     building_occupancy_df = building_occupancy_df.set_index('Name')
     building_occupancy_df = building_occupancy_df.loc[buildings]
 
@@ -159,9 +157,9 @@ def calc_average(last, current, share_of_use):
 
 class ScheduleData(object):
 
-    def __init__(self, locator, path_to_standard_schedule_database):
+    def __init__(self, locator):
         self.locator = locator
-        self.path_database = path_to_standard_schedule_database
+        self.path_database = self.locator.get_database_standard_schedules()
         self.schedule_data, self.schedule_complementary_data = self.fill_in_data()
 
     def fill_in_data(self):

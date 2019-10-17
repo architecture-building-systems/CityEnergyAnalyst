@@ -42,8 +42,8 @@ class InputLocator(object):
         """Use os.makedirs to ensure the folders exist"""
         self._ensure_folder(os.path.dirname(file_path))
 
-    def get_database_standard_schedules(self, name_database):
-        return os.path.join(self.db_path, 'schedules', name_database)
+    def get_database_standard_schedules(self):
+        return os.path.join(self.get_technology_folder(), 'archetypes', 'schedules')
 
     def get_database_standard_schedules_use(self, path_to_database, use):
         return os.path.join(path_to_database, use + '.csv')
