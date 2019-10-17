@@ -1,33 +1,5 @@
 Data Management:
 
-  - name: terrain-helper
-    label: Terrain helper
-    description: Creates a fixed elevation terrain file (good for most applications)
-    interfaces: [cli, arcgis, dashboard]
-    module: cea.datamanagement.terrain_helper
-    parameters: ['general:scenario', terrain-helper]
-
-  - name: district-helper
-    label: District helper
-    description: Query district geometry from Open Street Maps
-    interfaces: [cli, arcgis, dashboard]
-    module: cea.datamanagement.district_geometry_helper
-    parameters: ['general:scenario', district-helper]
-
-  - name: zone-helper
-    label: Zone helper
-    description: Query zone geometry from Open Street Maps
-    interfaces: [cli, arcgis, dashboard]
-    module: cea.datamanagement.zone_helper
-    parameters: ['general:scenario', zone-helper]
-
-  - name: streets-helper
-    label: Streets helper
-    description: Query streets geometry from Open Street Maps
-    interfaces: [cli, arcgis, dashboard]
-    module: cea.datamanagement.streets_helper
-    parameters: ['general:scenario', streets-helper]
-
   - name: data-helper
     label: Data helper
     description: Query characteristics of buildings and systems from statistical data
@@ -44,6 +16,28 @@ Data Management:
     interfaces: [cli, arcgis, dashboard]
     module: cea.datamanagement.weather_helper
     parameters: ['general:scenario', weather-helper]
+
+  - name: district-helper
+    label: District helper
+    description: Query district geometry from Open Street Maps
+    interfaces: [cli, arcgis, dashboard]
+    module: cea.datamanagement.district_geometry_helper
+    parameters: ['general:scenario', district-helper]
+
+  - name: terrain-helper
+    label: Terrain helper
+    description: Creates a fixed elevation terrain file (good for most applications)
+    interfaces: [cli, arcgis, dashboard]
+    module: cea.datamanagement.terrain_helper
+    parameters: ['general:scenario', terrain-helper]
+
+  - name: streets-helper
+    label: Streets helper
+    description: Query streets geometry from Open Street Maps
+    interfaces: [cli, arcgis, dashboard]
+    module: cea.datamanagement.streets_helper
+    parameters: ['general:scenario', streets-helper]
+
 
 Demand forecasting:
   - name: radiation
@@ -329,6 +323,13 @@ Utilities:
 
 
 default:
+
+  - name: zone-helper
+    label: Zone helper
+    description: Query zone geometry from Open Street Maps
+    interfaces: [cli, arcgis]
+    module: cea.datamanagement.zone_helper
+    parameters: ['general:scenario', zone-helper]
 
   - name: plots
     label: Plots basic
