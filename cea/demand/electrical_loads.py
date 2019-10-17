@@ -3,13 +3,13 @@
 Electrical loads
 """
 from __future__ import division
-from cea.constants import *
+
 import numpy as np
-from cea.utilities import physics
-from cea.demand import control_heating_cooling_systems, constants
-from cea.demand.hotwater_loads import calc_water_temperature
-import pandas as pd
+
+from cea.constants import *
 from cea.constants import HOURS_IN_YEAR
+from cea.demand import control_heating_cooling_systems, constants
+from cea.utilities import physics
 
 __author__ = "Jimeno A. Fonseca, Gabriel Happle"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -19,7 +19,6 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
-
 
 # import constants
 H_F = constants.H_F
@@ -33,7 +32,7 @@ HOURS_OP = constants.HOURS_OP
 GR = constants.GR
 
 
-def calc_Eal_Epro(tsd, bpr, schedules):
+def calc_Eal_Epro(tsd, schedules):
     """
     Calculate final internal electrical loads (without auxiliary loads)
 
@@ -51,25 +50,23 @@ def calc_Eal_Epro(tsd, bpr, schedules):
     """
 
     # calculate final electrical consumption due to appliances and lights in W
-    tsd['Ea'] = schedules['Ea'] * bpr.internal_loads['Ea_Wm2']
-    tsd['El'] = schedules['El'] * bpr.internal_loads['El_Wm2']
-    tsd['Eal'] = tsd['El'] + tsd['Ea']
-
-    if bpr.internal_loads['Epro_Wm2'] > 0:
-        tsd['Epro'] = schedules['Epro'] * bpr.internal_loads['Epro_Wm2']
-    else:
-        tsd['Epro'] = np.zeros(HOURS_IN_YEAR)
+    tsd['Ea'] = schedules['Ea_W']
+    tsd['El'] = schedules['El_W']
+    tsd['Eal'] = schedules['El_W'] + schedules['Ea_W']
+    tsd['Epro'] = schedules['Epro_W']
 
     return tsd
+
 
 def calc_E_sys(tsd):
     """
     Calculate the compound of end use electrical loads
 
     """
-    tsd['E_sys'] = tsd['Eal'] + tsd['Edata'] + tsd['Epro'] + tsd['Eaux'] #assuming a small loss
+    tsd['E_sys'] = tsd['Eal'] + tsd['Edata'] + tsd['Epro'] + tsd['Eaux']  # assuming a small loss
 
     return tsd
+
 
 def calc_Ef(bpr, tsd):
     """
@@ -102,6 +99,7 @@ def calc_Ef(bpr, tsd):
 
     return tsd
 
+
 def calc_Eaux(tsd):
     """
     Calculate the compound of final electricity loads
@@ -112,9 +110,9 @@ def calc_Eaux(tsd):
 
     return tsd
 
-def calc_Eaux_fw(tsd, bpr, schedules):
 
-    tsd['vfw_m3perh'] = schedules['Vw'] * bpr.internal_loads['Vw_lpd'] / 1000  # m3/h
+def calc_Eaux_fw(tsd, bpr, schedules):
+    tsd['vfw_m3perh'] = schedules['Vw_lph'] / 1000  # m3/h
 
     nf_ag = bpr.geometry['floors_ag']
     if nf_ag > 5:  # up to 5th floor no pumping needs
@@ -124,8 +122,8 @@ def calc_Eaux_fw(tsd, bpr, schedules):
 
     return tsd
 
-def calc_Eaux_ww(tsd, bpr):
 
+def calc_Eaux_ww(tsd, bpr):
     Ll = bpr.geometry['Blength']
     Lw = bpr.geometry['Bwidth']
     Mww = tsd['mww']
@@ -146,6 +144,7 @@ def calc_Eaux_ww(tsd, bpr):
     tsd['Eaux_ww'] = np.vectorize(calc_Eauxf_ww)(Qww, Qww_sys, Qwwf_0, deltaP_des, b, Mww)
 
     return tsd
+
 
 def calc_Eaux_Qhs_Qcs(tsd, bpr):
     """
@@ -212,9 +211,12 @@ def calc_Eaux_Qhs_Qcs(tsd, bpr):
     if control_heating_cooling_systems.has_heating_system(bpr):
 
         # for all subsystems
-        Eaux_hs_ahu = np.vectorize(calc_Eauxf_hs_dis)(Qhs_sys_ahu, Qhs_sys_0_ahu, deltaP_des, b, Ths_sup_ahu, Ths_re_ahu)
-        Eaux_hs_aru = np.vectorize(calc_Eauxf_hs_dis)(Qhs_sys_aru, Qhs_sys_0_aru, deltaP_des, b, Ths_sup_aru, Ths_re_aru)
-        Eaux_hs_shu = np.vectorize(calc_Eauxf_hs_dis)(Qhs_sys_shu, Qhs_sys_0_shu, deltaP_des, b, Ths_sup_shu, Ths_re_shu)
+        Eaux_hs_ahu = np.vectorize(calc_Eauxf_hs_dis)(Qhs_sys_ahu, Qhs_sys_0_ahu, deltaP_des, b, Ths_sup_ahu,
+                                                      Ths_re_ahu)
+        Eaux_hs_aru = np.vectorize(calc_Eauxf_hs_dis)(Qhs_sys_aru, Qhs_sys_0_aru, deltaP_des, b, Ths_sup_aru,
+                                                      Ths_re_aru)
+        Eaux_hs_shu = np.vectorize(calc_Eauxf_hs_dis)(Qhs_sys_shu, Qhs_sys_0_shu, deltaP_des, b, Ths_sup_shu,
+                                                      Ths_re_shu)
         tsd['Eaux_hs'] = Eaux_hs_ahu + Eaux_hs_aru + Eaux_hs_shu  # sum up
     else:
         tsd['Eaux_hs'] = np.zeros(HOURS_IN_YEAR)
@@ -222,15 +224,17 @@ def calc_Eaux_Qhs_Qcs(tsd, bpr):
     if control_heating_cooling_systems.has_cooling_system(bpr):
 
         # for all subsystems
-        Eaux_cs_ahu = np.vectorize(calc_Eauxf_cs_dis)(Qcs_sys_ahu, Qcs_sys_0_ahu, deltaP_des, b, Tcs_sup_ahu, Tcs_re_ahu)
-        Eaux_cs_aru = np.vectorize(calc_Eauxf_cs_dis)(Qcs_sys_aru, Qcs_sys_0_aru, deltaP_des, b, Tcs_sup_aru, Tcs_re_aru)
-        Eaux_cs_scu = np.vectorize(calc_Eauxf_cs_dis)(Qcs_sys_scu, Qcs_sys_0_scu, deltaP_des, b, Tcs_sup_scu, Tcs_re_scu)
+        Eaux_cs_ahu = np.vectorize(calc_Eauxf_cs_dis)(Qcs_sys_ahu, Qcs_sys_0_ahu, deltaP_des, b, Tcs_sup_ahu,
+                                                      Tcs_re_ahu)
+        Eaux_cs_aru = np.vectorize(calc_Eauxf_cs_dis)(Qcs_sys_aru, Qcs_sys_0_aru, deltaP_des, b, Tcs_sup_aru,
+                                                      Tcs_re_aru)
+        Eaux_cs_scu = np.vectorize(calc_Eauxf_cs_dis)(Qcs_sys_scu, Qcs_sys_0_scu, deltaP_des, b, Tcs_sup_scu,
+                                                      Tcs_re_scu)
         tsd['Eaux_cs'] = Eaux_cs_ahu + Eaux_cs_aru + Eaux_cs_scu  # sum up
     else:
         tsd['Eaux_cs'] = np.zeros(HOURS_IN_YEAR)
 
     return tsd
-
 
 
 def calc_Eauxf_hs_dis(Qhs_sys, Qhs_sys0, deltaP_des, b, ts, tr):
@@ -300,14 +304,15 @@ def calc_Eauxf_ve(tsd):
     fan_power = P_FAN  # specific fan consumption in W/m3/h, s
 
     # mechanical ventilation system air flow [m3/s] = outdoor air + recirculation air
-    q_ve_mech = tsd['m_ve_mech']/physics.calc_rho_air(tsd['theta_ve_mech']) \
-        + tsd['m_ve_rec']/physics.calc_rho_air(tsd['T_int'])
+    q_ve_mech = tsd['m_ve_mech'] / physics.calc_rho_air(tsd['theta_ve_mech']) \
+                + tsd['m_ve_rec'] / physics.calc_rho_air(tsd['T_int'])
 
     Eve_aux = fan_power * q_ve_mech * 3600
 
-    tsd['Eaux_ve']  = np.nan_to_num(Eve_aux)
+    tsd['Eaux_ve'] = np.nan_to_num(Eve_aux)
 
     return tsd
+
 
 def calc_Eauxf_ww(Qww, Qwwf, Qwwf0, deltaP_des, b, qV_des):
     """
@@ -367,5 +372,3 @@ def calc_Eauxf_fw(freshw, nf):
                 time = t0 + 11 + t
                 Eaux_fw[time] = Energy_hourWh
     return Eaux_fw
-
-

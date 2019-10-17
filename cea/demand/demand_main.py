@@ -4,25 +4,21 @@ Analytical energy demand model algorithm
 """
 from __future__ import division
 
-import multiprocessing as mp
 import os
 import time
-
-import pandas as pd
+import warnings
+from itertools import repeat
 
 import cea.config
 import cea.inputlocator
+import cea.utilities.parallel
 import demand_writers
 from cea.demand import thermal_loads
 from cea.demand.building_properties import BuildingProperties
 from cea.utilities import epwreader
-import warnings
-from cea.constants import HOURS_IN_YEAR
-import cea.utilities.parallel
-from itertools import repeat
+from cea.utilities.date import get_dates_from_year
 
 warnings.filterwarnings("ignore")
-
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -77,13 +73,11 @@ def demand_calculation(locator, config):
     loads_output = config.demand.loads_output
     massflows_output = config.demand.massflows_output
     temperatures_output = config.demand.temperatures_output
-    format_output = config.demand.format_output
     override_variables = config.demand.override_variables
-    write_detailed_output = config.demand.write_detailed_output
     debug = config.debug
     weather_path = locator.get_weather_file()
     weather_data = epwreader.epw_reader(weather_path)[['year', 'drybulb_C', 'wetbulb_C',
-                                                         'relhum_percent', 'windspd_ms', 'skytemp_C']]
+                                                       'relhum_percent', 'windspd_ms', 'skytemp_C']]
     year = weather_data['year'][0]
     # create date range for the calculation year
     date_range = get_dates_from_year(year)
@@ -96,15 +90,17 @@ def demand_calculation(locator, config):
         footprint = building_properties._prop_geometry.footprint
         floors = building_properties._prop_geometry.floors_ag
         names = building_properties._prop_geometry.index
-        GFA_m2 = [x*y for x,y in zip(footprint, floors)]
+        GFA_m2 = [x * y for x, y in zip(footprint, floors)]
         list_buildings_less_100m2 = []
         for name, gfa in zip(names, GFA_m2):
             if gfa < 100.0:
                 list_buildings_less_100m2.append(name)
         return list_buildings_less_100m2
+
     list_buildings_less_100m2 = calc_buildings_less_100m2(building_properties)
     if list_buildings_less_100m2 != []:
-        print('Warning! The following list of buildings have less than 100 m2 of gross floor area, CEA might fail: %s' % list_buildings_less_100m2)
+        print(
+                    'Warning! The following list of buildings have less than 100 m2 of gross floor area, CEA might fail: %s' % list_buildings_less_100m2)
 
     # SPECIFY NUMBER OF BUILDINGS TO SIMULATE
     if not building_names:
@@ -129,20 +125,12 @@ def demand_calculation(locator, config):
         repeat(loads_output, n),
         repeat(massflows_output, n),
         repeat(temperatures_output, n),
-        repeat(format_output, n),
         repeat(config, n),
-        repeat(write_detailed_output, n),
         repeat(debug, n))
 
     # WRITE TOTAL YEARLY VALUES
     writer_totals = demand_writers.YearlyDemandWriter(loads_output, massflows_output, temperatures_output)
-    if format_output == 'csv':
-        totals, time_series = writer_totals.write_to_csv(building_names, locator)
-    elif format_output == 'hdf5':
-        totals, time_series = writer_totals.write_to_hdf5(building_names, locator)
-    else:
-        raise Exception('error')
-
+    totals, time_series = writer_totals.write_to_csv(building_names, locator)
     time_elapsed = time.clock() - t0
     print('done - time elapsed: %d.2f seconds' % time_elapsed)
 
@@ -160,12 +148,9 @@ def main(config):
     print('Running demand calculation with dynamic infiltration=%s' %
           config.demand.use_dynamic_infiltration_calculation)
     print('Running demand calculation with multiprocessing=%s' % config.multiprocessing)
-    print('Running demand calculation with stochastic occupancy=%s' % config.demand.use_stochastic_occupancy)
-    if config.demand.write_detailed_output:
-        print('Running demand calculation with write detailed output=%s' % config.demand.write_detailed_output)
     if config.debug:
         print('Running demand in debug mode: Instant visulaization of tsd activated.')
-
+        print('Running demand calculation with write detailed output')
 
     if not radiation_files_exist(config, locator):
         raise ValueError("Missing radiation data in scenario. Consider running radiation script first.")
@@ -180,18 +165,6 @@ def radiation_files_exist(config, locator):
             locator.get_radiation_building(building_name))
 
     return all(daysim_results_exist(building_name) for building_name in locator.get_zone_building_names())
-
-
-def get_dates_from_year(year):
-    """
-    creates date range for the year of the calculation
-    :param year: year of first row in weather file
-    :type year: int
-    :return: pd.date_range with 8760 values
-    :rtype: pandas.data_range
-    """
-    return pd.date_range(str(year) + '/01/01', periods=HOURS_IN_YEAR, freq='H')
-
 
 
 if __name__ == '__main__':

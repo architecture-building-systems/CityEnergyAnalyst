@@ -278,7 +278,7 @@ def get_array_comfort_variables(building, date, schedules_dict, weather_data,use
     #   collect schedules
     schedules, tsd = initialize_inputs(building, schedules_dict, weather_data,use_stochastic_occupancy)
     #   calculate seoasonal setpoint
-    tsd = control_heating_cooling_systems.calc_simple_temp_control(tsd, building, date.dayofweek)
+    tsd = control_heating_cooling_systems.get_temperature_setpoints_incl_seasonality(tsd, building, date.dayofweek)
     #   replace NaNs values with -100 for heating set point and 100 for cooling set point (it implies no setpoint)
     np.place(tsd['ta_hs_set'], np.isnan(tsd['ta_hs_set']), -100)
     np.place(tsd['ta_cs_set'], np.isnan(tsd['ta_cs_set']), 100)
