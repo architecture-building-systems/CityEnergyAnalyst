@@ -7,6 +7,7 @@ Data Management:
     module: cea.datamanagement.data_helper
     parameters: ['general:scenario', data-helper]
     input-files:
+      - [get_zone_geometry]
       - [get_building_age]
       - [get_building_occupancy]
 
@@ -23,6 +24,8 @@ Data Management:
     interfaces: [cli, arcgis, dashboard]
     module: cea.datamanagement.district_geometry_helper
     parameters: ['general:scenario', district-helper]
+    input-files:
+      - [get_zone_geometry]
 
   - name: terrain-helper
     label: Terrain helper
@@ -30,6 +33,9 @@ Data Management:
     interfaces: [cli, arcgis, dashboard]
     module: cea.datamanagement.terrain_helper
     parameters: ['general:scenario', terrain-helper]
+    input-files:
+      - [get_zone_geometry]
+      - [get_district_geometry]
 
   - name: streets-helper
     label: Streets helper
@@ -37,7 +43,8 @@ Data Management:
     interfaces: [cli, arcgis, dashboard]
     module: cea.datamanagement.streets_helper
     parameters: ['general:scenario', streets-helper]
-
+    input-files:
+      - [get_district_geometry]
 
 Demand forecasting:
   - name: radiation
