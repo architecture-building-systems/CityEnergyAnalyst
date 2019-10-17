@@ -43,7 +43,7 @@ def get_technology_related_databases(locator, region):
 def data_helper(locator, region, overwrite_technology_folder,
                 update_architecture_dbf, update_HVAC_systems_dbf, update_indoor_comfort_dbf,
                 update_internal_loads_dbf, update_supply_systems_dbf,
-                update_schedule_operation_cea, schedule_model, buildings):
+                update_schedule_operation_cea, buildings):
     """
     algorithm to query building properties from statistical database
     Archetypes_HVAC_properties.csv. for more info check the integrated demand
@@ -497,7 +497,6 @@ def main(config):
     update_schedule_operation_cea = 'schedules' in config.data_helper.databases
 
     overwrite_technology_folder = config.data_helper.overwrite_technology_folder
-    schedule_model = config.data_helper.schedule_model
     buildings = config.data_helper.buildings
 
     locator = cea.inputlocator.InputLocator(config.scenario)
@@ -510,7 +509,6 @@ def main(config):
                 update_internal_loads_dbf=update_internal_loads_dbf,
                 update_supply_systems_dbf=update_supply_systems_dbf,
                 update_schedule_operation_cea=update_schedule_operation_cea,
-                schedule_model=schedule_model,
                 buildings=buildings)
 
 
