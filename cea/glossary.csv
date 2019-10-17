@@ -983,7 +983,7 @@ demand,get_total_demand,outputs/data/demand/total_demand.csv,Epro_MWhyr,Electric
 demand,get_total_demand,outputs/data/demand/total_demand.csv,GFA_m2,Gross floor area,[m2],{0.0...n},float,black
 demand,get_total_demand,outputs/data/demand/total_demand.csv,GRID0_kW,Nominal Grid electricity consumption,kW,{0.0...n},float,green
 demand,get_total_demand,outputs/data/demand/total_demand.csv,GRID_MWhyr,Grid electricity consumption,MWh/yr,{0.0...n},float,green
-demand,get_total_demand,outputs/data/demand/total_demand.csv,NFA_m2,TODO,TODO,TODO,TODO,black
+demand,get_total_demand,outputs/data/demand/total_demand.csv,Aocc_m2,Occupied floor area (heated/cooled),[m2],{0.0...n},float,black
 demand,get_total_demand,outputs/data/demand/total_demand.csv,NG_hs0_kW,Nominal NG requirement for space heating supply,kW,{0.0...n},float,red
 demand,get_total_demand,outputs/data/demand/total_demand.csv,NG_hs_MWhyr,NG requirement for space heating supply,MWh/yr,{0.0...n},float,red
 demand,get_total_demand,outputs/data/demand/total_demand.csv,NG_ww0_kW,Nominal NG requirement for hotwater supply,kW,{0.0...n},float,red_light
@@ -1194,7 +1194,7 @@ operation-costs,get_costs_operation_file,outputs/data/costs/operation_costs.csv,
 operation-costs,get_costs_operation_file,outputs/data/costs/operation_costs.csv,DH_ww_cost_yr,Operation costs due to hotwater,$USD(2015)/yr,TODO,TODO,orange_lighter
 operation-costs,get_costs_operation_file,outputs/data/costs/operation_costs.csv,GRID_cost_m2yr,Electricity supply from the grid,$USD(2015)/m2.yr,TODO,TODO,green
 operation-costs,get_costs_operation_file,outputs/data/costs/operation_costs.csv,GRID_cost_yr,Electricity supply from the grid,$USD(2015)/yr,TODO,TODO,green
-operation-costs,get_costs_operation_file,outputs/data/costs/operation_costs.csv,NFA_m2,TODO,TODO,TODO,TODO,black
+operation-costs,get_costs_operation_file,outputs/data/costs/operation_costs.csv,Aocc_m2,TODO,TODO,TODO,TODO,black
 operation-costs,get_costs_operation_file,outputs/data/costs/operation_costs.csv,NG_hs_cost_m2yr,TODO,TODO,TODO,TODO,black
 operation-costs,get_costs_operation_file,outputs/data/costs/operation_costs.csv,NG_hs_cost_yr,Operation costs of NG due to space heating,$USD(2015)/yr,TODO,TODO,red
 operation-costs,get_costs_operation_file,outputs/data/costs/operation_costs.csv,NG_ww_cost_m2yr,TODO,TODO,TODO,TODO,black
@@ -1372,18 +1372,18 @@ photovoltaic-thermal,PVT_totals,outputs/data/potentials/solar/pvt_total.csv,T_PV
 photovoltaic-thermal,PVT_totals,outputs/data/potentials/solar/pvt_total.csv,T_PVT_sup_C,Collector heating supply temperature.,[C],{0.0...n},float,black
 photovoltaic-thermal,PVT_totals,outputs/data/potentials/solar/pvt_total.csv,mcp_PVT_kWperC,Capacity flow rate (mass flow* specific heat capacity) of the hot water delivered by the collector.,[kW/Cap],{0.0...n},float,black
 photovoltaic-thermal,PVT_totals,outputs/data/potentials/solar/pvt_total.csv,radiation_kWh,Total radiatiative potential.,[kWh],{0.0...n},float,black
-radiation-daysim,get_radiation_building,outputs/data/solar-radiation/b001_insolation_whm2.json,srf0,TODO,TODO,TODO,TODO,black
-radiation-daysim,get_radiation_metadata,outputs/data/solar-radiation/b001_geometry.csv,AREA_m2,Surface area.,[m2],{0.0...n},float,black
-radiation-daysim,get_radiation_metadata,outputs/data/solar-radiation/b001_geometry.csv,BUILDING,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black
-radiation-daysim,get_radiation_metadata,outputs/data/solar-radiation/b001_geometry.csv,SURFACE,Unique surface ID for each building exterior surface.,[-],{srf0...srfn},string,black
-radiation-daysim,get_radiation_metadata,outputs/data/solar-radiation/b001_geometry.csv,TYPE,Surface typology.,[-],{walls/windows/roofs},string,black
-radiation-daysim,get_radiation_metadata,outputs/data/solar-radiation/b001_geometry.csv,Xcoor,Describes the position of the x vector.,[-],{0.0...n},float,black
-radiation-daysim,get_radiation_metadata,outputs/data/solar-radiation/b001_geometry.csv,Xdir,Directional scalar of the x vector.,[-],{-1...1},float,black
-radiation-daysim,get_radiation_metadata,outputs/data/solar-radiation/b001_geometry.csv,Ycoor,Describes the position of the y vector.,[-],{0.0...n},float,black
-radiation-daysim,get_radiation_metadata,outputs/data/solar-radiation/b001_geometry.csv,Ydir,Directional scalar of the y vector.,[-],{-1...1},float,black
-radiation-daysim,get_radiation_metadata,outputs/data/solar-radiation/b001_geometry.csv,Zcoor,Describes the position of the z vector.,[-],{0.0...n},float,black
-radiation-daysim,get_radiation_metadata,outputs/data/solar-radiation/b001_geometry.csv,Zdir,Directional scalar of the z vector.,[-],{-1...1},float,black
-radiation-daysim,get_radiation_metadata,outputs/data/solar-radiation/b001_geometry.csv,orientation,Orientation of the surface (north/east/south/west/top),[-],{north...},string,black
+radiation,get_radiation_building,outputs/data/solar-radiation/b001_insolation_whm2.json,srf0,TODO,TODO,TODO,TODO,black
+radiation,get_radiation_metadata,outputs/data/solar-radiation/b001_geometry.csv,AREA_m2,Surface area.,[m2],{0.0...n},float,black
+radiation,get_radiation_metadata,outputs/data/solar-radiation/b001_geometry.csv,BUILDING,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black
+radiation,get_radiation_metadata,outputs/data/solar-radiation/b001_geometry.csv,SURFACE,Unique surface ID for each building exterior surface.,[-],{srf0...srfn},string,black
+radiation,get_radiation_metadata,outputs/data/solar-radiation/b001_geometry.csv,TYPE,Surface typology.,[-],{walls/windows/roofs},string,black
+radiation,get_radiation_metadata,outputs/data/solar-radiation/b001_geometry.csv,Xcoor,Describes the position of the x vector.,[-],{0.0...n},float,black
+radiation,get_radiation_metadata,outputs/data/solar-radiation/b001_geometry.csv,Xdir,Directional scalar of the x vector.,[-],{-1...1},float,black
+radiation,get_radiation_metadata,outputs/data/solar-radiation/b001_geometry.csv,Ycoor,Describes the position of the y vector.,[-],{0.0...n},float,black
+radiation,get_radiation_metadata,outputs/data/solar-radiation/b001_geometry.csv,Ydir,Directional scalar of the y vector.,[-],{-1...1},float,black
+radiation,get_radiation_metadata,outputs/data/solar-radiation/b001_geometry.csv,Zcoor,Describes the position of the z vector.,[-],{0.0...n},float,black
+radiation,get_radiation_metadata,outputs/data/solar-radiation/b001_geometry.csv,Zdir,Directional scalar of the z vector.,[-],{-1...1},float,black
+radiation,get_radiation_metadata,outputs/data/solar-radiation/b001_geometry.csv,orientation,Orientation of the surface (north/east/south/west/top),[-],{north...},string,black
 sewage-potential,get_sewage_heat_potential,outputs/data/potentials/swp.csv,Qsw_kW,TODO,TODO,TODO,TODO,black
 sewage-potential,get_sewage_heat_potential,outputs/data/potentials/swp.csv,tin_HP_C,TODO,TODO,TODO,TODO,black
 sewage-potential,get_sewage_heat_potential,outputs/data/potentials/swp.csv,tin_sw_C,TODO,TODO,TODO,TODO,black
