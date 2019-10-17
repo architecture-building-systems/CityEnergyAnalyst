@@ -145,6 +145,9 @@ def extract_cea_outputs_to_osmose_main(case, timesteps, season, specified_buildi
         output_df1['w_gain_occ_kgpers'] = reduced_tsd_df['w_int']
         # output_df1['w_gain_infil_kgpers'] = reduced_tsd_df['m_ve_inf'] * reduced_tsd_df['w_ext'] / 1000
         output_df1['w_gain_infil_kgpers'] = reduced_tsd_df['m_ve_inf'] * reduced_tsd_df['x_ve_inf']
+        output_df1['Q_dhw_kWh'] = reduced_tsd_df['Qww_sys']/1000
+        output_df1['Tww_sup_C'] = reduced_tsd_df['Tww_sys_sup']
+        output_df1['Tww_ret_C'] = reduced_tsd_df['Tww_sys_re']
         output_df1 = output_df1.round(4)  # osmose does not read more decimals (observation)
         # output_df1 = output_df1.drop(output_df.index[range(7)])
 
@@ -187,6 +190,7 @@ def extract_cea_outputs_to_osmose_main(case, timesteps, season, specified_buildi
             (output_hcs['T_ext'] <= output_hcs['T_RA']) & (output_df1['Q_gain_occ_kWh'] <= 0.0), 0, output_hcs['m_ve_in_calc'])
 
         output_hcs['m_ve_max'] = output_hcs['m_ve_min'] * N_m_ve_max
+        output_hcs['m_ve_inf'] = reduced_tsd_df['m_ve_inf']
         output_hcs['rh_max'] = RH_max
         output_hcs['rh_min'] = RH_min
         output_hcs['w_max'] = np.vectorize(calc_w_from_rh)(output_hcs['rh_max'], reduced_tsd_df['T_int'])
