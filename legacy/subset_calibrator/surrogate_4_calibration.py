@@ -1,4 +1,3 @@
-import cea
 import os
 import pandas as pd
 import numpy as np
@@ -10,10 +9,8 @@ from pyDOE import lhs
 from cea.demand import demand_main
 from geopandas import GeoDataFrame as Gdf
 import cea.inputlocator as inputlocator
-from cea.demand.calibration.settings import subset_samples
-from keras.layers import Input, Dense
-from keras.models import Model
-import scipy.io
+from legacy.calibration import subset_samples
+from keras.layers import Dense
 from keras.models import Sequential
 from keras.callbacks import EarlyStopping
 from sklearn.preprocessing import MinMaxScaler

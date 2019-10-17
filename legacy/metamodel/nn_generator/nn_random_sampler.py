@@ -21,7 +21,7 @@ import pandas as pd
 import cea.inputlocator
 import cea.config
 from cea.demand import demand_main
-from cea.demand.calibration.latin_sampler import latin_sampler
+from legacy.calibration.latin_sampler import latin_sampler
 from cea.demand.demand_main import properties_and_schedule
 from legacy.metamodel.nn_generator import number_samples, random_variables, \
     target_parameters, boolean_vars
