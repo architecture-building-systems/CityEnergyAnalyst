@@ -56,7 +56,16 @@ def main(case):
             old_name = run_folder
             if os.path.exists(os.path.join(result_path, old_name)):
                 new_name = old_name + '_' + case_short + '_' + building + '_' + str(periods) + '_' + str(timesteps)
+
+                ##Remove .jpg
+                # model_folder = [result_path, run_folder, 's_001\\plots\\icc\\models']
+                # path_to_model_folder = os.path.join('', *model_folder)
+                # files = os.listdir(path_to_model_folder)
+                # [os.remove(os.path.join(path_to_model_folder, file)) for file in files if '.jpg' in file]
+
+                ##Rename
                 os.rename(os.path.join(result_path, run_folder),os.path.join(result_path, new_name))
+
             time_elapsed = time.clock() - t0
             print round(time_elapsed, 0), ' s for running: ', tech, '\n'
 
