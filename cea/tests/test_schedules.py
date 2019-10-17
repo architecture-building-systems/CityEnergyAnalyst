@@ -23,50 +23,6 @@ from cea.utilities import epwreader
 REFERENCE_TIME = 3456
 
 
-class TestSavingLoadingSchedules(unittest.TestCase):
-    """Make sure that the schedules loaded from disk are the same as those loaded if they're not present."""
-
-    def test_get_building_schedules(self):
-        """Make sure running get_building_schedules for same case returns the same value"""
-        test_building = 'B01'
-        config = cea.config.Configuration()
-        config.schedule_maker.schedule_model = 'deterministic'
-        config.schedule_maker.buildings = [test_building]
-        config.demand.use_stochastic_occupancy = False
-        locator = ReferenceCaseOpenLocator()
-
-        # create archetypal schedules in scenario inputs
-        data_helper(locator, region='CH', overwrite_technology_folder=True,
-                    update_architecture_dbf=True, update_HVAC_systems_dbf=True, update_indoor_comfort_dbf=True,
-                    update_internal_loads_dbf=True, update_supply_systems_dbf=True,
-                    update_schedule_operation_cea=True, schedule_model='CH-SIA-2024',
-                    buildings=config.schedule_maker.buildings)
-
-        # run get_building_schedules on clean folder - they're created from scratch
-        if os.path.exists(locator.get_occupancy_model_file(test_building)):
-            os.remove(locator.get_occupancy_model_file(test_building))
-        schedule_maker_main(locator, config)
-        fresh_schedules = pd.read_csv(locator.get_occupancy_model_file(test_building)).set_index('DATE')
-
-        # run again to get the frozen version
-        schedule_maker_main(locator, config)
-        frozen_schedules = pd.read_csv(locator.get_occupancy_model_file(test_building)).set_index('DATE')
-
-        self.assertEqual(sorted(fresh_schedules.keys()), sorted(frozen_schedules.keys()))
-        for schedule in fresh_schedules:
-            for i in range(len(fresh_schedules[schedule])):
-                fresh = fresh_schedules[schedule][i]
-                frozen = frozen_schedules[schedule][i]
-                if (not isinstance(fresh, str)) and (not isinstance(frozen, str)):
-                    if np.isnan(fresh) and np.isnan(frozen):
-                        pass
-                    else:
-                        self.assertEqual(fresh, frozen)
-                else:
-                    self.assertEqual(fresh, frozen)
-            self.assertIsNone(np.testing.assert_array_equal(fresh_schedules[schedule], frozen_schedules[schedule]))
-
-
 class TestBuildingPreprocessing(unittest.TestCase):
     def test_mixed_use_archetype_values(self):
         # test if a sample mixed use building gets standard results
