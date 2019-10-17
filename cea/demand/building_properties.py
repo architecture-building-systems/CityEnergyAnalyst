@@ -261,7 +261,7 @@ class BuildingProperties(object):
         """
 
         # calculate building geometry
-        df = self.geometry_reader_radiation_daysim(locator, envelope, occupancy, geometry, H_F)
+        df = self.geometry_reader_radiation_daysim(locator, envelope, occupancy, geometry)
         df = df.merge(hvac_temperatures, left_index=True, right_index=True)
 
         for building in df.index.values:
@@ -297,13 +297,13 @@ class BuildingProperties(object):
         df['Htr_is'] = H_IS * df['Atot']
 
         fields = ['Atot', 'Aw', 'Am', 'Aef', 'Af', 'Cm', 'Htr_is', 'Htr_em', 'Htr_ms', 'Htr_op', 'Hg',  'HD', 'Aroof',
-                  'U_wall', 'U_roof', 'U_win', 'U_base', 'Htr_w', 'GFA_m2', 'Aocc', 'Aop_sup',
+                  'U_wall', 'U_roof', 'U_win', 'U_base', 'Htr_w', 'GFA_m2', 'Aocc', 'Aop_sup', 'empty_envelope_ratio',
                   'Aop_bel', 'footprint']
         result = df[fields]
 
         return result
 
-    def geometry_reader_radiation_daysim(self, locator, envelope, occupancy, geometry, floor_height):
+    def geometry_reader_radiation_daysim(self, locator, envelope, occupancy, geometry):
         """
 
         Reader which returns the radiation specific geometries from Daysim. Adjusts the imported data such that it is
@@ -874,12 +874,12 @@ def calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, therm
     radiation_data = pd.read_json(locator.get_radiation_building(building_name))
     # sum wall
     # solar incident on all walls [W]
-    I_sol_wall = np.array(
-        [geometry_data_walls.ix[surface, 'AREA_m2'] * multiplier_wall * radiation_data[surface] for surface in
+    I_sol_wall = np.array([geometry_data_walls.ix[surface, 'AREA_m2'] * multiplier_wall * radiation_data[surface] for surface in
          geometry_data_walls.index]).sum(axis=0)
+
     # sensible gain on all walls [W]
     I_sol_wall = I_sol_wall * prop_envelope.ix[building_name, 'a_wall'] * thermal_resistance_surface * \
-                 prop_rc_model.ix[building_name, 'U_wall']
+                 prop_rc_model.ix[building_name, 'U_wall'] * prop_rc_model.ix[building_name, 'empty_envelope_ratio']
     # sum roof
 
     # solar incident on all roofs [W]
@@ -895,35 +895,12 @@ def calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, therm
                                                            prop_envelope.ix[building_name, 'rf_sh']) for surface
                in geometry_data_windows.index]
 
-    I_sol_win = [geometry_data_windows.ix[surface, 'AREA_m2'] * multiplier_win * radiation_data[surface]
-                 for surface in geometry_data_windows.index]
+    I_sol_win = np.array([geometry_data_windows.ix[surface, 'AREA_m2'] * multiplier_win * radiation_data[surface]
+                 for surface in geometry_data_windows.index]) * prop_rc_model.ix[building_name, 'empty_envelope_ratio']
 
     I_sol_win = np.array([x * y * (1 - prop_envelope.ix[building_name, 'F_F']) for x, y in zip(I_sol_win, Fsh_win)]).sum(axis=0)
 
     # sum
     I_sol = I_sol_wall + I_sol_roof + I_sol_win
-
-    return I_sol
-
-
-def calc_Isol_arcgis(I_sol_average, prop_rc_model, prop_envelope, thermal_resistance_surface):
-    """
-    This function calculates the effective collecting solar area accounting for use of blinds according to ISO 13790,
-    for the sake of simplicity and to avoid iterations, the delta is calculated based on the last time step.
-
-    :param t: time of the year
-    :param bpr: building properties object
-    :return: I_sol: numpy array containing the sensible solar heat loads for roof, walls and windows.
-    :rtype: np.array
-
-    """
-    from cea.technologies import blinds
-    Fsh_win = np.vectorize(blinds.calc_blinds_activation)(I_sol_average, prop_envelope.G_win, prop_envelope.rf_sh)
-
-    Asol_wall = prop_rc_model['Aop_sup'] * prop_envelope.a_wall * thermal_resistance_surface * prop_rc_model['U_wall']
-    Asol_roof = prop_rc_model['Aroof'] * prop_envelope.a_roof * thermal_resistance_surface * prop_rc_model['U_roof']
-    Asol_win = Fsh_win * prop_rc_model['Aw'] * (1 - prop_envelope.F_F)
-
-    I_sol = I_sol_average * (Asol_wall + Asol_roof + Asol_win)
 
     return I_sol
