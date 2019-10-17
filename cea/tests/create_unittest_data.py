@@ -52,7 +52,7 @@ def main(output_file):
     print("data for test_calc_thermal_loads:")
     print(building_properties.list_building_names())
 
-    schedule_maker_main(locator, config)
+    schedule_maker_main(locator, config, building='B01')
 
     bpr = building_properties['B01']
     result = calc_thermal_loads('B01', bpr, weather_data, date_range, locator,

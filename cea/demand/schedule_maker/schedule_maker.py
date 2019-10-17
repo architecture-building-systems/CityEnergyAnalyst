@@ -31,7 +31,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def schedule_maker_main(locator, config):
+def schedule_maker_main(locator, config, building=None):
     # local variables
     buildings = config.schedule_maker.buildings
     schedule_model = config.schedule_maker.schedule_model
@@ -45,6 +45,8 @@ def schedule_maker_main(locator, config):
 
     if buildings == []:
         buildings = locator.get_zone_building_names()
+    if building !=None:
+        buildings = [building] #this is to run the tests
 
     # get variables of indoor comfort and internal loads
     internal_loads = dbf_to_dataframe(locator.get_building_internal()).set_index('Name')

@@ -51,9 +51,10 @@ class TestCalcThermalLoads(unittest.TestCase):
 
     def test_calc_thermal_loads(self):
         bpr = self.building_properties['B01']
+        self.config.general.multiprocessing = False
         self.config.schedule_maker.schedule_model = "deterministic"
+        schedule_maker_main(self.locator, self.config, building='B01')
 
-        schedule_maker_main(self.locator, self.config)
         result = calc_thermal_loads('B01', bpr, self.weather_data, self.date_range, self.locator,
                                     self.use_dynamic_infiltration_calculation, self.resolution_output,
                                     self.loads_output, self.massflows_output, self.temperatures_output,
@@ -107,8 +108,8 @@ def run_for_single_building(building, bpr, weather_data, date, locator,
                             use_dynamic_infiltration_calculation, resolution_output, loads_output,
                             massflows_output, temperatures_output, config, debug):
 
-
-    schedule_maker_main(locator, config)
+    config.general.multiprocessing = False
+    schedule_maker_main(locator, config, building=building)
     calc_thermal_loads(building, bpr, weather_data, date, locator,
                        use_dynamic_infiltration_calculation, resolution_output, loads_output,
                        massflows_output, temperatures_output, config, debug)
