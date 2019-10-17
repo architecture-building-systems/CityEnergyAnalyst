@@ -145,7 +145,7 @@ architecture:
   - name: Name
     type: str
   - name: void_deck
-    type: float
+    type: int
   - name: Es
     type: float
   - name: Hs

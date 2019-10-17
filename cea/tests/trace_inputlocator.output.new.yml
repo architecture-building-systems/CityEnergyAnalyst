@@ -836,8 +836,8 @@ get_archetypes_properties:
                 sample_data: T4
                 types_found: [string]
             void_deck:
-                sample_data: !!python/long '0'
-                types_found: [long]
+                sample_data: 0
+                types_found: [int]
             wwr_east:
                 sample_data: 0.31
                 types_found: [float]
