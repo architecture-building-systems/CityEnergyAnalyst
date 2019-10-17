@@ -186,43 +186,61 @@ def plot_chiller_temperatures_scatter(chiller_df, building, building_result_path
 
 
 def plot_chiller_T_Qc_scatter(chiller_df, tech_rank, building, building_result_path, case):
-    chiller_dict = chiller_df.T.to_dict()
+    """
+    :param chiller_df: chw temperatures and Qc at each temperature
+    :param tech_rank:
+    :param building:
+    :param building_result_path:
+    :param case:
+    :return:
+    """
+    # transform dataframe to dict
+    if type(chiller_df) is not dict:
+        chiller_dict = chiller_df.T.to_dict()
+    else:
+        chiller_dict = chiller_df
 
-    # x axis (keys of the first level dict)
-    chiller_dict_keys = list(chiller_dict.keys())
+    # x_tech axis (keys of the first level dict, HCS technologies)
     x_labels = []
-    # for i in ['HCS_coil', 'HCS_ER0', 'HCS_3for2', 'HCS_LD', 'HCS_IEHX']:
-    #     if i in chiller_dict_keys:
-    #         x_labels.append(i)
-    for i in tech_rank:
-        x_labels.append('HCS_' + i)
-    x_labels_shown = []
-    label_dict = {'HCS_coil': 'Config|1', 'HCS_ER0': 'Config|2', 'HCS_3for2': 'Config|3', 'HCS_LD': 'Config|4',
-                  'HCS_IEHX': 'Config|5'}
-    for i in x_labels:
-        x_labels_shown.append(label_dict[i])
+    if 'base' in tech_rank[0]:
+        label_dict = {'HCS_base_coil': 'coil', 'HCS_base_ER0': 'ER0', 'HCS_base_3for2': '3for2', 'HCS_base_LD': 'LD',
+                      'HCS_base_IEHX': 'IEHX', 'HCS_base': 'Ref.'}
+        x_labels_shown = []
+        for tech in tech_rank:
+            x_labels.append(tech)
+            x_labels_shown.append(label_dict[tech])
+    else:
+        label_dict = {'HCS_coil': 'Config|1', 'HCS_ER0': 'Config|2', 'HCS_3for2': 'Config|3', 'HCS_LD': 'Config|4',
+                      'HCS_IEHX': 'Config|5', 'HCS_base': 'Reference'}
+        x_labels_shown = []
+        for tech in tech_rank:
+            x_labels.append('HCS' + tech)
+            x_labels_shown.append(label_dict[tech])
     x_values = list(range(len(x_labels)))
 
-    # lookup table mapping category, assign ranking to x labels
-    ranking_lookup_table = dict((v, k) for k, v in enumerate(x_labels))  # determine the x-axis order
+    # assign x-axis labels to technologies
+    ranking_lookup_table = dict((v, k) for k, v in enumerate(x_labels))
 
-    # build a list of points (x,y,annotation)
-    points_list = [(ranking_lookup_table[tech], key_T, anno_Qc)
-              for tech, T_Qc_dict in chiller_dict.items()
-              for key_T, anno_Qc in (T_Qc_dict if T_Qc_dict else {}).items()]
-    x, y, anno_Qc = zip(*points_list)
-    y_float = tuple(map(lambda i: float(i), y))
+    # build a list of points (x_tech,y_T_chw,item_Qc)
+    points_list = [(ranking_lookup_table[tech], key_T, item_Qc)
+              for tech in chiller_dict.keys()
+              for key_T, item_Qc in (chiller_dict[tech]).items()]
+    # points_list = [(ranking_lookup_table[tech], key_T, item_Qc)
+    #           for tech, T_Qc_dict in chiller_dict.items()
+    #           for key_T, item_Qc in (T_Qc_dict if T_Qc_dict else {}).items()]
+    x_tech, y_T_chw, Qc = zip(*points_list)
+    y_float = tuple(map(lambda i: float(i), y_T_chw))
     # y axis (keys of the second level dict)
     y_values = [8.1, 8.75, 9.4, 10.05, 10.7, 11.35, 12., 12.65, 13.3, 13.95]
-    # y_values = [float(i) for i in chiller_df.columns]
+    # y_values = [float(tech) for tech in chiller_df.columns]
     y_labels = [str(v) for v in y_values]
     # marker size
-    area = tuple(map(lambda x: (x / 1000) ** 2, anno_Qc))  # area = Qc
+    marker_size = tuple(map(lambda x: (x / 1000) ** 2, Qc))  # marker_size = Qc
 
     # figure name
-    figure_name = 'chw_Qc'
+    figure_name = case + 'chw_Qc'
 
-    format_chw_scatter_plot(area, building, building_result_path, case, figure_name, x, x_labels_shown, x_values,
+    format_chw_scatter_plot(marker_size, building, building_result_path, case, figure_name, x_tech, x_labels_shown, x_values,
                             y_float, y_labels, y_values)
     return np.nan
 
@@ -231,8 +249,13 @@ def format_chw_scatter_plot(area, building, building_result_path, case, figure_n
                             y_float, y_labels, y_values):
     # format the plt
     plt.figure()
-    case_name = case.split('_')[4]
-    plt.title(case.split('_')[0] + ' ' + CASE_TABLE[case_name] + ' ' + building, fontsize=16)
+    if len(case.split('_')) > 4:
+        case_name = case.split('_')[4]
+        title = case.split('_')[0] + ' ' + CASE_TABLE[case_name] + ' ' + building
+    else:
+        case_name = case.split('_')[0]
+        title = CASE_TABLE[case_name] + ' ' + building
+    plt.title(title, fontsize=16)
     # plt.xlabel('x')
     plt.xticks(x_values, x_labels_shown, fontsize=16)
     plt.yticks(y_values, y_labels, fontsize=16)
@@ -424,6 +447,7 @@ def path_to_save_chiller_t(building, building_result_path):
 def path_to_save_chw_scatter(building, building_result_path, name):
     filename = building + '_' + name + '.png'
     path_to_file = os.path.join(building_result_path, filename)
+    print(path_to_file)
     return path_to_file
 
 
