@@ -5,6 +5,7 @@ the `MonthlyDemandWriter`.
 """
 
 from __future__ import division
+
 import numpy as np
 import pandas as pd
 
@@ -24,7 +25,18 @@ class DemandWriter(object):
         from cea.demand.thermal_loads import TSD_KEYS_ENERGY_BALANCE_DASHBOARD, TSD_KEYS_SOLAR
 
         if not loads:
-            self.load_vars = ['PV', 'GRID', 'E_sys', 'Eal', 'Edata', 'Epro', 'Eaux',
+            self.load_vars = ['PV', 'GRID',
+                              'GRID_a',
+                              'GRID_l',
+                              'GRID_data',
+                              'GRID_pro',
+                              'GRID_aux',
+                              'GRID_ww',
+                              'GRID_hs',
+                              'GRID_cs',
+                              'GRID_cdata',
+                              'GRID_cre',
+                              'E_sys', 'Eal', 'Ea', 'El', 'Edata', 'Epro', 'Eaux',
                               'E_ww', 'E_hs', 'E_cs', 'E_cre', 'E_cdata',
                               'Qhs_sen_shu', 'Qhs_sen_ahu', 'Qhs_lat_ahu',
                               'Qhs_sen_aru', 'Qhs_lat_aru', 'Qhs_sen_sys',
