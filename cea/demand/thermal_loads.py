@@ -105,6 +105,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, date_range, locator,
             tsd['Edata'] = tsd['E_cdata'] = np.zeros(HOURS_IN_YEAR)
 
         # CALCULATE SPACE CONDITIONING DEMANDS
+        tsd = latent_loads.calc_Qgain_lat(tsd, schedules)
         tsd = calc_set_points(bpr, date_range, tsd, building_name, config, locator,
                               schedules)  # calculate the setpoints for every hour
         tsd = calc_Qhs_Qcs(bpr, tsd,
@@ -118,7 +119,6 @@ def calc_thermal_loads(building_name, bpr, weather_data, date_range, locator,
         tsd = calc_Qhs_sys(bpr, tsd)  # final : including fuels and renewables
 
         # Positive loads
-        tsd = latent_loads.calc_Qgain_lat(tsd, schedules)
         tsd['Qcs_lat_sys'] = abs(tsd['Qcs_lat_sys'])
         tsd['DC_cs'] = abs(tsd['DC_cs'])
         tsd['Qcs_sys'] = abs(tsd['Qcs_sys'])
