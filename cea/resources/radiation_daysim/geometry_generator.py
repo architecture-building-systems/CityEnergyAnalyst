@@ -124,7 +124,7 @@ def building2d23d(locator, geometry_terrain, config, height_col, nfloor_col):
     """
 
     # settings: parameters that configure the level of simplification of geometry
-    settings = config.radiation_daysim
+    settings = config.radiation
     consider_windows = True #legacy from config file. now it is always true
     district_shp_path = locator.get_district_geometry()
 
@@ -406,7 +406,7 @@ def geometry_main(locator, config):
 if __name__ == '__main__':
     config = cea.config.Configuration()
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    settings = config.radiation_daysim
+    settings = config.radiation
 
     # run routine City GML LOD 1
     time1 = time.time()

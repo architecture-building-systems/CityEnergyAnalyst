@@ -37,7 +37,7 @@ def has_refrigeration_load(bpr):
 
 def calc_Qcre_sys(bpr, tsd, schedules):
     # calculate refrigeration loads
-    tsd['Qcre'] = schedules['Qcre'] * bpr.internal_loads['Qcre_Wm2'] * -1.0  # cooling loads are negative
+    tsd['Qcre'] = schedules['Qcre_W'] * -1.0  # cooling loads are negative
     # calculate distribution losses for refrigeration loads analogously to space cooling distribution losses
     Y = bpr.building_systems['Y'][0]
     Lv = bpr.building_systems['Lv']

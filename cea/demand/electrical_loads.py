@@ -31,7 +31,7 @@ HOURS_OP = constants.HOURS_OP
 GR = constants.GR
 
 
-def calc_Eal_Epro(tsd, bpr, schedules):
+def calc_Eal_Epro(tsd, schedules):
     """
     Calculate final internal electrical loads (without auxiliary loads)
 
@@ -49,14 +49,10 @@ def calc_Eal_Epro(tsd, bpr, schedules):
     """
 
     # calculate final electrical consumption due to appliances and lights in W
-    tsd['Ea'] = schedules['Ea'] * bpr.internal_loads['Ea_Wm2']
-    tsd['El'] = schedules['El'] * bpr.internal_loads['El_Wm2']
-    tsd['Eal'] = tsd['El'] + tsd['Ea']
-
-    if bpr.internal_loads['Epro_Wm2'] > 0:
-        tsd['Epro'] = schedules['Epro'] * bpr.internal_loads['Epro_Wm2']
-    else:
-        tsd['Epro'] = np.zeros(HOURS_IN_YEAR)
+    tsd['Ea'] = schedules['Ea_W']
+    tsd['El'] = schedules['El_W']
+    tsd['Eal'] = schedules['El_W'] + schedules['Ea_W']
+    tsd['Epro'] = schedules['Epro_W']
 
     return tsd
 
@@ -136,7 +132,8 @@ def calc_Eaux(tsd):
 
 
 def calc_Eaux_fw(tsd, bpr, schedules):
-    tsd['vfw_m3perh'] = schedules['Vw'] * bpr.internal_loads['Vw_lpd'] / 1000  # m3/h
+
+    tsd['vfw_m3perh'] = schedules['Vw_lph'] / 1000  # m3/h
 
     nf_ag = bpr.geometry['floors_ag']
     if nf_ag > 5:  # up to 5th floor no pumping needs
@@ -265,7 +262,6 @@ def calc_Eaux_Qhs_Qcs(tsd, bpr):
 
     return tsd
 
-
 def calc_Eauxf_hs_dis(Qhs_sys, Qhs_sys0, deltaP_kPa, b, ts, tr):
     # Following EN 15316-3-2:2007 Annex F
 
@@ -327,7 +323,6 @@ def calc_Eauxf_ve(tsd):
     tsd['Eaux_ve'] = np.nan_to_num(Eve_aux)
 
     return tsd
-
 
 def calc_Eauxf_ww(Qww, deltaP_kPa, b, m_kgs):
     """

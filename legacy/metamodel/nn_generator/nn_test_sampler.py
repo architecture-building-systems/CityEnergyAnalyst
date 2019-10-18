@@ -13,9 +13,9 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-from cea.demand.calibration.latin_sampler import latin_sampler
+from legacy.calibration.latin_sampler import latin_sampler
 from cea.demand.demand_main import properties_and_schedule
-from cea.demand.calibration.bayesian_calibrator.calibration_sampling import apply_sample_parameters
+from legacy.calibration import apply_sample_parameters
 from cea.demand import demand_main
 import pickle
 import cea.inputlocator
