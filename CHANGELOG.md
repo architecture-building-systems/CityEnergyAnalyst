@@ -237,7 +237,7 @@
 2018-10-08 - 2.9.0 - #1629 1625 figure out why the radiation daysim tool hangs on sabines scenario
 2018-10-04 - 2.9.0 - #1615 This is a first stab to updating the documentation
 2018-10-02 - 2.9.0 - #1618 967 dashboard - changes so far It runs so I am merging. I guess we can talk about the changes on the presentation of the 18th.
-2018-09-20 - 2.7.22 - #1624 Fixing the pyliburo / radiation-daysim geometry problems
+2018-09-20 - 2.7.22 - #1624 Fixing the pyliburo / radiation geometry problems
 2018-09-18 - 2.7.22 - #1608 this solves issue #1351
 2018-09-08 - 2.7.22 - #1614 Typos and cleanup
 2018-09-04 - 2.7.22 - #1603 @daren-thomas great thanks!

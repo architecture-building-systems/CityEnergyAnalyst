@@ -100,6 +100,8 @@ internal-loads:
   fields:
   - name: Name
     type: str
+  - name: Occ_m2pax
+    type: float
   - name: Qs_Wp
     type: float
   - name: X_ghp
@@ -145,7 +147,7 @@ architecture:
   - name: Name
     type: str
   - name: void_deck
-    type: float
+    type: int
   - name: Es
     type: float
   - name: Hs
@@ -172,23 +174,6 @@ architecture:
     type: str
   - name: type_win
     type: str
-restrictions:
-  pk: Name
-  type: dbf
-  location: get_building_restrictions
-  fields:
-  - name: Name
-    type: str
-  - name: BIOGAS
-    type: int
-  - name: GEOTHERMAL
-    type: int
-  - name: NATURALGAS
-    type: int
-  - name: SOLAR
-    type: int
-  - name: WATERBODY
-    type: int
 indoor-comfort:
   pk: Name
   type: dbf
