@@ -66,7 +66,11 @@ Demand forecasting:
     description: Use CEA models and input schedules to estimate the occupancy profile of buildings
     interfaces: [dashboard]
     module: cea.demand.schedule_maker.schedule_maker
-    parameters: ['general:scenario', 'general:multiprocessing', 'general:debug', schedule-maker]
+    parameters: ['general:scenario',
+                 'general:multiprocessing',
+                 'general:number-of-cpus-to-keep-free',
+                 'general:debug',
+                 schedule-maker]
     input-files:
       - [get_envelope_systems]
       - [get_district_geometry]
@@ -80,7 +84,11 @@ Demand forecasting:
     description: Calculate the Demand
     interfaces: [cli, arcgis, dashboard]
     module: cea.demand.demand_main
-    parameters: ['general:scenario', 'general:multiprocessing','general:debug', demand]
+    parameters: ['general:scenario',
+                 'general:multiprocessing',
+                 'general:number-of-cpus-to-keep-free',
+                 'general:debug',
+                 demand]
     input-files:
       - [get_weather_file]
       - [get_envelope_systems]

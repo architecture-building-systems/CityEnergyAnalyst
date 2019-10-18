@@ -37,15 +37,16 @@ demand,Qww_sys_MWhyr,MWh/yr,End-use hotwater demand,orange
 demand,Qww_sys0_kW,kW,Nominal end-use hotwater demand,orange
 
 demand,Epro_kWh,kWh,End-use processes electricity demand,brown_lighter
-demand,Edata_kWh,kWh,End-use servers electricity demand,green_light
-demand,Eal_kWh,kWh,End-use appliances electricity demand,green
-demand,Eaux_kWh,kWh,End-use auxiliary electricity demand,yellow
+demand,Edata_kWh,kWh,End-use servers electricity demand,brown
+demand,Eal_kWh,kWh,End-use appliances & lighting electricity demand,green
+demand,Ea_kWh,kWh,End-use appliances electricity demand,green
+demand,El_kWh,kWh,End-use lighting electricity demand,green_light
+demand,Eaux_kWh,kWh,End-use auxiliary electricity demand,blue
 
 Requirements curve,Epro_req_W,W,End-use processes electricity demand,brown_lighter
 Requirements curve,Edata_req_W,W,End-use servers electricity demand,green_light
 Requirements curve,Eal_req_W,W,End-use appliances electricity demand,green
 Requirements curve,Eaux_req_W,W,End-use auxiliary electricity demand,yellow
-
 
 Requirements curve,E_hs_ww_req_connected_W,W,Electricity due to decentralized heating (buildings connected to district network),green
 Requirements curve,E_hs_ww_req_disconnected_W,W,Electricity due to decentralized heating,yellow
@@ -60,6 +61,46 @@ demand,E_sys0_kW,kW,Nominal end-use electricity demand,green
 demand,GRID_kWh,kWh,Grid electricity consumption,green
 demand,GRID_MWhyr,MWh/yr,Grid electricity consumption,green
 demand,GRID0_kW,kW,Nominal Grid electricity consumption,green
+
+demand,GRID_a_kWh,kWh,Grid total requirements of electricity,green
+demand,GRID_a_MWhyr,MWh/yr,Grid electricity requirements for appliances,green
+demand,GRID_a_kW,kW,Nominal Grid electricity requirements for appliances,green
+
+demand,GRID_l_kWh,kWh,Grid electricity requirements for lights,green_light
+demand,GRID_l_MWhyr,MWh/yr,Grid electricity requirements for lights,green_light
+demand,GRID_l_kW,kW,Nominal Grid electricity requirements for lights,green_light
+
+demand,GRID_aux_kWh,kWh,Grid electricity requirements for auxiliary loads,grey
+demand,GRID_aux_MWhyr,MWh/yr,Grid electricity requirements for auxiliary loads,grey
+demand,GRID_aux_kW,kW,Nominal Grid electricity requirements for auxiliary loads,grey
+
+demand,GRID_data_kWh,kWh,Grid electricity requirements for servers,blue
+demand,GRID_data_MWhyr,MWh/yr,Grid electricity requirements for servers,blue
+demand,GRID_data_kW,kW,Nominal Grid electricity requirements for servers,blue
+
+demand,GRID_pro_kWh,kWh,Grid electricity requirements for industrial processes,brown
+demand,GRID_pro_MWhyr,MWh/yr,Grid electricity requirements for industrial processes,brown
+demand,GRID_pro_kW,kW,Nominal Grid electricity requirements for industrial processes,brown
+
+demand,GRID_ww_kWh,kWh,Grid electricity requirements for hot water supply,orange
+demand,GRID_ww_MWhyr,MWh/yr,Grid electricity requirements for hot water,orange
+demand,GRID_ww_kW,kW,Nominal Grid electricity requirements for hot water,orange
+
+demand,GRID_hs_kWh,kWh,Grid electricity requirements for space heating,red
+demand,GRID_hs_MWhyr,MWh/yr,Grid electricity requirements for space heating,red
+demand,GRID_hs_kW,kW,Nominal Grid electricity requirements for  space heating,red
+
+demand,GRID_cdata_kWh,kWh,Grid electricity requirements for servers cooling,blue_light
+demand,GRID_cdata_MWhyr,MWh/yr,Grid electricity requirements for servers cooling,blue_light
+demand,GRID_cdata_kW,kW,Nominal Grid electricity requirements for servers cooling,blue_light
+
+demand,GRID_cre_kWh,kWh,Grid electricity requirements for refrigeration,blue_lighter
+demand,GRID_cre_MWhyr,MWh/yr,Grid electricity requirements for refrigeration,blue_lighter
+demand,GRID_cre_kW,kW,Nominal Grid electricity requirements for refrigeration,blue_lighter
+
+demand,GRID_cs_kWh,kWh,Grid electricity requirements for space cooling,blue
+demand,GRID_cs_MWhyr,MWh/yr,Grid electricity requirements for space cooling,blue
+demand,GRID_cs_kW,kW,Nominal Grid electricity requirements for space cooling,blue
 
 demand,PV_kWh,kWh,PV electricity consumption,yellow
 demand,PV_MWhyr,MWh/yr,PV electricity consumption,yellow

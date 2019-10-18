@@ -26,7 +26,8 @@ class LoadCurvePlot(cea.plots.demand.DemandPlotBase):
 
     def __init__(self, project, parameters, cache):
         super(LoadCurvePlot, self).__init__(project, parameters, cache)
-        self.analysis_fields = ["Eal_kWh",
+        self.analysis_fields = ["Ea_kWh",
+                                "El_kWh",
                                 "Edata_kWh",
                                 "Epro_kWh",
                                 "Eaux_kWh",
