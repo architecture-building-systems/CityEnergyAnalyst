@@ -118,7 +118,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, date_range, locator,
         tsd = calc_Qhs_sys(bpr, tsd)  # final : including fuels and renewables
 
         # Positive loads
-        tsd = latent_loads.calc_latent_gains_from_people(tsd, bpr)
+        tsd = latent_loads.calc_Qgain_lat(tsd, schedules)
         tsd['Qcs_lat_sys'] = abs(tsd['Qcs_lat_sys'])
         tsd['DC_cs'] = abs(tsd['DC_cs'])
         tsd['Qcs_sys'] = abs(tsd['Qcs_sys'])
