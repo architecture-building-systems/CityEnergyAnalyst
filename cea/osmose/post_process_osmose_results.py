@@ -3,10 +3,13 @@ import pandas as pd
 import os
 import matplotlib.pyplot as plt
 import matplotlib.patches
+from cea.osmose.auxiliary_functions import calc_h_from_T_w
 
+DETAILED_PLOTS = True
 
 
 def main(folder_path):
+    print(folder_path)
     ## Read files
     files_in_path = os.listdir(folder_path)
     balance_file = [file for file in files_in_path if 'balance' in file][0]
@@ -21,6 +24,7 @@ def main(folder_path):
     # air
     m_a_in_df, m_a_out_df = calc_layer_balance(balance_df, 'Bui_air_bal')
     plot_values_all_timesteps('Bui_air_bal_in', m_a_in_df, 'Air flow [kg/s/m2]', output_df, folder_path)
+    air_in_ratio = m_a_in_df.sum(axis=1)/output_df['m_ve_min']
     # water
     m_w_in_df, m_w_out_df = calc_layer_balance(balance_df, 'Bui_water_bal')
     # sensible heat
@@ -28,40 +32,55 @@ def main(folder_path):
     # electricity
     el_in_df, el_out_df = calc_layer_balance(balance_df, 'Electricity')
     el_usages = el_out_df.sum(axis=1)
-    plot_values_all_timesteps('Electricity_out', el_out_df, 'Electricity Usages [kWh/m2]', output_df, folder_path)
+    # plot_values_all_timesteps('Electricity_out', el_out_df, 'Electricity Usages [kWh/m2]', output_df, folder_path)
     plot_values_all_timesteps('Electricity_in', el_in_df, 'Electricity Supply [kWh/m2]', output_df, folder_path)
 
     ## Calculation
     # exergy
     exergy_req, exergy_reheat_req = calc_exergy(balance_df, output_df, folder_path)
     # Q
-    Qsc_total, Qsc_dict = calc_Qsc(output_df, Q_sen_in_df, Q_sen_out_df, folder_path)
-    Qh_reheat_dict = calc_Qh_reheat(output_df, folder_path)
-    Qc_coil_dict = calc_Qc_coil(output_df, folder_path)
-    Q_chiller_total, Q_r_chiller_total = calc_Q_chillers(streams_df)
+    Qsc_dict, Qsc_total_theoretical = calc_Qsc(output_df, Q_sen_in_df, Q_sen_out_df, folder_path)
+    Q_chiller_total, Q_r_chiller_total, Q_coil_dict,\
+    Q_reheat_dict, Q_exhaust = calc_Q_heat_cascade(folder_path,output_df,streams_df)
+    # cooling efficiency
+    OAU_cooling_eff = (Qsc_dict['OAU_Qsc']/Q_coil_dict['OAU_Qc_coil']).fillna(0)
+    plot_stacked_bars({'cooling eff': OAU_cooling_eff}, len(output_df.index), 'OAU cooling eff', 'Qsc/Qc_coil [kW]', folder_path)
     # COP
-    cop_total = Qsc_total / el_usages
+    cop_total = Qsc_dict['Qsc_total'] / el_usages
+    data_dict = {'COP': cop_total}
+    plot_stacked_bars(data_dict, len(output_df.index), 'COP', 'COP [kW]', folder_path)
     # Temperatures
     if 'base' not in folder_path:
         calc_chiller_T(output_df, folder_path) # not relevant in base
-    draw_T_SA(output_df, folder_path)
-    draw_T_offcoil(output_df, folder_path)
+    T_SA_dict = draw_T_SA(output_df, folder_path)
+    T_offcoil_dict = draw_T_offcoil(output_df, folder_path)
 
     ## Write total.csv
     total_dict = {'COP': cop_total,
+                  'air in ratio': air_in_ratio,
+                  'OAU cooling eff': OAU_cooling_eff,
                   'exergy_kWh': exergy_req,
                   'exergy_reheat_kWh': exergy_reheat_req,
                   'electricity_kWh': el_usages,
                   'Q_chiller_kWh': Q_chiller_total,
                   'Q_r_chiller_kWh': Q_r_chiller_total,
+                  'Q_exhaust_kWh': Q_exhaust,
+                  'Qsc_theoretical': Qsc_total_theoretical,
                   'Af_m2': output_df['Af_m2']}
     for key in ['SU_Qh', 'SU_Qh_reheat', 'SU_qt_hot']:
         if output_df[key].sum() != 0.0 :
-            print('SU in use: ', key)
             total_dict[key] = output_df[key]
-    total_dict.update(Qsc_dict)
-    total_dict.update(Qh_reheat_dict)
-    total_dict.update(Qc_coil_dict)
+            # warnings
+            plot_stacked_bars({key: output_df[key]}, len(output_df.index), key, 'Qh [kW]', folder_path)
+            print('SU in use: ', key)
+            if output_df[key].sum() > 10:
+                print('value: ', output_df[key].sum())
+
+    # add all dicts to total_dict
+    for dict in [Qsc_dict, Q_reheat_dict, Q_coil_dict, T_SA_dict, T_offcoil_dict]:
+        total_dict.update(dict)
+
+    # save to csv
     total_df = pd.DataFrame(total_dict)
     total_df.loc['sum'] = total_df.sum()
     total_df.to_csv(os.path.join(folder_path, 'total.csv'))
@@ -69,10 +88,28 @@ def main(folder_path):
     return
 
 
+def calc_Q_heat_cascade(folder_path, output_df, streams_df):
+    # qt_hot
+    Q_coil_dict = calc_Q_coil(output_df, folder_path)
+    Q_r_chillers = output_df.filter(like='Q_r_chiller_').sum(axis=1)
+    qt_hot_total = Q_coil_dict['Qc_coil_total'] + Q_r_chillers
+    # qt_cold
+    Q_exhaust = output_df.filter(like='qt_cold_OAU_EX_').sum(axis=1)
+    Q_reheat_dict, Q_reheat_total = calc_Q_reheat(output_df, folder_path)
+    Qc_chillers = streams_df.filter(like='chiller').filter(like='qt_cold_Hout').sum(axis=1)  # TODO: REMOVE
+    Q_chillers = output_df.filter(like='Q_chiller_').sum(axis=1)
+    qt_cold_total = Q_exhaust + Q_reheat_total + Qc_chillers
+    # check balance again
+    dQ = qt_hot_total.round(1) - qt_cold_total.round(1)
+    if max(dQ) > 0.5:
+        print('Qc_coil and Q_chiller not balanced', dQ)
+    return Qc_chillers, Q_r_chillers, Q_coil_dict, Q_reheat_dict, Q_exhaust
+
+
 def read_file_as_df(file_name, folder_path):
     # get outputs.csv
     path_to_file = os.path.join(folder_path, file_name)
-    print(path_to_file)
+    # print(path_to_file)
     # read csv
     outputs_df = pd.read_csv(path_to_file, header=None).T
     # set column
@@ -82,20 +119,21 @@ def read_file_as_df(file_name, folder_path):
 
 def calc_layer_balance(balance_df, layer):
     layer_in_df = balance_df.filter(like= layer + '_in')
+    # print (layer_in_df.columns)
     layer_out_df = balance_df.filter(like= layer + '_out')
+    # print (layer_out_df.columns)
     layer_diff = (layer_in_df.sum(axis=1) - layer_out_df.sum(axis=1)).sum()
     if abs(layer_diff) > 1E-3:
         print (layer, ' might not be balanced: ', layer_diff)
-    else:
-        print (layer, ' balanced!')
 
     return layer_in_df, layer_out_df
 
 
 def calc_exergy(balance_df, output_df, folder_path):
-    el_chillers_df = balance_df.filter(like='Electricity_out_chillers').sum(axis=1)
+    # total exergy
+    el_chillers_df = balance_df.filter(like='Electricity_in_chillers').sum(axis=1)
     ex_chillers = el_chillers_df * output_df['g_value_chillers'].values[0]
-    el_r_chillers_df = balance_df.filter(like='Electricity_in_r_chillers').sum(axis=1)
+    el_r_chillers_df = balance_df.filter(like='Electricity_out_r_chillers').sum(axis=1)
     if 'g_value_rchillers' in output_df.columns:
         ex_r_chillers = el_r_chillers_df * output_df['g_value_rchillers'].values[0]
     else:
@@ -114,11 +152,6 @@ def calc_exergy(balance_df, output_df, folder_path):
     Ex_reheat = Ex + ex_Qh_reheat
 
     return Ex, Ex_reheat
-
-def calc_Q_chillers(streams_df):
-    Q_chillers = streams_df.filter(like='chiller').filter(like='qt_cold_Hout').sum(axis=1)
-    Q_r_chillers = streams_df.filter(like='chiller').filter(like='qt_hot_Hin').sum(axis=1)
-    return Q_chillers, Q_r_chillers
 
 
 def calc_m_w(balance_df, folder_path):
@@ -152,25 +185,29 @@ def calc_m_w(balance_df, folder_path):
 
     return
 
-def calc_Qh_reheat(output_df, folder_path):
+def calc_Q_reheat(output_df, folder_path):
     Qh_reheat_OAU_df = output_df.filter(like='Qh_reheat_OAU')
     Qh_reheat_RAU_df = output_df.filter(like='Qh_reheat_RAU')
+    Qh_reheat_total = Qh_reheat_OAU_df.sum(axis=1) + Qh_reheat_RAU_df.sum(axis=1)
     data_dict = {'OAU_Qh_reheat': Qh_reheat_OAU_df.sum(axis=1), 'RAU_Qh_reheat': Qh_reheat_RAU_df.sum(axis=1)}
-    timesteps = len(output_df.index)
-    plot_stacked_bars(data_dict, timesteps, 'Reheat', 'Qh [kW]', folder_path)
-    return data_dict
+    if Qh_reheat_OAU_df.sum(axis=1).sum() + Qh_reheat_RAU_df.sum(axis=1).sum() > 0.0:
+        timesteps = len(output_df.index)
+        plot_stacked_bars(data_dict, timesteps, 'Reheat', 'Qh [kW]', folder_path)
+    return data_dict, Qh_reheat_total
 
-def calc_Qc_coil(output_df, folder_path):
+def calc_Q_coil(output_df, folder_path):
     Qc_coil_RAU = output_df.filter(like='Qc_coil_RAU').sum(axis=1)
     Qc_coil_OAU = output_df.filter(like='Qc_coil_OAU').sum(axis=1)
     Qc_coil_SCU = output_df.filter(like='Qc_sen_out_SCU').sum(axis=1)
-    # Qc coil
-    data_dict = {'RAU_Qc_coil': Qc_coil_RAU, 'OAU_Qc_coil': Qc_coil_OAU, 'SCU_Qc_coil': Qc_coil_SCU}
-    timesteps = len(output_df.index)
-    plot_stacked_bars(data_dict, timesteps, 'Cooling for each unit', 'Qc [W]', folder_path)
-    # pie
-    pie_data_dict = {'RAU': Qc_coil_RAU.sum(), 'OAU': Qc_coil_OAU.sum(), 'SCU': Qc_coil_SCU.sum()}
-    draw_pie(pie_data_dict, "Qc per unit", folder_path)
+    Qc_coil_total = Qc_coil_RAU + Qc_coil_OAU + Qc_coil_SCU
+    if DETAILED_PLOTS:
+        # plot stacked bars
+        data_dict = {'RAU_Qc_coil': Qc_coil_RAU, 'OAU_Qc_coil': Qc_coil_OAU, 'SCU_Qc_coil': Qc_coil_SCU,
+                     'Qc_coil_total': Qc_coil_total}
+        plot_stacked_bars(data_dict, len(output_df.index), 'Cooling coils', 'Qc [W]', folder_path)
+        # plot pie
+        pie_data_dict = {'RAU': Qc_coil_RAU.sum(), 'OAU': Qc_coil_OAU.sum(), 'SCU': Qc_coil_SCU.sum()}
+        draw_pie(pie_data_dict, "Qc per unit", folder_path)
     return data_dict
 
 def calc_chiller_T(output_df, folder_path):
@@ -210,31 +247,53 @@ def draw_T_chw_pie(Q_df, name, folder_path):
 
 
 def calc_Qsc(output_df, Q_sen_in_df, Q_sen_out_df, folder_path):
-    # Qsc
-    Qsc_OAU = output_df.filter(like='Qsc_OAU_OUT').sum(axis=1) - output_df.filter(like='Qsc_OAU_IN').sum(axis=1)
+    # 1) Total removed
+    Qsc_OAU_OUT = output_df.filter(like='Qsc_OAU_OUT').sum(axis=1)
+    Qsc_OAU_IN = output_df.filter(like='Qsc_OAU_IN').sum(axis=1)
+    Qsc_OAU = Qsc_OAU_OUT - Qsc_OAU_IN
     Qsc_RAU = output_df.filter(like='Qsc_RAU_OUT').sum(axis=1) - output_df.filter(like='Qsc_RAU_IN').sum(axis=1)
     Qsc_SCU = output_df.filter(like='Qsc_SCU').sum(axis=1)
-    Qsc_total = Qsc_SCU + Qsc_RAU + Qsc_OAU
-    Qsc_total_dict = {'RAU': Qsc_RAU, 'OAU': Qsc_OAU, 'SCU': Qsc_SCU}
-    timesteps = len(output_df.index)
-    plot_stacked_bars(Qsc_total_dict, timesteps, 'Space Cooling provided by each unit', 'Qsc [kW]', folder_path)
-    # pie
-    pie_data_dict = {'RAU': Qsc_RAU.sum(), 'OAU': Qsc_OAU.sum(), 'SCU': Qsc_SCU.sum()}
-    draw_pie(pie_data_dict, "Qsc per unit", folder_path)
-    pie_data_df = pd.DataFrame.from_dict(pie_data_dict, orient='index').T
-    draw_percent_stacked_bar(pie_data_df, folder_path, title='Qsc per unit')
+    Qsc_total = Qsc_OAU + Qsc_RAU + Qsc_SCU
+
+    # 2) Theoretical
+    h_OA = np.vectorize(calc_h_from_T_w)(output_df['T_OA'], output_df['w_OA'])
+    h_RA = np.vectorize(calc_h_from_T_w)(output_df['T_RA'], output_df['w_RA'])
+    Qsc_OAU_theoretical = output_df['m_ve_min']*(h_OA - h_RA)
+    Q_sen_gain = output_df['Qc_sen_in_gain']
+    h_fg = 2501 / 1000  # kJ/kg
+    Q_lat_gain = output_df['m_w_in_gain'] * h_fg
+    Qsc_total_theoretical = Qsc_OAU_theoretical + Q_sen_gain + Q_lat_gain
+
+    # Qsc
+    m_a_inf = output_df['m_a_in_inf'].astype('float').round(4)
+    m_a_out = output_df.filter(like='m_a_out').sum(axis=1).round(4)
+    ratio_exclude_inf = (1.0 - m_a_inf/m_a_out).round(3)
+    Qsc_OAU_exclude_inf = Qsc_OAU_OUT * ratio_exclude_inf - Qsc_OAU_IN
+    # plot
+    if DETAILED_PLOTS:
+        Qsc_total_dict = {'RAU': Qsc_RAU, 'OAU': Qsc_OAU, 'SCU': Qsc_SCU}
+        timesteps = len(output_df.index)
+        plot_stacked_bars(Qsc_total_dict, timesteps, 'Space Cooling provided by each unit', 'Qsc [kW]', folder_path)
+        # pie
+        pie_data_dict = {'RAU': Qsc_RAU.sum(), 'OAU': Qsc_OAU.sum(), 'SCU': Qsc_SCU.sum()}
+        draw_pie(pie_data_dict, "Qsc per unit", folder_path)
+        pie_data_df = pd.DataFrame.from_dict(pie_data_dict, orient='index').T
+        draw_percent_stacked_bar(pie_data_df, folder_path, title='Qsc per unit')
 
     Qsc_dict = {}
-    Qsc_dict['OAU_Qsc_sen'] = Q_sen_out_df.filter(like='hcs').sum(axis=1) - Q_sen_in_df.filter(like='hcs').sum(axis=1)
-    Qsc_dict['OAU_Qsc_lat'] = Qsc_total_dict['OAU'] - Qsc_dict['OAU_Qsc_sen']
+    OAU_Qsc_sen_out = Q_sen_out_df.filter(like='hcs').sum(axis=1) * ratio_exclude_inf
+    OAU_Qsc_sen_in = Q_sen_in_df.filter(like='hcs').sum(axis=1)
+    Qsc_dict['OAU_Qsc_sen'] = OAU_Qsc_sen_out.round(4) - OAU_Qsc_sen_in.round(4)
+    Qsc_dict['OAU_Qsc_lat'] = Qsc_OAU - Qsc_dict['OAU_Qsc_sen']
     Qsc_dict['RAU_Qsc_sen']= Q_sen_out_df.filter(like='rau').sum(axis=1) - Q_sen_in_df.filter(like='rau').sum(axis=1)
-    Qsc_dict['RAU_Qsc_lat'] = Qsc_total_dict['RAU'] - Qsc_dict['RAU_Qsc_sen']
+    Qsc_dict['RAU_Qsc_lat'] = Qsc_RAU - Qsc_dict['RAU_Qsc_sen']
     Qsc_dict['SCU_Qsc_sen'] = Q_sen_out_df.filter(like='scu').sum(axis=1)
-    Qsc_dict['OAU_Qsc'] = Qsc_total_dict['OAU']
-    Qsc_dict['RAU_Qsc'] = Qsc_total_dict['RAU']
-    Qsc_dict['SCU_Qsc'] = Qsc_total_dict['SCU']
+    Qsc_dict['OAU_Qsc'] = Qsc_OAU
+    Qsc_dict['RAU_Qsc'] = Qsc_RAU
+    Qsc_dict['SCU_Qsc'] = Qsc_SCU
+    Qsc_dict['Qsc_total'] = Qsc_SCU + Qsc_RAU + Qsc_OAU
 
-    return Qsc_total, Qsc_dict
+    return Qsc_dict, Qsc_total_theoretical
 
 def draw_T_SA(output_df, folder_path):
     T_RAU_SA_df = output_df.filter(like='T_RAU_SA')
@@ -244,7 +303,10 @@ def draw_T_SA(output_df, folder_path):
         'OAU T_SA': [T_OAU_SA_df.sum(axis=1), '#5e0c5b']
     }
     plot_temperatures(T_dict, output_df, folder_path, 'T_supply')
-    return
+    T_dict_output = {}
+    for key in T_dict.keys():
+        T_dict_output[key] = T_dict[key][0]
+    return T_dict_output
 
 def draw_T_offcoil(output_df, folder_path):
     T_RAU_RA1_df = output_df.filter(like='T_RAU_RA1')
@@ -253,12 +315,15 @@ def draw_T_offcoil(output_df, folder_path):
     T_OAU_chw_df = output_df.filter(like='T_oau_chw')
     T_dict = {
         'RAU T_offcoil': [T_RAU_RA1_df.sum(axis=1), '#ffc071'],
-        'RAU T_chw': [T_RAU_chw_df.sum(axis=1), '#664215'],
+        # 'RAU T_chw': [T_RAU_chw_df.sum(axis=1), '#664215'],
         'OAU T_offcoil': [T_OAU_OA1_df.sum(axis=1), '#b770b4'],
-        'OAU T_chw': [T_OAU_chw_df.sum(axis=1), '#510a4e']
+        # 'OAU T_chw': [T_OAU_chw_df.sum(axis=1), '#510a4e']
     }
     plot_temperatures(T_dict, output_df, folder_path, 'T_chw')
-    return
+    T_dict_output = {}
+    for key in T_dict.keys():
+        T_dict_output[key] = T_dict[key][0]
+    return T_dict_output
 
 def plot_values_all_timesteps(layer, m_a_in_df, y_axis_name, output_df, folder_path):
     # plot air flow per m2
@@ -465,17 +530,17 @@ if __name__ == '__main__':
 
     ## Loop through different technologies
 
-    # result_path_folder = "E:\\HCS_results_1008\\WTP_CBD_m_WP1_HOT\\B005_1_24\\BATCH1"
-    result_path_folder = "E:\\ipese_new\\osmose_mk\\results"
-    # TECHS = ['HCS_base', 'HCS_base_coil', 'HCS_base_3for2', 'HCS_base_ER0', 'HCS_base_IEHX', 'HCS_base_LD']
-    TECHS = ['HCS_base_3for2']
+    # result_path_folder = "E:\\HCS_results_1015\\base"
+    result_path_folder = 'E:\\OSMOSE_projects\\HCS_mk\\results'
+    TECHS = ['HCS_base', 'HCS_base_coil', 'HCS_base_3for2', 'HCS_base_ER0', 'HCS_base_IEHX', 'HCS_base_LD']
+    # TECHS = ['HCS_base']
 
     for tech in TECHS:
         tech_folder_path = os.path.join(result_path_folder, tech)
         folders_list = os.listdir(tech_folder_path)
-        timesteps = 24
-        for folder in folders_list:
-            if 'run' in folder:
+        # for folder in folders_list:
+        for folder in ['run_001_HOT_B001_1_168']:
+        #     if 'run' in folder:
                 folder_path = os.path.join(tech_folder_path, folder)
                 file_list = os.listdir(folder_path)
                 # if 'total.csv' not in file_list:
