@@ -8,7 +8,9 @@ from cea.osmose.settings import PLOTS
 
 CASE_TABLE = {'HOT': 'Hotel', 'OFF': 'Office', 'RET': 'Retail'}
 COLOR_CODES = {'3for2': '#C96A50', 'coil': '#3E9AA3', 'ER0': '#E2B43F', 'IEHX': '#51443D', 'LD': '#6245A3',
-               'status': '#707070'}
+               'status': '#707070',
+               'HCS_base_3for2': '#C96A50', 'HCS_base_coil': '#3E9AA3', 'HCS_base_ER0': '#E2B43F',
+               'HCS_base_IEHX': '#51443D', 'HCS_base_LD': '#6245A3', 'HCS_base': '#707070'}
 LABEL_DICT = {'coil': 'Config|1', 'ER0': 'Config|2', '3for2': 'Config|3', 'LD': 'Config|4', 'IEHX': 'Config|5'}
 
 def main(path_result_folder, case, time_steps):
@@ -253,7 +255,7 @@ def plot_three_stacked_bars_side_by_side(left_stack_dict, middle_stack_dict, rig
 
     return np.nan
 
-def plot_scatter_COP(all_cop_dict, all_el_total_dict, path_district_result_folder):
+def plot_scatter_COP(all_cop_dict, all_el_total_dict, path_district_result_folder, case):
     # get all the points
     building_lookup_key, tech_key, value = get_all_points_from_dict(all_cop_dict)
 
@@ -264,23 +266,28 @@ def plot_scatter_COP(all_cop_dict, all_el_total_dict, path_district_result_folde
     x_values = list(range(len(x_labels)))
     # y axis
     y = value
-    # y_values = np.arange(round(min(y)),round(max(y))+2)
-    y_values = np.arange(4, 9.5)
+    if max(y) > 9.5:
+        y_values = np.arange(round(min(y)),round(max(y))+2)
+    else:
+        y_values = np.arange(4, 9.5)
     y_minor_values = y_values + 0.5
     y_labels = [str(v) for v in y_values]
     # marker size
     anno = tech_key
-    el_tot_list = []
-    for i in range(len(anno)):
-        building = x_labels[building_lookup_key[i]]
-        tech = anno[i]
-        #area = (all_el_total_dict[building][tech]/500)**2 # qc_load_Wh_per_Af
-        area = (all_el_total_dict[building][tech] / 110) ** 2  # el_Wh_total_per_Af
-        #area = (all_el_total_dict[building][tech] / 600) ** 2  # qc_Wh_sys_per_Af
-        el_tot_list.append(area)  # Wh/m2
-    el_tot = tuple(el_tot_list)
-    # area = el_tot
-    area = tuple(map(lambda x: 100, anno))
+    if all_el_total_dict:
+        el_tot_list = []
+        for i in range(len(anno)):
+            building = x_labels[building_lookup_key[i]]
+            tech = anno[i]
+            #area = (all_el_total_dict[building][tech]/500)**2 # qc_load_Wh_per_Af
+            area = (all_el_total_dict[building][tech] / 110) ** 2  # el_Wh_total_per_Af
+            #area = (all_el_total_dict[building][tech] / 600) ** 2  # qc_Wh_sys_per_Af
+            el_tot_list.append(area)  # Wh/m2
+        el_tot = tuple(el_tot_list)
+        # area = el_tot
+        area = tuple(map(lambda x: 100, anno))
+    else:
+        area = tuple(map(lambda x: 100, anno))
     # area = tuple(map(lambda x:100, anno))
     # marker colors
     anno_colors = tuple(map(lambda i: COLOR_CODES[i], anno))
@@ -288,7 +295,10 @@ def plot_scatter_COP(all_cop_dict, all_el_total_dict, path_district_result_folde
     # format the plt
     plt.figure()
     case_names = {'HOT': 'Hotel', 'OFF': 'Office', 'RET': 'Retail'}
-    case_shown = case_names[case.split('_')[4]]
+    if case in case_names.keys():
+        case_shown = case
+    else:
+        case_shown = case_names[case.split('_')[4]]
     plt.title(case_shown, fontsize=18)
     plt.ylabel('COP', fontsize=18)
     x_labels_shown = []
@@ -431,6 +441,7 @@ def path_to_save_all_dirstrict_df(case, path_district_result_folder):
 def path_to_all_district_plot(case, path_district_result_folder, name):
     filename = case + '_' + name + '_all_techs.png'
     path_to_file = os.path.join(path_district_result_folder, filename)
+    print(path_to_file)
     return path_to_file
 
 
