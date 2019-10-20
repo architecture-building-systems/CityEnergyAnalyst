@@ -25,22 +25,24 @@ COLOR_CODES = {'HCS_base_3for2': '#C96A50', 'HCS_base_coil': '#3E9AA3', 'HCS_bas
                'HCS_base': '#707070'}
 KEY_TABLE = {'HCS_base_ER0': 'HCS_ER0', 'HCS_base_coil': 'HCS_coil', 'HCS_base_3for2': 'HCS_3for2',
              'HCS_base_IEHX': 'HCS_IEHX', 'HCS_base_LD': 'HCS_LD', 'HCS_base': 'HCS_base'}
+Y_CARNOT_RANGE = [-0.1, 0.0]
 PLOT_SPECS = {'icc':{'ylabel':'Temperature [C]', 'xlabel':'Heat Load [kW]', 'ylim':(273,350)},
-              'carnot':{'ylabel':'Carnot factor [-]', 'xlabel':'Heat Load [kW]', 'ylim':(-0.1,0.1)}}
+              'carnot':{'ylabel':'Carnot factor [-]', 'xlabel':'Heat Load [kW]', 'ylim':(min(Y_CARNOT_RANGE),max(Y_CARNOT_RANGE))}}
 
 def plot_carnot_from_icc_txt(path, t_list, T_max_list, T_ref_list, line_types, plot_type, model_name):
+
     # figure size
     plt.figure(figsize=(8, 7))
     ax1 = plt.subplot()
     # plot the lines
     if isinstance(t_list, int):
         label = 'line_type'
-        get_data_and_plot_curves_of_t(T_max_list, T_ref_list, ax1, line_types, model_name, path, plot_type, t_list, label)
+        get_data_and_plot_curves_of_t(T_ref_list, ax1, line_types, model_name, path, plot_type, t_list, label)
         fig_name = 'carnot' + '_' + model_name + '_t' + str(t_list) + '_DefaultHeatCascade.png'
     else:
         for t in t_list:
             label = 't'
-            get_data_and_plot_curves_of_t(T_max_list, T_ref_list, ax1, line_types, model_name, path, plot_type, t, label)
+            get_data_and_plot_curves_of_t(T_ref_list, ax1, line_types, model_name, path, plot_type, t, label)
         fig_name = 'carnot' + '_' + model_name + '_' + str(t_list.min()) + '_' + str(t_list.max()) + '_DefaultHeatCascade.png'
 
     # save the figure
@@ -52,52 +54,50 @@ def plot_carnot_from_icc_txt(path, t_list, T_max_list, T_ref_list, line_types, p
     return
 
 def plot_carnot_from_icc_txt_techs(paths, t, T_max_dict, T_ref_dict, line_types, plot_type, model_name):
+    case = ''
     # figure size
     plt.figure(figsize=(8, 7))
     ax1 = plt.subplot()
     # plot the lines
-
     for tech in paths.keys():
         path = paths[tech]
         T_max = T_max_dict[tech][t - 1]
         T_ref = T_ref_dict[tech][t - 1]
         for line_type in line_types:
             print(path)
-            _, y_base = load_data_from_txt(path, plot_type, 'base', model_name, t)
-            dT = T_max - y_base.max()
+            if case == '':
+                case = 'B' + path.split('run_')[1].split('_B')[0]
             x, y = load_data_from_txt(path, plot_type, line_type, model_name, t)
-            y_original = y + dT if line_type == 'base' else y - dT
-            y_carnot = np.vectorize(calc_carnot_factor)(T_ref, y_original)
+            y_carnot = np.vectorize(calc_carnot_factor)(T_ref, y + 273.15)
             ax1.plot(x, y_carnot, '-', color=COLOR_CODES[tech], label=KEY_TABLE[tech])
+            y_origin = np.zeros(len(y))
+            ax1.fill_between(x, y_carnot, y_origin, facecolor=COLOR_CODES[tech], alpha=0.4)
+    # build second y-axis (Temperature)
     ax2 = ax1.twinx()
-    # ax2.plot(x, y_original, color='#333452')
-    ax2.set(ylim=calc_T_from_carnot(T_ref,[-0.1,0.1]))
+    ax2.set(ylim=calc_T_from_carnot(T_ref,Y_CARNOT_RANGE))
     ax2.set_ylabel(ylabel='Temperature [C]' , fontsize=18, fontname = 'Times New Roman', fontweight='normal')
 
     # save the figure
-    set_plot_parameters(ax1, PLOT_SPECS['carnot'])
     ax1.set_title('t = ' + str(t), fontdict={'fontsize': 16, 'fontweight': 'medium'})
+    set_plot_parameters(ax1, PLOT_SPECS['carnot'])
     fig1 = plt.gcf()
-    os.chdir("..\\"*7)
+    os.chdir("..\\"*6)
     print('saving fig to...', os.path.abspath(os.curdir))
-    fig_name = 'carnot' + '_techs_' + str(t) + '_DefaultHeatCascade.png'
+    fig_name = case + '_carnot' + '_techs_' + str(t) + '_DefaultHeatCascade.png'
     fig1.savefig(fig_name, transparent=True)
     return
 
 
-def get_data_and_plot_curves_of_t(T_max_list, T_ref_list, ax1, line_types, model_name, path, plot_type, t, label):
-    T_max = T_max_list[t - 1]
+def get_data_and_plot_curves_of_t(T_ref_list, ax1, line_types, model_name, path, plot_type, t, label):
     T_ref = T_ref_list[t - 1]
+    c = 0
     for line_type in line_types:
-        # _, y_base = load_data_from_txt(path, plot_type, 'base', model_name, t)
-        # dT = T_max - y_base.max()
         x, y = load_data_from_txt(path, plot_type, line_type, model_name, t)
-        dT = 0
-        y_original = y + dT if line_type == 'base' else y - dT
-        y_carnot = np.vectorize(calc_carnot_factor)(T_ref, y_original)
+        y_carnot = np.vectorize(calc_carnot_factor)(T_ref, y + 273.15)
         if label == 't':
             label_name = t
-            color = COLOR_LIST[t]
+            color = COLOR_LIST[c]
+            c += 1
         else:
             label_name = line_type
             color = COLOR_TABLE[line_type]
@@ -116,7 +116,7 @@ def calc_T_from_carnot(T_ref, carnot):
     T_max = T_ref/(1-max(carnot)) #carnot = 0.1
     T_min = T_ref/(1-min(carnot)) #carnot = -0.1
     delta_T = max(T_max-T_ref, T_ref-T_min)
-    return (T_ref - delta_T, T_ref + delta_T)
+    return (T_min - 273.15, T_max - 273.15)
 
 def calc_T_max(path_to_folder, run_folder):
     # get streams_df
@@ -132,11 +132,16 @@ def calc_T_max(path_to_folder, run_folder):
     for idx in range(streams_df.shape[0]):
         Hin_list = streams_df.filter(like='Hin').iloc[idx]
         valid_index_list = Hin_list[Hin_list > 0.0].index
+        if len(valid_index_list) <= 0:
+            print (idx, 'no valid index')
         T_list = []
         for index in valid_index_list:
             new_index = index.split('Hin')[0] + 'Tin'
             T_list.append(streams_df.iloc[idx][new_index])
-        T_max = max(T_list)
+            if T_list != []:
+                T_max = max(T_list)
+            else:
+                print(idx, 'no T_list')
         T_max_list.append(T_max)
     return T_max_list
 
@@ -154,38 +159,41 @@ def calc_T_ref(path_to_folder, run_folder):
 
 def main():
     tech = 'HCS_base'
-    # path_to_base_folder = 'E:\\HCS_results_1008\\WTP_CBD_m_WP1_OFF\\B005_1_24\\BATCH2\\'
-    path_to_base_folder = 'E:\\ipese_new\\osmose_mk\\results\\'
-    # run_folder = 'run_001_OFF_B005_1_24'
-    run_folder = 'run_002'
+    path_to_base_folder = 'E:\\HCS_results_1015\\base\\'
+    # path_to_base_folder = 'E:\\OSMOSE_projects\\HCS_mk\\results\\'
+    run_folder = 'run_011_HOT_B001_1_168'
 
-    model_folder = [path_to_base_folder, tech,  run_folder, 's_001\\plots\\icc\\models']
-    path_to_folder = os.path.join('', *model_folder)
-
-    T_max_list = calc_T_max(path_to_base_folder + tech, run_folder)
-    T_ref_list = calc_T_ref(path_to_base_folder + tech, run_folder)
-    line_types = ['separated', 'base']
+    ## plot one tech
+    # model_folder = [path_to_base_folder, tech,  run_folder, 's_001\\plots\\icc\\models']
+    # path_to_folder = os.path.join('', *model_folder)
+    # T_max_list = calc_T_max(path_to_base_folder + tech, run_folder)
+    # T_ref_list = calc_T_ref(path_to_base_folder + tech, run_folder)
+    # line_types = ['base'] #'separated',
     #
-    ## plotting one t at a time
-    for t in np.arange(1,25,1):
-        plot_carnot_from_icc_txt(path_to_folder, t, T_max_list, T_ref_list, line_types, 'icc', 'all_chillers')
-
+    # ## plotting one t at a time
+    # for t in np.arange(1,25,1):
+    #     plot_carnot_from_icc_txt(path_to_folder, t, T_max_list, T_ref_list, line_types, 'icc', 'all_chillers')
     ## plot multiple t in one figure
-    # t_list = np.arange(3,25,6)
+    # t_list = np.arange(96+3,96+24,6)
+    # model_folder = ['E:\\HCS_results_1015\\base\\', 'HCS_base', 'run_005_RET_B005_1_168', 's_001\\plots\\icc\\models']
+    # path_to_folder = os.path.join('', *model_folder)
     # plot_carnot_from_icc_txt(path_to_folder, t_list, T_max_list, T_ref_list, line_types, 'icc', 'all_chillers')
 
+
     ## plot multiple techs in one figure
-    # paths_to_folder, T_max_dict, T_ref_dict = {}, {}, {}
-    # for tech in ['HCS_base', 'HCS_base_coil']:
-    # # for tech in ['HCS_base_3for2', 'HCS_base_coil']:
-    #     model_folder = [path_to_base_folder, tech, run_folder, 's_001\\plots\\icc\\models']
-    #     paths_to_folder[tech] = os.path.join('', *model_folder)
-    #     T_max_dict[tech] = calc_T_max(path_to_base_folder + tech, run_folder)
-    #     T_ref_dict[tech] = calc_T_ref(path_to_base_folder + tech, run_folder)
+    paths_to_folder, T_max_dict, T_ref_dict = {}, {}, {}
+    # for tech in ['HCS_base', 'HCS_base_coil', 'HCS_base_3for2', 'HCS_base_ER0', 'HCS_base_IEHX', 'HCS_base_LD']:
+    for tech in ['HCS_base','HCS_base_3for2']:
+        model_folder = [path_to_base_folder, tech, run_folder, 's_001\\plots\\icc\\models']
+        paths_to_folder[tech] = os.path.join('', *model_folder)
+        T_max_dict[tech] = calc_T_max(path_to_base_folder + tech, run_folder)
+        T_ref_dict[tech] = calc_T_ref(path_to_base_folder + tech, run_folder)
+
     # for t in np.arange(1,25,1):
-    # # for t in [20]:
-    #     line_types = ['separated'] # 'base'
-    #     plot_carnot_from_icc_txt_techs(paths_to_folder, t, T_max_dict, T_ref_dict, line_types, 'icc', 'all_chillers')
+    # for t in np.arange(73,73+24,1):
+    for t in [100, 112]:
+        line_types = ['separated'] # 'base'
+        plot_carnot_from_icc_txt_techs(paths_to_folder, t, T_max_dict, T_ref_dict, line_types, 'icc', 'all_chillers')
 
 
 if __name__ == '__main__':
