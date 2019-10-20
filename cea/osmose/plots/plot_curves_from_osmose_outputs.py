@@ -16,7 +16,7 @@ rcParams['mathtext.default'] = 'regular'
 
 COLOR_TABLE = {'base': sns.xkcd_rgb["pale red"], 'separated': sns.xkcd_rgb["sea blue"]}
 COLOR_LIST = ['#C96A50', '#3E9AA3', '#3E9BA3']
-PLOT_SPECS = {'icc':{'ylabel':'Temperature [C]', 'xlabel':'Heat Load [kW]'},
+PLOT_SPECS = {'icc':{'ylabel':'Temperature [C]', 'xlabel':'Heat Load [kW]', 'ylim':(0,50)},
               'carnot':{'ylabel':'Carnot factor [-]', 'xlabel':'Heat Load [kW]'}}
 
 def plot_base_and_separated(path, t, plot_type, model_name):
@@ -32,6 +32,8 @@ def plot_base_and_separated(path, t, plot_type, model_name):
     # save the figure
     set_plot_parameters(ax1, PLOT_SPECS[plot_type])
     fig1 = plt.gcf()
+    os.chdir("..\\")
+    print('saving fig to...', os.path.abspath(os.curdir))
     fig1.savefig(plot_type + '_' + model_name + '_t' + str(t) + '_DefaultHeatCascade.png', transparent=True)
     return
 
@@ -43,7 +45,7 @@ def set_plot_parameters(ax1, plot_specs):
     fontname = 'Times New Roman'
     fontsize = 18
     # set the legend
-    ax1.legend(loc='upper right', shadow=False, fancybox=True,
+    ax1.legend(loc='lower left', shadow=False, fancybox=True,
                fontsize=fontsize, prop={'family': 'Times New Roman', 'size': str(fontsize)})
     # set x and y range
     # plt.set_xlim([-766.00311044128,8090.8964687342])
@@ -79,7 +81,7 @@ def load_data_from_txt(path, plot_type, line_type, model_name, t):
 
 
 def main():
-    plot_type = 'carnot'
+    plot_type = 'icc'
     model_name = 'chillers'
 
     # path
@@ -87,7 +89,7 @@ def main():
     #                  'WTP_CBD_m_WP1_OFF', 'B005_1_24', 'base_3for2',
     #                  'run', 's_001', 'plots',
     #                  'carnot', 'models']
-    folder_layers = ['E:\\ipese_new\\osmose_mk\\results\\HCS_base','run_027',
+    folder_layers = ['E:\\OSMOSE_projects\\HCS_mk\\results\\HCS_base','run_021_OFF_B001_1_168',
                      's_001\\plots\\' + plot_type, 'models']
     path_to_folder = os.path.join('', *folder_layers)
 
@@ -95,7 +97,8 @@ def main():
 
 
     # plotting
-    for t in np.arange(1,25,1):
+    # for t in np.arange(1,25,1):
+    for t in [146]:
         plot_base_and_separated(path_to_folder, t, plot_type, model_name)
 
 
