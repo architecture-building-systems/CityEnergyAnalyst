@@ -7,14 +7,25 @@ from cea.plots.variable_naming import LOGO, COLOR, NAMING
 
 
 class EnergySupplyIntensityPlot(cea.plots.demand.DemandPlotBase):
-    name = "Energy Use Intensity"
+    name = "Energy Final Use Intensity"
 
     def __init__(self, project, parameters, cache):
         super(EnergySupplyIntensityPlot, self).__init__(project, parameters, cache)
-        analysis_fields = ["DH_hs_MWhyr", "DH_ww_MWhyr", 'SOLAR_ww_MWhyr', 'SOLAR_hs_MWhyr', "DC_cs_MWhyr", 'DC_cdata_MWhyr',
-                   'DC_cre_MWhyr', 'PV_MWhyr', 'GRID_MWhyr', 'NG_hs_MWhyr', 'COAL_hs_MWhyr', 'OIL_hs_MWhyr',
-                   'WOOD_hs_MWhyr', 'NG_ww_MWhyr', 'COAL_ww_MWhyr', 'OIL_ww_MWhyr', 'WOOD_ww_MWhyr', ]
-        self.analysis_fields = analysis_fields
+        self.analysis_fields = ["DH_hs_MWhyr", "DH_ww_MWhyr", 'SOLAR_ww_MWhyr', 'SOLAR_hs_MWhyr', "DC_cs_MWhyr",
+                                'DC_cdata_MWhyr', 'DC_cre_MWhyr', 'PV_MWhyr', 'NG_hs_MWhyr',
+                                'COAL_hs_MWhyr', 'OIL_hs_MWhyr', 'WOOD_hs_MWhyr', 'NG_ww_MWhyr', 'COAL_ww_MWhyr',
+                                'OIL_ww_MWhyr', 'WOOD_ww_MWhyr',
+                                'GRID_a_MWhyr',
+                                'GRID_l_MWhyr',
+                                'GRID_cs_MWhyr',
+                                'GRID_aux_MWhyr',
+                                'GRID_data_MWhyr',
+                                'GRID_pro_MWhyr',
+                                'GRID_ww_MWhyr',
+                                'GRID_hs_MWhyr',
+                                'GRID_cdata_MWhyr',
+                                'GRID_cre_MWhyr'
+                                ]
 
     @property
     def layout(self):

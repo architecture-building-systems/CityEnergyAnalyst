@@ -20,8 +20,7 @@ class ToolList(Resource):
         from itertools import groupby
         from collections import OrderedDict
 
-        tools = sorted(cea.scripts.for_interface(
-            'dashboard'), key=lambda t: t.category)
+        tools = cea.scripts.for_interface('dashboard')
         result = OrderedDict()
         for category, group in groupby(tools, lambda t: t.category):
             result[category] = [

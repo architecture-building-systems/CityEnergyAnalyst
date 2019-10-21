@@ -55,7 +55,7 @@ def operation_costs(locator, config):
             fields_to_plot.extend([service + '_cost_yr', service + '_cost_m2yr'])
             # calculate the total and relative costs
             heating[service + '_cost_yr'] = heating[service + '_MWhyr'] * heating['costs_kWh'] * 1000
-            heating[service + '_cost_m2yr'] = heating[service + '_cost_yr'] / heating['NFA_m2']
+            heating[service + '_cost_m2yr'] = heating[service + '_cost_yr'] / heating['Aocc_m2']
         except KeyError:
             print(heating)
             print(list(heating.columns))
@@ -68,7 +68,7 @@ def operation_costs(locator, config):
         # calculate the total and relative costs
         # calculate the total and relative costs
         dhw[service + '_cost_yr'] = dhw[service + '_MWhyr'] * dhw['costs_kWh'] * 1000
-        dhw[service + '_cost_m2yr'] = dhw[service + '_cost_yr'] / dhw['NFA_m2']
+        dhw[service + '_cost_m2yr'] = dhw[service + '_cost_yr'] / dhw['Aocc_m2']
 
     ## calculate the operational primary energy and emissions for cooling services
     cooling_services = ['DC_cs', 'DC_cdata', 'DC_cre']
@@ -77,7 +77,7 @@ def operation_costs(locator, config):
         # change price to that of local electricity mix
         # calculate the total and relative costs
         cooling[service + '_cost_yr'] = cooling[service + '_MWhyr'] * cooling['costs_kWh'] * 1000
-        cooling[service + '_cost_m2yr'] = cooling[service + '_cost_yr'] / cooling['NFA_m2']
+        cooling[service + '_cost_m2yr'] = cooling[service + '_cost_yr'] / cooling['Aocc_m2']
 
     ## calculate the operational primary energy and emissions for electrical services
     electrical_services = ['GRID', 'PV']
@@ -85,7 +85,7 @@ def operation_costs(locator, config):
         fields_to_plot.extend([service + '_cost_yr', service + '_cost_m2yr'])
         # calculate the total and relative costs
         electricity[service + '_cost_yr'] = electricity[service + '_MWhyr'] * electricity['costs_kWh'] * 1000
-        electricity[service + '_cost_m2yr'] = electricity[service + '_cost_yr'] / electricity['NFA_m2']
+        electricity[service + '_cost_m2yr'] = electricity[service + '_cost_yr'] / electricity['Aocc_m2']
 
     # plot also NFA area and costs
     analysis_fields_costs = ['Opex_a_sys_connected_USD',
@@ -93,7 +93,7 @@ def operation_costs(locator, config):
                              'Capex_a_sys_disconnected_USD',
                              'Capex_a_sys_connected_USD',
                              ]
-    fields_to_plot.extend(['NFA_m2'])
+    fields_to_plot.extend(['Aocc_m2'])
     fields_to_plot.extend(analysis_fields_costs)
 
     # create and save results
