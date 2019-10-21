@@ -34,9 +34,9 @@ def has_data_load(bpr):
         return False
 
 
-def calc_Edata(bpr, tsd, schedules):
+def calc_Edata(tsd, schedules):
 
-    tsd['Edata'] = schedules['Ed'] * bpr.internal_loads['Ed_Wm2']
+    tsd['Edata'] = schedules['Ed_W']
 
     return tsd
 

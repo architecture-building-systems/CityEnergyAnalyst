@@ -42,11 +42,11 @@ class InputLocator(object):
         """Use os.makedirs to ensure the folders exist"""
         self._ensure_folder(os.path.dirname(file_path))
 
-    def get_database_standard_schedules(self, name_database):
-        return os.path.join(self.db_path, 'schedules', name_database)
+    def get_database_standard_schedules(self):
+        return os.path.join(self.get_technology_folder(), 'archetypes', 'schedules')
 
     def get_database_standard_schedules_use(self, path_to_database, use):
-        return os.path.join(path_to_database, use + '.ceaschedule')
+        return os.path.join(path_to_database, use + '.csv')
 
     def get_project_path(self):
         """Returns the parent folder of a scenario - this is called a project or 'case-study'"""
@@ -723,15 +723,11 @@ class InputLocator(object):
         """
         return os.path.join(self.get_building_properties_folder(), 'variables_overrides.csv')
 
-    def get_building_schedules_predefined(self, building_name):
+    def get_building_schedules_folder(self):
+        """scenario/outputs/data/optimization/slave`
+        Slave results folder (storage + operation pattern)
         """
-        scenario/inputs/building-properties/{building_name}_schedules.csv
-        This file contains schedules of occupancy, appliance use, etc of each building.
-        Schedules are 8760 values per year
-        :param building_name:
-        :return:
-        """
-        return os.path.join(self.get_building_properties_folder(), '{}_schedules.csv'.format(building_name))
+        return self._ensure_folder(self.get_building_properties_folder(),'schedules')
 
     def get_building_schedules(self, building_name):
         """
@@ -741,7 +737,23 @@ class InputLocator(object):
         :param building_name:
         :return:
         """
-        return os.path.join(self.get_demand_results_folder(), '{}_schedules.csv'.format(building_name))
+        return os.path.join(self.get_building_schedules_folder(),'{}.csv'.format(building_name))
+
+    def get_occupancy_model_folder(self):
+        """scenario/outputs/data/optimization/slave`
+        Slave results folder (storage + operation pattern)
+        """
+        return self._ensure_folder(self.scenario, 'outputs', 'data', 'occupancy')
+
+    def get_occupancy_model_file(self, building_name):
+        """
+        scenario/inputs/building-properties/{building_name}_schedules.csv
+        This file contains schedules of occupancy, appliance use, etc of each building.
+        Schedules are 8760 values per year
+        :param building_name:
+        :return:
+        """
+        return os.path.join(self.get_occupancy_model_folder(), '{}.csv'.format(building_name))
 
     def get_terrain(self):
         """scenario/inputs/topography/terrain.tif"""

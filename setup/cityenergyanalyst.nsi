@@ -17,6 +17,7 @@ ${StrRep}
 !define CEA_ENV_FILENAME "Dependencies.7z"
 !define RELATIVE_GIT_PATH "Dependencies\cmder\vendor\git-for-windows\bin\git.exe"
 !define CEA_REPO_URL "https://github.com/architecture-building-systems/CityEnergyAnalyst.git"
+!define CEA_ELECTRON_URL "https://github.com/architecture-building-systems/cea-electron/releases/latest/download/win-unpacked.7z"
 
 !define CEA_TITLE "City Energy Analyst"
 
@@ -128,14 +129,31 @@ Section "Base Installation" Base_Installation_Section
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Open CEA Configuration file"
 
 
-    ;Download the CityEnergyAnalyst conda environment
-    DetailPrint "Downloading ${CEA_ENV_FILENAME}"
-    inetc::get ${CEA_ENV_URL} ${CEA_ENV_FILENAME}
-    Pop $R0 ;Get the return value
-    StrCmp $R0 "OK" download_ok
+
+
+    # Download the CEA Electron interface
+    DetailPrint "Downloading CEA Electron interface"
+    inetc::get ${CEA_ELECTRON_URL} "win-unpacked.7z"
+    Pop $R0  # get the return value
+    StrCmp $R0 "OK" download_electron_ok
         MessageBox MB_OK "Download failed: $R0"
         Quit
-    download_ok:
+    download_electron_ok:
+        # get on with life...
+
+    # unzip the electron interface
+    DetailPrint "Extracting win-unpacked.7z"
+    Nsis7z::ExtractWithDetails "win-unpacked.7z" "Extracting Electron interface %s..."
+    Delete "win-unpacked.7z"
+
+    # Download the CityEnergyAnalyst conda environment
+    DetailPrint "Downloading ${CEA_ENV_FILENAME}"
+    inetc::get ${CEA_ENV_URL} ${CEA_ENV_FILENAME}
+    Pop $R0  # Get the return value
+    StrCmp $R0 "OK" download_python_ok
+        MessageBox MB_OK "Download failed: $R0"
+        Quit
+    download_python_ok:
         # get on with life...
 
     # unzip python environment to ${INSTDIR}\Dependencies
@@ -160,7 +178,7 @@ Section "Base Installation" Base_Installation_Section
 
     # create cea.config file in the %userprofile% directory by calling `cea --help` and set daysim paths
     nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\Scripts\cea.exe" --help'
-    WriteINIStr "$PROFILE\cea.config" radiation-daysim daysim-bin-directory "$INSTDIR\Dependencies\Daysim"
+    WriteINIStr "$PROFILE\cea.config" radiation daysim-bin-directory "$INSTDIR\Dependencies\Daysim"
 
     ;Create uninstaller
     WriteUninstaller "$INSTDIR\Uninstall_CityEnergyAnalyst_${VER}.exe"
@@ -174,8 +192,8 @@ Section "Create Start menu shortcuts" Create_Start_Menu_Shortcuts_Section
     CreateShortCut '$SMPROGRAMS\${CEA_TITLE}\CEA Console.lnk' '$INSTDIR\Dependencies\cmder\cmder.exe' '/single' \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL CONTROL|SHIFT|F10 "Launch the CEA Console"
 
-    CreateShortcut "$SMPROGRAMS\${CEA_TITLE}\CEA Dashboard.lnk" "cmd" "/c $INSTDIR\dashboard.bat" \
-        "$INSTDIR\cea-icon.ico" 0 SW_SHOWMINIMIZED "" "Launch the CEA Dashboard"
+    CreateShortcut "$SMPROGRAMS\${CEA_TITLE}\CEA Dashboard.lnk" "$INSTDIR\win-unpacked\CityEnergyAnalyst.exe" "" \
+        "$INSTDIR\cea-icon.ico" 0 SW_SHOWMAXIMIZED "" "Launch the CEA Dashboard"
 
     CreateShortcut "$SMPROGRAMS\${CEA_TITLE}\cea.config.lnk" "$WINDIR\notepad.exe" "$PROFILE\cea.config" \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Open CEA Configuration file"
@@ -201,8 +219,8 @@ Section /o "Create Desktop shortcuts" Create_Desktop_Shortcuts_Section
     CreateShortCut '$DESKTOP\CEA Console.lnk' '$INSTDIR\Dependencies\cmder\cmder.exe' '/single' \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL CONTROL|SHIFT|F10 "Launch the CEA Console"
 
-    CreateShortcut "$DESKTOP\CEA Dashboard.lnk" "cmd" "/c $INSTDIR\dashboard.bat" \
-        "$INSTDIR\cea-icon.ico" 0 SW_SHOWMINIMIZED "" "Launch the CEA Dashboard"
+    CreateShortcut "$DESKTOP\CEA Dashboard.lnk" "$INSTDIR\win-unpacked\CityEnergyAnalyst.exe" "" \
+        "$INSTDIR\cea-icon.ico" 0 SW_SHOWMAXIMIZED "" "Launch the CEA Dashboard"
 
     CreateShortcut "$DESKTOP\cea.config.lnk" "$WINDIR\notepad.exe" "$PROFILE\cea.config" \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Open CEA Configuration file"
