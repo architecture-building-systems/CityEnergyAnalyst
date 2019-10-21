@@ -131,24 +131,16 @@ class Dashboard(object):
                 self.grid_width = [1] * len(self.plots)
 
     def add_plot(self, category, plot_id, index=None):
-        """Add a new plot to the dashboard"""
+        """Add a new plot to the specified index in the dashboard"""
         plot_class = cea.plots.categories.load_plot_by_id(category, plot_id)
         parameters = plot_class.get_default_parameters(self.config)
 
         plot = plot_class(self.config.project, parameters, self.cache)
 
-        if index is None or index == len(self.plots):
+        if index == len(self.plots):
             self.plots.append(plot)
         else:
             self.plots[index] = plot
-
-    def replace_plot(self, category, plot_id, plot_index):
-        """Replace plot at index"""
-        plot_class = cea.plots.categories.load_plot_by_id(category, plot_id)
-        parameters = plot_class.get_default_parameters(self.config)
-
-        plot = plot_class(self.config.project, parameters, self.cache)
-        self.plots[plot_index] = plot
 
     def remove_plot(self, plot_index):
         """Remove a plot by index"""
