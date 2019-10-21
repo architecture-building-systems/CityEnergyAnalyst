@@ -143,8 +143,10 @@ Section "Base Installation" Base_Installation_Section
 
     # unzip the electron interface
     DetailPrint "Extracting win-unpacked.7z"
-    Nsis7z::ExtractWithDetails "win-unpacked.7z" "Extracting Electron interface %s..."
-    Delete "win-unpacked.7z"
+    SetOutPath "$INSTDIR\win-unpacked"
+    Nsis7z::ExtractWithDetails "$INSTDIR\win-unpacked.7z" "Extracting Electron interface %s..."
+    Delete "$INSTDIR\win-unpacked.7z"
+    SetOutPath "$INSTDIR"
 
     # Download the CityEnergyAnalyst conda environment
     DetailPrint "Downloading ${CEA_ENV_FILENAME}"
@@ -193,7 +195,7 @@ Section "Create Start menu shortcuts" Create_Start_Menu_Shortcuts_Section
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL CONTROL|SHIFT|F10 "Launch the CEA Console"
 
     CreateShortcut "$SMPROGRAMS\${CEA_TITLE}\CEA Dashboard.lnk" "$INSTDIR\win-unpacked\CityEnergyAnalyst.exe" "" \
-        "$INSTDIR\cea-icon.ico" 0 SW_SHOWMAXIMIZED "" "Launch the CEA Dashboard"
+        "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Dashboard"
 
     CreateShortcut "$SMPROGRAMS\${CEA_TITLE}\cea.config.lnk" "$WINDIR\notepad.exe" "$PROFILE\cea.config" \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Open CEA Configuration file"
