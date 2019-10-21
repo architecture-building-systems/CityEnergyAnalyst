@@ -190,7 +190,7 @@ Energy potentials:
 Networks:
 
   - name: network-layout
-    label: Thermal Network I (Layout)
+    label: Thermal Network Part I (Layout)
     description: Create a potential layout of the network with the minimum spanning tree
     interfaces: [cli, arcgis, dashboard]
     module: cea.technologies.network_layout.main
@@ -201,7 +201,7 @@ Networks:
       - [get_zone_geometry]
 
   - name: thermal-network
-    label: Thermal Network II (simulation)
+    label: Thermal Network Part II (simulation)
     description: Solve the thermal hydraulic network
     interfaces: [cli, arcgis, dashboard]
     module: cea.technologies.thermal_network.thermal_network
@@ -220,12 +220,19 @@ Optimization:
   - name: thermal-network-optimization
     label: Thermal network optimization
     description: Optimize network design variables (plant locations, layout,...)
-    interfaces: [cli, arcgis, dashboard]
+    interfaces: [cli]
     module: cea.technologies.thermal_network.thermal_network_optimization
     parameters: ['general:scenario', 'general:multiprocessing', thermal-network-optimization]
 
+  - name: decentralized
+    label: Supply System Part I (decentralized)
+    description: Run decentralized building optimization
+    interfaces: [cli, arcgis, dashboard]
+    module: cea.optimization.preprocessing.decentralized_building_main
+    parameters: ['general:scenario', 'decentralized']
+
   - name: optimization
-    label: Central supply system
+    label: Supply System Part II (centralized)
     description: Run optimization for the given scenario
     interfaces: [cli, arcgis, dashboard]
     module: cea.optimization.optimization_main
@@ -238,12 +245,6 @@ Optimization:
       - [get_geothermal_potential]
       - [PV_totals]
 
-  - name: decentralized
-    label: Decentralized supply system
-    description: Run decentralized building optimization
-    interfaces: [cli, arcgis, dashboard]
-    module: cea.optimization.preprocessing.decentralized_building_main
-    parameters: ['general:scenario', 'decentralized']
 
 Analysis:
 
@@ -286,7 +287,7 @@ Analysis:
 
 
   - name: sensitivity-demand-samples
-    label: Sensitivity Analysis I (DOE)
+    label: Sensitivity Analysis Part I (design of experiments)
     description: Create samples for sensitivity analysis
     interfaces: [cli, arcgis, dashboard]
     module: cea.analysis.sensitivity.sensitivity_demand_samples
@@ -295,7 +296,7 @@ Analysis:
                  'sensitivity-demand:num-levels', 'sensitivity-demand:variable-groups']
 
   - name: sensitivity-demand-simulate
-    label: Sensitivity Analysis II (simulation)
+    label: Sensitivity Analysis Part II (simulation)
     description: Simulate demand for sensitivity analysis samples
     interfaces: [cli, arcgis, dashboard]
     module: cea.analysis.sensitivity.sensitivity_demand_simulate
@@ -305,7 +306,7 @@ Analysis:
                  'sensitivity-demand:sample-index', 'demand']
 
   - name: sensitivity-demand-analyze
-    label: Sensitivity Analysis III (analysis)
+    label: Sensitivity Analysis Part III (analysis)
     description: Analyze the results in the samples folder and write them out to an Excel file.
     interfaces: [cli, arcgis, dashboard]
     module: cea.analysis.sensitivity.sensitivity_demand_analyze
