@@ -27,6 +27,7 @@ SERVICE_LIFE_OF_TECHNICAL_SYSTEMS = 25  # service life of technical installation
 DAYS_IN_YEAR = 365
 HOURS_IN_DAY = 24
 HOURS_IN_YEAR = 8760
+MONTHS_IN_YEAR = 12
 
 # Specific heat
 HEAT_CAPACITY_OF_WATER_JPERKGK = 4185  # [J/kg K]

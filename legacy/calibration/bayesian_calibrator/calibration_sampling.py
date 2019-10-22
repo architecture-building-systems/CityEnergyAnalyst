@@ -10,13 +10,11 @@ import pandas as pd
 import cea
 import numpy as np
 from cea.demand import demand_main
-from cea.demand.calibration import latin_sampler
+from legacy.calibration import latin_sampler
 from geopandas import GeoDataFrame as Gdf
 
 import pickle
-import json
 
-import cea.demand.calibration.settings
 import cea.inputlocator as inputlocator
 
 __author__ = "Jimeno A. Fonseca"

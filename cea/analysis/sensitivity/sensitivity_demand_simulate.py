@@ -22,6 +22,7 @@ from geopandas import GeoDataFrame as Gdf
 
 import cea.config
 from cea.demand import demand_main
+from cea.demand.schedule_maker.schedule_maker import schedule_maker_main
 from cea.inputlocator import InputLocator
 
 __author__ = "Jimeno A. Fonseca; Daren Thomas"
@@ -126,8 +127,11 @@ def simulate_demand_sample(locator, config, output_parameters):
     config.demand.temperatures_output = []
     config.demand.format_output = "csv"
     config.demand.override_variables = True
+    config.schedule_maker.schedule_model = "deterministic"
+    config.schedule_maker.buildings = config.demand.buildings
 
     # force simulation to be sequential
+    schedule_maker_main(locator, config)
     totals, time_series = demand_main.demand_calculation(locator, config)
     return totals[output_parameters], time_series
 
