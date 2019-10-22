@@ -19,7 +19,7 @@ import os
 import random
 import networkx as nx
 from itertools import repeat, izip
-import multiprocessing
+import cea.utilities.parallel
 from cea.utilities.workerstream import stream_from_queue
 import cea.utilities.workerstream
 from math import ceil
@@ -394,7 +394,7 @@ HourlyThermalResults = collections.namedtuple('HourlyThermalResults',
                                                'q_loss_system', 'p_loss_system_edges'])
 
 
-def thermal_network_main(locator, thermal_network, use_multiprocessing=True):
+def thermal_network_main(locator, thermal_network, processes=1):
     """
     This function performs thermal and hydraulic calculation of a "well-defined" network, namely, the plant/consumer
     substations, piping routes and the pipe properties (length/diameter/heat transfer coefficient) are already 
@@ -493,7 +493,7 @@ def thermal_network_main(locator, thermal_network, use_multiprocessing=True):
         thermal_network.node_mass_flow_df = load_node_flowrate_from_previous_run(thermal_network)
     else:
         # calculate maximum edge mass flow
-        thermal_network.edge_mass_flow_df = calc_max_edge_flowrate(thermal_network, use_multiprocessing=use_multiprocessing)
+        thermal_network.edge_mass_flow_df = calc_max_edge_flowrate(thermal_network, processes=processes)
 
         # save results to file
         if thermal_network.use_representative_week_per_month:
@@ -535,29 +535,11 @@ def thermal_network_main(locator, thermal_network, use_multiprocessing=True):
 
     print('Solving hydraulic and thermal network')
     ## Start solving hydraulic and thermal equations at each time-step
-    number_of_processes = get_number_of_processes()
     nhours = (thermal_network.stop_t - thermal_network.start_t)
-    if use_multiprocessing and number_of_processes > 1:
-        print("Using %i CPU's" % number_of_processes)
-        pool = multiprocessing.Pool(number_of_processes)
-        queue = multiprocessing.Manager().Queue()
-        map_result = pool.map_async(hourly_thermal_calculation_wrapper,
-                                     izip(repeat(queue, nhours),
-                                          range(thermal_network.start_t, thermal_network.stop_t),
-                                          repeat(thermal_network, nhours)))
-        while not map_result.ready():
-            stream_from_queue(queue)
-        pool.close()
-        pool.join()
-        # process the rest of the Queue
-        while not queue.empty():
-            stream_from_queue(queue)
 
-        hourly_thermal_results = map_result.get()
-    else:
-        hourly_thermal_results = map(hourly_thermal_calculation,
-                                     range(thermal_network.start_t, thermal_network.stop_t),
-                                     repeat(thermal_network, nhours))
+    hourly_thermal_results = cea.utilities.parallel.vectorize(hourly_thermal_calculation, processes)(
+        range(thermal_network.start_t, thermal_network.stop_t),
+        repeat(thermal_network, nhours))
 
     # save results of hourly values over full year, write to csv
     # edge flow rates (flow direction corresponding to edge_node_df)
@@ -869,16 +851,6 @@ def calculate_ground_temperature(locator):
     return T_ground_K
 
 
-def hourly_thermal_calculation_wrapper(args):
-    """Wrap hourly_thermal_calculation to accept a tuple of args because multiprocessing.Pool.map only accepts one
-    argument for the function."""
-    # set up printing to stderr and stdout to go through the queue
-    queue, args = args[0], args[1:]
-    sys.stdout = cea.utilities.workerstream.QueueWorkerStream('stdout', queue)
-    sys.stderr = cea.utilities.workerstream.QueueWorkerStream('stderr', queue)
-    return hourly_thermal_calculation(*args)
-
-
 def hourly_thermal_calculation(t, thermal_network):
     """
     :param network_type: a string that defines whether the network is a district heating ('DH') or cooling ('DC')
@@ -1157,7 +1129,7 @@ def assign_pipes_to_edges(thermal_network):
     max_edge_mass_flow_df.columns = thermal_network.edge_node_df.columns
 
     # import pipe catalog from Excel file
-    pipe_catalog = pd.read_excel(thermal_network.locator.get_thermal_networks(), sheetname='PIPING CATALOG')
+    pipe_catalog = pd.read_excel(thermal_network.locator.get_thermal_networks(), sheet_name='PIPING CATALOG')
     pipe_catalog['mdot_min_kgs'] = pipe_catalog['Vdot_min_m3s'] * P_WATER_KGPERM3
     pipe_catalog['mdot_max_kgs'] = pipe_catalog['Vdot_max_m3s'] * P_WATER_KGPERM3
     pipe_properties_df = pd.DataFrame(data=None, index=pipe_catalog.columns.values,
@@ -1640,7 +1612,7 @@ def calc_thermal_conductivity(temperature):
     return 0.6065 * (-1.48445 + 4.12292 * temperature / 298.15 - 1.63866 * (temperature / 298.15) ** 2)
 
 
-def calc_max_edge_flowrate(thermal_network, use_multiprocessing=True):
+def calc_max_edge_flowrate(thermal_network, processes=1):
     """
     Calculates the maximum flow rate in the network in order to assign the pipe diameter required at each edge. This is
     done by calculating the mass flow rate required at each substation to supply the calculated demand at the target
@@ -1725,25 +1697,10 @@ def calc_max_edge_flowrate(thermal_network, use_multiprocessing=True):
         time_step_slice = range(thermal_network.start_t, thermal_network.stop_t)
         nhours = thermal_network.stop_t - thermal_network.start_t
 
-        number_of_processes = get_number_of_processes()
-        if use_multiprocessing and number_of_processes > 1:
-            print("Using %i CPU's" % number_of_processes)
-            pool = multiprocessing.Pool(number_of_processes)
-            queue = multiprocessing.Manager().Queue()
-            map_result = pool.map_async(hourly_mass_flow_calculation_wrapper,
-                                        izip(repeat(queue, nhours), time_step_slice, repeat(diameter_guess, nhours),
-                                             repeat(thermal_network, nhours)))
-            while not map_result.ready():
-                stream_from_queue(queue)
-            pool.close()
-            pool.join()
-            # process the rest of the Queue
-            while not queue.empty():
-                stream_from_queue(queue)
-            mass_flows = map_result.get()
-        else:
-            mass_flows = map(hourly_mass_flow_calculation, time_step_slice,
-                             repeat(diameter_guess, nhours), repeat(thermal_network, nhours))
+        mass_flows = cea.utilities.parallel.vectorize(hourly_mass_flow_calculation, processes)(
+            time_step_slice,
+            repeat(diameter_guess, nhours),
+            repeat(thermal_network, nhours))
 
         # write mass flows to the dataframes
         thermal_network.edge_mass_flow_df.iloc[time_step_slice] = [mfe[0] for mfe in mass_flows]
@@ -1851,16 +1808,6 @@ def read_in_diameters_from_shapefile(thermal_network):
                                                                    thermal_network.network_name))
     diameter_guess = network_edges['Pipe_DN']
     return diameter_guess
-
-
-def hourly_mass_flow_calculation_wrapper(args):
-    """A wrapper around hourly_mass_flow_calculation because multiprocessing.Pool.map only allows one argument"""
-    # set up printing to stderr and stdout to go through the queue
-    queue, args = args[0], args[1:]
-    sys.stdout = cea.utilities.workerstream.QueueWorkerStream('stdout', queue)
-    sys.stderr = cea.utilities.workerstream.QueueWorkerStream('stderr', queue)
-    return hourly_mass_flow_calculation(*args)
-
 
 def hourly_mass_flow_calculation(t, diameter_guess, thermal_network):
     """
@@ -3237,7 +3184,7 @@ def calc_aggregated_heat_conduction_coefficient(mass_flow, locator, edge_df, pip
     """
 
     L_pipe = edge_df['pipe length']
-    material_properties = pd.read_excel(locator.get_thermal_networks(), sheetname='MATERIAL PROPERTIES').set_index(
+    material_properties = pd.read_excel(locator.get_thermal_networks(), sheet_name='MATERIAL PROPERTIES').set_index(
         'material')
     conductivity_pipe = material_properties.ix['Steel', 'lambda_WmK']  # _[A. Kecebas et al., 2011]
     conductivity_insulation = material_properties.ix['PUR', 'lambda_WmK']  # _[A. Kecebas et al., 2011]
@@ -3543,20 +3490,11 @@ def main(config):
 
     for network_name in network_names:
         thermal_network = ThermalNetwork(locator, network_name, config.thermal_network)
-        thermal_network_main(locator, thermal_network, use_multiprocessing=config.multiprocessing)
+        thermal_network_main(locator, thermal_network, processes=config.get_number_of_processes())
 
-    print('test thermal_network_main() succeeded')
+    print('done.')
     print('total time: ', time.time() - start)
 
-
-def get_number_of_processes():
-    """
-    Returns the number of processes to use for multiprocessing.
-    :return number_of_processes: Number of processes to use.
-    """
-
-    number_of_processes = multiprocessing.cpu_count() - 1
-    return max(1, number_of_processes)  # ensure that at least one process is being used
 
 if __name__ == '__main__':
     main(cea.config.Configuration())

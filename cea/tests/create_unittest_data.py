@@ -14,9 +14,10 @@ import ConfigParser
 import json
 import pandas as pd
 
+from cea.demand.schedule_maker.schedule_maker import schedule_maker_main
 from cea.demand.thermal_loads import calc_thermal_loads
 from cea.demand.building_properties import BuildingProperties
-from cea.demand.demand_main import get_dates_from_year
+from cea.utilities.date import get_dates_from_year
 from cea.inputlocator import InputLocator
 from cea.utilities import epwreader
 
@@ -36,7 +37,7 @@ def main(output_file):
 
     # run properties script
     import cea.datamanagement.data_helper
-    cea.datamanagement.data_helper.data_helper(locator, 'CH', True, True, True, True, True, True, True)
+    cea.datamanagement.data_helper.data_helper(locator, 'CH', True, True, True, True, True, True, True, [])
 
     year = weather_data['year'][0]
     date_range = get_dates_from_year(year)
@@ -44,19 +45,19 @@ def main(output_file):
     loads_output = config.demand.loads_output
     massflows_output = config.demand.massflows_output
     temperatures_output = config.demand.temperatures_output
-    format_output = config.demand.format_output
-    use_dynamic_infiltration_calculation =  config.demand.use_dynamic_infiltration_calculation
-    write_detailed_output = config.demand.write_detailed_output
+    use_dynamic_infiltration_calculation = config.demand.use_dynamic_infiltration_calculation
     debug = config.debug
     building_properties = BuildingProperties(locator, config.demand.override_variables)
 
     print("data for test_calc_thermal_loads:")
     print(building_properties.list_building_names())
 
+    schedule_maker_main(locator, config, building='B01')
+
     bpr = building_properties['B01']
     result = calc_thermal_loads('B01', bpr, weather_data, date_range, locator,
                                 use_dynamic_infiltration_calculation, resolution_outputs, loads_output,
-                                massflows_output, temperatures_output, format_output, config, write_detailed_output,
+                                massflows_output, temperatures_output, config,
                                 debug)
 
     # test the building csv file
@@ -92,7 +93,7 @@ def main(output_file):
                                                                            use_dynamic_infiltration_calculation,
                                                                            resolution_outputs, loads_output,
                                                                            massflows_output, temperatures_output,
-                                                                           format_output, config, write_detailed_output,
+                                                                           config,
                                                                            debug)
         print("'%(b)s': (%(qhs_sys_kwh).5f, %(qcs_sys_kwh).5f, %(qww_sys_kwh).5f)," % locals())
         results[building] = (qhs_sys_kwh, qcs_sys_kwh, qww_sys_kwh)
@@ -107,10 +108,10 @@ def main(output_file):
 
 def run_for_single_building(building, bpr, weather_data, date_range, locator,
                             use_dynamic_infiltration_calculation, resolution_outputs, loads_output,
-                            massflows_output, temperatures_output, format_output, config, write_detailed_output, debug):
+                            massflows_output, temperatures_output, config, debug):
     calc_thermal_loads(building, bpr, weather_data, date_range, locator,
                        use_dynamic_infiltration_calculation, resolution_outputs, loads_output, massflows_output,
-                       temperatures_output, format_output, config, write_detailed_output, debug)
+                       temperatures_output, config, debug)
     df = pd.read_csv(locator.get_demand_results_file(building))
     return building, float(df['Qhs_sys_kWh'].sum()), df['Qcs_sys_kWh'].sum(), float(df['Qww_sys_kWh'].sum())
 

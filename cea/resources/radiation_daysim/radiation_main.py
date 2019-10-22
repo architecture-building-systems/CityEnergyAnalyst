@@ -174,7 +174,7 @@ def main(config):
     of interest. the number of sensor points depends on the size of the grid selected in the SETTINGS.py file and
     are generated automatically.
 
-    :param config: Configuration object with the settings (genera and radiation-daysim)
+    :param config: Configuration object with the settings (genera and radiation)
     :type config: cea.config.Configuartion
     :return:
     """
@@ -183,7 +183,7 @@ def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     #  the selected buildings are the ones for which the individual radiation script is run for
     #  this is only activated when in default.config, run_all_buildings is set as 'False'
-    settings = config.radiation_daysim
+    settings = config.radiation
 
     # BUGFIX for PyCharm: the PATH variable might not include the daysim-bin-directory, so we add it here
     os.environ["PATH"] = settings.daysim_bin_directory + os.pathsep + os.environ["PATH"]
