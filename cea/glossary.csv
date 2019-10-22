@@ -805,6 +805,7 @@ data-helper,get_building_internal,inputs/building-properties/internal_loads.dbf,
 data-helper,get_building_internal,inputs/building-properties/internal_loads.dbf,El_Wm2,Peak specific electrical load due to artificial lighting,[W/m2],{0.0...n},float,black
 data-helper,get_building_internal,inputs/building-properties/internal_loads.dbf,Epro_Wm2,Peak specific electrical load due to industrial processes,[W/m2],{0.0...n},string,black
 data-helper,get_building_internal,inputs/building-properties/internal_loads.dbf,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black
+data-helper,get_building_internal,inputs/building-properties/internal_loads.dbf,Occ_m2pax,Occupancy density,[m2/pax],{0.0...n},float,black
 data-helper,get_building_internal,inputs/building-properties/internal_loads.dbf,Qcre_Wm2,TODO,TODO,TODO,TODO,black
 data-helper,get_building_internal,inputs/building-properties/internal_loads.dbf,Qcpro_Wm2,Peak specific process cooling load,[W/m2],{0.0...n},float,black
 data-helper,get_building_internal,inputs/building-properties/internal_loads.dbf,Qhpro_Wm2,Peak specific process heating load,[W/m2],{0.0...n},float,black
