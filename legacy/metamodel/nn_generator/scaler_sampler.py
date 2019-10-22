@@ -25,7 +25,7 @@ import numpy as np
 import pandas as pd
 
 from cea.demand import demand_main
-from cea.demand.calibration.latin_sampler import latin_sampler
+from legacy.calibration.latin_sampler import latin_sampler
 from cea.demand.demand_main import properties_and_schedule
 from legacy.metamodel.nn_generator import input_prepare_main
 from cea.utilities import epwreader

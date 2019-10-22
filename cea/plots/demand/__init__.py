@@ -2,11 +2,13 @@ from __future__ import division
 from __future__ import print_function
 
 import functools
-import cea.plots
-import pandas as pd
 import os
+
+import pandas as pd
+
 import cea.config
 import cea.inputlocator
+import cea.plots
 
 """
 Implements py:class:`cea.plots.DemandPlotBase` as a base class for all plots in the category "demand" and also
@@ -55,13 +57,31 @@ class DemandPlotBase(cea.plots.PlotBase):
                                        'Qcs_lat_sys_kWh',
                                        'Q_loss_sen_ref_kWh',
                                        "GRID_kWh",
+                                       'GRID_a_kWh',
+                                       'GRID_l_kWh',
+                                       'GRID_data_kWh',
+                                       'GRID_pro_kWh',
+                                       'GRID_aux_kWh',
+                                       'GRID_ww_kWh',
+                                       'GRID_hs_kWh',
+                                       'GRID_cs_kWh',
+                                       'GRID_cdata_kWh',
+                                       'GRID_cre_kWh',
                                        "PV_kWh",
                                        "DH_hs_kWh",
                                        "DH_ww_kWh",
                                        "E_sys_kWh",
+                                       "Eal_kWh",
+                                       "El_kWh",
+                                       "Ea_kWh",
+                                       "Edata_kWh",
+                                       "Epro_kWh",
+                                       "Eaux_kWh",
                                        "Qhs_sys_kWh",
                                        "Qww_sys_kWh",
                                        "Qcs_sys_kWh",
+                                       'Qcdata_sys_kWh',
+                                       'Qcre_sys_kWh',
                                        'DC_cdata_kWh',
                                        'DC_cre_kWh',
                                        "DC_cs_kWh",
@@ -80,8 +100,8 @@ class DemandPlotBase(cea.plots.PlotBase):
                                        'E_cs_kWh',
                                        'E_cdata_kWh',
                                        'E_cre_kWh']
-        self.input_files = [(self.locator.get_total_demand, [])]  # all these scripts depend on demand
 
+        self.input_files = [(self.locator.get_total_demand, [])]  # all these scripts depend on demand
 
     @property
     def hourly_loads(self):
@@ -98,8 +118,8 @@ class DemandPlotBase(cea.plots.PlotBase):
         return df1
 
     def _calculate_hourly_loads(self):
-        data_demand = functools.reduce(self.add_fields,(pd.read_csv(self.locator.get_demand_results_file(building))
-                                                   for building in self.buildings)).set_index('DATE')
+        data_demand = functools.reduce(self.add_fields, (pd.read_csv(self.locator.get_demand_results_file(building))
+                                                         for building in self.buildings)).set_index('DATE')
         return data_demand
 
     def calculate_hourly_loads(self):

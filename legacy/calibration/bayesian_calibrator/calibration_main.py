@@ -31,8 +31,6 @@ import time
 import matplotlib.pyplot as plt
 import cea.inputlocator
 
-import cea.demand.calibration.settings
-
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Jimeno A. Fonseca", "Adam Rysanek"]
