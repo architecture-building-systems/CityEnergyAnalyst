@@ -62,7 +62,7 @@ demand,GRID_kWh,kWh,Grid electricity consumption,green
 demand,GRID_MWhyr,MWh/yr,Grid electricity consumption,green
 demand,GRID0_kW,kW,Nominal Grid electricity consumption,green
 
-demand,GRID_a_kWh,kWh,Grid total requirements of electricity,green
+demand,GRID_a_kWh,kWh,Grid electricity requirements for appliances,green
 demand,GRID_a_MWhyr,MWh/yr,Grid electricity requirements for appliances,green
 demand,GRID_a_kW,kW,Nominal Grid electricity requirements for appliances,green
 
