@@ -100,9 +100,11 @@ internal-loads:
   fields:
   - name: Name
     type: str
-  - name: Qs_Wp
+  - name: Occ_m2pax
     type: float
-  - name: X_ghp
+  - name: Qs_Wpax
+    type: float
+  - name: X_ghpax
     type: float
   - name: Ea_Wm2
     type: float
@@ -118,9 +120,9 @@ internal-loads:
     type: float
   - name: Qhpro_Wm2
     type: float
-  - name: Vww_lpd
+  - name: Vww_lpdpax
     type: float
-  - name: Vw_lpd
+  - name: Vw_lpdpax
     type: float
 supply-systems:
   pk: Name
@@ -145,7 +147,7 @@ architecture:
   - name: Name
     type: str
   - name: void_deck
-    type: float
+    type: int
   - name: Es
     type: float
   - name: Hs
@@ -172,23 +174,6 @@ architecture:
     type: str
   - name: type_win
     type: str
-restrictions:
-  pk: Name
-  type: dbf
-  location: get_building_restrictions
-  fields:
-  - name: Name
-    type: str
-  - name: BIOGAS
-    type: int
-  - name: GEOTHERMAL
-    type: int
-  - name: NATURALGAS
-    type: int
-  - name: SOLAR
-    type: int
-  - name: WATERBODY
-    type: int
 indoor-comfort:
   pk: Name
   type: dbf
@@ -196,19 +181,19 @@ indoor-comfort:
   fields:
   - name: Name
     type: str
-  - name: Tcs_set_C
-    type: float
-  - name: Tcs_setb_C
-    type: float
   - name: Ths_set_C
     type: float
   - name: Ths_setb_C
     type: float
-  - name: Ve_lps
+  - name: Tcs_set_C
     type: float
-  - name: rhum_max_pc
+  - name: Tcs_setb_C
     type: float
-  - name: rhum_min_pc
+  - name: RH_min_pc
+    type: float
+  - name: RH_max_pc
+    type: float
+  - name: Ve_lpspax
     type: float
 technical-systems:
   pk: Name
