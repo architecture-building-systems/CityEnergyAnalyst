@@ -570,11 +570,6 @@ class InputLocator(object):
         to the scenario if they are not yet present, based on the configured region for the scenario."""
         return os.path.join(self.get_technology_folder(), 'archetypes', 'construction_properties.xlsx')
 
-    def get_archetypes_schedules(self):
-        """Returns the database of schedules to be used by the data-helper. These are copied
-        to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return os.path.join(self.get_technology_folder(), 'archetypes', 'occupancy_schedules.xlsx')
-
     def get_archetypes_system_controls(self):
         """ Returns the database of region-specific system control parameters. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario.

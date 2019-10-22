@@ -99,7 +99,7 @@ Demand forecasting:
       - [get_radiation_metadata, building_name]
       - [get_building_architecture]
       - [get_building_occupancy]
-      - [get_archetypes_schedules]
+      - [get_building_schedules, building_name]
       - [get_zone_geometry]
       - [get_radiation_building, building_name]
       - [get_archetypes_properties]
