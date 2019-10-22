@@ -300,6 +300,13 @@ def task_run_sensitivity():
         config.sensitivity_demand.num_samples = 2
         config.sensitivity_demand.number_of_simulations = 1
 
+        # make sure data-helper was run first
+        import cea.datamanagement.data_helper
+        cea.datamanagement.data_helper.data_helper(locator=locator, region="CH", overwrite_technology_folder=True,
+                update_architecture_dbf=True, update_HVAC_systems_dbf=True, update_indoor_comfort_dbf=True,
+                update_internal_loads_dbf=True, update_supply_systems_dbf=True,
+                update_schedule_operation_cea=True, buildings=locator.get_zone_building_names())
+
         cea.analysis.sensitivity.sensitivity_demand_samples.main(config)
         count = cea.analysis.sensitivity.sensitivity_demand_count.count_samples(config.sensitivity_demand.samples_folder)
         cea.analysis.sensitivity.sensitivity_demand_simulate.main(config)
