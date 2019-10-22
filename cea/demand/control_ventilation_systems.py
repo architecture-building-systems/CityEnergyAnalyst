@@ -3,6 +3,7 @@
 
 from __future__ import division
 from cea.demand import control_heating_cooling_systems
+from cea.demand.constants import DELTA_T_NIGHT_FLUSHING, TEMPERATURE_ZONE_CONTROL_NIGHT_FLUSHING
 
 __author__ = "Gabriel Happle"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -98,15 +99,12 @@ def is_night_flushing_active(bpr, tsd, t):
 
     # night flushing is available for window ventilation (manual) and mechanical ventilation (automatic)
     # night flushing is active during the night in the cooling season,
-    #  IF the outdoor conditions are favourable (only temperature at the moment)
-    temperature_zone_control = 26  # (°C) night flushing only if temperature is higher than 26 # TODO review and make dynamic
-    delta_t = 2 # (°C) night flushing only if outdoor temperature is two degrees lower than indoor # TODO review and make dynamic
+    # IF the outdoor conditions are favourable (only temperature at the moment)
 
     if has_night_flushing(bpr) \
-            and control_heating_cooling_systems.is_cooling_season(t, bpr) \
             and is_night_time(t) \
-            and tsd['T_int'][t-1] > temperature_zone_control \
-            and tsd['T_int'][t-1] > tsd['T_ext'][t] + delta_t\
+            and tsd['T_int'][t-1] > TEMPERATURE_ZONE_CONTROL_NIGHT_FLUSHING \
+            and tsd['T_int'][t-1] > tsd['T_ext'][t] + DELTA_T_NIGHT_FLUSHING \
             and tsd['rh_ext'][t] < bpr.comfort['rhum_max_pc']:
 
         return True
@@ -138,8 +136,7 @@ def is_economizer_active(bpr, tsd, t):
     """
 
     if has_mechanical_ventilation_economizer(bpr) \
-            and control_heating_cooling_systems.is_cooling_season(t, bpr) \
-            and tsd['T_int'][t-1] > tsd['ta_cs_set'][t] >= tsd['T_ext'][t]:
+            and tsd['T_int'][t-1] > bpr.comfort['Tcs_set_C'] >= tsd['T_ext'][t]:
 
         return True
 
