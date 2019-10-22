@@ -130,7 +130,7 @@ def calc_min_moisture_set_point(bpr, tsd, t):
     """
 
     # from bpr get set point for humidification
-    phi_int_set_hu = bpr.comfort['RH_min_pc']
+    phi_int_set_hu = bpr.comfort['rhum_min_pc']
 
     t_int = tsd['T_int'][t]
 
@@ -159,7 +159,7 @@ def calc_max_moisture_set_point(bpr, tsd, t):
     """
 
     # from bpr get set point for humidification
-    phi_int_set_dhu = bpr.comfort['RH_max_pc']
+    phi_int_set_dhu = bpr.comfort['rhum_max_pc']
 
     t_int = tsd['T_int'][t]
 
