@@ -93,7 +93,7 @@ def schedule_maker_main(locator, config, building=None):
 
 
 def print_progress(i, n, args, result):
-    print("Building No. {i} completed out of {n}: {building}".format(i=i + 1, n=n, building=args[0]))
+    print("Building No. {i} completed out of {n}: {building}".format(i=i + 1, n=n, building=args[1]))
 
 
 def calc_schedules(locator,
