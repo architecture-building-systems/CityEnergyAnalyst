@@ -32,8 +32,8 @@ SCRIPT,LOCATOR_METHOD,FILE_NAME,VARIABLE,DESCRIPTION,UNIT,VALUES,TYPE,COLOR
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INDOOR_COMFORT,Ths_set_C,Setpoint temperature for heating system,[C],{0.0...n},float,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INDOOR_COMFORT,Ths_setb_C,Setback point of temperature for heating system,[C],{0.0...n},float,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INDOOR_COMFORT,Ve_lps,Indoor quality requirements of indoor ventilation per person,[l/s],{0.0...n},float,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INDOOR_COMFORT,rhum_max_pc,TODO,TODO,TODO,TODO,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INDOOR_COMFORT,rhum_min_pc,TODO,TODO,TODO,TODO,black
+-,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INDOOR_COMFORT,RH_max_pc,Upper bound of relative humidity,[%],{0.0...n},float,black
+-,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INDOOR_COMFORT,RH_min_pc,Lower_bound of relative humidity,[%],{0.0...n},float,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Code,Unique code for the material of the pipe.,[-],[-],string,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Ea_Wm2,Peak specific electrical load due to computers and devices,[W/m2],{0.0...n},float,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Ed_Wm2,Peak specific electrical load due to servers/data centres,[W/m2],{0.0...n},float,black
@@ -792,8 +792,8 @@ data-helper,get_building_comfort,inputs/building-properties/indoor_comfort.dbf,T
 data-helper,get_building_comfort,inputs/building-properties/indoor_comfort.dbf,Ths_set_C,Setpoint temperature for heating system,[C],{0.0...n},float,black
 data-helper,get_building_comfort,inputs/building-properties/indoor_comfort.dbf,Ths_setb_C,Setback point of temperature for heating system,[C],{0.0...n},float,black
 data-helper,get_building_comfort,inputs/building-properties/indoor_comfort.dbf,Ve_lps,Indoor quality requirements of indoor ventilation per person,[l/s],{0.0...n},float,black
-data-helper,get_building_comfort,inputs/building-properties/indoor_comfort.dbf,rhum_max_pc,TODO,TODO,TODO,TODO,black
-data-helper,get_building_comfort,inputs/building-properties/indoor_comfort.dbf,rhum_min_pc,TODO,TODO,TODO,TODO,black
+data-helper,get_building_comfort,inputs/building-properties/indoor_comfort.dbf,RH_max_pc,TODO,TODO,TODO,TODO,black
+data-helper,get_building_comfort,inputs/building-properties/indoor_comfort.dbf,RH_min_pc,TODO,TODO,TODO,TODO,black
 data-helper,get_building_hvac,inputs/building-properties/technical_systems.dbf,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black
 data-helper,get_building_hvac,inputs/building-properties/technical_systems.dbf,type_cs,Type of cooling supply system,[code],{T0...Tn},string,black
 data-helper,get_building_hvac,inputs/building-properties/technical_systems.dbf,type_ctrl,Type of heating and cooling control systems (relates to values in Default Database HVAC Properties),[code],{T1...Tn},string,black
