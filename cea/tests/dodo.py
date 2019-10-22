@@ -97,6 +97,7 @@ def task_run_unit_tests():
     def run_unit_tests():
         import unittest
         import os
+
         testsuite = unittest.defaultTestLoader.discover(os.path.dirname(__file__))
         result = unittest.TextTestRunner(verbosity=1).run(testsuite)
         return result.wasSuccessful()
