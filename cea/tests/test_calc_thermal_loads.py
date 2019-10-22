@@ -38,7 +38,8 @@ class TestCalcThermalLoads(unittest.TestCase):
 
         # run properties script
         import cea.datamanagement.data_helper
-        cea.datamanagement.data_helper.data_helper(cls.locator, 'CH', True, True, True, True, True, True, True, [])
+        cea.datamanagement.data_helper.data_helper(cls.locator, 'CH', True, True, True, True, True, True, True,
+                                                   cls.locator.get_zone_building_names())
 
         cls.building_properties = BuildingProperties(cls.locator, cls.config.demand.override_variables)
 
