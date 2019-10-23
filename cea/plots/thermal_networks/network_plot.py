@@ -352,12 +352,7 @@ if __name__ == '__main__':
     locator = cea.inputlocator.InputLocator(config.scenario)
     cache = cea.plots.cache.NullPlotCache()
 
-    # NetworkLayoutPlot(config.project, {'network-type': config.plots.network_type,
-    #                                    'scenario-name': config.scenario_name,
-    #                                    'network-name': config.plots.network_name},
-    #                   cache).plot(auto_open=True)
-
-    NetworkLayoutPlot(config.project, {'network-type': "DC",
+    NetworkLayoutPlot(config.project, {'network-type': config.plots.network_type,
                                        'scenario-name': config.scenario_name,
                                        'network-name': config.plots.network_name},
                       cache).plot(auto_open=True)
