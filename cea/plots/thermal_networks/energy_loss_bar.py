@@ -30,7 +30,7 @@ class EnergyLossBarPlot(cea.plots.thermal_networks.ThermalNetworksPlotBase):
     @property
     def layout(self):
         return go.Layout(barmode='stack',
-                         yaxis=dict(title='Energy [kWh/yr]', domain=[0.35, 1]),
+                         yaxis=dict(title='Energy [kWh/yr]'),
                          xaxis=dict(title='Name'))
 
     def calc_graph(self):
