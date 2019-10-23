@@ -27,6 +27,8 @@ DELTA_P_DIM = 5.0  # (Pa) dimensioning differential pressure for multi-storey bu
                  # according to DIN 1946-6
 P_FAN = 0.55  # specific fan consumption in W/m3/h
 MIN_VENTILATION_RATE = 0.6  # l/s/m2 [https://escholarship.org/content/qt7k1796zv/qt7k1796zv.pdf]
+TEMPERATURE_ZONE_CONTROL_NIGHT_FLUSHING = 26  # (°C) night flushing only if temperature is higher than 26 # TODO review and make dynamic
+DELTA_T_NIGHT_FLUSHING = 2  # (°C) night flushing only if outdoor temperature is two degrees lower than indoor # TODO review and make dynamic
 SHIELDING_CLASS = 2  # according to ISO 16798-7, 0 = open terrain, 1 = partly shielded from wind,
         #  2 = fully shielded from wind
 TER_CLASS = 2  # terrain class of surroundings according to ISO 16798-7: 0 = open, 1 = rural,  2 = urban
