@@ -55,7 +55,7 @@ class NetworkLayoutPlot(cea.plots.thermal_networks.ThermalNetworksMapPlotBase):
         def radius_from_demand(row):
             if row["Type"] == "CONSUMER":
                 building = row["Building"]
-                return scale * demand[building] / max_demand
+                return scale * (demand[building] / max_demand if building in demand.index else 0.1)
             elif row["Type"] == "PLANT":
                 return scale
             else:
@@ -352,7 +352,12 @@ if __name__ == '__main__':
     locator = cea.inputlocator.InputLocator(config.scenario)
     cache = cea.plots.cache.NullPlotCache()
 
-    NetworkLayoutPlot(config.project, {'network-type': config.plots.network_type,
+    # NetworkLayoutPlot(config.project, {'network-type': config.plots.network_type,
+    #                                    'scenario-name': config.scenario_name,
+    #                                    'network-name': config.plots.network_name},
+    #                   cache).plot(auto_open=True)
+
+    NetworkLayoutPlot(config.project, {'network-type': "DC",
                                        'scenario-name': config.scenario_name,
                                        'network-name': config.plots.network_name},
                       cache).plot(auto_open=True)
