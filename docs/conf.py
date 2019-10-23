@@ -24,10 +24,10 @@ import cea
 sys.path.insert(0, os.path.abspath('../cea'))
 
 
-
 # mock out some imports so we don't have conflicts on the readthedocs server...
 class Mock(MagicMock):
     __all__ = []
+
     @classmethod
     def __getattr__(cls, name):
             return MagicMock()
