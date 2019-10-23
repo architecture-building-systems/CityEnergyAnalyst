@@ -42,10 +42,10 @@ SCRIPT,LOCATOR_METHOD,FILE_NAME,VARIABLE,DESCRIPTION,UNIT,VALUES,TYPE,COLOR
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Qcre_Wm2,Peak specific cooling load due to refrigeration (cooling rooms),[W/m2],{0.0...n},float,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Qcpro_Wm2,Peak specific process cooling load,[W/m2],{0.0...n},float,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Qhpro_Wm2,Peak specific process heating load,[W/m2],{0.0...n},float,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Qs_Wp,Peak sensible heat load of people,[W/pax],{0.0...n},float,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Vw_lpd,Peak specific fresh water consumption (includes cold and hot water),[lpd],{0.0...n},float,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Vww_lpd,Peak specific daily hot water consumption,[lpd],{0.0...n},float,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS,X_ghp,Moisture released by occupancy at peak conditions,[gh/kg/p],{0.0...n},float,black
+-,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Qs_Wpax,Peak sensible heat load of people,[W/pax],{0.0...n},float,black
+-,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Vw_lpdpax,Peak specific fresh water consumption (includes cold and hot water),[lpd],{0.0...n},float,black
+-,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Vww_lpdpax,Peak specific daily hot water consumption,[lpd],{0.0...n},float,black
+-,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS,X_ghpax,Moisture released by occupancy at peak conditions,[gh/kg/p],{0.0...n},float,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:SUPPLY,building_use,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:SUPPLY,standard,Letter representing whereas the field represent construction properties of a building as newly constructed (C) or renovated (R),[-],{C or R},string,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:SUPPLY,type_cs,Type of cooling supply system,[code],{T0...Tn},string,black
@@ -791,7 +791,7 @@ data-helper,get_building_comfort,inputs/building-properties/indoor_comfort.dbf,T
 data-helper,get_building_comfort,inputs/building-properties/indoor_comfort.dbf,Tcs_setb_C,Setback point of temperature for cooling system,[C],{0.0...n},float,black
 data-helper,get_building_comfort,inputs/building-properties/indoor_comfort.dbf,Ths_set_C,Setpoint temperature for heating system,[C],{0.0...n},float,black
 data-helper,get_building_comfort,inputs/building-properties/indoor_comfort.dbf,Ths_setb_C,Setback point of temperature for heating system,[C],{0.0...n},float,black
-data-helper,get_building_comfort,inputs/building-properties/indoor_comfort.dbf,Ve_lps,Indoor quality requirements of indoor ventilation per person,[l/s],{0.0...n},float,black
+data-helper,get_building_comfort,inputs/building-properties/indoor_comfort.dbf,Ve_lpspax,Indoor quality requirements of indoor ventilation per person,[l/s],{0.0...n},float,black
 data-helper,get_building_comfort,inputs/building-properties/indoor_comfort.dbf,RH_max_pc,TODO,TODO,TODO,TODO,black
 data-helper,get_building_comfort,inputs/building-properties/indoor_comfort.dbf,RH_min_pc,TODO,TODO,TODO,TODO,black
 data-helper,get_building_hvac,inputs/building-properties/technical_systems.dbf,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black
