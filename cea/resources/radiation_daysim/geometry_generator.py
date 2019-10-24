@@ -161,6 +161,7 @@ def building2d23d(locator, geometry_terrain, config, height_col, nfloor_col):
     geometry_3D_zone = []
     geometry_3D_surroundings = []
 
+    building_solid_list = []
 
     for name in district_building_names:
         print('Generating geometry for building %(name)s' % locals())
@@ -185,6 +186,7 @@ def building2d23d(locator, geometry_terrain, config, height_col, nfloor_col):
 
         # create floors and form a solid
         building_solid = calc_solid(face_footprint, range_floors, flr2flr_height, config)
+        building_solid_list.append(building_solid)
 
         # now get all surfaces and create windows only if the buildings are in the area of study
         window_list =[]
@@ -254,13 +256,13 @@ def building2d23d(locator, geometry_terrain, config, height_col, nfloor_col):
                                      "footprint": footprint_list, "orientation_walls":orientation, "orientation_windows":orientation_win,
                                          "normals_windows":normals_win, "normals_walls": normals_w})
 
-            if config.general.debug:
-                # visualize building progress while debugging
-                edges1 = calculate.face_normal_as_edges(wall_list,5)
-                edges2 = calculate.face_normal_as_edges(roof_list, 5)
-                edges3 = calculate.face_normal_as_edges(footprint_list, 5)
-                utility.visualise([wall_list, roof_list, footprint_list, edges1, edges2, edges3],
-                                  ["WHITE", "WHITE", "WHITE", "BLACK", "BLACK", "BLACK"])
+            # if config.general.debug:
+            #     # visualize building progress while debugging
+            #     edges1 = calculate.face_normal_as_edges(wall_list,5)
+            #     edges2 = calculate.face_normal_as_edges(roof_list, 5)
+            #     edges3 = calculate.face_normal_as_edges(footprint_list, 5)
+            #     utility.visualise([wall_list, roof_list, footprint_list, edges1, edges2, edges3],
+            #                       ["WHITE", "WHITE", "WHITE", "BLACK", "BLACK", "BLACK"])
         else:
             facade_list, roof_list, footprint_list = urbangeom.identify_building_surfaces(building_solid)
             wall_list = facade_list
@@ -268,14 +270,14 @@ def building2d23d(locator, geometry_terrain, config, height_col, nfloor_col):
                                  "footprint": footprint_list, "orientation_walls":orientation, "orientation_windows":orientation_win,
                                   "normals_windows":normals_win, "normals_walls": normals_w})
 
-            if config.general.debug:
-                # visualize building progress while debugging
-                edges1 = calculate.face_normal_as_edges(wall_list,5)
-                edges2 = calculate.face_normal_as_edges(roof_list, 5)
-                edges3 = calculate.face_normal_as_edges(footprint_list, 5)
-                utility.visualise([wall_list, roof_list, footprint_list, edges1, edges2, edges3],
-                                  ["WHITE", "WHITE", "WHITE", "BLACK", "BLACK", "BLACK"])
-    return geometry_3D_zone, geometry_3D_surroundings
+            # if config.general.debug:
+            #     # visualize building progress while debugging
+            #     edges1 = calculate.face_normal_as_edges(wall_list,5)
+            #     edges2 = calculate.face_normal_as_edges(roof_list, 5)
+            #     edges3 = calculate.face_normal_as_edges(footprint_list, 5)
+            #     utility.visualise([wall_list, roof_list, footprint_list, edges1, edges2, edges3],
+            #                       ["WHITE", "WHITE", "WHITE", "BLACK", "BLACK", "BLACK"])
+    return geometry_3D_zone, geometry_3D_surroundings, building_solid_list
 
 
 def burn_buildings(geometry, terrain_intersection_curves):
@@ -331,12 +333,12 @@ def calc_solid(face_footprint, range_floors, flr2flr_height, config):
     # make sure all the normals are correct (they are pointing out)
     bldg_solid = construct.make_solid(building_shell_list[0])
     bldg_solid = modify.fix_close_solid(bldg_solid)
-
-    if config.general.debug:
-        # visualize building progress while debugging
-        face_list = fetch.topo_explorer(bldg_solid, "face")
-        edges = calculate.face_normal_as_edges(face_list,5)
-        utility.visualise([face_list,edges],["WHITE","BLACK"])
+    #
+    # if config.general.debug:
+    #     # visualize building progress while debugging
+    #     face_list = fetch.topo_explorer(bldg_solid, "face")
+    #     edges = calculate.face_normal_as_edges(face_list,5)
+    #     utility.visualise([face_list,edges],["WHITE","BLACK"])
     return bldg_solid
 
 def calc_windows_walls(facade_list, wwr):
@@ -398,10 +400,10 @@ def geometry_main(locator, config):
     elevation_mean, geometry_terrain = raster2tin(locator.get_terrain())
     # transform buildings 2D to 3D and add windows
     print("Creating 3D building surfaces")
-    geometry_3D_zone, geometry_3D_surroundings = building2d23d(locator, geometry_terrain, config,
+    geometry_3D_zone, geometry_3D_surroundings, building_solid_list  = building2d23d(locator, geometry_terrain, config,
                                                                height_col='height_ag', nfloor_col="floors_ag")
 
-    return elevation_mean, geometry_terrain, geometry_3D_zone, geometry_3D_surroundings
+    return elevation_mean, geometry_terrain, geometry_3D_zone, geometry_3D_surroundings, building_solid_list
 
 if __name__ == '__main__':
     config = cea.config.Configuration()
@@ -410,10 +412,11 @@ if __name__ == '__main__':
 
     # run routine City GML LOD 1
     time1 = time.time()
-    elevation_mean, geometry_terrain, geometry_3D_zone, geometry_3D_surroundings = geometry_main(locator, config)
+    elevation_mean, geometry_terrain, geometry_3D_zone, geometry_3D_surroundings, building_solid_list = geometry_main(locator, config)
 
     # to visualize the results
     geometry_buildings = []
+    geometry_buildings_nonop = []
     windows = [val for sublist in geometry_3D_zone for val in sublist['windows']]
     walls = [val for sublist in geometry_3D_zone for val in sublist['walls']]
     roofs = [val for sublist in geometry_3D_zone for val in sublist['roofs']]
@@ -422,17 +425,17 @@ if __name__ == '__main__':
     windows_s = [val for sublist in geometry_3D_surroundings for val in sublist['windows']]
     roof_s = [val for sublist in geometry_3D_surroundings for val in sublist['roofs']]
 
-    geometry_buildings.extend(windows)
+    geometry_buildings_nonop.extend(windows)
     geometry_buildings.extend(walls)
     geometry_buildings.extend(roofs)
     geometry_buildings.extend(footprint)
     geometry_buildings.extend(walls_s)
-    geometry_buildings.extend(windows_s)
+    geometry_buildings_nonop.extend(windows_s)
     geometry_buildings.extend(roof_s)
 
     if config.general.debug:
         normals_terrain = calculate.face_normal_as_edges(geometry_terrain,5)
-    utility.visualise([geometry_terrain, geometry_buildings], ["BLUE","WHITE"]) #install Wxpython
+    utility.visualise([geometry_terrain, geometry_buildings, geometry_buildings_nonop], ["GREEN","WHITE", "BLUE"]) #install Wxpython
 
 
 
