@@ -75,4 +75,12 @@ cea.scripts module
     :undoc-members:
     :show-inheritance:
 
+cea.worker module
+-----------------
+
+.. automodule:: cea.worker
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 
