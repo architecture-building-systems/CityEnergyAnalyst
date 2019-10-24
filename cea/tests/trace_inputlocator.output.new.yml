@@ -900,13 +900,13 @@ get_archetypes_properties:
             Ths_setb_C:
                 sample_data: !!python/long '12'
                 types_found: [long]
-            Ve_lps:
+            Ve_lpspax:
                 sample_data: 10.0
                 types_found: [float]
-            rhum_max_pc:
+            RH_max_pc:
                 sample_data: !!python/long '70'
                 types_found: [long]
-            rhum_min_pc:
+            RH_min_pc:
                 sample_data: !!python/long '30'
                 types_found: [long]
         INTERNAL_LOADS:
@@ -934,16 +934,16 @@ get_archetypes_properties:
             Qhpro_Wm2:
                 sample_data: !!python/long '0'
                 types_found: [long]
-            Qs_Wp:
+            Qs_Wpax:
                 sample_data: !!python/long '70'
                 types_found: [long]
-            Vw_lpd:
+            Vw_lpdpax:
                 sample_data: !!python/long '4'
                 types_found: [long]
-            Vww_lpd:
+            Vww_lpdpax:
                 sample_data: !!python/long '2'
                 types_found: [long]
-            X_ghp:
+            X_ghpax:
                 sample_data: !!python/long '80'
                 types_found: [long]
         SUPPLY:
@@ -1756,13 +1756,13 @@ get_building_comfort:
         Ths_setb_C:
             sample_data: 10
             types_found: [int]
-        Ve_lps:
+        Ve_lpspax:
             sample_data: 13.528116605751025
             types_found: [float]
-        rhum_max_pc:
+        RH_max_pc:
             sample_data: 70
             types_found: [int]
-        rhum_min_pc:
+        RH_min_pc:
             sample_data: 30
             types_found: [int]
     used_by: [demand]
