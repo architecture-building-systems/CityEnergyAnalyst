@@ -99,7 +99,7 @@ Demand forecasting:
       - [get_radiation_metadata, building_name]
       - [get_building_architecture]
       - [get_building_occupancy]
-      - [get_archetypes_schedules]
+      - [get_building_schedules, building_name]
       - [get_zone_geometry]
       - [get_radiation_building, building_name]
       - [get_archetypes_properties]
@@ -300,7 +300,7 @@ Analysis:
     description: Simulate demand for sensitivity analysis samples
     interfaces: [cli, arcgis, dashboard]
     module: cea.analysis.sensitivity.sensitivity_demand_simulate
-    parameters: ['general:scenario', 'general:multiprocessing',
+    parameters: ['general:scenario', 'general:multiprocessing', 'general:debug', 'schedule-maker:schedule-model', 'schedule-maker:buildings',
                  'sensitivity-demand:samples-folder', 'sensitivity-demand:simulation-folder',
                  'sensitivity-demand:output-parameters', 'sensitivity-demand:number-of-simulations',
                  'sensitivity-demand:sample-index', 'demand']

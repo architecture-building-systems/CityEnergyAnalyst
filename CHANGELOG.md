@@ -1,3 +1,19 @@
+2019-10-21 - 2.23 - #2391 Show plot parameters when adding and changing plots
+2019-10-18 - 2.23 - #2383 Fix to load curves plot and to glossary
+2019-10-17 - 2.23 - #2382 New Schedules Maker / Model
+2019-10-17 - 2.23 - #2384 fix void-deck issues @lguilhermers thanks!, we will implement cell validation in another issue #2141
+2019-10-17 - 2.23 - #2390 I816 stop bayesian calibration support @martin-mosteiro alright we take it out
+2019-10-15 - 2.23 - #2386 fix coordinate system
+2019-10-15 - 2.23 - #2372 2360 create installer for electron interface
+2019-10-14 - 2.23 - #2380 2344 multiprocessing and stdout
+2019-10-11 - 2.23 - #2374 2356 Update environment.ubuntu.yml
+2019-10-11 - 2.23 - #2378 I2204b temperature setpoints finish
+2019-10-10 - 2.23 - #2363 I2204 temperature setpoints
+2019-10-09 - 2.23 - #2318 Optimization cooling, Alright guys, we are merging and creating more issues should we find more problems.
+2019-10-08 - 2.23 - #2365 Ventilation code cleanup
+2019-10-08 - 2.23 - #2369 Glossary api for electron
+2019-10-07 - 2.23 - #2362 Raise an error for false weather files
+2019-10-07 - 2.23 - #2368 Release 2.23
 2019-10-02 - 2.22 - #2338 Moving flexibility (concept project) to legacy
 2019-10-02 - 2.22 - #2353 Project api for electron application
 2019-10-02 - 2.22 - #2337 fix to network layout script (EL is not implemented yet) @daren-thomas thanks for checking this out
