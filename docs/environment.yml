@@ -12,3 +12,4 @@ dependencies:
 - pip:
   - utm
   - pyyaml
+  - flask
