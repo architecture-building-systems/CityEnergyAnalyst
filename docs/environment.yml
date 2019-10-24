@@ -9,3 +9,6 @@ dependencies:
 - pillow
 - sphinx
 - sphinx_rtd_theme
+- pip:
+  - utm
+  - pyyaml
