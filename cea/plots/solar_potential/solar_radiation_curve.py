@@ -46,7 +46,7 @@ def solar_radiation_curve(data_frame, analysis_fields, title, output_path):
     # CALCULATE GRAPH
     traces_graph = calc_graph(analysis_fields, data_frame)
 
-    layout = dict(images=LOGO, title=title,
+    layout = dict(title=title,
                   yaxis=dict(domain=dict(x=[0, 1], y=[0.0, 0.7]), title='Solar Radiation [kW]'),
                   yaxis2=dict(title='Temperature [C]', overlaying='y',
                               side='right'), xaxis=dict(rangeselector=dict(buttons=list([
