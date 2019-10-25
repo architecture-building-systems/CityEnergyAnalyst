@@ -89,12 +89,12 @@ def add_rad_mat(daysim_mat_file, ageometry_table):
         write_file.close()
 
 
-def terrain2radiance(rad, tin_occface_terrain):
+def terrain_to_radiance(rad, tin_occface_terrain):
     for id, face in enumerate(tin_occface_terrain):
         create_radiance_srf(face, "terrain_srf" + str(id), "reflectance0.2", rad)
 
 
-def buildings2radiance(rad, building_surface_properties, geometry_3D_zone, geometry_3D_surroundings):
+def buildings_to_radiance(rad, building_surface_properties, geometry_3D_zone, geometry_3D_surroundings):
     # translate buildings into radiance surface
     fcnt = 0
     for bcnt, building_surfaces in enumerate(geometry_3D_zone):
@@ -210,9 +210,9 @@ def main(config):
     print("\tradiation_main: rad.command_file: {}".format(rad.command_file))
     add_rad_mat(daysim_mat, building_surface_properties)
     # send terrain
-    terrain2radiance(rad, geometry_terrain)
+    terrain_to_radiance(rad, geometry_terrain)
     # send buildings
-    buildings2radiance(rad, building_surface_properties, geometry_3D_zone, geometry_3D_surroundings)
+    buildings_to_radiance(rad, building_surface_properties, geometry_3D_zone, geometry_3D_surroundings)
     # create scene out of all this
     rad.create_rad_input_file()
     print("\tradiation_main: rad.rad_file_path: {}".format(rad.rad_file_path))
