@@ -14,6 +14,15 @@ blueprint = Blueprint(
     static_folder='static',
 )
 
+# maintain a list of all subprocess.Popen objects created
+worker_processes = []
+
+
+def shutdown_worker_processes():
+    """When shutting down the flask server, make sure any subprocesses are also terminated. See issue #2408."""
+    for process in worker_processes:
+        process.terminate()
+
 
 @blueprint.route("/")
 def route_index():
@@ -24,7 +33,7 @@ def route_index():
 def route_start(jobid):
     """Start a ``cea-worker`` subprocess for the script. (FUTURE: add support for cloud-based workers"""
     print("tools/route_start: {jobid}".format(**locals()))
-    subprocess.Popen(["python", "-m", "cea.worker", jobid])
+    worker_processes.append(subprocess.Popen(["python", "-m", "cea.worker", jobid]))
     return jsonify(jobid)
 
 
