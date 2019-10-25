@@ -223,6 +223,7 @@ def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, settings):
                                             sensors_number_zone,
                                             sensors_code_zone,
                                             sensor_intersection_zone):
+
         selection_of_results = solar_res[index:index + sensors_number_building] * (1 - sensor_intersection_building)
         items_sensor_name_and_result = dict(zip(sensor_code_building, selection_of_results))
         with open(locator.get_radiation_building(building_name), 'w') as outfile:
