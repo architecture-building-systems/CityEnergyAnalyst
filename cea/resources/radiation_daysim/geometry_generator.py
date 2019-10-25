@@ -111,7 +111,7 @@ def create_hollowed_facade(surface_facade, window):
 
 
 
-def building2d23d(locator, geometry_terrain, config, height_col, nfloor_col):
+def building_2d_to_3d(locator, geometry_terrain, config, height_col, nfloor_col):
     """
     :param locator: InputLocator - provides paths to files in a scenario
     :type locator: cea.inputlocator.InputLocator
@@ -180,7 +180,7 @@ def building2d23d(locator, geometry_terrain, config, height_col, nfloor_col):
                                                                             preserve_topology=True)
 
         # burn buildings footprint into the terrain and return the location of the new face
-        print('burning building ', name)
+        print('burning building', name)
         face_footprint = burn_buildings(geometry, terrain_intersection_curves)
 
         # create floors and form a solid
@@ -279,13 +279,13 @@ def building2d23d(locator, geometry_terrain, config, height_col, nfloor_col):
                                      "normals_windows":normals_win, "normals_walls": normals_walls,
                                      "intersect_windows": intersect_win, "intersect_walls": intersect_wall})
 
-            # if config.general.debug:
-            #     # visualize building progress while debugging
-            #     edges1 = calculate.face_normal_as_edges(wall_list,5)
-            #     edges2 = calculate.face_normal_as_edges(roof_list, 5)
-            #     edges3 = calculate.face_normal_as_edges(footprint_list, 5)
-            #     utility.visualise([wall_list, roof_list, footprint_list, edges1, edges2, edges3],
-            #                       ["WHITE", "WHITE", "WHITE", "BLACK", "BLACK", "BLACK"])
+            if config.general.debug:
+                # visualize building progress while debugging
+                edges1 = calculate.face_normal_as_edges(wall_list,5)
+                edges2 = calculate.face_normal_as_edges(roof_list, 5)
+                edges3 = calculate.face_normal_as_edges(footprint_list, 5)
+                utility.visualise([wall_list, roof_list, footprint_list, edges1, edges2, edges3],
+                                  ["WHITE", "WHITE", "WHITE", "BLACK", "BLACK", "BLACK"])
         else:
             facade_list, roof_list, footprint_list = urbangeom.identify_building_surfaces(building_solid)
             wall_list = facade_list
@@ -294,13 +294,13 @@ def building2d23d(locator, geometry_terrain, config, height_col, nfloor_col):
                                   "normals_windows":normals_win, "normals_walls": normals_walls,
                                  "intersect_windows": intersect_win, "intersect_walls": intersect_wall})
 
-            # if config.general.debug:
-            #     # visualize building progress while debugging
-            #     edges1 = calculate.face_normal_as_edges(wall_list,5)
-            #     edges2 = calculate.face_normal_as_edges(roof_list, 5)
-            #     edges3 = calculate.face_normal_as_edges(footprint_list, 5)
-            #     utility.visualise([wall_list, roof_list, footprint_list, edges1, edges2, edges3],
-            #                       ["WHITE", "WHITE", "WHITE", "BLACK", "BLACK", "BLACK"])
+            if config.general.debug:
+                # visualize building progress while debugging
+                edges1 = calculate.face_normal_as_edges(wall_list,5)
+                edges2 = calculate.face_normal_as_edges(roof_list, 5)
+                edges3 = calculate.face_normal_as_edges(footprint_list, 5)
+                utility.visualise([wall_list, roof_list, footprint_list, edges1, edges2, edges3],
+                                  ["WHITE", "WHITE", "WHITE", "BLACK", "BLACK", "BLACK"])
     return geometry_3D_zone, geometry_3D_surroundings, building_solid_list
 
 
@@ -409,7 +409,7 @@ def calc_intersection_face_solid(sensor_cord, building_solid_list):
             intersects += 1
     return intersects
 
-def raster2tin(input_terrain_raster):
+def raster_to_tin(input_terrain_raster):
 
     # read raster records
     raster_dataset = gdal.Open(input_terrain_raster)
@@ -437,11 +437,11 @@ def geometry_main(locator, config):
 
     # list of faces of terrain
     print("Reading terrain geometry")
-    elevation_mean, geometry_terrain = raster2tin(locator.get_terrain())
+    elevation_mean, geometry_terrain = raster_to_tin(locator.get_terrain())
     # transform buildings 2D to 3D and add windows
     print("Creating 3D building surfaces")
-    geometry_3D_zone, geometry_3D_surroundings, building_solid_list  = building2d23d(locator, geometry_terrain, config,
-                                                               height_col='height_ag', nfloor_col="floors_ag")
+    geometry_3D_zone, geometry_3D_surroundings, building_solid_list = building_2d_to_3d(locator, geometry_terrain, config,
+                                                                                         height_col='height_ag', nfloor_col="floors_ag")
 
     return elevation_mean, geometry_terrain, geometry_3D_zone, geometry_3D_surroundings, building_solid_list
 
