@@ -32,6 +32,14 @@ def create_radiance_srf(occface, srfname, srfmat, rad):
 
 
 def calc_transmissivity(G_value):
+    '''
+    Calculate window transmissivity from its transmittance using an empirical equation from Radiance.
+
+    :param G_value: Solar energy transmittance of windows (dimensionless)
+    :return: Transmissivity
+
+    [RADIANCE, 2010] The Radiance 4.0 Synthetic Imaging System. Lawrence Berkeley National Laboratory.
+    '''
     return (math.sqrt(0.8402528435 + 0.0072522239 * G_value * G_value) - 0.9166530661) / 0.0036261119 / G_value
 
 
@@ -151,7 +159,7 @@ def reader_surface_properties(locator, input_shp):
     return surface_properties.set_index('Name').round(decimals=2)
 
 
-def radiation_singleprocessing(rad, geometry_3D_zone, locator, settings, building_solid_list):
+def radiation_singleprocessing(rad, geometry_3D_zone, locator, settings):
     if settings.buildings == []:
         # get chunks of buildings to iterate
         chunks = [geometry_3D_zone[i:i + settings.n_buildings_in_chunk] for i in
@@ -165,7 +173,7 @@ def radiation_singleprocessing(rad, geometry_3D_zone, locator, settings, buildin
                 chunks.append([bldg_dict])
 
     for chunk_n, building_dict in enumerate(chunks):
-        daysim_main.isolation_daysim(chunk_n, rad, building_dict, locator, settings, building_solid_list)
+        daysim_main.isolation_daysim(chunk_n, rad, building_dict, locator, settings)
 
 
 def main(config):
@@ -198,7 +206,7 @@ def main(config):
                                                             input_shp=locator.get_building_architecture())
     print("creating 3D geometry and surfaces")
     # create geometrical faces of terrain and buildingsL
-    elevation, geometry_terrain, geometry_3D_zone, geometry_3D_surroundings, building_solid_list = geometry_generator.geometry_main(locator,
+    elevation, geometry_terrain, geometry_3D_zone, geometry_3D_surroundings = geometry_generator.geometry_main(locator,
                                                                                                                config)
 
     print("Sending the scene: geometry and materials to daysim")
@@ -218,7 +226,7 @@ def main(config):
     print("\tradiation_main: rad.rad_file_path: {}".format(rad.rad_file_path))
 
     time1 = time.time()
-    radiation_singleprocessing(rad, geometry_3D_zone, locator, settings, building_solid_list)
+    radiation_singleprocessing(rad, geometry_3D_zone, locator, settings)
 
     print("Daysim simulation finished in %.2f mins" % ((time.time() - time1) / 60.0))
 
