@@ -175,7 +175,7 @@ class BuildingData(object):
 
         # simplify geometry tol =1 for buildings of interest, tol = 5 for surroundings
         range_floors = range(nfloors + 1)
-        flr2flr_height = height / nfloors
+        floor_to_floor_height = height / nfloors
         geometry = self.zone_buildings_df.ix[name].geometry.simplify(self.settings.zone_geometry,
                                                                      preserve_topology=True)
 
@@ -183,7 +183,7 @@ class BuildingData(object):
         face_footprint = burn_buildings(geometry, self.terrain_intersection_curves)
 
         # create floors and form a solid
-        building_solid = calc_solid(face_footprint, range_floors, flr2flr_height)
+        building_solid = calc_solid(face_footprint, range_floors, floor_to_floor_height)
 
         return building_solid
 
@@ -192,7 +192,7 @@ class BuildingData(object):
 
         # simplify geometry tol =1 for buildings of interest, tol = 5 for surroundings
         range_floors = [0, 1]
-        flr2flr_height = height
+        floor_to_floor_height = height
         geometry = self.surroundings_buildings_df.ix[name].geometry.simplify(self.settings.surrounding_geometry,
                                                                              preserve_topology=True)
 
@@ -200,7 +200,7 @@ class BuildingData(object):
         face_footprint = burn_buildings(geometry, self.terrain_intersection_curves)
 
         # create floors and form a solid
-        building_solid = calc_solid(face_footprint, range_floors, flr2flr_height)
+        building_solid = calc_solid(face_footprint, range_floors, floor_to_floor_height)
 
         return building_solid
 
@@ -381,11 +381,11 @@ def burn_buildings(geometry, terrain_intersection_curves):
     return face
 
 
-def calc_solid(face_footprint, range_floors, flr2flr_height):
+def calc_solid(face_footprint, range_floors, floor_to_floor_height):
     # create faces for every floor and extrude the solid
     moved_face_list = []
     for floor_counter in range_floors:
-        dist2mve = floor_counter * flr2flr_height
+        dist2mve = floor_counter * floor_to_floor_height
         # get midpt of face
         orig_pt = calculate.face_midpt(face_footprint)
         # move the pt 1 level up
