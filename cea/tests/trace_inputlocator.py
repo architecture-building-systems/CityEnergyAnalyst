@@ -93,11 +93,11 @@ def main(config):
     scripts = sorted(set([td[1] for td in trace_data]))
     config.restricted_to = None
 
-    meta_to_yaml(trace_data, config.trace_inputlocator.meta_output_file)
+    meta_to_yaml(config, trace_data, config.trace_inputlocator.meta_output_file)
     print 'Trace Complete'
 
 
-def meta_to_yaml(trace_data, meta_output_file):
+def meta_to_yaml(config, trace_data, meta_output_file):
 
     locator_meta = {}
 
@@ -115,34 +115,37 @@ def meta_to_yaml(trace_data, meta_output_file):
         '': get_html_schema,
     }
 
-    for direction, script, locator_method, path, files in trace_data:
-        filename = os.path.join(cea.config.Configuration().__getattr__('scenario'), path, files)
+    for direction, script, locator_method, folder_path, file_name in trace_data:
+        file_full_path = os.path.join(config.scenario, folder_path, file_name)
         try:
-            file_type = os.path.basename(files).split('.')[1]
+            file_type = os.path.basename(file_name).split('.')[1]
         except IndexError:
             file_type = ''
 
-
-        if os.path.isfile(filename):
+        if os.path.isfile(file_full_path):
             locator_meta[locator_method] = {}
             locator_meta[locator_method]['created_by'] = []
             locator_meta[locator_method]['used_by'] = []
-            locator_meta[locator_method]['schema'] = schema['%s' % file_type](filename)
-            locator_meta[locator_method]['file_path'] = filename
+            locator_meta[locator_method]['schema'] = schema['%s' % file_type](file_full_path)
+            locator_meta[locator_method]['file_path'] = file_full_path
             locator_meta[locator_method]['file_type'] = file_type
             locator_meta[locator_method]['description'] = eval('cea.inputlocator.InputLocator(cea.config).' + str(
-                    locator_method) + '.__doc__')
+                locator_method) + '.__doc__')
 
     #get the dependencies from trace_data
-    for direction, script, locator_method, path, files in trace_data:
-        outputs = set()
-        inputs = set()
+    for direction, script, locator_method, folder_path, file_name in trace_data:
+        file_full_path = os.path.join(config.scenario, folder_path, file_name)
+        if not os.path.isfile(file_full_path):
+            # not interested in folders
+            continue
         if direction == 'output':
-            outputs.add(script)
+            locator_meta[locator_method]['created_by'].append(script)
         if direction == 'input':
-            inputs.add(script)
-        locator_meta[locator_method]['created_by'] = list(outputs)
-        locator_meta[locator_method]['used_by'] = list(inputs)
+            locator_meta[locator_method]['used_by'].append(script)
+
+    for locator_method in locator_meta.keys():
+        locator_meta[locator_method]["created_by"] = list(locator_meta[locator_method]["created_by"])
+        locator_meta[locator_method]["used_by"] = list(locator_meta[locator_method]["used_by"])
 
     # merge existing data
     methods = sorted(set([lm[2] for lm in trace_data]))
