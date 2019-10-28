@@ -9,26 +9,27 @@ into 3D geometry with windows and roof equivalent to LOD3
 from __future__ import division
 from __future__ import print_function
 
+import math
+import os
+import sys
+import time
+
+import gdal
+import numpy as np
+import py4design.py3dmodel.calculate as calculate
 import py4design.py3dmodel.construct as construct
 import py4design.py3dmodel.fetch as fetch
-import py4design.py3dmodel.calculate as calculate
-from py4design import py3dmodel as py3dmodel
-from py4design import urbangeom
 import py4design.py3dmodel.modify as modify
-import math
-
-import py4design.gml3dmodel as gml3dmodel
 import py4design.py3dmodel.utility as utility
 from OCC.IntCurvesFace import IntCurvesFace_ShapeIntersector
 from OCC.gp import gp_Pnt, gp_Lin, gp_Ax1, gp_Dir
-import OCC.TopoDS
 from geopandas import GeoDataFrame as gdf
+from py4design import py3dmodel as py3dmodel
+from py4design import urbangeom
 
-import cea.inputlocator
 import cea.config
-import numpy as np
-import gdal
-import time
+import cea.inputlocator
+import cea.utilities.parallel
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -40,8 +41,17 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def identify_surfaces_type(occface_list):
+# Disable
+def blockPrint():
+    sys.stdout = open(os.devnull, 'w')
 
+
+# Restore
+def enablePrint():
+    sys.stdout = sys.__stdout__
+
+
+def identify_surfaces_type(occface_list):
     roof_list = []
     footprint_list = []
     facade_list_north = []
@@ -55,7 +65,7 @@ def identify_surfaces_type(occface_list):
     for f in occface_list:
         # get the normal of each face
         n = py3dmodel.calculate.face_normal(f)
-        flatten_n = [n[0],n[1],0] # need to flatten to erase Z just to consider vertical surfaces.
+        flatten_n = [n[0], n[1], 0]  # need to flatten to erase Z just to consider vertical surfaces.
         angle_to_vertical = py3dmodel.calculate.angle_bw_2_vecs(vec_vertical, n)
         # means its a facade
         if angle_to_vertical > 45 and angle_to_vertical < 135:
@@ -89,26 +99,127 @@ def calc_intersection(terrain_intersection_curves, edges_coords, edges_dir):
     terrain_intersection_curves.PerformNearest(building_line, 0.0, float("+inf"))
     if terrain_intersection_curves.IsDone():
         npts = terrain_intersection_curves.NbPnt()
-        if npts !=0:
+        if npts != 0:
             return terrain_intersection_curves.Pnt(1), terrain_intersection_curves.Face(1)
         else:
             return None, None
     else:
         return None, None
 
+
 def create_windows(surface, wwr, ref_pypt):
     scaler = math.sqrt(wwr)
     return fetch.topo2topotype(modify.uniform_scale(surface, scaler, scaler, scaler, ref_pypt))
+
 
 def create_hollowed_facade(surface_facade, window):
     b_facade_cmpd = fetch.topo2topotype(construct.boolean_difference(surface_facade, window))
     hole_facade = fetch.topo_explorer(b_facade_cmpd, "face")[0]
     hollowed_facade = construct.simple_mesh(hole_facade)
-    #Clean small triangles: this is a despicable source of error
+    # Clean small triangles: this is a despicable source of error
     hollowed_facade_clean = [x for x in hollowed_facade if calculate.face_area(x) > 1E-3]
 
     return hollowed_facade_clean, hole_facade
 
+
+class BuildingDataFinale(object):
+    def __init__(self, district_building_solid_list, architecture_wwr_df):
+        self.point_to_evaluate = ''
+        self.district_building_solid_list = district_building_solid_list
+        self.architecture_wwr_df = architecture_wwr_df
+
+
+class BuildingData(object):
+    def __init__(self, locator, settings, geometry_terrain, height_col, nfloor_col):
+        self.point_to_evaluate = ''
+        self.locator = locator
+        self.height_col = height_col
+        self.nfloor_col = nfloor_col
+        self.settings = settings
+        self.architecture_wwr_df = gdf.from_file(self.locator.get_building_architecture()).set_index('Name')
+
+        self.terrain_intersection_curves = self.terrain_intersection_curves(geometry_terrain)
+
+        self.zone_buildings_df = gdf.from_file(self.locator.get_zone_geometry()).set_index('Name')
+        self.zone_building_names = self.zone_buildings_df.index.values
+        self.zone_building_solid_list = np.vectorize(self.calc_zone_building_solids)(self.zone_building_names)
+
+        self.surroundings_buildings_df = self.surroundings_building_records().set_index('Name')
+        self.surroundings_building_names = self.surroundings_buildings_df.index.values
+        self.surroundings_building_solid_list = np.vectorize(self.calc_surrounding_building_solids)(
+            self.surroundings_building_names)
+
+        self.district_building_names = np.append(self.zone_building_names, self.surroundings_building_names)
+        self.district_building_solid_list = np.append(self.zone_building_solid_list,
+                                                      self.surroundings_building_solid_list)
+
+    def surroundings_building_records(self):
+        surroundings_buildings_df = gdf.from_file(self.locator.get_district_geometry())
+        # clear in case there are repetitive buildings in the zone file
+        surroundings_buildings_df = surroundings_buildings_df.loc[
+            ~surroundings_buildings_df["Name"].isin(self.zone_building_names)]
+        surroundings_buildings_df.reset_index(inplace=True, drop=True)
+
+        return surroundings_buildings_df
+
+    def terrain_intersection_curves(self, geometry_terrain):
+        # make shell out of tin_occface_list and create OCC object
+        terrain_shell = construct.make_shell(geometry_terrain)
+        terrain_intersection_curves = IntCurvesFace_ShapeIntersector()
+        terrain_intersection_curves.Load(terrain_shell, 1e-6)
+        return terrain_intersection_curves
+
+    def calc_zone_building_solids(self, name):
+        height = float(self.zone_buildings_df.loc[name, self.height_col])
+        nfloors = int(self.zone_buildings_df.loc[name, self.nfloor_col])
+
+        # simplify geometry tol =1 for buildings of interest, tol = 5 for surroundings
+        range_floors = range(nfloors + 1)
+        flr2flr_height = height / nfloors
+        geometry = self.zone_buildings_df.ix[name].geometry.simplify(self.settings.zone_geometry,
+                                                                     preserve_topology=True)
+
+        # burn buildings footprint into the terrain and return the location of the new face
+        face_footprint = burn_buildings(geometry, self.terrain_intersection_curves)
+
+        # create floors and form a solid
+        building_solid = calc_solid(face_footprint, range_floors, flr2flr_height)
+
+        return building_solid
+
+    def calc_surrounding_building_solids(self, name):
+        height = float(self.surroundings_buildings_df.loc[name, self.height_col])
+
+        # simplify geometry tol =1 for buildings of interest, tol = 5 for surroundings
+        range_floors = [0, 1]
+        flr2flr_height = height
+        geometry = self.surroundings_buildings_df.ix[name].geometry.simplify(self.settings.surrounding_geometry,
+                                                                             preserve_topology=True)
+
+        # burn buildings footprint into the terrain and return the location of the new face
+        face_footprint = burn_buildings(geometry, self.terrain_intersection_curves)
+
+        # create floors and form a solid
+        building_solid = calc_solid(face_footprint, range_floors, flr2flr_height)
+
+        return building_solid
+
+
+def calc_building_geometry_surroundings(name, building_solid):
+    facade_list, roof_list, footprint_list = urbangeom.identify_building_surfaces(building_solid)
+    geometry_3D_surroundings = {"name": name,
+                                "windows": [],
+                                "walls": facade_list,
+                                "roofs": roof_list,
+                                "footprint": footprint_list,
+                                "orientation_walls": [],
+                                "orientation_windows": [],
+                                "normals_windows": [],
+                                "normals_walls": [],
+                                "intersect_windows": [],
+                                "intersect_walls": []}
+
+    return geometry_3D_surroundings
 
 
 def building_2d_to_3d(locator, geometry_terrain, config, height_col, nfloor_col):
@@ -124,184 +235,125 @@ def building_2d_to_3d(locator, geometry_terrain, config, height_col, nfloor_col)
 
     # settings: parameters that configure the level of simplification of geometry
     settings = config.radiation
-    consider_windows = True #legacy from config file. now it is always true
-    district_shp_path = locator.get_district_geometry()
 
-    # path to zone geometry database
-    zone_shp_path = locator.get_zone_geometry()
+    # preprocess data
+    data_preprocessed = BuildingData(locator, settings, geometry_terrain, height_col, nfloor_col)
+    district_building_solid_list = data_preprocessed.district_building_solid_list
+    surrounding_building_names = data_preprocessed.surroundings_building_names
+    surroundings_building_solid_list = data_preprocessed.surroundings_building_solid_list
+    zone_building_names = data_preprocessed.zone_building_names
+    zone_building_solid_list = data_preprocessed.zone_building_solid_list
+    architecture_wwr_df = data_preprocessed.architecture_wwr_df
 
-    # path to database of architecture properties
-    architecture_dbf_path = locator.get_building_architecture()
-
-    # read district shapefile and names of buildings of the district and the zone of analysis
-    district_building_records = gdf.from_file(district_shp_path)
-    zone_building_records = gdf.from_file(zone_shp_path)
-    zone_building_names = zone_building_records['Name'].values
-
-    #calculate district geometry (These are the surroundings of the zone oif interest and we simplify it to speet up computations)
-    #first make sure that the district file does not contain buildings in the zone, if it does then erase them
-    district_building_records = district_building_records.loc[~district_building_records["Name"].isin(zone_building_names)]
-    district_building_records.reset_index(inplace=True, drop=True)
-
-    #now append to the district building records, those of the zone
-    district_building_records = district_building_records.append(zone_building_records, ignore_index = True)
-    district_building_records.set_index('Name', inplace=True)
-    district_building_names = district_building_records.index.values
-
-    # Read architecture properties
-    architecture_wwr = gdf.from_file(architecture_dbf_path).set_index('Name')
-
-    #make shell out of tin_occface_list and create OCC object
-    terrain_shell = construct.make_shell(geometry_terrain)
-    terrain_intersection_curves = IntCurvesFace_ShapeIntersector()
-    terrain_intersection_curves.Load(terrain_shell, 1e-6)
-
-    #empty list where to store the closed geometries
-    geometry_3D_zone = []
-    geometry_3D_surroundings = []
-
-    building_solid_list = []
-
-    for name in district_building_names:
-        print('Generating geometry for building %(name)s' % locals())
-        height = float(district_building_records.loc[name, height_col])
-        nfloors = int(district_building_records.loc[name, nfloor_col])
-
-        # simplify geometry tol =1 for buildings of interest, tol = 5 for surroundings
-        if (name in zone_building_names) and settings.consider_floors:
-            range_floors = range(nfloors+1)
-            flr2flr_height = height / nfloors
-            geometry = district_building_records.ix[name].geometry.simplify(settings.zone_geometry,
-                                                                            preserve_topology=True)
-        else:
-            range_floors = [0,1]
-            flr2flr_height = height
-            geometry = district_building_records.ix[name].geometry.simplify(settings.surrounding_geometry,
-                                                                            preserve_topology=True)
-
-        # burn buildings footprint into the terrain and return the location of the new face
-        print('burning building', name)
-        face_footprint = burn_buildings(geometry, terrain_intersection_curves)
-
-        # create floors and form a solid
-        building_solid = calc_solid(face_footprint, range_floors, flr2flr_height, config)
-        building_solid_list.append(building_solid)
-
-    for name, building_solid in zip(district_building_names, building_solid_list):
-        # now get all surfaces and create windows only if the buildings are in the area of study
-        window_list =[]
-        wall_list = []
-        orientation = []
-        orientation_win = []
-        normals_walls = []
-        normals_win = []
-        intersect_win = []
-        intersect_wall = []
-        if (name in zone_building_names):
-            # identify building surfaces according to angle:
-            face_list = py3dmodel.fetch.faces_frm_solid(building_solid)
-            facade_list_north, facade_list_west, \
-            facade_list_east, facade_list_south, roof_list, footprint_list = identify_surfaces_type(face_list)
-
-            # get window properties
-            wwr_west = architecture_wwr.ix[name, "wwr_west"]
-            wwr_east = architecture_wwr.ix[name, "wwr_east"]
-            wwr_north = architecture_wwr.ix[name, "wwr_north"]
-            wwr_south = architecture_wwr.ix[name, "wwr_south"]
-
-            window_west,\
-            wall_west,\
-            normals_windows,\
-            normals_walls, \
-            wall_intersects_west,\
-            win_intersects_west = calc_windows_walls(facade_list_west, wwr_west, building_solid_list)
-            if len(window_west) != 0:
-                window_list.extend(window_west)
-                orientation_win.extend(['west'] * len(window_west))
-                normals_win.extend(normals_windows)
-                intersect_win.extend(win_intersects_west)
-            wall_list.extend(wall_west)
-            orientation.extend(['west']*len(wall_west))
-            normals_walls.extend(normals_walls)
-            intersect_wall.extend(wall_intersects_west)
-
-            window_east, \
-            wall_east,\
-            normals_windows_east, \
-            normals_walls_east, \
-            wall_intersects_east,\
-            win_intersects_east  = calc_windows_walls(facade_list_east, wwr_east, building_solid_list)
-            if len(window_east) != 0:
-                window_list.extend(window_east)
-                orientation_win.extend(['east'] * len(window_east))
-                normals_win.extend(normals_windows_east)
-                intersect_win.extend(win_intersects_east)
-            wall_list.extend(wall_east)
-            orientation.extend(['east'] * len(wall_east))
-            normals_walls.extend(normals_walls_east)
-            intersect_wall.extend(wall_intersects_east)
-
-            window_north, \
-            wall_north,\
-            normals_windows_north, \
-            normals_walls_north, \
-            wall_intersects_north, \
-            win_intersects_north  = calc_windows_walls(facade_list_north, wwr_north, building_solid_list)
-            if len(window_north) != 0:
-                window_list.extend(window_north)
-                orientation_win.extend(['north'] * len(window_north))
-                normals_win.extend(normals_windows_north)
-                intersect_win.extend(win_intersects_north)
-            wall_list.extend(wall_north)
-            orientation.extend(['north'] * len(wall_north))
-            normals_walls.extend(normals_walls_north)
-            intersect_wall.extend(wall_intersects_north)
-
-            window_south,\
-            wall_south, \
-            normals_windows_south,\
-            normals_walls_south,\
-            wall_intersects_south, \
-            win_intersects_south  = calc_windows_walls(facade_list_south, wwr_south, building_solid_list)
-            if len(window_south) != 0:
-                window_list.extend(window_south)
-                orientation_win.extend(['south'] * len(window_south))
-                normals_win.extend(normals_windows_south)
-                intersect_win.extend(win_intersects_south)
-            wall_list.extend(wall_south)
-            orientation.extend(['south'] * len(wall_south))
-            normals_walls.extend(normals_walls_south)
-            intersect_wall.extend(wall_intersects_south)
+    # calculate geometry for the surroundings
+    print('Generating geometry for surrounding buildings')
+    geometry_3D_surroundings = [calc_building_geometry_surroundings(x,y) for x,y in zip(surrounding_building_names, surroundings_building_solid_list)]
 
 
-            geometry_3D_zone.append({"name": name, "windows": window_list, "walls": wall_list, "roofs": roof_list,
-                                     "footprint": footprint_list, "orientation_walls":orientation, "orientation_windows":orientation_win,
-                                     "normals_windows":normals_win, "normals_walls": normals_walls,
-                                     "intersect_windows": intersect_win, "intersect_walls": intersect_wall})
+    # calculate geometry for the zone of analysis
+    print('Generating geometry for buildings in the zone of analysis')
+    data_preprocessed = BuildingDataFinale(district_building_solid_list, architecture_wwr_df)
+    n = len(zone_building_names)
+    calc_zone_geometry_multiprocessing = cea.utilities.parallel.vectorize(calc_building_geometry_zone,
+                                                                          config.get_number_of_processes(),
+                                                                          on_complete=print_progress)
 
-            if config.general.debug:
-                # visualize building progress while debugging
-                edges1 = calculate.face_normal_as_edges(wall_list,5)
-                edges2 = calculate.face_normal_as_edges(roof_list, 5)
-                edges3 = calculate.face_normal_as_edges(footprint_list, 5)
-                utility.visualise([wall_list, roof_list, footprint_list, edges1, edges2, edges3],
-                                  ["WHITE", "WHITE", "WHITE", "BLACK", "BLACK", "BLACK"])
-        else:
-            facade_list, roof_list, footprint_list = urbangeom.identify_building_surfaces(building_solid)
-            wall_list = facade_list
-            geometry_3D_surroundings.append({"name": name, "windows": window_list, "walls": wall_list, "roofs": roof_list,
-                                 "footprint": footprint_list, "orientation_walls":orientation, "orientation_windows":orientation_win,
-                                  "normals_windows":normals_win, "normals_walls": normals_walls,
-                                 "intersect_windows": intersect_win, "intersect_walls": intersect_wall})
+    geometry_3D_zone = calc_zone_geometry_multiprocessing(zone_building_names,
+                                                          zone_building_solid_list,
+                                                          [data_preprocessed for x in range(n)])
+    return geometry_3D_zone, geometry_3D_surroundings
 
-            if config.general.debug:
-                # visualize building progress while debugging
-                edges1 = calculate.face_normal_as_edges(wall_list,5)
-                edges2 = calculate.face_normal_as_edges(roof_list, 5)
-                edges3 = calculate.face_normal_as_edges(footprint_list, 5)
-                utility.visualise([wall_list, roof_list, footprint_list, edges1, edges2, edges3],
-                                  ["WHITE", "WHITE", "WHITE", "BLACK", "BLACK", "BLACK"])
-    return geometry_3D_zone, geometry_3D_surroundings, building_solid_list
+
+def print_progress(i, n, args, result):
+    print(
+        "Generating geometry for building {i} completed out of {n}: {building}".format(i=i + 1, n=n, building=args[0]))
+
+
+def calc_building_geometry_zone(name, building_solid, data_preprocessed):
+    # now get all surfaces and create windows only if the buildings are in the area of study
+    window_list = []
+    wall_list = []
+    orientation = []
+    orientation_win = []
+    normals_walls = []
+    normals_win = []
+    intersect_wall = []
+
+    blockPrint()  # disable annoying printing of Python OCC
+    # identify building surfaces according to angle:
+    face_list = py3dmodel.fetch.faces_frm_solid(building_solid)
+    facade_list_north, facade_list_west, \
+    facade_list_east, facade_list_south, roof_list, footprint_list = identify_surfaces_type(face_list)
+
+    # get window properties
+    wwr_west = data_preprocessed.architecture_wwr_df.ix[name, "wwr_west"]
+    wwr_east = data_preprocessed.architecture_wwr_df.ix[name, "wwr_east"]
+    wwr_north = data_preprocessed.architecture_wwr_df.ix[name, "wwr_north"]
+    wwr_south = data_preprocessed.architecture_wwr_df.ix[name, "wwr_south"]
+
+    window_west, \
+    wall_west, \
+    normals_windows_west, \
+    normals_walls_west, \
+    wall_intersects_west= calc_windows_walls(facade_list_west, wwr_west, data_preprocessed)
+    if len(window_west) != 0:
+        window_list.extend(window_west)
+        orientation_win.extend(['west'] * len(window_west))
+        normals_win.extend(normals_windows_west)
+    wall_list.extend(wall_west)
+    orientation.extend(['west'] * len(wall_west))
+    normals_walls.extend(normals_walls_west)
+    intersect_wall.extend(wall_intersects_west)
+
+    window_east, \
+    wall_east, \
+    normals_windows_east, \
+    normals_walls_east, \
+    wall_intersects_east = calc_windows_walls(facade_list_east, wwr_east, data_preprocessed)
+    if len(window_east) != 0:
+        window_list.extend(window_east)
+        orientation_win.extend(['east'] * len(window_east))
+        normals_win.extend(normals_windows_east)
+    wall_list.extend(wall_east)
+    orientation.extend(['east'] * len(wall_east))
+    normals_walls.extend(normals_walls_east)
+    intersect_wall.extend(wall_intersects_east)
+
+    window_north, \
+    wall_north, \
+    normals_windows_north, \
+    normals_walls_north, \
+    wall_intersects_north = calc_windows_walls(facade_list_north, wwr_north, data_preprocessed)
+    if len(window_north) != 0:
+        window_list.extend(window_north)
+        orientation_win.extend(['north'] * len(window_north))
+        normals_win.extend(normals_windows_north)
+    wall_list.extend(wall_north)
+    orientation.extend(['north'] * len(wall_north))
+    normals_walls.extend(normals_walls_north)
+    intersect_wall.extend(wall_intersects_north)
+
+    window_south, \
+    wall_south, \
+    normals_windows_south, \
+    normals_walls_south, \
+    wall_intersects_south= calc_windows_walls(facade_list_south, wwr_south, data_preprocessed)
+    if len(window_south) != 0:
+        window_list.extend(window_south)
+        orientation_win.extend(['south'] * len(window_south))
+        normals_win.extend(normals_windows_south)
+    wall_list.extend(wall_south)
+    orientation.extend(['south'] * len(wall_south))
+    normals_walls.extend(normals_walls_south)
+    intersect_wall.extend(wall_intersects_south)
+
+    geometry_3D_zone = {"name": name, "windows": window_list, "walls": wall_list, "roofs": roof_list,
+                        "footprint": footprint_list, "orientation_walls": orientation,
+                        "orientation_windows": orientation_win,
+                        "normals_windows": normals_win, "normals_walls": normals_walls,
+                        "intersect_walls": intersect_wall}
+
+    return geometry_3D_zone
 
 
 def burn_buildings(geometry, terrain_intersection_curves):
@@ -329,8 +381,7 @@ def burn_buildings(geometry, terrain_intersection_curves):
     return face
 
 
-def calc_solid(face_footprint, range_floors, flr2flr_height, config):
-
+def calc_solid(face_footprint, range_floors, flr2flr_height):
     # create faces for every floor and extrude the solid
     moved_face_list = []
     for floor_counter in range_floors:
@@ -365,52 +416,63 @@ def calc_solid(face_footprint, range_floors, flr2flr_height, config):
     #     utility.visualise([face_list,edges],["WHITE","BLACK"])
     return bldg_solid
 
-def calc_windows_walls(facade_list, wwr, building_solid_list):
+
+def calc_windows_walls(facade_list, wwr, data_processed):
     window_list = []
     wall_list = []
     normals_win = []
     normals_wall = []
-    win_intersects = []
     wall_intersects = []
     for surface_facade in facade_list:
+        # get coordinates of surface
         ref_pypt = calculate.face_midpt(surface_facade)
-        standard_normal = py3dmodel.calculate.face_normal(surface_facade) # to avoid problems with fuzzy normals
-        location_pt = py3dmodel.modify.move_pt(ref_pypt, standard_normal, 0.01)
-        intersects = calc_intersection_face_solid(location_pt, building_solid_list) #flag weather it intersects a surrounding geometry
-        # offset the facade to create a window according to the wwr
-        if 0.0 < wwr < 1.0:
-            # for window
-            window = create_windows(surface_facade, wwr, ref_pypt)
-            win_intersects.append(intersects)
-            window_list.append(window)
-            normals_win.append(standard_normal)
-            # for walls
-            hollowed_facade, hole_facade = create_hollowed_facade(surface_facade, window)  # accounts for hole created by window
-            wall_intersects.extend([intersects]*len(hollowed_facade))
-            wall_list.extend(hollowed_facade)
-            normals_wall.extend([standard_normal]*len(hollowed_facade))
+        standard_normal = py3dmodel.calculate.face_normal(surface_facade)  # to avoid problems with fuzzy normals
 
-        elif wwr == 1.0:
-            window_list.append(surface_facade)
-            normals_win.append(standard_normal)
-            win_intersects.append(intersects)
-        else:
+        # evaluate if the surface intersects any other solid (important to erase non-active surfaces in the building simulation model)
+        data_processed.point_to_evaluate = py3dmodel.modify.move_pt(ref_pypt, standard_normal, 0.1) # tol of 10cm
+        range_of_district_building_solid_list = range(len(data_processed.district_building_solid_list))
+        intersects = np.vectorize(calc_intersection_face_solid)(range_of_district_building_solid_list,
+                                                                data_processed)  # flag weather it intersects a surrounding geometry
+        intersects = sum(intersects)
+
+        if intersects > 0:  # the face intersects so it is a wall
             wall_list.append(surface_facade)
             normals_wall.append(standard_normal)
-            wall_intersects.append(intersects)
+            wall_intersects.append(1)
+        else:
+            # offset the facade to create a window according to the wwr
+            if 0.0 < wwr < 1.0:
+                # for window
+                window = create_windows(surface_facade, wwr, ref_pypt)
+                window_list.append(window)
+                normals_win.append(standard_normal)
+                # for walls
+                hollowed_facade, hole_facade = create_hollowed_facade(surface_facade,
+                                                                      window)  # accounts for hole created by window
+                wall_intersects.extend([intersects] * len(hollowed_facade))
+                wall_list.extend(hollowed_facade)
+                normals_wall.extend([standard_normal] * len(hollowed_facade))
 
-    return window_list, wall_list, normals_win, normals_wall, wall_intersects, win_intersects
+            elif wwr == 1.0:
+                window_list.append(surface_facade)
+                normals_win.append(standard_normal)
+            else:
+                wall_list.append(surface_facade)
+                normals_wall.append(standard_normal)
+                wall_intersects.append(intersects)
 
-def calc_intersection_face_solid(sensor_cord, building_solid_list):
-    intersects = 0
-    for solid in building_solid_list:
-        instersection = calculate.point_in_solid(sensor_cord, solid)
-        if instersection:
-            intersects += 1
+    return window_list, wall_list, normals_win, normals_wall, wall_intersects
+
+
+def calc_intersection_face_solid(index, data_processed):
+    if calculate.point_in_solid(data_processed.point_to_evaluate, data_processed.district_building_solid_list[index]):
+        intersects = 1
+    else:
+        intersects = 0
     return intersects
 
-def raster_to_tin(input_terrain_raster):
 
+def raster_to_tin(input_terrain_raster):
     # read raster records
     raster_dataset = gdal.Open(input_terrain_raster)
     band = raster_dataset.GetRasterBand(1)
@@ -433,17 +495,18 @@ def raster_to_tin(input_terrain_raster):
 
     return elevation_mean, tin_occface_list
 
-def geometry_main(locator, config):
 
+def geometry_main(locator, config):
     # list of faces of terrain
     print("Reading terrain geometry")
     elevation_mean, geometry_terrain = raster_to_tin(locator.get_terrain())
     # transform buildings 2D to 3D and add windows
     print("Creating 3D building surfaces")
-    geometry_3D_zone, geometry_3D_surroundings, building_solid_list = building_2d_to_3d(locator, geometry_terrain, config,
-                                                                                         height_col='height_ag', nfloor_col="floors_ag")
+    geometry_3D_zone, geometry_3D_surroundings = building_2d_to_3d(locator, geometry_terrain, config,
+                                                               height_col='height_ag', nfloor_col="floors_ag")
 
-    return elevation_mean, geometry_terrain, geometry_3D_zone, geometry_3D_surroundings, building_solid_list
+    return elevation_mean, geometry_terrain, geometry_3D_zone, geometry_3D_surroundings
+
 
 if __name__ == '__main__':
     config = cea.config.Configuration()
@@ -452,16 +515,17 @@ if __name__ == '__main__':
 
     # run routine City GML LOD 1
     time1 = time.time()
-    elevation_mean, geometry_terrain, geometry_3D_zone, geometry_3D_surroundings, building_solid_list = geometry_main(locator, config)
+    elevation_mean, geometry_terrain, geometry_3D_zone, geometry_3D_surroundings = geometry_main(locator, config)
 
     # to visualize the results
     geometry_buildings = []
     geometry_buildings_nonop = []
+    walls_intercept = [val for sublist in geometry_3D_zone for val, inter in zip(sublist['walls'], sublist['intersect_walls']) if inter > 0]
     windows = [val for sublist in geometry_3D_zone for val in sublist['windows']]
     walls = [val for sublist in geometry_3D_zone for val in sublist['walls']]
     roofs = [val for sublist in geometry_3D_zone for val in sublist['roofs']]
     footprint = [val for sublist in geometry_3D_zone for val in sublist['footprint']]
-    walls_s = [val for sublist in geometry_3D_surroundings  for val in sublist['walls']]
+    walls_s = [val for sublist in geometry_3D_surroundings for val in sublist['walls']]
     windows_s = [val for sublist in geometry_3D_surroundings for val in sublist['windows']]
     roof_s = [val for sublist in geometry_3D_surroundings for val in sublist['roofs']]
 
@@ -474,8 +538,7 @@ if __name__ == '__main__':
     geometry_buildings.extend(roof_s)
 
     if config.general.debug:
-        normals_terrain = calculate.face_normal_as_edges(geometry_terrain,5)
-    utility.visualise([geometry_terrain, geometry_buildings, geometry_buildings_nonop], ["GREEN","WHITE", "BLUE"]) #install Wxpython
-
-
+        normals_terrain = calculate.face_normal_as_edges(geometry_terrain, 5)
+    utility.visualise([geometry_terrain, geometry_buildings, geometry_buildings_nonop, walls_intercept],
+                      ["GREEN", "WHITE", "BLUE", "RED"])  # install Wxpython
 
