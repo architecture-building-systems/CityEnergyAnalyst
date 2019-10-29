@@ -7,6 +7,7 @@ from __future__ import division
 import os
 import pandas as pd
 import time
+from cea.utilities import epwreader
 import math
 from cea.resources.radiation_daysim import daysim_main, geometry_generator
 import py4design.py3dmodel.fetch as fetch
@@ -160,6 +161,12 @@ def reader_surface_properties(locator, input_shp):
 
 
 def radiation_singleprocessing(rad, geometry_3D_zone, locator, settings):
+
+    weather_path = locator.get_weather_file()
+    # check inconsistencies and replace by max value of weather file
+    weatherfile = epwreader.epw_reader(weather_path)['glohorrad_Whm2'].values
+    max_global = weatherfile.max()
+
     if settings.buildings == []:
         # get chunks of buildings to iterate
         chunks = [geometry_3D_zone[i:i + settings.n_buildings_in_chunk] for i in
@@ -173,7 +180,7 @@ def radiation_singleprocessing(rad, geometry_3D_zone, locator, settings):
                 chunks.append([bldg_dict])
 
     for chunk_n, building_dict in enumerate(chunks):
-        daysim_main.isolation_daysim(chunk_n, rad, building_dict, locator, settings)
+        daysim_main.isolation_daysim(chunk_n, rad, building_dict, locator, settings, max_global)
 
 
 def main(config):
