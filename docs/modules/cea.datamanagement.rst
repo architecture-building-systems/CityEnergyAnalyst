@@ -41,6 +41,14 @@ cea.datamanagement.district\_geometry\_helper module
     :undoc-members:
     :show-inheritance:
 
+cea.datamanagement.schedule\_helper module
+------------------------------------------
+
+.. automodule:: cea.datamanagement.schedule_helper
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cea.datamanagement.streets\_helper module
 -----------------------------------------
 

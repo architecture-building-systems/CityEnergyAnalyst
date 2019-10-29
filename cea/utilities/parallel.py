@@ -50,7 +50,8 @@ def vectorize(func, processes=1, on_complete=None):
     .. note: due to the way multiprocessing works, ``func`` and ``on_complete`` need to be module-level functions
 
     .. note: the if processes > 1, then the first argument to the vectorized ``func`` will be converted to a list before
-    running. This should not have any side effects, but is necessary if the args are constructed with ``itertools.repeat``.
+        running. This should not have any side effects, but is necessary if the args are constructed with
+        ``itertools.repeat``.
 
     :param func: The function to vectorize
     :param int processes: The number of processes to use (use ``config.get_number_of_processes()``)
