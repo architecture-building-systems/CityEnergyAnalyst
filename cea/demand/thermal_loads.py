@@ -7,6 +7,7 @@ from __future__ import division
 import numpy as np
 from cea.constants import HOURS_IN_YEAR
 import pandas as pd
+from cea.demand.latent_loads import convert_rh_to_moisture_content
 from cea.demand import demand_writers
 from cea.demand import latent_loads
 from cea.demand import hourly_procedure_heating_cooling_system_load, ventilation_air_flows_simple
@@ -84,6 +85,8 @@ def calc_thermal_loads(building_name, bpr, weather_data, date_range, locator,
         tsd['E_cre'] = np.zeros(HOURS_IN_YEAR)
 
     if np.isclose(bpr.rc_model['Af'], 0.0):  # if building does not have conditioned area
+        tsd['T_int'] = tsd['T_ext']
+        tsd['x_int'] = np.vectorize(convert_rh_to_moisture_content)(tsd['rh_ext'] , tsd['T_int'])
         print("this building does not have an air-conditioned area")
     else:
 
