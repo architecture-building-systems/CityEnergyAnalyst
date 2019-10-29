@@ -113,6 +113,16 @@ def calc_Ef(bpr, tsd):
             raise Exception('check potential error in input database of LCA infrastructure / ELECTRICITY')
     elif scale_technology == "NONE":
         tsd['GRID'] = np.zeros(HOURS_IN_YEAR)
+        tsd['GRID_a'] = np.zeros(HOURS_IN_YEAR)
+        tsd['GRID_l'] = np.zeros(HOURS_IN_YEAR)
+        tsd['GRID_data'] = np.zeros(HOURS_IN_YEAR)
+        tsd['GRID_pro'] = np.zeros(HOURS_IN_YEAR)
+        tsd['GRID_aux'] = np.zeros(HOURS_IN_YEAR)
+        tsd['GRID_ww'] = np.zeros(HOURS_IN_YEAR)
+        tsd['GRID_cs'] = np.zeros(HOURS_IN_YEAR)
+        tsd['GRID_hs'] = np.zeros(HOURS_IN_YEAR)
+        tsd['GRID_cdata'] = np.zeros(HOURS_IN_YEAR)
+        tsd['GRID_cre'] = np.zeros(HOURS_IN_YEAR)
         tsd['PV'] = np.zeros(HOURS_IN_YEAR)
     else:
         raise Exception('check potential error in input database of LCA infrastructure / ELECTRICITY')
