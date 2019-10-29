@@ -142,6 +142,7 @@ def calc_schedules(locator,
             for occupant in range(number_of_occupants):
                 final_schedule['Occ_m2pax'] += calc_individual_occupant_schedule(yearly_array)
         else:
+            number_of_occupants = 0
             final_schedule['Occ_m2pax'] = np.round(yearly_array * number_of_occupants)
     else:
         final_schedule['Occ_m2pax'] = np.zeros(HOURS_IN_YEAR)
