@@ -9,8 +9,6 @@ import py4design.py2radiance as py2radiance
 import py4design.py3dmodel.calculate as calculate
 from py4design import py3dmodel
 
-from cea.utilities import epwreader
-
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Jimeno A. Fonseca", "Kian Wee Chen"]
@@ -152,8 +150,8 @@ def calc_sensors_zone(geometry_3D_zone, locator, settings):
     return sensors_coords_zone, sensors_dir_zone, sensors_total_number_list, names_zone, sensors_code_zone, sensor_intersection_zone
 
 
-def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, settings):
-    weather_path = locator.get_weather_file()
+def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, settings, max_global):
+
     # folder for data work
     daysim_dir = locator.get_temporary_file("temp" + str(chunk_n))
     print('isolation_daysim: daysim_dir={daysim_dir}'.format(daysim_dir=daysim_dir))
@@ -189,7 +187,7 @@ def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, settings):
 
     # add_elevation_weather_file(weather_path)
     print('Executing epw2wea')
-    rad.execute_epw2wea(weather_path, ground_reflectance=settings.albedo)
+    rad.execute_epw2wea(locator.get_weather_file(), ground_reflectance=settings.albedo)
     print('Executing radfiles2daysim')
     rad.execute_radfiles2daysim()
     print('Writing radiance parameters')
@@ -208,9 +206,6 @@ def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, settings):
     shutil.rmtree(daysim_dir)
 
     # check inconsistencies and replace by max value of weather file
-    # check inconsistencies and replace by max value of weather file
-    weatherfile = epwreader.epw_reader(weather_path)['glohorrad_Whm2'].values
-    max_global = weatherfile.max()
     for i, value in enumerate(solar_res):
         solar_res[i] = [0 if x > max_global else x for x in value]
 
@@ -224,7 +219,7 @@ def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, settings):
                                             sensors_code_zone,
                                             sensor_intersection_zone):
 
-        selection_of_results = solar_res[index:index + sensors_number_building] * (1 - sensor_intersection_building)
+        selection_of_results = solar_res[index:index + sensors_number_building] * (1.0 - sensor_intersection_building)
         items_sensor_name_and_result = dict(zip(sensor_code_building, selection_of_results))
         with open(locator.get_radiation_building(building_name), 'w') as outfile:
             json.dump(items_sensor_name_and_result, outfile)

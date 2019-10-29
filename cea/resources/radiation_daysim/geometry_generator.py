@@ -517,10 +517,12 @@ if __name__ == '__main__':
     time1 = time.time()
     elevation_mean, geometry_terrain, geometry_3D_zone, geometry_3D_surroundings = geometry_main(locator, config)
 
+
     # to visualize the results
     geometry_buildings = []
     geometry_buildings_nonop = []
-    walls_intercept = [val for sublist in geometry_3D_zone for val, inter in zip(sublist['walls'], sublist['intersect_walls']) if inter > 0]
+    walls_intercept = [val for sublist in geometry_3D_zone for val, inter in
+                       zip(sublist['walls'], sublist['intersect_walls']) if inter > 0]
     windows = [val for sublist in geometry_3D_zone for val in sublist['windows']]
     walls = [val for sublist in geometry_3D_zone for val in sublist['walls']]
     roofs = [val for sublist in geometry_3D_zone for val in sublist['roofs']]
@@ -536,9 +538,7 @@ if __name__ == '__main__':
     geometry_buildings.extend(walls_s)
     geometry_buildings_nonop.extend(windows_s)
     geometry_buildings.extend(roof_s)
-
-    if config.general.debug:
-        normals_terrain = calculate.face_normal_as_edges(geometry_terrain, 5)
+    normals_terrain = calculate.face_normal_as_edges(geometry_terrain, 5)
     utility.visualise([geometry_terrain, geometry_buildings, geometry_buildings_nonop, walls_intercept],
                       ["GREEN", "WHITE", "BLUE", "RED"])  # install Wxpython
 
