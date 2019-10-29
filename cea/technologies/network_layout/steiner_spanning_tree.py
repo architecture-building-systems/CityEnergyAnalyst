@@ -35,22 +35,22 @@ def calc_steiner_spanning_tree(crs_projected, input_network_shp, output_network_
     present form.
 
     :param str crs_projected: e.g. "+proj=utm +zone=48N +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
-    :param str input_network_shp: e.g. "%TEMP%\potential_network.shp"
-    :param str output_network_folder: "{general:scenario}\inputs\networks\DC"
-    :param str building_nodes_shp: e.g. "%TEMP%\nodes_buildings.shp"
-    :param str output_edges: "{general:scenario}\inputs\networks\DC\edges.shp"
-    :param str output_nodes: "{general:scenario}\inputs\networks\DC\nodes.shp"
+    :param str input_network_shp: e.g. "TEMP/potential_network.shp"
+    :param str output_network_folder: "{general:scenario}/inputs/networks/DC"
+    :param str building_nodes_shp: e.g. "%TEMP%/nodes_buildings.shp"
+    :param str output_edges: "{general:scenario}/inputs/networks/DC/edges.shp"
+    :param str output_nodes: "{general:scenario}/inputs/networks/DC/nodes.shp"
     :param str weight_field: e.g. "Shape_Leng"
     :param str type_mat_default: e.g. "T1"
     :param float pipe_diameter_default: e.g. 150
     :param str type_network: "DC" or "DH"
-    :param str total_demand_location: "{general:scenario}\outputs\data\demand\Total_demand.csv"
+    :param str total_demand_location: "{general:scenario}/outputs/data/demand/Total_demand.csv"
     :param bool create_plant: e.g. True
     :param bool allow_looped_networks:
     :param bool optimization_flag:
     :param List[str] plant_building_names: e.g. ``['B001']``
     :param List[str] disconnected_building_names: e.g. ``['B002', 'B010', 'B004', 'B005', 'B009']``
-    :return: ``(mst_edges, new_mst_nodes)``s
+    :return: ``(mst_edges, new_mst_nodes)``
     """
     # read shapefile into networkx format into a directed graph, this is the potential network
     graph = nx.read_shp(input_network_shp)

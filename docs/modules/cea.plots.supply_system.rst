@@ -9,6 +9,14 @@ cea.plots.supply\_system package
 Submodules
 ----------
 
+cea.plots.supply\_system.dispatch\_curve\_cooling\_plant module
+---------------------------------------------------------------
+
+.. automodule:: cea.plots.supply_system.dispatch_curve_cooling_plant
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cea.plots.supply\_system.dispatch\_curve\_electricity module
 ------------------------------------------------------------
 
@@ -17,10 +25,10 @@ cea.plots.supply\_system.dispatch\_curve\_electricity module
     :undoc-members:
     :show-inheritance:
 
-cea.plots.supply\_system.dispatch\_curve\_heating module
---------------------------------------------------------
+cea.plots.supply\_system.dispatch\_curve\_heating\_plant module
+---------------------------------------------------------------
 
-.. automodule:: cea.plots.supply_system.dispatch_curve_heating
+.. automodule:: cea.plots.supply_system.dispatch_curve_heating_plant
     :members:
     :undoc-members:
     :show-inheritance:
