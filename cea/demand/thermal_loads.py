@@ -7,6 +7,7 @@ from __future__ import division
 import numpy as np
 from cea.constants import HOURS_IN_YEAR
 import pandas as pd
+from cea.demand.latent_loads import convert_rh_to_moisture_content
 from cea.demand import demand_writers
 from cea.demand import latent_loads
 from cea.demand import hourly_procedure_heating_cooling_system_load, ventilation_air_flows_simple
@@ -84,8 +85,9 @@ def calc_thermal_loads(building_name, bpr, weather_data, date_range, locator,
         tsd['E_cre'] = np.zeros(HOURS_IN_YEAR)
 
     if np.isclose(bpr.rc_model['Af'], 0.0):  # if building does not have conditioned area
-        # UPDATE ALL VALUES TO 0
-        tsd = update_timestep_data_no_conditioned_area(tsd)
+        tsd['T_int'] = tsd['T_ext']
+        tsd['x_int'] = np.vectorize(convert_rh_to_moisture_content)(tsd['rh_ext'] , tsd['T_int'])
+        print("this building does not have an air-conditioned area")
     else:
 
         #CALCULATE PROCESS HEATING
@@ -125,23 +127,23 @@ def calc_thermal_loads(building_name, bpr, weather_data, date_range, locator,
         tsd['Qcre_sys'] = abs(tsd['Qcre_sys'])  # inverting sign of cooling loads for reporting and graphs
         tsd['Qcdata_sys'] = abs(tsd['Qcdata_sys'])  # inverting sign of cooling loads for reporting and graphs
 
-        # CALCULATE HOT WATER LOADS
-        if hotwater_loads.has_hot_water_technical_system(bpr):
-            tsd = electrical_loads.calc_Eaux_fw(tsd, bpr, schedules)
-            tsd = hotwater_loads.calc_Qww(bpr, tsd, schedules)  # end-use
-            tsd = hotwater_loads.calc_Qww_sys(bpr, tsd)  # system (incl. losses)
-            tsd = electrical_loads.calc_Eaux_ww(tsd, bpr)  # calc auxiliary loads
-            tsd = hotwater_loads.calc_Qwwf(bpr, tsd)  # final
-        else:
-            tsd = electrical_loads.calc_Eaux_fw(tsd, bpr, schedules)
-            tsd['Qww'] = tsd['DH_ww'] = tsd['Qww_sys'] = np.zeros(HOURS_IN_YEAR)
-            tsd['mcpww_sys'] = tsd['Tww_sys_re'] = tsd['Tww_sys_sup'] = np.zeros(HOURS_IN_YEAR)
-            tsd['Eaux_ww'] = tsd['SOLAR_ww'] = np.zeros(HOURS_IN_YEAR)
-            tsd['NG_ww'] = tsd['COAL_ww'] = tsd['OIL_ww'] = tsd['WOOD_ww'] = np.zeros(HOURS_IN_YEAR)
-            tsd['E_ww'] = np.zeros(HOURS_IN_YEAR)
+    # CALCULATE HOT WATER LOADS
+    if hotwater_loads.has_hot_water_technical_system(bpr):
+        tsd = electrical_loads.calc_Eaux_fw(tsd, bpr, schedules)
+        tsd = hotwater_loads.calc_Qww(bpr, tsd, schedules)  # end-use
+        tsd = hotwater_loads.calc_Qww_sys(bpr, tsd)  # system (incl. losses)
+        tsd = electrical_loads.calc_Eaux_ww(tsd, bpr)  # calc auxiliary loads
+        tsd = hotwater_loads.calc_Qwwf(bpr, tsd)  # final
+    else:
+        tsd = electrical_loads.calc_Eaux_fw(tsd, bpr, schedules)
+        tsd['Qww'] = tsd['DH_ww'] = tsd['Qww_sys'] = np.zeros(HOURS_IN_YEAR)
+        tsd['mcpww_sys'] = tsd['Tww_sys_re'] = tsd['Tww_sys_sup'] = np.zeros(HOURS_IN_YEAR)
+        tsd['Eaux_ww'] = tsd['SOLAR_ww'] = np.zeros(HOURS_IN_YEAR)
+        tsd['NG_ww'] = tsd['COAL_ww'] = tsd['OIL_ww'] = tsd['WOOD_ww'] = np.zeros(HOURS_IN_YEAR)
+        tsd['E_ww'] = np.zeros(HOURS_IN_YEAR)
 
-        # CALCULATE SUM OF HEATING AND COOLING LOADS
-        tsd = calc_QH_sys_QC_sys(tsd)  # aggregated cooling and heating loads
+    # CALCULATE SUM OF HEATING AND COOLING LOADS
+    tsd = calc_QH_sys_QC_sys(tsd)  # aggregated cooling and heating loads
 
     # CALCULATE ELECTRICITY LOADS PART 2/2 AUXILIARY LOADS + ENERGY GENERATION
     tsd = electrical_loads.calc_Eaux(tsd)  # auxiliary totals
@@ -390,7 +392,7 @@ def initialize_inputs(bpr, weather_data, locator):
     tsd = initialize_timestep_data(bpr, weather_data)
 
     # get occupancy file
-    occupancy_yearly_schedules = pd.read_csv(locator.get_occupancy_model_file(building_name))
+    occupancy_yearly_schedules = pd.read_csv(locator.get_schedule_model_file(building_name))
 
     tsd['people'] = occupancy_yearly_schedules['people_pax']
     tsd['ve'] = occupancy_yearly_schedules['Ve_lps'] * 3.6 #m3/h
@@ -528,13 +530,23 @@ def update_timestep_data_no_conditioned_area(tsd):
     :return: update tsd
     """
 
-    zero_fields = ['Qhs_lat_sys', 'Qhs_sen_sys',
-                   'Qcs_lat_sys', 'Qcs_sen_sys',
-                   'Qhs_sen', 'Qcs_sen', 'x_int',
-                   'Qhs_em_ls', 'Qcs_em_ls', 'Qhpro_sys', 'Qcpro_sys',
-                   'ma_sup_hs', 'ma_sup_cs',
-                   'Ta_sup_hs', 'Ta_re_hs',
-                   'Ta_sup_cs', 'Ta_re_cs',
+    zero_fields = ['Qhs_lat_sys',
+                   'Qhs_sen_sys',
+                   'Qcs_lat_sys',
+                   'Qcs_sen_sys',
+                   'Qhs_sen',
+                   'Qcs_sen',
+                   'x_int',
+                   'Qhs_em_ls',
+                   'Qcs_em_ls',
+                   'Qhpro_sys',
+                   'Qcpro_sys',
+                   'ma_sup_hs',
+                   'ma_sup_cs',
+                   'Ta_sup_hs',
+                   'Ta_re_hs',
+                   'Ta_sup_cs',
+                   'Ta_re_cs',
                    'NG_hs',
                    'COAL_hs',
                    'OIL_hs',
@@ -542,18 +554,10 @@ def update_timestep_data_no_conditioned_area(tsd):
                    'NG_ww',
                    'COAL_ww',
                    'OIL_ww',
-                   'GRID_a',
-                   'GRID_l',
-                   'GRID_data',
-                   'GRID_pro',
-                   'GRID_aux',
-                   'GRID_ww',
-                   'GRID_hs',
-                   'GRID_cs',
-                   'GRID_cdata',
-                   'GRID_cre',
-                   'WOOD_ww', 'vfw_m3perh',
-                   'SOLAR_hs', 'DH_hs', 'Qhs_sys', 'Qhs',
+                   'WOOD_ww',
+                   'vfw_m3perh',
+                   'SOLAR_hs',
+                   'DH_hs', 'Qhs_sys', 'Qhs',
                    'SOLAR_ww', 'DH_ww', 'Qww_sys', 'Qww',
                    'DC_cs', 'DC_cs_lat', 'Qcs_sys', 'Qcs',
                    'DC_cdata', 'Qcdata_sys', 'Qcdata',
