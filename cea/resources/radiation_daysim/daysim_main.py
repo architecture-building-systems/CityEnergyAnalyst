@@ -8,6 +8,7 @@ import pandas as pd
 import py4design.py2radiance as py2radiance
 import py4design.py3dmodel.calculate as calculate
 from py4design import py3dmodel
+import numpy as np
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -128,7 +129,9 @@ def calc_sensors_zone(geometry_3D_zone, locator, settings):
         # get the total list of coordinates and directions to send to daysim
         sensors_coords_zone.extend(sensors_coords_building)
         sensors_dir_zone.extend(sensors_dir_building)
-        sensor_intersection_zone.extend(sensor_intersection_building)
+
+        #get total list of intersections
+        sensor_intersection_zone.append(sensor_intersection_building)
 
         # get the name of all buildings
         names_zone.append(building_name)
@@ -167,6 +170,7 @@ def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, settings, max_glob
 
     # calculate sensors
     print("Calculating and sending sensor points")
+
     sensors_coords_zone, \
     sensors_dir_zone, \
     sensors_number_zone, \
@@ -186,28 +190,22 @@ def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, settings, max_glob
                          'Just reduce the number of buildings per chunk and try again')
 
     # add_elevation_weather_file(weather_path)
-    print('Executing epw2wea')
+    print('Transforming weather files to daysim format')
     rad.execute_epw2wea(locator.get_weather_file(), ground_reflectance=settings.albedo)
-    print('Executing radfiles2daysim')
+    print('Transforming radiance files to daysim format')
     rad.execute_radfiles2daysim()
     print('Writing radiance parameters')
     rad.write_radiance_parameters(settings.rad_ab, settings.rad_ad, settings.rad_as, settings.rad_ar, settings.rad_aa,
                                   settings.rad_lr, settings.rad_st, settings.rad_sj, settings.rad_lw, settings.rad_dj,
                                   settings.rad_ds, settings.rad_dr, settings.rad_dp)
-    print('Executing gen_dc')
+    print('Executing hourly solar isolation calculation')
     rad.execute_gen_dc("w/m2")
-    print('Executing ds_illum')
     rad.execute_ds_illum()
-    print('Evaluating illumination per sensor')
     solar_res = rad.eval_ill_per_sensor()
 
-    # erase daysim folder to avoid conflicts after every iteration
-    print('Removing results folder')
-    shutil.rmtree(daysim_dir)
-
     # check inconsistencies and replace by max value of weather file
-    for i, value in enumerate(solar_res):
-        solar_res[i] = [0 if x > max_global else x for x in value]
+    print('Fixing inconsistencies, if any')
+    solar_res = np.clip(solar_res, a_min = 0.0, a_max=max_global)
 
     print("Writing results to disk")
     index = 0
@@ -219,8 +217,13 @@ def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, settings, max_glob
                                             sensors_code_zone,
                                             sensor_intersection_zone):
 
-        selection_of_results = solar_res[index:index + sensors_number_building] * (1.0 - sensor_intersection_building)
-        items_sensor_name_and_result = dict(zip(sensor_code_building, selection_of_results))
+        selection_of_results = solar_res[index:index + sensors_number_building]
+        result = [array * (1.0 - scalar) for array, scalar in zip(selection_of_results, sensor_intersection_building)]
+        items_sensor_name_and_result = dict(zip(sensor_code_building, result))
         with open(locator.get_radiation_building(building_name), 'w') as outfile:
             json.dump(items_sensor_name_and_result, outfile)
         index = index + sensors_number_building
+
+    # erase daysim folder to avoid conflicts after every iteration
+    print('Removing results folder')
+    shutil.rmtree(daysim_dir)
