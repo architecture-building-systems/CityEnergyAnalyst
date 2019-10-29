@@ -387,7 +387,7 @@ def correct_archetype_areas(prop_architecture_df, architecture_DB, list_uses):
                 # recalculate heated floor area as an average of the archetype value for each occupancy type in the
                 # building
                 Hs_ag = calc_average(Hs_ag, indexed_DB['Hs_ag'][current_use_code], prop_architecture_df[use][building])
-                Hs_bg = calc_average(Hs_ag, indexed_DB['Hs_bg'][current_use_code], prop_architecture_df[use][building])
+                Hs_bg = calc_average(Hs_bg, indexed_DB['Hs_bg'][current_use_code], prop_architecture_df[use][building])
                 Ns = calc_average(Ns, indexed_DB['Ns'][current_use_code], prop_architecture_df[use][building])
                 Es = calc_average(Es, indexed_DB['Es'][current_use_code], prop_architecture_df[use][building])
         Hs_ag_list.append(Hs_ag)
