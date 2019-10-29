@@ -11,7 +11,7 @@ Subpackages
 
 .. toctree::
 
-    cea.demand.calibration
+    cea.demand.schedule_maker
 
 Submodules
 ----------
@@ -108,14 +108,6 @@ cea.demand.latent\_loads module
 -------------------------------
 
 .. automodule:: cea.demand.latent_loads
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-cea.demand.occupancy\_model module
-----------------------------------
-
-.. automodule:: cea.demand.occupancy_model
     :members:
     :undoc-members:
     :show-inheritance:
