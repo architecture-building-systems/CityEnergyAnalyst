@@ -1,7 +1,7 @@
 SCRIPT,LOCATOR_METHOD,FILE_NAME,VARIABLE,DESCRIPTION,UNIT,VALUES,TYPE,COLOR
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:ARCHITECTURE,Es,TODO,TODO,TODO,TODO,black
+-,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:ARCHITECTURE,Es,Fraction of gross floor area with electrical demands.,[m2/m2],{0.0...1},float,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:ARCHITECTURE,Hs,Fraction of gross floor area air-conditioned.,[m2/m2],{0.0...1},float,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:ARCHITECTURE,Ns,TODO,TODO,TODO,TODO,black
+-,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:ARCHITECTURE,Ns,Fraction of net gross floor area.,[m2/m2],{0.0...1},float,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:ARCHITECTURE,building_use,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:ARCHITECTURE,standard,Letter representing whereas the field represent construction properties of a building as newly constructed (C) or renovated (R),[-],{C or R},string,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:ARCHITECTURE,type_cons,Type of construction. It relates to the contents of the default database of Envelope Properties: construction,[code],{T1...Tn},string,black
@@ -10,7 +10,7 @@ SCRIPT,LOCATOR_METHOD,FILE_NAME,VARIABLE,DESCRIPTION,UNIT,VALUES,TYPE,COLOR
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:ARCHITECTURE,type_shade,Shading system type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:ARCHITECTURE,type_wall,Wall construction type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:ARCHITECTURE,type_win,Window type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:ARCHITECTURE,void_deck,Share of floors with an open envelope (default = 0),[floor/floor],{0.0...1},float,black
+-,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:ARCHITECTURE,void_deck,Number of floors (from the ground up) with an open envelope (default = 0),[-],{0...n},integer,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:ARCHITECTURE,wwr_east,Window to wall ratio in in facades facing east,[m2/m2],{0.0...1},float,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:ARCHITECTURE,wwr_north,Window to wall ratio in in facades facing north,[m2/m2],{0.0...1},float,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:ARCHITECTURE,wwr_south,Window to wall ratio in in facades facing south,[m2/m2],{0.0...1},float,black
@@ -31,21 +31,21 @@ SCRIPT,LOCATOR_METHOD,FILE_NAME,VARIABLE,DESCRIPTION,UNIT,VALUES,TYPE,COLOR
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INDOOR_COMFORT,Tcs_setb_C,Setback point of temperature for cooling system,[C],{0.0...n},float,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INDOOR_COMFORT,Ths_set_C,Setpoint temperature for heating system,[C],{0.0...n},float,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INDOOR_COMFORT,Ths_setb_C,Setback point of temperature for heating system,[C],{0.0...n},float,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INDOOR_COMFORT,Ve_lps,Indoor quality requirements of indoor ventilation per person,[l/s],{0.0...n},float,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INDOOR_COMFORT,rhum_max_pc,TODO,TODO,TODO,TODO,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INDOOR_COMFORT,rhum_min_pc,TODO,TODO,TODO,TODO,black
+-,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INDOOR_COMFORT,Ve_lpspax,Indoor quality requirements of indoor ventilation per person,[l/s],{0.0...n},float,black
+-,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INDOOR_COMFORT,RH_max_pc,Upper bound of relative humidity,[%],{0.0...n},float,black
+-,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INDOOR_COMFORT,RH_min_pc,Lower_bound of relative humidity,[%],{0.0...n},float,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Code,Unique code for the material of the pipe.,[-],[-],string,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Ea_Wm2,Peak specific electrical load due to computers and devices,[W/m2],{0.0...n},float,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Ed_Wm2,Peak specific electrical load due to servers/data centres,[W/m2],{0.0...n},float,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS,El_Wm2,Peak specific electrical load due to artificial lighting,[W/m2],{0.0...n},float,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Epro_Wm2,Peak specific electrical load due to industrial processes,[W/m2],{0.0...n},string,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Qcre_Wm2,TODO,TODO,TODO,TODO,black
+-,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Epro_Wm2,Peak specific electrical load due to industrial processes,[W/m2],{0.0...n},float,black
+-,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Qcre_Wm2,Peak specific cooling load due to refrigeration (cooling rooms),[W/m2],{0.0...n},float,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Qcpro_Wm2,Peak specific process cooling load,[W/m2],{0.0...n},float,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Qhpro_Wm2,Peak specific process heating load,[W/m2],{0.0...n},float,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Qs_Wp,TODO,TODO,TODO,TODO,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Vw_lpd,Peak specific fresh water consumption (includes cold and hot water),[lpd],{0.0...n},float,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Vww_lpd,Peak specific daily hot water consumption,[lpd],{0.0...n},float,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS,X_ghp,Moisture released by occupancy at peak conditions,[gh/kg/p],{0.0...n},float,black
+-,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Qs_Wpax,Peak sensible heat load of people,[W/pax],{0.0...n},float,black
+-,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Vw_lpdpax,Peak specific fresh water consumption (includes cold and hot water),[lpd],{0.0...n},float,black
+-,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Vww_lpdpax,Peak specific daily hot water consumption,[lpd],{0.0...n},float,black
+-,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS,X_ghpax,Moisture released by occupancy at peak conditions,[gh/kg/p],{0.0...n},float,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:SUPPLY,building_use,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:SUPPLY,standard,Letter representing whereas the field represent construction properties of a building as newly constructed (C) or renovated (R),[-],{C or R},string,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:SUPPLY,type_cs,Type of cooling supply system,[code],{T0...Tn},string,black
@@ -282,7 +282,7 @@ SCRIPT,LOCATOR_METHOD,FILE_NAME,VARIABLE,DESCRIPTION,UNIT,VALUES,TYPE,COLOR
 -,get_building_occupancy,inputs/building-properties/occupancy.dbf,HOTEL,Hotels,m2,{0.0...1},float,green
 -,get_building_occupancy,inputs/building-properties/occupancy.dbf,INDUSTRIAL,Light industry,m2,{0.0...1},float,blue
 -,get_building_occupancy,inputs/building-properties/occupancy.dbf,LIBRARY,Libraries,m2,{0.0...1},float,grey
--,get_building_occupancy,inputs/building-properties/occupancy.dbf,MULTI_RES,Residential (multiple dwellings),m2,TODO,TODO,purple
+-,get_building_occupancy,inputs/building-properties/occupancy.dbf,MULTI_RES,Residential (multiple dwellings),m2,{0.0...1},float,purple
 -,get_building_occupancy,inputs/building-properties/occupancy.dbf,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black
 -,get_building_occupancy,inputs/building-properties/occupancy.dbf,OFFICE,Offices,m2,{0.0...1},float,red
 -,get_building_occupancy,inputs/building-properties/occupancy.dbf,PARKING,Parking,m2,{0.0...1},float,orange
@@ -337,11 +337,11 @@ SCRIPT,LOCATOR_METHOD,FILE_NAME,VARIABLE,DESCRIPTION,UNIT,VALUES,TYPE,COLOR
 -,get_data_benchmark,databases/sg/benchmarks/benchmark_2000w.xls:TOTAL,PEN_today,Present primary energy demand,[-],{0.0...n},float,black
 -,get_data_benchmark,databases/sg/benchmarks/benchmark_2000w.xls:TOTAL,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black
 -,get_district_geometry,inputs/building-geometry/district.shp,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black
--,get_district_geometry,inputs/building-geometry/district.shp,floors_ag,TODO,TODO,TODO,TODO,black
--,get_district_geometry,inputs/building-geometry/district.shp,floors_bg,TODO,TODO,TODO,TODO,black
+-,get_district_geometry,inputs/building-geometry/district.shp,floors_ag,Number of floors above ground (incl. ground floor),[-],{0...n},int,black
+-,get_district_geometry,inputs/building-geometry/district.shp,floors_bg,"Number of floors below ground (basement, etc)",[-],{0...n},int,black
 -,get_district_geometry,inputs/building-geometry/district.shp,geometry,TODO,TODO,TODO,TODO,black
--,get_district_geometry,inputs/building-geometry/district.shp,height_ag,Aggregated height of the walls.,[m],{0.0...n},float,black
--,get_district_geometry,inputs/building-geometry/district.shp,height_bg,TODO,TODO,TODO,TODO,black
+-,get_district_geometry,inputs/building-geometry/district.shp,height_ag,Height above ground (incl. ground floor),[m],{0.0...n},float,black
+-,get_district_geometry,inputs/building-geometry/district.shp,height_bg,"Height below ground (basement, etc)",[m],{0.0...n},float,black
 -,get_envelope_systems,databases/ch/systems/envelope_systems.xls:CONSTRUCTION,Cm_Af,Internal heat capacity per unit of air conditioned area. Defined according to ISO 13790.,[J/Km2],{0.0...1},float,black
 -,get_envelope_systems,databases/ch/systems/envelope_systems.xls:CONSTRUCTION,Description,Describes the source of the benchmark standards.,[-],[-],string,black
 -,get_envelope_systems,databases/ch/systems/envelope_systems.xls:CONSTRUCTION,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black
@@ -366,33 +366,34 @@ SCRIPT,LOCATOR_METHOD,FILE_NAME,VARIABLE,DESCRIPTION,UNIT,VALUES,TYPE,COLOR
 -,get_envelope_systems,databases/ch/systems/envelope_systems.xls:WALL,r_wall,Reflectance in the Red spectrum. Defined according Radiance. (long-wave),[-],{0.0...1},float,black
 -,get_envelope_systems,databases/ch/systems/envelope_systems.xls:WINDOW,Description,Describes the source of the benchmark standards.,[-],[-],string,black
 -,get_envelope_systems,databases/ch/systems/envelope_systems.xls:WINDOW,G_win,Solar heat gain coefficient. Defined according to ISO 13790.,[-],{0.0...1},float,black
+-,get_envelope_systems,databases/ch/systems/envelope_systems.xls:WINDOW,F_F,Window frame fraction coefficient. Defined according to ISO 13790.,[m2-frame/m2-window],{0.0...1},float,black
 -,get_envelope_systems,databases/ch/systems/envelope_systems.xls:WINDOW,U_win,Thermal transmittance of windows including linear losses (+10%). Defined according to ISO 13790.,[-],{0.1...n},float,black
 -,get_envelope_systems,databases/ch/systems/envelope_systems.xls:WINDOW,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black
 -,get_envelope_systems,databases/ch/systems/envelope_systems.xls:WINDOW,e_win,Emissivity of external surface. Defined according to ISO 13790.,[-],{0.0...1},float,black
--,get_life_cycle_inventory_building_systems,databases/sg/lifecycle/lca_buildings.xlsx:EMBODIED_EMISSIONS,Excavation,Typical embodied energy for site excavation.,[GJ],{0.0....n},float,black
--,get_life_cycle_inventory_building_systems,databases/sg/lifecycle/lca_buildings.xlsx:EMBODIED_EMISSIONS,Floor_g,Typical embodied energy of the ground floor.,[GJ],{0.0....n},float,black
--,get_life_cycle_inventory_building_systems,databases/sg/lifecycle/lca_buildings.xlsx:EMBODIED_EMISSIONS,Floor_int,Typical embodied energy of the interior floor.,[GJ],{0.0....n},float,black
--,get_life_cycle_inventory_building_systems,databases/sg/lifecycle/lca_buildings.xlsx:EMBODIED_EMISSIONS,Roof,Typical embodied energy of the roof.,[GJ],{0.0....n},float,black
--,get_life_cycle_inventory_building_systems,databases/sg/lifecycle/lca_buildings.xlsx:EMBODIED_EMISSIONS,Services,Typical embodied energy of the building services.,[GJ],{0.0....n},float,black
--,get_life_cycle_inventory_building_systems,databases/sg/lifecycle/lca_buildings.xlsx:EMBODIED_EMISSIONS,Wall_ext_ag,Typical embodied energy of the exterior above ground walls.,[GJ],{0.0....n},float,black
--,get_life_cycle_inventory_building_systems,databases/sg/lifecycle/lca_buildings.xlsx:EMBODIED_EMISSIONS,Wall_ext_bg,Typical embodied energy of the exterior below ground walls.,[GJ],{0.0....n},float,black
--,get_life_cycle_inventory_building_systems,databases/sg/lifecycle/lca_buildings.xlsx:EMBODIED_EMISSIONS,Wall_int_nosup,nan,[GJ],{0.0....n},float,black
--,get_life_cycle_inventory_building_systems,databases/sg/lifecycle/lca_buildings.xlsx:EMBODIED_EMISSIONS,Wall_int_sup,nan,[GJ],{0.0....n},float,black
--,get_life_cycle_inventory_building_systems,databases/sg/lifecycle/lca_buildings.xlsx:EMBODIED_EMISSIONS,Win_ext,Typical embodied energy of the external glazing.,[GJ],{0.0....n},float,black
+-,get_life_cycle_inventory_building_systems,databases/sg/lifecycle/lca_buildings.xlsx:EMBODIED_EMISSIONS,Excavation,Typical embodied emissions for site excavation.,[kg CO2-eq/m2],{0.0....n},float,black
+-,get_life_cycle_inventory_building_systems,databases/sg/lifecycle/lca_buildings.xlsx:EMBODIED_EMISSIONS,Floor_g,Typical embodied emissions of the ground floor.,[kg CO2-eq/m2],{0.0....n},float,black
+-,get_life_cycle_inventory_building_systems,databases/sg/lifecycle/lca_buildings.xlsx:EMBODIED_EMISSIONS,Floor_int,Typical embodied emissions of the interior floor.,[kg CO2-eq/m2],{0.0....n},float,black
+-,get_life_cycle_inventory_building_systems,databases/sg/lifecycle/lca_buildings.xlsx:EMBODIED_EMISSIONS,Roof,Typical embodied emissions of the roof.,[kg CO2-eq/m2],{0.0....n},float,black
+-,get_life_cycle_inventory_building_systems,databases/sg/lifecycle/lca_buildings.xlsx:EMBODIED_EMISSIONS,Services,Typical embodied emissions of the building services.,[kg CO2-eq/m2],{0.0....n},float,black
+-,get_life_cycle_inventory_building_systems,databases/sg/lifecycle/lca_buildings.xlsx:EMBODIED_EMISSIONS,Wall_ext_ag,Typical embodied emissions of the exterior above ground walls.,[kg CO2-eq/m2],{0.0....n},float,black
+-,get_life_cycle_inventory_building_systems,databases/sg/lifecycle/lca_buildings.xlsx:EMBODIED_EMISSIONS,Wall_ext_bg,Typical embodied emissions of the exterior below ground walls.,[kg CO2-eq/m2],{0.0....n},float,black
+-,get_life_cycle_inventory_building_systems,databases/sg/lifecycle/lca_buildings.xlsx:EMBODIED_EMISSIONS,Wall_int_nosup,Typical embodied emissions of the interior above ground walls.,[kg CO2-eq/m2],{0.0....n},float,black
+-,get_life_cycle_inventory_building_systems,databases/sg/lifecycle/lca_buildings.xlsx:EMBODIED_EMISSIONS,Wall_int_sup,Typical embodied emissions of the interior below ground walls.,[kg CO2-eq/m2],{0.0....n},float,black
+-,get_life_cycle_inventory_building_systems,databases/sg/lifecycle/lca_buildings.xlsx:EMBODIED_EMISSIONS,Win_ext,Typical embodied emissions of the external glazing.,[kg CO2-eq/m2],{0.0....n},float,black
 -,get_life_cycle_inventory_building_systems,databases/sg/lifecycle/lca_buildings.xlsx:EMBODIED_EMISSIONS,building_use,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black
 -,get_life_cycle_inventory_building_systems,databases/sg/lifecycle/lca_buildings.xlsx:EMBODIED_EMISSIONS,standard,Letter representing whereas the field represent construction properties of a building as newly constructed (C) or renovated (R),[-],{C or R},string,black
 -,get_life_cycle_inventory_building_systems,databases/sg/lifecycle/lca_buildings.xlsx:EMBODIED_EMISSIONS,year_end,Upper limit of year interval where the building properties apply,[yr],{0...n},int,black
 -,get_life_cycle_inventory_building_systems,databases/sg/lifecycle/lca_buildings.xlsx:EMBODIED_EMISSIONS,year_start,Lower limit of year interval where the building properties apply,[yr],{0...n},int,black
--,get_life_cycle_inventory_building_systems,databases/sg/lifecycle/lca_buildings.xlsx:EMBODIED_ENERGY,Excavation,Typical embodied energy for site excavation.,[GJ],{0.0....n},float,black
--,get_life_cycle_inventory_building_systems,databases/sg/lifecycle/lca_buildings.xlsx:EMBODIED_ENERGY,Floor_g,Typical embodied energy of the ground floor.,[GJ],{0.0....n},float,black
--,get_life_cycle_inventory_building_systems,databases/sg/lifecycle/lca_buildings.xlsx:EMBODIED_ENERGY,Floor_int,Typical embodied energy of the interior floor.,[GJ],{0.0....n},float,black
--,get_life_cycle_inventory_building_systems,databases/sg/lifecycle/lca_buildings.xlsx:EMBODIED_ENERGY,Roof,Typical embodied energy of the roof.,[GJ],{0.0....n},float,black
--,get_life_cycle_inventory_building_systems,databases/sg/lifecycle/lca_buildings.xlsx:EMBODIED_ENERGY,Services,Typical embodied energy of the building services.,[GJ],{0.0....n},float,black
--,get_life_cycle_inventory_building_systems,databases/sg/lifecycle/lca_buildings.xlsx:EMBODIED_ENERGY,Wall_ext_ag,Typical embodied energy of the exterior above ground walls.,[GJ],{0.0....n},float,black
--,get_life_cycle_inventory_building_systems,databases/sg/lifecycle/lca_buildings.xlsx:EMBODIED_ENERGY,Wall_ext_bg,Typical embodied energy of the exterior below ground walls.,[GJ],{0.0....n},float,black
--,get_life_cycle_inventory_building_systems,databases/sg/lifecycle/lca_buildings.xlsx:EMBODIED_ENERGY,Wall_int_nosup,nan,[GJ],{0.0....n},float,black
--,get_life_cycle_inventory_building_systems,databases/sg/lifecycle/lca_buildings.xlsx:EMBODIED_ENERGY,Wall_int_sup,nan,[GJ],{0.0....n},float,black
--,get_life_cycle_inventory_building_systems,databases/sg/lifecycle/lca_buildings.xlsx:EMBODIED_ENERGY,Win_ext,Typical embodied energy of the external glazing.,[GJ],{0.0....n},float,black
+-,get_life_cycle_inventory_building_systems,databases/sg/lifecycle/lca_buildings.xlsx:EMBODIED_ENERGY,Excavation,Typical embodied energy for site excavation.,[MJ oil-eq/m2],{0.0....n},float,black
+-,get_life_cycle_inventory_building_systems,databases/sg/lifecycle/lca_buildings.xlsx:EMBODIED_ENERGY,Floor_g,Typical embodied energy of the ground floor.,[MJ oil-eq/m2],{0.0....n},float,black
+-,get_life_cycle_inventory_building_systems,databases/sg/lifecycle/lca_buildings.xlsx:EMBODIED_ENERGY,Floor_int,Typical embodied energy of the interior floor.,[MJ oil-eq/m2],{0.0....n},float,black
+-,get_life_cycle_inventory_building_systems,databases/sg/lifecycle/lca_buildings.xlsx:EMBODIED_ENERGY,Roof,Typical embodied energy of the roof.,[MJ oil-eq/m2],{0.0....n},float,black
+-,get_life_cycle_inventory_building_systems,databases/sg/lifecycle/lca_buildings.xlsx:EMBODIED_ENERGY,Services,Typical embodied energy of the building services.,[MJ oil-eq/m2],{0.0....n},float,black
+-,get_life_cycle_inventory_building_systems,databases/sg/lifecycle/lca_buildings.xlsx:EMBODIED_ENERGY,Wall_ext_ag,Typical embodied energy of the exterior above ground walls.,[MJ oil-eq/m2],{0.0....n},float,black
+-,get_life_cycle_inventory_building_systems,databases/sg/lifecycle/lca_buildings.xlsx:EMBODIED_ENERGY,Wall_ext_bg,Typical embodied energy of the exterior below ground walls.,[MJ oil-eq/m2],{0.0....n},float,black
+-,get_life_cycle_inventory_building_systems,databases/sg/lifecycle/lca_buildings.xlsx:EMBODIED_ENERGY,Wall_int_nosup,nan,[MJ oil-eq/m2],{0.0....n},float,black
+-,get_life_cycle_inventory_building_systems,databases/sg/lifecycle/lca_buildings.xlsx:EMBODIED_ENERGY,Wall_int_sup,nan,[MJ oil-eq/m2],{0.0....n},float,black
+-,get_life_cycle_inventory_building_systems,databases/sg/lifecycle/lca_buildings.xlsx:EMBODIED_ENERGY,Win_ext,Typical embodied energy of the external glazing.,[MJ oil-eq/m2],{0.0....n},float,black
 -,get_life_cycle_inventory_building_systems,databases/sg/lifecycle/lca_buildings.xlsx:EMBODIED_ENERGY,building_use,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black
 -,get_life_cycle_inventory_building_systems,databases/sg/lifecycle/lca_buildings.xlsx:EMBODIED_ENERGY,standard,Letter representing whereas the field represent construction properties of a building as newly constructed (C) or renovated (R),[-],{C or R},string,black
 -,get_life_cycle_inventory_building_systems,databases/sg/lifecycle/lca_buildings.xlsx:EMBODIED_ENERGY,year_end,Upper limit of year interval where the building properties apply,[yr],{0...n},int,black
@@ -780,7 +781,7 @@ data-helper,get_building_architecture,inputs/building-properties/architecture.db
 data-helper,get_building_architecture,inputs/building-properties/architecture.dbf,type_shade,Shading system type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black
 data-helper,get_building_architecture,inputs/building-properties/architecture.dbf,type_wall,Wall construction type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black
 data-helper,get_building_architecture,inputs/building-properties/architecture.dbf,type_win,Window type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black
-data-helper,get_building_architecture,inputs/building-properties/architecture.dbf,void_deck,Share of floors with an open envelope (default = 0),[floor/floor],{0.0...1},float,black
+data-helper,get_building_architecture,inputs/building-properties/architecture.dbf,void_deck,Number of floors (from the ground up) with an open envelope (default = 0),[-],{0...n},black
 data-helper,get_building_architecture,inputs/building-properties/architecture.dbf,wwr_east,Window to wall ratio in in facades facing east,[m2/m2],{0.0...1},float,black
 data-helper,get_building_architecture,inputs/building-properties/architecture.dbf,wwr_north,Window to wall ratio in in facades facing north,[m2/m2],{0.0...1},float,black
 data-helper,get_building_architecture,inputs/building-properties/architecture.dbf,wwr_south,Window to wall ratio in in facades facing south,[m2/m2],{0.0...1},float,black
@@ -790,9 +791,9 @@ data-helper,get_building_comfort,inputs/building-properties/indoor_comfort.dbf,T
 data-helper,get_building_comfort,inputs/building-properties/indoor_comfort.dbf,Tcs_setb_C,Setback point of temperature for cooling system,[C],{0.0...n},float,black
 data-helper,get_building_comfort,inputs/building-properties/indoor_comfort.dbf,Ths_set_C,Setpoint temperature for heating system,[C],{0.0...n},float,black
 data-helper,get_building_comfort,inputs/building-properties/indoor_comfort.dbf,Ths_setb_C,Setback point of temperature for heating system,[C],{0.0...n},float,black
-data-helper,get_building_comfort,inputs/building-properties/indoor_comfort.dbf,Ve_lps,Indoor quality requirements of indoor ventilation per person,[l/s],{0.0...n},float,black
-data-helper,get_building_comfort,inputs/building-properties/indoor_comfort.dbf,rhum_max_pc,TODO,TODO,TODO,TODO,black
-data-helper,get_building_comfort,inputs/building-properties/indoor_comfort.dbf,rhum_min_pc,TODO,TODO,TODO,TODO,black
+data-helper,get_building_comfort,inputs/building-properties/indoor_comfort.dbf,Ve_lpspax,Indoor quality requirements of indoor ventilation per person,[l/s],{0.0...n},float,black
+data-helper,get_building_comfort,inputs/building-properties/indoor_comfort.dbf,RH_max_pc,Upper bound of relative humidity,[%],{0.0...n},float,black
+data-helper,get_building_comfort,inputs/building-properties/indoor_comfort.dbf,RH_min_pc,Lower_bound of relative humidity,[%],{0.0...n},float,black
 data-helper,get_building_hvac,inputs/building-properties/technical_systems.dbf,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black
 data-helper,get_building_hvac,inputs/building-properties/technical_systems.dbf,type_cs,Type of cooling supply system,[code],{T0...Tn},string,black
 data-helper,get_building_hvac,inputs/building-properties/technical_systems.dbf,type_ctrl,Type of heating and cooling control systems (relates to values in Default Database HVAC Properties),[code],{T1...Tn},string,black
@@ -804,13 +805,14 @@ data-helper,get_building_internal,inputs/building-properties/internal_loads.dbf,
 data-helper,get_building_internal,inputs/building-properties/internal_loads.dbf,El_Wm2,Peak specific electrical load due to artificial lighting,[W/m2],{0.0...n},float,black
 data-helper,get_building_internal,inputs/building-properties/internal_loads.dbf,Epro_Wm2,Peak specific electrical load due to industrial processes,[W/m2],{0.0...n},string,black
 data-helper,get_building_internal,inputs/building-properties/internal_loads.dbf,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black
-data-helper,get_building_internal,inputs/building-properties/internal_loads.dbf,Qcre_Wm2,TODO,TODO,TODO,TODO,black
+data-helper,get_building_internal,inputs/building-properties/internal_loads.dbf,Occ_m2pax,Occupancy density,[m2/pax],{0.0...n},float,black
+data-helper,get_building_internal,inputs/building-properties/internal_loads.dbf,Qcre_Wm2,Peak specific cooling load due to refrigeration (cooling rooms),[W/m2],{0.0...n},float,black
 data-helper,get_building_internal,inputs/building-properties/internal_loads.dbf,Qcpro_Wm2,Peak specific process cooling load,[W/m2],{0.0...n},float,black
 data-helper,get_building_internal,inputs/building-properties/internal_loads.dbf,Qhpro_Wm2,Peak specific process heating load,[W/m2],{0.0...n},float,black
-data-helper,get_building_internal,inputs/building-properties/internal_loads.dbf,Qs_Wp,TODO,TODO,TODO,TODO,black
-data-helper,get_building_internal,inputs/building-properties/internal_loads.dbf,Vw_lpd,Peak specific fresh water consumption (includes cold and hot water),[lpd],{0.0...n},float,black
-data-helper,get_building_internal,inputs/building-properties/internal_loads.dbf,Vww_lpd,Peak specific daily hot water consumption,[lpd],{0.0...n},float,black
-data-helper,get_building_internal,inputs/building-properties/internal_loads.dbf,X_ghp,Moisture released by occupancy at peak conditions,[gh/kg/p],{0.0...n},float,black
+data-helper,get_building_internal,inputs/building-properties/internal_loads.dbf,Qs_Wpax,Peak sensible heat load of people,[W/pax],{0.0...n},float,black
+data-helper,get_building_internal,inputs/building-properties/internal_loads.dbf,Vw_lpdpax,Peak specific fresh water consumption (includes cold and hot water),[lpd],{0.0...n},float,black
+data-helper,get_building_internal,inputs/building-properties/internal_loads.dbf,Vww_lpdpax,Peak specific daily hot water consumption,[lpd],{0.0...n},float,black
+data-helper,get_building_internal,inputs/building-properties/internal_loads.dbf,X_ghpax,Moisture released by occupancy at peak conditions,[gh/kg/p],{0.0...n},float,black
 data-helper,get_building_restrictions,inputs/building-properties/restrictions.dbf,BIOGAS,Biogas restricted in the area,[-],{0/1},int,black
 data-helper,get_building_restrictions,inputs/building-properties/restrictions.dbf,GEOTHERMAL,Share of foot-print area protected for geothermal exploration,[-],{0.0...1},float,black
 data-helper,get_building_restrictions,inputs/building-properties/restrictions.dbf,NATURALGAS,Natural gas restricted in the area.,[-],{0/1},int,black
@@ -834,13 +836,23 @@ demand,get_demand_results_file,outputs/data/demand/b001.csv,E_cdata_kWh,Data cen
 demand,get_demand_results_file,outputs/data/demand/b001.csv,E_cre_kWh,Refrigeration system electricity consumption.,[kWh],{0.0...n},float,black
 demand,get_demand_results_file,outputs/data/demand/b001.csv,E_cs_kWh,Cooling system electricity consumption.,[kWh],{0.0...n},float,black
 demand,get_demand_results_file,outputs/data/demand/b001.csv,E_hs_kWh,Heating system electricity consumption.,[kWh],{0.0...n},float,black
-demand,get_demand_results_file,outputs/data/demand/b001.csv,E_sys_kWh,End-use electricity demand,kWh,{0.0...n},float,green
-demand,get_demand_results_file,outputs/data/demand/b001.csv,E_ww_kWh,DHW electricity consumption.,[kWh],{0.0...n},float,black
-demand,get_demand_results_file,outputs/data/demand/b001.csv,Eal_kWh,Electricity consumption of appliances and lights,[kWh],{0.0...n},float,black
-demand,get_demand_results_file,outputs/data/demand/b001.csv,Eaux_kWh,Auxiliary electricity consumption.,[kWh],{0.0...n},float,black
-demand,get_demand_results_file,outputs/data/demand/b001.csv,Edata_kWh,Data centre electricity consumption.,[kWh],{0.0...n},float,black
-demand,get_demand_results_file,outputs/data/demand/b001.csv,Epro_kWh,Electricity consumption for industrial processes.,[kWh],{0.0...n},float,black
-demand,get_demand_results_file,outputs/data/demand/b001.csv,GRID_kWh,Grid electricity consumption,kWh,{0.0...n},float,green
+demand,get_demand_results_file,outputs/data/demand/b001.csv,E_sys_kWh,End-use total electricity system consumption = Ea + El + Edata + Epro + Eaux ,kWh,{0.0...n},float,green
+demand,get_demand_results_file,outputs/data/demand/b001.csv,E_ww_kWh,Hot water system electricity consumption.,[kWh],{0.0...n},float,black
+demand,get_demand_results_file,outputs/data/demand/b001.csv,Eal_kWh,End-use electricity consumption of appliances and lights,[kWh],{0.0...n},float,black
+demand,get_demand_results_file,outputs/data/demand/b001.csv,Eaux_kWh,End-use auxiliary electricity consumption.,[kWh],{0.0...n},float,black
+demand,get_demand_results_file,outputs/data/demand/b001.csv,Edata_kWh,End-use data centre electricity consumption.,[kWh],{0.0...n},float,black
+demand,get_demand_results_file,outputs/data/demand/b001.csv,Epro_kWh,End-use electricity consumption for industrial processes.,[kWh],{0.0...n},float,black
+demand,get_demand_results_file,outputs/data/demand/b001.csv,GRID_kWh,Grid total requirements of electricity = GRID_a + GRID_l + GRID_data + GRID_pro + GRID_aux + GRID_cdata + GRID_cre + GRID_hs + GRID_ww + GRID_cs,kWh,{0.0...n},float,green
+demand,get_demand_results_file,outputs/data/demand/b001.csv,GRID_a_kWh,kWh,Grid electricity requirements for appliances,{0.0...n},float,green
+demand,get_demand_results_file,outputs/data/demand/b001.csv,GRID_l_kWh,kWh,Grid electricity requirements for lights,{0.0...n},float,green_light
+demand,get_demand_results_file,outputs/data/demand/b001.csv,GRID_aux_kWh,kWh,Grid electricity requirements for auxiliary loads,{0.0...n},float,grey
+demand,get_demand_results_file,outputs/data/demand/b001.csv,GRID_data_kWh,kWh,Grid electricity requirements for servers,{0.0...n},float,blue
+demand,get_demand_results_file,outputs/data/demand/b001.csv,GRID_pro_kWh,kWh,Grid electricity requirements for industrial processes,{0.0...n},float,brown
+demand,get_demand_results_file,outputs/data/demand/b001.csv,GRID_ww_kWh,kWh,Grid electricity requirements for hot water supply,{0.0...n},float,orange
+demand,get_demand_results_file,outputs/data/demand/b001.csv,GRID_hs_kWh,kWh,Grid electricity requirements for space heating,{0.0...n},float,red
+demand,get_demand_results_file,outputs/data/demand/b001.csv,GRID_cdata_kWh,kWh,Grid electricity requirements for servers cooling,{0.0...n},float,blue_light
+demand,get_demand_results_file,outputs/data/demand/b001.csv,GRID_cre_kWh,kWh,Grid electricity requirements for refrigeration,{0.0...n},float,blue_lighter
+demand,get_demand_results_file,outputs/data/demand/b001.csv,GRID_cs_kWh,kWh,Grid electricity requirements for space cooling,{0.0...n},float,blue
 demand,get_demand_results_file,outputs/data/demand/b001.csv,I_rad_kWh,Radiative heat loss,kWh,{0.0...n},float,yellow_light
 demand,get_demand_results_file,outputs/data/demand/b001.csv,I_sol_and_I_rad_kWh,Net radiative heat gain,[kWh],{0.0...n},float,black
 demand,get_demand_results_file,outputs/data/demand/b001.csv,I_sol_kWh,Solar heat gain,kWh,{0.0...n},float,yellow
@@ -982,7 +994,7 @@ demand,get_total_demand,outputs/data/demand/total_demand.csv,Epro_MWhyr,Electric
 demand,get_total_demand,outputs/data/demand/total_demand.csv,GFA_m2,Gross floor area,[m2],{0.0...n},float,black
 demand,get_total_demand,outputs/data/demand/total_demand.csv,GRID0_kW,Nominal Grid electricity consumption,kW,{0.0...n},float,green
 demand,get_total_demand,outputs/data/demand/total_demand.csv,GRID_MWhyr,Grid electricity consumption,MWh/yr,{0.0...n},float,green
-demand,get_total_demand,outputs/data/demand/total_demand.csv,NFA_m2,TODO,TODO,TODO,TODO,black
+demand,get_total_demand,outputs/data/demand/total_demand.csv,Aocc_m2,Occupied floor area (heated/cooled),[m2],{0.0...n},float,black
 demand,get_total_demand,outputs/data/demand/total_demand.csv,NG_hs0_kW,Nominal NG requirement for space heating supply,kW,{0.0...n},float,red
 demand,get_total_demand,outputs/data/demand/total_demand.csv,NG_hs_MWhyr,NG requirement for space heating supply,MWh/yr,{0.0...n},float,red
 demand,get_total_demand,outputs/data/demand/total_demand.csv,NG_ww0_kW,Nominal NG requirement for hotwater supply,kW,{0.0...n},float,red_light
@@ -1193,7 +1205,7 @@ operation-costs,get_costs_operation_file,outputs/data/costs/operation_costs.csv,
 operation-costs,get_costs_operation_file,outputs/data/costs/operation_costs.csv,DH_ww_cost_yr,Operation costs due to hotwater,$USD(2015)/yr,TODO,TODO,orange_lighter
 operation-costs,get_costs_operation_file,outputs/data/costs/operation_costs.csv,GRID_cost_m2yr,Electricity supply from the grid,$USD(2015)/m2.yr,TODO,TODO,green
 operation-costs,get_costs_operation_file,outputs/data/costs/operation_costs.csv,GRID_cost_yr,Electricity supply from the grid,$USD(2015)/yr,TODO,TODO,green
-operation-costs,get_costs_operation_file,outputs/data/costs/operation_costs.csv,NFA_m2,TODO,TODO,TODO,TODO,black
+operation-costs,get_costs_operation_file,outputs/data/costs/operation_costs.csv,Aocc_m2,TODO,TODO,TODO,TODO,black
 operation-costs,get_costs_operation_file,outputs/data/costs/operation_costs.csv,NG_hs_cost_m2yr,TODO,TODO,TODO,TODO,black
 operation-costs,get_costs_operation_file,outputs/data/costs/operation_costs.csv,NG_hs_cost_yr,Operation costs of NG due to space heating,$USD(2015)/yr,TODO,TODO,red
 operation-costs,get_costs_operation_file,outputs/data/costs/operation_costs.csv,NG_ww_cost_m2yr,TODO,TODO,TODO,TODO,black
@@ -1371,18 +1383,18 @@ photovoltaic-thermal,PVT_totals,outputs/data/potentials/solar/pvt_total.csv,T_PV
 photovoltaic-thermal,PVT_totals,outputs/data/potentials/solar/pvt_total.csv,T_PVT_sup_C,Collector heating supply temperature.,[C],{0.0...n},float,black
 photovoltaic-thermal,PVT_totals,outputs/data/potentials/solar/pvt_total.csv,mcp_PVT_kWperC,Capacity flow rate (mass flow* specific heat capacity) of the hot water delivered by the collector.,[kW/Cap],{0.0...n},float,black
 photovoltaic-thermal,PVT_totals,outputs/data/potentials/solar/pvt_total.csv,radiation_kWh,Total radiatiative potential.,[kWh],{0.0...n},float,black
-radiation-daysim,get_radiation_building,outputs/data/solar-radiation/b001_insolation_whm2.json,srf0,TODO,TODO,TODO,TODO,black
-radiation-daysim,get_radiation_metadata,outputs/data/solar-radiation/b001_geometry.csv,AREA_m2,Surface area.,[m2],{0.0...n},float,black
-radiation-daysim,get_radiation_metadata,outputs/data/solar-radiation/b001_geometry.csv,BUILDING,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black
-radiation-daysim,get_radiation_metadata,outputs/data/solar-radiation/b001_geometry.csv,SURFACE,Unique surface ID for each building exterior surface.,[-],{srf0...srfn},string,black
-radiation-daysim,get_radiation_metadata,outputs/data/solar-radiation/b001_geometry.csv,TYPE,Surface typology.,[-],{walls/windows/roofs},string,black
-radiation-daysim,get_radiation_metadata,outputs/data/solar-radiation/b001_geometry.csv,Xcoor,Describes the position of the x vector.,[-],{0.0...n},float,black
-radiation-daysim,get_radiation_metadata,outputs/data/solar-radiation/b001_geometry.csv,Xdir,Directional scalar of the x vector.,[-],{-1...1},float,black
-radiation-daysim,get_radiation_metadata,outputs/data/solar-radiation/b001_geometry.csv,Ycoor,Describes the position of the y vector.,[-],{0.0...n},float,black
-radiation-daysim,get_radiation_metadata,outputs/data/solar-radiation/b001_geometry.csv,Ydir,Directional scalar of the y vector.,[-],{-1...1},float,black
-radiation-daysim,get_radiation_metadata,outputs/data/solar-radiation/b001_geometry.csv,Zcoor,Describes the position of the z vector.,[-],{0.0...n},float,black
-radiation-daysim,get_radiation_metadata,outputs/data/solar-radiation/b001_geometry.csv,Zdir,Directional scalar of the z vector.,[-],{-1...1},float,black
-radiation-daysim,get_radiation_metadata,outputs/data/solar-radiation/b001_geometry.csv,orientation,Orientation of the surface (north/east/south/west/top),[-],{north...},string,black
+radiation,get_radiation_building,outputs/data/solar-radiation/b001_insolation_whm2.json,srf0,TODO,TODO,TODO,TODO,black
+radiation,get_radiation_metadata,outputs/data/solar-radiation/b001_geometry.csv,AREA_m2,Surface area.,[m2],{0.0...n},float,black
+radiation,get_radiation_metadata,outputs/data/solar-radiation/b001_geometry.csv,BUILDING,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black
+radiation,get_radiation_metadata,outputs/data/solar-radiation/b001_geometry.csv,SURFACE,Unique surface ID for each building exterior surface.,[-],{srf0...srfn},string,black
+radiation,get_radiation_metadata,outputs/data/solar-radiation/b001_geometry.csv,TYPE,Surface typology.,[-],{walls/windows/roofs},string,black
+radiation,get_radiation_metadata,outputs/data/solar-radiation/b001_geometry.csv,Xcoor,Describes the position of the x vector.,[-],{0.0...n},float,black
+radiation,get_radiation_metadata,outputs/data/solar-radiation/b001_geometry.csv,Xdir,Directional scalar of the x vector.,[-],{-1...1},float,black
+radiation,get_radiation_metadata,outputs/data/solar-radiation/b001_geometry.csv,Ycoor,Describes the position of the y vector.,[-],{0.0...n},float,black
+radiation,get_radiation_metadata,outputs/data/solar-radiation/b001_geometry.csv,Ydir,Directional scalar of the y vector.,[-],{-1...1},float,black
+radiation,get_radiation_metadata,outputs/data/solar-radiation/b001_geometry.csv,Zcoor,Describes the position of the z vector.,[-],{0.0...n},float,black
+radiation,get_radiation_metadata,outputs/data/solar-radiation/b001_geometry.csv,Zdir,Directional scalar of the z vector.,[-],{-1...1},float,black
+radiation,get_radiation_metadata,outputs/data/solar-radiation/b001_geometry.csv,orientation,Orientation of the surface (north/east/south/west/top),[-],{north...},string,black
 sewage-potential,get_sewage_heat_potential,outputs/data/potentials/swp.csv,Qsw_kW,TODO,TODO,TODO,TODO,black
 sewage-potential,get_sewage_heat_potential,outputs/data/potentials/swp.csv,tin_HP_C,TODO,TODO,TODO,TODO,black
 sewage-potential,get_sewage_heat_potential,outputs/data/potentials/swp.csv,tin_sw_C,TODO,TODO,TODO,TODO,black

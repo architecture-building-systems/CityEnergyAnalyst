@@ -402,7 +402,7 @@ def objective_function(network_info, network_layout, thermal_network):
 
         # simulate the network with 0 loads, very fast, 0 cost, but necessary to generate the excel output files
         # thermal_network = ThermalNetwork(network_info.locator, "", )
-        thermal_network_main(network_info.locator, thermal_network, use_multiprocessing=False)
+        thermal_network_main(network_info.locator, thermal_network, processes=1)
 
         # set all buildings to disconnected
         network_layout.disconnected_buildings = network_info.building_names
@@ -421,7 +421,7 @@ def objective_function(network_info, network_layout, thermal_network):
         thermal_network.get_thermal_network_from_shapefile()
 
         # run the thermal_network simulation with the generated network
-        thermal_network_main(network_info.locator, thermal_network, use_multiprocessing=False)
+        thermal_network_main(network_info.locator, thermal_network, processes=1)
 
     ## Cost calculations
     Capex_total, Opex_total, Costs_total, cost_storage = network_costs.calc_Ctot_cs_district(network_info)
@@ -639,8 +639,10 @@ def admissible_plant_location(network_info):
 def generate_initial_population(network_info, network_layout):
     """
     Generates the initial population for network optimization.
+
     :param NetworkInfo network_info: Object storing global network information (information about the whole
                                      optimization)
+
     :param NetworkLayout network_layout: Stores information about the specific network layout of an individual
     :return: returns list of individuals as initial population for genetic algorithm
     """

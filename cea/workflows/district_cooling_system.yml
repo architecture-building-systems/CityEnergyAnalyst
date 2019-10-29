@@ -1,20 +1,27 @@
 - config: default
   "general:multiprocessing": on
-  "radiation-daysim:daysim-bin-directory": "${cea_radiation-daysim_daysim-bin-directory}"
+  "general:project": "${cea_general_project}/../reference-case-cooling"
+  "radiation:daysim-bin-directory": "${cea_radiation_daysim-bin-directory}"
 - script: extract-reference-case
   parameters:
     destination: "{general:project}/.."
     case: cooling
 - config: .
-  "general:project": "${cea_general_project}/../reference-case-cooling"
   "general:scenario-name": baseline
 - script: data-helper
-- script: radiation-daysim
+  parameters:
+    region: CH
+- script: weather-helper
+  parameters:
+    weather: Zuerich-Kloten_1990_2010_TMY
+- script: radiation
+- script: schedule-maker
 - script: demand
 - script: emissions
 - script: operation-costs
 - script: water-body-potential
 - script: sewage-potential
+- script: shallow-geothermal-potential
 - script: photovoltaic
 - script: solar-collector
   parameters:
@@ -51,4 +58,4 @@
     random-seed: 100
 - script: multi-criteria-analysis
   parameters:
-    generations: 2
+    generation: 2
