@@ -24,7 +24,7 @@ def copy_weather_file(source_weather_file, locator):
 
     :param string source_weather_file: path to a weather file (``*.epw``)
     :param cea.inputlocator.InputLocator locator: use the InputLocator to find output path
-    :return:
+    :return: (this script doesn't return anything)
     """
     from shutil import copyfile
     assert os.path.exists(source_weather_file), "Could not find weather file: {source_weather_file}".format(
@@ -35,6 +35,7 @@ def copy_weather_file(source_weather_file, locator):
         scenario=os.path.basename(locator.scenario),
         source_weather_file=source_weather_file
     ))
+
 
 def main(config):
     """

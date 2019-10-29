@@ -317,23 +317,11 @@ def storage_optimization(locator, master_to_slave_vars, lca, prices, config):
                                         T_storage_fin_op10, Q_loss10, mdot_DH_fin10, Q_uncontrollable_final_W = Optimized_Data10
 
     # Get results from storage operation
-    E_aux_ch_W = storage_dispatch['E_Storage_charging_req_W']
-    E_aux_dech_W = storage_dispatch['E_Storage_discharging_req_W']
-    E_thermalstorage_W = E_aux_ch_W + E_aux_dech_W
-
-    # VARIABLE COSTS
-    Opex_var_storage_USDhr = [load * price for load, price in zip(E_thermalstorage_W, lca.ELEC_PRICE)]
-    Opex_var_storage_USD = sum(Opex_var_storage_USDhr)
-
     # CAPEX AND FIXED COSTS
     StorageVol_m3 = storage_dispatch["Storage_Size_m3"]  # take the first line
     Capex_a_storage_USD, Opex_fixed_storage_USD, Capex_storage_USD = storage.calc_Cinv_storage(StorageVol_m3,
                                                                                                locator, config,
                                                                                                'TES2')
-
-    # EMISSIONS AND PRIMARY ENERGY
-    GHG_storage_tonCO2 = (np.sum(E_thermalstorage_W) * WH_TO_J / 1.0E6) * lca.EL_TO_CO2 / 1E3
-    PEN_storage_MJoil = (np.sum(E_thermalstorage_W) * WH_TO_J / 1.0E6) * lca.EL_TO_OIL_EQ
 
     # calculate electricity required to bring the temperature to convergence
     Q_storage_content_W = np.array(storage_dispatch['Q_storage_content_W'])
@@ -347,9 +335,6 @@ def storage_optimization(locator, master_to_slave_vars, lca, prices, config):
     else:
         E_gasPrim_fictiveBoiler_W = 0
 
-    GHG_storage_tonCO2 += (E_gasPrim_fictiveBoiler_W * WH_TO_J / 1.0E6) * lca.NG_BOILER_TO_CO2_STD / 1E3
-    PEN_storage_MJoil += (E_gasPrim_fictiveBoiler_W * WH_TO_J / 1.0E6) * lca.NG_BOILER_TO_OIL_STD
-
     # FIXME: repeating line 291-309?
     # Fill up storage if end-of-season energy is lower than beginning of season
     Q_Storage_SeasonEndReheat_W = Q_storage_content_W[-1] - Q_storage_content_W[0]
@@ -357,18 +342,8 @@ def storage_optimization(locator, master_to_slave_vars, lca, prices, config):
     if Q_Storage_SeasonEndReheat_W > 0:
         cost_Boiler_for_Storage_reHeat_at_seasonend_USD = float(
             Q_Storage_SeasonEndReheat_W) / 0.8 * prices.NG_PRICE / 1E3  # efficiency is assumed to be 0.8
-        GHG_Boiler_for_Storage_reHeat_at_seasonend_tonCO2 = ((float(
-            Q_Storage_SeasonEndReheat_W) / 0.8) * WH_TO_J / 1.0E6) * (lca.NG_BOILER_TO_CO2_STD / 1E3)
-        PEN_Boiler_for_Storage_reHeat_at_seasonend_MJoil = ((float(
-            Q_Storage_SeasonEndReheat_W) / 0.8) * WH_TO_J / 1.0E6) * lca.NG_BOILER_TO_OIL_STD
     else:
         cost_Boiler_for_Storage_reHeat_at_seasonend_USD = 0
-        GHG_Boiler_for_Storage_reHeat_at_seasonend_tonCO2 = 0
-        PEN_Boiler_for_Storage_reHeat_at_seasonend_MJoil = 0
-
-    Opex_var_storage_USD += cost_Boiler_for_Storage_reHeat_at_seasonend_USD
-    GHG_storage_tonCO2 += GHG_Boiler_for_Storage_reHeat_at_seasonend_tonCO2
-    PEN_storage_MJoil += PEN_Boiler_for_Storage_reHeat_at_seasonend_MJoil
 
     # HEATPUMP FOR SEASONAL SOLAR STORAGE OPERATION (CHARING AND DISCHARGING) TO DH
     storage_dispatch_df = pd.DataFrame(storage_dispatch)
@@ -395,12 +370,6 @@ def storage_optimization(locator, master_to_slave_vars, lca, prices, config):
 
         # opex fixed costs
         "Opex_fixed_Storage_connected_USD": Opex_fixed_storage_USD + Opex_fixed_HP_storage_USD,
-
-        # opex var costs
-        "Opex_var_Storage_connected_USD": Opex_var_storage_USD,
-
-        # opex annual costs
-        "Opex_a_Storage_connected_USD": Opex_fixed_storage_USD + Opex_fixed_HP_storage_USD + Opex_var_storage_USD,
     }
 
     return performance, storage_dispatch

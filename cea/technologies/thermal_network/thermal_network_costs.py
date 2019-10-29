@@ -447,10 +447,10 @@ def calc_Ctot_cs_district(network_info):
     :return:
     """
     # read in general values for cost calculation
-    detailed_electricity_pricing = False
-    lca = LcaCalculations(network_info.locator, detailed_electricity_pricing)
-    network_info.prices = Prices(network_info.locator)
-    network_info.prices.ELEC_PRICE = np.mean(lca.ELEC_PRICE, dtype=np.float64)  # [USD/W]
+    network_info.config.detailed_electricity_pricing = False # ensure getting the average value
+    detailed_electricity_pricing = network_info.config.detailed_electricity_pricing
+    network_info.prices = Prices(network_info.locator, detailed_electricity_pricing)
+    network_info.prices.ELEC_PRICE = np.mean(network_info.prices.ELEC_PRICE, dtype=np.float64)  # [USD/W]
     network_info.network_features = NetworkOptimizationFeatures(district_heating_network=network_info.network_type=="DH",
                                                                 district_cooling_network=network_info.network_type=="DC",
                                                                 locator=network_info.locator)
