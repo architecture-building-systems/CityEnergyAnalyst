@@ -218,7 +218,7 @@ def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, settings, max_glob
                                             sensor_intersection_zone):
 
         selection_of_results = solar_res[index:index + sensors_number_building]
-        result = [array * (1.0 - scalar) for array, scalar in zip(selection_of_results, sensor_intersection_building)]
+        result = [(array * (1.0 - scalar)).tolist() for array, scalar in zip(selection_of_results, sensor_intersection_building)]
         items_sensor_name_and_result = dict(zip(sensor_code_building, result))
         with open(locator.get_radiation_building(building_name), 'w') as outfile:
             json.dump(items_sensor_name_and_result, outfile)
