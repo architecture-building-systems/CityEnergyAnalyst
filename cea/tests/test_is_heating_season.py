@@ -1,7 +1,7 @@
 """
- the implementation of 251 (move Heating/Cooling season to a non northern-hemisphere-based system).
+The implementation of 251 (move Heating/Cooling season to a non northern-hemisphere-based system).
 
-the hours to start and stop (?) the heating season as explained in the reproduced method ``is_heating_season`` below.
+The hours to start and stop (?) the heating season as explained in the reproduced method ``is_heating_season`` below.
 
 New style: 6 attributes, ``heating_season_start``, ``heating_season_end``, ``cooling_season_start``,
 ``cooling_season_end``, ``has_heating_season``, ``has_cooling_season``.
