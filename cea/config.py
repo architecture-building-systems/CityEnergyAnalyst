@@ -99,8 +99,11 @@ class Configuration(object):
     def ignore_restrictions(self):
         """Create a ``with`` block where the config file restrictions are not kept. Usage::
 
+
             with config.ignore_restrictions():
                 config.my_section.my_property = value
+
+        .. note: this will produce a warning in the output.
         """
 
         class RestrictionsIgnorer(object):
@@ -109,7 +112,7 @@ class Configuration(object):
                 self.old_restrictions = None
 
             def __enter__(self):
-                print("WARNING: Ignoring config file restrictions. Consider refactoring the code.")
+                # print("WARNING: Ignoring config file restrictions. Consider refactoring the code.")
                 self.old_restrictions = self.config.restricted_to
                 self.config.restricted_to = None
 
