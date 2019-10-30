@@ -27,26 +27,54 @@ def run(config, script, **kwargs):
     print('Running {script} with args {args}'.format(script=script, args=kwargs))
     f = getattr(cea.api, script)
     f(config=config, **kwargs)
+    config.restricted_to = None
     print('-' * 80)
 
 
 def main(config):
+    workflow_yml = config.workflow.workflow
+    resume_yml = config.workflow.resume_file
+    resume_mode_on = config.workflow.resume
+
     set_up_environment_variables(config)
 
-    workflow_yml = config.workflow.workflow
+    resume_dict = read_resume_info(resume_yml, workflow_yml)
+    resume_step = resume_dict[workflow_yml]
+
     if not os.path.exists(workflow_yml):
         raise cea.ConfigError("Workflow YAML file not found: {workflow}".format(workflow=workflow_yml))
 
     with open(workflow_yml, 'r') as workflow_fp:
         workflow = yaml.load(workflow_fp)
 
-    for step in workflow:
+    for i, step in enumerate(workflow):
         if "script" in step:
+            if resume_mode_on and i <= resume_step:
+                # skip steps already completed while resuming
+                print("Skipping workflow step {i}: script={script}".format(i=i, script=step["script"]))
+                continue
             do_script_step(config, step)
         elif "config" in step:
             config = do_config_step(config, step)
         else:
-            raise ValueError("Invalid step configuration: {step}".format(step=step))
+            raise ValueError("Invalid step configuration: {i} - {step}".format(i=i, step=step))
+
+        # write out information for resuming
+        with open(resume_yml, 'w') as resume_fp:
+            resume_dict[workflow_yml] = i
+            yaml.dump(resume_dict, resume_fp, indent=4)
+
+
+def read_resume_info(resume_yml, workflow_yml):
+    try:
+        with open(resume_yml, 'r') as resume_fp:
+            resume_dict = yaml.load(resume_fp)
+            if not resume_dict:
+                resume_dict = {workflow_yml: 0}
+    except IOError:
+        # no resume file found?
+        resume_dict = {workflow_yml: 0}
+    return resume_dict
 
 
 def set_up_environment_variables(config):
@@ -89,7 +117,6 @@ def do_config_step(config, step):
 def set_parameter(config, parameter, value):
     """Set a parameter to a value (expand with environment vars) without tripping the restricted_to part of config"""
     with config.ignore_restrictions():
-        config.restricted_to = None
         print("Setting {parameter}={value}".format(parameter=parameter.fqname, value=value))
         if not isinstance(value, basestring):
             value = str(value)
