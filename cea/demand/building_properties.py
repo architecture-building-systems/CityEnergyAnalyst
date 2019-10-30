@@ -266,8 +266,10 @@ class BuildingProperties(object):
 
         for building in df.index.values:
             if hvac_temperatures.loc[building, 'type_hs'] == 'T0' and \
-                    hvac_temperatures.loc[building, 'type_cs'] == 'T0' and df.loc[building, 'Hs'] > 0.0:
-                df.loc[building, 'Hs'] = 0.0
+                    hvac_temperatures.loc[building, 'type_cs'] == 'T0' and np.sum(df.loc[building, 'Hs_ag'],
+                                                                                  df.loc[building, 'Hs_bg']) > 0.0:
+                df.loc[building, 'Hs_ag'] = 0.0
+                df.loc[building, 'Hs_bg'] = 0.0
                 print('Building {building} has no heating and cooling system, Hs corrected to 0.'.format(
                     building=building))
 
