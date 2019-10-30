@@ -348,7 +348,7 @@ def calc_category(archetype_DB, age, field, type):
 
 def correct_archetype_areas(prop_architecture_df, architecture_DB, list_uses):
     """
-    Corrects the heated area 'Hs' for buildings with multiple uses.
+    Corrects the heated area 'Hs_ag' and 'Hs_bg' for buildings with multiple uses.
 
     :var prop_architecture_df: DataFrame containing each building's occupancy, construction and renovation data as
         well as the architectural properties obtained from the archetypes.
@@ -358,8 +358,9 @@ def correct_archetype_areas(prop_architecture_df, architecture_DB, list_uses):
     :var list_uses: list of all occupancy types in the project
     :type list_uses: list[str]
 
-    :return Hs_list: the corrected values for 'Hs' for each building
-    :type Hs_list: list[float]
+    :return Hs_ag_list, Hs_bg_list, Ns_list, Es_list: the corrected values for 'Hs_ag', 'Hs_bg', 'Ns' and 'Es' for each
+    building
+    :type Hs_ag_list, Hs_bg_list, Ns_list, Es_list:: list[float]
     """
 
     indexed_DB = architecture_DB.set_index('Code')
@@ -430,7 +431,7 @@ def get_prop_architecture(categories_df, architecture_DB, list_uses):
     prop_architecture_df = prop_architecture_df.merge(window_DB, left_on='cat_windows', right_on='Code').drop('Code',
                                                                                                               axis=1)
 
-    # adjust share of floor space that is heated ('Hs') for multiuse buildings
+    # adjust share of floor space that is heated for multiuse buildings
     prop_architecture_df['Hs_ag'], prop_architecture_df['Hs_bg'], prop_architecture_df['Ns'],\
         prop_architecture_df['Es'] = correct_archetype_areas(prop_architecture_df, architecture_DB, list_uses)
 
