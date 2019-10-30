@@ -140,7 +140,7 @@ def calc_mixed_schedule(locator,
         schedule_new_data.update(DAY)
         schedule_new_data.update(HOUR)
 
-        # calcualate complementary_data
+        # calculate complementary_data
         schedule_complementary_data = {'METADATA': metadata, 'MONTHLY_MULTIPLIER': monthly_multiplier}
 
         # save cea schedule format
