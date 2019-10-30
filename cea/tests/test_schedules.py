@@ -66,7 +66,7 @@ class TestScheduleCreation(unittest.TestCase):
 
         # calculate schedules
         schedule_maker_main(locator, config)
-        calculated_schedules = pd.read_csv(locator.get_occupancy_model_file('B01')).set_index('DATE')
+        calculated_schedules = pd.read_csv(locator.get_schedule_model_file('B01')).set_index('DATE')
 
         config = ConfigParser.SafeConfigParser()
         config.read(get_test_config_path())

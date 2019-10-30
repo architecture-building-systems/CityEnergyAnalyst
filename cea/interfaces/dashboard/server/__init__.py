@@ -9,6 +9,7 @@ from flask import Blueprint, current_app
 from flask_restplus import Api, Resource
 from .jobs import api as jobs
 from .streams import api as streams
+from ..tools.routes import shutdown_worker_processes
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
@@ -37,5 +38,6 @@ class ServerAlive(Resource):
 @api.route("/shutdown")
 class ServerShutdown(Resource):
     def post(self):
+        shutdown_worker_processes()
         current_app.socketio.stop()
         return {'message': 'Shutting down...'}

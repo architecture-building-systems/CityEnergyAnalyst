@@ -718,13 +718,13 @@ class InputLocator(object):
         """
         return os.path.join(self.get_building_properties_folder(), 'variables_overrides.csv')
 
-    def get_building_schedules_folder(self):
+    def get_building_weekly_schedules_folder(self):
         """scenario/outputs/data/optimization/slave`
         Slave results folder (storage + operation pattern)
         """
         return self._ensure_folder(self.get_building_properties_folder(),'schedules')
 
-    def get_building_schedules(self, building_name):
+    def get_building_weekly_schedules(self, building_name):
         """
         scenario/inputs/building-properties/{building_name}_schedules.csv
         This file contains schedules of occupancy, appliance use, etc of each building.
@@ -732,15 +732,15 @@ class InputLocator(object):
         :param building_name:
         :return:
         """
-        return os.path.join(self.get_building_schedules_folder(),'{}.csv'.format(building_name))
+        return os.path.join(self.get_building_weekly_schedules_folder(), '{}.csv'.format(building_name))
 
-    def get_occupancy_model_folder(self):
+    def get_schedule_model_folder(self):
         """scenario/outputs/data/optimization/slave`
         Slave results folder (storage + operation pattern)
         """
         return self._ensure_folder(self.scenario, 'outputs', 'data', 'occupancy')
 
-    def get_occupancy_model_file(self, building_name):
+    def get_schedule_model_file(self, building_name):
         """
         scenario/inputs/building-properties/{building_name}_schedules.csv
         This file contains schedules of occupancy, appliance use, etc of each building.
@@ -748,7 +748,7 @@ class InputLocator(object):
         :param building_name:
         :return:
         """
-        return os.path.join(self.get_occupancy_model_folder(), '{}.csv'.format(building_name))
+        return os.path.join(self.get_schedule_model_folder(), '{}.csv'.format(building_name))
 
     def get_terrain(self):
         """scenario/inputs/topography/terrain.tif"""
