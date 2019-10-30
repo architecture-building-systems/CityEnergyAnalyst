@@ -58,8 +58,8 @@ def read_cea_schedule(path_to_cea_schedule):
 
 def save_cea_schedule(schedule_data, schedule_complementary_data, path_to_building_schedule):
 
-    METADATA = ['METADATA']+list(schedule_complementary_data['METADATA'])
-    MULTIPLIER = ['MONTHLY_MULTIPLIER']+list(schedule_complementary_data['MONTHLY_MULTIPLIER'])
+    METADATA = ['METADATA']+[schedule_complementary_data['METADATA']]
+    MULTIPLIER = ['MONTHLY_MULTIPLIER'] + list(schedule_complementary_data['MONTHLY_MULTIPLIER'])
     COLUMNS_SCHEDULES = schedule_data.keys()
     RECORDS_SCHEDULES = map(list, zip(*schedule_data.values()))
     with open(path_to_building_schedule, "wb") as csvfile:

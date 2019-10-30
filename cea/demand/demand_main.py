@@ -104,7 +104,7 @@ def demand_calculation(locator, config):
 
     # SPECIFY NUMBER OF BUILDINGS TO SIMULATE
     if not building_names:
-        building_names = building_properties.list_building_names()
+        building_names = locator.get_zone_building_names()
         print('Running demand calculation for all buildings in the zone')
     else:
         print('Running demand calculation for the following buildings=%s' % building_names)
