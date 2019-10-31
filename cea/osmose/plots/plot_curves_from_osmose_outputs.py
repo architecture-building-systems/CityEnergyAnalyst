@@ -49,6 +49,8 @@ def set_plot_parameters(ax1, plot_specs):
                fontsize=fontsize, prop={'family': 'Times New Roman', 'size': str(fontsize)})
     # set x and y range
     # plt.set_xlim([-766.00311044128,8090.8964687342])
+    if 'xlim' in plot_specs.keys():
+        ax1.set(xlim=plot_specs['xlim'])
     ax1.set(ylim=plot_specs['ylim'])
     # format ticks
     plt.xticks(fontname=fontname, fontsize=fontsize)
@@ -67,16 +69,21 @@ def set_plot_parameters(ax1, plot_specs):
     return
 
 
-def load_data_from_txt(path, plot_type, line_type, model_name, t):
+def load_data_from_txt(path, plot_type, line_type, txt_name, t):
     os.chdir(path)
-    if model_name == '':
+    if txt_name == '':
         file_name = plot_type + '_' + line_type + '_m_loc_loc1_t' + str(t) + '_c1_DefaultHeatCascade.txt'
+    elif 'loc' in txt_name:
+        file_name = plot_type + '_' + line_type + '_loc_' + txt_name + '_t' + str(t) + '_c1_DefaultHeatCascade.txt'
     else:
-        file_name = plot_type + '_' + line_type + '_m_' + model_name + '_loc_loc1_t' + str(t) + '_c1_DefaultHeatCascade.txt'
-    data = np.genfromtxt(file_name, delimiter=' ')
-    # x and y axes
-    x = data[:, 0]
-    y = data[:, 1]
+        file_name = plot_type + '_' + line_type + '_m_' + txt_name + '_loc_loc1_t' + str(t) + '_c1_DefaultHeatCascade.txt'
+    if os.path.isfile(os.path.join(path, file_name)):
+        data = np.genfromtxt(file_name, delimiter=' ')
+        # x and y axes
+        x = data[:, 0]
+        y = data[:, 1]
+    else:
+        x, y = 0, 0
     return x, y
 
 
