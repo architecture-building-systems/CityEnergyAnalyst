@@ -30,44 +30,43 @@ def main(case):
     path_to_case_folder = os.path.join(result_destination, case)
     make_directory(path_to_case_folder, new_calculation)
 
-    # extract demand outputs
-    building_names, \
-    Tamb, \
-    timesteps_calc, \
-    periods = extract_demand_outputs.extract_cea_outputs_to_osmose_main(case, timesteps, season, specified_buildings)
+    if type(timesteps) is int:
+        # extract demand outputs
+        building_names, \
+        Tamb, \
+        timesteps_calc, \
+        periods = extract_demand_outputs.extract_cea_outputs_to_osmose_main(case, timesteps, season,
+                                                                            specified_buildings)
+        ## start ampl license
+        start_ampl_license(ampl_lic_path, "start")
+        ## run osmose
+        time_print = timesteps
+        run_osmose_for_building_cases(Tamb, building_names, case, path_to_case_folder, periods, timesteps_calc, time_print)
+    elif type(timesteps) is list:
+        ## start ampl license
+        start_ampl_license(ampl_lic_path, "start")
+        for time in timesteps:
+            time_print = time
+            # extract demand outputs
+            building_names, \
+            Tamb, \
+            timesteps_calc, \
+            periods = extract_demand_outputs.extract_cea_outputs_to_osmose_main(case, [time], season,
+                                                                                specified_buildings)
+            ## run osmose
+            run_osmose_for_building_cases(Tamb, building_names, case, path_to_case_folder, periods, timesteps_calc, time_print)
 
-    ## start ampl license
-    start_ampl_license(ampl_lic_path, "start")
+    return np.nan
 
-    ## run osmose
+
+
+def run_osmose_for_building_cases(Tamb, building_names, case, path_to_case_folder, periods, timesteps_calc, time_print):
     write_osmose_general_inputs(path_to_case_folder, periods, timesteps_calc)
     for building in building_names:
         print building, ' in ', case
         write_osmose_building_inputs(Tamb, building)
         for tech in TECHS:
-            # run osmose
-            t = time.localtime()
-            print time.strftime("%H:%M", t)
-            t0 = time.clock()
-            result_path, run_folder = exec_osmose(tech, osmose_project_path)
-
-            # rename the files to keep track
-            case_short = case.split('_')[4]
-            old_name = run_folder
-            if os.path.exists(os.path.join(result_path, old_name)):
-                new_name = old_name + '_' + case_short + '_' + building + '_' + str(periods) + '_' + str(timesteps)
-
-                ##Remove .jpg
-                # model_folder = [result_path, run_folder, 's_001\\plots\\icc\\models']
-                # path_to_model_folder = os.path.join('', *model_folder)
-                # files = os.listdir(path_to_model_folder)
-                # [os.remove(os.path.join(path_to_model_folder, file)) for file in files if '.jpg' in file]
-
-                ##Rename
-                os.rename(os.path.join(result_path, run_folder),os.path.join(result_path, new_name))
-
-            time_elapsed = time.clock() - t0
-            print round(time_elapsed, 0), ' s for running: ', tech, '\n'
+            osmose_one_run(building, case, periods, tech, time_print)
 
         # # plot results
         # building_timestep_tag = building + "_" + str(periods) + "_" + str(timesteps_calc)
@@ -80,7 +79,36 @@ def main(case):
         # plot_results.main(building, TECHS, building_result_path)
         # compare_el.main(building, building_result_path, case)
         # # start_ampl_license(ampl_lic_path, "stop")
-    return np.nan
+
+
+def osmose_one_run(building, case, periods, tech, time_print):
+    # run osmose
+    t = time.localtime()
+    print time.strftime("%H:%M", t)
+    t0 = time.clock()
+    result_path, run_folder = exec_osmose(tech, osmose_project_path)
+    # rename the files to keep track
+    case_short = case.split('_')[4]
+    old_name = run_folder
+    if os.path.exists(os.path.join(result_path, old_name)):
+        if type(timesteps) is int:
+            new_name = old_name + '_' + case_short + '_' + building + '_' + str(periods) + '_' + str(time_print)
+        elif type(timesteps) is list:
+            new_name = old_name + '_' + case_short + '_' + building + '_' + str(periods) + '_' + str(time_print)
+        else:
+            print('check timesteps')
+
+        ##Remove .jpg
+        # model_folder = [result_path, run_folder, 's_001\\plots\\icc\\models']
+        # path_to_model_folder = os.path.join('', *model_folder)
+        # files = os.listdir(path_to_model_folder)
+        # [os.remove(os.path.join(path_to_model_folder, file)) for file in files if '.jpg' in file]
+
+        ##Rename
+        os.rename(os.path.join(result_path, run_folder), os.path.join(result_path, new_name))
+    time_elapsed = time.clock() - t0
+    print round(time_elapsed, 0), ' s for running: ', tech, '\n'
+    return
 
 
 def write_osmose_building_inputs(Tamb, building):
