@@ -69,7 +69,13 @@ def extract_cea_outputs_to_osmose_main(case, timesteps, season, specified_buildi
         end_t = (start_t + timesteps)
         op_time = np.ones(timesteps, dtype=int)
         periods = 1
-        save_operatingcost(op_time, timesteps)
+    elif type(timesteps) is list:
+        # one specific time-step
+        start_t = timesteps[0]
+        end_t = start_t + 1
+        timesteps = 1
+        op_time = np.ones(timesteps, dtype=int)
+        periods = 1
     else:
         cluster_numbers_df = pd.read_excel(path_to_number_of_k_file(), sheet_name='number_of_clusters')
         number_of_clusters = cluster_numbers_df[case.split('_')[4]][case.split('_')[0]]
@@ -91,7 +97,8 @@ def extract_cea_outputs_to_osmose_main(case, timesteps, season, specified_buildi
                 op_time.extend(np.ones(24, dtype=int)*count)
         periods = len(op_time)/24
         timesteps = len(op_time)
-        save_operatingcost(op_time, timesteps)
+
+    save_operatingcost(op_time, timesteps)
 
     RH_max, RH_min = get_rh(case)
 
@@ -346,7 +353,7 @@ def calc_m_exhaust_from_CO2(CO2_room, CO2_ext, CO2_gain_m3pers, rho_air):
 
 def path_to_demand_output(building_name, case):
     path_to_file = {}
-    path_to_folder = 'C:\\CEA_cases\\%s\\outputs\\data\\demand' % case
+    path_to_folder = 'C:\\CEA_cases\\HCS_cases_all\\%s\\outputs\\data\\demand' % case
     path_to_file['csv'] = os.path.join(path_to_folder, '%s.%s' % (building_name, 'csv'))
     path_to_file['xls'] = os.path.join(path_to_folder, '%s.%s' % (building_name, 'xls'))
     return path_to_file
@@ -354,7 +361,7 @@ def path_to_demand_output(building_name, case):
 
 def path_to_total_demand(case):
     path_to_file = {}
-    path_to_folder = 'C:\\CEA_cases\\%s\\outputs\\data\\demand' % case
+    path_to_folder = 'C:\\CEA_cases\\HCS_cases_all\\%s\\outputs\\data\\demand' % case
     path_to_file = os.path.join(path_to_folder, 'Total_demand.%s' % ('csv'))
     return path_to_file
 
