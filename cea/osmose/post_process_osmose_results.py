@@ -24,7 +24,8 @@ def main(folder_path):
     # air
     m_a_in_df, m_a_out_df = calc_layer_balance(balance_df, 'Bui_air_bal')
     plot_values_all_timesteps('Bui_air_bal_in', m_a_in_df, 'Air flow [kg/s/m2]', output_df, folder_path)
-    air_in_ratio = m_a_in_df.sum(axis=1)/output_df['m_ve_min']
+    m_a_in_min = output_df['m_ve_min'].combine(output_df['m_a_in_inf'],max)
+    air_in_ratio = m_a_in_df.sum(axis=1)/m_a_in_min
     # water
     m_w_in_df, m_w_out_df = calc_layer_balance(balance_df, 'Bui_water_bal')
     # sensible heat
@@ -38,6 +39,7 @@ def main(folder_path):
     ## Calculation
     # exergy
     exergy_req, exergy_reheat_req = calc_exergy(balance_df, output_df, folder_path)
+    exergy_recovered_df = calc_exergy_recovered(streams_df, output_df)
     # Q
     Qsc_dict, Qsc_total_theoretical = calc_Qsc(output_df, Q_sen_in_df, Q_sen_out_df, folder_path)
     Q_chiller_total, Q_r_chiller_total, Q_coil_dict,\
@@ -61,6 +63,7 @@ def main(folder_path):
                   'OAU cooling eff': OAU_cooling_eff,
                   'exergy_kWh': exergy_req,
                   'exergy_reheat_kWh': exergy_reheat_req,
+                  'exergy_recovered_kWh': exergy_recovered_df['total'],
                   'electricity_kWh': el_usages,
                   'Q_chiller_kWh': Q_chiller_total,
                   'Q_r_chiller_kWh': Q_r_chiller_total,
@@ -88,6 +91,24 @@ def main(folder_path):
     return
 
 
+def calc_exergy_recovered(stream_df, output_df):
+    T_OA_K = output_df['T_OA'] + 273.15
+    recover_streams_df = stream_df.filter(like='OAU_EX')
+    for column in recover_streams_df.filter(like='T'):
+        T_stream_K = recover_streams_df[column] + 273.15
+        recover_streams_df[column+'_carnot'] = 1 - T_OA_K/T_stream_K
+
+    exergy_recovered = pd.DataFrame()
+    for column in recover_streams_df.filter(like='Hout'):
+        Q_recovered = recover_streams_df[column]
+        Tin_carnot = recover_streams_df[column.split('Hout')[0] + 'Tin_carnot']
+        Tout_carnot = recover_streams_df[column.split('Hout')[0] + 'Tout_carnot']
+        exergy_recovered[column.split('_Hout')[0]] = (abs(Tin_carnot) + abs(Tout_carnot))*Q_recovered/2
+
+    exergy_recovered['total'] = exergy_recovered.sum(axis=1)
+    return exergy_recovered
+
+
 def calc_Q_heat_cascade(folder_path, output_df, streams_df):
     # qt_hot
     Q_coil_dict = calc_Q_coil(output_df, folder_path)
@@ -111,11 +132,13 @@ def read_file_as_df(file_name, folder_path):
     path_to_file = os.path.join(folder_path, file_name)
     # print(path_to_file)
     # read csv
-    outputs_df = pd.read_csv(path_to_file, header=None).T
+    file_df = pd.read_csv(path_to_file, header=None).T
     # set column
-    outputs_df.columns = outputs_df.iloc[0]
-    outputs_df = outputs_df[1:]
-    return outputs_df
+    file_df.columns = file_df.iloc[0]
+    file_df = file_df[1:]
+    # to numeric
+    file_df = file_df.apply(pd.to_numeric, errors='coerce')
+    return file_df
 
 def calc_layer_balance(balance_df, layer):
     layer_in_df = balance_df.filter(like= layer + '_in')
@@ -530,17 +553,17 @@ if __name__ == '__main__':
 
     ## Loop through different technologies
 
-    # result_path_folder = "E:\\HCS_results_1015\\base"
+    # result_path_folder = "E:\\HCS_results_1022\\HCS_base_m_out_dP"
     result_path_folder = 'E:\\OSMOSE_projects\\HCS_mk\\results'
-    TECHS = ['HCS_base', 'HCS_base_coil', 'HCS_base_3for2', 'HCS_base_ER0', 'HCS_base_IEHX', 'HCS_base_LD']
-    # TECHS = ['HCS_base']
+    # TECHS = ['HCS_base', 'HCS_base_coil', 'HCS_base_3for2', 'HCS_base_ER0', 'HCS_base_IEHX', 'HCS_base_LD']
+    TECHS = ['HCS_base_coil']
 
     for tech in TECHS:
         tech_folder_path = os.path.join(result_path_folder, tech)
         folders_list = os.listdir(tech_folder_path)
         # for folder in folders_list:
-        for folder in ['run_001_HOT_B001_1_168']:
-        #     if 'run' in folder:
+        for folder in ['run_018']:
+            if 'run' in folder:
                 folder_path = os.path.join(tech_folder_path, folder)
                 file_list = os.listdir(folder_path)
                 # if 'total.csv' not in file_list:
