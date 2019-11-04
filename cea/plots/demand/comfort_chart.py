@@ -293,7 +293,7 @@ def calc_data(data_frame, locator):
     """
 
     # read region-specific control parameters (identical for all buildings), i.e. heating and cooling season
-    prop_region_specific_control = pd.read_excel(locator.get_archetypes_system_controls(),
+    prop_region_specific_control = pd.read_excel(locator.get_archetypes_heating_season(),
                                                  true_values=['True', 'TRUE', 'true'],
                                                  false_values=['False', 'FALSE', 'false', u'FALSE'],
                                                  dtype={'has-heating-season': bool,
