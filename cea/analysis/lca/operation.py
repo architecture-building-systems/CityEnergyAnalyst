@@ -49,12 +49,12 @@ def lca_operation(locator):
     ## get the supply systems for each building in the scenario
     supply_systems = gpdf.from_file(locator.get_building_supply()).drop('geometry', axis=1)
     ## get the non-renewable primary energy and greenhouse gas emissions factors for each supply system in the database
-    data_LCI = locator.get_life_cycle_inventory_supply_systems()
-    factors_heating = pd.read_excel(data_LCI, sheet_name='HEATING')
-    factors_dhw = pd.read_excel(data_LCI, sheet_name='DHW')
-    factors_cooling = pd.read_excel(data_LCI, sheet_name='COOLING')
-    factors_electricity = pd.read_excel(data_LCI, sheet_name='ELECTRICITY')
-    factors_resources = pd.read_excel(data_LCI, sheet_name='RESOURCES')
+    data_all_in_one_systems = pd.read_excel(locator.get_supply_systems(), sheet_name='ALL_IN_ONE_SYSTEMS')
+    factors_heating = data_all_in_one_systems[data_all_in_one_systems['system'].isin(['HEATING', 'NONE'])]
+    factors_dhw = data_all_in_one_systems[data_all_in_one_systems['system'].isin(['HEATING', 'NONE'])]
+    factors_cooling = data_all_in_one_systems[data_all_in_one_systems['system'].isin(['COOLING', 'NONE'])]
+    factors_electricity = data_all_in_one_systems[data_all_in_one_systems['system'].isin(['ELECTRICITY', 'NONE'])]
+    factors_resources = pd.read_excel(locator.get_supply_systems(), sheet_name='FEEDSTOCKS')
 
     # local variables
     result_folder = locator.get_lca_emissions_results_folder()
@@ -63,14 +63,14 @@ def lca_operation(locator):
     ## create data frame for each type of end use energy containing the type of supply system use, the final energy
     ## demand and the primary energy and emissions factors for each corresponding type of supply system
 
-    heating_factors = factors_heating.merge(factors_resources, left_on='source_hs', right_on='code')[
-        ['code_x', 'source_hs', 'PEN', 'CO2']]
-    cooling_factors = factors_cooling.merge(factors_resources, left_on='source_cs', right_on='code')[
-        ['code_x', 'source_cs', 'PEN', 'CO2']]
-    dhw_factors = factors_dhw.merge(factors_resources, left_on='source_dhw', right_on='code')[
-        ['code_x', 'source_dhw', 'PEN', 'CO2']]
-    electricity_factors = factors_electricity.merge(factors_resources, left_on='source_el', right_on='code')[
-        ['code_x', 'source_el', 'PEN', 'CO2']]
+    heating_factors = factors_heating.merge(factors_resources, left_on='feedstock', right_on='code')[
+        ['code_x', 'feedstock', 'PEN', 'CO2']]
+    cooling_factors = factors_cooling.merge(factors_resources, left_on='feedstock', right_on='code')[
+        ['code_x', 'feedstock', 'PEN', 'CO2']]
+    dhw_factors = factors_dhw.merge(factors_resources, left_on='feedstock', right_on='code')[
+        ['code_x', 'feedstock', 'PEN', 'CO2']]
+    electricity_factors = factors_electricity.merge(factors_resources, left_on='feedstock', right_on='code')[
+        ['code_x', 'feedstock', 'PEN', 'CO2']]
 
     heating = supply_systems.merge(demand, on='Name').merge(heating_factors, left_on='type_hs', right_on='code_x')
     dhw = supply_systems.merge(demand, on='Name').merge(dhw_factors, left_on='type_dhw', right_on='code_x')

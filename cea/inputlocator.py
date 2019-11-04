@@ -584,22 +584,12 @@ class InputLocator(object):
         to the scenario if they are not yet present, based on the configured region for the scenario."""
         return os.path.join(self.get_technology_folder(), 'systems', 'supply_systems.xls')
 
-    def get_life_cycle_inventory_supply_systems(self):
-        """Returns the database of life cycle inventory for supply systems. These are copied
-        to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return os.path.join(self.get_technology_folder(), 'lifecycle', 'LCA_feedstocks.xlsx')
-
-    def get_electricity_costs(self):
-        """Returns the database of life cycle inventory for supply systems. These are copied
-        to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return os.path.join(self.get_technology_folder(), 'systems', 'electricity_costs.xlsx')
-
     def get_life_cycle_inventory_building_systems(self):
         """Returns the database of life cycle inventory for buildings systems. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
         return os.path.join(self.get_technology_folder(), 'lifecycle', 'LCA_buildings.xlsx')
 
-    def get_technical_emission_systems(self):
+    def get_air_conditioning_systems(self):
         """databases/Systems/emission_systems.csv"""
         return os.path.join(self.get_technology_folder(), 'systems', 'air_conditioning_systems.xls')
 
