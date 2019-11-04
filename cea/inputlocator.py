@@ -49,7 +49,7 @@ class InputLocator(object):
     #Paths to databases
     def get_databases_folder(self):
         """Returns the inputs folder of a scenario"""
-        return os.path.join(self.scenario, "databases")
+        return os.path.join(self.get_input_folder(), "technology")
 
     def get_database_standard_schedules(self):
         return os.path.join(self.get_databases_folder(), 'archetypes', 'schedules')
