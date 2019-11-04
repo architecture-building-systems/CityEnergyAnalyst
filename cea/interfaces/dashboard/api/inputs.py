@@ -193,37 +193,42 @@ def get_building_properties():
 
 def get_network(config, network_type, trigger_abort=True):
     # TODO: Get a list of names and send all in the json
-    locator = cea.inputlocator.InputLocator(config.scenario)
-    building_connectivity = get_building_connectivity(locator)
-    network_type = network_type.upper()
-    connected_buildings = building_connectivity[building_connectivity['{}_connectivity'.format(
-        network_type)] == 1]['Name'].values.tolist()
-    network_name = 'base'
+    try:
+        locator = cea.inputlocator.InputLocator(config.scenario)
+        building_connectivity = get_building_connectivity(locator)
+        network_type = network_type.upper()
+        connected_buildings = building_connectivity[building_connectivity['{}_connectivity'.format(
+            network_type)] == 1]['Name'].values.tolist()
+        network_name = 'base'
 
-    # Do not calculate if no connected buildings
-    if len(connected_buildings) < 2:
+        # Do not calculate if no connected buildings
+        if len(connected_buildings) < 2:
+            return None, [], None
+
+        edges = locator.get_network_layout_edges_shapefile(
+            network_type, network_name)
+        nodes = locator.get_network_layout_nodes_shapefile(
+            network_type, network_name)
+        supply_system = locator.get_building_supply()
+
+        no_network_file = not os.path.isfile(edges) or not os.path.isfile(nodes)
+        supply_system_modified = os.path.getmtime(supply_system)
+
+        # Generate network files
+        if no_network_file or supply_system_modified > os.path.getmtime(edges) or supply_system_modified > os.path.getmtime(nodes):
+            config.network_layout.network_type = network_type
+            config.network_layout.connected_buildings = connected_buildings
+            network_layout = NetworkLayout(network_layout=config.network_layout)
+            layout_network(network_layout, locator, output_name_network=network_name)
+
+        network_json, crs = df_to_json(edges, trigger_abort=trigger_abort)
+        nodes_json, _ = df_to_json(nodes, trigger_abort=trigger_abort)
+        network_json['features'].extend(nodes_json['features'])
+        network_json['properties'] = {'connected_buildings': connected_buildings}
+        return network_json, connected_buildings, crs
+    except IOError as e:
+        print(e)
         return None, [], None
-
-    edges = locator.get_network_layout_edges_shapefile(
-        network_type, network_name)
-    nodes = locator.get_network_layout_nodes_shapefile(
-        network_type, network_name)
-    supply_system = locator.get_building_supply()
-
-    no_network_file = not os.path.isfile(edges) or not os.path.isfile(nodes)
-    supply_system_modified = os.path.getmtime(supply_system)
-
-    # Generate network files
-    if no_network_file or supply_system_modified > os.path.getmtime(edges) or supply_system_modified > os.path.getmtime(nodes):
-        config.network_layout.network_type = network_type
-        config.network_layout.connected_buildings = connected_buildings
-        layout_network(config, locator, output_name_network=network_name)
-
-    network_json, crs = df_to_json(edges, trigger_abort=trigger_abort)
-    nodes_json, _ = df_to_json(nodes, trigger_abort=trigger_abort)
-    network_json['features'].extend(nodes_json['features'])
-    network_json['properties'] = {'connected_buildings': connected_buildings}
-    return network_json, crs
 
 
 def df_to_json(file_location, bbox=False, trigger_abort=True):
