@@ -197,9 +197,9 @@ def geometry_extractor_osm(locator, config):
     """
 
     # local variables:
-    buffer_m = config.district_helper.buffer
-    buildings_height = config.district_helper.height_ag
-    buildings_floors = config.district_helper.floors_ag
+    buffer_m = config.surroundings_helper.buffer
+    buildings_height = config.surroundings_helper.height_ag
+    buildings_floors = config.surroundings_helper.floors_ag
     shapefile_out_path = locator.get_surrounding_geometry()
     zone = Gdf.from_file(locator.get_zone_geometry())
 
