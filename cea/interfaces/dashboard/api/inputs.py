@@ -139,6 +139,56 @@ class AllInputs(Resource):
         store['colors'] = COLORS
 
         return store
+    def put(self):
+        form = api.payload
+        config = current_app.cea_config
+        locator = cea.inputlocator.InputLocator(config.scenario)
+
+        tables = form['tables']
+        geojsons = form['geojsons']
+        crs = form['crs']
+
+        out = {'tables': {}, 'geojsons': {}}
+
+        # TODO: Maybe save the files to temp location in case something fails
+        for db in INPUTS:
+            db_info = INPUTS[db]
+            location = getattr(locator, db_info['location'])()
+
+            if len(tables[db]) != 0:
+                if db_info['type'] == 'shp':
+                    from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
+                    table_df = geopandas.GeoDataFrame.from_features(geojsons[db]['features'],
+                                                                    crs=get_geographic_coordinate_system())
+                    out['geojsons'][db] = json.loads(table_df.to_json(show_bbox=True))
+                    table_df = table_df.to_crs(crs[db])
+                    table_df.to_file(location, driver='ESRI Shapefile', encoding='ISO-8859-1')
+
+                    table_df = pandas.DataFrame(table_df.drop(columns='geometry'))
+                    out['tables'][db] = json.loads(table_df.set_index('Name').to_json(orient='index'))
+                elif db_info['type'] == 'dbf':
+                    table_df = pandas.read_json(json.dumps(tables[db]), orient='index')
+
+                    # Make sure index name is 'Name;
+                    table_df.index.name = 'Name'
+                    table_df = table_df.reset_index()
+
+                    cea.utilities.dbf.dataframe_to_dbf(table_df, location)
+                    out['tables'][db] = json.loads(table_df.set_index('Name').to_json(orient='index'))
+
+            else:  # delete file if empty
+                out['tables'][db] = {}
+                if os.path.isfile(location):
+                    if db_info['type'] == 'shp':
+                        import glob
+                        for filepath in glob.glob(os.path.join(locator.get_building_geometry_folder(), '%s.*' % db)):
+                            os.remove(filepath)
+                    elif db_info['type'] == 'dbf':
+                        os.remove(location)
+                if db_info['type'] == 'shp':
+                    out['geojsons'][db] = {}
+
+        return out
 
 
 def get_building_properties():
