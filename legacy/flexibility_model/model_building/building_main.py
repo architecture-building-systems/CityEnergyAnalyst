@@ -182,7 +182,7 @@ def main(locator,
         T_int_cea_dic
     )
 
-    electricity_prices_MWh = pd.read_excel(locator.get_supply_systems(), "DETAILED_ELEC_COSTS")
+    electricity_prices_MWh = pd.read_excel(locator.get_database_supply_systems(), "DETAILED_ELEC_COSTS")
     electricity_prices_MWh["PRICE ($/MWh)"] = electricity_prices_MWh["Opex_var_buy_USD2015perkWh"]*1000
     electricity_prices_MWh["our_datetime"] = pd.date_range(start='1/1/2005', periods=HOURS_IN_YEAR)
     electricity_prices_MWh.set_index('our_datetime', inplace=True)

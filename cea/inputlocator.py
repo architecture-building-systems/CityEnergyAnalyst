@@ -42,23 +42,24 @@ class InputLocator(object):
         """Use os.makedirs to ensure the folders exist"""
         self._ensure_folder(os.path.dirname(file_path))
 
-    def get_database_standard_schedules(self):
-        return os.path.join(self.get_technology_folder(), 'archetypes', 'schedules')
-
-    def get_database_standard_schedules_use(self, path_to_database, use):
-        return os.path.join(path_to_database, use + '.csv')
-
     def get_project_path(self):
         """Returns the parent folder of a scenario - this is called a project or 'case-study'"""
         return os.path.dirname(self.scenario)
 
+    #Paths to databases
+    def get_databases_folder(self):
+        """Returns the inputs folder of a scenario"""
+        return os.path.join(self.scenario, "databases")
+
+    def get_database_standard_schedules(self):
+        return os.path.join(self.get_databases_folder(), 'archetypes', 'schedules')
+
+    def get_database_standard_schedules_use(self, path_to_database, use):
+        return os.path.join(path_to_database, use + '.csv')
+
     def get_input_folder(self):
         """Returns the inputs folder of a scenario"""
         return os.path.join(self.scenario, "inputs")
-
-    def get_technology_folder(self):
-        """Returns the inputs folder of a scenario"""
-        return self._ensure_folder(self.get_input_folder(), "technology")
 
     def get_optimization_results_folder(self):
         """Returns the folder containing the scenario's optimization results"""
@@ -568,7 +569,7 @@ class InputLocator(object):
     def get_archetypes_properties(self):
         """Returns the database of construction properties to be used by the data-helper. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return os.path.join(self.get_technology_folder(), 'archetypes', 'construction_properties.xlsx')
+        return os.path.join(self.get_databases_folder(), 'archetypes', 'construction_properties.xlsx')
 
     def get_archetypes_system_controls(self):
         """ Returns the database of region-specific system control parameters. These are copied
@@ -577,34 +578,34 @@ class InputLocator(object):
         :param region:
         :return:
         """
-        return os.path.join(self.get_technology_folder(), 'archetypes', 'system_controls.xlsx')
+        return os.path.join(self.get_databases_folder(), 'archetypes', 'system_controls.xlsx')
 
-    def get_supply_systems(self):
+    def get_database_supply_systems(self):
         """Returns the database of supply systems for cost analysis. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return os.path.join(self.get_technology_folder(), 'systems', 'supply_systems.xls')
+        return os.path.join(self.get_databases_folder(), 'systems', 'supply_systems.xls')
 
-    def get_life_cycle_inventory_building_systems(self):
+    def get_database_air_conditioning_systems(self):
+        """databases/Systems/emission_systems.csv"""
+        return os.path.join(self.get_databases_folder(), 'systems', 'air_conditioning_systems.xls')
+
+    def get_database_envelope_systems(self):
+        """databases/Systems/emission_systems.csv"""
+        return os.path.join(self.get_databases_folder(), 'systems', 'envelope_systems.xls')
+
+    def get_database_lca_buildings(self):
         """Returns the database of life cycle inventory for buildings systems. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return os.path.join(self.get_technology_folder(), 'lifecycle', 'LCA_buildings.xlsx')
+        return os.path.join(self.get_databases_folder(), 'lifecycle', 'LCA_buildings.xlsx')
 
-    def get_air_conditioning_systems(self):
-        """databases/Systems/emission_systems.csv"""
-        return os.path.join(self.get_technology_folder(), 'systems', 'air_conditioning_systems.xls')
-
-    def get_envelope_systems(self):
-        """databases/Systems/emission_systems.csv"""
-        return os.path.join(self.get_technology_folder(), 'systems', 'envelope_systems.xls')
-
-    def get_life_cycle_inventory_mobility(self):
+    def get_database_lca_mobility(self):
         """Returns the database of life cycle inventory for supply systems. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return os.path.join(self.get_technology_folder(), 'lifecycle', 'LCA_mobility.xls')
+        return os.path.join(self.get_databases_folder(), 'lifecycle', 'LCA_mobility.xls')
 
     def get_uncertainty_db(self):
         """databases/CH/Uncertainty/uncertainty_distributions.xls"""
-        return os.path.join(self.get_technology_folder(), 'uncertainty', 'uncertainty_distributions.xls')
+        return os.path.join(self.get_databases_folder(), 'uncertainty', 'uncertainty_distributions.xls')
 
     def get_uncertainty_results_folder(self):
         return self._ensure_folder(self.scenario, 'outputs', 'data', 'uncertainty')

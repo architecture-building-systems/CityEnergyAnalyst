@@ -637,7 +637,7 @@ class SolarProperties(object):
 
 
 def get_properties_supply_sytems(locator, properties_supply):
-    data_all_in_one_systems = pd.read_excel(locator.get_supply_systems(), sheet_name='ALL_IN_ONE_SYSTEMS')
+    data_all_in_one_systems = pd.read_excel(locator.get_database_supply_systems(), sheet_name='ALL_IN_ONE_SYSTEMS')
     supply_heating = data_all_in_one_systems[data_all_in_one_systems['system'].isin(['HEATING', 'NONE'])]
     supply_dhw = data_all_in_one_systems[data_all_in_one_systems['system'].isin(['HEATING', 'NONE'])]
     supply_cooling = data_all_in_one_systems[data_all_in_one_systems['system'].isin(['COOLING', 'NONE'])]
@@ -734,11 +734,11 @@ def get_properties_technical_systems(locator, prop_HVAC):
 
     """
 
-    prop_emission_heating = pd.read_excel(locator.get_air_conditioning_systems(), 'heating')
-    prop_emission_cooling = pd.read_excel(locator.get_air_conditioning_systems(), 'cooling')
-    prop_emission_dhw = pd.read_excel(locator.get_air_conditioning_systems(), 'dhw')
-    prop_emission_control_heating_and_cooling = pd.read_excel(locator.get_air_conditioning_systems(), 'controller')
-    prop_ventilation_system_and_control = pd.read_excel(locator.get_air_conditioning_systems(), 'ventilation')
+    prop_emission_heating = pd.read_excel(locator.get_database_air_conditioning_systems(), 'heating')
+    prop_emission_cooling = pd.read_excel(locator.get_database_air_conditioning_systems(), 'cooling')
+    prop_emission_dhw = pd.read_excel(locator.get_database_air_conditioning_systems(), 'dhw')
+    prop_emission_control_heating_and_cooling = pd.read_excel(locator.get_database_air_conditioning_systems(), 'controller')
+    prop_ventilation_system_and_control = pd.read_excel(locator.get_database_air_conditioning_systems(), 'ventilation')
 
     df_emission_heating = prop_HVAC.merge(prop_emission_heating, left_on='type_hs', right_on='code')
     df_emission_cooling = prop_HVAC.merge(prop_emission_cooling, left_on='type_cs', right_on='code')
@@ -795,12 +795,12 @@ def get_envelope_properties(locator, prop_architecture):
     :rtype: DataFrame
 
     """
-    prop_roof = pd.read_excel(locator.get_envelope_systems(), 'ROOF')
-    prop_wall = pd.read_excel(locator.get_envelope_systems(), 'WALL')
-    prop_win = pd.read_excel(locator.get_envelope_systems(), 'WINDOW')
-    prop_shading = pd.read_excel(locator.get_envelope_systems(), 'SHADING')
-    prop_construction = pd.read_excel(locator.get_envelope_systems(), 'CONSTRUCTION')
-    prop_leakage = pd.read_excel(locator.get_envelope_systems(), 'LEAKAGE')
+    prop_roof = pd.read_excel(locator.get_database_envelope_systems(), 'ROOF')
+    prop_wall = pd.read_excel(locator.get_database_envelope_systems(), 'WALL')
+    prop_win = pd.read_excel(locator.get_database_envelope_systems(), 'WINDOW')
+    prop_shading = pd.read_excel(locator.get_database_envelope_systems(), 'SHADING')
+    prop_construction = pd.read_excel(locator.get_database_envelope_systems(), 'CONSTRUCTION')
+    prop_leakage = pd.read_excel(locator.get_database_envelope_systems(), 'LEAKAGE')
 
     df_construction = prop_architecture.merge(prop_construction, left_on='type_cons', right_on='code')
     df_leakage = prop_architecture.merge(prop_leakage, left_on='type_leak', right_on='code')

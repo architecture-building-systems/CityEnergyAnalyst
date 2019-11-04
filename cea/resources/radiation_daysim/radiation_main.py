@@ -144,9 +144,9 @@ def reader_surface_properties(locator, input_shp):
 
     # local variables
     architectural_properties = gpdf.from_file(input_shp).drop('geometry', axis=1)
-    surface_database_windows = pd.read_excel(locator.get_envelope_systems(), "WINDOW")
-    surface_database_roof = pd.read_excel(locator.get_envelope_systems(), "ROOF")
-    surface_database_walls = pd.read_excel(locator.get_envelope_systems(), "WALL")
+    surface_database_windows = pd.read_excel(locator.get_database_envelope_systems(), "WINDOW")
+    surface_database_roof = pd.read_excel(locator.get_database_envelope_systems(), "ROOF")
+    surface_database_walls = pd.read_excel(locator.get_database_envelope_systems(), "WALL")
 
     # querry data
     df = architectural_properties.merge(surface_database_windows, left_on='type_win', right_on='code')
