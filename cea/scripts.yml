@@ -52,7 +52,8 @@ Demand forecasting:
     description: Use Daysim to calculate solar radiation for a scenario
     interfaces: [cli, arcgis, dashboard]
     module: cea.resources.radiation_daysim.radiation_main
-    parameters: ['general:scenario', 'general:multiprocessing', 'general:debug', radiation]
+    parameters: ['general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free', 'general:debug',
+                 radiation]
     input-files:
       - [get_envelope_systems]
       - [get_district_geometry]
@@ -222,7 +223,8 @@ Optimization:
     description: Optimize network design variables (plant locations, layout,...)
     interfaces: [cli]
     module: cea.technologies.thermal_network.thermal_network_optimization
-    parameters: ['general:scenario', 'general:multiprocessing', thermal-network-optimization]
+    parameters: ['general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free',
+                 thermal-network-optimization]
 
   - name: decentralized
     label: Supply System Part I (decentralized)
@@ -236,7 +238,7 @@ Optimization:
     description: Run optimization for the given scenario
     interfaces: [cli, arcgis, dashboard]
     module: cea.optimization.optimization_main
-    parameters: ['general:scenario', 'general:multiprocessing', optimization]
+    parameters: ['general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free', optimization]
     input-files:
       - [get_street_network]
       - [get_total_demand]
@@ -300,7 +302,8 @@ Analysis:
     description: Simulate demand for sensitivity analysis samples
     interfaces: [cli, arcgis, dashboard]
     module: cea.analysis.sensitivity.sensitivity_demand_simulate
-    parameters: ['general:scenario', 'general:multiprocessing', 'general:debug', 'schedule-maker:schedule-model', 'schedule-maker:buildings',
+    parameters: ['general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free', 'general:debug',
+                 'schedule-maker:schedule-model', 'schedule-maker:buildings',
                  'sensitivity-demand:samples-folder', 'sensitivity-demand:simulation-folder',
                  'sensitivity-demand:output-parameters', 'sensitivity-demand:number-of-simulations',
                  'sensitivity-demand:sample-index', 'demand']
