@@ -601,24 +601,16 @@ class InputLocator(object):
 
     def get_technical_emission_systems(self):
         """databases/Systems/emission_systems.csv"""
-        return os.path.join(self.get_technology_folder(), 'systems', 'emission_systems.xls')
+        return os.path.join(self.get_technology_folder(), 'systems', 'air_conditioning_systems.xls')
 
     def get_envelope_systems(self):
         """databases/Systems/emission_systems.csv"""
         return os.path.join(self.get_technology_folder(), 'systems', 'envelope_systems.xls')
 
-    def get_thermal_networks(self):
-        """db/Systems/thermal_networks.xls"""
-        return os.path.join(self.get_technology_folder(), 'systems', 'thermal_networks.xls')
-
-    def get_electrical_networks(self):
-        """db/Systems/electrical_networks.xls"""
-        return os.path.join(self.get_technology_folder(), 'systems', 'electrical_networks.xls')
-
-    def get_data_benchmark(self):
+    def get_life_cycle_inventory_mobility(self):
         """Returns the database of life cycle inventory for supply systems. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return os.path.join(self.get_technology_folder(), 'benchmarks', 'benchmark_2000W.xls')
+        return os.path.join(self.get_technology_folder(), 'lifecycle', 'LCA_mobility.xls')
 
     def get_uncertainty_db(self):
         """databases/CH/Uncertainty/uncertainty_distributions.xls"""

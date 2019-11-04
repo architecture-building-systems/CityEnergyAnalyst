@@ -28,7 +28,7 @@ def operation_costs(locator, config):
     factors_dhw = pd.read_excel(data_LCI, sheet_name='DHW')
     factors_cooling = pd.read_excel(data_LCI, sheet_name='COOLING')
     factors_electricity = pd.read_excel(data_LCI, sheet_name='ELECTRICITY')
-    factors_resources = pd.read_excel(data_LCI, sheet_name='RESOURCES')
+    factors_resources = pd.read_excel(locator.get_supply_systems(), sheet_name='FEEDSTOCKS')
 
     # local variables
     # calculate the total operational non-renewable primary energy demand and CO2 emissions
