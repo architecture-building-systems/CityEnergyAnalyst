@@ -12,7 +12,7 @@ import cea.inputlocator
 import cea.utilities.dbf
 from cea.plots.supply_system.supply_system_map import get_building_connectivity
 from cea.plots.variable_naming import get_color_array
-from cea.technologies.network_layout.main import layout_network
+from cea.technologies.network_layout.main import layout_network, NetworkLayout
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 
 api = Namespace('Inputs', description='Input data for CEA')
@@ -65,7 +65,7 @@ GEOJSON_KEYS = ['zone', 'district', 'streets', 'dc', 'dh']
 @api.route('/')
 class InputList(Resource):
     def get(self):
-        return {'buildingProperties': INPUT_KEYS, 'others': ['streets', 'dc', 'dh']}
+        return {'buildingProperties': INPUT_KEYS, 'geoJSONs': GEOJSON_KEYS}
 
 
 @api.route('/building-properties/<string:db>')
@@ -124,6 +124,7 @@ class AllInputs(Resource):
         # FIXME: Find a better way, current used to test for Input Editor
         store = get_building_properties()
         store['geojsons'] = {}
+        store['connected_buildings'] = {}
         store['crs'] = {}
         store['geojsons']['zone'], store['crs']['zone'] = df_to_json(
             locator.get_zone_geometry(), bbox=True, trigger_abort=False)
@@ -131,9 +132,9 @@ class AllInputs(Resource):
             locator.get_district_geometry(), bbox=True, trigger_abort=False)
         store['geojsons']['streets'], store['crs']['streets'] = df_to_json(
             locator.get_street_network(), trigger_abort=False)
-        store['geojsons']['dc'], store['crs']['dc'] = get_network(
+        store['geojsons']['dc'], store['connected_buildings']['dc'], store['crs']['dc'] = get_network(
             config, 'dc', trigger_abort=False)
-        store['geojsons']['dh'], store['crs']['dh'] = get_network(
+        store['geojsons']['dh'], store['connected_buildings']['dh'],  store['crs']['dh'] = get_network(
             config, 'dh', trigger_abort=False)
         store['colors'] = COLORS
 
