@@ -177,9 +177,9 @@ def get_building_properties():
                                      [['VARIABLE', 'UNIT', 'DESCRIPTION']].set_index('VARIABLE').to_json(orient='index'))
 
             for column in db_info['fieldnames']:
+                columns[column] = {}
                 if column == 'REFERENCE':
                     continue
-                columns[column] = {}
                 columns[column]['type'] = db_info['fieldtypes'][column].__name__
                 columns[column]['description'] = db_glossary[column]['DESCRIPTION']
                 columns[column]['unit'] = db_glossary[column]['UNIT']
@@ -188,6 +188,7 @@ def get_building_properties():
         except IOError as e:
             print(e)
             store['tables'][db] = {}
+            store['columns'][db] = {}
 
     return store
 
