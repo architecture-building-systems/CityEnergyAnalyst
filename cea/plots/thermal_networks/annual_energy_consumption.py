@@ -33,10 +33,10 @@ class AnnualEnergyConsumptionPlot(cea.plots.thermal_networks.ThermalNetworksPlot
 
         @property
         def layout(self):
-            return go.Layout(title=self.title, barmode='stack',  # annotations=annotations,
-                             yaxis=dict(title='Energy consumption [MWh/yr]'),
+            return go.Layout(barmode='stack',  # annotations=annotations,
+                             yaxis=dict(title='Energy consumption [MWh/yr]', domain=[0, 1]),
                              xaxis=dict(domain=[0.05, 0.4]),
-                             yaxis2=dict(title='Energy consumption per length [MWh/yr/m]', anchor='x2'),
+                             yaxis2=dict(title='Energy consumption per length [MWh/yr/m]', anchor='x2', domain=[0, 1]),
                              xaxis2=dict(domain=[0.5, 0.85]))
 
         def calc_graph(self):
@@ -65,7 +65,6 @@ class AnnualEnergyConsumptionPlot(cea.plots.thermal_networks.ThermalNetworksPlot
             for field in analysis_fields:
                 x = ['annual consumption']
                 y = annual_consumption[field] / 1000
-                name = field.split('_kWh', 1)[0]
                 total_perc = (y / total_energy_MWh * 100).round(2)
                 total_perc_txt = [str(y.round(0)) + " MWh (" + str(total_perc) + " %)"]
                 trace = go.Bar(x=x, y=[y], name=NAMING[field], text=total_perc_txt, marker=dict(color=COLOR[field]),
