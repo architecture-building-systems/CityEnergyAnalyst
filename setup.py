@@ -17,34 +17,35 @@ __status__ = "Production"
 with open('README.rst', 'r') as f:
     LONG_DESCRIPTION = f.read()
 
-INSTALL_REQUIRES = ['SALib==1.2',  # last version to work with python2
-                    'ephem',
-                    'deap==1.3.0',
-                    'doit==0.29.0',
-                    'flask-restplus',
-                    'geopandas',
-                    'gevent',
-                    'ipython',
-                    'jupyter',
-                    'mock',
-                    'numba',
-                    'plotly',
-                    'py4design==0.27',
-                    'pymc3==3.6',  # last version known to work with python2
-                    'pysal',
-                    'pyyaml',
-                    'requests',
-                    'seaborn',
-                    'setuptools',
-                    'flask-socketio',
-                    'staticmap',
-                    'sphinx',
-                    'timezonefinder==3.4.2',  # last version to work with python2
-                    'twine',
-                    'utm',
-                    'osmnx==0.9',
-                    'xlrd',
-                    'xlwt']
+INSTALL_REQUIRES = ["SALib==1.2",  # last version to work with python2
+                    "ephem",
+                    "deap==1.3.0",
+                    "doit==0.29.0",
+                    "flask-restplus",
+                    "geopandas",
+                    "gevent",
+                    "ipython",
+                    "jupyter",
+                    "mock",
+                    "numba",
+                    "plotly",
+                    "py4design==0.27",
+                    "pymc3==3.6",  # last version known to work with python2
+                    "pysal",
+                    "pyyaml",
+                    "requests",
+                    "seaborn",
+                    "setuptools",
+                    "flask-socketio",
+                    "staticmap",
+                    "sphinx",
+                    "sympy",
+                    "timezonefinder==3.4.2",  # last version to work with python2
+                    "twine",
+                    "utm",
+                    "osmnx==0.9",
+                    "xlrd",
+                    "xlwt"]
 
 # For building the documentation on readthedocs, exclude some of the packages, as they create build errors...
 if os.environ.get('READTHEDOCS') == 'True':
