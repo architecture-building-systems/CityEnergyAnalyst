@@ -72,10 +72,10 @@ def terrain_elevation_extractor(locator, config):
 
     # get the bounding box coordinates
     assert os.path.exists(
-        locator.get_district_geometry()), 'Get district geometry file first or the coordinates of the area where' \
+        locator.get_surrounding_geometry()), 'Get district geometry file first or the coordinates of the area where' \
                                           ' to extract the terrain from in the next format: lon_min, lat_min, lon_max, lat_max'
     print("generating terrain from District area")
-    bounding_box_district_file, crs, lon, lat = calc_bounding_box_projected_coordinates(locator.get_district_geometry(), locator.get_zone_geometry())
+    bounding_box_district_file, crs, lon, lat = calc_bounding_box_projected_coordinates(locator.get_surrounding_geometry(), locator.get_zone_geometry())
     x_min = bounding_box_district_file[0] - extra_border
     y_min = bounding_box_district_file[1] - extra_border
     x_max = bounding_box_district_file[2] + extra_border

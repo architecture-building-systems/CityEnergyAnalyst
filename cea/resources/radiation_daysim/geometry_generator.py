@@ -154,7 +154,7 @@ class BuildingData(object):
                                                       self.surroundings_building_solid_list)
 
     def surroundings_building_records(self):
-        surroundings_buildings_df = gdf.from_file(self.locator.get_district_geometry())
+        surroundings_buildings_df = gdf.from_file(self.locator.get_surrounding_geometry())
         # clear in case there are repetitive buildings in the zone file
         surroundings_buildings_df = surroundings_buildings_df.loc[
             ~surroundings_buildings_df["Name"].isin(self.zone_building_names)]

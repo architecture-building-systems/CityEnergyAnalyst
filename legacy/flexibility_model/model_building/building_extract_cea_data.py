@@ -262,7 +262,7 @@ def extract_cea_inputs_files(locator):
     zone_occupancy_df = dbf_to_dataframe(locator.get_building_occupancy())
     zone_df = Gdf.from_file(locator.get_zone_geometry())
     architecture_df = dbf_to_dataframe(locator.get_building_architecture())
-    technical_systems_df = dbf_to_dataframe(locator.get_building_hvac())
+    technical_systems_df = dbf_to_dataframe(locator.get_building_air_conditioning())
     supply_systems_df = dbf_to_dataframe(locator.get_building_supply())
 
     # Set index

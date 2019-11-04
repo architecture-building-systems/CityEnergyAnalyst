@@ -206,7 +206,7 @@ def main(config):
     print("verifying geometry files")
     print(locator.get_zone_geometry())
     verify_input_geometry_zone(gpdf.from_file(locator.get_zone_geometry()))
-    verify_input_geometry_district(gpdf.from_file(locator.get_district_geometry()))
+    verify_input_geometry_district(gpdf.from_file(locator.get_surrounding_geometry()))
 
     # import material properties of buildings
     building_surface_properties = reader_surface_properties(locator=locator,

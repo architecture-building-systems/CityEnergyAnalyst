@@ -46,7 +46,7 @@ class InputLocator(object):
         """Returns the parent folder of a scenario - this is called a project or 'case-study'"""
         return os.path.dirname(self.scenario)
 
-    #Paths to databases
+    # Paths to databases
     def get_databases_folder(self):
         """Returns the inputs folder of a scenario"""
         return os.path.join(self.get_input_folder(), "technology")
@@ -277,12 +277,12 @@ class InputLocator(object):
         return os.path.join(self.get_optimization_slave_results_folder(gen_num),
                             'gen_%(gen_num)s_total_performance.csv' % locals())
 
-    def get_optimization_generation_total_performance_pareto(self,  gen_num):
+    def get_optimization_generation_total_performance_pareto(self, gen_num):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
         return os.path.join(self.get_optimization_slave_results_folder(gen_num),
                             'gen_%(gen_num)s_total_performance_pareto.csv' % locals())
 
-    def get_optimization_generation_total_performance_halloffame(self,  gen_num):
+    def get_optimization_generation_total_performance_halloffame(self, gen_num):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
         return os.path.join(self.get_optimization_slave_results_folder(gen_num),
                             'gen_%(gen_num)s_total_performance_halloffame.csv' % locals())
@@ -586,11 +586,15 @@ class InputLocator(object):
         return os.path.join(self.get_databases_folder(), 'systems', 'supply_systems.xls')
 
     def get_database_air_conditioning_systems(self):
-        """databases/Systems/emission_systems.csv"""
-        return os.path.join(self.get_databases_folder(), 'systems', 'air_conditioning_systems.xls')
+        old_file_path = os.path.join(self.get_databases_folder(), 'systems', 'emission_systems.xls')
+        new_file_path = os.path.join(self.get_databases_folder(), 'systems', 'air_conditioning_systems.xls')
+        if os.path.exists(old_file_path):
+            os.rename(old_file_path, new_file_path)
+            os.rename(old_file_path, new_file_path)
+        return new_file_path
 
     def get_database_envelope_systems(self):
-        """databases/Systems/emission_systems.csv"""
+        """databases/Systems/envelope_systems.csv"""
         return os.path.join(self.get_databases_folder(), 'systems', 'envelope_systems.xls')
 
     def get_database_lca_buildings(self):
@@ -635,11 +639,18 @@ class InputLocator(object):
         self.check_cpg(shapefile_path)
         return shapefile_path
 
-    def get_district_geometry(self):
-        """scenario/inputs/building-geometry/district.shp"""
-        shapefile_path = os.path.join(self.get_building_geometry_folder(), 'district.shp')
-        self.check_cpg(shapefile_path)
-        return shapefile_path
+    def get_surrounding_geometry(self):
+        """scenario/inputs/building-geometry/surroundings.shp"""
+        """scenario/inputs/building-properties/air_conditioning_systems.dbf"""
+        old_file_path = os.path.join(self.get_building_geometry_folder(), 'district.shp')
+        new_file_path = os.path.join(self.get_building_geometry_folder(), 'surroundings.shp')
+        if os.path.exists(old_file_path):
+            for file_extention in ['.shp', '.cpg', '.prj', '.shx', '.dbf']:
+                old_path = os.path.join(self.get_building_geometry_folder(), 'district' + file_extention)
+                new_path = os.path.join(self.get_building_geometry_folder(), 'surroundings' + file_extention)
+                os.rename(old_path, new_path)
+        self.check_cpg(new_file_path)
+        return new_file_path
 
     def check_cpg(self, shapefile_path):
         # ensures that the CPG file is the correct one
@@ -679,13 +690,13 @@ class InputLocator(object):
         """scenario/inputs/building-properties/indoor_comfort.dbf"""
         return os.path.join(self.get_building_properties_folder(), 'indoor_comfort.dbf')
 
-    def get_building_hvac(self):
-        """scenario/inputs/building-properties/technical_systems.dbf"""
-        return os.path.join(self.get_building_properties_folder(), 'technical_systems.dbf')
-
-    def get_building_restrictions(self):
-        """scenario/inputs/building-properties/technical_systems.dbf"""
-        return os.path.join(self.get_building_properties_folder(), 'restrictions.dbf')
+    def get_building_air_conditioning(self):
+        """scenario/inputs/building-properties/air_conditioning_systems.dbf"""
+        old_file_path = os.path.join(self.get_building_properties_folder(), 'technical_systems.dbf')
+        new_file_path = os.path.join(self.get_building_properties_folder(), 'air_conditioning_systems.dbf')
+        if os.path.exists(old_file_path):
+            os.rename(old_file_path, new_file_path)
+        return new_file_path
 
     def get_building_architecture(self):
         """scenario/inputs/building-properties/architecture.dbf
@@ -705,7 +716,7 @@ class InputLocator(object):
         """scenario/outputs/data/optimization/slave`
         Slave results folder (storage + operation pattern)
         """
-        return self._ensure_folder(self.get_building_properties_folder(),'schedules')
+        return self._ensure_folder(self.get_building_properties_folder(), 'schedules')
 
     def get_building_weekly_schedules(self, building_name):
         """

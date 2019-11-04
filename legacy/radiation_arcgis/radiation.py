@@ -135,7 +135,7 @@ def simplify_building_geometries(locator, simple_context_shp, simple_cq_shp):
     dem_raster_extent = elevRaster.extent
     arcpy.SimplifyBuilding_cartography(locator.get_zone_geometry(), simple_cq_shp,
                                        simplification_tolerance=7, minimum_area=None)
-    arcpy.SimplifyBuilding_cartography(locator.get_district_geometry(), simple_context_shp,
+    arcpy.SimplifyBuilding_cartography(locator.get_surrounding_geometry(), simple_context_shp,
                                        simplification_tolerance=7, minimum_area=None)
     return dem_raster_extent
 

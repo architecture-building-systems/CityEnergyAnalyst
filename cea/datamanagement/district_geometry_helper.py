@@ -200,7 +200,7 @@ def geometry_extractor_osm(locator, config):
     buffer_m = config.district_helper.buffer
     buildings_height = config.district_helper.height_ag
     buildings_floors = config.district_helper.floors_ag
-    shapefile_out_path = locator.get_district_geometry()
+    shapefile_out_path = locator.get_surrounding_geometry()
     zone = Gdf.from_file(locator.get_zone_geometry())
 
     # trnasform zone file to geographic coordinates

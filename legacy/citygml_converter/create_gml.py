@@ -183,7 +183,7 @@ def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     # local variables
     output_folder = locator.get_building_geometry_citygml()
-    district_shp = locator.get_district_geometry()
+    district_shp = locator.get_surrounding_geometry()
     zone_shp = locator.get_zone_geometry()
     input_terrain_raster = locator.get_terrain()
     # run routine City GML LOD 1
