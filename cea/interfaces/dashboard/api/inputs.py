@@ -144,8 +144,8 @@ class AllInputs(Resource):
 def get_building_properties():
     import cea.glossary
     # FIXME: Find a better way to ensure order of tabs
-    tabs = ['zone', 'age', 'occupancy', 'architecture', 'internal-loads',
-            'supply-systems', 'indoor-comfort', 'district', 'restrictions']
+    tabs = ['zone', 'age', 'occupancy', 'architecture', 'internal-loads', 'indoor-comfort', 'technical-systems',
+            'supply-systems', 'district']
 
     config = current_app.cea_config
     locator = cea.inputlocator.InputLocator(config.scenario)
