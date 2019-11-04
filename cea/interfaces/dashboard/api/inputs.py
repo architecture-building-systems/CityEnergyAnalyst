@@ -241,6 +241,7 @@ def df_to_json(file_location, bbox=False, trigger_abort=True):
         print(e)
         if trigger_abort:
             abort(400, 'Input file not found: %s' % file_location)
+        return None, None
     except RuntimeError as e:
         print(e)
         if trigger_abort:
