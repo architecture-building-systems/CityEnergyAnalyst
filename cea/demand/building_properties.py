@@ -52,7 +52,7 @@ class BuildingProperties(object):
         prop_geometry['perimeter'] = prop_geometry.length
         prop_geometry['Blength'], prop_geometry['Bwidth'] = self.calc_bounding_box_geom(locator.get_zone_geometry())
         prop_geometry = prop_geometry.drop('geometry', axis=1).set_index('Name')
-        prop_hvac = dbf_to_dataframe(locator.get_building_hvac())
+        prop_hvac = dbf_to_dataframe(locator.get_building_air_conditioning())
         prop_occupancy_df = dbf_to_dataframe(locator.get_building_occupancy()).set_index('Name')
         # Drop 'REFERENCE' column if it exists
         if 'REFERENCE' in prop_occupancy_df:

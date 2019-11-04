@@ -50,9 +50,9 @@ def geometry_extractor_osm(locator, config):
     if list_of_bounding_box == []:
         # the list is empty, we then revert to get the bounding box for the district
         assert os.path.exists(
-            locator.get_district_geometry()), 'Get district geometry file first or the coordinates of the area where to extract the streets from in the next format: lon_min, lat_min, lon_max, lat_max: %s'
+            locator.get_surrounding_geometry()), 'Get district geometry file first or the coordinates of the area where to extract the streets from in the next format: lon_min, lat_min, lon_max, lat_max: %s'
         print("generating streets from District Geometry")
-        bounding_box_district_file = calc_bounding_box(locator.get_district_geometry(), locator.get_zone_geometry())
+        bounding_box_district_file = calc_bounding_box(locator.get_surrounding_geometry(), locator.get_zone_geometry())
         lon_min = bounding_box_district_file[0]-extra_border
         lat_min = bounding_box_district_file[1]-extra_border
         lon_max = bounding_box_district_file[2]+extra_border

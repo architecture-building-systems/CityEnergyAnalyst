@@ -152,7 +152,7 @@ def data_helper(locator, region, overwrite_technology_folder,
                   'type_ctrl',
                   'type_vent']
         prop_HVAC_df_merged = names_df.merge(prop_HVAC_df, on="Name")
-        dataframe_to_dbf(prop_HVAC_df_merged[fields], locator.get_building_hvac())
+        dataframe_to_dbf(prop_HVAC_df_merged[fields], locator.get_building_air_conditioning())
 
     if update_indoor_comfort_dbf:
         comfort_DB = pd.read_excel(locator.get_archetypes_properties(), 'INDOOR_COMFORT')

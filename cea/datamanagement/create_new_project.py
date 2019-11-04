@@ -53,14 +53,14 @@ def create_new_project(locator, config):
     # now create the district file if it does not exist
     if district_geometry_path == '':
         print("there is no district file, we proceed to create it based on the geometry of your zone")
-        zone.to_file(locator.get_district_geometry())
+        zone.to_file(locator.get_surrounding_geometry())
     else:
         # import file
         district, _, _ = shapefile_to_WSG_and_UTM(district_geometry_path)
         # verify if input file is correct for CEA, if not an exception will be released
         verify_input_geometry_district(zone)
         # create new file
-        district.to_file(locator.get_district_geometry())
+        district.to_file(locator.get_surrounding_geometry())
 
     # now transfer the streets
     if street_geometry_path == '':
