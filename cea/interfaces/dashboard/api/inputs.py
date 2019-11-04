@@ -47,6 +47,7 @@ def read_inputs_field_types():
 INPUTS = read_inputs_field_types()
 INPUT_KEYS = INPUTS.keys()
 GEOJSON_KEYS = ['zone', 'district', 'streets', 'dc', 'dh']
+NETWORK_KEYS = ['dc', 'dh']
 
 # INPUT_MODEL = api.model('Input', {
 #     'fields': fields.List(fields.String, description='Column names')
@@ -69,7 +70,7 @@ class InputList(Resource):
 
 
 @api.route('/building-properties/<string:db>')
-class Input(Resource):
+class InputBuildingProperties(Resource):
     def get(self, db):
         if db not in INPUTS:
             abort(400, 'Input file not found: %s' % db, choices=INPUT_KEYS)
@@ -80,33 +81,27 @@ class Input(Resource):
         return columns
 
 
-@api.route('/building-properties/<string:db>/geojson')
-class InputDatabases(Resource):
-    def get(self, db):
-        if not (db in INPUT_KEYS and db in GEOJSON_KEYS):
-            abort(400, 'Input file not found: %s' %
-                  db, choices=list(set(INPUT_KEYS) & set(GEOJSON_KEYS)))
-        db_info = INPUTS[db]
-        config = current_app.cea_config
-        locator = cea.inputlocator.InputLocator(config.scenario)
-        location = getattr(locator, db_info['location'])()
-        if db_info['type'] != 'shp':
-            abort(400, 'Invalid database for geojson: %s' % location)
-        return df_to_json(location, bbox=True)[0]
-
-
-@api.route('/others/<string:kind>/geojson')
-class InputOthers(Resource):
+@api.route('/geojson/<string:kind>')
+class InputGeojson(Resource):
     def get(self, kind):
         config = current_app.cea_config
-        locator = cea.inputlocator.InputLocator(
-            config.scenario)
-        if kind == 'streets':
-            return df_to_json(locator.get_street_network())[0]
-        if kind in ['dc', 'dh']:
+        locator = cea.inputlocator.InputLocator(config.scenario)
+
+        if kind not in GEOJSON_KEYS:
+            abort(400, 'Input file not found: %s' % kind, choices=GEOJSON_KEYS)
+        # Building geojsons
+        elif kind in INPUT_KEYS and kind in GEOJSON_KEYS:
+            db_info = INPUTS[kind]
+            config = current_app.cea_config
+            locator = cea.inputlocator.InputLocator(config.scenario)
+            location = getattr(locator, db_info['location'])()
+            if db_info['type'] != 'shp':
+                abort(400, 'Invalid database for geojson: %s' % location)
+            return df_to_json(location, bbox=True)[0]
+        elif kind in NETWORK_KEYS:
             return get_network(config, kind)[0]
-        abort(400, 'Input file not found: %s' %
-              kind, choices=['streets', 'dh', 'dc'])
+        elif kind == 'streets':
+            return df_to_json(locator.get_street_network())[0]
 
 
 @api.route('/building-properties')
