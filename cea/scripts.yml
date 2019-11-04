@@ -18,12 +18,12 @@ Data Management:
     module: cea.datamanagement.weather_helper
     parameters: ['general:scenario', weather-helper]
 
-  - name: district-helper
-    label: District helper
-    description: Query district geometry from Open Street Maps
+  - name: surroundings-helper
+    label: Surroundings helper
+    description: Query surrounding geometry from Open Street Maps
     interfaces: [cli, arcgis, dashboard]
-    module: cea.datamanagement.district_geometry_helper
-    parameters: ['general:scenario', district-helper]
+    module: cea.datamanagement.surrounding_geometry_helper
+    parameters: ['general:scenario', surroundings-helper]
     input-files:
       - [get_zone_geometry]
 
@@ -35,7 +35,7 @@ Data Management:
     parameters: ['general:scenario', terrain-helper]
     input-files:
       - [get_zone_geometry]
-      - [get_district_geometry]
+      - [get_surrounding_geometry]
 
   - name: streets-helper
     label: Streets helper
@@ -44,7 +44,7 @@ Data Management:
     module: cea.datamanagement.streets_helper
     parameters: ['general:scenario', streets-helper]
     input-files:
-      - [get_district_geometry]
+      - [get_surrounding_geometry]
 
 Demand forecasting:
   - name: radiation
@@ -56,7 +56,7 @@ Demand forecasting:
                  radiation]
     input-files:
       - [get_envelope_systems]
-      - [get_district_geometry]
+      - [get_surrounding_geometry]
       - [get_building_architecture]
       - [get_zone_geometry]
       - [get_terrain]
@@ -74,7 +74,7 @@ Demand forecasting:
                  schedule-maker]
     input-files:
       - [get_envelope_systems]
-      - [get_district_geometry]
+      - [get_surrounding_geometry]
       - [get_building_architecture]
       - [get_zone_geometry]
       - [get_terrain]
@@ -104,7 +104,7 @@ Demand forecasting:
       - [get_zone_geometry]
       - [get_radiation_building, building_name]
       - [get_archetypes_properties]
-      - [get_building_hvac]
+      - [get_building_air_conditioning]
       - [get_technical_emission_systems]
       - [get_building_supply]
       - [get_life_cycle_inventory_supply_systems]

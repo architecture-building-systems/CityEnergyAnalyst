@@ -19,7 +19,7 @@ zone:
 district:
   pk: Name
   type: shp  # shp or dbf
-  location: get_district_geometry
+  location: get_surrounding_geometry
   fields:
   - name: Name
     type: str
@@ -198,7 +198,7 @@ indoor-comfort:
 technical-systems:
   pk: Name
   type: dbf
-  location: get_building_hvac
+  location: get_building_air_conditioning
   fields:
     - name: Name
       type: str

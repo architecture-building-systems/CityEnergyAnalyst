@@ -123,7 +123,7 @@ digraph trace_inputlocator {
     "age.dbf" -> "demand"[label="(get_building_age)"]
     "architecture.dbf" -> "demand"[label="(get_building_architecture)"]
     "indoor_comfort.dbf" -> "demand"[label="(get_building_comfort)"]
-    "technical_systems.dbf" -> "demand"[label="(get_building_hvac)"]
+    "technical_systems.dbf" -> "demand"[label="(get_building_air_conditioning)"]
     "internal_loads.dbf" -> "demand"[label="(get_building_internal)"]
     "occupancy.dbf" -> "demand"[label="(get_building_occupancy)"]
     "supply_systems.dbf" -> "demand"[label="(get_building_supply)"]
