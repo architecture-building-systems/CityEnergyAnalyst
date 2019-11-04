@@ -5,15 +5,63 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 import pandas as pd
+import geopandas
+import json
+from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
+import cea.plots.thermal_networks
 
 __author__ = "Lennart Rogenhofer"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Lennart Rogenhofer"]
+__credits__ = ["Lennart Rogenhofer", "Daren Thomas"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
+
+
+class NetworkLayoutPlot(cea.plots.thermal_networks.ThermalNetworksMapPlotBase):
+    """Implement the thermal network layout plot, """
+    name = "Network Layout"
+
+    def __init__(self, project, parameters, cache):
+        super(NetworkLayoutPlot, self).__init__(project, parameters, cache)
+
+    @property
+    def edges_df(self):
+        edges_df = geopandas.GeoDataFrame.from_file(
+            self.locator.get_network_layout_edges_shapefile(self.network_type, self.network_name)).to_crs(
+            get_geographic_coordinate_system())
+        edges_df["_LineWidth"] = 0.05 * edges_df["Pipe_DN"]
+        edges_df["_FillColor"] = json.dumps(self.colors["edges"])
+        edges_df = edges_df.drop("weight", axis=1)
+        return edges_df
+
+    @property
+    def nodes_df(self):
+        nodes_df = geopandas.GeoDataFrame.from_file(
+            self.locator.get_network_layout_nodes_shapefile(self.network_type, self.network_name)).to_crs(
+            get_geographic_coordinate_system())
+        nodes_df["_Radius"] = self.get_radius(nodes_df)
+        nodes_df["_FillColor"] = nodes_df.apply(lambda row: json.dumps(self.color_by_type[row["Type"]]), axis=1)
+        return nodes_df
+
+    def get_radius(self, nodes_df):
+        """Figure out the radius for network nodes based on consumer consumption"""
+        scale = 10.0
+        demand = self.buildings_hourly.apply(pd.Series.max)
+        max_demand = demand.max()
+
+        def radius_from_demand(row):
+            if row["Type"] == "CONSUMER":
+                building = row["Building"]
+                return scale * (demand[building] / max_demand if building in demand.index else 0.1)
+            elif row["Type"] == "PLANT":
+                return scale
+            else:
+                return scale * 0.1
+        return nodes_df.apply(radius_from_demand, axis=1)
+
 
 
 def network_plot(data_frame, title, output_path, analysis_fields, demand_data, all_nodes):
@@ -293,3 +341,18 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
             plt.title(title, fontsize=18)
         plt.tight_layout()
         plt.savefig(output_path)
+
+
+if __name__ == '__main__':
+    import cea.config
+    import cea.plots.cache
+    import cea.inputlocator
+
+    config = cea.config.Configuration()
+    locator = cea.inputlocator.InputLocator(config.scenario)
+    cache = cea.plots.cache.NullPlotCache()
+
+    NetworkLayoutPlot(config.project, {'network-type': config.plots.network_type,
+                                       'scenario-name': config.scenario_name,
+                                       'network-name': config.plots.network_name},
+                      cache).plot(auto_open=True)
