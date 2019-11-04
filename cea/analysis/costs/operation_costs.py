@@ -23,12 +23,12 @@ def operation_costs(locator, config):
     # get local variables
     demand = pd.read_csv(locator.get_total_demand())
     supply_systems = gpdf.from_file(locator.get_building_supply()).drop('geometry', axis=1)
-    data_all_in_one_systems = pd.read_excel(locator.get_supply_systems(), sheet_name='ALL_IN_ONE_SYSTEMS')
+    data_all_in_one_systems = pd.read_excel(locator.get_database_supply_systems(), sheet_name='ALL_IN_ONE_SYSTEMS')
     factors_heating = data_all_in_one_systems[data_all_in_one_systems['system'].isin(['HEATING', 'NONE'])]
     factors_dhw = data_all_in_one_systems[data_all_in_one_systems['system'].isin(['HEATING', 'NONE'])]
     factors_cooling = data_all_in_one_systems[data_all_in_one_systems['system'].isin(['COOLING', 'NONE'])]
     factors_electricity = data_all_in_one_systems[data_all_in_one_systems['system'].isin(['ELECTRICITY', 'NONE'])]
-    factors_resources = pd.read_excel(locator.get_supply_systems(), sheet_name='FEEDSTOCKS')
+    factors_resources = pd.read_excel(locator.get_database_supply_systems(), sheet_name='FEEDSTOCKS')
 
     # local variables
     # calculate the total operational non-renewable primary energy demand and CO2 emissions

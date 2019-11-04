@@ -191,7 +191,7 @@ def calculate_contributions(archetype, cat_df, config, locator, year_to_calculat
     :rtype result: DataFrame
     """
     # get archetype properties from the database
-    database_df = pd.read_excel(locator.get_life_cycle_inventory_building_systems(), archetype)
+    database_df = pd.read_excel(locator.get_database_lca_buildings(), archetype)
     database_df['Code'] = database_df.apply(lambda x: calc_code(x['building_use'], x['year_start'],
                                                                 x['year_end'], x['standard']), axis=1)
 

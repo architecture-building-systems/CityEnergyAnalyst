@@ -198,7 +198,7 @@ def calc_Cinv_ACH(Q_nom_W, locator, ACH_type):
     Opex_fixed_ACH_USD = 0
     Capex_ACH_USD = 0
     if Q_nom_W > 0:
-        Absorption_chiller_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="Absorption_chiller")
+        Absorption_chiller_cost_data = pd.read_excel(locator.get_database_supply_systems(), sheet_name="Absorption_chiller")
         Absorption_chiller_cost_data = Absorption_chiller_cost_data[Absorption_chiller_cost_data['type'] == ACH_type]
         max_chiller_size = max(Absorption_chiller_cost_data['cap_max'].values)
 
@@ -286,7 +286,7 @@ def main(config):
         def __init__(self, chiller_prop, ACH_type):
             self.chiller_prop = chiller_prop[chiller_prop['type'] == ACH_type]
 
-    chiller_prop = AbsorptionChiller(pd.read_excel(locator.get_supply_systems(), sheet_name="Absorption_chiller"), ach_type)
+    chiller_prop = AbsorptionChiller(pd.read_excel(locator.get_database_supply_systems(), sheet_name="Absorption_chiller"), ach_type)
 
     chiller_operation = calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_ground_K, chiller_prop)
     print(chiller_operation)
