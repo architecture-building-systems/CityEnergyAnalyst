@@ -124,7 +124,7 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
         el_from_FC_Wh = Qgas_to_FC_Wh * FC_Effel
         FC_Status = np.where(Qgas_to_FC_Wh > 0.0, 1, 0)
         # add variable costs, emissions and primary energy
-        Opex_a_var_USD[2][4] += sum(prices.NG_PRICE * Qgas_to_FC_Wh - prices.ELEC_PRICE * el_from_FC_Wh)  # CHF, extra electricity sold to grid
+        Opex_a_var_USD[2][4] += sum(prices.NG_PRICE * Qgas_to_FC_Wh - prices.ELEC_PRICE_EXPORT * el_from_FC_Wh)  # CHF, extra electricity sold to grid
         GHG_tonCO2_from_FC = (0.0874 * Qgas_to_FC_Wh * 3600E-6 + 773 * 0.45 * el_from_FC_Wh * 1E-6 -
                               lca.EL_TO_CO2_EQ * el_from_FC_Wh * 3600E-6) / 1E3
         GHG_tonCO2[2][5] += sum(GHG_tonCO2_from_FC)  # tonCO2
