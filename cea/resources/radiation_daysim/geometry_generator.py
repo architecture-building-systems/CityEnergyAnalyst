@@ -146,7 +146,7 @@ class BuildingData(object):
 
         self.surroundings_buildings_df = self.surroundings_building_records().set_index('Name')
         self.surroundings_building_names = self.surroundings_buildings_df.index.values
-        self.surroundings_building_solid_list = np.vectorize(self.calc_surrounding_building_solids)(
+        self.surroundings_building_solid_list = np.vectorize(self.calc_surrounding_building_solids, otypes=[object])(
             self.surroundings_building_names)
 
         self.district_building_names = np.append(self.zone_building_names, self.surroundings_building_names)
