@@ -124,7 +124,7 @@ def calc_schedules(locator,
         Energy and Buildings, Vol. 40, No. 2, 2008, pp 83-98.
 
     """
-    #read building schedules input data:
+    # read building schedules input data:
     schedule = read_cea_schedule(locator.get_building_weekly_schedules(building))
     daily_schedule_building = schedule[0]
     monthly_multiplier = schedule[1]['MONTHLY_MULTIPLIER']
