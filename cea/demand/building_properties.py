@@ -734,11 +734,11 @@ def get_properties_technical_systems(locator, prop_HVAC):
 
     """
 
-    prop_emission_heating = pd.read_excel(locator.get_technical_emission_systems(), 'heating')
-    prop_emission_cooling = pd.read_excel(locator.get_technical_emission_systems(), 'cooling')
-    prop_emission_dhw = pd.read_excel(locator.get_technical_emission_systems(), 'dhw')
-    prop_emission_control_heating_and_cooling = pd.read_excel(locator.get_technical_emission_systems(), 'controller')
-    prop_ventilation_system_and_control = pd.read_excel(locator.get_technical_emission_systems(), 'ventilation')
+    prop_emission_heating = pd.read_excel(locator.get_air_conditioning_systems(), 'heating')
+    prop_emission_cooling = pd.read_excel(locator.get_air_conditioning_systems(), 'cooling')
+    prop_emission_dhw = pd.read_excel(locator.get_air_conditioning_systems(), 'dhw')
+    prop_emission_control_heating_and_cooling = pd.read_excel(locator.get_air_conditioning_systems(), 'controller')
+    prop_ventilation_system_and_control = pd.read_excel(locator.get_air_conditioning_systems(), 'ventilation')
 
     df_emission_heating = prop_HVAC.merge(prop_emission_heating, left_on='type_hs', right_on='code')
     df_emission_cooling = prop_HVAC.merge(prop_emission_cooling, left_on='type_cs', right_on='code')
