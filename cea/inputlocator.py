@@ -587,7 +587,7 @@ class InputLocator(object):
     def get_life_cycle_inventory_supply_systems(self):
         """Returns the database of life cycle inventory for supply systems. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return os.path.join(self.get_technology_folder(), 'lifecycle', 'LCA_infrastructure.xlsx')
+        return os.path.join(self.get_technology_folder(), 'lifecycle', 'LCA_feedstocks.xlsx')
 
     def get_electricity_costs(self):
         """Returns the database of life cycle inventory for supply systems. These are copied
