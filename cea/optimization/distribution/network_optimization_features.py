@@ -19,7 +19,7 @@ __status__ = "Production"
 class NetworkOptimizationFeatures(object):
     """
     This class just sets-ip constants of the linear model of the distribution.
-    These results are extracted form the work of Florian at the chair.
+    These results are extracted from the work of Florian at the chair.
     Unfortunately his work only worked for this case study and could not be used else where
     See the paper of Fonseca et al 2015 of the city energy analyst for more info on how that procedure used to work.
     """
@@ -33,6 +33,7 @@ class NetworkOptimizationFeatures(object):
         self.network_names = ['']
         self.district_heating_network = district_heating_network
         self.district_cooling_network = district_cooling_network
+
 
         for network_name in self.network_names:
             if self.district_heating_network:
@@ -65,15 +66,10 @@ class NetworkOptimizationFeatures(object):
                 pipe_cost = self.pipe_costs(locator, network_name, "DC")
                 self.pipesCosts_DCN_USD = self.pipesCosts_DCN_USD + pipe_cost
 
-    def pipe_costs(self, locator, network_name,network_type):
-        pipe_cost = 0
+    def pipe_costs(self, locator, network_name, network_type):
         edges_file = pd.read_csv(locator.get_thermal_network_edge_list_file(network_type, network_name))
-        internal_diameter = (edges_file['D_int_m'].values) * 1000
-        pipe_length = edges_file['pipe length'].values
-        for i in range(len(internal_diameter)):
-            piping_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="Piping")
-            piping_cost_data = piping_cost_data[
-                (piping_cost_data['Diameter_min'] <= internal_diameter[i]) & (
-                        piping_cost_data['Diameter_max'] > internal_diameter[i])]
-            pipe_cost = pipe_cost + (piping_cost_data.iloc[0]['Investment']) * pipe_length[i]
-        return pipe_cost
+        piping_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="PIPING")
+        merge_df = edges_file.merge(piping_cost_data, left_on='Pipe_DN_y', right_on='Pipe_DN')
+        merge_df['Inv_costs'] = merge_df['Inv_USD2015perm'] * merge_df['pipe length']
+        pipe_costs = merge_df['Inv_USD2015'].sum()
+        return pipe_costs
