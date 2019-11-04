@@ -22,7 +22,7 @@ Data Management:
     label: Surroundings helper
     description: Query surrounding geometry from Open Street Maps
     interfaces: [cli, arcgis, dashboard]
-    module: cea.datamanagement.surrounding_geometry_helper
+    module: cea.datamanagement.surroundings_helper
     parameters: ['general:scenario', surroundings-helper]
     input-files:
       - [get_zone_geometry]
@@ -111,7 +111,7 @@ Demand forecasting:
 
 Energy potentials:
   - name: shallow-geothermal-potential
-    label: shallow geothermal potential
+    label: Shallow geothermal potential
     description: Calculate the heat extracted from a geothermal probes (up to 50 m length)
     interfaces: [cli, arcgis, dashboard]
     module: cea.resources.geothermal
@@ -228,14 +228,14 @@ Optimization:
 
   - name: decentralized
     label: Supply System Part I (decentralized)
-    description: Run decentralized building optimization
+    description: Run optimization for decentralized operation
     interfaces: [cli, arcgis, dashboard]
     module: cea.optimization.preprocessing.decentralized_building_main
     parameters: ['general:scenario', 'decentralized']
 
   - name: optimization
     label: Supply System Part II (centralized)
-    description: Run optimization for the given scenario
+    description: Run optimization for centralized operation
     interfaces: [cli, arcgis, dashboard]
     module: cea.optimization.optimization_main
     parameters: ['general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free', optimization]
