@@ -26,13 +26,6 @@ class TestInputLocator(unittest.TestCase):
         self.assertTrue(os.path.exists(supply_systems_cost))
         self.assertTrue(os.path.realpath(supply_systems_cost).startswith(
             os.path.realpath(self.locator.scenario)), msg='Path not in scenario: %s' % supply_systems_cost)
-
-    def test_get_life_cycle_inventory_supply_systems(self):
-        life_cycle_inventory_supply_systems = self.locator.get_life_cycle_inventory_supply_systems()
-        self.assertTrue(os.path.exists(life_cycle_inventory_supply_systems))
-        self.assertTrue(os.path.realpath(life_cycle_inventory_supply_systems).startswith(
-            os.path.realpath(self.locator.scenario)),
-            msg='Path not in scenario: %s' % life_cycle_inventory_supply_systems)
         
     def test_get_life_cycle_inventory_building_systems(self):
         life_cycle_inventory_building_systems = self.locator.get_life_cycle_inventory_building_systems()
