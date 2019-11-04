@@ -218,7 +218,7 @@ def extract_cea_databases_files(locator):
     emission_systems_heating_df = pd.read_excel(locator.get_database_air_conditioning_systems(), 'heating')
     emission_systems_cooling_df = pd.read_excel(locator.get_database_air_conditioning_systems(), 'cooling')
     emission_systems_controller_df = pd.read_excel(locator.get_database_air_conditioning_systems(), 'controller')
-    system_controls_ini_df = pd.read_excel(locator.get_archetypes_system_controls(), 'heating_cooling')
+    system_controls_ini_df = pd.read_excel(locator.get_archetypes_heating_season(), 'heating_cooling')
     cooling_generation_df = pd.read_excel(locator.get_database_supply_systems(), 'ALL_IN_ONE_SYSTEMS')
 
     # Set index
