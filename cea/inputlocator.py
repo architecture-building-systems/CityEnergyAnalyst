@@ -588,7 +588,7 @@ class InputLocator(object):
     def get_database_air_conditioning_systems(self):
         old_file_path = os.path.join(self.get_databases_folder(), 'systems', 'emission_systems.xls')
         new_file_path = os.path.join(self.get_databases_folder(), 'systems', 'air_conditioning_systems.xls')
-        if os.path.exists(old_file_path):
+        if os.path.exists(old_file_path) and os.path.exists(new_file_path) == False:
             os.rename(old_file_path, new_file_path)
         return new_file_path
 
