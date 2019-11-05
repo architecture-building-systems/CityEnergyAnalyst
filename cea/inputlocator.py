@@ -578,7 +578,7 @@ class InputLocator(object):
         :param region:
         :return:
         """
-        return os.path.join(self.get_databases_folder(), 'systems', 'seasonality.xls')
+        return os.path.join(self.get_databases_folder(), 'systems', 'seasonality.xlsx')
 
     def get_database_supply_systems(self):
         """Returns the database of supply systems for cost analysis. These are copied
