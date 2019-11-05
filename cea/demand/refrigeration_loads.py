@@ -94,7 +94,7 @@ def calc_Qref(locator, bpr, tsd):
         else:
             raise Exception('check potential error in input database of LCA infrastructure / COOLING')
 
-    if scale_technology == "DISTRICT":
+    elif scale_technology == "DISTRICT":
         tsd['DC_cre'] = tsd['Qcs_sys'] / efficiency_average_year
         tsd['E_cre'] = np.zeros(HOURS_IN_YEAR)
     elif scale_technology == "NONE":
