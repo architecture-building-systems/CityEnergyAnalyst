@@ -639,8 +639,10 @@ def admissible_plant_location(network_info):
 def generate_initial_population(network_info, network_layout):
     """
     Generates the initial population for network optimization.
+
     :param NetworkInfo network_info: Object storing global network information (information about the whole
                                      optimization)
+
     :param NetworkLayout network_layout: Stores information about the specific network layout of an individual
     :return: returns list of individuals as initial population for genetic algorithm
     """

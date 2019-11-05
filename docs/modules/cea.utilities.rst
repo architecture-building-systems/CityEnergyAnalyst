@@ -9,10 +9,34 @@ cea.utilities package
 Submodules
 ----------
 
+cea.utilities.color\_fader module
+---------------------------------
+
+.. automodule:: cea.utilities.color_fader
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cea.utilities.compile\_pyd\_files module
 ----------------------------------------
 
 .. automodule:: cea.utilities.compile_pyd_files
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.utilities.converter\_old\_schedules\_to\_csv module
+-------------------------------------------------------
+
+.. automodule:: cea.utilities.converter_old_schedules_to_csv
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.utilities.date module
+-------------------------
+
+.. automodule:: cea.utilities.date
     :members:
     :undoc-members:
     :show-inheritance:
@@ -73,6 +97,14 @@ cea.utilities.latin\_hypercube module
     :undoc-members:
     :show-inheritance:
 
+cea.utilities.parallel module
+-----------------------------
+
+.. automodule:: cea.utilities.parallel
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cea.utilities.physics module
 ----------------------------
 
@@ -97,6 +129,14 @@ cea.utilities.reporting module
     :undoc-members:
     :show-inheritance:
 
+cea.utilities.schedule\_reader module
+-------------------------------------
+
+.. automodule:: cea.utilities.schedule_reader
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cea.utilities.solar\_equations module
 -------------------------------------
 
@@ -117,6 +157,14 @@ cea.utilities.workerstream module
 ---------------------------------
 
 .. automodule:: cea.utilities.workerstream
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.utilities.yaml\_ordered\_dict module
+----------------------------------------
+
+.. automodule:: cea.utilities.yaml_ordered_dict
     :members:
     :undoc-members:
     :show-inheritance:

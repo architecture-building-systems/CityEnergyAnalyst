@@ -21,8 +21,16 @@ class LoadCurveSupplyPlot(cea.plots.demand.DemandPlotBase):
 
     def __init__(self, project, parameters, cache):
         super(LoadCurveSupplyPlot, self).__init__(project, parameters, cache)
-        self.analysis_fields = ["DH_hs_kWh", "DH_ww_kWh", 'SOLAR_ww_kWh', 'SOLAR_hs_kWh', "DC_cs_kWh", 'DC_cdata_kWh',
-                                'DC_cre_kWh', 'PV_kWh', 'NG_hs_kWh', 'COAL_hs_kWh', 'OIL_hs_kWh',
+        self.analysis_fields = ["DH_hs_kWh",
+                                "DH_ww_kWh",
+                                'SOLAR_ww_kWh',
+                                'SOLAR_hs_kWh',
+                                "DC_cs_kWh",
+                                'DC_cdata_kWh',
+                                'DC_cre_kWh',
+                                'PV_kWh',
+                                'NG_hs_kWh',
+                                'COAL_hs_kWh', 'OIL_hs_kWh',
                                 'WOOD_hs_kWh', 'NG_ww_kWh', 'COAL_ww_kWh', 'OIL_ww_kWh', 'WOOD_ww_kWh',
                                 'GRID_a_kWh',
                                 'GRID_l_kWh',

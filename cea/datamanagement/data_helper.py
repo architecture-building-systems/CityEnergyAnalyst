@@ -167,8 +167,8 @@ def data_helper(locator, region, overwrite_technology_folder,
                   'Tcs_setb_C',
                   'Ths_setb_C',
                   'Ve_lpspax',
-                  'rhum_min_pc',
-                  'rhum_max_pc']
+                  'RH_min_pc',
+                  'RH_max_pc']
         prop_comfort_df_merged = names_df.merge(prop_comfort_df, on="Name")
         prop_comfort_df_merged = calculate_average_multiuse(fields,
                                                             prop_comfort_df_merged,

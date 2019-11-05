@@ -21,12 +21,6 @@ class TestInputLocator(unittest.TestCase):
         self.assertTrue(os.path.realpath(archetypes_properties).startswith(
             os.path.realpath(self.locator.scenario)), msg='Path not in scenario: %s' % archetypes_properties)
 
-    def test_get_archetypes_schedules(self):
-        archetypes_schedules = self.locator.get_archetypes_schedules()
-        self.assertTrue(os.path.exists(archetypes_schedules))
-        self.assertTrue(os.path.realpath(archetypes_schedules).startswith(
-            os.path.realpath(self.locator.scenario)), msg='Path not in scenario: %s' % archetypes_schedules)
-
     def test_get_supply_systems_cost(self):
         supply_systems_cost = self.locator.get_supply_systems()
         self.assertTrue(os.path.exists(supply_systems_cost))

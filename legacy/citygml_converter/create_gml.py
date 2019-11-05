@@ -47,7 +47,7 @@ def calc_intersection(terrain_intersection_curves, edges_coords, edges_dir):
     else:
         return None, None
 
-def building2d23d(citygml_writer, zone_shp_path, district_shp_path, tin_occface_list,
+def building_2d_to_3d(citygml_writer, zone_shp_path, district_shp_path, tin_occface_list,
                   height_col, nfloor_col):
     """
     This script extrudes buildings from the shapefile and creates intermediate floors.
@@ -80,11 +80,11 @@ def building2d23d(citygml_writer, zone_shp_path, district_shp_path, tin_occface_
         # simplify geometry tol =1 for buildings of interest, tol = 5 for surroundings
         if name in zone_building_names:
             range_floors = range(nfloors+1)
-            flr2flr_height = height / nfloors
+            floor_to_floor_height = height / nfloors
             geometry = district_building_records.ix[name].geometry.simplify(1, preserve_topology=True)
         else:
             range_floors = [0,1]
-            flr2flr_height = height
+            floor_to_floor_height = height
             geometry = district_building_records.ix[name].geometry.simplify(5, preserve_topology=True)
 
 
@@ -105,7 +105,7 @@ def building2d23d(citygml_writer, zone_shp_path, district_shp_path, tin_occface_
 
         moved_face_list = []
         for floor_counter in range_floors:
-            dist2mve = floor_counter*flr2flr_height
+            dist2mve = floor_counter*floor_to_floor_height
             #get midpt of face
             orig_pt = calculate.face_midpt(face)
             #move the pt 1 level up
@@ -135,7 +135,7 @@ def building2d23d(citygml_writer, zone_shp_path, district_shp_path, tin_occface_
 
     return bsolid_list
 
-def terrain2d23d(citygml_writer, input_terrain_raster):
+def terrain_2d_to_3d(citygml_writer, input_terrain_raster):
 
     # read x, y, z coordinates of raster
     raster_points = raster_reader(input_terrain_raster)
@@ -166,10 +166,10 @@ def create_citygml(zone_shp_path, district_shp_path, input_terrain, output_folde
     citygml_writer = pycitygml.Writer()
 
     # transform terrain to CityGML
-    terrain_face_list = terrain2d23d(citygml_writer, input_terrain)
+    terrain_face_list = terrain_2d_to_3d(citygml_writer, input_terrain)
     
     # transform buildings to
-    bsolid_list = building2d23d(citygml_writer, zone_shp_path, district_shp_path, terrain_face_list,
+    bsolid_list = building_2d_to_3d(citygml_writer, zone_shp_path, district_shp_path, terrain_face_list,
                                 height_col='height_ag', nfloor_col="floors_ag")
 
     #construct.visualise([terrain_face_list,bsolid_list], ["GREEN","WHITE"], backend = "wx") #install Wxpython
