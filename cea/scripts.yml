@@ -55,7 +55,7 @@ Demand forecasting:
     parameters: ['general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free', 'general:debug',
                  radiation]
     input-files:
-      - [get_envelope_systems]
+      - [get_database_envelope_systems]
       - [get_surrounding_geometry]
       - [get_building_architecture]
       - [get_zone_geometry]
@@ -73,7 +73,7 @@ Demand forecasting:
                  'general:debug',
                  schedule-maker]
     input-files:
-      - [get_envelope_systems]
+      - [get_database_envelope_systems]
       - [get_surrounding_geometry]
       - [get_building_architecture]
       - [get_zone_geometry]
@@ -92,21 +92,20 @@ Demand forecasting:
                  demand]
     input-files:
       - [get_weather_file]
-      - [get_envelope_systems]
+      - [get_database_envelope_systems]
+      - [get_database_air_conditioning_systems]
       - [get_building_comfort]
-      - [get_systems_seasonality]
       - [get_building_internal]
       - [get_building_age]
-      - [get_radiation_metadata, building_name]
       - [get_building_architecture]
       - [get_building_occupancy]
+      - [get_building_air_conditioning]
+      - [get_building_supply]
       - [get_building_weekly_schedules, building_name]
       - [get_zone_geometry]
+      - [get_radiation_metadata, building_name]
       - [get_radiation_building, building_name]
       - [get_archetypes_properties]
-      - [get_building_air_conditioning]
-      - [get_technical_emission_systems]
-      - [get_building_supply]
       - [get_life_cycle_inventory_supply_systems]
 
 Energy potentials:
