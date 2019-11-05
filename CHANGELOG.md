@@ -1,3 +1,19 @@
+2019-11-04 - 2.24 - #2437 Update input api
+2019-11-04 - 2.24 - #2354 2082 add remaining network plots to dashboard
+2019-11-04 - 2.24 - #2431 Update scripts.yml
+2019-11-04 - 2.24 - #2433 Update geometry_generator.py
+2019-10-31 - 2.24 - #2417 BUGFIX: Handle folder locator methods in TraceInputLocator
+2019-10-31 - 2.24 - #2416 Radiation now account for adjacent buildings
+2019-10-30 - 2.24 - #2414 Terminate running cea worker processes when closing the GUI @daren-thomas works like a charm, good stuff!
+2019-10-30 - 2.24 - #2421 BUGFIX: UnboundLocalError: local variable 'number_of_occupants' referenced before assignment
+2019-10-30 - 2.24 - #2415 Allow importing scripts.py from the Grasshopper interface
+2019-10-29 - 2.24 - #2419 fix to schedule maker
+2019-10-29 - 2.24 - #2411 2392 build the docs
+2019-10-29 - 2.24 - #2418 2324 resume workflow feature
+2019-10-24 - 2.24 - #2407 Update LCA_infrastructure.xlsx
+2019-10-23 - 2.24 - #2398 Update URL for CityEnergyAnalyst-GUI
+2019-10-23 - 2.24 - #2400 2399 demand keyerror rhum max pc
+2019-10-21 - 2.24 - #2396 Release 2.24
 2019-10-21 - 2.23 - #2391 Show plot parameters when adding and changing plots
 2019-10-18 - 2.23 - #2383 Fix to load curves plot and to glossary
 2019-10-17 - 2.23 - #2382 New Schedules Maker / Model
