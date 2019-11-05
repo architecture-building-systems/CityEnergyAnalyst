@@ -209,8 +209,10 @@ def main(config):
     verify_input_geometry_district(gpdf.from_file(locator.get_surrounding_geometry()))
 
     # import material properties of buildings
+    print("getting geometry materials")
     building_surface_properties = reader_surface_properties(locator=locator,
                                                             input_shp=locator.get_building_architecture())
+    building_surface_properties.to_csv(locator.get_radiation_materials())
     print("creating 3D geometry and surfaces")
     # create geometrical faces of terrain and buildingsL
     elevation, geometry_terrain, geometry_3D_zone, geometry_3D_surroundings = geometry_generator.geometry_main(locator,
