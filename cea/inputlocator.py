@@ -1011,10 +1011,6 @@ class InputLocator(object):
     # OUTPUTS
 
     # SOLAR-RADIATION
-    def get_radiation(self):  # todo: delete if not used
-        """scenario/outputs/data/solar-radiation/radiation.csv"""
-        return os.path.join(self._ensure_folder(self.get_solar_radiation_folder()), 'radiation.csv')
-
     def get_solar_radiation_folder(self):
         """scenario/outputs/data/solar-radiation"""
         return self._ensure_folder(self.scenario, 'outputs', 'data', 'solar-radiation')
@@ -1027,19 +1023,11 @@ class InputLocator(object):
         """scenario/outputs/data/solar-radiation/{building_name}_geometrgy.csv"""
         return os.path.join(self.get_solar_radiation_folder(), '%s_geometry.csv' % building_name)
 
-    def get_building_list(self):
-        """scenario/outputs/data/solar-radiation/radiation.csv"""
-        solar_radiation_folder = os.path.join(self.scenario, 'outputs', 'data', 'solar-radiation')
-        return os.path.join(solar_radiation_folder, 'radiation.csv')
+    def get_radiation_materials(self):
+        """scenario/outputs/data/solar-radiation/{building_name}_geometrgy.csv"""
+        return os.path.join(self.get_solar_radiation_folder(), 'buidling_materials.csv')
 
-    def get_3D_geometry_folder(self):
-        """scenario/inputs/3D-geometries"""
-        return self._ensure_folder(os.path.join(self.scenario, 'inputs', '3D-geometries'))
-
-    def get_surface_properties(self):
-        """scenario/outputs/data/solar-radiation/properties_surfaces.csv"""
-        return os.path.join(self.get_solar_radiation_folder(), 'properties_surfaces.csv')
-
+            # SENSITIVITY ANALYSIS
     def get_sensitivity_output(self, method, samples):
         """scenario/outputs/data/sensitivity-analysis/sensitivity_${METHOD}_${SAMPLES}.xls"""
         return os.path.join(self.scenario, 'outputs', 'data', 'sensitivity-analysis',
