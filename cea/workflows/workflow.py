@@ -74,6 +74,8 @@ def read_resume_info(resume_yml, workflow_yml):
     except IOError:
         # no resume file found?
         resume_dict = {workflow_yml: 0}
+    if not workflow_yml in resume_dict:
+        resume_dict[workflow_yml] = 0
     return resume_dict
 
 
