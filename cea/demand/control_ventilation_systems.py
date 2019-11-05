@@ -3,7 +3,7 @@
 
 from __future__ import division
 from cea.demand import control_heating_cooling_systems
-from cea.demand.constants import DELTA_T_NIGHT_FLUSHING, TEMPERATURE_ZONE_CONTROL_NIGHT_FLUSHING
+from cea.demand.constants import TEMPERATURE_ZONE_CONTROL_NIGHT_FLUSHING, DELTA_T_NIGHT_FLUSHING
 
 __author__ = "Gabriel Happle"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -98,14 +98,13 @@ def is_mechanical_ventilation_heat_recovery_active(bpr, tsd, t):
 def is_night_flushing_active(bpr, tsd, t):
 
     # night flushing is available for window ventilation (manual) and mechanical ventilation (automatic)
-    # night flushing is active during the night in the cooling season,
-    # IF the outdoor conditions are favourable (only temperature at the moment)
+    # night flushing is active during the night if the outdoor conditions are favourable
 
     if has_night_flushing(bpr) \
             and is_night_time(t) \
             and tsd['T_int'][t-1] > TEMPERATURE_ZONE_CONTROL_NIGHT_FLUSHING \
             and tsd['T_int'][t-1] > tsd['T_ext'][t] + DELTA_T_NIGHT_FLUSHING \
-            and tsd['rh_ext'][t] < bpr.comfort['rhum_max_pc']:
+            and tsd['rh_ext'][t] < bpr.comfort['RH_max_pc']:
 
         return True
 

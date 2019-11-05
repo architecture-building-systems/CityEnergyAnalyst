@@ -370,7 +370,7 @@ def has_hot_water_technical_system(bpr):
     :rtype: bool
         """
 
-    if bpr.hvac['type_dhw'] in {'T1', 'T2', 'T3', 'T4'}:  # 3for2
+    if bpr.hvac['type_dhw'] in {'T1', 'T2', 'T3', 'T4'}:
         return True
     elif bpr.hvac['type_dhw'] in {'T0'}:
         return False

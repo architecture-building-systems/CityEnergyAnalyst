@@ -68,6 +68,33 @@ class SupplySystemMapPlot(cea.plots.supply_system.SupplySystemPlotBase):
             self.category_name)
 
     def _plot_div_producer(self):
+        """
+        Since this plot doesn't use plotly to plot, we override _plot_div_producer to return a string containing
+        the html div to use for this plot. The template ``map_div.html`` expects some parameters:
+
+        Here is some example data (in a YAML-like format for documentation purposes)
+
+        ::
+
+            data:
+              DH:
+                connected_buildings: ['B1010', 'B1017', 'B1003']
+                disconnected_buildings: ['B1000', 'B1009', 'B1016', ..., 'B1015']
+                path_output_nodes: "{general:scenario}/inputs/networks/DH/gen_3_ind_1/nodes.shp"
+                path_output_edges: "{general:scenario}/inputs/networks/DH/gen_3_ind_1/edges.shp"
+              DC: {}  # data does not necessarily contain information for both types of district networks
+            colors:
+              dc: [63, 192, 194]
+              dh: [240, 75, 91]
+              disconnected: [68, 76, 83]
+              district: [255, 255, 255]
+            zone: str serialization of the GeoJSON of the zone.shp
+            district: str serialization of the GeoJSON of the district.shp
+            dc: str serialization of a GeoJSON containing both the nodes.shp + edges.shp of district cooling network
+            dh: str serialization of a GeoJSON containing both the nodes.shp + edges.shp of district heating network
+
+        :return: a str containing a full html ``<div/>`` that includes the js code to display the map.
+        """
         import os
         import hashlib
         from jinja2 import Template
@@ -79,16 +106,16 @@ class SupplySystemMapPlot(cea.plots.supply_system.SupplySystemPlotBase):
             get_geographic_coordinate_system()).to_json(show_bbox=True)
         district = geopandas.GeoDataFrame.from_file(self.locator.get_district_geometry()).to_crs(
             get_geographic_coordinate_system()).to_json(show_bbox=True)
-        dc = self.get_newtork_json(data['DC']['path_output_edges'], data['DC']['path_output_nodes'])
-        dh = self.get_newtork_json(data['DH']['path_output_edges'], data['DH']['path_output_nodes'])
+        dc = self.get_network_json(data['DC']['path_output_edges'], data['DC']['path_output_nodes'])
+        dh = self.get_network_json(data['DH']['path_output_edges'], data['DH']['path_output_nodes'])
 
         # Generate div id using hash of parameters
         div = Template(open(template).read()).render(hash=hashlib.md5(repr(sorted(data.items()))).hexdigest(),
-                                                     data=json.dumps(data), colors=COLORS,
+                                                     data=json.dumps(data), colors=json.dumps(COLORS),
                                                      zone=zone, district=district, dc=dc, dh=dh)
         return div
 
-    def get_newtork_json(self, edges, nodes):
+    def get_network_json(self, edges, nodes):
         if not edges or not nodes:
             return {}
         edges_df = geopandas.GeoDataFrame.from_file(edges)
@@ -108,7 +135,7 @@ class SupplySystemMapPlot(cea.plots.supply_system.SupplySystemPlotBase):
                                                 (self.individual, self.generation))
             network_name = "gen_" + str(self.generation) + "_ind_" + str(self.individual)
         else:
-            building_connectivity = self.get_building_connectivity(self.locator)
+            building_connectivity = get_building_connectivity(self.locator)
             network_name = "base"
 
         for network in ['DH', 'DC']:

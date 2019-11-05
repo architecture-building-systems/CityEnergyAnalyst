@@ -9,18 +9,18 @@ cea.optimization.master package
 Submodules
 ----------
 
-cea.optimization.master.check module
-------------------------------------
-
-.. automodule:: cea.optimization.master.check
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 cea.optimization.master.cost\_model module
 ------------------------------------------
 
 .. automodule:: cea.optimization.master.cost_model
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.optimization.master.crossover module
+----------------------------------------
+
+.. automodule:: cea.optimization.master.crossover
     :members:
     :undoc-members:
     :show-inheritance:
@@ -73,10 +73,10 @@ cea.optimization.master.mutations module
     :undoc-members:
     :show-inheritance:
 
-cea.optimization.master.performance\_aggregation module
--------------------------------------------------------
+cea.optimization.master.normalization module
+--------------------------------------------
 
-.. automodule:: cea.optimization.master.performance_aggregation
+.. automodule:: cea.optimization.master.normalization
     :members:
     :undoc-members:
     :show-inheritance:

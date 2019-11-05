@@ -12,7 +12,6 @@ Subpackages
 .. toctree::
 
     cea.optimization.distribution
-    cea.optimization.flexibility_model
     cea.optimization.master
     cea.optimization.preprocessing
     cea.optimization.slave

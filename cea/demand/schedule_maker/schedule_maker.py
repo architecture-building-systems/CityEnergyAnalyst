@@ -41,7 +41,7 @@ def schedule_maker_main(locator, config, building=None):
     elif schedule_model == 'stochastic':
         stochastic_schedule = True
     else:
-        Exception('there is no valid input for type of occupancy model')
+        raise ValueError("Invalid schedule model: {schedule_model}".format(**locals()))
 
     if buildings == []:
         buildings = locator.get_zone_building_names()
@@ -69,11 +69,6 @@ def schedule_maker_main(locator, config, building=None):
     # create date range for the calculation year
     date_range = get_dates_from_year(year)
 
-    #read building schedules input data:
-    schedules = [read_cea_schedule(locator.get_building_schedules(building)) for building in buildings]
-    daily_schedule_buildings = [schedule[0] for schedule in schedules]
-    monthly_multipliers = [schedule[1]['MONTHLY_MULTIPLIER'] for schedule in schedules]
-
 
     # SCHEDULE MAKER
     n = len(buildings)
@@ -84,23 +79,20 @@ def schedule_maker_main(locator, config, building=None):
     calc_schedules_multiprocessing(repeat(locator, n),
                                    buildings,
                                    repeat(date_range, n),
-                                   daily_schedule_buildings,
-                                   monthly_multipliers,
                                    [internal_loads.loc[b] for b in buildings],
                                    [indoor_comfort.loc[b] for b in buildings],
                                    [prop_geometry.loc[b] for b in buildings],
                                    repeat(stochastic_schedule, n))
+    return None
 
 
 def print_progress(i, n, args, result):
-    print("Building No. {i} completed out of {n}: {building}".format(i=i + 1, n=n, building=args[0]))
+    print("Schedule for building No. {i} completed out of {n}: {building}".format(i=i + 1, n=n, building=args[1]))
 
 
 def calc_schedules(locator,
                    building,
                    date_range,
-                   daily_schedule_building,
-                   monthly_multiplier,
                    internal_loads_building,
                    indoor_comfort_building,
                    prop_geometry_building,
@@ -132,6 +124,10 @@ def calc_schedules(locator,
         Energy and Buildings, Vol. 40, No. 2, 2008, pp 83-98.
 
     """
+    # read building schedules input data:
+    schedule = read_cea_schedule(locator.get_building_weekly_schedules(building))
+    daily_schedule_building = schedule[0]
+    monthly_multiplier = schedule[1]['MONTHLY_MULTIPLIER']
 
     final_schedule = {}
     days_in_schedule = len(list(set(daily_schedule_building['DAY'])))
@@ -149,6 +145,7 @@ def calc_schedules(locator,
         else:
             final_schedule['Occ_m2pax'] = np.round(yearly_array * number_of_occupants)
     else:
+        number_of_occupants = 0
         final_schedule['Occ_m2pax'] = np.zeros(HOURS_IN_YEAR)
 
     # HEAT AND HUMIDITY GAINS FROM OCCUPANTS
@@ -263,8 +260,10 @@ def calc_schedules(locator,
     }
 
     yearly_occupancy_schedules = pd.DataFrame(final_dict)
-    yearly_occupancy_schedules.to_csv(locator.get_occupancy_model_file(building), index=False, na_rep='OFF',
+    yearly_occupancy_schedules.to_csv(locator.get_schedule_model_file(building), index=False, na_rep='OFF',
                                       float_format='%.3f')
+
+    return final_dict
 
 
 def convert_schedule_string_to_temperature(schedule_string, schedule_type, Ths_set_C, Ths_setb_C, Tcs_set_C,
