@@ -94,7 +94,7 @@ Demand forecasting:
       - [get_weather_file]
       - [get_envelope_systems]
       - [get_building_comfort]
-      - [get_archetypes_system_controls]
+      - [get_systems_seasonality]
       - [get_building_internal]
       - [get_building_age]
       - [get_radiation_metadata, building_name]

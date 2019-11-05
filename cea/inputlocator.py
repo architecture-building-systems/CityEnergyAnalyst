@@ -571,18 +571,14 @@ class InputLocator(object):
         to the scenario if they are not yet present, based on the configured region for the scenario."""
         return os.path.join(self.get_databases_folder(), 'archetypes', 'construction_properties.xlsx')
 
-    def get_archetypes_heating_season(self):
+    def get_systems_seasonality(self):
         """ Returns the database of region-specific system control parameters. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario.
 
         :param region:
         :return:
         """
-        old_file_path = os.path.join(self.get_databases_folder(), 'systems', 'system_controls.xls')
-        new_file_path = os.path.join(self.get_databases_folder(), 'systems', 'heating_season.xls')
-        if os.path.exists(old_file_path):
-            os.rename(old_file_path, new_file_path)
-        return new_file_path
+        return os.path.join(self.get_databases_folder(), 'systems', 'seasonality.xls')
 
     def get_database_supply_systems(self):
         """Returns the database of supply systems for cost analysis. These are copied
