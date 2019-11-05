@@ -643,7 +643,7 @@ class InputLocator(object):
         """scenario/inputs/building-properties/air_conditioning_systems.dbf"""
         old_file_path = os.path.join(self.get_building_geometry_folder(), 'district.shp')
         new_file_path = os.path.join(self.get_building_geometry_folder(), 'surroundings.shp')
-        if os.path.exists(old_file_path):
+        if os.path.exists(old_file_path) and os.path.exists(new_file_path) == False:
             for file_extention in ['.shp', '.cpg', '.prj', '.shx', '.dbf']:
                 old_path = os.path.join(self.get_building_geometry_folder(), 'district' + file_extention)
                 new_path = os.path.join(self.get_building_geometry_folder(), 'surroundings' + file_extention)
@@ -693,7 +693,7 @@ class InputLocator(object):
         """scenario/inputs/building-properties/air_conditioning_systems.dbf"""
         old_file_path = os.path.join(self.get_building_properties_folder(), 'technical_systems.dbf')
         new_file_path = os.path.join(self.get_building_properties_folder(), 'air_conditioning_systems.dbf')
-        if os.path.exists(old_file_path):
+        if os.path.exists(old_file_path) and os.path.exists(new_file_path) == False:
             os.rename(old_file_path, new_file_path)
         return new_file_path
 
