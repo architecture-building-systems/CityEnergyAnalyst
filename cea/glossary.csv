@@ -24,6 +24,10 @@ SCRIPT,LOCATOR_METHOD,FILE_NAME,VARIABLE,DESCRIPTION,UNIT,VALUES,TYPE,COLOR
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:HVAC,type_dhw,Type of hot water supply system,[code],{T0...Tn},string,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:HVAC,type_hs,Type of heating supply system,[code],{T0...Tn},string,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:HVAC,type_vent,Type of ventilation strategy (relates to values in Default Database HVAC Properties),[code],{T1...Tn},string,black
+-,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:HVAC,heat_starts,Start of the heating season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black
+-,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:HVAC,heat_ends,End of the heating season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black
+-,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:HVAC,cool_starts,Start of the cooling season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black
+-,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:HVAC,cool_ends,End of the cooling season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:HVAC,year_end,Upper limit of year interval where the building properties apply,[yr],{0...n},int,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:HVAC,year_start,Lower limit of year interval where the building properties apply,[yr],{0...n},int,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INDOOR_COMFORT,Code,Unique code for the material of the pipe.,[-],[-],string,black
@@ -800,6 +804,10 @@ data-helper,get_building_air_conditioning,inputs/building-properties/technical_s
 data-helper,get_building_air_conditioning,inputs/building-properties/technical_systems.dbf,type_dhw,Type of hot water supply system,[code],{T0...Tn},string,black
 data-helper,get_building_air_conditioning,inputs/building-properties/technical_systems.dbf,type_hs,Type of heating supply system,[code],{T0...Tn},string,black
 data-helper,get_building_air_conditioning,inputs/building-properties/technical_systems.dbf,type_vent,Type of ventilation strategy (relates to values in Default Database HVAC Properties),[code],{T1...Tn},string,black
+data-helper,get_building_air_conditioning,inputs/building-properties/technical_systems.dbf,heat_starts,Start of the heating season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black
+data-helper,get_building_air_conditioning,inputs/building-properties/technical_systems.dbf,heat_ends,End of the heating season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black
+data-helper,get_building_air_conditioning,inputs/building-properties/technical_systems.dbf,cool_starts,Start of the cooling season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black
+data-helper,get_building_air_conditioning,inputs/building-properties/technical_systems.dbf,cool_ends,End of the cooling season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black
 data-helper,get_building_internal,inputs/building-properties/internal_loads.dbf,Ea_Wm2,Peak specific electrical load due to computers and devices,[W/m2],{0.0...n},float,black
 data-helper,get_building_internal,inputs/building-properties/internal_loads.dbf,Ed_Wm2,Peak specific electrical load due to servers/data centres,[W/m2],{0.0...n},float,black
 data-helper,get_building_internal,inputs/building-properties/internal_loads.dbf,El_Wm2,Peak specific electrical load due to artificial lighting,[W/m2],{0.0...n},float,black
