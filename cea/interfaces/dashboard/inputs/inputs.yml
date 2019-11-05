@@ -17,7 +17,7 @@ zone:
     type: float
   - name: REFERENCE
     type: str
-district:
+surroundings:
   parent: None
   pk: Name
   type: shp  # shp or dbf
@@ -203,7 +203,7 @@ indoor-comfort:
     type: float
   - name: Ve_lpspax
     type: float
-technical-systems:
+air-conditioning-systems:
   parent: zone
   pk: Name
   type: dbf
@@ -220,6 +220,14 @@ technical-systems:
     - name: type_ctrl
       type: str
     - name: type_vent
+      type: str
+    - name: heat_starts
+      type: str
+    - name: heat_ends
+      type: str
+    - name: cool_starts
+      type: str
+    - name: cool_ends
       type: str
 
 
