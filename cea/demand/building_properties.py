@@ -366,8 +366,8 @@ class BuildingProperties(object):
 
             else:
                 multiplier_win = 0.25 * (
-                            envelope.ix[building_name, 'wwr_south'] + envelope.ix[building_name, 'wwr_east'] +
-                            envelope.ix[building_name, 'wwr_north'] + envelope.ix[building_name, 'wwr_west'])
+                        envelope.ix[building_name, 'wwr_south'] + envelope.ix[building_name, 'wwr_east'] +
+                        envelope.ix[building_name, 'wwr_north'] + envelope.ix[building_name, 'wwr_west'])
                 envelope.ix[building_name, 'Awall'] = geometry_data_sum.ix['walls', 'AREA_m2'] * (1 - multiplier_win)
                 envelope.ix[building_name, 'Awin'] = geometry_data_sum.ix['walls', 'AREA_m2'] * multiplier_win
                 envelope.ix[building_name, 'Aroof'] = geometry_data_sum.ix['roofs', 'AREA_m2']
@@ -376,7 +376,7 @@ class BuildingProperties(object):
         df = df.merge(geometry, left_index=True, right_index=True)
 
         df['empty_envelope_ratio'] = 1 - (
-                    (df['void_deck'] * (df['height_ag'] / df['floors_ag'])) / (df['Awall'] + df['Awin']))
+                (df['void_deck'] * (df['height_ag'] / df['floors_ag'])) / (df['Awall'] + df['Awin']))
 
         # adjust envelope areas with Void_deck
         df['Aw'] = df['Awin'] * df['empty_envelope_ratio']
@@ -737,7 +737,8 @@ def get_properties_technical_systems(locator, prop_HVAC):
     prop_emission_heating = pd.read_excel(locator.get_database_air_conditioning_systems(), 'heating')
     prop_emission_cooling = pd.read_excel(locator.get_database_air_conditioning_systems(), 'cooling')
     prop_emission_dhw = pd.read_excel(locator.get_database_air_conditioning_systems(), 'dhw')
-    prop_emission_control_heating_and_cooling = pd.read_excel(locator.get_database_air_conditioning_systems(), 'controller')
+    prop_emission_control_heating_and_cooling = pd.read_excel(locator.get_database_air_conditioning_systems(),
+                                                              'controller')
     prop_ventilation_system_and_control = pd.read_excel(locator.get_database_air_conditioning_systems(), 'ventilation')
 
     df_emission_heating = prop_HVAC.merge(prop_emission_heating, left_on='type_hs', right_on='code')
@@ -748,7 +749,8 @@ def get_properties_technical_systems(locator, prop_HVAC):
     df_ventilation_system_and_control = prop_HVAC.merge(prop_ventilation_system_and_control, left_on='type_vent',
                                                         right_on='code')
 
-    fields_emission_heating = ['Name', 'type_hs', 'type_cs', 'type_dhw', 'type_ctrl', 'type_vent',
+    fields_emission_heating = ['Name', 'type_hs', 'type_cs', 'type_dhw', 'type_ctrl', 'type_vent', 'heat_starts',
+                               'heat_ends', 'cool_starts', 'cool_ends',
                                'Qhsmax_Wm2', 'dThs_C', 'Tshs0_ahu_C', 'dThs0_ahu_C', 'Th_sup_air_ahu_C', 'Tshs0_aru_C',
                                'dThs0_aru_C', 'Th_sup_air_aru_C', 'Tshs0_shu_C', 'dThs0_shu_C']
     fields_emission_cooling = ['Name', 'Qcsmax_Wm2', 'dTcs_C', 'Tscs0_ahu_C', 'dTcs0_ahu_C', 'Tc_sup_air_ahu_C',
@@ -764,15 +766,28 @@ def get_properties_technical_systems(locator, prop_HVAC):
                          on='Name').merge(df_ventilation_system_and_control[fields_system_ctrl_vent], on='Name')
 
     # read region-specific control parameters (identical for all buildings), i.e. heating and cooling season
-    prop_region_specific_control = pd.read_excel(locator.get_systems_seasonality(),
-                                                 true_values=['True', 'TRUE', 'true'],
-                                                 false_values=['False', 'FALSE', 'false', u'FALSE'],
-                                                 dtype={'has-heating-season': bool,
-                                                        'has-cooling-season': bool})  # read database
-
-    result = result.join(pd.concat([prop_region_specific_control] * len(result), ignore_index=True))  # join on each row
-
+    result['has-heating-season'] = result.apply(
+        lambda x: verify_has_season(x['Name'], x['heat_starts'], x['heat_ends']), axis=1)
+    result['has-cooling-season'] = result.apply(
+        lambda x: verify_has_season(x['Name'], x['cool_starts'], x['cool_ends']), axis=1)
     return result
+
+
+def verify_has_season(building_name, start, end):
+    def invalid_date(date):
+        if len(date) != 5 or "|" not in date:
+            return True
+        elif "00" in date.split("|"):
+            return True
+        else:
+            return False
+
+    if start == '00|00' or end == '00|00':
+        return False
+    elif invalid_date(start) or invalid_date(end):
+        raise Exception('invalid input found for building %s. dates of season must comply to DD|MM format, DD|00 are values are not valid' % building_name)
+    else:
+        return True
 
 
 def get_envelope_properties(locator, prop_architecture):
