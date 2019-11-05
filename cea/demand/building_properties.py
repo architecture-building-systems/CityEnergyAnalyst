@@ -11,7 +11,8 @@ from __future__ import division
 import numpy as np
 import pandas as pd
 from geopandas import GeoDataFrame as Gdf
-
+from datetime import datetime
+from collections import namedtuple
 from cea.demand import constants
 from cea.utilities.dbf import dbf_to_dataframe
 
@@ -766,11 +767,54 @@ def get_properties_technical_systems(locator, prop_HVAC):
                          on='Name').merge(df_ventilation_system_and_control[fields_system_ctrl_vent], on='Name')
 
     # read region-specific control parameters (identical for all buildings), i.e. heating and cooling season
-    result['has-heating-season'] = result.apply(
-        lambda x: verify_has_season(x['Name'], x['heat_starts'], x['heat_ends']), axis=1)
-    result['has-cooling-season'] = result.apply(
-        lambda x: verify_has_season(x['Name'], x['cool_starts'], x['cool_ends']), axis=1)
+    result['has-heating-season'] = result.apply(lambda x: verify_has_season(x['Name'],
+                                                                            x['heat_starts'],
+                                                                            x['heat_ends']), axis=1)
+    result['has-cooling-season'] = result.apply(lambda x: verify_has_season(x['Name'],
+                                                                            x['cool_starts'],
+                                                                            x['cool_ends']), axis=1)
+
+    # verify seasons do not overlap
+    result['overlap-season'] = result.apply(lambda x: verify_overlap_season(x['Name'],
+                                                                            x['has-heating-season'],
+                                                                            x['has-cooling-season'],
+                                                                            x['heat_starts'],
+                                                                            x['heat_ends'],
+                                                                            x['cool_starts'],
+                                                                            x['cool_ends']), axis=1)
     return result
+
+
+def verify_overlap_season(building_name, has_teating_season, has_cooling_season, heat_start, heat_end, cool_start,
+                          cool_end):
+    if has_cooling_season and has_teating_season:
+        Range = namedtuple('Range', ['start', 'end'])
+
+        # for heating
+        day1, month1 = map(int, heat_start.split('|'))
+        day2, month2 = map(int, heat_end.split('|'))
+        if month2 > month1:
+            r1 = Range(start=datetime(2012, month1, day1), end=datetime(2012, month2, day2))
+        else:
+            r1 = Range(start=datetime(2012, month1, day1), end=datetime(2013, month2, day2))
+
+        # for cooling
+        day1, month1 = map(int, cool_start.split('|'))
+        day2, month2 = map(int, cool_end.split('|'))
+        if month2 > month1:
+            r2 = Range(start=datetime(2012, month1, day1), end=datetime(2012, month2, day2))
+        else:
+            r2 = Range(start=datetime(2012, month1, day1), end=datetime(2013, month2, day2))
+
+        latest_start = max(r1.start, r2.start)
+        earliest_end = min(r1.end, r2.end)
+        delta = (earliest_end - latest_start).days + 1
+        overlap = max(0, delta)
+        if overlap > 0:
+            raise Exception(
+                'invalid input found for building %s. heating and cooling seasons cannot overlap in CEA' % building_name)
+        else:
+            return False
 
 
 def verify_has_season(building_name, start, end):
@@ -785,7 +829,8 @@ def verify_has_season(building_name, start, end):
     if start == '00|00' or end == '00|00':
         return False
     elif invalid_date(start) or invalid_date(end):
-        raise Exception('invalid input found for building %s. dates of season must comply to DD|MM format, DD|00 are values are not valid' % building_name)
+        raise Exception(
+            'invalid input found for building %s. dates of season must comply to DD|MM format, DD|00 are values are not valid' % building_name)
     else:
         return True
 
