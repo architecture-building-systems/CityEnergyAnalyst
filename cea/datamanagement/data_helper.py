@@ -150,7 +150,11 @@ def data_helper(locator, region, overwrite_technology_folder,
                   'type_hs',
                   'type_dhw',
                   'type_ctrl',
-                  'type_vent']
+                  'type_vent',
+                  'heat_starts',
+                  'heat_ends',
+                  'cool_starts',
+                  'cool_ends']
         prop_HVAC_df_merged = names_df.merge(prop_HVAC_df, on="Name")
         dataframe_to_dbf(prop_HVAC_df_merged[fields], locator.get_building_air_conditioning())
 
