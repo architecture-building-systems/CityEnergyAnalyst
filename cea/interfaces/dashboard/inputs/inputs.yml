@@ -1,5 +1,6 @@
 # describes the input databases
 zone:
+  parent: zone
   pk: Name
   type: shp  # shp or dbf
   location: get_zone_geometry
@@ -17,6 +18,7 @@ zone:
   - name: REFERENCE
     type: str
 district:
+  parent: None
   pk: Name
   type: shp  # shp or dbf
   location: get_surrounding_geometry
@@ -30,6 +32,7 @@ district:
   - name: REFERENCE
     type: str
 age:
+  parent: zone
   pk: Name
   type: dbf
   location: get_building_age
@@ -53,6 +56,7 @@ age:
   - name: REFERENCE
     type: str
 occupancy:
+  parent: zone
   pk: Name
   type: dbf
   location: get_building_occupancy
@@ -94,6 +98,7 @@ occupancy:
   - name: REFERENCE
     type: str
 internal-loads:
+  parent: zone
   pk: Name
   type: dbf
   location: get_building_internal
@@ -125,6 +130,7 @@ internal-loads:
   - name: Vw_lpdpax
     type: float
 supply-systems:
+  parent: zone
   pk: Name
   type: dbf
   location: get_building_supply
@@ -140,6 +146,7 @@ supply-systems:
   - name: type_hs
     type: str
 architecture:
+  parent: zone
   pk: Name
   type: dbf
   location: get_building_architecture
@@ -175,6 +182,7 @@ architecture:
   - name: type_win
     type: str
 indoor-comfort:
+  parent: zone
   pk: Name
   type: dbf
   location: get_building_comfort
@@ -196,6 +204,7 @@ indoor-comfort:
   - name: Ve_lpspax
     type: float
 technical-systems:
+  parent: zone
   pk: Name
   type: dbf
   location: get_building_air_conditioning
