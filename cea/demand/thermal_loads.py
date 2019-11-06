@@ -87,7 +87,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, date_range, locator,
     if np.isclose(bpr.rc_model['Af'], 0.0):  # if building does not have conditioned area
         tsd['T_int'] = tsd['T_ext']
         tsd['x_int'] = np.vectorize(convert_rh_to_moisture_content)(tsd['rh_ext'] , tsd['T_int'])
-        print("this building does not have an air-conditioned area")
+        print("building () does not have an air-conditioned area").format(bpr.name)
     else:
 
         #CALCULATE PROCESS HEATING
