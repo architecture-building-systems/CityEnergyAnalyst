@@ -357,6 +357,7 @@ class BuildingProperties(object):
         # call all building geometry files in a loop
         for building_name in locator.get_zone_building_names():
             geometry_data = pd.read_csv(locator.get_radiation_metadata(building_name))
+            geometry_data['AREA_m2'] = geometry_data['AREA_m2'] * np.array([1.0 - inter for inter in geometry_data['intersection'].values])
             geometry_data_sum = geometry_data.groupby(by='TYPE').sum()
             # do this in case the daysim radiation file did not included window
             if 'windows' in geometry_data.TYPE.values:
