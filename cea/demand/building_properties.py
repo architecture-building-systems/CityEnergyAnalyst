@@ -267,8 +267,10 @@ class BuildingProperties(object):
 
         for building in df.index.values:
             if hvac_temperatures.loc[building, 'type_hs'] == 'T0' and \
-                    hvac_temperatures.loc[building, 'type_cs'] == 'T0' and df.loc[building, 'Hs'] > 0.0:
-                df.loc[building, 'Hs'] = 0.0
+                    hvac_temperatures.loc[building, 'type_cs'] == 'T0' and \
+                    np.max([df.loc[building, 'Hs_ag'], df.loc[building, 'Hs_bg']]) > 0.0:
+                df.loc[building, 'Hs_ag'] = 0.0
+                df.loc[building, 'Hs_bg'] = 0.0
                 print('Building {building} has no heating and cooling system, Hs corrected to 0.'.format(
                     building=building))
 
@@ -285,13 +287,18 @@ class BuildingProperties(object):
         df['Am'] = df['Cm_Af'].apply(self.lookup_effective_mass_area_factor) * df['Af']  # Effective mass area in [m2]
 
         # Steady-state Thermal transmittance coefficients and Internal heat Capacity
-        df['Htr_w'] = df['Aw'] * df['U_win']  # Thermal transmission coefficient for windows and glazing in [W/K]
+        # Thermal transmission coefficient for windows and glazing in [W/K]
+        # Weigh area of windows with fraction of air-conditioned space, relationship of area and perimeter is squared
+        df['Htr_w'] = df['Aw'] * df['U_win'] * np.sqrt(df['Hs_ag'])
 
         # direct thermal transmission coefficient to the external environment in [W/K]
-        df['HD'] = df['Aop_sup'] * df['U_wall'] + df['footprint'] * df['U_roof']
+        # Weigh area of with fraction of air-conditioned space, relationship of area and perimeter is squared
+        df['HD'] = df['Aop_sup'] * df['U_wall'] * np.sqrt(df['Hs_ag']) + df['footprint'] * df['U_roof'] * df['Hs_ag']
 
-        df['Hg'] = B_F * df['Aop_bel'] * df[
-            'U_base']  # steady-state Thermal transmission coefficient to the ground. in W/K
+        # steady-state Thermal transmission coefficient to the ground. in W/K
+        df['Hg'] = B_F * df['Aop_bel'] * df['U_base'] * df['Hs_bg']
+
+        # calculate RC model properties
         df['Htr_op'] = df['Hg'] + df['HD']
         df['Htr_ms'] = H_MS * df['Am']  # Coupling conductance 1 in W/K
         df['Htr_em'] = 1 / (1 / df['Htr_op'] - 1 / df['Htr_ms'])  # Coupling conductance 2 in W/K
@@ -388,6 +395,8 @@ class BuildingProperties(object):
         # opague areas in [m2] below ground including floor
         df['Aop_bel'] = df['height_bg'] * df['perimeter'] + df['footprint']
         df['GFA_m2'] = df['footprint'] * df['floors']  # gross floor area
+        df['GFA_ag_m2'] = df['footprint'] * df['floors_ag']
+        df['GFA_bg_m2'] = df['footprint'] * df['floors_bg']
 
         return df
 
@@ -436,7 +445,8 @@ class BuildingProperties(object):
 
 def calc_useful_areas(df):
     df['Aocc'] = df['GFA_m2'] * df['Ns']  # occupied floor area: all occupied areas in the building
-    df['Af'] = df['GFA_m2'] * df['Hs']  # conditioned area: areas that are heated/cooled
+    # conditioned area: areas that are heated/cooled
+    df['Af'] = df['GFA_ag_m2'] * df['Hs_ag'] + df['GFA_bg_m2'] * df['Hs_bg']
     df['Aef'] = df['GFA_m2'] * df['Es']  # electrified area: share of gross floor area that is also electrified
     return df
 
@@ -606,7 +616,7 @@ class EnvelopeProperties(object):
 
     __slots__ = [u'a_roof', u'f_cros', u'n50', u'win_op', u'win_wall',
                  u'a_wall', u'rf_sh', u'e_wall', u'e_roof', u'G_win', u'e_win',
-                 u'U_roof', u'Hs', u'Ns', u'Es', u'Cm_Af', u'U_wall', u'U_base', u'U_win']
+                 u'U_roof', u'Hs_ag', u'Hs_bg', u'Ns', u'Es', u'Cm_Af', u'U_wall', u'U_base', u'U_win']
 
     def __init__(self, envelope):
         self.a_roof = envelope['a_roof']
@@ -619,7 +629,8 @@ class EnvelopeProperties(object):
         self.G_win = envelope['G_win']
         self.e_win = envelope['e_win']
         self.U_roof = envelope['U_roof']
-        self.Hs = envelope['Hs']
+        self.Hs_ag = envelope['Hs_ag']
+        self.Hs_bg = envelope['Hs_bg']
         self.Ns = envelope['Ns']
         self.Es = envelope['Es']
         self.Cm_Af = envelope['Cm_Af']
@@ -869,7 +880,7 @@ def get_envelope_properties(locator, prop_architecture):
     df_win = prop_architecture.merge(prop_win, left_on='type_win', right_on='code')
     df_shading = prop_architecture.merge(prop_shading, left_on='type_shade', right_on='code')
 
-    fields_construction = ['Name', 'Cm_Af', 'void_deck', 'Hs', 'Ns', 'Es']
+    fields_construction = ['Name', 'Cm_Af', 'void_deck', 'Hs_ag', 'Hs_bg', 'Ns', 'Es']
     fields_leakage = ['Name', 'n50']
     fields_roof = ['Name', 'e_roof', 'a_roof', 'U_roof']
     fields_wall = ['Name', 'wwr_north', 'wwr_west', 'wwr_east', 'wwr_south',

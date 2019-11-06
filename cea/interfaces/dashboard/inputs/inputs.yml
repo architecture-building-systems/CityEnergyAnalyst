@@ -157,7 +157,9 @@ architecture:
     type: int
   - name: Es
     type: float
-  - name: Hs
+  - name: Hs_ag
+    type: float
+  - name: Hs_bg
     type: float
   - name: Ns
     type: float
