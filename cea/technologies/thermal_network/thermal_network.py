@@ -1230,7 +1230,7 @@ def calc_pressure_nodes(t_supply_node__k, t_return_node__k, thermal_network, t):
     """
 
     edge_node_df = thermal_network.edge_node_df.copy()
-    pipe_diameter = thermal_network.pipe_properties[:]['D_int_m':'D_int_m'].values
+    pipe_diameter = np.array(thermal_network.pipe_properties[:]['D_int_m':'D_int_m'], dtype='float')
     pipe_length = thermal_network.edge_df['pipe length'].values
     edge_mass_flow = thermal_network.edge_mass_flow_df.ix[t].values
     node_mass_flow = thermal_network.node_mass_flow_df.ix[t].values
