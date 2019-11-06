@@ -1161,8 +1161,9 @@ def assign_pipes_to_edges(thermal_network):
     pipe_catalog['mdot_min_kgs'] = pipe_catalog['Vdot_min_m3s'] * P_WATER_KGPERM3
     pipe_catalog['mdot_max_kgs'] = pipe_catalog['Vdot_max_m3s'] * P_WATER_KGPERM3
 
-    series_max_mass_flow = abs(thermal_network.edge_mass_flow_df.T).max(axis=1)
-    pipe_properties_df = pd.DataFrame(series_max_mass_flow, columns=['max_flow_kgs'])
+    #necessary step to create dataframe and avoiding the presence of objects
+    series_max_mass_flow = pd.DataFrame(data=[(thermal_network.edge_mass_flow_df.abs()).max(axis=0)])
+    pipe_properties_df = series_max_mass_flow.T.rename(columns={0:'max_flow_kgs'})
     pipe_properties_df['Name'] = pipe_properties_df.index
     pipe_properties_df['Code'] = pipe_properties_df.apply(lambda x: calc_asign_diameter(x['max_flow_kgs'],
                                                                                         pipe_catalog), axis =1)
