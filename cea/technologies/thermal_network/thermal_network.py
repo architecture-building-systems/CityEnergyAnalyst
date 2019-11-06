@@ -1122,6 +1122,22 @@ def find_loops(edge_node_df):
 
     return loops, graph
 
+def calc_asign_diameter(max_flow, pipe_catalog):
+
+    if max_flow < pipe_catalog['mdot_min_kgs'].min():
+        return 'DN20'  # the smallest pipe
+    elif max_flow > pipe_catalog['mdot_min_kgs'].max():
+        raise ValueError(
+            'A very specific bad thing happened!: One or more of the pipes diameters you indicated' '\n'
+            'are not in the pipe catalog!, please make sure your input network match the piping catalog,' '\n'
+            'otherwise :P')
+    else:
+        length_catalogue = range(pipe_catalog['mdot_min_kgs'].count())
+        for i in length_catalogue:
+            if pipe_catalog.loc[i, 'mdot_min_kgs'] <= max_flow < pipe_catalog.loc[i, 'mdot_max_kgs']:
+                return pipe_catalog.loc[i, 'Code']
+
+
 
 def assign_pipes_to_edges(thermal_network):
     """
@@ -1139,65 +1155,38 @@ def assign_pipes_to_edges(thermal_network):
 
 
     """
-    max_edge_mass_flow_df = pd.DataFrame(data=[(thermal_network.edge_mass_flow_df.abs()).max(axis=0)])
-    max_edge_mass_flow_df.columns = thermal_network.edge_node_df.columns
 
     # import pipe catalog from Excel file
     pipe_catalog = pd.read_excel(thermal_network.locator.get_database_supply_systems(), sheet_name='PIPING')
     pipe_catalog['mdot_min_kgs'] = pipe_catalog['Vdot_min_m3s'] * P_WATER_KGPERM3
     pipe_catalog['mdot_max_kgs'] = pipe_catalog['Vdot_max_m3s'] * P_WATER_KGPERM3
-    pipe_properties_df = pd.DataFrame(data=None, index=pipe_catalog.columns.values,
-                                      columns=max_edge_mass_flow_df.columns.values)
-    if thermal_network.set_diameter:
-        # Set the pipe diameters according to the maximum flow in each edge.
-        # Find the minimum pipe diameter which allows for a mass flow of this magnitude.
-        for pipe in max_edge_mass_flow_df:
-            pipe_found = False
-            i = 0
-            while pipe_found == False:
-                if np.amax(np.absolute(max_edge_mass_flow_df[pipe].values)) <= pipe_catalog['mdot_max_kgs'][i]:
-                    pipe_properties_df[pipe] = np.transpose(pipe_catalog[:][i:i + 1].values)
-                    pipe_found = True
-                elif i == (len(pipe_catalog) - 1):
-                    pipe_properties_df[pipe] = np.transpose(pipe_catalog[:][i:i + 1].values)
-                    pipe_found = True
-                    print(pipe, 'with maximum flow rate of', max_edge_mass_flow_df[pipe].values, '[kg/s] ',
-                          'requires a bigger pipe than provided in the database.', '\n',
-                          'Please add a pipe with adequate pipe ',
-                          'size to the Piping Catalog under ..cea/database/system/thermal_networks.xls', '\n')
-                else:
-                    i += 1
-        # at the end save back the edges dataframe in the shapefile with the new pipe diameters
-        if os.path.exists(
-                thermal_network.locator.get_network_layout_edges_shapefile(thermal_network.network_type,
-                                                                           thermal_network.network_name)):
-            network_edges = gpd.read_file(
-                thermal_network.locator.get_network_layout_edges_shapefile(thermal_network.network_type,
-                                                                           thermal_network.network_name))
-            network_edges['Pipe_DN'] = pipe_properties_df.loc['Pipe_DN'].values
 
-            # get coordinate system and project to WSG 84
-            lat, lon = get_lat_lon_projected_shapefile(network_edges)
-            # get coordinate system and re project to UTM
-            network_edges = network_edges.to_crs(get_projected_coordinate_system(lat, lon))
-            # watchout keep coordinate system
+    series_max_mass_flow = abs(thermal_network.edge_mass_flow_df.T).max(axis=1)
+    pipe_properties_df = pd.DataFrame(series_max_mass_flow, columns=['max_flow_kgs'])
+    pipe_properties_df['Name'] = pipe_properties_df.index
+    pipe_properties_df['Code'] = pipe_properties_df.apply(lambda x: calc_asign_diameter(x['max_flow_kgs'],
+                                                                                        pipe_catalog), axis =1)
+    pipe_properties_df = pipe_properties_df.merge(pipe_catalog, on='Code')
 
-            network_edges.to_file(
-                thermal_network.locator.get_network_layout_edges_shapefile(thermal_network.network_type,
-                                                                           thermal_network.network_name), )
-    else:
-        # Find the pipe properties of the pipes from the .shp file
-        # The shape file pipe DN is stored in edge_df
-        for pipe, row in thermal_network.edge_df.iterrows():
-            # find matching pipe DN in the pipe catalog
-            index = pipe_catalog.Pipe_DN[pipe_catalog.Pipe_DN == row['Pipe_DN']].index
-            if len(index) == 0:  # there is no match in the pipe catalog
-                raise ValueError(
-                    'A very specific bad thing happened!: One or more of the pipes diameters you indicated' '\n'
-                    'are not in the pipe catalog!, please make sure your input network match the piping catalog,' '\n'
-                    'otherwise :P')
-            # assign pipe properties from the catalog, matching the Pipe DN of the .shp files
-            pipe_properties_df[pipe] = np.transpose(pipe_catalog.loc[index].values)
+    #save to the existing file:
+    network_edges_path = thermal_network.locator.get_network_layout_edges_shapefile(thermal_network.network_type,
+                                                                                 thermal_network.network_name)
+    if os.path.exists(network_edges_path):
+        network_edges = gpd.read_file(network_edges_path)
+        network_edges['Pipe_DN'] = network_edges.merge(pipe_properties_df, on='Name')['Pipe_DN_y']
+
+        # get coordinate system and project to WSG 84
+        lat, lon = get_lat_lon_projected_shapefile(network_edges)
+        # get coordinate system and re project to UTM
+        network_edges = network_edges.to_crs(get_projected_coordinate_system(lat, lon))
+        # watchout keep coordinate system
+
+        network_edges.to_file(
+            thermal_network.locator.get_network_layout_edges_shapefile(thermal_network.network_type,
+                                                                       thermal_network.network_name))
+
+    #throw result in the specified format
+    pipe_properties_df = pipe_properties_df.set_index('Name').T
 
     return pipe_properties_df
 
