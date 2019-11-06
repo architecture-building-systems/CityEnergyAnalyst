@@ -85,6 +85,7 @@ def schedule_maker_main(locator, config, building=None):
                                    [indoor_comfort.loc[b] for b in buildings],
                                    [prop_geometry.loc[b] for b in buildings],
                                    repeat(stochastic_schedule, n))
+    return None
 
 
 def print_progress(i, n, args, result):
@@ -125,7 +126,7 @@ def calc_schedules(locator,
         Energy and Buildings, Vol. 40, No. 2, 2008, pp 83-98.
 
     """
-    #read building schedules input data:
+    # read building schedules input data:
     schedule = read_cea_schedule(locator.get_building_weekly_schedules(building))
     daily_schedule_building = schedule[0]
     monthly_multiplier = schedule[1]['MONTHLY_MULTIPLIER']
@@ -263,6 +264,8 @@ def calc_schedules(locator,
     yearly_occupancy_schedules = pd.DataFrame(final_dict)
     yearly_occupancy_schedules.to_csv(locator.get_schedule_model_file(building), index=False, na_rep='OFF',
                                       float_format='%.3f')
+
+    return final_dict
 
 
 def convert_schedule_string_to_temperature(schedule_string, schedule_type, Ths_set_C, Ths_setb_C, Tcs_set_C,

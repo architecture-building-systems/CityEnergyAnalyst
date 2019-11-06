@@ -2,7 +2,7 @@ include cea/scripts.yml
 include cea/schemas.yml
 include cea/databases/weather/*.epw
 
-recursive-include cea/databases *.xlsx *.xls
+recursive-include cea/databases *.xlsx *.xls *.txt *.csv
 
 include cea/default.config
 include cea/tests/test_calc_thermal_loads.config
