@@ -57,6 +57,8 @@ def schedule_maker_main(locator, config, building=None):
     prop_geometry = Gdf.from_file(locator.get_zone_geometry())
     prop_geometry['footprint'] = prop_geometry.area
     prop_geometry['GFA_m2'] = prop_geometry['footprint'] * (prop_geometry['floors_ag'] + prop_geometry['floors_bg'])
+    prop_geometry['GFA_ag_m2'] = prop_geometry['footprint'] * prop_geometry['floors_ag']
+    prop_geometry['GFA_bg_m2'] = prop_geometry['footprint'] * prop_geometry['floors_bg']
     prop_geometry = prop_geometry.merge(architecture, on='Name').set_index('Name')
     prop_geometry = calc_useful_areas(prop_geometry)
 
