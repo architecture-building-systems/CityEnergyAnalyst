@@ -149,7 +149,8 @@ Energy potentials:
     description: Calculate electricity production from solar photovoltaic technologies
     interfaces: [cli, arcgis, dashboard]
     module: cea.technologies.solar.photovoltaic
-    parameters: ['general:scenario', 'solar:type-pvpanel',
+    parameters: ['general:scenario', 'general:multiprocessing', 'solar:type-pvpanel',
+                 'general:number-of-cpus-to-keep-free',
                  'solar:panel-on-roof', 'solar:panel-on-wall', 'solar:annual-radiation-threshold',
                  'solar:solar-window-solstice']
     input-files:
