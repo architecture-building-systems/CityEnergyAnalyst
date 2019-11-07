@@ -6,7 +6,8 @@ T_b_CDD = 25.0
 # TECHS = ['HCS_LD', 'HCS_coil', 'HCS_ER0', 'HCS_3for2', 'HCS_IEHX']
 # TECHS = ['HCS_base_LD', 'HCS_base_coil', 'HCS_base_3for2', 'HCS_base_ER0', 'HCS_base_IEHX',  'HCS_base']
 TECHS = ['HCS_base_hps']
-timesteps = [5136, 5144, 5145, 5147, 5148]  # 168 (week) [5389]
+# timesteps = [5136, 5144, 5145, 5147, 5148]  # 168 (week) [5389]
+timesteps = [5136]  # 168 (week) [5389]
 # timesteps = 24  # 168 (week) [5389]
 # timesteps = "typical days"  # 168 (week)
 typical_days_path = "E:\\WP2"
@@ -20,7 +21,7 @@ specified_buildings = ["B005"]
 # specified_buildings = ["B003","B008"]
 # specified_buildings = ["B001","B002","B003","B004","B005","B006","B007","B008","B009","B010"]
 # cases = ['WTP_CBD_m_WP1_RET','WTP_CBD_m_WP1_HOT','WTP_CBD_m_WP1_OFF']
-cases = ['WTP_CBD_m_WP1_HOT', 'WTP_CBD_m_WP1_RET']
+cases = ['WTP_CBD_m_WP1_HOT']
 
 ## LAPTOP ##
 ampl_lic_path = "C:\\Users\\Shanshan\\Desktop\\ampl"
