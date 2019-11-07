@@ -2,18 +2,14 @@ name: cityenergyanalyst_docs
 channels:
 - defaults
 dependencies:
-- fiona
 - geopandas
+- numba=0.42.0
 - mock
-- mkl-service
-- numpy
-- pandas
-- pyaml
 - python=2.7
 - pillow
 - sphinx
 - sphinx_rtd_theme
 - pip:
-  - py4design
+  - utm
+  - pyyaml
   - flask
-  - flask-wtf

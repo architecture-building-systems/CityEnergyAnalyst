@@ -25,26 +25,26 @@ cea.plots.demand.energy\_balance module
     :undoc-members:
     :show-inheritance:
 
-cea.plots.demand.energy\_demand module
---------------------------------------
+cea.plots.demand.energy\_end\_use module
+----------------------------------------
 
-.. automodule:: cea.plots.demand.energy_demand
+.. automodule:: cea.plots.demand.energy_end_use
     :members:
     :undoc-members:
     :show-inheritance:
 
-cea.plots.demand.energy\_supply module
---------------------------------------
+cea.plots.demand.energy\_end\_use\_intensity module
+---------------------------------------------------
 
-.. automodule:: cea.plots.demand.energy_supply
+.. automodule:: cea.plots.demand.energy_end_use_intensity
     :members:
     :undoc-members:
     :show-inheritance:
 
-cea.plots.demand.energy\_supply\_intensity module
--------------------------------------------------
+cea.plots.demand.energy\_final\_use module
+------------------------------------------
 
-.. automodule:: cea.plots.demand.energy_supply_intensity
+.. automodule:: cea.plots.demand.energy_final_use
     :members:
     :undoc-members:
     :show-inheritance:

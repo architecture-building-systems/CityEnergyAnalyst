@@ -1,3 +1,38 @@
+2019-11-04 - 2.24 - #2437 Update input api
+2019-11-04 - 2.24 - #2354 2082 add remaining network plots to dashboard
+2019-11-04 - 2.24 - #2431 Update scripts.yml
+2019-11-04 - 2.24 - #2433 Update geometry_generator.py
+2019-10-31 - 2.24 - #2417 BUGFIX: Handle folder locator methods in TraceInputLocator
+2019-10-31 - 2.24 - #2416 Radiation now account for adjacent buildings
+2019-10-30 - 2.24 - #2414 Terminate running cea worker processes when closing the GUI @daren-thomas works like a charm, good stuff!
+2019-10-30 - 2.24 - #2421 BUGFIX: UnboundLocalError: local variable 'number_of_occupants' referenced before assignment
+2019-10-30 - 2.24 - #2415 Allow importing scripts.py from the Grasshopper interface
+2019-10-29 - 2.24 - #2419 fix to schedule maker
+2019-10-29 - 2.24 - #2411 2392 build the docs
+2019-10-29 - 2.24 - #2418 2324 resume workflow feature
+2019-10-24 - 2.24 - #2407 Update LCA_infrastructure.xlsx
+2019-10-23 - 2.24 - #2398 Update URL for CityEnergyAnalyst-GUI
+2019-10-23 - 2.24 - #2400 2399 demand keyerror rhum max pc
+2019-10-21 - 2.24 - #2396 Release 2.24
+2019-10-21 - 2.23 - #2391 Show plot parameters when adding and changing plots
+2019-10-18 - 2.23 - #2383 Fix to load curves plot and to glossary
+2019-10-17 - 2.23 - #2382 New Schedules Maker / Model
+2019-10-17 - 2.23 - #2384 fix void-deck issues @lguilhermers thanks!, we will implement cell validation in another issue #2141
+2019-10-17 - 2.23 - #2390 I816 stop bayesian calibration support @martin-mosteiro alright we take it out
+2019-10-15 - 2.23 - #2386 fix coordinate system
+2019-10-15 - 2.23 - #2372 2360 create installer for electron interface
+2019-10-14 - 2.23 - #2380 2344 multiprocessing and stdout
+2019-10-11 - 2.23 - #2374 2356 Update environment.ubuntu.yml
+2019-10-11 - 2.23 - #2378 I2204b temperature setpoints finish
+2019-10-10 - 2.23 - #2363 I2204 temperature setpoints
+2019-10-09 - 2.23 - #2318 Optimization cooling, Alright guys, we are merging and creating more issues should we find more problems.
+2019-10-08 - 2.23 - #2365 Ventilation code cleanup
+2019-10-08 - 2.23 - #2369 Glossary api for electron
+2019-10-07 - 2.23 - #2362 Raise an error for false weather files
+2019-10-07 - 2.23 - #2368 Release 2.23
+2019-10-02 - 2.22 - #2338 Moving flexibility (concept project) to legacy
+2019-10-02 - 2.22 - #2353 Project api for electron application
+2019-10-02 - 2.22 - #2337 fix to network layout script (EL is not implemented yet) @daren-thomas thanks for checking this out
 2019-09-24 - 2.21 - #2335 Bugfix: Edit selection in input editor does not work if some old values is equal to the new value
 2019-09-24 - 2.21 - #2334 Show Es and Ns variable for architecture in dashboard
 2019-09-24 - 2.21 - #2320 BUG: fixed default value for workflow parameter
@@ -234,7 +269,7 @@
 2018-10-08 - 2.9.0 - #1629 1625 figure out why the radiation daysim tool hangs on sabines scenario
 2018-10-04 - 2.9.0 - #1615 This is a first stab to updating the documentation
 2018-10-02 - 2.9.0 - #1618 967 dashboard - changes so far It runs so I am merging. I guess we can talk about the changes on the presentation of the 18th.
-2018-09-20 - 2.7.22 - #1624 Fixing the pyliburo / radiation-daysim geometry problems
+2018-09-20 - 2.7.22 - #1624 Fixing the pyliburo / radiation geometry problems
 2018-09-18 - 2.7.22 - #1608 this solves issue #1351
 2018-09-08 - 2.7.22 - #1614 Typos and cleanup
 2018-09-04 - 2.7.22 - #1603 @daren-thomas great thanks!

@@ -172,7 +172,7 @@ The variable ``<GENERATIONNUMBER>`` refers to the unique generation number assig
 The variable ``<CONFIGURATION>`` refers to the unique configuration assigned during the optimization process.
 The encoding of the ``<CONFIGURATION>`` represents the following:
 
-+---------------+--------+-----------------------------------------+
++===============+========+=========================================+
 | Index in list | Value  | Description                             |
 +===============+========+=========================================+
 |             0 |      0 | CHP off                                 |

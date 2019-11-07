@@ -89,7 +89,8 @@ def _get_categories_dict():
     scripts_pickle = os.path.join(os.path.dirname(__file__), 'scripts.pickle')
     try:
         import yaml
-        categories = yaml.load(open(scripts_yml))
+        from cea.utilities.yaml_ordered_dict import OrderedDictYAMLLoader
+        categories = yaml.load(open(scripts_yml), OrderedDictYAMLLoader)
     except ImportError:
         import pickle
         categories = pickle.load(open(scripts_pickle))

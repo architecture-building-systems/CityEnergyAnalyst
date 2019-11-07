@@ -29,6 +29,14 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+def check_if_float(x):
+    y = 0.0
+    try:
+        y = float(x)
+    except:
+        if ',' in x:
+            y = float(x.split(',')[-1])
+    return y
 
 def clean_attributes(shapefile, buildings_height, buildings_floors, buildings_height_below_ground,
                      buildings_floors_below_ground, key):
@@ -57,8 +65,8 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, buildings_he
         # get the median from the area:
         data_osm_floors1 = shapefile['building:levels'].fillna(0)
         data_osm_floors2 = shapefile['roof:levels'].fillna(0)
-        data_floors_sum = [x + y for x, y in zip([float(x) for x in data_osm_floors1], [float(x) for x in data_osm_floors2])]
-        data_floors_sum_with_nan = [np.nan if x <= 1.0 else x for x in data_floors_sum]
+        data_floors_sum = [x + y for x, y in zip([check_if_float(x) for x in data_osm_floors1], [check_if_float(x) for x in data_osm_floors2])]
+        data_floors_sum_with_nan = [np.nan if x < 1.0 else x for x in data_floors_sum]
         data_osm_floors_joined = int(
             math.ceil(np.nanmedian(data_floors_sum_with_nan)))  # median so we get close to the worse case
         shapefile["floors_ag"] = [int(x) if x is not np.nan else data_osm_floors_joined for x in

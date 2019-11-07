@@ -99,8 +99,11 @@ class Configuration(object):
     def ignore_restrictions(self):
         """Create a ``with`` block where the config file restrictions are not kept. Usage::
 
+
             with config.ignore_restrictions():
                 config.my_section.my_property = value
+
+        .. note: this will produce a warning in the output.
         """
 
         class RestrictionsIgnorer(object):
@@ -109,7 +112,7 @@ class Configuration(object):
                 self.old_restrictions = None
 
             def __enter__(self):
-                print("WARNING: Ignoring config file restrictions. Consider refactoring the code.")
+                # print("WARNING: Ignoring config file restrictions. Consider refactoring the code.")
                 self.old_restrictions = self.config.restricted_to
                 self.config.restricted_to = None
 
@@ -188,8 +191,8 @@ class Configuration(object):
         :param config: Configuration file.
         :return number_of_processes: Number of processes to use.
         """
-        import multiprocessing
         if self.multiprocessing:
+            import multiprocessing
             number_of_processes = multiprocessing.cpu_count() - self.number_of_CPUs_to_keep_free
             return max(1, number_of_processes)  # ensure that at least one process is being used
         else:
@@ -452,13 +455,23 @@ class WeatherPathParameter(Parameter):
         self._extensions = ['epw']
 
     def decode(self, value):
-        if value in self.locator.get_weather_names():
+        if value == '':
+            return ''
+        elif value in self.locator.get_weather_names():
             weather_path = self.locator.get_weather(value)
         elif os.path.exists(value) and value.endswith('.epw'):
             weather_path = value
+        elif any(w.lower().startswith(value.lower()) for w in self.locator.get_weather_names()) and value.strip():
+            # allow using shortcuts
+            weather_path = self.locator.get_weather([w for w in self.locator.get_weather_names() if w.lower().startswith(value.lower())][0])
         else:
-            weather_path = self.locator.get_weather(self.locator.get_weather_names()[0])
+            raise cea.ConfigError("Invalid weather path: {}".format(value))
         return weather_path
+
+    @property
+    def default(self):
+        """override base default, since in decode we've banned empty weather file parameters"""
+        return ""
 
 
 class WorkflowParameter(Parameter):

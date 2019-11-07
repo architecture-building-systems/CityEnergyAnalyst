@@ -25,8 +25,8 @@ def network_costs(data_frame, analysis_fields, title, output_path):
 
     # PLOT GRAPH
     traces_graph.append(traces_table)
-    layout = go.Layout(images=LOGO, title=title, barmode='stack',
-                       yaxis=dict(title='Yearly Costs [$/yr]', domain=[0.35, 1]),
+    layout = go.Layout(barmode='stack',
+                       yaxis=dict(title='Yearly Costs [$/yr]'),
                        xaxis=dict(title='Scenario Name'))
     fig = go.Figure(data=traces_graph, layout=layout)
     plot(fig, auto_open=False, filename=output_path)

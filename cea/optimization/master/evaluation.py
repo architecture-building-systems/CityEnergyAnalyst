@@ -70,7 +70,6 @@ def evaluation_main(individual, building_names_all, locator, network_features, c
     # CREATE CLASS AND PASS KEY CHARACTERISTICS OF INDIVIDUAL
     # THIS CLASS SHOULD CONTAIN ALL VARIABLES THAT MAKE AN INDIVIDUAL CONFIGURATION
     master_to_slave_vars = master.export_data_to_master_to_slave_class(locator,
-                                                                       config,
                                                                        gen,
                                                                        ind_num,
                                                                        individual_with_name_dict,
@@ -85,13 +84,8 @@ def evaluation_main(individual, building_names_all, locator, network_features, c
     # INITIALIZE DICTS STORING PERFORMANCE DATA
     district_heating_fixed_costs = {}
     district_heating_generation_dispatch = {}
-    district_heating_electricity_requirements_dispatch = {}
-    district_heating_fuel_requirements_dispatch = {}
     district_cooling_fixed_costs = {}
     district_cooling_generation_dispatch = {}
-    district_cooling_electricity_requirements_dispatch = {}
-    district_cooling_fuel_requirements_dispatch = {}
-
     # DISTRICT HEATING NETWORK
     if master_to_slave_vars.DHN_exists:
         print("DISTRICT HEATING OPERATION")
@@ -123,6 +117,14 @@ def evaluation_main(individual, building_names_all, locator, network_features, c
             "E_PeakBoiler_req_W": np.zeros(HOURS_IN_YEAR),
             "E_BackupBoiler_req_W": np.zeros(HOURS_IN_YEAR),
         }
+        district_heating_fuel_requirements_dispatch = {
+            "NG_CHP_req_W": np.zeros(HOURS_IN_YEAR),
+            "NG_BaseBoiler_req_W": np.zeros(HOURS_IN_YEAR),
+            "NG_PeakBoiler_req_W": np.zeros(HOURS_IN_YEAR),
+            "NG_BackupBoiler_req_W": np.zeros(HOURS_IN_YEAR),
+            "WB_Furnace_req_W": np.zeros(HOURS_IN_YEAR),
+            "DB_Furnace_req_W": np.zeros(HOURS_IN_YEAR),
+        }
 
 
     # DISTRICT COOLING NETWORK:
@@ -135,7 +137,6 @@ def evaluation_main(individual, building_names_all, locator, network_features, c
                                                                                             master_to_slave_vars,
                                                                                             config,
                                                                                             prices,
-                                                                                            lca,
                                                                                             network_features)
     else:
         district_cooling_electricity_requirements_dispatch = {
@@ -147,6 +148,9 @@ def evaluation_main(individual, building_names_all, locator, network_features, c
             "E_BaseVCC_AS_req_W": np.zeros(HOURS_IN_YEAR),
             "E_PeakVCC_AS_req_W": np.zeros(HOURS_IN_YEAR),
             "E_BackupVCC_AS_req_W": np.zeros(HOURS_IN_YEAR),
+        }
+        district_cooling_fuel_requirements_dispatch ={
+            "NG_Trigen_req_W": np.zeros(HOURS_IN_YEAR)
         }
 
 
@@ -161,15 +165,19 @@ def evaluation_main(individual, building_names_all, locator, network_features, c
                                                                                               district_cooling_generation_dispatch,
                                                                                               district_cooling_electricity_requirements_dispatch)
 
+    # print("DISTRICT NATURAL GAS / BIOMASS GRID OPERATION")
+    # electricity_main.extract_fuels_demand_buildings(master_to_slave_vars, building_names_all, locator)
+
+
     print("DISTRICT ENERGY SYSTEM - COSTS, PRIMARY ENERGY AND EMISSIONS OF CONNECTED BUILDINGS")
     buildings_connected_costs, \
-    buildings_connected_emissions = cost_model.buildings_connected_costs_and_emissions(master_to_slave_vars,
-                                                                                       district_heating_fixed_costs,
+    buildings_connected_emissions = cost_model.buildings_connected_costs_and_emissions(district_heating_fixed_costs,
                                                                                        district_cooling_fixed_costs,
                                                                                        district_electricity_fixed_costs,
                                                                                        district_electricity_dispatch,
                                                                                        district_heating_fuel_requirements_dispatch,
                                                                                        district_cooling_fuel_requirements_dispatch,
+                                                                                       district_electricity_demands,
                                                                                        prices,
                                                                                        lca)
 
@@ -225,7 +233,7 @@ def save_results(master_to_slave_vars,
     pd.DataFrame(building_connectivity_dict).to_csv(
         locator.get_optimization_slave_building_connectivity(master_to_slave_vars.individual_number,
                                                              master_to_slave_vars.generation_number),
-        index=False)
+        index=False, float_format='%.3f')
 
     # SAVE PERFORMANCE RELATED FILES
     # put data inside a list, otherwise pandas cannot save it
@@ -245,18 +253,18 @@ def save_results(master_to_slave_vars,
     pd.DataFrame(performance_disconnected).to_csv(
         locator.get_optimization_slave_disconnected_performance(master_to_slave_vars.individual_number,
                                                                 master_to_slave_vars.generation_number),
-        index=False)
+        index=False, float_format='%.3f')
 
     performance_connected = dict(buildings_connected_costs, **buildings_connected_emissions)
     pd.DataFrame(performance_connected).to_csv(
         locator.get_optimization_slave_connected_performance(master_to_slave_vars.individual_number,
                                                            master_to_slave_vars.generation_number),
-        index=False)
+        index=False, float_format='%.3f')
 
     pd.DataFrame(performance_totals).to_csv(
         locator.get_optimization_slave_total_performance(master_to_slave_vars.individual_number,
                                                          master_to_slave_vars.generation_number),
-        index=False)
+        index=False, float_format='%.3f')
 
     # add date and plot
     DATE = master_to_slave_vars.date
@@ -267,19 +275,19 @@ def save_results(master_to_slave_vars,
 
     pd.DataFrame(electricity_requirements).to_csv(locator.get_optimization_slave_electricity_requirements_data(
         master_to_slave_vars.individual_number,
-        master_to_slave_vars.generation_number), index=False)
+        master_to_slave_vars.generation_number), index=False, float_format='%.3f')
 
 
     pd.DataFrame(electricity_dispatch).to_csv(locator.get_optimization_slave_electricity_activation_pattern(
-        master_to_slave_vars.individual_number, master_to_slave_vars.generation_number), index=False)
+        master_to_slave_vars.individual_number, master_to_slave_vars.generation_number), index=False, float_format='%.3f')
 
 
     pd.DataFrame(cooling_dispatch).to_csv(
         locator.get_optimization_slave_cooling_activation_pattern(master_to_slave_vars.individual_number,
                                                                   master_to_slave_vars.generation_number),
-        index=False)
+        index=False, float_format='%.3f')
 
     pd.DataFrame(heating_dispatch).to_csv(
         locator.get_optimization_slave_heating_activation_pattern(master_to_slave_vars.individual_number,
                                                                   master_to_slave_vars.generation_number),
-        index=False)
+        index=False, float_format='%.3f')

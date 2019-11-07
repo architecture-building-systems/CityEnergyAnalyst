@@ -1,8 +1,8 @@
+from flask import current_app
 from flask_restplus import Namespace, Resource, fields
-from utils import deconstruct_parameters
 
 import cea.scripts
-import cea.config
+from utils import deconstruct_parameters
 
 api = Namespace('Tools', description='Scripts for CEA')
 
@@ -20,8 +20,7 @@ class ToolList(Resource):
         from itertools import groupby
         from collections import OrderedDict
 
-        tools = sorted(cea.scripts.for_interface(
-            'dashboard'), key=lambda t: t.category)
+        tools = cea.scripts.for_interface('dashboard')
         result = OrderedDict()
         for category, group in groupby(tools, lambda t: t.category):
             result[category] = [
@@ -33,7 +32,7 @@ class ToolList(Resource):
 @api.route('/<string:tool_name>')
 class Tool(Resource):
     def get(self, tool_name):
-        config = cea.config.Configuration()
+        config = current_app.cea_config
         script = cea.scripts.by_name(tool_name)
 
         parameters = []
@@ -48,8 +47,9 @@ class Tool(Resource):
                 parameters.append(deconstruct_parameters(parameter))
 
         out = {
-            'label': script.label,
             'category': script.category,
+            'label': script.label,
+            'description': script.description,
             'parameters': parameters,
             'categorical_parameters': categories,
         }
@@ -61,7 +61,7 @@ class Tool(Resource):
 class ToolDefault(Resource):
     def post(self, tool_name):
         """Restore the default configuration values for the CEA"""
-        config = cea.config.Configuration()
+        config = current_app.cea_config
         default_config = cea.config.Configuration(
             config_file=cea.config.DEFAULT_CONFIG)
 
@@ -77,7 +77,7 @@ class ToolDefault(Resource):
 class ToolSave(Resource):
     def post(self, tool_name):
         """Save the configuration for this tool to the configuration file"""
-        config = cea.config.Configuration()
+        config = current_app.cea_config
         for parameter in parameters_for_script(tool_name, config):
             payload = api.payload[parameter.name]
             print('%s: %s' % (parameter.name, payload))
@@ -90,7 +90,7 @@ class ToolSave(Resource):
 class ToolSave(Resource):
     def post(self, tool_name):
         """Save the configuration for this tool to the configuration file"""
-        config = cea.config.Configuration()
+        config = current_app.cea_config
         for parameter in parameters_for_script(tool_name, config):
             payload = api.payload[parameter.name]
             print('%s: %s' % (parameter.name, payload))

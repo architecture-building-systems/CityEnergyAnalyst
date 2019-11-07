@@ -29,7 +29,7 @@ __status__ = "Production"
 # ===========================
 
 
-def calc_cop_CCGT(GT_size_W, T_sup_K, fuel_type, prices, electricity_price_perWh):
+def calc_cop_CCGT(GT_size_W, T_sup_K, fuel_type):
     """
     This function calcualates the COP of a combined cycle, the gas turbine (GT) exhaust gas is used by
     the steam turbine (ST) to generate electricity and heat.
@@ -71,7 +71,6 @@ def calc_cop_CCGT(GT_size_W, T_sup_K, fuel_type, prices, electricity_price_perWh
     range_eta_el_CC = np.zeros(it_len)
     range_eta_thermal_CC = np.zeros(it_len)
     range_q_input_CC_W = np.zeros(it_len)
-    range_op_cost_per_Wh_th = np.zeros(it_len)
 
     # create range of electricity output from the GT between the minimum and nominal load
     range_el_output_from_GT_W = np.linspace(GT_size_W * GT_MIN_PART_LOAD, GT_size_W, it_len)
@@ -88,15 +87,12 @@ def calc_cop_CCGT(GT_size_W, T_sup_K, fuel_type, prices, electricity_price_perWh
         range_eta_thermal_CC[i] = CC_operation['eta_thermal']  # thermal efficiency
 
         range_q_input_CC_W[i] = range_q_output_CC_W[i] / range_eta_thermal_CC[i]  # thermal energy input
-        range_op_cost_per_Wh_th[i] = (range_q_input_CC_W[i] * prices.NG_PRICE - range_el_output_CC_W[
-            i] * electricity_price_perWh) / range_q_output_CC_W[i]
 
     # create interpolation functions as a function of heat output
     el_output_interpol_with_q_output_W = interpolate.interp1d(range_q_output_CC_W, range_el_output_from_GT_W,
                                                               kind="linear")
     q_input_interpol_with_q_output_W = interpolate.interp1d(range_q_output_CC_W, range_q_input_CC_W, kind="linear")
-    op_cost_per_Wh_th_interpol_with_q_output = interpolate.interp1d(range_q_output_CC_W, range_op_cost_per_Wh_th,
-                                                                      kind="linear")
+
     # create interpolation functions as a function of thermal energy input
     eta_el_interpol_with_q_input = interpolate.interp1d(range_q_input_CC_W, range_eta_el_CC,
                                                         kind="linear")
@@ -106,7 +102,6 @@ def calc_cop_CCGT(GT_size_W, T_sup_K, fuel_type, prices, electricity_price_perWh
 
     return {'el_output_fn_q_input_W': el_output_interpol_with_q_output_W,
             'q_input_fn_q_output_W': q_input_interpol_with_q_output_W,
-            'fuel_cost_per_Wh_th_fn_q_output_W': op_cost_per_Wh_th_interpol_with_q_output,
             'q_output_min_W': q_output_min_W, 'q_output_max_W': q_output_max_W,
             'eta_el_fn_q_input': eta_el_interpol_with_q_input}
 

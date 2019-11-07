@@ -5,6 +5,7 @@ import cea.scripts
 import cea.inputlocator
 import cea.config
 import os
+import psutil
 
 blueprint = Blueprint(
     'tools_blueprint',
@@ -14,17 +15,44 @@ blueprint = Blueprint(
     static_folder='static',
 )
 
+# maintain a list of all subprocess.Popen objects created
+worker_processes = []
+
+
+def shutdown_worker_processes():
+    """When shutting down the flask server, make sure any subprocesses are also terminated. See issue #2408."""
+    for popen in worker_processes:
+        # using code from here: https://stackoverflow.com/a/4229404/2260
+        # to terminate child processes too
+        print("SHUTDOWN: killing child processes of {pid}".format(pid=popen.pid))
+        process = psutil.Process(popen.pid)
+        children = process.children(recursive=True)
+        for child in children:
+            print("-- killing child {pid}".format(pid=child.pid))
+            child.kill()
+        process.kill()
+
 
 @blueprint.route("/")
 def route_index():
     return render_template("job_table.html")
 
 
+@blueprint.route("/workers", methods=["GET"])
+def route_workers():
+    """Return a list of worker processes"""
+    processes = []
+    for worker in worker_processes:
+        processes.append(worker.pid)
+        processes.extend(child.pid for child in psutil.Process(worker.pid).children(recursive=True))
+    return jsonify(sorted(processes))
+
+
 @blueprint.route('/start/<jobid>', methods=['POST'])
 def route_start(jobid):
     """Start a ``cea-worker`` subprocess for the script. (FUTURE: add support for cloud-based workers"""
     print("tools/route_start: {jobid}".format(**locals()))
-    subprocess.Popen(["python", "-m", "cea.worker", jobid])
+    worker_processes.append(subprocess.Popen(["python", "-m", "cea.worker", jobid]))
     return jsonify(jobid)
 
 

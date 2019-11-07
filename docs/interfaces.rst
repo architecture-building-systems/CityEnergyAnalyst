@@ -29,8 +29,7 @@ list of commands available::
         dbf-to-excel, demand, demand-graphs, embodied-energy, emissions,
         excel-to-dbf, extract-reference-case, install-toolbox,
         latitude, list-demand-graphs-fields, locate, longitude, mobility,
-        operation-costs, photovoltaic, photovoltaic-thermal, radiation,
-        radiation-daysim, read-config, read-config-section,
+        operation-costs, photovoltaic, photovoltaic-thermal, read-config, read-config-section,
         retrofit-potential, scenario-plots, sensitivity-demand-analyze,
         sensitivity-demand-samples, sensitivity-demand-simulate,
         solar-collector, test, weather-files, weather-path, write-config

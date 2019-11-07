@@ -21,6 +21,7 @@ class AnnualCostsPlot(cea.plots.optimization.GenerationPlotBase):
     name = "Annual costs"
     expected_parameters = {
         'generation': 'plots-optimization:generation',
+        'normalization': 'plots-optimization:normalization',
         'scenario-name': 'general:scenario-name',
     }
 
@@ -31,11 +32,30 @@ class AnnualCostsPlot(cea.plots.optimization.GenerationPlotBase):
                                 "Opex_a_sys_connected_USD",
                                 "Opex_a_sys_disconnected_USD"
                                 ]
+        self.normalization = self.parameters['normalization']
         self.input_files = [(self.locator.get_optimization_generation_total_performance, [self.generation])]
+        self.titley = self.calc_titles()
+
+    def calc_titles(self):
+        if self.normalization == "gross floor area":
+            titley = 'Annualized cost [USD$(2015)/m2.yr]'
+        elif self.normalization == "net floor area":
+            titley = 'Annualized cost [USD$(2015)/m2.yr]'
+        elif self.normalization == "air conditioned floor area":
+            titley = 'Annualized cost [USD$(2015)/m2.yr]'
+        elif self.normalization == "building occupancy":
+            titley = 'Annualized cost [USD$(2015)/pax.yr]'
+        else:
+            titley = 'Annualized cost [USD$(2015)/yr]'
+        return titley
 
     @property
     def title(self):
-        return "Annual Costs for generation #%s" % self.generation
+        if self.normalization != "none":
+            return "Annual Costs for generation {generation} normalized to {normalized}".format(
+                generation=self.generation, normalized=self.normalization)
+        else:
+            return "Annual Costs for generation {generation}".format(generation=self.generation)
 
     @property
     def output_path(self):
@@ -46,11 +66,12 @@ class AnnualCostsPlot(cea.plots.optimization.GenerationPlotBase):
     @property
     def layout(self):
         return go.Layout(barmode='relative',
-                         yaxis=dict(title='Annualized cost [USD$(2015)/year]', domain=[0.0, 1.0]))
+                         yaxis=dict(title=self.titley))
 
     def calc_graph(self):
         self.multi_criteria = False  # TODO: add capabilities to plot muticriteria in this plot too
-        data = self.process_generation_total_performance()
+        data = self.process_generation_total_performance_pareto()
+        data = self.normalize_data(data, self.normalization, self.analysis_fields)
         graph = []
         for field in self.analysis_fields:
             y = data[field].values
@@ -74,7 +95,9 @@ def main():
     AnnualCostsPlot(config.project,
                     {'buildings': None,
                      'scenario-name': config.scenario_name,
-                     'generation': config.plots_optimization.generation},
+                     'generation': config.plots_optimization.generation,
+                     'normalization': config.plots_optimization.normalization
+                     },
                     cache).plot(auto_open=True)
 
 

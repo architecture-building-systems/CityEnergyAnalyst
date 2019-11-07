@@ -5,6 +5,7 @@ the `MonthlyDemandWriter`.
 """
 
 from __future__ import division
+
 import numpy as np
 import pandas as pd
 
@@ -24,7 +25,18 @@ class DemandWriter(object):
         from cea.demand.thermal_loads import TSD_KEYS_ENERGY_BALANCE_DASHBOARD, TSD_KEYS_SOLAR
 
         if not loads:
-            self.load_vars = ['PV', 'GRID', 'E_sys', 'Eal', 'Edata', 'Epro', 'Eaux',
+            self.load_vars = ['PV', 'GRID',
+                              'GRID_a',
+                              'GRID_l',
+                              'GRID_data',
+                              'GRID_pro',
+                              'GRID_aux',
+                              'GRID_ww',
+                              'GRID_hs',
+                              'GRID_cs',
+                              'GRID_cdata',
+                              'GRID_cre',
+                              'E_sys', 'Eal', 'Ea', 'El', 'Edata', 'Epro', 'Eaux',
                               'E_ww', 'E_hs', 'E_cs', 'E_cre', 'E_cdata',
                               'Qhs_sen_shu', 'Qhs_sen_ahu', 'Qhs_lat_ahu',
                               'Qhs_sen_aru', 'Qhs_lat_aru', 'Qhs_sen_sys',
@@ -86,7 +98,7 @@ class DemandWriter(object):
         else:
             self.temperature_vars = temperatures
 
-        self.OTHER_VARS = ['Name', 'Af_m2', 'Aroof_m2', 'GFA_m2', 'NFA_m2', 'people0']
+        self.OTHER_VARS = ['Name', 'Af_m2', 'Aroof_m2', 'GFA_m2', 'Aocc_m2', 'people0']
 
     def results_to_hdf5(self, tsd, bpr, locator, date, building_name):
         columns, hourly_data = self.calc_hourly_dataframe(building_name, date, tsd)
@@ -124,7 +136,7 @@ class DemandWriter(object):
         columns.extend(keys)
         # add other default elements
         data.update({'Name': building_name, 'Af_m2': bpr.rc_model['Af'], 'Aroof_m2': bpr.rc_model['Aroof'],
-                     'GFA_m2': bpr.rc_model['GFA_m2'], 'NFA_m2': bpr.rc_model['NFA_m2'],
+                     'GFA_m2': bpr.rc_model['GFA_m2'], 'Aocc_m2': bpr.rc_model['Aocc'],
                      'people0': tsd['people'].max()})
         return columns, data
 

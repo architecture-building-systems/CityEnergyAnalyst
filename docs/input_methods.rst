@@ -531,7 +531,7 @@ The following file is used by scripts: ['emissions']
 get_district_geometry
 ---------------------
 
-The following file is used by scripts: ['radiation-daysim']
+The following file is used by scripts: ['radiation']
 
 
 
@@ -549,7 +549,7 @@ The following file is used by scripts: ['radiation-daysim']
 get_envelope_systems
 --------------------
 
-The following file is used by scripts: ['radiation-daysim', 'demand']
+The following file is used by scripts: ['radiation', 'demand']
 
 
 
@@ -1180,7 +1180,7 @@ The following file is used by scripts: ['demand']
 get_terrain
 -----------
 
-The following file is used by scripts: ['radiation-daysim']
+The following file is used by scripts: ['radiation']
 
 
 
@@ -1221,7 +1221,7 @@ The following file is used by scripts: ['thermal-network']
 get_weather
 -----------
 
-The following file is used by scripts: ['radiation-daysim', 'photovoltaic', 'photovoltaic-thermal', 'solar-collector', 'demand', 'thermal-network']
+The following file is used by scripts: ['radiation', 'photovoltaic', 'photovoltaic-thermal', 'solar-collector', 'demand', 'thermal-network']
 
 
 
@@ -1234,7 +1234,7 @@ The following file is used by scripts: ['radiation-daysim', 'photovoltaic', 'pho
 get_zone_geometry
 -----------------
 
-The following file is used by scripts: ['photovoltaic', 'photovoltaic-thermal', 'emissions', 'network-layout', 'radiation-daysim', 'demand', 'solar-collector']
+The following file is used by scripts: ['photovoltaic', 'photovoltaic-thermal', 'emissions', 'network-layout', 'radiation', 'demand', 'solar-collector']
 
 
 

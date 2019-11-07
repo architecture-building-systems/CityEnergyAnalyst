@@ -136,11 +136,11 @@ def calc_Qww(bpr, tsd, schedules):
     Tww_sup_0_C = bpr.building_systems['Tww_sup_0']
 
     # calc end-use demand
-    tsd['vww_m3perh'] = schedules['Vww'] * bpr.internal_loads['Vww_lpd'] / 1000  # m3/h
-    tsd['mww'] = tsd['vww_m3perh'] * P_WATER / 3600  # kg/s
+    tsd['vww_m3perh'] = schedules['Vww_lph'] / 1000  # m3/h
+    tsd['mww_kgs'] = tsd['vww_m3perh'] * P_WATER / 3600  # kg/s
     tsd['mcptw'] = (tsd['vfw_m3perh'] - tsd['vww_m3perh']) * CP_KJPERKGK * P_WATER / 3600  # kW_K tap water
 
-    tsd['Qww'] = np.vectorize(function)(tsd['mww'], Tww_sup_0_C, tsd['Tww_re'])
+    tsd['Qww'] = np.vectorize(function)(tsd['mww_kgs'], Tww_sup_0_C, tsd['Tww_re'])
 
     return tsd
 
@@ -370,7 +370,7 @@ def has_hot_water_technical_system(bpr):
     :rtype: bool
         """
 
-    if bpr.hvac['type_dhw'] in {'T1', 'T2', 'T3', 'T4'}:  # 3for2
+    if bpr.hvac['type_dhw'] in {'T1', 'T2', 'T3', 'T4'}:
         return True
     elif bpr.hvac['type_dhw'] in {'T0'}:
         return False
