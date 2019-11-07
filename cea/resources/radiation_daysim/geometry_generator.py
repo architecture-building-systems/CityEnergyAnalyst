@@ -41,6 +41,10 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
+# suppress FIONA debug messages in output (needs to be re-done because of cea.parallel.vectorize using multiprocessing
+from cea import suppres_3rd_party_debug_loggers
+suppres_3rd_party_debug_loggers()
+
 # Disable
 def blockPrint():
     sys.stdout = open(os.devnull, 'w')
