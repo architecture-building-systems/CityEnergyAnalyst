@@ -125,7 +125,7 @@ class AllInputs(Resource):
         store['geojsons']['zone'], store['crs']['zone'] = df_to_json(
             locator.get_zone_geometry(), bbox=True, trigger_abort=False)
         store['geojsons']['district'], store['crs']['district'] = df_to_json(
-            locator.get_surrounding_geometry(), bbox=True, trigger_abort=False)
+            locator.get_surroundings_geometry(), bbox=True, trigger_abort=False)
         store['geojsons']['streets'], store['crs']['streets'] = df_to_json(
             locator.get_street_network(), trigger_abort=False)
         store['geojsons']['dc'], store['connected_buildings']['dc'], store['crs']['dc'] = get_network(

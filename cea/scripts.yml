@@ -35,7 +35,7 @@ Data Management:
     parameters: ['general:scenario', terrain-helper]
     input-files:
       - [get_zone_geometry]
-      - [get_surrounding_geometry]
+      - [get_surroundings_geometry]
 
   - name: streets-helper
     label: Streets helper
@@ -44,7 +44,7 @@ Data Management:
     module: cea.datamanagement.streets_helper
     parameters: ['general:scenario', streets-helper]
     input-files:
-      - [get_surrounding_geometry]
+      - [get_surroundings_geometry]
 
 Demand forecasting:
   - name: radiation
@@ -56,7 +56,7 @@ Demand forecasting:
                  radiation]
     input-files:
       - [get_database_envelope_systems]
-      - [get_surrounding_geometry]
+      - [get_surroundings_geometry]
       - [get_building_architecture]
       - [get_zone_geometry]
       - [get_terrain]
@@ -74,7 +74,7 @@ Demand forecasting:
                  schedule-maker]
     input-files:
       - [get_database_envelope_systems]
-      - [get_surrounding_geometry]
+      - [get_surroundings_geometry]
       - [get_building_architecture]
       - [get_zone_geometry]
       - [get_terrain]

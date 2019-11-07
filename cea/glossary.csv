@@ -341,12 +341,12 @@ SCRIPT,LOCATOR_METHOD,FILE_NAME,VARIABLE,DESCRIPTION,UNIT,VALUES,TYPE,COLOR
 -,get_data_benchmark,databases/sg/benchmarks/benchmark_2000w.xls:TOTAL,PEN_target_retrofit,Target primary energy demand for retrofitted buildings,[-],{0.0...n},float,black
 -,get_data_benchmark,databases/sg/benchmarks/benchmark_2000w.xls:TOTAL,PEN_today,Present primary energy demand,[-],{0.0...n},float,black
 -,get_data_benchmark,databases/sg/benchmarks/benchmark_2000w.xls:TOTAL,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black
--,get_surrounding_geometry,inputs/building-geometry/district.shp,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black
--,get_surrounding_geometry,inputs/building-geometry/district.shp,floors_ag,Number of floors above ground (incl. ground floor),[-],{0...n},int,black
--,get_surrounding_geometry,inputs/building-geometry/district.shp,floors_bg,"Number of floors below ground (basement, etc)",[-],{0...n},int,black
--,get_surrounding_geometry,inputs/building-geometry/district.shp,geometry,TODO,TODO,TODO,TODO,black
--,get_surrounding_geometry,inputs/building-geometry/district.shp,height_ag,Height above ground (incl. ground floor),[m],{0.0...n},float,black
--,get_surrounding_geometry,inputs/building-geometry/district.shp,height_bg,"Height below ground (basement, etc)",[m],{0.0...n},float,black
+-,get_surroundings_geometry,inputs/building-geometry/district.shp,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black
+-,get_surroundings_geometry,inputs/building-geometry/district.shp,floors_ag,Number of floors above ground (incl. ground floor),[-],{0...n},int,black
+-,get_surroundings_geometry,inputs/building-geometry/district.shp,floors_bg,"Number of floors below ground (basement, etc)",[-],{0...n},int,black
+-,get_surroundings_geometry,inputs/building-geometry/district.shp,geometry,TODO,TODO,TODO,TODO,black
+-,get_surroundings_geometry,inputs/building-geometry/district.shp,height_ag,Height above ground (incl. ground floor),[m],{0.0...n},float,black
+-,get_surroundings_geometry,inputs/building-geometry/district.shp,height_bg,"Height below ground (basement, etc)",[m],{0.0...n},float,black
 -,get_envelope_systems,databases/ch/systems/envelope_systems.xls:CONSTRUCTION,Cm_Af,Internal heat capacity per unit of air conditioned area. Defined according to ISO 13790.,[J/Km2],{0.0...1},float,black
 -,get_envelope_systems,databases/ch/systems/envelope_systems.xls:CONSTRUCTION,Description,Describes the source of the benchmark standards.,[-],[-],string,black
 -,get_envelope_systems,databases/ch/systems/envelope_systems.xls:CONSTRUCTION,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black

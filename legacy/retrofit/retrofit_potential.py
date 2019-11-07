@@ -197,8 +197,8 @@ def retrofit_scenario_creator(locator_baseline, locator_retrofit, geometry_df, a
 
 
     new_geometry.to_file(locator_retrofit.get_zone_geometry(), driver='ESRI Shapefile')
-    district = gdf.from_file(locator_baseline.get_surrounding_geometry())
-    district.to_file(locator_retrofit.get_surrounding_geometry())
+    district = gdf.from_file(locator_baseline.get_surroundings_geometry())
+    district.to_file(locator_retrofit.get_surroundings_geometry())
     dbf.dataframe_to_dbf(age.merge(data, on='Name'), locator_retrofit.get_building_age())
     dbf.dataframe_to_dbf(architecture.merge(data, on='Name'), locator_retrofit.get_building_architecture())
     dbf.dataframe_to_dbf(comfort.merge(data, on='Name'), locator_retrofit.get_building_comfort())
