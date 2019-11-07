@@ -11,6 +11,7 @@
 - script: data-helper
   parameters:
     region: SG
+    databases: [comfort, architecture, HVAC, internal-loads, supply, schedules]
 - script: weather-helper
   parameters:
     weather: Singapore-Changi_1990_2010_TMY
