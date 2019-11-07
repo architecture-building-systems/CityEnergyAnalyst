@@ -57,6 +57,8 @@ def schedule_maker_main(locator, config, building=None):
     prop_geometry = Gdf.from_file(locator.get_zone_geometry())
     prop_geometry['footprint'] = prop_geometry.area
     prop_geometry['GFA_m2'] = prop_geometry['footprint'] * (prop_geometry['floors_ag'] + prop_geometry['floors_bg'])
+    prop_geometry['GFA_ag_m2'] = prop_geometry['footprint'] * prop_geometry['floors_ag']
+    prop_geometry['GFA_bg_m2'] = prop_geometry['footprint'] * prop_geometry['floors_bg']
     prop_geometry = prop_geometry.merge(architecture, on='Name').set_index('Name')
     prop_geometry = calc_useful_areas(prop_geometry)
 
@@ -124,7 +126,7 @@ def calc_schedules(locator,
         Energy and Buildings, Vol. 40, No. 2, 2008, pp 83-98.
 
     """
-    #read building schedules input data:
+    # read building schedules input data:
     schedule = read_cea_schedule(locator.get_building_weekly_schedules(building))
     daily_schedule_building = schedule[0]
     monthly_multiplier = schedule[1]['MONTHLY_MULTIPLIER']

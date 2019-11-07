@@ -74,22 +74,24 @@ class SupplySystemMapPlot(cea.plots.supply_system.SupplySystemPlotBase):
 
         Here is some example data (in a YAML-like format for documentation purposes)
 
-        data:
-          DH:
-            connected_buildings: ['B1010', 'B1017', 'B1003']
-            disconnected_buildings: ['B1000', 'B1009', 'B1016', ..., 'B1015']
-            path_output_nodes: "{general:scenario}\inputs\networks\DH\gen_3_ind_1\nodes.shp"
-            path_output_edges: "{general:scenario}\inputs\networks\DH\gen_3_ind_1\edges.shp"
-          DC: {}  # data does not necessarily contain information for both types of district networks
-        colors:
-          dc: [63, 192, 194]
-          dh: [240, 75, 91]
-          disconnected: [68, 76, 83]
-          district: [255, 255, 255]
-        zone: str serialization of the GeoJSON of the zone.shp
-        district: str serialization of the GeoJSON of the district.shp
-        dc: str serialization of a GeoJSON containing both the nodes.shp + edges.shp of district cooling network
-        dh: str serialization of a GeoJSON containing both the nodes.shp + edges.shp of district heating network
+        ::
+
+            data:
+              DH:
+                connected_buildings: ['B1010', 'B1017', 'B1003']
+                disconnected_buildings: ['B1000', 'B1009', 'B1016', ..., 'B1015']
+                path_output_nodes: "{general:scenario}/inputs/networks/DH/gen_3_ind_1/nodes.shp"
+                path_output_edges: "{general:scenario}/inputs/networks/DH/gen_3_ind_1/edges.shp"
+              DC: {}  # data does not necessarily contain information for both types of district networks
+            colors:
+              dc: [63, 192, 194]
+              dh: [240, 75, 91]
+              disconnected: [68, 76, 83]
+              district: [255, 255, 255]
+            zone: str serialization of the GeoJSON of the zone.shp
+            district: str serialization of the GeoJSON of the district.shp
+            dc: str serialization of a GeoJSON containing both the nodes.shp + edges.shp of district cooling network
+            dh: str serialization of a GeoJSON containing both the nodes.shp + edges.shp of district heating network
 
         :return: a str containing a full html ``<div/>`` that includes the js code to display the map.
         """

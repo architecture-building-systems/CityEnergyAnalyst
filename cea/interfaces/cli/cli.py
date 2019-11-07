@@ -112,4 +112,6 @@ def print_valid_script_names():
 
 
 if __name__ == '__main__':
+    from cea import suppres_3rd_party_debug_loggers
+    suppres_3rd_party_debug_loggers()
     main(cea.config.Configuration())
