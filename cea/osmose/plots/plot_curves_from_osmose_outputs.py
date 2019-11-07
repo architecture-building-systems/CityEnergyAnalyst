@@ -45,7 +45,9 @@ def set_plot_parameters(ax1, plot_specs):
     fontname = 'Times New Roman'
     fontsize = 18
     # set the legend
-    ax1.legend(loc='lower left', shadow=False, fancybox=True,
+    # ax1.legend(loc='lower left', shadow=False, fancybox=True,
+    #            fontsize=fontsize, prop={'family': 'Times New Roman', 'size': str(fontsize)})
+    ax1.legend(loc='lower left', bbox_to_anchor =(1,0), shadow=False, fancybox=True,
                fontsize=fontsize, prop={'family': 'Times New Roman', 'size': str(fontsize)})
     # set x and y range
     # plt.set_xlim([-766.00311044128,8090.8964687342])
@@ -65,7 +67,7 @@ def set_plot_parameters(ax1, plot_specs):
     ax1.set_ylabel(plot_specs['ylabel'], fontsize=fontsize, color='black', fontname=fontname, fontweight='normal')
     ax1.set_xlabel(plot_specs['xlabel'], fontsize=fontsize, color='black', fontname=fontname, fontweight='normal')
     # tight layout prevents axis title overlapping
-    plt.tight_layout(pad=1, w_pad=3, h_pad=1.0)
+    # plt.tight_layout(pad=1, w_pad=3, h_pad=1.0)
     return
 
 
