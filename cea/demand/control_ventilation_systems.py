@@ -117,8 +117,8 @@ def is_economizer_active(bpr, tsd, t):
     Control of activity of economizer of mechanical ventilation system
     Economizer of mechanical ventilation is controlled via zone set point temperatures, indoor air temperature and
     outdoor air temperature.
-    Economizer is active during cooling season if the indoor air temperature exceeds the set point and the outdoor
-    temperatures are lower than the set point.
+    Economizer is active if the indoor air temperature exceeds the set point and the outdoor temperatures are lower
+    than the set point.
     Economizer increases mechanical ventilation flow rate to the maximum.
     
     Author: Gabriel Happle
