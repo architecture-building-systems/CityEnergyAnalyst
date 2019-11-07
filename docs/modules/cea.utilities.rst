@@ -9,6 +9,14 @@ cea.utilities package
 Submodules
 ----------
 
+cea.utilities.color\_fader module
+---------------------------------
+
+.. automodule:: cea.utilities.color_fader
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cea.utilities.compile\_pyd\_files module
 ----------------------------------------
 

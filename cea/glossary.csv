@@ -1,6 +1,7 @@
 SCRIPT,LOCATOR_METHOD,FILE_NAME,VARIABLE,DESCRIPTION,UNIT,VALUES,TYPE,COLOR
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:ARCHITECTURE,Es,Fraction of gross floor area with electrical demands.,[m2/m2],{0.0...1},float,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:ARCHITECTURE,Hs,Fraction of gross floor area air-conditioned.,[m2/m2],{0.0...1},float,black
+-,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:ARCHITECTURE,Hs_ag,Fraction of above ground gross floor area air-conditioned.,[m2/m2],{0.0...1},float,black
+-,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:ARCHITECTURE,Hs_bg,Fraction of below ground gross floor area air-conditioned ,[m2/m2],{0.0...1},float,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:ARCHITECTURE,Ns,Fraction of net gross floor area.,[m2/m2],{0.0...1},float,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:ARCHITECTURE,building_use,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:ARCHITECTURE,standard,Letter representing whereas the field represent construction properties of a building as newly constructed (C) or renovated (R),[-],{C or R},string,black
@@ -772,7 +773,8 @@ SCRIPT,LOCATOR_METHOD,FILE_NAME,VARIABLE,DESCRIPTION,UNIT,VALUES,TYPE,COLOR
 -,get_zone_geometry,inputs/building-geometry/zone.shp,height_ag,Aggregated height of the walls.,[m],{0.0...n},float,black
 -,get_zone_geometry,inputs/building-geometry/zone.shp,height_bg,TODO,TODO,TODO,TODO,black
 data-helper,get_building_architecture,inputs/building-properties/architecture.dbf,Es,TODO,TODO,TODO,TODO,black
-data-helper,get_building_architecture,inputs/building-properties/architecture.dbf,Hs,Fraction of gross floor area air-conditioned.,[m2/m2],{0.0...1},float,black
+data-helper,get_building_architecture,inputs/building-properties/architecture.dbf,Hs_ag,Fraction of above ground gross floor area air-conditioned.,[m2/m2],{0.0...1},float,black
+data-helper,get_building_architecture,inputs/building-properties/architecture.dbf,Hs_bg,Fraction of below ground gross floor area air-conditioned.,[m2/m2],{0.0...1},float,black
 data-helper,get_building_architecture,inputs/building-properties/architecture.dbf,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black
 data-helper,get_building_architecture,inputs/building-properties/architecture.dbf,Ns,TODO,TODO,TODO,TODO,black
 data-helper,get_building_architecture,inputs/building-properties/architecture.dbf,type_cons,Type of construction. It relates to the contents of the default database of Envelope Properties: construction,[code],{T1...Tn},string,black
