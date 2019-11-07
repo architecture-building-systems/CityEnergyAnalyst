@@ -712,14 +712,12 @@ class InputLocator(object):
         return os.path.join(self.get_building_properties_folder(), 'variables_overrides.csv')
 
     def get_building_weekly_schedules_folder(self):
-        """scenario/outputs/data/optimization/slave`
-        Slave results folder (storage + operation pattern)
-        """
+        """scenario/inputs/building-properties/schedules/"""
         return self._ensure_folder(self.get_building_properties_folder(), 'schedules')
 
     def get_building_weekly_schedules(self, building_name):
         """
-        scenario/inputs/building-properties/{building_name}_schedules.csv
+        scenario/inputs/building-properties/schedules/{building_name}.csv
         This file contains schedules of occupancy, appliance use, etc of each building.
         Schedules are 8760 values per year
         :param building_name:
