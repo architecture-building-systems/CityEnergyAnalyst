@@ -70,10 +70,10 @@ def is_mechanical_ventilation_heat_recovery_active(bpr, tsd, t):
     if is_mechanical_ventilation_active(bpr, tsd, t)\
             and has_mechanical_ventilation_heat_recovery(bpr)\
             and control_heating_cooling_systems.is_heating_season(t, bpr):
-
-        # heat recovery is always active if mechanical ventilation is active (no intelligent by pass)
-        # this is the usual system configuration according to Clayton Miller
-        return True
+        if is_night_flushing_active(bpr, tsd, t) or is_economizer_active(bpr, tsd, t):
+            return False
+        else:
+            return True
 
     elif is_mechanical_ventilation_active(bpr, tsd, t)\
             and has_mechanical_ventilation_heat_recovery(bpr)\
@@ -87,7 +87,7 @@ def is_mechanical_ventilation_heat_recovery_active(bpr, tsd, t):
             and tsd['T_int'][t-1] >= tsd['T_ext'][t]:
 
         # heat recovery is deactivated in the cooling case,
-        #  if outdoor air conditions are colder than indoor (free cooling)
+        # if outdoor air conditions are colder than indoor (free cooling)
 
         return False
 
