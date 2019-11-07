@@ -92,7 +92,7 @@ def calc_PV(locator, config, latitude, longitude, weather_data, datetime_local, 
         final = calc_pv_generation(sensor_groups, weather_data, datetime_local, solar_properties, latitude,
                                    panel_properties_PV)
 
-        final.to_csv(locator.PV_results(building_name=building_name), index=False,
+        final.to_csv(locator.PV_results(building_name=building_name), index=True,
                      float_format='%.2f')  # print PV generation potential
         sensors_metadata_cat.to_csv(locator.PV_metadata_results(building_name=building_name), index=True,
                                     index_label='SURFACE',
