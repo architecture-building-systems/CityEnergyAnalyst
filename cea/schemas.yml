@@ -2543,7 +2543,7 @@ get_demand_results_file:
       sample_data: 7.385
       types_found: [float]
   used_by: [sewage-potential, thermal-network]
-get_surrounding_geometry:
+get_surroundings_geometry:
   created_by: []
   description: scenario/inputs/building-geometry/surroundings.shp
   file_path: inputs/building-geometry/surroundings.shp

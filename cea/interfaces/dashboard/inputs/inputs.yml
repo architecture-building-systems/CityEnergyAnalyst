@@ -21,7 +21,7 @@ district:
   parent: None
   pk: Name
   type: shp  # shp or dbf
-  location: get_surrounding_geometry
+  location: get_surroundings_geometry
   fields:
   - name: Name
     type: str

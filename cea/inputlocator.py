@@ -638,7 +638,7 @@ class InputLocator(object):
         self.check_cpg(shapefile_path)
         return shapefile_path
 
-    def get_surrounding_geometry(self):
+    def get_surroundings_geometry(self):
         """scenario/inputs/building-geometry/surroundings.shp"""
         """scenario/inputs/building-properties/air_conditioning_systems.dbf"""
         old_file_path = os.path.join(self.get_building_geometry_folder(), 'district.shp')

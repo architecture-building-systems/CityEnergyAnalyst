@@ -307,7 +307,7 @@ class ThermalNetworksMapPlotBase(ThermalNetworksPlotBase):
         zone_df["_FillColor"] = json.dumps(self.colors["zone"])
         zone = zone_df.to_json(show_bbox=True)
 
-        district_df = geopandas.GeoDataFrame.from_file(self.locator.get_surrounding_geometry()).to_crs(
+        district_df = geopandas.GeoDataFrame.from_file(self.locator.get_surroundings_geometry()).to_crs(
             get_geographic_coordinate_system())
         district_df["_FillColor"] = json.dumps(self.colors["district"])
         district = district_df.to_json(show_bbox=True)
