@@ -176,7 +176,7 @@ class Scenarios(Resource):
                         print('site.shp file created at %s' % site_path)
                         cea.api.zone_helper(config)
                     elif tool == 'district':
-                        cea.api.district_helper(config)
+                        cea.api.surroundings_helper(config)
                     elif tool == 'streets':
                         cea.api.streets_helper(config)
                     elif tool == 'terrain':
