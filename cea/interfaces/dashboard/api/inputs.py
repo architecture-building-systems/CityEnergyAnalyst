@@ -10,6 +10,7 @@ from flask_restplus import Namespace, Resource, abort
 
 import cea.inputlocator
 import cea.utilities.dbf
+import cea.utilities.schedule_reader
 from cea.plots.supply_system.supply_system_map import get_building_connectivity
 from cea.plots.variable_naming import get_color_array
 from cea.technologies.network_layout.main import layout_network, NetworkLayout
@@ -132,6 +133,7 @@ class AllInputs(Resource):
         store['geojsons']['dh'], store['connected_buildings']['dh'],  store['crs']['dh'] = get_network(
             config, 'dh', trigger_abort=False)
         store['colors'] = COLORS
+        store['schedules'] = {}
 
         return store
     def put(self):
@@ -298,3 +300,29 @@ def df_to_json(file_location, bbox=False, trigger_abort=True):
         print(e)
         if trigger_abort:
             abort(400, e.message)
+
+
+@api.route('/building-schedule/<string:building>')
+class BuildingSchedule(Resource):
+    def get(self, building):
+        config = current_app.cea_config
+        locator = cea.inputlocator.InputLocator(config.scenario)
+        try:
+            return schedule_to_dict(locator, building)
+        except IOError as e:
+            print(e)
+            abort(500, 'File not found')
+
+
+def schedule_to_dict(locator, building):
+    schedule_path = locator.get_building_weekly_schedules(building)
+    schedule_data, schedule_complementary_data = cea.utilities.schedule_reader.read_cea_schedule(schedule_path)
+    df = pandas.DataFrame(schedule_data).set_index(['DAY', 'HOUR'])
+    out = {'SCHEDULES': {schedule_type: {day: df.loc[day][schedule_type].values.tolist() for day in df.index.levels[0]}
+                         for schedule_type in df.columns}}
+    out.update(schedule_complementary_data)
+    return out
+
+
+def json_to_schedule(json):
+    pass
