@@ -20,9 +20,6 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-from cea import suppres_3rd_party_debug_loggers
-suppres_3rd_party_debug_loggers()
-
 def create_sensor_input_file(rad, chunk_n):
     sensor_file_path = os.path.join(rad.data_folder_path, "points_" + str(chunk_n) + ".pts")
     sensor_file = open(sensor_file_path, "w")
