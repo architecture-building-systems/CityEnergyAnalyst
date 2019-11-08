@@ -135,6 +135,9 @@ class Scenarios(Resource):
                 if 'district' in files:
                     for filename in glob_shapefile_auxilaries(files['district']):
                         shutil.copy(filename, locator.get_building_geometry_folder())
+                if 'surroundings' in files:
+                    for filename in glob_shapefile_auxilaries(files['surroundings']):
+                        shutil.copy(filename, locator.get_building_geometry_folder())
                 if 'terrain' in files:
                     shutil.copyfile(files['terrain'], locator.get_terrain())
                 if 'streets' in files:
@@ -176,6 +179,8 @@ class Scenarios(Resource):
                         print('site.shp file created at %s' % site_path)
                         cea.api.zone_helper(config)
                     elif tool == 'district':
+                        cea.api.surroundings_helper(config)
+                    elif tool == 'surroundings':
                         cea.api.surroundings_helper(config)
                     elif tool == 'streets':
                         cea.api.streets_helper(config)

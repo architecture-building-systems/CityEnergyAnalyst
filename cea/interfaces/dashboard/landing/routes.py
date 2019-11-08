@@ -197,7 +197,7 @@ def route_create_scenario_save():
                     site.to_file(site_path)
                     print('site.shp file created at %s' % site_path)
                     cea.api.zone_helper(cea_config)
-                elif tool == 'district-helper':
+                elif tool == 'surroundings-helper':
                     cea.api.surroundings_helper(cea_config)
                 elif tool == 'streets-helper':
                     cea.api.streets_helper(cea_config)
