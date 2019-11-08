@@ -70,6 +70,6 @@ class NetworkOptimizationFeatures(object):
         edges_file = pd.read_csv(locator.get_thermal_network_edge_list_file(network_type, network_name))
         piping_cost_data = pd.read_excel(locator.get_database_supply_systems(), sheet_name="PIPING")
         merge_df = edges_file.merge(piping_cost_data, left_on='Pipe_DN_y', right_on='Pipe_DN')
-        merge_df['Inv_costs'] = merge_df['Inv_USD2015perm'] * merge_df['pipe length']
+        merge_df['Inv_USD2015'] = merge_df['Inv_USD2015perm_y'] * merge_df['pipe length']
         pipe_costs = merge_df['Inv_USD2015'].sum()
         return pipe_costs
