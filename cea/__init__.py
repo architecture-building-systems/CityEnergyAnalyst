@@ -31,6 +31,5 @@ def suppres_3rd_party_debug_loggers():
     import logging
     loggers_to_silence = ["shapely", "Fiona", "fiona", "matplotlib", "urllib3.connectionpool"]
     for log_name in loggers_to_silence:
-        print("Removing logger {}".format(log_name))
         log = logging.getLogger(log_name)
         log.setLevel(logging.ERROR)
