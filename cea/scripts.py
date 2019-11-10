@@ -138,7 +138,7 @@ def get_schema_variables(schema):
     for locator_method in schema:
 
         # if there is no script mapped to 'created_by', it must be an input_file
-        # replace non-existant script with the name of the file without the extension
+        # replace non-existent script with the name of the file without the extension
         if not schema[locator_method]['created_by']:
             script = "-"
         else:
