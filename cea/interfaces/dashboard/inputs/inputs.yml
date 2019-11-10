@@ -17,7 +17,7 @@ zone:
     type: float
   - name: REFERENCE
     type: str
-district:
+surroundings:
   parent: None
   pk: Name
   type: shp  # shp or dbf

@@ -136,7 +136,7 @@ def route_create_scenario_save():
 
     if request.form.get('input-files') == 'import':
         zone = request.form.get('zone')
-        district = request.form.get('district')
+        surroundings = request.form.get('surroundings')
         terrain = request.form.get('terrain')
         streets = request.form.get('streets')
         age = request.form.get('age')
@@ -153,8 +153,8 @@ def route_create_scenario_save():
         if zone:
             for filename in glob_shapefile_auxilaries(zone):
                 shutil.copy(filename, locator.get_building_geometry_folder())
-        if district:
-            for filename in glob_shapefile_auxilaries(district):
+        if surroundings:
+            for filename in glob_shapefile_auxilaries(surroundings):
                 shutil.copy(filename, locator.get_building_geometry_folder())
         if terrain:
             shutil.copyfile(terrain, locator.get_terrain())

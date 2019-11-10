@@ -2,7 +2,7 @@ let map = new MapClass('mapid');
 
 map.init({data: {
         zone: inputstore.getGeojson('zone'),
-        district: inputstore.getGeojson('district')
+        surroundings: inputstore.getGeojson('surroundings')
     }});
 
 map.setLayerProps('zone', {
@@ -13,8 +13,8 @@ map.setLayerProps('zone', {
     onClick: showProperties
 });
 
-map.setLayerProps('district', {
-    getFillColor: f => buildingColor(map.colors.district,'district', f),
+map.setLayerProps('surroundings', {
+    getFillColor: f => buildingColor(map.colors.surroundings,'surroundings', f),
     updateTriggers: {
         getFillColor: inputstore.getSelected.bind(inputstore)
     },
@@ -39,9 +39,9 @@ function showProperties({object, layer}, event) {
         selected = [object.properties['Name']];
     }
 
-    if (layer.id === 'district') {
-        $('#district-tab').trigger('click');
-    } else if (layer.id === 'zone' && $('#district-tab').hasClass('active') || !currentTable.getData().length) {
+    if (layer.id === 'surroundings') {
+        $('#surroundings-tab').trigger('click');
+    } else if (layer.id === 'zone' && $('#surroundings-tab').hasClass('active') || !currentTable.getData().length) {
         $('#zone-tab').trigger('click');
     }
 
@@ -73,6 +73,6 @@ function buildingColor(color, layer, object) {
 
 function redrawBuildings() {
     map.updateData('zone', inputstore.getGeojson('zone'));
-    map.updateData('district', inputstore.getGeojson('district'));
+    map.updateData('surroundings', inputstore.getGeojson('surroundings'));
     map.redraw();
 }

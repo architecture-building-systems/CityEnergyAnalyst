@@ -641,9 +641,10 @@ class InputLocator(object):
     def get_surroundings_geometry(self):
         """scenario/inputs/building-geometry/surroundings.shp"""
         """scenario/inputs/building-properties/air_conditioning_systems.dbf"""
+        # NOTE: we renamed district.shp to surroundings.shp - this code will automaticaly upgrade old scenarios
         old_file_path = os.path.join(self.get_building_geometry_folder(), 'district.shp')
         new_file_path = os.path.join(self.get_building_geometry_folder(), 'surroundings.shp')
-        if os.path.exists(old_file_path) and os.path.exists(new_file_path) == False:
+        if os.path.exists(old_file_path) and not os.path.exists(new_file_path):
             for file_extention in ['.shp', '.cpg', '.prj', '.shx', '.dbf']:
                 old_path = os.path.join(self.get_building_geometry_folder(), 'district' + file_extention)
                 new_path = os.path.join(self.get_building_geometry_folder(), 'surroundings' + file_extention)

@@ -1,21 +1,21 @@
 $(document).ready(function () {
     let zone;
-    let district;
+    let surroundings;
 
     let getZone = $.get('/inputs/geojson/zone', function (data) {
         zone = data;
     });
 
-    let getDistrict = $.get('/inputs/geojson/district', function (data) {
-        district = data;
+    let getSurroundings = $.get('/inputs/geojson/surroundings', function (data) {
+        surroundings = data;
     });
 
-    $.when(getZone, getDistrict).always(function () {
+    $.when(getZone, getSurroundings).always(function () {
         let map = new MapClass('map-div');
         map.init({
             data:{
                 zone: zone,
-                district: district
+                surroundings: surroundings
             },
             extrude: true
         });
