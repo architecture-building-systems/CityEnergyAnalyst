@@ -20,7 +20,7 @@ digraph trace_inputlocator {
         fontsize = 20;
         rank=same;
         label="WTP_CBD_h/inputs/building-geometry";
-        "district.shp"
+        "surroundings.shp"
         "zone.shp"
     }
     subgraph cluster_1_in {
@@ -120,7 +120,7 @@ digraph trace_inputlocator {
     "age.dbf" -> "photovoltaic"[label="(get_building_age)"]
     "occupancy.dbf" -> "photovoltaic"[label="(get_building_occupancy)"]
     "benchmark_2000W.xls" -> "photovoltaic"[label="(get_data_benchmark)"]
-    "district.shp" -> "photovoltaic"[label="(get_surroundings_geometry)"]
+    "surroundings.shp" -> "photovoltaic"[label="(get_surroundings_geometry)"]
     "envelope_systems.xls" -> "photovoltaic"[label="(get_envelope_systems)"]
     "LCA_buildings.xlsx" -> "photovoltaic"[label="(get_life_cycle_inventory_building_systems)"]
     "LCA_infrastructure.xlsx" -> "photovoltaic"[label="(get_life_cycle_inventory_supply_systems)"]

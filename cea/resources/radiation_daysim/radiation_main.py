@@ -12,7 +12,7 @@ import math
 from cea.resources.radiation_daysim import daysim_main, geometry_generator
 import py4design.py3dmodel.fetch as fetch
 import py4design.py2radiance as py2radiance
-from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_district
+from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_surroundings
 from geopandas import GeoDataFrame as gpdf
 import cea.inputlocator
 import cea.config
@@ -206,7 +206,7 @@ def main(config):
     print("verifying geometry files")
     print(locator.get_zone_geometry())
     verify_input_geometry_zone(gpdf.from_file(locator.get_zone_geometry()))
-    verify_input_geometry_district(gpdf.from_file(locator.get_surroundings_geometry()))
+    verify_input_geometry_surroundings(gpdf.from_file(locator.get_surroundings_geometry()))
 
     # import material properties of buildings
     print("getting geometry materials")

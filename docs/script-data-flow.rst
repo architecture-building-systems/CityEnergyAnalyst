@@ -34,7 +34,7 @@ sewage-potential
         fontsize = 20;
         rank=same;
         label="WTP_CBD_h/inputs/building-geometry";
-        "district.shp"
+        "surroundings.shp"
         "zone.shp"
     }
     subgraph cluster_1_in {
@@ -132,7 +132,7 @@ sewage-potential
     "occupancy.dbf" -> "sewage-potential"[label="(get_building_occupancy)"]
     "benchmark_2000W.xls" -> "sewage-potential"[label="(get_data_benchmark)"]
     "B001.csv" -> "sewage-potential"[label="(get_demand_results_file)"]
-    "district.shp" -> "sewage-potential"[label="(get_surroundings_geometry)"]
+    "surroundings.shp" -> "sewage-potential"[label="(get_surroundings_geometry)"]
     "envelope_systems.xls" -> "sewage-potential"[label="(get_envelope_systems)"]
     "LCA_buildings.xlsx" -> "sewage-potential"[label="(get_life_cycle_inventory_building_systems)"]
     "LCA_infrastructure.xlsx" -> "sewage-potential"[label="(get_life_cycle_inventory_supply_systems)"]
@@ -173,7 +173,7 @@ data-helper
         fontsize = 20;
         rank=same;
         label="WTP_CBD_h/inputs/building-geometry";
-        "district.shp"
+        "surroundings.shp"
         "zone.shp"
     }
     subgraph cluster_1_in {
@@ -266,7 +266,7 @@ data-helper
     "age.dbf" -> "data-helper"[label="(get_building_age)"]
     "occupancy.dbf" -> "data-helper"[label="(get_building_occupancy)"]
     "benchmark_2000W.xls" -> "data-helper"[label="(get_data_benchmark)"]
-    "district.shp" -> "data-helper"[label="(get_surroundings_geometry)"]
+    "surroundings.shp" -> "data-helper"[label="(get_surroundings_geometry)"]
     "envelope_systems.xls" -> "data-helper"[label="(get_envelope_systems)"]
     "LCA_buildings.xlsx" -> "data-helper"[label="(get_life_cycle_inventory_building_systems)"]
     "LCA_infrastructure.xlsx" -> "data-helper"[label="(get_life_cycle_inventory_supply_systems)"]
@@ -311,7 +311,7 @@ network-layout
         fontsize = 20;
         rank=same;
         label="WTP_CBD_h/inputs/building-geometry";
-        "district.shp"
+        "surroundings.shp"
         "zone.shp"
     }
     subgraph cluster_1_in {
@@ -408,7 +408,7 @@ network-layout
     "age.dbf" -> "network-layout"[label="(get_building_age)"]
     "occupancy.dbf" -> "network-layout"[label="(get_building_occupancy)"]
     "benchmark_2000W.xls" -> "network-layout"[label="(get_data_benchmark)"]
-    "district.shp" -> "network-layout"[label="(get_surroundings_geometry)"]
+    "surroundings.shp" -> "network-layout"[label="(get_surroundings_geometry)"]
     "envelope_systems.xls" -> "network-layout"[label="(get_envelope_systems)"]
     "LCA_buildings.xlsx" -> "network-layout"[label="(get_life_cycle_inventory_building_systems)"]
     "LCA_infrastructure.xlsx" -> "network-layout"[label="(get_life_cycle_inventory_supply_systems)"]
@@ -450,7 +450,7 @@ operation-costs
         fontsize = 20;
         rank=same;
         label="WTP_CBD_h/inputs/building-geometry";
-        "district.shp"
+        "surroundings.shp"
         "zone.shp"
     }
     subgraph cluster_1_in {
@@ -548,7 +548,7 @@ operation-costs
     "occupancy.dbf" -> "operation-costs"[label="(get_building_occupancy)"]
     "supply_systems.dbf" -> "operation-costs"[label="(get_building_supply)"]
     "benchmark_2000W.xls" -> "operation-costs"[label="(get_data_benchmark)"]
-    "district.shp" -> "operation-costs"[label="(get_surroundings_geometry)"]
+    "surroundings.shp" -> "operation-costs"[label="(get_surroundings_geometry)"]
     "envelope_systems.xls" -> "operation-costs"[label="(get_envelope_systems)"]
     "LCA_buildings.xlsx" -> "operation-costs"[label="(get_life_cycle_inventory_building_systems)"]
     "LCA_infrastructure.xlsx" -> "operation-costs"[label="(get_life_cycle_inventory_supply_systems)"]
@@ -589,7 +589,7 @@ solar-collector
         fontsize = 20;
         rank=same;
         label="WTP_CBD_h/inputs/building-geometry";
-        "district.shp"
+        "surroundings.shp"
         "zone.shp"
     }
     subgraph cluster_1_in {
@@ -689,7 +689,7 @@ solar-collector
     "age.dbf" -> "solar-collector"[label="(get_building_age)"]
     "occupancy.dbf" -> "solar-collector"[label="(get_building_occupancy)"]
     "benchmark_2000W.xls" -> "solar-collector"[label="(get_data_benchmark)"]
-    "district.shp" -> "solar-collector"[label="(get_surroundings_geometry)"]
+    "surroundings.shp" -> "solar-collector"[label="(get_surroundings_geometry)"]
     "envelope_systems.xls" -> "solar-collector"[label="(get_envelope_systems)"]
     "LCA_buildings.xlsx" -> "solar-collector"[label="(get_life_cycle_inventory_building_systems)"]
     "LCA_infrastructure.xlsx" -> "solar-collector"[label="(get_life_cycle_inventory_supply_systems)"]
@@ -734,7 +734,7 @@ lake-potential
         fontsize = 20;
         rank=same;
         label="WTP_CBD_h/inputs/building-geometry";
-        "district.shp"
+        "surroundings.shp"
         "zone.shp"
     }
     subgraph cluster_1_in {
@@ -822,7 +822,7 @@ lake-potential
     "age.dbf" -> "lake-potential"[label="(get_building_age)"]
     "occupancy.dbf" -> "lake-potential"[label="(get_building_occupancy)"]
     "benchmark_2000W.xls" -> "lake-potential"[label="(get_data_benchmark)"]
-    "district.shp" -> "lake-potential"[label="(get_surroundings_geometry)"]
+    "surroundings.shp" -> "lake-potential"[label="(get_surroundings_geometry)"]
     "envelope_systems.xls" -> "lake-potential"[label="(get_envelope_systems)"]
     "LCA_buildings.xlsx" -> "lake-potential"[label="(get_life_cycle_inventory_building_systems)"]
     "LCA_infrastructure.xlsx" -> "lake-potential"[label="(get_life_cycle_inventory_supply_systems)"]
@@ -862,7 +862,7 @@ thermal-network
         fontsize = 20;
         rank=same;
         label="WTP_CBD_h/inputs/building-geometry";
-        "district.shp"
+        "surroundings.shp"
         "zone.shp"
     }
     subgraph cluster_1_in {
@@ -989,7 +989,7 @@ thermal-network
     "occupancy.dbf" -> "thermal-network"[label="(get_building_occupancy)"]
     "benchmark_2000W.xls" -> "thermal-network"[label="(get_data_benchmark)"]
     "B001.csv" -> "thermal-network"[label="(get_demand_results_file)"]
-    "district.shp" -> "thermal-network"[label="(get_surroundings_geometry)"]
+    "surroundings.shp" -> "thermal-network"[label="(get_surroundings_geometry)"]
     "envelope_systems.xls" -> "thermal-network"[label="(get_envelope_systems)"]
     "LCA_buildings.xlsx" -> "thermal-network"[label="(get_life_cycle_inventory_building_systems)"]
     "LCA_infrastructure.xlsx" -> "thermal-network"[label="(get_life_cycle_inventory_supply_systems)"]
@@ -1045,7 +1045,7 @@ photovoltaic-thermal
         fontsize = 20;
         rank=same;
         label="WTP_CBD_h/inputs/building-geometry";
-        "district.shp"
+        "surroundings.shp"
         "zone.shp"
     }
     subgraph cluster_1_in {
@@ -1145,7 +1145,7 @@ photovoltaic-thermal
     "age.dbf" -> "photovoltaic-thermal"[label="(get_building_age)"]
     "occupancy.dbf" -> "photovoltaic-thermal"[label="(get_building_occupancy)"]
     "benchmark_2000W.xls" -> "photovoltaic-thermal"[label="(get_data_benchmark)"]
-    "district.shp" -> "photovoltaic-thermal"[label="(get_surroundings_geometry)"]
+    "surroundings.shp" -> "photovoltaic-thermal"[label="(get_surroundings_geometry)"]
     "envelope_systems.xls" -> "photovoltaic-thermal"[label="(get_envelope_systems)"]
     "LCA_buildings.xlsx" -> "photovoltaic-thermal"[label="(get_life_cycle_inventory_building_systems)"]
     "LCA_infrastructure.xlsx" -> "photovoltaic-thermal"[label="(get_life_cycle_inventory_supply_systems)"]
@@ -1190,7 +1190,7 @@ emissions
         fontsize = 20;
         rank=same;
         label="WTP_CBD_h/inputs/building-geometry";
-        "district.shp"
+        "surroundings.shp"
         "zone.shp"
     }
     subgraph cluster_1_in {
@@ -1292,7 +1292,7 @@ emissions
     "occupancy.dbf" -> "emissions"[label="(get_building_occupancy)"]
     "supply_systems.dbf" -> "emissions"[label="(get_building_supply)"]
     "benchmark_2000W.xls" -> "emissions"[label="(get_data_benchmark)"]
-    "district.shp" -> "emissions"[label="(get_surroundings_geometry)"]
+    "surroundings.shp" -> "emissions"[label="(get_surroundings_geometry)"]
     "envelope_systems.xls" -> "emissions"[label="(get_envelope_systems)"]
     "LCA_buildings.xlsx" -> "emissions"[label="(get_life_cycle_inventory_building_systems)"]
     "LCA_infrastructure.xlsx" -> "emissions"[label="(get_life_cycle_inventory_supply_systems)"]
@@ -1335,7 +1335,7 @@ demand
         fontsize = 20;
         rank=same;
         label="WTP_CBD_h/inputs/building-geometry";
-        "district.shp"
+        "surroundings.shp"
         "zone.shp"
     }
     subgraph cluster_1_in {
@@ -1443,7 +1443,7 @@ demand
     "occupancy.dbf" -> "demand"[label="(get_building_occupancy)"]
     "supply_systems.dbf" -> "demand"[label="(get_building_supply)"]
     "benchmark_2000W.xls" -> "demand"[label="(get_data_benchmark)"]
-    "district.shp" -> "demand"[label="(get_surroundings_geometry)"]
+    "surroundings.shp" -> "demand"[label="(get_surroundings_geometry)"]
     "envelope_systems.xls" -> "demand"[label="(get_envelope_systems)"]
     "LCA_buildings.xlsx" -> "demand"[label="(get_life_cycle_inventory_building_systems)"]
     "LCA_infrastructure.xlsx" -> "demand"[label="(get_life_cycle_inventory_supply_systems)"]
@@ -1486,7 +1486,7 @@ radiation
         fontsize = 20;
         rank=same;
         label="WTP_CBD_h/inputs/building-geometry";
-        "district.shp"
+        "surroundings.shp"
         "zone.shp"
     }
     subgraph cluster_1_in {
@@ -1576,7 +1576,7 @@ radiation
     "architecture.dbf" -> "radiation"[label="(get_building_architecture)"]
     "occupancy.dbf" -> "radiation"[label="(get_building_occupancy)"]
     "benchmark_2000W.xls" -> "radiation"[label="(get_data_benchmark)"]
-    "district.shp" -> "radiation"[label="(get_surroundings_geometry)"]
+    "surroundings.shp" -> "radiation"[label="(get_surroundings_geometry)"]
     "envelope_systems.xls" -> "radiation"[label="(get_envelope_systems)"]
     "LCA_buildings.xlsx" -> "radiation"[label="(get_life_cycle_inventory_building_systems)"]
     "LCA_infrastructure.xlsx" -> "radiation"[label="(get_life_cycle_inventory_supply_systems)"]
@@ -1617,7 +1617,7 @@ photovoltaic
         fontsize = 20;
         rank=same;
         label="WTP_CBD_h/inputs/building-geometry";
-        "district.shp"
+        "surroundings.shp"
         "zone.shp"
     }
     subgraph cluster_1_in {
@@ -1717,7 +1717,7 @@ photovoltaic
     "age.dbf" -> "photovoltaic"[label="(get_building_age)"]
     "occupancy.dbf" -> "photovoltaic"[label="(get_building_occupancy)"]
     "benchmark_2000W.xls" -> "photovoltaic"[label="(get_data_benchmark)"]
-    "district.shp" -> "photovoltaic"[label="(get_surroundings_geometry)"]
+    "surroundings.shp" -> "photovoltaic"[label="(get_surroundings_geometry)"]
     "envelope_systems.xls" -> "photovoltaic"[label="(get_envelope_systems)"]
     "LCA_buildings.xlsx" -> "photovoltaic"[label="(get_life_cycle_inventory_building_systems)"]
     "LCA_infrastructure.xlsx" -> "photovoltaic"[label="(get_life_cycle_inventory_supply_systems)"]

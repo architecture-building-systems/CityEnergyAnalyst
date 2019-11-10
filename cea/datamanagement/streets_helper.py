@@ -23,10 +23,10 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calc_bounding_box(shapefile_district, shapefile_zone):
+def calc_bounding_box(shapefile_surroundings, shapefile_zone):
     #connect both files and avoid repetition
     data_zone = Gdf.from_file(shapefile_zone)
-    data_dis = Gdf.from_file(shapefile_district)
+    data_dis = Gdf.from_file(shapefile_surroundings)
     data_dis = data_dis.loc[~data_dis["Name"].isin(data_zone["Name"])]
     data = data_dis.append(data_zone, ignore_index = True, sort=True)
     data = data.to_crs(get_geographic_coordinate_system())
@@ -50,13 +50,13 @@ def geometry_extractor_osm(locator, config):
     if list_of_bounding_box == []:
         # the list is empty, we then revert to get the bounding box for the district
         assert os.path.exists(
-            locator.get_surroundings_geometry()), 'Get district geometry file first or the coordinates of the area where to extract the streets from in the next format: lon_min, lat_min, lon_max, lat_max: %s'
-        print("generating streets from District Geometry")
-        bounding_box_district_file = calc_bounding_box(locator.get_surroundings_geometry(), locator.get_zone_geometry())
-        lon_min = bounding_box_district_file[0]-extra_border
-        lat_min = bounding_box_district_file[1]-extra_border
-        lon_max = bounding_box_district_file[2]+extra_border
-        lat_max = bounding_box_district_file[3]+extra_border
+            locator.get_surroundings_geometry()), 'Get surroundings geometry file first or the coordinates of the area where to extract the streets from in the next format: lon_min, lat_min, lon_max, lat_max: %s'
+        print("generating streets from Surroundings Geometry")
+        bounding_box_surroundings_file = calc_bounding_box(locator.get_surroundings_geometry(), locator.get_zone_geometry())
+        lon_min = bounding_box_surroundings_file[0]-extra_border
+        lat_min = bounding_box_surroundings_file[1]-extra_border
+        lon_max = bounding_box_surroundings_file[2]+extra_border
+        lat_max = bounding_box_surroundings_file[3]+extra_border
     elif len(list_of_bounding_box) == 4:
         print("generating streets from your bounding box")
         # the list is not empty, the user has indicated a specific set of coordinates
