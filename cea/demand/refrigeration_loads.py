@@ -77,27 +77,30 @@ def calc_Qref(locator, bpr, tsd):
     it calculates final loads
     """
     # GET SYSTEMS EFFICIENCIES
-    data_systems = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(), "COOLING").set_index('code')
-    type_system = bpr.supply['type_cs']
-    energy_source = data_systems.loc[type_system, 'source_cs']
-
-    if energy_source == "GRID":
-        if bpr.supply['type_cs'] in {'T2', 'T3'}:
-            if bpr.supply['type_cs'] == 'T2':
-                t_source = (tsd['T_ext'] + 273)
-            if bpr.supply['type_cs'] == 'T3':
-                t_source = (tsd['T_ext_wetbulb'] + 273)
-
+    energy_source = bpr.supply["source_cs"]
+    scale_technology = bpr.supply["scale_cs"]
+    efficiency_average_year = bpr.supply["eff_cs"]
+    if scale_technology == "BUILDING":
+        if energy_source == "GRID":
+            t_source = (tsd['T_ext'] + 273)
             # heat pump energy
             tsd['E_cre'] = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcre_sys'], (tsd['Tcre_sys_sup'] + 273),
                                                                 (tsd['Tcre_sys_re'] + 273), t_source)
             # final to district is zero
             tsd['DC_cre'] = np.zeros(HOURS_IN_YEAR)
-    elif energy_source == "DC":
-        tsd['DC_cre'] = tsd['Qcre_sys']
+        elif energy_source == "NONE":
+            tsd['E_cre'] = np.zeros(HOURS_IN_YEAR)
+            tsd['DC_cre'] = np.zeros(HOURS_IN_YEAR)
+        else:
+            raise Exception('check potential error in input database of LCA infrastructure / COOLING')
+
+    elif scale_technology == "DISTRICT":
+        tsd['DC_cre'] = tsd['Qcs_sys'] / efficiency_average_year
+        tsd['E_cre'] = np.zeros(HOURS_IN_YEAR)
+    elif scale_technology == "NONE":
+        tsd['DC_cre'] = np.zeros(HOURS_IN_YEAR)
         tsd['E_cre'] = np.zeros(HOURS_IN_YEAR)
     else:
-        tsd['E_cre'] = np.zeros(HOURS_IN_YEAR)
-
+        raise Exception('check potential error in input database of LCA infrastructure / COOLING')
     return tsd
 

@@ -13,7 +13,7 @@ from osgeo import gdal
 
 import cea.config
 import cea.inputlocator
-from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_district, \
+from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_surroundings, \
     verify_input_occupancy, verify_input_age, verify_input_terrain, COLUMNS_ZONE_OCCUPANCY, COLUMNS_ZONE_AGE
 from cea.utilities.dbf import dataframe_to_dbf, dbf_to_dataframe
 from cea.utilities.standardize_coordinates import shapefile_to_WSG_and_UTM, raster_to_WSG_and_UTM
@@ -31,7 +31,7 @@ __status__ = "Production"
 def create_new_project(locator, config):
     # Local variables
     zone_geometry_path = config.create_new_project.zone
-    district_geometry_path = config.create_new_project.district
+    surroundings_geometry_path = config.create_new_project.district
     street_geometry_path = config.create_new_project.streets
     terrain_path = config.create_new_project.terrain
     occupancy_path = config.create_new_project.occupancy
@@ -50,17 +50,17 @@ def create_new_project(locator, config):
     verify_input_terrain(terrain)
     driver.CreateCopy(locator.get_terrain(), terrain)
 
-    # now create the district file if it does not exist
-    if district_geometry_path == '':
-        print("there is no district file, we proceed to create it based on the geometry of your zone")
-        zone.to_file(locator.get_district_geometry())
+    # now create the surroundings file if it does not exist
+    if surroundings_geometry_path == '':
+        print("there is no surroundings file, we proceed to create it based on the geometry of your zone")
+        zone.to_file(locator.get_surroundings_geometry())
     else:
         # import file
-        district, _, _ = shapefile_to_WSG_and_UTM(district_geometry_path)
+        surroundings, _, _ = shapefile_to_WSG_and_UTM(surroundings_geometry_path)
         # verify if input file is correct for CEA, if not an exception will be released
-        verify_input_geometry_district(zone)
+        verify_input_geometry_surroundings(zone)
         # create new file
-        district.to_file(locator.get_district_geometry())
+        surroundings.to_file(locator.get_surroundings_geometry())
 
     # now transfer the streets
     if street_geometry_path == '':
