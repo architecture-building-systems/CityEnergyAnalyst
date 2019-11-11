@@ -49,6 +49,7 @@ def next_id():
         # this is the first job...
         return 1
 
+
 # FIXME: replace with database or similar solution
 class JobInfo(object):
     """Store all the information required to run a job"""
