@@ -20,7 +20,7 @@ digraph trace_inputlocator {
         fontsize = 20;
         rank=same;
         label="WTP_CBD_h/inputs/building-geometry";
-        "district.shp"
+        "surroundings.shp"
         "zone.shp"
     }
     subgraph cluster_1_in {
@@ -118,7 +118,7 @@ digraph trace_inputlocator {
     "occupancy.dbf" -> "operation-costs"[label="(get_building_occupancy)"]
     "supply_systems.dbf" -> "operation-costs"[label="(get_building_supply)"]
     "benchmark_2000W.xls" -> "operation-costs"[label="(get_data_benchmark)"]
-    "district.shp" -> "operation-costs"[label="(get_district_geometry)"]
+    "surroundings.shp" -> "operation-costs"[label="(get_district_geometry)"]
     "envelope_systems.xls" -> "operation-costs"[label="(get_envelope_systems)"]
     "LCA_buildings.xlsx" -> "operation-costs"[label="(get_life_cycle_inventory_building_systems)"]
     "LCA_infrastructure.xlsx" -> "operation-costs"[label="(get_life_cycle_inventory_supply_systems)"]

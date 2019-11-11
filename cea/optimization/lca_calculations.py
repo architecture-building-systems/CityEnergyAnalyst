@@ -23,7 +23,7 @@ __status__ = "Production"
 
 class LcaCalculations(object):
     def __init__(self, locator):
-        resources_lca = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(), sheet_name="RESOURCES")
+        resources_lca = pd.read_excel(locator.get_database_supply_systems(), sheet_name="FEEDSTOCKS")
         resources_lca.set_index('code', inplace=True)
 
         # Natural gas

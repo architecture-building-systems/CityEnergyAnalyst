@@ -19,7 +19,7 @@ from cea.utilities.standardize_coordinates import get_geographic_coordinate_syst
 api = Namespace('Inputs', description='Input data for CEA')
 
 COLORS = {
-    'district': get_color_array('white'),
+    'surroundings': get_color_array('white'),
     'dh': get_color_array('red'),
     'dc': get_color_array('blue'),
     'disconnected': get_color_array('grey')
@@ -47,7 +47,7 @@ def read_inputs_field_types():
 
 INPUTS = read_inputs_field_types()
 INPUT_KEYS = INPUTS.keys()
-GEOJSON_KEYS = ['zone', 'district', 'streets', 'dc', 'dh']
+GEOJSON_KEYS = ['zone', 'surroundings', 'streets', 'dc', 'dh']
 NETWORK_KEYS = ['dc', 'dh']
 
 # INPUT_MODEL = api.model('Input', {
@@ -124,8 +124,8 @@ class AllInputs(Resource):
         store['crs'] = {}
         store['geojsons']['zone'], store['crs']['zone'] = df_to_json(
             locator.get_zone_geometry(), bbox=True, trigger_abort=False)
-        store['geojsons']['district'], store['crs']['district'] = df_to_json(
-            locator.get_district_geometry(), bbox=True, trigger_abort=False)
+        store['geojsons']['surroundings'], store['crs']['surroundings'] = df_to_json(
+            locator.get_surroundings_geometry(), bbox=True, trigger_abort=False)
         store['geojsons']['streets'], store['crs']['streets'] = df_to_json(
             locator.get_street_network(), trigger_abort=False)
         store['geojsons']['dc'], store['connected_buildings']['dc'], store['crs']['dc'] = get_network(
@@ -192,7 +192,7 @@ def get_building_properties():
     import cea.glossary
     # FIXME: Find a better way to ensure order of tabs
     tabs = ['zone', 'age', 'occupancy', 'architecture', 'internal-loads', 'indoor-comfort', 'technical-systems',
-            'supply-systems', 'district']
+            'supply-systems', 'surroundings']
 
     config = current_app.cea_config
     locator = cea.inputlocator.InputLocator(config.scenario)

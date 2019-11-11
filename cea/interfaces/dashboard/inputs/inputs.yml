@@ -1,5 +1,6 @@
 # describes the input databases
 zone:
+  parent: zone
   pk: Name
   type: shp  # shp or dbf
   location: get_zone_geometry
@@ -16,10 +17,11 @@ zone:
     type: float
   - name: REFERENCE
     type: str
-district:
+surroundings:
+  parent: None
   pk: Name
   type: shp  # shp or dbf
-  location: get_district_geometry
+  location: get_surroundings_geometry
   fields:
   - name: Name
     type: str
@@ -30,6 +32,7 @@ district:
   - name: REFERENCE
     type: str
 age:
+  parent: zone
   pk: Name
   type: dbf
   location: get_building_age
@@ -53,6 +56,7 @@ age:
   - name: REFERENCE
     type: str
 occupancy:
+  parent: zone
   pk: Name
   type: dbf
   location: get_building_occupancy
@@ -94,6 +98,7 @@ occupancy:
   - name: REFERENCE
     type: str
 internal-loads:
+  parent: zone
   pk: Name
   type: dbf
   location: get_building_internal
@@ -125,6 +130,7 @@ internal-loads:
   - name: Vw_lpdpax
     type: float
 supply-systems:
+  parent: zone
   pk: Name
   type: dbf
   location: get_building_supply
@@ -140,6 +146,7 @@ supply-systems:
   - name: type_hs
     type: str
 architecture:
+  parent: zone
   pk: Name
   type: dbf
   location: get_building_architecture
@@ -177,6 +184,7 @@ architecture:
   - name: type_win
     type: str
 indoor-comfort:
+  parent: zone
   pk: Name
   type: dbf
   location: get_building_comfort
@@ -198,9 +206,10 @@ indoor-comfort:
   - name: Ve_lpspax
     type: float
 technical-systems:
+  parent: zone
   pk: Name
   type: dbf
-  location: get_building_hvac
+  location: get_building_air_conditioning
   fields:
     - name: Name
       type: str
@@ -213,6 +222,14 @@ technical-systems:
     - name: type_ctrl
       type: str
     - name: type_vent
+      type: str
+    - name: heat_starts
+      type: str
+    - name: heat_ends
+      type: str
+    - name: cool_starts
+      type: str
+    - name: cool_ends
       type: str
 
 

@@ -56,7 +56,7 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
     """
 
     t0 = time.clock()
-    chiller_prop = pd.read_excel(locator.get_supply_systems(), sheet_name="Absorption_chiller")
+    chiller_prop = pd.read_excel(locator.get_database_supply_systems(), sheet_name="Absorption_chiller")
     for building_name in building_names:
         ## Calculate cooling loads for different combinations
         # SENSIBLE COOLING UNIT
