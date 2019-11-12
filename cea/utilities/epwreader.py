@@ -32,7 +32,8 @@ def epw_reader(weather_path):
     result['date'] = pd.Series(pd.date_range(str(result["year"][0])+"/1/1", periods=HOURS_IN_YEAR, freq='H'))
     result['dayofyear'] = pd.date_range(str(result["year"][0])+"/1/1", periods=HOURS_IN_YEAR, freq='H').dayofyear
     result['ratio_diffhout'] = result['difhorrad_Whm2'] / result['glohorrad_Whm2']
-    result['skycover'] = result['ratio_diffhout'].fillna(1)
+    result['skycover'] = result['ratio_diffhout'].fillna(1.0)
+    result['skycover'] = result['skycover'].replace(np.inf, 1.0)
     result['wetbulb_C'] = np.vectorize(calc_wetbulb)(result['drybulb_C'], result['relhum_percent'])
     result['skytemp_C'] = np.vectorize(calc_skytemp)(result['drybulb_C'], result['dewpoint_C'], result['skycover'])
 
