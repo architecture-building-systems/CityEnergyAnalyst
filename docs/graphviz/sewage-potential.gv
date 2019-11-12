@@ -20,7 +20,7 @@ digraph trace_inputlocator {
         fontsize = 20;
         rank=same;
         label="WTP_CBD_h/inputs/building-geometry";
-        "district.shp"
+        "surroundings.shp"
         "zone.shp"
     }
     subgraph cluster_1_in {
@@ -118,7 +118,7 @@ digraph trace_inputlocator {
     "occupancy.dbf" -> "sewage-potential"[label="(get_building_occupancy)"]
     "benchmark_2000W.xls" -> "sewage-potential"[label="(get_data_benchmark)"]
     "B001.csv" -> "sewage-potential"[label="(get_demand_results_file)"]
-    "district.shp" -> "sewage-potential"[label="(get_district_geometry)"]
+    "surroundings.shp" -> "sewage-potential"[label="(get_district_geometry)"]
     "envelope_systems.xls" -> "sewage-potential"[label="(get_envelope_systems)"]
     "LCA_buildings.xlsx" -> "sewage-potential"[label="(get_life_cycle_inventory_building_systems)"]
     "LCA_infrastructure.xlsx" -> "sewage-potential"[label="(get_life_cycle_inventory_supply_systems)"]

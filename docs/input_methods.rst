@@ -528,14 +528,14 @@ The following file is used by scripts: ['emissions']
      code,Building use. It relates to the uses stored in the input database of Zone_occupancy - Unit: [-]
 
 
-get_district_geometry
+get_surroundings_geometry
 ---------------------
 
 The following file is used by scripts: ['radiation']
 
 
 
-.. csv-table:: **inputs/building-geometry/district.shp**
+.. csv-table:: **inputs/building-geometry/surroundings.shp**
     :header: "Variable", "Description"
 
      Name,Unique building ID. It must start with a letter. - Unit: [-]

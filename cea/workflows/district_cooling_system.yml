@@ -10,10 +10,11 @@
   "general:scenario-name": baseline
 - script: data-helper
   parameters:
-    region: CH
+    region: SG
+    databases: [comfort, architecture, HVAC, internal-loads, supply, schedules]
 - script: weather-helper
   parameters:
-    weather: Zuerich-Kloten_1990_2010_TMY
+    weather: Singapore-Changi_1990_2010_TMY
 - script: radiation
 - script: schedule-maker
 - script: demand

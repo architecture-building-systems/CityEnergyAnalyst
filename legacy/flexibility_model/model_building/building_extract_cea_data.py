@@ -209,17 +209,17 @@ def extract_cea_databases_files(locator):
     # Get data
     internal_loads_df = pd.read_excel(locator.get_archetypes_properties(), 'INTERNAL_LOADS')
     indoor_comfort_df = pd.read_excel(locator.get_archetypes_properties(), 'INDOOR_COMFORT')
-    construction_envelope_systems_df = pd.read_excel(locator.get_envelope_systems(), 'CONSTRUCTION')
-    leakage_envelope_systems_df = pd.read_excel(locator.get_envelope_systems(), 'LEAKAGE')
-    window_envelope_systems_df = pd.read_excel(locator.get_envelope_systems(), 'WINDOW')
-    roofs_envelope_systems_df = pd.read_excel(locator.get_envelope_systems(), 'ROOF')
-    wall_envelope_systems_df = pd.read_excel(locator.get_envelope_systems(), 'WALL')
-    shading_envelope_systems_df = pd.read_excel(locator.get_envelope_systems(), 'SHADING')
-    emission_systems_heating_df = pd.read_excel(locator.get_technical_emission_systems(), 'heating')
-    emission_systems_cooling_df = pd.read_excel(locator.get_technical_emission_systems(), 'cooling')
-    emission_systems_controller_df = pd.read_excel(locator.get_technical_emission_systems(), 'controller')
-    system_controls_ini_df = pd.read_excel(locator.get_archetypes_system_controls(), 'heating_cooling')
-    cooling_generation_df = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(), 'COOLING')
+    construction_envelope_systems_df = pd.read_excel(locator.get_database_envelope_systems(), 'CONSTRUCTION')
+    leakage_envelope_systems_df = pd.read_excel(locator.get_database_envelope_systems(), 'LEAKAGE')
+    window_envelope_systems_df = pd.read_excel(locator.get_database_envelope_systems(), 'WINDOW')
+    roofs_envelope_systems_df = pd.read_excel(locator.get_database_envelope_systems(), 'ROOF')
+    wall_envelope_systems_df = pd.read_excel(locator.get_database_envelope_systems(), 'WALL')
+    shading_envelope_systems_df = pd.read_excel(locator.get_database_envelope_systems(), 'SHADING')
+    emission_systems_heating_df = pd.read_excel(locator.get_database_air_conditioning_systems(), 'heating')
+    emission_systems_cooling_df = pd.read_excel(locator.get_database_air_conditioning_systems(), 'cooling')
+    emission_systems_controller_df = pd.read_excel(locator.get_database_air_conditioning_systems(), 'controller')
+    system_controls_ini_df = pd.read_excel(locator.get_systems_seasonality(), 'heating_cooling')
+    cooling_generation_df = pd.read_excel(locator.get_database_supply_systems(), 'ALL_IN_ONE_SYSTEMS')
 
     # Set index
     internal_loads_df.set_index('Code', inplace=True)
@@ -262,7 +262,7 @@ def extract_cea_inputs_files(locator):
     zone_occupancy_df = dbf_to_dataframe(locator.get_building_occupancy())
     zone_df = Gdf.from_file(locator.get_zone_geometry())
     architecture_df = dbf_to_dataframe(locator.get_building_architecture())
-    technical_systems_df = dbf_to_dataframe(locator.get_building_hvac())
+    technical_systems_df = dbf_to_dataframe(locator.get_building_air_conditioning())
     supply_systems_df = dbf_to_dataframe(locator.get_building_supply())
 
     # Set index

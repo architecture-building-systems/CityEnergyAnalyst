@@ -54,3 +54,13 @@ VEL_FLOW_MPERS = 3  # in m/s got from Rabtherm technology
 MIN_FLOW_LPERS = 9  # in lps got from Rabtherm technology
 T_MIN = 8  # tmin of extraction got from Rabtherm technology
 H0_KWPERM2K = 1.5  # kW/m2K # heat trasnfer coefficient/ got from Rabtherm technology
+
+#ground temperature values
+SOIL_Cp_JkgK = 2000 # _[A. Kecebas et al., 2011]
+SOIL_lambda_WmK = 1.6
+SOIL_rho_kgm3 = 1600
+
+#insulation of pipes
+PUR_lambda_WmK = 0.023
+STEEL_lambda_WmK = 76
+

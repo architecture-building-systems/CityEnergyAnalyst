@@ -17,6 +17,7 @@ from __future__ import print_function
 
 import multiprocessing
 import sys
+import logging
 from itertools import repeat, izip
 from cea.utilities.workerstream import stream_from_queue, QueueWorkerStream
 
@@ -112,6 +113,13 @@ def __apply_func_with_worker_stream(args):
 
     This function is called _inside_ a separate process.
     """
+
+    # set up logging
+    logger = multiprocessing.log_to_stderr()
+    logger.setLevel(logging.WARNING)
+    from cea import suppres_3rd_party_debug_loggers
+    suppres_3rd_party_debug_loggers()
+
     # unpack the arguments
     func, queue, on_complete, i_queue, n, args = args[0], args[1], args[2], args[3], args[4], args[5:]
 

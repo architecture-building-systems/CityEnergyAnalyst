@@ -12,7 +12,7 @@ import math
 from cea.resources.radiation_daysim import daysim_main, geometry_generator
 import py4design.py3dmodel.fetch as fetch
 import py4design.py2radiance as py2radiance
-from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_district
+from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_surroundings
 from geopandas import GeoDataFrame as gpdf
 import cea.inputlocator
 import cea.config
@@ -144,9 +144,9 @@ def reader_surface_properties(locator, input_shp):
 
     # local variables
     architectural_properties = gpdf.from_file(input_shp).drop('geometry', axis=1)
-    surface_database_windows = pd.read_excel(locator.get_envelope_systems(), "WINDOW")
-    surface_database_roof = pd.read_excel(locator.get_envelope_systems(), "ROOF")
-    surface_database_walls = pd.read_excel(locator.get_envelope_systems(), "WALL")
+    surface_database_windows = pd.read_excel(locator.get_database_envelope_systems(), "WINDOW")
+    surface_database_roof = pd.read_excel(locator.get_database_envelope_systems(), "ROOF")
+    surface_database_walls = pd.read_excel(locator.get_database_envelope_systems(), "WALL")
 
     # querry data
     df = architectural_properties.merge(surface_database_windows, left_on='type_win', right_on='code')
@@ -206,11 +206,13 @@ def main(config):
     print("verifying geometry files")
     print(locator.get_zone_geometry())
     verify_input_geometry_zone(gpdf.from_file(locator.get_zone_geometry()))
-    verify_input_geometry_district(gpdf.from_file(locator.get_district_geometry()))
+    verify_input_geometry_surroundings(gpdf.from_file(locator.get_surroundings_geometry()))
 
     # import material properties of buildings
+    print("getting geometry materials")
     building_surface_properties = reader_surface_properties(locator=locator,
                                                             input_shp=locator.get_building_architecture())
+    building_surface_properties.to_csv(locator.get_radiation_materials())
     print("creating 3D geometry and surfaces")
     # create geometrical faces of terrain and buildingsL
     elevation, geometry_terrain, geometry_3D_zone, geometry_3D_surroundings = geometry_generator.geometry_main(locator,

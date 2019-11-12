@@ -617,8 +617,8 @@ def calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr, tsd, t):
         raise Exception("Temperature in RC-Model of building {} out of bounds! First occured at timestep = {}."
                         " The results were Tint = {}, theta_c = {}, theta_m = {},"
                         " Check building geometry and internal loads! Building might be too small in size or"
-                        " architecture parameter Hs = {} might be too small for this geometry. Current bounds of range"
-                        " for RC-model temperatures are between {} and {}.".format(bpr.name, t, T_int, theta_c,  theta_m, bpr.architecture.Hs,
+                        " architecture parameter Hs_ag = {} might be too small for this geometry. Current bounds of range"
+                        " for RC-model temperatures are between {} and {}.".format(bpr.name, t, T_int, theta_c,  theta_m, bpr.architecture.Hs_ag,
                                                                                    T_WARNING_LOW, T_WARNING_HIGH))
 
     rc_model_temp = {'theta_m': theta_m, 'theta_c': theta_c, 'T_int': T_int, 'theta_o': theta_o, 'theta_ea': theta_ea,

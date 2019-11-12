@@ -74,9 +74,9 @@ With the CEA dashboard:
 Alternatively with Pycharm:
 
 #. Open PyCharm from your Desktop.
-#. Go to the cea.config file stored in %userprofile% and edit the parameters for the tools General, Data Helper, District Helper, Terrain Helper and Streets Helper
+#. Go to the cea.config file stored in %userprofile% and edit the parameters for the tools General, Data Helper, Surroundings Helper, Terrain Helper and Streets Helper
 #. Go to CityEnergyAnalyst/cea/datamanagement/data_helper.py and run.
-#. Go to CityEnergyAnalyst/cea/datamanagement/district_geometry_helper.py and run.
+#. Go to CityEnergyAnalyst/cea/datamanagement/surroundings_geometry_helper.py and run.
 #. Go to CityEnergyAnalyst/cea/datamanagement/terrain_helper.py and run.
 #. Go to CityEnergyAnalyst/cea/datamanagement/streets_helper.py and run.
 

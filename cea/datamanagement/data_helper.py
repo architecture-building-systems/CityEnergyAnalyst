@@ -34,7 +34,7 @@ __status__ = "Production"
 def get_technology_related_databases(locator, region):
     technology_database_template = locator.get_technology_template_for_region(region)
     print("Copying technology databases from {source}".format(source=technology_database_template))
-    output_directory = locator.get_technology_folder()
+    output_directory = locator.get_databases_folder()
 
     from distutils.dir_util import copy_tree
     copy_tree(technology_database_template, output_directory)
@@ -151,9 +151,13 @@ def data_helper(locator, region, overwrite_technology_folder,
                   'type_hs',
                   'type_dhw',
                   'type_ctrl',
-                  'type_vent']
+                  'type_vent',
+                  'heat_starts',
+                  'heat_ends',
+                  'cool_starts',
+                  'cool_ends']
         prop_HVAC_df_merged = names_df.merge(prop_HVAC_df, on="Name")
-        dataframe_to_dbf(prop_HVAC_df_merged[fields], locator.get_building_hvac())
+        dataframe_to_dbf(prop_HVAC_df_merged[fields], locator.get_building_air_conditioning())
 
     if update_indoor_comfort_dbf:
         comfort_DB = pd.read_excel(locator.get_archetypes_properties(), 'INDOOR_COMFORT')

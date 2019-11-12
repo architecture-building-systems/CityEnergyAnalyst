@@ -36,6 +36,8 @@ def main(config=None):
     if not config:
         config = cea.config.Configuration()
 
+    from cea import suppres_3rd_party_debug_loggers
+    suppres_3rd_party_debug_loggers()
 
     # handle arguments
     args = sys.argv[1:]  # drop the script name from the arguments
@@ -112,6 +114,4 @@ def print_valid_script_names():
 
 
 if __name__ == '__main__':
-    from cea import suppres_3rd_party_debug_loggers
-    suppres_3rd_party_debug_loggers()
     main(cea.config.Configuration())
