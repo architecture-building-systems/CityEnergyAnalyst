@@ -45,7 +45,7 @@ def schedule_maker_main(locator, config, building=None):
 
     if buildings == []:
         buildings = locator.get_zone_building_names()
-    if building !=None:
+    if building != None:
         buildings = [building] #this is to run the tests
 
     # get variables of indoor comfort and internal loads
