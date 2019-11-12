@@ -383,8 +383,16 @@ class BuildingProperties(object):
         df = envelope.merge(occupancy, left_index=True, right_index=True)
         df = df.merge(geometry, left_index=True, right_index=True)
 
-        df['empty_envelope_ratio'] = 1 - (
-                (df['void_deck'] * (df['height_ag'] / df['floors_ag'])) / (df['Awall'] + df['Awin']))
+        def calc_empty_envelope_ratio(void_deck_floors, height, floors, Awall, Awin):
+            if (Awall + Awin) > 0.0:
+                empty_envelope_ratio = 1 - ((void_deck_floors * (height/ floors)) / (Awall + Awin))
+            else:
+                empty_envelope_ratio = 1
+            return empty_envelope_ratio
+
+        df['empty_envelope_ratio'] = df.apply(lambda x: calc_empty_envelope_ratio(x['void_deck'], x['height_ag'],
+                                                                                  x['floors_ag'], x['Awall'],
+                                                                                  x['Awin']), axis=1)
 
         # adjust envelope areas with Void_deck
         df['Aw'] = df['Awin'] * df['empty_envelope_ratio']
