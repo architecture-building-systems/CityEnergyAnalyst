@@ -65,6 +65,7 @@ N_m_ve_max = 3
 def extract_cea_outputs_to_osmose_main(case, timesteps, season, specified_buildings):
 
     if type(timesteps) is int:
+        # one fixed period (24 or 168 timesteps)
         start_t = get_start_t(case, timesteps, season)
         end_t = (start_t + timesteps)
         op_time = np.ones(timesteps, dtype=int)
@@ -76,7 +77,7 @@ def extract_cea_outputs_to_osmose_main(case, timesteps, season, specified_buildi
         timesteps = 1
         op_time = np.ones(timesteps, dtype=int)
         periods = 1
-    else:
+    elif timesteps == 'typical days':
         cluster_numbers_df = pd.read_excel(path_to_number_of_k_file(), sheet_name='number_of_clusters')
         number_of_clusters = cluster_numbers_df[case.split('_')[4]][case.split('_')[0]]
         print('number of clusters: ', number_of_clusters)
@@ -97,7 +98,20 @@ def extract_cea_outputs_to_osmose_main(case, timesteps, season, specified_buildi
                 op_time.extend(np.ones(24, dtype=int)*count)
         periods = len(op_time)/24
         timesteps = len(op_time)
+    elif timesteps == 'dtw hours':
+        cluster_numbers_df = pd.read_excel(os.path.join(settings.typical_days_path, 'B005_HOT_DTW.xlsx'), header=None)
+        start_t, end_t = {}, {}
+        op_time = []
+        number_of_clusters = cluster_numbers_df.shape[0]
+        for n_hour in range(number_of_clusters):
+            start_t[n_hour] = cluster_numbers_df[0][n_hour]
+            end_t[n_hour] = cluster_numbers_df[0][n_hour] + 1
+            count = cluster_numbers_df[1][n_hour]
+            op_time.extend(np.ones(1, dtype=int)*count)
+        periods = number_of_clusters
+        timesteps = number_of_clusters
 
+    # output to osmose
     save_operatingcost(op_time, timesteps)
 
     RH_max, RH_min = get_rh(case)
