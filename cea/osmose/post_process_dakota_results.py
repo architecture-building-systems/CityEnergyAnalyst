@@ -9,22 +9,24 @@ from cea.osmose.plots.plot_curves_to_compare import plot_multiple_techs
 from matplotlib.ticker import ScalarFormatter
 
 def main():
-    result_folder = 'E:\\ipese_new\\osmose_mk\\results\\HCS_base_hps'
+    result_folder = 'E:\\ipese_new\\osmose_mk\\results\\HCS_base_hps\\'
     # run_folder_list = ['run_013_moga_HOT_B005_1_5136', 'run_014_moga_HOT_B005_1_5144', 'run_015_moga_HOT_B005_1_5145',
     #               'run_016_moga_HOT_B005_1_5147', 'run_017_moga_HOT_B005_1_5148']
-    run_folder_list = ['run_018_moga_HOT_B005_1_5136']
+    run_folder_list = ['run_004_moga_HOT_B005_1_5145_R717']
+    # run_folder_list = os.listdir(result_folder)
     for run_folder in run_folder_list:
-        path_to_rerun_folder = os.path.join('', *[result_folder, run_folder, 'rerun'])
+        if 'run' in run_folder:
+            path_to_rerun_folder = os.path.join('', *[result_folder, run_folder, 'rerun'])
 
-        ## reruns
-        plot_icc_of_all_reruns(path_to_rerun_folder)
-        reruns_df = get_all_reruns(path_to_rerun_folder)
-        plot_perato_reruns(reruns_df, path_to_rerun_folder)
+            ## reruns
+            plot_icc_of_all_reruns(path_to_rerun_folder)
+            reruns_df = get_all_reruns(path_to_rerun_folder)
+            plot_perato_reruns(reruns_df, path_to_rerun_folder)
 
-        ## all populations
-        path_to_dakota_folder = os.path.join('', *[result_folder, run_folder, 'dakota'])
-        plot_perato_all_populations(path_to_dakota_folder, run_folder)
-        plot_perato_graphics(path_to_dakota_folder)
+            ## all populations
+            path_to_dakota_folder = os.path.join('', *[result_folder, run_folder, 'dakota'])
+            plot_perato_all_populations(path_to_dakota_folder, run_folder)
+            plot_perato_graphics(path_to_dakota_folder)
     return
 
 
