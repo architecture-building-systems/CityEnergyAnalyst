@@ -26,9 +26,12 @@ cases = settings.cases
 
 
 def main(case):
-    # make folder to save results
+    # make folder to save re1sults
     path_to_case_folder = os.path.join(result_destination, case)
     make_directory(path_to_case_folder, new_calculation)
+
+    ## start ampl license
+    start_ampl_license(ampl_lic_path, "start")
 
     if type(timesteps) is int:
         # extract demand outputs
@@ -37,15 +40,12 @@ def main(case):
         timesteps_calc, \
         periods = extract_demand_outputs.extract_cea_outputs_to_osmose_main(case, timesteps, season,
                                                                             specified_buildings)
-        ## start ampl license
-        start_ampl_license(ampl_lic_path, "start")
         ## run osmose
         time_print = timesteps
         run_osmose_for_building_cases(Tamb, building_names, case, path_to_case_folder, periods, timesteps_calc, time_print)
     elif type(timesteps) is list:
-        ## start ampl license
-        start_ampl_license(ampl_lic_path, "start")
         for time in timesteps:
+            # run MILP for each time
             time_print = time
             # extract demand outputs
             building_names, \
@@ -55,6 +55,16 @@ def main(case):
                                                                                 specified_buildings)
             ## run osmose
             run_osmose_for_building_cases(Tamb, building_names, case, path_to_case_folder, periods, timesteps_calc, time_print)
+    elif type(timesteps) is str:
+        # extract demand outputs
+        building_names, \
+        Tamb, \
+        timesteps_calc, \
+        periods = extract_demand_outputs.extract_cea_outputs_to_osmose_main(case, timesteps, season,
+                                                                            specified_buildings)
+        ## run osmose
+        time_print = 'dtw'
+        run_osmose_for_building_cases(Tamb, building_names, case, path_to_case_folder, periods, timesteps_calc, time_print)
 
     return np.nan
 
@@ -95,6 +105,8 @@ def osmose_one_run(building, case, periods, tech, time_print):
             new_name = old_name + '_' + case_short + '_' + building + '_' + str(periods) + '_' + str(time_print)
         elif type(timesteps) is list:
             new_name = old_name + '_' + case_short + '_' + building + '_' + str(periods) + '_' + str(time_print)
+        elif type(timesteps) is str:
+            new_name = old_name + '_' + case_short + '_' + building + '_' + str(periods) + '_' + time_print
         else:
             print('check timesteps')
 
