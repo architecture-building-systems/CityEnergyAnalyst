@@ -159,30 +159,6 @@ def task_run_data_helper():
                     'scenario_path': scenario_path})],
         }
 
-
-def task_download_radiation():
-    """For some reference cases, the radiation and properties_surfaces.csv files are too big for git and are stored
-    with git lfs... For these cases we download a known good version from a url"""
-    def download_radiation(scenario_path, reference_case):
-        locator = cea.inputlocator.InputLocator(scenario_path)
-        data = REFERENCE_CASES_DATA[reference_case]
-        properties_surfaces_csv = os.path.join(os.path.dirname(__file__), 'radiation_data', data['properties_surfaces'])
-        radiation_csv = os.path.join(os.path.dirname(__file__), 'radiation_data', data['radiation'])
-        shutil.copyfile(properties_surfaces_csv, locator.get_surface_properties())
-        shutil.copyfile(radiation_csv, locator.get_radiation())
-
-    for reference_case, scenario_path in REFERENCE_CASES.items():
-        if _reference_cases and reference_case not in _reference_cases:
-            continue
-        yield {
-            'name': 'download_radiation:%s' % reference_case,
-            'task_dep': ['download_reference_cases'],
-            'actions': [(download_radiation, [], {
-                'scenario_path': scenario_path,
-                'reference_case': reference_case})]
-        }
-
-
 def task_run_demand():
     """run the demand script for each reference cases and weather file"""
     import cea.demand.demand_main

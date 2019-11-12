@@ -2582,10 +2582,10 @@ get_edge_mass_flow_csv_file:
             sample_value: !!python/long '8759'
             types_found: [long]
     used_by: []
-get_district_geometry:
+get_surroundings_geometry:
     created_by: []
-    description: scenario/inputs/building-geometry/district.shp
-    file_path: c:\reference-case-open\WTP_CBD_h\inputs/building-geometry\district.shp
+    description: scenario/inputs/building-geometry/surroundings.shp
+    file_path: c:\reference-case-open\WTP_CBD_h\inputs/building-geometry\surroundings.shp
     file_type: shp
     schema:
         Name:

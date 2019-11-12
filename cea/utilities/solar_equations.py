@@ -207,6 +207,7 @@ def filter_low_potential(radiation_json_path, metadata_csv_path, config):
 
     #. keep sensors above min radiation
     #. eliminate points when hourly production < 50 W/m2
+    #. augment the solar radiation due to differences between panel reflectance and original reflectances used in daysim
 
     :param radiation_csv: solar insulation data on all surfaces of each building
     :type radiation_csv: .csv
@@ -240,7 +241,6 @@ def filter_low_potential(radiation_json_path, metadata_csv_path, config):
     sensors_metadata = pd.read_csv(metadata_csv_path)
 
     # join total radiation to sensor_metadata
-
     sensors_rad_sum = sensors_rad.sum(0).to_frame('total_rad_Whm2')  # add new row with yearly radiation
     sensors_metadata.set_index('SURFACE', inplace=True)
     sensors_metadata = sensors_metadata.merge(sensors_rad_sum, left_index=True, right_index=True)  # [Wh/m2]
@@ -254,9 +254,10 @@ def filter_low_potential(radiation_json_path, metadata_csv_path, config):
     if config.solar.panel_on_wall is False:
         sensors_metadata = sensors_metadata[sensors_metadata.TYPE != 'walls']
 
-    # keep sensors above min production in sensors_rad
-    max_annual_radiation = sensors_rad.sum(0).max()
+
     # set min yearly radiation threshold for sensor selection
+    # keep sensors above min production in sensors_rad
+    max_annual_radiation = sensors_rad_sum.max().values[0]
     annual_radiation_threshold_Whperm2 = float(config.solar.annual_radiation_threshold)*1000
     sensors_metadata_clean = sensors_metadata[sensors_metadata.total_rad_Whm2 >= annual_radiation_threshold_Whperm2]
     sensors_rad_clean = sensors_rad[sensors_metadata_clean.index.tolist()]  # keep sensors above min radiation

@@ -42,23 +42,24 @@ class InputLocator(object):
         """Use os.makedirs to ensure the folders exist"""
         self._ensure_folder(os.path.dirname(file_path))
 
-    def get_database_standard_schedules(self):
-        return os.path.join(self.get_technology_folder(), 'archetypes', 'schedules')
-
-    def get_database_standard_schedules_use(self, path_to_database, use):
-        return os.path.join(path_to_database, use + '.csv')
-
     def get_project_path(self):
         """Returns the parent folder of a scenario - this is called a project or 'case-study'"""
         return os.path.dirname(self.scenario)
 
+    # Paths to databases
+    def get_databases_folder(self):
+        """Returns the inputs folder of a scenario"""
+        return os.path.join(self.get_input_folder(), "technology")
+
+    def get_database_standard_schedules(self):
+        return os.path.join(self.get_databases_folder(), 'archetypes', 'schedules')
+
+    def get_database_standard_schedules_use(self, path_to_database, use):
+        return os.path.join(path_to_database, use + '.csv')
+
     def get_input_folder(self):
         """Returns the inputs folder of a scenario"""
         return os.path.join(self.scenario, "inputs")
-
-    def get_technology_folder(self):
-        """Returns the inputs folder of a scenario"""
-        return self._ensure_folder(self.get_input_folder(), "technology")
 
     def get_optimization_results_folder(self):
         """Returns the folder containing the scenario's optimization results"""
@@ -276,12 +277,12 @@ class InputLocator(object):
         return os.path.join(self.get_optimization_slave_results_folder(gen_num),
                             'gen_%(gen_num)s_total_performance.csv' % locals())
 
-    def get_optimization_generation_total_performance_pareto(self,  gen_num):
+    def get_optimization_generation_total_performance_pareto(self, gen_num):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
         return os.path.join(self.get_optimization_slave_results_folder(gen_num),
                             'gen_%(gen_num)s_total_performance_pareto.csv' % locals())
 
-    def get_optimization_generation_total_performance_halloffame(self,  gen_num):
+    def get_optimization_generation_total_performance_halloffame(self, gen_num):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
         return os.path.join(self.get_optimization_slave_results_folder(gen_num),
                             'gen_%(gen_num)s_total_performance_halloffame.csv' % locals())
@@ -568,61 +569,46 @@ class InputLocator(object):
     def get_archetypes_properties(self):
         """Returns the database of construction properties to be used by the data-helper. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return os.path.join(self.get_technology_folder(), 'archetypes', 'construction_properties.xlsx')
+        return os.path.join(self.get_databases_folder(), 'archetypes', 'construction_properties.xlsx')
 
-    def get_archetypes_system_controls(self):
+    def get_systems_seasonality(self):
         """ Returns the database of region-specific system control parameters. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario.
 
         :param region:
         :return:
         """
-        return os.path.join(self.get_technology_folder(), 'archetypes', 'system_controls.xlsx')
+        return os.path.join(self.get_databases_folder(), 'systems', 'seasonality.xlsx')
 
-    def get_supply_systems(self):
+    def get_database_supply_systems(self):
         """Returns the database of supply systems for cost analysis. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return os.path.join(self.get_technology_folder(), 'systems', 'supply_systems.xls')
+        return os.path.join(self.get_databases_folder(), 'systems', 'supply_systems.xls')
 
-    def get_life_cycle_inventory_supply_systems(self):
-        """Returns the database of life cycle inventory for supply systems. These are copied
-        to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return os.path.join(self.get_technology_folder(), 'lifecycle', 'LCA_infrastructure.xlsx')
+    def get_database_air_conditioning_systems(self):
+        old_file_path = os.path.join(self.get_databases_folder(), 'systems', 'emission_systems.xls')
+        new_file_path = os.path.join(self.get_databases_folder(), 'systems', 'air_conditioning_systems.xls')
+        if os.path.exists(old_file_path) and os.path.exists(new_file_path) == False:
+            os.rename(old_file_path, new_file_path)
+        return new_file_path
 
-    def get_electricity_costs(self):
-        """Returns the database of life cycle inventory for supply systems. These are copied
-        to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return os.path.join(self.get_technology_folder(), 'systems', 'electricity_costs.xlsx')
+    def get_database_envelope_systems(self):
+        """databases/Systems/envelope_systems.csv"""
+        return os.path.join(self.get_databases_folder(), 'systems', 'envelope_systems.xls')
 
-    def get_life_cycle_inventory_building_systems(self):
+    def get_database_lca_buildings(self):
         """Returns the database of life cycle inventory for buildings systems. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return os.path.join(self.get_technology_folder(), 'lifecycle', 'LCA_buildings.xlsx')
+        return os.path.join(self.get_databases_folder(), 'lifecycle', 'LCA_buildings.xlsx')
 
-    def get_technical_emission_systems(self):
-        """databases/Systems/emission_systems.csv"""
-        return os.path.join(self.get_technology_folder(), 'systems', 'emission_systems.xls')
-
-    def get_envelope_systems(self):
-        """databases/Systems/emission_systems.csv"""
-        return os.path.join(self.get_technology_folder(), 'systems', 'envelope_systems.xls')
-
-    def get_thermal_networks(self):
-        """db/Systems/thermal_networks.xls"""
-        return os.path.join(self.get_technology_folder(), 'systems', 'thermal_networks.xls')
-
-    def get_electrical_networks(self):
-        """db/Systems/electrical_networks.xls"""
-        return os.path.join(self.get_technology_folder(), 'systems', 'electrical_networks.xls')
-
-    def get_data_benchmark(self):
+    def get_database_lca_mobility(self):
         """Returns the database of life cycle inventory for supply systems. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return os.path.join(self.get_technology_folder(), 'benchmarks', 'benchmark_2000W.xls')
+        return os.path.join(self.get_databases_folder(), 'lifecycle', 'LCA_mobility.xls')
 
     def get_uncertainty_db(self):
         """databases/CH/Uncertainty/uncertainty_distributions.xls"""
-        return os.path.join(self.get_technology_folder(), 'uncertainty', 'uncertainty_distributions.xls')
+        return os.path.join(self.get_databases_folder(), 'uncertainty', 'uncertainty_distributions.xls')
 
     def get_uncertainty_results_folder(self):
         return self._ensure_folder(self.scenario, 'outputs', 'data', 'uncertainty')
@@ -652,11 +638,19 @@ class InputLocator(object):
         self.check_cpg(shapefile_path)
         return shapefile_path
 
-    def get_district_geometry(self):
-        """scenario/inputs/building-geometry/district.shp"""
-        shapefile_path = os.path.join(self.get_building_geometry_folder(), 'district.shp')
-        self.check_cpg(shapefile_path)
-        return shapefile_path
+    def get_surroundings_geometry(self):
+        """scenario/inputs/building-geometry/surroundings.shp"""
+        """scenario/inputs/building-properties/air_conditioning_systems.dbf"""
+        # NOTE: we renamed district.shp to surroundings.shp - this code will automaticaly upgrade old scenarios
+        old_file_path = os.path.join(self.get_building_geometry_folder(), 'district.shp')
+        new_file_path = os.path.join(self.get_building_geometry_folder(), 'surroundings.shp')
+        if os.path.exists(old_file_path) and not os.path.exists(new_file_path):
+            for file_extention in ['.shp', '.cpg', '.prj', '.shx', '.dbf']:
+                old_path = os.path.join(self.get_building_geometry_folder(), 'district' + file_extention)
+                new_path = os.path.join(self.get_building_geometry_folder(), 'surroundings' + file_extention)
+                os.rename(old_path, new_path)
+        self.check_cpg(new_file_path)
+        return new_file_path
 
     def check_cpg(self, shapefile_path):
         # ensures that the CPG file is the correct one
@@ -696,13 +690,13 @@ class InputLocator(object):
         """scenario/inputs/building-properties/indoor_comfort.dbf"""
         return os.path.join(self.get_building_properties_folder(), 'indoor_comfort.dbf')
 
-    def get_building_hvac(self):
-        """scenario/inputs/building-properties/technical_systems.dbf"""
-        return os.path.join(self.get_building_properties_folder(), 'technical_systems.dbf')
-
-    def get_building_restrictions(self):
-        """scenario/inputs/building-properties/technical_systems.dbf"""
-        return os.path.join(self.get_building_properties_folder(), 'restrictions.dbf')
+    def get_building_air_conditioning(self):
+        """scenario/inputs/building-properties/air_conditioning_systems.dbf"""
+        old_file_path = os.path.join(self.get_building_properties_folder(), 'technical_systems.dbf')
+        new_file_path = os.path.join(self.get_building_properties_folder(), 'air_conditioning_systems.dbf')
+        if os.path.exists(old_file_path) and os.path.exists(new_file_path) == False:
+            os.rename(old_file_path, new_file_path)
+        return new_file_path
 
     def get_building_architecture(self):
         """scenario/inputs/building-properties/architecture.dbf
@@ -1016,10 +1010,6 @@ class InputLocator(object):
     # OUTPUTS
 
     # SOLAR-RADIATION
-    def get_radiation(self):  # todo: delete if not used
-        """scenario/outputs/data/solar-radiation/radiation.csv"""
-        return os.path.join(self._ensure_folder(self.get_solar_radiation_folder()), 'radiation.csv')
-
     def get_solar_radiation_folder(self):
         """scenario/outputs/data/solar-radiation"""
         return self._ensure_folder(self.scenario, 'outputs', 'data', 'solar-radiation')
@@ -1032,19 +1022,11 @@ class InputLocator(object):
         """scenario/outputs/data/solar-radiation/{building_name}_geometrgy.csv"""
         return os.path.join(self.get_solar_radiation_folder(), '%s_geometry.csv' % building_name)
 
-    def get_building_list(self):
-        """scenario/outputs/data/solar-radiation/radiation.csv"""
-        solar_radiation_folder = os.path.join(self.scenario, 'outputs', 'data', 'solar-radiation')
-        return os.path.join(solar_radiation_folder, 'radiation.csv')
+    def get_radiation_materials(self):
+        """scenario/outputs/data/solar-radiation/{building_name}_geometrgy.csv"""
+        return os.path.join(self.get_solar_radiation_folder(), 'buidling_materials.csv')
 
-    def get_3D_geometry_folder(self):
-        """scenario/inputs/3D-geometries"""
-        return self._ensure_folder(os.path.join(self.scenario, 'inputs', '3D-geometries'))
-
-    def get_surface_properties(self):
-        """scenario/outputs/data/solar-radiation/properties_surfaces.csv"""
-        return os.path.join(self.get_solar_radiation_folder(), 'properties_surfaces.csv')
-
+            # SENSITIVITY ANALYSIS
     def get_sensitivity_output(self, method, samples):
         """scenario/outputs/data/sensitivity-analysis/sensitivity_${METHOD}_${SAMPLES}.xls"""
         return os.path.join(self.scenario, 'outputs', 'data', 'sensitivity-analysis',

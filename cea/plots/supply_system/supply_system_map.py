@@ -104,7 +104,7 @@ class SupplySystemMapPlot(cea.plots.supply_system.SupplySystemPlotBase):
 
         zone = geopandas.GeoDataFrame.from_file(self.locator.get_zone_geometry()).to_crs(
             get_geographic_coordinate_system()).to_json(show_bbox=True)
-        district = geopandas.GeoDataFrame.from_file(self.locator.get_district_geometry()).to_crs(
+        district = geopandas.GeoDataFrame.from_file(self.locator.get_surroundings_geometry()).to_crs(
             get_geographic_coordinate_system()).to_json(show_bbox=True)
         dc = self.get_network_json(data['DC']['path_output_edges'], data['DC']['path_output_nodes'])
         dh = self.get_network_json(data['DH']['path_output_edges'], data['DH']['path_output_nodes'])
@@ -175,10 +175,13 @@ class SupplySystemMapPlot(cea.plots.supply_system.SupplySystemPlotBase):
 
 def get_building_connectivity(locator):
     supply_systems = dbf_to_dataframe(locator.get_building_supply())
-    heating_infrastructure = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(),
-                                           sheet_name='HEATING').set_index('code')['scale_hs']
-    cooling_infrastructure = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(),
-                                           sheet_name='COOLING').set_index('code')['scale_cs']
+    data_all_in_one_systems = pd.read_excel(locator.get_database_supply_systems(), sheet_name='ALL_IN_ONE_SYSTEMS')
+    heating_infrastructure = data_all_in_one_systems[data_all_in_one_systems['system'].isin(['HEATING', 'NONE'])]
+    heating_infrastructure = heating_infrastructure.set_index('code')['scale']
+
+    cooling_infrastructure = data_all_in_one_systems[data_all_in_one_systems['system'].isin(['COOLING', 'NONE'])]
+    cooling_infrastructure = cooling_infrastructure.set_index('code')['scale']
+
     building_connectivity = supply_systems[['Name']].copy()
     building_connectivity['DH_connectivity'] = (
             supply_systems['type_hs'].map(heating_infrastructure) == 'DISTRICT').astype(int)

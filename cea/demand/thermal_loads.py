@@ -191,36 +191,38 @@ def calc_Qcs_sys(bpr, tsd):
     efficiency_average_year = bpr.supply['eff_cs']
     if scale_technology == "BUILDING":
         if energy_source == "GRID":
-            if bpr.supply['type_cs'] in {'T2', 'T3'}:
-                if bpr.supply['type_cs'] == 'T2':
-                    t_source = (tsd['T_ext'] + 273)
-                if bpr.supply['type_cs'] == 'T3':
-                    t_source = (tsd['T_ext_wetbulb'] + 273)
+            t_source = (tsd['T_ext'] + 273)
 
-                # heat pump energy for the 3 components
-                # ahu
-                E_for_Qcs_sys_ahu = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcs_sys_ahu'],
-                                                                       (tsd['Tcs_sys_sup_ahu'] + 273),
-                                                                       (tsd['Tcs_sys_re_ahu'] + 273), t_source)
-                # aru
-                E_for_Qcs_sys_aru = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcs_sys_aru'],
-                                                                       (tsd['Tcs_sys_sup_aru'] + 273),
-                                                                       (tsd['Tcs_sys_re_aru'] + 273), t_source)
-                # scu
-                E_for_Qcs_sys_scu = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcs_sys_scu'],
-                                                                       (tsd['Tcs_sys_sup_scu'] + 273),
-                                                                       (tsd['Tcs_sys_re_scu'] + 273), t_source)
-                # sum
-                tsd['E_cs'] = E_for_Qcs_sys_scu + E_for_Qcs_sys_aru + E_for_Qcs_sys_ahu
-                tsd['DC_cs'] = np.zeros(HOURS_IN_YEAR)
+            # heat pump energy for the 3 components
+            # ahu
+            E_for_Qcs_sys_ahu = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcs_sys_ahu'],
+                                                                   (tsd['Tcs_sys_sup_ahu'] + 273),
+                                                                   (tsd['Tcs_sys_re_ahu'] + 273), t_source)
+            # aru
+            E_for_Qcs_sys_aru = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcs_sys_aru'],
+                                                                   (tsd['Tcs_sys_sup_aru'] + 273),
+                                                                   (tsd['Tcs_sys_re_aru'] + 273), t_source)
+            # scu
+            E_for_Qcs_sys_scu = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcs_sys_scu'],
+                                                                   (tsd['Tcs_sys_sup_scu'] + 273),
+                                                                   (tsd['Tcs_sys_re_scu'] + 273), t_source)
+            # sum
+            tsd['E_cs'] = E_for_Qcs_sys_scu + E_for_Qcs_sys_aru + E_for_Qcs_sys_ahu
+            tsd['DC_cs'] = np.zeros(HOURS_IN_YEAR)
         elif energy_source == "NONE":
             tsd['E_cs'] = np.zeros(HOURS_IN_YEAR)
             tsd['DC_cs'] = np.zeros(HOURS_IN_YEAR)
         else:
             raise Exception('check potential error in input database of LCA infrastructure / COOLING')
     elif scale_technology == "DISTRICT":
-        tsd['DC_cs'] = tsd['Qcs_sys'] / efficiency_average_year
-        tsd['E_cs'] = np.zeros(HOURS_IN_YEAR)
+        if energy_source == "GRID":
+            tsd['DC_cs'] = tsd['Qcs_sys'] / efficiency_average_year
+            tsd['E_cs'] = np.zeros(HOURS_IN_YEAR)
+        elif energy_source == "NONE":
+            tsd['DC_cs'] = np.zeros(HOURS_IN_YEAR)
+            tsd['E_cs'] = np.zeros(HOURS_IN_YEAR)
+        else:
+            raise Exception('check potential error in input database of ALL IN ONE SYSTEMS / COOLING')
     elif scale_technology == "NONE":
         tsd['DC_cs'] = np.zeros(HOURS_IN_YEAR)
         tsd['E_cs'] = np.zeros(HOURS_IN_YEAR)
@@ -596,10 +598,10 @@ def get_hours(bpr):
 
     if bpr.hvac['has-heating-season']:
         # if has heating season start simulating at [before] start of heating season
-        hour_start_simulation = control_heating_cooling_systems.convert_date_to_hour(bpr.hvac['heating-season-start'])
+        hour_start_simulation = control_heating_cooling_systems.convert_date_to_hour(bpr.hvac['heat_starts'])
     elif not bpr.hvac['has-heating-season'] and bpr.hvac['has-cooling-season']:
         # if has no heating season but cooling season start at [before] start of cooling season
-        hour_start_simulation = control_heating_cooling_systems.convert_date_to_hour(bpr.hvac['cooling-season-start'])
+        hour_start_simulation = control_heating_cooling_systems.convert_date_to_hour(bpr.hvac['cool_starts'])
     elif not bpr.hvac['has-heating-season'] and not bpr.hvac['has-cooling-season']:
         # no heating or cooling
         hour_start_simulation = 0

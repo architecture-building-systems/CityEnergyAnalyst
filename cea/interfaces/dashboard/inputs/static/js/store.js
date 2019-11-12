@@ -119,11 +119,11 @@ class InputStore {
         this.changes['delete'][layer].push(...buildings);
         var _this = this;
         $.each(buildings, function (_, building) {
-            if (layer === 'district') {
+            if (layer === 'surroundings') {
                 _this.data[layer] = _this.data[layer].filter(x => x['Name'] !== building);
             } else {
                 $.each(_this.data, function (table_name, table) {
-                    if (table_name !== 'district') {
+                    if (table_name !== 'surroundings') {
                         _this.data[table_name] = table.filter(x => x['Name'] !== building);
                     }
                 });
