@@ -65,7 +65,7 @@ def route_workers():
 def route_start(jobid):
     """Start a ``cea-worker`` subprocess for the script. (FUTURE: add support for cloud-based workers"""
     print("tools/route_start: {jobid}".format(**locals()))
-    worker_processes[jobid] = subprocess.Popen(["python", "-m", "cea.worker", jobid])
+    worker_processes[jobid] = subprocess.Popen(["python", "-m", "cea.worker", "{jobid}".format(jobid=jobid)])
     return jsonify(jobid)
 
 
