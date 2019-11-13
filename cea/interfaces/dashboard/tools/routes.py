@@ -16,21 +16,34 @@ blueprint = Blueprint(
 )
 
 # maintain a list of all subprocess.Popen objects created
-worker_processes = []
+worker_processes = {}  # jobid -> subprocess.Popen
 
 
 def shutdown_worker_processes():
     """When shutting down the flask server, make sure any subprocesses are also terminated. See issue #2408."""
-    for popen in worker_processes:
-        # using code from here: https://stackoverflow.com/a/4229404/2260
-        # to terminate child processes too
-        print("SHUTDOWN: killing child processes of {pid}".format(pid=popen.pid))
+    for jobid in worker_processes.keys():
+        kill_job(jobid)
+
+
+def kill_job(jobid):
+    """Kill the processes associated with a jobid"""
+    if not jobid in worker_processes:
+        return
+
+    popen = worker_processes[jobid]
+    # using code from here: https://stackoverflow.com/a/4229404/2260
+    # to terminate child processes too
+    print("killing child processes of {jobid} ({pid})".format(jobid=jobid, pid=popen.pid))
+    try:
         process = psutil.Process(popen.pid)
-        children = process.children(recursive=True)
-        for child in children:
-            print("-- killing child {pid}".format(pid=child.pid))
-            child.kill()
-        process.kill()
+    except psutil.NoSuchProcess:
+        return
+    children = process.children(recursive=True)
+    for child in children:
+        print("-- killing child {pid}".format(pid=child.pid))
+        child.kill()
+    process.kill()
+    del worker_processes[jobid]
 
 
 @blueprint.route("/")
@@ -42,17 +55,17 @@ def route_index():
 def route_workers():
     """Return a list of worker processes"""
     processes = []
-    for worker in worker_processes:
+    for worker in worker_processes.values():
         processes.append(worker.pid)
         processes.extend(child.pid for child in psutil.Process(worker.pid).children(recursive=True))
     return jsonify(sorted(processes))
 
 
-@blueprint.route('/start/<jobid>', methods=['POST'])
+@blueprint.route('/start/<int:jobid>', methods=['POST'])
 def route_start(jobid):
     """Start a ``cea-worker`` subprocess for the script. (FUTURE: add support for cloud-based workers"""
     print("tools/route_start: {jobid}".format(**locals()))
-    worker_processes.append(subprocess.Popen(["python", "-m", "cea.worker", jobid]))
+    worker_processes[jobid] = subprocess.Popen(["python", "-m", "cea.worker", jobid])
     return jsonify(jobid)
 
 
