@@ -5,6 +5,7 @@ it is highly recommended to keep those constants in a separate file in the subfo
 declare the constants closest to the point of usage.
 """
 from __future__ import absolute_import
+
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Sreepathi Bhargava Krishna"]
@@ -28,6 +29,8 @@ DAYS_IN_YEAR = 365
 HOURS_IN_DAY = 24
 HOURS_IN_YEAR = 8760
 MONTHS_IN_YEAR = 12
+HOURS_PRE_CONDITIONING = 720  # number of hours that the building will be thermally pre-conditioned,
+                                # the results of these hours will be overwritten
 
 # Specific heat
 HEAT_CAPACITY_OF_WATER_JPERKGK = 4185  # [J/kg K]

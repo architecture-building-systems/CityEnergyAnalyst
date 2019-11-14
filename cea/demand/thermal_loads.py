@@ -5,7 +5,7 @@ Demand model of thermal loads
 from __future__ import division
 
 import numpy as np
-from cea.constants import HOURS_IN_YEAR
+from cea.constants import HOURS_IN_YEAR, HOURS_PRE_CONDITIONING
 import pandas as pd
 from cea.demand.latent_loads import convert_rh_to_moisture_content
 from cea.demand import demand_writers
@@ -86,14 +86,14 @@ def calc_thermal_loads(building_name, bpr, weather_data, date_range, locator,
 
     if np.isclose(bpr.rc_model['Af'], 0.0):  # if building does not have conditioned area
         tsd['T_int'] = tsd['T_ext']
-        tsd['x_int'] = np.vectorize(convert_rh_to_moisture_content)(tsd['rh_ext'] , tsd['T_int'])
-        print("building () does not have an air-conditioned area").format(bpr.name)
+        tsd['x_int'] = np.vectorize(convert_rh_to_moisture_content)(tsd['rh_ext'], tsd['T_int'])
+        print("building () does not have an air-conditioned area".format(bpr.name))
     else:
 
-        #CALCULATE PROCESS HEATING
+        # CALCULATE PROCESS HEATING
         tsd['Qhpro_sys'] = schedules['Qhpro_W']  # in Wh
 
-        #CALCULATE PROCESS COOLING
+        # CALCULATE PROCESS COOLING
         tsd['Qcpro_sys'] = schedules['Qcpro_W']   # in Wh
 
         # CALCULATE DATA CENTER LOADS
@@ -150,7 +150,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, date_range, locator,
     tsd = electrical_loads.calc_E_sys(tsd)  # system (incl. losses)
     tsd = electrical_loads.calc_Ef(bpr, tsd)  # final (incl. self. generated)
 
-    #WRITE SOLAR RESULTS
+    # WRITE SOLAR RESULTS
     write_results(bpr, building_name, date_range, loads_output, locator, massflows_output,
                   resolution_outputs, temperatures_output, tsd, debug)
 
@@ -158,10 +158,10 @@ def calc_thermal_loads(building_name, bpr, weather_data, date_range, locator,
 
 
 def calc_QH_sys_QC_sys(tsd):
-  tsd['QH_sys'] = tsd['Qww_sys'] + tsd['Qhs_sys'] + tsd['Qhpro_sys']
-  tsd['QC_sys'] = tsd['Qcs_sys'] + tsd['Qcdata_sys'] + tsd['Qcre_sys'] + tsd['Qcpro_sys']
+    tsd['QH_sys'] = tsd['Qww_sys'] + tsd['Qhs_sys'] + tsd['Qhpro_sys']
+    tsd['QC_sys'] = tsd['Qcs_sys'] + tsd['Qcdata_sys'] + tsd['Qcre_sys'] + tsd['Qcpro_sys']
 
-  return tsd
+    return tsd
 
 
 def write_results(bpr, building_name, date, loads_output, locator, massflows_output,
@@ -397,7 +397,7 @@ def initialize_inputs(bpr, weather_data, locator):
     occupancy_yearly_schedules = pd.read_csv(locator.get_schedule_model_file(building_name))
 
     tsd['people'] = occupancy_yearly_schedules['people_pax']
-    tsd['ve'] = occupancy_yearly_schedules['Ve_lps'] * 3.6 #m3/h
+    tsd['ve'] = occupancy_yearly_schedules['Ve_lps'] * 3.6  # m3/h
     tsd['Qs'] = occupancy_yearly_schedules['Qs_W']
 
     return occupancy_yearly_schedules, tsd
@@ -585,10 +585,6 @@ def update_timestep_data_no_conditioned_area(tsd):
     tsd['T_int'] = tsd['T_ext'].copy()
 
     return tsd
-
-
-HOURS_IN_YEAR = HOURS_IN_YEAR
-HOURS_PRE_CONDITIONING = 720  # number of hours that the building will be thermally pre-conditioned, the results of these hours will be overwritten
 
 
 def get_hours(bpr):
