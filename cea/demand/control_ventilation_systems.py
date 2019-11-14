@@ -70,10 +70,10 @@ def is_mechanical_ventilation_heat_recovery_active(bpr, tsd, t):
     if is_mechanical_ventilation_active(bpr, tsd, t)\
             and has_mechanical_ventilation_heat_recovery(bpr)\
             and control_heating_cooling_systems.is_heating_season(t, bpr):
-
-        # heat recovery is always active if mechanical ventilation is active (no intelligent by pass)
-        # this is the usual system configuration according to Clayton Miller
-        return True
+        if is_night_flushing_active(bpr, tsd, t) or is_economizer_active(bpr, tsd, t):
+            return False
+        else:
+            return True
 
     elif is_mechanical_ventilation_active(bpr, tsd, t)\
             and has_mechanical_ventilation_heat_recovery(bpr)\
@@ -87,7 +87,7 @@ def is_mechanical_ventilation_heat_recovery_active(bpr, tsd, t):
             and tsd['T_int'][t-1] >= tsd['T_ext'][t]:
 
         # heat recovery is deactivated in the cooling case,
-        #  if outdoor air conditions are colder than indoor (free cooling)
+        # if outdoor air conditions are colder than indoor (free cooling)
 
         return False
 
@@ -98,10 +98,9 @@ def is_mechanical_ventilation_heat_recovery_active(bpr, tsd, t):
 def is_night_flushing_active(bpr, tsd, t):
 
     # night flushing is available for window ventilation (manual) and mechanical ventilation (automatic)
-    # night flushing is active during the night in the cooling season, if the outdoor conditions are favourable
+    # night flushing is active during the night if the outdoor conditions are favourable
 
     if has_night_flushing(bpr) \
-            and control_heating_cooling_systems.is_cooling_season(t, bpr) \
             and is_night_time(t) \
             and tsd['T_int'][t-1] > TEMPERATURE_ZONE_CONTROL_NIGHT_FLUSHING \
             and tsd['T_int'][t-1] > tsd['T_ext'][t] + DELTA_T_NIGHT_FLUSHING \
@@ -118,8 +117,8 @@ def is_economizer_active(bpr, tsd, t):
     Control of activity of economizer of mechanical ventilation system
     Economizer of mechanical ventilation is controlled via zone set point temperatures, indoor air temperature and
     outdoor air temperature.
-    Economizer is active during cooling season if the indoor air temperature exceeds the set point and the outdoor
-    temperatures are lower than the set point.
+    Economizer is active if the indoor air temperature exceeds the set point and the outdoor temperatures are lower
+    than the set point.
     Economizer increases mechanical ventilation flow rate to the maximum.
     
     Author: Gabriel Happle
@@ -136,8 +135,7 @@ def is_economizer_active(bpr, tsd, t):
     """
 
     if has_mechanical_ventilation_economizer(bpr) \
-            and control_heating_cooling_systems.is_cooling_season(t, bpr) \
-            and tsd['T_int'][t-1] > tsd['ta_cs_set'][t] >= tsd['T_ext'][t]:
+            and tsd['T_int'][t-1] > bpr.comfort['Tcs_set_C'] >= tsd['T_ext'][t]:
 
         return True
 
