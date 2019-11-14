@@ -65,7 +65,7 @@ def plot_carnot_from_icc_txt(path, t_list, T_ref_list, line_types, plot_type, mo
     return
 
 def plot_carnot_from_icc_txt_techs(paths, t, T_max_dict, T_ref_dict, line_types, plot_type, txt_name):
-    case = ''
+    case = 'B005'
     # figure size
     plt.figure(figsize=(8, 7))
     ax1 = plt.subplot()
@@ -181,34 +181,7 @@ def calc_T_ref(path_to_run_folder):
     T_ref_list = outputs_df['T_OA'] + 273.15
     return T_ref_list.values
 
-def main():
-    tech = 'HCS_base'
-    path_to_base_folder = 'E:\\HCS_results_1022\\HCS_base_m_out_dP\\'
-    # path_to_base_folder = 'E:\\OSMOSE_projects\\HCS_mk\\results\\'
-    run_folder = 'run_003_OFF_B005_1_24_no_r'
 
-    # plot one tech
-    run_folders = os.listdir(os.path.join(path_to_base_folder, tech))
-    for run_folder in ['run_011_RET_B005_1_24_no_r']:
-        if 'run' in run_folder:
-            plot_iccc_for_one_tech(path_to_base_folder, run_folder, tech)
-
-
-    ## plot multiple techs in one figure
-    # paths_to_folder, T_max_dict, T_ref_dict = {}, {}, {}
-    # # for tech in ['HCS_base', 'HCS_base_coil', 'HCS_base_3for2', 'HCS_base_ER0', 'HCS_base_IEHX', 'HCS_base_LD']:
-    # for tech in ['HCS_base']:
-    #     model_folder = [path_to_base_folder, tech, run_folder, 's_001\\plots\\icc\\models']
-    #     paths_to_folder[tech] = os.path.join('', *model_folder)
-    #     T_max_dict[tech] = calc_T_max(path_to_base_folder + tech, run_folder)
-    #     path_to_folder = os.path.join('', *[path_to_base_folder, tech, run_folder])
-    #     T_ref_dict[tech] = calc_T_ref(path_to_folder)
-    #
-    # for t in np.arange(1,25,1):
-    # # for t in np.arange(73,73+24,2):
-    # # for t in [10]:
-    #     line_types = ['separated'] # 'base'
-    #     plot_carnot_from_icc_txt_techs(paths_to_folder, t, T_max_dict, T_ref_dict, line_types, 'icc', 'all_chillers')
 
 
 def plot_iccc_for_one_tech(path_to_base_folder, run_folder, tech):
@@ -240,6 +213,37 @@ def plot_iccc_for_one_tech(path_to_base_folder, run_folder, tech):
     # model_folder = ['E:\\HCS_results_1015\\base\\', 'HCS_base', 'run_005_RET_B005_1_168', 's_001\\plots\\icc\\models']
     # path_to_folder = os.path.join('', *model_folder)
     # plot_carnot_from_icc_txt(path_to_folder, t_list, T_max_list, T_ref_list, line_types, 'icc', 'all_chillers')
+
+
+def main():
+    tech = 'HCS_base_3for2'
+    path_to_base_folder = 'E:\\OSMOSE_projects\\HCS_mk\\results\\'
+    # path_to_base_folder = 'E:\\OSMOSE_projects\\HCS_mk\\results\\'
+    run_folder = 'run_038_OFF_B005_1_24'
+
+    # plot one tech
+    # run_folders = os.listdir(os.path.join(path_to_base_folder, tech))
+    # for run_folder in ['run_001']:
+    #     if 'run' in run_folder:
+    #         plot_iccc_for_one_tech(path_to_base_folder, run_folder, tech)
+
+
+    ## plot multiple techs in one figure
+    paths_to_folder, T_max_dict, T_ref_dict = {}, {}, {}
+    # for tech in ['HCS_base', 'HCS_base_coil', 'HCS_base_3for2', 'HCS_base_ER0', 'HCS_base_IEHX', 'HCS_base_LD']:
+    for tech in ['HCS_base']:
+        model_folder = [path_to_base_folder, tech, run_folder, 's_001\\plots\\icc\\models']
+        paths_to_folder[tech] = os.path.join('', *model_folder)
+        T_max_dict[tech] = calc_T_max(path_to_base_folder + tech, run_folder)
+        path_to_folder = os.path.join('', *[path_to_base_folder, tech, run_folder])
+        T_ref_dict[tech] = calc_T_ref(path_to_folder)
+
+    for t in np.arange(1,25,1):
+    # for t in np.arange(73,73+24,2):
+    # for t in [10]:
+        line_types = ['base'] # 'base'
+        plot_carnot_from_icc_txt_techs(paths_to_folder, t, T_max_dict, T_ref_dict, line_types, 'icc', 'all_chillers')
+
 
 
 if __name__ == '__main__':

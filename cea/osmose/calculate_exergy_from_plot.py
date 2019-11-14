@@ -104,10 +104,11 @@ def get_exergy_use_gain_indices(x):
 def main():
     # case
     tech = 'HCS_base'
-    # path_to_base_folder = 'E:\\OSMOSE_projects\\HCS_mk\\results\\'
-    path_to_base_folder = "E:\\HCS_results_1022\\HCS_base_m_out_dP"
+    path_to_base_folder = 'E:\\OSMOSE_projects\\HCS_mk\\results\\'
+    # path_to_base_folder = "E:\\HCS_results_1022\\HCS_base_m_out_dP"
 
-    all_run_folders = os.listdir(os.path.join(path_to_base_folder, tech))
+    # all_run_folders = os.listdir(os.path.join(path_to_base_folder, tech))
+    all_run_folders = ['run_036_RET_B005_1_24', 'run_037_HOT_B005_1_24', 'run_038_OFF_B005_1_24']
     for run_folder in all_run_folders:
         if 'run' in run_folder:
             print(run_folder)

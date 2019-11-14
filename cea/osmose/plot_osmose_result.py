@@ -4,7 +4,7 @@ import pandas as pd
 import os
 import matplotlib.pyplot as plt
 
-from cea.osmose.post_compute_osmose_results import set_up_ex_df, calc_qc_loads
+from cea.osmose.osmose_result_functions import set_up_ex_df, calc_qc_loads
 from cea.osmose.auxiliary_functions import calc_RH_from_w
 from cea.osmose.settings import PLOTS
 

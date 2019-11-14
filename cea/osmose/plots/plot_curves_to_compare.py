@@ -37,7 +37,7 @@ def plot_multiple_techs(paths, t, plot_type, line_types, model_name):
         path = paths[key]
         for line_type in line_types:
             x, y = load_data_from_txt(path, plot_type, line_type, model_name, t)
-            if 'HCS' in key:
+            if 'HCS_base' in key:
                 color = COLOR_CODES[key]
             elif 'base' in line_type:
                 color = '#000000'  # set base to black
@@ -109,8 +109,32 @@ def main():
 
     # plot_multiple_techs(paths, 5, plot_type, line_type, model_name)
 
+    ## plot multiple techs
+    # 1. Main folder
+    main_folder = 'E:\\OSMOSE_projects\\HCS_mk\\results\\'
+    # 2. get paths
+    paths = {}
+    tech_dict = {'HCS_base_3for2': 'run_001', 'HCS_base': 'run_036'}
+    for tech in tech_dict.keys():
+        run = tech_dict[tech]
+        folder_layers = [main_folder, tech, run, 's_001\\plots\\icc\\models']
+        paths[tech] = os.path.join('', *folder_layers)
 
+    # 3. plot
+    plot_type = 'icc'
+    model_name = 'all_chillers'
+    line_type = ['separated']  # 'base' or 'separated'
+    t = 1
+    plot_multiple_techs(paths, t, plot_type, line_type, model_name)
+
+
+    #----------------------------
     ## Plot reruns from dakota ##
+    #----------------------------
+    # plot_reruns_from_dakota()
+
+
+def plot_reruns_from_dakota():
     # 1. Main folder
     main_folder = 'E:\\ipese_new\\osmose_mk\\results\\HCS_base_hps\\run_014_moga\\rerun'
     # 2. get paths
@@ -119,17 +143,18 @@ def main():
     #                    'run_001100', 'run_001319', 'run_001713', 'run_001640', 'run_001645', 'run_001675', 'run_001676',
     #                    'run_001678', 'run_001702', 'run_001703']
     for run_folder in os.listdir(main_folder):
-    # for run_folder in runs_to_exclude:
+        # for run_folder in runs_to_exclude:
         if 'run' in run_folder:
             # if run_folder not in runs_to_exclude:
-                folder_layers = [main_folder, run_folder, 's_001\\plots\\icc\\models']
-                paths[run_folder] = os.path.join('', *folder_layers)
+            folder_layers = [main_folder, run_folder, 's_001\\plots\\icc\\models']
+            paths[run_folder] = os.path.join('', *folder_layers)
     # 3. plot
     plot_type = 'icc'
     model_name = 'hp'
-    line_type = ['separated', 'base'] # 'base' or 'separated'
+    line_type = ['separated', 'base']  # 'base' or 'separated'
     t = 1
     plot_multiple_techs(paths, t, plot_type, line_type, model_name)
+
 
 if __name__ == '__main__':
     main()

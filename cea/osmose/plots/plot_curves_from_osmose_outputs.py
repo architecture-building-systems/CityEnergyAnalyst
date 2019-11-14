@@ -107,7 +107,7 @@ def main():
 
     # plotting
     # for t in np.arange(1,25,1):
-    for t in [146]:
+    for t in [12]:
         plot_base_and_separated(path_to_folder, t, plot_type, model_name)
 
 

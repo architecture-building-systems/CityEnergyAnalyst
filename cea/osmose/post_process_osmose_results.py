@@ -567,13 +567,13 @@ if __name__ == '__main__':
     # result_path_folder = "E:\\HCS_results_1022\\HCS_base_m_out_dP"
     result_path_folder = 'E:\\OSMOSE_projects\\HCS_mk\\results'
     # TECHS = ['HCS_base', 'HCS_base_coil', 'HCS_base_3for2', 'HCS_base_ER0', 'HCS_base_IEHX', 'HCS_base_LD']
-    TECHS = ['HCS_base_coil']
+    TECHS = ['HCS_base']
 
     for tech in TECHS:
         tech_folder_path = os.path.join(result_path_folder, tech)
         folders_list = os.listdir(tech_folder_path)
         # for folder in folders_list:
-        for folder in ['run_018']:
+        for folder in ['run_036_RET_B005_1_24', 'run_037_HOT_B005_1_24', 'run_038_OFF_B005_1_24']:
             if 'run' in folder:
                 folder_path = os.path.join(tech_folder_path, folder)
                 file_list = os.listdir(folder_path)

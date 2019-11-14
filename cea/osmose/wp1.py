@@ -26,7 +26,7 @@ cases = settings.cases
 
 
 def main(case):
-    # make folder to save re1sults
+    # make folder to save results
     path_to_case_folder = os.path.join(result_destination, case)
     make_directory(path_to_case_folder, new_calculation)
 
