@@ -255,19 +255,6 @@ diameter_int_m = pd.Series(D_int_m, pipe_names)
 diameter_ext_m = pd.Series(D_ext_m, pipe_names)
 diameter_ins_m = pd.Series(D_ins_m, pipe_names)
 
-#calculate the thermal characteristics of the grid
-temperature_of_the_ground_K = calculate_ground_temperature(locator)
-thermal_coeffcient_WperKm = pd.Series(np.vectorize(calc_linear_thermal_loss_coefficient)(diameter_ext_m, diameter_int_m, diameter_ins_m), pipe_names)
-average_temperature_network = T_sup_K_building.max(axis=1)
-delta_T_in_out_K = average_temperature_network - temperature_of_the_ground_K
-
-thermal_losses_W = results.link['headloss'].copy()
-thermal_losses_W.reset_index(inplace=True, drop=True)
-for pipe in pipe_names:
-    length = edge_df.loc[pipe]['pipe length']
-    k_WperKm_pipe = thermal_coeffcient_WperKm[pipe]
-    thermal_losses_W[pipe] = delta_T_in_out_K * k_WperKm_pipe * length
-
 # 2nd ITERATION GET PRESSURE POINTS AND MASSFLOWS FOR SIZING PUMPING NEEDS - this could be for all the year
 # modify diameter and run simualtions
 for edge in edge_df.iterrows():
@@ -285,9 +272,9 @@ head_loss_m = unitary_head_loss_m_l.copy()
 for column in head_loss_m.columns.values:
     length = edge_df.loc[column]['pipe length']
     head_loss_m[column] = head_loss_m[column] * length
-accumulated_head_loss_m = head_loss_m.sum(axis=1) + thermal_transfer_unit_design_head_m * len(building_names)
+accumulated_head_loss_m = head_loss_m.sum(axis=1) + (thermal_transfer_unit_design_head_m * len(building_names))
 
-# apply this pattern to the reservoir
+# apply this pattern to the reservoir and get results
 base_head = 1
 pattern = accumulated_head_loss_m.tolist()
 wn.add_pattern('reservoir', pattern)
@@ -298,6 +285,38 @@ pat = wn.get_pattern('reservoir')
 reservoir.head_timeseries._pattern = 'reservoir'
 sim = wntr.sim.EpanetSimulator(wn)
 results = sim.run_sim()
+
+
+#$ POSPROCESSING - PRESSURE/HEAD LOSSES PER PIPE PER HOUR OF THE YEAR
+unitary_head_loss_ftperkft = results.link['headloss'].abs()
+unitary_head_loss_m_l = unitary_head_loss_ftperkft * 0.30487 / 304.87
+head_loss_m = unitary_head_loss_m_l.copy()
+for column in head_loss_m.columns.values:
+    length = edge_df.loc[column]['pipe length']
+    head_loss_m[column] = head_loss_m[column] * length
+
+#$ POSPROCESSING - PUMPING NEEDS PER HOUR OF THE YEAR (TIMES 2 to account for return)
+accumulated_head_loss_m = (head_loss_m.sum(axis=1) + (thermal_transfer_unit_design_head_m * len(building_names))) *2
+
+
+#$ POSPROCESSING - MASSFLOWRATES PER PIPE PER HOUR OF THE YEAR
+flow_rate_m3s = results.link['flowrate'].abs()
+
+
+#$ POSPROCESSING - THERMAL LOSSES PER PIPE PER HOUR OF THE YEAR
+#calculate the thermal characteristics of the grid
+temperature_of_the_ground_K = calculate_ground_temperature(locator)
+thermal_coeffcient_WperKm = pd.Series(np.vectorize(calc_linear_thermal_loss_coefficient)(diameter_ext_m, diameter_int_m, diameter_ins_m), pipe_names)
+average_temperature_network = T_sup_K_building.max(axis=1)
+delta_T_in_out_K = average_temperature_network - temperature_of_the_ground_K
+
+thermal_losses_W = results.link['headloss'].copy()
+thermal_losses_W.reset_index(inplace=True, drop=True)
+for pipe in pipe_names:
+    length = edge_df.loc[pipe]['pipe length']
+    k_WperKm_pipe = thermal_coeffcient_WperKm[pipe]
+    thermal_losses_W[pipe] = delta_T_in_out_K * k_WperKm_pipe * length
+
 x = 1
 # Plot results on the network
 # pressure_at_5hr = results.node['pressure'].loc[4*3600, :]
