@@ -2,122 +2,121 @@
 
 [JUNCTIONS]
 ;ID                      Elevation       Demand Pattern                 
- NODE0                              0    475.50969424 pat2                       ;
- NODE1                              0               0 pat2                       ;
- NODE2                              0               0 pat2                       ;
- NODE3                              0               0 pat2                       ;
- NODE4                              0               0 pat2                       ;
- NODE5                              0               0 pat2                       ;
- NODE6                              0               0 pat2                       ;
- NODE7                              0    475.50969424 pat2                       ;
- NODE8                              0               0 pat2                       ;
- NODE9                              0    475.50969424 pat2                       ;
- NODE10                             0               0 pat2                       ;
- NODE11                             0               0 pat2                       ;
- NODE12                             0    475.50969424 pat2                       ;
- NODE13                             0    475.50969424 pat2                       ;
- NODE14                             0               0 pat2                       ;
- NODE15                             0               0 pat2                       ;
- NODE16                             0               0 pat2                       ;
- NODE17                             0               0 pat2                       ;
- NODE18                             0               0 pat2                       ;
- NODE19                             0               0 pat2                       ;
- NODE20                             0    475.50969424 pat2                       ;
- NODE21                             0               0 pat2                       ;
- NODE22                             0               0 pat2                       ;
- NODE23                             0               0 pat2                       ;
- NODE24                             0               0 pat2                       ;
- NODE25                             0    475.50969424 pat2                       ;
- NODE26                             0    475.50969424 pat2                       ;
- NODE27                             0               0 pat2                       ;
- NODE28                             0    475.50969424 pat2                       ;
- NODE29                             0    475.50969424 pat2                       ;
- NODE30                             0               0 pat2                       ;
- NODE31                             0               0 pat2                       ;
- NODE32                             0    475.50969424 pat2                       ;
- NODE33                             0    475.50969424 pat2                       ;
- NODE34                             0               0 pat2                       ;
- NODE35                             0               0 pat2                       ;
- NODE36                             0               0 pat2                       ;
- NODE37                             0    475.50969424 pat2                       ;
- NODE38                             0               0 pat2                       ;
- NODE39                             0    475.50969424 pat2                       ;
- NODE40                             0               0 pat2                       ;
- NODE41                             0               0 pat2                       ;
- NODE42                             0    475.50969424 pat2                       ;
- NODE43                             0    475.50969424 pat2                       ;
- NODE44                             0               0 pat2                       ;
- NODE45                             0               0 pat2                       ;
- NODE46                             0               0 pat2                       ;
- NODE47                             0               0 pat2                       ;
- NODE48                             0    475.50969424 pat2                       ;
- NODE49                             0               0 pat2                       ;
- NODE50                             0               0 pat2                       ;
+ NODE0                              0    158.50323141 pat1                       ;
+ NODE1                              0               0                            ;
+ NODE2                              0               0                            ;
+ NODE3                              0               0                            ;
+ NODE4                              0               0                            ;
+ NODE5                              0               0                            ;
+ NODE6                              0               0                            ;
+ NODE7                              0    158.50323141 pat1                       ;
+ NODE8                              0               0                            ;
+ NODE9                              0    158.50323141 pat1                       ;
+ NODE10                             0               0                            ;
+ NODE11                             0               0                            ;
+ NODE12                             0    158.50323141 pat1                       ;
+ NODE13                             0    158.50323141 pat1                       ;
+ NODE14                             0               0                            ;
+ NODE15                             0               0                            ;
+ NODE16                             0               0                            ;
+ NODE17                             0               0                            ;
+ NODE18                             0               0                            ;
+ NODE19                             0               0                            ;
+ NODE20                             0    158.50323141 pat1                       ;
+ NODE21                             0               0                            ;
+ NODE22                             0               0                            ;
+ NODE23                             0               0                            ;
+ NODE24                             0               0                            ;
+ NODE25                             0    158.50323141 pat1                       ;
+ NODE26                             0    158.50323141 pat1                       ;
+ NODE27                             0               0                            ;
+ NODE28                             0    158.50323141 pat1                       ;
+ NODE29                             0    158.50323141 pat1                       ;
+ NODE30                             0               0                            ;
+ NODE31                             0               0                            ;
+ NODE32                             0    158.50323141 pat1                       ;
+ NODE33                             0    158.50323141 pat1                       ;
+ NODE34                             0               0                            ;
+ NODE35                             0               0                            ;
+ NODE36                             0               0                            ;
+ NODE37                             0    158.50323141 pat1                       ;
+ NODE38                             0               0                            ;
+ NODE39                             0    158.50323141 pat1                       ;
+ NODE40                             0               0                            ;
+ NODE41                             0               0                            ;
+ NODE42                             0    158.50323141 pat1                       ;
+ NODE43                             0    158.50323141 pat1                       ;
+ NODE44                             0               0                            ;
+ NODE45                             0               0                            ;
+ NODE46                             0               0                            ;
+ NODE47                             0               0                            ;
+ NODE48                             0    158.50323141 pat1                       ;
+ NODE49                             0               0                            ;
+ NODE50                             0               0                            ;
 
 [RESERVOIRS]
 ;ID                                   Head                  Pattern
- NODE51                   3.280839895                     pat1   ;
+ NODE51                  249.34383202                reservoir   ;
 
 [TANKS]
 ;ID                              Elevation           Init Level            Min Level            Max Level             Diameter           Min Volume Volume Curve        
 
 [PIPES]
 ;ID                   Node1                Node2                              Length             Diameter            Roughness           Minor Loss               Status
- PIPE0                NODE0                NODE22                  83.294615406              12             100               0                 Open   ;
- PIPE1                NODE1                NODE31                  10.058406782              12             100               0                 Open   ;
- PIPE2                NODE1                NODE25                  79.213162652              12             100               0                 Open   ;
- PIPE3                NODE1                NODE24                  202.33800873              12             100               0                 Open   ;
- PIPE4                NODE2                NODE34                  72.773806615              12             100               0                 Open   ;
- PIPE5                NODE2                NODE11                  31.285323192              12             100               0                 Open   ;
- PIPE6                NODE3                NODE18                  173.83988924              12             100               0                 Open   ;
- PIPE7                NODE3                NODE50                  131.37344196              12             100               0                 Open   ;
- PIPE8                NODE4                NODE31                  119.46539142              12             100               0                 Open   ;
- PIPE9                NODE4                NODE30                  109.27656067              12             100               0                 Open   ;
- PIPE10               NODE5                NODE21                  33.208635883              12             100               0                 Open   ;
- PIPE11               NODE5                NODE49                  182.92116761              12             100               0                 Open   ;
- PIPE12               NODE6                NODE38                  132.36370701              12             100               0                 Open   ;
- PIPE13               NODE6                NODE15                  217.73917706              12             100               0                 Open   ;
- PIPE14               NODE6                NODE19                  163.31266989              12             100               0                 Open   ;
- PIPE15               NODE7                NODE38                  88.904651731              12             100               0                 Open   ;
- PIPE16               NODE8                NODE31                  34.055200051              12             100               0                 Open   ;
- PIPE17               NODE8                NODE28                  127.31263442              12             100               0                 Open   ;
- PIPE18               NODE9                NODE41                  46.983948736              12             100               0                 Open   ;
- PIPE19               NODE10               NODE21                  128.75130345              12             100               0                 Open   ;
- PIPE20               NODE10               NODE34                  207.83616558              12             100               0                 Open   ;
- PIPE21               NODE10               NODE42                  136.09028631              12             100               0                 Open   ;
- PIPE22               NODE11               NODE46                  38.416646786              12             100               0                 Open   ;
- PIPE23               NODE12               NODE23                  78.473543049              12             100               0                 Open   ;
- PIPE24               NODE13               NODE49                  56.733856273              12             100               0                 Open   ;
- PIPE25               NODE14               NODE33                  84.355697296              12             100               0                 Open   ;
- PIPE26               NODE14               NODE47                  214.01800382              12             100               0                 Open   ;
- PIPE27               NODE15               NODE37                  60.849029089              12             100               0                 Open   ;
- PIPE28               NODE15               NODE46                  43.703277608              12             100               0                 Open   ;
- PIPE29               NODE16               NODE36                  136.92605951              12             100               0                 Open   ;
- PIPE30               NODE16               NODE23                  185.73106146              12             100               0                 Open   ;
- PIPE31               NODE17               NODE48                  45.985102811              12             100               0                 Open   ;
- PIPE32               NODE17               NODE30                  111.93383589              12             100               0                 Open   ;
- PIPE33               NODE18               NODE45                  4.9569249076              12             100               0                 Open   ;
- PIPE34               NODE18               NODE43                  41.722774534              12             100               0                 Open   ;
- PIPE35               NODE19               NODE32                  67.790430362              12             100               0                 Open   ;
- PIPE36               NODE20               NODE40                   50.14920134              12             100               0                 Open   ;
- PIPE37               NODE22               NODE30                  111.49977009              12             100               0                 Open   ;
- PIPE38               NODE23               NODE27                  108.58380335              12             100               0                 Open   ;
- PIPE39               NODE24               NODE38                  128.16225293              12             100               0                 Open   ;
- PIPE40               NODE24               NODE36                  126.88482421              12             100               0                 Open   ;
- PIPE41               NODE26               NODE35                  49.633708437              12             100               0                 Open   ;
- PIPE42               NODE27               NODE47                  158.74038454              12             100               0                 Open   ;
- PIPE43               NODE29               NODE36                  47.174522501              12             100               0                 Open   ;
- PIPE44               NODE34               NODE40                  91.564972249              12             100               0                 Open   ;
- PIPE45               NODE35               NODE41                  74.964731225              12             100               0                 Open   ;
- PIPE46               NODE35               NODE46                  59.645454908              12             100               0                 Open   ;
- PIPE47               NODE39               NODE44                   29.61336895              12             100               0                 Open   ;
- PIPE48               NODE41               NODE45                  43.476924577              12             100               0                 Open   ;
- PIPE49               NODE44               NODE50                  140.24845135              12             100               0                 Open   ;
- PIPE50               NODE51               NODE19                  4.6398082755              12             100               0                 Open   ;
+ PIPE0                NODE0                NODE22                  83.294615406    8.1107444599             100               0                 Open   ;
+ PIPE1                NODE1                NODE31                  10.058406782    14.048222364             100               0                 Open   ;
+ PIPE2                NODE1                NODE25                  79.213162652    8.1107444599             100               0                 Open   ;
+ PIPE3                NODE1                NODE24                  202.33800873     16.22148892             100               0                 Open   ;
+ PIPE4                NODE2                NODE34                  72.773806615    14.048222364             100               0                 Open   ;
+ PIPE5                NODE2                NODE11                  31.285323192    14.048222364             100               0                 Open   ;
+ PIPE6                NODE3                NODE18                  173.83988924    8.1107444599             100               0                 Open   ;
+ PIPE7                NODE3                NODE50                  131.37344196    8.1107444599             100               0                 Open   ;
+ PIPE8                NODE4                NODE31                  119.46539142    11.470324816             100               0                 Open   ;
+ PIPE9                NODE4                NODE30                  109.27656067    11.470324816             100               0                 Open   ;
+ PIPE10               NODE5                NODE21                  33.208635883    8.1107444599             100               0                 Open   ;
+ PIPE11               NODE5                NODE49                  182.92116761    8.1107444599             100               0                 Open   ;
+ PIPE12               NODE6                NODE38                  132.36370701    22.940649632             100               0                 Open   ;
+ PIPE13               NODE6                NODE15                  217.73917706    22.940649632             100               0                 Open   ;
+ PIPE14               NODE6                NODE19                  163.31266989    32.442977839             100               0                 Open   ;
+ PIPE15               NODE7                NODE38                  88.904651731    8.1107444599             100               0                 Open   ;
+ PIPE16               NODE8                NODE31                  34.055200051    8.1107444599             100               0                 Open   ;
+ PIPE17               NODE8                NODE28                  127.31263442    8.1107444599             100               0                 Open   ;
+ PIPE18               NODE9                NODE41                  46.983948736    8.1107444599             100               0                 Open   ;
+ PIPE19               NODE10               NODE21                  128.75130345    8.1107444599             100               0                 Open   ;
+ PIPE20               NODE10               NODE34                  207.83616558    11.470324816             100               0                 Open   ;
+ PIPE21               NODE10               NODE42                  136.09028631    8.1107444599             100               0                 Open   ;
+ PIPE22               NODE11               NODE46                  38.416646786    14.048222364             100               0                 Open   ;
+ PIPE23               NODE12               NODE23                  78.473543049    8.1107444599             100               0                 Open   ;
+ PIPE24               NODE13               NODE49                  56.733856273    8.1107444599             100               0                 Open   ;
+ PIPE25               NODE14               NODE33                  84.355697296    8.1107444599             100               0                 Open   ;
+ PIPE26               NODE14               NODE47                  214.01800382    8.1107444599             100               0                 Open   ;
+ PIPE27               NODE15               NODE37                  60.849029089    8.1107444599             100               0                 Open   ;
+ PIPE28               NODE15               NODE46                  43.703277608    21.459013359             100               0                 Open   ;
+ PIPE29               NODE16               NODE36                  136.92605951    11.470324816             100               0                 Open   ;
+ PIPE30               NODE16               NODE23                  185.73106146    11.470324816             100               0                 Open   ;
+ PIPE31               NODE17               NODE48                  45.985102811    8.1107444599             100               0                 Open   ;
+ PIPE32               NODE17               NODE30                  111.93383589    8.1107444599             100               0                 Open   ;
+ PIPE33               NODE18               NODE45                  4.9569249076    11.470324816             100               0                 Open   ;
+ PIPE34               NODE18               NODE43                  41.722774534    8.1107444599             100               0                 Open   ;
+ PIPE35               NODE19               NODE32                  67.790430362    8.1107444599             100               0                 Open   ;
+ PIPE36               NODE20               NODE40                   50.14920134    8.1107444599             100               0                 Open   ;
+ PIPE37               NODE22               NODE30                  111.49977009    8.1107444599             100               0                 Open   ;
+ PIPE38               NODE23               NODE27                  108.58380335    8.1107444599             100               0                 Open   ;
+ PIPE39               NODE24               NODE38                  128.16225293    21.459013359             100               0                 Open   ;
+ PIPE40               NODE24               NODE36                  126.88482421    14.048222364             100               0                 Open   ;
+ PIPE41               NODE26               NODE35                  49.633708437    8.1107444599             100               0                 Open   ;
+ PIPE42               NODE27               NODE47                  158.74038454    8.1107444599             100               0                 Open   ;
+ PIPE43               NODE29               NODE36                  47.174522501    8.1107444599             100               0                 Open   ;
+ PIPE44               NODE34               NODE40                  91.564972249    8.1107444599             100               0                 Open   ;
+ PIPE45               NODE35               NODE41                  74.964731225    14.048222364             100               0                 Open   ;
+ PIPE46               NODE35               NODE46                  59.645454908     16.22148892             100               0                 Open   ;
+ PIPE47               NODE39               NODE44                   29.61336895    8.1107444599             100               0                 Open   ;
+ PIPE48               NODE41               NODE45                  43.476924577    11.470324816             100               0                 Open   ;
+ PIPE49               NODE44               NODE50                  140.24845135    8.1107444599             100               0                 Open   ;
+ PIPE50               NODE51               NODE19                  4.6398082755    33.441457503             100               0                 Open   ;
 
 [PUMPS]
 ;ID                   Node1                Node2                Properties          
- pump                 NODE51               NODE19               HEAD     curve1                 ;
 
 [VALVES]
 ;ID                   Node1                Node2                            Diameter Type              Setting           Minor Loss
@@ -133,19 +132,14 @@
 [PATTERNS]
 ;ID        Multipliers
 
-pat1 1.000000 2.000000 3.000000 4.000000 5.000000 6.000000
-pat1 7.000000 8.000000 9.000000 10.000000
+pat1 1.000000 1.000000 5.000000 10.000000 2.000000 4.000000
+pat1 3.000000 2.000000 1.000000 4.000000
 
-pat2 10.000000 10.000000 10.000000 10.000000 10.000000 10.000000
-pat2 10.000000 10.000000 10.000000 10.000000
+reservoir 0.014060 0.014060 0.277009 1.000000 0.050754 0.183237
+reservoir 0.107553 0.050754 0.014060 0.183237 0.014060
 
 [CURVES]
 ;ID         X-Value      Y-Value     
-;PUMP: curve1
- curve1         0.000000     3.280840   ;
- curve1         0.000000     6.561680   ;
- curve1         0.000000     1.640420   ;
-
 
 [CONTROLS]
 

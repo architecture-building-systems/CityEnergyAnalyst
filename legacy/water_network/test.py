@@ -137,32 +137,42 @@ edge_df, node_df = get_thermal_network_from_shapefile(locator, network_type, net
 wn = wntr.network.WaterNetworkModel()
 
 # add loads
-wn.add_pattern('pat1', [1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
-wn.add_pattern('pat2', [10, 10, 10, 10, 10, 10, 10, 10, 10, 10])
+wn.add_pattern('pat1', [1, 1, 5, 10, 2, 4, 3, 2, 1, 4])
+coefficient_friction_hanzen_williams = 100
+
+
 # add nodes
 for node in node_df.iterrows():
     if node[1]["Type"] == "CONSUMER":
-        base_demand_m3s = 0.03
-        demand_pattern = 'pat2'
-        wn.add_junction(node[0], base_demand=base_demand_m3s, demand_pattern=demand_pattern, elevation=0,
+        base_demand_m3s = 0.01
+        demand_pattern = 'pat1'
+        wn.add_junction(node[0],
+                        base_demand=base_demand_m3s,
+                        demand_pattern=demand_pattern,
+                        elevation=0,
                         coordinates=node[1]["coordinates"])
     elif node[1]["Type"] == "PLANT":
         base_head = 1000
-        reservoir_pattern = 'pat1'
         start_node = node[0]
+        name_node_plant = start_node
         end_node = edge_df[edge_df['start node'] == start_node]['end node'].values[0]
-        wn.add_reservoir(start_node, base_head=base_head, head_pattern=reservoir_pattern,
+        wn.add_reservoir(start_node,
+                         base_head=base_head,
                          coordinates=node[1]["coordinates"])
     else:
-        base_demand_m3s = 0
-        demand_pattern = 'pat2'
-        wn.add_junction(node[0], base_demand=base_demand_m3s, demand_pattern=demand_pattern, elevation=0,
+        wn.add_junction(node[0],
+                        elevation=0,
                         coordinates=node[1]["coordinates"])
 
 # add pipes
 for edge in edge_df.iterrows():
     length = edge[1]["pipe length"]
-    wn.add_pipe(edge[0], edge[1]["start node"], edge[1]["end node"], length=length, roughness=100, minor_loss=0.0,
+    edge_name = edge[0]
+    wn.add_pipe(edge_name, edge[1]["start node"],
+                edge[1]["end node"],
+                length=length,
+                roughness=coefficient_friction_hanzen_williams,
+                minor_loss=0.0,
                 status='OPEN')
 
 # add options
@@ -170,48 +180,70 @@ wn.options.time.duration = 10 * 3600
 wn.options.time.hydraulic_timestep = 60 * 60
 wn.options.time.pattern_timestep = 60 * 60
 velocity_ms = 3
-coefficient_friction_hanzen_williams = 150
+
 lequivalent_length_factor = 0.2
 
-# Simulate hydraulics
+#1st ITERATION GET MASS FLOWS AND CALCULATE DIAMETER
+sim = wntr.sim.EpanetSimulator(wn)
+results = sim.run_sim()
+max_volume_flow_rates_m3s = results.link['flowrate'].abs().max()
+pipe_names = max_volume_flow_rates_m3s.index.values
+diameter_m = pd.Series(np.vectorize(calc_max_diameter)(max_volume_flow_rates_m3s, velocity_ms=velocity_ms), pipe_names)
+
+#MODIFY TO NEW DIAMETER THE NETWORK
+for edge in edge_df.iterrows():
+    edge_name = edge[0]
+    pipe = wn.get_link(edge_name)
+    pipe.diameter = diameter_m[edge_name]
+
+#2nd ITERATION GET PRESSURE POINTS AND MASSFLOWS FOR SIZING PUMPING NEEDS
 sim = wntr.sim.EpanetSimulator(wn)
 results = sim.run_sim()
 
-volume_flow_rates_m3s = results.link['flowrate'].abs()
-max_volume_flow_rates_m3s = volume_flow_rates_m3s.max()
-pipe_names = max_volume_flow_rates_m3s.index.values
-diameter_m = np.vectorize(calc_max_diameter)(max_volume_flow_rates_m3s, velocity_ms=velocity_ms)
-max_head_loss_m = [calc_head_loss_m(diameter,
-                                    max_volume_flow_rates_m3s=mass_flow,
-                                    coefficient_friction=coefficient_friction_hanzen_williams,
-                                    length_m=edge_df.loc[pipe_name, 'pipe length'])*(1+lequivalent_length_factor) for pipe_name, diameter, mass_flow in
-                                    zip(pipe_names, diameter_m, max_volume_flow_rates_m3s)]
+accumulated_volume_flow_m3s = results.node['demand'][name_node_plant].abs()
+unitary_head_loss_ftperkft = results.link['headloss'].abs()
+unitary_head_loss_m_l = unitary_head_loss_ftperkft * 0.30487 / 304.87
+head_loss_m = unitary_head_loss_m_l.copy()
+for column in head_loss_m.columns.values:
+    length = edge_df.loc[column]['pipe length']
+    head_loss_m[column] = head_loss_m[column] * length
+
+accumulated_head_loss_m = head_loss_m.sum(axis=1)
 
 
-data  = pd.DataFrame({'pipe_names':pipe_names,
-                      'max_volume_flow_rates_m3s':max_volume_flow_rates_m3s.values,
-                      'diameter_m':diameter_m,
-                      'max_head_loss_m':max_head_loss_m
-                      })
+# max_head_loss_m = [calc_head_loss_m(diameter,
+#                                     max_volume_flow_rates_m3s=mass_flow,
+#                                     coefficient_friction=coefficient_friction_hanzen_williams,
+#                                     length_m=edge_df.loc[pipe_name, 'pipe length'])*(1+lequivalent_length_factor) for pipe_name, diameter, mass_flow in
+#                                     zip(pipe_names, diameter_m, max_volume_flow_rates_m3s)]
+#
+#
+# data  = pd.DataFrame({'pipe_names':pipe_names,
+#                       'max_volume_flow_rates_m3s':max_volume_flow_rates_m3s.values,
+#                       'diameter_m':diameter_m,
+#                       'max_head_loss_m':max_head_loss_m
+#                       })
+#
+# curve_points = data.sum(axis=0)
+# curve_points_y = int(curve_points['max_head_loss_m'])
+# curve_points_x = int(curve_points['max_volume_flow_rates_m3s'])
 
-curve_points = data.sum(axis=0)
-curve_points_y = curve_points['max_head_loss_m']
-curve_points_x = curve_points['max_volume_flow_rates_m3s']
 
-
-xy_tuples_list=[(0, curve_points_y), (0.0, curve_points_y*2), (curve_points_x/2, curve_points_y/2)]
-wn.add_curve('curve1', curve_type='HEAD', xy_tuples_list=xy_tuples_list)
+# xy_tuples_list= [(0, 600), (0.17, 291)]
+# xy_tuples_list = zip(accumulated_volume_flow_m3s, accumulated_head_loss_m)
+# xy_tuples_list = list(set(xy_tuples_list))
+# wn.add_curve('curve1', curve_type='HEAD', xy_tuples_list=xy_tuples_list)
+base_head = accumulated_head_loss_m.max()
+pattern = (accumulated_head_loss_m/accumulated_head_loss_m.max()).tolist()
+wn.add_pattern('reservoir', pattern)
 for node in node_df.iterrows():
     if node[1]["Type"] == "PLANT":
-        base_head = 1
         start_node = node[0]
         end_node = edge_df[edge_df['start node'] == start_node]['end node'].values[0]
         reservoir = wn.get_node(start_node)
-        reservoir.base_head = base_head
-        wn.add_pump(name='pump',
-                    start_node_name=start_node,
-                    end_node_name=end_node, pump_type='HEAD',
-                    pump_parameter='curve1')
+        reservoir.head_timeseries.base_value = int(base_head)
+        pat = wn.get_pattern('reservoir')
+        reservoir.head_timeseries._pattern = 'reservoir'
 
 sim = wntr.sim.EpanetSimulator(wn)
 results = sim.run_sim()
