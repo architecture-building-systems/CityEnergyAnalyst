@@ -21,7 +21,7 @@ import cea.technologies.direct_expansion_units as dx
 import cea.technologies.solar.solar_collector as solar_collector
 import cea.technologies.substation as substation
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, WH_TO_J
-from cea.optimization.constants import SIZING_MARGIN, T_GENERATOR_FROM_FP_C, T_GENERATOR_FROM_ET_C, \
+from cea.optimization.constants import  T_GENERATOR_FROM_FP_C, T_GENERATOR_FROM_ET_C, \
     Q_LOSS_DISCONNECTED, ACH_TYPE_SINGLE, VCC_CODE_DECENTRALIZED
 from cea.optimization.lca_calculations import LcaCalculations
 from cea.technologies.thermal_network.thermal_network import calculate_ground_temperature
@@ -428,7 +428,7 @@ def calc_VCC_operation(T_chw_re_K, T_chw_sup_K, mdot_kgpers):
 
 
 def calc_CT_operation(q_CT_load_Wh):
-    Q_nom_CT_W = np.max(q_CT_load_Wh) * (1 + SIZING_MARGIN)
+    Q_nom_CT_W = np.max(q_CT_load_Wh)
     el_CT_Wh = np.vectorize(cooling_tower.calc_CT)(q_CT_load_Wh, Q_nom_CT_W)
     return Q_nom_CT_W, el_CT_Wh
 
@@ -436,7 +436,7 @@ def calc_CT_operation(q_CT_load_Wh):
 def calc_boiler_operation(Q_ACH_size_W, T_hw_out_from_ACH_K, q_hw_single_ACH_Wh, q_sc_gen_FP_Wh):
     if not np.isclose(Q_ACH_size_W, 0.0):
         q_boiler_load_Wh = q_hw_single_ACH_Wh - q_sc_gen_FP_Wh
-        Q_nom_Boilers_W = np.max(q_boiler_load_Wh) * (1 + SIZING_MARGIN)
+        Q_nom_Boilers_W = np.max(q_boiler_load_Wh)
         T_re_boiler_K = T_hw_out_from_ACH_K
         boiler_eff = np.vectorize(boiler.calc_Cop_boiler)(q_boiler_load_Wh, Q_nom_Boilers_W, T_re_boiler_K)
         Q_gas_for_boiler_Wh = np.divide(q_boiler_load_Wh, boiler_eff,
@@ -451,7 +451,7 @@ def calc_boiler_operation(Q_ACH_size_W, T_hw_out_from_ACH_K, q_hw_single_ACH_Wh,
 def calc_burner_operation(Q_ACH_size_W, q_hw_single_ACH_Wh, q_sc_gen_ET_Wh):
     if not np.isclose(Q_ACH_size_W, 0.0):
         q_burner_load_Wh = q_hw_single_ACH_Wh - q_sc_gen_ET_Wh
-        Q_nom_Burners_W = np.max(q_burner_load_Wh) * (1 + SIZING_MARGIN)
+        Q_nom_Burners_W = np.max(q_burner_load_Wh)
         burner_eff = np.vectorize(burner.calc_cop_burner)(q_burner_load_Wh, Q_nom_Burners_W)
         q_gas_for_burber_Wh = np.divide(q_burner_load_Wh, burner_eff,
                                         out=np.zeros_like(q_burner_load_Wh), where=burner_eff != 0)

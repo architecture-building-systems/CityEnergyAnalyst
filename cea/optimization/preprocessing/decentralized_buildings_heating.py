@@ -16,7 +16,7 @@ import cea.technologies.cogeneration as FC
 import cea.technologies.heatpumps as HP
 import cea.technologies.substation as substation
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
-from cea.optimization.constants import Q_LOSS_DISCONNECTED, SIZING_MARGIN, GHP_A, GHP_HMAX_SIZE
+from cea.optimization.constants import Q_LOSS_DISCONNECTED, GHP_A, GHP_HMAX_SIZE
 from cea.resources.geothermal import calc_ground_temperature
 from cea.utilities import dbf
 from cea.utilities import epwreader
@@ -58,8 +58,7 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
         q_load_Wh = np.vectorize(calc_new_load)(substation_results["mdot_DH_result_kgpers"],
                                                 substation_results["T_supply_DH_result_K"],
                                                 substation_results["T_return_DH_result_K"])
-        Qannual_Wh = q_load_Wh.sum()
-        Qnom_W = q_load_Wh.max() * (1 + SIZING_MARGIN)
+        Qnom_W = q_load_Wh.max()
 
         # Create empty matrices
         Opex_a_var_USD = np.zeros((13, 7))
