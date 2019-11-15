@@ -1,9 +1,8 @@
-import wntr
-import matplotlib.pyplot as plt
-import pandas as pd
+from __future__ import division
+
 import geopandas as gpd
-import numpy as np
-import random
+import wntr
+
 
 def extract_network_from_shapefile(edge_shapefile_df, node_shapefile_df):
     """
@@ -78,6 +77,7 @@ def extract_network_from_shapefile(edge_shapefile_df, node_shapefile_df):
 
     return node_shapefile_df, edge_shapefile_df
 
+
 def get_thermal_network_from_shapefile(locator, network_type, network_name):
     """
     This function reads the existing node and pipe network from a shapefile and produces an edge-node incidence matrix
@@ -100,66 +100,25 @@ def get_thermal_network_from_shapefile(locator, network_type, network_name):
     # get node and pipe information
     node_df, edge_df = extract_network_from_shapefile(network_edges_df, network_nodes_df)
 
-    # create node catalogue indicating which nodes are plants and which consumers
+    return edge_df, node_df
 
-    node_df.coordinates = pd.Series(node_df.coordinates)
-    all_nodes_df = node_df[['Type', 'Building', 'coordinates']]
-    all_nodes_df.to_csv(locator.get_thermal_network_node_types_csv_file(network_type, network_name))
-    # extract the list of buildings in the current network
-    building_names = all_nodes_df.Building[all_nodes_df.Type == 'CONSUMER'].reset_index(drop=True)
 
-    # create first edge-node matrix
-    list_pipes = edge_df.index.values
-    list_nodes = node_df.index.values
-    edge_node_matrix = np.zeros((len(list_nodes), len(list_pipes)))
-    for j in range(len(list_pipes)):  # TODO: find ways to accelerate
-        for i in range(len(list_nodes)):
-            if edge_df['end node'][j] == list_nodes[i]:
-                edge_node_matrix[i][j] = 1
-            elif edge_df['start node'][j] == list_nodes[i]:
-                edge_node_matrix[i][j] = -1
-    edge_node_df = pd.DataFrame(data=edge_node_matrix, index=list_nodes,
-                                columns=list_pipes)  # first edge-node matrix
+def calc_max_diameter(volume_flow_m3s, velocity_ms):
+    import math
+    diameter_m = math.sqrt((volume_flow_m3s / velocity_ms) * (4 / math.pi))
+    return diameter_m
 
-    ## An edge node matrix is generated as a first guess and then virtual substation mass flows are imposed to
-    ## calculate mass flows in each edge (mass_flow_guess).
-    node_mass_flows_df = pd.DataFrame(data=np.zeros([1, len(edge_node_df.index)]), columns=edge_node_df.index)
-    total_flow = 0
-    number_of_plants = sum(all_nodes_df['Type'] == 'PLANT')
 
-    for node, row in all_nodes_df.iterrows():
-        if row['Type'] == 'CONSUMER':
-            node_mass_flows_df[node] = 1  # virtual consumer mass flow requirement
-            total_flow += 1
-    for node, row in all_nodes_df.iterrows():
-        if row['Type'] == 'PLANT':
-            node_mass_flows_df[node] = - total_flow / number_of_plants  # virtual plant supply mass flow
+def calc_head_loss_m(diamter_m, max_volume_flow_rates_m3s, coefficient_friction, length_m):
+    hf_L = (10.67 / (coefficient_friction ** 1.85)) * (max_volume_flow_rates_m3s ** 1.852) / (diamter_m ** 4.8704)
+    head_loss_m = hf_L * length_m
+    return head_loss_m
 
-    # The direction of flow is then corrected
-    # keep track if there was a change for the iterative process
-    pd.options.mode.chained_assignment = None  # avoid warnings of copies
-    changed = [True] * node_mass_flows_df.shape[1]
-    while any(changed):
-        for i in range(node_mass_flows_df.shape[1]):
-            # we have a plant with incoming mass flows, or we don't have a plant but only exiting mass flows
-            if ((node_mass_flows_df[node_mass_flows_df.columns[i]].min() < 0) and (
-                    edge_node_df.iloc[i].max() > 0)) or \
-                    ((node_mass_flows_df[node_mass_flows_df.columns[i]].min() >= 0) and (
-                            edge_node_df.iloc[i].max() <= 0)):
-                j = np.nonzero(edge_node_df.iloc[i])[0]
-                if len(j) > 1:  # valid if e.g. if more than one flow and all flows incoming. Only need to flip one.
-                    j = random.choice(j)
-                edge_node_df[edge_node_df.columns[j]] = -edge_node_df[edge_node_df.columns[j]]
-                new_nodes = [edge_df['end node'][j], edge_df['start node'][j]]
-                edge_df['start node'][j] = new_nodes[0]
-                edge_df['end node'][j] = new_nodes[1]
-                changed[i] = True
-            else:
-                changed[i] = False
-    return edge_df, edge_node_df, node_df
 
 import cea.inputlocator
 import cea.config
+import numpy as np
+import pandas as pd
 
 config = cea.config.Configuration()
 locator = cea.inputlocator.InputLocator(scenario=config.scenario)
@@ -172,46 +131,91 @@ file_type = config.thermal_network.file_type  # set to csv or shp
 set_diameter = config.thermal_network.set_diameter  # boolean
 network_names = config.thermal_network.network_names
 network_name = ''
-edge_df, edge_node_df, node_df = get_thermal_network_from_shapefile(locator, network_type, network_name)
+edge_df, node_df = get_thermal_network_from_shapefile(locator, network_type, network_name)
 
 # Create a water network model
 wn = wntr.network.WaterNetworkModel()
 
-#add loads
+# add loads
 wn.add_pattern('pat1', [1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
-wn.add_pattern('pat2', [1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
-
-lenght_edges = edge_df.shape[0]
+wn.add_pattern('pat2', [10, 10, 10, 10, 10, 10, 10, 10, 10, 10])
 # add nodes
 for node in node_df.iterrows():
     if node[1]["Type"] == "CONSUMER":
-        base_demand = 100
+        base_demand_m3s = 0.03
         demand_pattern = 'pat2'
-        wn.add_junction(node[0], base_demand=base_demand, demand_pattern=demand_pattern, elevation=0, coordinates=node[1]["coordinates"])
+        wn.add_junction(node[0], base_demand=base_demand_m3s, demand_pattern=demand_pattern, elevation=0,
+                        coordinates=node[1]["coordinates"])
     elif node[1]["Type"] == "PLANT":
+        base_head = 1000
         reservoir_pattern = 'pat1'
-        wn.add_reservoir(node[0], base_head=100000, head_pattern=reservoir_pattern, coordinates=node[1]["coordinates"])
+        start_node = node[0]
+        end_node = edge_df[edge_df['start node'] == start_node]['end node'].values[0]
+        wn.add_reservoir(start_node, base_head=base_head, head_pattern=reservoir_pattern,
+                         coordinates=node[1]["coordinates"])
     else:
-        base_demand = 0
+        base_demand_m3s = 0
         demand_pattern = 'pat2'
-        wn.add_junction(node[0], base_demand=base_demand, demand_pattern=demand_pattern, elevation=0, coordinates=node[1]["coordinates"])
+        wn.add_junction(node[0], base_demand=base_demand_m3s, demand_pattern=demand_pattern, elevation=0,
+                        coordinates=node[1]["coordinates"])
 
 # add pipes
 for edge in edge_df.iterrows():
     length = edge[1]["pipe length"]
-    wn.add_pipe(edge[0], edge[1]["start node"], edge[1]["end node"], length=length, diameter=0.3048, roughness=100, minor_loss=0.0, status='OPEN')
+    wn.add_pipe(edge[0], edge[1]["start node"], edge[1]["end node"], length=length, roughness=100, minor_loss=0.0,
+                status='OPEN')
 
-#add options
-wn.options.time.duration = 24*3600
-wn.options.time.hydraulic_timestep = 15*60
-wn.options.time.pattern_timestep = 60*60
-
-# Graph the network
-# wntr.graphics.plot_network(wn, title=wn.name)
+# add options
+wn.options.time.duration = 10 * 3600
+wn.options.time.hydraulic_timestep = 60 * 60
+wn.options.time.pattern_timestep = 60 * 60
+velocity_ms = 3
+coefficient_friction_hanzen_williams = 150
+lequivalent_length_factor = 0.2
 
 # Simulate hydraulics
 sim = wntr.sim.EpanetSimulator(wn)
 results = sim.run_sim()
+
+volume_flow_rates_m3s = results.link['flowrate'].abs()
+max_volume_flow_rates_m3s = volume_flow_rates_m3s.max()
+pipe_names = max_volume_flow_rates_m3s.index.values
+diameter_m = np.vectorize(calc_max_diameter)(max_volume_flow_rates_m3s, velocity_ms=velocity_ms)
+max_head_loss_m = [calc_head_loss_m(diameter,
+                                    max_volume_flow_rates_m3s=mass_flow,
+                                    coefficient_friction=coefficient_friction_hanzen_williams,
+                                    length_m=edge_df.loc[pipe_name, 'pipe length'])*(1+lequivalent_length_factor) for pipe_name, diameter, mass_flow in
+                                    zip(pipe_names, diameter_m, max_volume_flow_rates_m3s)]
+
+
+data  = pd.DataFrame({'pipe_names':pipe_names,
+                      'max_volume_flow_rates_m3s':max_volume_flow_rates_m3s.values,
+                      'diameter_m':diameter_m,
+                      'max_head_loss_m':max_head_loss_m
+                      })
+
+curve_points = data.sum(axis=0)
+curve_points_y = curve_points['max_head_loss_m']
+curve_points_x = curve_points['max_volume_flow_rates_m3s']
+
+
+xy_tuples_list=[(0, curve_points_y), (0.0, curve_points_y*2), (curve_points_x/2, curve_points_y/2)]
+wn.add_curve('curve1', curve_type='HEAD', xy_tuples_list=xy_tuples_list)
+for node in node_df.iterrows():
+    if node[1]["Type"] == "PLANT":
+        base_head = 1
+        start_node = node[0]
+        end_node = edge_df[edge_df['start node'] == start_node]['end node'].values[0]
+        reservoir = wn.get_node(start_node)
+        reservoir.base_head = base_head
+        wn.add_pump(name='pump',
+                    start_node_name=start_node,
+                    end_node_name=end_node, pump_type='HEAD',
+                    pump_parameter='curve1')
+
+sim = wntr.sim.EpanetSimulator(wn)
+results = sim.run_sim()
+x = 1
 
 # Plot results on the network
 # pressure_at_5hr = results.node['pressure'].loc[4*3600, :]
