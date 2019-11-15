@@ -50,13 +50,10 @@ def template(locator, archetypes):
         model = merged_annual.GRID_MWhyr
         real = merged_annual.Ec_measured
 
-
         # calculate errors
+        MBE_annual = ((model - real)/model )*100
+        print(MBE_annual)
 
-        NMBE_annual = ((model - real)/model )*100
-        # CvRMSE_annual = (math.sqrt((model - real)**2) / model)*100
-        print(NMBE_annual)
-        # print(CvRMSE_annual)
 
     if monthly == True:
         print("monthly validation")
@@ -67,12 +64,13 @@ def template(locator, archetypes):
 
         # extract model output
         demand_path = locator.get_demand_results_folder()
-        # monthly_model_data = (demand_path + "\\" + real_names + '.csv') #not sure why this doesnt work, have to get help
+        # monthly_model_data = (demand_path + "\\" + real_names + '.csv') #not sure why this doesnt work, have to get help. This should read the name of each line in real_names and extract the equivalent real data
         model = pd.read_csv(r"C:\CEA\Validation\LCZ1_Yishun\outputs\data\demand\B1000.csv")
         idx = pd.to_datetime(model.DATE)
         model['datetime'] = idx
         model_monthly = model.resample('M', on = 'datetime').sum()
-        monthly_model_data = model_monthly.GRID_kWh
+        monthly_model_data = [model_monthly.GRID_kWh]
+        monthly_model_data = pd.DataFrame(monthly_model_data)
 
 
         # hours = test.groupby(test.DATE.str[5:7])
