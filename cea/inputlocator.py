@@ -758,6 +758,13 @@ class InputLocator(object):
         self.check_cpg(shapefile_path)
         return shapefile_path
 
+    def outputdatafolder (self):
+        return self._ensure_folder(self.scenario,'outputs','data')
+
+    def get_totaloccupancy(self):
+        """scenario/outputs/data/totaloccupancy.csv"""
+        return os.path.join(self.scenario, "outputs", "data", "totaloccupancy.csv")
+
     def get_network_layout_nodes_shapefile(self, network_type, network_name=""):
         """scenario/inputs/network/DH or DC/network-nodes.shp"""
         shapefile_path = os.path.join(self.get_input_network_folder(network_type, network_name), 'nodes.shp')
@@ -1006,6 +1013,9 @@ class InputLocator(object):
         shapefile_path = os.path.join(self.get_networks_folder(), "mst_network.shp")
         self.check_cpg(shapefile_path)
         return shapefile_path
+
+    def get_measurements(self):
+        return self._ensure_folder(self.scenario, 'inputs', 'measurements')
 
     # OUTPUTS
 

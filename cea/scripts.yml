@@ -1,5 +1,14 @@
 Data Management:
 
+  - name: tooloftoday
+    label: Total Occupancy
+    description: Gives the total after mulplying by a fixed value
+    interfaces: [cli, dashboard]
+    module: cea.examples.tooloftoday
+    parameters: ['general:scenario', tooloftoday]
+    input-files:
+      - [get_building_occupancy]
+
   - name: data-helper
     label: Data helper
     description: Query characteristics of buildings and systems from statistical data
