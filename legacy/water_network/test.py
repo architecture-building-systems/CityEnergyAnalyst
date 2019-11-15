@@ -2,6 +2,7 @@ from __future__ import division
 
 import geopandas as gpd
 import wntr
+from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
 
 
 def extract_network_from_shapefile(edge_shapefile_df, node_shapefile_df):
@@ -118,41 +119,81 @@ def calc_head_loss_m(diamter_m, max_volume_flow_rates_m3s, coefficient_friction,
 import cea.inputlocator
 import cea.config
 import numpy as np
+from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3
 import pandas as pd
+from cea.technologies.thermal_network.substation_matrix import  determine_building_supply_temperatures
+import cea.technologies.substation as substation
 
 config = cea.config.Configuration()
 locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
 # add options for data sources: heating or cooling network, csv or shp
 network_type = config.thermal_network.network_type  # set to either 'DH' or 'DC'
-file_type = config.thermal_network.file_type  # set to csv or shp
-
-# this does a rule of max and min flow to set a diameter. if false it takes the input diameters
-set_diameter = config.thermal_network.set_diameter  # boolean
-network_names = config.thermal_network.network_names
 network_name = ''
+
+#GET INFORMATION ABOUT THE NETWORK
 edge_df, node_df = get_thermal_network_from_shapefile(locator, network_type, network_name)
+
+
+#GET INFORMATION ABOUT THE DEMAND OF BUILDINGS AND CONNECT TO THE NODE INFO
+substation_cooling_systems = ["ahu", "aru", "scu"]
+substation_heating_systems = ["ahu", "aru", "shu", "ww"]
+substation_systems = {'heating': substation_heating_systems if network_type == "DH" else [],
+                      'cooling': substation_cooling_systems if network_type == "DC" else []}
+
+building_names = locator.get_zone_building_names()
+#calculate substations for all buildings
+# local variables
+total_demand = pd.read_csv(locator.get_total_demand())
+volume_flow_m3pers_building = {}
+if network_type == "DH":
+    buildings_name_with_heating = get_building_names_with_load(total_demand, load_name='QH_sys_MWhyr')
+    buildings_name_with_space_heating = get_building_names_with_load(total_demand, load_name='Qhs_sys_MWhyr')
+    DHN_barcode = "111111thermalnetwork"
+    if (buildings_name_with_heating != [] and buildings_name_with_space_heating != []):
+        building_names = buildings_name_with_heating
+        substation.substation_main_heating(locator, total_demand, building_names, DHN_barcode=DHN_barcode)
+    else:
+        raise Exception('problem here')
+
+    for building_name in building_names:
+        substation_results = pd.read_csv(locator.get_optimization_substations_results_file(building_name, "DH", DHN_barcode))
+        volume_flow_m3pers_building[building_name] = substation_results["mdot_DH_result_kgpers"] / P_WATER_KGPERM3
+
+if network_type == "DC":
+    buildings_name_with_cooling = get_building_names_with_load(total_demand, load_name='QC_sys_MWhyr')
+    DCN_barcode = "111111thermalnetwork"
+    if buildings_name_with_cooling != []:
+        building_names = buildings_name_with_cooling
+        substation.substation_main_cooling(locator, total_demand, building_names, DCN_barcode=DCN_barcode)
+    else:
+        raise Exception('problem here')
+
+    for building_name in building_names:
+        substation_results = pd.read_csv(locator.get_optimization_substations_results_file(building_name, "DC", DCN_barcode))
+        volume_flow_m3pers_building[building_name] = substation_results["mdot_DH_result_kgpers"] / P_WATER_KGPERM3
 
 # Create a water network model
 wn = wntr.network.WaterNetworkModel()
 
 # add loads
-wn.add_pattern('pat1', [1, 1, 5, 10, 2, 4, 3, 2, 1, 4])
+for building in volume_flow_m3pers_building.keys():
+    wn.add_pattern(building, volume_flow_m3pers_building['B1014'].tolist())
 coefficient_friction_hanzen_williams = 100
-
+thermal_transfer_unit_design_head_m = 2.5 #half as we duplicate the pressure needs to calculate the pumping needs
 
 # add nodes
 for node in node_df.iterrows():
     if node[1]["Type"] == "CONSUMER":
-        base_demand_m3s = 0.01
-        demand_pattern = 'pat1'
+        base_demand_m3s = 1 # it gets multiplied by the demand
+        demand_pattern = node[1]['Building']
         wn.add_junction(node[0],
                         base_demand=base_demand_m3s,
                         demand_pattern=demand_pattern,
-                        elevation=0,
+                        elevation=thermal_transfer_unit_design_head_m,
                         coordinates=node[1]["coordinates"])
     elif node[1]["Type"] == "PLANT":
-        base_head = 1000
+        base_head = 10000
         start_node = node[0]
         name_node_plant = start_node
         end_node = edge_df[edge_df['start node'] == start_node]['end node'].values[0]
@@ -176,7 +217,7 @@ for edge in edge_df.iterrows():
                 status='OPEN')
 
 # add options
-wn.options.time.duration = 10 * 3600
+wn.options.time.duration = 24 * 3600 * 365
 wn.options.time.hydraulic_timestep = 60 * 60
 wn.options.time.pattern_timestep = 60 * 60
 velocity_ms = 3
@@ -190,65 +231,39 @@ max_volume_flow_rates_m3s = results.link['flowrate'].abs().max()
 pipe_names = max_volume_flow_rates_m3s.index.values
 diameter_m = pd.Series(np.vectorize(calc_max_diameter)(max_volume_flow_rates_m3s, velocity_ms=velocity_ms), pipe_names)
 
-#MODIFY TO NEW DIAMETER THE NETWORK
+#2nd ITERATION GET PRESSURE POINTS AND MASSFLOWS FOR SIZING PUMPING NEEDS - this could be for all the year
+#modify diameter and run simualtions
 for edge in edge_df.iterrows():
     edge_name = edge[0]
     pipe = wn.get_link(edge_name)
     pipe.diameter = diameter_m[edge_name]
-
-#2nd ITERATION GET PRESSURE POINTS AND MASSFLOWS FOR SIZING PUMPING NEEDS
 sim = wntr.sim.EpanetSimulator(wn)
 results = sim.run_sim()
 
-accumulated_volume_flow_m3s = results.node['demand'][name_node_plant].abs()
+
+
+#3d ITERATION GET FINAL UTILIZATION OF THE GRID (SUPPLY SIDE)
+#get accumulated heat loss per hour
 unitary_head_loss_ftperkft = results.link['headloss'].abs()
 unitary_head_loss_m_l = unitary_head_loss_ftperkft * 0.30487 / 304.87
 head_loss_m = unitary_head_loss_m_l.copy()
 for column in head_loss_m.columns.values:
     length = edge_df.loc[column]['pipe length']
     head_loss_m[column] = head_loss_m[column] * length
+accumulated_head_loss_m = head_loss_m.sum(axis=1) + thermal_transfer_unit_design_head_m * len(building_names)
 
-accumulated_head_loss_m = head_loss_m.sum(axis=1)
-
-
-# max_head_loss_m = [calc_head_loss_m(diameter,
-#                                     max_volume_flow_rates_m3s=mass_flow,
-#                                     coefficient_friction=coefficient_friction_hanzen_williams,
-#                                     length_m=edge_df.loc[pipe_name, 'pipe length'])*(1+lequivalent_length_factor) for pipe_name, diameter, mass_flow in
-#                                     zip(pipe_names, diameter_m, max_volume_flow_rates_m3s)]
-#
-#
-# data  = pd.DataFrame({'pipe_names':pipe_names,
-#                       'max_volume_flow_rates_m3s':max_volume_flow_rates_m3s.values,
-#                       'diameter_m':diameter_m,
-#                       'max_head_loss_m':max_head_loss_m
-#                       })
-#
-# curve_points = data.sum(axis=0)
-# curve_points_y = int(curve_points['max_head_loss_m'])
-# curve_points_x = int(curve_points['max_volume_flow_rates_m3s'])
-
-
-# xy_tuples_list= [(0, 600), (0.17, 291)]
-# xy_tuples_list = zip(accumulated_volume_flow_m3s, accumulated_head_loss_m)
-# xy_tuples_list = list(set(xy_tuples_list))
-# wn.add_curve('curve1', curve_type='HEAD', xy_tuples_list=xy_tuples_list)
-base_head = accumulated_head_loss_m.max()
-pattern = (accumulated_head_loss_m/accumulated_head_loss_m.max()).tolist()
+#apply this pattern to the reservoir
+base_head = 1
+pattern = accumulated_head_loss_m.tolist()
 wn.add_pattern('reservoir', pattern)
-for node in node_df.iterrows():
-    if node[1]["Type"] == "PLANT":
-        start_node = node[0]
-        end_node = edge_df[edge_df['start node'] == start_node]['end node'].values[0]
-        reservoir = wn.get_node(start_node)
-        reservoir.head_timeseries.base_value = int(base_head)
-        pat = wn.get_pattern('reservoir')
-        reservoir.head_timeseries._pattern = 'reservoir'
-
+end_node = edge_df[edge_df['start node'] == name_node_plant]['end node'].values[0]
+reservoir = wn.get_node(name_node_plant)
+reservoir.head_timeseries.base_value = int(base_head)
+pat = wn.get_pattern('reservoir')
+reservoir.head_timeseries._pattern = 'reservoir'
 sim = wntr.sim.EpanetSimulator(wn)
 results = sim.run_sim()
-x = 1
-
+x=1
 # Plot results on the network
 # pressure_at_5hr = results.node['pressure'].loc[4*3600, :]
 # wntr.graphics.plot_network(wn, node_attribute=pressure_at_5hr, node_size=30, title='Pressure at 5 hours')

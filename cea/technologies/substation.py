@@ -568,7 +568,7 @@ def calc_substation_cooling(Q, thi, tho, tci, ch, ch_0, Qnom, thi_0, tci_0, tho_
     :param thi: in temperature of primary side
     :param tho: out temperature of primary side
     :param tci: in temperature of secondary side
-    :param ch: capacity mass flow rate primary side
+    :param ch: capacity mass flow rate primary side in W
     :param ch_0: nominal capacity mass flow rate primary side
     :param Qnom: nominal cooling load
     :param thi_0: nominal in temperature of primary side
