@@ -748,18 +748,18 @@ class InputLocator(object):
 
     def get_input_network_folder(self, network_type, network_name):
         if network_name == '':  # in case there is no specfici networ name (default case)
-            return self._ensure_folder(self.scenario, 'inputs', 'networks', network_type)
+            return self._ensure_folder(self.get_thermal_network_folder(), network_type)
         else:
-            return self._ensure_folder(self.scenario, 'inputs', 'networks', network_type, network_name)
+            return self._ensure_folder(self.get_thermal_network_folder(), network_type, network_name)
 
     def get_network_layout_edges_shapefile(self, network_type, network_name):
-        """scenario/inputs/network/DH or DC/network-edges.shp"""
+        """scenario/outputs/thermal-network/DH or DC/network-edges.shp"""
         shapefile_path = os.path.join(self.get_input_network_folder(network_type, network_name), 'edges.shp')
         self.check_cpg(shapefile_path)
         return shapefile_path
 
     def get_network_layout_nodes_shapefile(self, network_type, network_name=""):
-        """scenario/inputs/network/DH or DC/network-nodes.shp"""
+        """scenario/outputs/thermal-network/DH or DC/network-nodes.shp"""
         shapefile_path = os.path.join(self.get_input_network_folder(network_type, network_name), 'nodes.shp')
         self.check_cpg(shapefile_path)
         return shapefile_path
@@ -952,6 +952,20 @@ class InputLocator(object):
             file_name = network_type + "_" + "_P_DeltaP_Pa.csv"
         else:
             file_name = network_type + "_" + network_name + "_P_DeltaP_Pa.csv"
+        return os.path.join(folder, file_name)
+
+    def get_thermal_network_layout_linear_pressure_drop_file(self, network_type, network_name, representative_week=False):
+        """scenario/outputs/data/optimization/network/layout/DH_P_DeltaP.csv or DC_P_DeltaP.csv
+        Pressure drop over an entire district heating or cooling network at each time step
+        """
+        if representative_week == True:
+            folder = self.get_representative_week_thermal_network_layout_folder()
+        else:
+            folder = self.get_thermal_network_folder()
+        if len(network_name) is 0:
+            file_name = network_type + "_" + "_P_DeltaP_Paperm.csv"
+        else:
+            file_name = network_type + "_" + network_name + "_P_DeltaP_Paperm.csv"
         return os.path.join(folder, file_name)
 
     def get_thermal_network_layout_pressure_drop_kw_file(self, network_type, network_name,
