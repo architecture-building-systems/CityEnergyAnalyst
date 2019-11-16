@@ -139,9 +139,12 @@ def calc_steiner_spanning_tree(crs_projected, input_network_shp, output_network_
                 new_mst_nodes, mst_edges = add_plant_close_to_anchor(building_anchor, new_mst_nodes, mst_edges,
                                                                      type_mat_default, pipe_diameter_default)
 
-    new_mst_nodes.drop(["FID", "coordinates", 'floors_bg', 'floors_ag', 'height_bg', 'height_ag', 'geometry_y'],
-                       axis=1,
-                       inplace=True)
+    fields_nodes = ['Name', 'Building', 'Type', 'geometry']
+    new_mst_nodes = new_mst_nodes[fields_nodes]
+
+    mst_edges['length_m'] = mst_edges['weight']
+    fields_edges = ['Name', 'length_m', 'Pipe_DN', 'Type_mat', 'geometry']
+    mst_edges = mst_edges[fields_edges]
 
     nx.write_shp(mst_non_directed, output_network_folder)
 
