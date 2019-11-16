@@ -198,8 +198,8 @@ wn = wntr.network.WaterNetworkModel()
 building_base_demand_m3s = {}
 for building in volume_flow_m3pers_building.keys():
     building_base_demand_m3s[building] = volume_flow_m3pers_building[building].max()
-    pattern = volume_flow_m3pers_building[building].tolist() / building_base_demand_m3s[building]
-    wn.add_pattern(building, volume_flow_m3pers_building[building].tolist())
+    pattern_demand = (volume_flow_m3pers_building[building].values/building_base_demand_m3s[building]).tolist()
+    wn.add_pattern(building, pattern_demand)
 coefficient_friction_hanzen_williams = 100
 thermal_transfer_unit_design_head_m = 2 # half as we duplicate the pressure needs to calculate the pumping needs
 
@@ -254,12 +254,14 @@ pipe_names = max_volume_flow_rates_m3s.index.values
 pipe_catalog = pd.read_excel(locator.get_database_supply_systems(), sheet_name='PIPING')
 Pipe_DN, D_ext_m, D_int_m, D_ins_m = zip(
     *[calc_max_diameter(flow, pipe_catalog, velocity_ms=velocity_ms) for flow in max_volume_flow_rates_m3s])
+pipe_dn = pd.Series(Pipe_DN, pipe_names)
 diameter_int_m = pd.Series(D_int_m, pipe_names)
 diameter_ext_m = pd.Series(D_ext_m, pipe_names)
 diameter_ins_m = pd.Series(D_ins_m, pipe_names)
 
 # 2nd ITERATION GET PRESSURE POINTS AND MASSFLOWS FOR SIZING PUMPING NEEDS - this could be for all the year
 # modify diameter and run simualtions
+edge_df['Pipe_DN'] = pipe_dn
 for edge in edge_df.iterrows():
     edge_name = edge[0]
     pipe = wn.get_link(edge_name)
@@ -369,9 +371,10 @@ massflow_supply_kgs.to_csv(locator.get_thermal_network_layout_massflow_file(netw
 thermal_losses_supply_kWh.to_csv(locator.get_thermal_network_qloss_system_file(network_type, network_name))
 
 #summary of edges used for the calculation
-
-edge_df.to_csv(locator.get_thermal_network_edge_list_file(network_type, network_name))
-node_df.to_csv(locator.get_thermal_network_node_types_csv_file(network_type, network_name))
+fields_edges = ['length_m', 'Pipe_DN']
+edge_df[fields_edges].to_csv(locator.get_thermal_network_edge_list_file(network_type, network_name))
+fields_nodes = ['Building', 'Type']
+node_df[fields_nodes].to_csv(locator.get_thermal_network_node_types_csv_file(network_type, network_name))
 
 x = 1
 # Plot results on the network

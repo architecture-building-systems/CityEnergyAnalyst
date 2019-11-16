@@ -198,7 +198,7 @@ class ThermalNetworksPlotBase(cea.plots.PlotBase):
     @property
     def network_pipe_length(self):
         df = pd.read_csv(self.locator.get_thermal_network_edge_list_file(self.network_type, self.network_name))
-        total_pipe_length = df['pipe length'].sum()
+        total_pipe_length = df['length_m'].sum()
         return total_pipe_length
 
     @property
