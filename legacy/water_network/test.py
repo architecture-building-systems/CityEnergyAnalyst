@@ -1,17 +1,19 @@
 from __future__ import division
 
+import math
+
 import geopandas as gpd
 import numpy as np
 import pandas as pd
 import wntr
-import math
 
 import cea.config
 import cea.inputlocator
 import cea.technologies.substation as substation
 from cea.constants import P_WATER_KGPERM3
-from cea.technologies.thermal_network.thermal_network import calculate_ground_temperature
 from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
+from cea.technologies.thermal_network.thermal_network import calculate_ground_temperature
+from cea.optimization.constants import PUMP_ETA
 
 
 def extract_network_from_shapefile(edge_shapefile_df, node_shapefile_df):
@@ -39,19 +41,10 @@ def extract_network_from_shapefile(edge_shapefile_df, node_shapefile_df):
     node_sorted_index = node_shapefile_df.index.to_series().str.split('NODE', expand=True)[1].apply(int).sort_values(
         ascending=True)
     node_shapefile_df = node_shapefile_df.reindex(index=node_sorted_index.index)
-    # assign node properties (plant/consumer/none)
-    node_shapefile_df['plant'] = ''
-    node_shapefile_df['consumer'] = ''
-    node_shapefile_df['none'] = ''
+
 
     for node, row in node_shapefile_df.iterrows():
         coord_node = row['geometry'].coords[0]
-        if row['Type'] == "PLANT":
-            node_shapefile_df.loc[node, 'plant'] = node
-        elif row['Type'] == "CONSUMER":  # TODO: add 'PROSUMER' by splitting nodes
-            node_shapefile_df.loc[node, 'consumer'] = node
-        else:
-            node_shapefile_df.loc[node, 'none'] = node
         coord_node_round = (round(coord_node[0], decimals), round(coord_node[1], decimals))
         node_dict[coord_node_round] = node
 
@@ -65,15 +58,13 @@ def extract_network_from_shapefile(edge_shapefile_df, node_shapefile_df):
         ascending=True)
     edge_shapefile_df = edge_shapefile_df.reindex(index=edge_sorted_index.index)
     # assign edge properties
-    edge_shapefile_df['pipe length'] = 0
     edge_shapefile_df['start node'] = ''
     edge_shapefile_df['end node'] = ''
 
     for pipe, row in edge_shapefile_df.iterrows():
         # get the length of the pipe and add to dataframe
-        edge_shapefile_df.loc[pipe, 'pipe length'] = row['geometry'].length
-        # get the start and end notes and add to dataframe
         edge_coords = row['geometry'].coords
+        edge_shapefile_df.loc[pipe, 'length_m'] = row['geometry'].length
         start_node = (round(edge_coords[0][0], decimals), round(edge_coords[0][1], decimals))
         end_node = (round(edge_coords[1][0], decimals), round(edge_coords[1][1], decimals))
         if start_node in node_dict.keys():
@@ -115,7 +106,7 @@ def get_thermal_network_from_shapefile(locator, network_type, network_name):
 
 def calc_max_diameter(volume_flow_m3s, pipe_catalog, velocity_ms):
     diameter_m = math.sqrt((volume_flow_m3s / velocity_ms) * (4 / math.pi))
-    slection_of_catalog = pipe_catalog.ix[(pipe_catalog['D_int_m']-diameter_m).abs().argsort()[:1]]
+    slection_of_catalog = pipe_catalog.ix[(pipe_catalog['D_int_m'] - diameter_m).abs().argsort()[:1]]
     D_int_m = slection_of_catalog['D_int_m'].values[0]
     Pipe_DN = slection_of_catalog['Pipe_DN'].values[0]
     D_ext_m = slection_of_catalog['D_ext_m'].values[0]
@@ -123,20 +114,23 @@ def calc_max_diameter(volume_flow_m3s, pipe_catalog, velocity_ms):
 
     return Pipe_DN, D_ext_m, D_int_m, D_ins_m
 
+
 def calc_head_loss_m(diamter_m, max_volume_flow_rates_m3s, coefficient_friction, length_m):
     hf_L = (10.67 / (coefficient_friction ** 1.85)) * (max_volume_flow_rates_m3s ** 1.852) / (diamter_m ** 4.8704)
     head_loss_m = hf_L * length_m
     return head_loss_m
 
+
 def calc_linear_thermal_loss_coefficient(diamter_ext_m, diamter_int_m, diameter_insulation_m):
     r_out_m = diamter_ext_m / 2
     r_in_m = diamter_int_m / 2
     r_s_m = diameter_insulation_m / 2
-    k_pipe_WmK = 58.7 #steel pipe
-    k_ins_WmK = 0.059 #scalcium silicate insulation
-    resistance_KmperW = ((math.log(r_out_m/r_in_m)/k_pipe_WmK) +(math.log(r_s_m/r_out_m)/k_ins_WmK))
+    k_pipe_WmK = 58.7  # steel pipe
+    k_ins_WmK = 0.059  # scalcium silicate insulation
+    resistance_KmperW = ((math.log(r_out_m / r_in_m) / k_pipe_WmK) + (math.log(r_s_m / r_out_m) / k_ins_WmK))
     K_WperKm = 2 * math.pi / resistance_KmperW
     return K_WperKm
+
 
 config = cea.config.Configuration()
 locator = cea.inputlocator.InputLocator(scenario=config.scenario)
@@ -190,31 +184,39 @@ if network_type == "DC":
     for building_name in building_names:
         substation_results = pd.read_csv(
             locator.get_optimization_substations_results_file(building_name, "DC", DCN_barcode))
-        volume_flow_m3pers_building[building_name] = substation_results["mdot_space_cooling_data_center_and_refrigeration_result_kgpers"] / P_WATER_KGPERM3
-        T_sup_K_building[building_name] = substation_results["T_return_DC_space_cooling_data_center_and_refrigeration_result_K"]
-        T_re_K_building[building_name] = substation_results["T_return_DC_space_cooling_data_center_and_refrigeration_result_K"]
+        volume_flow_m3pers_building[building_name] = substation_results[
+                                                         "mdot_space_cooling_data_center_and_refrigeration_result_kgpers"] / P_WATER_KGPERM3
+        T_sup_K_building[building_name] = substation_results[
+            "T_return_DC_space_cooling_data_center_and_refrigeration_result_K"]
+        T_re_K_building[building_name] = substation_results[
+            "T_return_DC_space_cooling_data_center_and_refrigeration_result_K"]
 
 # Create a water network model
 wn = wntr.network.WaterNetworkModel()
 
 # add loads
+building_base_demand_m3s = {}
 for building in volume_flow_m3pers_building.keys():
-    wn.add_pattern(building, volume_flow_m3pers_building['B1014'].tolist())
+    building_base_demand_m3s[building] = volume_flow_m3pers_building[building].max()
+    pattern = volume_flow_m3pers_building[building].tolist() / building_base_demand_m3s[building]
+    wn.add_pattern(building, volume_flow_m3pers_building[building].tolist())
 coefficient_friction_hanzen_williams = 100
-thermal_transfer_unit_design_head_m = 2.5  # half as we duplicate the pressure needs to calculate the pumping needs
+thermal_transfer_unit_design_head_m = 2 # half as we duplicate the pressure needs to calculate the pumping needs
 
 # add nodes
+consumer_nodes = []
 for node in node_df.iterrows():
     if node[1]["Type"] == "CONSUMER":
-        base_demand_m3s = 1  # it gets multiplied by the demand
         demand_pattern = node[1]['Building']
+        base_demand_m3s = building_base_demand_m3s[demand_pattern]
+        consumer_nodes.append(node[0])
         wn.add_junction(node[0],
                         base_demand=base_demand_m3s,
                         demand_pattern=demand_pattern,
                         elevation=thermal_transfer_unit_design_head_m,
                         coordinates=node[1]["coordinates"])
     elif node[1]["Type"] == "PLANT":
-        base_head = 10000
+        base_head = 1
         start_node = node[0]
         name_node_plant = start_node
         end_node = edge_df[edge_df['start node'] == start_node]['end node'].values[0]
@@ -228,7 +230,7 @@ for node in node_df.iterrows():
 
 # add pipes
 for edge in edge_df.iterrows():
-    length = edge[1]["pipe length"]
+    length = edge[1]["length_m"]
     edge_name = edge[0]
     wn.add_pipe(edge_name, edge[1]["start node"],
                 edge[1]["end node"],
@@ -238,10 +240,10 @@ for edge in edge_df.iterrows():
                 status='OPEN')
 
 # add options
-wn.options.time.duration = 24 * 3600 * 365
+wn.options.time.duration = 8759 * 3600
 wn.options.time.hydraulic_timestep = 60 * 60
 wn.options.time.pattern_timestep = 60 * 60
-velocity_ms = 3
+velocity_ms = 2
 lequivalent_length_factor = 0.2
 
 # 1st ITERATION GET MASS FLOWS AND CALCULATE DIAMETER
@@ -250,7 +252,8 @@ results = sim.run_sim()
 max_volume_flow_rates_m3s = results.link['flowrate'].abs().max()
 pipe_names = max_volume_flow_rates_m3s.index.values
 pipe_catalog = pd.read_excel(locator.get_database_supply_systems(), sheet_name='PIPING')
-Pipe_DN, D_ext_m, D_int_m, D_ins_m = zip(*[calc_max_diameter(flow, pipe_catalog, velocity_ms=velocity_ms) for flow in max_volume_flow_rates_m3s])
+Pipe_DN, D_ext_m, D_int_m, D_ins_m = zip(
+    *[calc_max_diameter(flow, pipe_catalog, velocity_ms=velocity_ms) for flow in max_volume_flow_rates_m3s])
 diameter_int_m = pd.Series(D_int_m, pipe_names)
 diameter_ext_m = pd.Series(D_ext_m, pipe_names)
 diameter_ins_m = pd.Series(D_ins_m, pipe_names)
@@ -266,56 +269,109 @@ results = sim.run_sim()
 
 # 3d ITERATION GET FINAL UTILIZATION OF THE GRID (SUPPLY SIDE)
 # get accumulated heat loss per hour
-unitary_head_loss_ftperkft = results.link['headloss'].abs()
-unitary_head_loss_m_l = unitary_head_loss_ftperkft * 0.30487 / 304.87
-head_loss_m = unitary_head_loss_m_l.copy()
+head_loss_substations_ft = results.node['head'][consumer_nodes].abs()
+head_loss_substations_m = head_loss_substations_ft * 0.30487
+unitary_head_ftperkft = results.link['headloss'].abs()
+unitary_head_mperm = unitary_head_ftperkft * 0.30487 / 304.87
+head_loss_m = unitary_head_mperm.copy()
 for column in head_loss_m.columns.values:
-    length = edge_df.loc[column]['pipe length']
+    length = edge_df.loc[column]['length_m']
     head_loss_m[column] = head_loss_m[column] * length
-accumulated_head_loss_m = head_loss_m.sum(axis=1) + (thermal_transfer_unit_design_head_m * len(building_names))
+reservoir_head_loss_m = head_loss_m.sum(axis=1) + head_loss_substations_m.sum(axis=1)
 
 # apply this pattern to the reservoir and get results
-base_head = 1
-pattern = accumulated_head_loss_m.tolist()
-wn.add_pattern('reservoir', pattern)
+base_head = reservoir_head_loss_m.max()
+pattern_head_m = (reservoir_head_loss_m.values/base_head).tolist()
+wn.add_pattern('reservoir', pattern_head_m)
 end_node = edge_df[edge_df['start node'] == name_node_plant]['end node'].values[0]
 reservoir = wn.get_node(name_node_plant)
 reservoir.head_timeseries.base_value = int(base_head)
-pat = wn.get_pattern('reservoir')
 reservoir.head_timeseries._pattern = 'reservoir'
 sim = wntr.sim.EpanetSimulator(wn)
 results = sim.run_sim()
 
+# $ POSPROCESSING - MASSFLOWRATES PER PIPE PER HOUR OF THE YEAR
+flow_rate_supply_m3s = results.link['flowrate'].abs()
+massflow_supply_kgs = flow_rate_supply_m3s / P_WATER_KGPERM3
 
-#$ POSPROCESSING - PRESSURE/HEAD LOSSES PER PIPE PER HOUR OF THE YEAR
-unitary_head_loss_ftperkft = results.link['headloss'].abs()
-unitary_head_loss_m_l = unitary_head_loss_ftperkft * 0.30487 / 304.87
-head_loss_m = unitary_head_loss_m_l.copy()
-for column in head_loss_m.columns.values:
-    length = edge_df.loc[column]['pipe length']
-    head_loss_m[column] = head_loss_m[column] * length
+# $ POSPROCESSING - MASSFLOWRATES PER NODE PER HOUR OF THE YEAR
+flow_rate_substations_m3s = results.node['demand'][consumer_nodes].abs()
 
-#$ POSPROCESSING - PUMPING NEEDS PER HOUR OF THE YEAR (TIMES 2 to account for return)
-accumulated_head_loss_m = (head_loss_m.sum(axis=1) + (thermal_transfer_unit_design_head_m * len(building_names))) *2
+# $ POSPROCESSING - PRESSURE/HEAD LOSSES PER PIPE PER HOUR OF THE YEAR
+# at the pipes
+unitary_head_loss_supply_network_ftperkft = results.link['headloss'].abs()
+unitary_head_loss_supply_network_Paperm = unitary_head_loss_supply_network_ftperkft * 2989.0669 / 304.87
+head_loss_supply_network_Pa = unitary_head_loss_supply_network_Paperm.copy()
+for column in head_loss_supply_network_Pa.columns.values:
+    length = edge_df.loc[column]['length_m']
+    head_loss_supply_network_Pa[column] = head_loss_supply_network_Pa[column] * length
+
+# at the substations
+head_loss_substations_ft = results.node['head'][consumer_nodes].abs()
+head_loss_substations_Pa = head_loss_substations_ft * (2989.0669)
+
+# $ POSPROCESSING - PRESSURE LOSSES ACCUMUALTED PER HOUR OF THE YEAR (TIMES 2 to account for return)
+accumulated_head_loss_supply_Pa = head_loss_supply_network_Pa.sum(axis=1)
+accumulated_head_loss_return_Pa = accumulated_head_loss_supply_Pa.copy()
+accumulated_head_loss_substations_Pa = head_loss_substations_Pa.sum(axis=1)
+accumulated_head_loss_total_Pa = accumulated_head_loss_supply_Pa + accumulated_head_loss_return_Pa + accumulated_head_loss_substations_Pa
+
+# $ POSPROCESSING - PUMPING NEEDS PER HOUR OF THE YEAR (TIMES 2 to account for return)
+head_loss_supply_kW = (head_loss_supply_network_Pa * (flow_rate_supply_m3s * 3600)) / (3.6E6 * PUMP_ETA)
+head_loss_substations_kW = (head_loss_substations_Pa * (flow_rate_substations_m3s * 3600)) / (3.6E6 * PUMP_ETA)
+accumulated_head_loss_supply_kW = head_loss_supply_kW.sum(axis=1)
+accumulated_head_loss_return_kW = accumulated_head_loss_supply_kW.copy()
+accumulated_head_loss_substations_kW = head_loss_substations_kW.sum(axis=1)
+accumulated_head_loss_total_kW = accumulated_head_loss_supply_kW + accumulated_head_loss_return_kW + accumulated_head_loss_substations_kW
 
 
-#$ POSPROCESSING - MASSFLOWRATES PER PIPE PER HOUR OF THE YEAR
-flow_rate_m3s = results.link['flowrate'].abs()
-
-
-#$ POSPROCESSING - THERMAL LOSSES PER PIPE PER HOUR OF THE YEAR
-#calculate the thermal characteristics of the grid
+# $ POSPROCESSING - THERMAL LOSSES PER PIPE PER HOUR OF THE YEAR
+# calculate the thermal characteristics of the grid
 temperature_of_the_ground_K = calculate_ground_temperature(locator)
-thermal_coeffcient_WperKm = pd.Series(np.vectorize(calc_linear_thermal_loss_coefficient)(diameter_ext_m, diameter_int_m, diameter_ins_m), pipe_names)
+thermal_coeffcient_WperKm = pd.Series(
+    np.vectorize(calc_linear_thermal_loss_coefficient)(diameter_ext_m, diameter_int_m, diameter_ins_m), pipe_names)
 average_temperature_network = T_sup_K_building.max(axis=1)
 delta_T_in_out_K = average_temperature_network - temperature_of_the_ground_K
 
-thermal_losses_W = results.link['headloss'].copy()
-thermal_losses_W.reset_index(inplace=True, drop=True)
+thermal_losses_supply_kWh = results.link['headloss'].copy()
+thermal_losses_supply_kWh.reset_index(inplace=True, drop=True)
 for pipe in pipe_names:
-    length = edge_df.loc[pipe]['pipe length']
+    length = edge_df.loc[pipe]['length_m']
     k_WperKm_pipe = thermal_coeffcient_WperKm[pipe]
-    thermal_losses_W[pipe] = delta_T_in_out_K * k_WperKm_pipe * length
+    thermal_losses_supply_kWh[pipe] = delta_T_in_out_K * k_WperKm_pipe * length / 1000
+
+# WRITE TO DISK
+
+# pressure losses total
+head_loss_system_Pa = pd.DataFrame({"pressure_loss_supply_Pa": accumulated_head_loss_supply_Pa,
+                                    "pressure_loss_return_Pa": accumulated_head_loss_return_Pa,
+                                    "pressure_loss_substations_Pa": accumulated_head_loss_substations_Pa,
+                                    "pressure_loss_total_Pa": accumulated_head_loss_total_Pa})
+head_loss_system_Pa.to_csv(locator.get_thermal_network_layout_pressure_drop_file(network_type, network_name))
+
+# pumping needs losses total
+pumping_energy_system_kWh = pd.DataFrame({"pressure_loss_supply_kW": accumulated_head_loss_supply_kW,
+                                          "pressure_loss_return_kW": accumulated_head_loss_return_kW,
+                                          "pressure_loss_substations_kW": accumulated_head_loss_substations_kW,
+                                          "pressure_loss_total_kW": accumulated_head_loss_total_kW})
+pumping_energy_system_kWh.to_csv(locator.get_thermal_network_layout_pressure_drop_kw_file(network_type, network_name))
+
+
+# unitary pressure losses
+unitary_head_loss_supply_network_Paperm.to_csv(locator.get_thermal_network_layout_linear_pressure_drop_file(network_type, network_name))
+head_loss_supply_network_Pa.to_csv()
+head_loss_substations_Pa.to_csv()
+
+# mass flow rates
+massflow_supply_kgs.to_csv(locator.get_thermal_network_layout_massflow_file(network_type, network_name))
+
+# thermal losses
+thermal_losses_supply_kWh.to_csv(locator.get_thermal_network_qloss_system_file(network_type, network_name))
+
+#summary of edges used for the calculation
+
+edge_df.to_csv(locator.get_thermal_network_edge_list_file(network_type, network_name))
+node_df.to_csv(locator.get_thermal_network_node_types_csv_file(network_type, network_name))
 
 x = 1
 # Plot results on the network
