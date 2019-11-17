@@ -220,6 +220,8 @@ def thermal_network_simplified(locator, config, network_name):
                                                        "Q_space_cooling_data_center_and_refrigeration_W"] / 1000
 
     # Create a water network model
+    import os
+    os.chdir(locator.get_thermal_network_folder())
     wn = wntr.network.WaterNetworkModel()
 
     # add loads
