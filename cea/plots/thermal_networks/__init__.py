@@ -66,8 +66,7 @@ class ThermalNetworksPlotBase(cea.plots.PlotBase):
     @property
     @cea.plots.cache.cached
     def buildings_hourly(self):
-        thermal_demand_df = pd.read_csv(self.locator.get_thermal_demand_csv_file(self.network_type, self.network_name),
-                                        index_col=0)
+        thermal_demand_df = pd.read_csv(self.locator.get_thermal_demand_csv_file(self.network_type, self.network_name))
         thermal_demand_df.set_index(self.date)
         thermal_demand_df = thermal_demand_df / 1000
         return thermal_demand_df
@@ -165,6 +164,12 @@ class ThermalNetworksPlotBase(cea.plots.PlotBase):
     def P_loss_kWh(self):
         return pd.read_csv(self.locator.get_thermal_network_layout_ploss_system_edges_file(self.network_type,
                                                                                            self.network_name))
+    @property
+    @cea.plots.cache.cached
+    def Unitary_P_loss_kPaperm(self):
+        return pd.read_csv(self.locator.get_thermal_network_layout_linear_pressure_drop_file(self.network_type,
+                                                                                           self.network_name)) /1000 #to kPa
+
     @property
     @cea.plots.cache.cached
     def Q_loss_kWh(self):
