@@ -26,6 +26,7 @@ from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3, HOURS
 from cea.constants import PUR_lambda_WmK, STEEL_lambda_WmK, SOIL_lambda_WmK
 from cea.optimization.constants import PUMP_ETA
 from cea.resources import geothermal
+from cea.technologies.thermal_network.simplified_thermal_network import thermal_network_simplified
 from cea.technologies.constants import ROUGHNESS, NETWORK_DEPTH, REDUCED_TIME_STEPS, MAX_INITIAL_DIAMETER_ITERATIONS, \
     MAX_NODE_FLOW
 from cea.utilities import epwreader
@@ -3491,12 +3492,17 @@ def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
     network_names = config.thermal_network.network_names
+    network_model = config.thermal_network.network_model
     if len(network_names) == 0:
         network_names = ['']
 
-    for network_name in network_names:
-        thermal_network = ThermalNetwork(locator, network_name, config.thermal_network)
-        thermal_network_main(locator, thermal_network, processes=config.get_number_of_processes())
+    if network_model == 'simplified':
+        for network_name in network_names:
+            thermal_network_simplified(locator, config, network_name)
+    else:
+        for network_name in network_names:
+            thermal_network = ThermalNetwork(locator, network_name, config.thermal_network)
+            thermal_network_main(locator, thermal_network, processes=config.get_number_of_processes())
 
     print('done.')
     print('total time: ', time.time() - start)
