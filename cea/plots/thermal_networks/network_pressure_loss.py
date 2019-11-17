@@ -153,12 +153,12 @@ class PeakNetworkPressureLossPlot(cea.plots.thermal_networks.ThermalNetworksMapP
         edges_df["_LineWidth"] = 0.1 * edges_df["Pipe_DN"]
 
         # color the edges based on aggregated pipe heat loss
-        P_loss_kWh_peak = self.P_loss_kWh.max().round(2)
-        edges_df["Peak Pumping Energy Pipes [kWh]"] = P_loss_kWh_peak.values
+        P_loss_kPaperm_peak = self.Unitary_P_loss_kPaperm.max().round(2)
+        edges_df["Peak Pressure loss [kPa/m]"] = P_loss_kPaperm_peak.values
 
         # figure out colors
-        p_loss_min = P_loss_kWh_peak.min()
-        p = P_loss_kWh_peak.max()
+        p_loss_min = P_loss_kPaperm_peak.min()
+        p = P_loss_kPaperm_peak.max()
         scale_p_loss = lambda x: remap(x, p_loss_min, p, 0.0, 1.0)
 
         # matplotlib works on RGB in ranges [0.0, 1.0] - scale the input colors to that, transform and then scale back
@@ -166,7 +166,7 @@ class PeakNetworkPressureLossPlot(cea.plots.thermal_networks.ThermalNetworksMapP
         min_rgb_mpl = [remap(c, 0.0, 255.0, 0.0, 1.0) for c in get_color_array("white")]
         max_rgb_mpl = [remap(c, 0.0, 255.0, 0.0, 1.0) for c in get_color_array("red")]
 
-        edges_df["_FillColor"] = P_loss_kWh_peak.apply(
+        edges_df["_FillColor"] = P_loss_kPaperm_peak.apply(
             lambda p_loss: json.dumps(
                 [remap(x, 0.0, 1.0, 0.0, 255.0)
                  for x in color_fader_rgb(min_rgb_mpl, max_rgb_mpl, mix=scale_p_loss(p_loss))])).values
