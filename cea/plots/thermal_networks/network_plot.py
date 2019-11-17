@@ -34,7 +34,7 @@ class NetworkLayoutPlot(cea.plots.thermal_networks.ThermalNetworksMapPlotBase):
             get_geographic_coordinate_system())
         edges_df["_LineWidth"] = 0.05 * edges_df["Pipe_DN"]
         edges_df["_FillColor"] = json.dumps(self.colors["edges"])
-        edges_df = edges_df.drop("weight", axis=1)
+        edges_df = edges_df.drop("length_m", axis=1)
         return edges_df
 
     @property

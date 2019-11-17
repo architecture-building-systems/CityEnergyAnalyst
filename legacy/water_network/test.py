@@ -15,6 +15,15 @@ from cea.optimization.preprocessing.preprocessing_main import get_building_names
 from cea.technologies.thermal_network.thermal_network import calculate_ground_temperature
 from cea.optimization.constants import PUMP_ETA
 
+__author__ = "Jimeno A. Fonseca"
+__copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Jimeno A. Fonseca"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
+
 
 def extract_network_from_shapefile(edge_shapefile_df, node_shapefile_df):
     """
@@ -155,6 +164,7 @@ total_demand = pd.read_csv(locator.get_total_demand())
 volume_flow_m3pers_building = pd.DataFrame()
 T_sup_K_building = pd.DataFrame()
 T_re_K_building = pd.DataFrame()
+Q_demand_kWh_building = pd.DataFrame()
 if network_type == "DH":
     buildings_name_with_heating = get_building_names_with_load(total_demand, load_name='QH_sys_MWhyr')
     buildings_name_with_space_heating = get_building_names_with_load(total_demand, load_name='Qhs_sys_MWhyr')
@@ -171,6 +181,7 @@ if network_type == "DH":
         volume_flow_m3pers_building[building_name] = substation_results["mdot_DH_result_kgpers"] / P_WATER_KGPERM3
         T_sup_K_building[building_name] = substation_results["T_supply_DH_result_K"]
         T_re_K_building[building_name] = substation_results["T_return_DH_result_K"]
+        Q_demand_kWh_building[building_name] = (substation_results["Q_heating_W"] + substation_results["Q_dhw_W"])/1000
 
 if network_type == "DC":
     buildings_name_with_cooling = get_building_names_with_load(total_demand, load_name='QC_sys_MWhyr')
@@ -190,6 +201,8 @@ if network_type == "DC":
             "T_return_DC_space_cooling_data_center_and_refrigeration_result_K"]
         T_re_K_building[building_name] = substation_results[
             "T_return_DC_space_cooling_data_center_and_refrigeration_result_K"]
+        Q_demand_kWh_building[building_name] = substation_results[
+            "Q_space_cooling_data_center_and_refrigeration_W"]/1000
 
 # Create a water network model
 wn = wntr.network.WaterNetworkModel()
@@ -298,6 +311,7 @@ massflow_supply_kgs = flow_rate_supply_m3s / P_WATER_KGPERM3
 
 # $ POSPROCESSING - MASSFLOWRATES PER NODE PER HOUR OF THE YEAR
 flow_rate_substations_m3s = results.node['demand'][consumer_nodes].abs()
+massflow_substations_kgs = flow_rate_substations_m3s / P_WATER_KGPERM3
 
 # $ POSPROCESSING - PRESSURE/HEAD LOSSES PER PIPE PER HOUR OF THE YEAR
 # at the pipes
@@ -327,13 +341,12 @@ accumulated_head_loss_substations_kW = head_loss_substations_kW.sum(axis=1)
 accumulated_head_loss_total_kW = accumulated_head_loss_supply_kW + accumulated_head_loss_return_kW + accumulated_head_loss_substations_kW
 
 
-# $ POSPROCESSING - THERMAL LOSSES PER PIPE PER HOUR OF THE YEAR
+# $ POSPROCESSING - THERMAL LOSSES PER PIPE PER HOUR OF THE YEAR (SUPPLY)
 # calculate the thermal characteristics of the grid
 temperature_of_the_ground_K = calculate_ground_temperature(locator)
-thermal_coeffcient_WperKm = pd.Series(
-    np.vectorize(calc_linear_thermal_loss_coefficient)(diameter_ext_m, diameter_int_m, diameter_ins_m), pipe_names)
-average_temperature_network = T_sup_K_building.max(axis=1)
-delta_T_in_out_K = average_temperature_network - temperature_of_the_ground_K
+thermal_coeffcient_WperKm = pd.Series(np.vectorize(calc_linear_thermal_loss_coefficient)(diameter_ext_m, diameter_int_m, diameter_ins_m), pipe_names)
+temperature_supply = T_sup_K_building.max(axis=1)
+delta_T_in_out_K = temperature_supply - temperature_of_the_ground_K
 
 thermal_losses_supply_kWh = results.link['headloss'].copy()
 thermal_losses_supply_kWh.reset_index(inplace=True, drop=True)
@@ -342,42 +355,61 @@ for pipe in pipe_names:
     k_WperKm_pipe = thermal_coeffcient_WperKm[pipe]
     thermal_losses_supply_kWh[pipe] = delta_T_in_out_K * k_WperKm_pipe * length / 1000
 
+# retutn pipes
+average_temperature_return= T_re_K_building.mean(axis=1)
+delta_T_in_out_K = average_temperature_return - temperature_of_the_ground_K
+
+thermal_losses_return_kWh = results.link['headloss'].copy()
+thermal_losses_return_kWh.reset_index(inplace=True, drop=True)
+for pipe in pipe_names:
+    length = edge_df.loc[pipe]['length_m']
+    k_WperKm_pipe = thermal_coeffcient_WperKm[pipe]
+    thermal_losses_return_kWh[pipe] = delta_T_in_out_K * k_WperKm_pipe * length / 1000
+
+#total
+thermal_losses_kWh = thermal_losses_supply_kWh + thermal_losses_return_kWh
+
+# $ POSPROCESSING - PLANT HEAT REQUIREMENT
+if network_type == "DH":
+    Plant_load_kWh = thermal_losses_kWh.sum(axis=1) + Q_demand_kWh_building.sum(axis=1) - accumulated_head_loss_total_kW.values
+elif network_type == "DC":
+    Plant_load_kWh = thermal_losses_kWh.sum(axis=1) + Q_demand_kWh_building.sum(axis=1) + accumulated_head_loss_total_kW.values
+Plant_load_kWh.to_csv(locator.get_thermal_network_plant_heat_requirement_file(network_type, network_name), header=['NONE'], index=False)
+
 # WRITE TO DISK
+
+# thermal demand per building (no losses in the network or substations)
+Q_demand_Wh_building = Q_demand_kWh_building * 1000
+Q_demand_Wh_building.to_csv(locator.get_thermal_demand_csv_file(network_type, network_name),index=False)
 
 # pressure losses total
 head_loss_system_Pa = pd.DataFrame({"pressure_loss_supply_Pa": accumulated_head_loss_supply_Pa,
                                     "pressure_loss_return_Pa": accumulated_head_loss_return_Pa,
                                     "pressure_loss_substations_Pa": accumulated_head_loss_substations_Pa,
                                     "pressure_loss_total_Pa": accumulated_head_loss_total_Pa})
-head_loss_system_Pa.to_csv(locator.get_thermal_network_layout_pressure_drop_file(network_type, network_name))
+head_loss_system_Pa.to_csv(locator.get_thermal_network_layout_pressure_drop_file(network_type, network_name), index=False)
 
 # pumping needs losses total
 pumping_energy_system_kWh = pd.DataFrame({"pressure_loss_supply_kW": accumulated_head_loss_supply_kW,
                                           "pressure_loss_return_kW": accumulated_head_loss_return_kW,
                                           "pressure_loss_substations_kW": accumulated_head_loss_substations_kW,
                                           "pressure_loss_total_kW": accumulated_head_loss_total_kW})
-pumping_energy_system_kWh.to_csv(locator.get_thermal_network_layout_pressure_drop_kw_file(network_type, network_name))
+pumping_energy_system_kWh.to_csv(locator.get_thermal_network_layout_pressure_drop_kw_file(network_type, network_name), index=False)
 
 
 # unitary pressure losses
-unitary_head_loss_supply_network_Paperm.to_csv(locator.get_thermal_network_layout_linear_pressure_drop_file(network_type, network_name))
+unitary_head_loss_supply_network_Paperm.to_csv(locator.get_thermal_network_layout_linear_pressure_drop_file(network_type, network_name), index=False)
 head_loss_supply_network_Pa.to_csv()
 head_loss_substations_Pa.to_csv()
 
 # mass flow rates
-massflow_supply_kgs.to_csv(locator.get_thermal_network_layout_massflow_file(network_type, network_name))
+massflow_supply_kgs.to_csv(locator.get_thermal_network_layout_massflow_file(network_type, network_name), index=False)
 
 # thermal losses
-thermal_losses_supply_kWh.to_csv(locator.get_thermal_network_qloss_system_file(network_type, network_name))
+thermal_losses_kWh.to_csv(locator.get_thermal_network_qloss_system_file(network_type, network_name), index=False)
 
 #summary of edges used for the calculation
 fields_edges = ['length_m', 'Pipe_DN']
-edge_df[fields_edges].to_csv(locator.get_thermal_network_edge_list_file(network_type, network_name))
+edge_df[fields_edges].to_csv(locator.get_thermal_network_edge_list_file(network_type, network_name), index=False)
 fields_nodes = ['Building', 'Type']
-node_df[fields_nodes].to_csv(locator.get_thermal_network_node_types_csv_file(network_type, network_name))
-
-x = 1
-# Plot results on the network
-# pressure_at_5hr = results.node['pressure'].loc[4*3600, :]
-# wntr.graphics.plot_network(wn, node_attribute=pressure_at_5hr, node_size=30, title='Pressure at 5 hours')
-# plt.show()
+node_df[fields_nodes].to_csv(locator.get_thermal_network_node_types_csv_file(network_type, network_name), index=False)
