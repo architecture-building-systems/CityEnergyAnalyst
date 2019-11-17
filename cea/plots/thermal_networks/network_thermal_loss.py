@@ -42,6 +42,8 @@ class AggregatedNetworkThermalLossPlot(cea.plots.thermal_networks.ThermalNetwork
 
     def __init__(self, project, parameters, cache):
         super(AggregatedNetworkThermalLossPlot, self).__init__(project, parameters, cache)
+        self.network_type = parameters['network-type']
+        self.network_name = parameters['network-name']
 
     @property
     def edges_df(self):

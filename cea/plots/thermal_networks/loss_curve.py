@@ -24,6 +24,8 @@ class LossCurvePlot(cea.plots.thermal_networks.ThermalNetworksPlotBase):
 
     def __init__(self, project, parameters, cache):
         super(LossCurvePlot, self).__init__(project, parameters, cache)
+        self.network_type = parameters['network-type']
+        self.network_name = parameters['network-name']
         self.yaxis_title = 'Loss [kWh]'
         self.network_args = [self.network_type, self.network_name]
         self.input_files = [(self.locator.get_thermal_demand_csv_file, self.network_args),
