@@ -43,6 +43,7 @@ INSTALL_REQUIRES = ['SALib==1.2',  # last version to work with python2
                     'timezonefinder==3.4.2',  # last version to work with python2
                     'twine',
                     'utm',
+                    'wntr==0.1.7'
                     'xlrd',
                     'xlwt']
 
