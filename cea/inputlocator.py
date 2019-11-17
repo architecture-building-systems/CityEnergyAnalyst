@@ -940,6 +940,20 @@ class InputLocator(object):
             file_name = network_type + "_" + network_name + "_ploss_System_edges_kW.csv"
         return os.path.join(folder, file_name)
 
+    def get_thermal_network_layout_unitary_ploss_system_edges_file(self, network_type, network_name,
+                                                           representative_week=False):
+        """scenario/outputs/data/optimization/network/layout/DH_qloss_System_kw.csv"""
+        if representative_week == True:
+            folder = self.get_representative_week_thermal_network_layout_folder()
+        else:
+            folder = self.get_thermal_network_folder()
+        if len(network_name) is 0:
+            file_name = network_type + "_" + "_ploss_System_edges_kWperm.csv"
+        else:
+            file_name = network_type + "_" + network_name + "_ploss_System_edges_kWperm.csv"
+        return os.path.join(folder, file_name)
+
+
     def get_thermal_network_layout_pressure_drop_file(self, network_type, network_name, representative_week=False):
         """scenario/outputs/data/optimization/network/layout/DH_P_DeltaP.csv or DC_P_DeltaP.csv
         Pressure drop over an entire district heating or cooling network at each time step
