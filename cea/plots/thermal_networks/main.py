@@ -16,7 +16,6 @@ import cea.inputlocator
 from cea.plots.thermal_networks.Supply_Return_Outdoor import supply_return_ambient_temp_plot
 from cea.plots.thermal_networks.annual_energy_consumption import annual_energy_consumption_plot
 from cea.plots.thermal_networks.energy_loss_bar import energy_loss_bar_plot
-from cea.plots.thermal_networks.loss_curve import loss_curve
 from cea.plots.thermal_networks.loss_duration_curve import loss_duration_curve
 from cea.plots.thermal_networks.network_plot import network_plot
 from cea.constants import HOURS_IN_YEAR
@@ -50,8 +49,6 @@ def plots_main(locator, config):
         # initialize class
         plots = Plots(locator, network_type, network_name)
         # create plots
-        plots.loss_curve(category)
-        plots.loss_curve_relative(category)
         plots.supply_return_ambient_curve(category)
         plots.loss_duration_curve(category)
         plots.energy_loss_bar_plot(category)
@@ -334,41 +331,6 @@ class Plots(object):
     '''
 
     # PLOTS
-
-    def loss_curve(self, category):
-        title = "Heat and Pressure Losses" + self.plot_title_tail  # title
-        output_path = self.locator.get_timeseries_plots_file(
-            self.plot_output_path_header + 'losses_curve', category)  # desitination path
-        analysis_fields = ["P_loss_kWh", "Q_loss_kWh"]  # plot data names
-        for column in self.demand_data['hourly_loads'].columns:
-            analysis_fields = analysis_fields + [str(column)]  # add demand data to names
-        data = self.p_data_processed['hourly_loss'].join(
-            pd.DataFrame(self.q_data_processed['hourly_network_loss'].sum(axis=1)))  # join pressure and heat loss data
-        data.index = self.demand_data['hourly_loads'].index  # match index
-        data = data.join(self.demand_data['hourly_loads'])  # add demand data
-        data.columns = analysis_fields  # format dataframe columns
-        data = data.set_index(self.date)
-        plot = loss_curve(data, analysis_fields, title, output_path)  # call plot
-        return plot
-
-    def loss_curve_relative(self, category):
-        title = "Relative Heat and Pressure Losses" + self.plot_title_tail  # title
-        output_path = self.locator.get_timeseries_plots_file(
-            self.plot_output_path_header + 'relative_losses_curve', category)  # desitination path
-        analysis_fields = ["P_loss_%", "Q_loss_%"]  # data headers
-        for column in self.demand_data['hourly_loads'].columns:
-            analysis_fields = analysis_fields + [str(column)]  # add demand names to data headers
-        df = self.p_data_rel_processed['hourly_loss']  # add relative pressure data
-        # format and join dataframes
-        df = df.rename(columns={0: 1})
-        data = df.join(pd.DataFrame(self.q_network_data_rel_processed['hourly_loss'].sum(axis=1)))
-        data.index = self.demand_data['hourly_loads'].index
-        data = data.join(self.demand_data['hourly_loads'])
-        data.columns = analysis_fields
-        data = data.abs()  # make sure all data is positive (relevant for DC)
-        data = data.set_index(self.date)
-        plot = loss_curve(data, analysis_fields, title, output_path)
-        return plot
 
     def supply_return_ambient_curve(self, category):
         analysis_fields = ["T_sup_C", "T_ret_C"]  # data headers
