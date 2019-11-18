@@ -74,35 +74,19 @@ def template(locator, archetypes):
         monthly_model_data = [model_monthly.GRID_kWh]
         monthly_model_data = pd.DataFrame(monthly_model_data)
 
-
-        # hours = test.groupby(test.DATE.str[5:7])
-        #
-
-        # # annual_model_data = pd.read_csv(demand_path + '/Total_demand.csv')
-        # # model_names = annual_model_data.Name
-        # #
-        # # merged_annual = annual_model_data.merge(annual_real_data, how='inner', on=['Name'])
-        # # model = merged_annual.GRID_MWhyr
-        # # real = merged_annual.Ec_measured
-        # #
-        # #
-        # # # calculate errors
-        # #
-        # # NMBE_annual = ((model - real)/model )*100
-        # # # CvRMSE_annual = (math.sqrt((model - real)**2) / model)*100
-        # # print(NMBE_annual)
-        # # print(CvRMSE_annual)
+        # calculate errors
         real_data = monthly_real_data.loc[:,'Ec_m1':'Ec_m12']
         real_data = real_data.values
         model_data = monthly_model_data.values
         be = real_data - model_data
-        nmbe =be.sum()/real_data.mean()
+        nmbe =(be.sum()/12)/real_data.mean()
         print(nmbe)
         mse = mean_squared_error(real_data,model_data)
         rmse = sqrt(mse)
-        cvrmse = rmse*100
+        cvrmse = rmse*100/real_data.mean()
         print(cvrmse)
 
+        print(model_data)
         # print (math.sqrt(9))
         # print (real_names.dtypes)
 
