@@ -1,3 +1,11 @@
+2019-11-15 - 2.25.2 - #2455 2349 suspend simulations
+2019-11-14 - 2.25.1 - #2448 Ventilation to avoid unrealistically high temperatures during heating season
+2019-11-12 - 2.25.1 - #2452 Update epwreader.py
+2019-11-11 - 2.25.1 - #2439 Databases major refactoring
+2019-11-07 - 2.25.1 - #2444 Update input api
+2019-11-06 - 2.25.1 - #2420 I1633 gains and losses proportional to conditioned area
+2019-11-05 - 2.25.1 - #2441 Release 2.25, I also updated the CEA website to reflect this
+2019-11-04 - 2.24 - #2434 Delete converter_old_schedules_to_csv.py
 2019-11-04 - 2.24 - #2437 Update input api
 2019-11-04 - 2.24 - #2354 2082 add remaining network plots to dashboard
 2019-11-04 - 2.24 - #2431 Update scripts.yml
