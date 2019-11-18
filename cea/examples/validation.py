@@ -10,6 +10,8 @@ import os
 import cea.config
 import cea.inputlocator
 import pandas as pd
+from sklearn.metrics import mean_squared_error
+from math import sqrt
 import math
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
@@ -60,12 +62,12 @@ def template(locator, archetypes):
         # extract real data
         measurements_path = locator.get_measurements()
         monthly_real_data= pd.read_csv(measurements_path + '/monthly_measurements.csv')
-        real_names = monthly_real_data.Name
+        real_names = monthly_real_data.Name.values[0]
 
         # extract model output
         demand_path = locator.get_demand_results_folder()
-        # monthly_model_data = (demand_path + "\\" + real_names + '.csv') #not sure why this doesnt work, have to get help. This should read the name of each line in real_names and extract the equivalent real data
-        model = pd.read_csv(r"C:\CEA\Validation\LCZ1_Yishun\outputs\data\demand\B1000.csv")
+        monthly_model_data = str(demand_path) + "\\" + str(real_names) + '.csv'
+        model = pd.read_csv(monthly_model_data)
         idx = pd.to_datetime(model.DATE)
         model['datetime'] = idx
         model_monthly = model.resample('M', on = 'datetime').sum()
@@ -90,10 +92,23 @@ def template(locator, archetypes):
         # # # CvRMSE_annual = (math.sqrt((model - real)**2) / model)*100
         # # print(NMBE_annual)
         # # print(CvRMSE_annual)
-        print(monthly_real_data)
-        print(monthly_model_data)
+        real_data = monthly_real_data.loc[:,'Ec_m1':'Ec_m12']
+        real_data = real_data.values
+        model_data = monthly_model_data.values
+        be = real_data - model_data
+        nmbe =be.sum()/real_data.mean()
+        print(nmbe)
+        mse = mean_squared_error(real_data,model_data)
+        rmse = sqrt(mse)
+        cvrmse = rmse*100
+        print(cvrmse)
+
         # print (math.sqrt(9))
         # print (real_names.dtypes)
+
+        # for i in range(1,13):
+        #    print('Ec_m'+str(i))
+        #    print (monthly_real_data.(i))
     pass
 
 
