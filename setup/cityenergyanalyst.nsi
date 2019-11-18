@@ -1,5 +1,7 @@
 # NSIS script for creating the City Energy Analyst installer
 
+; include logic library
+!include 'LogicLib.nsh'
 
 ; include the modern UI stuff
 !include "MUI2.nsh"
@@ -175,6 +177,15 @@ Section "Base Installation" Base_Installation_Section
     nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip install -U --force-reinstall pip'
     DetailPrint "Pip installing CityEnergyAnalyst==${VER}"
     nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip install -U cityenergyanalyst==${VER}'
+
+    # make sure cea was installed
+    Pop $0
+    DetailPrint 'pip install cityenergyanalyst==${VER} returned $0'
+    ${If} "$0" != "0"
+        Abort "Could not install CityEnergyAnalyst ${VER} - see Details"
+    ${EndIf}
+
+
     DetailPrint "Pip installing Jupyter"
     nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip install --force-reinstall jupyter ipython'
 
