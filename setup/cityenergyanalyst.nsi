@@ -19,7 +19,7 @@ ${StrRep}
 !define CEA_ENV_FILENAME "Dependencies.7z"
 !define RELATIVE_GIT_PATH "Dependencies\cmder\vendor\git-for-windows\bin\git.exe"
 !define CEA_REPO_URL "https://github.com/architecture-building-systems/CityEnergyAnalyst.git"
-!define CEA_ELECTRON_URL "https://github.com/architecture-building-systems/CityEnergyAnalyst-GUI/releases/latest/download/win-unpacked.7z"
+!define CEA_ELECTRON_URL "https://github.com/architecture-building-systems/CityEnergyAnalyst-GUI/releases/download/v${VER}/win-unpacked.7z"
 
 !define CEA_TITLE "City Energy Analyst"
 
@@ -143,9 +143,9 @@ Section "Base Installation" Base_Installation_Section
     download_electron_ok:
         # get on with life...
 
-    # unzip the electron interface
+    # unzip the electron interface (note, expect a subdirectory called win-unpacked inside the archive)
     DetailPrint "Extracting win-unpacked.7z"
-    SetOutPath "$INSTDIR\win-unpacked"
+    SetOutPath "$INSTDIR"
     Nsis7z::ExtractWithDetails "$INSTDIR\win-unpacked.7z" "Extracting Electron interface %s..."
     Delete "$INSTDIR\win-unpacked.7z"
     SetOutPath "$INSTDIR"
@@ -188,6 +188,9 @@ Section "Base Installation" Base_Installation_Section
 
     DetailPrint "Pip installing Jupyter"
     nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip install --force-reinstall jupyter ipython'
+
+    DetailPrint "Pip installing Sphinx"
+    nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip install --force-reinstall --no-deps sphinx'
 
     # create cea.config file in the %userprofile% directory by calling `cea --help` and set daysim paths
     nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\Scripts\cea.exe" --help'
