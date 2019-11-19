@@ -51,8 +51,8 @@ def validation(locator, archetypes): #confirm what goes in parenthesis here
         annual_measured_demand = merged_annual.Ec_measured
 
         # calculate errors
-        mbe_annual = ((annual_modelled_demand - annual_measured_demand) / annual_modelled_demand) * 100 #mean bias error (%)
-        print(mbe_annual)
+        be_annual = ((annual_modelled_demand - annual_measured_demand) / annual_modelled_demand) * 100 #bias error (%)
+        print(be_annual)
 
     ## monthly validation
     if monthly == True:
@@ -82,11 +82,11 @@ def validation(locator, archetypes): #confirm what goes in parenthesis here
 
             # calculate errors
             be = monthly_measured_demand - monthly_modelled_demand #bias error
-            nmbe = (be.sum()/12) / monthly_measured_demand.mean() #normalized mean bias error
+            nmbe = ((be.sum()/12) / monthly_measured_demand.mean())*100 #normalized mean bias error (%)
             print(nmbe)
             mse = mean_squared_error(monthly_measured_demand, monthly_modelled_demand) #mean squared error
             rmse = sqrt(mse) #root mean squared error
-            cvrmse = rmse * 100 / monthly_measured_demand.mean() #root mean squared error
+            cvrmse = rmse * 100 / monthly_measured_demand.mean() #coefficient of variation of the root mean squared error (%)
             print(cvrmse)
 
     pass
