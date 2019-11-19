@@ -5,14 +5,17 @@
 T_b_CDD = 25.0
 # TECHS = ['HCS_LD', 'HCS_coil', 'HCS_ER0', 'HCS_3for2', 'HCS_IEHX']
 # TECHS = ['HCS_base_LD', 'HCS_base_coil', 'HCS_base_3for2', 'HCS_base_ER0', 'HCS_base_IEHX',  'HCS_base']
-TECHS = ['HCS_base']
+TECHS = ['HCS_base_ER0', 'HCS_base_IEHX',  'HCS_base']
 # timesteps = [5136, 5144, 5145, 5147, 5148]  # 168 (week) [5389]
 # timesteps = [5145]  # 168 (week) [5389]
-timesteps = 24  # 168 (week) [5389]
+timesteps = 168  # 168 (week) [5389]
 # timesteps = "typical days"  # 168 (week)
 # timesteps = 'dtw hours'
 typical_days_path = "E:\\WP2"
 PLOTS = ['electricity_usages','air_flow','OAU_T_w_supply','exergy_usages', 'humidity_balance', 'humidity_storage', 'heat_balance']
+post_process_json = True
+remove_json = True
+post_process_osmose = True
 new_calculation = False
 
 # GENERAL INPUTS
@@ -21,7 +24,7 @@ specified_buildings = ["B005"]
 # specified_buildings = ["B001","B002","B005","B006","B009"]
 # specified_buildings = ["B003","B008"]
 # specified_buildings = ["B001","B002","B003","B004","B005","B006","B007","B008","B009","B010"]
-cases = ['WTP_CBD_m_WP1_RET','WTP_CBD_m_WP1_HOT','WTP_CBD_m_WP1_OFF']
+cases = ['WTP_CBD_m_WP1_OFF','WTP_CBD_m_WP1_RET','WTP_CBD_m_WP1_HOT']
 # cases = ['WTP_CBD_m_WP1_HOT']
 
 ## LAPTOP ##
