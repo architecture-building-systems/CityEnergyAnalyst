@@ -8,22 +8,22 @@ from cea.osmose.auxiliary_functions import calc_h_from_T_w
 DETAILED_PLOTS = True
 
 
-def main(folder_path):
-    print(folder_path)
+def main(run_folder_path):
+    print(run_folder_path)
     ## Read files
-    files_in_path = os.listdir(folder_path)
+    files_in_path = os.listdir(run_folder_path)
     balance_file = [file for file in files_in_path if 'balance' in file][0]
-    balance_df = read_file_as_df(balance_file, folder_path)
+    balance_df = read_file_as_df(balance_file, run_folder_path)
     output_file = [file for file in files_in_path if 'output' in file][0]
-    output_df = read_file_as_df(output_file, folder_path)
+    output_df = read_file_as_df(output_file, run_folder_path)
     stream_file = [file for file in files_in_path if 'stream' in file][0]
-    streams_df = read_file_as_df(stream_file, folder_path)
+    streams_df = read_file_as_df(stream_file, run_folder_path)
 
 
     ## Check balance
     # air
     m_a_in_df, m_a_out_df = calc_layer_balance(balance_df, 'Bui_air_bal')
-    plot_values_all_timesteps('Bui_air_bal_in', m_a_in_df, 'Air flow [kg/s/m2]', output_df, folder_path)
+    plot_values_all_timesteps('Bui_air_bal_in', m_a_in_df, 'Air flow [kg/s/m2]', output_df, run_folder_path)
     m_a_in_min = output_df['m_ve_min'].combine(output_df['m_a_in_inf'],max)
     air_in_ratio = m_a_in_df.sum(axis=1)/m_a_in_min
     # water
@@ -34,29 +34,29 @@ def main(folder_path):
     el_in_df, el_out_df = calc_layer_balance(balance_df, 'Electricity')
     el_usages = el_out_df.sum(axis=1)
     # plot_values_all_timesteps('Electricity_out', el_out_df, 'Electricity Usages [kWh/m2]', output_df, folder_path)
-    plot_values_all_timesteps('Electricity_in', el_in_df, 'Electricity Supply [kWh/m2]', output_df, folder_path)
+    plot_values_all_timesteps('Electricity_in', el_in_df, 'Electricity Supply [kWh/m2]', output_df, run_folder_path)
 
     ## Calculation
     # exergy
-    exergy_req, exergy_reheat_req = calc_exergy(balance_df, output_df, folder_path)
+    exergy_req, exergy_reheat_req = calc_exergy(balance_df, output_df, run_folder_path)
     exergy_recovered_df = calc_exergy_recovered(streams_df, output_df)
     # Q
-    Qsc_dict = calc_Qsc_room(output_df, Q_sen_in_df, Q_sen_out_df, folder_path)
-    Qsc_required = calc_Qsc(output_df)
+    Qsc_dict = calc_Qsc_room(output_df, Q_sen_in_df, Q_sen_out_df, run_folder_path)
+    Qsc_total_theoretical = calc_Qsc_theoretical(output_df)
     Q_chiller_total, Q_r_chiller_total, Q_coil_dict,\
-    Q_reheat_dict, Q_exhaust = calc_Q_heat_cascade(folder_path,output_df,streams_df)
+    Q_reheat_dict, Q_exhaust = calc_Q_heat_cascade(run_folder_path, output_df, streams_df)
     # cooling efficiency
     OAU_cooling_eff = (Qsc_dict['OAU_Qsc']/Q_coil_dict['OAU_Qc_coil']).fillna(0)
-    plot_stacked_bars({'cooling eff': OAU_cooling_eff}, len(output_df.index), 'OAU cooling eff', 'Qsc/Qc_coil [kW]', folder_path)
+    plot_stacked_bars({'cooling eff': OAU_cooling_eff}, len(output_df.index), 'OAU cooling eff', 'Qsc/Qc_coil [kW]', run_folder_path)
     # COP
     cop_total = Qsc_dict['Qsc_total'] / el_usages
     data_dict = {'COP': cop_total}
-    plot_stacked_bars(data_dict, len(output_df.index), 'COP', 'COP [kW]', folder_path)
+    plot_stacked_bars(data_dict, len(output_df.index), 'COP', 'COP [kW]', run_folder_path)
     # Temperatures
-    if 'base' not in folder_path:
-        calc_chiller_T(output_df, folder_path) # not relevant in base
-    T_SA_dict = draw_T_SA(output_df, folder_path)
-    T_offcoil_dict = draw_T_offcoil(output_df, folder_path)
+    if 'base' not in run_folder_path:
+        calc_chiller_T(output_df, run_folder_path) # not relevant in base
+    T_SA_dict = draw_T_SA(output_df, run_folder_path)
+    T_offcoil_dict = draw_T_offcoil(output_df, run_folder_path)
 
     ## Write total.csv
     total_dict = {'COP': cop_total,
@@ -69,13 +69,13 @@ def main(folder_path):
                   'Q_chiller_kWh': Q_chiller_total,
                   'Q_r_chiller_kWh': Q_r_chiller_total,
                   'Q_exhaust_kWh': Q_exhaust,
-                  'Qsc_theoretical': Qsc_required,
+                  'Qsc_theoretical': Qsc_total_theoretical,
                   'Af_m2': output_df['Af_m2']}
     for key in ['SU_Qh', 'SU_Qh_reheat', 'SU_qt_hot']:
         if output_df[key].sum() != 0.0 :
             total_dict[key] = output_df[key]
             # warnings
-            plot_stacked_bars({key: output_df[key]}, len(output_df.index), key, 'Qh [kW]', folder_path)
+            plot_stacked_bars({key: output_df[key]}, len(output_df.index), key, 'Qh [kW]', run_folder_path)
             print('SU in use: ', key)
             if output_df[key].sum() > 10:
                 print('value: ', output_df[key].sum())
@@ -87,7 +87,7 @@ def main(folder_path):
     # save to csv
     total_df = pd.DataFrame(total_dict)
     total_df.loc['sum'] = total_df.sum()
-    total_df.to_csv(os.path.join(folder_path, 'total.csv'))
+    total_df.to_csv(os.path.join(run_folder_path, 'total.csv'))
 
     return
 
@@ -156,24 +156,29 @@ def calc_layer_balance(balance_df, layer):
 def calc_exergy(balance_df, output_df, folder_path):
     # total exergy
     el_chillers_df = balance_df.filter(like='Electricity_in_chillers').sum(axis=1)
-    ex_chillers = el_chillers_df * output_df['g_value_chillers'].values[0]
-    el_r_chillers_df = balance_df.filter(like='Electricity_out_r_chillers').sum(axis=1)
-    if 'g_value_rchillers' in output_df.columns:
-        ex_r_chillers = el_r_chillers_df * output_df['g_value_rchillers'].values[0]
-    else:
-        ex_r_chillers = 0.0
-    Ex = ex_chillers - ex_r_chillers
-    data_dict = {'Ex': Ex}
-    timesteps = len(output_df.index)
-    plot_stacked_bars(data_dict, timesteps, 'exergy', 'exergy [kW]', folder_path)
+    if el_chillers_df.sum() > 0.0:
+        ex_chillers = el_chillers_df * output_df['g_value_chillers'].values[0]
+        # ex_chillers = el_chillers_df * 0.45
+        el_r_chillers_df = balance_df.filter(like='Electricity_out_r_chillers').sum(axis=1)
+        if 'g_value_rchillers' in output_df.columns:
+            ex_r_chillers = el_r_chillers_df * output_df['g_value_rchillers'].values[0]
+        else:
+            ex_r_chillers = 0.0
+        Ex = ex_chillers - ex_r_chillers
+        data_dict = {'Ex': Ex}
+        timesteps = len(output_df.index)
+        plot_stacked_bars(data_dict, timesteps, 'exergy', 'exergy [kW]', folder_path)
 
-    # reheating electricity
-    Qh_reheat = output_df.filter(like='Qh_reheat_OAU').sum(axis=1) + output_df.filter(like='Qh_reheat_RAU').sum(axis=1)
-    T_reheat = 50 + 273.15
-    T_OA = output_df['T_OA'] + 273.15
-    carnot_reheat = 1 - T_OA/T_reheat
-    ex_Qh_reheat = Qh_reheat * carnot_reheat
-    Ex_reheat = Ex + ex_Qh_reheat
+        # reheating electricity
+        Qh_reheat = output_df.filter(like='Qh_reheat_OAU').sum(axis=1) + output_df.filter(like='Qh_reheat_RAU').sum(axis=1)
+        T_reheat = 50 + 273.15
+        T_OA = output_df['T_OA'] + 273.15
+        carnot_reheat = 1 - T_OA/T_reheat
+        ex_Qh_reheat = Qh_reheat * carnot_reheat
+        Ex_reheat = Ex + ex_Qh_reheat
+    else:
+        Ex = el_chillers_df
+        Ex_reheat = el_chillers_df
 
     return Ex, Ex_reheat
 
@@ -311,7 +316,7 @@ def calc_Qsc_room(output_df, Q_sen_in_df, Q_sen_out_df, folder_path):
     return Qsc_dict
 
 
-def calc_Qsc(output_df):
+def calc_Qsc_theoretical(output_df):
     # TODO: calculate the whole part in extract_demand_outputs.py
     # sensible gains
     Q_sen_gains = output_df['Qc_sen_in_gain']   # solar, occupants, appliances, lighting, infiltration
@@ -567,13 +572,13 @@ if __name__ == '__main__':
     # result_path_folder = "E:\\HCS_results_1022\\HCS_base_m_out_dP"
     result_path_folder = 'E:\\OSMOSE_projects\\HCS_mk\\results'
     # TECHS = ['HCS_base', 'HCS_base_coil', 'HCS_base_3for2', 'HCS_base_ER0', 'HCS_base_IEHX', 'HCS_base_LD']
-    TECHS = ['HCS_base']
+    TECHS = ['HCS_base_coil_hps']
 
     for tech in TECHS:
         tech_folder_path = os.path.join(result_path_folder, tech)
         folders_list = os.listdir(tech_folder_path)
         # for folder in folders_list:
-        for folder in ['run_036_RET_B005_1_24', 'run_037_HOT_B005_1_24', 'run_038_OFF_B005_1_24']:
+        for folder in ['run_035_onerun']:
             if 'run' in folder:
                 folder_path = os.path.join(tech_folder_path, folder)
                 file_list = os.listdir(folder_path)
