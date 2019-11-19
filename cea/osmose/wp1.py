@@ -14,6 +14,9 @@ import cea.osmose.post_process_osmose_results as post_processing
 
 # import from settings # TODO: add to config
 TECHS = settings.TECHS
+post_process_json = settings.post_process_json
+remove_json = settings.remove_json
+post_process_osmose = settings.post_process_osmose
 specified_buildings = settings.specified_buildings
 timesteps = settings.timesteps
 osmose_project_path = settings.osmose_project_path
@@ -76,7 +79,12 @@ def run_osmose_for_building_cases(Tamb, building_names, case, path_to_case_folde
         print building, ' in ', case
         write_osmose_building_inputs(Tamb, building)
         for tech in TECHS:
-            osmose_one_run(building, case, periods, tech, time_print)
+            result_path, run_folder = osmose_one_run(building, case, periods, tech, time_print)
+            path_to_run_folder = rename_run_folder(building, case, periods, result_path, run_folder, time_print)
+            if post_process_json:
+                post_process_osmose_json_out(path_to_run_folder, remove_json)
+            if post_process_osmose:
+                post_processing.main(path_to_run_folder)
 
         # # plot results
         # building_timestep_tag = building + "_" + str(periods) + "_" + str(timesteps_calc)
@@ -90,6 +98,10 @@ def run_osmose_for_building_cases(Tamb, building_names, case, path_to_case_folde
         # compare_el.main(building, building_result_path, case)
         # # start_ampl_license(ampl_lic_path, "stop")
 
+def post_process_osmose_json_out(path_to_run_folder, remove_json):
+    from cea.osmose.read_osmose_out_json import post_process_osmose_out_json
+    post_process_osmose_out_json(path_to_run_folder, remove_json)
+    return
 
 def osmose_one_run(building, case, periods, tech, time_print):
     # run osmose
@@ -97,6 +109,12 @@ def osmose_one_run(building, case, periods, tech, time_print):
     print time.strftime("%H:%M", t)
     t0 = time.clock()
     result_path, run_folder = exec_osmose(tech, osmose_project_path)
+    time_elapsed = time.clock() - t0
+    print round(time_elapsed, 0), ' s for running: ', tech, '\n'
+    return result_path, run_folder
+
+
+def rename_run_folder(building, case, periods, result_path, run_folder, time_print):
     # rename the files to keep track
     case_short = case.split('_')[4]
     old_name = run_folder
@@ -118,9 +136,10 @@ def osmose_one_run(building, case, periods, tech, time_print):
 
         ##Rename
         os.rename(os.path.join(result_path, run_folder), os.path.join(result_path, new_name))
-    time_elapsed = time.clock() - t0
-    print round(time_elapsed, 0), ' s for running: ', tech, '\n'
-    return
+
+        ## new path
+        path_to_run_folder = os.path.join(result_path, new_name)
+    return path_to_run_folder
 
 
 def write_osmose_building_inputs(Tamb, building):
