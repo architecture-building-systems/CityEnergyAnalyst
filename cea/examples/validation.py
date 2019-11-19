@@ -26,7 +26,7 @@ def validation(locator, archetypes): #confirm what goes in parenthesis here
     This tool compares observed (real life measured data) and predicted (output of the model data) values.
     Annual data is compared in terms of MBE and monthly data in terms of NMBE and CvRMSE (follwing ASHRAE Guideline 14-2002).
     A new input folder with measurements has to be created, with a csv each for monthly and annual data provided as input for this tool.
-A    new output csv is generated providing for each building (if measured data is available): building ID | ZIP Code | Measured data (observed) | Modelled data (predicted) | Model errors
+    A new output csv is generated providing for each building (if measured data is available): building ID | ZIP Code | Measured data (observed) | Modelled data (predicted) | Model errors
     """
     
     #type of validation to run (select only the ones that have a corresponding csv in the inputs folder)
@@ -82,19 +82,13 @@ A    new output csv is generated providing for each building (if measured data i
 
             # calculate errors
             be = monthly_measured_demand - monthly_modelled_demand #bias error
-            nmbe = (be.sum()/12) / monthly_measured_demand.mean()
+            nmbe = (be.sum()/12) / monthly_measured_demand.mean() #normalized mean bias error
             print(nmbe)
-            mse = mean_squared_error(monthly_measured_demand, monthly_modelled_demand)
-            rmse = sqrt(mse)
-            cvrmse = rmse * 100 / monthly_measured_demand.mean()
+            mse = mean_squared_error(monthly_measured_demand, monthly_modelled_demand) #mean squared error
+            rmse = sqrt(mse) #root mean squared error
+            cvrmse = rmse * 100 / monthly_measured_demand.mean() #root mean squared error
             print(cvrmse)
 
-
-        # print (math.sqrt(9))
-
-
-        # for i in range(1,13):
-        #    print('Ec_m'+str(i))
     pass
 
 
