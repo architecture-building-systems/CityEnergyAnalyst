@@ -172,7 +172,8 @@ def calc_operating_conditions(chiller_prop, input_conditions):
 
     return {'T_hw_out_C': T_hw_out_C,
             'T_cw_out_C': T_cw_out_C,
-            'q_chw_W': q_chw_kW * 1000, 'q_hw_W': q_hw_kW * 1000,
+            'q_chw_W': q_chw_kW * 1000,
+            'q_hw_W': q_hw_kW * 1000,
             'q_cw_W': q_cw_kW * 1000}
 
 
