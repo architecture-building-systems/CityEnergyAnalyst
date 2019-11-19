@@ -107,7 +107,6 @@ def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_gro
     return chiller_operation
 
 
-
 def calc_operating_conditions(chiller_prop, input_conditions):
     """
     Calculates chiller operating conditions at given input conditions by solving the characteristic equations and the
@@ -123,6 +122,7 @@ def calc_operating_conditions(chiller_prop, input_conditions):
     ..[Kuhn A. & Ziegler F., 2005] Operational results of a 10kW absorption chiller and adaptation of the characteristic
     equation. In: Proceedings of the interantional conference solar air conditioning. Bad Staffelstein, Germany: 2005.
     """
+    import ipdb; ipdb.set_trace()
     # external water circuits (e: chilled water, ac: cooling water, d: hot water)
     T_cw_in_C = input_conditions['T_ground_K'] - 273.0  # condenser water inlet temperature
     T_chw_in_C = input_conditions['T_chw_re_K'] - 273.0  # inlet to the evaporator
@@ -133,6 +133,18 @@ def calc_operating_conditions(chiller_prop, input_conditions):
     mcp_cw_kWperK = m_cw_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK/1000
     mcp_hw_kWperK = m_hw_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK/1000
 
+    # chiller_props (these are constants from the Absorption_chiller sheet in systems.xls)
+    s_e = chiller_prop['s_e'].values[0]
+    r_e = chiller_prop['r_e'].values[0]
+    s_g = chiller_prop['s_g'].values[0]
+    r_g = chiller_prop['r_g'].values[0]
+    a_e = chiller_prop['a_e'].values[0]
+    e_e = chiller_prop['e_e'].values[0]
+    a_g = chiller_prop['a_g'].values[0]
+    e_g = chiller_prop['e_g'].values[0]
+
+
+
     # variables to solve
     T_hw_out_C, T_cw_out_C, q_hw_kW = sympy.symbols('T_hw_out_C T_cw_out_C q_hw_kW')
 
@@ -140,12 +152,12 @@ def calc_operating_conditions(chiller_prop, input_conditions):
     T_hw_mean_C = (input_conditions['T_hw_in_C'] + T_hw_out_C) / 2
     T_cw_mean_C = (T_cw_in_C + T_cw_out_C) / 2
     T_chw_mean_C = (T_chw_in_C + T_chw_out_C) / 2
-    ddt_e = T_hw_mean_C + chiller_prop['a_e'].values[0] * T_cw_mean_C + chiller_prop['e_e'].values[0] * T_chw_mean_C
-    ddt_g = T_hw_mean_C + chiller_prop['a_g'].values[0] * T_cw_mean_C + chiller_prop['e_g'].values[0] * T_chw_mean_C
+    ddt_e = T_hw_mean_C + a_e * T_cw_mean_C + e_e * T_chw_mean_C
+    ddt_g = T_hw_mean_C + a_g * T_cw_mean_C + e_g * T_chw_mean_C
 
     # systems of equations to solve
-    eq_e = chiller_prop['s_e'].values[0] * ddt_e + chiller_prop['r_e'].values[0] - q_chw_kW
-    eq_g = chiller_prop['s_g'].values[0] * ddt_g + chiller_prop['r_g'].values[0] - q_hw_kW
+    eq_e = s_e * ddt_e + r_e - q_chw_kW
+    eq_g = s_g * ddt_g + r_g - q_hw_kW
     eq_bal_g = (input_conditions['T_hw_in_C'] - T_hw_out_C) - q_hw_kW / mcp_hw_kWperK
 
     # solve the system of equations with sympy
