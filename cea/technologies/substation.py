@@ -493,7 +493,7 @@ def substation_model_heating(name, building_demand_df, T_DH_supply_C, Ths_supply
         if Qnom_W > 0:
             tco = Ths_supply_C + 273  # in K
             tci = Ths_return_C + 273  # in K
-            cc = mcphs_sys_kWperC_dict[hs_configuration] * 1000  # in W/K #fixme: recalculated with the Tsupply/return
+            cc = Qhs_sys_W / (tco - tci)
             index = np.where(Qhs_sys_W == Qnom_W)[0][0]
             thi_0 = thi[index]
             tci_0 = tci[index]
