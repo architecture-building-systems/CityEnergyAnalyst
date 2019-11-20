@@ -1014,8 +1014,14 @@ class InputLocator(object):
         self.check_cpg(shapefile_path)
         return shapefile_path
 
-    def get_measurements(self):
+    def get_measurements_folder(self):
         return self._ensure_folder(self.scenario, 'inputs', 'measurements')
+
+    def get_annual_measurements(self):
+        return os.path.join(self.get_measurements_folder(), 'annual_measurements.csv')
+
+    def get_monthly_measurements(self):
+        return os.path.join(self.get_measurements_folder(), 'monthly_measurements.csv')
 
     # OUTPUTS
 
