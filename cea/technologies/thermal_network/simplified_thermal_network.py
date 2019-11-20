@@ -131,8 +131,9 @@ def get_thermal_network_from_shapefile(locator, network_type, network_name):
     return edge_df, node_df
 
 
-def calc_max_diameter(volume_flow_m3s, pipe_catalog, velocity_ms):
-    diameter_m = math.sqrt((volume_flow_m3s / velocity_ms) * (4 / math.pi))
+def calc_max_diameter(volume_flow_m3s, pipe_catalog, velocity_ms, peak_load_percentage):
+    volume_flow_m3s_corrected_to_design = volume_flow_m3s * peak_load_percentage / 100
+    diameter_m = math.sqrt((volume_flow_m3s_corrected_to_design / velocity_ms) * (4 / math.pi))
     slection_of_catalog = pipe_catalog.ix[(pipe_catalog['D_int_m'] - diameter_m).abs().argsort()[:1]]
     D_int_m = slection_of_catalog['D_int_m'].values[0]
     Pipe_DN = slection_of_catalog['Pipe_DN'].values[0]
@@ -167,7 +168,7 @@ def thermal_network_simplified(locator, config, network_name):
     coefficient_friction_hanzen_williams = config.thermal_network.hw_friction_coefficient
     velocity_ms = config.thermal_network.peak_load_velocity
     fraction_equivalent_length = config.thermal_network.equivalent_length_factor
-    peak_load_percentile = config.thermal_network.peak_load_percentile
+    peak_load_percentage = config.thermal_network.peak_load_percentage
 
     # GET INFORMATION ABOUT THE NETWORK
     edge_df, node_df = get_thermal_network_from_shapefile(locator, network_type, network_name)
@@ -283,7 +284,7 @@ def thermal_network_simplified(locator, config, network_name):
     pipe_names = max_volume_flow_rates_m3s.index.values
     pipe_catalog = pd.read_excel(locator.get_database_supply_systems(), sheet_name='PIPING')
     Pipe_DN, D_ext_m, D_int_m, D_ins_m = zip(
-        *[calc_max_diameter(flow, pipe_catalog, velocity_ms=velocity_ms) for flow in max_volume_flow_rates_m3s])
+        *[calc_max_diameter(flow, pipe_catalog, velocity_ms=velocity_ms, peak_load_percentage=peak_load_percentage) for flow in max_volume_flow_rates_m3s])
     pipe_dn = pd.Series(Pipe_DN, pipe_names)
     diameter_int_m = pd.Series(D_int_m, pipe_names)
     diameter_ext_m = pd.Series(D_ext_m, pipe_names)
