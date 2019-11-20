@@ -163,10 +163,11 @@ def thermal_network_simplified(locator, config, network_name):
 
     #local variables
     network_type = config.thermal_network.network_type
-    thermal_transfer_unit_design_head_m = 2  # half as we duplicate the pressure needs to calculate the pumping needs
-    coefficient_friction_hanzen_williams = 100
-    velocity_ms = 2
-    lequivalent_length_factor = 0.2
+    thermal_transfer_unit_design_head_m = config.thermal_network.min_head_susbstation  # half as we duplicate the pressure needs to calculate the pumping needs
+    coefficient_friction_hanzen_williams = config.thermal_network.hw_friction_coefficient
+    velocity_ms = config.thermal_network.peak_load_velocity
+    fraction_equivalent_length = config.thermal_network.equivalent_length_factor
+    peak_load_percentile = config.thermal_network.peak_load_percentile
 
     # GET INFORMATION ABOUT THE NETWORK
     edge_df, node_df = get_thermal_network_from_shapefile(locator, network_type, network_name)
@@ -265,7 +266,7 @@ def thermal_network_simplified(locator, config, network_name):
         edge_name = edge[0]
         wn.add_pipe(edge_name, edge[1]["start node"],
                     edge[1]["end node"],
-                    length=length,
+                    length=length + (1*fraction_equivalent_length),
                     roughness=coefficient_friction_hanzen_williams,
                     minor_loss=0.0,
                     status='OPEN')
@@ -322,11 +323,11 @@ def thermal_network_simplified(locator, config, network_name):
 
     # $ POSPROCESSING - MASSFLOWRATES PER PIPE PER HOUR OF THE YEAR
     flow_rate_supply_m3s = results.link['flowrate'].abs()
-    massflow_supply_kgs = flow_rate_supply_m3s / P_WATER_KGPERM3
+    massflow_supply_kgs = flow_rate_supply_m3s * P_WATER_KGPERM3
 
     # $ POSPROCESSING - MASSFLOWRATES PER NODE PER HOUR OF THE YEAR
     flow_rate_substations_m3s = results.node['demand'][consumer_nodes].abs()
-    massflow_substations_kgs = flow_rate_substations_m3s / P_WATER_KGPERM3
+    massflow_substations_kgs = flow_rate_substations_m3s * P_WATER_KGPERM3
 
     # $ POSPROCESSING - PRESSURE/HEAD LOSSES PER PIPE PER HOUR OF THE YEAR
     # at the pipes
