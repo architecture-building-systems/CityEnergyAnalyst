@@ -690,8 +690,8 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
         # Edge Mass Flows
         edge_mass_flows_for_csv.columns = thermal_network.edge_node_df.columns
         edge_mass_flows_for_csv.to_csv(
-            thermal_network.locator.get_thermal_network_layout_massflow_file(thermal_network.network_type,
-                                                                             thermal_network.network_name),
+            thermal_network.locator.get_thermal_network_layout_massflow_edges_file(thermal_network.network_type,
+                                                                                   thermal_network.network_name),
             # , representative_week),
             na_rep='NaN', index=False, float_format='%.3f')
 
@@ -780,9 +780,9 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
 
         # Edge Mass Flows
         pd.DataFrame(csv_outputs['edge_mass_flows'], columns=thermal_network.edge_node_df.columns).to_csv(
-            thermal_network.locator.get_thermal_network_layout_massflow_file(thermal_network.network_type,
-                                                                             thermal_network.network_name,
-                                                                             representative_week),
+            thermal_network.locator.get_thermal_network_layout_massflow_edges_file(thermal_network.network_type,
+                                                                                   thermal_network.network_name,
+                                                                                   representative_week),
             na_rep='NaN', index=False, float_format='%.3f')
 
         # pressure losses over entire network in Pa

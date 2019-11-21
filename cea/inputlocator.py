@@ -859,7 +859,7 @@ class InputLocator(object):
         """
         return self._ensure_folder(self.get_thermal_network_folder(), "reduced_timesteps")
 
-    def get_thermal_network_layout_massflow_file(self, network_type, network_name, representative_week=False):
+    def get_thermal_network_layout_massflow_edges_file(self, network_type, network_name, representative_week=False):
         """scenario/outputs/data/optimization/network/layout/DH_MassFlow.csv or DC_MassFlow.csv
         Mass flow rates at each edge in a district heating or cooling network
         """
@@ -868,9 +868,37 @@ class InputLocator(object):
         else:
             folder = self.get_thermal_network_folder()
         if len(network_name) is 0:
-            file_name = network_type + "_" + "_MassFlow_kgs.csv"
+            file_name = network_type + "_" + "_massflow_edges_kgs.csv"
         else:
-            file_name = network_type + "_" + network_name + "_MassFlow_kgs.csv"
+            file_name = network_type + "_" + network_name + "_massflow_edges_kgs.csv"
+        return os.path.join(folder, file_name)
+
+    def get_thermal_network_velocity_edges_file(self, network_type, network_name, representative_week=False):
+        """scenario/outputs/data/optimization/network/layout/DH_MassFlow.csv or DC_MassFlow.csv
+        Mass flow rates at each edge in a district heating or cooling network
+        """
+        if representative_week == True:
+            folder = self.get_representative_week_thermal_network_layout_folder()
+        else:
+            folder = self.get_thermal_network_folder()
+        if len(network_name) is 0:
+            file_name = network_type + "_" + "_velocity_edges_mpers.csv"
+        else:
+            file_name = network_type + "_" + network_name + "_velocity_edges_mpers.csv"
+        return os.path.join(folder, file_name)
+
+    def get_thermal_network_layout_massflow_nodes_file(self, network_type, network_name, representative_week=False):
+        """scenario/outputs/data/optimization/network/layout/DH_MassFlow.csv or DC_MassFlow.csv
+        Mass flow rates at each edge in a district heating or cooling network
+        """
+        if representative_week == True:
+            folder = self.get_representative_week_thermal_network_layout_folder()
+        else:
+            folder = self.get_thermal_network_folder()
+        if len(network_name) is 0:
+            file_name = network_type + "_" + "_massflow_nodes_kgs.csv"
+        else:
+            file_name = network_type + "_" + network_name + "_massflow_nodes_kgs.csv"
         return os.path.join(folder, file_name)
 
     def get_thermal_network_layout_supply_temperature_file(self, network_type, network_name,

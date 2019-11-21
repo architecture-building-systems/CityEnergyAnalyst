@@ -1,16 +1,17 @@
 from __future__ import division
 from __future__ import print_function
 
+import json
 import os
+
+import geopandas
 import numpy as np
 import pandas as pd
-import geopandas
-import json
+
 import cea.plots.cache
 from cea.constants import HOURS_IN_YEAR
 from cea.plots.variable_naming import get_color_array
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
-
 
 """
 Implements py:class:`cea.plots.ThermalNetworksPlotBase` as a base class for all plots in the category 
@@ -55,12 +56,12 @@ class ThermalNetworksPlotBase(cea.plots.PlotBase):
         else:
             # plot title including network name
             return '{name} for {network_type} in {network_name}'.format(name=self.name, network_type=self.network_type,
-                                                                        network_name = self.network_name)
+                                                                        network_name=self.network_name)
 
     @property
     def output_path(self):
         file_name = '{network_type}_{network_name}_{name}'.format(network_type=self.network_type,
-                                                                     network_name=self.network_name, name=self.id())
+                                                                  network_name=self.network_name, name=self.id())
         return self.locator.get_timeseries_plots_file(file_name, self.category_path)
 
     @property
@@ -151,7 +152,8 @@ class ThermalNetworksPlotBase(cea.plots.PlotBase):
     @property
     @cea.plots.cache.cached
     def hourly_heat_loss(self):
-        hourly_heat_loss = pd.read_csv(self.locator.get_thermal_network_qloss_system_file(self.network_type, self.network_name))
+        hourly_heat_loss = pd.read_csv(
+            self.locator.get_thermal_network_qloss_system_file(self.network_type, self.network_name))
         hourly_heat_loss = abs(hourly_heat_loss).sum(axis=1)  # aggregate heat losses of all edges
         return pd.DataFrame(hourly_heat_loss)
 
@@ -164,17 +166,43 @@ class ThermalNetworksPlotBase(cea.plots.PlotBase):
     def P_loss_kWh(self):
         return pd.read_csv(self.locator.get_thermal_network_layout_ploss_system_edges_file(self.network_type,
                                                                                            self.network_name))
+
     @property
     @cea.plots.cache.cached
-    def Unitary_P_loss_Paperm(self):
+    def linear_pressure_loss_Paperm(self):
         return pd.read_csv(self.locator.get_network_linear_pressure_drop_edges(self.network_type,
                                                                                self.network_name))
+
+    @property
+    @cea.plots.cache.cached
+    def pressure_loss_nodes_Pa(self):
+        return pd.read_csv(self.locator.get_network_pressure_drop_nodes(self.network_type,
+                                                                        self.network_name))
+
+    @property
+    @cea.plots.cache.cached
+    def mass_flow_kgs_pipes(self):
+        return pd.read_csv(self.locator.get_thermal_network_layout_massflow_edges_file(self.network_type,
+                                                                                       self.network_name))
+
+    @property
+    @cea.plots.cache.cached
+    def velocity_mps_pipes(self):
+        return pd.read_csv(self.locator.get_thermal_network_velocity_edges_file(self.network_type,
+                                                                                       self.network_name))
+
+    @property
+    @cea.plots.cache.cached
+    def mass_flow_kgs_nodes(self):
+        return pd.read_csv(self.locator.get_thermal_network_layout_massflow_nodes_file(self.network_type,
+                                                                                       self.network_name))
 
     @property
     @cea.plots.cache.cached
     def Q_loss_kWh(self):
         return pd.read_csv(self.locator.get_thermal_network_qloss_system_file(self.network_type,
                                                                               self.network_name))  # edge loss
+
     @property
     @cea.plots.cache.cached
     def P_loss_substation_kWh(self):
@@ -214,8 +242,6 @@ class ThermalNetworksPlotBase(cea.plots.PlotBase):
             self.locator.get_thermal_network_layout_supply_temperature_file(self.network_type, self.network_name))
         supply_df -= 273.15  # convert from Kelvin to C
         return supply_df
-
-
 
 
 class ThermalNetworksMapPlotBase(ThermalNetworksPlotBase):
@@ -325,4 +351,3 @@ class ThermalNetworksMapPlotBase(ThermalNetworksPlotBase):
         div = Template(open(template).read()).render(hash=hash, edges=edges, nodes=nodes,
                                                      zone=zone, district=district)
         return div
-
