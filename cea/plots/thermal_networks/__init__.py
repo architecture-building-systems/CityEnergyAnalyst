@@ -167,8 +167,8 @@ class ThermalNetworksPlotBase(cea.plots.PlotBase):
     @property
     @cea.plots.cache.cached
     def Unitary_P_loss_Paperm(self):
-        return pd.read_csv(self.locator.get_thermal_network_layout_linear_pressure_drop_file(self.network_type,
-                                                                                           self.network_name))
+        return pd.read_csv(self.locator.get_network_linear_pressure_drop_edges(self.network_type,
+                                                                               self.network_name))
 
     @property
     @cea.plots.cache.cached
