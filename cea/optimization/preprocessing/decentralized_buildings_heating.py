@@ -143,11 +143,14 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
         # 3-13: Boiler NG + GHP
         for i in range(10):
             # set nominal size for Boiler and GHP
-            QnomBoiler_W = i / 10 * Qnom_W
+            nom_mdotkgpers = mdot_kgpers.max()
+            QnomBoiler_W = i / 10.0 * Qnom_W
+            mdot_kgpers_Boiler = i / 10.0 * nom_mdotkgpers
             QnomGHP_W = Qnom_W - QnomBoiler_W
+            mdot_kgpers_nom_GHP = nom_mdotkgpers - mdot_kgpers_Boiler
 
             # GHP operation
-            Texit_GHP_nom_K = QnomGHP_W / (mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK) + Tret_K
+            Texit_GHP_nom_K = QnomGHP_W / (mdot_kgpers_nom_GHP * HEAT_CAPACITY_OF_WATER_JPERKGK) + Tret_K
             el_GHP_Wh, q_load_NG_Boiler_Wh, \
             qhot_missing_Wh, \
             tsup2_K, q_from_GHP_Wh = np.vectorize(calc_GHP_operation)(QnomGHP_W, T_ground_K, Texit_GHP_nom_K,
@@ -223,11 +226,11 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
 
         # 3-13: BOILER + GHP
         for i in range(10):
-            Opex_a_var_USD[3 + i][0] = i / 10  # Boiler share
-            Opex_a_var_USD[3 + i][3] = 1 - i / 10  # GHP share
+            Opex_a_var_USD[3 + i][0] = i / 10.0  # Boiler share
+            Opex_a_var_USD[3 + i][3] = 1 - i / 10.0  # GHP share
 
             # Get boiler costs
-            QnomBoiler_W = i / 10 * Qnom_W
+            QnomBoiler_W = i / 10.0 * Qnom_W
             Capex_a_Boiler_USD, Opex_a_fixed_Boiler_USD, Capex_Boiler_USD = Boiler.calc_Cinv_boiler(QnomBoiler_W,
                                                                                                     locator,
                                                                                                     config, 'BO1')
@@ -286,7 +289,7 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
 
         # Check the GHP area constraint
         for i in range(10):
-            QGHP = (1 - i / 10) * Qnom_W
+            QGHP = (1 - i / 10.0) * Qnom_W
             areaAvail = geothermal_potential.ix[building_name, 'Area_geo']
             Qallowed = np.ceil(areaAvail / GHP_A) * GHP_HMAX_SIZE  # [W_th]
             if Qallowed < QGHP:
