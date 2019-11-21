@@ -36,8 +36,8 @@ class SupplyReturnAmbientCurvePlot(cea.plots.thermal_networks.ThermalNetworksPlo
         self.network_args = [self.network_type, self.network_name]
         self._plant_node = self.parameters['plant-node']
         self.input_files = [(self.locator.get_thermal_demand_csv_file, self.network_args),
-                            (self.locator.get_thermal_network_layout_pressure_drop_kw_file, self.network_args),
-                            (self.locator.get_thermal_network_qloss_system_file, self.network_args)]
+                            (self.locator.get_network_energy_pumping_requirements_file, self.network_args),
+                            (self.locator.get_network_thermal_loss_edges_file, self.network_args)]
 
     @property
     def plant_node(self):

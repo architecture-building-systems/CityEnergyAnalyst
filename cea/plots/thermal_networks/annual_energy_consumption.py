@@ -30,7 +30,7 @@ class AnnualEnergyConsumptionPlot(cea.plots.thermal_networks.ThermalNetworksPlot
             self.network_args = [self.network_type, self.network_name]
             self.input_files = [
                 (self.locator.get_thermal_demand_csv_file, self.network_args),
-                (self.locator.get_thermal_network_layout_pressure_drop_kw_file, self.network_args),
+                (self.locator.get_network_energy_pumping_requirements_file, self.network_args),
                 (self.locator.get_thermal_network_edge_list_file, self.network_args)]
 
         @property
@@ -46,7 +46,7 @@ class AnnualEnergyConsumptionPlot(cea.plots.thermal_networks.ThermalNetworksPlot
             annual_loads = self.hourly_loads.sum()[0]
             Pumping_substations_kWh = self.Pumping_substations_kWh
             Pumping_allpipes_kWh = self.Pumping_allpipes_kWh
-            Q_loss_kWh = abs(self.Q_loss_kWh)
+            Q_loss_kWh = abs(self.thermal_loss_edges_kWh)
 
             graph = []
             # format demand values

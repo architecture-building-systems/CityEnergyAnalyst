@@ -353,10 +353,12 @@ def thermal_network_simplified(locator, config, network_name):
 
     thermal_losses_supply_kWh = results.link['headloss'].copy()
     thermal_losses_supply_kWh.reset_index(inplace=True, drop=True)
+    thermal_losses_supply_Wperm = thermal_losses_supply_kWh.copy()
     for pipe in pipe_names:
         length = edge_df.loc[pipe]['length_m']
         k_WperKm_pipe = thermal_coeffcient_WperKm[pipe]
         thermal_losses_supply_kWh[pipe] = delta_T_in_out_K * k_WperKm_pipe * length / 1000
+        thermal_losses_supply_Wperm[pipe] = delta_T_in_out_K * k_WperKm_pipe
 
     # retutn pipes
     average_temperature_return = T_re_K_building.mean(axis=1)
@@ -370,7 +372,7 @@ def thermal_network_simplified(locator, config, network_name):
         thermal_losses_return_kWh[pipe] = delta_T_in_out_K * k_WperKm_pipe * length / 1000
 
     # total
-    thermal_losses_kWh = thermal_losses_supply_kWh + thermal_losses_return_kWh
+    thermal_losses_system_kWh = thermal_losses_supply_kWh + thermal_losses_return_kWh
 
     # WRITE TO DISK
 
@@ -426,10 +428,10 @@ def thermal_network_simplified(locator, config, network_name):
 
     # $ POSPROCESSING - PLANT HEAT REQUIREMENT
     if network_type == "DH":
-        Plant_load_kWh = thermal_losses_kWh.sum(axis=1) + Q_demand_kWh_building.sum(
+        Plant_load_kWh = thermal_losses_system_kWh.sum(axis=1) + Q_demand_kWh_building.sum(
             axis=1) - accumulated_head_loss_total_kW.values
     elif network_type == "DC":
-        Plant_load_kWh = thermal_losses_kWh.sum(axis=1) + Q_demand_kWh_building.sum(
+        Plant_load_kWh = thermal_losses_system_kWh.sum(axis=1) + Q_demand_kWh_building.sum(
             axis=1) + accumulated_head_loss_total_kW.values
     Plant_load_kWh.to_csv(locator.get_thermal_network_plant_heat_requirement_file(network_type, network_name),
                           header=['NONE'], index=False)
@@ -455,14 +457,13 @@ def thermal_network_simplified(locator, config, network_name):
                                               "pressure_loss_substations_kW": accumulated_head_loss_substations_kW,
                                               "pressure_loss_total_kW": accumulated_head_loss_total_kW})
     pumping_energy_system_kWh.to_csv(
-        locator.get_thermal_network_layout_pressure_drop_kw_file(network_type, network_name), index=False)
-
-
+        locator.get_network_energy_pumping_requirements_file(network_type, network_name), index=False)
 
 
 
     # thermal losses
-    thermal_losses_kWh.to_csv(locator.get_thermal_network_qloss_system_file(network_type, network_name), index=False)
+    thermal_losses_system_kWh.to_csv(locator.get_network_thermal_loss_edges_file(network_type, network_name), index=False)
+    thermal_losses_supply_Wperm.to_csv(locator.get_network_linear_thermal_loss_edges_file(network_type, network_name), index=False)
 
     # return average temperature of supply at the substations
     T_sup_K_nodes = T_sup_K_building.rename(columns=building_nodes_pairs_inversed)

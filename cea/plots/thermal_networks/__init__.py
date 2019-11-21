@@ -92,24 +92,24 @@ class ThermalNetworksPlotBase(cea.plots.PlotBase):
 
     @property
     @cea.plots.cache.cached
-    def hourly_pressure_loss(self):
+    def plant_pumping_requirement_kWh(self):
         hourly_pressure_loss = pd.read_csv(
-            self.locator.get_thermal_network_layout_pressure_drop_kw_file(self.network_type, self.network_name))
+            self.locator.get_network_energy_pumping_requirements_file(self.network_type, self.network_name))
         hourly_pressure_loss = hourly_pressure_loss['pressure_loss_total_kW']
         return pd.DataFrame(hourly_pressure_loss)
 
     @property
     def yearly_pressure_loss(self):
-        return self.hourly_pressure_loss.values.sum()
+        return self.plant_pumping_requirement_kWh.values.sum()
 
     @property
     def hourly_relative_pressure_loss(self):
-        relative_loss = self._calculate_relative_loss(self.hourly_pressure_loss)
+        relative_loss = self._calculate_relative_loss(self.plant_pumping_requirement_kWh)
         return pd.DataFrame(np.round(relative_loss, 2))
 
     @property
     def mean_pressure_loss_relative(self):
-        relative_loss = self._calculate_relative_loss(self.hourly_pressure_loss)
+        relative_loss = self._calculate_relative_loss(self.plant_pumping_requirement_kWh)
         mean_loss = np.nanmean(relative_loss)  # calculate average loss of nonzero values
         mean_loss = np.round(mean_loss, 2)
         return mean_loss
@@ -153,7 +153,7 @@ class ThermalNetworksPlotBase(cea.plots.PlotBase):
     @cea.plots.cache.cached
     def hourly_heat_loss(self):
         hourly_heat_loss = pd.read_csv(
-            self.locator.get_thermal_network_qloss_system_file(self.network_type, self.network_name))
+            self.locator.get_network_thermal_loss_edges_file(self.network_type, self.network_name))
         hourly_heat_loss = abs(hourly_heat_loss).sum(axis=1)  # aggregate heat losses of all edges
         return pd.DataFrame(hourly_heat_loss)
 
@@ -199,9 +199,15 @@ class ThermalNetworksPlotBase(cea.plots.PlotBase):
 
     @property
     @cea.plots.cache.cached
-    def Q_loss_kWh(self):
-        return pd.read_csv(self.locator.get_thermal_network_qloss_system_file(self.network_type,
-                                                                              self.network_name))  # edge loss
+    def thermal_loss_edges_kWh(self):
+        return pd.read_csv(self.locator.get_network_thermal_loss_edges_file(self.network_type,
+                                                                            self.network_name))  # edge loss
+
+    @property
+    @cea.plots.cache.cached
+    def thermal_loss_edges_Wperm(self):
+        return pd.read_csv(self.locator.get_network_linear_thermal_loss_edges_file(self.network_type,
+                                                                            self.network_name))  # edge loss
 
     @property
     @cea.plots.cache.cached
@@ -214,7 +220,7 @@ class ThermalNetworksPlotBase(cea.plots.PlotBase):
     def Pumping_allpipes_kWh(self):
         # FIXME: why the unit conversion?!
         df_pumping_kW = pd.read_csv(
-            self.locator.get_thermal_network_layout_pressure_drop_kw_file(self.network_type, self.network_name))
+            self.locator.get_network_energy_pumping_requirements_file(self.network_type, self.network_name))
         df_pumping_supply_kW = df_pumping_kW['pressure_loss_supply_kW']
         df_pumping_return_kW = df_pumping_kW['pressure_loss_return_kW']
         df_pumping_allpipes_kW = df_pumping_supply_kW + df_pumping_return_kW
@@ -225,7 +231,7 @@ class ThermalNetworksPlotBase(cea.plots.PlotBase):
     def Pumping_substations_kWh(self):
         # FIXME: why the unit conversion?!
         df_pumping_kW = pd.read_csv(
-            self.locator.get_thermal_network_layout_pressure_drop_kw_file(self.network_type, self.network_name))
+            self.locator.get_network_energy_pumping_requirements_file(self.network_type, self.network_name))
         return df_pumping_kW['pressure_loss_substations_kW']
 
     @property
@@ -273,7 +279,7 @@ class ThermalNetworksMapPlotBase(ThermalNetworksPlotBase):
         self.input_files = [(self.locator.get_zone_geometry, []),
                             (self.locator.get_thermal_demand_csv_file, self.network_args),
                             (self.locator.get_thermal_network_edge_list_file, self.network_args),
-                            (self.locator.get_thermal_network_qloss_system_file, self.network_args),
+                            (self.locator.get_network_thermal_loss_edges_file, self.network_args),
                             (self.locator.get_thermal_network_node_types_csv_file, self.network_args)]
 
     @property

@@ -48,12 +48,12 @@ class NetworkOptimizationFeatures(object):
         for network_name in self.network_names:
             thermal_loss_sum = 0
             if self.district_heating_network:
-                thermal_losses_kW = pd.read_csv(locator.get_thermal_network_qloss_system_file("DH", network_name))
+                thermal_losses_kW = pd.read_csv(locator.get_network_thermal_loss_edges_file("DH", network_name))
                 for column_name in thermal_losses_kW.columns:
                     thermal_loss_sum = thermal_loss_sum + (thermal_losses_kW[column_name].sum()) * 1000
                 self.thermallosses_DHN = self.thermallosses_DHN + thermal_loss_sum
             if self.district_cooling_network:
-                thermal_losses_kW = pd.read_csv(locator.get_thermal_network_qloss_system_file("DC", network_name))
+                thermal_losses_kW = pd.read_csv(locator.get_network_thermal_loss_edges_file("DC", network_name))
                 for column_name in thermal_losses_kW.columns:
                     thermal_loss_sum = thermal_loss_sum + (thermal_losses_kW[column_name].sum()) * 1000
                 self.thermallosses_DCN = self.thermallosses_DCN + thermal_loss_sum
