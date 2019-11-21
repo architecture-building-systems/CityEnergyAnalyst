@@ -58,8 +58,8 @@ def plot_multiple_techs(paths, t, plot_type, line_types, model_name):
     set_plot_parameters(ax1, PLOT_SPECS[plot_type])
     # set legend location
     ncol = 1 if len(paths) <= 15 else int(len(paths)/15)
-    # ax1.legend(loc='lower left', bbox_to_anchor=(1, 0), ncol=ncol)
-    ax1.get_legend().remove()
+    ax1.legend(loc='lower left', bbox_to_anchor=(1, 0), ncol=ncol)
+    # ax1.get_legend().remove()
     fig1 = plt.gcf()
     os.chdir("..\\"*6)
     print('saving fig to...', os.path.abspath(os.curdir))
@@ -110,39 +110,40 @@ def main():
     # plot_multiple_techs(paths, 5, plot_type, line_type, model_name)
 
     ## plot multiple techs
-    # 1. Main folder
-    main_folder = 'E:\\OSMOSE_projects\\HCS_mk\\results\\'
-    # 2. get paths
-    paths = {}
-    tech_dict = {'HCS_base_3for2': 'run_001', 'HCS_base': 'run_036'}
-    for tech in tech_dict.keys():
-        run = tech_dict[tech]
-        folder_layers = [main_folder, tech, run, 's_001\\plots\\icc\\models']
-        paths[tech] = os.path.join('', *folder_layers)
-
-    # 3. plot
-    plot_type = 'icc'
-    model_name = 'all_chillers'
-    line_type = ['separated']  # 'base' or 'separated'
-    t = 1
-    plot_multiple_techs(paths, t, plot_type, line_type, model_name)
+    # # 1. Main folder
+    # main_folder = 'E:\\OSMOSE_projects\\HCS_mk\\results\\'
+    # # 2. get paths
+    # paths = {}
+    # tech_dict = {'HCS_base_3for2': 'run_001', 'HCS_base': 'run_036'}
+    # for tech in tech_dict.keys():
+    #     run = tech_dict[tech]
+    #     folder_layers = [main_folder, tech, run, 's_001\\plots\\icc\\models']
+    #     paths[tech] = os.path.join('', *folder_layers)
+    #
+    # # 3. plot
+    # plot_type = 'icc'
+    # model_name = 'all_chillers'
+    # line_type = ['separated']  # 'base' or 'separated'
+    # t = 1
+    # plot_multiple_techs(paths, t, plot_type, line_type, model_name)
 
 
     #----------------------------
     ## Plot reruns from dakota ##
     #----------------------------
-    # plot_reruns_from_dakota()
+    plot_reruns_from_dakota()
 
 
 def plot_reruns_from_dakota():
     # 1. Main folder
-    main_folder = 'E:\\ipese_new\\osmose_mk\\results\\HCS_base_hps\\run_014_moga\\rerun'
+    main_folder = 'E:\\ipese_new\\osmose_mk\\results\\HCS_base_hps'
     # 2. get paths
     paths = {}
     # runs_to_exclude = ['run_001394', 'run_001780', 'run_001822', 'run_001839',
     #                    'run_001100', 'run_001319', 'run_001713', 'run_001640', 'run_001645', 'run_001675', 'run_001676',
     #                    'run_001678', 'run_001702', 'run_001703']
-    for run_folder in os.listdir(main_folder):
+    # for run_folder in os.listdir(main_folder):
+    for run_folder in ['run_155_onerun']:
         # for run_folder in runs_to_exclude:
         if 'run' in run_folder:
             # if run_folder not in runs_to_exclude:
@@ -152,8 +153,8 @@ def plot_reruns_from_dakota():
     plot_type = 'icc'
     model_name = 'hp'
     line_type = ['separated', 'base']  # 'base' or 'separated'
-    t = 1
-    plot_multiple_techs(paths, t, plot_type, line_type, model_name)
+    for t in np.arange(1,23,1):
+        plot_multiple_techs(paths, t, plot_type, line_type, model_name)
 
 
 if __name__ == '__main__':
