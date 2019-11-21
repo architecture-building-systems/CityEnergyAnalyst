@@ -30,7 +30,7 @@ class PeakNetworkPressureLossPlot(cea.plots.thermal_networks.ThermalNetworksMapP
     """
     Plot condensing all the properties of the network of interest at peak time.
     """
-    name = "Map: Network operating conditions at peak time (one line)"
+    name = "Map Network pressure conditions at peak time"
 
     def __init__(self, project, parameters, cache):
         super(PeakNetworkPressureLossPlot, self).__init__(project, parameters, cache)
