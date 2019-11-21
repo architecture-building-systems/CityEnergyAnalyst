@@ -359,7 +359,6 @@ class AbsorptionChiller(object):
             self.e_g = chiller_prop['e_g'].values[0]
 
 
-
 def main(config):
     """
     run the whole preprocessing routine
