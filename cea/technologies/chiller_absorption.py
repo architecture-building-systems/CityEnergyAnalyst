@@ -210,12 +210,19 @@ def calc_operating_conditions(absorption_chiller, input_conditions):
     #     [-0.5 * T_hw_in_C - 0.5 * e_g * (T_chw_in_C + T_chw_out_C)]])
 
     # the below equation for q_hw_kW was created with sympy.linsolve using symbols for all the variables.
-    q_hw_kW = ((r_g * s_e * (0.5 * a_e * mcp_hw_kWperK + 0.25 * s_g * (a_e - a_g)) + s_g * (
-                0.5 * a_g * mcp_hw_kWperK * (q_chw_kW - r_e) + s_e * (0.5 * mcp_hw_kWperK * (a_e * (
-                    0.5 * T_chw_in_C * e_g + 0.5 * T_chw_out_C * e_g + 0.5 * T_cw_in_C * a_g + 1.0 * T_hw_in_C) - a_g * (
-                                                                                                         0.5 * T_chw_in_C * e_e + 0.5 * T_chw_out_C * e_e + 0.5 * T_cw_in_C * a_e + 1.0 * T_hw_in_C)) - 0.25 * r_g * (
-                                                                                  a_e - a_g)))) / (
-                           s_e * (0.5 * a_e * mcp_hw_kWperK + 0.25 * s_g * (a_e - a_g))))
+    q_hw_kW = ((r_g * s_e * (0.5 * a_e * mcp_hw_kWperK + 0.25 * s_g * (a_e - a_g))
+                + s_g * (0.5 * a_g * mcp_hw_kWperK * (q_chw_kW - r_e)
+                         + s_e * (0.5 * mcp_hw_kWperK
+                                  * (a_e * (0.5 * T_chw_in_C * e_g
+                                            + 0.5 * T_chw_out_C * e_g
+                                            + 0.5 * T_cw_in_C * a_g
+                                            + 1.0 * T_hw_in_C)
+                                     - a_g * (0.5 * T_chw_in_C * e_e
+                                              + 0.5 * T_chw_out_C * e_e
+                                              + 0.5 * T_cw_in_C * a_e
+                                              + 1.0 * T_hw_in_C))
+                                  - 0.25 * r_g * (a_e - a_g))))
+               / (s_e * (0.5 * a_e * mcp_hw_kWperK + 0.25 * s_g * (a_e - a_g))))
 
     # calculate results
     q_cw_kW = q_hw_kW + q_chw_kW  # Q(condenser) + Q(absorber)
