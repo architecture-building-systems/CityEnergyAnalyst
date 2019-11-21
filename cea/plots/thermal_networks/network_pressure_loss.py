@@ -50,16 +50,15 @@ class PeakNetworkPressureLossPlot(cea.plots.thermal_networks.ThermalNetworksMapP
         edges_df["_LineWidth"] = 0.1 * edges_df["Pipe_DN"]
 
         # color the edges based on aggregated pipe heat loss
-        P_loss_kPaperm_peak = self.Unitary_P_loss_Paperm.max().round(0)
-        edges_df["Peak Pressure loss [Pa/m]"] = P_loss_kPaperm_peak.values
+        P_loss_kPaperm_peak = (self.linear_pressure_loss_Paperm.max() / 1000).round(1) #to KPa
+        Mass_flow_kgs_peak = self.mass_flow_kgs_pipes.max().round(1)
+        edges_df["Peak pressure loss [kPa/m]"] = P_loss_kPaperm_peak.values
+        edges_df["Peak mass flow rate [kg/s]"] = Mass_flow_kgs_peak.values
 
         # figure out colors
         p_loss_min = P_loss_kPaperm_peak.min()
         p = P_loss_kPaperm_peak.max()
         scale_p_loss = lambda x: remap(x, p_loss_min, p, 0.0, 1.0)
-
-        # matplotlib works on RGB in ranges [0.0, 1.0] - scale the input colors to that, transform and then scale back
-        # to web versions ([0, 255])
         min_rgb_mpl = [remap(c, 0.0, 255.0, 0.0, 1.0) for c in get_color_array("white")]
         max_rgb_mpl = [remap(c, 0.0, 255.0, 0.0, 1.0) for c in get_color_array("red")]
 
@@ -74,8 +73,12 @@ class PeakNetworkPressureLossPlot(cea.plots.thermal_networks.ThermalNetworksMapP
         nodes_df = geopandas.GeoDataFrame.from_file(
             self.locator.get_network_layout_nodes_shapefile(self.network_type, self.network_name)).to_crs(
             get_geographic_coordinate_system())
-        P_loss_substation_peak = self.P_loss_substation_kWh.max().round(2)
+
+        P_loss_substation_peak = self.P_loss_substation_kWh.max().round(1)
         nodes_df["Peak Pumping Energy Buildings [kWh]"] = P_loss_substation_peak
+
+        nodes_df["Peak pressure loss [kPa]"] = P_loss_kPa_peak.values
+        nodes_df["Peak mass flow rate [kg/s]"] = Mass_flow_kgs_peak.values
 
         peak_demands = self.buildings_hourly.apply(pd.Series.max)
 
