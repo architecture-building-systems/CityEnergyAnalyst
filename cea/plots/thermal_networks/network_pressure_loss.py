@@ -28,16 +28,9 @@ __status__ = "Production"
 
 class PeakNetworkPressureLossPlot(cea.plots.thermal_networks.ThermalNetworksMapPlotBase):
     """
-    Plot the peak thermal network losses. As with the NetworkLayoutPlot, edge widths are proportional to
-    the pipe diameter and node radius' are proportional to the peak building demand.
-
-    Edges (pipes) are colored on a scale to reflect the aggregated pipe heat loss. This information is also added
-    to the tooltip.
-
-    Nodes (buildings & plants) are colored on a scale to reflect the average supply temperature. This information
-    is also added to the tooltip, as well as the peek building demand.
+    Plot condensing all the properties of the network of interest at peak time.
     """
-    name = "Peak Network Pressure Map"
+    name = "Map: Network operating conditions at peak time (one line)"
 
     def __init__(self, project, parameters, cache):
         super(PeakNetworkPressureLossPlot, self).__init__(project, parameters, cache)
@@ -48,12 +41,15 @@ class PeakNetworkPressureLossPlot(cea.plots.thermal_networks.ThermalNetworksMapP
             self.locator.get_network_layout_edges_shapefile(self.network_type, self.network_name)).to_crs(
             get_geographic_coordinate_system())
         edges_df["_LineWidth"] = 0.1 * edges_df["Pipe_DN"]
+        edges_df["length_m"] = edges_df["length_m"].round(1)
 
         # color the edges based on aggregated pipe heat loss
-        P_loss_kPaperm_peak = (self.linear_pressure_loss_Paperm.max() / 1000).round(1) #to KPa
-        Mass_flow_kgs_peak = self.mass_flow_kgs_pipes.max().round(1)
+        P_loss_kPaperm_peak = (self.linear_pressure_loss_Paperm.max() / 1000).round(1) #to kPa/m
+        Mass_flow_kgs_peak = self.mass_flow_kgs_pipes.max().round(1) #in kgs
+        velocity_ms_peak  = self.velocity_mps_pipes.max().round(1) #in kgs
         edges_df["Peak pressure loss [kPa/m]"] = P_loss_kPaperm_peak.values
         edges_df["Peak mass flow rate [kg/s]"] = Mass_flow_kgs_peak.values
+        edges_df["Peak velocity [m/s]"] = velocity_ms_peak.values
 
         # figure out colors
         p_loss_min = P_loss_kPaperm_peak.min()
@@ -74,10 +70,9 @@ class PeakNetworkPressureLossPlot(cea.plots.thermal_networks.ThermalNetworksMapP
             self.locator.get_network_layout_nodes_shapefile(self.network_type, self.network_name)).to_crs(
             get_geographic_coordinate_system())
 
-        P_loss_substation_peak = self.P_loss_substation_kWh.max().round(1)
-        nodes_df["Peak Pumping Energy Buildings [kWh]"] = P_loss_substation_peak
-
-        nodes_df["Peak pressure loss [kPa]"] = P_loss_kPa_peak.values
+        P_loss_kPa_peak = (self.pressure_loss_nodes_Pa.max() /1000).round(1) #to kPa
+        Mass_flow_kgs_peak = self.mass_flow_kgs_nodes.max().round(1)
+        nodes_df["Peak pressure [kPa]"] = P_loss_kPa_peak.values
         nodes_df["Peak mass flow rate [kg/s]"] = Mass_flow_kgs_peak.values
 
         peak_demands = self.buildings_hourly.apply(pd.Series.max)
@@ -93,8 +88,8 @@ class PeakNetworkPressureLossPlot(cea.plots.thermal_networks.ThermalNetworksMapP
         nodes_df["_Radius"] = self.get_radius(nodes_df)
 
         # Figure out the colors (based on the average supply temperatures)
-        P_loss_min = P_loss_substation_peak.min()
-        P_loss_max = P_loss_substation_peak.max()
+        P_loss_min = P_loss_kPa_peak.min()
+        P_loss_max = P_loss_kPa_peak.max()
         scale_p_loss = lambda x: remap(x, P_loss_min, P_loss_max, 0.0, 1.0)
 
         # matplotlib works on RGB in ranges [0.0, 1.0] - scale the input colors to that, transform and then scale back
@@ -103,13 +98,10 @@ class PeakNetworkPressureLossPlot(cea.plots.thermal_networks.ThermalNetworksMapP
         max_rgb_mpl = [remap(c, 0.0, 255.0, 0.0, 1.0) for c in get_color_array("red")]
 
         nodes_df["_FillColor"] = json.dumps(get_color_array("black"))
-        for building in P_loss_substation_peak.index:
-            nodes_df.loc[nodes_df["Building"] == building,
-                         "Aggregated Pumping Energy Buildings [kWh]"] = P_loss_substation_peak[building]
-            nodes_df.loc[nodes_df["Building"] == building, "_FillColor"] = json.dumps(
-                [remap(c, 0.0, 1.0, 0.0, 255.0)
-                 for c in color_fader_rgb(min_rgb_mpl, max_rgb_mpl,
-                                          mix=scale_p_loss(P_loss_substation_peak[building]))])
+        nodes_df["_FillColor"] = P_loss_kPa_peak.apply(
+            lambda p_loss: json.dumps(
+                [remap(x, 0.0, 1.0, 0.0, 255.0)
+                 for x in color_fader_rgb(min_rgb_mpl, max_rgb_mpl, mix=scale_p_loss(p_loss))])).values
 
         return nodes_df
 

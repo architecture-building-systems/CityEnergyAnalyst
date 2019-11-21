@@ -247,7 +247,7 @@ def thermal_network_simplified(locator, config, network_name):
             wn.add_junction(node[0],
                             base_demand=base_demand_m3s,
                             demand_pattern=demand_pattern,
-                            elevation=thermal_transfer_unit_design_head_m,
+                            elevation=0.0,
                             coordinates=node[1]["coordinates"])
         elif node[1]["Type"] == "PLANT":
             base_head = 1
@@ -302,8 +302,6 @@ def thermal_network_simplified(locator, config, network_name):
 
     # 3d ITERATION GET FINAL UTILIZATION OF THE GRID (SUPPLY SIDE)
     # get accumulated heat loss per hour
-    head_loss_substations_ft = results.node['head'][consumer_nodes].abs()
-    head_loss_substations_m = head_loss_substations_ft * 0.30487
     unitary_head_ftperkft = results.link['headloss'].abs()
     unitary_head_mperm = unitary_head_ftperkft * 0.30487 / 304.87
     head_loss_m = unitary_head_mperm.copy()
@@ -323,14 +321,6 @@ def thermal_network_simplified(locator, config, network_name):
     results = sim.run_sim()
 
     #POSTPROCESSING
-
-    # $ POSPROCESSING - MASSFLOWRATES PER PIPE PER HOUR OF THE YEAR
-    flow_rate_supply_m3s = results.link['flowrate'].abs()
-    massflow_supply_kgs = flow_rate_supply_m3s * P_WATER_KGPERM3
-
-    # $ POSPROCESSING - MASSFLOWRATES PER NODE PER HOUR OF THE YEAR
-    flow_rate_substations_m3s = results.node['demand'][consumer_nodes].abs()
-    massflow_substations_kgs = flow_rate_substations_m3s * P_WATER_KGPERM3
 
     # $ POSPROCESSING - PRESSURE/HEAD LOSSES PER PIPE PER HOUR OF THE YEAR
     # at the pipes
@@ -352,17 +342,6 @@ def thermal_network_simplified(locator, config, network_name):
     accumulated_head_loss_substations_Pa = head_loss_substations_Pa.sum(axis=1)
     accumulated_head_loss_total_Pa = accumulated_head_loss_supply_Pa + accumulated_head_loss_return_Pa + accumulated_head_loss_substations_Pa
 
-    # $ POSPROCESSING - PUMPING NEEDS PER HOUR OF THE YEAR (TIMES 2 to account for return)
-    head_loss_supply_kWperm = (linear_pressure_loss_Paperm * (flow_rate_supply_m3s * 3600)) / (
-                3.6E6 * PUMP_ETA)
-    head_loss_return_kWperm = head_loss_supply_kWperm.copy()
-    head_loss_supply_kW = (head_loss_supply_network_Pa * (flow_rate_supply_m3s * 3600)) / (3.6E6 * PUMP_ETA)
-    head_loss_return_kW = head_loss_supply_kW.copy()
-    head_loss_substations_kW = (head_loss_substations_Pa * (flow_rate_substations_m3s * 3600)) / (3.6E6 * PUMP_ETA)
-    accumulated_head_loss_supply_kW = head_loss_supply_kW.sum(axis=1)
-    accumulated_head_loss_return_kW = head_loss_return_kW.sum(axis=1)
-    accumulated_head_loss_substations_kW = head_loss_substations_kW.sum(axis=1)
-    accumulated_head_loss_total_kW = accumulated_head_loss_supply_kW + accumulated_head_loss_return_kW + accumulated_head_loss_substations_kW
 
     # $ POSPROCESSING - THERMAL LOSSES PER PIPE PER HOUR OF THE YEAR (SUPPLY)
     # calculate the thermal characteristics of the grid
@@ -393,6 +372,57 @@ def thermal_network_simplified(locator, config, network_name):
     # total
     thermal_losses_kWh = thermal_losses_supply_kWh + thermal_losses_return_kWh
 
+    # WRITE TO DISK
+
+    # LINEAR PRESSURE LOSSES (EDGES)
+    linear_pressure_loss_Paperm.to_csv(locator.get_network_linear_pressure_drop_edges(network_type, network_name), index=False)
+
+    # MASS_FLOW_RATE (EDGES)
+    flow_rate_supply_m3s = results.link['flowrate'].abs()
+    massflow_supply_kgs = flow_rate_supply_m3s * P_WATER_KGPERM3
+    massflow_supply_kgs.to_csv(locator.get_thermal_network_layout_massflow_edges_file(network_type, network_name),
+                               index=False)
+
+    # VELOCITY (EDGES)
+    velocity_edges_ms = results.link['velocity'].abs()
+    velocity_edges_ms.to_csv(locator.get_thermal_network_velocity_edges_file(network_type, network_name),
+                               index=False)
+
+    # PRESSURE LOSSES (NODES)
+    pressure_drop_nodes_ft = results.node['pressure'].abs()
+    pressure_drop_nodes_Pa = pressure_drop_nodes_ft * 0.30487 * 9800
+    pressure_drop_nodes_Pa.to_csv(locator.get_network_pressure_drop_nodes(network_type, network_name), index=False)
+
+    # MASS_FLOW_RATE (NODES)
+    # $ POSPROCESSING - MASSFLOWRATES PER NODE PER HOUR OF THE YEAR
+    flow_rate_supply_nodes_m3s = results.node['demand'].abs()
+    massflow_supply_nodes_kgs = flow_rate_supply_nodes_m3s * P_WATER_KGPERM3
+    massflow_supply_nodes_kgs.to_csv(locator.get_thermal_network_layout_massflow_nodes_file(network_type, network_name), index=False)
+
+    # thermal demand per building (no losses in the network or substations)
+    Q_demand_Wh_building = Q_demand_kWh_building * 1000
+    Q_demand_Wh_building.to_csv(locator.get_thermal_demand_csv_file(network_type, network_name), index=False)
+
+    # pressure losses total
+    # $ POSPROCESSING - PUMPING NEEDS PER HOUR OF THE YEAR (TIMES 2 to account for return)
+    flow_rate_substations_m3s = results.node['demand'][consumer_nodes].abs()
+    head_loss_supply_kWperm = (linear_pressure_loss_Paperm * (flow_rate_supply_m3s * 3600)) / (3.6E6 * PUMP_ETA)
+    head_loss_return_kWperm = head_loss_supply_kWperm.copy()
+    head_loss_supply_kW = (head_loss_supply_network_Pa * (flow_rate_supply_m3s * 3600)) / (3.6E6 * PUMP_ETA)
+    head_loss_return_kW = head_loss_supply_kW.copy()
+    head_loss_substations_kW = (head_loss_substations_Pa * (flow_rate_substations_m3s * 3600)) / (3.6E6 * PUMP_ETA)
+    accumulated_head_loss_supply_kW = head_loss_supply_kW.sum(axis=1)
+    accumulated_head_loss_return_kW = head_loss_return_kW.sum(axis=1)
+    accumulated_head_loss_substations_kW = head_loss_substations_kW.sum(axis=1)
+    accumulated_head_loss_total_kW = accumulated_head_loss_supply_kW + \
+                                     accumulated_head_loss_return_kW +\
+                                     accumulated_head_loss_substations_kW
+    head_loss_system_Pa = pd.DataFrame({"pressure_loss_supply_Pa": accumulated_head_loss_supply_Pa,
+                                        "pressure_loss_return_Pa": accumulated_head_loss_return_Pa,
+                                        "pressure_loss_substations_Pa": accumulated_head_loss_substations_Pa,
+                                        "pressure_loss_total_Pa": accumulated_head_loss_total_Pa})
+    head_loss_system_Pa.to_csv(locator.get_thermal_network_layout_pressure_drop_file(network_type, network_name),
+                               index=False)
 
     # $ POSPROCESSING - PLANT HEAT REQUIREMENT
     if network_type == "DH":
@@ -403,28 +433,6 @@ def thermal_network_simplified(locator, config, network_name):
             axis=1) + accumulated_head_loss_total_kW.values
     Plant_load_kWh.to_csv(locator.get_thermal_network_plant_heat_requirement_file(network_type, network_name),
                           header=['NONE'], index=False)
-
-    # WRITE TO DISK
-
-    # LINEAR PRESSURE LOSSES (EDGES)
-    linear_pressure_loss_Paperm.to_csv(locator.get_network_linear_pressure_drop_edges(network_type, network_name), index=False)
-
-    # PRESSURE LOSSES (NODES)
-    pressure_drop_nodes_ft = results.node['pressure'].abs()
-    pressure_drop_nodes_Pa = pressure_drop_nodes_ft * 0.30487 * 9800
-    pressure_drop_nodes_Pa.to_csv(locator.get_network_pressure_drop_nodes(network_type, network_name), index=False)
-
-    # thermal demand per building (no losses in the network or substations)
-    Q_demand_Wh_building = Q_demand_kWh_building * 1000
-    Q_demand_Wh_building.to_csv(locator.get_thermal_demand_csv_file(network_type, network_name), index=False)
-
-    # pressure losses total
-    head_loss_system_Pa = pd.DataFrame({"pressure_loss_supply_Pa": accumulated_head_loss_supply_Pa,
-                                        "pressure_loss_return_Pa": accumulated_head_loss_return_Pa,
-                                        "pressure_loss_substations_Pa": accumulated_head_loss_substations_Pa,
-                                        "pressure_loss_total_Pa": accumulated_head_loss_total_Pa})
-    head_loss_system_Pa.to_csv(locator.get_thermal_network_layout_pressure_drop_file(network_type, network_name),
-                               index=False)
 
     # pressure losses per piping system
     head_loss_system_per_edge_kWh = head_loss_supply_kW + head_loss_return_kW
@@ -451,9 +459,7 @@ def thermal_network_simplified(locator, config, network_name):
 
 
 
-    # mass flow rates
-    massflow_supply_kgs.to_csv(locator.get_thermal_network_layout_massflow_file(network_type, network_name),
-                               index=False)
+
 
     # thermal losses
     thermal_losses_kWh.to_csv(locator.get_thermal_network_qloss_system_file(network_type, network_name), index=False)
