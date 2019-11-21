@@ -63,7 +63,7 @@ def get_streams_Q_T_from_json(data, path_to_run_folder, scenario, timesteps):
 def read_osmose_out_json(path_to_run_folder, remove_json):
     # get paths
     for item in os.listdir(path_to_run_folder):
-        if 'json' in item:
+        if 'out.json' in item:
             path_to_osmose_json_file = os.path.join(path_to_run_folder, item)
             # read json
             with open(path_to_osmose_json_file) as f:
@@ -79,10 +79,10 @@ def read_osmose_out_json(path_to_run_folder, remove_json):
 
 if __name__ == '__main__':
     # get file paths
-    # results_folder_path = 'E:\\ipese_new\\osmose_mk\\results\\'
-    results_folder_path = 'E:\\OSMOSE_projects\\HCS_mk\\results\\'
-    scenario_folder = 'HCS_base_coil_hps'
-    run_folder = 'run_009_onerun'
+    results_folder_path = 'E:\\ipese_new\\osmose_mk\\results\\'
+    # results_folder_path = 'E:\\OSMOSE_projects\\HCS_mk\\results\\'
+    scenario_folder = 'HCS_base_hps'
+    run_folder = 'run_172_moga\\rerun\\run_000001'
     remove_json = False
     path_to_run_folder = os.path.join('', *[results_folder_path, scenario_folder, run_folder])
     post_process_osmose_out_json(path_to_run_folder, remove_json)
