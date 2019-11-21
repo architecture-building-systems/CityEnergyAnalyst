@@ -27,7 +27,7 @@ class EnergyLossBarPlot(cea.plots.thermal_networks.ThermalNetworksPlotBase):
         self.network_name = parameters['network-name']
         self.network_args = [self.network_type, self.network_name]
         self.input_files = [(self.locator.get_thermal_network_layout_ploss_system_edges_file, self.network_args),
-                            (self.locator.get_thermal_network_qloss_system_file, self.network_args)]
+                            (self.locator.get_network_thermal_loss_edges_file, self.network_args)]
 
     @property
     def layout(self):
@@ -41,7 +41,7 @@ class EnergyLossBarPlot(cea.plots.thermal_networks.ThermalNetworksPlotBase):
         # format demand values
         P_loss_kWh = self.P_loss_kWh.fillna(value=0)
         P_loss_kWh = pd.DataFrame(P_loss_kWh.sum(axis=0), columns=['P_loss_kWh'])
-        Q_loss_kWh = abs(self.Q_loss_kWh.fillna(value=0))
+        Q_loss_kWh = abs(self.thermal_loss_edges_kWh.fillna(value=0))
         Q_loss_kWh = pd.DataFrame(Q_loss_kWh.sum(axis=0), columns=['Q_loss_kWh'])
         # calculate total_df
         total_df = pd.DataFrame(P_loss_kWh.values + Q_loss_kWh.values, index=Q_loss_kWh.index, columns=['total'])
@@ -64,7 +64,7 @@ class EnergyLossBarPlot(cea.plots.thermal_networks.ThermalNetworksPlotBase):
     def calc_table(self):
         P_loss_kWh = self.P_loss_kWh.fillna(value=0)
         P_loss_kWh = pd.DataFrame(P_loss_kWh.sum(axis=0), columns=['P_loss_kWh'])  # format individual loss data
-        Q_loss_kWh = abs(self.Q_loss_kWh).fillna(value=0)
+        Q_loss_kWh = abs(self.thermal_loss_edges_kWh).fillna(value=0)
         Q_loss_kWh = pd.DataFrame(Q_loss_kWh.sum(axis=0), columns=['Q_loss_kWh'])  # format individual loss data
         total_df = pd.DataFrame(P_loss_kWh.values + Q_loss_kWh.values, index=Q_loss_kWh.index,
                              columns=['total'])  # calculate total loss
@@ -98,7 +98,7 @@ class EnergyLossBarSubstationPlot(EnergyLossBarPlot):
         super(EnergyLossBarSubstationPlot, self).__init__(project, parameters, cache)
         self.network_args = [self.network_type, self.network_name]
         self.input_files = [(self.locator.get_thermal_network_layout_ploss_system_edges_file, self.network_args),
-                            (self.locator.get_thermal_network_qloss_system_file, self.network_args)]
+                            (self.locator.get_network_thermal_loss_edges_file, self.network_args)]
 
     def calc_graph(self):
         graph = []

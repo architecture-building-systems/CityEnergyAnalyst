@@ -77,13 +77,22 @@ class PeakNetworkPressureLossPlot(cea.plots.thermal_networks.ThermalNetworksMapP
 
         peak_demands = self.buildings_hourly.apply(pd.Series.max)
 
+        pumping_peak = self.plant_pumping_requirement_kWh.max().round(1)
+
         def get_peak_building_demand(row):
             if row["Type"] == "CONSUMER":
                 return peak_demands[row["Building"]]
             else:
                 return None
 
-        nodes_df["Peak Building Demand [kW]"] = nodes_df.apply(get_peak_building_demand, axis=1)
+        def get_pumping_node(row):
+            if row["Type"] == "PLANT":
+                return pumping_peak[0]
+            else:
+                return None
+
+        nodes_df["Peak Thermal Demand [kW]"] = nodes_df.apply(get_peak_building_demand, axis=1)
+        nodes_df["Pumping Power [kW]"] = nodes_df.apply(get_pumping_node, axis=1)
 
         nodes_df["_Radius"] = self.get_radius(nodes_df)
 

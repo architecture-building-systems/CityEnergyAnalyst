@@ -943,17 +943,30 @@ class InputLocator(object):
             file_name = network_type + "_" + network_name + "_ploss_Substations_kW.csv"
         return os.path.join(folder, file_name)
 
-    def get_thermal_network_qloss_system_file(self, network_type, network_name, representative_week=False):
+    def get_network_thermal_loss_edges_file(self, network_type, network_name, representative_week=False):
         """scenario/outputs/data/optimization/network/layout/DH_qloss_System_kw.csv"""
         if representative_week == True:
             folder = self.get_representative_week_thermal_network_layout_folder()
         else:
             folder = self.get_thermal_network_folder()
         if len(network_name) is 0:
-            file_name = network_type + "_" + "_qloss_System_kW.csv"
+            file_name = network_type + "_" + "_thermal_loss_edges_kW.csv"
         else:
-            file_name = network_type + "_" + network_name + "_qloss_System_kW.csv"
+            file_name = network_type + "_" + network_name + "_thermal_loss_edges_kW.csv"
         return os.path.join(folder, file_name)
+
+    def get_network_linear_thermal_loss_edges_file(self, network_type, network_name, representative_week=False):
+        """scenario/outputs/data/optimization/network/layout/DH_qloss_System_kw.csv"""
+        if representative_week == True:
+            folder = self.get_representative_week_thermal_network_layout_folder()
+        else:
+            folder = self.get_thermal_network_folder()
+        if len(network_name) is 0:
+            file_name = network_type + "_" + "_linear_thermal_loss_edges_Wperm.csv"
+        else:
+            file_name = network_type + "_" + network_name + "_linear_thermal_loss_edges_Wperm.csv"
+        return os.path.join(folder, file_name)
+
 
     def get_thermal_network_layout_ploss_system_edges_file(self, network_type, network_name,
                                                            representative_week=False):
@@ -1024,8 +1037,8 @@ class InputLocator(object):
             file_name = network_type + "_" + network_name + "_pressure_drop_nodes_Pa.csv"
         return os.path.join(folder, file_name)
 
-    def get_thermal_network_layout_pressure_drop_kw_file(self, network_type, network_name,
-                                                         representative_week=False):
+    def get_network_energy_pumping_requirements_file(self, network_type, network_name,
+                                                     representative_week=False):
         """scenario/outputs/data/optimization/network/layout/DH_P_DeltaP.csv or DC_P_DeltaP.csv
         Pressure drop over an entire district heating or cooling network at each time step
         """

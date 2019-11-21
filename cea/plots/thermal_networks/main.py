@@ -196,7 +196,7 @@ class Plots(object):
         '''
         Read in and format edge heat losses for all 8760 time steps
         '''
-        df = pd.read_csv(self.locator.get_thermal_network_qloss_system_file(self.network_type, self.network_name))
+        df = pd.read_csv(self.locator.get_network_thermal_loss_edges_file(self.network_type, self.network_name))
         df = abs(df).sum(axis=1)  # aggregate heat losses of all edges
         df1 = abs(df.values).sum()  # sum over all timesteps
         return {"hourly_network_loss": pd.DataFrame(df), "yearly_loss": df1}
@@ -205,7 +205,7 @@ class Plots(object):
         '''
         Read in pressure loss data for all time steps.
         '''
-        df = pd.read_csv(self.locator.get_thermal_network_layout_pressure_drop_kw_file(self.network_type, self.network_name))
+        df = pd.read_csv(self.locator.get_network_energy_pumping_requirements_file(self.network_type, self.network_name))
         df = df['pressure_loss_total_kW']
         df1 = df.values.sum()  # sum over all timesteps
         return {"hourly_loss": pd.DataFrame(df), "yearly_loss": df1}
@@ -299,8 +299,8 @@ class Plots(object):
         DN = edge_data['Pipe_DN_y']
         Tnode_hourly_C = pd.read_csv(self.locator.get_thermal_network_layout_supply_temperature_file(self.network_type,
                                                                                          self.network_name)) - 273.15  # node supply temperature
-        Q_loss_kWh = pd.read_csv(self.locator.get_thermal_network_qloss_system_file(self.network_type,
-                                                                            self.network_name))  # edge loss
+        Q_loss_kWh = pd.read_csv(self.locator.get_network_thermal_loss_edges_file(self.network_type,
+                                                                                  self.network_name))  # edge loss
         P_loss_kWh = pd.read_csv(self.locator.get_thermal_network_layout_ploss_system_edges_file(self.network_type,
                                                                                          self.network_name))
         P_loss_substation_kWh = pd.read_csv(self.locator.get_thermal_network_substation_ploss_file(self.network_type,
@@ -311,7 +311,7 @@ class Plots(object):
 
     def preprocessing_network_pumping(self):
         df_pumping_kW = pd.read_csv(
-            self.locator.get_thermal_network_layout_pressure_drop_kw_file(self.network_type, self.network_name))
+            self.locator.get_network_energy_pumping_requirements_file(self.network_type, self.network_name))
         df_pumping_supply_kW = df_pumping_kW['pressure_loss_supply_kW']
         df_pumping_return_kW = df_pumping_kW['pressure_loss_return_kW']
         df_pumping_allpipes_kW = df_pumping_supply_kW + df_pumping_return_kW
