@@ -22,7 +22,7 @@ __status__ = "Production"
 
 # technical model
 
-def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_ground_K, chiller_prop):
+def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_ground_K, absorption_chiller):
     """
     This model calculates the operation conditions of the absorption chiller given the chilled water loads in
     evaporators and the hot water inlet temperature in the generator (desorber).
@@ -48,7 +48,7 @@ def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_gro
     ..[Puig-Arnavat M. et al, 2010] Analysis and parameter identification for characteristic equations of single- and
     double-effect absorption chillers by means of multivariable regression. Int J Refrig: 2010.
     """
-    chiller_prop = chiller_prop.chiller_prop #get data from the class
+    chiller_prop = absorption_chiller.chiller_prop #get data from the class
     # create a dict of input operating conditions
     input_conditions = {'T_chw_sup_K': T_chw_sup_K,
                         'T_chw_re_K': T_chw_re_K,
@@ -89,7 +89,8 @@ def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_gro
             # operate at maximum load
             input_conditions['q_chw_W'] = max(chiller_prop['cap_max'].values)
 
-        operating_conditions = calc_operating_conditions(chiller_prop, input_conditions)
+        absorption_chiller.update_data(chiller_prop)
+        operating_conditions = calc_operating_conditions(absorption_chiller, input_conditions)
 
         # calculate chiller outputs
         wdot_W = calc_power_demand(input_conditions['q_chw_W'], chiller_prop) * number_of_chillers_activated
@@ -107,15 +108,14 @@ def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_gro
     return chiller_operation
 
 
-def calc_operating_conditions(chiller_prop, input_conditions):
+def calc_operating_conditions(absorption_chiller, input_conditions):
     """
     Calculates chiller operating conditions at given input conditions by solving the characteristic equations and the
     energy balance equations. This method is adapted from _[Kuhn A. & Ziegler F., 2005].
     The heat rejection to cooling tower is approximated with the energy balance:
     Q(condenser) + Q(absorber) = Q(generator) + Q(evaporator)
 
-    :param chiller_prop: parameters in the characteristic equations and the external flow rates.
-    :type chiller_prop: dict
+    :param AbsorptionChiller chiller_prop: parameters in the characteristic equations and the external flow rates.
     :param input_conditions:
     :type input_conditions: dict
     :return: a dict with operating conditions of the chilled water, cooling water and hot water loops in a absorption
@@ -166,20 +166,20 @@ def calc_operating_conditions(chiller_prop, input_conditions):
     T_chw_in_C = input_conditions['T_chw_re_K'] - 273.0  # inlet to the evaporator
     T_chw_out_C = input_conditions['T_chw_sup_K'] - 273.0  # outlet from the evaporator
     q_chw_kW = input_conditions['q_chw_W'] / 1000  # cooling load ata the evaporator
-    m_cw_kgpers = chiller_prop['m_cw'].values[0]  # external flow rate of cooling water at the condenser and absorber
-    m_hw_kgpers = chiller_prop['m_hw'].values[0]  # external flow rate of hot water at the generator
+    m_cw_kgpers = absorption_chiller.m_cw_kgpers  # external flow rate of cooling water at the condenser and absorber
+    m_hw_kgpers = absorption_chiller.m_hw_kgpers  # external flow rate of hot water at the generator
     mcp_cw_kWperK = m_cw_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK / 1000
     mcp_hw_kWperK = m_hw_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK / 1000
 
     # chiller_props (these are constants from the Absorption_chiller sheet in systems.xls)
-    s_e = chiller_prop['s_e'].values[0]
-    r_e = chiller_prop['r_e'].values[0]
-    s_g = chiller_prop['s_g'].values[0]
-    r_g = chiller_prop['r_g'].values[0]
-    a_e = chiller_prop['a_e'].values[0]
-    e_e = chiller_prop['e_e'].values[0]
-    a_g = chiller_prop['a_g'].values[0]
-    e_g = chiller_prop['e_g'].values[0]
+    s_e = absorption_chiller.s_e
+    r_e = absorption_chiller.r_e
+    s_g = absorption_chiller.s_g
+    r_g = absorption_chiller.r_g
+    a_e = absorption_chiller.a_e
+    e_e = absorption_chiller.e_e
+    a_g = absorption_chiller.a_g
+    e_g = absorption_chiller.e_g
 
     # variables to solve
     # T_hw_out_C, T_cw_out_C, q_hw_kW, ddt_e, ddt_g = sympy.symbols('T_hw_out_C T_cw_out_C q_hw_kW , ddt_e, ddt_g')
@@ -317,8 +317,47 @@ def calc_Cinv_ACH(Q_nom_W, locator, ACH_type):
 
 
 class AbsorptionChiller(object):
+    __slots__ = ["code", "chiller_prop", "m_cw_kgpers", "m_hw_kgpers",
+                 "s_e", "r_e", "s_g", "r_g", "a_e", "e_e", "a_g", "e_g"]
+
     def __init__(self, chiller_prop, ACH_type):
         self.chiller_prop = chiller_prop[chiller_prop['type'] == ACH_type]
+
+        # copy first row to self for faster lookup (avoid pandas __getitem__ in tight loops)
+        self.code = chiller_prop['code'].values[0]
+        # external flow rate of cooling water at the condenser and absorber
+        self.m_cw_kgpers = chiller_prop['m_cw'].values[0]
+
+        # external flow rate of hot water at the generator
+        self.m_hw_kgpers = chiller_prop['m_hw'].values[0]
+        self.s_e = chiller_prop['s_e'].values[0]
+        self.r_e = chiller_prop['r_e'].values[0]
+        self.s_g = chiller_prop['s_g'].values[0]
+        self.r_g = chiller_prop['r_g'].values[0]
+        self.a_e = chiller_prop['a_e'].values[0]
+        self.e_e = chiller_prop['e_e'].values[0]
+        self.a_g = chiller_prop['a_g'].values[0]
+        self.e_g = chiller_prop['e_g'].values[0]
+
+    def update_data(self, chiller_prop):
+        """Due to how AbsorptionChiller is currently used (FIXME: can we fix this?), we somedimes need to update
+        the instance variables from the databaframe chiller_prop.
+        """
+        if self.code != chiller_prop['code'].values[0]:
+            # only update if new code...
+            # print("Updating chiller_prop data! old code: {0}, new code: {1}".format(self.code, chiller_prop['code'].values[0]))
+            self.code = chiller_prop['code'].values[0]
+            self.m_cw_kgpers = chiller_prop['m_cw'].values[0]
+            self.m_hw_kgpers = chiller_prop['m_hw'].values[0]
+            self.s_e = chiller_prop['s_e'].values[0]
+            self.r_e = chiller_prop['r_e'].values[0]
+            self.s_g = chiller_prop['s_g'].values[0]
+            self.r_g = chiller_prop['r_g'].values[0]
+            self.a_e = chiller_prop['a_e'].values[0]
+            self.e_e = chiller_prop['e_e'].values[0]
+            self.a_g = chiller_prop['a_g'].values[0]
+            self.e_g = chiller_prop['e_g'].values[0]
+
 
 
 def main(config):
