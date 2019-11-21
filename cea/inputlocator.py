@@ -968,7 +968,7 @@ class InputLocator(object):
             file_name = network_type + "_" + network_name + "_P_DeltaP_Pa.csv"
         return os.path.join(folder, file_name)
 
-    def get_thermal_network_layout_linear_pressure_drop_file(self, network_type, network_name, representative_week=False):
+    def get_network_linear_pressure_drop_edges(self, network_type, network_name, representative_week=False):
         """scenario/outputs/data/optimization/network/layout/DH_P_DeltaP.csv or DC_P_DeltaP.csv
         Pressure drop over an entire district heating or cooling network at each time step
         """
@@ -977,9 +977,23 @@ class InputLocator(object):
         else:
             folder = self.get_thermal_network_folder()
         if len(network_name) is 0:
-            file_name = network_type + "_" + "_P_DeltaP_Paperm.csv"
+            file_name = network_type + "_" + "_pressure_drop_edges_Paperm.csv"
         else:
-            file_name = network_type + "_" + network_name + "_P_DeltaP_Paperm.csv"
+            file_name = network_type + "_" + network_name + "_pressure_drop_edges_Paperm.csv"
+        return os.path.join(folder, file_name)
+
+    def get_network_pressure_drop_nodes(self, network_type, network_name, representative_week=False):
+        """scenario/outputs/data/optimization/network/layout/DH_P_DeltaP.csv or DC_P_DeltaP.csv
+        Pressure drop over an entire district heating or cooling network at each time step
+        """
+        if representative_week == True:
+            folder = self.get_representative_week_thermal_network_layout_folder()
+        else:
+            folder = self.get_thermal_network_folder()
+        if len(network_name) is 0:
+            file_name = network_type + "_" + "_pressure_drop_nodes_Pa.csv"
+        else:
+            file_name = network_type + "_" + network_name + "_pressure_drop_nodes_Pa.csv"
         return os.path.join(folder, file_name)
 
     def get_thermal_network_layout_pressure_drop_kw_file(self, network_type, network_name,
