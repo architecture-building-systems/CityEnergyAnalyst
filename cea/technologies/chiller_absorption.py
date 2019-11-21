@@ -89,13 +89,7 @@ def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_gro
             # operate at maximum load
             input_conditions['q_chw_W'] = max(chiller_prop['cap_max'].values)
 
-        # calculate operating conditions at given input conditions
         operating_conditions = calc_operating_conditions(chiller_prop, input_conditions)
-        operating_conditions_new = calc_operating_conditions_new(chiller_prop, input_conditions)
-
-        for key in operating_conditions.keys():
-            assert np.isclose(float(operating_conditions[key]), operating_conditions_new[key])
-            # print("All same: {0:.2f} == {1:.2f}".format(float(operating_conditions[key]), operating_conditions_new[key]))
 
         # calculate chiller outputs
         wdot_W = calc_power_demand(input_conditions['q_chw_W'], chiller_prop) * number_of_chillers_activated
@@ -119,81 +113,50 @@ def calc_operating_conditions(chiller_prop, input_conditions):
     energy balance equations. This method is adapted from _[Kuhn A. & Ziegler F., 2005].
     The heat rejection to cooling tower is approximated with the energy balance:
     Q(condenser) + Q(absorber) = Q(generator) + Q(evaporator)
+
     :param chiller_prop: parameters in the characteristic equations and the external flow rates.
     :type chiller_prop: dict
     :param input_conditions:
     :type input_conditions: dict
     :return: a dict with operating conditions of the chilled water, cooling water and hot water loops in a absorption
     chiller.
-    ..[Kuhn A. & Ziegler F., 2005] Operational results of a 10kW absorption chiller and adaptation of the characteristic
-    equation. In: Proceedings of the interantional conference solar air conditioning. Bad Staffelstein, Germany: 2005.
-    """
-    # external water circuits (e: chilled water, ac: cooling water, d: hot water)
-    T_cw_in_C = input_conditions['T_ground_K'] - 273.0  # condenser water inlet temperature
-    T_chw_in_C = input_conditions['T_chw_re_K'] - 273.0  # inlet to the evaporator
-    T_chw_out_C = input_conditions['T_chw_sup_K'] - 273.0  # outlet from the evaporator
-    q_chw_kW = input_conditions['q_chw_W'] / 1000  # cooling load ata the evaporator
-    m_cw_kgpers = chiller_prop['m_cw'].values[0]  # external flow rate of cooling water at the condenser and absorber
-    m_hw_kgpers = chiller_prop['m_hw'].values[0]  # external flow rate of hot water at the generator
-    mcp_cw_kWperK = m_cw_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK/1000
-    mcp_hw_kWperK = m_hw_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK/1000
 
-    # chiller_props (these are constants from the Absorption_chiller sheet in systems.xls)
-    s_e = chiller_prop['s_e'].values[0]
-    r_e = chiller_prop['r_e'].values[0]
-    s_g = chiller_prop['s_g'].values[0]
-    r_g = chiller_prop['r_g'].values[0]
-    a_e = chiller_prop['a_e'].values[0]
-    e_e = chiller_prop['e_e'].values[0]
-    a_g = chiller_prop['a_g'].values[0]
-    e_g = chiller_prop['e_g'].values[0]
+    To improve speed, the system of equations was solved using sympy for the output variable ``q_hw_kW`` which is
+    then used to compute the remaining output variables. The following code was used to create the expression to
+    calculate ``q_hw_kW`` with::
 
+        # use symbolic computation to derive a formula for q_hw_kW:
 
+        # first, make sure all the variables are sympy symbols:
+        T_chw_in_C, T_chw_out_C, T_cw_in_C, T_hw_in_C, mcp_cw_kWperK, mcp_hw_kWperK, q_chw_kW = sympy.symbols(
+            "T_chw_in_C, T_chw_out_C, T_cw_in_C, T_hw_in_C, mcp_cw_kWperK, mcp_hw_kWperK, q_chw_kW")
+        T_hw_out_C, T_cw_out_C, q_hw_kW = sympy.symbols('T_hw_out_C, T_cw_out_C, q_hw_kW')
+        a_e, a_g, e_e, e_g, r_e, r_g, s_e, s_g = sympy.symbols("a_e, a_g, e_e, e_g, r_e, r_g, s_e, s_g")
+        ddt_e, ddt_g = sympy.symbols("ddt_e, ddt_g")
 
-    # variables to solve
-    T_hw_out_C, T_cw_out_C, q_hw_kW = sympy.symbols('T_hw_out_C T_cw_out_C q_hw_kW')
+        # the system of equations:
+        eq_e = s_e * ddt_e + r_e - q_chw_kW
+        eq_ddt_e = ((T_hw_in_C + T_hw_out_C) / 2.0
+                    + a_e * (T_cw_in_C + T_cw_out_C) / 2.0
+                    + e_e * (T_chw_in_C + T_chw_out_C) / 2.0
+                    - ddt_e)
+        eq_g = s_g * ddt_g + r_g - q_hw_kW
+        eq_ddt_g = ((T_hw_in_C + T_hw_out_C) / 2.0
+                    + a_g * (T_cw_in_C
+                    + T_cw_out_C) / 2.0
+                    + e_g * (T_chw_in_C + T_chw_out_C) / 2.0
+                    - ddt_g)
+        eq_bal_g = (T_hw_in_C - T_hw_out_C) - q_hw_kW / mcp_hw_kWperK
 
-    # characteristic temperature differences
-    T_hw_mean_C = (input_conditions['T_hw_in_C'] + T_hw_out_C) / 2
-    T_cw_mean_C = (T_cw_in_C + T_cw_out_C) / 2
-    T_chw_mean_C = (T_chw_in_C + T_chw_out_C) / 2
-    ddt_e = T_hw_mean_C + a_e * T_cw_mean_C + e_e * T_chw_mean_C
-    ddt_g = T_hw_mean_C + a_g * T_cw_mean_C + e_g * T_chw_mean_C
+        # solve the system of equations with sympy
+        eq_sys = [eq_e, eq_g, eq_bal_g, eq_ddt_e, eq_ddt_g]
+        unknown_variables = (T_hw_out_C, T_cw_out_C, q_hw_kW, ddt_e, ddt_g)
 
-    # systems of equations to solve
-    eq_e = s_e * ddt_e + r_e - q_chw_kW
-    eq_g = s_g * ddt_g + r_g - q_hw_kW
-    eq_bal_g = (input_conditions['T_hw_in_C'] - T_hw_out_C) - q_hw_kW / mcp_hw_kWperK
+        a, b = sympy.linear_eq_to_matrix(eq_sys, unknown_variables)
+        T_hw_out_C, T_cw_out_C, q_hw_kW, ddt_e, ddt_g = tuple(*sympy.linsolve(eq_sys, unknown_variables))
 
-    # solve the system of equations with sympy
-    eq_sys = [eq_e, eq_g, eq_bal_g]
-    unknown_variables = (T_hw_out_C, T_cw_out_C, q_hw_kW)
-    (T_hw_out_C, T_cw_out_C, q_hw_kW) = tuple(*sympy.linsolve(eq_sys, unknown_variables))
+        q_hw_kW.simplify()
 
-    # calculate results
-    q_cw_kW = q_hw_kW + q_chw_kW # Q(condenser) + Q(absorber)
-    T_hw_out_C = input_conditions['T_hw_in_C'] - q_hw_kW / mcp_hw_kWperK
-    T_cw_out_C = T_cw_in_C + q_cw_kW / mcp_cw_kWperK  # TODO: set upper bound of the chiller operation
-
-    return {'T_hw_out_C': T_hw_out_C,
-            'T_cw_out_C': T_cw_out_C,
-            'q_chw_W': q_chw_kW * 1000,
-            'q_hw_W': q_hw_kW * 1000,
-            'q_cw_W': q_cw_kW * 1000}
-
-
-def calc_operating_conditions_new(chiller_prop, input_conditions):
-    """
-    Calculates chiller operating conditions at given input conditions by solving the characteristic equations and the
-    energy balance equations. This method is adapted from _[Kuhn A. & Ziegler F., 2005].
-    The heat rejection to cooling tower is approximated with the energy balance:
-    Q(condenser) + Q(absorber) = Q(generator) + Q(evaporator)
-    :param chiller_prop: parameters in the characteristic equations and the external flow rates.
-    :type chiller_prop: dict
-    :param input_conditions:
-    :type input_conditions: dict
-    :return: a dict with operating conditions of the chilled water, cooling water and hot water loops in a absorption
-    chiller.
     ..[Kuhn A. & Ziegler F., 2005] Operational results of a 10kW absorption chiller and adaptation of the characteristic
     equation. In: Proceedings of the interantional conference solar air conditioning. Bad Staffelstein, Germany: 2005.
     """
@@ -352,6 +315,12 @@ def calc_Cinv_ACH(Q_nom_W, locator, ACH_type):
 
     return Capex_a_ACH_USD, Opex_fixed_ACH_USD, Capex_ACH_USD
 
+
+class AbsorptionChiller(object):
+    def __init__(self, chiller_prop, ACH_type):
+        self.chiller_prop = chiller_prop[chiller_prop['type'] == ACH_type]
+
+
 def main(config):
     """
     run the whole preprocessing routine
@@ -383,10 +352,6 @@ def main(config):
     T_hw_in_C = case_dict['T_hw_in_C']
     T_ground_K = 300
     ach_type = case_dict['ACH_type']
-
-    class AbsorptionChiller(object):
-        def __init__(self, chiller_prop, ACH_type):
-            self.chiller_prop = chiller_prop[chiller_prop['type'] == ACH_type]
 
     chiller_prop = AbsorptionChiller(pd.read_excel(locator.get_database_supply_systems(), sheet_name="Absorption_chiller"), ach_type)
 
