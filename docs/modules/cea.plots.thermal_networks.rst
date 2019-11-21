@@ -81,12 +81,4 @@ cea.plots.thermal\_networks.network\_thermal\_loss module
     :undoc-members:
     :show-inheritance:
 
-cea.plots.thermal\_networks.scenario\_network\_cost module
-----------------------------------------------------------
-
-.. automodule:: cea.plots.thermal_networks.scenario_network_cost
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 
