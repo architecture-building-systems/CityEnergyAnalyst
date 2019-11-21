@@ -192,6 +192,7 @@ def calc_operating_conditions_matrix(chiller_prop, input_conditions):
     equation. In: Proceedings of the interantional conference solar air conditioning. Bad Staffelstein, Germany: 2005.
     """
     # external water circuits (e: chilled water, ac: cooling water, d: hot water)
+    T_hw_in_C = input_conditions['T_hw_in_C']
     T_cw_in_C = input_conditions['T_ground_K'] - 273.0  # condenser water inlet temperature
     T_chw_in_C = input_conditions['T_chw_re_K'] - 273.0  # inlet to the evaporator
     T_chw_out_C = input_conditions['T_chw_sup_K'] - 273.0  # outlet from the evaporator
@@ -211,31 +212,28 @@ def calc_operating_conditions_matrix(chiller_prop, input_conditions):
     a_g = chiller_prop['a_g'].values[0]
     e_g = chiller_prop['e_g'].values[0]
 
-
-
     # variables to solve
-    T_hw_out_C, T_cw_out_C, q_hw_kW = sympy.symbols('T_hw_out_C T_cw_out_C q_hw_kW')
-
-    # characteristic temperature differences
-    T_hw_mean_C = (input_conditions['T_hw_in_C'] + T_hw_out_C) / 2
-    T_cw_mean_C = (T_cw_in_C + T_cw_out_C) / 2
-    T_chw_mean_C = (T_chw_in_C + T_chw_out_C) / 2
-    ddt_e = T_hw_mean_C + a_e * T_cw_mean_C + e_e * T_chw_mean_C
-    ddt_g = T_hw_mean_C + a_g * T_cw_mean_C + e_g * T_chw_mean_C
+    T_hw_out_C, T_cw_out_C, q_hw_kW, ddt_e, ddt_g = sympy.symbols('T_hw_out_C T_cw_out_C q_hw_kW , ddt_e, ddt_g')
 
     # systems of equations to solve
-    eq_e = s_e * ddt_e + r_e - q_chw_kW
-    eq_g = s_g * ddt_g + r_g - q_hw_kW
+    eq_e = chiller_prop['s_e'].values[0] * ddt_e + chiller_prop['r_e'].values[0] - q_chw_kW
+    eq_ddt_e = (input_conditions['T_hw_in_C'] + T_hw_out_C) / 2 + \
+               chiller_prop['a_e'].values[0] * (T_cw_in_C + T_cw_out_C) / 2 + \
+               chiller_prop['e_e'].values[0] * (T_chw_in_C + T_chw_out_C) / 2 - ddt_e
+    eq_g = chiller_prop['s_g'].values[0] * ddt_g + chiller_prop['r_g'].values[0] - q_hw_kW
+    eq_ddt_g = (input_conditions['T_hw_in_C'] + T_hw_out_C) / 2 + \
+               chiller_prop['a_g'].values[0] * (T_cw_in_C + T_cw_out_C) / 2 + \
+               chiller_prop['e_g'].values[0] * (T_chw_in_C + T_chw_out_C) / 2 - ddt_g
     eq_bal_g = (input_conditions['T_hw_in_C'] - T_hw_out_C) - q_hw_kW / mcp_hw_kWperK
 
     # solve the system of equations with sympy
-    eq_sys = [eq_e, eq_g, eq_bal_g]
-    unknown_variables = (T_hw_out_C, T_cw_out_C, q_hw_kW)
-    (T_hw_out_C, T_cw_out_C, q_hw_kW) = tuple(*sympy.linsolve(eq_sys, unknown_variables))
+    eq_sys = [eq_e, eq_g, eq_bal_g, eq_ddt_e, eq_ddt_g]
+    unknown_variables = (T_hw_out_C, T_cw_out_C, q_hw_kW, ddt_e, ddt_g)
+    (T_hw_out_C, T_cw_out_C, q_hw_kW, ddt_e, ddt_g) = tuple(*sympy.linsolve(eq_sys, unknown_variables))
 
     # calculate results
     q_cw_kW = q_hw_kW + q_chw_kW # Q(condenser) + Q(absorber)
-    T_hw_out_C = input_conditions['T_hw_in_C'] - q_hw_kW / mcp_hw_kWperK
+    T_hw_out_C = T_hw_in_C - q_hw_kW / mcp_hw_kWperK
     T_cw_out_C = T_cw_in_C + q_cw_kW / mcp_cw_kWperK  # TODO: set upper bound of the chiller operation
 
     return {'T_hw_out_C': T_hw_out_C,
