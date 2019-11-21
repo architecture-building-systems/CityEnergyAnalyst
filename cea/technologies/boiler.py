@@ -150,10 +150,11 @@ def calc_Cop_boiler(q_load_Wh, Q_nom_W, T_return_to_boiler_K):
 
         # calculate efficiency according to partload
         phi = float(q_load_Wh) / float(Q_nom_W)
+        if phi >=1.0: # avoid rounding error
+            phi = 0.98
         T_return_C = np.float(T_return_to_boiler_K - 273.15)
         eff_score = eff_of_phi(phi) / eff_of_phi(1)
         boiler_eff = (eff_score * eff_of_T_return([T_return_C]))[0] / 100.0
-        print(T_return_C, eff_score, phi, boiler_eff)
     else:
         boiler_eff = 0.0
 
