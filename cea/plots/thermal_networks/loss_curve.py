@@ -19,7 +19,7 @@ __status__ = "Production"
 
 class LossCurvePlot(cea.plots.thermal_networks.ThermalNetworksPlotBase):
     """Implement the heat and pressure losses plot"""
-    name = "Heat and Pressure Losses"
+    name = "Load curve of Heat and Pressure Losses"
 
     def __init__(self, project, parameters, cache):
         super(LossCurvePlot, self).__init__(project, parameters, cache)
