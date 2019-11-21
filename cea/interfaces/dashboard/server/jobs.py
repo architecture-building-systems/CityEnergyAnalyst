@@ -6,6 +6,7 @@ from __future__ import print_function
 
 from flask_restplus import Namespace, Resource, fields, reqparse
 from flask import request, current_app
+from cea.interfaces.dashboard.tools.routes import kill_job, worker_processes
 
 
 __author__ = "Daren Thomas"
@@ -24,6 +25,7 @@ JOB_STATE_PENDING = 0
 JOB_STATE_STARTED = 1
 JOB_STATE_SUCCESS = 2
 JOB_STATE_ERROR = 3
+JOB_STATE_CANCELED = 4
 
 job_info_model = api.model('JobInfo', {
     'id': fields.Integer,
@@ -48,6 +50,7 @@ def next_id():
     except ValueError:
         # this is the first job...
         return 1
+
 
 # FIXME: replace with database or similar solution
 class JobInfo(object):
@@ -113,6 +116,8 @@ class JobSuccess(Resource):
         job = jobs[jobid]
         job.state = JOB_STATE_SUCCESS
         job.error = None
+        if job.id in worker_processes:
+            del worker_processes[job.id]
         current_app.socketio.emit("cea-worker-success", api.marshal(job, job_info_model))
         return job
 
@@ -124,5 +129,19 @@ class JobError(Resource):
         job = jobs[jobid]
         job.state = JOB_STATE_ERROR
         job.error = request.data
+        if job.id in worker_processes:
+            del worker_processes[job.id]
         current_app.socketio.emit("cea-worker-error", api.marshal(job, job_info_model))
+        return job
+
+
+@api.route("/cancel/<int:jobid>")
+class JobCanceled(Resource):
+    @api.marshal_with(job_info_model)
+    def post(self, jobid):
+        job = jobs[jobid]
+        job.state = JOB_STATE_CANCELED
+        job.error = "Canceled by user"
+        kill_job(jobid)
+        current_app.socketio.emit("cea-worker-canceled", api.marshal(job, job_info_model))
         return job
