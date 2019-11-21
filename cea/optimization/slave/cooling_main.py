@@ -17,6 +17,7 @@ from cea.optimization.slave.cooling_resource_activation import calc_vcc_CT_opera
 from cea.optimization.slave.daily_storage.load_leveling import LoadLevelingDailyStorage
 from cea.technologies.cogeneration import calc_cop_CCGT
 from cea.technologies.thermal_network.thermal_network import calculate_ground_temperature
+from cea.technologies.chiller_absorption import  AbsorptionChiller
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -26,12 +27,6 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
-
-
-# technical model
-class AbsorptionChiller(object):
-    def __init__(self, chiller_prop, ACH_type):
-        self.chiller_prop = chiller_prop[chiller_prop['type'] == ACH_type]
 
 
 def district_cooling_network(locator,
