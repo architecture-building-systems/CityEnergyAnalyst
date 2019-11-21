@@ -164,7 +164,7 @@ def thermal_network_simplified(locator, config, network_name):
 
     #local variables
     network_type = config.thermal_network.network_type
-    thermal_transfer_unit_design_head_m = config.thermal_network.min_head_susbstation  # half as we duplicate the pressure needs to calculate the pumping needs
+    thermal_transfer_unit_design_head_m = config.thermal_network.min_head_susbstation  * 9.8
     coefficient_friction_hanzen_williams = config.thermal_network.hw_friction_coefficient
     velocity_ms = config.thermal_network.peak_load_velocity
     fraction_equivalent_length = config.thermal_network.equivalent_length_factor
@@ -267,7 +267,7 @@ def thermal_network_simplified(locator, config, network_name):
         edge_name = edge[0]
         wn.add_pipe(edge_name, edge[1]["start node"],
                     edge[1]["end node"],
-                    length=length + (1*fraction_equivalent_length),
+                    length=length * (1+fraction_equivalent_length),
                     roughness=coefficient_friction_hanzen_williams,
                     minor_loss=0.0,
                     status='OPEN')

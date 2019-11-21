@@ -22,7 +22,7 @@ __status__ = "Production"
 
 class NetworkLayoutPlot(cea.plots.thermal_networks.ThermalNetworksMapPlotBase):
     """Implement the thermal network layout plot, """
-    name = "Network Layout"
+    name = "Network layout map"
 
     def __init__(self, project, parameters, cache):
         super(NetworkLayoutPlot, self).__init__(project, parameters, cache)
