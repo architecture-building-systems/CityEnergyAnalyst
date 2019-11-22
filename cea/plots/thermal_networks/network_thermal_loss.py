@@ -52,8 +52,9 @@ class PeakNetworkThermalLossPlot(cea.plots.thermal_networks.ThermalNetworksMapPl
         edges_df["length_m"] = edges_df["length_m"].round(1)
 
         # color the edges based on aggregated pipe heat loss
-        yearly_thermal_loss = (self.thermal_loss_edges_Wperm.max()).round(2)
-        edges_df["Peak Thermal losses [W/m]"] = yearly_thermal_loss.values
+        if self.thermal_loss_edges_Wperm is not None: #backward compatibility with detailed thermal network (which does not include this output)
+            yearly_thermal_loss = (self.thermal_loss_edges_Wperm.max()).round(2)
+            edges_df["Peak Thermal losses [W/m]"] = yearly_thermal_loss.values
 
         # figure out colors
         q_loss_min = yearly_thermal_loss.min()
@@ -77,11 +78,12 @@ class PeakNetworkThermalLossPlot(cea.plots.thermal_networks.ThermalNetworksMapPl
             self.locator.get_network_layout_nodes_shapefile(self.network_type, self.network_name)).to_crs(
             get_geographic_coordinate_system())
 
-        Mass_flow_kgs_peak = self.mass_flow_kgs_nodes.max().round(1)
-        nodes_df["Peak mass flow rate [kg/s]"] = Mass_flow_kgs_peak.values
         peak_demands = self.buildings_hourly.apply(pd.Series.max)
-
         pumping_peak = self.plant_pumping_requirement_kWh.max().round(1)
+
+        if self.mass_flow_kgs_nodes is not None: #backward compatibility with detailed thermal network (which does not include this output)
+            Mass_flow_kgs_peak = self.mass_flow_kgs_nodes.max().round(1)
+            nodes_df["Peak mass flow rate [kg/s]"] = Mass_flow_kgs_peak.values
 
         def get_peak_building_demand(row):
             if row["Type"] == "CONSUMER":

@@ -247,7 +247,7 @@ def thermal_network_simplified(locator, config, network_name):
             wn.add_junction(node[0],
                             base_demand=base_demand_m3s,
                             demand_pattern=demand_pattern,
-                            elevation=0.0,
+                            elevation=thermal_transfer_unit_design_head_m,
                             coordinates=node[1]["coordinates"])
         elif node[1]["Type"] == "PLANT":
             base_head = 1
@@ -308,7 +308,7 @@ def thermal_network_simplified(locator, config, network_name):
     for column in head_loss_m.columns.values:
         length = edge_df.loc[column]['length_m']
         head_loss_m[column] = head_loss_m[column] * length
-    reservoir_head_loss_m = head_loss_m.sum(axis=1) #+ head_loss_substations_m.sum(axis=1)
+    reservoir_head_loss_m = head_loss_m.sum(axis=1) + thermal_transfer_unit_design_head_m
 
     # apply this pattern to the reservoir and get results
     base_head = reservoir_head_loss_m.max()

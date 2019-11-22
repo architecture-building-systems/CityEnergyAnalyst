@@ -46,10 +46,12 @@ class PeakNetworkPressureLossPlot(cea.plots.thermal_networks.ThermalNetworksMapP
         # color the edges based on aggregated pipe heat loss
         P_loss_kPaperm_peak = (self.linear_pressure_loss_Paperm.max() / 1000).round(1) #to kPa/m
         Mass_flow_kgs_peak = self.mass_flow_kgs_pipes.max().round(1) #in kgs
-        velocity_ms_peak  = self.velocity_mps_pipes.max().round(1) #in kgs
         edges_df["Peak pressure loss [kPa/m]"] = P_loss_kPaperm_peak.values
         edges_df["Peak mass flow rate [kg/s]"] = Mass_flow_kgs_peak.values
-        edges_df["Peak velocity [m/s]"] = velocity_ms_peak.values
+
+        if self.velocity_mps_pipes is not None: #backward compatibility with detailed thermal network (which does not include this output)
+            velocity_ms_peak = self.velocity_mps_pipes.max().round(1)  # in kgs
+            edges_df["Peak velocity [m/s]"] = velocity_ms_peak.values
 
         # figure out colors
         p_loss_min = P_loss_kPaperm_peak.min()
@@ -71,9 +73,11 @@ class PeakNetworkPressureLossPlot(cea.plots.thermal_networks.ThermalNetworksMapP
             get_geographic_coordinate_system())
 
         P_loss_kPa_peak = (self.pressure_loss_nodes_Pa.max() /1000).round(1) #to kPa
-        Mass_flow_kgs_peak = self.mass_flow_kgs_nodes.max().round(1)
         nodes_df["Peak pressure [kPa]"] = P_loss_kPa_peak.values
-        nodes_df["Peak mass flow rate [kg/s]"] = Mass_flow_kgs_peak.values
+
+        if self.mass_flow_kgs_nodes is not None: #backward compatibility with detailed thermal network (which does not include this output)
+            Mass_flow_kgs_peak = self.mass_flow_kgs_nodes.max().round(1)
+            nodes_df["Peak mass flow rate [kg/s]"] = Mass_flow_kgs_peak.values
 
         peak_demands = self.buildings_hourly.apply(pd.Series.max)
 

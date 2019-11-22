@@ -32,7 +32,7 @@ def substation_main_heating(locator, total_demand, buildings_name_with_heating, 
         T_DHN_supply = np.zeros(HOURS_IN_YEAR)
         for name in buildings_name_with_heating:
             buildings_dict[name] = pd.read_csv(locator.get_demand_results_file(name))
-
+            print(name)
             ## calculates the building side supply and return temperatures for each units
             Ths_supply_C, Ths_re_C = calc_temp_hex_building_side(buildings_dict[name],
                                                                  heating_configuration)
@@ -489,12 +489,12 @@ def substation_model_heating(name, building_demand_df, T_DH_supply_C, Ths_supply
     else:
         thi = T_DH_supply_C + 273  # In k
         Qhs_sys_W = Qhs_sys_kWh_dict[hs_configuration] * 1000  # in W
-        Qnom_W = max(Qhs_sys_W)  # in W
+        Qnom_W = max(Qhs_sys_W)
+        index = np.where(Qhs_sys_W == Qnom_W)[0][0]# in W
         if Qnom_W > 0:
             tco = Ths_supply_C + 273  # in K
             tci = Ths_return_C + 273  # in K
             cc = Qhs_sys_W / (tco - tci)
-            index = np.where(Qhs_sys_W == Qnom_W)[0][0]
             thi_0 = thi[index]
             tci_0 = tci[index]
             tco_0 = tco[index]

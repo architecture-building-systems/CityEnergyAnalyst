@@ -188,14 +188,22 @@ class ThermalNetworksPlotBase(cea.plots.PlotBase):
     @property
     @cea.plots.cache.cached
     def velocity_mps_pipes(self):
-        return pd.read_csv(self.locator.get_thermal_network_velocity_edges_file(self.network_type,
+        try:
+            return pd.read_csv(self.locator.get_thermal_network_velocity_edges_file(self.network_type,
                                                                                        self.network_name))
+        except:
+            #backward compatibility with detailed network simulation (which does not produce this data)
+            return None
 
     @property
     @cea.plots.cache.cached
     def mass_flow_kgs_nodes(self):
-        return pd.read_csv(self.locator.get_thermal_network_layout_massflow_nodes_file(self.network_type,
+        try:
+            return pd.read_csv(self.locator.get_thermal_network_layout_massflow_nodes_file(self.network_type,
                                                                                        self.network_name))
+        except:
+        # backward compatibility with detailed network simulation (which does not produce this data)
+            return None
 
     @property
     @cea.plots.cache.cached
@@ -206,8 +214,12 @@ class ThermalNetworksPlotBase(cea.plots.PlotBase):
     @property
     @cea.plots.cache.cached
     def thermal_loss_edges_Wperm(self):
-        return pd.read_csv(self.locator.get_network_linear_thermal_loss_edges_file(self.network_type,
-                                                                            self.network_name))  # edge loss
+        try:
+            return pd.read_csv(self.locator.get_network_linear_thermal_loss_edges_file(self.network_type,
+                                                                                       self.network_name))  # edge loss
+        except:
+            # backward compatibility with detailed network simulation (which does not produce this data)
+            return None
 
     @property
     @cea.plots.cache.cached
