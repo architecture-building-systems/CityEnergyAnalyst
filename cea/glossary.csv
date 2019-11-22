@@ -343,10 +343,8 @@ SCRIPT,LOCATOR_METHOD,FILE_NAME,VARIABLE,DESCRIPTION,UNIT,VALUES,TYPE,COLOR
 -,get_data_benchmark,databases/sg/benchmarks/benchmark_2000w.xls:TOTAL,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black
 -,get_surroundings_geometry,inputs/building-geometry/surroundings.shp,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black
 -,get_surroundings_geometry,inputs/building-geometry/surroundings.shp,floors_ag,Number of floors above ground (incl. ground floor),[-],{0...n},int,black
--,get_surroundings_geometry,inputs/building-geometry/surroundings.shp,floors_bg,"Number of floors below ground (basement, etc)",[-],{0...n},int,black
 -,get_surroundings_geometry,inputs/building-geometry/surroundings.shp,geometry,TODO,TODO,TODO,TODO,black
 -,get_surroundings_geometry,inputs/building-geometry/surroundings.shp,height_ag,Height above ground (incl. ground floor),[m],{0.0...n},float,black
--,get_surroundings_geometry,inputs/building-geometry/surroundings.shp,height_bg,"Height below ground (basement, etc)",[m],{0.0...n},float,black
 -,get_envelope_systems,databases/ch/systems/envelope_systems.xls:CONSTRUCTION,Cm_Af,Internal heat capacity per unit of air conditioned area. Defined according to ISO 13790.,[J/Km2],{0.0...1},float,black
 -,get_envelope_systems,databases/ch/systems/envelope_systems.xls:CONSTRUCTION,Description,Describes the source of the benchmark standards.,[-],[-],string,black
 -,get_envelope_systems,databases/ch/systems/envelope_systems.xls:CONSTRUCTION,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black
@@ -771,16 +769,16 @@ SCRIPT,LOCATOR_METHOD,FILE_NAME,VARIABLE,DESCRIPTION,UNIT,VALUES,TYPE,COLOR
 -,get_thermal_networks,databases/ch/systems/thermal_networks.xls:PIPING CATALOG,Vdot_min_m3s,Minimum volume flow rate for the nominal diameter (DN) bin.,[m3/s],{0.0...n},float,black
 -,get_weather,c:/users/assistenz/documents/github/cityenergyanalyst/cea/databases/weather/singapore.epw,EPW file variables,TODO,TODO,TODO,TODO,black
 -,get_zone_geometry,inputs/building-geometry/zone.shp,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black
--,get_zone_geometry,inputs/building-geometry/zone.shp,floors_ag,TODO,TODO,TODO,TODO,black
--,get_zone_geometry,inputs/building-geometry/zone.shp,floors_bg,TODO,TODO,TODO,TODO,black
+-,get_zone_geometry,inputs/building-geometry/zone.shp,floors_ag,Number of floors above ground (incl. ground floor),[-],{0...n},int,black
+-,get_zone_geometry,inputs/building-geometry/zone.shp,floors_bg,Number of floors below ground (basement, etc),[-],{0...n},int,black
 -,get_zone_geometry,inputs/building-geometry/zone.shp,geometry,TODO,TODO,TODO,TODO,black
 -,get_zone_geometry,inputs/building-geometry/zone.shp,height_ag,Aggregated height of the walls.,[m],{0.0...n},float,black
--,get_zone_geometry,inputs/building-geometry/zone.shp,height_bg,TODO,TODO,TODO,TODO,black
-data-helper,get_building_architecture,inputs/building-properties/architecture.dbf,Es,TODO,TODO,TODO,TODO,black
+-,get_zone_geometry,inputs/building-geometry/zone.shp,height_bg,Height below ground (basement, etc),[m],{0.0...n},float,black
+data-helper,get_building_architecture,inputs/building-properties/architecture.dbf,Es,Fraction of gross floor area with electrical demands.,[m2/m2],{0.0...1},float,black
 data-helper,get_building_architecture,inputs/building-properties/architecture.dbf,Hs_ag,Fraction of above ground gross floor area air-conditioned.,[m2/m2],{0.0...1},float,black
 data-helper,get_building_architecture,inputs/building-properties/architecture.dbf,Hs_bg,Fraction of below ground gross floor area air-conditioned.,[m2/m2],{0.0...1},float,black
 data-helper,get_building_architecture,inputs/building-properties/architecture.dbf,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black
-data-helper,get_building_architecture,inputs/building-properties/architecture.dbf,Ns,TODO,TODO,TODO,TODO,black
+data-helper,get_building_architecture,inputs/building-properties/architecture.dbf,Ns,Fraction of net gross floor area.,[m2/m2],{0.0...1},float,black
 data-helper,get_building_architecture,inputs/building-properties/architecture.dbf,type_cons,Type of construction. It relates to the contents of the default database of Envelope Properties: construction,[code],{T1...Tn},string,black
 data-helper,get_building_architecture,inputs/building-properties/architecture.dbf,type_leak,Leakage level. It relates to the contents of the default database of Envelope Properties: leakage,[code],{T1...Tn},string,black
 data-helper,get_building_architecture,inputs/building-properties/architecture.dbf,type_roof,Roof construction type (relates to values in Default Database Construction Properties),[-],{T1...Tn},string,black
