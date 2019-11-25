@@ -205,7 +205,7 @@ indoor-comfort:
     type: float
   - name: Ve_lpspax
     type: float
-technical-systems:
+air-conditioning-systems:
   parent: zone
   pk: Name
   type: dbf
