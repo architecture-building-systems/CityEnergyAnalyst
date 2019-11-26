@@ -394,12 +394,16 @@ class ThermalNetwork(object):
 
 # collect the results of each call to hourly_thermal_calculation in a record
 HourlyThermalResults = collections.namedtuple('HourlyThermalResults',
-                                              ['T_supply_nodes', 'T_return_nodes', 'q_loss_supply_edges',
-                                               'plant_heat_requirement', 'pressure_loss_system_Pa',
+                                              ['T_supply_nodes', 'T_return_nodes',
+                                               'q_loss_supply_edges',
+                                               'plant_heat_requirement',
+                                               'pressure_loss_system_Pa',
                                                'pressure_loss_system_kW',
-                                               'pressure_loss_substations_kW', 'edge_mass_flows',
-                                               'q_loss_system', 'pressure_loss_supply_edge_kW'])
-
+                                               'pressure_loss_substations_kW',
+                                               'linear_pressure_loss_supply_Paperm',
+                                               'edge_mass_flows',
+                                               'q_loss_system',
+                                               'pressure_loss_supply_edge_kW'])
 
 def thermal_network_main(locator, thermal_network, processes=1):
     """
