@@ -119,6 +119,10 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
                                'E_DX_AS_req_W': el_DX_hourly_Wh,
                                'E_cs_cre_cdata_req_W': el_DX_hourly_Wh,
                                }
+        # capacity of cooling technologies
+        operation_results[0][0] = Qc_nom_AHU_ARU_SCU_W
+        operation_results[0][1] = Qc_nom_AHU_ARU_SCU_W  # 1: DX_AS
+
 
         ## 1. VCC (AHU + ARU + SCU) + CT
         print 'Config 1: Vapor Compression Chillers -> AHU,ARU,SCU'
@@ -139,6 +143,9 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
                                'E_CT_req_W': el_CT_Wh,
                                'E_cs_cre_cdata_req_W': el_total_Wh,
                                }
+        # capacity of cooling technologies
+        operation_results[1][0] = Qc_nom_AHU_ARU_SCU_W
+        operation_results[1][2] = Qc_nom_AHU_ARU_SCU_W  # 2: BaseVCC_AS
 
         ## 2: SC_FP + single-effect ACH (AHU + ARU + SCU) + CT + Boiler + SC_FP
         print 'Config 2: Flat-plate Solar Collectors + Single-effect Absorption chillers -> AHU,ARU,SCU'
@@ -182,6 +189,9 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
                                'E_cs_cre_cdata_req_W': el_total_Wh,
                                'NG_Boiler_req': q_gas_Boiler_FP_to_single_ACH_to_AHU_ARU_SCU_Wh,
                                }
+        # capacity of cooling technologies
+        operation_results[2][0] = Qc_nom_AHU_ARU_SCU_W
+        operation_results[2][4] = Qc_nom_AHU_ARU_SCU_W  # 4: ACH_SC_FP
 
         # 3: SC_ET + single-effect ACH (AHU + ARU + SCU) + CT + Boiler + SC_ET
         print 'Config 3: Evacuated Tube Solar Collectors + Single-effect Absorption chillers -> AHU,ARU,SCU'
@@ -218,6 +228,9 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
                                'E_cs_cre_cdata_req_W': el_total_Wh,
                                'NG_Burner_req': q_gas_for_burner_Wh,
                                }
+        # capacity of cooling technologies
+        operation_results[3][0] = Qc_nom_AHU_ARU_SCU_W
+        operation_results[3][5] = Qc_nom_AHU_ARU_SCU_W  # 5: ACH_SC_ET
 
         # these two configurations are only activated when SCU is in use
         if Qc_nom_SCU_W > 0.0:
@@ -249,6 +262,10 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
                                    'E_CT_req_W': el_CT_Wh,
                                    'E_cs_cre_cdata_req_W': el_total_Wh
                                    }
+            # capacity of cooling technologies
+            operation_results[4][0] = Qc_nom_AHU_ARU_SCU_W
+            operation_results[4][2] = Qc_nom_AHU_ARU_W  # 2: BaseVCC_AS
+            operation_results[4][3] = Qc_nom_SCU_W      # 3: VCCHT_AS
 
             # 5: VCC (AHU + ARU) + ACH (SCU) + CT
             print 'Config 5: Vapor Compression Chillers(LT) -> AHU,ARU & Flate-place SC + Absorption Chillers(HT) -> SCU'
@@ -290,6 +307,10 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
                                    'E_cs_cre_cdata_req_W': el_total_Wh,
                                    'Q_BaseBoiler_NG_req': q_gas_for_boiler_Wh,
                                    }
+            # capacity of cooling technologies
+            operation_results[5][0] = Qc_nom_AHU_ARU_SCU_W
+            operation_results[5][2] = Qc_nom_AHU_ARU_W  # 2: BaseVCC_AS
+            operation_results[5][6] = Qc_nom_SCU_W      # 6: ACHHT_SC_FP
 
         ## Calculate Capex/Opex
         # Initialize arrays
@@ -376,13 +397,13 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
 
         # Save results in csv file
         performance_results = {
-            "DX to AHU_ARU_SCU Share": operation_results[:, 0],
-            "VCC to AHU_ARU_SCU Share": operation_results[:, 1],
-            "single effect ACH to AHU_ARU_SCU Share (FP)": operation_results[:, 2],
-            "single effect ACH to AHU_ARU_SCU Share (ET)": operation_results[:, 3],
-            "VCC to AHU_ARU Share": operation_results[:, 4],
-            "VCC to SCU Share": operation_results[:, 5],
-            "single effect ACH to SCU Share (FP)": operation_results[:, 6],
+            "Nominal Cooling Load": operation_results[:, 0],
+            "Capacity_DX_AS_W": operation_results[:, 1],
+            "Capacity_BaseVCC_AS_W": operation_results[:, 2],
+            "Capacity_VCCHT_AS_W": operation_results[:, 3],
+            "Capacity_ACH_SC_FP_W": operation_results[:, 4],
+            "Capaticy_ACH_SC_ET_W": operation_results[:, 5],
+            "Capacity_ACHHT_FP_W": operation_results[:, 6],
             "Capex_a_USD": Capex_a_USD[:, 0],
             "Capex_total_USD": Capex_total_USD[:, 0],
             "Opex_a_USD": Opex_a_USD[:, 1],
@@ -515,23 +536,6 @@ def initialize_result_tables_for_supply_configurations(Qc_nom_SCU_W):
     else:
         operation_results = np.zeros((6, 10))
 
-    ## logging the supply technology used in each configuration
-    # config 0: DX
-    operation_results[0][0] = 1
-    # config 1: VCC to AHU
-    operation_results[1][1] = 1
-    # config 2: single-effect ACH with FP to AHU & ARU & SCU
-    operation_results[2][2] = 1
-    # config 3: single-effect ACH with ET to AHU & ARU & SCU
-    operation_results[3][3] = 1
-    if operation_results.shape[0] > 4:
-        ## These two configurations are only available when SCU is in use.
-        # config 4: VCC to AHU + ARU and VCC to SCU
-        operation_results[4][4] = 1
-        operation_results[4][5] = 1
-        # config 5: VCC to AHU + ARU and single effect ACH to SCU
-        operation_results[5][4] = 1
-        operation_results[5][6] = 1
     return operation_results
 
 class AbsorptionChiller(object):
