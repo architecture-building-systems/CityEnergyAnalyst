@@ -629,7 +629,7 @@ class EnvelopeProperties(object):
     def __init__(self, envelope):
         self.a_roof = envelope['a_roof']
         self.n50 = envelope['n50']
-        self.win_wall = envelope['wwr_south']
+        self.win_wall = envelope['Awin'] / (envelope['Awin'] + envelope['Awall'])
         self.a_wall = envelope['a_wall']
         self.rf_sh = envelope['rf_sh']
         self.e_wall = envelope['e_wall']
