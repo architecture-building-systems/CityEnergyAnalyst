@@ -529,7 +529,7 @@ def thermal_network_main(locator, thermal_network, processes=1):
     # merge pipe properties to edge_df and then output as .csv
     thermal_network.edge_df = thermal_network.edge_df.merge(thermal_network.pipe_properties.T, left_index=True,
                                                             right_index=True)
-
+    thermal_network.edge_df['Pipe_DN'] = thermal_network.edge_df['Pipe_DN_y']
     fields_output = ['length_m', 'Pipe_DN', 'Type_mat', 'D_int_m']
     thermal_network.edge_df[fields_output].to_csv(
         thermal_network.locator.get_thermal_network_edge_list_file(thermal_network.network_type,
