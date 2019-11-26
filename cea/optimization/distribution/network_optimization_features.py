@@ -24,12 +24,12 @@ class NetworkOptimizationFeatures(object):
     See the paper of Fonseca et al 2015 of the city energy analyst for more info on how that procedure used to work.
     """
     def __init__(self, district_heating_network, district_cooling_network,  locator):
-        self.pipesCosts_DHN_USD = 0     # USD-2015
-        self.pipesCosts_DCN_USD = 0     # USD-2015
+        self.pipesCosts_DHN_USD = 0.0    # USD-2015
+        self.pipesCosts_DCN_USD = 0.0     # USD-2015
         self.DeltaP_DHN = np.zeros(HOURS_IN_YEAR)         # Pa
         self.DeltaP_DCN = np.zeros(HOURS_IN_YEAR)        # Pa
-        self.thermallosses_DHN = 0
-        self.thermallosses_DCN = 0
+        self.thermallosses_DHN = 0.0
+        self.thermallosses_DCN = 0.0
         self.network_names = ['']
         self.district_heating_network = district_heating_network
         self.district_cooling_network = district_cooling_network
@@ -69,7 +69,7 @@ class NetworkOptimizationFeatures(object):
     def pipe_costs(self, locator, network_name, network_type):
         edges_file = pd.read_csv(locator.get_thermal_network_edge_list_file(network_type, network_name))
         piping_cost_data = pd.read_excel(locator.get_database_supply_systems(), sheet_name="PIPING")
-        merge_df = edges_file.merge(piping_cost_data, left_on='Pipe_DN_y', right_on='Pipe_DN')
-        merge_df['Inv_USD2015'] = merge_df['Inv_USD2015perm_y'] * merge_df['pipe length']
+        merge_df = edges_file.merge(piping_cost_data, left_on='Pipe_DN', right_on='Pipe_DN')
+        merge_df['Inv_USD2015'] = merge_df['Inv_USD2015perm'] * merge_df['length_m']
         pipe_costs = merge_df['Inv_USD2015'].sum()
         return pipe_costs

@@ -292,6 +292,7 @@ def thermal_network_simplified(locator, config, network_name):
     # 2nd ITERATION GET PRESSURE POINTS AND MASSFLOWS FOR SIZING PUMPING NEEDS - this could be for all the year
     # modify diameter and run simualtions
     edge_df['Pipe_DN'] = pipe_dn
+    edge_df['D_int_m'] = D_int_m
     for edge in edge_df.iterrows():
         edge_name = edge[0]
         pipe = wn.get_link(edge_name)
@@ -489,7 +490,7 @@ def thermal_network_simplified(locator, config, network_name):
                          index=False)
 
     # summary of edges used for the calculation
-    fields_edges = ['length_m', 'Pipe_DN', 'Type_mat']
+    fields_edges = ['length_m', 'Pipe_DN', 'Type_mat', 'D_int_m']
     edge_df[fields_edges].to_csv(locator.get_thermal_network_edge_list_file(network_type, network_name), index=False)
     fields_nodes = ['Building', 'Type']
     node_df[fields_nodes].to_csv(locator.get_thermal_network_node_types_csv_file(network_type, network_name),
