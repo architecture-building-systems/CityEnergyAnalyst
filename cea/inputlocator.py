@@ -915,9 +915,9 @@ class InputLocator(object):
         else:
             folder = self.get_thermal_network_folder()
         if len(network_name) is 0:
-            file_name = network_type + "_" + "_T_Return_K.csv"
+            file_name = network_type + "_" + "_temperature_return_nodes_K.csv"
         else:
-            file_name = network_type + "_" + network_name + "_T_Return_K.csv"
+            file_name = network_type + "_" + network_name + "_temperature_return_nodes_K.csv"
         return os.path.join(folder, file_name)
 
     def get_thermal_network_substation_ploss_file(self, network_type, network_name, representative_week=False):

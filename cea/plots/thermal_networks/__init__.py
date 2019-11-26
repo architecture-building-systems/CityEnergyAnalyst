@@ -106,34 +106,6 @@ class ThermalNetworksPlotBase(cea.plots.PlotBase):
         hourly_thermal_loss = hourly_thermal_loss['thermal_loss_total_kW']
         return pd.DataFrame(hourly_thermal_loss)
 
-    @property
-    def yearly_pressure_loss(self):
-        return self.plant_pumping_requirement_kWh.values.sum()
-
-    @property
-    def hourly_relative_pressure_loss(self):
-        relative_loss = self._calculate_relative_loss(self.plant_pumping_requirement_kWh)
-        return pd.DataFrame(np.round(relative_loss, 2))
-
-    @property
-    def mean_pressure_loss_relative(self):
-        relative_loss = self._calculate_relative_loss(self.plant_pumping_requirement_kWh)
-        mean_loss = np.nanmean(relative_loss)  # calculate average loss of nonzero values
-        mean_loss = np.round(mean_loss, 2)
-        return mean_loss
-
-    @property
-    def hourly_relative_heat_loss(self):
-        relative_loss = self._calculate_relative_loss(self.hourly_heat_loss)
-        return pd.DataFrame(np.round(relative_loss, 2))
-
-    @property
-    def mean_heat_loss_relative(self):
-        relative_loss = self._calculate_relative_loss(self.hourly_heat_loss)
-        mean_loss = np.nanmean(relative_loss)  # calculate average loss of nonzero values
-        mean_loss = np.round(mean_loss, 2)
-        return mean_loss
-
     def _calculate_relative_loss(self, absolute_loss):
         """
                 Calculate relative heat or pressure loss:
@@ -164,10 +136,6 @@ class ThermalNetworksPlotBase(cea.plots.PlotBase):
             self.locator.get_network_thermal_loss_edges_file(self.network_type, self.network_name))
         hourly_heat_loss = abs(hourly_heat_loss).sum(axis=1)  # aggregate heat losses of all edges
         return pd.DataFrame(hourly_heat_loss)
-
-    @property
-    def yearly_heat_loss(self):
-        return abs(self.hourly_heat_loss.values).sum()
 
     @property
     @cea.plots.cache.cached
@@ -228,31 +196,6 @@ class ThermalNetworksPlotBase(cea.plots.PlotBase):
         except:
             # backward compatibility with detailed network simulation (which does not produce this data)
             return None
-
-    @property
-    @cea.plots.cache.cached
-    def P_loss_substation_kWh(self):
-        return pd.read_csv(self.locator.get_thermal_network_substation_ploss_file(self.network_type,
-                                                                                  self.network_name))
-
-    @property
-    @cea.plots.cache.cached
-    def Pumping_allpipes_kWh(self):
-        # FIXME: why the unit conversion?!
-        df_pumping_kW = pd.read_csv(
-            self.locator.get_network_energy_pumping_requirements_file(self.network_type, self.network_name))
-        df_pumping_supply_kW = df_pumping_kW['pressure_loss_total_kW']
-        df_pumping_return_kW = df_pumping_kW['pressure_loss_return_kW']
-        df_pumping_allpipes_kW = df_pumping_supply_kW + df_pumping_return_kW
-        return df_pumping_allpipes_kW
-
-    @property
-    @cea.plots.cache.cached
-    def Pumping_substations_kWh(self):
-        # FIXME: why the unit conversion?!
-        df_pumping_kW = pd.read_csv(
-            self.locator.get_network_energy_pumping_requirements_file(self.network_type, self.network_name))
-        return df_pumping_kW['pressure_loss_substations_kW']
 
     @property
     def network_pipe_length(self):
