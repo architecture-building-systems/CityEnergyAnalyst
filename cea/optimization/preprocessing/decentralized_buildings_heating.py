@@ -103,6 +103,17 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
                                          'Boiler_Status': Boiler_Status,
                                          'NG_Boiler_req_W': Qgas_to_Boiler_Wh,
                                          'E_hs_ww_req_W': np.zeros(8760)}
+        ## 1: Boiler BG
+        # add costs
+        Opex_a_var_USD[1][4] += sum(prices.BG_PRICE * Qgas_to_Boiler_Wh)  # CHF
+        GHG_tonCO2[1][5] += calc_emissions_Whyr_to_tonCO2yr(sum(Qgas_to_Boiler_Wh), lca.NG_TO_CO2_EQ)  # ton CO2
+        PEN_MJoil[1][6] += calc_pen_Whyr_to_MJoilyr(sum(Qgas_to_Boiler_Wh), lca.NG_TO_OIL_EQ)  # MJ-oil-eq
+        # add activation
+        resourcesRes[1][1] += sum(q_load_Wh)  # q from BG
+        heating_dispatch[1] = {'Q_Boiler_gen_directload_W': q_load_Wh,
+                               'Boiler_Status': Boiler_Status,
+                               'BG_Boiler_req_W': Qgas_to_Boiler_Wh,
+                               'E_hs_ww_req_W': np.zeros(8760)}
 
         ## 2: Fuel Cell
         (FC_Effel, FC_Effth) = np.vectorize(FC.calc_eta_FC)(q_load_Wh, Qnom_W, 1, "B")
@@ -197,6 +208,12 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
         Capex_a_USD[0][0] = Capex_a_Boiler_USD
         Opex_a_fixed_USD[0][0] = Opex_a_fixed_Boiler_USD
         Capex_opex_a_fixed_only_USD[0][0] = Capex_a_Boiler_USD + Opex_a_fixed_Boiler_USD  # TODO:variable price?
+
+        # 1: Boiler BG
+        Capex_total_USD[1][0] = Capex_Boiler_USD
+        Capex_a_USD[1][0] = Capex_a_Boiler_USD
+        Opex_a_fixed_USD[1][0] = Opex_a_fixed_Boiler_USD
+        Capex_opex_a_fixed_only_USD[1][0] = Capex_a_Boiler_USD + Opex_a_fixed_Boiler_USD  # TODO:variable price?
 
         # 2: Fuel Cell
         Capex_a_FC_USD, Opex_fixed_FC_USD, Capex_FC_USD = FC.calc_Cinv_FC(Qnom_W, locator, config)
@@ -300,9 +317,8 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
             "TAC_USD": TAC_USD[:, 1],
             "Capex_a_USD": Capex_a_USD[:, 0],
             "Capex_total_USD": Capex_total_USD[:, 0],
-            "Opex_a_USD": Opex_a_USD[:, 1],
-            "Opex_a_fixed_USD": Opex_a_fixed_USD[:, 0],
-            "Opex_a_var_USD": Opex_a_var_USD[:, 4],
+            "Opex_fixed_USD": Opex_a_fixed_USD[:, 0],
+            "Opex_var_USD": Opex_a_var_USD[:, 4],
             "GHG_tonCO2": GHG_tonCO2[:, 5],
             "PEN_MJoil": PEN_MJoil[:, 6],
             "Best configuration": Best[:, 0]}

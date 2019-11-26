@@ -1048,8 +1048,8 @@ def calc_costs_emissions_decentralized_DH(DHN_barcode, buildings_names_with_heat
             PEN_sys_disconnected_MJoilyr += dfBest["PEN_MJoil"].iloc[0]  # [MJ-oil-eq]
             Capex_total_sys_disconnected_USD += dfBest["Capex_total_USD"].iloc[0]
             Capex_a_sys_disconnected_USD += dfBest["Capex_a_USD"].iloc[0]
-            Opex_var_sys_disconnected += dfBest["Opex_a_var_USD"].iloc[0]
-            Opex_fixed_sys_disconnected_USD += dfBest["Opex_a_fixed_USD"].iloc[0]
+            Opex_var_sys_disconnected += dfBest["Opex_var_USD"].iloc[0]
+            Opex_fixed_sys_disconnected_USD += dfBest["Opex_fixed_USD"].iloc[0]
 
             pd.DataFrame({'Name': building_name,
                           'Capacity_Boiler_NG_heat_disconnected_W': dfBest["Capacity_BaseBoiler_NG_W"].iloc[0],
