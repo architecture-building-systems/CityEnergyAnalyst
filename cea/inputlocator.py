@@ -890,8 +890,8 @@ class InputLocator(object):
             file_name = network_type + "_" + network_name + "_massflow_nodes_kgs.csv"
         return os.path.join(folder, file_name)
 
-    def get_thermal_network_layout_supply_temperature_file(self, network_type, network_name,
-                                                           representative_week=False):
+    def get_network_temperature_supply_nodes_file(self, network_type, network_name,
+                                                  representative_week=False):
         """scenario/outputs/data/optimization/network/layout/DH_T_Supply.csv or DC_T_Supply.csv
         Supply temperatures at each node for each time step for a district heating or cooling network
         """
@@ -905,8 +905,8 @@ class InputLocator(object):
             file_name = network_type + "_" + network_name + "_temperature_supply_nodes_K.csv"
         return os.path.join(folder, file_name)
 
-    def get_thermal_network_layout_return_temperature_file(self, network_type, network_name,
-                                                           representative_week=False):
+    def get_network_temperature_return_nodes_file(self, network_type, network_name,
+                                                  representative_week=False):
         """scenario/outputs/data/optimization/network/layout/DH_T_Return.csv or DC_T_Return.csv
         Return temperatures at each node for each time step for a district heating or cooling network
         """
@@ -918,6 +918,20 @@ class InputLocator(object):
             file_name = network_type + "_" + "_temperature_return_nodes_K.csv"
         else:
             file_name = network_type + "_" + network_name + "_temperature_return_nodes_K.csv"
+        return os.path.join(folder, file_name)
+
+
+    def get_network_temperature_plant(self, network_type, network_name,
+                                                           representative_week=False):
+
+        if representative_week == True:
+            folder = self.get_representative_week_thermal_network_layout_folder()
+        else:
+            folder = self.get_thermal_network_folder()
+        if len(network_name) is 0:
+            file_name = network_type + "_" + "_temperature_plant_K.csv"
+        else:
+            file_name = network_type + "_" + network_name + "_temperature_plant_K.csv"
         return os.path.join(folder, file_name)
 
     def get_thermal_network_substation_ploss_file(self, network_type, network_name, representative_week=False):

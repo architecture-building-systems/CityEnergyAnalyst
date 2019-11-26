@@ -80,6 +80,11 @@ class NetworkLayoutOperationPeak(cea.plots.thermal_networks.ThermalNetworksMapPl
         P_loss_kPa_peak = (self.pressure_loss_nodes_Pa.max() /1000).round(1) #to kPa
         nodes_df["Peak pressure [kPa]"] = P_loss_kPa_peak.values
 
+        temperature_supply = self.temperature_supply_nodes_C.round(1)
+        temperature_return = self.temperature_return_nodes_C.round(1)
+        index_max = self.buildings_hourly.idxmax(axis=0)
+        delta_T = (temperature_supply - temperature_return).round(1)
+
         if self.mass_flow_kgs_nodes is not None: #backward compatibility with detailed thermal network (which does not include this output)
             Mass_flow_kgs_peak = self.mass_flow_kgs_nodes.max().round(1)
             nodes_df["Peak mass flow rate [kg/s]"] = Mass_flow_kgs_peak.values
@@ -99,6 +104,20 @@ class NetworkLayoutOperationPeak(cea.plots.thermal_networks.ThermalNetworksMapPl
             else:
                 return None
 
+        def get_peak_supply_temp(row):
+            if row["Building"] in index_max.index.values:
+                return temperature_supply[row['Name']][index_max[row["Building"]]]
+            else:
+                return None
+
+        def get_peak_delta_temp(row):
+            if row["Building"] in index_max.index.values:
+                return delta_T[row['Name']][index_max[row["Building"]]]
+            else:
+                return None
+
+        nodes_df["Peak Supply Temperature [C]"] = nodes_df.apply(get_peak_supply_temp, axis=1)
+        nodes_df["Peak delta Temperature [C]"] = nodes_df.apply(get_peak_delta_temp, axis=1)
         nodes_df["Peak Thermal Demand [kW]"] = nodes_df.apply(get_peak_building_demand, axis=1)
         nodes_df["Pumping Power [kW]"] = nodes_df.apply(get_pumping_node, axis=1)
 

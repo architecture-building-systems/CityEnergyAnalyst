@@ -104,9 +104,9 @@ class SupplyReturnAmbientCurvePlot(cea.plots.thermal_networks.ThermalNetworksPlo
     @property
     def plant_temperatures(self):
         supply_df = pd.read_csv(
-            self.locator.get_thermal_network_layout_supply_temperature_file(self.network_type, self.network_name))
+            self.locator.get_network_temperature_supply_nodes_file(self.network_type, self.network_name))
         return_df = pd.read_csv(
-            self.locator.get_thermal_network_layout_return_temperature_file(self.network_type, self.network_name))
+            self.locator.get_network_temperature_return_nodes_file(self.network_type, self.network_name))
 
         plant_node_supply = supply_df[self.plant_node]
         plant_node_return = return_df[self.plant_node]

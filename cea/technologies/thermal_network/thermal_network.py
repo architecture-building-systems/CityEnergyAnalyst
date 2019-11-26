@@ -761,14 +761,14 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
         # node temperatures
         T_supply_nodes_for_csv.columns = thermal_network.edge_node_df.index
         T_supply_nodes_for_csv.to_csv(
-            thermal_network.locator.get_thermal_network_layout_supply_temperature_file(
+            thermal_network.locator.get_network_temperature_supply_nodes_file(
                 thermal_network.network_type,
                 thermal_network.network_name),
             na_rep='NaN', index=False, float_format='%.3f')
 
         T_return_nodes_for_csv.columns = thermal_network.edge_node_df.index
         T_return_nodes_for_csv.to_csv(
-            thermal_network.locator.get_thermal_network_layout_return_temperature_file(
+            thermal_network.locator.get_network_temperature_return_nodes_file(
                 thermal_network.network_type,
                 thermal_network.network_name),
             na_rep='NaN', index=False, float_format='%.3f')
@@ -840,12 +840,12 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
 
         # node temperatures
         pd.DataFrame(csv_outputs['T_supply_nodes'], columns=thermal_network.edge_node_df.index).to_csv(
-            thermal_network.locator.get_thermal_network_layout_supply_temperature_file(
+            thermal_network.locator.get_network_temperature_supply_nodes_file(
                 thermal_network.network_type,
                 thermal_network.network_name, representative_week),
             na_rep='NaN', index=False, float_format='%.3f')
         pd.DataFrame(csv_outputs['T_return_nodes'], columns=thermal_network.edge_node_df.index).to_csv(
-            thermal_network.locator.get_thermal_network_layout_return_temperature_file(
+            thermal_network.locator.get_network_temperature_return_nodes_file(
                 thermal_network.network_type,
                 thermal_network.network_name, representative_week),
             na_rep='NaN', index=False, float_format='%.3f')
