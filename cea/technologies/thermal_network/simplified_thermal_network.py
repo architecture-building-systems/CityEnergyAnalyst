@@ -441,11 +441,6 @@ def thermal_network_simplified(locator, config, network_name):
     head_loss_system_per_edge_kWh.to_csv(
         locator.get_thermal_network_layout_ploss_system_edges_file(network_type, network_name), index=False)
 
-    # unitary pressure losses per piping system
-    head_loss_system_per_edge_kWhperm = head_loss_supply_kWperm + head_loss_return_kWperm
-    head_loss_system_per_edge_kWhperm.to_csv(
-        locator.get_thermal_network_layout_unitary_ploss_system_edges_file(network_type, network_name), index=False)
-
     # pressure losses per substation
     head_loss_substations_kW = head_loss_substations_kW.rename(columns=building_nodes_pairs)
     head_loss_substations_kW.to_csv(locator.get_thermal_network_substation_ploss_file(network_type, network_name),
