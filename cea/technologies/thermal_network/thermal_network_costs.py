@@ -538,7 +538,7 @@ def calc_network_size(network_info):
     network_info = pd.read_csv(
         network_info.locator.get_thermal_network_edge_list_file(network_info.network_type,
                                                                 network_info.network_name))
-    length_m = network_info['pipe length'].sum()
+    length_m = network_info['length_m'].sum()
     average_diameter_m = network_info['D_int_m'].mean()
     return float(length_m), float(average_diameter_m)
 

@@ -53,7 +53,7 @@ def network_main(locator, buildings_in_this_network, ground_temp, num_tot_buildi
 
     # CALCULATE RELATIVE LENGTH OF THIS NETWORK
     data_network = pd.read_csv(locator.get_thermal_network_edge_list_file(network_type))
-    pipes_tot_length = data_network['pipe length'].sum() * 2  # this considers return and supply
+    pipes_tot_length = data_network['length_m'].sum() * 2  # this considers return and supply
     ntwk_length = pipes_tot_length * num_buildings_network / num_tot_buildings
 
     # empty vectors
