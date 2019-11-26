@@ -408,10 +408,10 @@ def thermal_network_simplified(locator, config, network_name):
     flow_rate_substations_m3s = results.node['demand'][consumer_nodes].abs()
     head_loss_supply_kWperm = (linear_pressure_loss_Paperm * (flow_rate_supply_m3s * 3600)) / (3.6E6 * PUMP_ETA)
     head_loss_return_kWperm = head_loss_supply_kWperm.copy()
-    head_loss_supply_kW = (head_loss_supply_network_Pa * (flow_rate_supply_m3s * 3600)) / (3.6E6 * PUMP_ETA)
-    head_loss_return_kW = head_loss_supply_kW.copy()
+    pressure_loss_supply_edge_kW = (head_loss_supply_network_Pa * (flow_rate_supply_m3s * 3600)) / (3.6E6 * PUMP_ETA)
+    head_loss_return_kW = pressure_loss_supply_edge_kW.copy()
     head_loss_substations_kW = (head_loss_substations_Pa * (flow_rate_substations_m3s * 3600)) / (3.6E6 * PUMP_ETA)
-    accumulated_head_loss_supply_kW = head_loss_supply_kW.sum(axis=1)
+    accumulated_head_loss_supply_kW = pressure_loss_supply_edge_kW.sum(axis=1)
     accumulated_head_loss_return_kW = head_loss_return_kW.sum(axis=1)
     accumulated_head_loss_substations_kW = head_loss_substations_kW.sum(axis=1)
     accumulated_head_loss_total_kW = accumulated_head_loss_supply_kW + \
@@ -435,8 +435,7 @@ def thermal_network_simplified(locator, config, network_name):
                           header=['NONE'], index=False)
 
     # pressure losses per piping system
-    head_loss_system_per_edge_kWh = head_loss_supply_kW + head_loss_return_kW
-    head_loss_system_per_edge_kWh.to_csv(
+    pressure_loss_supply_edge_kW.to_csv(
         locator.get_thermal_network_layout_ploss_system_edges_file(network_type, network_name), index=False)
 
     # pressure losses per substation
@@ -453,10 +452,20 @@ def thermal_network_simplified(locator, config, network_name):
         locator.get_network_energy_pumping_requirements_file(network_type, network_name), index=False)
 
 
-
     # thermal losses
     thermal_losses_supply_kWh.to_csv(locator.get_network_thermal_loss_edges_file(network_type, network_name), index=False)
     thermal_losses_supply_Wperm.to_csv(locator.get_network_linear_thermal_loss_edges_file(network_type, network_name), index=False)
+
+
+    # thermal losses total
+    accumulated_thermal_losses_supply_kWh = thermal_losses_supply_kWh.sum(axis=1)
+    accumulated_thermal_losses_return_kWh = thermal_losses_supply_kWh.sum(axis=1)
+    accumulated_thermal_loss_total_kWh = accumulated_thermal_losses_supply_kWh + accumulated_thermal_losses_return_kWh
+    thermal_losses_total_kWh = pd.DataFrame({"thermal_loss_supply_kW": accumulated_thermal_losses_supply_kWh,
+                                              "thermal_loss_return_kW": accumulated_thermal_losses_return_kWh,
+                                              "thermal_loss_total_kW": accumulated_thermal_loss_total_kWh})
+    thermal_losses_total_kWh.to_csv(locator.get_network_total_thermal_loss_file(network_type, network_name), index=False)
+
 
     # return average temperature of supply at the substations
     T_sup_K_nodes = T_sup_K_building.rename(columns=building_nodes_pairs_inversed)

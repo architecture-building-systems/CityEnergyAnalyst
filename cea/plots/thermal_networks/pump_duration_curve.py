@@ -20,7 +20,7 @@ __status__ = "Production"
 
 class LoadDurationCurvePlot(cea.plots.thermal_networks.ThermalNetworksPlotBase):
     """Implement the load duration curve of pump plot"""
-    name = "Load duration curve of pump"
+    name = "Plot - Load Duration Curve of Main Pump"
 
     def __init__(self, project, parameters, cache):
         super(LoadDurationCurvePlot, self).__init__(project, parameters, cache)
