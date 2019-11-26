@@ -21,7 +21,7 @@ __status__ = "Production"
 
 class AnnualEnergyConsumptionPlot(cea.plots.thermal_networks.ThermalNetworksPlotBase):
         """Implement the Annual energy consumption plot"""
-        name = "Annual energy consumption"
+        name = "Yearly energy consumption"
 
         def __init__(self, project, parameters, cache):
             super(AnnualEnergyConsumptionPlot, self).__init__(project, parameters, cache)

@@ -20,7 +20,7 @@ __status__ = "Production"
 
 class SupplyReturnAmbientCurvePlot(cea.plots.thermal_networks.ThermalNetworksPlotBase):
     """Implement the heat and pressure losses plot"""
-    name = "Supply and Return vs. Ambient Temp"
+    name = "Heating Reset Curve"
 
     expected_parameters = {
         'scenario-name': 'general:scenario-name',

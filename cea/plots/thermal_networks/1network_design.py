@@ -26,14 +26,14 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-class PeakNetworkPressureLossPlot(cea.plots.thermal_networks.ThermalNetworksMapPlotBase):
+class NetworkLayoutOperationPeak(cea.plots.thermal_networks.ThermalNetworksMapPlotBase):
     """
     Plot condensing all the properties of the network of interest at peak time.
     """
-    name = "Map - Network Design at Nominal Operating Conditions"
+    name = "Network Layout at Nominal Operating Conditions"
 
     def __init__(self, project, parameters, cache):
-        super(PeakNetworkPressureLossPlot, self).__init__(project, parameters, cache)
+        super(NetworkLayoutOperationPeak, self).__init__(project, parameters, cache)
 
     @property
     def edges_df(self):
@@ -149,7 +149,7 @@ if __name__ == '__main__':
     locator = cea.inputlocator.InputLocator(config.scenario)
     cache = cea.plots.cache.NullPlotCache()
 
-    PeakNetworkPressureLossPlot(config.project, {'network-type': config.plots.network_type,
+    NetworkLayoutOperationPeak(config.project, {'network-type': config.plots.network_type,
                                             'scenario-name': config.scenario_name,
                                             'network-name': config.plots.network_name},
-                           cache).plot(auto_open=True)
+                               cache).plot(auto_open=True)
