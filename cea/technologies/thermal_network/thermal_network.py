@@ -397,7 +397,7 @@ HourlyThermalResults = collections.namedtuple('HourlyThermalResults',
                                                'plant_heat_requirement', 'pressure_loss_system_Pa',
                                                'pressure_loss_system_kW',
                                                'pressure_loss_substations_kW', 'edge_mass_flows',
-                                               'q_loss_system', 'p_loss_system_edges'])
+                                               'q_loss_system', 'pressure_loss_supply_edge_kW'])
 
 
 def thermal_network_main(locator, thermal_network, processes=1):
@@ -643,7 +643,7 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
         pressure_loss_system_Pa_for_csv = pd.DataFrame(csv_outputs['pressure_loss_system_Pa'])
         pressure_loss_system_kW_for_csv = pd.DataFrame(csv_outputs['pressure_loss_system_kW'])
         pressure_loss_substations_kW_for_csv = pd.DataFrame(csv_outputs['pressure_loss_substations_kW'])
-        p_loss_system_edges_to_csv = pd.DataFrame(csv_outputs['p_loss_system_edges'])
+        pressure_loss_supply_edge_for_csv = pd.DataFrame(csv_outputs['pressure_loss_supply_edge_kW'])
 
         # we need to extrapolate 8760 datapoints from 2016 points from our representative weeks.
         # To do this, the initial dataset is repeated 4 times, the remaining values are filled with the average values of all above.
@@ -683,9 +683,9 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
             pressure_loss_substations_kW_for_csv = pressure_loss_substations_kW_for_csv.append(
                 pressure_loss_substations_kW_for_csv.mean(), ignore_index=True)
 
-        p_loss_system_edges_to_csv = pd.concat([p_loss_system_edges_to_csv] * 4, ignore_index=True)
-        while len(p_loss_system_edges_to_csv.index) < HOURS_IN_YEAR:
-            p_loss_system_edges_to_csv = p_loss_system_edges_to_csv.append(p_loss_system_edges_to_csv.mean(),
+        pressure_loss_supply_edge_for_csv = pd.concat([pressure_loss_supply_edge_for_csv] * 4, ignore_index=True)
+        while len(pressure_loss_supply_edge_for_csv.index) < HOURS_IN_YEAR:
+            pressure_loss_supply_edge_for_csv = pressure_loss_supply_edge_for_csv.append(pressure_loss_supply_edge_for_csv.mean(),
                                                                            ignore_index=True)
 
         # Output values
@@ -697,14 +697,6 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
             # , representative_week),
             na_rep='NaN', index=False, float_format='%.3f')
 
-        # pressure losses over entire network in Pa
-        pressure_loss_system_Pa_for_csv.columns = ['pressure_loss_supply_Pa', 'pressure_loss_return_Pa',
-                                                   'pressure_loss_substations_Pa', 'pressure_loss_total_Pa']
-        pressure_loss_system_Pa_for_csv.to_csv(
-            thermal_network.locator.get_network_total_pressure_drop_file(thermal_network.network_type,
-                                                                         thermal_network.network_name),
-            # , representative_week),
-            index=False, float_format='%.3f')
 
         # pressure losses over entire network in kW
         pressure_loss_system_kW_for_csv.columns = ['pressure_loss_supply_kW', 'pressure_loss_return_kW',
@@ -743,11 +735,10 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
             float_format='%.3f')
 
         # pressure losses over entire network
-        p_loss_system_edges_to_csv.columns = thermal_network.edge_node_df.columns
-        pd.DataFrame(p_loss_system_edges_to_csv).to_csv(
-            thermal_network.locator.get_thermal_network_layout_ploss_system_edges_file(
-                thermal_network.network_type,
-                thermal_network.network_name),
+        pressure_loss_supply_edge_for_csv.columns = thermal_network.edge_node_df.columns
+        pd.DataFrame(pressure_loss_supply_edge_for_csv).to_csv(
+            thermal_network.locator.get_thermal_network_pressure_losses_edges_file(thermal_network.network_type,
+                                                                                   thermal_network.network_name),
             index=False,
             float_format='%.3f')
 
@@ -824,8 +815,8 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
             float_format='%.3f')
 
         # pressure losses over entire network per edge
-        pd.DataFrame(csv_outputs['p_loss_system_edges'], columns=thermal_network.edge_node_df.columns).to_csv(
-            thermal_network.locator.get_thermal_network_layout_ploss_system_edges_file(
+        pd.DataFrame(csv_outputs['pressure_loss_supply_edge_kW'], columns=thermal_network.edge_node_df.columns).to_csv(
+            thermal_network.locator.get_thermal_network_pressure_losses_edges_file(
                 thermal_network.network_type,
                 thermal_network.network_name, representative_week),
             index=False,
@@ -909,7 +900,7 @@ def hourly_thermal_calculation(t, thermal_network):
     P_return_nodes_Pa, \
     delta_P_network_Pa, \
     pressure_loss_system_kW, \
-    pressure_loss_edges_kW, \
+    pressure_loss_supply_edge_kW, \
     pressure_loss_substations_kW = calc_pressure_nodes(T_supply_nodes_K, T_return_nodes_K, thermal_network, t)
 
     # store node temperatures and pressures, as well as plant heat requirement and overall pressure drop at each
@@ -924,7 +915,7 @@ def hourly_thermal_calculation(t, thermal_network):
         pressure_loss_substations_kW=pressure_loss_substations_kW,
         edge_mass_flows=thermal_network.edge_mass_flow_df.ix[t],
         q_loss_system=total_heat_loss_kW,
-        p_loss_system_edges=pressure_loss_edges_kW
+        pressure_loss_supply_edge_kW=pressure_loss_supply_edge_kW
     )
 
     return hourly_thermal_results
@@ -1297,7 +1288,7 @@ def calc_pressure_nodes(t_supply_node__k, t_return_node__k, thermal_network, t):
             np.linalg.lstsq(-edge_node_transpose, np.transpose(pressure_loss_pipe_return__pa) * (-1), rcond=-1)[0]),
         decimals=5)
     return pressure_nodes_supply__pa, pressure_nodes_return__pa, pressure_loss_system__pa, \
-           pressure_loss_total_kw, pressure_loss_pipes_kW[0], pressure_loss_substations_kW
+           pressure_loss_total_kw, pressure_loss_pipe_supply_kW[0], pressure_loss_substations_kW
 
 
 def calc_pressure_loss_substations(thermal_network, supply_temperature, t):
