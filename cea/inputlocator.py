@@ -191,36 +191,25 @@ class InputLocator(object):
             self.get_electrical_and_thermal_network_optimization_slave_results_folder(gen_num),
             "network_plot_" + str(gen_num) + "_ind_" + str(ind_num) + '.png')
 
-    def get_concept_network_plot_complete(self, ind_num, gen_num):
-        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
-        return os.path.join(
-            self.get_electrical_and_thermal_network_optimization_slave_results_folder(gen_num),
-            "network_plot_complete_" + str(gen_num) + "_ind_" + str(ind_num) + '.png')
-
-    def get_address_of_individuals_of_a_generation(self, gen_num):
-        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
-        return os.path.join(self.get_optimization_slave_results_folder(gen_num), 'gen_' + str(gen_num) +
-                            '_address_of_individuals.csv')
-
-    def get_optimization_slave_cost_prime_primary_energy_data(self, ind_num, gen_num):
-        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+    def get_optimization_connected_heating_capacity(self, ind_num, gen_num):
         return os.path.join(self.get_optimization_slave_results_folder(gen_num),
-                            'ind_%(ind_num)s_SlaveCostData.csv' % locals())
+                            'ind_%(ind_num)s_connected_heating_capacity.csv' % locals())
 
-    def get_optimization_slave_slave_detailed_emission_and_eprim_data(self, ind_num, gen_num):
-        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+    def get_optimization_connected_cooling_capacity(self, ind_num, gen_num):
         return os.path.join(self.get_optimization_slave_results_folder(gen_num),
-                            'ind_%(ind_num)s_SlaveDetailedEmissionandEprimData.csv' % locals())
+                            'ind_%(ind_num)s_connected_cooling_capacity.csv' % locals())
 
-    def get_optimization_slave_investment_cost_detailed(self, ind_num, gen_num):
-        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+    def get_optimization_connected_electricity_capacity(self, ind_num, gen_num):
         return os.path.join(self.get_optimization_slave_results_folder(gen_num),
-                            'ind_%(ind_num)s_heating_InvestmentCostDetailed.csv' % locals())
+                            'ind_%(ind_num)s_connected_electrical_capacity.csv' % locals())
 
-    def get_optimization_slave_detailed_capacity_of_individual(self, ind_num, gen_num):
-        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+    def get_optimization_disconnected_heating_capacity(self, ind_num, gen_num):
         return os.path.join(self.get_optimization_slave_results_folder(gen_num),
-                            'ind_%(ind_num)s_detailed_capacity.csv' % locals())
+                            'ind_%(ind_num)s_disconnected_heating_capacity.csv' % locals())
+
+    def get_optimization_disconnected_cooling_capacity(self, ind_num, gen_num):
+        return os.path.join(self.get_optimization_slave_results_folder(gen_num),
+                            'ind_%(ind_num)s_disconnected_cooling_capacity.csv' % locals())
 
     def get_optimization_slave_electricity_performance(self, ind_num, gen_num):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
