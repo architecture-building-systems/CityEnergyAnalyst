@@ -998,8 +998,8 @@ class InputLocator(object):
             file_name = network_type + "_" + network_name + "_total_thermal_loss_edges_kW.csv"
         return os.path.join(folder, file_name)
 
-    def get_thermal_network_layout_ploss_system_edges_file(self, network_type, network_name,
-                                                           representative_week=False):
+    def get_thermal_network_pressure_losses_edges_file(self, network_type, network_name,
+                                                       representative_week=False):
         """scenario/outputs/data/optimization/network/layout/DH_qloss_System_kw.csv"""
         if representative_week == True:
             folder = self.get_representative_week_thermal_network_layout_folder()
