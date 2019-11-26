@@ -623,15 +623,14 @@ def calc_Mfl_kgpers(DELT, Nseg, STORED, TIME0, Tin_C, specific_flows_kgpers, tim
 
 # investment and maintenance costs
 
-def calc_Cinv_PVT(PVT_peak_kW, locator, config, technology=0):
+def calc_Cinv_PVT(PVT_peak_W, locator, technology=0):
     """
     P_peak in kW
     result in CHF
     technology = 0 represents the first technology when there are multiple technologies.
     FIXME: handle multiple technologies when cost calculations are done
     """
-    if PVT_peak_kW > 0.0:
-        PVT_peak_W = PVT_peak_kW * 1000  # converting to W from kW
+    if PVT_peak_W > 0.0:
         PVT_cost_data = pd.read_excel(locator.get_database_supply_systems(), sheet_name="PV")
         technology_code = list(set(PVT_cost_data['code']))
         PVT_cost_data[PVT_cost_data['code'] == technology_code[technology]]
