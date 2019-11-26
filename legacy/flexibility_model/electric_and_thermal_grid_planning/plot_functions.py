@@ -184,5 +184,3 @@ def plot_network(m, config, locator, network_number, generation):
             ax1.text(point.geometry.xy[0][0], point.geometry.xy[1][0], name, fontsize=8)
         # else:  # intersection
         #     ax1.plot(point.geometry.xy[0], point.geometry.xy[1], marker='o', color='blue', markersize=5)
-
-    plt.savefig(locator.get_concept_network_plot(network_number, generation))
