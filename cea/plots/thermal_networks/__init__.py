@@ -99,6 +99,14 @@ class ThermalNetworksPlotBase(cea.plots.PlotBase):
         return pd.DataFrame(hourly_pressure_loss)
 
     @property
+    @cea.plots.cache.cached
+    def total_thermal_losses_kWh(self):
+        hourly_thermal_loss = pd.read_csv(
+            self.locator.get_network_total_thermal_loss_file(self.network_type, self.network_name))
+        hourly_thermal_loss = hourly_thermal_loss['thermal_loss_total_kW']
+        return pd.DataFrame(hourly_thermal_loss)
+
+    @property
     def yearly_pressure_loss(self):
         return self.plant_pumping_requirement_kWh.values.sum()
 
@@ -233,7 +241,7 @@ class ThermalNetworksPlotBase(cea.plots.PlotBase):
         # FIXME: why the unit conversion?!
         df_pumping_kW = pd.read_csv(
             self.locator.get_network_energy_pumping_requirements_file(self.network_type, self.network_name))
-        df_pumping_supply_kW = df_pumping_kW['pressure_loss_supply_kW']
+        df_pumping_supply_kW = df_pumping_kW['pressure_loss_total_kW']
         df_pumping_return_kW = df_pumping_kW['pressure_loss_return_kW']
         df_pumping_allpipes_kW = df_pumping_supply_kW + df_pumping_return_kW
         return df_pumping_allpipes_kW
