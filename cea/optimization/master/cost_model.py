@@ -23,7 +23,7 @@ import cea.technologies.pumps as PumpModel
 import cea.technologies.solar.photovoltaic_thermal as pvt
 import cea.technologies.solar.solar_collector as stc
 import cea.technologies.thermal_storage as thermal_storage
-from cea.optimization.constants import N_PVT, PUMP_ETA, ACH_TYPE_DOUBLE
+from cea.optimization.constants import N_PVT, PUMP_ETA, ACH_TYPE_DOUBLE, N_SC_ET, N_SC_FP
 from cea.optimization.master.emissions_model import calc_emissions_Whyr_to_tonCO2yr, calc_pen_Whyr_to_MJoilyr
 from cea.technologies.pumps import calc_Cinv_pump
 
@@ -843,12 +843,14 @@ def calc_generation_costs_capacity_installed_heating(locator,
     # SOLAR TECHNOLOGIES
     # ADD COSTS AND EMISSIONS DUE TO SOLAR TECHNOLOGIES
     Capacity_SC_ET_area_m2 = master_to_slave_vars.A_SC_ET_m2
+    Capacity_SC_ET_W = Capacity_SC_ET_area_m2 * N_SC_ET * 1000  # W
     Capex_a_SC_ET_USD, \
     Opex_fixed_SC_ET_USD, \
     Capex_SC_ET_USD = stc.calc_Cinv_SC(Capacity_SC_ET_area_m2, locator,
                                        'ET')
 
     Capacity_SC_FP_m2 = master_to_slave_vars.A_SC_FP_m2
+    Capacity_SC_FP_W = Capacity_SC_FP_m2 * N_SC_FP * 1000  # W
     Capex_a_SC_FP_USD, \
     Opex_fixed_SC_FP_USD, \
     Capex_SC_FP_USD = stc.calc_Cinv_SC(Capacity_SC_FP_m2, locator,
@@ -856,6 +858,7 @@ def calc_generation_costs_capacity_installed_heating(locator,
 
     Capacity_PVT_m2 = master_to_slave_vars.A_PVT_m2
     Capacity_PVT_el_W = Capacity_PVT_m2 * N_PVT * 1000  # W
+    Capacity_PVT_th_W = Capacity_PVT_m2 * N_SC_FP * 1000  # W
     Capex_a_PVT_USD, \
     Opex_fixed_PVT_USD, \
     Capex_PVT_USD = pvt.calc_Cinv_PVT(Capacity_PVT_el_W, locator)
@@ -914,10 +917,13 @@ def calc_generation_costs_capacity_installed_heating(locator,
         "Capacity_HP_SS_heat_connected_W": Capacity_SS_HP_W,
         "Capacity_HP_GS_heat_connected_W": Capacity_GS_HP_W,
         "Capacity_HP_DS_heat_connected_W": Capacity_DS_HP_W,
+        "Capacity_SC_ET_heat_connected_W": Capacity_SC_ET_W,
+        "Capacity_SC_FP_heat_connected_W": Capacity_SC_FP_W,
         "Capacity_SC_ET_connected_m2": Capacity_SC_ET_area_m2,
         "Capacity_SC_FP_connected_m2": Capacity_SC_FP_m2,
         "Capacity_PVT_connected_m2": Capacity_PVT_m2,
         "Capacity_PVT_el_connected_W": Capacity_PVT_el_W,
+        "Capacity_PVT_heat_connected_W": Capacity_PVT_th_W,
         "Capacity_SeasonalStorage_WS_heat_connected_W": Capacity_seasonal_storage_W,
         "Capacity_SeasonalStorage_WS_heat_connected_m3": Capacity_seasonal_storage_m3,
     }
