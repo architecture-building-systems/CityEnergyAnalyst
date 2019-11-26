@@ -26,7 +26,7 @@ class EnergyLossBarPlot(cea.plots.thermal_networks.ThermalNetworksPlotBase):
         self.network_type = parameters['network-type']
         self.network_name = parameters['network-name']
         self.network_args = [self.network_type, self.network_name]
-        self.input_files = [(self.locator.get_thermal_network_layout_ploss_system_edges_file, self.network_args),
+        self.input_files = [(self.locator.get_thermal_network_pressure_losses_edges_file, self.network_args),
                             (self.locator.get_network_thermal_loss_edges_file, self.network_args)]
 
     @property
