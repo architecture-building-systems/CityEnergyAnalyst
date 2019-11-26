@@ -619,9 +619,9 @@ def calc_generation_costs_capacity_installed_cooling(locator,
 
     # PLOT RESULTS
     capacity_installed = {
-        "Capacity_Trigen_heat_NG_connected_W": Capacity_NG_Trigen_th_W,
-        "Capacity_Trigen_cool_NG_connected_W": Capacity_NG_Trigen_ACH_W,
-        "Capacity_Trigen_el_NG_connected_W": Capacity_NG_Trigen_el_W,
+        "Capacity_TrigenCCGT_heat_NG_connected_W": Capacity_NG_Trigen_th_W,
+        "Capacity_TrigenACH_cool_NG_connected_W": Capacity_NG_Trigen_ACH_W,
+        "Capacity_TrigenCCGT_el_NG_connected_W": Capacity_NG_Trigen_el_W,
         "Capacity_BaseVCC_WS_cool_connected_W": Capacity_BaseVCC_WS_W,
         "Capacity_PeakVCC_WS_cool_connected_W": Capacity_PeakVCC_WS_W,
         "Capacity_BaseVCC_AS_cool_connected_W": Capacity_BaseVCC_AS_W,
@@ -1034,9 +1034,12 @@ def calc_costs_emissions_decentralized_DC(DCN_barcode, buildings_names_with_cool
             Opex_fixed_sys_disconnected_USD += dfBest["Opex_a_fixed_USD"].iloc[0]
 
             data = pd.DataFrame({'Name': building_name,
-                                 'Capacity_Boiler_NG_cool_disconnected_W': dfBest["Capacity_BaseBoiler_NG_W"].iloc[0],
-                                 'Capacity_FC_NG_cool_disconnected_W': dfBest["Capacity_FC_NG_W"].iloc[0],
-                                 'Capacity_GS_HP_cool_disconnected_W': dfBest["Capacity_GS_HP_W"].iloc[0]})
+                                 'Capacity_DX_AS_cool_disconnected_W': dfBest["Capacity_DX_AS_W"].iloc[0],
+                                 'Capacity_BaseVCC_AS_cool_disconnected_W': dfBest["Capacity_BaseVCC_AS_W"].iloc[0],
+                                 'Capacity_VCCHT_AS_cool_disconnected_W': dfBest["Capacity_VCCHT_AS_W"].iloc[0],
+                                 'Capacity_ACH_SC_FP_cool_disconnected_W': dfBest["Capacity_ACH_SC_FP_W"].iloc[0],
+                                 'Capaticy_ACH_SC_ET_cool_disconnected_W': dfBest["Capaticy_ACH_SC_ET_W"].iloc[0],
+                                 'Capacity_ACHHT_FP_cool_disconnected_W': dfBest["Capacity_ACHHT_FP_W"].iloc[0]})
             capacity_installed_df = pd.concat([capacity_installed_df, data], ignore_index=True)
 
     return GHG_sys_disconnected_tonCO2yr, \
