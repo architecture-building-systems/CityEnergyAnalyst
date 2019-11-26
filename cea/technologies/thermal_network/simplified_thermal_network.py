@@ -371,8 +371,6 @@ def thermal_network_simplified(locator, config, network_name):
         k_WperKm_pipe = thermal_coeffcient_WperKm[pipe]
         thermal_losses_return_kWh[pipe] = delta_T_in_out_K * k_WperKm_pipe * length / 1000
 
-    # total
-    thermal_losses_system_kWh = thermal_losses_supply_kWh + thermal_losses_return_kWh
 
     # WRITE TO DISK
 
@@ -428,11 +426,11 @@ def thermal_network_simplified(locator, config, network_name):
 
     # $ POSPROCESSING - PLANT HEAT REQUIREMENT
     if network_type == "DH":
-        Plant_load_kWh = thermal_losses_system_kWh.sum(axis=1) + Q_demand_kWh_building.sum(
-            axis=1) - accumulated_head_loss_total_kW.values
+        Plant_load_kWh = thermal_losses_supply_kWh.sum(axis=1) * 2 + Q_demand_kWh_building.sum(axis=1) - accumulated_head_loss_total_kW.values
     elif network_type == "DC":
-        Plant_load_kWh = thermal_losses_system_kWh.sum(axis=1) + Q_demand_kWh_building.sum(
+        Plant_load_kWh = thermal_losses_supply_kWh.sum(axis=1) * 2 + Q_demand_kWh_building.sum(
             axis=1) + accumulated_head_loss_total_kW.values
+
     Plant_load_kWh.to_csv(locator.get_thermal_network_plant_heat_requirement_file(network_type, network_name),
                           header=['NONE'], index=False)
 
@@ -457,7 +455,7 @@ def thermal_network_simplified(locator, config, network_name):
 
 
     # thermal losses
-    thermal_losses_system_kWh.to_csv(locator.get_network_thermal_loss_edges_file(network_type, network_name), index=False)
+    thermal_losses_supply_kWh.to_csv(locator.get_network_thermal_loss_edges_file(network_type, network_name), index=False)
     thermal_losses_supply_Wperm.to_csv(locator.get_network_linear_thermal_loss_edges_file(network_type, network_name), index=False)
 
     # return average temperature of supply at the substations
