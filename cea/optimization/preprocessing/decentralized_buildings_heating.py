@@ -71,7 +71,6 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
         PEN_MJoil = np.zeros((13, 7))
         # indicate supply technologies for each configuration
         Opex_a_var_USD[0][0] = 1  # Boiler NG
-        Opex_a_var_USD[1][1] = 1  # Boiler BG
         Opex_a_var_USD[2][2] = 1  # Fuel Cell
 
         resourcesRes = np.zeros((13, 4))
@@ -104,7 +103,6 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
                                          'Boiler_Status': Boiler_Status,
                                          'NG_Boiler_req_W': Qgas_to_Boiler_Wh,
                                          'E_hs_ww_req_W': np.zeros(8760)}
-
         ## 1: Boiler BG
         # add costs
         Opex_a_var_USD[1][4] += sum(prices.BG_PRICE * Qgas_to_Boiler_Wh)  # CHF
@@ -310,20 +308,17 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
 
         # get the best option according to the ranking.
         Best[indexBest][0] = 1
-        Qnom_array = np.ones(len(Best[:, 0])) * Qnom_W
 
         # Save results in csv file
         performance_results = {
-            "BoilerNG Share": Opex_a_var_USD[:, 0],
-            "BoilerBG Share": Opex_a_var_USD[:, 1],
-            "FC Share": Opex_a_var_USD[:, 2],
-            "GHP Share": Opex_a_var_USD[:, 3],
+            "Capacity_BaseBoiler_NG_W": Qnom_W * Opex_a_var_USD[:, 0],
+            "Capacity_FC_NG_W": Qnom_W * Opex_a_var_USD[:, 2],
+            "Capacity_GS_HP_W": Qnom_W * Opex_a_var_USD[:, 3],
             "TAC_USD": TAC_USD[:, 1],
             "Capex_a_USD": Capex_a_USD[:, 0],
             "Capex_total_USD": Capex_total_USD[:, 0],
-            "Opex_a_USD": Opex_a_USD[:, 1],
-            "Opex_a_fixed_USD": Opex_a_fixed_USD[:, 0],
-            "Opex_a_var_USD": Opex_a_var_USD[:, 4],
+            "Opex_fixed_USD": Opex_a_fixed_USD[:, 0],
+            "Opex_var_USD": Opex_a_var_USD[:, 4],
             "GHG_tonCO2": GHG_tonCO2[:, 5],
             "PEN_MJoil": PEN_MJoil[:, 6],
             "Best configuration": Best[:, 0]}

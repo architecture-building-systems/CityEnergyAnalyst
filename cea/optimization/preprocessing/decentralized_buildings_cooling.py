@@ -115,9 +115,8 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
         operation_results[0][8] += calc_emissions_Whyr_to_tonCO2yr(sum(el_DX_hourly_Wh), lca.EL_TO_CO2_EQ)  # ton CO2
         operation_results[0][9] += calc_pen_Whyr_to_MJoilyr(sum(el_DX_hourly_Wh), lca.EL_TO_OIL_EQ)  # MJ oil
         # activation
-        cooling_dispatch[0] = {'Q_DX_gen_directload_W': q_DX_chw_Wh,
-                               'E_DX_req_W': el_DX_hourly_Wh,
-                               'DX_Status': DX_Status,
+        cooling_dispatch[0] = {'Q_DX_AS_gen_directload_W': q_DX_chw_Wh,
+                               'E_DX_AS_req_W': el_DX_hourly_Wh,
                                'E_cs_cre_cdata_req_W': el_DX_hourly_Wh,
                                }
         # capacity of cooling technologies
@@ -139,11 +138,10 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
         operation_results[1][7] += sum(prices.ELEC_PRICE * el_total_Wh)  # CHF
         operation_results[1][8] += calc_emissions_Whyr_to_tonCO2yr(sum(el_total_Wh), lca.EL_TO_CO2_EQ)  # ton CO2
         operation_results[1][9] += calc_pen_Whyr_to_MJoilyr(sum(el_total_Wh), lca.EL_TO_OIL_EQ)  # MJ-oil-eq
-        cooling_dispatch[1] = {'Q_VCC_gen_directload_W': q_VCC_chw_Wh,
-                               'E_VCC_req_W': el_VCC_Wh,
+        cooling_dispatch[1] = {'Q_BaseVCC_AS_gen_directload_W': q_VCC_chw_Wh,
+                               'E_BaseVCC_AS_req_W': el_VCC_Wh,
                                'E_CT_req_W': el_CT_Wh,
                                'E_cs_cre_cdata_req_W': el_total_Wh,
-                               'VCC_Status': VCC_Status
                                }
         # capacity of cooling technologies
         operation_results[1][0] = Qc_nom_AHU_ARU_SCU_W
@@ -183,8 +181,7 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
         operation_results[2][9] += calc_pen_Whyr_to_MJoilyr(sum(q_gas_total_Wh), lca.NG_TO_OIL_EQ)  # MJ-oil-eq
         # add activation
         cooling_dispatch[2] = {'Q_ACH_gen_directload_W': q_chw_single_ACH_Wh,
-                               'ACH_Status': ACH_Status,
-                               'Q_Boiler_ACH_W': q_load_Boiler_FP_to_single_ACH_to_AHU_ARU_SCU_Wh,
+                               'Q_Boiler_NG_ACH_W': q_load_Boiler_FP_to_single_ACH_to_AHU_ARU_SCU_Wh,
                                'Q_SC_FP_ACH_W': q_sc_gen_FP_Wh,
                                'E_ACH_req_W': el_single_ACH_Wh,
                                'E_CT_req_W': el_CT_Wh,
@@ -223,12 +220,11 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
         operation_results[3][9] += calc_pen_Whyr_to_MJoilyr(sum(q_gas_for_burner_Wh), lca.NG_TO_OIL_EQ)  # MJ-oil-eq
         # add activation
         cooling_dispatch[3] = {'Q_ACH_gen_directload_W': q_chw_single_ACH_Wh,
-                               'ACH_Status': ACH_Status,
-                               'Q_Burner_ACH_W': q_burner_load_Wh,
+                               'Q_Burner_NG_ACH_W': q_burner_load_Wh,
                                'Q_SC_ET_ACH_W': q_sc_gen_ET_Wh,
                                'E_ACH_req_W': el_single_ACH_Wh,
                                'E_CT_req_W': el_CT_Wh,
-                               'E_SC_FP_req_W': el_aux_SC_ET_Wh,
+                               'E_SC_ET_req_W': el_aux_SC_ET_Wh,
                                'E_cs_cre_cdata_req_W': el_total_Wh,
                                'NG_Burner_req': q_gas_for_burner_Wh,
                                }
@@ -259,11 +255,9 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
             operation_results[4][8] += calc_emissions_Whyr_to_tonCO2yr(sum(el_total_Wh), lca.EL_TO_CO2_EQ)  # ton CO2
             operation_results[4][9] += calc_pen_Whyr_to_MJoilyr(sum(el_total_Wh), lca.EL_TO_OIL_EQ)  # MJ-oil-eq
             # add activation
-            cooling_dispatch[4] = {'Q_VCC_LT_gen_directload_W': q_chw_VCC_to_AHU_ARU_Wh,
-                                   'Q_VCC_HT_gen_directload_W': q_chw_VCC_to_SCU_Wh,
-                                   'VCC_LT_Status': VCC_LT_Status,
-                                   'VCC_HT_Status': VCC_HT_Status,
-                                   'E_VCC_LT_req_W': el_VCC_to_AHU_ARU_Wh,
+            cooling_dispatch[4] = {'Q_BaseVCC_AS_gen_directload_W': q_chw_VCC_to_AHU_ARU_Wh,
+                                   'Q_BaseVCCHT_AS_gen_directload_W': q_chw_VCC_to_SCU_Wh,
+                                   'E_BaseVCC_req_W': el_VCC_to_AHU_ARU_Wh,
                                    'E_VCC_HT_req_W': el_VCC_to_SCU_Wh,
                                    'E_CT_req_W': el_CT_Wh,
                                    'E_cs_cre_cdata_req_W': el_total_Wh
@@ -304,16 +298,14 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
             operation_results[5][8] += calc_emissions_Whyr_to_tonCO2yr(sum(q_gas_total_Wh), lca.NG_TO_CO2_EQ)  # ton CO2
             operation_results[5][9] += calc_pen_Whyr_to_MJoilyr(sum(q_gas_total_Wh), lca.NG_TO_OIL_EQ)  # MJ-oil-eq
             # add activation
-            cooling_dispatch[5] = {'Q_VCC_LT_gen_directload_W': q_chw_VCC_to_AHU_ARU_Wh,
-                                   'Q_ACH_HT_gen_directload_W': q_chw_FP_ACH_to_SCU_Wh,
-                                   'VCC_LT_Status': VCC_LT_Status,
-                                   'ACH_HT_Status': ACH_HT_Status,
-                                   'E_VCC_LT_req_W': el_VCC_to_AHU_ARU_Wh,
-                                   'E_ACH_HT_req_W': el_FP_ACH_to_SCU_Wh,
-                                   'E_SC_FP_req_W': el_aux_SC_FP_Wh,
+            cooling_dispatch[5] = {'Q_BaseVCC_AS_gen_directload_W': q_chw_VCC_to_AHU_ARU_Wh,
+                                   'Q_ACHHT_AS_gen_directload_W': q_chw_FP_ACH_to_SCU_Wh,
+                                   'E_BaseVCC_req_W': el_VCC_to_AHU_ARU_Wh,
+                                   'E_ACHHT_req_W': el_FP_ACH_to_SCU_Wh,
+                                   'E_SC_FP_ACH_req_W': el_aux_SC_FP_Wh,
                                    'E_CT_req_W': el_CT_Wh,
                                    'E_cs_cre_cdata_req_W': el_total_Wh,
-                                   'NG_Boiler_req': q_gas_for_boiler_Wh,
+                                   'Q_BaseBoiler_NG_req': q_gas_for_boiler_Wh,
                                    }
             # capacity of cooling technologies
             operation_results[5][0] = Qc_nom_AHU_ARU_SCU_W
@@ -420,7 +412,8 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
             "GHG_tonCO2": operation_results[:, 8],
             "PEN_MJoil": operation_results[:, 9],
             "TAC_USD": TAC_USD[:, 1],
-            "Best configuration": Best[:, 0]
+            "Best configuration": Best[:, 0],
+            "Nominal_load_W": Qnom_W,
         }
         performance_results_df = pd.DataFrame(performance_results)
         performance_results_df.to_csv(
