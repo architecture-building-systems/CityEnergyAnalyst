@@ -39,6 +39,8 @@ __status__ = "Production"
 
 def buildings_disconnected_costs_and_emissions(column_names_buildings_heating,
                                                column_names_buildings_cooling, locator, master_to_slave_vars):
+
+
     DHN_barcode = master_to_slave_vars.DHN_barcode
     DCN_barcode = master_to_slave_vars.DCN_barcode
 
@@ -61,6 +63,9 @@ def buildings_disconnected_costs_and_emissions(column_names_buildings_heating,
     Opex_fixed_cooling_sys_disconnected_USD = calc_costs_emissions_decentralized_DC(DCN_barcode,
                                                                                     column_names_buildings_cooling,
                                                                                     locator)
+
+    disconnected_capacities = 2 #calc_buildings_disconnected_capacities
+
 
     disconnected_costs = {
         # heating
@@ -85,7 +90,7 @@ def buildings_disconnected_costs_and_emissions(column_names_buildings_heating,
         "PEN_cooling_disconnected_MJoil": PEN_cooling_sys_disconnected_MJoilyr
     }
 
-    return disconnected_costs, disconnected_emissions
+    return disconnected_costs, disconnected_emissions, disconnected_capacities
 
 
 def calc_network_costs_heating(locator, master_to_slave_vars, network_features, network_type, prices):
@@ -469,20 +474,23 @@ def calc_generation_costs_capacity_installed_cooling(locator,
                                                      ):
     # TRIGENERATION
     if master_to_slave_variables.NG_Trigen_on == 1:
-        Qc_ACH_nom_W = master_to_slave_variables.NG_Trigen_ACH_size_W
-        Capacity_NG_Trigen_W = master_to_slave_variables.NG_Trigen_CCGT_size_W
+        Capacity_NG_Trigen_ACH_W = master_to_slave_variables.NG_Trigen_ACH_size_W
+        Capacity_NG_Trigen_th_W = master_to_slave_variables.NG_Trigen_CCGT_size_thermal_W
+        Capacity_NG_Trigen_el_W = master_to_slave_variables.NG_Trigen_CCGT_size_electrical_W
 
         # ACH
-        Capex_a_ACH_USD, Opex_fixed_ACH_USD, Capex_ACH_USD = chiller_absorption.calc_Cinv_ACH(Qc_ACH_nom_W, locator,
+        Capex_a_ACH_USD, Opex_fixed_ACH_USD, Capex_ACH_USD = chiller_absorption.calc_Cinv_ACH(Capacity_NG_Trigen_ACH_W, locator,
                                                                                               ACH_TYPE_DOUBLE)
         # CCGT
-        Capex_a_CCGT_USD, Opex_fixed_CCGT_USD, Capex_CCGT_USD = cogeneration.calc_Cinv_CCGT(Capacity_NG_Trigen_W, locator, config)
+        Capex_a_CCGT_USD, Opex_fixed_CCGT_USD, Capex_CCGT_USD = cogeneration.calc_Cinv_CCGT(Capacity_NG_Trigen_el_W, locator, config)
 
         Capex_a_Trigen_NG_USD = Capex_a_ACH_USD + Capex_a_CCGT_USD
         Opex_fixed_Trigen_NG_USD = Opex_fixed_ACH_USD + Opex_fixed_CCGT_USD
         Capex_Trigen_NG_USD = Capex_ACH_USD + Capex_CCGT_USD
     else:
-        Capacity_NG_Trigen_W = 0.0
+        Capacity_NG_Trigen_ACH_W = 0.0
+        Capacity_NG_Trigen_th_W = 0.0
+        Capacity_NG_Trigen_el_W = 0.0
         Capex_a_Trigen_NG_USD = 0.0
         Opex_fixed_Trigen_NG_USD = 0.0
         Capex_Trigen_NG_USD = 0.0
@@ -605,15 +613,16 @@ def calc_generation_costs_capacity_installed_cooling(locator,
     Capacity_DailyStorage_W = master_to_slave_variables.Storage_cooling_size_W
 
     # PLOT RESULTS
-
     capacity_installed = {
-        "Capacity_Trigen_NG_connected_W": Capacity_NG_Trigen_W,
-        "Capacity_BaseVCC_WS_connected_W": Capacity_BaseVCC_WS_W,
-        "Capacity_PeakVCC_WS_connected_W": Capacity_PeakVCC_WS_W,
-        "Capacity_BaseVCC_AS_connected_W": Capacity_BaseVCC_AS_W,
-        "Capacity_PeakVCC_AS_connected_W": Capacity_PeakVCC_AS_W,
-        "Capacity_BackupVCC_AS_connected_W": Capacity_BackupVCC_AS_W,
-        "Capacity_DailyStorage_WS_connected_W": Capacity_DailyStorage_W,
+        "Capacity_Trigen_heat_NG_connected_W": Capacity_NG_Trigen_th_W,
+        "Capacity_Trigen_cool_NG_connected_W": Capacity_NG_Trigen_ACH_W,
+        "Capacity_Trigen_el_NG_connected_W": Capacity_NG_Trigen_el_W,
+        "Capacity_BaseVCC_WS_cool_connected_W": Capacity_BaseVCC_WS_W,
+        "Capacity_PeakVCC_WS_cool_connected_W": Capacity_PeakVCC_WS_W,
+        "Capacity_BaseVCC_AS_cool_connected_W": Capacity_BaseVCC_AS_W,
+        "Capacity_PeakVCC_AS_cool_connected_W": Capacity_PeakVCC_AS_W,
+        "Capacity_BackupVCC_AS_cool_connected_W": Capacity_BackupVCC_AS_W,
+        "Capacity_DailyStorage_WS_cool_connected_W": Capacity_DailyStorage_W,
     }
 
     performance_costs = {
@@ -683,35 +692,41 @@ def calc_generation_costs_capacity_installed_heating(locator,
 
     # CCGT
     if master_to_slave_vars.CC_on == 1:
-        Capacity_CHP_NG_W = master_to_slave_vars.CCGT_SIZE_W
-        Capex_a_CHP_NG_USD, Opex_fixed_CHP_NG_USD, Capex_CHP_NG_USD = chp.calc_Cinv_CCGT(Capacity_CHP_NG_W, locator,
+        Capacity_CHP_NG_heat_W = master_to_slave_vars.CCGT_SIZE_W
+        Capacity_CHP_NG_el_W = master_to_slave_vars.CCGT_SIZE_electrical_W
+        Capex_a_CHP_NG_USD, Opex_fixed_CHP_NG_USD, Capex_CHP_NG_USD = chp.calc_Cinv_CCGT(Capacity_CHP_NG_el_W, locator,
                                                                                          config)
     else:
-        Capacity_CHP_NG_W = 0.0
+        Capacity_CHP_NG_heat_W = 0.0
+        Capacity_CHP_NG_el_W = 0.0
         Capex_a_CHP_NG_USD = 0.0
         Opex_fixed_CHP_NG_USD = 0.0
         Capex_CHP_NG_USD = 0.0
 
     # DRY BIOMASS
     if master_to_slave_vars.Furnace_dry_on == 1:
-        Capacity_furnace_dry_W = master_to_slave_vars.DBFurnace_Q_max_W
+        Capacity_furnace_dry_heat_W = master_to_slave_vars.DBFurnace_Q_max_W
+        Capacity_furnace_dry_el_W = master_to_slave_vars.DBFurnace_electrical_W
         Capex_a_furnace_dry_USD, \
         Opex_fixed_furnace_dry_USD, \
-        Capex_furnace_dry_USD = furnace.calc_Cinv_furnace(Capacity_furnace_dry_W, locator, 'FU1')
+        Capex_furnace_dry_USD = furnace.calc_Cinv_furnace(Capacity_furnace_dry_heat_W, locator, 'FU1')
     else:
-        Capacity_furnace_dry_W = 0.0
+        Capacity_furnace_dry_el_W = 0.0
+        Capacity_furnace_dry_heat_W = 0.0
         Capex_furnace_dry_USD = 0.0
         Capex_a_furnace_dry_USD = 0.0
         Opex_fixed_furnace_dry_USD = 0.0
 
     # WET BIOMASS
     if master_to_slave_vars.Furnace_wet_on == 1:
-        Capacity_furnace_wet_W = master_to_slave_vars.WBFurnace_Q_max_W
+        Capacity_furnace_wet_heat_W = master_to_slave_vars.WBFurnace_Q_max_W
+        Capacity_furnace_wet_el_W = master_to_slave_vars.WBFurnace_electrical_W
         Capex_a_furnace_wet_USD, \
         Opex_fixed_furnace_wet_USD, \
-        Capex_furnace_wet_USD = furnace.calc_Cinv_furnace(Capacity_furnace_wet_W, locator, 'FU1')
+        Capex_furnace_wet_USD = furnace.calc_Cinv_furnace(Capacity_furnace_wet_heat_W, locator, 'FU1')
     else:
-        Capacity_furnace_wet_W = 0.0
+        Capacity_furnace_wet_heat_W = 0.0
+        Capacity_furnace_wet_el_W = 0.0
         Capex_a_furnace_wet_USD = 0.0
         Opex_fixed_furnace_wet_USD = 0.0
         Capex_furnace_wet_USD = 0.0
@@ -822,10 +837,10 @@ def calc_generation_costs_capacity_installed_heating(locator,
 
     # SOLAR TECHNOLOGIES
     # ADD COSTS AND EMISSIONS DUE TO SOLAR TECHNOLOGIES
-    SC_ET_area_m2 = master_to_slave_vars.A_SC_ET_m2
+    Capacity_SC_ET_area_m2 = master_to_slave_vars.A_SC_ET_m2
     Capex_a_SC_ET_USD, \
     Opex_fixed_SC_ET_USD, \
-    Capex_SC_ET_USD = stc.calc_Cinv_SC(SC_ET_area_m2, locator,
+    Capex_SC_ET_USD = stc.calc_Cinv_SC(Capacity_SC_ET_area_m2, locator,
                                        'ET')
 
     Capacity_SC_FP_m2 = master_to_slave_vars.A_SC_FP_m2
@@ -881,22 +896,25 @@ def calc_generation_costs_capacity_installed_heating(locator,
     Capacity_seasonal_storage_W = storage_activation_data['Q_storage_max_W']
 
     capacity_installed = {
-        "Capacity_CHP_NG_connected_W": Capacity_CHP_NG_W,
-        "Capacity_CHP_WB_connected_W": Capacity_furnace_wet_W,
-        "Capacity_CHP_DB_connected_W": Capacity_furnace_dry_W,
-        "Capacity_NG_BaseBoiler_connected_W": Capacity_BaseBoiler_NG_W,
-        "Capacity_NG_PeakBoiler_connected_W": Capacity_PeakBoiler_NG_W,
-        "Capacity_BackupBoiler_NG_connected_W": Capacity_BackupBoiler_NG_W,
-        "Capacity_HP_WS_connected_W": Capacity_WS_HP_W,
-        "Capacity_HP_SS_connected_W": Capacity_SS_HP_W,
-        "Capacity_HP_GS_connected_W": Capacity_GS_HP_W,
-        "Capacity_HP_DS_connected_W": Capacity_DS_HP_W,
-        "Capacity_SC_ET_connected_m2": SC_ET_area_m2,
+        "Capacity_CHP_NG_heat_connected_W": Capacity_CHP_NG_heat_W,
+        "Capacity_CHP_NG_el_connected_W": Capacity_CHP_NG_el_W,
+        "Capacity_CHP_WB_heat_connected_W": Capacity_furnace_wet_heat_W,
+        "Capacity_CHP_WB_el_connected_W": Capacity_furnace_wet_el_W,
+        "Capacity_CHP_DB_heat_connected_W": Capacity_furnace_dry_heat_W,
+        "Capacity_CHP_DB_el_connected_W": Capacity_furnace_dry_el_W,
+        "Capacity_BaseBoiler_NG_heat_connected_W": Capacity_BaseBoiler_NG_W,
+        "Capacity_PeakBoiler_NG_heat_connected_W": Capacity_PeakBoiler_NG_W,
+        "Capacity_BackupBoiler_NG_heat_connected_W": Capacity_BackupBoiler_NG_W,
+        "Capacity_HP_WS_heat_connected_W": Capacity_WS_HP_W,
+        "Capacity_HP_SS_heat_connected_W": Capacity_SS_HP_W,
+        "Capacity_HP_GS_heat_connected_W": Capacity_GS_HP_W,
+        "Capacity_HP_DS_heat_connected_W": Capacity_DS_HP_W,
+        "Capacity_SC_ET_connected_m2": Capacity_SC_ET_area_m2,
         "Capacity_SC_FP_connected_m2": Capacity_SC_FP_m2,
         "Capacity_PVT_connected_m2": Capacity_PVT_m2,
-        "Capacity_PVT_connected_W": Capacity_PVT_W,
-        "Capacity_SeasonalStorage_WS_connected_W": Capacity_seasonal_storage_W,
-        "Capacity_SeasonalStorage_WS_connected_m3": Capacity_seasonal_storage_m3,
+        "Capacity_PVT_heat_connected_W": Capacity_PVT_W,
+        "Capacity_SeasonalStorage_WS_heat_connected_W": Capacity_seasonal_storage_W,
+        "Capacity_SeasonalStorage_WS_heat_connected_m3": Capacity_seasonal_storage_m3,
     }
 
     performance_costs = {
@@ -1020,6 +1038,7 @@ def calc_costs_emissions_decentralized_DH(DHN_barcode, buildings_names_with_heat
     PEN_sys_disconnected_MJoilyr = 0.0
     Capex_total_sys_disconnected_USD = 0.0
     Opex_fixed_sys_disconnected_USD = 0.0
+    capacity_installed_dict = pd.DataFrame()
     for (index, building_name) in zip(DHN_barcode, buildings_names_with_heating_load):
         if index == "0":
             df = pd.read_csv(locator.get_optimization_decentralized_folder_building_result_heating(building_name))
@@ -1029,8 +1048,13 @@ def calc_costs_emissions_decentralized_DH(DHN_barcode, buildings_names_with_heat
             PEN_sys_disconnected_MJoilyr += dfBest["PEN_MJoil"].iloc[0]  # [MJ-oil-eq]
             Capex_total_sys_disconnected_USD += dfBest["Capex_total_USD"].iloc[0]
             Capex_a_sys_disconnected_USD += dfBest["Capex_a_USD"].iloc[0]
-            Opex_var_sys_disconnected += dfBest["Opex_a_var_USD"].iloc[0]
-            Opex_fixed_sys_disconnected_USD += dfBest["Opex_a_fixed_USD"].iloc[0]
+            Opex_var_sys_disconnected += dfBest["Opex_var_USD"].iloc[0]
+            Opex_fixed_sys_disconnected_USD += dfBest["Opex_fixed_USD"].iloc[0]
+
+            pd.DataFrame({'Name': building_name,
+                          'Capacity_Boiler_NG_heat_disconnected_W': dfBest["Capacity_BaseBoiler_NG_W"].iloc[0],
+                          'Capacity_FC_NG_heat_disconnected_W': dfBest["Capacity_FC_NG_W"].iloc[0],
+                          'Capacity_GS_HP_heat_disconnected_W': dfBest["Capacity_GS_HP_W"].iloc[0]})
 
     return GHG_sys_disconnected_tonCO2yr, \
            PEN_sys_disconnected_MJoilyr, \
