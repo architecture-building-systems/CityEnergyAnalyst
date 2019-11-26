@@ -64,3 +64,7 @@ SOIL_rho_kgm3 = 1600
 PUR_lambda_WmK = 0.023
 STEEL_lambda_WmK = 76
 
+#unit conversion
+FT_WATER_TO_PA = 2989.0669 # assumption at 4C water
+M_WATER_TO_PA = 9804
+FT_TO_M = 0.3048
