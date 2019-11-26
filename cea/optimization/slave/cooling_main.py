@@ -146,6 +146,9 @@ def district_cooling_network(locator,
 
             NG_Trigen_req_W[hour] = gas_output['NG_Trigen_req_W']
 
+    #calculate the electrical capacity as a function of the peak produced by the turbine
+    master_to_slave_variables.NG_Trigen_CCGT_size_electrical_W = E_Trigen_NG_gen_W.max()
+
     # BACK-UPP VCC - AIR SOURCE
     master_to_slave_variables.AS_BackupVCC_size_W = np.amax(Q_BackupVCC_AS_gen_W)
     if master_to_slave_variables.AS_BackupVCC_size_W != 0.0:
