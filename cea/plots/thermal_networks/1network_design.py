@@ -80,10 +80,23 @@ class NetworkLayoutOperationPeak(cea.plots.thermal_networks.ThermalNetworksMapPl
         P_loss_kPa_peak = (self.pressure_loss_nodes_Pa.max() /1000).round(1) #to kPa
         nodes_df["Peak pressure [kPa]"] = P_loss_kPa_peak.values
 
+        #temperature at all nodes
         temperature_supply = self.temperature_supply_nodes_C.round(1)
         temperature_return = self.temperature_return_nodes_C.round(1)
         index_max = self.buildings_hourly.idxmax(axis=0)
         delta_T = (temperature_supply - temperature_return).round(1)
+
+        #temperature at the plant
+        index_max_T_plant = self.buildings_hourly.sum(axis=1).idxmax(axis=0)
+        temperature_supply_plant = self.temperature_supply_return_plant_C['temperature_supply_K'] - 273
+        temperature_return_plant = self.temperature_supply_return_plant_C['temperature_return_K'] - 273
+        T_supply_peak = round(temperature_supply_plant[index_max_T_plant],1)
+        delta_T_peak = round((temperature_supply_plant - temperature_return_plant)[index_max_T_plant],1)
+
+        #energy generation at the plant
+        annual_loads = self.hourly_loads.values
+        Q_loss_kWh = self.total_thermal_losses_kWh.values
+        Peak_load_MWh = round((annual_loads + Q_loss_kWh).max()/1000,1)
 
         if self.mass_flow_kgs_nodes is not None: #backward compatibility with detailed thermal network (which does not include this output)
             Mass_flow_kgs_peak = self.mass_flow_kgs_nodes.max().round(1)
@@ -104,6 +117,24 @@ class NetworkLayoutOperationPeak(cea.plots.thermal_networks.ThermalNetworksMapPl
             else:
                 return None
 
+        def get_T_plant_node(row):
+            if row["Type"] == "PLANT":
+                return T_supply_peak
+            else:
+                return None
+
+        def get_Peak_plant_node(row):
+            if row["Type"] == "PLANT":
+                return Peak_load_MWh
+            else:
+                return None
+
+        def get_DT_plant_node(row):
+            if row["Type"] == "PLANT":
+                return delta_T_peak
+            else:
+                return None
+
         def get_peak_supply_temp(row):
             if row["Building"] in index_max.index.values:
                 return temperature_supply[row['Name']][index_max[row["Building"]]]
@@ -116,10 +147,14 @@ class NetworkLayoutOperationPeak(cea.plots.thermal_networks.ThermalNetworksMapPl
             else:
                 return None
 
+
         nodes_df["Peak Supply Temperature [C]"] = nodes_df.apply(get_peak_supply_temp, axis=1)
         nodes_df["Peak delta Temperature [C]"] = nodes_df.apply(get_peak_delta_temp, axis=1)
         nodes_df["Peak Thermal Demand [kW]"] = nodes_df.apply(get_peak_building_demand, axis=1)
         nodes_df["Pumping Power [kW]"] = nodes_df.apply(get_pumping_node, axis=1)
+        nodes_df["Supply Temperature [C]"] = nodes_df.apply(get_T_plant_node, axis=1)
+        nodes_df["Delta Temperature [C]"] = nodes_df.apply(get_DT_plant_node, axis=1)
+        nodes_df["Peak Thermal Generation [MW]"] = nodes_df.apply(get_Peak_plant_node, axis=1)
 
         nodes_df["_Radius"] = self.get_radius(nodes_df)
 

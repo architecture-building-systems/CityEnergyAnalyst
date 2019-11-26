@@ -221,6 +221,14 @@ class ThermalNetworksPlotBase(cea.plots.PlotBase):
         return_df -= 273.15  # convert from Kelvin to C
         return return_df
 
+    @property
+    @cea.plots.cache.cached
+    def temperature_supply_return_plant_C(self):
+        """Node supply temperatures"""
+        supply_df = pd.read_csv(
+            self.locator.get_network_temperature_plant(self.network_type, self.network_name))
+        return supply_df
+
 
 class ThermalNetworksMapPlotBase(ThermalNetworksPlotBase):
     """
