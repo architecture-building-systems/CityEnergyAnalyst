@@ -185,11 +185,13 @@ def evaluation_main(individual, building_names_all, locator, network_features, c
 
     print("DISTRICT ENERGY SYSTEM - COSTS, PRIMARY ENERGY AND EMISSIONS OF DISCONNECTED BUILDINGS")
     buildings_disconnected_costs, \
-    buildings_disconnected_emissions,\
-    buildings_disconnected_capacities = cost_model.buildings_disconnected_costs_and_emissions(building_names_heating,
-                                                                                             building_names_cooling,
-                                                                                             locator,
-                                                                                             master_to_slave_vars)
+    buildings_disconnected_emissions, \
+    buildings_disconnected_heating_capacities, \
+    buildings_disconnected_cooling_capacities = cost_model.buildings_disconnected_costs_and_emissions(
+        building_names_heating,
+        building_names_cooling,
+        locator,
+        master_to_slave_vars)
 
     print("AGGREGATING RESULTS")
     TAC_sys_USD, GHG_sys_tonCO2, PEN_sys_MJoil, performance_totals = summarize_results_individual(master_to_slave_vars,
@@ -213,7 +215,9 @@ def evaluation_main(individual, building_names_all, locator, network_features, c
                  building_connectivity_dict,
                  district_heating_capacity_installed,
                  district_cooling_capacity_installed,
-                 district_electricity_capacity_installed
+                 district_electricity_capacity_installed,
+                 buildings_disconnected_heating_capacities,
+                 buildings_disconnected_cooling_capacities
                  )
 
     # Converting costs into float64 to avoid longer values
@@ -238,23 +242,32 @@ def save_results(master_to_slave_vars,
                  building_connectivity_dict,
                  district_heating_capacity_installed,
                  district_cooling_capacity_installed,
-                 district_electricity_capacity_installed
+                 district_electricity_capacity_installed,
+                 buildings_disconnected_heating_capacities,
+                 buildings_disconnected_cooling_capacities
                  ):
-
     # local variables
     individual = master_to_slave_vars.individual_number
     generation = master_to_slave_vars.generation_number
 
     # SAVE INDIVIDUAL DISTRICT HEATING INSTALLED CAPACITIES
-    district_heating_capacity_installed.to_csv(locator.get_optimization_district_heating_capacity(individual,
-                                                                                                  generation),
+    pd.DataFrame(district_heating_capacity_installed, index =[0]).to_csv(locator.get_optimization_connected_heating_capacity(individual,
+                                                                                                                 generation),
+        index=False, float_format='%.3f')
+    pd.DataFrame(district_cooling_capacity_installed, index =[0]).to_csv(locator.get_optimization_connected_cooling_capacity(individual,
+                                                                                                                 generation),
                                                index=False, float_format='%.3f')
-    district_cooling_capacity_installed.to_csv(locator.get_optimization_district_cooling_capacity(individual,
-                                                                                                  generation),
-                                               index=False, float_format='%.3f')
-    district_electricity_capacity_installed.to_csv(locator.get_optimization_district_electricity_capacity(individual,
-                                                                                                          generation),
+    pd.DataFrame(district_electricity_capacity_installed, index =[0]).to_csv(locator.get_optimization_connected_electricity_capacity(individual,
+                                                                                                                         generation),
                                                    index=False, float_format='%.3f')
+
+    buildings_disconnected_heating_capacities.to_csv(locator.get_optimization_disconnected_heating_capacity(individual,
+                                                                                                        generation),
+                                                     index=False, float_format='%.3f')
+
+    buildings_disconnected_cooling_capacities.to_csv(locator.get_optimization_disconnected_cooling_capacity(individual,
+                                                                                                        generation),
+                                                     index=False, float_format='%.3f')
 
     # SAVE BUILDING CONNECTIVITY
     pd.DataFrame(building_connectivity_dict).to_csv(locator.get_optimization_slave_building_connectivity(individual,
@@ -262,30 +275,18 @@ def save_results(master_to_slave_vars,
                                                     index=False, float_format='%.3f')
 
     # SAVE PERFORMANCE RELATED FILES
-    # put data inside a list, otherwise pandas cannot save it
-    for column in buildings_connected_costs.keys():
-        buildings_connected_costs[column] = [buildings_connected_costs[column]]
-    for column in buildings_connected_emissions.keys():
-        buildings_connected_emissions[column] = [buildings_connected_emissions[column]]
-    for column in buildings_disconnected_costs.keys():
-        buildings_disconnected_costs[column] = [buildings_disconnected_costs[column]]
-    for column in buildings_disconnected_emissions.keys():
-        buildings_disconnected_emissions[column] = [buildings_disconnected_emissions[column]]
-    for column in performance_totals.keys():
-        performance_totals[column] = [performance_totals[column]]
-
     # export all including performance heating and performance cooling since we changed them
     performance_disconnected = dict(buildings_disconnected_costs, **buildings_disconnected_emissions)
-    pd.DataFrame(performance_disconnected).to_csv(locator.get_optimization_slave_disconnected_performance(individual,
+    pd.DataFrame(performance_disconnected, index =[0]).to_csv(locator.get_optimization_slave_disconnected_performance(individual,
                                                                                                           generation),
                                                   index=False, float_format='%.3f')
 
     performance_connected = dict(buildings_connected_costs, **buildings_connected_emissions)
-    pd.DataFrame(performance_connected).to_csv(locator.get_optimization_slave_connected_performance(individual,
+    pd.DataFrame(performance_connected, index =[0]).to_csv(locator.get_optimization_slave_connected_performance(individual,
                                                                                                     generation),
                                                index=False, float_format='%.3f')
 
-    pd.DataFrame(performance_totals).to_csv(locator.get_optimization_slave_total_performance(individual,
+    pd.DataFrame(performance_totals, index =[0]).to_csv(locator.get_optimization_slave_total_performance(individual,
                                                                                              generation),
                                             index=False, float_format='%.3f')
 
