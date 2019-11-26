@@ -140,8 +140,8 @@ class ThermalNetworksPlotBase(cea.plots.PlotBase):
     @property
     @cea.plots.cache.cached
     def P_loss_kWh(self):
-        return pd.read_csv(self.locator.get_thermal_network_layout_ploss_system_edges_file(self.network_type,
-                                                                                           self.network_name))
+        return pd.read_csv(self.locator.get_thermal_network_pressure_losses_edges_file(self.network_type,
+                                                                                       self.network_name))
 
     @property
     @cea.plots.cache.cached
