@@ -30,11 +30,33 @@ class InstalledCapacities(cea.plots.supply_system.SupplySystemPlotBase):
 
     def __init__(self, project, parameters, cache):
         super(InstalledCapacities, self).__init__(project, parameters, cache)
-        self.analysis_fields_connected_heating = []
+        self.analysis_fields_connected_heating = ['Capacity_BackupBoiler_NG_heat_connected_W',
+                                                  'Capacity_PeakBoiler_NG_heat_connected_W',
+                                                  'Capacity_BaseBoiler_NG_heat_connected_W',
+                                                  'Capacity_CHP_DB_heat_connected_W',
+                                                  'Capacity_CHP_NG_heat_connected_W',
+                                                  'Capacity_CHP_WB_heat_connected_W',
+                                                  'Capacity_HP_DS_heat_connected_W',
+                                                  'Capacity_HP_GS_heat_connected_W',
+                                                  'Capacity_HP_SS_heat_connected_W',
+                                                  'Capacity_HP_WS_heat_connected_W',
+                                                  'Capacity_SC_ET_heat_connected_W',
+                                                  'Capacity_SC_FP_heat_connected_W',
+                                                  'Capacity_PVT_heat_connected_W',
+                                                  'Capacity_SeasonalStorage_WS_heat_connected_W']
+
         self.analysis_fields_connected_cooling = []
-        self.analysis_fields_connected_electricity = []
-        self.analysis_fields_disconnected_heating = []
-        self.analysis_fields_disconnected_cooling =  []
+        self.analysis_fields_connected_electricity = ['Capacity_PV_el_connected_W',
+                                                      'Capacity_PVT_el_connected_W',
+                                                      'Capacity_CHP_WB_el_connected_W',
+                                                      'Capacity_CHP_NG_el_connected_W',
+                                                      'Capacity_CHP_DB_el_connected_W',
+                                                      'Capacity_GRID_el_connected_W',
+                                                      ]
+        self.analysis_fields_disconnected_heating = ['Capacity_BaseBoiler_NG_heat_disconnected_W',
+                                                     'Capacity_FC_NG_heat_disconnected_W',
+                                                     'Capacity_GS_HP_heat_disconnected_W']
+        self.analysis_fields_disconnected_cooling = []
         self.input_files = [(self.locator.get_optimization_slave_electricity_requirements_data,
                              [self.individual, self.generation])]
 
@@ -46,53 +68,63 @@ class InstalledCapacities(cea.plots.supply_system.SupplySystemPlotBase):
     def output_path(self):
         return self.locator.get_timeseries_plots_file(
             'gen{generation}_ind{individual}installed_capacities'.format(individual=self.individual,
-                                                                           generation=self.generation),
+                                                                         generation=self.generation),
             self.category_name)
 
     @property
     def layout(self):
-        return dict(barmode='relative', yaxis=dict(title='Installed Capacity [kW]'))
+        return go.Layout(barmode='stack',  # annotations=annotations,
+                         yaxis=dict(title='Installed Capacity [kW]', domain=[0, 1]),
+                         xaxis=dict(domain=[0.0, 0.2]),
+                         yaxis2=dict(anchor='x2', domain=[0, 1]),
+                         xaxis2=dict(domain=[0.25, 1.0]))
 
     def calc_graph(self):
         # GET BARCHART OF CONNECTED BUILDINGS
-        data_connected = self.process_individual_ramping_capacity()
-        data_disconnected = self.process_individual_ramping_capacity()
+        # get data
+        data_connected = self.process_connected_capacities_kW()
+        data_disconnected = self.process_disconnected_capacities_kW()
 
+        #organize fiels according to heating, cooling and electricity
         analysis_fields_connected_heating = self.analysis_fields_connected_heating
         analysis_fields_connected_cooling = self.analysis_fields_connected_cooling
         analysis_fields_connected_electricity = self.analysis_fields_connected_electricity
         analysis_fields_disconnected_heating = self.analysis_fields_disconnected_heating
         analysis_fields_disconnected_cooling = self.analysis_fields_disconnected_cooling
-        analysis_fields_connected = analysis_fields_connected_heating + analysis_fields_connected_cooling + analysis_fields_connected_electricity
-        analysis_fields_disconnected = analysis_fields_disconnected_heating + analysis_fields_disconnected_cooling
+        fields = analysis_fields_connected_heating + analysis_fields_connected_cooling + analysis_fields_connected_electricity
+        analysis_fields_connected = self.remove_unused_fields(data_connected, fields)
+        fields = analysis_fields_disconnected_heating + analysis_fields_disconnected_cooling
+        analysis_fields_disconnected = self.remove_unused_fields(data_disconnected, fields)
 
-        # iterate through annual_consumption to plot
-        total_connected = data_connected[analysis_fields_connected].sum()
+        # iterate and create plots
         graph = []
+        total_connected = data_connected[analysis_fields_connected].sum(axis=1)[0]
         for field in analysis_fields_connected_heating + analysis_fields_connected_cooling + analysis_fields_connected_electricity:
             x = ['Technology for connected buildings']
             y = data_connected[field]
-            total_perc = (y / total_connected * 100).round(2)
-            total_perc_txt = [str(y.round(1)) + " MWh (" + str(total_perc) + " %)"]
-            trace = go.Bar(x=x, y=[y], name=NAMING[field],
+            total_perc = (y[0] / total_connected * 100).round(2)
+            total_perc_txt = [str(round(y[0])) + " kW (" + str(total_perc) + " %)"]
+            trace = go.Bar(x=x,
+                           y=y,
+                           name=field,
                            text=total_perc_txt,
                            marker=dict(color=COLOR[field]))
             graph.append(trace)
 
-        total_disconnected = data_disconnected[analysis_fields_disconnected].sum()
-        for field in analysis_fields_disconnected_heating + analysis_fields_disconnected_cooling:
+        data_disconnected['total'] = data_disconnected[analysis_fields_disconnected].sum(axis=1)
+        for field in analysis_fields_disconnected:
             x = data_disconnected.index
-            y = data_disconnected[field]
-            total_perc = (y / total_disconnected * 100).round(2)
-            total_perc_txt = [str(y.round(1)) + " MWh (" + str(total_perc) + " %)"]
+            y = data_disconnected[field].values
+            total_perc = (y / data_disconnected['total'] * 100).round(2).values
+            total_perc_txt = [str(round(value,1)) + " kW (" + str(perc) + " %)" for perc, value in zip(total_perc, y)]
             trace = go.Bar(x=x,
-                           y=[y],
+                           y=y,
                            name=NAMING[field],
                            text=total_perc_txt,
                            marker=dict(color=COLOR[field]),
                            xaxis='x2',
                            yaxis='y2',
-                           showlegend=False)
+                           showlegend=True)
             graph.append(trace)
 
         return graph
@@ -106,12 +138,10 @@ def main():
     cache = cea.plots.cache.NullPlotCache()
     InstalledCapacities(config.project,
                         {'scenario-name': config.scenario_name,
-                                      'generation': config.plots_supply_system.generation,
-                                      'individual': config.plots_supply_system.individual},
+                         'generation': config.plots_supply_system.generation,
+                         'individual': config.plots_supply_system.individual},
                         cache).plot(auto_open=True)
 
 
 if __name__ == '__main__':
     main()
-
-

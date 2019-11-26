@@ -101,8 +101,10 @@ def electricity_calculations_of_all_buildings(locator, master_to_slave_vars,
                                      }
 
     # CALC COSTS and Capacities
-    district_microgrid_costs, district_electricity_capacity_installed = calc_electricity_performance_costs(locator,
-                                                                                                           master_to_slave_vars)
+    district_microgrid_costs, \
+    district_electricity_capacity_installed = calc_electricity_performance_costs(locator,
+                                                                                 E_GRID_directload_W,
+                                                                                 master_to_slave_vars)
 
     return district_microgrid_costs, \
            district_electricity_dispatch, \
@@ -142,18 +144,19 @@ def calc_electricity_performance_emissions(lca, E_PV_gen_export_W, E_GRID_direct
     return performance_electricity
 
 
-def calc_electricity_performance_costs(locator, master_to_slave_vars):
+def calc_electricity_performance_costs(locator, E_GRID_directload_W, master_to_slave_vars):
     # PV COSTS
     Capacity_PV_connected_m2 = master_to_slave_vars.A_PV_m2
-    Capex_a_PV_USD,\
-    Opex_fixed_PV_USD,\
+    Capex_a_PV_USD, \
+    Opex_fixed_PV_USD, \
     Capex_PV_USD, \
     Capacity_PV_connected_W = pv.calc_Cinv_pv(Capacity_PV_connected_m2, locator)
 
     capacity_installed = {
-        "Capacity_PV_connected_W": Capacity_PV_connected_W,
-        "Capacity_PV_connected_m2": Capacity_PV_connected_m2
-                        }
+        "Capacity_PV_el_connected_W": Capacity_PV_connected_W,
+        "Capacity_GRID_el_connected_W": E_GRID_directload_W.max(),
+        "Capacity_PV_el_connected_m2": Capacity_PV_connected_m2
+    }
 
     performance_electricity_costs = {
         "Capex_a_PV_connected_USD": Capex_a_PV_USD,
