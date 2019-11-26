@@ -874,6 +874,26 @@ def get_envelope_properties(locator, prop_architecture):
     :rtype: DataFrame
 
     """
+
+    def check_successful_merge(df_construction, df_leakage, df_roof, df_wall, df_win, df_shading):
+        if len(df_construction.loc[df_construction['code'].isna()]) > 0:
+            print('WARNING: Invalid construction type found in architecture inputs. The following buildings will not be modeled: {}.'.format(list(df_construction.loc[df_shading['code'].isna()]['Name'])))
+        if len(df_leakage.loc[df_leakage['code'].isna()]) > 0:
+            print('WARNING: Invalid leakage type found in architecture inputs. The following buildings will not be modeled: {}.'.format(
+                list(df_leakage.loc[df_shading['code'].isna()]['Name'])))
+        if len(df_roof[df_roof['code'].isna()]) > 0:
+            print('WARNING: Invalid roof type found in architecture inputs. The following buildings will not be modeled: {}.'.format(
+                list(df_roof.loc[df_shading['code'].isna()]['Name'])))
+        if len(df_wall.loc[df_wall['code'].isna()]) > 0:
+            print('WARNING: Invalid wall type found in architecture inputs. The following buildings will not be modeled: {}.'.format(
+                list(df_wall.loc[df_shading['code'].isna()]['Name'])))
+        if len(df_win.loc[df_win['code'].isna()]) > 0:
+            print('WARNING: Invalid window type found in architecture inputs. The following buildings will not be modeled: {}.'.format(
+                list(df_win.loc[df_shading['code'].isna()]['Name'])))
+        if len(df_shading.loc[df_shading['code'].isna()]) > 0:
+            print('WARNING: Invalid shading type found in architecture inputs. The following buildings will not be modeled: {}.'.format(
+                list(df_shading.loc[df_shading['code'].isna()]['Name'])))
+
     prop_roof = pd.read_excel(locator.get_database_envelope_systems(), 'ROOF')
     prop_wall = pd.read_excel(locator.get_database_envelope_systems(), 'WALL')
     prop_win = pd.read_excel(locator.get_database_envelope_systems(), 'WINDOW')
@@ -881,12 +901,14 @@ def get_envelope_properties(locator, prop_architecture):
     prop_construction = pd.read_excel(locator.get_database_envelope_systems(), 'CONSTRUCTION')
     prop_leakage = pd.read_excel(locator.get_database_envelope_systems(), 'LEAKAGE')
 
-    df_construction = prop_architecture.merge(prop_construction, left_on='type_cons', right_on='code')
-    df_leakage = prop_architecture.merge(prop_leakage, left_on='type_leak', right_on='code')
-    df_roof = prop_architecture.merge(prop_roof, left_on='type_roof', right_on='code')
-    df_wall = prop_architecture.merge(prop_wall, left_on='type_wall', right_on='code')
-    df_win = prop_architecture.merge(prop_win, left_on='type_win', right_on='code')
-    df_shading = prop_architecture.merge(prop_shading, left_on='type_shade', right_on='code')
+    df_construction = prop_architecture.merge(prop_construction, left_on='type_cons', right_on='code', how='left')
+    df_leakage = prop_architecture.merge(prop_leakage, left_on='type_leak', right_on='code', how='left')
+    df_roof = prop_architecture.merge(prop_roof, left_on='type_roof', right_on='code', how='left')
+    df_wall = prop_architecture.merge(prop_wall, left_on='type_wall', right_on='code', how='left')
+    df_win = prop_architecture.merge(prop_win, left_on='type_win', right_on='code', how='left')
+    df_shading = prop_architecture.merge(prop_shading, left_on='type_shade', right_on='code', how='left')
+
+    check_successful_merge(df_construction, df_leakage, df_roof, df_wall, df_win, df_shading)
 
     fields_construction = ['Name', 'Cm_Af', 'void_deck', 'Hs_ag', 'Hs_bg', 'Ns', 'Es']
     fields_leakage = ['Name', 'n50']
