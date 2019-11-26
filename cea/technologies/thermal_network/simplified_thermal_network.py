@@ -389,9 +389,9 @@ def thermal_network_simplified(locator, config, network_name):
                              index=False)
 
     # PRESSURE LOSSES (NODES)
-    pressure_drop_nodes_ft = results.node['pressure'].abs()
-    pressure_drop_nodes_Pa = pressure_drop_nodes_ft * FT_TO_M * M_WATER_TO_PA
-    pressure_drop_nodes_Pa.to_csv(locator.get_network_pressure_drop_nodes(network_type, network_name), index=False)
+    pressure_at_nodes_ft = results.node['pressure'].abs()
+    pressure_at_nodes_Pa = pressure_at_nodes_ft * FT_TO_M * M_WATER_TO_PA
+    pressure_at_nodes_Pa.to_csv(locator.get_network_pressure_at_nodes(network_type, network_name), index=False)
 
     # MASS_FLOW_RATE (NODES)
     # $ POSTPROCESSING - MASSFLOWRATES PER NODE PER HOUR OF THE YEAR
