@@ -11,7 +11,7 @@ import wntr
 import cea.config
 import cea.inputlocator
 import cea.technologies.substation as substation
-from cea.constants import P_WATER_KGPERM3, FT_WATER_TO_PA, FT_TO_M
+from cea.constants import P_WATER_KGPERM3, FT_WATER_TO_PA, FT_TO_M, M_WATER_TO_PA
 from cea.optimization.constants import PUMP_ETA
 from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
 from cea.resources import geothermal
@@ -162,7 +162,8 @@ def calc_linear_thermal_loss_coefficient(diamter_ext_m, diamter_int_m, diameter_
 def thermal_network_simplified(locator, config, network_name):
     # local variables
     network_type = config.thermal_network.network_type
-    thermal_transfer_unit_design_head_m = config.thermal_network.min_head_susbstation / 9.8  # FIXME: hard-coded value
+    min_head_substation_kPa = config.thermal_network.min_head_susbstation
+    thermal_transfer_unit_design_head_m = min_head_substation_kPa * 1000 / M_WATER_TO_PA
     coefficient_friction_hanzen_williams = config.thermal_network.hw_friction_coefficient
     velocity_ms = config.thermal_network.peak_load_velocity
     fraction_equivalent_length = config.thermal_network.equivalent_length_factor
@@ -389,7 +390,7 @@ def thermal_network_simplified(locator, config, network_name):
 
     # PRESSURE LOSSES (NODES)
     pressure_drop_nodes_ft = results.node['pressure'].abs()
-    pressure_drop_nodes_Pa = pressure_drop_nodes_ft * FT_TO_M * 9800
+    pressure_drop_nodes_Pa = pressure_drop_nodes_ft * FT_TO_M * M_WATER_TO_PA
     pressure_drop_nodes_Pa.to_csv(locator.get_network_pressure_drop_nodes(network_type, network_name), index=False)
 
     # MASS_FLOW_RATE (NODES)
