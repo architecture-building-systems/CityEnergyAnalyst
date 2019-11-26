@@ -185,7 +185,8 @@ def evaluation_main(individual, building_names_all, locator, network_features, c
 
     print("DISTRICT ENERGY SYSTEM - COSTS, PRIMARY ENERGY AND EMISSIONS OF DISCONNECTED BUILDINGS")
     buildings_disconnected_costs, \
-    buildings_disconnected_emissions = cost_model.buildings_disconnected_costs_and_emissions(building_names_heating,
+    buildings_disconnected_emissions,\
+    buildings_disconnected_capacities = cost_model.buildings_disconnected_costs_and_emissions(building_names_heating,
                                                                                              building_names_cooling,
                                                                                              locator,
                                                                                              master_to_slave_vars)
@@ -239,7 +240,7 @@ def save_results(master_to_slave_vars,
                  district_cooling_capacity_installed,
                  district_electricity_capacity_installed
                  ):
-    
+
     # local variables
     individual = master_to_slave_vars.individual_number
     generation = master_to_slave_vars.generation_number
