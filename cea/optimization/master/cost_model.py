@@ -601,16 +601,19 @@ def calc_generation_costs_capacity_installed_cooling(locator,
         Opex_fixed_BackupVCC_AS_USD = 0.0
         Capex_BackupVCC_AS_USD = 0.0
 
+    #STORAGE (Only capacity, since the rest is outside)
+    Capacity_DailyStorage_W = master_to_slave_variables.Storage_cooling_size_W
+
     # PLOT RESULTS
 
     capacity_installed = {
-        "Capacity_NG_Trigen_W": Capacity_NG_Trigen_W,
-        "Capacity_WS_BaseVCC_W": Capacity_BaseVCC_WS_W,
-        "Capacity_WS_PeakVCC_W": Capacity_PeakVCC_WS_W,
-        "Capacity_AS_BaseVCC_W": Capacity_BaseVCC_AS_W,
-        "Capacity_AS_PeakVCC_W": Capacity_PeakVCC_AS_W,
-        "Capacity_AS_BackupVCC_W": Capacity_BackupVCC_AS_W,
-        "Capacity_Storage_W": {"minimum": 0.2},
+        "Capacity_Trigen_NG_connected_W": Capacity_NG_Trigen_W,
+        "Capacity_BaseVCC_WS_connected_W": Capacity_BaseVCC_WS_W,
+        "Capacity_PeakVCC_WS_connected_W": Capacity_PeakVCC_WS_W,
+        "Capacity_BaseVCC_AS_connected_W": Capacity_BaseVCC_AS_W,
+        "Capacity_PeakVCC_AS_connected_W": Capacity_PeakVCC_AS_W,
+        "Capacity_BackupVCC_AS_connected_W": Capacity_BackupVCC_AS_W,
+        "Capacity_DailyStorage_WS_connected_W": Capacity_DailyStorage_W,
     }
 
     performance_costs = {
