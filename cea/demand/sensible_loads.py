@@ -264,6 +264,7 @@ def calc_temperatures_emission_systems(bpr, tsd):
 
     elif control_heating_cooling_systems.has_floor_heating_system(bpr):
 
+        Ta_heating_0 = np.nanmax(tsd['ta_hs_set'])
         Qhs_sys_0 = np.nanmax(tsd['Qhs_sys'])  # in W
 
         tsd['Ths_sys_sup_ahu'] = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
@@ -273,10 +274,9 @@ def calc_temperatures_emission_systems(bpr, tsd):
         tsd['Ths_sys_re_aru'] = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
         tsd['mcphs_sys_aru'] = np.zeros(HOURS_IN_YEAR)
 
-        Ths_sup, Ths_re, mcphs = np.vectorize(tabs.calc_floorheating)(tsd['Qhs_sys'], tsd['theta_m'], Qhs_sys_0,
-                                                                      bpr.building_systems['Ths_sup_shu_0'],
-                                                                      bpr.building_systems['Ths_re_shu_0'],
-                                                                      bpr.rc_model['Af'])
+        Ths_sup, Ths_re, mcphs = np.vectorize(radiators.calc_radiator)(tsd['Qhs_sys'], tsd['T_int'], Qhs_sys_0, Ta_heating_0,
+                                                                       bpr.building_systems['Ths_sup_shu_0'],
+                                                                       bpr.building_systems['Ths_re_shu_0'])
         tsd['Ths_sys_sup_shu'] = Ths_sup
         tsd['Ths_sys_re_shu'] = Ths_re
         tsd['mcphs_sys_shu'] = mcphs

@@ -352,8 +352,6 @@ def substation_model_cooling(name, building, T_DC_supply_to_cs_ref_C, T_DC_suppl
     T_supply_DC_flat = T_DC_supply_to_cs_ref_C + 273.0  # convert to K
     T_supply_DC_space_cooling_data_center_and_refrigeration_result_flat = T_DC_supply_to_cs_ref_data_C + 273.0  # convert to K
 
-    Electr_array_all_flat = building.E_sys_kWh.values * 1000  # convert to #to W #FIXME: check with old script
-
     # save the results into a .csv file
     results = pd.DataFrame(
         {"mdot_space_cooling_and_refrigeration_result_kgpers": mdot_space_cooling_and_refrigeration_result_flat,
@@ -366,7 +364,7 @@ def substation_model_cooling(name, building, T_DC_supply_to_cs_ref_C, T_DC_suppl
          "A_hex_cs_space_cooling_data_center_and_refrigeration": A_hex_cs + A_hex_data + A_hex_ref,
          "Q_space_cooling_and_refrigeration_W": Qcs_sys_W + Qcre_sys_W,
          "Q_space_cooling_data_center_and_refrigeration_W": Qcs_sys_W + Qcdata_sys_W + Qcre_sys_W,
-         "Electr_array_all_flat_W": Electr_array_all_flat})
+         })
 
     results.to_csv(locator.get_optimization_substations_results_file(name, "DC", DCN_barcode), sep=',', index=False,
                    float_format='%.3f')
@@ -539,10 +537,7 @@ def substation_model_heating(name, building_demand_df, T_DH_supply_C, Ths_supply
     T_supply_DH_result_flat = T_DH_supply_C + 273.0  # convert to K
     mdot_DH_result_flat = mcp_DH / HEAT_CAPACITY_OF_WATER_JPERKGK  # convert from W/K to kg/s
 
-    Electr_array_all_flat = building_demand_df.E_sys_kWh.values * 1000  # convert to #to W #FIXME: check with old script
-
     # save the results into a .csv file
-    # fixme: find usage of all results
     substation_activation = pd.DataFrame({"mdot_DH_result_kgpers": mdot_DH_result_flat,
                                           "T_return_DH_result_K": T_return_DH_result_flat,
                                           "T_supply_DH_result_K": T_supply_DH_result_flat,
@@ -550,8 +545,7 @@ def substation_model_heating(name, building_demand_df, T_DH_supply_C, Ths_supply
                                           "A_hex_dhw_design_m2": A_hex_ww,
                                           # fixme: temporary output
                                           "Q_heating_W": Qhs_sys_W,
-                                          "Q_dhw_W": Qww_sys_W,
-                                          "Electr_array_all_flat_W": Electr_array_all_flat})
+                                          "Q_dhw_W": Qww_sys_W})
 
     substation_activation.to_csv(locator.get_optimization_substations_results_file(name, "DH" , DHN_barcode), sep=',',
                                  index=False,
@@ -621,7 +615,7 @@ def calc_substation_heating(Q, thi, tco, tci, cc, cc_0, Qnom, thi_0, tci_0, tco_
         raise Exception("The temperature of the hot stream is lower than the cold stream, Please check inputs!")
 
     # nominal conditions network side
-    ch_0 = cc_0 * (tco_0 - tci_0) / ((thi_0 - tci_0) * 0.9)
+    ch_0 = cc_0 * (tco_0 - tci_0) / ((thi_0 - tci_0) * 0.99)
     tho_0 = thi_0 - Qnom / ch_0
     dTm_0 = calc_dTm_HEX(thi_0, tho_0, tci_0, tco_0)
     # Area heat excahnge and UA_heating
