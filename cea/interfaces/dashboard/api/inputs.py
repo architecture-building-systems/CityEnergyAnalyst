@@ -10,7 +10,7 @@ from flask_restplus import Namespace, Resource, abort
 
 import cea.inputlocator
 import cea.utilities.dbf
-import cea.utilities.schedule_reader
+from cea.utilities.schedule_reader import read_cea_schedule, save_cea_schedule
 from cea.plots.supply_system.supply_system_map import get_building_connectivity
 from cea.plots.variable_naming import get_color_array
 from cea.technologies.network_layout.main import layout_network, NetworkLayout
@@ -144,6 +144,7 @@ class AllInputs(Resource):
         tables = form['tables']
         geojsons = form['geojsons']
         crs = form['crs']
+        schedules = form['schedules']
 
         out = {'tables': {}, 'geojsons': {}}
 
@@ -184,6 +185,10 @@ class AllInputs(Resource):
                         os.remove(location)
                 if db_info['type'] == 'shp':
                     out['geojsons'][db] = {}
+
+        if schedules:
+            for building in schedules:
+                dict_to_schedule(locator, building, schedules[building])
 
         return out
 
@@ -316,7 +321,7 @@ class BuildingSchedule(Resource):
 
 def schedule_to_dict(locator, building):
     schedule_path = locator.get_building_weekly_schedules(building)
-    schedule_data, schedule_complementary_data = cea.utilities.schedule_reader.read_cea_schedule(schedule_path)
+    schedule_data, schedule_complementary_data = read_cea_schedule(schedule_path)
     df = pandas.DataFrame(schedule_data).set_index(['DAY', 'HOUR'])
     out = {'SCHEDULES': {schedule_type: {day: df.loc[day][schedule_type].values.tolist() for day in df.index.levels[0]}
                          for schedule_type in df.columns}}
@@ -324,5 +329,16 @@ def schedule_to_dict(locator, building):
     return out
 
 
-def json_to_schedule(json):
-    pass
+def dict_to_schedule(locator, building, schedule_dict):
+    schedule_path = locator.get_building_weekly_schedules(building)
+    schedule_data = schedule_dict['SCHEDULES']
+    schedule_complementary_data = {'MONTHLY_MULTIPLIER': schedule_dict['MONTHLY_MULTIPLIER'],
+                                   'METADATA': schedule_dict['METADATA']}
+
+    data = pandas.DataFrame()
+    for day in ['WEEKDAY', 'SATURDAY', 'SUNDAY']:
+        df = pandas.DataFrame({'HOUR': range(1, 25), 'DAY': [day] * 24})
+        for schedule_type, schedule in schedule_data.items():
+            df[schedule_type] = schedule[day]
+        data = data.append(df, ignore_index=True)
+    save_cea_schedule(data.to_dict('list'), schedule_complementary_data, schedule_path)

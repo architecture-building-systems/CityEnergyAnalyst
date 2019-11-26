@@ -132,7 +132,7 @@ def calc_mixed_schedule(locator,
                 if normalizing_value == 0.0:
                     schedule_new_data[schedule_type] = current_schedule * 0.0
                 else:
-                    schedule_new_data[schedule_type] = current_schedule / normalizing_value
+                    schedule_new_data[schedule_type] = np.round(current_schedule/normalizing_value, 2)
 
         # add hour and day of the week
         DAY = {'DAY': ['WEEKDAY'] * 24 + ['SATURDAY'] * 24 + ['SUNDAY'] * 24}
