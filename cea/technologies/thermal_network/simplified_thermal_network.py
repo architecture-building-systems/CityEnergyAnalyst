@@ -421,7 +421,7 @@ def thermal_network_simplified(locator, config, network_name):
                                         "pressure_loss_return_Pa": accumulated_head_loss_return_Pa,
                                         "pressure_loss_substations_Pa": accumulated_head_loss_substations_Pa,
                                         "pressure_loss_total_Pa": accumulated_head_loss_total_Pa})
-    head_loss_system_Pa.to_csv(locator.get_thermal_network_layout_pressure_drop_file(network_type, network_name),
+    head_loss_system_Pa.to_csv(locator.get_network_total_pressure_drop_file(network_type, network_name),
                                index=False)
 
     # $ POSPROCESSING - PLANT HEAT REQUIREMENT

@@ -37,26 +37,19 @@ class NetworkOptimizationFeatures(object):
 
         for network_name in self.network_names:
             if self.district_heating_network:
-                pressure_drop_Pa = pd.read_csv(locator.get_thermal_network_layout_pressure_drop_file("DH", network_name))
-                for i in range(len(pressure_drop_Pa)):
-                    self.DeltaP_DHN[i] = self.DeltaP_DHN[i] + pressure_drop_Pa['pressure_loss_total_Pa'][i]
+                pressure_drop_Pa = pd.read_csv(locator.get_network_total_pressure_drop_file("DH", network_name))
+                self.DeltaP_DHN = self.DeltaP_DHN + pressure_drop_Pa['pressure_loss_total_Pa']
             if self.district_cooling_network:
-                pressure_drop_Pa = pd.read_csv(locator.get_thermal_network_layout_pressure_drop_file("DC", network_name))
-                for i in range(len(pressure_drop_Pa)):
-                    self.DeltaP_DCN[i] = self.DeltaP_DCN[i] + pressure_drop_Pa['pressure_loss_total_Pa'][i]
+                pressure_drop_Pa = pd.read_csv(locator.get_network_total_pressure_drop_file("DC", network_name))
+                self.DeltaP_DCN = self.DeltaP_DCN + pressure_drop_Pa['pressure_loss_total_Pa']
 
         for network_name in self.network_names:
-            thermal_loss_sum = 0
             if self.district_heating_network:
-                thermal_losses_kW = pd.read_csv(locator.get_network_thermal_loss_edges_file("DH", network_name))
-                for column_name in thermal_losses_kW.columns:
-                    thermal_loss_sum = thermal_loss_sum + (thermal_losses_kW[column_name].sum()) * 1000
-                self.thermallosses_DHN = self.thermallosses_DHN + thermal_loss_sum
+                thermal_losses_kW = pd.read_csv(locator.get_network_total_thermal_loss_file("DH", network_name))
+                self.thermallosses_DHN = self.thermallosses_DHN + thermal_losses_kW['thermal_loss_total_kW']
             if self.district_cooling_network:
                 thermal_losses_kW = pd.read_csv(locator.get_network_thermal_loss_edges_file("DC", network_name))
-                for column_name in thermal_losses_kW.columns:
-                    thermal_loss_sum = thermal_loss_sum + (thermal_losses_kW[column_name].sum()) * 1000
-                self.thermallosses_DCN = self.thermallosses_DCN + thermal_loss_sum
+                self.thermallosses_DCN = self.thermallosses_DCN + thermal_losses_kW['thermal_loss_total_kW']
 
         for network_name in self.network_names:
             if self.district_heating_network:

@@ -701,8 +701,8 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
         pressure_loss_system_Pa_for_csv.columns = ['pressure_loss_supply_Pa', 'pressure_loss_return_Pa',
                                                    'pressure_loss_substations_Pa', 'pressure_loss_total_Pa']
         pressure_loss_system_Pa_for_csv.to_csv(
-            thermal_network.locator.get_thermal_network_layout_pressure_drop_file(thermal_network.network_type,
-                                                                                  thermal_network.network_name),
+            thermal_network.locator.get_network_total_pressure_drop_file(thermal_network.network_type,
+                                                                         thermal_network.network_name),
             # , representative_week),
             index=False, float_format='%.3f')
 
@@ -729,8 +729,8 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
         pressure_loss_system_Pa_for_csv.columns = ['pressure_loss_supply_Pa', 'pressure_loss_return_Pa',
                                                    'pressure_loss_substations_Pa', 'pressure_loss_total_Pa']
         pressure_loss_system_Pa_for_csv.to_csv(
-            thermal_network.locator.get_thermal_network_layout_pressure_drop_file(thermal_network.network_type,
-                                                                                  thermal_network.network_name),
+            thermal_network.locator.get_network_total_pressure_drop_file(thermal_network.network_type,
+                                                                         thermal_network.network_name),
             index=False,
             float_format='%.3f')
 
@@ -791,9 +791,9 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
         pd.DataFrame(csv_outputs['pressure_loss_system_Pa'],
                      columns=['pressure_loss_supply_Pa', 'pressure_loss_return_Pa',
                               'pressure_loss_substations_Pa', 'pressure_loss_total_Pa']).to_csv(
-            thermal_network.locator.get_thermal_network_layout_pressure_drop_file(thermal_network.network_type,
-                                                                                  thermal_network.network_name,
-                                                                                  representative_week),
+            thermal_network.locator.get_network_total_pressure_drop_file(thermal_network.network_type,
+                                                                         thermal_network.network_name,
+                                                                         representative_week),
             index=False,
             float_format='%.3f')
 
