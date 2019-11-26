@@ -1012,7 +1012,7 @@ class InputLocator(object):
         return os.path.join(folder, file_name)
 
 
-    def get_thermal_network_layout_pressure_drop_file(self, network_type, network_name, representative_week=False):
+    def get_network_total_pressure_drop_file(self, network_type, network_name, representative_week=False):
         """scenario/outputs/data/optimization/network/layout/DH_P_DeltaP.csv or DC_P_DeltaP.csv
         Pressure drop over an entire district heating or cooling network at each time step
         """
