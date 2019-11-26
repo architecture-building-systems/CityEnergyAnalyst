@@ -45,18 +45,32 @@ class InstalledCapacities(cea.plots.supply_system.SupplySystemPlotBase):
                                                   'Capacity_PVT_heat_connected_W',
                                                   'Capacity_SeasonalStorage_WS_heat_connected_W']
 
-        self.analysis_fields_connected_cooling = []
+        self.analysis_fields_connected_cooling = ["Capacity_TrigenCCGT_heat_NG_connected_W",
+                                                  "Capacity_TrigenACH_cool_NG_connected_W",
+                                                  "Capacity_BaseVCC_WS_cool_connected_W",
+                                                  "Capacity_PeakVCC_WS_cool_connected_W",
+                                                  "Capacity_BaseVCC_AS_cool_connected_W",
+                                                  "Capacity_PeakVCC_AS_cool_connected_W",
+                                                  "Capacity_BackupVCC_AS_cool_connected_W",
+                                                  "Capacity_DailyStorage_WS_cool_connected_W"]
+
         self.analysis_fields_connected_electricity = ['Capacity_PV_el_connected_W',
                                                       'Capacity_PVT_el_connected_W',
                                                       'Capacity_CHP_WB_el_connected_W',
                                                       'Capacity_CHP_NG_el_connected_W',
                                                       'Capacity_CHP_DB_el_connected_W',
+                                                      "Capacity_TrigenCCGT_el_NG_connected_W",
                                                       'Capacity_GRID_el_connected_W',
                                                       ]
         self.analysis_fields_disconnected_heating = ['Capacity_BaseBoiler_NG_heat_disconnected_W',
                                                      'Capacity_FC_NG_heat_disconnected_W',
                                                      'Capacity_GS_HP_heat_disconnected_W']
-        self.analysis_fields_disconnected_cooling = []
+        self.analysis_fields_disconnected_cooling = ['Capacity_DX_AS_cool_disconnected_W',
+                                                     'Capacity_BaseVCC_AS_cool_disconnected_W',
+                                                     'Capacity_VCCHT_AS_cool_disconnected_W',
+                                                     'Capacity_ACH_SC_FP_cool_disconnected_W',
+                                                     'Capaticy_ACH_SC_ET_cool_disconnected_W',
+                                                     'Capacity_ACHHT_FP_cool_disconnected_W']
         self.input_files = [(self.locator.get_optimization_slave_electricity_requirements_data,
                              [self.individual, self.generation])]
 
@@ -85,7 +99,7 @@ class InstalledCapacities(cea.plots.supply_system.SupplySystemPlotBase):
         data_connected = self.process_connected_capacities_kW()
         data_disconnected = self.process_disconnected_capacities_kW()
 
-        #organize fiels according to heating, cooling and electricity
+        # organize fiels according to heating, cooling and electricity
         analysis_fields_connected_heating = self.analysis_fields_connected_heating
         analysis_fields_connected_cooling = self.analysis_fields_connected_cooling
         analysis_fields_connected_electricity = self.analysis_fields_connected_electricity
@@ -99,7 +113,7 @@ class InstalledCapacities(cea.plots.supply_system.SupplySystemPlotBase):
         # iterate and create plots
         graph = []
         total_connected = data_connected[analysis_fields_connected].sum(axis=1)[0]
-        for field in analysis_fields_connected_heating + analysis_fields_connected_cooling + analysis_fields_connected_electricity:
+        for field in analysis_fields_connected:
             x = ['Technology for connected buildings']
             y = data_connected[field]
             total_perc = (y[0] / total_connected * 100).round(2)
@@ -116,7 +130,7 @@ class InstalledCapacities(cea.plots.supply_system.SupplySystemPlotBase):
             x = data_disconnected.index
             y = data_disconnected[field].values
             total_perc = (y / data_disconnected['total'] * 100).round(2).values
-            total_perc_txt = [str(round(value,1)) + " kW (" + str(perc) + " %)" for perc, value in zip(total_perc, y)]
+            total_perc_txt = [str(round(value, 1)) + " kW (" + str(perc) + " %)" for perc, value in zip(total_perc, y)]
             trace = go.Bar(x=x,
                            y=y,
                            name=NAMING[field],
