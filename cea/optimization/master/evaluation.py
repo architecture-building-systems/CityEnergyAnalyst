@@ -251,13 +251,13 @@ def save_results(master_to_slave_vars,
     generation = master_to_slave_vars.generation_number
 
     # SAVE INDIVIDUAL DISTRICT HEATING INSTALLED CAPACITIES
-    pd.DataFrame(district_heating_capacity_installed).to_csv(locator.get_optimization_connected_heating_capacity(individual,
+    pd.DataFrame(district_heating_capacity_installed, index =[0]).to_csv(locator.get_optimization_connected_heating_capacity(individual,
                                                                                                                  generation),
         index=False, float_format='%.3f')
-    pd.DataFrame(district_cooling_capacity_installed).to_csv(locator.get_optimization_connected_cooling_capacity(individual,
+    pd.DataFrame(district_cooling_capacity_installed, index =[0]).to_csv(locator.get_optimization_connected_cooling_capacity(individual,
                                                                                                                  generation),
                                                index=False, float_format='%.3f')
-    pd.DataFrame(district_electricity_capacity_installed).to_csv(locator.get_optimization_connected_electricity_capacity(individual,
+    pd.DataFrame(district_electricity_capacity_installed, index =[0]).to_csv(locator.get_optimization_connected_electricity_capacity(individual,
                                                                                                                          generation),
                                                    index=False, float_format='%.3f')
 
@@ -275,30 +275,18 @@ def save_results(master_to_slave_vars,
                                                     index=False, float_format='%.3f')
 
     # SAVE PERFORMANCE RELATED FILES
-    # put data inside a list, otherwise pandas cannot save it
-    for column in buildings_connected_costs.keys():
-        buildings_connected_costs[column] = [buildings_connected_costs[column]]
-    for column in buildings_connected_emissions.keys():
-        buildings_connected_emissions[column] = [buildings_connected_emissions[column]]
-    for column in buildings_disconnected_costs.keys():
-        buildings_disconnected_costs[column] = [buildings_disconnected_costs[column]]
-    for column in buildings_disconnected_emissions.keys():
-        buildings_disconnected_emissions[column] = [buildings_disconnected_emissions[column]]
-    for column in performance_totals.keys():
-        performance_totals[column] = [performance_totals[column]]
-
     # export all including performance heating and performance cooling since we changed them
     performance_disconnected = dict(buildings_disconnected_costs, **buildings_disconnected_emissions)
-    pd.DataFrame(performance_disconnected).to_csv(locator.get_optimization_slave_disconnected_performance(individual,
+    pd.DataFrame(performance_disconnected, index =[0]).to_csv(locator.get_optimization_slave_disconnected_performance(individual,
                                                                                                           generation),
                                                   index=False, float_format='%.3f')
 
     performance_connected = dict(buildings_connected_costs, **buildings_connected_emissions)
-    pd.DataFrame(performance_connected).to_csv(locator.get_optimization_slave_connected_performance(individual,
+    pd.DataFrame(performance_connected, index =[0]).to_csv(locator.get_optimization_slave_connected_performance(individual,
                                                                                                     generation),
                                                index=False, float_format='%.3f')
 
-    pd.DataFrame(performance_totals).to_csv(locator.get_optimization_slave_total_performance(individual,
+    pd.DataFrame(performance_totals, index =[0]).to_csv(locator.get_optimization_slave_total_performance(individual,
                                                                                              generation),
                                             index=False, float_format='%.3f')
 
