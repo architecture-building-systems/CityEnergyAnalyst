@@ -97,7 +97,7 @@ def calc_Ctot_network_pump(network_info):
     network_type = network_info.network_type
 
     # read in node mass flows
-    df = pd.read_csv(network_info.locator.get_edge_mass_flow_csv_file(network_type, ''), index_col=0)
+    df = pd.read_csv(network_info.locator.get_nominal_edge_mass_flow_csv_file(network_type, ''), index_col=0)
     mdotA_kgpers = np.array(df)
     mdotA_kgpers = np.nan_to_num(mdotA_kgpers)
     mdotnMax_kgpers = np.amax(mdotA_kgpers)  # find highest mass flow of all nodes at all timesteps (should be at plant)
