@@ -23,7 +23,7 @@ import cea.technologies.pumps as PumpModel
 import cea.technologies.solar.photovoltaic_thermal as pvt
 import cea.technologies.solar.solar_collector as stc
 import cea.technologies.thermal_storage as thermal_storage
-from cea.optimization.constants import N_PVT, PUMP_ETA, ACH_TYPE_DOUBLE
+from cea.optimization.constants import N_PVT, PUMP_ETA, ACH_TYPE_DOUBLE, N_SC_ET, N_SC_FP
 from cea.optimization.master.emissions_model import calc_emissions_Whyr_to_tonCO2yr, calc_pen_Whyr_to_MJoilyr
 from cea.technologies.pumps import calc_Cinv_pump
 
@@ -619,9 +619,9 @@ def calc_generation_costs_capacity_installed_cooling(locator,
 
     # PLOT RESULTS
     capacity_installed = {
-        "Capacity_Trigen_heat_NG_connected_W": Capacity_NG_Trigen_th_W,
-        "Capacity_Trigen_cool_NG_connected_W": Capacity_NG_Trigen_ACH_W,
-        "Capacity_Trigen_el_NG_connected_W": Capacity_NG_Trigen_el_W,
+        "Capacity_TrigenCCGT_heat_NG_connected_W": Capacity_NG_Trigen_th_W,
+        "Capacity_TrigenACH_cool_NG_connected_W": Capacity_NG_Trigen_ACH_W,
+        "Capacity_TrigenCCGT_el_NG_connected_W": Capacity_NG_Trigen_el_W,
         "Capacity_BaseVCC_WS_cool_connected_W": Capacity_BaseVCC_WS_W,
         "Capacity_PeakVCC_WS_cool_connected_W": Capacity_PeakVCC_WS_W,
         "Capacity_BaseVCC_AS_cool_connected_W": Capacity_BaseVCC_AS_W,
@@ -843,12 +843,14 @@ def calc_generation_costs_capacity_installed_heating(locator,
     # SOLAR TECHNOLOGIES
     # ADD COSTS AND EMISSIONS DUE TO SOLAR TECHNOLOGIES
     Capacity_SC_ET_area_m2 = master_to_slave_vars.A_SC_ET_m2
+    Capacity_SC_ET_W = Capacity_SC_ET_area_m2 * N_SC_ET * 1000  # W
     Capex_a_SC_ET_USD, \
     Opex_fixed_SC_ET_USD, \
     Capex_SC_ET_USD = stc.calc_Cinv_SC(Capacity_SC_ET_area_m2, locator,
                                        'ET')
 
     Capacity_SC_FP_m2 = master_to_slave_vars.A_SC_FP_m2
+    Capacity_SC_FP_W = Capacity_SC_FP_m2 * N_SC_FP * 1000  # W
     Capex_a_SC_FP_USD, \
     Opex_fixed_SC_FP_USD, \
     Capex_SC_FP_USD = stc.calc_Cinv_SC(Capacity_SC_FP_m2, locator,
@@ -856,6 +858,7 @@ def calc_generation_costs_capacity_installed_heating(locator,
 
     Capacity_PVT_m2 = master_to_slave_vars.A_PVT_m2
     Capacity_PVT_el_W = Capacity_PVT_m2 * N_PVT * 1000  # W
+    Capacity_PVT_th_W = Capacity_PVT_m2 * N_SC_FP * 1000  # W
     Capex_a_PVT_USD, \
     Opex_fixed_PVT_USD, \
     Capex_PVT_USD = pvt.calc_Cinv_PVT(Capacity_PVT_el_W, locator)
@@ -914,10 +917,13 @@ def calc_generation_costs_capacity_installed_heating(locator,
         "Capacity_HP_SS_heat_connected_W": Capacity_SS_HP_W,
         "Capacity_HP_GS_heat_connected_W": Capacity_GS_HP_W,
         "Capacity_HP_DS_heat_connected_W": Capacity_DS_HP_W,
+        "Capacity_SC_ET_heat_connected_W": Capacity_SC_ET_W,
+        "Capacity_SC_FP_heat_connected_W": Capacity_SC_FP_W,
         "Capacity_SC_ET_connected_m2": Capacity_SC_ET_area_m2,
         "Capacity_SC_FP_connected_m2": Capacity_SC_FP_m2,
         "Capacity_PVT_connected_m2": Capacity_PVT_m2,
         "Capacity_PVT_el_connected_W": Capacity_PVT_el_W,
+        "Capacity_PVT_heat_connected_W": Capacity_PVT_th_W,
         "Capacity_SeasonalStorage_WS_heat_connected_W": Capacity_seasonal_storage_W,
         "Capacity_SeasonalStorage_WS_heat_connected_m3": Capacity_seasonal_storage_m3,
     }
@@ -1028,9 +1034,12 @@ def calc_costs_emissions_decentralized_DC(DCN_barcode, buildings_names_with_cool
             Opex_fixed_sys_disconnected_USD += dfBest["Opex_a_fixed_USD"].iloc[0]
 
             data = pd.DataFrame({'Name': building_name,
-                                 'Capacity_Boiler_NG_cool_disconnected_W': dfBest["Capacity_BaseBoiler_NG_W"].iloc[0],
-                                 'Capacity_FC_NG_cool_disconnected_W': dfBest["Capacity_FC_NG_W"].iloc[0],
-                                 'Capacity_GS_HP_cool_disconnected_W': dfBest["Capacity_GS_HP_W"].iloc[0]})
+                                 'Capacity_DX_AS_cool_disconnected_W': dfBest["Capacity_DX_AS_W"].iloc[0],
+                                 'Capacity_BaseVCC_AS_cool_disconnected_W': dfBest["Capacity_BaseVCC_AS_W"].iloc[0],
+                                 'Capacity_VCCHT_AS_cool_disconnected_W': dfBest["Capacity_VCCHT_AS_W"].iloc[0],
+                                 'Capacity_ACH_SC_FP_cool_disconnected_W': dfBest["Capacity_ACH_SC_FP_W"].iloc[0],
+                                 'Capaticy_ACH_SC_ET_cool_disconnected_W': dfBest["Capaticy_ACH_SC_ET_W"].iloc[0],
+                                 'Capacity_ACHHT_FP_cool_disconnected_W': dfBest["Capacity_ACHHT_FP_W"].iloc[0]})
             capacity_installed_df = pd.concat([capacity_installed_df, data], ignore_index=True)
 
     return GHG_sys_disconnected_tonCO2yr, \

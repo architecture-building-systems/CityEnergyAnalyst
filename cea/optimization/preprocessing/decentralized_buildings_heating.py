@@ -311,6 +311,7 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
 
         # Save results in csv file
         performance_results = {
+            "Nominal heating load": Qnom_W,
             "Capacity_BaseBoiler_NG_W": Qnom_W * Opex_a_var_USD[:, 0],
             "Capacity_FC_NG_W": Qnom_W * Opex_a_var_USD[:, 2],
             "Capacity_GS_HP_W": Qnom_W * Opex_a_var_USD[:, 3],
