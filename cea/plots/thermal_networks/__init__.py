@@ -151,7 +151,7 @@ class ThermalNetworksPlotBase(cea.plots.PlotBase):
 
     @property
     @cea.plots.cache.cached
-    def pressure_loss_nodes_Pa(self):
+    def pressure_at_nodes_Pa(self):
         return pd.read_csv(self.locator.get_network_pressure_at_nodes(self.network_type,
                                                                       self.network_name))
 
