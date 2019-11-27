@@ -302,7 +302,7 @@ def thermal_network_simplified(locator, config, network_name):
     results = sim.run_sim()
 
     # 3rd ITERATION GET FINAL UTILIZATION OF THE GRID (SUPPLY SIDE)
-    # get accumulated heat loss per hour
+    # get accumulated head loss per hour
     unitary_head_ftperkft = results.link['headloss'].abs()
     unitary_head_mperm = unitary_head_ftperkft * FT_TO_M / (FT_TO_M * 1000)
     head_loss_m = unitary_head_mperm.copy()
