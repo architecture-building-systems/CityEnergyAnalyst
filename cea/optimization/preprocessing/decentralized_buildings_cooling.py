@@ -397,7 +397,7 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
 
         # Save results in csv file
         performance_results = {
-            "Nominal Cooling Load": operation_results[:, 0],
+            "Nominal heating load": operation_results[:, 0],
             "Capacity_DX_AS_W": operation_results[:, 1],
             "Capacity_BaseVCC_AS_W": operation_results[:, 2],
             "Capacity_VCCHT_AS_W": operation_results[:, 3],
@@ -406,14 +406,12 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
             "Capacity_ACHHT_FP_W": operation_results[:, 6],
             "Capex_a_USD": Capex_a_USD[:, 0],
             "Capex_total_USD": Capex_total_USD[:, 0],
-            "Opex_a_USD": Opex_a_USD[:, 1],
-            "Opex_a_fixed_USD": Opex_a_fixed_USD[:, 0],
-            "Opex_a_var_USD": operation_results[:, 7],
+            "Opex_fixed_USD": Opex_a_fixed_USD[:, 0],
+            "Opex_var_USD": operation_results[:, 7],
             "GHG_tonCO2": operation_results[:, 8],
             "PEN_MJoil": operation_results[:, 9],
             "TAC_USD": TAC_USD[:, 1],
             "Best configuration": Best[:, 0],
-            "Nominal_load_W": Qnom_W,
         }
         performance_results_df = pd.DataFrame(performance_results)
         performance_results_df.to_csv(

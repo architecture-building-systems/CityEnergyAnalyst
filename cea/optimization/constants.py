@@ -179,6 +179,8 @@ T_TO_SERVER = 55 + 273.0  # K
 # solar PV and PVT
 N_PV = 0.16
 N_PVT = 0.16
+N_SC_FP = 0.775
+N_SC_ET = 0.721
 
 # Low heating values
 LHV_NG = 45.4E6  # [J/kg]
