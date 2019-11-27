@@ -77,7 +77,7 @@ class NetworkLayoutOperationPeak(cea.plots.thermal_networks.ThermalNetworksMapPl
             self.locator.get_network_layout_nodes_shapefile(self.network_type, self.network_name)).to_crs(
             get_geographic_coordinate_system())
 
-        P_loss_kPa_peak = (self.pressure_loss_nodes_Pa.max() /1000).round(1) #to kPa
+        P_loss_kPa_peak = (self.pressure_at_nodes_Pa.max() / 1000).round(1) #to kPa
         nodes_df["Peak pressure [kPa]"] = P_loss_kPa_peak.values
 
         #temperature at all nodes
