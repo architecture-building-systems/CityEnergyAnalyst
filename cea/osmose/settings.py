@@ -8,7 +8,7 @@ T_b_CDD = 25.0
 TECHS = ['HCS_base']
 # timesteps = [5136, 5144, 5145, 5147, 5148]  # 168 (week) [5389]
 # timesteps = [5145]  # 168 (week) [5389]
-timesteps = 168  # 168 (week) [5389]
+timesteps = 24  # 168 (week) [5389]
 # timesteps = "typical days"  # 168 (week)
 # timesteps = 'dtw hours'
 typical_days_path = "E:\\WP2"
@@ -33,7 +33,7 @@ cases = ['WTP_CBD_m_WP1_OFF','WTP_CBD_m_WP1_RET','WTP_CBD_m_WP1_HOT']
 # # Branch mk
 # osmose_project_path = "E:\\OSMOSE_projects\\HCS_mk\\Projects"
 # # osmose_project_path = "E:\\ipese_new\\osmose_mk\\Projects"
-# osmose_outMsg_path = "\\s_001\\opt\\hc_outmsg.txt"
+osmose_outMsg_path = "\\s_001\\opt\\hc_outmsg.txt"
 #
 # # Branch master
 # # osmose_project_path = "E:\\OSMOSE_projects\\HCS\\Projects"
