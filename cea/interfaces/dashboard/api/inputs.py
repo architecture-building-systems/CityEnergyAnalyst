@@ -30,16 +30,8 @@ def read_inputs_field_types():
     """Parse the inputs.yaml file and create the dictionary of column types"""
     inputs = yaml.load(
         open(os.path.join(os.path.dirname(__file__), '../inputs/inputs.yml')).read())
-    types = {
-        'int': int,
-        'float': float,
-        'str': str,
-        'year': int,
-    }
 
     for db in inputs.keys():
-        inputs[db]['fieldtypes'] = {
-            field['name']: types[field['type']] for field in inputs[db]['fields']}
         inputs[db]['fieldnames'] = [field['name']
                                     for field in inputs[db]['fields']]
     return inputs
@@ -77,8 +69,8 @@ class InputBuildingProperties(Resource):
             abort(400, 'Input file not found: %s' % db, choices=INPUT_KEYS)
         db_info = INPUTS[db]
         columns = OrderedDict()
-        for column in db_info['fieldnames']:
-            columns[column] = db_info['fieldtypes'][column].__name__
+        for field in db_info['fields']:
+            columns[field['name']] = field['type']
         return columns
 
 
@@ -228,11 +220,19 @@ def get_building_properties():
             db_glossary = json.loads(glossary[filenames == '%s.%s' % (db.replace('-', '_'), db_info['type'])]
                                      [['VARIABLE', 'UNIT', 'DESCRIPTION']].set_index('VARIABLE').to_json(orient='index'))
 
-            for column in db_info['fieldnames']:
+            for field in db_info['fields']:
+                column = field['name']
                 columns[column] = {}
                 if column == 'REFERENCE':
                     continue
-                columns[column]['type'] = db_info['fieldtypes'][column].__name__
+                columns[column]['type'] = field['type']
+                if field['type'] == 'choice':
+                    path = getattr(locator, field['location']['path'])()
+                    columns[column]['path'] = path
+                    # TODO: Try to optimize this step to decrease the number of file reading
+                    columns[column]['choices'] = get_choices(field['location'], path)
+                if 'constraints' in field:
+                    columns[column]['constraints'] = field['constraints']
                 columns[column]['description'] = db_glossary[column]['DESCRIPTION']
                 columns[column]['unit'] = db_glossary[column]['UNIT']
             store['columns'][db] = columns
@@ -317,6 +317,15 @@ class BuildingSchedule(Resource):
         except IOError as e:
             print(e)
             abort(500, 'File not found')
+
+
+def get_choices(location, path):
+    df = pandas.read_excel(path, location['sheet'])
+    if 'filter' in location:
+        choices = df[df.eval(location['filter'])][location['column']].tolist()
+    else:
+        choices = df[location['column']].tolist()
+    return [{'value': choice, 'label': df.loc[df[location['column']] == choice, 'Description'].values[0]} for choice in choices]
 
 
 def schedule_to_dict(locator, building):
