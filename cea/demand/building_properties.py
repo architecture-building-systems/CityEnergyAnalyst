@@ -880,16 +880,16 @@ def get_envelope_properties(locator, prop_architecture):
             print('WARNING: Invalid construction type found in architecture inputs. The following buildings will not be modeled: {}.'.format(list(df_construction.loc[df_shading['code'].isna()]['Name'])))
         if len(df_leakage.loc[df_leakage['code'].isna()]) > 0:
             print('WARNING: Invalid leakage type found in architecture inputs. The following buildings will not be modeled: {}.'.format(
-                list(df_leakage.loc[df_shading['code'].isna()]['Name'])))
+                list(df_leakage.loc[df_leakage['code'].isna()]['Name'])))
         if len(df_roof[df_roof['code'].isna()]) > 0:
             print('WARNING: Invalid roof type found in architecture inputs. The following buildings will not be modeled: {}.'.format(
-                list(df_roof.loc[df_shading['code'].isna()]['Name'])))
+                list(df_roof.loc[df_roof['code'].isna()]['Name'])))
         if len(df_wall.loc[df_wall['code'].isna()]) > 0:
             print('WARNING: Invalid wall type found in architecture inputs. The following buildings will not be modeled: {}.'.format(
-                list(df_wall.loc[df_shading['code'].isna()]['Name'])))
+                list(df_wall.loc[df_wall['code'].isna()]['Name'])))
         if len(df_win.loc[df_win['code'].isna()]) > 0:
             print('WARNING: Invalid window type found in architecture inputs. The following buildings will not be modeled: {}.'.format(
-                list(df_win.loc[df_shading['code'].isna()]['Name'])))
+                list(df_win.loc[df_win['code'].isna()]['Name'])))
         if len(df_shading.loc[df_shading['code'].isna()]) > 0:
             print('WARNING: Invalid shading type found in architecture inputs. The following buildings will not be modeled: {}.'.format(
                 list(df_shading.loc[df_shading['code'].isna()]['Name'])))
