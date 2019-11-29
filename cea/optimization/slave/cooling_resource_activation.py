@@ -8,6 +8,7 @@ import cea.technologies.cooling_tower as CTModel
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.optimization.constants import VCC_T_COOL_IN, DT_COOL, ACH_T_IN_FROM_CHP_K
 from cea.technologies.pumps import calc_water_body_uptake_pumping
+import cea.technologies.chiller_absorption
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -86,8 +87,22 @@ def cooling_resource_activator(Q_thermal_req,
                                daily_storage_class,
                                T_ground_K,
                                master_to_slave_variables,
-                               chiller_prop,
+                               absorption_chiller,
                                CCGT_operation_data):
+    """
+
+    :param Q_thermal_req:
+    :param T_district_cooling_supply_K:
+    :param T_district_cooling_return_K:
+    :param Q_therm_Lake_W:
+    :param T_source_average_Lake_K:
+    :param daily_storage_class:
+    :param T_ground_K:
+    :param master_to_slave_variables:
+    :param cea.technologies.chiller_absorption.AbsorptionChiller absorption_chiller:
+    :param CCGT_operation_data:
+    :return:
+    """
     ## initializing unmet cooling load and requirements from daily storage for this hour
     Q_cooling_unmet_W = Q_thermal_req
     Q_DailyStorage_gen_directload_W = 0.0
@@ -111,7 +126,7 @@ def cooling_resource_activator(Q_thermal_req,
                                                         T_district_cooling_supply_K,
                                                         T_ACH_in_C,
                                                         T_ground_K,
-                                                        chiller_prop)
+                                                        absorption_chiller)
 
         # operation of the CCGT
         Q_used_prim_CC_fn_W = CCGT_operation_data['q_input_fn_q_output_W']
@@ -140,7 +155,7 @@ def cooling_resource_activator(Q_thermal_req,
                                                             T_district_cooling_supply_K,
                                                             T_ACH_in_C,
                                                             T_ground_K,
-                                                            chiller_prop)
+                                                            absorption_chiller)
             # operation Possible if above minimal load
             if Qh_CCGT_req_W <= Q_output_CC_max_W:  # Normal operation Possible within partload regime
                 Q_CHP_gen_W = float(Qh_CCGT_req_W)
