@@ -16,15 +16,3 @@ Subpackages
     cea.analysis.multicriteria
     cea.analysis.sensitivity
 
-Submodules
-----------
-
-cea.analysis.benchmark module
------------------------------
-
-.. automodule:: cea.analysis.benchmark
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-

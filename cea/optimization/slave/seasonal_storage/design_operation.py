@@ -236,6 +236,11 @@ def Storage_Design(CSV_NAME, T_storage_old_K, Q_in_storage_old_W, locator,
             T_storage_min_K = T_storage_new_K
             Q_disc_seasonstart_W[0] += Q_from_storage_req_W
 
+    Q_stored_max_W = np.amax(Q_storage_content_final_Whr)
+    T_st_max_K = np.amax(T_storage_final_Khr)
+    T_st_min_K = np.amin(T_storage_final_Khr)
+    Q_loss_tot_W = np.sum(Q_loss_Whr)
+
     storage_dispatch = {
 
         # TOTAL ENERGY GENERATED
@@ -278,6 +283,7 @@ def Storage_Design(CSV_NAME, T_storage_old_K, Q_in_storage_old_W, locator,
         "E_PVT_gen_W": E_PVT_gen_Whr,  # useful later on for the electricity dispatch curve
         "Storage_Size_m3": STORAGE_SIZE_m3,
         "Q_storage_content_W": Q_storage_content_final_Whr,
+        "Q_storage_max_W": Q_stored_max_W,
         "Q_DH_networkload_W": Q_DH_networkload_Wh,
 
         # this helps to know the peak (thermal) of the heatpumps
@@ -286,11 +292,6 @@ def Storage_Design(CSV_NAME, T_storage_old_K, Q_in_storage_old_W, locator,
         "Q_HP_SC_ET_W": Q_HP_SC_ET_Whr,
         "Q_HP_SC_FP_W": Q_HP_SC_FP_Whr,
     }
-
-    Q_stored_max_W = np.amax(Q_storage_content_final_Whr)
-    T_st_max_K = np.amax(T_storage_final_Khr)
-    T_st_min_K = np.amin(T_storage_final_Khr)
-    Q_loss_tot_W = np.sum(Q_loss_Whr)
 
     return (Q_stored_max_W, Q_rejected_final_W, Q_disc_seasonstart_W, T_st_max_K, T_st_min_K,
             Q_storage_content_final_Whr, T_storage_final_Khr, Q_loss_tot_W, mdot_DH_final_kgpers,

@@ -24,12 +24,12 @@ class NetworkOptimizationFeatures(object):
     See the paper of Fonseca et al 2015 of the city energy analyst for more info on how that procedure used to work.
     """
     def __init__(self, district_heating_network, district_cooling_network,  locator):
-        self.pipesCosts_DHN_USD = 0     # USD-2015
-        self.pipesCosts_DCN_USD = 0     # USD-2015
+        self.pipesCosts_DHN_USD = 0.0    # USD-2015
+        self.pipesCosts_DCN_USD = 0.0     # USD-2015
         self.DeltaP_DHN = np.zeros(HOURS_IN_YEAR)         # Pa
         self.DeltaP_DCN = np.zeros(HOURS_IN_YEAR)        # Pa
-        self.thermallosses_DHN = 0
-        self.thermallosses_DCN = 0
+        self.thermallosses_DHN = 0.0
+        self.thermallosses_DCN = 0.0
         self.network_names = ['']
         self.district_heating_network = district_heating_network
         self.district_cooling_network = district_cooling_network
@@ -37,26 +37,19 @@ class NetworkOptimizationFeatures(object):
 
         for network_name in self.network_names:
             if self.district_heating_network:
-                pressure_drop_Pa = pd.read_csv(locator.get_thermal_network_layout_pressure_drop_file("DH", network_name))
-                for i in range(len(pressure_drop_Pa)):
-                    self.DeltaP_DHN[i] = self.DeltaP_DHN[i] + pressure_drop_Pa['pressure_loss_total_Pa'][i]
+                pressure_drop_Pa = pd.read_csv(locator.get_network_total_pressure_drop_file("DH", network_name))
+                self.DeltaP_DHN = self.DeltaP_DHN + pressure_drop_Pa['pressure_loss_total_Pa']
             if self.district_cooling_network:
-                pressure_drop_Pa = pd.read_csv(locator.get_thermal_network_layout_pressure_drop_file("DC", network_name))
-                for i in range(len(pressure_drop_Pa)):
-                    self.DeltaP_DCN[i] = self.DeltaP_DCN[i] + pressure_drop_Pa['pressure_loss_total_Pa'][i]
+                pressure_drop_Pa = pd.read_csv(locator.get_network_total_pressure_drop_file("DC", network_name))
+                self.DeltaP_DCN = self.DeltaP_DCN + pressure_drop_Pa['pressure_loss_total_Pa']
 
         for network_name in self.network_names:
-            thermal_loss_sum = 0
             if self.district_heating_network:
-                thermal_losses_kW = pd.read_csv(locator.get_thermal_network_qloss_system_file("DH", network_name))
-                for column_name in thermal_losses_kW.columns:
-                    thermal_loss_sum = thermal_loss_sum + (thermal_losses_kW[column_name].sum()) * 1000
-                self.thermallosses_DHN = self.thermallosses_DHN + thermal_loss_sum
+                thermal_losses_kW = pd.read_csv(locator.get_network_total_thermal_loss_file("DH", network_name))
+                self.thermallosses_DHN = self.thermallosses_DHN + thermal_losses_kW['thermal_loss_total_kW']
             if self.district_cooling_network:
-                thermal_losses_kW = pd.read_csv(locator.get_thermal_network_qloss_system_file("DC", network_name))
-                for column_name in thermal_losses_kW.columns:
-                    thermal_loss_sum = thermal_loss_sum + (thermal_losses_kW[column_name].sum()) * 1000
-                self.thermallosses_DCN = self.thermallosses_DCN + thermal_loss_sum
+                thermal_losses_kW = pd.read_csv(locator.get_network_total_thermal_loss_file("DC", network_name))
+                self.thermallosses_DCN = self.thermallosses_DCN + thermal_losses_kW['thermal_loss_total_kW']
 
         for network_name in self.network_names:
             if self.district_heating_network:
@@ -69,7 +62,7 @@ class NetworkOptimizationFeatures(object):
     def pipe_costs(self, locator, network_name, network_type):
         edges_file = pd.read_csv(locator.get_thermal_network_edge_list_file(network_type, network_name))
         piping_cost_data = pd.read_excel(locator.get_database_supply_systems(), sheet_name="PIPING")
-        merge_df = edges_file.merge(piping_cost_data, left_on='Pipe_DN_y', right_on='Pipe_DN')
-        merge_df['Inv_USD2015'] = merge_df['Inv_USD2015perm_y'] * merge_df['pipe length']
+        merge_df = edges_file.merge(piping_cost_data, left_on='Pipe_DN', right_on='Pipe_DN')
+        merge_df['Inv_USD2015'] = merge_df['Inv_USD2015perm'] * merge_df['length_m']
         pipe_costs = merge_df['Inv_USD2015'].sum()
         return pipe_costs
