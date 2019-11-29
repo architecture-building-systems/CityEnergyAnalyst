@@ -222,7 +222,7 @@ def thermal_network_simplified(locator, config, network_name):
             volume_flow_m3pers_building[building_name] = substation_results[
                                                              "mdot_space_cooling_data_center_and_refrigeration_result_kgpers"] / P_WATER_KGPERM3
             T_sup_K_building[building_name] = substation_results[
-                "T_return_DC_space_cooling_data_center_and_refrigeration_result_K"]
+                "T_supply_DC_space_cooling_data_center_and_refrigeration_result_K"]
             T_re_K_building[building_name] = substation_results[
                 "T_return_DC_space_cooling_data_center_and_refrigeration_result_K"]
             Q_demand_kWh_building[building_name] = substation_results[
