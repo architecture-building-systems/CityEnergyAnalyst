@@ -202,7 +202,8 @@ def thermal_network_simplified(locator, config, network_name):
                 locator.get_optimization_substations_results_file(building_name, "DH", DHN_barcode))
             volume_flow_m3pers_building[building_name] = substation_results["mdot_DH_result_kgpers"] / P_WATER_KGPERM3
             T_sup_K_building[building_name] = substation_results["T_supply_DH_result_K"]
-            T_re_K_building[building_name] = substation_results["T_return_DH_result_K"]
+            T_re_K_building[building_name] = np.where(substation_results["T_return_DH_result_K"] >273.15,
+                                                      substation_results["T_return_DH_result_K"], np.nan)
             Q_demand_kWh_building[building_name] = (substation_results["Q_heating_W"] + substation_results[
                 "Q_dhw_W"]) / 1000
 
