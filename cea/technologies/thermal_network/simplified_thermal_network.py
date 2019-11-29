@@ -488,7 +488,7 @@ def thermal_network_simplified(locator, config, network_name):
 
     # thermal losses total
     accumulated_thermal_losses_supply_kWh = thermal_losses_supply_kWh.sum(axis=1)
-    accumulated_thermal_losses_return_kWh = thermal_losses_supply_kWh.sum(axis=1)
+    accumulated_thermal_losses_return_kWh = thermal_losses_return_kWh.sum(axis=1)
     accumulated_thermal_loss_total_kWh = accumulated_thermal_losses_supply_kWh + accumulated_thermal_losses_return_kWh
     thermal_losses_total_kWh = pd.DataFrame({"thermal_loss_supply_kW": accumulated_thermal_losses_supply_kWh,
                                              "thermal_loss_return_kW": accumulated_thermal_losses_return_kWh,
