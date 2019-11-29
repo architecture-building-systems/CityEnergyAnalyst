@@ -10,12 +10,13 @@ import cea.osmose.settings as settings
 import cea.osmose.extract_demand_outputs as extract_demand_outputs
 import cea.osmose.plot_osmose_result as plot_results
 import cea.osmose.compare_el_usages as compare_el
-import cea.osmose.post_process_osmose_results as post_processing
+import cea.osmose.post_process_osmose_results as post_processing_osmose_results
 
 # import from settings # TODO: add to config
 TECHS = settings.TECHS
 post_process_json = settings.post_process_json
 remove_json = settings.remove_json
+remove_jpg = settings.remove_jpg
 post_process_osmose = settings.post_process_osmose
 specified_buildings = settings.specified_buildings
 timesteps = settings.timesteps
@@ -29,9 +30,11 @@ cases = settings.cases
 
 
 def main(case):
+
+
     # make folder to save results
-    path_to_case_folder = os.path.join(result_destination, case)
-    make_directory(path_to_case_folder, new_calculation)
+    path_to_case_result_folder = os.path.join(result_destination, case)
+    # make_directory(path_to_case_result_folder, new_calculation)  # FIXME: this is redundant for the moment
 
     ## start ampl license
     start_ampl_license(ampl_lic_path, "start")
@@ -45,7 +48,8 @@ def main(case):
                                                                             specified_buildings)
         ## run osmose
         time_print = timesteps
-        run_osmose_for_building_cases(Tamb, building_names, case, path_to_case_folder, periods, timesteps_calc, time_print)
+        run_osmose_for_buildings_techs_in_each_case(Tamb, building_names, case, path_to_case_result_folder,
+                                                    periods, timesteps_calc, time_print)
     elif type(timesteps) is list:
         for time in timesteps:
             # run MILP for each time
@@ -57,7 +61,8 @@ def main(case):
             periods = extract_demand_outputs.extract_cea_outputs_to_osmose_main(case, [time], season,
                                                                                 specified_buildings)
             ## run osmose
-            run_osmose_for_building_cases(Tamb, building_names, case, path_to_case_folder, periods, timesteps_calc, time_print)
+            run_osmose_for_buildings_techs_in_each_case(Tamb, building_names, case, path_to_case_result_folder,
+                                                        periods, timesteps_calc, time_print)
     elif type(timesteps) is str:
         # extract demand outputs
         building_names, \
@@ -67,24 +72,26 @@ def main(case):
                                                                             specified_buildings)
         ## run osmose
         time_print = 'dtw'
-        run_osmose_for_building_cases(Tamb, building_names, case, path_to_case_folder, periods, timesteps_calc, time_print)
+        run_osmose_for_buildings_techs_in_each_case(Tamb, building_names, case, path_to_case_result_folder,
+                                                    periods, timesteps_calc, time_print)
 
     return np.nan
 
 
 
-def run_osmose_for_building_cases(Tamb, building_names, case, path_to_case_folder, periods, timesteps_calc, time_print):
+def run_osmose_for_buildings_techs_in_each_case(Tamb, building_names, case, path_to_case_folder,
+                                                periods, timesteps_calc, time_print):
     write_osmose_general_inputs(path_to_case_folder, periods, timesteps_calc)
     for building in building_names:
         print building, ' in ', case
         write_osmose_building_inputs(Tamb, building)
         for tech in TECHS:
-            result_path, run_folder = osmose_one_run(building, case, periods, tech, time_print)
+            result_path, run_folder = osmose_one_run(tech)
             path_to_run_folder = rename_run_folder(building, case, periods, result_path, run_folder, time_print)
             if post_process_json:
                 post_process_osmose_json_out(path_to_run_folder, remove_json)
             if post_process_osmose:
-                post_processing.main(path_to_run_folder)
+                post_processing_osmose_results.main(path_to_run_folder)
 
         # # plot results
         # building_timestep_tag = building + "_" + str(periods) + "_" + str(timesteps_calc)
@@ -103,7 +110,7 @@ def post_process_osmose_json_out(path_to_run_folder, remove_json):
     post_process_osmose_out_json(path_to_run_folder, remove_json)
     return
 
-def osmose_one_run(building, case, periods, tech, time_print):
+def osmose_one_run(tech):
     # run osmose
     t = time.localtime()
     print time.strftime("%H:%M", t)
@@ -129,10 +136,11 @@ def rename_run_folder(building, case, periods, result_path, run_folder, time_pri
             print('check timesteps')
 
         ##Remove .jpg
-        # model_folder = [result_path, run_folder, 's_001\\plots\\icc\\models']
-        # path_to_model_folder = os.path.join('', *model_folder)
-        # files = os.listdir(path_to_model_folder)
-        # [os.remove(os.path.join(path_to_model_folder, file)) for file in files if '.jpg' in file]
+        if remove_jpg:
+            model_folder = [result_path, run_folder, 's_001\\plots\\icc\\models']
+            path_to_model_folder = os.path.join('', *model_folder)
+            files = os.listdir(path_to_model_folder)
+            [os.remove(os.path.join(path_to_model_folder, file)) for file in files if '.jpg' in file]
 
         ##Rename
         os.rename(os.path.join(result_path, run_folder), os.path.join(result_path, new_name))
@@ -148,7 +156,7 @@ def write_osmose_building_inputs(Tamb, building):
 
 
 def write_osmose_general_inputs(path_to_case_folder, periods, timesteps_calc):
-    write_string_to_txt(path_to_case_folder, osmose_project_data_path, "path_to_case_folder.txt")  # osmose input
+    write_string_to_txt(path_to_case_folder, osmose_project_data_path, "path_to_case_folder.txt")  # osmose input #FIXME: might be redundant
     write_value_to_csv(timesteps_calc, osmose_project_data_path, "timesteps.csv")  # osmose input
     write_value_to_csv(periods, osmose_project_data_path, "periods.csv")  # osmose input
 
@@ -214,7 +222,7 @@ def exec_osmose(tech, osmose_project_path):
 
     # print OutMsg
     result_path = os.path.dirname(osmose_project_path) + "\\results\\" + tech
-    run_folder = os.listdir(result_path)[len(os.listdir(result_path)) - 1]
+    run_folder = os.listdir(result_path)[len(os.listdir(result_path)) - 1] # pick the last folder (by name)
     print tech, run_folder
     OutMsg_path = os.path.join(result_path, run_folder) + settings.osmose_outMsg_path
     f = open(OutMsg_path, "r")
