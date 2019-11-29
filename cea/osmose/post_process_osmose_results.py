@@ -122,8 +122,8 @@ def calc_Q_heat_cascade(folder_path, output_df, streams_df):
     Q_chillers = output_df.filter(like='Q_chiller_').sum(axis=1)
     qt_cold_total = Q_exhaust + Q_reheat_total + Qc_chillers
     # check balance again
-    dQ = qt_hot_total.round(1) - qt_cold_total.round(1)
-    if max(dQ) > 0.5:
+    dQ = (qt_hot_total - qt_cold_total).round(3)
+    if max(dQ) > 1.5: # below that might be rounding errors in postCompute
         print('Qc_coil and Q_chiller not balanced', dQ)
     return Qc_chillers, Q_r_chillers, Q_coil_dict, Q_reheat_dict, Q_exhaust
 
@@ -572,13 +572,13 @@ if __name__ == '__main__':
     # result_path_folder = "E:\\HCS_results_1022\\HCS_base_m_out_dP"
     result_path_folder = 'E:\\OSMOSE_projects\\HCS_mk\\results'
     # TECHS = ['HCS_base', 'HCS_base_coil', 'HCS_base_3for2', 'HCS_base_ER0', 'HCS_base_IEHX', 'HCS_base_LD']
-    TECHS = ['HCS_base_coil_hps']
+    TECHS = ['HCS_base_3for2']
 
     for tech in TECHS:
         tech_folder_path = os.path.join(result_path_folder, tech)
         folders_list = os.listdir(tech_folder_path)
         # for folder in folders_list:
-        for folder in ['run_035_onerun']:
+        for folder in ['run_001_OFF_B005_1_24']:
             if 'run' in folder:
                 folder_path = os.path.join(tech_folder_path, folder)
                 file_list = os.listdir(folder_path)
