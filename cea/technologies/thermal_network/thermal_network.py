@@ -20,6 +20,7 @@ import pandas as pd
 import cea.config
 import cea.inputlocator
 import cea.technologies.thermal_network.substation_matrix as substation_matrix
+from cea.technologies.thermal_network.thermal_network_loss import calc_temperature_out_per_pipe
 import cea.utilities.parallel
 import cea.utilities.workerstream
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3, HOURS_IN_YEAR
@@ -3187,6 +3188,8 @@ def calc_return_node_temperature(index, m_d, t_e_out, t_return, z_pipe_out, m_su
     return t_node
 
 
+
+
 def calc_t_out(node, edge, k_old, m_d, z, t_e_in, t_e_out, t_ground, z_note, thermal_network):
     """
     Given the pipe inlet temperature, this function calculate the outlet temperature of the pipe.
@@ -3204,7 +3207,7 @@ def calc_t_out(node, edge, k_old, m_d, z, t_e_in, t_e_out, t_ground, z_note, the
 
     :type node: float
     :type edge: np array
-    :type k: DataFrame
+    :type k: [kW/K]
     :type m_d: DataFrame
     :type z: DataFrame
     :type t_e_in: DataFrame
@@ -3235,9 +3238,10 @@ def calc_t_out(node, edge, k_old, m_d, z, t_e_in, t_e_out, t_ground, z_note, the
 
         elif np.isclose(z_note[node, e], -1):
             # calculate outlet temperature if flow goes from node to out_node through edge
-            t_e_out[out_node_index, e] = (t_e_in[node, e] * (k / 2 - m * HEAT_CAPACITY_OF_WATER_JPERKGK / 1000) - k * t_ground) / (
-                                                 -m * HEAT_CAPACITY_OF_WATER_JPERKGK / 1000 - k / 2)  # [K]
+
+            t_e_out[out_node_index, e] = calc_temperature_out_per_pipe(t_e_in[node, e], m, k, t_ground)
             dT = t_e_in[node, e] - t_e_out[out_node_index, e]
+
             if abs(dT) > 30:
                 print('High temperature loss on edge', e, '. Loss:', abs(dT))
                 # Store value

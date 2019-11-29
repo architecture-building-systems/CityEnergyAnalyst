@@ -11,9 +11,10 @@ import wntr
 import cea.config
 import cea.inputlocator
 import cea.technologies.substation as substation
-from cea.constants import P_WATER_KGPERM3, FT_WATER_TO_PA, FT_TO_M, M_WATER_TO_PA
+from cea.constants import P_WATER_KGPERM3, FT_WATER_TO_PA, FT_TO_M, M_WATER_TO_PA, HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.optimization.constants import PUMP_ETA
 from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
+from cea.technologies.thermal_network.thermal_network_loss import calc_temperature_out_per_pipe
 from cea.resources import geothermal
 from cea.technologies.constants import NETWORK_DEPTH
 from cea.utilities.epwreader import epw_reader
@@ -158,6 +159,12 @@ def calc_linear_thermal_loss_coefficient(diamter_ext_m, diamter_int_m, diameter_
     K_WperKm = 2 * math.pi / resistance_mKperW
     return K_WperKm
 
+def calc_thermal_loss_per_pipe(T_in_K, m_kgpers, T_ground_K, k_kWperK):
+    T_out_K = calc_temperature_out_per_pipe(T_in_K, m_kgpers, k_kWperK, T_ground_K)
+    DT = T_in_K - T_out_K
+    Q_loss_kWh = DT * m_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK / 1000
+
+    return Q_loss_kWh
 
 def thermal_network_simplified(locator, config, network_name):
     # local variables
@@ -337,6 +344,11 @@ def thermal_network_simplified(locator, config, network_name):
     head_loss_substations_ft = results.node['head'][consumer_nodes].abs()
     head_loss_substations_Pa = head_loss_substations_ft * FT_WATER_TO_PA
 
+    #POSTPORCESSING MASSFLOW RATES
+    # MASS_FLOW_RATE (EDGES)
+    flow_rate_supply_m3s = results.link['flowrate'].abs()
+    massflow_supply_kgs = flow_rate_supply_m3s * P_WATER_KGPERM3
+
     # $ POSTPROCESSING - PRESSURE LOSSES ACCUMULATED PER HOUR OF THE YEAR (TIMES 2 to account for return)
     accumulated_head_loss_supply_Pa = head_loss_supply_network_Pa.sum(axis=1)
     accumulated_head_loss_return_Pa = head_loss_return_network_Pa.sum(axis=1)
@@ -349,28 +361,38 @@ def thermal_network_simplified(locator, config, network_name):
     thermal_coeffcient_WperKm = pd.Series(
         np.vectorize(calc_linear_thermal_loss_coefficient)(diameter_ext_m, diameter_int_m, diameter_ins_m), pipe_names)
     average_temperature_supply_K = T_sup_K_building.mean(axis=1)
-    delta_T_in_out_K = average_temperature_supply_K - temperature_of_the_ground_K
+
 
     thermal_losses_supply_kWh = results.link['headloss'].copy()
     thermal_losses_supply_kWh.reset_index(inplace=True, drop=True)
     thermal_losses_supply_Wperm = thermal_losses_supply_kWh.copy()
     for pipe in pipe_names:
         length_m = edge_df.loc[pipe]['length_m']
+        massflow_kgs = massflow_supply_kgs[pipe]
         k_WperKm_pipe = thermal_coeffcient_WperKm[pipe]
-        thermal_losses_supply_kWh[pipe] = delta_T_in_out_K * k_WperKm_pipe * length_m / 1000
-        thermal_losses_supply_Wperm[pipe] = delta_T_in_out_K * k_WperKm_pipe
+        k_kWperK = k_WperKm_pipe * length_m / 1000
+        thermal_losses_supply_kWh[pipe] = np.vectorize(calc_thermal_loss_per_pipe)(average_temperature_supply_K.values,
+                                                                     massflow_kgs.values,
+                                                                     temperature_of_the_ground_K,
+                                                                     k_kWperK,
+                                                                     )
+
+        thermal_losses_supply_Wperm[pipe] = (thermal_losses_supply_kWh[pipe] / length_m) * 1000
 
     # return pipes
     average_temperature_return_K = T_re_K_building.mean(axis=1)
-    delta_T_in_out_K = average_temperature_return_K - temperature_of_the_ground_K
-
     thermal_losses_return_kWh = results.link['headloss'].copy()
     thermal_losses_return_kWh.reset_index(inplace=True, drop=True)
     for pipe in pipe_names:
         length_m = edge_df.loc[pipe]['length_m']
+        massflow_kgs = massflow_supply_kgs[pipe]
         k_WperKm_pipe = thermal_coeffcient_WperKm[pipe]
-        thermal_losses_return_kWh[pipe] = delta_T_in_out_K * k_WperKm_pipe * length_m / 1000
-
+        k_kWperK = k_WperKm_pipe * length_m / 1000
+        thermal_losses_return_kWh[pipe] = np.vectorize(calc_thermal_loss_per_pipe)(average_temperature_return_K.values,
+                                                                     massflow_kgs.values,
+                                                                     temperature_of_the_ground_K,
+                                                                     k_kWperK,
+                                                                     )
     # WRITE TO DISK
 
     # LINEAR PRESSURE LOSSES (EDGES)
