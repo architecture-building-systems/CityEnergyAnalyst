@@ -208,3 +208,19 @@ class DashboardPlotParameters(Resource):
         plot = dashboard.plots[plot_index]
 
         return get_plot_parameters(config, plot)
+
+
+@api.route('/<int:dashboard_index>/plots/<int:plot_index>/input-files')
+class DashboardPlotInputFiles(Resource):
+    def get(self, dashboard_index, plot_index):
+        """
+        Get input files of Plot
+        """
+        config = current_app.cea_config
+        plot_cache = cea.plots.cache.PlotCache(config)
+        dashboards = cea.plots.read_dashboards(config, plot_cache)
+
+        dashboard = dashboards[dashboard_index]
+        plot = dashboard.plots[plot_index]
+
+        return [locator_method(*args) for locator_method, args in plot.input_files]
