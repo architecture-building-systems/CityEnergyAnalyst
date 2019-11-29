@@ -1,16 +1,17 @@
 from __future__ import division
 from __future__ import print_function
 
+import json
 import os
+
+import geopandas
 import numpy as np
 import pandas as pd
-import geopandas
-import json
+
 import cea.plots.cache
 from cea.constants import HOURS_IN_YEAR
 from cea.plots.variable_naming import get_color_array
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
-
 
 """
 Implements py:class:`cea.plots.ThermalNetworksPlotBase` as a base class for all plots in the category 
@@ -55,19 +56,18 @@ class ThermalNetworksPlotBase(cea.plots.PlotBase):
         else:
             # plot title including network name
             return '{name} for {network_type} in {network_name}'.format(name=self.name, network_type=self.network_type,
-                                                                        network_name = self.network_name)
+                                                                        network_name=self.network_name)
 
     @property
     def output_path(self):
         file_name = '{network_type}_{network_name}_{name}'.format(network_type=self.network_type,
-                                                                     network_name=self.network_name, name=self.id())
+                                                                  network_name=self.network_name, name=self.id())
         return self.locator.get_timeseries_plots_file(file_name, self.category_path)
 
     @property
     @cea.plots.cache.cached
     def buildings_hourly(self):
-        thermal_demand_df = pd.read_csv(self.locator.get_thermal_demand_csv_file(self.network_type, self.network_name),
-                                        index_col=0)
+        thermal_demand_df = pd.read_csv(self.locator.get_thermal_demand_csv_file(self.network_type, self.network_name))
         thermal_demand_df.set_index(self.date)
         thermal_demand_df = thermal_demand_df / 1000
         return thermal_demand_df
@@ -92,39 +92,19 @@ class ThermalNetworksPlotBase(cea.plots.PlotBase):
 
     @property
     @cea.plots.cache.cached
-    def hourly_pressure_loss(self):
+    def plant_pumping_requirement_kWh(self):
         hourly_pressure_loss = pd.read_csv(
-            self.locator.get_thermal_network_layout_pressure_drop_kw_file(self.network_type, self.network_name))
+            self.locator.get_network_energy_pumping_requirements_file(self.network_type, self.network_name))
         hourly_pressure_loss = hourly_pressure_loss['pressure_loss_total_kW']
         return pd.DataFrame(hourly_pressure_loss)
 
     @property
-    def yearly_pressure_loss(self):
-        return self.hourly_pressure_loss.values.sum()
-
-    @property
-    def hourly_relative_pressure_loss(self):
-        relative_loss = self._calculate_relative_loss(self.hourly_pressure_loss)
-        return pd.DataFrame(np.round(relative_loss, 2))
-
-    @property
-    def mean_pressure_loss_relative(self):
-        relative_loss = self._calculate_relative_loss(self.hourly_pressure_loss)
-        mean_loss = np.nanmean(relative_loss)  # calculate average loss of nonzero values
-        mean_loss = np.round(mean_loss, 2)
-        return mean_loss
-
-    @property
-    def hourly_relative_heat_loss(self):
-        relative_loss = self._calculate_relative_loss(self.hourly_heat_loss)
-        return pd.DataFrame(np.round(relative_loss, 2))
-
-    @property
-    def mean_heat_loss_relative(self):
-        relative_loss = self._calculate_relative_loss(self.hourly_heat_loss)
-        mean_loss = np.nanmean(relative_loss)  # calculate average loss of nonzero values
-        mean_loss = np.round(mean_loss, 2)
-        return mean_loss
+    @cea.plots.cache.cached
+    def total_thermal_losses_kWh(self):
+        hourly_thermal_loss = pd.read_csv(
+            self.locator.get_network_total_thermal_loss_file(self.network_type, self.network_name))
+        hourly_thermal_loss = hourly_thermal_loss['thermal_loss_total_kW']
+        return pd.DataFrame(hourly_thermal_loss)
 
     def _calculate_relative_loss(self, absolute_loss):
         """
@@ -152,65 +132,102 @@ class ThermalNetworksPlotBase(cea.plots.PlotBase):
     @property
     @cea.plots.cache.cached
     def hourly_heat_loss(self):
-        hourly_heat_loss = pd.read_csv(self.locator.get_thermal_network_qloss_system_file(self.network_type, self.network_name))
+        hourly_heat_loss = pd.read_csv(
+            self.locator.get_network_thermal_loss_edges_file(self.network_type, self.network_name))
         hourly_heat_loss = abs(hourly_heat_loss).sum(axis=1)  # aggregate heat losses of all edges
         return pd.DataFrame(hourly_heat_loss)
 
     @property
-    def yearly_heat_loss(self):
-        return abs(self.hourly_heat_loss.values).sum()
-
-    @property
     @cea.plots.cache.cached
     def P_loss_kWh(self):
-        return pd.read_csv(self.locator.get_thermal_network_layout_ploss_system_edges_file(self.network_type,
-                                                                                           self.network_name))
-    @property
-    @cea.plots.cache.cached
-    def Q_loss_kWh(self):
-        return pd.read_csv(self.locator.get_thermal_network_qloss_system_file(self.network_type,
-                                                                              self.network_name))  # edge loss
-    @property
-    @cea.plots.cache.cached
-    def P_loss_substation_kWh(self):
-        return pd.read_csv(self.locator.get_thermal_network_substation_ploss_file(self.network_type,
-                                                                                  self.network_name))
+        return pd.read_csv(self.locator.get_thermal_network_pressure_losses_edges_file(self.network_type,
+                                                                                       self.network_name))
 
     @property
     @cea.plots.cache.cached
-    def Pumping_allpipes_kWh(self):
-        # FIXME: why the unit conversion?!
-        df_pumping_kW = pd.read_csv(
-            self.locator.get_thermal_network_layout_pressure_drop_kw_file(self.network_type, self.network_name))
-        df_pumping_supply_kW = df_pumping_kW['pressure_loss_supply_kW']
-        df_pumping_return_kW = df_pumping_kW['pressure_loss_return_kW']
-        df_pumping_allpipes_kW = df_pumping_supply_kW + df_pumping_return_kW
-        return df_pumping_allpipes_kW
+    def linear_pressure_loss_Paperm(self):
+        return pd.read_csv(self.locator.get_network_linear_pressure_drop_edges(self.network_type,
+                                                                               self.network_name))
 
     @property
     @cea.plots.cache.cached
-    def Pumping_substations_kWh(self):
-        # FIXME: why the unit conversion?!
-        df_pumping_kW = pd.read_csv(
-            self.locator.get_thermal_network_layout_pressure_drop_kw_file(self.network_type, self.network_name))
-        return df_pumping_kW['pressure_loss_substations_kW']
+    def pressure_at_nodes_Pa(self):
+        return pd.read_csv(self.locator.get_network_pressure_at_nodes(self.network_type,
+                                                                      self.network_name))
+
+    @property
+    @cea.plots.cache.cached
+    def mass_flow_kgs_pipes(self):
+        return pd.read_csv(self.locator.get_thermal_network_layout_massflow_edges_file(self.network_type,
+                                                                                       self.network_name))
+
+    @property
+    @cea.plots.cache.cached
+    def velocity_mps_pipes(self):
+        try:
+            return pd.read_csv(self.locator.get_thermal_network_velocity_edges_file(self.network_type,
+                                                                                       self.network_name))
+        except:
+            #backward compatibility with detailed network simulation (which does not produce this data)
+            return None
+
+    @property
+    @cea.plots.cache.cached
+    def mass_flow_kgs_nodes(self):
+        try:
+            return pd.read_csv(self.locator.get_thermal_network_layout_massflow_nodes_file(self.network_type,
+                                                                                       self.network_name))
+        except:
+        # backward compatibility with detailed network simulation (which does not produce this data)
+            return None
+
+    @property
+    @cea.plots.cache.cached
+    def thermal_loss_edges_kWh(self):
+        return pd.read_csv(self.locator.get_network_thermal_loss_edges_file(self.network_type,
+                                                                            self.network_name))  # edge loss
+
+    @property
+    @cea.plots.cache.cached
+    def thermal_loss_edges_Wperm(self):
+        try:
+            return pd.read_csv(self.locator.get_network_linear_thermal_loss_edges_file(self.network_type,
+                                                                                       self.network_name))  # edge loss
+        except:
+            # backward compatibility with detailed network simulation (which does not produce this data)
+            return None
 
     @property
     def network_pipe_length(self):
         df = pd.read_csv(self.locator.get_thermal_network_edge_list_file(self.network_type, self.network_name))
-        total_pipe_length = df['pipe length'].sum()
+        total_pipe_length = df['length_m'].sum()
         return total_pipe_length
 
     @property
     @cea.plots.cache.cached
-    def T_sup_C(self):
+    def temperature_supply_nodes_C(self):
         """Node supply temperatures"""
         supply_df = pd.read_csv(
-            self.locator.get_thermal_network_layout_supply_temperature_file(self.network_type, self.network_name))
+            self.locator.get_network_temperature_supply_nodes_file(self.network_type, self.network_name))
         supply_df -= 273.15  # convert from Kelvin to C
         return supply_df
 
+    @property
+    @cea.plots.cache.cached
+    def temperature_return_nodes_C(self):
+        """Node return temperatures"""
+        return_df = pd.read_csv(
+            self.locator.get_network_temperature_return_nodes_file(self.network_type, self.network_name))
+        return_df -= 273.15  # convert from Kelvin to C
+        return return_df
 
+    @property
+    @cea.plots.cache.cached
+    def temperature_supply_return_plant_C(self):
+        """Node supply temperatures"""
+        supply_df = pd.read_csv(
+            self.locator.get_network_temperature_plant(self.network_type, self.network_name))
+        return supply_df
 
 
 class ThermalNetworksMapPlotBase(ThermalNetworksPlotBase):
@@ -242,7 +259,7 @@ class ThermalNetworksMapPlotBase(ThermalNetworksPlotBase):
         self.input_files = [(self.locator.get_zone_geometry, []),
                             (self.locator.get_thermal_demand_csv_file, self.network_args),
                             (self.locator.get_thermal_network_edge_list_file, self.network_args),
-                            (self.locator.get_thermal_network_qloss_system_file, self.network_args),
+                            (self.locator.get_network_thermal_loss_edges_file, self.network_args),
                             (self.locator.get_thermal_network_node_types_csv_file, self.network_args)]
 
     @property
@@ -320,4 +337,3 @@ class ThermalNetworksMapPlotBase(ThermalNetworksPlotBase):
         div = Template(open(template).read()).render(hash=hash, edges=edges, nodes=nodes,
                                                      zone=zone, district=district)
         return div
-

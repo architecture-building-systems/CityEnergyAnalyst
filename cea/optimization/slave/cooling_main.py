@@ -146,6 +146,9 @@ def district_cooling_network(locator,
 
             NG_Trigen_req_W[hour] = gas_output['NG_Trigen_req_W']
 
+    #calculate the electrical capacity as a function of the peak produced by the turbine
+    master_to_slave_variables.NG_Trigen_CCGT_size_electrical_W = E_Trigen_NG_gen_W.max()
+
     # BACK-UPP VCC - AIR SOURCE
     master_to_slave_variables.AS_BackupVCC_size_W = np.amax(Q_BackupVCC_AS_gen_W)
     if master_to_slave_variables.AS_BackupVCC_size_W != 0.0:
@@ -159,11 +162,12 @@ def district_cooling_network(locator,
 
     # CAPEX (ANNUAL, TOTAL) AND OPEX (FIXED, VAR, ANNUAL) GENERATION UNITS
     mdotnMax_kgpers = np.amax(mdot_kgpers)
-    performance_costs_generation = cost_model.calc_generation_costs_cooling(locator,
-                                                                            master_to_slave_variables,
-                                                                            config,
-                                                                            mdotnMax_kgpers
-                                                                            )
+    performance_costs_generation, \
+    district_cooling_capacity_installed = cost_model.calc_generation_costs_capacity_installed_cooling(locator,
+                                                                                                      master_to_slave_variables,
+                                                                                                      config,
+                                                                                                      mdotnMax_kgpers
+                                                                                                      )
     # CAPEX (ANNUAL, TOTAL) AND OPEX (FIXED, VAR, ANNUAL) STORAGE UNITS
     performance_costs_storage = cost_model.calc_generation_costs_cooling_storage(locator,
                                                                                  master_to_slave_variables,
@@ -233,7 +237,8 @@ def district_cooling_network(locator,
     return district_cooling_costs, \
            district_cooling_generation_dispatch, \
            district_cooling_electricity_requirements_dispatch, \
-           district_cooling_fuel_requirements_dispatch
+           district_cooling_fuel_requirements_dispatch, \
+           district_cooling_capacity_installed
 
 
 def calc_network_summary_DCN(locator, master_to_slave_vars):
