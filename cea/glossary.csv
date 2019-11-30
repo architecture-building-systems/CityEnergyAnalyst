@@ -798,16 +798,16 @@ data-helper,get_building_comfort,inputs/building-properties/indoor_comfort.dbf,T
 data-helper,get_building_comfort,inputs/building-properties/indoor_comfort.dbf,Ve_lpspax,Indoor quality requirements of indoor ventilation per person,[l/s],{0.0...n},float,black
 data-helper,get_building_comfort,inputs/building-properties/indoor_comfort.dbf,RH_max_pc,Upper bound of relative humidity,[%],{0.0...n},float,black
 data-helper,get_building_comfort,inputs/building-properties/indoor_comfort.dbf,RH_min_pc,Lower_bound of relative humidity,[%],{0.0...n},float,black
-data-helper,get_building_air_conditioning,inputs/building-properties/technical_systems.dbf,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black
-data-helper,get_building_air_conditioning,inputs/building-properties/technical_systems.dbf,type_cs,Type of cooling supply system,[code],{T0...Tn},string,black
-data-helper,get_building_air_conditioning,inputs/building-properties/technical_systems.dbf,type_ctrl,Type of heating and cooling control systems (relates to values in Default Database HVAC Properties),[code],{T1...Tn},string,black
-data-helper,get_building_air_conditioning,inputs/building-properties/technical_systems.dbf,type_dhw,Type of hot water supply system,[code],{T0...Tn},string,black
-data-helper,get_building_air_conditioning,inputs/building-properties/technical_systems.dbf,type_hs,Type of heating supply system,[code],{T0...Tn},string,black
-data-helper,get_building_air_conditioning,inputs/building-properties/technical_systems.dbf,type_vent,Type of ventilation strategy (relates to values in Default Database HVAC Properties),[code],{T1...Tn},string,black
-data-helper,get_building_air_conditioning,inputs/building-properties/technical_systems.dbf,heat_starts,Start of the heating season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black
-data-helper,get_building_air_conditioning,inputs/building-properties/technical_systems.dbf,heat_ends,End of the heating season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black
-data-helper,get_building_air_conditioning,inputs/building-properties/technical_systems.dbf,cool_starts,Start of the cooling season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black
-data-helper,get_building_air_conditioning,inputs/building-properties/technical_systems.dbf,cool_ends,End of the cooling season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black
+data-helper,get_building_air_conditioning,inputs/building-properties/air_conditioning_systems.dbf,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black
+data-helper,get_building_air_conditioning,inputs/building-properties/air_conditioning_systems.dbf,type_cs,Type of cooling supply system,[code],{T0...Tn},string,black
+data-helper,get_building_air_conditioning,inputs/building-properties/air_conditioning_systems.dbf,type_ctrl,Type of heating and cooling control systems (relates to values in Default Database HVAC Properties),[code],{T1...Tn},string,black
+data-helper,get_building_air_conditioning,inputs/building-properties/air_conditioning_systems.dbf,type_dhw,Type of hot water supply system,[code],{T0...Tn},string,black
+data-helper,get_building_air_conditioning,inputs/building-properties/air_conditioning_systems.dbf,type_hs,Type of heating supply system,[code],{T0...Tn},string,black
+data-helper,get_building_air_conditioning,inputs/building-properties/air_conditioning_systems.dbf,type_vent,Type of ventilation strategy (relates to values in Default Database HVAC Properties),[code],{T1...Tn},string,black
+data-helper,get_building_air_conditioning,inputs/building-properties/air_conditioning_systems.dbf,heat_starts,Start of the heating season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black
+data-helper,get_building_air_conditioning,inputs/building-properties/air_conditioning_systems.dbf,heat_ends,End of the heating season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black
+data-helper,get_building_air_conditioning,inputs/building-properties/air_conditioning_systems.dbf,cool_starts,Start of the cooling season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black
+data-helper,get_building_air_conditioning,inputs/building-properties/air_conditioning_systems.dbf,cool_ends,End of the cooling season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black
 data-helper,get_building_internal,inputs/building-properties/internal_loads.dbf,Ea_Wm2,Peak specific electrical load due to computers and devices,[W/m2],{0.0...n},float,black
 data-helper,get_building_internal,inputs/building-properties/internal_loads.dbf,Ed_Wm2,Peak specific electrical load due to servers/data centres,[W/m2],{0.0...n},float,black
 data-helper,get_building_internal,inputs/building-properties/internal_loads.dbf,El_Wm2,Peak specific electrical load due to artificial lighting,[W/m2],{0.0...n},float,black

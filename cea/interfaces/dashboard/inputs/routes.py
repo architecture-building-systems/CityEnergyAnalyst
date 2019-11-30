@@ -28,6 +28,8 @@ def read_inputs_field_types():
         'float': float,
         'str': str,
         'year': int,
+        'choice': str,
+        'date': str
     }
 
     for db in inputs.keys():
