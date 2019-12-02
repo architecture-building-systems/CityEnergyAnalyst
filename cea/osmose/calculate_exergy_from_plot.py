@@ -14,9 +14,10 @@ COLOR_LIST = ['#43444b', '#5c5d67', '#2a2b2f',
               '#333452', '#1e6e6d', '#474863', '#5c5c74', '#707186', '#848597']
 
 
-def calc_exergy_from_plot(paths_to_folder, t, line_type, T_ref, plot_type, models_to_plot):
+def calc_exergy_from_plot(paths_to_folder, t, T_ref, plot_type, models_to_plot):
 
     # load and prepare data
+    line_type = 'base'
     x, y = load_data_from_txt(paths_to_folder, plot_type, line_type, models_to_plot, t)
     y_carnot = np.vectorize(calc_carnot_factor)(T_ref[t-1], y + 273.15)
     # get indices of exergy use and exergy gain
@@ -103,12 +104,15 @@ def get_exergy_use_gain_indices(x):
 
 def main():
     # case
-    tech = 'HCS_base'
-    path_to_base_folder = 'E:\\OSMOSE_projects\\HCS_mk\\results\\'
+    # tech = ''
+    tech = 'HCS_base_coil'
+    path_to_base_folder = 'E:\\results_1130'
+    path_to_base_folder = 'D:\\SH\\WP1_1130\\'
+    # path_to_base_folder = 'E:\\OSMOSE_projects\\HCS_mk\\results\\'
     # path_to_base_folder = "E:\\HCS_results_1022\\HCS_base_m_out_dP"
 
     # all_run_folders = os.listdir(os.path.join(path_to_base_folder, tech))
-    all_run_folders = ['run_036_RET_B005_1_24', 'run_037_HOT_B005_1_24', 'run_038_OFF_B005_1_24']
+    all_run_folders = ['run_003_OFF_B005_1_168']
     for run_folder in all_run_folders:
         if 'run' in run_folder:
             print(run_folder)
@@ -117,16 +121,26 @@ def main():
             model_folder = [path_to_base_folder, tech, run_folder, 's_001\\plots\\icc\\models']
             paths_to_model_folder = os.path.join('', *model_folder)
             path_to_run_folder = os.path.join('', *[path_to_base_folder, tech, run_folder])
+            # get T_ref
             T_ref = calc_T_ref(path_to_run_folder)
-
+            # get total_df
+            files_in_path = os.listdir(path_to_run_folder)
+            file_name = [file for file in files_in_path if 'total' in file][0]
+            total_df = pd.read_csv(os.path.join(path_to_run_folder, file_name), index_col=0)
             for line_type in line_types:
                 exergy_df = pd.DataFrame()
                 # for t in [1]:
-                for t in np.arange(1,25,1):
+                for t in np.arange(1,total_df.shape[0],1):
                 # for t in np.arange(73,73+24,1):
-                    exergy_dict, total_exergy_recovered = calc_exergy_from_plot(paths_to_model_folder, t, line_type, T_ref, 'icc', 'all_chillers')
+                    exergy_dict, total_exergy_recovered = calc_exergy_from_plot(paths_to_model_folder, t, T_ref, 'icc',
+                                                                                'all_chillers')
                     for key in exergy_dict.keys():
                         exergy_df.loc[t, key] = exergy_dict[key]
+
+                exergy_df['Qsc_kWh'] = total_df.loc[[str(x) for x in exergy_df.index], 'Qsc_theoretical'].values
+                exergy_df['Qc_chillers_kWh'] = total_df.loc[[str(x) for x in exergy_df.index], 'Q_chiller_kWh'].values
+                exergy_df['ratio_energy_recovery'] = (exergy_df['Qsc_kWh'] - exergy_df['Qc_chillers_kWh']) / exergy_df['Qsc_kWh']
+                exergy_df['energy_recovered'] = exergy_df['Qsc_kWh'] - exergy_df['Qc_chillers_kWh']
                 file_name = 'exergy_from_plot_' + line_type + '.csv'
                 exergy_df.to_csv(os.path.join(path_to_run_folder, file_name), na_rep='NaN')
 
