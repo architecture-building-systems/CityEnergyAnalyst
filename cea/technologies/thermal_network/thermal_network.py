@@ -1126,7 +1126,7 @@ def calc_asign_diameter(max_flow, pipe_catalog):
 
     if max_flow < pipe_catalog['mdot_min_kgs'].min():
         return 'DN20'  # the smallest pipe
-    elif max_flow > pipe_catalog['mdot_min_kgs'].max():
+    elif max_flow > pipe_catalog['mdot_max_kgs'].max():
         raise ValueError(
             'A very specific bad thing happened!: One or more of the pipes diameters you indicated' '\n'
             'are not in the pipe catalog!, please make sure your input network match the piping catalog,' '\n'
