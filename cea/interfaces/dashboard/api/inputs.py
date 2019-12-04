@@ -10,7 +10,7 @@ from flask_restplus import Namespace, Resource, abort
 
 import cea.inputlocator
 import cea.utilities.dbf
-import cea.utilities.schedule_reader
+from cea.utilities.schedule_reader import read_cea_schedule, save_cea_schedule
 from cea.plots.supply_system.supply_system_map import get_building_connectivity
 from cea.plots.variable_naming import get_color_array
 from cea.technologies.network_layout.main import layout_network, NetworkLayout
@@ -30,16 +30,8 @@ def read_inputs_field_types():
     """Parse the inputs.yaml file and create the dictionary of column types"""
     inputs = yaml.load(
         open(os.path.join(os.path.dirname(__file__), '../inputs/inputs.yml')).read())
-    types = {
-        'int': int,
-        'float': float,
-        'str': str,
-        'year': int,
-    }
 
     for db in inputs.keys():
-        inputs[db]['fieldtypes'] = {
-            field['name']: types[field['type']] for field in inputs[db]['fields']}
         inputs[db]['fieldnames'] = [field['name']
                                     for field in inputs[db]['fields']]
     return inputs
@@ -77,8 +69,8 @@ class InputBuildingProperties(Resource):
             abort(400, 'Input file not found: %s' % db, choices=INPUT_KEYS)
         db_info = INPUTS[db]
         columns = OrderedDict()
-        for column in db_info['fieldnames']:
-            columns[column] = db_info['fieldtypes'][column].__name__
+        for field in db_info['fields']:
+            columns[field['name']] = field['type']
         return columns
 
 
@@ -144,6 +136,7 @@ class AllInputs(Resource):
         tables = form['tables']
         geojsons = form['geojsons']
         crs = form['crs']
+        schedules = form['schedules']
 
         out = {'tables': {}, 'geojsons': {}}
 
@@ -185,13 +178,17 @@ class AllInputs(Resource):
                 if db_info['type'] == 'shp':
                     out['geojsons'][db] = {}
 
+        if schedules:
+            for building in schedules:
+                dict_to_schedule(locator, building, schedules[building])
+
         return out
 
 
 def get_building_properties():
     import cea.glossary
     # FIXME: Find a better way to ensure order of tabs
-    tabs = ['zone', 'age', 'occupancy', 'architecture', 'internal-loads', 'indoor-comfort', 'technical-systems',
+    tabs = ['zone', 'age', 'occupancy', 'architecture', 'internal-loads', 'indoor-comfort', 'air-conditioning-systems',
             'supply-systems', 'surroundings']
 
     config = current_app.cea_config
@@ -223,11 +220,19 @@ def get_building_properties():
             db_glossary = json.loads(glossary[filenames == '%s.%s' % (db.replace('-', '_'), db_info['type'])]
                                      [['VARIABLE', 'UNIT', 'DESCRIPTION']].set_index('VARIABLE').to_json(orient='index'))
 
-            for column in db_info['fieldnames']:
+            for field in db_info['fields']:
+                column = field['name']
                 columns[column] = {}
                 if column == 'REFERENCE':
                     continue
-                columns[column]['type'] = db_info['fieldtypes'][column].__name__
+                columns[column]['type'] = field['type']
+                if field['type'] == 'choice':
+                    path = getattr(locator, field['location']['path'])()
+                    columns[column]['path'] = path
+                    # TODO: Try to optimize this step to decrease the number of file reading
+                    columns[column]['choices'] = get_choices(field['location'], path)
+                if 'constraints' in field:
+                    columns[column]['constraints'] = field['constraints']
                 columns[column]['description'] = db_glossary[column]['DESCRIPTION']
                 columns[column]['unit'] = db_glossary[column]['UNIT']
             store['columns'][db] = columns
@@ -314,9 +319,18 @@ class BuildingSchedule(Resource):
             abort(500, 'File not found')
 
 
+def get_choices(location, path):
+    df = pandas.read_excel(path, location['sheet'])
+    if 'filter' in location:
+        choices = df[df.eval(location['filter'])][location['column']].tolist()
+    else:
+        choices = df[location['column']].tolist()
+    return [{'value': choice, 'label': df.loc[df[location['column']] == choice, 'Description'].values[0]} for choice in choices]
+
+
 def schedule_to_dict(locator, building):
     schedule_path = locator.get_building_weekly_schedules(building)
-    schedule_data, schedule_complementary_data = cea.utilities.schedule_reader.read_cea_schedule(schedule_path)
+    schedule_data, schedule_complementary_data = read_cea_schedule(schedule_path)
     df = pandas.DataFrame(schedule_data).set_index(['DAY', 'HOUR'])
     out = {'SCHEDULES': {schedule_type: {day: df.loc[day][schedule_type].values.tolist() for day in df.index.levels[0]}
                          for schedule_type in df.columns}}
@@ -324,5 +338,16 @@ def schedule_to_dict(locator, building):
     return out
 
 
-def json_to_schedule(json):
-    pass
+def dict_to_schedule(locator, building, schedule_dict):
+    schedule_path = locator.get_building_weekly_schedules(building)
+    schedule_data = schedule_dict['SCHEDULES']
+    schedule_complementary_data = {'MONTHLY_MULTIPLIER': schedule_dict['MONTHLY_MULTIPLIER'],
+                                   'METADATA': schedule_dict['METADATA']}
+
+    data = pandas.DataFrame()
+    for day in ['WEEKDAY', 'SATURDAY', 'SUNDAY']:
+        df = pandas.DataFrame({'HOUR': range(1, 25), 'DAY': [day] * 24})
+        for schedule_type, schedule in schedule_data.items():
+            df[schedule_type] = schedule[day]
+        data = data.append(df, ignore_index=True)
+    save_cea_schedule(data.to_dict('list'), schedule_complementary_data, schedule_path)
