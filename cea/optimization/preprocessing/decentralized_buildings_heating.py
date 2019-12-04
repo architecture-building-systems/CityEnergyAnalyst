@@ -71,6 +71,7 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
         PEN_MJoil = np.zeros((13, 7))
         # indicate supply technologies for each configuration
         Opex_a_var_USD[0][0] = 1  # Boiler NG
+        Opex_a_var_USD[1][1] = 1  # Boiler BG
         Opex_a_var_USD[2][2] = 1  # Fuel Cell
 
         resourcesRes = np.zeros((13, 4))
