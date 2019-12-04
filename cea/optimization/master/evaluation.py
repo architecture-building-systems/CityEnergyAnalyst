@@ -238,11 +238,11 @@ def save_results(master_to_slave_vars,
                  cooling_dispatch,
                  electricity_dispatch,
                  electricity_requirements,
-                 performance_totals,
+                 performance_totals_dict,
                  building_connectivity_dict,
-                 district_heating_capacity_installed,
-                 district_cooling_capacity_installed,
-                 district_electricity_capacity_installed,
+                 district_heating_capacity_installed_dict,
+                 district_cooling_capacity_installed_dict,
+                 district_electricity_capacity_installed_dict,
                  buildings_disconnected_heating_capacities,
                  buildings_disconnected_cooling_capacities
                  ):
@@ -251,15 +251,15 @@ def save_results(master_to_slave_vars,
     generation = master_to_slave_vars.generation_number
 
     # SAVE INDIVIDUAL DISTRICT HEATING INSTALLED CAPACITIES
-    pd.DataFrame(district_heating_capacity_installed, index =[0]).to_csv(locator.get_optimization_connected_heating_capacity(individual,
-                                                                                                                 generation),
-        index=False, float_format='%.3f')
-    pd.DataFrame(district_cooling_capacity_installed, index =[0]).to_csv(locator.get_optimization_connected_cooling_capacity(individual,
-                                                                                                                 generation),
-                                               index=False, float_format='%.3f')
-    pd.DataFrame(district_electricity_capacity_installed, index =[0]).to_csv(locator.get_optimization_connected_electricity_capacity(individual,
-                                                                                                                         generation),
-                                                   index=False, float_format='%.3f')
+    pd.DataFrame(district_heating_capacity_installed_dict, index =[0]).to_csv(locator.get_optimization_connected_heating_capacity(individual,
+                                                                                                                                  generation),
+                                                                              index=False, float_format='%.3f')
+    pd.DataFrame(district_cooling_capacity_installed_dict, index =[0]).to_csv(locator.get_optimization_connected_cooling_capacity(individual,
+                                                                                                                                  generation),
+                                                                              index=False, float_format='%.3f')
+    pd.DataFrame(district_electricity_capacity_installed_dict, index =[0]).to_csv(locator.get_optimization_connected_electricity_capacity(individual,
+                                                                                                                                          generation),
+                                                                                  index=False, float_format='%.3f')
 
     buildings_disconnected_heating_capacities.to_csv(locator.get_optimization_disconnected_heating_capacity(individual,
                                                                                                         generation),
@@ -270,25 +270,25 @@ def save_results(master_to_slave_vars,
                                                      index=False, float_format='%.3f')
 
     # SAVE BUILDING CONNECTIVITY
-    pd.DataFrame(building_connectivity_dict).to_csv(locator.get_optimization_slave_building_connectivity(individual,
+    pd.DataFrame(building_connectivity_dict, index =[0]).to_csv(locator.get_optimization_slave_building_connectivity(individual,
                                                                                                          generation),
                                                     index=False, float_format='%.3f')
 
     # SAVE PERFORMANCE RELATED FILES
     # export all including performance heating and performance cooling since we changed them
-    performance_disconnected = dict(buildings_disconnected_costs, **buildings_disconnected_emissions)
-    pd.DataFrame(performance_disconnected, index =[0]).to_csv(locator.get_optimization_slave_disconnected_performance(individual,
+    performance_disconnected_dict = dict(buildings_disconnected_costs, **buildings_disconnected_emissions)
+    pd.DataFrame(performance_disconnected_dict, index =[0]).to_csv(locator.get_optimization_slave_disconnected_performance(individual,
                                                                                                           generation),
                                                   index=False, float_format='%.3f')
 
-    performance_connected = dict(buildings_connected_costs, **buildings_connected_emissions)
-    pd.DataFrame(performance_connected, index =[0]).to_csv(locator.get_optimization_slave_connected_performance(individual,
+    performance_connected_dict = dict(buildings_connected_costs, **buildings_connected_emissions)
+    pd.DataFrame(performance_connected_dict, index =[0]).to_csv(locator.get_optimization_slave_connected_performance(individual,
                                                                                                     generation),
                                                index=False, float_format='%.3f')
 
-    pd.DataFrame(performance_totals, index =[0]).to_csv(locator.get_optimization_slave_total_performance(individual,
-                                                                                             generation),
-                                            index=False, float_format='%.3f')
+    pd.DataFrame(performance_totals_dict, index =[0]).to_csv(locator.get_optimization_slave_total_performance(individual,
+                                                                                                              generation),
+                                                             index=False, float_format='%.3f')
 
     # add date and plot
     DATE = master_to_slave_vars.date
