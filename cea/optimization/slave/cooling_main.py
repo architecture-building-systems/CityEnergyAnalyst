@@ -82,7 +82,7 @@ def district_cooling_network(locator,
 
     # get properties of technology used in this script
     ACH_prop = AbsorptionChiller(pd.read_excel(locator.get_database_supply_systems(), sheet_name="Absorption_chiller"), 'double')
-    CCGT_prop = calc_cop_CCGT(master_to_slave_variables.NG_Trigen_CCGT_size_W, ACH_T_IN_FROM_CHP_K, "NG")
+    CCGT_prop = calc_cop_CCGT(master_to_slave_variables.NG_Trigen_ACH_size_W, ACH_T_IN_FROM_CHP_K, "NG")
 
     # intitalize variables
     Q_Trigen_NG_gen_W = np.zeros(HOURS_IN_YEAR)

@@ -839,7 +839,7 @@ def calc_generation_costs_capacity_installed_heating(locator,
         Opex_fixed_wasteserver_HEX_USD = 0.0
         Capex_wasteserver_HEX_USD = 0.0
         Capacity_DS_HP_W = 0.0
-        Capex_a_wasteeserver_HP_USD = 0.0
+        Capex_a_wasteserver_HP_USD = 0.0
         Opex_fixed_wasteserver_HP_USD = 0.0
         Capex_wasteserver_HP_USD = 0.0
 
