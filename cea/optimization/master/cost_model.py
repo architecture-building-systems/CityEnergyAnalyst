@@ -1042,7 +1042,7 @@ def calc_costs_emissions_decentralized_DC(DCN_barcode, buildings_names_with_cool
                                  'Capacity_VCCHT_AS_cool_disconnected_W': dfBest["Capacity_VCCHT_AS_W"].iloc[0],
                                  'Capacity_ACH_SC_FP_cool_disconnected_W': dfBest["Capacity_ACH_SC_FP_W"].iloc[0],
                                  'Capaticy_ACH_SC_ET_cool_disconnected_W': dfBest["Capaticy_ACH_SC_ET_W"].iloc[0],
-                                 'Capacity_ACHHT_FP_cool_disconnected_W': dfBest["Capacity_ACHHT_FP_W"].iloc[0]})
+                                 'Capacity_ACHHT_FP_cool_disconnected_W': dfBest["Capacity_ACHHT_FP_W"].iloc[0]}, index =[0])
             capacity_installed_df = pd.concat([capacity_installed_df, data], ignore_index=True)
 
     return GHG_sys_disconnected_tonCO2yr, \
