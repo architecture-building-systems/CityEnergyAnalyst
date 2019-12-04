@@ -127,7 +127,7 @@ def calc_steiner_spanning_tree(crs_projected, input_network_shp, output_network_
         # add loops to the network by connecting None nodes that exist in the potential network
         mst_edges, new_mst_nodes = add_loops_to_network(G, mst_non_directed, new_mst_nodes, mst_edges, type_mat_default,
                                                         pipe_diameter_default)
-        mst_edges.drop(['weight'], inplace=True, axis=1)
+        # mst_edges.drop(['weight'], inplace=True, axis=1)
     if create_plant:
         if optimization_flag == False:
             building_anchor = calc_coord_anchor(total_demand_location, new_mst_nodes, type_network)
