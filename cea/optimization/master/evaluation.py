@@ -270,7 +270,7 @@ def save_results(master_to_slave_vars,
                                                      index=False, float_format='%.3f')
 
     # SAVE BUILDING CONNECTIVITY
-    pd.DataFrame(building_connectivity_dict, index =[0]).to_csv(locator.get_optimization_slave_building_connectivity(individual,
+    pd.DataFrame(building_connectivity_dict).to_csv(locator.get_optimization_slave_building_connectivity(individual,
                                                                                                          generation),
                                                     index=False, float_format='%.3f')
 
