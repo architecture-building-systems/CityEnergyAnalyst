@@ -1033,8 +1033,8 @@ def calc_costs_emissions_decentralized_DC(DCN_barcode, buildings_names_with_cool
             PEN_sys_disconnected_MJoilyr += dfBest["PEN_MJoil"].iloc[0]  # [MJ-oil-eq]
             Capex_total_sys_disconnected_USD += dfBest["Capex_total_USD"].iloc[0]
             Capex_a_sys_disconnected_USD += dfBest["Capex_a_USD"].iloc[0]
-            Opex_var_sys_disconnected += dfBest["Opex_a_var_USD"].iloc[0]
-            Opex_fixed_sys_disconnected_USD += dfBest["Opex_a_fixed_USD"].iloc[0]
+            Opex_var_sys_disconnected += dfBest["Opex_var_USD"].iloc[0]
+            Opex_fixed_sys_disconnected_USD += dfBest["Opex_fixed_USD"].iloc[0]
 
             data = pd.DataFrame({'Name': building_name,
                                  'Capacity_DX_AS_cool_disconnected_W': dfBest["Capacity_DX_AS_W"].iloc[0],
@@ -1042,7 +1042,7 @@ def calc_costs_emissions_decentralized_DC(DCN_barcode, buildings_names_with_cool
                                  'Capacity_VCCHT_AS_cool_disconnected_W': dfBest["Capacity_VCCHT_AS_W"].iloc[0],
                                  'Capacity_ACH_SC_FP_cool_disconnected_W': dfBest["Capacity_ACH_SC_FP_W"].iloc[0],
                                  'Capaticy_ACH_SC_ET_cool_disconnected_W': dfBest["Capaticy_ACH_SC_ET_W"].iloc[0],
-                                 'Capacity_ACHHT_FP_cool_disconnected_W': dfBest["Capacity_ACHHT_FP_W"].iloc[0]})
+                                 'Capacity_ACHHT_FP_cool_disconnected_W': dfBest["Capacity_ACHHT_FP_W"].iloc[0]}, index =[0])
             capacity_installed_df = pd.concat([capacity_installed_df, data], ignore_index=True)
 
     return GHG_sys_disconnected_tonCO2yr, \
