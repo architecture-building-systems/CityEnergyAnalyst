@@ -192,8 +192,8 @@ def calc_variable_costs_connected_buildings(sum_natural_gas_imports_W,
                                             ):
     # COSTS
     Opex_var_NG_sys_connected_USD = sum(sum_natural_gas_imports_W) * prices.NG_PRICE
-    Opex_var_WB_sys_connected_USD = sum(sum_wet_biomass_imports_W) * prices.BG_PRICE
-    Opex_var_DB_sys_connected_USD = sum(sum_dry_biomass_imports_W) * prices.BG_PRICE
+    Opex_var_WB_sys_connected_USD = sum(sum_wet_biomass_imports_W) * prices.WB_PRICE
+    Opex_var_DB_sys_connected_USD = sum(sum_dry_biomass_imports_W) * prices.DB_PRICE
     Opex_var_GRID_buy_sys_connected_USD = sum(sum_electricity_imports_W * prices.ELEC_PRICE)
     Opex_var_GRID_sell_sys_connected_USD = -sum(sum_electricity_exports_W * prices.ELEC_PRICE_EXPORT)
 

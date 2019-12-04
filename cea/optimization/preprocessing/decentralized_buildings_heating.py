@@ -142,25 +142,24 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
         # 3-13: Boiler NG + GHP
         for i in range(10):
             # set nominal size for Boiler and GHP
-            nom_mdotkgpers = mdot_kgpers.max()
             QnomBoiler_W = i / 10.0 * Qnom_W
-            mdot_kgpers_Boiler = i / 10.0 * nom_mdotkgpers
+            mdot_kgpers_Boiler = i / 10.0 * mdot_kgpers
             QnomGHP_W = Qnom_W - QnomBoiler_W
-            mdot_kgpers_nom_GHP = nom_mdotkgpers - mdot_kgpers_Boiler
 
             # GHP operation
-            Texit_GHP_nom_K = QnomGHP_W / (mdot_kgpers_nom_GHP * HEAT_CAPACITY_OF_WATER_JPERKGK) + Tret_K
+            Texit_GHP_nom_K = QnomGHP_W / (mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK) + Tret_K
             el_GHP_Wh, q_load_NG_Boiler_Wh, \
             qhot_missing_Wh, \
-            tsup2_K, q_from_GHP_Wh = np.vectorize(calc_GHP_operation)(QnomGHP_W, T_ground_K, Texit_GHP_nom_K,
+            Texit_GHP_K, q_from_GHP_Wh = np.vectorize(calc_GHP_operation)(QnomGHP_W, T_ground_K, Texit_GHP_nom_K,
                                                                       Tret_K, Tsup_K, mdot_kgpers, q_load_Wh)
             GHP_el_size_W[i][0] = max(el_GHP_Wh)
             GHP_Status = np.where(q_from_GHP_Wh > 0.0, 1, 0)
+
             # GHP Backup Boiler operation
             if max(qhot_missing_Wh) > 0.0:
                 print "GHP unable to cover the whole demand, boiler activated!"
                 Qnom_GHP_Backup_Boiler_W = max(qhot_missing_Wh)
-                BoilerEff = np.vectorize(Boiler.calc_Cop_boiler)(qhot_missing_Wh, Qnom_GHP_Backup_Boiler_W, tsup2_K)
+                BoilerEff = np.vectorize(Boiler.calc_Cop_boiler)(qhot_missing_Wh, Qnom_GHP_Backup_Boiler_W, Texit_GHP_K)
                 Qgas_to_GHPBoiler_Wh = np.divide(qhot_missing_Wh, BoilerEff,
                                                  out=np.zeros_like(qhot_missing_Wh), where=BoilerEff != 0.0)
             else:
@@ -170,7 +169,7 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
             GHPbackupBoiler_Status = np.where(qhot_missing_Wh > 0.0, 1, 0)
 
             # NG Boiler operation
-            BoilerEff = np.vectorize(Boiler.calc_Cop_boiler)(q_load_NG_Boiler_Wh, QnomBoiler_W, Texit_GHP_nom_K)
+            BoilerEff = np.vectorize(Boiler.calc_Cop_boiler)(q_load_NG_Boiler_Wh, QnomBoiler_W, Texit_GHP_K)
             Qgas_to_Boiler_Wh = np.divide(q_load_NG_Boiler_Wh, BoilerEff,
                                           out=np.zeros_like(q_load_NG_Boiler_Wh), where=BoilerEff != 0.0)
             Boiler_Status = np.where(q_load_NG_Boiler_Wh > 0.0, 1, 0)
@@ -368,7 +367,7 @@ def calc_new_load(mdot_kgpers, TsupDH, Tret):
     :return: Qload_W: load of the distribution
     :rtype: float
     """
-    Qload_W = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (TsupDH - Tret) * (1 + Q_LOSS_DISCONNECTED)
+    Qload_W = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (TsupDH - Tret)
     if Qload_W < 0:
         Qload_W = 0
     return Qload_W
