@@ -22,9 +22,9 @@ import cea.technologies.cooling_tower as cooling_tower
 import cea.technologies.direct_expansion_units as dx
 import cea.technologies.solar.solar_collector as solar_collector
 import cea.technologies.substation as substation
-from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, WH_TO_J
-from cea.optimization.constants import (T_GENERATOR_FROM_FP_C, T_GENERATOR_FROM_ET_C, Q_LOSS_DISCONNECTED,
-                                        ACH_TYPE_SINGLE)
+from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
+from cea.optimization.constants import (T_GENERATOR_FROM_FP_C, T_GENERATOR_FROM_ET_C,
+                                        Q_LOSS_DISCONNECTED, ACH_TYPE_SINGLE)
 from cea.optimization.lca_calculations import LcaCalculations
 from cea.technologies.thermal_network.thermal_network import calculate_ground_temperature
 import cea.utilities.parallel
@@ -60,7 +60,9 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
 
     t0 = time.clock()
     chiller_prop = pd.read_excel(locator.get_database_supply_systems(), sheet_name="Absorption_chiller")
+
     n = len(building_names)
+
     cea.utilities.parallel.vectorize(disconnected_cooling_for_building, config.get_number_of_processes())(
         building_names,
         repeat(chiller_prop, n),
@@ -322,6 +324,7 @@ def disconnected_cooling_for_building(building_name, chiller_prop, config, lca, 
         operation_results[5][0] = Qc_nom_AHU_ARU_SCU_W
         operation_results[5][2] = Qc_nom_AHU_ARU_W  # 2: BaseVCC_AS
         operation_results[5][6] = Qc_nom_SCU_W  # 6: ACHHT_SC_FP
+
     ## Calculate Capex/Opex
     # Initialize arrays
     number_of_configurations = len(operation_results)
