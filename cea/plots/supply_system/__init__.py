@@ -137,3 +137,47 @@ class SupplySystemPlotBase(cea.plots.PlotBase):
         data_el_exports_imports.index = pd.to_datetime(data_el_exports_imports.index)
         data_el_exports_imports["E_GRID_ramping_W"] = ramping
         return data_el_exports_imports
+
+    @cea.plots.cache.cached
+    def process_connected_capacities_kW(self):
+        try:
+            heat = pd.read_csv(self.locator.get_optimization_connected_heating_capacity(self.individual,
+                                                                                   self.generation))
+        except:
+            heat = pd.DataFrame()
+
+        try:
+            cool = pd.read_csv(self.locator.get_optimization_connected_cooling_capacity(self.individual,
+                                                                               self.generation))
+        except:
+            cool = pd.DataFrame()
+
+
+        elec = pd.read_csv(self.locator.get_optimization_connected_electricity_capacity(self.individual,
+                                                                               self.generation))
+
+        dataframe = heat.join(cool).join(elec)
+        return dataframe / 1E3 # to kW
+
+    @cea.plots.cache.cached
+    def process_disconnected_capacities_kW(self):
+        try:
+            heat = pd.read_csv(self.locator.get_optimization_disconnected_heating_capacity(self.individual,
+                                                                               self.generation))
+        except:
+            heat = None
+
+        try:
+            cool = pd.read_csv(self.locator.get_optimization_disconnected_cooling_capacity(self.individual,
+                                                                               self.generation))
+        except:
+            cool =None
+
+        if heat is None:
+            dataframe = cool.set_index('Name')
+        elif cool is None:
+            dataframe = heat.set_index('Name')
+        else:
+            dataframe = heat.merge(cool, on='Name', how='outer').set_index('Name')
+            dataframe.fillna(0.0, inplace=True)
+        return dataframe / 1E3 # to kW

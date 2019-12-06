@@ -721,7 +721,7 @@ def calc_Cinv_pv(total_module_area_m2, locator, technology=0):
     Opex_fixed_PV_USD = InvC * Inv_OM
     Capex_PV_USD = InvC
 
-    return Capex_a_PV_USD, Opex_fixed_PV_USD, Capex_PV_USD
+    return Capex_a_PV_USD, Opex_fixed_PV_USD, Capex_PV_USD, P_nominal_W
 
 
 # remuneration scheme

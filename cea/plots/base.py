@@ -127,6 +127,7 @@ class PlotBase(object):
         FIXME: what about columns with negative values?
         """
         import numpy as np
+        fields = [field for field in fields if field in data.columns]
         return [field for field in fields if np.isclose(data[field].sum(), 1e-8)==False]
 
     def calc_graph(self):

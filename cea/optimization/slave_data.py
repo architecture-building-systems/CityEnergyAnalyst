@@ -46,14 +46,17 @@ class SlaveData(object):
         # NG fired cogen
         self.CC_on = 0
         self.CCGT_SIZE_W = 0.0
+        self.CCGT_SIZE_electrical_W = 0.0
 
         # Wet biomass cogen
         self.Furnace_wet_on = 0
         self.WBFurnace_Q_max_W = 0.0
+        self.WBFurnace_electrical_W = 0.0
 
         # Dry biomass cogen
         self.Furnace_dry_on = 0
         self.DBFurnace_Q_max_W = 0.0
+        self.DBFurnace_electrical_W = 0.0
 
         # NG-fired Boilers
         self.Boiler_on = 0
@@ -103,7 +106,8 @@ class SlaveData(object):
         # NG-fired trigen
         self.NG_Trigen_on = 0
         self.NG_Trigen_ACH_size_W = 0.0
-        self.NG_Trigen_CCGT_size_W = 0.0
+        self.NG_Trigen_CCGT_size_thermal_W = 0.0
+        self.NG_Trigen_CCGT_size_electrical_W = 0.0
 
         # Water-source vapour compression chillers
         self.WS_BaseVCC_on = 0
