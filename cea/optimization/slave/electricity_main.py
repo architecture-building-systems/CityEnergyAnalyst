@@ -48,7 +48,6 @@ def electricity_calculations_of_all_buildings(locator, master_to_slave_vars,
                                                                 districy_heating_electricity_requirements_dispatch,
                                                                 districy_cooling_electricity_requirements_dispatch
                                                                 )
-
     # GET ACTIVATION CURVE
     # INITIALIZE VARIABLES:
     if master_to_slave_vars.DHN_exists:
@@ -101,12 +100,16 @@ def electricity_calculations_of_all_buildings(locator, master_to_slave_vars,
                                      'E_GRID_directload_W': E_GRID_directload_W
                                      }
 
-    # CALC COSTS
-    district_microgrid_costs = calc_electricity_performance_costs(locator, master_to_slave_vars)
+    # CALC COSTS and Capacities
+    district_microgrid_costs, \
+    district_electricity_capacity_installed = calc_electricity_performance_costs(locator,
+                                                                                 E_GRID_directload_W,
+                                                                                 master_to_slave_vars)
 
     return district_microgrid_costs, \
            district_electricity_dispatch, \
-           district_electricity_demands
+           district_electricity_demands, \
+           district_electricity_capacity_installed
 
 
 def calc_electricity_performance_emissions(lca, E_PV_gen_export_W, E_GRID_directload_W):
@@ -141,10 +144,19 @@ def calc_electricity_performance_emissions(lca, E_PV_gen_export_W, E_GRID_direct
     return performance_electricity
 
 
-def calc_electricity_performance_costs(locator, master_to_slave_vars):
+def calc_electricity_performance_costs(locator, E_GRID_directload_W, master_to_slave_vars):
     # PV COSTS
-    PV_installed_area_m2 = master_to_slave_vars.A_PV_m2  # kW
-    Capex_a_PV_USD, Opex_fixed_PV_USD, Capex_PV_USD = pv.calc_Cinv_pv(PV_installed_area_m2, locator)
+    Capacity_PV_connected_m2 = master_to_slave_vars.A_PV_m2
+    Capex_a_PV_USD, \
+    Opex_fixed_PV_USD, \
+    Capex_PV_USD, \
+    Capacity_PV_connected_W = pv.calc_Cinv_pv(Capacity_PV_connected_m2, locator)
+
+    capacity_installed = {
+        "Capacity_PV_el_connected_W": Capacity_PV_connected_W,
+        "Capacity_GRID_el_connected_W": E_GRID_directload_W.max(),
+        "Capacity_PV_el_connected_m2": Capacity_PV_connected_m2
+    }
 
     performance_electricity_costs = {
         "Capex_a_PV_connected_USD": Capex_a_PV_USD,
@@ -157,9 +169,9 @@ def calc_electricity_performance_costs(locator, master_to_slave_vars):
         # opex fixed costs
         "Opex_fixed_PV_connected_USD": Opex_fixed_PV_USD,
         "Opex_fixed_GRID_connected_USD": 0.0,
-
     }
-    return performance_electricity_costs
+
+    return performance_electricity_costs, capacity_installed
 
 
 def electricity_activation_curve(E_CHP_gen_W,
@@ -315,9 +327,9 @@ def calc_district_system_electricity_requirements(master_to_slave_vars,
                                                   DH_electricity_requirements,
                                                   DC_electricity_requirements):
     # by buildings
-    electricity_demand_buildings= extract_electricity_demand_buildings(master_to_slave_vars,
-                                                                             building_names,
-                                                                             locator)
+    electricity_demand_buildings = extract_electricity_demand_buildings(master_to_slave_vars,
+                                                                        building_names,
+                                                                        locator)
 
     # add those due to district heating and district cooling systems
     join1 = dict(electricity_demand_buildings, **DH_electricity_requirements)
@@ -451,7 +463,6 @@ def extract_electricity_demand_buildings(master_to_slave_vars, building_names, l
     return E_req_buildings
 
 
-
 def extract_fuels_demand_buildings(master_to_slave_vars, building_names, locator):
     # store the names of the buildings connected to district heating or district cooling
     buildings_connected_to_district_heating = master_to_slave_vars.buildings_connected_to_district_heating
@@ -461,7 +472,7 @@ def extract_fuels_demand_buildings(master_to_slave_vars, building_names, locator
     building_names_heating = master_to_slave_vars.building_names_heating
 
     # system requirements
-    NG_hs_ww_req_W  = np.zeros(HOURS_IN_YEAR)
+    NG_hs_ww_req_W = np.zeros(HOURS_IN_YEAR)
 
     # when the two networks are present
     if master_to_slave_vars.DHN_exists and master_to_slave_vars.DCN_exists:

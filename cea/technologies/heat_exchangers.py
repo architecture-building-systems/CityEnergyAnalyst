@@ -109,7 +109,7 @@ def calc_Cinv_HEX_hisaka(network_info):
     for node_id in substation_node_id_list:
         # read in node mass flows
         node_flows = pd.read_csv(
-            network_info.locator.get_node_mass_flow_csv_file(network_info.network_type, network_info.network_name))
+            network_info.locator.get_nominal_node_mass_flow_csv_file(network_info.network_type, network_info.network_name))
         # find design condition node mcp
         node_flow = max(node_flows[node_id])
         if node_flow > 0:

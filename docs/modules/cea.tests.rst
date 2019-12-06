@@ -65,14 +65,6 @@ cea.tests.test\_inputlocator module
     :undoc-members:
     :show-inheritance:
 
-cea.tests.test\_is\_heating\_season module
-------------------------------------------
-
-.. automodule:: cea.tests.test_is_heating_season
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 cea.tests.test\_plots module
 ----------------------------
 

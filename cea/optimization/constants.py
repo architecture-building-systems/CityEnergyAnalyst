@@ -54,7 +54,6 @@ DC_NETWORK_LOSS = 0.05  # Cooling ntw losses (10% --> 0.1)
 DH_NETWORK_LOSS = 0.12  # Heating ntw losses
 Q_MARGIN_FOR_NETWORK = 0.01  # Reliability margin for the system nominal capacity in the hub
 Q_LOSS_DISCONNECTED = 0.05  # Heat losses within a disconnected building
-SIZING_MARGIN = 0.20  # Reliability margin for the system nominal capacity
 Q_MIN_SHARE = 0.1  # Minimum percentage for the installed capacity
 STORAGE_COOLING_SHARE_RESTRICTION = 0.3  # Maximum percentage of the nominal cooling load that is allowed
 K_DH = 0.25  # linear heat loss coefficient district heting network twin pipes groundfoss
@@ -180,6 +179,8 @@ T_TO_SERVER = 55 + 273.0  # K
 # solar PV and PVT
 N_PV = 0.16
 N_PVT = 0.16
+N_SC_FP = 0.775
+N_SC_ET = 0.721
 
 # Low heating values
 LHV_NG = 45.4E6  # [J/kg]
