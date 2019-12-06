@@ -102,6 +102,9 @@ class DemandPlotBase(cea.plots.PlotBase):
                                        'E_cre_kWh']
 
         self.input_files = [(self.locator.get_total_demand, [])]  # all these scripts depend on demand
+        # Add building to input files if buildings are selected
+        if self.buildings:
+            self.input_files += [(self.locator.get_demand_results_file, [building]) for building in self.buildings]
 
     @property
     def hourly_loads(self):
