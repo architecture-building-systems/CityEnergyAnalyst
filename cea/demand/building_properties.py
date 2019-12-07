@@ -618,18 +618,21 @@ class BuildingPropertiesRow(object):
         factor = self.geometry['footprint'] / (self.geometry['Bwidth'] * self.geometry['Blength'])
         return factor
 
+def weird_division(n, d):
+    return n / d if d else 0.0
 
 class EnvelopeProperties(object):
     """Encapsulate a single row of the architecture input file for a building"""
 
-    __slots__ = [u'a_roof', u'f_cros', u'n50', u'win_op', u'win_wall',
+    __slots__ = [u'a_roof', u'f_cros', u'n50', u'win_op', u'win_wall', u'A_op',
                  u'a_wall', u'rf_sh', u'e_wall', u'e_roof', u'G_win', u'e_win',
                  u'U_roof', u'Hs_ag', u'Hs_bg', u'Ns', u'Es', u'Cm_Af', u'U_wall', u'U_base', u'U_win']
 
     def __init__(self, envelope):
+        self.A_op = envelope['Awin'] + envelope['Awall']
         self.a_roof = envelope['a_roof']
         self.n50 = envelope['n50']
-        self.win_wall = envelope['Awin'] / (envelope['Awin'] + envelope['Awall'])
+        self.win_wall = weird_division(envelope['Awin'] , self.A_op)
         self.a_wall = envelope['a_wall']
         self.rf_sh = envelope['rf_sh']
         self.e_wall = envelope['e_wall']
