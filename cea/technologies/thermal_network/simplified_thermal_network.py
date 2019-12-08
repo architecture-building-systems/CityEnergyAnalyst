@@ -257,7 +257,7 @@ def thermal_network_simplified(locator, config, network_name):
                             elevation=thermal_transfer_unit_design_head_m,
                             coordinates=node[1]["coordinates"])
         elif node[1]["Type"] == "PLANT":
-            base_head = 1
+            base_head = int(thermal_transfer_unit_design_head_m*1.2)
             start_node = node[0]
             name_node_plant = start_node
             wn.add_reservoir(start_node,
@@ -280,9 +280,11 @@ def thermal_network_simplified(locator, config, network_name):
                     status='OPEN')
 
     # add options
-    wn.options.time.duration = 8759 * 3600   # FIXME: hard-coded value, and why 8759?
+    wn.options.time.duration = 8759 * 3600   # this indicates epanet to do one year simulation
     wn.options.time.hydraulic_timestep = 60 * 60
     wn.options.time.pattern_timestep = 60 * 60
+    wn.options.solver.accuracy = 0.01
+    wn.options.solver.trials = 100
 
     # 1st ITERATION GET MASS FLOWS AND CALCULATE DIAMETER
     sim = wntr.sim.EpanetSimulator(wn)
@@ -317,7 +319,7 @@ def thermal_network_simplified(locator, config, network_name):
     for column in head_loss_m.columns.values:
         length_m = edge_df.loc[column]['length_m']
         head_loss_m[column] = head_loss_m[column] * length_m
-    reservoir_head_loss_m = head_loss_m.sum(axis=1) + thermal_transfer_unit_design_head_m # fixme: only one thermal_transfer_unit_design_head_m from one substation?
+    reservoir_head_loss_m = head_loss_m.sum(axis=1) + thermal_transfer_unit_design_head_m*1.2 # fixme: only one thermal_transfer_unit_design_head_m from one substation?
 
     # apply this pattern to the reservoir and get results
     base_head = reservoir_head_loss_m.max()
