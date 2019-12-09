@@ -1418,10 +1418,6 @@ class InputLocator(object):
         """scenario/outputs/plots/timeseries/{network_name}.html"""
         return os.path.join(self.get_plots_folder(category), '%(network_name)s.png' % locals())
 
-    def get_benchmark_plots_file(self):
-        """scenario/outputs/plots/graphs/Benchmark_scenarios.pdf"""
-        return os.path.join(self.get_plots_folder(''), 'Benchmark_scenarios.pdf')
-
     # OTHER
     def get_temporary_folder(self):
         """Temporary folder as returned by `tempfile`."""
