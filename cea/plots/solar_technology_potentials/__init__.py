@@ -3,6 +3,7 @@ from __future__ import print_function
 
 import pandas as pd
 import os
+import functools
 import cea.inputlocator
 from cea.utilities import epwreader
 
@@ -40,6 +41,8 @@ class SolarTechnologyPotentialsPlotBase(cea.plots.PlotBase):
         self.weather = self.locator.get_weather_file()
         self.pv_analysis_fields = ['PV_walls_east_E_kWh', 'PV_walls_west_E_kWh', 'PV_walls_south_E_kWh',
                                    'PV_walls_north_E_kWh', 'PV_roofs_top_E_kWh']
+        self.pv_analysis_fields_area = ['PV_walls_east_m2', 'PV_walls_west_m2', 'PV_walls_south_m2',
+                                   'PV_walls_north_m2', 'PV_roofs_top_m2']
         self.sc_fp_analysis_fields = ['SC_FP_walls_east_Q_kWh', 'SC_FP_walls_west_Q_kWh', 'SC_FP_walls_south_Q_kWh',
                                       'SC_FP_walls_north_Q_kWh', 'SC_FP_roofs_top_Q_kWh']
         self.sc_et_analysis_fields = ['SC_ET_walls_east_Q_kWh', 'SC_ET_walls_west_Q_kWh', 'SC_ET_walls_south_Q_kWh',
@@ -52,18 +55,63 @@ class SolarTechnologyPotentialsPlotBase(cea.plots.PlotBase):
                                     'PVT_walls_south_Q_kWh', 'PVT_walls_north_Q_kWh',
                                     'PVT_roofs_top_Q_kWh']
 
-    @property
+    def normalize_data(self, data_processed, buildings, analysis_fields, analysis_fields_area):
+        if self.normalization == "gross floor area":
+            data = pd.read_csv(self.locator.get_total_demand()).set_index('Name')
+            normalizatioon_factor = data.loc[buildings]['GFA_m2'].sum()
+            data_processed = data_processed.apply(lambda x: x/normalizatioon_factor if x.name in analysis_fields else x)
+        elif self.normalization == "net floor area":
+            data = pd.read_csv(self.locator.get_total_demand()).set_index('Name')
+            normalizatioon_factor = data.loc[buildings]['Aocc_m2'].sum()
+            data_processed = data_processed.apply(lambda x: x/normalizatioon_factor if x.name in analysis_fields else x)
+        elif self.normalization == "air conditioned floor area":
+            data = pd.read_csv(self.locator.get_total_demand()).set_index('Name')
+            normalizatioon_factor = data.loc[buildings]['Af_m2'].sum()
+            data_processed = data_processed.apply(lambda x: x/normalizatioon_factor if x.name in analysis_fields else x)
+        elif self.normalization == "building occupancy":
+            data = pd.read_csv(self.locator.get_total_demand()).set_index('Name')
+            normalizatioon_factor = data.loc[buildings]['people0'].sum()
+            data_processed = data_processed.apply(lambda x: x/normalizatioon_factor if x.name in analysis_fields else x)
+        elif self.normalization == "surface area":
+            for energy, area in zip(analysis_fields, analysis_fields_area):
+                if data_processed[area][0] > 0.0:
+                    data_processed[energy] = data_processed[energy] / data_processed[area]
+        return data_processed
+
+    def timeframe_data(self, data_PV):
+        if self.timeframe == "daily":
+            data_PV.index = pd.to_datetime(data_PV.index)
+            data_PV = data_PV.resample('D').sum()
+        elif self.timeframe == "weekly":
+            data_PV.index = pd.to_datetime(data_PV.index)
+            data_PV = data_PV.resample('W').sum()
+        elif self.timeframe == "monthly":
+            data_PV.index = pd.to_datetime(data_PV.index)
+            data_PV = data_PV.resample('M').sum()
+        elif self.timeframe == "yearly":
+            data_PV.index = pd.to_datetime(data_PV.index)
+            data_PV = data_PV.resample('Y').sum()
+        return data_PV
+
+    @cea.plots.cache.cached
     def PV_hourly_aggregated_kW(self):
-        return self.cache.lookup(data_path=os.path.join(self.category_name, 'PV_hourly_aggregated_kW'),
-                                 plot=self, producer=self._calculate_PV_hourly_aggregated_kW)
+        data = self._calculate_PV_hourly_aggregated_kW()
+        data_normalized = self.normalize_data(data, self.buildings, self.pv_analysis_fields,
+                                                      self.pv_analysis_fields_area)
+        PV_hourly_aggregated_kW = self.timeframe_data(data_normalized)
+
+        return PV_hourly_aggregated_kW
+
+    def add_pv_fields(self, df1, df2):
+        """Add the demand analysis fields together - use this in reduce to sum up the summable parts of the dfs"""
+        df1[self.pv_analysis_fields+self.pv_analysis_fields_area] = df2[self.pv_analysis_fields+self.pv_analysis_fields_area] + df1[self.pv_analysis_fields+self.pv_analysis_fields_area]
+        return df1
 
     def _calculate_PV_hourly_aggregated_kW(self):
         # get extra data of weather and date
-        weather_data = epwreader.epw_reader(self.weather)[["date", "drybulb_C", "wetbulb_C", "skytemp_C"]]
+        pv_hourly_aggregated_kW = functools.reduce(self.add_pv_fields, (pd.read_csv(self.locator.PV_results(building))
+                                                         for building in self.buildings)).set_index('Date')
 
-        pv_hourly_aggregated_kW = sum(pd.read_csv(self.locator.PV_results(building), usecols=self.pv_analysis_fields)
-                                      for building in self.buildings)
-        pv_hourly_aggregated_kW['DATE'] = weather_data["date"]
         return pv_hourly_aggregated_kW
 
     @property
