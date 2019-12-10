@@ -111,6 +111,14 @@ def calc_exergy_recovered(stream_df, output_df):
 
 
 def calc_Q_heat_cascade(folder_path, output_df, streams_df):
+    """
+    streams_df balance
+    Q_coil_OAU + Q_coil_RAU + Q_coil_SCU = Q_chiller + Q_reheat + Q_exhaust
+    :param folder_path:
+    :param output_df:
+    :param streams_df:
+    :return:
+    """
     # qt_hot
     Q_coil_dict = calc_Q_coil(output_df, folder_path)
     Q_r_chillers = output_df.filter(like='Q_r_chiller_').sum(axis=1)
@@ -570,15 +578,16 @@ if __name__ == '__main__':
     ## Loop through different technologies
 
     # result_path_folder = "E:\\HCS_results_1022\\HCS_base_m_out_dP"
-    result_path_folder = 'E:\\OSMOSE_projects\\HCS_mk\\results'
+    # result_path_folder = 'E:\\OSMOSE_projects\\HCS_mk\\results'
+    result_path_folder = 'E:\\results_1130\\'
     # TECHS = ['HCS_base', 'HCS_base_coil', 'HCS_base_3for2', 'HCS_base_ER0', 'HCS_base_IEHX', 'HCS_base_LD']
-    TECHS = ['HCS_base_3for2']
+    TECHS = ['HCS_base']
 
     for tech in TECHS:
         tech_folder_path = os.path.join(result_path_folder, tech)
         folders_list = os.listdir(tech_folder_path)
         # for folder in folders_list:
-        for folder in ['run_001_OFF_B005_1_24']:
+        for folder in ['run_003_OFF_B005_1_168']:
             if 'run' in folder:
                 folder_path = os.path.join(tech_folder_path, folder)
                 file_list = os.listdir(folder_path)
