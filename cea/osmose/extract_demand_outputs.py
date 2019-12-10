@@ -323,7 +323,7 @@ def output_operatingcost_to_osmose(op_time, timesteps):
 
 
 def calc_Q_sen_gain_inf_kWh(T_ext, T_int, m_ve_inf_kgpers, w_RA):
-    T = T_ext if T_ext <= T_int else T_int
+    T = T_ext if T_ext <= T_int else T_int #FIXME: double check if this is true, should be T_ext
     h_sen_inf_kJperkg = calc_h_from_T_w(T, w_RA)
     Q_gain_inf_kWh = m_ve_inf_kgpers * h_sen_inf_kJperkg
     return Q_gain_inf_kWh
