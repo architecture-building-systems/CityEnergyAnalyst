@@ -1,3 +1,11 @@
+2019-12-06 - 2.26.0a0 - #2481 Show plot input files
+2019-12-06 - 2.26.0a0 - #2462 Test epanet - simple thermal model Merging!! wihuu
+2019-12-04 - 2.26.0 - #2467 1777 optimize decentralized script for speed
+2019-12-03 - 2.26.0 - #2479 Data validation for inputs in front end
+2019-12-03 - 2.26.0 - #2478 2477 wrong column name in piping catalog
+2019-11-29 - 2.26.0 - #2475 Window to wall ratio and envelope properties
+2019-11-26 - 2.26.0 - #2470 Schedule reader to api
+2019-11-18 - 2.26.0 - #2466 Release 2.26
 2019-11-15 - 2.25.2 - #2455 2349 suspend simulations
 2019-11-14 - 2.25.1 - #2448 Ventilation to avoid unrealistically high temperatures during heating season
 2019-11-12 - 2.25.1 - #2452 Update epwreader.py
