@@ -9,6 +9,7 @@ import pandas as pd
 import cea.config
 import cea.inputlocator
 import cea.plots
+import cea.plots.cache
 
 """
 Implements py:class:`cea.plots.DemandPlotBase` as a base class for all plots in the category "demand" and also
