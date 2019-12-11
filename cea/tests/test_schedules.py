@@ -46,11 +46,10 @@ class TestBuildingPreprocessing(unittest.TestCase):
 
         self.assertEqual(correct_archetype_areas(
             prop_architecture_df=pd.DataFrame(
-                data=[['B1', 0.5, 0.5, 0.0, 2006, 2020, 'C'], ['B2', 0.2, 0.8, 0.0, 1000, 1920, 'R']],
-                columns=['Name', 'SERVERROOM', 'PARKING', 'Hs', 'year_start', 'year_end', 'standard']),
+                data=[['B1', 0.5, 0.5, 0.0, 0.0, 2006, 2020, 'C'], ['B2', 0.2, 0.8, 0.0, 0.0, 1000, 1920, 'R']],
+                columns=['Name', 'SERVERROOM', 'PARKING', 'Hs_ag', 'Hs_bg', 'year_start', 'year_end', 'standard']),
             architecture_DB=architecture_DB,
-            list_uses=['SERVERROOM', 'PARKING']),
-            ([0.5, 0.2], [0.5, 0.2], [0.95, 0.9200000000000002]))
+            list_uses=['SERVERROOM', 'PARKING']),([0.5, 0.2], [0.0, 0.0], [0.5, 0.2], [0.95, 0.9200000000000002]))
 
 
 class TestScheduleCreation(unittest.TestCase):
@@ -66,7 +65,7 @@ class TestScheduleCreation(unittest.TestCase):
 
         # calculate schedules
         schedule_maker_main(locator, config)
-        calculated_schedules = pd.read_csv(locator.get_occupancy_model_file('B01')).set_index('DATE')
+        calculated_schedules = pd.read_csv(locator.get_schedule_model_file('B01')).set_index('DATE')
 
         config = ConfigParser.SafeConfigParser()
         config.read(get_test_config_path())

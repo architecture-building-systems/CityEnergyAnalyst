@@ -1,3 +1,35 @@
+2019-12-06 - 2.26.0a0 - #2481 Show plot input files
+2019-12-06 - 2.26.0a0 - #2462 Test epanet - simple thermal model Merging!! wihuu
+2019-12-04 - 2.26.0 - #2467 1777 optimize decentralized script for speed
+2019-12-03 - 2.26.0 - #2479 Data validation for inputs in front end
+2019-12-03 - 2.26.0 - #2478 2477 wrong column name in piping catalog
+2019-11-29 - 2.26.0 - #2475 Window to wall ratio and envelope properties
+2019-11-26 - 2.26.0 - #2470 Schedule reader to api
+2019-11-18 - 2.26.0 - #2466 Release 2.26
+2019-11-15 - 2.25.2 - #2455 2349 suspend simulations
+2019-11-14 - 2.25.1 - #2448 Ventilation to avoid unrealistically high temperatures during heating season
+2019-11-12 - 2.25.1 - #2452 Update epwreader.py
+2019-11-11 - 2.25.1 - #2439 Databases major refactoring
+2019-11-07 - 2.25.1 - #2444 Update input api
+2019-11-06 - 2.25.1 - #2420 I1633 gains and losses proportional to conditioned area
+2019-11-05 - 2.25.1 - #2441 Release 2.25, I also updated the CEA website to reflect this
+2019-11-04 - 2.24 - #2434 Delete converter_old_schedules_to_csv.py
+2019-11-04 - 2.24 - #2437 Update input api
+2019-11-04 - 2.24 - #2354 2082 add remaining network plots to dashboard
+2019-11-04 - 2.24 - #2431 Update scripts.yml
+2019-11-04 - 2.24 - #2433 Update geometry_generator.py
+2019-10-31 - 2.24 - #2417 BUGFIX: Handle folder locator methods in TraceInputLocator
+2019-10-31 - 2.24 - #2416 Radiation now account for adjacent buildings
+2019-10-30 - 2.24 - #2414 Terminate running cea worker processes when closing the GUI @daren-thomas works like a charm, good stuff!
+2019-10-30 - 2.24 - #2421 BUGFIX: UnboundLocalError: local variable 'number_of_occupants' referenced before assignment
+2019-10-30 - 2.24 - #2415 Allow importing scripts.py from the Grasshopper interface
+2019-10-29 - 2.24 - #2419 fix to schedule maker
+2019-10-29 - 2.24 - #2411 2392 build the docs
+2019-10-29 - 2.24 - #2418 2324 resume workflow feature
+2019-10-24 - 2.24 - #2407 Update LCA_infrastructure.xlsx
+2019-10-23 - 2.24 - #2398 Update URL for CityEnergyAnalyst-GUI
+2019-10-23 - 2.24 - #2400 2399 demand keyerror rhum max pc
+2019-10-21 - 2.24 - #2396 Release 2.24
 2019-10-21 - 2.23 - #2391 Show plot parameters when adding and changing plots
 2019-10-18 - 2.23 - #2383 Fix to load curves plot and to glossary
 2019-10-17 - 2.23 - #2382 New Schedules Maker / Model

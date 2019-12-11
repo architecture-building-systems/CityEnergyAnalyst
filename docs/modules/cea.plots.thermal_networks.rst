@@ -65,10 +65,18 @@ cea.plots.thermal\_networks.network\_plot module
     :undoc-members:
     :show-inheritance:
 
-cea.plots.thermal\_networks.scenario\_network\_cost module
+cea.plots.thermal\_networks.network\_pressure\_loss module
 ----------------------------------------------------------
 
-.. automodule:: cea.plots.thermal_networks.scenario_network_cost
+.. automodule:: cea.plots.thermal_networks.network_pressure_loss
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.plots.thermal\_networks.network\_thermal\_loss module
+---------------------------------------------------------
+
+.. automodule:: cea.plots.thermal_networks.network_thermal_loss
     :members:
     :undoc-members:
     :show-inheritance:

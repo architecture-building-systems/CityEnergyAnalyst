@@ -610,7 +610,6 @@ B001_results.csv;A_hex_cs;float;[m2];Heat exchanger area corresponding to the de
 B001_results.csv;A_hex_cs_space_cooling_data_center_and_refrigeration;float;[m2];Heat Exchanger area corresponding to the demand from space cooling, data center and refrigeration;{0.0...n}
 B001_results.csv;A_hex_dhw_design_m2;float;[m2];Heat exchanger area corresponding to the demand from Domestic Hot Water;{0.0...n}
 B001_results.csv;Heat exchanger area corresponding to the demand from Heating;float;[m2];Area heat exchanger for the cooling system data center and refrigeration;{0.0...n}
-B001_results.csv;Electr_array_all_flat_W;float;[W];Electric consumption;{0.0...n}
 B001_results.csv;Q_dhw_W;float;[W];Load of domestic hot water system;{0.0...n}
 B001_results.csv;Q_heating_W;float;[W];Load of space heating;{0.0...n}
 B001_results.csv;Q_space_cooling_and_refrigeration_W;float;[W];Load of space cooling and refrigeration;{0.0...n}

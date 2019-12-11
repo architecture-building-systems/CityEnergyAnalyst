@@ -8,7 +8,7 @@ import os
 import numpy as np
 import pandas as pd
 from geopandas import GeoDataFrame as Gdf
-
+from cea.datamanagement.data_helper import get_list_of_uses_in_case_study
 import cea.config
 import cea.inputlocator
 from cea.constants import SERVICE_LIFE_OF_BUILDINGS, SERVICE_LIFE_OF_TECHNICAL_SYSTEMS, \
@@ -100,8 +100,7 @@ def lca_embodied(year_to_calculate, locator, config):
 
     # local variables
     architecture_df = dbf_to_dataframe(locator.get_building_architecture())
-    prop_occupancy_df = dbf_to_dataframe(locator.get_building_occupancy())
-    occupancy_df = pd.DataFrame(prop_occupancy_df.loc[:, (prop_occupancy_df != 0).any(axis=0)])
+    occupancy_df = dbf_to_dataframe(locator.get_building_occupancy())
     age_df = dbf_to_dataframe(locator.get_building_age())
     geometry_df = Gdf.from_file(locator.get_zone_geometry())
     geometry_df['footprint'] = geometry_df.area
@@ -109,7 +108,7 @@ def lca_embodied(year_to_calculate, locator, config):
     geometry_df = geometry_df.drop('geometry', axis=1)
 
     # get list of uses
-    list_uses = list(occupancy_df.drop({'Name'}, axis=1).columns)
+    list_uses = get_list_of_uses_in_case_study(occupancy_df)
 
     # define main use:
     occupancy_df['mainuse'] = calc_mainuse(occupancy_df, list_uses)
@@ -191,7 +190,7 @@ def calculate_contributions(archetype, cat_df, config, locator, year_to_calculat
     :rtype result: DataFrame
     """
     # get archetype properties from the database
-    database_df = pd.read_excel(locator.get_life_cycle_inventory_building_systems(), archetype)
+    database_df = pd.read_excel(locator.get_database_lca_buildings(), archetype)
     database_df['Code'] = database_df.apply(lambda x: calc_code(x['building_use'], x['year_start'],
                                                                 x['year_end'], x['standard']), axis=1)
 

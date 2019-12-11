@@ -28,6 +28,8 @@ def read_inputs_field_types():
         'float': float,
         'str': str,
         'year': int,
+        'choice': str,
+        'date': str
     }
 
     for db in inputs.keys():
@@ -79,7 +81,7 @@ def route_get_building_properties():
     div = request.args.get('div', default=False)
 
     # FIXME: Find a better way to ensure order of tabs
-    tabs = ['zone','age','occupancy','architecture','internal-loads', 'indoor-comfort', 'technical-systems',  'supply-systems', 'district']
+    tabs = ['zone','age','occupancy','architecture','internal-loads', 'indoor-comfort', 'air-conditioning-systems',  'supply-systems', 'surroundings']
 
     locator = cea.inputlocator.InputLocator(current_app.cea_config.scenario)
     store = {'tables': {}, 'geojsons': {}, 'columns': {}, 'column_types': {}, 'crs': {}, 'glossary': {}}

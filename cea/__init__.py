@@ -1,4 +1,4 @@
-__version__ = "2.24"
+__version__ = "2.27.0"
 
 
 class ConfigError(Exception):
@@ -29,7 +29,7 @@ class InvalidOccupancyNameException(Exception):
 def suppres_3rd_party_debug_loggers():
     """set logging level to WARN for fiona and shapely and others"""
     import logging
-    loggers_to_silence = ["shapely", "Fiona", "fiona", "urllib3.connectionpool"]
+    loggers_to_silence = ["shapely", "Fiona", "fiona", "matplotlib", "urllib3.connectionpool"]
     for log_name in loggers_to_silence:
         log = logging.getLogger(log_name)
-        log.setLevel(logging.WARNING)
+        log.setLevel(logging.ERROR)

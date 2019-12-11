@@ -85,12 +85,11 @@ class CeaScript(object):
 def _get_categories_dict():
     """Load the categories -> [script] mapping either from the YAML file or, in the case of arcgis / grasshopper,
     which don't support YAML, load from a pickled version generated on the call to ``cea install-toolbox``."""
-    import yaml
-    from cea.utilities.yaml_ordered_dict import OrderedDictYAMLLoader
-
     scripts_yml = os.path.join(os.path.dirname(__file__), 'scripts.yml')
     scripts_pickle = os.path.join(os.path.dirname(__file__), 'scripts.pickle')
     try:
+        import yaml
+        from cea.utilities.yaml_ordered_dict import OrderedDictYAMLLoader
         categories = yaml.load(open(scripts_yml), OrderedDictYAMLLoader)
     except ImportError:
         import pickle
@@ -139,7 +138,7 @@ def get_schema_variables(schema):
     for locator_method in schema:
 
         # if there is no script mapped to 'created_by', it must be an input_file
-        # replace non-existant script with the name of the file without the extension
+        # replace non-existent script with the name of the file without the extension
         if not schema[locator_method]['created_by']:
             script = "-"
         else:

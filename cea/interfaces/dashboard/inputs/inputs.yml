@@ -1,5 +1,6 @@
 # describes the input databases
 zone:
+  parent: zone
   pk: Name
   type: shp  # shp or dbf
   location: get_zone_geometry
@@ -16,10 +17,11 @@ zone:
     type: float
   - name: REFERENCE
     type: str
-district:
+surroundings:
+  parent: None
   pk: Name
   type: shp  # shp or dbf
-  location: get_district_geometry
+  location: get_surroundings_geometry
   fields:
   - name: Name
     type: str
@@ -30,6 +32,7 @@ district:
   - name: REFERENCE
     type: str
 age:
+  parent: zone
   pk: Name
   type: dbf
   location: get_building_age
@@ -53,6 +56,7 @@ age:
   - name: REFERENCE
     type: str
 occupancy:
+  parent: zone
   pk: Name
   type: dbf
   location: get_building_occupancy
@@ -61,39 +65,74 @@ occupancy:
     type: str
   - name: SINGLE_RES
     type: float
+    constraints:
+      max: 1
   - name: MULTI_RES
     type: float
+    constraints:
+      max: 1
   - name: OFFICE
     type: float
+    constraints:
+      max: 1
   - name: RETAIL
     type: float
+    constraints:
+      max: 1
   - name: SCHOOL
     type: float
+    constraints:
+      max: 1
   - name: RESTAURANT
     type: float
+    constraints:
+      max: 1
   - name: FOODSTORE
     type: float
+    constraints:
+      max: 1
   - name: GYM
     type: float
+    constraints:
+      max: 1
   - name: HOSPITAL
     type: float
+    constraints:
+      max: 1
   - name: HOTEL
     type: float
+    constraints:
+      max: 1
   - name: INDUSTRIAL
     type: float
+    constraints:
+      max: 1
   - name: LIBRARY
     type: float
+    constraints:
+      max: 1
   - name: SWIMMING
     type: float
+    constraints:
+      max: 1
   - name: COOLROOM
     type: float
+    constraints:
+      max: 1
   - name: SERVERROOM
     type: float
+    constraints:
+      max: 1
   - name: PARKING
     type: float
+    constraints:
+      max: 1
   - name: REFERENCE
     type: str
+    constraints:
+      max: 1
 internal-loads:
+  parent: zone
   pk: Name
   type: dbf
   location: get_building_internal
@@ -125,6 +164,7 @@ internal-loads:
   - name: Vw_lpdpax
     type: float
 supply-systems:
+  parent: zone
   pk: Name
   type: dbf
   location: get_building_supply
@@ -132,14 +172,35 @@ supply-systems:
   - name: Name
     type: str
   - name: type_cs
-    type: str
+    type: choice
+    location:
+      path: get_database_supply_systems
+      sheet: ALL_IN_ONE_SYSTEMS
+      column: code
+      filter: system=='COOLING' or system=='NONE'
   - name: type_dhw
-    type: str
+    type: choice
+    location:
+      path: get_database_supply_systems
+      sheet: ALL_IN_ONE_SYSTEMS
+      column: code
+      filter: system=='HEATING' or system=='NONE'
   - name: type_el
-    type: str
+    type: choice
+    location:
+      path: get_database_supply_systems
+      sheet: ALL_IN_ONE_SYSTEMS
+      column: code
+      filter: system=='ELECTRICITY' or system=='NONE'
   - name: type_hs
-    type: str
+    type: choice
+    location:
+      path: get_database_supply_systems
+      sheet: ALL_IN_ONE_SYSTEMS
+      column: code
+      filter: system=='HEATING' or system=='NONE'
 architecture:
+  parent: zone
   pk: Name
   type: dbf
   location: get_building_architecture
@@ -150,31 +211,74 @@ architecture:
     type: int
   - name: Es
     type: float
-  - name: Hs
+    constraints:
+      max: 1
+  - name: Hs_ag
     type: float
+    constraints:
+      max: 1
+  - name: Hs_bg
+    type: float
+    constraints:
+      max: 1
   - name: Ns
     type: float
+    constraints:
+      max: 1
   - name: wwr_north
     type: float
+    constraints:
+      max: 1
   - name: wwr_east
     type: float
+    constraints:
+      max: 1
   - name: wwr_south
     type: float
+    constraints:
+      max: 1
   - name: wwr_west
     type: float
+    constraints:
+      max: 1
   - name: type_cons
-    type: str
+    type: choice
+    location:
+      path: get_database_envelope_systems
+      sheet: CONSTRUCTION
+      column: code
   - name: type_leak
-    type: str
+    type: choice
+    location:
+      path: get_database_envelope_systems
+      sheet: LEAKAGE
+      column: code
   - name: type_roof
-    type: str
+    type: choice
+    location:
+      path: get_database_envelope_systems
+      sheet: ROOF
+      column: code
   - name: type_shade
-    type: str
+    type: choice
+    location:
+      path: get_database_envelope_systems
+      sheet: SHADING
+      column: code
   - name: type_wall
-    type: str
+    type: choice
+    location:
+      path: get_database_envelope_systems
+      sheet: WALL
+      column: code
   - name: type_win
-    type: str
+    type: choice
+    location:
+      path: get_database_envelope_systems
+      sheet: WINDOW
+      column: code
 indoor-comfort:
+  parent: zone
   pk: Name
   type: dbf
   location: get_building_comfort
@@ -195,23 +299,52 @@ indoor-comfort:
     type: float
   - name: Ve_lpspax
     type: float
-technical-systems:
+air-conditioning-systems:
+  parent: zone
   pk: Name
   type: dbf
-  location: get_building_hvac
+  location: get_building_air_conditioning
   fields:
     - name: Name
       type: str
     - name: type_cs
-      type: str
+      type: choice
+      location:
+        path: get_database_air_conditioning_systems
+        sheet: cooling
+        column: code
     - name: type_hs
-      type: str
+      type: choice
+      location:
+        path: get_database_air_conditioning_systems
+        sheet: heating
+        column: code
     - name: type_dhw
-      type: str
+      type: choice
+      location:
+        path: get_database_air_conditioning_systems
+        sheet: dhw
+        column: code
     - name: type_ctrl
-      type: str
+      type: choice
+      location:
+        path: get_database_air_conditioning_systems
+        sheet: controller
+        column: code
     - name: type_vent
-      type: str
+      type: choice
+      location:
+        path: get_database_air_conditioning_systems
+        sheet: ventilation
+        column: code
+    - name: heat_starts
+      type: date
+    - name: heat_ends
+      type: date
+    - name: cool_starts
+      type: date
+    - name: cool_ends
+      type: date
 
 
 

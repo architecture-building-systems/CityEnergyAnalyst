@@ -99,12 +99,11 @@ def demand_calculation(locator, config):
 
     list_buildings_less_100m2 = calc_buildings_less_100m2(building_properties)
     if list_buildings_less_100m2 != []:
-        print(
-                    'Warning! The following list of buildings have less than 100 m2 of gross floor area, CEA might fail: %s' % list_buildings_less_100m2)
+        print('Warning! The following list of buildings have less than 100 m2 of gross floor area, CEA might fail: %s' % list_buildings_less_100m2)
 
     # SPECIFY NUMBER OF BUILDINGS TO SIMULATE
     if not building_names:
-        building_names = building_properties.list_building_names()
+        building_names = locator.get_zone_building_names()
         print('Running demand calculation for all buildings in the zone')
     else:
         print('Running demand calculation for the following buildings=%s' % building_names)

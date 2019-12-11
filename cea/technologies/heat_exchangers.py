@@ -36,7 +36,7 @@ def calc_Cinv_HEX(Q_design_W, locator, config, technology_type):
 
     """
     if Q_design_W > 0:
-        HEX_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="HEX")
+        HEX_cost_data = pd.read_excel(locator.get_database_supply_systems(), sheet_name="HEX")
         HEX_cost_data = HEX_cost_data[HEX_cost_data['code'] == technology_type]
         # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
         # capacity for the corresponding technology from the database
@@ -73,7 +73,7 @@ def calc_Cinv_HEX_hisaka(network_info):
     Used in thermal_network_optimization.
     """
     ## read in cost values from database
-    HEX_prices = pd.read_excel(network_info.locator.get_supply_systems(),
+    HEX_prices = pd.read_excel(network_info.locator.get_database_supply_systems(),
                                sheet_name='HEX', index_col=0)
     a = HEX_prices['a']['District substation heat exchanger']
     b = HEX_prices['b']['District substation heat exchanger']
@@ -109,7 +109,7 @@ def calc_Cinv_HEX_hisaka(network_info):
     for node_id in substation_node_id_list:
         # read in node mass flows
         node_flows = pd.read_csv(
-            network_info.locator.get_node_mass_flow_csv_file(network_info.network_type, network_info.network_name))
+            network_info.locator.get_nominal_node_mass_flow_csv_file(network_info.network_type, network_info.network_name))
         # find design condition node mcp
         node_flow = max(node_flows[node_id])
         if node_flow > 0:

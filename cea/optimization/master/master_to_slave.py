@@ -250,7 +250,7 @@ def master_to_slave_district_cooling_technologies(Q_cooling_nom_W, individual_wi
     if individual_with_names_dict['NG_Trigen'] >= mimimum_valuedc('NG_Trigen') and ABSORPTION_CHILLER_ALLOWED is True:
         master_to_slave_vars.NG_Trigen_on = 1
         master_to_slave_vars.NG_Trigen_ACH_size_W = individual_with_names_dict['NG_Trigen'] * Q_cooling_nom_W
-        master_to_slave_vars.NG_Trigen_CCGT_size_W = master_to_slave_vars.NG_Trigen_ACH_size_W * 1.2
+        master_to_slave_vars.NG_Trigen_CCGT_size_thermal_W = master_to_slave_vars.NG_Trigen_ACH_size_W * 1.2
         # twice as big to allow for usage of absorption chiller
 
     # Water source base vapor compression chiller

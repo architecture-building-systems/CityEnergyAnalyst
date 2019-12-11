@@ -58,7 +58,7 @@ const jsonURLs = {
 
 const defaultColors = {
   zone: [68, 76, 83],
-  district: [255, 255, 255],
+  surroundings: [255, 255, 255],
   streets: [255, 255, 255],
   dh: [240, 75, 91],
   dc: [63, 192, 194]
@@ -238,7 +238,7 @@ class MapClass {
     const networkGroup = $("#network-group");
     switch (layer) {
       case "zone":
-      case "district":
+      case "surroundings":
       case "streets":
         !$(`#${layer}-layer-toggle`).length &&
           layersGroup.append(`
@@ -277,7 +277,7 @@ class MapClass {
     let extruded =
       document.getElementById(`3d-button`).dataset.extruded === "true";
     const zoneToggle = document.getElementById(`zone-cb`);
-    const districtToggle = document.getElementById(`district-cb`);
+    const surroundingsToggle = document.getElementById(`surroundings-cb`);
     const streetsToggle = document.getElementById(`streets-cb`);
     const networkToggle = document.getElementById(`network-cb`);
     const networkType = this.getNetworkType();
@@ -310,20 +310,20 @@ class MapClass {
       })
     ];
 
-    if (this.data.district)
+    if (this.data.surroundings)
       layers.push(
         new GeoJsonLayer({
-          id: "district",
-          data: this.data.district,
+          id: "surroundings",
+          data: this.data.surroundings,
           opacity: 0.3,
           wireframe: true,
           filled: true,
           extruded: extruded,
-          visible: districtToggle.checked,
+          visible: surroundingsToggle.checked,
 
           getElevation: f => f.properties["height_ag"],
-          getFillColor: this.colors.district,
-          updateTriggers: { ...updateTriggers.district },
+          getFillColor: this.colors.surroundings,
+          updateTriggers: { ...updateTriggers.surroundings },
 
           pickable: true,
           autoHighlight: true,
@@ -331,7 +331,7 @@ class MapClass {
 
           onHover: updateTooltip,
 
-          ...this.layerProps.district
+          ...this.layerProps.surroundings
         })
       );
 
@@ -641,7 +641,7 @@ function updateTooltip({ x, y, object, layer }) {
     tooltip.style.left = `${x}px`;
     let innerHTML = "";
 
-    if (layer.id === "zone" || layer.id === "district") {
+    if (layer.id === "zone" || layer.id === "surroundings") {
       $.each(object.properties, function(key, value) {
         innerHTML += `<div><b>${key}</b>: ${value}</div>`;
       });

@@ -183,10 +183,10 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, key):
     return result
 
 
-def erase_no_surrounding_areas(all_district, area_buffer):
+def erase_no_surrounding_areas(all_surroundings, area_buffer):
     polygon = area_buffer.geometry[0]
-    all_district.within(polygon)
-    subset = all_district[all_district.within(polygon)]
+    all_surroundings.within(polygon)
+    subset = all_surroundings[all_surroundings.within(polygon)]
     return subset
 
 
@@ -197,10 +197,10 @@ def geometry_extractor_osm(locator, config):
     """
 
     # local variables:
-    buffer_m = config.district_helper.buffer
-    buildings_height = config.district_helper.height_ag
-    buildings_floors = config.district_helper.floors_ag
-    shapefile_out_path = locator.get_district_geometry()
+    buffer_m = config.surroundings_helper.buffer
+    buildings_height = config.surroundings_helper.height_ag
+    buildings_floors = config.surroundings_helper.floors_ag
+    shapefile_out_path = locator.get_surroundings_geometry()
     zone = Gdf.from_file(locator.get_zone_geometry())
 
     # trnasform zone file to geographic coordinates
@@ -214,16 +214,16 @@ def geometry_extractor_osm(locator, config):
     area_with_buffer.crs = get_projected_coordinate_system(float(lat), float(lon))
     area_with_buffer = area_with_buffer.to_crs(get_geographic_coordinate_system())
 
-    # get footprints of all the district
-    all_district = ox.footprints.create_footprints_gdf(polygon=area_with_buffer['geometry'].values[0])
+    # get footprints of all the surroundings
+    all_surroundings = ox.footprints.create_footprints_gdf(polygon=area_with_buffer['geometry'].values[0])
 
     # erase overlapping area
-    district = erase_no_surrounding_areas(all_district.copy(), area_with_buffer)
+    surroundings = erase_no_surrounding_areas(all_surroundings.copy(), area_with_buffer)
 
-    assert district.shape[0] > 0, 'No buildings were found within range based on buffer parameter.'
+    assert surroundings.shape[0] > 0, 'No buildings were found within range based on buffer parameter.'
 
     # clean attributes of height, name and number of floors
-    result = clean_attributes(district, buildings_height, buildings_floors, key="CEA")
+    result = clean_attributes(surroundings, buildings_height, buildings_floors, key="CEA")
     result = result.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
 
     # save to shapefile

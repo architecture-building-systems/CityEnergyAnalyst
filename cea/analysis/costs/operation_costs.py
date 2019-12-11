@@ -23,25 +23,25 @@ def operation_costs(locator, config):
     # get local variables
     demand = pd.read_csv(locator.get_total_demand())
     supply_systems = gpdf.from_file(locator.get_building_supply()).drop('geometry', axis=1)
-    data_LCI = locator.get_life_cycle_inventory_supply_systems()
-    factors_heating = pd.read_excel(data_LCI, sheet_name='HEATING')
-    factors_dhw = pd.read_excel(data_LCI, sheet_name='DHW')
-    factors_cooling = pd.read_excel(data_LCI, sheet_name='COOLING')
-    factors_electricity = pd.read_excel(data_LCI, sheet_name='ELECTRICITY')
-    factors_resources = pd.read_excel(data_LCI, sheet_name='RESOURCES')
+    data_all_in_one_systems = pd.read_excel(locator.get_database_supply_systems(), sheet_name='ALL_IN_ONE_SYSTEMS')
+    factors_heating = data_all_in_one_systems[data_all_in_one_systems['system'].isin(['HEATING', 'NONE'])]
+    factors_dhw = data_all_in_one_systems[data_all_in_one_systems['system'].isin(['HEATING', 'NONE'])]
+    factors_cooling = data_all_in_one_systems[data_all_in_one_systems['system'].isin(['COOLING', 'NONE'])]
+    factors_electricity = data_all_in_one_systems[data_all_in_one_systems['system'].isin(['ELECTRICITY', 'NONE'])]
+    factors_resources = pd.read_excel(locator.get_database_supply_systems(), sheet_name='FEEDSTOCKS')
 
     # local variables
     # calculate the total operational non-renewable primary energy demand and CO2 emissions
     ## create data frame for each type of end use energy containing the type of supply system use, the final energy
     ## demand and the primary energy and emissions factors for each corresponding type of supply system
-    heating_costs = factors_heating.merge(factors_resources, left_on='source_hs', right_on='code')[
-        ['code_x', 'source_hs', 'costs_kWh']]
-    cooling_costs = factors_cooling.merge(factors_resources, left_on='source_cs', right_on='code')[
-        ['code_x', 'source_cs', 'costs_kWh']]
-    dhw_costs = factors_dhw.merge(factors_resources, left_on='source_dhw', right_on='code')[
-        ['code_x', 'source_dhw', 'costs_kWh']]
-    electricity_costs = factors_electricity.merge(factors_resources, left_on='source_el', right_on='code')[
-        ['code_x', 'source_el', 'costs_kWh']]
+    heating_costs = factors_heating.merge(factors_resources, left_on='feedstock', right_on='code')[
+        ['code_x', 'feedstock', 'Opex_var_buy_USD2015perkWh']]
+    cooling_costs = factors_cooling.merge(factors_resources, left_on='feedstock', right_on='code')[
+        ['code_x', 'feedstock', 'Opex_var_buy_USD2015perkWh']]
+    dhw_costs = factors_dhw.merge(factors_resources, left_on='feedstock', right_on='code')[
+        ['code_x', 'feedstock', 'Opex_var_buy_USD2015perkWh']]
+    electricity_costs = factors_electricity.merge(factors_resources, left_on='feedstock', right_on='code')[
+        ['code_x', 'feedstock', 'Opex_var_buy_USD2015perkWh']]
 
     heating = supply_systems.merge(demand, on='Name').merge(heating_costs, left_on='type_hs', right_on='code_x')
     dhw = supply_systems.merge(demand, on='Name').merge(dhw_costs, left_on='type_dhw', right_on='code_x')
@@ -54,7 +54,7 @@ def operation_costs(locator, config):
         try:
             fields_to_plot.extend([service + '_cost_yr', service + '_cost_m2yr'])
             # calculate the total and relative costs
-            heating[service + '_cost_yr'] = heating[service + '_MWhyr'] * heating['costs_kWh'] * 1000
+            heating[service + '_cost_yr'] = heating[service + '_MWhyr'] * heating['Opex_var_buy_USD2015perkWh'] * 1000
             heating[service + '_cost_m2yr'] = heating[service + '_cost_yr'] / heating['Aocc_m2']
         except KeyError:
             print(heating)
@@ -67,7 +67,7 @@ def operation_costs(locator, config):
         fields_to_plot.extend([service + '_cost_yr', service + '_cost_m2yr'])
         # calculate the total and relative costs
         # calculate the total and relative costs
-        dhw[service + '_cost_yr'] = dhw[service + '_MWhyr'] * dhw['costs_kWh'] * 1000
+        dhw[service + '_cost_yr'] = dhw[service + '_MWhyr'] * dhw['Opex_var_buy_USD2015perkWh'] * 1000
         dhw[service + '_cost_m2yr'] = dhw[service + '_cost_yr'] / dhw['Aocc_m2']
 
     ## calculate the operational primary energy and emissions for cooling services
@@ -76,7 +76,7 @@ def operation_costs(locator, config):
         fields_to_plot.extend([service + '_cost_yr', service + '_cost_m2yr'])
         # change price to that of local electricity mix
         # calculate the total and relative costs
-        cooling[service + '_cost_yr'] = cooling[service + '_MWhyr'] * cooling['costs_kWh'] * 1000
+        cooling[service + '_cost_yr'] = cooling[service + '_MWhyr'] * cooling['Opex_var_buy_USD2015perkWh'] * 1000
         cooling[service + '_cost_m2yr'] = cooling[service + '_cost_yr'] / cooling['Aocc_m2']
 
     ## calculate the operational primary energy and emissions for electrical services
@@ -84,7 +84,7 @@ def operation_costs(locator, config):
     for service in electrical_services:
         fields_to_plot.extend([service + '_cost_yr', service + '_cost_m2yr'])
         # calculate the total and relative costs
-        electricity[service + '_cost_yr'] = electricity[service + '_MWhyr'] * electricity['costs_kWh'] * 1000
+        electricity[service + '_cost_yr'] = electricity[service + '_MWhyr'] * electricity['Opex_var_buy_USD2015perkWh'] * 1000
         electricity[service + '_cost_m2yr'] = electricity[service + '_cost_yr'] / electricity['Aocc_m2']
 
     # plot also NFA area and costs

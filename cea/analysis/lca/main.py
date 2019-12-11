@@ -25,15 +25,23 @@ __status__ = "Production"
 
 
 def emissions_main(locator, config):
+
+    #
+    embodied = config.emissions.embodied
+    operation = config.emissions.operation
+    mobility = config.emissions.mobility
     # embodied emissions
-    year_to_calculate = config.emissions.year_to_calculate
-    lca_embodied(year_to_calculate, locator, config)
+    if embodied:
+        year_to_calculate = config.emissions.year_to_calculate
+        lca_embodied(year_to_calculate, locator, config)
 
     # operation emissions
-    lca_operation(locator)
+    if operation:
+        lca_operation(locator)
 
     # mobility emissions
-    lca_mobility(locator, config)
+    if mobility:
+        lca_mobility(locator, config)
 
 
 def main(config):

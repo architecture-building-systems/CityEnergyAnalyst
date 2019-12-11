@@ -132,7 +132,7 @@ def calc_mixed_schedule(locator,
                 if normalizing_value == 0.0:
                     schedule_new_data[schedule_type] = current_schedule * 0.0
                 else:
-                    schedule_new_data[schedule_type] = current_schedule / normalizing_value
+                    schedule_new_data[schedule_type] = np.round(current_schedule/normalizing_value, 2)
 
         # add hour and day of the week
         DAY = {'DAY': ['WEEKDAY'] * 24 + ['SATURDAY'] * 24 + ['SUNDAY'] * 24}
@@ -140,11 +140,11 @@ def calc_mixed_schedule(locator,
         schedule_new_data.update(DAY)
         schedule_new_data.update(HOUR)
 
-        # calcualate complementary_data
+        # calculate complementary_data
         schedule_complementary_data = {'METADATA': metadata, 'MONTHLY_MULTIPLIER': monthly_multiplier}
 
         # save cea schedule format
-        path_to_building_schedule = locator.get_building_schedules(building)
+        path_to_building_schedule = locator.get_building_weekly_schedules(building)
         save_cea_schedule(schedule_new_data, schedule_complementary_data, path_to_building_schedule)
 
 

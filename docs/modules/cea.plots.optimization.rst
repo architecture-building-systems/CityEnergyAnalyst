@@ -9,6 +9,14 @@ cea.plots.optimization package
 Submodules
 ----------
 
+cea.plots.optimization.Investment\_costs module
+-----------------------------------------------
+
+.. automodule:: cea.plots.optimization.Investment_costs
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cea.plots.optimization.annual\_costs module
 -------------------------------------------
 
@@ -37,6 +45,14 @@ cea.plots.optimization.pareto\_curve module
 -------------------------------------------
 
 .. automodule:: cea.plots.optimization.pareto_curve
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.plots.optimization.paretocurve\_convergence module
+------------------------------------------------------
+
+.. automodule:: cea.plots.optimization.paretocurve_convergence
     :members:
     :undoc-members:
     :show-inheritance:

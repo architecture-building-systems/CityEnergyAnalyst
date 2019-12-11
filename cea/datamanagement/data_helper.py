@@ -34,7 +34,7 @@ __status__ = "Production"
 def get_technology_related_databases(locator, region):
     technology_database_template = locator.get_technology_template_for_region(region)
     print("Copying technology databases from {source}".format(source=technology_database_template))
-    output_directory = locator.get_technology_folder()
+    output_directory = locator.get_databases_folder()
 
     from distutils.dir_util import copy_tree
     copy_tree(technology_database_template, output_directory)
@@ -115,7 +115,8 @@ def data_helper(locator, region, overwrite_technology_folder,
         prop_architecture_df_merged = names_df.merge(prop_architecture_df, on="Name")
 
         fields = ['Name',
-                  'Hs',
+                  'Hs_ag',
+                  'Hs_bg',
                   'Ns',
                   'Es',
                   'void_deck',
@@ -150,9 +151,13 @@ def data_helper(locator, region, overwrite_technology_folder,
                   'type_hs',
                   'type_dhw',
                   'type_ctrl',
-                  'type_vent']
+                  'type_vent',
+                  'heat_starts',
+                  'heat_ends',
+                  'cool_starts',
+                  'cool_ends']
         prop_HVAC_df_merged = names_df.merge(prop_HVAC_df, on="Name")
-        dataframe_to_dbf(prop_HVAC_df_merged[fields], locator.get_building_hvac())
+        dataframe_to_dbf(prop_HVAC_df_merged[fields], locator.get_building_air_conditioning())
 
     if update_indoor_comfort_dbf:
         comfort_DB = pd.read_excel(locator.get_archetypes_properties(), 'INDOOR_COMFORT')
@@ -347,7 +352,7 @@ def calc_category(archetype_DB, age, field, type):
 
 def correct_archetype_areas(prop_architecture_df, architecture_DB, list_uses):
     """
-    Corrects the heated area 'Hs' for buildings with multiple uses.
+    Corrects the heated area 'Hs_ag' and 'Hs_bg' for buildings with multiple uses.
 
     :var prop_architecture_df: DataFrame containing each building's occupancy, construction and renovation data as
         well as the architectural properties obtained from the archetypes.
@@ -357,8 +362,9 @@ def correct_archetype_areas(prop_architecture_df, architecture_DB, list_uses):
     :var list_uses: list of all occupancy types in the project
     :type list_uses: list[str]
 
-    :return Hs_list: the corrected values for 'Hs' for each building
-    :type Hs_list: list[float]
+    :return Hs_ag_list, Hs_bg_list, Ns_list, Es_list: the corrected values for 'Hs_ag', 'Hs_bg', 'Ns' and 'Es' for each
+    building
+    :type Hs_ag_list, Hs_bg_list, Ns_list, Es_list:: list[float]
     """
 
     indexed_DB = architecture_DB.set_index('Code')
@@ -367,13 +373,15 @@ def correct_archetype_areas(prop_architecture_df, architecture_DB, list_uses):
     def calc_average(last, current, share_of_use):
         return last + current * share_of_use
 
-    Hs_list = []
+    Hs_ag_list = []
+    Hs_bg_list = []
     Ns_list = []
     Es_list = []
     for building in prop_architecture_df.index:
-        Hs = 0
-        Ns = 0
-        Es = 0
+        Hs_ag = 0.0
+        Hs_bg = 0.0
+        Ns = 0.0
+        Es = 0.0
         for use in list_uses:
             # if the use is present in the building, find the building archetype properties for that use
             if prop_architecture_df[use][building] > 0.0:
@@ -383,14 +391,16 @@ def correct_archetype_areas(prop_architecture_df, architecture_DB, list_uses):
                                    str(prop_architecture_df['standard'][building])
                 # recalculate heated floor area as an average of the archetype value for each occupancy type in the
                 # building
-                Hs = calc_average(Hs, indexed_DB['Hs'][current_use_code], prop_architecture_df[use][building])
+                Hs_ag = calc_average(Hs_ag, indexed_DB['Hs_ag'][current_use_code], prop_architecture_df[use][building])
+                Hs_bg = calc_average(Hs_bg, indexed_DB['Hs_bg'][current_use_code], prop_architecture_df[use][building])
                 Ns = calc_average(Ns, indexed_DB['Ns'][current_use_code], prop_architecture_df[use][building])
                 Es = calc_average(Es, indexed_DB['Es'][current_use_code], prop_architecture_df[use][building])
-        Hs_list.append(Hs)
+        Hs_ag_list.append(Hs_ag)
+        Hs_bg_list.append(Hs_bg)
         Ns_list.append(Ns)
         Es_list.append(Es)
 
-    return Hs_list, Ns_list, Es_list
+    return Hs_ag_list, Hs_bg_list, Ns_list, Es_list
 
 
 def get_prop_architecture(categories_df, architecture_DB, list_uses):
@@ -425,9 +435,9 @@ def get_prop_architecture(categories_df, architecture_DB, list_uses):
     prop_architecture_df = prop_architecture_df.merge(window_DB, left_on='cat_windows', right_on='Code').drop('Code',
                                                                                                               axis=1)
 
-    # adjust share of floor space that is heated ('Hs') for multiuse buildings
-    prop_architecture_df['Hs'], prop_architecture_df['Ns'], prop_architecture_df['Es'] = correct_archetype_areas(
-        prop_architecture_df, architecture_DB, list_uses)
+    # adjust share of floor space that is heated for multiuse buildings
+    prop_architecture_df['Hs_ag'], prop_architecture_df['Hs_bg'], prop_architecture_df['Ns'],\
+        prop_architecture_df['Es'] = correct_archetype_areas(prop_architecture_df, architecture_DB, list_uses)
 
     return prop_architecture_df
 

@@ -13,7 +13,7 @@
     region: CH
 - script: weather-helper
   parameters:
-    weather: Zuerich-Kloten_1990_2010_TMY
+    weather: Zug-inducity_1990_2010_TMY
 - script: radiation
 - script: schedule-maker
 - script: demand
