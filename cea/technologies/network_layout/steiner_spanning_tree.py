@@ -112,7 +112,9 @@ def calc_steiner_spanning_tree(crs_projected, input_network_shp, output_network_
         lambda x: (round(x.coords[0][0], tolerance), round(x.coords[0][1], tolerance)))
     names_temporary = ["NODE" + str(x) for x in mst_nodes['FID']]
     new_mst_nodes = mst_nodes.merge(building_nodes_df, suffixes=['', '_y'], on="coordinates", how='outer')
-    new_mst_nodes.fillna(value="NONE", inplace=True)
+    new_mst_nodes.fillna(
+        value={"Name": "NONE", "floors_bg": "NONE", "floors_ag": "NONE", "height_bg": "NONE", "height_ag": "NONE",
+               "geometry_y": "NONE"}, inplace=True)
     new_mst_nodes.loc[:, 'Building'] = new_mst_nodes['Name']
     new_mst_nodes.loc[:, 'Name'] = names_temporary
     new_mst_nodes.loc[:, 'Type'] = new_mst_nodes['Building'].apply(lambda x: 'CONSUMER' if x != "NONE" else x)
