@@ -90,7 +90,7 @@ module.exports = function (grunt) {
         src: '<%= jshint.core.src %>'
       },
       test: {
-        src: '<%= jshint.test.src %>'
+        src: 'test.src %>'
       },
       assets: {
         options: {
@@ -363,7 +363,7 @@ module.exports = function (grunt) {
         tasks: ['jshint:core', 'qunit', 'concat']
       },
       test: {
-        files: '<%= jshint.test.src %>',
+        files: 'test.src %>',
         tasks: ['jshint:test', 'qunit']
       },
       less: {

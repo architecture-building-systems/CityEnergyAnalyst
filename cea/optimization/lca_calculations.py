@@ -23,7 +23,7 @@ __status__ = "Production"
 
 class LcaCalculations(object):
     def __init__(self, locator):
-        resources_lca = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(), sheet_name="RESOURCES")
+        resources_lca = pd.read_excel(locator.get_database_supply_systems(), sheet_name="FEEDSTOCKS")
         resources_lca.set_index('code', inplace=True)
 
         # Natural gas
@@ -31,12 +31,12 @@ class LcaCalculations(object):
         self.NG_TO_OIL_EQ = resources_lca.loc['NATURALGAS']['PEN']
 
         # Drybiomass
-        self.DRYBIOMASS_TO_CO2_EQ = resources_lca.loc['WOOD']['CO2']
-        self.DRYBIOMASS_TO_OIL_EQ = resources_lca.loc['WOOD']['PEN']
+        self.DRYBIOMASS_TO_CO2_EQ = resources_lca.loc['DRYBIOMASS']['CO2']
+        self.DRYBIOMASS_TO_OIL_EQ = resources_lca.loc['DRYBIOMASS']['PEN']
 
         # WetBiomass
-        self.WETBIOMASS_TO_CO2_EQ = resources_lca.loc['WASTE']['CO2']
-        self.WETBIOMASS_TO_OIL_EQ = resources_lca.loc['WASTE']['PEN']
+        self.WETBIOMASS_TO_CO2_EQ = resources_lca.loc['WETBIOMASS']['CO2']
+        self.WETBIOMASS_TO_OIL_EQ = resources_lca.loc['WETBIOMASS']['PEN']
 
         # Electricity MJ/MJoil and kg/MJ
         self.EL_TO_CO2_EQ = resources_lca.loc['GRID']['CO2']

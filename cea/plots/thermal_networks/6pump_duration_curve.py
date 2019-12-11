@@ -20,14 +20,16 @@ __status__ = "Production"
 
 class LoadDurationCurvePlot(cea.plots.thermal_networks.ThermalNetworksPlotBase):
     """Implement the load duration curve of pump plot"""
-    name = "Load duration curve of pump"
+    name = "Pumping Duration Curve"
 
     def __init__(self, project, parameters, cache):
         super(LoadDurationCurvePlot, self).__init__(project, parameters, cache)
+        self.network_type = parameters['network-type']
+        self.network_name = parameters['network-name']
         self.network_args = [self.network_type, self.network_name]
         self.input_files = [(self.locator.get_thermal_demand_csv_file, self.network_args),
-                            (self.locator.get_thermal_network_layout_pressure_drop_kw_file, self.network_args),
-                            (self.locator.get_thermal_network_qloss_system_file, self.network_args)]
+                            (self.locator.get_network_energy_pumping_requirements_file, self.network_args),
+                            (self.locator.get_network_thermal_loss_edges_file, self.network_args)]
 
     @property
     def layout(self):
@@ -37,7 +39,7 @@ class LoadDurationCurvePlot(cea.plots.thermal_networks.ThermalNetworksPlotBase):
 
     def calc_graph(self):
         analysis_fields = ["P_loss_kWh"]  # data to plot
-        data_frame = self.hourly_pressure_loss
+        data_frame = self.plant_pumping_requirement_kWh
         data_frame.columns = analysis_fields
         graph = []
         duration = range(HOURS_IN_YEAR)
@@ -53,7 +55,7 @@ class LoadDurationCurvePlot(cea.plots.thermal_networks.ThermalNetworksPlotBase):
     def calc_table(self):
         # calculate variables for the analysis
         analysis_fields = ["P_loss_kWh"]  # data to plot
-        data_frame = self.hourly_pressure_loss
+        data_frame = self.plant_pumping_requirement_kWh
         data_frame.columns = analysis_fields
         loss_peak = data_frame[analysis_fields].max().round(2).tolist()  # save maximum value of loss
         loss_total = (data_frame[analysis_fields].sum() / 1000).round(2).tolist()  # save total loss value

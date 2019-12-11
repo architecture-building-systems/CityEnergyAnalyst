@@ -2,12 +2,14 @@
 Operation for decentralized buildings
 """
 from __future__ import division
+from __future__ import print_function
 
 import time
 from math import ceil
 
 import numpy as np
 import pandas as pd
+from itertools import repeat
 
 import cea.config
 import cea.inputlocator
@@ -20,11 +22,12 @@ import cea.technologies.cooling_tower as cooling_tower
 import cea.technologies.direct_expansion_units as dx
 import cea.technologies.solar.solar_collector as solar_collector
 import cea.technologies.substation as substation
-from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, WH_TO_J
-from cea.optimization.constants import SIZING_MARGIN, T_GENERATOR_FROM_FP_C, T_GENERATOR_FROM_ET_C, \
-    Q_LOSS_DISCONNECTED, ACH_TYPE_SINGLE, VCC_CODE_DECENTRALIZED
+from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
+from cea.optimization.constants import (T_GENERATOR_FROM_FP_C, T_GENERATOR_FROM_ET_C,
+                                        Q_LOSS_DISCONNECTED, ACH_TYPE_SINGLE)
 from cea.optimization.lca_calculations import LcaCalculations
 from cea.technologies.thermal_network.thermal_network import calculate_ground_temperature
+import cea.utilities.parallel
 
 
 def disconnected_buildings_cooling_main(locator, building_names, total_demand, config, prices, lca):
@@ -56,361 +59,372 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
     """
 
     t0 = time.clock()
-    chiller_prop = pd.read_excel(locator.get_supply_systems(), sheet_name="Absorption_chiller")
-    for building_name in building_names:
-        ## Calculate cooling loads for different combinations
-        # SENSIBLE COOLING UNIT
-        Qc_nom_SCU_W, \
-        T_re_SCU_K, \
-        T_sup_SCU_K, \
-        mdot_SCU_kgpers = calc_combined_cooling_loads(building_name, locator, total_demand,
-                                                      cooling_configuration=['scu'])
-        # AIR HANDLING UNIT + AIR RECIRCULATION UNIT
-        Qc_nom_AHU_ARU_W, \
-        T_re_AHU_ARU_K, \
-        T_sup_AHU_ARU_K, \
-        mdot_AHU_ARU_kgpers = calc_combined_cooling_loads(building_name, locator, total_demand,
-                                                          cooling_configuration=['ahu', 'aru'])
-        # SENSIBLE COOLING UNIT + AIR HANDLING UNIT + AIR RECIRCULATION UNIT
-        Qc_nom_AHU_ARU_SCU_W, \
-        T_re_AHU_ARU_SCU_K, \
-        T_sup_AHU_ARU_SCU_K, \
-        mdot_AHU_ARU_SCU_kgpers = calc_combined_cooling_loads(building_name, locator, total_demand,
-                                                              cooling_configuration=['ahu', 'aru', 'scu'])
+    chiller_prop = pd.read_excel(locator.get_database_supply_systems(), sheet_name="Absorption_chiller")
 
-        ## Get hourly hot water supply condition of Solar Collectors (SC)
-        # Flate Plate Solar Collectors
-        SC_FP_data, T_hw_in_FP_C, el_aux_SC_FP_Wh, q_sc_gen_FP_Wh = get_SC_data(building_name, locator, panel_type="FP")
-        Capex_a_SC_FP_USD, Opex_SC_FP_USD, Capex_SC_FP_USD = solar_collector.calc_Cinv_SC(SC_FP_data['Area_SC_m2'][0],
-                                                                                          locator,
-                                                                                          panel_type="FP")
+    n = len(building_names)
 
-        # Evacuated Tube Solar Collectors
-        SC_ET_data, T_hw_in_ET_C, el_aux_SC_ET_Wh, q_sc_gen_ET_Wh = get_SC_data(building_name, locator, panel_type="ET")
-        Capex_a_SC_ET_USD, Opex_SC_ET_USD, Capex_SC_ET_USD = solar_collector.calc_Cinv_SC(SC_ET_data['Area_SC_m2'][0],
-                                                                                          locator,
-                                                                                          panel_type="ET")
+    cea.utilities.parallel.vectorize(disconnected_cooling_for_building, config.get_number_of_processes())(
+        building_names,
+        repeat(chiller_prop, n),
+        repeat(config, n),
+        repeat(lca, n),
+        repeat(locator, n),
+        repeat(prices, n),
+        repeat(total_demand, n))
+
+    print(time.clock() - t0, "seconds process time for the decentralized Building Routine \n")
 
 
-        ## Calculate ground temperatures to estimate cold water supply temperatures for absorption chiller
-        T_ground_K = calculate_ground_temperature(locator)  # FIXME: change to outlet temperature from the cooling towers
-
-        ## Initialize table to save results
-        # save costs of all supply configurations
-        operation_results = initialize_result_tables_for_supply_configurations(Qc_nom_SCU_W)
-        # save supply system activation of all supply configurations
-        cooling_dispatch = {}
-
-        ## HOURLY OPERATION
-        print building_name, ' decentralized cooling supply system simulations...'
-        T_re_AHU_ARU_SCU_K = np.where(T_re_AHU_ARU_SCU_K > 0.0, T_re_AHU_ARU_SCU_K, T_sup_AHU_ARU_SCU_K)
-
-        ## 0. DX operation
-        print 'Config 0: Direct Expansion Units -> AHU,ARU,SCU'
-        el_DX_hourly_Wh,\
-        q_DX_chw_Wh = np.vectorize(dx.calc_DX)(mdot_AHU_ARU_SCU_kgpers, T_sup_AHU_ARU_SCU_K, T_re_AHU_ARU_SCU_K)
-        DX_Status = np.where(q_DX_chw_Wh > 0.0, 1, 0)
-        # add electricity costs, CO2, PE
-        operation_results[0][7] += sum(prices.ELEC_PRICE * el_DX_hourly_Wh)
-        operation_results[0][8] += calc_emissions_Whyr_to_tonCO2yr(sum(el_DX_hourly_Wh), lca.EL_TO_CO2_EQ)  # ton CO2
-        operation_results[0][9] += calc_pen_Whyr_to_MJoilyr(sum(el_DX_hourly_Wh), lca.EL_TO_OIL_EQ)  # MJ oil
-        # activation
-        cooling_dispatch[0] = {'Q_DX_gen_directload_W': q_DX_chw_Wh,
-                               'E_DX_req_W': el_DX_hourly_Wh,
-                               'DX_Status': DX_Status,
-                               'E_cs_cre_cdata_req_W': el_DX_hourly_Wh,
-                               }
-
-        ## 1. VCC (AHU + ARU + SCU) + CT
-        print 'Config 1: Vapor Compression Chillers -> AHU,ARU,SCU'
-        # VCC operation
-        el_VCC_Wh, q_VCC_cw_Wh, q_VCC_chw_Wh = calc_VCC_operation(T_re_AHU_ARU_SCU_K, T_sup_AHU_ARU_SCU_K,
-                                                                  mdot_AHU_ARU_SCU_kgpers)
-        VCC_Status = np.where(q_VCC_chw_Wh > 0.0, 1, 0)
+def disconnected_cooling_for_building(building_name, chiller_prop, config, lca, locator, prices, total_demand):
+    ## Calculate cooling loads for different combinations
+    # SENSIBLE COOLING UNIT
+    Qc_nom_SCU_W, \
+    T_re_SCU_K, \
+    T_sup_SCU_K, \
+    mdot_SCU_kgpers = calc_combined_cooling_loads(building_name, locator, total_demand,
+                                                  cooling_configuration=['scu'])
+    # AIR HANDLING UNIT + AIR RECIRCULATION UNIT
+    Qc_nom_AHU_ARU_W, \
+    T_re_AHU_ARU_K, \
+    T_sup_AHU_ARU_K, \
+    mdot_AHU_ARU_kgpers = calc_combined_cooling_loads(building_name, locator, total_demand,
+                                                      cooling_configuration=['ahu', 'aru'])
+    # SENSIBLE COOLING UNIT + AIR HANDLING UNIT + AIR RECIRCULATION UNIT
+    Qc_nom_AHU_ARU_SCU_W, \
+    T_re_AHU_ARU_SCU_K, \
+    T_sup_AHU_ARU_SCU_K, \
+    mdot_AHU_ARU_SCU_kgpers = calc_combined_cooling_loads(building_name, locator, total_demand,
+                                                          cooling_configuration=['ahu', 'aru', 'scu'])
+    ## Get hourly hot water supply condition of Solar Collectors (SC)
+    # Flate Plate Solar Collectors
+    SC_FP_data, T_hw_in_FP_C, el_aux_SC_FP_Wh, q_sc_gen_FP_Wh = get_SC_data(building_name, locator, panel_type="FP")
+    Capex_a_SC_FP_USD, Opex_SC_FP_USD, Capex_SC_FP_USD = solar_collector.calc_Cinv_SC(SC_FP_data['Area_SC_m2'][0],
+                                                                                      locator,
+                                                                                      panel_type="FP")
+    # Evacuated Tube Solar Collectors
+    SC_ET_data, T_hw_in_ET_C, el_aux_SC_ET_Wh, q_sc_gen_ET_Wh = get_SC_data(building_name, locator, panel_type="ET")
+    Capex_a_SC_ET_USD, Opex_SC_ET_USD, Capex_SC_ET_USD = solar_collector.calc_Cinv_SC(SC_ET_data['Area_SC_m2'][0],
+                                                                                      locator,
+                                                                                      panel_type="ET")
+    ## Calculate ground temperatures to estimate cold water supply temperatures for absorption chiller
+    T_ground_K = calculate_ground_temperature(locator)  # FIXME: change to outlet temperature from the cooling towers
+    ## Initialize table to save results
+    # save costs of all supply configurations
+    operation_results = initialize_result_tables_for_supply_configurations(Qc_nom_SCU_W)
+    # save supply system activation of all supply configurations
+    cooling_dispatch = {}
+    ## HOURLY OPERATION
+    print('{building_name} decentralized cooling supply system simulations...'.format(building_name=building_name))
+    T_re_AHU_ARU_SCU_K = np.where(T_re_AHU_ARU_SCU_K > 0.0, T_re_AHU_ARU_SCU_K, T_sup_AHU_ARU_SCU_K)
+    ## 0. DX operation
+    print('{building_name} dConfig 0: Direct Expansion Units -> AHU,ARU,SCU'.format(building_name=building_name))
+    el_DX_hourly_Wh, \
+    q_DX_chw_Wh = np.vectorize(dx.calc_DX)(mdot_AHU_ARU_SCU_kgpers, T_sup_AHU_ARU_SCU_K, T_re_AHU_ARU_SCU_K)
+    DX_Status = np.where(q_DX_chw_Wh > 0.0, 1, 0)
+    # add electricity costs, CO2, PE
+    operation_results[0][7] += sum(prices.ELEC_PRICE * el_DX_hourly_Wh)
+    operation_results[0][8] += calc_emissions_Whyr_to_tonCO2yr(sum(el_DX_hourly_Wh), lca.EL_TO_CO2_EQ)  # ton CO2
+    operation_results[0][9] += calc_pen_Whyr_to_MJoilyr(sum(el_DX_hourly_Wh), lca.EL_TO_OIL_EQ)  # MJ oil
+    # activation
+    cooling_dispatch[0] = {'Q_DX_AS_gen_directload_W': q_DX_chw_Wh,
+                           'E_DX_AS_req_W': el_DX_hourly_Wh,
+                           'E_cs_cre_cdata_req_W': el_DX_hourly_Wh,
+                           }
+    # capacity of cooling technologies
+    operation_results[0][0] = Qc_nom_AHU_ARU_SCU_W
+    operation_results[0][1] = Qc_nom_AHU_ARU_SCU_W  # 1: DX_AS
+    ## 1. VCC (AHU + ARU + SCU) + CT
+    print('{building_name} Config 1: Vapor Compression Chillers -> AHU,ARU,SCU'.format(building_name=building_name))
+    # VCC operation
+    el_VCC_Wh, q_VCC_cw_Wh, q_VCC_chw_Wh = calc_VCC_operation(T_re_AHU_ARU_SCU_K, T_sup_AHU_ARU_SCU_K,
+                                                              mdot_AHU_ARU_SCU_kgpers)
+    VCC_Status = np.where(q_VCC_chw_Wh > 0.0, 1, 0)
+    # CT operation
+    q_CT_VCC_to_AHU_ARU_SCU_Wh = q_VCC_cw_Wh
+    Q_nom_CT_VCC_to_AHU_ARU_SCU_W, el_CT_Wh = calc_CT_operation(q_CT_VCC_to_AHU_ARU_SCU_Wh)
+    # add costs
+    el_total_Wh = el_VCC_Wh + el_CT_Wh
+    operation_results[1][7] += sum(prices.ELEC_PRICE * el_total_Wh)  # CHF
+    operation_results[1][8] += calc_emissions_Whyr_to_tonCO2yr(sum(el_total_Wh), lca.EL_TO_CO2_EQ)  # ton CO2
+    operation_results[1][9] += calc_pen_Whyr_to_MJoilyr(sum(el_total_Wh), lca.EL_TO_OIL_EQ)  # MJ-oil-eq
+    cooling_dispatch[1] = {'Q_BaseVCC_AS_gen_directload_W': q_VCC_chw_Wh,
+                           'E_BaseVCC_AS_req_W': el_VCC_Wh,
+                           'E_CT_req_W': el_CT_Wh,
+                           'E_cs_cre_cdata_req_W': el_total_Wh,
+                           }
+    # capacity of cooling technologies
+    operation_results[1][0] = Qc_nom_AHU_ARU_SCU_W
+    operation_results[1][2] = Qc_nom_AHU_ARU_SCU_W  # 2: BaseVCC_AS
+    ## 2: SC_FP + single-effect ACH (AHU + ARU + SCU) + CT + Boiler + SC_FP
+    print(
+        '{building_name} Config 2: Flat-plate Solar Collectors + Single-effect Absorption chillers -> AHU,ARU,SCU'.format(
+            building_name=building_name))
+    # ACH operation
+    T_hw_out_single_ACH_K, \
+    el_single_ACH_Wh, \
+    q_cw_single_ACH_Wh, \
+    q_hw_single_ACH_Wh, \
+    q_chw_single_ACH_Wh = calc_ACH_operation(T_ground_K, T_hw_in_FP_C, T_re_AHU_ARU_SCU_K, T_sup_AHU_ARU_SCU_K,
+                                             chiller_prop, mdot_AHU_ARU_SCU_kgpers, ACH_TYPE_SINGLE)
+    ACH_Status = np.where(q_chw_single_ACH_Wh > 0.0, 1, 0)
+    # CT operation
+    q_CT_FP_to_single_ACH_to_AHU_ARU_SCU_Wh = q_cw_single_ACH_Wh
+    Q_nom_CT_FP_to_single_ACH_to_AHU_ARU_SCU_W, el_CT_Wh = calc_CT_operation(
+        q_CT_FP_to_single_ACH_to_AHU_ARU_SCU_Wh)
+    # boiler operation
+    q_gas_Boiler_FP_to_single_ACH_to_AHU_ARU_SCU_Wh, \
+    Q_nom_Boiler_FP_to_single_ACH_to_AHU_ARU_SCU_W, \
+    q_load_Boiler_FP_to_single_ACH_to_AHU_ARU_SCU_Wh = calc_boiler_operation(Qc_nom_AHU_ARU_SCU_W,
+                                                                             T_hw_out_single_ACH_K,
+                                                                             q_hw_single_ACH_Wh,
+                                                                             q_sc_gen_FP_Wh)
+    # add electricity costs
+    el_total_Wh = el_single_ACH_Wh + el_aux_SC_FP_Wh + el_CT_Wh
+    operation_results[2][7] += sum(prices.ELEC_PRICE * el_total_Wh)  # CHF
+    operation_results[2][8] += calc_emissions_Whyr_to_tonCO2yr(sum(el_total_Wh), lca.EL_TO_CO2_EQ)  # ton CO2
+    operation_results[2][9] += calc_pen_Whyr_to_MJoilyr(sum(el_total_Wh), lca.EL_TO_OIL_EQ)  # MJ-oil-eq
+    # add gas costs
+    q_gas_total_Wh = q_gas_Boiler_FP_to_single_ACH_to_AHU_ARU_SCU_Wh
+    operation_results[2][7] += sum(prices.NG_PRICE * q_gas_total_Wh)  # CHF
+    operation_results[2][8] += calc_emissions_Whyr_to_tonCO2yr(sum(q_gas_total_Wh), lca.NG_TO_CO2_EQ)  # ton CO2
+    operation_results[2][9] += calc_pen_Whyr_to_MJoilyr(sum(q_gas_total_Wh), lca.NG_TO_OIL_EQ)  # MJ-oil-eq
+    # add activation
+    cooling_dispatch[2] = {'Q_ACH_gen_directload_W': q_chw_single_ACH_Wh,
+                           'Q_Boiler_NG_ACH_W': q_load_Boiler_FP_to_single_ACH_to_AHU_ARU_SCU_Wh,
+                           'Q_SC_FP_ACH_W': q_sc_gen_FP_Wh,
+                           'E_ACH_req_W': el_single_ACH_Wh,
+                           'E_CT_req_W': el_CT_Wh,
+                           'E_SC_FP_req_W': el_aux_SC_FP_Wh,
+                           'E_cs_cre_cdata_req_W': el_total_Wh,
+                           'NG_Boiler_req': q_gas_Boiler_FP_to_single_ACH_to_AHU_ARU_SCU_Wh,
+                           }
+    # capacity of cooling technologies
+    operation_results[2][0] = Qc_nom_AHU_ARU_SCU_W
+    operation_results[2][4] = Qc_nom_AHU_ARU_SCU_W  # 4: ACH_SC_FP
+    # 3: SC_ET + single-effect ACH (AHU + ARU + SCU) + CT + Boiler + SC_ET
+    print(
+        '{building_name} Config 3: Evacuated Tube Solar Collectors + Single-effect Absorption chillers -> AHU,ARU,SCU'.format(
+            building_name=building_name))
+    # ACH operation
+    T_hw_out_single_ACH_K, \
+    el_single_ACH_Wh, \
+    q_cw_single_ACH_Wh, \
+    q_hw_single_ACH_Wh, \
+    q_chw_single_ACH_Wh = calc_ACH_operation(T_ground_K, T_hw_in_ET_C, T_re_AHU_ARU_SCU_K, T_sup_AHU_ARU_SCU_K,
+                                             chiller_prop, mdot_AHU_ARU_SCU_kgpers, ACH_TYPE_SINGLE)
+    # CT operation
+    q_CT_ET_to_single_ACH_to_AHU_ARU_SCU_W = q_cw_single_ACH_Wh
+    Q_nom_CT_ET_to_single_ACH_to_AHU_ARU_SCU_W, el_CT_Wh = calc_CT_operation(q_CT_ET_to_single_ACH_to_AHU_ARU_SCU_W)
+    # burner operation
+    q_gas_for_burner_Wh, \
+    Q_nom_Burner_ET_to_single_ACH_to_AHU_ARU_SCU_W, \
+    q_burner_load_Wh = calc_burner_operation(Qc_nom_AHU_ARU_SCU_W, q_hw_single_ACH_Wh, q_sc_gen_ET_Wh)
+    # add electricity costs
+    el_total_Wh = el_single_ACH_Wh + el_aux_SC_ET_Wh + el_CT_Wh
+    operation_results[3][7] += sum(prices.ELEC_PRICE * el_total_Wh)  # CHF
+    operation_results[3][8] += calc_emissions_Whyr_to_tonCO2yr(sum(el_total_Wh), lca.EL_TO_CO2_EQ)  # ton CO2
+    operation_results[3][9] += calc_pen_Whyr_to_MJoilyr(sum(el_total_Wh), lca.EL_TO_OIL_EQ)  # MJ-oil-eq
+    # add gas costs
+    operation_results[3][7] += sum(prices.NG_PRICE * q_gas_for_burner_Wh)  # CHF
+    operation_results[3][8] += calc_emissions_Whyr_to_tonCO2yr(sum(q_gas_for_burner_Wh), lca.NG_TO_CO2_EQ)  # ton CO2
+    operation_results[3][9] += calc_pen_Whyr_to_MJoilyr(sum(q_gas_for_burner_Wh), lca.NG_TO_OIL_EQ)  # MJ-oil-eq
+    # add activation
+    cooling_dispatch[3] = {'Q_ACH_gen_directload_W': q_chw_single_ACH_Wh,
+                           'Q_Burner_NG_ACH_W': q_burner_load_Wh,
+                           'Q_SC_ET_ACH_W': q_sc_gen_ET_Wh,
+                           'E_ACH_req_W': el_single_ACH_Wh,
+                           'E_CT_req_W': el_CT_Wh,
+                           'E_SC_ET_req_W': el_aux_SC_ET_Wh,
+                           'E_cs_cre_cdata_req_W': el_total_Wh,
+                           'NG_Burner_req': q_gas_for_burner_Wh,
+                           }
+    # capacity of cooling technologies
+    operation_results[3][0] = Qc_nom_AHU_ARU_SCU_W
+    operation_results[3][5] = Qc_nom_AHU_ARU_SCU_W  # 5: ACH_SC_ET
+    # these two configurations are only activated when SCU is in use
+    if Qc_nom_SCU_W > 0.0:
+        # 4: VCC (AHU + ARU) + VCC (SCU) + CT
+        print(
+            '{building_name} Config 4: Vapor Compression Chillers(HT) -> SCU & Vapor Compression Chillers(LT) -> AHU,ARU'.format(
+                building_name=building_name))
+        # VCC (AHU + ARU) operation
+        el_VCC_to_AHU_ARU_Wh, \
+        q_cw_VCC_to_AHU_ARU_Wh, \
+        q_chw_VCC_to_AHU_ARU_Wh = calc_VCC_operation(T_re_AHU_ARU_K, T_sup_AHU_ARU_K, mdot_AHU_ARU_kgpers)
+        VCC_LT_Status = np.where(q_chw_VCC_to_AHU_ARU_Wh > 0.0, 1, 0)
+        # VCC(SCU) operation
+        el_VCC_to_SCU_Wh, \
+        q_cw_VCC_to_SCU_Wh, \
+        q_chw_VCC_to_SCU_Wh = calc_VCC_operation(T_re_SCU_K, T_sup_SCU_K, mdot_SCU_kgpers)
+        VCC_HT_Status = np.where(q_chw_VCC_to_AHU_ARU_Wh > 0.0, 1, 0)
         # CT operation
-        q_CT_VCC_to_AHU_ARU_SCU_Wh = q_VCC_cw_Wh
-        Q_nom_CT_VCC_to_AHU_ARU_SCU_W, el_CT_Wh = calc_CT_operation(q_CT_VCC_to_AHU_ARU_SCU_Wh)
-        # add costs
-        el_total_Wh = el_VCC_Wh + el_CT_Wh
-        operation_results[1][7] += sum(prices.ELEC_PRICE * el_total_Wh)  # CHF
-        operation_results[1][8] += calc_emissions_Whyr_to_tonCO2yr(sum(el_total_Wh), lca.EL_TO_CO2_EQ)  # ton CO2
-        operation_results[1][9] += calc_pen_Whyr_to_MJoilyr(sum(el_total_Wh), lca.EL_TO_OIL_EQ)  # MJ-oil-eq
-        cooling_dispatch[1] = {'Q_VCC_gen_directload_W': q_VCC_chw_Wh,
-                               'E_VCC_req_W': el_VCC_Wh,
+        q_CT_VCC_to_AHU_ARU_and_VCC_to_SCU_W = q_cw_VCC_to_AHU_ARU_Wh + q_cw_VCC_to_SCU_Wh
+        Q_nom_CT_VCC_to_AHU_ARU_and_VCC_to_SCU_W, el_CT_Wh = calc_CT_operation(q_CT_VCC_to_AHU_ARU_and_VCC_to_SCU_W)
+        # add el costs
+        el_total_Wh = el_VCC_to_AHU_ARU_Wh + el_VCC_to_SCU_Wh + el_CT_Wh
+        operation_results[4][7] += sum(prices.ELEC_PRICE * el_total_Wh)  # CHF
+        operation_results[4][8] += calc_emissions_Whyr_to_tonCO2yr(sum(el_total_Wh), lca.EL_TO_CO2_EQ)  # ton CO2
+        operation_results[4][9] += calc_pen_Whyr_to_MJoilyr(sum(el_total_Wh), lca.EL_TO_OIL_EQ)  # MJ-oil-eq
+        # add activation
+        cooling_dispatch[4] = {'Q_BaseVCC_AS_gen_directload_W': q_chw_VCC_to_AHU_ARU_Wh,
+                               'Q_BaseVCCHT_AS_gen_directload_W': q_chw_VCC_to_SCU_Wh,
+                               'E_BaseVCC_req_W': el_VCC_to_AHU_ARU_Wh,
+                               'E_VCC_HT_req_W': el_VCC_to_SCU_Wh,
                                'E_CT_req_W': el_CT_Wh,
-                               'E_cs_cre_cdata_req_W': el_total_Wh,
-                               'VCC_Status': VCC_Status
+                               'E_cs_cre_cdata_req_W': el_total_Wh
                                }
+        # capacity of cooling technologies
+        operation_results[4][0] = Qc_nom_AHU_ARU_SCU_W
+        operation_results[4][2] = Qc_nom_AHU_ARU_W  # 2: BaseVCC_AS
+        operation_results[4][3] = Qc_nom_SCU_W  # 3: VCCHT_AS
 
-        ## 2: SC_FP + single-effect ACH (AHU + ARU + SCU) + CT + Boiler + SC_FP
-        print 'Config 2: Flat-plate Solar Collectors + Single-effect Absorption chillers -> AHU,ARU,SCU'
-        # ACH operation
-        T_hw_out_single_ACH_K, \
-        el_single_ACH_Wh, \
-        q_cw_single_ACH_Wh, \
-        q_hw_single_ACH_Wh,\
-        q_chw_single_ACH_Wh = calc_ACH_operation(T_ground_K, T_hw_in_FP_C, T_re_AHU_ARU_SCU_K, T_sup_AHU_ARU_SCU_K,
-                                                 chiller_prop, mdot_AHU_ARU_SCU_kgpers, ACH_TYPE_SINGLE)
-
-        ACH_Status = np.where(q_chw_single_ACH_Wh > 0.0, 1, 0)
-        # CT operation
-        q_CT_FP_to_single_ACH_to_AHU_ARU_SCU_Wh = q_cw_single_ACH_Wh
-        Q_nom_CT_FP_to_single_ACH_to_AHU_ARU_SCU_W, el_CT_Wh = calc_CT_operation(
-            q_CT_FP_to_single_ACH_to_AHU_ARU_SCU_Wh)
+        # 5: VCC (AHU + ARU) + ACH (SCU) + CT
+        print(
+            '{building_name} Config 5: Vapor Compression Chillers(LT) -> AHU,ARU & Flate-place SC + Absorption Chillers(HT) -> SCU'.format(
+                building_name=building_name))
+        # ACH (SCU) operation
+        T_hw_FP_ACH_to_SCU_K, \
+        el_FP_ACH_to_SCU_Wh, \
+        q_cw_FP_ACH_to_SCU_Wh, \
+        q_hw_FP_ACH_to_SCU_Wh, \
+        q_chw_FP_ACH_to_SCU_Wh = calc_ACH_operation(T_ground_K, T_hw_in_FP_C, T_re_SCU_K, T_sup_SCU_K, chiller_prop,
+                                                    mdot_SCU_kgpers, ACH_TYPE_SINGLE)
+        ACH_HT_Status = np.where(q_chw_FP_ACH_to_SCU_Wh > 0.0, 1, 0)
         # boiler operation
-        q_gas_Boiler_FP_to_single_ACH_to_AHU_ARU_SCU_Wh, \
-        Q_nom_Boiler_FP_to_single_ACH_to_AHU_ARU_SCU_W, \
-        q_load_Boiler_FP_to_single_ACH_to_AHU_ARU_SCU_Wh = calc_boiler_operation(Qc_nom_AHU_ARU_SCU_W,
-                                                                                 T_hw_out_single_ACH_K,
-                                                                                 q_hw_single_ACH_Wh,
-                                                                                 q_sc_gen_FP_Wh)
-        # add electricity costs
-        el_total_Wh = el_single_ACH_Wh + el_aux_SC_FP_Wh + el_CT_Wh
-        operation_results[2][7] += sum(prices.ELEC_PRICE * el_total_Wh)  # CHF
-        operation_results[2][8] += calc_emissions_Whyr_to_tonCO2yr(sum(el_total_Wh), lca.EL_TO_CO2_EQ)  # ton CO2
-        operation_results[2][9] += calc_pen_Whyr_to_MJoilyr(sum(el_total_Wh), lca.EL_TO_OIL_EQ)  # MJ-oil-eq
-        # add gas costs
-        q_gas_total_Wh = q_gas_Boiler_FP_to_single_ACH_to_AHU_ARU_SCU_Wh
-        operation_results[2][7] += sum(prices.NG_PRICE * q_gas_total_Wh)  # CHF
-        operation_results[2][8] += calc_emissions_Whyr_to_tonCO2yr(sum(q_gas_total_Wh), lca.NG_TO_CO2_EQ)  # ton CO2
-        operation_results[2][9] += calc_pen_Whyr_to_MJoilyr(sum(q_gas_total_Wh), lca.NG_TO_OIL_EQ)  # MJ-oil-eq
-        # add activation
-        cooling_dispatch[2] = {'Q_ACH_gen_directload_W': q_chw_single_ACH_Wh,
-                               'ACH_Status': ACH_Status,
-                               'Q_Boiler_ACH_W': q_load_Boiler_FP_to_single_ACH_to_AHU_ARU_SCU_Wh,
-                               'Q_SC_FP_ACH_W': q_sc_gen_FP_Wh,
-                               'E_ACH_req_W': el_single_ACH_Wh,
-                               'E_CT_req_W': el_CT_Wh,
-                               'E_SC_FP_req_W': el_aux_SC_FP_Wh,
-                               'E_cs_cre_cdata_req_W': el_total_Wh,
-                               'NG_Boiler_req': q_gas_Boiler_FP_to_single_ACH_to_AHU_ARU_SCU_Wh,
-                               }
-
-        # 3: SC_ET + single-effect ACH (AHU + ARU + SCU) + CT + Boiler + SC_ET
-        print 'Config 3: Evacuated Tube Solar Collectors + Single-effect Absorption chillers -> AHU,ARU,SCU'
-        # ACH operation
-        T_hw_out_single_ACH_K, \
-        el_single_ACH_Wh, \
-        q_cw_single_ACH_Wh, \
-        q_hw_single_ACH_Wh,\
-        q_chw_single_ACH_Wh = calc_ACH_operation(T_ground_K, T_hw_in_ET_C, T_re_AHU_ARU_SCU_K, T_sup_AHU_ARU_SCU_K,
-                                                 chiller_prop, mdot_AHU_ARU_SCU_kgpers, ACH_TYPE_SINGLE)
+        q_gas_for_boiler_Wh, \
+        Q_nom_boiler_VCC_to_AHU_ARU_and_FP_to_single_ACH_to_SCU_W, \
+        q_load_from_boiler_Wh = calc_boiler_operation(Qc_nom_SCU_W, T_hw_FP_ACH_to_SCU_K,
+                                                      q_hw_FP_ACH_to_SCU_Wh, q_sc_gen_FP_Wh)
         # CT operation
-        q_CT_ET_to_single_ACH_to_AHU_ARU_SCU_W = q_cw_single_ACH_Wh
-        Q_nom_CT_ET_to_single_ACH_to_AHU_ARU_SCU_W, el_CT_Wh = calc_CT_operation(q_CT_ET_to_single_ACH_to_AHU_ARU_SCU_W)
-        # burner operation
-        q_gas_for_burner_Wh, \
-        Q_nom_Burner_ET_to_single_ACH_to_AHU_ARU_SCU_W,\
-        q_burner_load_Wh = calc_burner_operation(Qc_nom_AHU_ARU_SCU_W, q_hw_single_ACH_Wh, q_sc_gen_ET_Wh)
+        q_CT_VCC_to_AHU_ARU_and_single_ACH_to_SCU_Wh = q_cw_VCC_to_AHU_ARU_Wh + q_cw_FP_ACH_to_SCU_Wh
+        Q_nom_CT_VCC_to_AHU_ARU_and_FP_to_single_ACH_to_SCU_W, \
+        el_CT_Wh = calc_CT_operation(q_CT_VCC_to_AHU_ARU_and_single_ACH_to_SCU_Wh)
+
         # add electricity costs
-        el_total_Wh = el_single_ACH_Wh + el_aux_SC_ET_Wh + el_CT_Wh
-        operation_results[3][7] += sum(prices.ELEC_PRICE * el_total_Wh)  # CHF
-        operation_results[3][8] += calc_emissions_Whyr_to_tonCO2yr(sum(el_total_Wh), lca.EL_TO_CO2_EQ)  # ton CO2
-        operation_results[3][9] += calc_pen_Whyr_to_MJoilyr(sum(el_total_Wh),  lca.EL_TO_OIL_EQ)  # MJ-oil-eq
+        el_total_Wh = el_VCC_to_AHU_ARU_Wh + el_FP_ACH_to_SCU_Wh + el_aux_SC_FP_Wh + el_CT_Wh
+        operation_results[5][7] += sum(prices.ELEC_PRICE * el_total_Wh)  # CHF
+        operation_results[5][8] += calc_emissions_Whyr_to_tonCO2yr(sum(el_total_Wh), lca.EL_TO_CO2_EQ)  # ton CO2
+        operation_results[5][9] += calc_pen_Whyr_to_MJoilyr(sum(el_total_Wh), lca.EL_TO_OIL_EQ)  # MJ-oil-eq
         # add gas costs
-        operation_results[3][7] += sum(prices.NG_PRICE * q_gas_for_burner_Wh)  # CHF
-        operation_results[3][8] += calc_emissions_Whyr_to_tonCO2yr(sum(q_gas_for_burner_Wh),lca.NG_TO_CO2_EQ)  # ton CO2
-        operation_results[3][9] += calc_pen_Whyr_to_MJoilyr(sum(q_gas_for_burner_Wh), lca.NG_TO_OIL_EQ)  # MJ-oil-eq
+        q_gas_total_Wh = q_gas_for_boiler_Wh
+        operation_results[5][7] += sum(prices.NG_PRICE * q_gas_total_Wh)  # CHF
+        operation_results[5][8] += calc_emissions_Whyr_to_tonCO2yr(sum(q_gas_total_Wh), lca.NG_TO_CO2_EQ)  # ton CO2
+        operation_results[5][9] += calc_pen_Whyr_to_MJoilyr(sum(q_gas_total_Wh), lca.NG_TO_OIL_EQ)  # MJ-oil-eq
         # add activation
-        cooling_dispatch[3] = {'Q_ACH_gen_directload_W': q_chw_single_ACH_Wh,
-                               'ACH_Status': ACH_Status,
-                               'Q_Burner_ACH_W': q_burner_load_Wh,
-                               'Q_SC_ET_ACH_W': q_sc_gen_ET_Wh,
-                               'E_ACH_req_W': el_single_ACH_Wh,
+        cooling_dispatch[5] = {'Q_BaseVCC_AS_gen_directload_W': q_chw_VCC_to_AHU_ARU_Wh,
+                               'Q_ACHHT_AS_gen_directload_W': q_chw_FP_ACH_to_SCU_Wh,
+                               'E_BaseVCC_req_W': el_VCC_to_AHU_ARU_Wh,
+                               'E_ACHHT_req_W': el_FP_ACH_to_SCU_Wh,
+                               'E_SC_FP_ACH_req_W': el_aux_SC_FP_Wh,
                                'E_CT_req_W': el_CT_Wh,
-                               'E_SC_FP_req_W': el_aux_SC_ET_Wh,
                                'E_cs_cre_cdata_req_W': el_total_Wh,
-                               'NG_Burner_req': q_gas_for_burner_Wh,
+                               'Q_BaseBoiler_NG_req': q_gas_for_boiler_Wh,
                                }
+        # capacity of cooling technologies
+        operation_results[5][0] = Qc_nom_AHU_ARU_SCU_W
+        operation_results[5][2] = Qc_nom_AHU_ARU_W  # 2: BaseVCC_AS
+        operation_results[5][6] = Qc_nom_SCU_W  # 6: ACHHT_SC_FP
 
-        # these two configurations are only activated when SCU is in use
-        if Qc_nom_SCU_W > 0.0:
-            # 4: VCC (AHU + ARU) + VCC (SCU) + CT
-            print 'Config 4: Vapor Compression Chillers(HT) -> SCU & Vapor Compression Chillers(LT) -> AHU,ARU'
-            # VCC (AHU + ARU) operation
-            el_VCC_to_AHU_ARU_Wh, \
-            q_cw_VCC_to_AHU_ARU_Wh,\
-            q_chw_VCC_to_AHU_ARU_Wh = calc_VCC_operation(T_re_AHU_ARU_K, T_sup_AHU_ARU_K, mdot_AHU_ARU_kgpers)
-            VCC_LT_Status = np.where(q_chw_VCC_to_AHU_ARU_Wh > 0.0, 1, 0)
-            # VCC(SCU) operation
-            el_VCC_to_SCU_Wh, \
-            q_cw_VCC_to_SCU_Wh,\
-            q_chw_VCC_to_SCU_Wh = calc_VCC_operation(T_re_SCU_K, T_sup_SCU_K, mdot_SCU_kgpers)
-            VCC_HT_Status = np.where(q_chw_VCC_to_AHU_ARU_Wh > 0.0, 1, 0)
-            # CT operation
-            q_CT_VCC_to_AHU_ARU_and_VCC_to_SCU_W = q_cw_VCC_to_AHU_ARU_Wh + q_cw_VCC_to_SCU_Wh
-            Q_nom_CT_VCC_to_AHU_ARU_and_VCC_to_SCU_W, el_CT_Wh = calc_CT_operation(q_CT_VCC_to_AHU_ARU_and_VCC_to_SCU_W)
-            # add el costs
-            el_total_Wh = el_VCC_to_AHU_ARU_Wh + el_VCC_to_SCU_Wh + el_CT_Wh
-            operation_results[4][7] += sum(prices.ELEC_PRICE * el_total_Wh)  # CHF
-            operation_results[4][8] += calc_emissions_Whyr_to_tonCO2yr(sum(el_total_Wh), lca.EL_TO_CO2_EQ)  # ton CO2
-            operation_results[4][9] += calc_pen_Whyr_to_MJoilyr(sum(el_total_Wh), lca.EL_TO_OIL_EQ)  # MJ-oil-eq
-            # add activation
-            cooling_dispatch[4] = {'Q_VCC_LT_gen_directload_W': q_chw_VCC_to_AHU_ARU_Wh,
-                                   'Q_VCC_HT_gen_directload_W': q_chw_VCC_to_SCU_Wh,
-                                   'VCC_LT_Status': VCC_LT_Status,
-                                   'VCC_HT_Status': VCC_HT_Status,
-                                   'E_VCC_LT_req_W': el_VCC_to_AHU_ARU_Wh,
-                                   'E_VCC_HT_req_W': el_VCC_to_SCU_Wh,
-                                   'E_CT_req_W': el_CT_Wh,
-                                   'E_cs_cre_cdata_req_W': el_total_Wh
-                                   }
-
-            # 5: VCC (AHU + ARU) + ACH (SCU) + CT
-            print 'Config 5: Vapor Compression Chillers(LT) -> AHU,ARU & Flate-place SC + Absorption Chillers(HT) -> SCU'
-            # ACH (SCU) operation
-            T_hw_FP_ACH_to_SCU_K, \
-            el_FP_ACH_to_SCU_Wh, \
-            q_cw_FP_ACH_to_SCU_Wh, \
-            q_hw_FP_ACH_to_SCU_Wh,\
-            q_chw_FP_ACH_to_SCU_Wh = calc_ACH_operation(T_ground_K, T_hw_in_FP_C, T_re_SCU_K, T_sup_SCU_K, chiller_prop,
-                                                        mdot_SCU_kgpers, ACH_TYPE_SINGLE)
-            ACH_HT_Status = np.where(q_chw_FP_ACH_to_SCU_Wh > 0.0, 1, 0)
-            # boiler operation
-            q_gas_for_boiler_Wh, \
-            Q_nom_boiler_VCC_to_AHU_ARU_and_FP_to_single_ACH_to_SCU_W,\
-            q_load_from_boiler_Wh = calc_boiler_operation(Qc_nom_SCU_W, T_hw_FP_ACH_to_SCU_K,
-                                                          q_hw_FP_ACH_to_SCU_Wh, q_sc_gen_FP_Wh)
-            # CT operation
-            q_CT_VCC_to_AHU_ARU_and_single_ACH_to_SCU_Wh = q_cw_VCC_to_AHU_ARU_Wh + q_cw_FP_ACH_to_SCU_Wh
-            Q_nom_CT_VCC_to_AHU_ARU_and_FP_to_single_ACH_to_SCU_W, \
-            el_CT_Wh = calc_CT_operation(q_CT_VCC_to_AHU_ARU_and_single_ACH_to_SCU_Wh)
-
-            # add electricity costs
-            el_total_Wh = el_VCC_to_AHU_ARU_Wh + el_FP_ACH_to_SCU_Wh + el_aux_SC_FP_Wh + el_CT_Wh
-            operation_results[5][7] += sum(prices.ELEC_PRICE * el_total_Wh)  # CHF
-            operation_results[5][8] += calc_emissions_Whyr_to_tonCO2yr(sum(el_total_Wh), lca.EL_TO_CO2_EQ)  # ton CO2
-            operation_results[5][9] += calc_pen_Whyr_to_MJoilyr(sum(el_total_Wh), lca.EL_TO_OIL_EQ)  # MJ-oil-eq
-            # add gas costs
-            q_gas_total_Wh = q_gas_for_boiler_Wh
-            operation_results[5][7] += sum(prices.NG_PRICE * q_gas_total_Wh)  # CHF
-            operation_results[5][8] += calc_emissions_Whyr_to_tonCO2yr(sum(q_gas_total_Wh), lca.NG_TO_CO2_EQ)  # ton CO2
-            operation_results[5][9] += calc_pen_Whyr_to_MJoilyr(sum(q_gas_total_Wh), lca.NG_TO_OIL_EQ)  # MJ-oil-eq
-            # add activation
-            cooling_dispatch[5] = {'Q_VCC_LT_gen_directload_W': q_chw_VCC_to_AHU_ARU_Wh,
-                                   'Q_ACH_HT_gen_directload_W': q_chw_FP_ACH_to_SCU_Wh,
-                                   'VCC_LT_Status': VCC_LT_Status,
-                                   'ACH_HT_Status': ACH_HT_Status,
-                                   'E_VCC_LT_req_W': el_VCC_to_AHU_ARU_Wh,
-                                   'E_ACH_HT_req_W': el_FP_ACH_to_SCU_Wh,
-                                   'E_SC_FP_req_W': el_aux_SC_FP_Wh,
-                                   'E_CT_req_W': el_CT_Wh,
-                                   'E_cs_cre_cdata_req_W': el_total_Wh,
-                                   'NG_Boiler_req': q_gas_for_boiler_Wh,
-                                   }
-
-        ## Calculate Capex/Opex
-        # Initialize arrays
-        number_of_configurations = len(operation_results)
-        Capex_a_USD = np.zeros((number_of_configurations, 1))
-        Capex_total_USD = np.zeros((number_of_configurations, 1))
-        Opex_a_fixed_USD = np.zeros((number_of_configurations, 1))
-
-        print 'Cost calculation...'
-        # 0: DX
-        Capex_a_DX_USD, Opex_fixed_DX_USD, Capex_DX_USD = dx.calc_Cinv_DX(Qc_nom_AHU_ARU_SCU_W)
-        # add costs
-        Capex_a_USD[0][0] = Capex_a_DX_USD
-        Capex_total_USD[0][0] = Capex_DX_USD
-        Opex_a_fixed_USD[0][0] = Opex_fixed_DX_USD
-
-        # 1: VCC + CT
-        Capex_a_VCC_USD, Opex_fixed_VCC_USD, Capex_VCC_USD = chiller_vapor_compression.calc_Cinv_VCC(
-            Qc_nom_AHU_ARU_SCU_W, locator, 'CH3')
+    ## Calculate Capex/Opex
+    # Initialize arrays
+    number_of_configurations = len(operation_results)
+    Capex_a_USD = np.zeros((number_of_configurations, 1))
+    Capex_total_USD = np.zeros((number_of_configurations, 1))
+    Opex_a_fixed_USD = np.zeros((number_of_configurations, 1))
+    print('{building_name} Cost calculation...'.format(building_name=building_name))
+    # 0: DX
+    Capex_a_DX_USD, Opex_fixed_DX_USD, Capex_DX_USD = dx.calc_Cinv_DX(Qc_nom_AHU_ARU_SCU_W)
+    # add costs
+    Capex_a_USD[0][0] = Capex_a_DX_USD
+    Capex_total_USD[0][0] = Capex_DX_USD
+    Opex_a_fixed_USD[0][0] = Opex_fixed_DX_USD
+    # 1: VCC + CT
+    Capex_a_VCC_USD, Opex_fixed_VCC_USD, Capex_VCC_USD = chiller_vapor_compression.calc_Cinv_VCC(
+        Qc_nom_AHU_ARU_SCU_W, locator, 'CH3')
+    Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(
+        Q_nom_CT_VCC_to_AHU_ARU_SCU_W, locator, 'CT1')
+    # add costs
+    Capex_a_USD[1][0] = Capex_a_CT_USD + Capex_a_VCC_USD
+    Capex_total_USD[1][0] = Capex_CT_USD + Capex_VCC_USD
+    Opex_a_fixed_USD[1][0] = Opex_fixed_CT_USD + Opex_fixed_VCC_USD
+    # 2: single effect ACH + CT + Boiler + SC_FP
+    Capex_a_ACH_USD, Opex_fixed_ACH_USD, Capex_ACH_USD = chiller_absorption.calc_Cinv_ACH(
+        Qc_nom_AHU_ARU_SCU_W, locator, ACH_TYPE_SINGLE)
+    Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(
+        Q_nom_CT_FP_to_single_ACH_to_AHU_ARU_SCU_W, locator, 'CT1')
+    Capex_a_boiler_USD, Opex_fixed_boiler_USD, Capex_boiler_USD = boiler.calc_Cinv_boiler(
+        Q_nom_Boiler_FP_to_single_ACH_to_AHU_ARU_SCU_W, locator, config, 'BO1')
+    Capex_a_USD[2][0] = Capex_a_CT_USD + Capex_a_ACH_USD + Capex_a_boiler_USD + Capex_a_SC_FP_USD
+    Capex_total_USD[2][0] = Capex_CT_USD + Capex_ACH_USD + Capex_boiler_USD + Capex_SC_FP_USD
+    Opex_a_fixed_USD[2][
+        0] = Opex_fixed_CT_USD + Opex_fixed_ACH_USD + Opex_fixed_boiler_USD + Opex_SC_FP_USD
+    # 3: double effect ACH + CT + Boiler + SC_ET
+    Capex_a_ACH_USD, Opex_fixed_ACH_USD, Capex_ACH_USD = chiller_absorption.calc_Cinv_ACH(
+        Qc_nom_AHU_ARU_SCU_W, locator, ACH_TYPE_SINGLE)
+    Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(
+        Q_nom_CT_ET_to_single_ACH_to_AHU_ARU_SCU_W, locator, 'CT1')
+    Capex_a_burner_USD, Opex_fixed_burner_USD, Capex_burner_USD = burner.calc_Cinv_burner(
+        Q_nom_Burner_ET_to_single_ACH_to_AHU_ARU_SCU_W, locator, config, 'BO1')
+    Capex_a_USD[3][0] = Capex_a_CT_USD + Capex_a_ACH_USD + Capex_a_burner_USD + Capex_a_SC_ET_USD
+    Capex_total_USD[3][0] = Capex_CT_USD + Capex_ACH_USD + Capex_burner_USD + Capex_SC_ET_USD
+    Opex_a_fixed_USD[3][
+        0] = Opex_fixed_CT_USD + Opex_fixed_ACH_USD + Opex_fixed_burner_USD + Opex_SC_ET_USD
+    # these two configurations are only activated when SCU is in use
+    if Qc_nom_SCU_W > 0.0:
+        # 4: VCC (AHU + ARU) + VCC (SCU) + CT
+        Capex_a_VCC_AA_USD, Opex_VCC_AA_USD, Capex_VCC_AA_USD = chiller_vapor_compression.calc_Cinv_VCC(
+            Qc_nom_AHU_ARU_W, locator, 'CH3')
+        Capex_a_VCC_S_USD, Opex_VCC_S_USD, Capex_VCC_S_USD = chiller_vapor_compression.calc_Cinv_VCC(
+            Qc_nom_SCU_W, locator, 'CH3')
         Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(
-            Q_nom_CT_VCC_to_AHU_ARU_SCU_W, locator, 'CT1')
-        # add costs
-        Capex_a_USD[1][0] = Capex_a_CT_USD + Capex_a_VCC_USD
-        Capex_total_USD[1][0] = Capex_CT_USD + Capex_VCC_USD
-        Opex_a_fixed_USD[1][0] = Opex_fixed_CT_USD + Opex_fixed_VCC_USD
+            Q_nom_CT_VCC_to_AHU_ARU_and_VCC_to_SCU_W, locator, 'CT1')
+        Capex_a_USD[4][0] = Capex_a_CT_USD + Capex_a_VCC_AA_USD + Capex_a_VCC_S_USD
+        Capex_total_USD[4][0] = Capex_CT_USD + Capex_VCC_AA_USD + Capex_VCC_S_USD
+        Opex_a_fixed_USD[4][0] = Opex_fixed_CT_USD + Opex_VCC_AA_USD + Opex_VCC_S_USD
 
-        # 2: single effect ACH + CT + Boiler + SC_FP
-        Capex_a_ACH_USD, Opex_fixed_ACH_USD, Capex_ACH_USD = chiller_absorption.calc_Cinv_ACH(
-            Qc_nom_AHU_ARU_SCU_W, locator, ACH_TYPE_SINGLE)
+        # 5: VCC (AHU + ARU) + ACH (SCU) + CT + Boiler + SC_FP
+        Capex_a_ACH_S_USD, Opex_fixed_ACH_S_USD, Capex_ACH_S_USD = chiller_absorption.calc_Cinv_ACH(
+            Qc_nom_SCU_W, locator, ACH_TYPE_SINGLE)
         Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(
-            Q_nom_CT_FP_to_single_ACH_to_AHU_ARU_SCU_W, locator, 'CT1')
+            Q_nom_CT_VCC_to_AHU_ARU_and_FP_to_single_ACH_to_SCU_W, locator, 'CT1')
         Capex_a_boiler_USD, Opex_fixed_boiler_USD, Capex_boiler_USD = boiler.calc_Cinv_boiler(
-            Q_nom_Boiler_FP_to_single_ACH_to_AHU_ARU_SCU_W, locator, config, 'BO1')
-        Capex_a_USD[2][0] = Capex_a_CT_USD + Capex_a_ACH_USD + Capex_a_boiler_USD + Capex_a_SC_FP_USD
-        Capex_total_USD[2][0] = Capex_CT_USD + Capex_ACH_USD + Capex_boiler_USD + Capex_SC_FP_USD
-        Opex_a_fixed_USD[2][
-            0] = Opex_fixed_CT_USD + Opex_fixed_ACH_USD + Opex_fixed_boiler_USD + Opex_SC_FP_USD
-
-        # 3: double effect ACH + CT + Boiler + SC_ET
-        Capex_a_ACH_USD, Opex_fixed_ACH_USD, Capex_ACH_USD = chiller_absorption.calc_Cinv_ACH(
-            Qc_nom_AHU_ARU_SCU_W, locator, ACH_TYPE_SINGLE)
-        Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(
-            Q_nom_CT_ET_to_single_ACH_to_AHU_ARU_SCU_W, locator, 'CT1')
-        Capex_a_burner_USD, Opex_fixed_burner_USD, Capex_burner_USD = burner.calc_Cinv_burner(
-            Q_nom_Burner_ET_to_single_ACH_to_AHU_ARU_SCU_W, locator, config, 'BO1')
-        Capex_a_USD[3][0] = Capex_a_CT_USD + Capex_a_ACH_USD + Capex_a_burner_USD + Capex_a_SC_ET_USD
-        Capex_total_USD[3][0] = Capex_CT_USD + Capex_ACH_USD + Capex_burner_USD + Capex_SC_ET_USD
-        Opex_a_fixed_USD[3][
-            0] = Opex_fixed_CT_USD + Opex_fixed_ACH_USD + Opex_fixed_burner_USD + Opex_SC_ET_USD
-
-        # these two configurations are only activated when SCU is in use
-        if Qc_nom_SCU_W > 0.0:
-            # 4: VCC (AHU + ARU) + VCC (SCU) + CT
-            Capex_a_VCC_AA_USD, Opex_VCC_AA_USD, Capex_VCC_AA_USD = chiller_vapor_compression.calc_Cinv_VCC(
-                Qc_nom_AHU_ARU_W, locator, 'CH3')
-            Capex_a_VCC_S_USD, Opex_VCC_S_USD, Capex_VCC_S_USD = chiller_vapor_compression.calc_Cinv_VCC(
-                Qc_nom_SCU_W, locator, 'CH3')
-            Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(
-                Q_nom_CT_VCC_to_AHU_ARU_and_VCC_to_SCU_W, locator, 'CT1')
-            Capex_a_USD[4][0] = Capex_a_CT_USD + Capex_a_VCC_AA_USD + Capex_a_VCC_S_USD
-            Capex_total_USD[4][0] = Capex_CT_USD + Capex_VCC_AA_USD + Capex_VCC_S_USD
-            Opex_a_fixed_USD[4][0] = Opex_fixed_CT_USD + Opex_VCC_AA_USD + Opex_VCC_S_USD
-
-            # 5: VCC (AHU + ARU) + ACH (SCU) + CT + Boiler + SC_FP
-            Capex_a_ACH_S_USD, Opex_fixed_ACH_S_USD, Capex_ACH_S_USD = chiller_absorption.calc_Cinv_ACH(
-                Qc_nom_SCU_W, locator, ACH_TYPE_SINGLE)
-            Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(
-                Q_nom_CT_VCC_to_AHU_ARU_and_FP_to_single_ACH_to_SCU_W, locator, 'CT1')
-            Capex_a_boiler_USD, Opex_fixed_boiler_USD, Capex_boiler_USD = boiler.calc_Cinv_boiler(
-                Q_nom_boiler_VCC_to_AHU_ARU_and_FP_to_single_ACH_to_SCU_W, locator, config, 'BO1')
-            Capex_a_USD[5][0] = Capex_a_CT_USD + Capex_a_VCC_AA_USD + Capex_a_ACH_S_USD + \
-                                Capex_a_SC_FP_USD + Capex_a_boiler_USD
-            Capex_total_USD[5][0] = Capex_CT_USD + Capex_VCC_AA_USD + Capex_ACH_S_USD + \
-                                    Capex_SC_FP_USD + Capex_boiler_USD
-            Opex_a_fixed_USD[5][0] = Opex_fixed_CT_USD + Opex_VCC_AA_USD + Opex_fixed_ACH_S_USD + \
-                                     Opex_SC_FP_USD + Opex_fixed_boiler_USD
-
-        ## write all results from the configurations into TotalCosts, TotalCO2, TotalPrim
-        Opex_a_USD, TAC_USD, TotalCO2, TotalPrim = compile_TAC_CO2_Prim(Capex_a_USD, Opex_a_fixed_USD,
-                                                                        number_of_configurations, operation_results)
-
-        ## Determine the best configuration
-        Best, indexBest = rank_results(TAC_USD, TotalCO2, TotalPrim, number_of_configurations)
-
-        # Save results in csv file
-        performance_results = {
-            "DX to AHU_ARU_SCU Share": operation_results[:, 0],
-            "VCC to AHU_ARU_SCU Share": operation_results[:, 1],
-            "single effect ACH to AHU_ARU_SCU Share (FP)": operation_results[:, 2],
-            "single effect ACH to AHU_ARU_SCU Share (ET)": operation_results[:, 3],
-            "VCC to AHU_ARU Share": operation_results[:, 4],
-            "VCC to SCU Share": operation_results[:, 5],
-            "single effect ACH to SCU Share (FP)": operation_results[:, 6],
-            "Capex_a_USD": Capex_a_USD[:, 0],
-            "Capex_total_USD": Capex_total_USD[:, 0],
-            "Opex_a_USD": Opex_a_USD[:, 1],
-            "Opex_a_fixed_USD": Opex_a_fixed_USD[:, 0],
-            "Opex_a_var_USD": operation_results[:, 7],
-            "GHG_tonCO2": operation_results[:, 8],
-            "PEN_MJoil": operation_results[:, 9],
-            "TAC_USD": TAC_USD[:, 1],
-            "Best configuration": Best[:, 0]
-        }
-        performance_results_df = pd.DataFrame(performance_results)
-        performance_results_df.to_csv(
-            locator.get_optimization_decentralized_folder_building_result_cooling(building_name))
-
-        # save activation for the best supply system configuration
-        best_activation_df = pd.DataFrame.from_dict(cooling_dispatch[indexBest])  #
-        best_activation_df.to_csv(
-            locator.get_optimization_decentralized_folder_building_cooling_activation(building_name))
-
-    print time.clock() - t0, "seconds process time for the decentralized Building Routine \n"
+            Q_nom_boiler_VCC_to_AHU_ARU_and_FP_to_single_ACH_to_SCU_W, locator, config, 'BO1')
+        Capex_a_USD[5][0] = Capex_a_CT_USD + Capex_a_VCC_AA_USD + Capex_a_ACH_S_USD + \
+                            Capex_a_SC_FP_USD + Capex_a_boiler_USD
+        Capex_total_USD[5][0] = Capex_CT_USD + Capex_VCC_AA_USD + Capex_ACH_S_USD + \
+                                Capex_SC_FP_USD + Capex_boiler_USD
+        Opex_a_fixed_USD[5][0] = Opex_fixed_CT_USD + Opex_VCC_AA_USD + Opex_fixed_ACH_S_USD + \
+                                 Opex_SC_FP_USD + Opex_fixed_boiler_USD
+    ## write all results from the configurations into TotalCosts, TotalCO2, TotalPrim
+    Opex_a_USD, TAC_USD, TotalCO2, TotalPrim = compile_TAC_CO2_Prim(Capex_a_USD, Opex_a_fixed_USD,
+                                                                    number_of_configurations, operation_results)
+    ## Determine the best configuration
+    Best, indexBest = rank_results(TAC_USD, TotalCO2, TotalPrim, number_of_configurations)
+    # Save results in csv file
+    performance_results = {
+        "Nominal heating load": operation_results[:, 0],
+        "Capacity_DX_AS_W": operation_results[:, 1],
+        "Capacity_BaseVCC_AS_W": operation_results[:, 2],
+        "Capacity_VCCHT_AS_W": operation_results[:, 3],
+        "Capacity_ACH_SC_FP_W": operation_results[:, 4],
+        "Capaticy_ACH_SC_ET_W": operation_results[:, 5],
+        "Capacity_ACHHT_FP_W": operation_results[:, 6],
+        "Capex_a_USD": Capex_a_USD[:, 0],
+        "Capex_total_USD": Capex_total_USD[:, 0],
+        "Opex_fixed_USD": Opex_a_fixed_USD[:, 0],
+        "Opex_var_USD": operation_results[:, 7],
+        "GHG_tonCO2": operation_results[:, 8],
+        "PEN_MJoil": operation_results[:, 9],
+        "TAC_USD": TAC_USD[:, 1],
+        "Best configuration": Best[:, 0],
+    }
+    performance_results_df = pd.DataFrame(performance_results)
+    performance_results_df.to_csv(
+        locator.get_optimization_decentralized_folder_building_result_cooling(building_name))
+    # save activation for the best supply system configuration
+    best_activation_df = pd.DataFrame.from_dict(cooling_dispatch[indexBest])  #
+    best_activation_df.to_csv(
+        locator.get_optimization_decentralized_folder_building_cooling_activation(building_name))
 
 
 def calc_VCC_operation(T_chw_re_K, T_chw_sup_K, mdot_kgpers):
@@ -428,7 +442,7 @@ def calc_VCC_operation(T_chw_re_K, T_chw_sup_K, mdot_kgpers):
 
 
 def calc_CT_operation(q_CT_load_Wh):
-    Q_nom_CT_W = np.max(q_CT_load_Wh) * (1 + SIZING_MARGIN)
+    Q_nom_CT_W = np.max(q_CT_load_Wh)
     el_CT_Wh = np.vectorize(cooling_tower.calc_CT)(q_CT_load_Wh, Q_nom_CT_W)
     return Q_nom_CT_W, el_CT_Wh
 
@@ -436,7 +450,7 @@ def calc_CT_operation(q_CT_load_Wh):
 def calc_boiler_operation(Q_ACH_size_W, T_hw_out_from_ACH_K, q_hw_single_ACH_Wh, q_sc_gen_FP_Wh):
     if not np.isclose(Q_ACH_size_W, 0.0):
         q_boiler_load_Wh = q_hw_single_ACH_Wh - q_sc_gen_FP_Wh
-        Q_nom_Boilers_W = np.max(q_boiler_load_Wh) * (1 + SIZING_MARGIN)
+        Q_nom_Boilers_W = np.max(q_boiler_load_Wh)
         T_re_boiler_K = T_hw_out_from_ACH_K
         boiler_eff = np.vectorize(boiler.calc_Cop_boiler)(q_boiler_load_Wh, Q_nom_Boilers_W, T_re_boiler_K)
         Q_gas_for_boiler_Wh = np.divide(q_boiler_load_Wh, boiler_eff,
@@ -451,7 +465,7 @@ def calc_boiler_operation(Q_ACH_size_W, T_hw_out_from_ACH_K, q_hw_single_ACH_Wh,
 def calc_burner_operation(Q_ACH_size_W, q_hw_single_ACH_Wh, q_sc_gen_ET_Wh):
     if not np.isclose(Q_ACH_size_W, 0.0):
         q_burner_load_Wh = q_hw_single_ACH_Wh - q_sc_gen_ET_Wh
-        Q_nom_Burners_W = np.max(q_burner_load_Wh) * (1 + SIZING_MARGIN)
+        Q_nom_Burners_W = np.max(q_burner_load_Wh)
         burner_eff = np.vectorize(burner.calc_cop_burner)(q_burner_load_Wh, Q_nom_Burners_W)
         q_gas_for_burber_Wh = np.divide(q_burner_load_Wh, burner_eff,
                                         out=np.zeros_like(q_burner_load_Wh), where=burner_eff != 0)
@@ -522,37 +536,17 @@ def initialize_result_tables_for_supply_configurations(Qc_nom_SCU_W):
     else:
         operation_results = np.zeros((6, 10))
 
-    ## logging the supply technology used in each configuration
-    # config 0: DX
-    operation_results[0][0] = 1
-    # config 1: VCC to AHU
-    operation_results[1][1] = 1
-    # config 2: single-effect ACH with FP to AHU & ARU & SCU
-    operation_results[2][2] = 1
-    # config 3: single-effect ACH with ET to AHU & ARU & SCU
-    operation_results[3][3] = 1
-    if operation_results.shape[0] > 4:
-        ## These two configurations are only available when SCU is in use.
-        # config 4: VCC to AHU + ARU and VCC to SCU
-        operation_results[4][4] = 1
-        operation_results[4][5] = 1
-        # config 5: VCC to AHU + ARU and single effect ACH to SCU
-        operation_results[5][4] = 1
-        operation_results[5][6] = 1
     return operation_results
 
-class AbsorptionChiller(object):
-    def __init__(self, chiller_prop, ACH_type):
-        self.chiller_prop =  chiller_prop[chiller_prop['type'] == ACH_type]
 
-def calc_ACH_operation(T_ground_K, T_SC_hw_in_C, T_chw_re_K, T_chw_sup_K, chiller_prop, mdot_chw_kgpers, ACH_type):
-    chiller_prop = AbsorptionChiller(chiller_prop, ACH_type)
+def calc_ACH_operation(T_ground_K, T_SC_hw_in_C, T_chw_re_K, T_chw_sup_K, absorption_chiller, mdot_chw_kgpers, ACH_type):
+    absorption_chiller = chiller_absorption.AbsorptionChiller(absorption_chiller, ACH_type)
     SC_to_single_ACH_operation = np.vectorize(chiller_absorption.calc_chiller_main)(mdot_chw_kgpers,
                                                                                     T_chw_sup_K,
                                                                                     T_chw_re_K,
                                                                                     T_SC_hw_in_C,
                                                                                     T_ground_K,
-                                                                                    chiller_prop)
+                                                                                    absorption_chiller)
 
 
     el_ACH_Wh = np.asarray([x['wdot_W'] for x in SC_to_single_ACH_operation])
@@ -575,7 +569,7 @@ def get_SC_data(building_name, locator, panel_type):
     elif panel_type == "ET":
         T_hw_in_C = [x if x > T_GENERATOR_FROM_ET_C else T_GENERATOR_FROM_ET_C for x in SC_data['T_SC_re_C']]
     else:
-        print 'invalid panel type: ', panel_type
+        print('invalid panel type: ', panel_type)
     return SC_data, T_hw_in_C, el_aux_SC_Wh, q_sc_gen_Wh
 
 
@@ -642,7 +636,7 @@ def main(config):
     run the whole preprocessing routine
     """
     from cea.optimization.prices import Prices as Prices
-    print('Running decentralized model for buildings with scenario = %s' % config.scenario)
+    print("Running decentralized model for buildings with scenario = %s" % config.scenario)
 
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     total_demand = pd.read_csv(locator.get_total_demand())
@@ -651,7 +645,7 @@ def main(config):
     lca = LcaCalculations(locator)
     disconnected_buildings_cooling_main(locator, building_names, total_demand, config, prices, lca)
 
-    print 'test_decentralized_buildings_cooling() succeeded'
+    print("test_decentralized_buildings_cooling() succeeded")
 
 
 if __name__ == '__main__':

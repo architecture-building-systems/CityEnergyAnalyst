@@ -18,7 +18,7 @@ Step 1. Gather minimum data
 
 The objective of this step is to collect the minimum set of inputs needed for a new project. There are basically four(4) files you need to collect to start with CEA.
 
-#. District geometry file: A shapefile storing the geometry of buildings and surroundings
+#. Surroundings geometry file: A shapefile storing the geometry of buildings and surroundings
 #. Zone geometry file: A shapefile storing the geometry of buildings.
 #. Streets geometry file: A shapefile storing streets and pathways
 #. Terrain file: Digital elevation model of the terrain.
@@ -52,7 +52,7 @@ The objective of this step is to use the configuration editor to set up the inpu
 
     zone                 [-]        path to shapefile with geometry of zone
 
-    district             [-]        path to shapefile with geometry of district
+    surroundings         [-]        path to shapefile with geometry of surroundings
 
     streets              [-]        path to shapefile with geometry of streets
 

@@ -20,7 +20,7 @@ __status__ = "Production"
 
 class SupplyReturnAmbientCurvePlot(cea.plots.thermal_networks.ThermalNetworksPlotBase):
     """Implement the heat and pressure losses plot"""
-    name = "Supply and Return vs. Ambient Temp"
+    name = "Heating Reset Curve"
 
     expected_parameters = {
         'scenario-name': 'general:scenario-name',
@@ -31,11 +31,20 @@ class SupplyReturnAmbientCurvePlot(cea.plots.thermal_networks.ThermalNetworksPlo
 
     def __init__(self, project, parameters, cache):
         super(SupplyReturnAmbientCurvePlot, self).__init__(project, parameters, cache)
+        self.network_type = parameters['network-type']
+        self.network_name = parameters['network-name']
         self.network_args = [self.network_type, self.network_name]
-        self.plant_node = self.parameters['plant-node']
+        self._plant_node = self.parameters['plant-node']
         self.input_files = [(self.locator.get_thermal_demand_csv_file, self.network_args),
-                            (self.locator.get_thermal_network_layout_pressure_drop_kw_file, self.network_args),
-                            (self.locator.get_thermal_network_qloss_system_file, self.network_args)]
+                            (self.locator.get_network_energy_pumping_requirements_file, self.network_args),
+                            (self.locator.get_network_thermal_loss_edges_file, self.network_args)]
+
+    @property
+    def plant_node(self):
+        if not self._plant_node:
+            return self.locator.get_plant_nodes(self.network_type, self.network_name)[0]
+        else:
+            return self._plant_node
 
     @property
     def title(self):
@@ -95,9 +104,9 @@ class SupplyReturnAmbientCurvePlot(cea.plots.thermal_networks.ThermalNetworksPlo
     @property
     def plant_temperatures(self):
         supply_df = pd.read_csv(
-            self.locator.get_thermal_network_layout_supply_temperature_file(self.network_type, self.network_name))
+            self.locator.get_network_temperature_supply_nodes_file(self.network_type, self.network_name))
         return_df = pd.read_csv(
-            self.locator.get_thermal_network_layout_return_temperature_file(self.network_type, self.network_name))
+            self.locator.get_network_temperature_return_nodes_file(self.network_type, self.network_name))
 
         plant_node_supply = supply_df[self.plant_node]
         plant_node_return = return_df[self.plant_node]

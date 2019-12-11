@@ -1,6 +1,7 @@
 SCRIPT,LOCATOR_METHOD,FILE_NAME,VARIABLE,DESCRIPTION,UNIT,VALUES,TYPE,COLOR
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:ARCHITECTURE,Es,Fraction of gross floor area with electrical demands.,[m2/m2],{0.0...1},float,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:ARCHITECTURE,Hs,Fraction of gross floor area air-conditioned.,[m2/m2],{0.0...1},float,black
+-,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:ARCHITECTURE,Hs_ag,Fraction of above ground gross floor area air-conditioned.,[m2/m2],{0.0...1},float,black
+-,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:ARCHITECTURE,Hs_bg,Fraction of below ground gross floor area air-conditioned ,[m2/m2],{0.0...1},float,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:ARCHITECTURE,Ns,Fraction of net gross floor area.,[m2/m2],{0.0...1},float,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:ARCHITECTURE,building_use,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:ARCHITECTURE,standard,Letter representing whereas the field represent construction properties of a building as newly constructed (C) or renovated (R),[-],{C or R},string,black
@@ -24,6 +25,10 @@ SCRIPT,LOCATOR_METHOD,FILE_NAME,VARIABLE,DESCRIPTION,UNIT,VALUES,TYPE,COLOR
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:HVAC,type_dhw,Type of hot water supply system,[code],{T0...Tn},string,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:HVAC,type_hs,Type of heating supply system,[code],{T0...Tn},string,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:HVAC,type_vent,Type of ventilation strategy (relates to values in Default Database HVAC Properties),[code],{T1...Tn},string,black
+-,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:HVAC,heat_starts,Start of the heating season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black
+-,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:HVAC,heat_ends,End of the heating season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black
+-,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:HVAC,cool_starts,Start of the cooling season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black
+-,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:HVAC,cool_ends,End of the cooling season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:HVAC,year_end,Upper limit of year interval where the building properties apply,[yr],{0...n},int,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:HVAC,year_start,Lower limit of year interval where the building properties apply,[yr],{0...n},int,black
 -,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INDOOR_COMFORT,Code,Unique code for the material of the pipe.,[-],[-],string,black
@@ -275,23 +280,23 @@ SCRIPT,LOCATOR_METHOD,FILE_NAME,VARIABLE,DESCRIPTION,UNIT,VALUES,TYPE,COLOR
 -,get_building_age,inputs/building-properties/age.dbf,partitions,Year of last retrofit of internal wall partitions(0 if none),[-],{0...n},int,black
 -,get_building_age,inputs/building-properties/age.dbf,roof,Year of last retrofit of roof (0 if none),[-],{0...n},int,black
 -,get_building_age,inputs/building-properties/age.dbf,windows,Year of last retrofit of windows (0 if none),[-],{0...n},int,black
--,get_building_occupancy,inputs/building-properties/occupancy.dbf,COOLROOM,Refrigeration rooms,m2,{0.0...1},float,red
--,get_building_occupancy,inputs/building-properties/occupancy.dbf,FOODSTORE,Food stores,m2,{0.0...1},float,orange
--,get_building_occupancy,inputs/building-properties/occupancy.dbf,GYM,Gymnasiums,m2,{0.0...1},float,yellow
--,get_building_occupancy,inputs/building-properties/occupancy.dbf,HOSPITAL,Hospitals,m2,{0.0...1},float,brown
--,get_building_occupancy,inputs/building-properties/occupancy.dbf,HOTEL,Hotels,m2,{0.0...1},float,green
--,get_building_occupancy,inputs/building-properties/occupancy.dbf,INDUSTRIAL,Light industry,m2,{0.0...1},float,blue
--,get_building_occupancy,inputs/building-properties/occupancy.dbf,LIBRARY,Libraries,m2,{0.0...1},float,grey
--,get_building_occupancy,inputs/building-properties/occupancy.dbf,MULTI_RES,Residential (multiple dwellings),m2,{0.0...1},float,purple
+-,get_building_occupancy,inputs/building-properties/occupancy.dbf,COOLROOM,Refrigeration rooms,[m2],{0.0...1},float,red
+-,get_building_occupancy,inputs/building-properties/occupancy.dbf,FOODSTORE,Food stores,[m2],{0.0...1},float,orange
+-,get_building_occupancy,inputs/building-properties/occupancy.dbf,GYM,Gymnasiums,[m2],{0.0...1},float,yellow
+-,get_building_occupancy,inputs/building-properties/occupancy.dbf,HOSPITAL,Hospitals,[m2],{0.0...1},float,brown
+-,get_building_occupancy,inputs/building-properties/occupancy.dbf,HOTEL,Hotels,[m2],{0.0...1},float,green
+-,get_building_occupancy,inputs/building-properties/occupancy.dbf,INDUSTRIAL,Light industry,[m2],{0.0...1},float,blue
+-,get_building_occupancy,inputs/building-properties/occupancy.dbf,LIBRARY,Libraries,[m2],{0.0...1},float,grey
+-,get_building_occupancy,inputs/building-properties/occupancy.dbf,MULTI_RES,Residential (multiple dwellings),[m2],{0.0...1},float,purple
 -,get_building_occupancy,inputs/building-properties/occupancy.dbf,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black
--,get_building_occupancy,inputs/building-properties/occupancy.dbf,OFFICE,Offices,m2,{0.0...1},float,red
--,get_building_occupancy,inputs/building-properties/occupancy.dbf,PARKING,Parking,m2,{0.0...1},float,orange
--,get_building_occupancy,inputs/building-properties/occupancy.dbf,RESTAURANT,Restaurants,m2,{0.0...1},float,yellow
--,get_building_occupancy,inputs/building-properties/occupancy.dbf,RETAIL,Retail,m2,{0.0...1},float,brown
--,get_building_occupancy,inputs/building-properties/occupancy.dbf,SCHOOL,Schools,m2,{0.0...1},float,green
--,get_building_occupancy,inputs/building-properties/occupancy.dbf,SERVERROOM,Data center,m2,{0.0...1},float,blue
--,get_building_occupancy,inputs/building-properties/occupancy.dbf,SINGLE_RES,Residential (single dwellings),m2,{0.0...1},float,grey
--,get_building_occupancy,inputs/building-properties/occupancy.dbf,SWIMMING,Swimming halls,m2,{0.0...1},float,purple
+-,get_building_occupancy,inputs/building-properties/occupancy.dbf,OFFICE,Offices,[m2],{0.0...1},float,red
+-,get_building_occupancy,inputs/building-properties/occupancy.dbf,PARKING,Parking,[m2],{0.0...1},float,orange
+-,get_building_occupancy,inputs/building-properties/occupancy.dbf,RESTAURANT,Restaurants,[m2],{0.0...1},float,yellow
+-,get_building_occupancy,inputs/building-properties/occupancy.dbf,RETAIL,Retail,[m2],{0.0...1},float,brown
+-,get_building_occupancy,inputs/building-properties/occupancy.dbf,SCHOOL,Schools,[m2],{0.0...1},float,green
+-,get_building_occupancy,inputs/building-properties/occupancy.dbf,SERVERROOM,Data center,[m2],{0.0...1},float,blue
+-,get_building_occupancy,inputs/building-properties/occupancy.dbf,SINGLE_RES,Residential (single dwellings),[m2],{0.0...1},float,grey
+-,get_building_occupancy,inputs/building-properties/occupancy.dbf,SWIMMING,Swimming halls,[m2],{0.0...1},float,purple
 -,get_data_benchmark,databases/sg/benchmarks/benchmark_2000w.xls:EMBODIED,CO2_target_new,Target CO2 production for newly constructed buildings,[-],{0.0...n},float,black
 -,get_data_benchmark,databases/sg/benchmarks/benchmark_2000w.xls:EMBODIED,CO2_target_retrofit,Target CO2 production for retrofitted buildings,[-],{0.0...n},float,black
 -,get_data_benchmark,databases/sg/benchmarks/benchmark_2000w.xls:EMBODIED,CO2_today,Present CO2 production,[-],{0.0...n},float,black
@@ -336,12 +341,10 @@ SCRIPT,LOCATOR_METHOD,FILE_NAME,VARIABLE,DESCRIPTION,UNIT,VALUES,TYPE,COLOR
 -,get_data_benchmark,databases/sg/benchmarks/benchmark_2000w.xls:TOTAL,PEN_target_retrofit,Target primary energy demand for retrofitted buildings,[-],{0.0...n},float,black
 -,get_data_benchmark,databases/sg/benchmarks/benchmark_2000w.xls:TOTAL,PEN_today,Present primary energy demand,[-],{0.0...n},float,black
 -,get_data_benchmark,databases/sg/benchmarks/benchmark_2000w.xls:TOTAL,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black
--,get_district_geometry,inputs/building-geometry/district.shp,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black
--,get_district_geometry,inputs/building-geometry/district.shp,floors_ag,Number of floors above ground (incl. ground floor),[-],{0...n},int,black
--,get_district_geometry,inputs/building-geometry/district.shp,floors_bg,"Number of floors below ground (basement, etc)",[-],{0...n},int,black
--,get_district_geometry,inputs/building-geometry/district.shp,geometry,TODO,TODO,TODO,TODO,black
--,get_district_geometry,inputs/building-geometry/district.shp,height_ag,Height above ground (incl. ground floor),[m],{0.0...n},float,black
--,get_district_geometry,inputs/building-geometry/district.shp,height_bg,"Height below ground (basement, etc)",[m],{0.0...n},float,black
+-,get_surroundings_geometry,inputs/building-geometry/surroundings.shp,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black
+-,get_surroundings_geometry,inputs/building-geometry/surroundings.shp,floors_ag,Number of floors above ground (incl. ground floor),[-],{0...n},int,black
+-,get_surroundings_geometry,inputs/building-geometry/surroundings.shp,geometry,TODO,TODO,TODO,TODO,black
+-,get_surroundings_geometry,inputs/building-geometry/surroundings.shp,height_ag,Height above ground (incl. ground floor),[m],{0.0...n},float,black
 -,get_envelope_systems,databases/ch/systems/envelope_systems.xls:CONSTRUCTION,Cm_Af,Internal heat capacity per unit of air conditioned area. Defined according to ISO 13790.,[J/Km2],{0.0...1},float,black
 -,get_envelope_systems,databases/ch/systems/envelope_systems.xls:CONSTRUCTION,Description,Describes the source of the benchmark standards.,[-],[-],string,black
 -,get_envelope_systems,databases/ch/systems/envelope_systems.xls:CONSTRUCTION,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black
@@ -766,15 +769,16 @@ SCRIPT,LOCATOR_METHOD,FILE_NAME,VARIABLE,DESCRIPTION,UNIT,VALUES,TYPE,COLOR
 -,get_thermal_networks,databases/ch/systems/thermal_networks.xls:PIPING CATALOG,Vdot_min_m3s,Minimum volume flow rate for the nominal diameter (DN) bin.,[m3/s],{0.0...n},float,black
 -,get_weather,c:/users/assistenz/documents/github/cityenergyanalyst/cea/databases/weather/singapore.epw,EPW file variables,TODO,TODO,TODO,TODO,black
 -,get_zone_geometry,inputs/building-geometry/zone.shp,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black
--,get_zone_geometry,inputs/building-geometry/zone.shp,floors_ag,TODO,TODO,TODO,TODO,black
--,get_zone_geometry,inputs/building-geometry/zone.shp,floors_bg,TODO,TODO,TODO,TODO,black
+-,get_zone_geometry,inputs/building-geometry/zone.shp,floors_ag,Number of floors above ground (incl. ground floor),[-],{0...n},int,black
+-,get_zone_geometry,inputs/building-geometry/zone.shp,floors_bg,"Number of floors below ground (basement, etc)",[-],{0...n},int,black
 -,get_zone_geometry,inputs/building-geometry/zone.shp,geometry,TODO,TODO,TODO,TODO,black
 -,get_zone_geometry,inputs/building-geometry/zone.shp,height_ag,Aggregated height of the walls.,[m],{0.0...n},float,black
--,get_zone_geometry,inputs/building-geometry/zone.shp,height_bg,TODO,TODO,TODO,TODO,black
-data-helper,get_building_architecture,inputs/building-properties/architecture.dbf,Es,TODO,TODO,TODO,TODO,black
-data-helper,get_building_architecture,inputs/building-properties/architecture.dbf,Hs,Fraction of gross floor area air-conditioned.,[m2/m2],{0.0...1},float,black
+-,get_zone_geometry,inputs/building-geometry/zone.shp,height_bg,"Height below ground (basement, etc)",[m],{0.0...n},float,black
+data-helper,get_building_architecture,inputs/building-properties/architecture.dbf,Es,Fraction of gross floor area with electrical demands.,[m2/m2],{0.0...1},float,black
+data-helper,get_building_architecture,inputs/building-properties/architecture.dbf,Hs_ag,Fraction of above ground gross floor area air-conditioned.,[m2/m2],{0.0...1},float,black
+data-helper,get_building_architecture,inputs/building-properties/architecture.dbf,Hs_bg,Fraction of below ground gross floor area air-conditioned.,[m2/m2],{0.0...1},float,black
 data-helper,get_building_architecture,inputs/building-properties/architecture.dbf,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black
-data-helper,get_building_architecture,inputs/building-properties/architecture.dbf,Ns,TODO,TODO,TODO,TODO,black
+data-helper,get_building_architecture,inputs/building-properties/architecture.dbf,Ns,Fraction of net gross floor area.,[m2/m2],{0.0...1},float,black
 data-helper,get_building_architecture,inputs/building-properties/architecture.dbf,type_cons,Type of construction. It relates to the contents of the default database of Envelope Properties: construction,[code],{T1...Tn},string,black
 data-helper,get_building_architecture,inputs/building-properties/architecture.dbf,type_leak,Leakage level. It relates to the contents of the default database of Envelope Properties: leakage,[code],{T1...Tn},string,black
 data-helper,get_building_architecture,inputs/building-properties/architecture.dbf,type_roof,Roof construction type (relates to values in Default Database Construction Properties),[-],{T1...Tn},string,black
@@ -794,12 +798,16 @@ data-helper,get_building_comfort,inputs/building-properties/indoor_comfort.dbf,T
 data-helper,get_building_comfort,inputs/building-properties/indoor_comfort.dbf,Ve_lpspax,Indoor quality requirements of indoor ventilation per person,[l/s],{0.0...n},float,black
 data-helper,get_building_comfort,inputs/building-properties/indoor_comfort.dbf,RH_max_pc,Upper bound of relative humidity,[%],{0.0...n},float,black
 data-helper,get_building_comfort,inputs/building-properties/indoor_comfort.dbf,RH_min_pc,Lower_bound of relative humidity,[%],{0.0...n},float,black
-data-helper,get_building_hvac,inputs/building-properties/technical_systems.dbf,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black
-data-helper,get_building_hvac,inputs/building-properties/technical_systems.dbf,type_cs,Type of cooling supply system,[code],{T0...Tn},string,black
-data-helper,get_building_hvac,inputs/building-properties/technical_systems.dbf,type_ctrl,Type of heating and cooling control systems (relates to values in Default Database HVAC Properties),[code],{T1...Tn},string,black
-data-helper,get_building_hvac,inputs/building-properties/technical_systems.dbf,type_dhw,Type of hot water supply system,[code],{T0...Tn},string,black
-data-helper,get_building_hvac,inputs/building-properties/technical_systems.dbf,type_hs,Type of heating supply system,[code],{T0...Tn},string,black
-data-helper,get_building_hvac,inputs/building-properties/technical_systems.dbf,type_vent,Type of ventilation strategy (relates to values in Default Database HVAC Properties),[code],{T1...Tn},string,black
+data-helper,get_building_air_conditioning,inputs/building-properties/air_conditioning_systems.dbf,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black
+data-helper,get_building_air_conditioning,inputs/building-properties/air_conditioning_systems.dbf,type_cs,Type of cooling supply system,[code],{T0...Tn},string,black
+data-helper,get_building_air_conditioning,inputs/building-properties/air_conditioning_systems.dbf,type_ctrl,Type of heating and cooling control systems (relates to values in Default Database HVAC Properties),[code],{T1...Tn},string,black
+data-helper,get_building_air_conditioning,inputs/building-properties/air_conditioning_systems.dbf,type_dhw,Type of hot water supply system,[code],{T0...Tn},string,black
+data-helper,get_building_air_conditioning,inputs/building-properties/air_conditioning_systems.dbf,type_hs,Type of heating supply system,[code],{T0...Tn},string,black
+data-helper,get_building_air_conditioning,inputs/building-properties/air_conditioning_systems.dbf,type_vent,Type of ventilation strategy (relates to values in Default Database HVAC Properties),[code],{T1...Tn},string,black
+data-helper,get_building_air_conditioning,inputs/building-properties/air_conditioning_systems.dbf,heat_starts,Start of the heating season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black
+data-helper,get_building_air_conditioning,inputs/building-properties/air_conditioning_systems.dbf,heat_ends,End of the heating season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black
+data-helper,get_building_air_conditioning,inputs/building-properties/air_conditioning_systems.dbf,cool_starts,Start of the cooling season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black
+data-helper,get_building_air_conditioning,inputs/building-properties/air_conditioning_systems.dbf,cool_ends,End of the cooling season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black
 data-helper,get_building_internal,inputs/building-properties/internal_loads.dbf,Ea_Wm2,Peak specific electrical load due to computers and devices,[W/m2],{0.0...n},float,black
 data-helper,get_building_internal,inputs/building-properties/internal_loads.dbf,Ed_Wm2,Peak specific electrical load due to servers/data centres,[W/m2],{0.0...n},float,black
 data-helper,get_building_internal,inputs/building-properties/internal_loads.dbf,El_Wm2,Peak specific electrical load due to artificial lighting,[W/m2],{0.0...n},float,black

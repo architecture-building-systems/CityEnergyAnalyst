@@ -33,10 +33,10 @@ cea.datamanagement.databases\_verification module
     :undoc-members:
     :show-inheritance:
 
-cea.datamanagement.district\_geometry\_helper module
-----------------------------------------------------
+cea.datamanagement.schedule\_helper module
+------------------------------------------
 
-.. automodule:: cea.datamanagement.district_geometry_helper
+.. automodule:: cea.datamanagement.schedule_helper
     :members:
     :undoc-members:
     :show-inheritance:
@@ -45,6 +45,14 @@ cea.datamanagement.streets\_helper module
 -----------------------------------------
 
 .. automodule:: cea.datamanagement.streets_helper
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.datamanagement.surroundings\_helper module
+----------------------------------------------
+
+.. automodule:: cea.datamanagement.surroundings_helper
     :members:
     :undoc-members:
     :show-inheritance:

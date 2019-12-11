@@ -5,8 +5,9 @@ Demand model of thermal loads
 from __future__ import division
 
 import numpy as np
-from cea.constants import HOURS_IN_YEAR
+from cea.constants import HOURS_IN_YEAR, HOURS_PRE_CONDITIONING
 import pandas as pd
+from cea.demand.latent_loads import convert_rh_to_moisture_content
 from cea.demand import demand_writers
 from cea.demand import latent_loads
 from cea.demand import hourly_procedure_heating_cooling_system_load, ventilation_air_flows_simple
@@ -84,14 +85,15 @@ def calc_thermal_loads(building_name, bpr, weather_data, date_range, locator,
         tsd['E_cre'] = np.zeros(HOURS_IN_YEAR)
 
     if np.isclose(bpr.rc_model['Af'], 0.0):  # if building does not have conditioned area
-        # UPDATE ALL VALUES TO 0
-        tsd = update_timestep_data_no_conditioned_area(tsd)
+        tsd['T_int'] = tsd['T_ext']
+        tsd['x_int'] = np.vectorize(convert_rh_to_moisture_content)(tsd['rh_ext'], tsd['T_int'])
+        print("building () does not have an air-conditioned area".format(bpr.name))
     else:
 
-        #CALCULATE PROCESS HEATING
+        # CALCULATE PROCESS HEATING
         tsd['Qhpro_sys'] = schedules['Qhpro_W']  # in Wh
 
-        #CALCULATE PROCESS COOLING
+        # CALCULATE PROCESS COOLING
         tsd['Qcpro_sys'] = schedules['Qcpro_W']   # in Wh
 
         # CALCULATE DATA CENTER LOADS
@@ -125,30 +127,30 @@ def calc_thermal_loads(building_name, bpr, weather_data, date_range, locator,
         tsd['Qcre_sys'] = abs(tsd['Qcre_sys'])  # inverting sign of cooling loads for reporting and graphs
         tsd['Qcdata_sys'] = abs(tsd['Qcdata_sys'])  # inverting sign of cooling loads for reporting and graphs
 
-        # CALCULATE HOT WATER LOADS
-        if hotwater_loads.has_hot_water_technical_system(bpr):
-            tsd = electrical_loads.calc_Eaux_fw(tsd, bpr, schedules)
-            tsd = hotwater_loads.calc_Qww(bpr, tsd, schedules)  # end-use
-            tsd = hotwater_loads.calc_Qww_sys(bpr, tsd)  # system (incl. losses)
-            tsd = electrical_loads.calc_Eaux_ww(tsd, bpr)  # calc auxiliary loads
-            tsd = hotwater_loads.calc_Qwwf(bpr, tsd)  # final
-        else:
-            tsd = electrical_loads.calc_Eaux_fw(tsd, bpr, schedules)
-            tsd['Qww'] = tsd['DH_ww'] = tsd['Qww_sys'] = np.zeros(HOURS_IN_YEAR)
-            tsd['mcpww_sys'] = tsd['Tww_sys_re'] = tsd['Tww_sys_sup'] = np.zeros(HOURS_IN_YEAR)
-            tsd['Eaux_ww'] = tsd['SOLAR_ww'] = np.zeros(HOURS_IN_YEAR)
-            tsd['NG_ww'] = tsd['COAL_ww'] = tsd['OIL_ww'] = tsd['WOOD_ww'] = np.zeros(HOURS_IN_YEAR)
-            tsd['E_ww'] = np.zeros(HOURS_IN_YEAR)
+    # CALCULATE HOT WATER LOADS
+    if hotwater_loads.has_hot_water_technical_system(bpr):
+        tsd = electrical_loads.calc_Eaux_fw(tsd, bpr, schedules)
+        tsd = hotwater_loads.calc_Qww(bpr, tsd, schedules)  # end-use
+        tsd = hotwater_loads.calc_Qww_sys(bpr, tsd)  # system (incl. losses)
+        tsd = electrical_loads.calc_Eaux_ww(tsd, bpr)  # calc auxiliary loads
+        tsd = hotwater_loads.calc_Qwwf(bpr, tsd)  # final
+    else:
+        tsd = electrical_loads.calc_Eaux_fw(tsd, bpr, schedules)
+        tsd['Qww'] = tsd['DH_ww'] = tsd['Qww_sys'] = np.zeros(HOURS_IN_YEAR)
+        tsd['mcpww_sys'] = tsd['Tww_sys_re'] = tsd['Tww_sys_sup'] = np.zeros(HOURS_IN_YEAR)
+        tsd['Eaux_ww'] = tsd['SOLAR_ww'] = np.zeros(HOURS_IN_YEAR)
+        tsd['NG_ww'] = tsd['COAL_ww'] = tsd['OIL_ww'] = tsd['WOOD_ww'] = np.zeros(HOURS_IN_YEAR)
+        tsd['E_ww'] = np.zeros(HOURS_IN_YEAR)
 
-        # CALCULATE SUM OF HEATING AND COOLING LOADS
-        tsd = calc_QH_sys_QC_sys(tsd)  # aggregated cooling and heating loads
+    # CALCULATE SUM OF HEATING AND COOLING LOADS
+    tsd = calc_QH_sys_QC_sys(tsd)  # aggregated cooling and heating loads
 
     # CALCULATE ELECTRICITY LOADS PART 2/2 AUXILIARY LOADS + ENERGY GENERATION
     tsd = electrical_loads.calc_Eaux(tsd)  # auxiliary totals
     tsd = electrical_loads.calc_E_sys(tsd)  # system (incl. losses)
     tsd = electrical_loads.calc_Ef(bpr, tsd)  # final (incl. self. generated)
 
-    #WRITE SOLAR RESULTS
+    # WRITE SOLAR RESULTS
     write_results(bpr, building_name, date_range, loads_output, locator, massflows_output,
                   resolution_outputs, temperatures_output, tsd, debug)
 
@@ -156,10 +158,10 @@ def calc_thermal_loads(building_name, bpr, weather_data, date_range, locator,
 
 
 def calc_QH_sys_QC_sys(tsd):
-  tsd['QH_sys'] = tsd['Qww_sys'] + tsd['Qhs_sys'] + tsd['Qhpro_sys']
-  tsd['QC_sys'] = tsd['Qcs_sys'] + tsd['Qcdata_sys'] + tsd['Qcre_sys'] + tsd['Qcpro_sys']
+    tsd['QH_sys'] = tsd['Qww_sys'] + tsd['Qhs_sys'] + tsd['Qhpro_sys']
+    tsd['QC_sys'] = tsd['Qcs_sys'] + tsd['Qcdata_sys'] + tsd['Qcre_sys'] + tsd['Qcpro_sys']
 
-  return tsd
+    return tsd
 
 
 def write_results(bpr, building_name, date, loads_output, locator, massflows_output,
@@ -189,36 +191,38 @@ def calc_Qcs_sys(bpr, tsd):
     efficiency_average_year = bpr.supply['eff_cs']
     if scale_technology == "BUILDING":
         if energy_source == "GRID":
-            if bpr.supply['type_cs'] in {'T2', 'T3'}:
-                if bpr.supply['type_cs'] == 'T2':
-                    t_source = (tsd['T_ext'] + 273)
-                if bpr.supply['type_cs'] == 'T3':
-                    t_source = (tsd['T_ext_wetbulb'] + 273)
+            t_source = (tsd['T_ext'] + 273)
 
-                # heat pump energy for the 3 components
-                # ahu
-                E_for_Qcs_sys_ahu = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcs_sys_ahu'],
-                                                                       (tsd['Tcs_sys_sup_ahu'] + 273),
-                                                                       (tsd['Tcs_sys_re_ahu'] + 273), t_source)
-                # aru
-                E_for_Qcs_sys_aru = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcs_sys_aru'],
-                                                                       (tsd['Tcs_sys_sup_aru'] + 273),
-                                                                       (tsd['Tcs_sys_re_aru'] + 273), t_source)
-                # scu
-                E_for_Qcs_sys_scu = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcs_sys_scu'],
-                                                                       (tsd['Tcs_sys_sup_scu'] + 273),
-                                                                       (tsd['Tcs_sys_re_scu'] + 273), t_source)
-                # sum
-                tsd['E_cs'] = E_for_Qcs_sys_scu + E_for_Qcs_sys_aru + E_for_Qcs_sys_ahu
-                tsd['DC_cs'] = np.zeros(HOURS_IN_YEAR)
+            # heat pump energy for the 3 components
+            # ahu
+            E_for_Qcs_sys_ahu = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcs_sys_ahu'],
+                                                                   (tsd['Tcs_sys_sup_ahu'] + 273),
+                                                                   (tsd['Tcs_sys_re_ahu'] + 273), t_source)
+            # aru
+            E_for_Qcs_sys_aru = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcs_sys_aru'],
+                                                                   (tsd['Tcs_sys_sup_aru'] + 273),
+                                                                   (tsd['Tcs_sys_re_aru'] + 273), t_source)
+            # scu
+            E_for_Qcs_sys_scu = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcs_sys_scu'],
+                                                                   (tsd['Tcs_sys_sup_scu'] + 273),
+                                                                   (tsd['Tcs_sys_re_scu'] + 273), t_source)
+            # sum
+            tsd['E_cs'] = E_for_Qcs_sys_scu + E_for_Qcs_sys_aru + E_for_Qcs_sys_ahu
+            tsd['DC_cs'] = np.zeros(HOURS_IN_YEAR)
         elif energy_source == "NONE":
             tsd['E_cs'] = np.zeros(HOURS_IN_YEAR)
             tsd['DC_cs'] = np.zeros(HOURS_IN_YEAR)
         else:
             raise Exception('check potential error in input database of LCA infrastructure / COOLING')
     elif scale_technology == "DISTRICT":
-        tsd['DC_cs'] = tsd['Qcs_sys'] / efficiency_average_year
-        tsd['E_cs'] = np.zeros(HOURS_IN_YEAR)
+        if energy_source == "GRID":
+            tsd['DC_cs'] = tsd['Qcs_sys'] / efficiency_average_year
+            tsd['E_cs'] = np.zeros(HOURS_IN_YEAR)
+        elif energy_source == "NONE":
+            tsd['DC_cs'] = np.zeros(HOURS_IN_YEAR)
+            tsd['E_cs'] = np.zeros(HOURS_IN_YEAR)
+        else:
+            raise Exception('check potential error in input database of ALL IN ONE SYSTEMS / COOLING')
     elif scale_technology == "NONE":
         tsd['DC_cs'] = np.zeros(HOURS_IN_YEAR)
         tsd['E_cs'] = np.zeros(HOURS_IN_YEAR)
@@ -390,10 +394,10 @@ def initialize_inputs(bpr, weather_data, locator):
     tsd = initialize_timestep_data(bpr, weather_data)
 
     # get occupancy file
-    occupancy_yearly_schedules = pd.read_csv(locator.get_occupancy_model_file(building_name))
+    occupancy_yearly_schedules = pd.read_csv(locator.get_schedule_model_file(building_name))
 
     tsd['people'] = occupancy_yearly_schedules['people_pax']
-    tsd['ve'] = occupancy_yearly_schedules['Ve_lps'] * 3.6 #m3/h
+    tsd['ve'] = occupancy_yearly_schedules['Ve_lps'] * 3.6  # m3/h
     tsd['Qs'] = occupancy_yearly_schedules['Qs_W']
 
     return occupancy_yearly_schedules, tsd
@@ -528,13 +532,23 @@ def update_timestep_data_no_conditioned_area(tsd):
     :return: update tsd
     """
 
-    zero_fields = ['Qhs_lat_sys', 'Qhs_sen_sys',
-                   'Qcs_lat_sys', 'Qcs_sen_sys',
-                   'Qhs_sen', 'Qcs_sen', 'x_int',
-                   'Qhs_em_ls', 'Qcs_em_ls', 'Qhpro_sys', 'Qcpro_sys',
-                   'ma_sup_hs', 'ma_sup_cs',
-                   'Ta_sup_hs', 'Ta_re_hs',
-                   'Ta_sup_cs', 'Ta_re_cs',
+    zero_fields = ['Qhs_lat_sys',
+                   'Qhs_sen_sys',
+                   'Qcs_lat_sys',
+                   'Qcs_sen_sys',
+                   'Qhs_sen',
+                   'Qcs_sen',
+                   'x_int',
+                   'Qhs_em_ls',
+                   'Qcs_em_ls',
+                   'Qhpro_sys',
+                   'Qcpro_sys',
+                   'ma_sup_hs',
+                   'ma_sup_cs',
+                   'Ta_sup_hs',
+                   'Ta_re_hs',
+                   'Ta_sup_cs',
+                   'Ta_re_cs',
                    'NG_hs',
                    'COAL_hs',
                    'OIL_hs',
@@ -542,18 +556,10 @@ def update_timestep_data_no_conditioned_area(tsd):
                    'NG_ww',
                    'COAL_ww',
                    'OIL_ww',
-                   'GRID_a',
-                   'GRID_l',
-                   'GRID_data',
-                   'GRID_pro',
-                   'GRID_aux',
-                   'GRID_ww',
-                   'GRID_hs',
-                   'GRID_cs',
-                   'GRID_cdata',
-                   'GRID_cre',
-                   'WOOD_ww', 'vfw_m3perh',
-                   'SOLAR_hs', 'DH_hs', 'Qhs_sys', 'Qhs',
+                   'WOOD_ww',
+                   'vfw_m3perh',
+                   'SOLAR_hs',
+                   'DH_hs', 'Qhs_sys', 'Qhs',
                    'SOLAR_ww', 'DH_ww', 'Qww_sys', 'Qww',
                    'DC_cs', 'DC_cs_lat', 'Qcs_sys', 'Qcs',
                    'DC_cdata', 'Qcdata_sys', 'Qcdata',
@@ -581,10 +587,6 @@ def update_timestep_data_no_conditioned_area(tsd):
     return tsd
 
 
-HOURS_IN_YEAR = HOURS_IN_YEAR
-HOURS_PRE_CONDITIONING = 720  # number of hours that the building will be thermally pre-conditioned, the results of these hours will be overwritten
-
-
 def get_hours(bpr):
     """
 
@@ -596,10 +598,10 @@ def get_hours(bpr):
 
     if bpr.hvac['has-heating-season']:
         # if has heating season start simulating at [before] start of heating season
-        hour_start_simulation = control_heating_cooling_systems.convert_date_to_hour(bpr.hvac['heating-season-start'])
+        hour_start_simulation = control_heating_cooling_systems.convert_date_to_hour(bpr.hvac['heat_starts'])
     elif not bpr.hvac['has-heating-season'] and bpr.hvac['has-cooling-season']:
         # if has no heating season but cooling season start at [before] start of cooling season
-        hour_start_simulation = control_heating_cooling_systems.convert_date_to_hour(bpr.hvac['cooling-season-start'])
+        hour_start_simulation = control_heating_cooling_systems.convert_date_to_hour(bpr.hvac['cool_starts'])
     elif not bpr.hvac['has-heating-season'] and not bpr.hvac['has-cooling-season']:
         # no heating or cooling
         hour_start_simulation = 0

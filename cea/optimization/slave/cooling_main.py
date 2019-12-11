@@ -9,6 +9,7 @@ from __future__ import division
 
 import numpy as np
 import pandas as pd
+import cea.inputlocator
 
 from cea.constants import HOURS_IN_YEAR
 from cea.optimization.constants import T_TANK_FULLY_DISCHARGED_K, DT_COOL, VCC_T_COOL_IN, ACH_T_IN_FROM_CHP_K
@@ -17,6 +18,7 @@ from cea.optimization.slave.cooling_resource_activation import calc_vcc_CT_opera
 from cea.optimization.slave.daily_storage.load_leveling import LoadLevelingDailyStorage
 from cea.technologies.cogeneration import calc_cop_CCGT
 from cea.technologies.thermal_network.thermal_network import calculate_ground_temperature
+from cea.technologies.chiller_absorption import  AbsorptionChiller
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -28,12 +30,6 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-# technical model
-class AbsorptionChiller(object):
-    def __init__(self, chiller_prop, ACH_type):
-        self.chiller_prop = chiller_prop[chiller_prop['type'] == ACH_type]
-
-
 def district_cooling_network(locator,
                              master_to_slave_variables,
                              config,
@@ -42,7 +38,7 @@ def district_cooling_network(locator,
     """
     Computes the parameters for the cooling of the complete DCN
 
-    :param locator: path to res folder
+    :param cea.inputlocator.InputLocator locator: path to res folder
     :param network_features: network features
     :param prices: Prices imported from the database
     :type locator: string
@@ -81,10 +77,10 @@ def district_cooling_network(locator,
         T_source_average_Lake_K = np.zeros(HOURS_IN_YEAR)
 
     # get properties of technology used in this script
-    ACH_prop = AbsorptionChiller(pd.read_excel(locator.get_supply_systems(), sheet_name="Absorption_chiller"), 'double')
-    CCGT_prop = calc_cop_CCGT(master_to_slave_variables.NG_Trigen_CCGT_size_W, ACH_T_IN_FROM_CHP_K, "NG")
+    absorption_chiller = AbsorptionChiller(pd.read_excel(locator.get_database_supply_systems(), sheet_name="Absorption_chiller"), 'double')
+    CCGT_prop = calc_cop_CCGT(master_to_slave_variables.NG_Trigen_ACH_size_W, ACH_T_IN_FROM_CHP_K, "NG")
 
-    # intitalize variables
+    # initialize variables
     Q_Trigen_NG_gen_W = np.zeros(HOURS_IN_YEAR)
     Q_BaseVCC_WS_gen_W = np.zeros(HOURS_IN_YEAR)
     Q_PeakVCC_WS_gen_W = np.zeros(HOURS_IN_YEAR)
@@ -120,7 +116,7 @@ def district_cooling_network(locator,
                                                     daily_storage,
                                                     T_ground_K[hour],
                                                     master_to_slave_variables,
-                                                    ACH_prop,
+                                                    absorption_chiller,
                                                     CCGT_prop)
 
             Q_DailyStorage_gen_directload_W[hour] = thermal_output['Q_DailyStorage_gen_directload_W']
@@ -146,6 +142,9 @@ def district_cooling_network(locator,
 
             NG_Trigen_req_W[hour] = gas_output['NG_Trigen_req_W']
 
+    #calculate the electrical capacity as a function of the peak produced by the turbine
+    master_to_slave_variables.NG_Trigen_CCGT_size_electrical_W = E_Trigen_NG_gen_W.max()
+
     # BACK-UPP VCC - AIR SOURCE
     master_to_slave_variables.AS_BackupVCC_size_W = np.amax(Q_BackupVCC_AS_gen_W)
     if master_to_slave_variables.AS_BackupVCC_size_W != 0.0:
@@ -159,11 +158,12 @@ def district_cooling_network(locator,
 
     # CAPEX (ANNUAL, TOTAL) AND OPEX (FIXED, VAR, ANNUAL) GENERATION UNITS
     mdotnMax_kgpers = np.amax(mdot_kgpers)
-    performance_costs_generation = cost_model.calc_generation_costs_cooling(locator,
-                                                                            master_to_slave_variables,
-                                                                            config,
-                                                                            mdotnMax_kgpers
-                                                                            )
+    performance_costs_generation, \
+    district_cooling_capacity_installed = cost_model.calc_generation_costs_capacity_installed_cooling(locator,
+                                                                                                      master_to_slave_variables,
+                                                                                                      config,
+                                                                                                      mdotnMax_kgpers
+                                                                                                      )
     # CAPEX (ANNUAL, TOTAL) AND OPEX (FIXED, VAR, ANNUAL) STORAGE UNITS
     performance_costs_storage = cost_model.calc_generation_costs_cooling_storage(locator,
                                                                                  master_to_slave_variables,
@@ -233,7 +233,8 @@ def district_cooling_network(locator,
     return district_cooling_costs, \
            district_cooling_generation_dispatch, \
            district_cooling_electricity_requirements_dispatch, \
-           district_cooling_fuel_requirements_dispatch
+           district_cooling_fuel_requirements_dispatch, \
+           district_cooling_capacity_installed
 
 
 def calc_network_summary_DCN(locator, master_to_slave_vars):

@@ -11,6 +11,8 @@ from plotly.offline import plot
 import cea.config
 import cea.plots.demand
 from cea.plots.variable_naming import LOGO, COLORS_TO_RGB
+from cea.utilities.dbf import dbf_to_dataframe
+from cea.demand.control_heating_cooling_systems import convert_date_to_hour
 
 
 __author__ = "Gabriel Happle"
@@ -291,20 +293,22 @@ def calc_data(data_frame, locator):
      \for 4 conditions (summer (un)occupied, winter (un)occupied)
     :rtype: dict
     """
+    from cea.demand.building_properties import verify_has_season
 
     # read region-specific control parameters (identical for all buildings), i.e. heating and cooling season
-    prop_region_specific_control = pd.read_excel(locator.get_archetypes_system_controls(),
-                                                 true_values=['True', 'TRUE', 'true'],
-                                                 false_values=['False', 'FALSE', 'false', u'FALSE'],
-                                                 dtype={'has-heating-season': bool,
-                                                        'has-cooling-season': bool})  # read database
-    # extract data from df
-    has_winter = prop_region_specific_control['has-heating-season'][0]
-    has_summer = prop_region_specific_control['has-cooling-season'][0]
-    winter_end = prop_region_specific_control['heating-season-end'][0]
-    winter_start = prop_region_specific_control['heating-season-start'][0]
-    summer_end = prop_region_specific_control['cooling-season-end'][0]
-    summer_start = prop_region_specific_control['cooling-season-start'][0]
+    building_name = data_frame.Name[0]
+    air_con_data = dbf_to_dataframe(locator.get_building_air_conditioning()).set_index('Name')
+    has_winter = verify_has_season(building_name,
+                                   air_con_data.loc[building_name, 'heat_starts'],
+                                   air_con_data.loc[building_name, 'heat_ends'])
+    has_summer = verify_has_season(building_name,
+                                   air_con_data.loc[building_name, 'cool_starts'],
+                                   air_con_data.loc[building_name, 'cool_ends'])
+
+    winter_start = air_con_data.loc[building_name, 'heat_starts']
+    winter_end = air_con_data.loc[building_name, 'heat_ends']
+    summer_start = air_con_data.loc[building_name, 'cool_starts']
+    summer_end =  air_con_data.loc[building_name, 'cool_ends']
 
     # split up operative temperature and humidity points into 4 categories
     # (1) occupied in heating season
@@ -438,17 +442,17 @@ def datetime_in_season(dt, season_start, season_end):
 
     :param dt: datetime, index of resulting csv of cea.demand_main
     :type dt: datetime.datetime
-    :param season_start: start of season ["MM-DD"]
+    :param season_start: start of season ["DD|MM"]
     :type season_start: string
-    :param season_end: end of season ["MM-DD"]
+    :param season_end: end of season ["DD|MM"]
     :type season_end: string
     :return: True or False
     :rtype: bool
     """
 
-    month_start, day_start = map(int, season_start.split('-'))
+    day_start, month_start = map(int, season_start.split('|'))
     season_start_dt = datetime.datetime(dt.year, month_start, day_start, 0)
-    month_end, day_end = map(int, season_end.split('-'))
+    day_end , month_end = map(int, season_end.split('|'))
     season_end_dt = datetime.datetime(dt.year, month_end, day_end, 23)
 
     if season_start_dt < season_end_dt:

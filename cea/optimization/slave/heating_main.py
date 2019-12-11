@@ -56,10 +56,10 @@ def district_heating_network(locator,
     """
     # THERMAL STORAGE + NETWORK
     print("CALCULATING ECOLOGICAL COSTS OF SEASONAL STORAGE - DUE TO OPERATION (IF ANY)")
-    performance_storage, storage_dispatch = storage_main.storage_optimization(locator,
-                                                                              master_to_slave_variables,
-                                                                              lca, prices,
-                                                                              config)
+    storage_dispatch = storage_main.storage_optimization(locator,
+                                                         master_to_slave_variables,
+
+                                                         config)
     # Import data from storage optimization
     Q_DH_networkload_W = np.array(storage_dispatch['Q_DH_networkload_W'])
     Q_thermal_req_W = np.array(storage_dispatch['Q_req_after_storage_W'])
@@ -167,6 +167,11 @@ def district_heating_network(locator,
                                                                       T_district_heating_return_K
                                                                       )
 
+    # COgen size for electricity production
+    master_to_slave_variables.CCGT_SIZE_electrical_W = max(E_CHP_gen_W)
+    master_to_slave_variables.WBFurnace_electrical_W = max(E_Furnace_wet_gen_W)
+    master_to_slave_variables.DBFurnace_electrical_W = max(E_Furnace_dry_gen_W)
+
     # BACK-UP BOILER
     master_to_slave_variables.BackupBoiler_size_W = np.amax(Q_BackupBoiler_gen_W)
     if master_to_slave_variables.BackupBoiler_size_W != 0:
@@ -180,12 +185,16 @@ def district_heating_network(locator,
 
     # CAPEX (ANNUAL, TOTAL) AND OPEX (FIXED, VAR) GENERATION UNITS
     mdotnMax_kgpers = np.amax(mdot_DH_kgpers)
-    performance_costs_generation = cost_model.calc_generation_costs_heating(locator,
-                                                                            master_to_slave_variables,
-                                                                            config,
-                                                                            storage_dispatch,
-                                                                            mdotnMax_kgpers
-                                                                            )
+    performance_costs_generation, \
+    district_heating_capacity_installed = cost_model.calc_generation_costs_capacity_installed_heating(locator,
+                                                                                                      master_to_slave_variables,
+                                                                                                      config,
+                                                                                                      storage_dispatch,
+                                                                                                      mdotnMax_kgpers
+                                                                                                      )
+
+    # CAPEX (ANNUAL, TOTAL) AND OPEX (FIXED, VAR) SEASONAL STORAGE
+    performance_costs_storage = cost_model.calc_seasonal_storage_costs(config, locator, storage_dispatch)
 
     # CAPEX (ANNUAL, TOTAL) AND OPEX (FIXED, VAR) NETWORK
     performance_costs_network, \
@@ -196,7 +205,8 @@ def district_heating_network(locator,
                                                                               prices)
 
     # MERGE COSTS AND EMISSIONS IN ONE FILE
-    district_heating_costs = dict(performance_costs_generation, **performance_costs_network)
+    performance_costs_gen = dict(performance_costs_generation, **performance_costs_network)
+    district_heating_costs = dict(performance_costs_gen, **performance_costs_storage)
 
     # save data
     district_heating_generation_dispatch = {
@@ -265,7 +275,8 @@ def district_heating_network(locator,
     return district_heating_costs, \
            district_heating_generation_dispatch, \
            district_heating_electricity_requirements_dispatch, \
-           district_heating_fuel_requirements_dispatch
+           district_heating_fuel_requirements_dispatch, \
+           district_heating_capacity_installed
 
 
 def calc_network_summary_DHN(locator, master_to_slave_vars):

@@ -49,8 +49,8 @@ function createTable(parent, name, values, columns, types) {
         placeholder = '<div>File cannot be found.</div>';
         if (name === 'zone') {
             tool = 'zone-helper';
-        } else if (name === 'district') {
-            tool = 'district-helper';
+        } else if (name === 'surroundings') {
+            tool = 'surroundings-helper';
         } else {
             tool = 'data-helper';
         }
@@ -124,7 +124,7 @@ function updateData(data) {
     }
 
     // Update geometries
-    if (table === 'zone' || table === 'district') {
+    if (table === 'zone' || table === 'surroundings') {
         var properties = inputstore.getGeojson(table)['features'][inputstore.getGeojsonID(table, name)]['properties'];
         properties[column] = value;
         if (properties['REFERENCE']) {
@@ -272,7 +272,7 @@ $(window).load(function () {
 
     $('#delete-button').click(function () {
         var selected = inputstore.getSelected();
-        var layer = ($('.tab.active').data('name') !== 'district') ? 'zone':'district';
+        var layer = ($('.tab.active').data('name') !== 'surroundings') ? 'zone':'surroundings';
         var out = '<br>';
         $.each(selected, function (_, building) {
             out += `${building}<br>`
@@ -424,7 +424,7 @@ $(window).load(function () {
 
             // Update geojsons
             // FIXME: Copied from updateData()
-            if (table === 'zone' || table === 'district') {
+            if (table === 'zone' || table === 'surroundings') {
                 Object.assign(inputstore.getGeojson(table)['features'][inputstore.getGeojsonID(table, building)]['properties'], out);
             }
         });

@@ -1077,7 +1077,7 @@ def write_building_parameter_sets(locator,
     for building in buildings_names:
         if mean_floor_height_m[building] != mean_floor_height_0:
             warnings.warn(
-                'The district buildings do not all have the same mean floor height. Please modify the '
+                'The surroundings buildings do not all have the same mean floor height. Please modify the '
                 '"pre_write_building_infiltration_types" and the "pre_write_building_heat_capacity_types" functions '
                 'so that each building has an infiltration and a heat capacity that are adapted to its mean floor '
                 'height.'
