@@ -1532,16 +1532,6 @@ thermal-network,get_optimization_network_layout_pressure_drop_file,outputs/data/
 thermal-network,get_optimization_network_layout_qloss_system_file,outputs/data/optimization/network/layout/dh__qloss_system_kw.csv,PIPE0,TODO,TODO,TODO,TODO,black
 thermal-network,get_optimization_network_layout_return_temperature_file,outputs/data/optimization/network/layout/dh__t_return_k.csv,NODE0,TODO,TODO,TODO,TODO,black
 thermal-network,get_optimization_network_layout_supply_temperature_file,outputs/data/optimization/network/layout/dh__t_supply_k.csv,NODE0,TODO,TODO,TODO,TODO,black
-thermal-network,get_optimization_network_node_list_file,outputs/data/optimization/network/layout/dh__nodes.csv,Building,TODO,TODO,TODO,TODO,black
-thermal-network,get_optimization_network_node_list_file,outputs/data/optimization/network/layout/dh__nodes.csv,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black
-thermal-network,get_optimization_network_node_list_file,outputs/data/optimization/network/layout/dh__nodes.csv,Q_hex_h_ahu,TODO,TODO,TODO,TODO,black
-thermal-network,get_optimization_network_node_list_file,outputs/data/optimization/network/layout/dh__nodes.csv,Q_hex_h_aru,TODO,TODO,TODO,TODO,black
-thermal-network,get_optimization_network_node_list_file,outputs/data/optimization/network/layout/dh__nodes.csv,Q_hex_h_shu,TODO,TODO,TODO,TODO,black
-thermal-network,get_optimization_network_node_list_file,outputs/data/optimization/network/layout/dh__nodes.csv,Q_hex_h_ww,TODO,TODO,TODO,TODO,black
-thermal-network,get_optimization_network_node_list_file,outputs/data/optimization/network/layout/dh__nodes.csv,Q_hex_plant_kW,TODO,TODO,TODO,TODO,black
-thermal-network,get_optimization_network_node_list_file,outputs/data/optimization/network/layout/dh__nodes.csv,Type,TODO,TODO,TODO,TODO,black
-thermal-network,get_optimization_network_node_list_file,outputs/data/optimization/network/layout/dh__nodes.csv,Unnamed: 0,TODO,TODO,TODO,TODO,black
-thermal-network,get_optimization_network_node_list_file,outputs/data/optimization/network/layout/dh__nodes.csv,coordinates,TODO,TODO,TODO,TODO,black
 thermal-network,get_optimization_network_substation_ploss_file,outputs/data/optimization/network/layout/dh__ploss_substations_kw.csv,B001,TODO,TODO,TODO,TODO,black
 thermal-network,get_thermal_demand_csv_file,outputs/data/optimization/network/layout/aggregated_demand_dh__wh.csv,B001,TODO,TODO,TODO,TODO,black
 thermal-network,get_thermal_demand_csv_file,outputs/data/optimization/network/layout/aggregated_demand_dh__wh.csv,Unnamed: 0,TODO,TODO,TODO,TODO,black
