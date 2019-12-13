@@ -377,6 +377,24 @@ The following file is used by scripts: []
      radiation_kWh,Total radiatiative potential. - Unit: [kWh]
 
 
+get_building_air_conditioning
+-----------------------------
+
+The following file is used by scripts: ['demand']
+
+
+
+.. csv-table:: **inputs/building-properties/air_conditioning_systems.dbf**
+    :header: "Variable", "Description"
+
+     Name,Unique building ID. It must start with a letter. - Unit: [-]
+     type_cs,Type of cooling supply system - Unit: [code]
+     type_ctrl,Type of heating and cooling control systems (relates to values in Default Database HVAC Properties) - Unit: [code]
+     type_dhw,Type of hot water supply system - Unit: [code]
+     type_hs,Type of heating supply system - Unit: [code]
+     type_vent,Type of ventilation strategy (relates to values in Default Database HVAC Properties) - Unit: [code]
+
+
 get_building_architecture
 -------------------------
 
@@ -387,17 +405,16 @@ The following file is used by scripts: ['radiation', 'emissions', 'demand']
 .. csv-table:: **inputs/building-properties/architecture.dbf**
     :header: "Variable", "Description"
 
-     Es,TODO - Unit: TODO
-     Hs,Fraction of gross floor area air-conditioned. - Unit: [m2/m2]
+     Es,Fraction of gross floor area with electrical demands. - Unit: [m2/m2]
      Name,Unique building ID. It must start with a letter. - Unit: [-]
-     Ns,TODO - Unit: TODO
+     Ns,Fraction of net gross floor area. - Unit: [m2/m2]
      type_cons,Type of construction. It relates to the contents of the default database of Envelope Properties: construction - Unit: [code]
      type_leak,Leakage level. It relates to the contents of the default database of Envelope Properties: leakage - Unit: [code]
      type_roof,Roof construction type (relates to values in Default Database Construction Properties) - Unit: [-]
      type_shade,Shading system type (relates to values in Default Database Construction Properties) - Unit: [m2/m2]
      type_wall,Wall construction type (relates to values in Default Database Construction Properties) - Unit: [m2/m2]
      type_win,Window type (relates to values in Default Database Construction Properties) - Unit: [m2/m2]
-     void_deck,Share of floors with an open envelope (default = 0) - Unit: [floor/floor]
+     void_deck,Number of floors (from the ground up) with an open envelope (default = 0) - Unit: [-]
      wwr_east,Window to wall ratio in in facades facing east - Unit: [m2/m2]
      wwr_north,Window to wall ratio in in facades facing north - Unit: [m2/m2]
      wwr_south,Window to wall ratio in in facades facing south - Unit: [m2/m2]
@@ -415,31 +432,13 @@ The following file is used by scripts: ['demand']
     :header: "Variable", "Description"
 
      Name,Unique building ID. It must start with a letter. - Unit: [-]
+     RH_max_pc,Upper bound of relative humidity - Unit: [%]
+     RH_min_pc,Lower_bound of relative humidity - Unit: [%]
      Tcs_set_C,Setpoint temperature for cooling system - Unit: [C]
      Tcs_setb_C,Setback point of temperature for cooling system - Unit: [C]
      Ths_set_C,Setpoint temperature for heating system - Unit: [C]
      Ths_setb_C,Setback point of temperature for heating system - Unit: [C]
-     Ve_lps,Indoor quality requirements of indoor ventilation per person - Unit: [l/s]
-     rhum_max_pc,TODO - Unit: TODO
-     rhum_min_pc,TODO - Unit: TODO
-
-
-get_building_hvac
------------------
-
-The following file is used by scripts: ['demand']
-
-
-
-.. csv-table:: **inputs/building-properties/technical_systems.dbf**
-    :header: "Variable", "Description"
-
-     Name,Unique building ID. It must start with a letter. - Unit: [-]
-     type_cs,Type of cooling supply system - Unit: [code]
-     type_ctrl,Type of heating and cooling control systems (relates to values in Default Database HVAC Properties) - Unit: [code]
-     type_dhw,Type of hot water supply system - Unit: [code]
-     type_hs,Type of heating supply system - Unit: [code]
-     type_vent,Type of ventilation strategy (relates to values in Default Database HVAC Properties) - Unit: [code]
+     Ve_lpspax,Indoor quality requirements of indoor ventilation per person - Unit: [l/s]
 
 
 get_building_internal
@@ -457,31 +456,12 @@ The following file is used by scripts: ['demand']
      El_Wm2,Peak specific electrical load due to artificial lighting - Unit: [W/m2]
      Epro_Wm2,Peak specific electrical load due to industrial processes - Unit: [W/m2]
      Name,Unique building ID. It must start with a letter. - Unit: [-]
-     Qcre_Wm2,TODO - Unit: TODO
      Qcpro_Wm2,Peak specific process cooling load - Unit: [W/m2]
+     Qcre_Wm2,Peak specific cooling load due to refrigeration (cooling rooms) - Unit: [W/m2]
      Qhpro_Wm2,Peak specific process heating load - Unit: [W/m2]
-     Qs_Wp,TODO - Unit: TODO
-     Vw_lpd,Peak specific fresh water consumption (includes cold and hot water) - Unit: [lpd]
-     Vww_lpd,Peak specific daily hot water consumption - Unit: [lpd]
-     X_ghp,Moisture released by occupancy at peak conditions - Unit: [gh/kg/p]
-
-
-get_building_restrictions
--------------------------
-
-The following file is used by scripts: []
-
-
-
-.. csv-table:: **inputs/building-properties/restrictions.dbf**
-    :header: "Variable", "Description"
-
-     BIOGAS,Biogas restricted in the area - Unit: [-]
-     GEOTHERMAL,Share of foot-print area protected for geothermal exploration - Unit: [-]
-     NATURALGAS,Natural gas restricted in the area. - Unit: [-]
-     Name,Unique building ID. It must start with a letter. - Unit: [-]
-     SOLAR,Share of solar rooftop area protected - Unit: [-]
-     WATERBODY,Use of water bodies is restricted in the area. - Unit: [-]
+     Vw_lpdpax,Peak specific fresh water consumption (includes cold and hot water) - Unit: [lpd]
+     Vww_lpdpax,Peak specific daily hot water consumption - Unit: [lpd]
+     X_ghpax,Moisture released by occupancy at peak conditions - Unit: [gh/kg/p]
 
 
 get_building_supply
@@ -511,6 +491,7 @@ The following file is used by scripts: []
 .. csv-table:: **outputs/data/costs/operation_costs.csv**
     :header: "Variable", "Description"
 
+     Aocc_m2,TODO - Unit: TODO
      COAL_hs_cost_m2yr,TODO - Unit: TODO
      COAL_hs_cost_yr,Operation costs of coal due to space heating - Unit: $USD(2015)/yr
      COAL_ww_cost_m2yr,TODO - Unit: TODO
@@ -527,7 +508,6 @@ The following file is used by scripts: []
      DH_ww_cost_yr,Operation costs due to hotwater - Unit: $USD(2015)/yr
      GRID_cost_m2yr,Electricity supply from the grid - Unit: $USD(2015)/m2.yr
      GRID_cost_yr,Electricity supply from the grid - Unit: $USD(2015)/yr
-     Aocc_m2,TODO - Unit: TODO
      NG_hs_cost_m2yr,TODO - Unit: TODO
      NG_hs_cost_yr,Operation costs of NG due to space heating - Unit: $USD(2015)/yr
      NG_ww_cost_m2yr,TODO - Unit: TODO
@@ -571,13 +551,13 @@ The following file is used by scripts: ['sewage-potential', 'thermal-network']
      E_cre_kWh,Refrigeration system electricity consumption. - Unit: [kWh]
      E_cs_kWh,Cooling system electricity consumption. - Unit: [kWh]
      E_hs_kWh,Heating system electricity consumption. - Unit: [kWh]
-     E_sys_kWh,End-use electricity demand - Unit: kWh
-     E_ww_kWh,DHW electricity consumption. - Unit: [kWh]
-     Eal_kWh,Electricity consumption of appliances and lights - Unit: [kWh]
-     Eaux_kWh,Auxiliary electricity consumption. - Unit: [kWh]
-     Edata_kWh,Data centre electricity consumption. - Unit: [kWh]
-     Epro_kWh,Electricity consumption for industrial processes. - Unit: [kWh]
-     GRID_kWh,Grid electricity consumption - Unit: kWh
+     E_sys_kWh,End-use total electricity system consumption = Ea + El + Edata + Epro + Eaux  - Unit: kWh
+     E_ww_kWh,Hot water system electricity consumption. - Unit: [kWh]
+     Eal_kWh,End-use electricity consumption of appliances and lights - Unit: [kWh]
+     Eaux_kWh,End-use auxiliary electricity consumption. - Unit: [kWh]
+     Edata_kWh,End-use data centre electricity consumption. - Unit: [kWh]
+     Epro_kWh,End-use electricity consumption for industrial processes. - Unit: [kWh]
+     GRID_kWh,Grid total requirements of electricity = GRID_a + GRID_l + GRID_data + GRID_pro + GRID_aux + GRID_cdata + GRID_cre + GRID_hs + GRID_ww + GRID_cs - Unit: kWh
      I_rad_kWh,Radiative heat loss - Unit: kWh
      I_sol_and_I_rad_kWh,Net radiative heat gain - Unit: [kWh]
      I_sol_kWh,Solar heat gain - Unit: kWh
@@ -603,6 +583,7 @@ The following file is used by scripts: ['sewage-potential', 'thermal-network']
      Q_loss_sen_ref_kWh,Sensible heat loss from refrigeration systems - Unit: kWh
      Qcdata_kWh,Data centre space cooling demand - Unit: [kWh]
      Qcdata_sys_kWh,End-use data center cooling demand - Unit: kWh
+     Qcpro_sys_kWh,Process cooling demand - Unit: [kWh]
      Qcre_kWh,Refrigeration space cooling demand - Unit: [kWh]
      Qcre_sys_kWh,End-use refrigeration demand - Unit: kWh
      Qcs_dis_ls_kWh,Cooling system distribution losses - Unit: [kWh]
@@ -619,7 +600,6 @@ The following file is used by scripts: ['sewage-potential', 'thermal-network']
      Qcs_sys_aru_kWh,ARU system cool demand - Unit: [kWh]
      Qcs_sys_kWh,End-use space cooling demand - Unit: kWh
      Qcs_sys_scu_kWh,SCU system cool demand - Unit: [kWh]
-     Qcpro_sys_kWh,Process cooling demand - Unit: [kWh]
      Qhpro_sys_kWh,Process heat demand - Unit: [kWh]
      Qhs_dis_ls_kWh,Heating system distribution losses - Unit: [kWh]
      Qhs_em_ls_kWh,Heating system emission losses - Unit: [kWh]
@@ -694,6 +674,18 @@ The following file is used by scripts: []
 
      PIPE0,TODO - Unit: TODO
      Unnamed: 0,TODO - Unit: TODO
+
+
+get_geothermal_potential
+------------------------
+
+The following file is used by scripts: ['optimization']
+
+
+
+.. csv-table:: **C:\Users\darthoma\Documents\CityEnergyAnalyst\projects\reference-case-open\baseline\outputs/data/potentials\Shallow_geothermal_potential.csv**
+    :header: "Variable", "Description"
+
 
 
 get_lake_potential
@@ -871,28 +863,6 @@ The following file is used by scripts: ['thermal-network']
      geometry,TODO - Unit: TODO
 
 
-get_network_node_types_csv_file
--------------------------------
-
-The following file is used by scripts: []
-
-
-
-.. csv-table:: **outputs/data/optimization/network/layout/dh__nodes.csv**
-    :header: "Variable", "Description"
-
-     Building,TODO - Unit: TODO
-     Name,Unique building ID. It must start with a letter. - Unit: [-]
-     Q_hex_h_ahu,TODO - Unit: TODO
-     Q_hex_h_aru,TODO - Unit: TODO
-     Q_hex_h_shu,TODO - Unit: TODO
-     Q_hex_h_ww,TODO - Unit: TODO
-     Q_hex_plant_kW,TODO - Unit: TODO
-     Type,TODO - Unit: TODO
-     Unnamed: 0,TODO - Unit: TODO
-     coordinates,TODO - Unit: TODO
-
-
 get_node_mass_flow_csv_file
 ---------------------------
 
@@ -1043,28 +1013,6 @@ The following file is used by scripts: []
      NODE0,TODO - Unit: TODO
 
 
-get_optimization_network_node_list_file
----------------------------------------
-
-The following file is used by scripts: []
-
-
-
-.. csv-table:: **outputs/data/optimization/network/layout/dh__nodes.csv**
-    :header: "Variable", "Description"
-
-     Building,TODO - Unit: TODO
-     Name,Unique building ID. It must start with a letter. - Unit: [-]
-     Q_hex_h_ahu,TODO - Unit: TODO
-     Q_hex_h_aru,TODO - Unit: TODO
-     Q_hex_h_shu,TODO - Unit: TODO
-     Q_hex_h_ww,TODO - Unit: TODO
-     Q_hex_plant_kW,TODO - Unit: TODO
-     Type,TODO - Unit: TODO
-     Unnamed: 0,TODO - Unit: TODO
-     coordinates,TODO - Unit: TODO
-
-
 get_optimization_network_substation_ploss_file
 ----------------------------------------------
 
@@ -1162,6 +1110,18 @@ The following file is used by scripts: []
      pressure_loss_total_kW,TODO - Unit: TODO
 
 
+get_thermal_network_node_types_csv_file
+---------------------------------------
+
+The following file is used by scripts: []
+
+
+
+.. csv-table:: **outputs/data/optimization/network/layout/dh__nodes.csv**
+    :header: "Variable", "Description"
+
+
+
 get_thermal_network_qloss_system_file
 -------------------------------------
 
@@ -1186,6 +1146,7 @@ The following file is used by scripts: ['sewage-potential', 'emissions', 'operat
     :header: "Variable", "Description"
 
      Af_m2,Conditioned floor area (heated/cooled) - Unit: [m2]
+     Aocc_m2,Occupied floor area (heated/cooled) - Unit: [m2]
      Aroof_m2,Roof area - Unit: [m2]
      COAL_hs0_kW,Nominal Coal requirement for space heating supply - Unit: kW
      COAL_hs_MWhyr,Coal requirement for space heating supply - Unit: MWh/yr
@@ -1201,30 +1162,29 @@ The following file is used by scripts: ['sewage-potential', 'emissions', 'operat
      DH_hs_MWhyr,Energy requirement by district heating (space heating supply) - Unit: MWh/yr
      DH_ww0_kW,Nominal Energy requirement by district heating (hotwater supply) - Unit: kW
      DH_ww_MWhyr,Energy requirement by district heating (hotwater supply) - Unit: MWh/yr
-     E_cdata0_kW,Nominal Data centre cooling specific electricity consumption. - Unit: [kW/year]
+     E_cdata0_kW,Nominal Data centre cooling specific electricity consumption. - Unit: [kW]
      E_cdata_MWhyr,Electricity consumption due to data center cooling - Unit: MWh/yr
-     E_cre0_kW,Nominal Refrigeration system electricity consumption. - Unit: [kW/year]
+     E_cre0_kW,Nominal Refrigeration system electricity consumption. - Unit: [kW]
      E_cre_MWhyr,Electricity consumption due to refrigeration - Unit: MWh/yr
-     E_cs0_kW,Nominal Cooling system electricity consumption. - Unit: [kW/year]
+     E_cs0_kW,Nominal Cooling system electricity consumption. - Unit: [kW]
      E_cs_MWhyr,Electricity consumption due to space cooling - Unit: MWh/yr
-     E_hs0_kW,Nominal Heating system electricity consumption. - Unit: [kW/year]
+     E_hs0_kW,Nominal Heating system electricity consumption. - Unit: [kW]
      E_hs_MWhyr,Electricity consumption due to space heating - Unit: MWh/yr
      E_sys0_kW,Nominal end-use electricity demand - Unit: kW
      E_sys_MWhyr,End-use electricity demand - Unit: MWh/yr
-     E_ww0_kW,Nominal Domestic hot water electricity consumption. - Unit: [kW/year]
+     E_ww0_kW,Nominal Domestic hot water electricity consumption. - Unit: [kW]
      E_ww_MWhyr,Electricity consumption due to hot water - Unit: MWh/yr
-     Eal0_kW,Nominal Total net electricity for all sources and sinks. - Unit: [kW/year]
+     Eal0_kW,Nominal Total net electricity for all sources and sinks. - Unit: [kW]
      Eal_MWhyr,Electricity consumption due to appliances and lighting - Unit: MWh/yr
-     Eaux0_kW,Nominal Auxiliary electricity consumption. - Unit: [kW/year]
+     Eaux0_kW,Nominal Auxiliary electricity consumption. - Unit: [kW]
      Eaux_MWhyr,Electricity consumption due to auxiliary equipment - Unit: MWh/yr
-     Edata0_kW,Nominal Data centre electricity consumption. - Unit: [kW/year]
+     Edata0_kW,Nominal Data centre electricity consumption. - Unit: [kW]
      Edata_MWhyr,Electricity consumption for data centers - Unit: MWh/yr
-     Epro0_kW,Nominal Industrial processes electricity consumption. - Unit: [kW/year]
+     Epro0_kW,Nominal Industrial processes electricity consumption. - Unit: [kW]
      Epro_MWhyr,Electricity supplied to industrial processes - Unit: MWh/yr
      GFA_m2,Gross floor area - Unit: [m2]
      GRID0_kW,Nominal Grid electricity consumption - Unit: kW
      GRID_MWhyr,Grid electricity consumption - Unit: MWh/yr
-     Aocc_m2,TODO - Unit: TODO
      NG_hs0_kW,Nominal NG requirement for space heating supply - Unit: kW
      NG_hs_MWhyr,NG requirement for space heating supply - Unit: MWh/yr
      NG_ww0_kW,Nominal NG requirement for hotwater supply - Unit: kW
@@ -1236,79 +1196,79 @@ The following file is used by scripts: ['sewage-potential', 'emissions', 'operat
      OIL_ww_MWhyr,OIL requirement for hotwater supply - Unit: MWh/yr
      PV0_kW,Nominal PV electricity consumption - Unit: kW
      PV_MWhyr,PV electricity consumption - Unit: MWh/yr
-     QC_sys0_kW,Nominal Total system cooling demand. - Unit: [kW/year]
+     QC_sys0_kW,Nominal Total system cooling demand. - Unit: [kW]
      QC_sys_MWhyr,Total system cooling demand - Unit: [MWh/year]
-     QH_sys0_kW,Nominal total building heating demand. - Unit: [kW/year]
+     QH_sys0_kW,Nominal total building heating demand. - Unit: [kW]
      QH_sys_MWhyr,Total building heating demand - Unit: [MWh/year]
-     Qcdata0_kW,Nominal Data centre cooling demand. - Unit: [kW/year]
+     Qcdata0_kW,Nominal Data centre cooling demand. - Unit: [kW]
      Qcdata_MWhyr,Data centre cooling demand - Unit: [MWh/year]
      Qcdata_sys0_kW,Nominal end-use data center cooling demand - Unit: kW
      Qcdata_sys_MWhyr,End-use data center cooling demand - Unit: MWh/yr
-     Qcre0_kW,Nominal Refrigeration cooling demand. - Unit: [kW/year]
+     Qcpro_sys0_kW,Nominal process cooling demand. - Unit: [kW]
+     Qcpro_sys_MWhyr,Yearly processes cooling demand. - Unit: [MWh/year]
+     Qcre0_kW,Nominal Refrigeration cooling demand. - Unit: [kW]
      Qcre_MWhyr,Refrigeration cooling demand for the system - Unit: [MWh/year]
      Qcre_sys0_kW, Nominal refrigeration cooling demand - Unit: kW
      Qcre_sys_MWhyr,End-use refrigeration demand - Unit: MWh/yr
-     Qcs0_kW,Nominal Total cooling demand. - Unit: [kW/year]
+     Qcs0_kW,Nominal Total cooling demand. - Unit: [kW]
      Qcs_MWhyr,Total cool demand - Unit: [MWh/year]
-     Qcs_dis_ls0_kW,Nominal Cool distribution losses. - Unit: [kW/year]
+     Qcs_dis_ls0_kW,Nominal Cool distribution losses. - Unit: [kW]
      Qcs_dis_ls_MWhyr,Cool distribution losses - Unit: [MWh/year]
-     Qcs_em_ls0_kW,Nominal Cool emission losses. - Unit: [kW/year]
+     Qcs_em_ls0_kW,Nominal Cool emission losses. - Unit: [kW]
      Qcs_em_ls_MWhyr,Cool emission losses - Unit: [MWh/year]
-     Qcs_lat_ahu0_kW,Nominal AHU latent cool demand. - Unit: [kW/year]
+     Qcs_lat_ahu0_kW,Nominal AHU latent cool demand. - Unit: [kW]
      Qcs_lat_ahu_MWhyr,AHU latent cool demand - Unit: [MWh/year]
-     Qcs_lat_aru0_kW,Nominal ARU latent cool demand. - Unit: [kW/year]
+     Qcs_lat_aru0_kW,Nominal ARU latent cool demand. - Unit: [kW]
      Qcs_lat_aru_MWhyr,ARU latent cool demand - Unit: [MWh/year]
-     Qcs_lat_sys0_kW,Nominal System latent cool demand. - Unit: [kW/year]
+     Qcs_lat_sys0_kW,Nominal System latent cool demand. - Unit: [kW]
      Qcs_lat_sys_MWhyr,System latent cool demand - Unit: [MWh/year]
-     Qcs_sen_ahu0_kW,Nominal AHU system cool demand. - Unit: [kW/year]
+     Qcs_sen_ahu0_kW,Nominal AHU system cool demand. - Unit: [kW]
      Qcs_sen_ahu_MWhyr,AHU system cool demand - Unit: [MWh/year]
-     Qcs_sen_aru0_kW,Nominal ARU system cool demand. - Unit: [kW/year]
+     Qcs_sen_aru0_kW,Nominal ARU system cool demand. - Unit: [kW]
      Qcs_sen_aru_MWhyr,ARU system cool demand - Unit: [MWh/year]
-     Qcs_sen_scu0_kW,Nominal SCU system cool demand. - Unit: [kW/year]
+     Qcs_sen_scu0_kW,Nominal SCU system cool demand. - Unit: [kW]
      Qcs_sen_scu_MWhyr,SCU system cool demand - Unit: [MWh/year]
-     Qcs_sen_sys0_kW,Nominal Sensible system cool demand. - Unit: [kW/year]
+     Qcs_sen_sys0_kW,Nominal Sensible system cool demand. - Unit: [kW]
      Qcs_sen_sys_MWhyr,Sensible system cool demand - Unit: [MWh/year]
      Qcs_sys0_kW,Nominal end-use space cooling demand - Unit: kW
      Qcs_sys_MWhyr,End-use space cooling demand - Unit: MWh/yr
-     Qcs_sys_ahu0_kW,Nominal AHU system cool demand. - Unit: [kW/year]
+     Qcs_sys_ahu0_kW,Nominal AHU system cool demand. - Unit: [kW]
      Qcs_sys_ahu_MWhyr,AHU system cool demand - Unit: [MWh/year]
-     Qcs_sys_aru0_kW,Nominal ARU system cool demand. - Unit: [kW/year]
+     Qcs_sys_aru0_kW,Nominal ARU system cool demand. - Unit: [kW]
      Qcs_sys_aru_MWhyr,ARU system cool demand - Unit: [MWh/year]
-     Qcs_sys_scu0_kW,Nominal SCU system cool demand. - Unit: [kW/year]
+     Qcs_sys_scu0_kW,Nominal SCU system cool demand. - Unit: [kW]
      Qcs_sys_scu_MWhyr,SCU system cool demand - Unit: [MWh/year]
-     Qcpro_sys0_kW,Nominal process cooling demand. - Unit: [kW/year]
-     Qcpro_sys_MWhyr,Yearly processes cooling demand. - Unit: [MWh/year]
-     Qhpro_sys0_kW,Nominal process heat demand. - Unit: [kW/year]
+     Qhpro_sys0_kW,Nominal process heat demand. - Unit: [kW]
      Qhpro_sys_MWhyr,Yearly processes heat demand. - Unit: [MWh/year]
-     Qhs0_kW,Nominal Total heating demand. - Unit: [kW/year]
+     Qhs0_kW,Nominal Total heating demand. - Unit: [kW]
      Qhs_MWhyr,Total heating demand - Unit: [MWh/year]
-     Qhs_dis_ls0_kW,Nominal Heating system distribution losses. - Unit: [kW/year]
+     Qhs_dis_ls0_kW,Nominal Heating system distribution losses. - Unit: [kW]
      Qhs_dis_ls_MWhyr,Heating system distribution losses - Unit: [MWh/year]
-     Qhs_em_ls0_kW,Nominal Heating emission losses. - Unit: [kW/year]
+     Qhs_em_ls0_kW,Nominal Heating emission losses. - Unit: [kW]
      Qhs_em_ls_MWhyr,Heating system emission losses - Unit: [MWh/year]
-     Qhs_lat_ahu0_kW,Nominal AHU latent heat demand. - Unit: [kW/year]
+     Qhs_lat_ahu0_kW,Nominal AHU latent heat demand. - Unit: [kW]
      Qhs_lat_ahu_MWhyr,AHU latent heat demand - Unit: [MWh/year]
-     Qhs_lat_aru0_kW,Nominal ARU latent heat demand. - Unit: [kW/year]
+     Qhs_lat_aru0_kW,Nominal ARU latent heat demand. - Unit: [kW]
      Qhs_lat_aru_MWhyr,ARU latent heat demand - Unit: [MWh/year]
-     Qhs_lat_sys0_kW,Nominal System latent heat demand. - Unit: [kW/year]
+     Qhs_lat_sys0_kW,Nominal System latent heat demand. - Unit: [kW]
      Qhs_lat_sys_MWhyr,System latent heat demand - Unit: [MWh/year]
-     Qhs_sen_ahu0_kW,Nominal AHU sensible heat demand. - Unit: [kW/year]
+     Qhs_sen_ahu0_kW,Nominal AHU sensible heat demand. - Unit: [kW]
      Qhs_sen_ahu_MWhyr,AHU sensible heat demand - Unit: [MWh/year]
-     Qhs_sen_aru0_kW,ARU sensible heat demand - Unit: [kW/year]
+     Qhs_sen_aru0_kW,ARU sensible heat demand - Unit: [kW]
      Qhs_sen_aru_MWhyr,ARU sensible heat demand - Unit: [MWh/year]
-     Qhs_sen_shu0_kW,Nominal SHU sensible heat demand. - Unit: [kW/year]
+     Qhs_sen_shu0_kW,Nominal SHU sensible heat demand. - Unit: [kW]
      Qhs_sen_shu_MWhyr,SHU sensible heat demand - Unit: [MWh/year]
-     Qhs_sen_sys0_kW,Nominal HVAC systems sensible heat demand. - Unit: [kW/year]
+     Qhs_sen_sys0_kW,Nominal HVAC systems sensible heat demand. - Unit: [kW]
      Qhs_sen_sys_MWhyr,SHU sensible heat demand - Unit: [MWh/year]
      Qhs_sys0_kW,Nominal end-use space heating demand - Unit: kW
      Qhs_sys_MWhyr,End-use space heating demand - Unit: MWh/yr
-     Qhs_sys_ahu0_kW,Nominal AHU sensible heat demand. - Unit: [kW/year]
+     Qhs_sys_ahu0_kW,Nominal AHU sensible heat demand. - Unit: [kW]
      Qhs_sys_ahu_MWhyr,AHU system heat demand - Unit: [MWh/year]
-     Qhs_sys_aru0_kW,Nominal ARU sensible heat demand. - Unit: [kW/year]
+     Qhs_sys_aru0_kW,Nominal ARU sensible heat demand. - Unit: [kW]
      Qhs_sys_aru_MWhyr,ARU sensible heat demand - Unit: [MWh/year]
-     Qhs_sys_shu0_kW,Nominal SHU sensible heat demand. - Unit: [kW/year]
+     Qhs_sys_shu0_kW,Nominal SHU sensible heat demand. - Unit: [kW]
      Qhs_sys_shu_MWhyr,SHU sensible heat demand - Unit: [MWh/year]
-     Qww0_kW,Nominal DHW heat demand. - Unit: [kW/year]
+     Qww0_kW,Nominal DHW heat demand. - Unit: [kW]
      Qww_MWhyr,DHW heat demand - Unit: [MWh/year]
      Qww_sys0_kW,Nominal end-use hotwater demand - Unit: kW
      Qww_sys_MWhyr,End-use hotwater demand - Unit: MWh/yr
@@ -1321,4 +1281,16 @@ The following file is used by scripts: ['sewage-potential', 'emissions', 'operat
      WOOD_ww0_kW,Nominal WOOD requirement for hotwater supply - Unit: kW
      WOOD_ww_MWhyr,WOOD requirement for hotwater supply - Unit: MWh/yr
      people0,Nominal occupancy - Unit: [people]
+
+
+get_weather_file
+----------------
+
+The following file is used by scripts: ['radiation', 'photovoltaic', 'photovoltaic-thermal', 'solar-collector', 'demand', 'thermal-network']
+
+
+
+.. csv-table:: **{general:scenario}/inpusts/weather/weather.epw**
+    :header: "Variable", "Description"
+
 

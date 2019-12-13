@@ -9,9 +9,8 @@ The following file is used by scripts: ['data-helper', 'demand']
 .. csv-table:: **databases/ch/archetypes/construction_properties.xlsx:ARCHITECTURE**
     :header: "Variable", "Description"
 
-     Es,TODO - Unit: TODO
-     Hs,Fraction of gross floor area air-conditioned. - Unit: [m2/m2]
-     Ns,TODO - Unit: TODO
+     Es,Fraction of gross floor area with electrical demands. - Unit: [m2/m2]
+     Ns,Fraction of net gross floor area. - Unit: [m2/m2]
      building_use,Building use. It relates to the uses stored in the input database of Zone_occupancy - Unit: [-]
      standard,Letter representing whereas the field represent construction properties of a building as newly constructed (C) or renovated (R) - Unit: [-]
      type_cons,Type of construction. It relates to the contents of the default database of Envelope Properties: construction - Unit: [code]
@@ -20,7 +19,7 @@ The following file is used by scripts: ['data-helper', 'demand']
      type_shade,Shading system type (relates to values in Default Database Construction Properties) - Unit: [m2/m2]
      type_wall,Wall construction type (relates to values in Default Database Construction Properties) - Unit: [m2/m2]
      type_win,Window type (relates to values in Default Database Construction Properties) - Unit: [m2/m2]
-     void_deck,Share of floors with an open envelope (default = 0) - Unit: [floor/floor]
+     void_deck,Number of floors (from the ground up) with an open envelope (default = 0) - Unit: [-]
      wwr_east,Window to wall ratio in in facades facing east - Unit: [m2/m2]
      wwr_north,Window to wall ratio in in facades facing north - Unit: [m2/m2]
      wwr_south,Window to wall ratio in in facades facing south - Unit: [m2/m2]
@@ -47,13 +46,13 @@ The following file is used by scripts: ['data-helper', 'demand']
     :header: "Variable", "Description"
 
      Code,Unique code for the material of the pipe. - Unit: [-]
+     RH_max_pc,Upper bound of relative humidity - Unit: [%]
+     RH_min_pc,Lower_bound of relative humidity - Unit: [%]
      Tcs_set_C,Setpoint temperature for cooling system - Unit: [C]
      Tcs_setb_C,Setback point of temperature for cooling system - Unit: [C]
      Ths_set_C,Setpoint temperature for heating system - Unit: [C]
      Ths_setb_C,Setback point of temperature for heating system - Unit: [C]
-     Ve_lps,Indoor quality requirements of indoor ventilation per person - Unit: [l/s]
-     rhum_max_pc,TODO - Unit: TODO
-     rhum_min_pc,TODO - Unit: TODO
+     Ve_lpspax,Indoor quality requirements of indoor ventilation per person - Unit: [l/s]
 
 
 .. csv-table:: **databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS**
@@ -64,13 +63,13 @@ The following file is used by scripts: ['data-helper', 'demand']
      Ed_Wm2,Peak specific electrical load due to servers/data centres - Unit: [W/m2]
      El_Wm2,Peak specific electrical load due to artificial lighting - Unit: [W/m2]
      Epro_Wm2,Peak specific electrical load due to industrial processes - Unit: [W/m2]
-     Qcre_Wm2,TODO - Unit: TODO
-     Qcpro_Wm2,Peak specific process heat load - Unit: [W/m2]
-     Qhpro_Wm2,Peak specific process cooling load - Unit: [W/m2]
-     Qs_Wp,TODO - Unit: TODO
-     Vw_lpd,Peak specific fresh water consumption (includes cold and hot water) - Unit: [lpd]
-     Vww_lpd,Peak specific daily hot water consumption - Unit: [lpd]
-     X_ghp,Moisture released by occupancy at peak conditions - Unit: [gh/kg/p]
+     Qcpro_Wm2,Peak specific process cooling load - Unit: [W/m2]
+     Qcre_Wm2,Peak specific cooling load due to refrigeration (cooling rooms) - Unit: [W/m2]
+     Qhpro_Wm2,Peak specific process heating load - Unit: [W/m2]
+     Qs_Wpax,Peak sensible heat load of people - Unit: [W/pax]
+     Vw_lpdpax,Peak specific fresh water consumption (includes cold and hot water) - Unit: [lpd]
+     Vww_lpdpax,Peak specific daily hot water consumption - Unit: [lpd]
+     X_ghpax,Moisture released by occupancy at peak conditions - Unit: [gh/kg/p]
 
 
 .. csv-table:: **databases/ch/archetypes/construction_properties.xlsx:SUPPLY**
@@ -438,112 +437,55 @@ The following file is used by scripts: ['data-helper', 'emissions', 'demand']
 .. csv-table:: **inputs/building-properties/occupancy.dbf**
     :header: "Variable", "Description"
 
-     COOLROOM,Refrigeration rooms - Unit: m2
-     FOODSTORE,Food stores - Unit: m2
-     GYM,Gymnasiums - Unit: m2
-     HOSPITAL,Hospitals - Unit: m2
-     HOTEL,Hotels - Unit: m2
-     INDUSTRIAL,Light industry - Unit: m2
-     LIBRARY,Libraries - Unit: m2
-     MULTI_RES,Residential (multiple dwellings) - Unit: m2
+     COOLROOM,Refrigeration rooms - Unit: [m2]
+     FOODSTORE,Food stores - Unit: [m2]
+     GYM,Gymnasiums - Unit: [m2]
+     HOSPITAL,Hospitals - Unit: [m2]
+     HOTEL,Hotels - Unit: [m2]
+     INDUSTRIAL,Light industry - Unit: [m2]
+     LIBRARY,Libraries - Unit: [m2]
+     MULTI_RES,Residential (multiple dwellings) - Unit: [m2]
      Name,Unique building ID. It must start with a letter. - Unit: [-]
-     OFFICE,Offices - Unit: m2
-     PARKING,Parking - Unit: m2
-     RESTAURANT,Restaurants - Unit: m2
-     RETAIL,Retail - Unit: m2
-     SCHOOL,Schools - Unit: m2
-     SERVERROOM,Data center - Unit: m2
-     SINGLE_RES,Residential (single dwellings) - Unit: m2
-     SWIMMING,Swimming halls - Unit: m2
+     OFFICE,Offices - Unit: [m2]
+     PARKING,Parking - Unit: [m2]
+     RESTAURANT,Restaurants - Unit: [m2]
+     RETAIL,Retail - Unit: [m2]
+     SCHOOL,Schools - Unit: [m2]
+     SERVERROOM,Data center - Unit: [m2]
+     SINGLE_RES,Residential (single dwellings) - Unit: [m2]
+     SWIMMING,Swimming halls - Unit: [m2]
 
 
-get_data_benchmark
-------------------
+get_database_air_conditioning_systems
+-------------------------------------
 
-The following file is used by scripts: ['emissions']
+The following file is used by scripts: ['demand']
 
 
 
-.. csv-table:: **databases/sg/benchmarks/benchmark_2000w.xls:EMBODIED**
+.. csv-table:: **databases/ch/systems/air_conditioning_systems.xls:controller**
     :header: "Variable", "Description"
 
-     CO2_target_new,Target CO2 production for newly constructed buildings - Unit: [-]
-     CO2_target_retrofit,Target CO2 production for retrofitted buildings - Unit: [-]
-     CO2_today,Present CO2 production - Unit: [-]
-     Description,Describes the source of the benchmark standards. - Unit: [-]
-     NRE_target_new,Target non-renewable energy consumption for newly constructed buildings - Unit: [-]
-     NRE_target_retrofit,Target non-renewable energy consumption for retrofitted buildings - Unit: [-]
-     NRE_today,Present non-renewable energy consumption - Unit: [-]
-     PEN_target_new,Target primary energy demand for newly constructed buildings - Unit: [-]
-     PEN_target_retrofit,Target primary energy demand for retrofitted buildings - Unit: [-]
-     PEN_today,Present primary energy demand - Unit: [-]
-     code,Building use. It relates to the uses stored in the input database of Zone_occupancy - Unit: [-]
 
 
-.. csv-table:: **databases/sg/benchmarks/benchmark_2000w.xls:MOBILITY**
+.. csv-table:: **databases/ch/systems/air_conditioning_systems.xls:cooling**
     :header: "Variable", "Description"
 
-     CO2_target_new,Target CO2 production for newly constructed buildings - Unit: [-]
-     CO2_target_retrofit,Target CO2 production for retrofitted buildings - Unit: [-]
-     CO2_today,Present CO2 production - Unit: [-]
-     Description,Describes the source of the benchmark standards. - Unit: [-]
-     NRE_target_new,Target non-renewable energy consumption for newly constructed buildings - Unit: [-]
-     NRE_target_retrofit,Target non-renewable energy consumption for retrofitted buildings - Unit: [-]
-     NRE_today,Present non-renewable energy consumption - Unit: [-]
-     PEN_target_new,Target primary energy demand for newly constructed buildings - Unit: [-]
-     PEN_target_retrofit,Target primary energy demand for retrofitted buildings - Unit: [-]
-     PEN_today,Present primary energy demand - Unit: [-]
-     code,Building use. It relates to the uses stored in the input database of Zone_occupancy - Unit: [-]
 
 
-.. csv-table:: **databases/sg/benchmarks/benchmark_2000w.xls:OPERATION**
+.. csv-table:: **databases/ch/systems/air_conditioning_systems.xls:dhw**
     :header: "Variable", "Description"
 
-     CO2_target_new,Target CO2 production for newly constructed buildings - Unit: [-]
-     CO2_target_retrofit,Target CO2 production for retrofitted buildings - Unit: [-]
-     CO2_today,Present CO2 production - Unit: [-]
-     Description,Describes the source of the benchmark standards. - Unit: [-]
-     NRE_target_new,Target non-renewable energy consumption for newly constructed buildings - Unit: [-]
-     NRE_target_retrofit,Target non-renewable energy consumption for retrofitted buildings - Unit: [-]
-     NRE_today,Present non-renewable energy consumption - Unit: [-]
-     PEN_target_new,Target primary energy demand for newly constructed buildings - Unit: [-]
-     PEN_target_retrofit,Target primary energy demand for retrofitted buildings - Unit: [-]
-     PEN_today,Present primary energy demand - Unit: [-]
-     code,Building use. It relates to the uses stored in the input database of Zone_occupancy - Unit: [-]
 
 
-.. csv-table:: **databases/sg/benchmarks/benchmark_2000w.xls:TOTAL**
+.. csv-table:: **databases/ch/systems/air_conditioning_systems.xls:heating**
     :header: "Variable", "Description"
 
-     CO2_target_new,Target CO2 production for newly constructed buildings - Unit: [-]
-     CO2_target_retrofit,Target CO2 production for retrofitted buildings - Unit: [-]
-     CO2_today,Present CO2 production - Unit: [-]
-     Description,Describes the source of the benchmark standards. - Unit: [-]
-     NRE_target_new,Target non-renewable energy consumption for newly constructed buildings - Unit: [-]
-     NRE_target_retrofit,Target non-renewable energy consumption for retrofitted buildings - Unit: [-]
-     NRE_today,Present non-renewable energy consumption - Unit: [-]
-     PEN_target_new,Target primary energy demand for newly constructed buildings - Unit: [-]
-     PEN_target_retrofit,Target primary energy demand for retrofitted buildings - Unit: [-]
-     PEN_today,Present primary energy demand - Unit: [-]
-     code,Building use. It relates to the uses stored in the input database of Zone_occupancy - Unit: [-]
 
 
-get_surroundings_geometry
----------------------
-
-The following file is used by scripts: ['radiation']
-
-
-
-.. csv-table:: **inputs/building-geometry/surroundings.shp**
+.. csv-table:: **databases/ch/systems/air_conditioning_systems.xls:ventilation**
     :header: "Variable", "Description"
 
-     Name,Unique building ID. It must start with a letter. - Unit: [-]
-     floors_ag,TODO - Unit: TODO
-     floors_bg,TODO - Unit: TODO
-     geometry,TODO - Unit: TODO
-     height_ag,Aggregated height of the walls. - Unit: [m]
-     height_bg,TODO - Unit: TODO
 
 
 get_envelope_systems
@@ -620,16 +562,16 @@ The following file is used by scripts: ['emissions']
 .. csv-table:: **databases/sg/lifecycle/lca_buildings.xlsx:EMBODIED_EMISSIONS**
     :header: "Variable", "Description"
 
-     Excavation,Typical embodied energy for site excavation. - Unit: [GJ]
-     Floor_g,Typical embodied energy of the ground floor. - Unit: [GJ]
-     Floor_int,Typical embodied energy of the interior floor. - Unit: [GJ]
-     Roof,Typical embodied energy of the roof. - Unit: [GJ]
-     Services,Typical embodied energy of the building services. - Unit: [GJ]
-     Wall_ext_ag,Typical embodied energy of the exterior above ground walls. - Unit: [GJ]
-     Wall_ext_bg,Typical embodied energy of the exterior below ground walls. - Unit: [GJ]
-     Wall_int_nosup,nan - Unit: [GJ]
-     Wall_int_sup,nan - Unit: [GJ]
-     Win_ext,Typical embodied energy of the external glazing. - Unit: [GJ]
+     Excavation,Typical embodied emissions for site excavation. - Unit: [kg CO2-eq/m2]
+     Floor_g,Typical embodied emissions of the ground floor. - Unit: [kg CO2-eq/m2]
+     Floor_int,Typical embodied emissions of the interior floor. - Unit: [kg CO2-eq/m2]
+     Roof,Typical embodied emissions of the roof. - Unit: [kg CO2-eq/m2]
+     Services,Typical embodied emissions of the building services. - Unit: [kg CO2-eq/m2]
+     Wall_ext_ag,Typical embodied emissions of the exterior above ground walls. - Unit: [kg CO2-eq/m2]
+     Wall_ext_bg,Typical embodied emissions of the exterior below ground walls. - Unit: [kg CO2-eq/m2]
+     Wall_int_nosup,Typical embodied emissions of the interior above ground walls. - Unit: [kg CO2-eq/m2]
+     Wall_int_sup,Typical embodied emissions of the interior below ground walls. - Unit: [kg CO2-eq/m2]
+     Win_ext,Typical embodied emissions of the external glazing. - Unit: [kg CO2-eq/m2]
      building_use,Building use. It relates to the uses stored in the input database of Zone_occupancy - Unit: [-]
      standard,Letter representing whereas the field represent construction properties of a building as newly constructed (C) or renovated (R) - Unit: [-]
      year_end,Upper limit of year interval where the building properties apply - Unit: [yr]
@@ -639,16 +581,16 @@ The following file is used by scripts: ['emissions']
 .. csv-table:: **databases/sg/lifecycle/lca_buildings.xlsx:EMBODIED_ENERGY**
     :header: "Variable", "Description"
 
-     Excavation,Typical embodied energy for site excavation. - Unit: [GJ]
-     Floor_g,Typical embodied energy of the ground floor. - Unit: [GJ]
-     Floor_int,Typical embodied energy of the interior floor. - Unit: [GJ]
-     Roof,Typical embodied energy of the roof. - Unit: [GJ]
-     Services,Typical embodied energy of the building services. - Unit: [GJ]
-     Wall_ext_ag,Typical embodied energy of the exterior above ground walls. - Unit: [GJ]
-     Wall_ext_bg,Typical embodied energy of the exterior below ground walls. - Unit: [GJ]
-     Wall_int_nosup,nan - Unit: [GJ]
-     Wall_int_sup,nan - Unit: [GJ]
-     Win_ext,Typical embodied energy of the external glazing. - Unit: [GJ]
+     Excavation,Typical embodied energy for site excavation. - Unit: [MJ oil-eq/m2]
+     Floor_g,Typical embodied energy of the ground floor. - Unit: [MJ oil-eq/m2]
+     Floor_int,Typical embodied energy of the interior floor. - Unit: [MJ oil-eq/m2]
+     Roof,Typical embodied energy of the roof. - Unit: [MJ oil-eq/m2]
+     Services,Typical embodied energy of the building services. - Unit: [MJ oil-eq/m2]
+     Wall_ext_ag,Typical embodied energy of the exterior above ground walls. - Unit: [MJ oil-eq/m2]
+     Wall_ext_bg,Typical embodied energy of the exterior below ground walls. - Unit: [MJ oil-eq/m2]
+     Wall_int_nosup,nan - Unit: [MJ oil-eq/m2]
+     Wall_int_sup,nan - Unit: [MJ oil-eq/m2]
+     Win_ext,Typical embodied energy of the external glazing. - Unit: [MJ oil-eq/m2]
      building_use,Building use. It relates to the uses stored in the input database of Zone_occupancy - Unit: [-]
      standard,Letter representing whereas the field represent construction properties of a building as newly constructed (C) or renovated (R) - Unit: [-]
      year_end,Upper limit of year interval where the building properties apply - Unit: [yr]
@@ -1106,75 +1048,20 @@ The following file is used by scripts: ['thermal-network', 'photovoltaic', 'phot
      unit ,TODO - Unit: TODO
 
 
-get_technical_emission_systems
-------------------------------
+get_surroundings_geometry
+-------------------------
 
-The following file is used by scripts: ['demand']
+The following file is used by scripts: ['radiation']
 
 
 
-.. csv-table:: **databases/ch/systems/emission_systems.xls:controller**
+.. csv-table:: **inputs/building-geometry/surroundings.shp**
     :header: "Variable", "Description"
 
-     Description,Describes the source of the benchmark standards. - Unit: [-]
-     code,Building use. It relates to the uses stored in the input database of Zone_occupancy - Unit: [-]
-     dT_Qcs,TODO - Unit: TODO
-     dT_Qhs,TODO - Unit: TODO
-
-
-.. csv-table:: **databases/ch/systems/emission_systems.xls:cooling**
-    :header: "Variable", "Description"
-
-     Description,Describes the source of the benchmark standards. - Unit: [-]
-     Qcsmax_Wm2,TODO - Unit: TODO
-     Tc_sup_air_ahu_C,TODO - Unit: TODO
-     Tc_sup_air_aru_C,TODO - Unit: TODO
-     Tscs0_ahu_C,TODO - Unit: TODO
-     Tscs0_aru_C,TODO - Unit: TODO
-     Tscs0_scu_C,TODO - Unit: TODO
-     code,Building use. It relates to the uses stored in the input database of Zone_occupancy - Unit: [-]
-     dTcs0_ahu_C,TODO - Unit: TODO
-     dTcs0_aru_C,TODO - Unit: TODO
-     dTcs0_scu_C,TODO - Unit: TODO
-     dTcs_C,TODO - Unit: TODO
-
-
-.. csv-table:: **databases/ch/systems/emission_systems.xls:dhw**
-    :header: "Variable", "Description"
-
-     Description,Describes the source of the benchmark standards. - Unit: [-]
-     Qwwmax_Wm2,Maximum heat flow permitted by the distribution system per m2 of the exchange interface (e.g. floor/radiator heating area). - Unit: [W/m2]
-     Tsww0_C,Typical supply water temperature. - Unit: [C]
-     code,Building use. It relates to the uses stored in the input database of Zone_occupancy - Unit: [-]
-
-
-.. csv-table:: **databases/ch/systems/emission_systems.xls:heating**
-    :header: "Variable", "Description"
-
-     Description,Describes the source of the benchmark standards. - Unit: [-]
-     Qhsmax_Wm2,TODO - Unit: TODO
-     Th_sup_air_ahu_C,TODO - Unit: TODO
-     Th_sup_air_aru_C,TODO - Unit: TODO
-     Tshs0_ahu_C,TODO - Unit: TODO
-     Tshs0_aru_C,TODO - Unit: TODO
-     Tshs0_shu_C,TODO - Unit: TODO
-     code,Building use. It relates to the uses stored in the input database of Zone_occupancy - Unit: [-]
-     dThs0_ahu_C,TODO - Unit: TODO
-     dThs0_aru_C,TODO - Unit: TODO
-     dThs0_shu_C,TODO - Unit: TODO
-     dThs_C,TODO - Unit: TODO
-
-
-.. csv-table:: **databases/ch/systems/emission_systems.xls:ventilation**
-    :header: "Variable", "Description"
-
-     Description,Describes the source of the benchmark standards. - Unit: [-]
-     ECONOMIZER,TODO - Unit: TODO
-     HEAT_REC,TODO - Unit: TODO
-     MECH_VENT,TODO - Unit: TODO
-     NIGHT_FLSH,TODO - Unit: TODO
-     WIN_VENT,TODO - Unit: TODO
-     code,Building use. It relates to the uses stored in the input database of Zone_occupancy - Unit: [-]
+     Name,Unique building ID. It must start with a letter. - Unit: [-]
+     floors_ag,Number of floors above ground (incl. ground floor) - Unit: [-]
+     geometry,TODO - Unit: TODO
+     height_ag,Height above ground (incl. ground floor) - Unit: [m]
 
 
 get_terrain
@@ -1218,19 +1105,6 @@ The following file is used by scripts: ['thermal-network']
      Vdot_min_m3s,Minimum volume flow rate for the nominal diameter (DN) bin. - Unit: [m3/s]
 
 
-get_weather
------------
-
-The following file is used by scripts: ['radiation', 'photovoltaic', 'photovoltaic-thermal', 'solar-collector', 'demand', 'thermal-network']
-
-
-
-.. csv-table:: **c:/users/assistenz/documents/github/cityenergyanalyst/cea/databases/weather/singapore.epw**
-    :header: "Variable", "Description"
-
-     EPW file variables,TODO - Unit: TODO
-
-
 get_zone_geometry
 -----------------
 
@@ -1242,9 +1116,9 @@ The following file is used by scripts: ['photovoltaic', 'photovoltaic-thermal', 
     :header: "Variable", "Description"
 
      Name,Unique building ID. It must start with a letter. - Unit: [-]
-     floors_ag,TODO - Unit: TODO
-     floors_bg,TODO - Unit: TODO
+     floors_ag,Number of floors above ground (incl. ground floor) - Unit: [-]
+     floors_bg,Number of floors below ground (basement, etc) - Unit: [-]
      geometry,TODO - Unit: TODO
      height_ag,Aggregated height of the walls. - Unit: [m]
-     height_bg,TODO - Unit: TODO
+     height_bg,Height below ground (basement, etc) - Unit: [m]
 
