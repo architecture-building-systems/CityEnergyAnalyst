@@ -16,7 +16,6 @@
   </form>
   <script>
       $("#delete-input").on("input", function() {
-          console.log($(this).val());
           if ($(this).val() === '{{ dashboard_name }}') {
               $('#delete-btn').prop('disabled', false);
           } else {

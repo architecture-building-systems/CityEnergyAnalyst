@@ -1,0 +1,61 @@
+- config: default
+  "general:multiprocessing": on
+  "general:project": "${cea_general_project}/../reference-case-open"
+  "radiation:daysim-bin-directory": "${cea_radiation_daysim-bin-directory}"
+- script: extract-reference-case
+  parameters:
+    destination: "{general:project}/.."
+    case: open
+- config: .
+  "general:scenario-name": baseline
+- script: data-helper
+  parameters:
+    region: CH
+- script: weather-helper
+  parameters:
+    weather: Zug-inducity_1990_2010_TMY
+- script: radiation
+- script: schedule-maker
+- script: demand
+- script: emissions
+- script: operation-costs
+- script: water-body-potential
+- script: sewage-potential
+- script: shallow-geothermal-potential
+- script: photovoltaic
+- script: solar-collector
+  parameters:
+    type-scpanel: FP
+- script: solar-collector
+  parameters:
+    type-scpanel: ET
+- script: photovoltaic-thermal
+  parameters:
+    type-scpanel: FP
+- script: photovoltaic-thermal
+  parameters:
+    type-scpanel: ET
+- script: network-layout
+  parameters:
+    network-type: DH
+    allow-looped-networks: false
+    consider-only-buildings-with-demand: true
+- script: thermal-network
+  parameters:
+    network-type: DH
+    allow-looped-networks: false
+    consider-only-buildings-with-demand: true
+- script: decentralized
+  parameters:
+    detailed-electricity-pricing: false
+- script: optimization
+  parameters:
+    district-heating-network: true
+    district-cooling-network: false
+    detailed-electricity-pricing: false
+    number-of-generations: 2
+    population-size: 5
+    random-seed: 100
+- script: multi-criteria-analysis
+  parameters:
+    generation: 2

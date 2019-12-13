@@ -9,14 +9,6 @@ cea.tests package
 Submodules
 ----------
 
-cea.tests.cooling\_case\_workflow module
-----------------------------------------
-
-.. automodule:: cea.tests.cooling_case_workflow
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 cea.tests.create\_unittest\_data module
 ---------------------------------------
 
@@ -69,14 +61,6 @@ cea.tests.test\_inputlocator module
 -----------------------------------
 
 .. automodule:: cea.tests.test_inputlocator
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-cea.tests.test\_is\_heating\_season module
-------------------------------------------
-
-.. automodule:: cea.tests.test_is_heating_season
     :members:
     :undoc-members:
     :show-inheritance:

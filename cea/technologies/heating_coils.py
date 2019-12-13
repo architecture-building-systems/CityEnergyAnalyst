@@ -9,7 +9,6 @@ import numpy as np
 from cea.technologies import substation
 from cea.demand import constants
 
-# import from GV
 C_A = constants.C_A
 
 __author__ = "Jimeno A. Fonseca"
@@ -37,7 +36,6 @@ def calc_heating_coil(Qhsf, Qhsf_0, Ta_sup_hs, Ta_re_hs, Ths_sup_0, Ths_re_0, ma
     :param thi_0: nominal in temperature of primary side
     :param tci_0: nominal in temperature of secondary side
     :param tho_0: nominal out temperature of primary side
-    :param gv: path to global variables class
 
     :return:
         - tci = inlet temperature of secondary side (district heating network)
@@ -156,7 +154,6 @@ def calc_cooling_coil(Qcsf, Qcsf_0, Ta_sup_cs, Ta_re_cs, Tcs_sup_0, Tcs_re_0, ma
     :param thi_0: nominal in temperature of primary side
     :param tci_0: nominal in temperature of secondary side
     :param tho_0: nominal out temperature of primary side
-    :param gv: path to global variables class
 
     :return:
         - tci = inlet temperature of secondary side (district cooling network)

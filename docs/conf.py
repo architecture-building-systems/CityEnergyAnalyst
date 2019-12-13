@@ -24,10 +24,10 @@ import cea
 sys.path.insert(0, os.path.abspath('../cea'))
 
 
-
 # mock out some imports so we don't have conflicts on the readthedocs server...
 class Mock(MagicMock):
     __all__ = []
+
     @classmethod
     def __getattr__(cls, name):
             return MagicMock()
@@ -66,6 +66,8 @@ MOCK_MODULES = ['COLOR',
                 'ephem',
                 'fiona',
                 'fiona.crs',
+                'flask_restplus',
+                'flask_socketio',
                 'flask_wtf',
                 'flask_wtf.FlaskForm',
                 'wtforms',
@@ -124,6 +126,7 @@ MOCK_MODULES = ['COLOR',
                 'shapely.ops',
                 'shapely.ops.transform',
                 'shapely.wkb',
+                'shapely.wkt',
                 'simpledbf',
                 'tensorflow',
                 'tensorflow.py.keras',

@@ -9,12 +9,9 @@ respective folder
 from __future__ import division
 from __future__ import print_function
 
-import os
-import pandas as pd
-import numpy as np
 import cea.config
 import cea.inputlocator
-from cea.constants import HOURS_IN_YEAR
+import numpy as np
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -25,57 +22,56 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-def natural_gas_imports(master_to_slave_vars, locator, config):
 
-    NG_total_heating_W = np.zeros(HOURS_IN_YEAR)
-    NG_total_cooling_W = np.zeros(HOURS_IN_YEAR)
-    NG_total_W = np.zeros(HOURS_IN_YEAR)
-    storage_data = pd.read_csv(locator.get_optimization_slave_storage_operation_data(master_to_slave_vars.individual_number, master_to_slave_vars.generation_number))
-    date = storage_data.DATE.values
+def fuel_imports(master_to_slave_vars, heating_dispatch,
+                 cooling_dispatch):
 
-    if config.district_heating_network and master_to_slave_vars.DHN_barcode.count("1") > 0:
-        data_heating = pd.read_csv(os.path.join(locator.get_optimization_slave_heating_activation_pattern(master_to_slave_vars.individual_number, master_to_slave_vars.generation_number)))
-        NG_used_HPSew_W = data_heating["NG_used_HPSew_W"]
-        NG_used_HPLake_W = data_heating["NG_used_HPLake_W"]
-        NG_used_GHP_W = data_heating["NG_used_GHP_W"]
-        NG_used_CHP_W = data_heating["NG_used_CHP_W"]
-        NG_used_Furnace_W = data_heating["NG_used_Furnace_W"]
-        NG_used_BaseBoiler_W = data_heating["NG_used_BaseBoiler_W"]
-        NG_used_PeakBoiler_W = data_heating["NG_used_PeakBoiler_W"]
-        NG_used_BackupBoiler_W = data_heating["NG_used_BackupBoiler_W"]
-
-        for hour in range(HOURS_IN_YEAR):
-            NG_total_heating_W[hour] = NG_used_HPSew_W[hour] + NG_used_HPLake_W[hour] + NG_used_GHP_W[hour] + \
-                                       NG_used_CHP_W[hour] + NG_used_Furnace_W[hour] + NG_used_BaseBoiler_W[hour] + \
-                                       NG_used_PeakBoiler_W[hour] + NG_used_BackupBoiler_W[hour]
+    if master_to_slave_vars.DHN_exists:
+        NG_used_CHP_W = heating_dispatch["NG_CHP_req_W"]
+        NG_used_BaseBoiler_W = heating_dispatch["NG_BaseBoiler_req_W"]
+        NG_used_PeakBoiler_W = heating_dispatch["NG_PeakBoiler_req_W"]
+        NG_used_BackupBoiler_W = heating_dispatch["NG_BackupBoiler_req_W"]
+    else:
+        NG_used_CHP_W = np.zeros(8760)
+        NG_used_BaseBoiler_W = np.zeros(8760)
+        NG_used_PeakBoiler_W = np.zeros(8760)
+        NG_used_BackupBoiler_W = np.zeros(8760)
 
 
-    if config.district_cooling_network and master_to_slave_vars.DCN_barcode.count("1") > 0:
-        data_cooling = pd.read_csv(
-            os.path.join(locator.get_optimization_slave_cooling_activation_pattern(master_to_slave_vars.individual_number, master_to_slave_vars.generation_number)))
+    if master_to_slave_vars.DCN_exists:
+        NG_used_CCGT_W = cooling_dispatch["NG_used_CCGT_W"]
+    else:
+        NG_used_CCGT_W = np.zeros(8760)
 
-        # Natural Gas supply for the CCGT plant
-        NG_used_CCGT_W = data_cooling['NG_used_CCGT_W']
-        for hour in range(HOURS_IN_YEAR):
-            NG_total_cooling_W[hour] = NG_used_CCGT_W[hour]
+    NG_total_heating_W = [a + b + c + d  for a, b, c, d in
+                          zip(NG_used_CHP_W, NG_used_BaseBoiler_W, NG_used_PeakBoiler_W, NG_used_BackupBoiler_W)]
 
-    for hour in range(HOURS_IN_YEAR):
-        NG_total_W[hour] = NG_total_heating_W[hour] + NG_total_cooling_W[hour]
+    NG_total_cooling_W = NG_used_CCGT_W
 
+    NG_total_W = NG_total_heating_W + NG_total_cooling_W
 
-    results = pd.DataFrame({"DATE": date, "NG_total_W": NG_total_W})
+    naturalgas_dispatch = {
+        "NG_GRID_connected_W": NG_total_W,
+        "NG_GRID_heating_connected_W": NG_total_heating_W,
+        "NG_GRID_cooling_connected_W": NG_total_cooling_W,
+        "NG_CHP_req_W": NG_used_CHP_W,
+        "NG_BaseBoiler_req_W": NG_used_BaseBoiler_W,
+        "NG_PeakBoiler_req_W": NG_used_PeakBoiler_W,
+        "NG_BackupBoiler_req_W": NG_used_BackupBoiler_W,
+        "NG_used_CCGT_W": NG_used_CCGT_W
+    }
+    return naturalgas_dispatch
 
-    results.to_csv(locator.get_optimization_slave_natural_gas_imports(master_to_slave_vars.individual_number, master_to_slave_vars.generation_number), index=False)
-
-    return results
 
 def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
     generation = 2
     individual = 2
     print("Calculating imports of natural gas of individual" + str(individual) + " of generation " + str(generation))
+    district_heating_network = config.optimization.district_heating_network
+    district_cooling_network = config.optimization.district_cooling_network
 
-    natural_gas_imports(generation, individual, locator, config)
+    fuel_imports(generation, individual, locator)
 
 
 if __name__ == '__main__':

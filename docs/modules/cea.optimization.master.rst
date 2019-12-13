@@ -9,14 +9,6 @@ cea.optimization.master package
 Submodules
 ----------
 
-cea.optimization.master.check module
-------------------------------------
-
-.. automodule:: cea.optimization.master.check
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 cea.optimization.master.cost\_model module
 ------------------------------------------
 
@@ -29,6 +21,14 @@ cea.optimization.master.crossover module
 ----------------------------------------
 
 .. automodule:: cea.optimization.master.crossover
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.optimization.master.emissions\_model module
+-----------------------------------------------
+
+.. automodule:: cea.optimization.master.emissions_model
     :members:
     :undoc-members:
     :show-inheritance:
@@ -57,6 +57,14 @@ cea.optimization.master.master\_main module
     :undoc-members:
     :show-inheritance:
 
+cea.optimization.master.master\_to\_slave module
+------------------------------------------------
+
+.. automodule:: cea.optimization.master.master_to_slave
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cea.optimization.master.mutations module
 ----------------------------------------
 
@@ -73,18 +81,10 @@ cea.optimization.master.normalization module
     :undoc-members:
     :show-inheritance:
 
-cea.optimization.master.selection module
-----------------------------------------
+cea.optimization.master.performance\_aggregation module
+-------------------------------------------------------
 
-.. automodule:: cea.optimization.master.selection
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-cea.optimization.master.summarize\_individual module
-----------------------------------------------------
-
-.. automodule:: cea.optimization.master.summarize_individual
+.. automodule:: cea.optimization.master.performance_aggregation
     :members:
     :undoc-members:
     :show-inheritance:
@@ -93,6 +93,14 @@ cea.optimization.master.summarize\_network module
 -------------------------------------------------
 
 .. automodule:: cea.optimization.master.summarize_network
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.optimization.master.validation module
+-----------------------------------------
+
+.. automodule:: cea.optimization.master.validation
     :members:
     :undoc-members:
     :show-inheritance:

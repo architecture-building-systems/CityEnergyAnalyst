@@ -7,12 +7,10 @@ from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefil
 import numpy as np
 import pandas as pd
 import geopandas as gpd
-import cea.globalvar
 import cea.inputlocator
 from math import *
 import time
 import os
-import multiprocessing
 import cea.config
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
@@ -21,6 +19,7 @@ from geopandas import GeoDataFrame as gdf
 from numba import jit
 from itertools import izip, repeat
 from cea.constants import HOURS_IN_YEAR
+import cea.utilities.parallel
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -33,12 +32,6 @@ __status__ = "Production"
 
 
 # SC heat generation
-
-def calc_SC_wrapper(args):
-    """Wrap calc_SC to accept a tuple of args because multiprocessing.Pool.map only accepts one
-    argument for the function."""
-    return calc_SC(*args)
-
 
 def calc_SC(locator, config, latitude, longitude, weather_data, date_local, building_name):
     """
@@ -71,7 +64,7 @@ def calc_SC(locator, config, latitude, longitude, weather_data, date_local, buil
     print('calculating solar properties done for building %s' % building_name)
 
     # get properties of the panel to evaluate
-    panel_properties_SC = calc_properties_SC_db(locator.get_supply_systems(), config)
+    panel_properties_SC = calc_properties_SC_db(locator.get_database_supply_systems(), config)
     print('gathering properties of Solar collector panel for building %s' % building_name)
 
     # select sensor point with sufficient solar radiation
@@ -913,33 +906,35 @@ def calc_optimal_mass_flow_2(m, q, dp):
 
 
 # investment and maintenance costs
-def calc_Cinv_SC(Area_m2, locator, config, technology):
+def calc_Cinv_SC(Area_m2, locator, panel_type):
     """
     Lifetime 35 years
     """
+    if Area_m2 > 0.0:
+        SC_cost_data = pd.read_excel(locator.get_database_supply_systems(), sheet_name="SC")
+        SC_cost_data = SC_cost_data[SC_cost_data['type'] == panel_type]
+        cap_min = SC_cost_data['cap_min'].values[0]
+        cap_max = SC_cost_data['cap_max'].values[0]
+        # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
+        # capacity for the corresponding technology from the database
+        if Area_m2 <= cap_min:
+            Area_m2 = cap_min
+        Inv_a = SC_cost_data['a'].values[0]
+        Inv_b = SC_cost_data['b'].values[0]
+        Inv_c = SC_cost_data['c'].values[0]
+        Inv_d = SC_cost_data['d'].values[0]
+        Inv_e = SC_cost_data['e'].values[0]
+        Inv_IR = (SC_cost_data['IR_%'].values[0]) / 100
+        Inv_LT = SC_cost_data['LT_yr'].values[0]
+        Inv_OM = SC_cost_data['O&M_%'].values[0] / 100
 
-    SC_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="SC")
-    SC_cost_data[SC_cost_data['type'] == technology]
-    # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
-    # capacity for the corresponding technology from the database
-    if Area_m2 < SC_cost_data['cap_min'][0]:
-        Area_m2 = SC_cost_data['cap_min'][0]
-    SC_cost_data = SC_cost_data[
-        (SC_cost_data['cap_min'] <= Area_m2) & (SC_cost_data['cap_max'] > Area_m2)]
-    Inv_a = SC_cost_data.iloc[0]['a']
-    Inv_b = SC_cost_data.iloc[0]['b']
-    Inv_c = SC_cost_data.iloc[0]['c']
-    Inv_d = SC_cost_data.iloc[0]['d']
-    Inv_e = SC_cost_data.iloc[0]['e']
-    Inv_IR = (SC_cost_data.iloc[0]['IR_%']) / 100
-    Inv_LT = SC_cost_data.iloc[0]['LT_yr']
-    Inv_OM = SC_cost_data.iloc[0]['O&M_%'] / 100
+        InvC = Inv_a + Inv_b * (Area_m2) ** Inv_c + (Inv_d + Inv_e * Area_m2) * log(Area_m2)
 
-    InvC = Inv_a + Inv_b * (Area_m2) ** Inv_c + (Inv_d + Inv_e * Area_m2) * log(Area_m2)
-
-    Capex_a_SC_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-    Opex_fixed_SC_USD = Capex_a_SC_USD * Inv_OM
-    Capex_SC_USD = InvC
+        Capex_a_SC_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+        Opex_fixed_SC_USD = InvC * Inv_OM
+        Capex_SC_USD = InvC
+    else:
+        Capex_a_SC_USD = Opex_fixed_SC_USD = Capex_SC_USD = 0.0
 
     return Capex_a_SC_USD, Opex_fixed_SC_USD, Capex_SC_USD
 
@@ -957,47 +952,33 @@ def main(config):
     print('Running solar-collector with t-in-sc = %s' % config.solar.t_in_sc)
     print('Running solar-collector with type-scpanel = %s' % config.solar.type_scpanel)
 
-    list_buildings_names = config.solar.buildings
-    if not list_buildings_names:
-        list_buildings_names = locator.get_zone_building_names()
+    building_names = config.solar.buildings
+    if not building_names:
+        building_names = locator.get_zone_building_names()
 
     zone_geometry = gdf.from_file(locator.get_zone_geometry())
     latitude, longitude = get_lat_lon_projected_shapefile(zone_geometry)
 
-    panel_properties = calc_properties_SC_db(locator.get_supply_systems(), config)
+    panel_properties = calc_properties_SC_db(locator.get_database_supply_systems(), config)
     panel_type = panel_properties['type']
 
     # weather data
-    weather_data = epwreader.epw_reader(config.weather)
+    weather_data = epwreader.epw_reader(locator.get_weather_file())
     date_local = solar_equations.calc_datetime_local_from_weather_file(weather_data, latitude, longitude)
     print('reading weather data done')
 
-    building_count = len(list_buildings_names)
-    number_of_processes = config.get_number_of_processes()
-    if number_of_processes > 1:
-        print("Using %i CPU's" % number_of_processes)
-        pool = multiprocessing.Pool(number_of_processes)
-        pool.map(calc_SC_wrapper, izip(repeat(locator, building_count),
-                                       repeat(config, building_count),
-                                       repeat(latitude, building_count),
-                                       repeat(longitude, building_count),
-                                       repeat(weather_data, building_count),
-                                       repeat(date_local, building_count),
-                                       list_buildings_names))
-        # locator, config, latitude, longitude, weather_data, date_local, building
-    else:
-        print("Using single process")
-        map(calc_SC_wrapper, izip(repeat(locator, building_count),
-                                  repeat(config, building_count),
-                                  repeat(latitude, building_count),
-                                  repeat(longitude, building_count),
-                                  repeat(weather_data, building_count),
-                                  repeat(date_local, building_count),
-                                  list_buildings_names))
+    n = len(building_names)
+    cea.utilities.parallel.vectorize(calc_SC, config.get_number_of_processes())(repeat(locator, n),
+                                                                                 repeat(config, n),
+                                                                                 repeat(latitude, n),
+                                                                                 repeat(longitude, n),
+                                                                                 repeat(weather_data, n),
+                                                                                 repeat(date_local, n),
+                                                                                 building_names)
 
     # aggregate results from all buildings
     aggregated_annual_results = {}
-    for i, building in enumerate(list_buildings_names):
+    for i, building in enumerate(building_names):
         hourly_results_per_building = pd.read_csv(locator.SC_results(building, panel_type))
         if i == 0:
             aggregated_hourly_results_df = hourly_results_per_building

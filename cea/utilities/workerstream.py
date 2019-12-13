@@ -28,6 +28,16 @@ class WorkerStream(object):
         pass
 
 
+class HttpWorkerStream(object):
+    def __init__(self, name, jobid, url):
+        self.name = name
+        self.jobid = jobid
+        self.url = url
+
+    # def write(self, str):
+    #     async requests.post("url + jobid", str)
+
+
 class QueueWorkerStream(object):
     """File-like object for wrapping the output of the scripts with queues - to be created in child process"""
 

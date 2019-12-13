@@ -32,13 +32,12 @@ class SolarTechnologyPotentialsPlotBase(cea.plots.PlotBase):
     expected_parameters = {
         'buildings': 'plots:buildings',
         'scenario-name': 'general:scenario-name',
-        'weather': 'general:weather',
     }
 
     def __init__(self, project, parameters, cache):
         super(SolarTechnologyPotentialsPlotBase, self).__init__(project, parameters, cache)
         self.category_path = os.path.join('new_basic', self.category_name)
-        self.weather = self.parameters['weather']
+        self.weather = self.locator.get_weather_file()
         self.pv_analysis_fields = ['PV_walls_east_E_kWh', 'PV_walls_west_E_kWh', 'PV_walls_south_E_kWh',
                                    'PV_walls_north_E_kWh', 'PV_roofs_top_E_kWh']
         self.sc_fp_analysis_fields = ['SC_FP_walls_east_Q_kWh', 'SC_FP_walls_west_Q_kWh', 'SC_FP_walls_south_Q_kWh',

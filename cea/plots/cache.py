@@ -6,26 +6,17 @@ The cache object is passed to the `calc_graph` method and the plot is responsibl
 
 from __future__ import division
 from __future__ import print_function
+
+import functools
+import hashlib
 import os
 import time
-import hashlib
+
 import pandas as pd
-import functools
-
-
-class NullPlotCache(object):
-    """A dummy cache that doesn't cache anything - for comparing performance of PlotCache"""
-    def lookup(self, data_path, plot, producer):
-        return producer()
-
-    def lookup_plot_div(self, plot, producer):
-        return producer()
-
-    def lookup_table_div(self, plot, producer):
-        return producer()
 
 class PlotCache(object):
     """A cache for plot data. Use the ``lookup`` method to retrieve data from the cache."""
+
     def __init__(self, project):
         """Initialize the cache from disk"""
         self.parameter_guard = {}  # data_path => set(parameters.keys()) - just a check for programming errors
@@ -119,6 +110,7 @@ class PlotCache(object):
 
 class MemoryPlotCache(PlotCache):
     """Extend the PlotCache to also keep a copy of the cache in memory"""
+
     def __init__(self, project):
         super(MemoryPlotCache, self).__init__(project)
         self._cache = {}  # _cached_data_file -> df
@@ -138,10 +130,28 @@ class MemoryPlotCache(PlotCache):
         return data
 
 
+class NullPlotCache(PlotCache):
+    """A dummy cache that doesn't cache anything - for comparing performance of PlotCache"""
+
+    def __init__(self):
+        super(NullPlotCache, self).__init__(None)
+
+    def lookup(self, data_path, plot, producer):
+        return producer()
+
+    def lookup_plot_div(self, plot, producer):
+        return producer()
+
+    def lookup_table_div(self, plot, producer):
+        return producer()
+
+
 def cached(producer):
     """Calls to a function wrapped with this decorator are cached using ``self.cache.lookup``"""
+
     @functools.wraps(producer)
     def wrapper(self):
         return self.cache.lookup(data_path=os.path.join(self.category_name, producer.__name__),
                                  plot=self, producer=lambda: producer(self))
+
     return wrapper

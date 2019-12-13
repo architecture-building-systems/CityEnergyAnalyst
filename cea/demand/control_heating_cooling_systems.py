@@ -240,17 +240,17 @@ def heating_system_is_active(tsd, t):
 
 def convert_date_to_hour(date):
     """
-    converts date in 'MM-DD' format into hour of the year (first hour of the day)
-    i.e. '01-01' results in 0
+    converts date in 'DD|MM' format into hour of the year (first hour of the day)
+    i.e. '01|01' results in 0
 
-    :param date: date in 'MM-DD' format (from .xlsx database input)
+    :param date: date in 'DD|MM' format (from .xlsx database input)
     :type date: str
     :return: hour of the year (first hour of the day)
     :rtype: int
     """
     SECONDS_PER_HOUR = 60 * 60
 
-    month, day = map(int, date.split('-'))
+    day, month = map(int, date.split('|'))
     delta = datetime.datetime(2017, month, day) - datetime.datetime(2017, 1, 1)
     return int(delta.total_seconds() / SECONDS_PER_HOUR)
 
@@ -269,8 +269,8 @@ def is_heating_season(t, bpr):
 
     if bpr.hvac['has-heating-season']:
 
-        heating_start = convert_date_to_hour(bpr.hvac['heating-season-start'])
-        heating_end = convert_date_to_hour(bpr.hvac['heating-season-end']) + 23  # end at the last hour of the day
+        heating_start = convert_date_to_hour(bpr.hvac['heat_starts'])
+        heating_end = convert_date_to_hour(bpr.hvac['heat_ends']) + 23  # end at the last hour of the day
 
         # check if heating season is at the end of the year (north hemisphere) or in the middle of the year (south)
         if heating_start < heating_end and \
@@ -307,8 +307,8 @@ def is_cooling_season(t, bpr):
 
     if bpr.hvac['has-cooling-season']:
 
-        cooling_start = convert_date_to_hour(bpr.hvac['cooling-season-start'])
-        cooling_end = convert_date_to_hour(bpr.hvac['cooling-season-end']) + 23  # end at the last hour of the day
+        cooling_start = convert_date_to_hour(bpr.hvac['cool_starts'])
+        cooling_end = convert_date_to_hour(bpr.hvac['cool_ends']) + 23  # end at the last hour of the day
 
         # check if cooling season is at the end of the year (south hemisphere) or in the middle of the year (north)
         if cooling_start < cooling_end and \
@@ -333,7 +333,7 @@ def is_cooling_season(t, bpr):
 # temperature controllers
 
 
-def calc_simple_temp_control(tsd, bpr, weekday):
+def get_temperature_setpoints_incl_seasonality(tsd, bpr, schedules):
     """
 
     :param tsd: a dictionary of time step data mapping variable names to ndarrays for each hour of the year.
@@ -344,14 +344,17 @@ def calc_simple_temp_control(tsd, bpr, weekday):
     :return: tsd with updated columns
     :rtype: dict
     """
-
-    tsd['ta_hs_set'] = np.vectorize(get_heating_system_set_point)(tsd['people'], range(HOURS_IN_YEAR), bpr, weekday)
-    tsd['ta_cs_set'] = np.vectorize(get_cooling_system_set_point)(tsd['people'], range(HOURS_IN_YEAR), bpr, weekday)
-
+    hours_in_the_year_vector = range(HOURS_IN_YEAR)
+    tsd['ta_hs_set'] = np.vectorize(get_heating_system_set_point, otypes=[float])(hours_in_the_year_vector,
+                                                                                  schedules['Ths_set_C'],
+                                                                                  bpr)
+    tsd['ta_cs_set'] = np.vectorize(get_cooling_system_set_point, otypes=[float])(hours_in_the_year_vector,
+                                                                                  schedules['Tcs_set_C'],
+                                                                                  bpr)
     return tsd
 
 
-def get_heating_system_set_point(people, t, bpr, weekday):
+def get_heating_system_set_point(t, Ths_set_C, bpr):
     """
 
     :param people:
@@ -359,25 +362,21 @@ def get_heating_system_set_point(people, t, bpr, weekday):
     :type t: int
     :param bpr: BuildingPropertiesRow
     :type bpr: cea.demand.building_properties.BuildingPropertiesRow
-    :param weekday:
+    :param Ths_set_C:
     :return: heating system set point temperature [°C]
     :rtype: double
     """
 
     if is_heating_season(t, bpr):
-
-        if people == 0:
-            if 5 <= weekday <= 6:  # system is off on the weekend
-                return np.nan  # huge so the system will be off
-            else:
-                return bpr.comfort['Ths_setb_C']
+        if Ths_set_C == 'OFF':
+            return np.nan
         else:
-            return bpr.comfort['Ths_set_C']
+            return Ths_set_C
     else:
         return np.nan  # huge so the system will be off
 
 
-def get_cooling_system_set_point(people, t, bpr, weekday):
+def get_cooling_system_set_point(t, Tcs_set_C, bpr):
     """
 
     :param people:
@@ -385,18 +384,15 @@ def get_cooling_system_set_point(people, t, bpr, weekday):
     :type t: int
     :param bpr: BuildingPropertiesRow
     :type bpr: cea.demand.building_properties.BuildingPropertiesRow
-    :param weekday:
+    :param Tcs_set_C:
     :return: cooling system set point temperature [°C]
     :rtype: double
     """
 
     if is_cooling_season(t, bpr):
-        if people == 0:
-            if 5 <= weekday <= 6:  # system is off on the weekend
-                return np.nan  # huge so the system will be off
-            else:
-                return bpr.comfort['Tcs_setb_C']
+        if Tcs_set_C == 'OFF':
+            return np.nan
         else:
-                return bpr.comfort['Tcs_set_C']
+            return Tcs_set_C
     else:
         return np.nan  # huge so the system will be off

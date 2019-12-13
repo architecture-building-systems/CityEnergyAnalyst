@@ -37,14 +37,14 @@ def has_refrigeration_load(bpr):
 
 def calc_Qcre_sys(bpr, tsd, schedules):
     # calculate refrigeration loads
-    tsd['Qcre'] = schedules['Qcre'] * bpr.internal_loads['Qcre_Wm2'] * -1.0  # cooling loads are negative
+    tsd['Qcre'] = schedules['Qcre_W'] * -1.0  # cooling loads are negative
     # calculate distribution losses for refrigeration loads analogously to space cooling distribution losses
     Y = bpr.building_systems['Y'][0]
     Lv = bpr.building_systems['Lv']
     Qcre_d_ls = ((T_C_REF_SUP_0 + T_C_REF_RE_0) / 2.0 - tsd['T_ext']) * (tsd['Qcre'] / np.nanmin(tsd['Qcre'])) * (Lv * Y)
-    # calculate system loads for data center
-    tsd['Qcre_sys'] = tsd['Qcre'] + Qcre_d_ls
 
+    # calculate system loads for data center
+    tsd['Qcre_sys'] = abs(tsd['Qcre'] + Qcre_d_ls) #make sure you get the right mcpcre positive
     # writing values to tsd, replacing function and np.vectorize call with simple for loop
     tsd['mcpcre_sys'], tsd['Tcre_sys_re'], tsd['Tcre_sys_sup'] =\
         np.vectorize(calc_refrigeration_temperature_and_massflow)(tsd['Qcre_sys'])
@@ -61,9 +61,9 @@ def calc_refrigeration_temperature_and_massflow(Qcre_sys):
     """
 
     if Qcre_sys > 0.0:
-        mcpcre_sys = Qcre_sys / (T_C_REF_RE_0 - T_C_REF_SUP_0)
         Tcre_sys_re = T_C_REF_RE_0
         Tcre_sys_sup = T_C_REF_SUP_0
+        mcpcre_sys = Qcre_sys / (T_C_REF_RE_0 - T_C_REF_SUP_0)
     else:
         mcpcre_sys = 0.0
         Tcre_sys_re = np.nan
@@ -77,27 +77,30 @@ def calc_Qref(locator, bpr, tsd):
     it calculates final loads
     """
     # GET SYSTEMS EFFICIENCIES
-    data_systems = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(), "COOLING").set_index('code')
-    type_system = bpr.supply['type_cs']
-    energy_source = data_systems.loc[type_system, 'source_cs']
-
-    if energy_source == "GRID":
-        if bpr.supply['type_cs'] in {'T2', 'T3'}:
-            if bpr.supply['type_cs'] == 'T2':
-                t_source = (tsd['T_ext'] + 273)
-            if bpr.supply['type_cs'] == 'T3':
-                t_source = (tsd['T_ext_wetbulb'] + 273)
-
+    energy_source = bpr.supply["source_cs"]
+    scale_technology = bpr.supply["scale_cs"]
+    efficiency_average_year = bpr.supply["eff_cs"]
+    if scale_technology == "BUILDING":
+        if energy_source == "GRID":
+            t_source = (tsd['T_ext'] + 273)
             # heat pump energy
             tsd['E_cre'] = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcre_sys'], (tsd['Tcre_sys_sup'] + 273),
                                                                 (tsd['Tcre_sys_re'] + 273), t_source)
             # final to district is zero
             tsd['DC_cre'] = np.zeros(HOURS_IN_YEAR)
-    elif energy_source == "DC":
-        tsd['DC_cre'] = tsd['Qcre_sys']
+        elif energy_source == "NONE":
+            tsd['E_cre'] = np.zeros(HOURS_IN_YEAR)
+            tsd['DC_cre'] = np.zeros(HOURS_IN_YEAR)
+        else:
+            raise Exception('check potential error in input database of LCA infrastructure / COOLING')
+
+    elif scale_technology == "DISTRICT":
+        tsd['DC_cre'] = tsd['Qcs_sys'] / efficiency_average_year
+        tsd['E_cre'] = np.zeros(HOURS_IN_YEAR)
+    elif scale_technology == "NONE":
+        tsd['DC_cre'] = np.zeros(HOURS_IN_YEAR)
         tsd['E_cre'] = np.zeros(HOURS_IN_YEAR)
     else:
-        tsd['E_cre'] = np.zeros(HOURS_IN_YEAR)
-
+        raise Exception('check potential error in input database of LCA infrastructure / COOLING')
     return tsd
 

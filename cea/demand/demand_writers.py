@@ -1,15 +1,14 @@
 """
-A collection of classes that write out the demand results files. The `cea.globalvar.GlobalVariables.demand_writer`
-variable references the `DemandWriter` to use. The default is `HourlyDemandWriter`. A `MonthlyDemandWriter` is provided
+A collection of classes that write out the demand results files. The default is `HourlyDemandWriter`. A `MonthlyDemandWriter` is provided
 that sums the values up monthly. See the `cea.analysis.sensitivity.sensitivity_demand` module for an example of using
 the `MonthlyDemandWriter`.
 """
 
 from __future__ import division
+
 import numpy as np
 import pandas as pd
 
-# index into the `vars_to_print` structure, that corresponds to `gv.demand_building_csv_columns`
 FLOAT_FORMAT = '%.3f'
 
 
@@ -17,7 +16,6 @@ class DemandWriter(object):
     """
     This is meant to be an abstract base class: Use the subclasses of this class instead.
     Subclasses are expected to:
-    - set the `gv` field to a `cea.globalvar.GlobalVariables` instance in the constructor
     - set the `vars_to_print` field in the constructor (FIXME: describe the `vars_to_print` structure.
     - implement the `write_to_csv` method
     """
@@ -27,7 +25,18 @@ class DemandWriter(object):
         from cea.demand.thermal_loads import TSD_KEYS_ENERGY_BALANCE_DASHBOARD, TSD_KEYS_SOLAR
 
         if not loads:
-            self.load_vars = ['PV', 'GRID', 'E_sys', 'Eal', 'Edata', 'Epro', 'Eaux',
+            self.load_vars = ['PV', 'GRID',
+                              'GRID_a',
+                              'GRID_l',
+                              'GRID_data',
+                              'GRID_pro',
+                              'GRID_aux',
+                              'GRID_ww',
+                              'GRID_hs',
+                              'GRID_cs',
+                              'GRID_cdata',
+                              'GRID_cre',
+                              'E_sys', 'Eal', 'Ea', 'El', 'Edata', 'Epro', 'Eaux',
                               'E_ww', 'E_hs', 'E_cs', 'E_cre', 'E_cdata',
                               'Qhs_sen_shu', 'Qhs_sen_ahu', 'Qhs_lat_ahu',
                               'Qhs_sen_aru', 'Qhs_lat_aru', 'Qhs_sen_sys',
@@ -52,7 +61,7 @@ class DemandWriter(object):
                               'Qcs_sen_scu', 'Qcs_sen_ahu',
                               'Qcs_lat_ahu', 'Qcs_sen_aru', 'Qcs_lat_aru',
                               'Qcs_sen_sys', 'Qcs_lat_sys', 'Qcs_em_ls',
-                              'Qcs_dis_ls', 'Qhpro_sys',
+                              'Qcs_dis_ls', 'Qhpro_sys', 'Qcpro_sys',
                               'QH_sys', 'QC_sys']
 
         else:
@@ -89,7 +98,7 @@ class DemandWriter(object):
         else:
             self.temperature_vars = temperatures
 
-        self.OTHER_VARS = ['Name', 'Af_m2', 'Aroof_m2', 'GFA_m2', 'NFA_m2', 'people0']
+        self.OTHER_VARS = ['Name', 'Af_m2', 'Aroof_m2', 'GFA_m2', 'Aocc_m2', 'people0']
 
     def results_to_hdf5(self, tsd, bpr, locator, date, building_name):
         columns, hourly_data = self.calc_hourly_dataframe(building_name, date, tsd)
@@ -127,7 +136,7 @@ class DemandWriter(object):
         columns.extend(keys)
         # add other default elements
         data.update({'Name': building_name, 'Af_m2': bpr.rc_model['Af'], 'Aroof_m2': bpr.rc_model['Aroof'],
-                     'GFA_m2': bpr.rc_model['GFA_m2'], 'NFA_m2': bpr.rc_model['NFA_m2'],
+                     'GFA_m2': bpr.rc_model['GFA_m2'], 'Aocc_m2': bpr.rc_model['Aocc'],
                      'people0': tsd['people'].max()})
         return columns, data
 

@@ -3,7 +3,6 @@ This script calculates the minimum spanning tree of a shapefile network
 """
 
 import networkx as nx
-import cea.globalvar
 import cea.inputlocator
 from geopandas import GeoDataFrame as gdf
 import cea.config

@@ -63,7 +63,7 @@ def calc_heating_cooling_loads(bpr, tsd, t):
 
         else:
             # message and no heating system
-            warnings.warn('Unknown cooling system. Calculation without system.')
+            warnings.warn('Unknown heating system. Calculation without system.')
 
             # no system = no loads
             rc_model_temperatures = calc_rc_no_loads(bpr, tsd, t)

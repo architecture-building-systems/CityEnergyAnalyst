@@ -836,8 +836,8 @@ get_archetypes_properties:
                 sample_data: T4
                 types_found: [string]
             void_deck:
-                sample_data: !!python/long '0'
-                types_found: [long]
+                sample_data: 0
+                types_found: [int]
             wwr_east:
                 sample_data: 0.31
                 types_found: [float]
@@ -900,13 +900,13 @@ get_archetypes_properties:
             Ths_setb_C:
                 sample_data: !!python/long '12'
                 types_found: [long]
-            Ve_lps:
+            Ve_lpspax:
                 sample_data: 10.0
                 types_found: [float]
-            rhum_max_pc:
+            RH_max_pc:
                 sample_data: !!python/long '70'
                 types_found: [long]
-            rhum_min_pc:
+            RH_min_pc:
                 sample_data: !!python/long '30'
                 types_found: [long]
         INTERNAL_LOADS:
@@ -928,19 +928,22 @@ get_archetypes_properties:
             Qcre_Wm2:
                 sample_data: !!python/long '0'
                 types_found: [long]
+            Qcpro_Wm2:
+                sample_data: !!python/long '0'
+                types_found: [long]
             Qhpro_Wm2:
                 sample_data: !!python/long '0'
                 types_found: [long]
-            Qs_Wp:
+            Qs_Wpax:
                 sample_data: !!python/long '70'
                 types_found: [long]
-            Vw_lpd:
+            Vw_lpdpax:
                 sample_data: !!python/long '4'
                 types_found: [long]
-            Vww_lpd:
+            Vww_lpdpax:
                 sample_data: !!python/long '2'
                 types_found: [long]
-            X_ghp:
+            X_ghpax:
                 sample_data: !!python/long '80'
                 types_found: [long]
         SUPPLY:
@@ -1731,7 +1734,7 @@ get_building_architecture:
         wwr_west:
             sample_data: 0.59
             types_found: [float]
-    used_by: [radiation-daysim, emissions, demand]
+    used_by: [radiation, emissions, demand]
 get_building_comfort:
     created_by: [data-helper]
     description: scenario/inputs/building-properties/indoor_comfort.dbf
@@ -1753,13 +1756,13 @@ get_building_comfort:
         Ths_setb_C:
             sample_data: 10
             types_found: [int]
-        Ve_lps:
+        Ve_lpspax:
             sample_data: 13.528116605751025
             types_found: [float]
-        rhum_max_pc:
+        RH_max_pc:
             sample_data: 70
             types_found: [int]
-        rhum_min_pc:
+        RH_min_pc:
             sample_data: 30
             types_found: [int]
     used_by: [demand]
@@ -1810,6 +1813,9 @@ get_building_internal:
             sample_data: B010
             types_found: [string]
         Qcre_Wm2:
+            sample_data: 0.0
+            types_found: [float]
+        Qcpro_Wm2:
             sample_data: 0.0
             types_found: [float]
         Qhpro_Wm2:
@@ -1987,7 +1993,7 @@ get_costs_operation_file:
         GRID_cost_yr:
             sample_data: 1332201.0
             types_found: [float]
-        NFA_m2:
+        Aocc_m2:
             sample_data: 48914.39
             types_found: [float]
         NG_hs_cost_m2yr:
@@ -2048,152 +2054,6 @@ get_costs_operation_file:
             sample_data: 0.0
             types_found: [float]
     used_by: []
-get_data_benchmark:
-    created_by: []
-    description: "Returns the database of life cycle inventory for supply systems.\
-        \ These are copied\n        to the scenario if they are not yet present, based\
-        \ on the configured region for the scenario."
-    file_path: c:\reference-case-open\WTP_CBD_h\databases/SG/benchmarks\benchmark_2000W.xls
-    file_type: xls
-    schema:
-        EMBODIED:
-            CO2_target_new:
-                sample_data: 3.368983957219251
-                types_found: [float, null]
-            CO2_target_retrofit:
-                sample_data: 2.0588235294117645
-                types_found: [float, null]
-            CO2_today:
-                sample_data: 2.8
-                types_found: [float]
-            Description:
-                sample_data: 'Gebudeparkmodell 2016: Bibliotheken, Museen, usw.'
-                types_found: [string, null]
-            NRE_target_new:
-                sample_data: 46.469387755102034
-                types_found: [float, null]
-            NRE_target_retrofit:
-                sample_data: 25.346938775510203
-                types_found: [float, null]
-            NRE_today:
-                sample_data: 41.4
-                types_found: [float]
-            PEN_target_new:
-                sample_data: 66.87062937062936
-                types_found: [float, null]
-            PEN_target_retrofit:
-                sample_data: 31.206293706293707
-                types_found: [float, null]
-            PEN_today:
-                sample_data: 51.0
-                types_found: [float]
-            code:
-                sample_data: MUSEUM
-                types_found: [string]
-        MOBILITY:
-            CO2_target_new:
-                sample_data: 40.0
-                types_found: [float]
-            CO2_target_retrofit:
-                sample_data: 40.0
-                types_found: [float]
-            CO2_today:
-                sample_data: 90.0
-                types_found: [float]
-            Description:
-                sample_data: 'Assumed: same as RETAIL'
-                types_found: [string]
-            NRE_target_new:
-                sample_data: !!python/long '850'
-                types_found: [long]
-            NRE_target_retrofit:
-                sample_data: !!python/long '850'
-                types_found: [long]
-            NRE_today:
-                sample_data: 1460.0
-                types_found: [float]
-            PEN_target_new:
-                sample_data: !!python/long '900'
-                types_found: [long]
-            PEN_target_retrofit:
-                sample_data: !!python/long '900'
-                types_found: [long]
-            PEN_today:
-                sample_data: !!python/long '1550'
-                types_found: [long]
-            code:
-                sample_data: MUSEUM
-                types_found: [string]
-        OPERATION:
-            CO2_target_new:
-                sample_data: 5.936767783214273
-                types_found: [float]
-            CO2_target_retrofit:
-                sample_data: 7.246928211021759
-                types_found: [float]
-            CO2_today:
-                sample_data: 33.2
-                types_found: [float]
-            Description:
-                sample_data: 'Gebaeudeparkmodell 2016: Bibliotheken, Museen, usw.
-                    (ist)'
-                types_found: [string]
-            NRE_target_new:
-                sample_data: 409.74614621297553
-                types_found: [float]
-            NRE_target_retrofit:
-                sample_data: 430.86859519256734
-                types_found: [float]
-            NRE_today:
-                sample_data: 1275.48
-                types_found: [float]
-            PEN_target_new:
-                sample_data: 851.8767418273
-                types_found: [float]
-            PEN_target_retrofit:
-                sample_data: 887.5410774916356
-                types_found: [float]
-            PEN_today:
-                sample_data: 1604.52
-                types_found: [float]
-            code:
-                sample_data: MUSEUM
-                types_found: [string]
-        TOTAL:
-            CO2_target_new:
-                sample_data: 49.30575174043352
-                types_found: [float]
-            CO2_target_retrofit:
-                sample_data: 49.30575174043352
-                types_found: [float]
-            CO2_today:
-                sample_data: 126.0
-                types_found: [float]
-            Description:
-                sample_data: 'Calculated: based on the Top-Down Method for SIA 2040'
-                types_found: [string, null]
-            NRE_target_new:
-                sample_data: 1306.2155339680776
-                types_found: [float]
-            NRE_target_retrofit:
-                sample_data: 1306.2155339680776
-                types_found: [float]
-            NRE_today:
-                sample_data: 2776.88
-                types_found: [float]
-            PEN_target_new:
-                sample_data: 1818.7473711979292
-                types_found: [float]
-            PEN_target_retrofit:
-                sample_data: 1818.7473711979294
-                types_found: [float]
-            PEN_today:
-                sample_data: 3205.52
-                types_found: [float]
-            code:
-                sample_data: MUSEUM
-                types_found: [string]
-    used_by: [emissions]
 get_demand_results_file:
     created_by: [demand]
     description: scenario/outputs/data/demand/{building_name}.csv
@@ -2378,6 +2238,9 @@ get_demand_results_file:
             sample_data: 2543.288
             types_found: [float]
         Qcs_sys_scu_kWh:
+            sample_data: 0.0
+            types_found: [float]
+        Qcpro_sys_kWh:
             sample_data: 0.0
             types_found: [float]
         Qhpro_sys_kWh:
@@ -2573,10 +2436,10 @@ get_edge_mass_flow_csv_file:
             sample_value: !!python/long '8759'
             types_found: [long]
     used_by: []
-get_district_geometry:
+get_surroundings_geometry:
     created_by: []
-    description: scenario/inputs/building-geometry/district.shp
-    file_path: c:\reference-case-open\WTP_CBD_h\inputs/building-geometry\district.shp
+    description: scenario/inputs/building-geometry/surroundings.shp
+    file_path: c:\reference-case-open\WTP_CBD_h\inputs/building-geometry\surroundings.shp
     file_type: shp
     schema:
         Name:
@@ -2597,7 +2460,7 @@ get_district_geometry:
         height_bg:
             sample_data: !!python/long '0'
             types_found: [long]
-    used_by: [radiation-daysim]
+    used_by: [radiation]
 get_envelope_systems:
     created_by: []
     description: databases/Systems/emission_systems.csv
@@ -2691,7 +2554,7 @@ get_envelope_systems:
             e_win:
                 sample_data: 0.89
                 types_found: [float]
-    used_by: [radiation-daysim, demand]
+    used_by: [radiation, demand]
 get_lake_potential:
     created_by: [lake-potential]
     description: null
@@ -3476,7 +3339,7 @@ get_optimization_network_substation_ploss_file:
             types_found: [float]
     used_by: []
 get_radiation_building:
-    created_by: [radiation-daysim]
+    created_by: [radiation]
     description: scenario/outputs/data/solar-radiation/${building_name}_insolation_Whm2.json
     file_path: c:\reference-case-open\WTP_CBD_h\outputs/data/solar-radiation\B001_insolation_Whm2.json
     file_type: json
@@ -3486,7 +3349,7 @@ get_radiation_building:
             types_found: [float]
     used_by: [photovoltaic, photovoltaic-thermal, solar-collector, demand]
 get_radiation_metadata:
-    created_by: [radiation-daysim]
+    created_by: [radiation]
     description: scenario/outputs/data/solar-radiation/{building_name}_geometrgy.csv
     file_path: c:\reference-case-open\WTP_CBD_h\outputs/data/solar-radiation\B001_geometry.csv
     file_type: csv
@@ -4622,7 +4485,7 @@ get_terrain:
     file_path: c:\reference-case-open\WTP_CBD_h\inputs/topography\terrain.tif
     file_type: tif
     schema: {}
-    used_by: [radiation-daysim]
+    used_by: [radiation]
 get_total_demand:
     created_by: [demand]
     description: scenario/outputs/data/demand/Total_demand.csv
@@ -4746,7 +4609,7 @@ get_total_demand:
         GRID_MWhyr:
             sample_data: 8881.34
             types_found: [float]
-        NFA_m2:
+        Aocc_m2:
             sample_data: 48914.385
             types_found: [float]
         NG_hs0_kW:
@@ -4900,6 +4763,12 @@ get_total_demand:
             sample_data: 0.0
             types_found: [float]
         Qcs_sys_scu_MWhyr:
+            sample_data: 0.0
+            types_found: [float]
+        Qcpro_sys0_kW:
+            sample_data: 0.0
+            types_found: [float]
+        Qcpro_sys_MWhyr:
             sample_data: 0.0
             types_found: [float]
         Qhpro_sys0_kW:
@@ -5146,7 +5015,7 @@ get_weather:
         zenlum_lux (index = 19):
             sample_data: !!python/long '9999'
             types_found: [long]
-    used_by: [radiation-daysim, photovoltaic, photovoltaic-thermal, solar-collector,
+    used_by: [radiation, photovoltaic, photovoltaic-thermal, solar-collector,
         demand, thermal-network]
 get_zone_geometry:
     created_by: []
@@ -5172,5 +5041,5 @@ get_zone_geometry:
         height_bg:
             sample_data: !!python/long '0'
             types_found: [long]
-    used_by: [photovoltaic, photovoltaic-thermal, emissions, network-layout, radiation-daysim,
+    used_by: [photovoltaic, photovoltaic-thermal, emissions, network-layout, radiation,
         demand, solar-collector]

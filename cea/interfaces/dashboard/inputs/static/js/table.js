@@ -1,5 +1,8 @@
 var currentTable;
 var tempSelection;
+var editform = $('#cea-column-editor-form');
+const OCCUPANCY_ALERT = 'Remember to run data-helper after editing occupancy to reflect the changes to other building properties.';
+let executedAlert = false;
 
 // Add onclick function to tabs
 $("[id$=-tab]").each(function () {
@@ -46,15 +49,20 @@ function createTable(parent, name, values, columns, types) {
         placeholder = '<div>File cannot be found.</div>';
         if (name === 'zone') {
             tool = 'zone-helper';
-        } else if (name === 'district') {
-            tool = 'district-helper';
+        } else if (name === 'surroundings') {
+            tool = 'surroundings-helper';
         } else {
             tool = 'data-helper';
         }
 
-        placeholder += `<div>You can create the file using the <a href="/tools/${tool}">${tool}</a> tool.</div>`;
+        placeholder += `<div>You can create the file using the <ins>${tool}</ins> tool.</div>`;
     } else {
         placeholder = '<div>No matching records found.</div>';
+    }
+
+    let editCallback = {};
+    if (name === 'occupancy') {
+        editCallback.dataEdited = showOccupancyAlert;
     }
 
     $(`#${parent}`).append(`<div id="${name}-table"></div>`);
@@ -66,11 +74,14 @@ function createTable(parent, name, values, columns, types) {
 
         layout: (['occupancy','architecture'].includes(name)) ? 'fitDataFill' : 'fitColumns',
         height: '300px',
-        cellClick:selectRow,
+        cellClick: selectRow,
         cellEdited: updateData,
-        rowSelectionChanged: addToSelection
+        rowSelectionChanged: addToSelection,
 
+        ...editCallback
     });
+
+    createTooltip();
 
     $('#select-all-button').prop('disabled', !values.length);
     $('#filter-button').prop('disabled', !values.length);
@@ -113,7 +124,7 @@ function updateData(data) {
     }
 
     // Update geometries
-    if (table === 'zone' || table === 'district') {
+    if (table === 'zone' || table === 'surroundings') {
         var properties = inputstore.getGeojson(table)['features'][inputstore.getGeojsonID(table, name)]['properties'];
         properties[column] = value;
         if (properties['REFERENCE']) {
@@ -121,7 +132,7 @@ function updateData(data) {
         }
         if (column === 'height_ag') {
             inputstore.createNewGeojson(table);
-            redrawBuildings();
+           redrawBuildings();
         }
     }
 
@@ -162,7 +173,7 @@ function addToSelection(data, row) {
         $('.tabulator-tableHolder').scrollTop(scroll);
     }
 
-    redrawBuildings();
+   redrawBuildings();
 }
 
 function filterSelection(selection) {
@@ -170,6 +181,34 @@ function filterSelection(selection) {
         currentTable.setFilter("Name", "in", selection);
     } else {
         currentTable.clearFilter();
+    }
+}
+
+function createTooltip() {
+    var table = $('.tab.active').data('name');
+
+    $.each(inputstore.getColumns(table), function (_, column) {
+        var glossary = inputstore.glossary[column];
+        if (glossary) {
+            $(`.tabulator-col-title:contains("${column}")`)
+                .attr('data-toggle', 'tooltip')
+                .attr('data-placement', 'top')
+                .attr('data-container', 'body')
+                .attr('data-html', true)
+                .prop('title', `DESCRIPTION: ${glossary['DESCRIPTION']}<br>UNIT: ${glossary['UNIT']}`)
+                .tooltip();
+        }
+    });
+}
+
+function showOccupancyAlert() {
+    if (!executedAlert) {
+        executedAlert = true;
+        $.alert({
+            title: '',
+            bgOpacity: 0,
+            content: OCCUPANCY_ALERT
+        });
     }
 }
 
@@ -192,54 +231,68 @@ $(window).load(function () {
         var columns = inputstore.getColumns(table);
 
         $('#cea-column-editor .modal-title').text(`Editing ${table} table`);
-        $('#selected-buildings').text(`Buidlings selected:`);
-        $.each(inputstore.getSelected(), function (_, building) {
-            var row = currentTable.getRow(building).getData();
-            var out = {};
-            $.each(inputstore.getColumns(table), function (_, column) {
-                out[column] = row[column];
-            });
-            delete out['Name'];
-            delete out['REFERENCE'];
-            out = JSON.stringify(out);
-            $('#selected-buildings').append(`<div>${building}: ${out}</div>`);
-        });
+
+        if (table === 'occupancy') {
+            $('#cea-column-editor-form').on('submit', showOccupancyAlert);
+        }
 
         // TODO: Add input validation
-        $('#cea-column-editor-form').empty();
+        editform.empty();
         $.each(columns, function (_, column) {
             var type = (inputstore.getColumnTypes(table)[column] === 'str') ? 'text':'number';
             if (column !== 'Name' && column !== 'REFERENCE') {
                 var input =
-                    `<div class="form-group">
-                      <label class="control-label col-md-3 col-sm-3 col-xs-12" for="cea-input-${ column }">${ column }</label>
-                      <div class="col-md-6 col-sm-6 col-xs-12">
-                        <input type="${ type }" id="cea-input-${ column }" name="${ column }" placeholder="unchanged"
-                               class="form-control col-md-7 col-xs-12">
-                      </div>
-                    </div>`;
-                $('#cea-column-editor-form').append(input);
+                    `<div class="form-group">` +
+                      `<label class="control-label col-md-3 col-sm-3 col-xs-12" for="cea-input-${ column }">${ column }</label>` +
+                      `<div class="col-md-6 col-sm-6 col-xs-12">` +
+                        `<input type="${ type }" id="cea-input-${ column }" name="${ column }" placeholder="unchanged"
+                               class="form-control col-md-7 col-xs-12">` +
+                      `</div>` +
+                    `</div>`;
+                editform.append(input);
                 if (type === 'text') {
                     $(`#cea-input-${ column }`).prop('pattern', '[T][0-9]+')
                         .prop('title', 'T[number]');
+                } else if (type === 'number') {
+                    $(`#cea-input-${ column }`).prop('step', 'any')
+                        .prop('min', '0');
                 }
             }
         });
 
-        $('#cea-column-editor').modal({'show': true, 'backdrop': 'static'});
+        $('#cea-column-editor').on('shown.bs.modal', function () {
+            new Tabulator("#selected-buildings", {
+                data: currentTable.getSelectedData(),
+                columns: currentTable.getColumnDefinitions(),
+                layout:"fitColumns",
+                height: 200
+            });
+        }).modal({'show': true, 'backdrop': false});
     });
 
     $('#delete-button').click(function () {
         var selected = inputstore.getSelected();
-        var layer = ($('.tab.active').data('name') !== 'district') ? 'zone':'district';
-        var out = '\n';
+        var layer = ($('.tab.active').data('name') !== 'surroundings') ? 'zone':'surroundings';
+        var out = '<br>';
         $.each(selected, function (_, building) {
-            out += `${building}\n`
+            out += `${building}<br>`
         });
-        if (confirm("This will delete the following buildings from every table:" + out)) {
-            inputstore.deleteBuildings(layer, selected);
-            $('.tab.active').trigger('click');
-        }
+        $.confirm({
+            title: '',
+            bgOpacity: 0,
+            content: `This will delete the following buildings from every table: ${out}`,
+            buttons: {
+                delete: {
+                    btnClass: 'btn-red',
+                    action: function () {
+                        inputstore.deleteBuildings(layer, selected);
+                        $('.tab.active').trigger('click');
+                    }
+                },
+                cancel: function () {
+                }
+            }
+        });
     });
 
     $('#clear-button').click(function () {
@@ -250,62 +303,99 @@ $(window).load(function () {
     $('#discard-button').click(function () {
         var changes = inputstore.changes;
         if (!Object.keys(changes['update']).length && !Object.keys(changes['delete']).length) {
-            alert('No changes detected');
+            $.alert({
+                title: '',
+                bgOpacity: 0,
+                content: 'No changes detected'
+            });
         } else {
-            if (confirm("This will discard all unsaved changes.\n" + inputstore.changesToString())) {
-                inputstore.resetChanges();
-                $('.tab.active').trigger('click');
-            }
+            $.confirm({
+                title: '',
+                bgOpacity: 0,
+                content: `This will discard all unsaved changes.<br>${inputstore.changesToString()}`,
+                buttons: {
+                    discard: {
+                        btnClass: 'btn-red',
+                        action: function () {
+                            inputstore.resetChanges();
+                            $('.tab.active').trigger('click');
+                        }
+                    },
+                    cancel: function () {
+                    }
+                }
+            });
         }
     });
 
     $('#save-button').click(function () {
         var changes = inputstore.changes;
         if (!Object.keys(changes['update']).length && !Object.keys(changes['delete']).length) {
-            alert('No changes detected');
+            $.alert({
+                title: '',
+                bgOpacity: 0,
+                content: 'No changes detected'
+            });
         } else {
-            if (confirm("Save these changes?\n" +
-                "WARNING: Any buildings deleted this way cannot be recovered once saved!\n" +
-                inputstore.changesToString())) {
-                $('#saving-text').text('Saving Changes...');
-                $('#saving-popup').modal({'show': true, 'backdrop': 'static'});
+            var deletemsg = Object.keys(changes['delete']).length ? "<i>WARNING: Any buildings deleted this way cannot be recovered once saved!</i><br>":"";
+            $.confirm({
+                title: '',
+                bgOpacity: 0,
+                content: `Save these changes?<br>${deletemsg}${inputstore.changesToString()}`,
+                buttons: {
+                    save: {
+                        btnClass: 'btn-blue',
+                        action: function () {
+                            $('#saving-text').text('Saving Changes...');
+                            $('#saving-popup').modal({'show': true, 'backdrop': false});
 
-                $.ajax({
-                    type: 'POST',
-                    url: '/inputs/building-properties',
-                    data: JSON.stringify({
-                        changes: changes,
-                        geojson: inputstore.geojsondata,
-                        tables: inputstore.data,
-                        crs: inputstore.crs
-                    }),
-                    contentType: 'application/json'
-                }).done(function (data) {
-                    // TODO: Either refresh page or do applyChanges()
-                    inputstore.applyChanges(data);
-                    redrawBuildings();
+                            $.ajax({
+                                type: 'POST',
+                                url: '/inputs/building-properties',
+                                data: JSON.stringify({
+                                    changes: changes,
+                                    geojson: inputstore.geojsondata,
+                                    tables: inputstore.data,
+                                    crs: inputstore.crs
+                                }),
+                                contentType: 'application/json'
+                            }).done(function (data) {
+                                // TODO: Either refresh page or do applyChanges()
+                                inputstore.applyChanges(data);
+                                // Recreate table based on new data pointer
+                                $('.tab.active').click();
+                                // Only fetch networks if supply-system is updated or a building is deleted
+                                if (Object.keys(changes.update).includes('supply-systems') || Object.keys(changes.delete).includes('zone')) {
+                                    map.fetchNetwork();
+                                }
+                                redrawBuildings();
 
-                    $('#saving-text').text('✔ Changes Saved!');
-                    setTimeout(function(){
-                        $('#saving-popup').modal('hide');
-                    }, 1500);
-                }).fail(function () {
-                    var header =
-                        '<button type="button" class="close cea-modal-close" data-dismiss="modal">' +
-                        'Back' +
-                        '</button>';
-                    $('#saving-text').text('Something went wrong')
-                        .append(header);
-                });
-            }
+                                $('#saving-text').text('✔ Changes Saved!');
+                                setTimeout(function(){
+                                    $('#saving-popup').modal('hide');
+                                }, 1500);
+                            }).fail(function () {
+                                var header =
+                                    '<button type="button" class="close cea-modal-close" data-dismiss="modal">' +
+                                    'Back' +
+                                    '</button>';
+                                $('#saving-text').text('Something went wrong')
+                                    .append(header);
+                            });
+                        }
+                    },
+                    cancel: function () {
+                    }
+                }
+            });
         }
     });
 
-    $('#cea-column-editor-form').submit(function (e) {
+    editform.submit(function (e) {
         e.preventDefault();
         var table = $('.tab.active').data('name');
         var props = {};
-        var form = $('#cea-column-editor-form').serialize().split('&');
+        var form = editform.serialize().split('&');
         $.each(form, function (_, prop) {
             var temp = prop.split('=');
             if (temp[1] !== '') {
@@ -334,18 +424,28 @@ $(window).load(function () {
 
             // Update geojsons
             // FIXME: Copied from updateData()
-            if (table === 'zone' || table === 'district') {
+            if (table === 'zone' || table === 'surroundings') {
                 Object.assign(inputstore.getGeojson(table)['features'][inputstore.getGeojsonID(table, building)]['properties'], out);
             }
         });
 
         if (props['height_ag']) {
             inputstore.createNewGeojson(table);
-            redrawBuildings();
+           redrawBuildings();
         }
 
         currentTable.updateData(data);
 
         $('#cea-column-editor').modal('hide');
     });
+});
+
+window.addEventListener("beforeunload", function (e) {
+    var confirmationMessage = 'There are still some unsaved changes.' +
+        'Any unsaved changes will be discarded';
+
+    if (Object.keys(inputstore.changes['update']).length || Object.keys(inputstore.changes['delete']).length) {
+        e.returnValue = confirmationMessage;
+        return  confirmationMessage;
+    }
 });

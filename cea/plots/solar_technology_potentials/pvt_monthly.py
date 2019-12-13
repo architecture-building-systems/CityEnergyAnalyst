@@ -55,10 +55,10 @@ class PvtMonthlyPlot(cea.plots.solar_technology_potentials.SolarTechnologyPotent
     @property
     def layout(self):
         analysis_range = calc_range(self.data_frame, self.E_analysis_fields_used, self.Q_analysis_fields_used)
-        return go.Layout(title=self.title, barmode='stack',
-                         yaxis=dict(title='PVT Electricity/Heat production [MWh]', domain=[0.35, 1], rangemode='tozero',
+        return go.Layout(barmode='stack',
+                         yaxis=dict(title='PVT Electricity/Heat production [MWh]', rangemode='tozero',
                                     scaleanchor='y2', range=analysis_range),
-                         yaxis2=dict(overlaying='y', anchor='x', domain=[0.35, 1], range=analysis_range))
+                         yaxis2=dict(overlaying='y', anchor='x', range=analysis_range))
 
     def calc_graph(self):
         # calculate graph
@@ -276,17 +276,18 @@ def main():
     locator = cea.inputlocator.InputLocator(config.scenario)
     cache = cea.plots.cache.PlotCache(config.project)
     # cache = cea.plots.cache.NullPlotCache()
+    weather_path = locator.get_weather_file()
     PvtMonthlyPlot(config.project, {'buildings': None,
                                     'scenario-name': config.scenario_name,
-                                    'weather': config.weather},
+                                    'weather': weather_path},
                    cache).plot(auto_open=True)
     PvtMonthlyPlot(config.project, {'buildings': locator.get_zone_building_names()[0:2],
                                     'scenario-name': config.scenario_name,
-                                    'weather': config.weather},
+                                    'weather': weather_path},
                    cache).plot(auto_open=True)
     PvtMonthlyPlot(config.project, {'buildings': [locator.get_zone_building_names()[0]],
                                     'scenario-name': config.scenario_name,
-                                    'weather': config.weather},
+                                    'weather': weather_path},
                    cache).plot(auto_open=True)
 
 

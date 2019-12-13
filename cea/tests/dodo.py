@@ -57,16 +57,16 @@ REFERENCE_CASES = {
                                       "masterplan")}
 
 REFERENCE_CASES_DATA = {
-    'open': {'weather': 'Zug', 'latitude': 47.1628017306431, 'longitude': 8.31,
+    'open': {'weather': 'Zug-inducity_1990_2010_TMY', 'latitude': 47.1628017306431, 'longitude': 8.31,
              'radiation': 'open.baseline.radiation.csv',
              'properties_surfaces': 'open.baseline.properties_surfaces.csv'},
-    'zug/baseline': {'weather': 'Zug', 'latitude': 47.1628017306431, 'longitude': 8.31,
+    'zug/baseline': {'weather': 'Zug-inducity_1990_2010_TMY', 'latitude': 47.1628017306431, 'longitude': 8.31,
                      'radiation': 'zug.baseline.radiation.csv',
                      'properties_surfaces': 'zug.baseline.properties_surfaces.csv'},
-    'zurich/baseline': {'weather': 'Zurich', 'latitude': 46.9524055556, 'longitude': 7.43958333333,
+    'zurich/baseline': {'weather': 'Zuerich-Kloten_1990_2010_TMY', 'latitude': 46.9524055556, 'longitude': 7.43958333333,
                         'radiation': 'hq.baseline.radiation.csv',
                         'properties_surfaces': 'hq.baseline.properties_surfaces.csv'},
-    'zurich/masterplan': {'weather': 'Zurich', 'latitude': 46.9524055556, 'longitude': 7.43958333333,
+    'zurich/masterplan': {'weather': 'Zuerich-ETHZ_1990-2010_TMY', 'latitude': 46.9524055556, 'longitude': 7.43958333333,
                           'radiation': 'hq.masterplan.radiation.csv',
                           'properties_surfaces': 'hq.masterplan.properties_surfaces.csv'}}
 
@@ -97,6 +97,7 @@ def task_run_unit_tests():
     def run_unit_tests():
         import unittest
         import os
+
         testsuite = unittest.defaultTestLoader.discover(os.path.dirname(__file__))
         result = unittest.TextTestRunner(verbosity=1).run(testsuite)
         return result.wasSuccessful()
@@ -158,39 +159,21 @@ def task_run_data_helper():
                     'scenario_path': scenario_path})],
         }
 
-
-def task_download_radiation():
-    """For some reference cases, the radiation and properties_surfaces.csv files are too big for git and are stored
-    with git lfs... For these cases we download a known good version from a url"""
-    def download_radiation(scenario_path, reference_case):
-        locator = cea.inputlocator.InputLocator(scenario_path)
-        data = REFERENCE_CASES_DATA[reference_case]
-        properties_surfaces_csv = os.path.join(os.path.dirname(__file__), 'radiation_data', data['properties_surfaces'])
-        radiation_csv = os.path.join(os.path.dirname(__file__), 'radiation_data', data['radiation'])
-        shutil.copyfile(properties_surfaces_csv, locator.get_surface_properties())
-        shutil.copyfile(radiation_csv, locator.get_radiation())
-
-    for reference_case, scenario_path in REFERENCE_CASES.items():
-        if _reference_cases and reference_case not in _reference_cases:
-            continue
-        yield {
-            'name': 'download_radiation:%s' % reference_case,
-            'task_dep': ['download_reference_cases'],
-            'actions': [(download_radiation, [], {
-                'scenario_path': scenario_path,
-                'reference_case': reference_case})]
-        }
-
-
 def task_run_demand():
     """run the demand script for each reference cases and weather file"""
     import cea.demand.demand_main
 
     def run_demand(scenario_path, weather):
-
+        import cea.config
         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         config.scenario = scenario_path
-        config.weather = weather
+
+        # make sure weather file is copied to inputs first
+        import cea.datamanagement.weather_helper
+        import cea.demand.schedule_maker.schedule_maker
+        config.weather_helper.weather = weather
+        cea.datamanagement.weather_helper.main(config)
+        cea.demand.schedule_maker.schedule_maker.main(config)
         cea.demand.demand_main.main(config)
 
     for reference_case, scenario_path in REFERENCE_CASES.items():
@@ -200,7 +183,7 @@ def task_run_demand():
         weather = REFERENCE_CASES_DATA[reference_case]['weather']
 
         yield {
-            'name': 'run_demand:%(reference_case)s@%(weather)s' % locals(),
+            'name': 'run_demand:%(reference_case)s' % locals(),
             'task_dep': ['download_reference_cases', 'run_data_helper:%s' % reference_case],
             'actions': [(run_demand, [], {
                 'scenario_path': scenario_path,
@@ -234,24 +217,20 @@ def task_run_emissions_operation():
     """run the emissions operation script for each reference case"""
     import cea.analysis.lca.operation
 
-    def run_emissions_operation(scenario_path, weather):
+    def run_emissions_operation(scenario_path):
         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         config.scenario = scenario_path
-        config.weather = weather
         cea.analysis.lca.operation.main(config)
 
     for reference_case, scenario_path in REFERENCE_CASES.items():
         if _reference_cases and reference_case not in _reference_cases:
             continue
 
-        weather = REFERENCE_CASES_DATA[reference_case]['weather']
-
         yield {
             'name': 'run_emissions_operation:%(reference_case)s' % locals(),
-            'task_dep': ['run_demand:%(reference_case)s@%(weather)s' % locals()],
+            'task_dep': ['run_demand:%(reference_case)s' % locals()],
             'actions': [(run_emissions_operation, [], {
                 'scenario_path': scenario_path,
-                'weather': weather,
             })],
         }
 
@@ -260,30 +239,31 @@ def task_run_emissions_mobility():
     """run the emissions mobility script for each reference case"""
     import cea.analysis.lca.mobility
 
-    def run_emissions_mobility(scenario_path, weather):
+    def run_emissions_mobility(scenario_path):
         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         config.scenario = scenario_path
-        config.weather = weather
         cea.analysis.lca.mobility.main(config)
 
     for reference_case, scenario_path in REFERENCE_CASES.items():
         if _reference_cases and reference_case not in _reference_cases:
             continue
 
-        weather = REFERENCE_CASES_DATA[reference_case]['weather']
-
         yield {
             'name': 'run_emissions_mobility:%(reference_case)s' % locals(),
-            'task_dep': ['run_demand:%(reference_case)s@%(weather)s' % locals()],
+            'task_dep': ['run_demand:%(reference_case)s' % locals()],
             'actions': [(run_emissions_mobility, [], {
                 'scenario_path': scenario_path,
-                'weather': weather,
             })],
         }
 
 
 def task_run_sensitivity():
     """Run the sensitivity analysis for the the reference-case-open"""
+
+    # make sure the random number generator is always set to the same value
+    import numpy as np
+    np.random.seed(int("CEA", 16))
+
     def run_sensitivity():
         import cea.analysis.sensitivity.sensitivity_demand_samples
         import cea.analysis.sensitivity.sensitivity_demand_simulate
@@ -296,6 +276,13 @@ def task_run_sensitivity():
         config.sensitivity_demand.method = 'morris'
         config.sensitivity_demand.num_samples = 2
         config.sensitivity_demand.number_of_simulations = 1
+
+        # make sure data-helper was run first
+        import cea.datamanagement.data_helper
+        cea.datamanagement.data_helper.data_helper(locator=locator, region="CH", overwrite_technology_folder=True,
+                update_architecture_dbf=True, update_HVAC_systems_dbf=True, update_indoor_comfort_dbf=True,
+                update_internal_loads_dbf=True, update_supply_systems_dbf=True,
+                update_schedule_operation_cea=True, buildings=locator.get_zone_building_names())
 
         cea.analysis.sensitivity.sensitivity_demand_samples.main(config)
         count = cea.analysis.sensitivity.sensitivity_demand_count.count_samples(config.sensitivity_demand.samples_folder)
@@ -314,49 +301,11 @@ def task_run_sensitivity():
         'actions': [(run_sensitivity, [], {})],
     }
 
-
-def task_run_calibration():
-    """run the calibration_sampling for the included reference case"""
-    def run_calibration():
-        import cea.demand.calibration.bayesian_calibrator.calibration_sampling as calibration_sampling
-        import cea.demand.calibration.bayesian_calibrator.calibration_gaussian_emulator as calibration_gaussian_emulator
-        import cea.demand.calibration.bayesian_calibrator.calibration_main as calibration_main
-
-        config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
-        locator = cea.inputlocator.ReferenceCaseOpenLocator()
-
-        config.scenario = locator.scenario
-        config.single_calibration.building = 'B01'
-        config.single_calibration.variables = ['U_win', 'U_wall', 'U_roof', 'n50', 'Tcs_set_C', 'Hs']
-
-        config.single_calibration.load = 'E_sys'
-        config.single_calibration.samples = 2
-        config.single_calibration.show_plots = False
-        config.single_calibration.iterations = 100
-
-        # run calibration_sampling
-        calibration_sampling.sampling_main(locator=locator, config=config)
-
-        # run calibration_gaussian_emulator
-        calibration_gaussian_emulator.gaussian_emulator(locator=locator, config=config)
-
-        # run calibration_main
-        calibration_main.calibration_main(locator=locator, config=config)
-
-        # make sure the files were created
-        # FIXME: @JIMENOFONSECA - what files do I need to check? (this has changed)
-
-
-    return {
-        'name': 'run_calibration',
-        'actions': [(run_calibration, [], {})],
-    }
-
-
 def task_run_thermal_network():
     """run the thermal_network for the included reference case"""
     def run_thermal_network():
-        import cea.technologies.thermal_network.thermal_network as tnm
+        import cea.technologies.thermal_network.thermal_network as thermal_network
+        from cea.technologies.network_layout.main import NetworkLayout, layout_network
 
         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         locator = cea.inputlocator.InputLocator(scenario=REFERENCE_CASES['open'])
@@ -364,12 +313,17 @@ def task_run_thermal_network():
         config.multiprocessing = True
         config.thermal_network.start_t = 100
         config.thermal_network.stop_t = 200
+        config.thermal_network.network_type = 'DH'
+        config.network_layout.network_type = 'DH'
 
-        tnm.main(config)
+        # first, create the network layout
+        network_layout = NetworkLayout(config.network_layout)
+        layout_network(network_layout, locator, [])
+        thermal_network.main(config)
 
     return {
         'name': 'run_thermal_network',
-        'task_dep': ['run_demand:open@Zug'],
+        'task_dep': ['run_demand:open'],
         'actions': [(run_thermal_network, [], {})],
     }
 

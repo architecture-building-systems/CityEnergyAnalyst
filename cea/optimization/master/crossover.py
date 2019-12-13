@@ -1,72 +1,103 @@
 """
-CrossOver routine
+Crossover routines
 
 """
 from __future__ import division
-import random
-from deap import base
-from cea.optimization.constants import N_HEAT, N_SOLAR, N_HR, N_COOL, INDICES_CORRESPONDING_TO_DHN, INDICES_CORRESPONDING_TO_DCN
 
-toolbox = base.Toolbox()
+from deap import tools
+from cea.optimization.master.validation import validation_main
 
 
-def cxUniform(ind1, ind2, proba, nBuildings, config):
-    """
-    Performs a uniform crossover between the two parents.
-    Each segments is swapped with probability *proba*
-    
-    :param ind1: a list containing the parameters of the parent 1
-    :param ind2: a list containing the parameters of the parent 2
-    :param proba: Crossover probability
-    :type ind1: list
-    :type ind2: list
-    :type proba: float
+def crossover_main(ind1, ind2, indpb,
+                   column_names,
+                   heating_unit_names_share,
+                   cooling_unit_names_share,
+                   column_names_buildings_heating,
+                   column_names_buildings_cooling,
+                   district_heating_network,
+                   district_cooling_network
+                   ):
+    # create dict of individual with his/her name
+    ind1_with_name_dict = dict(zip(column_names, ind1))
+    ind2_with_name_dict = dict(zip(column_names, ind2))
 
-    :return: child1, child2
-    :rtype: list, list
-    """
-    child1 = toolbox.clone(ind1)
-    child2 = toolbox.clone(ind2)
-    
-    # Swap functions
-    def swap(inda, indb, n):
-        inda[n], indb[n] = indb[n], inda[n]
+    if district_heating_network:
 
-    def cross_integer_variables(child_1, child_2, number_of_plants, index_on_individual):
-        for i in range(number_of_plants):
-            if random.random() < proba:
-                child_1[index_on_individual + 2*i], child_2[index_on_individual + 2*i] = child_2[index_on_individual + 2*i], \
-                                                                                     child_1[index_on_individual + 2*i]
-    # Swap
-    cross_integer_variables(child1, child2, N_HEAT, 0) # crossing the integer variables corresponding to heating technologies
-    cross_integer_variables(child1, child2, N_SOLAR, N_HEAT * 2 + N_HR) # crossing the integer variables corresponding to solar technologies
-    cross_integer_variables(child1, child2, N_COOL, (N_HEAT + N_SOLAR) * 2 + N_HR + INDICES_CORRESPONDING_TO_DHN) # crossing the integer variables corresponding to cooling technologies
-    # Swap heating recovery options
-    for i in range(N_HR):
-        if random.random() < proba:
-            swap(child1, child2, N_HEAT*2 + i)
+        # MUTATE BUILDINGS CONNECTED
+        buildings_heating_ind1 = [ind1_with_name_dict[column] for column in column_names_buildings_heating]
+        buildings_heating_ind2 = [ind2_with_name_dict[column] for column in column_names_buildings_heating]
+        # apply crossover
+        buildings_heating_ind1, buildings_heating_ind2 = tools.cxUniform(buildings_heating_ind1,
+                                                                         buildings_heating_ind2,
+                                                                         indpb)
+        # take back to the individual
+        for column, cross_over_value in zip(column_names_buildings_heating, buildings_heating_ind1):
+            ind1_with_name_dict[column] = cross_over_value
+        for column, cross_over_value in zip(column_names_buildings_heating, buildings_heating_ind2):
+            ind2_with_name_dict[column] = cross_over_value
 
-    # Swap DHN and DCN variables
-    for i in range(INDICES_CORRESPONDING_TO_DHN):
-        if random.random() < proba:
-            swap(child1, child2, (N_HEAT + N_SOLAR) * 2 + N_HR + i)
+        # MUTATE SUPPLY SYSTEM UNITS SHARE
+        heating_units_share_ind1 = [ind1_with_name_dict[column] for column in heating_unit_names_share]
+        heating_units_share_ind2 = [ind2_with_name_dict[column] for column in heating_unit_names_share]
+        # apply crossover
+        heating_units_share_ind1, heating_units_share_ind2 = tools.cxUniform(heating_units_share_ind1,
+                                                                             heating_units_share_ind2,
+                                                                             indpb)
+        # takeback to the individual
+        for column, cross_over_value in zip(heating_unit_names_share, heating_units_share_ind1):
+            ind1_with_name_dict[column] = cross_over_value
+        for column, cross_over_value in zip(heating_unit_names_share, heating_units_share_ind2):
+            ind2_with_name_dict[column] = cross_over_value
 
-    for i in range(INDICES_CORRESPONDING_TO_DCN):
-        if random.random() < proba:
-            swap(child1, child2, (N_HEAT + N_SOLAR) * 2 + N_HR + INDICES_CORRESPONDING_TO_DHN + N_COOL * 2 + i)
+    if district_cooling_network:
 
-    # Swap DHN and DCN, connected buildings
-    if config.district_cooling_network:
-        for i in range(nBuildings):
-            if random.random() < proba:
-                swap(child1, child2, (N_HEAT + N_SOLAR) * 2 + N_HR + INDICES_CORRESPONDING_TO_DHN + N_COOL * 2 + INDICES_CORRESPONDING_TO_DCN + i)
+        # CROSSOVER BUILDINGS CONNECTED
+        buildings_cooling_ind1 = [ind1_with_name_dict[column] for column in column_names_buildings_cooling]
+        buildings_cooling_ind2 = [ind2_with_name_dict[column] for column in column_names_buildings_cooling]
+        # apply crossover
+        buildings_cooling_ind1, buildings_cooling_ind2 = tools.cxUniform(buildings_cooling_ind1,
+                                                                         buildings_cooling_ind2,
+                                                                         indpb)
+        # take back to teh individual
+        for column, cross_over_value in zip(column_names_buildings_cooling, buildings_cooling_ind1):
+            ind1_with_name_dict[column] = cross_over_value
+        for column, cross_over_value in zip(column_names_buildings_cooling, buildings_cooling_ind2):
+            ind2_with_name_dict[column] = cross_over_value
 
-    if config.district_cooling_network:
-        for i in range(nBuildings):
-            if random.random() < proba:
-                swap(child1, child2, (N_HEAT + N_SOLAR) * 2 + N_HR + INDICES_CORRESPONDING_TO_DHN + N_COOL * 2 + INDICES_CORRESPONDING_TO_DCN + nBuildings + i)
+        # CROSSOVER SUPPLY SYSTEM UNITS SHARE
+        cooling_units_share_ind1 = [ind1_with_name_dict[column] for column in cooling_unit_names_share]
+        cooling_units_share_ind2 = [ind2_with_name_dict[column] for column in cooling_unit_names_share]
+        # apply crossover
+        cooling_units_share_ind1, cooling_units_share_ind2 = tools.cxUniform(cooling_units_share_ind1,
+                                                                             cooling_units_share_ind2,
+                                                                             indpb)
+        # takeback to teh individual
+        for column, cross_over_value in zip(cooling_unit_names_share, cooling_units_share_ind1):
+            ind1_with_name_dict[column] = cross_over_value
+        for column, cross_over_value in zip(cooling_unit_names_share, cooling_units_share_ind2):
+            ind2_with_name_dict[column] = cross_over_value
 
-    del child1.fitness.values
-    del child2.fitness.values
+    # now validate individual
+    # now validate individual
+    ind1_with_name_dict = validation_main(ind1_with_name_dict,
+                                                column_names_buildings_heating,
+                                                column_names_buildings_cooling,
+                                                district_heating_network,
+                                                district_cooling_network
+                                                )
 
-    return child1, child2
+    ind2_with_name_dict = validation_main(ind2_with_name_dict,
+                                                column_names_buildings_heating,
+                                                column_names_buildings_cooling,
+                                                district_heating_network,
+                                                district_cooling_network
+                                                )
+
+    # now pass all the values mutated to the original individual
+    for i, column in enumerate(column_names):
+        ind1[i] = ind1_with_name_dict[column]
+
+    for i, column in enumerate(column_names):
+        ind2[i] = ind2_with_name_dict[column]
+
+    return ind1, ind2

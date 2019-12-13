@@ -18,7 +18,6 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-# import from GV
 B_F = constants.B_F
 D = constants.D
 C_A = constants.C_A
@@ -47,25 +46,6 @@ def calc_Qgain_sen(t, tsd, bpr):
     tsd['I_sol_and_I_rad'][t], tsd['I_rad'][t], tsd['I_sol'][t] = calc_I_sol(t, bpr, tsd)
 
     return tsd
-
-
-def calc_Qgain_lat(schedules, bpr):
-    # TODO: Documentation
-    # Refactored from CalcThermalLoads
-    """
-
-    :param schedules: The list of schedules defined for the project - in the same order as `list_uses`
-    :type schedules: list[ndarray[float]]
-
-    :return w_int: yearly schedule
-
-    """
-    # calc yearly humidity gains based on occupancy schedule and specific humidity gains for each occupancy type in the
-    # building
-    humidity_schedule = schedules['X'] * bpr.internal_loads['X_ghp']  # in g/h
-    w_int = humidity_schedule / (1000 * 3600)  # kg/s
-
-    return w_int
 
 
 def calc_I_sol(t, bpr, tsd):
@@ -284,6 +264,7 @@ def calc_temperatures_emission_systems(bpr, tsd):
 
     elif control_heating_cooling_systems.has_floor_heating_system(bpr):
 
+        Ta_heating_0 = np.nanmax(tsd['ta_hs_set'])
         Qhs_sys_0 = np.nanmax(tsd['Qhs_sys'])  # in W
 
         tsd['Ths_sys_sup_ahu'] = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
@@ -293,10 +274,9 @@ def calc_temperatures_emission_systems(bpr, tsd):
         tsd['Ths_sys_re_aru'] = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
         tsd['mcphs_sys_aru'] = np.zeros(HOURS_IN_YEAR)
 
-        Ths_sup, Ths_re, mcphs = np.vectorize(tabs.calc_floorheating)(tsd['Qhs_sys'], tsd['theta_m'], Qhs_sys_0,
-                                                                      bpr.building_systems['Ths_sup_shu_0'],
-                                                                      bpr.building_systems['Ths_re_shu_0'],
-                                                                      bpr.rc_model['Af'])
+        Ths_sup, Ths_re, mcphs = np.vectorize(radiators.calc_radiator)(tsd['Qhs_sys'], tsd['T_int'], Qhs_sys_0, Ta_heating_0,
+                                                                       bpr.building_systems['Ths_sup_shu_0'],
+                                                                       bpr.building_systems['Ths_re_shu_0'])
         tsd['Ths_sys_sup_shu'] = Ths_sup
         tsd['Ths_sys_re_shu'] = Ths_re
         tsd['mcphs_sys_shu'] = mcphs

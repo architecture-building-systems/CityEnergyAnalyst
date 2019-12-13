@@ -1,3 +1,128 @@
+2019-12-06 - 2.26.0a0 - #2481 Show plot input files
+2019-12-06 - 2.26.0a0 - #2462 Test epanet - simple thermal model Merging!! wihuu
+2019-12-04 - 2.26.0 - #2467 1777 optimize decentralized script for speed
+2019-12-03 - 2.26.0 - #2479 Data validation for inputs in front end
+2019-12-03 - 2.26.0 - #2478 2477 wrong column name in piping catalog
+2019-11-29 - 2.26.0 - #2475 Window to wall ratio and envelope properties
+2019-11-26 - 2.26.0 - #2470 Schedule reader to api
+2019-11-18 - 2.26.0 - #2466 Release 2.26
+2019-11-15 - 2.25.2 - #2455 2349 suspend simulations
+2019-11-14 - 2.25.1 - #2448 Ventilation to avoid unrealistically high temperatures during heating season
+2019-11-12 - 2.25.1 - #2452 Update epwreader.py
+2019-11-11 - 2.25.1 - #2439 Databases major refactoring
+2019-11-07 - 2.25.1 - #2444 Update input api
+2019-11-06 - 2.25.1 - #2420 I1633 gains and losses proportional to conditioned area
+2019-11-05 - 2.25.1 - #2441 Release 2.25, I also updated the CEA website to reflect this
+2019-11-04 - 2.24 - #2434 Delete converter_old_schedules_to_csv.py
+2019-11-04 - 2.24 - #2437 Update input api
+2019-11-04 - 2.24 - #2354 2082 add remaining network plots to dashboard
+2019-11-04 - 2.24 - #2431 Update scripts.yml
+2019-11-04 - 2.24 - #2433 Update geometry_generator.py
+2019-10-31 - 2.24 - #2417 BUGFIX: Handle folder locator methods in TraceInputLocator
+2019-10-31 - 2.24 - #2416 Radiation now account for adjacent buildings
+2019-10-30 - 2.24 - #2414 Terminate running cea worker processes when closing the GUI @daren-thomas works like a charm, good stuff!
+2019-10-30 - 2.24 - #2421 BUGFIX: UnboundLocalError: local variable 'number_of_occupants' referenced before assignment
+2019-10-30 - 2.24 - #2415 Allow importing scripts.py from the Grasshopper interface
+2019-10-29 - 2.24 - #2419 fix to schedule maker
+2019-10-29 - 2.24 - #2411 2392 build the docs
+2019-10-29 - 2.24 - #2418 2324 resume workflow feature
+2019-10-24 - 2.24 - #2407 Update LCA_infrastructure.xlsx
+2019-10-23 - 2.24 - #2398 Update URL for CityEnergyAnalyst-GUI
+2019-10-23 - 2.24 - #2400 2399 demand keyerror rhum max pc
+2019-10-21 - 2.24 - #2396 Release 2.24
+2019-10-21 - 2.23 - #2391 Show plot parameters when adding and changing plots
+2019-10-18 - 2.23 - #2383 Fix to load curves plot and to glossary
+2019-10-17 - 2.23 - #2382 New Schedules Maker / Model
+2019-10-17 - 2.23 - #2384 fix void-deck issues @lguilhermers thanks!, we will implement cell validation in another issue #2141
+2019-10-17 - 2.23 - #2390 I816 stop bayesian calibration support @martin-mosteiro alright we take it out
+2019-10-15 - 2.23 - #2386 fix coordinate system
+2019-10-15 - 2.23 - #2372 2360 create installer for electron interface
+2019-10-14 - 2.23 - #2380 2344 multiprocessing and stdout
+2019-10-11 - 2.23 - #2374 2356 Update environment.ubuntu.yml
+2019-10-11 - 2.23 - #2378 I2204b temperature setpoints finish
+2019-10-10 - 2.23 - #2363 I2204 temperature setpoints
+2019-10-09 - 2.23 - #2318 Optimization cooling, Alright guys, we are merging and creating more issues should we find more problems.
+2019-10-08 - 2.23 - #2365 Ventilation code cleanup
+2019-10-08 - 2.23 - #2369 Glossary api for electron
+2019-10-07 - 2.23 - #2362 Raise an error for false weather files
+2019-10-07 - 2.23 - #2368 Release 2.23
+2019-10-02 - 2.22 - #2338 Moving flexibility (concept project) to legacy
+2019-10-02 - 2.22 - #2353 Project api for electron application
+2019-10-02 - 2.22 - #2337 fix to network layout script (EL is not implemented yet) @daren-thomas thanks for checking this out
+2019-09-24 - 2.21 - #2335 Bugfix: Edit selection in input editor does not work if some old values is equal to the new value
+2019-09-24 - 2.21 - #2334 Show Es and Ns variable for architecture in dashboard
+2019-09-24 - 2.21 - #2320 BUG: fixed default value for workflow parameter
+2019-09-23 - 2.21 - #2303 CEA Occupancy-Schedule Updates
+2019-09-20 - 2.21 - #2286 Fix to #1271
+2019-09-18 - 2.21 - #2319 Bugfix: Dashboard set scenario function not working
+2019-09-18 - 2.21 - #2289 2255 thermal network optimization refactoring
+2019-09-17 - 2.21 - #2313 set seed for sensitivity analysis test
+2019-09-17 - 2.21 - #2299 2192 single plot view
+2019-09-17 - 2.21 - #2198 macOS installation guide
+2019-09-17 - 2.21 - #2305 2279 show baseline network in input editor
+2019-09-16 - 2.21 - #2306 2019.09.16 run radiation daysim from pycharm
+2019-09-16 - 2.21 - #2304 Renamed Zurich 2015 and 2016 files
+2019-09-13 - 2.21 - #2297 FEATURE: 1926 cea worker / non-blocking tools
+2019-09-12 - 2.21 - #2275 2063 process cooling
+2019-09-12 - 2.21 - #2301 hotfix for parameters changed in lca_operation
+2019-09-12 - 2.21 - #2292 steps for creating a release updated
+2019-09-10 - 2.21 - #2251 Change naming of weather files
+2019-09-10 - 2.21 - #2284 2277 update new release documentation
+2019-09-06 - 2.21 - #2294 Bugfix: BooleanParameter can now decode bool values
+2019-09-05 - 2.21 - #2266 Delete cooling_case_workflow.py
+2019-09-05 - 2.21 - #2288 FEATURE: New React Dashboard
+2019-09-05 - 2.21 - #2290 changing workflows structure
+2019-09-04 - 2.21 - #2287 I753 remove global vars last steps
+2019-09-03 - 2.21 - #2280 2279 generate network from building supply properties
+2019-09-03 - 2.21 - #2281 2256 update conditions to run disconnected_buildings_heating_main @shanshanhsieh elegant fix
+2019-08-30 - 2.21 - #2282 I2249 opt cooling
+2019-08-26 - 2.21 - #2278 Updated version number, changelog and credits for 2.21
+2019-08-26 - 2.20.3 - #2253 Feature: Supply system map plot @daren-thomas merging as we need it to plan for the 30 sec video for Arno
+2019-08-23 - 2.20.3 - #2258 2117 weather as input file
+2019-08-23 - 2.20.3 - #2257 FEATURE: lazy loading of cea.api module
+2019-08-23 - 2.20.3 - #2252 Fix: Add alert when user changes occupancy @reyery thanks for this!
+2019-08-22 - 2.20.3 - #2250 753 global variables removal 2.21
+2019-08-22 - 2.20.3 - #2248 Add legend toggle drop down to plots
+2019-08-21 - 2.20.3 - #2265 FEATURE: allow user-specified region databases for the data-helper
+2019-08-13 - 2.20.1 - #2241 updating version, changelog and credits for v2.20
+2019-08-13 - 2.19 - #2239 Bugfix: Map not initializing if district data does not exist
+2019-08-13 - 2.19 - #2238 Feature: Grid Layout for Dashboard
+2019-08-08 - 2.19 - #2216 Bugfix: Add script input validation for dashboard
+2019-08-08 - 2.19 - #2225 I2224 optimization heating
+2019-08-08 - 2.19 - #2230 fix occupancy
+2019-08-05 - 2.19 - #2228 Bugfix: Calculate and save projected coordinate system
+2019-08-05 - 2.19 - #2226 I2146 decentralized cooling @shanshanhsieh great! thanks!
+2019-08-02 - 2.19 - #2222 I2120 fixing optimization cooling
+2019-07-31 - 2.19 - #2160 2150 Feature: cea rename-building
+2019-07-29 - 2.19 - #2217 Release 2.19
+2019-07-29 - 2.18.1 - #2215 Minor Fix: Add tooltips to plot buttons
+2019-07-25 - 2.18.1 - #2209 Add "change plot" button to row layout
+2019-07-24 - 2.18.1 - #2191 I2182 read occupancy schedules
+2019-07-24 - 2.18.1 - #2203 Closes #2202
+2019-07-24 - 2.18.1 - #2199 Heating case workflow
+2019-07-23 - 2.18.1 - #2193 2143 document and proof default config
+2019-07-23 - 2.18.1 - #2196 I2195 fix vectorized setpoint
+2019-07-23 - 2.18.1 - #2161 don't create the inputs folder when opening a project + scenario
+2019-07-23 - 2.18.1 - #2194 Fixed typos in error message
+2019-07-22 - 2.18.1 - #2159 added more uses to reference-case-cooling
+2019-07-22 - 2.18.1 - #2166 I2120 re(making)factor optimization
+2019-07-19 - 2.18.1 - #2178 Fix: Dashboard popup tables
+2019-07-19 - 2.18.1 - #2181 adding comfort to dashboard
+2019-07-18 - 2.18.1 - #2162 FEATURE: New Map Dashboard layout
+2019-07-17 - 2.18.1 - #2164 2095 FIXED "ArcGIS interface installation does not work anymore"
+2019-07-17 - 2.18.1 - #2090 1870 dashboard settings not working for capex vs opex
+2019-07-13 - 2.18.1 - #2158 Thanks @Jack-Hawthorne!
+2019-07-12 - 2.18 - #2157 Release 2.18
+2019-07-09 - 2.17.1 - #2137 Bugfix for input editor
+2019-07-08 - 2.17.1 - #2145 remove faulty input requests
+2019-07-05 - 2.17.1 - #2085 1971 check input files
+2019-07-03 - 2.17.1 - #2134 Bugfix: Allow decimal values for number inputs
+2019-07-03 - 2.17.1 - #2129 Fix to known issues
+2019-07-03 - 2.17.1 - #2133 FEATURE: New 500 status error page
+2019-07-03 - 2.17.1 - #2128 Minor bugfix for glossary frontend
+2019-07-02 - 2.17.1 - #2071 I2015 constant supply temperature at plants
+2019-07-02 - 2.17.1 - #2125 FEATURE: Add Glossary Search to Dashboard
+2019-07-01 - 2.17 - #2124 Release 2.17
 2019-07-01 - 2.17a1 - #2121 Bugfix: Maintain original coordinate system when saving new input files
 2019-07-01 - 2.17a1 - #2093 1978 create an uninstaller for the cea sure! @daren-thomas
 2019-07-01 - 2.17a0 - #2119 creating warning
@@ -160,7 +285,7 @@
 2018-10-08 - 2.9.0 - #1629 1625 figure out why the radiation daysim tool hangs on sabines scenario
 2018-10-04 - 2.9.0 - #1615 This is a first stab to updating the documentation
 2018-10-02 - 2.9.0 - #1618 967 dashboard - changes so far It runs so I am merging. I guess we can talk about the changes on the presentation of the 18th.
-2018-09-20 - 2.7.22 - #1624 Fixing the pyliburo / radiation-daysim geometry problems
+2018-09-20 - 2.7.22 - #1624 Fixing the pyliburo / radiation geometry problems
 2018-09-18 - 2.7.22 - #1608 this solves issue #1351
 2018-09-08 - 2.7.22 - #1614 Typos and cleanup
 2018-09-04 - 2.7.22 - #1603 @daren-thomas great thanks!

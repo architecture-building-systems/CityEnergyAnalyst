@@ -25,7 +25,7 @@ Other variables used to calculate the loads include:
 - d \ :sub:`dhw,i` : daily demand for hot water (litres/person/day)
 
 At the beginning of the simulation for each building, yearly schedules of occupant presence (N \ :sub:`people`) and associated indoor comfort
-parameters, as well as schedules of electricity (D \ :sub:`light`) and hot water consumption (V \ :sub:`dhw`) are calculated as a simple
+parameters, as well as schedules of electricity (E \ :sub:`light` and E \ :sub:`appliances) and hot water consumption (V \ :sub:`dhw`) are calculated as a simple
 average:
 
 .. math::
@@ -62,7 +62,7 @@ At each time step, the transition probabilities between these states are calcula
 .. math::
     T_{11}(t) =\frac{P(t)-1}{P(t)}\cdot{T_{01}(t)}+\frac{P(t+1)}{P(t)}
 
-    T_{01}(t) =\frac{\mu-1}{\mu}\cdot{P(t)}+P(t+1)
+    T_{01}(t) =\frac{\mu-1}{\mu+1}\cdot{P(t)}+P(t+1)
 
 Where T \ :sub:`11` (t) is the probability of the occupant staying in the room at time t+1 given that the occupant
 was present at time t and  T \ :sub:`01` (t) is the probability of the occupant arriving at time t+1 given that they
@@ -81,7 +81,7 @@ were not present at the previous time step.
 
     T_{10}(t) + T_{11}(t) = 1
 
-The only parameter that needs to be estimated is μ, which we randomly draw for each occupant from a normal distribution.
+The only parameter that needs to be estimated is μ.
 
 .. image:: stochastic_flow.png
     :align: center

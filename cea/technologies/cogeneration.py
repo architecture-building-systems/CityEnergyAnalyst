@@ -12,6 +12,7 @@ from cea.optimization.constants import GT_MIN_PART_LOAD, LHV_NG, LHV_BG, GT_MAX_
     CC_EXIT_T_NG, ST_DELTA_T, CC_DELTA_T_DH, ST_GEN_ETA
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.technologies.constants import SPEC_VOLUME_STEAM
+import cea.resources.natural_gas as ngas
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -28,7 +29,7 @@ __status__ = "Production"
 # ===========================
 
 
-def calc_cop_CCGT(GT_size_W, T_sup_K, fuel_type, prices, lca_hour):
+def calc_cop_CCGT(GT_size_W, T_sup_K, fuel_type):
     """
     This function calcualates the COP of a combined cycle, the gas turbine (GT) exhaust gas is used by
     the steam turbine (ST) to generate electricity and heat.
@@ -70,7 +71,6 @@ def calc_cop_CCGT(GT_size_W, T_sup_K, fuel_type, prices, lca_hour):
     range_eta_el_CC = np.zeros(it_len)
     range_eta_thermal_CC = np.zeros(it_len)
     range_q_input_CC_W = np.zeros(it_len)
-    range_op_cost_per_Wh_th = np.zeros(it_len)
 
     # create range of electricity output from the GT between the minimum and nominal load
     range_el_output_from_GT_W = np.linspace(GT_size_W * GT_MIN_PART_LOAD, GT_size_W, it_len)
@@ -87,15 +87,12 @@ def calc_cop_CCGT(GT_size_W, T_sup_K, fuel_type, prices, lca_hour):
         range_eta_thermal_CC[i] = CC_operation['eta_thermal']  # thermal efficiency
 
         range_q_input_CC_W[i] = range_q_output_CC_W[i] / range_eta_thermal_CC[i]  # thermal energy input
-        range_op_cost_per_Wh_th[i] = (range_q_input_CC_W[i] * prices.NG_PRICE - range_el_output_CC_W[
-            i] * lca_hour) / range_q_output_CC_W[i]
 
     # create interpolation functions as a function of heat output
     el_output_interpol_with_q_output_W = interpolate.interp1d(range_q_output_CC_W, range_el_output_from_GT_W,
                                                               kind="linear")
     q_input_interpol_with_q_output_W = interpolate.interp1d(range_q_output_CC_W, range_q_input_CC_W, kind="linear")
-    op_cost_per_Wh_th_interpol_with_q_output = interpolate.interp1d(range_q_output_CC_W, range_op_cost_per_Wh_th,
-                                                                      kind="linear")
+
     # create interpolation functions as a function of thermal energy input
     eta_el_interpol_with_q_input = interpolate.interp1d(range_q_input_CC_W, range_eta_el_CC,
                                                         kind="linear")
@@ -105,7 +102,6 @@ def calc_cop_CCGT(GT_size_W, T_sup_K, fuel_type, prices, lca_hour):
 
     return {'el_output_fn_q_input_W': el_output_interpol_with_q_output_W,
             'q_input_fn_q_output_W': q_input_interpol_with_q_output_W,
-            'fuel_cost_per_Wh_th_fn_q_output_W': op_cost_per_Wh_th_interpol_with_q_output,
             'q_output_min_W': q_output_min_W, 'q_output_max_W': q_output_max_W,
             'eta_el_fn_q_input': eta_el_interpol_with_q_input}
 
@@ -311,19 +307,6 @@ def calc_ST_operation(m_exhaust_GT_kgpers, T_exhaust_GT_K, T_sup_K, fuel_type):
     delta_h_evap_Jperkg = (-2.4967 * (T_cond_0_K - 273) + 2507) * 1E3
     q_output_ST_W = (mdotHP_kgpers + mdotLP_kgpers) * delta_h_evap_Jperkg  # thermal output of ST
 
-    # temp_c = (0.9 * ((pres0/48.2E5) ** (0.4/1.4) - 1) + 1) * (texh - gV.ST_deltaT)
-    # qdot = (mdotHP + mdotLP) * (HEAT_CAPACITY_OF_WATER_JPERKGK * (temp_c - T_cond_0_K) + delta_h_evap_Jperkg)
-    # presSTexit = pres0 + gV.ST_deltaP
-    # wdotST = 0.9 / 18E-3 * 1.4 / 0.4 * 8.31 * \
-    #         (mdotHP * 534.5 * ( (6/48.2) ** (0.4/1.4) - 1 )\
-    #         + (mdotLP + mdotHP) * temp_i * ( (presSTexit/6E5) ** (0.4/1.4) - 1 ) )
-    #
-    # temp1 = (((6E5/pres0) ** (0.4/1.4) - 1) / 0.87 + 1) * T_cond_0_K
-    # wdotcomp = 0.87 / 18E-3 * 1.4 / 0.4 * 8.31 * \
-    #           (mdotHP * temp1 * ( (48.2/6) ** (0.4/1.4) - 1 )\
-    #           + (mdotHP + mdotLP) * T_cond_0_K * ( (6E5/pres0) ** (0.4/1.4) - 1 ))
-
-
     # calculate electricity output
     h_HP_Jperkg = (2.5081 * (T_exhaust_GT_K - ST_DELTA_T - 273) + 2122.7) * 1E3  # J/kg
     h_LP_Jperkg = (2.3153 * (temp_i_K - 273) + 2314.7) * 1E3  # J/kg
@@ -442,15 +425,20 @@ def calc_Cinv_CCGT(CC_size_W, locator, config, technology=0):
     ..[C. Weber, 2008] C.Weber, Multi-objective design and optimization of district energy systems including
     polygeneration energy conversion technologies., PhD Thesis, EPFL
     """
-    CCGT_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="CCGT")
+    CCGT_cost_data = pd.read_excel(locator.get_database_supply_systems(), sheet_name="CCGT")
     technology_code = list(set(CCGT_cost_data['code']))
     CCGT_cost_data[CCGT_cost_data['code'] == technology_code[technology]]
+
     # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
     # capacity for the corresponding technology from the database
     if CC_size_W < CCGT_cost_data['cap_min'][0]:
         CC_size_W = CCGT_cost_data['cap_min'][0]
     CCGT_cost_data = CCGT_cost_data[
         (CCGT_cost_data['cap_min'] <= CC_size_W) & (CCGT_cost_data['cap_max'] > CC_size_W)]
+
+
+    #costs of connection
+    connection_costs = ngas.calc_Cinv_gas(CC_size_W)
 
     Inv_a = CCGT_cost_data.iloc[0]['a']
     Inv_b = CCGT_cost_data.iloc[0]['b']
@@ -463,8 +451,8 @@ def calc_Cinv_CCGT(CC_size_W, locator, config, technology=0):
 
     InvC = Inv_a + Inv_b * (CC_size_W) ** Inv_c + (Inv_d + Inv_e * CC_size_W) * log(CC_size_W)
 
-    Capex_a_CCGT_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-    Opex_fixed_CCGT_USD = Capex_a_CCGT_USD * Inv_OM
+    Capex_a_CCGT_USD = (InvC+connection_costs) * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+    Opex_fixed_CCGT_USD = InvC * Inv_OM
     Capex_CCGT_USD = InvC
 
     return Capex_a_CCGT_USD, Opex_fixed_CCGT_USD, Capex_CCGT_USD
@@ -479,7 +467,7 @@ def calc_Cinv_FC(P_design_W, locator, config, technology=0):
     :rtype InvCa: float
     :returns InvCa: annualized investment costs in CHF
     """
-    FC_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="FC")
+    FC_cost_data = pd.read_excel(locator.get_database_supply_systems(), sheet_name="FC")
     technology_code = list(set(FC_cost_data['code']))
     FC_cost_data[FC_cost_data['code'] == technology_code[technology]]
     # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
@@ -501,7 +489,7 @@ def calc_Cinv_FC(P_design_W, locator, config, technology=0):
     InvC = Inv_a + Inv_b * (P_design_W) ** Inv_c + (Inv_d + Inv_e * P_design_W) * log(P_design_W)
 
     Capex_a_FC_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-    Opex_fixed_FC_USD = Capex_a_FC_USD * Inv_OM
+    Opex_fixed_FC_USD = InvC * Inv_OM
     Capex_FC_USD = InvC
 
     return Capex_a_FC_USD, Opex_fixed_FC_USD, Capex_FC_USD

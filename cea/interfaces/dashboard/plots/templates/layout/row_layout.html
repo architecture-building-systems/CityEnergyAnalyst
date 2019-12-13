@@ -1,0 +1,94 @@
+{% extends "layout/layout_container.html" %}
+
+{% block layout %}
+
+{% for plot in dashboard.plots %}
+  <div class="row">
+    <div class="col-md-12 col-sm-12 col-xs-12">
+      <div class="x_panel cea-plot"
+           data-cea-plot-index="{{ loop.index0 }}"
+           data-cea-dashboard-index="{{ dashboard_index }}">
+        <div class="x_title">
+          <h2><a href="{{ url_for('plots_blueprint.route_plot', dashboard_index=dashboard_index, plot_index=loop.index0) }}" target="_blank">{{ plot.title }}</a></h2>
+          {% if plot.parameters['scenario-name'] %}
+            <small>{{ plot.parameters['scenario-name'] }}</small>
+          {% endif %}
+          <ul class="nav navbar-right panel_toolbox">
+            {% if not loop.first %}
+            <li>
+              <a href="{{ url_for('plots_blueprint.route_move_plot_up', dashboard_index=dashboard_index, plot_index=loop.index0) }}">
+                <span data-toggle="tooltip" title="Move plot up">
+                  <i class="fa fa-chevron-up"></i>
+                </span>
+              </a>
+            </li>
+            {% endif %}
+            {% if not loop.last %}
+            <li>
+              <a href="{{ url_for('plots_blueprint.route_move_plot_down', dashboard_index=dashboard_index, plot_index=loop.index0) }}">
+                <span data-toggle="tooltip" title="Move plot down">
+                  <i class="fa fa-chevron-down"></i>
+                </span>
+              </a>
+            </li>
+            {% endif %}
+            <li>
+              <a data-toggle="modal"
+                 data-dashboard-index="{{ dashboard_index }}" data-plot-index="{{ loop.index0 }}"
+                 data-target="#cea-dashboard-replace-plot">
+                <span data-toggle="tooltip" title="Change plot">
+                  <i class="fa fa-retweet"></i>
+                </span>
+              </a>
+            </li>
+            <li>
+              <a id="table-btn-{{ loop.index0 }}"
+                 data-plot-title="{{ plot.title }}" data-dashboard-index="{{ dashboard_index }}"
+                 data-plot-index="{{ loop.index0 }}"
+                 onclick="open_table(this)" role="button" aria-expanded="false" style="display: none">
+                <span data-toggle="tooltip" title="Show table">
+                  <i class="fa fa-table"></i>
+                </span>
+              </a>
+            </li>
+            <li class="dropdown">
+              <a data-toggle="modal"
+                 data-dashboard-index="{{ dashboard_index }}" data-plot-index="{{ loop.index0 }}"
+                 data-target="#cea-dashboard-edit-plot"
+                 role="button" aria-expanded="false">
+                <span data-toggle="tooltip" title="Edit plot parameters">
+                  <i class="fa fa-wrench"></i>
+                </span>
+              </a>
+            </li>
+            <li>
+              <a href="{{ url_for('plots_blueprint.route_remove_plot_from_dashboard', dashboard_index=dashboard_index,
+                  plot_index=loop.index0) }}">
+                <span data-toggle="tooltip" title="Remove plot">
+                  <i class="fa fa-close"></i>
+                </span>
+              </a>
+            </li>
+          </ul>
+          <div class="clearfix"></div>
+        </div>
+        <div class="x_content" id="x_content-{{ dashboard_index }}-{{ loop.index0 }}" style="height: 500px">
+          <p>Loading plot...</p>
+        </div>
+        <div class="x_content table-dialog" id="x_table-{{ dashboard_index }}-{{ loop.index0 }}" title="{{ plot.title }}"></div>
+      </div>
+    </div>
+  </div>
+{% else %}
+  <div class="row">
+    <div class="col-md-12 col-sm-12 col-xs-12">
+      <div class="x_panel cea-plot">
+        <div class="x_content">
+          <h3>No Plots found.</h3>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endfor %}
+  <a href="#" data-toggle="modal" data-target="#cea-dashboard-add-plot">Add plot...</a>
+{% endblock layout %}

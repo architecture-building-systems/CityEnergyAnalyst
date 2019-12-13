@@ -11,10 +11,12 @@ Subpackages
 
 .. toctree::
 
+    cea.interfaces.dashboard.api
     cea.interfaces.dashboard.base
     cea.interfaces.dashboard.inputs
     cea.interfaces.dashboard.landing
     cea.interfaces.dashboard.plots
+    cea.interfaces.dashboard.server
     cea.interfaces.dashboard.tools
 
 Submodules
