@@ -135,6 +135,7 @@ MOCK_MODULES = ['COLOR',
                 'tensorflow.py.keras',
                 'timezonefinder',
                 'vtk',
+                'wntr',
                 'xlrd',
                 'xlwt']
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
