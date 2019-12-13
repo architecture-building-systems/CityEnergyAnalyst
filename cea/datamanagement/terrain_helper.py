@@ -40,11 +40,11 @@ def request_elevation(lon, lat):
     return elevation
 
 
-def calc_bounding_box_projected_coordinates(shapefile_zone, shapefile_district):
+def calc_bounding_box_projected_coordinates(shapefile_zone, shapefile_surroundings):
 
-    #connect both files and avoid repetition
+    # connect both files and avoid repetition
     data_zone = Gdf.from_file(shapefile_zone)
-    data_dis = Gdf.from_file(shapefile_district)
+    data_dis = Gdf.from_file(shapefile_surroundings)
     data_dis = data_dis.loc[~data_dis["Name"].isin(data_zone["Name"])]
     data = data_dis.append(data_zone, ignore_index = True, sort=True)
     data = data.to_crs(get_geographic_coordinate_system())
@@ -68,17 +68,18 @@ def terrain_elevation_extractor(locator, config):
     grid_size = config.terrain_helper.grid_size
     extra_border = np.float32(30)  # adding extra 30 m to avoid errors of no data
     raster_path = locator.get_terrain()
+    locator.ensure_parent_folder_exists(raster_path)
 
     # get the bounding box coordinates
     assert os.path.exists(
-        locator.get_district_geometry()), 'Get district geometry file first or the coordinates of the area where' \
+        locator.get_surroundings_geometry()), 'Get surroundings geometry file first or the coordinates of the area where' \
                                           ' to extract the terrain from in the next format: lon_min, lat_min, lon_max, lat_max'
-    print("generating terrain from District area")
-    bounding_box_district_file, crs, lon, lat = calc_bounding_box_projected_coordinates(locator.get_district_geometry(), locator.get_zone_geometry())
-    x_min = bounding_box_district_file[0] - extra_border
-    y_min = bounding_box_district_file[1] - extra_border
-    x_max = bounding_box_district_file[2] + extra_border
-    y_max = bounding_box_district_file[3] + extra_border
+    print("generating terrain from Surroundings area")
+    bounding_box_surroundings_file, crs, lon, lat = calc_bounding_box_projected_coordinates(locator.get_surroundings_geometry(), locator.get_zone_geometry())
+    x_min = bounding_box_surroundings_file[0] - extra_border
+    y_min = bounding_box_surroundings_file[1] - extra_border
+    x_max = bounding_box_surroundings_file[2] + extra_border
+    y_max = bounding_box_surroundings_file[3] + extra_border
 
     # make sure output is a whole number when min-max is divided by grid size
     x_extra = grid_size - ((x_max - x_min) % grid_size)/2

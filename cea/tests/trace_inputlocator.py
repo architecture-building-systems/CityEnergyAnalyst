@@ -1,6 +1,7 @@
 """
 Trace the InputLocator calls in a selection of scripts.
 """
+
 import sys
 import os
 import cea.api
@@ -11,6 +12,15 @@ import cea.inputlocator
 import pandas
 import yaml
 from dateutil.parser import parse
+
+__author__ = "Daren Thomas & Jack Hawthorne"
+__copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Jack Hawthorne", "Daren Thomas"]
+__license__ = "MIT"
+__version__ = "2.14"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
 
 
 def create_trace_function(results_set):
@@ -83,11 +93,11 @@ def main(config):
     scripts = sorted(set([td[1] for td in trace_data]))
     config.restricted_to = None
 
-    meta_to_yaml(trace_data, config.trace_inputlocator.meta_output_file)
+    meta_to_yaml(config, trace_data, config.trace_inputlocator.meta_output_file)
     print 'Trace Complete'
 
 
-def meta_to_yaml(trace_data, meta_output_file):
+def meta_to_yaml(config, trace_data, meta_output_file):
 
     locator_meta = {}
 
@@ -100,35 +110,42 @@ def meta_to_yaml(trace_data, meta_output_file):
         'json': get_json_schema,
         'epw': get_epw_schema,
         'dbf': get_dbf_schema,
-        'shp': get_shp_schema
+        'shp': get_shp_schema,
+        'html': get_html_schema,
+        '': get_html_schema,
     }
 
-    for direction, script, locator_method, path, files in trace_data:
-        filename = os.path.join(cea.config.Configuration().__getattr__('scenario'), path, files)
-        file_type = os.path.basename(files).split('.')[1]
+    for direction, script, locator_method, folder_path, file_name in trace_data:
+        file_full_path = os.path.join(config.scenario, folder_path, file_name)
+        try:
+            file_type = os.path.basename(file_name).split('.')[1]
+        except IndexError:
+            file_type = ''
 
-
-
-        if os.path.isfile(filename):
+        if os.path.isfile(file_full_path):
             locator_meta[locator_method] = {}
             locator_meta[locator_method]['created_by'] = []
             locator_meta[locator_method]['used_by'] = []
-            locator_meta[locator_method]['schema'] = schema['%s' % file_type](filename)
-            locator_meta[locator_method]['file_path'] = filename
+            locator_meta[locator_method]['schema'] = schema['%s' % file_type](file_full_path)
+            locator_meta[locator_method]['file_path'] = file_full_path
             locator_meta[locator_method]['file_type'] = file_type
             locator_meta[locator_method]['description'] = eval('cea.inputlocator.InputLocator(cea.config).' + str(
-                    locator_method) + '.__doc__')
+                locator_method) + '.__doc__')
 
     #get the dependencies from trace_data
-    for direction, script, locator_method, path, files in trace_data:
-        outputs = set()
-        inputs = set()
+    for direction, script, locator_method, folder_path, file_name in trace_data:
+        file_full_path = os.path.join(config.scenario, folder_path, file_name)
+        if not os.path.isfile(file_full_path):
+            # not interested in folders
+            continue
         if direction == 'output':
-            outputs.add(script)
+            locator_meta[locator_method]['created_by'].append(script)
         if direction == 'input':
-            inputs.add(script)
-        locator_meta[locator_method]['created_by'] = list(outputs)
-        locator_meta[locator_method]['used_by'] = list(inputs)
+            locator_meta[locator_method]['used_by'].append(script)
+
+    for locator_method in locator_meta.keys():
+        locator_meta[locator_method]["created_by"] = list(locator_meta[locator_method]["created_by"])
+        locator_meta[locator_method]["used_by"] = list(locator_meta[locator_method]["used_by"])
 
     # merge existing data
     methods = sorted(set([lm[2] for lm in trace_data]))
@@ -162,6 +179,7 @@ def is_date(data):
             return True
         except ValueError:
             return False
+
 
 def replace_repetitive_attr(attr):
     scenario = cea.config.Configuration().__getattr__('scenario')
@@ -238,6 +256,7 @@ def get_csv_schema(filename):
         schema[attr.encode('ascii', 'ignore')] = get_meta(db[attr], attr)
     return schema
 
+
 def get_json_schema(filename):
     with open(filename, 'r') as f:
         import json
@@ -247,6 +266,7 @@ def get_json_schema(filename):
         attr = replace_repetitive_attr(attr)
         schema[attr.encode('ascii', 'ignore')] = get_meta(db[attr], attr)
     return schema
+
 
 def get_epw_schema(filename):
     epw_labels = ['year (index = 0)', 'month (index = 1)', 'day (index = 2)', 'hour (index = 3)',
@@ -297,6 +317,12 @@ def get_shp_schema(filename):
             meta['sample_data'] = '((x1 y1, x2 y2, ...))'
         schema[attr.encode('ascii', 'ignore')] = meta
     return schema
+
+
+def get_html_schema(_):
+    """We don't need to keep a schema of html files - these are outputs anyway"""
+    return None
+
 
 if __name__ == '__main__':
     main(cea.config.Configuration())

@@ -9,8 +9,6 @@ import os
 
 import pandas as pd
 import numpy as np
-
-import cea.globalvar
 import cea.inputlocator
 from geopandas import GeoDataFrame as gdf
 from cea.utilities import dbf
@@ -85,7 +83,7 @@ def retrofit_main(locator_baseline, retrofit_scenario_name, keep_partial_matches
     internal_loads = dbf.dbf_to_dataframe(locator_baseline.get_building_internal())
     internal_loads = internal_loads.loc[internal_loads['Name'].isin(zone_building_names)]
 
-    hvac = dbf.dbf_to_dataframe(locator_baseline.get_building_hvac())
+    hvac = dbf.dbf_to_dataframe(locator_baseline.get_building_air_conditioning())
     hvac = hvac.loc[hvac['Name'].isin(zone_building_names)]
 
     supply = dbf.dbf_to_dataframe(locator_baseline.get_building_supply())
@@ -199,13 +197,13 @@ def retrofit_scenario_creator(locator_baseline, locator_retrofit, geometry_df, a
 
 
     new_geometry.to_file(locator_retrofit.get_zone_geometry(), driver='ESRI Shapefile')
-    district = gdf.from_file(locator_baseline.get_district_geometry())
-    district.to_file(locator_retrofit.get_district_geometry())
+    district = gdf.from_file(locator_baseline.get_surroundings_geometry())
+    district.to_file(locator_retrofit.get_surroundings_geometry())
     dbf.dataframe_to_dbf(age.merge(data, on='Name'), locator_retrofit.get_building_age())
     dbf.dataframe_to_dbf(architecture.merge(data, on='Name'), locator_retrofit.get_building_architecture())
     dbf.dataframe_to_dbf(comfort.merge(data, on='Name'), locator_retrofit.get_building_comfort())
     dbf.dataframe_to_dbf(internal_loads.merge(data, on='Name'), locator_retrofit.get_building_internal())
-    dbf.dataframe_to_dbf(hvac.merge(data, on='Name'), locator_retrofit.get_building_hvac())
+    dbf.dataframe_to_dbf(hvac.merge(data, on='Name'), locator_retrofit.get_building_air_conditioning())
     dbf.dataframe_to_dbf(supply.merge(data, on='Name'), locator_retrofit.get_building_supply())
     dbf.dataframe_to_dbf(occupancy.merge(data, on='Name'), locator_retrofit.get_building_occupancy())
     shutil.copy2(locator_baseline.get_terrain(), locator_retrofit.get_terrain())

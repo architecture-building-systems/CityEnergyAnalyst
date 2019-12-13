@@ -912,9 +912,14 @@ a:focus {
 }
 footer {
     background: #fff;
-    padding: 15px 20px;
+    padding: 10px 20px;
     display: block
 }
+
+footer div {
+    font-size: 10px;
+}
+
 .nav-sm footer {
     margin-left: 70px
 }
@@ -4253,3 +4258,18 @@ table thead .checkbox.radio { margin-top:-7px;margin-top:-21px; }
     background-color: #ffff !important;
 }
 /** /bootstrap-datetimepicker **/
+
+#stack-trace {
+    width: 60%;
+    margin: auto;
+}
+
+ul.side-menu > li:nth-child(1) {
+    margin: 10px 10px 20px;
+}
+
+.autocomplete-suggestion {
+    font-size: inherit;
+    white-space: normal;
+    margin-bottom: 10px;
+}

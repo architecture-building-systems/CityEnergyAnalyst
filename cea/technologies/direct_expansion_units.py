@@ -35,8 +35,8 @@ def calc_cop_DX(Q_load_W):
 def calc_DX(mdot_kgpers, T_sup_K, T_re_K):
 
     if np.isclose(mdot_kgpers, 0.0):
-
-        wdot_W = 0
+        q_chw_W = 0.0
+        wdot_W = 0.0
     else:
         q_chw_W = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_re_K - T_sup_K)
 
@@ -44,7 +44,7 @@ def calc_DX(mdot_kgpers, T_sup_K, T_re_K):
 
         wdot_W = q_chw_W/cop_DX
 
-    return wdot_W
+    return wdot_W, q_chw_W
 
 
 # investment and maintenance costs
@@ -69,7 +69,7 @@ def calc_Cinv_DX(Q_design_W):
         Inv_OM = 5 / 100
 
         Capex_a_DX_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-        Opex_fixed_DX_USD = Capex_a_DX_USD * Inv_OM
+        Opex_fixed_DX_USD = InvC * Inv_OM
         Capex_DX_USD = InvC
 
     return Capex_a_DX_USD, Opex_fixed_DX_USD, Capex_DX_USD

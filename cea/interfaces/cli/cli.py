@@ -36,6 +36,8 @@ def main(config=None):
     if not config:
         config = cea.config.Configuration()
 
+    from cea import suppres_3rd_party_debug_loggers
+    suppres_3rd_party_debug_loggers()
 
     # handle arguments
     args = sys.argv[1:]  # drop the script name from the arguments
@@ -55,6 +57,9 @@ def main(config=None):
     config.save(cea.config.CEA_CONFIG)
 
     cea_script.print_script_configuration(config)
+    if list(cea_script.missing_input_files(config)):
+        cea_script.print_missing_input_files(config)
+        return
 
     script_module = importlib.import_module(cea_script.module)
     try:
@@ -73,7 +78,6 @@ def main(config=None):
 def print_help(config, remaining_args):
     """Print out the help message for the ``cea`` command line interface"""
     if remaining_args:
-        default_config = cea.config.Configuration(config_file=cea.config.DEFAULT_CONFIG)
         script_name = remaining_args[0]
         try:
             cea_script = cea.scripts.by_name(script_name)
@@ -88,7 +92,7 @@ def print_help(config, remaining_args):
         for _, parameter in config.matching_parameters(cea_script.parameters):
             print("--%s: %s" % (parameter.name, parameter.get()))
             print("    %s" % parameter.help)
-            print("    (default: %s)" % default_config.get(parameter.fqname))
+            print("    (default: %s)" % parameter.default)
     else:
         print("usage: cea SCRIPT [OPTIONS]")
         print("       to run a specific script")

@@ -1,10 +1,11 @@
 from flask import Blueprint, render_template, current_app, jsonify, request, redirect, url_for
-from . import worker
+import subprocess
 
 import cea.scripts
 import cea.inputlocator
 import cea.config
 import os
+import psutil
 
 blueprint = Blueprint(
     'tools_blueprint',
@@ -14,24 +15,58 @@ blueprint = Blueprint(
     static_folder='static',
 )
 
-
-@blueprint.route('/index')
-def index():
-    return render_template('index.html')
+# maintain a list of all subprocess.Popen objects created
+worker_processes = {}  # jobid -> subprocess.Popen
 
 
-@blueprint.route('/start/<script>', methods=['POST'])
-def route_start(script):
-    """Start a subprocess for the script. Store output in a queue - reference the queue by id. Return queue id.
-    (this can be the process id)"""
-    kwargs = {}
-    print('/start/%s' % script)
-    for parameter in parameters_for_script(script, current_app.cea_config):
-        print('%s: %s' % (parameter.name, request.form.get(parameter.name)))
-        kwargs[parameter.py_name] = parameter.decode(request.form.get(parameter.name))
-    print('/tools/start: kwargs=%s' % kwargs)
-    current_app.workers[script] = worker.main(script, **kwargs)
-    return jsonify(script)
+def shutdown_worker_processes():
+    """When shutting down the flask server, make sure any subprocesses are also terminated. See issue #2408."""
+    for jobid in worker_processes.keys():
+        kill_job(jobid)
+
+
+def kill_job(jobid):
+    """Kill the processes associated with a jobid"""
+    if not jobid in worker_processes:
+        return
+
+    popen = worker_processes[jobid]
+    # using code from here: https://stackoverflow.com/a/4229404/2260
+    # to terminate child processes too
+    print("killing child processes of {jobid} ({pid})".format(jobid=jobid, pid=popen.pid))
+    try:
+        process = psutil.Process(popen.pid)
+    except psutil.NoSuchProcess:
+        return
+    children = process.children(recursive=True)
+    for child in children:
+        print("-- killing child {pid}".format(pid=child.pid))
+        child.kill()
+    process.kill()
+    del worker_processes[jobid]
+
+
+@blueprint.route("/")
+def route_index():
+    return render_template("job_table.html")
+
+
+@blueprint.route("/workers", methods=["GET"])
+def route_workers():
+    """Return a list of worker processes"""
+    processes = []
+    for worker in worker_processes.values():
+        processes.append(worker.pid)
+        processes.extend(child.pid for child in psutil.Process(worker.pid).children(recursive=True))
+    return jsonify(sorted(processes))
+
+
+@blueprint.route('/start/<int:jobid>', methods=['POST'])
+def route_start(jobid):
+    """Start a ``cea-worker`` subprocess for the script. (FUTURE: add support for cloud-based workers"""
+    print("tools/route_start: {jobid}".format(**locals()))
+    worker_processes[jobid] = subprocess.Popen(["python", "-m", "cea.worker", "{jobid}".format(jobid=jobid)])
+    return jsonify(jobid)
 
 
 @blueprint.route('/save-config/<script>', methods=['POST'])
@@ -48,69 +83,13 @@ def route_save_config(script):
 def route_restore_defaults(script_name):
     """Restore the default configuration values for the CEA"""
     config = current_app.cea_config
-    default_config = cea.config.Configuration(config_file=cea.config.DEFAULT_CONFIG)
 
     for parameter in parameters_for_script(script_name, config):
         if parameter.name != 'scenario':
-            parameter.set(default_config.sections[parameter.section.name].parameters[parameter.name].get())
+            parameter.set(parameter.default)
     config.save()
 
     return redirect(url_for('tools_blueprint.route_tool', script_name=script_name))
-
-
-@blueprint.route('/echo', methods=['POST'])
-def route_echo():
-    """echo back the parameters"""
-    data = request.form
-    print(data)
-    return jsonify(data)
-
-
-@blueprint.route('/kill/<script>')
-def route_kill(script):
-    if not script in current_app.workers:
-        return jsonify(False)
-    worker, connection = current_app.workers[script]
-    worker.terminate()
-    return jsonify(True)
-
-
-@blueprint.route('/exitcode/<script>')
-def route_exitcode(script):
-    if not script in current_app.workers:
-        return jsonify(None)
-    worker, connection = current_app.workers[script]
-    return jsonify(worker.exitcode)
-
-
-@blueprint.route('/is-alive/<script>')
-def is_alive(script):
-    if not script in current_app.workers:
-        return jsonify(False)
-    worker, connection = current_app.workers[script]
-    return jsonify(worker.is_alive())
-
-
-@blueprint.route('/read/<script>')
-def read(script):
-    """Reads the next message as a json dict {stream: stdout|stderr, message: str}"""
-    if not script in current_app.workers:
-        return jsonify(None)
-    worker, connection = current_app.workers[script]
-    concatenated_message = ''
-    try:
-        while connection.poll(0):
-            stream, message = connection.recv()
-            concatenated_message += message
-        else:
-            if not len(concatenated_message):
-                # never got any data
-                return jsonify(None)
-    except (EOFError, IOError):
-        if len(concatenated_message):
-            return jsonify(dict(stream=stream, message=concatenated_message))
-        return jsonify(None)
-    return jsonify(dict(stream=stream, message=concatenated_message))
 
 
 @blueprint.route('/open-folder-dialog/<fqname>')
@@ -148,6 +127,7 @@ def route_open_folder_dialog(fqname):
     return render_template('folder_listing.html', current_folder=current_folder,
                            folders=folders, title=parameter.help, fqname=fqname,
                            parameter_name=parameter.name, breadcrumbs=breadcrumbs)
+
 
 @blueprint.route('/open-file-dialog/<fqname>')
 def route_open_file_dialog(fqname):
@@ -212,7 +192,7 @@ def route_tool(script_name):
             parameters.append(parameter)
 
     return render_template('tool.html', script=script, parameters=parameters, categories=categories,
-                           weather_dict=weather_dict)
+                           weather_dict=weather_dict, last_updated=dir_last_updated())
 
 
 def parameters_for_script(script_name, config):
@@ -220,3 +200,9 @@ def parameters_for_script(script_name, config):
     import cea.scripts
     parameters = [p for _, p in config.matching_parameters(cea.scripts.by_name(script_name).parameters)]
     return parameters
+
+
+def dir_last_updated():
+    return str(max(os.path.getmtime(os.path.join(root_path, f))
+               for root_path, dirs, files in os.walk(os.path.join(os.path.dirname(__file__), 'static'))
+               for f in files))

@@ -8,7 +8,7 @@ import numpy as np
 import scipy
 import cea.config
 from math import ceil
-from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
+from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3
 from cea.technologies.constants import DT_COOL, DT_HEAT, U_COOL, U_HEAT, \
     HEAT_EX_EFFECTIVENESS, DT_INTERNAL_HEX, MAX_NODE_FLOW
 
@@ -73,7 +73,7 @@ def substation_HEX_design_main(buildings_demands, substation_systems, thermal_ne
     return substations_HEX_specs, substations_Q
 
 
-def determine_building_supply_temperatures(building_names, locator, substation_systems):
+def determine_building_supply_temperatures(building_names, locator, substation_systems, delta_T_supply_return = 20):
     """
     determines thermal network target temperatures (T_supply_DH_C,T_supply_DC) on the network side at each substation.
     :param building_names:
@@ -138,6 +138,12 @@ def determine_building_supply_temperatures(building_names, locator, substation_s
         buildings_demands[name]['Q_substation_cooling'] = abs(Q_substation_cooling)
         buildings_demands[name]['T_sup_target_DH'] = T_supply_DH_C
         buildings_demands[name]['T_sup_target_DC'] = T_supply_DC_C
+
+        buildings_demands[name]['T_re_target_DH'] = T_supply_DH_C - delta_T_supply_return
+        buildings_demands[name]['T_re_target_DC'] = T_supply_DC_C + delta_T_supply_return
+
+        buildings_demands[name]['V_substation_heating_m3pers'] = (buildings_demands[name]['Q_substation_heating'] * 1000 / (delta_T_supply_return  * HEAT_CAPACITY_OF_WATER_JPERKGK)) / P_WATER_KGPERM3
+        buildings_demands[name]['V_substation_cooling_m3pers'] = (buildings_demands[name]['Q_substation_cooling'] * 1000 / (delta_T_supply_return  * HEAT_CAPACITY_OF_WATER_JPERKGK)) / P_WATER_KGPERM3
 
     return buildings_demands
 
@@ -277,7 +283,7 @@ def substation_return_model_main(thermal_network, T_substation_supply, t, consum
         T_substation_supply_K = T_substation_supply.loc['T_supply', name]
 
         if thermal_network.network_type == 'DH':
-            for key in thermal_network.config.thermal_network.substation_heating_systems:
+            for key in thermal_network.substation_heating_systems:
                 key = 'hs_' + key
                 if not name in thermal_network.ch_old[key][t].columns:
                     thermal_network.ch_old[key][t][name] = 0.0
@@ -288,7 +294,7 @@ def substation_return_model_main(thermal_network, T_substation_supply, t, consum
                                                                       thermal_network.substations_HEX_specs.ix[name],
                                                                       thermal_network, name, t)
         else:
-            for key in thermal_network.config.thermal_network.substation_cooling_systems:
+            for key in thermal_network.substation_cooling_systems:
                 key = 'cs_' + key
                 if not name in thermal_network.cc_old[key][t].columns:
                     thermal_network.cc_old[key][t][name] = 0.0
@@ -849,7 +855,8 @@ def main(config):
     network_type = config.thermal_network.network_type
     network_name = ''
     file_type = config.thermal_network.file_type
-    thermal_network = ThermalNetwork(locator, network_type, network_name, file_type, config)
+    temperature_control = 'VT'
+    thermal_network = ThermalNetwork(locator, network_type, network_name, file_type, temperature_control, config)
 
     t = 1000  # FIXME
     T_DH = 60  # FIXME

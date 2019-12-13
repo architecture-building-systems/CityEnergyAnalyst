@@ -32,7 +32,8 @@ def epw_reader(weather_path):
     result['date'] = pd.Series(pd.date_range(str(result["year"][0])+"/1/1", periods=HOURS_IN_YEAR, freq='H'))
     result['dayofyear'] = pd.date_range(str(result["year"][0])+"/1/1", periods=HOURS_IN_YEAR, freq='H').dayofyear
     result['ratio_diffhout'] = result['difhorrad_Whm2'] / result['glohorrad_Whm2']
-    result['skycover'] = result['ratio_diffhout'].fillna(1)
+    result['ratio_diffhout'] = result['ratio_diffhout'].replace(np.inf, np.nan)
+    result['skycover'] = result['ratio_diffhout'].fillna(result['ratio_diffhout'].mean())
     result['wetbulb_C'] = np.vectorize(calc_wetbulb)(result['drybulb_C'], result['relhum_percent'])
     result['skytemp_C'] = np.vectorize(calc_skytemp)(result['drybulb_C'], result['dewpoint_C'], result['skycover'])
 
@@ -57,8 +58,7 @@ def calc_wetbulb(Tdrybulb, RH):
 def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     # for the interface, the user should pick a file out of of those in ...DB/Weather/...
-    weather_path = locator.get_default_weather()
-    epw_reader(weather_path=weather_path)
+    epw_reader(weather_path=(locator.get_weather_file()))
 
 
 if __name__ == '__main__':

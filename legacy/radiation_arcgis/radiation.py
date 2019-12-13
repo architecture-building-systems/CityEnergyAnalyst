@@ -18,7 +18,6 @@ from cea.utilities.standardize_coordinates import get_geographic_coordinate_syst
 from geopandas import GeoDataFrame as gdf
 from legacy.arcgis import arcpy
 from cea.utilities import epwreader
-import cea.globalvar
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2013, Architecture and Building Systems - ETH Zurich"
@@ -136,7 +135,7 @@ def simplify_building_geometries(locator, simple_context_shp, simple_cq_shp):
     dem_raster_extent = elevRaster.extent
     arcpy.SimplifyBuilding_cartography(locator.get_zone_geometry(), simple_cq_shp,
                                        simplification_tolerance=7, minimum_area=None)
-    arcpy.SimplifyBuilding_cartography(locator.get_district_geometry(), simple_context_shp,
+    arcpy.SimplifyBuilding_cartography(locator.get_surroundings_geometry(), simple_context_shp,
                                        simplification_tolerance=7, minimum_area=None)
     return dem_raster_extent
 

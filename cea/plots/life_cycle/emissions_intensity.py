@@ -22,7 +22,7 @@ class EmissionsIntensityPlot(cea.plots.life_cycle.LifeCycleAnalysisPlotBase):
 
     @property
     def layout(self):
-        return go.Layout(title=self.title, barmode='stack',
+        return go.Layout(barmode='stack',
                          yaxis=dict(title='Green House Gas Emissions per GFA [kg CO2-eq/m2.yr]'),
                          xaxis=dict(title='Building Name'))
 

@@ -38,10 +38,10 @@ def plot_main(locator, config):
     """
     # local variables
     buildings = config.plots.buildings
-    weather = config.weather
+    weather_path = locator.get_weather_file()
 
     # initialize class
-    plots = Plots(locator, buildings, weather, config)
+    plots = Plots(locator, buildings, weather_path, config)
     category = "basic//solar-technologies"
     # create plots
     # if len(buildings) == 1:  # when only one building is passed.

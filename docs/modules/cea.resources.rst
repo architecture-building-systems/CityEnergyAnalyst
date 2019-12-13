@@ -24,14 +24,6 @@ cea.resources.geothermal module
     :undoc-members:
     :show-inheritance:
 
-cea.resources.lake\_potential module
-------------------------------------
-
-.. automodule:: cea.resources.lake_potential
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 cea.resources.natural\_gas module
 ---------------------------------
 
@@ -44,6 +36,14 @@ cea.resources.sewage\_heat\_exchanger module
 --------------------------------------------
 
 .. automodule:: cea.resources.sewage_heat_exchanger
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.resources.water\_body\_potential module
+-------------------------------------------
+
+.. automodule:: cea.resources.water_body_potential
     :members:
     :undoc-members:
     :show-inheritance:

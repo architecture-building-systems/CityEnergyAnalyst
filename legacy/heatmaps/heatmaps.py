@@ -7,7 +7,6 @@ import os
 import pandas as pd
 
 import cea.inputlocator
-import cea.globalvar
 import cea.config
 from cea.interfaces.arcgis.modules import arcpy
 

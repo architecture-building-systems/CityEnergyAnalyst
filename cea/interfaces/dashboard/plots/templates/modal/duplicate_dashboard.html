@@ -1,0 +1,29 @@
+<div class="modal-header">
+  <button type="button" class="close cea-modal-close" data-dismiss="modal"><span aria-hidden="true">×</span>
+  </button>
+  <h3 class="modal-title">Duplicate Dashboard</h3>
+</div>
+
+<div class="modal-body">
+  <form id="cea-new-dashboard" class="form-horizontal" method="post" action="duplicate/{{ dashboard_index }}">
+    <div class="form-group">
+      <label class="control-label col-md-3 col-sm-3 col-xs-12" for="dashboard-name">Name</label>
+      <div class="col-md-6 col-sm-6 col-xs-12">
+        <input type="text" id="dashboard-name" name="name" value="{{ dashboard_name }}(Copy)" required
+               class="form-control col-md-7 col-xs-12">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="control-label col-md-3 col-sm-3 col-xs-12" for="dashboard-description">Description</label>
+      <div class="col-md-6 col-sm-6 col-xs-12">
+        <input type="text" id="dashboard-description" name="description" value="{{ dashboard_description }}"
+               class="form-control col-md-7 col-xs-12">
+      </div>
+    </div>
+    <br>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      <button type="submit" class="btn btn-default">Copy</button>
+    </div>
+  </form>
+</div>

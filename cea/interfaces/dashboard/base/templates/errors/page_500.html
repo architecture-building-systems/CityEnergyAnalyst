@@ -16,20 +16,11 @@
       <div class="text-center text-center">
         <h1 class="error-number">500</h1>
         <h2>Internal Server Error</h2>
-        <p>We track these errors automatically, but if the problem persists feel free to contact us. In the meantime, try refreshing. <a href="#">Report this?</a>
+        <p>Oops! Seems like there might be a bug in the program.
+          <a href="https://github.com/architecture-building-systems/CityEnergyAnalyst/issues">Report this?</a>
         </p>
-        <div class="mid_center">
-          <h3>Search</h3>
-          <form>
-            <div class="col-xs-12 form-group pull-right top_search">
-              <div class="input-group">
-                <input type="text" class="form-control" placeholder="Search for...">
-                <span class="input-group-btn">
-                        <button class="btn btn-default" type="button">Go!</button>
-                    </span>
-              </div>
-            </div>
-          </form>
+        <div id="stack-trace">
+          <pre style="text-align: left">{{ error }}</pre>
         </div>
       </div>
     </div>

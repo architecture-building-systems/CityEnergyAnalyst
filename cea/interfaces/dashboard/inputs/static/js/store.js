@@ -4,6 +4,7 @@ class InputStore {
         this.geojsons = store['geojsons'];
         this.columns = store['columns'];
         this.column_types = store['column_types'];
+        this.glossary = store['glossary'];
         this.crs = store['crs'];
         this.changes = {update:{},delete:{}};
 
@@ -48,15 +49,16 @@ class InputStore {
         return features.findIndex(x => x['properties']['Name'] === building);
     }
 
-    // TODO: Process change here, remove change if same as default
     addChange(method, table, building, column, value) {
         var change = {[column]:value};
         if (method === 'update') {
             //Check if update is the same as default
             if (this.tables[table][building][column] === value) {
-                delete this.changes[method][table][building][column];
-                if (!Object.keys(this.changes[method][table][building]).length) {
-                    delete this.changes[method][table][building];
+                if (this._checkNestedProp(this.changes, method, table, building, column)) {
+                    delete this.changes[method][table][building][column];
+                    if (!Object.keys(this.changes[method][table][building]).length) {
+                        delete this.changes[method][table][building];
+                    }
                 }
             } else {
                 this.changes[method][table] = this.changes[method][table] || {};
@@ -65,33 +67,33 @@ class InputStore {
             }
             console.log(this.changes);
         }
-
+        window.parent.postMessage(true, '*');
     }
 
     changesToString() {
         var out = '';
 
         if (!$.isEmptyObject(this.changes['update'])) {
-            out += '\nUPDATED:\n';
+            out += '<br>UPDATED:<br>';
             $.each(this.changes['update'], function (table, buildings) {
-                out += `${table}:\n`;
+                out += `${table}:<br>`;
                 $.each(buildings, function (name, properties) {
                     out += `${name}: `;
                     $.each(properties, function (property, value) {
                         out += `${property}:${value} `;
                     });
-                    out += '\n';
+                    out += '<br>';
                 });
-                out += '\n';
+                out += '<br>';
             });
         }
 
         if (!$.isEmptyObject(this.changes['delete'])) {
-            out += '\nDELETED:\n';
+            out += '<br>DELETED:<br>';
             $.each(this.changes['delete'], function (layer, buildings) {
-                out += `${layer}:\n${buildings}\n\n`;
+                out += `${layer}:<br>${buildings}<br>`;
             });
-            out += '\n';
+            out += '<br>';
         }
 
         return out;
@@ -112,21 +114,29 @@ class InputStore {
         });
     }
 
-    // TODO: Remove buidling from changes if being deleted
     deleteBuildings(layer, buildings) {
         this.changes['delete'][layer] = this.changes['delete'][layer] || [];
         this.changes['delete'][layer].push(...buildings);
         var _this = this;
         $.each(buildings, function (_, building) {
-            if (layer === 'district') {
+            if (layer === 'surroundings') {
                 _this.data[layer] = _this.data[layer].filter(x => x['Name'] !== building);
             } else {
                 $.each(_this.data, function (table_name, table) {
-                    if (table_name !== 'district') {
+                    if (table_name !== 'surroundings') {
                         _this.data[table_name] = table.filter(x => x['Name'] !== building);
                     }
                 });
             }
+
+            // Remove building from changes if being deleted
+            $.each(Object.keys(_this.tables), function (_, table) {
+                if (_this.changes['update'][table]) {
+                    delete _this.changes['update'][table][building];
+                    if (!Object.keys(_this.changes['update'][table]).length) delete _this.changes['update'][table];
+                }
+            });
+
             _this.geojsondata[layer]['features'] = _this.geojsondata[layer]['features'].filter(x => x['properties']['Name'] !== building);
         });
         this.geojsondata = JSON.parse(JSON.stringify(this.geojsondata));
@@ -136,6 +146,8 @@ class InputStore {
         this.changes = {update:{},delete:{}};
         this.generateData();
         this.generateGeojsonData();
+
+        window.parent.postMessage(false, '*');
     }
 
     applyChanges(data) {
@@ -159,5 +171,11 @@ class InputStore {
         }
 
         this.resetChanges();
+    }
+
+    _checkNestedProp(obj, level,  ...rest) {
+        if (obj === undefined) return false;
+        if (rest.length === 0 && obj.hasOwnProperty(level)) return true;
+        return this._checkNestedProp(obj[level], ...rest)
     }
 }

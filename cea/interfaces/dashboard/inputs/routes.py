@@ -6,6 +6,9 @@ import geopandas
 import yaml
 import os
 import json
+import pandas
+
+from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile, get_projected_coordinate_system
 
 
 blueprint = Blueprint(
@@ -25,6 +28,8 @@ def read_inputs_field_types():
         'float': float,
         'str': str,
         'year': int,
+        'choice': str,
+        'date': str
     }
 
     for db in inputs.keys():
@@ -70,22 +75,31 @@ def route_geojson_streets():
 
 @blueprint.route('/building-properties', methods=['GET'])
 def route_get_building_properties():
+    import cea.plots
+    import cea.glossary
+
+    div = request.args.get('div', default=False)
+
     # FIXME: Find a better way to ensure order of tabs
-    tabs = ['zone','age','occupancy','architecture','internal-loads','supply-systems','district','restrictions']
+    tabs = ['zone','age','occupancy','architecture','internal-loads', 'indoor-comfort', 'air-conditioning-systems',  'supply-systems', 'surroundings']
 
     locator = cea.inputlocator.InputLocator(current_app.cea_config.scenario)
-    store = {'tables': {}, 'geojsons': {}, 'columns': {}, 'column_types': {}, 'crs': {}}
+    store = {'tables': {}, 'geojsons': {}, 'columns': {}, 'column_types': {}, 'crs': {}, 'glossary': {}}
+    glossary = cea.glossary.read_glossary_df()
     for db in INPUTS:
         db_info = INPUTS[db]
         location = getattr(locator, db_info['location'])()
         try:
             if db_info['type'] == 'shp':
-                table_df = geopandas.GeoDataFrame.from_file(location)
-                store['crs'][db] = table_df.crs
-                from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
+
+                from cea.utilities.standardize_coordinates import shapefile_to_WSG_and_UTM, get_geographic_coordinate_system
+                table_df, lat, lon = shapefile_to_WSG_and_UTM(location)
+
+                # save projected coordinate system
+                store['crs'][db] = get_projected_coordinate_system(lat, lon)
+
                 store['geojsons'][db] = json.loads(table_df.to_crs(get_geographic_coordinate_system()).to_json(show_bbox=True))
 
-                import pandas
                 table_df = pandas.DataFrame(table_df.drop(columns='geometry'))
                 if 'REFERENCE' in db_info['fieldnames'] and 'REFERENCE' not in table_df.columns:
                     table_df['REFERENCE'] = None
@@ -99,15 +113,20 @@ def route_get_building_properties():
 
             store['columns'][db] = db_info['fieldnames']
             store['column_types'][db] = {k: v.__name__ for k, v in db_info['fieldtypes'].items()}
+
+            filenames = glossary['FILE_NAME'].str.split(pat='/').str[-1]
+            store['glossary'].update(json.loads(glossary[filenames == '%s.%s' % (db.replace('-','_'), db_info['type'])]
+                                                [['VARIABLE', 'UNIT', 'DESCRIPTION']].set_index('VARIABLE').to_json(orient='index')))
+
         except IOError as e:
             print(e)
             store['tables'][db] = {}
-    return render_template('table.html', store=store, tabs=tabs, last_updated=dir_last_updated())
+    return render_template('table.html' if not div else 'input_editor_electron.html',
+                           store=store, tabs=tabs, last_updated=dir_last_updated())
 
 
 @blueprint.route('/building-properties', methods=['POST'])
 def route_save_building_properties():
-    import pandas
     data = request.get_json()
     changes = data['changes']
     tables = data['tables']
