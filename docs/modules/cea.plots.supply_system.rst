@@ -41,6 +41,14 @@ cea.plots.supply\_system.grid\_ramping\_capacity module
     :undoc-members:
     :show-inheritance:
 
+cea.plots.supply\_system.installed\_capacities module
+-----------------------------------------------------
+
+.. automodule:: cea.plots.supply_system.installed_capacities
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cea.plots.supply\_system.requirements\_curve\_electricity module
 ----------------------------------------------------------------
 
