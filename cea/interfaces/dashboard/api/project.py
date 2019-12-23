@@ -10,6 +10,8 @@ from staticmap import StaticMap, Polygon
 from shapely.geometry import shape
 
 import cea.inputlocator
+import cea.api
+import cea.config
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 
 api = Namespace('Project', description='Current project for CEA')
@@ -102,18 +104,15 @@ class Scenarios(Resource):
     def post(self):
         """Create new scenario"""
         config = current_app.cea_config
+        temp_config = cea.config.Configuration()
         payload = api.payload
+        scenario_path = os.path.join(temp_config.project, payload['name'])
 
         # Make sure that the scenario folder exists
         try:
-            os.makedirs(os.path.join(config.project, payload['name']))
+            os.makedirs(scenario_path)
         except OSError as e:
             print(e.message)
-
-        config.scenario_name = payload['name']
-        config.save()
-
-        scenario_path = config.scenario
 
         locator = cea.inputlocator.InputLocator(scenario_path)
 
@@ -161,7 +160,7 @@ class Scenarios(Resource):
                         calculate_occupancy_file(zone_df, 'Get it from open street maps', locator.get_building_occupancy())
 
         elif payload['input-data'] == 'copy':
-            source_scenario = os.path.join(config.project, payload['copy-scenario'])
+            source_scenario = os.path.join(temp_config.project, payload['copy-scenario'])
             shutil.copytree(cea.inputlocator.InputLocator(source_scenario).get_input_folder(),
                             locator.get_input_folder())
 
@@ -177,17 +176,17 @@ class Scenarios(Resource):
                         locator.ensure_parent_folder_exists(site_path)
                         site.to_file(site_path)
                         print('site.shp file created at %s' % site_path)
-                        cea.api.zone_helper(config)
+                        cea.api.zone_helper(temp_config, scenario=scenario_path)
                     elif tool == 'surroundings':
-                        cea.api.surroundings_helper(config)
+                        cea.api.surroundings_helper(temp_config, scenario=scenario_path)
                     elif tool == 'surroundings':
-                        cea.api.surroundings_helper(config)
+                        cea.api.surroundings_helper(temp_config, scenario=scenario_path)
                     elif tool == 'streets':
-                        cea.api.streets_helper(config)
+                        cea.api.streets_helper(temp_config, scenario=scenario_path)
                     elif tool == 'terrain':
-                        cea.api.terrain_helper(config)
+                        cea.api.terrain_helper(temp_config, scenario=scenario_path)
                     elif tool == 'weather':
-                        cea.api.weather_helper(config)
+                        cea.api.weather_helper(temp_config, scenario=scenario_path)
 
         return {'scenarios': config.get_parameter('general:scenario-name')._choices}
 
