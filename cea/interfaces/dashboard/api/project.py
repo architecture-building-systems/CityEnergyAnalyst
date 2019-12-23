@@ -48,7 +48,7 @@ class Project(Resource):
             config.scenario_name = ''
             config.save()
         return {'name': name, 'path': config.project, 'scenario': config.scenario_name,
-                'scenarios': config.get_parameter('general:scenario-name')._choices}
+                'scenarios': get_scenarios_from_project(config)}
 
     @api.doc(body=PROJECT_PATH_MODEL, responses={200: 'Success', 400: 'Invalid Path given'})
     def put(self):
@@ -69,7 +69,7 @@ class Project(Resource):
 
         if 'scenario' in payload:
             scenario = payload['scenario']
-            choices = config.get_parameter('general:scenario-name')._choices
+            choices = get_scenarios_from_project(config)
             if scenario in choices:
                 config.scenario_name = scenario
                 config.save()
@@ -200,12 +200,13 @@ def check_scenario_exists(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         config = current_app.cea_config
-        choices = config.get_parameter('general:scenario-name')._choices
+        choices = get_scenarios_from_project(config)
         if kwargs['scenario'] not in choices:
             abort(400, 'Scenario does not exist', choices=choices)
         else:
             return func(*args, **kwargs)
     return wrapper
+
 
 # FIXME: Potential Issue. Need to check if the scenario being deleted/renamed is running in scripts.
 @api.route('/scenario/<string:scenario>')
@@ -242,7 +243,7 @@ class Scenario(Resource):
                 config.scenario_name = ''
                 config.save()
             shutil.rmtree(scenario_path)
-            return {'scenarios': config.get_parameter('general:scenario-name')._choices}
+            return {'scenarios': get_scenarios_from_project(config)}
         except WindowsError:
             abort(400, 'Make sure that the scenario you are trying to delete is not open in any application. '
                        'Try and refresh the page again.')
@@ -252,7 +253,7 @@ class Scenario(Resource):
 class ScenarioImage(Resource):
     def get(self, scenario):
         config = current_app.cea_config
-        choices = config.get_parameter('general:scenario-name')._choices
+        choices = get_scenarios_from_project(config)
         if scenario in choices:
             locator = cea.inputlocator.InputLocator(os.path.join(config.project, scenario))
             zone_path = locator.get_zone_geometry()
@@ -296,4 +297,8 @@ class ScenarioImage(Resource):
             abort(400, 'Zone file not found')
         else:
             abort(400, 'Scenario does not exist', choices=choices)
+
+
+def get_scenarios_from_project(config):
+    return config.get_parameter('general:scenario-name')._choices
 
