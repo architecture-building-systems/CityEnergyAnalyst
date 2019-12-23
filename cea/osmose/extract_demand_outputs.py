@@ -62,7 +62,7 @@ N_m_ve_max = 3
 # SS553_lps_m2 = 0.6
 
 
-def extract_cea_outputs_to_osmose_main(case, timesteps, season, specified_buildings):
+def extract_cea_outputs_to_osmose_main(case, timesteps, season, specified_buildings, problem_type='building'):
 
     # GET start_t
     start_t, end_t, op_time, periods, timesteps = get_timesteps_info(case, season, timesteps)
@@ -172,8 +172,11 @@ def extract_cea_outputs_to_osmose_main(case, timesteps, season, specified_buildi
         ## WRITE OUTPUTS
         # output a set of off coil temperatures for oau
         generate_oau_temperature_sets(building, output_hcs, reduced_demand_df)
-        output_building.T.to_csv(path_to_osmose_project_bui(building), header=False)
-        output_hcs.T.to_csv(path_to_osmose_project_hcs(building, 'hcs'), header=False)
+        if problem_type == 'building':
+            output_building.T.to_csv(path_to_osmose_project_bui(building), header=False)
+            output_hcs.T.to_csv(path_to_osmose_project_hcs(building, 'hcs'), header=False)
+        else:
+            return output_building, output_hcs
 
         # output_df.loc[:, 'Mf_air_kg'] = output_df['Vf_m3']*calc_rho_air(24)
 
