@@ -120,44 +120,49 @@ class Scenarios(Resource):
             files = payload['files']
 
             if files is not None:
-                # since we're creating a new scenario, go ahead and and make sure we have
-                # the folders _before_ we try copying to them
-                locator.ensure_parent_folder_exists(locator.get_zone_geometry())
-                locator.ensure_parent_folder_exists(locator.get_terrain())
-                locator.ensure_parent_folder_exists(locator.get_building_age())
-                locator.ensure_parent_folder_exists(locator.get_building_occupancy())
-                locator.ensure_parent_folder_exists(locator.get_street_network())
+                try:
+                    # since we're creating a new scenario, go ahead and and make sure we have
+                    # the folders _before_ we try copying to them
+                    locator.ensure_parent_folder_exists(locator.get_zone_geometry())
+                    locator.ensure_parent_folder_exists(locator.get_terrain())
+                    locator.ensure_parent_folder_exists(locator.get_building_age())
+                    locator.ensure_parent_folder_exists(locator.get_building_occupancy())
+                    locator.ensure_parent_folder_exists(locator.get_street_network())
 
-                if 'zone' in files:
-                    for filename in glob_shapefile_auxilaries(files['zone']):
-                        shutil.copy(filename, locator.get_building_geometry_folder())
-                if 'surroundings' in files:
-                    for filename in glob_shapefile_auxilaries(files['surroundings']):
-                        shutil.copy(filename, locator.get_building_geometry_folder())
-                if 'surroundings' in files:
-                    for filename in glob_shapefile_auxilaries(files['surroundings']):
-                        shutil.copy(filename, locator.get_building_geometry_folder())
-                if 'terrain' in files:
-                    shutil.copyfile(files['terrain'], locator.get_terrain())
-                if 'streets' in files:
-                    shutil.copyfile(files['streets'], locator.get_street_network())
+                    if 'zone' in files:
+                        for filename in glob_shapefile_auxilaries(files['zone']):
+                            shutil.copy(filename, locator.get_building_geometry_folder())
+                    if 'surroundings' in files:
+                        for filename in glob_shapefile_auxilaries(files['surroundings']):
+                            shutil.copy(filename, locator.get_building_geometry_folder())
+                    if 'surroundings' in files:
+                        for filename in glob_shapefile_auxilaries(files['surroundings']):
+                            shutil.copy(filename, locator.get_building_geometry_folder())
+                    if 'terrain' in files:
+                        shutil.copyfile(files['terrain'], locator.get_terrain())
+                    if 'streets' in files:
+                        shutil.copyfile(files['streets'], locator.get_street_network())
 
-                from cea.datamanagement.zone_helper import calculate_age_file, calculate_occupancy_file
-                if 'age' in files and files['age'] != '':
-                    shutil.copyfile(files['age'], locator.get_building_age())
-                elif 'zone' in files:
-                    zone_df = geopandas.read_file(files['zone'])
-                    calculate_age_file(zone_df, None, locator.get_building_age())
+                    from cea.datamanagement.zone_helper import calculate_age_file, calculate_occupancy_file
+                    if 'age' in files and files['age'] != '':
+                        shutil.copyfile(files['age'], locator.get_building_age())
+                    elif 'zone' in files:
+                        zone_df = geopandas.read_file(files['zone'])
+                        calculate_age_file(zone_df, None, locator.get_building_age())
 
-                if 'occupancy' in files and files['occupancy'] != '':
-                    shutil.copyfile(files['occupancy'], locator.get_building_occupancy())
-                elif 'zone' in files:
-                    zone_df = geopandas.read_file(files['zone'])
-                    if 'category' not in zone_df.columns:
-                        # set 'MULTI_RES' as default
-                        calculate_occupancy_file(zone_df, 'MULTI_RES', locator.get_building_occupancy())
-                    else:
-                        calculate_occupancy_file(zone_df, 'Get it from open street maps', locator.get_building_occupancy())
+                    if 'occupancy' in files and files['occupancy'] != '':
+                        shutil.copyfile(files['occupancy'], locator.get_building_occupancy())
+                    elif 'zone' in files:
+                        zone_df = geopandas.read_file(files['zone'])
+                        if 'category' not in zone_df.columns:
+                            # set 'MULTI_RES' as default
+                            calculate_occupancy_file(zone_df, 'MULTI_RES', locator.get_building_occupancy())
+                        else:
+                            calculate_occupancy_file(zone_df, 'Get it from open street maps', locator.get_building_occupancy())
+                except Exception as e:
+                    import traceback
+                    trace = traceback.format_exc()
+                    return {'message': e.message, 'trace': trace}, 500
 
         elif payload['input-data'] == 'copy':
             source_scenario = os.path.join(temp_config.project, payload['copy-scenario'])
@@ -168,27 +173,31 @@ class Scenarios(Resource):
             tools = payload['tools']
             if tools is not None:
                 for tool in tools:
-                    if tool == 'zone':
-                        # FIXME: Setup a proper endpoint for site creation
-                        site = geopandas.GeoDataFrame(crs=get_geographic_coordinate_system(),
-                                                      geometry=[shape(payload['geojson']['features'][0]['geometry'])])
-                        site_path = locator.get_site_polygon()
-                        locator.ensure_parent_folder_exists(site_path)
-                        site.to_file(site_path)
-                        print('site.shp file created at %s' % site_path)
-                        cea.api.zone_helper(temp_config, scenario=scenario_path)
-                    elif tool == 'surroundings':
-                        cea.api.surroundings_helper(temp_config, scenario=scenario_path)
-                    elif tool == 'surroundings':
-                        cea.api.surroundings_helper(temp_config, scenario=scenario_path)
-                    elif tool == 'streets':
-                        cea.api.streets_helper(temp_config, scenario=scenario_path)
-                    elif tool == 'terrain':
-                        cea.api.terrain_helper(temp_config, scenario=scenario_path)
-                    elif tool == 'weather':
-                        cea.api.weather_helper(temp_config, scenario=scenario_path)
+                    try:
+                        if tool == 'zone':
+                            # FIXME: Setup a proper endpoint for site creation
+                            site = geopandas.GeoDataFrame(crs=get_geographic_coordinate_system(),
+                                                          geometry=[shape(payload['geojson']['features'][0]['geometry'])])
+                            site_path = locator.get_site_polygon()
+                            locator.ensure_parent_folder_exists(site_path)
+                            site.to_file(site_path)
+                            print('site.shp file created at %s' % site_path)
+                            cea.api.zone_helper(temp_config, scenario=scenario_path)
+                        elif tool == 'surroundings':
+                            cea.api.surroundings_helper(temp_config, scenario=scenario_path)
+                        elif tool == 'streets':
+                            cea.api.streets_helper(temp_config, scenario=scenario_path)
+                        elif tool == 'terrain':
+                            cea.api.terrain_helper(temp_config, scenario=scenario_path)
+                        elif tool == 'weather':
+                            cea.api.weather_helper(temp_config, scenario=scenario_path)
+                    except Exception as e:
+                        import traceback
+                        trace = traceback.format_exc()
+                        return {'message': '{}_helper: {}'.format(tool, e.message), 'trace': trace}, 500
 
-        return {'scenarios': config.get_parameter('general:scenario-name')._choices}
+        return {'scenarios': get_scenarios_from_project(config)}
+
 
 def glob_shapefile_auxilaries(shapefile_path):
     """Returns a list of files in the same folder as ``shapefile_path``, but allows for varying extensions.
