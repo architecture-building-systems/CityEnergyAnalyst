@@ -22,7 +22,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def validation(locator, archetypes):  # confirm what goes in parenthesis here
+def validation(locator):
     """
     This tool compares observed (real life measured data) and predicted (output of the model data) values.
     Annual data is compared in terms of MBE and monthly data in terms of NMBE and CvRMSE (follwing ASHRAE Guideline 14-2002).
@@ -31,8 +31,8 @@ def validation(locator, archetypes):  # confirm what goes in parenthesis here
     """
 
     # type of validation to run (select only the ones that have a corresponding csv in the inputs folder)
-    annual = True
-    monthly = False
+    annual = False
+    monthly = True
     load = 'GRID'
 
     ## annual validation
@@ -111,7 +111,7 @@ def main(config):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(config.scenario)
 
-    validation(locator, config.scenario)
+    validation(locator)
 
 
 if __name__ == '__main__':

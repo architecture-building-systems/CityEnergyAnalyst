@@ -65,25 +65,8 @@ def calibration(locator, config):  # confirm what goes in parenthesis here
     df_comfort = dataframe_to_dbf(df_comfort, locator.get_building_comfort())
 
     ## run building schedules and energy demand (first run)
-    schedule_maker.schedule_maker_main()
-
-    # def main(config):
-    #     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
-    #     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    #     print('Running demand calculation for scenario %s' % config.scenario)
-    #     print('Running demand calculation with dynamic infiltration=%s' %
-    #           config.demand.use_dynamic_infiltration_calculation)
-    #     print('Running demand calculation with multiprocessing=%s' % config.multiprocessing)
-    #     if config.debug:
-    #         print('Running demand in debug mode: Instant visulaization of tsd activated.')
-    #         print('Running demand calculation with write detailed output')
-    #
-    #     if not radiation_files_exist(config, locator):
-    #         raise ValueError("Missing radiation data in scenario. Consider running radiation script first.")
-    #
-    #     demand_calculation(locator=locator, config=config)
-
-    # demand_main.demand_calculation(locator, config)
+    schedule_maker.schedule_maker_main(locator, config, building=None)
+    demand_main.demand_calculation(locator, config)
 
     # annual = True
     # monthly = False
@@ -165,7 +148,7 @@ def main(config):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(config.scenario)
 
-    calibration(locator, config.scenario)
+    calibration(locator, config)
 
 
 if __name__ == '__main__':
