@@ -1,8 +1,9 @@
 import hashlib
 
-from flask import current_app
+from flask import current_app, request
 from flask_restplus import Namespace, Resource
 
+import cea.config
 import cea.plots.cache
 from utils import deconstruct_parameters
 
@@ -23,13 +24,30 @@ def dashboard_to_dict(dashboard):
     return out
 
 
-def get_plot_parameters(config, plot_class):
+def get_plot_parameters(plot_class, scenario=None):
+    config = cea.config.Configuration()
+    print(scenario)
     parameters = []
-    for pname, fqname in plot_class.expected_parameters.items():
+    plot_parameters = sorted(plot_class.expected_parameters.items(), key=lambda x: x[1])
+    # Make sure to set scenario name to config first
+    if 'scenario-name' in [parameter[0] for parameter in plot_parameters]:
+        if scenario:
+            config.scenario_name = scenario
+        elif hasattr(plot_class, 'parameters') and 'scenario-name' in plot_class.parameters:
+            config.scenario_name = plot_class.parameters['scenario-name']
+    for pname, fqname in plot_parameters:
         parameter = config.get_parameter(fqname)
-        if hasattr(plot_class, 'parameters') and pname in plot_class.parameters:
-            parameter.set(plot_class.parameters[pname])
+        # skip setting 'scenario-name'
+        if pname != 'scenario-name' and hasattr(plot_class, 'parameters') and pname in plot_class.parameters:
+            try:
+                parameter.set(plot_class.parameters[pname])
+            # FIXME: Create and use a custom exception instead
+            except AssertionError as e:
+                if isinstance(parameter, cea.config.MultiChoiceParameter):
+                    parameter.set([])
+                print(e)
         parameters.append(deconstruct_parameters(parameter))
+    print(parameters)
     return parameters
 
 
@@ -133,10 +151,8 @@ class DashboardPlotCategoriesParameters(Resource):
     Get Plot Form Parameters from Config
     """
     def get(self, category_name, plot_id):
-        config = current_app.cea_config
         plot_class = cea.plots.categories.load_plot_by_id(category_name, plot_id)
-
-        return get_plot_parameters(config, plot_class)
+        return get_plot_parameters(plot_class, request.args.get('scenario'))
 
 
 @api.route('/<int:dashboard_index>/plots/<int:plot_index>')
@@ -157,6 +173,7 @@ class DashboardPlot(Resource):
         """
         form = api.payload
         config = current_app.cea_config
+        temp_config = cea.config.Configuration()
         plot_cache = cea.plots.cache.PlotCache(config)
         dashboards = cea.plots.read_dashboards(config, plot_cache)
         dashboard = dashboards[dashboard_index]
@@ -167,9 +184,12 @@ class DashboardPlot(Resource):
         # Set parameters if included in form and plot exists
         if 'parameters' in form:
             plot = dashboard.plots[plot_index]
-            print('expected_parameters: {}'.format(plot.expected_parameters.items()))
-            for pname, fqname in plot.expected_parameters.items():
-                parameter = config.get_parameter(fqname)
+            plot_parameters = plot.expected_parameters.items()
+            if 'scenario-name' in [parameter[0] for parameter in plot_parameters]:
+                temp_config.scenario_name = form['parameters']['scenario-name']
+            print('expected_parameters: {}'.format(plot_parameters))
+            for pname, fqname in plot_parameters:
+                parameter = temp_config.get_parameter(fqname)
                 if isinstance(parameter, cea.config.MultiChoiceParameter):
                     plot.parameters[pname] = parameter.decode(','.join(form['parameters'][pname]))
                 else:
@@ -207,7 +227,7 @@ class DashboardPlotParameters(Resource):
         dashboard = dashboards[dashboard_index]
         plot = dashboard.plots[plot_index]
 
-        return get_plot_parameters(config, plot)
+        return get_plot_parameters(plot, request.args.get('scenario'))
 
 
 @api.route('/<int:dashboard_index>/plots/<int:plot_index>/input-files')
