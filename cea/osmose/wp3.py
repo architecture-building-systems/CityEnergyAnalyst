@@ -5,7 +5,9 @@ from geopandas import GeoDataFrame as Gdf
 from simpledbf import Dbf5
 from cea.osmose.extract_demand_outputs import extract_cea_outputs_to_osmose_main, path_to_osmose_project_bui, \
     path_to_osmose_project_hcs
-
+from cea.osmose.wp1 import write_string_to_txt
+from cea.osmose import settings
+osmose_project_data_path = settings.osmose_project_data_path
 
 def extract_demand_output_district_to_osmose(path_to_district_folder, timesteps, season, specified_building):
 
@@ -14,25 +16,33 @@ def extract_demand_output_district_to_osmose(path_to_district_folder, timesteps,
     occupancy_df = occupancy_df.set_index('Name')
     # calculate Af
     geometry_df = calc_Af(path_to_district_folder)
+    # gather all info in district_df
+    district_df = occupancy_df[['HOTEL', 'OFFICE', 'RETAIL']]
+    district_df['Af_m2'] = geometry_df['Af']
+    path_to_district_demand_folder = os.path.join(path_to_district_folder, 'outputs\\data\\demand\\')
+    district_df.to_csv(os.path.join(path_to_district_demand_folder, 'building_info.csv'))
+    write_string_to_txt(os.path.join(path_to_district_demand_folder, 'district_cooling_demand.csv'),
+                        osmose_project_data_path, 'path_to_district_demand.txt')
     # calculate Af per function
     Af_per_function = {}
     for function in ['HOTEL', 'OFFICE', 'RETAIL']:
         buildings = occupancy_df[function][occupancy_df[function]==1].index
         Af_per_function[function[:3]] = geometry_df['Af'][buildings].sum()
 
-    # read building function
+
+    # write outputs for each funciton (input parameters to osmose)
     for case in ['WTP_CBD_m_WP1_OFF', 'WTP_CBD_m_WP1_HOT', 'WTP_CBD_m_WP1_RET']:
         output_building, output_hcs = extract_cea_outputs_to_osmose_main(case, timesteps, season, specified_building,
                                                                          problem_type='district')
         # get file and extrapolate
         building_Af_m2 = output_hcs['Af_m2'][0]
         multiplication_factor = Af_per_function[case.split('_')[4]] / building_Af_m2
-        ## output_building
+        ## output_building (scaled to Af)
         columns_with_scalar_values = [column for column in output_building.columns if 'Tww' not in column]
         scalar_df = output_building[columns_with_scalar_values] * multiplication_factor
         output_building.update(scalar_df)
         output_building.T.to_csv(path_to_osmose_project_bui('B_' + case.split('_')[4]), header=False) # save files
-        ## output_hcs
+        ## output_hcs (scaled to Af)
         columns_with_scalar_values = [column for column in output_hcs.columns
                                if ('v_' in column or 'V_' in column or 'm_' in column or 'M_' in column or
                                    'Af_m2' in column or 'Vf_m3' in column)]
@@ -80,5 +90,5 @@ if __name__ == '__main__':
     path_to_district_folder = 'C:\\SG_cases\\SDC'
     timesteps = 24
     season = 'Summer'
-    specified_building = ["B006"]
+    specified_building = []
     extract_demand_output_district_to_osmose(path_to_district_folder, timesteps, season, specified_building)
