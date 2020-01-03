@@ -405,45 +405,6 @@ def calc_m_exhaust_from_CO2(CO2_room, CO2_ext, CO2_gain_m3pers, rho_air):
     m_exhaust_kgpers = CO2_gain_m3pers * rho_air / (CO2_room - CO2_ext)
     return m_exhaust_kgpers
 
-
-##  Paths (TODO: connected with cea.config and inputLocator)
-
-
-def path_to_demand_output(building_name, case):
-    path_to_file = {}
-    path_to_folder = 'C:\\CEA_cases\\HCS_cases_all\\%s\\outputs\\data\\demand' % case
-    path_to_file['csv'] = os.path.join(path_to_folder, '%s.%s' % (building_name, 'csv'))
-    path_to_file['xls'] = os.path.join(path_to_folder, '%s.%s' % (building_name, 'xls'))
-    return path_to_file
-
-
-def path_to_total_demand(case):
-    path_to_folder = 'C:\\CEA_cases\\HCS_cases_all\\%s\\outputs\\data\\demand' % case
-    path_to_file = os.path.join(path_to_folder, 'Total_demand.%s' % ('csv'))
-    return path_to_file
-
-
-def path_to_osmose_project_bui(building_name):
-    format = 'csv'
-    path_to_folder = settings.osmose_project_data_path
-    path_to_file = os.path.join(path_to_folder, '%s_from_cea.%s' % (building_name, format))
-    return path_to_file
-
-
-def path_to_osmose_project_hcs(building_name, extension):
-    format = 'csv'
-    path_to_folder = settings.osmose_project_data_path
-    path_to_file = os.path.join(path_to_folder, '%s_from_cea_%s.%s' % (building_name, extension, format))
-    return path_to_file
-
-
-def path_to_osmose_project_inputT(number):
-    format = 'csv'
-    path_to_folder = settings.osmose_project_data_path
-    path_to_file = os.path.join(path_to_folder, 'input_T%s.%s' % (number, format))
-    return path_to_file
-
-
 def get_start_t(case, timesteps, season):
     """
     WTP: 5/16: 3240, Average Annual 7/30-8/5: 5040-5207
@@ -483,6 +444,41 @@ def get_RH_limits_assumptions(case):
 
     return RH_max, RH_min
 
+##  Paths (TODO: connected with cea.config and inputLocator)
+def path_to_demand_output(building_name, case):
+    path_to_file = {}
+    path_to_folder = 'C:\\CEA_cases\\HCS_cases_all\\%s\\outputs\\data\\demand' % case
+    path_to_file['csv'] = os.path.join(path_to_folder, '%s.%s' % (building_name, 'csv'))
+    path_to_file['xls'] = os.path.join(path_to_folder, '%s.%s' % (building_name, 'xls'))
+    return path_to_file
+
+def path_to_total_demand(case):
+    path_to_folder = 'C:\\CEA_cases\\HCS_cases_all\\%s\\outputs\\data\\demand' % case
+    path_to_file = os.path.join(path_to_folder, 'Total_demand.%s' % ('csv'))
+    return path_to_file
+
+def path_to_district_df(case):
+    path_to_folder = 'C:\\CEA_cases\\HCS_cases_all\\%s\\outputs\\data\\demand' % case
+    path_to_file = os.path.join(path_to_folder, 'Total_demand.%s' % ('csv'))
+    return path_to_file
+
+def path_to_osmose_project_bui(building_name):
+    format = 'csv'
+    path_to_folder = settings.osmose_project_data_path
+    path_to_file = os.path.join(path_to_folder, '%s_from_cea.%s' % (building_name, format))
+    return path_to_file
+
+def path_to_osmose_project_hcs(building_name, extension):
+    format = 'csv'
+    path_to_folder = settings.osmose_project_data_path
+    path_to_file = os.path.join(path_to_folder, '%s_from_cea_%s.%s' % (building_name, extension, format))
+    return path_to_file
+
+def path_to_osmose_project_inputT(number):
+    format = 'csv'
+    path_to_folder = settings.osmose_project_data_path
+    path_to_file = os.path.join(path_to_folder, 'input_T%s.%s' % (number, format))
+    return path_to_file
 
 def path_to_typical_days_files(case, name, cluster_numbers):
     format = 'csv'
