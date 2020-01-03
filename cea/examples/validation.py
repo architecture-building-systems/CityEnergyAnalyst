@@ -43,13 +43,13 @@ def validation(locator, archetypes):  # confirm what goes in parenthesis here
         annual_measured_data = pd.read_csv(locator.get_annual_measurements())
 
         # extract model output
-        annual_modelled_data = pd.read_csv(locator.get_demand_results_file())
+        annual_modelled_data = pd.read_csv(locator.get_total_demand())
 
         # mege the datasets
         merged_annual = annual_modelled_data.merge(annual_measured_data, how='inner',
                                                    on='Name', suffixes=('_model','_measured'))  # extract the modelled buildings that have a corresponding Name (Building ID) simulated by CEA
         annual_modelled_demand = merged_annual[load+'_MWhyr'+'_model']
-        annual_measured_demand = merged_annual[load+'_Mwhyr'+'_measured']
+        annual_measured_demand = merged_annual[load+'_MWhyr'+'_measured']
 
         # calculate errors
         biased_error_annual_data = ((annual_modelled_demand - annual_measured_demand) / annual_measured_demand) * 100
