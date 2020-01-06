@@ -117,9 +117,14 @@ def water_exergy_pyromat(T_water_C, T_ref_C):
     ex_water_0 = water.h(T_ref_K)[0] - T_ref_K*water.s(T_ref_K)[0]
     return ex_water
 
-
-
-
+def calc_Ex_Qc_T1_T2(Qc, T1, T2, T_ref_C):
+    T_ref_K = T_ref_C + 273.15
+    T1_K = T1 + 273.15
+    carnot_T1 = 1 - T_ref_K/T1_K
+    T2_K = T2 + 273.15
+    carnot_T2 = 1 - T2_K / T1_K
+    Ex_Qc = abs((carnot_T1 + carnot_T2) * Qc / 2.0)
+    return Ex_Qc
 
 def calc_Ex_Qc(Qc, T_RA_C, T_ref_C):
     T_ref_K = T_ref_C + 273.15

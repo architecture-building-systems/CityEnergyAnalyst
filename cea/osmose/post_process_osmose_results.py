@@ -4,6 +4,7 @@ import os
 import matplotlib.pyplot as plt
 import matplotlib.patches
 from cea.osmose.auxiliary_functions import calc_h_from_T_w
+from cea.osmose.exergy_functions import calc_Ex_Qc_T1_T2
 
 DETAILED_PLOTS = True
 
@@ -39,6 +40,7 @@ def main(run_folder_path):
     ## Calculation
     # exergy
     exergy_req, exergy_reheat_req = calc_exergy(balance_df, output_df, run_folder_path)
+    exergy_LD_OAU = calc_exergy_LD_OAU(output_df) if 'LD' in run_folder_path else 0.0
     exergy_recovered_df = calc_exergy_recovered(streams_df, output_df)
     # Q
     Qsc_dict = calc_Qsc_room(output_df, Q_sen_in_df, Q_sen_out_df, run_folder_path)
@@ -63,6 +65,7 @@ def main(run_folder_path):
                   'air in ratio': air_in_ratio,
                   'OAU cooling eff': OAU_cooling_eff,
                   'exergy_kWh': exergy_req,
+                  'exergy_LD_kWh': exergy_LD_OAU,
                   'exergy_reheat_kWh': exergy_reheat_req,
                   'exergy_recovered_kWh': exergy_recovered_df['total'],
                   'electricity_kWh': el_usages,
@@ -90,6 +93,14 @@ def main(run_folder_path):
     total_df.to_csv(os.path.join(run_folder_path, 'total.csv'))
 
     return
+
+def calc_exergy_LD_OAU(output_df):
+    Qc = output_df['Q_LD_de'].values
+    T1 = output_df['T_OAU_OA1'].values
+    T2 = output_df['T_OAU_SA'].values
+    T_ref = output_df['T_OA'].values
+    Ex = np.vectorize(calc_Ex_Qc_T1_T2)(Qc, T1, T2, T_ref)
+    return Ex
 
 
 def calc_exergy_recovered(stream_df, output_df):
@@ -578,16 +589,16 @@ if __name__ == '__main__':
     ## Loop through different technologies
 
     # result_path_folder = "E:\\HCS_results_1022\\HCS_base_m_out_dP"
-    # result_path_folder = 'E:\\OSMOSE_projects\\HCS_mk\\results'
-    result_path_folder = 'E:\\results_1130\\'
+    result_path_folder = 'E:\\OSMOSE_projects\\HCS_mk\\results'
+    # result_path_folder = 'E:\\results_1130\\'
     # TECHS = ['HCS_base', 'HCS_base_coil', 'HCS_base_3for2', 'HCS_base_ER0', 'HCS_base_IEHX', 'HCS_base_LD']
-    TECHS = ['HCS_base']
+    TECHS = ['HCS_base_LD']
 
     for tech in TECHS:
         tech_folder_path = os.path.join(result_path_folder, tech)
         folders_list = os.listdir(tech_folder_path)
-        # for folder in folders_list:
-        for folder in ['run_003_OFF_B005_1_168']:
+        for folder in folders_list:
+        # for folder in ['run_015']:
             if 'run' in folder:
                 folder_path = os.path.join(tech_folder_path, folder)
                 file_list = os.listdir(folder_path)
