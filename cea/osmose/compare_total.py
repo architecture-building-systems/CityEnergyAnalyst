@@ -15,28 +15,34 @@ T_LIST = [8.1, 8.75, 9.4, 10.05, 10.7, 11.35, 12., 12.65, 13.3, 13.95]
 
 
 def main():
-    # main_folder = 'E:\\OSMOSE_projects\\HCS_mk\\results'
-    main_folder = 'E:\\HCS_results_1015\\base'
-    techs = ['HCS_base', 'HCS_base_coil', 'HCS_base_3for2', 'HCS_base_ER0', 'HCS_base_IEHX', 'HCS_base_LD']
-    # techs = ['HCS_base_coil', 'HCS_base_3for2']
+    main_folder = 'E:\\OSMOSE_projects\\HCS_mk\\results'
+    # main_folder = 'E:\\HCS_results_1015\\base'
+    # techs = ['HCS_base', 'HCS_base_coil', 'HCS_base_3for2', 'HCS_base_ER0', 'HCS_base_IEHX', 'HCS_base_LD']
+    techs = ['HCS_base_LD']
     totals_dict = read_total_csv(main_folder, techs)
 
     for case_name in totals_dict.keys():
-        all_cop_dict, all_ex_dict, all_cooling_eff = {}, {}, {}
+        all_cop_dict, all_el_dict, all_ex_dict, all_cooling_eff = {}, {}, {}, {}
         for building_name in totals_dict[case_name].keys():
-            all_cop_dict[building_name], all_ex_dict[building_name], all_cooling_eff[building_name] = {}, {}, {}
+            all_cop_dict[building_name], all_el_dict[building_name], \
+            all_ex_dict[building_name], all_cooling_eff[building_name] = {}, {}, {}, {}
             OAU_T_Qc_dict, RAU_T_Qc_dict = {}, {}
             for tech in totals_dict[case_name][building_name].keys():
                 total_file = totals_dict[case_name][building_name][tech]
+                multiplication_factor = 8760/(total_file.shape[0]-1)
                 # exergy
-                exergy_total_kWh = total_file['exergy_kWh'].iloc[-1]
+                exergy_LD_kWh = total_file['exergy_LD_kWh'].iloc[-1] if 'exergy_LD_kWh' in total_file.columns else 0.0
+                exergy_total_kWh = total_file['exergy_kWh'].iloc[-1] + exergy_LD_kWh
                 Af_m2 = total_file['Af_m2'].iloc[1]
-                all_ex_dict[building_name][tech] = exergy_total_kWh*52/Af_m2
+                all_ex_dict[building_name][tech] = exergy_total_kWh*multiplication_factor/Af_m2
                 # COP
                 el_total = total_file['electricity_kWh'].iloc[-1]
                 Qsc_total = total_file['Qsc_total'].iloc[-1]
                 COP = Qsc_total / el_total
                 all_cop_dict[building_name][tech] = COP
+                # el
+                el_total = total_file['electricity_kWh'].iloc[-1]
+                all_el_dict[building_name][tech] = el_total*multiplication_factor/Af_m2
                 # Qsc/Qc
                 Qsc_total_kWh = total_file['Qsc_total'].iloc[-1]
                 Qc_coil_total_kWh = total_file['Qc_coil_total'].iloc[-1]
@@ -58,6 +64,9 @@ def main():
         ## DISTRICT
         # plot COP
         plot_setting = {'ytick_values': 'flexible', 'ylabel': 'COP [-]', 'name': 'COP'}
+        plot_scatter_all_dictrict(all_cop_dict, {}, main_folder, case_name, plot_setting)
+        # plot Electricity Consumption
+        plot_setting = {'ytick_values': 'flexible', 'ylabel': 'El [kWh/m2/yr]', 'name': 'electricity'}
         plot_scatter_all_dictrict(all_cop_dict, {}, main_folder, case_name, plot_setting)
         # plot EX
         plot_setting = {'ytick_values': 'flexible', 'ylabel': 'exergy [kWh/m2/yr]', 'name':'exergy'}
