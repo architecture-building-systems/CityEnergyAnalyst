@@ -94,7 +94,10 @@ def validation(locator):
             cvrmse = rmse * 100 / monthly_data['measurements'].mean()  # coefficient of variation of the root mean squared error (%)
             print(cvrmse)
 
-    pass
+            # if nmbe <30
+            # pass nmbe
+
+    return nmbe
 
 
 def main(config):

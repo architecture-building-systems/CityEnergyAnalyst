@@ -13,6 +13,11 @@ from cea.demand.schedule_maker import schedule_maker
 from cea.examples import validation
 import numpy as np
 from scipy.optimize import minimize
+from hyperopt import hp
+from collections import OrderedDict
+from sklearn.linear_model import LogisticRegression
+import hyperopt.pyll
+from hyperopt.pyll import scope
 import pandas as pd
 from sklearn.metrics import mean_squared_error
 from math import sqrt
@@ -27,7 +32,57 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-def calibration(locator, config):  # confirm what goes in parenthesis here
+# define a search space
+SPACE = OrderedDict([('Es', hp.uniform('Es', 0.6, 1.0)),
+                     ('Ns', hp.uniform('subsample', 0.7, 1.0)),
+                     ('Occ_m2pax', hp.uniform('Occ_m2pax', 30.0, 60.0)),
+                     ('Vww_lpdpax', hp.uniform('Vww_lpdpax', 20.0, 40.0)),
+                     ('Ea_Wm2', hp.uniform('Ea_Wm2', 1.0, 5.0)),
+                    ('El_Wm2', hp.uniform('El_Wm2', 1.0, 5.0))
+                    ])
+
+SPACE2 = hp.choice('classifier_type', [
+
+                    ('Es', hp.uniform('Es', 0.6, 1.0)),
+                     ('Ns', hp.uniform('subsample', 0.7, 1.0)),
+                     ('Occ_m2pax', hp.uniform('Occ_m2pax', 30.0, 60.0)),
+                     ('Vww_lpdpax', hp.uniform('Vww_lpdpax', 20.0, 40.0)),
+                     ('Ea_Wm2', hp.uniform('Ea_Wm2', 1.0, 5.0)),
+                    ('El_Wm2', hp.uniform('El_Wm2', 1.0, 5.0))
+                    ])
+
+space = hp.choice('classifier',[
+                      {
+                       'model': LogisticRegression,
+                       'param':
+                         {
+                             'hyper_param_groups' :hp.choice('hyper_param_groups',
+                                             [
+                                                {
+                                                 'penalty':hp.choice('penalty_block1', ['l2']),
+                                                 'solver':hp.choice('solver_block1', ['newton-cg', 'sag', 'saga', 'lbfgs']),
+                                                 'multi_class':hp.choice('multi_class', ['ovr', 'multinomial']),
+                                                },
+                                                {
+                                                 'penalty':hp.choice('penalty_block2', ['l2']),
+                                                 'solver':hp.choice('solver_block2', ['liblinear']),
+                                                 'multi_class':hp.choice('multi_class_block2', ['ovr']),
+                                                },
+                                                {
+                                                 'penalty':hp.choice('penalty_block3', ['l1']),
+                                                 'solver':hp.choice('solver_block3', ['saga']),
+                                                 'multi_class':hp.choice('multi_class_block3', ['ovr', 'multinomial']),
+                                                },
+                                             ]),
+                            'dual':hp.choice('dual', [False]),
+                            'class_weight':hp.choice('class_weight', ['balanced', None]),
+                            'random_state':hp.choice('random_state', [10,267]),
+                            'max_iter':hp.choice('max_iter', [100,500]),
+                            'verbose':hp.choice('verbose', [0])
+                         }
+                      }])
+
+def calibration(locator, config):
     """
     This tool reduces the error between observed (real life measured data) and predicted (output of the model data) values by changing some of CEA inputs.
     Annual data is compared in terms of MBE and monthly data in terms of NMBE and CvRMSE (follwing ASHRAE Guideline 14-2002).
@@ -73,15 +128,12 @@ def calibration(locator, config):  # confirm what goes in parenthesis here
 
     ## define function to be minimized
 
-    def rosen(x):
-        return sum(100.0 * (x[1:] - x[:-1] ** 2.0) ** 2.0 + (1 - x[:-1]) ** 2.0)
+    # def objective(params):
+    #     all_params = {**params, **STATIC_PARAMS}
+    #     score = -1.0 * train_evaluate(X, y, all_params)
+    #     monitor_callback(params, score)
+    #     return score
 
-    ## run optimization algorithm
-    x0 = np.array([Es, Ns, Occ_m2pax, Vww_lpdpax, Ea_Wm2, El_Wm2])
-    print(x0)
-    res = minimize(rosen, x0, method='nelder-mead',
-                   options={'xatol': 1e-8, 'disp': True})
-    print(res.x)
 
     pass
 

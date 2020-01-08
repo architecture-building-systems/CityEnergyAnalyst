@@ -13,6 +13,7 @@ from cea.demand.schedule_maker import schedule_maker
 from cea.examples import validation
 import numpy as np
 from scipy.optimize import minimize
+from hyperopt import hp
 import pandas as pd
 from sklearn.metrics import mean_squared_error
 from math import sqrt
@@ -26,6 +27,13 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
+
+# define a search space
+space = hp.choice('a',
+    [
+        ('case 1', 1 + hp.lognormal('c1', 0, 1)),
+        ('case 2', hp.uniform('c2', -10, 10))
+    ])
 
 def calibration(locator, config):  # confirm what goes in parenthesis here
     """
