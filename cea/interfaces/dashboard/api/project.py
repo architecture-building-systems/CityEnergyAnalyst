@@ -165,9 +165,13 @@ class Scenarios(Resource):
                     return {'message': e.message, 'trace': trace}, 500
 
         elif payload['input-data'] == 'copy':
-            source_scenario = os.path.join(temp_config.project, payload['copy-scenario'])
-            shutil.copytree(cea.inputlocator.InputLocator(source_scenario).get_input_folder(),
-                            locator.get_input_folder())
+            try:
+                os.makedirs(scenario_path)
+                source_scenario = os.path.join(temp_config.project, payload['copy-scenario'])
+                shutil.copytree(cea.inputlocator.InputLocator(source_scenario).get_input_folder(),
+                                locator.get_input_folder())
+            except OSError as e:
+                print(e.message)
 
         elif payload['input-data'] == 'generate':
             tools = payload['tools']
