@@ -44,7 +44,7 @@ def main(run_folder_path):
     exergy_recovered_df = calc_exergy_recovered(streams_df, output_df)
     # Q
     Qsc_dict = calc_Qsc_room(output_df, Q_sen_in_df, Q_sen_out_df, run_folder_path)
-    Qsc_total_theoretical = calc_Qsc_theoretical(output_df)
+    Qsc_total_theoretical, SHR_theoretical = calc_Qsc_theoretical(output_df)
     Q_chiller_total, Q_r_chiller_total, Q_coil_dict,\
     Q_reheat_dict, Q_exhaust = calc_Q_heat_cascade(run_folder_path, output_df, streams_df)
     # cooling efficiency
@@ -73,6 +73,7 @@ def main(run_folder_path):
                   'Q_r_chiller_kWh': Q_r_chiller_total,
                   'Q_exhaust_kWh': Q_exhaust,
                   'Qsc_theoretical': Qsc_total_theoretical,
+                  'SHR_theoretical': SHR_theoretical,
                   'Af_m2': output_df['Af_m2']}
     for key in ['SU_Qh', 'SU_Qh_reheat', 'SU_qt_hot']:
         if output_df[key].sum() != 0.0 :
@@ -95,8 +96,8 @@ def main(run_folder_path):
     return
 
 def calc_exergy_LD_OAU(output_df):
-    Qc = output_df['Q_LD_de'].values
-    T1 = output_df['T_OAU_OA1'].values
+    Qc = output_df['Q_LD_HP'].values
+    T1 = np.where(output_df['T_OAU_OA1']>=output_df['T_OA'], output_df['T_OA'] - 0.1, output_df['T_OAU_OA1'])
     T2 = output_df['T_OAU_SA'].values
     T_ref = output_df['T_OA'].values
     Ex = np.vectorize(calc_Ex_Qc_T1_T2)(Qc, T1, T2, T_ref)
@@ -295,18 +296,19 @@ def draw_T_chw_pie(Q_df, name, folder_path):
 
 
 def calc_Qsc_room(output_df, Q_sen_in_df, Q_sen_out_df, folder_path):
-    Qsc_OAU_OUT = output_df.filter(like='Qsc_OAU_OUT').sum(axis=1)
-    Qsc_OAU_IN = output_df.filter(like='Qsc_OAU_IN').sum(axis=1)
-    Qsc_OAU = Qsc_OAU_OUT - Qsc_OAU_IN
-    Qsc_RAU = output_df.filter(like='Qsc_RAU_OUT').sum(axis=1) - output_df.filter(like='Qsc_RAU_IN').sum(axis=1)
-    Qsc_SCU = output_df.filter(like='Qsc_SCU').sum(axis=1)
-    Qsc_total = Qsc_OAU + Qsc_RAU + Qsc_SCU
-
     # Qsc
     m_a_inf = output_df['m_a_in_inf'].astype('float').round(4)
     m_a_out = output_df.filter(like='m_a_out').sum(axis=1).round(4)
     ratio_exclude_inf = (1.0 - m_a_inf/m_a_out).round(3)
+
+    Qsc_OAU_OUT = output_df.filter(like='Qsc_OAU_OUT').sum(axis=1)
+    Qsc_OAU_IN = output_df.filter(like='Qsc_OAU_IN').sum(axis=1)
+    Qsc_OAU = Qsc_OAU_OUT - Qsc_OAU_IN
     Qsc_OAU_exclude_inf = Qsc_OAU_OUT * ratio_exclude_inf - Qsc_OAU_IN
+    Qsc_RAU = output_df.filter(like='Qsc_RAU_OUT').sum(axis=1) - output_df.filter(like='Qsc_RAU_IN').sum(axis=1)
+    Qsc_SCU = output_df.filter(like='Qsc_SCU').sum(axis=1)
+
+
 
     # plot
     if DETAILED_PLOTS:
@@ -323,7 +325,7 @@ def calc_Qsc_room(output_df, Q_sen_in_df, Q_sen_out_df, folder_path):
     OAU_Qsc_sen_out = Q_sen_out_df.filter(like='hcs').sum(axis=1) * ratio_exclude_inf
     OAU_Qsc_sen_in = Q_sen_in_df.filter(like='hcs').sum(axis=1)
     Qsc_dict['OAU_Qsc_sen'] = OAU_Qsc_sen_out.round(4) - OAU_Qsc_sen_in.round(4)
-    Qsc_dict['OAU_Qsc_lat'] = Qsc_OAU - Qsc_dict['OAU_Qsc_sen']
+    Qsc_dict['OAU_Qsc_lat'] = Qsc_OAU_exclude_inf - Qsc_dict['OAU_Qsc_sen']
     Qsc_dict['RAU_Qsc_sen']= Q_sen_out_df.filter(like='rau').sum(axis=1) - Q_sen_in_df.filter(like='rau').sum(axis=1)
     Qsc_dict['RAU_Qsc_lat'] = Qsc_RAU - Qsc_dict['RAU_Qsc_sen']
     Qsc_dict['SCU_Qsc_sen'] = Q_sen_out_df.filter(like='scu').sum(axis=1)
@@ -331,6 +333,7 @@ def calc_Qsc_room(output_df, Q_sen_in_df, Q_sen_out_df, folder_path):
     Qsc_dict['RAU_Qsc'] = Qsc_RAU
     Qsc_dict['SCU_Qsc'] = Qsc_SCU
     Qsc_dict['Qsc_total'] = Qsc_SCU + Qsc_RAU + Qsc_OAU
+    Qsc_dict['SHR'] = (Qsc_dict['OAU_Qsc_sen'] + Qsc_dict['RAU_Qsc_sen'] + Qsc_dict['SCU_Qsc_sen']) / Qsc_dict['Qsc_total']
 
     return Qsc_dict
 
@@ -341,17 +344,20 @@ def calc_Qsc_theoretical(output_df):
     Q_sen_gains = output_df['Qc_sen_in_gain']   # solar, occupants, appliances, lighting, infiltration
 
     # latent gains
-    h_fg = 2501 / 1000  # kJ/kg
+    h_fg = 2501  # kJ/kg
     Q_lat_gains = output_df['m_w_in_gain'] * h_fg  # occupants, infiltration
 
-    # from the required fresh air # TODO: seperate into sen/lat
+    # from the required fresh air
+    Q_lat_gain_ve_min = output_df['m_ve_min'] * (output_df['w_OA'] - output_df['w_RA'])/1000 * h_fg
     h_OA = np.vectorize(calc_h_from_T_w)(output_df['T_OA'], output_df['w_OA'])
     h_RA = np.vectorize(calc_h_from_T_w)(output_df['T_RA'], output_df['w_RA'])
-    Q_sen_gain_ve_min = output_df['m_ve_min']*(h_OA - h_RA)
+    Q_sen_gain_ve_min = output_df['m_ve_min'] * (h_OA - h_RA) - Q_lat_gain_ve_min
 
-    Qsc_total_theoretical = Q_sen_gain_ve_min + Q_sen_gains + Q_lat_gains
+    # total
+    Qsc_total_theoretical = Q_sen_gain_ve_min + Q_lat_gain_ve_min + Q_sen_gains + Q_lat_gains
+    SHR_theoretical = (Q_sen_gain_ve_min + Q_sen_gains) / Qsc_total_theoretical
 
-    return Qsc_total_theoretical
+    return Qsc_total_theoretical, SHR_theoretical
 
 def draw_T_SA(output_df, folder_path):
     T_RAU_SA_df = output_df.filter(like='T_RAU_SA')
@@ -597,9 +603,9 @@ if __name__ == '__main__':
     for tech in TECHS:
         tech_folder_path = os.path.join(result_path_folder, tech)
         folders_list = os.listdir(tech_folder_path)
-        for folder in folders_list:
-        # for folder in ['run_015']:
-            if 'run' in folder:
+        # for folder in folders_list:
+        for folder in ['run_004_OFF_B005_1_24']:
+            # if 'run' in folder:
                 folder_path = os.path.join(tech_folder_path, folder)
                 file_list = os.listdir(folder_path)
                 # if 'total.csv' not in file_list:
