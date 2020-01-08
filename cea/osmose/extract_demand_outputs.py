@@ -72,7 +72,7 @@ def extract_cea_outputs_to_osmose_main(case, timesteps, season, specified_buildi
 
     # assumptions according to cases
     RH_max, RH_min = get_RH_limits_assumptions(case)
-    w_RA = get_humidity_ratio_assumptions(case)
+    w_RA_gperkg = get_humidity_ratio_assumptions(case)
 
     # read total demand
     total_demand_df = pd.read_csv(path_to_total_demand(case)).set_index('Name')
@@ -102,7 +102,7 @@ def extract_cea_outputs_to_osmose_main(case, timesteps, season, specified_buildi
         output_building['Q_gain_occ_kWh'] = reduced_demand_df['Q_gain_occ_kWh']
         Q_sen_gain_inf_kWh = np.vectorize(calc_Q_sen_gain_inf_kWh)(reduced_demand_df['T_ext'],
                                                                    reduced_demand_df['T_int'],
-                                                                   reduced_demand_df['m_ve_inf'], w_RA)
+                                                                   reduced_demand_df['m_ve_inf'], w_RA_gperkg)
         output_building['Q_gain_total_inf_kWh'] = reduced_demand_df['Q_gain_total_kWh'] + Q_sen_gain_inf_kWh
         ## humidity gain
         output_building['w_gain_occ_kgpers'] = reduced_demand_df['w_int']
@@ -122,7 +122,7 @@ def extract_cea_outputs_to_osmose_main(case, timesteps, season, specified_buildi
         output_hcs['COND_TIN'] = reduced_demand_df['T_ext_wetbulb'] + 5 + 273.15  # FIXME: hard-coded
         output_hcs['COND_TOUT'] = reduced_demand_df['T_ext_wetbulb'] + 4.5 + 273.15
         output_hcs['T_RA'] = reduced_demand_df['T_int']
-        output_hcs['w_RA'] = w_RA
+        output_hcs['w_RA_gperkg'] = w_RA_gperkg
         output_hcs['rh_ext'] = np.where((reduced_demand_df['rh_ext'] / 100) >= 1, 0.99, reduced_demand_df['rh_ext'] / 100)
         output_hcs['w_ext'] = np.vectorize(calc_w_from_rh)(reduced_demand_df['rh_ext'],
                                                            reduced_demand_df['T_ext'])  # g/kg d.a. # TODO: check if it's the same as x_ve_inf
@@ -234,10 +234,10 @@ def generate_oau_temperature_sets(building, output_hcs, reduced_demand_df):
 
 def get_humidity_ratio_assumptions(case):
     if ('OFF' in case) or ('RET' in case) or ('HOT' in case):
-        w_RA = 10.29  # 24C with 55% RH #FIXME: hard-coded
+        w_RA_gperkg = 10.29  # 24C with 55% RH #FIXME: hard-coded
     elif 'RES' in case:
-        w_RA = 13.1  # 28C with 55% RH
-    return w_RA
+        w_RA_gperkg = 13.1  # 28C with 55% RH
+    return w_RA_gperkg
 
 
 def get_reduced_demand_df(case, building, end_t, start_t):
@@ -325,9 +325,9 @@ def output_operatingcost_to_osmose(op_time, timesteps):
     return
 
 
-def calc_Q_sen_gain_inf_kWh(T_ext, T_int, m_ve_inf_kgpers, w_RA):
+def calc_Q_sen_gain_inf_kWh(T_ext, T_int, m_ve_inf_kgpers, w_RA_gperkg):
     T = T_ext if T_ext <= T_int else T_int #FIXME: double check if this is true, should be T_ext
-    h_sen_inf_kJperkg = calc_h_from_T_w(T, w_RA)
+    h_sen_inf_kJperkg = calc_h_from_T_w(T, w_RA_gperkg)
     Q_gain_inf_kWh = m_ve_inf_kgpers * h_sen_inf_kJperkg
     return Q_gain_inf_kWh
 

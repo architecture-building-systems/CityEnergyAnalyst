@@ -7,8 +7,8 @@ def calc_h_from_T_w(T_C, w_gperkg):
     :return:
     """
     c_air = 1.007  # kJ/kg/K
-    c_vapor = 1.84 / 1000  # kJ/kg/K
-    h_fg = 2501 / 1000  # kJ/kg
+    c_vapor = 1.84 / 1000  # kJ/g/K
+    h_fg = 2501 / 1000  # kJ/g
 
     h_kJperkg = (c_air * T_C - 0.026) + w_gperkg * (h_fg + c_vapor * T_C)
 
