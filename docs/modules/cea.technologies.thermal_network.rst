@@ -41,6 +41,14 @@ cea.technologies.thermal\_network.thermal\_network\_costs module
     :undoc-members:
     :show-inheritance:
 
+cea.technologies.thermal\_network.thermal\_network\_loss module
+---------------------------------------------------------------
+
+.. automodule:: cea.technologies.thermal_network.thermal_network_loss
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cea.technologies.thermal\_network.thermal\_network\_optimization module
 -----------------------------------------------------------------------
 

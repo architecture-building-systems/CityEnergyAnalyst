@@ -3080,42 +3080,6 @@ get_network_layout_nodes_shapefile:
       sample_data: ((x1 y1, x2 y2, ...))
       types_found: [Point]
   used_by: [thermal-network]
-get_network_node_types_csv_file:
-  created_by: [thermal-network]
-  file_path: outputs/data/optimization/network/layout/dh__nodes.csv
-  file_type: csv
-  schema:
-    Building:
-      sample_value: NONE
-      types_found: [str]
-    Name:
-      sample_value: NODE25
-      types_found: [str]
-    Q_hex_h_ahu:
-      sample_value: 223.0
-      types_found: [float, null]
-    Q_hex_h_aru:
-      sample_value: 46.0
-      types_found: [float, null]
-    Q_hex_h_shu:
-      sample_value: 0.0
-      types_found: [float, null]
-    Q_hex_h_ww:
-      sample_value: 59.0
-      types_found: [float, null]
-    Q_hex_plant_kW:
-      sample_value: 0.0
-      types_found: [float]
-    Type:
-      sample_value: NONE
-      types_found: [str]
-    'Unnamed: 0':
-      sample_value: !!python/long '30'
-      types_found: [long]
-    coordinates:
-      sample_value: (463411.2481, 5225358.972)
-      types_found: [str]
-  used_by: []
 get_node_mass_flow_csv_file:
   created_by: [thermal-network]
   file_path: outputs/data/optimization/network/layout/nominal_nodemassflow_at_design_dh__kgpers.csv
@@ -3266,7 +3230,7 @@ get_optimization_network_layout_supply_temperature_file:
       sample_value: 341.471
       types_found: [float]
   used_by: []
-get_optimization_network_node_list_file:
+get_thermal_network_node_types_csv_file:
   created_by: [thermal-network]
   file_path: outputs/data/optimization/network/layout/dh__nodes.csv
   file_type: csv
