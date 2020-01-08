@@ -225,9 +225,14 @@ def main():
     tech = 'HCS_base_coil'
     # path_to_base_folder = 'E:\\OSMOSE_projects\\HCS_mk\\results\\'
     path_to_base_folder = 'E:\\results_1130\\'
-    path_to_base_folder = 'D:\\SH\\WP1_1130\\'
+    path_to_base_folder = 'C:\\Users\\Zhongming\\Documents\\HCS_mk\\results\\'
     # path_to_base_folder = 'E:\\OSMOSE_projects\\HCS_mk\\results\\'
     run_folder = 'run_003_OFF_B005_1_168'
+    folders_to_compare = {#'HCS_base': 'run_003_OFF_B005_1_168',
+                          # 'HCS_base_ER0': 'run_003_OFF_B005_1_168',
+                          'HCS_base_coil': 'run_003_OFF_B005_1_168',
+                          'HCS_base_3for2': 'run_003_OFF_B005_1_168',
+                          'HCS_base_LD': 'run_003_OFF_B005_1_168' }
 
     # plot one tech (with x axis = Qc/Qsc
     # run_folders = os.listdir(os.path.join(path_to_base_folder, tech))
@@ -239,7 +244,8 @@ def main():
     ## plot multiple techs in one figure
     paths_to_folder, T_max_dict, T_ref_dict = {}, {}, {}
     # for tech in ['HCS_base', 'HCS_base_coil', 'HCS_base_3for2', 'HCS_base_ER0', 'HCS_base_IEHX', 'HCS_base_LD']:
-    for tech in ['HCS_base', 'HCS_base_coil']:
+    for tech in folders_to_compare.keys():
+        run_folder = folders_to_compare[tech]
         model_folder = [path_to_base_folder, tech, run_folder, 's_001\\plots\\icc\\models']
         paths_to_folder[tech] = os.path.join('', *model_folder)
         T_max_dict[tech] = calc_T_max(path_to_base_folder + tech, run_folder)
@@ -247,8 +253,8 @@ def main():
         T_ref_dict[tech] = calc_T_ref(path_to_folder)
     #
     # for t in np.arange(25,48,1):
-    # for t in np.arange(73,73+24,2):
-    for t in [83]:
+    for t in np.arange(73,73+24,1):
+    # for t in [83]:
         line_types = ['base'] # 'base'
         plot_carnot_from_icc_txt_techs(paths_to_folder, t, T_ref_dict, line_types, 'icc', 'all_chillers')
 

@@ -16,8 +16,8 @@ T_LIST = [8.1, 8.75, 9.4, 10.05, 10.7, 11.35, 12., 12.65, 13.3, 13.95]
 ITEMS_TO_COMPARE = ['exergy', 'electricity', 'COP', 'cooling_efficiency', 'SHR', 'Tchw']
 
 def main():
-    main_folder = 'E:\\OSMOSE_projects\\HCS_mk\\results'
-    # main_folder = 'E:\\HCS_results_1015\\base'
+    # main_folder = 'E:\\OSMOSE_projects\\HCS_mk\\results'
+    main_folder = 'C:\\Users\\Zhongming\\Documents\\HCS_mk\\results'
     # techs = ['HCS_base', 'HCS_base_coil', 'HCS_base_3for2', 'HCS_base_ER0', 'HCS_base_IEHX', 'HCS_base_LD']
     techs = ['HCS_base_LD']
     totals_dict = read_total_csv(main_folder, techs)
