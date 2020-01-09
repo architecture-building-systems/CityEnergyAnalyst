@@ -99,6 +99,7 @@ class SolarTechnologyPotentialsPlotBase(cea.plots.PlotBase):
             data_PV = data_PV.resample('Y').sum()
         return data_PV
 
+    @property
     @cea.plots.cache.cached
     def PV_hourly_aggregated_kW(self):
         data = self._calculate_PV_hourly_aggregated_kW()
