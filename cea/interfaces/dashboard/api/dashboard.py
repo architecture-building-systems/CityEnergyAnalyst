@@ -9,7 +9,6 @@ from utils import deconstruct_parameters
 
 api = Namespace('Dashboard', description='Dashboard plots')
 
-
 LAYOUTS = ['row', 'grid']
 CATEGORIES = {c.name: {'label': c.label, 'plots': [{'id': p.id(), 'name': p.name} for p in c.plots]}
               for c in cea.plots.categories.list_categories()}
@@ -24,15 +23,14 @@ def dashboard_to_dict(dashboard):
     return out
 
 
-def get_plot_parameters(plot_class, scenario=None):
+def get_plot_parameters(plot_class, scenario_name=None):
     config = cea.config.Configuration()
-    print(scenario)
     parameters = []
     plot_parameters = sorted(plot_class.expected_parameters.items(), key=lambda x: x[1])
     # Make sure to set scenario name to config first
     if 'scenario-name' in [parameter[0] for parameter in plot_parameters]:
-        if scenario:
-            config.scenario_name = scenario
+        if scenario_name:
+            config.scenario_name = scenario_name
         elif hasattr(plot_class, 'parameters') and 'scenario-name' in plot_class.parameters:
             config.scenario_name = plot_class.parameters['scenario-name']
     for pname, fqname in plot_parameters:
@@ -41,13 +39,12 @@ def get_plot_parameters(plot_class, scenario=None):
         if pname != 'scenario-name' and hasattr(plot_class, 'parameters') and pname in plot_class.parameters:
             try:
                 parameter.set(plot_class.parameters[pname])
-            # FIXME: Create and use a custom exception instead
+            # FIXME: Use a custom exception instead
             except AssertionError as e:
                 if isinstance(parameter, cea.config.MultiChoiceParameter):
                     parameter.set([])
                 print(e)
         parameters.append(deconstruct_parameters(parameter))
-    print(parameters)
     return parameters
 
 
@@ -75,7 +72,7 @@ class Dashboards(Resource):
 
         if 'grid' in form['layout']:
             types = [[2] + [1] * 4, [1] * 6, [1] * 3 + [3], [2, 1] * 2]
-            grid_width = types[int(form['layout'].split('-')[-1])-1]
+            grid_width = types[int(form['layout'].split('-')[-1]) - 1]
             dashboard_index = cea.plots.new_dashboard(config, current_app.plot_cache, form['name'], 'grid',
                                                       grid_width=grid_width)
         else:
@@ -110,7 +107,6 @@ class Dashboard(Resource):
         """
         Delete Dashboard
         """
-        form = api.payload
         config = current_app.cea_config
         cea.plots.delete_dashboard(config, dashboard_index)
 
@@ -136,6 +132,7 @@ class DashboardPlotCategories(Resource):
     """
     Get Plot Categories
     """
+
     def get(self):
         return CATEGORIES
 
@@ -145,6 +142,7 @@ class DashboardPlotCategoriesParameters(Resource):
     """
     Get Plot Form Parameters from Config
     """
+
     def get(self, category_name, plot_id):
         plot_class = cea.plots.categories.load_plot_by_id(category_name, plot_id)
         return get_plot_parameters(plot_class, request.args.get('scenario'))
@@ -168,7 +166,6 @@ class DashboardPlot(Resource):
         form = api.payload
         config = current_app.cea_config
         temp_config = cea.config.Configuration()
-        plot_cache = cea.plots.cache.PlotCache(config)
         dashboards = cea.plots.read_dashboards(config, current_app.plot_cache)
         dashboard = dashboards[dashboard_index]
 
@@ -179,7 +176,7 @@ class DashboardPlot(Resource):
         if 'parameters' in form:
             plot = dashboard.plots[plot_index]
             plot_parameters = plot.expected_parameters.items()
-            if 'scenario-name' in [parameter[0] for parameter in plot_parameters]:
+            if 'scenario-name' in plot.expected_parameters:
                 temp_config.scenario_name = form['parameters']['scenario-name']
             print('expected_parameters: {}'.format(plot_parameters))
             for pname, fqname in plot_parameters:
