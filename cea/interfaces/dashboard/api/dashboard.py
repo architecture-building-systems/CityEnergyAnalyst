@@ -165,6 +165,8 @@ class DashboardPlot(Resource):
         """
         form = api.payload
         config = current_app.cea_config
+
+        # avoid overwriting original config.scenario for plot
         temp_config = cea.config.Configuration()
         dashboards = cea.plots.read_dashboards(config, current_app.plot_cache)
         dashboard = dashboards[dashboard_index]
