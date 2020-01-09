@@ -104,17 +104,16 @@ class Scenarios(Resource):
     def post(self):
         """Create new scenario"""
         config = current_app.cea_config
-        temp_config = cea.config.Configuration()
         payload = api.payload
-        scenario_path = os.path.join(temp_config.project, payload['name'])
+        new_scenario_path = os.path.join(config.project, payload['name'])
 
         # Make sure that the scenario folder exists
         try:
-            os.makedirs(scenario_path)
+            os.makedirs(new_scenario_path)
         except OSError as e:
             print(e.message)
 
-        locator = cea.inputlocator.InputLocator(scenario_path)
+        locator = cea.inputlocator.InputLocator(new_scenario_path)
 
         if payload['input-data'] == 'import':
             files = payload['files']
@@ -166,7 +165,7 @@ class Scenarios(Resource):
 
         elif payload['input-data'] == 'copy':
             try:
-                source_scenario = os.path.join(temp_config.project, payload['copy-scenario'])
+                source_scenario = os.path.join(config.project, payload['copy-scenario'])
                 shutil.copytree(cea.inputlocator.InputLocator(source_scenario).get_input_folder(),
                                 locator.get_input_folder())
             except OSError as e:
@@ -187,15 +186,15 @@ class Scenarios(Resource):
                             locator.ensure_parent_folder_exists(site_path)
                             site.to_file(site_path)
                             print('site.shp file created at %s' % site_path)
-                            cea.api.zone_helper(temp_config, scenario=scenario_path)
+                            cea.api.zone_helper(config, scenario=new_scenario_path)
                         elif tool == 'surroundings':
-                            cea.api.surroundings_helper(temp_config, scenario=scenario_path)
+                            cea.api.surroundings_helper(config, scenario=new_scenario_path)
                         elif tool == 'streets':
-                            cea.api.streets_helper(temp_config, scenario=scenario_path)
+                            cea.api.streets_helper(config, scenario=new_scenario_path)
                         elif tool == 'terrain':
-                            cea.api.terrain_helper(temp_config, scenario=scenario_path)
+                            cea.api.terrain_helper(config, scenario=new_scenario_path)
                         elif tool == 'weather':
-                            cea.api.weather_helper(temp_config, scenario=scenario_path)
+                            cea.api.weather_helper(config, scenario=new_scenario_path)
                     except Exception as e:
                         import traceback
                         trace = traceback.format_exc()
