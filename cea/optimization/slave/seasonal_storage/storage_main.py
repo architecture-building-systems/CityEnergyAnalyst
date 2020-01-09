@@ -19,8 +19,6 @@ import numpy as np
 import pandas as pd
 
 import cea.optimization.slave.seasonal_storage.design_operation as StDesOp
-import cea.technologies.heatpumps as hp
-import cea.technologies.thermal_storage as storage
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3, WH_TO_J
 from cea.constants import HOURS_IN_YEAR
 
@@ -34,7 +32,7 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def storage_optimization(locator, master_to_slave_vars, lca, prices, config):
+def storage_optimization(locator, master_to_slave_vars, config):
     """
     This function performs the storage optimization and stores the results in the designated folders
     :param locator: locator class
@@ -305,74 +303,16 @@ def storage_optimization(locator, master_to_slave_vars, lca, prices, config):
 
                                         # leave initial values as we adjust the final outcome only, give back values from 5th round
 
-                                        Optimized_Data10, storage_dispatch = StDesOp.Storage_Design(CSV_NAME,
-                                                                                                    T_initial_K,
-                                                                                                    Q_initial_W,
-                                                                                                    locator,
-                                                                                                    V_storage_possible_needed,
-                                                                                                    solar_technologies_data,
-                                                                                                    master_to_slave_vars,
-                                                                                                    P_HP_max, config)
-                                        Q_stored_max_opt10, Q_rejected_fin_opt10, Q_disc_seasonstart_opt10, T_st_max_op10, T_st_min_op10, Q_storage_content_fin_op10, \
-                                        T_storage_fin_op10, Q_loss10, mdot_DH_fin10, Q_uncontrollable_final_W = Optimized_Data10
+                                        _, storage_dispatch = StDesOp.Storage_Design(CSV_NAME,
+                                                                                     T_initial_K,
+                                                                                     Q_initial_W,
+                                                                                     locator,
+                                                                                     V_storage_possible_needed,
+                                                                                     solar_technologies_data,
+                                                                                     master_to_slave_vars,
+                                                                                     P_HP_max, config)
 
-    # Get results from storage operation
-    # CAPEX AND FIXED COSTS
-    StorageVol_m3 = storage_dispatch["Storage_Size_m3"]  # take the first line
-    Capex_a_storage_USD, Opex_fixed_storage_USD, Capex_storage_USD = storage.calc_Cinv_storage(StorageVol_m3,
-                                                                                               locator, config,
-                                                                                               'TES2')
-
-    # calculate electricity required to bring the temperature to convergence
-    Q_storage_content_W = np.array(storage_dispatch['Q_storage_content_W'])
-    StorageContentEndOfYear = Q_storage_content_W[-1]
-    StorageContentStartOfYear = Q_storage_content_W[0]
-
-    if StorageContentEndOfYear < StorageContentStartOfYear:
-        QToCoverByStorageBoiler_W = float(StorageContentEndOfYear - StorageContentStartOfYear)
-        eta_fictive_Boiler = 0.8  # add rather low efficiency as a penalty
-        E_gasPrim_fictiveBoiler_W = QToCoverByStorageBoiler_W / eta_fictive_Boiler
-    else:
-        E_gasPrim_fictiveBoiler_W = 0
-
-    # FIXME: repeating line 291-309?
-    # Fill up storage if end-of-season energy is lower than beginning of season
-    Q_Storage_SeasonEndReheat_W = Q_storage_content_W[-1] - Q_storage_content_W[0]
-
-    if Q_Storage_SeasonEndReheat_W > 0:
-        cost_Boiler_for_Storage_reHeat_at_seasonend_USD = float(
-            Q_Storage_SeasonEndReheat_W) / 0.8 * prices.NG_PRICE / 1E3  # efficiency is assumed to be 0.8
-    else:
-        cost_Boiler_for_Storage_reHeat_at_seasonend_USD = 0
-
-    # HEATPUMP FOR SEASONAL SOLAR STORAGE OPERATION (CHARING AND DISCHARGING) TO DH
-    storage_dispatch_df = pd.DataFrame(storage_dispatch)
-    array = np.array(storage_dispatch_df[["E_Storage_charging_req_W", "E_Storage_discharging_req_W", "Q_Storage_gen_W",
-                                          "Q_Storage_req_W"]])
-    Q_HP_max_storage_W = 0
-    for i in range(8760):
-        if array[i][0] > 0:
-            Q_HP_max_storage_W = max(Q_HP_max_storage_W, array[i][3] + array[i][0])
-        elif array[i][1] > 0:
-            Q_HP_max_storage_W = max(Q_HP_max_storage_W, array[i][2] + array[i][1])
-
-    Capex_a_HP_storage_USD, Opex_fixed_HP_storage_USD, Capex_HP_storage_USD = hp.calc_Cinv_HP(Q_HP_max_storage_W,
-                                                                                              locator,
-                                                                                              'HP2')
-
-    # SUMMARY OF COSTS AND EMISSIONS
-    performance = {
-        # annual costs
-        "Capex_a_Storage_connected_USD": Capex_a_storage_USD + Capex_a_HP_storage_USD,
-
-        # total costs
-        "Capex_total_Storage_connected_USD": Capex_storage_USD + Capex_HP_storage_USD,
-
-        # opex fixed costs
-        "Opex_fixed_Storage_connected_USD": Opex_fixed_storage_USD + Opex_fixed_HP_storage_USD,
-    }
-
-    return performance, storage_dispatch
+    return storage_dispatch
 
 
 def calc_T_initial_from_Q_and_V(Q_initial_W, T_ST_MIN, V_storage_initial_m3):

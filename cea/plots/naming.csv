@@ -444,9 +444,9 @@ Thermal Network,T_ret_C,C,Plant return temperature,yellow
 Thermal Network,P_loss_substations_kWh,kWh,Pumping energy (substations),grey
 Thermal Network,P_loss_kWh,kWh,Pumping energy (pipes),grey
 Thermal Network,Q_loss_kWh,kWh,Network thermal loss,orange
-Thermal Network,Q_dem_heat,kWh,Aggregated heat supplied by network,blue
-Thermal Network,Q_dem_cool,kWh,Aggregated cooling load supplied by network,blue_light
-Thermal Network,Q_dem_kWh,kWh,Aggregated load supplied by network,blue_light
+Thermal Network,Q_dem_heat,kWh,Aggregated heat supplied by network,red
+Thermal Network,Q_dem_cool,kWh,Aggregated cooling load supplied by network,blue
+Thermal Network,Q_dem_kWh,kWh,Aggregated load supplied by network,green
 
 Operation costs,DH_hs_cost_yr,$USD(2015)/yr,Operation costs due to space heating,orange
 Operation costs,DH_ww_cost_yr,$USD(2015)/yr,Operation costs due to hotwater,orange_lighter
@@ -563,3 +563,36 @@ potential_duplicate,GHG_sys_tonCO2,ton CO2-eq/yr,Green house gas emissions of en
 potential_duplicate,PEN_sys_MJoil,MJ oil-eq/yr,Primary energy of energy system (MJ oil-eq/yr),red
 potential_duplicate,Capex_total_sys_USD,$USD(2015),Total CAPEX of energy system ($USD(2015)),red
 potential_duplicate,Opex_a_sys_USD,$USD(2015)/yr,Annual OPEX ($USD(2015)/yr),red
+
+capacities,Capacity_BackupBoiler_NG_heat_connected_W,W,Capacity_BackupBoiler_NG_heat_connected_W,grey
+capacities,Capacity_PeakBoiler_NG_heat_connected_W,W,Capacity_PeakBoiler_NG_heat_connected_W,brown
+capacities,Capacity_BaseBoiler_NG_heat_connected_W,W,Capacity_BaseBoiler_NG_heat_connected_W,black
+capacities,Capacity_CHP_DB_heat_connected_W,W,Capacity_CHP_DB_heat_connected_W,red
+capacities,Capacity_CHP_NG_heat_connected_W,W,Capacity_CHP_NG_heat_connected_W,red_light
+capacities,Capacity_CHP_WB_heat_connected_W,W,Capacity_CHP_WB_heat_connected_W,red_lighter
+capacities,Capacity_HP_DS_heat_connected_W,W,Capacity_HP_DS_heat_connected_W,orange
+capacities,Capacity_HP_GS_heat_connected_W,W,Capacity_HP_GS_heat_connected_W,orange_light
+capacities,Capacity_HP_SS_heat_connected_W,W,Capacity_HP_SS_heat_connected_W,orange_lighter
+capacities,Capacity_HP_WS_heat_connected_W,W,Capacity_HP_WS_heat_connected_W,blue
+capacities,Capacity_SC_ET_heat_connected_W,W,Capacity_SC_ET_heat_connected_W,blue_light
+capacities,Capacity_SC_FP_heat_connected_W,W,Capacity_SC_FP_heat_connected_W,blue_lighter
+capacities,Capacity_PVT_heat_connected_W,W,Capacity_PVT_heat_connected_W,grey
+capacities,Capacity_SeasonalStorage_WS_heat_connected_W,W,Capacity_SeasonalStorage_WS_heat_connected_W,grey
+
+capacities,Capacity_PV_el_connected_W,W,Capacity_PV_el_connected_W,yellow
+capacities,Capacity_PVT_el_connected_W,W,Capacity_PVT_el_connected_W,yellow_lighter
+capacities,Capacity_CHP_NG_el_connected_W,W,Capacity_CHP_NG_el_connected_W,green
+capacities,Capacity_CHP_WB_el_connected_W,W,Capacity_CHP_WB_el_connected_W,green
+capacities,Capacity_CHP_DB_el_connected_W,W,Capacity_CHP_DB_el_connected_W,green
+capacities,Capacity_GRID_el_connected_W,W,Capacity_GRID_el_connected_W,green_light
+
+capacities,Capacity_BaseBoiler_NG_heat_disconnected_W,W,Capacity_BaseBoiler_NG_heat_disconnected_W,red
+capacities,Capacity_FC_NG_heat_disconnected_W,W,Capacity_FC_NG_heat_disconnected_W,red_light
+capacities,Capacity_GS_HP_heat_disconnected_W,W,Capacity_GS_HP_heat_disconnected_W,red_lighter
+
+capacities,Capacity_DX_AS_cool_disconnected_W,W,Capacity_DX_AS_cool_disconnected_W,blue
+capacities,Capacity_BaseVCC_AS_cool_disconnected_W,W,Capacity_BaseVCC_AS_cool_disconnected_W,blue_light
+capacities,Capacity_VCCHT_AS_cool_disconnected_W,W,Capacity_VCCHT_AS_cool_disconnected_W,blue_lighter
+capacities,Capacity_ACH_SC_FP_cool_disconnected_W,W,Capacity_ACH_SC_FP_cool_disconnected_W,orange
+capacities,Capaticy_ACH_SC_ET_cool_disconnected_W,W,Capaticy_ACH_SC_ET_cool_disconnected_W,orange_light
+capacities,Capacity_ACHHT_FP_cool_disconnected_W,W,Capacity_ACHHT_FP_cool_disconnected_W,orange_lighter

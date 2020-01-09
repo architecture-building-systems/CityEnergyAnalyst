@@ -18,13 +18,14 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
+
 class Prices(object):
     def __init__(self, locator, detailed_electricity_pricing):
         pricing = pd.read_excel(locator.get_database_supply_systems(), sheet_name="FEEDSTOCKS")
         self.NG_PRICE = pricing[pricing['code'] == 'NATURALGAS'].iloc[0]['Opex_var_buy_USD2015perkWh'] / 1000 # in USD/Wh
         self.BG_PRICE = pricing[pricing['code'] == 'BIOGAS'].iloc[0]['Opex_var_buy_USD2015perkWh']  / 1000# in USD/Wh
-        self.WB_PRICE = pricing[pricing['code'] == 'WASTE'].iloc[0]['Opex_var_buy_USD2015perkWh']  / 1000# in USD/Wh
-        self.DB_PRICE = pricing[pricing['code'] == 'WOOD'].iloc[0]['Opex_var_buy_USD2015perkWh'] / 1000 # in USD/Wh
+        self.WB_PRICE = pricing[pricing['code'] == 'WETBIOMASS'].iloc[0]['Opex_var_buy_USD2015perkWh']  / 1000# in USD/Wh
+        self.DB_PRICE = pricing[pricing['code'] == 'DRYBIOMASS'].iloc[0]['Opex_var_buy_USD2015perkWh'] / 1000 # in USD/Wh
         self.SOLAR_PRICE = pricing[pricing['code'] == 'SOLAR'].iloc[0]['Opex_var_buy_USD2015perkWh']  / 1000# in USD/Wh
         self.SOLAR_PRICE_EXPORT = pricing[pricing['code'] == 'SOLAR'].iloc[0]['Opex_var_sell_USD2015perkWh'] / 1000 # in USD/Wh
 

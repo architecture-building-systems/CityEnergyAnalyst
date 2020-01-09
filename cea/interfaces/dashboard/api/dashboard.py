@@ -40,8 +40,7 @@ class Dashboards(Resource):
         Get list of Dashboards
         """
         config = current_app.cea_config
-        plot_cache = cea.plots.cache.PlotCache(config)
-        dashboards = cea.plots.read_dashboards(config, plot_cache)
+        dashboards = cea.plots.read_dashboards(config, current_app.plot_cache)
 
         out = []
         for d in dashboards:
@@ -55,15 +54,14 @@ class Dashboards(Resource):
         """
         form = api.payload
         config = current_app.cea_config
-        plot_cache = cea.plots.cache.PlotCache(config)
 
         if 'grid' in form['layout']:
             types = [[2] + [1] * 4, [1] * 6, [1] * 3 + [3], [2, 1] * 2]
             grid_width = types[int(form['layout'].split('-')[-1])-1]
-            dashboard_index = cea.plots.new_dashboard(config, plot_cache, form['name'], 'grid',
+            dashboard_index = cea.plots.new_dashboard(config, current_app.plot_cache, form['name'], 'grid',
                                                       grid_width=grid_width)
         else:
-            dashboard_index = cea.plots.new_dashboard(config, plot_cache, form['name'], form['layout'])
+            dashboard_index = cea.plots.new_dashboard(config, current_app.plot_cache, form['name'], form['layout'])
 
         return {'new_dashboard_index': dashboard_index}
 
@@ -73,9 +71,8 @@ class DashboardDuplicate(Resource):
     def post(self):
         form = api.payload
         config = current_app.cea_config
-        plot_cache = cea.plots.cache.PlotCache(config)
-
-        dashboard_index = cea.plots.duplicate_dashboard(config, plot_cache, form['name'], form['dashboard_index'])
+        dashboard_index = cea.plots.duplicate_dashboard(config, current_app.plot_cache, form['name'],
+                                                        form['dashboard_index'])
 
         return {'new_dashboard_index': dashboard_index}
 
@@ -87,8 +84,7 @@ class Dashboard(Resource):
         Get Dashboard
         """
         config = current_app.cea_config
-        plot_cache = cea.plots.cache.PlotCache(config)
-        dashboards = cea.plots.read_dashboards(config, plot_cache)
+        dashboards = cea.plots.read_dashboards(config, current_app.plot_cache)
 
         return dashboard_to_dict(dashboards[dashboard_index])
 
@@ -108,8 +104,7 @@ class Dashboard(Resource):
         """
         form = api.payload
         config = current_app.cea_config
-        plot_cache = cea.plots.cache.PlotCache(config)
-        dashboards = cea.plots.read_dashboards(config, plot_cache)
+        dashboards = cea.plots.read_dashboards(config, current_app.cea_config)
 
         dashboard = dashboards[dashboard_index]
         dashboard.set_scenario(form['scenario'])
@@ -146,8 +141,7 @@ class DashboardPlot(Resource):
         Get Dashboard Plot
         """
         config = current_app.cea_config
-        plot_cache = cea.plots.cache.PlotCache(config)
-        dashboards = cea.plots.read_dashboards(config, plot_cache)
+        dashboards = cea.plots.read_dashboards(config, current_app.plot_cache)
 
         return dashboard_to_dict(dashboards[dashboard_index])['plots'][plot_index]
 
@@ -157,8 +151,7 @@ class DashboardPlot(Resource):
         """
         form = api.payload
         config = current_app.cea_config
-        plot_cache = cea.plots.cache.PlotCache(config)
-        dashboards = cea.plots.read_dashboards(config, plot_cache)
+        dashboards = cea.plots.read_dashboards(config, current_app.plot_cache)
         dashboard = dashboards[dashboard_index]
 
         if 'category' in form and 'plot_id' in form:
@@ -184,8 +177,7 @@ class DashboardPlot(Resource):
         Delete Plot from Dashboard
         """
         config = current_app.cea_config
-        plot_cache = cea.plots.cache.PlotCache(config)
-        dashboards = cea.plots.read_dashboards(config, plot_cache)
+        dashboards = cea.plots.read_dashboards(config, current_app.plot_cache)
 
         dashboard = dashboards[dashboard_index]
         dashboard.remove_plot(plot_index)
@@ -201,10 +193,24 @@ class DashboardPlotParameters(Resource):
         Get Plot Form Parameters of Plot in Dashboard
         """
         config = current_app.cea_config
-        plot_cache = cea.plots.cache.PlotCache(config)
-        dashboards = cea.plots.read_dashboards(config, plot_cache)
+        dashboards = cea.plots.read_dashboards(config, current_app.plot_cache)
 
         dashboard = dashboards[dashboard_index]
         plot = dashboard.plots[plot_index]
 
         return get_plot_parameters(config, plot)
+
+
+@api.route('/<int:dashboard_index>/plots/<int:plot_index>/input-files')
+class DashboardPlotInputFiles(Resource):
+    def get(self, dashboard_index, plot_index):
+        """
+        Get input files of Plot
+        """
+        config = current_app.cea_config
+        dashboards = cea.plots.read_dashboards(config, current_app.plot_cache)
+
+        dashboard = dashboards[dashboard_index]
+        plot = dashboard.plots[plot_index]
+
+        return [locator_method(*args) for locator_method, args in plot.input_files]
