@@ -19,7 +19,9 @@ __status__ = "Production"
 
 class PVPotentialPlot(cea.plots.solar_technology_potentials.SolarTechnologyPotentialsPlotBase):
     """Implement the pv-electricity-potential plot"""
+
     name = "PV Electricity Potential"
+
     expected_parameters = {
         'buildings': 'plots:buildings',
         'scenario-name': 'general:scenario-name',
