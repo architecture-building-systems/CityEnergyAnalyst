@@ -237,7 +237,7 @@ Optimization:
     description: Run optimization for decentralized operation
     interfaces: [cli, arcgis, dashboard]
     module: cea.optimization.preprocessing.decentralized_building_main
-    parameters: ['general:scenario', 'decentralized']
+    parameters: ['general:scenario', 'decentralized', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free']
 
   - name: optimization
     label: Supply System Part II (centralized)

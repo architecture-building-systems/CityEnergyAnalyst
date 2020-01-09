@@ -2028,151 +2028,6 @@ get_costs_operation_file:
       sample_data: 0.0
       types_found: [float]
   used_by: []
-get_data_benchmark:
-  created_by: []
-  description: "Returns the database of life cycle inventory for supply systems. These\
-    \ are copied\n        to the scenario if they are not yet present, based on the\
-    \ configured region for the scenario."
-  file_path: databases/sg/benchmarks/benchmark_2000w.xls
-  file_type: xls
-  schema:
-    EMBODIED:
-      CO2_target_new:
-        sample_data: 3.368983957219251
-        types_found: [float, null]
-      CO2_target_retrofit:
-        sample_data: 2.0588235294117645
-        types_found: [float, null]
-      CO2_today:
-        sample_data: 2.8
-        types_found: [float]
-      Description:
-        sample_data: 'Gebudeparkmodell 2016: Bibliotheken, Museen, usw.'
-        types_found: [string, null]
-      NRE_target_new:
-        sample_data: 46.469387755102034
-        types_found: [float, null]
-      NRE_target_retrofit:
-        sample_data: 25.346938775510203
-        types_found: [float, null]
-      NRE_today:
-        sample_data: 41.4
-        types_found: [float]
-      PEN_target_new:
-        sample_data: 66.87062937062936
-        types_found: [float, null]
-      PEN_target_retrofit:
-        sample_data: 31.206293706293707
-        types_found: [float, null]
-      PEN_today:
-        sample_data: 51.0
-        types_found: [float]
-      code:
-        sample_data: MUSEUM
-        types_found: [string]
-    MOBILITY:
-      CO2_target_new:
-        sample_data: 40.0
-        types_found: [float]
-      CO2_target_retrofit:
-        sample_data: 40.0
-        types_found: [float]
-      CO2_today:
-        sample_data: 90.0
-        types_found: [float]
-      Description:
-        sample_data: 'Assumed: same as RETAIL'
-        types_found: [string]
-      NRE_target_new:
-        sample_data: !!python/long '850'
-        types_found: [long]
-      NRE_target_retrofit:
-        sample_data: !!python/long '850'
-        types_found: [long]
-      NRE_today:
-        sample_data: 1460.0
-        types_found: [float]
-      PEN_target_new:
-        sample_data: !!python/long '900'
-        types_found: [long]
-      PEN_target_retrofit:
-        sample_data: !!python/long '900'
-        types_found: [long]
-      PEN_today:
-        sample_data: !!python/long '1550'
-        types_found: [long]
-      code:
-        sample_data: MUSEUM
-        types_found: [string]
-    OPERATION:
-      CO2_target_new:
-        sample_data: 5.936767783214273
-        types_found: [float]
-      CO2_target_retrofit:
-        sample_data: 7.246928211021759
-        types_found: [float]
-      CO2_today:
-        sample_data: 33.2
-        types_found: [float]
-      Description:
-        sample_data: 'Gebaeudeparkmodell 2016: Bibliotheken, Museen, usw. (ist)'
-        types_found: [string]
-      NRE_target_new:
-        sample_data: 409.74614621297553
-        types_found: [float]
-      NRE_target_retrofit:
-        sample_data: 430.86859519256734
-        types_found: [float]
-      NRE_today:
-        sample_data: 1275.48
-        types_found: [float]
-      PEN_target_new:
-        sample_data: 851.8767418273
-        types_found: [float]
-      PEN_target_retrofit:
-        sample_data: 887.5410774916356
-        types_found: [float]
-      PEN_today:
-        sample_data: 1604.52
-        types_found: [float]
-      code:
-        sample_data: MUSEUM
-        types_found: [string]
-    TOTAL:
-      CO2_target_new:
-        sample_data: 49.30575174043352
-        types_found: [float]
-      CO2_target_retrofit:
-        sample_data: 49.30575174043352
-        types_found: [float]
-      CO2_today:
-        sample_data: 126.0
-        types_found: [float]
-      Description:
-        sample_data: 'Calculated: based on the Top-Down Method for SIA 2040'
-        types_found: [string, null]
-      NRE_target_new:
-        sample_data: 1306.2155339680776
-        types_found: [float]
-      NRE_target_retrofit:
-        sample_data: 1306.2155339680776
-        types_found: [float]
-      NRE_today:
-        sample_data: 2776.88
-        types_found: [float]
-      PEN_target_new:
-        sample_data: 1818.7473711979292
-        types_found: [float]
-      PEN_target_retrofit:
-        sample_data: 1818.7473711979294
-        types_found: [float]
-      PEN_today:
-        sample_data: 3205.52
-        types_found: [float]
-      code:
-        sample_data: MUSEUM
-        types_found: [string]
-  used_by: [emissions]
 get_demand_results_file:
   created_by: [demand]
   description: scenario/outputs/data/demand/{building_name}.csv
@@ -3225,42 +3080,6 @@ get_network_layout_nodes_shapefile:
       sample_data: ((x1 y1, x2 y2, ...))
       types_found: [Point]
   used_by: [thermal-network]
-get_network_node_types_csv_file:
-  created_by: [thermal-network]
-  file_path: outputs/data/optimization/network/layout/dh__nodes.csv
-  file_type: csv
-  schema:
-    Building:
-      sample_value: NONE
-      types_found: [str]
-    Name:
-      sample_value: NODE25
-      types_found: [str]
-    Q_hex_h_ahu:
-      sample_value: 223.0
-      types_found: [float, null]
-    Q_hex_h_aru:
-      sample_value: 46.0
-      types_found: [float, null]
-    Q_hex_h_shu:
-      sample_value: 0.0
-      types_found: [float, null]
-    Q_hex_h_ww:
-      sample_value: 59.0
-      types_found: [float, null]
-    Q_hex_plant_kW:
-      sample_value: 0.0
-      types_found: [float]
-    Type:
-      sample_value: NONE
-      types_found: [str]
-    'Unnamed: 0':
-      sample_value: !!python/long '30'
-      types_found: [long]
-    coordinates:
-      sample_value: (463411.2481, 5225358.972)
-      types_found: [str]
-  used_by: []
 get_node_mass_flow_csv_file:
   created_by: [thermal-network]
   file_path: outputs/data/optimization/network/layout/nominal_nodemassflow_at_design_dh__kgpers.csv
@@ -3411,7 +3230,7 @@ get_optimization_network_layout_supply_temperature_file:
       sample_value: 341.471
       types_found: [float]
   used_by: []
-get_optimization_network_node_list_file:
+get_thermal_network_node_types_csv_file:
   created_by: [thermal-network]
   file_path: outputs/data/optimization/network/layout/dh__nodes.csv
   file_type: csv

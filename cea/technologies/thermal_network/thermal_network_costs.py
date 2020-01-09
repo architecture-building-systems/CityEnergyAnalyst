@@ -97,12 +97,12 @@ def calc_Ctot_network_pump(network_info):
     network_type = network_info.network_type
 
     # read in node mass flows
-    df = pd.read_csv(network_info.locator.get_edge_mass_flow_csv_file(network_type, ''), index_col=0)
+    df = pd.read_csv(network_info.locator.get_nominal_edge_mass_flow_csv_file(network_type, ''), index_col=0)
     mdotA_kgpers = np.array(df)
     mdotA_kgpers = np.nan_to_num(mdotA_kgpers)
     mdotnMax_kgpers = np.amax(mdotA_kgpers)  # find highest mass flow of all nodes at all timesteps (should be at plant)
     # read in total pressure loss in kW
-    deltaP_kW = pd.read_csv(network_info.locator.get_thermal_network_layout_pressure_drop_kw_file(network_type,''))
+    deltaP_kW = pd.read_csv(network_info.locator.get_network_energy_pumping_requirements_file(network_type, ''))
     deltaP_kW = deltaP_kW['pressure_loss_total_kW'].sum()
 
     Opex_var = deltaP_kW * 1000 * network_info.prices.ELEC_PRICE
@@ -538,7 +538,7 @@ def calc_network_size(network_info):
     network_info = pd.read_csv(
         network_info.locator.get_thermal_network_edge_list_file(network_info.network_type,
                                                                 network_info.network_name))
-    length_m = network_info['pipe length'].sum()
+    length_m = network_info['length_m'].sum()
     average_diameter_m = network_info['D_int_m'].mean()
     return float(length_m), float(average_diameter_m)
 

@@ -41,7 +41,7 @@ class LoadCurvePlot(cea.plots.demand.DemandPlotBase):
     @property
     def layout(self):
         # computing this instead of initializing, because it's dependent on self.data...
-        return dict(yaxis=dict(title='End-Use Energy Demand [MWh]'),
+        return dict(barmode='relative', yaxis=dict(title='End-Use Energy Demand [MWh]'),
                     yaxis2=dict(title='Outdoor Temperature [C]', overlaying='y', side='right'))
 
     @property
@@ -61,7 +61,7 @@ class LoadCurvePlot(cea.plots.demand.DemandPlotBase):
         for field in analysis_fields:
             y = data[field].values / 1E3  # to MW
             name = NAMING[field]
-            trace = go.Scattergl(x=data.index, y=y, name=name, marker=dict(color=COLOR[field]))
+            trace = go.Bar(x=data.index, y=y, name=name, marker=dict(color=COLOR[field]))
             traces.append(trace)
 
         data_T = self.calculate_external_temperature()

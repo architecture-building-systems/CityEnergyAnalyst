@@ -26,7 +26,7 @@ def register_scripts():
             cea_script.print_script_configuration(config)
             if list(cea_script.missing_input_files(config)):
                 cea_script.print_missing_input_files(config)
-                return
+                raise cea.MissingInputDataException()
             t0 = datetime.datetime.now()
             # run the script
             script_module.main(config)

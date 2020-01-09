@@ -29,9 +29,14 @@ DAYS_IN_YEAR = 365
 HOURS_IN_DAY = 24
 HOURS_IN_YEAR = 8760
 MONTHS_IN_YEAR = 12
+
 MONTHS_IN_YEAR_NAMES = ['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL',
                         'MAY', 'JUNE', 'JULY', 'AUGUST', 'SEPTEMBER',
                         'OCTOBER', 'NOVEMBER', 'DECEMBER']
+
+HOURS_PRE_CONDITIONING = 720  # number of hours that the building will be thermally pre-conditioned,
+                                # the results of these hours will be overwritten
+
 
 # Specific heat
 HEAT_CAPACITY_OF_WATER_JPERKGK = 4185  # [J/kg K]
@@ -64,3 +69,9 @@ SOIL_rho_kgm3 = 1600
 # insulation of pipes
 PUR_lambda_WmK = 0.023
 STEEL_lambda_WmK = 76
+
+#unit conversion
+FT_WATER_TO_PA = 2989.0669 # assumption at 4C water
+M_WATER_TO_PA = 9804
+FT_TO_M = 0.3048
+

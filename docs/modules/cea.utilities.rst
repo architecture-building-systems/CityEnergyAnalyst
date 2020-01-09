@@ -25,14 +25,6 @@ cea.utilities.compile\_pyd\_files module
     :undoc-members:
     :show-inheritance:
 
-cea.utilities.converter\_old\_schedules\_to\_csv module
--------------------------------------------------------
-
-.. automodule:: cea.utilities.converter_old_schedules_to_csv
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 cea.utilities.date module
 -------------------------
 

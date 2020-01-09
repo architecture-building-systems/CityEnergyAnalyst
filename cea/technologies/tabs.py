@@ -47,12 +47,12 @@ def calc_floorheating(Qh, tm, Qh0, tsh0, trh0, Af):
         A_tabs = 0.8 * Af   # m2
         H_tabs = A_tabs / R_tabs
 
-        def fh(x):
+        def fh(x, mCw0, k2, tm, H_tabs):
             Eq = mCw0 * k2 - (x+k2-tm) * H_tabs
             return Eq
 
         k2 = Qh * k1
-        result = scipy.optimize.newton(fh, trh0, maxiter=1000, tol=0.1) - 273
+        result = scipy.optimize.newton(fh, trh0, args=(mCw0, k2, tsh0, H_tabs),  maxiter=1000, tol=0.1) - 273
         trh = result.real
         tsh = trh + k2
         mCw = Qh / (tsh - trh)
