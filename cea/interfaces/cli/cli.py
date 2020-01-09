@@ -59,7 +59,7 @@ def main(config=None):
     cea_script.print_script_configuration(config)
     if list(cea_script.missing_input_files(config)):
         cea_script.print_missing_input_files(config)
-        return
+        sys.exit(cea.MissingInputDataException.rc)
 
     script_module = importlib.import_module(cea_script.module)
     try:
