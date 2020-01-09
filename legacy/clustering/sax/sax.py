@@ -68,7 +68,7 @@ class SAX(object):
 
     def normalize(self, x):
         """
-        Function will normalize an array (give it a mean of 0, and a
+        Function will add_timeframe an array (give it a mean of 0, and a
         standard deviation of 1) unless it's standard deviation is below
         epsilon, in which case it returns an array of zeros the length
         of the original array.

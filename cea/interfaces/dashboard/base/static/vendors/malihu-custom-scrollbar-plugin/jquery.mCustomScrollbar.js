@@ -184,7 +184,7 @@ and dependencies (minified).
 				*/
 				deltaFactor:"auto",
 				/*
-				normalize mouse-wheel delta to -1 or 1 (disables mouse-wheel acceleration) 
+				add_timeframe mouse-wheel delta to -1 or 1 (disables mouse-wheel acceleration)
 				values: boolean
 					option						default
 					-------------------------------------

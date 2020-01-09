@@ -198,7 +198,7 @@ var requirejs, require, define;
             checkLoadedTimeoutId,
             config = {
                 //Defaults. Do not set a default for map
-                //config to speed up normalize(), which
+                //config to speed up add_timeframe(), which
                 //will run faster if there is no default.
                 waitSeconds: 7,
                 baseUrl: './',
@@ -254,7 +254,7 @@ var requirejs, require, define;
         }
 
         /**
-         * Given a relative module name, like ./something, normalize it to
+         * Given a relative module name, like ./something, add_timeframe it to
          * a real name that can be mapped to a path.
          * @param {String} name the relative name
          * @param {String} baseName a real name that the name arg is relative
@@ -398,7 +398,7 @@ var requirejs, require, define;
         /**
          * Creates a module mapping that includes plugin prefix, module
          * name, and path. If parentModuleMap is provided it will
-         * also normalize the name via require.normalize()
+         * also add_timeframe the name via require.add_timeframe()
          *
          * @param {String} name the module name
          * @param {String} [parentModuleMap] parent module map
@@ -438,15 +438,15 @@ var requirejs, require, define;
             if (name) {
                 if (prefix) {
                     if (pluginModule && pluginModule.normalize) {
-                        //Plugin is loaded, use its normalize method.
+                        //Plugin is loaded, use its add_timeframe method.
                         normalizedName = pluginModule.normalize(name, function (name) {
                             return normalize(name, parentName, applyMap);
                         });
                     } else {
                         // If nested plugin references, then do not try to
-                        // normalize, as it will not normalize correctly. This
+                        // add_timeframe, as it will not add_timeframe correctly. This
                         // places a restriction on resourceIds, and the longer
-                        // term solution is not to normalize until plugins are
+                        // term solution is not to add_timeframe until plugins are
                         // loaded and all normalizations to allow for async
                         // loading of a loader plugin. But for now, fixes the
                         // common uses. Details in #1131
@@ -459,7 +459,7 @@ var requirejs, require, define;
                     normalizedName = normalize(name, parentName, applyMap);
 
                     //Normalized name may be a plugin ID due to map config
-                    //application in normalize. The map config values must
+                    //application in add_timeframe. The map config values must
                     //already be normalized, so do not need to redo that part.
                     nameParts = splitPrefix(normalizedName);
                     prefix = nameParts[0];
@@ -1611,7 +1611,7 @@ var requirejs, require, define;
             /**
              * Converts a module name to a file path. Supports cases where
              * moduleName may actually be just an URL.
-             * Note that it **does not** call normalize on the moduleName,
+             * Note that it **does not** call add_timeframe on the moduleName,
              * it is assumed to have already been normalized. This is an
              * internal API, not a public one. Use toUrl for the public API.
              */
