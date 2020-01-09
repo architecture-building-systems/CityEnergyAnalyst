@@ -60,6 +60,7 @@ def validation(locator):
         print("monthly validation")
         monthly_measured_data = pd.read_csv(locator.get_monthly_measurements())
         measured_building_names = monthly_measured_data.Name.values
+        list_of_scores = []
         for building_name in measured_building_names:  # number of buildings that have real data available
 
             # extract measured data (format: BuildingID (corresponding to CEA model) | ZipCode (optional) | monthly energy consumed (kWh) (Jan-Dec)
@@ -94,10 +95,16 @@ def validation(locator):
             cvrmse = rmse * 100 / monthly_data['measurements'].mean()  # coefficient of variation of the root mean squared error (%)
             print(cvrmse)
 
-            # if nmbe <30
-            # pass nmbe
+            if nmbe <5 and cvrmse <15:
+                arg = 1
+            else:
+                arg = 0
 
-    return nmbe
+            ind_score_building = arg
+            list_of_scores.append(ind_score_building)
+        score = sum (list_of_scores)
+    print (score)
+    return score
 
 
 def main(config):

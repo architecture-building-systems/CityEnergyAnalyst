@@ -18,6 +18,9 @@ from collections import OrderedDict
 from sklearn.linear_model import LogisticRegression
 import hyperopt.pyll
 from hyperopt.pyll import scope
+import pickle
+import time
+from hyperopt import fmin, tpe, hp, STATUS_OK, Trials
 import pandas as pd
 from sklearn.metrics import mean_squared_error
 from math import sqrt
@@ -32,75 +35,29 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-# define a search space
-SPACE = OrderedDict([('Es', hp.uniform('Es', 0.6, 1.0)),
-                     ('Ns', hp.uniform('subsample', 0.7, 1.0)),
-                     ('Occ_m2pax', hp.uniform('Occ_m2pax', 30.0, 60.0)),
-                     ('Vww_lpdpax', hp.uniform('Vww_lpdpax', 20.0, 40.0)),
-                     ('Ea_Wm2', hp.uniform('Ea_Wm2', 1.0, 5.0)),
-                    ('El_Wm2', hp.uniform('El_Wm2', 1.0, 5.0))
-                    ])
 
-SPACE2 = hp.choice('classifier_type', [
-
-                    ('Es', hp.uniform('Es', 0.6, 1.0)),
-                     ('Ns', hp.uniform('subsample', 0.7, 1.0)),
-                     ('Occ_m2pax', hp.uniform('Occ_m2pax', 30.0, 60.0)),
-                     ('Vww_lpdpax', hp.uniform('Vww_lpdpax', 20.0, 40.0)),
-                     ('Ea_Wm2', hp.uniform('Ea_Wm2', 1.0, 5.0)),
-                    ('El_Wm2', hp.uniform('El_Wm2', 1.0, 5.0))
-                    ])
-
-space = hp.choice('classifier',[
-                      {
-                       'model': LogisticRegression,
-                       'param':
-                         {
-                             'hyper_param_groups' :hp.choice('hyper_param_groups',
-                                             [
-                                                {
-                                                 'penalty':hp.choice('penalty_block1', ['l2']),
-                                                 'solver':hp.choice('solver_block1', ['newton-cg', 'sag', 'saga', 'lbfgs']),
-                                                 'multi_class':hp.choice('multi_class', ['ovr', 'multinomial']),
-                                                },
-                                                {
-                                                 'penalty':hp.choice('penalty_block2', ['l2']),
-                                                 'solver':hp.choice('solver_block2', ['liblinear']),
-                                                 'multi_class':hp.choice('multi_class_block2', ['ovr']),
-                                                },
-                                                {
-                                                 'penalty':hp.choice('penalty_block3', ['l1']),
-                                                 'solver':hp.choice('solver_block3', ['saga']),
-                                                 'multi_class':hp.choice('multi_class_block3', ['ovr', 'multinomial']),
-                                                },
-                                             ]),
-                            'dual':hp.choice('dual', [False]),
-                            'class_weight':hp.choice('class_weight', ['balanced', None]),
-                            'random_state':hp.choice('random_state', [10,267]),
-                            'max_iter':hp.choice('max_iter', [100,500]),
-                            'verbose':hp.choice('verbose', [0])
-                         }
-                      }])
-
-def calibration(locator, config):
+def calc_score(static_params, params):
     """
     This tool reduces the error between observed (real life measured data) and predicted (output of the model data) values by changing some of CEA inputs.
     Annual data is compared in terms of MBE and monthly data in terms of NMBE and CvRMSE (follwing ASHRAE Guideline 14-2002).
     A new input folder with measurements has to be created, with a csv each for monthly and annual data provided as input for this tool.
     A new output csv is generated providing for each building (if measured data is available): building ID | ZIP Code | Measured data (observed) | Modelled data (predicted) | Model errors
     """
+    locator = static_params['locator']
+    config = static_params['config']
 
     ## define set of CEA inputs to be calibrated and initial guess values
-    Es = 0.7
-    Ns = 0.8
+    Es = params['Es']
+    Ns = params['Ns']
+    Occ_m2pax = params['Occ_m2pax']
+    Vww_lpdpax = params['Vww_lpdpax']
+    Ea_Wm2 = params['Ea_Wm2']
+    El_Wm2 = params['El_Wm2']
+
+    ##define fixed constant parameters (to be redefined by CEA config file)
     Hs_ag = 0
-    Occ_m2pax = 50
-    Vww_lpdpax = 30
-    Ea_Wm2 = 4
-    El_Wm2 = 2
     Tcs_set_C = 40
     Tcs_setb_C = 40
-
 
     ## overwrite inputs with corresponding initial values
     df_arch = dbf_to_dataframe(locator.get_building_architecture())
@@ -124,18 +81,39 @@ def calibration(locator, config):
     ## run building schedules and energy demand (first run)
     schedule_maker.schedule_maker_main(locator, config, building=None)
     demand_main.demand_calculation(locator, config)
-    validation.validation(locator)
 
-    ## define function to be minimized
+    #calculate the score
+    score = validation.validation(locator)
 
-    # def objective(params):
-    #     all_params = {**params, **STATIC_PARAMS}
-    #     score = -1.0 * train_evaluate(X, y, all_params)
-    #     monitor_callback(params, score)
-    #     return score
+    return score
 
 
-    pass
+def calibration(config, locator):
+
+    max_evals = 2
+
+    #  define a search space
+    SPACE = OrderedDict([('Es', hp.uniform('Es', 0.6, 1.0)),
+                         ('Ns', hp.uniform('subsample', 0.7, 1.0)),
+                         ('Occ_m2pax', hp.uniform('Occ_m2pax', 30.0, 60.0)),
+                         ('Vww_lpdpax', hp.uniform('Vww_lpdpax', 20.0, 40.0)),
+                         ('Ea_Wm2', hp.uniform('Ea_Wm2', 1.0, 5.0)),
+                         ('El_Wm2', hp.uniform('El_Wm2', 1.0, 5.0))
+                         ])
+    STATIC_PARAMS = {'locator': locator, 'config': config}
+
+    #define the objective
+    def objective(params):
+        return 1.0 * calc_score(STATIC_PARAMS, params)
+
+    #run the algorithm
+    trials = Trials()
+    best = fmin(objective,
+                space=SPACE,
+                algo=tpe.suggest,
+                max_evals=max_evals,
+                trials=trials)
+    print(best)
 
 
 def main(config):
@@ -151,9 +129,7 @@ def main(config):
     """
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(config.scenario)
-
-    calibration(locator, config)
-
+    calibration(config, locator)
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
