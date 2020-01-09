@@ -9,6 +9,7 @@ import pandas as pd
 import cea.config
 import cea.inputlocator
 import cea.plots
+import cea.plots.cache
 
 """
 Implements py:class:`cea.plots.DemandPlotBase` as a base class for all plots in the category "demand" and also
@@ -125,8 +126,7 @@ class DemandPlotBase(cea.plots.PlotBase):
                                                          for building in self.buildings)).set_index('DATE')
         return data_demand
 
-    def calculate_hourly_loads(self):
-        data_demand = self._calculate_hourly_loads()
+    def add_timeframe(self, data_demand):
         if self.timeframe == "daily":
             data_demand.index = pd.to_datetime(data_demand.index)
             data_demand = data_demand.resample('D').sum()
@@ -136,8 +136,18 @@ class DemandPlotBase(cea.plots.PlotBase):
         elif self.timeframe == "monthly":
             data_demand.index = pd.to_datetime(data_demand.index)
             data_demand = data_demand.resample('M').sum()
+        elif self.timeframe == "yearly":
+            data_demand.index = pd.to_datetime(data_demand.index)
+            data_demand = data_demand.resample('Y').sum()
         return data_demand
 
+    @cea.plots.cache.cached
+    def calculate_hourly_loads(self):
+        data = self._calculate_hourly_loads()
+        data_demand  = self.add_timeframe(data)
+        return data_demand
+
+    @cea.plots.cache.cached
     def calculate_external_temperature(self):
         data_weather = pd.read_csv(self.locator.get_demand_results_file(self.buildings[0])).set_index('DATE')
         if self.timeframe == "daily":
@@ -149,6 +159,9 @@ class DemandPlotBase(cea.plots.PlotBase):
         elif self.timeframe == "monthly":
             data_weather.index = pd.to_datetime(data_weather.index)
             data_weather = data_weather.resample('M').mean()
+        elif self.timeframe == "yearly":
+            data_weather.index = pd.to_datetime(data_weather.index)
+            data_weather = data_weather.resample('Y').mean()
         return data_weather
 
     @property
