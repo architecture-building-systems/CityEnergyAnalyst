@@ -1,9 +1,11 @@
 from __future__ import division
 from __future__ import print_function
 
-import pandas as pd
-import os
 import functools
+import os
+
+import pandas as pd
+
 import cea.inputlocator
 from cea.utilities import epwreader
 
@@ -42,7 +44,7 @@ class SolarTechnologyPotentialsPlotBase(cea.plots.PlotBase):
         self.pv_analysis_fields = ['PV_walls_east_E_kWh', 'PV_walls_west_E_kWh', 'PV_walls_south_E_kWh',
                                    'PV_walls_north_E_kWh', 'PV_roofs_top_E_kWh']
         self.pv_analysis_fields_area = ['PV_walls_east_m2', 'PV_walls_west_m2', 'PV_walls_south_m2',
-                                   'PV_walls_north_m2', 'PV_roofs_top_m2']
+                                        'PV_walls_north_m2', 'PV_roofs_top_m2']
         self.sc_fp_analysis_fields = ['SC_FP_walls_east_Q_kWh', 'SC_FP_walls_west_Q_kWh', 'SC_FP_walls_south_Q_kWh',
                                       'SC_FP_walls_north_Q_kWh', 'SC_FP_roofs_top_Q_kWh']
         self.sc_et_analysis_fields = ['SC_ET_walls_east_Q_kWh', 'SC_ET_walls_west_Q_kWh', 'SC_ET_walls_south_Q_kWh',
@@ -59,19 +61,23 @@ class SolarTechnologyPotentialsPlotBase(cea.plots.PlotBase):
         if self.normalization == "gross floor area":
             data = pd.read_csv(self.locator.get_total_demand()).set_index('Name')
             normalizatioon_factor = data.loc[buildings]['GFA_m2'].sum()
-            data_processed = data_processed.apply(lambda x: x/normalizatioon_factor if x.name in analysis_fields else x)
+            data_processed = data_processed.apply(
+                lambda x: x / normalizatioon_factor if x.name in analysis_fields else x)
         elif self.normalization == "net floor area":
             data = pd.read_csv(self.locator.get_total_demand()).set_index('Name')
             normalizatioon_factor = data.loc[buildings]['Aocc_m2'].sum()
-            data_processed = data_processed.apply(lambda x: x/normalizatioon_factor if x.name in analysis_fields else x)
+            data_processed = data_processed.apply(
+                lambda x: x / normalizatioon_factor if x.name in analysis_fields else x)
         elif self.normalization == "air conditioned floor area":
             data = pd.read_csv(self.locator.get_total_demand()).set_index('Name')
             normalizatioon_factor = data.loc[buildings]['Af_m2'].sum()
-            data_processed = data_processed.apply(lambda x: x/normalizatioon_factor if x.name in analysis_fields else x)
+            data_processed = data_processed.apply(
+                lambda x: x / normalizatioon_factor if x.name in analysis_fields else x)
         elif self.normalization == "building occupancy":
             data = pd.read_csv(self.locator.get_total_demand()).set_index('Name')
             normalizatioon_factor = data.loc[buildings]['people0'].sum()
-            data_processed = data_processed.apply(lambda x: x/normalizatioon_factor if x.name in analysis_fields else x)
+            data_processed = data_processed.apply(
+                lambda x: x / normalizatioon_factor if x.name in analysis_fields else x)
         elif self.normalization == "surface area":
             for energy, area in zip(analysis_fields, analysis_fields_area):
                 if data_processed[area][0] > 0.0:
@@ -97,20 +103,24 @@ class SolarTechnologyPotentialsPlotBase(cea.plots.PlotBase):
     def PV_hourly_aggregated_kW(self):
         data = self._calculate_PV_hourly_aggregated_kW()
         data_normalized = self.normalize_data(data, self.buildings, self.pv_analysis_fields,
-                                                      self.pv_analysis_fields_area)
+                                              self.pv_analysis_fields_area)
         PV_hourly_aggregated_kW = self.timeframe_data(data_normalized)
 
         return PV_hourly_aggregated_kW
 
     def add_pv_fields(self, df1, df2):
         """Add the demand analysis fields together - use this in reduce to sum up the summable parts of the dfs"""
-        df1[self.pv_analysis_fields+self.pv_analysis_fields_area] = df2[self.pv_analysis_fields+self.pv_analysis_fields_area] + df1[self.pv_analysis_fields+self.pv_analysis_fields_area]
+        df1[self.pv_analysis_fields + self.pv_analysis_fields_area] = df2[
+                                                                          self.pv_analysis_fields + self.pv_analysis_fields_area] + \
+                                                                      df1[
+                                                                          self.pv_analysis_fields + self.pv_analysis_fields_area]
         return df1
 
     def _calculate_PV_hourly_aggregated_kW(self):
         # get extra data of weather and date
         pv_hourly_aggregated_kW = functools.reduce(self.add_pv_fields, (pd.read_csv(self.locator.PV_results(building))
-                                                         for building in self.buildings)).set_index('Date')
+                                                                        for building in self.buildings)).set_index(
+            'Date')
 
         return pv_hourly_aggregated_kW
 
@@ -124,7 +134,7 @@ class SolarTechnologyPotentialsPlotBase(cea.plots.PlotBase):
         weather_data = epwreader.epw_reader(self.weather)[["date", "drybulb_C", "wetbulb_C", "skytemp_C"]]
 
         pvt_hourly_aggregated_kW = sum(pd.read_csv(self.locator.PVT_results(building), usecols=self.pvt_analysis_fields)
-                                      for building in self.buildings)
+                                       for building in self.buildings)
         pvt_hourly_aggregated_kW['DATE'] = weather_data["date"]
         return pvt_hourly_aggregated_kW
 
@@ -165,4 +175,3 @@ class SolarTechnologyPotentialsPlotBase(cea.plots.PlotBase):
                                           inplace=True)
         sc_et_hourly_aggregated_kW['DATE'] = weather_data["date"]
         return sc_et_hourly_aggregated_kW
-
