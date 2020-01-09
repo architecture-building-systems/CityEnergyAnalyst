@@ -1014,7 +1014,7 @@ thermal-network
     "thermal-network" -> "DH__qloss_System_kW.csv"[label="(get_optimization_network_layout_qloss_system_file)"]
     "thermal-network" -> "DH__T_Return_K.csv"[label="(get_optimization_network_layout_return_temperature_file)"]
     "thermal-network" -> "DH__T_Supply_K.csv"[label="(get_optimization_network_layout_supply_temperature_file)"]
-    "thermal-network" -> "DH__Nodes.csv"[label="(get_optimization_network_node_list_file)"]
+    "thermal-network" -> "DH__Nodes.csv"[label="(get_thermal_network_node_types_csv_file)"]
     "thermal-network" -> "DH__ploss_Substations_kW.csv"[label="(get_optimization_network_substation_ploss_file)"]
     "thermal-network" -> "Aggregated_Demand_DH__Wh.csv"[label="(get_thermal_demand_csv_file)"]
     }

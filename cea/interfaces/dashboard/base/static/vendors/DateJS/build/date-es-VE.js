@@ -2586,7 +2586,7 @@ Date.CultureStrings.lang = "es-VE";
 						// ok, so we're dealing with x/year. But that's not a full date.
 						// This fixes wonky dateElementOrder parsing when set to dmy order.
 						if (Date.CultureInfo.dateElementOrder[0] === "d") {
-							s = "1/" + n[0] + "/" + n[2]; // set to 1st of month and normalize the seperator
+							s = "1/" + n[0] + "/" + n[2]; // set to 1st of month and add_timeframe the seperator
 						}
 				}
 			} catch (e) {}
