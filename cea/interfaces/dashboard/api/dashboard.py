@@ -23,27 +23,39 @@ def dashboard_to_dict(dashboard):
     return out
 
 
-def get_plot_parameters(plot_class, scenario_name=None):
+def get_parameters_from_plot(plot, scenario_name=None):
     config = cea.config.Configuration()
     parameters = []
-    plot_parameters = sorted(plot_class.expected_parameters.items(), key=lambda x: x[1])
     # Make sure to set scenario name to config first
-    if 'scenario-name' in [parameter[0] for parameter in plot_parameters]:
-        if scenario_name:
+    if 'scenario-name' in plot.expected_parameters:
+        if scenario_name is not None:
             config.scenario_name = scenario_name
-        elif hasattr(plot_class, 'parameters') and 'scenario-name' in plot_class.parameters:
-            config.scenario_name = plot_class.parameters['scenario-name']
-    for pname, fqname in plot_parameters:
+        elif 'scenario-name' in plot.parameters:
+            config.scenario_name = plot.parameters['scenario-name']
+
+    for pname, fqname in sorted(plot.expected_parameters.items(), key=lambda x: x[1]):
         parameter = config.get_parameter(fqname)
-        # skip setting 'scenario-name'
-        if pname != 'scenario-name' and hasattr(plot_class, 'parameters') and pname in plot_class.parameters:
+        if pname in plot.parameters:
             try:
-                parameter.set(plot_class.parameters[pname])
+                parameter.set(plot.parameters[pname])
             # FIXME: Use a custom exception instead
             except AssertionError as e:
                 if isinstance(parameter, cea.config.MultiChoiceParameter):
                     parameter.set([])
                 print(e)
+        parameters.append(deconstruct_parameters(parameter))
+    return parameters
+
+
+def get_parameters_from_plot_class(plot_class, scenario_name=None):
+    config = cea.config.Configuration()
+    parameters = []
+    # Make sure to set scenario name to config first
+    if 'scenario-name' in plot_class.expected_parameters and scenario_name is not None:
+        config.scenario_name = scenario_name
+
+    for pname, fqname in sorted(plot_class.expected_parameters.items(), key=lambda x: x[1]):
+        parameter = config.get_parameter(fqname)
         parameters.append(deconstruct_parameters(parameter))
     return parameters
 
@@ -145,7 +157,7 @@ class DashboardPlotCategoriesParameters(Resource):
 
     def get(self, category_name, plot_id):
         plot_class = cea.plots.categories.load_plot_by_id(category_name, plot_id)
-        return get_plot_parameters(plot_class, request.args.get('scenario'))
+        return get_parameters_from_plot_class(plot_class, request.args.get('scenario'))
 
 
 @api.route('/<int:dashboard_index>/plots/<int:plot_index>')
@@ -218,7 +230,7 @@ class DashboardPlotParameters(Resource):
         dashboard = dashboards[dashboard_index]
         plot = dashboard.plots[plot_index]
 
-        return get_plot_parameters(plot, request.args.get('scenario'))
+        return get_parameters_from_plot(plot, request.args.get('scenario'))
 
 
 @api.route('/<int:dashboard_index>/plots/<int:plot_index>/input-files')
