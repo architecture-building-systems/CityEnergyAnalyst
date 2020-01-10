@@ -181,7 +181,7 @@ def radiation_singleprocessing(rad, geometry_3D_zone, locator, settings):
                 chunks.append([bldg_dict])
 
     for chunk_n, building_dict in enumerate(chunks):
-        daysim_main.isolation_daysim(chunk_n, rad, building_dict, locator, settings, max_global)
+        daysim_main.isolation_daysim(chunk_n, rad, building_dict, locator, settings, max_global, weatherfile)
 
 
 def check_daysim_bin_directory(path_hint):

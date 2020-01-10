@@ -4,11 +4,11 @@ import json
 import os
 import shutil
 
+import numpy as np
 import pandas as pd
 import py4design.py2radiance as py2radiance
 import py4design.py3dmodel.calculate as calculate
 from py4design import py3dmodel
-import numpy as np
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -46,7 +46,7 @@ def generate_sensor_surfaces(occface, wall_dim, roof_dim, srf_type, orientation,
     sensor_cord = [py3dmodel.calculate.face_midpt(x) for x in sensor_surfaces]
     sensor_type = [srf_type for x in sensor_surfaces]
     sensor_orientation = [orientation for x in sensor_surfaces]
-    sensor_area = [calculate.face_area(x) for x in sensor_surfaces]
+    sensor_area = [calculate.face_area(x) * (1.0 - scalar) for x, scalar in zip(sensor_surfaces, sensor_intersection)]
 
     return sensor_dir, sensor_cord, sensor_type, sensor_area, sensor_orientation, sensor_intersection
 
@@ -130,7 +130,7 @@ def calc_sensors_zone(geometry_3D_zone, locator, settings):
         sensors_coords_zone.extend(sensors_coords_building)
         sensors_dir_zone.extend(sensors_dir_building)
 
-        #get total list of intersections
+        # get total list of intersections
         sensor_intersection_zone.append(sensor_intersection_building)
 
         # get the name of all buildings
@@ -153,8 +153,7 @@ def calc_sensors_zone(geometry_3D_zone, locator, settings):
     return sensors_coords_zone, sensors_dir_zone, sensors_total_number_list, names_zone, sensors_code_zone, sensor_intersection_zone
 
 
-def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, settings, max_global):
-
+def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, settings, max_global, weatherfile):
     # folder for data work
     daysim_dir = locator.get_temporary_file("temp" + str(chunk_n))
     print('isolation_daysim: daysim_dir={daysim_dir}'.format(daysim_dir=daysim_dir))
@@ -205,7 +204,7 @@ def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, settings, max_glob
 
     # check inconsistencies and replace by max value of weather file
     print('Fixing inconsistencies, if any')
-    solar_res = np.clip(solar_res, a_min = 0.0, a_max=max_global)
+    solar_res = np.clip(solar_res, a_min=0.0, a_max=max_global)
 
     print("Writing results to disk")
     index = 0
@@ -216,13 +215,50 @@ def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, settings, max_glob
                                             sensors_number_zone,
                                             sensors_code_zone,
                                             sensor_intersection_zone):
-
+        # select sensors and plot to disk
         selection_of_results = solar_res[index:index + sensors_number_building]
-        result = [(array * (1.0 - scalar)).tolist() for array, scalar in zip(selection_of_results, sensor_intersection_building)]
+        result = [(array * (1.0 - scalar)).tolist() for array, scalar in
+                  zip(selection_of_results, sensor_intersection_building)]
         items_sensor_name_and_result = dict(zip(sensor_code_building, result))
-        with open(locator.get_radiation_building(building_name), 'w') as outfile:
+        with open(locator.get_radiation_building_sensors(building_name), 'w') as outfile:
             json.dump(items_sensor_name_and_result, outfile)
         index = index + sensors_number_building
+
+        # create summary and save to disk
+        geometry = pd.read_csv(locator.get_radiation_metadata(building_name))
+        geometry['code'] = geometry['TYPE'] + '_' + geometry['orientation'] + '_kW'
+        solar_analysis_fields = ['windows_east_kW',
+                                 'windows_west_kW',
+                                 'windows_south_kW',
+                                 'windows_north_kW',
+                                 'walls_east_kW',
+                                 'walls_west_kW',
+                                 'walls_south_kW',
+                                 'walls_north_kW',
+                                 'roofs_top_kW']
+        solar_analysis_fields_area = ['windows_east_m2',
+                                           'windows_west_m2',
+                                           'windows_south_m2',
+                                           'windows_north_m2',
+                                           'walls_east_m2',
+                                           'walls_west_m2',
+                                           'walls_south_m2',
+                                           'walls_north_m2',
+                                           'roofs_top_m2']
+        dict_not_aggregated = {}
+        for field, field_area in zip(solar_analysis_fields, solar_analysis_fields_area):
+            select_sensors = geometry.loc[geometry['code'] == field].set_index('SURFACE')
+            area_m2 = select_sensors['AREA_m2'].sum()
+            array_field = np.array([select_sensors.ix[surface, 'AREA_m2'] *
+                                    np.array(items_sensor_name_and_result[surface])
+                                    for surface in select_sensors.index]).sum(axis=0)
+            dict_not_aggregated[field] = array_field
+            dict_not_aggregated[field_area] = area_m2
+
+        data_aggregated_kW = (pd.DataFrame(dict_not_aggregated)/1000).round(2) #in kWh
+        data_aggregated_kW["Date"] = weatherfile["date"]
+        data_aggregated_kW.to_csv(locator.get_radiation_building(building_name))
+
 
     # erase daysim folder to avoid conflicts after every iteration
     print('Removing results folder')
