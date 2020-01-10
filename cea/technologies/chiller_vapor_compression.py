@@ -98,7 +98,7 @@ def calc_Cinv_VCC(Q_nom_W, locator, technology_type):
         # capacity for the corresponding technology from the database
         if Q_nom_W < VCC_cost_data.iloc[0]['cap_min']:
             Q_nom_W = VCC_cost_data.iloc[0]['cap_min']
-        if Q_nom_W <= max_chiller_size:
+        if Q_nom_W < max_chiller_size:
             VCC_cost_data = VCC_cost_data[(VCC_cost_data['cap_min'] <= Q_nom_W) & (VCC_cost_data['cap_max'] > Q_nom_W)]
             Inv_a = VCC_cost_data.iloc[0]['a']
             Inv_b = VCC_cost_data.iloc[0]['b']
