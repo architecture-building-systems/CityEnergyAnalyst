@@ -60,7 +60,7 @@ def calc_PV(locator, config, latitude, longitude, weather_data, datetime_local, 
     """
 
     t0 = time.clock()
-    radiation_path = locator.get_radiation_building(building_name)
+    radiation_path = locator.get_radiation_building_sensors(building_name)
     metadata_csv_path = locator.get_radiation_metadata(building_name)
 
     # solar properties
