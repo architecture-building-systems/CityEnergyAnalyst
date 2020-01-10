@@ -354,7 +354,7 @@ class BuildingProperties(object):
         envelope['Aroof'] = np.nan
 
         # call all building geometry files in a loop
-        for building_name in locator.get_zone_building_names():
+        for building_name in envelope.index:
             geometry_data = pd.read_csv(locator.get_radiation_building(building_name))
             envelope.ix[building_name, 'Awall_ag'] = geometry_data['walls_east_m2'][0] + \
                                                   geometry_data['walls_west_m2'][0] + \
