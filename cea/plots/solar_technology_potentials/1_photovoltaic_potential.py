@@ -2,10 +2,9 @@ from __future__ import division
 from __future__ import print_function
 
 import plotly.graph_objs as go
-import pandas as pd
-from plotly.offline import plot
+
 import cea.plots.solar_technology_potentials
-from cea.plots.variable_naming import LOGO, COLOR, NAMING
+from cea.plots.variable_naming import COLOR, NAMING
 
 __author__ = "Shanshan Hsieh"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -68,13 +67,12 @@ class PVPotentialPlot(cea.plots.solar_technology_potentials.SolarTechnologyPoten
                 if self.normalization == "none":
                     return "%s for Selected Buildings" % self.name
                 else:
-                    return "%s for Selected Buildings normalized to %s" % (self.name,self.normalization)
+                    return "%s for Selected Buildings normalized to %s" % (self.name, self.normalization)
         else:
             if self.normalization == "none":
                 return "%s for District" % self.name
             else:
-                return "%s for District normalized to %s" % (self.name,self.normalization)
-
+                return "%s for District normalized to %s" % (self.name, self.normalization)
 
     def calc_graph(self):
         data = self.PV_hourly_aggregated_kW()
@@ -82,7 +80,7 @@ class PVPotentialPlot(cea.plots.solar_technology_potentials.SolarTechnologyPoten
         analysis_fields = self.remove_unused_fields(data, self.pv_analysis_fields)
         for field in analysis_fields:
             if self.normalization != "none":
-                y = data[field].values #in kW
+                y = data[field].values  # in kW
             else:
                 y = data[field].values / 1E3  # to MW
 
@@ -90,6 +88,7 @@ class PVPotentialPlot(cea.plots.solar_technology_potentials.SolarTechnologyPoten
             trace = go.Bar(x=data.index, y=y, name=name, marker=dict(color=COLOR[field]))
             traces.append(trace)
         return traces
+
 
 def main():
     """Test this plot"""
@@ -101,20 +100,21 @@ def main():
     cache = cea.plots.cache.PlotCache(config.project)
     # cache = cea.plots.cache.NullPlotCache()
     PVPotentialPlot(config.project, {'buildings': None,
-                                             'scenario-name': config.scenario_name,
-                                             'timeframe': config.plots.timeframe,
-                                             'normalization': config.plots.normalization},
+                                     'scenario-name': config.scenario_name,
+                                     'timeframe': config.plots.timeframe,
+                                     'normalization': config.plots.normalization},
                     cache).plot(auto_open=True)
     PVPotentialPlot(config.project, {'buildings': locator.get_zone_building_names()[0:2],
-                                             'scenario-name': config.scenario_name,
-                                             'timeframe': config.plots.timeframe,
-                                             'normalization': config.plots.normalization},
+                                     'scenario-name': config.scenario_name,
+                                     'timeframe': config.plots.timeframe,
+                                     'normalization': config.plots.normalization},
                     cache).plot(auto_open=True)
     PVPotentialPlot(config.project, {'buildings': [locator.get_zone_building_names()[0]],
-                                             'scenario-name': config.scenario_name,
-                                             'timeframe': config.plots.timeframe,
-                                             'normalization': config.plots.normalization},
+                                     'scenario-name': config.scenario_name,
+                                     'timeframe': config.plots.timeframe,
+                                     'normalization': config.plots.normalization},
                     cache).plot(auto_open=True)
+
 
 if __name__ == '__main__':
     main()
