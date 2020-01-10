@@ -209,15 +209,15 @@ demand,E_ww_MWhyr,MWh/yr,Electricity consumption due to hot water,green_lighter
 demand,E_cdata_MWhyr,MWh/yr,Electricity consumption due to data center cooling,yellow_light
 demand,E_cre_MWhyr,MWh/yr,Electricity consumption due to refrigeration,yellow_lighter
 
-solar radiation,windows_east,,Radiation in windows in the east facade,blue
-solar radiation,windows_west,,Radiation in windows in the west facade,grey
-solar radiation,windows_south,,Radiation in windows in the south facade,green
-solar radiation,windows_north,,Radiation in windows in the north facade,orange_light
-solar radiation,walls_east,,Radiation in walls in the east facade,purple
-solar radiation,walls_west,,Radiation in walls in the west facade,brown
-solar radiation,walls_north,,Radiation in walls in the north facade,orange
-solar radiation,walls_south,,Radiation in walls in the south facade,red
-solar radiation,roofs_top,,Radiation on the roof,yellow
+solar radiation,windows_east_kW,,Radiation in windows in the east facade,blue
+solar radiation,windows_west_kW,,Radiation in windows in the west facade,grey
+solar radiation,windows_south_kW,,Radiation in windows in the south facade,green
+solar radiation,windows_north_kW,,Radiation in windows in the north facade,orange_light
+solar radiation,walls_east_kW,,Radiation in walls in the east facade,purple
+solar radiation,walls_west_kW,,Radiation in walls in the west facade,brown
+solar radiation,walls_north_kW,,Radiation in walls in the north facade,orange
+solar radiation,walls_south_kW,,Radiation in walls in the south facade,red
+solar radiation,roofs_top_kW,,Radiation on the roof,yellow
 
 Solar technologies,PV_walls_east_E_kWh,kWh,Electricity production from photovoltaic panels on east facades,purple
 Solar technologies,PV_walls_west_E_kWh,kWh,Electricity production from photovoltaic panels on west facades,brown
