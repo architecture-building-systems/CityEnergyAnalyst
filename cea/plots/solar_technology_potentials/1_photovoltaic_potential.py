@@ -6,9 +6,9 @@ import plotly.graph_objs as go
 import cea.plots.solar_technology_potentials
 from cea.plots.variable_naming import COLOR, NAMING
 
-__author__ = "Shanshan Hsieh"
-__copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Shanshan Hsieh", "Jimeno A. Fonseca"]
+__author__ = "Jimeno A. Fonseca"
+__copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Jimeno A. Fonseca", "Shanshan Hsieh"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -98,7 +98,6 @@ def main():
     config = cea.config.Configuration()
     locator = cea.inputlocator.InputLocator(config.scenario)
     cache = cea.plots.cache.PlotCache(config.project)
-    # cache = cea.plots.cache.NullPlotCache()
     PVPotentialPlot(config.project, {'buildings': None,
                                      'scenario-name': config.scenario_name,
                                      'timeframe': config.plots.timeframe,
