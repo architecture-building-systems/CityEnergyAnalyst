@@ -99,7 +99,6 @@ class SolarTechnologyPotentialsPlotBase(cea.plots.PlotBase):
             data_PV = data_PV.resample('Y').sum()
         return data_PV
 
-    @property
     @cea.plots.cache.cached
     def PV_hourly_aggregated_kW(self):
         data = self._calculate_PV_hourly_aggregated_kW()
@@ -111,12 +110,11 @@ class SolarTechnologyPotentialsPlotBase(cea.plots.PlotBase):
 
     def add_pv_fields(self, df1, df2):
         """Add the demand analysis fields together - use this in reduce to sum up the summable parts of the dfs"""
-        df1[self.pv_analysis_fields + self.pv_analysis_fields_area] = df2[
-                                                                          self.pv_analysis_fields + self.pv_analysis_fields_area] + \
-                                                                      df1[
-                                                                          self.pv_analysis_fields + self.pv_analysis_fields_area]
+        fields = self.pv_analysis_fields + self.pv_analysis_fields_area
+        df1[fields] = df2[fields] + df1[fields]
         return df1
 
+    @cea.plots.cache.cached
     def _calculate_PV_hourly_aggregated_kW(self):
         # get extra data of weather and date
         pv_hourly_aggregated_kW = functools.reduce(self.add_pv_fields, (pd.read_csv(self.locator.PV_results(building))
