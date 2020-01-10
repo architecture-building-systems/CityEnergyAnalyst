@@ -16,10 +16,10 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-class PVPotentialPlot(cea.plots.solar_technology_potentials.SolarTechnologyPotentialsPlotBase):
+class SCETPotentialPlot(cea.plots.solar_technology_potentials.SolarTechnologyPotentialsPlotBase):
     """Implement the pv-electricity-potential plot"""
 
-    name = "Photovoltaic Potential"
+    name = "Solar Collector (ET) Potential"
 
     expected_parameters = {
         'buildings': 'plots:buildings',
@@ -29,25 +29,24 @@ class PVPotentialPlot(cea.plots.solar_technology_potentials.SolarTechnologyPoten
     }
 
     def __init__(self, project, parameters, cache):
-        super(PVPotentialPlot, self).__init__(project, parameters, cache)
+        super(SCETPotentialPlot, self).__init__(project, parameters, cache)
         self.timeframe = self.parameters['timeframe']
         self.normalization = self.parameters['normalization']
-        self.input_files = [(self.locator.PV_totals, [])] + [(self.locator.PV_results, [building])
-                                                             for building in self.buildings]
+        self.input_files = [(self.locator.SC_results, [building, 'ET']) for building in self.buildings]
 
     def calc_titles(self):
         if self.normalization == "gross floor area":
-            titley = 'PV Electricity [kWh/m2]'
+            titley = 'Thermal Energy [kWh/m2]'
         elif self.normalization == "net floor area":
-            titley = 'PV Electricity [kWh/m2]'
+            titley = 'Thermal Energy [kWh/m2]'
         elif self.normalization == "air conditioned floor area":
-            titley = 'PV Electricity [kWh/m2]'
+            titley = 'Thermal Energy [kWh/m2]'
         elif self.normalization == "surface area":
-            titley = 'PV Electricity [kWh/m2]'
+            titley = 'Thermal Energy[kWh/m2]'
         elif self.normalization == "building occupancy":
-            titley = 'PV Electricity [kWh/pax]'
+            titley = 'Thermal Energy [kWh/pax]'
         else:
-            titley = 'PV Electricity [MWh]'
+            titley = 'Thermal Energy [MWh]'
         return titley
 
     @property
@@ -75,9 +74,9 @@ class PVPotentialPlot(cea.plots.solar_technology_potentials.SolarTechnologyPoten
                 return "%s for District normalized to %s" % (self.name, self.normalization)
 
     def calc_graph(self):
-        data = self.PV_hourly_aggregated_kW()
+        data = self.SC_ET_hourly_aggregated_kW()
         traces = []
-        analysis_fields = self.remove_unused_fields(data, self.pv_analysis_fields)
+        analysis_fields = self.remove_unused_fields(data, self.sc_et_analysis_fields)
         for field in analysis_fields:
             if self.normalization != "none":
                 y = data[field].values  # in kW
@@ -85,7 +84,7 @@ class PVPotentialPlot(cea.plots.solar_technology_potentials.SolarTechnologyPoten
                 y = data[field].values / 1E3  # to MW
 
             name = NAMING[field]
-            trace = go.Bar(x=data.index, y=y, name=name, marker=dict(color=COLOR[field]))
+            trace = go.Bar(x=data.index, y=y, name=name, marker=dict(color=COLOR[field]),showlegend=True)
             traces.append(trace)
         return traces
 
@@ -98,21 +97,21 @@ def main():
     config = cea.config.Configuration()
     locator = cea.inputlocator.InputLocator(config.scenario)
     cache = cea.plots.cache.PlotCache(config.project)
-    PVPotentialPlot(config.project, {'buildings': None,
+    SCETPotentialPlot(config.project, {'buildings': None,
                                      'scenario-name': config.scenario_name,
                                      'timeframe': config.plots.timeframe,
                                      'normalization': config.plots.normalization},
-                    cache).plot(auto_open=True)
-    PVPotentialPlot(config.project, {'buildings': locator.get_zone_building_names()[0:2],
+                      cache).plot(auto_open=True)
+    SCETPotentialPlot(config.project, {'buildings': locator.get_zone_building_names()[0:2],
                                      'scenario-name': config.scenario_name,
                                      'timeframe': config.plots.timeframe,
                                      'normalization': config.plots.normalization},
-                    cache).plot(auto_open=True)
-    PVPotentialPlot(config.project, {'buildings': [locator.get_zone_building_names()[0]],
+                      cache).plot(auto_open=True)
+    SCETPotentialPlot(config.project, {'buildings': [locator.get_zone_building_names()[0]],
                                      'scenario-name': config.scenario_name,
                                      'timeframe': config.plots.timeframe,
                                      'normalization': config.plots.normalization},
-                    cache).plot(auto_open=True)
+                      cache).plot(auto_open=True)
 
 
 if __name__ == '__main__':
