@@ -165,8 +165,8 @@ def radiation_singleprocessing(rad, geometry_3D_zone, locator, settings):
 
     weather_path = locator.get_weather_file()
     # check inconsistencies and replace by max value of weather file
-    weatherfile = epwreader.epw_reader(weather_path)['glohorrad_Whm2'].values
-    max_global = weatherfile.max()
+    weatherfile = epwreader.epw_reader(weather_path)
+    max_global = weatherfile['glohorrad_Whm2'].max()
 
     if settings.buildings == []:
         # get chunks of buildings to iterate
