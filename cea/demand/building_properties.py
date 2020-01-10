@@ -992,7 +992,7 @@ def calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, therm
         multiplier_wall = 1 - multiplier_win
 
     # read daysim radiation
-    radiation_data = pd.read_json(locator.get_radiation_building(building_name))
+    radiation_data = pd.read_json(locator.get_radiation_building_sensors(building_name))
     # sum wall
     # solar incident on all walls [W]
     I_sol_wall = np.array(
