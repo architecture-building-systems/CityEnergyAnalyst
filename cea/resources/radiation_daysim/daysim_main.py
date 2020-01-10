@@ -237,14 +237,14 @@ def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, settings, max_glob
                                  'walls_north_kW',
                                  'roofs_top_kW']
         solar_analysis_fields_area = ['windows_east_m2',
-                                           'windows_west_m2',
-                                           'windows_south_m2',
-                                           'windows_north_m2',
-                                           'walls_east_m2',
-                                           'walls_west_m2',
-                                           'walls_south_m2',
-                                           'walls_north_m2',
-                                           'roofs_top_m2']
+                                      'windows_west_m2',
+                                      'windows_south_m2',
+                                      'windows_north_m2',
+                                      'walls_east_m2',
+                                      'walls_west_m2',
+                                      'walls_south_m2',
+                                      'walls_north_m2',
+                                      'roofs_top_m2']
         dict_not_aggregated = {}
         for field, field_area in zip(solar_analysis_fields, solar_analysis_fields_area):
             select_sensors = geometry.loc[geometry['code'] == field].set_index('SURFACE')
@@ -252,13 +252,13 @@ def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, settings, max_glob
             array_field = np.array([select_sensors.ix[surface, 'AREA_m2'] *
                                     np.array(items_sensor_name_and_result[surface])
                                     for surface in select_sensors.index]).sum(axis=0)
-            dict_not_aggregated[field] = array_field
+            dict_not_aggregated[field] = array_field / 1000  # in kWh
             dict_not_aggregated[field_area] = area_m2
 
-        data_aggregated_kW = (pd.DataFrame(dict_not_aggregated)/1000).round(2) #in kWh
+        data_aggregated_kW = (pd.DataFrame(dict_not_aggregated)).round(2)
         data_aggregated_kW["Date"] = weatherfile["date"]
+        data_aggregated_kW.set_index('Date', inplace=True)
         data_aggregated_kW.to_csv(locator.get_radiation_building(building_name))
-
 
     # erase daysim folder to avoid conflicts after every iteration
     print('Removing results folder')
