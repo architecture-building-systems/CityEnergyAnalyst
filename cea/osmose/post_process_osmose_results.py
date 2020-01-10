@@ -200,6 +200,9 @@ def calc_exergy(balance_df, output_df, folder_path):
         Ex = el_chillers_df
         Ex_reheat = el_chillers_df
 
+    if 'LD' in folder_path:
+        Ex = Ex + output_df['el_out_LD_HP']
+
     return Ex, Ex_reheat
 
 
@@ -604,7 +607,7 @@ if __name__ == '__main__':
         tech_folder_path = os.path.join(result_path_folder, tech)
         folders_list = os.listdir(tech_folder_path)
         # for folder in folders_list:
-        for folder in ['run_004_OFF_B005_1_24']:
+        for folder in ['run_007_OFF_B005_1_24']:
             # if 'run' in folder:
                 folder_path = os.path.join(tech_folder_path, folder)
                 file_list = os.listdir(folder_path)
