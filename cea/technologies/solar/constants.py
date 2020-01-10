@@ -18,8 +18,8 @@ K = 0.4  # glazing extinction coefficient
 Pg = 0.2  # ground reflectance
 
 # operation temperatures
-T_IN_SC_FP = 75
-T_IN_SC_ET = 100
+T_IN_SC_FP = 60
+T_IN_SC_ET = 75
 T_IN_PVT = 35
 
 # standard testing condition (STC)

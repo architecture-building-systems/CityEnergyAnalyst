@@ -1,11 +1,12 @@
 from __future__ import division
 from __future__ import print_function
 
-import pandas as pd
-import numpy as np
+import functools
 import os
+
+import pandas as pd
+
 import cea.inputlocator
-from cea.utilities import epwreader
 
 """
 Implements py:class:`cea.plots.SolarPotentialPlotBase` as a base class for all plots in the category "solar-potential"
@@ -29,117 +30,105 @@ class SolarPotentialPlotBase(cea.plots.PlotBase):
     """Implements properties / methods used by all plots in this category"""
     category_name = "solar-potential"
 
-    # default parameters for plots in this category - override if your plot differs
     expected_parameters = {
         'buildings': 'plots:buildings',
         'scenario-name': 'general:scenario-name',
+        'timeframe': 'plots:timeframe',
+        'normalization': 'plots:normalization',
     }
 
     def __init__(self, project, parameters, cache):
         super(SolarPotentialPlotBase, self).__init__(project, parameters, cache)
         self.category_path = os.path.join('new_basic', 'solar-potential')
+        self.timeframe = self.parameters['timeframe']
+        self.normalization = self.parameters['normalization']
+        self.input_files = [(self.locator.get_radiation_metadata, [building]) for building in self.buildings] + \
+                           [(self.locator.get_radiation_building_sensors, [building]) for building in self.buildings]
         self.weather = self.locator.get_weather_file()
-        self.analysis_fields = ['windows_east', 'windows_west', 'windows_south', 'windows_north',
-                                'walls_east', 'walls_west', 'walls_south', 'walls_north', 'roofs_top']
+        self.solar_analysis_fields = ['windows_east_kW',
+                                      'windows_west_kW',
+                                      'windows_south_kW',
+                                      'windows_north_kW',
+                                      'walls_east_kW',
+                                      'walls_west_kW',
+                                      'walls_south_kW',
+                                      'walls_north_kW',
+                                      'roofs_top_kW']
+        self.solar_analysis_fields_area = ['windows_east_m2',
+                                           'windows_west_m2',
+                                           'windows_south_m2',
+                                           'windows_north_m2',
+                                           'walls_east_m2',
+                                           'walls_west_m2',
+                                           'walls_south_m2',
+                                           'walls_north_m2',
+                                           'roofs_top_m2']
 
-        # make sure we have radiation output for all the buildings
-        self.input_files = [(self.locator.get_radiation_metadata, [building_name]) for building_name in
-                            self.buildings] + [(self.locator.get_radiation_building, [building_name]) for building_name
-                                               in self.buildings]
+    def normalize_data(self, data_processed, buildings, analysis_fields, analysis_fields_area):
+        if self.normalization == "gross floor area":
+            data = pd.read_csv(self.locator.get_total_demand()).set_index('Name')
+            normalizatioon_factor = data.loc[buildings]['GFA_m2'].sum()
+            data_processed = data_processed.apply(
+                lambda x: x / normalizatioon_factor if x.name in analysis_fields else x)
+        elif self.normalization == "net floor area":
+            data = pd.read_csv(self.locator.get_total_demand()).set_index('Name')
+            normalizatioon_factor = data.loc[buildings]['Aocc_m2'].sum()
+            data_processed = data_processed.apply(
+                lambda x: x / normalizatioon_factor if x.name in analysis_fields else x)
+        elif self.normalization == "air conditioned floor area":
+            data = pd.read_csv(self.locator.get_total_demand()).set_index('Name')
+            normalizatioon_factor = data.loc[buildings]['Af_m2'].sum()
+            data_processed = data_processed.apply(
+                lambda x: x / normalizatioon_factor if x.name in analysis_fields else x)
+        elif self.normalization == "building occupancy":
+            data = pd.read_csv(self.locator.get_total_demand()).set_index('Name')
+            normalizatioon_factor = data.loc[buildings]['people0'].sum()
+            data_processed = data_processed.apply(
+                lambda x: x / normalizatioon_factor if x.name in analysis_fields else x)
+        elif self.normalization == "surface area":
+            for energy, area in zip(analysis_fields, analysis_fields_area):
+                if data_processed[area][0] > 0.0:
+                    data_processed[energy] = data_processed[energy] / data_processed[area]
+        return data_processed
 
-    @property
-    def input_data_aggregated_kW(self):
-        """
-        Returns the preprocessed data used for the solar-potential plots. Uses the PlotCache
-        to speed up ``self._calculate_input_data_aggregated_kW()``
-        """
-        return self.cache.lookup(data_path=os.path.join(self.category_name, 'input_data_aggregated_kW'),
-                                 plot=self, producer=self._calculate_input_data_aggregated_kW)
+    def timeframe_data(self, data):
+        if self.timeframe == "daily":
+            data.index = pd.to_datetime(data.index)
+            data = data.resample('D').sum()
+        elif self.timeframe == "weekly":
+            data.index = pd.to_datetime(data.index)
+            data = data.resample('W').sum()
+        elif self.timeframe == "monthly":
+            data.index = pd.to_datetime(data.index)
+            data = data.resample('M').sum()
+        elif self.timeframe == "yearly":
+            data.index = pd.to_datetime(data.index)
+            data = data.resample('Y').sum()
+        return data
 
-    @property
-    def input_data_not_aggregated_MW(self):
-        """
-        Returns the preprocessed data used for the solar-potential plots. Uses the PlotCache
-        to speed up ``self._calculate_input_data_aggregated_kW()``
-        """
-        return self.cache.lookup(data_path=os.path.join(self.category_name, 'input_data_not_aggregated_MW'),
-                                 plot=self, producer=self._calculate_input_data_not_aggregated_MW)
+    def add_solar_fields(self, df1, df2):
+        """Add the demand analysis fields together - use this in reduce to sum up the summable parts of the dfs"""
+        fields = self.solar_analysis_fields + self.solar_analysis_fields_area
+        df1[fields] = df2[fields] + df1[fields]
+        return df1
 
+    @cea.plots.cache.cached
+    def solar_hourly_aggregated_kW(self):
+        data = self._calculate_input_data_aggregated_kW()
+        data_normalized = self.normalize_data(data,
+                                              self.buildings,
+                                              self.solar_analysis_fields,
+                                              self.solar_analysis_fields_area)
+        solar_hourly_aggregated_kW = self.timeframe_data(data_normalized)
+
+        return solar_hourly_aggregated_kW
+
+    @cea.plots.cache.cached
     def _calculate_input_data_aggregated_kW(self):
         """This is the data all the solar-potential plots are based on."""
         # get extra data of weather and date
-        weather_data = epwreader.epw_reader(self.weather)[["date", "drybulb_C", "wetbulb_C", "skytemp_C"]]
-
-        # get data of buildings
-        dict_not_aggregated = {}
-        for i, building in enumerate(self.buildings):
-            geometry = pd.read_csv(self.locator.get_radiation_metadata(building))
-            geometry['code'] = geometry['TYPE'] + '_' + geometry['orientation']
-            insolation = pd.read_json(self.locator.get_radiation_building(building))
-            if i == 0:
-                for field in self.analysis_fields:
-                    select_sensors = geometry.loc[geometry['code'] == field].set_index('SURFACE')
-                    array_field = np.array(
-                        [select_sensors.ix[surface, 'AREA_m2'] * insolation[surface] for surface in
-                         select_sensors.index]).sum(axis=0)  #
-                    dict_not_aggregated[field] = array_field
-            else:
-                dict_not_aggregated_2 = {}
-                for field in self.analysis_fields:
-                    select_sensors = geometry.loc[geometry['code'] == field].set_index('SURFACE')
-                    array_field = np.array(
-                        [select_sensors.ix[surface, 'AREA_m2'] * insolation[surface] for surface in
-                         select_sensors.index]).sum(axis=0)
-                    dict_not_aggregated_2[field] = array_field  # W
-                    dict_not_aggregated[field] = dict_not_aggregated[field] + array_field
-
-        # round and add weather vars and date
-        input_data_aggregated_kW = (pd.DataFrame(dict_not_aggregated) / 1000).round(2)  # in kW
-        input_data_aggregated_kW["T_ext_C"] = weather_data["drybulb_C"].values
-        input_data_aggregated_kW["DATE"] = weather_data["date"]
+        input_data_aggregated_kW = functools.reduce(self.add_solar_fields,
+                                                    (pd.read_csv(self.locator.get_radiation_building(building))
+                                                     for building in self.buildings)).set_index('Date')
 
         return input_data_aggregated_kW
-
-    def _calculate_input_data_not_aggregated_MW(self):
-        """This is the data all the solar-potential plots are based on."""
-        # get data of buildings
-        input_data_not_aggregated_MW = []
-        dict_not_aggregated = {}
-        for i, building in enumerate(self.buildings):
-            geometry = pd.read_csv(self.locator.get_radiation_metadata(building))
-            geometry['code'] = geometry['TYPE'] + '_' + geometry['orientation']
-            insolation = pd.read_json(self.locator.get_radiation_building(building))
-            if i == 0:
-                for field in self.analysis_fields:
-                    select_sensors = geometry.loc[geometry['code'] == field].set_index('SURFACE')
-                    array_field = np.array(
-                        [select_sensors.ix[surface, 'AREA_m2'] * insolation[surface] for surface in
-                         select_sensors.index]).sum(axis=0)  #
-                    dict_not_aggregated[field] = array_field
-
-                # add date and resample into months
-                df_not_aggregated = pd.DataFrame(dict_not_aggregated)
-                resample_data_frame = (df_not_aggregated.sum(axis=0) / 1000000).round(2)  # into MWh
-                input_data_not_aggregated_MW = pd.DataFrame({building: resample_data_frame},
-                                                            index=resample_data_frame.index).T
-
-            else:
-                dict_not_aggregated_2 = {}
-                for field in self.analysis_fields:
-                    select_sensors = geometry.loc[geometry['code'] == field].set_index('SURFACE')
-                    array_field = np.array(
-                        [select_sensors.ix[surface, 'AREA_m2'] * insolation[surface] for surface in
-                         select_sensors.index]).sum(axis=0)
-                    dict_not_aggregated_2[field] = array_field  # W
-                    dict_not_aggregated[field] = dict_not_aggregated[field] + array_field
-
-                    # add date and resample into months
-                df_not_aggregated = pd.DataFrame(dict_not_aggregated_2)
-                resample_data_frame = (df_not_aggregated.sum(axis=0) / 1000000).round(2)  # into MWh
-                intermediate_dataframe = pd.DataFrame({building: resample_data_frame},
-                                                      index=resample_data_frame.index).T
-                input_data_not_aggregated_MW = input_data_not_aggregated_MW.append(intermediate_dataframe)
-
-        # round and add weather vars and date
-        input_data_not_aggregated_MW["Name"] = input_data_not_aggregated_MW.index.values
-        return input_data_not_aggregated_MW
