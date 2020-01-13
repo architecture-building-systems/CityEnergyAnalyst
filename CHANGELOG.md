@@ -1,3 +1,11 @@
+2020-01-10 - 2.27.0 - #2517 2511 solar plots
+2020-01-10 - 2.27.0 - #2499 @daren-thomas well as soon as this fixes the problem of #2502
+2020-01-09 - 2.27.0 - #2503 Fix for scenario creation
+2020-01-09 - 2.27.0 - #2412 Simplify environment.ubuntu.yml
+2020-01-09 - 2.27.0 - #2492 Fixing plots nyc
+2020-01-08 - 2.27.0 - #2497 Rtd build errors
+2020-01-07 - 2.27.0 - #2498 Missing input files should create an error, not a success in the jobs list
+2019-12-10 - 2.27.0 - #2495 Release 2.27.0
 2019-12-06 - 2.26.0a0 - #2481 Show plot input files
 2019-12-06 - 2.26.0a0 - #2462 Test epanet - simple thermal model Merging!! wihuu
 2019-12-04 - 2.26.0 - #2467 1777 optimize decentralized script for speed
