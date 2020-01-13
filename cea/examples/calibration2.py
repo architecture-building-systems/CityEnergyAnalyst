@@ -59,9 +59,9 @@ def calc_score(static_params, params):
     El_Wm2 = params['El_Wm2']
 
     ##define fixed constant parameters (to be redefined by CEA config file)
-    Hs_ag = 0.2
-    Tcs_set_C = 33
-    Tcs_setb_C = 33
+    Hs_ag = 0
+    Tcs_set_C = 40
+    Tcs_setb_C = 40
 
     ## overwrite inputs with corresponding initial values
     df_arch = dbf_to_dataframe(locator.get_building_architecture())
@@ -94,7 +94,7 @@ def calc_score(static_params, params):
 
 def calibration(config, locator):
 
-    max_evals = 50
+    max_evals = 300
 
     #  define a search space
     SPACE = OrderedDict([('Es', hp.uniform('Es', 0.6, 1.0)),
