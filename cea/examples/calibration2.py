@@ -20,11 +20,15 @@ import hyperopt.pyll
 from hyperopt.pyll import scope
 import pickle
 import time
+import matplotlib.pyplot as plt
 from hyperopt import fmin, tpe, hp, STATUS_OK, Trials
+from hyperopt.plotting import main_plot_history,main_plot_histogram
 import pandas as pd
 from sklearn.metrics import mean_squared_error
 from math import sqrt
 from cea.constants import MONTHS_IN_YEAR, MONTHS_IN_YEAR_NAMES
+
+from sklearn.externals import joblib
 
 __author__ = "Luis Santos"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -55,9 +59,9 @@ def calc_score(static_params, params):
     El_Wm2 = params['El_Wm2']
 
     ##define fixed constant parameters (to be redefined by CEA config file)
-    Hs_ag = 0
-    Tcs_set_C = 40
-    Tcs_setb_C = 40
+    Hs_ag = 0.2
+    Tcs_set_C = 33
+    Tcs_setb_C = 33
 
     ## overwrite inputs with corresponding initial values
     df_arch = dbf_to_dataframe(locator.get_building_architecture())
@@ -90,11 +94,11 @@ def calc_score(static_params, params):
 
 def calibration(config, locator):
 
-    max_evals = 2
+    max_evals = 50
 
     #  define a search space
     SPACE = OrderedDict([('Es', hp.uniform('Es', 0.6, 1.0)),
-                         ('Ns', hp.uniform('subsample', 0.7, 1.0)),
+                         ('Ns', hp.uniform('Ns', 0.7, 1.0)),
                          ('Occ_m2pax', hp.uniform('Occ_m2pax', 30.0, 60.0)),
                          ('Vww_lpdpax', hp.uniform('Vww_lpdpax', 20.0, 40.0)),
                          ('Ea_Wm2', hp.uniform('Ea_Wm2', 1.0, 5.0)),
@@ -104,7 +108,7 @@ def calibration(config, locator):
 
     #define the objective
     def objective(params):
-        return 1.0 * calc_score(STATIC_PARAMS, params)
+        return -1.0 * calc_score(STATIC_PARAMS, params)
 
     #run the algorithm
     trials = Trials()
@@ -114,8 +118,10 @@ def calibration(config, locator):
                 max_evals=max_evals,
                 trials=trials)
     print(best)
+    print('Best Params: {}'.format(best))
+    print (trials.losses())
 
-
+    x=1
 def main(config):
     """
     This is the main entry point to your script. Any parameters used by your script must be present in the ``config``
