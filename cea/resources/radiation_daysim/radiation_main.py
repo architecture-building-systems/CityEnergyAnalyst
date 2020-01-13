@@ -5,6 +5,7 @@ from __future__ import print_function
 from __future__ import division
 
 import os
+import sys
 import pandas as pd
 import time
 from cea.utilities import epwreader
@@ -33,14 +34,14 @@ def create_radiance_srf(occface, srfname, srfmat, rad):
 
 
 def calc_transmissivity(G_value):
-    '''
+    """
     Calculate window transmissivity from its transmittance using an empirical equation from Radiance.
 
     :param G_value: Solar energy transmittance of windows (dimensionless)
     :return: Transmissivity
 
     [RADIANCE, 2010] The Radiance 4.0 Synthetic Imaging System. Lawrence Berkeley National Laboratory.
-    '''
+    """
     return (math.sqrt(0.8402528435 + 0.0072522239 * G_value * G_value) - 0.9166530661) / 0.0036261119 / G_value
 
 
@@ -164,8 +165,8 @@ def radiation_singleprocessing(rad, geometry_3D_zone, locator, settings):
 
     weather_path = locator.get_weather_file()
     # check inconsistencies and replace by max value of weather file
-    weatherfile = epwreader.epw_reader(weather_path)['glohorrad_Whm2'].values
-    max_global = weatherfile.max()
+    weatherfile = epwreader.epw_reader(weather_path)
+    max_global = weatherfile['glohorrad_Whm2'].max()
 
     if settings.buildings == []:
         # get chunks of buildings to iterate
@@ -180,13 +181,57 @@ def radiation_singleprocessing(rad, geometry_3D_zone, locator, settings):
                 chunks.append([bldg_dict])
 
     for chunk_n, building_dict in enumerate(chunks):
-        daysim_main.isolation_daysim(chunk_n, rad, building_dict, locator, settings, max_global)
+        daysim_main.isolation_daysim(chunk_n, rad, building_dict, locator, settings, max_global, weatherfile)
+
+
+def check_daysim_bin_directory(path_hint):
+    """
+    Check for the Daysim bin directory based on ``path_hint`` and return it on success.
+
+    If the binaries could not be found there, check in a folder `Depencencies/Daysim` of the installation - this will
+    catch installations on Windows that used the official CEA installer.
+
+    Check the RAYPATH environment variable. Return that.
+
+    Check for ``C:\Daysim\bin`` - it might be there?
+
+    If the binaries can't be found anywhere, raise an exception.
+
+    :param str path_hint: The path to check first, according to the `cea.config` file.
+    :return: path_hint, contains the Daysim binaries - otherwise an exception occurrs.
+    """
+    required_binaries = ["ds_illum", "epw2wea", "gen_dc", "isotrop_sky", "oconv", "radfiles2daysim", "rayinit",
+                         "rtrace_dc"]
+
+    def contains_binaries(path):
+        """True if all the required binaries are found in path - note that binaries might have an extension"""
+        try:
+            found_binaries = set(bin for bin, ext in map(os.path.splitext, os.listdir(path)))
+        except:
+            # could not find the binaries, bogus path
+            return False
+        return all(bin in found_binaries for bin in required_binaries)
+
+    folders_to_check = [
+        path_hint,
+        os.path.join(os.path.dirname(sys.executable), "..", "Daysim"),
+    ]
+    folders_to_check.extend(os.environ["RAYPATH"].split(";"))
+    if sys.platform == "win32":
+        folders_to_check.append(r"C:\Daysim\bin")
+    folders_to_check = list(set(os.path.abspath(os.path.normpath(os.path.normcase(p))) for p in folders_to_check))
+
+    for path in folders_to_check:
+        if contains_binaries(path):
+            return path_hint
+
+    raise ValueError("Could not find Daysim binaries - checked these paths: {}".format(", ".join(folders_to_check)))
 
 
 def main(config):
     """
     This function makes the calculation of solar insolation in X sensor points for every building in the zone
-    of interest. the number of sensor points depends on the size of the grid selected in the SETTINGS.py file and
+    of interest. The number of sensor points depends on the size of the grid selected in the config file and
     are generated automatically.
 
     :param config: Configuration object with the settings (genera and radiation)
@@ -198,10 +243,12 @@ def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     #  the selected buildings are the ones for which the individual radiation script is run for
     #  this is only activated when in default.config, run_all_buildings is set as 'False'
-    settings = config.radiation
+
+    # BUGFIX for #2447 (make sure the Daysim binaries are there before starting the simulation)
+    config.radiation.daysim_bin_directory = check_daysim_bin_directory(config.radiation.daysim_bin_directory)
 
     # BUGFIX for PyCharm: the PATH variable might not include the daysim-bin-directory, so we add it here
-    os.environ["PATH"] = settings.daysim_bin_directory + os.pathsep + os.environ["PATH"]
+    os.environ["PATH"] = config.radiation.daysim_bin_directory + os.pathsep + os.environ["PATH"]
 
     print("verifying geometry files")
     print(locator.get_zone_geometry())
@@ -235,7 +282,7 @@ def main(config):
     print("\tradiation_main: rad.rad_file_path: {}".format(rad.rad_file_path))
 
     time1 = time.time()
-    radiation_singleprocessing(rad, geometry_3D_zone, locator, settings)
+    radiation_singleprocessing(rad, geometry_3D_zone, locator, config.radiation)
 
     print("Daysim simulation finished in %.2f mins" % ((time.time() - time1) / 60.0))
 

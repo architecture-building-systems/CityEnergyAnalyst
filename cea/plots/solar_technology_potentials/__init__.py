@@ -41,16 +41,37 @@ class SolarTechnologyPotentialsPlotBase(cea.plots.PlotBase):
         super(SolarTechnologyPotentialsPlotBase, self).__init__(project, parameters, cache)
         self.category_path = os.path.join('new_basic', self.category_name)
         self.weather = self.locator.get_weather_file()
-        self.pv_analysis_fields = ['PV_walls_east_E_kWh', 'PV_walls_west_E_kWh', 'PV_walls_south_E_kWh',
-                                   'PV_walls_north_E_kWh', 'PV_roofs_top_E_kWh']
-        self.pv_analysis_fields_area = ['PV_walls_east_m2', 'PV_walls_west_m2', 'PV_walls_south_m2',
-                                        'PV_walls_north_m2', 'PV_roofs_top_m2']
-        self.sc_fp_analysis_fields = ['SC_FP_walls_east_Q_kWh', 'SC_FP_walls_west_Q_kWh', 'SC_FP_walls_south_Q_kWh',
-                                      'SC_FP_walls_north_Q_kWh', 'SC_FP_roofs_top_Q_kWh']
-        self.sc_et_analysis_fields = ['SC_ET_walls_east_Q_kWh', 'SC_ET_walls_west_Q_kWh', 'SC_ET_walls_south_Q_kWh',
-                                      'SC_ET_walls_north_Q_kWh', 'SC_ET_roofs_top_Q_kWh']
-        self.sc_analysis_fields = ['SC_walls_east_Q_kWh', 'SC_walls_west_Q_kWh', 'SC_walls_south_Q_kWh',
-                                   'SC_walls_north_Q_kWh', 'SC_roofs_top_Q_kWh']
+        self.pv_analysis_fields = ['PV_walls_east_E_kWh',
+                                   'PV_walls_west_E_kWh',
+                                   'PV_walls_south_E_kWh',
+                                   'PV_walls_north_E_kWh',
+                                   'PV_roofs_top_E_kWh']
+        self.pv_analysis_fields_area = ['PV_walls_east_m2',
+                                        'PV_walls_west_m2',
+                                        'PV_walls_south_m2',
+                                        'PV_walls_north_m2',
+                                        'PV_roofs_top_m2']
+        self.sc_et_analysis_fields = ['SC_ET_walls_east_Q_kWh',
+                                      'SC_ET_walls_west_Q_kWh',
+                                      'SC_ET_walls_south_Q_kWh',
+                                      'SC_ET_walls_north_Q_kWh',
+                                      'SC_ET_roofs_top_Q_kWh']
+        self.sc_et_analysis_fields_area = ['SC_ET_walls_east_m2',
+                                           'SC_ET_walls_west_m2',
+                                           'SC_ET_walls_south_m2',
+                                           'SC_ET_walls_north_m2',
+                                           'SC_ET_roofs_top_m2']
+        self.sc_fp_analysis_fields = ['SC_FP_walls_east_Q_kWh',
+                                      'SC_FP_walls_west_Q_kWh',
+                                      'SC_FP_walls_south_Q_kWh',
+                                      'SC_FP_walls_north_Q_kWh',
+                                      'SC_FP_roofs_top_Q_kWh']
+        self.sc_fp_analysis_fields_area = ['SC_FP_walls_east_m2',
+                                           'SC_FP_walls_west_m2',
+                                           'SC_FP_walls_south_m2',
+                                           'SC_FP_walls_north_m2',
+                                           'SC_FP_roofs_top_m2']
+
         self.pvt_analysis_fields = ['PVT_walls_east_E_kWh', 'PVT_walls_west_E_kWh', 'PVT_walls_south_E_kWh',
                                     'PVT_walls_north_E_kWh',
                                     'PVT_roofs_top_E_kWh', 'PVT_walls_east_Q_kWh', 'PVT_walls_west_Q_kWh',
@@ -99,7 +120,7 @@ class SolarTechnologyPotentialsPlotBase(cea.plots.PlotBase):
             data_PV = data_PV.resample('Y').sum()
         return data_PV
 
-    @property
+    # FOR PV PANELS
     @cea.plots.cache.cached
     def PV_hourly_aggregated_kW(self):
         data = self._calculate_PV_hourly_aggregated_kW()
@@ -111,12 +132,11 @@ class SolarTechnologyPotentialsPlotBase(cea.plots.PlotBase):
 
     def add_pv_fields(self, df1, df2):
         """Add the demand analysis fields together - use this in reduce to sum up the summable parts of the dfs"""
-        df1[self.pv_analysis_fields + self.pv_analysis_fields_area] = df2[
-                                                                          self.pv_analysis_fields + self.pv_analysis_fields_area] + \
-                                                                      df1[
-                                                                          self.pv_analysis_fields + self.pv_analysis_fields_area]
+        fields = self.pv_analysis_fields + self.pv_analysis_fields_area
+        df1[fields] = df2[fields] + df1[fields]
         return df1
 
+    @cea.plots.cache.cached
     def _calculate_PV_hourly_aggregated_kW(self):
         # get extra data of weather and date
         pv_hourly_aggregated_kW = functools.reduce(self.add_pv_fields, (pd.read_csv(self.locator.PV_results(building))
@@ -124,6 +144,31 @@ class SolarTechnologyPotentialsPlotBase(cea.plots.PlotBase):
             'Date')
 
         return pv_hourly_aggregated_kW
+
+    # FOR SOLAR COLLECTORS
+    @cea.plots.cache.cached
+    def SC_ET_hourly_aggregated_kW(self):
+        data = self._calculate_SC_ET_hourly_aggregated_kW()
+        data_normalized = self.normalize_data(data,
+                                              self.buildings,
+                                              self.sc_et_analysis_fields,
+                                              self.sc_et_analysis_fields_area)
+        SC_et_hourly_aggregated_kW = self.timeframe_data(data_normalized)
+
+        return SC_et_hourly_aggregated_kW
+
+    def add_sc_et_fields(self, df1, df2):
+        """Add the demand analysis fields together - use this in reduce to sum up the summable parts of the dfs"""
+        fields = self.sc_et_analysis_fields + self.sc_et_analysis_fields_area
+        df1[fields] = df2[fields] + df1[fields]
+        return df1
+
+    @cea.plots.cache.cached
+    def _calculate_SC_ET_hourly_aggregated_kW(self):
+        sc_et_hourly_aggregated_kW = functools.reduce(self.add_sc_et_fields,
+                                                      (pd.read_csv(self.locator.SC_results(building, panel_type='ET'))
+                                                       for building in self.buildings)).set_index('Date')
+        return sc_et_hourly_aggregated_kW
 
     @property
     def PVT_hourly_aggregated_kW(self):
@@ -157,22 +202,3 @@ class SolarTechnologyPotentialsPlotBase(cea.plots.PlotBase):
                                           inplace=True)
         sc_fp_hourly_aggregated_kW['DATE'] = weather_data["date"]
         return sc_fp_hourly_aggregated_kW
-
-    @property
-    def SC_ET_hourly_aggregated_kW(self):
-        return self.cache.lookup(data_path=os.path.join(self.category_name, 'SC_ET_hourly_aggregated_kW'),
-                                 plot=self, producer=self._calculate_SC_ET_hourly_aggregated_kW)
-
-    def _calculate_SC_ET_hourly_aggregated_kW(self):
-        weather_data = epwreader.epw_reader(self.weather)[["date", "drybulb_C", "wetbulb_C", "skytemp_C"]]
-        sc_et_hourly_aggregated_kW = sum(
-            pd.read_csv(self.locator.SC_results(building, panel_type='FP'), usecols=self.sc_analysis_fields) for
-            building in self.buildings)
-        sc_et_hourly_aggregated_kW.rename(columns={'SC_walls_east_Q_kWh': 'SC_ET_walls_east_Q_kWh',
-                                                   'SC_walls_west_Q_kWh': 'SC_ET_walls_west_Q_kWh',
-                                                   'SC_walls_south_Q_kWh': 'SC_ET_walls_south_Q_kWh',
-                                                   'SC_walls_north_Q_kWh': 'SC_ET_walls_north_Q_kWh',
-                                                   'SC_roofs_top_Q_kWh': 'SC_ET_roofs_top_Q_kWh'},
-                                          inplace=True)
-        sc_et_hourly_aggregated_kW['DATE'] = weather_data["date"]
-        return sc_et_hourly_aggregated_kW
