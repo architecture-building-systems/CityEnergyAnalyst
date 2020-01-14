@@ -61,6 +61,7 @@ def validation(locator):
         monthly_measured_data = pd.read_csv(locator.get_monthly_measurements())
         measured_building_names = monthly_measured_data.Name.values
         list_of_scores = []
+        number_of_calibrated =[]
         for building_name in measured_building_names:  # number of buildings that have real data available
 
             # extract measured data (format: BuildingID (corresponding to CEA model) | ZipCode (optional) | monthly energy consumed (kWh) (Jan-Dec)
@@ -100,9 +101,13 @@ def validation(locator):
             else:
                 arg = 0
 
-            ind_score_building = arg
+            ind_calib_building = arg #indicates if the building is calibrated or not
+            ind_score_building = ind_calib_building * sum(monthly_data['measurements']) #weights the calibration by building energy consumption
+            number_of_calibrated.append(ind_calib_building)
             list_of_scores.append(ind_score_building)
+        n_calib = sum (number_of_calibrated)
         score = sum (list_of_scores)
+    print (n_calib)
     print (score)
     return score
 

@@ -94,7 +94,7 @@ def calc_score(static_params, params):
 
 def calibration(config, locator):
 
-    max_evals = 300
+    max_evals = 100
 
     #  define a search space
     SPACE = OrderedDict([('Es', hp.uniform('Es', 0.6, 1.0)),
