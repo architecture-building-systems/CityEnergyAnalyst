@@ -33,7 +33,7 @@ def calc_spatio_temporal_visuals(locator, list_of_buildings, initial_date, confi
 
     for i, building in enumerate(building_names):
 
-        sensors_rad = pd.read_json(locator.get_radiation_building(building_name=building))
+        sensors_rad = pd.read_json(locator.get_radiation_building_sensors(building_name=building))
         sensors_metadata = pd.read_csv(locator.get_radiation_metadata(building_name= building))
 
         sensors_metadata_roof = sensors_metadata[sensors_metadata.TYPE == 'roofs']

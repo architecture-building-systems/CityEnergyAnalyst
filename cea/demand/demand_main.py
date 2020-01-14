@@ -161,7 +161,7 @@ def radiation_files_exist(config, locator):
     # verify that the necessary radiation files exist
     def daysim_results_exist(building_name):
         return os.path.exists(locator.get_radiation_metadata(building_name)) and os.path.exists(
-            locator.get_radiation_building(building_name))
+            locator.get_radiation_building_sensors(building_name))
 
     return all(daysim_results_exist(building_name) for building_name in locator.get_zone_building_names())
 
