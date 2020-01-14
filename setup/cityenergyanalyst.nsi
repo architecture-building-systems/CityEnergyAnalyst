@@ -175,8 +175,6 @@ Section "Base Installation" Base_Installation_Section
 
     DetailPrint "Updating Pip"
     nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip install -U --force-reinstall pip'
-    DetailPrint "Pip uninstalling previous CityEnergyAnalyst"
-    nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip uninstall -y cityenergyanalyst'
     DetailPrint "Pip installing CityEnergyAnalyst==${VER}"
     nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip install -U cityenergyanalyst==${VER}'
 
