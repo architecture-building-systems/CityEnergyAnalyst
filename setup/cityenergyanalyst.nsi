@@ -15,11 +15,11 @@ ${StrRep}
 
 
 # download CEA conda env from here
-!define CEA_ENV_URL "https://github.com/architecture-building-systems/CityEnergyAnalyst/releases/download/v2.26.0/Dependencies.7z"
+!define CEA_ENV_URL "https://github.com/architecture-building-systems/CityEnergyAnalyst/releases/download/v2.27.0/Dependencies.7z"
 !define CEA_ENV_FILENAME "Dependencies.7z"
 !define RELATIVE_GIT_PATH "Dependencies\cmder\vendor\git-for-windows\bin\git.exe"
 !define CEA_REPO_URL "https://github.com/architecture-building-systems/CityEnergyAnalyst.git"
-!define CEA_ELECTRON_URL "https://github.com/architecture-building-systems/CityEnergyAnalyst-GUI/releases/download/v${VER}/win-unpacked.7z"
+!define CEA_ELECTRON_URL "https://github.com/architecture-building-systems/CityEnergyAnalyst/releases/download/v${VER}/win-unpacked.7z"
 
 !define CEA_TITLE "City Energy Analyst"
 
@@ -175,6 +175,8 @@ Section "Base Installation" Base_Installation_Section
 
     DetailPrint "Updating Pip"
     nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip install -U --force-reinstall pip'
+    DetailPrint "Pip uninstalling previous CityEnergyAnalyst"
+    nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip uninstall -y cityenergyanalyst'
     DetailPrint "Pip installing CityEnergyAnalyst==${VER}"
     nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip install -U cityenergyanalyst==${VER}'
 
