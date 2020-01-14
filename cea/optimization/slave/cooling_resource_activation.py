@@ -35,7 +35,8 @@ def calc_vcc_operation(Qc_from_VCC_W, T_DCN_re_K, T_DCN_sup_K, T_source_K):
 def calc_vcc_CT_operation(Qc_from_VCC_W,
                           T_DCN_re_K,
                           T_DCN_sup_K,
-                          T_source_K):
+                          T_source_K,
+                          size_chiller_CT):
     from cea.technologies.constants import G_VALUE_CENTRALIZED  # this is where to differentiate chiller performances
     VCC_operation = chiller_vapor_compression.calc_VCC(Qc_from_VCC_W, T_DCN_sup_K, T_DCN_re_K, T_source_K,
                                                        G_VALUE_CENTRALIZED)
@@ -45,7 +46,7 @@ def calc_vcc_CT_operation(Qc_from_VCC_W,
     Qc_VCC_W = VCC_operation['q_chw_W']
 
     # calculate cooling tower
-    wdot_CT_Wh = CTModel.calc_CT(Qc_CT_VCC_W, Qc_CT_VCC_W)
+    wdot_CT_Wh = CTModel.calc_CT(Qc_CT_VCC_W, size_chiller_CT)
 
     # calcualte energy consumption and variable costs
     E_used_VCC_W = (VCC_operation['wdot_W'] + wdot_CT_Wh)
@@ -53,7 +54,8 @@ def calc_vcc_CT_operation(Qc_from_VCC_W,
     return Qc_VCC_W, E_used_VCC_W
 
 
-def calc_chiller_absorption_operation(Qc_ACH_req_W, T_DCN_re_K, T_DCN_sup_K, T_ACH_in_C, T_ground_K, chiller_prop):
+def calc_chiller_absorption_operation(Qc_ACH_req_W, T_DCN_re_K, T_DCN_sup_K, T_ACH_in_C, T_ground_K, chiller_prop,
+                                      size_ACH_W):
     if T_DCN_re_K == T_DCN_sup_K:
         mdot_ACH_kgpers = 0
     else:
@@ -70,7 +72,7 @@ def calc_chiller_absorption_operation(Qc_ACH_req_W, T_DCN_re_K, T_DCN_sup_K, T_A
     Qc_CT_ACH_W = ACH_operation['q_cw_W']
 
     # calculate cooling tower
-    wdot_CT_Wh = CTModel.calc_CT(Qc_CT_ACH_W, Qc_CT_ACH_W)
+    wdot_CT_Wh = CTModel.calc_CT(Qc_CT_ACH_W, size_ACH_W)
 
     # calcualte energy consumption and variable costs
     Qh_CHP_ACH_W = ACH_operation['q_hw_W']
@@ -126,7 +128,8 @@ def cooling_resource_activator(Q_thermal_req,
                                                         T_district_cooling_supply_K,
                                                         T_ACH_in_C,
                                                         T_ground_K,
-                                                        absorption_chiller)
+                                                        absorption_chiller,
+                                                        size_trigen_W)
 
         # operation of the CCGT
         Q_used_prim_CC_fn_W = CCGT_operation_data['q_input_fn_q_output_W']
@@ -155,7 +158,8 @@ def cooling_resource_activator(Q_thermal_req,
                                                             T_district_cooling_supply_K,
                                                             T_ACH_in_C,
                                                             T_ground_K,
-                                                            absorption_chiller)
+                                                            absorption_chiller,
+                                                            size_trigen_W)
             # operation Possible if above minimal load
             if Qh_CCGT_req_W <= Q_output_CC_max_W:  # Normal operation Possible within partload regime
                 Q_CHP_gen_W = float(Qh_CCGT_req_W)
@@ -294,6 +298,7 @@ def cooling_resource_activator(Q_thermal_req,
                                                    T_district_cooling_return_K,
                                                    T_district_cooling_supply_K,
                                                    VCC_T_COOL_IN,
+                                                   size_AS_BaseVCC_W
                                                    )
 
         Q_cooling_unmet_W = Q_cooling_unmet_W - Q_BaseVCC_AS_gen_directload_W - Qc_from_storage_W
@@ -323,7 +328,8 @@ def cooling_resource_activator(Q_thermal_req,
         E_PeakVCC_AS_req_W = calc_vcc_CT_operation(Q_PeakVCC_AS_gen_W,
                                                    T_district_cooling_return_K,
                                                    T_district_cooling_supply_K,
-                                                   VCC_T_COOL_IN)
+                                                   VCC_T_COOL_IN,
+                                                   size_AS_PeakVCC_W)
 
         Q_cooling_unmet_W = Q_cooling_unmet_W - Q_PeakVCC_AS_gen_directload_W - Qc_from_storage_W
         Q_DailyStorage_gen_directload_W += Qc_from_storage_W
