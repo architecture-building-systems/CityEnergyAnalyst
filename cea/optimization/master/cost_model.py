@@ -24,6 +24,7 @@ import cea.technologies.solar.photovoltaic_thermal as pvt
 import cea.technologies.solar.solar_collector as stc
 import cea.technologies.thermal_storage as thermal_storage
 from cea.optimization.constants import N_PVT, PUMP_ETA, ACH_TYPE_DOUBLE, N_SC_ET, N_SC_FP
+from cea.optimization.constants import VCC_CODE_CENTRALIZED, VCC_CODE_DECENTRALIZED
 from cea.optimization.master.emissions_model import calc_emissions_Whyr_to_tonCO2yr, calc_pen_Whyr_to_MJoilyr
 from cea.technologies.pumps import calc_Cinv_pump
 
@@ -502,7 +503,7 @@ def calc_generation_costs_capacity_installed_cooling(locator,
         Capex_a_BaseVCC_WS_USD, Opex_fixed_BaseVCC_WS_USD, Capex_BaseVCC_WS_USD = VCCModel.calc_Cinv_VCC(
             Capacity_BaseVCC_WS_W,
             locator,
-            'CH3')
+            VCC_CODE_CENTRALIZED)
         # Pump uptake from water body
         # Values for the calculation of Delta P (from F. Muller network optimization code)
         # WARNING : current = values for Inducity - Zug
@@ -532,7 +533,7 @@ def calc_generation_costs_capacity_installed_cooling(locator,
         Capex_a_PeakVCC_WS_USD, Opex_fixed_PeakVCC_WS_USD, Capex_PeakVCC_WS_USD = VCCModel.calc_Cinv_VCC(
             Capacity_PeakVCC_WS_W,
             locator,
-            'CH3')
+            VCC_CODE_CENTRALIZED)
         # Pump uptake from water body
         # Values for the calculation of Delta P (from F. Muller network optimization code)
         # WARNING : current = values for Inducity - Zug
@@ -560,7 +561,7 @@ def calc_generation_costs_capacity_installed_cooling(locator,
         Capacity_BaseVCC_AS_W = master_to_slave_variables.AS_BaseVCC_size_W
         # VCC
         Capex_a_VCC_USD, Opex_fixed_VCC_USD, Capex_VCC_USD = VCCModel.calc_Cinv_VCC(Capacity_BaseVCC_AS_W, locator,
-                                                                                    'CH3')
+                                                                                    VCC_CODE_CENTRALIZED)
 
         # COOLING TOWER
         Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = CTModel.calc_Cinv_CT(Capacity_BaseVCC_AS_W, locator, 'CT1')
@@ -580,7 +581,7 @@ def calc_generation_costs_capacity_installed_cooling(locator,
         Capacity_PeakVCC_AS_W = master_to_slave_variables.AS_PeakVCC_size_W
         # VCC
         Capex_a_VCC_USD, Opex_fixed_VCC_USD, Capex_VCC_USD = VCCModel.calc_Cinv_VCC(Capacity_PeakVCC_AS_W, locator,
-                                                                                    'CH3')
+                                                                                    VCC_CODE_CENTRALIZED)
 
         # COOLING TOWER
         Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = CTModel.calc_Cinv_CT(Capacity_PeakVCC_AS_W, locator, 'CT1')
@@ -599,7 +600,7 @@ def calc_generation_costs_capacity_installed_cooling(locator,
         Capacity_BackupVCC_AS_W = master_to_slave_variables.AS_BackupVCC_size_W
         # VCC
         Capex_a_VCC_USD, Opex_fixed_VCC_USD, Capex_VCC_USD = VCCModel.calc_Cinv_VCC(Capacity_BackupVCC_AS_W, locator,
-                                                                                    'CH3')
+                                                                                    VCC_CODE_CENTRALIZED)
 
         # COOLING TOWER
         Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = CTModel.calc_Cinv_CT(Capacity_BackupVCC_AS_W, locator, 'CT1')
