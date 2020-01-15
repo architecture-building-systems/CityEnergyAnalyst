@@ -252,8 +252,7 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
                 0] += Capex_a_GHPBoiler_USD + Opex_a_fixed_GHPBoiler_USD  # TODO:variable price?
 
             # Get ground source heat pump costs
-            Capex_a_GHP_USD, Opex_a_fixed_GHP_USD, Capex_GHP_USD = HP.calc_Cinv_GHP(GHP_el_size_W[i][0], locator,
-                                                                                    config)
+            Capex_a_GHP_USD, Opex_a_fixed_GHP_USD, Capex_GHP_USD = HP.calc_Cinv_GHP(GHP_el_size_W[i][0], locator)
             Capex_total_USD[3 + i][0] += Capex_GHP_USD
             Capex_a_USD[3 + i][0] += Capex_a_GHP_USD
             Opex_a_fixed_USD[3 + i][0] += Opex_a_fixed_GHP_USD
