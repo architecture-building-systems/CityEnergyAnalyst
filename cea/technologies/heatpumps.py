@@ -405,7 +405,7 @@ def calc_Cinv_HP(HP_Size, locator, technology_type):
     return Capex_a_HP_USD, Opex_fixed_HP_USD, Capex_HP_USD
 
 
-def calc_Cinv_GHP(GHP_Size_W, locator, config, technology=0):
+def calc_Cinv_GHP(GHP_Size_W, locator, technology=0):
     """
     Calculates the annualized investment costs for the geothermal heat pump
 

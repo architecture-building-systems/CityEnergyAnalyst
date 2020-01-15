@@ -807,7 +807,7 @@ def calc_generation_costs_capacity_installed_heating(locator,
         Capacity_GS_HP_W = master_to_slave_vars.GHP_maxSize_W
         Capex_a_GHP_USD, \
         Opex_fixed_GHP_USD, \
-        Capex_GHP_USD = hp.calc_Cinv_GHP(Capacity_GS_HP_W, locator, config)
+        Capex_GHP_USD = hp.calc_Cinv_GHP(Capacity_GS_HP_W, locator)
     else:
         Capacity_GS_HP_W = 0.0
         Capex_a_GHP_USD = 0.0

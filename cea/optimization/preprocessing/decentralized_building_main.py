@@ -14,7 +14,6 @@ from cea.optimization.lca_calculations import LcaCalculations
 from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
 
 
-
 def disconnected_building_main(locator, total_demand, config, prices, lca):
     """
     This functions optimizes disconnected buildings individually
