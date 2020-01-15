@@ -696,6 +696,7 @@ def calc_generation_costs_capacity_installed_heating(locator,
         locator.get_optimization_thermal_network_data_file(master_to_slave_vars.network_data_file_heating))
     GHP_cost_data = pd.read_excel(locator.get_database_supply_systems(), sheet_name="HP")
     BH_cost_data = pd.read_excel(locator.get_database_supply_systems(), sheet_name="BH")
+    boiler_cost_data = pd.read_excel(locator.get_database_supply_systems(), sheet_name="Boiler")
 
     # CCGT
     if master_to_slave_vars.CC_on == 1:
@@ -743,7 +744,7 @@ def calc_generation_costs_capacity_installed_heating(locator,
         Capacity_BaseBoiler_NG_W = master_to_slave_vars.Boiler_Q_max_W
         Capex_a_BaseBoiler_NG_USD, \
         Opex_fixed_BaseBoiler_NG_USD, \
-        Capex_BaseBoiler_NG_USD = boiler.calc_Cinv_boiler(Capacity_BaseBoiler_NG_W, locator, 'BO1')
+        Capex_BaseBoiler_NG_USD = boiler.calc_Cinv_boiler(Capacity_BaseBoiler_NG_W, locator, 'BO1', boiler_cost_data)
     else:
         Capacity_BaseBoiler_NG_W = 0.0
         Capex_a_BaseBoiler_NG_USD = 0.0
@@ -755,7 +756,7 @@ def calc_generation_costs_capacity_installed_heating(locator,
         Capacity_PeakBoiler_NG_W = master_to_slave_vars.BoilerPeak_Q_max_W
         Capex_a_PeakBoiler_NG_USD, \
         Opex_fixed_PeakBoiler_NG_USD, \
-        Capex_PeakBoiler_NG_USD = boiler.calc_Cinv_boiler(Capacity_PeakBoiler_NG_W, locator, 'BO1')
+        Capex_PeakBoiler_NG_USD = boiler.calc_Cinv_boiler(Capacity_PeakBoiler_NG_W, locator, 'BO1', boiler_cost_data)
     else:
         Capacity_PeakBoiler_NG_W = 0.0
         Capex_a_PeakBoiler_NG_USD = 0.0
@@ -820,7 +821,7 @@ def calc_generation_costs_capacity_installed_heating(locator,
         Capacity_BackupBoiler_NG_W = master_to_slave_vars.BackupBoiler_size_W
         Capex_a_BackupBoiler_NG_USD, \
         Opex_fixed_BackupBoiler_NG_USD, \
-        Capex_BackupBoiler_NG_USD = boiler.calc_Cinv_boiler(Capacity_BackupBoiler_NG_W, locator, 'BO1')
+        Capex_BackupBoiler_NG_USD = boiler.calc_Cinv_boiler(Capacity_BackupBoiler_NG_W, locator, 'BO1', boiler_cost_data)
     else:
         Capacity_BackupBoiler_NG_W = 0.0
         Capex_a_BackupBoiler_NG_USD = 0.0
