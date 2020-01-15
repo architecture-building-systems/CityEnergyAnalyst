@@ -147,12 +147,14 @@ def district_cooling_network(locator,
 
     # BACK-UPP VCC - AIR SOURCE
     master_to_slave_variables.AS_BackupVCC_size_W = np.amax(Q_BackupVCC_AS_gen_W)
+    size_chiller_CT = master_to_slave_variables.AS_BackupVCC_size_W
     if master_to_slave_variables.AS_BackupVCC_size_W != 0.0:
         master_to_slave_variables.AS_BackupVCC_on = 1
         Q_BackupVCC_AS_gen_W, E_BackupVCC_AS_req_W = np.vectorize(calc_vcc_CT_operation)(Q_BackupVCC_AS_gen_W,
                                                                                          T_district_cooling_return_K,
                                                                                          T_district_cooling_supply_K,
-                                                                                         VCC_T_COOL_IN)
+                                                                                         VCC_T_COOL_IN,
+                                                                                         size_chiller_CT)
     else:
         E_BackupVCC_AS_req_W = np.zeros(HOURS_IN_YEAR)
 
