@@ -405,7 +405,7 @@ def calc_Cinv_HP(HP_Size, locator, technology_type):
     return Capex_a_HP_USD, Opex_fixed_HP_USD, Capex_HP_USD
 
 
-def calc_Cinv_GHP(GHP_Size_W, locator, GHP_cost_data):
+def calc_Cinv_GHP(GHP_Size_W, GHP_cost_data, BH_cost_data):
     """
     Calculates the annualized investment costs for the geothermal heat pump
 
@@ -435,8 +435,7 @@ def calc_Cinv_GHP(GHP_Size_W, locator, GHP_cost_data):
 
     Capex_a_GHP_USD = InvC_GHP * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
     Opex_fixed_GHP_USD = InvC_GHP * Inv_OM
-    
-    BH_cost_data = pd.read_excel(locator.get_database_supply_systems(), sheet_name="BH")
+
     # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
     # capacity for the corresponding technology from the database
     if GHP_Size_W < BH_cost_data['cap_min'][0]:

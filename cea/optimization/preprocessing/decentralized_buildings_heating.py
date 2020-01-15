@@ -47,6 +47,7 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
 
     T_ground_K = calc_ground_temperature(locator, weather_data['drybulb_C'], depth_m=10)
     GHP_cost_data = pd.read_excel(locator.get_database_supply_systems(), sheet_name="HP")
+    BH_cost_data = pd.read_excel(locator.get_database_supply_systems(), sheet_name="BH")
 
 
     # This will calculate the substation state if all buildings where connected(this is how we study this)
@@ -253,7 +254,8 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
                 0] += Capex_a_GHPBoiler_USD + Opex_a_fixed_GHPBoiler_USD  # TODO:variable price?
 
             # Get ground source heat pump costs
-            Capex_a_GHP_USD, Opex_a_fixed_GHP_USD, Capex_GHP_USD = HP.calc_Cinv_GHP(GHP_el_size_W[i][0], locator, GHP_cost_data=GHP_cost_data)
+            Capex_a_GHP_USD, Opex_a_fixed_GHP_USD, Capex_GHP_USD = HP.calc_Cinv_GHP(GHP_el_size_W[i][0], GHP_cost_data,
+                                                                                    BH_cost_data)
             Capex_total_USD[3 + i][0] += Capex_GHP_USD
             Capex_a_USD[3 + i][0] += Capex_a_GHP_USD
             Opex_a_fixed_USD[3 + i][0] += Opex_a_fixed_GHP_USD
