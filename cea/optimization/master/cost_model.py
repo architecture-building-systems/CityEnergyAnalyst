@@ -674,7 +674,7 @@ def calc_generation_costs_capacity_installed_heating(locator,
     addPrm = primary energy needs
     :param DHN_barcode: parameter indicating if the building is connected or not
     :param buildList: list of buildings in the district
-    :param locator: input locator set to scenario
+    :param cea.inputlocator.InputLocator locator: input locator set to scenario
     :param master_to_slave_vars: class containing the features of a specific individual
     :param Q_uncovered_design_W: hourly max of the heating uncovered demand
     :param Q_uncovered_annual_W: total heating uncovered
@@ -682,7 +682,6 @@ def calc_generation_costs_capacity_installed_heating(locator,
     :param thermal_network: network features
     :type indCombi: string
     :type buildList: list
-    :type locator: string
     :type master_to_slave_vars: class
     :type Q_uncovered_design_W: float
     :type Q_uncovered_annual_W: float
@@ -695,6 +694,7 @@ def calc_generation_costs_capacity_installed_heating(locator,
 
     thermal_network = pd.read_csv(
         locator.get_optimization_thermal_network_data_file(master_to_slave_vars.network_data_file_heating))
+    GHP_cost_data = pd.read_excel(locator.get_database_supply_systems(), sheet_name="HP")
 
     # CCGT
     if master_to_slave_vars.CC_on == 1:
@@ -807,7 +807,7 @@ def calc_generation_costs_capacity_installed_heating(locator,
         Capacity_GS_HP_W = master_to_slave_vars.GHP_maxSize_W
         Capex_a_GHP_USD, \
         Opex_fixed_GHP_USD, \
-        Capex_GHP_USD = hp.calc_Cinv_GHP(Capacity_GS_HP_W, locator)
+        Capex_GHP_USD = hp.calc_Cinv_GHP(Capacity_GS_HP_W, locator, GHP_cost_data)
     else:
         Capacity_GS_HP_W = 0.0
         Capex_a_GHP_USD = 0.0
