@@ -18,7 +18,6 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-
 class Prices(object):
     def __init__(self, locator, detailed_electricity_pricing):
         pricing = pd.read_excel(locator.get_database_supply_systems(), sheet_name="FEEDSTOCKS")
