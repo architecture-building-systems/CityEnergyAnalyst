@@ -204,8 +204,7 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
 
         # Add all costs
         # 0: Boiler NG
-        Capex_a_Boiler_USD, Opex_a_fixed_Boiler_USD, Capex_Boiler_USD = Boiler.calc_Cinv_boiler(Qnom_W, locator, config,
-                                                                                                'BO1')
+        Capex_a_Boiler_USD, Opex_a_fixed_Boiler_USD, Capex_Boiler_USD = Boiler.calc_Cinv_boiler(Qnom_W, locator, 'BO1')
         Capex_total_USD[0][0] = Capex_Boiler_USD
         Capex_a_USD[0][0] = Capex_a_Boiler_USD
         Opex_a_fixed_USD[0][0] = Opex_a_fixed_Boiler_USD
@@ -232,8 +231,7 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
             # Get boiler costs
             QnomBoiler_W = i / 10.0 * Qnom_W
             Capex_a_Boiler_USD, Opex_a_fixed_Boiler_USD, Capex_Boiler_USD = Boiler.calc_Cinv_boiler(QnomBoiler_W,
-                                                                                                    locator,
-                                                                                                    config, 'BO1')
+                                                                                                    locator, 'BO1')
 
             Capex_total_USD[3 + i][0] += Capex_Boiler_USD
             Capex_a_USD[3 + i][0] += Capex_a_Boiler_USD
@@ -244,8 +242,7 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
             # Get back up boiler costs
             Qnom_Backup_Boiler_W = Q_Boiler_for_GHP_W[i][0]
             Capex_a_GHPBoiler_USD, Opex_a_fixed_GHPBoiler_USD, Capex_GHPBoiler_USD = Boiler.calc_Cinv_boiler(
-                Qnom_Backup_Boiler_W, locator,
-                config, 'BO1')
+                Qnom_Backup_Boiler_W, locator, 'BO1')
 
             Capex_total_USD[3 + i][0] += Capex_GHPBoiler_USD
             Capex_a_USD[3 + i][0] += Capex_a_GHPBoiler_USD
