@@ -357,7 +357,7 @@ def disconnected_cooling_for_building(building_name, supply_systems, lca, locato
     Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(
         Q_nom_CT_FP_to_single_ACH_to_AHU_ARU_SCU_W, locator, 'CT1')
     Capex_a_boiler_USD, Opex_fixed_boiler_USD, Capex_boiler_USD = boiler.calc_Cinv_boiler(
-        Q_nom_Boiler_FP_to_single_ACH_to_AHU_ARU_SCU_W, locator, 'BO1', boiler_cost_data)
+        Q_nom_Boiler_FP_to_single_ACH_to_AHU_ARU_SCU_W, 'BO1', boiler_cost_data)
     Capex_a_USD[2][0] = Capex_a_CT_USD + Capex_a_ACH_USD + Capex_a_boiler_USD + Capex_a_SC_FP_USD
     Capex_total_USD[2][0] = Capex_CT_USD + Capex_ACH_USD + Capex_boiler_USD + Capex_SC_FP_USD
     Opex_a_fixed_USD[2][
@@ -392,7 +392,7 @@ def disconnected_cooling_for_building(building_name, supply_systems, lca, locato
         Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(
             Q_nom_CT_VCC_to_AHU_ARU_and_FP_to_single_ACH_to_SCU_W, locator, 'CT1')
         Capex_a_boiler_USD, Opex_fixed_boiler_USD, Capex_boiler_USD = boiler.calc_Cinv_boiler(
-            Q_nom_boiler_VCC_to_AHU_ARU_and_FP_to_single_ACH_to_SCU_W, locator, 'BO1', boiler_cost_data)
+            Q_nom_boiler_VCC_to_AHU_ARU_and_FP_to_single_ACH_to_SCU_W, 'BO1', boiler_cost_data)
         Capex_a_USD[5][0] = Capex_a_CT_USD + Capex_a_VCC_AA_USD + Capex_a_ACH_S_USD + \
                             Capex_a_SC_FP_USD + Capex_a_boiler_USD
         Capex_total_USD[5][0] = Capex_CT_USD + Capex_VCC_AA_USD + Capex_ACH_S_USD + \
