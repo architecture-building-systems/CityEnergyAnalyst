@@ -121,7 +121,7 @@ def disconnected_cooling_for_building(building_name, supply_systems, lca, locato
     print('{building_name} decentralized cooling supply system simulations...'.format(building_name=building_name))
     T_re_AHU_ARU_SCU_K = np.where(T_re_AHU_ARU_SCU_K > 0.0, T_re_AHU_ARU_SCU_K, T_sup_AHU_ARU_SCU_K)
     ## 0. DX operation
-    print('{building_name} dConfig 0: Direct Expansion Units -> AHU,ARU,SCU'.format(building_name=building_name))
+    print('{building_name} Config 0: Direct Expansion Units -> AHU,ARU,SCU'.format(building_name=building_name))
     el_DX_hourly_Wh, \
     q_DX_chw_Wh = np.vectorize(dx.calc_DX)(mdot_AHU_ARU_SCU_kgpers, T_sup_AHU_ARU_SCU_K, T_re_AHU_ARU_SCU_K)
     DX_Status = np.where(q_DX_chw_Wh > 0.0, 1, 0)
