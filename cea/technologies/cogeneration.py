@@ -415,7 +415,7 @@ def calc_eta_FC(Q_load_W, Q_design_W, phi_threshold, approach_call):
 
 # investment and maintenance costs
 
-def calc_Cinv_CCGT(CC_size_W, locator, technology=0):
+def calc_Cinv_CCGT(CC_size_W, locator):
     """
     Annualized investment costs for the Combined cycle
     :type CC_size_W : float
@@ -426,8 +426,6 @@ def calc_Cinv_CCGT(CC_size_W, locator, technology=0):
     polygeneration energy conversion technologies., PhD Thesis, EPFL
     """
     CCGT_cost_data = pd.read_excel(locator.get_database_supply_systems(), sheet_name="CCGT")
-    technology_code = list(set(CCGT_cost_data['code']))
-    CCGT_cost_data[CCGT_cost_data['code'] == technology_code[technology]]
 
     # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
     # capacity for the corresponding technology from the database
