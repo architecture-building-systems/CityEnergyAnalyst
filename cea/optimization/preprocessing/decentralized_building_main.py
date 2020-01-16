@@ -12,6 +12,7 @@ from cea.optimization.preprocessing import decentralized_buildings_heating
 from cea.optimization.preprocessing import decentralized_buildings_cooling
 from cea.optimization.lca_calculations import LcaCalculations
 from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
+from cea.technologies.supply_systems_database import SupplySystemsDatabase
 
 
 def disconnected_building_main(locator, total_demand, config, prices, lca):
@@ -45,9 +46,10 @@ def disconnected_building_main(locator, total_demand, config, prices, lca):
 def main(config):
     print('Running decentralized model for buildings with scenario = %s' % config.scenario)
     locator = cea.inputlocator.InputLocator(config.scenario)
+    supply_systems = SupplySystemsDatabase(locator)
     total_demand = pd.read_csv(locator.get_total_demand())
     detailed_electricity_pricing = config.decentralized.detailed_electricity_pricing
-    prices = Prices(locator, detailed_electricity_pricing)
+    prices = Prices(supply_systems, detailed_electricity_pricing)
     lca = LcaCalculations(locator)
     disconnected_building_main(locator=locator,  total_demand=total_demand,
                                config=config, prices=prices, lca=lca)
