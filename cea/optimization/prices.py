@@ -19,8 +19,8 @@ __status__ = "Production"
 
 
 class Prices(object):
-    def __init__(self, locator, detailed_electricity_pricing):
-        pricing = pd.read_excel(locator.get_database_supply_systems(), sheet_name="FEEDSTOCKS")
+    def __init__(self, supply_systems, detailed_electricity_pricing):
+        pricing = supply_systems.FEEDSTOCKS
         self.NG_PRICE = pricing[pricing['code'] == 'NATURALGAS'].iloc[0]['Opex_var_buy_USD2015perkWh'] / 1000 # in USD/Wh
         self.BG_PRICE = pricing[pricing['code'] == 'BIOGAS'].iloc[0]['Opex_var_buy_USD2015perkWh']  / 1000# in USD/Wh
         self.WB_PRICE = pricing[pricing['code'] == 'WETBIOMASS'].iloc[0]['Opex_var_buy_USD2015perkWh']  / 1000# in USD/Wh
@@ -29,7 +29,7 @@ class Prices(object):
         self.SOLAR_PRICE_EXPORT = pricing[pricing['code'] == 'SOLAR'].iloc[0]['Opex_var_sell_USD2015perkWh'] / 1000 # in USD/Wh
 
         if detailed_electricity_pricing:
-            electricity_costs = pd.read_excel(locator.get_database_supply_systems(), sheet_name="DETAILED_ELEC_COSTS")
+            electricity_costs = supply_systems.DETAILED_ELEC_COSTS
             self.ELEC_PRICE = electricity_costs['Opex_var_buy_USD2015perkWh'].values / 1000  # in USD_2015 per Wh
             self.ELEC_PRICE_EXPORT = electricity_costs['Opex_var_sell_USD2015perkWh'].values / 1000  # in USD_2015 per Wh
         else:

@@ -643,9 +643,10 @@ def main(config):
     print("Running decentralized model for buildings with scenario = %s" % config.scenario)
 
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+    supply_systems = SupplySystemsDatabase(locator)
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = total_demand.Name
-    prices = Prices(locator, config.optimization.detailed_electricity_pricing)
+    prices = Prices(supply_systems, config.optimization.detailed_electricity_pricing)
     lca = LcaCalculations(locator)
     disconnected_buildings_cooling_main(locator, building_names, total_demand, config, prices, lca)
 

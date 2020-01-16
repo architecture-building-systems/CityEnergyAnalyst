@@ -17,6 +17,7 @@ from cea.optimization.master import master_main
 from cea.optimization.preprocessing.preprocessing_main import preproccessing
 from cea.optimization.prices import Prices as Prices
 from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
+from cea.technologies.supply_systems_database import SupplySystemsDatabase
 
 warnings.filterwarnings("ignore")
 
@@ -64,7 +65,8 @@ def moo_optimization(locator, weather_file, config):
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names_all = list(total_demand.Name.values)  # needs to be a list to avoid errors
     lca = LcaCalculations(locator)
-    prices = Prices(locator, config.optimization.detailed_electricity_pricing)
+    supply_systems = SupplySystemsDatabase(locator)
+    prices = Prices(supply_systems, config.optimization.detailed_electricity_pricing)
 
     # local flags
     district_heating_network = config.optimization.district_heating_network
