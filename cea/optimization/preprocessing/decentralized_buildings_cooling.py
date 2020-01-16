@@ -27,6 +27,7 @@ from cea.optimization.constants import (T_GENERATOR_FROM_FP_C, T_GENERATOR_FROM_
                                         Q_LOSS_DISCONNECTED, ACH_TYPE_SINGLE)
 from cea.optimization.lca_calculations import LcaCalculations
 from cea.technologies.thermal_network.thermal_network import calculate_ground_temperature
+from cea.technologies.supply_systems_database import SupplySystemsDatabase
 import cea.utilities.parallel
 
 
@@ -59,14 +60,13 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
     """
 
     t0 = time.clock()
-    chiller_prop, boiler_cost_data = pd.read_excel(locator.get_database_supply_systems(), sheet_name=["Absorption_chiller", "Boiler"]).values()
+    supply_systems = SupplySystemsDatabase(locator)
 
     n = len(building_names)
 
     cea.utilities.parallel.vectorize(disconnected_cooling_for_building, config.get_number_of_processes())(
         building_names,
-        repeat(chiller_prop, n),
-        repeat(boiler_cost_data, n),
+        repeat(supply_systems, n),
         repeat(lca, n),
         repeat(locator, n),
         repeat(prices, n),
@@ -75,7 +75,11 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
     print(time.clock() - t0, "seconds process time for the decentralized Building Routine \n")
 
 
-def disconnected_cooling_for_building(building_name, chiller_prop, boiler_cost_data, lca, locator, prices, total_demand):
+def disconnected_cooling_for_building(building_name, supply_systems, lca, locator, prices, total_demand):
+
+    chiller_prop = supply_systems.Absorption_chiller
+    boiler_cost_data = supply_systems.Boiler
+
     ## Calculate cooling loads for different combinations
     # SENSIBLE COOLING UNIT
     Qc_nom_SCU_W, \

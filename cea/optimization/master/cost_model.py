@@ -484,7 +484,7 @@ def calc_generation_costs_capacity_installed_cooling(locator,
                                                                                               ACH_TYPE_DOUBLE)
         # CCGT
         Capex_a_CCGT_USD, Opex_fixed_CCGT_USD, Capex_CCGT_USD = cogeneration.calc_Cinv_CCGT(Capacity_NG_Trigen_el_W,
-                                                                                            locator, config)
+                                                                                            locator)
 
         Capex_a_Trigen_NG_USD = Capex_a_ACH_USD + Capex_a_CCGT_USD
         Opex_fixed_Trigen_NG_USD = Opex_fixed_ACH_USD + Opex_fixed_CCGT_USD
@@ -704,8 +704,7 @@ def calc_generation_costs_capacity_installed_heating(locator,
     if master_to_slave_vars.CC_on == 1:
         Capacity_CHP_NG_heat_W = master_to_slave_vars.CCGT_SIZE_W
         Capacity_CHP_NG_el_W = master_to_slave_vars.CCGT_SIZE_electrical_W
-        Capex_a_CHP_NG_USD, Opex_fixed_CHP_NG_USD, Capex_CHP_NG_USD = chp.calc_Cinv_CCGT(Capacity_CHP_NG_el_W, locator,
-                                                                                         config)
+        Capex_a_CHP_NG_USD, Opex_fixed_CHP_NG_USD, Capex_CHP_NG_USD = chp.calc_Cinv_CCGT(Capacity_CHP_NG_el_W, locator)
     else:
         Capacity_CHP_NG_heat_W = 0.0
         Capacity_CHP_NG_el_W = 0.0
