@@ -15,6 +15,7 @@ import cea.technologies.boiler as Boiler
 import cea.technologies.cogeneration as FC
 import cea.technologies.heatpumps as HP
 import cea.technologies.substation as substation
+import cea.utilities.parallel
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.optimization.constants import Q_LOSS_DISCONNECTED, GHP_A, GHP_HMAX_SIZE
 from cea.resources.geothermal import calc_ground_temperature

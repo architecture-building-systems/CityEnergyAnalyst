@@ -258,6 +258,7 @@ def calc_power_demand(q_chw_W, chiller_prop):
 
 # Investment costs
 
+
 def calc_Cinv_ACH(Q_nom_W, locator, ACH_type):
     """
     Annualized investment costs for the vapor compressor chiller
