@@ -17,6 +17,13 @@
       font-weight: bold;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
     }
+    #export-plot {
+      font-size: 12px;
+      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+    }
   </style>
 </head>
 <body style="margin: 0">
@@ -32,22 +39,24 @@
   <div style="grid-area: content;">
     {{ plot_div|safe }}
   </div>
+  <a id="export-plot" href="#">>> Export to File</a>
 </div>
 <script>
+    if (window.location.protocol !== "http:") {
+        document.getElementById('export-plot').remove();
+    }
     const plots = document.querySelectorAll(".plotly-graph-div.js-plotly-plot");
     let showLegend = true;
     window.addEventListener("resize", resizePlots);
     function resizePlots() {
         for (let i = 0; i < plots.length ; i++) {
             Plotly.Plots.resize(plots[i].id);
-            console.log(plots[i]._context)
         }
     }
     function toggleLegends() {
-        for (let i = 0; i < plots.length ; i++) {
+        for (let i = 0; i < plots.length; i++) {
             showLegend = !showLegend;
-            Plotly.relayout(plots[i].id, { showlegend: showLegend });
-
+            Plotly.relayout(plots[i].id, {showlegend: showLegend});
         }
     }
 </script>
