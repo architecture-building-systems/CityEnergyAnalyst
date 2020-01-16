@@ -9,7 +9,7 @@ import time
 import numpy as np
 import pandas as pd
 from geopandas import GeoDataFrame as Gdf
-
+from itertools import repeat
 from cea.optimization.master.emissions_model import calc_emissions_Whyr_to_tonCO2yr, calc_pen_Whyr_to_MJoilyr
 import cea.technologies.boiler as Boiler
 import cea.technologies.cogeneration as FC
@@ -53,15 +53,21 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
     # This will calculate the substation state if all buildings where connected(this is how we study this)
     substation.substation_main_heating(locator, total_demand, building_names)
 
-    for building_name in building_names:
-        disconnected_heating_for_building(supply_systems, T_ground_K, building_name,
-                                          config, geothermal_potential_data, lca, locator, prices)
+    n = len(building_names)
+    cea.utilities.parallel.vectorize(disconnected_heating_for_building, config.get_number_of_processes())(
+        building_names,
+        repeat(supply_systems, n),
+        repeat(T_ground_K, n),
+        repeat(geothermal_potential_data, n),
+        repeat(lca, n),
+        repeat(locator, n),
+        repeat(prices, n))
 
     print time.clock() - t0, "seconds process time for the Disconnected Building Routine \n"
 
 
-def disconnected_heating_for_building(supply_systems, T_ground_K, building_name, config,
-                                      geothermal_potential_data, lca, locator, prices):
+def disconnected_heating_for_building(building_name, supply_systems, T_ground_K, geothermal_potential_data, lca,
+                                      locator, prices):
     print('{building_name} disconnected heating supply system simulations...'.format(building_name=building_name))
     GHP_cost_data = supply_systems.HP
     BH_cost_data = supply_systems.BH
@@ -207,7 +213,7 @@ def disconnected_heating_for_building(supply_systems, T_ground_K, building_name,
                                    'E_hs_ww_req_W': el_GHP_Wh}
     # Add all costs
     # 0: Boiler NG
-    Capex_a_Boiler_USD, Opex_a_fixed_Boiler_USD, Capex_Boiler_USD = Boiler.calc_Cinv_boiler(Qnom_W, locator, 'BO1',
+    Capex_a_Boiler_USD, Opex_a_fixed_Boiler_USD, Capex_Boiler_USD = Boiler.calc_Cinv_boiler(Qnom_W, 'BO1',
                                                                                             boiler_cost_data)
     Capex_total_USD[0][0] = Capex_Boiler_USD
     Capex_a_USD[0][0] = Capex_a_Boiler_USD
@@ -231,8 +237,7 @@ def disconnected_heating_for_building(supply_systems, T_ground_K, building_name,
 
         # Get boiler costs
         QnomBoiler_W = i / 10.0 * Qnom_W
-        Capex_a_Boiler_USD, Opex_a_fixed_Boiler_USD, Capex_Boiler_USD = Boiler.calc_Cinv_boiler(QnomBoiler_W,
-                                                                                                locator, 'BO1',
+        Capex_a_Boiler_USD, Opex_a_fixed_Boiler_USD, Capex_Boiler_USD = Boiler.calc_Cinv_boiler(QnomBoiler_W, 'BO1',
                                                                                                 boiler_cost_data)
 
         Capex_total_USD[3 + i][0] += Capex_Boiler_USD
@@ -244,7 +249,7 @@ def disconnected_heating_for_building(supply_systems, T_ground_K, building_name,
         # Get back up boiler costs
         Qnom_Backup_Boiler_W = Q_Boiler_for_GHP_W[i][0]
         Capex_a_GHPBoiler_USD, Opex_a_fixed_GHPBoiler_USD, Capex_GHPBoiler_USD = Boiler.calc_Cinv_boiler(
-            Qnom_Backup_Boiler_W, locator, 'BO1', boiler_cost_data)
+            Qnom_Backup_Boiler_W, 'BO1', boiler_cost_data)
 
         Capex_total_USD[3 + i][0] += Capex_GHPBoiler_USD
         Capex_a_USD[3 + i][0] += Capex_a_GHPBoiler_USD

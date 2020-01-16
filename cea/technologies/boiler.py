@@ -163,7 +163,7 @@ def calc_Cop_boiler(q_load_Wh, Q_nom_W, T_return_to_boiler_K):
 
 # investment and maintenance costs
 
-def calc_Cinv_boiler(Q_design_W, locator, technology_type, boiler_cost_data):
+def calc_Cinv_boiler(Q_design_W, technology_type, boiler_cost_data):
     """
     Calculates the annual cost of a boiler (based on A+W cost of oil boilers) [CHF / a]
     and Faz. 2012 data
