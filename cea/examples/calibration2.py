@@ -82,8 +82,17 @@ def calc_score(static_params, params):
     df_comfort.Tcs_setb_C = Tcs_setb_C
     df_comfort = dataframe_to_dbf(df_comfort, locator.get_building_comfort())
 
-    ## run building schedules and energy demand (first run)
+    ## run building schedules and energy demand
+
+    # define which buildings will be simulated ***
+    # monthly_measured_data = pd.read_csv(locator.get_monthly_measurements())
+    # measured_building_names = monthly_measured_data.Name.values
+    # for building_name in measured_building_names:
+
     schedule_maker.schedule_maker_main(locator, config, building=None)
+
+    # Define monthly multiplier occupancy values in the schedules based on the monthly measured electricity consumption ***
+
     demand_main.demand_calculation(locator, config)
 
     #calculate the score
@@ -91,6 +100,7 @@ def calc_score(static_params, params):
 
     return score
 
+    ## save the iteration number, the value of each parameter tested and the score obtained ***
 
 def calibration(config, locator):
 
