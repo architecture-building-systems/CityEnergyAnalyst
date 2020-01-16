@@ -353,7 +353,7 @@ def disconnected_cooling_for_building(building_name, supply_systems, lca, locato
     Opex_a_fixed_USD[1][0] = Opex_fixed_CT_USD + Opex_fixed_VCC_USD
     # 2: single effect ACH + CT + Boiler + SC_FP
     Capex_a_ACH_USD, Opex_fixed_ACH_USD, Capex_ACH_USD = chiller_absorption.calc_Cinv_ACH(
-        Qc_nom_AHU_ARU_SCU_W, locator, ACH_TYPE_SINGLE)
+        Qc_nom_AHU_ARU_SCU_W, supply_systems.Absorption_chiller, ACH_TYPE_SINGLE)
     Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(
         Q_nom_CT_FP_to_single_ACH_to_AHU_ARU_SCU_W, locator, 'CT1')
     Capex_a_boiler_USD, Opex_fixed_boiler_USD, Capex_boiler_USD = boiler.calc_Cinv_boiler(
@@ -364,7 +364,7 @@ def disconnected_cooling_for_building(building_name, supply_systems, lca, locato
         0] = Opex_fixed_CT_USD + Opex_fixed_ACH_USD + Opex_fixed_boiler_USD + Opex_SC_FP_USD
     # 3: double effect ACH + CT + Boiler + SC_ET
     Capex_a_ACH_USD, Opex_fixed_ACH_USD, Capex_ACH_USD = chiller_absorption.calc_Cinv_ACH(
-        Qc_nom_AHU_ARU_SCU_W, locator, ACH_TYPE_SINGLE)
+        Qc_nom_AHU_ARU_SCU_W, supply_systems.Absorption_chiller, ACH_TYPE_SINGLE)
     Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(
         Q_nom_CT_ET_to_single_ACH_to_AHU_ARU_SCU_W, locator, 'CT1')
     Capex_a_burner_USD, Opex_fixed_burner_USD, Capex_burner_USD = burner.calc_Cinv_burner(
@@ -388,7 +388,7 @@ def disconnected_cooling_for_building(building_name, supply_systems, lca, locato
 
         # 5: VCC (AHU + ARU) + ACH (SCU) + CT + Boiler + SC_FP
         Capex_a_ACH_S_USD, Opex_fixed_ACH_S_USD, Capex_ACH_S_USD = chiller_absorption.calc_Cinv_ACH(
-            Qc_nom_SCU_W, locator, ACH_TYPE_SINGLE)
+            Qc_nom_SCU_W, supply_systems.Absorption_chiller, ACH_TYPE_SINGLE)
         Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(
             Q_nom_CT_VCC_to_AHU_ARU_and_FP_to_single_ACH_to_SCU_W, locator, 'CT1')
         Capex_a_boiler_USD, Opex_fixed_boiler_USD, Capex_boiler_USD = boiler.calc_Cinv_boiler(
