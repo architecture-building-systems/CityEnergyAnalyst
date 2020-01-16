@@ -415,7 +415,7 @@ def calc_eta_FC(Q_load_W, Q_design_W, phi_threshold, approach_call):
 
 # investment and maintenance costs
 
-def calc_Cinv_CCGT(CC_size_W, locator, config, technology=0):
+def calc_Cinv_CCGT(CC_size_W, locator, technology=0):
     """
     Annualized investment costs for the Combined cycle
     :type CC_size_W : float
