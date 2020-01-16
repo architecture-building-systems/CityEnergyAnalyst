@@ -20,6 +20,7 @@ from cea.optimization.constants import Q_LOSS_DISCONNECTED, GHP_A, GHP_HMAX_SIZE
 from cea.resources.geothermal import calc_ground_temperature
 from cea.utilities import dbf
 from cea.utilities import epwreader
+from cea.technologies.supply_systems_database import SupplySystemsDatabase
 
 
 def disconnected_buildings_heating_main(locator, total_demand, building_names, config, prices, lca):
@@ -46,8 +47,10 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
                                                          'relhum_percent', 'windspd_ms', 'skytemp_C']]
 
     T_ground_K = calc_ground_temperature(locator, weather_data['drybulb_C'], depth_m=10)
-    GHP_cost_data, BH_cost_data, boiler_cost_data = pd.read_excel(locator.get_database_supply_systems(),
-                                                                  sheet_name=["HP", "BH", "Boiler"]).values()
+    supply_systems = SupplySystemsDatabase(locator)
+    GHP_cost_data = supply_systems.HP
+    BH_cost_data = supply_systems.BH
+    boiler_cost_data = supply_systems.Boiler
 
 
     # This will calculate the substation state if all buildings where connected(this is how we study this)

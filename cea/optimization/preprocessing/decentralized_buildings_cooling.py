@@ -67,7 +67,6 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
         building_names,
         repeat(chiller_prop, n),
         repeat(boiler_cost_data, n),
-        repeat(config, n),
         repeat(lca, n),
         repeat(locator, n),
         repeat(prices, n),
@@ -76,7 +75,7 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
     print(time.clock() - t0, "seconds process time for the decentralized Building Routine \n")
 
 
-def disconnected_cooling_for_building(building_name, chiller_prop, boiler_cost_data, config, lca, locator, prices, total_demand):
+def disconnected_cooling_for_building(building_name, chiller_prop, boiler_cost_data, lca, locator, prices, total_demand):
     ## Calculate cooling loads for different combinations
     # SENSIBLE COOLING UNIT
     Qc_nom_SCU_W, \
@@ -365,7 +364,7 @@ def disconnected_cooling_for_building(building_name, chiller_prop, boiler_cost_d
     Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(
         Q_nom_CT_ET_to_single_ACH_to_AHU_ARU_SCU_W, locator, 'CT1')
     Capex_a_burner_USD, Opex_fixed_burner_USD, Capex_burner_USD = burner.calc_Cinv_burner(
-        Q_nom_Burner_ET_to_single_ACH_to_AHU_ARU_SCU_W, locator, config, 'BO1')
+        Q_nom_Burner_ET_to_single_ACH_to_AHU_ARU_SCU_W, boiler_cost_data, 'BO1')
     Capex_a_USD[3][0] = Capex_a_CT_USD + Capex_a_ACH_USD + Capex_a_burner_USD + Capex_a_SC_ET_USD
     Capex_total_USD[3][0] = Capex_CT_USD + Capex_ACH_USD + Capex_burner_USD + Capex_SC_ET_USD
     Opex_a_fixed_USD[3][

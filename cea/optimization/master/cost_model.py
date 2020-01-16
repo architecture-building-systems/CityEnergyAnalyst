@@ -27,6 +27,7 @@ from cea.optimization.constants import N_PVT, PUMP_ETA, ACH_TYPE_DOUBLE, N_SC_ET
 from cea.optimization.constants import VCC_CODE_CENTRALIZED, VCC_CODE_DECENTRALIZED
 from cea.optimization.master.emissions_model import calc_emissions_Whyr_to_tonCO2yr, calc_pen_Whyr_to_MJoilyr
 from cea.technologies.pumps import calc_Cinv_pump
+from cea.technologies.supply_systems_database import SupplySystemsDatabase
 
 __author__ = "Tim Vollrath"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -694,9 +695,10 @@ def calc_generation_costs_capacity_installed_heating(locator,
 
     thermal_network = pd.read_csv(
         locator.get_optimization_thermal_network_data_file(master_to_slave_vars.network_data_file_heating))
-    GHP_cost_data = pd.read_excel(locator.get_database_supply_systems(), sheet_name="HP")
-    BH_cost_data = pd.read_excel(locator.get_database_supply_systems(), sheet_name="BH")
-    boiler_cost_data = pd.read_excel(locator.get_database_supply_systems(), sheet_name="Boiler")
+    supply_systems = SupplySystemsDatabase(locator)
+    GHP_cost_data = supply_systems.HP
+    BH_cost_data = supply_systems.BH
+    boiler_cost_data = supply_systems.Boiler
 
     # CCGT
     if master_to_slave_vars.CC_on == 1:
