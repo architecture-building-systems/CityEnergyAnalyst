@@ -34,11 +34,11 @@ def substation_main_heating(locator, total_demand, buildings_name_with_heating, 
             buildings_dict[name] = pd.read_csv(locator.get_demand_results_file(name))
             print(name)
             ## calculates the building side supply and return temperatures for each units
-            Ths_supply_C, Ths_re_C = calc_temp_hex_building_side(buildings_dict[name],
-                                                                 heating_configuration)
+            Ths_supply_C, Ths_re_C = calc_temp_hex_building_side_heating(buildings_dict[name],
+                                                                         heating_configuration)
 
             # compare and get the minimum tempearture of the DH plant
-            T_DH_supply = calc_temp_this_building(Ths_supply_C)
+            T_DH_supply = calc_temp_this_building_heating(Ths_supply_C)
             T_DHN_supply = np.vectorize(calc_DH_supply)(T_DH_supply, T_DHN_supply)
 
             # Create two vectors for doing the calculation
@@ -63,8 +63,8 @@ def substation_main_heating(locator, total_demand, buildings_name_with_heating, 
         # CALCULATE SUBSTATIONS DURING DECENTRALIZED OPTIMIZATION
         for name in buildings_name_with_heating:
             substation_demand = pd.read_csv(locator.get_demand_results_file(name))
-            Ths_supply_C, Ths_return_C = calc_temp_hex_building_side(substation_demand, heating_configuration)
-            T_heating_system_supply = calc_temp_this_building(Ths_supply_C)
+            Ths_supply_C, Ths_return_C = calc_temp_hex_building_side_heating(substation_demand, heating_configuration)
+            T_heating_system_supply = calc_temp_this_building_heating(Ths_supply_C)
             substation_model_heating(name,
                                      substation_demand,
                                      T_heating_system_supply,
@@ -76,12 +76,12 @@ def substation_main_heating(locator, total_demand, buildings_name_with_heating, 
     return
 
 
-def calc_temp_this_building(Tww_Ths_supply_C):
+def calc_temp_this_building_heating(Tww_Ths_supply_C):
     T_DH_supply = np.where(Tww_Ths_supply_C > 0, Tww_Ths_supply_C + DT_HEAT, Tww_Ths_supply_C)
     return T_DH_supply
 
 
-def calc_temp_hex_building_side(building_demand_df, heating_configuration):
+def calc_temp_hex_building_side_heating(building_demand_df, heating_configuration):
     # space heating
 
     Ths_return, Ths_supply = calc_compound_Ths(building_demand_df, heating_configuration)
