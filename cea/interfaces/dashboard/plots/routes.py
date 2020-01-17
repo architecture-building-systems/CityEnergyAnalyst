@@ -300,10 +300,21 @@ def load_plot(dashboard, plot_index):
 def route_plot(dashboard_index, plot_index):
     try:
         plot = load_plot(dashboard_index, plot_index)
+        plot_title = plot.title
+        if 'scenario-name' in plot.parameters:
+            plot_title += ' - {}'.format(plot.parameters['scenario-name'])
     except Exception as ex:
         return abort(500, ex)
 
-    return render_template('plot.html', dashboard_index=dashboard_index, plot_index=plot_index, plot=plot)
+    if not plot.missing_input_files():
+        plot_div = plot.plot_div()
+    else:
+        return render_template('missing_input_files.html',
+                               missing_input_files=[lm(*args) for lm, args in plot.missing_input_files()],
+                               script_suggestions=script_suggestions(
+                                   lm.__name__ for lm, _ in plot.missing_input_files())), 404
+
+    return render_template('plot.html', plot_div=plot_div, plot_title=plot_title)
 
 
 def dir_last_updated():

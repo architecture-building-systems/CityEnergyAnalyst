@@ -116,7 +116,7 @@
             longitude: 0,
             zoom: 0, bearing: 0, pitch: 0
         };
-        const deckgl = new DeckGL({
+        const deckgl = new deck.DeckGL({
             container: hash,
             mapStyle: lightMap,
             viewState: currentViewState,
@@ -164,7 +164,6 @@
                     this._btn.className = "mapboxgl-ctrl-icon mapboxgl-ctrl-3d";
                     this._btn.type = "button";
                     this._btn.setAttribute("data-extruded", this._extruded);
-                    this._btn.setAttribute("data-toggle", "tooltip");
                     this._btn.setAttribute("data-placement", "left");
                     this._btn.setAttribute("data-container", "body");
                     this._btn.setAttribute("data-trigger", "hover");
@@ -212,7 +211,6 @@
                     this._btn.id = "dark-button";
                     this._btn.className = "mapboxgl-ctrl-icon mapboxgl-ctrl-map-style";
                     this._btn.type = "button";
-                    this._btn.setAttribute("data-toggle", "tooltip");
                     this._btn.setAttribute("data-placement", "left");
                     this._btn.setAttribute("data-container", "body");
                     this._btn.setAttribute("data-trigger", "hover");
@@ -247,7 +245,6 @@
                     this._btn.id = `recenter-button-${ hash }`;
                     this._btn.className = "mapboxgl-ctrl-icon mapboxgl-ctrl-recenter";
                     this._btn.type = "button";
-                    this._btn.setAttribute("data-toggle", "tooltip");
                     this._btn.setAttribute("data-placement", "left");
                     this._btn.setAttribute("data-container", "body");
                     this._btn.setAttribute("data-trigger", "hover");
@@ -294,7 +291,7 @@
             let extruded = document.getElementById(`3d-button-${ hash }`).dataset.extruded === 'true';
 
             // Add zone layer
-            let layers = [new GeoJsonLayer({
+            let layers = [new deck.GeoJsonLayer({
                 id: 'zone',
                 data: zone,
                 opacity: 0.5,
@@ -312,7 +309,7 @@
                 onHover: updateTooltip
             })];
 
-            if (district) layers.push(new GeoJsonLayer({
+            if (district) layers.push(new deck.GeoJsonLayer({
                 id: 'district',
                 data: district,
                 opacity: 0.3,
@@ -330,7 +327,7 @@
 
                 onHover: updateTooltip
             }));
-            if (edges) layers.push(new GeoJsonLayer({
+            if (edges) layers.push(new deck.GeoJsonLayer({
                 id: 'edges',
                 data: edges,
                 lineWidthScale: 1,  // line width is scaled by the plot object
@@ -344,10 +341,8 @@
                 highlightColor: [255, 255, 0, 128],
                 onHover: updateTooltip
             }));
-            console.log(layers);
-            console.log(edges);
 
-            if (nodes) layers.push(new GeoJsonLayer({
+            if (nodes) layers.push(new deck.GeoJsonLayer({
                 id: 'nodes',
                 data: nodes,
                 getRadius: f => f.properties["_Radius"],
@@ -369,30 +364,32 @@
                 let innerHTML = '';
 
                 if (layer.id === 'zone' || layer.id === 'district') {
-                    $.each(object.properties, function (key, value)  {
+                    Object.keys(object.properties).forEach(function(key) {
                         if (key.startsWith("_")) { return null; }
-                        innerHTML += `<div><b>${key}</b>: ${value}</div>`;
+                        innerHTML += `<div><b>${key}</b>: ${object.properties[key]}</div>`;
                     });
                     let area = turf.area(object);
                     innerHTML += `<br><div><b>area</b>: ${Math.round(area * 1000) / 1000}m<sup>2</sup></div>` +
                         `<div><b>volume</b>: ${Math.round(area * object.properties['height_ag'] * 1000) / 1000}m<sup>3</sup></div>`;
                 } else if (layer.id === 'edges') {
-                    $.each(object.properties, function(key, value) {
+                    Object.keys(object.properties).forEach(function(key) {
+                        const value = object.properties[key];
                         if (key.startsWith("_")) { return null; }
                         if (value === null) { return null; }
                         if (value === "NONE") { return null; }
                         innerHTML += `<div><b>${key}</b>: ${value}</div>`;
                     });
                 } else if (layer.id === 'nodes') {
-                    $.each(object.properties, function(key, value) {
+                    Object.keys(object.properties).forEach(function(key) {
+                        const value = object.properties[key];
                         if (key.startsWith("_")) { return null; }
                         if (value === null) { return null; }
                         if (value === "NONE") { return null; }
                         innerHTML += `<div><b>${key}</b>: ${value}</div>`;
                     });
                 } else {
-                    $.each(object.properties, function (key, value) {
-                        innerHTML += `<div><b>${key}</b>: ${value}</div>`;
+                    Object.keys(object.properties).forEach(function(key) {
+                        innerHTML += `<div><b>${key}</b>: ${object.properties[key]}</div>`;
                     });
                 }
 
@@ -402,11 +399,4 @@
             }
         }
     }
-
-
-
-    $(document).ready(function() {
-        $('[data-toggle="tooltip"]').tooltip()
-    });
-
 </script>
