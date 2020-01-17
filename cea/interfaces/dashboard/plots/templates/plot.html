@@ -1,81 +1,64 @@
-{% extends "base_site.html" %}
-
-{% block title %} {{ plot.name }} {% endblock title %}
-
-{% block stylesheets %}
-  {{ super() }}
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/css/bootstrap-select.min.css">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>City Energy Analyst | {{ plot_title }}</title>
   <style>
-    .nav-md .container.body .right_col {
-      margin-left: 0;
+    .grid-container {
+      box-sizing: border-box;
+      height: 100vh;
+      padding: 0 20px 20px;
+      display: grid;
+      grid-template-rows: auto minmax(0px, 1fr);
+      grid-template-columns: minmax(0px, 1fr);
+      grid-template-areas: 'header' 'content';
     }
-    .x_content.cea-plot {
-      height: 50vh;
-      min-height: 450px;
+    #plot-title {
+      font-size: 20px;
+      font-weight: bold;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+    }
+    #export-plot {
+      font-size: 12px;
+      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
     }
   </style>
-{% endblock stylesheets %}
-
-{% block sidebar %}{% endblock sidebar %}
-{% block top_navigation %} {% endblock top_navigation %}
-{% block body_class %}{% endblock body_class %}
-
-{% block content %}
-    <script src="{{ url_for('.static', filename='js/plotly-latest.min.js') }}"></script>
-    <div class="right_col" role="main">
-      <div class="">
-        <div class="row">
-          <div class="col-md-12 col-sm-12 col-xs-12">
-            <div class="x_panel cea-plot"
-                 data-cea-plot-index="{{ plot_index }}"
-                 data-cea-dashboard-index="{{ dashboard_index }}">
-              <div class="x_title">
-                <h2>{{ plot.title }}</h2>
-                <div class="clearfix"></div>
-              </div>
-              <div class="x_content">
-                <!-- {{ parameters }} -->
-                {% if 'buildings' in parameters %}
-                <select id="parameters-buildings" class="selectpicker"
-                        data-none-selected-text="Whole District" multiple>
-                  {% for building in parameters['all_buildings'] %}
-                    <option title="{{ building }}">{{ building }}</option>
-                  {% endfor %}
-                </select>
-                {% endif %}
-              </div>
-              <div class="x_content cea-plot" id="x_content-{{ dashboard_index }}-{{ plot_index }}">
-                <p>Loading plot...</p>
-              </div>
-              <div class="x_content" id="x_table-{{ dashboard_index }}-{{ plot_index }}">
-                  <p>Loading table...</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-{% endblock content %}
-
-{% block footer %}{% endblock footer %}
-
-{% block javascripts %}
-  {{ super() }}
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/js/bootstrap-select.min.js"></script>
-  <script src="{{ url_for('.static', filename='js/plotly-latest.min.js') }}"></script>
-  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-  <script src="https://unpkg.com/deck.gl@latest/dist.min.js"></script>
-  <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v1.2.0/mapbox-gl.js'></script>
-  <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v1.2.0/mapbox-gl.css' rel='stylesheet' />
-  <script src='https://npmcdn.com/@turf/turf/turf.min.js'></script>
-  <script src="{{ url_for('.static', filename='js/single-plots.js') }}"></script>
-  <script>
-    window.addEventListener("resize", function() {
-      console.log("resizing");
-      $.each($(".plotly-graph-div.js-plotly-plot"), function() {
-        Plotly.Plots.resize($(this).attr("id"));
-      });
-    });
-  </script>
-{% endblock javascripts %}
-
+</head>
+<body style="margin: 0">
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script src="https://npmcdn.com/@turf/turf/turf.min.js"></script>
+<script src="https://api.tiles.mapbox.com/mapbox-gl-js/v1.2.0/mapbox-gl.js"></script>
+<script src="https://unpkg.com/deck.gl@latest/dist.min.js"></script>
+<div class="grid-container">
+  <div style="grid-area: header;">
+    <p id="plot-title">{{ plot_title }}</p>
+    <button onclick="toggleLegends()">Toggle Legend</button>
+  </div>
+  <div style="grid-area: content;">
+    {{ plot_div|safe }}
+  </div>
+  <a id="export-plot" href="#">>> Export to File</a>
+</div>
+<script>
+    if (window.location.protocol !== "http:") {
+        document.getElementById('export-plot').remove();
+    }
+    const plots = document.querySelectorAll(".plotly-graph-div.js-plotly-plot");
+    let showLegend = true;
+    window.addEventListener("resize", resizePlots);
+    function resizePlots() {
+        for (let i = 0; i < plots.length ; i++) {
+            Plotly.Plots.resize(plots[i].id);
+        }
+    }
+    function toggleLegends() {
+        for (let i = 0; i < plots.length; i++) {
+            showLegend = !showLegend;
+            Plotly.relayout(plots[i].id, {showlegend: showLegend});
+        }
+    }
+</script>
+</body>
+</html>
