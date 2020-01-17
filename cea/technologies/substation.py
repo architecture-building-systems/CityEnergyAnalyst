@@ -33,7 +33,7 @@ def substation_main_heating(locator, total_demand, buildings_name_with_heating, 
         for name in buildings_name_with_heating:
             buildings_dict[name] = pd.read_csv(locator.get_demand_results_file(name))
             print(name)
-            ## calculates the building side supply and return temperatures for each units
+            ## calculates the building side supply and return temperatures for each unit
             Ths_supply_C, Ths_re_C = calc_temp_hex_building_side_heating(buildings_dict[name],
                                                                          heating_configuration)
 
@@ -107,7 +107,7 @@ def substation_main_cooling(locator, total_demand, buildings_name_with_cooling, 
             Tcs_return_C, Tcs_supply_C = calc_temp_hex_building_side_cooling(buildings_dict[name],
                                                                              cooling_configuration)
 
-            # calculates the building side supply and return temperatures for each units
+            # calculates the building side supply and return temperatures for each unit
             T_DC_supply_to_cs_ref, T_DC_supply_to_cs_ref_data = calc_temp_this_building_cooling(T_supply_to_cs_ref,
                                                                                                 T_supply_to_cs_ref_data)
 
@@ -144,7 +144,7 @@ def substation_main_cooling(locator, total_demand, buildings_name_with_cooling, 
             T_supply_to_cs_ref, T_supply_to_cs_ref_data, \
             Tcs_return_C, Tcs_supply_C = calc_temp_hex_building_side_cooling(substation_demand, cooling_configuration)
 
-            # calculates the building side supply and return temperatures for each units
+            # calculates the building side supply and return temperatures for each unit
             T_DC_supply_to_cs_ref, T_DC_supply_to_cs_ref_data = calc_temp_this_building_cooling(T_supply_to_cs_ref,
                                                                                                 T_supply_to_cs_ref_data)
 
