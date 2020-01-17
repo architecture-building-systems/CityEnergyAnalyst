@@ -26,7 +26,7 @@ __status__ = "Production"
 # Substation model
 def substation_main_heating(locator, total_demand, buildings_name_with_heating, heating_configuration=7, DHN_barcode=""):
     if DHN_barcode.count("1") > 0:  # check if there are buildings connected
-        # FIRS GET THE MAXIMUM TEMPERATURE NEEDED BY THE NETWORK AT EVERY TIME STEP
+        # FIRST GET THE MAXIMUM TEMPERATURE NEEDED BY THE NETWORK AT EVERY TIME STEP
         buildings_dict = {}
         heating_system_temperatures_dict = {}
         T_DHN_supply = np.zeros(HOURS_IN_YEAR)
