@@ -1,4 +1,4 @@
-__version__ = "2.15"
+__version__ = "2.28.1"
 
 
 class ConfigError(Exception):
@@ -24,3 +24,12 @@ class MissingInputDataException(Exception):
 class InvalidOccupancyNameException(Exception):
     """Raised when the occupancy.dbf has an invalid / unknown occupancy column"""
     rc = 104
+
+
+def suppres_3rd_party_debug_loggers():
+    """set logging level to WARN for fiona and shapely and others"""
+    import logging
+    loggers_to_silence = ["shapely", "Fiona", "fiona", "matplotlib", "urllib3.connectionpool"]
+    for log_name in loggers_to_silence:
+        log = logging.getLogger(log_name)
+        log.setLevel(logging.ERROR)

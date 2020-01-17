@@ -130,7 +130,7 @@ def calc_min_moisture_set_point(bpr, tsd, t):
     """
 
     # from bpr get set point for humidification
-    phi_int_set_hu = bpr.comfort['rhum_min_pc']
+    phi_int_set_hu = bpr.comfort['RH_min_pc']
 
     t_int = tsd['T_int'][t]
 
@@ -159,7 +159,7 @@ def calc_max_moisture_set_point(bpr, tsd, t):
     """
 
     # from bpr get set point for humidification
-    phi_int_set_dhu = bpr.comfort['rhum_max_pc']
+    phi_int_set_dhu = bpr.comfort['RH_max_pc']
 
     t_int = tsd['T_int'][t]
 
@@ -388,11 +388,23 @@ def calc_moisture_content_airflows(tsd, t):
     return
 
 
-def calc_latent_gains_from_people(tsd, bpr):
+def calc_Qgain_lat(tsd, schedules):
+    # TODO: Documentation
+    # Refactored from CalcThermalLoads
+    """
 
+    :param schedules: The list of schedules defined for the project - in the same order as `list_uses`
+    :type schedules: list[ndarray[float]]
+
+    :return w_int: yearly schedule
+
+    """
+    # calc yearly humidity gains based on occupancy schedule and specific humidity gains for each occupancy type in the
     KG_PER_GRAM = 0.001
-    HOURS_PER_SEC = 1/3600
+    HOURS_PER_SEC = 1 / 3600
 
-    tsd['Q_gain_lat_peop'] = tsd['people'] * bpr.internal_loads['X_ghp'] * KG_PER_GRAM * H_WE * HOURS_PER_SEC  # (J/s = W)
+
+    tsd['w_int'] = schedules['X_gh'] * KG_PER_GRAM * HOURS_PER_SEC # kg/s
+    tsd['Q_gain_lat_peop'] = tsd['w_int'] * H_WE # (J/s = W)
 
     return tsd

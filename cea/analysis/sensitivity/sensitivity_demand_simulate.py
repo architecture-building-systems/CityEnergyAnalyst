@@ -12,18 +12,18 @@ out to the samples folder as files of the form `results.$i.csv` (with `$i` set t
 from __future__ import division
 
 import os
-import sys
-import shutil
 import pickle
+import shutil
+import sys
+
 import numpy as np
 import pandas as pd
 from geopandas import GeoDataFrame as Gdf
 
-import cea.demand.demand_writers
-import cea.globalvar
-from cea.demand import demand_main
-from cea.inputlocator import InputLocator
 import cea.config
+from cea.demand import demand_main
+from cea.demand.schedule_maker.schedule_maker import schedule_maker_main
+from cea.inputlocator import InputLocator
 
 __author__ = "Jimeno A. Fonseca; Daren Thomas"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -127,8 +127,11 @@ def simulate_demand_sample(locator, config, output_parameters):
     config.demand.temperatures_output = []
     config.demand.format_output = "csv"
     config.demand.override_variables = True
+    config.schedule_maker.schedule_model = "deterministic"
+    config.schedule_maker.buildings = config.demand.buildings
 
     # force simulation to be sequential
+    schedule_maker_main(locator, config)
     totals, time_series = demand_main.demand_calculation(locator, config)
     return totals[output_parameters], time_series
 
@@ -204,7 +207,6 @@ def main(config):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
 
     print("Running sensitivity-demand-simulate for scenario = %s" % config.scenario)
-    print("Running sensitivity-demand-simulate with weather = %s" % config.weather)
     print("Running sensitivity-demand-simulate with sample-index = %s" % config.sensitivity_demand.sample_index)
     print("Running sensitivity-demand-simulate with number-of-simulations = %s" %
           config.sensitivity_demand.number_of_simulations)
@@ -227,7 +229,6 @@ def main(config):
         config.sensitivity_demand.number_of_simulations = min(
             config.sensitivity_demand.number_of_simulations,
             len(samples) - config.sensitivity_demand.sample_index)
-
 
     simulate_demand_batch(sample_index=config.sensitivity_demand.sample_index,
                           batch_size=config.sensitivity_demand.number_of_simulations,

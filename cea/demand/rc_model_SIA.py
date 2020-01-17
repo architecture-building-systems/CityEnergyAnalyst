@@ -590,12 +590,13 @@ def calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr, tsd, t):
     m_ve_mech = tsd['m_ve_mech'][t]
     m_ve_window = tsd['m_ve_window'][t]
     m_ve_inf = tsd['m_ve_inf'][t]
-    El = tsd['El'][t]
-    Ea = tsd['Ea'][t]
+    El = tsd['El'][t] * min(bpr.rc_model['Af']/bpr.rc_model['Aef'], 1.0) # account for a proportion of internal gains
+    Ea = tsd['Ea'][t] * min(bpr.rc_model['Af']/bpr.rc_model['Aef'], 1.0)  # account for a proportion of internal gains
     Epro = tsd['Epro'][t]
     Qcpro = tsd['Qcpro_sys'][t]
     people = tsd['people'][t]
-    I_sol = tsd['I_sol_and_I_rad'][t]
+    # account for a proportion of solar gains. This is very simplified for now.
+    I_sol = tsd['I_sol_and_I_rad'][t] * np.sqrt(bpr.architecture.Hs_ag)
     T_ext = tsd['T_ext'][t]
     theta_ve_mech = tsd['theta_ve_mech'][t]
 
@@ -605,7 +606,7 @@ def calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr, tsd, t):
     Qs = tsd['Qs'][t]
     a_t = bpr.rc_model['Atot']
     a_m = bpr.rc_model['Am']
-    a_w = bpr.rc_model['Aw']
+    a_w = bpr.rc_model['Awin_ag']
     c_m = bpr.rc_model['Cm'] / 3600  # (Wh/K) SIA 2044 unit is Wh/K, ISO unit is J/K
 
     T_int, theta_c, theta_m, theta_o, theta_ea, theta_ec, theta_em, h_ea, h_ec, h_em, h_op_m \
@@ -617,8 +618,8 @@ def calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr, tsd, t):
         raise Exception("Temperature in RC-Model of building {} out of bounds! First occured at timestep = {}."
                         " The results were Tint = {}, theta_c = {}, theta_m = {},"
                         " Check building geometry and internal loads! Building might be too small in size or"
-                        " architecture parameter Hs = {} might be too small for this geometry. Current bounds of range"
-                        " for RC-model temperatures are between {} and {}.".format(bpr.name, t, T_int, theta_c,  theta_m, bpr.architecture.Hs,
+                        " architecture parameter Hs_ag = {} might be too small for this geometry. Current bounds of range"
+                        " for RC-model temperatures are between {} and {}.".format(bpr.name, t, T_int, theta_c,  theta_m, bpr.architecture.Hs_ag,
                                                                                    T_WARNING_LOW, T_WARNING_HIGH))
 
     rc_model_temp = {'theta_m': theta_m, 'theta_c': theta_c, 'T_int': T_int, 'theta_o': theta_o, 'theta_ea': theta_ea,

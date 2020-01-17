@@ -24,10 +24,10 @@ import cea
 sys.path.insert(0, os.path.abspath('../cea'))
 
 
-
 # mock out some imports so we don't have conflicts on the readthedocs server...
 class Mock(MagicMock):
     __all__ = []
+
     @classmethod
     def __getattr__(cls, name):
             return MagicMock()
@@ -66,8 +66,11 @@ MOCK_MODULES = ['COLOR',
                 'ephem',
                 'fiona',
                 'fiona.crs',
+                'flask_restplus',
+                'flask_socketio',
                 'flask_wtf',
                 'flask_wtf.FlaskForm',
+                'geopandas',
                 'wtforms',
                 'wtforms.TextField',
                 'wtforms.PasswordField',
@@ -115,6 +118,13 @@ MOCK_MODULES = ['COLOR',
                 'python-dateutil',
                 'pythonocc',
                 'scikit-learn',
+                'scipy',
+                'scipy.interpolate',
+                'scipy.integrate',
+                'scipy.optimize',
+                'scipy.spatial',
+                'scipy.stats',
+                'scipy.linalg',
                 'seaborn',
                 'shapely',
                 'shapely.affinity',
@@ -124,11 +134,13 @@ MOCK_MODULES = ['COLOR',
                 'shapely.ops',
                 'shapely.ops.transform',
                 'shapely.wkb',
+                'shapely.wkt',
                 'simpledbf',
                 'tensorflow',
                 'tensorflow.py.keras',
                 'timezonefinder',
                 'vtk',
+                'wntr',
                 'xlrd',
                 'xlwt']
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
@@ -192,6 +204,7 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store',
                     'modules/cea.CH','modules/cea.databases*',  # databases doesn't contain any modules
                     'modules/cea.analysis.sensitivity.sensitivity_optimization.rst',  # TODO: remove when fixed
                     'modules/cea.utilities.compile_pyd_files*',  # TODO: remove when fixed
+                    'templates',
                     'modules/cea.api*',
                     'script_dependencies'
                     ]

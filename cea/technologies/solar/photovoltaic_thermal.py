@@ -5,30 +5,30 @@ Photovoltaic thermal panels
 from __future__ import division
 from __future__ import print_function
 
-import sys
 import os
 import time
+from itertools import repeat
 from math import *
-from numba import jit
+
 import geopandas as gpd
 import numpy as np
 import pandas as pd
 from geopandas import GeoDataFrame as gdf
-from itertools import izip, repeat
-import multiprocessing
-import cea.utilities.workerstream
+from numba import jit
+
 import cea.inputlocator
+import cea.utilities.parallel
+import cea.utilities.workerstream
+from cea.constants import HOURS_IN_YEAR
+from cea.technologies.solar import constants
 from cea.technologies.solar.photovoltaic import (calc_properties_PV_db, calc_PV_power, calc_diffuseground_comp,
                                                  calc_absorbed_radiation_PV, calc_cell_temperature)
 from cea.technologies.solar.solar_collector import (calc_properties_SC_db, calc_IAM_beam_SC, calc_q_rad, calc_q_gain,
                                                     vectorize_calc_Eaux_SC, calc_optimal_mass_flow,
                                                     calc_optimal_mass_flow_2, calc_qloss_network)
-from cea.technologies.solar import constants
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
 from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile
-from cea.constants import HOURS_IN_YEAR
-from cea.utilities.workerstream import stream_from_queue
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -38,23 +38,6 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
-
-
-def calc_PVT_wrapper(args):
-    """Wrap calc_PVT to accept a tuple of args because multiprocessing.Pool.map only accepts one argument for the
-    function"""
-    return calc_PVT(*args)
-
-def calc_PVT_mp_wrapper(args):
-    """Wrap calc_PVT to accept a tuple of args because multiprocessing.Pool.map only accepts one argument for the
-    function - expects the first argument to be a multiprocessing.Queue() which is used to write stdout and stderr to"""
-    queue, args = args[0], args[1:]
-
-    # set up printing to stderr and stdout to go through the queue
-    sys.stdout = cea.utilities.workerstream.QueueWorkerStream('stdout', queue)
-    sys.stderr = cea.utilities.workerstream.QueueWorkerStream('stderr', queue)
-
-    return calc_PVT(*args)
 
 
 def calc_PVT(locator, config, latitude, longitude, weather_data, date_local, building_name):
@@ -83,7 +66,7 @@ def calc_PVT(locator, config, latitude, longitude, weather_data, date_local, bui
     """
     t0 = time.clock()
 
-    radiation_json_path = locator.get_radiation_building(building_name)
+    radiation_json_path = locator.get_radiation_building_sensors(building_name)
     metadata_csv_path = locator.get_radiation_metadata(building_name)
 
     # solar properties
@@ -91,8 +74,8 @@ def calc_PVT(locator, config, latitude, longitude, weather_data, date_local, bui
     print('calculating solar properties done for building %s' % building_name)
 
     # get properties of the panel to evaluate # TODO: find a PVT module reference
-    panel_properties_PV = calc_properties_PV_db(locator.get_supply_systems(), config)
-    panel_properties_SC = calc_properties_SC_db(locator.get_supply_systems(), config)
+    panel_properties_PV = calc_properties_PV_db(locator.get_database_supply_systems(), config)
+    panel_properties_SC = calc_properties_SC_db(locator.get_database_supply_systems(), config)
     print('gathering properties of PVT collector panel for building %s' % building_name)
 
     # select sensor point with sufficient solar radiation
@@ -130,7 +113,7 @@ def calc_PVT(locator, config, latitude, longitude, weather_data, date_local, bui
 
     else:  # This block is activated when a building has not sufficient solar potential
         Final = pd.DataFrame(
-            {'PVT_walls_north_E_kWh': 0.0, 'PVT_walls_north_m2': 0.0, 'PVT_walls_north_Q_kWh': 0.0,
+            {'Date': date_local, 'PVT_walls_north_E_kWh': 0.0, 'PVT_walls_north_m2': 0.0, 'PVT_walls_north_Q_kWh': 0.0,
              'PVT_walls_north_Tout_C': 0.0,
              'PVT_walls_south_E_kWh': 0.0, 'PVT_walls_south_m2': 0, 'PVT_walls_south_Q_kWh': 0.0,
              'PVT_walls_south_Tout_C': 0.0,
@@ -144,13 +127,13 @@ def calc_PVT(locator, config, latitude, longitude, weather_data, date_local, bui
              'mcp_PVT_kWperC': 0.0, 'Eaux_PVT_kWh': 0.0,
              'Q_PVT_l_kWh': 0.0, 'E_PVT_gen_kWh': 0.0, 'Area_PVT_m2': 0.0,
              'radiation_kWh': 0.0}, index=range(HOURS_IN_YEAR))
-        Final.to_csv(locator.PVT_results(building_name=building_name), index=True, float_format='%.2f', na_rep='nan')
+        Final.to_csv(locator.PVT_results(building_name=building_name), index=False, float_format='%.2f', na_rep='nan')
         sensors_metadata_cat = pd.DataFrame(
             {'SURFACE': 0, 'AREA_m2': 0, 'BUILDING': 0, 'TYPE': 0, 'Xcoor': 0, 'Xdir': 0, 'Ycoor': 0, 'Ydir': 0,
              'Zcoor': 0, 'Zdir': 0, 'orientation': 0, 'total_rad_Whm2': 0, 'tilt_deg': 0, 'B_deg': 0,
              'array_spacing_m': 0, 'surface_azimuth_deg': 0, 'area_installed_module_m2': 0,
              'CATteta_z': 0, 'CATB': 0, 'CATGB': 0, 'type_orientation': 0}, index=range(2))
-        sensors_metadata_cat.to_csv(locator.PVT_metadata_results(building_name=building_name), index=True,
+        sensors_metadata_cat.to_csv(locator.PVT_metadata_results(building_name=building_name), index=False,
                                     float_format='%.2f')
 
     return
@@ -640,37 +623,39 @@ def calc_Mfl_kgpers(DELT, Nseg, STORED, TIME0, Tin_C, specific_flows_kgpers, tim
 
 # investment and maintenance costs
 
-def calc_Cinv_PVT(PVT_peak_kW, locator, config, technology=0):
+def calc_Cinv_PVT(PVT_peak_W, locator, technology=0):
     """
     P_peak in kW
     result in CHF
     technology = 0 represents the first technology when there are multiple technologies.
     FIXME: handle multiple technologies when cost calculations are done
     """
-    PVT_peak_W = PVT_peak_kW * 1000  # converting to W from kW
-    PVT_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="PV")
-    technology_code = list(set(PVT_cost_data['code']))
-    PVT_cost_data[PVT_cost_data['code'] == technology_code[technology]]
-    # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
-    # capacity for the corresponding technology from the database
-    if PVT_peak_W < PVT_cost_data['cap_min'][0]:
-        PVT_peak_W = PVT_cost_data['cap_min'][0]
-    PVT_cost_data = PVT_cost_data[
-        (PVT_cost_data['cap_min'] <= PVT_peak_W) & (PVT_cost_data['cap_max'] > PVT_peak_W)]
-    Inv_a = PVT_cost_data.iloc[0]['a']
-    Inv_b = PVT_cost_data.iloc[0]['b']
-    Inv_c = PVT_cost_data.iloc[0]['c']
-    Inv_d = PVT_cost_data.iloc[0]['d']
-    Inv_e = PVT_cost_data.iloc[0]['e']
-    Inv_IR = (PVT_cost_data.iloc[0]['IR_%']) / 100
-    Inv_LT = PVT_cost_data.iloc[0]['LT_yr']
-    Inv_OM = PVT_cost_data.iloc[0]['O&M_%'] / 100
+    if PVT_peak_W > 0.0:
+        PVT_cost_data = pd.read_excel(locator.get_database_supply_systems(), sheet_name="PV")
+        technology_code = list(set(PVT_cost_data['code']))
+        PVT_cost_data[PVT_cost_data['code'] == technology_code[technology]]
+        # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
+        # capacity for the corresponding technology from the database
+        if PVT_peak_W < PVT_cost_data['cap_min'][0]:
+            PVT_peak_W = PVT_cost_data['cap_min'][0]
+        PVT_cost_data = PVT_cost_data[
+            (PVT_cost_data['cap_min'] <= PVT_peak_W) & (PVT_cost_data['cap_max'] > PVT_peak_W)]
+        Inv_a = PVT_cost_data.iloc[0]['a']
+        Inv_b = PVT_cost_data.iloc[0]['b']
+        Inv_c = PVT_cost_data.iloc[0]['c']
+        Inv_d = PVT_cost_data.iloc[0]['d']
+        Inv_e = PVT_cost_data.iloc[0]['e']
+        Inv_IR = (PVT_cost_data.iloc[0]['IR_%']) / 100
+        Inv_LT = PVT_cost_data.iloc[0]['LT_yr']
+        Inv_OM = PVT_cost_data.iloc[0]['O&M_%'] / 100
 
-    InvC = Inv_a + Inv_b * (PVT_peak_W) ** Inv_c + (Inv_d + Inv_e * PVT_peak_W) * log(PVT_peak_W)
+        InvC = Inv_a + Inv_b * (PVT_peak_W) ** Inv_c + (Inv_d + Inv_e * PVT_peak_W) * log(PVT_peak_W)
 
-    Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-    Opex_fixed = Capex_a * Inv_OM
-    Capex = InvC
+        Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+        Opex_fixed = InvC * Inv_OM
+        Capex = InvC
+    else:
+        Capex_a = Opex_fixed = Capex = 0.0
 
     return Capex_a, Opex_fixed, Capex
 
@@ -696,42 +681,18 @@ def main(config):
     latitude, longitude = get_lat_lon_projected_shapefile(hourly_results_per_building)
 
     # weather hourly_results_per_building
-    weather_data = epwreader.epw_reader(config.weather)
+    weather_data = epwreader.epw_reader(locator.get_weather_file())
     date_local = solar_equations.calc_datetime_local_from_weather_file(weather_data, latitude, longitude)
     print('reading weather hourly_results_per_building done.')
 
-    num_buildings = len(building_names)
-    number_of_processes = config.get_number_of_processes()
-    if number_of_processes > 1:
-        print("Using %i CPU's" % number_of_processes)
-        pool = multiprocessing.Pool(number_of_processes)
-        queue = multiprocessing.Manager().Queue()
-        map_result = pool.map_async(calc_PVT_mp_wrapper, izip(repeat(queue, num_buildings),
-                                                              repeat(locator, num_buildings),
-                                                              repeat(config, num_buildings),
-                                                              repeat(latitude, num_buildings),
-                                                              repeat(longitude, num_buildings),
-                                                              repeat(weather_data, num_buildings),
-                                                              repeat(date_local, num_buildings),
-                                                              building_names))
-        while not map_result.ready():
-            stream_from_queue(queue)
-
-        pool.close()
-        pool.join()
-
-        # process the rest of the Queue
-        while not queue.empty():
-            stream_from_queue(queue)
-    else:
-        print("Using single process")
-        map(calc_PVT_wrapper, izip(repeat(locator, num_buildings),
-                                   repeat(config, num_buildings),
-                                   repeat(latitude, num_buildings),
-                                   repeat(longitude, num_buildings),
-                                   repeat(weather_data, num_buildings),
-                                   repeat(date_local, num_buildings),
-                                   building_names))
+    n = len(building_names)
+    cea.utilities.parallel.vectorize(calc_PVT, config.get_number_of_processes())(repeat(locator, n),
+                                                                                 repeat(config, n),
+                                                                                 repeat(latitude, n),
+                                                                                 repeat(longitude, n),
+                                                                                 repeat(weather_data, n),
+                                                                                 repeat(date_local, n),
+                                                                                 building_names)
 
     # aggregate results from all buildings
     aggregated_annual_results = {}

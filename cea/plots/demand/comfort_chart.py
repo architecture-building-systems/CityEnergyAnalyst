@@ -11,6 +11,8 @@ from plotly.offline import plot
 import cea.config
 import cea.plots.demand
 from cea.plots.variable_naming import LOGO, COLORS_TO_RGB
+from cea.utilities.dbf import dbf_to_dataframe
+from cea.demand.control_heating_cooling_systems import convert_date_to_hour
 
 
 __author__ = "Gabriel Happle"
@@ -29,8 +31,8 @@ VERTICES_WINTER_COMFORT = [(21.5, 0.0), (26.5, 0.0), (24.0, 12.0), (19.5, 12.0)]
 VERTICES_SUMMER_COMFORT = [(25.0, 0.0), (28.25, 0.0), (26.75, 12.0), (24.0, 12.0)]  # (T, moisture ratio)
 
 # layout of graph and table
-YAXIS_DOMAIN_GRAPH = [0, 0.8]
-XAXIS_DOMAIN_GRAPH = [0.2, 0.8]
+YAXIS_DOMAIN_GRAPH = [0, 1]
+XAXIS_DOMAIN_GRAPH = [0, 1]
 
 
 class ComfortChartPlot(cea.plots.demand.DemandSingleBuildingPlotBase):
@@ -40,8 +42,6 @@ class ComfortChartPlot(cea.plots.demand.DemandSingleBuildingPlotBase):
 
     def __init__(self, project, parameters, cache):
         super(ComfortChartPlot, self).__init__(project, parameters, cache)
-        if len(self.buildings) > 1:
-            self.buildings = [self.buildings[0]]
         self.analysis_fields = None
 
     @property
@@ -50,7 +50,7 @@ class ComfortChartPlot(cea.plots.demand.DemandSingleBuildingPlotBase):
 
     @property
     def data(self):
-        return self.hourly_loads[self.hourly_loads['Name'].isin(self.buildings)]
+        return self.hourly_loads[self.hourly_loads['Name'] == self.building]
 
     @property
     def dict_graph(self):
@@ -69,7 +69,7 @@ class ComfortChartPlot(cea.plots.demand.DemandSingleBuildingPlotBase):
         traces_graph.extend(traces_relative_humidity)
 
         # add text for winter / summer comfort zones
-        trace_layout = go.Scatter(
+        trace_layout = go.Scattergl(
             x=[23, 26.5],
             y=[3, 3],
             text=['Winter comfort zone',
@@ -234,16 +234,16 @@ def calc_graph(dict_graph):
     traces = []
 
     # draw scatter of comfort conditions in building
-    trace = go.Scatter(x=dict_graph['t_op_occupied_winter'], y=dict_graph['x_int_occupied_winter'],
+    trace = go.Scattergl(x=dict_graph['t_op_occupied_winter'], y=dict_graph['x_int_occupied_winter'],
                        name='occupied hours winter', mode='markers', marker=dict(color=COLORS_TO_RGB['red']))
     traces.append(trace)
-    trace = go.Scatter(x=dict_graph['t_op_unoccupied_winter'], y=dict_graph['x_int_unoccupied_winter'],
+    trace = go.Scattergl(x=dict_graph['t_op_unoccupied_winter'], y=dict_graph['x_int_unoccupied_winter'],
                        name='unoccupied hours winter', mode='markers', marker=dict(color=COLORS_TO_RGB['blue']))
     traces.append(trace)
-    trace = go.Scatter(x=dict_graph['t_op_occupied_summer'], y=dict_graph['x_int_occupied_summer'],
+    trace = go.Scattergl(x=dict_graph['t_op_occupied_summer'], y=dict_graph['x_int_occupied_summer'],
                        name='occupied hours summer', mode='markers', marker=dict(color=COLORS_TO_RGB['purple']))
     traces.append(trace)
-    trace = go.Scatter(x=dict_graph['t_op_unoccupied_summer'], y=dict_graph['x_int_unoccupied_summer'],
+    trace = go.Scattergl(x=dict_graph['t_op_unoccupied_summer'], y=dict_graph['x_int_unoccupied_summer'],
                        name='unoccupied hours summer', mode='markers', marker=dict(color=COLORS_TO_RGB['orange']))
     traces.append(trace)
 
@@ -268,7 +268,7 @@ def create_relative_humidity_lines():
     for rh_line in rh_lines:
 
         y_data = calc_constant_rh_curve(t_axis, rh_line, P_ATM)
-        trace = go.Scatter(x=t_axis, y=y_data, mode='line', name="{:.0%} relative humidity".format(rh_line),
+        trace = go.Scattergl(x=t_axis, y=y_data, mode='line', name="{:.0%} relative humidity".format(rh_line),
                            line=dict(color=COLORS_TO_RGB['grey_light'], width=1), showlegend=False)
         traces.append(trace)
 
@@ -293,20 +293,22 @@ def calc_data(data_frame, locator):
      \for 4 conditions (summer (un)occupied, winter (un)occupied)
     :rtype: dict
     """
+    from cea.demand.building_properties import verify_has_season
 
     # read region-specific control parameters (identical for all buildings), i.e. heating and cooling season
-    prop_region_specific_control = pd.read_excel(locator.get_archetypes_system_controls(),
-                                                 true_values=['True', 'TRUE', 'true'],
-                                                 false_values=['False', 'FALSE', 'false', u'FALSE'],
-                                                 dtype={'has-heating-season': bool,
-                                                        'has-cooling-season': bool})  # read database
-    # extract data from df
-    has_winter = prop_region_specific_control['has-heating-season'][0]
-    has_summer = prop_region_specific_control['has-cooling-season'][0]
-    winter_end = prop_region_specific_control['heating-season-end'][0]
-    winter_start = prop_region_specific_control['heating-season-start'][0]
-    summer_end = prop_region_specific_control['cooling-season-end'][0]
-    summer_start = prop_region_specific_control['cooling-season-start'][0]
+    building_name = data_frame.Name[0]
+    air_con_data = dbf_to_dataframe(locator.get_building_air_conditioning()).set_index('Name')
+    has_winter = verify_has_season(building_name,
+                                   air_con_data.loc[building_name, 'heat_starts'],
+                                   air_con_data.loc[building_name, 'heat_ends'])
+    has_summer = verify_has_season(building_name,
+                                   air_con_data.loc[building_name, 'cool_starts'],
+                                   air_con_data.loc[building_name, 'cool_ends'])
+
+    winter_start = air_con_data.loc[building_name, 'heat_starts']
+    winter_end = air_con_data.loc[building_name, 'heat_ends']
+    summer_start = air_con_data.loc[building_name, 'cool_starts']
+    summer_end =  air_con_data.loc[building_name, 'cool_ends']
 
     # split up operative temperature and humidity points into 4 categories
     # (1) occupied in heating season
@@ -440,17 +442,17 @@ def datetime_in_season(dt, season_start, season_end):
 
     :param dt: datetime, index of resulting csv of cea.demand_main
     :type dt: datetime.datetime
-    :param season_start: start of season ["MM-DD"]
+    :param season_start: start of season ["DD|MM"]
     :type season_start: string
-    :param season_end: end of season ["MM-DD"]
+    :param season_end: end of season ["DD|MM"]
     :type season_end: string
     :return: True or False
     :rtype: bool
     """
 
-    month_start, day_start = map(int, season_start.split('-'))
+    day_start, month_start = map(int, season_start.split('|'))
     season_start_dt = datetime.datetime(dt.year, month_start, day_start, 0)
-    month_end, day_end = map(int, season_end.split('-'))
+    day_end , month_end = map(int, season_end.split('|'))
     season_end_dt = datetime.datetime(dt.year, month_end, day_end, 23)
 
     if season_start_dt < season_end_dt:

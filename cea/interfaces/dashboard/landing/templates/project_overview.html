@@ -82,6 +82,11 @@
     function openSettings(scenario, func) {
         $.get('project-overview/' + scenario + '/' + func, {}, function(html) {
             $('#cea-prompt .modal-content').html(html);
+            if (func === 'delete') {
+                $('#cea-prompt').on('shown.bs.modal', function () {
+                    $(this).find('#delete-input').focus();
+                });
+            }
             $('#cea-prompt').modal({'show': true, 'backdrop': 'static'});
         });
     }

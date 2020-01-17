@@ -4,7 +4,7 @@ This script calculates the minimum spanning tree of a shapefile network
 
 import math
 import os
-
+from typing import List
 import networkx as nx
 import numpy as np
 import pandas as pd
@@ -14,7 +14,6 @@ from cea.utilities.standardize_coordinates import get_projected_coordinate_syste
 from shapely.geometry import LineString
 
 import cea.config
-import cea.globalvar
 import cea.inputlocator
 
 __author__ = "Jimeno A. Fonseca"
@@ -31,6 +30,28 @@ def calc_steiner_spanning_tree(crs_projected, input_network_shp, output_network_
                                output_edges, output_nodes, weight_field, type_mat_default, pipe_diameter_default,
                                type_network, total_demand_location, create_plant, allow_looped_networks,
                                optimization_flag, plant_building_names, disconnected_building_names):
+    """
+    Calculate the minimum spanning tree of the network. Note that this function can't be run in parallel in it's
+    present form.
+
+    :param str crs_projected: e.g. "+proj=utm +zone=48N +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
+    :param str input_network_shp: e.g. "TEMP/potential_network.shp"
+    :param str output_network_folder: "{general:scenario}/inputs/networks/DC"
+    :param str building_nodes_shp: e.g. "%TEMP%/nodes_buildings.shp"
+    :param str output_edges: "{general:scenario}/inputs/networks/DC/edges.shp"
+    :param str output_nodes: "{general:scenario}/inputs/networks/DC/nodes.shp"
+    :param str weight_field: e.g. "Shape_Leng"
+    :param str type_mat_default: e.g. "T1"
+    :param float pipe_diameter_default: e.g. 150
+    :param str type_network: "DC" or "DH"
+    :param str total_demand_location: "{general:scenario}/outputs/data/demand/Total_demand.csv"
+    :param bool create_plant: e.g. True
+    :param bool allow_looped_networks:
+    :param bool optimization_flag:
+    :param List[str] plant_building_names: e.g. ``['B001']``
+    :param List[str] disconnected_building_names: e.g. ``['B002', 'B010', 'B004', 'B005', 'B009']``
+    :return: ``(mst_edges, new_mst_nodes)``
+    """
     # read shapefile into networkx format into a directed graph, this is the potential network
     graph = nx.read_shp(input_network_shp)
     nodes_graph = nx.read_shp(building_nodes_shp)
@@ -74,7 +95,7 @@ def calc_steiner_spanning_tree(crs_projected, input_network_shp, output_network_
                          'Check the streets.shp for isolated/disconnected streets (lines) and erase them, '
                          'the Steiner tree does not support disconnected graphs.')
 
-    nx.write_shp(mst_non_directed, output_network_folder)
+    nx.write_shp(mst_non_directed, output_network_folder)  # writes nodes.shp and edges.shp
 
     # populate fields Building, Type, Name
     mst_nodes = gdf.from_file(output_nodes)
@@ -91,7 +112,9 @@ def calc_steiner_spanning_tree(crs_projected, input_network_shp, output_network_
         lambda x: (round(x.coords[0][0], tolerance), round(x.coords[0][1], tolerance)))
     names_temporary = ["NODE" + str(x) for x in mst_nodes['FID']]
     new_mst_nodes = mst_nodes.merge(building_nodes_df, suffixes=['', '_y'], on="coordinates", how='outer')
-    new_mst_nodes.fillna(value="NONE", inplace=True)
+    new_mst_nodes.fillna(
+        value={"Name": "NONE", "floors_bg": "NONE", "floors_ag": "NONE", "height_bg": "NONE", "height_ag": "NONE"},
+        inplace=True)
     new_mst_nodes.loc[:, 'Building'] = new_mst_nodes['Name']
     new_mst_nodes.loc[:, 'Name'] = names_temporary
     new_mst_nodes.loc[:, 'Type'] = new_mst_nodes['Building'].apply(lambda x: 'CONSUMER' if x != "NONE" else x)
@@ -102,11 +125,12 @@ def calc_steiner_spanning_tree(crs_projected, input_network_shp, output_network_
     mst_edges.loc[:, 'Pipe_DN'] = pipe_diameter_default
     mst_edges.loc[:, 'Name'] = ["PIPE" + str(x) for x in mst_edges.index]
 
-    if allow_looped_networks == True:
+    if allow_looped_networks:
         # add loops to the network by connecting None nodes that exist in the potential network
         mst_edges, new_mst_nodes = add_loops_to_network(G, mst_non_directed, new_mst_nodes, mst_edges, type_mat_default,
                                                         pipe_diameter_default)
-        mst_edges.drop(['weight'], inplace=True, axis=1)
+        # mst_edges.drop(['weight'], inplace=True, axis=1)
+
     if create_plant:
         if optimization_flag == False:
             building_anchor = calc_coord_anchor(total_demand_location, new_mst_nodes, type_network)
@@ -118,9 +142,12 @@ def calc_steiner_spanning_tree(crs_projected, input_network_shp, output_network_
                 new_mst_nodes, mst_edges = add_plant_close_to_anchor(building_anchor, new_mst_nodes, mst_edges,
                                                                      type_mat_default, pipe_diameter_default)
 
-    new_mst_nodes.drop(["FID", "coordinates", 'floors_bg', 'floors_ag', 'height_bg', 'height_ag', 'geometry_y'],
-                       axis=1,
-                       inplace=True)
+    fields_nodes = ['Name', 'Building', 'Type', 'geometry']
+    new_mst_nodes = new_mst_nodes[fields_nodes]
+
+    mst_edges['length_m'] = mst_edges['weight']
+    fields_edges = ['Name', 'length_m', 'Pipe_DN', 'Type_mat', 'geometry']
+    mst_edges = mst_edges[fields_edges]
 
     nx.write_shp(mst_non_directed, output_network_folder)
 
@@ -232,6 +259,9 @@ def calc_coord_anchor(total_demand_location, nodes_df, type_network):
         field = "QH_sys_MWhyr"
     elif type_network == "DC":
         field = "QC_sys_MWhyr"
+    else:
+        raise ValueError("Invalid value for variable 'type_network': {type_network}".format(type_network=type_network))
+
     max_value = nodes_names_demand[field].max()
     building_series = nodes_names_demand[nodes_names_demand[field] == max_value]
 

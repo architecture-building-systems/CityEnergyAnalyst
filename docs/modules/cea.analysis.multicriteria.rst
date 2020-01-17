@@ -6,13 +6,6 @@ cea.analysis.multicriteria package
     :undoc-members:
     :show-inheritance:
 
-Subpackages
------------
-
-.. toctree::
-
-    cea.analysis.multicriteria.optimization_post_processing
-
 Submodules
 ----------
 

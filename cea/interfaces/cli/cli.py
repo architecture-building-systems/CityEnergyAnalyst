@@ -12,6 +12,7 @@ import datetime
 import ConfigParser
 import cea.config
 import cea.scripts
+import cea
 
 
 __author__ = "Daren Thomas"
@@ -22,6 +23,7 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
+
 
 def main(config=None):
     """
@@ -34,12 +36,17 @@ def main(config=None):
     if not config:
         config = cea.config.Configuration()
 
+    from cea import suppres_3rd_party_debug_loggers
+    suppres_3rd_party_debug_loggers()
 
     # handle arguments
     args = sys.argv[1:]  # drop the script name from the arguments
     if not len(args) or args[0].lower() == '--help':
         print_help(config, args[1:])
         sys.exit(1)
+    if args[0].lower() == '--version':
+        print('City Energy Analyst version %s' % cea.__version__)
+        sys.exit(0)
     script_name = args.pop(0)
     cea_script = cea.scripts.by_name(script_name)
     config.restrict_to(cea_script.parameters)
@@ -50,6 +57,9 @@ def main(config=None):
     config.save(cea.config.CEA_CONFIG)
 
     cea_script.print_script_configuration(config)
+    if list(cea_script.missing_input_files(config)):
+        cea_script.print_missing_input_files(config)
+        sys.exit(cea.MissingInputDataException.rc)
 
     script_module = importlib.import_module(cea_script.module)
     try:
@@ -68,7 +78,6 @@ def main(config=None):
 def print_help(config, remaining_args):
     """Print out the help message for the ``cea`` command line interface"""
     if remaining_args:
-        default_config = cea.config.Configuration(config_file=cea.config.DEFAULT_CONFIG)
         script_name = remaining_args[0]
         try:
             cea_script = cea.scripts.by_name(script_name)
@@ -83,7 +92,7 @@ def print_help(config, remaining_args):
         for _, parameter in config.matching_parameters(cea_script.parameters):
             print("--%s: %s" % (parameter.name, parameter.get()))
             print("    %s" % parameter.help)
-            print("    (default: %s)" % default_config.get(parameter.fqname))
+            print("    (default: %s)" % parameter.default)
     else:
         print("usage: cea SCRIPT [OPTIONS]")
         print("       to run a specific script")
@@ -102,6 +111,7 @@ def print_valid_script_names():
     for category, group in itertools.groupby(scripts, lambda s: s.category):
         print(textwrap.fill("[%s]:  %s" % (category, ', '.join(s.name for s in sorted(group, key=lambda s: s.name))),
                             subsequent_indent='    ', break_on_hyphens=False))
+
 
 if __name__ == '__main__':
     main(cea.config.Configuration())

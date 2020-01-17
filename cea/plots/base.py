@@ -4,14 +4,18 @@ py:class:`cea.plots.base.PlotBase` to figure out the list of plots in a category
 """
 from __future__ import division
 from __future__ import print_function
+
 import os
 import re
+
 import jinja2
 import plotly.graph_objs
 import plotly.offline
+
+import cea.config
 import cea.inputlocator
 from cea import MissingInputDataException
-from cea.plots.variable_naming import LOGO, COLOR, NAMING
+from cea.plots.variable_naming import COLOR, NAMING
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -44,10 +48,16 @@ class PlotBase(object):
         # self.analysis_fields = None  # override this in the plot subclasses! set it to a list of fields in self.data
         # self.input_files = []  # override this in the plot subclasses! set it to a list of tuples (locator.method, args)
         self.parameters = parameters
-        self.buildings = self.process_buildings_parameter()
+        self.buildings = self.process_buildings_parameter() if 'buildings' in self.expected_parameters else None
 
         for parameter_name in self.expected_parameters:
-            assert parameter_name in parameters, "Missing parameter {}".format(parameter_name)
+            # Try to load missing parameters with default values
+            if parameter_name not in parameters:
+                try:
+                    self.parameters[parameter_name] = cea.config.Configuration(cea.config.DEFAULT_CONFIG).get(
+                        'plots:{}'.format(parameter_name))
+                except Exception:
+                    assert parameter_name in parameters, "Missing parameter {}".format(parameter_name)
 
     def missing_input_files(self):
         """Return the list of missing input files for this plot"""
@@ -82,14 +92,15 @@ class PlotBase(object):
     def totals_bar_plot(self):
         """Creates a plot based on the totals data in percentages."""
         traces = []
-        self.data['total'] = self.data[self.analysis_fields].sum(axis=1)
-        self.data = self.data.sort_values(by='total', ascending=False)  # this will get the maximum value to the left
+        data = self.data
+        data['total'] = data[self.analysis_fields].sum(axis=1)
+        data = data.sort_values(by='total', ascending=False)  # this will get the maximum value to the left
         for field in self.analysis_fields:
-            y = self.data[field]
-            total_percent = (y / self.data['total'] * 100).round(2).values
+            y = data[field]
+            total_percent = (y / data['total'] * 100).round(2).values
             total_percent_txt = ["(%.2f %%)" % x for x in total_percent]
             name = NAMING[field]
-            trace = plotly.graph_objs.Bar(x=self.data["Name"], y=y, name=name, marker=dict(color=COLOR[field]))
+            trace = plotly.graph_objs.Bar(x=data["Name"], y=y, name=name, marker=dict(color=COLOR[field]))
             traces.append(trace)
         return traces
 
@@ -115,7 +126,9 @@ class PlotBase(object):
 
         FIXME: what about columns with negative values?
         """
-        return [field for field in fields if data[field].sum() > 0.0]
+        import numpy as np
+        fields = [field for field in fields if field in data.columns]
+        return [field for field in fields if np.isclose(data[field].sum(), 1e-8)==False]
 
     def calc_graph(self):
         """Calculate a plotly Data object as to be passed to the data attribute of Figure"""
@@ -137,6 +150,9 @@ class PlotBase(object):
             f.write(plot_html)
 
         print("Plotted '%s' to %s" % (self.name, self.output_path))
+        if auto_open:
+            import webbrowser
+            webbrowser.open(self.output_path)
 
     def plot_div(self):
         """Return the plot as an html <div/> for use in the dashboard. Override this method in subclasses"""
@@ -146,6 +162,8 @@ class PlotBase(object):
 
     def _plot_div_producer(self):
         fig = plotly.graph_objs.Figure(data=self.calc_graph(), layout=self.layout)
+        fig['layout'] = dict(fig['layout'], **{'margin': dict(l=50, r=50, t=20, b=50), 'hovermode': 'closest', 'font': dict(size=10)})
+        fig['layout']['yaxis'] = dict(fig['layout']['yaxis'], **{'hoverformat': ".2f"})
         div = plotly.offline.plot(fig, output_type='div', include_plotlyjs=False, show_link=False)
         return div
 

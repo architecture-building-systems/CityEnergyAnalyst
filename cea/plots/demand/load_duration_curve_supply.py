@@ -23,18 +23,19 @@ class LoadDurationCurveSupplyPlot(cea.plots.demand.load_duration_curve.LoadDurat
 
     @property
     def layout(self):
-        return go.Layout(xaxis=dict(title='Duration Normalized [%]', domain=[0, 1]),
-                         yaxis=dict(title='Load [kW]', domain=[0.0, 0.7]), showlegend=True)
+        return go.Layout(xaxis=dict(title='Duration Normalized [%]'),
+                         yaxis=dict(title='Load [kW]'), showlegend=True)
 
     def calc_graph(self):
         graph = []
         duration = range(HOURS_IN_YEAR)
         x = [(a - min(duration)) / (max(duration) - min(duration)) * 100 for a in duration]
+        self.analysis_fields = self.remove_unused_fields(self.data, self.analysis_fields)
         for field in self.remove_unused_fields(self.data, self.analysis_fields):
             name = NAMING[field]
             data = self.data.sort_values(by=field, ascending=False)
             y = data[field].values
-            trace = go.Scatter(x=x, y=y, name=name, fill='tozeroy', opacity=0.8, marker=dict(color=COLOR[field]))
+            trace = go.Scattergl(x=x, y=y, name=name, fill='tozeroy', opacity=0.8, marker=dict(color=COLOR[field]))
             graph.append(trace)
         return graph
 

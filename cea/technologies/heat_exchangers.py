@@ -28,8 +28,6 @@ def calc_Cinv_HEX(Q_design_W, locator, config, technology_type):
     :type Q_design_W : float
     :param Q_design_W: Design Load of Boiler
 
-    :param gv: globalvar.py
-
     :rtype InvC_return : float
     :returns InvC_return: total investment Cost in [CHF]
 
@@ -38,7 +36,7 @@ def calc_Cinv_HEX(Q_design_W, locator, config, technology_type):
 
     """
     if Q_design_W > 0:
-        HEX_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="HEX")
+        HEX_cost_data = pd.read_excel(locator.get_database_supply_systems(), sheet_name="HEX")
         HEX_cost_data = HEX_cost_data[HEX_cost_data['code'] == technology_type]
         # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
         # capacity for the corresponding technology from the database
@@ -59,13 +57,13 @@ def calc_Cinv_HEX(Q_design_W, locator, config, technology_type):
         InvC = Inv_a + Inv_b * (Q_design_W) ** Inv_c + (Inv_d + Inv_e * Q_design_W) * log(Q_design_W)
 
         Capex_a_HEX_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-        Opex_fixed_HEX_USD = Capex_a_HEX_USD * Inv_OM
+        Opex_fixed_HEX_USD = InvC * Inv_OM
         Capex_HEX_USD = InvC
 
     else:
-        Capex_a_HEX_USD = 0
-        Opex_fixed_HEX_USD = 0
-        Capex_HEX_USD = 0
+        Capex_a_HEX_USD = 0.0
+        Opex_fixed_HEX_USD = 0.0
+        Capex_HEX_USD = 0.0
 
     return Capex_a_HEX_USD, Opex_fixed_HEX_USD, Capex_HEX_USD
 
@@ -75,7 +73,7 @@ def calc_Cinv_HEX_hisaka(network_info):
     Used in thermal_network_optimization.
     """
     ## read in cost values from database
-    HEX_prices = pd.read_excel(network_info.locator.get_supply_systems(),
+    HEX_prices = pd.read_excel(network_info.locator.get_database_supply_systems(),
                                sheet_name='HEX', index_col=0)
     a = HEX_prices['a']['District substation heat exchanger']
     b = HEX_prices['b']['District substation heat exchanger']
@@ -111,7 +109,7 @@ def calc_Cinv_HEX_hisaka(network_info):
     for node_id in substation_node_id_list:
         # read in node mass flows
         node_flows = pd.read_csv(
-            network_info.locator.get_node_mass_flow_csv_file(network_info.network_type, network_info.network_name))
+            network_info.locator.get_nominal_node_mass_flow_csv_file(network_info.network_type, network_info.network_name))
         # find design condition node mcp
         node_flow = max(node_flows[node_id])
         if node_flow > 0:
@@ -133,7 +131,7 @@ def calc_Cinv_HEX_hisaka(network_info):
                     Capex_substation_hex = Capex_substation_hex + (a + b * mcp_sub ** c + d * np.log(mcp_sub) + e * mcp_sub * np.log(mcp_sub))
 
             Capex_a_substation_hex = Capex_substation_hex * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-            Opex_fixed_substation_hex = Capex_a_substation_hex * Inv_OM
+            Opex_fixed_substation_hex = Capex_substation_hex * Inv_OM
 
             # aggregate all substation costs in a network
             Capex_a = Capex_a + Capex_a_substation_hex

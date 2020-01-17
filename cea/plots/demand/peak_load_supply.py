@@ -7,7 +7,7 @@ import cea.plots.demand
 
 
 class PeakLoadSupplyPlot(cea.plots.demand.DemandPlotBase):
-    name = "Peak Load Supply"
+    name = "Peak Supply"
 
     def __init__(self, project, parameters, cache):
         super(PeakLoadSupplyPlot, self).__init__(project, parameters, cache)
@@ -19,25 +19,32 @@ class PeakLoadSupplyPlot(cea.plots.demand.DemandPlotBase):
 
     @property
     def layout(self):
-        return go.Layout(barmode='group', yaxis=dict(title='Peak Load [kW]'), showlegend=True)
+        return go.Layout(barmode='group', yaxis=dict(title='Peak Load [kW]'),
+               xaxis=dict(title='Building Name'), showlegend=True)
 
     def calc_graph(self):
-        if len(self.buildings) > 1:
-            return self.totals_bar_plot()
-        assert len(self.data) == 1, 'Expected DataFrame with only one row'
-
         analysis_fields = self.remove_unused_fields(self.data, self.analysis_fields)
-        building_data = self.data.iloc[0]
-        traces = []
-        area = building_data["GFA_m2"]
-        building_data = building_data[analysis_fields]
-        x = ["Absolute [kW]", "Relative [W/m2]"]
-        for field in analysis_fields:
-            y = [building_data[field], building_data[field] / area * 1000]
-            name = NAMING[field]
-            trace = go.Bar(x=x, y=y, name=name, marker=dict(color=COLOR[field]))
-            traces.append(trace)
-        return traces
+        if len(self.buildings) == 1:
+            assert len(self.data) == 1, 'Expected DataFrame with only one row'
+            building_data = self.data.iloc[0]
+            traces = []
+            area = building_data["GFA_m2"]
+            x = ["Absolute [kW]", "Relative [kW/m2]"]
+            for field in analysis_fields:
+                name = NAMING[field]
+                y = [building_data[field], building_data[field] / area * 1000]
+                trace = go.Bar(x=x, y=y, name=name, marker=dict(color=COLOR[field]))
+                traces.append(trace)
+            return traces
+        else:
+            traces = []
+            dataframe = self.data
+            for field in analysis_fields:
+                y = dataframe[field]
+                name = NAMING[field]
+                trace = go.Bar(x=dataframe["Name"], y=y, name=name, marker=dict(color=COLOR[field]))
+                traces.append(trace)
+            return traces
 
 
 def peak_load_building(data_frame, analysis_fields, title, output_path):

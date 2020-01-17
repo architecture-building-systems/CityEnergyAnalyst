@@ -2,11 +2,14 @@ from __future__ import division
 from __future__ import print_function
 
 import functools
-import cea.plots
-import pandas as pd
 import os
+
+import pandas as pd
+
 import cea.config
 import cea.inputlocator
+import cea.plots
+import cea.plots.cache
 
 """
 Implements py:class:`cea.plots.DemandPlotBase` as a base class for all plots in the category "demand" and also
@@ -38,7 +41,6 @@ class DemandPlotBase(cea.plots.PlotBase):
 
     def __init__(self, project, parameters, cache):
         super(DemandPlotBase, self).__init__(project, parameters, cache)
-
         self.category_path = os.path.join('new_basic', 'demand')
 
         # FIXME: this should probably be worked out from a declarative description of the demand outputs
@@ -56,13 +58,31 @@ class DemandPlotBase(cea.plots.PlotBase):
                                        'Qcs_lat_sys_kWh',
                                        'Q_loss_sen_ref_kWh',
                                        "GRID_kWh",
+                                       'GRID_a_kWh',
+                                       'GRID_l_kWh',
+                                       'GRID_data_kWh',
+                                       'GRID_pro_kWh',
+                                       'GRID_aux_kWh',
+                                       'GRID_ww_kWh',
+                                       'GRID_hs_kWh',
+                                       'GRID_cs_kWh',
+                                       'GRID_cdata_kWh',
+                                       'GRID_cre_kWh',
                                        "PV_kWh",
                                        "DH_hs_kWh",
                                        "DH_ww_kWh",
                                        "E_sys_kWh",
+                                       "Eal_kWh",
+                                       "El_kWh",
+                                       "Ea_kWh",
+                                       "Edata_kWh",
+                                       "Epro_kWh",
+                                       "Eaux_kWh",
                                        "Qhs_sys_kWh",
                                        "Qww_sys_kWh",
                                        "Qcs_sys_kWh",
+                                       'Qcdata_sys_kWh',
+                                       'Qcre_sys_kWh',
                                        'DC_cdata_kWh',
                                        'DC_cre_kWh',
                                        "DC_cs_kWh",
@@ -81,7 +101,11 @@ class DemandPlotBase(cea.plots.PlotBase):
                                        'E_cs_kWh',
                                        'E_cdata_kWh',
                                        'E_cre_kWh']
+
         self.input_files = [(self.locator.get_total_demand, [])]  # all these scripts depend on demand
+        # Add building to input files if buildings are selected
+        if self.buildings:
+            self.input_files += [(self.locator.get_demand_results_file, [building]) for building in self.buildings]
 
     @property
     def hourly_loads(self):
@@ -92,14 +116,53 @@ class DemandPlotBase(cea.plots.PlotBase):
         return self.cache.lookup(data_path=os.path.join(self.category_name, 'hourly_loads'),
                                  plot=self, producer=self._calculate_hourly_loads)
 
+    def add_fields(self, df1, df2):
+        """Add the demand analysis fields together - use this in reduce to sum up the summable parts of the dfs"""
+        df1[self.demand_analysis_fields] = df2[self.demand_analysis_fields] + df1[self.demand_analysis_fields]
+        return df1
+
     def _calculate_hourly_loads(self):
-        def add_fields(df1, df2):
-            """Add the demand analysis fields together - use this in reduce to sum up the summable parts of the dfs"""
-            df1[self.demand_analysis_fields] += df2[self.demand_analysis_fields]
-            return df1
-        return functools.reduce(add_fields,
-                                (pd.read_csv(self.locator.get_demand_results_file(building)) for building in
-                                 self.buildings)).set_index('DATE')
+        data_demand = functools.reduce(self.add_fields, (pd.read_csv(self.locator.get_demand_results_file(building))
+                                                         for building in self.buildings)).set_index('DATE')
+        return data_demand
+
+    def add_timeframe(self, data_demand):
+        if self.timeframe == "daily":
+            data_demand.index = pd.to_datetime(data_demand.index)
+            data_demand = data_demand.resample('D').sum()
+        elif self.timeframe == "weekly":
+            data_demand.index = pd.to_datetime(data_demand.index)
+            data_demand = data_demand.resample('W').sum()
+        elif self.timeframe == "monthly":
+            data_demand.index = pd.to_datetime(data_demand.index)
+            data_demand = data_demand.resample('M').sum()
+        elif self.timeframe == "yearly":
+            data_demand.index = pd.to_datetime(data_demand.index)
+            data_demand = data_demand.resample('Y').sum()
+        return data_demand
+
+    @cea.plots.cache.cached
+    def calculate_hourly_loads(self):
+        data = self._calculate_hourly_loads()
+        data_demand  = self.add_timeframe(data)
+        return data_demand
+
+    @cea.plots.cache.cached
+    def calculate_external_temperature(self):
+        data_weather = pd.read_csv(self.locator.get_demand_results_file(self.buildings[0])).set_index('DATE')
+        if self.timeframe == "daily":
+            data_weather.index = pd.to_datetime(data_weather.index)
+            data_weather = data_weather.resample('D').mean()
+        elif self.timeframe == "weekly":
+            data_weather.index = pd.to_datetime(data_weather.index)
+            data_weather = data_weather.resample('W').mean()
+        elif self.timeframe == "monthly":
+            data_weather.index = pd.to_datetime(data_weather.index)
+            data_weather = data_weather.resample('M').mean()
+        elif self.timeframe == "yearly":
+            data_weather.index = pd.to_datetime(data_weather.index)
+            data_weather = data_weather.resample('Y').mean()
+        return data_weather
 
     @property
     def yearly_loads(self):
@@ -120,8 +183,9 @@ class DemandSingleBuildingPlotBase(DemandPlotBase):
     }
 
     def __init__(self, project, parameters, cache):
-        parameters['buildings'] = [parameters['building']]
         super(DemandSingleBuildingPlotBase, self).__init__(project, parameters, cache)
+        self.building = parameters['building']
+        self.buildings = [self.building]  # some parts of DemandPlotBase require this
 
 
 def main():

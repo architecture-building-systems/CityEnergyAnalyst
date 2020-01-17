@@ -22,11 +22,11 @@ The results from the optimization is a collection of pareto-optimum solutions.
 Optimization Variables
 ----------------------
 Beside the objectives, the main outputs from the optimization is the energy supply system configurations.
-Each perato-optimum solution implies a unique energy supply system configuration. A configuration is combination of
+Each pareto-optimum solution implies a unique energy supply system configuration. A configuration is combination of
 energy supply technologies and sizes.
 All possible configurations that is incorporated in the CEA is presented in this figure:
 
-.. image:: flowchart_thermal_electric_network_planning.png
+.. image:: supply_system_superstructure.png
     :align: center
 
 Supply technology selection and sizing
@@ -60,17 +60,22 @@ Optimization Parameters
 -----------------------
 For this optimization, the users can adjust four optimization parameters or use the default numbers.
 
-- initialind: number of individuals. Default 3 individuals.
-- halloffame: number of individuals to store in the hall of fame. Default 20 individuals.
-- ngen: number of generations. Default 3 generations.
-- fcheckpoint: frequency to save a checkpoint. Default 1 generation.
-- maxtime: time to terminate the optimization if unfinished
-- recoverycheckpoint = to resume the optimization from a check point.
-- random-seed = Random seed to make it easy to replicate the results of the scenarios. Default 0.
-
+- district-heating-network: Boolean, describes if a district heating system should be optimized. Default is true
+- district-cooling-network: Boolean, describes if a district cooling system should be optimized. Default is false
+- detailed-electricity-pricing:  Boolean, describes if a district cooling system should be optimized. Default is false
+- population-size:  Boolean, describes if a district cooling system should be optimized. Leave this field empty to use the standard 92 by Deb et al.,2014.
+- number-of-generations: number of iterations of GA algortihm (NSGA-III by Dep et al., 2014). Default is 100
+- random-seed: Random seed to make it easy to replicate the results of the scenarios. Default 100
+- crossover-prob: Probability of crossover. Default 0.9
+- mutate-prob: Probability of mutation. Default 0.1
 
 These parameters are case-study dependent and need to be tuned based on the user requirement. The default values
-provided are to act like a beacon in the research.
+provided are to act like a beacon in the research. The next figure presents a comparison of three combinations
+of crossover-prob and mutate-prob. The first row presents the Generational distance for every generation for each of the
+three cases. The second row presents the pareto curves for each curve.
+
+.. image:: Optimization_tests.png
+    :align: center
 
 NOTE: As Genetic Algorithm, which is stochastic in nature, is being used as an optimization algorithm, the results
 might not always be exact. So if there are 5 runs of the optimization, there is no guarantee that all 5 runs will

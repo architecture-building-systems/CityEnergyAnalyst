@@ -4,20 +4,21 @@ file `test_schedules.config` that can be created by running this file. Note, how
 test data - you should only do this if you are sure that the new data is correct.
 """
 
+import ConfigParser
+import json
 import os
 import unittest
+
+import numpy as np
 import pandas as pd
-import json
-import ConfigParser
-from cea.inputlocator import ReferenceCaseOpenLocator
-from cea.datamanagement.data_helper import calculate_average_multiuse
-from cea.datamanagement.data_helper import correct_archetype_areas
-from cea.demand.occupancy_model import calc_schedules
-from cea.demand.occupancy_model import schedule_maker
-from cea.utilities import epwreader
+
 import cea.config
-from cea.demand.building_properties import BuildingProperties
 from cea.constants import HOURS_IN_YEAR
+from cea.datamanagement.data_helper import calculate_average_multiuse, correct_archetype_areas, data_helper
+from cea.demand.building_properties import BuildingProperties
+from cea.demand.schedule_maker.schedule_maker import schedule_maker_main
+from cea.inputlocator import ReferenceCaseOpenLocator
+from cea.utilities import epwreader
 
 REFERENCE_TIME = 3456
 
@@ -29,7 +30,7 @@ class TestBuildingPreprocessing(unittest.TestCase):
         config = ConfigParser.SafeConfigParser()
         config.read(get_test_config_path())
 
-        calculated_results = calculate_test_mixed_use_archetype_values_results(locator).to_dict()
+        calculated_results = calculate_mixed_use_archetype_values_results(locator).to_dict()
 
         # compare to reference values
         expected_results = json.loads(config.get('test_mixed_use_archetype_values', 'expected_results'))
@@ -45,11 +46,10 @@ class TestBuildingPreprocessing(unittest.TestCase):
 
         self.assertEqual(correct_archetype_areas(
             prop_architecture_df=pd.DataFrame(
-                data=[['B1', 0.5, 0.5, 0.0, 2006, 2020, 'C'], ['B2', 0.2, 0.8, 0.0, 1000, 1920, 'R']],
-                columns=['Name', 'SERVERROOM', 'PARKING', 'Hs', 'year_start', 'year_end', 'standard']),
+                data=[['B1', 0.5, 0.5, 0.0, 0.0, 2006, 2020, 'C'], ['B2', 0.2, 0.8, 0.0, 0.0, 1000, 1920, 'R']],
+                columns=['Name', 'SERVERROOM', 'PARKING', 'Hs_ag', 'Hs_bg', 'year_start', 'year_end', 'standard']),
             architecture_DB=architecture_DB,
-            list_uses=['SERVERROOM', 'PARKING']),
-            ([0.5, 0.2], [0.5, 0.2], [0.95, 0.9200000000000002]))
+            list_uses=['SERVERROOM', 'PARKING']),([0.5, 0.2], [0.0, 0.0], [0.5, 0.2], [0.95, 0.9200000000000002]))
 
 
 class TestScheduleCreation(unittest.TestCase):
@@ -57,33 +57,35 @@ class TestScheduleCreation(unittest.TestCase):
         locator = ReferenceCaseOpenLocator()
         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         config.scenario = locator.scenario
-        stochastic_occupancy = config.demand.use_stochastic_occupancy
-
-        # get year from weather file
-        weather_data = epwreader.epw_reader(config.weather)[['year']]
-        year = weather_data['year'][0]
-        date = pd.date_range(str(year) + '/01/01', periods=HOURS_IN_YEAR, freq='H')
 
         building_properties = BuildingProperties(locator, False)
         bpr = building_properties['B01']
-        list_uses = ['OFFICE', 'INDUSTRIAL']
         bpr.occupancy = {'OFFICE': 0.5, 'INDUSTRIAL': 0.5}
+        bpr.comfort['mainuse'] = 'OFFICE'
 
         # calculate schedules
-        archetype_schedules, archetype_values = schedule_maker(date, locator, list_uses)
-        calculated_schedules = calc_schedules(list_uses, archetype_schedules, bpr, archetype_values,
-                                              stochastic_occupancy)
+        schedule_maker_main(locator, config)
+        calculated_schedules = pd.read_csv(locator.get_schedule_model_file('B01')).set_index('DATE')
 
         config = ConfigParser.SafeConfigParser()
         config.read(get_test_config_path())
         reference_results = json.loads(config.get('test_mixed_use_schedules', 'reference_results'))
 
         for schedule in reference_results:
-            self.assertAlmostEqual(calculated_schedules[schedule][REFERENCE_TIME], reference_results[schedule],
-                                   places=4, msg="Schedule '%s' at time %s, %f != %f" % (
-                schedule, str(REFERENCE_TIME), calculated_schedules[schedule][
-                    REFERENCE_TIME],
-                reference_results[schedule]))
+            if (isinstance(calculated_schedules[schedule][REFERENCE_TIME], str)) and (isinstance(
+                    reference_results[schedule], unicode)):
+                self.assertEqual(calculated_schedules[schedule][REFERENCE_TIME], reference_results[schedule],
+                                 msg="Schedule '{}' at time {}, {} != {}".format(schedule, str(REFERENCE_TIME),
+                                                                                 calculated_schedules[schedule][
+                                                                                     REFERENCE_TIME],
+                                                                                 reference_results[schedule]))
+            else:
+                self.assertAlmostEqual(calculated_schedules[schedule][REFERENCE_TIME], reference_results[schedule],
+                                       places=4,
+                                       msg="Schedule '{}' at time {}, {} != {}".format(schedule, str(REFERENCE_TIME),
+                                                                                       calculated_schedules[schedule][
+                                                                                           REFERENCE_TIME],
+                                                                                       reference_results[schedule]))
 
 
 def get_test_config_path():
@@ -91,21 +93,25 @@ def get_test_config_path():
     return os.path.join(os.path.dirname(__file__), 'test_schedules.config')
 
 
-def calculate_test_mixed_use_archetype_values_results(locator):
+def calculate_mixed_use_archetype_values_results(locator):
     """calculate the results for the test - refactored, so we can also use it to write the results to the
     config file."""
-    office_occ = float(pd.read_excel(locator.get_archetypes_schedules(), 'OFFICE', index_col=0).T['density'].values[:1][0])
-    gym_occ = float(pd.read_excel(locator.get_archetypes_schedules(), 'GYM', index_col=0).T['density'].values[:1][0])
+
+    occ_densities = pd.read_excel(locator.get_archetypes_properties(), 'INTERNAL_LOADS').set_index('Code')
+    office_occ = float(occ_densities.ix['OFFICE', 'Occ_m2pax'])
+    gym_occ = float(occ_densities.ix['GYM', 'Occ_m2pax'])
     calculated_results = calculate_average_multiuse(
-        properties_df=pd.DataFrame(data=[['B1', 0.5, 0.5, 0.0, 0.0], ['B2', 0.25, 0.75, 0.0, 0.0]],
-                                   columns=['Name', 'OFFICE', 'GYM', 'X_ghp', 'El_Wm2']),
+        fields=['X_ghpax', 'El_Wm2'],
+        properties_df=pd.DataFrame(data=[['B1', 0.5, 0.5, 0.0, 0.0, 0.0], ['B2', 0.25, 0.75, 0.0, 0.0, 0.0]],
+                                   columns=['Name', 'OFFICE', 'GYM', 'X_ghpax', 'El_Wm2', 'Occ_m2pax']),
         occupant_densities={'OFFICE': 1 / office_occ, 'GYM': 1 / gym_occ},
         list_uses=['OFFICE', 'GYM'],
         properties_DB=pd.read_excel(locator.get_archetypes_properties(), 'INTERNAL_LOADS')).set_index('Name')
+
     return calculated_results
 
 
-def create_test_data():
+def create_data():
     """Create test data to compare against - run this the first time you make changes that affect the results. Note,
     this will overwrite the previous test data."""
     test_config = ConfigParser.SafeConfigParser()
@@ -113,7 +119,7 @@ def create_test_data():
     if not test_config.has_section('test_mixed_use_archetype_values'):
         test_config.add_section('test_mixed_use_archetype_values')
     locator = ReferenceCaseOpenLocator()
-    expected_results = calculate_test_mixed_use_archetype_values_results(locator)
+    expected_results = calculate_mixed_use_archetype_values_results(locator)
     test_config.set('test_mixed_use_archetype_values', 'expected_results', expected_results.to_json())
 
     config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
@@ -125,14 +131,12 @@ def create_test_data():
     list_uses = ['OFFICE', 'INDUSTRIAL']
     bpr.occupancy = {'OFFICE': 0.5, 'INDUSTRIAL': 0.5}
     # get year from weather file
-    weather_data = epwreader.epw_reader(config.weather)[['year']]
+    weather_path = locator.get_weather_file()
+    weather_data = epwreader.epw_reader(weather_path)[['year']]
     year = weather_data['year'][0]
     date = pd.date_range(str(year) + '/01/01', periods=HOURS_IN_YEAR, freq='H')
 
-    archetype_schedules, archetype_values = schedule_maker('CH', date, locator, list_uses)
-    stochastic_occupancy = config.demand.use_stochastic_occupancy
-    calculated_schedules = calc_schedules(list_uses, archetype_schedules, bpr, archetype_values,
-                                          stochastic_occupancy)
+    calculated_schedules = schedule_maker_main(locator, config)
     if not test_config.has_section('test_mixed_use_schedules'):
         test_config.add_section('test_mixed_use_schedules')
     test_config.set('test_mixed_use_schedules', 'reference_results', json.dumps(
@@ -143,4 +147,4 @@ def create_test_data():
 
 
 if __name__ == '__main__':
-    create_test_data()
+    create_data()

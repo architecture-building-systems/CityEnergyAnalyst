@@ -1,5 +1,7 @@
 # NSIS script for creating the City Energy Analyst installer
 
+; include logic library
+!include 'LogicLib.nsh'
 
 ; include the modern UI stuff
 !include "MUI2.nsh"
@@ -12,13 +14,12 @@ ${StrRep}
 !define MUI_ICON "cea-icon.ico"
 
 
-# download CEA conda env from here (FIXME: update to a more sane download URL)
-# !define CEA_ENV_URL "https://polybox.ethz.ch/index.php/s/M8MYliTOGbbSCjH/download"
-# !define CEA_ENV_FILENAME "cea.7z"
-!define CEA_ENV_URL "https://github.com/architecture-building-systems/CityEnergyAnalyst/releases/download/v2.13/Dependencies.7z"
+# download CEA conda env from here
+!define CEA_ENV_URL "https://github.com/architecture-building-systems/CityEnergyAnalyst/releases/download/v2.27.0/Dependencies.7z"
 !define CEA_ENV_FILENAME "Dependencies.7z"
 !define RELATIVE_GIT_PATH "Dependencies\cmder\vendor\git-for-windows\bin\git.exe"
 !define CEA_REPO_URL "https://github.com/architecture-building-systems/CityEnergyAnalyst.git"
+!define CEA_ELECTRON_URL "https://github.com/architecture-building-systems/CityEnergyAnalyst/releases/download/v${VER}/win-unpacked.7z"
 
 !define CEA_TITLE "City Energy Analyst"
 
@@ -95,7 +96,7 @@ Section "Base Installation" Base_Installation_Section
     FileWrite $0 "$\r$\n" ; we write a new line
     FileWrite $0 "SET PROJ_LIB=$INSTDIR\Dependencies\Python\Library\share"
     FileWrite $0 "$\r$\n" ; we write a new line
-    FileWrite $0 "ALIAS find=$INSTDIR\Dependencies\cmder\vendor\git-for-windows\usr\bin\find.exe $$*"
+    FileWrite $0 "ALIAS find=$\"$INSTDIR\Dependencies\cmder\vendor\git-for-windows\usr\bin\find.exe$\" $$*"
     FileClose $0
 
     # create a batch file for running the dashboard with some environment variables set (for DAYSIM etc.)
@@ -113,7 +114,7 @@ Section "Base Installation" Base_Installation_Section
     FileWrite $0 "$\r$\n" ; we write a new line
     FileWrite $0 "SET RAYPATH=$INSTDIR\Dependencies\Daysim"
     FileWrite $0 "$\r$\n" ; we write a new line
-    FileWrite $0 "$INSTDIR\Dependencies\Python\python.exe -m cea.interfaces.cli.cli dashboard"
+    FileWrite $0 "$\"$INSTDIR\Dependencies\Python\python.exe$\" -u -m cea.interfaces.cli.cli dashboard"
     FileClose $0
 
 
@@ -130,14 +131,33 @@ Section "Base Installation" Base_Installation_Section
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Open CEA Configuration file"
 
 
-    ;Download the CityEnergyAnalyst conda environment
-    DetailPrint "Downloading ${CEA_ENV_FILENAME}"
-    inetc::get ${CEA_ENV_URL} ${CEA_ENV_FILENAME}
-    Pop $R0 ;Get the return value
-    StrCmp $R0 "OK" download_ok
+
+
+    # Download the CEA Electron interface
+    DetailPrint "Downloading CEA Electron interface"
+    inetc::get ${CEA_ELECTRON_URL} "win-unpacked.7z"
+    Pop $R0  # get the return value
+    StrCmp $R0 "OK" download_electron_ok
         MessageBox MB_OK "Download failed: $R0"
         Quit
-    download_ok:
+    download_electron_ok:
+        # get on with life...
+
+    # unzip the electron interface (note, expect a subdirectory called win-unpacked inside the archive)
+    DetailPrint "Extracting win-unpacked.7z"
+    SetOutPath "$INSTDIR"
+    Nsis7z::ExtractWithDetails "$INSTDIR\win-unpacked.7z" "Extracting Electron interface %s..."
+    Delete "$INSTDIR\win-unpacked.7z"
+    SetOutPath "$INSTDIR"
+
+    # Download the CityEnergyAnalyst conda environment
+    DetailPrint "Downloading ${CEA_ENV_FILENAME}"
+    inetc::get ${CEA_ENV_URL} ${CEA_ENV_FILENAME}
+    Pop $R0  # Get the return value
+    StrCmp $R0 "OK" download_python_ok
+        MessageBox MB_OK "Download failed: $R0"
+        Quit
+    download_python_ok:
         # get on with life...
 
     # unzip python environment to ${INSTDIR}\Dependencies
@@ -156,14 +176,28 @@ Section "Base Installation" Base_Installation_Section
     DetailPrint "Updating Pip"
     nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip install -U --force-reinstall pip'
     DetailPrint "Pip installing CityEnergyAnalyst==${VER}"
-    nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip install -U --no-deps cityenergyanalyst==${VER}'
+    nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip install -U cityenergyanalyst==${VER}'
+
+    # make sure cea was installed
+    Pop $0
+    DetailPrint 'pip install cityenergyanalyst==${VER} returned $0'
+    ${If} "$0" != "0"
+        Abort "Could not install CityEnergyAnalyst ${VER} - see Details"
+    ${EndIf}
+
+
+    DetailPrint "Pip installing Jupyter"
+    nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip install --force-reinstall jupyter ipython'
+
+    DetailPrint "Pip installing Sphinx"
+    nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip install --force-reinstall --no-deps sphinx'
 
     # create cea.config file in the %userprofile% directory by calling `cea --help` and set daysim paths
     nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\Scripts\cea.exe" --help'
-    WriteINIStr "$PROFILE\cea.config" radiation-daysim daysim-bin-directory "$INSTDIR\Dependencies\Daysim"
+    WriteINIStr "$PROFILE\cea.config" radiation daysim-bin-directory "$INSTDIR\Dependencies\Daysim"
 
     ;Create uninstaller
-    WriteUninstaller "$INSTDIR\Uninstall.exe"
+    WriteUninstaller "$INSTDIR\Uninstall_CityEnergyAnalyst_${VER}.exe"
 
 SectionEnd
 
@@ -174,11 +208,15 @@ Section "Create Start menu shortcuts" Create_Start_Menu_Shortcuts_Section
     CreateShortCut '$SMPROGRAMS\${CEA_TITLE}\CEA Console.lnk' '$INSTDIR\Dependencies\cmder\cmder.exe' '/single' \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL CONTROL|SHIFT|F10 "Launch the CEA Console"
 
-    CreateShortcut "$SMPROGRAMS\${CEA_TITLE}\CEA Dashboard.lnk" "cmd" "/c $INSTDIR\dashboard.bat" \
-        "$INSTDIR\cea-icon.ico" 0 SW_SHOWMINIMIZED "" "Launch the CEA Dashboard"
+    CreateShortcut "$SMPROGRAMS\${CEA_TITLE}\CEA Dashboard.lnk" "$INSTDIR\win-unpacked\CityEnergyAnalyst.exe" "" \
+        "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Dashboard"
 
     CreateShortcut "$SMPROGRAMS\${CEA_TITLE}\cea.config.lnk" "$WINDIR\notepad.exe" "$PROFILE\cea.config" \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Open CEA Configuration file"
+
+    CreateShortcut "$SMPROGRAMS\${CEA_TITLE}\Uninstall CityEnergy Analyst.lnk" \
+        "$INSTDIR\Uninstall_CityEnergyAnalyst_${VER}.exe" "" \
+        "$INSTDIR\Uninstall_CityEnergyAnalyst_${VER}.exe" 0 SW_SHOWNORMAL "" "Uninstall the City Energy Analyst"
 
 SectionEnd
 
@@ -197,8 +235,8 @@ Section /o "Create Desktop shortcuts" Create_Desktop_Shortcuts_Section
     CreateShortCut '$DESKTOP\CEA Console.lnk' '$INSTDIR\Dependencies\cmder\cmder.exe' '/single' \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL CONTROL|SHIFT|F10 "Launch the CEA Console"
 
-    CreateShortcut "$DESKTOP\CEA Dashboard.lnk" "cmd" "/c $INSTDIR\dashboard.bat" \
-        "$INSTDIR\cea-icon.ico" 0 SW_SHOWMINIMIZED "" "Launch the CEA Dashboard"
+    CreateShortcut "$DESKTOP\CEA Dashboard.lnk" "$INSTDIR\win-unpacked\CityEnergyAnalyst.exe" "" \
+        "$INSTDIR\cea-icon.ico" 0 SW_SHOWMAXIMIZED "" "Launch the CEA Dashboard"
 
     CreateShortcut "$DESKTOP\cea.config.lnk" "$WINDIR\notepad.exe" "$PROFILE\cea.config" \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Open CEA Configuration file"
@@ -221,12 +259,23 @@ SectionEnd
 
 Section "Uninstall"
 
-  ;ADD YOUR OWN FILES HERE...
+  ; Delete the shortcuts
+  Delete /REBOOTOK "$SMPROGRAMS\${CEA_TITLE}\CEA Console.lnk"
+  Delete /REBOOTOK "$SMPROGRAMS\${CEA_TITLE}\CEA Dashboard.lnk"
+  Delete /REBOOTOK "$SMPROGRAMS\${CEA_TITLE}\cea.config.lnk"
+  Delete /REBOOTOK "$SMPROGRAMS\${CEA_TITLE}\Uninstall CityEnergy Analyst.lnk"
+  RMDir /REBOOTOK "$SMPROGRAMS\${CEA_TITLE}"
 
-  Delete "$INSTDIR\Uninstall.exe"
+  Delete /REBOOTOK "$DESKTOP\CEA Console.lnk"
+  Delete /REBOOTOK "$DESKTOP\CEA Dashboard.lnk"
+  Delete /REBOOTOK "$DESKTOP\cea.config.lnk"
 
-  RMDir "$INSTDIR"
+  ; Delete the cea.config file
+  Delete /REBOOTOK "$PROFILE\cea.config"
 
-  DeleteRegKey /ifempty HKCU "Software\Modern UI Test"
+  SetOutPath $TEMP
+  Delete /REBOOTOK "$INSTDIR\Uninstall_CityEnergyAnalyst_${VER}.exe"
+
+  RMDir /R /REBOOTOK "$INSTDIR"
 
 SectionEnd

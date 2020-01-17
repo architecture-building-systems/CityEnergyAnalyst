@@ -29,6 +29,14 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+def check_if_float(x):
+    y = 0.0
+    try:
+        y = float(x)
+    except:
+        if ',' in x:
+            y = float(x.split(',')[-1])
+    return y
 
 def clean_attributes(shapefile, buildings_height, buildings_floors, buildings_height_below_ground,
                      buildings_floors_below_ground, key):
@@ -57,22 +65,24 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, buildings_he
         # get the median from the area:
         data_osm_floors1 = shapefile['building:levels'].fillna(0)
         data_osm_floors2 = shapefile['roof:levels'].fillna(0)
-        data_floors_sum = [x + y for x, y in zip([float(x) for x in data_osm_floors1], [float(x) for x in data_osm_floors2])]
-        data_floors_sum_with_nan = [np.nan if x <= 1.0 else x for x in data_floors_sum]
+        data_floors_sum = [x + y for x, y in zip([check_if_float(x) for x in data_osm_floors1], [check_if_float(x) for x in data_osm_floors2])]
+        data_floors_sum_with_nan = [np.nan if x < 1.0 else x for x in data_floors_sum]
         data_osm_floors_joined = int(
             math.ceil(np.nanmedian(data_floors_sum_with_nan)))  # median so we get close to the worse case
         shapefile["floors_ag"] = [int(x) if x is not np.nan else data_osm_floors_joined for x in
                                   data_floors_sum_with_nan]
         shapefile["height_ag"] = shapefile["floors_ag"] * constants.H_F
-    elif buildings_height is None and buildings_floors is not None:
-        shapefile["floors_ag"] = [buildings_floors] * no_buildings
-        shapefile["height_ag"] = shapefile["floors_ag"] * constants.H_F
-    elif buildings_height is not None and buildings_floors is None:
-        shapefile["height_ag"] = [buildings_height] * no_buildings
-        shapefile["floors_ag"] = [int(math.floor(x)) for x in shapefile["height_ag"] / constants.H_F]
-    else:  # both are not none
-        shapefile["height_ag"] = [buildings_height] * no_buildings
-        shapefile["floors_ag"] = [buildings_floors] * no_buildings
+    else:
+        shapefile['REFERENCE'] = "User - assumption"
+        if buildings_height is None and buildings_floors is not None:
+            shapefile["floors_ag"] = [buildings_floors] * no_buildings
+            shapefile["height_ag"] = shapefile["floors_ag"] * constants.H_F
+        elif buildings_height is not None and buildings_floors is None:
+            shapefile["height_ag"] = [buildings_height] * no_buildings
+            shapefile["floors_ag"] = [int(math.floor(x)) for x in shapefile["height_ag"] / constants.H_F]
+        else:  # both are not none
+            shapefile["height_ag"] = [buildings_height] * no_buildings
+            shapefile["floors_ag"] = [buildings_floors] * no_buildings
 
     # add fields for floorsa and height below ground
     shapefile["height_bg"] = [buildings_height_below_ground] * no_buildings
@@ -119,6 +129,11 @@ def zone_helper(locator, config):
     zone_output_path = locator.get_zone_geometry()
     occupancy_output_path = locator.get_building_occupancy()
     age_output_path = locator.get_building_age()
+
+    # ensure folders exist
+    locator.ensure_parent_folder_exists(zone_output_path)
+    locator.ensure_parent_folder_exists(occupancy_output_path)
+    locator.ensure_parent_folder_exists(age_output_path)
 
     # get zone.shp file and save in folder location
     zone_df = polygon_to_zone(buildings_floors, buildings_floors_below_ground, buildings_height,

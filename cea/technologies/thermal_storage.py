@@ -29,7 +29,7 @@ def calc_Cinv_storage(V_tank_m3, locator, config, technology_type):
 
     """
     if V_tank_m3 > 0:
-        storage_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="TES")
+        storage_cost_data = pd.read_excel(locator.get_database_supply_systems(), sheet_name="TES")
         storage_cost_data = storage_cost_data[storage_cost_data['code'] == technology_type]
 
         # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
@@ -52,12 +52,11 @@ def calc_Cinv_storage(V_tank_m3, locator, config, technology_type):
         InvC = Inv_a + Inv_b * (V_tank_m3) ** Inv_c + (Inv_d + Inv_e * V_tank_m3) * log(V_tank_m3)
 
         Capex_a_storage_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-        Opex_fixed_storage_USD = Capex_a_storage_USD * Inv_OM
+        Opex_fixed_storage_USD = InvC * Inv_OM
         Capex_storage_USD = InvC
-        # TODO: make sure the cost of heat pump is added
     else:
-        Capex_a_storage_USD = 0
-        Opex_fixed_storage_USD = 0
-        Capex_storage_USD = 0
+        Capex_a_storage_USD = 0.0
+        Opex_fixed_storage_USD = 0.0
+        Capex_storage_USD = 0.0
 
     return Capex_a_storage_USD, Opex_fixed_storage_USD, Capex_storage_USD

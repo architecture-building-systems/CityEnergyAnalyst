@@ -63,7 +63,7 @@ def calc_heating_cooling_loads(bpr, tsd, t):
 
         else:
             # message and no heating system
-            warnings.warn('Unknown cooling system. Calculation without system.')
+            warnings.warn('Unknown heating system. Calculation without system.')
 
             # no system = no loads
             rc_model_temperatures = calc_rc_no_loads(bpr, tsd, t)
@@ -760,8 +760,8 @@ def detailed_thermal_balance_to_tsd(tsd, bpr, t, rc_model_temperatures):
     theta_ea = rc_model_temperatures['theta_ea']
 
     # backwards calculate individual heat transfer coefficient
-    h_wall_em = h_em * bpr.rc_model['Aop_sup'] * bpr.rc_model['U_wall'] / h_op_m
-    h_base_em = h_em * bpr.rc_model['Aop_bel'] * B_F * bpr.rc_model['U_base'] / h_op_m
+    h_wall_em = h_em * bpr.rc_model['Awall_ag'] * bpr.rc_model['U_wall'] / h_op_m
+    h_base_em = h_em * bpr.rc_model['Aop_bg'] * B_F * bpr.rc_model['U_base'] / h_op_m
     h_roof_em = h_em * bpr.rc_model['Aroof'] * bpr.rc_model['U_roof'] / h_op_m
 
     # calculate heat fluxes between mass and outside through opaque elements

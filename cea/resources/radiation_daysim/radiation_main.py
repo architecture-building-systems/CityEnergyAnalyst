@@ -3,13 +3,17 @@ Radiation engine and geometry handler for CEA
 """
 from __future__ import print_function
 from __future__ import division
+
+import os
+import sys
 import pandas as pd
 import time
+from cea.utilities import epwreader
 import math
 from cea.resources.radiation_daysim import daysim_main, geometry_generator
 import py4design.py3dmodel.fetch as fetch
 import py4design.py2radiance as py2radiance
-from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_district
+from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_surroundings
 from geopandas import GeoDataFrame as gpdf
 import cea.inputlocator
 import cea.config
@@ -30,6 +34,14 @@ def create_radiance_srf(occface, srfname, srfmat, rad):
 
 
 def calc_transmissivity(G_value):
+    """
+    Calculate window transmissivity from its transmittance using an empirical equation from Radiance.
+
+    :param G_value: Solar energy transmittance of windows (dimensionless)
+    :return: Transmissivity
+
+    [RADIANCE, 2010] The Radiance 4.0 Synthetic Imaging System. Lawrence Berkeley National Laboratory.
+    """
     return (math.sqrt(0.8402528435 + 0.0072522239 * G_value * G_value) - 0.9166530661) / 0.0036261119 / G_value
 
 
@@ -87,12 +99,12 @@ def add_rad_mat(daysim_mat_file, ageometry_table):
         write_file.close()
 
 
-def terrain2radiance(rad, tin_occface_terrain):
+def terrain_to_radiance(rad, tin_occface_terrain):
     for id, face in enumerate(tin_occface_terrain):
         create_radiance_srf(face, "terrain_srf" + str(id), "reflectance0.2", rad)
 
 
-def buildings2radiance(rad, building_surface_properties, geometry_3D_zone, geometry_3D_surroundings):
+def buildings_to_radiance(rad, building_surface_properties, geometry_3D_zone, geometry_3D_surroundings):
     # translate buildings into radiance surface
     fcnt = 0
     for bcnt, building_surfaces in enumerate(geometry_3D_zone):
@@ -114,7 +126,7 @@ def buildings2radiance(rad, building_surface_properties, geometry_3D_zone, geome
         ## for the surrounding buildings only, walls and roofs
         id = 0
         for pypolygon in building_surfaces['walls']:
-            create_radiance_srf(pypolygon, "surroundingbuildings" + str(id), "reflectance0.2" , rad)
+            create_radiance_srf(pypolygon, "surroundingbuildings" + str(id), "reflectance0.2", rad)
             id += 1
         for pypolygon in building_surfaces['roofs']:
             create_radiance_srf(pypolygon, "surroundingbuildings" + str(id), "reflectance0.2", rad)
@@ -133,9 +145,9 @@ def reader_surface_properties(locator, input_shp):
 
     # local variables
     architectural_properties = gpdf.from_file(input_shp).drop('geometry', axis=1)
-    surface_database_windows = pd.read_excel(locator.get_envelope_systems(), "WINDOW")
-    surface_database_roof = pd.read_excel(locator.get_envelope_systems(), "ROOF")
-    surface_database_walls = pd.read_excel(locator.get_envelope_systems(), "WALL")
+    surface_database_windows = pd.read_excel(locator.get_database_envelope_systems(), "WINDOW")
+    surface_database_roof = pd.read_excel(locator.get_database_envelope_systems(), "ROOF")
+    surface_database_walls = pd.read_excel(locator.get_database_envelope_systems(), "WALL")
 
     # querry data
     df = architectural_properties.merge(surface_database_windows, left_on='type_win', right_on='code')
@@ -148,7 +160,14 @@ def reader_surface_properties(locator, input_shp):
 
     return surface_properties.set_index('Name').round(decimals=2)
 
-def radiation_singleprocessing(rad, geometry_3D_zone, locator, weather_path, settings):
+
+def radiation_singleprocessing(rad, geometry_3D_zone, locator, settings):
+
+    weather_path = locator.get_weather_file()
+    # check inconsistencies and replace by max value of weather file
+    weatherfile = epwreader.epw_reader(weather_path)
+    max_global = weatherfile['glohorrad_Whm2'].max()
+
     if settings.buildings == []:
         # get chunks of buildings to iterate
         chunks = [geometry_3D_zone[i:i + settings.n_buildings_in_chunk] for i in
@@ -162,15 +181,60 @@ def radiation_singleprocessing(rad, geometry_3D_zone, locator, weather_path, set
                 chunks.append([bldg_dict])
 
     for chunk_n, building_dict in enumerate(chunks):
-        daysim_main.isolation_daysim(chunk_n, rad, building_dict, locator, weather_path, settings)
+        daysim_main.isolation_daysim(chunk_n, rad, building_dict, locator, settings, max_global, weatherfile)
+
+
+def check_daysim_bin_directory(path_hint):
+    """
+    Check for the Daysim bin directory based on ``path_hint`` and return it on success.
+
+    If the binaries could not be found there, check in a folder `Depencencies/Daysim` of the installation - this will
+    catch installations on Windows that used the official CEA installer.
+
+    Check the RAYPATH environment variable. Return that.
+
+    Check for ``C:\Daysim\bin`` - it might be there?
+
+    If the binaries can't be found anywhere, raise an exception.
+
+    :param str path_hint: The path to check first, according to the `cea.config` file.
+    :return: path_hint, contains the Daysim binaries - otherwise an exception occurrs.
+    """
+    required_binaries = ["ds_illum", "epw2wea", "gen_dc", "isotrop_sky", "oconv", "radfiles2daysim", "rayinit",
+                         "rtrace_dc"]
+
+    def contains_binaries(path):
+        """True if all the required binaries are found in path - note that binaries might have an extension"""
+        try:
+            found_binaries = set(bin for bin, ext in map(os.path.splitext, os.listdir(path)))
+        except:
+            # could not find the binaries, bogus path
+            return False
+        return all(bin in found_binaries for bin in required_binaries)
+
+    folders_to_check = [
+        path_hint,
+        os.path.join(os.path.dirname(sys.executable), "..", "Daysim"),
+    ]
+    folders_to_check.extend(os.environ["RAYPATH"].split(";"))
+    if sys.platform == "win32":
+        folders_to_check.append(r"C:\Daysim\bin")
+    folders_to_check = list(set(os.path.abspath(os.path.normpath(os.path.normcase(p))) for p in folders_to_check))
+
+    for path in folders_to_check:
+        if contains_binaries(path):
+            return path_hint
+
+    raise ValueError("Could not find Daysim binaries - checked these paths: {}".format(", ".join(folders_to_check)))
+
 
 def main(config):
     """
     This function makes the calculation of solar insolation in X sensor points for every building in the zone
-    of interest. the number of sensor points depends on the size of the grid selected in the SETTINGS.py file and
+    of interest. The number of sensor points depends on the size of the grid selected in the config file and
     are generated automatically.
 
-    :param config: Configuration object with the settings (genera and radiation-daysim)
+    :param config: Configuration object with the settings (genera and radiation)
     :type config: cea.config.Configuartion
     :return:
     """
@@ -179,16 +243,23 @@ def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     #  the selected buildings are the ones for which the individual radiation script is run for
     #  this is only activated when in default.config, run_all_buildings is set as 'False'
-    settings = config.radiation_daysim
+
+    # BUGFIX for #2447 (make sure the Daysim binaries are there before starting the simulation)
+    config.radiation.daysim_bin_directory = check_daysim_bin_directory(config.radiation.daysim_bin_directory)
+
+    # BUGFIX for PyCharm: the PATH variable might not include the daysim-bin-directory, so we add it here
+    os.environ["PATH"] = config.radiation.daysim_bin_directory + os.pathsep + os.environ["PATH"]
 
     print("verifying geometry files")
     print(locator.get_zone_geometry())
     verify_input_geometry_zone(gpdf.from_file(locator.get_zone_geometry()))
-    verify_input_geometry_district(gpdf.from_file(locator.get_district_geometry()))
+    verify_input_geometry_surroundings(gpdf.from_file(locator.get_surroundings_geometry()))
 
     # import material properties of buildings
+    print("getting geometry materials")
     building_surface_properties = reader_surface_properties(locator=locator,
                                                             input_shp=locator.get_building_architecture())
+    building_surface_properties.to_csv(locator.get_radiation_materials())
     print("creating 3D geometry and surfaces")
     # create geometrical faces of terrain and buildingsL
     elevation, geometry_terrain, geometry_3D_zone, geometry_3D_surroundings = geometry_generator.geometry_main(locator,
@@ -203,18 +274,18 @@ def main(config):
     print("\tradiation_main: rad.command_file: {}".format(rad.command_file))
     add_rad_mat(daysim_mat, building_surface_properties)
     # send terrain
-    terrain2radiance(rad, geometry_terrain)
+    terrain_to_radiance(rad, geometry_terrain)
     # send buildings
-    buildings2radiance(rad, building_surface_properties, geometry_3D_zone, geometry_3D_surroundings)
+    buildings_to_radiance(rad, building_surface_properties, geometry_3D_zone, geometry_3D_surroundings)
     # create scene out of all this
     rad.create_rad_input_file()
     print("\tradiation_main: rad.rad_file_path: {}".format(rad.rad_file_path))
 
     time1 = time.time()
-    radiation_singleprocessing(rad, geometry_3D_zone, locator, config.weather, settings)
+    radiation_singleprocessing(rad, geometry_3D_zone, locator, config.radiation)
 
     print("Daysim simulation finished in %.2f mins" % ((time.time() - time1) / 60.0))
 
+
 if __name__ == '__main__':
     main(cea.config.Configuration())
-

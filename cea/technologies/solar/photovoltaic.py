@@ -2,23 +2,27 @@
 Photovoltaic
 """
 
-from __future__ import print_function
 from __future__ import division
-from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile
-from geopandas import GeoDataFrame as gdf
+from __future__ import print_function
+
 import os
 import time
+from itertools import repeat
+from math import *
+
 import numpy as np
 import pandas as pd
+from geopandas import GeoDataFrame as gdf
 from scipy import interpolate
-import cea.globalvar
+
+import cea.config
 import cea.inputlocator
-from math import *
+import cea.utilities.parallel
+from cea.constants import HOURS_IN_YEAR
+from cea.technologies.solar import constants
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
-from cea.technologies.solar import constants
-import cea.config
-from cea.constants import HOURS_IN_YEAR
+from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -30,7 +34,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calc_PV(locator, config, radiation_path, metadata_csv, latitude, longitude, weather_path, building_name):
+def calc_PV(locator, config, latitude, longitude, weather_data, datetime_local, building_name):
     """
     This function first determines the surface area with sufficient solar radiation, and then calculates the optimal
     tilt angles of panels at each surface location. The panels are categorized into groups by their surface azimuths,
@@ -56,23 +60,20 @@ def calc_PV(locator, config, radiation_path, metadata_csv, latitude, longitude, 
     """
 
     t0 = time.clock()
-
-    # weather data
-    weather_data = epwreader.epw_reader(weather_path)
-    datetime_local = solar_equations.calc_datetime_local_from_weather_file(weather_data, latitude, longitude)
-    print('reading weather data done')
+    radiation_path = locator.get_radiation_building_sensors(building_name)
+    metadata_csv_path = locator.get_radiation_metadata(building_name)
 
     # solar properties
     solar_properties = solar_equations.calc_sun_properties(latitude, longitude, weather_data, datetime_local, config)
     print('calculating solar properties done')
 
     # calculate properties of PV panel
-    panel_properties_PV = calc_properties_PV_db(locator.get_supply_systems(), config)
+    panel_properties_PV = calc_properties_PV_db(locator.get_database_supply_systems(), config)
     print('gathering properties of PV panel')
 
     # select sensor point with sufficient solar radiation
     max_annual_radiation, annual_radiation_threshold, sensors_rad_clean, sensors_metadata_clean = \
-        solar_equations.filter_low_potential(radiation_path, metadata_csv, config)
+        solar_equations.filter_low_potential(radiation_path, metadata_csv_path, config)
 
     print('filtering low potential sensor points done')
 
@@ -88,7 +89,8 @@ def calc_PV(locator, config, radiation_path, metadata_csv, latitude, longitude, 
 
         print('generating groups of sensor points done')
 
-        final = calc_pv_generation(sensor_groups, weather_data, datetime_local, solar_properties, latitude, panel_properties_PV)
+        final = calc_pv_generation(sensor_groups, weather_data, datetime_local, solar_properties, latitude,
+                                   panel_properties_PV)
 
         final.to_csv(locator.PV_results(building_name=building_name), index=True,
                      float_format='%.2f')  # print PV generation potential
@@ -99,17 +101,18 @@ def calc_PV(locator, config, radiation_path, metadata_csv, latitude, longitude, 
         print(building_name, 'done - time elapsed: %.2f seconds' % (time.clock() - t0))
     else:  # This loop is activated when a building has not sufficient solar potential
         final = pd.DataFrame(
-            {'PV_walls_north_E_kWh': 0, 'PV_walls_north_m2': 0, 'PV_walls_south_E_kWh': 0, 'PV_walls_south_m2': 0,
+            {'Date': datetime_local, 'PV_walls_north_E_kWh': 0, 'PV_walls_north_m2': 0, 'PV_walls_south_E_kWh': 0,
+             'PV_walls_south_m2': 0,
              'PV_walls_east_E_kWh': 0, 'PV_walls_east_m2': 0, 'PV_walls_west_E_kWh': 0, 'PV_walls_west_m2': 0,
              'PV_roofs_top_E_kWh': 0, 'PV_roofs_top_m2': 0,
              'E_PV_gen_kWh': 0, 'Area_PV_m2': 0, 'radiation_kWh': 0}, index=range(HOURS_IN_YEAR))
-        final.to_csv(locator.PV_results(building_name=building_name), index=True, float_format='%.2f')
+        final.to_csv(locator.PV_results(building_name=building_name), index=False, float_format='%.2f')
         sensors_metadata_cat = pd.DataFrame(
             {'SURFACE': 0, 'AREA_m2': 0, 'BUILDING': 0, 'TYPE': 0, 'Xcoor': 0, 'Xdir': 0, 'Ycoor': 0, 'Ydir': 0,
              'Zcoor': 0, 'Zdir': 0, 'orientation': 0, 'total_rad_Whm2': 0, 'tilt_deg': 0, 'B_deg': 0,
              'array_spacing_m': 0, 'surface_azimuth_deg': 0, 'area_installed_module_m2': 0,
              'CATteta_z': 0, 'CATB': 0, 'CATGB': 0, 'type_orientation': 0}, index=range(2))
-        sensors_metadata_cat.to_csv(locator.PV_metadata_results(building_name=building_name), index=True,
+        sensors_metadata_cat.to_csv(locator.PV_metadata_results(building_name=building_name), index=False,
                                     float_format='%.2f')
 
     return
@@ -379,7 +382,7 @@ def calc_absorbed_radiation_PV(I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetae
         part1 = teta_r + teta
         part2 = teta_r - teta
         Ta_B = exp((-K * L) / cos(teta_r)) * (
-            1 - 0.5 * ((sin(part2) ** 2) / (sin(part1) ** 2) + (tan(part2) ** 2) / (tan(part1) ** 2)))
+                1 - 0.5 * ((sin(part2) ** 2) / (sin(part1) ** 2) + (tan(part2) ** 2) / (tan(part1) ** 2)))
         kteta_B = Ta_B / Ta_n
     else:
         kteta_B = 0
@@ -389,7 +392,7 @@ def calc_absorbed_radiation_PV(I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetae
     part1 = teta_r + tetaed
     part2 = teta_r - tetaed
     Ta_D = exp((-K * L) / cos(teta_r)) * (
-        1 - 0.5 * ((sin(part2) ** 2) / (sin(part1) ** 2) + (tan(part2) ** 2) / (tan(part1) ** 2)))
+            1 - 0.5 * ((sin(part2) ** 2) / (sin(part1) ** 2) + (tan(part2) ** 2) / (tan(part1) ** 2)))
     kteta_D = Ta_D / Ta_n
 
     # incidence angle modifier for ground-reflected radiation
@@ -397,15 +400,15 @@ def calc_absorbed_radiation_PV(I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetae
     part1 = teta_r + tetaeg
     part2 = teta_r - tetaeg
     Ta_eG = exp((-K * L) / cos(teta_r)) * (
-        1 - 0.5 * ((sin(part2) ** 2) / (sin(part1) ** 2) + (tan(part2) ** 2) / (tan(part1) ** 2)))
+            1 - 0.5 * ((sin(part2) ** 2) / (sin(part1) ** 2) + (tan(part2) ** 2) / (tan(part1) ** 2)))
     kteta_eG = Ta_eG / Ta_n
 
     # absorbed solar radiation
     absorbed_radiation_Wperm2 = M * Ta_n * (
-        kteta_B * I_direct * Rb + kteta_D * I_diffuse * (1 + cos(tilt)) / 2 + kteta_eG * I_sol * Pg * (
+            kteta_B * I_direct * Rb + kteta_D * I_diffuse * (1 + cos(tilt)) / 2 + kteta_eG * I_sol * Pg * (
             1 - cos(tilt)) / 2)  # [W/m2] (5.12.1)
     if absorbed_radiation_Wperm2 < 0:  # when points are 0 and too much losses
-        #print ('the absorbed radiation', absorbed_radiation_Wperm2 ,'is negative, please check calc_absorbed_radiation_PVT')
+        # print ('the absorbed radiation', absorbed_radiation_Wperm2 ,'is negative, please check calc_absorbed_radiation_PVT')
         absorbed_radiation_Wperm2 = 0
 
     return absorbed_radiation_Wperm2
@@ -497,13 +500,13 @@ def optimal_angle_and_tilt(sensors_metadata_clean, latitude, worst_sh, worst_Az,
 
     # calculate the surface area required to install one pv panel on flat roofs with defined tilt angle and array spacing
     surface_area_flat = module_length * (
-        sensors_metadata_clean.array_s / 2 + module_length * [cos(optimal_angle_flat)])
+            sensors_metadata_clean.array_s / 2 + module_length * [cos(optimal_angle_flat)])
 
     # calculate the pv module area within the area of each sensor point
     sensors_metadata_clean['area_module'] = np.where(sensors_metadata_clean['tilt'] >= 5,
                                                      sensors_metadata_clean.AREA_m2,
                                                      module_length ** 2 * (
-                                                         sensors_metadata_clean.AREA_m2 / surface_area_flat))
+                                                             sensors_metadata_clean.AREA_m2 / surface_area_flat))
 
     # categorize the sensors by surface_azimuth, B, GB
     result = np.vectorize(solar_equations.calc_categoriesroof)(sensors_metadata_clean.surface_azimuth,
@@ -692,7 +695,7 @@ def calc_Cinv_pv(total_module_area_m2, locator, technology=0):
     :param P_peak: installed capacity of PV module [kW]
     :return InvCa: capital cost of the installed PV module [CHF/Y]
     """
-    PV_cost_data = pd.read_excel(locator.get_supply_systems(), sheet_name="PV")
+    PV_cost_data = pd.read_excel(locator.get_database_supply_systems(), sheet_name="PV")
     technology_code = list(set(PV_cost_data['code']))
     PV_cost_data[PV_cost_data['code'] == technology_code[technology]]
     nominal_efficiency = PV_cost_data[PV_cost_data['code'] == technology_code[technology]]['PV_n'].max()
@@ -715,10 +718,10 @@ def calc_Cinv_pv(total_module_area_m2, locator, technology=0):
     InvC = Inv_a + Inv_b * (P_nominal_W) ** Inv_c + (Inv_d + Inv_e * P_nominal_W) * log(P_nominal_W)
 
     Capex_a_PV_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-    Opex_fixed_PV_USD = Capex_a_PV_USD * Inv_OM
+    Opex_fixed_PV_USD = InvC * Inv_OM
     Capex_PV_USD = InvC
 
-    return Capex_a_PV_USD, Opex_fixed_PV_USD, Capex_PV_USD
+    return Capex_a_PV_USD, Opex_fixed_PV_USD, Capex_PV_USD, P_nominal_W
 
 
 # remuneration scheme
@@ -760,21 +763,26 @@ def main(config):
     print('Running photovoltaic with solar-window-solstice = %s' % config.solar.solar_window_solstice)
     print('Running photovoltaic with type-pvpanel = %s' % config.solar.type_pvpanel)
 
-    list_buildings_names = locator.get_zone_building_names()
-
-    hourly_results_per_building = gdf.from_file(locator.get_zone_geometry())
-    latitude, longitude = get_lat_lon_projected_shapefile(hourly_results_per_building)
+    buildings_names = locator.get_zone_building_names()
+    zone_geometry_df = gdf.from_file(locator.get_zone_geometry())
+    latitude, longitude = get_lat_lon_projected_shapefile(zone_geometry_df)
 
     # list_buildings_names =['B026', 'B036', 'B039', 'B043', 'B050'] for missing buildings
-    for building in list_buildings_names:
-        radiation_path = locator.get_radiation_building(building_name=building)
-        radiation_metadata = locator.get_radiation_metadata(building_name=building)
-        calc_PV(locator=locator, config=config, radiation_path=radiation_path, metadata_csv=radiation_metadata,
-                latitude=latitude, longitude=longitude, weather_path=config.weather, building_name=building)
+    weather_data = epwreader.epw_reader(locator.get_weather_file())
+    date_local = solar_equations.calc_datetime_local_from_weather_file(weather_data, latitude, longitude)
+
+    n = len(buildings_names)
+    cea.utilities.parallel.vectorize(calc_PV, config.get_number_of_processes())(repeat(locator, n),
+                                                                                repeat(config, n),
+                                                                                repeat(latitude, n),
+                                                                                repeat(longitude, n),
+                                                                                repeat(weather_data, n),
+                                                                                repeat(date_local, n),
+                                                                                buildings_names)
 
     # aggregate results from all buildings
     aggregated_annual_results = {}
-    for i, building in enumerate(list_buildings_names):
+    for i, building in enumerate(buildings_names):
         hourly_results_per_building = pd.read_csv(locator.PV_results(building))
         if i == 0:
             aggregated_hourly_results_df = hourly_results_per_building
@@ -792,7 +800,6 @@ def main(config):
     # save annual results
     aggregated_annual_results_df = pd.DataFrame(aggregated_annual_results).T
     aggregated_annual_results_df.to_csv(locator.PV_total_buildings(), index=True, float_format='%.2f')
-
 
 
 if __name__ == '__main__':

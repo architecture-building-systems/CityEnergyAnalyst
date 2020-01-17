@@ -3,7 +3,6 @@ from __future__ import division
 import numpy as np
 import pandas as pd
 import cea.config
-import cea.globalvar
 import cea.inputlocator
 
 from cea.optimization.prices import Prices as Prices
@@ -16,6 +15,7 @@ from cea.optimization.constants import PUMP_ETA
 from cea.optimization.lca_calculations import LcaCalculations
 from cea.constants import HOURS_IN_YEAR
 from cea.technologies.heat_exchangers import calc_Cinv_HEX_hisaka
+from cea.utilities import epwreader
 
 __author__ = "Lennart Rogenhofer, Shanshan Hsieh"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -32,8 +32,8 @@ class Thermal_Network(object):
     Storage of information for the network currently being calculated.
     """
 
-    def __init__(self, locator, config, network_type, gv):
-        # sotre key variables
+    def __init__(self, locator, config, network_type):
+        # store key variables
         self.locator = locator
         self.config = config
         self.network_type = network_type
@@ -48,13 +48,11 @@ class Thermal_Network(object):
         self.cost_storage = None
         self.building_names = None
         self.number_of_buildings_in_district = 0
-        self.gv = gv
         self.prices = None
         self.network_features = None
         self.layout = 0
         self.has_loops = None
         self.populations = {}
-        self.all_individuals = None
         self.generation_number = 0
         self.building_index = []
         self.individual_number = 0
@@ -63,6 +61,16 @@ class Thermal_Network(object):
         self.full_heating_systems = ['ahu', 'aru', 'shu', 'ww']
         self.full_cooling_systems = ['ahu', 'aru',
                                      'scu']  # Todo: add 'data', 're' here once the are available disconnectedly
+        self.substation_cooling_systems = config.thermal_network_optimization.substation_cooling_systems
+        self.substation_heating_systems = config.thermal_network_optimization.substation_heating_systems
+        self.__weather_data = None
+
+    @property
+    def weather_data(self):
+        if self.__weather_data is None:
+            weather_path = self.locator.get_weather_file()
+            self.__weather_data = epwreader.epw_reader(weather_path)[['year', 'drybulb_C', 'wetbulb_C']]
+        return self.__weather_data
 
 
 def calc_Capex_a_network_pipes(network_info):
@@ -86,25 +94,25 @@ def calc_Ctot_network_pump(network_info):
     :returns Opex_a_fixed: annual fixed operation and maintenance cost
     :returns Opex_var: annual variable operation cost
     """
-    network_type = network_info.config.thermal_network.network_type
+    network_type = network_info.network_type
 
     # read in node mass flows
-    df = pd.read_csv(network_info.locator.get_edge_mass_flow_csv_file(network_type, ''), index_col=0)
+    df = pd.read_csv(network_info.locator.get_nominal_edge_mass_flow_csv_file(network_type, ''), index_col=0)
     mdotA_kgpers = np.array(df)
     mdotA_kgpers = np.nan_to_num(mdotA_kgpers)
     mdotnMax_kgpers = np.amax(mdotA_kgpers)  # find highest mass flow of all nodes at all timesteps (should be at plant)
     # read in total pressure loss in kW
-    deltaP_kW = pd.read_csv(network_info.locator.get_thermal_network_layout_pressure_drop_kw_file(network_type,''))
+    deltaP_kW = pd.read_csv(network_info.locator.get_network_energy_pumping_requirements_file(network_type, ''))
     deltaP_kW = deltaP_kW['pressure_loss_total_kW'].sum()
 
     Opex_var = deltaP_kW * 1000 * network_info.prices.ELEC_PRICE
 
-    if network_info.config.thermal_network.network_type == 'DH':
+    if network_info.network_type == 'DH':
         deltaPmax = np.max(network_info.network_features.DeltaP_DHN)
     else:
         deltaPmax = np.max(network_info.network_features.DeltaP_DCN)
 
-    Capex_a, Opex_a_fixed, Capex_total = pumps.calc_Cinv_pump(deltaPmax, mdotnMax_kgpers, PUMP_ETA, network_info.config,
+    Capex_a, Opex_a_fixed, Capex_total = pumps.calc_Cinv_pump(deltaPmax, mdotnMax_kgpers, PUMP_ETA,
                                                network_info.locator, 'PU1')  # investment of Machinery
 
     return Capex_a, Opex_a_fixed, Opex_var
@@ -114,14 +122,14 @@ def calc_Ctot_cooling_plants(network_info):
     """
     Calculates costs of centralized cooling plants (chillers and cooling towers).
 
-    :param network_info: an object storing information of the current network
+    :param NetworkInfo network_info: an object storing information of the current network
     :return:
     """
 
     # read in plant heat requirement
     plant_heat_hourly_kWh = pd.read_csv(
         network_info.locator.get_thermal_network_plant_heat_requirement_file(
-            network_info.network_type, network_info.config.thermal_network_optimization.network_names))
+            network_info.network_type, network_info.network_names))
     # read in number of plants
     number_of_plants = len(plant_heat_hourly_kWh.columns)
 
@@ -167,7 +175,7 @@ def calc_Ctot_cooling_plants(network_info):
                                                                 network_info.full_cooling_systems)
 
                 # calculate the COP based on the actually supplied demands.
-                COP_plant, COP_chiller = VCCModel.calc_VCC_COP(network_info.config, supplied_systems, centralized=True)
+                COP_plant, COP_chiller = VCCModel.calc_VCC_COP(network_info.weather_data, supplied_systems, centralized=True)
                 Opex_var_plant += abs(
                     plant_heat_yearly_kWh) / COP_plant * 1000 * network_info.prices.ELEC_PRICE
             else:
@@ -182,7 +190,7 @@ def calc_Ctot_cooling_plants(network_info):
                     #     ... etc.
                     supplied_systems = find_supplied_systems_t(network_info, t, building_demand,
                                                                network_info.full_cooling_systems)
-                    COP_plant, COP_chiller = VCCModel.calc_VCC_COP(network_info.config, supplied_systems,
+                    COP_plant, COP_chiller = VCCModel.calc_VCC_COP(network_info.weather_data, supplied_systems,
                                                                    centralized=True)
                     # calculate cost of producing cooling
                     column_name = plant_heat_original_kWh.columns[plant_number]
@@ -191,10 +199,8 @@ def calc_Ctot_cooling_plants(network_info):
 
             # calculate equipment cost of chiller and cooling tower
 
-            Capex_a_chiller_USD, Opex_fixed_chiller, _ = VCCModel.calc_Cinv_VCC(peak_demand_W, network_info.locator,
-                                                      network_info.config, 'CH1')
-            Capex_a_CT_USD, Opex_fixed_CT, _ = CTModel.calc_Cinv_CT(peak_demand_W, network_info.locator,
-                                               network_info.config, 'CT1')
+            Capex_a_chiller_USD, Opex_fixed_chiller, _ = VCCModel.calc_Cinv_VCC(peak_demand_W, network_info.locator, 'CH1')
+            Capex_a_CT_USD, Opex_fixed_CT, _ = CTModel.calc_Cinv_CT(peak_demand_W, network_info.locator, 'CT1')
         # sum over all plants
         Capex_a_chiller += Capex_a_chiller_USD
         Capex_a_CT += Capex_a_CT_USD
@@ -207,7 +213,7 @@ def calc_Ctot_cs_disconnected_loads(network_info):
     """
     Calculates the space cooling cost of disconnected loads at the building level.
     The calculation for entirely disconnected buildings is done in calc_Ctot_cs_disconnected_buildings.
-    :param network_info: an object storing information of the current network
+    :param Thermal_Network network_info: an object storing information of the current network
     :return:
     """
     disconnected_systems = []
@@ -228,7 +234,8 @@ def calc_Ctot_cs_disconnected_loads(network_info):
         supplied_systems = []
         # iterate through all possible cooling systems
         for system in network_info.full_cooling_systems:
-            if system not in network_info.config.thermal_network.substation_cooling_systems:
+
+            if system not in network_info.substation_cooling_systems:
                 # add system to list of loads that are supplied at building level
                 disconnected_systems.append(system)
         if len(disconnected_systems) > 0:
@@ -255,11 +262,11 @@ def calc_Ctot_cs_disconnected_loads(network_info):
                         peak_demand_kW = disconnected_demand_t.abs().max()  # calculate peak demand of all disconnected systems
                         disconnected_demand_t_sum = disconnected_demand_t.abs().sum()
                     print 'Calculate cost of disconnected loads in building ', building
-                    if network_info.config.thermal_network_optimization.yearly_cost_calculations:
+                    if network_info.yearly_cost_calculations:
                         supplied_systems = find_supplied_systems_annual(network_info,
                                                                         building_demand,
                                                                         supplied_systems)
-                        COP_chiller_system, COP_chiller = VCCModel.calc_VCC_COP(network_info.config, system_string,
+                        COP_chiller_system, COP_chiller = VCCModel.calc_VCC_COP(network_info.weather_data, system_string,
                                                                                 centralized=False)
                         # calculate cost of producing cooling
                         Opex_var_system += disconnected_demand_t_sum / COP_chiller_system * 1000 * network_info.prices.ELEC_PRICE
@@ -274,7 +281,7 @@ def calc_Ctot_cs_disconnected_loads(network_info):
                                                                        building_demand,
                                                                        supplied_systems)
                             if len(supplied_systems) > 0:
-                                COP_chiller_system, COP_chiller = VCCModel.calc_VCC_COP(network_info.config,
+                                COP_chiller_system, COP_chiller = VCCModel.calc_VCC_COP(network_info.weather_data,
                                                                                         supplied_systems,
                                                                                         centralized=False)
                                 # calculate cost of producing cooling
@@ -285,11 +292,9 @@ def calc_Ctot_cs_disconnected_loads(network_info):
                         Q_peak_CT_kW = max(Q_CT_kW)
 
                     # calculate disconnected systems cost of disconnected loads. Assumes that all these loads are supplied by one chiller, unless this exceeds maximum chiller capacity of database
-                    Capex_a_chiller_USD, Opex_fixed_chiller, _ = VCCModel.calc_Cinv_VCC(peak_demand_kW * 1000,
-                                                              network_info.locator,
-                                                              network_info.config, 'CH3')
+                    Capex_a_chiller_USD, Opex_fixed_chiller, _ = VCCModel.calc_Cinv_VCC(peak_demand_kW * 1000, network_info.locator, 'CH3')
                     Capex_a_CT_USD, Opex_fixed_CT, _ = CTModel.calc_Cinv_CT(Q_peak_CT_kW * 1000, network_info.locator,
-                                                       network_info.config, 'CT1')
+                                                                            'CT1')
                     # sum up costs
                     dis_opex += Opex_var_system + Opex_fixed_chiller + Opex_fixed_CT
                     dis_capex += Capex_a_chiller_USD + Capex_a_CT_USD
@@ -384,12 +389,12 @@ def calc_Ctot_cs_disconnected_buildings(network_info):
                 # calculate peak demand
                 peak_demand_kW = demand_hourly_kWh.abs().max()
                 print 'Calculate cost of disconnected building production at building ', building
-                if network_info.config.thermal_network_optimization.yearly_cost_calculations:
+                if network_info.yearly_cost_calculations:
                     demand_annual_kWh = demand_hourly_kWh.sum()
                     # calculate plant COP according to the cold water supply temperature in SG context
                     supplied_systems = find_supplied_systems_annual(network_info, building_demand,
                                                                     ['ahu', 'aru', 'scu'], dis_build=True)
-                    COP_chiller_system, COP_chiller = VCCModel.calc_VCC_COP(network_info.config, supplied_systems,
+                    COP_chiller_system, COP_chiller = VCCModel.calc_VCC_COP(network_info.weather_data, supplied_systems,
                                                                             centralized=False)
                     # calculate cost of producing cooling
                     Opex_var_system = demand_annual_kWh / COP_chiller_system * 1000 * network_info.prices.ELEC_PRICE
@@ -402,7 +407,7 @@ def calc_Ctot_cs_disconnected_buildings(network_info):
                                                                    ['ahu', 'aru', 'scu'], dis_build=True)
                         # calculate COP of plant operation in this hour based on supplied loads
                         # calculate plant COP according to the cold water supply temperature in SG context
-                        COP_chiller_system, COP_chiller = VCCModel.calc_VCC_COP(network_info.config, supplied_systems,
+                        COP_chiller_system, COP_chiller = VCCModel.calc_VCC_COP(network_info.weather_data, supplied_systems,
                                                                                 centralized=False)
                         # calculate cost of producing cooling
                         Opex_var_system += abs(demand_hourly_kWh[
@@ -412,11 +417,8 @@ def calc_Ctot_cs_disconnected_buildings(network_info):
                     Q_peak_CT_kW = max(Q_CT_kW)
 
                 # calculate cost of chiller and cooling tower at building level
-                Capex_a_chiller_USD, Opex_fixed_chiller, _ = VCCModel.calc_Cinv_VCC(peak_demand_kW * 1000,
-                                                                             network_info.locator,
-                                                                             network_info.config, 'CH3')
-                Capex_a_CT_USD, Opex_fixed_CT, _ = CTModel.calc_Cinv_CT(Q_peak_CT_kW * 1000, network_info.locator,
-                                                                 network_info.config, 'CT1')
+                Capex_a_chiller_USD, Opex_fixed_chiller, _ = VCCModel.calc_Cinv_VCC(peak_demand_kW * 1000, network_info.locator, 'CH3')
+                Capex_a_CT_USD, Opex_fixed_CT, _ = CTModel.calc_Cinv_CT(Q_peak_CT_kW * 1000, network_info.locator, 'CT1')
                 # sum up costs
                 dis_opex += Opex_var_system + Opex_fixed_chiller + Opex_fixed_CT
                 dis_capex += Capex_a_chiller_USD + Capex_a_CT_USD
@@ -441,16 +443,17 @@ def calc_Ctot_cs_district(network_info):
     Calculates the total costs for cooling of the entire district, which includes the cooling networks and
     disconnected loads & buildings.
     Maintenance of network neglected, see Documentation Master Thesis Lennart Rogenhofer
-    :param network_info: an object storing information of the current network
+    :param Thermal_Network network_info: an object storing information of the current network
     :return:
     """
     # read in general values for cost calculation
     network_info.config.detailed_electricity_pricing = False # ensure getting the average value
     detailed_electricity_pricing = network_info.config.detailed_electricity_pricing
-    lca = LcaCalculations(network_info.locator, detailed_electricity_pricing)
-    network_info.prices = Prices(network_info.locator, network_info.config)
-    network_info.prices.ELEC_PRICE = np.mean(lca.ELEC_PRICE, dtype=np.float64)  # [USD/kWh]
-    network_info.network_features = NetworkOptimizationFeatures(network_info.config, network_info.locator)
+    network_info.prices = Prices(network_info.locator, detailed_electricity_pricing)
+    network_info.prices.ELEC_PRICE = np.mean(network_info.prices.ELEC_PRICE, dtype=np.float64)  # [USD/W]
+    network_info.network_features = NetworkOptimizationFeatures(district_heating_network=network_info.network_type=="DH",
+                                                                district_cooling_network=network_info.network_type=="DC",
+                                                                locator=network_info.locator)
     cost_storage_df = pd.DataFrame(index=network_info.cost_info, columns=[0])
 
     ## calculate network costs
@@ -535,7 +538,7 @@ def calc_network_size(network_info):
     network_info = pd.read_csv(
         network_info.locator.get_thermal_network_edge_list_file(network_info.network_type,
                                                                 network_info.network_name))
-    length_m = network_info['pipe length'].sum()
+    length_m = network_info['length_m'].sum()
     average_diameter_m = network_info['D_int_m'].mean()
     return float(length_m), float(average_diameter_m)
 
@@ -549,14 +552,12 @@ def main(config):
 
     # initialize key variables
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    gv = cea.globalvar.GlobalVariables()
     network_type = config.thermal_network.network_type
-    network_info = Thermal_Network(locator, config, network_type, gv)
+    network_info = Thermal_Network(locator, config, network_type)
 
     print('\n NOTE: This function is only designed to output costs of a "centralized network" '
           'with "all buildings connected". \n')
     print('Running thermal network cost calculation for scenario %s' % config.scenario)
-    print('Running thermal network cost calculation with weather file %s' % config.weather)
     print('Network costs of %s:' % network_type)
 
 

@@ -1,0 +1,70 @@
+{% macro plot_widget(dashboard_index, plot_index, plot) %}
+<div class="col-lg-4 col-md-12 col-sm-12 col-xs-12 plot-widget">
+  <div class="x_panel cea-plot"
+       data-cea-plot-index="{{ plot_index }}"
+       data-cea-dashboard-index="{{ dashboard_index }}">
+    <div class="x_title">
+      <h4 class="navbar-left">
+        <a href="{{ url_for('plots_blueprint.route_plot', dashboard_index=dashboard_index, plot_index=plot_index) }}">
+          {{ plot.title }}
+        </a>
+      </h4>
+      <small>{{ plot.parameters['scenario-name'] }}</small>
+      <ul class="nav navbar-right panel_toolbox">
+        <li>
+          <a data-toggle="modal"
+             data-dashboard-index="{{ dashboard_index }}" data-plot-index="{{ plot_index }}"
+             data-target="#cea-dashboard-replace-plot">
+            <span data-toggle="tooltip" title="Change plot">
+              <i class="fa fa-retweet"></i>
+            </span>
+          </a>
+        </li>
+        <li>
+          <a id="table-btn-{{ plot_index }}"
+             data-plot-title="{{ plot.title }}" data-dashboard-index="{{ dashboard_index }}"
+             data-plot-index="{{ plot_index }}"
+             onclick="open_table(this)" role="button" aria-expanded="false" style="display: none">
+            <span data-toggle="tooltip" title="Show table">
+              <i class="fa fa-table"></i>
+            </span>
+          </a>
+        </li>
+        <li>
+          <a data-toggle="modal"
+             data-dashboard-index="{{ dashboard_index }}" data-plot-index="{{ plot_index }}" data-toggle="modal"
+             data-target="#cea-dashboard-edit-plot"
+             role="button" aria-expanded="false">
+            <span data-toggle="tooltip" title="Edit plot parameters">
+              <i class="fa fa-wrench"></i>
+            </span>
+          </a>
+        </li>
+        <li>
+          <a href="{{ url_for('plots_blueprint.route_remove_plot_from_dashboard', dashboard_index=dashboard_index,
+              plot_index=plot_index) }}">
+            <span data-toggle="tooltip" title="Remove plot">
+              <i class="fa fa-close"></i>
+            </span>
+          </a>
+        </li>
+      </ul>
+      <div class="clearfix"></div>
+    </div>
+    <div class="x_content" id="x_content-{{ dashboard_index }}-{{ plot_index }}" style="height: 450px;">
+      <p>Loading plot...</p>
+    </div>
+    <div class="x_content table-dialog" id="x_table-{{ dashboard_index }}-{{ plot_index }}" title="{{ plot.title }}"></div>
+  </div>
+</div>
+{% endmacro %}
+
+{% macro plot_empty_widget() %}
+<div class="col-lg-4 col-md-12 col-sm-12 col-xs-12 plot-widget">
+  <div class="x_panel">
+    <div class="x_content">
+       <a href="#" data-toggle="modal" data-target="#cea-dashboard-add-plot">Add plot...</a>
+    </div>
+  </div>
+</div>
+{% endmacro %}

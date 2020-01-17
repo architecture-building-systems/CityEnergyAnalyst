@@ -1,0 +1,402 @@
+<div id="{{ hash }}" style="height: 100%; position: relative;"></div>
+<div id="map-tooltip-{{ hash }}"></div>
+
+<style>
+  #map-tooltip-{{ hash }}:empty {display: none;}
+  #map-tooltip-{{ hash }} {
+    font-family: Helvetica, Arial, sans-serif;
+    position: absolute;
+    padding: 4px;
+    margin: 8px;
+    background: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    width: 150px;
+    font-size: 10px;
+    z-index: 9;
+    pointer-events: none;
+  }
+  .map-plot-label {
+    font-size: 12px;
+  }
+  #layers-group-{{ hash }} {
+    display: inline-block;
+    text-align: center;
+    position: absolute;
+    left: 50%;
+    top: 15px;
+    transform: translateX(-50%);
+    z-index: 1;
+    background: rgba(255,255,255,0.9);
+  }
+
+  .mapboxgl-ctrl-3d {
+    background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMCIgaGVpZ2h0PSIzMCI+ICAgIDx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkeT0iLjM1ZW0iIHN0eWxlPSJmb250LXNpemU6IDE0cHg7IGZvbnQtZmFtaWx5OiAnSGVsdmV0aWNhIE5ldWUnLEFyaWFsLEhlbHZldGljYSxzYW5zLXNlcmlmOyBmb250LXdlaWdodDogYm9sZDsgdGV4dC1hbmNob3I6IG1pZGRsZTsiPjNEPC90ZXh0Pjwvc3ZnPg==);
+  }
+
+  .mapboxgl-ctrl-2d {
+    background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMCIgaGVpZ2h0PSIzMCI+ICAgIDx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkeT0iLjM1ZW0iIHN0eWxlPSJmb250LXNpemU6IDE0cHg7IGZvbnQtZmFtaWx5OiAnSGVsdmV0aWNhIE5ldWUnLEFyaWFsLEhlbHZldGljYSxzYW5zLXNlcmlmOyBmb250LXdlaWdodDogYm9sZDsgdGV4dC1hbmNob3I6IG1pZGRsZTsiPjJEPC90ZXh0Pjwvc3ZnPg==);
+  }
+
+  .mapboxgl-ctrl-recenter {
+    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAxUlEQVR42mNkwA/WQ+lAXAoYaWEAFxDnAnEUEGtBxa4B8TIgngzE3/AZoAjE24H4ARD3APEpqLgZEJcAsQIQewLxfWwGgGw+B8QrgLgBh4tB4hFAbARzCbIB5UDsCMQeUL4FEKdB2bOA+ASUvQOI9wNxJ7oBF4G4GIj3QDUfBGI2qNwvILaHGuICxL1ArA8zABbSPkAsDMSfgHgeECeiOX8+ECcBMR8QvwXiLVQzgGIvUC0QKY5GEKAoISG7hOykjA5onxsB4UA/bwmOYBwAAAAASUVORK5CYII=);
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+
+  .mapboxgl-ctrl-map-style {
+    background-image: url(data:image/svg+xml;base64,PHN2ZyBhcmlhLWhpZGRlbj0idHJ1ZSIgZm9jdXNhYmxlPSJmYWxzZSIgZGF0YS1wcmVmaXg9ImZhcyIgZGF0YS1pY29uPSJhZGp1c3QiIGNsYXNzPSJzdmctaW5saW5lLS1mYSBmYS1hZGp1c3QgZmEtdy0xNiIgcm9sZT0iaW1nIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cGF0aCBmaWxsPSJjdXJyZW50Q29sb3IiIGQ9Ik04IDI1NmMwIDEzNi45NjYgMTExLjAzMyAyNDggMjQ4IDI0OHMyNDgtMTExLjAzNCAyNDgtMjQ4UzM5Mi45NjYgOCAyNTYgOCA4IDExOS4wMzMgOCAyNTZ6bTI0OCAxODRWNzJjMTAxLjcwNSAwIDE4NCA4Mi4zMTEgMTg0IDE4NCAwIDEwMS43MDUtODIuMzExIDE4NC0xODQgMTg0eiI+PC9wYXRoPjwvc3ZnPg==);
+    background-size: 50%;
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+
+  .mapboxgl-ctrl-icon {
+    margin: auto;
+  }
+</style>
+<script src="https://unpkg.com/deck.gl@latest/dist.min.js"></script>
+<script src='https://api.tiles.mapbox.com/mapbox-gl-js/v1.2.0/mapbox-gl.js'></script>
+<link href='https://api.tiles.mapbox.com/mapbox-gl-js/v1.2.0/mapbox-gl.css' rel='stylesheet' />
+<script src='https://npmcdn.com/@turf/turf/turf.min.js'></script>
+<script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+<script>
+    render({{ edges }}, {{ nodes }}, {{ zone }}, {{ district }}, "{{ hash }}");
+
+    function render(edges, nodes, zone, district, hash) {
+        const lightMap = {
+            "version": 8,
+            "sources": {
+                "osm-tiles": {
+                    "type": "raster",
+                    "tiles": [
+                        "http://a.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                        "http://b.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                        "http://b.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    ],
+                    "tileSize": 256,
+                    "attribution": "Map data \u00A9 OpenStreetMap contributors"
+                }
+            },
+            "layers": [{
+                "id": "osm-tiles",
+                "type": "raster",
+                "source": "osm-tiles",
+                "minzoom": 0,
+                "maxzoom": 22
+            }]
+        };
+        const darkMap = {
+            "version": 8,
+            "sources": {
+                "carto-tiles": {
+                    "type": "raster",
+                    "tiles": [
+                        "https://cartodb-basemaps-a.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png",
+                        "https://cartodb-basemaps-b.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png",
+                        "https://cartodb-basemaps-c.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png"
+                    ],
+                    "tileSize": 256,
+                    "attribution": "Map tiles by Carto, under CC BY 3.0. Data by OpenStreetMap, under ODbL."
+                }
+            },
+            "layers": [
+                {
+                    "id": "carto-tiles",
+                    "type": "raster",
+                    "source": "carto-tiles",
+                    "minzoom": 0,
+                    "maxzoom": 22
+                }
+            ]
+        };
+
+        let currentViewState = {
+            latitude: 0,
+            longitude: 0,
+            zoom: 0, bearing: 0, pitch: 0
+        };
+        const deckgl = new deck.DeckGL({
+            container: hash,
+            mapStyle: lightMap,
+            viewState: currentViewState,
+            layers: [],
+            onViewStateChange: ({viewState}) => {
+                currentViewState = viewState;
+                deckgl.setProps({viewState: currentViewState});
+            }
+        });
+
+        // Center Camera
+        let bbox = zone.bbox;
+        let cameraOptions = deckgl.getMapboxMap().cameraForBounds(
+            [[bbox[0], bbox[1]], [bbox[2], bbox[3]]],
+            {maxZoom: 18}
+        );
+        currentViewState = {
+            ...currentViewState,
+            zoom: cameraOptions.zoom,
+            latitude: cameraOptions.center.lat,
+            longitude: cameraOptions.center.lng
+        };
+        deckgl.setProps({viewState: currentViewState});
+
+        init();
+
+        function init() {
+            // Disable context menu
+            document.getElementById(hash).oncontextmenu = function(){return false};
+
+            setupButtons();
+            redraw();
+        }
+
+        function setupButtons() {
+            class dToggle {
+                constructor() {
+                    this._extruded = false;
+                }
+                onAdd(map) {
+                    this._map = map;
+
+                    this._btn = document.createElement("button");
+                    this._btn.id = `3d-button-${ hash }`;
+                    this._btn.className = "mapboxgl-ctrl-icon mapboxgl-ctrl-3d";
+                    this._btn.type = "button";
+                    this._btn.setAttribute("data-extruded", this._extruded);
+                    this._btn.setAttribute("data-placement", "left");
+                    this._btn.setAttribute("data-container", "body");
+                    this._btn.setAttribute("data-trigger", "hover");
+                    this._btn.setAttribute("title", "Toggle 3D");
+                    this._btn.onclick = function () {
+                        this._extruded = !this._extruded;
+                        this.setAttribute("data-extruded", this._extruded);
+                        let pitch;
+                        let bearing;
+                        if (this._extruded) {
+                            pitch = 45;
+                        } else {
+                            pitch = 0;
+                            bearing = 0;
+                        }
+
+                        let className = this._extruded ? "mapboxgl-ctrl-icon mapboxgl-ctrl-2d" : "mapboxgl-ctrl-icon mapboxgl-ctrl-3d";
+                        document.getElementById(`3d-button-${ hash }`).setAttribute('class', className);
+                        deckgl.setProps({ controller: {dragRotate: this._extruded},
+                            viewState:{...currentViewState, pitch: pitch, bearing: bearing, transitionDuration: 300} });
+                        redraw();
+                    };
+
+                    this._container = document.createElement("div");
+                    this._container.className = "mapboxgl-ctrl-group mapboxgl-ctrl";
+                    this._container.appendChild(this._btn);
+
+                    return this._container;
+                }
+
+                onRemove() {
+                    this._container.parentNode.removeChild(this._container);
+                    this._map = undefined;
+                }
+            }
+
+            class darkToggle {
+                constructor() {
+                    this._dark = false;
+                }
+                onAdd(map) {
+                    this._map = map;
+
+                    this._btn = document.createElement("button");
+                    this._btn.id = "dark-button";
+                    this._btn.className = "mapboxgl-ctrl-icon mapboxgl-ctrl-map-style";
+                    this._btn.type = "button";
+                    this._btn.setAttribute("data-placement", "left");
+                    this._btn.setAttribute("data-container", "body");
+                    this._btn.setAttribute("data-trigger", "hover");
+                    this._btn.setAttribute("title", "Toggle Dark map");
+                    this._btn.onclick = function() {
+                        this._dark = !this._dark;
+                        if (this._dark) {
+                            deckgl.getMapboxMap().setStyle(darkMap);
+                        } else {
+                            deckgl.getMapboxMap().setStyle(lightMap);
+                        }
+                    };
+
+                    this._container = document.createElement("div");
+                    this._container.className = "mapboxgl-ctrl-group mapboxgl-ctrl";
+                    this._container.appendChild(this._btn);
+
+                    return this._container;
+                }
+
+                onRemove() {
+                    this._container.parentNode.removeChild(this._container);
+                    this._map = undefined;
+                }
+            }
+
+            class recenterMap {
+                onAdd(map) {
+                    this._map = map;
+
+                    this._btn = document.createElement("button");
+                    this._btn.id = `recenter-button-${ hash }`;
+                    this._btn.className = "mapboxgl-ctrl-icon mapboxgl-ctrl-recenter";
+                    this._btn.type = "button";
+                    this._btn.setAttribute("data-placement", "left");
+                    this._btn.setAttribute("data-container", "body");
+                    this._btn.setAttribute("data-trigger", "hover");
+                    this._btn.setAttribute("title", "Center to location");
+                    this._btn.onclick = function () {
+                        deckgl.setProps({
+                            viewState:{
+                                ...currentViewState,
+                                zoom: cameraOptions.zoom,
+                                latitude: cameraOptions.center.lat,
+                                longitude: cameraOptions.center.lng,
+                                transitionDuration: 300
+                            }
+                        });
+                    };
+
+                    this._container = document.createElement("div");
+                    this._container.className = "mapboxgl-ctrl-group mapboxgl-ctrl";
+                    this._container.appendChild(this._btn);
+
+                    return this._container;
+                }
+
+                onRemove() {
+                    this._container.parentNode.removeChild(this._container);
+                    this._map = undefined;
+                }
+            }
+
+            deckgl.getMapboxMap().addControl(new dToggle(), 'top-right');
+            deckgl.getMapboxMap().addControl(new darkToggle(), 'top-right');
+            deckgl.getMapboxMap().addControl(new recenterMap(), 'top-right');
+            deckgl.setProps({
+                onDragStart: (info, event) => {
+                    let dToggleButton = document.getElementById(`3d-button-${ hash }`);
+                    if (event.rightButton && dToggleButton.dataset.extruded==='false') {
+                        dToggleButton.click();
+                    }
+                }
+            });
+        }
+
+        function redraw() {
+            let extruded = document.getElementById(`3d-button-${ hash }`).dataset.extruded === 'true';
+
+            // Add zone layer
+            let layers = [new deck.GeoJsonLayer({
+                id: 'zone',
+                data: zone,
+                opacity: 0.5,
+                wireframe: true,
+                filled: true,
+                extruded: extruded,
+
+                getElevation: f => f.properties['height_ag'],
+                getFillColor: f => JSON.parse(f.properties["_FillColor"]),
+
+                pickable: true,
+                autoHighlight: true,
+                highlightColor: [255, 255, 0, 128],
+
+                onHover: updateTooltip
+            })];
+
+            if (district) layers.push(new deck.GeoJsonLayer({
+                id: 'district',
+                data: district,
+                opacity: 0.3,
+                wireframe: true,
+                filled: true,
+                extruded: extruded,
+                visible: true,
+
+                getElevation: f => f.properties['height_ag'],
+                getFillColor: f => JSON.parse(f.properties["_FillColor"]),
+
+                pickable: true,
+                autoHighlight: true,
+                highlightColor: [255, 255, 0, 128],
+
+                onHover: updateTooltip
+            }));
+            if (edges) layers.push(new deck.GeoJsonLayer({
+                id: 'edges',
+                data: edges,
+                lineWidthScale: 1,  // line width is scaled by the plot object
+
+                getFillColor: f => JSON.parse(f.properties["_FillColor"]),
+                getLineColor: f => JSON.parse(f.properties["_FillColor"]),
+                getLineWidth: f => f.properties["_LineWidth"],
+
+                pickable: true,
+                autoHighlight: true,
+                highlightColor: [255, 255, 0, 128],
+                onHover: updateTooltip
+            }));
+
+            if (nodes) layers.push(new deck.GeoJsonLayer({
+                id: 'nodes',
+                data: nodes,
+                getRadius: f => f.properties["_Radius"],
+                getFillColor: f => JSON.parse(f.properties["_FillColor"]),
+                pickable: true,
+                autoHighlight: true,
+                highlightColor: [255, 255, 0, 128],
+                onHover: updateTooltip
+            }));
+
+            deckgl.setProps({layers})
+        }
+
+        function updateTooltip({x, y, object, layer}) {
+            const tooltip = document.getElementById(`map-tooltip-${ hash }`);
+            if (object) {
+                tooltip.style.top = `${y}px`;
+                tooltip.style.left = `${x}px`;
+                let innerHTML = '';
+
+                if (layer.id === 'zone' || layer.id === 'district') {
+                    Object.keys(object.properties).forEach(function(key) {
+                        if (key.startsWith("_")) { return null; }
+                        innerHTML += `<div><b>${key}</b>: ${object.properties[key]}</div>`;
+                    });
+                    let area = turf.area(object);
+                    innerHTML += `<br><div><b>area</b>: ${Math.round(area * 1000) / 1000}m<sup>2</sup></div>` +
+                        `<div><b>volume</b>: ${Math.round(area * object.properties['height_ag'] * 1000) / 1000}m<sup>3</sup></div>`;
+                } else if (layer.id === 'edges') {
+                    Object.keys(object.properties).forEach(function(key) {
+                        const value = object.properties[key];
+                        if (key.startsWith("_")) { return null; }
+                        if (value === null) { return null; }
+                        if (value === "NONE") { return null; }
+                        innerHTML += `<div><b>${key}</b>: ${value}</div>`;
+                    });
+                } else if (layer.id === 'nodes') {
+                    Object.keys(object.properties).forEach(function(key) {
+                        const value = object.properties[key];
+                        if (key.startsWith("_")) { return null; }
+                        if (value === null) { return null; }
+                        if (value === "NONE") { return null; }
+                        innerHTML += `<div><b>${key}</b>: ${value}</div>`;
+                    });
+                } else {
+                    Object.keys(object.properties).forEach(function(key) {
+                        innerHTML += `<div><b>${key}</b>: ${object.properties[key]}</div>`;
+                    });
+                }
+
+                tooltip.innerHTML = innerHTML;
+            } else {
+                tooltip.innerHTML = '';
+            }
+        }
+    }
+</script>

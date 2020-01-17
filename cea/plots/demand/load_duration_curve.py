@@ -31,23 +31,25 @@ class LoadDurationCurvePlot(cea.plots.demand.DemandPlotBase):
 
     @property
     def layout(self):
-        return go.Layout(xaxis=dict(title='Duration Normalized [%]', domain=[0, 1]),
-                         yaxis=dict(title='Load [kW]', domain=[0.0, 0.7]), showlegend=True)
+        return go.Layout(xaxis=dict(title='Duration Normalized [%]'),
+                         yaxis=dict(title='Load [kW]'), showlegend=True)
 
     def calc_graph(self):
         graph = []
         duration = range(HOURS_IN_YEAR)
         x = [(a - min(duration)) / (max(duration) - min(duration)) * 100 for a in duration]
+        self.analysis_fields = self.remove_unused_fields(self.data, self.analysis_fields)
         for field in self.analysis_fields:
             name = NAMING[field]
             y = self.data.sort_values(by=field, ascending=False)[field].values
-            trace = go.Scatter(x=x, y=y, name=name, fill='tozeroy', opacity=0.8,
+            trace = go.Scattergl(x=x, y=y, name=name, fill='tozeroy', opacity=0.8,
                                marker=dict(color=COLOR[field]))
             graph.append(trace)
         return graph
 
     def calc_table(self):
         # calculate variables for the analysis
+        self.analysis_fields = self.remove_unused_fields(self.data, self.analysis_fields)
         load_peak = self.data[self.analysis_fields].max().round(2).tolist()
         load_total = (self.data[self.analysis_fields].sum() / 1000).round(2).tolist()
 
@@ -117,7 +119,7 @@ def calc_graph(analysis_fields, data_frame):
         name = NAMING[field]
         data_frame_new = data_frame.sort_values(by=field, ascending=False)
         y = data_frame_new[field].values
-        trace = go.Scatter(x=x, y=y, name=name, fill='tozeroy', opacity=0.8,
+        trace = go.Scattergl(x=x, y=y, name=name, fill='tozeroy', opacity=0.8,
                            marker=dict(color=COLOR[field]))
         graph.append(trace)
 
@@ -145,11 +147,14 @@ if __name__ == '__main__':
     # cache = cea.plots.cache.NullPlotCache()
 
     LoadDurationCurvePlot(config.project, {'buildings': None,
-                                           'scenario-name': config.scenario_name},
+                                           'scenario-name': config.scenario_name,
+                                           'timeframe': config.plots.timeframe},
                           cache).plot(auto_open=True)
     LoadDurationCurvePlot(config.project, {'buildings': locator.get_zone_building_names()[0:2],
-                                           'scenario-name': config.scenario_name},
+                                           'scenario-name': config.scenario_name,
+                                           'timeframe': config.plots.timeframe},
                           cache).plot(auto_open=True)
     LoadDurationCurvePlot(config.project, {'buildings': [locator.get_zone_building_names()[0]],
-                                           'scenario-name': config.scenario_name},
+                                           'scenario-name': config.scenario_name,
+                                           'timeframe': config.plots.timeframe},
                           cache).plot(auto_open=True)

@@ -17,6 +17,14 @@ cea.interfaces.cli.cea\_config module
     :undoc-members:
     :show-inheritance:
 
+cea.interfaces.cli.cea\_doc module
+----------------------------------
+
+.. automodule:: cea.interfaces.cli.cea_doc
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cea.interfaces.cli.cli module
 -----------------------------
 

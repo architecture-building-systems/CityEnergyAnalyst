@@ -10,7 +10,6 @@ from shapely.geometry import Point, LineString, MultiPoint, box
 from shapely.ops import split, linemerge, snap
 
 import cea.config
-import cea.globalvar
 import cea.inputlocator
 from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_geographic_coordinate_system
 

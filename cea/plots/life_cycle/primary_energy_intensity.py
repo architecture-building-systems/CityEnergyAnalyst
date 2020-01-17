@@ -22,7 +22,7 @@ class PrimaryEnergyIntensityPlot(cea.plots.life_cycle.LifeCycleAnalysisPlotBase)
 
     @property
     def layout(self):
-        return go.Layout(title=self.title, barmode='stack',
+        return go.Layout(barmode='stack',
                          yaxis=dict(title='Consumption of Fossil Fuels per GFA [MJ Oil-eq/m2.yr]'),
                          xaxis=dict(title='Building Name'))
 

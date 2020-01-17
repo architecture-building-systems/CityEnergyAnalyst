@@ -11,6 +11,7 @@ Subpackages
 
 .. toctree::
 
+    cea.technologies.network_layout
     cea.technologies.solar
     cea.technologies.thermal_network
 

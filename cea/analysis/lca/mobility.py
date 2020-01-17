@@ -8,6 +8,7 @@ import os
 import pandas as pd
 from geopandas import GeoDataFrame as gpdf
 import cea.inputlocator
+import cea.config
 
 __author__ = "Martin Mosteiro Romero"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -59,10 +60,10 @@ def lca_mobility(locator, config):
     # local files
     demand = pd.read_csv(locator.get_total_demand())
     prop_occupancy = gpdf.from_file(locator.get_building_occupancy()).drop('geometry', axis=1)#.set_index('Name')
-    factors_mobility = pd.read_excel(locator.get_data_benchmark(), sheet_name='MOBILITY').drop('Description', axis=1).set_index("code")
+    factors_mobility = pd.read_excel(locator.get_database_lca_mobility(), sheet_name='MOBILITY').drop('Description', axis=1).set_index("code")
 
     # calculate total_LCA_mobility: .csv
-    occupancy_type = prop_occupancy.drop('Name', axis=1).columns.values
+    occupancy_type = filter(lambda o: o != "REFERENCE", prop_occupancy.drop('Name', axis=1).columns.values)
     non_renewable_energy = factors_mobility['NRE_today']
     emissions = factors_mobility['CO2_today']
 
@@ -79,6 +80,7 @@ def lca_mobility(locator, config):
 
     mobility[fields_to_plot].to_csv(locator.get_lca_mobility(), index=False, float_format='%.2f')
 
+
 def main(config):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
@@ -86,6 +88,7 @@ def main(config):
     print("Running mobility with scenario = %s" % config.scenario)
 
     lca_mobility(locator=locator, config=config)
+
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
