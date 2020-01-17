@@ -83,8 +83,8 @@ def calc_temp_this_building(Tww_Ths_supply_C):
 
 def calc_temp_hex_building_side(building_demand_df, heating_configuration):
     # space heating
-
     Ths_return, Ths_supply = calc_compound_Ths(building_demand_df, heating_configuration)
+
     # domestic hot water
     Tww_supply = building_demand_df.Tww_sys_sup_C.values
 
@@ -100,6 +100,7 @@ def substation_main_cooling(locator, total_demand, buildings_name_with_cooling, 
         cooling_system_temperatures_dict = {}
         T_DCN_supply_to_cs_ref = np.zeros(HOURS_IN_YEAR) + 1E6
         T_DCN_supply_to_cs_ref_data = np.zeros(HOURS_IN_YEAR) + 1E6
+        # calc HEX temperatures
         for name in buildings_name_with_cooling:
             buildings_dict[name] = pd.read_csv(locator.get_demand_results_file(name))
 
@@ -869,12 +870,6 @@ def calc_DC_supply(t_0, t_1):  # fixme: keep the correct one
     :param t_1:  current minimum temperature to evaluate
     :return: ``tmin``, new minimum temperature
     """
-    # if t_0 == 0:
-    #     t_0 = 1E6
-    # if t_1 > 0:
-    #     tmin = min(t_0, t_1)
-    # else:
-    #     tmin = t_0
     if t_0 <= 0.0 and t_1 <= 0.0:
         t_0 = 0.0
         t_1 = 0.0
