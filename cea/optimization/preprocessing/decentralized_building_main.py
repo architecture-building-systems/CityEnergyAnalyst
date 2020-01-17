@@ -40,7 +40,7 @@ def disconnected_building_main(locator, total_demand, config, prices, lca):
                                                                             buildings_name_with_cooling,
                                                                             total_demand,
                                                                             config, prices, lca)
-    print "Run decentralized model for buildings"
+    print "done."
 
 
 def main(config):
