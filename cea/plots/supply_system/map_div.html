@@ -104,8 +104,6 @@
 <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v1.2.0/mapbox-gl.js'></script>
 <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v1.2.0/mapbox-gl.css' rel='stylesheet' />
 <script src='https://npmcdn.com/@turf/turf/turf.min.js'></script>
-<script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
 <script>
     render({{ data }}, {{ zone }}, {{ district }}, {{ dc }}, {{ dh }}, "{{ hash }}");
 
@@ -172,7 +170,7 @@
             zoom: 0, bearing: 0, pitch: 0
         };
         let filtered = {dc:{}, dh:{}};
-        const deckgl = new DeckGL({
+        const deckgl = new deck.DeckGL({
             container: hash,
             mapStyle: lightMap,
             viewState: currentViewState,
@@ -245,7 +243,6 @@
                     this._btn.className = "mapboxgl-ctrl-icon mapboxgl-ctrl-3d";
                     this._btn.type = "button";
                     this._btn.setAttribute("data-extruded", this._extruded);
-                    this._btn.setAttribute("data-toggle", "tooltip");
                     this._btn.setAttribute("data-placement", "left");
                     this._btn.setAttribute("data-container", "body");
                     this._btn.setAttribute("data-trigger", "hover");
@@ -293,7 +290,6 @@
                     this._btn.id = "dark-button";
                     this._btn.className = "mapboxgl-ctrl-icon mapboxgl-ctrl-map-style";
                     this._btn.type = "button";
-                    this._btn.setAttribute("data-toggle", "tooltip");
                     this._btn.setAttribute("data-placement", "left");
                     this._btn.setAttribute("data-container", "body");
                     this._btn.setAttribute("data-trigger", "hover");
@@ -328,7 +324,6 @@
                     this._btn.id = `recenter-button-${ hash }`;
                     this._btn.className = "mapboxgl-ctrl-icon mapboxgl-ctrl-recenter";
                     this._btn.type = "button";
-                    this._btn.setAttribute("data-toggle", "tooltip");
                     this._btn.setAttribute("data-placement", "left");
                     this._btn.setAttribute("data-container", "body");
                     this._btn.setAttribute("data-trigger", "hover");
@@ -369,7 +364,6 @@
                     this._btn.id = `layer-toggle-button-${ hash }`;
                     this._btn.className = "mapboxgl-ctrl-icon mapboxgl-ctrl-layer-toggle";
                     this._btn.type = "button";
-                    this._btn.setAttribute("data-toggle", "tooltip");
                     this._btn.setAttribute("data-placement", "left");
                     this._btn.setAttribute("data-container", "body");
                     this._btn.setAttribute("data-trigger", "hover");
@@ -414,7 +408,7 @@
             let extruded = document.getElementById(`3d-button-${ hash }`).dataset.extruded === 'true';
             let networkType = getNetworkType();
             // Add zone layer
-            let layers = [new GeoJsonLayer({
+            let layers = [new deck.GeoJsonLayer({
                 id: 'zone',
                 data: filterBuildings(),
                 opacity: 0.5,
@@ -435,7 +429,7 @@
                 onHover: updateTooltip
             })];
 
-            if (district) layers.push(new GeoJsonLayer({
+            if (district) layers.push(new deck.GeoJsonLayer({
                 id: 'district',
                 data: district,
                 opacity: 0.3,
@@ -455,7 +449,7 @@
             }));
 
             // Add DC network layer
-            if (dc) layers.push(new GeoJsonLayer({
+            if (dc) layers.push(new deck.GeoJsonLayer({
                 id:'dc',
                 data: dc,
                 stroked: false,
@@ -474,7 +468,7 @@
             }));
 
             // Add DH network layer
-            if (dh) layers.push(new GeoJsonLayer({
+            if (dh) layers.push(new deck.GeoJsonLayer({
                 id:'dh',
                 data: dh,
                 stroked: false,
@@ -551,14 +545,15 @@
                 let innerHTML = '';
 
                 if (layer.id === 'zone' || layer.id === 'district') {
-                    $.each(object.properties, function (key, value)  {
-                        innerHTML += `<div><b>${key}</b>: ${value}</div>`;
+                    Object.keys(object.properties).forEach(function (key) {
+                        innerHTML += `<div><b>${key}</b>: ${object.properties[key]}</div>`;
                     });
                     let area = turf.area(object);
                     innerHTML += `<br><div><b>area</b>: ${Math.round(area * 1000) / 1000}m<sup>2</sup></div>` +
                         `<div><b>volume</b>: ${Math.round(area * object.properties['height_ag'] * 1000) / 1000}m<sup>3</sup></div>`;
                 } else if (layer.id === 'dc' || layer.id === 'dh') {
-                    $.each(object.properties, function (key, value) {
+                    Object.keys(object.properties).forEach(function (key) {
+                        const value = object.properties[key];
                         if (key !== 'Building' &&  value === 'NONE') return null;
                         innerHTML += `<div><b>${key}</b>: ${value}</div>`;
                     });
@@ -567,8 +562,8 @@
                         innerHTML += `<br><div><b>length</b>: ${Math.round(length * 1000) / 1000}m</div>`;
                     }
                 } else {
-                    $.each(object.properties, function (key, value) {
-                        innerHTML += `<div><b>${key}</b>: ${value}</div>`;
+                    Object.keys(object.properties).forEach(function (key) {
+                        innerHTML += `<div><b>${key}</b>: ${object.properties[key]}</div>`;
                     });
                 }
 
@@ -597,11 +592,4 @@
             return null
         }
     }
-
-
-
-    $(document).ready(function() {
-        $('[data-toggle="tooltip"]').tooltip()
-    });
-
 </script>
