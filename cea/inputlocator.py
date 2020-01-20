@@ -749,6 +749,10 @@ class InputLocator(object):
     def outputdatafolder (self):
         return self._ensure_folder(self.scenario,'outputs','data')
 
+    def get_calibrationresults(self):
+        """scenario/outputs/data/calibration_results/calibrationresults.csv"""
+        return os.path.join(self.scenario, 'outputs','data','calibration_results', 'calibrationresults.csv')
+
     def get_totaloccupancy(self):
         """scenario/outputs/data/totaloccupancy.csv"""
         return os.path.join(self.scenario, "outputs", "data", "totaloccupancy.csv")

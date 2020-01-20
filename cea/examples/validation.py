@@ -22,7 +22,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def validation(locator):
+def validation(locator, measured_building_names=[]):
     """
     This tool compares observed (real life measured data) and predicted (output of the model data) values.
     Annual data is compared in terms of MBE and monthly data in terms of NMBE and CvRMSE (follwing ASHRAE Guideline 14-2002).
@@ -59,7 +59,10 @@ def validation(locator):
     if monthly:
         print("monthly validation")
         monthly_measured_data = pd.read_csv(locator.get_monthly_measurements())
-        measured_building_names = monthly_measured_data.Name.values
+        if measured_building_names == []:
+
+            measured_building_names = monthly_measured_data.Name.values
+
         list_of_scores = []
         number_of_calibrated =[]
         for building_name in measured_building_names:  # number of buildings that have real data available
