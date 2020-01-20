@@ -163,7 +163,7 @@ def calc_Cop_boiler(q_load_Wh, Q_nom_W, T_return_to_boiler_K):
 
 # investment and maintenance costs
 
-def calc_Cinv_boiler(Q_design_W, locator, config, technology_type):
+def calc_Cinv_boiler(Q_design_W, technology_type, boiler_cost_data):
     """
     Calculates the annual cost of a boiler (based on A+W cost of oil boilers) [CHF / a]
     and Faz. 2012 data
@@ -174,12 +174,11 @@ def calc_Cinv_boiler(Q_design_W, locator, config, technology_type):
     :rtype InvCa : float
     :returns InvCa: Annualized investment costs in CHF/a including Maintenance Cost
     """
-    Capex_a_Boiler_USD = 0
-    Opex_a_fix_Boiler_USD = 0
-    Capex_Boiler_USD = 0
+    Capex_a_Boiler_USD = 0.0
+    Opex_a_fix_Boiler_USD = 0.0
+    Capex_Boiler_USD = 0.0
 
-    if Q_design_W > 0:
-        boiler_cost_data = pd.read_excel(locator.get_database_supply_systems(), sheet_name="Boiler")
+    if Q_design_W > 0.0:
         boiler_cost_data = boiler_cost_data[boiler_cost_data['code'] == technology_type]
         # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
         # capacity for the corresponding technology from the database
@@ -197,9 +196,9 @@ def calc_Cinv_boiler(Q_design_W, locator, config, technology_type):
             Inv_c = boiler_cost_data.iloc[0]['c']
             Inv_d = boiler_cost_data.iloc[0]['d']
             Inv_e = boiler_cost_data.iloc[0]['e']
-            Inv_IR = (boiler_cost_data.iloc[0]['IR_%']) / 100
+            Inv_IR = (boiler_cost_data.iloc[0]['IR_%']) / 100.0
             Inv_LT = boiler_cost_data.iloc[0]['LT_yr']
-            Inv_OM = boiler_cost_data.iloc[0]['O&M_%'] / 100
+            Inv_OM = boiler_cost_data.iloc[0]['O&M_%'] / 100.0
 
             InvC = Inv_a + Inv_b * (Q_design_W) ** Inv_c + (Inv_d + Inv_e * Q_design_W) * log(Q_design_W)
 
@@ -219,9 +218,9 @@ def calc_Cinv_boiler(Q_design_W, locator, config, technology_type):
             Inv_c = boiler_cost_data.iloc[0]['c']
             Inv_d = boiler_cost_data.iloc[0]['d']
             Inv_e = boiler_cost_data.iloc[0]['e']
-            Inv_IR = (boiler_cost_data.iloc[0]['IR_%']) / 100
+            Inv_IR = (boiler_cost_data.iloc[0]['IR_%']) / 100.0
             Inv_LT = boiler_cost_data.iloc[0]['LT_yr']
-            Inv_OM = boiler_cost_data.iloc[0]['O&M_%'] / 100
+            Inv_OM = boiler_cost_data.iloc[0]['O&M_%'] / 100.0
 
             InvC = (Inv_a + Inv_b * (Q_nom_W) ** Inv_c + (Inv_d + Inv_e * Q_nom_W) * log(Q_nom_W)) * number_of_boilers
 
