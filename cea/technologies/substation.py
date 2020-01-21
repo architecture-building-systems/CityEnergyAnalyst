@@ -869,27 +869,16 @@ def calc_DC_supply(t_0, t_1):  # fixme: keep the correct one
     :param t_1:  current minimum temperature to evaluate
     :return: ``tmin``, new minimum temperature
     """
-    # if t_0 == 0:
-    #     t_0 = 1E6
-    # if t_1 > 0:
-    #     tmin = min(t_0, t_1)
-    # else:
-    #     tmin = t_0
     # TODO: verify if this assumption makes sense
-    if t_0 < 0.0:
-        t_0 = 1E-6
-    if t_1 < 0.0:
-        t_1 = 1E-6
-    if isclose(t_0, 0.0) and isclose(t_1, 0.0):
-        t_0 = 0.0
-        t_1 = 0.0
-    elif t_0 == 0.0:
-        t_0 = 1E6
-    elif t_1 == 0.0:
-        t_1 = 1E6
-
-    tmin = min(t_0, t_1)
-    return tmin
+    if isclose(t_0, 0.0):
+        if isclose(t_1, 0.0):
+            return 0.0
+        else:
+            return t_1
+    elif isclose(t_1, 0.0):
+        return t_0
+    else:
+        return min(t_0, t_1)
 
 
 def calc_DH_supply(t_0, t_1):
