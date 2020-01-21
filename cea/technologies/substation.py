@@ -883,9 +883,9 @@ def calc_DC_supply(t_0, t_1):  # fixme: keep the correct one
     if isclose(t_0, 0.0) and isclose(t_1, 0.0):
         t_0 = 0.0
         t_1 = 0.0
-    elif t_0 == 0.0:
+    if t_0 == 0.0:
         t_0 = 1E6
-    elif t_1 == 0.0:
+    if t_1 == 0.0:
         t_1 = 1E6
 
     tmin = min(t_0, t_1)
