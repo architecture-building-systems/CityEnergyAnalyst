@@ -876,16 +876,20 @@ def calc_DC_supply(t_0, t_1):  # fixme: keep the correct one
     # else:
     #     tmin = t_0
     # TODO: verify if this assumption makes sense
-    if t_0 < t_1:
-        if isclose(t_0, 0.0):
-            return 1E-6
-        else:
-            return t_0
-    else:
-        if isclose(t_1, 0.0):
-            return 1E-6
-        else:
-            return t_1
+    if t_0 < 0.0:
+        t_0 = 1E-6
+    if t_1 < 0.0:
+        t_1 = 1E-6
+    if isclose(t_0, 0.0) and isclose(t_1, 0.0):
+        t_0 = 0.0
+        t_1 = 0.0
+    if t_0 == 0.0:
+        t_0 = 1E6
+    if t_1 == 0.0:
+        t_1 = 1E6
+
+    tmin = min(t_0, t_1)
+    return tmin
 
 
 def calc_DH_supply(t_0, t_1):
