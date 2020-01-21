@@ -19,6 +19,7 @@ from cea.optimization.slave.daily_storage.load_leveling import LoadLevelingDaily
 from cea.technologies.cogeneration import calc_cop_CCGT
 from cea.technologies.thermal_network.thermal_network import calculate_ground_temperature
 from cea.technologies.chiller_absorption import  AbsorptionChiller
+from cea.technologies.supply_systems_database import SupplySystemsDatabase
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -41,7 +42,6 @@ def district_cooling_network(locator,
     :param cea.inputlocator.InputLocator locator: path to res folder
     :param network_features: network features
     :param prices: Prices imported from the database
-    :type locator: string
     :type network_features: class
     :type prices: class
     :return: costs, co2, prim
@@ -159,11 +159,12 @@ def district_cooling_network(locator,
         E_BackupVCC_AS_req_W = np.zeros(HOURS_IN_YEAR)
 
     # CAPEX (ANNUAL, TOTAL) AND OPEX (FIXED, VAR, ANNUAL) GENERATION UNITS
+    supply_systems = SupplySystemsDatabase(locator)
     mdotnMax_kgpers = np.amax(mdot_kgpers)
     performance_costs_generation, \
     district_cooling_capacity_installed = cost_model.calc_generation_costs_capacity_installed_cooling(locator,
                                                                                                       master_to_slave_variables,
-                                                                                                      config,
+                                                                                                      supply_systems,
                                                                                                       mdotnMax_kgpers
                                                                                                       )
     # CAPEX (ANNUAL, TOTAL) AND OPEX (FIXED, VAR, ANNUAL) STORAGE UNITS
