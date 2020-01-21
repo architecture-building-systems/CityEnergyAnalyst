@@ -11,6 +11,7 @@ import cea.technologies.thermal_network.thermal_network_costs
 from cea.technologies.thermal_network.thermal_network import ThermalNetwork, thermal_network_main
 from cea.technologies.network_layout.main import layout_network, NetworkLayout
 from cea.utilities import epwreader
+from cea.technologies.supply_systems_database import SupplySystemsDatabase
 import cea.technologies.thermal_network.thermal_network_costs as network_costs
 import os
 import pandas as pd
@@ -94,6 +95,7 @@ class NetworkInfo(object):
         self.max_number_of_plants = config.thermal_network_optimization.max_number_of_plants
         self.lucky_few = config.thermal_network_optimization.lucky_few
         self.yearly_cost_calculations = config.thermal_network_optimization.yearly_cost_calculations
+        self.supply_systems = SupplySystemsDatabase(locator)
 
         self.full_heating_systems = ['ahu', 'aru', 'shu', 'ww']
         self.full_cooling_systems = ['ahu', 'aru',

@@ -27,6 +27,7 @@ from cea.optimization.constants import (T_GENERATOR_FROM_FP_C, T_GENERATOR_FROM_
                                         Q_LOSS_DISCONNECTED, ACH_TYPE_SINGLE)
 from cea.optimization.lca_calculations import LcaCalculations
 from cea.technologies.thermal_network.thermal_network import calculate_ground_temperature
+from cea.technologies.supply_systems_database import SupplySystemsDatabase
 import cea.utilities.parallel
 
 
@@ -59,14 +60,13 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
     """
 
     t0 = time.clock()
-    chiller_prop = pd.read_excel(locator.get_database_supply_systems(), sheet_name="Absorption_chiller")
+    supply_systems = SupplySystemsDatabase(locator)
 
     n = len(building_names)
 
     cea.utilities.parallel.vectorize(disconnected_cooling_for_building, config.get_number_of_processes())(
         building_names,
-        repeat(chiller_prop, n),
-        repeat(config, n),
+        repeat(supply_systems, n),
         repeat(lca, n),
         repeat(locator, n),
         repeat(prices, n),
@@ -75,7 +75,11 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
     print(time.clock() - t0, "seconds process time for the decentralized Building Routine \n")
 
 
-def disconnected_cooling_for_building(building_name, chiller_prop, config, lca, locator, prices, total_demand):
+def disconnected_cooling_for_building(building_name, supply_systems, lca, locator, prices, total_demand):
+
+    chiller_prop = supply_systems.Absorption_chiller
+    boiler_cost_data = supply_systems.Boiler
+
     ## Calculate cooling loads for different combinations
     # SENSIBLE COOLING UNIT
     Qc_nom_SCU_W, \
@@ -117,7 +121,7 @@ def disconnected_cooling_for_building(building_name, chiller_prop, config, lca, 
     print('{building_name} decentralized cooling supply system simulations...'.format(building_name=building_name))
     T_re_AHU_ARU_SCU_K = np.where(T_re_AHU_ARU_SCU_K > 0.0, T_re_AHU_ARU_SCU_K, T_sup_AHU_ARU_SCU_K)
     ## 0. DX operation
-    print('{building_name} dConfig 0: Direct Expansion Units -> AHU,ARU,SCU'.format(building_name=building_name))
+    print('{building_name} Config 0: Direct Expansion Units -> AHU,ARU,SCU'.format(building_name=building_name))
     el_DX_hourly_Wh, \
     q_DX_chw_Wh = np.vectorize(dx.calc_DX)(mdot_AHU_ARU_SCU_kgpers, T_sup_AHU_ARU_SCU_K, T_re_AHU_ARU_SCU_K)
     DX_Status = np.where(q_DX_chw_Wh > 0.0, 1, 0)
@@ -349,22 +353,22 @@ def disconnected_cooling_for_building(building_name, chiller_prop, config, lca, 
     Opex_a_fixed_USD[1][0] = Opex_fixed_CT_USD + Opex_fixed_VCC_USD
     # 2: single effect ACH + CT + Boiler + SC_FP
     Capex_a_ACH_USD, Opex_fixed_ACH_USD, Capex_ACH_USD = chiller_absorption.calc_Cinv_ACH(
-        Qc_nom_AHU_ARU_SCU_W, locator, ACH_TYPE_SINGLE)
+        Qc_nom_AHU_ARU_SCU_W, supply_systems.Absorption_chiller, ACH_TYPE_SINGLE)
     Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(
         Q_nom_CT_FP_to_single_ACH_to_AHU_ARU_SCU_W, locator, 'CT1')
     Capex_a_boiler_USD, Opex_fixed_boiler_USD, Capex_boiler_USD = boiler.calc_Cinv_boiler(
-        Q_nom_Boiler_FP_to_single_ACH_to_AHU_ARU_SCU_W, locator, config, 'BO1')
+        Q_nom_Boiler_FP_to_single_ACH_to_AHU_ARU_SCU_W, 'BO1', boiler_cost_data)
     Capex_a_USD[2][0] = Capex_a_CT_USD + Capex_a_ACH_USD + Capex_a_boiler_USD + Capex_a_SC_FP_USD
     Capex_total_USD[2][0] = Capex_CT_USD + Capex_ACH_USD + Capex_boiler_USD + Capex_SC_FP_USD
     Opex_a_fixed_USD[2][
         0] = Opex_fixed_CT_USD + Opex_fixed_ACH_USD + Opex_fixed_boiler_USD + Opex_SC_FP_USD
     # 3: double effect ACH + CT + Boiler + SC_ET
     Capex_a_ACH_USD, Opex_fixed_ACH_USD, Capex_ACH_USD = chiller_absorption.calc_Cinv_ACH(
-        Qc_nom_AHU_ARU_SCU_W, locator, ACH_TYPE_SINGLE)
+        Qc_nom_AHU_ARU_SCU_W, supply_systems.Absorption_chiller, ACH_TYPE_SINGLE)
     Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(
         Q_nom_CT_ET_to_single_ACH_to_AHU_ARU_SCU_W, locator, 'CT1')
     Capex_a_burner_USD, Opex_fixed_burner_USD, Capex_burner_USD = burner.calc_Cinv_burner(
-        Q_nom_Burner_ET_to_single_ACH_to_AHU_ARU_SCU_W, locator, config, 'BO1')
+        Q_nom_Burner_ET_to_single_ACH_to_AHU_ARU_SCU_W, boiler_cost_data, 'BO1')
     Capex_a_USD[3][0] = Capex_a_CT_USD + Capex_a_ACH_USD + Capex_a_burner_USD + Capex_a_SC_ET_USD
     Capex_total_USD[3][0] = Capex_CT_USD + Capex_ACH_USD + Capex_burner_USD + Capex_SC_ET_USD
     Opex_a_fixed_USD[3][
@@ -384,11 +388,11 @@ def disconnected_cooling_for_building(building_name, chiller_prop, config, lca, 
 
         # 5: VCC (AHU + ARU) + ACH (SCU) + CT + Boiler + SC_FP
         Capex_a_ACH_S_USD, Opex_fixed_ACH_S_USD, Capex_ACH_S_USD = chiller_absorption.calc_Cinv_ACH(
-            Qc_nom_SCU_W, locator, ACH_TYPE_SINGLE)
+            Qc_nom_SCU_W, supply_systems.Absorption_chiller, ACH_TYPE_SINGLE)
         Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(
             Q_nom_CT_VCC_to_AHU_ARU_and_FP_to_single_ACH_to_SCU_W, locator, 'CT1')
         Capex_a_boiler_USD, Opex_fixed_boiler_USD, Capex_boiler_USD = boiler.calc_Cinv_boiler(
-            Q_nom_boiler_VCC_to_AHU_ARU_and_FP_to_single_ACH_to_SCU_W, locator, config, 'BO1')
+            Q_nom_boiler_VCC_to_AHU_ARU_and_FP_to_single_ACH_to_SCU_W, 'BO1', boiler_cost_data)
         Capex_a_USD[5][0] = Capex_a_CT_USD + Capex_a_VCC_AA_USD + Capex_a_ACH_S_USD + \
                             Capex_a_SC_FP_USD + Capex_a_boiler_USD
         Capex_total_USD[5][0] = Capex_CT_USD + Capex_VCC_AA_USD + Capex_ACH_S_USD + \
@@ -639,9 +643,10 @@ def main(config):
     print("Running decentralized model for buildings with scenario = %s" % config.scenario)
 
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+    supply_systems = SupplySystemsDatabase(locator)
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = total_demand.Name
-    prices = Prices(locator, config.optimization.detailed_electricity_pricing)
+    prices = Prices(supply_systems, config.optimization.detailed_electricity_pricing)
     lca = LcaCalculations(locator)
     disconnected_buildings_cooling_main(locator, building_names, total_demand, config, prices, lca)
 

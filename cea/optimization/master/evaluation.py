@@ -7,6 +7,7 @@ from __future__ import division
 import numpy as np
 import pandas as pd
 
+import cea.inputlocator
 from cea.constants import HOURS_IN_YEAR
 from cea.optimization.master import cost_model
 from cea.optimization.master import master_to_slave as master
@@ -36,7 +37,7 @@ def evaluation_main(individual, building_names_all, locator, network_features, c
 
     :param individual: list with values of the individual
     :param column_names_buildings_all: list with names of buildings
-    :param locator: locator class
+    :param cea.inputlocator.InputLocator locator: locator class
     :param solar_features: solar features call to class
     :param network_features: network features call to class
     :param optimization_constants: class containing constants used in optimization
@@ -44,7 +45,6 @@ def evaluation_main(individual, building_names_all, locator, network_features, c
     :param prices: class of prices used in optimization
     :type individual: list
     :type column_names_buildings_all: list
-    :type locator: string
     :type solar_features: class
     :type network_features: class
     :type optimization_constants: class

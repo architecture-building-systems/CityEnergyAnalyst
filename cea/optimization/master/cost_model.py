@@ -27,6 +27,7 @@ from cea.optimization.constants import N_PVT, PUMP_ETA, ACH_TYPE_DOUBLE, N_SC_ET
 from cea.optimization.constants import VCC_CODE_CENTRALIZED, VCC_CODE_DECENTRALIZED
 from cea.optimization.master.emissions_model import calc_emissions_Whyr_to_tonCO2yr, calc_pen_Whyr_to_MJoilyr
 from cea.technologies.pumps import calc_Cinv_pump
+from cea.technologies.supply_systems_database import SupplySystemsDatabase
 
 __author__ = "Tim Vollrath"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -468,7 +469,7 @@ def calc_generation_costs_cooling_storage(locator,
 
 def calc_generation_costs_capacity_installed_cooling(locator,
                                                      master_to_slave_variables,
-                                                     config,
+                                                     supply_systems,
                                                      mdotnMax_kgpers,
                                                      ):
     # TRIGENERATION
@@ -479,11 +480,11 @@ def calc_generation_costs_capacity_installed_cooling(locator,
 
         # ACH
         Capex_a_ACH_USD, Opex_fixed_ACH_USD, Capex_ACH_USD = chiller_absorption.calc_Cinv_ACH(Capacity_NG_Trigen_ACH_W,
-                                                                                              locator,
+                                                                                              supply_systems.Absorption_chiller,
                                                                                               ACH_TYPE_DOUBLE)
         # CCGT
         Capex_a_CCGT_USD, Opex_fixed_CCGT_USD, Capex_CCGT_USD = cogeneration.calc_Cinv_CCGT(Capacity_NG_Trigen_el_W,
-                                                                                            locator, config)
+                                                                                            supply_systems.CCGT)
 
         Capex_a_Trigen_NG_USD = Capex_a_ACH_USD + Capex_a_CCGT_USD
         Opex_fixed_Trigen_NG_USD = Opex_fixed_ACH_USD + Opex_fixed_CCGT_USD
@@ -674,7 +675,7 @@ def calc_generation_costs_capacity_installed_heating(locator,
     addPrm = primary energy needs
     :param DHN_barcode: parameter indicating if the building is connected or not
     :param buildList: list of buildings in the district
-    :param locator: input locator set to scenario
+    :param cea.inputlocator.InputLocator locator: input locator set to scenario
     :param master_to_slave_vars: class containing the features of a specific individual
     :param Q_uncovered_design_W: hourly max of the heating uncovered demand
     :param Q_uncovered_annual_W: total heating uncovered
@@ -682,7 +683,6 @@ def calc_generation_costs_capacity_installed_heating(locator,
     :param thermal_network: network features
     :type indCombi: string
     :type buildList: list
-    :type locator: string
     :type master_to_slave_vars: class
     :type Q_uncovered_design_W: float
     :type Q_uncovered_annual_W: float
@@ -695,13 +695,16 @@ def calc_generation_costs_capacity_installed_heating(locator,
 
     thermal_network = pd.read_csv(
         locator.get_optimization_thermal_network_data_file(master_to_slave_vars.network_data_file_heating))
+    supply_systems = SupplySystemsDatabase(locator)
+    GHP_cost_data = supply_systems.HP
+    BH_cost_data = supply_systems.BH
+    boiler_cost_data = supply_systems.Boiler
 
     # CCGT
     if master_to_slave_vars.CC_on == 1:
         Capacity_CHP_NG_heat_W = master_to_slave_vars.CCGT_SIZE_W
         Capacity_CHP_NG_el_W = master_to_slave_vars.CCGT_SIZE_electrical_W
-        Capex_a_CHP_NG_USD, Opex_fixed_CHP_NG_USD, Capex_CHP_NG_USD = chp.calc_Cinv_CCGT(Capacity_CHP_NG_el_W, locator,
-                                                                                         config)
+        Capex_a_CHP_NG_USD, Opex_fixed_CHP_NG_USD, Capex_CHP_NG_USD = chp.calc_Cinv_CCGT(Capacity_CHP_NG_el_W, supply_systems.CCGT)
     else:
         Capacity_CHP_NG_heat_W = 0.0
         Capacity_CHP_NG_el_W = 0.0
@@ -742,7 +745,7 @@ def calc_generation_costs_capacity_installed_heating(locator,
         Capacity_BaseBoiler_NG_W = master_to_slave_vars.Boiler_Q_max_W
         Capex_a_BaseBoiler_NG_USD, \
         Opex_fixed_BaseBoiler_NG_USD, \
-        Capex_BaseBoiler_NG_USD = boiler.calc_Cinv_boiler(Capacity_BaseBoiler_NG_W, locator, config, 'BO1')
+        Capex_BaseBoiler_NG_USD = boiler.calc_Cinv_boiler(Capacity_BaseBoiler_NG_W, 'BO1', boiler_cost_data)
     else:
         Capacity_BaseBoiler_NG_W = 0.0
         Capex_a_BaseBoiler_NG_USD = 0.0
@@ -754,7 +757,7 @@ def calc_generation_costs_capacity_installed_heating(locator,
         Capacity_PeakBoiler_NG_W = master_to_slave_vars.BoilerPeak_Q_max_W
         Capex_a_PeakBoiler_NG_USD, \
         Opex_fixed_PeakBoiler_NG_USD, \
-        Capex_PeakBoiler_NG_USD = boiler.calc_Cinv_boiler(Capacity_PeakBoiler_NG_W, locator, config, 'BO1')
+        Capex_PeakBoiler_NG_USD = boiler.calc_Cinv_boiler(Capacity_PeakBoiler_NG_W, 'BO1', boiler_cost_data)
     else:
         Capacity_PeakBoiler_NG_W = 0.0
         Capex_a_PeakBoiler_NG_USD = 0.0
@@ -807,7 +810,7 @@ def calc_generation_costs_capacity_installed_heating(locator,
         Capacity_GS_HP_W = master_to_slave_vars.GHP_maxSize_W
         Capex_a_GHP_USD, \
         Opex_fixed_GHP_USD, \
-        Capex_GHP_USD = hp.calc_Cinv_GHP(Capacity_GS_HP_W, locator, config)
+        Capex_GHP_USD = hp.calc_Cinv_GHP(Capacity_GS_HP_W, GHP_cost_data, BH_cost_data)
     else:
         Capacity_GS_HP_W = 0.0
         Capex_a_GHP_USD = 0.0
@@ -819,7 +822,7 @@ def calc_generation_costs_capacity_installed_heating(locator,
         Capacity_BackupBoiler_NG_W = master_to_slave_vars.BackupBoiler_size_W
         Capex_a_BackupBoiler_NG_USD, \
         Opex_fixed_BackupBoiler_NG_USD, \
-        Capex_BackupBoiler_NG_USD = boiler.calc_Cinv_boiler(Capacity_BackupBoiler_NG_W, locator, config, 'BO1')
+        Capex_BackupBoiler_NG_USD = boiler.calc_Cinv_boiler(Capacity_BackupBoiler_NG_W, 'BO1', boiler_cost_data)
     else:
         Capacity_BackupBoiler_NG_W = 0.0
         Capex_a_BackupBoiler_NG_USD = 0.0
