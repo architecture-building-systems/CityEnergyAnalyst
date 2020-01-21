@@ -188,8 +188,12 @@ def thermal_network_simplified(locator, config, network_name):
     T_re_K_building = pd.DataFrame()
     Q_demand_kWh_building = pd.DataFrame()
     if network_type == "DH":
-        buildings_name_with_heating = get_building_names_with_load(total_demand, load_name='QH_sys_MWhyr')
-        buildings_name_with_space_heating = get_building_names_with_load(total_demand, load_name='Qhs_sys_MWhyr')
+        buildings_name_with_heating = [building for building in
+                                       get_building_names_with_load(total_demand, load_name='QH_sys_MWhyr') if
+                                       building in node_df.Building.values]
+        buildings_name_with_space_heating = [building for building in
+                                             get_building_names_with_load(total_demand, load_name='Qhs_sys_MWhyr') if
+                                             building in node_df.Building.values]
         DHN_barcode = "111111thermalnetwork"
         if (buildings_name_with_heating != [] and buildings_name_with_space_heating != []):
             building_names = buildings_name_with_heating
@@ -208,7 +212,9 @@ def thermal_network_simplified(locator, config, network_name):
                 "Q_dhw_W"]) / 1000
 
     if network_type == "DC":
-        buildings_name_with_cooling = get_building_names_with_load(total_demand, load_name='QC_sys_MWhyr')
+        buildings_name_with_cooling = [building for building in
+                                       get_building_names_with_load(total_demand, load_name='QC_sys_MWhyr') if
+                                       building in node_df.Building.values]
         DCN_barcode = "111111thermalnetwork"
         if buildings_name_with_cooling != []:
             building_names = buildings_name_with_cooling
