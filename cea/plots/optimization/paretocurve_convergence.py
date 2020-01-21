@@ -23,7 +23,7 @@ __status__ = "Production"
 
 class OptimizationPerformance(cea.plots.optimization.GenerationPlotBase):
     """Show a pareto curve for a single generation"""
-    name = "Perfromance of optimization algorithm"
+    name = "Performance of optimization algorithm"
     expected_parameters = {
         'generation': 'plots-optimization:generation',
         'scenario-name': 'general:scenario-name',
