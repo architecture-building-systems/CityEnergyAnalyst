@@ -415,7 +415,7 @@ def calc_eta_FC(Q_load_W, Q_design_W, phi_threshold, approach_call):
 
 # investment and maintenance costs
 
-def calc_Cinv_CCGT(CC_size_W, locator, config, technology=0):
+def calc_Cinv_CCGT(CC_size_W, CCGT_cost_data):
     """
     Annualized investment costs for the Combined cycle
     :type CC_size_W : float
@@ -425,9 +425,6 @@ def calc_Cinv_CCGT(CC_size_W, locator, config, technology=0):
     ..[C. Weber, 2008] C.Weber, Multi-objective design and optimization of district energy systems including
     polygeneration energy conversion technologies., PhD Thesis, EPFL
     """
-    CCGT_cost_data = pd.read_excel(locator.get_database_supply_systems(), sheet_name="CCGT")
-    technology_code = list(set(CCGT_cost_data['code']))
-    CCGT_cost_data[CCGT_cost_data['code'] == technology_code[technology]]
 
     # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
     # capacity for the corresponding technology from the database
@@ -458,7 +455,7 @@ def calc_Cinv_CCGT(CC_size_W, locator, config, technology=0):
     return Capex_a_CCGT_USD, Opex_fixed_CCGT_USD, Capex_CCGT_USD
 
 
-def calc_Cinv_FC(P_design_W, locator, config, technology=0):
+def calc_Cinv_FC(P_design_W, FC_cost_data):
     """
     Calculates the investment cost of a Fuel Cell in CHF
     http://hexis.com/sites/default/files/media/publikationen/140623_hexis_galileo_ibb_profitpaket.pdf?utm_source=HEXIS+Mitarbeitende&utm_campaign=06d2c528a5-1_Newsletter_2014_Mitarbeitende_DE&utm_medium=email&utm_term=0_e97bc1703e-06d2c528a5-
@@ -467,9 +464,6 @@ def calc_Cinv_FC(P_design_W, locator, config, technology=0):
     :rtype InvCa: float
     :returns InvCa: annualized investment costs in CHF
     """
-    FC_cost_data = pd.read_excel(locator.get_database_supply_systems(), sheet_name="FC")
-    technology_code = list(set(FC_cost_data['code']))
-    FC_cost_data[FC_cost_data['code'] == technology_code[technology]]
     # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
     # capacity for the corresponding technology from the database
     if P_design_W < FC_cost_data['cap_min'][0]:

@@ -83,7 +83,7 @@ def burner_op_cost(Q_load_W, Q_design_W, FuelType, lca, prices):
 
 # investment and maintenance costs
 
-def calc_Cinv_burner(Q_design_W, locator, config, technology_type):
+def calc_Cinv_burner(Q_design_W, boiler_cost_data, technology_type):
     """
     Assume the same cost as gas boilers.
     :type Q_design_W : float
@@ -96,7 +96,6 @@ def calc_Cinv_burner(Q_design_W, locator, config, technology_type):
     Capex_burner_USD = 0
 
     if Q_design_W > 0:
-        boiler_cost_data = pd.read_excel(locator.get_database_supply_systems(), sheet_name="Boiler")
         boiler_cost_data = boiler_cost_data[boiler_cost_data['code'] == technology_type]
         # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
         # capacity for the corresponding technology from the database
