@@ -38,13 +38,11 @@
 - script: network-layout
   parameters:
     network-type: DH
-    allow-looped-networks: false
-    consider-only-buildings-with-demand: true
+    network-model: simplified
 - script: thermal-network
   parameters:
     network-type: DH
-    allow-looped-networks: false
-    consider-only-buildings-with-demand: true
+    network-model: simplified
 - script: decentralized
   parameters:
     detailed-electricity-pricing: false
