@@ -171,7 +171,7 @@ def thermal_network_simplified(locator, config, network_name):
     network_type = config.thermal_network.network_type
     min_head_substation_kPa = config.thermal_network.min_head_susbstation
     thermal_transfer_unit_design_head_m = min_head_substation_kPa * 1000 / M_WATER_TO_PA
-    coefficient_friction_hanzen_williams = config.thermal_network.hw_friction_coefficient
+    coefficient_friction_hazen_williams = config.thermal_network.hw_friction_coefficient
     velocity_ms = config.thermal_network.peak_load_velocity
     fraction_equivalent_length = config.thermal_network.equivalent_length_factor
     peak_load_percentage = config.thermal_network.peak_load_percentage
@@ -275,7 +275,7 @@ def thermal_network_simplified(locator, config, network_name):
         wn.add_pipe(edge_name, edge[1]["start node"],
                     edge[1]["end node"],
                     length=length_m * (1 + fraction_equivalent_length),
-                    roughness=coefficient_friction_hanzen_williams,
+                    roughness=coefficient_friction_hazen_williams,
                     minor_loss=0.0,
                     status='OPEN')
 

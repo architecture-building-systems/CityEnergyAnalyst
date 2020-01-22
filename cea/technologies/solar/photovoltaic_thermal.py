@@ -66,7 +66,7 @@ def calc_PVT(locator, config, latitude, longitude, weather_data, date_local, bui
     """
     t0 = time.clock()
 
-    radiation_json_path = locator.get_radiation_building(building_name)
+    radiation_json_path = locator.get_radiation_building_sensors(building_name)
     metadata_csv_path = locator.get_radiation_metadata(building_name)
 
     # solar properties

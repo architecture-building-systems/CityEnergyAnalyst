@@ -160,20 +160,18 @@ Uploading to PyPI
 
 .. _twine: https://pypi.python.org/pypi/twine
 
-Updating the CEA Electron interface
------------------------------------
+Updating the CEA GUI interface
+------------------------------
 
-For the installer to be able to pick up the newest version of the CEA Electron interface, you need to build it,
+For the installer to be able to pick up the newest version of the CEA GUI interface, you need to build it,
 create a release and attach a ``win-unpacked.7z`` to the release. Here are the steps:
 
-- pull the newest version of the ``cea-electron`` repository
-- open CEA Console, navigate to the GitHub repo of the ``cea-electron`` repository
+- pull the newest version of the ``CityEnergyAnalyst-GUI`` repository
+- open CEA Console, navigate to the GitHub repo of the ``CityEnergyAnalyst-GUI`` repository
 - type ``yarn dist:dir``, wait for the command to complete
 - the subfolder ``dist`` will contain a folder ``win-unpacked``
 - compress the folder ``win-unpacked`` to ``win-unpacked.7z``
-- open https://github.com/architecture-building-systems/cea-electron/releases in the browser
-- Draft a new release, use a tag corresponding to the CEA version number (e.g. ``v2.23``)
-- Attach the ``win-unpacked.7z`` file to the release (the installer will automatically use the latest release on installation)
+- attach the ``win-unpacked.7z`` file to the CityEnergyAnalyst release
 
 
 Updating Link in www.cityenergyanalyst.com/tryit

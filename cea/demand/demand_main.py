@@ -131,7 +131,7 @@ def demand_calculation(locator, config):
     writer_totals = demand_writers.YearlyDemandWriter(loads_output, massflows_output, temperatures_output)
     totals, time_series = writer_totals.write_to_csv(building_names, locator)
     time_elapsed = time.clock() - t0
-    print('done - time elapsed: %d.2f seconds' % time_elapsed)
+    print('done - time elapsed: %d.2 seconds' % time_elapsed)
 
     return totals, time_series
 
@@ -161,7 +161,7 @@ def radiation_files_exist(config, locator):
     # verify that the necessary radiation files exist
     def daysim_results_exist(building_name):
         return os.path.exists(locator.get_radiation_metadata(building_name)) and os.path.exists(
-            locator.get_radiation_building(building_name))
+            locator.get_radiation_building_sensors(building_name))
 
     return all(daysim_results_exist(building_name) for building_name in locator.get_zone_building_names())
 

@@ -112,7 +112,9 @@ def calc_steiner_spanning_tree(crs_projected, input_network_shp, output_network_
         lambda x: (round(x.coords[0][0], tolerance), round(x.coords[0][1], tolerance)))
     names_temporary = ["NODE" + str(x) for x in mst_nodes['FID']]
     new_mst_nodes = mst_nodes.merge(building_nodes_df, suffixes=['', '_y'], on="coordinates", how='outer')
-    new_mst_nodes.fillna(value="NONE", inplace=True)
+    new_mst_nodes.fillna(
+        value={"Name": "NONE", "floors_bg": "NONE", "floors_ag": "NONE", "height_bg": "NONE", "height_ag": "NONE"},
+        inplace=True)
     new_mst_nodes.loc[:, 'Building'] = new_mst_nodes['Name']
     new_mst_nodes.loc[:, 'Name'] = names_temporary
     new_mst_nodes.loc[:, 'Type'] = new_mst_nodes['Building'].apply(lambda x: 'CONSUMER' if x != "NONE" else x)
@@ -123,11 +125,12 @@ def calc_steiner_spanning_tree(crs_projected, input_network_shp, output_network_
     mst_edges.loc[:, 'Pipe_DN'] = pipe_diameter_default
     mst_edges.loc[:, 'Name'] = ["PIPE" + str(x) for x in mst_edges.index]
 
-    if allow_looped_networks == True:
+    if allow_looped_networks:
         # add loops to the network by connecting None nodes that exist in the potential network
         mst_edges, new_mst_nodes = add_loops_to_network(G, mst_non_directed, new_mst_nodes, mst_edges, type_mat_default,
                                                         pipe_diameter_default)
         # mst_edges.drop(['weight'], inplace=True, axis=1)
+
     if create_plant:
         if optimization_flag == False:
             building_anchor = calc_coord_anchor(total_demand_location, new_mst_nodes, type_network)

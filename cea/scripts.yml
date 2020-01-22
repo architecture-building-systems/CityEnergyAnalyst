@@ -65,7 +65,7 @@ Demand forecasting:
   - name: schedule-maker
     label: Building Schedules
     description: Use CEA models and input schedules to estimate the occupancy profile of buildings
-    interfaces: [dashboard]
+    interfaces: [dashboard, cli]
     module: cea.demand.schedule_maker.schedule_maker
     parameters: ['general:scenario',
                  'general:multiprocessing',
