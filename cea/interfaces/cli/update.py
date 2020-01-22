@@ -60,7 +60,7 @@ def main(*_):
     print("Checking latest version available online...")
     online_version = fetch_online_version()
     print("Version {} found.".format(online_version))
-    if not update_available(online_version):
+    if update_available(online_version):
         if installed_as_editable():  # Should not `pip install cityenergyanalyst` if dev version is installed
             print("CEA installed as dev. Will only update CEA GUI. Run `git pull` to update CEA")
         else:
