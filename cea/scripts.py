@@ -30,7 +30,8 @@ class CeaScript(object):
         """
         print('City Energy Analyst version %s' % cea.__version__)
         script_name = self.name
-        print("%(verb)s `cea %(script_name)s` with the following parameters:" % locals())
+        if len(self.parameters):
+            print("%(verb)s `cea %(script_name)s` with the following parameters:" % locals())
         for section, parameter in config.matching_parameters(self.parameters):
             section_name = section.name
             parameter_name = parameter.name
