@@ -67,7 +67,7 @@ def main(*_):
             # Update CEA using pip
             print("\n### UPDATE CEA ###")
             download_dependencies()
-            subprocess.check_call([sys.executable, "-m", "pip", "install", "cityenergyanalyst"])
+            subprocess.check_call([sys.executable, "-m", "pip", "install", "-U", "cityenergyanalyst"])
 
         # Update CEA GUI
         print("\n### UPDATE GUI ###")
