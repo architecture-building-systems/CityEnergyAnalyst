@@ -15,7 +15,7 @@ from packaging import version
 
 GITHUB_REPO_URL = 'https://github.com/architecture-building-systems/CityEnergyAnalyst'
 DOWNLOAD_URL_PREFIX = '{}/releases/latest/download'.format(GITHUB_REPO_URL)
-VERSION_REGEX = r'(0|[1-9]\d*)\.(0|[1-9]\d*)\.(?:0|[1-9]\d*)([0-9A-Za-z-]+)?'
+VERSION_REGEX = r'(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:[0-9A-Za-z-]+)?'
 DEPENDENCIES = 'Dependencies.7z'
 GUI_FILE = 'win-unpacked.7z'  # For windows only
 
