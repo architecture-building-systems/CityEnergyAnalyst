@@ -41,7 +41,7 @@ class SupplySystemsDatabase(object):
         self.TES = all_worksheets["TES"]
         self.Pump = all_worksheets["Pump"]
         self.PIPING = all_worksheets["PIPING"]
-        self.DETAILED_ELEC_PRICES = all_worksheets["DETAILED_ELEC_PRICES"]
+        self.DETAILED_ELEC_COSTS = all_worksheets["DETAILED_ELEC_COSTS"]
 
     def read_excel(self, locator):
         """Read in the excel file, using the cache _locators"""
