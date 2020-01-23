@@ -105,6 +105,7 @@ Demand forecasting:
       - [get_zone_geometry]
       - [get_radiation_metadata, building_name]
       - [get_radiation_building, building_name]
+      - [get_schedule_model_file, building_name]
 
 Energy potentials:
   - name: shallow-geothermal-potential
