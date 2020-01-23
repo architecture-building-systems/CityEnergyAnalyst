@@ -61,17 +61,20 @@ def main(*_):
     online_version = fetch_online_version()
     print("Version {} found.".format(online_version))
     if update_available(online_version):
-        if installed_as_editable():  # Should not `pip install cityenergyanalyst` if dev version is installed
+        if not installed_as_editable():  # Should not `pip install cityenergyanalyst` if dev version is installed
             print("CEA installed as dev. Will only update CEA GUI. Run `git pull` to update CEA")
         else:
-            # Update CEA using pip
-            print("\n### UPDATE CEA ###")
+            # Update CEA
+            print("\n### UPDATING CEA ###")
             download_dependencies()
-            subprocess.check_call([sys.executable, "-m", "pip", "install", "-U", "cityenergyanalyst"])
+            # Run pip to update CEA from PyPi
+            pip_cmd = "{python} -m pip install -U cityenergyanalyst".format(python=sys.executable)
+            print("Running `{}`".format(pip_cmd))
+            subprocess.call(pip_cmd.split(" "))
 
         # Update CEA GUI
-        print("\n### UPDATE GUI ###")
-        # Get GUI path relative to python path (only true if assumptions hold)
+        print("\n### UPDATING GUI ###")
+        # Get GUI path relative to python path (only true if folder structure holds)
         gui_url = '{}/{}'.format(DOWNLOAD_URL_PREFIX, GUI_FILE)
         gui_path = os.path.abspath(os.path.join(sys.executable, "../../.."))
         temp_path = os.path.join(tempfile.gettempdir(), 'temp.7z')

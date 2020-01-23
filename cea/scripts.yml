@@ -338,13 +338,6 @@ Utilities:
 
 
 default:
-  - name: update
-    label: Update
-    description: Updates CEA
-    interfaces: [cli]
-    module: cea.interfaces.cli.update
-    parameters: []
-
   - name: zone-helper
     label: Zone helper
     description: Query zone geometry from Open Street Maps
