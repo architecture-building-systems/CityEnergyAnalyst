@@ -192,7 +192,8 @@ def thermal_network_simplified(locator, config, network_name):
         buildings_name_with_space_heating = get_building_names_with_load(total_demand, load_name='Qhs_sys_MWhyr')
         DHN_barcode = "111111thermalnetwork"
         if (buildings_name_with_heating != [] and buildings_name_with_space_heating != []):
-            building_names = buildings_name_with_heating
+            building_names = [building for building in buildings_name_with_heating if building in
+                              node_df.Building.values]
             substation.substation_main_heating(locator, total_demand, building_names, DHN_barcode=DHN_barcode)
         else:
             raise Exception('problem here')
@@ -211,7 +212,8 @@ def thermal_network_simplified(locator, config, network_name):
         buildings_name_with_cooling = get_building_names_with_load(total_demand, load_name='QC_sys_MWhyr')
         DCN_barcode = "111111thermalnetwork"
         if buildings_name_with_cooling != []:
-            building_names = buildings_name_with_cooling
+            building_names = [building for building in buildings_name_with_cooling if building in
+                              node_df.Building.values]
             substation.substation_main_cooling(locator, total_demand, building_names, DCN_barcode=DCN_barcode)
         else:
             raise Exception('problem here')
