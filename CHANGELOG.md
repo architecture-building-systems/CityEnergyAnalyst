@@ -1,3 +1,13 @@
+2020-01-23 - 2.28.1 - #2526 Fix COOLROOM bug in thermal networks
+2020-01-23 - 2.28.1 - #2530 updated schemas.yml with trace-inputlocator output
+2020-01-23 - 2.28.1 - #2532 fixed workflow and also bug in supply_systems.xls
+2020-01-21 - 2.28.1 - #2528 Fix incorrect locator method @martin-mosteiro great catch!
+2020-01-20 - 2.28.1 - #2522 2493 decentralized optimization. Tested with the centralized optimization too. @daren-thomas grande!
+2020-01-20 - 2.28.1 - #2523 Typos and nomenclature in thermal networks
+2020-01-17 - 2.28.1 - #2521 Open plot in new window @reyery working great!
+2020-01-14 - 2.28.1 - #2520 Release 2.28
+2020-01-14 - 2.27.0 - #2516 fixing small bugs i2512 and i2509
+2020-01-14 - 2.27.0 - #2513 fix nominal cap
 2020-01-10 - 2.27.0 - #2517 2511 solar plots
 2020-01-10 - 2.27.0 - #2499 @daren-thomas well as soon as this fixes the problem of #2502
 2020-01-09 - 2.27.0 - #2503 Fix for scenario creation
