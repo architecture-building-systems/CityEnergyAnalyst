@@ -2078,7 +2078,7 @@ get_database_supply_systems:
       unit:
         sample_data: W
         types_found: [string]
-    DETAILED_ELEC_PRICES:
+    DETAILED_ELEC_COSTS:
       Opex_var_buy_USD2015perkWh:
         sample_data: 0.04936071505496888
         types_found: [float]
