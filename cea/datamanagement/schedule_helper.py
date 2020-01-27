@@ -158,6 +158,9 @@ def calc_average(last, current, share_of_use):
 class ScheduleData(object):
 
     def __init__(self, locator):
+        """
+        :param cea.inputlocator.InputLocator locator: InputLocator for locating schedule data
+        """
         self.locator = locator
         self.path_database = self.locator.get_database_standard_schedules()
         self.schedule_data, self.schedule_complementary_data = self.fill_in_data()
