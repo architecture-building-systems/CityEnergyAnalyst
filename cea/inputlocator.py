@@ -54,8 +54,8 @@ class InputLocator(object):
     def get_database_standard_schedules(self):
         return os.path.join(self.get_databases_folder(), 'archetypes', 'schedules')
 
-    def get_database_standard_schedules_use(self, path_to_database, use):
-        return os.path.join(path_to_database, use + '.csv')
+    def get_database_standard_schedules_use(self, use):
+        return os.path.join(self.get_database_standard_schedules(), use + '.csv')
 
     def get_input_folder(self):
         """Returns the inputs folder of a scenario"""
@@ -708,24 +708,36 @@ class InputLocator(object):
         """
         scenario/inputs/building-properties/schedules/{building_name}.csv
         This file contains schedules of occupancy, appliance use, etc of each building.
-        Schedules are 8760 values per year
-        :param building_name:
+
+        The format is a bit weird (e.g. not strictly a CSV table):
+
+        First row contains two columns (METADATA, <schedule-type>
+        Second row contains 13 columns (MONTHLY_MULTIPLIER, <jan-multiplier>, <feb-multiplier>, etc.)
+        The following rows are three sets of HOUR 1-24, one set for each of DAY in {WEEKDAY, SATURDAY, SUNDAY}
+
+        These weekly schedules are used by the schedule-maker script to create the schedules for each hour of the
+        year (``get_schedule_model_file``).
+
+        Do not read this file yourself, instead, use :py:func`cea.utilities.schedule_reader.read_cea_schedule`
+
+        :param str building_name: The building to create the schedule for
         :return:
         """
         return os.path.join(self.get_building_weekly_schedules_folder(), '{}.csv'.format(building_name))
 
     def get_schedule_model_folder(self):
-        """scenario/outputs/data/optimization/slave`
-        Slave results folder (storage + operation pattern)
+        """scenario/outputs/data/occupancy
+        Folder to store occupancy schedules to.
         """
         return self._ensure_folder(self.scenario, 'outputs', 'data', 'occupancy')
 
     def get_schedule_model_file(self, building_name):
         """
-        scenario/inputs/building-properties/{building_name}_schedules.csv
+        scenario/outputs/data/occupancy/{building_name}.csv
+
         This file contains schedules of occupancy, appliance use, etc of each building.
         Schedules are 8760 values per year
-        :param building_name:
+        :param building_name: The building to get the schedule file for.
         :return:
         """
         return os.path.join(self.get_schedule_model_folder(), '{}.csv'.format(building_name))
