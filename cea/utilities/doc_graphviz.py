@@ -2,7 +2,7 @@
 doc_graphviz.py
 
 Creates the graphviz output used to visualize script dependencies.
-This file relies on the schema.yml to create the graphviz plots.
+This file relies on the schemas.yml to create the graphviz plots.
 
 """
 
