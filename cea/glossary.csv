@@ -1871,7 +1871,6 @@ thermal-network,get_network_layout_edges_shapefile,inputs/networks/dc/edges.shp,
 thermal-network,get_network_layout_edges_shapefile,inputs/networks/dc/edges.shp,Pipe_DN,Classifies nominal pipe diameters (DN) into typical bins. E.g. DN100 refers to pipes of approx. 100mm in diameter.,[DN#],alphanumeric,string,black
 thermal-network,get_network_layout_edges_shapefile,inputs/networks/dc/edges.shp,Type_mat,TODO,TODO,TODO,TODO,black
 thermal-network,get_network_layout_edges_shapefile,inputs/networks/dc/edges.shp,geometry,TODO,TODO,TODO,TODO,black
-thermal-network,get_network_layout_edges_shapefile,inputs/networks/dc/edges.shp,weight,TODO,TODO,TODO,TODO,black
 thermal-network,get_thermal_demand_csv_file,outputs/data/optimization/network/layout/aggregated_demand_dh__wh.csv,B001,TODO,TODO,TODO,TODO,black
 thermal-network,get_thermal_demand_csv_file,outputs/data/optimization/network/layout/aggregated_demand_dh__wh.csv,Unnamed: 0,TODO,TODO,TODO,TODO,black
 thermal_network,get_network_energy_pumping_requirements_file,outputs/data/thermal-network/DH__plant_pumping_load_kW.csv,pressure_loss_return_kW,TODO,TODO,TODO,float,black
