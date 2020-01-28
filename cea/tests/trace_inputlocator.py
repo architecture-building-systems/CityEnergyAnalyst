@@ -195,7 +195,7 @@ def replace_repetitive_attr(attr):
     return attr
 
 
-def get_meta(df_series, attribute_name):
+def get_meta(df_series):
     types_found = set()
     meta = {}
     for data in df_series:
@@ -234,7 +234,7 @@ def get_xls_schema(filename):
             # select only non-nan columns
             nested_df = nested_df[new_cols]
         for attr in nested_df:
-            meta[attr.encode('ascii', 'ignore')] = get_meta(nested_df[attr], attr)
+            meta[attr.encode('ascii', 'ignore')] = get_meta(nested_df[attr])
         schema[sheet.encode('ascii', 'ignore')] = meta
     return schema
 
@@ -253,7 +253,7 @@ def get_csv_schema(filename):
     schema = {}
     for attr in db:
         attr = replace_repetitive_attr(attr)
-        schema[attr.encode('ascii', 'ignore')] = get_meta(db[attr], attr)
+        schema[attr.encode('ascii', 'ignore')] = get_meta(db[attr])
     return schema
 
 
@@ -264,7 +264,7 @@ def get_json_schema(filename):
     schema = {}
     for attr in db:
         attr = replace_repetitive_attr(attr)
-        schema[attr.encode('ascii', 'ignore')] = get_meta(db[attr], attr)
+        schema[attr.encode('ascii', 'ignore')] = get_meta(db[attr])
     return schema
 
 
@@ -293,7 +293,7 @@ def get_epw_schema(filename):
     db = pandas.read_csv(filename, skiprows=8, header=None, names=epw_labels)
     schema = {}
     for attr in db:
-        schema[attr.encode('ascii', 'ignore')] = get_meta(db[attr], attr)
+        schema[attr.encode('ascii', 'ignore')] = get_meta(db[attr])
     return schema
 
 
@@ -302,7 +302,7 @@ def get_dbf_schema(filename):
     db = pysal.open(filename, 'r')
     schema = {}
     for attr in db.header:
-        schema[attr.encode('ascii', 'ignore')] = get_meta(db.by_col(attr), attr)
+        schema[attr.encode('ascii', 'ignore')] = get_meta(db.by_col(attr))
     return schema
 
 
@@ -312,7 +312,7 @@ def get_shp_schema(filename):
     schema = {}
     for attr in db:
         attr = replace_repetitive_attr(attr)
-        meta = get_meta(db[attr], attr)
+        meta = get_meta(db[attr])
         if attr == 'geometry':
             meta['sample_data'] = '((x1 y1, x2 y2, ...))'
         schema[attr.encode('ascii', 'ignore')] = meta
