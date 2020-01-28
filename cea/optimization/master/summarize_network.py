@@ -150,21 +150,21 @@ def network_main(locator, buildings_in_this_network, ground_temp, num_tot_buildi
             mdot_cool_space_cooling_and_refrigeration_netw_all_kgpers += substations[
                 iteration].mdot_space_cooling_and_refrigeration_result_kgpers.values
             mdot_cool_space_cooling_data_center_and_refrigeration_netw_all_kgpers += substations[
-                iteration].mdot_space_cooling_data_center_and_refrigeration_result_kgpers.values
+                iteration].mdot_space_cooling_data_center_process_and_refrigeration_result_kgpers.values
 
             Q_DC_building_netw_space_cooling_and_refrigeration_total_W += (
                 substations[iteration].Q_space_cooling_and_refrigeration_W.values)
             Q_DC_building_netw_space_cooling_data_center_and_refrigeration_total_W += (
-                substations[iteration].Q_space_cooling_data_center_and_refrigeration_W.values)
+                substations[iteration].Q_space_cooling_data_center_process_and_refrigeration_W.values)
 
             sum_tret_mdot_cool_space_cooling_and_refrigeration += substations[
                                                                       iteration].T_return_DC_space_cooling_and_refrigeration_result_K.values * \
                                                                   substations[
                                                                       iteration].mdot_space_cooling_and_refrigeration_result_kgpers.values
             sum_tret_mdot_cool_space_cooling_data_center_and_refrigeration += substations[
-                                                                                  iteration].T_return_DC_space_cooling_data_center_and_refrigeration_result_K.values * \
+                                                                                  iteration].T_return_DC_space_cooling_data_center_process_and_refrigeration_result_K.values * \
                                                                               substations[
-                                                                                  iteration].mdot_space_cooling_data_center_and_refrigeration_result_kgpers.values
+                                                                                  iteration].mdot_space_cooling_data_center_process_and_refrigeration_result_kgpers.values
 
             # evaluate minimum flows
             mdot_cool_space_cooling_and_refrigeration_netw_min_kgpers = np.vectorize(calc_min_flow)(
@@ -172,7 +172,7 @@ def network_main(locator, buildings_in_this_network, ground_temp, num_tot_buildi
                 substations[iteration].mdot_space_cooling_and_refrigeration_result_kgpers.values)
             mdot_cool_space_cooling_data_center_and_refrigeration_netw_min_kgpers = np.vectorize(calc_min_flow)(
                 mdot_cool_space_cooling_data_center_and_refrigeration_netw_min_kgpers,
-                substations[iteration].mdot_space_cooling_data_center_and_refrigeration_result_kgpers.values)
+                substations[iteration].mdot_space_cooling_data_center_process_and_refrigeration_result_kgpers.values)
             iteration += 1
 
         # calculate thermal losses of distribution

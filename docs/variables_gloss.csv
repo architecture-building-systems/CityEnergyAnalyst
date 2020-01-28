@@ -607,25 +607,25 @@ DiscOp_B01_result_heating.csv;QfromGHP;float;[W];Heat supplied from groundsource
 DiscOp_B01_result_heating.csv;QfromNG;float;[W];Heat supplied from natural gas boiler;{0.0...n}
 DiscOp_B01_result_heating.csv;Total Costs;float;[USD-2015];Total cost of the district system (annualized investment cost + operation cost);{0.0...n}
 B001_results.csv;A_hex_cs;float;[m2];Heat exchanger area corresponding to the demand from space cooling;{0.0...n}
-B001_results.csv;A_hex_cs_space_cooling_data_center_and_refrigeration;float;[m2];Heat Exchanger area corresponding to the demand from space cooling, data center and refrigeration;{0.0...n}
+B001_results.csv;A_hex_cs_space_cooling_data_center_process_and_refrigeration;float;[m2];Heat Exchanger area corresponding to the demand from space cooling, data center and refrigeration;{0.0...n}
 B001_results.csv;A_hex_dhw_design_m2;float;[m2];Heat exchanger area corresponding to the demand from Domestic Hot Water;{0.0...n}
 B001_results.csv;Heat exchanger area corresponding to the demand from Heating;float;[m2];Area heat exchanger for the cooling system data center and refrigeration;{0.0...n}
 B001_results.csv;Q_dhw_W;float;[W];Load of domestic hot water system;{0.0...n}
 B001_results.csv;Q_heating_W;float;[W];Load of space heating;{0.0...n}
 B001_results.csv;Q_space_cooling_and_refrigeration_W;float;[W];Load of space cooling and refrigeration;{0.0...n}
-B001_results.csv;Q_space_cooling_data_center_and_refrigeration_W;float;[W];Load of space cooling data center and refrigeration;{0.0...n}
+B001_results.csv;Q_space_cooling_data_center_process_and_refrigeration_W;float;[W];Load of space cooling data center and refrigeration;{0.0...n}
 B001_results.csv;T_heating_max_all_buildings_intern_K;float;[K];Maximum setpoint temperature corresponding to heating of all the connected buildings;{0.0...n}
 B001_results.csv;T_hotwater_max_all_buildings_intern_K;float;[K];Maximum setpoint temperature corresponding to hot water supply to all the connected buildings;{0.0...n}
 B001_results.csv;T_return_DC_space_cooling_and_refrigeration_result_K;float;[K];Return temperature of district cooling corresponding to space cooling of buildings and refrigeration;{0.0...n}
-B001_results.csv;T_return_DC_space_cooling_data_center_and_refrigeration_result_K;float;[K];Return temperature of district cooling corresponding to space cooling of buildings, data center and refrigeration;{0.0...n}
+B001_results.csv;T_return_DC_space_cooling_data_center_process_and_refrigeration_result_K;float;[K];Return temperature of district cooling corresponding to space cooling of buildings, data center and refrigeration;{0.0...n}
 B001_results.csv;T_return_DH_result_K;float;[K];Return temperature of district heating corresponding to all buildings;{0.0...n}
 B001_results.csv;T_supply_DC_space_cooling_and_refrigeration_result_K;float;[K];Supply temperature of district cooling corresponding to space cooling of buildings and refrigeration;{0.0...n}
-B001_results.csv;T_supply_DC_space_cooling_data_center_and_refrigeration_result_K;float;[K];Supply temperature of district cooling corresponding to space cooling of buildings, data center and refrigeration;{0.0...n}
+B001_results.csv;T_supply_DC_space_cooling_data_center_process_and_refrigeration_result_K;float;[K];Supply temperature of district cooling corresponding to space cooling of buildings, data center and refrigeration;{0.0...n}
 B001_results.csv;T_supply_DH_result_K;float;[K];Supply temperature of district heating corresponding to all buildings;{0.0...n}
 B001_results.csv;T_total_supply_max_all_buildings_intern_K;float;[K];Maximum temperature of supply for all buildings;{0.0...n}
 B001_results.csv;mdot_DH_result_kgpers;float;[kg/s];Flow rate corresponding to District Heating;{0.0...n}
 B001_results.csv;mdot_space_cooling_and_refrigeration_result_kgpers;float;[kg/s];Flow rate corresponding to District Cooling (space cooling and refrigeration);{0.0...n}
-B001_results.csv;mdot_space_cooling_data_center_and_refrigeration_result_kgpers;float;[kg/s];Flow rate corresponding to District Cooling (space cooling, data center and refrigeration);{0.0...n}
+B001_results.csv;mdot_space_cooling_data_center_process_and_refrigeration_result_kgpers;float;[kg/s];Flow rate corresponding to District Cooling (space cooling, data center and refrigeration);{0.0...n}
 B001_PVT.csv;Date;date;[datetime];Date and time in hourly steps.;{yyyy-mm-dd hh:mm:ss-Z}
 B001_PVT.csv;PVT_walls_south_Q_kWh;float;[kWh];Heat production from photovoltaic-thermal panels on south facades;{0.0...n}
 B001_PVT.csv;PVT_walls_south_E_kWh;float;[kWh];Electricity production from photovoltaic-thermal panels on south facades;{0.0...n}

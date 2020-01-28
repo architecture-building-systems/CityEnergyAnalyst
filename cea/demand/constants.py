@@ -76,6 +76,10 @@ T_WARNING_HIGH = 50.0
 T_C_REF_SUP_0 = 1  # (°C) refactored from refrigeration loads, without original source
 T_C_REF_RE_0 = 5  # (°C) refactored from refrigeration loads, without original source
 
+# SUPPLY AND RETURN TEMPERATURES OF PROCESS COOLING
+T_C_PRO_SUP_0 = 6  # (°C) from Hochschulgebiet Vertiefungsstudie
+T_C_PRO_RE_0 = 12  # (°C) from Hochschulgebiet Vertiefungsstudie
+
 # SUPPLY AND RETURN TEMPERATURES OF DATA CENTER COOLING SYSTEM
 T_C_DATA_RE_0 = 15  # (°C) refactored from data center loads, without original source
 T_C_DATA_SUP_0 = 7  # (°C) refactored from data center loads, without original source

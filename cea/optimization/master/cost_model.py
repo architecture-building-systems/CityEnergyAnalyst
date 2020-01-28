@@ -405,7 +405,7 @@ def calc_substations_costs_cooling(building_names, master_to_slave_vars, distric
             else:
                 df = pd.read_csv(
                     locator.get_optimization_substations_results_file(building_name, "DC", district_network_barcode),
-                    usecols=["Q_space_cooling_data_center_and_refrigeration_W"])
+                    usecols=["Q_space_cooling_data_center_process_and_refrigeration_W"])
 
             subsArray = np.array(df)
             Q_max_W = np.amax(subsArray)

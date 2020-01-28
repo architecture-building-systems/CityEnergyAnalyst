@@ -582,12 +582,12 @@ def calc_combined_cooling_loads(building_name, locator, total_demand, cooling_co
     buildings_name_with_cooling = [building_name]
     substation.substation_main_cooling(locator, total_demand, buildings_name_with_cooling, cooling_configuration)
     substation_operation = pd.read_csv(locator.get_optimization_substations_results_file(building_name, "DC", ""),
-                                       usecols=["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K",
-                                                "T_return_DC_space_cooling_data_center_and_refrigeration_result_K",
-                                                "mdot_space_cooling_data_center_and_refrigeration_result_kgpers"])
-    T_re_K = substation_operation["T_return_DC_space_cooling_data_center_and_refrigeration_result_K"].values
-    T_sup_K = substation_operation["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K"].values
-    mdot_kgpers = substation_operation["mdot_space_cooling_data_center_and_refrigeration_result_kgpers"].values
+                                       usecols=["T_supply_DC_space_cooling_data_center_process_and_refrigeration_result_K",
+                                                "T_return_DC_space_cooling_data_center_process_and_refrigeration_result_K",
+                                                "mdot_space_cooling_data_center_process_and_refrigeration_result_kgpers"])
+    T_re_K = substation_operation["T_return_DC_space_cooling_data_center_process_and_refrigeration_result_K"].values
+    T_sup_K = substation_operation["T_supply_DC_space_cooling_data_center_process_and_refrigeration_result_K"].values
+    mdot_kgpers = substation_operation["mdot_space_cooling_data_center_process_and_refrigeration_result_kgpers"].values
     # calculate combined load
     Qc_load_W = np.vectorize(calc_new_load)(mdot_kgpers, T_sup_K, T_re_K)
     Qc_design_W = Qc_load_W.max()

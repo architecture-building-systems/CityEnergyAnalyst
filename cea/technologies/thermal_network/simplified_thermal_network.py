@@ -222,13 +222,13 @@ def thermal_network_simplified(locator, config, network_name):
             substation_results = pd.read_csv(
                 locator.get_optimization_substations_results_file(building_name, "DC", DCN_barcode))
             volume_flow_m3pers_building[building_name] = substation_results[
-                                                             "mdot_space_cooling_data_center_and_refrigeration_result_kgpers"] / P_WATER_KGPERM3
+                                                             "mdot_space_cooling_data_center_process_and_refrigeration_result_kgpers"] / P_WATER_KGPERM3
             T_sup_K_building[building_name] = substation_results[
-                "T_supply_DC_space_cooling_data_center_and_refrigeration_result_K"]
+                "T_supply_DC_space_cooling_data_center_process_and_refrigeration_result_K"]
             T_re_K_building[building_name] = substation_results[
-                "T_return_DC_space_cooling_data_center_and_refrigeration_result_K"]
+                "T_return_DC_space_cooling_data_center_process_and_refrigeration_result_K"]
             Q_demand_kWh_building[building_name] = substation_results[
-                                                       "Q_space_cooling_data_center_and_refrigeration_W"] / 1000
+                                                       "Q_space_cooling_data_center_process_and_refrigeration_W"] / 1000
 
     # Create a water network model
     import os
