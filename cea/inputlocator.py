@@ -934,6 +934,14 @@ class InputLocator(object):
             file_name = network_type + "_" + network_name + "_temperature_plant_K.csv"
         return os.path.join(folder, file_name)
 
+    def get_decentralized_chiller_electricity(self, network_type, network_name):
+        folder = self.get_thermal_network_folder()
+        if len(network_name) is 0:
+            file_name = network_type + "_" + "_electricity_decentralized_chiller_kW.csv"
+        else:
+            file_name = network_type + "_" + network_name + "_electricity_decentralized_chiller_kW.csv"
+        return os.path.join(folder, file_name)
+
     def get_thermal_network_substation_ploss_file(self, network_type, network_name, representative_week=False):
         """scenario/outputs/data/optimization/network/layout/DH_qloss_substations_kw.csv"""
         if representative_week == True:

@@ -9,9 +9,9 @@ import scipy
 from numba import jit
 
 import cea.config
-from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
-from cea.constants import HOURS_IN_YEAR
-from cea.technologies.constants import DT_HEAT, DT_COOL, U_COOL, U_HEAT
+from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, HOURS_IN_YEAR
+from cea.optimization.constants import HP_COP_MAX, HP_COP_MIN, HP_ETA_EX_COOL
+from cea.technologies.constants import T_LAKE_SUP, DT_HEAT, DT_COOL, U_COOL, U_HEAT
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -94,7 +94,8 @@ def calc_temp_hex_building_side_heating(building_demand_df, heating_configuratio
     return Ths_supply_C, Ths_return
 
 
-def substation_main_cooling(locator, total_demand, buildings_name_with_cooling, cooling_configuration=['aru','ahu','scu'], DCN_barcode=""):
+def substation_main_cooling(locator, total_demand, buildings_name_with_cooling,
+                            cooling_configuration=['aru', 'ahu', 'scu'], DCN_barcode=""):
     if DCN_barcode.count("1") > 0:  # CALCULATE SUBSTATIONS DURING CENTRALIZED OPTIMIZATION
         buildings_dict = {}
         cooling_system_temperatures_dict = {}
@@ -140,6 +141,14 @@ def substation_main_cooling(locator, total_demand, buildings_name_with_cooling, 
                                      cooling_system_temperatures_dict[name]['Tcs_return_C'],
                                      cooling_configuration,
                                      locator, DCN_barcode)
+
+        decentralized_chiller_electricity_demand_kW = pd.DataFrame()
+        for name in buildings_name_with_cooling:
+            decentralized_chiller_electricity_demand_kW[name] = \
+            pd.read_csv(locator.get_optimization_substations_results_file(name, "DC", DCN_barcode))[
+                'E_space_cooling_data_center_process_and_refrigeration_W'] / 1000
+        decentralized_chiller_electricity_demand_kW.to_csv(locator.get_decentralized_chiller_electricity("DC", ""))
+
     else:
         # CALCULATE SUBSTATIONS DURING DECENTRALIZED OPTIMIZATION
         for name in buildings_name_with_cooling:
@@ -256,6 +265,7 @@ def substation_model_cooling(name, building, T_DC_supply_to_cs_ref_C, T_DC_suppl
                              'scu': abs(building.mcpcs_sys_scu_kWperC.values)}
 
     ## SIZE FOR THE SPACE COOLING HEAT EXCHANGER
+    Ecs_sys_W = np.zeros(HOURS_IN_YEAR)
     if len(cs_configuration) == 0:
         t_DC_return_cs = 0
         mcp_DC_cs = 0
@@ -267,7 +277,9 @@ def substation_model_cooling(name, building, T_DC_supply_to_cs_ref_C, T_DC_suppl
         for unit in cs_configuration:
             Qcs_sys_kWh += Qcs_sys_kWh_dict[unit]
         Qcs_sys_W = abs(Qcs_sys_kWh) * 1000  # in W
-        # only include space cooling and refrigeration
+        Ecs_sys_W = np.zeros(HOURS_IN_YEAR)
+
+        # only include space cooling
         Qnom_W = max(Qcs_sys_W)  # in W
         if Qnom_W > 0:
             tho = Tcs_supply_C + 273  # in K
@@ -290,6 +302,7 @@ def substation_model_cooling(name, building, T_DC_supply_to_cs_ref_C, T_DC_suppl
             A_hex_cs = 0
 
     # HEX sizing for refrigeration, calculate t_DC_return_ref, mcp_DC_ref
+    Ecre_sys_W = np.zeros(HOURS_IN_YEAR)
     if len(cs_configuration) == 0:
         t_DC_return_ref = tci
         mcp_DC_ref = 0
@@ -302,6 +315,23 @@ def substation_model_cooling(name, building, T_DC_supply_to_cs_ref_C, T_DC_suppl
         if Qnom_W > 0:
             tho = building.Tcre_sys_sup_C + 273  # in K
             thi = building.Tcre_sys_re_C + 273  # in K
+
+            # set minimum allowable network temperature
+            tmin = T_LAKE_SUP + 273
+            # calculate hourly COP for decentralized chiller
+            COP = HP_ETA_EX_COOL * tho / ((T_DC_supply_to_cs_ref_data_process_C + 273) - tho)
+            COP[COP < HP_COP_MIN] = HP_COP_MIN
+            COP[COP > HP_COP_MAX] = HP_COP_MAX
+            # calculate electricity demand for decentralized chiller
+            Ecre_sys_W[tho < tmin] = Qcre_sys_W[tho < tmin] / COP[tho < tmin]
+            # adjust cooling demand to anergy required by chiller only
+            Qcre_sys_W[tho < tmin] -= Ecre_sys_W[tho < tmin]
+            Qnom_W = max(Qcre_sys_W)
+            # adjust secondary temperatures at HEX
+            thi[tho < tmin] += tmin - tho
+            tho[tho < tmin] = tmin
+
+            # continue with normal HEX calculation
             ch = abs(building.mcpcre_sys_kWperC.values) * 1000  # in W/K
             index = np.where(Qcre_sys_W == Qnom_W)[0][0]
             tci_0 = tci[index]  # in K
@@ -316,6 +346,7 @@ def substation_model_cooling(name, building, T_DC_supply_to_cs_ref_C, T_DC_suppl
             A_hex_ref = 0
 
     # HEX sizing for datacenter, calculate t_DC_return_data, mcp_DC_data
+    Ecdata_sys_W = np.zeros(HOURS_IN_YEAR)
     if len(cs_configuration) == 0:
         t_DC_return_data = tci
         mcp_DC_data = 0
@@ -328,6 +359,23 @@ def substation_model_cooling(name, building, T_DC_supply_to_cs_ref_C, T_DC_suppl
         if Qnom_W > 0:
             tho = building.Tcdata_sys_sup_C + 273  # in K
             thi = building.Tcdata_sys_re_C + 273  # in K
+
+            # set minimum allowable network temperature
+            tmin = T_LAKE_SUP + 273
+            # calculate hourly COP for decentralized chiller
+            COP = HP_ETA_EX_COOL * tho / ((T_DC_supply_to_cs_ref_data_process_C + 273) - tho)
+            COP[COP < HP_COP_MIN] = HP_COP_MIN
+            COP[COP > HP_COP_MAX] = HP_COP_MAX
+            # calculate electricity demand for decentralized chiller
+            Ecdata_sys_W[tho < tmin] = Qcdata_sys_W[tho < tmin] / COP[tho < tmin]
+            # adjust cooling demand to anergy required by chiller only
+            Qcdata_sys_W[tho < tmin] -= Ecdata_sys_W[tho < tmin]
+            Qnom_W = max(Qcdata_sys_W)
+            # adjust secondary temperatures at HEX
+            thi[tho < tmin] += tmin - tho
+            tho[tho < tmin] = tmin
+
+            # continue with normal HEX calculation
             ch = abs(building.mcpcdata_sys_kWperC.values) * 1000  # in W/K
             index = np.where(Qcdata_sys_W == Qnom_W)[0][0]
             tci_0 = tci[index]  # in K
@@ -342,6 +390,7 @@ def substation_model_cooling(name, building, T_DC_supply_to_cs_ref_C, T_DC_suppl
             A_hex_data = 0
 
     # HEX sizing for process cooling, calculate t_DC_return_process, mcp_DC_process
+    Ecpro_sys_W = np.zeros(HOURS_IN_YEAR)
     if len(cs_configuration) == 0:
         t_DC_return_pro = tci
         mcp_DC_pro = 0
@@ -354,6 +403,23 @@ def substation_model_cooling(name, building, T_DC_supply_to_cs_ref_C, T_DC_suppl
         if Qnom_W > 0:
             tho = building.Tcpro_sys_sup_C + 273  # in K
             thi = building.Tcpro_sys_re_C + 273  # in K
+
+            # set minimum allowable network temperature
+            tmin = T_LAKE_SUP + 273
+            # calculate hourly COP for decentralized chiller
+            COP = HP_ETA_EX_COOL * tho / ((T_DC_supply_to_cs_ref_data_process_C + 273) - tho)
+            COP[COP < HP_COP_MIN] = HP_COP_MIN
+            COP[COP > HP_COP_MAX] = HP_COP_MAX
+            # calculate electricity demand for decentralized chiller
+            Ecpro_sys_W[tho < tmin] = Qcpro_sys_W[tho < tmin] / COP[tho < tmin]
+            # adjust cooling demand to anergy required by chiller only
+            Qcpro_sys_W[tho < tmin] -= Ecpro_sys_W[tho < tmin]
+            Qnom_W = max(Qcpro_sys_W)
+            # adjust secondary temperatures at HEX
+            thi[tho < tmin] += tmin - tho
+            tho[tho < tmin] = tmin
+
+            # continue with normal HEX calculation
             ch = abs(building.mcpcpro_sys_kWperC.values) * 1000  # in W/K
             index = np.where(Qcpro_sys_W == Qnom_W)[0][0]
             tci_0 = tci[index]  # in K
@@ -370,11 +436,6 @@ def substation_model_cooling(name, building, T_DC_supply_to_cs_ref_C, T_DC_suppl
     # calculate mix temperature of return DC
     T_DC_return_cs_ref_C = np.vectorize(calc_HEX_mix_2_flows)(Qcs_sys_W, Qcre_sys_W, mcp_DC_cs, mcp_DC_ref,
                                                               t_DC_return_cs, t_DC_return_ref)
-    # T_DC_return_cs_ref_data_C = np.vectorize(calc_HEX_mix_3_flows)(Qcs_sys_W, Qcre_sys_W, Qcdata_sys_W,
-    #                                                                mcp_DC_cs, mcp_DC_ref, mcp_DC_data,
-    #                                                                t_DC_return_cs, t_DC_return_ref, t_DC_return_data,
-    #                                                                )
-
     T_DC_return_cs_ref_data_process_C = np.vectorize(calc_HEX_mix_4_flows)(
         Qcs_sys_W, Qcre_sys_W, Qcdata_sys_W, Qcpro_sys_W,
         mcp_DC_cs, mcp_DC_ref, mcp_DC_data, mcp_DC_pro,
@@ -385,9 +446,11 @@ def substation_model_cooling(name, building, T_DC_supply_to_cs_ref_C, T_DC_suppl
                                                        HEAT_CAPACITY_OF_WATER_JPERKGK  # convert from W/K to kg/s
 
     T_r1_space_cooling_and_refrigeration_result_flat = T_DC_return_cs_ref_C + 273.0  # convert to K
-    T_r1_space_cooling_data_center_process_and_refrigeration_result_flat = T_DC_return_cs_ref_data_process_C + 273.0  # convert to K
+    T_r1_space_cooling_data_center_process_and_refrigeration_result_flat = \
+        T_DC_return_cs_ref_data_process_C + 273.0  # convert to K
     T_supply_DC_flat = T_DC_supply_to_cs_ref_C + 273.0  # convert to K
-    T_supply_DC_space_cooling_data_center_process_and_refrigeration_result_flat = T_DC_supply_to_cs_ref_data_process_C + 273.0  # convert to K
+    T_supply_DC_space_cooling_data_center_process_and_refrigeration_result_flat = \
+        T_DC_supply_to_cs_ref_data_process_C + 273.0  # convert to K
 
     # save the results into a .csv file
     results = pd.DataFrame(
@@ -404,6 +467,8 @@ def substation_model_cooling(name, building, T_DC_supply_to_cs_ref_C, T_DC_suppl
          "A_hex_cs_space_cooling_data_center_process_and_refrigeration": A_hex_cs + A_hex_data + A_hex_ref + A_hex_pro,
          "Q_space_cooling_and_refrigeration_W": Qcs_sys_W + Qcre_sys_W,
          "Q_space_cooling_data_center_process_and_refrigeration_W": Qcs_sys_W + Qcdata_sys_W + Qcre_sys_W + Qcpro_sys_W,
+         "E_space_cooling_and_refrigeration_W": Ecs_sys_W + Ecre_sys_W,
+         "E_space_cooling_data_center_process_and_refrigeration_W": Ecs_sys_W + Ecdata_sys_W + Ecre_sys_W + Ecpro_sys_W,
          })
 
     results.to_csv(locator.get_optimization_substations_results_file(name, "DC", DCN_barcode), sep=',', index=False,
@@ -921,12 +986,20 @@ def calc_DC_supply(t_0, t_1):  # fixme: keep the correct one
     if isclose(t_0, 0.0):
         if isclose(t_1, 0.0):
             return 0.0
-        else:
+        elif t_1 > T_LAKE_SUP:
             return t_1
+        else:
+            return T_LAKE_SUP
     elif isclose(t_1, 0.0):
-        return t_0
+        if t_0 > T_LAKE_SUP:
+            return t_0
+        else:
+            return T_LAKE_SUP
     else:
-        return min(t_0, t_1)
+        if min(t_0, t_1) > T_LAKE_SUP:
+            return min(t_0, t_1)
+        else:
+            return T_LAKE_SUP
 
 
 def calc_DH_supply(t_0, t_1):

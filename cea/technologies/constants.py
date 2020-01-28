@@ -23,6 +23,7 @@ HP_DELTA_T_COND = 2.0  # pinch for condenser [K]
 HP_DELTA_T_EVAP = 2.0  # pinch for evaporator [K]
 HP_MAX_T_COND = 140 + 273.0  # max temperature at condenser [K]
 HP_AUXRATIO = 0.83  # Wdot_comp / Wdot_total (circulating pumps)
+
 # Substation data
 ROUGHNESS = 0.02 / 1000  # roughness coefficient for heating network pipe in m (for a steel pipe, from Li &
 NETWORK_DEPTH = 1  # m
@@ -71,3 +72,6 @@ BOILER_ETA_HP = 0.9
 
 #natural gas conncetion
 GAS_CONNECTION_COST = 15.5 / 1000  # CHF / W, from  Energie360 15.5 CHF / kW
+
+# LAKE WATER TEMPERATURE
+T_LAKE_SUP = 6  # (C) from Zuerichsee report
