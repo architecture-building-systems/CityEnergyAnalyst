@@ -224,7 +224,7 @@ def get_xls_schema(filename):
         # if xls seems to have row attributes
         if 'Unnamed: 1' in db[sheet].keys():
             nested_df = db[sheet].T
-            # filter the goddamn nans
+            # filter the nans
             new_cols = []
             for col in nested_df.columns:
                 if col == col:

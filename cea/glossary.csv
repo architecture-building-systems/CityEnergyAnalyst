@@ -408,42 +408,9 @@ operation-costs,get_costs_operation_file,outputs/data/costs/operation_costs.csv,
 operation-costs,get_costs_operation_file,outputs/data/costs/operation_costs.csv,WOOD_hs_cost_yr,Operation costs of wood due to space heating,$USD(2015)/yr,TODO,TODO,brown
 operation-costs,get_costs_operation_file,outputs/data/costs/operation_costs.csv,WOOD_ww_cost_m2yr,TODO,TODO,TODO,TODO,black
 operation-costs,get_costs_operation_file,outputs/data/costs/operation_costs.csv,WOOD_ww_cost_yr,Operation costs of wood due to hotwater,$USD(2015)/yr,TODO,TODO,brown_light
--,get_database_air_conditioning_systems,inputs/technology/systems/air_conditioning_systems.xls,controller,TODO,TODO,TODO,TODO,black
--,get_database_air_conditioning_systems,inputs/technology/systems/air_conditioning_systems.xls,cooling,TODO,TODO,TODO,TODO,black
--,get_database_air_conditioning_systems,inputs/technology/systems/air_conditioning_systems.xls,dhw,TODO,TODO,TODO,TODO,black
--,get_database_air_conditioning_systems,inputs/technology/systems/air_conditioning_systems.xls,heating,TODO,TODO,TODO,TODO,black
--,get_database_air_conditioning_systems,inputs/technology/systems/air_conditioning_systems.xls,ventilation,TODO,TODO,TODO,TODO,black
--,get_database_envelope_systems,inputs/technology/systems/envelope_systems.xls,CONSTRUCTION,TODO,TODO,TODO,TODO,black
--,get_database_envelope_systems,inputs/technology/systems/envelope_systems.xls,LEAKAGE,TODO,TODO,TODO,TODO,black
--,get_database_envelope_systems,inputs/technology/systems/envelope_systems.xls,ROOF,TODO,TODO,TODO,TODO,black
--,get_database_envelope_systems,inputs/technology/systems/envelope_systems.xls,SHADING,TODO,TODO,TODO,TODO,black
--,get_database_envelope_systems,inputs/technology/systems/envelope_systems.xls,WALL,TODO,TODO,TODO,TODO,black
--,get_database_envelope_systems,inputs/technology/systems/envelope_systems.xls,WINDOW,TODO,TODO,TODO,TODO,black
--,get_database_lca_buildings,inputs/technology/lifecycle/LCA_buildings.xlsx,EMBODIED_EMISSIONS,TODO,TODO,TODO,TODO,black
--,get_database_lca_buildings,inputs/technology/lifecycle/LCA_buildings.xlsx,EMBODIED_ENERGY,TODO,TODO,TODO,TODO,black
--,get_database_lca_mobility,inputs/technology/lifecycle/LCA_mobility.xls,MOBILITY,TODO,TODO,TODO,TODO,black
 -,get_database_standard_schedules_use,inputs/technology/archetypes/schedules/RESTAURANT.csv,CH-SIA-2014,TODO,TODO,TODO,float,black
 -,get_database_standard_schedules_use,inputs/technology/archetypes/schedules/RESTAURANT.csv,METADATA,TODO,TODO,TODO,float,black
 -,get_database_standard_schedules_use,inputs/technology/archetypes/schedules/RESTAURANT.csv,RESTAURANT,TODO,TODO,TODO,float,black
--,get_database_supply_systems,inputs/technology/systems/supply_systems.xls,ALL_IN_ONE_SYSTEMS,TODO,TODO,TODO,TODO,black
--,get_database_supply_systems,inputs/technology/systems/supply_systems.xls,Absorption_chiller,TODO,TODO,TODO,TODO,black
--,get_database_supply_systems,inputs/technology/systems/supply_systems.xls,BH,TODO,TODO,TODO,TODO,black
--,get_database_supply_systems,inputs/technology/systems/supply_systems.xls,Boiler,TODO,TODO,TODO,TODO,black
--,get_database_supply_systems,inputs/technology/systems/supply_systems.xls,CCGT,TODO,TODO,TODO,TODO,black
--,get_database_supply_systems,inputs/technology/systems/supply_systems.xls,CT,TODO,TODO,TODO,TODO,black
--,get_database_supply_systems,inputs/technology/systems/supply_systems.xls,Chiller,TODO,TODO,TODO,TODO,black
--,get_database_supply_systems,inputs/technology/systems/supply_systems.xls,DETAILED_ELEC_PRICES,TODO,TODO,TODO,TODO,black
--,get_database_supply_systems,inputs/technology/systems/supply_systems.xls,FC,TODO,TODO,TODO,TODO,black
--,get_database_supply_systems,inputs/technology/systems/supply_systems.xls,FEEDSTOCKS,TODO,TODO,TODO,TODO,black
--,get_database_supply_systems,inputs/technology/systems/supply_systems.xls,Furnace,TODO,TODO,TODO,TODO,black
--,get_database_supply_systems,inputs/technology/systems/supply_systems.xls,HEX,TODO,TODO,TODO,TODO,black
--,get_database_supply_systems,inputs/technology/systems/supply_systems.xls,HP,TODO,TODO,TODO,TODO,black
--,get_database_supply_systems,inputs/technology/systems/supply_systems.xls,PIPING,TODO,TODO,TODO,TODO,black
--,get_database_supply_systems,inputs/technology/systems/supply_systems.xls,PV,TODO,TODO,TODO,TODO,black
--,get_database_supply_systems,inputs/technology/systems/supply_systems.xls,PVT,TODO,TODO,TODO,TODO,black
--,get_database_supply_systems,inputs/technology/systems/supply_systems.xls,Pump,TODO,TODO,TODO,TODO,black
--,get_database_supply_systems,inputs/technology/systems/supply_systems.xls,SC,TODO,TODO,TODO,TODO,black
--,get_database_supply_systems,inputs/technology/systems/supply_systems.xls,TES,TODO,TODO,TODO,TODO,black
 demand,get_demand_results_file,outputs/data/demand/b001.csv,COAL_hs_kWh,Coal requirement for space heating supply,kWh,{0.0...n},float,black
 demand,get_demand_results_file,outputs/data/demand/b001.csv,COAL_ww_kWh,Coal requirement for hotwater supply,kWh,{0.0...n},float,grey
 demand,get_demand_results_file,outputs/data/demand/b001.csv,DATE,Time stamp for each day of the year ascending in hour intervals.,[smalldatetime],YYYY-MM-DD hh:mm:ss,date,black
