@@ -1746,6 +1746,25 @@ photovoltaic-thermal,PVT_totals,outputs/data/potentials/solar/pvt_total.csv,T_PV
 photovoltaic-thermal,PVT_totals,outputs/data/potentials/solar/pvt_total.csv,T_PVT_sup_C,Collector heating supply temperature.,[C],{0.0...n},float,black
 photovoltaic-thermal,PVT_totals,outputs/data/potentials/solar/pvt_total.csv,mcp_PVT_kWperC,Capacity flow rate (mass flow* specific heat capacity) of the hot water delivered by the collector.,[kW/Cap],{0.0...n},float,black
 photovoltaic-thermal,PVT_totals,outputs/data/potentials/solar/pvt_total.csv,radiation_kWh,Total radiatiative potential.,[kWh],{0.0...n},float,black
+radiation,get_radiation_building,outputs/data/solar-radiation/B001_radiation.csv,Date,TODO,TODO,TODO,date,black
+radiation,get_radiation_building,outputs/data/solar-radiation/B001_radiation.csv,roofs_top_kW,TODO,TODO,TODO,float,black
+radiation,get_radiation_building,outputs/data/solar-radiation/B001_radiation.csv,roofs_top_m2,TODO,TODO,TODO,float,black
+radiation,get_radiation_building,outputs/data/solar-radiation/B001_radiation.csv,walls_east_kW,TODO,TODO,TODO,float,black
+radiation,get_radiation_building,outputs/data/solar-radiation/B001_radiation.csv,walls_east_m2,TODO,TODO,TODO,float,black
+radiation,get_radiation_building,outputs/data/solar-radiation/B001_radiation.csv,walls_north_kW,TODO,TODO,TODO,float,black
+radiation,get_radiation_building,outputs/data/solar-radiation/B001_radiation.csv,walls_north_m2,TODO,TODO,TODO,float,black
+radiation,get_radiation_building,outputs/data/solar-radiation/B001_radiation.csv,walls_south_kW,TODO,TODO,TODO,float,black
+radiation,get_radiation_building,outputs/data/solar-radiation/B001_radiation.csv,walls_south_m2,TODO,TODO,TODO,float,black
+radiation,get_radiation_building,outputs/data/solar-radiation/B001_radiation.csv,walls_west_kW,TODO,TODO,TODO,float,black
+radiation,get_radiation_building,outputs/data/solar-radiation/B001_radiation.csv,walls_west_m2,TODO,TODO,TODO,float,black
+radiation,get_radiation_building,outputs/data/solar-radiation/B001_radiation.csv,windows_east_kW,TODO,TODO,TODO,float,black
+radiation,get_radiation_building,outputs/data/solar-radiation/B001_radiation.csv,windows_east_m2,TODO,TODO,TODO,float,black
+radiation,get_radiation_building,outputs/data/solar-radiation/B001_radiation.csv,windows_north_kW,TODO,TODO,TODO,float,black
+radiation,get_radiation_building,outputs/data/solar-radiation/B001_radiation.csv,windows_north_m2,TODO,TODO,TODO,float,black
+radiation,get_radiation_building,outputs/data/solar-radiation/B001_radiation.csv,windows_south_kW,TODO,TODO,TODO,float,black
+radiation,get_radiation_building,outputs/data/solar-radiation/B001_radiation.csv,windows_south_m2,TODO,TODO,TODO,float,black
+radiation,get_radiation_building,outputs/data/solar-radiation/B001_radiation.csv,windows_west_kW,TODO,TODO,TODO,float,black
+radiation,get_radiation_building,outputs/data/solar-radiation/B001_radiation.csv,windows_west_m2,TODO,TODO,TODO,float,black
 radiation,get_radiation_building_sensors,outputs/data/solar-radiation/B001_insolation_Whm2.json,srf0,TODO,TODO,TODO,float,black
 radiation,get_radiation_materials,outputs/data/solar-radiation/buidling_materials.csv,G_win,TODO,TODO,TODO,float,black
 radiation,get_radiation_materials,outputs/data/solar-radiation/buidling_materials.csv,Name,TODO,TODO,TODO,string,black
