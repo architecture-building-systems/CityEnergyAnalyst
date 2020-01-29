@@ -1,7 +1,7 @@
 import os
 import glob
 
-from flask_restplus import Namespace, Resource
+from flask_restplus import Namespace, Resource, abort
 import pandas
 
 import cea.databases
@@ -96,7 +96,7 @@ class Database(Resource):
         elif db in locator.keys():
             return get_database_dict(locator, db)
         else:
-            return {"message": "Could not find '{}' database. Try instead {}".format(db, ", ".join(locator.keys()))}
+            abort(400, "Could not find '{}' database. Try instead {}".format(db, ", ".join(locator.keys())))
 
 
 @api.route("/schema/<string:db>")
@@ -112,4 +112,4 @@ class DatabaseSchema(Resource):
             db_schema = schemas[SCHEMA_KEY[db]]['schema']
             return db_schema
         else:
-            return {"message": "Could not find '{}' database. Try instead {}".format(db, ", ".join(SCHEMA_KEY.keys()))}
+            abort(400, "Could not find '{}' database. Try instead {}".format(db, ", ".join(SCHEMA_KEY.keys())))
