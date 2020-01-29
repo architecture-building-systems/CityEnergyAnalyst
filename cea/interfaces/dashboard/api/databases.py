@@ -25,7 +25,12 @@ SCHEMA_KEY = {
 }
 
 
-# FIXME: Temp solution
+def get_regions():
+    return [folder for folder in os.listdir(database_path) if folder != "weather"
+            and os.path.isdir(os.path.join(database_path, folder))]
+
+
+# FIXME: Temp solution for database locators for shipped databases
 def database_paths(region):
     region_path = os.path.join(database_path, region)
     DATABASE_TYPES = {
@@ -79,36 +84,44 @@ def get_database_dict(path, db):
 @api.route("/")
 class DatabaseRegion(Resource):
     def get(self):
-        return [folder for folder in os.listdir(database_path) if folder != "weather"
-                and os.path.isdir(os.path.join(database_path, folder))]
+        return {'regions': get_regions(), 'databases': SCHEMA_KEY.keys()}
 
 
 @api.route("/<string:region>/<string:db>")
 class Database(Resource):
     def get(self, region, db):
+        regions = get_regions()
+        if region not in regions:
+            abort(400, "Could not find '{}' region. Try instead {}".format(region, ", ".join(regions)))
         locator = database_paths(region)
-        if db == 'all':
-            out = {}
-            for db_name in locator.keys():
-                out[db_name] = get_database_dict(locator[db_name], db_name)
-            return out
-        elif db in locator.keys():
-            return get_database_dict(locator[db], db)
-        else:
-            abort(400, "Could not find '{}' database. Try instead {}".format(db, ", ".join(locator.keys())))
+        db_names = locator.keys()
+        try:
+            if db == 'all':
+                out = {}
+                for db_name in db_names:
+                    out[db_name] = get_database_dict(locator[db_name], db_name)
+                return out
+            elif db in db_names:
+                return get_database_dict(locator[db], db)
+            else:
+                abort(400, "Could not find '{}' database. Try instead {}".format(db, ", ".join(db_names)))
+        except IOError as e:
+            print(e)
+            abort(500, e.message)
 
 
 @api.route("/schema/<string:db>")
 class DatabaseSchema(Resource):
     def get(self, db):
         schemas = cea.scripts.schemas()
+        db_names = SCHEMA_KEY.keys()
         if db == 'all':
             out = {}
-            for db_name in SCHEMA_KEY.keys():
+            for db_name in db_names:
                 out[db_name] = schemas[SCHEMA_KEY[db_name]]['schema']
             return out
-        elif db in SCHEMA_KEY.keys():
+        elif db in db_names:
             db_schema = schemas[SCHEMA_KEY[db]]['schema']
             return db_schema
         else:
-            abort(400, "Could not find '{}' database. Try instead {}".format(db, ", ".join(SCHEMA_KEY.keys())))
+            abort(400, "Could not find '{}' database. Try instead {}".format(db, ", ".join(db_names)))
