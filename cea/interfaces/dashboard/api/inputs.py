@@ -7,6 +7,7 @@ import pandas
 import yaml
 from flask import current_app
 from flask_restplus import Namespace, Resource, abort
+from .databases import SCHEMA_KEY, get_database_dict
 
 import cea.inputlocator
 import cea.utilities.dbf
@@ -317,6 +318,32 @@ class BuildingSchedule(Resource):
         except IOError as e:
             print(e)
             abort(500, 'File not found')
+
+
+@api.route('/databases/<string:db>')
+class InputDatabase(Resource):
+    def get(self, db):
+        config = current_app.cea_config
+        locator = cea.inputlocator.InputLocator(config.scenario)
+        # Need to change locator method for schedules since `schema.yml` uses
+        # `get_database_standard_schedules_use` instead of `get_database_standard_schedules`
+        locator_methods = dict(SCHEMA_KEY)
+        locator_methods['schedules'] = 'get_database_standard_schedules'
+        db_names = locator_methods.keys()
+        try:
+            # All or nothing. Abort reading databases if encounter error
+            if db == 'all':
+                out = {}
+                for db_name in db_names:
+                    out[db_name] = get_database_dict(locator.__getattribute__(locator_methods[db_name])(), db_name)
+                return out
+            elif db in db_names:
+                return get_database_dict(locator.__getattribute__(locator_methods[db])(), db)
+            else:
+                abort(400, "Could not find '{}' database. Try instead {}".format(db, ", ".join(db_names)))
+        except IOError as e:
+            print(e)
+            abort(500, e.message)
 
 
 def get_choices(location, path):
