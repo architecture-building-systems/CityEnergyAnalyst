@@ -497,7 +497,7 @@ SCRIPT,LOCATOR_METHOD,FILE_NAME,VARIABLE,DESCRIPTION,UNIT,VALUES,TYPE,COLOR
 -,get_surroundings_geometry,inputs/building-geometry/surroundings.shp,floors_ag,Number of floors above ground (incl. ground floor),[-],{0...n},int,black
 -,get_surroundings_geometry,inputs/building-geometry/surroundings.shp,geometry,TODO,TODO,TODO,TODO,black
 -,get_surroundings_geometry,inputs/building-geometry/surroundings.shp,height_ag,Height above ground (incl. ground floor),[m],{0.0...n},float,black
--,get_terrain,inputs/topography/terrain.tif,Mock_variable,TODO,TODO,TODO,TODO,black
+-,get_terrain,inputs/topography/terrain.tif,raster_value,TODO,TODO,TODO,TODO,black
 -,get_weather,c:/users/assistenz/documents/github/cityenergyanalyst/cea/databases/weather/singapore.epw,EPW file variables,TODO,TODO,TODO,TODO,black
 -,get_zone_geometry,inputs/building-geometry/zone.shp,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black
 -,get_zone_geometry,inputs/building-geometry/zone.shp,floors_ag,Number of floors above ground (incl. ground floor),[-],{0...n},int,black
