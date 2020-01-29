@@ -63,13 +63,12 @@ def get_schedules_dict(schedule_path):
     return out
 
 
-def get_database_dict(locator, db):
+def get_database_dict(path, db):
     if db == "schedules":
-        return get_schedules_dict(locator["schedules"])
+        return get_schedules_dict(path)
     else:
         out = {}
-        db_path = locator[db]
-        xls = pandas.ExcelFile(db_path)
+        xls = pandas.ExcelFile(path)
         for sheet in xls.sheet_names:
             df = xls.parse(sheet)
             # Replace NaN with null to prevent JSON errors
@@ -91,10 +90,10 @@ class Database(Resource):
         if db == 'all':
             out = {}
             for db_name in locator.keys():
-                out[db_name] = get_database_dict(locator, db_name)
+                out[db_name] = get_database_dict(locator[db_name], db_name)
             return out
         elif db in locator.keys():
-            return get_database_dict(locator, db)
+            return get_database_dict(locator[db], db)
         else:
             abort(400, "Could not find '{}' database. Try instead {}".format(db, ", ".join(locator.keys())))
 
