@@ -491,7 +491,7 @@ SCRIPT,LOCATOR_METHOD,FILE_NAME,VARIABLE,DESCRIPTION,UNIT,VALUES,TYPE,COLOR
 -,get_optimization_thermal_network_data_file,outputs/data/optimization/network/DH_Network_summary_result_0x19b.csv,T_DHNf_sup_K,TODO,TODO,TODO,float,black
 -,get_optimization_thermal_network_data_file,outputs/data/optimization/network/DH_Network_summary_result_0x19b.csv,mcpdata_netw_total_kWperC,TODO,TODO,TODO,float,black
 -,get_optimization_thermal_network_data_file,outputs/data/optimization/network/DH_Network_summary_result_0x19b.csv,mdot_DH_netw_total_kgpers,TODO,TODO,TODO,float,black
--,get_street_network,inputs/networks/streets.shp,FID,TODO,TODO,TODO,TODO,black
+-,get_street_network,inputs/networks/streets.shp,Id,TODO,TODO,TODO,TODO,black
 -,get_street_network,inputs/networks/streets.shp,geometry,TODO,TODO,TODO,TODO,black
 -,get_surroundings_geometry,inputs/building-geometry/surroundings.shp,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black
 -,get_surroundings_geometry,inputs/building-geometry/surroundings.shp,floors_ag,Number of floors above ground (incl. ground floor),[-],{0...n},int,black
