@@ -6462,7 +6462,7 @@ get_water_body_potential:
   used_by: [optimization]
 get_weather:
   created_by: []
-  file_path: ../../../../github/cityenergyanalyst/cea/databases/weather/Zug-inducity_1990_2010_TMY.epw
+  file_path: databases/weather/Zug-inducity_1990_2010_TMY.epw
   file_type: epw
   schema:
     Albedo (index = 32):
