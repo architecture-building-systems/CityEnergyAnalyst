@@ -219,7 +219,7 @@ PVT_total_buildings:
     Q_PVT_l_kWh:
       sample_data: 11207.15
       types_found: [float]
-    'Unnamed: 0':
+    'Name':
       sample_data: B09
       types_found: [string]
     radiation_kWh:
