@@ -18,89 +18,47 @@ SCRIPT,LOCATOR_METHOD,FILE_NAME,VARIABLE,DESCRIPTION,UNIT,VALUES,TYPE,COLOR
 -,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE,wwr_west,Window to wall ratio in in facades facing west,[m2/m2],{0.0...1},float,black
 -,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE,year_end,Upper limit of year interval where the building properties apply,[yr],{0...n},int,black
 -,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE,year_start,Lower limit of year interval where the building properties apply,[yr],{0...n},int,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:HVAC,building_use,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:HVAC,cool_ends,End of the cooling season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:HVAC,cool_starts,Start of the cooling season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:HVAC,heat_ends,End of the heating season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:HVAC,heat_starts,Start of the heating season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:HVAC,standard,Letter representing whereas the field represent construction properties of a building as newly constructed (C) or renovated (R),[-],{C or R},string,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:HVAC,type_cs,Type of cooling supply system,[code],{T0...Tn},string,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:HVAC,type_ctrl,Type of heating and cooling control systems (relates to values in Default Database HVAC Properties),[code],{T1...Tn},string,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:HVAC,type_dhw,Type of hot water supply system,[code],{T0...Tn},string,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:HVAC,type_hs,Type of heating supply system,[code],{T0...Tn},string,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:HVAC,type_vent,Type of ventilation strategy (relates to values in Default Database HVAC Properties),[code],{T1...Tn},string,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:HVAC,year_end,Upper limit of year interval where the building properties apply,[yr],{0...n},int,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:HVAC,year_start,Lower limit of year interval where the building properties apply,[yr],{0...n},int,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INDOOR_COMFORT,Code,Unique code for the material of the pipe.,[-],[-],string,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INDOOR_COMFORT,RH_max_pc,Upper bound of relative humidity,[%],{0.0...n},float,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INDOOR_COMFORT,RH_min_pc,Lower_bound of relative humidity,[%],{0.0...n},float,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INDOOR_COMFORT,Tcs_set_C,Setpoint temperature for cooling system,[C],{0.0...n},float,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INDOOR_COMFORT,Tcs_setb_C,Setback point of temperature for cooling system,[C],{0.0...n},float,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INDOOR_COMFORT,Ths_set_C,Setpoint temperature for heating system,[C],{0.0...n},float,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INDOOR_COMFORT,Ths_setb_C,Setback point of temperature for heating system,[C],{0.0...n},float,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INDOOR_COMFORT,Ve_lpspax,Indoor quality requirements of indoor ventilation per person,[l/s],{0.0...n},float,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Code,Unique code for the material of the pipe.,[-],[-],string,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Ea_Wm2,Peak specific electrical load due to computers and devices,[W/m2],{0.0...n},float,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Ed_Wm2,Peak specific electrical load due to servers/data centres,[W/m2],{0.0...n},float,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS,El_Wm2,Peak specific electrical load due to artificial lighting,[W/m2],{0.0...n},float,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Epro_Wm2,Peak specific electrical load due to industrial processes,[W/m2],{0.0...n},float,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Qcpro_Wm2,Peak specific process cooling load,[W/m2],{0.0...n},float,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Qcre_Wm2,Peak specific cooling load due to refrigeration (cooling rooms),[W/m2],{0.0...n},float,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Qhpro_Wm2,Peak specific process heating load,[W/m2],{0.0...n},float,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Qs_Wpax,Peak sensible heat load of people,[W/pax],{0.0...n},float,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Vw_lpdpax,Peak specific fresh water consumption (includes cold and hot water),[lpd],{0.0...n},float,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Vww_lpdpax,Peak specific daily hot water consumption,[lpd],{0.0...n},float,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:INTERNAL_LOADS,X_ghpax,Moisture released by occupancy at peak conditions,[gh/kg/p],{0.0...n},float,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:SUPPLY,building_use,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:SUPPLY,standard,Letter representing whereas the field represent construction properties of a building as newly constructed (C) or renovated (R),[-],{C or R},string,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:SUPPLY,type_cs,Type of cooling supply system,[code],{T0...Tn},string,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:SUPPLY,type_dhw,Type of hot water supply system,[code],{T0...Tn},string,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:SUPPLY,type_el,Type of electrical supply system,[code],{T0...Tn},string,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:SUPPLY,type_hs,Type of heating supply system,[code],{T0...Tn},string,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:SUPPLY,year_end,Upper limit of year interval where the building properties apply,[yr],{0...n},int,black
--,get_archetypes_properties,databases/ch/archetypes/construction_properties.xlsx:SUPPLY,year_start,Lower limit of year interval where the building properties apply,[yr],{0...n},int,black
--,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:HVAC,building_use,TODO,TODO,TODO,TYPE,black
--,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:HVAC,cool_ends,TODO,TODO,TODO,TYPE,black
--,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:HVAC,cool_starts,TODO,TODO,TODO,TYPE,black
--,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:HVAC,heat_ends,TODO,TODO,TODO,TYPE,black
--,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:HVAC,heat_starts,TODO,TODO,TODO,TYPE,black
--,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:HVAC,standard,TODO,TODO,TODO,TYPE,black
--,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:HVAC,type_cs,TODO,TODO,TODO,TYPE,black
--,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:HVAC,type_ctrl,TODO,TODO,TODO,TYPE,black
--,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:HVAC,type_dhw,TODO,TODO,TODO,TYPE,black
--,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:HVAC,type_hs,TODO,TODO,TODO,TYPE,black
--,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:HVAC,type_vent,TODO,TODO,TODO,TYPE,black
--,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:HVAC,year_end,TODO,TODO,TODO,TYPE,black
--,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:HVAC,year_start,TODO,TODO,TODO,TYPE,black
--,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:INDOOR_COMFORT,Code,TODO,TODO,TODO,TYPE,black
--,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:INDOOR_COMFORT,RH_max_pc,TODO,TODO,TODO,TYPE,black
--,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:INDOOR_COMFORT,RH_min_pc,TODO,TODO,TODO,TYPE,black
--,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:INDOOR_COMFORT,Tcs_set_C,TODO,TODO,TODO,TYPE,black
--,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:INDOOR_COMFORT,Tcs_setb_C,TODO,TODO,TODO,TYPE,black
--,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:INDOOR_COMFORT,Ths_set_C,TODO,TODO,TODO,TYPE,black
--,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:INDOOR_COMFORT,Ths_setb_C,TODO,TODO,TODO,TYPE,black
--,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:INDOOR_COMFORT,Ve_lpspax,TODO,TODO,TODO,TYPE,black
--,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Code,TODO,TODO,TODO,TYPE,black
--,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Ea_Wm2,TODO,TODO,TODO,TYPE,black
--,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Ed_Wm2,TODO,TODO,TODO,TYPE,black
--,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS,El_Wm2,TODO,TODO,TODO,TYPE,black
--,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Epro_Wm2,TODO,TODO,TODO,TYPE,black
--,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Occ_m2pax,TODO,TODO,TODO,TYPE,black
--,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Qcpro_Wm2,TODO,TODO,TODO,TYPE,black
--,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Qcre_Wm2,TODO,TODO,TODO,TYPE,black
--,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Qhpro_Wm2,TODO,TODO,TODO,TYPE,black
--,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Qs_Wpax,TODO,TODO,TODO,TYPE,black
--,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Vw_lpdpax,TODO,TODO,TODO,TYPE,black
--,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Vww_lpdpax,TODO,TODO,TODO,TYPE,black
--,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS,X_ghpax,TODO,TODO,TODO,TYPE,black
--,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY,building_use,TODO,TODO,TODO,TYPE,black
--,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY,standard,TODO,TODO,TODO,TYPE,black
--,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY,type_cs,TODO,TODO,TODO,TYPE,black
--,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY,type_dhw,TODO,TODO,TODO,TYPE,black
--,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY,type_el,TODO,TODO,TODO,TYPE,black
--,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY,type_hs,TODO,TODO,TODO,TYPE,black
--,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY,year_end,TODO,TODO,TODO,TYPE,black
--,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY,year_start,TODO,TODO,TODO,TYPE,black
+-,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:HVAC,building_use,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black
+-,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:HVAC,cool_ends,End of the cooling season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black
+-,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:HVAC,cool_starts,Start of the cooling season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black
+-,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:HVAC,heat_ends,End of the heating season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black
+-,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:HVAC,heat_starts,Start of the heating season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black
+-,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:HVAC,standard,Letter representing whereas the field represent construction properties of a building as newly constructed (C) or renovated (R),[-],{C or R},string,black
+-,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:HVAC,type_cs,Type of cooling supply system,[code],{T0...Tn},string,black
+-,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:HVAC,type_ctrl,Type of heating and cooling control systems (relates to values in Default Database HVAC Properties),[code],{T1...Tn},string,black
+-,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:HVAC,type_dhw,Type of hot water supply system,[code],{T0...Tn},string,black
+-,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:HVAC,type_hs,Type of heating supply system,[code],{T0...Tn},string,black
+-,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:HVAC,type_vent,Type of ventilation strategy (relates to values in Default Database HVAC Properties),[code],{T1...Tn},string,black
+-,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:HVAC,year_end,Upper limit of year interval where the building properties apply,[yr],{0...n},int,black
+-,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:HVAC,year_start,Lower limit of year interval where the building properties apply,[yr],{0...n},int,black
+-,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:INDOOR_COMFORT,Code,Unique code for the material of the pipe.,[-],[-],string,black
+-,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:INDOOR_COMFORT,RH_max_pc,Upper bound of relative humidity,[%],{0.0...n},float,black
+-,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:INDOOR_COMFORT,RH_min_pc,Lower_bound of relative humidity,[%],{0.0...n},float,black
+-,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:INDOOR_COMFORT,Tcs_set_C,Setpoint temperature for cooling system,[C],{0.0...n},float,black
+-,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:INDOOR_COMFORT,Tcs_setb_C,Setback point of temperature for cooling system,[C],{0.0...n},float,black
+-,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:INDOOR_COMFORT,Ths_set_C,Setpoint temperature for heating system,[C],{0.0...n},float,black
+-,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:INDOOR_COMFORT,Ths_setb_C,Setback point of temperature for heating system,[C],{0.0...n},float,black
+-,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:INDOOR_COMFORT,Ve_lpspax,Indoor quality requirements of indoor ventilation per person,[l/s],{0.0...n},float,black
+-,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Code,Unique code for the material of the pipe.,[-],[-],string,black
+-,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Ea_Wm2,Peak specific electrical load due to computers and devices,[W/m2],{0.0...n},float,black
+-,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Ed_Wm2,Peak specific electrical load due to servers/data centres,[W/m2],{0.0...n},float,black
+-,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS,El_Wm2,Peak specific electrical load due to artificial lighting,[W/m2],{0.0...n},float,black
+-,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Epro_Wm2,Peak specific electrical load due to industrial processes,[W/m2],{0.0...n},float,black
+-,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Qcpro_Wm2,Peak specific process cooling load,[W/m2],{0.0...n},float,black
+-,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Qcre_Wm2,Peak specific cooling load due to refrigeration (cooling rooms),[W/m2],{0.0...n},float,black
+-,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Qhpro_Wm2,Peak specific process heating load,[W/m2],{0.0...n},float,black
+-,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Qs_Wpax,Peak sensible heat load of people,[W/pax],{0.0...n},float,black
+-,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Vw_lpdpax,Peak specific fresh water consumption (includes cold and hot water),[lpd],{0.0...n},float,black
+-,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS,Vww_lpdpax,Peak specific daily hot water consumption,[lpd],{0.0...n},float,black
+-,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS,X_ghpax,Moisture released by occupancy at peak conditions,[gh/kg/p],{0.0...n},float,black
+-,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY,building_use,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black
+-,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY,standard,Letter representing whereas the field represent construction properties of a building as newly constructed (C) or renovated (R),[-],{C or R},string,black
+-,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY,type_cs,Type of cooling supply system,[code],{T0...Tn},string,black
+-,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY,type_dhw,Type of hot water supply system,[code],{T0...Tn},string,black
+-,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY,type_el,Type of electrical supply system,[code],{T0...Tn},string,black
+-,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY,type_hs,Type of heating supply system,[code],{T0...Tn},string,black
+-,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY,year_end,Upper limit of year interval where the building properties apply,[yr],{0...n},int,black
+-,get_archetypes_properties,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY,year_start,Lower limit of year interval where the building properties apply,[yr],{0...n},int,black
 -,get_building_age,inputs/building-properties/age.dbf,HVAC,Year of last retrofit of HVAC systems (0 if none),[-],{0...n},int,black
 -,get_building_age,inputs/building-properties/age.dbf,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black
 -,get_building_age,inputs/building-properties/age.dbf,basement,Year of last retrofit of basement (0 if none),[-],{0...n},int,black
