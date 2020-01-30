@@ -168,6 +168,9 @@ PVT_total_buildings:
     Eaux_PVT_kWh:
       sample_data: 411.88
       types_found: [float]
+    Name:
+      sample_data: B09
+      types_found: [string]
     PVT_roofs_top_E_kWh:
       sample_data: 45622.6
       types_found: [float]
@@ -219,9 +222,6 @@ PVT_total_buildings:
     Q_PVT_l_kWh:
       sample_data: 11207.15
       types_found: [float]
-    'Name':
-      sample_data: B09
-      types_found: [string]
     radiation_kWh:
       sample_data: 689935.18
       types_found: [float]
