@@ -1,5 +1,6 @@
 import os
 import glob
+from collections import OrderedDict
 
 from flask_restplus import Namespace, Resource, abort
 import pandas
@@ -72,12 +73,12 @@ def get_database_dict(path, db):
     if db == "schedules":
         return get_schedules_dict(path)
     else:
-        out = {}
+        out = OrderedDict()
         xls = pandas.ExcelFile(path)
         for sheet in xls.sheet_names:
             df = xls.parse(sheet)
             # Replace NaN with null to prevent JSON errors
-            out[sheet] = df.where(pandas.notnull(df), None).to_dict(orient='records')
+            out[sheet] = df.where(pandas.notnull(df), None).to_dict(orient='records', into=OrderedDict)
         return out
 
 
@@ -97,7 +98,7 @@ class Database(Resource):
         db_names = locator.keys()
         try:
             if db == 'all':
-                out = {}
+                out = OrderedDict()
                 for db_name in db_names:
                     out[db_name] = get_database_dict(locator[db_name], db_name)
                 return out
