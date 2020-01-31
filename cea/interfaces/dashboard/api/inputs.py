@@ -333,7 +333,7 @@ class InputDatabase(Resource):
         try:
             # All or nothing. Abort reading databases if encounter error
             if db == 'all':
-                out = {}
+                out = OrderedDict()
                 for db_name in db_names:
                     out[db_name] = get_database_dict(locator.__getattribute__(locator_methods[db_name])(), db_name)
                 return out
