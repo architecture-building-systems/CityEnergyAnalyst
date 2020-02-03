@@ -10,6 +10,8 @@ from __future__ import division
 
 import cea.config
 import cea.inputlocator
+import os
+from distutils.dir_util import copy_tree
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -21,13 +23,40 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def data_initializer(locator, databases_path):
-    print("Copying technology databases from {source}".format(source=databases_path))
+def data_initializer(locator,
+                     databases_path,
+                     initialize_archetypes_database=True,
+                     initialize_lca_database=True,
+                     initialize_systems_database=True,
+                     ):
 
     output_directory = locator.get_databases_folder()
+    print("Copying databases from {source}".format(source=databases_path))
+    print("Copying databases to {path}".format(path=output_directory))
 
-    from distutils.dir_util import copy_tree
-    copy_tree(databases_path, output_directory)
+    if initialize_archetypes_database:
+        try:
+            complete_databases_path = os.path.join(databases_path, 'archetypes')
+            complete_output_directory = locator.get_databases_archetypes_folder()
+            copy_tree(complete_databases_path, complete_output_directory)
+        except:
+            raise Exception("we could not find the 'archetypes' database in the path you indicated, please check the spelling")
+
+    if initialize_lca_database:
+        try:
+            complete_databases_path = os.path.join(databases_path, 'lifecycle')
+            complete_output_directory = locator.get_databases_lca_folder()
+            copy_tree(complete_databases_path, complete_output_directory)
+        except:
+            raise Exception("we could not find the 'lifecycle' database in the path you indicated, please check the spelling")
+
+    if initialize_systems_database:
+        try:
+            complete_databases_path = os.path.join(databases_path, 'systems')
+            complete_output_directory = locator.get_databases_lca_folder()
+            copy_tree(complete_databases_path, complete_output_directory)
+        except:
+            raise Exception("we could not find the 'systems' database in the path you indicated, please check the spelling")
 
 
 def main(config):
@@ -39,7 +68,17 @@ def main(config):
     print('Running data-intializer with scenario = %s' % config.scenario)
     print('Running data-intializer with databases located in = %s' % config.data_initializer.databases_path)
     locator = cea.inputlocator.InputLocator(config.scenario)
-    data_initializer(locator=locator, region=config.data_initializer.databases_path)
+
+    initialize_archetypes_database = 'archetypes' in config.data_initializer.databases
+    initialize_lca_database = 'lifecycle' in config.data_initializer.databases
+    initialize_systems_database = 'Systems' in config.data_initializer.databases
+
+    data_initializer(locator=locator,
+                     databases_path=config.data_initializer.databases_path,
+                     initialize_archetypes_database=initialize_archetypes_database,
+                     initialize_lca_database=initialize_lca_database,
+                     initialize_systems_database=initialize_systems_database
+                     )
 
 
 if __name__ == '__main__':
