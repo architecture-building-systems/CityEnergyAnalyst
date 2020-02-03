@@ -54,6 +54,12 @@ class InputLocator(object):
     def get_databases_archetypes_folder(self):
         return os.path.join(self.get_databases_folder(), 'archetypes')
 
+    def get_databases_lifecycle_folder(self):
+        return os.path.join(self.get_databases_folder(), 'lifecycle')
+
+    def get_databases_systems_folder(self):
+        return os.path.join(self.get_databases_folder(), 'systems')
+
     def get_database_standard_schedules(self):
         return os.path.join(self.get_databases_folder(), 'archetypes', 'schedules')
 
