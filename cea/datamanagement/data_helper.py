@@ -40,9 +40,14 @@ def get_technology_related_databases(locator, region):
     copy_tree(technology_database_template, output_directory)
 
 
-def data_helper(locator, update_architecture_dbf, update_HVAC_systems_dbf, update_indoor_comfort_dbf,
-                update_internal_loads_dbf, update_supply_systems_dbf,
-                update_schedule_operation_cea, buildings):
+def data_helper(locator,
+                update_architecture_dbf,
+                update_HVAC_systems_dbf,
+                update_indoor_comfort_dbf,
+                update_internal_loads_dbf,
+                update_supply_systems_dbf,
+                update_schedule_operation_cea,
+                buildings):
     """
     algorithm to query building properties from statistical database
     Archetypes_HVAC_properties.csv. for more info check the integrated demand
