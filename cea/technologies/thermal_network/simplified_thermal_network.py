@@ -169,7 +169,7 @@ def calc_thermal_loss_per_pipe(T_in_K, m_kgpers, T_ground_K, k_kWperK):
 def thermal_network_simplified(locator, config, network_name):
     # local variables
     network_type = config.thermal_network.network_type
-    min_head_substation_kPa = config.thermal_network.min_head_susbstation
+    min_head_substation_kPa = config.thermal_network.min_head_substation
     thermal_transfer_unit_design_head_m = min_head_substation_kPa * 1000 / M_WATER_TO_PA
     coefficient_friction_hazen_williams = config.thermal_network.hw_friction_coefficient
     velocity_ms = config.thermal_network.peak_load_velocity
