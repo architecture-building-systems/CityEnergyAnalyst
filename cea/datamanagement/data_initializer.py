@@ -45,7 +45,7 @@ def data_initializer(locator,
     if initialize_lca_database:
         try:
             complete_databases_path = os.path.join(databases_path, 'lifecycle')
-            complete_output_directory = locator.get_databases_lca_folder()
+            complete_output_directory = locator.get_databases_lifecycle_folder()
             copy_tree(complete_databases_path, complete_output_directory)
         except:
             raise Exception("we could not find the 'lifecycle' database in the path you indicated, please check the spelling")
@@ -53,7 +53,7 @@ def data_initializer(locator,
     if initialize_systems_database:
         try:
             complete_databases_path = os.path.join(databases_path, 'systems')
-            complete_output_directory = locator.get_databases_lca_folder()
+            complete_output_directory = locator.get_databases_systems_folder()
             copy_tree(complete_databases_path, complete_output_directory)
         except:
             raise Exception("we could not find the 'systems' database in the path you indicated, please check the spelling")
