@@ -1,8 +1,17 @@
 Data Management:
 
+  - name: data-initializer
+    label: DataBase Initializer
+    description: Initialize your databases for CEA
+    interfaces: [cli, arcgis, dashboard]
+    module: cea.datamanagement.data_initializer
+    parameters: ['general:scenario', data-initializer]
+    input-files:
+      - [get_databases_folder]
+
   - name: data-helper
-    label: Data helper
-    description: Query characteristics of buildings and systems from statistical data
+    label: Archetypes Mapper
+    description: Assign construction properties to buildings from the Archetypes DataBase
     interfaces: [cli, arcgis, dashboard]
     module: cea.datamanagement.data_helper
     parameters: ['general:scenario', data-helper]
