@@ -12,6 +12,8 @@
   parameters:
     databases: CH
 - script: data-helper
+  parameters:
+    databases: [comfort, architecture, HVAC, internal-loads, supply, schedules]
 - script: weather-helper
   parameters:
     weather: Zug-inducity_1990_2010_TMY
