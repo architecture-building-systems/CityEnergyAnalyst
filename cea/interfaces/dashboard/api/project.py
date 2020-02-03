@@ -2,6 +2,7 @@ import os
 import shutil
 import glob
 from functools import wraps
+import traceback
 
 import geopandas
 from flask import current_app
@@ -115,13 +116,6 @@ class Scenarios(Resource):
 
         locator = cea.inputlocator.InputLocator(new_scenario_path)
 
-        # Copy selected database to scenario folder
-        database_path = locator.db_path
-        regions = [folder for folder in os.listdir(database_path) if folder != "weather"
-                   and os.path.isdir(os.path.join(database_path, folder))]
-        if payload['database'] in regions:
-            get_technology_related_databases(locator, payload['database'])
-
         if payload['input-data'] == 'import':
             files = payload['files']
 
@@ -166,7 +160,6 @@ class Scenarios(Resource):
                         else:
                             calculate_occupancy_file(zone_df, 'Get it from open street maps', locator.get_building_occupancy())
                 except Exception as e:
-                    import traceback
                     trace = traceback.format_exc()
                     return {'message': e.message, 'trace': trace}, 500
 
@@ -176,7 +169,6 @@ class Scenarios(Resource):
                 shutil.copytree(cea.inputlocator.InputLocator(source_scenario).get_input_folder(),
                                 locator.get_input_folder())
             except OSError as e:
-                import traceback
                 trace = traceback.format_exc()
                 return {'message': e.message, 'trace': trace}, 500
 
@@ -203,9 +195,15 @@ class Scenarios(Resource):
                         elif tool == 'weather':
                             cea.api.weather_helper(config, scenario=new_scenario_path)
                     except Exception as e:
-                        import traceback
                         trace = traceback.format_exc()
                         return {'message': '{}_helper: {}'.format(tool, e.message), 'trace': trace}, 500
+
+        # Run database_initializer to copy databases to input
+        try:
+            cea.api.data_initializer(config, scenario=new_scenario_path, databases_path=payload['databases-path'])
+        except Exception as e:
+            trace = traceback.format_exc()
+            return {'message': 'database_initializer: {}'.format(e.message), 'trace': trace}, 500
 
         return {'scenarios': list_scenario_names_for_project(config)}
 
@@ -214,15 +212,6 @@ def glob_shapefile_auxilaries(shapefile_path):
     """Returns a list of files in the same folder as ``shapefile_path``, but allows for varying extensions.
     This gets the .dbf, .shx, .prj, .shp and .cpg files"""
     return glob.glob('{basepath}.*'.format(basepath=os.path.splitext(shapefile_path)[0]))
-
-
-def get_technology_related_databases(locator, region):
-    technology_database_template = locator.get_technology_template_for_region(region)
-    print("Copying technology databases from {source}".format(source=technology_database_template))
-    output_directory = locator.get_databases_folder()
-
-    from distutils.dir_util import copy_tree
-    copy_tree(technology_database_template, output_directory)
 
 
 def check_scenario_exists(func):
