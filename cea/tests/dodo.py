@@ -141,7 +141,7 @@ def task_download_reference_cases():
 def task_run_data_initializer():
     """Run the data initializer for each reference case"""
 
-    def run_data_helper(scenario_path, databases_path):
+    def run_data_initializer(scenario_path, databases_path):
         import cea.datamanagement.data_initializer
         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         config.scenario = scenario_path
@@ -155,10 +155,10 @@ def task_run_data_initializer():
         databases_path = REFERENCE_CASES_DATA[reference_case]['databases']
 
         yield {
-            'name': 'run_data_helper:%s' % reference_case,
+            'name': 'run_data_initializer:%s' % reference_case,
             'task_dep': ['download_reference_cases'],
             'actions': [
-                (run_data_helper, [], {
+                (run_data_initializer, [], {
                     'scenario_path': scenario_path,
                     'databases_path': databases_path})],
         }
@@ -178,7 +178,7 @@ def task_run_data_helper():
 
         yield {
             'name': 'run_data_helper:%s' % reference_case,
-            'task_dep': ['download_reference_cases'],
+            'task_dep': ['run_data_initializer:%s' % reference_case],
             'actions': [
                 (run_data_helper, [], {
                     'scenario_path': scenario_path})],
