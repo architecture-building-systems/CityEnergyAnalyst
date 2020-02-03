@@ -23,6 +23,7 @@ __status__ = "Production"
 
 def data_initializer(locator, databases_path):
     print("Copying technology databases from {source}".format(source=databases_path))
+
     output_directory = locator.get_databases_folder()
 
     from distutils.dir_util import copy_tree

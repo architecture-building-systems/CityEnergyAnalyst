@@ -265,10 +265,10 @@ def task_run_sensitivity():
     np.random.seed(int("CEA", 16))
 
     def run_sensitivity():
-        import cea.analysis.sensitivity.sensitivity_demand_samples
-        import cea.analysis.sensitivity.sensitivity_demand_simulate
-        import cea.analysis.sensitivity.sensitivity_demand_analyze
-        import cea.analysis.sensitivity.sensitivity_demand_count
+        import legacy.sensitivity.sensitivity_demand_samples
+        import legacy.sensitivity.sensitivity_demand_simulate
+        import legacy.sensitivity.sensitivity_demand_analyze
+        import legacy.sensitivity.sensitivity_demand_count
 
         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         locator = cea.inputlocator.ReferenceCaseOpenLocator()
@@ -279,21 +279,21 @@ def task_run_sensitivity():
 
         # make sure data-helper was run first
         import cea.datamanagement.data_helper
-        cea.datamanagement.data_helper.data_helper(locator=locator, region="CH", overwrite_technology_folder=True,
+        cea.datamanagement.data_helper.data_helper(locator=locator,
                 update_architecture_dbf=True, update_HVAC_systems_dbf=True, update_indoor_comfort_dbf=True,
                 update_internal_loads_dbf=True, update_supply_systems_dbf=True,
                 update_schedule_operation_cea=True, buildings=locator.get_zone_building_names())
 
-        cea.analysis.sensitivity.sensitivity_demand_samples.main(config)
-        count = cea.analysis.sensitivity.sensitivity_demand_count.count_samples(config.sensitivity_demand.samples_folder)
-        cea.analysis.sensitivity.sensitivity_demand_simulate.main(config)
+        legacy.sensitivity.sensitivity_demand_samples.main(config)
+        count = legacy.sensitivity.sensitivity_demand_count.count_samples(config.sensitivity_demand.samples_folder)
+        legacy.sensitivity.sensitivity_demand_simulate.main(config)
         result_0_csv = os.path.join(config.sensitivity_demand.samples_folder, 'result.0.csv')
         for i in range(count):
             # generate "fake" results
             if i == 0:
                 continue
             shutil.copyfile(result_0_csv, os.path.join(config.sensitivity_demand.samples_folder, 'result.%i.csv' % i))
-        cea.analysis.sensitivity.sensitivity_demand_analyze.main(config)
+        legacy.sensitivity.sensitivity_demand_analyze.main(config)
 
 
     return {
