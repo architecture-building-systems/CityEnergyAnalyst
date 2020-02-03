@@ -10,10 +10,11 @@
   "general:scenario-name": baseline
 - script: data-initializer
   parameters:
-    databases: CH
+    databases-path: CH
+    databases: [archetypes, lifecycle, systems]
 - script: data-helper
   parameters:
-    databases: [comfort, architecture, HVAC, internal-loads, supply, schedules]
+    input-databases: [comfort, architecture, HVAC, internal-loads, supply, schedules]
 - script: weather-helper
   parameters:
     weather: Zug-inducity_1990_2010_TMY
