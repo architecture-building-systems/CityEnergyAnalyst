@@ -6,8 +6,6 @@ Data Management:
     interfaces: [cli, arcgis, dashboard]
     module: cea.datamanagement.data_initializer
     parameters: ['general:scenario', data-initializer]
-    input-files:
-      - [get_databases_folder]
 
   - name: data-helper
     label: Archetypes Mapper
