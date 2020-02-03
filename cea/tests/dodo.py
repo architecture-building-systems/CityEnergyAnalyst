@@ -57,16 +57,16 @@ REFERENCE_CASES = {
                                       "masterplan")}
 
 REFERENCE_CASES_DATA = {
-    'open': {'weather': 'Zug-inducity_1990_2010_TMY', 'latitude': 47.1628017306431, 'longitude': 8.31,
+    'open': {'databases': 'CH', 'weather': 'Zug-inducity_1990_2010_TMY', 'latitude': 47.1628017306431, 'longitude': 8.31,
              'radiation': 'open.baseline.radiation.csv',
              'properties_surfaces': 'open.baseline.properties_surfaces.csv'},
-    'zug/baseline': {'weather': 'Zug-inducity_1990_2010_TMY', 'latitude': 47.1628017306431, 'longitude': 8.31,
+    'zug/baseline': {'databases': 'CH', 'weather': 'Zug-inducity_1990_2010_TMY', 'latitude': 47.1628017306431, 'longitude': 8.31,
                      'radiation': 'zug.baseline.radiation.csv',
                      'properties_surfaces': 'zug.baseline.properties_surfaces.csv'},
-    'zurich/baseline': {'weather': 'Zuerich-Kloten_1990_2010_TMY', 'latitude': 46.9524055556, 'longitude': 7.43958333333,
+    'zurich/baseline': {'databases': 'CH', 'weather': 'Zuerich-Kloten_1990_2010_TMY', 'latitude': 46.9524055556, 'longitude': 7.43958333333,
                         'radiation': 'hq.baseline.radiation.csv',
                         'properties_surfaces': 'hq.baseline.properties_surfaces.csv'},
-    'zurich/masterplan': {'weather': 'Zuerich-ETHZ_1990-2010_TMY', 'latitude': 46.9524055556, 'longitude': 7.43958333333,
+    'zurich/masterplan': {'databases': 'CH', 'weather': 'Zuerich-ETHZ_1990-2010_TMY', 'latitude': 46.9524055556, 'longitude': 7.43958333333,
                           'radiation': 'hq.masterplan.radiation.csv',
                           'properties_surfaces': 'hq.masterplan.properties_surfaces.csv'}}
 
@@ -137,6 +137,31 @@ def task_download_reference_cases():
         'actions': [download_reference_cases],
     }
 
+
+def task_run_data_initializer():
+    """Run the data initializer for each reference case"""
+
+    def run_data_helper(scenario_path, databases_path):
+        import cea.datamanagement.data_initializer
+        config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
+        config.scenario = scenario_path
+        config.data_initializer.databases_path = databases_path
+        cea.datamanagement.data_initializer.main(config)
+
+    for reference_case, scenario_path in REFERENCE_CASES.items():
+        if _reference_cases and reference_case not in _reference_cases:
+            continue
+
+        databases_path = REFERENCE_CASES_DATA[reference_case]['databases']
+
+        yield {
+            'name': 'run_data_helper:%s' % reference_case,
+            'task_dep': ['download_reference_cases'],
+            'actions': [
+                (run_data_helper, [], {
+                    'scenario_path': scenario_path,
+                    'databases_path': databases_path})],
+        }
 
 def task_run_data_helper():
     """Run the data helper for each reference case"""
