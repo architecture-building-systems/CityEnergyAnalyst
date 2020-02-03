@@ -507,7 +507,8 @@ def main(config):
     buildings = config.data_helper.buildings
     locator = cea.inputlocator.InputLocator(config.scenario)
 
-    data_helper(locator=locator, update_architecture_dbf=update_architecture_dbf,
+    data_helper(locator=locator,
+                update_architecture_dbf=update_architecture_dbf,
                 update_HVAC_systems_dbf=update_technical_systems_dbf,
                 update_indoor_comfort_dbf=update_indoor_comfort_dbf,
                 update_internal_loads_dbf=update_internal_loads_dbf,
