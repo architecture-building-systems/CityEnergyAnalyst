@@ -40,8 +40,7 @@ def get_technology_related_databases(locator, region):
     copy_tree(technology_database_template, output_directory)
 
 
-def data_helper(locator, region, overwrite_technology_folder,
-                update_architecture_dbf, update_HVAC_systems_dbf, update_indoor_comfort_dbf,
+def data_helper(locator, update_architecture_dbf, update_HVAC_systems_dbf, update_indoor_comfort_dbf,
                 update_internal_loads_dbf, update_supply_systems_dbf,
                 update_schedule_operation_cea, buildings):
     """
@@ -69,11 +68,6 @@ def data_helper(locator, region, overwrite_technology_folder,
     - indoor_comfort.shp
         describes the queried thermal properties of buildings
     """
-    # get technology database
-    if overwrite_technology_folder:
-        # copy all the region-specific archetypes to the scenario's technology folder
-        get_technology_related_databases(locator, region)
-
     # get occupancy and age files
     building_occupancy_df = dbf_to_dataframe(locator.get_building_occupancy())
     building_age_df = dbf_to_dataframe(locator.get_building_age())
@@ -497,7 +491,6 @@ def main(config):
     """
 
     print('Running data-helper with scenario = %s' % config.scenario)
-    print('Running data-helper with archetypes = %s' % config.data_helper.databases)
 
     update_architecture_dbf = 'architecture' in config.data_helper.databases
     update_technical_systems_dbf = 'HVAC' in config.data_helper.databases
@@ -506,14 +499,10 @@ def main(config):
     update_supply_systems_dbf = 'supply' in config.data_helper.databases
     update_schedule_operation_cea = 'schedules' in config.data_helper.databases
 
-    overwrite_technology_folder = config.data_helper.overwrite_technology_folder
     buildings = config.data_helper.buildings
-
     locator = cea.inputlocator.InputLocator(config.scenario)
 
-    data_helper(locator=locator, region=config.data_helper.region,
-                overwrite_technology_folder=overwrite_technology_folder,
-                update_architecture_dbf=update_architecture_dbf,
+    data_helper(locator=locator, update_architecture_dbf=update_architecture_dbf,
                 update_HVAC_systems_dbf=update_technical_systems_dbf,
                 update_indoor_comfort_dbf=update_indoor_comfort_dbf,
                 update_internal_loads_dbf=update_internal_loads_dbf,
