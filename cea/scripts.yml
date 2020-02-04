@@ -1,12 +1,5 @@
 Data Management:
 
-  - name: data-initializer
-    label: DataBase Initializer
-    description: Initialize databases for CEA
-    interfaces: [cli, arcgis, dashboard]
-    module: cea.datamanagement.data_initializer
-    parameters: ['general:scenario', data-initializer]
-
   - name: data-helper
     label: Archetypes Mapper
     description: Assign building properties and systems types from the Archetypes DataBase
@@ -321,6 +314,13 @@ Utilities:
 
 
 default:
+
+  - name: data-initializer
+    label: DataBase Initializer
+    description: Initialize databases for CEA
+    interfaces: [cli, arcgis]
+    module: cea.datamanagement.data_initializer
+    parameters: ['general:scenario', data-initializer]
 
   - name: zone-helper
     label: Zone helper
