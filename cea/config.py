@@ -697,51 +697,36 @@ class ChoiceParameter(Parameter):
             return self._choices[0]
 
 
-class RegionParameter(ChoiceParameter):
+class DatabasePathParameter(Parameter):
     """A parameter that can either be set to a region-specific CEA Database (e.g. CH or SG) or to a user-defined
     folder that has the same structure."""
-    typename = "RegionParameter"
+    typename = "DatabasePathParameter"
 
     def initialize(self, parser):
         self.locator = cea.inputlocator.InputLocator(None)
-
-    @property
-    def _choices(self):
-        """List the technology database template names available"""
-        return [region for region in os.listdir(self.locator.db_path)
-                if os.path.isdir(os.path.join(self.locator.db_path, region))
-                and not region == "weather"]
+        self._choices = {p: os.path.join(self.locator.db_path, p) for p in os.listdir(self.locator.db_path)
+                         if os.path.isdir(os.path.join(self.locator.db_path, p)) and p != 'weather'}
 
     def encode(self, value):
-        """Make sure to use the friendly shorthands (e.g. CH and SG) if possible"""
-        if value in self._choices:
-            return value
-        for region in self._choices:
-            if self.locator.are_equal(value, os.path.join(self.locator.db_path, region)):
-                return region
-        if not os.path.exists(value):
-            # return the default value
-            print("Region template path does not exist, using default region. (Not found: {region})".format(
-                region=value))
-            return self.config.default_config.get(self.section.name, self.name)
-        return value
+        return str(value)
 
     def decode(self, value):
-        """Return either built-in region name (e.g. CH or SG) OR a full path to the user-supplied template folder"""
-        if value in self._choices:
-            return value
-
-        if os.path.exists(value) and os.path.isdir(value):
-            if self.is_valid_template(value):
-                return value
-            else:
-                print('Invalid region template path, using default region instead. (bad template: {region})'.format(
-                    region=value))
-                return self.default
+        if value == '':
+            return ''
+        # Assume value is CH or SG
+        if value in self._choices.keys():
+            database_path = self._choices[value]
+        # Assume value is a path
+        elif os.path.exists(value) and os.path.isdir(value) and self.is_valid_template(value):
+            database_path = value
         else:
-            print('Region template path does not exist, using default region. (Not found: {region})'.format(
-                region=value))
-            return self.default
+            raise cea.ConfigError("Invalid region path: {}".format(value))
+        return database_path
+
+    @property
+    def default(self):
+        """override base default, since in decode we've banned empty parameter"""
+        return ""
 
     def is_valid_template(self, path):
         """True, if the path is a valid template path - containing the same excel files as the standard regions."""
