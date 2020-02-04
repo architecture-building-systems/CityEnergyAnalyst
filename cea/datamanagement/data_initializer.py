@@ -71,7 +71,7 @@ def main(config):
 
     initialize_archetypes_database = 'archetypes' in config.data_initializer.databases
     initialize_lca_database = 'lifecycle' in config.data_initializer.databases
-    initialize_systems_database = 'Systems' in config.data_initializer.databases
+    initialize_systems_database = 'systems' in config.data_initializer.databases
 
     data_initializer(locator=locator,
                      databases_path=config.data_initializer.databases_path,
