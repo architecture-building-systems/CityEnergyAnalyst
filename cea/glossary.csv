@@ -308,10 +308,10 @@ network-layout,get_network_layout_nodes_shapefile,,Type,TODO,TODO,TODO,TODO,blac
 -,get_database_supply_systems,Absorption_chiller,c,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
 -,get_database_supply_systems,Absorption_chiller,cap_max,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
 -,get_database_supply_systems,Absorption_chiller,cap_min,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,Absorption_chiller,code,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
+-,get_database_supply_systems,Absorption_chiller,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
 -,get_database_supply_systems,Absorption_chiller,currency,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
 -,get_database_supply_systems,Absorption_chiller,d,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,Absorption_chiller,Description,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
+-,get_database_supply_systems,Absorption_chiller,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
 -,get_database_supply_systems,Absorption_chiller,e,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
 -,get_database_supply_systems,Absorption_chiller,e_e,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
 -,get_database_supply_systems,Absorption_chiller,e_g,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
@@ -339,10 +339,10 @@ network-layout,get_network_layout_nodes_shapefile,,Type,TODO,TODO,TODO,TODO,blac
 -,get_database_supply_systems,BH,c,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:BH
 -,get_database_supply_systems,BH,cap_max,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:BH
 -,get_database_supply_systems,BH,cap_min,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:BH
--,get_database_supply_systems,BH,code,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:BH
+-,get_database_supply_systems,BH,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/supply_systems.xls:BH
 -,get_database_supply_systems,BH,currency,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:BH
 -,get_database_supply_systems,BH,d,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:BH
--,get_database_supply_systems,BH,Description,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:BH
+-,get_database_supply_systems,BH,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:BH
 -,get_database_supply_systems,BH,e,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:BH
 -,get_database_supply_systems,BH,IR_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:BH
 -,get_database_supply_systems,BH,LT_yr,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:BH
@@ -354,10 +354,10 @@ network-layout,get_network_layout_nodes_shapefile,,Type,TODO,TODO,TODO,TODO,blac
 -,get_database_supply_systems,Boiler,c,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Boiler
 -,get_database_supply_systems,Boiler,cap_max,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Boiler
 -,get_database_supply_systems,Boiler,cap_min,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Boiler
--,get_database_supply_systems,Boiler,code,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:Boiler
+-,get_database_supply_systems,Boiler,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/supply_systems.xls:Boiler
 -,get_database_supply_systems,Boiler,currency,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:Boiler
 -,get_database_supply_systems,Boiler,d,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Boiler
--,get_database_supply_systems,Boiler,Description,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:Boiler
+-,get_database_supply_systems,Boiler,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:Boiler
 -,get_database_supply_systems,Boiler,e,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Boiler
 -,get_database_supply_systems,Boiler,IR_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Boiler
 -,get_database_supply_systems,Boiler,LT_yr,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Boiler
@@ -369,10 +369,10 @@ network-layout,get_network_layout_nodes_shapefile,,Type,TODO,TODO,TODO,TODO,blac
 -,get_database_supply_systems,CCGT,c,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:CCGT
 -,get_database_supply_systems,CCGT,cap_max,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CCGT
 -,get_database_supply_systems,CCGT,cap_min,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CCGT
--,get_database_supply_systems,CCGT,code,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:CCGT
+-,get_database_supply_systems,CCGT,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/supply_systems.xls:CCGT
 -,get_database_supply_systems,CCGT,currency,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:CCGT
 -,get_database_supply_systems,CCGT,d,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CCGT
--,get_database_supply_systems,CCGT,Description,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:CCGT
+-,get_database_supply_systems,CCGT,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:CCGT
 -,get_database_supply_systems,CCGT,e,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CCGT
 -,get_database_supply_systems,CCGT,IR_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CCGT
 -,get_database_supply_systems,CCGT,LT_yr,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CCGT
@@ -384,10 +384,10 @@ network-layout,get_network_layout_nodes_shapefile,,Type,TODO,TODO,TODO,TODO,blac
 -,get_database_supply_systems,Chiller,c,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Chiller
 -,get_database_supply_systems,Chiller,cap_max,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Chiller
 -,get_database_supply_systems,Chiller,cap_min,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Chiller
--,get_database_supply_systems,Chiller,code,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:Chiller
+-,get_database_supply_systems,Chiller,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/supply_systems.xls:Chiller
 -,get_database_supply_systems,Chiller,currency,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:Chiller
 -,get_database_supply_systems,Chiller,d,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Chiller
--,get_database_supply_systems,Chiller,Description,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:Chiller
+-,get_database_supply_systems,Chiller,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:Chiller
 -,get_database_supply_systems,Chiller,e,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Chiller
 -,get_database_supply_systems,Chiller,IR_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Chiller
 -,get_database_supply_systems,Chiller,LT_yr,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Chiller
@@ -399,10 +399,10 @@ network-layout,get_network_layout_nodes_shapefile,,Type,TODO,TODO,TODO,TODO,blac
 -,get_database_supply_systems,CT,c,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CT
 -,get_database_supply_systems,CT,cap_max,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CT
 -,get_database_supply_systems,CT,cap_min,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CT
--,get_database_supply_systems,CT,code,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:CT
+-,get_database_supply_systems,CT,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/supply_systems.xls:CT
 -,get_database_supply_systems,CT,currency,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:CT
 -,get_database_supply_systems,CT,d,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CT
--,get_database_supply_systems,CT,Description,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:CT
+-,get_database_supply_systems,CT,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:CT
 -,get_database_supply_systems,CT,e,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CT
 -,get_database_supply_systems,CT,IR_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CT
 -,get_database_supply_systems,CT,LT_yr,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CT
@@ -418,10 +418,10 @@ network-layout,get_network_layout_nodes_shapefile,,Type,TODO,TODO,TODO,TODO,blac
 -,get_database_supply_systems,FC,c,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:FC
 -,get_database_supply_systems,FC,cap_max,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:FC
 -,get_database_supply_systems,FC,cap_min,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:FC
--,get_database_supply_systems,FC,code,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:FC
+-,get_database_supply_systems,FC,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/supply_systems.xls:FC
 -,get_database_supply_systems,FC,currency,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:FC
 -,get_database_supply_systems,FC,d,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:FC
--,get_database_supply_systems,FC,Description,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:FC
+-,get_database_supply_systems,FC,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:FC
 -,get_database_supply_systems,FC,e,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:FC
 -,get_database_supply_systems,FC,IR_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:FC
 -,get_database_supply_systems,FC,LT_yr,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:FC
@@ -439,10 +439,10 @@ network-layout,get_network_layout_nodes_shapefile,,Type,TODO,TODO,TODO,TODO,blac
 -,get_database_supply_systems,Furnace,c,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Furnace
 -,get_database_supply_systems,Furnace,cap_max,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Furnace
 -,get_database_supply_systems,Furnace,cap_min,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Furnace
--,get_database_supply_systems,Furnace,code,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:Furnace
+-,get_database_supply_systems,Furnace,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/supply_systems.xls:Furnace
 -,get_database_supply_systems,Furnace,currency,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:Furnace
 -,get_database_supply_systems,Furnace,d,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Furnace
--,get_database_supply_systems,Furnace,Description,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:Furnace
+-,get_database_supply_systems,Furnace,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:Furnace
 -,get_database_supply_systems,Furnace,e,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Furnace
 -,get_database_supply_systems,Furnace,IR_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Furnace
 -,get_database_supply_systems,Furnace,LT_yr,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Furnace
@@ -457,11 +457,11 @@ network-layout,get_network_layout_nodes_shapefile,,Type,TODO,TODO,TODO,TODO,blac
 -,get_database_supply_systems,HEX,c_p,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:HEX
 -,get_database_supply_systems,HEX,cap_max,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HEX
 -,get_database_supply_systems,HEX,cap_min,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_supply_systems,HEX,code,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_supply_systems,HEX,Currency,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:HEX
+-,get_database_supply_systems,HEX,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/supply_systems.xls:HEX
+-,get_database_supply_systems,HEX,Currency,Defines the unit of currency used to create the cost estimations (year specific). E.g. USD-2015.,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:HEX
 -,get_database_supply_systems,HEX,d,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HEX
 -,get_database_supply_systems,HEX,d_p,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_supply_systems,HEX,Description,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:HEX
+-,get_database_supply_systems,HEX,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:HEX
 -,get_database_supply_systems,HEX,e,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HEX
 -,get_database_supply_systems,HEX,e_p,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:HEX
 -,get_database_supply_systems,HEX,IR_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HEX
@@ -474,10 +474,10 @@ network-layout,get_network_layout_nodes_shapefile,,Type,TODO,TODO,TODO,TODO,blac
 -,get_database_supply_systems,HP,c,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:HP
 -,get_database_supply_systems,HP,cap_max,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HP
 -,get_database_supply_systems,HP,cap_min,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HP
--,get_database_supply_systems,HP,code,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:HP
+-,get_database_supply_systems,HP,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/supply_systems.xls:HP
 -,get_database_supply_systems,HP,currency,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:HP
 -,get_database_supply_systems,HP,d,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HP
--,get_database_supply_systems,HP,Description,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:HP
+-,get_database_supply_systems,HP,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:HP
 -,get_database_supply_systems,HP,e,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:HP
 -,get_database_supply_systems,HP,IR_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HP
 -,get_database_supply_systems,HP,LT_yr,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HP
@@ -487,7 +487,7 @@ network-layout,get_network_layout_nodes_shapefile,,Type,TODO,TODO,TODO,TODO,blac
 -,get_database_supply_systems,PIPING,D_ext_m,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:PIPING
 -,get_database_supply_systems,PIPING,D_ins_m,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:PIPING
 -,get_database_supply_systems,PIPING,D_int_m,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:PIPING
--,get_database_supply_systems,PIPING,Inv_USD2015perm,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:PIPING
+-,get_database_supply_systems,PIPING,Inv_USD2015perm,Typical cost of investment for a given pipe diameter.,[$/m],{0.0....n},float,black,inputs/technology/systems/supply_systems.xls:PIPING
 -,get_database_supply_systems,PIPING,Pipe_DN,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PIPING
 -,get_database_supply_systems,PIPING,Vdot_max_m3s,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:PIPING
 -,get_database_supply_systems,PIPING,Vdot_min_m3s,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:PIPING
@@ -497,10 +497,10 @@ network-layout,get_network_layout_nodes_shapefile,,Type,TODO,TODO,TODO,TODO,blac
 -,get_database_supply_systems,Pump,c,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Pump
 -,get_database_supply_systems,Pump,cap_max,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Pump
 -,get_database_supply_systems,Pump,cap_min,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Pump
--,get_database_supply_systems,Pump,code,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:Pump
+-,get_database_supply_systems,Pump,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/supply_systems.xls:Pump
 -,get_database_supply_systems,Pump,currency,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:Pump
 -,get_database_supply_systems,Pump,d,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Pump
--,get_database_supply_systems,Pump,Description,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:Pump
+-,get_database_supply_systems,Pump,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:Pump
 -,get_database_supply_systems,Pump,e,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Pump
 -,get_database_supply_systems,Pump,IR_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Pump
 -,get_database_supply_systems,Pump,LT_yr,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Pump
@@ -512,10 +512,10 @@ network-layout,get_network_layout_nodes_shapefile,,Type,TODO,TODO,TODO,TODO,blac
 -,get_database_supply_systems,PV,c,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PV
 -,get_database_supply_systems,PV,cap_max,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PV
 -,get_database_supply_systems,PV,cap_min,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PV,code,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:PV
+-,get_database_supply_systems,PV,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/supply_systems.xls:PV
 -,get_database_supply_systems,PV,currency,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:PV
 -,get_database_supply_systems,PV,d,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PV,Description,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:PV
+-,get_database_supply_systems,PV,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:PV
 -,get_database_supply_systems,PV,e,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PV
 -,get_database_supply_systems,PV,IR_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PV
 -,get_database_supply_systems,PV,LT_yr,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PV
@@ -539,10 +539,10 @@ network-layout,get_network_layout_nodes_shapefile,,Type,TODO,TODO,TODO,TODO,blac
 -,get_database_supply_systems,PVT,c,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PVT
 -,get_database_supply_systems,PVT,cap_max,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PVT
 -,get_database_supply_systems,PVT,cap_min,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PVT
--,get_database_supply_systems,PVT,code,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:PVT
+-,get_database_supply_systems,PVT,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/supply_systems.xls:PVT
 -,get_database_supply_systems,PVT,currency,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:PVT
 -,get_database_supply_systems,PVT,d,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PVT
--,get_database_supply_systems,PVT,Description,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:PVT
+-,get_database_supply_systems,PVT,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:PVT
 -,get_database_supply_systems,PVT,e,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PVT
 -,get_database_supply_systems,PVT,IR_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PVT
 -,get_database_supply_systems,PVT,LT_yr,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PVT
@@ -558,11 +558,11 @@ network-layout,get_network_layout_nodes_shapefile,,Type,TODO,TODO,TODO,TODO,blac
 -,get_database_supply_systems,SC,c2,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:SC
 -,get_database_supply_systems,SC,cap_max,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:SC
 -,get_database_supply_systems,SC,cap_min,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,code,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:SC
+-,get_database_supply_systems,SC,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/supply_systems.xls:SC
 -,get_database_supply_systems,SC,Cp_fluid,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:SC
 -,get_database_supply_systems,SC,currency,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:SC
 -,get_database_supply_systems,SC,d,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,Description,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:SC
+-,get_database_supply_systems,SC,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:SC
 -,get_database_supply_systems,SC,dP1,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:SC
 -,get_database_supply_systems,SC,dP2,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:SC
 -,get_database_supply_systems,SC,dP3,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:SC
@@ -587,10 +587,10 @@ network-layout,get_network_layout_nodes_shapefile,,Type,TODO,TODO,TODO,TODO,blac
 -,get_database_supply_systems,TES,c,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:TES
 -,get_database_supply_systems,TES,cap_max,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:TES
 -,get_database_supply_systems,TES,cap_min,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:TES
--,get_database_supply_systems,TES,code,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:TES
+-,get_database_supply_systems,TES,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/supply_systems.xls:TES
 -,get_database_supply_systems,TES,currency,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:TES
 -,get_database_supply_systems,TES,d,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:TES
--,get_database_supply_systems,TES,Description,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:TES
+-,get_database_supply_systems,TES,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:TES
 -,get_database_supply_systems,TES,e,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:TES
 -,get_database_supply_systems,TES,IR_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:TES
 -,get_database_supply_systems,TES,LT_yr,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:TES
