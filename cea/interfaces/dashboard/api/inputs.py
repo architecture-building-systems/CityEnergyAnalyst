@@ -7,7 +7,7 @@ import pandas
 import yaml
 from flask import current_app
 from flask_restplus import Namespace, Resource, abort
-from .databases import SCHEMA_KEY, get_database_dict
+from .databases import DATABASE_NAMES, DATABASES, DATABASES_TYPE_MAP, get_database_dict
 
 import cea.inputlocator
 import cea.utilities.dbf
@@ -33,8 +33,7 @@ def read_inputs_field_types():
         open(os.path.join(os.path.dirname(__file__), '../inputs/inputs.yml')).read())
 
     for db in inputs.keys():
-        inputs[db]['fieldnames'] = [field['name']
-                                    for field in inputs[db]['fields']]
+        inputs[db]['fieldnames'] = [field['name']for field in inputs[db]['fields']]
     return inputs
 
 
@@ -325,22 +324,24 @@ class InputDatabase(Resource):
     def get(self, db):
         config = current_app.cea_config
         locator = cea.inputlocator.InputLocator(config.scenario)
-        # Need to change locator method for schedules since `schema.yml` uses
-        # `get_database_standard_schedules_use` instead of `get_database_standard_schedules`
-        locator_methods = dict(SCHEMA_KEY)
-        locator_methods['schedules'] = 'get_database_standard_schedules'
-        db_names = locator_methods.keys()
         try:
             # All or nothing. Abort reading databases if encounter error
             if db == 'all':
                 out = OrderedDict()
-                for db_name in db_names:
-                    out[db_name] = get_database_dict(locator.__getattribute__(locator_methods[db_name])(), db_name)
+                for db_type, db_dict in DATABASES.items():
+                    out[db_type] = OrderedDict()
+                    for db_name, db_props in db_dict.items():
+                        # Need to change locator method for schedules since `schema.yml` uses
+                        # `get_database_standard_schedules_use` instead of `get_database_standard_schedules`
+                        locator_method = db_props['schema_key'] if db_name != 'schedules' else 'get_database_standard_schedules'
+                        out[db_type][db_name] = get_database_dict(locator.__getattribute__(locator_method)())
                 return out
-            elif db in db_names:
-                return get_database_dict(locator.__getattribute__(locator_methods[db])(), db)
+            elif db in DATABASE_NAMES:
+                db_type = DATABASES_TYPE_MAP[db]
+                locator_method = DATABASES[db_type][db]['schema_key'] if db != 'schedules' else 'get_database_standard_schedules'
+                return get_database_dict(locator.__getattribute__(locator_method)())
             else:
-                abort(400, "Could not find '{}' database. Try instead {}".format(db, ", ".join(db_names)))
+                abort(400, "Could not find '{}' database. Try instead {}".format(db, ", ".join(DATABASE_NAMES)))
         except IOError as e:
             print(e)
             abort(500, e.message)
