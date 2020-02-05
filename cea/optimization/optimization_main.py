@@ -18,6 +18,7 @@ from cea.optimization.preprocessing.preprocessing_main import preproccessing
 from cea.optimization.prices import Prices as Prices
 from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
 from cea.technologies.supply_systems_database import SupplySystemsDatabase
+from constants import DH_ACRONYM, DC_ACRONYM
 
 warnings.filterwarnings("ignore")
 
@@ -69,8 +70,14 @@ def moo_optimization(locator, weather_file, config):
     prices = Prices(supply_systems, config.optimization.detailed_electricity_pricing)
 
     # local flags
-    district_heating_network = config.optimization.district_heating_network
-    district_cooling_network = config.optimization.district_cooling_network
+    if config.optimization.network_type == DH_ACRONYM:
+        district_heating_network = True
+        district_cooling_network = False
+    elif config.optimization.network_type == DC_ACRONYM:
+        district_heating_network = False
+        district_cooling_network = True
+    else:
+        raise Exception("no valid values for 'network-type' inpuit parameter")
 
     #GET NAMES_OF BUILDINGS THAT HAVE HEATING, COOLING AND ELECTRICITY LOAD SEPARATELY
 
