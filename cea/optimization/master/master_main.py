@@ -121,6 +121,10 @@ def non_dominated_sorting_genetic_algorithm(locator,
     MUTPB = config.optimization.mutation_prob
     technologies_heating_allowed = config.optimization.technologies_DH
     technologies_cooling_allowed = config.optimization.technologies_DC
+    mutation_method_integer = config.optimization.mutation_method_integer
+    mutation_method_continuous = config.optimization.mutation_method_continuous
+    crossover_method_integer = config.optimization.crossover_method_integer
+    crossover_method_continuous = config.optimization.crossover_method_continuous
 
     # SET-UP EVOLUTIONARY ALGORITHM
     # Hyperparameters
@@ -188,7 +192,9 @@ def non_dominated_sorting_genetic_algorithm(locator,
                      district_heating_network=district_heating_network,
                      district_cooling_network=district_cooling_network,
                      technologies_heating_allowed=technologies_heating_allowed,
-                     technologies_cooling_allowed=technologies_cooling_allowed)
+                     technologies_cooling_allowed=technologies_cooling_allowed,
+                     crossover_method_integer=crossover_method_integer,
+                     crossover_method_continuous=crossover_method_continuous)
     toolbox.register("mutate",
                      mutation_main,
                      indpb=MUTPB,
@@ -200,7 +206,10 @@ def non_dominated_sorting_genetic_algorithm(locator,
                      district_heating_network=district_heating_network,
                      district_cooling_network=district_cooling_network,
                      technologies_heating_allowed=technologies_heating_allowed,
-                     technologies_cooling_allowed=technologies_cooling_allowed)
+                     technologies_cooling_allowed=technologies_cooling_allowed,
+                     mutation_method_integer=mutation_method_integer,
+                     mutation_method_continuous=mutation_method_continuous
+                     )
     toolbox.register("evaluate",
                      objective_function_wrapper)
     toolbox.register("select",
