@@ -16,7 +16,9 @@ def mutation_main(individual, indpb,
                   column_names_buildings_heating,
                   column_names_buildings_cooling,
                   district_heating_network,
-                  district_cooling_network
+                  district_cooling_network,
+                  technologies_heating_allowed,
+                  technologies_cooling_allowed,
                   ):
     # create dict of individual with his/her name
     individual_with_name_dict = dict(zip(column_names, individual))
@@ -64,7 +66,9 @@ def mutation_main(individual, indpb,
                                                 column_names_buildings_heating,
                                                 column_names_buildings_cooling,
                                                 district_heating_network,
-                                                district_cooling_network
+                                                district_cooling_network,
+                                                technologies_heating_allowed,
+                                                technologies_cooling_allowed,
                                                 )
 
     # now pass all the values mutated to the original individual
