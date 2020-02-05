@@ -126,9 +126,9 @@ def calc_Ex_Qc_T1_T2(Qc, T1, T2, T_ref_C):
     Ex_Qc = abs((carnot_T1 + carnot_T2) * Qc / 2.0)
     return Ex_Qc
 
-def calc_Ex_Qc(Qc, T_RA_C, T_ref_C):
+def calc_Ex_Qc(Qc, T_C, T_ref_C):
     T_ref_K = T_ref_C + 273.15
-    T_RA_K = T_RA_C + 273.15
+    T_RA_K = T_C + 273.15
     Ex_Qc = Qc * (T_ref_K / T_RA_K - 1)
     return Ex_Qc
 
