@@ -31,6 +31,8 @@ def evaluation_main(individual, building_names_all, locator, network_features, c
                     building_names_electricity,
                     district_heating_network,
                     district_cooling_network,
+                    technologies_heating_allowed,
+                    technologies_cooling_allowed
                     ):
     """
     This function evaluates an individual
@@ -80,7 +82,10 @@ def evaluation_main(individual, building_names_all, locator, network_features, c
                                                                        DHN_barcode,
                                                                        DCN_barcode,
                                                                        district_heating_network,
-                                                                       district_cooling_network)
+                                                                       district_cooling_network,
+                                                                       technologies_heating_allowed,
+                                                                       technologies_cooling_allowed,
+                                                                       )
     # INITIALIZE DICTS STORING PERFORMANCE DATA
     district_heating_fixed_costs = {}
     district_heating_generation_dispatch = {}
