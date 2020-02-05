@@ -68,7 +68,6 @@ def evaluation_main(individual, building_names_all, locator, network_features, c
 
     print("EVALUATING THE NEXT SYSTEM OPTION/INDIVIDUAL")
     print(individual_with_name_dict)
-
     # CREATE CLASS AND PASS KEY CHARACTERISTICS OF INDIVIDUAL
     # THIS CLASS SHOULD CONTAIN ALL VARIABLES THAT MAKE AN INDIVIDUAL CONFIGURATION
     master_to_slave_vars = master.export_data_to_master_to_slave_class(locator,
@@ -86,80 +85,33 @@ def evaluation_main(individual, building_names_all, locator, network_features, c
                                                                        technologies_heating_allowed,
                                                                        technologies_cooling_allowed,
                                                                        )
-    # INITIALIZE DICTS STORING PERFORMANCE DATA
-    district_heating_fixed_costs = {}
-    district_heating_generation_dispatch = {}
-    district_cooling_fixed_costs = {}
-    district_cooling_generation_dispatch = {}
-    district_heating_capacity_installed = {}
-    district_cooling_capacity_installed = {}
+
     # DISTRICT HEATING NETWORK
-    if master_to_slave_vars.DHN_exists:
-        print("DISTRICT HEATING OPERATION")
-        district_heating_fixed_costs, \
-        district_heating_generation_dispatch, \
-        district_heating_electricity_requirements_dispatch, \
-        district_heating_fuel_requirements_dispatch, \
-        district_heating_capacity_installed = heating_main.district_heating_network(locator,
-                                                                                    master_to_slave_vars,
-                                                                                    config,
-                                                                                    prices,
-                                                                                    lca,
-                                                                                    network_features,
-                                                                                    )
-    else:
-        district_heating_electricity_requirements_dispatch = {
-            # ENERGY REQUIREMENTS
-            # Electricity
-            "E_Storage_charging_req_W": np.zeros(HOURS_IN_YEAR),
-            "E_Storage_discharging_req_W": np.zeros(HOURS_IN_YEAR),
-            "E_DHN_req_W": np.zeros(HOURS_IN_YEAR),
-            "E_HP_SC_FP_req_W": np.zeros(HOURS_IN_YEAR),
-            "E_HP_SC_ET_req_W": np.zeros(HOURS_IN_YEAR),
-            "E_HP_PVT_req_W": np.zeros(HOURS_IN_YEAR),
-            "E_HP_Server_req_W": np.zeros(HOURS_IN_YEAR),
-            "E_HP_Sew_req_W": np.zeros(HOURS_IN_YEAR),
-            "E_HP_Lake_req_W": np.zeros(HOURS_IN_YEAR),
-            "E_GHP_req_W": np.zeros(HOURS_IN_YEAR),
-            "E_BaseBoiler_req_W": np.zeros(HOURS_IN_YEAR),
-            "E_PeakBoiler_req_W": np.zeros(HOURS_IN_YEAR),
-            "E_BackupBoiler_req_W": np.zeros(HOURS_IN_YEAR),
-        }
-        district_heating_fuel_requirements_dispatch = {
-            "NG_CHP_req_W": np.zeros(HOURS_IN_YEAR),
-            "NG_BaseBoiler_req_W": np.zeros(HOURS_IN_YEAR),
-            "NG_PeakBoiler_req_W": np.zeros(HOURS_IN_YEAR),
-            "NG_BackupBoiler_req_W": np.zeros(HOURS_IN_YEAR),
-            "WB_Furnace_req_W": np.zeros(HOURS_IN_YEAR),
-            "DB_Furnace_req_W": np.zeros(HOURS_IN_YEAR),
-        }
+    print("DISTRICT HEATING OPERATION")
+    district_heating_fixed_costs, \
+    district_heating_generation_dispatch, \
+    district_heating_electricity_requirements_dispatch, \
+    district_heating_fuel_requirements_dispatch, \
+    district_heating_capacity_installed = heating_main.district_heating_network(locator,
+                                                                                master_to_slave_vars,
+                                                                                config,
+                                                                                prices,
+                                                                                lca,
+                                                                                network_features,
+                                                                                )
 
     # DISTRICT COOLING NETWORK:
-    if master_to_slave_vars.DCN_exists:
-        print("DISTRICT COOLING OPERATION")
-        district_cooling_fixed_costs, \
-        district_cooling_generation_dispatch, \
-        district_cooling_electricity_requirements_dispatch, \
-        district_cooling_fuel_requirements_dispatch, \
-        district_cooling_capacity_installed = cooling_main.district_cooling_network(locator,
-                                                                                    master_to_slave_vars,
-                                                                                    config,
-                                                                                    prices,
-                                                                                    network_features)
-    else:
-        district_cooling_electricity_requirements_dispatch = {
-            # ENERGY REQUIREMENTS
-            # Electricity
-            "E_DCN_req_W": np.zeros(HOURS_IN_YEAR),
-            "E_BaseVCC_WS_req_W": np.zeros(HOURS_IN_YEAR),
-            "E_PeakVCC_WS_req_W": np.zeros(HOURS_IN_YEAR),
-            "E_BaseVCC_AS_req_W": np.zeros(HOURS_IN_YEAR),
-            "E_PeakVCC_AS_req_W": np.zeros(HOURS_IN_YEAR),
-            "E_BackupVCC_AS_req_W": np.zeros(HOURS_IN_YEAR),
-        }
-        district_cooling_fuel_requirements_dispatch = {
-            "NG_Trigen_req_W": np.zeros(HOURS_IN_YEAR)
-        }
+    print("DISTRICT COOLING OPERATION")
+    district_cooling_fixed_costs, \
+    district_cooling_generation_dispatch, \
+    district_cooling_electricity_requirements_dispatch, \
+    district_cooling_fuel_requirements_dispatch, \
+    district_cooling_capacity_installed = cooling_main.district_cooling_network(locator,
+                                                                                master_to_slave_vars,
+                                                                                config,
+                                                                                prices,
+                                                                                network_features)
+
 
     # ELECTRICITY CONSUMPTION CALCULATIONS
     print("DISTRICT ELECTRICITY GRID OPERATION")
@@ -173,9 +125,7 @@ def evaluation_main(individual, building_names_all, locator, network_features, c
                                                                                                          district_cooling_generation_dispatch,
                                                                                                          district_cooling_electricity_requirements_dispatch)
 
-    # print("DISTRICT NATURAL GAS / BIOMASS GRID OPERATION")
     # electricity_main.extract_fuels_demand_buildings(master_to_slave_vars, building_names_all, locator)
-
     print("DISTRICT ENERGY SYSTEM - COSTS, PRIMARY ENERGY AND EMISSIONS OF CONNECTED BUILDINGS")
     buildings_connected_costs, \
     buildings_connected_emissions = cost_model.buildings_connected_costs_and_emissions(district_heating_fixed_costs,
