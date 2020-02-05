@@ -298,7 +298,7 @@ def get_timesteps_info(case, season, timesteps):
         periods = len(op_time) / 24
         timesteps = len(op_time)
     elif timesteps == 'dtw hours':
-        cluster_numbers_df = pd.read_excel(os.path.join(settings.typical_days_path, 'B005_HOT_DTW.xlsx'), header=None)
+        cluster_numbers_df = pd.read_excel(os.path.join(settings.typical_days_path, 'B005_HOT_DTW.xlsx'), header=None) # TODO: remove hard-coded value
         start_t, end_t = {}, {}
         op_time = []
         number_of_clusters = cluster_numbers_df.shape[0]
