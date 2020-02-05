@@ -9,7 +9,7 @@ from deap import tools
 from cea.optimization.master.validation import validation_main
 
 
-class CrossOverMethods(object):
+class CrossOverMethodsInteger(object):
     """
         mutation methods for integers
       """
@@ -29,9 +29,24 @@ class CrossOverMethods(object):
             return tools.cxPartialyMatched(individual_1,
                                            individual_2)
         elif self.method == 'UniformPartialyMatched':
-            return tools.cxPartialyMatched(individual_1,
-                                           individual_2)
+            return tools.cxUniformPartialyMatched(individual_1, individual_2, probability)
 
+class CrossOverMethodsContinuous(object):
+    """
+        mutation methods for integers
+      """
+
+    def __init__(self, crossover_method):
+        self.method = crossover_method
+
+    def crossover(self, individual_1, individual_2, probability):
+        if self.method == 'Uniform':
+            return tools.cxUniform(individual_1,
+                                   individual_2,
+                                   probability)
+        elif self.method == 'TwoPoint':
+            return tools.cxESTwoPoint(individual_1,
+                                      individual_2)
 
 def crossover_main(ind1, ind2, indpb,
                    column_names,
@@ -46,8 +61,8 @@ def crossover_main(ind1, ind2, indpb,
                    crossover_method_integer,
                    crossover_method_continuous
                    ):
-    crossover_integer = CrossOverMethods(crossover_method_integer)
-    crossover_continuous = CrossOverMethods(crossover_method_continuous)
+    crossover_integer = CrossOverMethodsInteger(crossover_method_integer)
+    crossover_continuous = CrossOverMethodsContinuous(crossover_method_continuous)
 
     # create dict of individual with his/her name
     ind1_with_name_dict = dict(zip(column_names, ind1))
