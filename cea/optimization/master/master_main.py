@@ -119,8 +119,8 @@ def non_dominated_sorting_genetic_algorithm(locator,
     RANDOM_SEED = config.optimization.random_seed
     CXPB = config.optimization.crossover_prob
     MUTPB = config.optimization.mutation_prob
-    technologies_heating_allowed = config.optimization.technology_DH
-    technologies_cooling_allowed = config.optimization.technology_DC
+    technologies_heating_allowed = config.optimization.technologies_DH
+    technologies_cooling_allowed = config.optimization.technologies_DC
 
     # SET-UP EVOLUTIONARY ALGORITHM
     # Hyperparameters
@@ -515,8 +515,8 @@ def create_empty_individual(column_names,
                             technologies_cooling_allowed,
                             ):
     # local variables
-    heating_unit_names_share = [x[0] for x in DH_CONVERSION_TECHNOLOGIES_SHARE if x[0] in technologies_heating_allowed]
-    cooling_unit_names_share = [x[0] for x in DC_CONVERSION_TECHNOLOGIES_SHARE if x[0] in technologies_cooling_allowed]
+    heating_unit_names_share = [x[0] for x in DH_CONVERSION_TECHNOLOGIES_SHARE.iteritems() if x[0] in technologies_heating_allowed]
+    cooling_unit_names_share = [x[0] for x in DC_CONVERSION_TECHNOLOGIES_SHARE.iteritems() if x[0] in technologies_cooling_allowed]
 
     heating_unit_share_float = [0.0] * len(heating_unit_names_share)
     cooling_unit_share_float = [0.0] * len(cooling_unit_names_share)
@@ -524,21 +524,15 @@ def create_empty_individual(column_names,
     DH_buildings_connected_int = [0] * len(column_names_buildings_heating)
     DC_buildings_connected_int = [0] * len(column_names_buildings_cooling)
 
-    # 3 cases are possible
-    if district_heating_network and district_cooling_network:
-        # combine both strings and calculate the ranges of each part of the individual
-        individual = heating_unit_share_float + \
-                     DH_buildings_connected_int + \
-                     cooling_unit_share_float + \
-                     DC_buildings_connected_int
-
-    elif district_heating_network:
+    # 1 cases are possible
+    if district_heating_network:
         individual = heating_unit_share_float + \
                      DH_buildings_connected_int
-
     elif district_cooling_network:
         individual = cooling_unit_share_float + \
                      DC_buildings_connected_int
+    else:
+        raise Exception('option not available')
 
     individual_with_names_dict = dict(zip(column_names, individual))
 
@@ -555,7 +549,7 @@ def get_column_names_individual(district_heating_network,
     # 2 cases are possible
     if district_heating_network:
         # local variables
-        heating_unit_names_share = [x[0] for x in DH_CONVERSION_TECHNOLOGIES_SHARE if x[0] in technologies_heating_allowed]
+        heating_unit_names_share = [x[0] for x in DH_CONVERSION_TECHNOLOGIES_SHARE.iteritems() if x[0] in technologies_heating_allowed]
         column_names_buildings_heating = [x + "_" + DH_ACRONYM for x in building_names_heating]
         cooling_unit_names_share = []
         column_names_buildings_cooling = []
@@ -563,7 +557,7 @@ def get_column_names_individual(district_heating_network,
                        column_names_buildings_heating
     elif district_cooling_network:
         # local variables
-        cooling_unit_names_share = [x[0] for x in DC_CONVERSION_TECHNOLOGIES_SHARE if x[0] in technologies_cooling_allowed]
+        cooling_unit_names_share = [x[0] for x in DC_CONVERSION_TECHNOLOGIES_SHARE.iteritems() if x[0] in technologies_cooling_allowed]
         column_names_buildings_cooling = [x + "_" + DC_ACRONYM for x in building_names_cooling]
         heating_unit_names_share = []
         column_names_buildings_heating = []
