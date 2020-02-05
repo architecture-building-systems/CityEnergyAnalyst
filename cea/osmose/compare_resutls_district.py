@@ -63,7 +63,7 @@ def main(path_result_folder, case, time_steps):
             qc_all_tech_per_building_dict[label] = qc_sys_scu_percent
         # plot qc box plot
         techs = ordered_el_compare_df.columns
-        plot_stacked_bar(building, time_steps, techs, qc_all_tech_per_building_dict, path_district_result_folder, case)
+        plot_heat_removed_stack_all_techs(building, time_steps, techs, qc_all_tech_per_building_dict, path_district_result_folder, case)
 
         # ex_Wh_per_Af
         if 'ex_overlap_bar' in PLOTS:
@@ -102,7 +102,7 @@ def main(path_result_folder, case, time_steps):
     return np.nan
 
 
-def plot_stacked_bar(building, time_steps, techs, qc_all_tech_per_building_dict, path_district_result_folder, case):
+def plot_heat_removed_stack_all_techs(building, time_steps, techs, qc_all_tech_per_building_dict, path_district_result_folder, case):
     # plotting
     fig, ax = plt.subplots()
     bar_width = 0.5
