@@ -4,7 +4,7 @@ import os
 import matplotlib.pyplot as plt
 import matplotlib.patches
 from cea.osmose.auxiliary_functions import calc_h_from_T_w
-from cea.osmose.exergy_functions import calc_Ex_Qc_T1_T2
+from cea.osmose.exergy_functions import calc_Ex_Qc
 
 DETAILED_PLOTS = True
 
@@ -34,6 +34,7 @@ def main(run_folder_path):
     # electricity
     el_in_df, el_out_df = calc_layer_balance(balance_df, 'Electricity')
     el_usages = el_out_df.sum(axis=1)
+    el_aux_dict, el_LD_HP = calc_el_aux(balance_df)
     # plot_values_all_timesteps('Electricity_out', el_out_df, 'Electricity Usages [kWh/m2]', output_df, folder_path)
     plot_values_all_timesteps('Electricity_in', el_in_df, 'Electricity Supply [kWh/m2]', output_df, run_folder_path)
 
@@ -41,7 +42,7 @@ def main(run_folder_path):
     # exergy
     exergy_req, exergy_reheat_req = calc_exergy(balance_df, output_df, run_folder_path)
     exergy_LD_OAU = calc_exergy_LD_OAU(output_df) if 'LD' in run_folder_path else 0.0
-    exergy_recovered_df = calc_exergy_recovered(streams_df, output_df)
+    exergy_recovered_df = calc_exergy_recovered_OAU_EX(streams_df, output_df)
     # Q
     Qsc_dict = calc_Qsc_room(output_df, Q_sen_in_df, Q_sen_out_df, run_folder_path)
     Qsc_total_theoretical, SHR_theoretical = calc_Qsc_theoretical(output_df)
@@ -69,6 +70,11 @@ def main(run_folder_path):
                   'exergy_reheat_kWh': exergy_reheat_req,
                   'exergy_recovered_kWh': exergy_recovered_df['total'],
                   'electricity_kWh': el_usages,
+                  'electricity_aux_scu_kWh': el_aux_dict['el_aux_scu_kWh'],
+                  'electricity_aux_rau_kWh': el_aux_dict['el_aux_rau_kWh'],
+                  'electricity_aux_oau_kWh': el_aux_dict['el_aux_oau_kWh'],
+                  'electricity_aux_kWh': el_aux_dict['el_aux_kWh'],
+                  'electricity_LD_HP_kWh': el_LD_HP,
                   'Q_chiller_kWh': Q_chiller_total,
                   'Q_r_chiller_kWh': Q_r_chiller_total,
                   'Q_exhaust_kWh': Q_exhaust,
@@ -96,15 +102,47 @@ def main(run_folder_path):
     return
 
 def calc_exergy_LD_OAU(output_df):
-    Qc = output_df['Q_LD_HP'].values
-    T1 = np.where(output_df['T_OAU_OA1']>=output_df['T_OA'], output_df['T_OA'] - 0.1, output_df['T_OAU_OA1'])
-    T2 = output_df['T_OAU_SA'].values
     T_ref = output_df['T_OA'].values
-    Ex = np.vectorize(calc_Ex_Qc_T1_T2)(Qc, T1, T2, T_ref)
-    return Ex
+    Qc_ER = output_df['Q_LD_HP'].values - output_df['Q_LD_de'].values
+    T_SA = output_df['T_OAU_SA'].values
+    T_OA1 = np.where(output_df['T_OAU_OA1'] >= output_df['T_OA'], output_df['T_OA'] - 0.1, output_df['T_OAU_OA1'])
+    Ex_ER = np.vectorize(calc_Ex_Qc)(Qc_ER, T_SA, T_ref)
+    Qc_de = output_df['Q_LD_de'].values
+
+    Ex_de = np.vectorize(calc_Ex_Qc)(Qc_de, T_SA, T_ref)
+    Ex_LD = Ex_ER + Ex_de
+    return Ex_LD
 
 
-def calc_exergy_recovered(stream_df, output_df):
+def calc_el_aux(balance_df):
+    el_aux_kWh_dict = {}
+    el_df = balance_df.filter(like='Electricity_in')
+    el_aux_columns = [i for i in el_df.columns if 'chiller' not in i]
+    el_aux_df = el_df[el_aux_columns]
+    el_aux_kWh_dict['el_aux_kWh'] = el_aux_df.sum(axis=1)
+    el_aux_scu_columns = [i for i in el_aux_columns if 'scu' in i]
+    el_aux_scu_df =  el_df[el_aux_scu_columns]
+    el_aux_kWh_dict['el_aux_scu_kWh'] = el_aux_scu_df.sum(axis=1)
+    el_aux_rau_columns = [i for i in el_aux_columns if 'rau' in i]
+    el_aux_rau_df =  el_df[el_aux_rau_columns]
+    el_aux_kWh_dict['el_aux_rau_kWh'] = el_aux_rau_df.sum(axis=1)
+    el_aux_oau_columns = [i for i in el_aux_columns if 'OAU' in i]
+    el_aux_oau_df =  el_df[el_aux_oau_columns]
+    el_aux_kWh_dict['el_aux_oau_kWh'] = el_aux_oau_df.sum(axis=1)
+    # check balance
+    diff = (el_aux_kWh_dict['el_aux_scu_kWh'] + el_aux_kWh_dict['el_aux_rau_kWh']
+            + el_aux_kWh_dict['el_aux_oau_kWh']) - el_aux_kWh_dict['el_aux_kWh']
+    if diff.sum() > 1E-3 :
+        ValueError('el_aux not balanced')
+
+    if 'Electricity_in_HP_LD_LD_HP_el' in el_df.columns:
+        el_LD_HP_kWh = el_df['Electricity_in_HP_LD_LD_HP_el']
+    else:
+        el_LD_HP_kWh = el_aux_kWh_dict['el_aux_kWh'].copy()*0
+    return el_aux_kWh_dict, el_LD_HP_kWh
+
+
+def calc_exergy_recovered_OAU_EX(stream_df, output_df):
     T_OA_K = output_df['T_OA'] + 273.15
     recover_streams_df = stream_df.filter(like='OAU_EX')
     for column in recover_streams_df.filter(like='T'):
@@ -191,7 +229,7 @@ def calc_exergy(balance_df, output_df, folder_path):
 
         # reheating electricity
         Qh_reheat = output_df.filter(like='Qh_reheat_OAU').sum(axis=1) + output_df.filter(like='Qh_reheat_RAU').sum(axis=1)
-        T_reheat = 50 + 273.15
+        T_reheat = 50 + 273.15 # FIXME: approximation
         T_OA = output_df['T_OA'] + 273.15
         carnot_reheat = 1 - T_OA/T_reheat
         ex_Qh_reheat = Qh_reheat * carnot_reheat
@@ -200,8 +238,8 @@ def calc_exergy(balance_df, output_df, folder_path):
         Ex = el_chillers_df
         Ex_reheat = el_chillers_df
 
-    if 'LD' in folder_path:
-        Ex = Ex + output_df['el_out_LD_HP']
+    # if 'LD' in folder_path:
+    #     Ex = Ex + output_df['el_out_LD_HP']*0.59
 
     return Ex, Ex_reheat
 
@@ -310,8 +348,6 @@ def calc_Qsc_room(output_df, Q_sen_in_df, Q_sen_out_df, folder_path):
     Qsc_OAU_exclude_inf = Qsc_OAU_OUT * ratio_exclude_inf - Qsc_OAU_IN
     Qsc_RAU = output_df.filter(like='Qsc_RAU_OUT').sum(axis=1) - output_df.filter(like='Qsc_RAU_IN').sum(axis=1)
     Qsc_SCU = output_df.filter(like='Qsc_SCU').sum(axis=1)
-
-
 
     # plot
     if DETAILED_PLOTS:
@@ -598,7 +634,7 @@ if __name__ == '__main__':
     ## Loop through different technologies
 
     # result_path_folder = "E:\\HCS_results_1022\\HCS_base_m_out_dP"
-    result_path_folder = 'E:\\OSMOSE_projects\\HCS_mk\\results'
+    result_path_folder = 'C:\\Users\\Shanshan\\Documents\\WP1_results\\WP1_results_1130'
     # result_path_folder = 'E:\\results_1130\\'
     # TECHS = ['HCS_base', 'HCS_base_coil', 'HCS_base_3for2', 'HCS_base_ER0', 'HCS_base_IEHX', 'HCS_base_LD']
     TECHS = ['HCS_base_LD']
@@ -606,9 +642,9 @@ if __name__ == '__main__':
     for tech in TECHS:
         tech_folder_path = os.path.join(result_path_folder, tech)
         folders_list = os.listdir(tech_folder_path)
-        # for folder in folders_list:
-        for folder in ['run_007_OFF_B005_1_24']:
-            # if 'run' in folder:
+        for folder in folders_list:
+        # for folder in ['run_007_OFF_B005_1_24']:
+            if 'run' in folder:
                 folder_path = os.path.join(tech_folder_path, folder)
                 file_list = os.listdir(folder_path)
                 # if 'total.csv' not in file_list:
