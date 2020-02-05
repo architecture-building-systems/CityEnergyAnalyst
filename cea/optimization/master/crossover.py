@@ -5,6 +5,7 @@ Crossover routines
 from __future__ import division
 
 from deap import tools
+
 from cea.optimization.master.validation import validation_main
 
 
@@ -15,7 +16,9 @@ def crossover_main(ind1, ind2, indpb,
                    column_names_buildings_heating,
                    column_names_buildings_cooling,
                    district_heating_network,
-                   district_cooling_network
+                   district_cooling_network,
+                   technologies_heating_allowed,
+                   technologies_cooling_allowed,
                    ):
     # create dict of individual with his/her name
     ind1_with_name_dict = dict(zip(column_names, ind1))
@@ -80,18 +83,22 @@ def crossover_main(ind1, ind2, indpb,
     # now validate individual
     # now validate individual
     ind1_with_name_dict = validation_main(ind1_with_name_dict,
-                                                column_names_buildings_heating,
-                                                column_names_buildings_cooling,
-                                                district_heating_network,
-                                                district_cooling_network
-                                                )
+                                          column_names_buildings_heating,
+                                          column_names_buildings_cooling,
+                                          district_heating_network,
+                                          district_cooling_network,
+                                          technologies_heating_allowed,
+                                          technologies_cooling_allowed,
+                                          )
 
     ind2_with_name_dict = validation_main(ind2_with_name_dict,
-                                                column_names_buildings_heating,
-                                                column_names_buildings_cooling,
-                                                district_heating_network,
-                                                district_cooling_network
-                                                )
+                                          column_names_buildings_heating,
+                                          column_names_buildings_cooling,
+                                          district_heating_network,
+                                          district_cooling_network,
+                                          technologies_heating_allowed,
+                                          technologies_cooling_allowed,
+                                          )
 
     # now pass all the values mutated to the original individual
     for i, column in enumerate(column_names):
