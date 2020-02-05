@@ -227,7 +227,10 @@ def calc_master_to_slave_variables(locator, gen,
 
     # Store inforamtion about which units are activated
     master_to_slave_vars = master_to_slave_electrical_technologies(individual_with_names_dict, locator,
-                                                                   master_to_slave_vars)
+                                                                   master_to_slave_vars,
+                                                                   district_heating_network,
+                                                                   district_cooling_network,
+                                                                   )
 
     if master_to_slave_vars.DHN_exists:
         master_to_slave_vars.Q_heating_nom_W = Q_heating_nom_W
@@ -423,10 +426,20 @@ def master_to_slave_district_heating_technologies(Q_heating_nom_W,
 
 def master_to_slave_electrical_technologies(individual_with_names_dict,
                                             locator,
-                                            master_to_slave_vars):
+                                            master_to_slave_vars,
+                                            district_heating_network,
+                                            district_cooling_network,
+                                            ):
     # SOLAR TECHNOLOGIES
-    if individual_with_names_dict[
-        'PV'] > 0.0:  # different in this case, because solar technologies can have shares close to 0.0
+    if district_heating_network:
+        technologies_allowed = master_to_slave_vars.technologies_heating_allowed
+    elif district_cooling_network:
+        technologies_allowed = master_to_slave_vars.technologies_cooling_allowed
+    else:
+        raise Exception("option not available")
+
+    if 'PV' in technologies_allowed and individual_with_names_dict['PV'] > 0.0:
+        # different in this case, because solar technologies can have shares close to 0.0
         buildings = master_to_slave_vars.building_names_all
         share_allowed = individual_with_names_dict['PV']
         master_to_slave_vars.PV_on = 1
