@@ -441,7 +441,7 @@ Documentation:
 
   - name: update-naming
     label: update-naming
-    description: Updates the naming.csv using the schema.yml
+    description: Updates the naming.csv using the schemas.yml
     interfaces: [doc]
     module: cea.utilities.doc_update_naming
     parameters: []
