@@ -7,7 +7,7 @@ import pandas
 
 import cea.databases
 import cea.scripts
-from cea.utilities.schedule_reader import read_cea_schedule
+from cea.utilities.schedule_reader import read_cea_schedule, save_cea_schedule
 
 api = Namespace("Databases", description="Database data for technologies in CEA")
 cea_database_path = os.path.dirname(cea.databases.__file__)
@@ -67,21 +67,41 @@ def get_database_path(region, db_name):
     return os.path.join(cea_database_path, region, db_type, file_name)
 
 
-def get_schedules_dict(schedule_path):
+def get_all_schedules_dict(schedules_folder):
+    """Read all schedules in schedules folder to a dict with their names as keys"""
     out = {}
-    schedule_files = glob.glob(os.path.join(schedule_path, "*.csv"))
+    schedule_files = glob.glob(os.path.join(schedules_folder, "*.csv"))
     for schedule_file in schedule_files:
         archetype = os.path.splitext(os.path.basename(schedule_file))[0]
-        schedule_data, schedule_complementary_data = read_cea_schedule(os.path.join(schedule_path, schedule_file))
-        df = pandas.DataFrame(schedule_data).set_index(["DAY", "HOUR"])
-        out[archetype] = {'SCHEDULES': {schedule_type: {day: df.loc[day][schedule_type].values.tolist()
-                                                        for day in df.index.levels[0]}
-                                        for schedule_type in df.columns}}
-        out[archetype].update(schedule_complementary_data)
+        schedule_path = os.path.join(schedules_folder, schedule_file)
+        out[archetype] = schedule_to_dict(schedule_path)
     return out
 
 
-def get_database_dict(db_path):
+def schedule_to_dict(schedule_path):
+    schedule_data, schedule_complementary_data = read_cea_schedule(schedule_path)
+    df = pandas.DataFrame(schedule_data).set_index(['DAY', 'HOUR'])
+    out = {'SCHEDULES': {schedule_type: {day: df.loc[day][schedule_type].values.tolist() for day in df.index.levels[0]}
+                         for schedule_type in df.columns}}
+    out.update(schedule_complementary_data)
+    return out
+
+
+def schedule_dict_to_file(schedule_dict, schedule_path):
+    schedule_data = schedule_dict['SCHEDULES']
+    schedule_complementary_data = {'MONTHLY_MULTIPLIER': schedule_dict['MONTHLY_MULTIPLIER'],
+                                   'METADATA': schedule_dict['METADATA']}
+
+    data = pandas.DataFrame()
+    for day in ['WEEKDAY', 'SATURDAY', 'SUNDAY']:
+        df = pandas.DataFrame({'HOUR': range(1, 25), 'DAY': [day] * 24})
+        for schedule_type, schedule in schedule_data.items():
+            df[schedule_type] = schedule[day]
+        data = data.append(df, ignore_index=True)
+    save_cea_schedule(data.to_dict('list'), schedule_complementary_data, schedule_path)
+
+
+def database_to_dict(db_path):
     out = OrderedDict()
     xls = pandas.ExcelFile(db_path)
     for sheet in xls.sheet_names:
@@ -90,7 +110,8 @@ def get_database_dict(db_path):
         out[sheet] = df.where(pandas.notnull(df), None).to_dict(orient='records', into=OrderedDict)
     return out
 
-def write_database_dict(db_dict):
+
+# def database_dict_to_file(db_dict, db_path):
 
 
 @api.route("/")
@@ -98,6 +119,7 @@ class DatabaseInfo(Resource):
     def get(self):
         databases = OrderedDict((db_type, [db_name for db_name in db_dict]) for db_type, db_dict in DATABASES.items())
         return {'regions': get_regions(), 'databases': databases}
+
 
 # FIXME: Separate db equals 'all' logic. Too messy
 @api.route("/<string:region>/<string:db>")
@@ -114,16 +136,16 @@ class Database(Resource):
                     for db_name in db_dict:
                         db_path = get_database_path(region, db_name)
                         if db_name == 'schedules':
-                            out[db_type][db_name] = get_schedules_dict(db_path)
+                            out[db_type][db_name] = get_all_schedules_dict(db_path)
                         else:
-                            out[db_type][db_name] = get_database_dict(db_path)
+                            out[db_type][db_name] = database_to_dict(db_path)
                 return out
             elif db in DATABASE_NAMES:
                 db_path = get_database_path(region, db)
                 if db == 'schedules':
-                    return get_schedules_dict(db_path)
+                    return get_all_schedules_dict(db_path)
                 else:
-                    return get_database_dict(db_path)
+                    return database_to_dict(db_path)
             else:
                 abort(400, "Could not find '{}' database. Try instead {}".format(db, ", ".join(DATABASE_NAMES)))
         except IOError as e:
