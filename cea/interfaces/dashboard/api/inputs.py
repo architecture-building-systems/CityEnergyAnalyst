@@ -7,11 +7,10 @@ import pandas
 import yaml
 from flask import current_app
 from flask_restplus import Namespace, Resource, abort
-from .databases import DATABASE_NAMES, DATABASES, DATABASES_TYPE_MAP, get_database_dict, get_schedules_dict
+from .databases import DATABASE_NAMES, DATABASES, DATABASES_TYPE_MAP, database_to_dict, get_all_schedules_dict, schedule_to_dict, schedule_dict_to_file
 
 import cea.inputlocator
 import cea.utilities.dbf
-from cea.utilities.schedule_reader import read_cea_schedule, save_cea_schedule
 from cea.plots.supply_system.supply_system_map import get_building_connectivity
 from cea.plots.variable_naming import get_color_array
 from cea.technologies.network_layout.main import layout_network, NetworkLayout
@@ -180,7 +179,7 @@ class AllInputs(Resource):
 
         if schedules:
             for building in schedules:
-                dict_to_schedule(locator, building, schedules[building])
+                schedule_dict_to_file(schedules[building], locator.get_building_weekly_schedules(building))
 
         return out
 
@@ -313,7 +312,8 @@ class BuildingSchedule(Resource):
         config = current_app.cea_config
         locator = cea.inputlocator.InputLocator(config.scenario)
         try:
-            return schedule_to_dict(locator, building)
+            schedule_path = locator.get_building_weekly_schedules(building)
+            return schedule_to_dict(schedule_path)
         except IOError as e:
             print(e)
             abort(500, 'File not found')
@@ -335,18 +335,18 @@ class InputDatabase(Resource):
                         if db_name == 'schedules':
                             # Need to change locator method for schedules since `schema.yml` uses
                             # `get_database_standard_schedules_use` instead of `get_database_standard_schedules`
-                            out[db_type][db_name] = get_schedules_dict(locator.get_database_standard_schedules())
+                            out[db_type][db_name] = get_all_schedules_dict(locator.get_database_standard_schedules())
                         else:
                             locator_method = db_props['schema_key']
-                            out[db_type][db_name] = get_database_dict(locator.__getattribute__(locator_method)())
+                            out[db_type][db_name] = database_to_dict(locator.__getattribute__(locator_method)())
                 return out
             elif db in DATABASE_NAMES:
                 db_type = DATABASES_TYPE_MAP[db]
                 if db == 'schedules':
-                    return get_schedules_dict(locator.get_database_standard_schedules())
+                    return get_all_schedules_dict(locator.get_database_standard_schedules())
                 else:
                     locator_method = DATABASES[db_type][db]['schema_key']
-                    return get_database_dict(locator.__getattribute__(locator_method)())
+                    return database_to_dict(locator.__getattribute__(locator_method)())
             else:
                 abort(400, "Could not find '{}' database. Try instead {}".format(db, ", ".join(DATABASE_NAMES)))
         except IOError as e:
@@ -361,28 +361,3 @@ def get_choices(location, path):
     else:
         choices = df[location['column']].tolist()
     return [{'value': choice, 'label': df.loc[df[location['column']] == choice, 'Description'].values[0]} for choice in choices]
-
-
-def schedule_to_dict(locator, building):
-    schedule_path = locator.get_building_weekly_schedules(building)
-    schedule_data, schedule_complementary_data = read_cea_schedule(schedule_path)
-    df = pandas.DataFrame(schedule_data).set_index(['DAY', 'HOUR'])
-    out = {'SCHEDULES': {schedule_type: {day: df.loc[day][schedule_type].values.tolist() for day in df.index.levels[0]}
-                         for schedule_type in df.columns}}
-    out.update(schedule_complementary_data)
-    return out
-
-
-def dict_to_schedule(locator, building, schedule_dict):
-    schedule_path = locator.get_building_weekly_schedules(building)
-    schedule_data = schedule_dict['SCHEDULES']
-    schedule_complementary_data = {'MONTHLY_MULTIPLIER': schedule_dict['MONTHLY_MULTIPLIER'],
-                                   'METADATA': schedule_dict['METADATA']}
-
-    data = pandas.DataFrame()
-    for day in ['WEEKDAY', 'SATURDAY', 'SUNDAY']:
-        df = pandas.DataFrame({'HOUR': range(1, 25), 'DAY': [day] * 24})
-        for schedule_type, schedule in schedule_data.items():
-            df[schedule_type] = schedule[day]
-        data = data.append(df, ignore_index=True)
-    save_cea_schedule(data.to_dict('list'), schedule_complementary_data, schedule_path)
