@@ -99,6 +99,7 @@ def schedule_dict_to_file(schedule_dict, schedule_path):
             df[schedule_type] = schedule[day]
         data = data.append(df, ignore_index=True)
     save_cea_schedule(data.to_dict('list'), schedule_complementary_data, schedule_path)
+    print('Schedule file written to {}'.format(schedule_path))
 
 
 def database_to_dict(db_path):
@@ -111,7 +112,13 @@ def database_to_dict(db_path):
     return out
 
 
-# def database_dict_to_file(db_dict, db_path):
+def database_dict_to_file(db_dict, db_path):
+    with pandas.ExcelWriter(db_path) as writer:
+        for sheet_name, data in db_dict.items():
+            # FIXME: `fillna` used to fill empty cells in "air_conditioning_systems" to NA, could be dangerous for empty row values
+            df = pandas.DataFrame(data).fillna(value='NA')
+            df.to_excel(writer, sheet_name=sheet_name, index=False)
+    print('Database file written to {}'.format(db_path))
 
 
 @api.route("/")

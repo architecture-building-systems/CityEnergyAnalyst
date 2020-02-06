@@ -5,9 +5,9 @@ from collections import OrderedDict
 import geopandas
 import pandas
 import yaml
-from flask import current_app
+from flask import current_app, request
 from flask_restplus import Namespace, Resource, abort
-from .databases import DATABASE_NAMES, DATABASES, DATABASES_TYPE_MAP, database_to_dict, get_all_schedules_dict, schedule_to_dict, schedule_dict_to_file
+from .databases import DATABASE_NAMES, DATABASES, DATABASES_TYPE_MAP, database_to_dict, database_dict_to_file, get_all_schedules_dict, schedule_to_dict, schedule_dict_to_file
 
 import cea.inputlocator
 import cea.utilities.dbf
@@ -354,6 +354,30 @@ class InputDatabase(Resource):
             abort(500, e.message)
 
 
+@api.route('/databases')
+class InputDatabaseSave(Resource):
+    def put(self):
+        config = current_app.cea_config
+        # Preserve key order of json string (could be removed for python3)
+        payload = json.loads(request.data, object_pairs_hook=OrderedDict)
+        locator = cea.inputlocator.InputLocator(config.scenario)
+
+        for db_name in payload:
+            if db_name == 'schedules':
+                for archetype, schedule_dict in payload['schedules']['data'].items():
+                    schedule_dict_to_file(
+                        schedule_dict,
+                        locator.get_database_standard_schedules_use(
+                            locator.get_database_standard_schedules(), archetype
+                        )
+                    )
+            else:
+                db_type = DATABASES_TYPE_MAP[db_name]
+                locator_method = DATABASES[db_type][db_name]['schema_key']
+                db_path = locator.__getattribute__(locator_method)()
+                database_dict_to_file(payload[db_name]['data'], db_path)
+
+        return payload
 def get_choices(location, path):
     df = pandas.read_excel(path, location['sheet'])
     if 'filter' in location:
