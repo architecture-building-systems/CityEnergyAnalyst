@@ -12,6 +12,7 @@ from cea.utilities.schedule_reader import read_cea_schedule
 api = Namespace("Databases", description="Database data for technologies in CEA")
 cea_database_path = os.path.dirname(cea.databases.__file__)
 
+# FIXME: Should use inputlocator to find default databases instead? But still need a way to map database names to their locator method for schemas
 # { db_type: { db_name: db_prop, ... }, ... }
 DATABASES = OrderedDict([
     ("archetypes", {
@@ -81,17 +82,15 @@ def get_schedules_dict(schedule_path):
 
 
 def get_database_dict(db_path):
-    db_name = os.path.splitext(os.path.basename(db_path))[0]
-    if db_name == "schedules":
-        return get_schedules_dict(db_path)
-    else:
-        out = OrderedDict()
-        xls = pandas.ExcelFile(db_path)
-        for sheet in xls.sheet_names:
-            df = xls.parse(sheet)
-            # Replace NaN with null to prevent JSON errors
-            out[sheet] = df.where(pandas.notnull(df), None).to_dict(orient='records', into=OrderedDict)
-        return out
+    out = OrderedDict()
+    xls = pandas.ExcelFile(db_path)
+    for sheet in xls.sheet_names:
+        df = xls.parse(sheet)
+        # Replace NaN with null to prevent JSON errors
+        out[sheet] = df.where(pandas.notnull(df), None).to_dict(orient='records', into=OrderedDict)
+    return out
+
+def write_database_dict(db_dict):
 
 
 @api.route("/")
@@ -100,7 +99,7 @@ class DatabaseInfo(Resource):
         databases = OrderedDict((db_type, [db_name for db_name in db_dict]) for db_type, db_dict in DATABASES.items())
         return {'regions': get_regions(), 'databases': databases}
 
-
+# FIXME: Separate db equals 'all' logic. Too messy
 @api.route("/<string:region>/<string:db>")
 class Database(Resource):
     def get(self, region, db):
@@ -113,10 +112,18 @@ class Database(Resource):
                 for db_type, db_dict in DATABASES.items():
                     out[db_type] = OrderedDict()
                     for db_name in db_dict:
-                        out[db_type][db_name] = get_database_dict(get_database_path(region, db_name))
+                        db_path = get_database_path(region, db_name)
+                        if db_name == 'schedules':
+                            out[db_type][db_name] = get_schedules_dict(db_path)
+                        else:
+                            out[db_type][db_name] = get_database_dict(db_path)
                 return out
             elif db in DATABASE_NAMES:
-                return get_database_dict(get_database_path(region, db))
+                db_path = get_database_path(region, db)
+                if db == 'schedules':
+                    return get_schedules_dict(db_path)
+                else:
+                    return get_database_dict(db_path)
             else:
                 abort(400, "Could not find '{}' database. Try instead {}".format(db, ", ".join(DATABASE_NAMES)))
         except IOError as e:
@@ -129,7 +136,6 @@ class DatabaseSchema(Resource):
     def get(self, db):
         import cea.glossary
         schemas = cea.scripts.schemas()
-        glossary = cea.glossary.read_glossary_df()
 
         if db == 'all':
             out = {}
