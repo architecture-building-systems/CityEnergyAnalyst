@@ -287,21 +287,23 @@ def master_to_slave_district_cooling_technologies(Q_cooling_nom_W,
 
     # Storage Cooling
     flag = False
+    if 'WS_BaseVCC' in technologies_cooling_allowed and individual_with_names_dict['WS_BaseVCC'] >= mimimum_valuedc(
+            'WS_BaseVCC'):
+        flag = True
+    elif 'WS_PeakVCC' in technologies_cooling_allowed and individual_with_names_dict['WS_PeakVCC'] >= mimimum_valuedc(
+            'WS_PeakVCC'):
+        flag = True
+    elif 'AS_BaseVCC' in technologies_cooling_allowed and individual_with_names_dict['AS_BaseVCC'] >= mimimum_valuedc(
+            'AS_BaseVCC'):
+        flag = True
+    elif 'AS_PeakVCC' in technologies_cooling_allowed and individual_with_names_dict['AS_PeakVCC'] >= mimimum_valuedc(
+            'AS_PeakVCC'):
+        flag = True
+    elif 'NG_Trigen' in technologies_cooling_allowed and individual_with_names_dict['NG_Trigen'] >= mimimum_valuedc(
+            'NG_Trigen'):
+        flag = True
     if 'Storage' in technologies_cooling_allowed and individual_with_names_dict['Storage'] >= mimimum_valuedc(
-            'Storage'):
-        if 'WS_BaseVCC' in technologies_cooling_allowed and individual_with_names_dict['WS_BaseVCC'] >= mimimum_valuedc('WS_BaseVCC'):
-            flag = True
-        elif 'WS_PeakVCC' in technologies_cooling_allowed and individual_with_names_dict['WS_PeakVCC'] >= mimimum_valuedc('WS_PeakVCC'):
-            flag = True
-        elif 'AS_BaseVCC' in technologies_cooling_allowed and individual_with_names_dict['AS_BaseVCC'] >= mimimum_valuedc('AS_BaseVCC'):
-            flag = True
-        elif 'AS_PeakVCC' in technologies_cooling_allowed and individual_with_names_dict['AS_PeakVCC'] >= mimimum_valuedc('AS_PeakVCC'):
-            flag = True
-        elif 'NG_Trigen' in technologies_cooling_allowed and individual_with_names_dict['NG_Trigen'] >= mimimum_valuedc('NG_Trigen'):
-            flag = True
-        else:
-            raise Exception('The system cannot have a storage without any cooling unit, please check your input technologies')
-    if flag:
+            'Storage') and flag:
         master_to_slave_vars.Storage_cooling_on = 1
         master_to_slave_vars.Storage_cooling_size_W = individual_with_names_dict['Storage'] * Q_cooling_nom_W
 
