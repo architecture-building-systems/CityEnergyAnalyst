@@ -44,7 +44,8 @@ def get_technology_related_databases(locator, region):
 def data_helper(locator, region, overwrite_technology_folder,
                 update_architecture_dbf, update_HVAC_systems_dbf, update_indoor_comfort_dbf,
                 update_internal_loads_dbf, update_supply_systems_dbf,
-                update_schedule_operation_cea, buildings):
+                update_schedule_operation_cea,
+                update_emisison_intensity_dbf, buildings):
     """
     algorithm to query building properties from statistical database
     Archetypes_HVAC_properties.csv. for more info check the integrated demand
@@ -136,7 +137,7 @@ def data_helper(locator, region, overwrite_technology_folder,
 
     # get properties about types of HVAC systems
     if update_HVAC_systems_dbf:
-        construction_properties_hvac = pd.read_excel(locator.get_archetypes_properties(), 'HVAC')
+        construction_properties_hvac = pd.read_excel(locator.get_archetypes_properties(), 'air_conditioning')
         construction_properties_hvac['Code'] = construction_properties_hvac.apply(
             lambda x: calc_code(x['building_use'], x['year_start'],
                                 x['year_end'], x['standard']), axis=1)
@@ -236,6 +237,29 @@ def data_helper(locator, region, overwrite_technology_folder,
                   'type_dhw',
                   'type_el']
         dataframe_to_dbf(prop_supply_df_merged[fields], locator.get_building_supply())
+
+    if update_emisison_intensity_dbf:
+        emisison_intensity_DB = pd.read_excel(locator.get_archetypes_properties(), 'EMISSION_INTENSITY')
+        emisison_intensity_DB['Code'] = emisison_intensity_DB.apply(lambda x: calc_code(x['building_use'], x['year_start'],
+                                                                x['year_end'], x['standard']), axis=1)
+
+        categories_df['cat_supply'] = calc_category(emisison_intensity_DB, categories_df, 'HVAC', 'R')
+
+        # define HVAC systems types
+        prop_emission_df = categories_df.merge(emisison_intensity_DB, left_on='cat_supply', right_on='Code')
+        fields = ['Name',
+                  'W_e_ag_kgm2',
+                  'W_e_bg_kgm2',
+                  'W_i_ag_kgm2',
+                  'W_i_bg_kgm2',
+                  'Win_kgm2',
+                  'F_i_kgm2',
+                  'F_e_kgm2',
+                  'R_kgm2',
+                  'Tech_kgm2',
+                  'Exca_kgm2',
+                  'Mobi_kgm2']
+        dataframe_to_dbf(prop_emission_df[fields], locator.get_building_emission_intensity())
 
 
 def get_list_of_uses_in_case_study(building_occupancy_df):
@@ -501,7 +525,8 @@ def main(config):
     print('Running data-helper with archetypes = %s' % config.data_helper.databases)
 
     update_architecture_dbf = 'architecture' in config.data_helper.databases
-    update_technical_systems_dbf = 'HVAC' in config.data_helper.databases
+    update_air_conditioning_systems_dbf = 'air-conditioning' in config.data_helper.databases
+    update_emisison_intensity_dbf = 'emission-intensity' in config.data_helper.databases
     update_indoor_comfort_dbf = 'comfort' in config.data_helper.databases
     update_internal_loads_dbf = 'internal-loads' in config.data_helper.databases
     update_supply_systems_dbf = 'supply' in config.data_helper.databases
@@ -515,11 +540,12 @@ def main(config):
     data_helper(locator=locator, region=config.data_helper.region,
                 overwrite_technology_folder=overwrite_technology_folder,
                 update_architecture_dbf=update_architecture_dbf,
-                update_HVAC_systems_dbf=update_technical_systems_dbf,
+                update_HVAC_systems_dbf=update_air_conditioning_systems_dbf,
                 update_indoor_comfort_dbf=update_indoor_comfort_dbf,
                 update_internal_loads_dbf=update_internal_loads_dbf,
                 update_supply_systems_dbf=update_supply_systems_dbf,
                 update_schedule_operation_cea=update_schedule_operation_cea,
+                update_emisison_intensity_dbf = update_emisison_intensity_dbf,
                 buildings=buildings)
 
 
