@@ -79,7 +79,7 @@ def mutation_main(individual,
         # MUTATE BUILDINGS CONNECTED
         buildings_cooling = [individual_with_name_dict[column] for column in column_names_buildings_cooling]
         # apply mutations
-        buildings_cooling_mutated = mutation_integer.mutate(buildings_cooling, indpb)[0]
+        buildings_cooling_mutated = mutation_integer.mutate(buildings_cooling, indpb)
         # take back to teh individual
         for column, mutated_value in zip(column_names_buildings_cooling, buildings_cooling_mutated):
             individual_with_name_dict[column] = mutated_value
