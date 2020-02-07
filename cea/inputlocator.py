@@ -670,6 +670,10 @@ class InputLocator(object):
         """scenario/inputs/building-properties/building_supply.dbf"""
         return os.path.join(self.get_building_properties_folder(), 'supply_systems.dbf')
 
+    def get_building_emission_intensity(self):
+        """scenario/inputs/building-properties/emission_intensity.dbf"""
+        return os.path.join(self.get_building_properties_folder(), 'emission_intensity.dbf')
+
     def get_building_internal(self):
         """scenario/inputs/building-properties/internal_loads.dbf"""
         return os.path.join(self.get_building_properties_folder(), 'internal_loads.dbf')
