@@ -269,8 +269,7 @@ Analysis:
       - [get_building_occupancy]
       - [get_zone_geometry]
       - [get_building_supply]
-      - [get_database_lca_buildings]
-      - [get_database_lca_mobility]
+      - [get_building_emission_intensity]
 
 
   - name: operation-costs
