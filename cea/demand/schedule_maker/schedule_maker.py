@@ -109,10 +109,9 @@ def calc_schedules(locator,
     occupant presence is modeled based on the probability of occupant presence at the current and next time step as
     given by the occupant schedules used in the deterministic model.
 
-    :param locator: InputLocator instance
-    :param building: name of current building
-    :param date_range: range of dates being considered
-    :type date_range: DatetimeIndex
+    :param cea.inputlocator.InputLocator locator: InputLocator instance
+    :param str building: name of current building
+    :param DatetimeIndex date_range: range of dates being considered
     :param daily_schedule_building: building schedules for occupancy, electricity demand, water consumption, and system operation
     :type daily_schedule_building: {str: array}
     :param monthly_multiplier: percentage of the total number of occupants present at each month of the year

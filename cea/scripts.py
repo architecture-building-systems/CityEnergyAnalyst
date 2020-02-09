@@ -126,7 +126,7 @@ def schemas():
 
 def get_schema_variables(schema):
     """
-    This method returns a set of all variables within the schema.yml. The set is organised by:
+    This method returns a set of all variables within the schemas.yml. The set is organised by:
     (variable_name, locator_method, script, file_name:sheet_name)
     If the variable is from an input database, the script is replaced by "-"
     Also, if the variable is not from a tree data shape (such as xlsx or xls), the 'file_name:sheet_name' becomes 'file_name' only.
@@ -143,6 +143,10 @@ def get_schema_variables(schema):
             script = "-"
         else:
             script = schema[locator_method]['created_by'][0]
+
+        if not "schema" in schema[locator_method] or not schema[locator_method]["schema"]:
+            print("Could not find schema for {locator_method}".format(locator_method=locator_method))
+            continue
 
         # for repetitive variables, include only one instance
         for variable in schema[locator_method]['schema']:

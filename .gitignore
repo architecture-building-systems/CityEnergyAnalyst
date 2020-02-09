@@ -121,3 +121,4 @@ CityEnergyAnalyst.srctrlbm
 CityEnergyAnalyst.srctrldb
 CityEnergyAnalyst.srctrldb_tmp
 CityEnergyAnalyst.srctrlprj
+*.~csv
