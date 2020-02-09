@@ -154,6 +154,14 @@ cea.technologies.substation module
     :undoc-members:
     :show-inheritance:
 
+cea.technologies.supply\_systems\_database module
+-------------------------------------------------
+
+.. automodule:: cea.technologies.supply_systems_database
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cea.technologies.tabs module
 ----------------------------
 

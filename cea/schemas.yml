@@ -168,6 +168,9 @@ PVT_total_buildings:
     Eaux_PVT_kWh:
       sample_data: 411.88
       types_found: [float]
+    Name:
+      sample_data: B09
+      types_found: [string]
     PVT_roofs_top_E_kWh:
       sample_data: 45622.6
       types_found: [float]
@@ -219,9 +222,6 @@ PVT_total_buildings:
     Q_PVT_l_kWh:
       sample_data: 11207.15
       types_found: [float]
-    'Unnamed: 0':
-      sample_data: B09
-      types_found: [string]
     radiation_kWh:
       sample_data: 689935.18
       types_found: [float]
@@ -1010,7 +1010,7 @@ get_building_age:
     windows:
       sample_data: 0
       types_found: [int]
-  used_by: [data_helper, emissions, demand]
+  used_by: [data_helper, demand, emissions]
 get_building_air_conditioning:
   created_by: [data_helper]
   file_path: inputs/building-properties/air_conditioning_systems.dbf
@@ -1100,7 +1100,7 @@ get_building_architecture:
     wwr_west:
       sample_data: 0.4
       types_found: [float]
-  used_by: [schedule_maker, radiation, emissions, demand]
+  used_by: [demand, emissions, radiation, schedule_maker]
 get_building_comfort:
   created_by: [data_helper]
   file_path: inputs/building-properties/indoor_comfort.dbf
@@ -1130,7 +1130,7 @@ get_building_comfort:
     Ve_lpspax:
       sample_data: 10.0
       types_found: [float]
-  used_by: [schedule_maker, demand]
+  used_by: [demand, schedule_maker]
 get_building_internal:
   created_by: [data_helper]
   file_path: inputs/building-properties/internal_loads.dbf
@@ -1175,7 +1175,7 @@ get_building_internal:
     X_ghpax:
       sample_data: 80.0
       types_found: [float]
-  used_by: [schedule_maker, demand]
+  used_by: [demand, schedule_maker]
 get_building_occupancy:
   created_by: []
   file_path: inputs/building-properties/occupancy.dbf
@@ -1232,7 +1232,7 @@ get_building_occupancy:
     SWIMMING:
       sample_data: 0.0
       types_found: [float]
-  used_by: [data_helper, emissions, demand]
+  used_by: [data_helper, demand, emissions]
 get_building_supply:
   created_by: [data_helper]
   file_path: inputs/building-properties/supply_systems.dbf
@@ -1253,7 +1253,7 @@ get_building_supply:
     type_hs:
       sample_data: T3
       types_found: [string]
-  used_by: [demand, decentralized, emissions, operation_costs]
+  used_by: [decentralized, demand, emissions, operation_costs]
 get_building_weekly_schedules:
   created_by: [data_helper]
   file_path: inputs/building-properties/schedules/B001.csv
@@ -1265,7 +1265,7 @@ get_building_weekly_schedules:
     mixed-schedule:
       sample_data: 0.8500000000000001
       types_found: [float, null]
-  used_by: [schedule_maker, demand]
+  used_by: [demand, schedule_maker]
 get_costs_operation_file:
   created_by: [operation_costs]
   file_path: outputs/data/costs/operation_costs.csv
@@ -1615,7 +1615,7 @@ get_database_envelope_systems:
       e_win:
         sample_data: 0.89
         types_found: [float]
-  used_by: [schedule_maker, radiation, demand]
+  used_by: [demand, radiation, schedule_maker]
 get_database_lca_buildings:
   created_by: []
   file_path: inputs/technology/lifecycle/LCA_buildings.xlsx
@@ -2078,7 +2078,7 @@ get_database_supply_systems:
       unit:
         sample_data: W
         types_found: [string]
-    DETAILED_ELEC_PRICES:
+    DETAILED_ELEC_COSTS:
       Opex_var_buy_USD2015perkWh:
         sample_data: 0.04936071505496888
         types_found: [float]
@@ -2654,8 +2654,8 @@ get_database_supply_systems:
       'unit ':
         sample_data: m3
         types_found: [string]
-  used_by: [photovoltaic_thermal, decentralized, solar_collector, thermal_network,
-    optimization, emissions, demand, photovoltaic, operation_costs]
+  used_by: [decentralized, demand, emissions, operation_costs, optimization, photovoltaic,
+    photovoltaic_thermal, solar_collector, thermal_network]
 get_demand_results_file:
   created_by: [demand]
   file_path: outputs/data/demand/B001.csv
@@ -3060,7 +3060,7 @@ get_demand_results_file:
     x_int:
       sample_data: 4.255
       types_found: [float]
-  used_by: [decentralized, optimization, thermal_network, sewage_potential]
+  used_by: [decentralized, optimization, sewage_potential, thermal_network]
 get_geothermal_potential:
   created_by: [shallow_geothermal_potential]
   file_path: outputs/data/potentials/Shallow_geothermal_potential.csv
@@ -3632,21 +3632,62 @@ get_network_total_thermal_loss_file:
       types_found: [float]
   used_by: [optimization]
 get_optimization_checkpoint:
-  created_by: [optimization, optimization]
+  created_by: [optimization]
   file_path: outputs/data/optimization/master/CheckPoint_1
   file_type: ''
-  schema: null
+  schema:
+    !!python/unicode 'difference_generational_distances':
+      sample_data: [1.1439113700385677, 0.0]
+      types_found: null
+    !!python/unicode 'generation': {sample_data: 1, types_found: null}
+    !!python/unicode 'generational_distances':
+      sample_data: [1.1439113700385677, 1.1439113700385677]
+      types_found: null
+    !!python/unicode 'selected_population':
+      sample_data:
+      - [0.77, 0.57, 0.0, 0.84, 0.91, 0.24, 0.45, 1, 1, 0, 1, 1, 1, 1, 1, 1]
+      - [0.15, 0.45, 0.77, 0.71, 0.73, 0.43, 0.8, 1, 0, 0, 0, 1, 1, 0, 0, 1]
+      - [0.2, 0.45, 0.77, 0.71, 0.73, 0.43, 0.8, 1, 0, 0, 0, 1, 1, 0, 0, 1]
+      - [0.51, 0.49, 0.58, 0.15, 0.68, 0.86, 0.16, 1, 1, 0, 0, 1, 0, 0, 1, 1]
+      - [0.77, 0.57, 0.53, 0.84, 0.91, 0.24, 0.45, 1, 1, 0, 1, 1, 1, 1, 1, 1]
+      types_found: null
+    !!python/unicode 'tested_population':
+      sample_data:
+      - [0.15, 0.18, 0.0, 0.35, 0.63, 0.96, 0.21, 1, 1, 1, 1, 0, 1, 0, 0, 0]
+      - [0.2, 0.45, 0.77, 0.71, 0.73, 0.43, 0.8, 1, 0, 0, 0, 1, 1, 0, 0, 1]
+      - [0.29, 0.59, 0.0, 0.34, 0.85, 0.36, 0.48, 1, 1, 1, 1, 0, 1, 1, 1, 1]
+      - [0.77, 0.57, 0.53, 0.84, 0.91, 0.24, 0.45, 1, 1, 0, 1, 1, 1, 1, 1, 1]
+      types_found: null
   used_by: []
 get_optimization_connected_cooling_capacity:
-  created_by: [optimization, optimization, optimization, optimization, optimization,
-    optimization, optimization, optimization, optimization, optimization]
+  created_by: [optimization]
   file_path: outputs/data/optimization/slave/gen_1/ind_1_connected_cooling_capacity.csv
   file_type: csv
-  schema: null
+  schema:
+    Capacity_ACHHT_FP_cool_disconnected_W:
+      sample_data: 0.0
+      types_found: [float]
+    Capacity_ACH_SC_FP_cool_disconnected_W:
+      sample_data: 0.0
+      types_found: [float]
+    Capacity_BaseVCC_AS_cool_disconnected_W:
+      sample_data: 4966727.0
+      types_found: [float]
+    Capacity_DX_AS_cool_disconnected_W:
+      sample_data: 0.0
+      types_found: [float]
+    Capacity_VCCHT_AS_cool_disconnected_W:
+      sample_data: 0.0
+      types_found: [float]
+    Capaticy_ACH_SC_ET_cool_disconnected_W:
+      sample_data: 0.0
+      types_found: [float]
+    Name:
+      sample_data: B009
+      types_found: [string]
   used_by: []
 get_optimization_connected_electricity_capacity:
-  created_by: [optimization, optimization, optimization, optimization, optimization,
-    optimization, optimization, optimization, optimization, optimization]
+  created_by: [optimization]
   file_path: outputs/data/optimization/slave/gen_2/ind_0_connected_electrical_capacity.csv
   file_type: csv
   schema:
@@ -3661,8 +3702,7 @@ get_optimization_connected_electricity_capacity:
       types_found: [float]
   used_by: []
 get_optimization_connected_heating_capacity:
-  created_by: [optimization, optimization, optimization, optimization, optimization,
-    optimization, optimization, optimization, optimization, optimization]
+  created_by: [optimization]
   file_path: outputs/data/optimization/slave/gen_0/ind_2_connected_heating_capacity.csv
   file_type: csv
   schema:
@@ -3815,15 +3855,34 @@ get_optimization_decentralized_folder_building_result_heating_activation:
       types_found: [long]
   used_by: [optimization]
 get_optimization_disconnected_cooling_capacity:
-  created_by: [optimization, optimization, optimization, optimization, optimization,
-    optimization, optimization, optimization, optimization, optimization]
+  created_by: [optimization]
   file_path: outputs/data/optimization/slave/gen_1/ind_0_disconnected_cooling_capacity.csv
   file_type: csv
-  schema: null
+  schema:
+    Capacity_ACHHT_FP_cool_disconnected_W:
+      sample_data: 0.0
+      types_found: [float]
+    Capacity_ACH_SC_FP_cool_disconnected_W:
+      sample_data: 0.0
+      types_found: [float]
+    Capacity_BaseVCC_AS_cool_disconnected_W:
+      sample_data: 4966727.0
+      types_found: [float]
+    Capacity_DX_AS_cool_disconnected_W:
+      sample_data: 0.0
+      types_found: [float]
+    Capacity_VCCHT_AS_cool_disconnected_W:
+      sample_data: 0.0
+      types_found: [float]
+    Capaticy_ACH_SC_ET_cool_disconnected_W:
+      sample_data: 0.0
+      types_found: [float]
+    Name:
+      sample_data: B009
+      types_found: [string]
   used_by: []
 get_optimization_disconnected_heating_capacity:
-  created_by: [optimization, optimization, optimization, optimization, optimization,
-    optimization, optimization, optimization, optimization, optimization]
+  created_by: [optimization]
   file_path: outputs/data/optimization/slave/gen_0/ind_1_disconnected_heating_capacity.csv
   file_type: csv
   schema:
@@ -3841,7 +3900,7 @@ get_optimization_disconnected_heating_capacity:
       types_found: [string]
   used_by: []
 get_optimization_generation_connected_performance:
-  created_by: [optimization, optimization]
+  created_by: [optimization]
   file_path: outputs/data/optimization/slave/gen_1/gen_1_connected_performance.csv
   file_type: csv
   schema:
@@ -4066,7 +4125,7 @@ get_optimization_generation_connected_performance:
       types_found: [string]
   used_by: []
 get_optimization_generation_disconnected_performance:
-  created_by: [optimization, optimization]
+  created_by: [optimization]
   file_path: outputs/data/optimization/slave/gen_2/gen_2_disconnected_performance.csv
   file_type: csv
   schema:
@@ -4120,7 +4179,7 @@ get_optimization_generation_disconnected_performance:
       types_found: [string]
   used_by: []
 get_optimization_generation_total_performance:
-  created_by: [optimization, optimization]
+  created_by: [optimization]
   file_path: outputs/data/optimization/slave/gen_2/gen_2_total_performance.csv
   file_type: csv
   schema:
@@ -4192,7 +4251,7 @@ get_optimization_generation_total_performance:
       types_found: [string]
   used_by: []
 get_optimization_generation_total_performance_halloffame:
-  created_by: [optimization, optimization]
+  created_by: [optimization]
   file_path: outputs/data/optimization/slave/gen_1/gen_1_total_performance_halloffame.csv
   file_type: csv
   schema:
@@ -4336,7 +4395,7 @@ get_optimization_generation_total_performance_pareto:
       types_found: [string]
   used_by: [multi_criteria_analysis]
 get_optimization_individuals_in_generation:
-  created_by: [optimization, optimization]
+  created_by: [optimization]
   file_path: outputs/data/optimization/slave/gen_2/generation_2_individuals.csv
   file_type: csv
   schema:
@@ -4445,11 +4504,9 @@ get_optimization_network_results_summary:
     mdot_DH_netw_total_kgpers:
       sample_data: 0.955
       types_found: [float]
-  used_by: [optimization, optimization, optimization, optimization, optimization,
-    optimization, optimization, optimization]
+  used_by: [optimization]
 get_optimization_slave_building_connectivity:
-  created_by: [optimization, optimization, optimization, optimization, optimization,
-    optimization, optimization, optimization, optimization, optimization]
+  created_by: [optimization]
   file_path: outputs/data/optimization/slave/gen_2/ind_1_building_connectivity.csv
   file_type: csv
   schema:
@@ -4464,8 +4521,7 @@ get_optimization_slave_building_connectivity:
       types_found: [string]
   used_by: []
 get_optimization_slave_connected_performance:
-  created_by: [optimization, optimization, optimization, optimization, optimization,
-    optimization, optimization, optimization, optimization, optimization]
+  created_by: [optimization]
   file_path: outputs/data/optimization/slave/gen_1/ind_2_buildings_connected_performance.csv
   file_type: csv
   schema:
@@ -4678,8 +4734,7 @@ get_optimization_slave_connected_performance:
       types_found: [float]
   used_by: []
 get_optimization_slave_cooling_activation_pattern:
-  created_by: [optimization, optimization, optimization, optimization, optimization,
-    optimization, optimization, optimization, optimization, optimization]
+  created_by: [optimization]
   file_path: outputs/data/optimization/slave/gen_1/ind_2_Cooling_Activation_Pattern.csv
   file_type: csv
   schema:
@@ -4688,8 +4743,7 @@ get_optimization_slave_cooling_activation_pattern:
       types_found: [date]
   used_by: []
 get_optimization_slave_disconnected_performance:
-  created_by: [optimization, optimization, optimization, optimization, optimization,
-    optimization, optimization, optimization, optimization, optimization]
+  created_by: [optimization]
   file_path: outputs/data/optimization/slave/gen_2/ind_0_buildings_disconnected_performance.csv
   file_type: csv
   schema:
@@ -4731,8 +4785,7 @@ get_optimization_slave_disconnected_performance:
       types_found: [float]
   used_by: []
 get_optimization_slave_electricity_activation_pattern:
-  created_by: [optimization, optimization, optimization, optimization, optimization,
-    optimization, optimization, optimization, optimization, optimization]
+  created_by: [optimization]
   file_path: outputs/data/optimization/slave/gen_1/ind_1_Electricity_Activation_Pattern.csv
   file_type: csv
   schema:
@@ -4780,8 +4833,7 @@ get_optimization_slave_electricity_activation_pattern:
       types_found: [float]
   used_by: []
 get_optimization_slave_electricity_requirements_data:
-  created_by: [optimization, optimization, optimization, optimization, optimization,
-    optimization, optimization, optimization, optimization, optimization]
+  created_by: [optimization]
   file_path: outputs/data/optimization/slave/gen_1/ind_1_Electricity_Requirements_Pattern.csv
   file_type: csv
   schema:
@@ -4874,8 +4926,7 @@ get_optimization_slave_electricity_requirements_data:
       types_found: [float]
   used_by: []
 get_optimization_slave_heating_activation_pattern:
-  created_by: [optimization, optimization, optimization, optimization, optimization,
-    optimization, optimization, optimization, optimization, optimization]
+  created_by: [optimization]
   file_path: outputs/data/optimization/slave/gen_2/ind_0_Heating_Activation_Pattern.csv
   file_type: csv
   schema:
@@ -4953,8 +5004,7 @@ get_optimization_slave_heating_activation_pattern:
       types_found: [float]
   used_by: []
 get_optimization_slave_total_performance:
-  created_by: [optimization, optimization, optimization, optimization, optimization,
-    optimization, optimization, optimization, optimization, optimization]
+  created_by: [optimization]
   file_path: outputs/data/optimization/slave/gen_0/ind_2_total_performance.csv
   file_type: csv
   schema:
@@ -5554,8 +5604,7 @@ get_optimization_thermal_network_data_file:
     mdot_DH_netw_total_kgpers:
       sample_data: 0.955
       types_found: [float]
-  used_by: [optimization, optimization, optimization, optimization, optimization,
-    optimization, optimization, optimization]
+  used_by: [optimization]
 get_radiation_building:
   created_by: [radiation]
   file_path: outputs/data/solar-radiation/B001_radiation.csv
@@ -5618,7 +5667,7 @@ get_radiation_building:
     windows_west_m2:
       sample_data: 156.21
       types_found: [float]
-  used_by: [photovoltaic_thermal, solar_collector, photovoltaic, demand]
+  used_by: [demand, photovoltaic, photovoltaic_thermal, solar_collector]
 get_radiation_building_sensors:
   created_by: [radiation]
   file_path: outputs/data/solar-radiation/B001_insolation_Whm2.json
@@ -5627,7 +5676,7 @@ get_radiation_building_sensors:
     srf0:
       sample_data: 0.0
       types_found: [float]
-  used_by: [photovoltaic_thermal, solar_collector, photovoltaic, demand]
+  used_by: [demand, photovoltaic, photovoltaic_thermal, solar_collector]
 get_radiation_materials:
   created_by: [radiation]
   file_path: outputs/data/solar-radiation/buidling_materials.csv
@@ -5696,7 +5745,7 @@ get_radiation_metadata:
     orientation:
       sample_data: top
       types_found: [string]
-  used_by: [photovoltaic_thermal, solar_collector, photovoltaic, demand]
+  used_by: [demand, photovoltaic, photovoltaic_thermal, solar_collector]
 get_schedule_model_file:
   created_by: [schedule_maker]
   file_path: outputs/data/occupancy/B001.csv
@@ -5789,7 +5838,7 @@ get_street_network:
     geometry:
       sample_data: ((x1 y1, x2 y2, ...))
       types_found: [LineString]
-  used_by: [optimization, network_layout]
+  used_by: [network_layout, optimization]
 get_surroundings_geometry:
   created_by: []
   file_path: inputs/building-geometry/surroundings.shp
@@ -5813,7 +5862,7 @@ get_surroundings_geometry:
     height_bg:
       sample_data: 3.57142857143
       types_found: [float]
-  used_by: [schedule_maker, radiation]
+  used_by: [radiation, schedule_maker]
 get_terrain:
   created_by: []
   file_path: inputs/topography/terrain.tif
@@ -5822,7 +5871,7 @@ get_terrain:
     raster_value:
       sample_data: 1.0
       types_found: [!!python/name:__builtin__.float '']
-  used_by: [schedule_maker, radiation]
+  used_by: [radiation, schedule_maker]
 get_thermal_demand_csv_file:
   created_by: [thermal_network]
   file_path: outputs/data/thermal-network/DH__thermal_demand_per_building_W.csv
@@ -6397,8 +6446,8 @@ get_total_demand:
     people0:
       sample_data: 257.0
       types_found: [float]
-  used_by: [optimization, network_layout, sewage_potential, decentralized, operation_costs,
-    thermal_network, emissions]
+  used_by: [decentralized, emissions, network_layout, operation_costs, optimization,
+    sewage_potential, thermal_network]
 get_water_body_potential:
   created_by: [water_body_potential]
   file_path: outputs/data/potentials/Water_body_potential.csv
@@ -6413,7 +6462,7 @@ get_water_body_potential:
   used_by: [optimization]
 get_weather:
   created_by: []
-  file_path: ../../../../github/cityenergyanalyst/cea/databases/weather/Zug-inducity_1990_2010_TMY.epw
+  file_path: databases/weather/Zug-inducity_1990_2010_TMY.epw
   file_type: epw
   schema:
     Albedo (index = 32):
@@ -6632,9 +6681,8 @@ get_weather_file:
     zenlum_lux (index = 19):
       sample_data: !!python/long '9999'
       types_found: [long]
-  used_by: [schedule_maker, photovoltaic_thermal, decentralized, solar_collector,
-    radiation, thermal_network, optimization, shallow_geothermal_potential, demand,
-    photovoltaic]
+  used_by: [decentralized, demand, optimization, photovoltaic, photovoltaic_thermal,
+    radiation, schedule_maker, shallow_geothermal_potential, solar_collector, thermal_network]
 get_zone_geometry:
   created_by: []
   file_path: inputs/building-geometry/zone.shp
@@ -6658,6 +6706,6 @@ get_zone_geometry:
     height_bg:
       sample_data: 3.57142857143
       types_found: [float]
-  used_by: [schedule_maker, photovoltaic_thermal, decentralized, network_layout, radiation,
-    demand, solar_collector, thermal_network, optimization, shallow_geothermal_potential,
-    emissions, sewage_potential, data_helper, photovoltaic]
+  used_by: [data_helper, decentralized, demand, emissions, network_layout, optimization,
+    photovoltaic, photovoltaic_thermal, radiation, schedule_maker, sewage_potential,
+    shallow_geothermal_potential, solar_collector, thermal_network]

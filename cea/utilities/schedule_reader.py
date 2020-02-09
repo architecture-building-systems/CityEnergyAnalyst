@@ -34,12 +34,13 @@ HOUR = range(1, 25) + range(1, 25) + range(1, 25)
 
 
 def read_cea_schedule(path_to_cea_schedule):
-    '''
-    reader of schedule file
-    .ceaschedule
-    :param path:
-    :return:
-    '''
+    """
+    reader for the files ``locator.get_building_weekly_schedules``
+
+    :param str path_to_cea_schedule: path to the cea schedule file to read.
+                                     (E.g. inputs/building-properties/schedules/B001.csv)
+    :return: schedule data, schedule complementary data
+    """
 
     with open(path_to_cea_schedule) as f:
         reader = csv.reader(f)
@@ -48,6 +49,9 @@ def read_cea_schedule(path_to_cea_schedule):
                 metadata = row[1]
             elif i == 1:
                 monthly_multiplier = [round(float(x), 2) for x in row[1:]]
+            else:
+                # skip all the other rows
+                break
 
     schedule_data = pd.read_csv(path_to_cea_schedule, skiprows=2).T
     schedule_data = dict(zip(schedule_data.index, schedule_data.values))
@@ -70,10 +74,10 @@ def save_cea_schedule(schedule_data, schedule_complementary_data, path_to_buildi
         for row in RECORDS_SCHEDULES:
             csvwriter.writerow(row)
 
+
 def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    path_database = locator.get_database_standard_schedules('CH-SIA-2024')
-    path_to_building_schedule = locator.get_database_standard_schedules_use(path_database, 'MULTI_RES')
+    path_to_building_schedule = locator.get_database_standard_schedules_use('MULTI_RES')
     read_cea_schedule(path_to_building_schedule)
 
 
