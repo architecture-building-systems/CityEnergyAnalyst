@@ -529,14 +529,14 @@ def get_column_names_individual(district_heating_network,
            column_names_buildings_cooling
 
 
-def calc_euclidean_distance(x2, y2, z2):
-    x1, y1, z1 = 0.0, 0.0, 0.0
-    euclidean_distance = sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2 + (z2 - z1) ** 2)
+def calc_euclidean_distance(x2, y2):
+    x1, y1 = 0.0, 0.0
+    euclidean_distance = sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
     return euclidean_distance
 
 
-def calc_gd(n, X2, Y2, Z2):
-    gd = 1 / n * sqrt(sum([calc_euclidean_distance(x2, y2, z2) for x2, y2, z2 in zip(X2, Y2, Z2)]))
+def calc_gd(n, X2, Y2):
+    gd = 1 / n * sqrt(sum([calc_euclidean_distance(x2, y2) for x2, y2 in zip(X2, Y2)]))
     return gd
 
 
@@ -544,9 +544,8 @@ def calc_performance_metrics(generational_distance_n_minus_1, paretofrontier):
     number_of_individuals = len([paretofrontier])
     X2 = [paretofrontier[x].fitness.values[0] for x in range(number_of_individuals)]
     Y2 = [paretofrontier[x].fitness.values[1] for x in range(number_of_individuals)]
-    Z2 = [paretofrontier[x].fitness.values[2] for x in range(number_of_individuals)]
 
-    generational_distance = calc_gd(number_of_individuals, X2, Y2, Z2)
+    generational_distance = calc_gd(number_of_individuals, X2, Y2)
     difference_generational_distance = abs(generational_distance_n_minus_1 - generational_distance)
 
     return generational_distance, difference_generational_distance,
