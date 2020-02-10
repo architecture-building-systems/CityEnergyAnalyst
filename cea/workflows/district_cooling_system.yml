@@ -14,7 +14,7 @@
     databases: [archetypes, lifecycle, systems]
 - script: data-helper
   parameters:
-    input-databases: [comfort, architecture, HVAC, internal-loads, supply, schedules]
+    input-databases: [comfort, architecture, air-conditioning, internal-loads, supply, schedules, emission-intensity]
 - script: weather-helper
   parameters:
     weather: Singapore-Changi_1990_2010_TMY
