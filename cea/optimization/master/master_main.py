@@ -64,7 +64,7 @@ def objective_function(individual,
     """
     print('cea optimization progress: individual ' + str(individual_number) + ' and generation ' + str(
         generation) + '/' + str(config.optimization.number_of_generations))
-    costs_USD, CO2_ton, prim_MJ = evaluation.evaluation_main(individual,
+    costs_USD, CO2_ton, _ = evaluation.evaluation_main(individual,
                                                              building_names_all,
                                                              locator,
                                                              network_features,
@@ -81,7 +81,7 @@ def objective_function(individual,
                                                              district_heating_network,
                                                              district_cooling_network,
                                                              )
-    return costs_USD, CO2_ton, prim_MJ
+    return costs_USD, CO2_ton
 
 
 def objective_function_wrapper(args):
@@ -118,7 +118,7 @@ def non_dominated_sorting_genetic_algorithm(locator,
 
     # SET-UP EVOLUTIONARY ALGORITHM
     # Hyperparameters
-    NOBJ = 3  # number of objectives
+    NOBJ = 2  # number of objectives
     P = 12
     ref_points = tools.uniform_reference_points(NOBJ, P)
     if MU == None:
@@ -425,62 +425,6 @@ def save_generation_individuals(columns_of_saved_files, generation, invalid_ind,
     individuals_info['individual'] = individual_list
     individuals_info['generation'] = generation
     individuals_info.to_csv(locator.get_optimization_individuals_in_generation(generation))
-
-
-def convergence_metric(old_front, new_front, normalization):
-    #  This function calculates the metrics corresponding to a Pareto-front
-    #  combined_euclidean_distance calculates the euclidean distance between the current front and the previous one
-    #  it is done by locating the choosing a point on current front and the closest point in the previous front and
-    #  calculating normalized euclidean distance
-
-    #  Spread discusses on the spread of the Pareto-front, i.e. how evenly the Pareto front is spaced. This is calculated
-    #  by identifying the closest neighbour to a point on the Pareto-front. Distance to each closest neighbour is then
-    #  subtracted by the mean distance for all the points on the Pareto-front (i.e. closest neighbors for all points).
-    #  The ideal value for this is to be 'zero'
-
-    combined_euclidean_distance = 0
-
-    for indNew in new_front:
-
-        (aNew, bNew, cNew) = indNew.fitness.values
-        distance = []
-        for i, indOld in enumerate(old_front):
-            (aOld, bOld, cOld) = indOld.fitness.values
-            distance_mix = ((aNew - aOld) / normalization[0]) ** 2 + ((bNew - bOld) / normalization[1]) ** 2 + (
-                    (cNew - cOld) / normalization[2]) ** 2
-            distance_mix = round(distance_mix, 5)
-            distance.append(np.sqrt(distance_mix))
-
-        combined_euclidean_distance = combined_euclidean_distance + min(distance)
-
-    combined_euclidean_distance = (combined_euclidean_distance) / (len(new_front))
-
-    spread = []
-    nearest_neighbor = []
-
-    for i, ind_i in enumerate(new_front):
-        spread_i = []
-        (cost_i, co2_i, eprim_i) = ind_i.fitness.values
-        for j, ind_j in enumerate(new_front):
-            (cost_j, co2_j, eprim_j) = ind_j.fitness.values
-            if i != j:
-                spread_mix = ((cost_i - cost_j) / normalization[0]) ** 2 + ((co2_i - co2_j) / normalization[1]) ** 2 + (
-                        (eprim_i - eprim_j) / normalization[2]) ** 2
-                spread_mix = round(spread_mix, 5)
-                spread.append(np.sqrt(spread_mix))
-                spread_i.append(np.sqrt(spread_mix))
-
-        nearest_neighbor.append(min(spread_i))
-    average_spread = np.mean(spread)
-
-    nearest_neighbor = [abs(x - average_spread) for x in nearest_neighbor]
-
-    spread_final = np.sum(nearest_neighbor)
-
-    print ('combined euclidean distance = ' + str(combined_euclidean_distance))
-    print ('spread = ' + str(spread_final))
-
-    return combined_euclidean_distance, spread_final
 
 
 def create_empty_individual(column_names, column_names_buildings_heating, column_names_buildings_cooling,
