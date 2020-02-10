@@ -28,17 +28,12 @@ class LcaCalculations(object):
 
         # Natural gas
         self.NG_TO_CO2_EQ = resources_lca.loc['NATURALGAS']['CO2']
-        self.NG_TO_OIL_EQ = resources_lca.loc['NATURALGAS']['PEN']
 
         # Drybiomass
         self.DRYBIOMASS_TO_CO2_EQ = resources_lca.loc['DRYBIOMASS']['CO2']
-        self.DRYBIOMASS_TO_OIL_EQ = resources_lca.loc['DRYBIOMASS']['PEN']
 
         # WetBiomass
         self.WETBIOMASS_TO_CO2_EQ = resources_lca.loc['WETBIOMASS']['CO2']
-        self.WETBIOMASS_TO_OIL_EQ = resources_lca.loc['WETBIOMASS']['PEN']
 
         # Electricity MJ/MJoil and kg/MJ
         self.EL_TO_CO2_EQ = resources_lca.loc['GRID']['CO2']
-        self.EL_TO_OIL_EQ = resources_lca.loc['GRID']['CO2']
-
