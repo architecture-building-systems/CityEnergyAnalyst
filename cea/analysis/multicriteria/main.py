@@ -37,7 +37,6 @@ def multi_criteria_main(locator, config):
 def rank_normalized_data(compiled_data_df, config):
     compiled_data_df['TAC_rank'] = compiled_data_df['normalized_TAC'].rank(ascending=True)
     compiled_data_df['GHG_rank'] = compiled_data_df['normalized_emissions'].rank(ascending=True)
-    compiled_data_df['PEN_rank'] = compiled_data_df['normalized_prim'].rank(ascending=True)
     ## user defined mcda
     compiled_data_df['user_MCDA'] = compiled_data_df['normalized_Capex_total'] * \
                                     config.multi_criteria.capex_total * \
@@ -47,9 +46,7 @@ def rank_normalized_data(compiled_data_df, config):
                                     compiled_data_df['normalized_TAC'] * \
                                     config.multi_criteria.annualized_costs * config.multi_criteria.economic_sustainability + \
                                     compiled_data_df['normalized_emissions'] * \
-                                    config.multi_criteria.emissions * config.multi_criteria.environmental_sustainability + \
-                                    compiled_data_df['normalized_prim'] * \
-                                    config.multi_criteria.primary_energy * config.multi_criteria.environmental_sustainability
+                                    config.multi_criteria.emissions * config.multi_criteria.environmental_sustainability
     compiled_data_df['user_MCDA_rank'] = compiled_data_df['user_MCDA'].rank(ascending=True)
     return compiled_data_df
 
@@ -69,12 +66,7 @@ def normalize_compiled_data(compiled_data_df):
                                    compiled_data_df['GHG_sys_tonCO2']))
     else:
         normalized_emissions = [1] * len(compiled_data_df['GHG_sys_tonCO2'])
-    # primary energy
-    if (max(compiled_data_df['PEN_sys_MJoil']) - min(compiled_data_df['PEN_sys_MJoil'])) > 1E-8:
-        normalized_prim = (compiled_data_df['PEN_sys_MJoil'] - min(compiled_data_df['PEN_sys_MJoil'])) / (
-                max(compiled_data_df['PEN_sys_MJoil']) - min(compiled_data_df['PEN_sys_MJoil']))
-    else:
-        normalized_prim = [1] * len(compiled_data_df['PEN_sys_MJoil'])
+
     # capex
     if (max(compiled_data_df['Capex_total_sys_USD']) - min(compiled_data_df['Capex_total_sys_USD'])) > 1E-8:
         normalized_Capex_total = (compiled_data_df['Capex_total_sys_USD'] - min(
@@ -92,7 +84,6 @@ def normalize_compiled_data(compiled_data_df):
 
     compiled_data_df = compiled_data_df.assign(normalized_TAC=normalized_TAC)
     compiled_data_df = compiled_data_df.assign(normalized_emissions=normalized_emissions)
-    compiled_data_df = compiled_data_df.assign(normalized_prim=normalized_prim)
     compiled_data_df = compiled_data_df.assign(normalized_Capex_total=normalized_Capex_total)
     compiled_data_df = compiled_data_df.assign(normalized_Opex=normalized_Opex)
     return compiled_data_df
