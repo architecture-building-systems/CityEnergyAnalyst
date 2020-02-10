@@ -291,32 +291,32 @@ network-layout,get_network_layout_nodes_shapefile,,Type,Weather a Plant or A Cus
 -,get_database_envelope_systems,WINDOW,F_F,Window frame fraction coefficient. Defined according to ISO 13790.,[m2-frame/m2-window],{0.0...1},float,black,inputs/technology/systems/envelope_systems.xls:WINDOW
 -,get_database_envelope_systems,WINDOW,G_win,Solar heat gain coefficient. Defined according to ISO 13790.,[-],{0.0...1},float,black,inputs/technology/systems/envelope_systems.xls:WINDOW
 -,get_database_envelope_systems,WINDOW,U_win,Thermal transmittance of windows including linear losses (+10%). Defined according to ISO 13790.,[-],{0.1...n},float,black,inputs/technology/systems/envelope_systems.xls:WINDOW
--,get_database_supply_systems,Absorption_chiller,a,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,Absorption_chiller,a_e,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,Absorption_chiller,a_g,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,Absorption_chiller,assumption,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,Absorption_chiller,b,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,Absorption_chiller,c,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,Absorption_chiller,cap_max,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,Absorption_chiller,cap_min,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,Absorption_chiller,code,Type of Absorption Chiller,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,Absorption_chiller,currency,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,Absorption_chiller,d,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
+-,get_database_supply_systems,Absorption_chiller,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
+-,get_database_supply_systems,Absorption_chiller,a_e,parameter in the characteristic equations to calculate the evaporator side ,[-],depends on the source,float,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
+-,get_database_supply_systems,Absorption_chiller,a_g,parameter in the characteristic equations to calculate the generator side,[-],depends on the source,float,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
+-,get_database_supply_systems,Absorption_chiller,assumption,items made by assumptions in this technology,[-],depends on the data availability,string,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
+-,get_database_supply_systems,Absorption_chiller,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
+-,get_database_supply_systems,Absorption_chiller,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
+-,get_database_supply_systems,Absorption_chiller,cap_max,maximum capacity ,[W],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
+-,get_database_supply_systems,Absorption_chiller,cap_min,minimum capacity,[W],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
+-,get_database_supply_systems,Absorption_chiller,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
+-,get_database_supply_systems,Absorption_chiller,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
+-,get_database_supply_systems,Absorption_chiller,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
 -,get_database_supply_systems,Absorption_chiller,Description,Describes the Type of Absorption Chiller,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,Absorption_chiller,e,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,Absorption_chiller,e_e,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,Absorption_chiller,e_g,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,Absorption_chiller,IR_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,Absorption_chiller,LT_yr,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,Absorption_chiller,m_cw,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,Absorption_chiller,m_hw,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,Absorption_chiller,O&M_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,Absorption_chiller,r_e,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,Absorption_chiller,r_g,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,Absorption_chiller,s_e,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,Absorption_chiller,s_g,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,Absorption_chiller,type,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,Absorption_chiller,unit,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
+-,get_database_supply_systems,Absorption_chiller,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
+-,get_database_supply_systems,Absorption_chiller,e_e,parameter in the characteristic equations to calculate the evaporator side ,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
+-,get_database_supply_systems,Absorption_chiller,e_g,parameter in the characteristic equations to calculate the generator side,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
+-,get_database_supply_systems,Absorption_chiller,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
+-,get_database_supply_systems,Absorption_chiller,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
+-,get_database_supply_systems,Absorption_chiller,m_cw,external flow rate of cooling water at the condenser and absorber,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
+-,get_database_supply_systems,Absorption_chiller,m_hw,external flow rate of hot water at the generator,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
+-,get_database_supply_systems,Absorption_chiller,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
+-,get_database_supply_systems,Absorption_chiller,r_e,parameter in the characteristic equations to calculate the evaporator side ,[-],depends on the source,float,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
+-,get_database_supply_systems,Absorption_chiller,r_g,parameter in the characteristic equations to calculate the generator side,[-],depends on the source,float,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
+-,get_database_supply_systems,Absorption_chiller,s_e,parameter in the characteristic equations to calculate the evaporator side ,[kW/K],depends on the source,float,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
+-,get_database_supply_systems,Absorption_chiller,s_g,parameter in the characteristic equations to calculate the generator side,[-],depends on the source,float,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
+-,get_database_supply_systems,Absorption_chiller,type,"type of absorption chiller (single, double, or triple)",[-],depends on the source,string,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
+-,get_database_supply_systems,Absorption_chiller,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
 -,get_database_supply_systems,ALL_IN_ONE_SYSTEMS,code,Type of all in one system,[-],alphanumeric,date,black,inputs/technology/systems/supply_systems.xls:ALL_IN_ONE_SYSTEMS
 -,get_database_supply_systems,ALL_IN_ONE_SYSTEMS,Description,Description of Type of all in one system,[-],alphanumeric,string,black,inputs/technology/systems/supply_systems.xls:ALL_IN_ONE_SYSTEMS
 -,get_database_supply_systems,ALL_IN_ONE_SYSTEMS,efficiency,efficiency of the all in one system,[-],{0.0…n},float,black,inputs/technology/systems/supply_systems.xls:ALL_IN_ONE_SYSTEMS
@@ -324,269 +324,268 @@ network-layout,get_network_layout_nodes_shapefile,,Type,Weather a Plant or A Cus
 -,get_database_supply_systems,ALL_IN_ONE_SYSTEMS,reference,Reference of the data,[-],alphanumeric,string,black,inputs/technology/systems/supply_systems.xls:ALL_IN_ONE_SYSTEMS
 -,get_database_supply_systems,ALL_IN_ONE_SYSTEMS,scale,"whether the all in one system is used at the building, or the district scale",[-],alphanumeric,string,black,inputs/technology/systems/supply_systems.xls:ALL_IN_ONE_SYSTEMS
 -,get_database_supply_systems,ALL_IN_ONE_SYSTEMS,system,"whether the all in one system is used for heating, cooling or electricity",[-],alphanumeric,string,black,inputs/technology/systems/supply_systems.xls:ALL_IN_ONE_SYSTEMS
--,get_database_supply_systems,BH,a,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:BH
--,get_database_supply_systems,BH,assumption,TODO,TODO,TODO,,black,inputs/technology/systems/supply_systems.xls:BH
--,get_database_supply_systems,BH,b,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:BH
--,get_database_supply_systems,BH,c,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:BH
--,get_database_supply_systems,BH,cap_max,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:BH
--,get_database_supply_systems,BH,cap_min,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:BH
--,get_database_supply_systems,BH,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/supply_systems.xls:BH
--,get_database_supply_systems,BH,currency,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:BH
--,get_database_supply_systems,BH,d,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:BH
--,get_database_supply_systems,BH,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:BH
--,get_database_supply_systems,BH,e,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:BH
--,get_database_supply_systems,BH,IR_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:BH
--,get_database_supply_systems,BH,LT_yr,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:BH
--,get_database_supply_systems,BH,O&M_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:BH
--,get_database_supply_systems,BH,unit,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:BH
--,get_database_supply_systems,Boiler,a,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Boiler
--,get_database_supply_systems,Boiler,assumption,TODO,TODO,TODO,,black,inputs/technology/systems/supply_systems.xls:Boiler
--,get_database_supply_systems,Boiler,b,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Boiler
--,get_database_supply_systems,Boiler,c,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Boiler
--,get_database_supply_systems,Boiler,cap_max,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Boiler
--,get_database_supply_systems,Boiler,cap_min,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Boiler
--,get_database_supply_systems,Boiler,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/supply_systems.xls:Boiler
--,get_database_supply_systems,Boiler,currency,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:Boiler
--,get_database_supply_systems,Boiler,d,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Boiler
--,get_database_supply_systems,Boiler,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:Boiler
--,get_database_supply_systems,Boiler,e,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Boiler
--,get_database_supply_systems,Boiler,IR_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Boiler
--,get_database_supply_systems,Boiler,LT_yr,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Boiler
--,get_database_supply_systems,Boiler,O&M_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Boiler
--,get_database_supply_systems,Boiler,unit,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:Boiler
--,get_database_supply_systems,CCGT,a,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CCGT
--,get_database_supply_systems,CCGT,assumption,TODO,TODO,TODO,,black,inputs/technology/systems/supply_systems.xls:CCGT
--,get_database_supply_systems,CCGT,b,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:CCGT
--,get_database_supply_systems,CCGT,c,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:CCGT
--,get_database_supply_systems,CCGT,cap_max,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CCGT
--,get_database_supply_systems,CCGT,cap_min,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CCGT
--,get_database_supply_systems,CCGT,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/supply_systems.xls:CCGT
--,get_database_supply_systems,CCGT,currency,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:CCGT
--,get_database_supply_systems,CCGT,d,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CCGT
--,get_database_supply_systems,CCGT,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:CCGT
--,get_database_supply_systems,CCGT,e,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CCGT
--,get_database_supply_systems,CCGT,IR_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CCGT
--,get_database_supply_systems,CCGT,LT_yr,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CCGT
--,get_database_supply_systems,CCGT,O&M_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CCGT
--,get_database_supply_systems,CCGT,unit,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:CCGT
--,get_database_supply_systems,Chiller,a,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Chiller
--,get_database_supply_systems,Chiller,assumption,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:Chiller
--,get_database_supply_systems,Chiller,b,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Chiller
--,get_database_supply_systems,Chiller,c,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Chiller
--,get_database_supply_systems,Chiller,cap_max,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Chiller
--,get_database_supply_systems,Chiller,cap_min,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Chiller
--,get_database_supply_systems,Chiller,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/supply_systems.xls:Chiller
--,get_database_supply_systems,Chiller,currency,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:Chiller
--,get_database_supply_systems,Chiller,d,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Chiller
+-,get_database_supply_systems,BH,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:BH
+-,get_database_supply_systems,BH,assumption,items made by assumptions in this technology,[-],depends on the data availability,,black,inputs/technology/systems/supply_systems.xls:BH
+-,get_database_supply_systems,BH,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:BH
+-,get_database_supply_systems,BH,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:BH
+-,get_database_supply_systems,BH,cap_max,maximum capacity ,[W],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:BH
+-,get_database_supply_systems,BH,cap_min,minimum capacity,[W],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:BH
+-,get_database_supply_systems,BH,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/supply_systems.xls:BH
+-,get_database_supply_systems,BH,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/supply_systems.xls:BH
+-,get_database_supply_systems,BH,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:BH
+-,get_database_supply_systems,BH,Description,Describes the type of borehole heat exchanger,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:BH
+-,get_database_supply_systems,BH,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:BH
+-,get_database_supply_systems,BH,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:BH
+-,get_database_supply_systems,BH,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/supply_systems.xls:BH
+-,get_database_supply_systems,BH,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:BH
+-,get_database_supply_systems,BH,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/supply_systems.xls:BH
+-,get_database_supply_systems,Boiler,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Boiler
+-,get_database_supply_systems,Boiler,assumption,items made by assumptions in this technology,[-],depends on the data availability,,black,inputs/technology/systems/supply_systems.xls:Boiler
+-,get_database_supply_systems,Boiler,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Boiler
+-,get_database_supply_systems,Boiler,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Boiler
+-,get_database_supply_systems,Boiler,cap_max,maximum capacity ,[W],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:Boiler
+-,get_database_supply_systems,Boiler,cap_min,minimum capacity,[W],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:Boiler
+-,get_database_supply_systems,Boiler,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/supply_systems.xls:Boiler
+-,get_database_supply_systems,Boiler,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/supply_systems.xls:Boiler
+-,get_database_supply_systems,Boiler,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Boiler
+-,get_database_supply_systems,Boiler,Description,Describes the type of boiler,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:Boiler
+-,get_database_supply_systems,Boiler,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Boiler
+-,get_database_supply_systems,Boiler,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:Boiler
+-,get_database_supply_systems,Boiler,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/supply_systems.xls:Boiler
+-,get_database_supply_systems,Boiler,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:Boiler
+-,get_database_supply_systems,Boiler,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/supply_systems.xls:Boiler
+-,get_database_supply_systems,CCGT,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CCGT
+-,get_database_supply_systems,CCGT,assumption,items made by assumptions in this technology,[-],depends on the data availability,,black,inputs/technology/systems/supply_systems.xls:CCGT
+-,get_database_supply_systems,CCGT,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:CCGT
+-,get_database_supply_systems,CCGT,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:CCGT
+-,get_database_supply_systems,CCGT,cap_max,maximum capacity ,[W],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:CCGT
+-,get_database_supply_systems,CCGT,cap_min,minimum capacity,[W],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:CCGT
+-,get_database_supply_systems,CCGT,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/supply_systems.xls:CCGT
+-,get_database_supply_systems,CCGT,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/supply_systems.xls:CCGT
+-,get_database_supply_systems,CCGT,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CCGT
+-,get_database_supply_systems,CCGT,Description,Describes the type of combined-cycle gas turbine,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:CCGT
+-,get_database_supply_systems,CCGT,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CCGT
+-,get_database_supply_systems,CCGT,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:CCGT
+-,get_database_supply_systems,CCGT,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/supply_systems.xls:CCGT
+-,get_database_supply_systems,CCGT,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:CCGT
+-,get_database_supply_systems,CCGT,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/supply_systems.xls:CCGT
+-,get_database_supply_systems,Chiller,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Chiller
+-,get_database_supply_systems,Chiller,assumption,items made by assumptions in this technology,[-],depends on the data availability,string,black,inputs/technology/systems/supply_systems.xls:Chiller
+-,get_database_supply_systems,Chiller,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Chiller
+-,get_database_supply_systems,Chiller,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Chiller
+-,get_database_supply_systems,Chiller,cap_max,maximum capacity ,[W],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:Chiller
+-,get_database_supply_systems,Chiller,cap_min,minimum capacity,[W],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:Chiller
+-,get_database_supply_systems,Chiller,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/supply_systems.xls:Chiller
+-,get_database_supply_systems,Chiller,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/supply_systems.xls:Chiller
+-,get_database_supply_systems,Chiller,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Chiller
 -,get_database_supply_systems,Chiller,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:Chiller
--,get_database_supply_systems,Chiller,e,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Chiller
--,get_database_supply_systems,Chiller,IR_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Chiller
--,get_database_supply_systems,Chiller,LT_yr,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Chiller
--,get_database_supply_systems,Chiller,O&M_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Chiller
--,get_database_supply_systems,Chiller,unit,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:Chiller
--,get_database_supply_systems,CT,a,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:CT
--,get_database_supply_systems,CT,assumption,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:CT
--,get_database_supply_systems,CT,b,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:CT
--,get_database_supply_systems,CT,c,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CT
--,get_database_supply_systems,CT,cap_max,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CT
--,get_database_supply_systems,CT,cap_min,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CT
--,get_database_supply_systems,CT,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/supply_systems.xls:CT
--,get_database_supply_systems,CT,currency,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:CT
--,get_database_supply_systems,CT,d,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CT
--,get_database_supply_systems,CT,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:CT
--,get_database_supply_systems,CT,e,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CT
--,get_database_supply_systems,CT,IR_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CT
--,get_database_supply_systems,CT,LT_yr,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CT
--,get_database_supply_systems,CT,O&M_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CT
--,get_database_supply_systems,CT,unit,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:CT
+-,get_database_supply_systems,Chiller,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Chiller
+-,get_database_supply_systems,Chiller,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:Chiller
+-,get_database_supply_systems,Chiller,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/supply_systems.xls:Chiller
+-,get_database_supply_systems,Chiller,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:Chiller
+-,get_database_supply_systems,Chiller,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/supply_systems.xls:Chiller
+-,get_database_supply_systems,CT,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:CT
+-,get_database_supply_systems,CT,assumption,items made by assumptions in this technology,[-],depends on the data availability,string,black,inputs/technology/systems/supply_systems.xls:CT
+-,get_database_supply_systems,CT,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:CT
+-,get_database_supply_systems,CT,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CT
+-,get_database_supply_systems,CT,cap_max,maximum capacity ,[W],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:CT
+-,get_database_supply_systems,CT,cap_min,minimum capacity,[W],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:CT
+-,get_database_supply_systems,CT,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/supply_systems.xls:CT
+-,get_database_supply_systems,CT,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/supply_systems.xls:CT
+-,get_database_supply_systems,CT,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CT
+-,get_database_supply_systems,CT,Description,Describes the type of cooling tower,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:CT
+-,get_database_supply_systems,CT,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CT
+-,get_database_supply_systems,CT,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:CT
+-,get_database_supply_systems,CT,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/supply_systems.xls:CT
+-,get_database_supply_systems,CT,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:CT
+-,get_database_supply_systems,CT,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/supply_systems.xls:CT
 -,get_database_supply_systems,DETAILED_ELEC_PRICES,hour,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:DETAILED_ELEC_PRICES
 -,get_database_supply_systems,DETAILED_ELEC_PRICES,Opex_var_buy_USD2015perkWh,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:DETAILED_ELEC_PRICES
 -,get_database_supply_systems,DETAILED_ELEC_PRICES,Opex_var_sell_USD2015perkWh,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:DETAILED_ELEC_PRICES
 -,get_database_supply_systems,DETAILED_ELEC_PRICES,year,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:DETAILED_ELEC_PRICES
--,get_database_supply_systems,FC, Assumptions,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:FC
--,get_database_supply_systems,FC,a,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:FC
--,get_database_supply_systems,FC,b,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:FC
--,get_database_supply_systems,FC,c,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:FC
--,get_database_supply_systems,FC,cap_max,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:FC
--,get_database_supply_systems,FC,cap_min,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:FC
--,get_database_supply_systems,FC,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/supply_systems.xls:FC
--,get_database_supply_systems,FC,currency,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:FC
--,get_database_supply_systems,FC,d,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:FC
--,get_database_supply_systems,FC,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:FC
--,get_database_supply_systems,FC,e,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:FC
--,get_database_supply_systems,FC,IR_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:FC
--,get_database_supply_systems,FC,LT_yr,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:FC
--,get_database_supply_systems,FC,O&M_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:FC
--,get_database_supply_systems,FC,unit,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:FC
+-,get_database_supply_systems,FC, Assumptions,items made by assumptions in this technology,[-],depends on the data availability,string,black,inputs/technology/systems/supply_systems.xls:FC
+-,get_database_supply_systems,FC,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:FC
+-,get_database_supply_systems,FC,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:FC
+-,get_database_supply_systems,FC,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:FC
+-,get_database_supply_systems,FC,cap_max,maximum capacity ,[W],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:FC
+-,get_database_supply_systems,FC,cap_min,minimum capacity,[W],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:FC
+-,get_database_supply_systems,FC,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/supply_systems.xls:FC
+-,get_database_supply_systems,FC,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/supply_systems.xls:FC
+-,get_database_supply_systems,FC,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:FC
+-,get_database_supply_systems,FC,Description,Describes the type of fuel cell,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:FC
+-,get_database_supply_systems,FC,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:FC
+-,get_database_supply_systems,FC,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:FC
+-,get_database_supply_systems,FC,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/supply_systems.xls:FC
+-,get_database_supply_systems,FC,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:FC
+-,get_database_supply_systems,FC,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/supply_systems.xls:FC
 -,get_database_supply_systems,FEEDSTOCKS,CO2,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:FEEDSTOCKS
 -,get_database_supply_systems,FEEDSTOCKS,code,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:FEEDSTOCKS
 -,get_database_supply_systems,FEEDSTOCKS,Opex_var_buy_USD2015perkWh,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:FEEDSTOCKS
 -,get_database_supply_systems,FEEDSTOCKS,Opex_var_sell_USD2015perkWh,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:FEEDSTOCKS
--,get_database_supply_systems,FEEDSTOCKS,PEN,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:FEEDSTOCKS
 -,get_database_supply_systems,FEEDSTOCKS,reference,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:FEEDSTOCKS
--,get_database_supply_systems,Furnace,a,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Furnace
--,get_database_supply_systems,Furnace,assumption,TODO,TODO,TODO,,black,inputs/technology/systems/supply_systems.xls:Furnace
--,get_database_supply_systems,Furnace,b,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Furnace
--,get_database_supply_systems,Furnace,c,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Furnace
--,get_database_supply_systems,Furnace,cap_max,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Furnace
--,get_database_supply_systems,Furnace,cap_min,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Furnace
--,get_database_supply_systems,Furnace,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/supply_systems.xls:Furnace
--,get_database_supply_systems,Furnace,currency,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:Furnace
--,get_database_supply_systems,Furnace,d,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Furnace
--,get_database_supply_systems,Furnace,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:Furnace
--,get_database_supply_systems,Furnace,e,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Furnace
--,get_database_supply_systems,Furnace,IR_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Furnace
--,get_database_supply_systems,Furnace,LT_yr,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Furnace
--,get_database_supply_systems,Furnace,O&M_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Furnace
--,get_database_supply_systems,Furnace,unit,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:Furnace
--,get_database_supply_systems,HEX,a,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_supply_systems,HEX,a_p,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_supply_systems,HEX,assumption,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_supply_systems,HEX,b,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_supply_systems,HEX,b_p,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_supply_systems,HEX,c,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_supply_systems,HEX,c_p,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_supply_systems,HEX,cap_max,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_supply_systems,HEX,cap_min,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_supply_systems,HEX,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_supply_systems,HEX,Currency,Defines the unit of currency used to create the cost estimations (year specific). E.g. USD-2015.,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_supply_systems,HEX,d,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_supply_systems,HEX,d_p,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_supply_systems,HEX,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_supply_systems,HEX,e,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_supply_systems,HEX,e_p,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_supply_systems,HEX,IR_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_supply_systems,HEX,LT_yr,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_supply_systems,HEX,O&M_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_supply_systems,HEX,unit,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_supply_systems,HP,a,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HP
--,get_database_supply_systems,HP,assumption,TODO,TODO,TODO,,black,inputs/technology/systems/supply_systems.xls:HP
--,get_database_supply_systems,HP,b,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:HP
--,get_database_supply_systems,HP,c,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:HP
--,get_database_supply_systems,HP,cap_max,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HP
--,get_database_supply_systems,HP,cap_min,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HP
--,get_database_supply_systems,HP,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/supply_systems.xls:HP
--,get_database_supply_systems,HP,currency,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:HP
--,get_database_supply_systems,HP,d,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HP
--,get_database_supply_systems,HP,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:HP
--,get_database_supply_systems,HP,e,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:HP
--,get_database_supply_systems,HP,IR_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HP
--,get_database_supply_systems,HP,LT_yr,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HP
--,get_database_supply_systems,HP,O&M_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HP
--,get_database_supply_systems,HP,unit,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:HP
--,get_database_supply_systems,PIPING,Code,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:PIPING
--,get_database_supply_systems,PIPING,D_ext_m,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:PIPING
--,get_database_supply_systems,PIPING,D_ins_m,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:PIPING
--,get_database_supply_systems,PIPING,D_int_m,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:PIPING
+-,get_database_supply_systems,Furnace,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Furnace
+-,get_database_supply_systems,Furnace,assumption,items made by assumptions in this technology,[-],depends on the data availability,,black,inputs/technology/systems/supply_systems.xls:Furnace
+-,get_database_supply_systems,Furnace,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Furnace
+-,get_database_supply_systems,Furnace,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Furnace
+-,get_database_supply_systems,Furnace,cap_max,maximum capacity ,[W],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:Furnace
+-,get_database_supply_systems,Furnace,cap_min,minimum capacity,[W],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:Furnace
+-,get_database_supply_systems,Furnace,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/supply_systems.xls:Furnace
+-,get_database_supply_systems,Furnace,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/supply_systems.xls:Furnace
+-,get_database_supply_systems,Furnace,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Furnace
+-,get_database_supply_systems,Furnace,Description,Describes the type of furnace,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:Furnace
+-,get_database_supply_systems,Furnace,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Furnace
+-,get_database_supply_systems,Furnace,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:Furnace
+-,get_database_supply_systems,Furnace,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/supply_systems.xls:Furnace
+-,get_database_supply_systems,Furnace,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:Furnace
+-,get_database_supply_systems,Furnace,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/supply_systems.xls:Furnace
+-,get_database_supply_systems,HEX,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:HEX
+-,get_database_supply_systems,HEX,a_p,"pressure loss function, f(x) = a_p + b_p*x^c_p + d_p*ln(x) + e_p*x*ln*(x), where x is the capacity mass flow rate [W/K]   ",[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:HEX
+-,get_database_supply_systems,HEX,assumption,items made by assumptions in this technology,[-],depends on the data availability,string,black,inputs/technology/systems/supply_systems.xls:HEX
+-,get_database_supply_systems,HEX,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:HEX
+-,get_database_supply_systems,HEX,b_p,"pressure loss function, f(x) = a_p + b_p*x^c_p + d_p*ln(x) + e_p*x*ln*(x), where x is the capacity mass flow rate [W/K]   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:HEX
+-,get_database_supply_systems,HEX,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HEX
+-,get_database_supply_systems,HEX,c_p,"pressure loss function, f(x) = a_p + b_p*x^c_p + d_p*ln(x) + e_p*x*ln*(x), where x is the capacity mass flow rate [W/K]   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:HEX
+-,get_database_supply_systems,HEX,cap_max,maximum capacity ,[W] or [m2],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:HEX
+-,get_database_supply_systems,HEX,cap_min,minimum capacity,[W] or [m2],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:HEX
+-,get_database_supply_systems,HEX,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/supply_systems.xls:HEX
+-,get_database_supply_systems,HEX,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/supply_systems.xls:HEX
+-,get_database_supply_systems,HEX,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HEX
+-,get_database_supply_systems,HEX,d_p,"pressure loss function, f(x) = a_p + b_p*x^c_p + d_p*ln(x) + e_p*x*ln*(x), where x is the capacity mass flow rate [W/K]   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HEX
+-,get_database_supply_systems,HEX,Description,Describes the type of heat exchanger,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:HEX
+-,get_database_supply_systems,HEX,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HEX
+-,get_database_supply_systems,HEX,e_p,"pressure loss function, f(x) = a_p + b_p*x^c_p + d_p*ln(x) + e_p*x*ln*(x), where x is the capacity mass flow rate [W/K]   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:HEX
+-,get_database_supply_systems,HEX,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:HEX
+-,get_database_supply_systems,HEX,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/supply_systems.xls:HEX
+-,get_database_supply_systems,HEX,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:HEX
+-,get_database_supply_systems,HEX,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/supply_systems.xls:HEX
+-,get_database_supply_systems,HP,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HP
+-,get_database_supply_systems,HP,assumption,items made by assumptions in this technology,[-],depends on the data availability,,black,inputs/technology/systems/supply_systems.xls:HP
+-,get_database_supply_systems,HP,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:HP
+-,get_database_supply_systems,HP,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:HP
+-,get_database_supply_systems,HP,cap_max,maximum capacity ,[W],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:HP
+-,get_database_supply_systems,HP,cap_min,minimum capacity,[W],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:HP
+-,get_database_supply_systems,HP,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/supply_systems.xls:HP
+-,get_database_supply_systems,HP,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/supply_systems.xls:HP
+-,get_database_supply_systems,HP,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HP
+-,get_database_supply_systems,HP,Description,Describes the source of the heat pump,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:HP
+-,get_database_supply_systems,HP,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:HP
+-,get_database_supply_systems,HP,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:HP
+-,get_database_supply_systems,HP,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/supply_systems.xls:HP
+-,get_database_supply_systems,HP,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:HP
+-,get_database_supply_systems,HP,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/supply_systems.xls:HP
+-,get_database_supply_systems,PIPING,Code,no such column?,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:PIPING
+-,get_database_supply_systems,PIPING,D_ext_m,external pipe diameter tolerance for the nominal diameter (DN),[m],depends on the source,float,black,inputs/technology/systems/supply_systems.xls:PIPING
+-,get_database_supply_systems,PIPING,D_ins_m,maximum pipe diameter tolerance for the nominal diameter (DN),[m],depends on the source,float,black,inputs/technology/systems/supply_systems.xls:PIPING
+-,get_database_supply_systems,PIPING,D_int_m,internal pipe diameter tolerance for the nominal diameter (DN),[m],depends on the source,float,black,inputs/technology/systems/supply_systems.xls:PIPING
 -,get_database_supply_systems,PIPING,Inv_USD2015perm,Typical cost of investment for a given pipe diameter.,[$/m],{0.0....n},float,black,inputs/technology/systems/supply_systems.xls:PIPING
--,get_database_supply_systems,PIPING,Pipe_DN,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PIPING
--,get_database_supply_systems,PIPING,Vdot_max_m3s,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:PIPING
--,get_database_supply_systems,PIPING,Vdot_min_m3s,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:PIPING
--,get_database_supply_systems,Pump,a,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Pump
--,get_database_supply_systems,Pump,assumption,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:Pump
--,get_database_supply_systems,Pump,b,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Pump
--,get_database_supply_systems,Pump,c,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Pump
--,get_database_supply_systems,Pump,cap_max,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Pump
--,get_database_supply_systems,Pump,cap_min,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Pump
--,get_database_supply_systems,Pump,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/supply_systems.xls:Pump
--,get_database_supply_systems,Pump,currency,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:Pump
--,get_database_supply_systems,Pump,d,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Pump
+-,get_database_supply_systems,PIPING,Pipe_DN,Nominal pipe diameter,[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:PIPING
+-,get_database_supply_systems,PIPING,Vdot_max_m3s,maximum volumetric flow rate for the nominal diameter (DN),[m3/s],depends on the source,float,black,inputs/technology/systems/supply_systems.xls:PIPING
+-,get_database_supply_systems,PIPING,Vdot_min_m3s,minimum volumetric flow rate for the nominal diameter (DN),[m3/s],depends on the source,float,black,inputs/technology/systems/supply_systems.xls:PIPING
+-,get_database_supply_systems,Pump,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Pump
+-,get_database_supply_systems,Pump,assumption,items made by assumptions in this technology,[-],depends on the data availability,string,black,inputs/technology/systems/supply_systems.xls:Pump
+-,get_database_supply_systems,Pump,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Pump
+-,get_database_supply_systems,Pump,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Pump
+-,get_database_supply_systems,Pump,cap_max,maximum capacity ,[W],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:Pump
+-,get_database_supply_systems,Pump,cap_min,minimum capacity,[W],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:Pump
+-,get_database_supply_systems,Pump,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/supply_systems.xls:Pump
+-,get_database_supply_systems,Pump,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/supply_systems.xls:Pump
+-,get_database_supply_systems,Pump,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Pump
 -,get_database_supply_systems,Pump,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:Pump
--,get_database_supply_systems,Pump,e,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Pump
--,get_database_supply_systems,Pump,IR_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Pump
--,get_database_supply_systems,Pump,LT_yr,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Pump
--,get_database_supply_systems,Pump,O&M_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Pump
--,get_database_supply_systems,Pump,unit,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:Pump
--,get_database_supply_systems,PV,a,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PV,assumption,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PV,b,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PV,c,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PV,cap_max,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PV,cap_min,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PV,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PV,currency,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PV,d,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PV
+-,get_database_supply_systems,Pump,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Pump
+-,get_database_supply_systems,Pump,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:Pump
+-,get_database_supply_systems,Pump,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/supply_systems.xls:Pump
+-,get_database_supply_systems,Pump,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:Pump
+-,get_database_supply_systems,Pump,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/supply_systems.xls:Pump
+-,get_database_supply_systems,PV,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PV
+-,get_database_supply_systems,PV,assumption,items made by assumptions in this technology,[-],depends on the data availability,string,black,inputs/technology/systems/supply_systems.xls:PV
+-,get_database_supply_systems,PV,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:PV
+-,get_database_supply_systems,PV,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PV
+-,get_database_supply_systems,PV,cap_max,maximum capacity ,[W],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:PV
+-,get_database_supply_systems,PV,cap_min,minimum capacity,[W],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:PV
+-,get_database_supply_systems,PV,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/supply_systems.xls:PV
+-,get_database_supply_systems,PV,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/supply_systems.xls:PV
+-,get_database_supply_systems,PV,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PV
 -,get_database_supply_systems,PV,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PV,e,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PV,IR_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PV,LT_yr,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PV,misc_losses,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PV,module_length_m,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PV,O&M_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PV,PV_a0,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PV,PV_a1,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PV,PV_a2,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PV,PV_a3,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PV,PV_a4,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PV,PV_Bref,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PV,PV_n,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PV,PV_noct,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PV,PV_th,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PV,type,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PV,unit,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PVT,a,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PVT
--,get_database_supply_systems,PVT,assumption,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:PVT
--,get_database_supply_systems,PVT,b,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:PVT
--,get_database_supply_systems,PVT,c,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PVT
--,get_database_supply_systems,PVT,cap_max,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PVT
--,get_database_supply_systems,PVT,cap_min,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PVT
--,get_database_supply_systems,PVT,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/supply_systems.xls:PVT
--,get_database_supply_systems,PVT,currency,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:PVT
--,get_database_supply_systems,PVT,d,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PVT
--,get_database_supply_systems,PVT,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:PVT
--,get_database_supply_systems,PVT,e,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PVT
--,get_database_supply_systems,PVT,IR_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PVT
--,get_database_supply_systems,PVT,LT_yr,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PVT
--,get_database_supply_systems,PVT,O&M_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PVT
--,get_database_supply_systems,PVT,unit,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:PVT
--,get_database_supply_systems,SC,a,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,aperture_area_ratio,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,assumption,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,b,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,c,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,C_eff,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,c1,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,c2,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,cap_max,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,cap_min,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,Cp_fluid,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,currency,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,d,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,dP1,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,dP2,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,dP3,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,dP4,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,e,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,IAM_d,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,IR_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,LT_yr,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,mB_max_r,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,mB_min_r,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,mB0_r,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,module_area_m2,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,module_length_m,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,n0,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,O&M_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,t_max,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,type,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,unit,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,TES,a,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:TES
+-,get_database_supply_systems,PV,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PV
+-,get_database_supply_systems,PV,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:PV
+-,get_database_supply_systems,PV,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/supply_systems.xls:PV
+-,get_database_supply_systems,PV,misc_losses,"losses from cabling, resistances etc…",[-],depends on the source,float,black,inputs/technology/systems/supply_systems.xls:PV
+-,get_database_supply_systems,PV,module_length_m,lengh of the PV module,[m],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:PV
+-,get_database_supply_systems,PV,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:PV
+-,get_database_supply_systems,PV,PV_a0,"parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  + a3*x**3 + a4*x**4, x is the relative air mass",[-],TODO,float,black,inputs/technology/systems/supply_systems.xls:PV
+-,get_database_supply_systems,PV,PV_a1,"parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  + a3*x**3 + a4*x**4, x is the relative air mass",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:PV
+-,get_database_supply_systems,PV,PV_a2,"parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  + a3*x**3 + a4*x**4, x is the relative air mass",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:PV
+-,get_database_supply_systems,PV,PV_a3,"parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  + a3*x**3 + a4*x**4, x is the relative air mass",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:PV
+-,get_database_supply_systems,PV,PV_a4,"parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  + a3*x**3 + a4*x**4, x is the relative air mass",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:PV
+-,get_database_supply_systems,PV,PV_Bref,cell maximum power temperature coefficient,[1/C],depends on the source,float,black,inputs/technology/systems/supply_systems.xls:PV
+-,get_database_supply_systems,PV,PV_n,nominal efficiency,[-],depends on the source,float,black,inputs/technology/systems/supply_systems.xls:PV
+-,get_database_supply_systems,PV,PV_noct,nominal operating cell temperature,[C],depends on the source,float,black,inputs/technology/systems/supply_systems.xls:PV
+-,get_database_supply_systems,PV,PV_th,glazing thickness,[m],depends on the source,float,black,inputs/technology/systems/supply_systems.xls:PV
+-,get_database_supply_systems,PV,type,redundant,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:PV
+-,get_database_supply_systems,PV,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/supply_systems.xls:PV
+-,get_database_supply_systems,PVT,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PVT
+-,get_database_supply_systems,PVT,assumption,items made by assumptions in this technology,[-],depends on the data availability,string,black,inputs/technology/systems/supply_systems.xls:PVT
+-,get_database_supply_systems,PVT,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:PVT
+-,get_database_supply_systems,PVT,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PVT
+-,get_database_supply_systems,PVT,cap_max,maximum capacity ,[W],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:PVT
+-,get_database_supply_systems,PVT,cap_min,minimum capacity,[W],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:PVT
+-,get_database_supply_systems,PVT,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/supply_systems.xls:PVT
+-,get_database_supply_systems,PVT,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/supply_systems.xls:PVT
+-,get_database_supply_systems,PVT,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PVT
+-,get_database_supply_systems,PVT,Description,Describes the type of photovoltaic thermal technology,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:PVT
+-,get_database_supply_systems,PVT,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PVT
+-,get_database_supply_systems,PVT,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:PVT
+-,get_database_supply_systems,PVT,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/supply_systems.xls:PVT
+-,get_database_supply_systems,PVT,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:PVT
+-,get_database_supply_systems,PVT,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/supply_systems.xls:PVT
+-,get_database_supply_systems,SC,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:SC
+-,get_database_supply_systems,SC,aperture_area_ratio,ratio of aperture area to panel area,[-],depends on the source,float,black,inputs/technology/systems/supply_systems.xls:SC
+-,get_database_supply_systems,SC,assumption,items made by assumptions in this technology,[-],depends on the data availability,string,black,inputs/technology/systems/supply_systems.xls:SC
+-,get_database_supply_systems,SC,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:SC
+-,get_database_supply_systems,SC,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:SC
+-,get_database_supply_systems,SC,C_eff,thermal capacity of module ,[J/M2k],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:SC
+-,get_database_supply_systems,SC,c1,collector heat loss coefficient at zero temperature difference and wind speed,[W/M2k],depends on the source,float,black,inputs/technology/systems/supply_systems.xls:SC
+-,get_database_supply_systems,SC,c2,ctemperature difference dependency of the heat loss coefficient,[W/m2K2],depends on the source,float,black,inputs/technology/systems/supply_systems.xls:SC
+-,get_database_supply_systems,SC,cap_max,maximum capacity ,[m2],TODO,long,black,inputs/technology/systems/supply_systems.xls:SC
+-,get_database_supply_systems,SC,cap_min,minimum capacity,[m2],TODO,long,black,inputs/technology/systems/supply_systems.xls:SC
+-,get_database_supply_systems,SC,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/supply_systems.xls:SC
+-,get_database_supply_systems,SC,Cp_fluid,heat capacity of the heat transfer fluid,[J/kgK],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:SC
+-,get_database_supply_systems,SC,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/supply_systems.xls:SC
+-,get_database_supply_systems,SC,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:SC
+-,get_database_supply_systems,SC,Description,Describes the type of solar collector,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:SC
+-,get_database_supply_systems,SC,dP1,pressure drop at zero flow rate,[Pa/m2],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:SC
+-,get_database_supply_systems,SC,dP2,pressure drop at nominal flow rate (mB0),[Pa/m2],depends on the source,float,black,inputs/technology/systems/supply_systems.xls:SC
+-,get_database_supply_systems,SC,dP3,pressure drop at maximum flow rate (mB_max),[Pa/m2],depends on the source,float,black,inputs/technology/systems/supply_systems.xls:SC
+-,get_database_supply_systems,SC,dP4,pressure drop at minimum flow rate (mB_min),[Pa/m2],depends on the source,float,black,inputs/technology/systems/supply_systems.xls:SC
+-,get_database_supply_systems,SC,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:SC
+-,get_database_supply_systems,SC,IAM_d,incident angle modifier for diffuse radiation,[-],depends on the source,float,black,inputs/technology/systems/supply_systems.xls:SC
+-,get_database_supply_systems,SC,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:SC
+-,get_database_supply_systems,SC,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/supply_systems.xls:SC
+-,get_database_supply_systems,SC,mB_max_r,maximum flow rate per aperture area,[kg/m2/hr],depends on the source,float,black,inputs/technology/systems/supply_systems.xls:SC
+-,get_database_supply_systems,SC,mB_min_r,minimum flow rate per aperture area,[kg/m2/hr],depends on the source,float,black,inputs/technology/systems/supply_systems.xls:SC
+-,get_database_supply_systems,SC,mB0_r,nominal flow rate per aperture area,[kg/m2/hr],depends on the source,float,black,inputs/technology/systems/supply_systems.xls:SC
+-,get_database_supply_systems,SC,module_area_m2,module area of a solar collector,[m2],depends on the source,float,black,inputs/technology/systems/supply_systems.xls:SC
+-,get_database_supply_systems,SC,module_length_m,lengh of a solar collector module,[m],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:SC
+-,get_database_supply_systems,SC,n0,zero loss efficiency at normal incidence,[-],depends on the source,float,black,inputs/technology/systems/supply_systems.xls:SC
+-,get_database_supply_systems,SC,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:SC
+-,get_database_supply_systems,SC,t_max,maximum operating temperature,[C],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:SC
+-,get_database_supply_systems,SC,type,type of the solar collector (FP: flate-plate or ET: evacuated-tube),TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:SC
+-,get_database_supply_systems,SC,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/supply_systems.xls:SC
+-,get_database_supply_systems,TES,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:TES
 -,get_database_supply_systems,TES,assumption,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:TES
--,get_database_supply_systems,TES,b,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:TES
--,get_database_supply_systems,TES,c,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:TES
--,get_database_supply_systems,TES,cap_max,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:TES
--,get_database_supply_systems,TES,cap_min,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:TES
--,get_database_supply_systems,TES,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/supply_systems.xls:TES
--,get_database_supply_systems,TES,currency,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:TES
--,get_database_supply_systems,TES,d,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:TES
+-,get_database_supply_systems,TES,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:TES
+-,get_database_supply_systems,TES,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:TES
+-,get_database_supply_systems,TES,cap_max,maximum capacity ,[m3],TODO,long,black,inputs/technology/systems/supply_systems.xls:TES
+-,get_database_supply_systems,TES,cap_min,minimum capacity,[m3],TODO,long,black,inputs/technology/systems/supply_systems.xls:TES
+-,get_database_supply_systems,TES,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/supply_systems.xls:TES
+-,get_database_supply_systems,TES,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/supply_systems.xls:TES
+-,get_database_supply_systems,TES,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:TES
 -,get_database_supply_systems,TES,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:TES
--,get_database_supply_systems,TES,e,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:TES
--,get_database_supply_systems,TES,IR_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:TES
--,get_database_supply_systems,TES,LT_yr,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:TES
--,get_database_supply_systems,TES,O&M_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:TES
--,get_database_supply_systems,TES,unit ,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:TES
+-,get_database_supply_systems,TES,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:TES
+-,get_database_supply_systems,TES,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:TES
+-,get_database_supply_systems,TES,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/supply_systems.xls:TES
+-,get_database_supply_systems,TES,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:TES
+-,get_database_supply_systems,TES,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/supply_systems.xls:TES
 -,get_terrain,,raster_value,TODO,TODO,TODO,TODO,black,inputs/topography/terrain.tif
 weather_helper,get_weather_file,,aerosol_opt_thousandths (index = 29),TODO,TODO,TODO,float,black,inputs/weather/weather.epw
 weather_helper,get_weather_file,,Albedo (index = 32),TODO,TODO,TODO,float,black,inputs/weather/weather.epw
