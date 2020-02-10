@@ -585,16 +585,6 @@ class InputLocator(object):
         """databases/Systems/envelope_systems.csv"""
         return os.path.join(self.get_databases_folder(), 'systems', 'envelope_systems.xls')
 
-    def get_database_lca_buildings(self):
-        """Returns the database of life cycle inventory for buildings systems. These are copied
-        to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return os.path.join(self.get_databases_folder(), 'lifecycle', 'LCA_buildings.xlsx')
-
-    def get_database_lca_mobility(self):
-        """Returns the database of life cycle inventory for supply systems. These are copied
-        to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return os.path.join(self.get_databases_folder(), 'lifecycle', 'LCA_mobility.xls')
-
     def get_uncertainty_db(self):
         """databases/CH/Uncertainty/uncertainty_distributions.xls"""
         return os.path.join(self.get_databases_folder(), 'uncertainty', 'uncertainty_distributions.xls')
