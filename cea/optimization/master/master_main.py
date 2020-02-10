@@ -65,25 +65,25 @@ def objective_function(individual,
     """
     print('cea optimization progress: individual ' + str(individual_number) + ' and generation ' + str(
         generation) + '/' + str(config.optimization.number_of_generations))
-    costs_USD, CO2_ton, _ = evaluation.evaluation_main(individual,
-                                                       building_names_all,
-                                                       locator,
-                                                       network_features,
-                                                       config,
-                                                       prices, lca,
-                                                       individual_number,
-                                                       generation,
-                                                       column_names,
-                                                       column_names_buildings_heating,
-                                                       column_names_buildings_cooling,
-                                                       building_names_heating,
-                                                       building_names_cooling,
-                                                       building_names_electricity,
-                                                       district_heating_network,
-                                                       district_cooling_network,
-                                                       technologies_heating_allowed,
-                                                       technologies_cooling_allowed,
-                                                       )
+    costs_USD, CO2_ton = evaluation.evaluation_main(individual,
+                                                    building_names_all,
+                                                    locator,
+                                                    network_features,
+                                                    config,
+                                                    prices, lca,
+                                                    individual_number,
+                                                    generation,
+                                                    column_names,
+                                                    column_names_buildings_heating,
+                                                    column_names_buildings_cooling,
+                                                    building_names_heating,
+                                                    building_names_cooling,
+                                                    building_names_electricity,
+                                                    district_heating_network,
+                                                    district_cooling_network,
+                                                    technologies_heating_allowed,
+                                                    technologies_cooling_allowed,
+                                                    )
     return costs_USD, CO2_ton
 
 
@@ -456,6 +456,7 @@ def save_generation_individuals(columns_of_saved_files, generation, invalid_ind,
     individuals_info['individual'] = individual_list
     individuals_info['generation'] = generation
     individuals_info.to_csv(locator.get_optimization_individuals_in_generation(generation))
+
 
 def create_empty_individual(column_names,
                             column_names_buildings_heating,
