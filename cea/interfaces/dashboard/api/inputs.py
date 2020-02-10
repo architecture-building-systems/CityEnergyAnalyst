@@ -388,16 +388,15 @@ class InputDatabaseCopy(Resource):
         payload = api.payload
         locator = cea.inputlocator.InputLocator(config.scenario)
 
-        if 'path' in payload:
-            if os.path.exists(payload['path']):
-                databases_path = locator.get_databases_folder()
-                shutil.copytree(databases_path,
-                                payload.path)
-                return {'message': 'Database copied to {}'.format(payload['path'])}
-            else:
-                abort(500, '{} does not exist'.format(payload['path']))
+        if payload and 'path' in payload and 'name' in payload:
+            copy_path = os.path.join(payload['path'], payload['name'])
+            if os.path.exists(copy_path):
+                abort(500, 'Copy path {} already exists. Choose a different path/name.'.format(copy_path))
+            locator.ensure_parent_folder_exists(copy_path)
+            shutil.copytree(locator.get_databases_folder(), copy_path)
+            return {'message': 'Database copied to {}'.format(copy_path)}
         else:
-            abort(500, 'No path found')
+            abort(500, "'path' and 'name' required")
 
 
 @api.route('/databases/check')
