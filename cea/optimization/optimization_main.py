@@ -18,6 +18,7 @@ from cea.optimization.preprocessing.preprocessing_main import preproccessing
 from cea.optimization.prices import Prices as Prices
 from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
 from cea.technologies.supply_systems_database import SupplySystemsDatabase
+from constants import DH_ACRONYM, DC_ACRONYM
 
 warnings.filterwarnings("ignore")
 
@@ -69,8 +70,14 @@ def moo_optimization(locator, weather_file, config):
     prices = Prices(supply_systems, config.optimization.detailed_electricity_pricing)
 
     # local flags
-    district_heating_network = config.optimization.district_heating_network
-    district_cooling_network = config.optimization.district_cooling_network
+    if config.optimization.network_type == DH_ACRONYM:
+        district_heating_network = True
+        district_cooling_network = False
+    elif config.optimization.network_type == DC_ACRONYM:
+        district_heating_network = False
+        district_cooling_network = True
+    else:
+        raise Exception("no valid values for 'network-type' inpuit parameter")
 
     #GET NAMES_OF BUILDINGS THAT HAVE HEATING, COOLING AND ELECTRICITY LOAD SEPARATELY
 
@@ -127,32 +134,14 @@ def check_input_files(config, locator):
     :param cea.config.InputLocator locator: The input locator to use
     :return: None
     """
+    network_type = config.optimization.network_type
     if not demand_files_exist(locator):
         raise ValueError("Missing demand data of the scenario. Consider running demand script first.")
-    if not os.path.exists(locator.get_total_demand()):
-        raise ValueError("Missing total demand of the scenario. Consider running demand script first.")
-    if not os.path.exists(locator.PV_totals()):
-        raise ValueError("Missing PV potential of the scenario. Consider running photovoltaic script first.")
-    if config.optimization.district_heating_network:
-        if not os.path.exists(locator.PVT_totals()):
-            raise ValueError(
-                "Missing PVT potential of the scenario. Consider running photovoltaic-thermal script first.")
-        network_type = "DH"
-    else:
-        network_type = "DC"
     if not os.path.exists(locator.SC_totals(panel_type='FP')):
-        raise ValueError(
-            "Missing SC potential of panel type 'FP' of the scenario. Consider running solar-collector script first with panel_type as FP and t-in-SC as 75")
+        raise ValueError("Missing SC potential of panel type 'FP' of the scenario. Consider running solar-collector script first with panel_type as FP and t-in-SC as 75")
     if not os.path.exists(locator.SC_totals(panel_type='ET')):
         raise ValueError(
             "Missing SC potential of panel type 'ET' of the scenario. Consider running solar-collector script first with panel_type as ET and t-in-SC as 150")
-    if not os.path.exists(locator.get_sewage_heat_potential()):
-        raise ValueError(
-            "Missing sewage potential of the scenario. Consider running sewage heat potential script first.")
-    if not os.path.exists(locator.get_water_body_potential()):
-        raise ValueError("Missing water-body potential of the scenario. Consider running water body potential script first.")
-    if not os.path.exists(locator.get_geothermal_potential()):
-        raise ValueError("Missing geothermal potential of the scenario. Consider running geothermal potential script first.")
     if not os.path.exists(locator.get_thermal_network_edge_list_file(network_type, '')):
         raise ValueError(
             "Missing thermal network simulation results. Consider running thermal network simulation script first.")

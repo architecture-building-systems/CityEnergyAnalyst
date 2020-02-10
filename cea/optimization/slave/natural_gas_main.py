@@ -68,8 +68,6 @@ def main(config):
     generation = 2
     individual = 2
     print("Calculating imports of natural gas of individual" + str(individual) + " of generation " + str(generation))
-    district_heating_network = config.optimization.district_heating_network
-    district_cooling_network = config.optimization.district_cooling_network
 
     fuel_imports(generation, individual, locator)
 

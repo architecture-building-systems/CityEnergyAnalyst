@@ -34,6 +34,8 @@ class SlaveData(object):
         self.date = 0
         self.DHN_exists = False
         self.DCN_exists = False
+        self.technologies_cooling_allowed = None
+        self.technologies_heating_allowed = None
         self.individual_with_names_dict= {}
         self.building_names_all = []
         self.building_names_heating = []
@@ -134,8 +136,8 @@ class SlaveData(object):
         self.STORAGE_SIZE = 1000000.0  # in m^3 - size of hot water storage tank (up to now a random variable)
         self.STORAGE_HEIGHT = 3.0  # in m - height of hot water storage tank
         self.A_storage_outside = self.STORAGE_SIZE / self.STORAGE_HEIGHT + 2 * np.pi * \
-                                 (
-                                             self.STORAGE_SIZE / self.STORAGE_HEIGHT / np.pi) ** 0.5  # neglecting ground area for heat losses
+                                 (self.STORAGE_SIZE / self.STORAGE_HEIGHT / np.pi) ** 0.5
+                                    # neglecting ground area for heat losses
         self.alpha_loss = 0.0111  # EnergyPRO: 0.3 * 0.037 ; \
         # Saplamidis: 0.293542 # Wh / h= 0( .005 / (math.log10(26/25.0) ) ,
         # from Vassilis-Storage Optimization Code ** ACHTUNG !! CHANGE - SCALES WITH SIZE (?!)
