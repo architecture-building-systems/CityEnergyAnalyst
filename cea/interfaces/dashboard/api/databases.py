@@ -106,17 +106,15 @@ def database_to_dict(db_path):
     out = OrderedDict()
     xls = pandas.ExcelFile(db_path)
     for sheet in xls.sheet_names:
-        df = xls.parse(sheet)
-        # Replace NaN with null to prevent JSON errors
-        out[sheet] = df.where(pandas.notnull(df), None).to_dict(orient='records', into=OrderedDict)
+        df = xls.parse(sheet, keep_default_na=False)
+        out[sheet] = df.to_dict(orient='records', into=OrderedDict)
     return out
 
 
 def database_dict_to_file(db_dict, db_path):
     with pandas.ExcelWriter(db_path) as writer:
         for sheet_name, data in db_dict.items():
-            # FIXME: `fillna` used to fill empty cells in "air_conditioning_systems" to NA, could be dangerous for empty row values
-            df = pandas.DataFrame(data).fillna(value='NA')
+            df = pandas.DataFrame(data).dropna(axis=0, how='all')
             df.to_excel(writer, sheet_name=sheet_name, index=False)
     print('Database file written to {}'.format(db_path))
 
