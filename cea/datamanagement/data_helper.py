@@ -523,13 +523,13 @@ def main(config):
 
     print('Running data-helper with scenario = %s' % config.scenario)
 
-    update_architecture_dbf = 'architecture' in config.data_helper.databases
-    update_air_conditioning_systems_dbf = 'air-conditioning' in config.data_helper.databases
-    update_emission_intensity_dbf = 'emission-intensity' in config.data_helper.databases
-    update_indoor_comfort_dbf = 'comfort' in config.data_helper.databases
-    update_internal_loads_dbf = 'internal-loads' in config.data_helper.databases
-    update_supply_systems_dbf = 'supply' in config.data_helper.databases
-    update_schedule_operation_cea = 'schedules' in config.data_helper.databases
+    update_architecture_dbf = 'architecture' in config.data_helper.input_databases
+    update_air_conditioning_systems_dbf = 'air-conditioning' in config.data_helper.input_databases
+    update_emission_intensity_dbf = 'emission-intensity' in config.data_helper.input_databases
+    update_indoor_comfort_dbf = 'comfort' in config.data_helper.input_databases
+    update_internal_loads_dbf = 'internal-loads' in config.data_helper.input_databases
+    update_supply_systems_dbf = 'supply' in config.data_helper.input_databases
+    update_schedule_operation_cea = 'schedules' in config.data_helper.input_databases
 
     buildings = config.data_helper.buildings
     locator = cea.inputlocator.InputLocator(config.scenario)
