@@ -126,6 +126,18 @@ data-helper,get_building_supply,,type_cs,Type of cooling supply system,[code],{T
 data-helper,get_building_supply,,type_dhw,Type of hot water supply system,[code],{T0...Tn},string,black,inputs/building-properties/supply_systems.dbf
 data-helper,get_building_supply,,type_el,Type of electrical supply system,[code],{T0...Tn},string,black,inputs/building-properties/supply_systems.dbf
 data-helper,get_building_supply,,type_hs,Type of heating supply system,[code],{T0...Tn},string,black,inputs/building-properties/supply_systems.dbf
+data-helper,get_building_emission_intensity,,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/building-properties/emission_intensity.dbf
+data-helper,get_building_emission_intensity,,W_e_ag_kgm2,Emissions of external walls below ground per wall area,[kg CO2-eq/m2],{0.0...n}, float,black,inputs/building-properties/emission_intensity.dbf
+data-helper,get_building_emission_intensity,,W_e_bg_kgm2,Emissions of external walls above ground per wall area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/building-properties/emission_intensity.dbf
+data-helper,get_building_emission_intensity,,W_i_ag_kgm2,Emissions of internal walls below ground per wall area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/building-properties/emission_intensity.dbf
+data-helper,get_building_emission_intensity,,W_i_bg_kgm2,Emissions of internal walls above ground per wall area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/building-properties/emission_intensity.dbf
+data-helper,get_building_emission_intensity,,Win_kgm2,Emissions of widows per window area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/building-properties/emission_intensity.dbf
+data-helper,get_building_emission_intensity,,F_i_kgm2,Emissions of internal floors per floor area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/building-properties/emission_intensity.dbf
+data-helper,get_building_emission_intensity,,F_e_kgm2,Emissions of basement floor per floor area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/building-properties/emission_intensity.dbf
+data-helper,get_building_emission_intensity,,R_kgm2,Emissions of roof per roof area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/building-properties/emission_intensity.dbf
+data-helper,get_building_emission_intensity,,Tech_kgm2,Emissions of technical installations per gross floor area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/building-properties/emission_intensity.dbf
+data-helper,get_building_emission_intensity,,Exca_kgm2,Emissions of excavations per basement floor area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/building-properties/emission_intensity.dbf
+data-helper,get_building_emission_intensity,,Mobi_kgm2,Emissions of induced mobility per gross floor area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/building-properties/emission_intensity.dbf
 thermal-network,get_network_layout_edges_shapefile,,geometry,TODO,TODO,TODO,TODO,black,inputs/networks/dc/edges.shp
 thermal-network,get_network_layout_edges_shapefile,,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/networks/dc/edges.shp
 thermal-network,get_network_layout_edges_shapefile,,Pipe_DN,Classifies nominal pipe diameters (DN) into typical bins. E.g. DN100 refers to pipes of approx. 100mm in diameter.,[DN#],alphanumeric,string,black,inputs/networks/dc/edges.shp
@@ -200,39 +212,19 @@ network-layout,get_network_layout_nodes_shapefile,,Type,TODO,TODO,TODO,TODO,blac
 -,get_database_standard_schedules_use,,CH-SIA-2014,TODO,TODO,TODO,float,black,inputs/technology/archetypes/schedules/RESTAURANT.csv
 -,get_database_standard_schedules_use,,METADATA,TODO,TODO,TODO,float,black,inputs/technology/archetypes/schedules/RESTAURANT.csv
 -,get_database_standard_schedules_use,,RESTAURANT,TODO,TODO,TODO,float,black,inputs/technology/archetypes/schedules/RESTAURANT.csv
--,get_database_lca_buildings,EMBODIED_EMISSIONS,building_use,TODO,TODO,TODO,string,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_EMISSIONS
--,get_database_lca_buildings,EMBODIED_EMISSIONS,Excavation,TODO,TODO,TODO,long,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_EMISSIONS
--,get_database_lca_buildings,EMBODIED_EMISSIONS,Floor_g,TODO,TODO,TODO,long,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_EMISSIONS
--,get_database_lca_buildings,EMBODIED_EMISSIONS,Floor_int,TODO,TODO,TODO,long,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_EMISSIONS
--,get_database_lca_buildings,EMBODIED_EMISSIONS,Roof,TODO,TODO,TODO,long,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_EMISSIONS
--,get_database_lca_buildings,EMBODIED_EMISSIONS,Services,TODO,TODO,TODO,long,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_EMISSIONS
--,get_database_lca_buildings,EMBODIED_EMISSIONS,standard,TODO,TODO,TODO,string,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_EMISSIONS
--,get_database_lca_buildings,EMBODIED_EMISSIONS,Wall_ext_ag,TODO,TODO,TODO,long,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_EMISSIONS
--,get_database_lca_buildings,EMBODIED_EMISSIONS,Wall_ext_bg,TODO,TODO,TODO,long,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_EMISSIONS
--,get_database_lca_buildings,EMBODIED_EMISSIONS,Wall_int_nosup,TODO,TODO,TODO,long,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_EMISSIONS
--,get_database_lca_buildings,EMBODIED_EMISSIONS,Wall_int_sup,TODO,TODO,TODO,long,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_EMISSIONS
--,get_database_lca_buildings,EMBODIED_EMISSIONS,Win_ext,TODO,TODO,TODO,long,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_EMISSIONS
--,get_database_lca_buildings,EMBODIED_EMISSIONS,year_end,TODO,TODO,TODO,long,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_EMISSIONS
--,get_database_lca_buildings,EMBODIED_EMISSIONS,year_start,TODO,TODO,TODO,long,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_EMISSIONS
--,get_database_lca_buildings,EMBODIED_ENERGY,building_use,TODO,TODO,TODO,string,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_ENERGY
--,get_database_lca_buildings,EMBODIED_ENERGY,Excavation,TODO,TODO,TODO,long,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_ENERGY
--,get_database_lca_buildings,EMBODIED_ENERGY,Floor_g,TODO,TODO,TODO,long,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_ENERGY
--,get_database_lca_buildings,EMBODIED_ENERGY,Floor_int,TODO,TODO,TODO,long,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_ENERGY
--,get_database_lca_buildings,EMBODIED_ENERGY,Roof,TODO,TODO,TODO,long,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_ENERGY
--,get_database_lca_buildings,EMBODIED_ENERGY,Services,TODO,TODO,TODO,long,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_ENERGY
--,get_database_lca_buildings,EMBODIED_ENERGY,standard,TODO,TODO,TODO,string,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_ENERGY
--,get_database_lca_buildings,EMBODIED_ENERGY,Wall_ext_ag,TODO,TODO,TODO,long,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_ENERGY
--,get_database_lca_buildings,EMBODIED_ENERGY,Wall_ext_bg,TODO,TODO,TODO,long,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_ENERGY
--,get_database_lca_buildings,EMBODIED_ENERGY,Wall_int_nosup,TODO,TODO,TODO,long,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_ENERGY
--,get_database_lca_buildings,EMBODIED_ENERGY,Wall_int_sup,TODO,TODO,TODO,long,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_ENERGY
--,get_database_lca_buildings,EMBODIED_ENERGY,Win_ext,TODO,TODO,TODO,long,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_ENERGY
--,get_database_lca_buildings,EMBODIED_ENERGY,year_end,TODO,TODO,TODO,long,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_ENERGY
--,get_database_lca_buildings,EMBODIED_ENERGY,year_start,TODO,TODO,TODO,long,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_ENERGY
--,get_database_lca_mobility,MOBILITY,CO2_today,TODO,TODO,TODO,float,black,inputs/technology/lifecycle/LCA_mobility.xls:MOBILITY
--,get_database_lca_mobility,MOBILITY,code,TODO,TODO,TODO,string,black,inputs/technology/lifecycle/LCA_mobility.xls:MOBILITY
--,get_database_lca_mobility,MOBILITY,Description,TODO,TODO,TODO,string,black,inputs/technology/lifecycle/LCA_mobility.xls:MOBILITY
--,get_database_lca_mobility,MOBILITY,NRE_today,TODO,TODO,TODO,float,black,inputs/technology/lifecycle/LCA_mobility.xls:MOBILITY
--,get_database_lca_mobility,MOBILITY,PEN_today,TODO,TODO,TODO,long,black,inputs/technology/lifecycle/LCA_mobility.xls:MOBILITY
+-,get_archetypes_properties,EMISSION_INTENSITY,W_e_ag_kgm2,Emissions of external walls below ground per wall area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
+-,get_archetypes_properties,EMISSION_INTENSITY,W_e_bg_kgm2,Emissions of external walls above ground per wall area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
+-,get_archetypes_properties,EMISSION_INTENSITY,W_i_ag_kgm2,Emissions of internal walls below ground per wall area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
+-,get_archetypes_properties,EMISSION_INTENSITY,W_i_bg_kgm2,Emissions of internal walls above ground per wall area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
+-,get_archetypes_properties,EMISSION_INTENSITY,Win_kgm2,Emissions of widows per window area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
+-,get_archetypes_properties,EMISSION_INTENSITY,F_i_kgm2,Emissions of internal floors per floor area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
+-,get_archetypes_properties,EMISSION_INTENSITY,F_e_kgm2,Emissions of basement floor per floor area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
+-,get_archetypes_properties,EMISSION_INTENSITY,R_kgm2,Emissions of roof per roof area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
+-,get_archetypes_properties,EMISSION_INTENSITY,Tech_kgm2,Emissions of technical installations per gross floor area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
+-,get_archetypes_properties,EMISSION_INTENSITY,Exca_kgm2,Emissions of excavations per basement floor area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
+-,get_archetypes_properties,EMISSION_INTENSITY,Mobi_kgm2,Emissions of induced mobility per gross floor area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
+-,get_archetypes_properties,EMISSION_INTENSITY,year_end,Upper limit of year interval where the building properties apply,[yr],{0...n},int,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
+-,get_archetypes_properties,EMISSION_INTENSITY,year_start,Lower limit of year interval where the building properties apply,[yr],{0...n},int,black ,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
 -,get_database_air_conditioning_systems,controller,code,TODO,TODO,TODO,string,black,inputs/technology/systems/air_conditioning_systems.xls:controller
 -,get_database_air_conditioning_systems,controller,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/air_conditioning_systems.xls:controller
 -,get_database_air_conditioning_systems,controller,dT_Qcs,TODO,TODO,TODO,float,black,inputs/technology/systems/air_conditioning_systems.xls:controller
