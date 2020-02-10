@@ -1,8 +1,8 @@
 Data Management:
 
   - name: data-helper
-    label: Data helper
-    description: Query characteristics of buildings and systems from statistical data
+    label: Archetypes Mapper
+    description: Assign building properties and systems types from the Archetypes DataBase
     interfaces: [cli, arcgis, dashboard]
     module: cea.datamanagement.data_helper
     parameters: ['general:scenario', data-helper]
@@ -20,7 +20,7 @@ Data Management:
 
   - name: surroundings-helper
     label: Surroundings helper
-    description: Query surrounding geometry from Open Street Maps
+    description: Query geometry of surrounding buildings from Open Street Maps
     interfaces: [cli, arcgis, dashboard]
     module: cea.datamanagement.surroundings_helper
     parameters: ['general:scenario', surroundings-helper]
@@ -29,7 +29,7 @@ Data Management:
 
   - name: terrain-helper
     label: Terrain helper
-    description: Creates a fixed elevation terrain file (good for most applications)
+    description: Query topography with a fixed elevation
     interfaces: [cli, arcgis, dashboard]
     module: cea.datamanagement.terrain_helper
     parameters: ['general:scenario', terrain-helper]
@@ -257,7 +257,7 @@ Analysis:
 
 
   - name: emissions
-    label: Life Cycle Analysis (zone)
+    label: Life Cycle Analysis
     description: Calculate emissions and primary energy due to building, construction, operation, dismantling and induced mobility
     interfaces: [cli, arcgis, dashboard]
     module: cea.analysis.lca.main
@@ -274,7 +274,7 @@ Analysis:
 
 
   - name: operation-costs
-    label: Costs Analysis (buildings)
+    label: Costs Analysis
     description: Calculate energy costs due to building operation
     interfaces: [cli, arcgis, dashboard]
     module: cea.analysis.costs.operation_costs
@@ -285,32 +285,7 @@ Analysis:
       - [get_database_lca_mobility]
 
 
-  - name: sensitivity-demand-samples
-    label: Sensitivity Analysis Part I (design of experiments)
-    description: Create samples for sensitivity analysis
-    interfaces: [cli, arcgis, dashboard]
-    module: cea.analysis.sensitivity.sensitivity_demand_samples
-    parameters: ['general:scenario', 'sensitivity-demand:num-samples', 'sensitivity-demand:samples-folder',
-                 'sensitivity-demand:method', 'sensitivity-demand:calc-second-order',
-                 'sensitivity-demand:num-levels', 'sensitivity-demand:variable-groups']
 
-  - name: sensitivity-demand-simulate
-    label: Sensitivity Analysis Part II (simulation)
-    description: Simulate demand for sensitivity analysis samples
-    interfaces: [cli, arcgis, dashboard]
-    module: cea.analysis.sensitivity.sensitivity_demand_simulate
-    parameters: ['general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free', 'general:debug',
-                 'schedule-maker:schedule-model', 'schedule-maker:buildings',
-                 'sensitivity-demand:samples-folder', 'sensitivity-demand:simulation-folder',
-                 'sensitivity-demand:output-parameters', 'sensitivity-demand:number-of-simulations',
-                 'sensitivity-demand:sample-index', 'demand']
-
-  - name: sensitivity-demand-analyze
-    label: Sensitivity Analysis Part III (analysis)
-    description: Analyze the results in the samples folder and write them out to an Excel file.
-    interfaces: [cli, arcgis, dashboard]
-    module: cea.analysis.sensitivity.sensitivity_demand_analyze
-    parameters: ['sensitivity-demand:samples-folder', 'sensitivity-demand:temporal-scale']
 
 Utilities:
 
@@ -339,6 +314,13 @@ Utilities:
 
 
 default:
+
+  - name: data-initializer
+    label: DataBase Initializer
+    description: Initialize databases for CEA
+    interfaces: [cli, arcgis]
+    module: cea.datamanagement.data_initializer
+    parameters: ['general:scenario', data-initializer]
 
   - name: zone-helper
     label: Zone helper
@@ -423,6 +405,33 @@ default:
     interfaces: [cli]
     module: cea.workflows.workflow
     parameters: [workflow]
+
+  - name: sensitivity-demand-samples
+    label: Sensitivity Analysis Part I (design of experiments)
+    description: Create samples for sensitivity analysis
+    interfaces: [cli]
+    module: cea.legacy.sensitivity.sensitivity_demand_samples
+    parameters: ['general:scenario', 'sensitivity-demand:num-samples', 'sensitivity-demand:samples-folder',
+                 'sensitivity-demand:method', 'sensitivity-demand:calc-second-order',
+                 'sensitivity-demand:num-levels', 'sensitivity-demand:variable-groups']
+
+  - name: sensitivity-demand-simulate
+    label: Sensitivity Analysis Part II (simulation)
+    description: Simulate demand for sensitivity analysis samples
+    interfaces: [cli]
+    module: cea.legacy.sensitivity.sensitivity_demand_simulate
+    parameters: ['general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free', 'general:debug',
+                 'schedule-maker:schedule-model', 'schedule-maker:buildings',
+                 'sensitivity-demand:samples-folder', 'sensitivity-demand:simulation-folder',
+                 'sensitivity-demand:output-parameters', 'sensitivity-demand:number-of-simulations',
+                 'sensitivity-demand:sample-index', 'demand']
+
+  - name: sensitivity-demand-analyze
+    label: Sensitivity Analysis Part III (analysis)
+    description: Analyze the results in the samples folder and write them out to an Excel file.
+    interfaces: [cli]
+    module: cea.legacy.sensitivity.sensitivity_demand_analyze
+    parameters: ['sensitivity-demand:samples-folder', 'sensitivity-demand:temporal-scale']
 
 Documentation:
   - name: html
