@@ -85,8 +85,6 @@ def main():
     import cea.plots.cache
     config = cea.config.Configuration()
     cache = cea.plots.cache.NullPlotCache()
-    locator = cea.inputlocator.InputLocator(config.scenario)
-    # cache = cea.plots.cache.PlotCache(config.project)
     AnnualEmissionsPlot(config.project,
                         {'buildings': None,
                          'scenario-name': config.scenario_name,
