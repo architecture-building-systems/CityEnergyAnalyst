@@ -41,15 +41,15 @@ def get_technology_related_databases(locator, region):
     copy_tree(technology_database_template, output_directory)
 
 
-def data_helper(locator,
-                update_architecture_dbf,
-                update_air_conditioning_systems_dbf,
-                update_indoor_comfort_dbf,
-                update_internal_loads_dbf,
-                update_supply_systems_dbf,
-                update_schedule_operation_cea,
-                update_emission_intensity_dbf,
-                buildings):
+def archetypes_mapper(locator,
+                      update_architecture_dbf,
+                      update_air_conditioning_systems_dbf,
+                      update_indoor_comfort_dbf,
+                      update_internal_loads_dbf,
+                      update_supply_systems_dbf,
+                      update_schedule_operation_cea,
+                      update_emission_intensity_dbf,
+                      buildings):
 
     """
     algorithm to query building properties from statistical database
@@ -265,9 +265,9 @@ def data_helper(locator,
 def get_list_of_uses_in_case_study(building_occupancy_df):
     """
     validates lists of uses in case study.
-    refactored from data_helper function
+    refactored from archetypes_mapper function
 
-    :param building_occupancy_df: dataframe of occupancy.dbf input (can be read in data-helper or in building-properties)
+    :param building_occupancy_df: dataframe of occupancy.dbf input (can be read in archetypes-mapper or in building-properties)
     :type building_occupancy_df: pandas.DataFrame
     :return: list of uses in case study
     :rtype: pandas.DataFrame.Index
@@ -521,28 +521,28 @@ def main(config):
     made to this script (e.g. refactorings) do not stop the script from working and also that the results stay the same.
     """
 
-    print('Running data-helper with scenario = %s' % config.scenario)
+    print('Running archetypes-mapper with scenario = %s' % config.scenario)
 
-    update_architecture_dbf = 'architecture' in config.data_helper.input_databases
-    update_air_conditioning_systems_dbf = 'air-conditioning' in config.data_helper.input_databases
-    update_emission_intensity_dbf = 'emission-intensity' in config.data_helper.input_databases
-    update_indoor_comfort_dbf = 'comfort' in config.data_helper.input_databases
-    update_internal_loads_dbf = 'internal-loads' in config.data_helper.input_databases
-    update_supply_systems_dbf = 'supply' in config.data_helper.input_databases
-    update_schedule_operation_cea = 'schedules' in config.data_helper.input_databases
+    update_architecture_dbf = 'architecture' in config.archetypes_mapper.input_databases
+    update_air_conditioning_systems_dbf = 'air-conditioning' in config.archetypes_mapper.input_databases
+    update_emission_intensity_dbf = 'emission-intensity' in config.archetypes_mapper.input_databases
+    update_indoor_comfort_dbf = 'comfort' in config.archetypes_mapper.input_databases
+    update_internal_loads_dbf = 'internal-loads' in config.archetypes_mapper.input_databases
+    update_supply_systems_dbf = 'supply' in config.archetypes_mapper.input_databases
+    update_schedule_operation_cea = 'schedules' in config.archetypes_mapper.input_databases
 
-    buildings = config.data_helper.buildings
+    buildings = config.archetypes_mapper.buildings
     locator = cea.inputlocator.InputLocator(config.scenario)
 
-    data_helper(locator=locator,
-                update_architecture_dbf=update_architecture_dbf,
-                update_air_conditioning_systems_dbf=update_air_conditioning_systems_dbf,
-                update_indoor_comfort_dbf=update_indoor_comfort_dbf,
-                update_internal_loads_dbf=update_internal_loads_dbf,
-                update_supply_systems_dbf=update_supply_systems_dbf,
-                update_schedule_operation_cea=update_schedule_operation_cea,
-                update_emission_intensity_dbf= update_emission_intensity_dbf,
-                buildings=buildings)
+    archetypes_mapper(locator=locator,
+                      update_architecture_dbf=update_architecture_dbf,
+                      update_air_conditioning_systems_dbf=update_air_conditioning_systems_dbf,
+                      update_indoor_comfort_dbf=update_indoor_comfort_dbf,
+                      update_internal_loads_dbf=update_internal_loads_dbf,
+                      update_supply_systems_dbf=update_supply_systems_dbf,
+                      update_schedule_operation_cea=update_schedule_operation_cea,
+                      update_emission_intensity_dbf= update_emission_intensity_dbf,
+                      buildings=buildings)
 
 
 if __name__ == '__main__':

@@ -54,53 +54,53 @@ SCRIPT,LOCATOR_METHOD,WORKSHEET,VARIABLE,DESCRIPTION,UNIT,VALUES,TYPE,COLOR,FILE
 -,get_building_age,,partitions,Year of last retrofit of internal wall partitions(0 if none),[-],{0...n},int,black,inputs/building-properties/age.dbf
 -,get_building_age,,roof,Year of last retrofit of roof (0 if none),[-],{0...n},int,black,inputs/building-properties/age.dbf
 -,get_building_age,,windows,Year of last retrofit of windows (0 if none),[-],{0...n},int,black,inputs/building-properties/age.dbf
-data-helper,get_building_air_conditioning,,cool_ends,End of the cooling season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black,inputs/building-properties/air_conditioning_systems.dbf
-data-helper,get_building_air_conditioning,,cool_starts,Start of the cooling season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black,inputs/building-properties/air_conditioning_systems.dbf
-data-helper,get_building_air_conditioning,,heat_ends,End of the heating season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black,inputs/building-properties/air_conditioning_systems.dbf
-data-helper,get_building_air_conditioning,,heat_starts,Start of the heating season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black,inputs/building-properties/air_conditioning_systems.dbf
-data-helper,get_building_air_conditioning,,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/building-properties/air_conditioning_systems.dbf
-data-helper,get_building_air_conditioning,,type_cs,Type of cooling supply system,[code],{T0...Tn},string,black,inputs/building-properties/air_conditioning_systems.dbf
-data-helper,get_building_air_conditioning,,type_ctrl,Type of heating and cooling control systems (relates to values in Default Database HVAC Properties),[code],{T1...Tn},string,black,inputs/building-properties/air_conditioning_systems.dbf
-data-helper,get_building_air_conditioning,,type_dhw,Type of hot water supply system,[code],{T0...Tn},string,black,inputs/building-properties/air_conditioning_systems.dbf
-data-helper,get_building_air_conditioning,,type_hs,Type of heating supply system,[code],{T0...Tn},string,black,inputs/building-properties/air_conditioning_systems.dbf
-data-helper,get_building_air_conditioning,,type_vent,Type of ventilation strategy (relates to values in Default Database HVAC Properties),[code],{T1...Tn},string,black,inputs/building-properties/air_conditioning_systems.dbf
-data-helper,get_building_architecture,,Es,Fraction of gross floor area with electrical demands.,[m2/m2],{0.0...1},float,black,inputs/building-properties/architecture.dbf
-data-helper,get_building_architecture,,Hs_ag,Fraction of above ground gross floor area air-conditioned.,[m2/m2],{0.0...1},float,black,inputs/building-properties/architecture.dbf
-data-helper,get_building_architecture,,Hs_bg,Fraction of below ground gross floor area air-conditioned.,[m2/m2],{0.0...1},float,black,inputs/building-properties/architecture.dbf
-data-helper,get_building_architecture,,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/building-properties/architecture.dbf
-data-helper,get_building_architecture,,Ns,Fraction of net gross floor area.,[m2/m2],{0.0...1},float,black,inputs/building-properties/architecture.dbf
-data-helper,get_building_architecture,,type_cons,Type of construction. It relates to the contents of the default database of Envelope Properties: construction,[code],{T1...Tn},string,black,inputs/building-properties/architecture.dbf
-data-helper,get_building_architecture,,type_leak,Leakage level. It relates to the contents of the default database of Envelope Properties: leakage,[code],{T1...Tn},string,black,inputs/building-properties/architecture.dbf
-data-helper,get_building_architecture,,type_roof,Roof construction type (relates to values in Default Database Construction Properties),[-],{T1...Tn},string,black,inputs/building-properties/architecture.dbf
-data-helper,get_building_architecture,,type_shade,Shading system type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black,inputs/building-properties/architecture.dbf
-data-helper,get_building_architecture,,type_wall,Wall construction type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black,inputs/building-properties/architecture.dbf
-data-helper,get_building_architecture,,type_win,Window type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black,inputs/building-properties/architecture.dbf
-data-helper,get_building_architecture,,void_deck,Number of floors (from the ground up) with an open envelope (default = 0),[-],{0...n},int,black,inputs/building-properties/architecture.dbf
-data-helper,get_building_architecture,,wwr_east,Window to wall ratio in in facades facing east,[m2/m2],{0.0...1},float,black,inputs/building-properties/architecture.dbf
-data-helper,get_building_architecture,,wwr_north,Window to wall ratio in in facades facing north,[m2/m2],{0.0...1},float,black,inputs/building-properties/architecture.dbf
-data-helper,get_building_architecture,,wwr_south,Window to wall ratio in in facades facing south,[m2/m2],{0.0...1},float,black,inputs/building-properties/architecture.dbf
-data-helper,get_building_architecture,,wwr_west,Window to wall ratio in in facades facing west,[m2/m2],{0.0...1},float,black,inputs/building-properties/architecture.dbf
-data-helper,get_building_comfort,,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/building-properties/indoor_comfort.dbf
-data-helper,get_building_comfort,,RH_max_pc,Upper bound of relative humidity,[%],{0.0...n},float,black,inputs/building-properties/indoor_comfort.dbf
-data-helper,get_building_comfort,,RH_min_pc,Lower_bound of relative humidity,[%],{0.0...n},float,black,inputs/building-properties/indoor_comfort.dbf
-data-helper,get_building_comfort,,Tcs_set_C,Setpoint temperature for cooling system,[C],{0.0...n},float,black,inputs/building-properties/indoor_comfort.dbf
-data-helper,get_building_comfort,,Tcs_setb_C,Setback point of temperature for cooling system,[C],{0.0...n},float,black,inputs/building-properties/indoor_comfort.dbf
-data-helper,get_building_comfort,,Ths_set_C,Setpoint temperature for heating system,[C],{0.0...n},float,black,inputs/building-properties/indoor_comfort.dbf
-data-helper,get_building_comfort,,Ths_setb_C,Setback point of temperature for heating system,[C],{0.0...n},float,black,inputs/building-properties/indoor_comfort.dbf
-data-helper,get_building_comfort,,Ve_lpspax,Indoor quality requirements of indoor ventilation per person,[l/s],{0.0...n},float,black,inputs/building-properties/indoor_comfort.dbf
-data-helper,get_building_internal,,Ea_Wm2,Peak specific electrical load due to computers and devices,[W/m2],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
-data-helper,get_building_internal,,Ed_Wm2,Peak specific electrical load due to servers/data centres,[W/m2],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
-data-helper,get_building_internal,,El_Wm2,Peak specific electrical load due to artificial lighting,[W/m2],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
-data-helper,get_building_internal,,Epro_Wm2,Peak specific electrical load due to industrial processes,[W/m2],{0.0...n},string,black,inputs/building-properties/internal_loads.dbf
-data-helper,get_building_internal,,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/building-properties/internal_loads.dbf
-data-helper,get_building_internal,,Occ_m2pax,Occupancy density,[m2/pax],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
-data-helper,get_building_internal,,Qcpro_Wm2,Peak specific process cooling load,[W/m2],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
-data-helper,get_building_internal,,Qcre_Wm2,Peak specific cooling load due to refrigeration (cooling rooms),[W/m2],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
-data-helper,get_building_internal,,Qhpro_Wm2,Peak specific process heating load,[W/m2],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
-data-helper,get_building_internal,,Qs_Wpax,Peak sensible heat load of people,[W/pax],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
-data-helper,get_building_internal,,Vw_lpdpax,Peak specific fresh water consumption (includes cold and hot water),[lpd],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
-data-helper,get_building_internal,,Vww_lpdpax,Peak specific daily hot water consumption,[lpd],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
-data-helper,get_building_internal,,X_ghpax,Moisture released by occupancy at peak conditions,[gh/kg/p],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
+archetypes-mapper,get_building_air_conditioning,,cool_ends,End of the cooling season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black,inputs/building-properties/air_conditioning_systems.dbf
+archetypes-mapper,get_building_air_conditioning,,cool_starts,Start of the cooling season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black,inputs/building-properties/air_conditioning_systems.dbf
+archetypes-mapper,get_building_air_conditioning,,heat_ends,End of the heating season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black,inputs/building-properties/air_conditioning_systems.dbf
+archetypes-mapper,get_building_air_conditioning,,heat_starts,Start of the heating season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black,inputs/building-properties/air_conditioning_systems.dbf
+archetypes-mapper,get_building_air_conditioning,,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/building-properties/air_conditioning_systems.dbf
+archetypes-mapper,get_building_air_conditioning,,type_cs,Type of cooling supply system,[code],{T0...Tn},string,black,inputs/building-properties/air_conditioning_systems.dbf
+archetypes-mapper,get_building_air_conditioning,,type_ctrl,Type of heating and cooling control systems (relates to values in Default Database HVAC Properties),[code],{T1...Tn},string,black,inputs/building-properties/air_conditioning_systems.dbf
+archetypes-mapper,get_building_air_conditioning,,type_dhw,Type of hot water supply system,[code],{T0...Tn},string,black,inputs/building-properties/air_conditioning_systems.dbf
+archetypes-mapper,get_building_air_conditioning,,type_hs,Type of heating supply system,[code],{T0...Tn},string,black,inputs/building-properties/air_conditioning_systems.dbf
+archetypes-mapper,get_building_air_conditioning,,type_vent,Type of ventilation strategy (relates to values in Default Database HVAC Properties),[code],{T1...Tn},string,black,inputs/building-properties/air_conditioning_systems.dbf
+archetypes-mapper,get_building_architecture,,Es,Fraction of gross floor area with electrical demands.,[m2/m2],{0.0...1},float,black,inputs/building-properties/architecture.dbf
+archetypes-mapper,get_building_architecture,,Hs_ag,Fraction of above ground gross floor area air-conditioned.,[m2/m2],{0.0...1},float,black,inputs/building-properties/architecture.dbf
+archetypes-mapper,get_building_architecture,,Hs_bg,Fraction of below ground gross floor area air-conditioned.,[m2/m2],{0.0...1},float,black,inputs/building-properties/architecture.dbf
+archetypes-mapper,get_building_architecture,,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/building-properties/architecture.dbf
+archetypes-mapper,get_building_architecture,,Ns,Fraction of net gross floor area.,[m2/m2],{0.0...1},float,black,inputs/building-properties/architecture.dbf
+archetypes-mapper,get_building_architecture,,type_cons,Type of construction. It relates to the contents of the default database of Envelope Properties: construction,[code],{T1...Tn},string,black,inputs/building-properties/architecture.dbf
+archetypes-mapper,get_building_architecture,,type_leak,Leakage level. It relates to the contents of the default database of Envelope Properties: leakage,[code],{T1...Tn},string,black,inputs/building-properties/architecture.dbf
+archetypes-mapper,get_building_architecture,,type_roof,Roof construction type (relates to values in Default Database Construction Properties),[-],{T1...Tn},string,black,inputs/building-properties/architecture.dbf
+archetypes-mapper,get_building_architecture,,type_shade,Shading system type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black,inputs/building-properties/architecture.dbf
+archetypes-mapper,get_building_architecture,,type_wall,Wall construction type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black,inputs/building-properties/architecture.dbf
+archetypes-mapper,get_building_architecture,,type_win,Window type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black,inputs/building-properties/architecture.dbf
+archetypes-mapper,get_building_architecture,,void_deck,Number of floors (from the ground up) with an open envelope (default = 0),[-],{0...n},int,black,inputs/building-properties/architecture.dbf
+archetypes-mapper,get_building_architecture,,wwr_east,Window to wall ratio in in facades facing east,[m2/m2],{0.0...1},float,black,inputs/building-properties/architecture.dbf
+archetypes-mapper,get_building_architecture,,wwr_north,Window to wall ratio in in facades facing north,[m2/m2],{0.0...1},float,black,inputs/building-properties/architecture.dbf
+archetypes-mapper,get_building_architecture,,wwr_south,Window to wall ratio in in facades facing south,[m2/m2],{0.0...1},float,black,inputs/building-properties/architecture.dbf
+archetypes-mapper,get_building_architecture,,wwr_west,Window to wall ratio in in facades facing west,[m2/m2],{0.0...1},float,black,inputs/building-properties/architecture.dbf
+archetypes-mapper,get_building_comfort,,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/building-properties/indoor_comfort.dbf
+archetypes-mapper,get_building_comfort,,RH_max_pc,Upper bound of relative humidity,[%],{0.0...n},float,black,inputs/building-properties/indoor_comfort.dbf
+archetypes-mapper,get_building_comfort,,RH_min_pc,Lower_bound of relative humidity,[%],{0.0...n},float,black,inputs/building-properties/indoor_comfort.dbf
+archetypes-mapper,get_building_comfort,,Tcs_set_C,Setpoint temperature for cooling system,[C],{0.0...n},float,black,inputs/building-properties/indoor_comfort.dbf
+archetypes-mapper,get_building_comfort,,Tcs_setb_C,Setback point of temperature for cooling system,[C],{0.0...n},float,black,inputs/building-properties/indoor_comfort.dbf
+archetypes-mapper,get_building_comfort,,Ths_set_C,Setpoint temperature for heating system,[C],{0.0...n},float,black,inputs/building-properties/indoor_comfort.dbf
+archetypes-mapper,get_building_comfort,,Ths_setb_C,Setback point of temperature for heating system,[C],{0.0...n},float,black,inputs/building-properties/indoor_comfort.dbf
+archetypes-mapper,get_building_comfort,,Ve_lpspax,Indoor quality requirements of indoor ventilation per person,[l/s],{0.0...n},float,black,inputs/building-properties/indoor_comfort.dbf
+archetypes-mapper,get_building_internal,,Ea_Wm2,Peak specific electrical load due to computers and devices,[W/m2],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
+archetypes-mapper,get_building_internal,,Ed_Wm2,Peak specific electrical load due to servers/data centres,[W/m2],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
+archetypes-mapper,get_building_internal,,El_Wm2,Peak specific electrical load due to artificial lighting,[W/m2],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
+archetypes-mapper,get_building_internal,,Epro_Wm2,Peak specific electrical load due to industrial processes,[W/m2],{0.0...n},string,black,inputs/building-properties/internal_loads.dbf
+archetypes-mapper,get_building_internal,,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/building-properties/internal_loads.dbf
+archetypes-mapper,get_building_internal,,Occ_m2pax,Occupancy density,[m2/pax],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
+archetypes-mapper,get_building_internal,,Qcpro_Wm2,Peak specific process cooling load,[W/m2],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
+archetypes-mapper,get_building_internal,,Qcre_Wm2,Peak specific cooling load due to refrigeration (cooling rooms),[W/m2],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
+archetypes-mapper,get_building_internal,,Qhpro_Wm2,Peak specific process heating load,[W/m2],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
+archetypes-mapper,get_building_internal,,Qs_Wpax,Peak sensible heat load of people,[W/pax],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
+archetypes-mapper,get_building_internal,,Vw_lpdpax,Peak specific fresh water consumption (includes cold and hot water),[lpd],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
+archetypes-mapper,get_building_internal,,Vww_lpdpax,Peak specific daily hot water consumption,[lpd],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
+archetypes-mapper,get_building_internal,,X_ghpax,Moisture released by occupancy at peak conditions,[gh/kg/p],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
 -,get_building_occupancy,,COOLROOM,Refrigeration rooms,[m2],{0.0...1},float,red,inputs/building-properties/occupancy.dbf
 -,get_building_occupancy,,FOODSTORE,Food stores,[m2],{0.0...1},float,orange,inputs/building-properties/occupancy.dbf
 -,get_building_occupancy,,GYM,Gymnasiums,[m2],{0.0...1},float,yellow,inputs/building-properties/occupancy.dbf
@@ -118,25 +118,25 @@ data-helper,get_building_internal,,X_ghpax,Moisture released by occupancy at pea
 -,get_building_occupancy,,SERVERROOM,Data center,[m2],{0.0...1},float,blue,inputs/building-properties/occupancy.dbf
 -,get_building_occupancy,,SINGLE_RES,Residential (single dwellings),[m2],{0.0...1},float,grey,inputs/building-properties/occupancy.dbf
 -,get_building_occupancy,,SWIMMING,Swimming halls,[m2],{0.0...1},float,purple,inputs/building-properties/occupancy.dbf
-data_helper,get_building_weekly_schedules,,METADATA,TODO,TODO,TODO,float,black,inputs/building-properties/schedules/B001.csv
-data_helper,get_building_weekly_schedules,,mixed-schedule,TODO,TODO,TODO,float,black,inputs/building-properties/schedules/B001.csv
-data-helper,get_building_supply,,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/building-properties/supply_systems.dbf
-data-helper,get_building_supply,,type_cs,Type of cooling supply system,[code],{T0...Tn},string,black,inputs/building-properties/supply_systems.dbf
-data-helper,get_building_supply,,type_dhw,Type of hot water supply system,[code],{T0...Tn},string,black,inputs/building-properties/supply_systems.dbf
-data-helper,get_building_supply,,type_el,Type of electrical supply system,[code],{T0...Tn},string,black,inputs/building-properties/supply_systems.dbf
-data-helper,get_building_supply,,type_hs,Type of heating supply system,[code],{T0...Tn},string,black,inputs/building-properties/supply_systems.dbf
-data-helper,get_building_emission_intensity,,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/building-properties/emission_intensity.dbf
-data-helper,get_building_emission_intensity,,W_e_ag_kgm2,Emissions of external walls below ground per wall area,[kg CO2-eq/m2],{0.0...n}, float,black,inputs/building-properties/emission_intensity.dbf
-data-helper,get_building_emission_intensity,,W_e_bg_kgm2,Emissions of external walls above ground per wall area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/building-properties/emission_intensity.dbf
-data-helper,get_building_emission_intensity,,W_i_ag_kgm2,Emissions of internal walls below ground per wall area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/building-properties/emission_intensity.dbf
-data-helper,get_building_emission_intensity,,W_i_bg_kgm2,Emissions of internal walls above ground per wall area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/building-properties/emission_intensity.dbf
-data-helper,get_building_emission_intensity,,Win_kgm2,Emissions of widows per window area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/building-properties/emission_intensity.dbf
-data-helper,get_building_emission_intensity,,F_i_kgm2,Emissions of internal floors per floor area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/building-properties/emission_intensity.dbf
-data-helper,get_building_emission_intensity,,F_e_kgm2,Emissions of basement floor per floor area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/building-properties/emission_intensity.dbf
-data-helper,get_building_emission_intensity,,R_kgm2,Emissions of roof per roof area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/building-properties/emission_intensity.dbf
-data-helper,get_building_emission_intensity,,Tech_kgm2,Emissions of technical installations per gross floor area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/building-properties/emission_intensity.dbf
-data-helper,get_building_emission_intensity,,Exca_kgm2,Emissions of excavations per basement floor area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/building-properties/emission_intensity.dbf
-data-helper,get_building_emission_intensity,,Mobi_kgm2,Emissions of induced mobility per gross floor area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/building-properties/emission_intensity.dbf
+archetypes-mapper,get_building_weekly_schedules,,METADATA,TODO,TODO,TODO,float,black,inputs/building-properties/schedules/B001.csv
+archetypes-mapper,get_building_weekly_schedules,,mixed-schedule,TODO,TODO,TODO,float,black,inputs/building-properties/schedules/B001.csv
+archetypes-mapper,get_building_supply,,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/building-properties/supply_systems.dbf
+archetypes-mapper,get_building_supply,,type_cs,Type of cooling supply system,[code],{T0...Tn},string,black,inputs/building-properties/supply_systems.dbf
+archetypes-mapper,get_building_supply,,type_dhw,Type of hot water supply system,[code],{T0...Tn},string,black,inputs/building-properties/supply_systems.dbf
+archetypes-mapper,get_building_supply,,type_el,Type of electrical supply system,[code],{T0...Tn},string,black,inputs/building-properties/supply_systems.dbf
+archetypes-mapper,get_building_supply,,type_hs,Type of heating supply system,[code],{T0...Tn},string,black,inputs/building-properties/supply_systems.dbf
+archetypes-mapper,get_building_emission_intensity,,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/building-properties/emission_intensity.dbf
+archetypes-mapper,get_building_emission_intensity,,W_e_ag_kgm2,Emissions of external walls below ground per wall area,[kg CO2-eq/m2],{0.0...n}, float,black,inputs/building-properties/emission_intensity.dbf
+archetypes-mapper,get_building_emission_intensity,,W_e_bg_kgm2,Emissions of external walls above ground per wall area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/building-properties/emission_intensity.dbf
+archetypes-mapper,get_building_emission_intensity,,W_i_ag_kgm2,Emissions of internal walls below ground per wall area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/building-properties/emission_intensity.dbf
+archetypes-mapper,get_building_emission_intensity,,W_i_bg_kgm2,Emissions of internal walls above ground per wall area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/building-properties/emission_intensity.dbf
+archetypes-mapper,get_building_emission_intensity,,Win_kgm2,Emissions of widows per window area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/building-properties/emission_intensity.dbf
+archetypes-mapper,get_building_emission_intensity,,F_i_kgm2,Emissions of internal floors per floor area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/building-properties/emission_intensity.dbf
+archetypes-mapper,get_building_emission_intensity,,F_e_kgm2,Emissions of basement floor per floor area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/building-properties/emission_intensity.dbf
+archetypes-mapper,get_building_emission_intensity,,R_kgm2,Emissions of roof per roof area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/building-properties/emission_intensity.dbf
+archetypes-mapper,get_building_emission_intensity,,Tech_kgm2,Emissions of technical installations per gross floor area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/building-properties/emission_intensity.dbf
+archetypes-mapper,get_building_emission_intensity,,Exca_kgm2,Emissions of excavations per basement floor area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/building-properties/emission_intensity.dbf
+archetypes-mapper,get_building_emission_intensity,,Mobi_kgm2,Emissions of induced mobility per gross floor area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/building-properties/emission_intensity.dbf
 thermal-network,get_network_layout_edges_shapefile,,geometry,Geometry,[-],[-],[-],black,inputs/networks/dc/edges.shp
 thermal-network,get_network_layout_edges_shapefile,,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/networks/dc/edges.shp
 thermal-network,get_network_layout_edges_shapefile,,Pipe_DN,Classifies nominal pipe diameters (DN) into typical bins. E.g. DN100 refers to pipes of approx. 100mm in diameter.,[DN#],alphanumeric,string,black,inputs/networks/dc/edges.shp

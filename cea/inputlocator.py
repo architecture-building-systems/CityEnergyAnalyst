@@ -585,7 +585,7 @@ class InputLocator(object):
         return region
 
     def get_archetypes_properties(self):
-        """Returns the database of construction properties to be used by the data-helper. These are copied
+        """Returns the database of construction properties to be used by the archetypes-mapper. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
         return os.path.join(self.get_databases_folder(), 'archetypes', 'construction_properties.xlsx')
 

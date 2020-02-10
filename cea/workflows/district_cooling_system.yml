@@ -12,7 +12,7 @@
   parameters:
     databases-path: SG
     databases: [archetypes, lifecycle, systems]
-- script: data-helper
+- script: archetypes-mapper
   parameters:
     input-databases: [comfort, architecture, air-conditioning, internal-loads, supply, schedules, emission-intensity]
 - script: weather-helper

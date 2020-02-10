@@ -1015,7 +1015,7 @@ get_archetypes_properties:
       year_start:
         sample_data: !!python/long '2021'
         types_found: [long]
-  used_by: [data_helper]
+  used_by: [archetypes_mapper]
 get_building_age:
   created_by: []
   file_path: inputs/building-properties/age.dbf
@@ -1045,9 +1045,9 @@ get_building_age:
     windows:
       sample_data: 0
       types_found: [int]
-  used_by: [data_helper, demand, emissions]
+  used_by: [archetypes_mapper, demand, emissions]
 get_building_air_conditioning:
-  created_by: [data_helper]
+  created_by: [archetypes_mapper]
   file_path: inputs/building-properties/air_conditioning_systems.dbf
   file_type: dbf
   schema:
@@ -1083,7 +1083,7 @@ get_building_air_conditioning:
       types_found: [string]
   used_by: [demand]
 get_building_architecture:
-  created_by: [data_helper]
+  created_by: [archetypes_mapper]
   file_path: inputs/building-properties/architecture.dbf
   file_type: dbf
   schema:
@@ -1137,7 +1137,7 @@ get_building_architecture:
       types_found: [float]
   used_by: [demand, emissions, radiation, schedule_maker]
 get_building_comfort:
-  created_by: [data_helper]
+  created_by: [archetypes_mapper]
   file_path: inputs/building-properties/indoor_comfort.dbf
   file_type: dbf
   schema:
@@ -1167,7 +1167,7 @@ get_building_comfort:
       types_found: [float]
   used_by: [demand, schedule_maker]
 get_building_internal:
-  created_by: [data_helper]
+  created_by: [archetypes_mapper]
   file_path: inputs/building-properties/internal_loads.dbf
   file_type: dbf
   schema:
@@ -1267,9 +1267,9 @@ get_building_occupancy:
     SWIMMING:
       sample_data: 0.0
       types_found: [float]
-  used_by: [data_helper, demand, emissions]
+  used_by: [archetypes_mapper, demand, emissions]
 get_building_supply:
-  created_by: [data_helper]
+  created_by: [archetypes_mapper]
   file_path: inputs/building-properties/supply_systems.dbf
   file_type: dbf
   schema:
@@ -1290,7 +1290,7 @@ get_building_supply:
       types_found: [string]
   used_by: [decentralized, demand, emissions, operation_costs]
 get_building_weekly_schedules:
-  created_by: [data_helper]
+  created_by: [archetypes_mapper]
   file_path: inputs/building-properties/schedules/B001.csv
   file_type: csv
   schema:
@@ -1665,7 +1665,7 @@ get_database_standard_schedules_use:
     RESTAURANT:
       sample_data: 0.8
       types_found: [float, null]
-  used_by: [data_helper]
+  used_by: [archetypes_mapper]
 get_database_supply_systems:
   created_by: []
   file_path: inputs/technology/systems/supply_systems.xls
@@ -6627,6 +6627,6 @@ get_zone_geometry:
     height_bg:
       sample_data: 3.57142857143
       types_found: [float]
-  used_by: [data_helper, decentralized, demand, emissions, network_layout, optimization,
+  used_by: [archetypes_mapper, decentralized, demand, emissions, network_layout, optimization,
     photovoltaic, photovoltaic_thermal, radiation, schedule_maker, sewage_potential,
     shallow_geothermal_potential, solar_collector, thermal_network]
