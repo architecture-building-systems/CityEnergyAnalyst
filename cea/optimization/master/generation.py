@@ -24,7 +24,10 @@ def generate_main(individual_with_names_dict,
                   column_names_buildings_heating,
                   column_names_buildings_cooling,
                   district_heating_network,
-                  district_cooling_network):
+                  district_cooling_network,
+                  technologies_heating_allowed,
+                  technologies_cooling_allowed,
+                  ):
     """
     Creates an individual configuration for the evolutionary algorithm.
     The individual is divided into four parts namely Heating technologies, Cooling Technologies, Heating Network
@@ -47,28 +50,26 @@ def generate_main(individual_with_names_dict,
     """
 
     # POPULATE INDIVIDUAL WE KEEP A DATAFRAME SO IT IS EASIER FOR THE PROGRAMMER TO KNOW WHAT IS GOING ON
-    if district_heating_network and district_cooling_network:
+    if district_heating_network:
         populated_individual_with_name_dict = populate_individual(individual_with_names_dict,
                                                                   DH_CONVERSION_TECHNOLOGIES_SHARE,
-                                                                  column_names_buildings_heating)
-
-        populated_individual_with_name_dict = populate_individual(populated_individual_with_name_dict,
-                                                                  DC_CONVERSION_TECHNOLOGIES_SHARE,
-                                                                  column_names_buildings_cooling)
-    elif district_heating_network:
-        populated_individual_with_name_dict = populate_individual(individual_with_names_dict,
-                                                                  DH_CONVERSION_TECHNOLOGIES_SHARE,
+                                                                  technologies_heating_allowed,
                                                                   column_names_buildings_heating)
     elif district_cooling_network:
         populated_individual_with_name_dict = populate_individual(individual_with_names_dict,
                                                                   DC_CONVERSION_TECHNOLOGIES_SHARE,
+                                                                  technologies_cooling_allowed,
                                                                   column_names_buildings_cooling)
+    else:
+        raise Exception("option not existent")
 
     populated_individual_with_name_dict = validation_main(populated_individual_with_name_dict,
                                                           column_names_buildings_heating,
                                                           column_names_buildings_cooling,
                                                           district_heating_network,
-                                                          district_cooling_network
+                                                          district_cooling_network,
+                                                          technologies_heating_allowed,
+                                                          technologies_cooling_allowed
                                                           )
 
     # CONVERT BACK INTO AN INDIVIDUAL STRING IMPORTANT TO USE column_names to keep the order
@@ -81,10 +82,12 @@ def generate_main(individual_with_names_dict,
 
 def populate_individual(empty_individual_with_names_dict,
                         name_share_conversion_technologies,
+                        technologies_allowed,
                         columns_buildings_name):
     # do it for the share of the units that are activated
     for column, limits in name_share_conversion_technologies.iteritems():
-        empty_individual_with_names_dict[column] = round(random.uniform(0.0, 1.0),2)
+        if column in technologies_allowed:
+            empty_individual_with_names_dict[column] = round(random.uniform(0.0, 1.0),2)
 
     # do it for the buildings
     for column in columns_buildings_name:
