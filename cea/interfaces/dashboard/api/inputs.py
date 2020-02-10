@@ -362,20 +362,20 @@ class InputDatabaseSave(Resource):
         payload = json.loads(request.data, object_pairs_hook=OrderedDict)
         locator = cea.inputlocator.InputLocator(config.scenario)
 
-        for db_name in payload:
-            if db_name == 'schedules':
-                for archetype, schedule_dict in payload['schedules']['data'].items():
-                    schedule_dict_to_file(
-                        schedule_dict,
-                        locator.get_database_standard_schedules_use(
-                            locator.get_database_standard_schedules(), archetype
+        for db_type in payload:
+            for db_name in payload[db_type]:
+                if db_name == 'schedules':
+                    for archetype, schedule_dict in payload[db_type]['schedules'].items():
+                        schedule_dict_to_file(
+                            schedule_dict,
+                            locator.get_database_standard_schedules_use(
+                                archetype
+                            )
                         )
-                    )
-            else:
-                db_type = DATABASES_TYPE_MAP[db_name]
-                locator_method = DATABASES[db_type][db_name]['schema_key']
-                db_path = locator.__getattribute__(locator_method)()
-                database_dict_to_file(payload[db_name]['data'], db_path)
+                else:
+                    locator_method = DATABASES[db_type][db_name]['schema_key']
+                    db_path = locator.__getattribute__(locator_method)()
+                    database_dict_to_file(payload[db_type][db_name], db_path)
 
         return payload
 def get_choices(location, path):
