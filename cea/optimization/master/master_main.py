@@ -32,7 +32,7 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 warnings.filterwarnings("ignore")
-NOBJ = 3  # number of objectives
+NOBJ = 2  # number of objectives
 creator.create("FitnessMin", base.Fitness, weights=(-1.0,) * NOBJ)
 creator.create("Individual", list, typecode='d', fitness=creator.FitnessMin)
 
@@ -126,7 +126,6 @@ def non_dominated_sorting_genetic_algorithm(locator,
 
     # SET-UP EVOLUTIONARY ALGORITHM
     # Hyperparameters
-    NOBJ = 2  # number of objectives
     P = 12
     ref_points = tools.uniform_reference_points(NOBJ, P)
     if MU == None:

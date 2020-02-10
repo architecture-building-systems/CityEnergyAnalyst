@@ -149,8 +149,7 @@ def evaluation_main(individual, building_names_all, locator, network_features, c
         master_to_slave_vars)
 
     print("AGGREGATING RESULTS")
-    TAC_sys_USD, GHG_sys_tonCO2, PEN_sys_MJoil, performance_totals = summarize_results_individual(master_to_slave_vars,
-                                                                                                  buildings_connected_costs,
+    TAC_sys_USD, GHG_sys_tonCO2, performance_totals = summarize_results_individual(buildings_connected_costs,
                                                                                                   buildings_connected_emissions,
                                                                                                   buildings_disconnected_costs,
                                                                                                   buildings_disconnected_emissions)
@@ -178,9 +177,8 @@ def evaluation_main(individual, building_names_all, locator, network_features, c
     # Converting costs into float64 to avoid longer values
     print ('Total TAC in USD = ' + str(TAC_sys_USD))
     print ('Total GHG emissions in tonCO2-eq = ' + str(GHG_sys_tonCO2))
-    print ('Total PEN non-renewable in MJoil ' + str(PEN_sys_MJoil) + "\n")
 
-    return TAC_sys_USD, GHG_sys_tonCO2, PEN_sys_MJoil
+    return TAC_sys_USD, GHG_sys_tonCO2
 
 
 def save_results(master_to_slave_vars,
