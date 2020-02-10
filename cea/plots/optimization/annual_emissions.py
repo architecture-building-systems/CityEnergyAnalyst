@@ -35,13 +35,13 @@ class AnnualEmissionsPlot(cea.plots.optimization.GenerationPlotBase):
 
     def calc_titles(self):
         if self.normalization == "gross floor area":
-            titley = 'Annual emissions [ton CO2-eq/m2.yr]'
+            titley = 'Annual emissions [kg CO2-eq/m2.yr]'
         elif self.normalization == "net floor area":
-            titley = 'Annual emissions [ton CO2-eq/m2.yr]'
+            titley = 'Annual emissions [kg CO2-eq/m2.yr]'
         elif self.normalization == "air conditioned floor area":
-            titley = 'Annual emissions [ton CO2-eq/m2.yr]'
+            titley = 'Annual emissions [kg CO2-eq/m2.yr]'
         elif self.normalization == "building occupancy":
-            titley = 'Annual emissions [ton CO2-eq/pax.yr]'
+            titley = 'Annual emissions [kg CO2-eq/pax.yr]'
         else:
             titley = 'Annual emissions [ton CO2-eq/yr]'
         return titley
