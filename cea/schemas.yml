@@ -1015,6 +1015,8 @@ get_archetypes_properties:
       year_start:
         sample_data: !!python/long '2021'
         types_found: [long]
+      Reference:
+        types_found: [string]
   used_by: [archetypes_mapper]
 get_building_age:
   created_by: []
