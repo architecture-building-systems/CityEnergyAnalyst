@@ -226,22 +226,22 @@ network-layout,get_network_layout_nodes_shapefile,,Type,Weather a Plant or A Cus
 -,get_archetypes_properties,EMISSION_INTENSITY,year_start,Lower limit of year interval where the building properties apply,[yr],{0...n},int,black ,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
 -,get_database_air_conditioning_systems,controller,code,Type of controller,[code],{T0...Tn},string,black,inputs/technology/systems/air_conditioning_systems.xls:controller
 -,get_database_air_conditioning_systems,controller,Description,Describes the type of controller,[-],[-],string,black,inputs/technology/systems/air_conditioning_systems.xls:controller
--,get_database_air_conditioning_systems,controller,dT_Qcs,TODO,TODO,{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:controller
--,get_database_air_conditioning_systems,controller,dT_Qhs,TODO,TODO,{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:controller
+-,get_database_air_conditioning_systems,controller,dT_Qcs,correction temperature of emission losses due to control system of cooling,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:controller
+-,get_database_air_conditioning_systems,controller,dT_Qhs,correction temperature of emission losses due to control system of heating,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:controller
 -,get_database_air_conditioning_systems,cooling,code,Type of cooling system,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
 -,get_database_air_conditioning_systems,cooling,Description,Describes the type of cooling system,[-],[-],string,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
--,get_database_air_conditioning_systems,cooling,dTcs_C,TODO,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
--,get_database_air_conditioning_systems,cooling,dTcs0_ahu_C,TODO,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
--,get_database_air_conditioning_systems,cooling,dTcs0_aru_C,TODO,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
--,get_database_air_conditioning_systems,cooling,dTcs0_scu_C,TODO,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
+-,get_database_air_conditioning_systems,cooling,dTcs_C,Set-point correction for space emission systems,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
+-,get_database_air_conditioning_systems,cooling,dTcs0_ahu_C,Nominal temperature increase on the water side of the air-handling units,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
+-,get_database_air_conditioning_systems,cooling,dTcs0_aru_C,Nominal temperature increase on the water side of the air-recirculation units,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
+-,get_database_air_conditioning_systems,cooling,dTcs0_scu_C,Nominal temperature increase on the water side of the sensible cooling units,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
 -,get_database_air_conditioning_systems,cooling,Qcsmax_Wm2,Maximum heat flow permitted by cooling system per m2 gross floor area ,[W/m2],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
--,get_database_air_conditioning_systems,cooling,Tc_sup_air_ahu_C,TODO,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
--,get_database_air_conditioning_systems,cooling,Tc_sup_air_aru_C,TODO,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
--,get_database_air_conditioning_systems,cooling,Tscs0_ahu_C,TODO,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
--,get_database_air_conditioning_systems,cooling,Tscs0_aru_C,TODO,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
--,get_database_air_conditioning_systems,cooling,Tscs0_scu_C,TODO,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
--,get_database_air_conditioning_systems,dhw,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/air_conditioning_systems.xls:dhw
--,get_database_air_conditioning_systems,dhw,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/air_conditioning_systems.xls:dhw
+-,get_database_air_conditioning_systems,cooling,Tc_sup_air_ahu_C,Supply air temperature of the air-handling units,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
+-,get_database_air_conditioning_systems,cooling,Tc_sup_air_aru_C,Supply air temperature of the air-recirculation units,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
+-,get_database_air_conditioning_systems,cooling,Tscs0_ahu_C,Nominal supply temperature of the water side of the air-handling units,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
+-,get_database_air_conditioning_systems,cooling,Tscs0_aru_C,Nominal supply temperature of the water side of the air-recirculation units,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
+-,get_database_air_conditioning_systems,cooling,Tscs0_scu_C,Nominal supply temperature of the water side of the sensible cooling units,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
+-,get_database_air_conditioning_systems,dhw,code,Type of hot water supply system,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/air_conditioning_systems.xls:dhw
+-,get_database_air_conditioning_systems,dhw,Description,Describes the Type of hot water supply system,[-],[-],string,black,inputs/technology/systems/air_conditioning_systems.xls:dhw
 -,get_database_air_conditioning_systems,dhw,Qwwmax_Wm2,Maximum heat flow permitted by hot water system per m2 gross floor area ,[W/m2],{0.0....n},float,black,inputs/technology/systems/air_conditioning_systems.xls:dhw
 -,get_database_air_conditioning_systems,dhw,Tsww0_C,Typical supply water temperature.,[C],{0.0....n},float,black,inputs/technology/systems/air_conditioning_systems.xls:dhw
 -,get_database_air_conditioning_systems,heating,code,Type of heating system,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/air_conditioning_systems.xls:heating
