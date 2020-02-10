@@ -850,7 +850,7 @@ get_archetypes_properties:
       year_start:
         sample_data: !!python/long '2021'
         types_found: [long]
-    HVAC:
+    AIR_CONDITIONING:
       building_use:
         sample_data: UNIVERSITY
         types_found: [string]
@@ -973,6 +973,41 @@ get_archetypes_properties:
         types_found: [string]
       type_hs:
         sample_data: T3
+        types_found: [string]
+      year_end:
+        sample_data: !!python/long '2030'
+        types_found: [long]
+      year_start:
+        sample_data: !!python/long '2021'
+        types_found: [long]
+    EMISSION_INTENSITY:
+      W_e_ag_kgm2:
+        types_found: [float]
+      W_e_bg_kgm2:
+        types_found: [float]
+      W_i_ag_kgm2:
+        types_found: [float]
+      W_i_bg_kgm2:
+        types_found: [float]
+      Win_kgm2:
+        types_found: [float]
+      F_i_kgm2:
+        types_found: [float]
+      F_e_kgm2:
+        types_found: [float]
+      R_kgm2:
+        types_found: [float]
+      Tech_kgm2:
+        types_found: [float]
+      Exca_kgm2:
+        types_found: [float]
+      Mobi_kgm2:
+        types_found: [float]
+      building_use:
+        sample_data: LIBRARY
+        types_found: [string]
+      standard:
+        sample_data: R
         types_found: [string]
       year_end:
         sample_data: !!python/long '2030'
@@ -1616,120 +1651,6 @@ get_database_envelope_systems:
         sample_data: 0.89
         types_found: [float]
   used_by: [demand, radiation, schedule_maker]
-get_database_lca_buildings:
-  created_by: []
-  file_path: inputs/technology/lifecycle/LCA_buildings.xlsx
-  file_type: xlsx
-  schema:
-    EMBODIED_EMISSIONS:
-      Excavation:
-        sample_data: !!python/long '0'
-        types_found: [long]
-      Floor_g:
-        sample_data: !!python/long '44'
-        types_found: [long]
-      Floor_int:
-        sample_data: !!python/long '8'
-        types_found: [long]
-      Roof:
-        sample_data: !!python/long '47'
-        types_found: [long]
-      Services:
-        sample_data: !!python/long '7'
-        types_found: [long]
-      Wall_ext_ag:
-        sample_data: !!python/long '35'
-        types_found: [long]
-      Wall_ext_bg:
-        sample_data: !!python/long '49'
-        types_found: [long]
-      Wall_int_nosup:
-        sample_data: !!python/long '5'
-        types_found: [long]
-      Wall_int_sup:
-        sample_data: !!python/long '5'
-        types_found: [long]
-      Win_ext:
-        sample_data: !!python/long '85'
-        types_found: [long]
-      building_use:
-        sample_data: LIBRARY
-        types_found: [string]
-      standard:
-        sample_data: R
-        types_found: [string]
-      year_end:
-        sample_data: !!python/long '2030'
-        types_found: [long]
-      year_start:
-        sample_data: !!python/long '2021'
-        types_found: [long]
-    EMBODIED_ENERGY:
-      Excavation:
-        sample_data: !!python/long '0'
-        types_found: [long]
-      Floor_g:
-        sample_data: !!python/long '551'
-        types_found: [long]
-      Floor_int:
-        sample_data: !!python/long '102'
-        types_found: [long]
-      Roof:
-        sample_data: !!python/long '598'
-        types_found: [long]
-      Services:
-        sample_data: !!python/long '108'
-        types_found: [long]
-      Wall_ext_ag:
-        sample_data: !!python/long '428'
-        types_found: [long]
-      Wall_ext_bg:
-        sample_data: !!python/long '633'
-        types_found: [long]
-      Wall_int_nosup:
-        sample_data: !!python/long '72'
-        types_found: [long]
-      Wall_int_sup:
-        sample_data: !!python/long '72'
-        types_found: [long]
-      Win_ext:
-        sample_data: !!python/long '1273'
-        types_found: [long]
-      building_use:
-        sample_data: LIBRARY
-        types_found: [string]
-      standard:
-        sample_data: R
-        types_found: [string]
-      year_end:
-        sample_data: !!python/long '2030'
-        types_found: [long]
-      year_start:
-        sample_data: !!python/long '2021'
-        types_found: [long]
-  used_by: [emissions]
-get_database_lca_mobility:
-  created_by: []
-  file_path: inputs/technology/lifecycle/LCA_mobility.xls
-  file_type: xls
-  schema:
-    MOBILITY:
-      CO2_today:
-        sample_data: 90.0
-        types_found: [float]
-      Description:
-        sample_data: 'Assumed: same as RETAIL'
-        types_found: [string]
-      NRE_today:
-        sample_data: 1460.0
-        types_found: [float]
-      PEN_today:
-        sample_data: !!python/long '1550'
-        types_found: [long]
-      code:
-        sample_data: MUSEUM
-        types_found: [string]
-  used_by: [emissions, operation_costs]
 get_database_standard_schedules_use:
   created_by: []
   file_path: inputs/technology/archetypes/schedules/RESTAURANT.csv

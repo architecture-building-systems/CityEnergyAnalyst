@@ -211,6 +211,8 @@ network-layout,get_network_layout_nodes_shapefile,,Type,Weather a Plant or A Cus
 -,get_database_standard_schedules_use,,CH-SIA-2014,metadata,[-],TODO,string,black,inputs/technology/archetypes/schedules/RESTAURANT.csv
 -,get_database_standard_schedules_use,,METADATA,metadata,[-],TODO,string,black,inputs/technology/archetypes/schedules/RESTAURANT.csv
 -,get_database_standard_schedules_use,,RESTAURANT,metadata,[-],TODO,string,black,inputs/technology/archetypes/schedules/RESTAURANT.csv
+-,get_archetypes_properties,EMISSION_INTENSITY,building_use,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
+-,get_archetypes_properties,EMISSION_INTENSITY,standard,Letter representing whereas the field represent construction properties of a building as newly constructed (C) or renovated (R),[-],{C or R},string,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
 -,get_archetypes_properties,EMISSION_INTENSITY,W_e_ag_kgm2,Emissions of external walls below ground per wall area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
 -,get_archetypes_properties,EMISSION_INTENSITY,W_e_bg_kgm2,Emissions of external walls above ground per wall area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
 -,get_archetypes_properties,EMISSION_INTENSITY,W_i_ag_kgm2,Emissions of internal walls below ground per wall area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
