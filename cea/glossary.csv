@@ -1,12 +1,11 @@
 SCRIPT,LOCATOR_METHOD,WORKSHEET,VARIABLE,DESCRIPTION,UNIT,VALUES,TYPE,COLOR,FILE_NAME
--,get_weather,/users/assistenz/documents/github/cityenergyanalyst/cea/databases/weather/singapore.epw,EPW file variables,TODO,TODO,TODO,TODO,black,c:/users/assistenz/documents/github/cityenergyanalyst/cea/databases/weather/singapore.epw
 -,get_weather,,aerosol_opt_thousandths (index = 29),TODO,TODO,TODO,TYPE,black,databases/weather/Zug-inducity_1990_2010_TMY.epw
--,get_weather,,Albedo (index = 32),TODO,TODO,TODO,TYPE,black,databases/weather/Zug-inducity_1990_2010_TMY.epw
--,get_weather,,atmos_Pa (index = 9),TODO,TODO,TODO,TYPE,black,databases/weather/Zug-inducity_1990_2010_TMY.epw
+-,get_weather,,Albedo (index = 32),Albedo,TODO,TODO,TYPE,black,databases/weather/Zug-inducity_1990_2010_TMY.epw
+-,get_weather,,atmos_Pa (index = 9),Atmospheric pressure,TODO,TODO,TYPE,black,databases/weather/Zug-inducity_1990_2010_TMY.epw
 -,get_weather,,ceiling_hgt_m (index = 25),TODO,TODO,TODO,TYPE,black,databases/weather/Zug-inducity_1990_2010_TMY.epw
--,get_weather,,datasource (index = 5),TODO,TODO,TODO,TYPE,black,databases/weather/Zug-inducity_1990_2010_TMY.epw
+-,get_weather,,datasource (index = 5),Source of data,TODO,TODO,TYPE,black,databases/weather/Zug-inducity_1990_2010_TMY.epw
 -,get_weather,,day (index = 2),TODO,TODO,TODO,TYPE,black,databases/weather/Zug-inducity_1990_2010_TMY.epw
--,get_weather,,days_last_snow (index = 31),TODO,TODO,TODO,TYPE,black,databases/weather/Zug-inducity_1990_2010_TMY.epw
+-,get_weather,,days_last_snow (index = 31),Days since last snow,TODO,TODO,TYPE,black,databases/weather/Zug-inducity_1990_2010_TMY.epw
 -,get_weather,,dewpoint_C (index = 7),TODO,TODO,TODO,TYPE,black,databases/weather/Zug-inducity_1990_2010_TMY.epw
 -,get_weather,,difhorillum_lux (index = 18),TODO,TODO,TODO,TYPE,black,databases/weather/Zug-inducity_1990_2010_TMY.epw
 -,get_weather,,difhorrad_Whm2 (index = 15),TODO,TODO,TODO,TYPE,black,databases/weather/Zug-inducity_1990_2010_TMY.epw
@@ -36,14 +35,14 @@ SCRIPT,LOCATOR_METHOD,WORKSHEET,VARIABLE,DESCRIPTION,UNIT,VALUES,TYPE,COLOR,FILE
 -,get_weather,,year (index = 0),TODO,TODO,TODO,TYPE,black,databases/weather/Zug-inducity_1990_2010_TMY.epw
 -,get_weather,,zenlum_lux (index = 19),TODO,TODO,TODO,TYPE,black,databases/weather/Zug-inducity_1990_2010_TMY.epw
 -,get_surroundings_geometry,,floors_ag,Number of floors above ground (incl. ground floor),[-],{0...n},int,black,inputs/building-geometry/surroundings.shp
--,get_surroundings_geometry,,floors_bg,TODO,TODO,TODO,TYPE,black,inputs/building-geometry/surroundings.shp
--,get_surroundings_geometry,,geometry,TODO,TODO,TODO,TODO,black,inputs/building-geometry/surroundings.shp
+-,get_surroundings_geometry,,floors_bg,"Number of floors below ground (basement, etc)",[-],{0...n},int,black,inputs/building-geometry/surroundings.shp
+-,get_surroundings_geometry,,geometry,Geometry,[-],[-],[-],black,inputs/building-geometry/surroundings.shp
 -,get_surroundings_geometry,,height_ag,Height above ground (incl. ground floor),[m],{0.0...n},float,black,inputs/building-geometry/surroundings.shp
--,get_surroundings_geometry,,height_bg,TODO,TODO,TODO,TYPE,black,inputs/building-geometry/surroundings.shp
+-,get_surroundings_geometry,,height_bg,"Height below ground (basement, etc)",[m],{0.0...n},float,black,inputs/building-geometry/surroundings.shp
 -,get_surroundings_geometry,,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/building-geometry/surroundings.shp
 -,get_zone_geometry,,floors_ag,Number of floors above ground (incl. ground floor),[-],{0...n},int,black,inputs/building-geometry/zone.shp
 -,get_zone_geometry,,floors_bg,"Number of floors below ground (basement, etc)",[-],{0...n},int,black,inputs/building-geometry/zone.shp
--,get_zone_geometry,,geometry,TODO,TODO,TODO,TODO,black,inputs/building-geometry/zone.shp
+-,get_zone_geometry,,geometry,Geometry,[-],[-],[-],black,inputs/building-geometry/zone.shp
 -,get_zone_geometry,,height_ag,Aggregated height of the walls.,[m],{0.0...n},float,black,inputs/building-geometry/zone.shp
 -,get_zone_geometry,,height_bg,"Height below ground (basement, etc)",[m],{0.0...n},float,black,inputs/building-geometry/zone.shp
 -,get_zone_geometry,,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/building-geometry/zone.shp
@@ -138,16 +137,16 @@ data-helper,get_building_emission_intensity,,R_kgm2,Emissions of roof per roof a
 data-helper,get_building_emission_intensity,,Tech_kgm2,Emissions of technical installations per gross floor area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/building-properties/emission_intensity.dbf
 data-helper,get_building_emission_intensity,,Exca_kgm2,Emissions of excavations per basement floor area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/building-properties/emission_intensity.dbf
 data-helper,get_building_emission_intensity,,Mobi_kgm2,Emissions of induced mobility per gross floor area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/building-properties/emission_intensity.dbf
-thermal-network,get_network_layout_edges_shapefile,,geometry,TODO,TODO,TODO,TODO,black,inputs/networks/dc/edges.shp
+thermal-network,get_network_layout_edges_shapefile,,geometry,Geometry,[-],[-],[-],black,inputs/networks/dc/edges.shp
 thermal-network,get_network_layout_edges_shapefile,,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/networks/dc/edges.shp
 thermal-network,get_network_layout_edges_shapefile,,Pipe_DN,Classifies nominal pipe diameters (DN) into typical bins. E.g. DN100 refers to pipes of approx. 100mm in diameter.,[DN#],alphanumeric,string,black,inputs/networks/dc/edges.shp
-thermal-network,get_network_layout_edges_shapefile,,Type_mat,TODO,TODO,TODO,TODO,black,inputs/networks/dc/edges.shp
-network-layout,get_network_layout_nodes_shapefile,,Building,TODO,TODO,TODO,TODO,black,inputs/networks/dc/nodes.shp
-network-layout,get_network_layout_nodes_shapefile,,geometry,TODO,TODO,TODO,TODO,black,inputs/networks/dc/nodes.shp
+thermal-network,get_network_layout_edges_shapefile,,Type_mat,Material type,[-],{T0…Tn},string,black,inputs/networks/dc/edges.shp
+network-layout,get_network_layout_nodes_shapefile,,Building,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/networks/dc/nodes.shp
+network-layout,get_network_layout_nodes_shapefile,,geometry,Geometry,[-],[-],[-],black,inputs/networks/dc/nodes.shp
 network-layout,get_network_layout_nodes_shapefile,,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/networks/dc/nodes.shp
-network-layout,get_network_layout_nodes_shapefile,,Type,TODO,TODO,TODO,TODO,black,inputs/networks/dc/nodes.shp
--,get_street_network,,geometry,TODO,TODO,TODO,TODO,black,inputs/networks/streets.shp
--,get_street_network,,Id,TODO,TODO,TODO,TODO,black,inputs/networks/streets.shp
+network-layout,get_network_layout_nodes_shapefile,,Type,Weather a Plant or A Customer,[-],alphanumeric,string,black,inputs/networks/dc/nodes.shp
+-,get_street_network,,geometry,Geometry,[-],[-],[-],black,inputs/networks/streets.shp
+-,get_street_network,,Id,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/networks/streets.shp
 -,get_archetypes_properties,ARCHITECTURE,building_use,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
 -,get_archetypes_properties,ARCHITECTURE,Es,Fraction of gross floor area with electrical demands.,[m2/m2],{0.0...1},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
 -,get_archetypes_properties,ARCHITECTURE,Hs_ag,Fraction of above ground gross floor area air-conditioned.,[m2/m2],{0.0...1},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
@@ -209,9 +208,9 @@ network-layout,get_network_layout_nodes_shapefile,,Type,TODO,TODO,TODO,TODO,blac
 -,get_archetypes_properties,SUPPLY,type_hs,Type of heating supply system,[code],{T0...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY
 -,get_archetypes_properties,SUPPLY,year_end,Upper limit of year interval where the building properties apply,[yr],{0...n},int,black,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY
 -,get_archetypes_properties,SUPPLY,year_start,Lower limit of year interval where the building properties apply,[yr],{0...n},int,black,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY
--,get_database_standard_schedules_use,,CH-SIA-2014,TODO,TODO,TODO,float,black,inputs/technology/archetypes/schedules/RESTAURANT.csv
--,get_database_standard_schedules_use,,METADATA,TODO,TODO,TODO,float,black,inputs/technology/archetypes/schedules/RESTAURANT.csv
--,get_database_standard_schedules_use,,RESTAURANT,TODO,TODO,TODO,float,black,inputs/technology/archetypes/schedules/RESTAURANT.csv
+-,get_database_standard_schedules_use,,CH-SIA-2014,metadata,[-],TODO,string,black,inputs/technology/archetypes/schedules/RESTAURANT.csv
+-,get_database_standard_schedules_use,,METADATA,metadata,[-],TODO,string,black,inputs/technology/archetypes/schedules/RESTAURANT.csv
+-,get_database_standard_schedules_use,,RESTAURANT,metadata,[-],TODO,string,black,inputs/technology/archetypes/schedules/RESTAURANT.csv
 -,get_archetypes_properties,EMISSION_INTENSITY,W_e_ag_kgm2,Emissions of external walls below ground per wall area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
 -,get_archetypes_properties,EMISSION_INTENSITY,W_e_bg_kgm2,Emissions of external walls above ground per wall area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
 -,get_archetypes_properties,EMISSION_INTENSITY,W_i_ag_kgm2,Emissions of internal walls below ground per wall area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
@@ -225,63 +224,63 @@ network-layout,get_network_layout_nodes_shapefile,,Type,TODO,TODO,TODO,TODO,blac
 -,get_archetypes_properties,EMISSION_INTENSITY,Mobi_kgm2,Emissions of induced mobility per gross floor area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
 -,get_archetypes_properties,EMISSION_INTENSITY,year_end,Upper limit of year interval where the building properties apply,[yr],{0...n},int,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
 -,get_archetypes_properties,EMISSION_INTENSITY,year_start,Lower limit of year interval where the building properties apply,[yr],{0...n},int,black ,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
--,get_database_air_conditioning_systems,controller,code,TODO,TODO,TODO,string,black,inputs/technology/systems/air_conditioning_systems.xls:controller
--,get_database_air_conditioning_systems,controller,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/air_conditioning_systems.xls:controller
--,get_database_air_conditioning_systems,controller,dT_Qcs,TODO,TODO,TODO,float,black,inputs/technology/systems/air_conditioning_systems.xls:controller
--,get_database_air_conditioning_systems,controller,dT_Qhs,TODO,TODO,TODO,float,black,inputs/technology/systems/air_conditioning_systems.xls:controller
--,get_database_air_conditioning_systems,cooling,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
--,get_database_air_conditioning_systems,cooling,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
--,get_database_air_conditioning_systems,cooling,dTcs_C,TODO,TODO,TODO,float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
--,get_database_air_conditioning_systems,cooling,dTcs0_ahu_C,TODO,TODO,TODO,float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
--,get_database_air_conditioning_systems,cooling,dTcs0_aru_C,TODO,TODO,TODO,float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
--,get_database_air_conditioning_systems,cooling,dTcs0_scu_C,TODO,TODO,TODO,float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
--,get_database_air_conditioning_systems,cooling,Qcsmax_Wm2,TODO,TODO,TODO,long,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
--,get_database_air_conditioning_systems,cooling,Tc_sup_air_ahu_C,TODO,TODO,TODO,float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
--,get_database_air_conditioning_systems,cooling,Tc_sup_air_aru_C,TODO,TODO,TODO,float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
--,get_database_air_conditioning_systems,cooling,Tscs0_ahu_C,TODO,TODO,TODO,float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
--,get_database_air_conditioning_systems,cooling,Tscs0_aru_C,TODO,TODO,TODO,float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
--,get_database_air_conditioning_systems,cooling,Tscs0_scu_C,TODO,TODO,TODO,float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
+-,get_database_air_conditioning_systems,controller,code,Type of controller,[code],{T0...Tn},string,black,inputs/technology/systems/air_conditioning_systems.xls:controller
+-,get_database_air_conditioning_systems,controller,Description,Describes the type of controller,[-],[-],string,black,inputs/technology/systems/air_conditioning_systems.xls:controller
+-,get_database_air_conditioning_systems,controller,dT_Qcs,TODO,TODO,{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:controller
+-,get_database_air_conditioning_systems,controller,dT_Qhs,TODO,TODO,{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:controller
+-,get_database_air_conditioning_systems,cooling,code,Type of cooling system,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
+-,get_database_air_conditioning_systems,cooling,Description,Describes the type of cooling system,[-],[-],string,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
+-,get_database_air_conditioning_systems,cooling,dTcs_C,TODO,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
+-,get_database_air_conditioning_systems,cooling,dTcs0_ahu_C,TODO,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
+-,get_database_air_conditioning_systems,cooling,dTcs0_aru_C,TODO,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
+-,get_database_air_conditioning_systems,cooling,dTcs0_scu_C,TODO,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
+-,get_database_air_conditioning_systems,cooling,Qcsmax_Wm2,Maximum heat flow permitted by cooling system per m2 gross floor area ,[W/m2],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
+-,get_database_air_conditioning_systems,cooling,Tc_sup_air_ahu_C,TODO,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
+-,get_database_air_conditioning_systems,cooling,Tc_sup_air_aru_C,TODO,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
+-,get_database_air_conditioning_systems,cooling,Tscs0_ahu_C,TODO,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
+-,get_database_air_conditioning_systems,cooling,Tscs0_aru_C,TODO,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
+-,get_database_air_conditioning_systems,cooling,Tscs0_scu_C,TODO,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
 -,get_database_air_conditioning_systems,dhw,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/air_conditioning_systems.xls:dhw
 -,get_database_air_conditioning_systems,dhw,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/air_conditioning_systems.xls:dhw
--,get_database_air_conditioning_systems,dhw,Qwwmax_Wm2,Maximum heat flow permitted by the distribution system per m2 of the exchange interface (e.g. floor/radiator heating area).,[W/m2],{0.0....n},float,black,inputs/technology/systems/air_conditioning_systems.xls:dhw
+-,get_database_air_conditioning_systems,dhw,Qwwmax_Wm2,Maximum heat flow permitted by hot water system per m2 gross floor area ,[W/m2],{0.0....n},float,black,inputs/technology/systems/air_conditioning_systems.xls:dhw
 -,get_database_air_conditioning_systems,dhw,Tsww0_C,Typical supply water temperature.,[C],{0.0....n},float,black,inputs/technology/systems/air_conditioning_systems.xls:dhw
--,get_database_air_conditioning_systems,heating,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/air_conditioning_systems.xls:heating
--,get_database_air_conditioning_systems,heating,Description,TODO,TODO,TODO,string,black,inputs/technology/systems/air_conditioning_systems.xls:heating
--,get_database_air_conditioning_systems,heating,dThs_C,TODO,TODO,TODO,float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
--,get_database_air_conditioning_systems,heating,dThs0_ahu_C,TODO,TODO,TODO,float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
--,get_database_air_conditioning_systems,heating,dThs0_aru_C,TODO,TODO,TODO,float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
--,get_database_air_conditioning_systems,heating,dThs0_shu_C,TODO,TODO,TODO,float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
--,get_database_air_conditioning_systems,heating,Qhsmax_Wm2,TODO,TODO,TODO,long,black,inputs/technology/systems/air_conditioning_systems.xls:heating
+-,get_database_air_conditioning_systems,heating,code,Type of heating system,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/air_conditioning_systems.xls:heating
+-,get_database_air_conditioning_systems,heating,Description,Description Type of heating system,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
+-,get_database_air_conditioning_systems,heating,dThs_C,TODO,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
+-,get_database_air_conditioning_systems,heating,dThs0_ahu_C,TODO,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
+-,get_database_air_conditioning_systems,heating,dThs0_aru_C,TODO,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
+-,get_database_air_conditioning_systems,heating,dThs0_shu_C,TODO,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
+-,get_database_air_conditioning_systems,heating,Qhsmax_Wm2,Maximum heat flow permitted by heating system per m2 gross floor area ,[W/m2],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
 -,get_database_air_conditioning_systems,heating,Th_sup_air_ahu_C,TODO,TODO,TODO,float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
 -,get_database_air_conditioning_systems,heating,Th_sup_air_aru_C,TODO,TODO,TODO,float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
 -,get_database_air_conditioning_systems,heating,Tshs0_ahu_C,TODO,TODO,TODO,float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
 -,get_database_air_conditioning_systems,heating,Tshs0_aru_C,TODO,TODO,TODO,float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
 -,get_database_air_conditioning_systems,heating,Tshs0_shu_C,TODO,TODO,TODO,float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
--,get_database_air_conditioning_systems,ventilation,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/air_conditioning_systems.xls:ventilation
--,get_database_air_conditioning_systems,ventilation,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/air_conditioning_systems.xls:ventilation
--,get_database_air_conditioning_systems,ventilation,ECONOMIZER,TODO,TODO,TODO,bool,black,inputs/technology/systems/air_conditioning_systems.xls:ventilation
--,get_database_air_conditioning_systems,ventilation,HEAT_REC,TODO,TODO,TODO,bool,black,inputs/technology/systems/air_conditioning_systems.xls:ventilation
--,get_database_air_conditioning_systems,ventilation,MECH_VENT,TODO,TODO,TODO,bool,black,inputs/technology/systems/air_conditioning_systems.xls:ventilation
--,get_database_air_conditioning_systems,ventilation,NIGHT_FLSH,TODO,TODO,TODO,bool,black,inputs/technology/systems/air_conditioning_systems.xls:ventilation
--,get_database_air_conditioning_systems,ventilation,WIN_VENT,TODO,TODO,TODO,bool,black,inputs/technology/systems/air_conditioning_systems.xls:ventilation
+-,get_database_air_conditioning_systems,ventilation,code,Type of ventilation,[-],[-],string,black,inputs/technology/systems/air_conditioning_systems.xls:ventilation
+-,get_database_air_conditioning_systems,ventilation,Description,Describes the Type of ventilation,[-],[-],string,black,inputs/technology/systems/air_conditioning_systems.xls:ventilation
+-,get_database_air_conditioning_systems,ventilation,ECONOMIZER,"Boolean, economizer on",[-],"{TRUE, FALSE}",bool,black,inputs/technology/systems/air_conditioning_systems.xls:ventilation
+-,get_database_air_conditioning_systems,ventilation,HEAT_REC,"Boolean, heat recovery on",[-],"{TRUE, FALSE}",bool,black,inputs/technology/systems/air_conditioning_systems.xls:ventilation
+-,get_database_air_conditioning_systems,ventilation,MECH_VENT,"Boolean, mechanical ventilation on",[-],"{TRUE, FALSE}",bool,black,inputs/technology/systems/air_conditioning_systems.xls:ventilation
+-,get_database_air_conditioning_systems,ventilation,NIGHT_FLSH,"Boolean, night flush on",[-],"{TRUE, FALSE}",bool,black,inputs/technology/systems/air_conditioning_systems.xls:ventilation
+-,get_database_air_conditioning_systems,ventilation,WIN_VENT,"Boolean, window ventilation on",[-],"{TRUE, FALSE}",bool,black,inputs/technology/systems/air_conditioning_systems.xls:ventilation
 -,get_database_envelope_systems,CONSTRUCTION,Cm_Af,Internal heat capacity per unit of air conditioned area. Defined according to ISO 13790.,[J/Km2],{0.0...1},float,black,inputs/technology/systems/envelope_systems.xls:CONSTRUCTION
--,get_database_envelope_systems,CONSTRUCTION,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/envelope_systems.xls:CONSTRUCTION
--,get_database_envelope_systems,CONSTRUCTION,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:CONSTRUCTION
--,get_database_envelope_systems,LEAKAGE,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/envelope_systems.xls:LEAKAGE
--,get_database_envelope_systems,LEAKAGE,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:LEAKAGE
+-,get_database_envelope_systems,CONSTRUCTION,code,Type of construction,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:CONSTRUCTION
+-,get_database_envelope_systems,CONSTRUCTION,Description,Describes the Type of construction,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:CONSTRUCTION
+-,get_database_envelope_systems,LEAKAGE,code,Type of Leakage,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:LEAKAGE
+-,get_database_envelope_systems,LEAKAGE,Description,Describes the Type of Leakage,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:LEAKAGE
 -,get_database_envelope_systems,LEAKAGE,n50,Air exchanges per hour at a pressure of 50 Pa.,[1/h],{0.0...10},float,black,inputs/technology/systems/envelope_systems.xls:LEAKAGE
 -,get_database_envelope_systems,ROOF,a_roof,Solar absorption coefficient. Defined according to ISO 13790.,[-],{0.0...1},float,black,inputs/technology/systems/envelope_systems.xls:ROOF
--,get_database_envelope_systems,ROOF,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/envelope_systems.xls:ROOF
--,get_database_envelope_systems,ROOF,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:ROOF
+-,get_database_envelope_systems,ROOF,code,Type of roof,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:ROOF
+-,get_database_envelope_systems,ROOF,Description,Describes the Type of roof,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:ROOF
 -,get_database_envelope_systems,ROOF,e_roof,Emissivity of external surface. Defined according to ISO 13790.,[-],{0.0...1},float,black,inputs/technology/systems/envelope_systems.xls:ROOF
 -,get_database_envelope_systems,ROOF,r_roof,Reflectance in the Red spectrum. Defined according Radiance. (long-wave),[-],{0.0...1},float,black,inputs/technology/systems/envelope_systems.xls:ROOF
 -,get_database_envelope_systems,ROOF,U_roof,Thermal transmittance of windows including linear losses (+10%). Defined according to ISO 13790.,[-],{0.1...n},float,black,inputs/technology/systems/envelope_systems.xls:ROOF
--,get_database_envelope_systems,SHADING,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/envelope_systems.xls:SHADING
+-,get_database_envelope_systems,SHADING,code,Type of shading,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:SHADING
 -,get_database_envelope_systems,SHADING,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:SHADING
 -,get_database_envelope_systems,SHADING,rf_sh,Shading coefficient when shading device is active. Defined according to ISO 13790.,[-],{0.0...1},float,black,inputs/technology/systems/envelope_systems.xls:SHADING
 -,get_database_envelope_systems,WALL,a_wall,Solar absorption coefficient. Defined according to ISO 13790.,[-],{0.0...1},float,black,inputs/technology/systems/envelope_systems.xls:WALL
--,get_database_envelope_systems,WALL,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/envelope_systems.xls:WALL
--,get_database_envelope_systems,WALL,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:WALL
+-,get_database_envelope_systems,WALL,code,Type of wall,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:WALL
+-,get_database_envelope_systems,WALL,Description,Describes the Type of wall,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:WALL
 -,get_database_envelope_systems,WALL,e_wall,Emissivity of external surface. Defined according to ISO 13790.,[-],{0.0...1},float,black,inputs/technology/systems/envelope_systems.xls:WALL
 -,get_database_envelope_systems,WALL,r_wall,Reflectance in the Red spectrum. Defined according Radiance. (long-wave),[-],{0.0...1},float,black,inputs/technology/systems/envelope_systems.xls:WALL
 -,get_database_envelope_systems,WALL,U_base,Thermal transmittance of basement including linear losses (+10%). Defined according to ISO 13790.,[-],{0.0...1},float,black,inputs/technology/systems/envelope_systems.xls:WALL
@@ -300,10 +299,10 @@ network-layout,get_network_layout_nodes_shapefile,,Type,TODO,TODO,TODO,TODO,blac
 -,get_database_supply_systems,Absorption_chiller,c,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
 -,get_database_supply_systems,Absorption_chiller,cap_max,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
 -,get_database_supply_systems,Absorption_chiller,cap_min,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,Absorption_chiller,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
+-,get_database_supply_systems,Absorption_chiller,code,Type of Absorption Chiller,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
 -,get_database_supply_systems,Absorption_chiller,currency,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
 -,get_database_supply_systems,Absorption_chiller,d,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,Absorption_chiller,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
+-,get_database_supply_systems,Absorption_chiller,Description,Describes the Type of Absorption Chiller,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
 -,get_database_supply_systems,Absorption_chiller,e,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
 -,get_database_supply_systems,Absorption_chiller,e_e,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
 -,get_database_supply_systems,Absorption_chiller,e_g,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
@@ -318,13 +317,13 @@ network-layout,get_network_layout_nodes_shapefile,,Type,TODO,TODO,TODO,TODO,blac
 -,get_database_supply_systems,Absorption_chiller,s_g,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
 -,get_database_supply_systems,Absorption_chiller,type,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
 -,get_database_supply_systems,Absorption_chiller,unit,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,ALL_IN_ONE_SYSTEMS,code,TODO,TODO,TODO,date,black,inputs/technology/systems/supply_systems.xls:ALL_IN_ONE_SYSTEMS
--,get_database_supply_systems,ALL_IN_ONE_SYSTEMS,Description,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:ALL_IN_ONE_SYSTEMS
--,get_database_supply_systems,ALL_IN_ONE_SYSTEMS,efficiency,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:ALL_IN_ONE_SYSTEMS
--,get_database_supply_systems,ALL_IN_ONE_SYSTEMS,feedstock,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:ALL_IN_ONE_SYSTEMS
--,get_database_supply_systems,ALL_IN_ONE_SYSTEMS,reference,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:ALL_IN_ONE_SYSTEMS
--,get_database_supply_systems,ALL_IN_ONE_SYSTEMS,scale,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:ALL_IN_ONE_SYSTEMS
--,get_database_supply_systems,ALL_IN_ONE_SYSTEMS,system,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:ALL_IN_ONE_SYSTEMS
+-,get_database_supply_systems,ALL_IN_ONE_SYSTEMS,code,Type of all in one system,[-],alphanumeric,date,black,inputs/technology/systems/supply_systems.xls:ALL_IN_ONE_SYSTEMS
+-,get_database_supply_systems,ALL_IN_ONE_SYSTEMS,Description,Description of Type of all in one system,[-],alphanumeric,string,black,inputs/technology/systems/supply_systems.xls:ALL_IN_ONE_SYSTEMS
+-,get_database_supply_systems,ALL_IN_ONE_SYSTEMS,efficiency,efficiency of the all in one system,[-],{0.0…n},float,black,inputs/technology/systems/supply_systems.xls:ALL_IN_ONE_SYSTEMS
+-,get_database_supply_systems,ALL_IN_ONE_SYSTEMS,feedstock,feedstock used by the the all in one system,[-],alphanumeric,string,black,inputs/technology/systems/supply_systems.xls:ALL_IN_ONE_SYSTEMS
+-,get_database_supply_systems,ALL_IN_ONE_SYSTEMS,reference,Reference of the data,[-],alphanumeric,string,black,inputs/technology/systems/supply_systems.xls:ALL_IN_ONE_SYSTEMS
+-,get_database_supply_systems,ALL_IN_ONE_SYSTEMS,scale,"whether the all in one system is used at the building, or the district scale",[-],alphanumeric,string,black,inputs/technology/systems/supply_systems.xls:ALL_IN_ONE_SYSTEMS
+-,get_database_supply_systems,ALL_IN_ONE_SYSTEMS,system,"whether the all in one system is used for heating, cooling or electricity",[-],alphanumeric,string,black,inputs/technology/systems/supply_systems.xls:ALL_IN_ONE_SYSTEMS
 -,get_database_supply_systems,BH,a,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:BH
 -,get_database_supply_systems,BH,assumption,TODO,TODO,TODO,,black,inputs/technology/systems/supply_systems.xls:BH
 -,get_database_supply_systems,BH,b,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:BH
