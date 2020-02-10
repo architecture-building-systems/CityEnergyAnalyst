@@ -140,7 +140,7 @@ archetypes-mapper,get_building_emission_intensity,,Mobi_kgm2,Emissions of induce
 thermal-network,get_network_layout_edges_shapefile,,geometry,Geometry,[-],[-],[-],black,inputs/networks/dc/edges.shp
 thermal-network,get_network_layout_edges_shapefile,,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/networks/dc/edges.shp
 thermal-network,get_network_layout_edges_shapefile,,Pipe_DN,Classifies nominal pipe diameters (DN) into typical bins. E.g. DN100 refers to pipes of approx. 100mm in diameter.,[DN#],alphanumeric,string,black,inputs/networks/dc/edges.shp
-thermal-network,get_network_layout_edges_shapefile,,Type_mat,Material type,[-],{T0…Tn},string,black,inputs/networks/dc/edges.shp
+thermal-network,get_network_layout_edges_shapefile,,Type_mat,Material type,[-],{T0...Tn},string,black,inputs/networks/dc/edges.shp
 network-layout,get_network_layout_nodes_shapefile,,Building,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/networks/dc/nodes.shp
 network-layout,get_network_layout_nodes_shapefile,,geometry,Geometry,[-],[-],[-],black,inputs/networks/dc/nodes.shp
 network-layout,get_network_layout_nodes_shapefile,,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/networks/dc/nodes.shp
@@ -321,7 +321,7 @@ network-layout,get_network_layout_nodes_shapefile,,Type,Weather a Plant or A Cus
 -,get_database_supply_systems,Absorption_chiller,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
 -,get_database_supply_systems,ALL_IN_ONE_SYSTEMS,code,Type of all in one system,[-],alphanumeric,date,black,inputs/technology/systems/supply_systems.xls:ALL_IN_ONE_SYSTEMS
 -,get_database_supply_systems,ALL_IN_ONE_SYSTEMS,Description,Description of Type of all in one system,[-],alphanumeric,string,black,inputs/technology/systems/supply_systems.xls:ALL_IN_ONE_SYSTEMS
--,get_database_supply_systems,ALL_IN_ONE_SYSTEMS,efficiency,efficiency of the all in one system,[-],{0.0…n},float,black,inputs/technology/systems/supply_systems.xls:ALL_IN_ONE_SYSTEMS
+-,get_database_supply_systems,ALL_IN_ONE_SYSTEMS,efficiency,efficiency of the all in one system,[-],{0.0...n},float,black,inputs/technology/systems/supply_systems.xls:ALL_IN_ONE_SYSTEMS
 -,get_database_supply_systems,ALL_IN_ONE_SYSTEMS,feedstock,feedstock used by the the all in one system,[-],alphanumeric,string,black,inputs/technology/systems/supply_systems.xls:ALL_IN_ONE_SYSTEMS
 -,get_database_supply_systems,ALL_IN_ONE_SYSTEMS,reference,Reference of the data,[-],alphanumeric,string,black,inputs/technology/systems/supply_systems.xls:ALL_IN_ONE_SYSTEMS
 -,get_database_supply_systems,ALL_IN_ONE_SYSTEMS,scale,"whether the all in one system is used at the building, or the district scale",[-],alphanumeric,string,black,inputs/technology/systems/supply_systems.xls:ALL_IN_ONE_SYSTEMS
@@ -511,7 +511,7 @@ network-layout,get_network_layout_nodes_shapefile,,Type,Weather a Plant or A Cus
 -,get_database_supply_systems,PV,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PV
 -,get_database_supply_systems,PV,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:PV
 -,get_database_supply_systems,PV,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PV,misc_losses,"losses from cabling, resistances etc…",[-],depends on the source,float,black,inputs/technology/systems/supply_systems.xls:PV
+-,get_database_supply_systems,PV,misc_losses,"losses from cabling, resistances etc...",[-],depends on the source,float,black,inputs/technology/systems/supply_systems.xls:PV
 -,get_database_supply_systems,PV,module_length_m,lengh of the PV module,[m],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:PV
 -,get_database_supply_systems,PV,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:PV
 -,get_database_supply_systems,PV,PV_a0,"parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  + a3*x**3 + a4*x**4, x is the relative air mass",[-],TODO,float,black,inputs/technology/systems/supply_systems.xls:PV
