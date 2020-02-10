@@ -8,9 +8,13 @@
     case: open
 - config: .
   "general:scenario-name": baseline
+- script: data-initializer
+  parameters:
+    databases-path: CH
+    databases: [archetypes, lifecycle, systems]
 - script: data-helper
   parameters:
-    region: CH
+    input-databases: [comfort, architecture, HVAC, internal-loads, supply, schedules]
 - script: weather-helper
   parameters:
     weather: Zug-inducity_1990_2010_TMY

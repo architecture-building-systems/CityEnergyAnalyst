@@ -2,6 +2,7 @@ import os
 import shutil
 import glob
 from functools import wraps
+import traceback
 
 import geopandas
 from flask import current_app
@@ -159,7 +160,6 @@ class Scenarios(Resource):
                         else:
                             calculate_occupancy_file(zone_df, 'Get it from open street maps', locator.get_building_occupancy())
                 except Exception as e:
-                    import traceback
                     trace = traceback.format_exc()
                     return {'message': e.message, 'trace': trace}, 500
 
@@ -169,7 +169,6 @@ class Scenarios(Resource):
                 shutil.copytree(cea.inputlocator.InputLocator(source_scenario).get_input_folder(),
                                 locator.get_input_folder())
             except OSError as e:
-                import traceback
                 trace = traceback.format_exc()
                 return {'message': e.message, 'trace': trace}, 500
 
@@ -196,9 +195,16 @@ class Scenarios(Resource):
                         elif tool == 'weather':
                             cea.api.weather_helper(config, scenario=new_scenario_path)
                     except Exception as e:
-                        import traceback
                         trace = traceback.format_exc()
                         return {'message': '{}_helper: {}'.format(tool, e.message), 'trace': trace}, 500
+
+        # Run database_initializer to copy databases to input
+        if payload['databases-path'] != 'create':
+            try:
+                cea.api.data_initializer(config, scenario=new_scenario_path, databases_path=payload['databases-path'])
+            except Exception as e:
+                trace = traceback.format_exc()
+                return {'message': 'data_initializer: {}'.format(e.message), 'trace': trace}, 500
 
         return {'scenarios': list_scenario_names_for_project(config)}
 

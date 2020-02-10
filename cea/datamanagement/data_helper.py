@@ -41,11 +41,16 @@ def get_technology_related_databases(locator, region):
     copy_tree(technology_database_template, output_directory)
 
 
-def data_helper(locator, region, overwrite_technology_folder,
-                update_architecture_dbf, update_HVAC_systems_dbf, update_indoor_comfort_dbf,
-                update_internal_loads_dbf, update_supply_systems_dbf,
+def data_helper(locator,
+                update_architecture_dbf,
+                update_air_conditioning_systems_dbf,
+                update_indoor_comfort_dbf,
+                update_internal_loads_dbf,
+                update_supply_systems_dbf,
                 update_schedule_operation_cea,
-                update_emisison_intensity_dbf, buildings):
+                update_emission_intensity_dbf,
+                buildings):
+
     """
     algorithm to query building properties from statistical database
     Archetypes_HVAC_properties.csv. for more info check the integrated demand
@@ -54,7 +59,7 @@ def data_helper(locator, region, overwrite_technology_folder,
     :param InputLocator locator: an InputLocator instance set to the scenario to work on
     :param boolean update_architecture_dbf: if True, update the construction and architecture properties.
     :param boolean update_indoor_comfort_dbf: if True, get properties about thermal comfort.
-    :param boolean update_HVAC_systems_dbf: if True, get properties about types of HVAC systems, otherwise False.
+    :param boolean update_air_conditioning_systems_dbf: if True, get properties about types of HVAC systems, otherwise False.
     :param boolean update_internal_loads_dbf: if True, get properties about internal loads, otherwise False.
 
     The following files are created by this script, depending on which flags were set:
@@ -71,11 +76,6 @@ def data_helper(locator, region, overwrite_technology_folder,
     - indoor_comfort.shp
         describes the queried thermal properties of buildings
     """
-    # get technology database
-    if overwrite_technology_folder:
-        # copy all the region-specific archetypes to the scenario's technology folder
-        get_technology_related_databases(locator, region)
-
     # get occupancy and age files
     building_occupancy_df = dbf_to_dataframe(locator.get_building_occupancy())
     building_age_df = dbf_to_dataframe(locator.get_building_age())
@@ -136,7 +136,7 @@ def data_helper(locator, region, overwrite_technology_folder,
         dataframe_to_dbf(prop_architecture_df_merged[fields], locator.get_building_architecture())
 
     # get properties about types of HVAC systems
-    if update_HVAC_systems_dbf:
+    if update_air_conditioning_systems_dbf:
         construction_properties_hvac = pd.read_excel(locator.get_archetypes_properties(), 'air_conditioning')
         construction_properties_hvac['Code'] = construction_properties_hvac.apply(
             lambda x: calc_code(x['building_use'], x['year_start'],
@@ -238,7 +238,7 @@ def data_helper(locator, region, overwrite_technology_folder,
                   'type_el']
         dataframe_to_dbf(prop_supply_df_merged[fields], locator.get_building_supply())
 
-    if update_emisison_intensity_dbf:
+    if update_emission_intensity_dbf:
         emisison_intensity_DB = pd.read_excel(locator.get_archetypes_properties(), 'EMISSION_INTENSITY')
         emisison_intensity_DB['Code'] = emisison_intensity_DB.apply(lambda x: calc_code(x['building_use'], x['year_start'],
                                                                 x['year_end'], x['standard']), axis=1)
@@ -522,7 +522,6 @@ def main(config):
     """
 
     print('Running data-helper with scenario = %s' % config.scenario)
-    print('Running data-helper with archetypes = %s' % config.data_helper.databases)
 
     update_architecture_dbf = 'architecture' in config.data_helper.databases
     update_air_conditioning_systems_dbf = 'air-conditioning' in config.data_helper.databases
@@ -532,20 +531,17 @@ def main(config):
     update_supply_systems_dbf = 'supply' in config.data_helper.databases
     update_schedule_operation_cea = 'schedules' in config.data_helper.databases
 
-    overwrite_technology_folder = config.data_helper.overwrite_technology_folder
     buildings = config.data_helper.buildings
-
     locator = cea.inputlocator.InputLocator(config.scenario)
 
-    data_helper(locator=locator, region=config.data_helper.region,
-                overwrite_technology_folder=overwrite_technology_folder,
+    data_helper(locator=locator,
                 update_architecture_dbf=update_architecture_dbf,
-                update_HVAC_systems_dbf=update_air_conditioning_systems_dbf,
+                update_air_conditioning_systems_dbf=update_air_conditioning_systems_dbf,
                 update_indoor_comfort_dbf=update_indoor_comfort_dbf,
                 update_internal_loads_dbf=update_internal_loads_dbf,
                 update_supply_systems_dbf=update_supply_systems_dbf,
                 update_schedule_operation_cea=update_schedule_operation_cea,
-                update_emisison_intensity_dbf = update_emission_intensity_dbf,
+                update_emission_intensity_dbf= update_emission_intensity_dbf,
                 buildings=buildings)
 
 
