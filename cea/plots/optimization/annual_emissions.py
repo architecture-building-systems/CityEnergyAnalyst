@@ -48,9 +48,9 @@ class AnnualEmissionsPlot(cea.plots.optimization.GenerationPlotBase):
     @property
     def title(self):
         if self.normalization != "none":
-            return "Annual emissions for generation {generation} normalized to {normalized}".format(generation=self.generation, normalized=self.normalization)
+            return "Annual Emissions for generation {generation} normalized to {normalized}".format(generation=self.generation, normalized=self.normalization)
         else:
-            return "Annual emissions for generation {generation}".format(generation=self.generation)
+            return "Annual Emissions for generation {generation}".format(generation=self.generation)
 
     @property
     def output_path(self):
