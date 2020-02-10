@@ -25,16 +25,6 @@ DATABASES = OrderedDict([
             "schema_key": "get_database_standard_schedules_use"
         }
     }),
-    ("lifecycle", {
-        "lca_buildings": {
-            "file_ext": ".xlsx",
-            "schema_key": "get_database_lca_buildings"
-        },
-        "lca_mobility": {
-            "file_ext": ".xls",
-            "schema_key": "get_database_lca_mobility"
-        }
-    }),
     ("systems", {
         "air_conditioning_systems": {
             "file_ext": ".xls",
