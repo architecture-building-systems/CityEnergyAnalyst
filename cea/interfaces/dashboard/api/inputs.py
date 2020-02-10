@@ -1,5 +1,6 @@
 import json
 import os
+import shutil
 from collections import OrderedDict
 
 import geopandas
@@ -378,6 +379,42 @@ class InputDatabaseSave(Resource):
                     database_dict_to_file(payload[db_type][db_name], db_path)
 
         return payload
+
+
+@api.route('/databases/copy')
+class InputDatabaseCopy(Resource):
+    def put(self):
+        config = current_app.cea_config
+        payload = api.payload
+        locator = cea.inputlocator.InputLocator(config.scenario)
+
+        if 'path' in payload:
+            if os.path.exists(payload['path']):
+                databases_path = locator.get_databases_folder()
+                shutil.copytree(databases_path,
+                                payload.path)
+                return {'message': 'Database copied to {}'.format(payload['path'])}
+            else:
+                abort(500, '{} does not exist'.format(payload['path']))
+        else:
+            abort(500, 'No path found')
+
+
+@api.route('/databases/check')
+class InputDatabaseCheck(Resource):
+    def get(self):
+        config = current_app.cea_config
+        locator = cea.inputlocator.InputLocator(config.scenario)
+        try:
+            valid = locator.is_valid_database_template()
+            if not valid:
+                raise IOError('Database in path is not valid.')
+        except IOError as e:
+            print(e)
+            abort(500, e.message)
+        return {'message': 'Database in path seems to be valid.'}
+
+
 def get_choices(location, path):
     df = pandas.read_excel(path, location['sheet'])
     if 'filter' in location:
