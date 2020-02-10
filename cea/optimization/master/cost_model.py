@@ -24,8 +24,8 @@ import cea.technologies.solar.photovoltaic_thermal as pvt
 import cea.technologies.solar.solar_collector as stc
 import cea.technologies.thermal_storage as thermal_storage
 from cea.optimization.constants import N_PVT, PUMP_ETA, ACH_TYPE_DOUBLE, N_SC_ET, N_SC_FP
-from cea.optimization.constants import VCC_CODE_CENTRALIZED, VCC_CODE_DECENTRALIZED
-from cea.optimization.master.emissions_model import calc_emissions_Whyr_to_tonCO2yr, calc_pen_Whyr_to_MJoilyr
+from cea.optimization.constants import VCC_CODE_CENTRALIZED
+from cea.optimization.master.emissions_model import calc_emissions_Whyr_to_tonCO2yr
 from cea.technologies.pumps import calc_Cinv_pump
 from cea.technologies.supply_systems_database import SupplySystemsDatabase
 
@@ -46,7 +46,6 @@ def buildings_disconnected_costs_and_emissions(column_names_buildings_heating,
 
     # DISCONNECTED BUILDINGS  - HEATING LOADS
     GHG_heating_sys_disconnected_tonCO2yr, \
-    PEN_heating_sys_disconnected_MJoilyr, \
     Capex_total_heating_sys_disconnected_USD, \
     Capex_a_heating_sys_disconnected_USD, \
     Opex_var_heating_sys_disconnected, \
@@ -57,7 +56,6 @@ def buildings_disconnected_costs_and_emissions(column_names_buildings_heating,
 
     # DISCONNECTED BUILDINGS - COOLING LOADS
     GHG_cooling_sys_disconnected_tonCO2yr, \
-    PEN_cooling_sys_disconnected_MJoilyr, \
     Capex_total_cooling_sys_disconnected_USD, \
     Capex_a_cooling_sys_disconnected_USD, \
     Opex_var_cooling_sys_disconnected, \
@@ -65,7 +63,6 @@ def buildings_disconnected_costs_and_emissions(column_names_buildings_heating,
     capacity_installed_cooling_sys_df = calc_costs_emissions_decentralized_DC(DCN_barcode,
                                                                               column_names_buildings_cooling,
                                                                               locator)
-
 
     disconnected_costs = {
         # heating
@@ -84,16 +81,12 @@ def buildings_disconnected_costs_and_emissions(column_names_buildings_heating,
         # CO2 EMISSIONS
         "GHG_heating_disconnected_tonCO2": GHG_heating_sys_disconnected_tonCO2yr,
         "GHG_cooling_disconnected_tonCO2": GHG_cooling_sys_disconnected_tonCO2yr,
-
-        # PRIMARY ENERGY (NON-RENEWABLE)
-        "PEN_heating_disconnected_MJoil": PEN_heating_sys_disconnected_MJoilyr,
-        "PEN_cooling_disconnected_MJoil": PEN_cooling_sys_disconnected_MJoilyr
     }
 
     return disconnected_costs, disconnected_emissions, capacity_installed_heating_sys_df, capacity_installed_cooling_sys_df
 
 
-def calc_network_costs_heating(locator, master_to_slave_vars, network_features, network_type, prices):
+def calc_network_costs_heating(locator, master_to_slave_vars, network_features, network_type):
     # Intitialize class
     pipesCosts_USD = network_features.pipesCosts_DHN_USD
     num_buildings_connected = master_to_slave_vars.number_of_buildings_connected_heating
@@ -220,22 +213,14 @@ def calc_emissions_connected_buildings(sum_natural_gas_imports_W,
     sum_natural_gas_imports_Whyr = sum(sum_natural_gas_imports_W)
     sum_wet_biomass_imports_Whyr = sum(sum_wet_biomass_imports_W)
     sum_dry_biomass_imports_Whyr = sum(sum_dry_biomass_imports_W)
-    sum_electricity_imports_Whyr = sum(sum_electricity_imports_W)
-    sum_electricity_exports_Whyr = sum(sum_electricity_exports_W)
+    sum_el_imports_Whyr = sum(sum_electricity_imports_W)
+    sum_el_exports_Whyr = sum(sum_electricity_exports_W)
 
     GHG_NG_connected_tonCO2yr = calc_emissions_Whyr_to_tonCO2yr(sum_natural_gas_imports_Whyr, lca.NG_TO_CO2_EQ)
     GHG_WB_connected_tonCO2yr = calc_emissions_Whyr_to_tonCO2yr(sum_wet_biomass_imports_Whyr, lca.WETBIOMASS_TO_CO2_EQ)
     GHG_DB_connected_tonCO2yr = calc_emissions_Whyr_to_tonCO2yr(sum_dry_biomass_imports_Whyr, lca.DRYBIOMASS_TO_CO2_EQ)
-    GHG_GRID_imports_connected_tonCO2yr = calc_emissions_Whyr_to_tonCO2yr(sum_electricity_imports_Whyr,
-                                                                          lca.EL_TO_CO2_EQ)
-    GHG_GRID_exports_connected_tonCO2yr = - calc_emissions_Whyr_to_tonCO2yr(sum_electricity_exports_Whyr,
-                                                                            lca.EL_TO_CO2_EQ)
-
-    PEN_NG_connected_MJoilyr = calc_pen_Whyr_to_MJoilyr(sum_natural_gas_imports_Whyr, lca.NG_TO_OIL_EQ)
-    PEN_WB_connected_MJoilyr = calc_pen_Whyr_to_MJoilyr(sum_wet_biomass_imports_Whyr, lca.WETBIOMASS_TO_OIL_EQ)
-    PEN_DB_connected_MJoilyr = calc_pen_Whyr_to_MJoilyr(sum_dry_biomass_imports_Whyr, lca.DRYBIOMASS_TO_OIL_EQ)
-    PEN_GRID_imports_connected_MJoilyr = calc_pen_Whyr_to_MJoilyr(sum_electricity_imports_Whyr, lca.EL_TO_OIL_EQ)
-    PEN_GRID_exports_connected_MJoilyr = - calc_pen_Whyr_to_MJoilyr(sum_electricity_exports_Whyr, lca.EL_TO_OIL_EQ)
+    GHG_GRID_imports_connected_tonCO2yr = calc_emissions_Whyr_to_tonCO2yr(sum_el_imports_Whyr, lca.EL_TO_CO2_EQ)
+    GHG_GRID_exports_connected_tonCO2yr = - calc_emissions_Whyr_to_tonCO2yr(sum_el_exports_Whyr, lca.EL_TO_CO2_EQ)
 
     buildings_connected_emissions_primary_energy = {
         "GHG_NG_connected_tonCO2yr": GHG_NG_connected_tonCO2yr,
@@ -243,12 +228,6 @@ def calc_emissions_connected_buildings(sum_natural_gas_imports_W,
         "GHG_DB_connected_tonCO2yr": GHG_DB_connected_tonCO2yr,
         "GHG_GRID_imports_connected_tonCO2yr": GHG_GRID_imports_connected_tonCO2yr,
         "GHG_GRID_exports_connected_tonCO2yr": GHG_GRID_exports_connected_tonCO2yr,
-
-        "PEN_NG_connected_MJoilyr": PEN_NG_connected_MJoilyr,
-        "PEN_WB_connected_MJoilyr": PEN_WB_connected_MJoilyr,
-        "PEN_DB_connected_MJoilyr": PEN_DB_connected_MJoilyr,
-        "PEN_GRID_imports_connected_MJoilyr": PEN_GRID_imports_connected_MJoilyr,
-        "PEN_GRID_exports_connected_MJoilyr": PEN_GRID_exports_connected_MJoilyr
     }
 
     return buildings_connected_emissions_primary_energy
@@ -704,7 +683,8 @@ def calc_generation_costs_capacity_installed_heating(locator,
     if master_to_slave_vars.CC_on == 1:
         Capacity_CHP_NG_heat_W = master_to_slave_vars.CCGT_SIZE_W
         Capacity_CHP_NG_el_W = master_to_slave_vars.CCGT_SIZE_electrical_W
-        Capex_a_CHP_NG_USD, Opex_fixed_CHP_NG_USD, Capex_CHP_NG_USD = chp.calc_Cinv_CCGT(Capacity_CHP_NG_el_W, supply_systems.CCGT)
+        Capex_a_CHP_NG_USD, Opex_fixed_CHP_NG_USD, Capex_CHP_NG_USD = chp.calc_Cinv_CCGT(Capacity_CHP_NG_el_W,
+                                                                                         supply_systems.CCGT)
     else:
         Capacity_CHP_NG_heat_W = 0.0
         Capacity_CHP_NG_el_W = 0.0
@@ -1024,7 +1004,6 @@ def calc_costs_emissions_decentralized_DC(DCN_barcode, buildings_names_with_cool
     GHG_sys_disconnected_tonCO2yr = 0.0
     Capex_a_sys_disconnected_USD = 0.0
     Opex_var_sys_disconnected = 0.0
-    PEN_sys_disconnected_MJoilyr = 0.0
     Capex_total_sys_disconnected_USD = 0.0
     Opex_fixed_sys_disconnected_USD = 0.0
     capacity_installed_df = pd.DataFrame()
@@ -1034,7 +1013,6 @@ def calc_costs_emissions_decentralized_DC(DCN_barcode, buildings_names_with_cool
                                                                                                    configuration='AHU_ARU_SCU'))
             dfBest = df[df["Best configuration"] == 1]
             GHG_sys_disconnected_tonCO2yr += dfBest["GHG_tonCO2"].iloc[0]  # [ton CO2]
-            PEN_sys_disconnected_MJoilyr += dfBest["PEN_MJoil"].iloc[0]  # [MJ-oil-eq]
             Capex_total_sys_disconnected_USD += dfBest["Capex_total_USD"].iloc[0]
             Capex_a_sys_disconnected_USD += dfBest["Capex_a_USD"].iloc[0]
             Opex_var_sys_disconnected += dfBest["Opex_var_USD"].iloc[0]
@@ -1046,15 +1024,15 @@ def calc_costs_emissions_decentralized_DC(DCN_barcode, buildings_names_with_cool
                                  'Capacity_VCCHT_AS_cool_disconnected_W': dfBest["Capacity_VCCHT_AS_W"].iloc[0],
                                  'Capacity_ACH_SC_FP_cool_disconnected_W': dfBest["Capacity_ACH_SC_FP_W"].iloc[0],
                                  'Capaticy_ACH_SC_ET_cool_disconnected_W': dfBest["Capaticy_ACH_SC_ET_W"].iloc[0],
-                                 'Capacity_ACHHT_FP_cool_disconnected_W': dfBest["Capacity_ACHHT_FP_W"].iloc[0]}, index =[0])
+                                 'Capacity_ACHHT_FP_cool_disconnected_W': dfBest["Capacity_ACHHT_FP_W"].iloc[0]},
+                                index=[0])
             capacity_installed_df = pd.concat([capacity_installed_df, data], ignore_index=True)
 
     return GHG_sys_disconnected_tonCO2yr, \
-           PEN_sys_disconnected_MJoilyr, \
            Capex_total_sys_disconnected_USD, \
            Capex_a_sys_disconnected_USD, \
            Opex_var_sys_disconnected, \
-           Opex_fixed_sys_disconnected_USD,\
+           Opex_fixed_sys_disconnected_USD, \
            capacity_installed_df
 
 
@@ -1063,7 +1041,6 @@ def calc_costs_emissions_decentralized_DH(DHN_barcode, buildings_names_with_heat
     Capex_a_sys_disconnected_USD = 0.0
     CostDiscBuild = 0.0
     Opex_var_sys_disconnected = 0.0
-    PEN_sys_disconnected_MJoilyr = 0.0
     Capex_total_sys_disconnected_USD = 0.0
     Opex_fixed_sys_disconnected_USD = 0.0
     capacity_installed_df = pd.DataFrame()
@@ -1073,20 +1050,19 @@ def calc_costs_emissions_decentralized_DH(DHN_barcode, buildings_names_with_heat
             dfBest = df[df["Best configuration"] == 1]
             CostDiscBuild += dfBest["TAC_USD"].iloc[0]  # [USD]
             GHG_sys_disconnected_tonCO2yr += dfBest["GHG_tonCO2"].iloc[0]  # [ton CO2]
-            PEN_sys_disconnected_MJoilyr += dfBest["PEN_MJoil"].iloc[0]  # [MJ-oil-eq]
             Capex_total_sys_disconnected_USD += dfBest["Capex_total_USD"].iloc[0]
             Capex_a_sys_disconnected_USD += dfBest["Capex_a_USD"].iloc[0]
             Opex_var_sys_disconnected += dfBest["Opex_var_USD"].iloc[0]
             Opex_fixed_sys_disconnected_USD += dfBest["Opex_fixed_USD"].iloc[0]
 
             data = pd.DataFrame({'Name': building_name,
-                                 'Capacity_BaseBoiler_NG_heat_disconnected_W': dfBest["Capacity_BaseBoiler_NG_W"].iloc[0],
+                                 'Capacity_BaseBoiler_NG_heat_disconnected_W': dfBest["Capacity_BaseBoiler_NG_W"].iloc[
+                                     0],
                                  'Capacity_FC_NG_heat_disconnected_W': dfBest["Capacity_FC_NG_W"].iloc[0],
-                                 'Capacity_GS_HP_heat_disconnected_W': dfBest["Capacity_GS_HP_W"].iloc[0]}, index =[0])
+                                 'Capacity_GS_HP_heat_disconnected_W': dfBest["Capacity_GS_HP_W"].iloc[0]}, index=[0])
             capacity_installed_df = pd.concat([capacity_installed_df, data], ignore_index=True)
 
     return GHG_sys_disconnected_tonCO2yr, \
-           PEN_sys_disconnected_MJoilyr, \
            Capex_total_sys_disconnected_USD, \
            Capex_a_sys_disconnected_USD, \
            Opex_var_sys_disconnected, \
