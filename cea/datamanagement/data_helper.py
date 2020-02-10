@@ -137,7 +137,7 @@ def data_helper(locator,
 
     # get properties about types of HVAC systems
     if update_air_conditioning_systems_dbf:
-        construction_properties_hvac = pd.read_excel(locator.get_archetypes_properties(), 'air_conditioning')
+        construction_properties_hvac = pd.read_excel(locator.get_archetypes_properties(), 'AIR_CONDITIONING')
         construction_properties_hvac['Code'] = construction_properties_hvac.apply(
             lambda x: calc_code(x['building_use'], x['year_start'],
                                 x['year_end'], x['standard']), axis=1)
