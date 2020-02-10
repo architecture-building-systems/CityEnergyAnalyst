@@ -1,11 +1,11 @@
 Data Management:
 
-  - name: data-helper
+  - name: archetypes-mapper
     label: Archetypes Mapper
     description: Assign building properties and systems types from the Archetypes DataBase
     interfaces: [cli, arcgis, dashboard]
-    module: cea.datamanagement.data_helper
-    parameters: ['general:scenario', data-helper]
+    module: cea.datamanagement.archetypes_mapper
+    parameters: ['general:scenario', archetypes-mapper]
     input-files:
       - [get_zone_geometry]
       - [get_building_age]

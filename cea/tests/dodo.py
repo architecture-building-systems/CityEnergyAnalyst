@@ -165,12 +165,12 @@ def task_run_data_initializer():
 
 def task_run_data_helper():
     """Run the data helper for each reference case"""
-    import cea.datamanagement.data_helper
+    import cea.datamanagement.archetypes_mapper
 
     def run_data_helper(scenario_path):
         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         config.scenario = scenario_path
-        cea.datamanagement.data_helper.main(config)
+        cea.datamanagement.archetypes_mapper.main(config)
 
     for reference_case, scenario_path in REFERENCE_CASES.items():
         if _reference_cases and reference_case not in _reference_cases:

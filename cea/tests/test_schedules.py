@@ -14,7 +14,7 @@ import pandas as pd
 
 import cea.config
 from cea.constants import HOURS_IN_YEAR
-from cea.datamanagement.data_helper import calculate_average_multiuse, correct_archetype_areas, data_helper
+from cea.datamanagement.archetypes_mapper import calculate_average_multiuse, correct_archetype_areas, archetypes_mapper
 from cea.demand.building_properties import BuildingProperties
 from cea.demand.schedule_maker.schedule_maker import schedule_maker_main
 from cea.inputlocator import ReferenceCaseOpenLocator
