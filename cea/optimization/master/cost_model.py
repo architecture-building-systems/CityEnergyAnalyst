@@ -249,7 +249,7 @@ def summary_fuel_electricity_consumption(district_cooling_fuel_requirements_disp
     # dispatch, this is only for calculation of emissions purposes
     # it avoids double counting when calculating emissions due to decentralized buildings)
     sum_electricity_imports_W = (data['E_GRID_directload_W'] -
-                                 district_electricity_demands['E_hs_ww_req_disconnected_W'] -
+                                 district_electricity_demands['E_hs_ww_req_disconnected_W'].values -
                                  district_electricity_demands['E_cs_cre_cdata_req_disconnected_W'])
 
     sum_electricity_exports_W = (data['E_CHP_gen_export_W'] +
