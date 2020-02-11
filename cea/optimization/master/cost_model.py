@@ -210,17 +210,11 @@ def calc_emissions_connected_buildings(sum_natural_gas_imports_W,
                                        sum_electricity_exports_W,
                                        lca):
     # SUMMARIZE
-    sum_natural_gas_imports_Whyr = sum(sum_natural_gas_imports_W)
-    sum_wet_biomass_imports_Whyr = sum(sum_wet_biomass_imports_W)
-    sum_dry_biomass_imports_Whyr = sum(sum_dry_biomass_imports_W)
-    sum_el_imports_Whyr = sum(sum_electricity_imports_W)
-    sum_el_exports_Whyr = sum(sum_electricity_exports_W)
-
-    GHG_NG_connected_tonCO2yr = calc_emissions_Whyr_to_tonCO2yr(sum_natural_gas_imports_Whyr, lca.NG_TO_CO2_EQ)
-    GHG_WB_connected_tonCO2yr = calc_emissions_Whyr_to_tonCO2yr(sum_wet_biomass_imports_Whyr, lca.WETBIOMASS_TO_CO2_EQ)
-    GHG_DB_connected_tonCO2yr = calc_emissions_Whyr_to_tonCO2yr(sum_dry_biomass_imports_Whyr, lca.DRYBIOMASS_TO_CO2_EQ)
-    GHG_GRID_imports_connected_tonCO2yr = calc_emissions_Whyr_to_tonCO2yr(sum_el_imports_Whyr, lca.EL_TO_CO2_EQ)
-    GHG_GRID_exports_connected_tonCO2yr = - calc_emissions_Whyr_to_tonCO2yr(sum_el_exports_Whyr, lca.EL_TO_CO2_EQ)
+    GHG_NG_connected_tonCO2yr = sum(calc_emissions_Whyr_to_tonCO2yr(sum_natural_gas_imports_W, lca.NG_TO_CO2_EQ))
+    GHG_WB_connected_tonCO2yr = sum(calc_emissions_Whyr_to_tonCO2yr(sum_wet_biomass_imports_W, lca.WETBIOMASS_TO_CO2_EQ))
+    GHG_DB_connected_tonCO2yr = sum(calc_emissions_Whyr_to_tonCO2yr(sum_dry_biomass_imports_W, lca.DRYBIOMASS_TO_CO2_EQ))
+    GHG_GRID_imports_connected_tonCO2yr = sum(calc_emissions_Whyr_to_tonCO2yr(sum_electricity_imports_W, lca.EL_TO_CO2_EQ))
+    GHG_GRID_exports_connected_tonCO2yr = - sum(calc_emissions_Whyr_to_tonCO2yr(sum_electricity_exports_W, lca.EL_TO_CO2_EQ))
 
     buildings_connected_emissions_primary_energy = {
         "GHG_NG_connected_tonCO2yr": GHG_NG_connected_tonCO2yr,
