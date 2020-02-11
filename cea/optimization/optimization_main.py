@@ -65,9 +65,10 @@ def moo_optimization(locator, weather_file, config):
     # read total demand file and names and number of all buildings
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names_all = list(total_demand.Name.values)  # needs to be a list to avoid errors
-    lca = LcaCalculations(locator)
     supply_systems = SupplySystemsDatabase(locator)
     prices = Prices(supply_systems)
+    lca = LcaCalculations(supply_systems)
+
 
     # local flags
     if config.optimization.network_type == DH_ACRONYM:
