@@ -21,34 +21,37 @@ class SupplySystemsDatabase(object):
         :param cea.inputlocator.InputLocator locator: provides the path to the
         """
 
-        all_worksheets = self.read_excel(locator)
+        conversion_systems_worksheets,\
+        distribution_systems_worksheets,\
+        feedstocks_worksheets = self.read_excel(locator)
 
-        self.ALL_IN_ONE_SYSTEMS = all_worksheets["ALL_IN_ONE_SYSTEMS"]
-        self.FEEDSTOCKS = all_worksheets["FEEDSTOCKS"]
-        self.PV = all_worksheets["PV"]
-        self.SC = all_worksheets["SC"]
-        self.PVT = all_worksheets["PVT"]
-        self.Boiler = all_worksheets["Boiler"]
-        self.Furnace = all_worksheets["Furnace"]
-        self.FC = all_worksheets["FC"]
-        self.CCGT = all_worksheets["CCGT"]
-        self.Chiller = all_worksheets["Chiller"]
-        self.Absorption_chiller = all_worksheets["Absorption_chiller"]
-        self.CT = all_worksheets["CT"]
-        self.HEX = all_worksheets["HEX"]
-        self.BH = all_worksheets["BH"]
-        self.HP = all_worksheets["HP"]
-        self.TES = all_worksheets["TES"]
-        self.Pump = all_worksheets["Pump"]
-        self.PIPING = all_worksheets["PIPING"]
-        self.DETAILED_ELEC_COSTS = all_worksheets["DETAILED_ELEC_COSTS"]
+        self.FEEDSTOCKS = feedstocks_worksheets
+        self.PIPING = distribution_systems_worksheets["THERMAL_GRID"]
+        self.ALL_IN_ONE_SYSTEMS = conversion_systems_worksheets["ALL_IN_ONE_SYSTEMS"]
+        self.PV = conversion_systems_worksheets["PV"]
+        self.SC = conversion_systems_worksheets["SC"]
+        self.PVT = conversion_systems_worksheets["PVT"]
+        self.Boiler = conversion_systems_worksheets["Boiler"]
+        self.Furnace = conversion_systems_worksheets["Furnace"]
+        self.FC = conversion_systems_worksheets["FC"]
+        self.CCGT = conversion_systems_worksheets["CCGT"]
+        self.Chiller = conversion_systems_worksheets["Chiller"]
+        self.Absorption_chiller = conversion_systems_worksheets["Absorption_chiller"]
+        self.CT = conversion_systems_worksheets["CT"]
+        self.HEX = conversion_systems_worksheets["HEX"]
+        self.BH = conversion_systems_worksheets["BH"]
+        self.HP = conversion_systems_worksheets["HP"]
+        self.TES = conversion_systems_worksheets["TES"]
+        self.Pump = conversion_systems_worksheets["Pump"]
 
     def read_excel(self, locator):
         """Read in the excel file, using the cache _locators"""
         global _locators
         if locator in _locators:
-            all_worksheets = _locators[locator]
+            conversion_systems_worksheets, distribution_systems_worksheets, feedstocks_worksheets = _locators[locator]
         else:
-            all_worksheets = pd.read_excel(locator.get_database_supply_systems(), sheet_name=None)
-            _locators[locator] = all_worksheets
-        return all_worksheets
+            conversion_systems_worksheets = pd.read_excel(locator.get_database_conversion_systems(), sheet_name=None)
+            distribution_systems_worksheets = pd.read_excel(locator.get_database_distribution_systems(), sheet_name=None)
+            feedstocks_worksheets = pd.read_excel(locator.get_database_feedstocks(), sheet_name=None)
+            _locators[locator] = conversion_systems_worksheets, distribution_systems_worksheets, feedstocks_worksheets
+        return conversion_systems_worksheets, distribution_systems_worksheets, feedstocks_worksheets
