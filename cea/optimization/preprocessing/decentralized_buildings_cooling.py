@@ -646,7 +646,7 @@ def main(config):
     supply_systems = SupplySystemsDatabase(locator)
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = total_demand.Name
-    prices = Prices(supply_systems, config.optimization.detailed_electricity_pricing)
+    prices = Prices(supply_systems)
     lca = LcaCalculations(locator)
     disconnected_buildings_cooling_main(locator, building_names, total_demand, config, prices, lca)
 
