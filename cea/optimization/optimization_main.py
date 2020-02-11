@@ -67,7 +67,7 @@ def moo_optimization(locator, weather_file, config):
     building_names_all = list(total_demand.Name.values)  # needs to be a list to avoid errors
     lca = LcaCalculations(locator)
     supply_systems = SupplySystemsDatabase(locator)
-    prices = Prices(supply_systems, config.optimization.detailed_electricity_pricing)
+    prices = Prices(supply_systems)
 
     # local flags
     if config.optimization.network_type == DH_ACRONYM:
