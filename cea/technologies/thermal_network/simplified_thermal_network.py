@@ -293,7 +293,7 @@ def thermal_network_simplified(locator, config, network_name):
     results = sim.run_sim()
     max_volume_flow_rates_m3s = results.link['flowrate'].abs().max()
     pipe_names = max_volume_flow_rates_m3s.index.values
-    pipe_catalog = pd.read_excel(locator.get_database_supply_systems(), sheet_name='PIPING')
+    pipe_catalog = pd.read_excel(locator.get_database_distribution_systems(), sheet_name='THERMAL_GRID')
     Pipe_DN, D_ext_m, D_int_m, D_ins_m = zip(
         *[calc_max_diameter(flow, pipe_catalog, velocity_ms=velocity_ms, peak_load_percentage=peak_load_percentage) for
           flow in max_volume_flow_rates_m3s])
