@@ -48,8 +48,7 @@ def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
     supply_systems = SupplySystemsDatabase(locator)
     total_demand = pd.read_csv(locator.get_total_demand())
-    detailed_electricity_pricing = config.decentralized.detailed_electricity_pricing
-    prices = Prices(supply_systems, detailed_electricity_pricing)
+    prices = Prices(supply_systems)
     lca = LcaCalculations(locator)
     disconnected_building_main(locator=locator,  total_demand=total_demand,
                                config=config, prices=prices, lca=lca)
