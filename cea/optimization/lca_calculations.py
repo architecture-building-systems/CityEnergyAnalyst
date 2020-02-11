@@ -22,18 +22,9 @@ __status__ = "Production"
 
 
 class LcaCalculations(object):
-    def __init__(self, locator):
-        resources_lca = pd.read_excel(locator.get_database_conversion_systems(), sheet_name="FEEDSTOCKS")
-        resources_lca.set_index('code', inplace=True)
-
-        # Natural gas
-        self.NG_TO_CO2_EQ = resources_lca.loc['NATURALGAS']['CO2']
-
-        # Drybiomass
-        self.DRYBIOMASS_TO_CO2_EQ = resources_lca.loc['DRYBIOMASS']['CO2']
-
-        # WetBiomass
-        self.WETBIOMASS_TO_CO2_EQ = resources_lca.loc['WETBIOMASS']['CO2']
-
-        # Electricity MJ/MJoil and kg/MJ
-        self.EL_TO_CO2_EQ = resources_lca.loc['GRID']['CO2']
+    def __init__(self, supply_systems):
+        pricing = supply_systems.FEEDSTOCKS
+        self.NG_TO_CO2_EQ = list(pricing['NATURALGAS']['CO2']) * 365  # in kgCo2/MJ for every hour of a year
+        self.WETBIOMASS_TO_CO2_EQ = list(pricing['WETBIOMASS']['CO2']) * 365  # in kgCo2/MJ for every hour of a year
+        self.DRYBIOMASS_TO_CO2_EQ = list(pricing['DRYBIOMASS']['CO2']) * 365  # in kgCo2/MJ for every hour of a year
+        self.EL_TO_CO2_EQ = list(pricing['GRID']['CO2']) * 365  # in kgCo2/MJ for every hour of a year
