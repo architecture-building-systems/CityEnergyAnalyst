@@ -13,7 +13,7 @@ from itertools import repeat
 
 import cea.config
 import cea.inputlocator
-from cea.optimization.master.emissions_model import calc_emissions_Whyr_to_tonCO2yr, calc_pen_Whyr_to_MJoilyr
+from cea.optimization.master.emissions_model import calc_emissions_Whyr_to_tonCO2yr
 import cea.technologies.boiler as boiler
 import cea.technologies.burner as burner
 import cea.technologies.chiller_absorption as chiller_absorption
