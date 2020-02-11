@@ -19,22 +19,15 @@ __status__ = "Production"
 
 
 class Prices(object):
-    def __init__(self, supply_systems, detailed_electricity_pricing):
+    def __init__(self, supply_systems):
         pricing = supply_systems.FEEDSTOCKS
-        self.NG_PRICE = pricing[pricing['code'] == 'NATURALGAS'].iloc[0]['Opex_var_buy_USD2015perkWh'] / 1000 # in USD/Wh
-        self.BG_PRICE = pricing[pricing['code'] == 'BIOGAS'].iloc[0]['Opex_var_buy_USD2015perkWh']  / 1000# in USD/Wh
-        self.WB_PRICE = pricing[pricing['code'] == 'WETBIOMASS'].iloc[0]['Opex_var_buy_USD2015perkWh']  / 1000# in USD/Wh
-        self.DB_PRICE = pricing[pricing['code'] == 'DRYBIOMASS'].iloc[0]['Opex_var_buy_USD2015perkWh'] / 1000 # in USD/Wh
-        self.SOLAR_PRICE = pricing[pricing['code'] == 'SOLAR'].iloc[0]['Opex_var_buy_USD2015perkWh']  / 1000# in USD/Wh
-        self.SOLAR_PRICE_EXPORT = pricing[pricing['code'] == 'SOLAR'].iloc[0]['Opex_var_sell_USD2015perkWh'] / 1000 # in USD/Wh
+        self.NG_PRICE = pricing['NATURALGAS']['Opex_var_buy_USD2015perkWh'] / 1000 # in USD/Wh
+        self.BG_PRICE = pricing['BIOGAS']['Opex_var_buy_USD2015perkWh']  / 1000# in USD/Wh
+        self.WB_PRICE = pricing['WETBIOMASS']['Opex_var_buy_USD2015perkWh']  / 1000# in USD/Wh
+        self.DB_PRICE = pricing['DRYBIOMASS']['Opex_var_buy_USD2015perkWh'] / 1000 # in USD/Wh
+        self.SOLAR_PRICE = pricing['SOLAR']['Opex_var_buy_USD2015perkWh']  / 1000# in USD/Wh
+        self.SOLAR_PRICE_EXPORT = pricing['SOLAR']['Opex_var_sell_USD2015perkWh'] / 1000 # in USD/Wh
+        self.ELEC_PRICE = pricing['GRID']['Opex_var_buy_USD2015perkWh'].values / 1000  # in USD_2015 per Wh
+        self.ELEC_PRICE_EXPORT = pricing['GRID']['Opex_var_sell_USD2015perkWh'].values / 1000  # in USD_2015 per Wh
 
-        if detailed_electricity_pricing:
-            electricity_costs = supply_systems.DETAILED_ELEC_COSTS
-            self.ELEC_PRICE = electricity_costs['Opex_var_buy_USD2015perkWh'].values / 1000  # in USD_2015 per Wh
-            self.ELEC_PRICE_EXPORT = electricity_costs['Opex_var_sell_USD2015perkWh'].values / 1000  # in USD_2015 per Wh
-        else:
-            average_electricity_price = pricing[pricing['code'] == 'GRID'].iloc[0]['Opex_var_buy_USD2015perkWh'] / 1000
-            average_electricity_selling_price = pricing[pricing['code'] == 'GRID'].iloc[0]['Opex_var_sell_USD2015perkWh'] / 1000
-            self.ELEC_PRICE = np.ones(HOURS_IN_YEAR) * average_electricity_price  # in USD_2015 per Wh
-            self.ELEC_PRICE_EXPORT = np.ones(HOURS_IN_YEAR) * average_electricity_selling_price  # in USD_2015 per Wh
 
