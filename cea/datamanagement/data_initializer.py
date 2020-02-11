@@ -26,7 +26,7 @@ __status__ = "Production"
 def data_initializer(locator,
                      databases_path,
                      initialize_archetypes_database=True,
-                     initialize_lca_database=True,
+                     initialize_feedstocks_database=True,
                      initialize_systems_database=True,
                      ):
 
@@ -42,10 +42,10 @@ def data_initializer(locator,
         except:
             raise Exception("we could not find the 'archetypes' database in the path you indicated, please check the spelling")
 
-    if initialize_lca_database:
+    if initialize_feedstocks_database:
         try:
-            complete_databases_path = os.path.join(databases_path, 'lifecycle')
-            complete_output_directory = locator.get_databases_lifecycle_folder()
+            complete_databases_path = os.path.join(databases_path, 'feedstocks')
+            complete_output_directory = locator.get_databases_feedstocks_folder()
             copy_tree(complete_databases_path, complete_output_directory)
         except:
             raise Exception("we could not find the 'lifecycle' database in the path you indicated, please check the spelling")
@@ -70,13 +70,13 @@ def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
 
     initialize_archetypes_database = 'archetypes' in config.data_initializer.databases
-    initialize_lca_database = 'lifecycle' in config.data_initializer.databases
+    initialize_feedstocks_database = 'feedstocks' in config.data_initializer.databases
     initialize_systems_database = 'systems' in config.data_initializer.databases
 
     data_initializer(locator=locator,
                      databases_path=config.data_initializer.databases_path,
                      initialize_archetypes_database=initialize_archetypes_database,
-                     initialize_lca_database=initialize_lca_database,
+                     initialize_feedstocks_database=initialize_feedstocks_database,
                      initialize_systems_database=initialize_systems_database
                      )
 
