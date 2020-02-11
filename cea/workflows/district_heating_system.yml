@@ -48,13 +48,10 @@
     network-type: DH
     network-model: simplified
 - script: decentralized
-  parameters:
-    detailed-electricity-pricing: false
 - script: optimization
   parameters:
     district-heating-network: true
     district-cooling-network: false
-    detailed-electricity-pricing: false
     number-of-generations: 2
     population-size: 5
     random-seed: 100
