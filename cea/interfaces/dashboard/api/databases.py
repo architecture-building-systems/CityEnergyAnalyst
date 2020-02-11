@@ -34,10 +34,20 @@ DATABASES = OrderedDict([
             "file_ext": ".xls",
             "schema_key": "get_database_envelope_systems"
         },
-        "supply_systems": {
+        "conversion_systems": {
             "file_ext": ".xls",
-            "schema_key": "get_database_supply_systems"
+            "schema_key": "get_database_conversion_systems"
+        },
+        "distribution_systems": {
+            "file_ext": ".xls",
+            "schema_key": "get_database_distribution_systems"
         }
+    }),
+    ("feedstocks", {
+        "feedstocks": {
+            "file_ext": ".xls",
+            "schema_key": "get_database_feedstocks"
+        },
     })
 ])
 
