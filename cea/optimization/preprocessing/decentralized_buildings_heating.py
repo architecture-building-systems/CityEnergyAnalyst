@@ -10,14 +10,14 @@ import numpy as np
 import pandas as pd
 from geopandas import GeoDataFrame as Gdf
 from itertools import repeat
-from cea.optimization.master.emissions_model import calc_emissions_Whyr_to_tonCO2yr, calc_pen_Whyr_to_MJoilyr
+from cea.optimization.master.emissions_model import calc_emissions_Whyr_to_tonCO2yr
 import cea.technologies.boiler as Boiler
 import cea.technologies.cogeneration as FC
 import cea.technologies.heatpumps as HP
 import cea.technologies.substation as substation
 import cea.utilities.parallel
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
-from cea.optimization.constants import Q_LOSS_DISCONNECTED, GHP_A, GHP_HMAX_SIZE
+from cea.optimization.constants import GHP_A, GHP_HMAX_SIZE
 from cea.resources.geothermal import calc_ground_temperature
 from cea.utilities import dbf
 from cea.utilities import epwreader
