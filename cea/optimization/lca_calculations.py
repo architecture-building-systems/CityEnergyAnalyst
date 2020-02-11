@@ -7,7 +7,7 @@ from __future__ import division
 
 import warnings
 
-import pandas as pd
+import numpy as np
 
 warnings.filterwarnings("ignore")
 
@@ -23,8 +23,8 @@ __status__ = "Production"
 
 class LcaCalculations(object):
     def __init__(self, supply_systems):
-        pricing = supply_systems.FEEDSTOCKS
-        self.NG_TO_CO2_EQ = list(pricing['NATURALGAS']['CO2']) * 365  # in kgCo2/MJ for every hour of a year
-        self.WETBIOMASS_TO_CO2_EQ = list(pricing['WETBIOMASS']['CO2']) * 365  # in kgCo2/MJ for every hour of a year
-        self.DRYBIOMASS_TO_CO2_EQ = list(pricing['DRYBIOMASS']['CO2']) * 365  # in kgCo2/MJ for every hour of a year
-        self.EL_TO_CO2_EQ = list(pricing['GRID']['CO2']) * 365  # in kgCo2/MJ for every hour of a year
+        feedstocks = supply_systems.FEEDSTOCKS
+        self.NG_TO_CO2_EQ = np.tile(feedstocks['NATURALGAS']['CO2'].values, 365)  # in kgCo2/MJ for every hour of a year
+        self.WETBIOMASS_TO_CO2_EQ = np.tile(feedstocks['WETBIOMASS']['CO2'].values, 365) # in kgCo2/MJ for every hour of a year
+        self.DRYBIOMASS_TO_CO2_EQ = np.tile(feedstocks['DRYBIOMASS']['CO2'].values, 365) # in kgCo2/MJ for every hour of a year
+        self.EL_TO_CO2_EQ = np.tile(feedstocks['GRID']['CO2'].values, 365) # in kgCo2/MJ for every hour of a year
