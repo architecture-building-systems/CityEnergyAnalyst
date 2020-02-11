@@ -142,7 +142,7 @@ Energy potentials:
       - [get_radiation_metadata, building_name]
       - [get_zone_geometry]
       - [get_radiation_building, building_name]
-      - [get_database_supply_systems]
+      - [get_database_conversion_systems]
       - [get_weather_file]
 
   - name: photovoltaic
@@ -158,7 +158,7 @@ Energy potentials:
       - [get_radiation_metadata, building_name]
       - [get_zone_geometry]
       - [get_radiation_building, building_name]
-      - [get_database_supply_systems]
+      - [get_database_conversion_systems]
       - [get_weather_file]
 
   - name: sewage-potential
@@ -184,7 +184,7 @@ Energy potentials:
       - [get_radiation_metadata, building_name]
       - [get_zone_geometry]
       - [get_radiation_building, building_name]
-      - [get_database_supply_systems]
+      - [get_database_conversion_systems]
       - [get_weather_file]
 
 Networks:
@@ -211,7 +211,7 @@ Networks:
     input-files:
       - [get_network_layout_nodes_shapefile, "thermal-network:network-type"]
       - [get_demand_results_file, building_name]
-      - [get_database_supply_systems]
+      - [get_database_conversion_systems]
       - [get_weather_file]
 
 Optimization:
