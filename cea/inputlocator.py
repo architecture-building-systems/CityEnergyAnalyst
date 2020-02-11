@@ -54,8 +54,8 @@ class InputLocator(object):
     def get_databases_archetypes_folder(self):
         return os.path.join(self.get_databases_folder(), 'archetypes')
 
-    def get_databases_lifecycle_folder(self):
-        return os.path.join(self.get_databases_folder(), 'lifecycle')
+    def get_databases_feedstocks_folder(self):
+        return os.path.join(self.get_databases_folder(), 'feedstocks')
 
     def get_databases_systems_folder(self):
         return os.path.join(self.get_databases_folder(), 'systems')
@@ -598,10 +598,20 @@ class InputLocator(object):
         """
         return os.path.join(self.get_databases_folder(), 'systems', 'seasonality.xlsx')
 
-    def get_database_supply_systems(self):
+    def get_database_conversion_systems(self):
         """Returns the database of supply systems for cost analysis. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return os.path.join(self.get_databases_folder(), 'systems', 'supply_systems.xls')
+        return os.path.join(self.get_databases_folder(), 'systems', 'conversion_systems.xls')
+
+    def get_database_distribution_systems(self):
+        """Returns the database of supply systems for cost analysis. These are copied
+        to the scenario if they are not yet present, based on the configured region for the scenario."""
+        return os.path.join(self.get_databases_folder(), 'systems', 'distribution_systems.xls')
+
+    def get_database_feedstocks(self):
+        """Returns the database of supply systems for cost analysis. These are copied
+        to the scenario if they are not yet present, based on the configured region for the scenario."""
+        return os.path.join(self.get_databases_folder(), 'feedstocks', 'feedstocks.xls')
 
     def get_database_air_conditioning_systems(self):
         old_file_path = os.path.join(self.get_databases_folder(), 'systems', 'emission_systems.xls')
