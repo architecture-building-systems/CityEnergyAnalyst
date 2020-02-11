@@ -24,6 +24,7 @@ class AnnualEmissionsPlot(cea.plots.optimization.GenerationPlotBase):
         'normalization': 'plots-optimization:normalization',
         'scenario-name': 'general:scenario-name',
     }
+
     def __init__(self, project, parameters, cache):
         super(AnnualEmissionsPlot, self).__init__(project, parameters, cache)
         self.analysis_fields = ["GHG_sys_connected_tonCO2",
@@ -32,6 +33,7 @@ class AnnualEmissionsPlot(cea.plots.optimization.GenerationPlotBase):
         self.normalization = self.parameters['normalization']
         self.input_files = [(self.locator.get_optimization_generation_total_performance, [self.generation])]
         self.titley = self.calc_titles()
+        self.data_clean = None
 
     def calc_titles(self):
         if self.normalization == "gross floor area":
@@ -45,10 +47,12 @@ class AnnualEmissionsPlot(cea.plots.optimization.GenerationPlotBase):
         else:
             titley = 'Annual emissions [ton CO2-eq/yr]'
         return titley
+
     @property
     def title(self):
         if self.normalization != "none":
-            return "Annual emissions for generation {generation} normalized to {normalized}".format(generation=self.generation, normalized=self.normalization)
+            return "Annual emissions for generation {generation} normalized to {normalized}".format(
+                generation=self.generation, normalized=self.normalization)
         else:
             return "Annual emissions for generation {generation}".format(generation=self.generation)
 
@@ -61,12 +65,17 @@ class AnnualEmissionsPlot(cea.plots.optimization.GenerationPlotBase):
     @property
     def layout(self):
         return go.Layout(barmode='relative',
-                         yaxis=dict(title=self.titley))
+                         yaxis=dict(title=self.titley),
+                         xaxis=dict(categoryorder='array',
+                                    categoryarray=[x for _, x in sorted(
+                                        zip(self.data_clean['TAC_sys_USD'], self.data_clean['individual_name']))])
+                         )
 
     def calc_graph(self):
         self.multi_criteria = False  # TODO: add capabilities to plot muticriteria in this plot too
         data = self.process_generation_total_performance_pareto()
         data = self.normalize_data(data, self.normalization, self.analysis_fields)
+        self.data_clean = data
         graph = []
         for field in self.analysis_fields:
             y = data[field].values
@@ -85,8 +94,7 @@ def main():
     import cea.plots.cache
     config = cea.config.Configuration()
     cache = cea.plots.cache.NullPlotCache()
-    locator = cea.inputlocator.InputLocator(config.scenario)
-    # cache = cea.plots.cache.PlotCache(config.project)
+
     AnnualEmissionsPlot(config.project,
                         {'buildings': None,
                          'scenario-name': config.scenario_name,
