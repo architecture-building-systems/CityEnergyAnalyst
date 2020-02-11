@@ -87,7 +87,6 @@ def disconnected_heating_for_building(building_name, supply_systems, T_ground_K,
     Capex_opex_a_fixed_only_USD = np.zeros((13, 7))
     Opex_a_USD = np.zeros((13, 7))
     GHG_tonCO2 = np.zeros((13, 7))
-    PEN_MJoil = np.zeros((13, 7))
     # indicate supply technologies for each configuration
     Opex_a_var_USD[0][0] = 1  # Boiler NG
     Opex_a_var_USD[1][1] = 1  # Boiler BG
@@ -111,7 +110,6 @@ def disconnected_heating_for_building(building_name, supply_systems, T_ground_K,
     # add costs
     Opex_a_var_USD[0][4] += sum(prices.NG_PRICE * Qgas_to_Boiler_Wh)  # CHF
     GHG_tonCO2[0][5] += sum(calc_emissions_Whyr_to_tonCO2yr(Qgas_to_Boiler_Wh, lca.NG_TO_CO2_EQ))  # ton CO2
-    PEN_MJoil[0][6] += sum(calc_pen_Whyr_to_MJoilyr(Qgas_to_Boiler_Wh, lca.NG_TO_OIL_EQ))  # MJ-oil-eq
     # add activation
     resourcesRes[0][0] += sum(q_load_Wh)  # q from NG
     heating_dispatch[0] = {'Q_Boiler_gen_directload_W': q_load_Wh,
@@ -122,7 +120,6 @@ def disconnected_heating_for_building(building_name, supply_systems, T_ground_K,
     # add costs
     Opex_a_var_USD[1][4] += sum(prices.BG_PRICE * Qgas_to_Boiler_Wh)  # CHF
     GHG_tonCO2[1][5] += sum(calc_emissions_Whyr_to_tonCO2yr(Qgas_to_Boiler_Wh, lca.NG_TO_CO2_EQ))  # ton CO2
-    PEN_MJoil[1][6] += sum(calc_pen_Whyr_to_MJoilyr(Qgas_to_Boiler_Wh, lca.NG_TO_OIL_EQ))  # MJ-oil-eq
     # add activation
     resourcesRes[1][1] += sum(q_load_Wh)  # q from BG
     heating_dispatch[1] = {'Q_Boiler_gen_directload_W': q_load_Wh,
@@ -142,8 +139,6 @@ def disconnected_heating_for_building(building_name, supply_systems, T_ground_K,
     GHG_tonCO2[2][5] += sum(GHG_tonCO2_from_FC)  # tonCO2
     # Bloom box emissions within the FC: 773 lbs / MWh_el (and 1 lbs = 0.45 kg)
     # http://www.carbonlighthouse.com/2011/09/16/bloom-box/
-    PEN_MJoil_from_FC = 1.51 * Qgas_to_FC_Wh * 3600E-6 - lca.EL_TO_OIL_EQ * el_from_FC_Wh * 3600E-6
-    PEN_MJoil[2][6] += sum(PEN_MJoil_from_FC)  # MJ-oil-eq
     # add activation
     resourcesRes[2][0] = sum(q_load_Wh)  # q from NG
     resourcesRes[2][2] = sum(el_from_FC_Wh)  # el for GHP # FIXME: el from FC
@@ -191,12 +186,10 @@ def disconnected_heating_for_building(building_name, supply_systems, T_ground_K,
         el_total_Wh = el_GHP_Wh
         Opex_a_var_USD[3 + i][4] += sum(prices.ELEC_PRICE * el_total_Wh)  # CHF
         GHG_tonCO2[3 + i][5] += sum(calc_emissions_Whyr_to_tonCO2yr(el_total_Wh, lca.EL_TO_CO2_EQ))  # ton CO2
-        PEN_MJoil[3 + i][6] += sum(calc_pen_Whyr_to_MJoilyr(el_total_Wh, lca.EL_TO_OIL_EQ))  # MJ-oil-eq
         # gas
         Q_gas_total_Wh = Qgas_to_GHPBoiler_Wh + Qgas_to_Boiler_Wh
         Opex_a_var_USD[3 + i][4] += sum(prices.NG_PRICE * Q_gas_total_Wh)  # CHF
         GHG_tonCO2[3 + i][5] += sum(calc_emissions_Whyr_to_tonCO2yr(Q_gas_total_Wh, lca.NG_TO_CO2_EQ))  # ton CO2
-        PEN_MJoil[3 + i][6] += sum(calc_pen_Whyr_to_MJoilyr(Q_gas_total_Wh, lca.NG_TO_OIL_EQ))  # MJ-oil-eq
         # add activation
         resourcesRes[3 + i][0] = sum(qhot_missing_Wh + q_load_NG_Boiler_Wh)
         resourcesRes[3 + i][2] = sum(el_GHP_Wh)
@@ -269,16 +262,13 @@ def disconnected_heating_for_building(building_name, supply_systems, T_ground_K,
     indexBest = 0
     TAC_USD = np.zeros((13, 2))
     TotalCO2 = np.zeros((13, 2))
-    TotalPrim = np.zeros((13, 2))
     for i in range(13):
-        TAC_USD[i][0] = TotalCO2[i][0] = TotalPrim[i][0] = i
+        TAC_USD[i][0] = TotalCO2[i][0]  = i
         Opex_a_USD[i][1] = Opex_a_fixed_USD[i][0] + + Opex_a_var_USD[i][4]
         TAC_USD[i][1] = Capex_opex_a_fixed_only_USD[i][0] + Opex_a_var_USD[i][4]
         TotalCO2[i][1] = GHG_tonCO2[i][5]
-        TotalPrim[i][1] = PEN_MJoil[i][6]
     CostsS = TAC_USD[np.argsort(TAC_USD[:, 1])]
     CO2S = TotalCO2[np.argsort(TotalCO2[:, 1])]
-    PrimS = TotalPrim[np.argsort(TotalPrim[:, 1])]
     el = len(CostsS)
     rank = 0
     Bestfound = False
@@ -298,7 +288,6 @@ def disconnected_heating_for_building(building_name, supply_systems, T_ground_K,
 
         optsearch[int(CostsS[rank][0])] -= 1
         optsearch[int(CO2S[rank][0])] -= 1
-        optsearch[int(PrimS[rank][0])] -= 1
 
         if np.count_nonzero(optsearch) != el:
             Bestfound = True
@@ -319,7 +308,6 @@ def disconnected_heating_for_building(building_name, supply_systems, T_ground_K,
         "Opex_fixed_USD": Opex_a_fixed_USD[:, 0],
         "Opex_var_USD": Opex_a_var_USD[:, 4],
         "GHG_tonCO2": GHG_tonCO2[:, 5],
-        "PEN_MJoil": PEN_MJoil[:, 6],
         "Best configuration": Best[:, 0]}
     results_to_csv = pd.DataFrame(performance_results)
     fName_result = locator.get_optimization_decentralized_folder_building_result_heating(building_name)
