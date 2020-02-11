@@ -186,9 +186,9 @@ def calc_variable_costs_connected_buildings(sum_natural_gas_imports_W,
                                             prices,
                                             ):
     # COSTS
-    Opex_var_NG_sys_connected_USD = sum(sum_natural_gas_imports_W) * prices.NG_PRICE
-    Opex_var_WB_sys_connected_USD = sum(sum_wet_biomass_imports_W) * prices.WB_PRICE
-    Opex_var_DB_sys_connected_USD = sum(sum_dry_biomass_imports_W) * prices.DB_PRICE
+    Opex_var_NG_sys_connected_USD = sum(sum_natural_gas_imports_W * prices.NG_PRICE)
+    Opex_var_WB_sys_connected_USD = sum(sum_wet_biomass_imports_W * prices.WB_PRICE)
+    Opex_var_DB_sys_connected_USD = sum(sum_dry_biomass_imports_W * prices.DB_PRICE)
     Opex_var_GRID_buy_sys_connected_USD = sum(sum_electricity_imports_W * prices.ELEC_PRICE)
     Opex_var_GRID_sell_sys_connected_USD = -sum(sum_electricity_exports_W * prices.ELEC_PRICE_EXPORT)
 
@@ -243,7 +243,7 @@ def summary_fuel_electricity_consumption(district_cooling_fuel_requirements_disp
 
     sum_wet_biomass_imports_W = data['WB_Furnace_req_W']
 
-    sum_dry_biomass_imports_W = (data['DB_Furnace_req_W'])
+    sum_dry_biomass_imports_W = data['DB_Furnace_req_W']
 
     # discount those of disconnected buildings (which are part of the directload
     # dispatch, this is only for calculation of emissions purposes
