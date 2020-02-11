@@ -1668,7 +1668,157 @@ get_database_standard_schedules_use:
       sample_data: 0.8
       types_found: [float, null]
   used_by: [archetypes_mapper]
-get_database_supply_systems:
+get_database_feedstocks:
+  created_by: []
+  file_path: inputs/technology/feedstocks/feedstocks.xls
+  file_type: xls
+  schema:
+    NATURALGAS:
+      CO2:
+        sample_data: 0.0075
+        types_found: [float]
+      Opex_var_buy_USD2015perkWh:
+        sample_data: 0.20800000000000002
+        types_found: [float]
+      Opex_var_sell_USD2015perkWh:
+        sample_data: 0.20800000000000002
+        types_found: [float]
+      hour:
+        sample_data: 0
+        types_found: [int]
+      reference:
+        sample_data: KBOB 2009/1:2016, ID 42.001 Kehrichtverbrennung, cost from CEA
+        types_found: [string, null]
+    BIOGAS:
+      CO2:
+        sample_data: 0.0075
+        types_found: [float]
+      Opex_var_buy_USD2015perkWh:
+        sample_data: 0.20800000000000002
+        types_found: [float]
+      Opex_var_sell_USD2015perkWh:
+        sample_data: 0.20800000000000002
+        types_found: [float]
+      hour:
+        sample_data: 0
+        types_found: [int]
+      reference:
+        sample_data: KBOB 2009/1:2016, ID 42.001 Kehrichtverbrennung, cost from CEA
+        types_found: [string, null]
+    GRID:
+      CO2:
+        sample_data: 0.0075
+        types_found: [float]
+      Opex_var_buy_USD2015perkWh:
+        sample_data: 0.20800000000000002
+        types_found: [float]
+      Opex_var_sell_USD2015perkWh:
+        sample_data: 0.20800000000000002
+        types_found: [float]
+      hour:
+        sample_data: 0
+        types_found: [int]
+      reference:
+        sample_data: KBOB 2009/1:2016, ID 42.001 Kehrichtverbrennung, cost from CEA
+        types_found: [string, null]
+    SOLAR:
+      CO2:
+        sample_data: 0.0075
+        types_found: [float]
+      Opex_var_buy_USD2015perkWh:
+        sample_data: 0.20800000000000002
+        types_found: [float]
+      Opex_var_sell_USD2015perkWh:
+        sample_data: 0.20800000000000002
+        types_found: [float]
+      hour:
+        sample_data: 0
+        types_found: [int]
+      reference:
+        sample_data: KBOB 2009/1:2016, ID 42.001 Kehrichtverbrennung, cost from CEA
+        types_found: [string, null]
+    OIL:
+      CO2:
+        sample_data: 0.0075
+        types_found: [float]
+      Opex_var_buy_USD2015perkWh:
+        sample_data: 0.20800000000000002
+        types_found: [float]
+      Opex_var_sell_USD2015perkWh:
+        sample_data: 0.20800000000000002
+        types_found: [float]
+      hour:
+        sample_data: 0
+        types_found: [int]
+      reference:
+        sample_data: KBOB 2009/1:2016, ID 42.001 Kehrichtverbrennung, cost from CEA
+        types_found: [string, null]
+    COAL:
+      CO2:
+        sample_data: 0.0075
+        types_found: [float]
+      Opex_var_buy_USD2015perkWh:
+        sample_data: 0.20800000000000002
+        types_found: [float]
+      Opex_var_sell_USD2015perkWh:
+        sample_data: 0.20800000000000002
+        types_found: [float]
+      hour:
+        sample_data: 0
+        types_found: [int]
+      reference:
+        sample_data: KBOB 2009/1:2016, ID 42.001 Kehrichtverbrennung, cost from CEA
+        types_found: [string, null]
+    WOOD:
+      CO2:
+        sample_data: 0.0075
+        types_found: [float]
+      Opex_var_buy_USD2015perkWh:
+        sample_data: 0.20800000000000002
+        types_found: [float]
+      Opex_var_sell_USD2015perkWh:
+        sample_data: 0.20800000000000002
+        types_found: [float]
+      hour:
+        sample_data: 0
+        types_found: [int]
+      reference:
+        sample_data: KBOB 2009/1:2016, ID 42.001 Kehrichtverbrennung, cost from CEA
+        types_found: [string, null]
+    WETBIOMASS:
+      CO2:
+        sample_data: 0.0075
+        types_found: [float]
+      Opex_var_buy_USD2015perkWh:
+        sample_data: 0.20800000000000002
+        types_found: [float]
+      Opex_var_sell_USD2015perkWh:
+        sample_data: 0.20800000000000002
+        types_found: [float]
+      hour:
+        sample_data: 0
+        types_found: [int]
+      reference:
+        sample_data: KBOB 2009/1:2016, ID 42.001 Kehrichtverbrennung, cost from CEA
+        types_found: [string, null]
+    DRYBIOMASS:
+      CO2:
+        sample_data: 0.0075
+        types_found: [float]
+      Opex_var_buy_USD2015perkWh:
+        sample_data: 0.20800000000000002
+        types_found: [float]
+      Opex_var_sell_USD2015perkWh:
+        sample_data: 0.20800000000000002
+        types_found: [float]
+      hour:
+        sample_data: 0
+        types_found: [int]
+      reference:
+        sample_data: KBOB 2009/1:2016, ID 42.001 Kehrichtverbrennung, cost from CEA
+        types_found: [string, null]
+  used_by: [decentralized, emissions, operation_costs, optimization]
+get_database_conversion_systems:
   created_by: []
   file_path: inputs/technology/systems/supply_systems.xls
   file_type: xls
@@ -2060,25 +2210,6 @@ get_database_supply_systems:
       unit:
         sample_data: W
         types_found: [string]
-    FEEDSTOCKS:
-      CO2:
-        sample_data: 0.0075
-        types_found: [float]
-      Opex_var_buy_USD2015perkWh:
-        sample_data: 0.20800000000000002
-        types_found: [float]
-      Opex_var_sell_USD2015perkWh:
-        sample_data: 0.20800000000000002
-        types_found: [float]
-      PEN:
-        sample_data: 0.116
-        types_found: [float]
-      code:
-        sample_data: DRYBIOMASS
-        types_found: [string]
-      reference:
-        sample_data: KBOB 2009/1:2016, ID 42.001 Kehrichtverbrennung, cost from CEA
-        types_found: [string, null]
     Furnace:
       Description:
         sample_data: furnace combined with ORC
@@ -2232,31 +2363,6 @@ get_database_supply_systems:
       unit:
         sample_data: W
         types_found: [string]
-    PIPING:
-      Code:
-        sample_data: DN1500
-        types_found: [string]
-      D_ext_m:
-        sample_data: 1.52869695
-        types_found: [float]
-      D_ins_m:
-        sample_data: 1.9947486772999998
-        types_found: [float]
-      D_int_m:
-        sample_data: 1.4941228500000001
-        types_found: [float]
-      Inv_USD2015perm:
-        sample_data: 9651.7762182
-        types_found: [float]
-      Pipe_DN:
-        sample_data: !!python/long '1500'
-        types_found: [long]
-      Vdot_max_m3s:
-        sample_data: 10.76274617420937
-        types_found: [float]
-      Vdot_min_m3s:
-        sample_data: 0.5169956864157574
-        types_found: [float]
     PV:
       Description:
         sample_data: generic amorphous silicon panel
@@ -2578,7 +2684,38 @@ get_database_supply_systems:
         sample_data: m3
         types_found: [string]
   used_by: [decentralized, demand, emissions, operation_costs, optimization, photovoltaic,
-    photovoltaic_thermal, solar_collector, thermal_network]
+    photovoltaic_thermal, solar_collector]
+get_database_distribution_systems:
+  created_by: []
+  file_path: inputs/technology/systems/distribution_systems.xls
+  file_type: xls
+  schema:
+    THERMAL_GRID:
+      Code:
+        sample_data: DN1500
+        types_found: [string]
+      D_ext_m:
+        sample_data: 1.52869695
+        types_found: [float]
+      D_ins_m:
+        sample_data: 1.9947486772999998
+        types_found: [float]
+      D_int_m:
+        sample_data: 1.4941228500000001
+        types_found: [float]
+      Inv_USD2015perm:
+        sample_data: 9651.7762182
+        types_found: [float]
+      Pipe_DN:
+        sample_data: !!python/long '1500'
+        types_found: [long]
+      Vdot_max_m3s:
+        sample_data: 10.76274617420937
+        types_found: [float]
+      Vdot_min_m3s:
+        sample_data: 0.5169956864157574
+        types_found: [float]
+  used_by: [optimization, thermal_network]
 get_demand_results_file:
   created_by: [demand]
   file_path: outputs/data/demand/B001.csv
