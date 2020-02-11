@@ -49,7 +49,7 @@ def main(config):
     supply_systems = SupplySystemsDatabase(locator)
     total_demand = pd.read_csv(locator.get_total_demand())
     prices = Prices(supply_systems)
-    lca = LcaCalculations(locator)
+    lca = LcaCalculations(supply_systems)
     disconnected_building_main(locator=locator,  total_demand=total_demand,
                                config=config, prices=prices, lca=lca)
 
