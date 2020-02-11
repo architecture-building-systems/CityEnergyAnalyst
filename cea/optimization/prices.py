@@ -4,9 +4,6 @@ This file imports the price details from the cost database as a class. This help
 of the corresponding values in individual files.
 """
 from __future__ import division
-import pandas as pd
-import numpy as np
-from cea.constants import HOURS_IN_YEAR
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
@@ -21,13 +18,19 @@ __status__ = "Production"
 class Prices(object):
     def __init__(self, supply_systems):
         pricing = supply_systems.FEEDSTOCKS
-        self.NG_PRICE = pricing['NATURALGAS']['Opex_var_buy_USD2015perkWh'] / 1000 # in USD/Wh
-        self.BG_PRICE = pricing['BIOGAS']['Opex_var_buy_USD2015perkWh']  / 1000# in USD/Wh
-        self.WB_PRICE = pricing['WETBIOMASS']['Opex_var_buy_USD2015perkWh']  / 1000# in USD/Wh
-        self.DB_PRICE = pricing['DRYBIOMASS']['Opex_var_buy_USD2015perkWh'] / 1000 # in USD/Wh
-        self.SOLAR_PRICE = pricing['SOLAR']['Opex_var_buy_USD2015perkWh']  / 1000# in USD/Wh
-        self.SOLAR_PRICE_EXPORT = pricing['SOLAR']['Opex_var_sell_USD2015perkWh'] / 1000 # in USD/Wh
-        self.ELEC_PRICE = pricing['GRID']['Opex_var_buy_USD2015perkWh'].values / 1000  # in USD_2015 per Wh
-        self.ELEC_PRICE_EXPORT = pricing['GRID']['Opex_var_sell_USD2015perkWh'].values / 1000  # in USD_2015 per Wh
-
-
+        self.NG_PRICE = list(
+            pricing['NATURALGAS']['Opex_var_buy_USD2015perkWh'] / 1000) * 365  # in USD/Wh for every hour of a year
+        self.BG_PRICE = list(
+            pricing['BIOGAS']['Opex_var_buy_USD2015perkWh'] / 1000) * 365  # in USD/Wh for every hour of a year
+        self.WB_PRICE = list(
+            pricing['WETBIOMASS']['Opex_var_buy_USD2015perkWh'] / 1000) * 365  # in USD/Wh for every hour of a year
+        self.DB_PRICE = list(
+            pricing['DRYBIOMASS']['Opex_var_buy_USD2015perkWh'] / 1000) * 365  # in USD/Wh for every hour of a year
+        self.SOLAR_PRICE = list(
+            pricing['SOLAR']['Opex_var_buy_USD2015perkWh'] / 1000) * 365  # in USD/Wh for every hour of a year
+        self.SOLAR_PRICE_EXPORT = list(
+            pricing['SOLAR']['Opex_var_sell_USD2015perkWh']) * 365  # in USD/Wh for every hour of a year
+        self.ELEC_PRICE = list(
+            pricing['GRID']['Opex_var_buy_USD2015perkWh'] / 1000) * 365  # in USD/Wh for every hour of a year
+        self.ELEC_PRICE_EXPORT = list(
+            pricing['GRID']['Opex_var_sell_USD2015perkWh'] / 1000) * 365  # in USD/Wh for every hour of a year
