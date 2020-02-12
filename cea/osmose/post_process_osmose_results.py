@@ -72,7 +72,9 @@ def main(run_folder_path):
                   'electricity_kWh': el_usages,
                   'electricity_aux_scu_kWh': el_aux_dict['el_aux_scu_kWh'],
                   'electricity_aux_rau_kWh': el_aux_dict['el_aux_rau_kWh'],
+                  'electricity_aux_rau_reheat_kWh': el_aux_dict['el_aux_rau_reheat_kWh'],
                   'electricity_aux_oau_kWh': el_aux_dict['el_aux_oau_kWh'],
+                  'electricity_aux_oau_reheat_kWh': el_aux_dict['el_aux_oau_reheat_kWh'],
                   'electricity_aux_kWh': el_aux_dict['el_aux_kWh'],
                   'electricity_LD_HP_kWh': el_LD_HP,
                   'Q_chiller_kWh': Q_chiller_total,
@@ -115,31 +117,75 @@ def calc_exergy_LD_OAU(output_df):
 
 
 def calc_el_aux(balance_df):
-    el_aux_kWh_dict = {}
+    el_aux_dict = {}
+    rau_reheat, oau_reheat = False, False
+    # read data
     el_df = balance_df.filter(like='Electricity_in')
+    ## el_aux
     el_aux_columns = [i for i in el_df.columns if 'chiller' not in i]
     el_aux_df = el_df[el_aux_columns]
-    el_aux_kWh_dict['el_aux_kWh'] = el_aux_df.sum(axis=1)
+    el_aux_dict['el_aux_kWh'] = el_aux_df.sum(axis=1)
+    zero_series = el_aux_dict['el_aux_kWh'].copy()*0.0
+    ## el_aux, scu
     el_aux_scu_columns = [i for i in el_aux_columns if 'scu' in i]
-    el_aux_scu_df =  el_df[el_aux_scu_columns]
-    el_aux_kWh_dict['el_aux_scu_kWh'] = el_aux_scu_df.sum(axis=1)
-    el_aux_rau_columns = [i for i in el_aux_columns if 'rau' in i]
-    el_aux_rau_df =  el_df[el_aux_rau_columns]
-    el_aux_kWh_dict['el_aux_rau_kWh'] = el_aux_rau_df.sum(axis=1)
+    el_aux_scu_df = el_df[el_aux_scu_columns]
+    el_aux_dict['el_aux_scu_kWh'] = el_aux_scu_df.sum(axis=1)
+    ## el_aux, oau
     el_aux_oau_columns = [i for i in el_aux_columns if 'OAU' in i]
-    el_aux_oau_df =  el_df[el_aux_oau_columns]
-    el_aux_kWh_dict['el_aux_oau_kWh'] = el_aux_oau_df.sum(axis=1)
+    el_aux_oau_reheat_columns = [i for i in el_aux_oau_columns if ('reheat' in i) and ('base' not in i)]
+    if el_aux_oau_reheat_columns != []:
+        oau_reheat = True
+        el_aux_oau_columns.remove(el_aux_oau_reheat_columns[0])
+    el_aux_oau_df = el_df[el_aux_oau_columns]
+    el_aux_oau_reheat_df = el_df[el_aux_oau_reheat_columns]
+    # if oau_reheat:
+    #     diff_ratio = 0.0
+    #     diff_ratio = (0.25 / 0.5) if 'coil' in el_aux_oau_reheat_columns[0] else diff_ratio
+    #     diff_ratio = (0.25 / 0.75) if 'ER0' in el_aux_oau_reheat_columns[0] else diff_ratio
+    #     diff_ratio = (0.25 / 0.75) if 'IEHX' in el_aux_oau_reheat_columns[0] else diff_ratio
+    #     print(el_aux_oau_reheat_columns[0], diff_ratio)
+    #     reheat_array = np.where(el_aux_oau_reheat_df[el_aux_oau_reheat_columns[0]] > 0.0, 1.0, 0.0)
+    #     diff = el_df[el_aux_oau_columns].sum(axis=1) * diff_ratio * reheat_array
+    #     el_aux_oau_df.loc[:,'diff'] = diff
+    #     el_aux_oau_reheat_df.loc[:,'diff'] = diff*(-1)
+    el_aux_dict['el_aux_oau_kWh'] = el_aux_oau_df.sum(axis=1)
+    el_aux_dict['el_aux_oau_reheat_kWh'] = el_aux_oau_reheat_df.sum(axis=1)
+    ## el_aux, rau
+    el_aux_rau_columns = [i for i in el_aux_columns if 'rau' in i]
+    if 'base' not in el_aux_oau_columns[0]: # the reheating part in HCS_base is only the fan power, can be included in el_aux_rau
+        el_aux_rau_reheat_columns = [i for i in el_aux_rau_columns if 'reheat' in i]
+    else:
+        el_aux_rau_reheat_columns = []
+    if el_aux_rau_reheat_columns != []:
+        rau_reheat = True
+        el_aux_rau_columns.remove(el_aux_rau_reheat_columns[0])
+    el_aux_rau_df = el_df[el_aux_rau_columns]
+    el_aux_rau_reheat_df = el_df[el_aux_rau_reheat_columns]
+    # # back-ward calculation
+    # if rau_reheat:
+    #     reheat_array = np.where(el_aux_rau_reheat_df[el_aux_rau_reheat_columns[0]] > 0.0, 1.0, 0.0)
+    #     diff = el_df[el_aux_rau_columns].sum(axis=1) * 0.5 * reheat_array
+    #     el_aux_rau_df.loc[:,'diff'] = diff
+    #     el_aux_rau_reheat_df.loc[:,'diff'] = diff*(-1)
+    # write
+    el_aux_dict['el_aux_rau_kWh'] = el_aux_rau_df.sum(axis=1)
+    el_aux_dict['el_aux_rau_reheat_kWh'] = el_aux_rau_reheat_df.sum(axis=1)
+    ## LD
+    el_LD_HP_kWh = el_df['Electricity_in_HP_LD_LD_HP_el'] if 'Electricity_in_HP_LD_LD_HP_el' in el_df.columns \
+        else zero_series
+    el_aux_dict['el_aux_kWh'] = el_aux_dict['el_aux_kWh'] - el_LD_HP_kWh
+    ## su
+    el_su_reheat = [i for i in el_df.columns if 'su_Qh_reheat' in i]
+    el_aux_dict['el_su_reheat_kWh'] = el_df[el_su_reheat[0]] if el_su_reheat != [] else zero_series
+    if el_su_reheat != []:
+        print('SU in use', el_su_reheat)
     # check balance
-    diff = (el_aux_kWh_dict['el_aux_scu_kWh'] + el_aux_kWh_dict['el_aux_rau_kWh']
-            + el_aux_kWh_dict['el_aux_oau_kWh']) - el_aux_kWh_dict['el_aux_kWh']
-    if diff.sum() > 1E-3 :
+    balance = (el_aux_dict['el_aux_scu_kWh'] + el_aux_dict['el_aux_rau_kWh'] + el_aux_dict['el_aux_rau_reheat_kWh']
+            + el_aux_dict['el_aux_oau_kWh'] + el_aux_dict['el_aux_oau_reheat_kWh']) - el_aux_dict['el_aux_kWh']
+    if abs(balance.sum()) > 1E-3 :
         ValueError('el_aux not balanced')
 
-    if 'Electricity_in_HP_LD_LD_HP_el' in el_df.columns:
-        el_LD_HP_kWh = el_df['Electricity_in_HP_LD_LD_HP_el']
-    else:
-        el_LD_HP_kWh = el_aux_kWh_dict['el_aux_kWh'].copy()*0
-    return el_aux_kWh_dict, el_LD_HP_kWh
+    return el_aux_dict, el_LD_HP_kWh
 
 
 def calc_exergy_recovered_OAU_EX(stream_df, output_df):
@@ -147,7 +193,7 @@ def calc_exergy_recovered_OAU_EX(stream_df, output_df):
     recover_streams_df = stream_df.filter(like='OAU_EX')
     for column in recover_streams_df.filter(like='T'):
         T_stream_K = recover_streams_df[column] + 273.15
-        recover_streams_df[column+'_carnot'] = 1 - T_OA_K/T_stream_K
+        recover_streams_df.loc[:, column+'_carnot'] = 1 - T_OA_K/T_stream_K
 
     exergy_recovered = pd.DataFrame()
     for column in recover_streams_df.filter(like='Hout'):
@@ -637,7 +683,7 @@ if __name__ == '__main__':
     result_path_folder = 'C:\\Users\\Shanshan\\Documents\\WP1_results\\WP1_results_1130'
     # result_path_folder = 'E:\\results_1130\\'
     # TECHS = ['HCS_base', 'HCS_base_coil', 'HCS_base_3for2', 'HCS_base_ER0', 'HCS_base_IEHX', 'HCS_base_LD']
-    TECHS = ['HCS_base_LD']
+    TECHS = ['HCS_base']
 
     for tech in TECHS:
         tech_folder_path = os.path.join(result_path_folder, tech)
