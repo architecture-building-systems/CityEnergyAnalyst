@@ -179,7 +179,6 @@ def plot_chiller_temperatures_scatter(chiller_df, building, building_result_path
 
     # figure name
     figure_name = 'chw_freq'
-
     format_chw_scatter_plot(area, building, building_result_path, case, figure_name, x, x_labels_shown, x_values,
                             y_float, y_labels, y_values)
     return np.nan
@@ -203,19 +202,22 @@ def plot_chiller_T_Qc_scatter(chiller_df, tech_rank, building, building_result_p
     # x_tech axis (keys of the first level dict, HCS technologies)
     x_labels = []
     if 'base' in tech_rank[0]:
-        label_dict = {'HCS_base_coil': 'coil', 'HCS_base_ER0': 'ER0', 'HCS_base_3for2': '3for2', 'HCS_base_LD': 'LD',
-                      'HCS_base_IEHX': 'IEHX', 'HCS_base': 'Ref.'}
+        # label_dict = {'HCS_base_coil': 'coil', 'HCS_base_ER0': 'ER0', 'HCS_base_3for2': '3for2', 'HCS_base_LD': 'LD',
+        #               'HCS_base_IEHX': 'IEHX', 'HCS_base': 'Ref.'}
+        label_dict = {'HCS_base_coil': 'Config|1', 'HCS_base_ER0': 'Config|2', 'HCS_base_3for2': 'Config|3',
+                      'HCS_base_LD': 'Config|4', 'HCS_base_IEHX': 'Config|5', 'HCS_base': 'Ref'}
         x_labels_shown = []
         for tech in tech_rank:
             x_labels.append(tech)
             x_labels_shown.append(label_dict[tech])
     else:
-        label_dict = {'HCS_coil': 'Config|1', 'HCS_ER0': 'Config|2', 'HCS_3for2': 'Config|3', 'HCS_LD': 'Config|4',
-                      'HCS_IEHX': 'Config|5', 'HCS_base': 'Reference'}
+        label_dict = {'HCS_base_coil': 'Config|1', 'HCS_base_ER0': 'Config|2', 'HCS_base_3for2': 'Config|3', 'HCS_base_LD': 'Config|4',
+                      'HCS_base_IEHX': 'Config|5', 'HCS_base': 'Ref'}
         x_labels_shown = []
         for tech in tech_rank:
             x_labels.append('HCS' + tech)
             x_labels_shown.append(label_dict[tech])
+
     x_values = list(range(len(x_labels)))
 
     # assign x-axis labels to technologies
@@ -235,11 +237,10 @@ def plot_chiller_T_Qc_scatter(chiller_df, tech_rank, building, building_result_p
     # y_values = [float(tech) for tech in chiller_df.columns]
     y_labels = [str(v) for v in y_values]
     # marker size
-    marker_size = tuple(map(lambda x: (x / 1000) ** 2, Qc))  # marker_size = Qc
+    marker_size = tuple(map(lambda x: (x*0.6) ** 2, Qc))  # marker_size = Qc
 
     # figure name
     figure_name = case + 'chw_Qc'
-
     format_chw_scatter_plot(marker_size, building, building_result_path, case, figure_name, x_tech, x_labels_shown, x_values,
                             y_float, y_labels, y_values)
     return np.nan
@@ -257,12 +258,13 @@ def format_chw_scatter_plot(area, building, building_result_path, case, figure_n
         title = CASE_TABLE[case_name] + ' ' + building
     plt.title(title, fontsize=16)
     # plt.xlabel('x')
-    plt.xticks(x_values, x_labels_shown, fontsize=16)
+    plt.xticks(x_values, x_labels_shown, fontsize=16, rotation=20)
     plt.yticks(y_values, y_labels, fontsize=16)
     plt.axis([min(x_values) - 0.5, max(x_values) + 0.5,
               min(y_values) - 0.5, max(y_values) + 0.5])
     plt.scatter(x, y_float, s=area, c='#454545')  # navy: #14453
-    plt.ylabel('Chilled water temperature [C]', fontsize=16)
+    plt.ylabel('Off-coil temperature [C]', fontsize=16)
+    plt.tight_layout()
     # plt.show()
     plt.savefig(path_to_save_chw_scatter(building, building_result_path, figure_name))
 
