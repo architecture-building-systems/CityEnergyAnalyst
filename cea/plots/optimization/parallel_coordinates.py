@@ -1,0 +1,118 @@
+"""
+Show a Pareto curve plot for individuals in a given generation.
+"""
+from __future__ import division
+from __future__ import print_function
+
+import plotly.graph_objs as go
+
+import cea.plots.optimization
+
+__author__ = "Bhargava Srepathi"
+__copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Bhargava Srepathi", "Daren Thomas"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
+
+
+class ParallelCoordinatesForOneGenerationPlot(cea.plots.optimization.GenerationPlotBase):
+    """Show a pareto curve for a single generation"""
+    name = "Parallel coordinates"
+    expected_parameters = {
+        'generation': 'plots-optimization:generation',
+        'normalization': 'plots-optimization:normalization',
+        'scenario-name': 'general:scenario-name',
+    }
+
+    def __init__(self, project, parameters, cache):
+        super(ParallelCoordinatesForOneGenerationPlot, self).__init__(project, parameters, cache)
+        self.analysis_fields = ['individual_name',
+                                'TAC_sys_USD',
+                                'GHG_sys_tonCO2',
+                                'Capex_total_sys_USD',
+                                'Opex_a_sys_USD']
+        self.objectives = ['TAC_sys_USD', 'GHG_sys_tonCO2', 'Capex_total_sys_USD', 'Opex_a_sys_USD']
+        self.normalization = self.parameters['normalization']
+        self.input_files = [(self.locator.get_optimization_generation_total_performance, [self.generation])]
+        self.titles = self.calc_titles()
+
+    def calc_titles(self):
+        if self.normalization == "gross floor area":
+            titlex = 'Total annualized costs [USD$(2015)/m2.yr]'
+            titley = 'GHG emissions [kg CO2-eq/m2.yr]'
+            titlez = 'Investment costs <br>[USD$(2015)/m2]'
+            titlel = 'Operation costs <br>[USD$(2015)/m2.yr]'
+        elif self.normalization == "net floor area":
+            titlex = 'Total annualized costs [USD$(2015)/m2.yr]'
+            titley = 'GHG emissions [kg CO2-eq/m2.yr]'
+            titlez = 'Investment costs <br>[USD$(2015)/m2]'
+            titlel = 'Operation costs <br>[USD$(2015)/m2.yr]'
+        elif self.normalization == "air conditioned floor area":
+            titlex = 'Total annualized costs [USD$(2015)/m2.yr]'
+            titley = 'GHG emissions [kg CO2-eq/m2.yr]'
+            titlez = 'Investment costs <br>[USD$(2015)/m2.yr]'
+            titlel = 'Operation costs <br>[USD$(2015)/m2.yr]'
+        elif self.normalization == "building occupancy":
+            titlex = 'Total annualized costs [USD$(2015)/pax.yr]'
+            titley = 'GHG emissions [kg CO2-eq/pax.yr]'
+            titlez = 'Investment costs <br>[USD$(2015)/pax]'
+            titlel = 'Operation costs <br>[USD$(2015)/pax.yr]'
+        else:
+            titlex = 'Total annualized costs [USD$(2015)/yr]'
+            titley = 'GHG emissions [ton CO2-eq/yr]'
+            titlez = 'Investment costs <br>[USD$(2015)]'
+            titlel = 'Operation costs <br>[USD$(2015)/yr]'
+
+        return titlex, titley, titlez, titlel
+
+    @property
+    def layout(self):
+        return go.Layout()
+
+    @property
+    def title(self):
+        if self.normalization != "none":
+            return "Parallel Plot for generation {generation} normalized to {normalized}".format(
+                generation=self.generation, normalized=self.normalization)
+        else:
+            return "Parallel Plot for generation {generation}".format(generation=self.generation)
+
+    @property
+    def output_path(self):
+        return self.locator.get_timeseries_plots_file('gen{generation}_parallelplot'.format(generation=self.generation),
+                                                      self.category_name)
+
+    def calc_graph(self):
+        graph = []
+        # PUT THE PARETO CURVE INSIDE
+        data = self.process_generation_total_performance_pareto()
+        data = self.normalize_data(data, self.normalization, self.objectives)
+
+        dimensions = list([dict(label=label, ticktext=data['individual_name'], values=data[field]) for field, label in zip(self.objectives, self.titles)])
+        line = dict(ticktext=data['individual_name'], color= data['Capex_total_sys_USD'], colorscale='Jet', showscale=True)
+
+        trace = go.Parcoords(line=line, dimensions=dimensions)
+
+        graph.append(trace)
+
+        return graph
+
+
+def main():
+    """Test this plot"""
+    import cea.config
+    import cea.plots.cache
+    config = cea.config.Configuration()
+    cache = cea.plots.cache.NullPlotCache()
+    ParallelCoordinatesForOneGenerationPlot(config.project,
+                                            {'scenario-name': config.scenario_name,
+                                             'generation': config.plots_optimization.generation,
+                                             'normalization': config.plots_optimization.normalization},
+                                            cache).plot(auto_open=True)
+
+
+if __name__ == '__main__':
+    main()
