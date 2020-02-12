@@ -32,41 +32,42 @@ class ParallelCoordinatesForOneGenerationPlot(cea.plots.optimization.GenerationP
         self.analysis_fields = ['individual_name',
                                 'TAC_sys_USD',
                                 'GHG_sys_tonCO2',
+                                'Opex_a_sys_USD',
                                 'Capex_total_sys_USD',
-                                'Opex_a_sys_USD']
-        self.objectives = ['TAC_sys_USD', 'GHG_sys_tonCO2', 'Capex_total_sys_USD', 'Opex_a_sys_USD']
+                                ]
+        self.objectives = ['TAC_sys_USD', 'GHG_sys_tonCO2',  'Opex_a_sys_USD', 'Capex_total_sys_USD',]
         self.normalization = self.parameters['normalization']
         self.input_files = [(self.locator.get_optimization_generation_total_performance, [self.generation])]
         self.titles = self.calc_titles()
 
     def calc_titles(self):
         if self.normalization == "gross floor area":
-            titlex = 'Total annualized costs [USD$(2015)/m2.yr]'
-            titley = 'GHG emissions [kg CO2-eq/m2.yr]'
+            titlex = 'Total annualized costs <br>[USD$(2015)/m2.yr]'
+            titley = 'GHG emissions <br>[kg CO2-eq/m2.yr]'
             titlez = 'Investment costs <br>[USD$(2015)/m2]'
             titlel = 'Operation costs <br>[USD$(2015)/m2.yr]'
         elif self.normalization == "net floor area":
-            titlex = 'Total annualized costs [USD$(2015)/m2.yr]'
+            titlex = 'Total annualized costs <br>[USD$(2015)/m2.yr]'
             titley = 'GHG emissions [kg CO2-eq/m2.yr]'
             titlez = 'Investment costs <br>[USD$(2015)/m2]'
             titlel = 'Operation costs <br>[USD$(2015)/m2.yr]'
         elif self.normalization == "air conditioned floor area":
-            titlex = 'Total annualized costs [USD$(2015)/m2.yr]'
-            titley = 'GHG emissions [kg CO2-eq/m2.yr]'
+            titlex = 'Total annualized costs <br>[USD$(2015)/m2.yr]'
+            titley = 'GHG emissions <br>[kg CO2-eq/m2.yr]'
             titlez = 'Investment costs <br>[USD$(2015)/m2.yr]'
             titlel = 'Operation costs <br>[USD$(2015)/m2.yr]'
         elif self.normalization == "building occupancy":
-            titlex = 'Total annualized costs [USD$(2015)/pax.yr]'
-            titley = 'GHG emissions [kg CO2-eq/pax.yr]'
+            titlex = 'Total annualized costs <br>[USD$(2015)/pax.yr]'
+            titley = 'GHG emissions <br>[kg CO2-eq/pax.yr]'
             titlez = 'Investment costs <br>[USD$(2015)/pax]'
             titlel = 'Operation costs <br>[USD$(2015)/pax.yr]'
         else:
-            titlex = 'Total annualized costs [USD$(2015)/yr]'
-            titley = 'GHG emissions [ton CO2-eq/yr]'
+            titlex = 'Total annualized costs <br>[USD$(2015)/yr]'
+            titley = 'GHG emissions <br>[ton CO2-eq/yr]'
             titlez = 'Investment costs <br>[USD$(2015)]'
             titlel = 'Operation costs <br>[USD$(2015)/yr]'
 
-        return titlex, titley, titlez, titlel
+        return titlex, titley, titlel, titlez
 
     @property
     def layout(self):
@@ -91,8 +92,8 @@ class ParallelCoordinatesForOneGenerationPlot(cea.plots.optimization.GenerationP
         data = self.process_generation_total_performance_pareto()
         data = self.normalize_data(data, self.normalization, self.objectives)
 
-        dimensions = list([dict(label=label, ticktext=data['individual_name'], values=data[field]) for field, label in zip(self.objectives, self.titles)])
-        line = dict(ticktext=data['individual_name'], color= data['Capex_total_sys_USD'], colorscale='Jet', showscale=True)
+        dimensions = list([dict(label=label, ticktext=data[field], values=data[field]) for field, label in zip(self.objectives, self.titles)])
+        line = dict(color= data['Capex_total_sys_USD'], colorscale='Jet', showscale=True)
 
         trace = go.Parcoords(line=line, dimensions=dimensions)
 
