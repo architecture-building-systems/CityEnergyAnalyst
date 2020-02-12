@@ -11,7 +11,7 @@ COLOR_TABLE = {'base': sns.xkcd_rgb["pale red"], 'separated': sns.xkcd_rgb["sea 
 
 Y_CARNOT_RANGE = [0.0, -0.1]
 PLOT_SPECS = {'icc':{'ylabel':'Temperature [C]', 'xlabel':'Heat [kW]', 'ylim':(min(Y_CARNOT_RANGE),max(Y_CARNOT_RANGE)),
-                     'xlim':(-100,800), 'ylabel':'Carnot factor [-]', 'xlabel':'Heat [kW]'},
+                     'xlim':(-200,1600), 'ylabel':'Carnot factor [-]', 'xlabel':'Heat [kW]'},
               'carnot':{'ylabel':'Carnot factor [-]', 'xlabel':'Heat [kW]'}}
 
 
@@ -26,7 +26,7 @@ def plot_loc2_to_loc3(path, t, plot_type, T_ref):
     for line_type in line_types:
         x, y = load_data_from_txt(path, plot_type, line_type, model_name, t)
         y_carnot = np.vectorize(calc_carnot_factor)(T_ref_t, y + 273.15)
-        ax1.plot(x*(-1), y_carnot, '-', color=COLOR_TABLE[line_type], label=line_type, linestyle='--')
+        ax1.plot(x*(-1), y_carnot, '-', color='#707070', label=line_type, linestyle='--')
 
     # plot the loc3
     line_types = ['separated']
@@ -34,7 +34,7 @@ def plot_loc2_to_loc3(path, t, plot_type, T_ref):
     for line_type in line_types:
         x, y = load_data_from_txt(path, plot_type, line_type, model_name, t)
         y_carnot = np.vectorize(calc_carnot_factor)(T_ref_t, y + 273.15)
-        ax1.plot(x, y_carnot, '-', color=COLOR_TABLE[line_type], label=line_type)
+        ax1.plot(x, y_carnot, '-', color='#707070', label=line_type)
 
     # build second y-axis (Temperature)
     ax2 = ax1.twinx()
@@ -56,19 +56,19 @@ def plot_loc2_to_loc3(path, t, plot_type, T_ref):
 
 def main():
     plot_type = 'icc'
-    base_folder_path = 'E:\\OSMOSE_projects\\HCS_mk\\results\\HCS_base_locs'
-    run_folder_path = 'run_010_HOT_B005_1_168'
+    base_folder_path = 'C:\\Users\\Shanshan\\Documents\\WP1_results\\WP1_results_1130\\'
+    tech = 'HCS_base_locs'
+    run_folder_path = 'run_009_RET_B005_1_168'
 
-    folder_layers = [base_folder_path, run_folder_path,'s_001\\plots\\' + plot_type, 'locations']
+    folder_layers = [base_folder_path, tech, run_folder_path,'s_001\\plots\\' + plot_type, 'locations']
     path_to_folder = os.path.join('', *folder_layers)
 
     # load temperatures
-    T_ref = calc_T_ref(os.path.join('', *['C:\\Users\\Shanshan\\Documents\\WP1_results\\WP1_results_1130\\',
-                                          'HCS_base', 'run_008_HOT_B005_1_168']))
+    T_ref = calc_T_ref(os.path.join('', *[base_folder_path, 'HCS_base', 'run_003_OFF_B005_1_168'])) # fixed parameters
 
     # plotting
-    # for t in np.arange(1,168,4):
-    for t in [89, 93, 97, 101, 105]:
+    # for t in np.arange(73,73+25,1):
+    for t in [85]:
         plot_loc2_to_loc3(path_to_folder, t, plot_type, T_ref)
 
 
