@@ -192,7 +192,7 @@ network-layout,get_network_layout_nodes_shapefile,,Type,Weather a Plant or A Cus
 -,get_archetypes_properties,INTERNAL_LOADS,Ed_Wm2,Peak specific electrical load due to servers/data centres,[W/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS
 -,get_archetypes_properties,INTERNAL_LOADS,El_Wm2,Peak specific electrical load due to artificial lighting,[W/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS
 -,get_archetypes_properties,INTERNAL_LOADS,Epro_Wm2,Peak specific electrical load due to industrial processes,[W/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS
--,get_archetypes_properties,INTERNAL_LOADS,Occ_m2pax,TODO,TODO,TODO,TYPE,black,inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS
+-,get_archetypes_properties,INTERNAL_LOADS,Occ_m2pax,Occupancy density,[m2/pax],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS
 -,get_archetypes_properties,INTERNAL_LOADS,Qcpro_Wm2,Peak specific process cooling load,[W/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS
 -,get_archetypes_properties,INTERNAL_LOADS,Qcre_Wm2,Peak specific cooling load due to refrigeration (cooling rooms),[W/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS
 -,get_archetypes_properties,INTERNAL_LOADS,Qhpro_Wm2,Peak specific process heating load,[W/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS
@@ -248,16 +248,16 @@ network-layout,get_network_layout_nodes_shapefile,,Type,Weather a Plant or A Cus
 -,get_database_air_conditioning_systems,dhw,Tsww0_C,Typical supply water temperature.,[C],{0.0....n},float,black,inputs/technology/systems/air_conditioning_systems.xls:dhw
 -,get_database_air_conditioning_systems,heating,code,Type of heating system,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/air_conditioning_systems.xls:heating
 -,get_database_air_conditioning_systems,heating,Description,Description Type of heating system,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
--,get_database_air_conditioning_systems,heating,dThs_C,TODO,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
--,get_database_air_conditioning_systems,heating,dThs0_ahu_C,TODO,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
--,get_database_air_conditioning_systems,heating,dThs0_aru_C,TODO,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
--,get_database_air_conditioning_systems,heating,dThs0_shu_C,TODO,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
+-,get_database_air_conditioning_systems,heating,dThs_C,correction temperature of emission losses due to type of heating system,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
+-,get_database_air_conditioning_systems,heating,dThs0_ahu_C,Nominal temperature increase on the water side of the air-handling units,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
+-,get_database_air_conditioning_systems,heating,dThs0_aru_C,Nominal temperature increase on the water side of the air-recirculation units,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
+-,get_database_air_conditioning_systems,heating,dThs0_shu_C,Nominal temperature increase on the water side of the sensible heating units,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
 -,get_database_air_conditioning_systems,heating,Qhsmax_Wm2,Maximum heat flow permitted by heating system per m2 gross floor area ,[W/m2],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
--,get_database_air_conditioning_systems,heating,Th_sup_air_ahu_C,TODO,TODO,TODO,float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
--,get_database_air_conditioning_systems,heating,Th_sup_air_aru_C,TODO,TODO,TODO,float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
--,get_database_air_conditioning_systems,heating,Tshs0_ahu_C,TODO,TODO,TODO,float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
--,get_database_air_conditioning_systems,heating,Tshs0_aru_C,TODO,TODO,TODO,float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
--,get_database_air_conditioning_systems,heating,Tshs0_shu_C,TODO,TODO,TODO,float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
+-,get_database_air_conditioning_systems,heating,Th_sup_air_ahu_C,Supply air temperature of the air-handling units,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
+-,get_database_air_conditioning_systems,heating,Th_sup_air_aru_C,Supply air temperature of the air-recirculation units,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
+-,get_database_air_conditioning_systems,heating,Tshs0_ahu_C,Nominal supply temperature of the water side of the air-handling units,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
+-,get_database_air_conditioning_systems,heating,Tshs0_aru_C,Nominal supply temperature of the water side of the air-recirculation units,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
+-,get_database_air_conditioning_systems,heating,Tshs0_shu_C,Nominal supply temperature of the water side of the sensible heating units,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
 -,get_database_air_conditioning_systems,ventilation,code,Type of ventilation,[-],[-],string,black,inputs/technology/systems/air_conditioning_systems.xls:ventilation
 -,get_database_air_conditioning_systems,ventilation,Description,Describes the Type of ventilation,[-],[-],string,black,inputs/technology/systems/air_conditioning_systems.xls:ventilation
 -,get_database_air_conditioning_systems,ventilation,ECONOMIZER,"Boolean, economizer on",[-],"{TRUE, FALSE}",bool,black,inputs/technology/systems/air_conditioning_systems.xls:ventilation
