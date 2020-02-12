@@ -33,14 +33,6 @@ cea.plots.optimization.annual\_emissions module
     :undoc-members:
     :show-inheritance:
 
-cea.plots.optimization.annual\_primary\_energy module
------------------------------------------------------
-
-.. automodule:: cea.plots.optimization.annual_primary_energy
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 cea.plots.optimization.pareto\_curve module
 -------------------------------------------
 
