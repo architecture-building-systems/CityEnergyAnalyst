@@ -35,7 +35,7 @@ class ParallelCoordinatesForOneGenerationPlot(cea.plots.optimization.GenerationP
                                 'Opex_a_sys_USD',
                                 'Capex_total_sys_USD',
                                 ]
-        self.objectives = [ 'GHG_sys_tonCO2', 'TAC_sys_USD', 'Opex_a_sys_USD', 'Capex_total_sys_USD',]
+        self.objectives = ['GHG_sys_tonCO2', 'TAC_sys_USD', 'Opex_a_sys_USD', 'Capex_total_sys_USD']
         self.normalization = self.parameters['normalization']
         self.input_files = [(self.locator.get_optimization_generation_total_performance, [self.generation])]
         self.titles = self.calc_titles()
