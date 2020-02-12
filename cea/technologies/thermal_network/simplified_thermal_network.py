@@ -190,7 +190,7 @@ def thermal_network_simplified(locator, config, network_name):
     if network_type == "DH":
         buildings_name_with_heating = get_building_names_with_load(total_demand, load_name='QH_sys_MWhyr')
         buildings_name_with_space_heating = get_building_names_with_load(total_demand, load_name='Qhs_sys_MWhyr')
-        DHN_barcode = "012345"
+        DHN_barcode = "0"
         if (buildings_name_with_heating != [] and buildings_name_with_space_heating != []):
             building_names = [building for building in buildings_name_with_heating if building in
                               node_df.Building.values]
@@ -210,7 +210,7 @@ def thermal_network_simplified(locator, config, network_name):
 
     if network_type == "DC":
         buildings_name_with_cooling = get_building_names_with_load(total_demand, load_name='QC_sys_MWhyr')
-        DCN_barcode = "012345"
+        DCN_barcode = "0"
         if buildings_name_with_cooling != []:
             building_names = [building for building in buildings_name_with_cooling if building in
                               node_df.Building.values]
