@@ -74,7 +74,7 @@ def calc_Cinv_HEX_hisaka(network_info):
     """
     ## read in cost values from database
     HEX_prices = pd.read_excel(network_info.locator.get_database_conversion_systems(),
-                               sheet_name='HEX', index_col=0)
+                               sheet_name="HEX", index_col=0)
     a = HEX_prices['a']['District substation heat exchanger']
     b = HEX_prices['b']['District substation heat exchanger']
     c = HEX_prices['c']['District substation heat exchanger']
