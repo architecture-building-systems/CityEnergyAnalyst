@@ -354,10 +354,7 @@ class InputLocator(object):
 
     def get_optimization_network_results_summary(self, network_type, key):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
-        if network_type + '_' + 'Network_summary_result_' in key:
-            path = os.path.join(self.get_optimization_network_results_folder(), key)
-        else:
-            path = os.path.join(self.get_optimization_network_results_folder(),
+        path = os.path.join(self.get_optimization_network_results_folder(),
                                 network_type + '_' + 'Network_summary_result_' + hex(int(str(key), 2)) + '.csv')
         return path
 
@@ -493,13 +490,14 @@ class InputLocator(object):
 
     def get_optimization_substations_results_file(self, building_name, network_type_code, district_network_barcode):
         """scenario/outputs/data/optimization/substations/${building_name}_result.csv"""
+        district_network_barcode_hex = hex(int(str(district_network_barcode), 2))
         return os.path.join(self.get_optimization_substations_folder(),
-                            "%(district_network_barcode)s%(network_type_code)s_%(building_name)s_result.csv" % locals())
+                            "%(district_network_barcode_hex)s%(network_type_code)s_%(building_name)s_result.csv" % locals())
 
     def get_optimization_substations_total_file(self, genome, network_type):
         """scenario/outputs/data/optimization/substations/Total_${genome}.csv"""
-        return os.path.join(self.get_optimization_substations_folder(),
-                            "Total_%(network_type)s_%(genome)s.csv" % locals())
+        genome_hex = hex(int(str(genome), 2))
+        return os.path.join(self.get_optimization_substations_folder(),"Total_%(network_type)s_%(genome_hex)s.csv" % locals())
 
     def get_optimization_clustering_folder(self):
         """scenario/outputs/data/optimization/clustering_sax
