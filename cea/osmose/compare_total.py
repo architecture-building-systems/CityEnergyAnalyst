@@ -13,30 +13,41 @@ CASE_TABLE = {'HOT': 'Hotel', 'OFF': 'Office', 'RET': 'Retail'}
 T_LIST = [8.1, 8.75, 9.4, 10.05, 10.7, 11.35, 12., 12.65, 13.3, 13.95]
 # T_LIST = [13.95]
 
-ITEMS_TO_COMPARE = ['exergy', 'electricity', 'COP', 'cooling_efficiency', 'SHR', 'Tchw']
+# ITEMS_TO_COMPARE = ['exergy_cooling', 'exergy_total', 'electricity', 'electricity_aux', 'COP', 'cooling_efficiency', 'SHR', 'Tchw']
+ITEMS_TO_COMPARE = ['Tchw']
 
 def main():
     # main_folder = 'E:\\OSMOSE_projects\\HCS_mk\\results'
-    main_folder = 'C:\\Users\\Zhongming\\Documents\\HCS_mk\\results'
-    # techs = ['HCS_base', 'HCS_base_coil', 'HCS_base_3for2', 'HCS_base_ER0', 'HCS_base_IEHX', 'HCS_base_LD']
-    techs = ['HCS_base_LD']
+    main_folder = 'C:\\Users\\Shanshan\\Documents\\WP1_results\\WP1_results_1130'
+    techs = ['HCS_base', 'HCS_base_coil', 'HCS_base_3for2', 'HCS_base_ER0', 'HCS_base_IEHX', 'HCS_base_LD']
+    # techs = ['HCS_base_LD']
     totals_dict = read_total_csv(main_folder, techs)
 
     for case_name in totals_dict.keys():
-        all_cop_dict, all_el_dict, all_ex_dict, all_cooling_eff = {}, {}, {}, {}
+        all_cop_dict, all_el_dict, all_el_aux_dict, \
+        all_ex_cooling_dict, all_ex_total_dict, all_cooling_eff = {}, {}, {}, {}, {}, {}
         for building_name in totals_dict[case_name].keys():
-            all_cop_dict[building_name], all_el_dict[building_name], \
-            all_ex_dict[building_name], all_cooling_eff[building_name] = {}, {}, {}, {}
+            all_cop_dict[building_name], all_el_dict[building_name], all_el_aux_dict[building_name], \
+            all_ex_cooling_dict[building_name], all_ex_total_dict[building_name],\
+            all_cooling_eff[building_name] = {}, {}, {}, {}, {}, {}
             OAU_T_Qc_dict, RAU_T_Qc_dict, SHR = {}, {}, {}
             for tech in totals_dict[case_name][building_name].keys():
                 total_file = totals_dict[case_name][building_name][tech]
                 multiplication_factor = 8760/(total_file.shape[0]-1)
+                Af_m2 = total_file['Af_m2'].iloc[1]
                 # exergy
-                if 'exergy' in ITEMS_TO_COMPARE:
+                if 'exergy_cooling' in ITEMS_TO_COMPARE:
                     exergy_LD_kWh = total_file['exergy_LD_kWh'].iloc[-1] if 'exergy_LD_kWh' in total_file.columns else 0.0
                     exergy_total_kWh = total_file['exergy_kWh'].iloc[-1] + exergy_LD_kWh
-                    Af_m2 = total_file['Af_m2'].iloc[1]
-                    all_ex_dict[building_name][tech] = exergy_total_kWh*multiplication_factor/Af_m2
+                    # exergy_total_kWh = total_file['exergy_kWh'].iloc[-1]
+                    all_ex_cooling_dict[building_name][tech] = exergy_total_kWh*multiplication_factor/Af_m2
+                if 'exergy_total' in ITEMS_TO_COMPARE:
+                    electricity_LD_kWh = total_file['electricity_LD_HP_kWh'].iloc[
+                        -1] if 'electricity_LD_HP_kWh' in total_file.columns else 0.0
+                    electricity_aux_kWh = total_file['electricity_aux_kWh'].iloc[-1]
+                    exergy_total_kWh = total_file['exergy_kWh'].iloc[-1] + electricity_aux_kWh + electricity_LD_kWh
+                    # exergy_total_kWh = total_file['exergy_kWh'].iloc[-1]
+                    all_ex_total_dict[building_name][tech] = exergy_total_kWh*multiplication_factor/Af_m2
                 # COP
                 if 'COP' in ITEMS_TO_COMPARE:
                     el_total = total_file['electricity_kWh'].iloc[-1]
@@ -47,6 +58,9 @@ def main():
                 if 'electricity' in ITEMS_TO_COMPARE:
                     el_total = total_file['electricity_kWh'].iloc[-1]
                     all_el_dict[building_name][tech] = el_total*multiplication_factor/Af_m2
+                if 'electricity_aux' in ITEMS_TO_COMPARE:
+                    el_total = total_file['electricity_aux_kWh'].iloc[-1]
+                    all_el_aux_dict[building_name][tech] = el_total*multiplication_factor/Af_m2
                 # Qsc/Qc
                 if 'cooling_efficiency' in ITEMS_TO_COMPARE:
                     Qsc_total_kWh = total_file['Qsc_total'].iloc[-1]
@@ -57,16 +71,17 @@ def main():
                     SHR[tech] = total_file['SHR_theoretical']
                 # T_Qc
                 if 'Tchw' in ITEMS_TO_COMPARE:
-                    OAU_T_Qc_dict[tech], RAU_T_Qc_dict[tech] = {}, {}
-                    for T in T_LIST:
-                        OAU_Qc_coil = total_file[total_file['OAU T_offcoil'] == T]['OAU_Qc_coil'].sum()
-                        OAU_T_Qc_dict[tech][T] = OAU_Qc_coil
-                        RAU_Qc_coil = total_file[total_file['RAU T_offcoil'] == T]['RAU_Qc_coil'].sum()
-                        RAU_T_Qc_dict[tech][T] = RAU_Qc_coil
+                    if 'LD' not in tech:
+                        OAU_T_Qc_dict[tech], RAU_T_Qc_dict[tech] = {}, {}
+                        for T in T_LIST:
+                            OAU_Qc_coil = total_file[total_file['OAU T_offcoil'] == T]['OAU_Qc_coil'].sum()
+                            OAU_T_Qc_dict[tech][T] = OAU_Qc_coil * multiplication_factor / Af_m2
+                            RAU_Qc_coil = total_file[total_file['RAU T_offcoil'] == T]['RAU_Qc_coil'].sum()
+                            RAU_T_Qc_dict[tech][T] = RAU_Qc_coil * multiplication_factor / Af_m2
             ## BUILDING
             if 'Tchw' in ITEMS_TO_COMPARE:
                 # plot T_offcoil
-                tech_rank = ['HCS_base', 'HCS_base_coil', 'HCS_base_3for2', 'HCS_base_ER0', 'HCS_base_IEHX', 'HCS_base_LD']
+                tech_rank = ['HCS_base', 'HCS_base_3for2', 'HCS_base_ER0', 'HCS_base_coil', 'HCS_base_IEHX']
                 plot_chiller_T_Qc_scatter(OAU_T_Qc_dict, tech_rank, building_name, main_folder, case_name + '_OAU')
                 plot_chiller_T_Qc_scatter(RAU_T_Qc_dict, tech_rank, building_name, main_folder, case_name + '_RAU')
             if 'SHR' in ITEMS_TO_COMPARE:
@@ -77,25 +92,33 @@ def main():
         # plot COP
         if 'COP' in ITEMS_TO_COMPARE:
             plot_setting = {'ytick_values': 'flexible', 'ylabel': 'COP [-]', 'name': 'COP'}
-            plot_scatter_all_dictrict(all_cop_dict, {}, main_folder, case_name, plot_setting)
+            plot_scatter_all_district(all_cop_dict, {}, main_folder, case_name, plot_setting)
         # plot Electricity Consumption
         if 'electricity' in ITEMS_TO_COMPARE:
-            plot_setting = {'ytick_values': 'flexible', 'ylabel': 'El [kWh/m2/yr]', 'name': 'electricity'}
-            plot_scatter_all_dictrict(all_el_dict, {}, main_folder, case_name, plot_setting)
+            plot_setting = {'ytick_values': [10, 53, 3], 'ylabel': 'electricity [kWh/m2/yr]', 'name': 'electricity'}
+            point_size = {'HCS_base_3for2': 100, 'HCS_base_coil': 90, 'HCS_base_ER0': 120,
+                          'HCS_base_IEHX': 90, 'HCS_base_LD': 100, 'HCS_base': 100}
+            plot_scatter_all_district(all_el_dict, point_size, main_folder, case_name, plot_setting)
+        if 'electricity_aux' in ITEMS_TO_COMPARE:
+            plot_setting = {'ytick_values': [0, 16, 1], 'ylabel': 'electricity [kWh/m2/yr]', 'name': 'electricity_aux'}
+            plot_scatter_all_district(all_el_aux_dict, {}, main_folder, case_name, plot_setting)
         # plot EX
-        if 'exergy' in ITEMS_TO_COMPARE:
-            plot_setting = {'ytick_values': 'flexible', 'ylabel': 'exergy [kWh/m2/yr]', 'name':'exergy'}
-            plot_scatter_all_dictrict(all_ex_dict, {}, main_folder, case_name, plot_setting)
+        if 'exergy_cooling' in ITEMS_TO_COMPARE:
+            plot_setting = {'ytick_values': [3, 16, 1], 'ylabel': 'exergy [kWh/m2/yr]', 'name':'exergy_cooling'}
+            plot_scatter_all_district(all_ex_cooling_dict, {}, main_folder, case_name, plot_setting)
+        if 'exergy_total' in ITEMS_TO_COMPARE:
+            plot_setting = {'ytick_values': 'flexible', 'ylabel': 'exergy [kWh/m2/yr]', 'name': 'exergy_total'}
+            plot_scatter_all_district(all_ex_total_dict, {}, main_folder, case_name, plot_setting)
         # plot Cooling Efficiency
         if 'cooling_efficiency' in ITEMS_TO_COMPARE:
             plot_setting = {'ytick_values': 'flexible', 'ylabel': 'Qsc/Qc [-]', 'name': 'eff_cooling'}
-            plot_scatter_all_dictrict(all_cooling_eff, {}, main_folder, case_name, plot_setting)
+            plot_scatter_all_district(all_cooling_eff, {}, main_folder, case_name, plot_setting)
 
     return
 
 
 
-def plot_scatter_all_dictrict(dict_to_plot_scatter, dict_for_label_scale, path_to_save_result, case, plot_setting):
+def plot_scatter_all_district(dict_to_plot_scatter, dict_for_label_scale, path_to_save_result, case, plot_setting):
     # get all the points
     building_lookup_key, tech_key, value = get_all_points_from_dict(dict_to_plot_scatter)
 
@@ -116,17 +139,20 @@ def plot_scatter_all_dictrict(dict_to_plot_scatter, dict_for_label_scale, path_t
     # marker size
     anno = tech_key
     if dict_for_label_scale:
-        el_tot_list = []
+        area_list = []
         for i in range(len(anno)):
-            building = x_labels[building_lookup_key[i]]
             tech = anno[i]
-            #area = (all_el_total_dict[building][tech]/500)**2 # qc_load_Wh_per_Af
-            area = (dict_for_label_scale[building][tech] / 110) ** 2  # el_Wh_total_per_Af
-            #area = (all_el_total_dict[building][tech] / 600) ** 2  # qc_Wh_sys_per_Af
-            el_tot_list.append(area)  # Wh/m2
-        el_tot = tuple(el_tot_list)
-        # area = el_tot
-        area = tuple(map(lambda x: 100, anno))
+            area_list.append(dict_for_label_scale[tech])
+        area = tuple(area_list)
+        ## OBSOLETE: to connect to the cooling load
+        # el_tot_list = []
+        # for i in range(len(anno)):
+        #     building = x_labels[building_lookup_key[i]]
+        #     tech = anno[i]
+        #     area = (dict_for_label_scale[building][tech] / 110) ** 2  # el_Wh_total_per_Af
+        #     el_tot_list.append(area)  # Wh/m2
+        # el_tot = tuple(el_tot_list)
+        # # area = el_tot
     else:
         area = tuple(map(lambda x: 100, anno))
     # area = tuple(map(lambda x:100, anno))
@@ -150,7 +176,7 @@ def plot_scatter_all_dictrict(dict_to_plot_scatter, dict_for_label_scale, path_t
     plt.yticks(y_values, y_labels, fontsize=18)
     plt.axis([min(x_values) - 0.5, max(x_values) + 0.5,
               min(y_values) - 0.2, max(y_values) + 0.2])
-    plt.scatter(x, y, c=anno_colors, s=area)
+    plt.scatter(x, y, c=anno_colors, s=area, alpha=0.7)
     # plt.show()
     plt.savefig(path_to_all_district_plot(case, path_to_save_result, plot_setting['name']), bbox_inches="tight")
     return np.nan
@@ -160,7 +186,8 @@ def plot_hourly(y, case, building, folder_path, plot_setting):
     # plot temperatures
     fig, ax = plt.subplots(figsize=(12, 5))
     for key in y.keys():
-        color = COLOR_CODES[key.split('_')[2]]
+        # color = COLOR_CODES[key.split('_')[2]]
+        color = COLOR_CODES[key]
         x = np.arange(0, y[key][:-1].size, 1)
         ax.plot(x, y[key][:-1], label=key, color=color)
     # set x-axis limit
