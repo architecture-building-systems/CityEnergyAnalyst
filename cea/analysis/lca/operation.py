@@ -54,10 +54,9 @@ def lca_operation(locator):
     factors_dhw = data_all_in_one_systems[data_all_in_one_systems['system'].isin(['HEATING', 'NONE'])]
     factors_cooling = data_all_in_one_systems[data_all_in_one_systems['system'].isin(['COOLING', 'NONE'])]
     factors_electricity = data_all_in_one_systems[data_all_in_one_systems['system'].isin(['ELECTRICITY', 'NONE'])]
-    factors_resources = pd.read_excel(locator.get_database_conversion_systems(), sheet_name='FEEDSTOCKS')
+    factors_resources = pd.read_excel(locator.get_database_feedstocks())
 
     # local variables
-    result_folder = locator.get_lca_emissions_results_folder()
     Qhs_flag = Qww_flag = Qcs_flag = E_flag = True
     # calculate the total operational non-renewable primary energy demand and CO2 emissions
     ## create data frame for each type of end use energy containing the type of supply system use, the final energy
