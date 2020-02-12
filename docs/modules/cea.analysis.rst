@@ -14,5 +14,4 @@ Subpackages
     cea.analysis.costs
     cea.analysis.lca
     cea.analysis.multicriteria
-    cea.analysis.sensitivity
 
