@@ -1434,7 +1434,7 @@ get_database_air_conditioning_systems:
   file_path: inputs/technology/systems/air_conditioning_systems.xls
   file_type: xls
   schema:
-    controller:
+    CONTROLLER:
       Description:
         sample_data: room temperature control (electromagnetically/electronically).
         types_found: [string]
@@ -1447,7 +1447,7 @@ get_database_air_conditioning_systems:
       dT_Qhs:
         sample_data: 1.8
         types_found: [float]
-    cooling:
+    COOLING:
       Description:
         sample_data: 'floor cooling (18/21)  '
         types_found: [string]
@@ -1484,7 +1484,7 @@ get_database_air_conditioning_systems:
       dTcs_C:
         sample_data: 0.5
         types_found: [float]
-    dhw:
+    HOT_WATER:
       Description:
         sample_data: 'High temperature in the tropics (60/25) '
         types_found: [string]
@@ -1497,7 +1497,7 @@ get_database_air_conditioning_systems:
       code:
         sample_data: T4
         types_found: [string]
-    heating:
+    HEATING:
       Description:
         sample_data: 'Floor heating (40/35) '
         types_found: [string]
@@ -1534,7 +1534,7 @@ get_database_air_conditioning_systems:
       dThs_C:
         sample_data: -0.9
         types_found: [float]
-    ventilation:
+    VENTILATION:
       Description:
         sample_data: Window ventilation - no night flushing
         types_found: [string]
