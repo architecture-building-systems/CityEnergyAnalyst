@@ -54,7 +54,11 @@ def lca_operation(locator):
     factors_dhw = data_all_in_one_systems[data_all_in_one_systems['system'].isin(['HEATING', 'NONE'])]
     factors_cooling = data_all_in_one_systems[data_all_in_one_systems['system'].isin(['COOLING', 'NONE'])]
     factors_electricity = data_all_in_one_systems[data_all_in_one_systems['system'].isin(['ELECTRICITY', 'NONE'])]
-    factors_resources = pd.read_excel(locator.get_database_feedstocks())
+    factors_resources = pd.read_excel(locator.get_database_feedstocks(),sheet_name =None)
+
+    #get the mean of all values for this
+    factors_resources_simple = [(name, values['CO2'].mean()) for name, values in factors_resources.items()]
+    factors_resources_simple = pd.DataFrame(factors_resources_simple, columns=['code', 'CO2'])
 
     # local variables
     Qhs_flag = Qww_flag = Qcs_flag = E_flag = True
@@ -62,13 +66,13 @@ def lca_operation(locator):
     ## create data frame for each type of end use energy containing the type of supply system use, the final energy
     ## demand and the primary energy and emissions factors for each corresponding type of supply system
 
-    heating_factors = factors_heating.merge(factors_resources, left_on='feedstock', right_on='code')[
+    heating_factors = factors_heating.merge(factors_resources_simple, left_on='feedstock', right_on='code')[
         ['code_x', 'feedstock','CO2']]
-    cooling_factors = factors_cooling.merge(factors_resources, left_on='feedstock', right_on='code')[
+    cooling_factors = factors_cooling.merge(factors_resources_simple, left_on='feedstock', right_on='code')[
         ['code_x', 'feedstock', 'CO2']]
-    dhw_factors = factors_dhw.merge(factors_resources, left_on='feedstock', right_on='code')[
+    dhw_factors = factors_dhw.merge(factors_resources_simple, left_on='feedstock', right_on='code')[
         ['code_x', 'feedstock', 'CO2']]
-    electricity_factors = factors_electricity.merge(factors_resources, left_on='feedstock', right_on='code')[
+    electricity_factors = factors_electricity.merge(factors_resources_simple, left_on='feedstock', right_on='code')[
         ['code_x', 'feedstock', 'CO2']]
 
     heating = supply_systems.merge(demand, on='Name').merge(heating_factors, left_on='type_hs', right_on='code_x')
