@@ -49,7 +49,7 @@ class ParallelCoordinatesForOneGenerationPlot(cea.plots.optimization.GenerationP
             titlel = 'Operation costs <br>[USD$(2015)/m2.yr]'
         elif self.normalization == "net floor area":
             titlex = 'Total annualized costs <br>[USD$(2015)/m2.yr]'
-            titley = 'GHG emissions [kg CO2-eq/m2.yr]'
+            titley = 'GHG emissions <br>[kg CO2-eq/m2.yr]'
             titlez = 'Investment costs <br>[USD$(2015)/m2]'
             titlel = 'Operation costs <br>[USD$(2015)/m2.yr]'
         elif self.normalization == "air conditioned floor area":
