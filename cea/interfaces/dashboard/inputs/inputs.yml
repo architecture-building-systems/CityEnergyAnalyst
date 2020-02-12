@@ -311,31 +311,31 @@ air-conditioning-systems:
       type: choice
       location:
         path: get_database_air_conditioning_systems
-        sheet: cooling
+        sheet: COOLING
         column: code
     - name: type_hs
       type: choice
       location:
         path: get_database_air_conditioning_systems
-        sheet: heating
+        sheet: HEATING
         column: code
     - name: type_dhw
       type: choice
       location:
         path: get_database_air_conditioning_systems
-        sheet: dhw
+        sheet: HOT_WATER
         column: code
     - name: type_ctrl
       type: choice
       location:
         path: get_database_air_conditioning_systems
-        sheet: controller
+        sheet: CONTROLLER
         column: code
     - name: type_vent
       type: choice
       location:
         path: get_database_air_conditioning_systems
-        sheet: ventilation
+        sheet: VENTILATION
         column: code
     - name: heat_starts
       type: date
