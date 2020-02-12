@@ -16,15 +16,15 @@ rcParams['mathtext.default'] = 'regular'
 
 COLOR_TABLE = {'base': sns.xkcd_rgb["pale red"], 'separated': sns.xkcd_rgb["sea blue"]}
 COLOR_LIST = ['#C96A50', '#3E9AA3', '#3E9BA3']
-PLOT_SPECS = {'icc':{'ylabel':'Temperature [C]', 'xlabel':'Heat Load [kW]', 'ylim':(0,50)},
-              'carnot':{'ylabel':'Carnot factor [-]', 'xlabel':'Heat Load [kW]'}}
+PLOT_SPECS = {'icc':{'ylabel':'Temperature [C]', 'xlabel':'Heat [kW]', 'ylim':(0,35), 'xlim':(-800,100)},
+              'carnot':{'ylabel':'Carnot factor [-]', 'xlabel':'Heat [kW]'}}
 
 def plot_base_and_separated(path, t, plot_type, model_name):
     # figure size
     plt.figure(figsize=(8, 7))
     ax1 = plt.subplot()
     # plot the lines
-    line_types = ['base', 'separated']
+    line_types = ['separated']
     for line_type in line_types:
         x, y = load_data_from_txt(path, plot_type, line_type, model_name, t)
         ax1.plot(x, y, '-', color=COLOR_TABLE[line_type], label=line_type)
@@ -43,12 +43,14 @@ def plot_base_and_separated(path, t, plot_type, model_name):
 
 def set_plot_parameters(ax1, plot_specs):
     fontname = 'Times New Roman'
-    fontsize = 18
+    fontsize = 24
     # set the legend
     # ax1.legend(loc='lower left', shadow=False, fancybox=True,
     #            fontsize=fontsize, prop={'family': 'Times New Roman', 'size': str(fontsize)})
-    ax1.legend(loc='lower left', bbox_to_anchor =(1,0), shadow=False, fancybox=True,
-               fontsize=fontsize, prop={'family': 'Times New Roman', 'size': str(fontsize)})
+    if 'show_legend' in plot_specs.keys():
+        if plot_specs['show_legend']:
+            ax1.legend(loc='lower left', bbox_to_anchor =(1,0), shadow=False, fancybox=True,
+                       fontsize=fontsize, prop={'family': 'Times New Roman', 'size': str(fontsize)})
     # set x and y range
     # plt.set_xlim([-766.00311044128,8090.8964687342])
     if 'xlim' in plot_specs.keys():
@@ -91,23 +93,23 @@ def load_data_from_txt(path, plot_type, line_type, txt_name, t):
 
 def main():
     plot_type = 'icc'
-    model_name = 'chillers'
-
+    model_name = 'loc3'
+    run_folder = 'run_003_OFF_B005_1_168'
     # path
     # folder_layers = ['E:\\HCS_results_1003',
     #                  'WTP_CBD_m_WP1_OFF', 'B005_1_24', 'base_3for2',
     #                  'run', 's_001', 'plots',
     #                  'carnot', 'models']
-    folder_layers = ['E:\\OSMOSE_projects\\HCS_mk\\results\\HCS_base','run_021_OFF_B001_1_168',
-                     's_001\\plots\\' + plot_type, 'models']
+    folder_layers = ['E:\\OSMOSE_projects\\HCS_mk\\results\\HCS_base_locs', run_folder,
+                     's_001\\plots\\' + plot_type, 'locations']
     path_to_folder = os.path.join('', *folder_layers)
 
     # plot specifications
 
 
     # plotting
-    # for t in np.arange(1,25,1):
-    for t in [12]:
+    for t in np.arange(73,73+25,4):
+    # for t in [89, 93, 97, 101, 105]:
         plot_base_and_separated(path_to_folder, t, plot_type, model_name)
 
 
