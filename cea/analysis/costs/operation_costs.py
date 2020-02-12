@@ -19,7 +19,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def operation_costs(locator, config):
+def operation_costs(locator):
     # get local variables
     demand = pd.read_csv(locator.get_total_demand())
     supply_systems = gpdf.from_file(locator.get_building_supply()).drop('geometry', axis=1)
@@ -28,19 +28,23 @@ def operation_costs(locator, config):
     factors_dhw = data_all_in_one_systems[data_all_in_one_systems['system'].isin(['HEATING', 'NONE'])]
     factors_cooling = data_all_in_one_systems[data_all_in_one_systems['system'].isin(['COOLING', 'NONE'])]
     factors_electricity = data_all_in_one_systems[data_all_in_one_systems['system'].isin(['ELECTRICITY', 'NONE'])]
-    factors_resources = pd.read_excel(locator.get_database_conversion_systems(), sheet_name='FEEDSTOCKS')
+    factors_resources = pd.read_excel(locator.get_database_conversion_systems(), sheet_name=None)
+
+    #get the mean of all values for this
+    factors_resources_simple = [(name, values['Opex_var_buy_USD2015perkWh'].mean()) for name, values in factors_resources.items()]
+    factors_resources_simple = pd.DataFrame(factors_resources_simple, columns=['code', 'Opex_var_buy_USD2015perkWh'])
 
     # local variables
     # calculate the total operational non-renewable primary energy demand and CO2 emissions
     ## create data frame for each type of end use energy containing the type of supply system use, the final energy
     ## demand and the primary energy and emissions factors for each corresponding type of supply system
-    heating_costs = factors_heating.merge(factors_resources, left_on='feedstock', right_on='code')[
+    heating_costs = factors_heating.merge(factors_resources_simple, left_on='feedstock', right_on='code')[
         ['code_x', 'feedstock', 'Opex_var_buy_USD2015perkWh']]
-    cooling_costs = factors_cooling.merge(factors_resources, left_on='feedstock', right_on='code')[
+    cooling_costs = factors_cooling.merge(factors_resources_simple, left_on='feedstock', right_on='code')[
         ['code_x', 'feedstock', 'Opex_var_buy_USD2015perkWh']]
-    dhw_costs = factors_dhw.merge(factors_resources, left_on='feedstock', right_on='code')[
+    dhw_costs = factors_dhw.merge(factors_resources_simple, left_on='feedstock', right_on='code')[
         ['code_x', 'feedstock', 'Opex_var_buy_USD2015perkWh']]
-    electricity_costs = factors_electricity.merge(factors_resources, left_on='feedstock', right_on='code')[
+    electricity_costs = factors_electricity.merge(factors_resources_simple, left_on='feedstock', right_on='code')[
         ['code_x', 'feedstock', 'Opex_var_buy_USD2015perkWh']]
 
     heating = supply_systems.merge(demand, on='Name').merge(heating_costs, left_on='type_hs', right_on='code_x')
@@ -134,7 +138,7 @@ def main(config):
 
     print('Running operation-costs with scenario = %s' % config.scenario)
 
-    operation_costs(locator=locator, config=config)
+    operation_costs(locator=locator)
 
 
 if __name__ == '__main__':
