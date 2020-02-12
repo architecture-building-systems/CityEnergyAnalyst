@@ -26,9 +26,11 @@ COLOR_CODES = {'HCS_base_3for2': '#C96A50', 'HCS_base_coil': '#3E9AA3', 'HCS_bas
                'HCS_base': '#707070'}
 KEY_TABLE = {'HCS_base_ER0': 'HCS_ER0', 'HCS_base_coil': 'HCS_coil', 'HCS_base_3for2': 'HCS_3for2',
              'HCS_base_IEHX': 'HCS_IEHX', 'HCS_base_LD': 'HCS_LD', 'HCS_base': 'HCS_base'}
-Y_CARNOT_RANGE = [-0.1, 0.02]
-PLOT_SPECS = {'icc':{'ylabel':'Temperature [C]', 'xlabel':'Heat Load [kW]', 'ylim':(273,350)},
-              'carnot':{'ylabel':'Carnot factor [-]', 'xlabel':'Heat Load [kW]', 'ylim':(min(Y_CARNOT_RANGE),max(Y_CARNOT_RANGE))},
+Y_CARNOT_RANGE = [0.0, -0.1]
+PLOT_SPECS = {'icc':{'ylabel':'Temperature [C]', 'xlabel':'Cooling Load [kW]', 'ylim':(273,350)},
+              'carnot':{'ylabel':'Carnot factor [-]', 'xlabel':'Cooling Load [kW]',
+                        'ylim':(min(Y_CARNOT_RANGE),max(Y_CARNOT_RANGE)),
+                        'show_legend': False},
               'carnot_fraction':{'ylabel':'Carnot factor [-]', 'xlabel':'Qc_load/Qsc [-]',
                                  'xlim':(0,1), 'ylim':(min(Y_CARNOT_RANGE),max(Y_CARNOT_RANGE))}
               }
@@ -91,16 +93,17 @@ def plot_carnot_from_icc_txt_techs(paths, t, T_ref_dict, line_types, plot_type, 
     # build second y-axis (Temperature)
     ax2 = ax1.twinx()
     ax2.set(ylim=calc_T_from_carnot(T_ref,Y_CARNOT_RANGE))
-    ax2.set_ylabel(ylabel='Temperature [C]' , fontsize=18, fontname = 'Times New Roman', fontweight='normal')
+    ax2.set_ylabel(ylabel='Temperature [C]' , fontsize=24, fontname = 'Times New Roman', fontweight='normal')
 
     # save the figure
-    ax1.set_title('t = ' + str(t), fontdict={'fontsize': 16, 'fontweight': 'medium'})
+    ax1.set_title('t = ' + str(t), fontdict={'fontsize': 16, 'fontweight': 'medium'}, pad=20)
     set_plot_parameters(ax1, PLOT_SPECS['carnot'])
-    ax1.set(xlim=(0,1600)) #TODO: delete
+    ax1.set(xlim=(0,2500)) #TODO: force use
     fig1 = plt.gcf()
     os.chdir("..\\"*6)
     print('saving fig to...', os.path.abspath(os.curdir))
     fig_name = case + '_carnot' + '_techs_' + str(t) + '_DefaultHeatCascade.png'
+    fig1.tight_layout()
     fig1.savefig(fig_name, transparent=True)
     return
 
@@ -222,17 +225,28 @@ def plot_iccc_for_one_tech(path_to_base_folder, run_folder, tech):
 
 
 def main():
-    tech = 'HCS_base_coil'
     # path_to_base_folder = 'E:\\OSMOSE_projects\\HCS_mk\\results\\'
     path_to_base_folder = 'E:\\results_1130\\'
-    path_to_base_folder = 'C:\\Users\\Zhongming\\Documents\\HCS_mk\\results\\'
+    path_to_base_folder = 'C:\\Users\\Shanshan\\Documents\\WP1_results\\WP1_results_1130\\'
     # path_to_base_folder = 'E:\\OSMOSE_projects\\HCS_mk\\results\\'
-    run_folder = 'run_003_OFF_B005_1_168'
-    folders_to_compare = {#'HCS_base': 'run_003_OFF_B005_1_168',
-                          # 'HCS_base_ER0': 'run_003_OFF_B005_1_168',
-                          'HCS_base_coil': 'run_003_OFF_B005_1_168',
-                          'HCS_base_3for2': 'run_003_OFF_B005_1_168',
-                          'HCS_base_LD': 'run_003_OFF_B005_1_168' }
+    folders_to_compare = {#'HCS_base': 'run_013_RET_B005_1_168',
+                            # HOT
+                            # 'HCS_base_ER0': 'run_008_HOT_B005_1_168',
+                            # 'HCS_base_coil': 'run_008_HOT_B005_1_168',
+                            # 'HCS_base_3for2': 'run_008_HOT_B005_1_168',
+                            # 'HCS_base_IEHX': 'run_008_HOT_B005_1_168',
+                            # OFF
+                            # 'HCS_base_ER0': 'run_003_OFF_B005_1_168',
+                            # 'HCS_base_coil': 'run_003_OFF_B005_1_168',
+                            # 'HCS_base_3for2': 'run_003_OFF_B005_1_168',
+                            # 'HCS_base_IEHX': 'run_003_OFF_B005_1_168',
+                            # RET
+                            'HCS_base_ER0': 'run_013_RET_B005_1_168',
+                            'HCS_base_coil': 'run_013_RET_B005_1_168',
+                            'HCS_base_3for2': 'run_013_RET_B005_1_168',
+                            'HCS_base_IEHX': 'run_013_RET_B005_1_168',
+                          # 'HCS_base_LD': 'run_013_RET_B005_1_168'
+                          }
 
     # plot one tech (with x axis = Qc/Qsc
     # run_folders = os.listdir(os.path.join(path_to_base_folder, tech))
@@ -253,8 +267,8 @@ def main():
         T_ref_dict[tech] = calc_T_ref(path_to_folder)
     #
     # for t in np.arange(25,48,1):
-    for t in np.arange(73,73+24,1):
-    # for t in [83]:
+    # for t in np.arange(73,73+25,1):
+    for t in [85]:
         line_types = ['base'] # 'base'
         plot_carnot_from_icc_txt_techs(paths_to_folder, t, T_ref_dict, line_types, 'icc', 'all_chillers')
 
