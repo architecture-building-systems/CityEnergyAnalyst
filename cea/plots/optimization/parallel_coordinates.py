@@ -30,17 +30,18 @@ class ParallelCoordinatesForOneGenerationPlot(cea.plots.optimization.GenerationP
     def __init__(self, project, parameters, cache):
         super(ParallelCoordinatesForOneGenerationPlot, self).__init__(project, parameters, cache)
         self.analysis_fields = ['individual_name',
-                                'TAC_sys_USD',
                                 'GHG_sys_tonCO2',
+                                'TAC_sys_USD',
                                 'Opex_a_sys_USD',
                                 'Capex_total_sys_USD',
                                 ]
-        self.objectives = ['TAC_sys_USD', 'GHG_sys_tonCO2',  'Opex_a_sys_USD', 'Capex_total_sys_USD',]
+        self.objectives = [ 'GHG_sys_tonCO2', 'TAC_sys_USD', 'Opex_a_sys_USD', 'Capex_total_sys_USD',]
         self.normalization = self.parameters['normalization']
         self.input_files = [(self.locator.get_optimization_generation_total_performance, [self.generation])]
         self.titles = self.calc_titles()
 
     def calc_titles(self):
+        title = 'System No.'
         if self.normalization == "gross floor area":
             titlex = 'Total annualized costs <br>[USD$(2015)/m2.yr]'
             titley = 'GHG emissions <br>[kg CO2-eq/m2.yr]'
@@ -67,7 +68,7 @@ class ParallelCoordinatesForOneGenerationPlot(cea.plots.optimization.GenerationP
             titlez = 'Investment costs <br>[USD$(2015)]'
             titlel = 'Operation costs <br>[USD$(2015)/yr]'
 
-        return titlex, titley, titlel, titlez
+        return title, titley, titlex, titlel, titlez
 
     @property
     def layout(self):
@@ -91,8 +92,9 @@ class ParallelCoordinatesForOneGenerationPlot(cea.plots.optimization.GenerationP
         # PUT THE PARETO CURVE INSIDE
         data = self.process_generation_total_performance_pareto()
         data = self.normalize_data(data, self.normalization, self.objectives)
+        data = data.sort_values(['GHG_sys_tonCO2'])
 
-        dimensions = list([dict(label=label, ticktext=data[field], values=data[field]) for field, label in zip(self.objectives, self.titles)])
+        dimensions = list([dict(label=label, values=data[field]) if field != 'individual_name' else dict(ticktext=data[field], label=label, tickvals = range(data.shape[0]), values= range(data.shape[0])) for field, label in zip(self.analysis_fields, self.titles) ])
         line = dict(color= data['Capex_total_sys_USD'], colorscale='Jet', showscale=True)
 
         trace = go.Parcoords(line=line, dimensions=dimensions)
