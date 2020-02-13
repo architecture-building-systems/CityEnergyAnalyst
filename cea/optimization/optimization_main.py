@@ -6,18 +6,16 @@ from __future__ import division
 from __future__ import print_function
 
 import os
+import time
 import warnings
 
 import pandas as pd
-import time
+
 import cea.config
 import cea.inputlocator
-from cea.optimization.lca_calculations import LcaCalculations
 from cea.optimization.master import master_main
-from cea.optimization.preprocessing.preprocessing_main import preproccessing
-from cea.optimization.prices import Prices as Prices
 from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
-from cea.technologies.supply_systems_database import SupplySystemsDatabase
+from cea.optimization.preprocessing.preprocessing_main import preproccessing
 from constants import DH_ACRONYM, DC_ACRONYM
 
 warnings.filterwarnings("ignore")
@@ -65,10 +63,6 @@ def moo_optimization(locator, weather_file, config):
     # read total demand file and names and number of all buildings
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names_all = list(total_demand.Name.values)  # needs to be a list to avoid errors
-    supply_systems = SupplySystemsDatabase(locator)
-    prices = Prices(supply_systems)
-    lca = LcaCalculations(supply_systems)
-
 
     # local flags
     if config.optimization.network_type == DH_ACRONYM:
@@ -80,8 +74,7 @@ def moo_optimization(locator, weather_file, config):
     else:
         raise Exception("no valid values for 'network-type' inpuit parameter")
 
-    #GET NAMES_OF BUILDINGS THAT HAVE HEATING, COOLING AND ELECTRICITY LOAD SEPARATELY
-
+    # GET NAMES_OF BUILDINGS THAT HAVE HEATING, COOLING AND ELECTRICITY LOAD SEPARATELY
     buildings_heating_demand = get_building_names_with_load(total_demand, load_name='QH_sys_MWhyr')
     buildings_cooling_demand = get_building_names_with_load(total_demand, load_name='QC_sys_MWhyr')
     buildings_electricity_demand = get_building_names_with_load(total_demand, load_name='E_sys_MWhyr')
@@ -89,8 +82,13 @@ def moo_optimization(locator, weather_file, config):
     # pre-process information regarding resources and technologies (they are treated before the optimization)
     # optimize best systems for every individual building (they will compete against a district distribution solution)
     print("PRE-PROCESSING")
-    network_features = preproccessing(locator, total_demand, buildings_heating_demand, buildings_cooling_demand,
-                                      weather_file, district_heating_network, district_cooling_network)
+    weather_features, network_features, prices, lca = preproccessing(locator,
+                                                        total_demand,
+                                                        buildings_heating_demand,
+                                                        buildings_cooling_demand,
+                                                        weather_file,
+                                                        district_heating_network,
+                                                        district_cooling_network)
 
     # optimize conversion systems
     print("SUPPLY SYSTEMS OPTIMIZATION")
@@ -101,10 +99,15 @@ def moo_optimization(locator, weather_file, config):
                                                         buildings_heating_demand,
                                                         buildings_cooling_demand,
                                                         buildings_electricity_demand,
-                                                        network_features, config, prices, lca)
+                                                        network_features,
+                                                        weather_features,
+                                                        config,
+                                                        prices,
+                                                        lca)
 
     t1 = time.clock()
-    print('Centralized Optimization succeeded after %s seconds' %(t1-t0))
+    print('Centralized Optimization succeeded after %s seconds' % (t1 - t0))
+
 
 # ============================
 # test
@@ -127,7 +130,6 @@ def main(config):
     moo_optimization(locator=locator, weather_file=weather_file, config=config)
 
 
-
 def check_input_files(config, locator):
     """
     Raise a ``ValueError`` if any of the required input files are missing.
@@ -139,7 +141,8 @@ def check_input_files(config, locator):
     if not demand_files_exist(locator):
         raise ValueError("Missing demand data of the scenario. Consider running demand script first.")
     if not os.path.exists(locator.SC_totals(panel_type='FP')):
-        raise ValueError("Missing SC potential of panel type 'FP' of the scenario. Consider running solar-collector script first with panel_type as FP and t-in-SC as 75")
+        raise ValueError(
+            "Missing SC potential of panel type 'FP' of the scenario. Consider running solar-collector script first with panel_type as FP and t-in-SC as 75")
     if not os.path.exists(locator.SC_totals(panel_type='ET')):
         raise ValueError(
             "Missing SC potential of panel type 'ET' of the scenario. Consider running solar-collector script first with panel_type as ET and t-in-SC as 150")

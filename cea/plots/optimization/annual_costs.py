@@ -33,7 +33,7 @@ class AnnualCostsPlot(cea.plots.optimization.GenerationPlotBase):
                                 "Opex_a_sys_disconnected_USD"
                                 ]
         self.normalization = self.parameters['normalization']
-        self.input_files = [(self.locator.get_optimization_generation_total_performance, [self.generation])]
+        self.input_files = [(self.locator.get_optimization_generation_total_performance_pareto, [self.generation])]
         self.titley = self.calc_titles()
         self.data_clean = None
 

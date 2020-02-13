@@ -32,8 +32,6 @@ __status__ = "Production"
 def district_heating_network(locator,
                              master_to_slave_variables,
                              config,
-                             prices,
-                             lca,
                              network_features):
     """
     Computes the parameters for the heating of the complete DHN
@@ -59,7 +57,6 @@ def district_heating_network(locator,
         print("CALCULATING ECOLOGICAL COSTS OF SEASONAL STORAGE - DUE TO OPERATION (IF ANY)")
         storage_dispatch = storage_main.storage_optimization(locator,
                                                              master_to_slave_variables,
-
                                                              config)
         # Import data from storage optimization
         Q_DH_networkload_W = np.array(storage_dispatch['Q_DH_networkload_W'])
