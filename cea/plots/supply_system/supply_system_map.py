@@ -39,8 +39,7 @@ class SupplySystemMapPlot(cea.plots.supply_system.SupplySystemPlotBase):
     name = "Supply system map"
 
     expected_parameters = {
-        'generation': 'plots-supply-system:generation',
-        'individual': 'plots-supply-system:individual',
+        'system': 'plots-supply-system:system',
         'scenario-name': 'general:scenario-name',
     }
 
@@ -198,8 +197,7 @@ def main():
     cache = cea.plots.cache.NullPlotCache()
     SupplySystemMapPlot(config.project,
                         {'scenario-name': config.scenario_name,
-                         'generation': config.plots_supply_system.generation,
-                         'individual': config.plots_supply_system.individual},
+                         'system': config.plots_supply_system.system,},
                         cache).plot(auto_open=True)
 
 
