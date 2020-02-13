@@ -886,8 +886,8 @@ class GenerationParameter(ChoiceParameter):
             with open(checkpoint, 'rb') as f:
                 data_checkpoint = json.load(f)
                 interations.extend(data_checkpoint['generation_to_show'])
-        unique_iterations = [x.split("_")[1] for x in interations]
-        unique_iterations = list(set(unique_iterations))
+        unique_iterations = list(set(interations))
+        unique_iterations = [str(x) for x in unique_iterations]
         return unique_iterations
 
     def encode(self, value):
