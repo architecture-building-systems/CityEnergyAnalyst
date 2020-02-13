@@ -40,7 +40,7 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.GenerationPlotBase)
                                 'Opex_a_sys_USD']
         self.objectives = ['TAC_sys_USD', 'GHG_sys_tonCO2', 'PEN_sys_MJoil']
         self.normalization = self.parameters['normalization']
-        self.input_files = [(self.locator.get_optimization_generation_total_performance, [self.generation])]
+        self.input_files = [(self.locator.get_optimization_generation_total_performance_pareto, [self.generation])]
         self.multi_criteria = self.parameters['multicriteria']
         self.titlex, self.titley, self.titlez = self.calc_titles()
 
@@ -101,7 +101,7 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.GenerationPlotBase)
         # graph.append(trace)
 
         # PUT THE PARETO CURVE INSIDE
-        data = self.process_generation_total_performance_pareto()
+        data = self.process_generation_total_performance_pareto_with_multi()
         data = self.normalize_data(data, self.normalization, self.objectives)
         xs = data[self.objectives[0]].values
         ys = data[self.objectives[1]].values

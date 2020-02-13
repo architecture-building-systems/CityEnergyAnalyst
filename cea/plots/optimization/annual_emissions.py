@@ -31,7 +31,7 @@ class AnnualEmissionsPlot(cea.plots.optimization.GenerationPlotBase):
                                 "GHG_sys_disconnected_tonCO2",
                                 ]
         self.normalization = self.parameters['normalization']
-        self.input_files = [(self.locator.get_optimization_generation_total_performance, [self.generation])]
+        self.input_files = [(self.locator.get_optimization_generation_total_performance_pareto, [self.generation])]
         self.titley = self.calc_titles()
         self.data_clean = None
 
