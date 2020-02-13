@@ -391,11 +391,13 @@ def non_dominated_sorting_genetic_algorithm(locator,
             print "Saving results for generation", gen, "\n"
             save_generation_dataframes(gen, invalid_ind, locator, DCN_network_list_tested, DHN_network_list_tested)
             save_generation_individuals(column_names, gen, invalid_ind, locator)
-            save_generation_pareto_individuals(locator, gen, record_individuals_tested, paretofrontier)
+            systems_name_list = save_generation_pareto_individuals(locator, gen, record_individuals_tested, paretofrontier)
+        else:
+            systems_name_list = []
 
         if gen == NGEN and config.debug == False:  # final generation re-evaluate paretofront
             print "Saving results for generation", gen, "\n"
-            save_final_generation_pareto_individuals(toolbox,
+            systems_name_list = save_final_generation_pareto_individuals(toolbox,
                                                      locator,
                                                      gen,
                                                      record_individuals_tested,
@@ -424,7 +426,8 @@ def non_dominated_sorting_genetic_algorithm(locator,
                       selected_population=pop,
                       tested_population=invalid_ind,
                       generational_distances=generational_distances,
-                      difference_generational_distances = difference_generational_distances)
+                      difference_generational_distances = difference_generational_distances,
+                      systems_to_show=systems_name_list)
             json.dump(cp, fp)
     if config.multiprocessing:
         pool.close()
@@ -500,11 +503,13 @@ def save_final_generation_pareto_individuals(toolbox,
                                                            individual_number, generation_number))],
                                                   ignore_index=True)
 
-    individual_name_list = ["Sys " + str(y) + "-" + str(x) for x, y in zip(individual_number_list, generation_number_list)]
+    systems_name_list = ["Sys " + str(y) + "-" + str(x) for x, y in zip(individual_number_list, generation_number_list)]
     performance_totals_pareto['individual'] = individual_number_list
-    performance_totals_pareto['individual_name'] = individual_name_list
+    performance_totals_pareto['individual_name'] = systems_name_list
     performance_totals_pareto['generation'] = generation_number_list
     performance_totals_pareto.to_csv(locator.get_optimization_generation_total_performance_pareto(generation))
+
+    return systems_name_list
 
 
 def save_generation_pareto_individuals(locator, generation, record_individuals_tested, paretofrontier):
@@ -523,11 +528,13 @@ def save_generation_pareto_individuals(locator, generation, record_individuals_t
                                                        locator.get_optimization_slave_total_performance(ind, gen))],
                                                   ignore_index=True)
 
-    individual_name_list = ["Sys " + str(y) + "-" + str(x) for x, y in zip(individual_list, generation_list)]
+    systems_name_list = ["Sys " + str(y) + "-" + str(x) for x, y in zip(individual_list, generation_list)]
     performance_totals_pareto['individual'] = individual_list
-    performance_totals_pareto['individual_name'] = individual_name_list
+    performance_totals_pareto['individual_name'] = systems_name_list
     performance_totals_pareto['generation'] = generation_list
     performance_totals_pareto.to_csv(locator.get_optimization_generation_total_performance_pareto(generation))
+
+    return systems_name_list
 
 def save_generation_dataframes(generation,
                                slected_individuals,
