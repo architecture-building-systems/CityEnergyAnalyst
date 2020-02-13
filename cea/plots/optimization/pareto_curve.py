@@ -101,7 +101,7 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.GenerationPlotBase)
         # graph.append(trace)
 
         # PUT THE PARETO CURVE INSIDE
-        data = self.process_generation_total_performance_pareto()
+        data = self.process_generation_total_performance_pareto_with_multi()
         data = self.normalize_data(data, self.normalization, self.objectives)
         xs = data[self.objectives[0]].values
         ys = data[self.objectives[1]].values
