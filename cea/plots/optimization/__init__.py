@@ -57,9 +57,8 @@ class GenerationPlotBase(cea.plots.PlotBase):
         return data_processed
 
     @cea.plots.cache.cached
-    def process_generation_total_performance_halloffame(self):
-
-        data_processed = pd.read_csv(self.locator.get_optimization_generation_total_performance_halloffame(self.generation))
+    def process_generation_total_performance_pareto(self):
+        data_processed = pd.read_csv(self.locator.get_optimization_generation_total_performance_pareto(self.generation))
         return data_processed
 
     def normalize_data(self, data_processed, normalization, analysis_fields):
