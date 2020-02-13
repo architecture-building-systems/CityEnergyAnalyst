@@ -505,7 +505,7 @@ def save_final_generation_pareto_individuals(toolbox,
                                                            individual_number, generation_number))],
                                                   ignore_index=True)
 
-    systems_name_list = ["Sys " + str(y) + "-" + str(x) for x, y in zip(individual_number_list, generation_number_list)]
+    systems_name_list = ["sys_" + str(y) + "_" + str(x) for x, y in zip(individual_number_list, generation_number_list)]
     performance_totals_pareto['individual'] = individual_number_list
     performance_totals_pareto['individual_name'] = systems_name_list
     performance_totals_pareto['generation'] = generation_number_list
@@ -531,7 +531,7 @@ def save_generation_pareto_individuals(locator, generation, record_individuals_t
                                                        locator.get_optimization_slave_total_performance(ind, gen))],
                                                   ignore_index=True)
 
-    systems_name_list = ["Sys " + str(y) + "-" + str(x) for x, y in zip(individual_list, generation_list)]
+    systems_name_list = ["sys_" + str(y) + "_" + str(x) for x, y in zip(individual_list, generation_list)]
     performance_totals_pareto['individual'] = individual_list
     performance_totals_pareto['individual_name'] = systems_name_list
     performance_totals_pareto['generation'] = generation_list
@@ -546,7 +546,7 @@ def save_generation_dataframes(generation,
                                DCN_network_list_selected,
                                DHN_network_list_selected):
     individual_list = range(len(slected_individuals))
-    individual_name_list = ["Sys " + str(generation) + "-" + str(x) for x in individual_list]
+    individual_name_list = ["sys_" + str(generation) + "_" + str(x) for x in individual_list]
     performance_disconnected = pd.DataFrame()
     performance_connected = pd.DataFrame()
     performance_totals = pd.DataFrame()
