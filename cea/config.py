@@ -868,6 +868,33 @@ class SingleBuildingParameter(ChoiceParameter):
             return self._choices[0]
         return str(value)
 
+class GenerationParameter(ChoiceParameter):
+    """A (single) building in the zone"""
+    typename = 'GenerationParameter'
+    def initialize(self, parser):
+        # skip the default ChoiceParameter initialization of _choices
+        pass
+
+    @property
+    def _choices(self):
+        import glob
+        # set the `._choices` attribute to the list buildings in the project
+        locator = cea.inputlocator.InputLocator(self.config.scenario)
+        checkpoints = glob.glob(os.path.join(locator.get_optimization_master_results_folder(),"*.json"))
+        interations = []
+        for checkpoint in checkpoints:
+            with open(checkpoint, 'rb') as f:
+                data_checkpoint = json.load(f)
+                interations.extend(data_checkpoint['generation_to_show'])
+        unique_iterations = [x.split(" ")[1].split("-")[0] for x in interations]
+        unique_iterations = list(set(unique_iterations))
+        return unique_iterations
+
+    def encode(self, value):
+        if not str(value) in self._choices:
+            return self._choices[0]
+        return str(value)
+
 
 class BuildingsParameter(MultiChoiceParameter):
     """A list of buildings in the zone"""
