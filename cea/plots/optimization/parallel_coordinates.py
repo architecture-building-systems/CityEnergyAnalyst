@@ -97,7 +97,7 @@ class ParallelCoordinatesForOneGenerationPlot(cea.plots.optimization.GenerationP
         dimensions = list([dict(label=label, values=data[field]) if field != 'individual_name' else dict(ticktext=data[field], label=label, tickvals = range(data.shape[0]), values= range(data.shape[0])) for field, label in zip(self.analysis_fields, self.titles) ])
         line = dict(color= data['Capex_total_sys_USD'], colorscale='Jet', showscale=True)
 
-        trace = go.Parcoords(line=line, dimensions=dimensions)
+        trace = go.Parcoords(line=line, dimensions=dimensions, labelfont=dict(size=10), rangefont=dict(size=8), tickfont=dict(size=10))
 
         graph.append(trace)
 
