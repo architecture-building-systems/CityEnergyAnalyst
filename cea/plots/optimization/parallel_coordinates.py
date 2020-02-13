@@ -8,9 +8,9 @@ import plotly.graph_objs as go
 
 import cea.plots.optimization
 
-__author__ = "Bhargava Srepathi"
-__copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Bhargava Srepathi", "Daren Thomas"]
+__author__ = "Jimeno A. Fonseca"
+__copyright__ = "Copyright 2020, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Jimeno A. Fonseca"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -37,7 +37,7 @@ class ParallelCoordinatesForOneGenerationPlot(cea.plots.optimization.GenerationP
                                 ]
         self.objectives = ['GHG_sys_tonCO2', 'TAC_sys_USD', 'Opex_a_sys_USD', 'Capex_total_sys_USD']
         self.normalization = self.parameters['normalization']
-        self.input_files = [(self.locator.get_optimization_generation_total_performance, [self.generation])]
+        self.input_files = [(self.locator.get_optimization_generation_total_performance_pareto, [self.generation])]
         self.titles = self.calc_titles()
 
     def calc_titles(self):
