@@ -506,6 +506,8 @@ def save_final_generation_pareto_individuals(toolbox,
     performance_totals_pareto['generation'] = generation_number_list
     performance_totals_pareto.to_csv(locator.get_optimization_generation_total_performance_pareto(generation))
 
+    return systems_name_list
+
 
 
 def save_generation_pareto_individuals(locator, generation, record_individuals_tested, paretofrontier):
