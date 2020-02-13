@@ -100,8 +100,7 @@ def main():
     cache = cea.plots.cache.NullPlotCache()
     DispatchCurveDistrictElectricityPlot(config.project,
                                          {'scenario-name': config.scenario_name,
-                                          'generation': config.plots_supply_system.generation,
-                                          'individual': config.plots_supply_system.individual,
+                                          'system': config.plots_supply_system.system,
                                           'timeframe': config.plots_supply_system.timeframe},
                                          cache).plot(auto_open=True)
 

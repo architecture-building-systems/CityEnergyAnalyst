@@ -40,8 +40,9 @@ class SupplySystemPlotBase(cea.plots.PlotBase):
         super(SupplySystemPlotBase, self).__init__(project, parameters, cache)
 
         self.category_path = os.path.join('testing', 'supply-system-overview')
-        self.generation = self.parameters['generation']
-        self.individual = self.parameters['individual']
+        self.system = self.parameters['system']
+        self.generation = self.system.split(" ")[1].split("-")[0]
+        self.individual = self.system.split(" ")[1].split("-")[1]
         self.input_files = []
 
     @cea.plots.cache.cached
