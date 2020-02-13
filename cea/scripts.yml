@@ -236,7 +236,7 @@ Optimization:
     description: Run optimization for centralized operation
     interfaces: [cli, arcgis, dashboard]
     module: cea.optimization.optimization_main
-    parameters: ['general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free', optimization]
+    parameters: ['general:debug', 'general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free', optimization]
     input-files:
       - [get_street_network]
       - [get_total_demand]

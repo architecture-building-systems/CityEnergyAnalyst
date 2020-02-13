@@ -17,6 +17,7 @@ from math import sqrt
 from cea.optimization.constants import DH_CONVERSION_TECHNOLOGIES_SHARE, DC_CONVERSION_TECHNOLOGIES_SHARE, DH_ACRONYM, \
     DC_ACRONYM
 from cea.optimization.master import evaluation
+from cea.optimization.master.data_saver import save_results
 from cea.optimization.master.generation import generate_main
 from cea.optimization.master.generation import individual_to_barcode
 from cea.optimization.master.mutations import mutation_main
@@ -40,7 +41,7 @@ creator.create("Individual", list, typecode='d', fitness=creator.FitnessMin)
 
 def objective_function(individual,
                        individual_number,
-                       generation,
+                       generation_number,
                        building_names_all,
                        column_names_buildings_heating,
                        column_names_buildings_cooling,
@@ -49,6 +50,7 @@ def objective_function(individual,
                        building_names_electricity,
                        locator,
                        network_features,
+                       weather_features,
                        config,
                        prices,
                        lca,
@@ -56,7 +58,8 @@ def objective_function(individual,
                        district_cooling_network,
                        technologies_heating_allowed,
                        technologies_cooling_allowed,
-                       column_names):
+                       column_names,
+                       print_final_results=False):
     """
     Objective function is used to calculate the costs, CO2, primary energy and the variables corresponding to the
     individual
@@ -65,15 +68,33 @@ def objective_function(individual,
     :return: returns costs, CO2, primary energy and the master_to_slave_vars
     """
     print('cea optimization progress: individual ' + str(individual_number) + ' and generation ' + str(
-        generation) + '/' + str(config.optimization.number_of_generations))
-    costs_USD, CO2_ton, prim_MJ = evaluation.evaluation_main(individual,
+        generation_number) + '/' + str(config.optimization.number_of_generations))
+
+    TAC_sys_USD, \
+    GHG_sys_tonCO2, \
+    buildings_connected_costs, \
+    buildings_connected_emissions, \
+    buildings_disconnected_costs, \
+    buildings_disconnected_emissions, \
+    district_heating_generation_dispatch, \
+    district_cooling_generation_dispatch, \
+    district_electricity_dispatch, \
+    district_electricity_demands, \
+    performance_totals, \
+    building_connectivity_dict, \
+    district_heating_capacity_installed, \
+    district_cooling_capacity_installed, \
+    district_electricity_capacity_installed, \
+    buildings_disconnected_heating_capacities, \
+    buildings_disconnected_cooling_capacities = evaluation.evaluation_main(individual,
                                                              building_names_all,
                                                              locator,
                                                              network_features,
+                                                             weather_features,
                                                              config,
                                                              prices, lca,
                                                              individual_number,
-                                                             generation,
+                                                             generation_number,
                                                              column_names,
                                                              column_names_buildings_heating,
                                                              column_names_buildings_cooling,
@@ -85,7 +106,30 @@ def objective_function(individual,
                                                              technologies_heating_allowed,
                                                              technologies_cooling_allowed,
                                                              )
-    return costs_USD, CO2_ton, prim_MJ
+
+    if config.debug or print_final_results:  # print for the last generation and
+        print("SAVING RESULTS TO DISK")
+        save_results(locator,
+                     weather_features.date,
+                     individual_number,
+                     generation_number,
+                     buildings_connected_costs,
+                     buildings_connected_emissions,
+                     buildings_disconnected_costs,
+                     buildings_disconnected_emissions,
+                     district_heating_generation_dispatch,
+                     district_cooling_generation_dispatch,
+                     district_electricity_dispatch,
+                     district_electricity_demands,
+                     performance_totals,
+                     building_connectivity_dict,
+                     district_heating_capacity_installed,
+                     district_cooling_capacity_installed,
+                     district_electricity_capacity_installed,
+                     buildings_disconnected_heating_capacities,
+                     buildings_disconnected_cooling_capacities)
+
+    return TAC_sys_USD, GHG_sys_tonCO2
 
 
 def objective_function_wrapper(args):
@@ -109,6 +153,7 @@ def non_dominated_sorting_genetic_algorithm(locator,
                                             building_names_cooling,
                                             building_names_electricity,
                                             network_features,
+                                            weather_features,
                                             config,
                                             prices,
                                             lca):
@@ -222,7 +267,6 @@ def non_dominated_sorting_genetic_algorithm(locator,
 
     # Initialize statistics object
     paretofrontier = tools.ParetoFront()
-    halloffame = tools.HallOfFame(MU)
     generational_distances = []
     difference_generational_distances = []
     stats = tools.Statistics(lambda ind: ind.fitness.values)
@@ -247,6 +291,7 @@ def non_dominated_sorting_genetic_algorithm(locator,
                                                    repeat(building_names_electricity, len(invalid_ind)),
                                                    repeat(locator, len(invalid_ind)),
                                                    repeat(network_features, len(invalid_ind)),
+                                                   repeat(weather_features, len(invalid_ind)),
                                                    repeat(config, len(invalid_ind)),
                                                    repeat(prices, len(invalid_ind)),
                                                    repeat(lca, len(invalid_ind)),
@@ -267,7 +312,6 @@ def non_dominated_sorting_genetic_algorithm(locator,
     # Compile statistics about the population
     record = stats.compile(pop)
     paretofrontier.update(pop)
-    halloffame.update(pop)
     performance_metrics = calc_performance_metrics(0.0, paretofrontier)
     generational_distances.append(performance_metrics[0])
     difference_generational_distances.append(performance_metrics[1])
@@ -299,6 +343,7 @@ def non_dominated_sorting_genetic_algorithm(locator,
                                      repeat(building_names_electricity, len(invalid_ind)),
                                      repeat(locator, len(invalid_ind)),
                                      repeat(network_features, len(invalid_ind)),
+                                     repeat(weather_features, len(invalid_ind)),
                                      repeat(config, len(invalid_ind)),
                                      repeat(prices, len(invalid_ind)),
                                      repeat(lca, len(invalid_ind)),
@@ -318,8 +363,6 @@ def non_dominated_sorting_genetic_algorithm(locator,
 
         # get paretofront and update dictionary of individuals evaluated
         paretofrontier.update(pop)
-        halloffame.update(pop)
-
         record_individuals_tested = calc_dictionary_of_all_individuals_tested(record_individuals_tested, gen=gen,
                                                                               invalid_ind=invalid_ind)
 
@@ -344,11 +387,37 @@ def non_dominated_sorting_genetic_algorithm(locator,
             DCN_network_list_tested.append(DCN_barcode)
             DHN_network_list_tested.append(DHN_barcode)
 
-        print "Saving results for generation", gen, "\n"
-        save_generation_dataframes(gen, invalid_ind, locator, DCN_network_list_tested, DHN_network_list_tested)
-        save_generation_individuals(column_names, gen, invalid_ind, locator)
-        save_generation_pareto_individuals(locator, gen, record_individuals_tested, paretofrontier)
-        save_generation_halloffame_individuals(locator, gen, record_individuals_tested, halloffame)
+        if config.debug:
+            print "Saving results for generation", gen, "\n"
+            save_generation_dataframes(gen, invalid_ind, locator, DCN_network_list_tested, DHN_network_list_tested)
+            save_generation_individuals(column_names, gen, invalid_ind, locator)
+            systems_name_list = save_generation_pareto_individuals(locator, gen, record_individuals_tested, paretofrontier)
+        else:
+            systems_name_list = []
+
+        if gen == NGEN and config.debug == False:  # final generation re-evaluate paretofront
+            print "Saving results for generation", gen, "\n"
+            systems_name_list = save_final_generation_pareto_individuals(toolbox,
+                                                     locator,
+                                                     gen,
+                                                     record_individuals_tested,
+                                                     paretofrontier,
+                                                     building_names_all,
+                                                     column_names_buildings_heating,
+                                                     column_names_buildings_cooling,
+                                                     building_names_heating,
+                                                     building_names_cooling,
+                                                     building_names_electricity,
+                                                     network_features,
+                                                     weather_features,
+                                                     config,
+                                                     prices,
+                                                     lca,
+                                                     district_heating_network,
+                                                     district_cooling_network,
+                                                     technologies_heating_allowed,
+                                                     technologies_cooling_allowed,
+                                                     column_names)
 
         # Create Checkpoint if necessary
         print "Creating CheckPoint", gen, "\n"
@@ -357,7 +426,8 @@ def non_dominated_sorting_genetic_algorithm(locator,
                       selected_population=pop,
                       tested_population=invalid_ind,
                       generational_distances=generational_distances,
-                      difference_generational_distances = difference_generational_distances)
+                      difference_generational_distances = difference_generational_distances,
+                      systems_to_show=systems_name_list)
             json.dump(cp, fp)
     if config.multiprocessing:
         pool.close()
@@ -365,10 +435,88 @@ def non_dominated_sorting_genetic_algorithm(locator,
     return pop, logbook
 
 
+def save_final_generation_pareto_individuals(toolbox,
+                                             locator,
+                                             generation,
+                                             record_individuals_tested,
+                                             paretofrontier,
+                                             building_names_all,
+                                             column_names_buildings_heating,
+                                             column_names_buildings_cooling,
+                                             building_names_heating,
+                                             building_names_cooling,
+                                             building_names_electricity,
+                                             network_features,
+                                             weather_features,
+                                             config,
+                                             prices,
+                                             lca,
+                                             district_heating_network,
+                                             district_cooling_network,
+                                             technologies_heating_allowed,
+                                             technologies_cooling_allowed,
+                                             column_names):
+    #local variables
+    performance_totals_pareto = pd.DataFrame()
+    individual_number_list = []
+    generation_number_list = []
+    individual_in_pareto_list = []
+    for i, record in enumerate(record_individuals_tested['individual_code']):
+        if record in paretofrontier:
+            individual_number = record_individuals_tested['individual_id'][i]
+            generation_number = record_individuals_tested['generation'][i]
+            individual = record_individuals_tested['individual_code'][i]
+            individual_number_list.append(individual_number)
+            generation_number_list.append(generation_number)
+            individual_in_pareto_list.append(individual)
+
+    save_generation_individuals(column_names, generation, individual_in_pareto_list, locator)
+
+    #evaluate once again and print results for the pareto curve
+    print_final_results = True
+    toolbox.map(toolbox.evaluate, izip(individual_in_pareto_list,
+                                       individual_number_list,
+                                       generation_number_list,
+                                       repeat(building_names_all, len(individual_in_pareto_list)),
+                                       repeat(column_names_buildings_heating, len(individual_in_pareto_list)),
+                                       repeat(column_names_buildings_cooling, len(individual_in_pareto_list)),
+                                       repeat(building_names_heating, len(individual_in_pareto_list)),
+                                       repeat(building_names_cooling, len(individual_in_pareto_list)),
+                                       repeat(building_names_electricity, len(individual_in_pareto_list)),
+                                       repeat(locator, len(individual_in_pareto_list)),
+                                       repeat(network_features, len(individual_in_pareto_list)),
+                                       repeat(weather_features, len(individual_in_pareto_list)),
+                                       repeat(config, len(individual_in_pareto_list)),
+                                       repeat(prices, len(individual_in_pareto_list)),
+                                       repeat(lca, len(individual_in_pareto_list)),
+                                       repeat(district_heating_network, len(individual_in_pareto_list)),
+                                       repeat(district_cooling_network, len(individual_in_pareto_list)),
+                                       repeat(technologies_heating_allowed, len(individual_in_pareto_list)),
+                                       repeat(technologies_cooling_allowed, len(individual_in_pareto_list)),
+                                       repeat(column_names, len(individual_in_pareto_list)),
+                                       repeat(print_final_results, len(individual_in_pareto_list))))
+
+    for individual_number, generation_number in zip(individual_number_list, generation_number_list):
+        performance_totals_pareto = pd.concat([performance_totals_pareto,
+                                                   pd.read_csv(
+                                                       locator.get_optimization_slave_total_performance(
+                                                           individual_number, generation_number))],
+                                                  ignore_index=True)
+
+    systems_name_list = ["Sys " + str(y) + "-" + str(x) for x, y in zip(individual_number_list, generation_number_list)]
+    performance_totals_pareto['individual'] = individual_number_list
+    performance_totals_pareto['individual_name'] = systems_name_list
+    performance_totals_pareto['generation'] = generation_number_list
+    performance_totals_pareto.to_csv(locator.get_optimization_generation_total_performance_pareto(generation))
+
+    return systems_name_list
+
+
 def save_generation_pareto_individuals(locator, generation, record_individuals_tested, paretofrontier):
     performance_totals_pareto = pd.DataFrame()
     individual_list = []
     generation_list = []
+
     for i, record in enumerate(record_individuals_tested['individual_code']):
         if record in paretofrontier:
             ind = record_individuals_tested['individual_id'][i]
@@ -380,32 +528,13 @@ def save_generation_pareto_individuals(locator, generation, record_individuals_t
                                                        locator.get_optimization_slave_total_performance(ind, gen))],
                                                   ignore_index=True)
 
-    individual_name_list = ["Sys " + str(y) + "-" + str(x) for x, y in zip(individual_list, generation_list)]
+    systems_name_list = ["Sys " + str(y) + "-" + str(x) for x, y in zip(individual_list, generation_list)]
     performance_totals_pareto['individual'] = individual_list
-    performance_totals_pareto['individual_name'] = individual_name_list
+    performance_totals_pareto['individual_name'] = systems_name_list
     performance_totals_pareto['generation'] = generation_list
     performance_totals_pareto.to_csv(locator.get_optimization_generation_total_performance_pareto(generation))
 
-def save_generation_halloffame_individuals(locator, generation, record_individuals_tested, hall_of_fame):
-    performance_totals_halloffame = pd.DataFrame()
-    individual_list = []
-    generation_list = []
-    for i, record in enumerate(record_individuals_tested['individual_code']):
-        if record in hall_of_fame:
-            ind = record_individuals_tested['individual_id'][i]
-            gen = record_individuals_tested['generation'][i]
-            individual_list.append(ind)
-            generation_list.append(gen)
-            performance_totals_halloffame = pd.concat([performance_totals_halloffame,
-                                                   pd.read_csv(
-                                                       locator.get_optimization_slave_total_performance(ind, gen))],
-                                                  ignore_index=True)
-
-    individual_name_list = ["Sys " + str(y) + "-" + str(x) for x, y in zip(individual_list, generation_list)]
-    performance_totals_halloffame['individual'] = individual_list
-    performance_totals_halloffame['individual_name'] = individual_name_list
-    performance_totals_halloffame['generation'] = generation_list
-    performance_totals_halloffame.to_csv(locator.get_optimization_generation_total_performance_halloffame(generation))
+    return systems_name_list
 
 def save_generation_dataframes(generation,
                                slected_individuals,
