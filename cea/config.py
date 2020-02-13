@@ -886,7 +886,7 @@ class GenerationParameter(ChoiceParameter):
             with open(checkpoint, 'rb') as f:
                 data_checkpoint = json.load(f)
                 interations.extend(data_checkpoint['generation_to_show'])
-        unique_iterations = [x.split(" ")[1].split("-")[0] for x in interations]
+        unique_iterations = [x.split("_")[1] for x in interations]
         unique_iterations = list(set(unique_iterations))
         return unique_iterations
 
