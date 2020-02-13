@@ -437,10 +437,11 @@ class InputLocator(object):
         Operation pattern for decentralized buildings"""
         return self._ensure_folder(self.get_optimization_results_folder(), "decentralized")
 
+
     def get_optimization_checkpoint(self, generation):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
         return os.path.join(self.get_optimization_master_results_folder(),
-                            'CheckPoint_' + str(generation))
+                            'CheckPoint_' + str(generation)+"json")
 
     def get_optimization_checkpoint_initial(self):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""

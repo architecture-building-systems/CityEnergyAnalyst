@@ -386,14 +386,17 @@ def non_dominated_sorting_genetic_algorithm(locator,
 
         if config.debug:
             print "Saving results for generation", gen, "\n"
+            valid_generation = [gen]
             save_generation_dataframes(gen, invalid_ind, locator, DCN_network_list_tested, DHN_network_list_tested)
             save_generation_individuals(column_names, gen, invalid_ind, locator)
             systems_name_list = save_generation_pareto_individuals(locator, gen, record_individuals_tested, paretofrontier)
         else:
             systems_name_list = []
+            valid_generation = []
 
         if gen == NGEN and config.debug == False:  # final generation re-evaluate paretofront
             print "Saving results for generation", gen, "\n"
+            valid_generation = [gen]
             systems_name_list = save_final_generation_pareto_individuals(toolbox,
                                                      locator,
                                                      gen,
@@ -424,7 +427,9 @@ def non_dominated_sorting_genetic_algorithm(locator,
                       tested_population=invalid_ind,
                       generational_distances=generational_distances,
                       difference_generational_distances = difference_generational_distances,
-                      systems_to_show=systems_name_list)
+                      systems_to_show=systems_name_list,
+                      generation_to_show =valid_generation,
+                      )
             json.dump(cp, fp)
     if config.multiprocessing:
         pool.close()
