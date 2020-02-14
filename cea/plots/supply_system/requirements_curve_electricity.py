@@ -76,14 +76,12 @@ class RequirementsCurveDistrictElectricityPlot(cea.plots.supply_system.SupplySys
 
     @property
     def title(self):
-        return "Requirements curve electrical system # %s (%s)" % (self.individual, self.timeframe)
+        return "Requirements curve electrical fro %s (%s)" % (self.system, self.timeframe)
 
     @property
     def output_path(self):
         return self.locator.get_timeseries_plots_file(
-            'gen{generation}_ind{individual}requirements_curve_electricity'.format(individual=self.individual,
-                                                                                   generation=self.generation),
-            self.category_name)
+            '{system}_electricity_requirements'.format(system=self.system), self.category_name)
 
     @property
     def layout(self):
