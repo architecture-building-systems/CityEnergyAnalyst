@@ -55,16 +55,13 @@ class SupplySystemMapPlot(cea.plots.supply_system.SupplySystemPlotBase):
     @property
     def title(self):
         if self.generation is not None:
-            return "Supply system map for system #{individual} of gen{generation}".format(individual=self.individual,
-                                                                                          generation=self.generation)
+            return "Supply system map for #{system}".format(system=self.system)
         return "Supply system map for original system"
 
     @property
     def output_path(self):
         return self.locator.get_timeseries_plots_file(
-            'gen{generation}_ind{individual}supply_system_map'.format(individual=self.individual,
-                                                                      generation=self.generation),
-            self.category_name)
+            '{system}_supply_system_map'.format(system=self.system), self.category_name)
 
     def _plot_div_producer(self):
         """
