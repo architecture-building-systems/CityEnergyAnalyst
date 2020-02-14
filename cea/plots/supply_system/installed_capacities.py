@@ -75,14 +75,12 @@ class InstalledCapacities(cea.plots.supply_system.SupplySystemPlotBase):
 
     @property
     def title(self):
-        return "Installed Capacities for system %s" % (self.individual)
+        return "Installed Capacities for %s" % (self.system)
 
     @property
     def output_path(self):
         return self.locator.get_timeseries_plots_file(
-            'gen{generation}_ind{individual}installed_capacities'.format(individual=self.individual,
-                                                                         generation=self.generation),
-            self.category_name)
+            '{system}_install_capacities'.format(system=self.system), self.category_name)
 
     @property
     def layout(self):
