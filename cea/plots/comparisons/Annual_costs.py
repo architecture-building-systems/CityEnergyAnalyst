@@ -18,7 +18,7 @@ __status__ = "Production"
 
 class ComparisonsAnnualCostsPlot(cea.plots.comparisons.ComparisonsPlotBase):
     """Implement the "CAPEX vs. OPEX of centralized system in generation X" plot"""
-    name = "Comparisons annual costs"
+    name = "Annualized costs"
 
     def __init__(self, project, parameters, cache):
         super(ComparisonsAnnualCostsPlot, self).__init__(project, parameters, cache)
@@ -31,13 +31,11 @@ class ComparisonsAnnualCostsPlot(cea.plots.comparisons.ComparisonsPlotBase):
 
     @property
     def title(self):
-        return "Comparison Annual Costs"
+        return "Annualized Costs per Scenario"
 
     @property
     def output_path(self):
-        return self.locator.get_timeseries_plots_file('%s%s%s_annualized_costs' % (self.urban_scenarios, \
-                                                                                   self.energy_system_scenarios_generation, \
-                                                                                   self.energy_system_scenarios_individual))
+        return self.locator.get_timeseries_plots_file('scenarios_annualized_costs')
 
     @property
     def layout(self):
@@ -65,8 +63,7 @@ def main():
     config = cea.config.Configuration()
     cache = cea.plots.cache.NullPlotCache()
     ComparisonsAnnualCostsPlot(config.project,
-                               {
-                                   'urban-energy-system-scenarios': config.plots_scenario_comparisons.urban_energy_system_scenarios},
+                               { 'scenarios-and-systems': config.plots_comparisons.scenarios_and_systems},
                                cache).plot(auto_open=True)
 
 

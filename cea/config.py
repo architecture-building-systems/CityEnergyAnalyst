@@ -11,10 +11,11 @@ import ConfigParser
 import cea.inputlocator
 import collections
 import datetime
+import glob
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Daren Thomas"]
+__credits__ = ["Daren Thomas", "Jimeno A. Fonseca"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -904,17 +905,8 @@ class SystemParameter(ChoiceParameter):
 
     @property
     def _choices(self):
-        import glob
-        # set the `._choices` attribute to the list buildings in the project
-        locator = cea.inputlocator.InputLocator(self.config.scenario)
-        checkpoints = glob.glob(os.path.join(locator.get_optimization_master_results_folder(),"*.json"))
-        interations = []
-        for checkpoint in checkpoints:
-            with open(checkpoint, 'rb') as f:
-                data_checkpoint = json.load(f)
-                interations.extend(data_checkpoint['systems_to_show'])
-        unique_iterations = list(set(interations))
-        return unique_iterations
+        scenario = self.config.scenario
+        return get_systems_list(scenario)
 
     def encode(self, value):
         if not str(value) in self._choices:
@@ -931,9 +923,14 @@ class MultiSystemParameter(MultiChoiceParameter):
 
     @property
     def _choices(self):
-        # set the `._choices` attribute to the list buildings in the project
-        locator = cea.inputlocator.InputLocator(self.config.scenario)
-        return locator.get_zone_building_names()
+        project_path = self.config.project
+        scenarios_names_list = get_scenarios_list(project_path)
+        unique_systems_scenarios_list = []
+        for scenario_name in scenarios_names_list:
+            scenario_path = os.path.join(project_path, scenario_name)
+            systems_scenario = get_systems_list(scenario_path)
+            unique_systems_scenarios_list.extend([scenario_name+"_"+x for x in systems_scenario])
+        return unique_systems_scenarios_list
 
 class BuildingsParameter(MultiChoiceParameter):
     """A list of buildings in the zone"""
@@ -949,6 +946,28 @@ class BuildingsParameter(MultiChoiceParameter):
         locator = cea.inputlocator.InputLocator(self.config.scenario)
         return locator.get_zone_building_names()
 
+
+def get_scenarios_list(project_path):
+    def is_valid_scenario(project_path, folder_name):
+        fodler_path = os.path.join(project_path, folder_name)
+        # a scenario must be a valid path
+        # a scenario can't start with a . like `.config`
+        return all([os.path.isdir(fodler_path), not folder_name.startswith('.')])
+
+    return [folder_name for folder_name in os.listdir(project_path)
+            if is_valid_scenario(project_path, folder_name)]
+
+
+def get_systems_list(scenario_path):
+    locator = cea.inputlocator.InputLocator(scenario_path)
+    checkpoints = glob.glob(os.path.join(locator.get_optimization_master_results_folder(), "*.json"))
+    interations = []
+    for checkpoint in checkpoints:
+        with open(checkpoint, 'rb') as f:
+            data_checkpoint = json.load(f)
+            interations.extend(data_checkpoint['systems_to_show'])
+    unique_iterations = list(set(interations))
+    return unique_iterations
 
 def parse_string_to_list(line):
     """Parse a line in the csv format into a list of strings"""
