@@ -70,8 +70,7 @@ class InvestmentCostsPlot(cea.plots.optimization.GenerationPlotBase):
         )
 
     def calc_graph(self):
-        self.multi_criteria = False  # TODO: add capabilities to plot muticriteria in this plot too
-        data = self.process_generation_total_performance_pareto_with_multi()
+        data = self.process_generation_total_performance_pareto()
         data = self.normalize_data(data, self.normalization, self.analysis_fields)
         self.data_clean = data
         graph = []
