@@ -906,7 +906,7 @@ class SystemParameter(ChoiceParameter):
     @property
     def _choices(self):
         scenario = self.config.scenario
-        unique_systems_scenario_list = ["_today_"]
+        unique_systems_scenario_list = ["_sys_today_"]
         unique_systems_scenario_list.extend(get_systems_list(scenario))
         return unique_systems_scenario_list
 
@@ -931,7 +931,7 @@ class MultiSystemParameter(MultiChoiceParameter):
         for scenario_name in scenarios_names_list:
             scenario_path = os.path.join(project_path, scenario_name)
             systems_scenario = get_systems_list(scenario_path)
-            unique_systems_scenarios_list.extend([scenario_name+"_today_"])
+            unique_systems_scenarios_list.extend([scenario_name+"_sys_today_"])
             unique_systems_scenarios_list.extend([scenario_name+"_"+x for x in systems_scenario])
         return unique_systems_scenarios_list
 
