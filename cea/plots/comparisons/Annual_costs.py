@@ -26,7 +26,8 @@ class ComparisonsAnnualCostsPlot(cea.plots.comparisons.ComparisonsPlotBase):
                                 "Capex_a_sys_disconnected_USD",
                                 "Opex_a_sys_connected_USD",
                                 "Opex_a_sys_disconnected_USD"]
-        self.input_files = [(x[4].get_optimization_generation_total_performance, [x[2], x[3]]) for x in self.scenarios_and_systems]
+        self.input_files = [(x[4].get_optimization_slave_total_performance, [x[3], x[2]]) if x[2] != "today" else
+                            (x[4].get_costs_operation_file, []) for x in self.scenarios_and_systems]
 
     @property
     def title(self):
