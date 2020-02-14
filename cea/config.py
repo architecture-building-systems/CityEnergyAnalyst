@@ -923,29 +923,17 @@ class SystemParameter(ChoiceParameter):
 
 class MultiSystemParameter(MultiChoiceParameter):
     """A (single) building in the zone"""
-    typename = 'SystemParameter'
+    typename = 'MultiSystemParameter'
+
     def initialize(self, parser):
-        # skip the default ChoiceParameter initialization of _choices
+        # skip the default MultiChoiceParameter initialization of _choices
         pass
 
     @property
     def _choices(self):
-        import glob
         # set the `._choices` attribute to the list buildings in the project
         locator = cea.inputlocator.InputLocator(self.config.scenario)
-        checkpoints = glob.glob(os.path.join(locator.get_optimization_master_results_folder(),"*.json"))
-        interations = []
-        for checkpoint in checkpoints:
-            with open(checkpoint, 'rb') as f:
-                data_checkpoint = json.load(f)
-                interations.extend(data_checkpoint['systems_to_show'])
-        unique_iterations = list(set(interations))
-        return unique_iterations
-
-    def encode(self, value):
-        if not str(value) in self._choices:
-            return self._choices[0]
-        return str(value)
+        return locator.get_zone_building_names()
 
 class BuildingsParameter(MultiChoiceParameter):
     """A list of buildings in the zone"""
