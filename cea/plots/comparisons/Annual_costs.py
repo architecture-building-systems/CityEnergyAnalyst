@@ -63,7 +63,7 @@ def main():
     config = cea.config.Configuration()
     cache = cea.plots.cache.NullPlotCache()
     ComparisonsAnnualCostsPlot(config.project,
-                               { 'scenarios-and-systems': config.plots_comparisons.scenarios_and_systems},
+                               {'scenarios-and-systems': config.plots_comparisons.scenarios_and_systems},
                                cache).plot(auto_open=True)
 
 

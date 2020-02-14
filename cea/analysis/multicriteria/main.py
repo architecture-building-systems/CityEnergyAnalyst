@@ -19,34 +19,40 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def multi_criteria_main(locator, config):
+def multi_criteria_main(locator,
+                        generation,
+                        weight_annualized_capital_costs,
+                        weight_total_capital_costs,
+                        weight_annual_operation_costs,
+                        weight_annual_emissions,
+                        ):
     # local variables
-    generation = config.multi_criteria.generation
-
     compiled_data_df = pd.read_csv(locator.get_optimization_generation_total_performance_pareto(generation))
 
     # normalize data
     compiled_data_df = normalize_compiled_data(compiled_data_df)
-    # rank data
-    compiled_data_df = rank_normalized_data(compiled_data_df, config)
 
+    # rank data
+    compiled_data_df = rank_normalized_data(compiled_data_df, weight_annualized_capital_costs,
+                                            weight_total_capital_costs,
+                                            weight_annual_operation_costs,
+                                            weight_annual_emissions)
     compiled_data_df.to_csv(locator.get_multi_criteria_analysis(generation))
     return
 
 
-def rank_normalized_data(compiled_data_df, config):
+def rank_normalized_data(compiled_data_df,
+                         weight_annualized_capital_costs,
+                         weight_total_capital_costs,
+                         weight_annual_operation_costs,
+                         weight_annual_emissions):
     compiled_data_df['TAC_rank'] = compiled_data_df['normalized_TAC'].rank(ascending=True)
     compiled_data_df['GHG_rank'] = compiled_data_df['normalized_emissions'].rank(ascending=True)
     ## user defined mcda
-    compiled_data_df['user_MCDA'] = compiled_data_df['normalized_Capex_total'] * \
-                                    config.multi_criteria.capex_total * \
-                                    config.multi_criteria.economic_sustainability + \
-                                    compiled_data_df['normalized_Opex'] * \
-                                    config.multi_criteria.opex * config.multi_criteria.economic_sustainability + \
-                                    compiled_data_df['normalized_TAC'] * \
-                                    config.multi_criteria.annualized_costs * config.multi_criteria.economic_sustainability + \
-                                    compiled_data_df['normalized_emissions'] * \
-                                    config.multi_criteria.emissions * config.multi_criteria.environmental_sustainability
+    compiled_data_df['user_MCDA'] = (compiled_data_df['normalized_Capex_total'] * weight_total_capital_costs +
+                                     compiled_data_df['normalized_Opex'] * weight_annual_operation_costs +
+                                     compiled_data_df['normalized_TAC'] * weight_annualized_capital_costs +
+                                     compiled_data_df['normalized_emissions'] * weight_annual_emissions)
     compiled_data_df['user_MCDA_rank'] = compiled_data_df['user_MCDA'].rank(ascending=True)
     return compiled_data_df
 
@@ -95,7 +101,18 @@ def main(config):
     print("Running multicriteria with scenario = %s" % config.scenario)
     print("Running multicriteria for generation = %s" % config.multi_criteria.generation)
 
-    multi_criteria_main(locator, config)
+    weight_annualized_capital_costs = config.multi_criteria.annualized_capital_costs
+    weight_total_capital_costs = config.multi_criteria.total_capital_costs
+    weight_annual_operation_costs = config.multi_criteria.annual_operation_costs
+    weight_annual_emissions = config.multi_criteria.annual_emissions
+    generation = config.multi_criteria.generation
+
+    multi_criteria_main(locator,
+                        generation,
+                        weight_annualized_capital_costs,
+                        weight_total_capital_costs,
+                        weight_annual_operation_costs,
+                        weight_annual_emissions)
 
 
 if __name__ == '__main__':

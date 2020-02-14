@@ -73,7 +73,7 @@ class AnnualCostsPlot(cea.plots.optimization.GenerationPlotBase):
         )
 
     def calc_graph(self):
-        data = self.process_generation_total_performance_pareto_with_multi()
+        data = self.process_generation_total_performance_pareto()
         data = self.normalize_data(data, self.normalization, self.analysis_fields)
         self.data_clean = data
         graph = []
@@ -95,8 +95,7 @@ def main():
     config = cea.config.Configuration()
     cache = cea.plots.cache.NullPlotCache()
     AnnualCostsPlot(config.project,
-                    {'buildings': None,
-                     'scenario-name': config.scenario_name,
+                    {'scenario-name': config.scenario_name,
                      'generation': config.plots_optimization.generation,
                      'normalization': config.plots_optimization.normalization
                      },
