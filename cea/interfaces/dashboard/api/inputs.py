@@ -12,7 +12,7 @@ from .databases import DATABASE_NAMES, DATABASES, DATABASES_TYPE_MAP, database_t
 
 import cea.inputlocator
 import cea.utilities.dbf
-from cea.plots.supply_system.supply_system_map import get_building_connectivity
+from cea.plots.supply_system.a_supply_system_map import get_building_connectivity
 from cea.plots.variable_naming import get_color_array
 from cea.technologies.network_layout.main import layout_network, NetworkLayout
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system

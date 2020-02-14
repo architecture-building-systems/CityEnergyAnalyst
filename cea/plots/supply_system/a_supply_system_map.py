@@ -45,8 +45,6 @@ class SupplySystemMapPlot(cea.plots.supply_system.SupplySystemPlotBase):
 
     def __init__(self, project, parameters, cache):
         super(SupplySystemMapPlot, self).__init__(project, parameters, cache)
-        self.generation = self.parameters['generation']
-        self.individual = self.parameters['individual'] if self.generation is not None else 0
         self.scenario = self.parameters['scenario-name']
         self.config = cea.config.Configuration()
         self.input_files = [(self.locator.get_optimization_slave_building_connectivity,

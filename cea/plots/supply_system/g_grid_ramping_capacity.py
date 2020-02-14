@@ -21,7 +21,7 @@ __status__ = "Production"
 
 class RampingCapacity(cea.plots.supply_system.SupplySystemPlotBase):
     """Show a pareto curve for a single generation"""
-    name = "Electrical Grid Impact (ramp-rate)"
+    name = "Impact on Electrical Grid (ramp-rate)"
     expected_parameters = {
         'system': 'plots-supply-system:system',
         'scenario-name': 'general:scenario-name',

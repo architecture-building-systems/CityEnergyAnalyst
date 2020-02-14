@@ -24,7 +24,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 # identifies this package as a plots category and sets the label name for the category
-label = 'Solar technology potentials'
+label = 'C - Technology potentials'
 
 
 class SolarTechnologyPotentialsPlotBase(cea.plots.PlotBase):

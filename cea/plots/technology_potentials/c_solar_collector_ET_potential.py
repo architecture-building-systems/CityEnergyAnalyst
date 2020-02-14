@@ -3,7 +3,7 @@ from __future__ import print_function
 
 import plotly.graph_objs as go
 
-import cea.plots.solar_technology_potentials
+import cea.plots.technology_potentials
 from cea.plots.variable_naming import COLOR, NAMING
 
 __author__ = "Jimeno A. Fonseca"
@@ -16,7 +16,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-class SCETPotentialPlot(cea.plots.solar_technology_potentials.SolarTechnologyPotentialsPlotBase):
+class SCETPotentialPlot(cea.plots.technology_potentials.SolarTechnologyPotentialsPlotBase):
     """Implement the pv-electricity-potential plot"""
 
     name = "Solar Collector (ET) Potential"

@@ -20,7 +20,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 # identifies this package as a plots category and sets the label name for the category
-label = 'Life Cycle Analysis'
+label = 'G - Life Cycle Analysis'
 
 
 class LifeCycleAnalysisPlotBase(cea.plots.PlotBase):

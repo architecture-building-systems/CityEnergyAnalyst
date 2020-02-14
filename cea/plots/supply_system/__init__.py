@@ -22,7 +22,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 # identifies this package as a plots category and sets the label name for the category
-label = 'Supply System'
+label = 'F - Supply System'
 
 
 class SupplySystemPlotBase(cea.plots.PlotBase):
