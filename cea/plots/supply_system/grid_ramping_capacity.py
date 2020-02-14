@@ -35,14 +35,12 @@ class RampingCapacity(cea.plots.supply_system.SupplySystemPlotBase):
 
     @property
     def title(self):
-        return "Likelihood of intra-daily ramp rate at transformer for system %s" % (self.individual)
+        return "Variance in intra-daily ramp rate at transformer for %s" % (self.system)
 
     @property
     def output_path(self):
         return self.locator.get_timeseries_plots_file(
-            'gen{generation}_ind{individual}ramping_capacity'.format(individual=self.individual,
-                                                                     generation=self.generation),
-            self.category_name)
+            '{system}_ramping_capacity'.format(system=self.system), self.category_name)
 
     @property
     def layout(self):
