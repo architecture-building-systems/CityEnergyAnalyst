@@ -26,7 +26,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 # identifies this package as a plots category and sets the label name for the category
-label = 'Energy demand'
+label = 'B - Energy demand'
 
 
 class DemandPlotBase(cea.plots.PlotBase):

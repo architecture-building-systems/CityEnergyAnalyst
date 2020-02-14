@@ -14,6 +14,7 @@ CATEGORIES = {c.name: {'label': c.label, 'plots': [{'id': p.id(), 'name': p.name
               for c in cea.plots.categories.list_categories()}
 
 
+
 def dashboard_to_dict(dashboard):
     out = dashboard.to_dict()
     for i, plot in enumerate(out['plots']):

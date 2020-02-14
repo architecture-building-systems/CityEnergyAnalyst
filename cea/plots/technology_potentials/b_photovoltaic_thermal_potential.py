@@ -5,7 +5,7 @@ import math
 import pandas as pd
 import plotly.graph_objs as go
 from plotly.offline import plot
-import cea.plots.solar_technology_potentials
+import cea.plots.technology_potentials
 from cea.plots.variable_naming import LOGO, COLOR, NAMING
 
 
@@ -19,7 +19,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-class PvtMonthlyPlot(cea.plots.solar_technology_potentials.SolarTechnologyPotentialsPlotBase):
+class PvtMonthlyPlot(cea.plots.technology_potentials.SolarTechnologyPotentialsPlotBase):
     """Implement the pv-electricity-potential plot"""
     name = "PVT Electricity/Thermal Potential"
 

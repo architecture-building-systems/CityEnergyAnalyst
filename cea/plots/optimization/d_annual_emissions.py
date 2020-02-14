@@ -18,7 +18,7 @@ __status__ = "Production"
 
 class AnnualEmissionsPlot(cea.plots.optimization.GenerationPlotBase):
     """Implement the "CAPEX vs. OPEX of centralized system in generation X" plot"""
-    name = "Annual emissions"
+    name = "Annualized emissions"
     expected_parameters = {
         'generation': 'plots-optimization:generation',
         'normalization': 'plots-optimization:normalization',
