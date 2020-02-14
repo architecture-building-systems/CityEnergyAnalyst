@@ -42,15 +42,16 @@ class ComparisonsPlotBase(cea.plots.PlotBase):
         super(ComparisonsPlotBase, self).__init__(project, parameters, cache)
         self.category_path = os.path.join('testing', 'comparisons')
         self.project = project
-        self.scenarios_and_systems = [(x, x.rsplit('_', 3)[0], x.rsplit('_', 3)[2], x.rsplit('_', 3)[3]) for x in
-                                      self.parameters['scenarios-and-systems']]
+        self.scenarios_and_systems = [(x, x.rsplit('_', 3)[0], x.rsplit('_', 3)[2], x.rsplit('_', 3)[3],
+                                       cea.inputlocator.InputLocator(os.path.join(self.project, x.rsplit('_', 3)[0])))
+                                      for x in self.parameters['scenarios-and-systems']]
 
     @cea.plots.cache.cached
     def preprocessing_annual_costs_scenarios(self):
         # Import multi-criteria data
         # local variables
         data_processed = pd.DataFrame()
-        for scenario_and_system, scenario_name, generation, individual in self.scenarios_and_systems:
+        for scenario_and_system, scenario_name, generation, individual, locator_scenario in self.scenarios_and_systems:
             # get data
             path_to_scenario = os.path.join(self.project, scenario_name)
             locator_scenario = cea.inputlocator.InputLocator(path_to_scenario)
@@ -58,4 +59,3 @@ class ComparisonsPlotBase(cea.plots.PlotBase):
             data_raw_df['scenario_name'] = scenario_name
             data_processed = pd.concat([data_processed, data_raw_df], sort=True, ignore_index=True)
         return data_processed
-
