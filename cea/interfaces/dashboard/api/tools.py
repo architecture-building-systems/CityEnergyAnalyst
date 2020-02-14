@@ -80,7 +80,7 @@ class ToolSave(Resource):
         config = current_app.cea_config
         payload = api.payload
         for parameter in parameters_for_script(tool_name, config):
-            if parameter.name in payload:
+            if parameter.name != 'scenario' and parameter.name in payload:
                 value = payload[parameter.name]
                 print('%s: %s' % (parameter.name, value))
                 parameter.set(value)
