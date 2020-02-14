@@ -33,7 +33,7 @@ def lca_embodied(year_to_calculate, locator):
     The results are provided in total as well as per square meter:
 
     - embodied non-renewable primary energy: E_nre_pen_GJ and E_nre_pen_MJm2
-    - embodied greenhouse gas emissions: E_ghg_ton and E_ghg_kgm2
+    - embodied greenhouse gas emissions: GHG_sys_embodied_tonCO2 and GHG_sys_embodied_kgCO2m2
 
     As part of the algorithm, the following files are read from InputLocator:
 
@@ -234,11 +234,11 @@ def calculate_contributions(df, year_to_calculate):
         'confirm'] / SERVICE_LIFE_OF_TECHNICAL_SYSTEMS
 
     # the total embodied energy/emissions are calculated as a sum of the contributions from construction and retrofits
-    df['E_ghg_ton'] = df[total_column] / 1000  # kG-CO2 eq to ton
-    df['E_ghg_kgm2'] = df[total_column] / df['GFA_m2']
+    df['GHG_sys_embodied_tonCO2'] = df[total_column] / 1000  # kG-CO2 eq to ton
+    df['GHG_sys_embodied_kgCO2m2'] = df[total_column] / df['GFA_m2']
 
     # the total and specific embodied energy/emissions are returned
-    result = df[['Name', 'E_ghg_ton', 'E_ghg_kgm2', 'GFA_m2']]
+    result = df[['Name', 'GHG_sys_embodied_tonCO2', 'GHG_sys_embodied_kgCO2m2', 'GFA_m2']]
 
     return result
 
