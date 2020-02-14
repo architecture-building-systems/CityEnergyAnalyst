@@ -14,8 +14,8 @@ CEA can be installed in Windows, Ubuntu and on the computer cluster of the ETH Z
 - :doc:`installation-on-euler`.
 
 
-Cite us
--------
+Cite
+----
 
 The CEA team. The City Energy Analyst 2.9 (Version v2.9). Zenodo. http://doi.org/10.5281/zenodo.1098896
 

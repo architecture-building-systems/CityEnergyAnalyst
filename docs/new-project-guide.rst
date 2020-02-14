@@ -66,7 +66,7 @@ The objective of this step is to use the configuration editor to set up the inpu
 
 
 Step 3. Archetype Mapper tool
-------------------------
+-----------------------------
 
 The objective of this step will be to create additional input databases of your project and add default values to them.
 In the next step you will be free to edit or replace those databases according to the real or expected values

@@ -1,6 +1,6 @@
 :orphan:
 
-Installing the City Energy Analyst on the Euler cluster
+Installation guide for the Euler cluster
 =======================================================
 
 **Disclaimer**: for this to work, you must be an ETH Zurich affiliated

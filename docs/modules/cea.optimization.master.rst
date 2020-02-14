@@ -25,6 +25,14 @@ cea.optimization.master.crossover module
     :undoc-members:
     :show-inheritance:
 
+cea.optimization.master.data\_saver module
+------------------------------------------
+
+.. automodule:: cea.optimization.master.data_saver
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cea.optimization.master.emissions\_model module
 -----------------------------------------------
 
