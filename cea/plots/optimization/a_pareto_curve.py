@@ -118,6 +118,9 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.GenerationPlotBase)
                                  color='black',
                                  width=2)))
         graph.append(trace)
+
+        # This includes the point of today's emissions
+
         return graph
 
 
