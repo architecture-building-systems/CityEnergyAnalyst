@@ -31,7 +31,7 @@ class ComparisonsPlotBase(cea.plots.PlotBase):
     category_name = "comparisons"
 
     # default parameters for plots in this category - override if your plot differs
-    expected_parameters = {'urban-energy-system-scenarios':'plots-scenario-comparisons:urban-energy-system-scenarios'}
+    expected_parameters = {'scenario-and-system':'plots-comparisons:scenario-and-system'}
 
     def __init__(self, project, parameters, cache):
         """
@@ -42,9 +42,8 @@ class ComparisonsPlotBase(cea.plots.PlotBase):
         super(ComparisonsPlotBase, self).__init__(project, parameters, cache)
         self.category_path = os.path.join('testing', 'comparisons')
         self.project = project
-        self.urban_energy_system_scenarios = self.parameters['urban-energy-system-scenarios']
-        self.urban_scenarios, \
-        self.energy_system_scenarios_generation,\
+        self.scenario_and_system = self.parameters['scenario-and-system']
+        self.urban_scenarios, self.energy_system_scenarios_generation,\
         self.energy_system_scenarios_individual = self.calc_input_variables()
 
     def calc_input_variables(self):
