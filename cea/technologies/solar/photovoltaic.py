@@ -407,9 +407,9 @@ def calc_absorbed_radiation_PV(I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetae
     absorbed_radiation_Wperm2 = M * Ta_n * (
             kteta_B * I_direct * Rb + kteta_D * I_diffuse * (1 + cos(tilt)) / 2 + kteta_eG * I_sol * Pg * (
             1 - cos(tilt)) / 2)  # [W/m2] (5.12.1)
-    if absorbed_radiation_Wperm2 < 0:  # when points are 0 and too much losses
+    if absorbed_radiation_Wperm2 < 0.0:  # when points are 0 and too much losses
         # print ('the absorbed radiation', absorbed_radiation_Wperm2 ,'is negative, please check calc_absorbed_radiation_PVT')
-        absorbed_radiation_Wperm2 = 0
+        absorbed_radiation_Wperm2 = 0.0
 
     return absorbed_radiation_Wperm2
 
@@ -436,9 +436,10 @@ def calc_PV_power(absorbed_radiation_Wperm2, T_cell_C, eff_nom, tot_module_area_
     reference conditions. Solar Cells, 18, 269-279.
 
     """
-    T_standard_C = 25  # temperature at the standard testing condition
+    T_standard_C = 25.0  # temperature at the standard testing condition
     el_output_PV_kW = eff_nom * tot_module_area_m2 * absorbed_radiation_Wperm2 * \
                       (1 - Bref_perC * (T_cell_C - T_standard_C)) * (1 - misc_losses) / 1000
+
     return el_output_PV_kW
 
 
