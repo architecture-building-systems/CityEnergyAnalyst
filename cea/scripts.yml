@@ -107,6 +107,34 @@ Demand forecasting:
       - [get_radiation_building, building_name]
       - [get_schedule_model_file, building_name]
 
+Life Cycle Analysis:
+
+  - name: emissions
+    label: Emissions
+    description: Calculate emissions and primary energy due to building, construction, operation, dismantling and induced mobility
+    interfaces: [cli, arcgis, dashboard]
+    module: cea.analysis.lca.main
+    parameters: ['general:scenario', emissions]
+    input-files:
+      - [get_total_demand]
+      - [get_building_age]
+      - [get_building_architecture]
+      - [get_building_occupancy]
+      - [get_zone_geometry]
+      - [get_building_supply]
+      - [get_building_emission_intensity]
+
+  - name: operation-costs
+    label: Operation Costs
+    description: Calculate energy costs due to building operation
+    interfaces: [cli, arcgis, dashboard]
+    module: cea.analysis.costs.operation_costs
+    parameters: ['general:scenario']
+    input-files:
+      - [get_total_demand]
+      - [get_building_supply]
+      - [get_database_lca_mobility]
+
 Energy potentials:
   - name: shallow-geothermal-potential
     label: Shallow geothermal potential
@@ -245,47 +273,6 @@ Optimization:
       - [get_geothermal_potential]
       - [PV_totals]
 
-
-Analysis:
-
-  - name: multi-criteria-analysis
-    label: Multicriteria analysis
-    description: Multicriteria analysis
-    interfaces: [cli, arcgis, dashboard]
-    module: cea.analysis.multicriteria.main
-    parameters: ['general:scenario', multi-criteria]
-
-
-  - name: emissions
-    label: Life Cycle Analysis
-    description: Calculate emissions and primary energy due to building, construction, operation, dismantling and induced mobility
-    interfaces: [cli, arcgis, dashboard]
-    module: cea.analysis.lca.main
-    parameters: ['general:scenario', emissions]
-    input-files:
-      - [get_total_demand]
-      - [get_building_age]
-      - [get_building_architecture]
-      - [get_building_occupancy]
-      - [get_zone_geometry]
-      - [get_building_supply]
-      - [get_building_emission_intensity]
-
-
-  - name: operation-costs
-    label: Costs Analysis
-    description: Calculate energy costs due to building operation
-    interfaces: [cli, arcgis, dashboard]
-    module: cea.analysis.costs.operation_costs
-    parameters: ['general:scenario']
-    input-files:
-      - [get_total_demand]
-      - [get_building_supply]
-      - [get_database_lca_mobility]
-
-
-
-
 Utilities:
 
   - name: dbf-to-excel-to-dbf
@@ -313,6 +300,13 @@ Utilities:
 
 
 default:
+
+  - name: multi-criteria-analysis
+    label: Multicriteria analysis
+    description: Multicriteria analysis
+    interfaces: [cli, arcgis]
+    module: cea.analysis.multicriteria.main
+    parameters: ['general:scenario', multi-criteria]
 
   - name: data-initializer
     label: DataBase Initializer
