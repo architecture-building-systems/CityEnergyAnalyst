@@ -3141,17 +3141,11 @@ get_lca_embodied:
   file_path: outputs/data/emissions/Total_LCA_embodied.csv
   file_type: csv
   schema:
-    E_ghg_kgm2:
+    GHG_sys_embodied_kgCO2m2:
       sample_data: 6.63
       types_found: [float]
-    E_ghg_ton:
+    GHG_sys_embodied_tonCO2:
       sample_data: 33.13
-      types_found: [float]
-    E_nre_pen_GJ:
-      sample_data: 384.67
-      types_found: [float]
-    E_nre_pen_MJm2:
-      sample_data: 76.98
       types_found: [float]
     GFA_m2:
       sample_data: 4997.25
@@ -3168,17 +3162,11 @@ get_lca_mobility:
     GFA_m2:
       sample_data: 4997.25
       types_found: [float]
-    M_ghg_kgm2:
+    GHG_sys_mobility_kgCO2m2:
       sample_data: 19.95
       types_found: [float]
-    M_ghg_ton:
+    GHG_sys_mobility_tonCO2:
       sample_data: 99.7
-      types_found: [float]
-    M_nre_pen_GJ:
-      sample_data: 1651.59
-      types_found: [float]
-    M_nre_pen_MJm2:
-      sample_data: 330.5
       types_found: [float]
     Name:
       sample_data: B09

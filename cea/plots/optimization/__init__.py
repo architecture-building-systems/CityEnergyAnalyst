@@ -59,6 +59,8 @@ class GenerationPlotBase(cea.plots.PlotBase):
     @cea.plots.cache.cached
     def process_generation_total_performance_pareto(self):
         data_processed = pd.read_csv(self.locator.get_optimization_generation_total_performance_pareto(self.generation))
+        data_processed['GHG_sys_embodied_tonCO2'] = pd.read_csv(self.locator.get_lca_embodied())['GHG_sys_embodied_tonCO2'].sum()
+        data_processed['GHG_sys_mobility_tonCO2'] = pd.read_csv(self.locator.get_lca_mobility())['GHG_sys_mobility_tonCO2'].sum()
         return data_processed
 
     def normalize_data(self, data_processed, normalization, analysis_fields):

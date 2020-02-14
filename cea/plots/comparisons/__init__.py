@@ -31,7 +31,9 @@ class ComparisonsPlotBase(cea.plots.PlotBase):
     category_name = "comparisons"
 
     # default parameters for plots in this category - override if your plot differs
-    expected_parameters = {'scenarios-and-systems':'plots-comparisons:scenarios-and-systems'}
+    expected_parameters = {'scenarios-and-systems':'plots-comparisons:scenarios-and-systems',
+                           'normalization': 'plots-comparisons:normalization',
+                           }
 
     def __init__(self, project, parameters, cache):
         """
@@ -45,6 +47,13 @@ class ComparisonsPlotBase(cea.plots.PlotBase):
         self.scenarios_and_systems = [(x, x.rsplit('_', 3)[0], x.rsplit('_', 3)[2], x.rsplit('_', 3)[3],
                                        cea.inputlocator.InputLocator(os.path.join(self.project, x.rsplit('_', 3)[0])))
                                       for x in self.parameters['scenarios-and-systems']]
+
+    @property
+    def locator(self):
+        """
+        :return: cea.inputlocator.InputLocator
+        """
+        return cea.inputlocator.InputLocator(os.path.join(self.project, self.scenarios_and_systems[0][1]))
 
     @cea.plots.cache.cached
     def preprocessing_annual_costs_scenarios(self):
@@ -60,10 +69,40 @@ class ComparisonsPlotBase(cea.plots.PlotBase):
                 data_building_costs = pd.read_csv(locator_scenario.get_costs_operation_file())
                 data_raw_df = pd.DataFrame(data_building_costs.sum(axis=0)).T
                 data_raw_df['scenario_name'] = scenario_name+"<br>"+"sys_"+"today"
+                data_raw_df = self.normalize_data(data_raw_df, self.normalization, self.analysis_fields)
             else:
                 data_raw_df = pd.read_csv(locator_scenario.get_optimization_slave_total_performance(individual, generation))
+                data_raw_df = self.normalize_data(data_raw_df, self.normalization, self.analysis_fields)
                 data_raw_df['scenario_name'] = scenario_name+"<br>"+"sys_"+generation+"_"+individual
 
             data_raw_df['scenario_name'] = scenario_and_system
             data_processed = pd.concat([data_processed, data_raw_df], sort=True, ignore_index=True)
+        return data_processed
+
+    def normalize_data(self, data_processed, normalization, analysis_fields):
+        if normalization == "gross floor area":
+            data = pd.read_csv(self.locator.get_total_demand())
+            normalizatioon_factor = sum(data['GFA_m2'])
+            data_processed = data_processed.apply(
+                lambda x: x / normalizatioon_factor if x.name in analysis_fields else x)
+            data_processed['GHG_sys_tonCO2'] = data_processed['GHG_sys_tonCO2'] * 1000  # convert to kg
+        elif normalization == "net floor area":
+            data = pd.read_csv(self.locator.get_total_demand())
+            normalizatioon_factor = sum(data['Aocc_m2'])
+            data_processed = data_processed.apply(
+                lambda x: x / normalizatioon_factor if x.name in analysis_fields else x)
+            data_processed['GHG_sys_tonCO2'] = data_processed['GHG_sys_tonCO2'] * 1000  # convert to kg
+        elif normalization == "air conditioned floor area":
+            data = pd.read_csv(self.locator.get_total_demand())
+            normalizatioon_factor = sum(data['Af_m2'])
+            data_processed = data_processed.apply(
+                lambda x: x / normalizatioon_factor if x.name in analysis_fields else x)
+            data_processed['GHG_sys_tonCO2'] = data_processed['GHG_sys_tonCO2'] * 1000  # convert to kg
+        elif normalization == "building occupancy":
+            data = pd.read_csv(self.locator.get_total_demand())
+            normalizatioon_factor = sum(data['people0'])
+            data_processed = data_processed.apply(
+                lambda x: x / normalizatioon_factor if x.name in analysis_fields else x)
+            data_processed['GHG_sys_tonCO2'] = data_processed['GHG_sys_tonCO2'] * 1000  # convert to kg
+
         return data_processed

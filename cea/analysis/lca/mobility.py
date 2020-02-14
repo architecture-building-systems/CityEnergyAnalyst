@@ -65,11 +65,11 @@ def lca_mobility(locator):
     geometry_df['GFA_m2'] = geometry_df['footprint'] * (geometry_df['floors_bg'] + geometry_df['floors_ag'])
 
     data_merged_df = geometry_df.merge(emission_df, on='Name')
-    data_merged_df['M_ghg_ton'] = data_merged_df['Mobi_kgm2'] * data_merged_df['GFA_m2'] /1000
-    data_merged_df['M_ghg_kgm2'] = data_merged_df['Mobi_kgm2']
+    data_merged_df['GHG_sys_mobility_tonCO2'] = data_merged_df['Mobi_kgm2'] * data_merged_df['GFA_m2'] /1000
+    data_merged_df['GHG_sys_mobility_kgCO2m2'] = data_merged_df['Mobi_kgm2']
 
     # calculate total_LCA_mobility: .csv
-    fields_to_plot = ['Name', 'GFA_m2', 'M_ghg_ton', 'M_ghg_kgm2']
+    fields_to_plot = ['Name', 'GFA_m2', 'GHG_sys_mobility_tonCO2', 'GHG_sys_mobility_kgCO2m2']
     data_merged_df[fields_to_plot].to_csv(locator.get_lca_mobility(), index=False, float_format='%.2f')
 
 def main(config):

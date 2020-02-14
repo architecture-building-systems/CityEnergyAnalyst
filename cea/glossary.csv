@@ -1002,17 +1002,13 @@ demand,get_total_demand,,WOOD_hs_MWhyr,WOOD requirement for space heating supply
 demand,get_total_demand,,WOOD_hs0_kW,Nominal WOOD requirement for space heating supply,kW,{0.0...n},float,brown,outputs/data/demand/total_demand.csv
 demand,get_total_demand,,WOOD_ww_MWhyr,WOOD requirement for hotwater supply,MWh/yr,{0.0...n},float,brown_light,outputs/data/demand/total_demand.csv
 demand,get_total_demand,,WOOD_ww0_kW,Nominal WOOD requirement for hotwater supply,kW,{0.0...n},float,brown_light,outputs/data/demand/total_demand.csv
-emissions,get_lca_embodied,,E_ghg_kgm2,Building construction and decomissioning,kg CO2-eq/m2.yr,{0.0...n},float,black,outputs/data/emissions/total_lca_embodied.csv
-emissions,get_lca_embodied,,E_ghg_ton,Building construction and decomissioning,ton CO2-eq/yr,{0.0...n},float,black,outputs/data/emissions/total_lca_embodied.csv
-emissions,get_lca_embodied,,E_nre_pen_GJ,Building construction and decomissioning,GJ/yr,{0.0...n},float,red,outputs/data/emissions/total_lca_embodied.csv
-emissions,get_lca_embodied,,E_nre_pen_MJm2,Building construction and decomissioning,MJoil-eq/m2.yr,{0.0...n},float,red,outputs/data/emissions/total_lca_embodied.csv
+emissions,get_lca_embodied,,GHG_sys_embodied_kgCO2m2,Building construction and decomissioning,kg CO2-eq/m2.yr,{0.0...n},float,black,outputs/data/emissions/total_lca_embodied.csv
+emissions,get_lca_embodied,,GHG_sys_embodied_tonCO2,Building construction and decomissioning,ton CO2-eq/yr,{0.0...n},float,black,outputs/data/emissions/total_lca_embodied.csv
 emissions,get_lca_embodied,,GFA_m2,Gross floor area,[m2],{0.0...n},float,black,outputs/data/emissions/total_lca_embodied.csv
 emissions,get_lca_embodied,,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,outputs/data/emissions/total_lca_embodied.csv
 emissions,get_lca_mobility,,GFA_m2,Gross floor area,[m2],{0.0...n},float,black,outputs/data/emissions/total_lca_mobility.csv
-emissions,get_lca_mobility,,M_ghg_kgm2,Commuting,kg CO2-eq/m2.yr,{0.0...n},float,grey_light,outputs/data/emissions/total_lca_mobility.csv
-emissions,get_lca_mobility,,M_ghg_ton,Commuting,ton CO2-eq/yr,{0.0...n},float,grey_light,outputs/data/emissions/total_lca_mobility.csv
-emissions,get_lca_mobility,,M_nre_pen_GJ,Commuting,GJ/yr,{0.0...n},float,red_lighter,outputs/data/emissions/total_lca_mobility.csv
-emissions,get_lca_mobility,,M_nre_pen_MJm2,Commuting,MJoil-eq/m2.yr,{0.0...n},float,red_lighter,outputs/data/emissions/total_lca_mobility.csv
+emissions,get_lca_mobility,,GHG_sys_mobility_kgCO2m2,Commuting,kg CO2-eq/m2.yr,{0.0...n},float,grey_light,outputs/data/emissions/total_lca_mobility.csv
+emissions,get_lca_mobility,,GHG_sys_mobility_tonCO2,Commuting,ton CO2-eq/yr,{0.0...n},float,grey_light,outputs/data/emissions/total_lca_mobility.csv
 emissions,get_lca_mobility,,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,outputs/data/emissions/total_lca_mobility.csv
 emissions,get_lca_operation,,COAL_hs_ghg_kgm2,Emissions due to operational energy per unit of conditioned floor area of the coal powererd heating system,[kg/m2 -yr],{0.0...n},float,black,outputs/data/emissions/total_lca_operation.csv
 emissions,get_lca_operation,,COAL_hs_ghg_ton,Emissions due to operational energy of the coal powered heating system,[ton/yr],{0.0...n},float,black,outputs/data/emissions/total_lca_operation.csv
@@ -1026,8 +1022,8 @@ emissions,get_lca_operation,,DC_cdata_ghg_kgm2,Emissions due to operational ener
 emissions,get_lca_operation,,DC_cdata_ghg_ton,Emissions due to operational energy of the district cooling for the data center,[ton/yr],{0.0...n},float,black,outputs/data/emissions/total_lca_operation.csv
 emissions,get_lca_operation,,DC_cdata_nre_pen_GJ,Operational primary energy demand (non-renewable) for district cooling system of the data center,[GJ/yr],{0.0...n},float,black,outputs/data/emissions/total_lca_operation.csv
 emissions,get_lca_operation,,DC_cdata_nre_pen_MJm2,Operational primary energy demand per unit of conditioned floor area (non-renewable) of the dstrict cooling for the data center,[MJ/m2-yr],{0.0...n},float,black,outputs/data/emissions/total_lca_operation.csv
-emissions,get_lca_operation,,DC_cre_ghg_kgm2,Emissions due to operational energy per unit of conditioned floor area of the district cooling for cooling and refrigeration,[kg/m2 -yr],{0.0...n},float,black,outputs/data/emissions/total_lca_operation.csv
-emissions,get_lca_operation,,DC_cre_ghg_ton,Emissions due to operational energy of the district cooling for the cooling and refrigeration,[ton/yr],{0.0...n},float,black,outputs/data/emissions/total_lca_operation.csv
+emissions,get_lca_operation,,DC_crGHG_sys_embodied_kgCO2m2,Emissions due to operational energy per unit of conditioned floor area of the district cooling for cooling and refrigeration,[kg/m2 -yr],{0.0...n},float,black,outputs/data/emissions/total_lca_operation.csv
+emissions,get_lca_operation,,DC_crGHG_sys_embodied_tonCO2,Emissions due to operational energy of the district cooling for the cooling and refrigeration,[ton/yr],{0.0...n},float,black,outputs/data/emissions/total_lca_operation.csv
 emissions,get_lca_operation,,DC_cre_nre_pen_GJ,Operational primary energy demand (non-renewable) for district cooling system for cooling and refrigeration,[GJ/yr],{0.0...n},float,black,outputs/data/emissions/total_lca_operation.csv
 emissions,get_lca_operation,,DC_cre_nre_pen_MJm2,Operational primary energy demand per unit of conditioned floor area (non-renewable) of the dstrict cooling for cooling and refrigeration,[MJ/m2-yr],{0.0...n},float,black,outputs/data/emissions/total_lca_operation.csv
 emissions,get_lca_operation,,DC_cs_ghg_kgm2,Emissions due to operational energy per unit of conditioned floor area of the district cooling,[kg/m2 -yr],{0.0...n},float,black,outputs/data/emissions/total_lca_operation.csv

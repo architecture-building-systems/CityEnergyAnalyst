@@ -41,10 +41,8 @@ class LifeCycleAnalysisPlotBase(cea.plots.PlotBase):
                                       'PV_cost_yr', 'NG_hs_cost_yr', 'COAL_hs_cost_yr', 'OIL_hs_cost_yr',
                                       'WOOD_hs_cost_yr', 'NG_ww_cost_yr', 'COAL_ww_cost_yr', 'OIL_ww_cost_yr',
                                       'WOOD_ww_cost_yr']
-        self.analysis_fields_emissions = ['E_ghg_ton', 'O_ghg_ton', 'M_ghg_ton']
-        self.analysis_fields_emissions_m2 = ['E_ghg_kgm2', 'O_ghg_kgm2', 'M_ghg_kgm2']
-        self.analysis_fields_primary_energy = ['E_nre_pen_GJ', 'O_nre_pen_GJ', 'M_nre_pen_GJ']
-        self.analysis_fields_primary_energy_m2 = ['E_nre_pen_MJm2', 'O_nre_pen_MJm2', 'M_nre_pen_MJm2']
+        self.analysis_fields_emissions = ['GHG_sys_embodied_tonCO2', 'O_ghg_ton', 'GHG_sys_mobility_tonCO2']
+        self.analysis_fields_emissions_m2 = ['GHG_sys_embodied_kgCO2m2', 'O_ghg_kgm2', 'GHG_sys_mobility_kgCO2m2']
         self.input_files = [(self.locator.get_lca_embodied, []),
                             (self.locator.get_lca_operation, []),
                             (self.locator.get_lca_mobility, [])]
