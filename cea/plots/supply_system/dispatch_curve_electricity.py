@@ -47,14 +47,12 @@ class DispatchCurveDistrictElectricityPlot(cea.plots.supply_system.SupplySystemP
 
     @property
     def title(self):
-        return "Dispatch curve for electricity system #%s (%s)" % (self.individual, self.timeframe)
+        return "Dispatch curve for electricity system %s (%s)" % (self.system, self.timeframe)
 
     @property
     def output_path(self):
         return self.locator.get_timeseries_plots_file(
-            'gen{generation}_ind{individual}dispatch_curve_electricity'.format(individual=self.individual,
-                                                                           generation=self.generation),
-            self.category_name)
+            '{system}_dispatch_electricity'.format(system=self.system), self.category_name)
 
     @property
     def layout(self):
