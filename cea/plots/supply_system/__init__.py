@@ -30,8 +30,7 @@ class SupplySystemPlotBase(cea.plots.PlotBase):
     category_name = "supply-system"
 
     expected_parameters = {
-        'generation': 'plots-supply-system:generation',
-        'individual': 'plots-supply-system:individual',
+        'system': 'plots-supply-system:system',
         'timeframe': 'plots-supply-system:timeframe',
         'scenario-name': 'general:scenario-name',
     }
