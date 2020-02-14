@@ -59,9 +59,11 @@ class ComparisonsPlotBase(cea.plots.PlotBase):
             if generation == "today":
                 data_building_costs = pd.read_csv(locator_scenario.get_costs_operation_file())
                 data_raw_df = pd.DataFrame(data_building_costs.sum(axis=0)).T
+                data_raw_df['scenario_name'] = scenario_name+"<br>"+"sys_"+"today"
             else:
                 data_raw_df = pd.read_csv(locator_scenario.get_optimization_slave_total_performance(individual, generation))
+                data_raw_df['scenario_name'] = scenario_name+"<br>"+"sys_"+generation+"_"+individual
 
-            data_raw_df['scenario_name'] = scenario_name
+            data_raw_df['scenario_name'] = scenario_and_system
             data_processed = pd.concat([data_processed, data_raw_df], sort=True, ignore_index=True)
         return data_processed
