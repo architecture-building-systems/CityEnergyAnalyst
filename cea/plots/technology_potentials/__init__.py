@@ -29,7 +29,7 @@ label = 'C - Technology potentials'
 
 class SolarTechnologyPotentialsPlotBase(cea.plots.PlotBase):
     """Implements properties / methods used by all plots in this category"""
-    category_name = "solar-technology-potentials"
+    category_name = "technology-potentials"
 
     # default parameters for plots in this category - override if your plot differs
     expected_parameters = {
