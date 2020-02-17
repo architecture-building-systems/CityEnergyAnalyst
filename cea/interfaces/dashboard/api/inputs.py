@@ -125,7 +125,7 @@ class AllInputs(Resource):
         store['geojsons']['dh'], store['connected_buildings']['dh'],  store['crs']['dh'] = get_network(
             config, 'dh', trigger_abort=False)
         store['colors'] = COLORS
-        store['SCHEDULES'] = {}
+        store['schedules'] = {}
 
         return store
     def put(self):
@@ -136,7 +136,7 @@ class AllInputs(Resource):
         tables = form['tables']
         geojsons = form['geojsons']
         crs = form['crs']
-        SCHEDULES = form['SCHEDULES']
+        schedules = form['schedules']
 
         out = {'tables': {}, 'geojsons': {}}
 
@@ -178,9 +178,9 @@ class AllInputs(Resource):
                 if db_info['type'] == 'shp':
                     out['geojsons'][db] = {}
 
-        if SCHEDULES:
-            for building in SCHEDULES:
-                schedule_dict_to_file(SCHEDULES[building], locator.get_building_weekly_schedules(building))
+        if schedules:
+            for building in schedules:
+                schedule_dict_to_file(schedules[building], locator.get_building_weekly_schedules(building))
 
         return out
 
