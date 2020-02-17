@@ -429,7 +429,7 @@ Emissions and Primary Energy,GHG_sys_mobility_tonCO2,ton CO2-eq/yr,Commuting,gre
 Emissions and Primary Energy,O_ghg_ton,ton CO2-eq/yr,Energy system operation,grey
 Emissions and Primary Energy,GHG_sys_embodied_kgCO2m2,kg CO2-eq/m2.yr,Building construction and decomissioning,black
 Emissions and Primary Energy,GHG_sys_mobility_kgCO2m2,kg CO2-eq/m2.yr,Commuting,grey_light
-Emissions and Primary Energy,O_ghg_kgm2,kg CO2-eq/m2.yr,Energy system operation,grey
+Emissions and Primary Energy,GHG_sys_kgCO2m2,kg CO2-eq/m2.yr,Energy system operation,grey
 
 Thermal Network,P_loss_%,-,Pumping energy,grey
 Thermal Network,Q_loss_%,-,Network thermal loss,orange

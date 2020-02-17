@@ -134,16 +134,16 @@ def lca_operation(locator):
 
     # calculate the total operational non-renewable primary energy demand and emissions as a sum of the results for each
     # energy service used in the building
-    result['O_ghg_kgm2'] = 0.0
-    result['O_ghg_ton'] = 0.0
+    result['GHG_sys_kgCO2m2'] = 0.0
+    result['GHG_sys_tonCO2'] = 0.0
     all_services = electrical_services + cooling_services + heating_services + dhw_services
     for service in all_services:
         fields_to_plot += [service[2] + '_ghg_ton', service[2] + '_ghg_kgm2']
-        result['O_ghg_ton'] += result[service[2] + '_ghg_ton']
-        result['O_ghg_kgm2'] += result[service[2] + '_ghg_kgm2']
+        result['GHG_sys_tonCO2'] += result[service[2] + '_ghg_ton']
+        result['GHG_sys_kgCO2m2'] += result[service[2] + '_ghg_kgm2']
 
     # export the total operational non-renewable energy demand and emissions for each building
-    fields_to_plot += ['Name', 'GFA_m2', 'O_ghg_ton', 'O_ghg_kgm2']
+    fields_to_plot += ['Name', 'GFA_m2', 'GHG_sys_tonCO2', 'GHG_sys_kgCO2m2']
     result[fields_to_plot].to_csv(locator.get_lca_operation(), index=False, float_format='%.2f')
 
 

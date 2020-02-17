@@ -111,7 +111,7 @@ def costs_main(locator, config):
                              'Capex_a_sys_connected_USD',
                              'Capex_total_sys_connected_USD',
                              'Capex_total_sys_disconnected_USD',
-                               'Capex_total_sys_USD', 'Capex_a_sys_USD'
+                               'Capex_total_sys_USD', 'TAC_sys_USD'
                                ])
     # operation emissions
     if operational:
@@ -183,7 +183,7 @@ def costs_main(locator, config):
                                             result['SOLAR_ww_sys_total_capex_yr']
 
     result['Capex_total_sys_USD'] = result['Capex_total_sys_disconnected_USD'] + result['Capex_total_sys_connected_USD']
-    result['Capex_a_sys_USD'] = result['Capex_a_sys_disconnected_USD'] + result['Capex_a_sys_connected_USD']
+    result['TAC_sys_USD'] = result['Capex_a_sys_disconnected_USD'] + result['Capex_a_sys_connected_USD']
     result['Opex_a_sys_USD'] = result['Opex_a_sys_disconnected_USD'] + result['Opex_a_sys_connected_USD']
 
     result[['Name'] + fields_to_plot].to_csv(
