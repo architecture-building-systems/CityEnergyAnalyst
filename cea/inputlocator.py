@@ -57,8 +57,11 @@ class InputLocator(object):
     def get_databases_feedstocks_folder(self):
         return os.path.join(self.get_databases_folder(), 'feedstocks')
 
+    def get_databases_assemblies_folder(self):
+        return os.path.join(self.get_databases_folder(), 'assemblies')
+
     def get_databases_systems_folder(self):
-        return os.path.join(self.get_databases_folder(), 'systems')
+        return os.path.join(self.get_databases_folder(), 'components')
 
     def get_database_standard_schedules(self):
         return os.path.join(self.get_databases_folder(), 'archetypes', 'schedules')
@@ -585,42 +588,34 @@ class InputLocator(object):
     def get_archetypes_properties(self):
         """Returns the database of construction properties to be used by the archetypes-mapper. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return os.path.join(self.get_databases_folder(), 'archetypes', 'construction_properties.xlsx')
+        return os.path.join(self.get_databases_archetypes_folder(), 'construction_properties.xlsx')
 
-    def get_systems_seasonality(self):
-        """ Returns the database of region-specific system control parameters. These are copied
-        to the scenario if they are not yet present, based on the configured region for the scenario.
-
-        :param region:
-        :return:
-        """
-        return os.path.join(self.get_databases_folder(), 'systems', 'seasonality.xlsx')
+    def get_database_assemblies(self):
+        """Returns the database of supply components for cost analysis. These are copied
+        to the scenario if they are not yet present, based on the configured region for the scenario."""
+        return os.path.join(self.get_databases_assemblies_folder(), 'assemblies.xls')
 
     def get_database_conversion_systems(self):
-        """Returns the database of supply systems for cost analysis. These are copied
+        """Returns the database of supply components for cost analysis. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return os.path.join(self.get_databases_folder(), 'systems', 'conversion_systems.xls')
+        return os.path.join(self.get_databases_folder(), 'components', 'conversion.xls')
 
     def get_database_distribution_systems(self):
-        """Returns the database of supply systems for cost analysis. These are copied
+        """Returns the database of supply components for cost analysis. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return os.path.join(self.get_databases_folder(), 'systems', 'distribution_systems.xls')
-
-    def get_database_feedstocks(self):
-        """Returns the database of supply systems for cost analysis. These are copied
-        to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return os.path.join(self.get_databases_folder(), 'feedstocks', 'feedstocks.xls')
+        return os.path.join(self.get_databases_folder(), 'components', 'distribution.xls')
 
     def get_database_air_conditioning_systems(self):
-        old_file_path = os.path.join(self.get_databases_folder(), 'systems', 'emission_systems.xls')
-        new_file_path = os.path.join(self.get_databases_folder(), 'systems', 'air_conditioning_systems.xls')
-        if os.path.exists(old_file_path) and os.path.exists(new_file_path) == False:
-            os.rename(old_file_path, new_file_path)
-        return new_file_path
+        return os.path.join(self.get_databases_folder(), 'components', 'air_conditioning.xls')
 
     def get_database_envelope_systems(self):
         """databases/Systems/envelope_systems.csv"""
-        return os.path.join(self.get_databases_folder(), 'systems', 'envelope_systems.xls')
+        return os.path.join(self.get_databases_folder(), 'components', 'envelope.xls')
+
+    def get_database_feedstocks(self):
+        """Returns the database of supply components for cost analysis. These are copied
+        to the scenario if they are not yet present, based on the configured region for the scenario."""
+        return os.path.join(self.get_databases_folder(), 'feedstocks', 'feedstocks.xls')
 
     def get_uncertainty_db(self):
         """databases/CH/Uncertainty/uncertainty_distributions.xls"""
