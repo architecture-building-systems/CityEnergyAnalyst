@@ -197,7 +197,7 @@ The following file is used by scripts: ['photovoltaic_thermal', 'decentralized',
 
 
 
-.. csv-table:: **inputs/technology/systems/supply_systems.xls:ALL_IN_ONE_SYSTEMS**
+.. csv-table:: **inputs/technology/systems/supply_systems.xls:BUNDLES**
     :header: "Variable", "Description"
 
 
