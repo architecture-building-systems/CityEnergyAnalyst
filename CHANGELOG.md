@@ -1,3 +1,14 @@
+2020-02-17 - 2.29.0 - #2565 Issue databases
+2020-02-17 - 2.29.0 - #2557 I2553 restructure database
+2020-02-13 - 2.29.0 - #2562 2551 many files optimization
+2020-02-13 - 2.29.0 - #2559 Update how-are-schedules-defined.rst
+2020-02-11 - 2.29.0 - #2556 `Annual Cost` and `Annual Emissions` plots x-axis are sorted by cost
+2020-02-10 - 2.29.0 - #2554 2536 technology editor
+2020-02-10 - 2.29.0 - #2550 I2534 opt technologies, merging but sending a new PR with more tests in case functionality is broken (not likely) according to extensive testing.
+2020-02-06 - 2.29.0 - #2546 Glossary.csv - synchronized with newest schemas.yml
+2020-02-03 - 2.29.0 - #2544 update schemas.yml file to conform to changes in PR 2532
+2020-02-03 - 2.29.0 - #2545 Fixed typo in a variable name @martin-mosteiro good catch
+2020-01-23 - 2.29.0 - #2542 Release 2.29
 2020-01-23 - 2.28.1 - #2526 Fix COOLROOM bug in thermal networks
 2020-01-23 - 2.28.1 - #2530 updated schemas.yml with trace-inputlocator output
 2020-01-23 - 2.28.1 - #2532 fixed workflow and also bug in supply_systems.xls
