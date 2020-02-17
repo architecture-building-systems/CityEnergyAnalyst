@@ -10,7 +10,7 @@ import cea.plots.optimization
 
 __author__ = "Bhargava Srepathi"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Bhargava Srepathi", "Daren Thomas"]
+__credits__ = ["Bhargava Srepathi", "Daren Thomas", "Jimeno A. Fonseca"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
