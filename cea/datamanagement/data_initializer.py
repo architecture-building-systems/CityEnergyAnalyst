@@ -27,7 +27,8 @@ def data_initializer(locator,
                      databases_path,
                      initialize_archetypes_database=True,
                      initialize_feedstocks_database=True,
-                     initialize_systems_database=True,
+                     initialize_components_database=True,
+                     initialize_assemblies_database=True,
                      ):
 
     output_directory = locator.get_databases_folder()
@@ -50,14 +51,21 @@ def data_initializer(locator,
         except:
             raise Exception("we could not find the 'lifecycle' database in the path you indicated, please check the spelling")
 
-    if initialize_systems_database:
+    if initialize_components_database:
         try:
-            complete_databases_path = os.path.join(databases_path, 'systems')
+            complete_databases_path = os.path.join(databases_path, 'components')
             complete_output_directory = locator.get_databases_systems_folder()
             copy_tree(complete_databases_path, complete_output_directory)
         except:
-            raise Exception("we could not find the 'systems' database in the path you indicated, please check the spelling")
+            raise Exception("we could not find the 'components' database in the path you indicated, please check the spelling")
 
+    if initialize_assemblies_database:
+        try:
+            complete_databases_path = os.path.join(databases_path, 'assemblies')
+            complete_output_directory = locator.get_databases_assemblies_folder()
+            copy_tree(complete_databases_path, complete_output_directory)
+        except:
+            raise Exception("we could not find the 'assemblies' database in the path you indicated, please check the spelling")
 
 def main(config):
     """
@@ -71,13 +79,15 @@ def main(config):
 
     initialize_archetypes_database = 'archetypes' in config.data_initializer.databases
     initialize_feedstocks_database = 'feedstocks' in config.data_initializer.databases
-    initialize_systems_database = 'systems' in config.data_initializer.databases
+    initialize_components_database = 'components' in config.data_initializer.databases
+    initialize_assemblies_database = 'assemblies' in config.data_initializer.databases
 
     data_initializer(locator=locator,
                      databases_path=config.data_initializer.databases_path,
                      initialize_archetypes_database=initialize_archetypes_database,
                      initialize_feedstocks_database=initialize_feedstocks_database,
-                     initialize_systems_database=initialize_systems_database
+                     initialize_components_database=initialize_components_database,
+                     initialize_assemblies_database=initialize_assemblies_database
                      )
 
 
