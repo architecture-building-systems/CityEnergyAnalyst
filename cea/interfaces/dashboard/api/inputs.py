@@ -405,9 +405,7 @@ class InputDatabaseCheck(Resource):
         config = current_app.cea_config
         locator = cea.inputlocator.InputLocator(config.scenario)
         try:
-            valid = locator.is_valid_database_template()
-            if not valid:
-                raise IOError('Database in path is not valid.')
+            locator.verify_database_template()
         except IOError as e:
             print(e)
             abort(500, e.message)
