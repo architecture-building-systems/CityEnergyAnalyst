@@ -1818,14 +1818,14 @@ get_database_feedstocks:
         sample_data: KBOB 2009/1:2016, ID 42.001 Kehrichtverbrennung, cost from CEA
         types_found: [string, null]
   used_by: [decentralized, emissions, operation_costs, optimization]
-get_database_conversion_systems:
+get_database_assemblies:
   created_by: []
-  file_path: inputs/technology/systems/supply_systems.xls
+  file_path: inputs/technology/assemblies/assemblies.xls
   file_type: xls
   schema:
-    ALL_IN_ONE_SYSTEMS:
+    SUPPLY:
       Description:
-        sample_data: PV panel - monocrystalline roof top
+        sample_data: heatpump - air-air
         types_found: [string]
       code:
         sample_data: T25
@@ -1845,6 +1845,15 @@ get_database_conversion_systems:
       system:
         sample_data: ELECTRICITY
         types_found: [string]
+      CAPEX_USD2015kW:
+        sample_data: 200.0
+        types_found: [float]
+  used_by: [demand, emissions, operation_costs]
+get_database_conversion_systems:
+  created_by: []
+  file_path: inputs/technology/systems/supply_systems.xls
+  file_type: xls
+  schema:
     Absorption_chiller:
       Description:
         sample_data: LiBr triple effect
@@ -2683,8 +2692,7 @@ get_database_conversion_systems:
       'unit ':
         sample_data: m3
         types_found: [string]
-  used_by: [decentralized, demand, emissions, operation_costs, optimization, photovoltaic,
-    photovoltaic_thermal, solar_collector]
+  used_by: [decentralized, optimization, photovoltaic, photovoltaic_thermal, solar_collector]
 get_database_distribution_systems:
   created_by: []
   file_path: inputs/technology/systems/distribution_systems.xls
