@@ -69,7 +69,7 @@ class InputLocator(object):
     def get_database_standard_schedules_use(self, use):
         return os.path.join(self.get_database_standard_schedules(), use + '.csv')
 
-    def is_valid_database_template(self):
+    def verify_database_template(self):
         """True, if the path is a valid template path - containing the same excel files as the standard regions."""
         default_template = os.path.join(self.db_path, 'CH')
         for folder in os.listdir(default_template):
@@ -84,9 +84,9 @@ class InputLocator(object):
                     continue
                 template_file_path = os.path.join(self.get_databases_folder(), folder, file)
                 if not os.path.exists(template_file_path):
-                    print("Invalid user-specified region template - file not found: {template_file_path}".format(
-                        template_file_path=template_file_path))
-                    return False
+                    message = "Invalid user-specified region template - file not found: {template_file_path}".format(
+                        template_file_path=template_file_path)
+                    raise IOError(message)
         return True
 
     def get_input_folder(self):
