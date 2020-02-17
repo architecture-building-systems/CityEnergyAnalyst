@@ -11,10 +11,11 @@ import ConfigParser
 import cea.inputlocator
 import collections
 import datetime
+import glob
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Daren Thomas"]
+__credits__ = ["Daren Thomas", "Jimeno A. Fonseca"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -869,6 +870,89 @@ class SingleBuildingParameter(ChoiceParameter):
         return str(value)
 
 
+class GenerationParameter(ChoiceParameter):
+    """A (single) building in the zone"""
+    typename = 'GenerationParameter'
+
+    def initialize(self, parser):
+        # skip the default ChoiceParameter initialization of _choices
+        pass
+
+    @property
+    def _choices(self):
+        import glob
+        # set the `._choices` attribute to the list buildings in the project
+        locator = cea.inputlocator.InputLocator(self.config.scenario)
+        checkpoints = glob.glob(os.path.join(locator.get_optimization_master_results_folder(),"*.json"))
+        interations = []
+        for checkpoint in checkpoints:
+            with open(checkpoint, 'rb') as f:
+                data_checkpoint = json.load(f)
+                interations.extend(data_checkpoint['generation_to_show'])
+        unique_iterations = list(set(interations))
+        unique_iterations = [str(x) for x in unique_iterations]
+        return unique_iterations
+
+    def encode(self, value):
+        if str(value) in self._choices:
+            return str(value)
+        else:
+            if not self._choices or len(self._choices) < 1:
+                print('No choices for {fqname} to decode {value}'.format(fqname=self.fqname, value=value))
+                return ''
+            else:
+                return self._choices[0]
+
+    def decode(self, value):
+        if str(value) in self._choices:
+            return str(value)
+        else:
+            if not self._choices or len(self._choices) < 1:
+                print('No choices for {fqname} to decode {value}'.format(fqname=self.fqname, value=value))
+                return None
+            else:
+                return self._choices[0]
+
+
+class SystemParameter(ChoiceParameter):
+    """A (single) building in the zone"""
+    typename = 'SystemParameter'
+    def initialize(self, parser):
+        # skip the default ChoiceParameter initialization of _choices
+        pass
+
+    @property
+    def _choices(self):
+        scenario = self.config.scenario
+        unique_systems_scenario_list = ["_sys_today_"]
+        unique_systems_scenario_list.extend(get_systems_list(scenario))
+        return unique_systems_scenario_list
+
+    def encode(self, value):
+        if not str(value) in self._choices:
+            return self._choices[0]
+        return str(value)
+
+class MultiSystemParameter(MultiChoiceParameter):
+    """A (single) building in the zone"""
+    typename = 'MultiSystemParameter'
+
+    def initialize(self, parser):
+        # skip the default MultiChoiceParameter initialization of _choices
+        pass
+
+    @property
+    def _choices(self):
+        project_path = self.config.project
+        scenarios_names_list = get_scenarios_list(project_path)
+        unique_systems_scenarios_list = []
+        for scenario_name in scenarios_names_list:
+            scenario_path = os.path.join(project_path, scenario_name)
+            systems_scenario = get_systems_list(scenario_path)
+            unique_systems_scenarios_list.extend([scenario_name+"_sys_today_"])
+            unique_systems_scenarios_list.extend([scenario_name+"_"+x for x in systems_scenario])
+        return unique_systems_scenarios_list
+
 class BuildingsParameter(MultiChoiceParameter):
     """A list of buildings in the zone"""
     typename = 'BuildingsParameter'
@@ -883,6 +967,28 @@ class BuildingsParameter(MultiChoiceParameter):
         locator = cea.inputlocator.InputLocator(self.config.scenario)
         return locator.get_zone_building_names()
 
+
+def get_scenarios_list(project_path):
+    def is_valid_scenario(project_path, folder_name):
+        fodler_path = os.path.join(project_path, folder_name)
+        # a scenario must be a valid path
+        # a scenario can't start with a . like `.config`
+        return all([os.path.isdir(fodler_path), not folder_name.startswith('.')])
+
+    return [folder_name for folder_name in os.listdir(project_path)
+            if is_valid_scenario(project_path, folder_name)]
+
+
+def get_systems_list(scenario_path):
+    locator = cea.inputlocator.InputLocator(scenario_path)
+    checkpoints = glob.glob(os.path.join(locator.get_optimization_master_results_folder(), "*.json"))
+    interations = []
+    for checkpoint in checkpoints:
+        with open(checkpoint, 'rb') as f:
+            data_checkpoint = json.load(f)
+            interations.extend(data_checkpoint['systems_to_show'])
+    unique_iterations = list(set(interations))
+    return unique_iterations
 
 def parse_string_to_list(line):
     """Parse a line in the csv format into a list of strings"""

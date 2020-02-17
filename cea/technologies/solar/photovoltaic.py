@@ -68,7 +68,7 @@ def calc_PV(locator, config, latitude, longitude, weather_data, datetime_local, 
     print('calculating solar properties done')
 
     # calculate properties of PV panel
-    panel_properties_PV = calc_properties_PV_db(locator.get_database_supply_systems(), config)
+    panel_properties_PV = calc_properties_PV_db(locator.get_database_conversion_systems(), config)
     print('gathering properties of PV panel')
 
     # select sensor point with sufficient solar radiation
@@ -695,7 +695,7 @@ def calc_Cinv_pv(total_module_area_m2, locator, technology=0):
     :param P_peak: installed capacity of PV module [kW]
     :return InvCa: capital cost of the installed PV module [CHF/Y]
     """
-    PV_cost_data = pd.read_excel(locator.get_database_supply_systems(), sheet_name="PV")
+    PV_cost_data = pd.read_excel(locator.get_database_conversion_systems(), sheet_name="PV")
     technology_code = list(set(PV_cost_data['code']))
     PV_cost_data[PV_cost_data['code'] == technology_code[technology]]
     nominal_efficiency = PV_cost_data[PV_cost_data['code'] == technology_code[technology]]['PV_n'].max()

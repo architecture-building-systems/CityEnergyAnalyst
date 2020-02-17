@@ -28,7 +28,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 # identifies this package as a plots category and sets the label name for the category
-label = 'Thermal networks'
+label = 'D - Thermal networks'
 
 
 class ThermalNetworksPlotBase(cea.plots.PlotBase):
