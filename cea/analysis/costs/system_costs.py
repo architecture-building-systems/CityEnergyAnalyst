@@ -110,12 +110,14 @@ def costs_main(locator, config):
         fields_to_plot.extend(['Capex_a_sys_disconnected_USD',
                              'Capex_a_sys_connected_USD',
                              'Capex_total_sys_connected_USD',
-                             'Capex_total_sys_disconnected_USD'])
+                             'Capex_total_sys_disconnected_USD',
+                               'Capex_total_sys_USD', 'Capex_a_sys_USD'
+                               ])
     # operation emissions
     if operational:
         fields_to_plot.extend(['Opex_a_sys_connected_USD',
-                             'Opex_a_sys_disconnected_USD'
-                             ])
+                             'Opex_a_sys_disconnected_USD',
+                             'Opex_a_sys_USD'])
 
     # create and save results
     result = heating.merge(dhw, on='Name', suffixes=('', '_dhw'))
@@ -179,6 +181,10 @@ def costs_main(locator, config):
                                             result['WOOD_ww_sys_total_capex_yr'] + \
                                             result['COAL_ww_sys_total_capex_yr'] + \
                                             result['SOLAR_ww_sys_total_capex_yr']
+
+    result['Capex_total_sys_USD'] = result['Capex_total_sys_disconnected_USD'] + result['Capex_total_sys_connected_USD']
+    result['Capex_a_sys_USD'] = result['Capex_a_sys_disconnected_USD'] + result['Capex_a_sys_connected_USD']
+    result['Opex_a_sys_USD'] = result['Opex_a_sys_disconnected_USD'] + result['Opex_a_sys_connected_USD']
 
     result[['Name'] + fields_to_plot].to_csv(
         locator.get_costs_operation_file(), index=False, float_format='%.2f')
