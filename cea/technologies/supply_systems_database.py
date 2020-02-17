@@ -23,11 +23,11 @@ class SupplySystemsDatabase(object):
 
         conversion_systems_worksheets,\
         distribution_systems_worksheets,\
-        feedstocks_worksheets = self.read_excel(locator)
+        feedstocks_worksheets,assemblies_worksheets = self.read_excel(locator)
 
         self.FEEDSTOCKS = feedstocks_worksheets
         self.PIPING = distribution_systems_worksheets["THERMAL_GRID"]
-        self.ALL_IN_ONE_SYSTEMS = conversion_systems_worksheets["ALL_IN_ONE_SYSTEMS"]
+        self.ALL_IN_ONE_SYSTEMS = assemblies_worksheets["SUPPLY"]
         self.PV = conversion_systems_worksheets["PV"]
         self.SC = conversion_systems_worksheets["SC"]
         self.PVT = conversion_systems_worksheets["PVT"]
@@ -48,10 +48,11 @@ class SupplySystemsDatabase(object):
         """Read in the excel file, using the cache _locators"""
         global _locators
         if locator in _locators:
-            conversion_systems_worksheets, distribution_systems_worksheets, feedstocks_worksheets = _locators[locator]
+            conversion_systems_worksheets, distribution_systems_worksheets, feedstocks_worksheets, assemblies_worksheets = _locators[locator]
         else:
             conversion_systems_worksheets = pd.read_excel(locator.get_database_conversion_systems(), sheet_name=None)
             distribution_systems_worksheets = pd.read_excel(locator.get_database_distribution_systems(), sheet_name=None)
             feedstocks_worksheets = pd.read_excel(locator.get_database_feedstocks(), sheet_name=None)
-            _locators[locator] = conversion_systems_worksheets, distribution_systems_worksheets, feedstocks_worksheets
-        return conversion_systems_worksheets, distribution_systems_worksheets, feedstocks_worksheets
+            assemblies_worksheets = pd.read_excel(locator.get_database_assemblies(), sheet_name=None)
+            _locators[locator] = conversion_systems_worksheets, distribution_systems_worksheets, feedstocks_worksheets, assemblies_worksheets
+        return conversion_systems_worksheets, distribution_systems_worksheets, feedstocks_worksheets, assemblies_worksheets

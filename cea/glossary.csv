@@ -293,187 +293,188 @@ network-layout,get_network_layout_nodes_shapefile,,Type,Weather a Plant or A Cus
 -,get_database_envelope_systems,WINDOW,F_F,Window frame fraction coefficient. Defined according to ISO 13790.,[m2-frame/m2-window],{0.0...1},float,black,inputs/technology/systems/envelope_systems.xls:WINDOW
 -,get_database_envelope_systems,WINDOW,G_win,Solar heat gain coefficient. Defined according to ISO 13790.,[-],{0.0...1},float,black,inputs/technology/systems/envelope_systems.xls:WINDOW
 -,get_database_envelope_systems,WINDOW,U_win,Thermal transmittance of windows including linear losses (+10%). Defined according to ISO 13790.,[-],{0.1...n},float,black,inputs/technology/systems/envelope_systems.xls:WINDOW
--,get_database_conversion_systems,Absorption_chiller,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_conversion_systems,Absorption_chiller,a_e,parameter in the characteristic equations to calculate the evaporator side ,[-],depends on the source,float,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_conversion_systems,Absorption_chiller,a_g,parameter in the characteristic equations to calculate the generator side,[-],depends on the source,float,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_conversion_systems,Absorption_chiller,assumption,items made by assumptions in this technology,[-],depends on the data availability,string,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_conversion_systems,Absorption_chiller,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_conversion_systems,Absorption_chiller,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_conversion_systems,Absorption_chiller,cap_max,maximum capacity ,[W],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_conversion_systems,Absorption_chiller,cap_min,minimum capacity,[W],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_conversion_systems,Absorption_chiller,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_conversion_systems,Absorption_chiller,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_conversion_systems,Absorption_chiller,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_conversion_systems,Absorption_chiller,Description,Describes the Type of Absorption Chiller,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_conversion_systems,Absorption_chiller,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_conversion_systems,Absorption_chiller,e_e,parameter in the characteristic equations to calculate the evaporator side ,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_conversion_systems,Absorption_chiller,e_g,parameter in the characteristic equations to calculate the generator side,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_conversion_systems,Absorption_chiller,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_conversion_systems,Absorption_chiller,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_conversion_systems,Absorption_chiller,m_cw,external flow rate of cooling water at the condenser and absorber,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_conversion_systems,Absorption_chiller,m_hw,external flow rate of hot water at the generator,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_conversion_systems,Absorption_chiller,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_conversion_systems,Absorption_chiller,r_e,parameter in the characteristic equations to calculate the evaporator side ,[-],depends on the source,float,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_conversion_systems,Absorption_chiller,r_g,parameter in the characteristic equations to calculate the generator side,[-],depends on the source,float,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_conversion_systems,Absorption_chiller,s_e,parameter in the characteristic equations to calculate the evaporator side ,[kW/K],depends on the source,float,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_conversion_systems,Absorption_chiller,s_g,parameter in the characteristic equations to calculate the generator side,[-],depends on the source,float,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_conversion_systems,Absorption_chiller,type,"type of absorption chiller (single, double, or triple)",[-],depends on the source,string,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_conversion_systems,Absorption_chiller,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_conversion_systems,ALL_IN_ONE_SYSTEMS,code,Type of all in one system,[-],alphanumeric,date,black,inputs/technology/systems/supply_systems.xls:ALL_IN_ONE_SYSTEMS
--,get_database_conversion_systems,ALL_IN_ONE_SYSTEMS,Description,Description of Type of all in one system,[-],alphanumeric,string,black,inputs/technology/systems/supply_systems.xls:ALL_IN_ONE_SYSTEMS
--,get_database_conversion_systems,ALL_IN_ONE_SYSTEMS,efficiency,efficiency of the all in one system,[-],{0.0...n},float,black,inputs/technology/systems/supply_systems.xls:ALL_IN_ONE_SYSTEMS
--,get_database_conversion_systems,ALL_IN_ONE_SYSTEMS,feedstock,feedstock used by the the all in one system,[-],alphanumeric,string,black,inputs/technology/systems/supply_systems.xls:ALL_IN_ONE_SYSTEMS
--,get_database_conversion_systems,ALL_IN_ONE_SYSTEMS,reference,Reference of the data,[-],alphanumeric,string,black,inputs/technology/systems/supply_systems.xls:ALL_IN_ONE_SYSTEMS
--,get_database_conversion_systems,ALL_IN_ONE_SYSTEMS,scale,"whether the all in one system is used at the building, or the district scale",[-],alphanumeric,string,black,inputs/technology/systems/supply_systems.xls:ALL_IN_ONE_SYSTEMS
--,get_database_conversion_systems,ALL_IN_ONE_SYSTEMS,system,"whether the all in one system is used for heating, cooling or electricity",[-],alphanumeric,string,black,inputs/technology/systems/supply_systems.xls:ALL_IN_ONE_SYSTEMS
--,get_database_conversion_systems,BH,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:BH
--,get_database_conversion_systems,BH,assumption,items made by assumptions in this technology,[-],depends on the data availability,,black,inputs/technology/systems/supply_systems.xls:BH
--,get_database_conversion_systems,BH,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:BH
--,get_database_conversion_systems,BH,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:BH
--,get_database_conversion_systems,BH,cap_max,maximum capacity ,[W],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:BH
--,get_database_conversion_systems,BH,cap_min,minimum capacity,[W],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:BH
--,get_database_conversion_systems,BH,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/supply_systems.xls:BH
--,get_database_conversion_systems,BH,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/supply_systems.xls:BH
--,get_database_conversion_systems,BH,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:BH
--,get_database_conversion_systems,BH,Description,Describes the type of borehole heat exchanger,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:BH
--,get_database_conversion_systems,BH,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:BH
--,get_database_conversion_systems,BH,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:BH
--,get_database_conversion_systems,BH,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/supply_systems.xls:BH
--,get_database_conversion_systems,BH,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:BH
--,get_database_conversion_systems,BH,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/supply_systems.xls:BH
--,get_database_conversion_systems,Boiler,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Boiler
--,get_database_conversion_systems,Boiler,assumption,items made by assumptions in this technology,[-],depends on the data availability,,black,inputs/technology/systems/supply_systems.xls:Boiler
--,get_database_conversion_systems,Boiler,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Boiler
--,get_database_conversion_systems,Boiler,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Boiler
--,get_database_conversion_systems,Boiler,cap_max,maximum capacity ,[W],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:Boiler
--,get_database_conversion_systems,Boiler,cap_min,minimum capacity,[W],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:Boiler
--,get_database_conversion_systems,Boiler,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/supply_systems.xls:Boiler
--,get_database_conversion_systems,Boiler,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/supply_systems.xls:Boiler
--,get_database_conversion_systems,Boiler,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Boiler
--,get_database_conversion_systems,Boiler,Description,Describes the type of boiler,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:Boiler
--,get_database_conversion_systems,Boiler,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Boiler
--,get_database_conversion_systems,Boiler,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:Boiler
--,get_database_conversion_systems,Boiler,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/supply_systems.xls:Boiler
--,get_database_conversion_systems,Boiler,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:Boiler
--,get_database_conversion_systems,Boiler,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/supply_systems.xls:Boiler
--,get_database_conversion_systems,CCGT,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CCGT
--,get_database_conversion_systems,CCGT,assumption,items made by assumptions in this technology,[-],depends on the data availability,,black,inputs/technology/systems/supply_systems.xls:CCGT
--,get_database_conversion_systems,CCGT,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:CCGT
--,get_database_conversion_systems,CCGT,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:CCGT
--,get_database_conversion_systems,CCGT,cap_max,maximum capacity ,[W],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:CCGT
--,get_database_conversion_systems,CCGT,cap_min,minimum capacity,[W],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:CCGT
--,get_database_conversion_systems,CCGT,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/supply_systems.xls:CCGT
--,get_database_conversion_systems,CCGT,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/supply_systems.xls:CCGT
--,get_database_conversion_systems,CCGT,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CCGT
--,get_database_conversion_systems,CCGT,Description,Describes the type of combined-cycle gas turbine,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:CCGT
--,get_database_conversion_systems,CCGT,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CCGT
--,get_database_conversion_systems,CCGT,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:CCGT
--,get_database_conversion_systems,CCGT,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/supply_systems.xls:CCGT
--,get_database_conversion_systems,CCGT,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:CCGT
--,get_database_conversion_systems,CCGT,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/supply_systems.xls:CCGT
--,get_database_conversion_systems,Chiller,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Chiller
--,get_database_conversion_systems,Chiller,assumption,items made by assumptions in this technology,[-],depends on the data availability,string,black,inputs/technology/systems/supply_systems.xls:Chiller
--,get_database_conversion_systems,Chiller,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Chiller
--,get_database_conversion_systems,Chiller,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Chiller
--,get_database_conversion_systems,Chiller,cap_max,maximum capacity ,[W],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:Chiller
--,get_database_conversion_systems,Chiller,cap_min,minimum capacity,[W],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:Chiller
--,get_database_conversion_systems,Chiller,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/supply_systems.xls:Chiller
--,get_database_conversion_systems,Chiller,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/supply_systems.xls:Chiller
--,get_database_conversion_systems,Chiller,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Chiller
--,get_database_conversion_systems,Chiller,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:Chiller
--,get_database_conversion_systems,Chiller,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Chiller
--,get_database_conversion_systems,Chiller,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:Chiller
--,get_database_conversion_systems,Chiller,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/supply_systems.xls:Chiller
--,get_database_conversion_systems,Chiller,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:Chiller
--,get_database_conversion_systems,Chiller,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/supply_systems.xls:Chiller
--,get_database_conversion_systems,CT,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:CT
--,get_database_conversion_systems,CT,assumption,items made by assumptions in this technology,[-],depends on the data availability,string,black,inputs/technology/systems/supply_systems.xls:CT
--,get_database_conversion_systems,CT,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:CT
--,get_database_conversion_systems,CT,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CT
--,get_database_conversion_systems,CT,cap_max,maximum capacity ,[W],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:CT
--,get_database_conversion_systems,CT,cap_min,minimum capacity,[W],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:CT
--,get_database_conversion_systems,CT,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/supply_systems.xls:CT
--,get_database_conversion_systems,CT,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/supply_systems.xls:CT
--,get_database_conversion_systems,CT,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CT
--,get_database_conversion_systems,CT,Description,Describes the type of cooling tower,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:CT
--,get_database_conversion_systems,CT,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CT
--,get_database_conversion_systems,CT,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:CT
--,get_database_conversion_systems,CT,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/supply_systems.xls:CT
--,get_database_conversion_systems,CT,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:CT
--,get_database_conversion_systems,CT,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/supply_systems.xls:CT
--,get_database_conversion_systems,DETAILED_ELEC_PRICES,hour,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:DETAILED_ELEC_PRICES
--,get_database_conversion_systems,DETAILED_ELEC_PRICES,Opex_var_buy_USD2015perkWh,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:DETAILED_ELEC_PRICES
--,get_database_conversion_systems,DETAILED_ELEC_PRICES,Opex_var_sell_USD2015perkWh,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:DETAILED_ELEC_PRICES
--,get_database_conversion_systems,DETAILED_ELEC_PRICES,year,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:DETAILED_ELEC_PRICES
--,get_database_conversion_systems,FC, Assumptions,items made by assumptions in this technology,[-],depends on the data availability,string,black,inputs/technology/systems/supply_systems.xls:FC
--,get_database_conversion_systems,FC,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:FC
--,get_database_conversion_systems,FC,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:FC
--,get_database_conversion_systems,FC,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:FC
--,get_database_conversion_systems,FC,cap_max,maximum capacity ,[W],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:FC
--,get_database_conversion_systems,FC,cap_min,minimum capacity,[W],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:FC
--,get_database_conversion_systems,FC,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/supply_systems.xls:FC
--,get_database_conversion_systems,FC,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/supply_systems.xls:FC
--,get_database_conversion_systems,FC,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:FC
--,get_database_conversion_systems,FC,Description,Describes the type of fuel cell,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:FC
--,get_database_conversion_systems,FC,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:FC
--,get_database_conversion_systems,FC,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:FC
--,get_database_conversion_systems,FC,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/supply_systems.xls:FC
--,get_database_conversion_systems,FC,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:FC
--,get_database_conversion_systems,FC,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/supply_systems.xls:FC
--,get_database_conversion_systems,FEEDSTOCKS,CO2,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:FEEDSTOCKS
--,get_database_conversion_systems,FEEDSTOCKS,code,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:FEEDSTOCKS
--,get_database_conversion_systems,FEEDSTOCKS,Opex_var_buy_USD2015perkWh,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:FEEDSTOCKS
--,get_database_conversion_systems,FEEDSTOCKS,Opex_var_sell_USD2015perkWh,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:FEEDSTOCKS
--,get_database_conversion_systems,FEEDSTOCKS,reference,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:FEEDSTOCKS
--,get_database_conversion_systems,Furnace,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Furnace
--,get_database_conversion_systems,Furnace,assumption,items made by assumptions in this technology,[-],depends on the data availability,,black,inputs/technology/systems/supply_systems.xls:Furnace
--,get_database_conversion_systems,Furnace,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Furnace
--,get_database_conversion_systems,Furnace,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Furnace
--,get_database_conversion_systems,Furnace,cap_max,maximum capacity ,[W],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:Furnace
--,get_database_conversion_systems,Furnace,cap_min,minimum capacity,[W],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:Furnace
--,get_database_conversion_systems,Furnace,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/supply_systems.xls:Furnace
--,get_database_conversion_systems,Furnace,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/supply_systems.xls:Furnace
--,get_database_conversion_systems,Furnace,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Furnace
--,get_database_conversion_systems,Furnace,Description,Describes the type of furnace,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:Furnace
--,get_database_conversion_systems,Furnace,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Furnace
--,get_database_conversion_systems,Furnace,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:Furnace
--,get_database_conversion_systems,Furnace,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/supply_systems.xls:Furnace
--,get_database_conversion_systems,Furnace,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:Furnace
--,get_database_conversion_systems,Furnace,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/supply_systems.xls:Furnace
--,get_database_conversion_systems,HEX,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_conversion_systems,HEX,a_p,"pressure loss function, f(x) = a_p + b_p*x^c_p + d_p*ln(x) + e_p*x*ln*(x), where x is the capacity mass flow rate [W/K]   ",[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_conversion_systems,HEX,assumption,items made by assumptions in this technology,[-],depends on the data availability,string,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_conversion_systems,HEX,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_conversion_systems,HEX,b_p,"pressure loss function, f(x) = a_p + b_p*x^c_p + d_p*ln(x) + e_p*x*ln*(x), where x is the capacity mass flow rate [W/K]   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_conversion_systems,HEX,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_conversion_systems,HEX,c_p,"pressure loss function, f(x) = a_p + b_p*x^c_p + d_p*ln(x) + e_p*x*ln*(x), where x is the capacity mass flow rate [W/K]   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_conversion_systems,HEX,cap_max,maximum capacity ,[W] or [m2],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_conversion_systems,HEX,cap_min,minimum capacity,[W] or [m2],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_conversion_systems,HEX,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_conversion_systems,HEX,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_conversion_systems,HEX,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_conversion_systems,HEX,d_p,"pressure loss function, f(x) = a_p + b_p*x^c_p + d_p*ln(x) + e_p*x*ln*(x), where x is the capacity mass flow rate [W/K]   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_conversion_systems,HEX,Description,Describes the type of heat exchanger,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_conversion_systems,HEX,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_conversion_systems,HEX,e_p,"pressure loss function, f(x) = a_p + b_p*x^c_p + d_p*ln(x) + e_p*x*ln*(x), where x is the capacity mass flow rate [W/K]   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_conversion_systems,HEX,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_conversion_systems,HEX,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_conversion_systems,HEX,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_conversion_systems,HEX,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_conversion_systems,HP,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HP
--,get_database_conversion_systems,HP,assumption,items made by assumptions in this technology,[-],depends on the data availability,,black,inputs/technology/systems/supply_systems.xls:HP
--,get_database_conversion_systems,HP,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:HP
--,get_database_conversion_systems,HP,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:HP
--,get_database_conversion_systems,HP,cap_max,maximum capacity ,[W],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:HP
--,get_database_conversion_systems,HP,cap_min,minimum capacity,[W],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:HP
--,get_database_conversion_systems,HP,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/supply_systems.xls:HP
--,get_database_conversion_systems,HP,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/supply_systems.xls:HP
--,get_database_conversion_systems,HP,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HP
--,get_database_conversion_systems,HP,Description,Describes the source of the heat pump,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:HP
--,get_database_conversion_systems,HP,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:HP
--,get_database_conversion_systems,HP,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:HP
--,get_database_conversion_systems,HP,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/supply_systems.xls:HP
--,get_database_conversion_systems,HP,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:HP
+-,get_database_conversion_systems,Absorption_chiller,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
+-,get_database_conversion_systems,Absorption_chiller,a_e,parameter in the characteristic equations to calculate the evaporator side ,[-],depends on the source,float,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
+-,get_database_conversion_systems,Absorption_chiller,a_g,parameter in the characteristic equations to calculate the generator side,[-],depends on the source,float,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
+-,get_database_conversion_systems,Absorption_chiller,assumption,items made by assumptions in this technology,[-],depends on the data availability,string,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
+-,get_database_conversion_systems,Absorption_chiller,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
+-,get_database_conversion_systems,Absorption_chiller,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
+-,get_database_conversion_systems,Absorption_chiller,cap_max,maximum capacity ,[W],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
+-,get_database_conversion_systems,Absorption_chiller,cap_min,minimum capacity,[W],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
+-,get_database_conversion_systems,Absorption_chiller,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
+-,get_database_conversion_systems,Absorption_chiller,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
+-,get_database_conversion_systems,Absorption_chiller,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
+-,get_database_conversion_systems,Absorption_chiller,Description,Describes the Type of Absorption Chiller,[-],[-],string,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
+-,get_database_conversion_systems,Absorption_chiller,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
+-,get_database_conversion_systems,Absorption_chiller,e_e,parameter in the characteristic equations to calculate the evaporator side ,TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
+-,get_database_conversion_systems,Absorption_chiller,e_g,parameter in the characteristic equations to calculate the generator side,TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
+-,get_database_conversion_systems,Absorption_chiller,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
+-,get_database_conversion_systems,Absorption_chiller,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
+-,get_database_conversion_systems,Absorption_chiller,m_cw,external flow rate of cooling water at the condenser and absorber,TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
+-,get_database_conversion_systems,Absorption_chiller,m_hw,external flow rate of hot water at the generator,TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
+-,get_database_conversion_systems,Absorption_chiller,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
+-,get_database_conversion_systems,Absorption_chiller,r_e,parameter in the characteristic equations to calculate the evaporator side ,[-],depends on the source,float,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
+-,get_database_conversion_systems,Absorption_chiller,r_g,parameter in the characteristic equations to calculate the generator side,[-],depends on the source,float,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
+-,get_database_conversion_systems,Absorption_chiller,s_e,parameter in the characteristic equations to calculate the evaporator side ,[kW/K],depends on the source,float,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
+-,get_database_conversion_systems,Absorption_chiller,s_g,parameter in the characteristic equations to calculate the generator side,[-],depends on the source,float,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
+-,get_database_conversion_systems,Absorption_chiller,type,"type of absorption chiller (single, double, or triple)",[-],depends on the source,string,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
+-,get_database_conversion_systems,Absorption_chiller,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
+-,get_database_assemblies,SUPPLY,code,Type of all in one system,[-],alphanumeric,date,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
+-,get_database_assemblies,SUPPLY,Description,Description of Type of all in one system,[-],alphanumeric,string,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
+-,get_database_assemblies,SUPPLY,efficiency,efficiency of the all in one system,[-],{0.0...n},float,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
+-,get_database_assemblies,SUPPLY,feedstock,feedstock used by the the all in one system,[-],alphanumeric,string,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
+-,get_database_assemblies,SUPPLY,reference,Reference of the data,[-],alphanumeric,string,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
+-,get_database_assemblies,SUPPLY,scale,"whether the all in one system is used at the building, or the district scale",[-],alphanumeric,string,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
+-,get_database_assemblies,SUPPLY,system,"whether the all in one system is used for heating, cooling or electricity",[-],alphanumeric,string,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
+-,get_database_assemblies,SUPPLY,CAPEX_USD2015kW,Capital costs per kW,[USD2015/kW],{0.0...n},float,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
+-,get_database_conversion_systems,BH,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:BH
+-,get_database_conversion_systems,BH,assumption,items made by assumptions in this technology,[-],depends on the data availability,,black,inputs/technology/systems/conversion_systems.xls:BH
+-,get_database_conversion_systems,BH,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:BH
+-,get_database_conversion_systems,BH,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:BH
+-,get_database_conversion_systems,BH,cap_max,maximum capacity ,[W],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:BH
+-,get_database_conversion_systems,BH,cap_min,minimum capacity,[W],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:BH
+-,get_database_conversion_systems,BH,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/conversion_systems.xls:BH
+-,get_database_conversion_systems,BH,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/conversion_systems.xls:BH
+-,get_database_conversion_systems,BH,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:BH
+-,get_database_conversion_systems,BH,Description,Describes the type of borehole heat exchanger,[-],[-],string,black,inputs/technology/systems/conversion_systems.xls:BH
+-,get_database_conversion_systems,BH,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:BH
+-,get_database_conversion_systems,BH,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:BH
+-,get_database_conversion_systems,BH,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:BH
+-,get_database_conversion_systems,BH,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:BH
+-,get_database_conversion_systems,BH,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/conversion_systems.xls:BH
+-,get_database_conversion_systems,Boiler,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:Boiler
+-,get_database_conversion_systems,Boiler,assumption,items made by assumptions in this technology,[-],depends on the data availability,,black,inputs/technology/systems/conversion_systems.xls:Boiler
+-,get_database_conversion_systems,Boiler,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:Boiler
+-,get_database_conversion_systems,Boiler,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:Boiler
+-,get_database_conversion_systems,Boiler,cap_max,maximum capacity ,[W],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:Boiler
+-,get_database_conversion_systems,Boiler,cap_min,minimum capacity,[W],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:Boiler
+-,get_database_conversion_systems,Boiler,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/conversion_systems.xls:Boiler
+-,get_database_conversion_systems,Boiler,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/conversion_systems.xls:Boiler
+-,get_database_conversion_systems,Boiler,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:Boiler
+-,get_database_conversion_systems,Boiler,Description,Describes the type of boiler,[-],[-],string,black,inputs/technology/systems/conversion_systems.xls:Boiler
+-,get_database_conversion_systems,Boiler,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:Boiler
+-,get_database_conversion_systems,Boiler,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:Boiler
+-,get_database_conversion_systems,Boiler,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:Boiler
+-,get_database_conversion_systems,Boiler,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:Boiler
+-,get_database_conversion_systems,Boiler,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/conversion_systems.xls:Boiler
+-,get_database_conversion_systems,CCGT,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:CCGT
+-,get_database_conversion_systems,CCGT,assumption,items made by assumptions in this technology,[-],depends on the data availability,,black,inputs/technology/systems/conversion_systems.xls:CCGT
+-,get_database_conversion_systems,CCGT,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:CCGT
+-,get_database_conversion_systems,CCGT,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:CCGT
+-,get_database_conversion_systems,CCGT,cap_max,maximum capacity ,[W],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:CCGT
+-,get_database_conversion_systems,CCGT,cap_min,minimum capacity,[W],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:CCGT
+-,get_database_conversion_systems,CCGT,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/conversion_systems.xls:CCGT
+-,get_database_conversion_systems,CCGT,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/conversion_systems.xls:CCGT
+-,get_database_conversion_systems,CCGT,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:CCGT
+-,get_database_conversion_systems,CCGT,Description,Describes the type of combined-cycle gas turbine,[-],[-],string,black,inputs/technology/systems/conversion_systems.xls:CCGT
+-,get_database_conversion_systems,CCGT,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:CCGT
+-,get_database_conversion_systems,CCGT,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:CCGT
+-,get_database_conversion_systems,CCGT,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:CCGT
+-,get_database_conversion_systems,CCGT,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:CCGT
+-,get_database_conversion_systems,CCGT,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/conversion_systems.xls:CCGT
+-,get_database_conversion_systems,Chiller,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:Chiller
+-,get_database_conversion_systems,Chiller,assumption,items made by assumptions in this technology,[-],depends on the data availability,string,black,inputs/technology/systems/conversion_systems.xls:Chiller
+-,get_database_conversion_systems,Chiller,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:Chiller
+-,get_database_conversion_systems,Chiller,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:Chiller
+-,get_database_conversion_systems,Chiller,cap_max,maximum capacity ,[W],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:Chiller
+-,get_database_conversion_systems,Chiller,cap_min,minimum capacity,[W],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:Chiller
+-,get_database_conversion_systems,Chiller,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/conversion_systems.xls:Chiller
+-,get_database_conversion_systems,Chiller,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/conversion_systems.xls:Chiller
+-,get_database_conversion_systems,Chiller,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:Chiller
+-,get_database_conversion_systems,Chiller,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/conversion_systems.xls:Chiller
+-,get_database_conversion_systems,Chiller,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:Chiller
+-,get_database_conversion_systems,Chiller,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:Chiller
+-,get_database_conversion_systems,Chiller,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:Chiller
+-,get_database_conversion_systems,Chiller,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:Chiller
+-,get_database_conversion_systems,Chiller,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/conversion_systems.xls:Chiller
+-,get_database_conversion_systems,CT,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:CT
+-,get_database_conversion_systems,CT,assumption,items made by assumptions in this technology,[-],depends on the data availability,string,black,inputs/technology/systems/conversion_systems.xls:CT
+-,get_database_conversion_systems,CT,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:CT
+-,get_database_conversion_systems,CT,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:CT
+-,get_database_conversion_systems,CT,cap_max,maximum capacity ,[W],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:CT
+-,get_database_conversion_systems,CT,cap_min,minimum capacity,[W],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:CT
+-,get_database_conversion_systems,CT,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/conversion_systems.xls:CT
+-,get_database_conversion_systems,CT,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/conversion_systems.xls:CT
+-,get_database_conversion_systems,CT,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:CT
+-,get_database_conversion_systems,CT,Description,Describes the type of cooling tower,[-],[-],string,black,inputs/technology/systems/conversion_systems.xls:CT
+-,get_database_conversion_systems,CT,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:CT
+-,get_database_conversion_systems,CT,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:CT
+-,get_database_conversion_systems,CT,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:CT
+-,get_database_conversion_systems,CT,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:CT
+-,get_database_conversion_systems,CT,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/conversion_systems.xls:CT
+-,get_database_conversion_systems,DETAILED_ELEC_PRICES,hour,TODO,TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:DETAILED_ELEC_PRICES
+-,get_database_conversion_systems,DETAILED_ELEC_PRICES,Opex_var_buy_USD2015perkWh,TODO,TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:DETAILED_ELEC_PRICES
+-,get_database_conversion_systems,DETAILED_ELEC_PRICES,Opex_var_sell_USD2015perkWh,TODO,TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:DETAILED_ELEC_PRICES
+-,get_database_conversion_systems,DETAILED_ELEC_PRICES,year,TODO,TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:DETAILED_ELEC_PRICES
+-,get_database_conversion_systems,FC, Assumptions,items made by assumptions in this technology,[-],depends on the data availability,string,black,inputs/technology/systems/conversion_systems.xls:FC
+-,get_database_conversion_systems,FC,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:FC
+-,get_database_conversion_systems,FC,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:FC
+-,get_database_conversion_systems,FC,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:FC
+-,get_database_conversion_systems,FC,cap_max,maximum capacity ,[W],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:FC
+-,get_database_conversion_systems,FC,cap_min,minimum capacity,[W],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:FC
+-,get_database_conversion_systems,FC,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/conversion_systems.xls:FC
+-,get_database_conversion_systems,FC,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/conversion_systems.xls:FC
+-,get_database_conversion_systems,FC,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:FC
+-,get_database_conversion_systems,FC,Description,Describes the type of fuel cell,[-],[-],string,black,inputs/technology/systems/conversion_systems.xls:FC
+-,get_database_conversion_systems,FC,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:FC
+-,get_database_conversion_systems,FC,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:FC
+-,get_database_conversion_systems,FC,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:FC
+-,get_database_conversion_systems,FC,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:FC
+-,get_database_conversion_systems,FC,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/conversion_systems.xls:FC
+-,get_database_conversion_systems,FEEDSTOCKS,CO2,TODO,TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:FEEDSTOCKS
+-,get_database_conversion_systems,FEEDSTOCKS,code,TODO,TODO,TODO,string,black,inputs/technology/systems/conversion_systems.xls:FEEDSTOCKS
+-,get_database_conversion_systems,FEEDSTOCKS,Opex_var_buy_USD2015perkWh,TODO,TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:FEEDSTOCKS
+-,get_database_conversion_systems,FEEDSTOCKS,Opex_var_sell_USD2015perkWh,TODO,TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:FEEDSTOCKS
+-,get_database_conversion_systems,FEEDSTOCKS,reference,TODO,TODO,TODO,string,black,inputs/technology/systems/conversion_systems.xls:FEEDSTOCKS
+-,get_database_conversion_systems,Furnace,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:Furnace
+-,get_database_conversion_systems,Furnace,assumption,items made by assumptions in this technology,[-],depends on the data availability,,black,inputs/technology/systems/conversion_systems.xls:Furnace
+-,get_database_conversion_systems,Furnace,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:Furnace
+-,get_database_conversion_systems,Furnace,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:Furnace
+-,get_database_conversion_systems,Furnace,cap_max,maximum capacity ,[W],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:Furnace
+-,get_database_conversion_systems,Furnace,cap_min,minimum capacity,[W],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:Furnace
+-,get_database_conversion_systems,Furnace,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/conversion_systems.xls:Furnace
+-,get_database_conversion_systems,Furnace,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/conversion_systems.xls:Furnace
+-,get_database_conversion_systems,Furnace,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:Furnace
+-,get_database_conversion_systems,Furnace,Description,Describes the type of furnace,[-],[-],string,black,inputs/technology/systems/conversion_systems.xls:Furnace
+-,get_database_conversion_systems,Furnace,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:Furnace
+-,get_database_conversion_systems,Furnace,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:Furnace
+-,get_database_conversion_systems,Furnace,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:Furnace
+-,get_database_conversion_systems,Furnace,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:Furnace
+-,get_database_conversion_systems,Furnace,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/conversion_systems.xls:Furnace
+-,get_database_conversion_systems,HEX,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:HEX
+-,get_database_conversion_systems,HEX,a_p,"pressure loss function, f(x) = a_p + b_p*x^c_p + d_p*ln(x) + e_p*x*ln*(x), where x is the capacity mass flow rate [W/K]   ",[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:HEX
+-,get_database_conversion_systems,HEX,assumption,items made by assumptions in this technology,[-],depends on the data availability,string,black,inputs/technology/systems/conversion_systems.xls:HEX
+-,get_database_conversion_systems,HEX,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:HEX
+-,get_database_conversion_systems,HEX,b_p,"pressure loss function, f(x) = a_p + b_p*x^c_p + d_p*ln(x) + e_p*x*ln*(x), where x is the capacity mass flow rate [W/K]   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:HEX
+-,get_database_conversion_systems,HEX,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:HEX
+-,get_database_conversion_systems,HEX,c_p,"pressure loss function, f(x) = a_p + b_p*x^c_p + d_p*ln(x) + e_p*x*ln*(x), where x is the capacity mass flow rate [W/K]   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:HEX
+-,get_database_conversion_systems,HEX,cap_max,maximum capacity ,[W] or [m2],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:HEX
+-,get_database_conversion_systems,HEX,cap_min,minimum capacity,[W] or [m2],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:HEX
+-,get_database_conversion_systems,HEX,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/conversion_systems.xls:HEX
+-,get_database_conversion_systems,HEX,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/conversion_systems.xls:HEX
+-,get_database_conversion_systems,HEX,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:HEX
+-,get_database_conversion_systems,HEX,d_p,"pressure loss function, f(x) = a_p + b_p*x^c_p + d_p*ln(x) + e_p*x*ln*(x), where x is the capacity mass flow rate [W/K]   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:HEX
+-,get_database_conversion_systems,HEX,Description,Describes the type of heat exchanger,[-],[-],string,black,inputs/technology/systems/conversion_systems.xls:HEX
+-,get_database_conversion_systems,HEX,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:HEX
+-,get_database_conversion_systems,HEX,e_p,"pressure loss function, f(x) = a_p + b_p*x^c_p + d_p*ln(x) + e_p*x*ln*(x), where x is the capacity mass flow rate [W/K]   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:HEX
+-,get_database_conversion_systems,HEX,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:HEX
+-,get_database_conversion_systems,HEX,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:HEX
+-,get_database_conversion_systems,HEX,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:HEX
+-,get_database_conversion_systems,HEX,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/conversion_systems.xls:HEX
+-,get_database_conversion_systems,HP,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:HP
+-,get_database_conversion_systems,HP,assumption,items made by assumptions in this technology,[-],depends on the data availability,,black,inputs/technology/systems/conversion_systems.xls:HP
+-,get_database_conversion_systems,HP,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:HP
+-,get_database_conversion_systems,HP,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:HP
+-,get_database_conversion_systems,HP,cap_max,maximum capacity ,[W],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:HP
+-,get_database_conversion_systems,HP,cap_min,minimum capacity,[W],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:HP
+-,get_database_conversion_systems,HP,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/conversion_systems.xls:HP
+-,get_database_conversion_systems,HP,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/conversion_systems.xls:HP
+-,get_database_conversion_systems,HP,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:HP
+-,get_database_conversion_systems,HP,Description,Describes the source of the heat pump,[-],[-],string,black,inputs/technology/systems/conversion_systems.xls:HP
+-,get_database_conversion_systems,HP,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:HP
+-,get_database_conversion_systems,HP,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:HP
+-,get_database_conversion_systems,HP,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:HP
+-,get_database_conversion_systems,HP,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:HP
 -,get_database_conversion_systems,HP,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/distribution_systems.xls:HP
 -,get_database_distribution_systems,THERMAL_GRID,Code,no such column?,TODO,TODO,string,black,inputs/technology/systems/distribution_systems.xls:THERMAL_GRID
 -,get_database_distribution_systems,THERMAL_GRID,D_ext_m,external pipe diameter tolerance for the nominal diameter (DN),[m],depends on the source,float,black,inputs/technology/systems/distribution_systems.xls:THERMAL_GRID
@@ -483,111 +484,111 @@ network-layout,get_network_layout_nodes_shapefile,,Type,Weather a Plant or A Cus
 -,get_database_distribution_systems,THERMAL_GRID,Pipe_DN,Nominal pipe diameter,[-],depends on the source,long,black,inputs/technology/systems/distribution_systems.xls:THERMAL_GRID
 -,get_database_distribution_systems,THERMAL_GRID,Vdot_max_m3s,maximum volumetric flow rate for the nominal diameter (DN),[m3/s],depends on the source,float,black,inputs/technology/systems/distribution_systems.xls:THERMAL_GRID
 -,get_database_distribution_systems,THERMAL_GRID,Vdot_min_m3s,minimum volumetric flow rate for the nominal diameter (DN),[m3/s],depends on the source,float,black,inputs/technology/systems/distribution_systems.xls:THERMAL_GRID
--,get_database_conversion_systems,Pump,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Pump
--,get_database_conversion_systems,Pump,assumption,items made by assumptions in this technology,[-],depends on the data availability,string,black,inputs/technology/systems/supply_systems.xls:Pump
--,get_database_conversion_systems,Pump,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Pump
--,get_database_conversion_systems,Pump,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Pump
--,get_database_conversion_systems,Pump,cap_max,maximum capacity ,[W],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:Pump
--,get_database_conversion_systems,Pump,cap_min,minimum capacity,[W],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:Pump
--,get_database_conversion_systems,Pump,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/supply_systems.xls:Pump
--,get_database_conversion_systems,Pump,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/supply_systems.xls:Pump
--,get_database_conversion_systems,Pump,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Pump
--,get_database_conversion_systems,Pump,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:Pump
--,get_database_conversion_systems,Pump,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Pump
--,get_database_conversion_systems,Pump,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:Pump
--,get_database_conversion_systems,Pump,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/supply_systems.xls:Pump
--,get_database_conversion_systems,Pump,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:Pump
--,get_database_conversion_systems,Pump,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/supply_systems.xls:Pump
--,get_database_conversion_systems,PV,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_conversion_systems,PV,assumption,items made by assumptions in this technology,[-],depends on the data availability,string,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_conversion_systems,PV,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_conversion_systems,PV,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_conversion_systems,PV,cap_max,maximum capacity ,[W],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_conversion_systems,PV,cap_min,minimum capacity,[W],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_conversion_systems,PV,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_conversion_systems,PV,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_conversion_systems,PV,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_conversion_systems,PV,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_conversion_systems,PV,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_conversion_systems,PV,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_conversion_systems,PV,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_conversion_systems,PV,misc_losses,"losses from cabling, resistances etc...",[-],depends on the source,float,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_conversion_systems,PV,module_length_m,lengh of the PV module,[m],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_conversion_systems,PV,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_conversion_systems,PV,PV_a0,"parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  + a3*x**3 + a4*x**4, x is the relative air mass",[-],TODO,float,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_conversion_systems,PV,PV_a1,"parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  + a3*x**3 + a4*x**4, x is the relative air mass",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_conversion_systems,PV,PV_a2,"parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  + a3*x**3 + a4*x**4, x is the relative air mass",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_conversion_systems,PV,PV_a3,"parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  + a3*x**3 + a4*x**4, x is the relative air mass",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_conversion_systems,PV,PV_a4,"parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  + a3*x**3 + a4*x**4, x is the relative air mass",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_conversion_systems,PV,PV_Bref,cell maximum power temperature coefficient,[1/C],depends on the source,float,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_conversion_systems,PV,PV_n,nominal efficiency,[-],depends on the source,float,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_conversion_systems,PV,PV_noct,nominal operating cell temperature,[C],depends on the source,float,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_conversion_systems,PV,PV_th,glazing thickness,[m],depends on the source,float,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_conversion_systems,PV,type,redundant,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_conversion_systems,PV,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_conversion_systems,PVT,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PVT
--,get_database_conversion_systems,PVT,assumption,items made by assumptions in this technology,[-],depends on the data availability,string,black,inputs/technology/systems/supply_systems.xls:PVT
--,get_database_conversion_systems,PVT,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:PVT
--,get_database_conversion_systems,PVT,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PVT
--,get_database_conversion_systems,PVT,cap_max,maximum capacity ,[W],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:PVT
--,get_database_conversion_systems,PVT,cap_min,minimum capacity,[W],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:PVT
--,get_database_conversion_systems,PVT,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/supply_systems.xls:PVT
--,get_database_conversion_systems,PVT,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/supply_systems.xls:PVT
--,get_database_conversion_systems,PVT,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PVT
--,get_database_conversion_systems,PVT,Description,Describes the type of photovoltaic thermal technology,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:PVT
--,get_database_conversion_systems,PVT,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PVT
--,get_database_conversion_systems,PVT,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:PVT
--,get_database_conversion_systems,PVT,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/supply_systems.xls:PVT
--,get_database_conversion_systems,PVT,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:PVT
--,get_database_conversion_systems,PVT,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/supply_systems.xls:PVT
--,get_database_conversion_systems,SC,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_conversion_systems,SC,aperture_area_ratio,ratio of aperture area to panel area,[-],depends on the source,float,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_conversion_systems,SC,assumption,items made by assumptions in this technology,[-],depends on the data availability,string,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_conversion_systems,SC,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_conversion_systems,SC,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_conversion_systems,SC,C_eff,thermal capacity of module ,[J/M2k],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_conversion_systems,SC,c1,collector heat loss coefficient at zero temperature difference and wind speed,[W/M2k],depends on the source,float,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_conversion_systems,SC,c2,ctemperature difference dependency of the heat loss coefficient,[W/m2K2],depends on the source,float,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_conversion_systems,SC,cap_max,maximum capacity ,[m2],TODO,long,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_conversion_systems,SC,cap_min,minimum capacity,[m2],TODO,long,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_conversion_systems,SC,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_conversion_systems,SC,Cp_fluid,heat capacity of the heat transfer fluid,[J/kgK],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_conversion_systems,SC,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_conversion_systems,SC,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_conversion_systems,SC,Description,Describes the type of solar collector,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_conversion_systems,SC,dP1,pressure drop at zero flow rate,[Pa/m2],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_conversion_systems,SC,dP2,pressure drop at nominal flow rate (mB0),[Pa/m2],depends on the source,float,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_conversion_systems,SC,dP3,pressure drop at maximum flow rate (mB_max),[Pa/m2],depends on the source,float,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_conversion_systems,SC,dP4,pressure drop at minimum flow rate (mB_min),[Pa/m2],depends on the source,float,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_conversion_systems,SC,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_conversion_systems,SC,IAM_d,incident angle modifier for diffuse radiation,[-],depends on the source,float,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_conversion_systems,SC,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_conversion_systems,SC,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_conversion_systems,SC,mB_max_r,maximum flow rate per aperture area,[kg/m2/hr],depends on the source,float,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_conversion_systems,SC,mB_min_r,minimum flow rate per aperture area,[kg/m2/hr],depends on the source,float,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_conversion_systems,SC,mB0_r,nominal flow rate per aperture area,[kg/m2/hr],depends on the source,float,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_conversion_systems,SC,module_area_m2,module area of a solar collector,[m2],depends on the source,float,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_conversion_systems,SC,module_length_m,lengh of a solar collector module,[m],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_conversion_systems,SC,n0,zero loss efficiency at normal incidence,[-],depends on the source,float,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_conversion_systems,SC,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_conversion_systems,SC,t_max,maximum operating temperature,[C],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_conversion_systems,SC,type,type of the solar collector (FP: flate-plate or ET: evacuated-tube),TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_conversion_systems,SC,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_conversion_systems,TES,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:TES
--,get_database_conversion_systems,TES,assumption,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:TES
--,get_database_conversion_systems,TES,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:TES
--,get_database_conversion_systems,TES,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:TES
--,get_database_conversion_systems,TES,cap_max,maximum capacity ,[m3],TODO,long,black,inputs/technology/systems/supply_systems.xls:TES
--,get_database_conversion_systems,TES,cap_min,minimum capacity,[m3],TODO,long,black,inputs/technology/systems/supply_systems.xls:TES
--,get_database_conversion_systems,TES,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/supply_systems.xls:TES
--,get_database_conversion_systems,TES,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/supply_systems.xls:TES
--,get_database_conversion_systems,TES,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:TES
--,get_database_conversion_systems,TES,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:TES
--,get_database_conversion_systems,TES,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:TES
--,get_database_conversion_systems,TES,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:TES
--,get_database_conversion_systems,TES,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/supply_systems.xls:TES
--,get_database_conversion_systems,TES,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/supply_systems.xls:TES
--,get_database_conversion_systems,TES,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/supply_systems.xls:TES
+-,get_database_conversion_systems,Pump,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:Pump
+-,get_database_conversion_systems,Pump,assumption,items made by assumptions in this technology,[-],depends on the data availability,string,black,inputs/technology/systems/conversion_systems.xls:Pump
+-,get_database_conversion_systems,Pump,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:Pump
+-,get_database_conversion_systems,Pump,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:Pump
+-,get_database_conversion_systems,Pump,cap_max,maximum capacity ,[W],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:Pump
+-,get_database_conversion_systems,Pump,cap_min,minimum capacity,[W],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:Pump
+-,get_database_conversion_systems,Pump,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/conversion_systems.xls:Pump
+-,get_database_conversion_systems,Pump,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/conversion_systems.xls:Pump
+-,get_database_conversion_systems,Pump,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:Pump
+-,get_database_conversion_systems,Pump,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/conversion_systems.xls:Pump
+-,get_database_conversion_systems,Pump,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:Pump
+-,get_database_conversion_systems,Pump,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:Pump
+-,get_database_conversion_systems,Pump,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:Pump
+-,get_database_conversion_systems,Pump,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:Pump
+-,get_database_conversion_systems,Pump,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/conversion_systems.xls:Pump
+-,get_database_conversion_systems,PV,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:PV
+-,get_database_conversion_systems,PV,assumption,items made by assumptions in this technology,[-],depends on the data availability,string,black,inputs/technology/systems/conversion_systems.xls:PV
+-,get_database_conversion_systems,PV,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:PV
+-,get_database_conversion_systems,PV,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:PV
+-,get_database_conversion_systems,PV,cap_max,maximum capacity ,[W],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:PV
+-,get_database_conversion_systems,PV,cap_min,minimum capacity,[W],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:PV
+-,get_database_conversion_systems,PV,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/conversion_systems.xls:PV
+-,get_database_conversion_systems,PV,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/conversion_systems.xls:PV
+-,get_database_conversion_systems,PV,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:PV
+-,get_database_conversion_systems,PV,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/conversion_systems.xls:PV
+-,get_database_conversion_systems,PV,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:PV
+-,get_database_conversion_systems,PV,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:PV
+-,get_database_conversion_systems,PV,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:PV
+-,get_database_conversion_systems,PV,misc_losses,"losses from cabling, resistances etc...",[-],depends on the source,float,black,inputs/technology/systems/conversion_systems.xls:PV
+-,get_database_conversion_systems,PV,module_length_m,lengh of the PV module,[m],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:PV
+-,get_database_conversion_systems,PV,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:PV
+-,get_database_conversion_systems,PV,PV_a0,"parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  + a3*x**3 + a4*x**4, x is the relative air mass",[-],TODO,float,black,inputs/technology/systems/conversion_systems.xls:PV
+-,get_database_conversion_systems,PV,PV_a1,"parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  + a3*x**3 + a4*x**4, x is the relative air mass",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:PV
+-,get_database_conversion_systems,PV,PV_a2,"parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  + a3*x**3 + a4*x**4, x is the relative air mass",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:PV
+-,get_database_conversion_systems,PV,PV_a3,"parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  + a3*x**3 + a4*x**4, x is the relative air mass",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:PV
+-,get_database_conversion_systems,PV,PV_a4,"parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  + a3*x**3 + a4*x**4, x is the relative air mass",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:PV
+-,get_database_conversion_systems,PV,PV_Bref,cell maximum power temperature coefficient,[1/C],depends on the source,float,black,inputs/technology/systems/conversion_systems.xls:PV
+-,get_database_conversion_systems,PV,PV_n,nominal efficiency,[-],depends on the source,float,black,inputs/technology/systems/conversion_systems.xls:PV
+-,get_database_conversion_systems,PV,PV_noct,nominal operating cell temperature,[C],depends on the source,float,black,inputs/technology/systems/conversion_systems.xls:PV
+-,get_database_conversion_systems,PV,PV_th,glazing thickness,[m],depends on the source,float,black,inputs/technology/systems/conversion_systems.xls:PV
+-,get_database_conversion_systems,PV,type,redundant,TODO,TODO,string,black,inputs/technology/systems/conversion_systems.xls:PV
+-,get_database_conversion_systems,PV,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/conversion_systems.xls:PV
+-,get_database_conversion_systems,PVT,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:PVT
+-,get_database_conversion_systems,PVT,assumption,items made by assumptions in this technology,[-],depends on the data availability,string,black,inputs/technology/systems/conversion_systems.xls:PVT
+-,get_database_conversion_systems,PVT,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:PVT
+-,get_database_conversion_systems,PVT,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:PVT
+-,get_database_conversion_systems,PVT,cap_max,maximum capacity ,[W],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:PVT
+-,get_database_conversion_systems,PVT,cap_min,minimum capacity,[W],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:PVT
+-,get_database_conversion_systems,PVT,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/conversion_systems.xls:PVT
+-,get_database_conversion_systems,PVT,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/conversion_systems.xls:PVT
+-,get_database_conversion_systems,PVT,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:PVT
+-,get_database_conversion_systems,PVT,Description,Describes the type of photovoltaic thermal technology,[-],[-],string,black,inputs/technology/systems/conversion_systems.xls:PVT
+-,get_database_conversion_systems,PVT,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:PVT
+-,get_database_conversion_systems,PVT,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:PVT
+-,get_database_conversion_systems,PVT,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:PVT
+-,get_database_conversion_systems,PVT,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:PVT
+-,get_database_conversion_systems,PVT,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/conversion_systems.xls:PVT
+-,get_database_conversion_systems,SC,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,aperture_area_ratio,ratio of aperture area to panel area,[-],depends on the source,float,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,assumption,items made by assumptions in this technology,[-],depends on the data availability,string,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,C_eff,thermal capacity of module ,[J/M2k],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,c1,collector heat loss coefficient at zero temperature difference and wind speed,[W/M2k],depends on the source,float,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,c2,ctemperature difference dependency of the heat loss coefficient,[W/m2K2],depends on the source,float,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,cap_max,maximum capacity ,[m2],TODO,long,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,cap_min,minimum capacity,[m2],TODO,long,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,Cp_fluid,heat capacity of the heat transfer fluid,[J/kgK],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,Description,Describes the type of solar collector,[-],[-],string,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,dP1,pressure drop at zero flow rate,[Pa/m2],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,dP2,pressure drop at nominal flow rate (mB0),[Pa/m2],depends on the source,float,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,dP3,pressure drop at maximum flow rate (mB_max),[Pa/m2],depends on the source,float,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,dP4,pressure drop at minimum flow rate (mB_min),[Pa/m2],depends on the source,float,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,IAM_d,incident angle modifier for diffuse radiation,[-],depends on the source,float,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,mB_max_r,maximum flow rate per aperture area,[kg/m2/hr],depends on the source,float,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,mB_min_r,minimum flow rate per aperture area,[kg/m2/hr],depends on the source,float,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,mB0_r,nominal flow rate per aperture area,[kg/m2/hr],depends on the source,float,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,module_area_m2,module area of a solar collector,[m2],depends on the source,float,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,module_length_m,lengh of a solar collector module,[m],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,n0,zero loss efficiency at normal incidence,[-],depends on the source,float,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,t_max,maximum operating temperature,[C],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,type,type of the solar collector (FP: flate-plate or ET: evacuated-tube),TODO,TODO,string,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,TES,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:TES
+-,get_database_conversion_systems,TES,assumption,TODO,TODO,TODO,string,black,inputs/technology/systems/conversion_systems.xls:TES
+-,get_database_conversion_systems,TES,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:TES
+-,get_database_conversion_systems,TES,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:TES
+-,get_database_conversion_systems,TES,cap_max,maximum capacity ,[m3],TODO,long,black,inputs/technology/systems/conversion_systems.xls:TES
+-,get_database_conversion_systems,TES,cap_min,minimum capacity,[m3],TODO,long,black,inputs/technology/systems/conversion_systems.xls:TES
+-,get_database_conversion_systems,TES,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/conversion_systems.xls:TES
+-,get_database_conversion_systems,TES,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/conversion_systems.xls:TES
+-,get_database_conversion_systems,TES,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:TES
+-,get_database_conversion_systems,TES,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/conversion_systems.xls:TES
+-,get_database_conversion_systems,TES,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:TES
+-,get_database_conversion_systems,TES,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:TES
+-,get_database_conversion_systems,TES,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:TES
+-,get_database_conversion_systems,TES,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:TES
+-,get_database_conversion_systems,TES,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/conversion_systems.xls:TES
 -,get_database_feedstocks,NATURALGAS,hour,hour of a 24 hour day,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:NATURALGAS
 -,get_database_feedstocks,NATURALGAS,CO2,Green House Gas Emisisons factor,[kg CO2-eq/MJ],{0.0...n},string,black,inputs/technology/feedstocks/feedstocks.xls:NATURALGAS
 -,get_database_feedstocks,NATURALGAS,Opex_var_buy_USD2015perkWh,buying price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:NATURALGAS
@@ -1054,10 +1055,8 @@ emissions,get_lca_operation,,NG_ww_ghg_kgm2,Emissions due to operational energy 
 emissions,get_lca_operation,,NG_ww_ghg_ton,Emissions due to operational energy of the solar powered domestic hot water system,[ton/yr],{0.0...n},float,black,outputs/data/emissions/total_lca_operation.csv
 emissions,get_lca_operation,,NG_ww_nre_pen_GJ,Operational primary energy demand (non-renewable) for natural gas powered domestic hot water system,[GJ/yr],{0.0...n},float,black,outputs/data/emissions/total_lca_operation.csv
 emissions,get_lca_operation,,NG_ww_nre_pen_MJm2,Operational primary energy demand per unit of conditioned floor area (non-renewable) of the natural gas powered domestic hot water system,[MJ/m2-yr],{0.0...n},float,black,outputs/data/emissions/total_lca_operation.csv
-emissions,get_lca_operation,,O_ghg_kgm2,Energy system operation,kg CO2-eq/m2.yr,{0.0...n},float,grey,outputs/data/emissions/total_lca_operation.csv
-emissions,get_lca_operation,,O_ghg_ton,Energy system operation,ton CO2-eq/yr,{0.0...n},float,grey,outputs/data/emissions/total_lca_operation.csv
-emissions,get_lca_operation,,O_nre_pen_GJ,Energy system operation,GJ/yr,{0.0...n},float,red_light,outputs/data/emissions/total_lca_operation.csv
-emissions,get_lca_operation,,O_nre_pen_MJm2,Energy system operation,MJoil-eq/m2.yr,{0.0...n},float,red_light,outputs/data/emissions/total_lca_operation.csv
+emissions,get_lca_operation,,GHG_sys_kgCO2m2,Energy system operation,kg CO2-eq/m2.yr,{0.0...n},float,grey,outputs/data/emissions/total_lca_operation.csv
+emissions,get_lca_operation,,GHG_sys_tonCO2,Energy system operation,ton CO2-eq/yr,{0.0...n},float,grey,outputs/data/emissions/total_lca_operation.csv
 emissions,get_lca_operation,,OIL_hs_ghg_kgm2,Emissions due to operational energy per unit of conditioned floor area of the oil powered heating system,[kg/m2 -yr],{0.0...n},float,black,outputs/data/emissions/total_lca_operation.csv
 emissions,get_lca_operation,,OIL_hs_ghg_ton,Emissions due to operational energy of the oil powered heating system,[ton/yr],{0.0...n},float,black,outputs/data/emissions/total_lca_operation.csv
 emissions,get_lca_operation,,OIL_hs_nre_pen_GJ,Operational primary energy demand (non-renewable) for oil powered heating system,[GJ/yr],{0.0...n},float,black,outputs/data/emissions/total_lca_operation.csv

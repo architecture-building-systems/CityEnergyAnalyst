@@ -174,29 +174,29 @@ supply-systems:
   - name: type_cs
     type: choice
     location:
-      path: get_database_conversion_systems
-      sheet: ALL_IN_ONE_SYSTEMS
+      path: get_database_assemblies
+      sheet: SUPPLY
       column: code
       filter: system=='COOLING' or system=='NONE'
   - name: type_dhw
     type: choice
     location:
-      path: get_database_conversion_systems
-      sheet: ALL_IN_ONE_SYSTEMS
+      path: get_database_assemblies
+      sheet: SUPPLY
       column: code
       filter: system=='HEATING' or system=='NONE'
   - name: type_el
     type: choice
     location:
-      path: get_database_conversion_systems
-      sheet: ALL_IN_ONE_SYSTEMS
+      path: get_database_assemblies
+      sheet: SUPPLY
       column: code
       filter: system=='ELECTRICITY' or system=='NONE'
   - name: type_hs
     type: choice
     location:
-      path: get_database_conversion_systems
-      sheet: ALL_IN_ONE_SYSTEMS
+      path: get_database_assemblies
+      sheet: SUPPLY
       column: code
       filter: system=='HEATING' or system=='NONE'
 architecture:

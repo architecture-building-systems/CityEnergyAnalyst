@@ -125,7 +125,7 @@ class AllInputs(Resource):
         store['geojsons']['dh'], store['connected_buildings']['dh'],  store['crs']['dh'] = get_network(
             config, 'dh', trigger_abort=False)
         store['colors'] = COLORS
-        store['schedules'] = {}
+        store['SCHEDULES'] = {}
 
         return store
     def put(self):
@@ -136,7 +136,7 @@ class AllInputs(Resource):
         tables = form['tables']
         geojsons = form['geojsons']
         crs = form['crs']
-        schedules = form['schedules']
+        SCHEDULES = form['SCHEDULES']
 
         out = {'tables': {}, 'geojsons': {}}
 
@@ -178,9 +178,9 @@ class AllInputs(Resource):
                 if db_info['type'] == 'shp':
                     out['geojsons'][db] = {}
 
-        if schedules:
-            for building in schedules:
-                schedule_dict_to_file(schedules[building], locator.get_building_weekly_schedules(building))
+        if SCHEDULES:
+            for building in SCHEDULES:
+                schedule_dict_to_file(SCHEDULES[building], locator.get_building_weekly_schedules(building))
 
         return out
 
@@ -333,8 +333,8 @@ class InputDatabase(Resource):
                 for db_type, db_dict in DATABASES.items():
                     out[db_type] = OrderedDict()
                     for db_name, db_props in db_dict.items():
-                        if db_name == 'schedules':
-                            # Need to change locator method for schedules since `schema.yml` uses
+                        if db_name == 'SCHEDULES':
+                            # Need to change locator method for SCHEDULES since `schema.yml` uses
                             # `get_database_standard_schedules_use` instead of `get_database_standard_schedules`
                             out[db_type][db_name] = get_all_schedules_dict(locator.get_database_standard_schedules())
                         else:
@@ -343,7 +343,7 @@ class InputDatabase(Resource):
                 return out
             elif db in DATABASE_NAMES:
                 db_type = DATABASES_TYPE_MAP[db]
-                if db == 'schedules':
+                if db == 'SCHEDULES':
                     return get_all_schedules_dict(locator.get_database_standard_schedules())
                 else:
                     locator_method = DATABASES[db_type][db]['schema_key']
@@ -365,8 +365,8 @@ class InputDatabaseSave(Resource):
 
         for db_type in payload:
             for db_name in payload[db_type]:
-                if db_name == 'schedules':
-                    for archetype, schedule_dict in payload[db_type]['schedules'].items():
+                if db_name == 'SCHEDULES':
+                    for archetype, schedule_dict in payload[db_type]['SCHEDULES'].items():
                         schedule_dict_to_file(
                             schedule_dict,
                             locator.get_database_standard_schedules_use(
