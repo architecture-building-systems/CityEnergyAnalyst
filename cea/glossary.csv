@@ -1055,10 +1055,8 @@ emissions,get_lca_operation,,NG_ww_ghg_kgm2,Emissions due to operational energy 
 emissions,get_lca_operation,,NG_ww_ghg_ton,Emissions due to operational energy of the solar powered domestic hot water system,[ton/yr],{0.0...n},float,black,outputs/data/emissions/total_lca_operation.csv
 emissions,get_lca_operation,,NG_ww_nre_pen_GJ,Operational primary energy demand (non-renewable) for natural gas powered domestic hot water system,[GJ/yr],{0.0...n},float,black,outputs/data/emissions/total_lca_operation.csv
 emissions,get_lca_operation,,NG_ww_nre_pen_MJm2,Operational primary energy demand per unit of conditioned floor area (non-renewable) of the natural gas powered domestic hot water system,[MJ/m2-yr],{0.0...n},float,black,outputs/data/emissions/total_lca_operation.csv
-emissions,get_lca_operation,,O_ghg_kgm2,Energy system operation,kg CO2-eq/m2.yr,{0.0...n},float,grey,outputs/data/emissions/total_lca_operation.csv
-emissions,get_lca_operation,,O_ghg_ton,Energy system operation,ton CO2-eq/yr,{0.0...n},float,grey,outputs/data/emissions/total_lca_operation.csv
-emissions,get_lca_operation,,O_nre_pen_GJ,Energy system operation,GJ/yr,{0.0...n},float,red_light,outputs/data/emissions/total_lca_operation.csv
-emissions,get_lca_operation,,O_nre_pen_MJm2,Energy system operation,MJoil-eq/m2.yr,{0.0...n},float,red_light,outputs/data/emissions/total_lca_operation.csv
+emissions,get_lca_operation,,GHG_sys_kgCO2m2,Energy system operation,kg CO2-eq/m2.yr,{0.0...n},float,grey,outputs/data/emissions/total_lca_operation.csv
+emissions,get_lca_operation,,GHG_sys_tonCO2,Energy system operation,ton CO2-eq/yr,{0.0...n},float,grey,outputs/data/emissions/total_lca_operation.csv
 emissions,get_lca_operation,,OIL_hs_ghg_kgm2,Emissions due to operational energy per unit of conditioned floor area of the oil powered heating system,[kg/m2 -yr],{0.0...n},float,black,outputs/data/emissions/total_lca_operation.csv
 emissions,get_lca_operation,,OIL_hs_ghg_ton,Emissions due to operational energy of the oil powered heating system,[ton/yr],{0.0...n},float,black,outputs/data/emissions/total_lca_operation.csv
 emissions,get_lca_operation,,OIL_hs_nre_pen_GJ,Operational primary energy demand (non-renewable) for oil powered heating system,[GJ/yr],{0.0...n},float,black,outputs/data/emissions/total_lca_operation.csv

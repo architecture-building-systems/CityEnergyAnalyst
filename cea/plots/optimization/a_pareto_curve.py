@@ -120,6 +120,7 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.GenerationPlotBase)
         graph.append(trace)
 
         # This includes the point of today's emissions
+        data_today = self.normalize_data(data, self.normalization, self.objectives)
 
         return graph
 

@@ -3350,17 +3350,11 @@ get_lca_operation:
     OIL_ww_nre_pen_MJm2:
       sample_data: 0.0
       types_found: [float]
-    O_ghg_kgm2:
+    GHG_sys_kgCO2m2:
       sample_data: 12.08
       types_found: [float]
-    O_ghg_ton:
+    GHG_sys_tonCO2:
       sample_data: 60.36
-      types_found: [float]
-    O_nre_pen_GJ:
-      sample_data: 3983.29
-      types_found: [float]
-    O_nre_pen_MJm2:
-      sample_data: 398.55
       types_found: [float]
     PV_ghg_kgm2:
       sample_data: 0.0
