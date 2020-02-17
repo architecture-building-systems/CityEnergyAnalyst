@@ -215,11 +215,11 @@ def extract_cea_databases_files(locator):
     roofs_envelope_systems_df = pd.read_excel(locator.get_database_envelope_systems(), 'ROOF')
     wall_envelope_systems_df = pd.read_excel(locator.get_database_envelope_systems(), 'WALL')
     shading_envelope_systems_df = pd.read_excel(locator.get_database_envelope_systems(), 'SHADING')
-    emission_systems_heating_df = pd.read_excel(locator.get_database_air_conditioning_systems(), 'heating')
-    emission_systems_cooling_df = pd.read_excel(locator.get_database_air_conditioning_systems(), 'cooling')
-    emission_systems_controller_df = pd.read_excel(locator.get_database_air_conditioning_systems(), 'controller')
-    system_controls_ini_df = pd.read_excel(locator.get_systems_seasonality(), 'heating_cooling')
-    cooling_generation_df = pd.read_excel(locator.get_database_supply_systems(), 'ALL_IN_ONE_SYSTEMS')
+    emission_systems_heating_df = pd.read_excel(locator.get_database_air_conditioning_systems(), 'HEATING')
+    emission_systems_cooling_df = pd.read_excel(locator.get_database_air_conditioning_systems(), 'COOLING')
+    emission_systems_controller_df = pd.read_excel(locator.get_database_air_conditioning_systems(), 'CONTROLLER')
+    system_controls_ini_df = pd.read_excel(locator.get_systems_seasonality(), 'HEATING_COOLING')
+    cooling_generation_df = pd.read_excel(locator.get_database_conversion_systems(), 'ALL_IN_ONE_SYSTEMS')
 
     # Set index
     internal_loads_df.set_index('Code', inplace=True)

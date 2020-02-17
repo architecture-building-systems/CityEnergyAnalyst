@@ -23,8 +23,7 @@ class DispatchCurveDistrictCoolingPlot(cea.plots.supply_system.SupplySystemPlotB
     """Show a pareto curve for a single generation"""
     name = "Dispatch curve cooling plant"
     expected_parameters = {
-        'generation': 'plots-supply-system:generation',
-        'individual': 'plots-supply-system:individual',
+        'system': 'plots-supply-system:system',
         'timeframe': 'plots-supply-system:timeframe',
         'scenario-name': 'general:scenario-name',
     }
@@ -48,14 +47,12 @@ class DispatchCurveDistrictCoolingPlot(cea.plots.supply_system.SupplySystemPlotB
 
     @property
     def title(self):
-        return "Dispatch curve for cooling plant in system #%s (%s)" % (self.individual, self.timeframe)
+        return "Dispatch curve for cooling plant in system %s (%s)" % (self.system, self.timeframe)
 
     @property
     def output_path(self):
         return self.locator.get_timeseries_plots_file(
-            'gen{generation}_ind{individual}dispatch_curve_cooling_plant'.format(individual=self.individual,
-                                                                                 generation=self.generation),
-            self.category_name)
+            '{system}_dispatch_curve_cooling_plant'.format(system=self.system), self.category_name)
 
     @property
     def layout(self):
@@ -91,8 +88,7 @@ def main():
     cache = cea.plots.cache.NullPlotCache()
     DispatchCurveDistrictCoolingPlot(config.project,
                                      {'scenario-name': config.scenario_name,
-                                      'generation': config.plots_supply_system.generation,
-                                      'individual': config.plots_supply_system.individual,
+                                      'system': config.plots_supply_system.system,
                                       'timeframe': config.plots_supply_system.timeframe},
                                      cache).plot(auto_open=True)
 

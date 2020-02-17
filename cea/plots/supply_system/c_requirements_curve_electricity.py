@@ -23,8 +23,7 @@ class RequirementsCurveDistrictElectricityPlot(cea.plots.supply_system.SupplySys
     """Show a pareto curve for a single generation"""
     name = "Requirements curve electricity"
     expected_parameters = {
-        'generation': 'plots-supply-system:generation',
-        'individual': 'plots-supply-system:individual',
+        'system': 'plots-supply-system:system',
         'timeframe': 'plots-supply-system:timeframe',
         'scenario-name': 'general:scenario-name',
     }
@@ -77,14 +76,12 @@ class RequirementsCurveDistrictElectricityPlot(cea.plots.supply_system.SupplySys
 
     @property
     def title(self):
-        return "Requirements curve electrical system # %s (%s)" % (self.individual, self.timeframe)
+        return "Requirements curve electrical fro %s (%s)" % (self.system, self.timeframe)
 
     @property
     def output_path(self):
         return self.locator.get_timeseries_plots_file(
-            'gen{generation}_ind{individual}requirements_curve_electricity'.format(individual=self.individual,
-                                                                                   generation=self.generation),
-            self.category_name)
+            '{system}_electricity_requirements'.format(system=self.system), self.category_name)
 
     @property
     def layout(self):
@@ -120,8 +117,7 @@ def main():
     cache = cea.plots.cache.NullPlotCache()
     RequirementsCurveDistrictElectricityPlot(config.project,
                                              {'scenario-name': config.scenario_name,
-                                              'generation': config.plots_supply_system.generation,
-                                              'individual': config.plots_supply_system.individual,
+                                              'system': config.plots_supply_system.system,
                                               'timeframe': config.plots_supply_system.timeframe},
                                              cache).plot(auto_open=True)
 

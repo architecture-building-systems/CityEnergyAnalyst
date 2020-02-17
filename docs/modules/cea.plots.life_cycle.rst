@@ -25,34 +25,10 @@ cea.plots.life\_cycle.emissions\_intensity module
     :undoc-members:
     :show-inheritance:
 
-cea.plots.life\_cycle.main module
----------------------------------
-
-.. automodule:: cea.plots.life_cycle.main
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 cea.plots.life\_cycle.operation\_costs module
 ---------------------------------------------
 
 .. automodule:: cea.plots.life_cycle.operation_costs
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-cea.plots.life\_cycle.primary\_energy module
---------------------------------------------
-
-.. automodule:: cea.plots.life_cycle.primary_energy
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-cea.plots.life\_cycle.primary\_energy\_intensity module
--------------------------------------------------------
-
-.. automodule:: cea.plots.life_cycle.primary_energy_intensity
     :members:
     :undoc-members:
     :show-inheritance:

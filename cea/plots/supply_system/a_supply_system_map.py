@@ -39,15 +39,12 @@ class SupplySystemMapPlot(cea.plots.supply_system.SupplySystemPlotBase):
     name = "Supply system map"
 
     expected_parameters = {
-        'generation': 'plots-supply-system:generation',
-        'individual': 'plots-supply-system:individual',
+        'system': 'plots-supply-system:system',
         'scenario-name': 'general:scenario-name',
     }
 
     def __init__(self, project, parameters, cache):
         super(SupplySystemMapPlot, self).__init__(project, parameters, cache)
-        self.generation = self.parameters['generation']
-        self.individual = self.parameters['individual'] if self.generation is not None else 0
         self.scenario = self.parameters['scenario-name']
         self.config = cea.config.Configuration()
         self.input_files = [(self.locator.get_optimization_slave_building_connectivity,
@@ -56,16 +53,13 @@ class SupplySystemMapPlot(cea.plots.supply_system.SupplySystemPlotBase):
     @property
     def title(self):
         if self.generation is not None:
-            return "Supply system map for system #{individual} of gen{generation}".format(individual=self.individual,
-                                                                                          generation=self.generation)
+            return "Supply system map for #{system}".format(system=self.system)
         return "Supply system map for original system"
 
     @property
     def output_path(self):
         return self.locator.get_timeseries_plots_file(
-            'gen{generation}_ind{individual}supply_system_map'.format(individual=self.individual,
-                                                                      generation=self.generation),
-            self.category_name)
+            '{system}_supply_system_map'.format(system=self.system), self.category_name)
 
     def _plot_div_producer(self):
         """
@@ -175,7 +169,7 @@ class SupplySystemMapPlot(cea.plots.supply_system.SupplySystemPlotBase):
 
 def get_building_connectivity(locator):
     supply_systems = dbf_to_dataframe(locator.get_building_supply())
-    data_all_in_one_systems = pd.read_excel(locator.get_database_supply_systems(), sheet_name='ALL_IN_ONE_SYSTEMS')
+    data_all_in_one_systems = pd.read_excel(locator.get_database_conversion_systems(), sheet_name='ALL_IN_ONE_SYSTEMS')
     heating_infrastructure = data_all_in_one_systems[data_all_in_one_systems['system'].isin(['HEATING', 'NONE'])]
     heating_infrastructure = heating_infrastructure.set_index('code')['scale']
 
@@ -198,8 +192,7 @@ def main():
     cache = cea.plots.cache.NullPlotCache()
     SupplySystemMapPlot(config.project,
                         {'scenario-name': config.scenario_name,
-                         'generation': config.plots_supply_system.generation,
-                         'individual': config.plots_supply_system.individual},
+                         'system': config.plots_supply_system.system,},
                         cache).plot(auto_open=True)
 
 

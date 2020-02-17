@@ -41,14 +41,16 @@ def get_technology_related_databases(locator, region):
     copy_tree(technology_database_template, output_directory)
 
 
-def data_helper(locator,
-                update_architecture_dbf,
-                update_HVAC_systems_dbf,
-                update_indoor_comfort_dbf,
-                update_internal_loads_dbf,
-                update_supply_systems_dbf,
-                update_schedule_operation_cea,
-                buildings):
+def archetypes_mapper(locator,
+                      update_architecture_dbf,
+                      update_air_conditioning_systems_dbf,
+                      update_indoor_comfort_dbf,
+                      update_internal_loads_dbf,
+                      update_supply_systems_dbf,
+                      update_schedule_operation_cea,
+                      update_emission_intensity_dbf,
+                      buildings):
+
     """
     algorithm to query building properties from statistical database
     Archetypes_HVAC_properties.csv. for more info check the integrated demand
@@ -57,7 +59,7 @@ def data_helper(locator,
     :param InputLocator locator: an InputLocator instance set to the scenario to work on
     :param boolean update_architecture_dbf: if True, update the construction and architecture properties.
     :param boolean update_indoor_comfort_dbf: if True, get properties about thermal comfort.
-    :param boolean update_HVAC_systems_dbf: if True, get properties about types of HVAC systems, otherwise False.
+    :param boolean update_air_conditioning_systems_dbf: if True, get properties about types of HVAC systems, otherwise False.
     :param boolean update_internal_loads_dbf: if True, get properties about internal loads, otherwise False.
 
     The following files are created by this script, depending on which flags were set:
@@ -134,8 +136,8 @@ def data_helper(locator,
         dataframe_to_dbf(prop_architecture_df_merged[fields], locator.get_building_architecture())
 
     # get properties about types of HVAC systems
-    if update_HVAC_systems_dbf:
-        construction_properties_hvac = pd.read_excel(locator.get_archetypes_properties(), 'HVAC')
+    if update_air_conditioning_systems_dbf:
+        construction_properties_hvac = pd.read_excel(locator.get_archetypes_properties(), 'AIR_CONDITIONING')
         construction_properties_hvac['Code'] = construction_properties_hvac.apply(
             lambda x: calc_code(x['building_use'], x['year_start'],
                                 x['year_end'], x['standard']), axis=1)
@@ -236,13 +238,36 @@ def data_helper(locator,
                   'type_el']
         dataframe_to_dbf(prop_supply_df_merged[fields], locator.get_building_supply())
 
+    if update_emission_intensity_dbf:
+        emisison_intensity_DB = pd.read_excel(locator.get_archetypes_properties(), 'EMISSION_INTENSITY')
+        emisison_intensity_DB['Code'] = emisison_intensity_DB.apply(lambda x: calc_code(x['building_use'], x['year_start'],
+                                                                x['year_end'], x['standard']), axis=1)
+
+        categories_df['cat_supply'] = calc_category(emisison_intensity_DB, categories_df, 'HVAC', 'R')
+
+        # define HVAC systems types
+        prop_emission_df = categories_df.merge(emisison_intensity_DB, left_on='cat_supply', right_on='Code')
+        fields = ['Name',
+                  'W_e_ag_kgm2',
+                  'W_e_bg_kgm2',
+                  'W_i_ag_kgm2',
+                  'W_i_bg_kgm2',
+                  'Win_kgm2',
+                  'F_i_kgm2',
+                  'F_e_kgm2',
+                  'R_kgm2',
+                  'Tech_kgm2',
+                  'Exca_kgm2',
+                  'Mobi_kgm2']
+        dataframe_to_dbf(prop_emission_df[fields], locator.get_building_emission_intensity())
+
 
 def get_list_of_uses_in_case_study(building_occupancy_df):
     """
     validates lists of uses in case study.
-    refactored from data_helper function
+    refactored from archetypes_mapper function
 
-    :param building_occupancy_df: dataframe of occupancy.dbf input (can be read in data-helper or in building-properties)
+    :param building_occupancy_df: dataframe of occupancy.dbf input (can be read in archetypes-mapper or in building-properties)
     :type building_occupancy_df: pandas.DataFrame
     :return: list of uses in case study
     :rtype: pandas.DataFrame.Index
@@ -496,26 +521,28 @@ def main(config):
     made to this script (e.g. refactorings) do not stop the script from working and also that the results stay the same.
     """
 
-    print('Running data-helper with scenario = %s' % config.scenario)
+    print('Running archetypes-mapper with scenario = %s' % config.scenario)
 
-    update_architecture_dbf = 'architecture' in config.data_helper.input_databases
-    update_technical_systems_dbf = 'HVAC' in config.data_helper.input_databases
-    update_indoor_comfort_dbf = 'comfort' in config.data_helper.input_databases
-    update_internal_loads_dbf = 'internal-loads' in config.data_helper.input_databases
-    update_supply_systems_dbf = 'supply' in config.data_helper.input_databases
-    update_schedule_operation_cea = 'schedules' in config.data_helper.input_databases
+    update_architecture_dbf = 'architecture' in config.archetypes_mapper.input_databases
+    update_air_conditioning_systems_dbf = 'air-conditioning' in config.archetypes_mapper.input_databases
+    update_emission_intensity_dbf = 'emission-intensity' in config.archetypes_mapper.input_databases
+    update_indoor_comfort_dbf = 'comfort' in config.archetypes_mapper.input_databases
+    update_internal_loads_dbf = 'internal-loads' in config.archetypes_mapper.input_databases
+    update_supply_systems_dbf = 'supply' in config.archetypes_mapper.input_databases
+    update_schedule_operation_cea = 'schedules' in config.archetypes_mapper.input_databases
 
-    buildings = config.data_helper.buildings
+    buildings = config.archetypes_mapper.buildings
     locator = cea.inputlocator.InputLocator(config.scenario)
 
-    data_helper(locator=locator,
-                update_architecture_dbf=update_architecture_dbf,
-                update_HVAC_systems_dbf=update_technical_systems_dbf,
-                update_indoor_comfort_dbf=update_indoor_comfort_dbf,
-                update_internal_loads_dbf=update_internal_loads_dbf,
-                update_supply_systems_dbf=update_supply_systems_dbf,
-                update_schedule_operation_cea=update_schedule_operation_cea,
-                buildings=buildings)
+    archetypes_mapper(locator=locator,
+                      update_architecture_dbf=update_architecture_dbf,
+                      update_air_conditioning_systems_dbf=update_air_conditioning_systems_dbf,
+                      update_indoor_comfort_dbf=update_indoor_comfort_dbf,
+                      update_internal_loads_dbf=update_internal_loads_dbf,
+                      update_supply_systems_dbf=update_supply_systems_dbf,
+                      update_schedule_operation_cea=update_schedule_operation_cea,
+                      update_emission_intensity_dbf= update_emission_intensity_dbf,
+                      buildings=buildings)
 
 
 if __name__ == '__main__':

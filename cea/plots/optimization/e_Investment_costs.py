@@ -16,9 +16,9 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-class AnnualEmissionsPlot(cea.plots.optimization.GenerationPlotBase):
+class InvestmentCostsPlot(cea.plots.optimization.GenerationPlotBase):
     """Implement the "CAPEX vs. OPEX of centralized system in generation X" plot"""
-    name = "Annual emissions"
+    name = "Investment costs"
     expected_parameters = {
         'generation': 'plots-optimization:generation',
         'normalization': 'plots-optimization:normalization',
@@ -26,9 +26,9 @@ class AnnualEmissionsPlot(cea.plots.optimization.GenerationPlotBase):
     }
 
     def __init__(self, project, parameters, cache):
-        super(AnnualEmissionsPlot, self).__init__(project, parameters, cache)
-        self.analysis_fields = ["GHG_sys_connected_tonCO2",
-                                "GHG_sys_disconnected_tonCO2",
+        super(InvestmentCostsPlot, self).__init__(project, parameters, cache)
+        self.analysis_fields = ["Capex_total_sys_connected_USD",
+                                "Capex_total_sys_disconnected_USD",
                                 ]
         self.normalization = self.parameters['normalization']
         self.input_files = [(self.locator.get_optimization_generation_total_performance_pareto, [self.generation])]
@@ -37,42 +37,39 @@ class AnnualEmissionsPlot(cea.plots.optimization.GenerationPlotBase):
 
     def calc_titles(self):
         if self.normalization == "gross floor area":
-            titley = 'Annual emissions [ton CO2-eq/m2.yr]'
+            titley = 'Investment cost [USD$(2015)/m2]'
         elif self.normalization == "net floor area":
-            titley = 'Annual emissions [ton CO2-eq/m2.yr]'
+            titley = 'Investment cost [USD$(2015)/m2]'
         elif self.normalization == "air conditioned floor area":
-            titley = 'Annual emissions [ton CO2-eq/m2.yr]'
+            titley = 'Investment cost [USD$(2015)/m2]'
         elif self.normalization == "building occupancy":
-            titley = 'Annual emissions [ton CO2-eq/pax.yr]'
+            titley = 'Investment cost [USD$(2015)/pax]'
         else:
-            titley = 'Annual emissions [ton CO2-eq/yr]'
+            titley = 'Investment cost [USD$(2015)/m2]'
         return titley
 
     @property
     def title(self):
         if self.normalization != "none":
-            return "Annual emissions for generation {generation} normalized to {normalized}".format(
-                generation=self.generation, normalized=self.normalization)
+            return "Investment Costs for generation {generation} normalized to {normalized}".format(generation=self.generation, normalized=self.normalization)
         else:
-            return "Annual emissions for generation {generation}".format(generation=self.generation)
+            return "Investment Costs for generation {generation}".format(generation=self.generation)
 
     @property
     def output_path(self):
         return self.locator.get_timeseries_plots_file(
-            'gen{generation}_annualized_costs'.format(generation=self.generation),
+            'gen{generation}_investment_costs'.format(generation=self.generation),
             self.category_name)
 
     @property
     def layout(self):
         return go.Layout(barmode='relative',
                          yaxis=dict(title=self.titley),
-                         xaxis=dict(categoryorder='array',
-                                    categoryarray=[x for _, x in sorted(
-                                        zip(self.data_clean['TAC_sys_USD'], self.data_clean['individual_name']))])
-                         )
+                         xaxis=dict(categoryorder = 'array',
+                                    categoryarray = [x for _, x in sorted(zip(self.data_clean['TAC_sys_USD'], self.data_clean['individual_name']))])
+        )
 
     def calc_graph(self):
-        self.multi_criteria = False  # TODO: add capabilities to plot muticriteria in this plot too
         data = self.process_generation_total_performance_pareto()
         data = self.normalize_data(data, self.normalization, self.analysis_fields)
         self.data_clean = data
@@ -94,13 +91,13 @@ def main():
     import cea.plots.cache
     config = cea.config.Configuration()
     cache = cea.plots.cache.NullPlotCache()
-
-    AnnualEmissionsPlot(config.project,
+    locator = cea.inputlocator.InputLocator(config.scenario)
+    # cache = cea.plots.cache.PlotCache(config.project)
+    InvestmentCostsPlot(config.project,
                         {'buildings': None,
                          'scenario-name': config.scenario_name,
                          'generation': config.plots_optimization.generation,
-                         'normalization': config.plots_optimization.normalization
-                         },
+                         'normalization': config.plots_optimization.normalization},
                         cache).plot(auto_open=True)
 
 

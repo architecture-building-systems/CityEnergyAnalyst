@@ -23,8 +23,7 @@ class InstalledCapacities(cea.plots.supply_system.SupplySystemPlotBase):
     """Show a pareto curve for a single generation"""
     name = "Installed Capacities"
     expected_parameters = {
-        'generation': 'plots-supply-system:generation',
-        'individual': 'plots-supply-system:individual',
+        'system': 'plots-supply-system:system',
         'scenario-name': 'general:scenario-name',
     }
 
@@ -76,14 +75,12 @@ class InstalledCapacities(cea.plots.supply_system.SupplySystemPlotBase):
 
     @property
     def title(self):
-        return "Installed Capacities for system %s" % (self.individual)
+        return "Installed Capacities for %s" % (self.system)
 
     @property
     def output_path(self):
         return self.locator.get_timeseries_plots_file(
-            'gen{generation}_ind{individual}installed_capacities'.format(individual=self.individual,
-                                                                         generation=self.generation),
-            self.category_name)
+            '{system}_install_capacities'.format(system=self.system), self.category_name)
 
     @property
     def layout(self):
@@ -152,8 +149,7 @@ def main():
     cache = cea.plots.cache.NullPlotCache()
     InstalledCapacities(config.project,
                         {'scenario-name': config.scenario_name,
-                         'generation': config.plots_supply_system.generation,
-                         'individual': config.plots_supply_system.individual},
+                         'system': config.plots_supply_system.system,},
                         cache).plot(auto_open=True)
 
 

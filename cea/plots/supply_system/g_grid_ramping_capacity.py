@@ -21,10 +21,9 @@ __status__ = "Production"
 
 class RampingCapacity(cea.plots.supply_system.SupplySystemPlotBase):
     """Show a pareto curve for a single generation"""
-    name = "Electrical Grid Impact (ramp-rate)"
+    name = "Impact on Electrical Grid (ramp-rate)"
     expected_parameters = {
-        'generation': 'plots-supply-system:generation',
-        'individual': 'plots-supply-system:individual',
+        'system': 'plots-supply-system:system',
         'scenario-name': 'general:scenario-name',
     }
 
@@ -36,14 +35,12 @@ class RampingCapacity(cea.plots.supply_system.SupplySystemPlotBase):
 
     @property
     def title(self):
-        return "Likelihood of intra-daily ramp rate at transformer for system %s" % (self.individual)
+        return "Variance in intra-daily ramp rate at transformer for %s" % (self.system)
 
     @property
     def output_path(self):
         return self.locator.get_timeseries_plots_file(
-            'gen{generation}_ind{individual}ramping_capacity'.format(individual=self.individual,
-                                                                           generation=self.generation),
-            self.category_name)
+            '{system}_ramping_capacity'.format(system=self.system), self.category_name)
 
     @property
     def layout(self):
@@ -70,12 +67,9 @@ def main():
     cache = cea.plots.cache.NullPlotCache()
     RampingCapacity(config.project,
                     {'scenario-name': config.scenario_name,
-                                      'generation': config.plots_supply_system.generation,
-                                      'individual': config.plots_supply_system.individual},
+                     'system': config.plots_supply_system.system, },
                     cache).plot(auto_open=True)
 
 
 if __name__ == '__main__':
     main()
-
-

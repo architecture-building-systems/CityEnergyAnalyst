@@ -18,7 +18,7 @@ __status__ = "Production"
 
 class AnnualCostsPlot(cea.plots.optimization.GenerationPlotBase):
     """Implement the "CAPEX vs. OPEX of centralized system in generation X" plot"""
-    name = "Annual costs"
+    name = "Annualized costs"
     expected_parameters = {
         'generation': 'plots-optimization:generation',
         'normalization': 'plots-optimization:normalization',
@@ -73,9 +73,7 @@ class AnnualCostsPlot(cea.plots.optimization.GenerationPlotBase):
         )
 
     def calc_graph(self):
-        self.multi_criteria = False  # TODO: add capabilities to plot muticriteria in this plot too
         data = self.process_generation_total_performance_pareto()
-        data = self.normalize_data(data, self.normalization, self.analysis_fields)
         self.data_clean = data
         graph = []
         for field in self.analysis_fields:
@@ -95,11 +93,8 @@ def main():
     import cea.plots.cache
     config = cea.config.Configuration()
     cache = cea.plots.cache.NullPlotCache()
-    locator = cea.inputlocator.InputLocator(config.scenario)
-    # cache = cea.plots.cache.PlotCache(config.project)
     AnnualCostsPlot(config.project,
-                    {'buildings': None,
-                     'scenario-name': config.scenario_name,
+                    {'scenario-name': config.scenario_name,
                      'generation': config.plots_optimization.generation,
                      'normalization': config.plots_optimization.normalization
                      },
