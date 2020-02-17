@@ -1848,6 +1848,15 @@ get_database_assemblies:
       CAPEX_USD2015kW:
         sample_data: 200.0
         types_found: [float]
+      IR_%:
+        sample_data: !!python/long '5'
+        types_found: [long]
+      LT_yr:
+        sample_data: !!python/long '25'
+        types_found: [long]
+      O&M_%:
+        sample_data: !!python/long '5'
+        types_found: [long]
   used_by: [demand, emissions, operation_costs]
 get_database_conversion_systems:
   created_by: []

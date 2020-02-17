@@ -1418,7 +1418,7 @@ class InputLocator(object):
 
     def get_costs_operation_file(self):
         """scenario/outputs/data/costs/{load}_cost_operation.pdf"""
-        return os.path.join(self.get_costs_folder(), 'operation_costs.csv' % locals())
+        return os.path.join(self.get_costs_folder(), 'supply_system_costs_today.csv' % locals())
 
     # GRAPHS
     def get_plots_folder(self, category):
