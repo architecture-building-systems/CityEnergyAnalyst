@@ -36,7 +36,7 @@ def get_parameters_from_plot(plot, scenario_name=None):
 
     for pname, fqname in sorted(plot.expected_parameters.items(), key=lambda x: x[1]):
         parameter = config.get_parameter(fqname)
-        if pname in plot.parameters:
+        if pname in plot.parameters and pname != 'scenario-name':
             try:
                 parameter.set(plot.parameters[pname])
             # FIXME: Use a custom exception instead
