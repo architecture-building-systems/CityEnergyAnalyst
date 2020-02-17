@@ -869,9 +869,11 @@ class SingleBuildingParameter(ChoiceParameter):
             return self._choices[0]
         return str(value)
 
+
 class GenerationParameter(ChoiceParameter):
     """A (single) building in the zone"""
     typename = 'GenerationParameter'
+
     def initialize(self, parser):
         # skip the default ChoiceParameter initialization of _choices
         pass
@@ -892,9 +894,25 @@ class GenerationParameter(ChoiceParameter):
         return unique_iterations
 
     def encode(self, value):
-        if not str(value) in self._choices:
-            return self._choices[0]
-        return str(value)
+        if str(value) in self._choices:
+            return str(value)
+        else:
+            if not self._choices or len(self._choices) < 1:
+                print('No choices for {fqname} to decode {value}'.format(fqname=self.fqname, value=value))
+                return ''
+            else:
+                return self._choices[0]
+
+    def decode(self, value):
+        if str(value) in self._choices:
+            return str(value)
+        else:
+            if not self._choices or len(self._choices) < 1:
+                print('No choices for {fqname} to decode {value}'.format(fqname=self.fqname, value=value))
+                return None
+            else:
+                return self._choices[0]
+
 
 class SystemParameter(ChoiceParameter):
     """A (single) building in the zone"""
