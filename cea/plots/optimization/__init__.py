@@ -45,6 +45,15 @@ class GenerationPlotBase(cea.plots.PlotBase):
         self.generation = self.parameters['generation']
 
     @cea.plots.cache.cached
+    def process_today_system_performance(self):
+        data_processed = pd.DataFrame()
+        data_processed_costs = pd.read_csv(self.locator.get_costs_operation_file())
+        data_processed['GHG_sys_tonCO2'] = [pd.read_csv(self.locator.get_lca_operation())['GHG_sys_tonCO2'].sum()]
+        data_processed['TAC_sys_USD'] = [data_processed_costs['TAC_sys_USD'].sum()]
+        data_processed['Capex_total_sys_USD'] = [data_processed_costs['Capex_total_sys_USD'].sum()]
+        return data_processed
+
+    @cea.plots.cache.cached
     def process_generation_total_performance_pareto_with_multi(self):
         multi_criteria_main(self.locator,
                             self.generation,

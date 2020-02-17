@@ -93,6 +93,16 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.GenerationPlotBase)
     def calc_graph(self):
         graph = []
 
+        # This includes the point of today's emissions
+        data_today = self.process_today_system_performance()
+        data_today = self.normalize_data(data_today, self.normalization, self.objectives)
+        xs = data_today[self.objectives[0]].values
+        ys = data_today[self.objectives[1]].values
+        name = "Today"
+        trace = go.Scattergl(x=xs, y=ys, mode='markers', name="Today's system", text=name,
+                             marker=dict(size='20', color='black', line=dict(color='black',width=2)))
+        graph.append(trace)
+
         # PUT THE PARETO CURVE INSIDE
         data = self.process_generation_total_performance_pareto_with_multi()
         data = self.normalize_data(data, self.normalization, self.objectives)
@@ -102,8 +112,8 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.GenerationPlotBase)
 
         individual_names = data['individual_name'].values
 
-        trace = go.Scattergl(x=xs, y=ys, mode='markers', name='Pareto curve', text=individual_names,
-                             marker=dict(size='12', color=zs,
+        trace = go.Scattergl(x=xs, y=ys, mode='markers', name='Pareto optimal systems', text=individual_names,
+                             marker=dict(size='20', color=zs,
                                          colorbar=go.ColorBar(title=self.titlez, titleside='bottom'),
                                          colorscale='Jet', showscale=True, opacity=0.8))
         graph.append(trace)
@@ -113,17 +123,15 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.GenerationPlotBase)
         xs = final_dataframe[self.objectives[0]].values
         ys = final_dataframe[self.objectives[1]].values
         name = final_dataframe["Attribute"].values
-        trace = go.Scattergl(x=xs, y=ys, mode='markers', name="Selected by Multi-criteria", text=name,
+        trace = go.Scattergl(x=xs, y=ys, mode='markers', name="Multi-criteria system", text=name,
                              marker=dict(size='20', color='white', line=dict(
                                  color='black',
                                  width=2)))
         graph.append(trace)
 
-        # This includes the point of today's emissions
-        data_today = self.normalize_data(data, self.normalization, self.objectives)
+
 
         return graph
-
 
 def calc_final_dataframe(individual_data):
     user_defined_mcda = individual_data.loc[individual_data["user_MCDA_rank"] < 2]
