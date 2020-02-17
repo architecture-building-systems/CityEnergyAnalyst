@@ -59,7 +59,7 @@ class ComparisonsAnnualCostsPlot(cea.plots.comparisons.ComparisonsPlotBase):
     @property
     def layout(self):
         return go.Layout(barmode='relative',
-                         yaxis=dict(title='Annualized cost [USD$(2015)/year]'))
+                         yaxis=dict(title=self.titley))
 
     def calc_graph(self):
         data = self.preprocessing_annual_costs_scenarios()

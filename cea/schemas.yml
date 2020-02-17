@@ -1818,14 +1818,14 @@ get_database_feedstocks:
         sample_data: KBOB 2009/1:2016, ID 42.001 Kehrichtverbrennung, cost from CEA
         types_found: [string, null]
   used_by: [decentralized, emissions, operation_costs, optimization]
-get_database_conversion_systems:
+get_database_assemblies:
   created_by: []
-  file_path: inputs/technology/systems/supply_systems.xls
+  file_path: inputs/technology/assemblies/assemblies.xls
   file_type: xls
   schema:
-    ALL_IN_ONE_SYSTEMS:
+    SUPPLY:
       Description:
-        sample_data: PV panel - monocrystalline roof top
+        sample_data: heatpump - air-air
         types_found: [string]
       code:
         sample_data: T25
@@ -1845,6 +1845,24 @@ get_database_conversion_systems:
       system:
         sample_data: ELECTRICITY
         types_found: [string]
+      CAPEX_USD2015kW:
+        sample_data: 200.0
+        types_found: [float]
+      IR_%:
+        sample_data: !!python/long '5'
+        types_found: [long]
+      LT_yr:
+        sample_data: !!python/long '25'
+        types_found: [long]
+      O&M_%:
+        sample_data: !!python/long '5'
+        types_found: [long]
+  used_by: [demand, emissions, operation_costs]
+get_database_conversion_systems:
+  created_by: []
+  file_path: inputs/technology/systems/supply_systems.xls
+  file_type: xls
+  schema:
     Absorption_chiller:
       Description:
         sample_data: LiBr triple effect
@@ -2683,8 +2701,7 @@ get_database_conversion_systems:
       'unit ':
         sample_data: m3
         types_found: [string]
-  used_by: [decentralized, demand, emissions, operation_costs, optimization, photovoltaic,
-    photovoltaic_thermal, solar_collector]
+  used_by: [decentralized, optimization, photovoltaic, photovoltaic_thermal, solar_collector]
 get_database_distribution_systems:
   created_by: []
   file_path: inputs/technology/systems/distribution_systems.xls
@@ -3333,17 +3350,11 @@ get_lca_operation:
     OIL_ww_nre_pen_MJm2:
       sample_data: 0.0
       types_found: [float]
-    O_ghg_kgm2:
+    GHG_sys_kgCO2m2:
       sample_data: 12.08
       types_found: [float]
-    O_ghg_ton:
+    GHG_sys_tonCO2:
       sample_data: 60.36
-      types_found: [float]
-    O_nre_pen_GJ:
-      sample_data: 3983.29
-      types_found: [float]
-    O_nre_pen_MJm2:
-      sample_data: 398.55
       types_found: [float]
     PV_ghg_kgm2:
       sample_data: 0.0

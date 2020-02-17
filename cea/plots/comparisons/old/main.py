@@ -129,8 +129,8 @@ class Plots(object):
                                          'COAL_ww_cost_m2yr',
                                          'OIL_ww_cost_m2yr',
                                          'WOOD_ww_cost_m2yr']
-        self.analysis_fields_emissions = ['GHG_sys_embodied_tonCO2', 'O_ghg_ton', 'GHG_sys_mobility_tonCO2']
-        self.analysis_fields_emissions_m2 = ['GHG_sys_embodied_kgCO2m2', 'O_ghg_kgm2', 'GHG_sys_mobility_kgCO2m2']
+        self.analysis_fields_emissions = ['GHG_sys_embodied_tonCO2', 'GHG_sys_tonCO2', 'GHG_sys_mobility_tonCO2']
+        self.analysis_fields_emissions_m2 = ['GHG_sys_embodied_kgCO2m2', 'GHG_sys_kgCO2m2', 'GHG_sys_mobility_kgCO2m2']
         self.analysis_fields_occupancy_type = ['COOLROOM', 'FOODSTORE', 'GYM', 'HOSPITAL', 'HOTEL', 'INDUSTRIAL',
                                                'LIBRARY', 'MULTI_RES', 'OFFICE', 'PARKING', 'RESTAURANT', 'RETAIL',
                                                'SCHOOL', 'SERVERROOM', 'SINGLE_RES', 'SWIMMING']
