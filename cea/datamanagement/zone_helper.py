@@ -127,7 +127,7 @@ def zone_helper(locator, config):
     occupancy_type = config.zone_helper.occupancy_type
     year_construction = config.zone_helper.year_construction
     zone_output_path = locator.get_zone_geometry()
-    occupancy_output_path = locator.get_building_occupancy()
+    occupancy_output_path = locator.get_building_typology()
     age_output_path = locator.get_building_age()
 
     # ensure folders exist
