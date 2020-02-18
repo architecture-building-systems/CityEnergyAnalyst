@@ -95,53 +95,11 @@ def archetypes_mapper(locator,
 
     # get properties about the construction and architecture
     if update_architecture_dbf:
-        architecture_DB = pd.read_excel(locator.get_archetypes_properties(), 'ARCHITECTURE')
-        prop_architecture_df = get_prop_architecture(building_typology_df, architecture_DB)
-        # write to dbf file
-        prop_architecture_df_merged = names_df.merge(prop_architecture_df, on="Name")
-        fields = ['Name',
-                  'Hs_ag',
-                  'Hs_bg',
-                  'Ns',
-                  'Es',
-                  'void_deck',
-                  'wwr_north',
-                  'wwr_west',
-                  'wwr_east',
-                  'wwr_south',
-                  'type_cons',
-                  'type_leak',
-                  'type_roof',
-                  'type_wall',
-                  'type_win',
-                  'type_shade']
-        dataframe_to_dbf(prop_architecture_df_merged[fields], locator.get_building_architecture())
+        architecture_mapper(locator, building_typology_df)
 
     # get properties about types of HVAC systems
     if update_air_conditioning_systems_dbf:
-        construction_properties_hvac = pd.read_excel(locator.get_archetypes_properties(), 'AIR_CONDITIONING')
-        construction_properties_hvac['Code'] = construction_properties_hvac.apply(
-            lambda x: calc_code(x['building_use'], x['year_start'],
-                                x['year_end'], x['standard']), axis=1)
-
-        categories_df['cat_HVAC'] = calc_category(construction_properties_hvac, categories_df, 'HVAC', 'R')
-
-        # define HVAC systems types
-        prop_HVAC_df = categories_df.merge(construction_properties_hvac, left_on='cat_HVAC', right_on='Code')
-
-        # write to shapefile
-        fields = ['Name',
-                  'type_cs',
-                  'type_hs',
-                  'type_dhw',
-                  'type_ctrl',
-                  'type_vent',
-                  'heat_starts',
-                  'heat_ends',
-                  'cool_starts',
-                  'cool_ends']
-        prop_HVAC_df_merged = names_df.merge(prop_HVAC_df, on="Name")
-        dataframe_to_dbf(prop_HVAC_df_merged[fields], locator.get_building_air_conditioning())
+        aircon_mapper(locator, building_typology_df)
 
     if update_indoor_comfort_dbf:
         comfort_DB = pd.read_excel(locator.get_archetypes_properties(), 'INDOOR_COMFORT')
@@ -221,27 +179,65 @@ def archetypes_mapper(locator,
         dataframe_to_dbf(prop_supply_df_merged[fields], locator.get_building_supply())
 
     if update_emission_intensity_dbf:
-        emisison_intensity_DB = pd.read_excel(locator.get_archetypes_properties(), 'EMISSION_INTENSITY')
-        emisison_intensity_DB['Code'] = emisison_intensity_DB.apply(lambda x: calc_code(x['building_use'], x['year_start'],
-                                                                x['year_end'], x['standard']), axis=1)
+        emission_intensity_mapper(locator, building_typology_df)
 
-        categories_df['cat_supply'] = calc_category(emisison_intensity_DB, categories_df, 'HVAC', 'R')
 
-        # define HVAC systems types
-        prop_emission_df = categories_df.merge(emisison_intensity_DB, left_on='cat_supply', right_on='Code')
-        fields = ['Name',
-                  'W_e_ag_kgm2',
-                  'W_e_bg_kgm2',
-                  'W_i_ag_kgm2',
-                  'W_i_bg_kgm2',
-                  'Win_kgm2',
-                  'F_i_kgm2',
-                  'F_e_kgm2',
-                  'R_kgm2',
-                  'Tech_kgm2',
-                  'Exca_kgm2',
-                  'Mobi_kgm2']
-        dataframe_to_dbf(prop_emission_df[fields], locator.get_building_emission_intensity())
+def emission_intensity_mapper(locator, building_typology_df):
+    emisison_intensity_DB = pd.read_excel(locator.get_archetypes_properties(), 'EMISSION_INTENSITY')
+    prop_emission_df = building_typology_df.merge(emisison_intensity_DB, left_on='STANDARD', right_on='code')
+    fields = ['Name',
+              'W_e_ag_kgm2',
+              'W_e_bg_kgm2',
+              'W_i_ag_kgm2',
+              'W_i_bg_kgm2',
+              'Win_kgm2',
+              'F_i_kgm2',
+              'F_e_kgm2',
+              'R_kgm2',
+              'Tech_kgm2',
+              'Exca_kgm2',
+              'Mobi_kgm2']
+    dataframe_to_dbf(prop_emission_df[fields], locator.get_building_emission_intensity())
+
+
+def aircon_mapper(locator, typology_df):
+    air_conditioning_DB = pd.read_excel(locator.get_archetypes_properties(), 'AIR_CONDITIONING')
+    # define HVAC systems types
+    prop_HVAC_df = typology_df.merge(air_conditioning_DB, left_on='STANDARD', right_on='code')
+    # write to shapefile
+    fields = ['Name',
+              'type_cs',
+              'type_hs',
+              'type_dhw',
+              'type_ctrl',
+              'type_vent',
+              'heat_starts',
+              'heat_ends',
+              'cool_starts',
+              'cool_ends']
+    dataframe_to_dbf(prop_HVAC_df[fields], locator.get_building_air_conditioning())
+
+
+def architecture_mapper(locator, typology_df):
+    architecture_DB = pd.read_excel(locator.get_archetypes_properties(), 'ARCHITECTURE')
+    prop_architecture_df = typology_df.merge(architecture_DB, left_on='STANDARD', right_on='code')
+    fields = ['Name',
+              'Hs_ag',
+              'Hs_bg',
+              'Ns',
+              'Es',
+              'void_deck',
+              'wwr_north',
+              'wwr_west',
+              'wwr_east',
+              'wwr_south',
+              'type_cons',
+              'type_leak',
+              'type_roof',
+              'type_wall',
+              'type_win',
+              'type_shade']
+    dataframe_to_dbf(prop_architecture_df[fields], locator.get_building_architecture())
 
 
 def get_list_of_uses_in_case_study(building_typology_df):
