@@ -33,15 +33,26 @@ def epw_reader(weather_path):
     result['dayofyear'] = pd.date_range(str(result["year"][0])+"/1/1", periods=HOURS_IN_YEAR, freq='H').dayofyear
     result['ratio_diffhout'] = result['difhorrad_Whm2'] / result['glohorrad_Whm2']
     result['ratio_diffhout'] = result['ratio_diffhout'].replace(np.inf, np.nan)
-    result['skycover'] = result['ratio_diffhout'].fillna(result['ratio_diffhout'].mean())
     result['wetbulb_C'] = np.vectorize(calc_wetbulb)(result['drybulb_C'], result['relhum_percent'])
-    result['skytemp_C'] = np.vectorize(calc_skytemp)(result['drybulb_C'], result['dewpoint_C'], result['skycover'])
+    result['skytemp_C'] = np.vectorize(calc_skytemp)(result['drybulb_C'], result['dewpoint_C'], result['opaqskycvr_tenths'])
 
     return result
 
 
 def calc_skytemp(Tdrybulb, Tdewpoint, N):
-    sky_e = (0.787 + 0.764 * math.log((Tdewpoint + 273) / 273)) * 1 + 0.0224 * N + 0.0035 * N ** 2 + 0.00025 * N ** 3
+    """
+    Documentation e.g. here:
+    https://www.energyplus.net/sites/default/files/docs/site_v8.3.0/EngineeringReference/05-Climate/index.html
+    or:
+    https://bigladdersoftware.com/epx/docs/8-6/engineering-reference/climate-calculations.html
+
+    :param Tdrybulb: Dry bulb temperature [C]
+    :param Tdewpoint: Wet bulb temperature [C]
+    :param N: opaque skycover in [tenths], minimum is 0, maximum is 10 see: http://glossary.ametsoc.org/wiki/Sky_cover
+    :return: sky temperature [C]
+    """
+
+    sky_e = (0.787 + 0.764 * math.log((Tdewpoint + 273) / 273)) * (1 + 0.0224 * N - 0.0035 * N ** 2 + 0.00028 * N ** 3)
     hor_IR = sky_e * BOLTZMANN * (Tdrybulb + 273) ** 4
     sky_T = ((hor_IR / BOLTZMANN) ** 0.25) - 273
 
