@@ -63,11 +63,11 @@ class InputLocator(object):
     def get_databases_systems_folder(self):
         return os.path.join(self.get_databases_folder(), 'components')
 
-    def get_database_standard_schedules(self):
-        return os.path.join(self.get_databases_folder(), 'archetypes', 'schedules')
+    def get_database_use_types_folder(self):
+        return os.path.join(self.get_databases_archetypes_folder(), 'use_types')
 
     def get_database_standard_schedules_use(self, use):
-        return os.path.join(self.get_database_standard_schedules(), use + '.csv')
+        return os.path.join(self.get_database_use_types_folder(), use + '.csv')
 
     def verify_database_template(self):
         """True, if the path is a valid template path - containing the same excel files as the standard regions."""
@@ -593,7 +593,7 @@ class InputLocator(object):
     def get_use_types_properties(self):
         """Returns the database of construction properties to be used by the archetypes-mapper. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return os.path.join(self.get_databases_archetypes_folder(), 'use_types' 'use_types_properties.xlsx')
+        return os.path.join(self.get_database_use_types_folder(), 'use_types_properties.xlsx')
 
     def get_database_assemblies(self):
         """Returns the database of supply components for cost analysis. These are copied

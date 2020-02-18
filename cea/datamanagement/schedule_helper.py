@@ -173,7 +173,7 @@ class ScheduleData(object):
 
     def fill_in_data(self):
         occupancy_types = []
-        for file_name in os.listdir(self.locator.get_database_standard_schedules()):
+        for file_name in os.listdir(self.locator.get_database_use_types_folder()):
             if file_name.endswith(".csv"):
                 use, _ = os.path.splitext(file_name)
                 occupancy_types.append(use)
