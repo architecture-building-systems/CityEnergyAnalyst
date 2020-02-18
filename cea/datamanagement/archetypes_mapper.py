@@ -121,6 +121,20 @@ def archetypes_mapper(locator,
 
 def indoor_comfort_mapper(list_uses, locator, occupant_densities, building_typology_df):
     comfort_DB = pd.read_excel(locator.get_use_types_properties(), 'INDOOR_COMFORT')
+    #
+    # list_var_names = ["1ST_USE", '2ND_USE', '3RD_USE']
+    # list_var_values = ["1ST_USE_R", '2ND_USE_R', '3RD_USE_R']
+    # # validate list of uses
+    # n_records = building_typology_df.shape[0]
+    # for use in list_uses:
+    #     for row in range(n_records):
+    #         for var_name, var_value in zip(list_var_names,list_var_values):
+    #             if building_typology_df.loc[row, var_name] == use:
+    #                 value_use = building_typology_df.loc[row, var_value]
+    #
+    #
+    #                     list_uses.append(building_typology_df.loc[row, var_name])  # append valid uses
+
     # define comfort
     prop_comfort_df = building_typology_df.merge(comfort_DB, left_on='1ST_USE', right_on='code')
     # write to shapefile
@@ -311,40 +325,6 @@ def calc_comparison(array_second, array_max):
             array_max = array_second
     return array_max
 
-
-def calc_category(archetype_DB, age, field, type):
-    category = []
-    for row in age.index:
-        if age.loc[row, field] > age.loc[row, 'built']:
-            try:
-                category.append(archetype_DB[(archetype_DB['year_start'] <= age.loc[row, field]) & \
-                                             (archetype_DB['year_end'] >= age.loc[row, field]) & \
-                                             (archetype_DB['building_use'] == age.loc[row, 'mainuse']) & \
-                                             (archetype_DB['standard'] == type)].Code.values[0])
-            except IndexError:
-                # raise warnings for e.g. using CH case study with SG construction
-                warnings.warn(
-                    'Specified building database does not contain renovated building properties. Buildings are treated as new construction.')
-                category.append(archetype_DB[(archetype_DB['year_start'] <= age.loc[row, field]) & \
-                                             (archetype_DB['year_end'] >= age.loc[row, field]) & \
-                                             (archetype_DB['building_use'] == age.loc[row, 'mainuse']) & \
-                                             (archetype_DB['standard'] == 'C')].Code.values[0])
-        else:
-            category.append(archetype_DB[(archetype_DB['year_start'] <= age.loc[row, 'built']) & \
-                                         (archetype_DB['year_end'] >= age.loc[row, 'built']) & \
-                                         (archetype_DB['building_use'] == age.loc[row, 'mainuse']) & \
-                                         (archetype_DB['standard'] == 'C')].Code.values[0])
-        if field != 'built':
-            if 0 < age.loc[row, field] < age.loc[row, 'built']:
-                print('Incorrect %s renovation year in building %s: renovation year is lower than building age' %
-                      (field, age['Name'][row]))
-            if age.loc[row, field] == age.loc[row, 'built']:
-                print('Incorrect %s renovation year in building %s: if building is not renovated, the year needs to be '
-                      'set to 0' % (field, age['Name'][row]))
-
-    return category
-
-
 def correct_archetype_areas(prop_architecture_df, architecture_DB, list_uses):
     """
     Corrects the heated area 'Hs_ag' and 'Hs_bg' for buildings with multiple uses.
@@ -444,11 +424,21 @@ def calculate_average_multiuse(fields, properties_df, occupant_densities, list_u
                 column_total = 0
                 people_total = 0
                 for use in list_uses:
-                    if use in properties_df.columns:
-                        column_total += (properties_df[use][building]
+                    if use in [properties_df['1ST_USE'][building]]:
+                        column_total += (properties_df['1ST_USE_R'][building]
                                          * occupant_densities[use]
                                          * properties_DB[column][use])
-                        people_total += properties_df[use][building] * occupant_densities[use]
+                        people_total += properties_df['1ST_USE_R'][building] * occupant_densities[use]
+                    if use in [properties_df['2ND_USE'][building]]:
+                        column_total += (properties_df['2ND_USE_R'][building]
+                                         * occupant_densities[use]
+                                         * properties_DB[column][use])
+                        people_total += properties_df['2ND_USE_R'][building] * occupant_densities[use]
+                    if use in [properties_df['3RD_USE'][building]]:
+                        column_total += (properties_df['3RD_USE_R'][building]
+                                         * occupant_densities[use]
+                                         * properties_DB[column][use])
+                        people_total += properties_df['3RD_USE_R'][building] * occupant_densities[use]
                 if people_total > 0.0:
                     properties_df.loc[building, column] = column_total / people_total
                 else:
@@ -458,7 +448,13 @@ def calculate_average_multiuse(fields, properties_df, occupant_densities, list_u
             for building in properties_df.index:
                 average = 0.0
                 for use in list_uses:
-                    average += properties_df[use][building] * properties_DB[column][use]
+                    if use in [properties_df['1ST_USE'][building]]:
+                        average += properties_df['1ST_USE_R'][building] * properties_DB[column][use]
+                    if use in [properties_df['2ND_USE'][building]]:
+                        average += properties_df['2ND_USE_R'][building] * properties_DB[column][use]
+                    if use in [properties_df['3RD_USE'][building]]:
+                        average += properties_df['3RD_USE_R'][building] * properties_DB[column][use]
+
                 properties_df.loc[building, column] = average
 
     return properties_df
