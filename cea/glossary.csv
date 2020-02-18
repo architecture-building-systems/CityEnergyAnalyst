@@ -1,12 +1,11 @@
 SCRIPT,LOCATOR_METHOD,WORKSHEET,VARIABLE,DESCRIPTION,UNIT,VALUES,TYPE,COLOR,FILE_NAME
--,get_weather,/users/assistenz/documents/github/cityenergyanalyst/cea/databases/weather/singapore.epw,EPW file variables,TODO,TODO,TODO,TODO,black,c:/users/assistenz/documents/github/cityenergyanalyst/cea/databases/weather/singapore.epw
 -,get_weather,,aerosol_opt_thousandths (index = 29),TODO,TODO,TODO,TYPE,black,databases/weather/Zug-inducity_1990_2010_TMY.epw
--,get_weather,,Albedo (index = 32),TODO,TODO,TODO,TYPE,black,databases/weather/Zug-inducity_1990_2010_TMY.epw
--,get_weather,,atmos_Pa (index = 9),TODO,TODO,TODO,TYPE,black,databases/weather/Zug-inducity_1990_2010_TMY.epw
+-,get_weather,,Albedo (index = 32),Albedo,TODO,TODO,TYPE,black,databases/weather/Zug-inducity_1990_2010_TMY.epw
+-,get_weather,,atmos_Pa (index = 9),Atmospheric pressure,TODO,TODO,TYPE,black,databases/weather/Zug-inducity_1990_2010_TMY.epw
 -,get_weather,,ceiling_hgt_m (index = 25),TODO,TODO,TODO,TYPE,black,databases/weather/Zug-inducity_1990_2010_TMY.epw
--,get_weather,,datasource (index = 5),TODO,TODO,TODO,TYPE,black,databases/weather/Zug-inducity_1990_2010_TMY.epw
+-,get_weather,,datasource (index = 5),Source of data,TODO,TODO,TYPE,black,databases/weather/Zug-inducity_1990_2010_TMY.epw
 -,get_weather,,day (index = 2),TODO,TODO,TODO,TYPE,black,databases/weather/Zug-inducity_1990_2010_TMY.epw
--,get_weather,,days_last_snow (index = 31),TODO,TODO,TODO,TYPE,black,databases/weather/Zug-inducity_1990_2010_TMY.epw
+-,get_weather,,days_last_snow (index = 31),Days since last snow,TODO,TODO,TYPE,black,databases/weather/Zug-inducity_1990_2010_TMY.epw
 -,get_weather,,dewpoint_C (index = 7),TODO,TODO,TODO,TYPE,black,databases/weather/Zug-inducity_1990_2010_TMY.epw
 -,get_weather,,difhorillum_lux (index = 18),TODO,TODO,TODO,TYPE,black,databases/weather/Zug-inducity_1990_2010_TMY.epw
 -,get_weather,,difhorrad_Whm2 (index = 15),TODO,TODO,TODO,TYPE,black,databases/weather/Zug-inducity_1990_2010_TMY.epw
@@ -36,14 +35,14 @@ SCRIPT,LOCATOR_METHOD,WORKSHEET,VARIABLE,DESCRIPTION,UNIT,VALUES,TYPE,COLOR,FILE
 -,get_weather,,year (index = 0),TODO,TODO,TODO,TYPE,black,databases/weather/Zug-inducity_1990_2010_TMY.epw
 -,get_weather,,zenlum_lux (index = 19),TODO,TODO,TODO,TYPE,black,databases/weather/Zug-inducity_1990_2010_TMY.epw
 -,get_surroundings_geometry,,floors_ag,Number of floors above ground (incl. ground floor),[-],{0...n},int,black,inputs/building-geometry/surroundings.shp
--,get_surroundings_geometry,,floors_bg,TODO,TODO,TODO,TYPE,black,inputs/building-geometry/surroundings.shp
--,get_surroundings_geometry,,geometry,TODO,TODO,TODO,TODO,black,inputs/building-geometry/surroundings.shp
+-,get_surroundings_geometry,,floors_bg,"Number of floors below ground (basement, etc)",[-],{0...n},int,black,inputs/building-geometry/surroundings.shp
+-,get_surroundings_geometry,,geometry,Geometry,[-],[-],[-],black,inputs/building-geometry/surroundings.shp
 -,get_surroundings_geometry,,height_ag,Height above ground (incl. ground floor),[m],{0.0...n},float,black,inputs/building-geometry/surroundings.shp
--,get_surroundings_geometry,,height_bg,TODO,TODO,TODO,TYPE,black,inputs/building-geometry/surroundings.shp
+-,get_surroundings_geometry,,height_bg,"Height below ground (basement, etc)",[m],{0.0...n},float,black,inputs/building-geometry/surroundings.shp
 -,get_surroundings_geometry,,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/building-geometry/surroundings.shp
 -,get_zone_geometry,,floors_ag,Number of floors above ground (incl. ground floor),[-],{0...n},int,black,inputs/building-geometry/zone.shp
 -,get_zone_geometry,,floors_bg,"Number of floors below ground (basement, etc)",[-],{0...n},int,black,inputs/building-geometry/zone.shp
--,get_zone_geometry,,geometry,TODO,TODO,TODO,TODO,black,inputs/building-geometry/zone.shp
+-,get_zone_geometry,,geometry,Geometry,[-],[-],[-],black,inputs/building-geometry/zone.shp
 -,get_zone_geometry,,height_ag,Aggregated height of the walls.,[m],{0.0...n},float,black,inputs/building-geometry/zone.shp
 -,get_zone_geometry,,height_bg,"Height below ground (basement, etc)",[m],{0.0...n},float,black,inputs/building-geometry/zone.shp
 -,get_zone_geometry,,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/building-geometry/zone.shp
@@ -55,53 +54,53 @@ SCRIPT,LOCATOR_METHOD,WORKSHEET,VARIABLE,DESCRIPTION,UNIT,VALUES,TYPE,COLOR,FILE
 -,get_building_age,,partitions,Year of last retrofit of internal wall partitions(0 if none),[-],{0...n},int,black,inputs/building-properties/age.dbf
 -,get_building_age,,roof,Year of last retrofit of roof (0 if none),[-],{0...n},int,black,inputs/building-properties/age.dbf
 -,get_building_age,,windows,Year of last retrofit of windows (0 if none),[-],{0...n},int,black,inputs/building-properties/age.dbf
-data-helper,get_building_air_conditioning,,cool_ends,End of the cooling season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black,inputs/building-properties/air_conditioning_systems.dbf
-data-helper,get_building_air_conditioning,,cool_starts,Start of the cooling season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black,inputs/building-properties/air_conditioning_systems.dbf
-data-helper,get_building_air_conditioning,,heat_ends,End of the heating season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black,inputs/building-properties/air_conditioning_systems.dbf
-data-helper,get_building_air_conditioning,,heat_starts,Start of the heating season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black,inputs/building-properties/air_conditioning_systems.dbf
-data-helper,get_building_air_conditioning,,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/building-properties/air_conditioning_systems.dbf
-data-helper,get_building_air_conditioning,,type_cs,Type of cooling supply system,[code],{T0...Tn},string,black,inputs/building-properties/air_conditioning_systems.dbf
-data-helper,get_building_air_conditioning,,type_ctrl,Type of heating and cooling control systems (relates to values in Default Database HVAC Properties),[code],{T1...Tn},string,black,inputs/building-properties/air_conditioning_systems.dbf
-data-helper,get_building_air_conditioning,,type_dhw,Type of hot water supply system,[code],{T0...Tn},string,black,inputs/building-properties/air_conditioning_systems.dbf
-data-helper,get_building_air_conditioning,,type_hs,Type of heating supply system,[code],{T0...Tn},string,black,inputs/building-properties/air_conditioning_systems.dbf
-data-helper,get_building_air_conditioning,,type_vent,Type of ventilation strategy (relates to values in Default Database HVAC Properties),[code],{T1...Tn},string,black,inputs/building-properties/air_conditioning_systems.dbf
-data-helper,get_building_architecture,,Es,Fraction of gross floor area with electrical demands.,[m2/m2],{0.0...1},float,black,inputs/building-properties/architecture.dbf
-data-helper,get_building_architecture,,Hs_ag,Fraction of above ground gross floor area air-conditioned.,[m2/m2],{0.0...1},float,black,inputs/building-properties/architecture.dbf
-data-helper,get_building_architecture,,Hs_bg,Fraction of below ground gross floor area air-conditioned.,[m2/m2],{0.0...1},float,black,inputs/building-properties/architecture.dbf
-data-helper,get_building_architecture,,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/building-properties/architecture.dbf
-data-helper,get_building_architecture,,Ns,Fraction of net gross floor area.,[m2/m2],{0.0...1},float,black,inputs/building-properties/architecture.dbf
-data-helper,get_building_architecture,,type_cons,Type of construction. It relates to the contents of the default database of Envelope Properties: construction,[code],{T1...Tn},string,black,inputs/building-properties/architecture.dbf
-data-helper,get_building_architecture,,type_leak,Leakage level. It relates to the contents of the default database of Envelope Properties: leakage,[code],{T1...Tn},string,black,inputs/building-properties/architecture.dbf
-data-helper,get_building_architecture,,type_roof,Roof construction type (relates to values in Default Database Construction Properties),[-],{T1...Tn},string,black,inputs/building-properties/architecture.dbf
-data-helper,get_building_architecture,,type_shade,Shading system type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black,inputs/building-properties/architecture.dbf
-data-helper,get_building_architecture,,type_wall,Wall construction type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black,inputs/building-properties/architecture.dbf
-data-helper,get_building_architecture,,type_win,Window type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black,inputs/building-properties/architecture.dbf
-data-helper,get_building_architecture,,void_deck,Number of floors (from the ground up) with an open envelope (default = 0),[-],{0...n},int,black,inputs/building-properties/architecture.dbf
-data-helper,get_building_architecture,,wwr_east,Window to wall ratio in in facades facing east,[m2/m2],{0.0...1},float,black,inputs/building-properties/architecture.dbf
-data-helper,get_building_architecture,,wwr_north,Window to wall ratio in in facades facing north,[m2/m2],{0.0...1},float,black,inputs/building-properties/architecture.dbf
-data-helper,get_building_architecture,,wwr_south,Window to wall ratio in in facades facing south,[m2/m2],{0.0...1},float,black,inputs/building-properties/architecture.dbf
-data-helper,get_building_architecture,,wwr_west,Window to wall ratio in in facades facing west,[m2/m2],{0.0...1},float,black,inputs/building-properties/architecture.dbf
-data-helper,get_building_comfort,,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/building-properties/indoor_comfort.dbf
-data-helper,get_building_comfort,,RH_max_pc,Upper bound of relative humidity,[%],{0.0...n},float,black,inputs/building-properties/indoor_comfort.dbf
-data-helper,get_building_comfort,,RH_min_pc,Lower_bound of relative humidity,[%],{0.0...n},float,black,inputs/building-properties/indoor_comfort.dbf
-data-helper,get_building_comfort,,Tcs_set_C,Setpoint temperature for cooling system,[C],{0.0...n},float,black,inputs/building-properties/indoor_comfort.dbf
-data-helper,get_building_comfort,,Tcs_setb_C,Setback point of temperature for cooling system,[C],{0.0...n},float,black,inputs/building-properties/indoor_comfort.dbf
-data-helper,get_building_comfort,,Ths_set_C,Setpoint temperature for heating system,[C],{0.0...n},float,black,inputs/building-properties/indoor_comfort.dbf
-data-helper,get_building_comfort,,Ths_setb_C,Setback point of temperature for heating system,[C],{0.0...n},float,black,inputs/building-properties/indoor_comfort.dbf
-data-helper,get_building_comfort,,Ve_lpspax,Indoor quality requirements of indoor ventilation per person,[l/s],{0.0...n},float,black,inputs/building-properties/indoor_comfort.dbf
-data-helper,get_building_internal,,Ea_Wm2,Peak specific electrical load due to computers and devices,[W/m2],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
-data-helper,get_building_internal,,Ed_Wm2,Peak specific electrical load due to servers/data centres,[W/m2],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
-data-helper,get_building_internal,,El_Wm2,Peak specific electrical load due to artificial lighting,[W/m2],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
-data-helper,get_building_internal,,Epro_Wm2,Peak specific electrical load due to industrial processes,[W/m2],{0.0...n},string,black,inputs/building-properties/internal_loads.dbf
-data-helper,get_building_internal,,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/building-properties/internal_loads.dbf
-data-helper,get_building_internal,,Occ_m2pax,Occupancy density,[m2/pax],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
-data-helper,get_building_internal,,Qcpro_Wm2,Peak specific process cooling load,[W/m2],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
-data-helper,get_building_internal,,Qcre_Wm2,Peak specific cooling load due to refrigeration (cooling rooms),[W/m2],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
-data-helper,get_building_internal,,Qhpro_Wm2,Peak specific process heating load,[W/m2],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
-data-helper,get_building_internal,,Qs_Wpax,Peak sensible heat load of people,[W/pax],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
-data-helper,get_building_internal,,Vw_lpdpax,Peak specific fresh water consumption (includes cold and hot water),[lpd],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
-data-helper,get_building_internal,,Vww_lpdpax,Peak specific daily hot water consumption,[lpd],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
-data-helper,get_building_internal,,X_ghpax,Moisture released by occupancy at peak conditions,[gh/kg/p],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
+archetypes-mapper,get_building_air_conditioning,,cool_ends,End of the cooling season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black,inputs/building-properties/air_conditioning_systems.dbf
+archetypes-mapper,get_building_air_conditioning,,cool_starts,Start of the cooling season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black,inputs/building-properties/air_conditioning_systems.dbf
+archetypes-mapper,get_building_air_conditioning,,heat_ends,End of the heating season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black,inputs/building-properties/air_conditioning_systems.dbf
+archetypes-mapper,get_building_air_conditioning,,heat_starts,Start of the heating season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black,inputs/building-properties/air_conditioning_systems.dbf
+archetypes-mapper,get_building_air_conditioning,,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/building-properties/air_conditioning_systems.dbf
+archetypes-mapper,get_building_air_conditioning,,type_cs,Type of cooling supply system,[code],{T0...Tn},string,black,inputs/building-properties/air_conditioning_systems.dbf
+archetypes-mapper,get_building_air_conditioning,,type_ctrl,Type of heating and cooling control systems (relates to values in Default Database HVAC Properties),[code],{T1...Tn},string,black,inputs/building-properties/air_conditioning_systems.dbf
+archetypes-mapper,get_building_air_conditioning,,type_dhw,Type of hot water supply system,[code],{T0...Tn},string,black,inputs/building-properties/air_conditioning_systems.dbf
+archetypes-mapper,get_building_air_conditioning,,type_hs,Type of heating supply system,[code],{T0...Tn},string,black,inputs/building-properties/air_conditioning_systems.dbf
+archetypes-mapper,get_building_air_conditioning,,type_vent,Type of ventilation strategy (relates to values in Default Database HVAC Properties),[code],{T1...Tn},string,black,inputs/building-properties/air_conditioning_systems.dbf
+archetypes-mapper,get_building_architecture,,Es,Fraction of gross floor area with electrical demands.,[m2/m2],{0.0...1},float,black,inputs/building-properties/architecture.dbf
+archetypes-mapper,get_building_architecture,,Hs_ag,Fraction of above ground gross floor area air-conditioned.,[m2/m2],{0.0...1},float,black,inputs/building-properties/architecture.dbf
+archetypes-mapper,get_building_architecture,,Hs_bg,Fraction of below ground gross floor area air-conditioned.,[m2/m2],{0.0...1},float,black,inputs/building-properties/architecture.dbf
+archetypes-mapper,get_building_architecture,,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/building-properties/architecture.dbf
+archetypes-mapper,get_building_architecture,,Ns,Fraction of net gross floor area.,[m2/m2],{0.0...1},float,black,inputs/building-properties/architecture.dbf
+archetypes-mapper,get_building_architecture,,type_cons,Type of construction. It relates to the contents of the default database of Envelope Properties: construction,[code],{T1...Tn},string,black,inputs/building-properties/architecture.dbf
+archetypes-mapper,get_building_architecture,,type_leak,Leakage level. It relates to the contents of the default database of Envelope Properties: leakage,[code],{T1...Tn},string,black,inputs/building-properties/architecture.dbf
+archetypes-mapper,get_building_architecture,,type_roof,Roof construction type (relates to values in Default Database Construction Properties),[-],{T1...Tn},string,black,inputs/building-properties/architecture.dbf
+archetypes-mapper,get_building_architecture,,type_shade,Shading system type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black,inputs/building-properties/architecture.dbf
+archetypes-mapper,get_building_architecture,,type_wall,Wall construction type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black,inputs/building-properties/architecture.dbf
+archetypes-mapper,get_building_architecture,,type_win,Window type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black,inputs/building-properties/architecture.dbf
+archetypes-mapper,get_building_architecture,,void_deck,Number of floors (from the ground up) with an open envelope (default = 0),[-],{0...n},int,black,inputs/building-properties/architecture.dbf
+archetypes-mapper,get_building_architecture,,wwr_east,Window to wall ratio in in facades facing east,[m2/m2],{0.0...1},float,black,inputs/building-properties/architecture.dbf
+archetypes-mapper,get_building_architecture,,wwr_north,Window to wall ratio in in facades facing north,[m2/m2],{0.0...1},float,black,inputs/building-properties/architecture.dbf
+archetypes-mapper,get_building_architecture,,wwr_south,Window to wall ratio in in facades facing south,[m2/m2],{0.0...1},float,black,inputs/building-properties/architecture.dbf
+archetypes-mapper,get_building_architecture,,wwr_west,Window to wall ratio in in facades facing west,[m2/m2],{0.0...1},float,black,inputs/building-properties/architecture.dbf
+archetypes-mapper,get_building_comfort,,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/building-properties/indoor_comfort.dbf
+archetypes-mapper,get_building_comfort,,RH_max_pc,Upper bound of relative humidity,[%],{0.0...n},float,black,inputs/building-properties/indoor_comfort.dbf
+archetypes-mapper,get_building_comfort,,RH_min_pc,Lower_bound of relative humidity,[%],{0.0...n},float,black,inputs/building-properties/indoor_comfort.dbf
+archetypes-mapper,get_building_comfort,,Tcs_set_C,Setpoint temperature for cooling system,[C],{0.0...n},float,black,inputs/building-properties/indoor_comfort.dbf
+archetypes-mapper,get_building_comfort,,Tcs_setb_C,Setback point of temperature for cooling system,[C],{0.0...n},float,black,inputs/building-properties/indoor_comfort.dbf
+archetypes-mapper,get_building_comfort,,Ths_set_C,Setpoint temperature for heating system,[C],{0.0...n},float,black,inputs/building-properties/indoor_comfort.dbf
+archetypes-mapper,get_building_comfort,,Ths_setb_C,Setback point of temperature for heating system,[C],{0.0...n},float,black,inputs/building-properties/indoor_comfort.dbf
+archetypes-mapper,get_building_comfort,,Ve_lpspax,Indoor quality requirements of indoor ventilation per person,[l/s],{0.0...n},float,black,inputs/building-properties/indoor_comfort.dbf
+archetypes-mapper,get_building_internal,,Ea_Wm2,Peak specific electrical load due to computers and devices,[W/m2],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
+archetypes-mapper,get_building_internal,,Ed_Wm2,Peak specific electrical load due to servers/data centres,[W/m2],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
+archetypes-mapper,get_building_internal,,El_Wm2,Peak specific electrical load due to artificial lighting,[W/m2],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
+archetypes-mapper,get_building_internal,,Epro_Wm2,Peak specific electrical load due to industrial processes,[W/m2],{0.0...n},string,black,inputs/building-properties/internal_loads.dbf
+archetypes-mapper,get_building_internal,,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/building-properties/internal_loads.dbf
+archetypes-mapper,get_building_internal,,Occ_m2pax,Occupancy density,[m2/pax],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
+archetypes-mapper,get_building_internal,,Qcpro_Wm2,Peak specific process cooling load,[W/m2],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
+archetypes-mapper,get_building_internal,,Qcre_Wm2,Peak specific cooling load due to refrigeration (cooling rooms),[W/m2],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
+archetypes-mapper,get_building_internal,,Qhpro_Wm2,Peak specific process heating load,[W/m2],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
+archetypes-mapper,get_building_internal,,Qs_Wpax,Peak sensible heat load of people,[W/pax],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
+archetypes-mapper,get_building_internal,,Vw_lpdpax,Peak specific fresh water consumption (includes cold and hot water),[lpd],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
+archetypes-mapper,get_building_internal,,Vww_lpdpax,Peak specific daily hot water consumption,[lpd],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
+archetypes-mapper,get_building_internal,,X_ghpax,Moisture released by occupancy at peak conditions,[gh/kg/p],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
 -,get_building_occupancy,,COOLROOM,Refrigeration rooms,[m2],{0.0...1},float,red,inputs/building-properties/occupancy.dbf
 -,get_building_occupancy,,FOODSTORE,Food stores,[m2],{0.0...1},float,orange,inputs/building-properties/occupancy.dbf
 -,get_building_occupancy,,GYM,Gymnasiums,[m2],{0.0...1},float,yellow,inputs/building-properties/occupancy.dbf
@@ -119,23 +118,35 @@ data-helper,get_building_internal,,X_ghpax,Moisture released by occupancy at pea
 -,get_building_occupancy,,SERVERROOM,Data center,[m2],{0.0...1},float,blue,inputs/building-properties/occupancy.dbf
 -,get_building_occupancy,,SINGLE_RES,Residential (single dwellings),[m2],{0.0...1},float,grey,inputs/building-properties/occupancy.dbf
 -,get_building_occupancy,,SWIMMING,Swimming halls,[m2],{0.0...1},float,purple,inputs/building-properties/occupancy.dbf
-data_helper,get_building_weekly_schedules,,METADATA,TODO,TODO,TODO,float,black,inputs/building-properties/schedules/B001.csv
-data_helper,get_building_weekly_schedules,,mixed-schedule,TODO,TODO,TODO,float,black,inputs/building-properties/schedules/B001.csv
-data-helper,get_building_supply,,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/building-properties/supply_systems.dbf
-data-helper,get_building_supply,,type_cs,Type of cooling supply system,[code],{T0...Tn},string,black,inputs/building-properties/supply_systems.dbf
-data-helper,get_building_supply,,type_dhw,Type of hot water supply system,[code],{T0...Tn},string,black,inputs/building-properties/supply_systems.dbf
-data-helper,get_building_supply,,type_el,Type of electrical supply system,[code],{T0...Tn},string,black,inputs/building-properties/supply_systems.dbf
-data-helper,get_building_supply,,type_hs,Type of heating supply system,[code],{T0...Tn},string,black,inputs/building-properties/supply_systems.dbf
-thermal-network,get_network_layout_edges_shapefile,,geometry,TODO,TODO,TODO,TODO,black,inputs/networks/dc/edges.shp
+archetypes-mapper,get_building_weekly_schedules,,METADATA,TODO,TODO,TODO,float,black,inputs/building-properties/schedules/B001.csv
+archetypes-mapper,get_building_weekly_schedules,,mixed-schedule,TODO,TODO,TODO,float,black,inputs/building-properties/schedules/B001.csv
+archetypes-mapper,get_building_supply,,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/building-properties/supply_systems.dbf
+archetypes-mapper,get_building_supply,,type_cs,Type of cooling supply system,[code],{T0...Tn},string,black,inputs/building-properties/supply_systems.dbf
+archetypes-mapper,get_building_supply,,type_dhw,Type of hot water supply system,[code],{T0...Tn},string,black,inputs/building-properties/supply_systems.dbf
+archetypes-mapper,get_building_supply,,type_el,Type of electrical supply system,[code],{T0...Tn},string,black,inputs/building-properties/supply_systems.dbf
+archetypes-mapper,get_building_supply,,type_hs,Type of heating supply system,[code],{T0...Tn},string,black,inputs/building-properties/supply_systems.dbf
+archetypes-mapper,get_building_emission_intensity,,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/building-properties/emission_intensity.dbf
+archetypes-mapper,get_building_emission_intensity,,W_e_ag_kgm2,Emissions of external walls below ground per wall area,[kg CO2-eq/m2],{0.0...n}, float,black,inputs/building-properties/emission_intensity.dbf
+archetypes-mapper,get_building_emission_intensity,,W_e_bg_kgm2,Emissions of external walls above ground per wall area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/building-properties/emission_intensity.dbf
+archetypes-mapper,get_building_emission_intensity,,W_i_ag_kgm2,Emissions of internal walls below ground per wall area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/building-properties/emission_intensity.dbf
+archetypes-mapper,get_building_emission_intensity,,W_i_bg_kgm2,Emissions of internal walls above ground per wall area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/building-properties/emission_intensity.dbf
+archetypes-mapper,get_building_emission_intensity,,Win_kgm2,Emissions of widows per window area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/building-properties/emission_intensity.dbf
+archetypes-mapper,get_building_emission_intensity,,F_i_kgm2,Emissions of internal floors per floor area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/building-properties/emission_intensity.dbf
+archetypes-mapper,get_building_emission_intensity,,F_e_kgm2,Emissions of basement floor per floor area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/building-properties/emission_intensity.dbf
+archetypes-mapper,get_building_emission_intensity,,R_kgm2,Emissions of roof per roof area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/building-properties/emission_intensity.dbf
+archetypes-mapper,get_building_emission_intensity,,Tech_kgm2,Emissions of technical installations per gross floor area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/building-properties/emission_intensity.dbf
+archetypes-mapper,get_building_emission_intensity,,Exca_kgm2,Emissions of excavations per basement floor area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/building-properties/emission_intensity.dbf
+archetypes-mapper,get_building_emission_intensity,,Mobi_kgm2,Emissions of induced mobility per gross floor area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/building-properties/emission_intensity.dbf
+thermal-network,get_network_layout_edges_shapefile,,geometry,Geometry,[-],[-],[-],black,inputs/networks/dc/edges.shp
 thermal-network,get_network_layout_edges_shapefile,,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/networks/dc/edges.shp
 thermal-network,get_network_layout_edges_shapefile,,Pipe_DN,Classifies nominal pipe diameters (DN) into typical bins. E.g. DN100 refers to pipes of approx. 100mm in diameter.,[DN#],alphanumeric,string,black,inputs/networks/dc/edges.shp
-thermal-network,get_network_layout_edges_shapefile,,Type_mat,TODO,TODO,TODO,TODO,black,inputs/networks/dc/edges.shp
-network-layout,get_network_layout_nodes_shapefile,,Building,TODO,TODO,TODO,TODO,black,inputs/networks/dc/nodes.shp
-network-layout,get_network_layout_nodes_shapefile,,geometry,TODO,TODO,TODO,TODO,black,inputs/networks/dc/nodes.shp
+thermal-network,get_network_layout_edges_shapefile,,Type_mat,Material type,[-],{T0...Tn},string,black,inputs/networks/dc/edges.shp
+network-layout,get_network_layout_nodes_shapefile,,Building,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/networks/dc/nodes.shp
+network-layout,get_network_layout_nodes_shapefile,,geometry,Geometry,[-],[-],[-],black,inputs/networks/dc/nodes.shp
 network-layout,get_network_layout_nodes_shapefile,,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/networks/dc/nodes.shp
-network-layout,get_network_layout_nodes_shapefile,,Type,TODO,TODO,TODO,TODO,black,inputs/networks/dc/nodes.shp
--,get_street_network,,geometry,TODO,TODO,TODO,TODO,black,inputs/networks/streets.shp
--,get_street_network,,Id,TODO,TODO,TODO,TODO,black,inputs/networks/streets.shp
+network-layout,get_network_layout_nodes_shapefile,,Type,Weather a Plant or A Customer,[-],alphanumeric,string,black,inputs/networks/dc/nodes.shp
+-,get_street_network,,geometry,Geometry,[-],[-],[-],black,inputs/networks/streets.shp
+-,get_street_network,,Id,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/networks/streets.shp
 -,get_archetypes_properties,ARCHITECTURE,building_use,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
 -,get_archetypes_properties,ARCHITECTURE,Es,Fraction of gross floor area with electrical demands.,[m2/m2],{0.0...1},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
 -,get_archetypes_properties,ARCHITECTURE,Hs_ag,Fraction of above ground gross floor area air-conditioned.,[m2/m2],{0.0...1},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
@@ -181,7 +192,7 @@ network-layout,get_network_layout_nodes_shapefile,,Type,TODO,TODO,TODO,TODO,blac
 -,get_archetypes_properties,INTERNAL_LOADS,Ed_Wm2,Peak specific electrical load due to servers/data centres,[W/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS
 -,get_archetypes_properties,INTERNAL_LOADS,El_Wm2,Peak specific electrical load due to artificial lighting,[W/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS
 -,get_archetypes_properties,INTERNAL_LOADS,Epro_Wm2,Peak specific electrical load due to industrial processes,[W/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS
--,get_archetypes_properties,INTERNAL_LOADS,Occ_m2pax,TODO,TODO,TODO,TYPE,black,inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS
+-,get_archetypes_properties,INTERNAL_LOADS,Occ_m2pax,Occupancy density,[m2/pax],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS
 -,get_archetypes_properties,INTERNAL_LOADS,Qcpro_Wm2,Peak specific process cooling load,[W/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS
 -,get_archetypes_properties,INTERNAL_LOADS,Qcre_Wm2,Peak specific cooling load due to refrigeration (cooling rooms),[W/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS
 -,get_archetypes_properties,INTERNAL_LOADS,Qhpro_Wm2,Peak specific process heating load,[W/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS
@@ -197,99 +208,81 @@ network-layout,get_network_layout_nodes_shapefile,,Type,TODO,TODO,TODO,TODO,blac
 -,get_archetypes_properties,SUPPLY,type_hs,Type of heating supply system,[code],{T0...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY
 -,get_archetypes_properties,SUPPLY,year_end,Upper limit of year interval where the building properties apply,[yr],{0...n},int,black,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY
 -,get_archetypes_properties,SUPPLY,year_start,Lower limit of year interval where the building properties apply,[yr],{0...n},int,black,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY
--,get_database_standard_schedules_use,,CH-SIA-2014,TODO,TODO,TODO,float,black,inputs/technology/archetypes/schedules/RESTAURANT.csv
--,get_database_standard_schedules_use,,METADATA,TODO,TODO,TODO,float,black,inputs/technology/archetypes/schedules/RESTAURANT.csv
--,get_database_standard_schedules_use,,RESTAURANT,TODO,TODO,TODO,float,black,inputs/technology/archetypes/schedules/RESTAURANT.csv
--,get_database_lca_buildings,EMBODIED_EMISSIONS,building_use,TODO,TODO,TODO,string,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_EMISSIONS
--,get_database_lca_buildings,EMBODIED_EMISSIONS,Excavation,TODO,TODO,TODO,long,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_EMISSIONS
--,get_database_lca_buildings,EMBODIED_EMISSIONS,Floor_g,TODO,TODO,TODO,long,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_EMISSIONS
--,get_database_lca_buildings,EMBODIED_EMISSIONS,Floor_int,TODO,TODO,TODO,long,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_EMISSIONS
--,get_database_lca_buildings,EMBODIED_EMISSIONS,Roof,TODO,TODO,TODO,long,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_EMISSIONS
--,get_database_lca_buildings,EMBODIED_EMISSIONS,Services,TODO,TODO,TODO,long,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_EMISSIONS
--,get_database_lca_buildings,EMBODIED_EMISSIONS,standard,TODO,TODO,TODO,string,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_EMISSIONS
--,get_database_lca_buildings,EMBODIED_EMISSIONS,Wall_ext_ag,TODO,TODO,TODO,long,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_EMISSIONS
--,get_database_lca_buildings,EMBODIED_EMISSIONS,Wall_ext_bg,TODO,TODO,TODO,long,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_EMISSIONS
--,get_database_lca_buildings,EMBODIED_EMISSIONS,Wall_int_nosup,TODO,TODO,TODO,long,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_EMISSIONS
--,get_database_lca_buildings,EMBODIED_EMISSIONS,Wall_int_sup,TODO,TODO,TODO,long,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_EMISSIONS
--,get_database_lca_buildings,EMBODIED_EMISSIONS,Win_ext,TODO,TODO,TODO,long,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_EMISSIONS
--,get_database_lca_buildings,EMBODIED_EMISSIONS,year_end,TODO,TODO,TODO,long,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_EMISSIONS
--,get_database_lca_buildings,EMBODIED_EMISSIONS,year_start,TODO,TODO,TODO,long,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_EMISSIONS
--,get_database_lca_buildings,EMBODIED_ENERGY,building_use,TODO,TODO,TODO,string,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_ENERGY
--,get_database_lca_buildings,EMBODIED_ENERGY,Excavation,TODO,TODO,TODO,long,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_ENERGY
--,get_database_lca_buildings,EMBODIED_ENERGY,Floor_g,TODO,TODO,TODO,long,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_ENERGY
--,get_database_lca_buildings,EMBODIED_ENERGY,Floor_int,TODO,TODO,TODO,long,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_ENERGY
--,get_database_lca_buildings,EMBODIED_ENERGY,Roof,TODO,TODO,TODO,long,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_ENERGY
--,get_database_lca_buildings,EMBODIED_ENERGY,Services,TODO,TODO,TODO,long,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_ENERGY
--,get_database_lca_buildings,EMBODIED_ENERGY,standard,TODO,TODO,TODO,string,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_ENERGY
--,get_database_lca_buildings,EMBODIED_ENERGY,Wall_ext_ag,TODO,TODO,TODO,long,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_ENERGY
--,get_database_lca_buildings,EMBODIED_ENERGY,Wall_ext_bg,TODO,TODO,TODO,long,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_ENERGY
--,get_database_lca_buildings,EMBODIED_ENERGY,Wall_int_nosup,TODO,TODO,TODO,long,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_ENERGY
--,get_database_lca_buildings,EMBODIED_ENERGY,Wall_int_sup,TODO,TODO,TODO,long,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_ENERGY
--,get_database_lca_buildings,EMBODIED_ENERGY,Win_ext,TODO,TODO,TODO,long,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_ENERGY
--,get_database_lca_buildings,EMBODIED_ENERGY,year_end,TODO,TODO,TODO,long,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_ENERGY
--,get_database_lca_buildings,EMBODIED_ENERGY,year_start,TODO,TODO,TODO,long,black,inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_ENERGY
--,get_database_lca_mobility,MOBILITY,CO2_today,TODO,TODO,TODO,float,black,inputs/technology/lifecycle/LCA_mobility.xls:MOBILITY
--,get_database_lca_mobility,MOBILITY,code,TODO,TODO,TODO,string,black,inputs/technology/lifecycle/LCA_mobility.xls:MOBILITY
--,get_database_lca_mobility,MOBILITY,Description,TODO,TODO,TODO,string,black,inputs/technology/lifecycle/LCA_mobility.xls:MOBILITY
--,get_database_lca_mobility,MOBILITY,NRE_today,TODO,TODO,TODO,float,black,inputs/technology/lifecycle/LCA_mobility.xls:MOBILITY
--,get_database_lca_mobility,MOBILITY,PEN_today,TODO,TODO,TODO,long,black,inputs/technology/lifecycle/LCA_mobility.xls:MOBILITY
--,get_database_air_conditioning_systems,controller,code,TODO,TODO,TODO,string,black,inputs/technology/systems/air_conditioning_systems.xls:controller
--,get_database_air_conditioning_systems,controller,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/air_conditioning_systems.xls:controller
--,get_database_air_conditioning_systems,controller,dT_Qcs,TODO,TODO,TODO,float,black,inputs/technology/systems/air_conditioning_systems.xls:controller
--,get_database_air_conditioning_systems,controller,dT_Qhs,TODO,TODO,TODO,float,black,inputs/technology/systems/air_conditioning_systems.xls:controller
--,get_database_air_conditioning_systems,cooling,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
--,get_database_air_conditioning_systems,cooling,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
--,get_database_air_conditioning_systems,cooling,dTcs_C,TODO,TODO,TODO,float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
--,get_database_air_conditioning_systems,cooling,dTcs0_ahu_C,TODO,TODO,TODO,float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
--,get_database_air_conditioning_systems,cooling,dTcs0_aru_C,TODO,TODO,TODO,float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
--,get_database_air_conditioning_systems,cooling,dTcs0_scu_C,TODO,TODO,TODO,float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
--,get_database_air_conditioning_systems,cooling,Qcsmax_Wm2,TODO,TODO,TODO,long,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
--,get_database_air_conditioning_systems,cooling,Tc_sup_air_ahu_C,TODO,TODO,TODO,float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
--,get_database_air_conditioning_systems,cooling,Tc_sup_air_aru_C,TODO,TODO,TODO,float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
--,get_database_air_conditioning_systems,cooling,Tscs0_ahu_C,TODO,TODO,TODO,float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
--,get_database_air_conditioning_systems,cooling,Tscs0_aru_C,TODO,TODO,TODO,float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
--,get_database_air_conditioning_systems,cooling,Tscs0_scu_C,TODO,TODO,TODO,float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
--,get_database_air_conditioning_systems,dhw,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/air_conditioning_systems.xls:dhw
--,get_database_air_conditioning_systems,dhw,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/air_conditioning_systems.xls:dhw
--,get_database_air_conditioning_systems,dhw,Qwwmax_Wm2,Maximum heat flow permitted by the distribution system per m2 of the exchange interface (e.g. floor/radiator heating area).,[W/m2],{0.0....n},float,black,inputs/technology/systems/air_conditioning_systems.xls:dhw
+-,get_database_standard_schedules_use,,CH-SIA-2014,metadata,[-],TODO,string,black,inputs/technology/archetypes/schedules/RESTAURANT.csv
+-,get_database_standard_schedules_use,,METADATA,metadata,[-],TODO,string,black,inputs/technology/archetypes/schedules/RESTAURANT.csv
+-,get_database_standard_schedules_use,,RESTAURANT,metadata,[-],TODO,string,black,inputs/technology/archetypes/schedules/RESTAURANT.csv
+-,get_archetypes_properties,EMISSION_INTENSITY,building_use,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
+-,get_archetypes_properties,EMISSION_INTENSITY,standard,Letter representing whereas the field represent construction properties of a building as newly constructed (C) or renovated (R),[-],{C or R},string,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
+-,get_archetypes_properties,EMISSION_INTENSITY,W_e_ag_kgm2,Emissions of external walls below ground per wall area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
+-,get_archetypes_properties,EMISSION_INTENSITY,W_e_bg_kgm2,Emissions of external walls above ground per wall area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
+-,get_archetypes_properties,EMISSION_INTENSITY,W_i_ag_kgm2,Emissions of internal walls below ground per wall area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
+-,get_archetypes_properties,EMISSION_INTENSITY,W_i_bg_kgm2,Emissions of internal walls above ground per wall area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
+-,get_archetypes_properties,EMISSION_INTENSITY,Win_kgm2,Emissions of widows per window area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
+-,get_archetypes_properties,EMISSION_INTENSITY,F_i_kgm2,Emissions of internal floors per floor area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
+-,get_archetypes_properties,EMISSION_INTENSITY,F_e_kgm2,Emissions of basement floor per floor area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
+-,get_archetypes_properties,EMISSION_INTENSITY,R_kgm2,Emissions of roof per roof area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
+-,get_archetypes_properties,EMISSION_INTENSITY,Tech_kgm2,Emissions of technical installations per gross floor area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
+-,get_archetypes_properties,EMISSION_INTENSITY,Exca_kgm2,Emissions of excavations per basement floor area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
+-,get_archetypes_properties,EMISSION_INTENSITY,Mobi_kgm2,Emissions of induced mobility per gross floor area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
+-,get_archetypes_properties,EMISSION_INTENSITY,year_end,Upper limit of year interval where the building properties apply,[yr],{0...n},int,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
+-,get_archetypes_properties,EMISSION_INTENSITY,year_start,Lower limit of year interval where the building properties apply,[yr],{0...n},int,black ,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
+-,get_database_air_conditioning_systems,controller,code,Type of controller,[code],{T0...Tn},string,black,inputs/technology/systems/air_conditioning_systems.xls:controller
+-,get_database_air_conditioning_systems,controller,Description,Describes the type of controller,[-],[-],string,black,inputs/technology/systems/air_conditioning_systems.xls:controller
+-,get_database_air_conditioning_systems,controller,dT_Qcs,correction temperature of emission losses due to control system of cooling,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:controller
+-,get_database_air_conditioning_systems,controller,dT_Qhs,correction temperature of emission losses due to control system of heating,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:controller
+-,get_database_air_conditioning_systems,cooling,code,Type of cooling system,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
+-,get_database_air_conditioning_systems,cooling,Description,Describes the type of cooling system,[-],[-],string,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
+-,get_database_air_conditioning_systems,cooling,dTcs_C,Set-point correction for space emission systems,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
+-,get_database_air_conditioning_systems,cooling,dTcs0_ahu_C,Nominal temperature increase on the water side of the air-handling units,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
+-,get_database_air_conditioning_systems,cooling,dTcs0_aru_C,Nominal temperature increase on the water side of the air-recirculation units,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
+-,get_database_air_conditioning_systems,cooling,dTcs0_scu_C,Nominal temperature increase on the water side of the sensible cooling units,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
+-,get_database_air_conditioning_systems,cooling,Qcsmax_Wm2,Maximum heat flow permitted by cooling system per m2 gross floor area ,[W/m2],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
+-,get_database_air_conditioning_systems,cooling,Tc_sup_air_ahu_C,Supply air temperature of the air-handling units,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
+-,get_database_air_conditioning_systems,cooling,Tc_sup_air_aru_C,Supply air temperature of the air-recirculation units,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
+-,get_database_air_conditioning_systems,cooling,Tscs0_ahu_C,Nominal supply temperature of the water side of the air-handling units,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
+-,get_database_air_conditioning_systems,cooling,Tscs0_aru_C,Nominal supply temperature of the water side of the air-recirculation units,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
+-,get_database_air_conditioning_systems,cooling,Tscs0_scu_C,Nominal supply temperature of the water side of the sensible cooling units,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
+-,get_database_air_conditioning_systems,dhw,code,Type of hot water supply system,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/air_conditioning_systems.xls:dhw
+-,get_database_air_conditioning_systems,dhw,Description,Describes the Type of hot water supply system,[-],[-],string,black,inputs/technology/systems/air_conditioning_systems.xls:dhw
+-,get_database_air_conditioning_systems,dhw,Qwwmax_Wm2,Maximum heat flow permitted by hot water system per m2 gross floor area ,[W/m2],{0.0....n},float,black,inputs/technology/systems/air_conditioning_systems.xls:dhw
 -,get_database_air_conditioning_systems,dhw,Tsww0_C,Typical supply water temperature.,[C],{0.0....n},float,black,inputs/technology/systems/air_conditioning_systems.xls:dhw
--,get_database_air_conditioning_systems,heating,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/air_conditioning_systems.xls:heating
--,get_database_air_conditioning_systems,heating,Description,TODO,TODO,TODO,string,black,inputs/technology/systems/air_conditioning_systems.xls:heating
--,get_database_air_conditioning_systems,heating,dThs_C,TODO,TODO,TODO,float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
--,get_database_air_conditioning_systems,heating,dThs0_ahu_C,TODO,TODO,TODO,float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
--,get_database_air_conditioning_systems,heating,dThs0_aru_C,TODO,TODO,TODO,float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
--,get_database_air_conditioning_systems,heating,dThs0_shu_C,TODO,TODO,TODO,float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
--,get_database_air_conditioning_systems,heating,Qhsmax_Wm2,TODO,TODO,TODO,long,black,inputs/technology/systems/air_conditioning_systems.xls:heating
--,get_database_air_conditioning_systems,heating,Th_sup_air_ahu_C,TODO,TODO,TODO,float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
--,get_database_air_conditioning_systems,heating,Th_sup_air_aru_C,TODO,TODO,TODO,float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
--,get_database_air_conditioning_systems,heating,Tshs0_ahu_C,TODO,TODO,TODO,float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
--,get_database_air_conditioning_systems,heating,Tshs0_aru_C,TODO,TODO,TODO,float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
--,get_database_air_conditioning_systems,heating,Tshs0_shu_C,TODO,TODO,TODO,float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
--,get_database_air_conditioning_systems,ventilation,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/air_conditioning_systems.xls:ventilation
--,get_database_air_conditioning_systems,ventilation,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/air_conditioning_systems.xls:ventilation
--,get_database_air_conditioning_systems,ventilation,ECONOMIZER,TODO,TODO,TODO,bool,black,inputs/technology/systems/air_conditioning_systems.xls:ventilation
--,get_database_air_conditioning_systems,ventilation,HEAT_REC,TODO,TODO,TODO,bool,black,inputs/technology/systems/air_conditioning_systems.xls:ventilation
--,get_database_air_conditioning_systems,ventilation,MECH_VENT,TODO,TODO,TODO,bool,black,inputs/technology/systems/air_conditioning_systems.xls:ventilation
--,get_database_air_conditioning_systems,ventilation,NIGHT_FLSH,TODO,TODO,TODO,bool,black,inputs/technology/systems/air_conditioning_systems.xls:ventilation
--,get_database_air_conditioning_systems,ventilation,WIN_VENT,TODO,TODO,TODO,bool,black,inputs/technology/systems/air_conditioning_systems.xls:ventilation
+-,get_database_air_conditioning_systems,heating,code,Type of heating system,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/air_conditioning_systems.xls:heating
+-,get_database_air_conditioning_systems,heating,Description,Description Type of heating system,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
+-,get_database_air_conditioning_systems,heating,dThs_C,correction temperature of emission losses due to type of heating system,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
+-,get_database_air_conditioning_systems,heating,dThs0_ahu_C,Nominal temperature increase on the water side of the air-handling units,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
+-,get_database_air_conditioning_systems,heating,dThs0_aru_C,Nominal temperature increase on the water side of the air-recirculation units,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
+-,get_database_air_conditioning_systems,heating,dThs0_shu_C,Nominal temperature increase on the water side of the sensible heating units,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
+-,get_database_air_conditioning_systems,heating,Qhsmax_Wm2,Maximum heat flow permitted by heating system per m2 gross floor area ,[W/m2],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
+-,get_database_air_conditioning_systems,heating,Th_sup_air_ahu_C,Supply air temperature of the air-handling units,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
+-,get_database_air_conditioning_systems,heating,Th_sup_air_aru_C,Supply air temperature of the air-recirculation units,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
+-,get_database_air_conditioning_systems,heating,Tshs0_ahu_C,Nominal supply temperature of the water side of the air-handling units,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
+-,get_database_air_conditioning_systems,heating,Tshs0_aru_C,Nominal supply temperature of the water side of the air-recirculation units,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
+-,get_database_air_conditioning_systems,heating,Tshs0_shu_C,Nominal supply temperature of the water side of the sensible heating units,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
+-,get_database_air_conditioning_systems,ventilation,code,Type of ventilation,[-],[-],string,black,inputs/technology/systems/air_conditioning_systems.xls:ventilation
+-,get_database_air_conditioning_systems,ventilation,Description,Describes the Type of ventilation,[-],[-],string,black,inputs/technology/systems/air_conditioning_systems.xls:ventilation
+-,get_database_air_conditioning_systems,ventilation,ECONOMIZER,"Boolean, economizer on",[-],"{TRUE, FALSE}",bool,black,inputs/technology/systems/air_conditioning_systems.xls:ventilation
+-,get_database_air_conditioning_systems,ventilation,HEAT_REC,"Boolean, heat recovery on",[-],"{TRUE, FALSE}",bool,black,inputs/technology/systems/air_conditioning_systems.xls:ventilation
+-,get_database_air_conditioning_systems,ventilation,MECH_VENT,"Boolean, mechanical ventilation on",[-],"{TRUE, FALSE}",bool,black,inputs/technology/systems/air_conditioning_systems.xls:ventilation
+-,get_database_air_conditioning_systems,ventilation,NIGHT_FLSH,"Boolean, night flush on",[-],"{TRUE, FALSE}",bool,black,inputs/technology/systems/air_conditioning_systems.xls:ventilation
+-,get_database_air_conditioning_systems,ventilation,WIN_VENT,"Boolean, window ventilation on",[-],"{TRUE, FALSE}",bool,black,inputs/technology/systems/air_conditioning_systems.xls:ventilation
 -,get_database_envelope_systems,CONSTRUCTION,Cm_Af,Internal heat capacity per unit of air conditioned area. Defined according to ISO 13790.,[J/Km2],{0.0...1},float,black,inputs/technology/systems/envelope_systems.xls:CONSTRUCTION
--,get_database_envelope_systems,CONSTRUCTION,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/envelope_systems.xls:CONSTRUCTION
--,get_database_envelope_systems,CONSTRUCTION,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:CONSTRUCTION
--,get_database_envelope_systems,LEAKAGE,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/envelope_systems.xls:LEAKAGE
--,get_database_envelope_systems,LEAKAGE,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:LEAKAGE
+-,get_database_envelope_systems,CONSTRUCTION,code,Type of construction,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:CONSTRUCTION
+-,get_database_envelope_systems,CONSTRUCTION,Description,Describes the Type of construction,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:CONSTRUCTION
+-,get_database_envelope_systems,LEAKAGE,code,Type of Leakage,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:LEAKAGE
+-,get_database_envelope_systems,LEAKAGE,Description,Describes the Type of Leakage,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:LEAKAGE
 -,get_database_envelope_systems,LEAKAGE,n50,Air exchanges per hour at a pressure of 50 Pa.,[1/h],{0.0...10},float,black,inputs/technology/systems/envelope_systems.xls:LEAKAGE
 -,get_database_envelope_systems,ROOF,a_roof,Solar absorption coefficient. Defined according to ISO 13790.,[-],{0.0...1},float,black,inputs/technology/systems/envelope_systems.xls:ROOF
--,get_database_envelope_systems,ROOF,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/envelope_systems.xls:ROOF
--,get_database_envelope_systems,ROOF,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:ROOF
+-,get_database_envelope_systems,ROOF,code,Type of roof,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:ROOF
+-,get_database_envelope_systems,ROOF,Description,Describes the Type of roof,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:ROOF
 -,get_database_envelope_systems,ROOF,e_roof,Emissivity of external surface. Defined according to ISO 13790.,[-],{0.0...1},float,black,inputs/technology/systems/envelope_systems.xls:ROOF
 -,get_database_envelope_systems,ROOF,r_roof,Reflectance in the Red spectrum. Defined according Radiance. (long-wave),[-],{0.0...1},float,black,inputs/technology/systems/envelope_systems.xls:ROOF
 -,get_database_envelope_systems,ROOF,U_roof,Thermal transmittance of windows including linear losses (+10%). Defined according to ISO 13790.,[-],{0.1...n},float,black,inputs/technology/systems/envelope_systems.xls:ROOF
--,get_database_envelope_systems,SHADING,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/envelope_systems.xls:SHADING
+-,get_database_envelope_systems,SHADING,code,Type of shading,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:SHADING
 -,get_database_envelope_systems,SHADING,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:SHADING
 -,get_database_envelope_systems,SHADING,rf_sh,Shading coefficient when shading device is active. Defined according to ISO 13790.,[-],{0.0...1},float,black,inputs/technology/systems/envelope_systems.xls:SHADING
 -,get_database_envelope_systems,WALL,a_wall,Solar absorption coefficient. Defined according to ISO 13790.,[-],{0.0...1},float,black,inputs/technology/systems/envelope_systems.xls:WALL
--,get_database_envelope_systems,WALL,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/envelope_systems.xls:WALL
--,get_database_envelope_systems,WALL,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:WALL
+-,get_database_envelope_systems,WALL,code,Type of wall,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:WALL
+-,get_database_envelope_systems,WALL,Description,Describes the Type of wall,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:WALL
 -,get_database_envelope_systems,WALL,e_wall,Emissivity of external surface. Defined according to ISO 13790.,[-],{0.0...1},float,black,inputs/technology/systems/envelope_systems.xls:WALL
 -,get_database_envelope_systems,WALL,r_wall,Reflectance in the Red spectrum. Defined according Radiance. (long-wave),[-],{0.0...1},float,black,inputs/technology/systems/envelope_systems.xls:WALL
 -,get_database_envelope_systems,WALL,U_base,Thermal transmittance of basement including linear losses (+10%). Defined according to ISO 13790.,[-],{0.0...1},float,black,inputs/technology/systems/envelope_systems.xls:WALL
@@ -300,302 +293,347 @@ network-layout,get_network_layout_nodes_shapefile,,Type,TODO,TODO,TODO,TODO,blac
 -,get_database_envelope_systems,WINDOW,F_F,Window frame fraction coefficient. Defined according to ISO 13790.,[m2-frame/m2-window],{0.0...1},float,black,inputs/technology/systems/envelope_systems.xls:WINDOW
 -,get_database_envelope_systems,WINDOW,G_win,Solar heat gain coefficient. Defined according to ISO 13790.,[-],{0.0...1},float,black,inputs/technology/systems/envelope_systems.xls:WINDOW
 -,get_database_envelope_systems,WINDOW,U_win,Thermal transmittance of windows including linear losses (+10%). Defined according to ISO 13790.,[-],{0.1...n},float,black,inputs/technology/systems/envelope_systems.xls:WINDOW
--,get_database_supply_systems,Absorption_chiller,a,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,Absorption_chiller,a_e,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,Absorption_chiller,a_g,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,Absorption_chiller,assumption,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,Absorption_chiller,b,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,Absorption_chiller,c,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,Absorption_chiller,cap_max,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,Absorption_chiller,cap_min,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,Absorption_chiller,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,Absorption_chiller,currency,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,Absorption_chiller,d,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,Absorption_chiller,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,Absorption_chiller,e,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,Absorption_chiller,e_e,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,Absorption_chiller,e_g,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,Absorption_chiller,IR_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,Absorption_chiller,LT_yr,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,Absorption_chiller,m_cw,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,Absorption_chiller,m_hw,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,Absorption_chiller,O&M_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,Absorption_chiller,r_e,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,Absorption_chiller,r_g,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,Absorption_chiller,s_e,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,Absorption_chiller,s_g,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,Absorption_chiller,type,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,Absorption_chiller,unit,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:Absorption_chiller
--,get_database_supply_systems,ALL_IN_ONE_SYSTEMS,code,TODO,TODO,TODO,date,black,inputs/technology/systems/supply_systems.xls:ALL_IN_ONE_SYSTEMS
--,get_database_supply_systems,ALL_IN_ONE_SYSTEMS,Description,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:ALL_IN_ONE_SYSTEMS
--,get_database_supply_systems,ALL_IN_ONE_SYSTEMS,efficiency,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:ALL_IN_ONE_SYSTEMS
--,get_database_supply_systems,ALL_IN_ONE_SYSTEMS,feedstock,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:ALL_IN_ONE_SYSTEMS
--,get_database_supply_systems,ALL_IN_ONE_SYSTEMS,reference,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:ALL_IN_ONE_SYSTEMS
--,get_database_supply_systems,ALL_IN_ONE_SYSTEMS,scale,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:ALL_IN_ONE_SYSTEMS
--,get_database_supply_systems,ALL_IN_ONE_SYSTEMS,system,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:ALL_IN_ONE_SYSTEMS
--,get_database_supply_systems,BH,a,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:BH
--,get_database_supply_systems,BH,assumption,TODO,TODO,TODO,,black,inputs/technology/systems/supply_systems.xls:BH
--,get_database_supply_systems,BH,b,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:BH
--,get_database_supply_systems,BH,c,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:BH
--,get_database_supply_systems,BH,cap_max,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:BH
--,get_database_supply_systems,BH,cap_min,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:BH
--,get_database_supply_systems,BH,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/supply_systems.xls:BH
--,get_database_supply_systems,BH,currency,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:BH
--,get_database_supply_systems,BH,d,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:BH
--,get_database_supply_systems,BH,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:BH
--,get_database_supply_systems,BH,e,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:BH
--,get_database_supply_systems,BH,IR_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:BH
--,get_database_supply_systems,BH,LT_yr,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:BH
--,get_database_supply_systems,BH,O&M_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:BH
--,get_database_supply_systems,BH,unit,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:BH
--,get_database_supply_systems,Boiler,a,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Boiler
--,get_database_supply_systems,Boiler,assumption,TODO,TODO,TODO,,black,inputs/technology/systems/supply_systems.xls:Boiler
--,get_database_supply_systems,Boiler,b,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Boiler
--,get_database_supply_systems,Boiler,c,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Boiler
--,get_database_supply_systems,Boiler,cap_max,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Boiler
--,get_database_supply_systems,Boiler,cap_min,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Boiler
--,get_database_supply_systems,Boiler,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/supply_systems.xls:Boiler
--,get_database_supply_systems,Boiler,currency,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:Boiler
--,get_database_supply_systems,Boiler,d,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Boiler
--,get_database_supply_systems,Boiler,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:Boiler
--,get_database_supply_systems,Boiler,e,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Boiler
--,get_database_supply_systems,Boiler,IR_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Boiler
--,get_database_supply_systems,Boiler,LT_yr,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Boiler
--,get_database_supply_systems,Boiler,O&M_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Boiler
--,get_database_supply_systems,Boiler,unit,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:Boiler
--,get_database_supply_systems,CCGT,a,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CCGT
--,get_database_supply_systems,CCGT,assumption,TODO,TODO,TODO,,black,inputs/technology/systems/supply_systems.xls:CCGT
--,get_database_supply_systems,CCGT,b,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:CCGT
--,get_database_supply_systems,CCGT,c,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:CCGT
--,get_database_supply_systems,CCGT,cap_max,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CCGT
--,get_database_supply_systems,CCGT,cap_min,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CCGT
--,get_database_supply_systems,CCGT,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/supply_systems.xls:CCGT
--,get_database_supply_systems,CCGT,currency,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:CCGT
--,get_database_supply_systems,CCGT,d,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CCGT
--,get_database_supply_systems,CCGT,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:CCGT
--,get_database_supply_systems,CCGT,e,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CCGT
--,get_database_supply_systems,CCGT,IR_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CCGT
--,get_database_supply_systems,CCGT,LT_yr,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CCGT
--,get_database_supply_systems,CCGT,O&M_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CCGT
--,get_database_supply_systems,CCGT,unit,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:CCGT
--,get_database_supply_systems,Chiller,a,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Chiller
--,get_database_supply_systems,Chiller,assumption,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:Chiller
--,get_database_supply_systems,Chiller,b,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Chiller
--,get_database_supply_systems,Chiller,c,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Chiller
--,get_database_supply_systems,Chiller,cap_max,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Chiller
--,get_database_supply_systems,Chiller,cap_min,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Chiller
--,get_database_supply_systems,Chiller,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/supply_systems.xls:Chiller
--,get_database_supply_systems,Chiller,currency,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:Chiller
--,get_database_supply_systems,Chiller,d,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Chiller
--,get_database_supply_systems,Chiller,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:Chiller
--,get_database_supply_systems,Chiller,e,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Chiller
--,get_database_supply_systems,Chiller,IR_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Chiller
--,get_database_supply_systems,Chiller,LT_yr,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Chiller
--,get_database_supply_systems,Chiller,O&M_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Chiller
--,get_database_supply_systems,Chiller,unit,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:Chiller
--,get_database_supply_systems,CT,a,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:CT
--,get_database_supply_systems,CT,assumption,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:CT
--,get_database_supply_systems,CT,b,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:CT
--,get_database_supply_systems,CT,c,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CT
--,get_database_supply_systems,CT,cap_max,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CT
--,get_database_supply_systems,CT,cap_min,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CT
--,get_database_supply_systems,CT,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/supply_systems.xls:CT
--,get_database_supply_systems,CT,currency,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:CT
--,get_database_supply_systems,CT,d,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CT
--,get_database_supply_systems,CT,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:CT
--,get_database_supply_systems,CT,e,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CT
--,get_database_supply_systems,CT,IR_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CT
--,get_database_supply_systems,CT,LT_yr,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CT
--,get_database_supply_systems,CT,O&M_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:CT
--,get_database_supply_systems,CT,unit,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:CT
--,get_database_supply_systems,DETAILED_ELEC_PRICES,hour,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:DETAILED_ELEC_PRICES
--,get_database_supply_systems,DETAILED_ELEC_PRICES,Opex_var_buy_USD2015perkWh,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:DETAILED_ELEC_PRICES
--,get_database_supply_systems,DETAILED_ELEC_PRICES,Opex_var_sell_USD2015perkWh,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:DETAILED_ELEC_PRICES
--,get_database_supply_systems,DETAILED_ELEC_PRICES,year,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:DETAILED_ELEC_PRICES
--,get_database_supply_systems,FC, Assumptions,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:FC
--,get_database_supply_systems,FC,a,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:FC
--,get_database_supply_systems,FC,b,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:FC
--,get_database_supply_systems,FC,c,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:FC
--,get_database_supply_systems,FC,cap_max,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:FC
--,get_database_supply_systems,FC,cap_min,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:FC
--,get_database_supply_systems,FC,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/supply_systems.xls:FC
--,get_database_supply_systems,FC,currency,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:FC
--,get_database_supply_systems,FC,d,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:FC
--,get_database_supply_systems,FC,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:FC
--,get_database_supply_systems,FC,e,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:FC
--,get_database_supply_systems,FC,IR_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:FC
--,get_database_supply_systems,FC,LT_yr,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:FC
--,get_database_supply_systems,FC,O&M_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:FC
--,get_database_supply_systems,FC,unit,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:FC
--,get_database_supply_systems,FEEDSTOCKS,CO2,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:FEEDSTOCKS
--,get_database_supply_systems,FEEDSTOCKS,code,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:FEEDSTOCKS
--,get_database_supply_systems,FEEDSTOCKS,Opex_var_buy_USD2015perkWh,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:FEEDSTOCKS
--,get_database_supply_systems,FEEDSTOCKS,Opex_var_sell_USD2015perkWh,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:FEEDSTOCKS
--,get_database_supply_systems,FEEDSTOCKS,PEN,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:FEEDSTOCKS
--,get_database_supply_systems,FEEDSTOCKS,reference,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:FEEDSTOCKS
--,get_database_supply_systems,Furnace,a,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Furnace
--,get_database_supply_systems,Furnace,assumption,TODO,TODO,TODO,,black,inputs/technology/systems/supply_systems.xls:Furnace
--,get_database_supply_systems,Furnace,b,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Furnace
--,get_database_supply_systems,Furnace,c,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Furnace
--,get_database_supply_systems,Furnace,cap_max,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Furnace
--,get_database_supply_systems,Furnace,cap_min,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Furnace
--,get_database_supply_systems,Furnace,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/supply_systems.xls:Furnace
--,get_database_supply_systems,Furnace,currency,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:Furnace
--,get_database_supply_systems,Furnace,d,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Furnace
--,get_database_supply_systems,Furnace,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:Furnace
--,get_database_supply_systems,Furnace,e,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Furnace
--,get_database_supply_systems,Furnace,IR_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Furnace
--,get_database_supply_systems,Furnace,LT_yr,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Furnace
--,get_database_supply_systems,Furnace,O&M_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Furnace
--,get_database_supply_systems,Furnace,unit,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:Furnace
--,get_database_supply_systems,HEX,a,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_supply_systems,HEX,a_p,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_supply_systems,HEX,assumption,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_supply_systems,HEX,b,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_supply_systems,HEX,b_p,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_supply_systems,HEX,c,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_supply_systems,HEX,c_p,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_supply_systems,HEX,cap_max,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_supply_systems,HEX,cap_min,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_supply_systems,HEX,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_supply_systems,HEX,Currency,Defines the unit of currency used to create the cost estimations (year specific). E.g. USD-2015.,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_supply_systems,HEX,d,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_supply_systems,HEX,d_p,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_supply_systems,HEX,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_supply_systems,HEX,e,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_supply_systems,HEX,e_p,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_supply_systems,HEX,IR_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_supply_systems,HEX,LT_yr,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_supply_systems,HEX,O&M_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_supply_systems,HEX,unit,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:HEX
--,get_database_supply_systems,HP,a,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HP
--,get_database_supply_systems,HP,assumption,TODO,TODO,TODO,,black,inputs/technology/systems/supply_systems.xls:HP
--,get_database_supply_systems,HP,b,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:HP
--,get_database_supply_systems,HP,c,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:HP
--,get_database_supply_systems,HP,cap_max,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HP
--,get_database_supply_systems,HP,cap_min,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HP
--,get_database_supply_systems,HP,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/supply_systems.xls:HP
--,get_database_supply_systems,HP,currency,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:HP
--,get_database_supply_systems,HP,d,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HP
--,get_database_supply_systems,HP,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:HP
--,get_database_supply_systems,HP,e,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:HP
--,get_database_supply_systems,HP,IR_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HP
--,get_database_supply_systems,HP,LT_yr,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HP
--,get_database_supply_systems,HP,O&M_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:HP
--,get_database_supply_systems,HP,unit,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:HP
--,get_database_supply_systems,PIPING,Code,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:PIPING
--,get_database_supply_systems,PIPING,D_ext_m,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:PIPING
--,get_database_supply_systems,PIPING,D_ins_m,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:PIPING
--,get_database_supply_systems,PIPING,D_int_m,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:PIPING
--,get_database_supply_systems,PIPING,Inv_USD2015perm,Typical cost of investment for a given pipe diameter.,[$/m],{0.0....n},float,black,inputs/technology/systems/supply_systems.xls:PIPING
--,get_database_supply_systems,PIPING,Pipe_DN,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PIPING
--,get_database_supply_systems,PIPING,Vdot_max_m3s,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:PIPING
--,get_database_supply_systems,PIPING,Vdot_min_m3s,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:PIPING
--,get_database_supply_systems,Pump,a,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Pump
--,get_database_supply_systems,Pump,assumption,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:Pump
--,get_database_supply_systems,Pump,b,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Pump
--,get_database_supply_systems,Pump,c,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:Pump
--,get_database_supply_systems,Pump,cap_max,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Pump
--,get_database_supply_systems,Pump,cap_min,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Pump
--,get_database_supply_systems,Pump,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/supply_systems.xls:Pump
--,get_database_supply_systems,Pump,currency,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:Pump
--,get_database_supply_systems,Pump,d,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Pump
--,get_database_supply_systems,Pump,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:Pump
--,get_database_supply_systems,Pump,e,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Pump
--,get_database_supply_systems,Pump,IR_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Pump
--,get_database_supply_systems,Pump,LT_yr,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Pump
--,get_database_supply_systems,Pump,O&M_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:Pump
--,get_database_supply_systems,Pump,unit,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:Pump
--,get_database_supply_systems,PV,a,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PV,assumption,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PV,b,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PV,c,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PV,cap_max,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PV,cap_min,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PV,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PV,currency,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PV,d,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PV,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PV,e,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PV,IR_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PV,LT_yr,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PV,misc_losses,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PV,module_length_m,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PV,O&M_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PV,PV_a0,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PV,PV_a1,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PV,PV_a2,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PV,PV_a3,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PV,PV_a4,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PV,PV_Bref,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PV,PV_n,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PV,PV_noct,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PV,PV_th,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PV,type,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PV,unit,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:PV
--,get_database_supply_systems,PVT,a,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PVT
--,get_database_supply_systems,PVT,assumption,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:PVT
--,get_database_supply_systems,PVT,b,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:PVT
--,get_database_supply_systems,PVT,c,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PVT
--,get_database_supply_systems,PVT,cap_max,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PVT
--,get_database_supply_systems,PVT,cap_min,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PVT
--,get_database_supply_systems,PVT,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/supply_systems.xls:PVT
--,get_database_supply_systems,PVT,currency,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:PVT
--,get_database_supply_systems,PVT,d,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PVT
--,get_database_supply_systems,PVT,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:PVT
--,get_database_supply_systems,PVT,e,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PVT
--,get_database_supply_systems,PVT,IR_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PVT
--,get_database_supply_systems,PVT,LT_yr,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PVT
--,get_database_supply_systems,PVT,O&M_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:PVT
--,get_database_supply_systems,PVT,unit,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:PVT
--,get_database_supply_systems,SC,a,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,aperture_area_ratio,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,assumption,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,b,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,c,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,C_eff,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,c1,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,c2,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,cap_max,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,cap_min,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,Cp_fluid,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,currency,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,d,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,dP1,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,dP2,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,dP3,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,dP4,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,e,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,IAM_d,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,IR_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,LT_yr,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,mB_max_r,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,mB_min_r,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,mB0_r,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,module_area_m2,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,module_length_m,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,n0,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,O&M_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,t_max,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,type,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,SC,unit,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:SC
--,get_database_supply_systems,TES,a,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:TES
--,get_database_supply_systems,TES,assumption,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:TES
--,get_database_supply_systems,TES,b,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:TES
--,get_database_supply_systems,TES,c,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:TES
--,get_database_supply_systems,TES,cap_max,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:TES
--,get_database_supply_systems,TES,cap_min,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:TES
--,get_database_supply_systems,TES,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/supply_systems.xls:TES
--,get_database_supply_systems,TES,currency,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:TES
--,get_database_supply_systems,TES,d,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:TES
--,get_database_supply_systems,TES,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/supply_systems.xls:TES
--,get_database_supply_systems,TES,e,TODO,TODO,TODO,float,black,inputs/technology/systems/supply_systems.xls:TES
--,get_database_supply_systems,TES,IR_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:TES
--,get_database_supply_systems,TES,LT_yr,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:TES
--,get_database_supply_systems,TES,O&M_%,TODO,TODO,TODO,long,black,inputs/technology/systems/supply_systems.xls:TES
--,get_database_supply_systems,TES,unit ,TODO,TODO,TODO,string,black,inputs/technology/systems/supply_systems.xls:TES
+-,get_database_conversion_systems,Absorption_chiller,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
+-,get_database_conversion_systems,Absorption_chiller,a_e,parameter in the characteristic equations to calculate the evaporator side ,[-],depends on the source,float,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
+-,get_database_conversion_systems,Absorption_chiller,a_g,parameter in the characteristic equations to calculate the generator side,[-],depends on the source,float,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
+-,get_database_conversion_systems,Absorption_chiller,assumption,items made by assumptions in this technology,[-],depends on the data availability,string,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
+-,get_database_conversion_systems,Absorption_chiller,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
+-,get_database_conversion_systems,Absorption_chiller,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
+-,get_database_conversion_systems,Absorption_chiller,cap_max,maximum capacity ,[W],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
+-,get_database_conversion_systems,Absorption_chiller,cap_min,minimum capacity,[W],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
+-,get_database_conversion_systems,Absorption_chiller,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
+-,get_database_conversion_systems,Absorption_chiller,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
+-,get_database_conversion_systems,Absorption_chiller,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
+-,get_database_conversion_systems,Absorption_chiller,Description,Describes the Type of Absorption Chiller,[-],[-],string,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
+-,get_database_conversion_systems,Absorption_chiller,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
+-,get_database_conversion_systems,Absorption_chiller,e_e,parameter in the characteristic equations to calculate the evaporator side ,TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
+-,get_database_conversion_systems,Absorption_chiller,e_g,parameter in the characteristic equations to calculate the generator side,TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
+-,get_database_conversion_systems,Absorption_chiller,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
+-,get_database_conversion_systems,Absorption_chiller,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
+-,get_database_conversion_systems,Absorption_chiller,m_cw,external flow rate of cooling water at the condenser and absorber,TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
+-,get_database_conversion_systems,Absorption_chiller,m_hw,external flow rate of hot water at the generator,TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
+-,get_database_conversion_systems,Absorption_chiller,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
+-,get_database_conversion_systems,Absorption_chiller,r_e,parameter in the characteristic equations to calculate the evaporator side ,[-],depends on the source,float,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
+-,get_database_conversion_systems,Absorption_chiller,r_g,parameter in the characteristic equations to calculate the generator side,[-],depends on the source,float,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
+-,get_database_conversion_systems,Absorption_chiller,s_e,parameter in the characteristic equations to calculate the evaporator side ,[kW/K],depends on the source,float,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
+-,get_database_conversion_systems,Absorption_chiller,s_g,parameter in the characteristic equations to calculate the generator side,[-],depends on the source,float,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
+-,get_database_conversion_systems,Absorption_chiller,type,"type of absorption chiller (single, double, or triple)",[-],depends on the source,string,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
+-,get_database_conversion_systems,Absorption_chiller,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
+-,get_database_assemblies,SUPPLY,code,Type of all in one system,[-],alphanumeric,date,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
+-,get_database_assemblies,SUPPLY,Description,Description of Type of all in one system,[-],alphanumeric,string,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
+-,get_database_assemblies,SUPPLY,efficiency,efficiency of the all in one system,[-],{0.0...n},float,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
+-,get_database_assemblies,SUPPLY,feedstock,feedstock used by the the all in one system,[-],alphanumeric,string,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
+-,get_database_assemblies,SUPPLY,reference,Reference of the data,[-],alphanumeric,string,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
+-,get_database_assemblies,SUPPLY,scale,"whether the all in one system is used at the building, or the district scale",[-],alphanumeric,string,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
+-,get_database_assemblies,SUPPLY,system,"whether the all in one system is used for heating, cooling or electricity",[-],alphanumeric,string,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
+-,get_database_assemblies,SUPPLY,CAPEX_USD2015kW,Capital costs per kW,[USD2015/kW],{0.0...n},float,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
+-,get_database_conversion_systems,BH,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:BH
+-,get_database_conversion_systems,BH,assumption,items made by assumptions in this technology,[-],depends on the data availability,,black,inputs/technology/systems/conversion_systems.xls:BH
+-,get_database_conversion_systems,BH,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:BH
+-,get_database_conversion_systems,BH,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:BH
+-,get_database_conversion_systems,BH,cap_max,maximum capacity ,[W],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:BH
+-,get_database_conversion_systems,BH,cap_min,minimum capacity,[W],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:BH
+-,get_database_conversion_systems,BH,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/conversion_systems.xls:BH
+-,get_database_conversion_systems,BH,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/conversion_systems.xls:BH
+-,get_database_conversion_systems,BH,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:BH
+-,get_database_conversion_systems,BH,Description,Describes the type of borehole heat exchanger,[-],[-],string,black,inputs/technology/systems/conversion_systems.xls:BH
+-,get_database_conversion_systems,BH,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:BH
+-,get_database_conversion_systems,BH,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:BH
+-,get_database_conversion_systems,BH,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:BH
+-,get_database_conversion_systems,BH,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:BH
+-,get_database_conversion_systems,BH,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/conversion_systems.xls:BH
+-,get_database_conversion_systems,Boiler,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:Boiler
+-,get_database_conversion_systems,Boiler,assumption,items made by assumptions in this technology,[-],depends on the data availability,,black,inputs/technology/systems/conversion_systems.xls:Boiler
+-,get_database_conversion_systems,Boiler,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:Boiler
+-,get_database_conversion_systems,Boiler,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:Boiler
+-,get_database_conversion_systems,Boiler,cap_max,maximum capacity ,[W],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:Boiler
+-,get_database_conversion_systems,Boiler,cap_min,minimum capacity,[W],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:Boiler
+-,get_database_conversion_systems,Boiler,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/conversion_systems.xls:Boiler
+-,get_database_conversion_systems,Boiler,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/conversion_systems.xls:Boiler
+-,get_database_conversion_systems,Boiler,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:Boiler
+-,get_database_conversion_systems,Boiler,Description,Describes the type of boiler,[-],[-],string,black,inputs/technology/systems/conversion_systems.xls:Boiler
+-,get_database_conversion_systems,Boiler,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:Boiler
+-,get_database_conversion_systems,Boiler,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:Boiler
+-,get_database_conversion_systems,Boiler,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:Boiler
+-,get_database_conversion_systems,Boiler,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:Boiler
+-,get_database_conversion_systems,Boiler,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/conversion_systems.xls:Boiler
+-,get_database_conversion_systems,CCGT,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:CCGT
+-,get_database_conversion_systems,CCGT,assumption,items made by assumptions in this technology,[-],depends on the data availability,,black,inputs/technology/systems/conversion_systems.xls:CCGT
+-,get_database_conversion_systems,CCGT,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:CCGT
+-,get_database_conversion_systems,CCGT,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:CCGT
+-,get_database_conversion_systems,CCGT,cap_max,maximum capacity ,[W],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:CCGT
+-,get_database_conversion_systems,CCGT,cap_min,minimum capacity,[W],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:CCGT
+-,get_database_conversion_systems,CCGT,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/conversion_systems.xls:CCGT
+-,get_database_conversion_systems,CCGT,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/conversion_systems.xls:CCGT
+-,get_database_conversion_systems,CCGT,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:CCGT
+-,get_database_conversion_systems,CCGT,Description,Describes the type of combined-cycle gas turbine,[-],[-],string,black,inputs/technology/systems/conversion_systems.xls:CCGT
+-,get_database_conversion_systems,CCGT,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:CCGT
+-,get_database_conversion_systems,CCGT,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:CCGT
+-,get_database_conversion_systems,CCGT,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:CCGT
+-,get_database_conversion_systems,CCGT,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:CCGT
+-,get_database_conversion_systems,CCGT,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/conversion_systems.xls:CCGT
+-,get_database_conversion_systems,Chiller,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:Chiller
+-,get_database_conversion_systems,Chiller,assumption,items made by assumptions in this technology,[-],depends on the data availability,string,black,inputs/technology/systems/conversion_systems.xls:Chiller
+-,get_database_conversion_systems,Chiller,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:Chiller
+-,get_database_conversion_systems,Chiller,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:Chiller
+-,get_database_conversion_systems,Chiller,cap_max,maximum capacity ,[W],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:Chiller
+-,get_database_conversion_systems,Chiller,cap_min,minimum capacity,[W],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:Chiller
+-,get_database_conversion_systems,Chiller,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/conversion_systems.xls:Chiller
+-,get_database_conversion_systems,Chiller,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/conversion_systems.xls:Chiller
+-,get_database_conversion_systems,Chiller,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:Chiller
+-,get_database_conversion_systems,Chiller,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/conversion_systems.xls:Chiller
+-,get_database_conversion_systems,Chiller,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:Chiller
+-,get_database_conversion_systems,Chiller,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:Chiller
+-,get_database_conversion_systems,Chiller,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:Chiller
+-,get_database_conversion_systems,Chiller,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:Chiller
+-,get_database_conversion_systems,Chiller,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/conversion_systems.xls:Chiller
+-,get_database_conversion_systems,CT,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:CT
+-,get_database_conversion_systems,CT,assumption,items made by assumptions in this technology,[-],depends on the data availability,string,black,inputs/technology/systems/conversion_systems.xls:CT
+-,get_database_conversion_systems,CT,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:CT
+-,get_database_conversion_systems,CT,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:CT
+-,get_database_conversion_systems,CT,cap_max,maximum capacity ,[W],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:CT
+-,get_database_conversion_systems,CT,cap_min,minimum capacity,[W],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:CT
+-,get_database_conversion_systems,CT,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/conversion_systems.xls:CT
+-,get_database_conversion_systems,CT,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/conversion_systems.xls:CT
+-,get_database_conversion_systems,CT,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:CT
+-,get_database_conversion_systems,CT,Description,Describes the type of cooling tower,[-],[-],string,black,inputs/technology/systems/conversion_systems.xls:CT
+-,get_database_conversion_systems,CT,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:CT
+-,get_database_conversion_systems,CT,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:CT
+-,get_database_conversion_systems,CT,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:CT
+-,get_database_conversion_systems,CT,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:CT
+-,get_database_conversion_systems,CT,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/conversion_systems.xls:CT
+-,get_database_conversion_systems,DETAILED_ELEC_PRICES,hour,TODO,TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:DETAILED_ELEC_PRICES
+-,get_database_conversion_systems,DETAILED_ELEC_PRICES,Opex_var_buy_USD2015perkWh,TODO,TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:DETAILED_ELEC_PRICES
+-,get_database_conversion_systems,DETAILED_ELEC_PRICES,Opex_var_sell_USD2015perkWh,TODO,TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:DETAILED_ELEC_PRICES
+-,get_database_conversion_systems,DETAILED_ELEC_PRICES,year,TODO,TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:DETAILED_ELEC_PRICES
+-,get_database_conversion_systems,FC, Assumptions,items made by assumptions in this technology,[-],depends on the data availability,string,black,inputs/technology/systems/conversion_systems.xls:FC
+-,get_database_conversion_systems,FC,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:FC
+-,get_database_conversion_systems,FC,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:FC
+-,get_database_conversion_systems,FC,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:FC
+-,get_database_conversion_systems,FC,cap_max,maximum capacity ,[W],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:FC
+-,get_database_conversion_systems,FC,cap_min,minimum capacity,[W],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:FC
+-,get_database_conversion_systems,FC,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/conversion_systems.xls:FC
+-,get_database_conversion_systems,FC,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/conversion_systems.xls:FC
+-,get_database_conversion_systems,FC,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:FC
+-,get_database_conversion_systems,FC,Description,Describes the type of fuel cell,[-],[-],string,black,inputs/technology/systems/conversion_systems.xls:FC
+-,get_database_conversion_systems,FC,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:FC
+-,get_database_conversion_systems,FC,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:FC
+-,get_database_conversion_systems,FC,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:FC
+-,get_database_conversion_systems,FC,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:FC
+-,get_database_conversion_systems,FC,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/conversion_systems.xls:FC
+-,get_database_conversion_systems,FEEDSTOCKS,CO2,TODO,TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:FEEDSTOCKS
+-,get_database_conversion_systems,FEEDSTOCKS,code,TODO,TODO,TODO,string,black,inputs/technology/systems/conversion_systems.xls:FEEDSTOCKS
+-,get_database_conversion_systems,FEEDSTOCKS,Opex_var_buy_USD2015perkWh,TODO,TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:FEEDSTOCKS
+-,get_database_conversion_systems,FEEDSTOCKS,Opex_var_sell_USD2015perkWh,TODO,TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:FEEDSTOCKS
+-,get_database_conversion_systems,FEEDSTOCKS,reference,TODO,TODO,TODO,string,black,inputs/technology/systems/conversion_systems.xls:FEEDSTOCKS
+-,get_database_conversion_systems,Furnace,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:Furnace
+-,get_database_conversion_systems,Furnace,assumption,items made by assumptions in this technology,[-],depends on the data availability,,black,inputs/technology/systems/conversion_systems.xls:Furnace
+-,get_database_conversion_systems,Furnace,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:Furnace
+-,get_database_conversion_systems,Furnace,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:Furnace
+-,get_database_conversion_systems,Furnace,cap_max,maximum capacity ,[W],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:Furnace
+-,get_database_conversion_systems,Furnace,cap_min,minimum capacity,[W],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:Furnace
+-,get_database_conversion_systems,Furnace,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/conversion_systems.xls:Furnace
+-,get_database_conversion_systems,Furnace,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/conversion_systems.xls:Furnace
+-,get_database_conversion_systems,Furnace,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:Furnace
+-,get_database_conversion_systems,Furnace,Description,Describes the type of furnace,[-],[-],string,black,inputs/technology/systems/conversion_systems.xls:Furnace
+-,get_database_conversion_systems,Furnace,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:Furnace
+-,get_database_conversion_systems,Furnace,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:Furnace
+-,get_database_conversion_systems,Furnace,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:Furnace
+-,get_database_conversion_systems,Furnace,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:Furnace
+-,get_database_conversion_systems,Furnace,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/conversion_systems.xls:Furnace
+-,get_database_conversion_systems,HEX,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:HEX
+-,get_database_conversion_systems,HEX,a_p,"pressure loss function, f(x) = a_p + b_p*x^c_p + d_p*ln(x) + e_p*x*ln*(x), where x is the capacity mass flow rate [W/K]   ",[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:HEX
+-,get_database_conversion_systems,HEX,assumption,items made by assumptions in this technology,[-],depends on the data availability,string,black,inputs/technology/systems/conversion_systems.xls:HEX
+-,get_database_conversion_systems,HEX,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:HEX
+-,get_database_conversion_systems,HEX,b_p,"pressure loss function, f(x) = a_p + b_p*x^c_p + d_p*ln(x) + e_p*x*ln*(x), where x is the capacity mass flow rate [W/K]   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:HEX
+-,get_database_conversion_systems,HEX,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:HEX
+-,get_database_conversion_systems,HEX,c_p,"pressure loss function, f(x) = a_p + b_p*x^c_p + d_p*ln(x) + e_p*x*ln*(x), where x is the capacity mass flow rate [W/K]   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:HEX
+-,get_database_conversion_systems,HEX,cap_max,maximum capacity ,[W] or [m2],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:HEX
+-,get_database_conversion_systems,HEX,cap_min,minimum capacity,[W] or [m2],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:HEX
+-,get_database_conversion_systems,HEX,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/conversion_systems.xls:HEX
+-,get_database_conversion_systems,HEX,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/conversion_systems.xls:HEX
+-,get_database_conversion_systems,HEX,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:HEX
+-,get_database_conversion_systems,HEX,d_p,"pressure loss function, f(x) = a_p + b_p*x^c_p + d_p*ln(x) + e_p*x*ln*(x), where x is the capacity mass flow rate [W/K]   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:HEX
+-,get_database_conversion_systems,HEX,Description,Describes the type of heat exchanger,[-],[-],string,black,inputs/technology/systems/conversion_systems.xls:HEX
+-,get_database_conversion_systems,HEX,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:HEX
+-,get_database_conversion_systems,HEX,e_p,"pressure loss function, f(x) = a_p + b_p*x^c_p + d_p*ln(x) + e_p*x*ln*(x), where x is the capacity mass flow rate [W/K]   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:HEX
+-,get_database_conversion_systems,HEX,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:HEX
+-,get_database_conversion_systems,HEX,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:HEX
+-,get_database_conversion_systems,HEX,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:HEX
+-,get_database_conversion_systems,HEX,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/conversion_systems.xls:HEX
+-,get_database_conversion_systems,HP,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:HP
+-,get_database_conversion_systems,HP,assumption,items made by assumptions in this technology,[-],depends on the data availability,,black,inputs/technology/systems/conversion_systems.xls:HP
+-,get_database_conversion_systems,HP,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:HP
+-,get_database_conversion_systems,HP,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:HP
+-,get_database_conversion_systems,HP,cap_max,maximum capacity ,[W],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:HP
+-,get_database_conversion_systems,HP,cap_min,minimum capacity,[W],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:HP
+-,get_database_conversion_systems,HP,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/conversion_systems.xls:HP
+-,get_database_conversion_systems,HP,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/conversion_systems.xls:HP
+-,get_database_conversion_systems,HP,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:HP
+-,get_database_conversion_systems,HP,Description,Describes the source of the heat pump,[-],[-],string,black,inputs/technology/systems/conversion_systems.xls:HP
+-,get_database_conversion_systems,HP,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:HP
+-,get_database_conversion_systems,HP,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:HP
+-,get_database_conversion_systems,HP,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:HP
+-,get_database_conversion_systems,HP,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:HP
+-,get_database_conversion_systems,HP,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/distribution_systems.xls:HP
+-,get_database_distribution_systems,THERMAL_GRID,Code,no such column?,TODO,TODO,string,black,inputs/technology/systems/distribution_systems.xls:THERMAL_GRID
+-,get_database_distribution_systems,THERMAL_GRID,D_ext_m,external pipe diameter tolerance for the nominal diameter (DN),[m],depends on the source,float,black,inputs/technology/systems/distribution_systems.xls:THERMAL_GRID
+-,get_database_distribution_systems,THERMAL_GRID,D_ins_m,maximum pipe diameter tolerance for the nominal diameter (DN),[m],depends on the source,float,black,inputs/technology/systems/distribution_systems.xls:THERMAL_GRID
+-,get_database_distribution_systems,THERMAL_GRID,D_int_m,internal pipe diameter tolerance for the nominal diameter (DN),[m],depends on the source,float,black,inputs/technology/systems/distribution_systems.xls:THERMAL_GRID
+-,get_database_distribution_systems,THERMAL_GRID,Inv_USD2015perm,Typical cost of investment for a given pipe diameter.,[$/m],{0.0....n},float,black,inputs/technology/systems/distribution_systems.xls:THERMAL_GRID
+-,get_database_distribution_systems,THERMAL_GRID,Pipe_DN,Nominal pipe diameter,[-],depends on the source,long,black,inputs/technology/systems/distribution_systems.xls:THERMAL_GRID
+-,get_database_distribution_systems,THERMAL_GRID,Vdot_max_m3s,maximum volumetric flow rate for the nominal diameter (DN),[m3/s],depends on the source,float,black,inputs/technology/systems/distribution_systems.xls:THERMAL_GRID
+-,get_database_distribution_systems,THERMAL_GRID,Vdot_min_m3s,minimum volumetric flow rate for the nominal diameter (DN),[m3/s],depends on the source,float,black,inputs/technology/systems/distribution_systems.xls:THERMAL_GRID
+-,get_database_conversion_systems,Pump,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:Pump
+-,get_database_conversion_systems,Pump,assumption,items made by assumptions in this technology,[-],depends on the data availability,string,black,inputs/technology/systems/conversion_systems.xls:Pump
+-,get_database_conversion_systems,Pump,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:Pump
+-,get_database_conversion_systems,Pump,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:Pump
+-,get_database_conversion_systems,Pump,cap_max,maximum capacity ,[W],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:Pump
+-,get_database_conversion_systems,Pump,cap_min,minimum capacity,[W],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:Pump
+-,get_database_conversion_systems,Pump,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/conversion_systems.xls:Pump
+-,get_database_conversion_systems,Pump,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/conversion_systems.xls:Pump
+-,get_database_conversion_systems,Pump,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:Pump
+-,get_database_conversion_systems,Pump,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/conversion_systems.xls:Pump
+-,get_database_conversion_systems,Pump,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:Pump
+-,get_database_conversion_systems,Pump,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:Pump
+-,get_database_conversion_systems,Pump,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:Pump
+-,get_database_conversion_systems,Pump,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:Pump
+-,get_database_conversion_systems,Pump,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/conversion_systems.xls:Pump
+-,get_database_conversion_systems,PV,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:PV
+-,get_database_conversion_systems,PV,assumption,items made by assumptions in this technology,[-],depends on the data availability,string,black,inputs/technology/systems/conversion_systems.xls:PV
+-,get_database_conversion_systems,PV,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:PV
+-,get_database_conversion_systems,PV,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:PV
+-,get_database_conversion_systems,PV,cap_max,maximum capacity ,[W],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:PV
+-,get_database_conversion_systems,PV,cap_min,minimum capacity,[W],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:PV
+-,get_database_conversion_systems,PV,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/conversion_systems.xls:PV
+-,get_database_conversion_systems,PV,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/conversion_systems.xls:PV
+-,get_database_conversion_systems,PV,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:PV
+-,get_database_conversion_systems,PV,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/conversion_systems.xls:PV
+-,get_database_conversion_systems,PV,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:PV
+-,get_database_conversion_systems,PV,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:PV
+-,get_database_conversion_systems,PV,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:PV
+-,get_database_conversion_systems,PV,misc_losses,"losses from cabling, resistances etc...",[-],depends on the source,float,black,inputs/technology/systems/conversion_systems.xls:PV
+-,get_database_conversion_systems,PV,module_length_m,lengh of the PV module,[m],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:PV
+-,get_database_conversion_systems,PV,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:PV
+-,get_database_conversion_systems,PV,PV_a0,"parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  + a3*x**3 + a4*x**4, x is the relative air mass",[-],TODO,float,black,inputs/technology/systems/conversion_systems.xls:PV
+-,get_database_conversion_systems,PV,PV_a1,"parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  + a3*x**3 + a4*x**4, x is the relative air mass",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:PV
+-,get_database_conversion_systems,PV,PV_a2,"parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  + a3*x**3 + a4*x**4, x is the relative air mass",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:PV
+-,get_database_conversion_systems,PV,PV_a3,"parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  + a3*x**3 + a4*x**4, x is the relative air mass",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:PV
+-,get_database_conversion_systems,PV,PV_a4,"parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  + a3*x**3 + a4*x**4, x is the relative air mass",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:PV
+-,get_database_conversion_systems,PV,PV_Bref,cell maximum power temperature coefficient,[1/C],depends on the source,float,black,inputs/technology/systems/conversion_systems.xls:PV
+-,get_database_conversion_systems,PV,PV_n,nominal efficiency,[-],depends on the source,float,black,inputs/technology/systems/conversion_systems.xls:PV
+-,get_database_conversion_systems,PV,PV_noct,nominal operating cell temperature,[C],depends on the source,float,black,inputs/technology/systems/conversion_systems.xls:PV
+-,get_database_conversion_systems,PV,PV_th,glazing thickness,[m],depends on the source,float,black,inputs/technology/systems/conversion_systems.xls:PV
+-,get_database_conversion_systems,PV,type,redundant,TODO,TODO,string,black,inputs/technology/systems/conversion_systems.xls:PV
+-,get_database_conversion_systems,PV,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/conversion_systems.xls:PV
+-,get_database_conversion_systems,PVT,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:PVT
+-,get_database_conversion_systems,PVT,assumption,items made by assumptions in this technology,[-],depends on the data availability,string,black,inputs/technology/systems/conversion_systems.xls:PVT
+-,get_database_conversion_systems,PVT,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:PVT
+-,get_database_conversion_systems,PVT,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:PVT
+-,get_database_conversion_systems,PVT,cap_max,maximum capacity ,[W],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:PVT
+-,get_database_conversion_systems,PVT,cap_min,minimum capacity,[W],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:PVT
+-,get_database_conversion_systems,PVT,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/conversion_systems.xls:PVT
+-,get_database_conversion_systems,PVT,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/conversion_systems.xls:PVT
+-,get_database_conversion_systems,PVT,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:PVT
+-,get_database_conversion_systems,PVT,Description,Describes the type of photovoltaic thermal technology,[-],[-],string,black,inputs/technology/systems/conversion_systems.xls:PVT
+-,get_database_conversion_systems,PVT,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:PVT
+-,get_database_conversion_systems,PVT,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:PVT
+-,get_database_conversion_systems,PVT,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:PVT
+-,get_database_conversion_systems,PVT,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:PVT
+-,get_database_conversion_systems,PVT,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/conversion_systems.xls:PVT
+-,get_database_conversion_systems,SC,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,aperture_area_ratio,ratio of aperture area to panel area,[-],depends on the source,float,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,assumption,items made by assumptions in this technology,[-],depends on the data availability,string,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,C_eff,thermal capacity of module ,[J/M2k],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,c1,collector heat loss coefficient at zero temperature difference and wind speed,[W/M2k],depends on the source,float,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,c2,ctemperature difference dependency of the heat loss coefficient,[W/m2K2],depends on the source,float,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,cap_max,maximum capacity ,[m2],TODO,long,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,cap_min,minimum capacity,[m2],TODO,long,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,Cp_fluid,heat capacity of the heat transfer fluid,[J/kgK],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,Description,Describes the type of solar collector,[-],[-],string,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,dP1,pressure drop at zero flow rate,[Pa/m2],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,dP2,pressure drop at nominal flow rate (mB0),[Pa/m2],depends on the source,float,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,dP3,pressure drop at maximum flow rate (mB_max),[Pa/m2],depends on the source,float,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,dP4,pressure drop at minimum flow rate (mB_min),[Pa/m2],depends on the source,float,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,IAM_d,incident angle modifier for diffuse radiation,[-],depends on the source,float,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,mB_max_r,maximum flow rate per aperture area,[kg/m2/hr],depends on the source,float,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,mB_min_r,minimum flow rate per aperture area,[kg/m2/hr],depends on the source,float,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,mB0_r,nominal flow rate per aperture area,[kg/m2/hr],depends on the source,float,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,module_area_m2,module area of a solar collector,[m2],depends on the source,float,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,module_length_m,lengh of a solar collector module,[m],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,n0,zero loss efficiency at normal incidence,[-],depends on the source,float,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,t_max,maximum operating temperature,[C],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,type,type of the solar collector (FP: flate-plate or ET: evacuated-tube),TODO,TODO,string,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,SC,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/conversion_systems.xls:SC
+-,get_database_conversion_systems,TES,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:TES
+-,get_database_conversion_systems,TES,assumption,TODO,TODO,TODO,string,black,inputs/technology/systems/conversion_systems.xls:TES
+-,get_database_conversion_systems,TES,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:TES
+-,get_database_conversion_systems,TES,c,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:TES
+-,get_database_conversion_systems,TES,cap_max,maximum capacity ,[m3],TODO,long,black,inputs/technology/systems/conversion_systems.xls:TES
+-,get_database_conversion_systems,TES,cap_min,minimum capacity,[m3],TODO,long,black,inputs/technology/systems/conversion_systems.xls:TES
+-,get_database_conversion_systems,TES,code,identifier of each unique equipment,[-],an unique code for each equipment in this worksheet,string,black,inputs/technology/systems/conversion_systems.xls:TES
+-,get_database_conversion_systems,TES,currency,currency-year information of the investment cost function,[currency-year],"should be unified to the same currency-year, e.g., USD-2015",string,black,inputs/technology/systems/conversion_systems.xls:TES
+-,get_database_conversion_systems,TES,d,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:TES
+-,get_database_conversion_systems,TES,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/conversion_systems.xls:TES
+-,get_database_conversion_systems,TES,e,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:TES
+-,get_database_conversion_systems,TES,IR_%,interest rate charged on the loan for the capital cost,[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:TES
+-,get_database_conversion_systems,TES,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:TES
+-,get_database_conversion_systems,TES,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:TES
+-,get_database_conversion_systems,TES,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/conversion_systems.xls:TES
+-,get_database_feedstocks,NATURALGAS,hour,hour of a 24 hour day,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:NATURALGAS
+-,get_database_feedstocks,NATURALGAS,CO2,Green House Gas Emisisons factor,[kg CO2-eq/MJ],{0.0...n},string,black,inputs/technology/feedstocks/feedstocks.xls:NATURALGAS
+-,get_database_feedstocks,NATURALGAS,Opex_var_buy_USD2015perkWh,buying price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:NATURALGAS
+-,get_database_feedstocks,NATURALGAS,Opex_var_sell_USD2015perkWh,selling price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:NATURALGAS
+-,get_database_feedstocks,NATURALGAS,reference,reference,[-],[-],string,black,inputs/technology/feedstocks/feedstocks.xls:NATURALGAS
+-,get_database_feedstocks,BIOGAS,hour,hour of a 24 hour day,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:BIOGAS
+-,get_database_feedstocks,BIOGAS,CO2,Green House Gas Emisisons factor,[kg CO2-eq/MJ],{0.0...n},string,black,inputs/technology/feedstocks/feedstocks.xls:BIOGAS
+-,get_database_feedstocks,BIOGAS,Opex_var_buy_USD2015perkWh,buying price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:BIOGAS
+-,get_database_feedstocks,BIOGAS,Opex_var_sell_USD2015perkWh,selling price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:BIOGAS
+-,get_database_feedstocks,BIOGAS,reference,reference,[-],[-],string,black,inputs/technology/feedstocks/feedstocks.xls:BIOGAS
+-,get_database_feedstocks,GRID,hour,hour of a 24 hour day,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:GRID
+-,get_database_feedstocks,GRID,CO2,Green House Gas Emisisons factor,[kg CO2-eq/MJ],{0.0...n},string,black,inputs/technology/feedstocks/feedstocks.xls:GRID
+-,get_database_feedstocks,GRID,Opex_var_buy_USD2015perkWh,buying price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:GRID
+-,get_database_feedstocks,GRID,Opex_var_sell_USD2015perkWh,selling price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:GRID
+-,get_database_feedstocks,GRID,reference,reference,[-],[-],string,black,inputs/technology/feedstocks/feedstocks.xls:GRID
+-,get_database_feedstocks,SOLAR,hour,hour of a 24 hour day,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:SOLAR
+-,get_database_feedstocks,SOLAR,CO2,Green House Gas Emisisons factor,[kg CO2-eq/MJ],{0.0...n},string,black,inputs/technology/feedstocks/feedstocks.xls:SOLAR
+-,get_database_feedstocks,SOLAR,Opex_var_buy_USD2015perkWh,buying price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:SOLAR
+-,get_database_feedstocks,SOLAR,Opex_var_sell_USD2015perkWh,selling price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:SOLAR
+-,get_database_feedstocks,SOLAR,reference,reference,[-],[-],string,black,inputs/technology/feedstocks/feedstocks.xls:SOLAR
+-,get_database_feedstocks,OIL,hour,hour of a 24 hour day,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:OIL
+-,get_database_feedstocks,OIL,CO2,Green House Gas Emisisons factor,[kg CO2-eq/MJ],{0.0...n},string,black,inputs/technology/feedstocks/feedstocks.xls:OIL
+-,get_database_feedstocks,OIL,Opex_var_buy_USD2015perkWh,buying price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:OIL
+-,get_database_feedstocks,OIL,Opex_var_sell_USD2015perkWh,selling price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:OIL
+-,get_database_feedstocks,OIL,reference,reference,[-],[-],string,black,inputs/technology/feedstocks/feedstocks.xls:OIL
+-,get_database_feedstocks,COAL,hour,hour of a 24 hour day,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:COAL
+-,get_database_feedstocks,COAL,CO2,Green House Gas Emisisons factor,[kg CO2-eq/MJ],{0.0...n},string,black,inputs/technology/feedstocks/feedstocks.xls:COAL
+-,get_database_feedstocks,COAL,Opex_var_buy_USD2015perkWh,buying price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:COAL
+-,get_database_feedstocks,COAL,Opex_var_sell_USD2015perkWh,selling price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:COAL
+-,get_database_feedstocks,COAL,reference,reference,[-],[-],string,black,inputs/technology/feedstocks/feedstocks.xls:COAL
+-,get_database_feedstocks,WOOD,hour,hour of a 24 hour day,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:WOOD
+-,get_database_feedstocks,WOOD,CO2,Green House Gas Emisisons factor,[kg CO2-eq/MJ],{0.0...n},string,black,inputs/technology/feedstocks/feedstocks.xls:WOOD
+-,get_database_feedstocks,WOOD,Opex_var_buy_USD2015perkWh,buying price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:WOOD
+-,get_database_feedstocks,WOOD,Opex_var_sell_USD2015perkWh,selling price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:WOOD
+-,get_database_feedstocks,WOOD,reference,reference,[-],[-],string,black,inputs/technology/feedstocks/feedstocks.xls:WOOD
+-,get_database_feedstocks,WETBIOMASS,hour,hour of a 24 hour day,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:WETBIOMASS
+-,get_database_feedstocks,WETBIOMASS,CO2,Green House Gas Emisisons factor,[kg CO2-eq/MJ],{0.0...n},string,black,inputs/technology/feedstocks/feedstocks.xls:WETBIOMASS
+-,get_database_feedstocks,WETBIOMASS,Opex_var_buy_USD2015perkWh,buying price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:WETBIOMASS
+-,get_database_feedstocks,WETBIOMASS,Opex_var_sell_USD2015perkWh,selling price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:WETBIOMASS
+-,get_database_feedstocks,WETBIOMASS,reference,reference,[-],[-],string,black,inputs/technology/feedstocks/feedstocks.xls:WETBIOMASS
+-,get_database_feedstocks,DRYBIOMASS,hour,hour of a 24 hour day,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:DRYBIOMASS
+-,get_database_feedstocks,DRYBIOMASS,CO2,Green House Gas Emisisons factor,[kg CO2-eq/MJ],{0.0...n},string,black,inputs/technology/feedstocks/feedstocks.xls:DRYBIOMASS
+-,get_database_feedstocks,DRYBIOMASS,Opex_var_buy_USD2015perkWh,buying price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:DRYBIOMASS
+-,get_database_feedstocks,DRYBIOMASS,Opex_var_sell_USD2015perkWh,selling price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:DRYBIOMASS
+-,get_database_feedstocks,DRYBIOMASS,reference,reference,[-],[-],string,black,inputs/technology/feedstocks/feedstocks.xls:DRYBIOMASS
 -,get_terrain,,raster_value,TODO,TODO,TODO,TODO,black,inputs/topography/terrain.tif
 weather_helper,get_weather_file,,aerosol_opt_thousandths (index = 29),TODO,TODO,TODO,float,black,inputs/weather/weather.epw
 weather_helper,get_weather_file,,Albedo (index = 32),TODO,TODO,TODO,float,black,inputs/weather/weather.epw
@@ -965,17 +1003,13 @@ demand,get_total_demand,,WOOD_hs_MWhyr,WOOD requirement for space heating supply
 demand,get_total_demand,,WOOD_hs0_kW,Nominal WOOD requirement for space heating supply,kW,{0.0...n},float,brown,outputs/data/demand/total_demand.csv
 demand,get_total_demand,,WOOD_ww_MWhyr,WOOD requirement for hotwater supply,MWh/yr,{0.0...n},float,brown_light,outputs/data/demand/total_demand.csv
 demand,get_total_demand,,WOOD_ww0_kW,Nominal WOOD requirement for hotwater supply,kW,{0.0...n},float,brown_light,outputs/data/demand/total_demand.csv
-emissions,get_lca_embodied,,E_ghg_kgm2,Building construction and decomissioning,kg CO2-eq/m2.yr,{0.0...n},float,black,outputs/data/emissions/total_lca_embodied.csv
-emissions,get_lca_embodied,,E_ghg_ton,Building construction and decomissioning,ton CO2-eq/yr,{0.0...n},float,black,outputs/data/emissions/total_lca_embodied.csv
-emissions,get_lca_embodied,,E_nre_pen_GJ,Building construction and decomissioning,GJ/yr,{0.0...n},float,red,outputs/data/emissions/total_lca_embodied.csv
-emissions,get_lca_embodied,,E_nre_pen_MJm2,Building construction and decomissioning,MJoil-eq/m2.yr,{0.0...n},float,red,outputs/data/emissions/total_lca_embodied.csv
+emissions,get_lca_embodied,,GHG_sys_embodied_kgCO2m2,Building construction and decomissioning,kg CO2-eq/m2.yr,{0.0...n},float,black,outputs/data/emissions/total_lca_embodied.csv
+emissions,get_lca_embodied,,GHG_sys_embodied_tonCO2,Building construction and decomissioning,ton CO2-eq/yr,{0.0...n},float,black,outputs/data/emissions/total_lca_embodied.csv
 emissions,get_lca_embodied,,GFA_m2,Gross floor area,[m2],{0.0...n},float,black,outputs/data/emissions/total_lca_embodied.csv
 emissions,get_lca_embodied,,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,outputs/data/emissions/total_lca_embodied.csv
 emissions,get_lca_mobility,,GFA_m2,Gross floor area,[m2],{0.0...n},float,black,outputs/data/emissions/total_lca_mobility.csv
-emissions,get_lca_mobility,,M_ghg_kgm2,Commuting,kg CO2-eq/m2.yr,{0.0...n},float,grey_light,outputs/data/emissions/total_lca_mobility.csv
-emissions,get_lca_mobility,,M_ghg_ton,Commuting,ton CO2-eq/yr,{0.0...n},float,grey_light,outputs/data/emissions/total_lca_mobility.csv
-emissions,get_lca_mobility,,M_nre_pen_GJ,Commuting,GJ/yr,{0.0...n},float,red_lighter,outputs/data/emissions/total_lca_mobility.csv
-emissions,get_lca_mobility,,M_nre_pen_MJm2,Commuting,MJoil-eq/m2.yr,{0.0...n},float,red_lighter,outputs/data/emissions/total_lca_mobility.csv
+emissions,get_lca_mobility,,GHG_sys_mobility_kgCO2m2,Commuting,kg CO2-eq/m2.yr,{0.0...n},float,grey_light,outputs/data/emissions/total_lca_mobility.csv
+emissions,get_lca_mobility,,GHG_sys_mobility_tonCO2,Commuting,ton CO2-eq/yr,{0.0...n},float,grey_light,outputs/data/emissions/total_lca_mobility.csv
 emissions,get_lca_mobility,,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,outputs/data/emissions/total_lca_mobility.csv
 emissions,get_lca_operation,,COAL_hs_ghg_kgm2,Emissions due to operational energy per unit of conditioned floor area of the coal powererd heating system,[kg/m2 -yr],{0.0...n},float,black,outputs/data/emissions/total_lca_operation.csv
 emissions,get_lca_operation,,COAL_hs_ghg_ton,Emissions due to operational energy of the coal powered heating system,[ton/yr],{0.0...n},float,black,outputs/data/emissions/total_lca_operation.csv
@@ -989,8 +1023,8 @@ emissions,get_lca_operation,,DC_cdata_ghg_kgm2,Emissions due to operational ener
 emissions,get_lca_operation,,DC_cdata_ghg_ton,Emissions due to operational energy of the district cooling for the data center,[ton/yr],{0.0...n},float,black,outputs/data/emissions/total_lca_operation.csv
 emissions,get_lca_operation,,DC_cdata_nre_pen_GJ,Operational primary energy demand (non-renewable) for district cooling system of the data center,[GJ/yr],{0.0...n},float,black,outputs/data/emissions/total_lca_operation.csv
 emissions,get_lca_operation,,DC_cdata_nre_pen_MJm2,Operational primary energy demand per unit of conditioned floor area (non-renewable) of the dstrict cooling for the data center,[MJ/m2-yr],{0.0...n},float,black,outputs/data/emissions/total_lca_operation.csv
-emissions,get_lca_operation,,DC_cre_ghg_kgm2,Emissions due to operational energy per unit of conditioned floor area of the district cooling for cooling and refrigeration,[kg/m2 -yr],{0.0...n},float,black,outputs/data/emissions/total_lca_operation.csv
-emissions,get_lca_operation,,DC_cre_ghg_ton,Emissions due to operational energy of the district cooling for the cooling and refrigeration,[ton/yr],{0.0...n},float,black,outputs/data/emissions/total_lca_operation.csv
+emissions,get_lca_operation,,DC_crGHG_sys_embodied_kgCO2m2,Emissions due to operational energy per unit of conditioned floor area of the district cooling for cooling and refrigeration,[kg/m2 -yr],{0.0...n},float,black,outputs/data/emissions/total_lca_operation.csv
+emissions,get_lca_operation,,DC_crGHG_sys_embodied_tonCO2,Emissions due to operational energy of the district cooling for the cooling and refrigeration,[ton/yr],{0.0...n},float,black,outputs/data/emissions/total_lca_operation.csv
 emissions,get_lca_operation,,DC_cre_nre_pen_GJ,Operational primary energy demand (non-renewable) for district cooling system for cooling and refrigeration,[GJ/yr],{0.0...n},float,black,outputs/data/emissions/total_lca_operation.csv
 emissions,get_lca_operation,,DC_cre_nre_pen_MJm2,Operational primary energy demand per unit of conditioned floor area (non-renewable) of the dstrict cooling for cooling and refrigeration,[MJ/m2-yr],{0.0...n},float,black,outputs/data/emissions/total_lca_operation.csv
 emissions,get_lca_operation,,DC_cs_ghg_kgm2,Emissions due to operational energy per unit of conditioned floor area of the district cooling,[kg/m2 -yr],{0.0...n},float,black,outputs/data/emissions/total_lca_operation.csv
@@ -1021,10 +1055,8 @@ emissions,get_lca_operation,,NG_ww_ghg_kgm2,Emissions due to operational energy 
 emissions,get_lca_operation,,NG_ww_ghg_ton,Emissions due to operational energy of the solar powered domestic hot water system,[ton/yr],{0.0...n},float,black,outputs/data/emissions/total_lca_operation.csv
 emissions,get_lca_operation,,NG_ww_nre_pen_GJ,Operational primary energy demand (non-renewable) for natural gas powered domestic hot water system,[GJ/yr],{0.0...n},float,black,outputs/data/emissions/total_lca_operation.csv
 emissions,get_lca_operation,,NG_ww_nre_pen_MJm2,Operational primary energy demand per unit of conditioned floor area (non-renewable) of the natural gas powered domestic hot water system,[MJ/m2-yr],{0.0...n},float,black,outputs/data/emissions/total_lca_operation.csv
-emissions,get_lca_operation,,O_ghg_kgm2,Energy system operation,kg CO2-eq/m2.yr,{0.0...n},float,grey,outputs/data/emissions/total_lca_operation.csv
-emissions,get_lca_operation,,O_ghg_ton,Energy system operation,ton CO2-eq/yr,{0.0...n},float,grey,outputs/data/emissions/total_lca_operation.csv
-emissions,get_lca_operation,,O_nre_pen_GJ,Energy system operation,GJ/yr,{0.0...n},float,red_light,outputs/data/emissions/total_lca_operation.csv
-emissions,get_lca_operation,,O_nre_pen_MJm2,Energy system operation,MJoil-eq/m2.yr,{0.0...n},float,red_light,outputs/data/emissions/total_lca_operation.csv
+emissions,get_lca_operation,,GHG_sys_kgCO2m2,Energy system operation,kg CO2-eq/m2.yr,{0.0...n},float,grey,outputs/data/emissions/total_lca_operation.csv
+emissions,get_lca_operation,,GHG_sys_tonCO2,Energy system operation,ton CO2-eq/yr,{0.0...n},float,grey,outputs/data/emissions/total_lca_operation.csv
 emissions,get_lca_operation,,OIL_hs_ghg_kgm2,Emissions due to operational energy per unit of conditioned floor area of the oil powered heating system,[kg/m2 -yr],{0.0...n},float,black,outputs/data/emissions/total_lca_operation.csv
 emissions,get_lca_operation,,OIL_hs_ghg_ton,Emissions due to operational energy of the oil powered heating system,[ton/yr],{0.0...n},float,black,outputs/data/emissions/total_lca_operation.csv
 emissions,get_lca_operation,,OIL_hs_nre_pen_GJ,Operational primary energy demand (non-renewable) for oil powered heating system,[GJ/yr],{0.0...n},float,black,outputs/data/emissions/total_lca_operation.csv

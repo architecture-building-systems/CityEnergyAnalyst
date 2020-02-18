@@ -850,7 +850,7 @@ get_archetypes_properties:
       year_start:
         sample_data: !!python/long '2021'
         types_found: [long]
-    HVAC:
+    AIR_CONDITIONING:
       building_use:
         sample_data: UNIVERSITY
         types_found: [string]
@@ -980,7 +980,44 @@ get_archetypes_properties:
       year_start:
         sample_data: !!python/long '2021'
         types_found: [long]
-  used_by: [data_helper]
+    EMISSION_INTENSITY:
+      W_e_ag_kgm2:
+        types_found: [float]
+      W_e_bg_kgm2:
+        types_found: [float]
+      W_i_ag_kgm2:
+        types_found: [float]
+      W_i_bg_kgm2:
+        types_found: [float]
+      Win_kgm2:
+        types_found: [float]
+      F_i_kgm2:
+        types_found: [float]
+      F_e_kgm2:
+        types_found: [float]
+      R_kgm2:
+        types_found: [float]
+      Tech_kgm2:
+        types_found: [float]
+      Exca_kgm2:
+        types_found: [float]
+      Mobi_kgm2:
+        types_found: [float]
+      building_use:
+        sample_data: LIBRARY
+        types_found: [string]
+      standard:
+        sample_data: R
+        types_found: [string]
+      year_end:
+        sample_data: !!python/long '2030'
+        types_found: [long]
+      year_start:
+        sample_data: !!python/long '2021'
+        types_found: [long]
+      Reference:
+        types_found: [string]
+  used_by: [archetypes_mapper]
 get_building_age:
   created_by: []
   file_path: inputs/building-properties/age.dbf
@@ -1010,9 +1047,9 @@ get_building_age:
     windows:
       sample_data: 0
       types_found: [int]
-  used_by: [data_helper, demand, emissions]
+  used_by: [archetypes_mapper, demand, emissions]
 get_building_air_conditioning:
-  created_by: [data_helper]
+  created_by: [archetypes_mapper]
   file_path: inputs/building-properties/air_conditioning_systems.dbf
   file_type: dbf
   schema:
@@ -1048,7 +1085,7 @@ get_building_air_conditioning:
       types_found: [string]
   used_by: [demand]
 get_building_architecture:
-  created_by: [data_helper]
+  created_by: [archetypes_mapper]
   file_path: inputs/building-properties/architecture.dbf
   file_type: dbf
   schema:
@@ -1102,7 +1139,7 @@ get_building_architecture:
       types_found: [float]
   used_by: [demand, emissions, radiation, schedule_maker]
 get_building_comfort:
-  created_by: [data_helper]
+  created_by: [archetypes_mapper]
   file_path: inputs/building-properties/indoor_comfort.dbf
   file_type: dbf
   schema:
@@ -1132,7 +1169,7 @@ get_building_comfort:
       types_found: [float]
   used_by: [demand, schedule_maker]
 get_building_internal:
-  created_by: [data_helper]
+  created_by: [archetypes_mapper]
   file_path: inputs/building-properties/internal_loads.dbf
   file_type: dbf
   schema:
@@ -1232,9 +1269,9 @@ get_building_occupancy:
     SWIMMING:
       sample_data: 0.0
       types_found: [float]
-  used_by: [data_helper, demand, emissions]
+  used_by: [archetypes_mapper, demand, emissions]
 get_building_supply:
-  created_by: [data_helper]
+  created_by: [archetypes_mapper]
   file_path: inputs/building-properties/supply_systems.dbf
   file_type: dbf
   schema:
@@ -1255,7 +1292,7 @@ get_building_supply:
       types_found: [string]
   used_by: [decentralized, demand, emissions, operation_costs]
 get_building_weekly_schedules:
-  created_by: [data_helper]
+  created_by: [archetypes_mapper]
   file_path: inputs/building-properties/schedules/B001.csv
   file_type: csv
   schema:
@@ -1397,7 +1434,7 @@ get_database_air_conditioning_systems:
   file_path: inputs/technology/systems/air_conditioning_systems.xls
   file_type: xls
   schema:
-    controller:
+    CONTROLLER:
       Description:
         sample_data: room temperature control (electromagnetically/electronically).
         types_found: [string]
@@ -1410,7 +1447,7 @@ get_database_air_conditioning_systems:
       dT_Qhs:
         sample_data: 1.8
         types_found: [float]
-    cooling:
+    COOLING:
       Description:
         sample_data: 'floor cooling (18/21)  '
         types_found: [string]
@@ -1447,7 +1484,7 @@ get_database_air_conditioning_systems:
       dTcs_C:
         sample_data: 0.5
         types_found: [float]
-    dhw:
+    HOT_WATER:
       Description:
         sample_data: 'High temperature in the tropics (60/25) '
         types_found: [string]
@@ -1460,7 +1497,7 @@ get_database_air_conditioning_systems:
       code:
         sample_data: T4
         types_found: [string]
-    heating:
+    HEATING:
       Description:
         sample_data: 'Floor heating (40/35) '
         types_found: [string]
@@ -1497,7 +1534,7 @@ get_database_air_conditioning_systems:
       dThs_C:
         sample_data: -0.9
         types_found: [float]
-    ventilation:
+    VENTILATION:
       Description:
         sample_data: Window ventilation - no night flushing
         types_found: [string]
@@ -1616,120 +1653,6 @@ get_database_envelope_systems:
         sample_data: 0.89
         types_found: [float]
   used_by: [demand, radiation, schedule_maker]
-get_database_lca_buildings:
-  created_by: []
-  file_path: inputs/technology/lifecycle/LCA_buildings.xlsx
-  file_type: xlsx
-  schema:
-    EMBODIED_EMISSIONS:
-      Excavation:
-        sample_data: !!python/long '0'
-        types_found: [long]
-      Floor_g:
-        sample_data: !!python/long '44'
-        types_found: [long]
-      Floor_int:
-        sample_data: !!python/long '8'
-        types_found: [long]
-      Roof:
-        sample_data: !!python/long '47'
-        types_found: [long]
-      Services:
-        sample_data: !!python/long '7'
-        types_found: [long]
-      Wall_ext_ag:
-        sample_data: !!python/long '35'
-        types_found: [long]
-      Wall_ext_bg:
-        sample_data: !!python/long '49'
-        types_found: [long]
-      Wall_int_nosup:
-        sample_data: !!python/long '5'
-        types_found: [long]
-      Wall_int_sup:
-        sample_data: !!python/long '5'
-        types_found: [long]
-      Win_ext:
-        sample_data: !!python/long '85'
-        types_found: [long]
-      building_use:
-        sample_data: LIBRARY
-        types_found: [string]
-      standard:
-        sample_data: R
-        types_found: [string]
-      year_end:
-        sample_data: !!python/long '2030'
-        types_found: [long]
-      year_start:
-        sample_data: !!python/long '2021'
-        types_found: [long]
-    EMBODIED_ENERGY:
-      Excavation:
-        sample_data: !!python/long '0'
-        types_found: [long]
-      Floor_g:
-        sample_data: !!python/long '551'
-        types_found: [long]
-      Floor_int:
-        sample_data: !!python/long '102'
-        types_found: [long]
-      Roof:
-        sample_data: !!python/long '598'
-        types_found: [long]
-      Services:
-        sample_data: !!python/long '108'
-        types_found: [long]
-      Wall_ext_ag:
-        sample_data: !!python/long '428'
-        types_found: [long]
-      Wall_ext_bg:
-        sample_data: !!python/long '633'
-        types_found: [long]
-      Wall_int_nosup:
-        sample_data: !!python/long '72'
-        types_found: [long]
-      Wall_int_sup:
-        sample_data: !!python/long '72'
-        types_found: [long]
-      Win_ext:
-        sample_data: !!python/long '1273'
-        types_found: [long]
-      building_use:
-        sample_data: LIBRARY
-        types_found: [string]
-      standard:
-        sample_data: R
-        types_found: [string]
-      year_end:
-        sample_data: !!python/long '2030'
-        types_found: [long]
-      year_start:
-        sample_data: !!python/long '2021'
-        types_found: [long]
-  used_by: [emissions]
-get_database_lca_mobility:
-  created_by: []
-  file_path: inputs/technology/lifecycle/LCA_mobility.xls
-  file_type: xls
-  schema:
-    MOBILITY:
-      CO2_today:
-        sample_data: 90.0
-        types_found: [float]
-      Description:
-        sample_data: 'Assumed: same as RETAIL'
-        types_found: [string]
-      NRE_today:
-        sample_data: 1460.0
-        types_found: [float]
-      PEN_today:
-        sample_data: !!python/long '1550'
-        types_found: [long]
-      code:
-        sample_data: MUSEUM
-        types_found: [string]
-  used_by: [emissions, operation_costs]
 get_database_standard_schedules_use:
   created_by: []
   file_path: inputs/technology/archetypes/schedules/RESTAURANT.csv
@@ -1744,15 +1667,165 @@ get_database_standard_schedules_use:
     RESTAURANT:
       sample_data: 0.8
       types_found: [float, null]
-  used_by: [data_helper]
-get_database_supply_systems:
+  used_by: [archetypes_mapper]
+get_database_feedstocks:
   created_by: []
-  file_path: inputs/technology/systems/supply_systems.xls
+  file_path: inputs/technology/feedstocks/feedstocks.xls
   file_type: xls
   schema:
-    ALL_IN_ONE_SYSTEMS:
+    NATURALGAS:
+      CO2:
+        sample_data: 0.0075
+        types_found: [float]
+      Opex_var_buy_USD2015perkWh:
+        sample_data: 0.20800000000000002
+        types_found: [float]
+      Opex_var_sell_USD2015perkWh:
+        sample_data: 0.20800000000000002
+        types_found: [float]
+      hour:
+        sample_data: 0
+        types_found: [int]
+      reference:
+        sample_data: KBOB 2009/1:2016, ID 42.001 Kehrichtverbrennung, cost from CEA
+        types_found: [string, null]
+    BIOGAS:
+      CO2:
+        sample_data: 0.0075
+        types_found: [float]
+      Opex_var_buy_USD2015perkWh:
+        sample_data: 0.20800000000000002
+        types_found: [float]
+      Opex_var_sell_USD2015perkWh:
+        sample_data: 0.20800000000000002
+        types_found: [float]
+      hour:
+        sample_data: 0
+        types_found: [int]
+      reference:
+        sample_data: KBOB 2009/1:2016, ID 42.001 Kehrichtverbrennung, cost from CEA
+        types_found: [string, null]
+    GRID:
+      CO2:
+        sample_data: 0.0075
+        types_found: [float]
+      Opex_var_buy_USD2015perkWh:
+        sample_data: 0.20800000000000002
+        types_found: [float]
+      Opex_var_sell_USD2015perkWh:
+        sample_data: 0.20800000000000002
+        types_found: [float]
+      hour:
+        sample_data: 0
+        types_found: [int]
+      reference:
+        sample_data: KBOB 2009/1:2016, ID 42.001 Kehrichtverbrennung, cost from CEA
+        types_found: [string, null]
+    SOLAR:
+      CO2:
+        sample_data: 0.0075
+        types_found: [float]
+      Opex_var_buy_USD2015perkWh:
+        sample_data: 0.20800000000000002
+        types_found: [float]
+      Opex_var_sell_USD2015perkWh:
+        sample_data: 0.20800000000000002
+        types_found: [float]
+      hour:
+        sample_data: 0
+        types_found: [int]
+      reference:
+        sample_data: KBOB 2009/1:2016, ID 42.001 Kehrichtverbrennung, cost from CEA
+        types_found: [string, null]
+    OIL:
+      CO2:
+        sample_data: 0.0075
+        types_found: [float]
+      Opex_var_buy_USD2015perkWh:
+        sample_data: 0.20800000000000002
+        types_found: [float]
+      Opex_var_sell_USD2015perkWh:
+        sample_data: 0.20800000000000002
+        types_found: [float]
+      hour:
+        sample_data: 0
+        types_found: [int]
+      reference:
+        sample_data: KBOB 2009/1:2016, ID 42.001 Kehrichtverbrennung, cost from CEA
+        types_found: [string, null]
+    COAL:
+      CO2:
+        sample_data: 0.0075
+        types_found: [float]
+      Opex_var_buy_USD2015perkWh:
+        sample_data: 0.20800000000000002
+        types_found: [float]
+      Opex_var_sell_USD2015perkWh:
+        sample_data: 0.20800000000000002
+        types_found: [float]
+      hour:
+        sample_data: 0
+        types_found: [int]
+      reference:
+        sample_data: KBOB 2009/1:2016, ID 42.001 Kehrichtverbrennung, cost from CEA
+        types_found: [string, null]
+    WOOD:
+      CO2:
+        sample_data: 0.0075
+        types_found: [float]
+      Opex_var_buy_USD2015perkWh:
+        sample_data: 0.20800000000000002
+        types_found: [float]
+      Opex_var_sell_USD2015perkWh:
+        sample_data: 0.20800000000000002
+        types_found: [float]
+      hour:
+        sample_data: 0
+        types_found: [int]
+      reference:
+        sample_data: KBOB 2009/1:2016, ID 42.001 Kehrichtverbrennung, cost from CEA
+        types_found: [string, null]
+    WETBIOMASS:
+      CO2:
+        sample_data: 0.0075
+        types_found: [float]
+      Opex_var_buy_USD2015perkWh:
+        sample_data: 0.20800000000000002
+        types_found: [float]
+      Opex_var_sell_USD2015perkWh:
+        sample_data: 0.20800000000000002
+        types_found: [float]
+      hour:
+        sample_data: 0
+        types_found: [int]
+      reference:
+        sample_data: KBOB 2009/1:2016, ID 42.001 Kehrichtverbrennung, cost from CEA
+        types_found: [string, null]
+    DRYBIOMASS:
+      CO2:
+        sample_data: 0.0075
+        types_found: [float]
+      Opex_var_buy_USD2015perkWh:
+        sample_data: 0.20800000000000002
+        types_found: [float]
+      Opex_var_sell_USD2015perkWh:
+        sample_data: 0.20800000000000002
+        types_found: [float]
+      hour:
+        sample_data: 0
+        types_found: [int]
+      reference:
+        sample_data: KBOB 2009/1:2016, ID 42.001 Kehrichtverbrennung, cost from CEA
+        types_found: [string, null]
+  used_by: [decentralized, emissions, operation_costs, optimization]
+get_database_assemblies:
+  created_by: []
+  file_path: inputs/technology/assemblies/assemblies.xls
+  file_type: xls
+  schema:
+    SUPPLY:
       Description:
-        sample_data: PV panel - monocrystalline roof top
+        sample_data: heatpump - air-air
         types_found: [string]
       code:
         sample_data: T25
@@ -1772,6 +1845,24 @@ get_database_supply_systems:
       system:
         sample_data: ELECTRICITY
         types_found: [string]
+      CAPEX_USD2015kW:
+        sample_data: 200.0
+        types_found: [float]
+      IR_%:
+        sample_data: !!python/long '5'
+        types_found: [long]
+      LT_yr:
+        sample_data: !!python/long '25'
+        types_found: [long]
+      O&M_%:
+        sample_data: !!python/long '5'
+        types_found: [long]
+  used_by: [demand, emissions, operation_costs]
+get_database_conversion_systems:
+  created_by: []
+  file_path: inputs/technology/systems/supply_systems.xls
+  file_type: xls
+  schema:
     Absorption_chiller:
       Description:
         sample_data: LiBr triple effect
@@ -2137,25 +2228,6 @@ get_database_supply_systems:
       unit:
         sample_data: W
         types_found: [string]
-    FEEDSTOCKS:
-      CO2:
-        sample_data: 0.0075
-        types_found: [float]
-      Opex_var_buy_USD2015perkWh:
-        sample_data: 0.20800000000000002
-        types_found: [float]
-      Opex_var_sell_USD2015perkWh:
-        sample_data: 0.20800000000000002
-        types_found: [float]
-      PEN:
-        sample_data: 0.116
-        types_found: [float]
-      code:
-        sample_data: DRYBIOMASS
-        types_found: [string]
-      reference:
-        sample_data: KBOB 2009/1:2016, ID 42.001 Kehrichtverbrennung, cost from CEA
-        types_found: [string, null]
     Furnace:
       Description:
         sample_data: furnace combined with ORC
@@ -2309,31 +2381,6 @@ get_database_supply_systems:
       unit:
         sample_data: W
         types_found: [string]
-    PIPING:
-      Code:
-        sample_data: DN1500
-        types_found: [string]
-      D_ext_m:
-        sample_data: 1.52869695
-        types_found: [float]
-      D_ins_m:
-        sample_data: 1.9947486772999998
-        types_found: [float]
-      D_int_m:
-        sample_data: 1.4941228500000001
-        types_found: [float]
-      Inv_USD2015perm:
-        sample_data: 9651.7762182
-        types_found: [float]
-      Pipe_DN:
-        sample_data: !!python/long '1500'
-        types_found: [long]
-      Vdot_max_m3s:
-        sample_data: 10.76274617420937
-        types_found: [float]
-      Vdot_min_m3s:
-        sample_data: 0.5169956864157574
-        types_found: [float]
     PV:
       Description:
         sample_data: generic amorphous silicon panel
@@ -2654,8 +2701,38 @@ get_database_supply_systems:
       'unit ':
         sample_data: m3
         types_found: [string]
-  used_by: [decentralized, demand, emissions, operation_costs, optimization, photovoltaic,
-    photovoltaic_thermal, solar_collector, thermal_network]
+  used_by: [decentralized, optimization, photovoltaic, photovoltaic_thermal, solar_collector]
+get_database_distribution_systems:
+  created_by: []
+  file_path: inputs/technology/systems/distribution_systems.xls
+  file_type: xls
+  schema:
+    THERMAL_GRID:
+      Code:
+        sample_data: DN1500
+        types_found: [string]
+      D_ext_m:
+        sample_data: 1.52869695
+        types_found: [float]
+      D_ins_m:
+        sample_data: 1.9947486772999998
+        types_found: [float]
+      D_int_m:
+        sample_data: 1.4941228500000001
+        types_found: [float]
+      Inv_USD2015perm:
+        sample_data: 9651.7762182
+        types_found: [float]
+      Pipe_DN:
+        sample_data: !!python/long '1500'
+        types_found: [long]
+      Vdot_max_m3s:
+        sample_data: 10.76274617420937
+        types_found: [float]
+      Vdot_min_m3s:
+        sample_data: 0.5169956864157574
+        types_found: [float]
+  used_by: [optimization, thermal_network]
 get_demand_results_file:
   created_by: [demand]
   file_path: outputs/data/demand/B001.csv
@@ -3081,17 +3158,11 @@ get_lca_embodied:
   file_path: outputs/data/emissions/Total_LCA_embodied.csv
   file_type: csv
   schema:
-    E_ghg_kgm2:
+    GHG_sys_embodied_kgCO2m2:
       sample_data: 6.63
       types_found: [float]
-    E_ghg_ton:
+    GHG_sys_embodied_tonCO2:
       sample_data: 33.13
-      types_found: [float]
-    E_nre_pen_GJ:
-      sample_data: 384.67
-      types_found: [float]
-    E_nre_pen_MJm2:
-      sample_data: 76.98
       types_found: [float]
     GFA_m2:
       sample_data: 4997.25
@@ -3108,17 +3179,11 @@ get_lca_mobility:
     GFA_m2:
       sample_data: 4997.25
       types_found: [float]
-    M_ghg_kgm2:
+    GHG_sys_mobility_kgCO2m2:
       sample_data: 19.95
       types_found: [float]
-    M_ghg_ton:
+    GHG_sys_mobility_tonCO2:
       sample_data: 99.7
-      types_found: [float]
-    M_nre_pen_GJ:
-      sample_data: 1651.59
-      types_found: [float]
-    M_nre_pen_MJm2:
-      sample_data: 330.5
       types_found: [float]
     Name:
       sample_data: B09
@@ -3285,17 +3350,11 @@ get_lca_operation:
     OIL_ww_nre_pen_MJm2:
       sample_data: 0.0
       types_found: [float]
-    O_ghg_kgm2:
+    GHG_sys_kgCO2m2:
       sample_data: 12.08
       types_found: [float]
-    O_ghg_ton:
+    GHG_sys_tonCO2:
       sample_data: 60.36
-      types_found: [float]
-    O_nre_pen_GJ:
-      sample_data: 3983.29
-      types_found: [float]
-    O_nre_pen_MJm2:
-      sample_data: 398.55
       types_found: [float]
     PV_ghg_kgm2:
       sample_data: 0.0
@@ -6706,6 +6765,6 @@ get_zone_geometry:
     height_bg:
       sample_data: 3.57142857143
       types_found: [float]
-  used_by: [data_helper, decentralized, demand, emissions, network_layout, optimization,
+  used_by: [archetypes_mapper, decentralized, demand, emissions, network_layout, optimization,
     photovoltaic, photovoltaic_thermal, radiation, schedule_maker, sewage_potential,
     shallow_geothermal_potential, solar_collector, thermal_network]

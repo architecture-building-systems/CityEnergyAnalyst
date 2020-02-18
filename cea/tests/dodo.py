@@ -163,24 +163,24 @@ def task_run_data_initializer():
                     'databases_path': databases_path})],
         }
 
-def task_run_data_helper():
+def task_run_archetypes_mapper():
     """Run the data helper for each reference case"""
-    import cea.datamanagement.data_helper
+    import cea.datamanagement.archetypes_mapper
 
-    def run_data_helper(scenario_path):
+    def run_archetypes_mapper(scenario_path):
         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         config.scenario = scenario_path
-        cea.datamanagement.data_helper.main(config)
+        cea.datamanagement.archetypes_mapper.main(config)
 
     for reference_case, scenario_path in REFERENCE_CASES.items():
         if _reference_cases and reference_case not in _reference_cases:
             continue
 
         yield {
-            'name': 'run_data_helper:%s' % reference_case,
+            'name': 'run_archetypes_mapper:%s' % reference_case,
             'task_dep': ['run_data_initializer:%s' % reference_case],
             'actions': [
-                (run_data_helper, [], {
+                (run_archetypes_mapper, [], {
                     'scenario_path': scenario_path})],
         }
 
@@ -209,7 +209,7 @@ def task_run_demand():
 
         yield {
             'name': 'run_demand:%(reference_case)s' % locals(),
-            'task_dep': ['download_reference_cases', 'run_data_helper:%s' % reference_case],
+            'task_dep': ['download_reference_cases', 'run_archetypes_mapper:%s' % reference_case],
             'actions': [(run_demand, [], {
                 'scenario_path': scenario_path,
                 'weather': weather
@@ -233,7 +233,7 @@ def task_run_embodied_energy():
 
         yield {
             'name': 'run_embodied_energy:%(reference_case)s' % locals(),
-            'task_dep': ['download_reference_cases', 'run_data_helper:%s' % reference_case],
+            'task_dep': ['download_reference_cases', 'run_archetypes_mapper:%s' % reference_case],
             'actions': [(run_embodied_energy, [scenario_path])],
         }
 

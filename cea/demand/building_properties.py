@@ -646,7 +646,7 @@ class SolarProperties(object):
 
 
 def get_properties_supply_sytems(locator, properties_supply):
-    data_all_in_one_systems = pd.read_excel(locator.get_database_supply_systems(), sheet_name='ALL_IN_ONE_SYSTEMS')
+    data_all_in_one_systems = pd.read_excel(locator.get_database_assemblies(), sheet_name='SUPPLY')
     supply_heating = data_all_in_one_systems[data_all_in_one_systems['system'].isin(['HEATING', 'NONE'])]
     supply_dhw = data_all_in_one_systems[data_all_in_one_systems['system'].isin(['HEATING', 'NONE'])]
     supply_cooling = data_all_in_one_systems[data_all_in_one_systems['system'].isin(['COOLING', 'NONE'])]
@@ -743,12 +743,12 @@ def get_properties_technical_systems(locator, prop_HVAC):
 
     """
 
-    prop_emission_heating = pd.read_excel(locator.get_database_air_conditioning_systems(), 'heating')
-    prop_emission_cooling = pd.read_excel(locator.get_database_air_conditioning_systems(), 'cooling')
-    prop_emission_dhw = pd.read_excel(locator.get_database_air_conditioning_systems(), 'dhw')
+    prop_emission_heating = pd.read_excel(locator.get_database_air_conditioning_systems(), 'HEATING')
+    prop_emission_cooling = pd.read_excel(locator.get_database_air_conditioning_systems(), 'COOLING')
+    prop_emission_dhw = pd.read_excel(locator.get_database_air_conditioning_systems(), 'HOT_WATER')
     prop_emission_control_heating_and_cooling = pd.read_excel(locator.get_database_air_conditioning_systems(),
-                                                              'controller')
-    prop_ventilation_system_and_control = pd.read_excel(locator.get_database_air_conditioning_systems(), 'ventilation')
+                                                              'CONTROLLER')
+    prop_ventilation_system_and_control = pd.read_excel(locator.get_database_air_conditioning_systems(), 'VENTILATION')
 
     df_emission_heating = prop_HVAC.merge(prop_emission_heating, left_on='type_hs', right_on='code')
     df_emission_cooling = prop_HVAC.merge(prop_emission_cooling, left_on='type_cs', right_on='code')
