@@ -138,7 +138,7 @@ def zone_helper(locator, config):
                               buildings_height_below_ground,
                               poly, zone_output_path)
 
-    # use zone.shp file contents to get the contents of occupancy.dbf and age.dbf
+    # USE_A zone.shp file contents to get the contents of occupancy.dbf and age.dbf
     calculate_typology_file(zone_df.copy(), year_construction, occupancy_type, typology_output_path)
 
 
@@ -153,40 +153,46 @@ def calculate_typology_file(zone_df, year_construction, occupancy_type, occupanc
     typology_df = calculate_age(zone_df, year_construction)
 
     # get the occupancy form open street maps if indicated
-    typology_df["USE"] = "MULTI_RES" #initialize
-    zone_df['STANDARD'] = "T5" ##hardcoded for now
+    typology_df['1ST_USE'] = 'MULTI_RES'
+    typology_df['1ST_USE_R'] = 1.0
+    typology_df['2ND_USE'] = "NONE"
+    typology_df['2ND_USE_R'] = 0.0
+    typology_df['3RD_USE'] = "NONE"
+    typology_df['3RD_USE_R'] = 0.0
+    typology_df['STANDARD'] = "T5" ##hardcoded for now
     if occupancy_type == "Get it from open street maps":
         no_buildings = typology_df.shape[0]
         for index in range(no_buildings):
+            typology_df.loc[index, "USE_A_R"] = 1.0
             if zone_df.loc[index, "category"] == "yes":
-                typology_df.loc[index, "USE"] = "MULTI_RES"
+                typology_df.loc[index, "USE_A"] = "MULTI_RES"
                 typology_df.loc[index, "REFERENCE"] = "CEA - assumption"
             elif zone_df.loc[index, "category"] == "residential" or zone_df.loc[index, "category"] == "apartments":
-                typology_df.loc[index, "USE"] = "MULTI_RES"
+                typology_df.loc[index, "USE_A"] = "MULTI_RES"
                 typology_df.loc[index, "REFERENCE"] = "OSM - as it is"
             elif zone_df.loc[index, "category"] == "commercial" or zone_df.loc[index, "category"] == "civic":
-                typology_df.loc[index, "USE"] = "OFFICE"
+                typology_df.loc[index, "USE_A"] = "OFFICE"
                 typology_df.loc[index, "REFERENCE"] = "OSM - as it is"
             elif zone_df.loc[index, "category"] == "school":
-                typology_df.loc[index, "USE"] = "SCHOOL"
+                typology_df.loc[index, "USE_A"] = "SCHOOL"
                 typology_df.loc[index, "REFERENCE"] = "OSM - as it is"
             elif zone_df.loc[index, "category"] == "garage" or zone_df.loc[index, "category"] == "garages" or zone_df.loc[index, "category"] == "warehouse":
-                typology_df.loc[index, "USE"] = "PARKING"
+                typology_df.loc[index, "USE_A"] = "PARKING"
                 typology_df.loc[index, "REFERENCE"] = "OSM - as it is"
             elif zone_df.loc[index, "category"] == "house" or zone_df.loc[index, "category"] == "terrace" or zone_df.loc[index, "category"] == "detached":
-                typology_df.loc[index, "USE"] = "SINGLE_RES"
+                typology_df.loc[index, "USE_A"] = "SINGLE_RES"
                 typology_df.loc[index, "REFERENCE"] = "OSM - as it is"
             elif zone_df.loc[index, "category"] == "retail":
-                typology_df.loc[index, "USE"] = "RETAIL"
+                typology_df.loc[index, "USE_A"] = "RETAIL"
                 typology_df.loc[index, "REFERENCE"] = "OSM - as it is"
             elif zone_df.loc[index, "category"] == "industrial":
-                typology_df.loc[index, "USE"] = "INDUSTRIAL"
+                typology_df.loc[index, "USE_A"] = "INDUSTRIAL"
                 typology_df.loc[index, "REFERENCE"] = "OSM - as it is"
             elif zone_df.loc[index, "category"] == "warehouse":
-                typology_df.loc[index, "USE"] = "INDUSTRIAL"
+                typology_df.loc[index, "USE_A"] = "INDUSTRIAL"
                 typology_df.loc[index, "REFERENCE"] = "OSM - as it is"
             else:
-                typology_df.loc[index, "USE"] = "MULTI_RES"
+                typology_df.loc[index, "USE_A"] = "MULTI_RES"
                 typology_df.loc[index, "REFERENCE"] = "CEA - assumption"
 
     fields = COLUMNS_ZONE_TYPOLOGY
@@ -218,8 +224,6 @@ def calculate_age(zone_df, year_construction):
         zone_df["YEAR"] = [int(x) if x is not np.nan else data_osm_floors_joined for x in data_floors_sum_with_nan]
     else:
         zone_df['REFERENCE'] = "CEA - assumption"
-
-
 
     return zone_df
 
