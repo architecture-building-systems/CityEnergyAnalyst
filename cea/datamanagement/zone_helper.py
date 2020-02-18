@@ -15,7 +15,7 @@ import pandas as pd
 
 import cea.config
 import cea.inputlocator
-from cea.datamanagement.databases_verification import COLUMNS_ZONE_AGE, COLUMNS_ZONE_OCCUPANCY
+from cea.datamanagement.databases_verification import COLUMNS_ZONE_TYPOLOGY
 from cea.demand import constants
 from cea.utilities.dbf import dataframe_to_dbf
 from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_geographic_coordinate_system
@@ -127,13 +127,11 @@ def zone_helper(locator, config):
     occupancy_type = config.zone_helper.occupancy_type
     year_construction = config.zone_helper.year_construction
     zone_output_path = locator.get_zone_geometry()
-    occupancy_output_path = locator.get_building_typology()
-    age_output_path = locator.get_building_age()
+    typology_output_path = locator.get_building_typology()
 
     # ensure folders exist
     locator.ensure_parent_folder_exists(zone_output_path)
-    locator.ensure_parent_folder_exists(occupancy_output_path)
-    locator.ensure_parent_folder_exists(age_output_path)
+    locator.ensure_parent_folder_exists(typology_output_path)
 
     # get zone.shp file and save in folder location
     zone_df = polygon_to_zone(buildings_floors, buildings_floors_below_ground, buildings_height,
@@ -141,11 +139,10 @@ def zone_helper(locator, config):
                               poly, zone_output_path)
 
     # use zone.shp file contents to get the contents of occupancy.dbf and age.dbf
-    calculate_occupancy_file(zone_df.copy(), occupancy_type, occupancy_output_path)
-    calculate_age_file(zone_df.copy(), year_construction, age_output_path)
+    calculate_typology_file(zone_df.copy(), year_construction, occupancy_type, typology_output_path)
 
 
-def calculate_occupancy_file(zone_df, occupancy_type, occupancy_output_path):
+def calculate_typology_file(zone_df, year_construction, occupancy_type, occupancy_output_path):
     """
     This script fills in the occupancy.dbf file with one occupancy type
     :param zone_df:
@@ -153,51 +150,49 @@ def calculate_occupancy_file(zone_df, occupancy_type, occupancy_output_path):
     :param occupancy_output_path:
     :return:
     """
-    occupancy_df = zone_df[["Name"]].copy()
-    for occupancy in COLUMNS_ZONE_OCCUPANCY:
-        if occupancy_type == occupancy:
-            occupancy_df.loc[:, occupancy] = 1.0
-        else:
-            occupancy_df.loc[:, occupancy] = 0.0
+    typology_df = calculate_standard_based_on_age(zone_df, year_construction)
 
     # get the occupancy form open street maps if indicated
+    typology_df["USE"] = "MULTI_RES" #initialize
     if occupancy_type == "Get it from open street maps":
-        no_buildings = occupancy_df.shape[0]
+        no_buildings = typology_df.shape[0]
         for index in range(no_buildings):
             if zone_df.loc[index, "category"] == "yes":
-                occupancy_df.loc[index, "MULTI_RES"] = 1.0
-                occupancy_df.loc[index, "REFERENCE"] = "CEA - assumption"
+                typology_df.loc[index, "USE"] = "MULTI_RES"
+                typology_df.loc[index, "REFERENCE"] = "CEA - assumption"
             elif zone_df.loc[index, "category"] == "residential" or zone_df.loc[index, "category"] == "apartments":
-                occupancy_df.loc[index, "MULTI_RES"] = 1.0
-                occupancy_df.loc[index, "REFERENCE"] = "OSM - as it is"
+                typology_df.loc[index, "USE"] = "MULTI_RES"
+                typology_df.loc[index, "REFERENCE"] = "OSM - as it is"
             elif zone_df.loc[index, "category"] == "commercial" or zone_df.loc[index, "category"] == "civic":
-                occupancy_df.loc[index, "OFFICE"] = 1.0
-                occupancy_df.loc[index, "REFERENCE"] = "OSM - as it is"
+                typology_df.loc[index, "USE"] = "OFFICE"
+                typology_df.loc[index, "REFERENCE"] = "OSM - as it is"
             elif zone_df.loc[index, "category"] == "school":
-                occupancy_df.loc[index, "SCHOOL"] = 1.0
-                occupancy_df.loc[index, "REFERENCE"] = "OSM - as it is"
+                typology_df.loc[index, "USE"] = "SCHOOL"
+                typology_df.loc[index, "REFERENCE"] = "OSM - as it is"
             elif zone_df.loc[index, "category"] == "garage" or zone_df.loc[index, "category"] == "garages" or zone_df.loc[index, "category"] == "warehouse":
-                occupancy_df.loc[index, "PARKING"] = 1.0
-                occupancy_df.loc[index, "REFERENCE"] = "OSM - as it is"
+                typology_df.loc[index, "USE"] = "PARKING"
+                typology_df.loc[index, "REFERENCE"] = "OSM - as it is"
             elif zone_df.loc[index, "category"] == "house" or zone_df.loc[index, "category"] == "terrace" or zone_df.loc[index, "category"] == "detached":
-                occupancy_df.loc[index, "SINGLE_RES"] = 1.0
-                occupancy_df.loc[index, "REFERENCE"] = "OSM - as it is"
+                typology_df.loc[index, "USE"] = "SINGLE_RES"
+                typology_df.loc[index, "REFERENCE"] = "OSM - as it is"
             elif zone_df.loc[index, "category"] == "retail":
-                occupancy_df.loc[index, "RETAIL"] = 1.0
-                occupancy_df.loc[index, "REFERENCE"] = "OSM - as it is"
+                typology_df.loc[index, "USE"] = "RETAIL"
+                typology_df.loc[index, "REFERENCE"] = "OSM - as it is"
             elif zone_df.loc[index, "category"] == "industrial":
-                occupancy_df.loc[index, "INDUSTRIAL"] = 1.0
-                occupancy_df.loc[index, "REFERENCE"] = "OSM - as it is"
+                typology_df.loc[index, "USE"] = "INDUSTRIAL"
+                typology_df.loc[index, "REFERENCE"] = "OSM - as it is"
             elif zone_df.loc[index, "category"] == "warehouse":
-                occupancy_df.loc[index, "INDUSTRIAL"] = 1.0
-                occupancy_df.loc[index, "REFERENCE"] = "OSM - as it is"
+                typology_df.loc[index, "USE"] = "INDUSTRIAL"
+                typology_df.loc[index, "REFERENCE"] = "OSM - as it is"
             else:
-                occupancy_df.loc[index, "MULTI_RES"] = 1.0
-                occupancy_df.loc[index, "REFERENCE"] = "CEA - assumption"
-    dataframe_to_dbf(occupancy_df, occupancy_output_path)
+                typology_df.loc[index, "USE"] = "MULTI_RES"
+                typology_df.loc[index, "REFERENCE"] = "CEA - assumption"
+
+    fields = COLUMNS_ZONE_TYPOLOGY
+    dataframe_to_dbf(typology_df[fields+['REFERENCE']], occupancy_output_path)
 
 
-def calculate_age_file(zone_df, year_construction, age_output_path):
+def calculate_standard_based_on_age(zone_df, year_construction):
     """
     This script fills in the age.dbf file with one year of construction
     :param zone_df:
@@ -205,13 +200,6 @@ def calculate_age_file(zone_df, year_construction, age_output_path):
     :param age_output_path:
     :return:
     """
-    #create dataframe to fill in the data
-    for column in COLUMNS_ZONE_AGE:
-        if column == 'built':
-            zone_df.loc[:, column] = year_construction
-        else:
-            zone_df.loc[:, column] = 0
-
     if year_construction is None:
         print('Warning! you have not indicated a year of construction for the buildings, '
               'we are reverting to data stored in Open Street Maps (It might not be accurate at all),'
@@ -226,14 +214,11 @@ def calculate_age_file(zone_df, year_construction, age_output_path):
 
         data_floors_sum_with_nan = [np.nan if x is np.nan else int(x) for x in zone_df['start_date']]
         data_osm_floors_joined = int(math.ceil(np.nanmedian(data_floors_sum_with_nan)))  # median so we get close to the worse case
-        zone_df["built"] = [int(x) if x is not np.nan else data_osm_floors_joined for x in data_floors_sum_with_nan]
+        zone_df["YEAR"] = [int(x) if x is not np.nan else data_osm_floors_joined for x in data_floors_sum_with_nan]
     else:
         zone_df['REFERENCE'] = "CEA - assumption"
 
-    fields = ["Name"] + COLUMNS_ZONE_AGE + ['REFERENCE']
-    age_dbf = zone_df[fields]
-
-    dataframe_to_dbf(age_dbf, age_output_path)
+    return zone_df
 
 
 def polygon_to_zone(buildings_floors, buildings_floors_below_ground, buildings_height, buildings_height_below_ground,
