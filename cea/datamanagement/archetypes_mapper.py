@@ -83,7 +83,7 @@ def archetypes_mapper(locator,
 
     # get occupant densities from archetypes schedules
     occupant_densities = {}
-    occ_densities = pd.read_excel(locator.get_archetypes_properties(), 'INTERNAL_LOADS').set_index('Code')
+    occ_densities = pd.read_excel(locator.get_use_types_properties(), 'INTERNAL_LOADS').set_index('code')
     for use in list_uses:
         if occ_densities.loc[use, 'Occ_m2pax'] > 0.0:
             occupant_densities[use] = 1 / occ_densities.loc[use, 'Occ_m2pax']
@@ -102,31 +102,10 @@ def archetypes_mapper(locator,
         aircon_mapper(locator, building_typology_df)
 
     if update_indoor_comfort_dbf:
-        comfort_DB = pd.read_excel(locator.get_archetypes_properties(), 'INDOOR_COMFORT')
-
-        # define comfort
-        prop_comfort_df = categories_df.merge(comfort_DB, left_on='mainuse', right_on='Code')
-
-        # write to shapefile
-        fields = ['Name',
-                  'Tcs_set_C',
-                  'Ths_set_C',
-                  'Tcs_setb_C',
-                  'Ths_setb_C',
-                  'Ve_lpspax',
-                  'RH_min_pc',
-                  'RH_max_pc']
-        prop_comfort_df_merged = names_df.merge(prop_comfort_df, on="Name")
-        prop_comfort_df_merged = calculate_average_multiuse(fields,
-                                                            prop_comfort_df_merged,
-                                                            occupant_densities,
-                                                            list_uses,
-                                                            comfort_DB)
-
-        dataframe_to_dbf(prop_comfort_df_merged[fields], locator.get_building_comfort())
+        indoor_comfort_mapper(list_uses, locator, occupant_densities, building_typology_df)
 
     if update_internal_loads_dbf:
-        internal_loads_mapper(list_uses, locator, names_df, occupant_densities, building_typology_df)
+        internal_loads_mapper(list_uses, locator, occupant_densities, building_typology_df)
 
     if update_schedule_operation_cea:
         if buildings == []:
@@ -140,10 +119,31 @@ def archetypes_mapper(locator,
         emission_intensity_mapper(locator, building_typology_df)
 
 
-def internal_loads_mapper(list_uses, locator, names_df, occupant_densities, building_typology_df):
+def indoor_comfort_mapper(list_uses, locator, occupant_densities, building_typology_df):
+    comfort_DB = pd.read_excel(locator.get_use_types_properties(), 'INDOOR_COMFORT')
+    # define comfort
+    prop_comfort_df = building_typology_df.merge(comfort_DB, left_on='1ST_USE', right_on='code')
+    # write to shapefile
+    fields = ['Name',
+              'Tcs_set_C',
+              'Ths_set_C',
+              'Tcs_setb_C',
+              'Ths_setb_C',
+              'Ve_lpspax',
+              'RH_min_pc',
+              'RH_max_pc']
+    prop_comfort_df_merged = calculate_average_multiuse(fields,
+                                                        prop_comfort_df,
+                                                        occupant_densities,
+                                                        list_uses,
+                                                        comfort_DB)
+    dataframe_to_dbf(prop_comfort_df_merged[fields], locator.get_building_comfort())
+
+
+def internal_loads_mapper(list_uses, locator, occupant_densities, building_typology_df):
     internal_DB = pd.read_excel(locator.get_use_types_properties(), 'INTERNAL_LOADS')
     # define comfort
-    prop_internal_df = categories_df.merge(internal_DB, left_on='1st_USE', right_on='code')
+    prop_internal_df = building_typology_df.merge(internal_DB, left_on='1ST_USE', right_on='code')
     # write to shapefile
     fields = ['Name',
               'Occ_m2pax',
@@ -158,9 +158,8 @@ def internal_loads_mapper(list_uses, locator, names_df, occupant_densities, buil
               'Qhpro_Wm2',
               'Qcpro_Wm2',
               'Epro_Wm2']
-    prop_internal_df_merged = names_df.merge(prop_internal_df, on="Name")
     prop_internal_df_merged = calculate_average_multiuse(fields,
-                                                         prop_internal_df_merged,
+                                                         prop_internal_df,
                                                          occupant_densities,
                                                          list_uses,
                                                          internal_DB)
@@ -436,7 +435,7 @@ def calculate_average_multiuse(fields, properties_df, occupant_densities, list_u
     :return properties_df: the same DataFrame as the input parameter, but with the updated properties for multiuse
         buildings
     """
-    properties_DB = properties_DB.set_index('Code')
+    properties_DB = properties_DB.set_index('code')
     for column in fields:
         if column in ['Ve_lpspax', 'Qs_Wpax', 'X_ghpax', 'Vww_lpdpax', 'Vw_lpdpax']:
             # some properties are imported from the Excel files as int instead of float

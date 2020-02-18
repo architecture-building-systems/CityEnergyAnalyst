@@ -336,7 +336,7 @@ class InputDatabase(Resource):
                         if db_name == 'SCHEDULES':
                             # Need to change locator method for SCHEDULES since `schema.yml` uses
                             # `get_database_standard_schedules_use` instead of `get_database_standard_schedules`
-                            out[db_type][db_name] = get_all_schedules_dict(locator.get_database_standard_schedules())
+                            out[db_type][db_name] = get_all_schedules_dict(locator.get_database_use_types_folder())
                         else:
                             locator_method = db_props['schema_key']
                             out[db_type][db_name] = database_to_dict(locator.__getattribute__(locator_method)())
@@ -344,7 +344,7 @@ class InputDatabase(Resource):
             elif db in DATABASE_NAMES:
                 db_type = DATABASES_TYPE_MAP[db]
                 if db == 'SCHEDULES':
-                    return get_all_schedules_dict(locator.get_database_standard_schedules())
+                    return get_all_schedules_dict(locator.get_database_use_types_folder())
                 else:
                     locator_method = DATABASES[db_type][db]['schema_key']
                     return database_to_dict(locator.__getattribute__(locator_method)())
