@@ -126,33 +126,7 @@ def archetypes_mapper(locator,
         dataframe_to_dbf(prop_comfort_df_merged[fields], locator.get_building_comfort())
 
     if update_internal_loads_dbf:
-        internal_DB = pd.read_excel(locator.get_archetypes_properties(), 'INTERNAL_LOADS')
-
-        # define comfort
-        prop_internal_df = categories_df.merge(internal_DB, left_on='mainuse', right_on='Code')
-
-        # write to shapefile
-        fields = ['Name',
-                  'Occ_m2pax',
-                  'Qs_Wpax',
-                  'X_ghpax',
-                  'Ea_Wm2',
-                  'El_Wm2',
-                  'Ed_Wm2',
-                  'Qcre_Wm2',
-                  'Vww_lpdpax',
-                  'Vw_lpdpax',
-                  'Qhpro_Wm2',
-                  'Qcpro_Wm2',
-                  'Epro_Wm2']
-        prop_internal_df_merged = names_df.merge(prop_internal_df, on="Name")
-        prop_internal_df_merged = calculate_average_multiuse(fields,
-                                                             prop_internal_df_merged,
-                                                             occupant_densities,
-                                                             list_uses,
-                                                             internal_DB)
-
-        dataframe_to_dbf(prop_internal_df_merged[fields], locator.get_building_internal())
+        internal_loads_mapper(list_uses, locator, names_df, occupant_densities, building_typology_df)
 
     if update_schedule_operation_cea:
         if buildings == []:
@@ -164,6 +138,33 @@ def archetypes_mapper(locator,
 
     if update_emission_intensity_dbf:
         emission_intensity_mapper(locator, building_typology_df)
+
+
+def internal_loads_mapper(list_uses, locator, names_df, occupant_densities, building_typology_df):
+    internal_DB = pd.read_excel(locator.get_use_types_properties(), 'INTERNAL_LOADS')
+    # define comfort
+    prop_internal_df = categories_df.merge(internal_DB, left_on='1st_USE', right_on='code')
+    # write to shapefile
+    fields = ['Name',
+              'Occ_m2pax',
+              'Qs_Wpax',
+              'X_ghpax',
+              'Ea_Wm2',
+              'El_Wm2',
+              'Ed_Wm2',
+              'Qcre_Wm2',
+              'Vww_lpdpax',
+              'Vw_lpdpax',
+              'Qhpro_Wm2',
+              'Qcpro_Wm2',
+              'Epro_Wm2']
+    prop_internal_df_merged = names_df.merge(prop_internal_df, on="Name")
+    prop_internal_df_merged = calculate_average_multiuse(fields,
+                                                         prop_internal_df_merged,
+                                                         occupant_densities,
+                                                         list_uses,
+                                                         internal_DB)
+    dataframe_to_dbf(prop_internal_df_merged[fields], locator.get_building_internal())
 
 
 def supply_mapper(locator, building_typology_df):
