@@ -68,10 +68,10 @@ def calc_mixed_schedule(locator, building_typology_df, buildings):
         else:
             occupant_densities[use] = 0.0
 
-    monthly_multiplier = np.zeros(12)
     for building in buildings:
         schedule_new_data = {}
         main_use_this_building = building_typology_df['1ST_USE'][building]
+        monthly_multiplier = np.zeros(12)
         for var_name, var_value in zip(list_var_names, list_var_values):
             monthly_multiplier += np.sum([np.array(schedule_data_all_uses.schedule_complementary_data[use]['MONTHLY_MULTIPLIER'])
                                          * building_typology_df.loc[building, var_value] if building_typology_df.loc[building, var_name] == use
