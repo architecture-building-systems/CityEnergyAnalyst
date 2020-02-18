@@ -266,7 +266,7 @@ class BuildingProperties(object):
         df = self.geometry_reader_radiation_daysim(locator, envelope, occupancy, geometry)
         df = df.merge(hvac_temperatures, left_index=True, right_index=True)
 
-        for building in df.index.values:
+        for building in locator.get_zone_building_names():
             if hvac_temperatures.loc[building, 'type_hs'] == 'T0' and \
                     hvac_temperatures.loc[building, 'type_cs'] == 'T0' and \
                     np.max([df.loc[building, 'Hs_ag'], df.loc[building, 'Hs_bg']]) > 0.0:
@@ -354,7 +354,7 @@ class BuildingProperties(object):
         envelope['Aroof'] = np.nan
 
         # call all building geometry files in a loop
-        for building_name in envelope.index:
+        for building_name in locator.get_zone_building_names():
             geometry_data = pd.read_csv(locator.get_radiation_building(building_name))
             envelope.ix[building_name, 'Awall_ag'] = geometry_data['walls_east_m2'][0] + \
                                                   geometry_data['walls_west_m2'][0] + \
