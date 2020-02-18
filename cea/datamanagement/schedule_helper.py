@@ -12,7 +12,6 @@ import pandas as pd
 import cea
 import cea.config
 import cea.inputlocator
-from cea.datamanagement.databases_verification import COLUMNS_ZONE_OCCUPANCY
 from cea.demand.constants import VARIABLE_CEA_SCHEDULE_RELATION
 from cea.utilities.schedule_reader import read_cea_schedule, save_cea_schedule
 

@@ -18,7 +18,6 @@ import cea.config
 import cea.inputlocator
 from cea import InvalidOccupancyNameException
 from cea.datamanagement.schedule_helper import calc_mixed_schedule
-from cea.datamanagement.databases_verification import COLUMNS_ZONE_OCCUPANCY
 from cea.utilities.dbf import dbf_to_dataframe, dataframe_to_dbf
 
 
@@ -80,7 +79,7 @@ def archetypes_mapper(locator,
     building_typology_df = dbf_to_dataframe(locator.get_building_typology())
 
     # validate list of uses in case study
-    list_uses = list(set(building_typology_df['USE'].values))
+    list_uses = get_list_of_uses_in_case_study(building_typology_df)
 
     # get occupant densities from archetypes schedules
     occupant_densities = {}
@@ -94,27 +93,12 @@ def archetypes_mapper(locator,
     # prepare shapefile to store results (a shapefile with only names of buildings
     names_df = building_typology_df[['Name']]
 
-    # define main use:
-    building_typology_df['mainuse'] = building_typology_df['USE']
-
-    # dataframe with joined data for categories
-    categories_df = building_typology_df.merge(building_age_df, on='Name')
-
     # get properties about the construction and architecture
     if update_architecture_dbf:
         architecture_DB = pd.read_excel(locator.get_archetypes_properties(), 'ARCHITECTURE')
-        architecture_DB['Code'] = architecture_DB.apply(lambda x: calc_code(x['building_use'], x['year_start'],
-                                                                            x['year_end'], x['standard']), axis=1)
-        categories_df['cat_built'] = calc_category(architecture_DB, categories_df, 'built', 'C')
-        retrofit_category = ['envelope', 'roof', 'windows']
-        for category in retrofit_category:
-            categories_df['cat_' + category] = calc_category(architecture_DB, categories_df, category, 'R')
-
-        prop_architecture_df = get_prop_architecture(categories_df, architecture_DB, list_uses)
-
+        prop_architecture_df = get_prop_architecture(building_typology_df, architecture_DB)
         # write to dbf file
         prop_architecture_df_merged = names_df.merge(prop_architecture_df, on="Name")
-
         fields = ['Name',
                   'Hs_ag',
                   'Hs_bg',
@@ -131,7 +115,6 @@ def archetypes_mapper(locator,
                   'type_wall',
                   'type_win',
                   'type_shade']
-
         dataframe_to_dbf(prop_architecture_df_merged[fields], locator.get_building_architecture())
 
     # get properties about types of HVAC systems
@@ -271,20 +254,17 @@ def get_list_of_uses_in_case_study(building_typology_df):
     :return: list of uses in case study
     :rtype: pandas.DataFrame.Index
     """
-    columns = building_typology_df.columns
+    list_var_names = ["1ST_USE", '2ND_USE', '3RD_USE']
+    list_var_values = ["1ST_USE_R", '2ND_USE_R', '3RD_USE_R']
     # validate list of uses
     list_uses = []
-    for name in columns:
-        if name in COLUMNS_ZONE_OCCUPANCY:
-            if building_typology_df[name].sum() > 0.0:
-                list_uses.append(name)  # append valid uses
-        elif name in {'Name', 'REFERENCE'}:
-            pass  # do nothing with 'Name' and 'Reference'
-        else:
-            raise InvalidOccupancyNameException(
-                'occupancy.dbf has use "{}". This use is not part of the database. Change occupancy.dbf'
-                ' or customize archetypes database AND databases_verification.py.'.format(name))
-    return list_uses
+    n_records = building_typology_df.shape[0]
+    for row in range(n_records):
+        for var_name, var_value in zip(list_var_names,list_var_values):
+            if building_typology_df.loc[row, var_value] > 0.0:
+                list_uses.append(building_typology_df.loc[row, var_name])  # append valid uses
+    unique_uses = list(set(list_uses))
+    return unique_uses
 
 
 def calc_code(code1, code2, code3, code4):
@@ -427,42 +407,21 @@ def correct_archetype_areas(prop_architecture_df, architecture_DB, list_uses):
     return Hs_ag_list, Hs_bg_list, Ns_list, Es_list
 
 
-def get_prop_architecture(categories_df, architecture_DB, list_uses):
+def get_prop_architecture(typology_df, architecture_DB):
     """
     This function obtains every building's architectural properties based on the construction and renovation years.
 
-    :param categories_df: DataFrame containing each building's construction and renovation categories for each building
+    :param typology_df: DataFrame containing each building's construction and renovation categories for each building
         component based on the construction and renovation years
-    :type categories_df: DataFrame
+    :type typology_df: DataFrame
     :param architecture_DB: DataFrame containing the archetypal architectural properties for each use type, construction
         and renovation year
     :type categories_df: DataFrame
     :return prop_architecture_df: DataFrame containing the architectural properties of each building in the area
     :rtype prop_architecture_df: DataFrame
     """
-
-    # create databases from construction and renovation archetypes
-    construction_DB = architecture_DB.drop(['type_leak', 'type_wall', 'type_roof', 'type_shade', 'type_win'], axis=1)
-    envelope_DB = architecture_DB[['Code', 'type_leak', 'type_wall']].copy()
-    roof_DB = architecture_DB[['Code', 'type_roof']].copy()
-    window_DB = architecture_DB[['Code', 'type_win', 'type_shade']].copy()
-
     # create prop_architecture_df based on the construction categories and archetype architecture database
-    prop_architecture_df = categories_df.merge(construction_DB, left_on='cat_built', right_on='Code').drop('Code',
-                                                                                                           axis=1)
-    # get envelope properties based on the envelope renovation year
-    prop_architecture_df = prop_architecture_df.merge(envelope_DB, left_on='cat_envelope', right_on='Code').drop('Code',
-                                                                                                                 axis=1)
-    # get roof properties based on the roof renovation year
-    prop_architecture_df = prop_architecture_df.merge(roof_DB, left_on='cat_roof', right_on='Code').drop('Code', axis=1)
-    # get window properties based on the window renovation year
-    prop_architecture_df = prop_architecture_df.merge(window_DB, left_on='cat_windows', right_on='Code').drop('Code',
-                                                                                                              axis=1)
-
-    # adjust share of floor space that is heated for multiuse buildings
-    prop_architecture_df['Hs_ag'], prop_architecture_df['Hs_bg'], prop_architecture_df['Ns'],\
-        prop_architecture_df['Es'] = correct_archetype_areas(prop_architecture_df, architecture_DB, list_uses)
-
+    prop_architecture_df = typology_df.merge(architecture_DB, left_on='STANDARD', right_on='code')
     return prop_architecture_df
 
 
