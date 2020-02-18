@@ -31,106 +31,27 @@ surroundings:
     type: float
   - name: REFERENCE
     type: str
-age:
+typology:
   parent: zone
   pk: Name
   type: dbf
-  location: get_building_age
+  location: get_building_typology
   fields:
   - name: Name
     type: str
-  - name: HVAC
-    type: year
-  - name: basement
-    type: year
-  - name: built
-    type: year
-  - name: envelope
-    type: year
-  - name: partitions
-    type: year
-  - name: roof
-    type: year
-  - name: windows
+  - name: STANDARD
+    type: str
+  - name: USE
+    type: choice
+    location:
+      path: get_archetypes_properties
+      sheet: ARCHITECTURE
+      column: code
+      filter: system=='COOLING' or system=='NONE'
+  - name: YEAR
     type: year
   - name: REFERENCE
     type: str
-occupancy:
-  parent: zone
-  pk: Name
-  type: dbf
-  location: get_building_occupancy
-  fields:
-  - name: Name
-    type: str
-  - name: SINGLE_RES
-    type: float
-    constraints:
-      max: 1
-  - name: MULTI_RES
-    type: float
-    constraints:
-      max: 1
-  - name: OFFICE
-    type: float
-    constraints:
-      max: 1
-  - name: RETAIL
-    type: float
-    constraints:
-      max: 1
-  - name: SCHOOL
-    type: float
-    constraints:
-      max: 1
-  - name: RESTAURANT
-    type: float
-    constraints:
-      max: 1
-  - name: FOODSTORE
-    type: float
-    constraints:
-      max: 1
-  - name: GYM
-    type: float
-    constraints:
-      max: 1
-  - name: HOSPITAL
-    type: float
-    constraints:
-      max: 1
-  - name: HOTEL
-    type: float
-    constraints:
-      max: 1
-  - name: INDUSTRIAL
-    type: float
-    constraints:
-      max: 1
-  - name: LIBRARY
-    type: float
-    constraints:
-      max: 1
-  - name: SWIMMING
-    type: float
-    constraints:
-      max: 1
-  - name: COOLROOM
-    type: float
-    constraints:
-      max: 1
-  - name: SERVERROOM
-    type: float
-    constraints:
-      max: 1
-  - name: PARKING
-    type: float
-    constraints:
-      max: 1
-  - name: REFERENCE
-    type: str
-    constraints:
-      max: 1
 internal-loads:
   parent: zone
   pk: Name

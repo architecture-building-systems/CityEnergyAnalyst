@@ -8,8 +8,7 @@ Data Management:
     parameters: ['general:scenario', archetypes-mapper]
     input-files:
       - [get_zone_geometry]
-      - [get_building_age]
-      - [get_building_occupancy]
+      - [get_building_typology]
 
   - name: weather-helper
     label: Weather helper
@@ -96,9 +95,8 @@ Demand forecasting:
       - [get_database_air_conditioning_systems]
       - [get_building_comfort]
       - [get_building_internal]
-      - [get_building_age]
       - [get_building_architecture]
-      - [get_building_occupancy]
+      - [get_building_typology]
       - [get_building_air_conditioning]
       - [get_building_supply]
       - [get_building_weekly_schedules, building_name]
@@ -117,9 +115,8 @@ Life Cycle Analysis:
     parameters: ['general:scenario', emissions]
     input-files:
       - [get_total_demand]
-      - [get_building_age]
       - [get_building_architecture]
-      - [get_building_occupancy]
+      - [get_building_typology]
       - [get_zone_geometry]
       - [get_building_supply]
       - [get_building_emission_intensity]

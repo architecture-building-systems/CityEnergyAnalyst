@@ -162,7 +162,7 @@ def calc_Eaux_ww(tsd, bpr):
     Lw = bpr.geometry['Bwidth']
     Mww = tsd['mww_kgs']
     Qww = tsd['Qww']
-    Year = bpr.age['built']
+    Year = bpr.age['YEAR']
     nf_ag = bpr.geometry['floors_ag']
     fforma = bpr.building_systems['fforma']
 
@@ -212,7 +212,7 @@ def calc_Eaux_Qhs_Qcs(tsd, bpr):
     Ths_re_shu = tsd['Ths_sys_re_shu']
     Ths_sup_shu = tsd['Ths_sys_sup_shu']
 
-    Year = bpr.age['built']
+    Year = bpr.age['YEAR']
     nf_ag = bpr.geometry['floors_ag']
 
     # split up the final demands according to the fraction of energy

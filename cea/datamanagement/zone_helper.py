@@ -150,10 +150,11 @@ def calculate_typology_file(zone_df, year_construction, occupancy_type, occupanc
     :param occupancy_output_path:
     :return:
     """
-    typology_df = calculate_standard_based_on_age(zone_df, year_construction)
+    typology_df = calculate_age(zone_df, year_construction)
 
     # get the occupancy form open street maps if indicated
     typology_df["USE"] = "MULTI_RES" #initialize
+    zone_df['STANDARD'] = "T5" ##hardcoded for now
     if occupancy_type == "Get it from open street maps":
         no_buildings = typology_df.shape[0]
         for index in range(no_buildings):
@@ -192,7 +193,7 @@ def calculate_typology_file(zone_df, year_construction, occupancy_type, occupanc
     dataframe_to_dbf(typology_df[fields+['REFERENCE']], occupancy_output_path)
 
 
-def calculate_standard_based_on_age(zone_df, year_construction):
+def calculate_age(zone_df, year_construction):
     """
     This script fills in the age.dbf file with one year of construction
     :param zone_df:
@@ -217,6 +218,8 @@ def calculate_standard_based_on_age(zone_df, year_construction):
         zone_df["YEAR"] = [int(x) if x is not np.nan else data_osm_floors_joined for x in data_floors_sum_with_nan]
     else:
         zone_df['REFERENCE'] = "CEA - assumption"
+
+
 
     return zone_df
 
