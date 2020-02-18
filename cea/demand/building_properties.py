@@ -102,7 +102,7 @@ class BuildingProperties(object):
         self._prop_HVAC_result = prop_HVAC_result
         self._prop_comfort = prop_comfort
         self._prop_internal_loads = prop_internal_loads
-        self._prop_age = prop_typology[['Name','YEAR']]
+        self._prop_age = prop_typology[['YEAR']]
         self._solar = solar
         self._prop_RC_model = prop_rc_model
 
@@ -361,8 +361,7 @@ class BuildingProperties(object):
                                                   geometry_data['windows_north_m2'][0]
             envelope.ix[building_name, 'Aroof'] = geometry_data['roofs_top_m2'][0]
 
-        df = envelope.merge(typology, left_index=True, right_index=True)
-        df = df.merge(geometry, left_index=True, right_index=True)
+        df = envelope.merge(geometry, left_index=True, right_index=True)
 
         def calc_empty_envelope_ratio(void_deck_floors, height, floors, Awall, Awin):
             if (Awall + Awin) > 0.0:
@@ -586,13 +585,11 @@ class BuildingPropertiesRow(object):
 
     def _calculate_pipe_transmittance_values(self):
         """linear trasmissivity coefficients of piping W/(m.K)"""
-        if self.age['built'] >= 1995 or self.age['HVAC'] > 1995:
+        if self.age['YEAR'] >= 1995:
             phi_pipes = [0.2, 0.3, 0.3]
         # elif 1985 <= self.age['built'] < 1995 and self.age['HVAC'] == 0:
-        elif 1985 <= self.age['built'] < 1995:
+        elif 1985 <= self.age['YEAR'] < 1995:
             phi_pipes = [0.3, 0.4, 0.4]
-            if self.age['HVAC'] == self.age['built']:
-                print('Incorrect HVAC renovation year: if HVAC has not been renovated, the year should be set to 0')
         else:
             phi_pipes = [0.4, 0.4, 0.4]
         return phi_pipes

@@ -681,10 +681,6 @@ class InputLocator(object):
         zone_building_names = sorted(gdf.from_file(self.get_zone_geometry())['Name'].values)
         return [b.encode('utf-8') if isinstance(b, basestring) else str(b) for b in zone_building_names]
 
-    def get_building_geometry_citygml(self):
-        """scenario/outputs/data/solar-radiation/district.gml"""
-        return os.path.join(self.get_solar_radiation_folder(), 'district.gml')
-
     def get_building_typology(self):
         """scenario/inputs/building-properties/building_occupancy.dbf"""
         return os.path.join(self.get_building_properties_folder(), 'typology.dbf')
@@ -707,11 +703,7 @@ class InputLocator(object):
 
     def get_building_air_conditioning(self):
         """scenario/inputs/building-properties/air_conditioning_systems.dbf"""
-        old_file_path = os.path.join(self.get_building_properties_folder(), 'technical_systems.dbf')
-        new_file_path = os.path.join(self.get_building_properties_folder(), 'air_conditioning_systems.dbf')
-        if os.path.exists(old_file_path) and os.path.exists(new_file_path) == False:
-            os.rename(old_file_path, new_file_path)
-        return new_file_path
+        return os.path.join(self.get_building_properties_folder(), 'air_conditioning.dbf')
 
     def get_building_architecture(self):
         """scenario/inputs/building-properties/architecture.dbf
