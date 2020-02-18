@@ -77,11 +77,10 @@ def archetypes_mapper(locator,
         describes the queried thermal properties of buildings
     """
     # get occupancy and age files
-    building_occupancy_df = dbf_to_dataframe(locator.get_building_typology())
-    building_age_df = dbf_to_dataframe(locator.get_building_age())
+    building_typology_df = dbf_to_dataframe(locator.get_building_typology())
 
     # validate list of uses in case study
-    list_uses = get_list_of_uses_in_case_study(building_occupancy_df)
+    list_uses = list(set(building_typology_df['USE'].values))
 
     # get occupant densities from archetypes schedules
     occupant_densities = {}
@@ -93,13 +92,13 @@ def archetypes_mapper(locator,
             occupant_densities[use] = 0.0
 
     # prepare shapefile to store results (a shapefile with only names of buildings
-    names_df = building_age_df[['Name']]
+    names_df = building_typology_df[['Name']]
 
     # define main use:
-    building_occupancy_df['mainuse'] = calc_mainuse(building_occupancy_df, list_uses)
+    building_typology_df['mainuse'] = building_typology_df['USE']
 
     # dataframe with joined data for categories
-    categories_df = building_occupancy_df.merge(building_age_df, on='Name')
+    categories_df = building_typology_df.merge(building_age_df, on='Name')
 
     # get properties about the construction and architecture
     if update_architecture_dbf:
@@ -217,7 +216,7 @@ def archetypes_mapper(locator,
     if update_schedule_operation_cea:
         if buildings == []:
             buildings = locator.get_zone_building_names()
-        calc_mixed_schedule(locator, building_occupancy_df, buildings)
+        calc_mixed_schedule(locator, building_typology_df, buildings)
 
     if update_supply_systems_dbf:
         supply_DB = pd.read_excel(locator.get_archetypes_properties(), 'SUPPLY')
@@ -262,22 +261,22 @@ def archetypes_mapper(locator,
         dataframe_to_dbf(prop_emission_df[fields], locator.get_building_emission_intensity())
 
 
-def get_list_of_uses_in_case_study(building_occupancy_df):
+def get_list_of_uses_in_case_study(building_typology_df):
     """
     validates lists of uses in case study.
     refactored from archetypes_mapper function
 
-    :param building_occupancy_df: dataframe of occupancy.dbf input (can be read in archetypes-mapper or in building-properties)
-    :type building_occupancy_df: pandas.DataFrame
+    :param building_typology_df: dataframe of occupancy.dbf input (can be read in archetypes-mapper or in building-properties)
+    :type building_typology_df: pandas.DataFrame
     :return: list of uses in case study
     :rtype: pandas.DataFrame.Index
     """
-    columns = building_occupancy_df.columns
+    columns = building_typology_df.columns
     # validate list of uses
     list_uses = []
     for name in columns:
         if name in COLUMNS_ZONE_OCCUPANCY:
-            if building_occupancy_df[name].sum() > 0.0:
+            if building_typology_df[name].sum() > 0.0:
                 list_uses.append(name)  # append valid uses
         elif name in {'Name', 'REFERENCE'}:
             pass  # do nothing with 'Name' and 'Reference'
