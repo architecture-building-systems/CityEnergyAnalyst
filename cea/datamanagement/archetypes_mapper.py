@@ -77,7 +77,7 @@ def archetypes_mapper(locator,
         describes the queried thermal properties of buildings
     """
     # get occupancy and age files
-    building_occupancy_df = dbf_to_dataframe(locator.get_building_occupancy())
+    building_occupancy_df = dbf_to_dataframe(locator.get_building_typology())
     building_age_df = dbf_to_dataframe(locator.get_building_age())
 
     # validate list of uses in case study

@@ -684,9 +684,9 @@ class InputLocator(object):
         """scenario/inputs/building-properties/age.dbf"""
         return os.path.join(self.get_building_properties_folder(), 'age.dbf')
 
-    def get_building_occupancy(self):
+    def get_building_typology(self):
         """scenario/inputs/building-properties/building_occupancy.dbf"""
-        return os.path.join(self.get_building_properties_folder(), 'occupancy.dbf')
+        return os.path.join(self.get_building_properties_folder(), 'typology.dbf')
 
     def get_building_supply(self):
         """scenario/inputs/building-properties/building_supply.dbf"""
