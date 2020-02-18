@@ -36,27 +36,27 @@ COLUMN_NAMES_CEA_SCHEDULE = ['DAY',
                              'SERVERS']
 
 
-def calc_mixed_schedule(locator, building_occupancy_df, buildings):
+def calc_mixed_schedule(locator, building_typology_df, buildings):
     """
     Builds the ``cea.inputlocator.InputLocator#get_building_weekly_schedules`` for each building in the zone,
     combining the occupancy types as indicated in the inputs.
 
 
     :param cea.inputlocator.InputLocator locator: the locator to use
-    :param building_occupancy_df: ``occupancy.dbf``, with an added column "mainuse"
+    :param building_typology_df: ``occupancy.dbf``, with an added column "mainuse"
     :param buildings: the list of buildings to calculate the schedules for
     :return:
     """
 
     metadata = 'mixed-schedule'
     schedule_data_all_uses = ScheduleData(locator)
-    building_occupancy_df = building_occupancy_df.set_index('Name')
-    building_occupancy_df = building_occupancy_df.loc[buildings]
+    building_typology_df = building_typology_df.set_index('Name')
+    building_typology_df = building_typology_df.loc[buildings]
 
     # get list of uses only with a valid value in building_occupancy_df
-    list_uses = get_short_list_of_uses_in_case_study(building_occupancy_df)
+    list_uses = get_list_of_uses_in_case_study(building_typology_df)
 
-    internal_loads = pd.read_excel(locator.get_archetypes_properties(), 'INTERNAL_LOADS')
+    internal_loads = pd.read_excel(locator.get_use_types_properties(), 'INTERNAL_LOADS')
     internal_loads = internal_loads.set_index('Code')
 
     occupant_densities = {}
@@ -68,9 +68,9 @@ def calc_mixed_schedule(locator, building_occupancy_df, buildings):
 
     for building in buildings:
         schedule_new_data = {}
-        main_use_this_building = building_occupancy_df['mainuse'][building]
+        main_use_this_building = building_typology_df['mainuse'][building]
         monthly_multiplier = np.sum([np.array(
-            schedule_data_all_uses.schedule_complementary_data[use]['MONTHLY_MULTIPLIER']) * building_occupancy_df.loc[
+            schedule_data_all_uses.schedule_complementary_data[use]['MONTHLY_MULTIPLIER']) * building_typology_df.loc[
                                          building, use] for use in list_uses], axis=0)
         for schedule_type in VARIABLE_CEA_SCHEDULE_RELATION.values():
             current_schedule = np.zeros(len(schedule_data_all_uses.schedule_data['HOTEL'][schedule_type]))
@@ -80,8 +80,8 @@ def calc_mixed_schedule(locator, building_occupancy_df, buildings):
                     schedule_type]
             else:
                 for use in list_uses:
-                    if building_occupancy_df[use][building] > 0.0:
-                        current_share_of_use = building_occupancy_df[use][building]
+                    if building_typology_df[use][building] > 0.0:
+                        current_share_of_use = building_typology_df[use][building]
                         if schedule_type in ['OCCUPANCY'] and occupant_densities[use] > 0.0:
                             # for variables that depend on the number of people, the schedule needs to be calculated by number
                             # of people for each use at each time step, not the share of the occupancy for each
@@ -154,6 +154,28 @@ def calc_mixed_schedule(locator, building_occupancy_df, buildings):
         path_to_building_schedule = locator.get_building_weekly_schedules(building)
         save_cea_schedule(schedule_new_data, schedule_complementary_data, path_to_building_schedule)
 
+def get_list_of_uses_in_case_study(building_typology_df):
+    """
+    validates lists of uses in case study.
+    refactored from archetypes_mapper function
+
+    :param building_typology_df: dataframe of occupancy.dbf input (can be read in archetypes-mapper or in building-properties)
+    :type building_typology_df: pandas.DataFrame
+    :return: list of uses in case study
+    :rtype: pandas.DataFrame.Index
+    """
+    list_var_names = ["1ST_USE", '2ND_USE', '3RD_USE']
+    list_var_values = ["1ST_USE_R", '2ND_USE_R', '3RD_USE_R']
+    # validate list of uses
+    list_uses = []
+    n_records = building_typology_df.shape[0]
+    for row in range(n_records):
+        for var_name, var_value in zip(list_var_names,list_var_values):
+            if building_typology_df.loc[row, var_value] > 0.0:
+                list_uses.append(building_typology_df.loc[row, var_name])  # append valid uses
+    unique_uses = list(set(list_uses))
+    return unique_uses
+
 
 def calc_average(last, current, share_of_use):
     """
@@ -188,26 +210,6 @@ class ScheduleData(object):
         schedule_data = dict(zip(occupancy_types, data_schedules))
         complementary_data = dict(zip(occupancy_types, data_schedules_complimentary))
         return schedule_data, complementary_data
-
-
-def get_short_list_of_uses_in_case_study(building_occupancy_df):
-    """
-    gets only the list of land uses that all the building occupnacy dataset has
-    It avoids multiple iterations, when these landuises are not even selected in the database
-
-    :param building_occupancy_df: dataframe of occupancy.dbf input (can be read in data-helper or in building-properties)
-    :type building_occupancy_df: pandas.DataFrame
-    :return: list of uses in case study
-    :rtype: pandas.DataFrame.Index
-    """
-    columns = building_occupancy_df.columns
-    # validate list of uses
-    list_uses = []
-    for name in columns:
-        if name in COLUMNS_ZONE_OCCUPANCY:
-            if building_occupancy_df[name].sum() > 0.0:
-                list_uses.append(name)  # append valid uses
-    return list_uses
 
 
 def main(config):

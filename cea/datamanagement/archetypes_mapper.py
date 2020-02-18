@@ -90,9 +90,6 @@ def archetypes_mapper(locator,
         else:
             occupant_densities[use] = 0.0
 
-    # prepare shapefile to store results (a shapefile with only names of buildings
-    names_df = building_typology_df[['Name']]
-
     # get properties about the construction and architecture
     if update_architecture_dbf:
         architecture_mapper(locator, building_typology_df)
@@ -121,20 +118,6 @@ def archetypes_mapper(locator,
 
 def indoor_comfort_mapper(list_uses, locator, occupant_densities, building_typology_df):
     comfort_DB = pd.read_excel(locator.get_use_types_properties(), 'INDOOR_COMFORT')
-    #
-    # list_var_names = ["1ST_USE", '2ND_USE', '3RD_USE']
-    # list_var_values = ["1ST_USE_R", '2ND_USE_R', '3RD_USE_R']
-    # # validate list of uses
-    # n_records = building_typology_df.shape[0]
-    # for use in list_uses:
-    #     for row in range(n_records):
-    #         for var_name, var_value in zip(list_var_names,list_var_values):
-    #             if building_typology_df.loc[row, var_name] == use:
-    #                 value_use = building_typology_df.loc[row, var_value]
-    #
-    #
-    #                     list_uses.append(building_typology_df.loc[row, var_name])  # append valid uses
-
     # define comfort
     prop_comfort_df = building_typology_df.merge(comfort_DB, left_on='1ST_USE', right_on='code')
     # write to shapefile
