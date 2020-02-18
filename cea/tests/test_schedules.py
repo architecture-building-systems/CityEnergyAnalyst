@@ -40,18 +40,6 @@ class TestBuildingPreprocessing(unittest.TestCase):
                 self.assertIn(building, calculated_results[column])
                 self.assertAlmostEqual(value, calculated_results[column][building], 4)
 
-        architecture_DB = pd.read_excel(locator.get_archetypes_properties(), 'ARCHITECTURE')
-        architecture_DB['Code'] = architecture_DB.apply(lambda x: x['building_use'] + str(x['year_start']) +
-                                                                  str(x['year_end']) + x['standard'], axis=1)
-
-        self.assertEqual(correct_archetype_areas(
-            prop_architecture_df=pd.DataFrame(
-                data=[['B1', 0.5, 0.5, 0.0, 0.0, 2006, 2020, 'C'], ['B2', 0.2, 0.8, 0.0, 0.0, 1000, 1920, 'R']],
-                columns=['Name', 'SERVERROOM', 'PARKING', 'Hs_ag', 'Hs_bg', 'year_start', 'year_end', 'standard']),
-            architecture_DB=architecture_DB,
-            list_uses=['SERVERROOM', 'PARKING']),([0.5, 0.2], [0.0, 0.0], [0.5, 0.2], [0.95, 0.9200000000000002]))
-
-
 class TestScheduleCreation(unittest.TestCase):
     def test_mixed_use_schedules(self):
         locator = ReferenceCaseOpenLocator()
