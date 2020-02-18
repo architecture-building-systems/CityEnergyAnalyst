@@ -17,6 +17,14 @@ cea.interfaces.dashboard.api.dashboard module
     :undoc-members:
     :show-inheritance:
 
+cea.interfaces.dashboard.api.databases module
+---------------------------------------------
+
+.. automodule:: cea.interfaces.dashboard.api.databases
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cea.interfaces.dashboard.api.glossary module
 --------------------------------------------
 

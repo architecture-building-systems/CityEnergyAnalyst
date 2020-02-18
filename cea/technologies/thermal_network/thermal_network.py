@@ -546,8 +546,8 @@ def thermal_network_main(locator, thermal_network, processes=1):
                                                                    thermal_network.network_name))
 
     # read in HEX pressure loss values from database
-    HEX_prices = pd.read_excel(thermal_network.locator.get_database_supply_systems(),
-                               sheet_name='HEX', index_col=0)
+    HEX_prices = pd.read_excel(thermal_network.locator.get_database_conversion_systems(),
+                               sheet_name="HEX", index_col=0)
     a_p = HEX_prices['a']['District substation heat exchanger']
     b_p = HEX_prices['b']['District substation heat exchanger']
     c_p = HEX_prices['c']['District substation heat exchanger']
@@ -1255,7 +1255,7 @@ def assign_pipes_to_edges(thermal_network):
     """
 
     # import pipe catalog from Excel file
-    pipe_catalog = pd.read_excel(thermal_network.locator.get_database_supply_systems(), sheet_name='PIPING')
+    pipe_catalog = pd.read_excel(thermal_network.locator.get_database_distribution_systems(), sheet_name='THERMAL_GRID')
     pipe_catalog['mdot_min_kgs'] = pipe_catalog['Vdot_min_m3s'] * P_WATER_KGPERM3
     pipe_catalog['mdot_max_kgs'] = pipe_catalog['Vdot_max_m3s'] * P_WATER_KGPERM3
 

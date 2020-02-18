@@ -9,50 +9,50 @@ cea.plots.optimization package
 Submodules
 ----------
 
-cea.plots.optimization.Investment\_costs module
------------------------------------------------
+cea.plots.optimization.a\_pareto\_curve module
+----------------------------------------------
 
-.. automodule:: cea.plots.optimization.Investment_costs
+.. automodule:: cea.plots.optimization.a_pareto_curve
     :members:
     :undoc-members:
     :show-inheritance:
 
-cea.plots.optimization.annual\_costs module
--------------------------------------------
-
-.. automodule:: cea.plots.optimization.annual_costs
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-cea.plots.optimization.annual\_emissions module
------------------------------------------------
-
-.. automodule:: cea.plots.optimization.annual_emissions
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-cea.plots.optimization.annual\_primary\_energy module
------------------------------------------------------
-
-.. automodule:: cea.plots.optimization.annual_primary_energy
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-cea.plots.optimization.pareto\_curve module
--------------------------------------------
-
-.. automodule:: cea.plots.optimization.pareto_curve
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-cea.plots.optimization.paretocurve\_convergence module
+cea.plots.optimization.b\_parallel\_coordinates module
 ------------------------------------------------------
 
-.. automodule:: cea.plots.optimization.paretocurve_convergence
+.. automodule:: cea.plots.optimization.b_parallel_coordinates
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.plots.optimization.c\_annual\_costs module
+----------------------------------------------
+
+.. automodule:: cea.plots.optimization.c_annual_costs
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.plots.optimization.d\_annual\_emissions module
+--------------------------------------------------
+
+.. automodule:: cea.plots.optimization.d_annual_emissions
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.plots.optimization.e\_Investment\_costs module
+--------------------------------------------------
+
+.. automodule:: cea.plots.optimization.e_Investment_costs
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.plots.optimization.f\_paretocurve\_convergence module
+---------------------------------------------------------
+
+.. automodule:: cea.plots.optimization.f_paretocurve_convergence
     :members:
     :undoc-members:
     :show-inheritance:

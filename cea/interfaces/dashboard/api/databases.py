@@ -16,38 +16,44 @@ cea_database_path = os.path.dirname(cea.databases.__file__)
 # { db_type: { db_name: db_prop, ... }, ... }
 DATABASES = OrderedDict([
     ("archetypes", {
-        "construction_properties": {
+        "CONSTRUCTION": {
             "file_ext": ".xlsx",
             "schema_key": "get_archetypes_properties"
         },
-        "schedules": {
+        "SCHEDULES": {
             "file_ext": "",  # Folder
             "schema_key": "get_database_standard_schedules_use"
         }
     }),
-    ("lifecycle", {
-        "lca_buildings": {
-            "file_ext": ".xlsx",
-            "schema_key": "get_database_lca_buildings"
-        },
-        "lca_mobility": {
+    ("assemblies", {
+        "ASSEMBLIES": {
             "file_ext": ".xls",
-            "schema_key": "get_database_lca_mobility"
-        }
+            "schema_key": "get_database_assemblies"
+        },
     }),
-    ("systems", {
-        "air_conditioning_systems": {
+    ("components", {
+        "AIR-CONDITIONING": {
             "file_ext": ".xls",
             "schema_key": "get_database_air_conditioning_systems"
         },
-        "envelope_systems": {
+        "ENVELOPE": {
             "file_ext": ".xls",
             "schema_key": "get_database_envelope_systems"
         },
-        "supply_systems": {
+        "CONVERSION": {
             "file_ext": ".xls",
-            "schema_key": "get_database_supply_systems"
+            "schema_key": "get_database_conversion_systems"
+        },
+        "DISTRIBUTION": {
+            "file_ext": ".xls",
+            "schema_key": "get_database_distribution_systems"
         }
+    }),
+    ("feedstocks", {
+        "FEEDSTOCKS": {
+            "file_ext": ".xls",
+            "schema_key": "get_database_feedstocks"
+        },
     })
 ])
 

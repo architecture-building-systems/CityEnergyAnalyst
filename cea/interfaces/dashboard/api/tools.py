@@ -78,23 +78,12 @@ class ToolSave(Resource):
     def post(self, tool_name):
         """Save the configuration for this tool to the configuration file"""
         config = current_app.cea_config
+        payload = api.payload
         for parameter in parameters_for_script(tool_name, config):
-            payload = api.payload[parameter.name]
-            print('%s: %s' % (parameter.name, payload))
-            parameter.set(payload)
-        config.save()
-        return 'Success'
-
-
-@api.route('/<string:tool_name>/save-config')
-class ToolSave(Resource):
-    def post(self, tool_name):
-        """Save the configuration for this tool to the configuration file"""
-        config = current_app.cea_config
-        for parameter in parameters_for_script(tool_name, config):
-            payload = api.payload[parameter.name]
-            print('%s: %s' % (parameter.name, payload))
-            parameter.set(payload)
+            if parameter.name != 'scenario' and parameter.name in payload:
+                value = payload[parameter.name]
+                print('%s: %s' % (parameter.name, value))
+                parameter.set(value)
         config.save()
         return 'Success'
 

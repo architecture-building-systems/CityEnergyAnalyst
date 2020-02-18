@@ -29,6 +29,7 @@ INSTALL_REQUIRES = ['SALib==1.2',  # last version to work with python2
                     'jupyter',
                     'mock',
                     'numba',
+                    'openpyxl==2.6.4',
                     'osmnx==0.9',
                     'plotly',
                     'psutil',

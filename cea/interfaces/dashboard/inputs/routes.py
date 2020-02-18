@@ -1,15 +1,14 @@
+import json
+import os
+
+import geopandas
+import pandas
+import yaml
 from flask import Blueprint, render_template, current_app, request, abort, jsonify
 
 import cea.inputlocator
 import cea.utilities.dbf
-import geopandas
-import yaml
-import os
-import json
-import pandas
-
-from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile, get_projected_coordinate_system
-
+from cea.utilities.standardize_coordinates import get_projected_coordinate_system
 
 blueprint = Blueprint(
     'inputs_blueprint',
@@ -18,6 +17,7 @@ blueprint = Blueprint(
     template_folder='templates',
     static_folder='static',
 )
+
 
 # mapping of input files to columns and data-types
 def read_inputs_field_types():
@@ -36,6 +36,8 @@ def read_inputs_field_types():
         inputs[db]['fieldtypes'] = {field['name']: types[field['type']] for field in inputs[db]['fields']}
         inputs[db]['fieldnames'] = [field['name'] for field in inputs[db]['fields']]
     return inputs
+
+
 INPUTS = read_inputs_field_types()
 
 
@@ -75,13 +77,13 @@ def route_geojson_streets():
 
 @blueprint.route('/building-properties', methods=['GET'])
 def route_get_building_properties():
-    import cea.plots
     import cea.glossary
 
     div = request.args.get('div', default=False)
 
     # FIXME: Find a better way to ensure order of tabs
-    tabs = ['zone','age','occupancy','architecture','internal-loads', 'indoor-comfort', 'air-conditioning-systems',  'supply-systems', 'surroundings']
+    tabs = ['zone', 'age', 'occupancy', 'architecture', 'internal-loads', 'indoor-comfort', 'air-conditioning-systems',
+            'supply-systems', 'emission-intensity', 'surroundings']
 
     locator = cea.inputlocator.InputLocator(current_app.cea_config.scenario)
     store = {'tables': {}, 'geojsons': {}, 'columns': {}, 'column_types': {}, 'crs': {}, 'glossary': {}}
@@ -92,13 +94,15 @@ def route_get_building_properties():
         try:
             if db_info['type'] == 'shp':
 
-                from cea.utilities.standardize_coordinates import shapefile_to_WSG_and_UTM, get_geographic_coordinate_system
+                from cea.utilities.standardize_coordinates import shapefile_to_WSG_and_UTM, \
+                    get_geographic_coordinate_system
                 table_df, lat, lon = shapefile_to_WSG_and_UTM(location)
 
                 # save projected coordinate system
                 store['crs'][db] = get_projected_coordinate_system(lat, lon)
 
-                store['geojsons'][db] = json.loads(table_df.to_crs(get_geographic_coordinate_system()).to_json(show_bbox=True))
+                store['geojsons'][db] = json.loads(
+                    table_df.to_crs(get_geographic_coordinate_system()).to_json(show_bbox=True))
 
                 table_df = pandas.DataFrame(table_df.drop(columns='geometry'))
                 if 'REFERENCE' in db_info['fieldnames'] and 'REFERENCE' not in table_df.columns:
@@ -115,8 +119,9 @@ def route_get_building_properties():
             store['column_types'][db] = {k: v.__name__ for k, v in db_info['fieldtypes'].items()}
 
             filenames = glossary['FILE_NAME'].str.split(pat='/').str[-1]
-            store['glossary'].update(json.loads(glossary[filenames == '%s.%s' % (db.replace('-','_'), db_info['type'])]
-                                                [['VARIABLE', 'UNIT', 'DESCRIPTION']].set_index('VARIABLE').to_json(orient='index')))
+            store['glossary'].update(json.loads(glossary[filenames == '%s.%s' % (db.replace('-', '_'), db_info['type'])]
+                                                [['VARIABLE', 'UNIT', 'DESCRIPTION']].set_index('VARIABLE').to_json(
+                orient='index')))
 
         except IOError as e:
             print(e)
@@ -144,7 +149,8 @@ def route_save_building_properties():
         if len(tables[db]) != 0:
             if db_info['type'] == 'shp':
                 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
-                table_df = geopandas.GeoDataFrame.from_features(geojson[db]['features'], crs=get_geographic_coordinate_system())
+                table_df = geopandas.GeoDataFrame.from_features(geojson[db]['features'],
+                                                                crs=get_geographic_coordinate_system())
                 out['geojsons'][db] = json.loads(table_df.to_json(show_bbox=True))
                 table_df = table_df.to_crs(crs[db])
                 table_df.to_file(location, driver='ESRI Shapefile', encoding='ISO-8859-1')
@@ -175,7 +181,8 @@ def df_to_json(file_location):
     try:
         table_df = geopandas.GeoDataFrame.from_file(file_location)
         from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
-        table_df = table_df.to_crs(get_geographic_coordinate_system())  # make sure that the geojson is coded in latitude / longitude
+        table_df = table_df.to_crs(
+            get_geographic_coordinate_system())  # make sure that the geojson is coded in latitude / longitude
         return json.loads(table_df.to_json())
     except IOError as e:
         print(e)
@@ -184,5 +191,5 @@ def df_to_json(file_location):
 
 def dir_last_updated():
     return str(max(os.path.getmtime(os.path.join(root_path, f))
-               for root_path, dirs, files in os.walk(os.path.join(os.path.dirname(__file__), 'static'))
-               for f in files))
+                   for root_path, dirs, files in os.walk(os.path.join(os.path.dirname(__file__), 'static'))
+                   for f in files))
