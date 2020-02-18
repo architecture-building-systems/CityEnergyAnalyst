@@ -142,7 +142,7 @@ class Scenarios(Resource):
                     if 'streets' in files:
                         shutil.copyfile(files['streets'], locator.get_street_network())
 
-                    from cea.datamanagement.zone_helper import calculate_standard_based_on_age, calculate_typology_file
+                    from cea.datamanagement.zone_helper import calculate_age, calculate_typology_file
                     if 'typology' in files and files['typology'] != '':
                         shutil.copyfile(files['typology'], locator.get_building_typology())
                     elif 'zone' in files:
