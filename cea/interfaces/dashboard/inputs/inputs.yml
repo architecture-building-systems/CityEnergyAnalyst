@@ -40,14 +40,13 @@ typology:
   - name: Name
     type: str
   - name: STANDARD
-    type: str
-  - name: USE
     type: choice
     location:
       path: get_archetypes_properties
       sheet: ARCHITECTURE
       column: code
-      filter: system=='COOLING' or system=='NONE'
+  - name: USE
+    type: str
   - name: YEAR
     type: year
   - name: REFERENCE
