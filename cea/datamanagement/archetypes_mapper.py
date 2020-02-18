@@ -398,6 +398,8 @@ def calculate_average_multiuse(fields, properties_df, occupant_densities, list_u
     :return properties_df: the same DataFrame as the input parameter, but with the updated properties for multiuse
         buildings
     """
+    list_var_names = ["1ST_USE", '2ND_USE', '3RD_USE']
+    list_var_values = ["1ST_USE_R", '2ND_USE_R', '3RD_USE_R']
     properties_DB = properties_DB.set_index('code')
     for column in fields:
         if column in ['Ve_lpspax', 'Qs_Wpax', 'X_ghpax', 'Vww_lpdpax', 'Vw_lpdpax']:
@@ -407,21 +409,12 @@ def calculate_average_multiuse(fields, properties_df, occupant_densities, list_u
                 column_total = 0
                 people_total = 0
                 for use in list_uses:
-                    if use in [properties_df['1ST_USE'][building]]:
-                        column_total += (properties_df['1ST_USE_R'][building]
-                                         * occupant_densities[use]
-                                         * properties_DB[column][use])
-                        people_total += properties_df['1ST_USE_R'][building] * occupant_densities[use]
-                    if use in [properties_df['2ND_USE'][building]]:
-                        column_total += (properties_df['2ND_USE_R'][building]
-                                         * occupant_densities[use]
-                                         * properties_DB[column][use])
-                        people_total += properties_df['2ND_USE_R'][building] * occupant_densities[use]
-                    if use in [properties_df['3RD_USE'][building]]:
-                        column_total += (properties_df['3RD_USE_R'][building]
-                                         * occupant_densities[use]
-                                         * properties_DB[column][use])
-                        people_total += properties_df['3RD_USE_R'][building] * occupant_densities[use]
+                    for var_name, var_value in zip(list_var_names, list_var_values):
+                        if use in [properties_df[var_name][building]]:
+                            column_total += (properties_df[var_value][building]
+                                             * occupant_densities[use]
+                                             * properties_DB[column][use])
+                            people_total += properties_df[var_value][building] * occupant_densities[use]
                 if people_total > 0.0:
                     properties_df.loc[building, column] = column_total / people_total
                 else:
@@ -431,12 +424,10 @@ def calculate_average_multiuse(fields, properties_df, occupant_densities, list_u
             for building in properties_df.index:
                 average = 0.0
                 for use in list_uses:
-                    if use in [properties_df['1ST_USE'][building]]:
-                        average += properties_df['1ST_USE_R'][building] * properties_DB[column][use]
-                    if use in [properties_df['2ND_USE'][building]]:
-                        average += properties_df['2ND_USE_R'][building] * properties_DB[column][use]
-                    if use in [properties_df['3RD_USE'][building]]:
-                        average += properties_df['3RD_USE_R'][building] * properties_DB[column][use]
+                    for var_name, var_value in zip(list_var_names, list_var_values):
+                        if use in [properties_df[var_name][building]]:
+                            average += properties_df[var_value][building] * properties_DB[column][use]
+
 
                 properties_df.loc[building, column] = average
 
