@@ -39,16 +39,32 @@ typology:
   fields:
   - name: Name
     type: str
+  - name: YEAR
+    type: year
   - name: STANDARD
     type: choice
     location:
       path: get_archetypes_properties
       sheet: ARCHITECTURE
       column: code
-  - name: USE
+  - name: 1ST_USE
     type: str
-  - name: YEAR
-    type: year
+  - name: 1ST_USE_R
+    type: float
+    constraints:
+      max: 1
+  - name: 2ND_USE
+    type: str
+  - name: 2ND_USE_R
+    type: float
+    constraints:
+      max: 1
+  - name: 3RD_USE
+    type: str
+  - name: 3RD_USE_R
+    type: float
+    constraints:
+      max: 1
   - name: REFERENCE
     type: str
 internal-loads:

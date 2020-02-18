@@ -73,7 +73,12 @@ def create_new_project(locator, config):
         zone = Gdf.from_file(zone_geometry_path).drop('geometry', axis=1)
         zone['STANDARD'] = 'T6'
         zone['YEAR'] = 2020
-        zone['USE'] = 'MULTI_RES'
+        zone['1ST_USE'] = 'MULTI_RES'
+        zone['1ST_USE_R'] = 1.0
+        zone['2ND_USE'] = "NONE"
+        zone['2ND_USE_R'] = 0.0
+        zone['3RD_USE'] = "NONE"
+        zone['3RD_USE_R'] = 0.0
         dataframe_to_dbf(zone[COLUMNS_ZONE_TYPOLOGY], locator.get_building_typology())
     else:
         # import file

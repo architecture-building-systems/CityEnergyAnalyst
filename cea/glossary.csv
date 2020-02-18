@@ -94,8 +94,13 @@ archetypes-mapper,get_building_internal,,Vw_lpdpax,Peak specific fresh water con
 archetypes-mapper,get_building_internal,,Vww_lpdpax,Peak specific daily hot water consumption,[lpd],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
 archetypes-mapper,get_building_internal,,X_ghpax,Moisture released by occupancy at peak conditions,[gh/kg/p],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
 -,get_building_typology,,YEAR,Construction year,[-],{0...n},int,black,inputs/building-properties/typology.dbf
--,get_building_typology,,STANDARD,Construction Standard,[code],{T1...Tn},float,red,inputs/building-properties/typology.dbf
--,get_building_typology,,USE,Use type,[code],{MULTI_RES...OFFICE},float,orange,inputs/building-properties/typology.dbf
+-,get_building_typology,,STANDARD,Construction Standard,[code],{T1...Tn},string,red,inputs/building-properties/typology.dbf
+-,get_building_typology,,1ST_USE,Building Main Use Type,[code],{MULTI_RES...OFFICE},string,orange,inputs/building-properties/typology.dbf
+-,get_building_typology,,2ND_USE,Building Second Use Type,[code],{MULTI_RES...OFFICE},string,orange,inputs/building-properties/typology.dbf
+-,get_building_typology,,3RD_USE,Building Third Use Type,[code],{MULTI_RES...OFFICE},string,orange,inputs/building-properties/typology.dbf
+-,get_building_typology,,1ST_USE_R,Ratio of gross floor area for Main Use Type,[m2/m2],{0.0...1.0},float,orange,inputs/building-properties/typology.dbf
+-,get_building_typology,,2ND_USE_R,Ratio of gross floor area for Second Use Type,[m2/m2],{0.0...1.0},float,orange,inputs/building-properties/typology.dbf
+-,get_building_typology,,3RD_USE_R,Ratio of gross floor area for Third Use Type,[m2/m2],{0.0...1.0},float,orange,inputs/building-properties/typology.dbf
 -,get_building_typology,,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/building-properties/typology.dbf
 archetypes-mapper,get_building_weekly_schedules,,METADATA,TODO,TODO,TODO,float,black,inputs/building-properties/schedules/B001.csv
 archetypes-mapper,get_building_weekly_schedules,,mixed-schedule,TODO,TODO,TODO,float,black,inputs/building-properties/schedules/B001.csv
