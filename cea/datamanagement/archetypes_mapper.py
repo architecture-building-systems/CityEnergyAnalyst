@@ -160,26 +160,21 @@ def archetypes_mapper(locator,
         calc_mixed_schedule(locator, building_typology_df, buildings)
 
     if update_supply_systems_dbf:
-        supply_DB = pd.read_excel(locator.get_archetypes_properties(), 'SUPPLY')
-        supply_DB['Code'] = supply_DB.apply(lambda x: calc_code(x['building_use'], x['year_start'],
-                                                                x['year_end'], x['standard']), axis=1)
-
-        categories_df['cat_supply'] = calc_category(supply_DB, categories_df, 'HVAC', 'R')
-
-        # define HVAC systems types
-        prop_supply_df = categories_df.merge(supply_DB, left_on='cat_supply', right_on='Code')
-
-        # write to shapefile
-        prop_supply_df_merged = names_df.merge(prop_supply_df, on="Name")
-        fields = ['Name',
-                  'type_cs',
-                  'type_hs',
-                  'type_dhw',
-                  'type_el']
-        dataframe_to_dbf(prop_supply_df_merged[fields], locator.get_building_supply())
+        supply_mapper(locator, building_typology_df)
 
     if update_emission_intensity_dbf:
         emission_intensity_mapper(locator, building_typology_df)
+
+
+def supply_mapper(locator, building_typology_df):
+    supply_DB = pd.read_excel(locator.get_archetypes_properties(), 'SUPPLY')
+    prop_supply_df = building_typology_df.merge(supply_DB, left_on='STANDARD', right_on='code')
+    fields = ['Name',
+              'type_cs',
+              'type_hs',
+              'type_dhw',
+              'type_el']
+    dataframe_to_dbf(prop_supply_df[fields], locator.get_building_supply())
 
 
 def emission_intensity_mapper(locator, building_typology_df):
