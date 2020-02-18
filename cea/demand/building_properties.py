@@ -55,17 +55,11 @@ class BuildingProperties(object):
         prop_geometry['Blength'], prop_geometry['Bwidth'] = self.calc_bounding_box_geom(locator.get_zone_geometry())
         prop_geometry = prop_geometry.drop('geometry', axis=1).set_index('Name')
         prop_hvac = dbf_to_dataframe(locator.get_building_air_conditioning())
-        prop_occupancy_df = dbf_to_dataframe(locator.get_building_typology()).set_index('Name')
+        prop_typology = dbf_to_dataframe(locator.get_building_typology()).set_index('Name')
         # Drop 'REFERENCE' column if it exists
-        if 'REFERENCE' in prop_occupancy_df:
-            prop_occupancy_df.drop('REFERENCE', 1, inplace=True)
-        prop_occupancy_df.fillna(value=0.0, inplace=True)  # fix badly formatted occupancy file...
-        prop_occupancy = prop_occupancy_df.loc[:, (prop_occupancy_df != 0).any(axis=0)]
+        if 'REFERENCE' in prop_typology:
+            prop_typology.drop('REFERENCE', 1, inplace=True)
         prop_architectures = dbf_to_dataframe(locator.get_building_architecture())
-        prop_age = dbf_to_dataframe(locator.get_building_age()).set_index('Name')
-        # Drop 'REFERENCE' column if it exists
-        if 'REFERENCE' in prop_age:
-            prop_age.drop('REFERENCE', 1, inplace=True)
         prop_comfort = dbf_to_dataframe(locator.get_building_comfort()).set_index('Name')
         prop_internal_loads = dbf_to_dataframe(locator.get_building_internal()).set_index('Name')
         prop_supply_systems_building = dbf_to_dataframe(locator.get_building_supply())
@@ -89,7 +83,7 @@ class BuildingProperties(object):
             prop_HVAC_result = self.apply_overrides(prop_HVAC_result)
 
         # get properties of rc demand model
-        prop_rc_model = self.calc_prop_rc_model(locator, prop_occupancy, prop_envelope,
+        prop_rc_model = self.calc_prop_rc_model(locator, prop_typology, prop_envelope,
                                                 prop_geometry, prop_HVAC_result)
 
         # get solar properties
@@ -104,11 +98,11 @@ class BuildingProperties(object):
         self._prop_supply_systems = prop_supply_systems
         self._prop_geometry = prop_geometry
         self._prop_envelope = prop_envelope
-        self._prop_occupancy = prop_occupancy
+        self._prop_typology = prop_typology
         self._prop_HVAC_result = prop_HVAC_result
         self._prop_comfort = prop_comfort
         self._prop_internal_loads = prop_internal_loads
-        self._prop_age = prop_age
+        self._prop_age = prop_typology[['Name','YEAR']]
         self._solar = solar
         self._prop_RC_model = prop_rc_model
 
@@ -153,8 +147,8 @@ class BuildingProperties(object):
         return self._prop_RC_model.index
 
     def list_uses(self):
-        """get list of all uses (occupancy types)"""
-        return list(self._prop_occupancy.columns)
+        """get list of all uses (typology types)"""
+        return list(set(self._prop_typology['USE'].values))
 
     def get_prop_supply_systems(self, name_building):
         """get geometry of a building by name"""
@@ -168,9 +162,9 @@ class BuildingProperties(object):
         """get the architecture and thermal properties of a building by name"""
         return self._prop_envelope.ix[name_building].to_dict()
 
-    def get_prop_occupancy(self, name_building):
-        """get the occupancy properties of a building by name"""
-        return self._prop_occupancy.ix[name_building].to_dict()
+    def get_prop_typology(self, name_building):
+        """get the typology properties of a building by name"""
+        return self._prop_typology.ix[name_building].to_dict()
 
     def get_prop_hvac(self, name_building):
         """get HVAC properties of a building by name"""
@@ -196,16 +190,16 @@ class BuildingProperties(object):
         """get solar properties of a building by name"""
         return self._solar.ix[name_building]
 
-    def calc_prop_rc_model(self, locator, occupancy, envelope, geometry, hvac_temperatures):
+    def calc_prop_rc_model(self, locator, typology, envelope, geometry, hvac_temperatures):
         """
         Return the RC model properties for all buildings. The RC model used is described in ISO 13790:2008, Annex C (Full
         set of equations for simple hourly method).
 
-        :param occupancy: The contents of the `occupancy.shp` file, indexed by building name. Each column is the name of an
-            occupancy type (GYM, HOSPITAL, HOTEL, INDUSTRIAL, MULTI_RES, OFFICE, PARKING, etc.) except for the
+        :param typology: The contents of the `typology.shp` file, indexed by building name. Each column is the name of an
+            typology type (GYM, HOSPITAL, HOTEL, INDUSTRIAL, MULTI_RES, OFFICE, PARKING, etc.) except for the
             "PFloor" column which is a fraction of heated floor area.
-            The occupancy types must add up to 1.0.
-        :type occupancy: Gdf
+            The typology types must add up to 1.0.
+        :type typology: Gdf
 
         :param envelope: The contents of the `architecture.shp` file, indexed by building name.
             It contains the following fields:
@@ -263,7 +257,8 @@ class BuildingProperties(object):
         """
 
         # calculate building geometry
-        df = self.geometry_reader_radiation_daysim(locator, envelope, occupancy, geometry)
+        df = self.geometry_reader_radiation_daysim(locator, envelope, geometry)
+        df = df.merge(typology, left_index=True, right_index=True)
         df = df.merge(hvac_temperatures, left_index=True, right_index=True)
 
         for building in df.index.values:
@@ -310,7 +305,7 @@ class BuildingProperties(object):
 
         return result
 
-    def geometry_reader_radiation_daysim(self, locator, envelope, occupancy, geometry):
+    def geometry_reader_radiation_daysim(self, locator, envelope, geometry):
         """
 
         Reader which returns the radiation specific geometries from Daysim. Adjusts the imported data such that it is
@@ -320,7 +315,7 @@ class BuildingProperties(object):
 
         :param envelope: The contents of the `architecture.shp` file, indexed by building name.
 
-        :param occupancy: The contents of the `occupancy.shp` file, indexed by building name.
+        :param typology: The contents of the `typology.shp` file, indexed by building name.
 
         :param geometry: The contents of the `zone.shp` file indexed by building name.
 
@@ -366,7 +361,7 @@ class BuildingProperties(object):
                                                   geometry_data['windows_north_m2'][0]
             envelope.ix[building_name, 'Aroof'] = geometry_data['roofs_top_m2'][0]
 
-        df = envelope.merge(occupancy, left_index=True, right_index=True)
+        df = envelope.merge(typology, left_index=True, right_index=True)
         df = df.merge(geometry, left_index=True, right_index=True)
 
         def calc_empty_envelope_ratio(void_deck_floors, height, floors, Awall, Awin):
@@ -420,7 +415,7 @@ class BuildingProperties(object):
         return BuildingPropertiesRow(name=building_name,
                                      geometry=self.get_prop_geometry(building_name),
                                      envelope=self.get_prop_envelope(building_name),
-                                     occupancy=self.get_prop_occupancy(building_name),
+                                     typology=self.get_prop_typology(building_name),
                                      hvac=self.get_prop_hvac(building_name),
                                      rc_model=self.get_prop_rc_model(building_name),
                                      comfort=self.get_prop_comfort(building_name),
@@ -451,7 +446,7 @@ class BuildingPropertiesRow(object):
     """Encapsulate the data of a single row in the DataSets of BuildingProperties. This class meant to be
     read-only."""
 
-    def __init__(self, name, geometry, envelope, occupancy, hvac,
+    def __init__(self, name, geometry, envelope, typology, hvac,
                  rc_model, comfort, internal_loads, age, solar, supply):
         """Create a new instance of BuildingPropertiesRow - meant to be called by BuildingProperties[building_name].
         Each of the arguments is a pandas Series object representing a row in the corresponding DataFrame."""
@@ -459,7 +454,7 @@ class BuildingPropertiesRow(object):
         self.name = name
         self.geometry = geometry
         self.architecture = EnvelopeProperties(envelope)
-        self.occupancy = occupancy  # FIXME: rename to uses!
+        self.typology = typology  # FIXME: rename to uses!
         self.hvac = hvac
         self.rc_model = rc_model
         self.comfort = comfort

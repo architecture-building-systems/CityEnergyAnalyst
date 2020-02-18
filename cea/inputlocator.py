@@ -680,10 +680,6 @@ class InputLocator(object):
         """scenario/outputs/data/solar-radiation/district.gml"""
         return os.path.join(self.get_solar_radiation_folder(), 'district.gml')
 
-    def get_building_age(self):
-        """scenario/inputs/building-properties/age.dbf"""
-        return os.path.join(self.get_building_properties_folder(), 'age.dbf')
-
     def get_building_typology(self):
         """scenario/inputs/building-properties/building_occupancy.dbf"""
         return os.path.join(self.get_building_properties_folder(), 'typology.dbf')
