@@ -1,13 +1,12 @@
 """
 Energyplus file reader
 """
+from __future__ import division
 import pandas as pd
-
 import math
 import cea.inputlocator
 import numpy as np
-from cea.utilities.physics import BOLTZMANN
-from cea.constants import HOURS_IN_YEAR
+from cea.constants import HOURS_IN_YEAR, BOLTZMANN, KELVIN_OFFSET
 
 __author__ = "Clayton Miller"
 __copyright__ = "Copyright 2014, Architecture and Building Systems - ETH Zurich"
@@ -52,9 +51,9 @@ def calc_skytemp(Tdrybulb, Tdewpoint, N):
     :return: sky temperature [C]
     """
 
-    sky_e = (0.787 + 0.764 * math.log((Tdewpoint + 273) / 273)) * (1 + 0.0224 * N - 0.0035 * N ** 2 + 0.00028 * N ** 3)
-    hor_IR = sky_e * BOLTZMANN * (Tdrybulb + 273) ** 4
-    sky_T = ((hor_IR / BOLTZMANN) ** 0.25) - 273
+    sky_e = (0.787 + 0.764 * math.log((Tdewpoint + KELVIN_OFFSET) / KELVIN_OFFSET)) * (1 + 0.0224 * N - 0.0035 * N ** 2 + 0.00028 * N ** 3)
+    hor_IR = sky_e * BOLTZMANN * (Tdrybulb + KELVIN_OFFSET) ** 4
+    sky_T = ((hor_IR / BOLTZMANN) ** 0.25) - KELVIN_OFFSET
 
     return sky_T  # sky temperature in C
 
