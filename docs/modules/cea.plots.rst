@@ -13,7 +13,6 @@ Subpackages
 
     cea.plots.comparisons
     cea.plots.demand
-    cea.plots.life_cycle
     cea.plots.optimization
     cea.plots.solar_potential
     cea.plots.supply_system
