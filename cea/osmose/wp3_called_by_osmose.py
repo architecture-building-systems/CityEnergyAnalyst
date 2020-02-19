@@ -27,32 +27,59 @@ OSMOSE_PROJECT_PATH = "E:\\OSMOSE_projects\\HCS_mk\\results\\N_base"
 def main(path_to_case):
     # INITIALIZE TIMER
     t0 = time.clock()
-    ## 1. CALCULATE SUBSTATION MASSFLOW
-    substation_flow_rate_m3pers_df, T_supply_K, timesteps, substation_A_hex_df = write_cea_demand_from_osmose(path_to_case)
-    max_substation_flow_rate_m3pers = substation_flow_rate_m3pers_df.max().to_frame().T
+    ## 1. TRANSFORM OSMOSE DATA TO CEA FORMAT
+    substation_flow_rate_m3pers_df, \
+    T_supply_K, \
+    timesteps, \
+    substation_A_hex_df = write_cea_demand_from_osmose(path_to_case)
 
-    ## 2. PRE-CALCULATED METADATA
-    edge_node_df, all_nodes_df, edge_length_df = get_precalculated_metadata(path_to_case)
+    ## 2. GET NETWORK INFO
+    edge_node_df, all_nodes_df, edge_length_df = get_network_info(path_to_case)
 
-    ## 3. PIPE SIZING
-    D_ins_m, plant_index, plant_node = get_pipe_sizes(all_nodes_df, edge_node_df, max_substation_flow_rate_m3pers,
-                                                      path_to_case)
+    ## 3. PIPE SIZING & COSTS
+    D_ins_m, Cinv_pipe_perm, \
+    plant_index, plant_node = get_pipe_sizes(all_nodes_df, edge_node_df,
+                                             substation_flow_rate_m3pers_df, path_to_case)
+    Cinv_network_pipes = calc_Cinv_network_pipes(edge_length_df, Cinv_pipe_perm)
 
-    ## 4. Piping cost calculation
-
-
-    ## 5. Substation cost calculation
+    ## 5. SUBSTATION COSTS
     substation_A_hex_df['Cinv_hex'] = np.vectorize(calc_Cinv_substation_hex)(substation_A_hex_df)
 
+    ## 6. PUMPING COSTS
+    pressure_losses_in_edges_Pa_df = calc_network_pressure_losses(D_ins_m, T_supply_K, all_nodes_df, edge_length_df,
+                                                                  edge_node_df, plant_index, plant_node,
+                                                                  substation_flow_rate_m3pers_df)
+
+    # electricity consumption # TODO:add substation head loss at critical building and plant
+    plant_pressure_losses_Pa = pressure_losses_in_edges_Pa_df.sum(axis=1)
+    plant_flow_rate_m3pers = substation_flow_rate_m3pers_df.sum(axis=1)
+    plant_pumping_kW = plant_pressure_losses_Pa.values * plant_flow_rate_m3pers.values / 1000 / PUMP_ETA
+    annual_pumping_energy_kWh = sum(plant_pumping_kW)*int(HOURS_IN_YEAR / timesteps) # match yearly hours
+
+    # pump size
+    Cinv_pump, pump_size_kW = calc_Cinv_pumps(plant_pumping_kW)
+    time_elapsed = time.clock() - t0
+    print('done - time elapsed: %d.2f seconds' % time_elapsed)
+
+    # results
+    results_dict = {'pumping_kWh': annual_pumping_energy_kWh,
+                    'Cinv_pump': Cinv_pump,
+                    'Cinv_hex': substation_A_hex_df['Cinv_hex'].sum(),
+                    'Cinv_pipes': Cinv_network_pipes}
+    import csv
+    with open(os.path.join(path_to_case,'pass_to_osmose.csv'), 'w') as f:
+        for key in results_dict.keys():
+            f.write("%s,%s\n" % (key, str(results_dict[key])))
+    return
 
 
-    ## 5. Calculate Pressure Losses
+def calc_network_pressure_losses(D_ins_m, T_supply_K, all_nodes_df, edge_length_df, edge_node_df, plant_index,
+                                 plant_node, substation_flow_rate_m3pers_df):
     # write building flowrates into node_flows_at_substations_df
     node_flowrates_at_substations_df = write_substation_flowrates_into_nodes(all_nodes_df, edge_node_df, plant_node,
                                                                              substation_flow_rate_m3pers_df)
     # calculate flowrate in each edge (Ax = b)
     flows_in_edges_m3pers_df = calculate_flow_in_edges(edge_node_df, node_flowrates_at_substations_df, plant_index)
-
     # calculate pressure losses in each edge
     pressure_losses_in_edges_Pa = []
     for edge in flows_in_edges_m3pers_df.columns:
@@ -64,30 +91,9 @@ def main(path_to_case):
     pressure_losses_in_edges_Pa_df = pd.DataFrame(pressure_losses_in_edges_Pa).T
     pressure_losses_in_edges_Pa_df = pd.DataFrame(pressure_losses_in_edges_Pa_df.values, columns=edge_node_df.columns)
 
-    ## 6. Pumping Energy
-    # critical path
-
-
-    # electricity consumption # TODO:add substation head loss at critical building and plant
-    plant_pressure_losses_Pa = pressure_losses_in_edges_Pa_df.sum(axis=1)
-    plant_flow_rate_m3pers = substation_flow_rate_m3pers_df.sum(axis=1)
-    plant_pumping_kW = plant_pressure_losses_Pa.values * plant_flow_rate_m3pers.values / 1000 / PUMP_ETA
-    annual_pumping_energy_kWh = sum(plant_pumping_kW)*int(HOURS_IN_YEAR / timesteps) # match yearly hours
-
-    # pump size
-    pump_size_kW = max(plant_pumping_kW)
-    time_elapsed = time.clock() - t0
-    print('done - time elapsed: %d.2f seconds' % time_elapsed)
-
-    # results
-    results_dict = {'pumping_kWh': annual_pumping_energy_kWh,
-                    'pump_size_kW': pump_size_kW,
-                    'Cinv_hex': substation_A_hex_df['Cinv_hex'].sum()}
-    import csv
-    with open(os.path.join(path_to_case,'pass_to_osmose.csv'), 'w') as f:
-        for key in results_dict.keys():
-            f.write("%s,%s\n" % (key, str(results_dict[key])))
-    return
+    # TODO: supply and return
+    # TODO: critical paths
+    return pressure_losses_in_edges_Pa_df
 
 
 ## ====== Processing ============ #
@@ -161,7 +167,7 @@ def write_cea_demand_from_osmose(path_to_district_folder):
     # substation_flow_rate_m3pers_df = substation_flow_rate_m3pers_df.drop(columns=['index'])
     return substation_flow_rate_m3pers_df, T_supply_K, timesteps, substation_A_hex
 
-def get_precalculated_metadata(path_to_case):
+def get_network_info(path_to_case):
     path_to_thermal_network = os.path.join(path_to_case, 'outputs\\data\\thermal-network\\')
     # get edge node matrix
     path_to_edge_node_matrix = os.path.join('', *[path_to_thermal_network, "DC__EdgeNode.csv"])
@@ -227,19 +233,28 @@ def get_Ts_Tr_from_txt(icc_file_name, icc_folder_path):
 
 ## ========= Cost Calculations ============ ##
 
-def pipe_costs(self, locator, network_name, network_type):
-    edges_file = pd.read_csv(locator.get_thermal_network_edge_list_file(network_type, network_name))
-    piping_cost_data = pd.read_excel(locator.get_database_supply_systems(), sheet_name="PIPING")
-    merge_df = edges_file.merge(piping_cost_data, left_on='Pipe_DN', right_on='Pipe_DN')
-    merge_df['Inv_USD2015'] = merge_df['Inv_USD2015perm'] * merge_df['length_m']
-    pipe_costs = merge_df['Inv_USD2015'].sum()
-    return pipe_costs
+def calc_Cinv_network_pipes(edge_length_df, Cinv_pipe_perm):
+    Cinv_network_pipes = sum(edge_length_df['length_m'] * Cinv_pipe_perm * 2)
+    return Cinv_network_pipes
 
 def calc_Cinv_substation_hex(A_hex_m2):
 
     C_inv_hex = 7000 + 260 * A_hex_m2 ** 0.8
 
     return C_inv_hex
+
+def calc_Cinv_pumps(plant_pumping_kW):
+    pump_size_kW = max(plant_pumping_kW)
+    if pump_size_kW <= 4.0 :
+        min_pump_size_kW = 0.5
+        if pump_size_kW < min_pump_size_kW :
+            Cinv_pump = 29.314 * min_pump_size_kW ** 0.5216
+        else: Cinv_pump = 29.314 * pump_size_kW ** 0.5216
+    elif(pump_size_kW <= 37.0) and (4.0 < pump_size_kW):
+        Cinv_pump = 4.323 * pump_size_kW ** 0.7464
+    else:
+        Cinv_pump = 1.0168 * pump_size_kW ** 0.8873
+    return Cinv_pump, pump_size_kW
 
 ##========== Pressure Calculations ======== ##
 
@@ -307,7 +322,8 @@ def solve_Ax_b(A, node_flows_at_substations_t):
     flow_in_edges = np.linalg.solve(A, b)
     return flow_in_edges
 
-def get_pipe_sizes(all_nodes_df, edge_node_df, max_substation_flow_rate_m3pers, path_to_case):
+def get_pipe_sizes(all_nodes_df, edge_node_df, substation_flow_rate_m3pers_df, path_to_case):
+    max_substation_flow_rate_m3pers = substation_flow_rate_m3pers_df.max().to_frame().T
     # get plant_index
     plant_node = all_nodes_df.loc[all_nodes_df['Type'] == 'PLANT', 'Name'].values[0]
     plant_index = np.where(edge_node_df.index == plant_node)[0][0]
@@ -316,17 +332,18 @@ def get_pipe_sizes(all_nodes_df, edge_node_df, max_substation_flow_rate_m3pers, 
                                                                   edge_node_df)
     max_flow_in_edges_m3pers = calc_flow_in_edges(edge_node_df, max_flow_at_substations_df, plant_index)
     # get pipe catalog
-    path_to_pipe_catalog = os.path.join(path_to_case, 'inputs\\technology\\systems\\supply_systems.xls')
-    pipe_catalog_df = pd.read_excel(path_to_pipe_catalog, sheet_name='PIPING')
+    path_to_supply_systems = os.path.join(path_to_case, 'inputs\\technology\\systems\\supply_systems.xls')
+    pipe_catalog_df = pd.read_excel(path_to_supply_systems, sheet_name='PIPING')
     # get pipe sizes
     velocity_mpers = 2
     peak_load_percentage = 70
-    Pipe_DN, D_ext_m, D_int_m, D_ins_m = zip(
+    Pipe_DN, D_ext_m, D_int_m, D_ins_m, Cinv_pipe = zip(
         *[calc_max_diameter(flow, pipe_catalog_df, velocity_ms=velocity_mpers,
                             peak_load_percentage=peak_load_percentage) for
           flow in max_flow_in_edges_m3pers])
     D_ins_m = pd.Series(D_ins_m, index=edge_node_df.columns)
-    return D_ins_m, plant_index, plant_node
+    Cinv_pipe_perm = pd.Series(Cinv_pipe, index=edge_node_df.columns)
+    return D_ins_m, Cinv_pipe_perm, plant_index, plant_node
 
 def calc_max_diameter(volume_flow_m3s, pipe_catalog, velocity_ms, peak_load_percentage):
     """
@@ -339,16 +356,18 @@ def calc_max_diameter(volume_flow_m3s, pipe_catalog, velocity_ms, peak_load_perc
     """
     volume_flow_m3s_corrected_to_design = volume_flow_m3s * peak_load_percentage / 100
     diameter_m = math.sqrt((volume_flow_m3s_corrected_to_design / velocity_ms) * (4 / math.pi))
-    slection_of_catalog = pipe_catalog.ix[(pipe_catalog['D_int_m'] - diameter_m).abs().argsort()[:1]]
-    D_int_m = slection_of_catalog['D_int_m'].values[0]
-    Pipe_DN = slection_of_catalog['Pipe_DN'].values[0]
-    D_ext_m = slection_of_catalog['D_ext_m'].values[0]
-    D_ins_m = slection_of_catalog['D_ins_m'].values[0]
+    selection_of_catalog = pipe_catalog.ix[(pipe_catalog['D_int_m'] - diameter_m).abs().argsort()[:1]]
+    D_int_m = selection_of_catalog['D_int_m'].values[0]
+    Pipe_DN = selection_of_catalog['Pipe_DN'].values[0]
+    D_ext_m = selection_of_catalog['D_ext_m'].values[0]
+    D_ins_m = selection_of_catalog['D_ins_m'].values[0]
+    Cinv_pipe = selection_of_catalog['Inv_USD2015perm'].values[0]
 
-    return Pipe_DN, D_ext_m, D_int_m, D_ins_m
+    return Pipe_DN, D_ext_m, D_int_m, D_ins_m, Cinv_pipe
 
 
 ##========== UTILITY FUNCTIONS ============ ##
+
 def write_substation_values_to_nodes(substation_flow_df, all_nodes_df, edge_node_df):
     node_flows_at_substations_df = np.nan_to_num(
         [substation_flow_df[all_nodes_df.loc[all_nodes_df['Name'] == node, 'Building'].values[0]][0]
