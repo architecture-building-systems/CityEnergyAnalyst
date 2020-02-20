@@ -253,7 +253,7 @@ class CEARad(py2radiance.Rad):
         wfilename_no_extension = tail.replace(".epw", "")
         weaweatherfilename = wfilename_no_extension + "_60min.wea"
         weaweatherfile = os.path.join(daysimdir_wea, weaweatherfilename)
-        command1 = "epw2wea" + ' "' + epwweatherfile + '" "' + weaweatherfile + '"'
+        command1 = 'epw2wea "{}" "{}"'.format(epwweatherfile, weaweatherfile)
         f = open(self.command_file, "a")
         f.write(command1)
         f.write("\n")
@@ -308,12 +308,12 @@ class CEARad(py2radiance.Rad):
         hea_file.write("\ngeometry_file" + " " + os.path.join("rad", radfilename + "_geometry.rad"))
         hea_file.write("\nradiance_source_files 2," + radgeomfilepath + "," + radmaterialfile)
         hea_file.close()
-        command1 = "radfiles2daysim" + " " + tail + " " + "-g" + " " + "-m" + " " + "-d"
+        command1 = 'radfiles2daysim "{}" -g -m -d'.format(hea_filepath)
         f = open(self.command_file, "a")
         f.write(command1)
         f.write("\n")
         f.close()
-        self.run_cmd(command1, cwd=head)
+        self.run_cmd(command1)
 
     def execute_gen_dc(self, output_unit):
         hea_filepath = self.hea_file
@@ -339,9 +339,6 @@ class CEARad(py2radiance.Rad):
         # write analysis result file
         head, tail = os.path.split(hea_filepath)
         tail = tail.replace(".hea", "")
-        # hea_file.write("\nDDS_sensor_file" + " " + os.path.join("res", tail + ".dds"))
-        # hea_file.write("\nDDS_file" + " " + os.path.join("res", tail + ".sen"))
-        # write output unit
         nsensors = len(self.sensor_positions)
         sensor_str = ""
         if output_unit == "w/m2":
@@ -387,9 +384,9 @@ class CEARad(py2radiance.Rad):
 
         _head, _tail = os.path.split(temp_hea_filepath)
         # execute gen_dc
-        command1 = "gen_dc" + " " + _tail + " " + "-dir"
-        command2 = "gen_dc" + " " + _tail + " " + "-dif"
-        command3 = "gen_dc" + " " + _tail + " " + "-paste"
+        command1 = 'gen_dc "{}" -dir'.format(temp_hea_filepath)
+        command2 = 'gen_dc "{}" -dif'.format(temp_hea_filepath)
+        command3 = 'gen_dc "{}" -paste'.format(temp_hea_filepath)
         f = open(self.command_file, "a")
         f.write(command1)
         f.write("\n")
@@ -398,21 +395,21 @@ class CEARad(py2radiance.Rad):
         f.write(command3)
         f.write("\n")
         f.close()
-        self.run_cmd(command1, cwd=_head)
-        self.run_cmd(command2, cwd=_head)
-        self.run_cmd(command3, cwd=_head)
+        self.run_cmd(command1)
+        self.run_cmd(command2)
+        self.run_cmd(command3)
 
     def execute_ds_illum(self):
         hea_filepath = self.hea_file
         head, tail = os.path.split(hea_filepath)
 
         # execute ds_illum
-        command1 = "ds_illum" + " " + tail
+        command1 = 'ds_illum "{}"'.format(hea_filepath)
         f = open(self.command_file, "a")
         f.write(command1)
         f.write("\n")
         f.close()
-        self.run_cmd(command1, cwd=head)
+        self.run_cmd(command1)
 
 def main(config):
     """
