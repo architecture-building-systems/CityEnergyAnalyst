@@ -379,7 +379,6 @@ def get_prop_architecture(typology_df, architecture_DB):
     return prop_architecture_df
 
 
-# FIXME: `fields` parameter might be redundant
 def calculate_average_multiuse(fields, properties_df, occupant_densities, list_uses, properties_DB, list_var_names=None,
                                list_var_values=None):
     """
