@@ -268,7 +268,7 @@ class Plots(object):
 
         for scenario, scenario_name in zip(self.scenarios, scenarios_clean):
             locator = cea.inputlocator.InputLocator(scenario)
-            district_occupancy_df = dbf_to_dataframe(locator.get_building_occupancy())
+            district_occupancy_df = dbf_to_dataframe(locator.get_building_typology())
             district_occupancy_df.set_index('Name', inplace=True)
             district_gfa_df = pd.read_csv(locator.get_total_demand())[['GFA_m2'] + ["Name"]]
             district_gfa_df.set_index('Name', inplace=True)

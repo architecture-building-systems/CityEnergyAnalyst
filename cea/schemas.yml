@@ -1018,36 +1018,6 @@ get_archetypes_properties:
       Reference:
         types_found: [string]
   used_by: [archetypes_mapper]
-get_building_age:
-  created_by: []
-  file_path: inputs/building-properties/age.dbf
-  file_type: dbf
-  schema:
-    HVAC:
-      sample_data: 0
-      types_found: [int]
-    Name:
-      sample_data: B09
-      types_found: [string]
-    basement:
-      sample_data: 0
-      types_found: [int]
-    built:
-      sample_data: 2016
-      types_found: [int]
-    envelope:
-      sample_data: 0
-      types_found: [int]
-    partitions:
-      sample_data: 0
-      types_found: [int]
-    roof:
-      sample_data: 0
-      types_found: [int]
-    windows:
-      sample_data: 0
-      types_found: [int]
-  used_by: [archetypes_mapper, demand, emissions]
 get_building_air_conditioning:
   created_by: [archetypes_mapper]
   file_path: inputs/building-properties/air_conditioning_systems.dbf

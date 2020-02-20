@@ -96,7 +96,7 @@ def lca_embodied(year_to_calculate, locator):
     """
 
     # local variables
-    age_df = dbf_to_dataframe(locator.get_building_age())
+    age_df = dbf_to_dataframe(locator.get_building_typology())
     architecture_df = dbf_to_dataframe(locator.get_building_architecture())
     emission_df = dbf_to_dataframe(locator.get_building_emission_intensity())
     geometry_df = Gdf.from_file(locator.get_zone_geometry())
@@ -175,10 +175,9 @@ def calculate_contributions(df, year_to_calculate):
     # calculate the embodied energy/emissions due to construction
     total_column = 'saver'
     ## calculate how many years before the calculation year the building was built in
-    df['delta_year'] = year_to_calculate - df['built']
+    df['delta_year'] = year_to_calculate - df['YEAR']
     ## if it was built more than 60 years before, the embodied energy/emissions have been "paid off" and are set to 0
-    df['confirm'] = df.apply(
-        lambda x: calc_if_existing(x['delta_year'], SERVICE_LIFE_OF_BUILDINGS), axis=1)
+    df['confirm'] = df.apply(lambda x: calc_if_existing(x['delta_year'], SERVICE_LIFE_OF_BUILDINGS), axis=1)
     ## if it was built less than 60 years before, the contribution from each building component is calculated
     df[total_column] = ((df['W_e_ag_kgm2'] * df['area_walls_ext_ag'] +
                          df['W_e_bg_kgm2'] * df['area_walls_ext_bg'] +
@@ -191,47 +190,6 @@ def calculate_contributions(df, year_to_calculate):
                          df['Exca_kgm2'] * df['footprint']) / SERVICE_LIFE_OF_BUILDINGS) * df['confirm']
 
     df[total_column] += (((df['floor_area_ag'] + df['footprint']) * df['Tech_kgm2']) / SERVICE_LIFE_OF_TECHNICAL_SYSTEMS) * df['confirm']
-
-    # calculate the embodied energy/emissions due to retrofits
-    # if a component was retrofitted more than 60 years before, its contribution has been "paid off" and is set to 0
-    ## contributions due to envelope retrofit
-    df['delta_year'] = year_to_calculate - df['envelope']
-    df['confirm'] = df.apply(lambda x: calc_if_existing(x['delta_year'], SERVICE_LIFE_OF_BUILDINGS),
-                             axis=1)
-    df[total_column] += df['W_e_ag_kgm2'] * df['area_walls_ext_ag'] * df['confirm'] / SERVICE_LIFE_OF_BUILDINGS
-
-    ## contributions due to roof retrofit
-    df['delta_year'] = year_to_calculate - df['roof']
-    df['confirm'] = df.apply(lambda x: calc_if_existing(x['delta_year'], SERVICE_LIFE_OF_BUILDINGS), axis=1)
-    df[total_column] += df['R_kgm2'] * df['footprint'] * df['confirm'] / SERVICE_LIFE_OF_BUILDINGS
-
-    ## contributions due to windows retrofit
-    df['delta_year'] = year_to_calculate - df['windows']
-    df['confirm'] = df.apply(lambda x: calc_if_existing(x['delta_year'], SERVICE_LIFE_OF_BUILDINGS),
-                             axis=1)
-    df[total_column] += df['windows_ag'] * df['Win_kgm2'] * df['confirm'] / SERVICE_LIFE_OF_BUILDINGS
-
-    ## contributions due to partitions retrofit
-    df['delta_year'] = year_to_calculate - df['partitions']
-    df['confirm'] = df.apply(lambda x: calc_if_existing(x['delta_year'], SERVICE_LIFE_OF_BUILDINGS), axis=1)
-    df[total_column] += (df['floor_area_ag'] * df['F_i_kgm2'] +
-                         df['floor_area_ag'] * df['W_i_ag_kgm2'] * CONVERSION_AREA_TO_FLOOR_AREA_RATIO +
-                         df['footprint'] * df['W_i_bg_kgm2'] * CONVERSION_AREA_TO_FLOOR_AREA_RATIO /
-                         SERVICE_LIFE_OF_BUILDINGS) * df['confirm']
-
-    ## contributions due to basement_df
-    df['delta_year'] = year_to_calculate - df['basement']
-    df['confirm'] = df.apply(lambda x: calc_if_existing(x['delta_year'], SERVICE_LIFE_OF_BUILDINGS),
-                             axis=1)
-    df[total_column] += (df['footprint'] * df['F_e_kgm2'] +
-                         df['W_e_bg_kgm2'] * df['area_walls_ext_bg'] / SERVICE_LIFE_OF_BUILDINGS) * df['confirm']
-
-    ## contributions due to HVAC_df
-    df['delta_year'] = year_to_calculate - df['HVAC']
-    df['confirm'] = df.apply(lambda x: calc_if_existing(x['delta_year'], SERVICE_LIFE_OF_TECHNICAL_SYSTEMS),
-                             axis=1)
-    df[total_column] += ((df['floor_area_ag'] + df['footprint']) * df['Tech_kgm2']) * df[
-        'confirm'] / SERVICE_LIFE_OF_TECHNICAL_SYSTEMS
 
     # the total embodied energy/emissions are calculated as a sum of the contributions from construction and retrofits
     df['GHG_sys_embodied_tonCO2'] = df[total_column] / 1000  # kG-CO2 eq to ton

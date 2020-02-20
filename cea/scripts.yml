@@ -8,8 +8,7 @@ Data Management:
     parameters: ['general:scenario', archetypes-mapper]
     input-files:
       - [get_zone_geometry]
-      - [get_building_age]
-      - [get_building_occupancy]
+      - [get_building_typology]
 
   - name: weather-helper
     label: Weather helper
@@ -96,9 +95,8 @@ Demand forecasting:
       - [get_database_air_conditioning_systems]
       - [get_building_comfort]
       - [get_building_internal]
-      - [get_building_age]
       - [get_building_architecture]
-      - [get_building_occupancy]
+      - [get_building_typology]
       - [get_building_air_conditioning]
       - [get_building_supply]
       - [get_building_weekly_schedules, building_name]
@@ -117,9 +115,8 @@ Life Cycle Analysis:
     parameters: ['general:scenario', emissions]
     input-files:
       - [get_total_demand]
-      - [get_building_age]
       - [get_building_architecture]
-      - [get_building_occupancy]
+      - [get_building_typology]
       - [get_zone_geometry]
       - [get_building_supply]
       - [get_building_emission_intensity]
@@ -281,22 +278,37 @@ Utilities:
     module: cea.utilities.dbf
     parameters: ['general:scenario', 'dbf-tools:input-file', 'dbf-tools:output-path','dbf-tools:output-file-name' ]
 
-  - name: test
-    label: Test CEA
-    description: Run some tests on the CEA
+  - name: data-initializer
+    label: Database Initializer
+    description: Initialize databases for CEA
     interfaces: [cli, arcgis, dashboard]
-    module: cea.tests.dodo
-    parameters: [test]
+    module: cea.datamanagement.data_initializer
+    parameters: ['general:scenario', data-initializer]
 
   - name: rename-building
     label: Rename building
     description: Renames a building in the input files
-    interfaces: [cli, dashboard]
+    interfaces: [cli, arcgis, dashboard]
     module: cea.utilities.rename_building
     parameters: ['general:scenario', rename-building]
     input-files:
       - [get_zone_geometry]
 
+  - name: create-mixed-use-type
+    label: Create mixed use-type
+    description: Creates a new use-type by aggregating values from a list of different use-types
+    interfaces: [cli, dashboard]
+    module: cea.utilities.create_mixed_use_type
+    parameters: ['general:scenario', create-mixed-use-type]
+    input-files:
+      - [get_use_types_properties]
+
+  - name: test
+    label: Test CEA
+    description: Run some tests on the CEA
+    interfaces: [cli, arcgis dashboard]
+    module: cea.tests.dodo
+    parameters: [test]
 
 default:
 
@@ -306,13 +318,6 @@ default:
     interfaces: [cli, arcgis]
     module: cea.analysis.multicriteria.main
     parameters: ['general:scenario', multi-criteria]
-
-  - name: data-initializer
-    label: DataBase Initializer
-    description: Initialize databases for CEA
-    interfaces: [cli, arcgis]
-    module: cea.datamanagement.data_initializer
-    parameters: ['general:scenario', data-initializer]
 
   - name: zone-helper
     label: Zone helper
