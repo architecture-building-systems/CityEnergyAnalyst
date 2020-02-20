@@ -46,14 +46,6 @@ SCRIPT,LOCATOR_METHOD,WORKSHEET,VARIABLE,DESCRIPTION,UNIT,VALUES,TYPE,COLOR,FILE
 -,get_zone_geometry,,height_ag,Aggregated height of the walls.,[m],{0.0...n},float,black,inputs/building-geometry/zone.shp
 -,get_zone_geometry,,height_bg,"Height below ground (basement, etc)",[m],{0.0...n},float,black,inputs/building-geometry/zone.shp
 -,get_zone_geometry,,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/building-geometry/zone.shp
--,get_building_age,,basement,Year of last retrofit of basement (0 if none),[-],{0...n},int,black,inputs/building-properties/age.dbf
--,get_building_age,,built,Construction year,[-],{0...n},int,black,inputs/building-properties/age.dbf
--,get_building_age,,envelope,Year of last retrofit of building facades (0 if none),[-],{0...n},int,black,inputs/building-properties/age.dbf
--,get_building_age,,HVAC,Year of last retrofit of HVAC systems (0 if none),[-],{0...n},int,black,inputs/building-properties/age.dbf
--,get_building_age,,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/building-properties/age.dbf
--,get_building_age,,partitions,Year of last retrofit of internal wall partitions(0 if none),[-],{0...n},int,black,inputs/building-properties/age.dbf
--,get_building_age,,roof,Year of last retrofit of roof (0 if none),[-],{0...n},int,black,inputs/building-properties/age.dbf
--,get_building_age,,windows,Year of last retrofit of windows (0 if none),[-],{0...n},int,black,inputs/building-properties/age.dbf
 archetypes-mapper,get_building_air_conditioning,,cool_ends,End of the cooling season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black,inputs/building-properties/air_conditioning_systems.dbf
 archetypes-mapper,get_building_air_conditioning,,cool_starts,Start of the cooling season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black,inputs/building-properties/air_conditioning_systems.dbf
 archetypes-mapper,get_building_air_conditioning,,heat_ends,End of the heating season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black,inputs/building-properties/air_conditioning_systems.dbf
@@ -101,23 +93,15 @@ archetypes-mapper,get_building_internal,,Qs_Wpax,Peak sensible heat load of peop
 archetypes-mapper,get_building_internal,,Vw_lpdpax,Peak specific fresh water consumption (includes cold and hot water),[lpd],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
 archetypes-mapper,get_building_internal,,Vww_lpdpax,Peak specific daily hot water consumption,[lpd],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
 archetypes-mapper,get_building_internal,,X_ghpax,Moisture released by occupancy at peak conditions,[gh/kg/p],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
--,get_building_occupancy,,COOLROOM,Refrigeration rooms,[m2],{0.0...1},float,red,inputs/building-properties/occupancy.dbf
--,get_building_occupancy,,FOODSTORE,Food stores,[m2],{0.0...1},float,orange,inputs/building-properties/occupancy.dbf
--,get_building_occupancy,,GYM,Gymnasiums,[m2],{0.0...1},float,yellow,inputs/building-properties/occupancy.dbf
--,get_building_occupancy,,HOSPITAL,Hospitals,[m2],{0.0...1},float,brown,inputs/building-properties/occupancy.dbf
--,get_building_occupancy,,HOTEL,Hotels,[m2],{0.0...1},float,green,inputs/building-properties/occupancy.dbf
--,get_building_occupancy,,INDUSTRIAL,Light industry,[m2],{0.0...1},float,blue,inputs/building-properties/occupancy.dbf
--,get_building_occupancy,,LIBRARY,Libraries,[m2],{0.0...1},float,grey,inputs/building-properties/occupancy.dbf
--,get_building_occupancy,,MULTI_RES,Residential (multiple dwellings),[m2],{0.0...1},float,purple,inputs/building-properties/occupancy.dbf
--,get_building_occupancy,,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/building-properties/occupancy.dbf
--,get_building_occupancy,,OFFICE,Offices,[m2],{0.0...1},float,red,inputs/building-properties/occupancy.dbf
--,get_building_occupancy,,PARKING,Parking,[m2],{0.0...1},float,orange,inputs/building-properties/occupancy.dbf
--,get_building_occupancy,,RESTAURANT,Restaurants,[m2],{0.0...1},float,yellow,inputs/building-properties/occupancy.dbf
--,get_building_occupancy,,RETAIL,Retail,[m2],{0.0...1},float,brown,inputs/building-properties/occupancy.dbf
--,get_building_occupancy,,SCHOOL,Schools,[m2],{0.0...1},float,green,inputs/building-properties/occupancy.dbf
--,get_building_occupancy,,SERVERROOM,Data center,[m2],{0.0...1},float,blue,inputs/building-properties/occupancy.dbf
--,get_building_occupancy,,SINGLE_RES,Residential (single dwellings),[m2],{0.0...1},float,grey,inputs/building-properties/occupancy.dbf
--,get_building_occupancy,,SWIMMING,Swimming halls,[m2],{0.0...1},float,purple,inputs/building-properties/occupancy.dbf
+-,get_building_typology,,YEAR,Construction year,[-],{0...n},int,black,inputs/building-properties/typology.dbf
+-,get_building_typology,,STANDARD,Construction Standard,[code],{T1...Tn},string,red,inputs/building-properties/typology.dbf
+-,get_building_typology,,1ST_USE,Building Main Use Type,[code],{MULTI_RES...OFFICE},string,orange,inputs/building-properties/typology.dbf
+-,get_building_typology,,2ND_USE,Building Second Use Type,[code],{MULTI_RES...OFFICE},string,orange,inputs/building-properties/typology.dbf
+-,get_building_typology,,3RD_USE,Building Third Use Type,[code],{MULTI_RES...OFFICE},string,orange,inputs/building-properties/typology.dbf
+-,get_building_typology,,1ST_USE_R,Ratio of gross floor area for Main Use Type,[m2/m2],{0.0...1.0},float,orange,inputs/building-properties/typology.dbf
+-,get_building_typology,,2ND_USE_R,Ratio of gross floor area for Second Use Type,[m2/m2],{0.0...1.0},float,orange,inputs/building-properties/typology.dbf
+-,get_building_typology,,3RD_USE_R,Ratio of gross floor area for Third Use Type,[m2/m2],{0.0...1.0},float,orange,inputs/building-properties/typology.dbf
+-,get_building_typology,,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/building-properties/typology.dbf
 archetypes-mapper,get_building_weekly_schedules,,METADATA,TODO,TODO,TODO,float,black,inputs/building-properties/schedules/B001.csv
 archetypes-mapper,get_building_weekly_schedules,,mixed-schedule,TODO,TODO,TODO,float,black,inputs/building-properties/schedules/B001.csv
 archetypes-mapper,get_building_supply,,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/building-properties/supply_systems.dbf

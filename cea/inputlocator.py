@@ -63,11 +63,11 @@ class InputLocator(object):
     def get_databases_systems_folder(self):
         return os.path.join(self.get_databases_folder(), 'components')
 
-    def get_database_standard_schedules(self):
-        return os.path.join(self.get_databases_folder(), 'archetypes', 'schedules')
+    def get_database_use_types_folder(self):
+        return os.path.join(self.get_databases_archetypes_folder(), 'use_types')
 
     def get_database_standard_schedules_use(self, use):
-        return os.path.join(self.get_database_standard_schedules(), use + '.csv')
+        return os.path.join(self.get_database_use_types_folder(), use + '.csv')
 
     def verify_database_template(self):
         """True, if the path is a valid template path - containing the same excel files as the standard regions."""
@@ -590,6 +590,11 @@ class InputLocator(object):
         to the scenario if they are not yet present, based on the configured region for the scenario."""
         return os.path.join(self.get_databases_archetypes_folder(), 'construction_properties.xlsx')
 
+    def get_use_types_properties(self):
+        """Returns the database of construction properties to be used by the archetypes-mapper. These are copied
+        to the scenario if they are not yet present, based on the configured region for the scenario."""
+        return os.path.join(self.get_database_use_types_folder(), 'use_types_properties.xlsx')
+
     def get_database_assemblies(self):
         """Returns the database of supply components for cost analysis. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
@@ -676,17 +681,9 @@ class InputLocator(object):
         zone_building_names = sorted(gdf.from_file(self.get_zone_geometry())['Name'].values)
         return [b.encode('utf-8') if isinstance(b, basestring) else str(b) for b in zone_building_names]
 
-    def get_building_geometry_citygml(self):
-        """scenario/outputs/data/solar-radiation/district.gml"""
-        return os.path.join(self.get_solar_radiation_folder(), 'district.gml')
-
-    def get_building_age(self):
-        """scenario/inputs/building-properties/age.dbf"""
-        return os.path.join(self.get_building_properties_folder(), 'age.dbf')
-
-    def get_building_occupancy(self):
+    def get_building_typology(self):
         """scenario/inputs/building-properties/building_occupancy.dbf"""
-        return os.path.join(self.get_building_properties_folder(), 'occupancy.dbf')
+        return os.path.join(self.get_building_properties_folder(), 'typology.dbf')
 
     def get_building_supply(self):
         """scenario/inputs/building-properties/building_supply.dbf"""
@@ -706,11 +703,7 @@ class InputLocator(object):
 
     def get_building_air_conditioning(self):
         """scenario/inputs/building-properties/air_conditioning_systems.dbf"""
-        old_file_path = os.path.join(self.get_building_properties_folder(), 'technical_systems.dbf')
-        new_file_path = os.path.join(self.get_building_properties_folder(), 'air_conditioning_systems.dbf')
-        if os.path.exists(old_file_path) and os.path.exists(new_file_path) == False:
-            os.rename(old_file_path, new_file_path)
-        return new_file_path
+        return os.path.join(self.get_building_properties_folder(), 'air_conditioning.dbf')
 
     def get_building_architecture(self):
         """scenario/inputs/building-properties/architecture.dbf

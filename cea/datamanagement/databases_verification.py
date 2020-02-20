@@ -7,11 +7,7 @@ from __future__ import print_function
 
 COLUMNS_ZONE_GEOMETRY = ['Name', 'floors_bg', 'floors_ag', 'height_bg', 'height_ag']
 COLUMNS_SURROUNDINGS_GEOMETRY = ['Name', 'height_ag', 'floors_ag']
-COLUMNS_ZONE_AGE = ['built', 'roof', 'windows', 'partitions', 'basement', 'HVAC', 'envelope']
-COLUMNS_ZONE_OCCUPANCY = ['MULTI_RES', 'OFFICE', 'RETAIL', 'SCHOOL', 'HOTEL', 'GYM', 'HOSPITAL', 'INDUSTRIAL',
-                          'RESTAURANT', 'SINGLE_RES', 'SERVERROOM', 'SWIMMING', 'FOODSTORE', 'LIBRARY', 'COOLROOM',
-                          'PARKING', 'LAB', 'MUSEUM', 'LIBRARY', 'UNIVERSITY']
-
+COLUMNS_ZONE_TYPOLOGY = ['Name', 'STANDARD', 'YEAR', '1ST_USE', '1ST_USE_R', '2ND_USE', '2ND_USE_R', '3RD_USE', '3RD_USE_R']
 
 def assert_columns_names(zone_df, columns):
     try:
@@ -92,14 +88,9 @@ def verify_input_geometry_surroundings(surroundings_df):
     assert_input_geometry_acceptable_values_floor_height_surroundings(surroundings_df)
 
 
-def verify_input_occupancy(occupancy_df):
+def verify_input_typology(typology_df):
     # Verification 1. verify if all the column names are correct
-    assert_columns_names(occupancy_df, COLUMNS_ZONE_OCCUPANCY)
-
-
-def verify_input_age(age_df):
-    # Verification 1. verify if all the column names are correct
-    assert_columns_names(age_df, COLUMNS_ZONE_AGE)
+    assert_columns_names(typology_df, COLUMNS_ZONE_TYPOLOGY)
 
 
 def verify_input_terrain(terrain_raster):

@@ -18,7 +18,6 @@ import cea.config
 import cea.inputlocator
 from cea import InvalidOccupancyNameException
 from cea.datamanagement.schedule_helper import calc_mixed_schedule
-from cea.datamanagement.databases_verification import COLUMNS_ZONE_OCCUPANCY
 from cea.utilities.dbf import dbf_to_dataframe, dataframe_to_dbf
 
 
@@ -77,215 +76,183 @@ def archetypes_mapper(locator,
         describes the queried thermal properties of buildings
     """
     # get occupancy and age files
-    building_occupancy_df = dbf_to_dataframe(locator.get_building_occupancy())
-    building_age_df = dbf_to_dataframe(locator.get_building_age())
+    building_typology_df = dbf_to_dataframe(locator.get_building_typology())
 
     # validate list of uses in case study
-    list_uses = get_list_of_uses_in_case_study(building_occupancy_df)
+    list_uses = get_list_of_uses_in_case_study(building_typology_df)
 
     # get occupant densities from archetypes schedules
     occupant_densities = {}
-    occ_densities = pd.read_excel(locator.get_archetypes_properties(), 'INTERNAL_LOADS').set_index('Code')
+    occ_densities = pd.read_excel(locator.get_use_types_properties(), 'INTERNAL_LOADS').set_index('code')
     for use in list_uses:
         if occ_densities.loc[use, 'Occ_m2pax'] > 0.0:
             occupant_densities[use] = 1 / occ_densities.loc[use, 'Occ_m2pax']
         else:
             occupant_densities[use] = 0.0
 
-    # prepare shapefile to store results (a shapefile with only names of buildings
-    names_df = building_age_df[['Name']]
-
-    # define main use:
-    building_occupancy_df['mainuse'] = calc_mainuse(building_occupancy_df, list_uses)
-
-    # dataframe with joined data for categories
-    categories_df = building_occupancy_df.merge(building_age_df, on='Name')
-
     # get properties about the construction and architecture
     if update_architecture_dbf:
-        architecture_DB = pd.read_excel(locator.get_archetypes_properties(), 'ARCHITECTURE')
-        architecture_DB['Code'] = architecture_DB.apply(lambda x: calc_code(x['building_use'], x['year_start'],
-                                                                            x['year_end'], x['standard']), axis=1)
-        categories_df['cat_built'] = calc_category(architecture_DB, categories_df, 'built', 'C')
-        retrofit_category = ['envelope', 'roof', 'windows']
-        for category in retrofit_category:
-            categories_df['cat_' + category] = calc_category(architecture_DB, categories_df, category, 'R')
-
-        prop_architecture_df = get_prop_architecture(categories_df, architecture_DB, list_uses)
-
-        # write to dbf file
-        prop_architecture_df_merged = names_df.merge(prop_architecture_df, on="Name")
-
-        fields = ['Name',
-                  'Hs_ag',
-                  'Hs_bg',
-                  'Ns',
-                  'Es',
-                  'void_deck',
-                  'wwr_north',
-                  'wwr_west',
-                  'wwr_east',
-                  'wwr_south',
-                  'type_cons',
-                  'type_leak',
-                  'type_roof',
-                  'type_wall',
-                  'type_win',
-                  'type_shade']
-
-        dataframe_to_dbf(prop_architecture_df_merged[fields], locator.get_building_architecture())
+        architecture_mapper(locator, building_typology_df)
 
     # get properties about types of HVAC systems
     if update_air_conditioning_systems_dbf:
-        construction_properties_hvac = pd.read_excel(locator.get_archetypes_properties(), 'AIR_CONDITIONING')
-        construction_properties_hvac['Code'] = construction_properties_hvac.apply(
-            lambda x: calc_code(x['building_use'], x['year_start'],
-                                x['year_end'], x['standard']), axis=1)
-
-        categories_df['cat_HVAC'] = calc_category(construction_properties_hvac, categories_df, 'HVAC', 'R')
-
-        # define HVAC systems types
-        prop_HVAC_df = categories_df.merge(construction_properties_hvac, left_on='cat_HVAC', right_on='Code')
-
-        # write to shapefile
-        fields = ['Name',
-                  'type_cs',
-                  'type_hs',
-                  'type_dhw',
-                  'type_ctrl',
-                  'type_vent',
-                  'heat_starts',
-                  'heat_ends',
-                  'cool_starts',
-                  'cool_ends']
-        prop_HVAC_df_merged = names_df.merge(prop_HVAC_df, on="Name")
-        dataframe_to_dbf(prop_HVAC_df_merged[fields], locator.get_building_air_conditioning())
+        aircon_mapper(locator, building_typology_df)
 
     if update_indoor_comfort_dbf:
-        comfort_DB = pd.read_excel(locator.get_archetypes_properties(), 'INDOOR_COMFORT')
-
-        # define comfort
-        prop_comfort_df = categories_df.merge(comfort_DB, left_on='mainuse', right_on='Code')
-
-        # write to shapefile
-        fields = ['Name',
-                  'Tcs_set_C',
-                  'Ths_set_C',
-                  'Tcs_setb_C',
-                  'Ths_setb_C',
-                  'Ve_lpspax',
-                  'RH_min_pc',
-                  'RH_max_pc']
-        prop_comfort_df_merged = names_df.merge(prop_comfort_df, on="Name")
-        prop_comfort_df_merged = calculate_average_multiuse(fields,
-                                                            prop_comfort_df_merged,
-                                                            occupant_densities,
-                                                            list_uses,
-                                                            comfort_DB)
-
-        dataframe_to_dbf(prop_comfort_df_merged[fields], locator.get_building_comfort())
+        indoor_comfort_mapper(list_uses, locator, occupant_densities, building_typology_df)
 
     if update_internal_loads_dbf:
-        internal_DB = pd.read_excel(locator.get_archetypes_properties(), 'INTERNAL_LOADS')
-
-        # define comfort
-        prop_internal_df = categories_df.merge(internal_DB, left_on='mainuse', right_on='Code')
-
-        # write to shapefile
-        fields = ['Name',
-                  'Occ_m2pax',
-                  'Qs_Wpax',
-                  'X_ghpax',
-                  'Ea_Wm2',
-                  'El_Wm2',
-                  'Ed_Wm2',
-                  'Qcre_Wm2',
-                  'Vww_lpdpax',
-                  'Vw_lpdpax',
-                  'Qhpro_Wm2',
-                  'Qcpro_Wm2',
-                  'Epro_Wm2']
-        prop_internal_df_merged = names_df.merge(prop_internal_df, on="Name")
-        prop_internal_df_merged = calculate_average_multiuse(fields,
-                                                             prop_internal_df_merged,
-                                                             occupant_densities,
-                                                             list_uses,
-                                                             internal_DB)
-
-        dataframe_to_dbf(prop_internal_df_merged[fields], locator.get_building_internal())
+        internal_loads_mapper(list_uses, locator, occupant_densities, building_typology_df)
 
     if update_schedule_operation_cea:
-        if buildings == []:
+        if not buildings:
             buildings = locator.get_zone_building_names()
-        calc_mixed_schedule(locator, building_occupancy_df, buildings)
+        calc_mixed_schedule(locator, building_typology_df, buildings)
 
     if update_supply_systems_dbf:
-        supply_DB = pd.read_excel(locator.get_archetypes_properties(), 'SUPPLY')
-        supply_DB['Code'] = supply_DB.apply(lambda x: calc_code(x['building_use'], x['year_start'],
-                                                                x['year_end'], x['standard']), axis=1)
-
-        categories_df['cat_supply'] = calc_category(supply_DB, categories_df, 'HVAC', 'R')
-
-        # define HVAC systems types
-        prop_supply_df = categories_df.merge(supply_DB, left_on='cat_supply', right_on='Code')
-
-        # write to shapefile
-        prop_supply_df_merged = names_df.merge(prop_supply_df, on="Name")
-        fields = ['Name',
-                  'type_cs',
-                  'type_hs',
-                  'type_dhw',
-                  'type_el']
-        dataframe_to_dbf(prop_supply_df_merged[fields], locator.get_building_supply())
+        supply_mapper(locator, building_typology_df)
 
     if update_emission_intensity_dbf:
-        emisison_intensity_DB = pd.read_excel(locator.get_archetypes_properties(), 'EMISSION_INTENSITY')
-        emisison_intensity_DB['Code'] = emisison_intensity_DB.apply(lambda x: calc_code(x['building_use'], x['year_start'],
-                                                                x['year_end'], x['standard']), axis=1)
-
-        categories_df['cat_supply'] = calc_category(emisison_intensity_DB, categories_df, 'HVAC', 'R')
-
-        # define HVAC systems types
-        prop_emission_df = categories_df.merge(emisison_intensity_DB, left_on='cat_supply', right_on='Code')
-        fields = ['Name',
-                  'W_e_ag_kgm2',
-                  'W_e_bg_kgm2',
-                  'W_i_ag_kgm2',
-                  'W_i_bg_kgm2',
-                  'Win_kgm2',
-                  'F_i_kgm2',
-                  'F_e_kgm2',
-                  'R_kgm2',
-                  'Tech_kgm2',
-                  'Exca_kgm2',
-                  'Mobi_kgm2']
-        dataframe_to_dbf(prop_emission_df[fields], locator.get_building_emission_intensity())
+        emission_intensity_mapper(locator, building_typology_df)
 
 
-def get_list_of_uses_in_case_study(building_occupancy_df):
+def indoor_comfort_mapper(list_uses, locator, occupant_densities, building_typology_df):
+    comfort_DB = pd.read_excel(locator.get_use_types_properties(), 'INDOOR_COMFORT')
+    # define comfort
+    prop_comfort_df = building_typology_df.merge(comfort_DB, left_on='1ST_USE', right_on='code')
+    # write to shapefile
+    fields = ['Name',
+              'Tcs_set_C',
+              'Ths_set_C',
+              'Tcs_setb_C',
+              'Ths_setb_C',
+              'Ve_lpspax',
+              'RH_min_pc',
+              'RH_max_pc']
+    prop_comfort_df_merged = calculate_average_multiuse(fields,
+                                                        prop_comfort_df,
+                                                        occupant_densities,
+                                                        list_uses,
+                                                        comfort_DB)
+    dataframe_to_dbf(prop_comfort_df_merged[fields], locator.get_building_comfort())
+
+
+def internal_loads_mapper(list_uses, locator, occupant_densities, building_typology_df):
+    internal_DB = pd.read_excel(locator.get_use_types_properties(), 'INTERNAL_LOADS')
+    # define comfort
+    prop_internal_df = building_typology_df.merge(internal_DB, left_on='1ST_USE', right_on='code')
+    # write to shapefile
+    fields = ['Name',
+              'Occ_m2pax',
+              'Qs_Wpax',
+              'X_ghpax',
+              'Ea_Wm2',
+              'El_Wm2',
+              'Ed_Wm2',
+              'Qcre_Wm2',
+              'Vww_lpdpax',
+              'Vw_lpdpax',
+              'Qhpro_Wm2',
+              'Qcpro_Wm2',
+              'Epro_Wm2']
+    prop_internal_df_merged = calculate_average_multiuse(fields,
+                                                         prop_internal_df,
+                                                         occupant_densities,
+                                                         list_uses,
+                                                         internal_DB)
+    dataframe_to_dbf(prop_internal_df_merged[fields], locator.get_building_internal())
+
+
+def supply_mapper(locator, building_typology_df):
+    supply_DB = pd.read_excel(locator.get_archetypes_properties(), 'SUPPLY')
+    prop_supply_df = building_typology_df.merge(supply_DB, left_on='STANDARD', right_on='code')
+    fields = ['Name',
+              'type_cs',
+              'type_hs',
+              'type_dhw',
+              'type_el']
+    dataframe_to_dbf(prop_supply_df[fields], locator.get_building_supply())
+
+
+def emission_intensity_mapper(locator, building_typology_df):
+    emisison_intensity_DB = pd.read_excel(locator.get_archetypes_properties(), 'EMISSION_INTENSITY')
+    prop_emission_df = building_typology_df.merge(emisison_intensity_DB, left_on='STANDARD', right_on='code')
+    fields = ['Name',
+              'W_e_ag_kgm2',
+              'W_e_bg_kgm2',
+              'W_i_ag_kgm2',
+              'W_i_bg_kgm2',
+              'Win_kgm2',
+              'F_i_kgm2',
+              'F_e_kgm2',
+              'R_kgm2',
+              'Tech_kgm2',
+              'Exca_kgm2',
+              'Mobi_kgm2']
+    dataframe_to_dbf(prop_emission_df[fields], locator.get_building_emission_intensity())
+
+
+def aircon_mapper(locator, typology_df):
+    air_conditioning_DB = pd.read_excel(locator.get_archetypes_properties(), 'AIR_CONDITIONING')
+    # define HVAC systems types
+    prop_HVAC_df = typology_df.merge(air_conditioning_DB, left_on='STANDARD', right_on='code')
+    # write to shapefile
+    fields = ['Name',
+              'type_cs',
+              'type_hs',
+              'type_dhw',
+              'type_ctrl',
+              'type_vent',
+              'heat_starts',
+              'heat_ends',
+              'cool_starts',
+              'cool_ends']
+    dataframe_to_dbf(prop_HVAC_df[fields], locator.get_building_air_conditioning())
+
+
+def architecture_mapper(locator, typology_df):
+    architecture_DB = pd.read_excel(locator.get_archetypes_properties(), 'ARCHITECTURE')
+    prop_architecture_df = typology_df.merge(architecture_DB, left_on='STANDARD', right_on='code')
+    fields = ['Name',
+              'Hs_ag',
+              'Hs_bg',
+              'Ns',
+              'Es',
+              'void_deck',
+              'wwr_north',
+              'wwr_west',
+              'wwr_east',
+              'wwr_south',
+              'type_cons',
+              'type_leak',
+              'type_roof',
+              'type_wall',
+              'type_win',
+              'type_shade']
+    dataframe_to_dbf(prop_architecture_df[fields], locator.get_building_architecture())
+
+
+def get_list_of_uses_in_case_study(building_typology_df):
     """
     validates lists of uses in case study.
     refactored from archetypes_mapper function
 
-    :param building_occupancy_df: dataframe of occupancy.dbf input (can be read in archetypes-mapper or in building-properties)
-    :type building_occupancy_df: pandas.DataFrame
+    :param building_typology_df: dataframe of occupancy.dbf input (can be read in archetypes-mapper or in building-properties)
+    :type building_typology_df: pandas.DataFrame
     :return: list of uses in case study
     :rtype: pandas.DataFrame.Index
     """
-    columns = building_occupancy_df.columns
+    list_var_names = ["1ST_USE", '2ND_USE', '3RD_USE']
+    list_var_values = ["1ST_USE_R", '2ND_USE_R', '3RD_USE_R']
     # validate list of uses
     list_uses = []
-    for name in columns:
-        if name in COLUMNS_ZONE_OCCUPANCY:
-            if building_occupancy_df[name].sum() > 0.0:
-                list_uses.append(name)  # append valid uses
-        elif name in {'Name', 'REFERENCE'}:
-            pass  # do nothing with 'Name' and 'Reference'
-        else:
-            raise InvalidOccupancyNameException(
-                'occupancy.dbf has use "{}". This use is not part of the database. Change occupancy.dbf'
-                ' or customize archetypes database AND databases_verification.py.'.format(name))
-    return list_uses
+    n_records = building_typology_df.shape[0]
+    for row in range(n_records):
+        for var_name, var_value in zip(list_var_names,list_var_values):
+            if building_typology_df.loc[row, var_value] > 0.0:
+                list_uses.append(building_typology_df.loc[row, var_name])  # append valid uses
+    unique_uses = list(set(list_uses))
+    return unique_uses
 
 
 def calc_code(code1, code2, code3, code4):
@@ -341,40 +308,6 @@ def calc_comparison(array_second, array_max):
             array_max = array_second
     return array_max
 
-
-def calc_category(archetype_DB, age, field, type):
-    category = []
-    for row in age.index:
-        if age.loc[row, field] > age.loc[row, 'built']:
-            try:
-                category.append(archetype_DB[(archetype_DB['year_start'] <= age.loc[row, field]) & \
-                                             (archetype_DB['year_end'] >= age.loc[row, field]) & \
-                                             (archetype_DB['building_use'] == age.loc[row, 'mainuse']) & \
-                                             (archetype_DB['standard'] == type)].Code.values[0])
-            except IndexError:
-                # raise warnings for e.g. using CH case study with SG construction
-                warnings.warn(
-                    'Specified building database does not contain renovated building properties. Buildings are treated as new construction.')
-                category.append(archetype_DB[(archetype_DB['year_start'] <= age.loc[row, field]) & \
-                                             (archetype_DB['year_end'] >= age.loc[row, field]) & \
-                                             (archetype_DB['building_use'] == age.loc[row, 'mainuse']) & \
-                                             (archetype_DB['standard'] == 'C')].Code.values[0])
-        else:
-            category.append(archetype_DB[(archetype_DB['year_start'] <= age.loc[row, 'built']) & \
-                                         (archetype_DB['year_end'] >= age.loc[row, 'built']) & \
-                                         (archetype_DB['building_use'] == age.loc[row, 'mainuse']) & \
-                                         (archetype_DB['standard'] == 'C')].Code.values[0])
-        if field != 'built':
-            if 0 < age.loc[row, field] < age.loc[row, 'built']:
-                print('Incorrect %s renovation year in building %s: renovation year is lower than building age' %
-                      (field, age['Name'][row]))
-            if age.loc[row, field] == age.loc[row, 'built']:
-                print('Incorrect %s renovation year in building %s: if building is not renovated, the year needs to be '
-                      'set to 0' % (field, age['Name'][row]))
-
-    return category
-
-
 def correct_archetype_areas(prop_architecture_df, architecture_DB, list_uses):
     """
     Corrects the heated area 'Hs_ag' and 'Hs_bg' for buildings with multiple uses.
@@ -428,46 +361,26 @@ def correct_archetype_areas(prop_architecture_df, architecture_DB, list_uses):
     return Hs_ag_list, Hs_bg_list, Ns_list, Es_list
 
 
-def get_prop_architecture(categories_df, architecture_DB, list_uses):
+def get_prop_architecture(typology_df, architecture_DB):
     """
     This function obtains every building's architectural properties based on the construction and renovation years.
 
-    :param categories_df: DataFrame containing each building's construction and renovation categories for each building
+    :param typology_df: DataFrame containing each building's construction and renovation categories for each building
         component based on the construction and renovation years
-    :type categories_df: DataFrame
+    :type typology_df: DataFrame
     :param architecture_DB: DataFrame containing the archetypal architectural properties for each use type, construction
         and renovation year
     :type categories_df: DataFrame
     :return prop_architecture_df: DataFrame containing the architectural properties of each building in the area
     :rtype prop_architecture_df: DataFrame
     """
-
-    # create databases from construction and renovation archetypes
-    construction_DB = architecture_DB.drop(['type_leak', 'type_wall', 'type_roof', 'type_shade', 'type_win'], axis=1)
-    envelope_DB = architecture_DB[['Code', 'type_leak', 'type_wall']].copy()
-    roof_DB = architecture_DB[['Code', 'type_roof']].copy()
-    window_DB = architecture_DB[['Code', 'type_win', 'type_shade']].copy()
-
     # create prop_architecture_df based on the construction categories and archetype architecture database
-    prop_architecture_df = categories_df.merge(construction_DB, left_on='cat_built', right_on='Code').drop('Code',
-                                                                                                           axis=1)
-    # get envelope properties based on the envelope renovation year
-    prop_architecture_df = prop_architecture_df.merge(envelope_DB, left_on='cat_envelope', right_on='Code').drop('Code',
-                                                                                                                 axis=1)
-    # get roof properties based on the roof renovation year
-    prop_architecture_df = prop_architecture_df.merge(roof_DB, left_on='cat_roof', right_on='Code').drop('Code', axis=1)
-    # get window properties based on the window renovation year
-    prop_architecture_df = prop_architecture_df.merge(window_DB, left_on='cat_windows', right_on='Code').drop('Code',
-                                                                                                              axis=1)
-
-    # adjust share of floor space that is heated for multiuse buildings
-    prop_architecture_df['Hs_ag'], prop_architecture_df['Hs_bg'], prop_architecture_df['Ns'],\
-        prop_architecture_df['Es'] = correct_archetype_areas(prop_architecture_df, architecture_DB, list_uses)
-
+    prop_architecture_df = typology_df.merge(architecture_DB, left_on='STANDARD', right_on='code')
     return prop_architecture_df
 
 
-def calculate_average_multiuse(fields, properties_df, occupant_densities, list_uses, properties_DB):
+def calculate_average_multiuse(fields, properties_df, occupant_densities, list_uses, properties_DB, list_var_names=None,
+                               list_var_values=None):
     """
     This script calculates the average internal loads and ventilation properties for multiuse buildings.
 
@@ -482,11 +395,21 @@ def calculate_average_multiuse(fields, properties_df, occupant_densities, list_u
     :param properties_DB: DataFrame containing each occupancy type's indoor comfort properties or internal loads based
         on the corresponding archetypes
     :type properties_DB: DataFrame
+    :param list_var_names: List of column names in properties_df that contain the names of use-types being caculated
+    :type: list_var_names: list[str]
+    :param list_var_values: List of column names in properties_df that contain values of use-type ratio in respect to list_var_names
+    :type: list_var_values: list[str]
 
     :return properties_df: the same DataFrame as the input parameter, but with the updated properties for multiuse
         buildings
     """
-    properties_DB = properties_DB.set_index('Code')
+
+    if list_var_names is None:
+        list_var_names = ["1ST_USE", '2ND_USE', '3RD_USE']
+    if list_var_values is None:
+        list_var_values = ["1ST_USE_R", '2ND_USE_R', '3RD_USE_R']
+
+    properties_DB = properties_DB.set_index('code')
     for column in fields:
         if column in ['Ve_lpspax', 'Qs_Wpax', 'X_ghpax', 'Vww_lpdpax', 'Vw_lpdpax']:
             # some properties are imported from the Excel files as int instead of float
@@ -495,11 +418,12 @@ def calculate_average_multiuse(fields, properties_df, occupant_densities, list_u
                 column_total = 0
                 people_total = 0
                 for use in list_uses:
-                    if use in properties_df.columns:
-                        column_total += (properties_df[use][building]
-                                         * occupant_densities[use]
-                                         * properties_DB[column][use])
-                        people_total += properties_df[use][building] * occupant_densities[use]
+                    for var_name, var_value in zip(list_var_names, list_var_values):
+                        if use in [properties_df[var_name][building]]:
+                            column_total += (properties_df[var_value][building]
+                                             * occupant_densities[use]
+                                             * properties_DB[column][use])
+                            people_total += properties_df[var_value][building] * occupant_densities[use]
                 if people_total > 0.0:
                     properties_df.loc[building, column] = column_total / people_total
                 else:
@@ -509,7 +433,11 @@ def calculate_average_multiuse(fields, properties_df, occupant_densities, list_u
             for building in properties_df.index:
                 average = 0.0
                 for use in list_uses:
-                    average += properties_df[use][building] * properties_DB[column][use]
+                    for var_name, var_value in zip(list_var_names, list_var_values):
+                        if use in [properties_df[var_name][building]]:
+                            average += properties_df[var_value][building] * properties_DB[column][use]
+
+
                 properties_df.loc[building, column] = average
 
     return properties_df
