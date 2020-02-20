@@ -792,7 +792,13 @@ get_archetypes_properties:
   file_path: inputs/technology/archetypes/construction_properties.xlsx
   file_type: xlsx
   schema:
-    ARCHITECTURE:
+    ENVELOPE_COMPONENTS:
+      STANDARD:
+        sample_data: R
+        types_found: [string]
+      Description:
+        sample_data: UNIVERSITY
+        types_found: [string]
       Es:
         sample_data: 0.9
         types_found: [float]
@@ -805,12 +811,6 @@ get_archetypes_properties:
       Ns:
         sample_data: 0.9
         types_found: [float]
-      building_use:
-        sample_data: UNIVERSITY
-        types_found: [string]
-      standard:
-        sample_data: R
-        types_found: [string]
       type_cons:
         sample_data: T3
         types_found: [string]
@@ -850,8 +850,11 @@ get_archetypes_properties:
       year_start:
         sample_data: !!python/long '2021'
         types_found: [long]
-    AIR_CONDITIONING:
-      building_use:
+    HVAC_COMPONENTS:
+      STANDARD:
+        sample_data: R
+        types_found: [string]
+      Description:
         sample_data: UNIVERSITY
         types_found: [string]
       cool_ends:
@@ -890,77 +893,12 @@ get_archetypes_properties:
       year_start:
         sample_data: !!python/long '2021'
         types_found: [long]
-    INDOOR_COMFORT:
-      Code:
-        sample_data: UNIVERSITY
-        types_found: [string]
-      RH_max_pc:
-        sample_data: !!python/long '60'
-        types_found: [long]
-      RH_min_pc:
-        sample_data: !!python/long '30'
-        types_found: [long]
-      Tcs_set_C:
-        sample_data: !!python/long '26'
-        types_found: [long]
-      Tcs_setb_C:
-        sample_data: !!python/long '28'
-        types_found: [long]
-      Ths_set_C:
-        sample_data: !!python/long '21'
-        types_found: [long]
-      Ths_setb_C:
-        sample_data: !!python/long '12'
-        types_found: [long]
-      Ve_lpspax:
-        sample_data: 8.333333333333334
-        types_found: [float]
-    INTERNAL_LOADS:
-      Code:
-        sample_data: UNIVERSITY
-        types_found: [string]
-      Ea_Wm2:
-        sample_data: 4.0
-        types_found: [float]
-      Ed_Wm2:
-        sample_data: !!python/long '0'
-        types_found: [long]
-      El_Wm2:
-        sample_data: 12.5
-        types_found: [float]
-      Epro_Wm2:
-        sample_data: 0.0
-        types_found: [float]
-      Occ_m2pax:
-        sample_data: 10.0
-        types_found: [float]
-      Qcpro_Wm2:
-        sample_data: !!python/long '0'
-        types_found: [long]
-      Qcre_Wm2:
-        sample_data: !!python/long '0'
-        types_found: [long]
-      Qhpro_Wm2:
-        sample_data: !!python/long '0'
-        types_found: [long]
-      Qs_Wpax:
-        sample_data: !!python/long '70'
-        types_found: [long]
-      Vw_lpdpax:
-        sample_data: 30.0
-        types_found: [float]
-      Vww_lpdpax:
-        sample_data: 2.0
-        types_found: [float]
-      X_ghpax:
-        sample_data: !!python/long '80'
-        types_found: [long]
-    SUPPLY:
-      building_use:
-        sample_data: UNIVERSITY
-        types_found: [string]
-      standard:
+    SUPPLY_ASSEMBLIES:
+      STANDARD:
         sample_data: R
+        types_found: [string]
+      Description:
+        sample_data: UNIVERSITY
         types_found: [string]
       type_cs:
         sample_data: T19
@@ -1790,10 +1728,112 @@ get_database_feedstocks:
   used_by: [decentralized, emissions, operation_costs, optimization]
 get_database_assemblies:
   created_by: []
-  file_path: inputs/technology/assemblies/assemblies.xls
+  file_path: inputs/technology/assemblies/supply.xls
   file_type: xls
   schema:
-    SUPPLY:
+    HEATING:
+      Description:
+        sample_data: heatpump - air-air
+        types_found: [string]
+      code:
+        sample_data: T25
+        types_found: [date, string]
+      efficiency:
+        sample_data: 0.99
+        types_found: [float]
+      feedstock:
+        sample_data: SOLAR
+        types_found: [string]
+      reference:
+        sample_data: educated guess
+        types_found: [string]
+      scale:
+        sample_data: BUILDING
+        types_found: [string]
+      system:
+        sample_data: ELECTRICITY
+        types_found: [string]
+      CAPEX_USD2015kW:
+        sample_data: 200.0
+        types_found: [float]
+      IR_%:
+        sample_data: !!python/long '5'
+        types_found: [long]
+      LT_yr:
+        sample_data: !!python/long '25'
+        types_found: [long]
+      O&M_%:
+        sample_data: !!python/long '5'
+        types_found: [long]
+    HOT_WATER:
+      Description:
+        sample_data: heatpump - air-air
+        types_found: [string]
+      code:
+        sample_data: T25
+        types_found: [date, string]
+      efficiency:
+        sample_data: 0.99
+        types_found: [float]
+      feedstock:
+        sample_data: SOLAR
+        types_found: [string]
+      reference:
+        sample_data: educated guess
+        types_found: [string]
+      scale:
+        sample_data: BUILDING
+        types_found: [string]
+      system:
+        sample_data: ELECTRICITY
+        types_found: [string]
+      CAPEX_USD2015kW:
+        sample_data: 200.0
+        types_found: [float]
+      IR_%:
+        sample_data: !!python/long '5'
+        types_found: [long]
+      LT_yr:
+        sample_data: !!python/long '25'
+        types_found: [long]
+      O&M_%:
+        sample_data: !!python/long '5'
+        types_found: [long]
+    COOLING:
+      Description:
+        sample_data: heatpump - air-air
+        types_found: [string]
+      code:
+        sample_data: T25
+        types_found: [date, string]
+      efficiency:
+        sample_data: 0.99
+        types_found: [float]
+      feedstock:
+        sample_data: SOLAR
+        types_found: [string]
+      reference:
+        sample_data: educated guess
+        types_found: [string]
+      scale:
+        sample_data: BUILDING
+        types_found: [string]
+      system:
+        sample_data: ELECTRICITY
+        types_found: [string]
+      CAPEX_USD2015kW:
+        sample_data: 200.0
+        types_found: [float]
+      IR_%:
+        sample_data: !!python/long '5'
+        types_found: [long]
+      LT_yr:
+        sample_data: !!python/long '25'
+        types_found: [long]
+      O&M_%:
+        sample_data: !!python/long '5'
+        types_found: [long]
+    ELECTRICITY:
       Description:
         sample_data: heatpump - air-air
         types_found: [string]

@@ -14,7 +14,7 @@ cea_database_path = os.path.dirname(cea.databases.__file__)
 
 DATABASES = OrderedDict([
     ("archetypes", {
-        "CONSTRUCTION": {
+        "CONSTRUCION_STANDARDS": {
             "filename": "construction_properties.xlsx",
             "schema_key": "get_archetypes_properties"
         },
@@ -22,13 +22,13 @@ DATABASES = OrderedDict([
         "USE_TYPES": None  # Handle manually
     }),
     ("assemblies", {
-        "ASSEMBLIES": {
-            "filename": "assemblies.xls",
+        "SUPPLY": {
+            "filename": "supply.xls",
             "schema_key": "get_database_assemblies"
         },
     }),
     ("components", {
-        "AIR_CONDITIONING": {
+        "HVAC": {
             "filename": "air_conditioning.xls",
             "schema_key": "get_database_air_conditioning_systems"
         },
