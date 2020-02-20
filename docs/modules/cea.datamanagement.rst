@@ -9,6 +9,14 @@ cea.datamanagement package
 Submodules
 ----------
 
+cea.datamanagement.archetypes\_mapper module
+--------------------------------------------
+
+.. automodule:: cea.datamanagement.archetypes_mapper
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cea.datamanagement.create\_new\_project module
 ----------------------------------------------
 
@@ -17,10 +25,10 @@ cea.datamanagement.create\_new\_project module
     :undoc-members:
     :show-inheritance:
 
-cea.datamanagement.data\_helper module
---------------------------------------
+cea.datamanagement.data\_initializer module
+-------------------------------------------
 
-.. automodule:: cea.datamanagement.data_helper
+.. automodule:: cea.datamanagement.data_initializer
     :members:
     :undoc-members:
     :show-inheritance:

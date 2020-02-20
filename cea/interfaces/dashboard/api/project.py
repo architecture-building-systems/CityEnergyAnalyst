@@ -125,8 +125,7 @@ class Scenarios(Resource):
                     # the folders _before_ we try copying to them
                     locator.ensure_parent_folder_exists(locator.get_zone_geometry())
                     locator.ensure_parent_folder_exists(locator.get_terrain())
-                    locator.ensure_parent_folder_exists(locator.get_building_age())
-                    locator.ensure_parent_folder_exists(locator.get_building_occupancy())
+                    locator.ensure_parent_folder_exists(locator.get_building_typology())
                     locator.ensure_parent_folder_exists(locator.get_street_network())
 
                     if 'zone' in files:
@@ -143,22 +142,16 @@ class Scenarios(Resource):
                     if 'streets' in files:
                         shutil.copyfile(files['streets'], locator.get_street_network())
 
-                    from cea.datamanagement.zone_helper import calculate_age_file, calculate_occupancy_file
-                    if 'age' in files and files['age'] != '':
-                        shutil.copyfile(files['age'], locator.get_building_age())
-                    elif 'zone' in files:
-                        zone_df = geopandas.read_file(files['zone'])
-                        calculate_age_file(zone_df, None, locator.get_building_age())
-
-                    if 'occupancy' in files and files['occupancy'] != '':
-                        shutil.copyfile(files['occupancy'], locator.get_building_occupancy())
+                    from cea.datamanagement.zone_helper import calculate_age, calculate_typology_file
+                    if 'typology' in files and files['typology'] != '':
+                        shutil.copyfile(files['typology'], locator.get_building_typology())
                     elif 'zone' in files:
                         zone_df = geopandas.read_file(files['zone'])
                         if 'category' not in zone_df.columns:
                             # set 'MULTI_RES' as default
-                            calculate_occupancy_file(zone_df, 'MULTI_RES', locator.get_building_occupancy())
+                            calculate_typology_file(zone_df, None, 'MULTI_RES', locator.get_building_typology())
                         else:
-                            calculate_occupancy_file(zone_df, 'Get it from open street maps', locator.get_building_occupancy())
+                            calculate_typology_file(zone_df, None, 'Get it from open street maps', locator.get_building_typology())
                 except Exception as e:
                     trace = traceback.format_exc()
                     return {'message': e.message, 'trace': trace}, 500

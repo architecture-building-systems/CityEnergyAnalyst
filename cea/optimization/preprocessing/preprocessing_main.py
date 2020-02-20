@@ -14,6 +14,7 @@ from cea.utilities import epwreader
 from cea.technologies.supply_systems_database import SupplySystemsDatabase
 from cea.optimization.lca_calculations import LcaCalculations
 from cea.optimization.prices import Prices as Prices
+import shutil
 
 
 __author__ = "Jimeno A. Fonseca"
@@ -59,6 +60,12 @@ def preproccessing(locator, total_demand, buildings_heating_demand, buildings_co
     :rtype: float, float, float, float
 
     """
+    print("PRE-PROCESSING 0/4: initialize directory")
+    shutil.rmtree(locator.get_optimization_master_results_folder())
+    shutil.rmtree(locator.get_optimization_network_results_folder())
+    shutil.rmtree(locator.get_optimization_slave_results_folder())
+    shutil.rmtree(locator.get_optimization_substations_folder())
+
     print("PRE-PROCESSING 1/4: weather features")  # at first estimate a distribution with all the buildings connected
     weather_features = WeatherFeatures(weather_file, locator)
 

@@ -1,15 +1,14 @@
 Data Management:
 
-  - name: data-helper
+  - name: archetypes-mapper
     label: Archetypes Mapper
     description: Assign building properties and systems types from the Archetypes DataBase
     interfaces: [cli, arcgis, dashboard]
-    module: cea.datamanagement.data_helper
-    parameters: ['general:scenario', data-helper]
+    module: cea.datamanagement.archetypes_mapper
+    parameters: ['general:scenario', archetypes-mapper]
     input-files:
       - [get_zone_geometry]
-      - [get_building_age]
-      - [get_building_occupancy]
+      - [get_building_typology]
 
   - name: weather-helper
     label: Weather helper
@@ -96,9 +95,8 @@ Demand forecasting:
       - [get_database_air_conditioning_systems]
       - [get_building_comfort]
       - [get_building_internal]
-      - [get_building_age]
       - [get_building_architecture]
-      - [get_building_occupancy]
+      - [get_building_typology]
       - [get_building_air_conditioning]
       - [get_building_supply]
       - [get_building_weekly_schedules, building_name]
@@ -106,6 +104,32 @@ Demand forecasting:
       - [get_radiation_metadata, building_name]
       - [get_radiation_building, building_name]
       - [get_schedule_model_file, building_name]
+
+Life Cycle Analysis:
+
+  - name: emissions
+    label: Emissions
+    description: Calculate emissions and primary energy due to building, construction, operation, dismantling and induced mobility
+    interfaces: [cli, arcgis, dashboard]
+    module: cea.analysis.lca.main
+    parameters: ['general:scenario', emissions]
+    input-files:
+      - [get_total_demand]
+      - [get_building_architecture]
+      - [get_building_typology]
+      - [get_zone_geometry]
+      - [get_building_supply]
+      - [get_building_emission_intensity]
+
+  - name: system-costs
+    label: System Costs
+    description: Calculate costs due to supply systems
+    interfaces: [cli, arcgis, dashboard]
+    module: cea.analysis.costs.system_costs
+    parameters: ['general:scenario', costs]
+    input-files:
+      - [get_total_demand]
+      - [get_building_supply]
 
 Energy potentials:
   - name: shallow-geothermal-potential
@@ -142,7 +166,7 @@ Energy potentials:
       - [get_radiation_metadata, building_name]
       - [get_zone_geometry]
       - [get_radiation_building, building_name]
-      - [get_database_supply_systems]
+      - [get_database_conversion_systems]
       - [get_weather_file]
 
   - name: photovoltaic
@@ -158,7 +182,7 @@ Energy potentials:
       - [get_radiation_metadata, building_name]
       - [get_zone_geometry]
       - [get_radiation_building, building_name]
-      - [get_database_supply_systems]
+      - [get_database_conversion_systems]
       - [get_weather_file]
 
   - name: sewage-potential
@@ -184,7 +208,7 @@ Energy potentials:
       - [get_radiation_metadata, building_name]
       - [get_zone_geometry]
       - [get_radiation_building, building_name]
-      - [get_database_supply_systems]
+      - [get_database_conversion_systems]
       - [get_weather_file]
 
 Networks:
@@ -211,7 +235,7 @@ Networks:
     input-files:
       - [get_network_layout_nodes_shapefile, "thermal-network:network-type"]
       - [get_demand_results_file, building_name]
-      - [get_database_supply_systems]
+      - [get_database_conversion_systems]
       - [get_weather_file]
 
 Optimization:
@@ -245,48 +269,6 @@ Optimization:
       - [get_geothermal_potential]
       - [PV_totals]
 
-
-Analysis:
-
-  - name: multi-criteria-analysis
-    label: Multicriteria analysis
-    description: Multicriteria analysis
-    interfaces: [cli, arcgis, dashboard]
-    module: cea.analysis.multicriteria.main
-    parameters: ['general:scenario', multi-criteria]
-
-
-  - name: emissions
-    label: Life Cycle Analysis
-    description: Calculate emissions and primary energy due to building, construction, operation, dismantling and induced mobility
-    interfaces: [cli, arcgis, dashboard]
-    module: cea.analysis.lca.main
-    parameters: ['general:scenario', emissions]
-    input-files:
-      - [get_total_demand]
-      - [get_building_age]
-      - [get_building_architecture]
-      - [get_building_occupancy]
-      - [get_zone_geometry]
-      - [get_building_supply]
-      - [get_database_lca_buildings]
-      - [get_database_lca_mobility]
-
-
-  - name: operation-costs
-    label: Costs Analysis
-    description: Calculate energy costs due to building operation
-    interfaces: [cli, arcgis, dashboard]
-    module: cea.analysis.costs.operation_costs
-    parameters: ['general:scenario']
-    input-files:
-      - [get_total_demand]
-      - [get_building_supply]
-      - [get_database_lca_mobility]
-
-
-
-
 Utilities:
 
   - name: dbf-to-excel-to-dbf
@@ -296,31 +278,46 @@ Utilities:
     module: cea.utilities.dbf
     parameters: ['general:scenario', 'dbf-tools:input-file', 'dbf-tools:output-path','dbf-tools:output-file-name' ]
 
-  - name: test
-    label: Test CEA
-    description: Run some tests on the CEA
+  - name: data-initializer
+    label: Database Initializer
+    description: Initialize databases for CEA
     interfaces: [cli, arcgis, dashboard]
-    module: cea.tests.dodo
-    parameters: [test]
+    module: cea.datamanagement.data_initializer
+    parameters: ['general:scenario', data-initializer]
 
   - name: rename-building
     label: Rename building
     description: Renames a building in the input files
-    interfaces: [cli, dashboard]
+    interfaces: [cli, arcgis, dashboard]
     module: cea.utilities.rename_building
     parameters: ['general:scenario', rename-building]
     input-files:
       - [get_zone_geometry]
 
+  - name: create-mixed-use-type
+    label: Create mixed use-type
+    description: Creates a new use-type by aggregating values from a list of different use-types
+    interfaces: [cli, dashboard]
+    module: cea.utilities.create_mixed_use_type
+    parameters: ['general:scenario', create-mixed-use-type]
+    input-files:
+      - [get_use_types_properties]
+
+  - name: test
+    label: Test CEA
+    description: Run some tests on the CEA
+    interfaces: [cli, arcgis dashboard]
+    module: cea.tests.dodo
+    parameters: [test]
 
 default:
 
-  - name: data-initializer
-    label: DataBase Initializer
-    description: Initialize databases for CEA
+  - name: multi-criteria-analysis
+    label: Multicriteria analysis
+    description: Multicriteria analysis
     interfaces: [cli, arcgis]
-    module: cea.datamanagement.data_initializer
-    parameters: ['general:scenario', data-initializer]
+    module: cea.analysis.multicriteria.main
+    parameters: ['general:scenario', multi-criteria]
 
   - name: zone-helper
     label: Zone helper
@@ -405,33 +402,6 @@ default:
     interfaces: [cli]
     module: cea.workflows.workflow
     parameters: [workflow]
-
-  - name: sensitivity-demand-samples
-    label: Sensitivity Analysis Part I (design of experiments)
-    description: Create samples for sensitivity analysis
-    interfaces: [cli]
-    module: cea.legacy.sensitivity.sensitivity_demand_samples
-    parameters: ['general:scenario', 'sensitivity-demand:num-samples', 'sensitivity-demand:samples-folder',
-                 'sensitivity-demand:method', 'sensitivity-demand:calc-second-order',
-                 'sensitivity-demand:num-levels', 'sensitivity-demand:variable-groups']
-
-  - name: sensitivity-demand-simulate
-    label: Sensitivity Analysis Part II (simulation)
-    description: Simulate demand for sensitivity analysis samples
-    interfaces: [cli]
-    module: cea.legacy.sensitivity.sensitivity_demand_simulate
-    parameters: ['general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free', 'general:debug',
-                 'schedule-maker:schedule-model', 'schedule-maker:buildings',
-                 'sensitivity-demand:samples-folder', 'sensitivity-demand:simulation-folder',
-                 'sensitivity-demand:output-parameters', 'sensitivity-demand:number-of-simulations',
-                 'sensitivity-demand:sample-index', 'demand']
-
-  - name: sensitivity-demand-analyze
-    label: Sensitivity Analysis Part III (analysis)
-    description: Analyze the results in the samples folder and write them out to an Excel file.
-    interfaces: [cli]
-    module: cea.legacy.sensitivity.sensitivity_demand_analyze
-    parameters: ['sensitivity-demand:samples-folder', 'sensitivity-demand:temporal-scale']
 
 Documentation:
   - name: html

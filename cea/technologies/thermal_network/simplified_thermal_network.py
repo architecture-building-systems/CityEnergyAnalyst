@@ -190,7 +190,7 @@ def thermal_network_simplified(locator, config, network_name):
     if network_type == "DH":
         buildings_name_with_heating = get_building_names_with_load(total_demand, load_name='QH_sys_MWhyr')
         buildings_name_with_space_heating = get_building_names_with_load(total_demand, load_name='Qhs_sys_MWhyr')
-        DHN_barcode = "111111thermalnetwork"
+        DHN_barcode = "0"
         if (buildings_name_with_heating != [] and buildings_name_with_space_heating != []):
             building_names = [building for building in buildings_name_with_heating if building in
                               node_df.Building.values]
@@ -210,7 +210,7 @@ def thermal_network_simplified(locator, config, network_name):
 
     if network_type == "DC":
         buildings_name_with_cooling = get_building_names_with_load(total_demand, load_name='QC_sys_MWhyr')
-        DCN_barcode = "111111thermalnetwork"
+        DCN_barcode = "0"
         if buildings_name_with_cooling != []:
             building_names = [building for building in buildings_name_with_cooling if building in
                               node_df.Building.values]
@@ -293,7 +293,7 @@ def thermal_network_simplified(locator, config, network_name):
     results = sim.run_sim()
     max_volume_flow_rates_m3s = results.link['flowrate'].abs().max()
     pipe_names = max_volume_flow_rates_m3s.index.values
-    pipe_catalog = pd.read_excel(locator.get_database_supply_systems(), sheet_name='PIPING')
+    pipe_catalog = pd.read_excel(locator.get_database_distribution_systems(), sheet_name='THERMAL_GRID')
     Pipe_DN, D_ext_m, D_int_m, D_ins_m = zip(
         *[calc_max_diameter(flow, pipe_catalog, velocity_ms=velocity_ms, peak_load_percentage=peak_load_percentage) for
           flow in max_volume_flow_rates_m3s])

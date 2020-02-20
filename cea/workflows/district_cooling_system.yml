@@ -12,9 +12,9 @@
   parameters:
     databases-path: SG
     databases: [archetypes, lifecycle, systems]
-- script: data-helper
+- script: archetypes-mapper
   parameters:
-    input-databases: [comfort, architecture, HVAC, internal-loads, supply, schedules]
+    input-databases: [comfort, architecture, air-conditioning, internal-loads, supply, schedules, emission-intensity]
 - script: weather-helper
   parameters:
     weather: Singapore-Changi_1990_2010_TMY
@@ -48,13 +48,10 @@
     network-type: DC
     network-model: simplified
 - script: decentralized
-  parameters:
-    detailed-electricity-pricing: false
 - script: optimization
   parameters:
     district-heating-network: false
     district-cooling-network: true
-    detailed-electricity-pricing: false
     number-of-generations: 2
     population-size: 5
     random-seed: 100

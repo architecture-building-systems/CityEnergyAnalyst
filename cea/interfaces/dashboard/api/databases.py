@@ -12,42 +12,44 @@ from cea.utilities.schedule_reader import read_cea_schedule, save_cea_schedule
 api = Namespace("Databases", description="Database data for technologies in CEA")
 cea_database_path = os.path.dirname(cea.databases.__file__)
 
-# FIXME: Should use inputlocator to find default databases instead? But still need a way to map database names to their locator method for schemas
-# { db_type: { db_name: db_prop, ... }, ... }
 DATABASES = OrderedDict([
     ("archetypes", {
-        "construction_properties": {
-            "file_ext": ".xlsx",
+        "CONSTRUCTION": {
+            "filename": "construction_properties.xlsx",
             "schema_key": "get_archetypes_properties"
         },
-        "schedules": {
-            "file_ext": "",  # Folder
-            "schema_key": "get_database_standard_schedules_use"
-        }
+        # FIXME: Find a way to include schema info
+        "USE_TYPES": None  # Handle manually
     }),
-    ("lifecycle", {
-        "lca_buildings": {
-            "file_ext": ".xlsx",
-            "schema_key": "get_database_lca_buildings"
+    ("assemblies", {
+        "ASSEMBLIES": {
+            "filename": "assemblies.xls",
+            "schema_key": "get_database_assemblies"
         },
-        "lca_mobility": {
-            "file_ext": ".xls",
-            "schema_key": "get_database_lca_mobility"
-        }
     }),
-    ("systems", {
-        "air_conditioning_systems": {
-            "file_ext": ".xls",
+    ("components", {
+        "AIR_CONDITIONING": {
+            "filename": "air_conditioning.xls",
             "schema_key": "get_database_air_conditioning_systems"
         },
-        "envelope_systems": {
-            "file_ext": ".xls",
+        "ENVELOPE": {
+            "filename": "envelope.xls",
             "schema_key": "get_database_envelope_systems"
         },
-        "supply_systems": {
-            "file_ext": ".xls",
-            "schema_key": "get_database_supply_systems"
+        "CONVERSION": {
+            "filename": "conversion.xls",
+            "schema_key": "get_database_conversion_systems"
+        },
+        "DISTRIBUTION": {
+            "filename": "distribution.xls",
+            "schema_key": "get_database_distribution_systems"
         }
+    }),
+    ("feedstocks", {
+        "FEEDSTOCKS": {
+            "filename": "feedstocks.xls",
+            "schema_key": "get_database_feedstocks"
+        },
     })
 ])
 
@@ -60,11 +62,17 @@ def get_regions():
             and os.path.isdir(os.path.join(cea_database_path, folder))]
 
 
-# # FIXME: Temp solution for database locators for shipped databases
 def get_database_path(region, db_name):
     db_type = DATABASES_TYPE_MAP[db_name]
-    file_name = '{}{}'.format(db_name, DATABASES[db_type][db_name]['file_ext'])
-    return os.path.join(cea_database_path, region, db_type, file_name)
+    return os.path.join(cea_database_path, region, db_type, DATABASES[db_type][db_name]['filename'])
+
+
+def get_schedules_folder_path(region):
+    return os.path.join(cea_database_path, region, 'archetypes', 'use_types')
+
+
+def get_use_type_properties_path(region):
+    return os.path.join(cea_database_path, region, 'archetypes', 'use_types', 'use_types_properties.xlsx')
 
 
 def get_all_schedules_dict(schedules_folder):
@@ -102,6 +110,15 @@ def schedule_dict_to_file(schedule_dict, schedule_path):
     print('Schedule file written to {}'.format(schedule_path))
 
 
+def use_type_properties_to_dict(db_path):
+    out = OrderedDict()
+    xls = pandas.ExcelFile(db_path)
+    for sheet in xls.sheet_names:
+        df = xls.parse(sheet, keep_default_na=False).set_index('code').round(1)
+        out[sheet] = df.to_dict(orient='index', into=OrderedDict)
+    return out
+
+
 def database_to_dict(db_path):
     out = OrderedDict()
     xls = pandas.ExcelFile(db_path)
@@ -126,7 +143,31 @@ class DatabaseInfo(Resource):
         return {'regions': get_regions(), 'databases': databases}
 
 
-# FIXME: Separate db equals 'all' logic. Too messy
+@api.route("/<string:region>/all")
+class DatabaseAll(Resource):
+    def get(self, region):
+        regions = get_regions()
+        if region not in regions:
+            abort(400, "Could not find '{}' region. Try instead {}".format(region, ", ".join(regions)))
+        try:
+            out = OrderedDict()
+            for db_type, db_dict in DATABASES.items():
+                out[db_type] = OrderedDict()
+                for db_name in db_dict:
+                    if db_name == 'USE_TYPES':
+                        out[db_type][db_name] = {}
+                        out[db_type][db_name]['SCHEDULES'] = get_all_schedules_dict(get_schedules_folder_path(region))
+                        out[db_type][db_name]['USE_TYPE_PROPERTIES'] = use_type_properties_to_dict(
+                            get_use_type_properties_path(region))
+                    else:
+                        db_path = get_database_path(region, db_name)
+                        out[db_type][db_name] = database_to_dict(db_path)
+            return out
+        except IOError as e:
+            print(e)
+            abort(500, e.message)
+
+
 @api.route("/<string:region>/<string:db>")
 class Database(Resource):
     def get(self, region, db):
@@ -134,22 +175,15 @@ class Database(Resource):
         if region not in regions:
             abort(400, "Could not find '{}' region. Try instead {}".format(region, ", ".join(regions)))
         try:
-            if db == 'all':
-                out = OrderedDict()
-                for db_type, db_dict in DATABASES.items():
-                    out[db_type] = OrderedDict()
-                    for db_name in db_dict:
-                        db_path = get_database_path(region, db_name)
-                        if db_name == 'schedules':
-                            out[db_type][db_name] = get_all_schedules_dict(db_path)
-                        else:
-                            out[db_type][db_name] = database_to_dict(db_path)
-                return out
-            elif db in DATABASE_NAMES:
-                db_path = get_database_path(region, db)
-                if db == 'schedules':
-                    return get_all_schedules_dict(db_path)
+            if db in DATABASE_NAMES:
+                if db == 'USE_TYPES':
+                    out = OrderedDict()
+                    out['SCHEDULES'] = get_all_schedules_dict(get_schedules_folder_path(region))
+                    out['USE_TYPE_PROPERTIES'] = use_type_properties_to_dict(
+                        get_use_type_properties_path(region))
+                    return out
                 else:
+                    db_path = get_database_path(region, db)
                     return database_to_dict(db_path)
             else:
                 abort(400, "Could not find '{}' database. Try instead {}".format(db, ", ".join(DATABASE_NAMES)))
@@ -169,11 +203,17 @@ class DatabaseSchema(Resource):
             for db_type, db_dict in DATABASES.items():
                 out[db_type] = {}
                 for db_name, db_props in db_dict.items():
-                    out[db_type][db_name] = schemas[db_props['schema_key']]['schema']
+                    if db_name == 'USE_TYPES':
+                        out[db_type][db_name] = schemas['get_database_standard_schedules_use']['schema']
+                    else:
+                        out[db_type][db_name] = schemas[db_props['schema_key']]['schema']
             return out
         elif db in DATABASE_NAMES:
-            db_type = DATABASES_TYPE_MAP[db]
-            db_schema = schemas[DATABASES[db_type][db]['schema_key']]['schema']
-            return db_schema
+            if db == 'USE_TYPES':
+                return schemas['get_database_standard_schedules_use']['schema']
+            else:
+                db_type = DATABASES_TYPE_MAP[db]
+                db_schema = schemas[DATABASES[db_type][db]['schema_key']]['schema']
+                return db_schema
         else:
             abort(400, "Could not find '{}' database. Try instead {}".format(db, ", ".join(DATABASE_NAMES)))
