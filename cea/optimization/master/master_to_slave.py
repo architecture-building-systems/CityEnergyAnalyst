@@ -179,6 +179,7 @@ def calc_master_to_slave_variables(locator, gen,
 
     # initialise class storing dynamic variables transfered from master to slave optimization
     master_to_slave_vars = slave_data.SlaveData()
+    master_to_slave_vars = slave_data.SlaveData()
 
     # Store information aobut individual regarding the configuration of the network and curstomers connected
     if district_heating_network and DHN_barcode.count("1") > 0:

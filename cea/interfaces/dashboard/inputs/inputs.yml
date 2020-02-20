@@ -31,106 +31,42 @@ surroundings:
     type: float
   - name: REFERENCE
     type: str
-age:
+typology:
   parent: zone
   pk: Name
   type: dbf
-  location: get_building_age
+  location: get_building_typology
   fields:
   - name: Name
     type: str
-  - name: HVAC
+  - name: YEAR
     type: year
-  - name: basement
-    type: year
-  - name: built
-    type: year
-  - name: envelope
-    type: year
-  - name: partitions
-    type: year
-  - name: roof
-    type: year
-  - name: windows
-    type: year
-  - name: REFERENCE
+  - name: STANDARD
+    type: choice
+    location:
+      path: get_archetypes_properties
+      sheet: ARCHITECTURE
+      column: code
+  - name: 1ST_USE
     type: str
-occupancy:
-  parent: zone
-  pk: Name
-  type: dbf
-  location: get_building_occupancy
-  fields:
-  - name: Name
+  - name: 1ST_USE_R
+    type: float
+    constraints:
+      max: 1
+  - name: 2ND_USE
     type: str
-  - name: SINGLE_RES
+  - name: 2ND_USE_R
     type: float
     constraints:
       max: 1
-  - name: MULTI_RES
-    type: float
-    constraints:
-      max: 1
-  - name: OFFICE
-    type: float
-    constraints:
-      max: 1
-  - name: RETAIL
-    type: float
-    constraints:
-      max: 1
-  - name: SCHOOL
-    type: float
-    constraints:
-      max: 1
-  - name: RESTAURANT
-    type: float
-    constraints:
-      max: 1
-  - name: FOODSTORE
-    type: float
-    constraints:
-      max: 1
-  - name: GYM
-    type: float
-    constraints:
-      max: 1
-  - name: HOSPITAL
-    type: float
-    constraints:
-      max: 1
-  - name: HOTEL
-    type: float
-    constraints:
-      max: 1
-  - name: INDUSTRIAL
-    type: float
-    constraints:
-      max: 1
-  - name: LIBRARY
-    type: float
-    constraints:
-      max: 1
-  - name: SWIMMING
-    type: float
-    constraints:
-      max: 1
-  - name: COOLROOM
-    type: float
-    constraints:
-      max: 1
-  - name: SERVERROOM
-    type: float
-    constraints:
-      max: 1
-  - name: PARKING
+  - name: 3RD_USE
+    type: str
+  - name: 3RD_USE_R
     type: float
     constraints:
       max: 1
   - name: REFERENCE
     type: str
-    constraints:
-      max: 1
 internal-loads:
   parent: zone
   pk: Name
@@ -174,29 +110,29 @@ supply-systems:
   - name: type_cs
     type: choice
     location:
-      path: get_database_supply_systems
-      sheet: ALL_IN_ONE_SYSTEMS
+      path: get_database_assemblies
+      sheet: SUPPLY
       column: code
       filter: system=='COOLING' or system=='NONE'
   - name: type_dhw
     type: choice
     location:
-      path: get_database_supply_systems
-      sheet: ALL_IN_ONE_SYSTEMS
+      path: get_database_assemblies
+      sheet: SUPPLY
       column: code
       filter: system=='HEATING' or system=='NONE'
   - name: type_el
     type: choice
     location:
-      path: get_database_supply_systems
-      sheet: ALL_IN_ONE_SYSTEMS
+      path: get_database_assemblies
+      sheet: SUPPLY
       column: code
       filter: system=='ELECTRICITY' or system=='NONE'
   - name: type_hs
     type: choice
     location:
-      path: get_database_supply_systems
-      sheet: ALL_IN_ONE_SYSTEMS
+      path: get_database_assemblies
+      sheet: SUPPLY
       column: code
       filter: system=='HEATING' or system=='NONE'
 architecture:
@@ -311,31 +247,31 @@ air-conditioning-systems:
       type: choice
       location:
         path: get_database_air_conditioning_systems
-        sheet: cooling
+        sheet: COOLING
         column: code
     - name: type_hs
       type: choice
       location:
         path: get_database_air_conditioning_systems
-        sheet: heating
+        sheet: HEATING
         column: code
     - name: type_dhw
       type: choice
       location:
         path: get_database_air_conditioning_systems
-        sheet: dhw
+        sheet: HOT_WATER
         column: code
     - name: type_ctrl
       type: choice
       location:
         path: get_database_air_conditioning_systems
-        sheet: controller
+        sheet: CONTROLLER
         column: code
     - name: type_vent
       type: choice
       location:
         path: get_database_air_conditioning_systems
-        sheet: ventilation
+        sheet: VENTILATION
         column: code
     - name: heat_starts
       type: date
@@ -345,6 +281,36 @@ air-conditioning-systems:
       type: date
     - name: cool_ends
       type: date
+emission-intensity:
+  parent: zone
+  pk: Name
+  type: dbf
+  location: get_building_emission_intensity
+  fields:
+  - name: Name
+    type: str
+  - name: W_e_ag_kgm2
+    type: float
+  - name: W_e_bg_kgm2
+    type: float
+  - name: W_i_ag_kgm2
+    type: float
+  - name: W_i_bg_kgm2
+    type: float
+  - name: Win_kgm2
+    type: float
+  - name: F_i_kgm2
+    type: float
+  - name: F_e_kgm2
+    type: float
+  - name: R_kgm2
+    type: float
+  - name: Tech_kgm2
+    type: float
+  - name: Exca_kgm2
+    type: float
+  - name: Mobi_kgm2
+    type: float
 
 
 

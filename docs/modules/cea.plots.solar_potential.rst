@@ -9,10 +9,10 @@ cea.plots.solar\_potential package
 Submodules
 ----------
 
-cea.plots.solar\_potential.solar\_radiation module
---------------------------------------------------
+cea.plots.solar\_potential.a\_solar\_radiation module
+-----------------------------------------------------
 
-.. automodule:: cea.plots.solar_potential.solar_radiation
+.. automodule:: cea.plots.solar_potential.a_solar_radiation
     :members:
     :undoc-members:
     :show-inheritance:

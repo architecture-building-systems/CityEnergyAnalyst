@@ -8,11 +8,12 @@ import pandas
 import yaml
 from flask import current_app, request
 from flask_restplus import Namespace, Resource, abort
-from .databases import DATABASE_NAMES, DATABASES, DATABASES_TYPE_MAP, database_to_dict, database_dict_to_file, get_all_schedules_dict, schedule_to_dict, schedule_dict_to_file
+from .databases import DATABASE_NAMES, DATABASES, DATABASES_TYPE_MAP, database_to_dict, database_dict_to_file, \
+    get_all_schedules_dict, schedule_to_dict, schedule_dict_to_file, use_type_properties_to_dict
 
 import cea.inputlocator
 import cea.utilities.dbf
-from cea.plots.supply_system.supply_system_map import get_building_connectivity
+from cea.plots.supply_system.a_supply_system_map import get_building_connectivity
 from cea.plots.variable_naming import get_color_array
 from cea.technologies.network_layout.main import layout_network, NetworkLayout
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
@@ -188,8 +189,8 @@ class AllInputs(Resource):
 def get_building_properties():
     import cea.glossary
     # FIXME: Find a better way to ensure order of tabs
-    tabs = ['zone', 'age', 'occupancy', 'architecture', 'internal-loads', 'indoor-comfort', 'air-conditioning-systems',
-            'supply-systems', 'surroundings']
+    tabs = ['zone', 'typology', 'architecture', 'internal-loads', 'indoor-comfort', 'air-conditioning-systems',
+            'supply-systems', 'emission-intensity', 'surroundings']
 
     config = current_app.cea_config
     locator = cea.inputlocator.InputLocator(config.scenario)
@@ -320,32 +321,48 @@ class BuildingSchedule(Resource):
             abort(500, 'File not found')
 
 
-# FIXME: Separate db equals 'all' logic. Too messy
+# TODO: Could create and use method to parse databases since it is very similar to the one in `api/databases` endpoint
+@api.route('/databases/all')
+class InputDatabaseAll(Resource):
+    def get(self):
+        config = current_app.cea_config
+        locator = cea.inputlocator.InputLocator(config.scenario)
+        try:
+            # All or nothing. Abort reading databases if encounter error
+            out = OrderedDict()
+            for db_type, db_dict in DATABASES.items():
+                out[db_type] = OrderedDict()
+                for db_name, db_props in db_dict.items():
+                    if db_name == 'USE_TYPES':
+                        out[db_type][db_name] = {}
+                        out[db_type][db_name]['SCHEDULES'] = get_all_schedules_dict(
+                            locator.get_database_use_types_folder())
+                        out[db_type][db_name]['USE_TYPE_PROPERTIES'] = use_type_properties_to_dict(
+                            locator.get_use_types_properties())
+                    else:
+                        locator_method = db_props['schema_key']
+                        out[db_type][db_name] = database_to_dict(locator.__getattribute__(locator_method)())
+            return out
+        except IOError as e:
+            print(e)
+            abort(500, e.message)
+
+
 @api.route('/databases/<string:db>')
 class InputDatabase(Resource):
     def get(self, db):
         config = current_app.cea_config
         locator = cea.inputlocator.InputLocator(config.scenario)
         try:
-            # All or nothing. Abort reading databases if encounter error
-            if db == 'all':
-                out = OrderedDict()
-                for db_type, db_dict in DATABASES.items():
-                    out[db_type] = OrderedDict()
-                    for db_name, db_props in db_dict.items():
-                        if db_name == 'schedules':
-                            # Need to change locator method for schedules since `schema.yml` uses
-                            # `get_database_standard_schedules_use` instead of `get_database_standard_schedules`
-                            out[db_type][db_name] = get_all_schedules_dict(locator.get_database_standard_schedules())
-                        else:
-                            locator_method = db_props['schema_key']
-                            out[db_type][db_name] = database_to_dict(locator.__getattribute__(locator_method)())
-                return out
-            elif db in DATABASE_NAMES:
-                db_type = DATABASES_TYPE_MAP[db]
-                if db == 'schedules':
-                    return get_all_schedules_dict(locator.get_database_standard_schedules())
+            if db in DATABASE_NAMES:
+                if db == 'USE_TYPES':
+                    out = OrderedDict()
+                    out['SCHEDULES'] = get_all_schedules_dict(
+                        locator.get_database_use_types_folder())
+                    out['USE_TYPE_PROPERTIES'] = use_type_properties_to_dict(
+                        locator.get_use_types_properties())
                 else:
+                    db_type = DATABASES_TYPE_MAP[db]
                     locator_method = DATABASES[db_type][db]['schema_key']
                     return database_to_dict(locator.__getattribute__(locator_method)())
             else:
@@ -365,8 +382,8 @@ class InputDatabaseSave(Resource):
 
         for db_type in payload:
             for db_name in payload[db_type]:
-                if db_name == 'schedules':
-                    for archetype, schedule_dict in payload[db_type]['schedules'].items():
+                if db_name == 'SCHEDULES':
+                    for archetype, schedule_dict in payload[db_type]['SCHEDULES'].items():
                         schedule_dict_to_file(
                             schedule_dict,
                             locator.get_database_standard_schedules_use(
@@ -405,9 +422,7 @@ class InputDatabaseCheck(Resource):
         config = current_app.cea_config
         locator = cea.inputlocator.InputLocator(config.scenario)
         try:
-            valid = locator.is_valid_database_template()
-            if not valid:
-                raise IOError('Database in path is not valid.')
+            locator.verify_database_template()
         except IOError as e:
             print(e)
             abort(500, e.message)

@@ -68,7 +68,7 @@ def calc_PV(locator, config, latitude, longitude, weather_data, datetime_local, 
     print('calculating solar properties done')
 
     # calculate properties of PV panel
-    panel_properties_PV = calc_properties_PV_db(locator.get_database_supply_systems(), config)
+    panel_properties_PV = calc_properties_PV_db(locator.get_database_conversion_systems(), config)
     print('gathering properties of PV panel')
 
     # select sensor point with sufficient solar radiation
@@ -407,9 +407,9 @@ def calc_absorbed_radiation_PV(I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetae
     absorbed_radiation_Wperm2 = M * Ta_n * (
             kteta_B * I_direct * Rb + kteta_D * I_diffuse * (1 + cos(tilt)) / 2 + kteta_eG * I_sol * Pg * (
             1 - cos(tilt)) / 2)  # [W/m2] (5.12.1)
-    if absorbed_radiation_Wperm2 < 0:  # when points are 0 and too much losses
+    if absorbed_radiation_Wperm2 < 0.0:  # when points are 0 and too much losses
         # print ('the absorbed radiation', absorbed_radiation_Wperm2 ,'is negative, please check calc_absorbed_radiation_PVT')
-        absorbed_radiation_Wperm2 = 0
+        absorbed_radiation_Wperm2 = 0.0
 
     return absorbed_radiation_Wperm2
 
@@ -436,9 +436,10 @@ def calc_PV_power(absorbed_radiation_Wperm2, T_cell_C, eff_nom, tot_module_area_
     reference conditions. Solar Cells, 18, 269-279.
 
     """
-    T_standard_C = 25  # temperature at the standard testing condition
+    T_standard_C = 25.0  # temperature at the standard testing condition
     el_output_PV_kW = eff_nom * tot_module_area_m2 * absorbed_radiation_Wperm2 * \
                       (1 - Bref_perC * (T_cell_C - T_standard_C)) * (1 - misc_losses) / 1000
+
     return el_output_PV_kW
 
 
@@ -695,7 +696,7 @@ def calc_Cinv_pv(total_module_area_m2, locator, technology=0):
     :param P_peak: installed capacity of PV module [kW]
     :return InvCa: capital cost of the installed PV module [CHF/Y]
     """
-    PV_cost_data = pd.read_excel(locator.get_database_supply_systems(), sheet_name="PV")
+    PV_cost_data = pd.read_excel(locator.get_database_conversion_systems(), sheet_name="PV")
     technology_code = list(set(PV_cost_data['code']))
     PV_cost_data[PV_cost_data['code'] == technology_code[technology]]
     nominal_efficiency = PV_cost_data[PV_cost_data['code'] == technology_code[technology]]['PV_n'].max()
