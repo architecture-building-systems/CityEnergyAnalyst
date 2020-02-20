@@ -7,7 +7,7 @@ The following is a set of guidelines for contributing to CEA, which is hosted on
 
 Step 1. Let us know about it
 ----------------------------
-Weather you would like to implement a new feature or fix a bug, let the CEA team know. We can then enter to support you and coordinate efforts across our wide network of contributors.
+Whether you would like to implement a new feature or fix a bug, let the CEA team know. This will help us to coordinate efforts across network of developers. It will also help us to better support your work.
 
 You can let us know by reporting a new issue https://github.com/architecture-building-systems/CityEnergyAnalyst/issues/new/choose
 
