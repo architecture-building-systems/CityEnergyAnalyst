@@ -214,6 +214,10 @@ def check_daysim_bin_directory(path_hint):
             return False
         return all(bin in found_binaries for bin in required_binaries)
 
+    def contains_whitespace(path):
+        """True if path contains whitespace"""
+        return len(path.split()) > 1
+
     folders_to_check = [
         path_hint,
         os.path.join(os.path.dirname(sys.executable), "..", "Daysim"),
@@ -225,7 +229,11 @@ def check_daysim_bin_directory(path_hint):
 
     for path in folders_to_check:
         if contains_binaries(path):
-            return path_hint
+            # If path to binaries contains whitespace, provide a warning
+            if contains_whitespace(path):
+                print("ATTENTION: Daysim binaries found in '{}', but its path contains whitespaces. Consider moving the binaries to another path to use them.")
+                continue
+            return path
 
     raise ValueError("Could not find Daysim binaries - checked these paths: {}".format(", ".join(folders_to_check)))
 
