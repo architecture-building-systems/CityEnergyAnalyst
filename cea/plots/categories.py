@@ -5,7 +5,6 @@ the conventions for adding new plots.
 
 from __future__ import division
 from __future__ import print_function
-import os
 import pkgutil
 import importlib
 import inspect
@@ -32,13 +31,6 @@ def list_categories():
             # only consider subfolders of cea/plots to be categories
             continue
         module = importlib.import_module(modname)
-
-        # Tries to fix issue #2472 by skipping .pyc file plots
-        module_path, module_ext = os.path.splitext(module.__file__)
-        if module_ext == '.pyc' and not os.path.exists("{}.py".format(module_path)):
-            # check if the `.pyc` file has an accompanied `.py` file, else skip
-            continue
-
         if not hasattr(module, 'label'):
             # doesn't implement the interface for categories (__init__.py must have a "label" attribute)
             continue
