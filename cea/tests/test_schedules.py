@@ -30,7 +30,7 @@ class TestBuildingPreprocessing(unittest.TestCase):
         config.read(get_test_config_path())
 
         calculated_results = calculate_mixed_use_archetype_values_results(locator).to_dict()
-
+        print(calculated_results)
         # compare to reference values
         expected_results = json.loads(config.get('test_mixed_use_archetype_values', 'expected_results'))
         for column, rows in expected_results.items():
@@ -94,7 +94,7 @@ def calculate_mixed_use_archetype_values_results(locator):
                                    columns=['Name', "1ST_USE", "1ST_USE_R", '2ND_USE', '2ND_USE_R', '3RD_USE', '3RD_USE_R', 'X_ghpax', 'El_Wm2', 'Occ_m2pax']),
         occupant_densities={'OFFICE': 1 / office_occ, 'GYM': 1 / gym_occ},
         list_uses=['OFFICE', 'GYM'],
-        properties_DB=pd.read_excel(locator.get_use_types_properties(), 'INTERNAL_LOADS'))
+        properties_DB=pd.read_excel(locator.get_use_types_properties(), 'INTERNAL_LOADS')).set_index('Name')
 
     return calculated_results
 
