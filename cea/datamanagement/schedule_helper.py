@@ -36,7 +36,7 @@ COLUMN_NAMES_CEA_SCHEDULE = ['DAY',
                              'SERVERS']
 
 
-def calc_mixed_schedule(locator, building_typology_df, buildings):
+def calc_mixed_schedule(locator, building_typology_df, buildings, list_var_names=None, list_var_values=None):
     """
     Builds the ``cea.inputlocator.InputLocator#get_building_weekly_schedules`` for each building in the zone,
     combining the occupancy types as indicated in the inputs.
@@ -45,10 +45,18 @@ def calc_mixed_schedule(locator, building_typology_df, buildings):
     :param cea.inputlocator.InputLocator locator: the locator to use
     :param building_typology_df: ``occupancy.dbf``, with an added column "mainuse"
     :param buildings: the list of buildings to calculate the schedules for
+    :type buildings: list[str]
+    :param list_var_names: List of column names in building_typology_df that contain the names of use-types being caculated
+    :type list_var_names: list[str]
+    :param list_var_values: List of column names in building_typology_df that contain values of use-type ratio in respect to list_var_names
+    :type list_var_values: list[str]
     :return:
     """
-    list_var_names = ["1ST_USE", '2ND_USE', '3RD_USE']
-    list_var_values = ["1ST_USE_R", '2ND_USE_R', '3RD_USE_R']
+
+    if list_var_names is None:
+        list_var_names = ["1ST_USE", '2ND_USE', '3RD_USE']
+    if list_var_values is None:
+        list_var_values = ["1ST_USE_R", '2ND_USE_R', '3RD_USE_R']
 
     metadata = 'mixed-schedule'
     schedule_data_all_uses = ScheduleData(locator)
@@ -69,95 +77,122 @@ def calc_mixed_schedule(locator, building_typology_df, buildings):
             occupant_densities[use] = 0.0
 
     for building in buildings:
-        schedule_new_data = {}
-        main_use_this_building = building_typology_df['1ST_USE'][building]
-        monthly_multiplier = np.zeros(12)
-        for var_name, var_value in zip(list_var_names, list_var_values):
-            monthly_multiplier += np.sum([np.array(schedule_data_all_uses.schedule_complementary_data[use]['MONTHLY_MULTIPLIER'])
-                                         * building_typology_df.loc[building, var_value] if building_typology_df.loc[building, var_name] == use
-                                          else np.zeros(12) for use in list_uses], axis=0)
-        for schedule_type in VARIABLE_CEA_SCHEDULE_RELATION.values():
-            current_schedule = np.zeros(len(schedule_data_all_uses.schedule_data['HOTEL'][schedule_type]))
-            normalizing_value = 0.0
-            if schedule_type in ['HEATING', 'COOLING']:
-                schedule_new_data[schedule_type] = schedule_data_all_uses.schedule_data[main_use_this_building][
-                    schedule_type]
-            else:
-                for use in list_uses:
-                    for var_name, var_value in zip(list_var_names, list_var_values):
-                        if building_typology_df[var_name][building] == use and building_typology_df[var_value][building] > 0.0:
-                            current_share_of_use = building_typology_df[var_value][building]
-                            if schedule_type in ['OCCUPANCY'] and occupant_densities[use] > 0.0:
-                                # for variables that depend on the number of people, the schedule needs to be calculated by number
-                                # of people for each use at each time step, not the share of the occupancy for each
-                                share_time_occupancy_density = current_share_of_use * occupant_densities[use]
-                                normalizing_value += share_time_occupancy_density
-                                current_schedule = np.vectorize(calc_average)(current_schedule,
-                                                                              schedule_data_all_uses.schedule_data[use][
-                                                                                  schedule_type],
-                                                                              share_time_occupancy_density)
-
-                            if schedule_type in ['WATER'] and occupant_densities[use] > 0.0 and (
-                                    internal_loads.loc[use, 'Vw_lpdpax'] + internal_loads.loc[use, 'Vw_lpdpax']) > 0.0:
-                                # for variables that depend on the number of people, the schedule needs to be calculated by number
-                                # of people for each use at each time step, not the share of the occupancy for each
-                                share_time_occupancy_density = current_share_of_use * occupant_densities[use] * (
-                                            internal_loads.loc[use, 'Vw_lpdpax'] + internal_loads.loc[use, 'Vw_lpdpax'])
-                                normalizing_value += share_time_occupancy_density
-                                current_schedule = np.vectorize(calc_average)(current_schedule,
-                                                                              schedule_data_all_uses.schedule_data[use][
-                                                                                  schedule_type],
-                                                                              share_time_occupancy_density)
-
-                            elif schedule_type in ['APPLIANCES'] and internal_loads.loc[use, 'Ea_Wm2'] > 0.0:
-                                share_time_occupancy_density = current_share_of_use * internal_loads.loc[use, 'Ea_Wm2']
-                                normalizing_value += share_time_occupancy_density
-                                current_schedule = np.vectorize(calc_average)(current_schedule,
-                                                                              schedule_data_all_uses.schedule_data[use][
-                                                                                  schedule_type],
-                                                                              share_time_occupancy_density)
-
-                            elif schedule_type in ['LIGHTING'] and internal_loads.loc[use, 'El_Wm2'] > 0.0:
-                                share_time_occupancy_density = current_share_of_use * internal_loads.loc[use, 'El_Wm2']
-                                normalizing_value += share_time_occupancy_density
-                                current_schedule = np.vectorize(calc_average)(current_schedule,
-                                                                              schedule_data_all_uses.schedule_data[use][
-                                                                                  schedule_type],
-                                                                              share_time_occupancy_density)
-
-                            elif schedule_type in ['PROCESSES'] and internal_loads.loc[use, 'Epro_Wm2'] > 0.0:
-                                share_time_occupancy_density = current_share_of_use * internal_loads.loc[use, 'Epro_Wm2']
-                                normalizing_value += share_time_occupancy_density
-                                current_schedule = np.vectorize(calc_average)(current_schedule,
-                                                                              schedule_data_all_uses.schedule_data[use][
-                                                                                  schedule_type],
-                                                                              share_time_occupancy_density)
-
-                            elif schedule_type in ['SERVERS'] and internal_loads.loc[use, 'Ed_Wm2'] > 0.0:
-                                share_time_occupancy_density = current_share_of_use * internal_loads.loc[use, 'Ed_Wm2']
-
-                                normalizing_value += share_time_occupancy_density
-                                current_schedule = np.vectorize(calc_average)(current_schedule,
-                                                                              schedule_data_all_uses.schedule_data[use][
-                                                                                  schedule_type],
-                                                                              share_time_occupancy_density)
-                if normalizing_value == 0.0:
-                    schedule_new_data[schedule_type] = current_schedule * 0.0
-                else:
-                    schedule_new_data[schedule_type] = np.round(current_schedule/normalizing_value, 2)
-
-        # add hour and day of the week
-        DAY = {'DAY': ['WEEKDAY'] * 24 + ['SATURDAY'] * 24 + ['SUNDAY'] * 24}
-        HOUR = {'HOUR': range(1, 25) + range(1, 25) + range(1, 25)}
-        schedule_new_data.update(DAY)
-        schedule_new_data.update(HOUR)
-
-        # calculate complementary_data
-        schedule_complementary_data = {'METADATA': metadata, 'MONTHLY_MULTIPLIER': monthly_multiplier}
-
+        schedule_new_data, schedule_complementary_data = calc_single_mixed_schedule(list_uses, occupant_densities, building_typology_df, internal_loads, building, schedule_data_all_uses, list_var_names, list_var_values, metadata)
         # save cea schedule format
         path_to_building_schedule = locator.get_building_weekly_schedules(building)
         save_cea_schedule(schedule_new_data, schedule_complementary_data, path_to_building_schedule)
+
+
+def calc_single_mixed_schedule(list_uses, occupant_densities, building_typology_df, internal_loads_df, building, schedule_data_all_uses, list_var_names, list_var_values, metadata='mixed-schedule'):
+    """
+        Builds the ``cea.inputlocator.InputLocator#get_building_weekly_schedules`` for each building in the zone,
+        combining the occupancy types as indicated in the inputs.
+
+        :param list_uses: list of uses in the project
+        :type list_uses: list[str]
+        :param occupant_densities: Dictionary containing the number of people per square meter for each occupancy type based
+        on the archetypes
+        :type occupant_densities: dict
+        :param building_typology_df: ``occupancy.dbf``, with an added column "mainuse"
+        :type building_typology_df: pandas.DataFrame
+        :param building: name of buildings to calculate the schedules for
+        :type building: str
+        :param list_var_names: List of column names in building_typology_df that contain the names of use-types being caculated
+        :type list_var_names: list[str]
+        :param list_var_values: List of column names in building_typology_df that contain values of use-type ratio in respect to list_var_names
+        :type list_var_values: list[str]
+        :return:
+        """
+
+    schedule_new_data = {}
+    # First name in `list_var_names` would be treated as main use
+    main_use_this_building = building_typology_df[list_var_names[0]][building]
+    monthly_multiplier = np.zeros(12)
+    for var_name, var_value in zip(list_var_names, list_var_values):
+        monthly_multiplier += np.sum(
+            [np.array(schedule_data_all_uses.schedule_complementary_data[use]['MONTHLY_MULTIPLIER'])
+             * building_typology_df.loc[building, var_value] if building_typology_df.loc[building, var_name] == use
+             else np.zeros(12) for use in list_uses], axis=0)
+    for schedule_type in VARIABLE_CEA_SCHEDULE_RELATION.values():
+        current_schedule = np.zeros(len(schedule_data_all_uses.schedule_data['HOTEL'][schedule_type]))
+        normalizing_value = 0.0
+        if schedule_type in ['HEATING', 'COOLING']:
+            schedule_new_data[schedule_type] = schedule_data_all_uses.schedule_data[main_use_this_building][
+                schedule_type]
+        else:
+            for use in list_uses:
+                for var_name, var_value in zip(list_var_names, list_var_values):
+                    if building_typology_df[var_name][building] == use and building_typology_df[var_value][
+                        building] > 0.0:
+                        current_share_of_use = building_typology_df[var_value][building]
+                        if schedule_type in ['OCCUPANCY'] and occupant_densities[use] > 0.0:
+                            # for variables that depend on the number of people, the schedule needs to be calculated by number
+                            # of people for each use at each time step, not the share of the occupancy for each
+                            share_time_occupancy_density = current_share_of_use * occupant_densities[use]
+                            normalizing_value += share_time_occupancy_density
+                            current_schedule = np.vectorize(calc_average)(current_schedule,
+                                                                          schedule_data_all_uses.schedule_data[use][
+                                                                              schedule_type],
+                                                                          share_time_occupancy_density)
+
+                        if schedule_type in ['WATER'] and occupant_densities[use] > 0.0 and (
+                                internal_loads_df.loc[use, 'Vw_lpdpax'] + internal_loads_df.loc[use, 'Vw_lpdpax']) > 0.0:
+                            # for variables that depend on the number of people, the schedule needs to be calculated by number
+                            # of people for each use at each time step, not the share of the occupancy for each
+                            share_time_occupancy_density = current_share_of_use * occupant_densities[use] * (
+                                    internal_loads_df.loc[use, 'Vw_lpdpax'] + internal_loads_df.loc[use, 'Vw_lpdpax'])
+                            normalizing_value += share_time_occupancy_density
+                            current_schedule = np.vectorize(calc_average)(current_schedule,
+                                                                          schedule_data_all_uses.schedule_data[use][
+                                                                              schedule_type],
+                                                                          share_time_occupancy_density)
+
+                        elif schedule_type in ['APPLIANCES'] and internal_loads_df.loc[use, 'Ea_Wm2'] > 0.0:
+                            share_time_occupancy_density = current_share_of_use * internal_loads_df.loc[use, 'Ea_Wm2']
+                            normalizing_value += share_time_occupancy_density
+                            current_schedule = np.vectorize(calc_average)(current_schedule,
+                                                                          schedule_data_all_uses.schedule_data[use][
+                                                                              schedule_type],
+                                                                          share_time_occupancy_density)
+
+                        elif schedule_type in ['LIGHTING'] and internal_loads_df.loc[use, 'El_Wm2'] > 0.0:
+                            share_time_occupancy_density = current_share_of_use * internal_loads_df.loc[use, 'El_Wm2']
+                            normalizing_value += share_time_occupancy_density
+                            current_schedule = np.vectorize(calc_average)(current_schedule,
+                                                                          schedule_data_all_uses.schedule_data[use][
+                                                                              schedule_type],
+                                                                          share_time_occupancy_density)
+
+                        elif schedule_type in ['PROCESSES'] and internal_loads_df.loc[use, 'Epro_Wm2'] > 0.0:
+                            share_time_occupancy_density = current_share_of_use * internal_loads_df.loc[use, 'Epro_Wm2']
+                            normalizing_value += share_time_occupancy_density
+                            current_schedule = np.vectorize(calc_average)(current_schedule,
+                                                                          schedule_data_all_uses.schedule_data[use][
+                                                                              schedule_type],
+                                                                          share_time_occupancy_density)
+
+                        elif schedule_type in ['SERVERS'] and internal_loads_df.loc[use, 'Ed_Wm2'] > 0.0:
+                            share_time_occupancy_density = current_share_of_use * internal_loads_df.loc[use, 'Ed_Wm2']
+
+                            normalizing_value += share_time_occupancy_density
+                            current_schedule = np.vectorize(calc_average)(current_schedule,
+                                                                          schedule_data_all_uses.schedule_data[use][
+                                                                              schedule_type],
+                                                                          share_time_occupancy_density)
+            if normalizing_value == 0.0:
+                schedule_new_data[schedule_type] = current_schedule * 0.0
+            else:
+                schedule_new_data[schedule_type] = np.round(current_schedule / normalizing_value, 2)
+
+    # add hour and day of the week
+    DAY = {'DAY': ['WEEKDAY'] * 24 + ['SATURDAY'] * 24 + ['SUNDAY'] * 24}
+    HOUR = {'HOUR': range(1, 25) + range(1, 25) + range(1, 25)}
+    schedule_new_data.update(DAY)
+    schedule_new_data.update(HOUR)
+
+    # calculate complementary_data
+    schedule_complementary_data = {'METADATA': metadata, 'MONTHLY_MULTIPLIER': monthly_multiplier}
+    return schedule_new_data, schedule_complementary_data
 
 def get_list_of_uses_in_case_study(building_typology_df):
     """

@@ -105,7 +105,7 @@ def archetypes_mapper(locator,
         internal_loads_mapper(list_uses, locator, occupant_densities, building_typology_df)
 
     if update_schedule_operation_cea:
-        if buildings == []:
+        if not buildings:
             buildings = locator.get_zone_building_names()
         calc_mixed_schedule(locator, building_typology_df, buildings)
 
@@ -379,7 +379,9 @@ def get_prop_architecture(typology_df, architecture_DB):
     return prop_architecture_df
 
 
-def calculate_average_multiuse(fields, properties_df, occupant_densities, list_uses, properties_DB):
+# FIXME: `fields` parameter might be redundant
+def calculate_average_multiuse(fields, properties_df, occupant_densities, list_uses, properties_DB, list_var_names=None,
+                               list_var_values=None):
     """
     This script calculates the average internal loads and ventilation properties for multiuse buildings.
 
@@ -394,12 +396,20 @@ def calculate_average_multiuse(fields, properties_df, occupant_densities, list_u
     :param properties_DB: DataFrame containing each occupancy type's indoor comfort properties or internal loads based
         on the corresponding archetypes
     :type properties_DB: DataFrame
+    :param list_var_names: List of column names in properties_df that contain the names of use-types being caculated
+    :type: list_var_names: list[str]
+    :param list_var_values: List of column names in properties_df that contain values of use-type ratio in respect to list_var_names
+    :type: list_var_values: list[str]
 
     :return properties_df: the same DataFrame as the input parameter, but with the updated properties for multiuse
         buildings
     """
-    list_var_names = ["1ST_USE", '2ND_USE', '3RD_USE']
-    list_var_values = ["1ST_USE_R", '2ND_USE_R', '3RD_USE_R']
+
+    if list_var_names is None:
+        list_var_names = ["1ST_USE", '2ND_USE', '3RD_USE']
+    if list_var_values is None:
+        list_var_values = ["1ST_USE_R", '2ND_USE_R', '3RD_USE_R']
+
     properties_DB = properties_DB.set_index('code')
     for column in fields:
         if column in ['Ve_lpspax', 'Qs_Wpax', 'X_ghpax', 'Vww_lpdpax', 'Vw_lpdpax']:
