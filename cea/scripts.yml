@@ -278,17 +278,17 @@ Utilities:
     module: cea.utilities.dbf
     parameters: ['general:scenario', 'dbf-tools:input-file', 'dbf-tools:output-path','dbf-tools:output-file-name' ]
 
-  - name: test
-    label: Test CEA
-    description: Run some tests on the CEA
+  - name: data-initializer
+    label: Database Initializer
+    description: Initialize databases for CEA
     interfaces: [cli, arcgis, dashboard]
-    module: cea.tests.dodo
-    parameters: [test]
+    module: cea.datamanagement.data_initializer
+    parameters: ['general:scenario', data-initializer]
 
   - name: rename-building
     label: Rename building
     description: Renames a building in the input files
-    interfaces: [cli, dashboard]
+    interfaces: [cli, arcgis, dashboard]
     module: cea.utilities.rename_building
     parameters: ['general:scenario', rename-building]
     input-files:
@@ -303,6 +303,13 @@ Utilities:
     input-files:
       - [get_use_types_properties]
 
+  - name: test
+    label: Test CEA
+    description: Run some tests on the CEA
+    interfaces: [cli, arcgis dashboard]
+    module: cea.tests.dodo
+    parameters: [test]
+
 default:
 
   - name: multi-criteria-analysis
@@ -311,13 +318,6 @@ default:
     interfaces: [cli, arcgis]
     module: cea.analysis.multicriteria.main
     parameters: ['general:scenario', multi-criteria]
-
-  - name: data-initializer
-    label: DataBase Initializer
-    description: Initialize databases for CEA
-    interfaces: [cli, arcgis]
-    module: cea.datamanagement.data_initializer
-    parameters: ['general:scenario', data-initializer]
 
   - name: zone-helper
     label: Zone helper
