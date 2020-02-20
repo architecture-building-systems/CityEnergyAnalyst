@@ -5,9 +5,8 @@ EN-13970
 """
 from __future__ import division
 import numpy as np
-from cea.utilities.physics import BOLTZMANN
 from cea.demand import control_heating_cooling_systems, constants
-from cea.constants import HOURS_IN_YEAR
+from cea.constants import HOURS_IN_YEAR, BOLTZMANN, KELVIN_OFFSET
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -118,7 +117,7 @@ def calc_hr(emissivity, theta_ss):
         hr:
 
     """
-    return 4.0 * emissivity * BOLTZMANN * (theta_ss + 273.0) ** 3.0
+    return 4.0 * emissivity * BOLTZMANN * (theta_ss + KELVIN_OFFSET) ** 3.0
 
 
 def calc_Qhs_sys_Qcs_sys(tsd):
@@ -223,8 +222,8 @@ def calc_temperatures_emission_systems(bpr, tsd):
 
         index = np.where(qhs_sys_ahu == Qhs_sys_ahu_0)
         ma_sup_0 = tsd['ma_sup_hs_ahu'][index[0][0]]
-        Ta_sup_0 = tsd['ta_sup_hs_ahu'][index[0][0]] + 273
-        Ta_re_0 = tsd['ta_re_hs_ahu'][index[0][0]] + 273
+        Ta_sup_0 = tsd['ta_sup_hs_ahu'][index[0][0]] + KELVIN_OFFSET
+        Ta_re_0 = tsd['ta_re_hs_ahu'][index[0][0]] + KELVIN_OFFSET
         Ths_sup, Ths_re, mcphs = np.vectorize(heating_coils.calc_heating_coil)(qhs_sys_ahu, Qhs_sys_ahu_0, tsd['ta_sup_hs_ahu'],
                                                                                tsd['ta_re_hs_ahu'],
                                                                                bpr.building_systems['Ths_sup_ahu_0'],
@@ -244,8 +243,8 @@ def calc_temperatures_emission_systems(bpr, tsd):
 
         index = np.where(qhs_sys_aru == Qhs_sys_aru_0)
         ma_sup_0 = tsd['ma_sup_hs_aru'][index[0][0]]
-        Ta_sup_0 = tsd['ta_sup_hs_aru'][index[0][0]] + 273
-        Ta_re_0 = tsd['ta_re_hs_aru'][index[0][0]] + 273
+        Ta_sup_0 = tsd['ta_sup_hs_aru'][index[0][0]] + KELVIN_OFFSET
+        Ta_re_0 = tsd['ta_re_hs_aru'][index[0][0]] + KELVIN_OFFSET
         Ths_sup, Ths_re, mcphs = np.vectorize(heating_coils.calc_heating_coil)(qhs_sys_aru, Qhs_sys_aru_0,
                                                                                tsd['ta_sup_hs_aru'],
                                                                                tsd['ta_re_hs_aru'],
@@ -312,8 +311,8 @@ def calc_temperatures_emission_systems(bpr, tsd):
 
         index = np.where(qcs_sys_ahu == Qcs_sys_ahu_0)
         ma_sup_0 = tsd['ma_sup_cs_ahu'][index[0][0]]
-        Ta_sup_0 = tsd['ta_sup_cs_ahu'][index[0][0]] + 273
-        Ta_re_0 = tsd['ta_re_cs_ahu'][index[0][0]] + 273
+        Ta_sup_0 = tsd['ta_sup_cs_ahu'][index[0][0]] + KELVIN_OFFSET
+        Ta_re_0 = tsd['ta_re_cs_ahu'][index[0][0]] + KELVIN_OFFSET
         Tcs_sup, Tcs_re, mcpcs = np.vectorize(heating_coils.calc_cooling_coil)(qcs_sys_ahu, Qcs_sys_ahu_0, tsd['ta_sup_cs_ahu'],
                                                                                tsd['ta_re_cs_ahu'],
                                                                                bpr.building_systems['Tcs_sup_ahu_0'],
@@ -333,8 +332,8 @@ def calc_temperatures_emission_systems(bpr, tsd):
 
         index = np.where(qcs_sys_aru == Qcs_sys_aru_0)
         ma_sup_0 = tsd['ma_sup_cs_aru'][index[0][0]]
-        Ta_sup_0 = tsd['ta_sup_cs_aru'][index[0][0]] + 273
-        Ta_re_0 = tsd['ta_re_cs_aru'][index[0][0]] + 273
+        Ta_sup_0 = tsd['ta_sup_cs_aru'][index[0][0]] + KELVIN_OFFSET
+        Ta_re_0 = tsd['ta_re_cs_aru'][index[0][0]] + KELVIN_OFFSET
         Tcs_sup, Tcs_re, mcpcs = np.vectorize(heating_coils.calc_cooling_coil)(qcs_sys_aru, Qcs_sys_aru_0, tsd['ta_sup_cs_aru'],
                                                                                tsd['ta_re_cs_aru'],
                                                                                bpr.building_systems['Tcs_sup_aru_0'],
@@ -367,8 +366,8 @@ def calc_temperatures_emission_systems(bpr, tsd):
 
         index = np.where(qcs_sys_aru == Qcs_sys_aru_0)
         ma_sup_0 = tsd['ma_sup_cs_aru'][index[0][0]]
-        Ta_sup_0 = tsd['ta_sup_cs_aru'][index[0][0]] + 273
-        Ta_re_0 = tsd['ta_re_cs_aru'][index[0][0]] + 273
+        Ta_sup_0 = tsd['ta_sup_cs_aru'][index[0][0]] + KELVIN_OFFSET
+        Ta_re_0 = tsd['ta_re_cs_aru'][index[0][0]] + KELVIN_OFFSET
         Tcs_sup, Tcs_re, mcpcs = np.vectorize(heating_coils.calc_cooling_coil)(qcs_sys_aru, Qcs_sys_aru_0,
                                                                                tsd['ta_sup_cs_aru'],
                                                                                tsd['ta_re_cs_aru'],
@@ -397,8 +396,8 @@ def calc_temperatures_emission_systems(bpr, tsd):
 
         index = np.where(qcs_sys_ahu == Qcs_sys_ahu_0)
         ma_sup_0 = tsd['ma_sup_cs_ahu'][index[0][0]]
-        Ta_sup_0 = tsd['ta_sup_cs_ahu'][index[0][0]] + 273
-        Ta_re_0 = tsd['ta_re_cs_ahu'][index[0][0]] + 273
+        Ta_sup_0 = tsd['ta_sup_cs_ahu'][index[0][0]] + KELVIN_OFFSET
+        Ta_re_0 = tsd['ta_re_cs_ahu'][index[0][0]] + KELVIN_OFFSET
         Tcs_sup, Tcs_re, mcpcs = np.vectorize(heating_coils.calc_cooling_coil)(qcs_sys_ahu, Qcs_sys_ahu_0,
                                                                                tsd['ta_sup_cs_ahu'],
                                                                                tsd['ta_re_cs_ahu'],
@@ -421,8 +420,8 @@ def calc_temperatures_emission_systems(bpr, tsd):
 
         index = np.where(qcs_sys_aru == Qcs_sys_aru_0)
         ma_sup_0 = tsd['ma_sup_cs_aru'][index[0][0]]
-        Ta_sup_0 = tsd['ta_sup_cs_aru'][index[0][0]] + 273
-        Ta_re_0 = tsd['ta_re_cs_aru'][index[0][0]] + 273
+        Ta_sup_0 = tsd['ta_sup_cs_aru'][index[0][0]] + KELVIN_OFFSET
+        Ta_re_0 = tsd['ta_re_cs_aru'][index[0][0]] + KELVIN_OFFSET
         Tcs_sup, Tcs_re, mcpcs = np.vectorize(heating_coils.calc_cooling_coil)(qcs_sys_aru, Qcs_sys_aru_0,
                                                                                tsd['ta_sup_cs_aru'],
                                                                                tsd['ta_re_cs_aru'],

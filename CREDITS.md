@@ -9,7 +9,7 @@ The CEA team
 Starting from version 2.9.1 the credits are structured alphabetically (surname) and split into the categories of developers,
 scrum master, project owner, project sponsor and collaborators.
 
-- Version 2.30.0 - January 2020
+- Version 2.30.0 - February 2020
 
     Developers:
     * [Amr Elesawy](http://www.systems.arch.ethz.ch/about-us/team/team-zurich/amr-elesawy.html)
@@ -44,6 +44,7 @@ scrum master, project owner, project sponsor and collaborators.
     * Lennart Rogenhofer
     * Toivo Säwén
     * Tim Vollrath
+
 
 - Version 2.29.0 - January 2020
 

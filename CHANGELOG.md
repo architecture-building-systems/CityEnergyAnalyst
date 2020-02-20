@@ -1,3 +1,6 @@
+2020-02-19 - 2.29.0 - #2571 fix skytemp
+2020-02-18 - 2.29.0 - #2574 Use consistent input locator method in building_properties.py
+2020-02-18 - 2.29.0 - #2563 2227 negative values in ct
 2020-02-17 - 2.29.0 - #2565 Issue databases
 2020-02-17 - 2.29.0 - #2557 I2553 restructure database
 2020-02-13 - 2.29.0 - #2562 2551 many files optimization
