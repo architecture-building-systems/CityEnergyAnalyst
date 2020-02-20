@@ -579,7 +579,7 @@ class ListParameter(Parameter):
             value = parse_string_to_list(value)
         strings = [str(s).strip() for s in value]
         for s in strings:
-            assert not ',' in s, 'No commas allowed in values of ListParameter %s (value to encode: %s)' % (
+            assert ',' not in s, 'No commas allowed in values of ListParameter %s (value to encode: %s)' % (
                 self.fqname, repr(value))
         return ', '.join(strings)
 
@@ -868,6 +868,10 @@ class SingleBuildingParameter(ChoiceParameter):
         if not str(value) in self._choices:
             return self._choices[0]
         return str(value)
+
+class UseTypeRatioParameter(ListParameter):
+    """A list of use-type names and ratios"""
+    typename = 'UseTypeRatioParameter'
 
 
 class GenerationParameter(ChoiceParameter):
