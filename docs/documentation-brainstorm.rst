@@ -25,3 +25,6 @@ The purpose of this document is to figure out a new structure for the documentat
   - how to set up a development environment
   - how to update the documentation
   - how to contribute to the project
+
+. go through all the tutorials - which ones are still valid?
+. show the relationships of the various databases (how does the GUI map to files? how do the codes map to the files?)
