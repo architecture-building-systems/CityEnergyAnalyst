@@ -45,8 +45,8 @@ typology:
     type: choice
     location:
       path: get_archetypes_properties
-      sheet: ARCHITECTURE
-      column: code
+      sheet: ENVELOPE_COMPONENTS
+      column: STANDARD
   - name: 1ST_USE
     type: str
   - name: 1ST_USE_R
@@ -111,30 +111,26 @@ supply-systems:
     type: choice
     location:
       path: get_database_assemblies
-      sheet: SUPPLY
+      sheet: COOLING
       column: code
-      filter: system=='COOLING' or system=='NONE'
   - name: type_dhw
     type: choice
     location:
       path: get_database_assemblies
-      sheet: SUPPLY
+      sheet: HOT_WATER
       column: code
-      filter: system=='HEATING' or system=='NONE'
   - name: type_el
     type: choice
     location:
       path: get_database_assemblies
-      sheet: SUPPLY
+      sheet: ELECTRICITY
       column: code
-      filter: system=='ELECTRICITY' or system=='NONE'
   - name: type_hs
     type: choice
     location:
       path: get_database_assemblies
-      sheet: SUPPLY
+      sheet: HEATING
       column: code
-      filter: system=='HEATING' or system=='NONE'
 architecture:
   parent: zone
   pk: Name
