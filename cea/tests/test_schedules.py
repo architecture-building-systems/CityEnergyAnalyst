@@ -9,12 +9,11 @@ import json
 import os
 import unittest
 
-import numpy as np
 import pandas as pd
 
 import cea.config
 from cea.constants import HOURS_IN_YEAR
-from cea.datamanagement.archetypes_mapper import calculate_average_multiuse, correct_archetype_areas, archetypes_mapper
+from cea.datamanagement.archetypes_mapper import calculate_average_multiuse
 from cea.demand.building_properties import BuildingProperties
 from cea.demand.schedule_maker.schedule_maker import schedule_maker_main
 from cea.inputlocator import ReferenceCaseOpenLocator
@@ -39,6 +38,7 @@ class TestBuildingPreprocessing(unittest.TestCase):
             for building, value in rows.items():
                 self.assertIn(building, calculated_results[column])
                 self.assertAlmostEqual(value, calculated_results[column][building], 4)
+
 
 class TestScheduleCreation(unittest.TestCase):
     def test_mixed_use_schedules(self):
@@ -90,11 +90,11 @@ def calculate_mixed_use_archetype_values_results(locator):
     gym_occ = float(occ_densities.ix['GYM', 'Occ_m2pax'])
     calculated_results = calculate_average_multiuse(
         fields=['X_ghpax', 'El_Wm2'],
-        properties_df=pd.DataFrame(data=[['B1', 0.5, 0.5, 0.0, 0.0, 0.0], ['B2', 0.25, 0.75, 0.0, 0.0, 0.0]],
-                                   columns=['Name', 'OFFICE', 'GYM', 'X_ghpax', 'El_Wm2', 'Occ_m2pax']),
+        properties_df=pd.DataFrame(data=[['B1', 'OFFICE', 0.5, 'NONE', 0.5, 'NONE', 0.0, 0.0, 0.0, 0.0], ['B2', 'GYM', 0.75, 'OFFICE', 0.25, 'NONE', 0.0, 0.0, 0.0, 0.0]],
+                                   columns=['Name', "1ST_USE", "1ST_USE_R", '2ND_USE', '2ND_USE_R', '3RD_USE', '3RD_USE_R', 'X_ghpax', 'El_Wm2', 'Occ_m2pax']),
         occupant_densities={'OFFICE': 1 / office_occ, 'GYM': 1 / gym_occ},
         list_uses=['OFFICE', 'GYM'],
-        properties_DB=pd.read_excel(locator.get_use_types_properties(), 'INTERNAL_LOADS')).set_index('Name')
+        properties_DB=pd.read_excel(locator.get_use_types_properties(), 'INTERNAL_LOADS'))
 
     return calculated_results
 
