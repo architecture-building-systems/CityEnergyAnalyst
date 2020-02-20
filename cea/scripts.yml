@@ -294,6 +294,14 @@ Utilities:
     input-files:
       - [get_zone_geometry]
 
+  - name: create-mixed-use-type
+    label: Create mixed use type
+    description: Creates a new use-type by aggregating values from a list of different use-types
+    interfaces: [cli, dashboard]
+    module: cea.utilities.create_mixed_use_type
+    parameters: ['general:scenario', create-mixed-use-type]
+    input-files:
+      - [get_use_types_properties]
 
 default:
 
