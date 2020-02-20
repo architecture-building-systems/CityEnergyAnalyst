@@ -231,19 +231,25 @@ def check_daysim_bin_directory(path_hint):
 
 
 class CEARad(py2radiance.Rad):
-    def __init__(self, base_file_path, data_folder_path):
+    """Overrides some methods of py4design.rad that run DAYSIM commands"""
+    def __init__(self, base_file_path, data_folder_path, debug=False):
         super(CEARad, self).__init__(base_file_path, data_folder_path)
+        self.debug = debug
 
-    @staticmethod
-    def run_cmd(cmd, cwd=None):
-        print('Running command `{}`{}'.format(cmd, '' if cwd is None else ' in `{}`'.format(cwd)))
-        p = subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE)
-        while p.poll() is None:
-            line = p.stdout.readline()
-            if len(line.strip()):
-                print(line)
-        print(p.stdout.read())
-        print('`{}` completed'.format(cmd))
+    def run_cmd(self, cmd, cwd=None):
+        # Verbose output if debug is true
+        if self.debug:
+            print('Running command `{}`{}'.format(cmd, '' if cwd is None else ' in `{}`'.format(cwd)))
+            p = subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE)
+            while p.poll() is None:
+                line = p.stdout.readline()
+                if len(line.strip()):
+                    print(line)
+            print(p.stdout.read())
+            print('`{}` completed'.format(cmd))
+        else:
+            # Stops script if commands fail (i.e non-zero exit code)
+            subprocess.check_call(cmd, cwd=cwd, stderr=subprocess.STDOUT)
 
     def execute_epw2wea(self, epwweatherfile, ground_reflectance=0.2):
         daysimdir_wea = self.daysimdir_wea
@@ -259,7 +265,8 @@ class CEARad(py2radiance.Rad):
         f.write("\n")
         f.close()
 
-        proc = subprocess.Popen(command1, stdout=subprocess.PIPE)
+        # TODO: Might not need `shell`. Check on a Windows machine that has a space in the username
+        proc = subprocess.Popen(command1, stdout=subprocess.PIPE, shell=True)
         site_headers = proc.stdout.read()
         site_headers_list = site_headers.split("\r\n")
         hea_filepath = self.hea_file
@@ -451,7 +458,7 @@ def main(config):
     print("Sending the scene: geometry and materials to daysim")
     # send materials
     daysim_mat = locator.get_temporary_file('default_materials.rad')
-    rad = CEARad(daysim_mat, locator.get_temporary_folder())
+    rad = CEARad(daysim_mat, locator.get_temporary_folder(), debug=config.debug)
     print("\tradiation_main: rad.base_file_path: {}".format(rad.base_file_path))
     print("\tradiation_main: rad.data_folder_path: {}".format(rad.data_folder_path))
     print("\tradiation_main: rad.command_file: {}".format(rad.command_file))
