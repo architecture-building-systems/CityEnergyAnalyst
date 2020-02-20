@@ -85,7 +85,7 @@ def calculate_mixed_use_archetype_values_results(locator):
     """calculate the results for the test - refactored, so we can also use it to write the results to the
     config file."""
 
-    occ_densities = pd.read_excel(locator.get_archetypes_properties(), 'INTERNAL_LOADS').set_index('Code')
+    occ_densities = pd.read_excel(locator.get_use_types_properties(), 'INTERNAL_LOADS').set_index('code')
     office_occ = float(occ_densities.ix['OFFICE', 'Occ_m2pax'])
     gym_occ = float(occ_densities.ix['GYM', 'Occ_m2pax'])
     calculated_results = calculate_average_multiuse(
