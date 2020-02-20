@@ -93,7 +93,9 @@ def calculate_mixed_loads(properties_df, loads_df, occupant_densities, list_uses
                                                      list_uses, loads_df,
                                                      list_var_names, list_var_values).loc[:, loads_df_columns]
     calculated_loads_df['code'] = use_type_name
-    return loads_df.append(calculated_loads_df)
+    # Remove rows that have the same `code` as new row
+    clean_loads_df = loads_df[loads_df['code'] != use_type_name]
+    return clean_loads_df.append(calculated_loads_df)
 
 
 def calculate_occupant_density(use_types, internal_loads_df):
