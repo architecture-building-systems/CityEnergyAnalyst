@@ -63,7 +63,7 @@ def calc_E_sys(tsd):
     Calculate the compound of end use electrical loads
 
     """
-    tsd['E_sys'] = tsd['Ea'] + tsd['El'] + tsd['Edata'] + tsd['Epro'] + tsd['Eaux'] + tsd['Ev_W']  # assuming a small loss
+    tsd['E_sys'] = tsd['Ea'] + tsd['El'] + tsd['Edata'] + tsd['Epro'] + tsd['Eaux'] + tsd['Ev']  # assuming a small loss
 
     return tsd
 
