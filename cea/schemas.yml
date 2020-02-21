@@ -1198,7 +1198,7 @@ get_building_supply:
     type_hs:
       sample_data: T3
       types_found: [string]
-  used_by: [decentralized, demand, emissions, operation_costs]
+  used_by: [decentralized, demand, emissions, system_costs]
 get_building_weekly_schedules:
   created_by: [archetypes_mapper]
   file_path: inputs/building-properties/schedules/B001.csv
@@ -1212,7 +1212,7 @@ get_building_weekly_schedules:
       types_found: [float, null]
   used_by: [demand, schedule_maker]
 get_costs_operation_file:
-  created_by: [operation_costs]
+  created_by: [system_costs]
   file_path: outputs/data/costs/operation_costs.csv
   file_type: csv
   schema:
@@ -1725,7 +1725,7 @@ get_database_feedstocks:
       reference:
         sample_data: KBOB 2009/1:2016, ID 42.001 Kehrichtverbrennung, cost from CEA
         types_found: [string, null]
-  used_by: [decentralized, emissions, operation_costs, optimization]
+  used_by: [decentralized, emissions, system_costs, optimization]
 get_database_assemblies:
   created_by: []
   file_path: inputs/technology/assemblies/supply.xls
@@ -1867,7 +1867,7 @@ get_database_assemblies:
       O&M_%:
         sample_data: !!python/long '5'
         types_found: [long]
-  used_by: [demand, emissions, operation_costs]
+  used_by: [demand, emissions, system_costs]
 get_database_conversion_systems:
   created_by: []
   file_path: inputs/technology/systems/supply_systems.xls
@@ -6515,7 +6515,7 @@ get_total_demand:
     people0:
       sample_data: 257.0
       types_found: [float]
-  used_by: [decentralized, emissions, network_layout, operation_costs, optimization,
+  used_by: [decentralized, emissions, network_layout, system_costs, optimization,
     sewage_potential, thermal_network]
 get_water_body_potential:
   created_by: [water_body_potential]
