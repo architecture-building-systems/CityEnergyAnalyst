@@ -10,6 +10,7 @@ prEN 15316-2:2014
 
 from __future__ import division
 import numpy as np
+from cea.demand.control_heating_cooling_systems import has_heating_system, has_cooling_system
 
 __author__ = "Gabriel Happle"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -226,11 +227,11 @@ def calc_delta_theta_int_inc_heating(bpr):
     __credits__ = ["Shanshan Hsieh", "Daren Thomas"]
 
     try:
-        delta_theta_int_inc_heating = 0.0 if bpr.hvac['type_hs'] == 'T0' else (bpr.hvac['dT_Qhs'] + bpr.hvac['dThs_C'])
+        delta_theta_int_inc_heating = 0.0 if has_heating_system(bpr) == False else (bpr.hvac['dT_Qhs'] + bpr.hvac['dThs_C'])
 
     except KeyError:
         raise ValueError(
-            'Invalid system / control combination: %s, %s' % (bpr.hvac['type_hs'], bpr.hvac['type_ctrl']))
+            'Invalid system / control combination: %s, %s' % (bpr.hvac['class_hs'], bpr.hvac['type_ctrl']))
 
     return delta_theta_int_inc_heating
 
@@ -261,9 +262,9 @@ def calc_delta_theta_int_inc_cooling(bpr):
 
     try:
 
-        delta_theta_int_inc_cooling = 0.0 if bpr.hvac['type_cs'] == 'T0' else (bpr.hvac['dT_Qcs'] + bpr.hvac['dTcs_C'])
+        delta_theta_int_inc_cooling = 0.0 if has_cooling_system(bpr) == False else (bpr.hvac['dT_Qcs'] + bpr.hvac['dTcs_C'])
     except KeyError:
         raise ValueError(
-            'Invalid system / control combination: %s, %s' % (bpr.hvac['type_cs'], bpr.hvac['type_ctrl']))
+            'Invalid system / control combination: %s, %s' % (bpr.hvac['class_cs'], bpr.hvac['type_ctrl']))
 
     return delta_theta_int_inc_cooling
