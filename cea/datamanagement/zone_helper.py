@@ -162,7 +162,7 @@ def calculate_typology_file(locator, zone_df, year_construction, occupancy_type,
     typology_df = calculate_age(zone_df, year_construction)
 
     #calculate the most likely construction standard
-    standard_database = pd.read_excel(locator.get_archetypes_properties(), sheet_name='STANDARD_DEFINITION')
+    standard_database = pd.read_excel(locator.get_database_construction_standards(), sheet_name='STANDARD_DEFINITION')
     typology_df['STANDARD'] = calc_category(standard_database, typology_df['YEAR'].values)
 
     #Calculate the most likely use type

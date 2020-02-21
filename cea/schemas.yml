@@ -787,9 +787,9 @@ SC_totals:
       sample_data: 0.0
       types_found: [float]
   used_by: [optimization]
-get_archetypes_properties:
+get_database_construction_standards:
   created_by: []
-  file_path: inputs/technology/archetypes/construction_properties.xlsx
+  file_path: inputs/technology/archetypes/CONSTRUCTION_STANDARDS.xlsx
   file_type: xlsx
   schema:
     STANDARD_DEFINITION:
@@ -805,7 +805,7 @@ get_archetypes_properties:
       YEAR_START:
         sample_data: !!python/long '2021'
         types_found: [long]
-    ENVELOPE_COMPONENTS:
+    ENVELOPE_ASSEMBLIES:
       STANDARD:
         sample_data: R
         types_found: [string]
@@ -854,7 +854,7 @@ get_archetypes_properties:
       wwr_west:
         sample_data: 0.31
         types_found: [float]
-    HVAC_COMPONENTS:
+    HVAC_ASSEMBLIES:
       STANDARD:
         sample_data: R
         types_found: [string]
@@ -1463,7 +1463,7 @@ get_database_envelope_systems:
       code:
         sample_data: T3
         types_found: [string]
-    LEAKAGE:
+    TIGHTNESS:
       Description:
         sample_data: Very Leaky
         types_found: [string]
@@ -1709,7 +1709,7 @@ get_database_feedstocks:
         sample_data: KBOB 2009/1:2016, ID 42.001 Kehrichtverbrennung, cost from CEA
         types_found: [string, null]
   used_by: [decentralized, emissions, system_costs, optimization]
-get_database_assemblies:
+get_database_supply_assemblies:
   created_by: []
   file_path: inputs/technology/assemblies/supply.xls
   file_type: xls
