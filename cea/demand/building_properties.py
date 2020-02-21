@@ -261,10 +261,13 @@ class BuildingProperties(object):
         df = df.merge(typology, left_index=True, right_index=True)
         df = df.merge(hvac_temperatures, left_index=True, right_index=True)
 
+
+        from cea.demand.control_heating_cooling_systems import has_heating_system, has_cooling_system
         for building in locator.get_zone_building_names():
-            if hvac_temperatures.loc[building, 'type_hs'] == 'T0' and \
-                    hvac_temperatures.loc[building, 'type_cs'] == 'T0' and \
-                    np.max([df.loc[building, 'Hs_ag'], df.loc[building, 'Hs_bg']]) > 0.0:
+            data = {'type_hs': hvac_temperatures.loc[building, 'type_hs'], 'type_cs': hvac_temperatures.loc[building, 'type_cs']}
+            has_system_heating_flag = has_heating_system(data)
+            has_system_cooling_flag = has_cooling_system(data)
+            if has_system_heating_flag and has_system_cooling_flag and np.max([df.loc[building, 'Hs_ag'], df.loc[building, 'Hs_bg']]) > 0.0:
                 df.loc[building, 'Hs_ag'] = 0.0
                 df.loc[building, 'Hs_bg'] = 0.0
                 print('Building {building} has no heating and cooling system, Hs corrected to 0.'.format(
@@ -638,7 +641,7 @@ class SolarProperties(object):
 
 
 def get_properties_supply_sytems(locator, properties_supply):
-    data_all_in_one_systems = pd.read_excel(locator.get_database_assemblies(), sheet_name=None)
+    data_all_in_one_systems = pd.read_excel(locator.get_database_supply_assemblies(), sheet_name=None)
     supply_heating = data_all_in_one_systems['HEATING']
     supply_dhw = data_all_in_one_systems['HOT_WATER']
     supply_cooling = data_all_in_one_systems['COOLING']
@@ -751,11 +754,12 @@ def get_properties_technical_systems(locator, prop_HVAC):
                                                         right_on='code')
 
     fields_emission_heating = ['Name', 'type_hs', 'type_cs', 'type_dhw', 'type_ctrl', 'type_vent', 'heat_starts',
-                               'heat_ends', 'cool_starts', 'cool_ends',
+                               'heat_ends', 'cool_starts', 'cool_ends', 'class_hs', 'convection_hs',
                                'Qhsmax_Wm2', 'dThs_C', 'Tshs0_ahu_C', 'dThs0_ahu_C', 'Th_sup_air_ahu_C', 'Tshs0_aru_C',
                                'dThs0_aru_C', 'Th_sup_air_aru_C', 'Tshs0_shu_C', 'dThs0_shu_C']
     fields_emission_cooling = ['Name', 'Qcsmax_Wm2', 'dTcs_C', 'Tscs0_ahu_C', 'dTcs0_ahu_C', 'Tc_sup_air_ahu_C',
-                               'Tscs0_aru_C', 'dTcs0_aru_C', 'Tc_sup_air_aru_C', 'Tscs0_scu_C', 'dTcs0_scu_C']
+                               'Tscs0_aru_C', 'dTcs0_aru_C', 'Tc_sup_air_aru_C', 'Tscs0_scu_C', 'dTcs0_scu_C',
+                               'class_cs', 'convection_cs']
     fields_emission_control_heating_and_cooling = ['Name', 'dT_Qhs', 'dT_Qcs']
     fields_emission_dhw = ['Name', 'Tsww0_C', 'Qwwmax_Wm2']
     fields_system_ctrl_vent = ['Name', 'MECH_VENT', 'WIN_VENT', 'HEAT_REC', 'NIGHT_FLSH', 'ECONOMIZER']

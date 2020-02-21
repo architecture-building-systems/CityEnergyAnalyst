@@ -77,7 +77,7 @@ def create_mixed_use_type(locator, internal_loads_df, indoor_comfort_df,
                                                                                 list_var_values, use_type_metadata)
 
     print("Writing to disk...")
-    use_type_properties_path = locator.get_use_types_properties()
+    use_type_properties_path = locator.get_database_use_types_properties()
     with pd.ExcelWriter(use_type_properties_path) as writer:
         new_internal_loads_df.to_excel(writer, sheet_name='INTERNAL_LOADS', index=False)
         new_indoor_comfort_df.to_excel(writer, sheet_name='INDOOR_COMFORT', index=False)
@@ -117,7 +117,7 @@ def main(config):
     use_type_ratios_dict = {k: float(v) for k, v in [ratio.split('|') for ratio in use_type_ratios]}
 
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    use_type_properties_df = pd.read_excel(locator.get_use_types_properties(), sheet_name=None)
+    use_type_properties_df = pd.read_excel(locator.get_database_use_types_properties(), sheet_name=None)
     internal_loads_df = use_type_properties_df['INTERNAL_LOADS']
     indoor_comfort_df = use_type_properties_df['INDOOR_COMFORT']
 
