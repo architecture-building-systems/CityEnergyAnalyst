@@ -145,6 +145,7 @@ def internal_loads_mapper(list_uses, locator, occupant_densities, building_typol
               'Ea_Wm2',
               'El_Wm2',
               'Ed_Wm2',
+              'Ev_kWveh',
               'Qcre_Wm2',
               'Vww_lpdpax',
               'Vw_lpdpax',

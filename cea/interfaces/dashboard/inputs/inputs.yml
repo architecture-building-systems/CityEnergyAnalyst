@@ -109,6 +109,8 @@ internal-loads:
     type: float
   - name: Ed_Wm2
     type: float
+  - name: Ev_kWveh
+    type: float
   - name: Qcpro_Wm2
     type: float
   - name: Qhpro_Wm2
