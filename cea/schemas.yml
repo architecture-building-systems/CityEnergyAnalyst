@@ -1740,12 +1740,16 @@ get_database_supply_assemblies:
       feedstock:
         sample_data: SOLAR
         types_found: [string]
+        choice:
+          values: [NONE, NATURALGAS, BIOGAS, GRID, SOLAR, OIL, COAL, WOOD, WETBIOMASS, DRYBIOMASS]
       reference:
         sample_data: educated guess
         types_found: [string]
       scale:
         sample_data: BUILDING
         types_found: [string]
+        choice:
+          values: [NONE, BUILDING, DISTRICT, CITY]
       system:
         sample_data: ELECTRICITY
         types_found: [string]
@@ -1774,12 +1778,16 @@ get_database_supply_assemblies:
       feedstock:
         sample_data: SOLAR
         types_found: [string]
+        choice:
+          values: [NONE, NATURALGAS, BIOGAS, GRID, SOLAR, OIL, COAL, WOOD, WETBIOMASS, DRYBIOMASS]
       reference:
         sample_data: educated guess
         types_found: [string]
       scale:
         sample_data: BUILDING
         types_found: [string]
+        choice:
+          values: [NONE, BUILDING, DISTRICT, CITY]
       system:
         sample_data: ELECTRICITY
         types_found: [string]
@@ -1808,12 +1816,16 @@ get_database_supply_assemblies:
       feedstock:
         sample_data: SOLAR
         types_found: [string]
+        choice:
+          values: [NONE, NATURALGAS, BIOGAS, GRID, SOLAR, OIL, COAL, WOOD, WETBIOMASS, DRYBIOMASS]
       reference:
         sample_data: educated guess
         types_found: [string]
       scale:
         sample_data: BUILDING
         types_found: [string]
+        choice:
+          values: [NONE, BUILDING, DISTRICT, CITY]
       system:
         sample_data: ELECTRICITY
         types_found: [string]
@@ -1842,12 +1854,16 @@ get_database_supply_assemblies:
       feedstock:
         sample_data: SOLAR
         types_found: [string]
+        choice:
+          values: [NONE, NATURALGAS, BIOGAS, GRID, SOLAR, OIL, COAL, WOOD, WETBIOMASS, DRYBIOMASS]
       reference:
         sample_data: educated guess
         types_found: [string]
       scale:
         sample_data: BUILDING
         types_found: [string]
+        choice:
+          values: [NONE, BUILDING, DISTRICT, CITY]
       system:
         sample_data: ELECTRICITY
         types_found: [string]
