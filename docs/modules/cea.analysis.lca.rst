@@ -25,14 +25,6 @@ cea.analysis.lca.main module
     :undoc-members:
     :show-inheritance:
 
-cea.analysis.lca.mobility module
---------------------------------
-
-.. automodule:: cea.analysis.lca.mobility
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 cea.analysis.lca.operation module
 ---------------------------------
 
