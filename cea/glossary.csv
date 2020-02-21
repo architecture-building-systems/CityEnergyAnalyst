@@ -62,7 +62,7 @@ archetypes-mapper,get_building_architecture,,Hs_bg,Fraction of below ground gros
 archetypes-mapper,get_building_architecture,,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/building-properties/architecture.dbf
 archetypes-mapper,get_building_architecture,,Ns,Fraction of net gross floor area.,[m2/m2],{0.0...1},float,black,inputs/building-properties/architecture.dbf
 archetypes-mapper,get_building_architecture,,type_cons,Type of construction. It relates to the contents of the default database of Envelope Properties: construction,[code],{T1...Tn},string,black,inputs/building-properties/architecture.dbf
-archetypes-mapper,get_building_architecture,,type_leak,Leakage level. It relates to the contents of the default database of Envelope Properties: leakage,[code],{T1...Tn},string,black,inputs/building-properties/architecture.dbf
+archetypes-mapper,get_building_architecture,,type_leak,Tightness level. It relates to the contents of the default database of Envelope Properties: tightness,[code],{T1...Tn},string,black,inputs/building-properties/architecture.dbf
 archetypes-mapper,get_building_architecture,,type_roof,Roof construction type (relates to values in Default Database Construction Properties),[-],{T1...Tn},string,black,inputs/building-properties/architecture.dbf
 archetypes-mapper,get_building_architecture,,type_shade,Shading system type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black,inputs/building-properties/architecture.dbf
 archetypes-mapper,get_building_architecture,,type_wall,Wall construction type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black,inputs/building-properties/architecture.dbf
@@ -141,7 +141,7 @@ network-layout,get_network_layout_nodes_shapefile,,Type,Weather a Plant or A Cus
 -,get_database_construction_standards,ENVELOPE_ASSEMBLIES,Ns,Fraction of net gross floor area.,[m2/m2],{0.0...1},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
 -,get_database_construction_standards,ENVELOPE_ASSEMBLIES,STANDARD, Unique ID of Construction Standard,[-],{code},string,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
 -,get_database_construction_standards,ENVELOPE_ASSEMBLIES,type_cons,Type of construction. It relates to the contents of the default database of Envelope Properties: construction,[code],{T1...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
--,get_database_construction_standards,ENVELOPE_ASSEMBLIES,type_leak,Leakage level. It relates to the contents of the default database of Envelope Properties: leakage,[code],{T1...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
+-,get_database_construction_standards,ENVELOPE_ASSEMBLIES,type_leak,Tightness level. It relates to the contents of the default database of Envelope Properties: tightness,[code],{T1...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
 -,get_database_construction_standards,ENVELOPE_ASSEMBLIES,type_roof,Roof construction type (relates to values in Default Database Construction Properties),[-],{T1...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
 -,get_database_construction_standards,ENVELOPE_ASSEMBLIES,type_shade,Shading system type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
 -,get_database_construction_standards,ENVELOPE_ASSEMBLIES,type_wall,Wall construction type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
@@ -227,9 +227,9 @@ network-layout,get_network_layout_nodes_shapefile,,Type,Weather a Plant or A Cus
 -,get_database_envelope_systems,CONSTRUCTION,Cm_Af,Internal heat capacity per unit of air conditioned area. Defined according to ISO 13790.,[J/Km2],{0.0...1},float,black,inputs/technology/systems/envelope_systems.xls:CONSTRUCTION
 -,get_database_envelope_systems,CONSTRUCTION,code,Type of construction,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:CONSTRUCTION
 -,get_database_envelope_systems,CONSTRUCTION,Description,Describes the Type of construction,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:CONSTRUCTION
--,get_database_envelope_systems,LEAKAGE,code,Type of Leakage,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:LEAKAGE
--,get_database_envelope_systems,LEAKAGE,Description,Describes the Type of Leakage,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:LEAKAGE
--,get_database_envelope_systems,LEAKAGE,n50,Air exchanges per hour at a pressure of 50 Pa.,[1/h],{0.0...10},float,black,inputs/technology/systems/envelope_systems.xls:LEAKAGE
+-,get_database_envelope_systems,TIGHTNESS,code,Type of tightness,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:TIGHTNESS
+-,get_database_envelope_systems,TIGHTNESS,Description,Describes the Type of tightness,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:TIGHTNESS
+-,get_database_envelope_systems,TIGHTNESS,n50,Air exchanges per hour at a pressure of 50 Pa.,[1/h],{0.0...10},float,black,inputs/technology/systems/envelope_systems.xls:TIGHTNESS
 -,get_database_envelope_systems,ROOF,a_roof,Solar absorption coefficient. Defined according to ISO 13790.,[-],{0.0...1},float,black,inputs/technology/systems/envelope_systems.xls:ROOF
 -,get_database_envelope_systems,ROOF,code,Type of roof,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:ROOF
 -,get_database_envelope_systems,ROOF,Description,Describes the Type of roof,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:ROOF
