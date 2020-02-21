@@ -267,7 +267,7 @@ class BuildingProperties(object):
             def __init__(self, hvac):
                 self.hvac = hvac
         for building in locator.get_zone_building_names():
-            data = prov({'type_hs':hvac_temperatures.loc[building, 'type_hs'], 'type_cs': hvac_temperatures.loc[building, 'type_cs']})
+            data = prov({'class_hs':hvac_temperatures.loc[building, 'class_hs'], 'class_cs': hvac_temperatures.loc[building, 'class_cs']})
             has_system_heating_flag = has_heating_system(data)
             has_system_cooling_flag = has_cooling_system(data)
             if has_system_heating_flag and has_system_cooling_flag and np.max([df.loc[building, 'Hs_ag'], df.loc[building, 'Hs_bg']]) > 0.0:
