@@ -148,13 +148,13 @@ if __name__ == '__main__':
 
     scenarios_names = ['FAR10_9_buildings_with_context', 'FAR10_1_building_with_context']
 
-    for surrounding, zone, scenario, typology in zip(location_surroundings, location_zone, scenarios_names, location_typology):
+    for surroundings, zone, scenario, typology in zip(location_surroundings, location_zone, scenarios_names, location_typology):
         locator = cea.inputlocator.InputLocator(scenario)
         config.multiprocessing = True
         config.create_new_project.scenario = scenario
         config.create_new_project.project = project_name
         config.create_new_project.zone = zone
-        config.create_new_project.surroundings = surrounding
+        config.create_new_project.surroundings = surroundings
         config.create_new_project.typology = typology
         config.workflow.scenario = scenario
         config.project = project_name
