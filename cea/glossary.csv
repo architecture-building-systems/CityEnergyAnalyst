@@ -43,7 +43,7 @@ SCRIPT,LOCATOR_METHOD,WORKSHEET,VARIABLE,DESCRIPTION,UNIT,VALUES,TYPE,COLOR,FILE
 -,get_zone_geometry,,floors_ag,Number of floors above ground (incl. ground floor),[-],{0...n},int,black,inputs/building-geometry/zone.shp
 -,get_zone_geometry,,floors_bg,"Number of floors below ground (basement, etc)",[-],{0...n},int,black,inputs/building-geometry/zone.shp
 -,get_zone_geometry,,geometry,Geometry,[-],[-],[-],black,inputs/building-geometry/zone.shp
--,get_zone_geometry,,height_ag,Aggregated height of the walls.,[m],{0.0...n},float,black,inputs/building-geometry/zone.shp
+-,get_zone_geometry,,height_ag, Height above ground (incl. ground floor),[m],{0.0...n},float,black,inputs/building-geometry/zone.shp
 -,get_zone_geometry,,height_bg,"Height below ground (basement, etc)",[m],{0.0...n},float,black,inputs/building-geometry/zone.shp
 -,get_zone_geometry,,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/building-geometry/zone.shp
 archetypes-mapper,get_building_air_conditioning,,cool_ends,End of the cooling season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black,inputs/building-properties/air_conditioning_systems.dbf
@@ -131,12 +131,17 @@ network-layout,get_network_layout_nodes_shapefile,,Name,Unique building ID. It m
 network-layout,get_network_layout_nodes_shapefile,,Type,Weather a Plant or A Customer,[-],alphanumeric,string,black,inputs/networks/dc/nodes.shp
 -,get_street_network,,geometry,Geometry,[-],[-],[-],black,inputs/networks/streets.shp
 -,get_street_network,,Id,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/networks/streets.shp
--,get_archetypes_properties,ENVELOPE_COMPONENTS,building_use,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
+-,get_archetypes_properties,STANDARD_DEFINITION,Description,Description of the construction standard,[-],alphanumeric,string,black,inputs/technology/archetypes/construction_properties.xlsx:STANDARD_DEFINITION
+-,get_archetypes_properties,STANDARD_DEFINITION,YEAR_END,Upper limit of year interval where the building properties apply,[yr],{0...n},int,black,inputs/technology/archetypes/construction_properties.xlsx:STANDARD_DEFINITION
+-,get_archetypes_properties,STANDARD_DEFINITION,YEAR_START,Lower limit of year interval where the building properties apply,[yr],{0...n},int,black,inputs/technology/archetypes/construction_properties.xlsx:STANDARD_DEFINITION
+-,get_archetypes_properties,STANDARD_DEFINITION,YEAR_END,Upper limit of year interval where the building properties apply,[yr],{0...n},int,black,inputs/technology/archetypes/construction_properties.xlsx:STANDARD_DEFINITION
+-,get_archetypes_properties,STANDARD_DEFINITION,YEAR_START,Lower limit of year interval where the building properties apply,[yr],{0...n},int,black,inputs/technology/archetypes/construction_properties.xlsx:STANDARD_DEFINITION
+-,get_archetypes_properties,STANDARD_DEFINITION,STANDARD, Unique ID of Construction Standard,[-],{code},string,black,inputs/technology/archetypes/construction_properties.xlsx:STANDARD_DEFINITION
 -,get_archetypes_properties,ENVELOPE_COMPONENTS,Es,Fraction of gross floor area with electrical demands.,[m2/m2],{0.0...1},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
 -,get_archetypes_properties,ENVELOPE_COMPONENTS,Hs_ag,Fraction of above ground gross floor area air-conditioned.,[m2/m2],{0.0...1},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
 -,get_archetypes_properties,ENVELOPE_COMPONENTS,Hs_bg,Fraction of below ground gross floor area air-conditioned ,[m2/m2],{0.0...1},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
 -,get_archetypes_properties,ENVELOPE_COMPONENTS,Ns,Fraction of net gross floor area.,[m2/m2],{0.0...1},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
--,get_archetypes_properties,ENVELOPE_COMPONENTS,STANDARD,Letter representing whereas the field represent construction properties of a building as newly constructed (C) or renovated (R),[-],{C or R},string,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
+-,get_archetypes_properties,ENVELOPE_COMPONENTS,STANDARD, Unique ID of Construction Standard,[-],{code},string,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
 -,get_archetypes_properties,ENVELOPE_COMPONENTS,type_cons,Type of construction. It relates to the contents of the default database of Envelope Properties: construction,[code],{T1...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
 -,get_archetypes_properties,ENVELOPE_COMPONENTS,type_leak,Leakage level. It relates to the contents of the default database of Envelope Properties: leakage,[code],{T1...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
 -,get_archetypes_properties,ENVELOPE_COMPONENTS,type_roof,Roof construction type (relates to values in Default Database Construction Properties),[-],{T1...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
@@ -148,34 +153,26 @@ network-layout,get_network_layout_nodes_shapefile,,Type,Weather a Plant or A Cus
 -,get_archetypes_properties,ENVELOPE_COMPONENTS,wwr_north,Window to wall ratio in in facades facing north,[m2/m2],{0.0...1},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
 -,get_archetypes_properties,ENVELOPE_COMPONENTS,wwr_south,Window to wall ratio in in facades facing south,[m2/m2],{0.0...1},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
 -,get_archetypes_properties,ENVELOPE_COMPONENTS,wwr_west,Window to wall ratio in in facades facing west,[m2/m2],{0.0...1},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
--,get_archetypes_properties,ENVELOPE_COMPONENTS,year_end,Upper limit of year interval where the building properties apply,[yr],{0...n},int,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
--,get_archetypes_properties,ENVELOPE_COMPONENTS,year_start,Lower limit of year interval where the building properties apply,[yr],{0...n},int,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
--,get_archetypes_properties,HVAC_COMPONENTS,building_use,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
 -,get_archetypes_properties,HVAC_COMPONENTS,cool_ends,End of the cooling season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
 -,get_archetypes_properties,HVAC_COMPONENTS,cool_starts,Start of the cooling season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
 -,get_archetypes_properties,HVAC_COMPONENTS,heat_ends,End of the heating season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
 -,get_archetypes_properties,HVAC_COMPONENTS,heat_starts,Start of the heating season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
--,get_archetypes_properties,HVAC_COMPONENTS,standard,Letter representing whereas the field represent construction properties of a building as newly constructed (C) or renovated (R),[-],{C or R},string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
+-,get_archetypes_properties,HVAC_COMPONENTS,STANDARD, Unique ID of Construction Standard,[-],{code},string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
 -,get_archetypes_properties,HVAC_COMPONENTS,type_cs,Type of cooling supply system,[code],{T0...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
 -,get_archetypes_properties,HVAC_COMPONENTS,type_ctrl,Type of heating and cooling control systems (relates to values in Default Database HVAC Properties),[code],{T1...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
 -,get_archetypes_properties,HVAC_COMPONENTS,type_dhw,Type of hot water supply system,[code],{T0...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
 -,get_archetypes_properties,HVAC_COMPONENTS,type_hs,Type of heating supply system,[code],{T0...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
 -,get_archetypes_properties,HVAC_COMPONENTS,type_vent,Type of ventilation strategy (relates to values in Default Database HVAC Properties),[code],{T1...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
--,get_archetypes_properties,HVAC_COMPONENTS,year_end,Upper limit of year interval where the building properties apply,[yr],{0...n},int,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
--,get_archetypes_properties,HVAC_COMPONENTS,year_start,Lower limit of year interval where the building properties apply,[yr],{0...n},int,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
 -,get_archetypes_properties,SUPPLY_ASSEMBLIES,building_use,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY
--,get_archetypes_properties,SUPPLY_ASSEMBLIES,standard,Letter representing whereas the field represent construction properties of a building as newly constructed (C) or renovated (R),[-],{C or R},string,black,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY
+-,get_archetypes_properties,SUPPLY_ASSEMBLIES,STANDARD, Unique ID of Construction Standard,[-],{code},string,black,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY
 -,get_archetypes_properties,SUPPLY_ASSEMBLIES,type_cs,Type of cooling supply system,[code],{T0...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY
 -,get_archetypes_properties,SUPPLY_ASSEMBLIES,type_dhw,Type of hot water supply system,[code],{T0...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY
 -,get_archetypes_properties,SUPPLY_ASSEMBLIES,type_el,Type of electrical supply system,[code],{T0...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY
 -,get_archetypes_properties,SUPPLY_ASSEMBLIES,type_hs,Type of heating supply system,[code],{T0...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY
--,get_archetypes_properties,SUPPLY_ASSEMBLIES,year_end,Upper limit of year interval where the building properties apply,[yr],{0...n},int,black,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY
--,get_archetypes_properties,SUPPLY_ASSEMBLIES,year_start,Lower limit of year interval where the building properties apply,[yr],{0...n},int,black,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY
 -,get_database_standard_schedules_use,,CH-SIA-2014,metadata,[-],TODO,string,black,inputs/technology/archetypes/schedules/RESTAURANT.csv
 -,get_database_standard_schedules_use,,METADATA,metadata,[-],TODO,string,black,inputs/technology/archetypes/schedules/RESTAURANT.csv
 -,get_database_standard_schedules_use,,RESTAURANT,metadata,[-],TODO,string,black,inputs/technology/archetypes/schedules/RESTAURANT.csv
--,get_archetypes_properties,EMISSION_INTENSITY,building_use,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
--,get_archetypes_properties,EMISSION_INTENSITY,standard,Letter representing whereas the field represent construction properties of a building as newly constructed (C) or renovated (R),[-],{C or R},string,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
+-,get_archetypes_properties,EMISSION_INTENSITY,STANDARD, Unique ID of Construction Standard,[-],{code},string,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
 -,get_archetypes_properties,EMISSION_INTENSITY,W_e_ag_kgm2,Emissions of external walls below ground per wall area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
 -,get_archetypes_properties,EMISSION_INTENSITY,W_e_bg_kgm2,Emissions of external walls above ground per wall area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
 -,get_archetypes_properties,EMISSION_INTENSITY,W_i_ag_kgm2,Emissions of internal walls below ground per wall area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
@@ -187,8 +184,6 @@ network-layout,get_network_layout_nodes_shapefile,,Type,Weather a Plant or A Cus
 -,get_archetypes_properties,EMISSION_INTENSITY,Tech_kgm2,Emissions of technical installations per gross floor area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
 -,get_archetypes_properties,EMISSION_INTENSITY,Exca_kgm2,Emissions of excavations per basement floor area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
 -,get_archetypes_properties,EMISSION_INTENSITY,Mobi_kgm2,Emissions of induced mobility per gross floor area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
--,get_archetypes_properties,EMISSION_INTENSITY,year_end,Upper limit of year interval where the building properties apply,[yr],{0...n},int,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
--,get_archetypes_properties,EMISSION_INTENSITY,year_start,Lower limit of year interval where the building properties apply,[yr],{0...n},int,black ,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
 -,get_database_air_conditioning_systems,controller,code,Type of controller,[code],{T0...Tn},string,black,inputs/technology/systems/air_conditioning_systems.xls:controller
 -,get_database_air_conditioning_systems,controller,Description,Describes the type of controller,[-],[-],string,black,inputs/technology/systems/air_conditioning_systems.xls:controller
 -,get_database_air_conditioning_systems,controller,dT_Qcs,correction temperature of emission losses due to control system of cooling,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:controller
