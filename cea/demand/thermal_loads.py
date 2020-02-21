@@ -467,6 +467,7 @@ def initialize_timestep_data(bpr, weather_data):
                               'GRID',
                               'GRID_a',
                               'GRID_l',
+                              'GRID_v',
                               'GRID_data',
                               'GRID_pro',
                               'GRID_aux',
@@ -567,7 +568,7 @@ def update_timestep_data_no_conditioned_area(tsd):
                    'DC_cre', 'Qcre_sys', 'Qcre',
                    'Eaux', 'Ehs_lat_aux', 'Eaux_hs', 'Eaux_cs', 'Eaux_ve', 'Eaux_ww', 'Eaux_fw',
                    'E_sys', 'PV', 'GRID', 'E_ww', 'E_hs', 'E_cs', 'E_cre', 'E_cdata', 'E_pro',
-                   'Epro', 'Edata', 'Ea', 'El', 'Eal',
+                   'Epro', 'Edata', 'Ea', 'El', 'Eal', 'Ev',
                    'mcphs_sys', 'mcpcs_sys', 'mcptw'
                                              'mcpww_sys', 'mcpcdata_sys', 'mcpcre_sys',
                    'Tcdata_sys_re', 'Tcdata_sys_sup',

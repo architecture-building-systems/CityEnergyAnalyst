@@ -72,21 +72,20 @@ class InputLocator(object):
     def verify_database_template(self):
         """True, if the path is a valid template path - containing the same excel files as the standard regions."""
         default_template = os.path.join(self.db_path, 'CH')
+        missing_files = []
         for folder in os.listdir(default_template):
-            if not os.path.isdir(os.path.join(default_template, folder)):
-                continue
-            for file in os.listdir(os.path.join(default_template, folder)):
-                default_file_path = os.path.join(default_template, folder, file)
-                if not os.path.isfile(default_file_path):
-                    continue
-                if not os.path.splitext(default_file_path)[1] in {'.xls', '.xlsx'}:
-                    # we're only interested in the excel files
-                    continue
-                template_file_path = os.path.join(self.get_databases_folder(), folder, file)
-                if not os.path.exists(template_file_path):
-                    message = "Invalid user-specified region template - file not found: {template_file_path}".format(
-                        template_file_path=template_file_path)
-                    raise IOError(message)
+            if os.path.isdir(os.path.join(default_template, folder)):
+                # check inside folders
+                for file in os.listdir(os.path.join(default_template, folder)):
+                    default_file_path = os.path.join(default_template, folder, file)
+                    if os.path.isfile(default_file_path) and os.path.splitext(default_file_path)[1] in {'.xls', '.xlsx'}:
+                        # we're only interested in the excel files
+                        template_file_path = os.path.join(self.get_databases_folder(), folder, file)
+                        if not os.path.exists(template_file_path):
+                            missing_files.append(template_file_path)
+        if len(missing_files):
+            message = "Invalid user-specified region template - files not found: {}".format(', '.join(missing_files))
+            raise IOError(message)
         return True
 
     def get_input_folder(self):
@@ -585,51 +584,43 @@ class InputLocator(object):
             raise ValueError("You are trying to get the technology database for an unsupported region.")
         return region
 
-    def get_archetypes_properties(self):
+    def get_database_construction_standards(self):
         """Returns the database of construction properties to be used by the archetypes-mapper. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return os.path.join(self.get_databases_archetypes_folder(), 'construction_properties.xlsx')
+        return os.path.join(self.get_databases_archetypes_folder(), 'CONSTRUCTION_STANDARD.xlsx')
 
-    def get_use_types_properties(self):
+    def get_database_use_types_properties(self):
         """Returns the database of construction properties to be used by the archetypes-mapper. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
         return os.path.join(self.get_database_use_types_folder(), 'use_types_properties.xlsx')
 
-    def get_database_assemblies(self):
+    def get_database_supply_assemblies(self):
         """Returns the database of supply components for cost analysis. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return os.path.join(self.get_databases_assemblies_folder(), 'supply.xls')
+        return os.path.join(self.get_databases_assemblies_folder(), 'SUPPLY.xls')
+
+    def get_database_air_conditioning_systems(self):
+        return os.path.join(self.get_databases_assemblies_folder(), 'HVAC.xls')
+
+    def get_database_envelope_systems(self):
+        """databases/Systems/envelope_systems.csv"""
+        return os.path.join(self.get_databases_assemblies_folder(), 'ENVELOPE.xls')
 
     def get_database_conversion_systems(self):
         """Returns the database of supply components for cost analysis. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return os.path.join(self.get_databases_folder(), 'components', 'conversion.xls')
+        return os.path.join(self.get_databases_folder(), 'components', 'CONVERSION.xls')
 
     def get_database_distribution_systems(self):
         """Returns the database of supply components for cost analysis. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return os.path.join(self.get_databases_folder(), 'components', 'distribution.xls')
-
-    def get_database_air_conditioning_systems(self):
-        return os.path.join(self.get_databases_folder(), 'components', 'air_conditioning.xls')
-
-    def get_database_envelope_systems(self):
-        """databases/Systems/envelope_systems.csv"""
-        return os.path.join(self.get_databases_folder(), 'components', 'envelope.xls')
+        return os.path.join(self.get_databases_folder(), 'components', 'DISTRIBUTION.xls')
 
     def get_database_feedstocks(self):
         """Returns the database of supply components for cost analysis. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return os.path.join(self.get_databases_folder(), 'feedstocks', 'feedstocks.xls')
+        return os.path.join(self.get_databases_folder(), 'components', 'FEEDSTOCKS.xls')
 
-    def get_uncertainty_db(self):
-        """databases/CH/Uncertainty/uncertainty_distributions.xls"""
-        return os.path.join(self.get_databases_folder(), 'uncertainty', 'uncertainty_distributions.xls')
-
-    def get_uncertainty_results_folder(self):
-        return self._ensure_folder(self.scenario, 'outputs', 'data', 'uncertainty')
-
-    # INPUTS
 
     def get_building_geometry_folder(self):
         """scenario/inputs/building-geometry/"""

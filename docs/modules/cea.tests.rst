@@ -81,6 +81,14 @@ cea.tests.test\_schedules module
     :undoc-members:
     :show-inheritance:
 
+cea.tests.test\_technologies module
+-----------------------------------
+
+.. automodule:: cea.tests.test_technologies
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cea.tests.trace\_inputlocator module
 ------------------------------------
 

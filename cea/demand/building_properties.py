@@ -261,10 +261,16 @@ class BuildingProperties(object):
         df = df.merge(typology, left_index=True, right_index=True)
         df = df.merge(hvac_temperatures, left_index=True, right_index=True)
 
+
+        from cea.demand.control_heating_cooling_systems import has_heating_system, has_cooling_system
+        class prov(object):
+            def __init__(self, hvac):
+                self.hvac = hvac
         for building in locator.get_zone_building_names():
-            if hvac_temperatures.loc[building, 'type_hs'] == 'T0' and \
-                    hvac_temperatures.loc[building, 'type_cs'] == 'T0' and \
-                    np.max([df.loc[building, 'Hs_ag'], df.loc[building, 'Hs_bg']]) > 0.0:
+            data = prov({'class_hs':hvac_temperatures.loc[building, 'class_hs'], 'class_cs': hvac_temperatures.loc[building, 'class_cs']})
+            has_system_heating_flag = has_heating_system(data)
+            has_system_cooling_flag = has_cooling_system(data)
+            if has_system_heating_flag and has_system_cooling_flag and np.max([df.loc[building, 'Hs_ag'], df.loc[building, 'Hs_bg']]) > 0.0:
                 df.loc[building, 'Hs_ag'] = 0.0
                 df.loc[building, 'Hs_bg'] = 0.0
                 print('Building {building} has no heating and cooling system, Hs corrected to 0.'.format(
@@ -638,7 +644,7 @@ class SolarProperties(object):
 
 
 def get_properties_supply_sytems(locator, properties_supply):
-    data_all_in_one_systems = pd.read_excel(locator.get_database_assemblies(), sheet_name=None)
+    data_all_in_one_systems = pd.read_excel(locator.get_database_supply_assemblies(), sheet_name=None)
     supply_heating = data_all_in_one_systems['HEATING']
     supply_dhw = data_all_in_one_systems['HOT_WATER']
     supply_cooling = data_all_in_one_systems['COOLING']
@@ -751,11 +757,12 @@ def get_properties_technical_systems(locator, prop_HVAC):
                                                         right_on='code')
 
     fields_emission_heating = ['Name', 'type_hs', 'type_cs', 'type_dhw', 'type_ctrl', 'type_vent', 'heat_starts',
-                               'heat_ends', 'cool_starts', 'cool_ends',
+                               'heat_ends', 'cool_starts', 'cool_ends', 'class_hs', 'convection_hs',
                                'Qhsmax_Wm2', 'dThs_C', 'Tshs0_ahu_C', 'dThs0_ahu_C', 'Th_sup_air_ahu_C', 'Tshs0_aru_C',
                                'dThs0_aru_C', 'Th_sup_air_aru_C', 'Tshs0_shu_C', 'dThs0_shu_C']
     fields_emission_cooling = ['Name', 'Qcsmax_Wm2', 'dTcs_C', 'Tscs0_ahu_C', 'dTcs0_ahu_C', 'Tc_sup_air_ahu_C',
-                               'Tscs0_aru_C', 'dTcs0_aru_C', 'Tc_sup_air_aru_C', 'Tscs0_scu_C', 'dTcs0_scu_C']
+                               'Tscs0_aru_C', 'dTcs0_aru_C', 'Tc_sup_air_aru_C', 'Tscs0_scu_C', 'dTcs0_scu_C',
+                               'class_cs', 'convection_cs']
     fields_emission_control_heating_and_cooling = ['Name', 'dT_Qhs', 'dT_Qcs']
     fields_emission_dhw = ['Name', 'Tsww0_C', 'Qwwmax_Wm2']
     fields_system_ctrl_vent = ['Name', 'MECH_VENT', 'WIN_VENT', 'HEAT_REC', 'NIGHT_FLSH', 'ECONOMIZER']
@@ -856,7 +863,7 @@ def get_envelope_properties(locator, prop_architecture):
 
     """
 
-    def check_successful_merge(df_construction, df_leakage, df_roof, df_wall, df_win, df_shading):
+    def check_successful_merge(df_construction, df_leakage, df_roof, df_wall, df_win, df_shading, df_floor):
         if len(df_construction.loc[df_construction['code'].isna()]) > 0:
             raise ValueError(
                 'WARNING: Invalid construction type found in architecture inputs. The following buildings will not be modeled: {}.'.format(
@@ -881,35 +888,43 @@ def get_envelope_properties(locator, prop_architecture):
             raise ValueError(
                 'WARNING: Invalid shading type found in architecture inputs. The following buildings will not be modeled: {}.'.format(
                     list(df_shading.loc[df_shading['code'].isna()]['Name'])))
+        if len(df_floor.loc[df_floor['code'].isna()]) > 0:
+            raise ValueError(
+                'WARNING: Invalid floor type found in architecture inputs. The following buildings will not be modeled: {}.'.format(
+                    list(df_floor.loc[df_floor['code'].isna()]['Name'])))
 
     prop_roof = pd.read_excel(locator.get_database_envelope_systems(), 'ROOF')
     prop_wall = pd.read_excel(locator.get_database_envelope_systems(), 'WALL')
+    prop_floor = pd.read_excel(locator.get_database_envelope_systems(), 'FLOOR')
     prop_win = pd.read_excel(locator.get_database_envelope_systems(), 'WINDOW')
     prop_shading = pd.read_excel(locator.get_database_envelope_systems(), 'SHADING')
     prop_construction = pd.read_excel(locator.get_database_envelope_systems(), 'CONSTRUCTION')
-    prop_leakage = pd.read_excel(locator.get_database_envelope_systems(), 'LEAKAGE')
+    prop_leakage = pd.read_excel(locator.get_database_envelope_systems(), 'TIGHTNESS')
 
     df_construction = prop_architecture.merge(prop_construction, left_on='type_cons', right_on='code', how='left')
     df_leakage = prop_architecture.merge(prop_leakage, left_on='type_leak', right_on='code', how='left')
+    df_floor = prop_architecture.merge(prop_floor, left_on='type_base', right_on='code', how='left')
     df_roof = prop_architecture.merge(prop_roof, left_on='type_roof', right_on='code', how='left')
     df_wall = prop_architecture.merge(prop_wall, left_on='type_wall', right_on='code', how='left')
     df_win = prop_architecture.merge(prop_win, left_on='type_win', right_on='code', how='left')
     df_shading = prop_architecture.merge(prop_shading, left_on='type_shade', right_on='code', how='left')
 
-    check_successful_merge(df_construction, df_leakage, df_roof, df_wall, df_win, df_shading)
+    check_successful_merge(df_construction, df_leakage, df_roof, df_wall, df_win, df_shading, df_floor)
 
     fields_construction = ['Name', 'Cm_Af', 'void_deck', 'Hs_ag', 'Hs_bg', 'Ns', 'Es']
     fields_leakage = ['Name', 'n50']
+    fields_basement = ['Name', 'U_base']
     fields_roof = ['Name', 'e_roof', 'a_roof', 'U_roof']
     fields_wall = ['Name', 'wwr_north', 'wwr_west', 'wwr_east', 'wwr_south',
-                   'e_wall', 'a_wall', 'U_wall', 'U_base']
+                   'e_wall', 'a_wall', 'U_wall']
     fields_win = ['Name', 'e_win', 'G_win', 'U_win', 'F_F']
     fields_shading = ['Name', 'rf_sh']
 
     envelope_prop = df_roof[fields_roof].merge(df_wall[fields_wall], on='Name').merge(df_win[fields_win],
                                                                                       on='Name').merge(
         df_shading[fields_shading], on='Name').merge(df_construction[fields_construction], on='Name').merge(
-        df_leakage[fields_leakage], on='Name')
+        df_leakage[fields_leakage], on='Name').merge(
+        df_floor[fields_basement], on='Name')
 
     return envelope_prop
 
