@@ -117,6 +117,14 @@ def use_type_properties_to_dict(db_path):
     return out
 
 
+def use_type_properties_dict_to_file(db_dict, db_path):
+    with pandas.ExcelWriter(db_path) as writer:
+        for sheet_name, data in db_dict.items():
+            df = pandas.DataFrame.from_dict(data, orient='index').dropna(axis=0, how='all').reindex(data.keys())
+            df.index.name = 'code'
+            df.to_excel(writer, sheet_name=sheet_name)
+
+
 def database_to_dict(db_path):
     out = OrderedDict()
     xls = pandas.ExcelFile(db_path)
