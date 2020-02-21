@@ -47,7 +47,6 @@ def archetypes_mapper(locator,
                       update_internal_loads_dbf,
                       update_supply_systems_dbf,
                       update_schedule_operation_cea,
-                      update_emission_intensity_dbf,
                       buildings):
 
     """
@@ -112,9 +111,6 @@ def archetypes_mapper(locator,
     if update_supply_systems_dbf:
         supply_mapper(locator, building_typology_df)
 
-    if update_emission_intensity_dbf:
-        emission_intensity_mapper(locator, building_typology_df)
-
 
 def indoor_comfort_mapper(list_uses, locator, occupant_densities, building_typology_df):
     comfort_DB = pd.read_excel(locator.get_database_use_types_properties(), 'INDOOR_COMFORT')
@@ -173,25 +169,6 @@ def supply_mapper(locator, building_typology_df):
               'type_el']
     dataframe_to_dbf(prop_supply_df[fields], locator.get_building_supply())
 
-
-def emission_intensity_mapper(locator, building_typology_df):
-    emisison_intensity_DB = pd.read_excel(locator.get_database_construction_standards(), 'EMISSION_INTENSITY')
-    prop_emission_df = building_typology_df.merge(emisison_intensity_DB, left_on='STANDARD', right_on='STANDARD')
-    fields = ['Name',
-              'W_e_ag_kgm2',
-              'W_e_bg_kgm2',
-              'W_i_ag_kgm2',
-              'W_i_bg_kgm2',
-              'Win_kgm2',
-              'F_i_kgm2',
-              'F_e_kgm2',
-              'R_kgm2',
-              'Tech_kgm2',
-              'Exca_kgm2',
-              'Mobi_kgm2']
-    dataframe_to_dbf(prop_emission_df[fields], locator.get_building_emission_intensity())
-
-
 def aircon_mapper(locator, typology_df):
     air_conditioning_DB = pd.read_excel(locator.get_database_construction_standards(), 'HVAC_ASSEMBLIES')
     # define HVAC systems types
@@ -226,6 +203,7 @@ def architecture_mapper(locator, typology_df):
               'type_cons',
               'type_leak',
               'type_floor',
+              'type_part',
               'type_base',
               'type_roof',
               'type_wall',
@@ -455,7 +433,6 @@ def main(config):
 
     update_architecture_dbf = 'architecture' in config.archetypes_mapper.input_databases
     update_air_conditioning_systems_dbf = 'air-conditioning' in config.archetypes_mapper.input_databases
-    update_emission_intensity_dbf = 'emission-intensity' in config.archetypes_mapper.input_databases
     update_indoor_comfort_dbf = 'comfort' in config.archetypes_mapper.input_databases
     update_internal_loads_dbf = 'internal-loads' in config.archetypes_mapper.input_databases
     update_supply_systems_dbf = 'supply' in config.archetypes_mapper.input_databases
@@ -471,7 +448,6 @@ def main(config):
                       update_internal_loads_dbf=update_internal_loads_dbf,
                       update_supply_systems_dbf=update_supply_systems_dbf,
                       update_schedule_operation_cea=update_schedule_operation_cea,
-                      update_emission_intensity_dbf= update_emission_intensity_dbf,
                       buildings=buildings)
 
 

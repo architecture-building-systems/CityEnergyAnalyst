@@ -65,7 +65,8 @@ archetypes-mapper,get_building_architecture,,type_cons,Type of construction. It 
 archetypes-mapper,get_building_architecture,,type_leak,Tightness level. It relates to the contents of the default database of Envelope Properties: tightness,[code],{T1...Tn},string,black,inputs/building-properties/architecture.dbf
 archetypes-mapper,get_building_architecture,,type_roof,Roof construction type (relates to values in Default Database Construction Properties),[-],{T1...Tn},string,black,inputs/building-properties/architecture.dbf
 archetypes-mapper,get_building_architecture,,type_shade,Shading system type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black,inputs/building-properties/architecture.dbf
-archetypes-mapper,get_building_architecture,,type_wall,Wall construction type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black,inputs/building-properties/architecture.dbf
+archetypes-mapper,get_building_architecture,,type_wall,External wall construction type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black,inputs/building-properties/architecture.dbf
+archetypes-mapper,get_building_architecture,,type_part,Internal partitions construction type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black,inputs/building-properties/architecture.dbf
 archetypes-mapper,get_building_architecture,,type_floor,Internal floor construction type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black,inputs/building-properties/architecture.dbf
 archetypes-mapper,get_building_architecture,,type_base,Basement floor construction type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black,inputs/building-properties/architecture.dbf
 archetypes-mapper,get_building_architecture,,type_win,Window type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black,inputs/building-properties/architecture.dbf
@@ -146,7 +147,8 @@ network-layout,get_network_layout_nodes_shapefile,,Type,Weather a Plant or A Cus
 -,get_database_construction_standards,ENVELOPE_ASSEMBLIES,type_leak,Tightness level. It relates to the contents of the default database of Envelope Properties: tightness,[code],{T1...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
 -,get_database_construction_standards,ENVELOPE_ASSEMBLIES,type_roof,Roof construction type (relates to values in Default Database Construction Properties),[-],{T1...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
 -,get_database_construction_standards,ENVELOPE_ASSEMBLIES,type_shade,Shading system type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
--,get_database_construction_standards,ENVELOPE_ASSEMBLIES,type_wall,Wall construction type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
+-,get_database_construction_standards,ENVELOPE_ASSEMBLIES,type_wall,External wall construction type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
+-,get_database_construction_standards,ENVELOPE_ASSEMBLIES,type_part,Internal partitions construction type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
 -,get_database_construction_standards,ENVELOPE_ASSEMBLIES,type_floor,Internal floor construction type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
 -,get_database_construction_standards,ENVELOPE_ASSEMBLIES,type_base,Basement floor construction type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
 -,get_database_construction_standards,ENVELOPE_ASSEMBLIES,type_win,Window type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
@@ -173,18 +175,6 @@ network-layout,get_network_layout_nodes_shapefile,,Type,Weather a Plant or A Cus
 -,get_database_standard_schedules_use,,CH-SIA-2014,metadata,[-],TODO,string,black,inputs/technology/archetypes/schedules/RESTAURANT.csv
 -,get_database_standard_schedules_use,,METADATA,metadata,[-],TODO,string,black,inputs/technology/archetypes/schedules/RESTAURANT.csv
 -,get_database_standard_schedules_use,,RESTAURANT,metadata,[-],TODO,string,black,inputs/technology/archetypes/schedules/RESTAURANT.csv
--,get_database_construction_standards,EMISSION_INTENSITY,STANDARD, Unique ID of Construction Standard,[-],{code},string,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
--,get_database_construction_standards,EMISSION_INTENSITY,W_e_ag_kgm2,Emissions of external walls below ground per wall area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
--,get_database_construction_standards,EMISSION_INTENSITY,W_e_bg_kgm2,Emissions of external walls above ground per wall area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
--,get_database_construction_standards,EMISSION_INTENSITY,W_i_ag_kgm2,Emissions of internal walls below ground per wall area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
--,get_database_construction_standards,EMISSION_INTENSITY,W_i_bg_kgm2,Emissions of internal walls above ground per wall area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
--,get_database_construction_standards,EMISSION_INTENSITY,Win_kgm2,Emissions of widows per window area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
--,get_database_construction_standards,EMISSION_INTENSITY,F_i_kgm2,Emissions of internal floors per floor area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
--,get_database_construction_standards,EMISSION_INTENSITY,F_e_kgm2,Emissions of basement floor per floor area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
--,get_database_construction_standards,EMISSION_INTENSITY,R_kgm2,Emissions of roof per roof area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
--,get_database_construction_standards,EMISSION_INTENSITY,Tech_kgm2,Emissions of technical installations per gross floor area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
--,get_database_construction_standards,EMISSION_INTENSITY,Exca_kgm2,Emissions of excavations per basement floor area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
--,get_database_construction_standards,EMISSION_INTENSITY,Mobi_kgm2,Emissions of induced mobility per gross floor area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
 -,get_database_air_conditioning_systems,controller,code,Unique ID of the controller,[code],{T0...Tn},string,black,inputs/technology/systems/air_conditioning_systems.xls:controller
 -,get_database_air_conditioning_systems,controller,Description,Describes the type of controller,[-],[-],string,black,inputs/technology/systems/air_conditioning_systems.xls:controller
 -,get_database_air_conditioning_systems,controller,dT_Qcs,correction temperature of emission losses due to control system of cooling,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:controller
@@ -234,28 +224,28 @@ network-layout,get_network_layout_nodes_shapefile,,Type,Weather a Plant or A Cus
 -,get_database_envelope_systems,TIGHTNESS,code,Type of tightness,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:TIGHTNESS
 -,get_database_envelope_systems,TIGHTNESS,Description,Describes the Type of tightness,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:TIGHTNESS
 -,get_database_envelope_systems,TIGHTNESS,n50,Air exchanges per hour at a pressure of 50 Pa.,[1/h],{0.0...10},float,black,inputs/technology/systems/envelope_systems.xls:TIGHTNESS
--,get_database_envelope_systems,ROOF,GHG_ROOF_kgCO2m2,Embodied emissions per m2 of roof.,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/systems/envelope_systems.xls:ROOF
+-,get_database_envelope_systems,ROOF,GHG_ROOF_kgCO2m2,Embodied emissions per m2 of roof.(entire building life cycle),[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/systems/envelope_systems.xls:ROOF
 -,get_database_envelope_systems,ROOF,a_roof,Solar absorption coefficient. Defined according to ISO 13790.,[-],{0.0...1},float,black,inputs/technology/systems/envelope_systems.xls:ROOF
 -,get_database_envelope_systems,ROOF,code,Type of roof,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:ROOF
 -,get_database_envelope_systems,ROOF,Description,Describes the Type of roof,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:ROOF
 -,get_database_envelope_systems,ROOF,e_roof,Emissivity of external surface. Defined according to ISO 13790.,[-],{0.0...1},float,black,inputs/technology/systems/envelope_systems.xls:ROOF
 -,get_database_envelope_systems,ROOF,r_roof,Reflectance in the Red spectrum. Defined according Radiance. (long-wave),[-],{0.0...1},float,black,inputs/technology/systems/envelope_systems.xls:ROOF
 -,get_database_envelope_systems,ROOF,U_roof,Thermal transmittance of windows including linear losses (+10%). Defined according to ISO 13790.,[-],{0.1...n},float,black,inputs/technology/systems/envelope_systems.xls:ROOF
--,get_database_envelope_systems,FLOOR,GHG_FLOOR_kgCO2m2,Embodied emissions per m2 of roof.,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/systems/envelope_systems.xls:ROOF
+-,get_database_envelope_systems,FLOOR,GHG_FLOOR_kgCO2m2,Embodied emissions per m2 of roof.(entire building life cycle),[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/systems/envelope_systems.xls:ROOF
 -,get_database_envelope_systems,FLOOR,code,Type of roof,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:ROOF
 -,get_database_envelope_systems,FLOOR,Description,Describes the Type of roof,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:ROOF
 -,get_database_envelope_systems,FLOOR,U_base,Thermal transmittance of floor including linear losses (+10%). Defined according to ISO 13790.,[-],{0.1...n},float,black,inputs/technology/systems/envelope_systems.xls:ROOF
 -,get_database_envelope_systems,SHADING,code,Type of shading,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:SHADING
 -,get_database_envelope_systems,SHADING,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:SHADING
 -,get_database_envelope_systems,SHADING,rf_sh,Shading coefficient when shading device is active. Defined according to ISO 13790.,[-],{0.0...1},float,black,inputs/technology/systems/envelope_systems.xls:SHADING
--,get_database_envelope_systems,WALL,GHG_WALL_kgCO2m2,Embodied emissions per m2 of walls.,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/systems/envelope_systems.xls:WALL
+-,get_database_envelope_systems,WALL,GHG_WALL_kgCO2m2,Embodied emissions per m2 of walls (entire building life cycle),[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/systems/envelope_systems.xls:WALL
 -,get_database_envelope_systems,WALL,a_wall,Solar absorption coefficient. Defined according to ISO 13790.,[-],{0.0...1},float,black,inputs/technology/systems/envelope_systems.xls:WALL
 -,get_database_envelope_systems,WALL,code,Type of wall,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:WALL
 -,get_database_envelope_systems,WALL,Description,Describes the Type of wall,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:WALL
 -,get_database_envelope_systems,WALL,e_wall,Emissivity of external surface. Defined according to ISO 13790.,[-],{0.0...1},float,black,inputs/technology/systems/envelope_systems.xls:WALL
 -,get_database_envelope_systems,WALL,r_wall,Reflectance in the Red spectrum. Defined according Radiance. (long-wave),[-],{0.0...1},float,black,inputs/technology/systems/envelope_systems.xls:WALL
 -,get_database_envelope_systems,WALL,U_wall,Thermal transmittance of windows including linear losses (+10%). Defined according to ISO 13790.,[-],{0.1...n},float,black,inputs/technology/systems/envelope_systems.xls:WALL
--,get_database_envelope_systems,WINDOW,GHG_WINDOW_kgCO2m2,Embodied emissions per m2 of windows.,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/systems/envelope_systems.xls:WALL
+-,get_database_envelope_systems,WINDOW,GHG_WIN_kgCO2m2,Embodied emissions per m2 of windows.(entire building life cycle),[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/systems/envelope_systems.xls:WALL
 -,get_database_envelope_systems,WINDOW,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/envelope_systems.xls:WINDOW
 -,get_database_envelope_systems,WINDOW,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:WINDOW
 -,get_database_envelope_systems,WINDOW,e_win,Emissivity of external surface. Defined according to ISO 13790.,[-],{0.0...1},float,black,inputs/technology/systems/envelope_systems.xls:WINDOW

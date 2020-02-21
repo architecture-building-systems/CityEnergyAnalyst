@@ -190,7 +190,7 @@ def get_building_properties():
     import cea.glossary
     # FIXME: Find a better way to ensure order of tabs
     tabs = ['zone', 'typology', 'architecture', 'internal-loads', 'indoor-comfort', 'air-conditioning-systems',
-            'supply-systems', 'emission-intensity', 'surroundings']
+            'supply-systems', 'surroundings']
 
     config = current_app.cea_config
     locator = cea.inputlocator.InputLocator(config.scenario)
