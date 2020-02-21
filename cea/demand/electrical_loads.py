@@ -78,7 +78,7 @@ def calc_Ef(bpr, tsd):
     energy_source = bpr.supply['source_el']
     scale_technology = bpr.supply['scale_el']
     total_el_demand = (tsd['Ea'] + tsd['El'] + tsd['Edata'] + tsd['Epro'] + tsd['Eaux'] +
-                      tsd['Ev_W'] + tsd['E_ww'] + tsd['E_cs'] + tsd['E_hs'] + tsd['E_cdata'] + tsd['E_cre'])
+                       tsd['Ev'] + tsd['E_ww'] + tsd['E_cs'] + tsd['E_hs'] + tsd['E_cdata'] + tsd['E_cre'])
 
     if scale_technology == "BUILDING":
         if energy_source == "SOLAR":
