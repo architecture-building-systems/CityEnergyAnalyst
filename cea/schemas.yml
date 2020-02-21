@@ -2674,6 +2674,8 @@ get_database_conversion_systems:
       type:
         sample_data: ET
         types_found: [string]
+        choice:
+          values: [FP, ET]
       unit:
         sample_data: m2
         types_found: [string]
