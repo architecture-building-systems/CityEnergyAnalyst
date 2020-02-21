@@ -1578,13 +1578,13 @@ get_database_feedstocks:
   file_type: xls
   schema:
     NATURALGAS:
-      CO2:
+      GHG_kgCO2MJ:
         sample_data: 0.0075
         types_found: [float]
-      Opex_var_buy_USD2015perkWh:
+      Opex_var_buy_USD2015kWh:
         sample_data: 0.20800000000000002
         types_found: [float]
-      Opex_var_sell_USD2015perkWh:
+      Opex_var_sell_USD2015kWh:
         sample_data: 0.20800000000000002
         types_found: [float]
       hour:
@@ -1594,13 +1594,13 @@ get_database_feedstocks:
         sample_data: KBOB 2009/1:2016, ID 42.001 Kehrichtverbrennung, cost from CEA
         types_found: [string, null]
     BIOGAS:
-      CO2:
+      GHG_kgCO2MJ:
         sample_data: 0.0075
         types_found: [float]
-      Opex_var_buy_USD2015perkWh:
+      Opex_var_buy_USD2015kWh:
         sample_data: 0.20800000000000002
         types_found: [float]
-      Opex_var_sell_USD2015perkWh:
+      Opex_var_sell_USD2015kWh:
         sample_data: 0.20800000000000002
         types_found: [float]
       hour:
@@ -1610,13 +1610,13 @@ get_database_feedstocks:
         sample_data: KBOB 2009/1:2016, ID 42.001 Kehrichtverbrennung, cost from CEA
         types_found: [string, null]
     GRID:
-      CO2:
+      GHG_kgCO2MJ:
         sample_data: 0.0075
         types_found: [float]
-      Opex_var_buy_USD2015perkWh:
+      Opex_var_buy_USD2015kWh:
         sample_data: 0.20800000000000002
         types_found: [float]
-      Opex_var_sell_USD2015perkWh:
+      Opex_var_sell_USD2015kWh:
         sample_data: 0.20800000000000002
         types_found: [float]
       hour:
@@ -1626,13 +1626,13 @@ get_database_feedstocks:
         sample_data: KBOB 2009/1:2016, ID 42.001 Kehrichtverbrennung, cost from CEA
         types_found: [string, null]
     SOLAR:
-      CO2:
+      GHG_kgCO2MJ:
         sample_data: 0.0075
         types_found: [float]
-      Opex_var_buy_USD2015perkWh:
+      Opex_var_buy_USD2015kWh:
         sample_data: 0.20800000000000002
         types_found: [float]
-      Opex_var_sell_USD2015perkWh:
+      Opex_var_sell_USD2015kWh:
         sample_data: 0.20800000000000002
         types_found: [float]
       hour:
@@ -1642,13 +1642,13 @@ get_database_feedstocks:
         sample_data: KBOB 2009/1:2016, ID 42.001 Kehrichtverbrennung, cost from CEA
         types_found: [string, null]
     OIL:
-      CO2:
+      GHG_kgCO2MJ:
         sample_data: 0.0075
         types_found: [float]
-      Opex_var_buy_USD2015perkWh:
+      Opex_var_buy_USD2015kWh:
         sample_data: 0.20800000000000002
         types_found: [float]
-      Opex_var_sell_USD2015perkWh:
+      Opex_var_sell_USD2015kWh:
         sample_data: 0.20800000000000002
         types_found: [float]
       hour:
@@ -1658,13 +1658,13 @@ get_database_feedstocks:
         sample_data: KBOB 2009/1:2016, ID 42.001 Kehrichtverbrennung, cost from CEA
         types_found: [string, null]
     COAL:
-      CO2:
+      GHG_kgCO2MJ:
         sample_data: 0.0075
         types_found: [float]
-      Opex_var_buy_USD2015perkWh:
+      Opex_var_buy_USD2015kWh:
         sample_data: 0.20800000000000002
         types_found: [float]
-      Opex_var_sell_USD2015perkWh:
+      Opex_var_sell_USD2015kWh:
         sample_data: 0.20800000000000002
         types_found: [float]
       hour:
@@ -1674,13 +1674,13 @@ get_database_feedstocks:
         sample_data: KBOB 2009/1:2016, ID 42.001 Kehrichtverbrennung, cost from CEA
         types_found: [string, null]
     WOOD:
-      CO2:
+      GHG_kgCO2MJ:
         sample_data: 0.0075
         types_found: [float]
-      Opex_var_buy_USD2015perkWh:
+      Opex_var_buy_USD2015kWh:
         sample_data: 0.20800000000000002
         types_found: [float]
-      Opex_var_sell_USD2015perkWh:
+      Opex_var_sell_USD2015kWh:
         sample_data: 0.20800000000000002
         types_found: [float]
       hour:
@@ -1690,13 +1690,13 @@ get_database_feedstocks:
         sample_data: KBOB 2009/1:2016, ID 42.001 Kehrichtverbrennung, cost from CEA
         types_found: [string, null]
     WETBIOMASS:
-      CO2:
+      GHG_kgCO2MJ:
         sample_data: 0.0075
         types_found: [float]
-      Opex_var_buy_USD2015perkWh:
+      Opex_var_buy_USD2015kWh:
         sample_data: 0.20800000000000002
         types_found: [float]
-      Opex_var_sell_USD2015perkWh:
+      Opex_var_sell_USD2015kWh:
         sample_data: 0.20800000000000002
         types_found: [float]
       hour:
@@ -1706,13 +1706,13 @@ get_database_feedstocks:
         sample_data: KBOB 2009/1:2016, ID 42.001 Kehrichtverbrennung, cost from CEA
         types_found: [string, null]
     DRYBIOMASS:
-      CO2:
+      GHG_kgCO2MJ:
         sample_data: 0.0075
         types_found: [float]
-      Opex_var_buy_USD2015perkWh:
+      Opex_var_buy_USD2015kWh:
         sample_data: 0.20800000000000002
         types_found: [float]
-      Opex_var_sell_USD2015perkWh:
+      Opex_var_sell_USD2015kWh:
         sample_data: 0.20800000000000002
         types_found: [float]
       hour:
@@ -2176,10 +2176,10 @@ get_database_conversion_systems:
         sample_data: W
         types_found: [string]
     DETAILED_ELEC_COSTS:
-      Opex_var_buy_USD2015perkWh:
+      Opex_var_buy_USD2015kWh:
         sample_data: 0.04936071505496888
         types_found: [float]
-      Opex_var_sell_USD2015perkWh:
+      Opex_var_sell_USD2015kWh:
         sample_data: 0.04936071505496888
         types_found: [float]
       hour:
