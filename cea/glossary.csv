@@ -721,8 +721,9 @@ demand,get_demand_results_file,,GRID_cre_kWh,kWh,Grid electricity requirements f
 demand,get_demand_results_file,,GRID_cs_kWh,kWh,Grid electricity requirements for space cooling,{0.0...n},float,blue,outputs/data/demand/b001.csv
 demand,get_demand_results_file,,GRID_data_kWh,kWh,Grid electricity requirements for servers,{0.0...n},float,blue,outputs/data/demand/b001.csv
 demand,get_demand_results_file,,GRID_hs_kWh,kWh,Grid electricity requirements for space heating,{0.0...n},float,red,outputs/data/demand/b001.csv
-demand,get_demand_results_file,,GRID_kWh,Grid total requirements of electricity = GRID_a + GRID_l + GRID_data + GRID_pro + GRID_aux + GRID_cdata + GRID_cre + GRID_hs + GRID_ww + GRID_cs,kWh,{0.0...n},float,green,outputs/data/demand/b001.csv
+demand,get_demand_results_file,,GRID_kWh,Grid total requirements of electricity = GRID_a + GRID_l + GRID_v +GRID_data + GRID_pro + GRID_aux + GRID_cdata + GRID_cre + GRID_hs + GRID_ww + GRID_cs,kWh,{0.0...n},float,green,outputs/data/demand/b001.csv
 demand,get_demand_results_file,,GRID_l_kWh,kWh,Grid electricity requirements for lights,{0.0...n},float,green_light,outputs/data/demand/b001.csv
+demand,get_demand_results_file,,GRID_v_kWh,kWh,Grid electricity requirements for Electromobility,{0.0...n},float,green_light,outputs/data/demand/b001.csv
 demand,get_demand_results_file,,GRID_pro_kWh,kWh,Grid electricity requirements for industrial processes,{0.0...n},float,brown,outputs/data/demand/b001.csv
 demand,get_demand_results_file,,GRID_ww_kWh,kWh,Grid electricity requirements for hot water supply,{0.0...n},float,orange,outputs/data/demand/b001.csv
 demand,get_demand_results_file,,I_rad_kWh,Radiative heat loss,kWh,{0.0...n},float,yellow_light,outputs/data/demand/b001.csv
