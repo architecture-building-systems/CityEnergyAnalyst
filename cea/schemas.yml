@@ -1476,6 +1476,9 @@ get_database_envelope_systems:
       r_roof:
         sample_data: 0.4
         types_found: [float]
+      GHG_ROOF_kgCO2m2:
+        sample_data: 100
+        types_found: [float]
     SHADING:
       Description:
         sample_data: venetian blinds
@@ -1490,9 +1493,6 @@ get_database_envelope_systems:
       Description:
         sample_data: concrete block exposed- NTU
         types_found: [string]
-      U_base:
-        sample_data: 1.7
-        types_found: [float]
       U_wall:
         sample_data: 3.2
         types_found: [float]
@@ -1507,6 +1507,9 @@ get_database_envelope_systems:
         types_found: [float]
       r_wall:
         sample_data: 0.4
+        types_found: [float]
+      GHG_WALL_kgCO2m2:
+        sample_data: 100
         types_found: [float]
     WINDOW:
       Description:
@@ -1526,6 +1529,22 @@ get_database_envelope_systems:
         types_found: [string]
       e_win:
         sample_data: 0.89
+        types_found: [float]
+      GHG_WIN_kgCO2m2:
+        sample_data: 100
+        types_found: [float]
+    FLOOR:
+      Description:
+        sample_data: window - SinBERBest Office
+        types_found: [string]
+      U_base:
+        sample_data: 2.2
+        types_found: [float]
+      code:
+        sample_data: T10
+        types_found: [string]
+      GHG_FLOOR_kgCO2m2:
+        sample_data: 100
         types_found: [float]
   used_by: [demand, radiation, schedule_maker]
 get_database_standard_schedules_use:
