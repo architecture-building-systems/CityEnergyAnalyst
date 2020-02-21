@@ -18,9 +18,11 @@ Step 2. Install our development version
 ----------------------------------------
 If you have not done it yet, please install the development version of CEA. Make sure you have the CEA repository
 (included in the development version) connected via github and your favorite python editor (ours is PyCharm). You can
-download the development version with the same link as the one used in www.cityenergyanalyst.com/tryit.
+download the development version with the same link as the one used `www.cityenergyanalyst.com/tryit`_.
 
 Here we tell you how to do it https://cityenergyanalyst.com/blog/2019/6/3/how-to-install-the-cea-on-windows-part-2
+
+.. _`www.cityenergyanalyst.com/tryit`: http://www.cityenergyanalyst.com/tryit
 
 Step 3. Branch out and code
 ----------------------------
