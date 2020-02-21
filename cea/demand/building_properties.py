@@ -638,11 +638,11 @@ class SolarProperties(object):
 
 
 def get_properties_supply_sytems(locator, properties_supply):
-    data_all_in_one_systems = pd.read_excel(locator.get_database_assemblies(), sheet_name='SUPPLY')
-    supply_heating = data_all_in_one_systems[data_all_in_one_systems['system'].isin(['HEATING', 'NONE'])]
-    supply_dhw = data_all_in_one_systems[data_all_in_one_systems['system'].isin(['HEATING', 'NONE'])]
-    supply_cooling = data_all_in_one_systems[data_all_in_one_systems['system'].isin(['COOLING', 'NONE'])]
-    supply_electricity = data_all_in_one_systems[data_all_in_one_systems['system'].isin(['ELECTRICITY', 'NONE'])]
+    data_all_in_one_systems = pd.read_excel(locator.get_database_assemblies(), sheet_name=None)
+    supply_heating = data_all_in_one_systems['HEATING']
+    supply_dhw = data_all_in_one_systems['HOT_WATER']
+    supply_cooling = data_all_in_one_systems['COOLING']
+    supply_electricity = data_all_in_one_systems['ELECTRICITY']
 
     df_emission_heating = properties_supply.merge(supply_heating, left_on='type_hs', right_on='code')
     df_emission_cooling = properties_supply.merge(supply_cooling, left_on='type_cs', right_on='code')

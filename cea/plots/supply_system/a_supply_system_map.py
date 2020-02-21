@@ -169,11 +169,11 @@ class SupplySystemMapPlot(cea.plots.supply_system.SupplySystemPlotBase):
 
 def get_building_connectivity(locator):
     supply_systems = dbf_to_dataframe(locator.get_building_supply())
-    data_all_in_one_systems = pd.read_excel(locator.get_database_assemblies(), sheet_name='SUPPLY')
-    heating_infrastructure = data_all_in_one_systems[data_all_in_one_systems['system'].isin(['HEATING', 'NONE'])]
+    data_all_in_one_systems = pd.read_excel(locator.get_database_assemblies(), sheet_name=None)
+    heating_infrastructure = data_all_in_one_systems['HEATING']
     heating_infrastructure = heating_infrastructure.set_index('code')['scale']
 
-    cooling_infrastructure = data_all_in_one_systems[data_all_in_one_systems['system'].isin(['COOLING', 'NONE'])]
+    cooling_infrastructure = data_all_in_one_systems['COOLING']
     cooling_infrastructure = cooling_infrastructure.set_index('code')['scale']
 
     building_connectivity = supply_systems[['Name']].copy()
