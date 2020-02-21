@@ -116,6 +116,14 @@ class Scenarios(Resource):
 
         locator = cea.inputlocator.InputLocator(new_scenario_path)
 
+        # Run database_initializer to copy databases to input
+        if 'databases-path' in payload:
+            try:
+                cea.api.data_initializer(config, scenario=new_scenario_path, databases_path=payload['databases-path'])
+            except Exception as e:
+                trace = traceback.format_exc()
+                return {'message': 'data_initializer: {}'.format(e.message), 'trace': trace}, 500
+
         if payload['input-data'] == 'import':
             files = payload['files']
 
@@ -190,14 +198,6 @@ class Scenarios(Resource):
                     except Exception as e:
                         trace = traceback.format_exc()
                         return {'message': '{}_helper: {}'.format(tool, e.message), 'trace': trace}, 500
-
-        # Run database_initializer to copy databases to input
-        if payload['databases-path'] != 'create':
-            try:
-                cea.api.data_initializer(config, scenario=new_scenario_path, databases_path=payload['databases-path'])
-            except Exception as e:
-                trace = traceback.format_exc()
-                return {'message': 'data_initializer: {}'.format(e.message), 'trace': trace}, 500
 
         return {'scenarios': list_scenario_names_for_project(config)}
 
