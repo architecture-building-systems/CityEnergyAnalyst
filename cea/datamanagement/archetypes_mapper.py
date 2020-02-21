@@ -83,7 +83,7 @@ def archetypes_mapper(locator,
 
     # get occupant densities from archetypes schedules
     occupant_densities = {}
-    occ_densities = pd.read_excel(locator.get_use_types_properties(), 'INTERNAL_LOADS').set_index('code')
+    occ_densities = pd.read_excel(locator.get_database_use_types_properties(), 'INTERNAL_LOADS').set_index('code')
     for use in list_uses:
         if occ_densities.loc[use, 'Occ_m2pax'] > 0.0:
             occupant_densities[use] = 1 / occ_densities.loc[use, 'Occ_m2pax']
@@ -117,7 +117,7 @@ def archetypes_mapper(locator,
 
 
 def indoor_comfort_mapper(list_uses, locator, occupant_densities, building_typology_df):
-    comfort_DB = pd.read_excel(locator.get_use_types_properties(), 'INDOOR_COMFORT')
+    comfort_DB = pd.read_excel(locator.get_database_use_types_properties(), 'INDOOR_COMFORT')
     # define comfort
     prop_comfort_df = building_typology_df.merge(comfort_DB, left_on='1ST_USE', right_on='code')
     # write to shapefile
@@ -138,7 +138,7 @@ def indoor_comfort_mapper(list_uses, locator, occupant_densities, building_typol
 
 
 def internal_loads_mapper(list_uses, locator, occupant_densities, building_typology_df):
-    internal_DB = pd.read_excel(locator.get_use_types_properties(), 'INTERNAL_LOADS')
+    internal_DB = pd.read_excel(locator.get_database_use_types_properties(), 'INTERNAL_LOADS')
     # define comfort
     prop_internal_df = building_typology_df.merge(internal_DB, left_on='1ST_USE', right_on='code')
     # write to shapefile
@@ -164,7 +164,7 @@ def internal_loads_mapper(list_uses, locator, occupant_densities, building_typol
 
 
 def supply_mapper(locator, building_typology_df):
-    supply_DB = pd.read_excel(locator.get_archetypes_properties(), 'SUPPLY_ASSEMBLIES')
+    supply_DB = pd.read_excel(locator.get_database_construction_standards(), 'SUPPLY_ASSEMBLIES')
     prop_supply_df = building_typology_df.merge(supply_DB, left_on='STANDARD', right_on='STANDARD')
     fields = ['Name',
               'type_cs',
@@ -175,7 +175,7 @@ def supply_mapper(locator, building_typology_df):
 
 
 def emission_intensity_mapper(locator, building_typology_df):
-    emisison_intensity_DB = pd.read_excel(locator.get_archetypes_properties(), 'EMISSION_INTENSITY')
+    emisison_intensity_DB = pd.read_excel(locator.get_database_construction_standards(), 'EMISSION_INTENSITY')
     prop_emission_df = building_typology_df.merge(emisison_intensity_DB, left_on='STANDARD', right_on='STANDARD')
     fields = ['Name',
               'W_e_ag_kgm2',
@@ -193,7 +193,7 @@ def emission_intensity_mapper(locator, building_typology_df):
 
 
 def aircon_mapper(locator, typology_df):
-    air_conditioning_DB = pd.read_excel(locator.get_archetypes_properties(), 'HVAC_COMPONENTS')
+    air_conditioning_DB = pd.read_excel(locator.get_database_construction_standards(), 'HVAC_ASSEMBLIES')
     # define HVAC systems types
     prop_HVAC_df = typology_df.merge(air_conditioning_DB, left_on='STANDARD', right_on='STANDARD')
     # write to shapefile
@@ -211,7 +211,7 @@ def aircon_mapper(locator, typology_df):
 
 
 def architecture_mapper(locator, typology_df):
-    architecture_DB = pd.read_excel(locator.get_archetypes_properties(), 'ENVELOPE_COMPONENTS')
+    architecture_DB = pd.read_excel(locator.get_database_construction_standards(), 'ENVELOPE_ASSEMBLIES')
     prop_architecture_df = typology_df.merge(architecture_DB, left_on='STANDARD', right_on='STANDARD')
     fields = ['Name',
               'Hs_ag',
