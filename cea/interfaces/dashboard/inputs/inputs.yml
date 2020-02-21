@@ -46,8 +46,8 @@ typology:
     choice_properties:
       lookup:
         path: get_archetypes_properties
-        sheet: ENVELOPE_COMPONENTS
-        column: STANDARD
+          sheet: STANDARD_DEFINITION
+          column: STANDARD
   - name: 1ST_USE
     type: choice
     choice_properties:
