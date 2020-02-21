@@ -31,7 +31,7 @@ __status__ = "Production"
 def create_new_project(locator, config):
     # Local variables
     zone_geometry_path = config.create_new_project.zone
-    surroundings_geometry_path = config.create_new_project.district
+    surroundings_geometry_path = config.create_new_project.surroundings
     street_geometry_path = config.create_new_project.streets
     terrain_path = config.create_new_project.terrain
     typology_path = config.create_new_project.typology
@@ -100,7 +100,7 @@ def main(config):
     # print out all configuration variables used by this script
     print("Running create-new-project with project = %s" % config.create_new_project.project)
     print("Running create-new-project with scenario = %s" % config.create_new_project.scenario)
-    print("Running create-new-project with typology = %s" % config.create_new_project.occupancy)
+    print("Running create-new-project with typology = %s" % config.create_new_project.typology)
     print("Running create-new-project with zone = %s" % config.create_new_project.zone)
     print("Running create-new-project with terrain = %s" % config.create_new_project.terrain)
     print("Running create-new-project with output-path = %s" % config.create_new_project.output_path)
