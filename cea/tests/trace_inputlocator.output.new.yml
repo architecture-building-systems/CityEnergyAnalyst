@@ -793,7 +793,7 @@ SC_totals:
             sample_data: 0.0
             types_found: [float]
     used_by: []
-get_archetypes_properties:
+get_database_construction_standards:
     created_by: []
     description: "Returns the database of construction properties to be used by the\
         \ data-helper. These are copied\n        to the scenario if they are not yet\
