@@ -64,7 +64,7 @@ typology:
     type: choice
     choice_properties:
       lookup:
-        path: get_use_types_properties
+        path: get_database_use_types_properties
         sheet: INTERNAL_LOADS
         column: code
       none_value: NONE
@@ -76,7 +76,7 @@ typology:
     type: choice
     choice_properties:
       lookup:
-        path: get_use_types_properties
+        path: get_database_use_types_properties
         sheet: INTERNAL_LOADS
         column: code
       none_value: NONE
@@ -130,28 +130,28 @@ supply-systems:
     type: choice
     choice_properties:
       lookup:
-        path: get_database_assemblies
+        path: get_database_supply_assemblies
         sheet: COOLING
         column: code
   - name: type_dhw
     type: choice
     choice_properties:
       lookup:
-        path: get_database_assemblies
+        path: get_database_supply_assemblies
         sheet: HOT_WATER
         column: code
   - name: type_el
     type: choice
     choice_properties:
       lookup:
-        path: get_database_assemblies
+        path: get_database_supply_assemblies
         sheet: ELECTRICITY
         column: code
   - name: type_hs
     type: choice
     choice_properties:
       lookup:
-        path: get_database_assemblies
+        path: get_database_supply_assemblies
         sheet: HEATING
         column: code
 architecture:
