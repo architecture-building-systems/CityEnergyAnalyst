@@ -263,8 +263,11 @@ class BuildingProperties(object):
 
 
         from cea.demand.control_heating_cooling_systems import has_heating_system, has_cooling_system
+        class prov(object):
+            def __init__(self, hvac):
+                self.hvac = hvac
         for building in locator.get_zone_building_names():
-            data = {'type_hs': hvac_temperatures.loc[building, 'type_hs'], 'type_cs': hvac_temperatures.loc[building, 'type_cs']}
+            data = prov({'class_hs':hvac_temperatures.loc[building, 'class_hs'], 'class_cs': hvac_temperatures.loc[building, 'class_cs']})
             has_system_heating_flag = has_heating_system(data)
             has_system_cooling_flag = has_cooling_system(data)
             if has_system_heating_flag and has_system_cooling_flag and np.max([df.loc[building, 'Hs_ag'], df.loc[building, 'Hs_bg']]) > 0.0:
@@ -860,7 +863,7 @@ def get_envelope_properties(locator, prop_architecture):
 
     """
 
-    def check_successful_merge(df_construction, df_leakage, df_roof, df_wall, df_win, df_shading):
+    def check_successful_merge(df_construction, df_leakage, df_roof, df_wall, df_win, df_shading, df_floor):
         if len(df_construction.loc[df_construction['code'].isna()]) > 0:
             raise ValueError(
                 'WARNING: Invalid construction type found in architecture inputs. The following buildings will not be modeled: {}.'.format(
@@ -885,35 +888,43 @@ def get_envelope_properties(locator, prop_architecture):
             raise ValueError(
                 'WARNING: Invalid shading type found in architecture inputs. The following buildings will not be modeled: {}.'.format(
                     list(df_shading.loc[df_shading['code'].isna()]['Name'])))
+        if len(df_floor.loc[df_floor['code'].isna()]) > 0:
+            raise ValueError(
+                'WARNING: Invalid floor type found in architecture inputs. The following buildings will not be modeled: {}.'.format(
+                    list(df_floor.loc[df_floor['code'].isna()]['Name'])))
 
     prop_roof = pd.read_excel(locator.get_database_envelope_systems(), 'ROOF')
     prop_wall = pd.read_excel(locator.get_database_envelope_systems(), 'WALL')
+    prop_floor = pd.read_excel(locator.get_database_envelope_systems(), 'FLOOR')
     prop_win = pd.read_excel(locator.get_database_envelope_systems(), 'WINDOW')
     prop_shading = pd.read_excel(locator.get_database_envelope_systems(), 'SHADING')
     prop_construction = pd.read_excel(locator.get_database_envelope_systems(), 'CONSTRUCTION')
-    prop_leakage = pd.read_excel(locator.get_database_envelope_systems(), 'LEAKAGE')
+    prop_leakage = pd.read_excel(locator.get_database_envelope_systems(), 'TIGHTNESS')
 
     df_construction = prop_architecture.merge(prop_construction, left_on='type_cons', right_on='code', how='left')
     df_leakage = prop_architecture.merge(prop_leakage, left_on='type_leak', right_on='code', how='left')
+    df_floor = prop_architecture.merge(prop_floor, left_on='type_base', right_on='code', how='left')
     df_roof = prop_architecture.merge(prop_roof, left_on='type_roof', right_on='code', how='left')
     df_wall = prop_architecture.merge(prop_wall, left_on='type_wall', right_on='code', how='left')
     df_win = prop_architecture.merge(prop_win, left_on='type_win', right_on='code', how='left')
     df_shading = prop_architecture.merge(prop_shading, left_on='type_shade', right_on='code', how='left')
 
-    check_successful_merge(df_construction, df_leakage, df_roof, df_wall, df_win, df_shading)
+    check_successful_merge(df_construction, df_leakage, df_roof, df_wall, df_win, df_shading, df_floor)
 
     fields_construction = ['Name', 'Cm_Af', 'void_deck', 'Hs_ag', 'Hs_bg', 'Ns', 'Es']
     fields_leakage = ['Name', 'n50']
+    fields_basement = ['Name', 'U_base']
     fields_roof = ['Name', 'e_roof', 'a_roof', 'U_roof']
     fields_wall = ['Name', 'wwr_north', 'wwr_west', 'wwr_east', 'wwr_south',
-                   'e_wall', 'a_wall', 'U_wall', 'U_base']
+                   'e_wall', 'a_wall', 'U_wall']
     fields_win = ['Name', 'e_win', 'G_win', 'U_win', 'F_F']
     fields_shading = ['Name', 'rf_sh']
 
     envelope_prop = df_roof[fields_roof].merge(df_wall[fields_wall], on='Name').merge(df_win[fields_win],
                                                                                       on='Name').merge(
         df_shading[fields_shading], on='Name').merge(df_construction[fields_construction], on='Name').merge(
-        df_leakage[fields_leakage], on='Name')
+        df_leakage[fields_leakage], on='Name').merge(
+        df_floor[fields_basement], on='Name')
 
     return envelope_prop
 
