@@ -134,8 +134,6 @@ network-layout,get_network_layout_nodes_shapefile,,Type,Weather a Plant or A Cus
 -,get_archetypes_properties,STANDARD_DEFINITION,Description,Description of the construction standard,[-],alphanumeric,string,black,inputs/technology/archetypes/construction_properties.xlsx:STANDARD_DEFINITION
 -,get_archetypes_properties,STANDARD_DEFINITION,YEAR_END,Upper limit of year interval where the building properties apply,[yr],{0...n},int,black,inputs/technology/archetypes/construction_properties.xlsx:STANDARD_DEFINITION
 -,get_archetypes_properties,STANDARD_DEFINITION,YEAR_START,Lower limit of year interval where the building properties apply,[yr],{0...n},int,black,inputs/technology/archetypes/construction_properties.xlsx:STANDARD_DEFINITION
--,get_archetypes_properties,STANDARD_DEFINITION,YEAR_END,Upper limit of year interval where the building properties apply,[yr],{0...n},int,black,inputs/technology/archetypes/construction_properties.xlsx:STANDARD_DEFINITION
--,get_archetypes_properties,STANDARD_DEFINITION,YEAR_START,Lower limit of year interval where the building properties apply,[yr],{0...n},int,black,inputs/technology/archetypes/construction_properties.xlsx:STANDARD_DEFINITION
 -,get_archetypes_properties,STANDARD_DEFINITION,STANDARD, Unique ID of Construction Standard,[-],{code},string,black,inputs/technology/archetypes/construction_properties.xlsx:STANDARD_DEFINITION
 -,get_archetypes_properties,ENVELOPE_COMPONENTS,Es,Fraction of gross floor area with electrical demands.,[m2/m2],{0.0...1},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
 -,get_archetypes_properties,ENVELOPE_COMPONENTS,Hs_ag,Fraction of above ground gross floor area air-conditioned.,[m2/m2],{0.0...1},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
@@ -163,7 +161,6 @@ network-layout,get_network_layout_nodes_shapefile,,Type,Weather a Plant or A Cus
 -,get_archetypes_properties,HVAC_COMPONENTS,type_dhw,Type of hot water supply system,[code],{T0...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
 -,get_archetypes_properties,HVAC_COMPONENTS,type_hs,Type of heating supply system,[code],{T0...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
 -,get_archetypes_properties,HVAC_COMPONENTS,type_vent,Type of ventilation strategy (relates to values in Default Database HVAC Properties),[code],{T1...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
--,get_archetypes_properties,SUPPLY_ASSEMBLIES,building_use,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY
 -,get_archetypes_properties,SUPPLY_ASSEMBLIES,STANDARD, Unique ID of Construction Standard,[-],{code},string,black,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY
 -,get_archetypes_properties,SUPPLY_ASSEMBLIES,type_cs,Type of cooling supply system,[code],{T0...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY
 -,get_archetypes_properties,SUPPLY_ASSEMBLIES,type_dhw,Type of hot water supply system,[code],{T0...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY
