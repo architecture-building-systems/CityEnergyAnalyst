@@ -13,42 +13,42 @@ api = Namespace("Databases", description="Database data for technologies in CEA"
 cea_database_path = os.path.dirname(cea.databases.__file__)
 
 DATABASES = OrderedDict([
-    ("archetypes", {
-        "CONSTRUCION_STANDARDS": {
+    ("archetypes", OrderedDict([
+        ("CONSTRUCTION_STANDARDS", {
             "filename": "CONSTRUCTION_STANDARDS.xlsx",
             "schema_key": "get_database_construction_standards"
-        },
+        }),
         # FIXME: Find a way to include schema info
-        "USE_TYPES": None  # Handle manually
-    }),
-    ("assemblies", {
-        "SUPPLY": {
+        ("USE_TYPES", None)  # Handle manually
+    ])),
+    ("assemblies", OrderedDict([
+        ("SUPPLY", {
             "filename": "SUPPLY.xls",
             "schema_key": "get_database_supply_assemblies"
-        },
-        "HVAC": {
+        }),
+        ("HVAC", {
             "filename": "HVAC.xls",
             "schema_key": "get_database_air_conditioning_systems"
-        },
-        "ENVELOPE": {
+        }),
+        ("ENVELOPE", {
             "filename": "ENVELOPE.xls",
             "schema_key": "get_database_envelope_systems"
-        },
-    }),
-    ("components", {
-        "CONVERSION": {
+        }),
+    ])),
+    ("components", OrderedDict([
+        ("CONVERSION", {
             "filename": "CONVERSION.xls",
             "schema_key": "get_database_conversion_systems"
-        },
-        "DISTRIBUTION": {
+        }),
+        ("DISTRIBUTION", {
             "filename": "DISTRIBUTION.xls",
             "schema_key": "get_database_distribution_systems"
-        },
-        "FEEDSTOCKS": {
+        }),
+        ("FEEDSTOCKS", {
             "filename": "FEEDSTOCKS.xls",
             "schema_key": "get_database_feedstocks"
-        },
-    })
+        })
+    ]))
 ])
 
 DATABASES_TYPE_MAP = {db_name: db_type for db_type, db_dict in DATABASES.items() for db_name in db_dict}
