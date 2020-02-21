@@ -198,7 +198,7 @@ def get_array_geometry_variables(building):
     array_OPwall.fill(building.rc_model['Aop_sup'])
     #   basement wall area
     array_OPwallB = np.empty(HOURS_IN_YEAR)
-    array_OPwallB.fill(building.rc_model['Aop_bel'])
+    array_OPwallB.fill(building.rc_model['Aop_bg'])
     #   window area
     array_GLwin = np.empty(HOURS_IN_YEAR)
     array_GLwin.fill(building.rc_model['Aw'])

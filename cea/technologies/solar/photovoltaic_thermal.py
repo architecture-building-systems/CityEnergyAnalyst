@@ -66,7 +66,7 @@ def calc_PVT(locator, config, latitude, longitude, weather_data, date_local, bui
     """
     t0 = time.clock()
 
-    radiation_json_path = locator.get_radiation_building(building_name)
+    radiation_json_path = locator.get_radiation_building_sensors(building_name)
     metadata_csv_path = locator.get_radiation_metadata(building_name)
 
     # solar properties
@@ -74,8 +74,8 @@ def calc_PVT(locator, config, latitude, longitude, weather_data, date_local, bui
     print('calculating solar properties done for building %s' % building_name)
 
     # get properties of the panel to evaluate # TODO: find a PVT module reference
-    panel_properties_PV = calc_properties_PV_db(locator.get_database_supply_systems(), config)
-    panel_properties_SC = calc_properties_SC_db(locator.get_database_supply_systems(), config)
+    panel_properties_PV = calc_properties_PV_db(locator.get_database_conversion_systems(), config)
+    panel_properties_SC = calc_properties_SC_db(locator.get_database_conversion_systems(), config)
     print('gathering properties of PVT collector panel for building %s' % building_name)
 
     # select sensor point with sufficient solar radiation
@@ -631,7 +631,7 @@ def calc_Cinv_PVT(PVT_peak_W, locator, technology=0):
     FIXME: handle multiple technologies when cost calculations are done
     """
     if PVT_peak_W > 0.0:
-        PVT_cost_data = pd.read_excel(locator.get_database_supply_systems(), sheet_name="PV")
+        PVT_cost_data = pd.read_excel(locator.get_database_conversion_systems(), sheet_name="PV")
         technology_code = list(set(PVT_cost_data['code']))
         PVT_cost_data[PVT_cost_data['code'] == technology_code[technology]]
         # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
@@ -723,7 +723,7 @@ def main(config):
     aggregated_hourly_results_df.to_csv(locator.PVT_totals(), index=True, float_format='%.2f', na_rep='nan')
     # save annual results
     aggregated_annual_results_df = pd.DataFrame(aggregated_annual_results).T
-    aggregated_annual_results_df.to_csv(locator.PVT_total_buildings(), index=True, float_format='%.2f')
+    aggregated_annual_results_df.to_csv(locator.PVT_total_buildings(), index=True, index_label="Name", float_format='%.2f')
 
 
 if __name__ == '__main__':

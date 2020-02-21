@@ -32,8 +32,6 @@ __status__ = "Production"
 def district_heating_network(locator,
                              master_to_slave_variables,
                              config,
-                             prices,
-                             lca,
                              network_features):
     """
     Computes the parameters for the heating of the complete DHN
@@ -54,159 +52,208 @@ def district_heating_network(locator,
     :rtype: float, float, float, array
 
     """
-    # THERMAL STORAGE + NETWORK
-    print("CALCULATING ECOLOGICAL COSTS OF SEASONAL STORAGE - DUE TO OPERATION (IF ANY)")
-    storage_dispatch = storage_main.storage_optimization(locator,
-                                                         master_to_slave_variables,
+    if master_to_slave_variables.DHN_exists:
+        # THERMAL STORAGE + NETWORK
+        print("CALCULATING ECOLOGICAL COSTS OF SEASONAL STORAGE - DUE TO OPERATION (IF ANY)")
+        storage_dispatch = storage_main.storage_optimization(locator,
+                                                             master_to_slave_variables,
+                                                             config)
+        # Import data from storage optimization
+        Q_DH_networkload_W = np.array(storage_dispatch['Q_DH_networkload_W'])
+        Q_thermal_req_W = np.array(storage_dispatch['Q_req_after_storage_W'])
 
-                                                         config)
-    # Import data from storage optimization
-    Q_DH_networkload_W = np.array(storage_dispatch['Q_DH_networkload_W'])
-    Q_thermal_req_W = np.array(storage_dispatch['Q_req_after_storage_W'])
+        E_PVT_gen_W = storage_dispatch['E_PVT_gen_W']
 
-    E_PVT_gen_W = storage_dispatch['E_PVT_gen_W']
+        Q_PVT_to_directload_W = storage_dispatch["Q_PVT_gen_directload_W"]
+        Q_PVT_to_storage_W = storage_dispatch["Q_PVT_gen_storage_W"]
 
-    Q_PVT_to_directload_W = storage_dispatch["Q_PVT_gen_directload_W"]
-    Q_PVT_to_storage_W = storage_dispatch["Q_PVT_gen_storage_W"]
+        Q_SC_ET_to_directload_W = storage_dispatch["Q_SC_ET_gen_directload_W"]
+        Q_SC_ET_to_storage_W = storage_dispatch["Q_SC_ET_gen_storage_W"]
 
-    Q_SC_ET_to_directload_W = storage_dispatch["Q_SC_ET_gen_directload_W"]
-    Q_SC_ET_to_storage_W = storage_dispatch["Q_SC_ET_gen_storage_W"]
+        Q_SC_FP_to_directload_W = storage_dispatch["Q_SC_FP_gen_directload_W"]
+        Q_SC_FP_to_storage_W = storage_dispatch["Q_SC_FP_gen_storage_W"]
 
-    Q_SC_FP_to_directload_W = storage_dispatch["Q_SC_FP_gen_directload_W"]
-    Q_SC_FP_to_storage_W = storage_dispatch["Q_SC_FP_gen_storage_W"]
+        Q_HP_Server_to_directload_W = storage_dispatch["Q_HP_Server_gen_directload_W"]
+        Q_HP_Server_to_storage_W = storage_dispatch["Q_HP_Server_gen_storage_W"]
 
-    Q_HP_Server_to_directload_W = storage_dispatch["Q_HP_Server_gen_directload_W"]
-    Q_HP_Server_to_storage_W = storage_dispatch["Q_HP_Server_gen_storage_W"]
+        E_Storage_req_charging_W = storage_dispatch["E_Storage_charging_req_W"]
+        E_Storage_req_discharging_W = storage_dispatch["E_Storage_discharging_req_W"]
+        E_HP_SC_FP_req_W = storage_dispatch["E_HP_SC_FP_req_W"]
+        E_HP_SC_ET_req_W = storage_dispatch["E_HP_SC_ET_req_W"]
+        E_HP_PVT_req_W = storage_dispatch["E_HP_PVT_req_W"]
+        E_HP_Server_req_W = storage_dispatch["E_HP_Server_req_W"]
 
-    E_Storage_req_charging_W = storage_dispatch["E_Storage_charging_req_W"]
-    E_Storage_req_discharging_W = storage_dispatch["E_Storage_discharging_req_W"]
-    E_HP_SC_FP_req_W = storage_dispatch["E_HP_SC_FP_req_W"]
-    E_HP_SC_ET_req_W = storage_dispatch["E_HP_SC_ET_req_W"]
-    E_HP_PVT_req_W = storage_dispatch["E_HP_PVT_req_W"]
-    E_HP_Server_req_W = storage_dispatch["E_HP_Server_req_W"]
+        Q_SC_ET_gen_W = storage_dispatch["Q_SC_ET_gen_W"]
+        Q_SC_FP_gen_W = storage_dispatch["Q_SC_FP_gen_W"]
+        Q_PVT_gen_W = storage_dispatch["Q_PVT_gen_W"]
+        Q_Server_gen_W = storage_dispatch["Q_HP_Server_gen_W"]
 
-    Q_SC_ET_gen_W = storage_dispatch["Q_SC_ET_gen_W"]
-    Q_SC_FP_gen_W = storage_dispatch["Q_SC_FP_gen_W"]
-    Q_PVT_gen_W = storage_dispatch["Q_PVT_gen_W"]
-    Q_Server_gen_W = storage_dispatch["Q_HP_Server_gen_W"]
+        Q_Storage_gen_W = storage_dispatch["Q_Storage_gen_W"]
 
-    Q_Storage_gen_W = storage_dispatch["Q_Storage_gen_W"]
+        # HEATING PLANT
+        # Import Temperatures from Network Summary:
+        mdot_DH_kgpers, T_district_heating_return_K, T_district_heating_supply_K = calc_network_summary_DHN(locator,
+                                                                                                            master_to_slave_variables)
 
-    # HEATING PLANT
-    # Import Temperatures from Network Summary:
-    mdot_DH_kgpers, T_district_heating_return_K, T_district_heating_supply_K = calc_network_summary_DHN(locator,
-                                                                                                        master_to_slave_variables)
+        # FIXED ORDER ACTIVATION STARTS
+        # Import Data - Sewage heat
+        if master_to_slave_variables.HPSew_on == 1:
+            HPSew_Data = pd.read_csv(locator.get_sewage_heat_potential())
+            Q_therm_Sew = np.array(HPSew_Data['Qsw_kW']) * 1E3
+            Q_therm_Sew_W = [
+                x if x < master_to_slave_variables.HPSew_maxSize_W else master_to_slave_variables.HPSew_maxSize_W for x
+                in
+                Q_therm_Sew]
+            T_source_average_sewage_K = np.array(HPSew_Data['Ts_C']) + 273
+        else:
+            Q_therm_Sew_W = np.zeros(HOURS_IN_YEAR)
+            T_source_average_sewage_K = np.zeros(HOURS_IN_YEAR)
 
-    # FIXED ORDER ACTIVATION STARTS
-    # Import Data - Sewage heat
-    if master_to_slave_variables.HPSew_on == 1:
-        HPSew_Data = pd.read_csv(locator.get_sewage_heat_potential())
-        Q_therm_Sew = np.array(HPSew_Data['Qsw_kW']) * 1E3
-        Q_therm_Sew_W = [
-            x if x < master_to_slave_variables.HPSew_maxSize_W else master_to_slave_variables.HPSew_maxSize_W for x in
-            Q_therm_Sew]
-        T_source_average_sewage_K = np.array(HPSew_Data['Ts_C']) + 273
+        # Import Data - lake heat
+        if master_to_slave_variables.HPLake_on == 1:
+            HPlake_Data = pd.read_csv(locator.get_water_body_potential())
+            Q_therm_Lake = np.array(HPlake_Data['QLake_kW']) * 1E3
+            Q_therm_Lake_W = [
+                x if x < master_to_slave_variables.HPLake_maxSize_W else master_to_slave_variables.HPLake_maxSize_W for
+                x in
+                Q_therm_Lake]
+            T_source_average_Lake_K = np.array(HPlake_Data['Ts_C']) + 273
+        else:
+            Q_therm_Lake_W = np.zeros(HOURS_IN_YEAR)
+            T_source_average_Lake_K = np.zeros(HOURS_IN_YEAR)
+
+        # Import Data - geothermal (shallow)
+        if master_to_slave_variables.GHP_on == 1:
+            GHP_Data = pd.read_csv(locator.get_geothermal_potential())
+            Q_therm_GHP = np.array(GHP_Data['QGHP_kW']) * 1E3
+            Q_therm_GHP_W = [
+                x if x < master_to_slave_variables.GHP_maxSize_W else master_to_slave_variables.GHP_maxSize_W
+                for x in Q_therm_GHP]
+            T_source_average_GHP_W = np.array(GHP_Data['Ts_C']) + 273
+        else:
+            Q_therm_GHP_W = np.zeros(HOURS_IN_YEAR)
+            T_source_average_GHP_W = np.zeros(HOURS_IN_YEAR)
+
+        # dispatch
+        Q_HPSew_gen_W, \
+        Q_HPLake_gen_W, \
+        Q_GHP_gen_W, \
+        Q_CHP_gen_W, \
+        Q_Furnace_dry_gen_W, \
+        Q_Furnace_wet_gen_W, \
+        Q_BaseBoiler_gen_W, \
+        Q_PeakBoiler_gen_W, \
+        Q_BackupBoiler_gen_W, \
+        E_HPSew_req_W, \
+        E_HPLake_req_W, \
+        E_BaseBoiler_req_W, \
+        E_PeakBoiler_req_W, \
+        E_GHP_req_W, \
+        E_CHP_gen_W, \
+        E_Furnace_dry_gen_W, \
+        E_Furnace_wet_gen_W, \
+        NG_CHP_req_W, \
+        NG_BaseBoiler_req_W, \
+        NG_PeakBoiler_req_W, \
+        WetBiomass_Furnace_req_W, \
+        DryBiomass_Furnace_req_W = np.vectorize(heating_source_activator)(Q_thermal_req_W,
+                                                                          master_to_slave_variables,
+                                                                          Q_therm_GHP_W,
+                                                                          T_source_average_GHP_W,
+                                                                          T_source_average_Lake_K,
+                                                                          Q_therm_Lake_W,
+                                                                          Q_therm_Sew_W,
+                                                                          T_source_average_sewage_K,
+                                                                          T_district_heating_supply_K,
+                                                                          T_district_heating_return_K
+                                                                          )
+
+        # COgen size for electricity production
+        master_to_slave_variables.CCGT_SIZE_electrical_W = max(E_CHP_gen_W)
+        master_to_slave_variables.WBFurnace_electrical_W = max(E_Furnace_wet_gen_W)
+        master_to_slave_variables.DBFurnace_electrical_W = max(E_Furnace_dry_gen_W)
+
+        # BACK-UP BOILER
+        master_to_slave_variables.BackupBoiler_size_W = np.amax(Q_BackupBoiler_gen_W)
+        if master_to_slave_variables.BackupBoiler_size_W != 0:
+            master_to_slave_variables.BackupBoiler_on = 1
+            NG_BackupBoiler_req_W, E_BackupBoiler_req_W = np.vectorize(cond_boiler_op_cost)(Q_BackupBoiler_gen_W,
+                                                                                            master_to_slave_variables.BackupBoiler_size_W,
+                                                                                            T_district_heating_return_K)
+        else:
+            E_BackupBoiler_req_W = np.zeros(HOURS_IN_YEAR)
+            NG_BackupBoiler_req_W = np.zeros(HOURS_IN_YEAR)
+
+        # CAPEX (ANNUAL, TOTAL) AND OPEX (FIXED, VAR) GENERATION UNITS
+        mdotnMax_kgpers = np.amax(mdot_DH_kgpers)
+        performance_costs_generation, \
+        district_heating_capacity_installed = cost_model.calc_generation_costs_capacity_installed_heating(locator,
+                                                                                                          master_to_slave_variables,
+                                                                                                          config,
+                                                                                                          storage_dispatch,
+                                                                                                          mdotnMax_kgpers
+                                                                                                          )
+
+        # CAPEX (ANNUAL, TOTAL) AND OPEX (FIXED, VAR) SEASONAL STORAGE
+        performance_costs_storage = cost_model.calc_seasonal_storage_costs(config, locator, storage_dispatch)
+
+        # CAPEX (ANNUAL, TOTAL) AND OPEX (FIXED, VAR) NETWORK
+        performance_costs_network, \
+        E_used_district_heating_network_W = cost_model.calc_network_costs_heating(locator,
+                                                                                  master_to_slave_variables,
+                                                                                  network_features,
+                                                                                  "DH"
+                                                                                  )
+
+        # MERGE COSTS AND EMISSIONS IN ONE FILE
+        performance_costs_gen = dict(performance_costs_generation, **performance_costs_network)
+        district_heating_costs = dict(performance_costs_gen, **performance_costs_storage)
+
     else:
-        Q_therm_Sew_W = np.zeros(HOURS_IN_YEAR)
-        T_source_average_sewage_K = np.zeros(HOURS_IN_YEAR)
-
-    # Import Data - lake heat
-    if master_to_slave_variables.HPLake_on == 1:
-        HPlake_Data = pd.read_csv(locator.get_water_body_potential())
-        Q_therm_Lake = np.array(HPlake_Data['QLake_kW']) * 1E3
-        Q_therm_Lake_W = [
-            x if x < master_to_slave_variables.HPLake_maxSize_W else master_to_slave_variables.HPLake_maxSize_W for x in
-            Q_therm_Lake]
-        T_source_average_Lake_K = np.array(HPlake_Data['Ts_C']) + 273
-    else:
-        Q_therm_Lake_W = np.zeros(HOURS_IN_YEAR)
-        T_source_average_Lake_K = np.zeros(HOURS_IN_YEAR)
-
-    # Import Data - geothermal (shallow)
-    if master_to_slave_variables.GHP_on == 1:
-        GHP_Data = pd.read_csv(locator.get_geothermal_potential())
-        Q_therm_GHP = np.array(GHP_Data['QGHP_kW']) * 1E3
-        Q_therm_GHP_W = [x if x < master_to_slave_variables.GHP_maxSize_W else master_to_slave_variables.GHP_maxSize_W
-                         for x in Q_therm_GHP]
-        T_source_average_GHP_W = np.array(GHP_Data['Ts_C']) + 273
-    else:
-        Q_therm_GHP_W = np.zeros(HOURS_IN_YEAR)
-        T_source_average_GHP_W = np.zeros(HOURS_IN_YEAR)
-
-    # dispatch
-    Q_HPSew_gen_W, \
-    Q_HPLake_gen_W, \
-    Q_GHP_gen_W, \
-    Q_CHP_gen_W, \
-    Q_Furnace_dry_gen_W, \
-    Q_Furnace_wet_gen_W, \
-    Q_BaseBoiler_gen_W, \
-    Q_PeakBoiler_gen_W, \
-    Q_BackupBoiler_gen_W, \
-    E_HPSew_req_W, \
-    E_HPLake_req_W, \
-    E_BaseBoiler_req_W, \
-    E_PeakBoiler_req_W, \
-    E_GHP_req_W, \
-    E_CHP_gen_W, \
-    E_Furnace_dry_gen_W, \
-    E_Furnace_wet_gen_W, \
-    NG_CHP_req_W, \
-    NG_BaseBoiler_req_W, \
-    NG_PeakBoiler_req_W, \
-    WetBiomass_Furnace_req_W, \
-    DryBiomass_Furnace_req_W = np.vectorize(heating_source_activator)(Q_thermal_req_W,
-                                                                      master_to_slave_variables,
-                                                                      Q_therm_GHP_W,
-                                                                      T_source_average_GHP_W,
-                                                                      T_source_average_Lake_K,
-                                                                      Q_therm_Lake_W,
-                                                                      Q_therm_Sew_W,
-                                                                      T_source_average_sewage_K,
-                                                                      T_district_heating_supply_K,
-                                                                      T_district_heating_return_K
-                                                                      )
-
-    # COgen size for electricity production
-    master_to_slave_variables.CCGT_SIZE_electrical_W = max(E_CHP_gen_W)
-    master_to_slave_variables.WBFurnace_electrical_W = max(E_Furnace_wet_gen_W)
-    master_to_slave_variables.DBFurnace_electrical_W = max(E_Furnace_dry_gen_W)
-
-    # BACK-UP BOILER
-    master_to_slave_variables.BackupBoiler_size_W = np.amax(Q_BackupBoiler_gen_W)
-    if master_to_slave_variables.BackupBoiler_size_W != 0:
-        master_to_slave_variables.BackupBoiler_on = 1
-        NG_BackupBoiler_req_W, E_BackupBoiler_req_W = np.vectorize(cond_boiler_op_cost)(Q_BackupBoiler_gen_W,
-                                                                                        master_to_slave_variables.BackupBoiler_size_W,
-                                                                                        T_district_heating_return_K)
-    else:
+        Q_DH_networkload_W = np.zeros(HOURS_IN_YEAR)
+        Q_SC_ET_to_storage_W = np.zeros(HOURS_IN_YEAR)
+        Q_PVT_to_storage_W = np.zeros(HOURS_IN_YEAR)
+        Q_SC_FP_to_storage_W = np.zeros(HOURS_IN_YEAR)
+        Q_HP_Server_to_storage_W = np.zeros(HOURS_IN_YEAR)
+        Q_Storage_gen_W = np.zeros(HOURS_IN_YEAR)
+        Q_PVT_to_directload_W = np.zeros(HOURS_IN_YEAR)
+        Q_SC_ET_to_directload_W = np.zeros(HOURS_IN_YEAR)
+        Q_SC_FP_to_directload_W = np.zeros(HOURS_IN_YEAR)
+        Q_HP_Server_to_directload_W = np.zeros(HOURS_IN_YEAR)
+        Q_HPSew_gen_W = np.zeros(HOURS_IN_YEAR)
+        Q_HPLake_gen_W = np.zeros(HOURS_IN_YEAR)
+        Q_GHP_gen_W = np.zeros(HOURS_IN_YEAR)
+        Q_CHP_gen_W = np.zeros(HOURS_IN_YEAR)
+        Q_Furnace_dry_gen_W = np.zeros(HOURS_IN_YEAR)
+        Q_Furnace_wet_gen_W = np.zeros(HOURS_IN_YEAR)
+        Q_BaseBoiler_gen_W = np.zeros(HOURS_IN_YEAR)
+        Q_PeakBoiler_gen_W = np.zeros(HOURS_IN_YEAR)
+        Q_BackupBoiler_gen_W = np.zeros(HOURS_IN_YEAR)
+        E_CHP_gen_W = np.zeros(HOURS_IN_YEAR)
+        E_PVT_gen_W = np.zeros(HOURS_IN_YEAR)
+        E_Furnace_dry_gen_W = np.zeros(HOURS_IN_YEAR)
+        E_Furnace_wet_gen_W = np.zeros(HOURS_IN_YEAR)
+        E_Storage_req_charging_W = np.zeros(HOURS_IN_YEAR)
+        E_Storage_req_discharging_W = np.zeros(HOURS_IN_YEAR)
+        E_used_district_heating_network_W = np.zeros(HOURS_IN_YEAR)
+        E_HP_SC_FP_req_W = np.zeros(HOURS_IN_YEAR)
+        E_HP_SC_ET_req_W = np.zeros(HOURS_IN_YEAR)
+        E_HP_PVT_req_W = np.zeros(HOURS_IN_YEAR)
+        E_HP_Server_req_W = np.zeros(HOURS_IN_YEAR)
+        E_HPSew_req_W = np.zeros(HOURS_IN_YEAR)
+        E_HPLake_req_W = np.zeros(HOURS_IN_YEAR)
+        E_GHP_req_W = np.zeros(HOURS_IN_YEAR)
+        E_BaseBoiler_req_W = np.zeros(HOURS_IN_YEAR)
+        E_PeakBoiler_req_W = np.zeros(HOURS_IN_YEAR)
         E_BackupBoiler_req_W = np.zeros(HOURS_IN_YEAR)
+        NG_CHP_req_W = np.zeros(HOURS_IN_YEAR)
+        NG_BaseBoiler_req_W = np.zeros(HOURS_IN_YEAR)
+        NG_PeakBoiler_req_W = np.zeros(HOURS_IN_YEAR)
         NG_BackupBoiler_req_W = np.zeros(HOURS_IN_YEAR)
-
-    # CAPEX (ANNUAL, TOTAL) AND OPEX (FIXED, VAR) GENERATION UNITS
-    mdotnMax_kgpers = np.amax(mdot_DH_kgpers)
-    performance_costs_generation, \
-    district_heating_capacity_installed = cost_model.calc_generation_costs_capacity_installed_heating(locator,
-                                                                                                      master_to_slave_variables,
-                                                                                                      config,
-                                                                                                      storage_dispatch,
-                                                                                                      mdotnMax_kgpers
-                                                                                                      )
-
-    # CAPEX (ANNUAL, TOTAL) AND OPEX (FIXED, VAR) SEASONAL STORAGE
-    performance_costs_storage = cost_model.calc_seasonal_storage_costs(config, locator, storage_dispatch)
-
-    # CAPEX (ANNUAL, TOTAL) AND OPEX (FIXED, VAR) NETWORK
-    performance_costs_network, \
-    E_used_district_heating_network_W = cost_model.calc_network_costs_heating(locator,
-                                                                              master_to_slave_variables,
-                                                                              network_features,
-                                                                              "DH",
-                                                                              prices)
-
-    # MERGE COSTS AND EMISSIONS IN ONE FILE
-    performance_costs_gen = dict(performance_costs_generation, **performance_costs_network)
-    district_heating_costs = dict(performance_costs_gen, **performance_costs_storage)
+        WetBiomass_Furnace_req_W = np.zeros(HOURS_IN_YEAR)
+        DryBiomass_Furnace_req_W = np.zeros(HOURS_IN_YEAR)
+        district_heating_costs = {}
+        district_heating_capacity_installed = {}
 
     # save data
     district_heating_generation_dispatch = {

@@ -15,6 +15,7 @@ from datetime import datetime
 from collections import namedtuple
 from cea.demand import constants
 from cea.utilities.dbf import dbf_to_dataframe
+from cea.technologies import blinds
 
 # import constants
 H_F = constants.H_F
@@ -54,17 +55,11 @@ class BuildingProperties(object):
         prop_geometry['Blength'], prop_geometry['Bwidth'] = self.calc_bounding_box_geom(locator.get_zone_geometry())
         prop_geometry = prop_geometry.drop('geometry', axis=1).set_index('Name')
         prop_hvac = dbf_to_dataframe(locator.get_building_air_conditioning())
-        prop_occupancy_df = dbf_to_dataframe(locator.get_building_occupancy()).set_index('Name')
+        prop_typology = dbf_to_dataframe(locator.get_building_typology()).set_index('Name')
         # Drop 'REFERENCE' column if it exists
-        if 'REFERENCE' in prop_occupancy_df:
-            prop_occupancy_df.drop('REFERENCE', 1, inplace=True)
-        prop_occupancy_df.fillna(value=0.0, inplace=True)  # fix badly formatted occupancy file...
-        prop_occupancy = prop_occupancy_df.loc[:, (prop_occupancy_df != 0).any(axis=0)]
+        if 'REFERENCE' in prop_typology:
+            prop_typology.drop('REFERENCE', 1, inplace=True)
         prop_architectures = dbf_to_dataframe(locator.get_building_architecture())
-        prop_age = dbf_to_dataframe(locator.get_building_age()).set_index('Name')
-        # Drop 'REFERENCE' column if it exists
-        if 'REFERENCE' in prop_age:
-            prop_age.drop('REFERENCE', 1, inplace=True)
         prop_comfort = dbf_to_dataframe(locator.get_building_comfort()).set_index('Name')
         prop_internal_loads = dbf_to_dataframe(locator.get_building_internal()).set_index('Name')
         prop_supply_systems_building = dbf_to_dataframe(locator.get_building_supply())
@@ -88,7 +83,7 @@ class BuildingProperties(object):
             prop_HVAC_result = self.apply_overrides(prop_HVAC_result)
 
         # get properties of rc demand model
-        prop_rc_model = self.calc_prop_rc_model(locator, prop_occupancy, prop_envelope,
+        prop_rc_model = self.calc_prop_rc_model(locator, prop_typology, prop_envelope,
                                                 prop_geometry, prop_HVAC_result)
 
         # get solar properties
@@ -103,11 +98,11 @@ class BuildingProperties(object):
         self._prop_supply_systems = prop_supply_systems
         self._prop_geometry = prop_geometry
         self._prop_envelope = prop_envelope
-        self._prop_occupancy = prop_occupancy
+        self._prop_typology = prop_typology
         self._prop_HVAC_result = prop_HVAC_result
         self._prop_comfort = prop_comfort
         self._prop_internal_loads = prop_internal_loads
-        self._prop_age = prop_age
+        self._prop_age = prop_typology[['YEAR']]
         self._solar = solar
         self._prop_RC_model = prop_rc_model
 
@@ -152,8 +147,8 @@ class BuildingProperties(object):
         return self._prop_RC_model.index
 
     def list_uses(self):
-        """get list of all uses (occupancy types)"""
-        return list(self._prop_occupancy.columns)
+        """get list of all uses (typology types)"""
+        return list(set(self._prop_typology['USE'].values))
 
     def get_prop_supply_systems(self, name_building):
         """get geometry of a building by name"""
@@ -167,9 +162,9 @@ class BuildingProperties(object):
         """get the architecture and thermal properties of a building by name"""
         return self._prop_envelope.ix[name_building].to_dict()
 
-    def get_prop_occupancy(self, name_building):
-        """get the occupancy properties of a building by name"""
-        return self._prop_occupancy.ix[name_building].to_dict()
+    def get_prop_typology(self, name_building):
+        """get the typology properties of a building by name"""
+        return self._prop_typology.ix[name_building].to_dict()
 
     def get_prop_hvac(self, name_building):
         """get HVAC properties of a building by name"""
@@ -195,16 +190,16 @@ class BuildingProperties(object):
         """get solar properties of a building by name"""
         return self._solar.ix[name_building]
 
-    def calc_prop_rc_model(self, locator, occupancy, envelope, geometry, hvac_temperatures):
+    def calc_prop_rc_model(self, locator, typology, envelope, geometry, hvac_temperatures):
         """
         Return the RC model properties for all buildings. The RC model used is described in ISO 13790:2008, Annex C (Full
         set of equations for simple hourly method).
 
-        :param occupancy: The contents of the `occupancy.shp` file, indexed by building name. Each column is the name of an
-            occupancy type (GYM, HOSPITAL, HOTEL, INDUSTRIAL, MULTI_RES, OFFICE, PARKING, etc.) except for the
+        :param typology: The contents of the `typology.shp` file, indexed by building name. Each column is the name of an
+            typology type (GYM, HOSPITAL, HOTEL, INDUSTRIAL, MULTI_RES, OFFICE, PARKING, etc.) except for the
             "PFloor" column which is a fraction of heated floor area.
-            The occupancy types must add up to 1.0.
-        :type occupancy: Gdf
+            The typology types must add up to 1.0.
+        :type typology: Gdf
 
         :param envelope: The contents of the `architecture.shp` file, indexed by building name.
             It contains the following fields:
@@ -262,21 +257,26 @@ class BuildingProperties(object):
         """
 
         # calculate building geometry
-        df = self.geometry_reader_radiation_daysim(locator, envelope, occupancy, geometry)
+        df = self.geometry_reader_radiation_daysim(locator, envelope, geometry)
+        df = df.merge(typology, left_index=True, right_index=True)
         df = df.merge(hvac_temperatures, left_index=True, right_index=True)
 
-        for building in df.index.values:
-            if hvac_temperatures.loc[building, 'type_hs'] == 'T0' and \
-                    hvac_temperatures.loc[building, 'type_cs'] == 'T0' and \
-                    np.max([df.loc[building, 'Hs_ag'], df.loc[building, 'Hs_bg']]) > 0.0:
+
+        from cea.demand.control_heating_cooling_systems import has_heating_system, has_cooling_system
+        class prov(object):
+            def __init__(self, hvac):
+                self.hvac = hvac
+        for building in locator.get_zone_building_names():
+            data = prov({'class_hs':hvac_temperatures.loc[building, 'class_hs'], 'class_cs': hvac_temperatures.loc[building, 'class_cs']})
+            has_system_heating_flag = has_heating_system(data)
+            has_system_cooling_flag = has_cooling_system(data)
+            if has_system_heating_flag and has_system_cooling_flag and np.max([df.loc[building, 'Hs_ag'], df.loc[building, 'Hs_bg']]) > 0.0:
                 df.loc[building, 'Hs_ag'] = 0.0
                 df.loc[building, 'Hs_bg'] = 0.0
                 print('Building {building} has no heating and cooling system, Hs corrected to 0.'.format(
                     building=building))
 
         df = calc_useful_areas(df)
-
-        df['Atot'] = df['Af'] * LAMBDA_AT  # area of all surfaces facing the building zone
 
         if 'Cm_Af' in self.get_overrides_columns():
             # Internal heat capacity is not part of input, calculate [J/K]
@@ -289,14 +289,14 @@ class BuildingProperties(object):
         # Steady-state Thermal transmittance coefficients and Internal heat Capacity
         # Thermal transmission coefficient for windows and glazing in [W/K]
         # Weigh area of windows with fraction of air-conditioned space, relationship of area and perimeter is squared
-        df['Htr_w'] = df['Aw'] * df['U_win'] * np.sqrt(df['Hs_ag'])
+        df['Htr_w'] = df['Awin_ag'] * df['U_win'] * np.sqrt(df['Hs_ag'])
 
         # direct thermal transmission coefficient to the external environment in [W/K]
         # Weigh area of with fraction of air-conditioned space, relationship of area and perimeter is squared
-        df['HD'] = df['Aop_sup'] * df['U_wall'] * np.sqrt(df['Hs_ag']) + df['footprint'] * df['U_roof'] * df['Hs_ag']
+        df['HD'] = df['Awall_ag'] * df['U_wall'] * np.sqrt(df['Hs_ag']) + df['Aroof'] * df['U_roof'] * df['Hs_ag']
 
         # steady-state Thermal transmission coefficient to the ground. in W/K
-        df['Hg'] = B_F * df['Aop_bel'] * df['U_base'] * df['Hs_bg']
+        df['Hg'] = B_F * df['Aop_bg'] * df['U_base'] * df['Hs_bg']
 
         # calculate RC model properties
         df['Htr_op'] = df['Hg'] + df['HD']
@@ -304,14 +304,14 @@ class BuildingProperties(object):
         df['Htr_em'] = 1 / (1 / df['Htr_op'] - 1 / df['Htr_ms'])  # Coupling conductance 2 in W/K
         df['Htr_is'] = H_IS * df['Atot']
 
-        fields = ['Atot', 'Aw', 'Am', 'Aef', 'Af', 'Cm', 'Htr_is', 'Htr_em', 'Htr_ms', 'Htr_op', 'Hg', 'HD', 'Aroof',
-                  'U_wall', 'U_roof', 'U_win', 'U_base', 'Htr_w', 'GFA_m2', 'Aocc', 'Aop_sup', 'empty_envelope_ratio',
-                  'Aop_bel', 'footprint']
+        fields = ['Atot', 'Awin_ag', 'Am', 'Aef', 'Af', 'Cm', 'Htr_is', 'Htr_em', 'Htr_ms', 'Htr_op', 'Hg', 'HD', 'Aroof',
+                  'U_wall', 'U_roof', 'U_win', 'U_base', 'Htr_w', 'GFA_m2', 'Aocc', 'Aop_bg', 'empty_envelope_ratio',
+                  'Awall_ag', 'footprint']
         result = df[fields]
 
         return result
 
-    def geometry_reader_radiation_daysim(self, locator, envelope, occupancy, geometry):
+    def geometry_reader_radiation_daysim(self, locator, envelope, geometry):
         """
 
         Reader which returns the radiation specific geometries from Daysim. Adjusts the imported data such that it is
@@ -321,7 +321,7 @@ class BuildingProperties(object):
 
         :param envelope: The contents of the `architecture.shp` file, indexed by building name.
 
-        :param occupancy: The contents of the `occupancy.shp` file, indexed by building name.
+        :param typology: The contents of the `typology.shp` file, indexed by building name.
 
         :param geometry: The contents of the `zone.shp` file indexed by building name.
 
@@ -330,10 +330,9 @@ class BuildingProperties(object):
         :return: Adjusted Daysim geometry data containing the following:
 
             - Name: Name of building.
-            - Awall: Wall areas (length x height) multiplied by the FactorShade [m2]
             - Aw: Area of windows for each building (using mean window to wall ratio for building, excluding voids) [m2]
-            - Aop_sup: Opaque wall areas above ground (excluding voids, windows and roof) [m2]
-            - Aop_bel: Opaque areas below ground (including ground floor, excluding voids and windows) [m2]
+            - Awall_ag: Opaque wall areas above ground (excluding voids, windows and roof) [m2]
+            - Aop_bg: Opaque areas below ground (including ground floor, excluding voids and windows) [m2]
             - Aroof: Area of the roof (considered flat and equal to the building footprint) [m2]
             - GFA_m2: Gross floor area [m2]
             - floors: Sum of floors below ground (floors_bg) and floors above ground (floors_ag) [m2]
@@ -351,57 +350,45 @@ class BuildingProperties(object):
         """
 
         # add result columns to envelope df
-        envelope['Awall'] = np.nan
-        envelope['Awin'] = np.nan
+        envelope['Awall_ag'] = np.nan
+        envelope['Awin_ag'] = np.nan
         envelope['Aroof'] = np.nan
 
         # call all building geometry files in a loop
         for building_name in locator.get_zone_building_names():
-            geometry_data = pd.read_csv(locator.get_radiation_metadata(building_name))
-            geometry_data['AREA_m2'] = geometry_data['AREA_m2'] * np.array(
-                [1.0 - inter for inter in geometry_data['intersection'].values])
-            geometry_data_sum = geometry_data.groupby(by='TYPE').sum()
-            # do this in case the daysim radiation file did not included window
-            if 'windows' in geometry_data.TYPE.values:
-                if 'walls' in geometry_data.TYPE.values:
-                    envelope.ix[building_name, 'Awall'] = geometry_data_sum.ix['walls', 'AREA_m2']
-                    envelope.ix[building_name, 'Awin'] = geometry_data_sum.ix['windows', 'AREA_m2']
-                    envelope.ix[building_name, 'Aroof'] = geometry_data_sum.ix['roofs', 'AREA_m2']
-                else:
-                    envelope.ix[building_name, 'Awall'] = 0.0  # when window to wall ration is 1, there are no walls.
-                    envelope.ix[building_name, 'Awin'] = geometry_data_sum.ix['windows', 'AREA_m2']
-                    envelope.ix[building_name, 'Aroof'] = geometry_data_sum.ix['roofs', 'AREA_m2']
+            geometry_data = pd.read_csv(locator.get_radiation_building(building_name))
+            envelope.ix[building_name, 'Awall_ag'] = geometry_data['walls_east_m2'][0] + \
+                                                  geometry_data['walls_west_m2'][0] + \
+                                                  geometry_data['walls_south_m2'][0] +\
+                                                  geometry_data['walls_north_m2'][0]
+            envelope.ix[building_name, 'Awin_ag'] = geometry_data['windows_east_m2'][0] + \
+                                                  geometry_data['windows_west_m2'][0] + \
+                                                  geometry_data['windows_south_m2'][0] +\
+                                                  geometry_data['windows_north_m2'][0]
+            envelope.ix[building_name, 'Aroof'] = geometry_data['roofs_top_m2'][0]
 
-            else:
-                multiplier_win = 0.25 * (
-                        envelope.ix[building_name, 'wwr_south'] + envelope.ix[building_name, 'wwr_east'] +
-                        envelope.ix[building_name, 'wwr_north'] + envelope.ix[building_name, 'wwr_west'])
-                envelope.ix[building_name, 'Awall'] = geometry_data_sum.ix['walls', 'AREA_m2'] * (1 - multiplier_win)
-                envelope.ix[building_name, 'Awin'] = geometry_data_sum.ix['walls', 'AREA_m2'] * multiplier_win
-                envelope.ix[building_name, 'Aroof'] = geometry_data_sum.ix['roofs', 'AREA_m2']
-
-        df = envelope.merge(occupancy, left_index=True, right_index=True)
-        df = df.merge(geometry, left_index=True, right_index=True)
+        df = envelope.merge(geometry, left_index=True, right_index=True)
 
         def calc_empty_envelope_ratio(void_deck_floors, height, floors, Awall, Awin):
             if (Awall + Awin) > 0.0:
-                empty_envelope_ratio = 1 - ((void_deck_floors * (height/ floors)) / (Awall + Awin))
+                empty_envelope_ratio = 1 - ((void_deck_floors * (height / floors)) / (Awall + Awin))
             else:
                 empty_envelope_ratio = 1
             return empty_envelope_ratio
 
-        df['empty_envelope_ratio'] = df.apply(lambda x: calc_empty_envelope_ratio(x['void_deck'], x['height_ag'],
-                                                                                  x['floors_ag'], x['Awall'],
-                                                                                  x['Awin']), axis=1)
+        df['empty_envelope_ratio'] = df.apply(lambda x: calc_empty_envelope_ratio(x['void_deck'],
+                                                                                  x['height_ag'],
+                                                                                  x['floors_ag'],
+                                                                                  x['Awall_ag'],
+                                                                                  x['Awin_ag']), axis=1)
 
         # adjust envelope areas with Void_deck
-        df['Aw'] = df['Awin'] * df['empty_envelope_ratio']
-        df['Aop_sup'] = df['Awall'] * df['empty_envelope_ratio']
+        df['Awin_ag'] = df['Awin_ag'] * df['empty_envelope_ratio']
+        df['Awall_ag'] = df['Awall_ag'] * df['empty_envelope_ratio']
+        df['Aop_bg'] = df['height_bg'] * df['perimeter'] + df['footprint']
 
         # get other cuantities.
         df['floors'] = df['floors_bg'] + df['floors_ag']
-        # opague areas in [m2] below ground including floor
-        df['Aop_bel'] = df['height_bg'] * df['perimeter'] + df['footprint']
         df['GFA_m2'] = df['footprint'] * df['floors']  # gross floor area
         df['GFA_ag_m2'] = df['footprint'] * df['floors_ag']
         df['GFA_bg_m2'] = df['footprint'] * df['floors_bg']
@@ -433,7 +420,7 @@ class BuildingProperties(object):
         return BuildingPropertiesRow(name=building_name,
                                      geometry=self.get_prop_geometry(building_name),
                                      envelope=self.get_prop_envelope(building_name),
-                                     occupancy=self.get_prop_occupancy(building_name),
+                                     typology=self.get_prop_typology(building_name),
                                      hvac=self.get_prop_hvac(building_name),
                                      rc_model=self.get_prop_rc_model(building_name),
                                      comfort=self.get_prop_comfort(building_name),
@@ -456,6 +443,7 @@ def calc_useful_areas(df):
     # conditioned area: areas that are heated/cooled
     df['Af'] = df['GFA_ag_m2'] * df['Hs_ag'] + df['GFA_bg_m2'] * df['Hs_bg']
     df['Aef'] = df['GFA_m2'] * df['Es']  # electrified area: share of gross floor area that is also electrified
+    df['Atot'] = df['Af'] * LAMBDA_AT  # area of all surfaces facing the building zone
     return df
 
 
@@ -463,7 +451,7 @@ class BuildingPropertiesRow(object):
     """Encapsulate the data of a single row in the DataSets of BuildingProperties. This class meant to be
     read-only."""
 
-    def __init__(self, name, geometry, envelope, occupancy, hvac,
+    def __init__(self, name, geometry, envelope, typology, hvac,
                  rc_model, comfort, internal_loads, age, solar, supply):
         """Create a new instance of BuildingPropertiesRow - meant to be called by BuildingProperties[building_name].
         Each of the arguments is a pandas Series object representing a row in the corresponding DataFrame."""
@@ -471,7 +459,7 @@ class BuildingPropertiesRow(object):
         self.name = name
         self.geometry = geometry
         self.architecture = EnvelopeProperties(envelope)
-        self.occupancy = occupancy  # FIXME: rename to uses!
+        self.typology = typology  # FIXME: rename to uses!
         self.hvac = hvac
         self.rc_model = rc_model
         self.comfort = comfort
@@ -603,13 +591,11 @@ class BuildingPropertiesRow(object):
 
     def _calculate_pipe_transmittance_values(self):
         """linear trasmissivity coefficients of piping W/(m.K)"""
-        if self.age['built'] >= 1995 or self.age['HVAC'] > 1995:
+        if self.age['YEAR'] >= 1995:
             phi_pipes = [0.2, 0.3, 0.3]
         # elif 1985 <= self.age['built'] < 1995 and self.age['HVAC'] == 0:
-        elif 1985 <= self.age['built'] < 1995:
+        elif 1985 <= self.age['YEAR'] < 1995:
             phi_pipes = [0.3, 0.4, 0.4]
-            if self.age['HVAC'] == self.age['built']:
-                print('Incorrect HVAC renovation year: if HVAC has not been renovated, the year should be set to 0')
         else:
             phi_pipes = [0.4, 0.4, 0.4]
         return phi_pipes
@@ -618,21 +604,19 @@ class BuildingPropertiesRow(object):
         factor = self.geometry['footprint'] / (self.geometry['Bwidth'] * self.geometry['Blength'])
         return factor
 
+
 def weird_division(n, d):
     return n / d if d else 0.0
+
 
 class EnvelopeProperties(object):
     """Encapsulate a single row of the architecture input file for a building"""
 
-    __slots__ = [u'a_roof', u'f_cros', u'n50', u'win_op', u'win_wall', u'A_op',
-                 u'a_wall', u'rf_sh', u'e_wall', u'e_roof', u'G_win', u'e_win',
-                 u'U_roof', u'Hs_ag', u'Hs_bg', u'Ns', u'Es', u'Cm_Af', u'U_wall', u'U_base', u'U_win']
-
     def __init__(self, envelope):
-        self.A_op = envelope['Awin'] + envelope['Awall']
+        self.A_op = envelope['Awin_ag'] + envelope['Awall_ag']
         self.a_roof = envelope['a_roof']
         self.n50 = envelope['n50']
-        self.win_wall = weird_division(envelope['Awin'] , self.A_op)
+        self.win_wall = weird_division(envelope['Awin_ag'], self.A_op)
         self.a_wall = envelope['a_wall']
         self.rf_sh = envelope['rf_sh']
         self.e_wall = envelope['e_wall']
@@ -660,11 +644,11 @@ class SolarProperties(object):
 
 
 def get_properties_supply_sytems(locator, properties_supply):
-    data_all_in_one_systems = pd.read_excel(locator.get_database_supply_systems(), sheet_name='ALL_IN_ONE_SYSTEMS')
-    supply_heating = data_all_in_one_systems[data_all_in_one_systems['system'].isin(['HEATING', 'NONE'])]
-    supply_dhw = data_all_in_one_systems[data_all_in_one_systems['system'].isin(['HEATING', 'NONE'])]
-    supply_cooling = data_all_in_one_systems[data_all_in_one_systems['system'].isin(['COOLING', 'NONE'])]
-    supply_electricity = data_all_in_one_systems[data_all_in_one_systems['system'].isin(['ELECTRICITY', 'NONE'])]
+    data_all_in_one_systems = pd.read_excel(locator.get_database_supply_assemblies(), sheet_name=None)
+    supply_heating = data_all_in_one_systems['HEATING']
+    supply_dhw = data_all_in_one_systems['HOT_WATER']
+    supply_cooling = data_all_in_one_systems['COOLING']
+    supply_electricity = data_all_in_one_systems['ELECTRICITY']
 
     df_emission_heating = properties_supply.merge(supply_heating, left_on='type_hs', right_on='code')
     df_emission_cooling = properties_supply.merge(supply_cooling, left_on='type_cs', right_on='code')
@@ -757,12 +741,12 @@ def get_properties_technical_systems(locator, prop_HVAC):
 
     """
 
-    prop_emission_heating = pd.read_excel(locator.get_database_air_conditioning_systems(), 'heating')
-    prop_emission_cooling = pd.read_excel(locator.get_database_air_conditioning_systems(), 'cooling')
-    prop_emission_dhw = pd.read_excel(locator.get_database_air_conditioning_systems(), 'dhw')
+    prop_emission_heating = pd.read_excel(locator.get_database_air_conditioning_systems(), 'HEATING')
+    prop_emission_cooling = pd.read_excel(locator.get_database_air_conditioning_systems(), 'COOLING')
+    prop_emission_dhw = pd.read_excel(locator.get_database_air_conditioning_systems(), 'HOT_WATER')
     prop_emission_control_heating_and_cooling = pd.read_excel(locator.get_database_air_conditioning_systems(),
-                                                              'controller')
-    prop_ventilation_system_and_control = pd.read_excel(locator.get_database_air_conditioning_systems(), 'ventilation')
+                                                              'CONTROLLER')
+    prop_ventilation_system_and_control = pd.read_excel(locator.get_database_air_conditioning_systems(), 'VENTILATION')
 
     df_emission_heating = prop_HVAC.merge(prop_emission_heating, left_on='type_hs', right_on='code')
     df_emission_cooling = prop_HVAC.merge(prop_emission_cooling, left_on='type_cs', right_on='code')
@@ -773,11 +757,12 @@ def get_properties_technical_systems(locator, prop_HVAC):
                                                         right_on='code')
 
     fields_emission_heating = ['Name', 'type_hs', 'type_cs', 'type_dhw', 'type_ctrl', 'type_vent', 'heat_starts',
-                               'heat_ends', 'cool_starts', 'cool_ends',
+                               'heat_ends', 'cool_starts', 'cool_ends', 'class_hs', 'convection_hs',
                                'Qhsmax_Wm2', 'dThs_C', 'Tshs0_ahu_C', 'dThs0_ahu_C', 'Th_sup_air_ahu_C', 'Tshs0_aru_C',
                                'dThs0_aru_C', 'Th_sup_air_aru_C', 'Tshs0_shu_C', 'dThs0_shu_C']
     fields_emission_cooling = ['Name', 'Qcsmax_Wm2', 'dTcs_C', 'Tscs0_ahu_C', 'dTcs0_ahu_C', 'Tc_sup_air_ahu_C',
-                               'Tscs0_aru_C', 'dTcs0_aru_C', 'Tc_sup_air_aru_C', 'Tscs0_scu_C', 'dTcs0_scu_C']
+                               'Tscs0_aru_C', 'dTcs0_aru_C', 'Tc_sup_air_aru_C', 'Tscs0_scu_C', 'dTcs0_scu_C',
+                               'class_cs', 'convection_cs']
     fields_emission_control_heating_and_cooling = ['Name', 'dT_Qhs', 'dT_Qcs']
     fields_emission_dhw = ['Name', 'Tsww0_C', 'Qwwmax_Wm2']
     fields_system_ctrl_vent = ['Name', 'MECH_VENT', 'WIN_VENT', 'HEAT_REC', 'NIGHT_FLSH', 'ECONOMIZER']
@@ -878,54 +863,68 @@ def get_envelope_properties(locator, prop_architecture):
 
     """
 
-    def check_successful_merge(df_construction, df_leakage, df_roof, df_wall, df_win, df_shading):
+    def check_successful_merge(df_construction, df_leakage, df_roof, df_wall, df_win, df_shading, df_floor):
         if len(df_construction.loc[df_construction['code'].isna()]) > 0:
-            raise ValueError('WARNING: Invalid construction type found in architecture inputs. The following buildings will not be modeled: {}.'.format(
-                list(df_construction.loc[df_shading['code'].isna()]['Name'])))
+            raise ValueError(
+                'WARNING: Invalid construction type found in architecture inputs. The following buildings will not be modeled: {}.'.format(
+                    list(df_construction.loc[df_shading['code'].isna()]['Name'])))
         if len(df_leakage.loc[df_leakage['code'].isna()]) > 0:
-            raise ValueError('WARNING: Invalid leakage type found in architecture inputs. The following buildings will not be modeled: {}.'.format(
-                list(df_leakage.loc[df_leakage['code'].isna()]['Name'])))
+            raise ValueError(
+                'WARNING: Invalid leakage type found in architecture inputs. The following buildings will not be modeled: {}.'.format(
+                    list(df_leakage.loc[df_leakage['code'].isna()]['Name'])))
         if len(df_roof[df_roof['code'].isna()]) > 0:
-            raise ValueError('WARNING: Invalid roof type found in architecture inputs. The following buildings will not be modeled: {}.'.format(
-                list(df_roof.loc[df_roof['code'].isna()]['Name'])))
+            raise ValueError(
+                'WARNING: Invalid roof type found in architecture inputs. The following buildings will not be modeled: {}.'.format(
+                    list(df_roof.loc[df_roof['code'].isna()]['Name'])))
         if len(df_wall.loc[df_wall['code'].isna()]) > 0:
-            raise ValueError('WARNING: Invalid wall type found in architecture inputs. The following buildings will not be modeled: {}.'.format(
-                list(df_wall.loc[df_wall['code'].isna()]['Name'])))
+            raise ValueError(
+                'WARNING: Invalid wall type found in architecture inputs. The following buildings will not be modeled: {}.'.format(
+                    list(df_wall.loc[df_wall['code'].isna()]['Name'])))
         if len(df_win.loc[df_win['code'].isna()]) > 0:
-            raise ValueError('WARNING: Invalid window type found in architecture inputs. The following buildings will not be modeled: {}.'.format(
-                list(df_win.loc[df_win['code'].isna()]['Name'])))
+            raise ValueError(
+                'WARNING: Invalid window type found in architecture inputs. The following buildings will not be modeled: {}.'.format(
+                    list(df_win.loc[df_win['code'].isna()]['Name'])))
         if len(df_shading.loc[df_shading['code'].isna()]) > 0:
-            raise ValueError('WARNING: Invalid shading type found in architecture inputs. The following buildings will not be modeled: {}.'.format(
-                list(df_shading.loc[df_shading['code'].isna()]['Name'])))
+            raise ValueError(
+                'WARNING: Invalid shading type found in architecture inputs. The following buildings will not be modeled: {}.'.format(
+                    list(df_shading.loc[df_shading['code'].isna()]['Name'])))
+        if len(df_floor.loc[df_floor['code'].isna()]) > 0:
+            raise ValueError(
+                'WARNING: Invalid floor type found in architecture inputs. The following buildings will not be modeled: {}.'.format(
+                    list(df_floor.loc[df_floor['code'].isna()]['Name'])))
 
     prop_roof = pd.read_excel(locator.get_database_envelope_systems(), 'ROOF')
     prop_wall = pd.read_excel(locator.get_database_envelope_systems(), 'WALL')
+    prop_floor = pd.read_excel(locator.get_database_envelope_systems(), 'FLOOR')
     prop_win = pd.read_excel(locator.get_database_envelope_systems(), 'WINDOW')
     prop_shading = pd.read_excel(locator.get_database_envelope_systems(), 'SHADING')
     prop_construction = pd.read_excel(locator.get_database_envelope_systems(), 'CONSTRUCTION')
-    prop_leakage = pd.read_excel(locator.get_database_envelope_systems(), 'LEAKAGE')
+    prop_leakage = pd.read_excel(locator.get_database_envelope_systems(), 'TIGHTNESS')
 
     df_construction = prop_architecture.merge(prop_construction, left_on='type_cons', right_on='code', how='left')
     df_leakage = prop_architecture.merge(prop_leakage, left_on='type_leak', right_on='code', how='left')
+    df_floor = prop_architecture.merge(prop_floor, left_on='type_base', right_on='code', how='left')
     df_roof = prop_architecture.merge(prop_roof, left_on='type_roof', right_on='code', how='left')
     df_wall = prop_architecture.merge(prop_wall, left_on='type_wall', right_on='code', how='left')
     df_win = prop_architecture.merge(prop_win, left_on='type_win', right_on='code', how='left')
     df_shading = prop_architecture.merge(prop_shading, left_on='type_shade', right_on='code', how='left')
 
-    check_successful_merge(df_construction, df_leakage, df_roof, df_wall, df_win, df_shading)
+    check_successful_merge(df_construction, df_leakage, df_roof, df_wall, df_win, df_shading, df_floor)
 
     fields_construction = ['Name', 'Cm_Af', 'void_deck', 'Hs_ag', 'Hs_bg', 'Ns', 'Es']
     fields_leakage = ['Name', 'n50']
+    fields_basement = ['Name', 'U_base']
     fields_roof = ['Name', 'e_roof', 'a_roof', 'U_roof']
     fields_wall = ['Name', 'wwr_north', 'wwr_west', 'wwr_east', 'wwr_south',
-                   'e_wall', 'a_wall', 'U_wall', 'U_base']
+                   'e_wall', 'a_wall', 'U_wall']
     fields_win = ['Name', 'e_win', 'G_win', 'U_win', 'F_F']
     fields_shading = ['Name', 'rf_sh']
 
     envelope_prop = df_roof[fields_roof].merge(df_wall[fields_wall], on='Name').merge(df_win[fields_win],
                                                                                       on='Name').merge(
         df_shading[fields_shading], on='Name').merge(df_construction[fields_construction], on='Name').merge(
-        df_leakage[fields_leakage], on='Name')
+        df_leakage[fields_leakage], on='Name').merge(
+        df_floor[fields_basement], on='Name')
 
     return envelope_prop
 
@@ -973,56 +972,47 @@ def calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, therm
 
     """
 
-    # read daysim geometry
-    geometry_data = pd.read_csv(locator.get_radiation_metadata(building_name)).set_index('SURFACE')
-    geometry_data_roofs = geometry_data[geometry_data.TYPE == 'roofs']
-    geometry_data_walls = geometry_data[geometry_data.TYPE == 'walls']
-
-    # do this in case the daysim radiation file did not included window
-    if 'windows' in geometry_data.TYPE.values:
-        geometry_data_windows = geometry_data[geometry_data.TYPE == 'windows']
-        multiplier_wall = 1
-        multiplier_win = 1
-    else:
-        geometry_data_windows = geometry_data[geometry_data.TYPE == 'walls']
-        multiplier_win = 0.25 * (
-                prop_envelope.ix[building_name, 'wwr_south'] + prop_envelope.ix[building_name, 'wwr_east'] +
-                prop_envelope.ix[
-                    building_name, 'wwr_north'] + prop_envelope.ix[building_name, 'wwr_west'])
-        multiplier_wall = 1 - multiplier_win
-
     # read daysim radiation
-    radiation_data = pd.read_json(locator.get_radiation_building(building_name))
+    radiation_data = pd.read_csv(locator.get_radiation_building(building_name))
+
     # sum wall
     # solar incident on all walls [W]
-    I_sol_wall = np.array(
-        [geometry_data_walls.ix[surface, 'AREA_m2'] * multiplier_wall * radiation_data[surface] for surface in
-         geometry_data_walls.index]).sum(axis=0)
+    I_sol_wall = (radiation_data['walls_east_kW'] +
+                  radiation_data['walls_west_kW'] +
+                  radiation_data['walls_north_kW'] +
+                  radiation_data['walls_south_kW']).values * 1000  # in W
 
     # sensible gain on all walls [W]
-    I_sol_wall = I_sol_wall * prop_envelope.ix[building_name, 'a_wall'] * thermal_resistance_surface * \
-                 prop_rc_model.ix[building_name, 'U_wall'] * prop_rc_model.ix[building_name, 'empty_envelope_ratio']
+    I_sol_wall = I_sol_wall * \
+                 prop_envelope.ix[building_name, 'a_wall'] * \
+                 thermal_resistance_surface * \
+                 prop_rc_model.ix[building_name, 'U_wall'] * \
+                 prop_rc_model.ix[building_name, 'empty_envelope_ratio']
+
     # sum roof
-
     # solar incident on all roofs [W]
-    I_sol_roof = np.array([geometry_data_roofs.ix[surface, 'AREA_m2'] * radiation_data[surface] for surface in
-                           geometry_data_roofs.index]).sum(axis=0)
+    I_sol_roof = radiation_data['roofs_top_kW'].values * 1000  # in W
+
     # sensible gain on all roofs [W]
-    I_sol_roof = I_sol_roof * prop_envelope.ix[building_name, 'a_roof'] * thermal_resistance_surface * \
+    I_sol_roof = I_sol_roof * \
+                 prop_envelope.ix[building_name, 'a_roof'] * \
+                 thermal_resistance_surface * \
                  prop_rc_model.ix[building_name, 'U_roof']
+
     # sum window, considering shading
-    from cea.technologies import blinds
-    Fsh_win = [np.vectorize(blinds.calc_blinds_activation)(radiation_data[surface],
-                                                           prop_envelope.ix[building_name, 'G_win'],
-                                                           prop_envelope.ix[building_name, 'rf_sh']) for surface
-               in geometry_data_windows.index]
+    I_sol_win = (radiation_data['windows_east_kW'] +
+                 radiation_data['windows_west_kW'] +
+                 radiation_data['windows_north_kW'] +
+                 radiation_data['windows_south_kW']).values * 1000  # in W
 
-    I_sol_win = np.array([geometry_data_windows.ix[surface, 'AREA_m2'] * multiplier_win * radiation_data[surface]
-                          for surface in geometry_data_windows.index]) * prop_rc_model.ix[
-                    building_name, 'empty_envelope_ratio']
+    Fsh_win = np.vectorize(blinds.calc_blinds_activation)(I_sol_win,
+                                                          prop_envelope.ix[building_name, 'G_win'],
+                                                          prop_envelope.ix[building_name, 'rf_sh'])
 
-    I_sol_win = np.array(
-        [x * y * (1 - prop_envelope.ix[building_name, 'F_F']) for x, y in zip(I_sol_win, Fsh_win)]).sum(axis=0)
+    I_sol_win = I_sol_win * \
+                Fsh_win * \
+                (1 - prop_envelope.ix[building_name, 'F_F']) * \
+                prop_rc_model.ix[building_name, 'empty_envelope_ratio']
 
     # sum
     I_sol = I_sol_wall + I_sol_roof + I_sol_win

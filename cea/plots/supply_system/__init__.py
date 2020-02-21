@@ -30,8 +30,7 @@ class SupplySystemPlotBase(cea.plots.PlotBase):
     category_name = "supply-system"
 
     expected_parameters = {
-        'generation': 'plots-supply-system:generation',
-        'individual': 'plots-supply-system:individual',
+        'system': 'plots-supply-system:system',
         'timeframe': 'plots-supply-system:timeframe',
         'scenario-name': 'general:scenario-name',
     }
@@ -40,8 +39,9 @@ class SupplySystemPlotBase(cea.plots.PlotBase):
         super(SupplySystemPlotBase, self).__init__(project, parameters, cache)
 
         self.category_path = os.path.join('testing', 'supply-system-overview')
-        self.generation = self.parameters['generation']
-        self.individual = self.parameters['individual']
+        self.system = self.parameters['system']
+        self.generation = self.system.split("_")[1]
+        self.individual = self.system.split("_")[2]
         self.input_files = []
 
     @cea.plots.cache.cached

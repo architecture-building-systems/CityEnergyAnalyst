@@ -65,8 +65,8 @@ The objective of this step is to use the configuration editor to set up the inpu
    in CityEnergyAnalyst>cea>datamanagement>create_new_project.py.
 
 
-Step 3. Data helper tool
-------------------------
+Step 3. Archetype Mapper tool
+-----------------------------
 
 The objective of this step will be to create additional input databases of your project and add default values to them.
 In the next step you will be free to edit or replace those databases according to the real or expected values
@@ -74,7 +74,7 @@ of your project. For more information of these databases take a look to `Input d
 
 #. Open Pycharm and the project City Energy Analyst.
 #. From the the project tab on the left run the data helper tool. The tool is stored
-   in CityEnergyAnalyst>cea>datamanagement>data_helper.py.
+   in CityEnergyAnalyst>cea>datamanagement>archetypes_mapper.py.
 
 Finally, the new input databases can be edited or replaced to agree with the inputs that your project may have. To edit these databases check the guide on `How to edit databases in CEA <https://docs.google.com/presentation/d/16LXsu0vbllRL-in_taABuiThJ2uMP9Q05m3ORdaQrvU/edit#slide=id.gc6f73a04f_0_0>`__.
 

@@ -36,8 +36,8 @@ def main(output_file):
         ['year', 'drybulb_C', 'wetbulb_C', 'relhum_percent', 'windspd_ms', 'skytemp_C']]
 
     # run properties script
-    import cea.datamanagement.data_helper
-    cea.datamanagement.data_helper.data_helper(locator, 'CH', True, True, True, True, True, True, True, [])
+    import cea.datamanagement.archetypes_mapper
+    cea.datamanagement.archetypes_mapper.archetypes_mapper(locator, True, True, True, True, True, True, [])
 
     year = weather_data['year'][0]
     date_range = get_dates_from_year(year)

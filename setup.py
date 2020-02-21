@@ -18,16 +18,19 @@ with open('README.rst', 'r') as f:
     LONG_DESCRIPTION = f.read()
 
 INSTALL_REQUIRES = ['SALib==1.2',  # last version to work with python2
-                    'ephem',
                     'deap==1.3.0',
                     'doit==0.29.0',
+                    'ephem',
                     'flask-restplus',
+                    'flask-socketio',
                     'geopandas',
                     'gevent',
                     'ipython',
                     'jupyter',
                     'mock',
                     'numba',
+                    'openpyxl==2.6.4',
+                    'osmnx==0.9',
                     'plotly',
                     'psutil',
                     'py4design==0.27',
@@ -37,9 +40,9 @@ INSTALL_REQUIRES = ['SALib==1.2',  # last version to work with python2
                     'requests',
                     'seaborn',
                     'setuptools',
-                    'flask-socketio',
-                    'staticmap',
                     'sphinx',
+                    'staticmap',
+                    'sympy',
                     'timezonefinder==3.4.2',  # last version to work with python2
                     'twine',
                     'utm',

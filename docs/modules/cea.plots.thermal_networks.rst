@@ -9,74 +9,50 @@ cea.plots.thermal\_networks package
 Submodules
 ----------
 
-cea.plots.thermal\_networks.Supply\_Return\_Outdoor module
-----------------------------------------------------------
+cea.plots.thermal\_networks.a\_network\_design module
+-----------------------------------------------------
 
-.. automodule:: cea.plots.thermal_networks.Supply_Return_Outdoor
+.. automodule:: cea.plots.thermal_networks.a_network_design
     :members:
     :undoc-members:
     :show-inheritance:
 
-cea.plots.thermal\_networks.annual\_energy\_consumption module
---------------------------------------------------------------
+cea.plots.thermal\_networks.b\_demand\_curve module
+---------------------------------------------------
 
-.. automodule:: cea.plots.thermal_networks.annual_energy_consumption
+.. automodule:: cea.plots.thermal_networks.b_demand_curve
     :members:
     :undoc-members:
     :show-inheritance:
 
-cea.plots.thermal\_networks.energy\_loss\_bar module
-----------------------------------------------------
+cea.plots.thermal\_networks.c\_annual\_energy\_consumption module
+-----------------------------------------------------------------
 
-.. automodule:: cea.plots.thermal_networks.energy_loss_bar
+.. automodule:: cea.plots.thermal_networks.c_annual_energy_consumption
     :members:
     :undoc-members:
     :show-inheritance:
 
-cea.plots.thermal\_networks.loss\_curve module
-----------------------------------------------
+cea.plots.thermal\_networks.d\_energy\_loss\_bar module
+-------------------------------------------------------
 
-.. automodule:: cea.plots.thermal_networks.loss_curve
+.. automodule:: cea.plots.thermal_networks.d_energy_loss_bar
     :members:
     :undoc-members:
     :show-inheritance:
 
-cea.plots.thermal\_networks.loss\_duration\_curve module
---------------------------------------------------------
+cea.plots.thermal\_networks.e\_heating\_reset\_curve module
+-----------------------------------------------------------
 
-.. automodule:: cea.plots.thermal_networks.loss_duration_curve
+.. automodule:: cea.plots.thermal_networks.e_heating_reset_curve
     :members:
     :undoc-members:
     :show-inheritance:
 
-cea.plots.thermal\_networks.main module
----------------------------------------
+cea.plots.thermal\_networks.f\_pump\_duration\_curve module
+-----------------------------------------------------------
 
-.. automodule:: cea.plots.thermal_networks.main
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-cea.plots.thermal\_networks.network\_plot module
-------------------------------------------------
-
-.. automodule:: cea.plots.thermal_networks.network_plot
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-cea.plots.thermal\_networks.network\_pressure\_loss module
-----------------------------------------------------------
-
-.. automodule:: cea.plots.thermal_networks.network_pressure_loss
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-cea.plots.thermal\_networks.network\_thermal\_loss module
----------------------------------------------------------
-
-.. automodule:: cea.plots.thermal_networks.network_thermal_loss
+.. automodule:: cea.plots.thermal_networks.f_pump_duration_curve
     :members:
     :undoc-members:
     :show-inheritance:

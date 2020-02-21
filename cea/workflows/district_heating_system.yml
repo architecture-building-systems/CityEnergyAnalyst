@@ -1,0 +1,60 @@
+- config: default
+  "general:multiprocessing": on
+  "general:project": "${CEA_general_project}/../reference-case-open"
+  "radiation:daysim-bin-directory": "${CEA_radiation_daysim-bin-directory}"
+- script: extract-reference-case
+  parameters:
+    destination: "{general:project}/.."
+    case: open
+- config: .
+  "general:scenario-name": baseline
+- script: data-initializer
+  parameters:
+    databases-path: CH
+    databases: [archetypes, lifecycle, systems]
+- script: archetypes-mapper
+  parameters:
+    input-databases: [comfort, architecture, air-conditioning, internal-loads, supply, schedules, emission-intensity]
+- script: weather-helper
+  parameters:
+    weather: Zug-inducity_1990_2010_TMY
+- script: radiation
+- script: schedule-maker
+- script: demand
+- script: emissions
+- script: operation-costs
+- script: water-body-potential
+- script: sewage-potential
+- script: shallow-geothermal-potential
+- script: photovoltaic
+- script: solar-collector
+  parameters:
+    type-scpanel: FP
+- script: solar-collector
+  parameters:
+    type-scpanel: ET
+- script: photovoltaic-thermal
+  parameters:
+    type-scpanel: FP
+- script: photovoltaic-thermal
+  parameters:
+    type-scpanel: ET
+- script: network-layout
+  parameters:
+    network-type: DH
+    network-model: simplified
+- script: thermal-network
+  parameters:
+    network-type: DH
+    network-model: simplified
+- script: decentralized
+- script: optimization
+  parameters:
+    district-heating-network: true
+    district-cooling-network: false
+    number-of-generations: 2
+    population-size: 5
+    random-seed: 100
+- script: multi-criteria-analysis
+  parameters:
+    generation: 2

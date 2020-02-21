@@ -25,7 +25,7 @@ Other variables used to calculate the loads include:
 - d \ :sub:`dhw,i` : daily demand for hot water (litres/person/day)
 
 At the beginning of the simulation for each building, yearly schedules of occupant presence (N \ :sub:`people`) and associated indoor comfort
-parameters, as well as schedules of electricity (E \ :sub:`light` and E \ :sub:`appliances) and hot water consumption (V \ :sub:`dhw`) are calculated as a simple
+parameters, as well as schedules of electricity (E \ :sub:`light` and E \ :sub:`appliances`) and hot water consumption (V \ :sub:`dhw`) are calculated as a simple
 average:
 
 .. math::

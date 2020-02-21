@@ -13,7 +13,7 @@ from cea.technologies.constants import BOILER_ETA_HP
 from cea.constants import HOURS_IN_YEAR, WH_TO_J
 
 
-def calc_pareto_Qhp(locator, total_demand, prices, lca, config):
+def calc_pareto_Qhp(locator, total_demand, prices, lca):
     """
     This function calculates the contribution to the pareto optimal results of process heating,
 
@@ -28,7 +28,7 @@ def calc_pareto_Qhp(locator, total_demand, prices, lca, config):
     hpCO2 = 0
     hpPrim = 0
 
-
+    boiler_cost_data = pd.read_excel(locator.get_database_conversion_systems(), sheet_name="Boiler")
 
     if total_demand["Qhpro_sys_MWhyr"].sum()>0:
         df = total_demand[total_demand.Qhpro_sys_MWhyr != 0]
@@ -53,7 +53,7 @@ def calc_pareto_Qhp(locator, total_demand, prices, lca, config):
 
             # Investment costs
 
-            Capex_a_hp_USD, Opex_fixed_hp_USD, Capex_hp_USD = boiler.calc_Cinv_boiler(Qnom_Wh, locator, config, 'BO1')
+            Capex_a_hp_USD, Opex_fixed_hp_USD, Capex_hp_USD = boiler.calc_Cinv_boiler(Qnom_Wh, 'BO1', boiler_cost_data)
             hpCosts += (Capex_a_hp_USD + Opex_fixed_hp_USD)
     else:
         hpCosts = hpCO2 = hpPrim = 0

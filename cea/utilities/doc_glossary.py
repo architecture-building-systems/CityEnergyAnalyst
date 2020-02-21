@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 """
 doc_glossary.py
 
@@ -20,7 +22,6 @@ __version__ = "2.14"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
-
 
 
 def main(_):
@@ -68,10 +69,10 @@ def main(_):
                     glossary_data.add(tuple(glossary_df.loc[key].iloc[number-1]))
                     redundant_methods.add((locator_method, file_name))
 
-    print '\n             !!! Redundancy Found !!! \n' \
-          'The following inputlocator methods service similar files:'
-    for locator_method, file_name in redundant_methods:
-        print 'O   ' + locator_method + '   --->   ' + file_name
+    if redundant_methods:
+        print("\n             !!! Redundancy Found !!! \nThe following inputlocator methods service similar files:")
+        for locator_method, file_name in redundant_methods:
+            print("O   " + locator_method + '   --->   ' + file_name)
 
     glossary_data = sorted(glossary_data)
 
@@ -89,4 +90,4 @@ def main(_):
     with open(os.path.join(documentation_dir,'output_methods.rst'), 'w') as gloss:
         gloss.write(output)
 
-    print '\n ~~~~~~~~ Glossary files updated ~~~~~~~~\n'
+    print('\n ~~~~~~~~ Glossary files updated ~~~~~~~~\n')

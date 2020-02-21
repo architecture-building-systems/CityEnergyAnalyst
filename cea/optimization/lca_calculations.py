@@ -7,7 +7,7 @@ from __future__ import division
 
 import warnings
 
-import pandas as pd
+import numpy as np
 
 warnings.filterwarnings("ignore")
 
@@ -22,23 +22,9 @@ __status__ = "Production"
 
 
 class LcaCalculations(object):
-    def __init__(self, locator):
-        resources_lca = pd.read_excel(locator.get_database_supply_systems(), sheet_name="FEEDSTOCKS")
-        resources_lca.set_index('code', inplace=True)
-
-        # Natural gas
-        self.NG_TO_CO2_EQ = resources_lca.loc['NATURALGAS']['CO2']
-        self.NG_TO_OIL_EQ = resources_lca.loc['NATURALGAS']['PEN']
-
-        # Drybiomass
-        self.DRYBIOMASS_TO_CO2_EQ = resources_lca.loc['DRYBIOMASS']['CO2']
-        self.DRYBIOMASS_TO_OIL_EQ = resources_lca.loc['DRYBIOMASS']['PEN']
-
-        # WetBiomass
-        self.WETBIOMASS_TO_CO2_EQ = resources_lca.loc['WETBIOMASS']['CO2']
-        self.WETBIOMASS_TO_OIL_EQ = resources_lca.loc['WETBIOMASS']['PEN']
-
-        # Electricity MJ/MJoil and kg/MJ
-        self.EL_TO_CO2_EQ = resources_lca.loc['GRID']['CO2']
-        self.EL_TO_OIL_EQ = resources_lca.loc['GRID']['CO2']
-
+    def __init__(self, supply_systems):
+        feedstocks = supply_systems.FEEDSTOCKS
+        self.NG_TO_CO2_EQ = np.tile(feedstocks['NATURALGAS']['GHG_kgCO2MJ'].values, 365)  # in kgCo2/MJ for every hour of a year
+        self.WETBIOMASS_TO_CO2_EQ = np.tile(feedstocks['WETBIOMASS']['GHG_kgCO2MJ'].values, 365) # in kgCo2/MJ for every hour of a year
+        self.DRYBIOMASS_TO_CO2_EQ = np.tile(feedstocks['DRYBIOMASS']['GHG_kgCO2MJ'].values, 365) # in kgCo2/MJ for every hour of a year
+        self.EL_TO_CO2_EQ = np.tile(feedstocks['GRID']['GHG_kgCO2MJ'].values, 365) # in kgCo2/MJ for every hour of a year

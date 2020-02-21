@@ -48,7 +48,7 @@ def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_gro
     ..[Puig-Arnavat M. et al, 2010] Analysis and parameter identification for characteristic equations of single- and
     double-effect absorption chillers by means of multivariable regression. Int J Refrig: 2010.
     """
-    chiller_prop = absorption_chiller.chiller_prop #get data from the class
+    chiller_prop = absorption_chiller.chiller_prop # get data from the class
     # create a dict of input operating conditions
     input_conditions = {'T_chw_sup_K': T_chw_sup_K,
                         'T_chw_re_K': T_chw_re_K,
@@ -258,7 +258,8 @@ def calc_power_demand(q_chw_W, chiller_prop):
 
 # Investment costs
 
-def calc_Cinv_ACH(Q_nom_W, locator, ACH_type):
+
+def calc_Cinv_ACH(Q_nom_W, Absorption_chiller_cost_data, ACH_type):
     """
     Annualized investment costs for the vapor compressor chiller
     :type Q_nom_W : float
@@ -270,7 +271,6 @@ def calc_Cinv_ACH(Q_nom_W, locator, ACH_type):
     Opex_fixed_ACH_USD = 0
     Capex_ACH_USD = 0
     if Q_nom_W > 0:
-        Absorption_chiller_cost_data = pd.read_excel(locator.get_database_supply_systems(), sheet_name="Absorption_chiller")
         Absorption_chiller_cost_data = Absorption_chiller_cost_data[Absorption_chiller_cost_data['type'] == ACH_type]
         max_chiller_size = max(Absorption_chiller_cost_data['cap_max'].values)
 
@@ -398,7 +398,7 @@ def main(config):
     T_ground_K = 300
     ach_type = case_dict['ACH_type']
 
-    chiller_prop = AbsorptionChiller(pd.read_excel(locator.get_database_supply_systems(), sheet_name="Absorption_chiller"), ach_type)
+    chiller_prop = AbsorptionChiller(pd.read_excel(locator.get_database_conversion_systems(), sheet_name="Absorption_chiller"), ach_type)
 
     chiller_operation = calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_ground_K, chiller_prop)
     print(chiller_operation)

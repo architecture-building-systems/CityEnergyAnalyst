@@ -129,10 +129,8 @@ class Plots(object):
                                          'COAL_ww_cost_m2yr',
                                          'OIL_ww_cost_m2yr',
                                          'WOOD_ww_cost_m2yr']
-        self.analysis_fields_emissions = ['E_ghg_ton', 'O_ghg_ton', 'M_ghg_ton']
-        self.analysis_fields_emissions_m2 = ['E_ghg_kgm2', 'O_ghg_kgm2', 'M_ghg_kgm2']
-        self.analysis_fields_primary_energy = ['E_nre_pen_GJ', 'O_nre_pen_GJ', 'M_nre_pen_GJ']
-        self.analysis_fields_primary_energy_m2 = ['E_nre_pen_MJm2', 'O_nre_pen_MJm2', 'M_nre_pen_MJm2']
+        self.analysis_fields_emissions = ['GHG_sys_embodied_tonCO2', 'GHG_sys_tonCO2', 'GHG_sys_mobility_tonCO2']
+        self.analysis_fields_emissions_m2 = ['GHG_sys_embodied_kgCO2m2', 'GHG_sys_kgCO2m2', 'GHG_sys_mobility_kgCO2m2']
         self.analysis_fields_occupancy_type = ['COOLROOM', 'FOODSTORE', 'GYM', 'HOSPITAL', 'HOTEL', 'INDUSTRIAL',
                                                'LIBRARY', 'MULTI_RES', 'OFFICE', 'PARKING', 'RESTAURANT', 'RETAIL',
                                                'SCHOOL', 'SERVERROOM', 'SINGLE_RES', 'SWIMMING']
@@ -270,7 +268,7 @@ class Plots(object):
 
         for scenario, scenario_name in zip(self.scenarios, scenarios_clean):
             locator = cea.inputlocator.InputLocator(scenario)
-            district_occupancy_df = dbf_to_dataframe(locator.get_building_occupancy())
+            district_occupancy_df = dbf_to_dataframe(locator.get_building_typology())
             district_occupancy_df.set_index('Name', inplace=True)
             district_gfa_df = pd.read_csv(locator.get_total_demand())[['GFA_m2'] + ["Name"]]
             district_gfa_df.set_index('Name', inplace=True)

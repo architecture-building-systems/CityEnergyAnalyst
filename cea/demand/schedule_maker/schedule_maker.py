@@ -109,10 +109,9 @@ def calc_schedules(locator,
     occupant presence is modeled based on the probability of occupant presence at the current and next time step as
     given by the occupant schedules used in the deterministic model.
 
-    :param locator: InputLocator instance
-    :param building: name of current building
-    :param date_range: range of dates being considered
-    :type date_range: DatetimeIndex
+    :param cea.inputlocator.InputLocator locator: InputLocator instance
+    :param str building: name of current building
+    :param DatetimeIndex date_range: range of dates being considered
     :param daily_schedule_building: building schedules for occupancy, electricity demand, water consumption, and system operation
     :type daily_schedule_building: {str: array}
     :param monthly_multiplier: percentage of the total number of occupants present at each month of the year
@@ -222,7 +221,17 @@ def calc_schedules(locator,
     yearly_array = get_yearly_vectors(date_range, days_in_schedule, occupant_load, monthly_multiplier) + base_load
     final_schedule[variable] = yearly_array * internal_loads_building[variable] * prop_geometry_building['Aef']
 
-    # LIGHTING AND PROCESS ENERGY DEMAND SCHEDULES
+    # ELECTROMOVILITYSCHEDULE
+    variable = 'Ev_kWveh'
+    array = daily_schedule_building[VARIABLE_CEA_SCHEDULE_RELATION[variable]]
+    # base load is independent of monthly variations
+    base_load = np.min(array)
+    occupant_load = array - base_load
+    # this schedule is assumed to be independent of occupant presence
+    yearly_array = get_yearly_vectors(date_range, days_in_schedule, occupant_load, monthly_multiplier) + base_load
+    final_schedule[variable] = yearly_array * internal_loads_building[variable] *1000 #convert to Wh
+
+    # DATACENTRE AND PROCESS ENERGY DEMAND SCHEDULES
     for variable in ['Ed_Wm2', 'Epro_Wm2', 'Qcre_Wm2', 'Qhpro_Wm2', 'Qcpro_Wm2']:
         # these schedules are assumed to be independent of occupant presence and have no monthly variations
         array = daily_schedule_building[VARIABLE_CEA_SCHEDULE_RELATION[variable]]
@@ -255,10 +264,11 @@ def calc_schedules(locator,
         'Ea_W': final_schedule['Ea_Wm2'],
         'El_W': final_schedule['El_Wm2'],
         'Ed_W': final_schedule['Ed_Wm2'],
+        'Ev_W': final_schedule['Ev_kWveh'],
+        'Qcpro_W': final_schedule['Qcpro_Wm2'],
         'Epro_W': final_schedule['Epro_Wm2'],
         'Qcre_W': final_schedule['Qcre_Wm2'],
         'Qhpro_W': final_schedule['Qhpro_Wm2'],
-        'Qcpro_W': final_schedule['Qcpro_Wm2'],
     }
 
     yearly_occupancy_schedules = pd.DataFrame(final_dict)

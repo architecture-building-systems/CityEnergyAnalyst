@@ -36,13 +36,13 @@ def calc_CT(q_hot_Wh, Q_nom_W):
         w_partload_factor = calc_CT_partload_factor(q_partload_ratio)
 
         # calculate nominal fan power
-        w_nom_fan = 0.011 * Q_nom_W
+        w_nom_fan = 0.011 * Q_nom_W # _[B. Stephane, 2012]
 
         # calculate total electricity consumption
         el_W = w_partload_factor * w_nom_fan
 
     else:
-        el_W = 0
+        el_W = 0.0
 
     return el_W
 
@@ -67,7 +67,7 @@ def calc_CT_partload_factor(q_part_load_ratio):
 
 def calc_CT_yearly(q_hot_kWh):
     """
-    For the operation of a water condenser + direct cooling tower with a fit funciton based on the hourly calculation in calc_CT.
+    For the operation of a water condenser + direct cooling tower with a fit function based on the hourly calculation in calc_CT.
 
     :type q_hot_kWh : float
     :param q_hot_kWh: heat rejected from chiller condensers
@@ -97,7 +97,7 @@ def calc_Cinv_CT(Q_nom_CT_W, locator, technology_type):
     Capex_CT_USD = 0.0
 
     if Q_nom_CT_W > 0:
-        CT_cost_data = pd.read_excel(locator.get_database_supply_systems(), sheet_name="CT")
+        CT_cost_data = pd.read_excel(locator.get_database_conversion_systems(), sheet_name="CT")
         CT_cost_data = CT_cost_data[CT_cost_data['code'] == technology_type]
         max_chiller_size = max(CT_cost_data['cap_max'].values)
 
@@ -148,12 +148,13 @@ def calc_Cinv_CT(Q_nom_CT_W, locator, technology_type):
     return Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD
 
 
-def main(locator):
+def main():
     import numpy as np
     q_hot_Wh = np.arange(0.0, 1E3, 100)
     Q_nom_W = 1E3
     wdot_W = np.vectorize(calc_CT)(q_hot_Wh, Q_nom_W)
     print wdot_W
+
 
 
 

@@ -16,6 +16,7 @@ from cea.optimization.lca_calculations import LcaCalculations
 from cea.constants import HOURS_IN_YEAR
 from cea.technologies.heat_exchangers import calc_Cinv_HEX_hisaka
 from cea.utilities import epwreader
+from cea.technologies.supply_systems_database import SupplySystemsDatabase
 
 __author__ = "Lennart Rogenhofer, Shanshan Hsieh"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -45,6 +46,7 @@ class Thermal_Network(object):
                           'capex_network', 'network_length_m', 'avg_diam_m']
         self.generation_info = ['plant_buildings', 'number_of_plants', 'supplied_loads', 'disconnected_buildings',
                                 'has_loops']
+        self.supply_systems = SupplySystemsDatabase(locator)
         self.cost_storage = None
         self.building_names = None
         self.number_of_buildings_in_district = 0
@@ -448,8 +450,7 @@ def calc_Ctot_cs_district(network_info):
     """
     # read in general values for cost calculation
     network_info.config.detailed_electricity_pricing = False # ensure getting the average value
-    detailed_electricity_pricing = network_info.config.detailed_electricity_pricing
-    network_info.prices = Prices(network_info.locator, detailed_electricity_pricing)
+    network_info.prices = Prices(network_info.supply_systems)
     network_info.prices.ELEC_PRICE = np.mean(network_info.prices.ELEC_PRICE, dtype=np.float64)  # [USD/W]
     network_info.network_features = NetworkOptimizationFeatures(district_heating_network=network_info.network_type=="DH",
                                                                 district_cooling_network=network_info.network_type=="DC",

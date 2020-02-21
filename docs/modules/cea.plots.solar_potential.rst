@@ -9,34 +9,10 @@ cea.plots.solar\_potential package
 Submodules
 ----------
 
-cea.plots.solar\_potential.main module
---------------------------------------
+cea.plots.solar\_potential.a\_solar\_radiation module
+-----------------------------------------------------
 
-.. automodule:: cea.plots.solar_potential.main
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-cea.plots.solar\_potential.solar\_radiation module
---------------------------------------------------
-
-.. automodule:: cea.plots.solar_potential.solar_radiation
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-cea.plots.solar\_potential.solar\_radiation\_curve module
----------------------------------------------------------
-
-.. automodule:: cea.plots.solar_potential.solar_radiation_curve
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-cea.plots.solar\_potential.solar\_radiation\_monthly module
------------------------------------------------------------
-
-.. automodule:: cea.plots.solar_potential.solar_radiation_monthly
+.. automodule:: cea.plots.solar_potential.a_solar_radiation
     :members:
     :undoc-members:
     :show-inheritance:

@@ -9,10 +9,10 @@ cea.analysis.costs package
 Submodules
 ----------
 
-cea.analysis.costs.operation\_costs module
-------------------------------------------
+cea.analysis.costs.system\_costs module
+---------------------------------------
 
-.. automodule:: cea.analysis.costs.operation_costs
+.. automodule:: cea.analysis.costs.system_costs
     :members:
     :undoc-members:
     :show-inheritance:

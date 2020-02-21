@@ -23,6 +23,7 @@ LATENT_HEAT_OF_AIR_KJPERKG = 2257  # latent heat of air kJ/kg
 CONVERSION_AREA_TO_FLOOR_AREA_RATIO = 1.5  # conversion component's area to floor area
 SERVICE_LIFE_OF_BUILDINGS = 60  # service life of standard building components and materials SIA2032
 SERVICE_LIFE_OF_TECHNICAL_SYSTEMS = 25  # service life of technical installations Average of SIA2032 (20 - 40)
+EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS = 35 #kg COs/m2 gross floor area
 
 # Date data
 DAYS_IN_YEAR = 365
@@ -68,3 +69,10 @@ STEEL_lambda_WmK = 76
 FT_WATER_TO_PA = 2989.0669 # assumption at 4C water
 M_WATER_TO_PA = 9804
 FT_TO_M = 0.3048
+
+# PHYSICAL CONSTANTS
+# stefan-boltzmann constant
+BOLTZMANN = 0.000000056697  # W/m2K4
+
+# KELVIN TO DEGREE CELSIUS CONVERSION
+KELVIN_OFFSET = 273.0

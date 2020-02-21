@@ -1,17 +1,20 @@
 import json
 import os
+import shutil
 from collections import OrderedDict
 
 import geopandas
 import pandas
 import yaml
-from flask import current_app
+from flask import current_app, request
 from flask_restplus import Namespace, Resource, abort
+from .databases import DATABASE_NAMES, DATABASES, DATABASES_TYPE_MAP, database_to_dict, database_dict_to_file, \
+    get_all_schedules_dict, schedule_to_dict, schedule_dict_to_file, use_type_properties_to_dict, \
+    use_type_properties_dict_to_file
 
 import cea.inputlocator
 import cea.utilities.dbf
-from cea.utilities.schedule_reader import read_cea_schedule, save_cea_schedule
-from cea.plots.supply_system.supply_system_map import get_building_connectivity
+from cea.plots.supply_system.a_supply_system_map import get_building_connectivity
 from cea.plots.variable_naming import get_color_array
 from cea.technologies.network_layout.main import layout_network, NetworkLayout
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
@@ -32,8 +35,7 @@ def read_inputs_field_types():
         open(os.path.join(os.path.dirname(__file__), '../inputs/inputs.yml')).read())
 
     for db in inputs.keys():
-        inputs[db]['fieldnames'] = [field['name']
-                                    for field in inputs[db]['fields']]
+        inputs[db]['fieldnames'] = [field['name']for field in inputs[db]['fields']]
     return inputs
 
 
@@ -180,7 +182,7 @@ class AllInputs(Resource):
 
         if schedules:
             for building in schedules:
-                dict_to_schedule(locator, building, schedules[building])
+                schedule_dict_to_file(schedules[building], locator.get_building_weekly_schedules(building))
 
         return out
 
@@ -188,7 +190,7 @@ class AllInputs(Resource):
 def get_building_properties():
     import cea.glossary
     # FIXME: Find a better way to ensure order of tabs
-    tabs = ['zone', 'age', 'occupancy', 'architecture', 'internal-loads', 'indoor-comfort', 'air-conditioning-systems',
+    tabs = ['zone', 'typology', 'architecture', 'internal-loads', 'indoor-comfort', 'air-conditioning-systems',
             'supply-systems', 'surroundings']
 
     config = current_app.cea_config
@@ -227,10 +229,10 @@ def get_building_properties():
                     continue
                 columns[column]['type'] = field['type']
                 if field['type'] == 'choice':
-                    path = getattr(locator, field['location']['path'])()
+                    path = getattr(locator, field['choice_properties']['lookup']['path'])()
                     columns[column]['path'] = path
                     # TODO: Try to optimize this step to decrease the number of file reading
-                    columns[column]['choices'] = get_choices(field['location'], path)
+                    columns[column]['choices'] = get_choices(field['choice_properties'], path)
                 if 'constraints' in field:
                     columns[column]['constraints'] = field['constraints']
                 columns[column]['description'] = db_glossary[column]['DESCRIPTION']
@@ -313,41 +315,131 @@ class BuildingSchedule(Resource):
         config = current_app.cea_config
         locator = cea.inputlocator.InputLocator(config.scenario)
         try:
-            return schedule_to_dict(locator, building)
+            schedule_path = locator.get_building_weekly_schedules(building)
+            return schedule_to_dict(schedule_path)
         except IOError as e:
             print(e)
             abort(500, 'File not found')
 
 
-def get_choices(location, path):
-    df = pandas.read_excel(path, location['sheet'])
-    if 'filter' in location:
-        choices = df[df.eval(location['filter'])][location['column']].tolist()
-    else:
-        choices = df[location['column']].tolist()
-    return [{'value': choice, 'label': df.loc[df[location['column']] == choice, 'Description'].values[0]} for choice in choices]
+# TODO: Could create and use method to parse databases since it is very similar to the one in `api/databases` endpoint
+@api.route('/databases/all')
+class InputDatabaseAll(Resource):
+    def get(self):
+        config = current_app.cea_config
+        locator = cea.inputlocator.InputLocator(config.scenario)
+        try:
+            # All or nothing. Abort reading databases if encounter error
+            out = OrderedDict()
+            for db_type, db_dict in DATABASES.items():
+                out[db_type] = OrderedDict()
+                for db_name, db_props in db_dict.items():
+                    if db_name == 'USE_TYPES':
+                        out[db_type][db_name] = {}
+                        out[db_type][db_name]['SCHEDULES'] = get_all_schedules_dict(
+                            locator.get_database_use_types_folder())
+                        out[db_type][db_name]['USE_TYPE_PROPERTIES'] = use_type_properties_to_dict(
+                            locator.get_database_use_types_properties())
+                    else:
+                        locator_method = db_props['schema_key']
+                        out[db_type][db_name] = database_to_dict(locator.__getattribute__(locator_method)())
+            return out
+        except IOError as e:
+            print(e)
+            abort(500, e.message)
 
 
-def schedule_to_dict(locator, building):
-    schedule_path = locator.get_building_weekly_schedules(building)
-    schedule_data, schedule_complementary_data = read_cea_schedule(schedule_path)
-    df = pandas.DataFrame(schedule_data).set_index(['DAY', 'HOUR'])
-    out = {'SCHEDULES': {schedule_type: {day: df.loc[day][schedule_type].values.tolist() for day in df.index.levels[0]}
-                         for schedule_type in df.columns}}
-    out.update(schedule_complementary_data)
+@api.route('/databases/<string:db>')
+class InputDatabase(Resource):
+    def get(self, db):
+        config = current_app.cea_config
+        locator = cea.inputlocator.InputLocator(config.scenario)
+        try:
+            if db in DATABASE_NAMES:
+                if db == 'USE_TYPES':
+                    out = OrderedDict()
+                    out['SCHEDULES'] = get_all_schedules_dict(
+                        locator.get_database_use_types_folder())
+                    out['USE_TYPE_PROPERTIES'] = use_type_properties_to_dict(
+                        locator.get_database_use_types_properties())
+                else:
+                    db_type = DATABASES_TYPE_MAP[db]
+                    locator_method = DATABASES[db_type][db]['schema_key']
+                    return database_to_dict(locator.__getattribute__(locator_method)())
+            else:
+                abort(400, "Could not find '{}' database. Try instead {}".format(db, ", ".join(DATABASE_NAMES)))
+        except IOError as e:
+            print(e)
+            abort(500, e.message)
+
+
+@api.route('/databases')
+class InputDatabaseSave(Resource):
+    def put(self):
+        config = current_app.cea_config
+        # Preserve key order of json string (could be removed for python3)
+        payload = json.loads(request.data, object_pairs_hook=OrderedDict)
+        locator = cea.inputlocator.InputLocator(config.scenario)
+
+        for db_type in payload:
+            for db_name in payload[db_type]:
+                if db_name == 'USE_TYPES':
+                    use_type_properties_dict_to_file(payload[db_type]['USE_TYPES']['USE_TYPE_PROPERTIES'],
+                                                     locator.get_database_use_types_properties())
+                    for archetype, schedule_dict in payload[db_type]['USE_TYPES']['SCHEDULES'].items():
+                        schedule_dict_to_file(
+                            schedule_dict,
+                            locator.get_database_standard_schedules_use(
+                                archetype
+                            )
+                        )
+                else:
+                    locator_method = DATABASES[db_type][db_name]['schema_key']
+                    db_path = locator.__getattribute__(locator_method)()
+                    database_dict_to_file(payload[db_type][db_name], db_path)
+
+        return payload
+
+
+@api.route('/databases/copy')
+class InputDatabaseCopy(Resource):
+    def put(self):
+        config = current_app.cea_config
+        payload = api.payload
+        locator = cea.inputlocator.InputLocator(config.scenario)
+
+        if payload and 'path' in payload and 'name' in payload:
+            copy_path = os.path.join(payload['path'], payload['name'])
+            if os.path.exists(copy_path):
+                abort(500, 'Copy path {} already exists. Choose a different path/name.'.format(copy_path))
+            locator.ensure_parent_folder_exists(copy_path)
+            shutil.copytree(locator.get_databases_folder(), copy_path)
+            return {'message': 'Database copied to {}'.format(copy_path)}
+        else:
+            abort(500, "'path' and 'name' required")
+
+
+@api.route('/databases/check')
+class InputDatabaseCheck(Resource):
+    def get(self):
+        config = current_app.cea_config
+        locator = cea.inputlocator.InputLocator(config.scenario)
+        try:
+            locator.verify_database_template()
+        except IOError as e:
+            print(e)
+            abort(500, e.message)
+        return {'message': 'Database in path seems to be valid.'}
+
+
+def get_choices(choice_properties, path):
+    lookup = choice_properties['lookup']
+    df = pandas.read_excel(path, lookup['sheet'])
+    choices = df[lookup['column']].tolist()
+    out = []
+    if 'none_value' in choice_properties:
+        out.append({'value': 'NONE', 'label': ''})
+    for choice in choices:
+        label = df.loc[df[lookup['column']] == choice, 'Description'].values[0] if 'Description' in df.columns else ''
+        out.append({'value': choice, 'label': label})
     return out
-
-
-def dict_to_schedule(locator, building, schedule_dict):
-    schedule_path = locator.get_building_weekly_schedules(building)
-    schedule_data = schedule_dict['SCHEDULES']
-    schedule_complementary_data = {'MONTHLY_MULTIPLIER': schedule_dict['MONTHLY_MULTIPLIER'],
-                                   'METADATA': schedule_dict['METADATA']}
-
-    data = pandas.DataFrame()
-    for day in ['WEEKDAY', 'SATURDAY', 'SUNDAY']:
-        df = pandas.DataFrame({'HOUR': range(1, 25), 'DAY': [day] * 24})
-        for schedule_type, schedule in schedule_data.items():
-            df[schedule_type] = schedule[day]
-        data = data.append(df, ignore_index=True)
-    save_cea_schedule(data.to_dict('list'), schedule_complementary_data, schedule_path)

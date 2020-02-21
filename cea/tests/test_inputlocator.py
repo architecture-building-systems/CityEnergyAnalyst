@@ -16,20 +16,13 @@ class TestInputLocator(unittest.TestCase):
             self.assertTrue(os.path.exists(self.locator.get_weather(weather)))
 
     def test_get_archetypes_properties(self):
-        archetypes_properties = self.locator.get_archetypes_properties()
+        archetypes_properties = self.locator.get_database_construction_standards()
         self.assertTrue(os.path.exists(archetypes_properties))
         self.assertTrue(os.path.realpath(archetypes_properties).startswith(
             os.path.realpath(self.locator.scenario)), msg='Path not in scenario: %s' % archetypes_properties)
 
     def test_get_supply_systems_cost(self):
-        supply_systems_cost = self.locator.get_database_supply_systems()
+        supply_systems_cost = self.locator.get_database_conversion_systems()
         self.assertTrue(os.path.exists(supply_systems_cost))
         self.assertTrue(os.path.realpath(supply_systems_cost).startswith(
             os.path.realpath(self.locator.scenario)), msg='Path not in scenario: %s' % supply_systems_cost)
-        
-    def test_get_life_cycle_inventory_building_systems(self):
-        life_cycle_inventory_building_systems = self.locator.get_database_lca_buildings()
-        self.assertTrue(os.path.exists(life_cycle_inventory_building_systems))
-        self.assertTrue(os.path.realpath(life_cycle_inventory_building_systems).startswith(
-            os.path.realpath(self.locator.scenario)),
-            msg='Path not in scenario: %s' % life_cycle_inventory_building_systems)

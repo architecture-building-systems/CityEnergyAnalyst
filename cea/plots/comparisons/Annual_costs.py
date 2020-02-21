@@ -18,34 +18,53 @@ __status__ = "Production"
 
 class ComparisonsAnnualCostsPlot(cea.plots.comparisons.ComparisonsPlotBase):
     """Implement the "CAPEX vs. OPEX of centralized system in generation X" plot"""
-    name = "Comparisons annual costs"
+    name = "Annualized costs"
 
     def __init__(self, project, parameters, cache):
         super(ComparisonsAnnualCostsPlot, self).__init__(project, parameters, cache)
         self.analysis_fields = ["Capex_a_sys_connected_USD",
                                 "Capex_a_sys_disconnected_USD",
                                 "Opex_a_sys_connected_USD",
-                                "Opex_a_sys_disconnected_USD"
-                                ]
-        self.input_files = []
+                                "Opex_a_sys_disconnected_USD"]
+        self.normalization = self.parameters['normalization']
+        self.input_files = [(x[4].get_optimization_slave_total_performance, [x[3], x[2]]) if x[2] != "today" else
+                            (x[4].get_costs_operation_file, []) for x in self.scenarios_and_systems]
+        self.titley = self.calc_titles()
+        self.data_clean = None
+
+    def calc_titles(self):
+        if self.normalization == "gross floor area":
+            titley = 'Annualized cost [USD$(2015)/m2.yr]'
+        elif self.normalization == "net floor area":
+            titley = 'Annualized cost [USD$(2015)/m2.yr]'
+        elif self.normalization == "air conditioned floor area":
+            titley = 'Annualized cost [USD$(2015)/m2.yr]'
+        elif self.normalization == "building occupancy":
+            titley = 'Annualized cost [USD$(2015)/pax.yr]'
+        else:
+            titley = 'Annualized cost [USD$(2015)/yr]'
+        return titley
 
     @property
     def title(self):
-        return "Comparison Annual Costs"
+        if self.normalization != "none":
+            return "Annual Costs per Scenario normalized to {normalized}".format(normalized=self.normalization)
+        else:
+            return "Annual Costs per Scenario"
 
     @property
     def output_path(self):
-        return self.locator.get_timeseries_plots_file('%s%s%s_annualized_costs' % (self.urban_scenarios, \
-                                                                                   self.energy_system_scenarios_generation, \
-                                                                                   self.energy_system_scenarios_individual))
+        return self.locator.get_timeseries_plots_file('scenarios_annualized_costs')
 
     @property
     def layout(self):
         return go.Layout(barmode='relative',
-                         yaxis=dict(title='Annualized cost [USD$(2015)/year]'))
+                         yaxis=dict(title=self.titley))
 
     def calc_graph(self):
         data = self.preprocessing_annual_costs_scenarios()
+        data = self.normalize_data(data, self.normalization, self.analysis_fields)
+        self.data_clean = data
         graph = []
         for field in self.analysis_fields:
             y = data[field].values
@@ -65,8 +84,8 @@ def main():
     config = cea.config.Configuration()
     cache = cea.plots.cache.NullPlotCache()
     ComparisonsAnnualCostsPlot(config.project,
-                               {
-                                   'urban-energy-system-scenarios': config.plots_scenario_comparisons.urban_energy_system_scenarios},
+                               {'scenarios-and-systems': config.plots_comparisons.scenarios_and_systems,
+                                'normalization': config.plots_comparisons.normalization},
                                cache).plot(auto_open=True)
 
 

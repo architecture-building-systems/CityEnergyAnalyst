@@ -15,7 +15,7 @@ import pandas as pd
 
 import cea.technologies.solar.photovoltaic as pv
 from cea.constants import HOURS_IN_YEAR
-from cea.optimization.master.emissions_model import calc_emissions_Whyr_to_tonCO2yr, calc_pen_Whyr_to_MJoilyr
+from cea.optimization.master.emissions_model import calc_emissions_Whyr_to_tonCO2yr
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -116,16 +116,10 @@ def calc_electricity_performance_emissions(lca, E_PV_gen_export_W, E_GRID_direct
     # SOlar technologies
     GHG_PV_gen_export_tonCO2 = calc_emissions_Whyr_to_tonCO2yr(sum(E_PV_gen_export_W), lca.EL_TO_CO2)
     GHG_PV_gen_directload_tonCO2 = 0.0  # because the price of fuel is already included
-
-    PEN_PV_gen_export_MJoil = calc_pen_Whyr_to_MJoilyr(sum(E_PV_gen_export_W), lca.EL_TO_OIL_EQ)
-    PEN_PV_gen_directload_MJoil = 0.0  # because the price of fuel is already included
-
     GHG_PV_connected_tonCO2 = GHG_PV_gen_directload_tonCO2 - GHG_PV_gen_export_tonCO2
-    PEN_PV_connected_MJoil = PEN_PV_gen_directload_MJoil - PEN_PV_gen_export_MJoil
 
     # GRid
     GHG_GRID_directload_tonCO2 = calc_emissions_Whyr_to_tonCO2yr(sum(E_GRID_directload_W), lca.EL_TO_CO2)
-    PEN_GRID_directload_MJoil = calc_pen_Whyr_to_MJoilyr(sum(E_GRID_directload_W), lca.EL_TO_OIL_EQ)
 
     # calculate emissions of generation units BUT solar (the last will be calculated in the next STEP)
     # PEN_HPSolarandHeatRecovery_MJoil = E_aux_solar_and_heat_recovery_W * lca.EL_TO_OIL_EQ * WH_TO_J / 1.0E6
@@ -136,9 +130,6 @@ def calc_electricity_performance_emissions(lca, E_PV_gen_export_W, E_GRID_direct
         "GHG_PV_connected_tonCO2": GHG_PV_connected_tonCO2,
         "GHG_GRID_connected_tonCO2": GHG_GRID_directload_tonCO2,
 
-        # primary energy
-        "PEN_PV_connected_MJoil": PEN_PV_connected_MJoil,
-        "PEN_GRID_connected_MJoil": PEN_GRID_directload_MJoil
     }
 
     return performance_electricity
@@ -397,7 +388,7 @@ def extract_electricity_demand_buildings(master_to_slave_vars, building_names, l
                 building_dencentralized_system_heating = pd.read_csv(
                     locator.get_optimization_decentralized_folder_building_result_heating_activation(name))
                 building_dencentralized_system_cooling = pd.read_csv(
-                    locator.get_optimization_decentralized_folder_building_result_cooling_activation(name))
+                    locator.get_optimization_decentralized_folder_building_cooling_activation(name))
                 E_hs_ww_req_disconnected_W += building_dencentralized_system_heating['E_hs_ww_req_W']
                 E_cs_cre_cdata_req_disconnected_W += building_dencentralized_system_cooling['E_cs_cre_cdata_req_W']
 

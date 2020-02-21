@@ -2496,7 +2496,7 @@ jQuery.extend({
 
       ret = elem.getAttribute( name );
 
-      // Non-existent attributes return null, we normalize to undefined
+      // Non-existent attributes return null, we add_timeframe to undefined
       return ret === null ?
         undefined :
         ret;
@@ -3325,7 +3325,7 @@ jQuery.event = {
       return event;
     }
 
-    // Create a writable copy of the event object and normalize some properties
+    // Create a writable copy of the event object and add_timeframe some properties
     var i, prop,
       originalEvent = event,
       fixHook = jQuery.event.fixHooks[ event.type ] || {},
@@ -6503,7 +6503,7 @@ jQuery.extend({
   // Add in properties whose names you wish to fix before
   // setting or getting the value
   cssProps: {
-    // normalize float css property
+    // add_timeframe float css property
     "float": jQuery.support.cssFloat ? "cssFloat" : "styleFloat"
   },
 
@@ -7380,7 +7380,7 @@ jQuery.extend({
         }
       } else {
         // We extract error from statusText
-        // then normalize statusText and status for non-aborts
+        // then add_timeframe statusText and status for non-aborts
         error = statusText;
         if ( !statusText || status ) {
           statusText = "error";
@@ -7840,7 +7840,7 @@ jQuery.ajaxSetup({
   }
 });
 
-// Detect, normalize options and install callbacks for jsonp requests
+// Detect, add_timeframe options and install callbacks for jsonp requests
 jQuery.ajaxPrefilter( "json jsonp", function( s, originalSettings, jqXHR ) {
 
   var inspectData = s.contentType === "application/x-www-form-urlencoded" &&
@@ -8152,7 +8152,7 @@ if ( jQuery.support.ajax ) {
                   try {
                     statusText = xhr.statusText;
                   } catch( e ) {
-                    // We normalize with Webkit giving an empty statusText
+                    // We add_timeframe with Webkit giving an empty statusText
                     statusText = "";
                   }
 
@@ -8577,7 +8577,7 @@ jQuery.extend({
     opt.duration = jQuery.fx.off ? 0 : typeof opt.duration === "number" ? opt.duration :
       opt.duration in jQuery.fx.speeds ? jQuery.fx.speeds[ opt.duration ] : jQuery.fx.speeds._default;
 
-    // normalize opt.queue - true/undefined/null -> "fx"
+    // add_timeframe opt.queue - true/undefined/null -> "fx"
     if ( opt.queue == null || opt.queue === true ) {
       opt.queue = "fx";
     }

@@ -57,16 +57,16 @@ REFERENCE_CASES = {
                                       "masterplan")}
 
 REFERENCE_CASES_DATA = {
-    'open': {'weather': 'Zug-inducity_1990_2010_TMY', 'latitude': 47.1628017306431, 'longitude': 8.31,
+    'open': {'databases': 'CH', 'weather': 'Zug-inducity_1990_2010_TMY', 'latitude': 47.1628017306431, 'longitude': 8.31,
              'radiation': 'open.baseline.radiation.csv',
              'properties_surfaces': 'open.baseline.properties_surfaces.csv'},
-    'zug/baseline': {'weather': 'Zug-inducity_1990_2010_TMY', 'latitude': 47.1628017306431, 'longitude': 8.31,
+    'zug/baseline': {'databases': 'CH', 'weather': 'Zug-inducity_1990_2010_TMY', 'latitude': 47.1628017306431, 'longitude': 8.31,
                      'radiation': 'zug.baseline.radiation.csv',
                      'properties_surfaces': 'zug.baseline.properties_surfaces.csv'},
-    'zurich/baseline': {'weather': 'Zuerich-Kloten_1990_2010_TMY', 'latitude': 46.9524055556, 'longitude': 7.43958333333,
+    'zurich/baseline': {'databases': 'CH', 'weather': 'Zuerich-Kloten_1990_2010_TMY', 'latitude': 46.9524055556, 'longitude': 7.43958333333,
                         'radiation': 'hq.baseline.radiation.csv',
                         'properties_surfaces': 'hq.baseline.properties_surfaces.csv'},
-    'zurich/masterplan': {'weather': 'Zuerich-ETHZ_1990-2010_TMY', 'latitude': 46.9524055556, 'longitude': 7.43958333333,
+    'zurich/masterplan': {'databases': 'CH', 'weather': 'Zuerich-ETHZ_1990-2010_TMY', 'latitude': 46.9524055556, 'longitude': 7.43958333333,
                           'radiation': 'hq.masterplan.radiation.csv',
                           'properties_surfaces': 'hq.masterplan.properties_surfaces.csv'}}
 
@@ -138,24 +138,49 @@ def task_download_reference_cases():
     }
 
 
-def task_run_data_helper():
-    """Run the data helper for each reference case"""
-    import cea.datamanagement.data_helper
+def task_run_data_initializer():
+    """Run the data initializer for each reference case"""
 
-    def run_data_helper(scenario_path):
+    def run_data_initializer(scenario_path, databases_path):
+        import cea.datamanagement.data_initializer
         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         config.scenario = scenario_path
-        cea.datamanagement.data_helper.main(config)
+        config.data_initializer.databases_path = databases_path
+        cea.datamanagement.data_initializer.main(config)
+
+    for reference_case, scenario_path in REFERENCE_CASES.items():
+        if _reference_cases and reference_case not in _reference_cases:
+            continue
+
+        databases_path = REFERENCE_CASES_DATA[reference_case]['databases']
+
+        yield {
+            'name': 'run_data_initializer:%s' % reference_case,
+            'task_dep': ['download_reference_cases'],
+            'actions': [
+                (run_data_initializer, [], {
+                    'scenario_path': scenario_path,
+                    'databases_path': databases_path})],
+        }
+
+def task_run_archetypes_mapper():
+    """Run the data helper for each reference case"""
+    import cea.datamanagement.archetypes_mapper
+
+    def run_archetypes_mapper(scenario_path):
+        config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
+        config.scenario = scenario_path
+        cea.datamanagement.archetypes_mapper.main(config)
 
     for reference_case, scenario_path in REFERENCE_CASES.items():
         if _reference_cases and reference_case not in _reference_cases:
             continue
 
         yield {
-            'name': 'run_data_helper:%s' % reference_case,
-            'task_dep': ['download_reference_cases'],
+            'name': 'run_archetypes_mapper:%s' % reference_case,
+            'task_dep': ['run_data_initializer:%s' % reference_case],
             'actions': [
-                (run_data_helper, [], {
+                (run_archetypes_mapper, [], {
                     'scenario_path': scenario_path})],
         }
 
@@ -184,7 +209,7 @@ def task_run_demand():
 
         yield {
             'name': 'run_demand:%(reference_case)s' % locals(),
-            'task_dep': ['download_reference_cases', 'run_data_helper:%s' % reference_case],
+            'task_dep': ['download_reference_cases', 'run_archetypes_mapper:%s' % reference_case],
             'actions': [(run_demand, [], {
                 'scenario_path': scenario_path,
                 'weather': weather
@@ -208,7 +233,7 @@ def task_run_embodied_energy():
 
         yield {
             'name': 'run_embodied_energy:%(reference_case)s' % locals(),
-            'task_dep': ['download_reference_cases', 'run_data_helper:%s' % reference_case],
+            'task_dep': ['download_reference_cases', 'run_archetypes_mapper:%s' % reference_case],
             'actions': [(run_embodied_energy, [scenario_path])],
         }
 
@@ -233,73 +258,6 @@ def task_run_emissions_operation():
                 'scenario_path': scenario_path,
             })],
         }
-
-
-def task_run_emissions_mobility():
-    """run the emissions mobility script for each reference case"""
-    import cea.analysis.lca.mobility
-
-    def run_emissions_mobility(scenario_path):
-        config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
-        config.scenario = scenario_path
-        cea.analysis.lca.mobility.main(config)
-
-    for reference_case, scenario_path in REFERENCE_CASES.items():
-        if _reference_cases and reference_case not in _reference_cases:
-            continue
-
-        yield {
-            'name': 'run_emissions_mobility:%(reference_case)s' % locals(),
-            'task_dep': ['run_demand:%(reference_case)s' % locals()],
-            'actions': [(run_emissions_mobility, [], {
-                'scenario_path': scenario_path,
-            })],
-        }
-
-
-def task_run_sensitivity():
-    """Run the sensitivity analysis for the the reference-case-open"""
-
-    # make sure the random number generator is always set to the same value
-    import numpy as np
-    np.random.seed(int("CEA", 16))
-
-    def run_sensitivity():
-        import cea.analysis.sensitivity.sensitivity_demand_samples
-        import cea.analysis.sensitivity.sensitivity_demand_simulate
-        import cea.analysis.sensitivity.sensitivity_demand_analyze
-        import cea.analysis.sensitivity.sensitivity_demand_count
-
-        config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
-        locator = cea.inputlocator.ReferenceCaseOpenLocator()
-        config.scenario = locator.scenario
-        config.sensitivity_demand.method = 'morris'
-        config.sensitivity_demand.num_samples = 2
-        config.sensitivity_demand.number_of_simulations = 1
-
-        # make sure data-helper was run first
-        import cea.datamanagement.data_helper
-        cea.datamanagement.data_helper.data_helper(locator=locator, region="CH", overwrite_technology_folder=True,
-                update_architecture_dbf=True, update_HVAC_systems_dbf=True, update_indoor_comfort_dbf=True,
-                update_internal_loads_dbf=True, update_supply_systems_dbf=True,
-                update_schedule_operation_cea=True, buildings=locator.get_zone_building_names())
-
-        cea.analysis.sensitivity.sensitivity_demand_samples.main(config)
-        count = cea.analysis.sensitivity.sensitivity_demand_count.count_samples(config.sensitivity_demand.samples_folder)
-        cea.analysis.sensitivity.sensitivity_demand_simulate.main(config)
-        result_0_csv = os.path.join(config.sensitivity_demand.samples_folder, 'result.0.csv')
-        for i in range(count):
-            # generate "fake" results
-            if i == 0:
-                continue
-            shutil.copyfile(result_0_csv, os.path.join(config.sensitivity_demand.samples_folder, 'result.%i.csv' % i))
-        cea.analysis.sensitivity.sensitivity_demand_analyze.main(config)
-
-
-    return {
-        'name': 'run_sensitivity',
-        'actions': [(run_sensitivity, [], {})],
-    }
 
 def task_run_thermal_network():
     """run the thermal_network for the included reference case"""

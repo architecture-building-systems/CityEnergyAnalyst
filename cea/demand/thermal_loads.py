@@ -84,29 +84,30 @@ def calc_thermal_loads(building_name, bpr, weather_data, date_range, locator,
         tsd['mcpcre_sys'] = tsd['Tcre_sys_re'] = tsd['Tcre_sys_sup'] = np.zeros(HOURS_IN_YEAR)
         tsd['E_cre'] = np.zeros(HOURS_IN_YEAR)
 
+    # CALCULATE PROCESS HEATING
+    tsd['Qhpro_sys'] = schedules['Qhpro_W']  # in Wh
+
+    # CALCULATE PROCESS COOLING
+    tsd['Qcpro_sys'] = schedules['Qcpro_W']  # in Wh
+
+    # CALCULATE DATA CENTER LOADS
+    if datacenter_loads.has_data_load(bpr):
+        tsd = datacenter_loads.calc_Edata(tsd, schedules)  # end-use electricity
+        tsd = datacenter_loads.calc_Qcdata_sys(bpr, tsd)  # system need for cooling
+        tsd = datacenter_loads.calc_Qcdataf(locator, bpr, tsd)  # final need for cooling
+    else:
+        tsd['DC_cdata'] = tsd['Qcdata_sys'] = tsd['Qcdata'] = np.zeros(HOURS_IN_YEAR)
+        tsd['mcpcdata_sys'] = tsd['Tcdata_sys_re'] = tsd['Tcdata_sys_sup'] = np.zeros(HOURS_IN_YEAR)
+        tsd['Edata'] = tsd['E_cdata'] = np.zeros(HOURS_IN_YEAR)
+
+    # CALCULATE SPACE CONDITIONING DEMANDS
     if np.isclose(bpr.rc_model['Af'], 0.0):  # if building does not have conditioned area
         tsd['T_int'] = tsd['T_ext']
         tsd['x_int'] = np.vectorize(convert_rh_to_moisture_content)(tsd['rh_ext'], tsd['T_int'])
+        tsd['E_cs'] = tsd['E_hs'] = np.zeros(HOURS_IN_YEAR)
+        tsd['Eaux_cs'] = tsd['Eaux_hs'] = tsd['Ehs_lat_aux'] = np.zeros(HOURS_IN_YEAR)
         print("building () does not have an air-conditioned area".format(bpr.name))
     else:
-
-        # CALCULATE PROCESS HEATING
-        tsd['Qhpro_sys'] = schedules['Qhpro_W']  # in Wh
-
-        # CALCULATE PROCESS COOLING
-        tsd['Qcpro_sys'] = schedules['Qcpro_W']   # in Wh
-
-        # CALCULATE DATA CENTER LOADS
-        if datacenter_loads.has_data_load(bpr):
-            tsd = datacenter_loads.calc_Edata(tsd, schedules)  # end-use electricity
-            tsd = datacenter_loads.calc_Qcdata_sys(bpr, tsd)  # system need for cooling
-            tsd = datacenter_loads.calc_Qcdataf(locator, bpr, tsd)  # final need for cooling
-        else:
-            tsd['DC_cdata'] = tsd['Qcdata_sys'] = tsd['Qcdata'] = np.zeros(HOURS_IN_YEAR)
-            tsd['mcpcdata_sys'] = tsd['Tcdata_sys_re'] = tsd['Tcdata_sys_sup'] = np.zeros(HOURS_IN_YEAR)
-            tsd['Edata'] = tsd['E_cdata'] = np.zeros(HOURS_IN_YEAR)
-
-        # CALCULATE SPACE CONDITIONING DEMANDS
         tsd = latent_loads.calc_Qgain_lat(tsd, schedules)
         tsd = calc_set_points(bpr, date_range, tsd, building_name, config, locator,
                               schedules)  # calculate the setpoints for every hour
@@ -466,6 +467,7 @@ def initialize_timestep_data(bpr, weather_data):
                               'GRID',
                               'GRID_a',
                               'GRID_l',
+                              'GRID_v',
                               'GRID_data',
                               'GRID_pro',
                               'GRID_aux',
@@ -566,7 +568,7 @@ def update_timestep_data_no_conditioned_area(tsd):
                    'DC_cre', 'Qcre_sys', 'Qcre',
                    'Eaux', 'Ehs_lat_aux', 'Eaux_hs', 'Eaux_cs', 'Eaux_ve', 'Eaux_ww', 'Eaux_fw',
                    'E_sys', 'PV', 'GRID', 'E_ww', 'E_hs', 'E_cs', 'E_cre', 'E_cdata', 'E_pro',
-                   'Epro', 'Edata', 'Ea', 'El', 'Eal',
+                   'Epro', 'Edata', 'Ea', 'El', 'Eal', 'Ev',
                    'mcphs_sys', 'mcpcs_sys', 'mcptw'
                                              'mcpww_sys', 'mcpcdata_sys', 'mcpcre_sys',
                    'Tcdata_sys_re', 'Tcdata_sys_sup',

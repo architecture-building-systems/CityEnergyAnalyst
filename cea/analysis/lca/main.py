@@ -9,7 +9,7 @@ import os
 
 from cea.analysis.lca.embodied import lca_embodied
 from cea.analysis.lca.operation import lca_operation
-from cea.analysis.lca.mobility import lca_mobility
+
 
 import cea.config
 import cea.inputlocator
@@ -29,19 +29,14 @@ def emissions_main(locator, config):
     #
     embodied = config.emissions.embodied
     operation = config.emissions.operation
-    mobility = config.emissions.mobility
     # embodied emissions
     if embodied:
         year_to_calculate = config.emissions.year_to_calculate
-        lca_embodied(year_to_calculate, locator, config)
+        lca_embodied(year_to_calculate, locator)
 
     # operation emissions
     if operation:
         lca_operation(locator)
-
-    # mobility emissions
-    if mobility:
-        lca_mobility(locator, config)
 
 
 def main(config):

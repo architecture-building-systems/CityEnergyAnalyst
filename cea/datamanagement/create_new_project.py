@@ -14,7 +14,7 @@ from osgeo import gdal
 import cea.config
 import cea.inputlocator
 from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_surroundings, \
-    verify_input_occupancy, verify_input_age, verify_input_terrain, COLUMNS_ZONE_OCCUPANCY, COLUMNS_ZONE_AGE
+    verify_input_typology, verify_input_terrain, COLUMNS_ZONE_TYPOLOGY
 from cea.utilities.dbf import dataframe_to_dbf, dbf_to_dataframe
 from cea.utilities.standardize_coordinates import shapefile_to_WSG_and_UTM, raster_to_WSG_and_UTM
 
@@ -34,8 +34,7 @@ def create_new_project(locator, config):
     surroundings_geometry_path = config.create_new_project.surroundings
     street_geometry_path = ''
     terrain_path = config.create_new_project.terrain
-    occupancy_path = config.create_new_project.occupancy
-    age_path = config.create_new_project.age
+    typology_path = config.create_new_project.typology
 
     # import file
     zone, lat, lon = shapefile_to_WSG_and_UTM(zone_geometry_path)
@@ -43,7 +42,6 @@ def create_new_project(locator, config):
     verify_input_geometry_zone(zone)
     locator.ensure_parent_folder_exists(locator.get_zone_geometry())
     zone.to_file(locator.get_zone_geometry())
-
 
     # apply coordinate system of terrain into zone and save zone to disk.
 
@@ -67,41 +65,31 @@ def create_new_project(locator, config):
         street.to_file(locator.get_street_network())
 
     ## create occupancy file and year file
-    if occupancy_path == '':
-        print("there is no occupancy file, we proceed to create it based on the geometry of your zone")
-        zone = Gdf.from_file(zone_geometry_path).drop('geometry', axis=1)
-        for field in COLUMNS_ZONE_OCCUPANCY:
-            zone[field] = 0.0
-        zone[COLUMNS_ZONE_OCCUPANCY[:2]] = 0.5  # adding 0.5 area use to the first two uses
-        dataframe_to_dbf(zone[['Name'] + COLUMNS_ZONE_OCCUPANCY], locator.get_building_occupancy())
-    else:
-        # import file
-        occupancy_file = dbf_to_dataframe(occupancy_path)
-        occupancy_file_test = occupancy_file[['Name'] + COLUMNS_ZONE_OCCUPANCY]
-        # verify if input file is correct for CEA, if not an exception will be released
-        verify_input_occupancy(occupancy_file_test)
-        # create new file
-        locator.ensure_parent_folder_exists(locator.get_building_occupancy())
-        copyfile(occupancy_path, locator.get_building_occupancy())
 
-    ## create age file
-    if age_path == '':
-        print(
-            "there is no file with the age of the buildings, we proceed to create it based on the geometry of your zone")
+    if typology_path == '':
+        print("there is no typology file, we proceed to create it based on the geometry of your zone")
+
         zone = Gdf.from_file(zone_geometry_path).drop('geometry', axis=1)
-        for field in COLUMNS_ZONE_AGE:
-            zone[field] = 0.0
-        zone['built'] = 2017  # adding year of construction
-        dataframe_to_dbf(zone[['Name'] + COLUMNS_ZONE_AGE], locator.get_building_age())
+        zone['STANDARD'] = 'T6'
+        zone['YEAR'] = 2020
+        zone['1ST_USE'] = 'MULTI_RES'
+        zone['1ST_USE_R'] = 1.0
+        zone['2ND_USE'] = "NONE"
+        zone['2ND_USE_R'] = 0.0
+        zone['3RD_USE'] = "NONE"
+        zone['3RD_USE_R'] = 0.0
+        dataframe_to_dbf(zone[COLUMNS_ZONE_TYPOLOGY], locator.get_building_typology())
     else:
         # import file
-        age_file = dbf_to_dataframe(age_path)
-        age_file_test = age_file[['Name'] + COLUMNS_ZONE_AGE]
+        occupancy_file = dbf_to_dataframe(typology_path)
+        occupancy_file_test = occupancy_file[COLUMNS_ZONE_TYPOLOGY]
         # verify if input file is correct for CEA, if not an exception will be released
-        verify_input_age(age_file_test)
+        verify_input_typology(occupancy_file_test)
         # create new file
-        locator.ensure_parent_folder_exists(locator.get_building_age())
-        copyfile(age_path, locator.get_building_age())
+
+
+        copyfile(typology_path, locator.get_building_typology())
+
 
     # add other folders by calling the locator
     locator.get_measurements()
@@ -114,13 +102,13 @@ def main(config):
     # print out all configuration variables used by this script
     print("Running create-new-project with project = %s" % config.create_new_project.project)
     print("Running create-new-project with scenario = %s" % config.create_new_project.scenario)
-    print("Running create-new-project with occupancy-types = %s" % config.create_new_project.occupancy)
+    print("Running create-new-project with typology = %s" % config.create_new_project.occupancy)
     print("Running create-new-project with zone = %s" % config.create_new_project.zone)
-    print("Running create-new-project with terrain = %s" % config.create_new_project.terrain)
     print("Running create-new-project with terrain = %s" % config.create_new_project.terrain)
     print("Running create-new-project with output-path = %s" % config.create_new_project.output_path)
 
-    scenario = os.path.join(config.create_new_project.output_path, config.create_new_project.project,
+    scenario = os.path.join(config.create_new_project.output_path,
+                            config.create_new_project.project,
                             config.create_new_project.scenario)
 
     locator = cea.inputlocator.InputLocator(scenario)

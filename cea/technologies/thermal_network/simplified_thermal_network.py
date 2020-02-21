@@ -169,9 +169,9 @@ def calc_thermal_loss_per_pipe(T_in_K, m_kgpers, T_ground_K, k_kWperK):
 def thermal_network_simplified(locator, config, network_name):
     # local variables
     network_type = config.thermal_network.network_type
-    min_head_substation_kPa = config.thermal_network.min_head_susbstation
+    min_head_substation_kPa = config.thermal_network.min_head_substation
     thermal_transfer_unit_design_head_m = min_head_substation_kPa * 1000 / M_WATER_TO_PA
-    coefficient_friction_hanzen_williams = config.thermal_network.hw_friction_coefficient
+    coefficient_friction_hazen_williams = config.thermal_network.hw_friction_coefficient
     velocity_ms = config.thermal_network.peak_load_velocity
     fraction_equivalent_length = config.thermal_network.equivalent_length_factor
     peak_load_percentage = config.thermal_network.peak_load_percentage
@@ -190,9 +190,10 @@ def thermal_network_simplified(locator, config, network_name):
     if network_type == "DH":
         buildings_name_with_heating = get_building_names_with_load(total_demand, load_name='QH_sys_MWhyr')
         buildings_name_with_space_heating = get_building_names_with_load(total_demand, load_name='Qhs_sys_MWhyr')
-        DHN_barcode = "111111thermalnetwork"
+        DHN_barcode = "0"
         if (buildings_name_with_heating != [] and buildings_name_with_space_heating != []):
-            building_names = buildings_name_with_heating
+            building_names = [building for building in buildings_name_with_heating if building in
+                              node_df.Building.values]
             substation.substation_main_heating(locator, total_demand, building_names, DHN_barcode=DHN_barcode)
         else:
             raise Exception('problem here')
@@ -209,9 +210,10 @@ def thermal_network_simplified(locator, config, network_name):
 
     if network_type == "DC":
         buildings_name_with_cooling = get_building_names_with_load(total_demand, load_name='QC_sys_MWhyr')
-        DCN_barcode = "111111thermalnetwork"
+        DCN_barcode = "0"
         if buildings_name_with_cooling != []:
-            building_names = buildings_name_with_cooling
+            building_names = [building for building in buildings_name_with_cooling if building in
+                              node_df.Building.values]
             substation.substation_main_cooling(locator, total_demand, building_names, DCN_barcode=DCN_barcode)
         else:
             raise Exception('problem here')
@@ -275,7 +277,7 @@ def thermal_network_simplified(locator, config, network_name):
         wn.add_pipe(edge_name, edge[1]["start node"],
                     edge[1]["end node"],
                     length=length_m * (1 + fraction_equivalent_length),
-                    roughness=coefficient_friction_hanzen_williams,
+                    roughness=coefficient_friction_hazen_williams,
                     minor_loss=0.0,
                     status='OPEN')
 
@@ -291,7 +293,7 @@ def thermal_network_simplified(locator, config, network_name):
     results = sim.run_sim()
     max_volume_flow_rates_m3s = results.link['flowrate'].abs().max()
     pipe_names = max_volume_flow_rates_m3s.index.values
-    pipe_catalog = pd.read_excel(locator.get_database_supply_systems(), sheet_name='PIPING')
+    pipe_catalog = pd.read_excel(locator.get_database_distribution_systems(), sheet_name='THERMAL_GRID')
     Pipe_DN, D_ext_m, D_int_m, D_ins_m = zip(
         *[calc_max_diameter(flow, pipe_catalog, velocity_ms=velocity_ms, peak_load_percentage=peak_load_percentage) for
           flow in max_volume_flow_rates_m3s])

@@ -31,106 +31,60 @@ surroundings:
     type: float
   - name: REFERENCE
     type: str
-age:
+typology:
   parent: zone
   pk: Name
   type: dbf
-  location: get_building_age
+  location: get_building_typology
   fields:
   - name: Name
     type: str
-  - name: HVAC
+  - name: YEAR
     type: year
-  - name: basement
-    type: year
-  - name: built
-    type: year
-  - name: envelope
-    type: year
-  - name: partitions
-    type: year
-  - name: roof
-    type: year
-  - name: windows
-    type: year
-  - name: REFERENCE
-    type: str
-occupancy:
-  parent: zone
-  pk: Name
-  type: dbf
-  location: get_building_occupancy
-  fields:
-  - name: Name
-    type: str
-  - name: SINGLE_RES
+  - name: STANDARD
+    type: choice
+    choice_properties:
+      lookup:
+        path: get_database_construction_standards
+        sheet: STANDARD_DEFINITION
+        column: STANDARD
+  - name: 1ST_USE
+    type: choice
+    choice_properties:
+      lookup:
+        path: get_database_use_types_properties
+        sheet: INTERNAL_LOADS
+        column: code
+  - name: 1ST_USE_R
     type: float
     constraints:
       max: 1
-  - name: MULTI_RES
+  - name: 2ND_USE
+    type: choice
+    choice_properties:
+      lookup:
+        path: get_database_use_types_properties
+        sheet: INTERNAL_LOADS
+        column: code
+      none_value: NONE
+  - name: 2ND_USE_R
     type: float
     constraints:
       max: 1
-  - name: OFFICE
-    type: float
-    constraints:
-      max: 1
-  - name: RETAIL
-    type: float
-    constraints:
-      max: 1
-  - name: SCHOOL
-    type: float
-    constraints:
-      max: 1
-  - name: RESTAURANT
-    type: float
-    constraints:
-      max: 1
-  - name: FOODSTORE
-    type: float
-    constraints:
-      max: 1
-  - name: GYM
-    type: float
-    constraints:
-      max: 1
-  - name: HOSPITAL
-    type: float
-    constraints:
-      max: 1
-  - name: HOTEL
-    type: float
-    constraints:
-      max: 1
-  - name: INDUSTRIAL
-    type: float
-    constraints:
-      max: 1
-  - name: LIBRARY
-    type: float
-    constraints:
-      max: 1
-  - name: SWIMMING
-    type: float
-    constraints:
-      max: 1
-  - name: COOLROOM
-    type: float
-    constraints:
-      max: 1
-  - name: SERVERROOM
-    type: float
-    constraints:
-      max: 1
-  - name: PARKING
+  - name: 3RD_USE
+    type: choice
+    choice_properties:
+      lookup:
+        path: get_database_use_types_properties
+        sheet: INTERNAL_LOADS
+        column: code
+      none_value: NONE
+  - name: 3RD_USE_R
     type: float
     constraints:
       max: 1
   - name: REFERENCE
     type: str
-    constraints:
-      max: 1
 internal-loads:
   parent: zone
   pk: Name
@@ -155,6 +109,8 @@ internal-loads:
     type: float
   - name: Ed_Wm2
     type: float
+  - name: Ev_kWveh
+    type: float
   - name: Qcpro_Wm2
     type: float
   - name: Qhpro_Wm2
@@ -173,32 +129,32 @@ supply-systems:
     type: str
   - name: type_cs
     type: choice
-    location:
-      path: get_database_supply_systems
-      sheet: ALL_IN_ONE_SYSTEMS
-      column: code
-      filter: system=='COOLING' or system=='NONE'
+    choice_properties:
+      lookup:
+        path: get_database_supply_assemblies
+        sheet: COOLING
+        column: code
   - name: type_dhw
     type: choice
-    location:
-      path: get_database_supply_systems
-      sheet: ALL_IN_ONE_SYSTEMS
-      column: code
-      filter: system=='HEATING' or system=='NONE'
+    choice_properties:
+      lookup:
+        path: get_database_supply_assemblies
+        sheet: HOT_WATER
+        column: code
   - name: type_el
     type: choice
-    location:
-      path: get_database_supply_systems
-      sheet: ALL_IN_ONE_SYSTEMS
-      column: code
-      filter: system=='ELECTRICITY' or system=='NONE'
+    choice_properties:
+      lookup:
+        path: get_database_supply_assemblies
+        sheet: ELECTRICITY
+        column: code
   - name: type_hs
     type: choice
-    location:
-      path: get_database_supply_systems
-      sheet: ALL_IN_ONE_SYSTEMS
-      column: code
-      filter: system=='HEATING' or system=='NONE'
+    choice_properties:
+      lookup:
+        path: get_database_supply_assemblies
+        sheet: HEATING
+        column: code
 architecture:
   parent: zone
   pk: Name
@@ -243,40 +199,60 @@ architecture:
       max: 1
   - name: type_cons
     type: choice
-    location:
-      path: get_database_envelope_systems
-      sheet: CONSTRUCTION
-      column: code
+    choice_properties:
+      lookup:
+        path: get_database_envelope_systems
+        sheet: CONSTRUCTION
+        column: code
   - name: type_leak
     type: choice
-    location:
-      path: get_database_envelope_systems
-      sheet: LEAKAGE
-      column: code
+    choice_properties:
+      lookup:
+        path: get_database_envelope_systems
+        sheet: TIGHTNESS
+        column: code
   - name: type_roof
     type: choice
-    location:
-      path: get_database_envelope_systems
-      sheet: ROOF
-      column: code
+    choice_properties:
+      lookup:
+        path: get_database_envelope_systems
+        sheet: ROOF
+        column: code
   - name: type_shade
     type: choice
-    location:
-      path: get_database_envelope_systems
-      sheet: SHADING
-      column: code
+    choice_properties:
+      lookup:
+        path: get_database_envelope_systems
+        sheet: SHADING
+        column: code
   - name: type_wall
     type: choice
-    location:
-      path: get_database_envelope_systems
-      sheet: WALL
-      column: code
+    choice_properties:
+      lookup:
+        path: get_database_envelope_systems
+        sheet: WALL
+        column: code
+  - name: type_floor
+    type: choice
+    choice_properties:
+      lookup:
+        path: get_database_envelope_systems
+        sheet: FLOOR
+        column: code
+  - name: type_base
+    type: choice
+    choice_properties:
+      lookup:
+        path: get_database_envelope_systems
+        sheet: FLOOR
+        column: code
   - name: type_win
     type: choice
-    location:
-      path: get_database_envelope_systems
-      sheet: WINDOW
-      column: code
+    choice_properties:
+      lookup:
+        path: get_database_envelope_systems
+        sheet: WINDOW
+        column: code
 indoor-comfort:
   parent: zone
   pk: Name
@@ -309,34 +285,39 @@ air-conditioning-systems:
       type: str
     - name: type_cs
       type: choice
-      location:
-        path: get_database_air_conditioning_systems
-        sheet: cooling
-        column: code
+      choice_properties:
+        lookup:
+          path: get_database_air_conditioning_systems
+          sheet: COOLING
+          column: code
     - name: type_hs
       type: choice
-      location:
-        path: get_database_air_conditioning_systems
-        sheet: heating
-        column: code
+      choice_properties:
+        lookup:
+          path: get_database_air_conditioning_systems
+          sheet: HEATING
+          column: code
     - name: type_dhw
       type: choice
-      location:
-        path: get_database_air_conditioning_systems
-        sheet: dhw
-        column: code
+      choice_properties:
+        lookup:
+          path: get_database_air_conditioning_systems
+          sheet: HOT_WATER
+          column: code
     - name: type_ctrl
       type: choice
-      location:
-        path: get_database_air_conditioning_systems
-        sheet: controller
-        column: code
+      choice_properties:
+        lookup:
+          path: get_database_air_conditioning_systems
+          sheet: CONTROLLER
+          column: code
     - name: type_vent
       type: choice
-      location:
-        path: get_database_air_conditioning_systems
-        sheet: ventilation
-        column: code
+      choice_properties:
+        lookup:
+          path: get_database_air_conditioning_systems
+          sheet: VENTILATION
+          column: code
     - name: heat_starts
       type: date
     - name: heat_ends

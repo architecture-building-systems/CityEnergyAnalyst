@@ -26,12 +26,14 @@ def has_heating_system(bpr):
     :rtype: bool
     """
 
-    if bpr.hvac['type_hs'] in {'T1', 'T2', 'T3', 'T4'}:
+    supported1 = ['RADIATOR', 'FLOOR_HEATING', 'CENTRAL_AC']
+    supported2 = ['NONE']
+    if bpr.hvac['class_hs'] in supported1:
         return True
-    elif bpr.hvac['type_hs'] in {'T0'}:
+    elif bpr.hvac['class_hs'] in supported2:
         return False
     else:
-        raise ValueError('Invalid value for type_hs: %s' % bpr.hvac['type_hs'])
+        raise ValueError('Invalid value for class_cs: %s. CEA only supports the following systems %s' %(bpr.hvac['class_hs'], supported1.extend(supported2)))
 
 
 def has_cooling_system(bpr):
@@ -43,13 +45,14 @@ def has_cooling_system(bpr):
     :return: True or False
     :rtype: bool
     """
-
-    if bpr.hvac['type_cs'] in {'T1', 'T2', 'T3', 'T4', 'T5'}:
+    supported1 = ['CEILING_COOLING', 'FLOOR_COOLING', 'DECENTRALIZED_AC', 'CENTRAL_AC', 'HYBRID_AC']
+    supported2 = ['NONE']
+    if bpr.hvac['class_cs'] in supported1:
         return True
-    elif bpr.hvac['type_cs'] in {'T0'}:
+    elif bpr.hvac['class_cs'] in supported2:
         return False
     else:
-        raise ValueError('Invalid value for type_cs: %s' % bpr.hvac['type_cs'])
+        raise ValueError('Invalid value for class_cs: %s. CEA only supports the following systems %s' %(bpr.hvac['class_cs'], supported1.extend(supported2)))
 
 
 def has_radiator_heating_system(bpr):
@@ -62,14 +65,14 @@ def has_radiator_heating_system(bpr):
     :rtype: bool
     """
 
-    if bpr.hvac['type_hs'] in {'T1', 'T2'}:
-        # radiator or floor heating
+    supported1 = ['RADIATOR']
+    supported2 = ['NONE', 'FLOOR_HEATING', 'CENTRAL_AC']
+    if bpr.hvac['class_hs'] in supported1:
         return True
-    elif bpr.hvac['type_hs'] in {'T0', 'T3', 'T4'}:
-        # no system or central ac
+    elif bpr.hvac['class_hs'] in supported2:
         return False
     else:
-        raise ValueError('Invalid value for type_hs: %s' % bpr.hvac['type_hs'])
+        raise ValueError('Invalid value for class_hs: %s. CEA only supports the following systems  %s' %(bpr.hvac['class_hs'], supported1.extend(supported2)))
 
 
 def has_floor_heating_system(bpr):
@@ -81,14 +84,15 @@ def has_floor_heating_system(bpr):
     :return: True or False
     :rtype: bool
     """
-    if bpr.hvac['type_hs'] in {'T4'}:
-        # floor heating
+
+    supported1 = ['FLOOR_HEATING']
+    supported2 = ['NONE', 'RADIATOR', 'CENTRAL_AC']
+    if bpr.hvac['class_hs'] in supported1:
         return True
-    elif bpr.hvac['type_hs'] in {'T0', 'T1', 'T2', 'T3'}:
-        # no system, radiators or central ac
+    elif bpr.hvac['class_hs'] in supported2:
         return False
     else:
-        raise ValueError('Invalid value for type_hs: %s' % bpr.hvac['type_hs'])
+        raise ValueError('Invalid value for class_hs: %s. CEA only supports the following systems  %s' %(bpr.hvac['class_hs'], supported1.extend(supported2)))
 
 
 def has_central_ac_heating_system(bpr):
@@ -101,12 +105,14 @@ def has_central_ac_heating_system(bpr):
     :rtype: bool
     """
 
-    if bpr.hvac['type_hs'] in {'T3'}:  # central ac
+    supported1 = ['CENTRAL_AC']
+    supported2 = ['NONE', 'RADIATOR', 'FLOOR_HEATING']
+    if bpr.hvac['class_hs'] in supported1:
         return True
-    elif bpr.hvac['type_hs'] in {'T0', 'T1', 'T2', 'T4'}:
+    elif bpr.hvac['class_hs'] in supported2:
         return False
     else:
-        raise ValueError('Invalid value for type_hs: %s' % bpr.hvac['type_hs'])
+        raise ValueError('Invalid value for class_hs: %s. CEA only supports the following systems %s' %(bpr.hvac['class_hs'], supported1.extend(supported2)))
 
 
 def has_local_ac_cooling_system(bpr):
@@ -119,12 +125,15 @@ def has_local_ac_cooling_system(bpr):
     :rtype: bool
     """
 
-    if bpr.hvac['type_cs'] in {'T2'}:  # mini-split ac
+    supported1 = ['DECENTRALIZED_AC']
+    supported2 = ['NONE', 'CEILING_COOLING', 'FLOOR_COOLING', 'CENTRAL_AC', 'HYBRID_AC']
+    if bpr.hvac['class_cs'] in supported1:
         return True
-    elif bpr.hvac['type_cs'] in {'T0', 'T1', 'T3', 'T4', 'T5'}:
+    elif bpr.hvac['class_cs'] in supported2:
         return False
     else:
-        raise ValueError('Invalid value for type_cs: %s' % bpr.hvac['type_cs'])
+        raise ValueError('Invalid value for class_cs: %s. CEA only supports the following systems %s' %(bpr.hvac['class_cs'], supported1.extend(supported2)))
+
 
 
 def has_central_ac_cooling_system(bpr):
@@ -136,13 +145,14 @@ def has_central_ac_cooling_system(bpr):
     :return: True or False
     :rtype: bool
     """
-
-    if bpr.hvac['type_cs'] in {'T3'}:  # central ac
+    supported1 = ['CENTRAL_AC']
+    supported2 = ['NONE', 'CEILING_COOLING', 'FLOOR_COOLING', 'DECENTRALIZED_AC', 'HYBRID_AC']
+    if bpr.hvac['class_cs'] in supported1:
         return True
-    elif bpr.hvac['type_cs'] in {'T0', 'T1', 'T2', 'T4', 'T5'}:
+    elif bpr.hvac['class_cs'] in supported2:
         return False
     else:
-        raise ValueError('Invalid value for type_cs: %s' % bpr.hvac['type_cs'])
+        raise ValueError('Invalid value for class_cs: %s. CEA only supports the following systems %s' %(bpr.hvac['class_cs'], supported1.extend(supported2)))
 
 
 def has_3for2_cooling_system(bpr):
@@ -155,12 +165,14 @@ def has_3for2_cooling_system(bpr):
     :rtype: bool
     """
 
-    if bpr.hvac['type_cs'] in {'T4'}:  # 3for2
+    supported1 = ['HYBRID_AC']
+    supported2 = ['NONE', 'CEILING_COOLING', 'FLOOR_COOLING', 'DECENTRALIZED_AC', 'CENTRAL_AC']
+    if bpr.hvac['class_cs'] in supported1:
         return True
-    elif bpr.hvac['type_cs'] in {'T0', 'T1', 'T2', 'T3', 'T5'}:
+    elif bpr.hvac['class_cs'] in supported2:
         return False
     else:
-        raise ValueError('Invalid value for type_cs: %s' % bpr.hvac['type_cs'])
+        raise ValueError('Invalid value for class_cs: %s. CEA only supports the following systems %s' %(bpr.hvac['class_cs'], supported1.extend(supported2)))
 
 
 def has_ceiling_cooling_system(bpr):
@@ -173,12 +185,14 @@ def has_ceiling_cooling_system(bpr):
     :rtype: bool
     """
 
-    if bpr.hvac['type_cs'] in {'T1'}:  # ceiling cooling
+    supported1 = ['CEILING_COOLING']
+    supported2 = ['NONE', 'HYBRID_AC', 'FLOOR_COOLING', 'DECENTRALIZED_AC', 'CENTRAL_AC']
+    if bpr.hvac['class_cs'] in supported1:
         return True
-    elif bpr.hvac['type_cs'] in {'T0', 'T2', 'T3', 'T4', 'T5'}:
+    elif bpr.hvac['class_cs'] in supported2:
         return False
     else:
-        raise ValueError('Invalid value for type_cs: %s' % bpr.hvac['type_cs'])
+        raise ValueError('Invalid value for class_cs: %s. CEA only supports the following systems %s' %(bpr.hvac['class_cs'], supported1.extend(supported2)))
 
 def has_floor_cooling_system(bpr):
     """
@@ -190,12 +204,14 @@ def has_floor_cooling_system(bpr):
     :rtype: bool
     """
 
-    if bpr.hvac['type_cs'] in {'T5'}:  # floor cooling
+    supported1 = ['FLOOR_COOLING']
+    supported2 = ['NONE', 'HYBRID_AC', 'CEILING_COOLING', 'DECENTRALIZED_AC', 'CENTRAL_AC']
+    if bpr.hvac['class_cs'] in supported1:
         return True
-    elif bpr.hvac['type_cs'] in {'T0', 'T1', 'T2', 'T3', 'T4'}:
+    elif bpr.hvac['class_cs'] in supported2:
         return False
     else:
-        raise ValueError('Invalid value for type_cs: %s' % bpr.hvac['type_cs'])
+        raise ValueError('Invalid value for class_cs: %s. CEA only supports the following systems %s' %(bpr.hvac['class_cs'], supported1.extend(supported2)))
 
 def cooling_system_is_active(bpr, tsd, t):
     """

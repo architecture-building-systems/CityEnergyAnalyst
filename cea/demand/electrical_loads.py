@@ -51,6 +51,7 @@ def calc_Eal_Epro(tsd, schedules):
     # calculate final electrical consumption due to appliances and lights in W
     tsd['Ea'] = schedules['Ea_W']
     tsd['El'] = schedules['El_W']
+    tsd['Ev'] = schedules['Ev_W']
     tsd['Eal'] = schedules['El_W'] + schedules['Ea_W']
     tsd['Epro'] = schedules['Epro_W']
 
@@ -62,7 +63,7 @@ def calc_E_sys(tsd):
     Calculate the compound of end use electrical loads
 
     """
-    tsd['E_sys'] = tsd['Ea'] + tsd['El'] + tsd['Edata'] + tsd['Epro'] + tsd['Eaux']  # assuming a small loss
+    tsd['E_sys'] = tsd['Ea'] + tsd['El'] + tsd['Edata'] + tsd['Epro'] + tsd['Eaux'] + tsd['Ev']  # assuming a small loss
 
     return tsd
 
@@ -76,14 +77,15 @@ def calc_Ef(bpr, tsd):
     # GET SYSTEMS EFFICIENCIES
     energy_source = bpr.supply['source_el']
     scale_technology = bpr.supply['scale_el']
-    total_el_demand = tsd['Ea'] + tsd['El'] + tsd['Edata'] + tsd['Epro'] + tsd['Eaux'] + \
-                      tsd['E_ww'] + tsd['E_cs'] + tsd['E_hs'] + tsd['E_cdata'] + tsd['E_cre']
+    total_el_demand = (tsd['Ea'] + tsd['El'] + tsd['Edata'] + tsd['Epro'] + tsd['Eaux'] +
+                       tsd['Ev'] + tsd['E_ww'] + tsd['E_cs'] + tsd['E_hs'] + tsd['E_cdata'] + tsd['E_cre'])
 
     if scale_technology == "BUILDING":
         if energy_source == "SOLAR":
             tsd['GRID'] = np.zeros(HOURS_IN_YEAR)
             tsd['GRID_a'] = np.zeros(HOURS_IN_YEAR)
             tsd['GRID_l'] = np.zeros(HOURS_IN_YEAR)
+            tsd['GRID_v'] = np.zeros(HOURS_IN_YEAR)
             tsd['GRID_data'] = np.zeros(HOURS_IN_YEAR)
             tsd['GRID_pro'] = np.zeros(HOURS_IN_YEAR)
             tsd['GRID_aux'] = np.zeros(HOURS_IN_YEAR)
@@ -100,6 +102,7 @@ def calc_Ef(bpr, tsd):
             tsd['GRID'] = total_el_demand
             tsd['GRID_a'] = tsd['Ea']
             tsd['GRID_l'] = tsd['El']
+            tsd['GRID_v'] = tsd['Ev']
             tsd['GRID_data'] = tsd['Edata']
             tsd['GRID_pro'] = tsd['Epro']
             tsd['GRID_aux'] = tsd['Eaux']
@@ -115,6 +118,7 @@ def calc_Ef(bpr, tsd):
         tsd['GRID'] = np.zeros(HOURS_IN_YEAR)
         tsd['GRID_a'] = np.zeros(HOURS_IN_YEAR)
         tsd['GRID_l'] = np.zeros(HOURS_IN_YEAR)
+        tsd['GRID_v'] = np.zeros(HOURS_IN_YEAR)
         tsd['GRID_data'] = np.zeros(HOURS_IN_YEAR)
         tsd['GRID_pro'] = np.zeros(HOURS_IN_YEAR)
         tsd['GRID_aux'] = np.zeros(HOURS_IN_YEAR)
@@ -162,7 +166,7 @@ def calc_Eaux_ww(tsd, bpr):
     Lw = bpr.geometry['Bwidth']
     Mww = tsd['mww_kgs']
     Qww = tsd['Qww']
-    Year = bpr.age['built']
+    Year = bpr.age['YEAR']
     nf_ag = bpr.geometry['floors_ag']
     fforma = bpr.building_systems['fforma']
 
@@ -212,7 +216,7 @@ def calc_Eaux_Qhs_Qcs(tsd, bpr):
     Ths_re_shu = tsd['Ths_sys_re_shu']
     Ths_sup_shu = tsd['Ths_sys_sup_shu']
 
-    Year = bpr.age['built']
+    Year = bpr.age['YEAR']
     nf_ag = bpr.geometry['floors_ag']
 
     # split up the final demands according to the fraction of energy
