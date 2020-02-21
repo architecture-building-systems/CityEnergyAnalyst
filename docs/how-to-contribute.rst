@@ -11,7 +11,8 @@ Step 1. Let us know about it
 Whether you would like to implement a new feature or fix a bug, let the CEA team know. This will help us to coordinate
 efforts across network of developers. It will also help us to better support your work.
 
-You can let us know by reporting a new issue https://github.com/architecture-building-systems/CityEnergyAnalyst/issues/new/choose
+You can let us know by reporting a new issue
+https://github.com/architecture-building-systems/CityEnergyAnalyst/issues/new/choose
 
 Step 2. Install our development version
 ----------------------------------------
