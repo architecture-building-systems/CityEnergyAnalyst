@@ -38,7 +38,7 @@ class TestCalcThermalLoads(unittest.TestCase):
 
         # run properties script
         import cea.datamanagement.archetypes_mapper
-        cea.datamanagement.archetypes_mapper.archetypes_mapper(cls.locator, True, True, True, True, True, True, True,
+        cea.datamanagement.archetypes_mapper.archetypes_mapper(cls.locator, True, True, True, True, True, True,
                                                          cls.locator.get_zone_building_names())
 
         cls.building_properties = BuildingProperties(cls.locator, cls.config.demand.override_variables)
