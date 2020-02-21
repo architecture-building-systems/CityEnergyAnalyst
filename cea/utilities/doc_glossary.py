@@ -81,14 +81,14 @@ def main(_):
     # create the input_files.rst based of jinja2 template in docs/templates
     template_path = os.path.join(documentation_dir, 'templates', 'glossary.rst')
     template = Template(open(template_path, 'r').read())
-    output = template.render(headers=input_locator_methods, tuples=glossary_data, details=details)
+    output = template.render(locators=input_locator_methods, glossary_data=glossary_data, details=details)
     with open(os.path.join(documentation_dir,'input_methods.rst'), 'w') as gloss:
         gloss.write(output)
 
     # create the output_files.rst based of jinja2 template in docs/templates
     template_path = os.path.join(documentation_dir, 'templates', 'glossary.rst')
     template = Template(open(template_path, 'r').read())
-    output = template.render(headers=output_locator_methods, tuples=glossary_data, details=details)
+    output = template.render(locators=output_locator_methods, glossary_data=glossary_data, details=details)
     with open(os.path.join(documentation_dir,'output_methods.rst'), 'w') as gloss:
         gloss.write(output)
 
