@@ -851,17 +851,12 @@ def has_sensible_heating_demand(t_int_0, tsd, t):
 # 3.8.1
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-f_hc_cv_heating_system = {'T1': 1, 'T2': 1, 'T3': 1, 'T4': 0.5}
-# T1 = radiator, T2 = radiator, T3 = AC, T4 = floor heating #TODO: add heating ceiling
-f_hc_cv_cooling_system = {'T1': 0.5, 'T2': 1, 'T3': 1, 'T4': 1, 'T5': 0.1} #FIXME check 3for2
-# T1 = ceiling cooling, T2 mini-split AC, T3 = AC, T4 = 3for2, T5 = floor cooling
-
 def lookup_f_hc_cv_heating(bpr):
 
     # 3.1.8.1 in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
 
     # look up factor
-    f_hc_cv = f_hc_cv_heating_system[bpr.hvac['type_hs']]
+    f_hc_cv = bpr.hvac['convection_hs']
 
     return f_hc_cv
 
@@ -871,7 +866,7 @@ def lookup_f_hc_cv_cooling(bpr):
     # 3.1.8.1 in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
 
     # look up factor
-    f_hc_cv = f_hc_cv_cooling_system[bpr.hvac['type_cs']]
+    f_hc_cv = bpr.hvac['convection_cs']
 
     return f_hc_cv
 

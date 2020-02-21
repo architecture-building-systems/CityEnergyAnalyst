@@ -23,6 +23,7 @@ LATENT_HEAT_OF_AIR_KJPERKG = 2257  # latent heat of air kJ/kg
 CONVERSION_AREA_TO_FLOOR_AREA_RATIO = 1.5  # conversion component's area to floor area
 SERVICE_LIFE_OF_BUILDINGS = 60  # service life of standard building components and materials SIA2032
 SERVICE_LIFE_OF_TECHNICAL_SYSTEMS = 25  # service life of technical installations Average of SIA2032 (20 - 40)
+EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS = 35 #kg COs/m2 gross floor area
 
 # Date data
 DAYS_IN_YEAR = 365

@@ -37,7 +37,7 @@ def main(output_file):
 
     # run properties script
     import cea.datamanagement.archetypes_mapper
-    cea.datamanagement.archetypes_mapper.archetypes_mapper(locator, True, True, True, True, True, True, True, [])
+    cea.datamanagement.archetypes_mapper.archetypes_mapper(locator, True, True, True, True, True, True, [])
 
     year = weather_data['year'][0]
     date_range = get_dates_from_year(year)

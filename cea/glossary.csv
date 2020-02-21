@@ -43,7 +43,7 @@ SCRIPT,LOCATOR_METHOD,WORKSHEET,VARIABLE,DESCRIPTION,UNIT,VALUES,TYPE,COLOR,FILE
 -,get_zone_geometry,,floors_ag,Number of floors above ground (incl. ground floor),[-],{0...n},int,black,inputs/building-geometry/zone.shp
 -,get_zone_geometry,,floors_bg,"Number of floors below ground (basement, etc)",[-],{0...n},int,black,inputs/building-geometry/zone.shp
 -,get_zone_geometry,,geometry,Geometry,[-],[-],[-],black,inputs/building-geometry/zone.shp
--,get_zone_geometry,,height_ag,Aggregated height of the walls.,[m],{0.0...n},float,black,inputs/building-geometry/zone.shp
+-,get_zone_geometry,,height_ag, Height above ground (incl. ground floor),[m],{0.0...n},float,black,inputs/building-geometry/zone.shp
 -,get_zone_geometry,,height_bg,"Height below ground (basement, etc)",[m],{0.0...n},float,black,inputs/building-geometry/zone.shp
 -,get_zone_geometry,,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/building-geometry/zone.shp
 archetypes-mapper,get_building_air_conditioning,,cool_ends,End of the cooling season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black,inputs/building-properties/air_conditioning_systems.dbf
@@ -62,10 +62,13 @@ archetypes-mapper,get_building_architecture,,Hs_bg,Fraction of below ground gros
 archetypes-mapper,get_building_architecture,,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/building-properties/architecture.dbf
 archetypes-mapper,get_building_architecture,,Ns,Fraction of net gross floor area.,[m2/m2],{0.0...1},float,black,inputs/building-properties/architecture.dbf
 archetypes-mapper,get_building_architecture,,type_cons,Type of construction. It relates to the contents of the default database of Envelope Properties: construction,[code],{T1...Tn},string,black,inputs/building-properties/architecture.dbf
-archetypes-mapper,get_building_architecture,,type_leak,Leakage level. It relates to the contents of the default database of Envelope Properties: leakage,[code],{T1...Tn},string,black,inputs/building-properties/architecture.dbf
+archetypes-mapper,get_building_architecture,,type_leak,Tightness level. It relates to the contents of the default database of Envelope Properties: tightness,[code],{T1...Tn},string,black,inputs/building-properties/architecture.dbf
 archetypes-mapper,get_building_architecture,,type_roof,Roof construction type (relates to values in Default Database Construction Properties),[-],{T1...Tn},string,black,inputs/building-properties/architecture.dbf
 archetypes-mapper,get_building_architecture,,type_shade,Shading system type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black,inputs/building-properties/architecture.dbf
-archetypes-mapper,get_building_architecture,,type_wall,Wall construction type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black,inputs/building-properties/architecture.dbf
+archetypes-mapper,get_building_architecture,,type_wall,External wall construction type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black,inputs/building-properties/architecture.dbf
+archetypes-mapper,get_building_architecture,,type_part,Internal partitions construction type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black,inputs/building-properties/architecture.dbf
+archetypes-mapper,get_building_architecture,,type_floor,Internal floor construction type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black,inputs/building-properties/architecture.dbf
+archetypes-mapper,get_building_architecture,,type_base,Basement floor construction type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black,inputs/building-properties/architecture.dbf
 archetypes-mapper,get_building_architecture,,type_win,Window type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black,inputs/building-properties/architecture.dbf
 archetypes-mapper,get_building_architecture,,void_deck,Number of floors (from the ground up) with an open envelope (default = 0),[-],{0...n},int,black,inputs/building-properties/architecture.dbf
 archetypes-mapper,get_building_architecture,,wwr_east,Window to wall ratio in in facades facing east,[m2/m2],{0.0...1},float,black,inputs/building-properties/architecture.dbf
@@ -82,6 +85,7 @@ archetypes-mapper,get_building_comfort,,Ths_setb_C,Setback point of temperature 
 archetypes-mapper,get_building_comfort,,Ve_lpspax,Indoor quality requirements of indoor ventilation per person,[l/s],{0.0...n},float,black,inputs/building-properties/indoor_comfort.dbf
 archetypes-mapper,get_building_internal,,Ea_Wm2,Peak specific electrical load due to computers and devices,[W/m2],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
 archetypes-mapper,get_building_internal,,Ed_Wm2,Peak specific electrical load due to servers/data centres,[W/m2],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
+archetypes-mapper,get_building_internal,,Ev_kWveh,Peak specific charging capacity per vehicle,[kW/vehicle],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
 archetypes-mapper,get_building_internal,,El_Wm2,Peak specific electrical load due to artificial lighting,[W/m2],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
 archetypes-mapper,get_building_internal,,Epro_Wm2,Peak specific electrical load due to industrial processes,[W/m2],{0.0...n},string,black,inputs/building-properties/internal_loads.dbf
 archetypes-mapper,get_building_internal,,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/building-properties/internal_loads.dbf
@@ -131,69 +135,54 @@ network-layout,get_network_layout_nodes_shapefile,,Name,Unique building ID. It m
 network-layout,get_network_layout_nodes_shapefile,,Type,Weather a Plant or A Customer,[-],alphanumeric,string,black,inputs/networks/dc/nodes.shp
 -,get_street_network,,geometry,Geometry,[-],[-],[-],black,inputs/networks/streets.shp
 -,get_street_network,,Id,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/networks/streets.shp
--,get_archetypes_properties,ENVELOPE_COMPONENTS,building_use,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
--,get_archetypes_properties,ENVELOPE_COMPONENTS,Es,Fraction of gross floor area with electrical demands.,[m2/m2],{0.0...1},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
--,get_archetypes_properties,ENVELOPE_COMPONENTS,Hs_ag,Fraction of above ground gross floor area air-conditioned.,[m2/m2],{0.0...1},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
--,get_archetypes_properties,ENVELOPE_COMPONENTS,Hs_bg,Fraction of below ground gross floor area air-conditioned ,[m2/m2],{0.0...1},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
--,get_archetypes_properties,ENVELOPE_COMPONENTS,Ns,Fraction of net gross floor area.,[m2/m2],{0.0...1},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
--,get_archetypes_properties,ENVELOPE_COMPONENTS,STANDARD,Letter representing whereas the field represent construction properties of a building as newly constructed (C) or renovated (R),[-],{C or R},string,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
--,get_archetypes_properties,ENVELOPE_COMPONENTS,type_cons,Type of construction. It relates to the contents of the default database of Envelope Properties: construction,[code],{T1...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
--,get_archetypes_properties,ENVELOPE_COMPONENTS,type_leak,Leakage level. It relates to the contents of the default database of Envelope Properties: leakage,[code],{T1...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
--,get_archetypes_properties,ENVELOPE_COMPONENTS,type_roof,Roof construction type (relates to values in Default Database Construction Properties),[-],{T1...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
--,get_archetypes_properties,ENVELOPE_COMPONENTS,type_shade,Shading system type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
--,get_archetypes_properties,ENVELOPE_COMPONENTS,type_wall,Wall construction type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
--,get_archetypes_properties,ENVELOPE_COMPONENTS,type_win,Window type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
--,get_archetypes_properties,ENVELOPE_COMPONENTS,void_deck,Number of floors (from the ground up) with an open envelope (default = 0),[-],{0...n},integer,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
--,get_archetypes_properties,ENVELOPE_COMPONENTS,wwr_east,Window to wall ratio in in facades facing east,[m2/m2],{0.0...1},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
--,get_archetypes_properties,ENVELOPE_COMPONENTS,wwr_north,Window to wall ratio in in facades facing north,[m2/m2],{0.0...1},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
--,get_archetypes_properties,ENVELOPE_COMPONENTS,wwr_south,Window to wall ratio in in facades facing south,[m2/m2],{0.0...1},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
--,get_archetypes_properties,ENVELOPE_COMPONENTS,wwr_west,Window to wall ratio in in facades facing west,[m2/m2],{0.0...1},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
--,get_archetypes_properties,ENVELOPE_COMPONENTS,year_end,Upper limit of year interval where the building properties apply,[yr],{0...n},int,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
--,get_archetypes_properties,ENVELOPE_COMPONENTS,year_start,Lower limit of year interval where the building properties apply,[yr],{0...n},int,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
--,get_archetypes_properties,HVAC_COMPONENTS,building_use,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
--,get_archetypes_properties,HVAC_COMPONENTS,cool_ends,End of the cooling season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
--,get_archetypes_properties,HVAC_COMPONENTS,cool_starts,Start of the cooling season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
--,get_archetypes_properties,HVAC_COMPONENTS,heat_ends,End of the heating season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
--,get_archetypes_properties,HVAC_COMPONENTS,heat_starts,Start of the heating season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
--,get_archetypes_properties,HVAC_COMPONENTS,standard,Letter representing whereas the field represent construction properties of a building as newly constructed (C) or renovated (R),[-],{C or R},string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
--,get_archetypes_properties,HVAC_COMPONENTS,type_cs,Type of cooling supply system,[code],{T0...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
--,get_archetypes_properties,HVAC_COMPONENTS,type_ctrl,Type of heating and cooling control systems (relates to values in Default Database HVAC Properties),[code],{T1...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
--,get_archetypes_properties,HVAC_COMPONENTS,type_dhw,Type of hot water supply system,[code],{T0...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
--,get_archetypes_properties,HVAC_COMPONENTS,type_hs,Type of heating supply system,[code],{T0...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
--,get_archetypes_properties,HVAC_COMPONENTS,type_vent,Type of ventilation strategy (relates to values in Default Database HVAC Properties),[code],{T1...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
--,get_archetypes_properties,HVAC_COMPONENTS,year_end,Upper limit of year interval where the building properties apply,[yr],{0...n},int,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
--,get_archetypes_properties,HVAC_COMPONENTS,year_start,Lower limit of year interval where the building properties apply,[yr],{0...n},int,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
--,get_archetypes_properties,SUPPLY_ASSEMBLIES,building_use,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY
--,get_archetypes_properties,SUPPLY_ASSEMBLIES,standard,Letter representing whereas the field represent construction properties of a building as newly constructed (C) or renovated (R),[-],{C or R},string,black,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY
--,get_archetypes_properties,SUPPLY_ASSEMBLIES,type_cs,Type of cooling supply system,[code],{T0...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY
--,get_archetypes_properties,SUPPLY_ASSEMBLIES,type_dhw,Type of hot water supply system,[code],{T0...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY
--,get_archetypes_properties,SUPPLY_ASSEMBLIES,type_el,Type of electrical supply system,[code],{T0...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY
--,get_archetypes_properties,SUPPLY_ASSEMBLIES,type_hs,Type of heating supply system,[code],{T0...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY
--,get_archetypes_properties,SUPPLY_ASSEMBLIES,year_end,Upper limit of year interval where the building properties apply,[yr],{0...n},int,black,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY
--,get_archetypes_properties,SUPPLY_ASSEMBLIES,year_start,Lower limit of year interval where the building properties apply,[yr],{0...n},int,black,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY
+-,get_database_construction_standards,STANDARD_DEFINITION,Description,Description of the construction standard,[-],alphanumeric,string,black,inputs/technology/archetypes/construction_properties.xlsx:STANDARD_DEFINITION
+-,get_database_construction_standards,STANDARD_DEFINITION,YEAR_END,Upper limit of year interval where the building properties apply,[yr],{0...n},int,black,inputs/technology/archetypes/construction_properties.xlsx:STANDARD_DEFINITION
+-,get_database_construction_standards,STANDARD_DEFINITION,YEAR_START,Lower limit of year interval where the building properties apply,[yr],{0...n},int,black,inputs/technology/archetypes/construction_properties.xlsx:STANDARD_DEFINITION
+-,get_database_construction_standards,STANDARD_DEFINITION,STANDARD, Unique ID of Construction Standard,[-],{code},string,black,inputs/technology/archetypes/construction_properties.xlsx:STANDARD_DEFINITION
+-,get_database_construction_standards,ENVELOPE_ASSEMBLIES,Es,Fraction of gross floor area with electrical demands.,[m2/m2],{0.0...1},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
+-,get_database_construction_standards,ENVELOPE_ASSEMBLIES,Hs_ag,Fraction of above ground gross floor area air-conditioned.,[m2/m2],{0.0...1},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
+-,get_database_construction_standards,ENVELOPE_ASSEMBLIES,Hs_bg,Fraction of below ground gross floor area air-conditioned ,[m2/m2],{0.0...1},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
+-,get_database_construction_standards,ENVELOPE_ASSEMBLIES,Ns,Fraction of net gross floor area.,[m2/m2],{0.0...1},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
+-,get_database_construction_standards,ENVELOPE_ASSEMBLIES,STANDARD, Unique ID of Construction Standard,[-],{code},string,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
+-,get_database_construction_standards,ENVELOPE_ASSEMBLIES,type_cons,Type of construction. It relates to the contents of the default database of Envelope Properties: construction,[code],{T1...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
+-,get_database_construction_standards,ENVELOPE_ASSEMBLIES,type_leak,Tightness level. It relates to the contents of the default database of Envelope Properties: tightness,[code],{T1...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
+-,get_database_construction_standards,ENVELOPE_ASSEMBLIES,type_roof,Roof construction type (relates to values in Default Database Construction Properties),[-],{T1...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
+-,get_database_construction_standards,ENVELOPE_ASSEMBLIES,type_shade,Shading system type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
+-,get_database_construction_standards,ENVELOPE_ASSEMBLIES,type_wall,External wall construction type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
+-,get_database_construction_standards,ENVELOPE_ASSEMBLIES,type_part,Internal partitions construction type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
+-,get_database_construction_standards,ENVELOPE_ASSEMBLIES,type_floor,Internal floor construction type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
+-,get_database_construction_standards,ENVELOPE_ASSEMBLIES,type_base,Basement floor construction type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
+-,get_database_construction_standards,ENVELOPE_ASSEMBLIES,type_win,Window type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
+-,get_database_construction_standards,ENVELOPE_ASSEMBLIES,void_deck,Number of floors (from the ground up) with an open envelope (default = 0),[-],{0...n},integer,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
+-,get_database_construction_standards,ENVELOPE_ASSEMBLIES,wwr_east,Window to wall ratio in in facades facing east,[m2/m2],{0.0...1},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
+-,get_database_construction_standards,ENVELOPE_ASSEMBLIES,wwr_north,Window to wall ratio in in facades facing north,[m2/m2],{0.0...1},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
+-,get_database_construction_standards,ENVELOPE_ASSEMBLIES,wwr_south,Window to wall ratio in in facades facing south,[m2/m2],{0.0...1},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
+-,get_database_construction_standards,ENVELOPE_ASSEMBLIES,wwr_west,Window to wall ratio in in facades facing west,[m2/m2],{0.0...1},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
+-,get_database_construction_standards,HVAC_ASSEMBLIES,cool_ends,End of the cooling season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
+-,get_database_construction_standards,HVAC_ASSEMBLIES,cool_starts,Start of the cooling season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
+-,get_database_construction_standards,HVAC_ASSEMBLIES,heat_ends,End of the heating season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
+-,get_database_construction_standards,HVAC_ASSEMBLIES,heat_starts,Start of the heating season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
+-,get_database_construction_standards,HVAC_ASSEMBLIES,STANDARD, Unique ID of Construction Standard,[-],{code},string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
+-,get_database_construction_standards,HVAC_ASSEMBLIES,type_cs,Type of cooling supply system,[code],{T0...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
+-,get_database_construction_standards,HVAC_ASSEMBLIES,type_ctrl,Type of heating and cooling control systems (relates to values in Default Database HVAC Properties),[code],{T1...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
+-,get_database_construction_standards,HVAC_ASSEMBLIES,type_dhw,Type of hot water supply system,[code],{T0...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
+-,get_database_construction_standards,HVAC_ASSEMBLIES,type_hs,Type of heating supply system,[code],{T0...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
+-,get_database_construction_standards,HVAC_ASSEMBLIES,type_vent,Type of ventilation strategy (relates to values in Default Database HVAC Properties),[code],{T1...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
+-,get_database_construction_standards,SUPPLY_ASSEMBLIES,STANDARD, Unique ID of Construction Standard,[-],{code},string,black,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY
+-,get_database_construction_standards,SUPPLY_ASSEMBLIES,type_cs,Type of cooling supply system,[code],{T0...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY
+-,get_database_construction_standards,SUPPLY_ASSEMBLIES,type_dhw,Type of hot water supply system,[code],{T0...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY
+-,get_database_construction_standards,SUPPLY_ASSEMBLIES,type_el,Type of electrical supply system,[code],{T0...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY
+-,get_database_construction_standards,SUPPLY_ASSEMBLIES,type_hs,Type of heating supply system,[code],{T0...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY
 -,get_database_standard_schedules_use,,CH-SIA-2014,metadata,[-],TODO,string,black,inputs/technology/archetypes/schedules/RESTAURANT.csv
 -,get_database_standard_schedules_use,,METADATA,metadata,[-],TODO,string,black,inputs/technology/archetypes/schedules/RESTAURANT.csv
 -,get_database_standard_schedules_use,,RESTAURANT,metadata,[-],TODO,string,black,inputs/technology/archetypes/schedules/RESTAURANT.csv
--,get_archetypes_properties,EMISSION_INTENSITY,building_use,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
--,get_archetypes_properties,EMISSION_INTENSITY,standard,Letter representing whereas the field represent construction properties of a building as newly constructed (C) or renovated (R),[-],{C or R},string,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
--,get_archetypes_properties,EMISSION_INTENSITY,W_e_ag_kgm2,Emissions of external walls below ground per wall area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
--,get_archetypes_properties,EMISSION_INTENSITY,W_e_bg_kgm2,Emissions of external walls above ground per wall area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
--,get_archetypes_properties,EMISSION_INTENSITY,W_i_ag_kgm2,Emissions of internal walls below ground per wall area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
--,get_archetypes_properties,EMISSION_INTENSITY,W_i_bg_kgm2,Emissions of internal walls above ground per wall area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
--,get_archetypes_properties,EMISSION_INTENSITY,Win_kgm2,Emissions of widows per window area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
--,get_archetypes_properties,EMISSION_INTENSITY,F_i_kgm2,Emissions of internal floors per floor area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
--,get_archetypes_properties,EMISSION_INTENSITY,F_e_kgm2,Emissions of basement floor per floor area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
--,get_archetypes_properties,EMISSION_INTENSITY,R_kgm2,Emissions of roof per roof area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
--,get_archetypes_properties,EMISSION_INTENSITY,Tech_kgm2,Emissions of technical installations per gross floor area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
--,get_archetypes_properties,EMISSION_INTENSITY,Exca_kgm2,Emissions of excavations per basement floor area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
--,get_archetypes_properties,EMISSION_INTENSITY,Mobi_kgm2,Emissions of induced mobility per gross floor area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
--,get_archetypes_properties,EMISSION_INTENSITY,year_end,Upper limit of year interval where the building properties apply,[yr],{0...n},int,black,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
--,get_archetypes_properties,EMISSION_INTENSITY,year_start,Lower limit of year interval where the building properties apply,[yr],{0...n},int,black ,inputs/technology/archetypes/construction_properties.xlsx:EMISSION_INTENSITY
--,get_database_air_conditioning_systems,controller,code,Type of controller,[code],{T0...Tn},string,black,inputs/technology/systems/air_conditioning_systems.xls:controller
+-,get_database_air_conditioning_systems,controller,code,Unique ID of the controller,[code],{T0...Tn},string,black,inputs/technology/systems/air_conditioning_systems.xls:controller
 -,get_database_air_conditioning_systems,controller,Description,Describes the type of controller,[-],[-],string,black,inputs/technology/systems/air_conditioning_systems.xls:controller
 -,get_database_air_conditioning_systems,controller,dT_Qcs,correction temperature of emission losses due to control system of cooling,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:controller
 -,get_database_air_conditioning_systems,controller,dT_Qhs,correction temperature of emission losses due to control system of heating,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:controller
--,get_database_air_conditioning_systems,cooling,code,Type of cooling system,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
+-,get_database_air_conditioning_systems,cooling,code,Unique ID of the heating system,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
+-,get_database_air_conditioning_systems,cooling,convection_cs,Convective part of the power of the heating system in relation to the total power,[-],{0.0...1},string,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
+-,get_database_air_conditioning_systems,cooling,class_cs,Type or class of the cooling system,[-],alphanumeric,string,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
 -,get_database_air_conditioning_systems,cooling,Description,Describes the type of cooling system,[-],[-],string,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
 -,get_database_air_conditioning_systems,cooling,dTcs_C,Set-point correction for space emission systems,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
 -,get_database_air_conditioning_systems,cooling,dTcs0_ahu_C,Nominal temperature increase on the water side of the air-handling units,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
@@ -205,11 +194,13 @@ network-layout,get_network_layout_nodes_shapefile,,Type,Weather a Plant or A Cus
 -,get_database_air_conditioning_systems,cooling,Tscs0_ahu_C,Nominal supply temperature of the water side of the air-handling units,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
 -,get_database_air_conditioning_systems,cooling,Tscs0_aru_C,Nominal supply temperature of the water side of the air-recirculation units,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
 -,get_database_air_conditioning_systems,cooling,Tscs0_scu_C,Nominal supply temperature of the water side of the sensible cooling units,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:cooling
--,get_database_air_conditioning_systems,dhw,code,Type of hot water supply system,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/air_conditioning_systems.xls:dhw
+-,get_database_air_conditioning_systems,dhw,code,Unique ID of the hot water supply system,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/air_conditioning_systems.xls:dhw
 -,get_database_air_conditioning_systems,dhw,Description,Describes the Type of hot water supply system,[-],[-],string,black,inputs/technology/systems/air_conditioning_systems.xls:dhw
 -,get_database_air_conditioning_systems,dhw,Qwwmax_Wm2,Maximum heat flow permitted by hot water system per m2 gross floor area ,[W/m2],{0.0....n},float,black,inputs/technology/systems/air_conditioning_systems.xls:dhw
 -,get_database_air_conditioning_systems,dhw,Tsww0_C,Typical supply water temperature.,[C],{0.0....n},float,black,inputs/technology/systems/air_conditioning_systems.xls:dhw
--,get_database_air_conditioning_systems,heating,code,Type of heating system,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/air_conditioning_systems.xls:heating
+-,get_database_air_conditioning_systems,heating,code,Unique ID of the heating system,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/air_conditioning_systems.xls:heating
+-,get_database_air_conditioning_systems,heating,convection_hs,Convective part of the power of the heating system in relation to the total power,[-],{0.0...1},string,black,inputs/technology/systems/air_conditioning_systems.xls:heating
+-,get_database_air_conditioning_systems,heating,class_hs,Type or class of the heating system,[-],alphanumeric,string,black,inputs/technology/systems/air_conditioning_systems.xls:heating
 -,get_database_air_conditioning_systems,heating,Description,Description Type of heating system,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
 -,get_database_air_conditioning_systems,heating,dThs_C,correction temperature of emission losses due to type of heating system,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
 -,get_database_air_conditioning_systems,heating,dThs0_ahu_C,Nominal temperature increase on the water side of the air-handling units,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
@@ -221,7 +212,7 @@ network-layout,get_network_layout_nodes_shapefile,,Type,Weather a Plant or A Cus
 -,get_database_air_conditioning_systems,heating,Tshs0_ahu_C,Nominal supply temperature of the water side of the air-handling units,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
 -,get_database_air_conditioning_systems,heating,Tshs0_aru_C,Nominal supply temperature of the water side of the air-recirculation units,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
 -,get_database_air_conditioning_systems,heating,Tshs0_shu_C,Nominal supply temperature of the water side of the sensible heating units,[C],{0.0...n},float,black,inputs/technology/systems/air_conditioning_systems.xls:heating
--,get_database_air_conditioning_systems,ventilation,code,Type of ventilation,[-],[-],string,black,inputs/technology/systems/air_conditioning_systems.xls:ventilation
+-,get_database_air_conditioning_systems,ventilation,code,Unique ID of the type of ventilation,[-],[-],string,black,inputs/technology/systems/air_conditioning_systems.xls:ventilation
 -,get_database_air_conditioning_systems,ventilation,Description,Describes the Type of ventilation,[-],[-],string,black,inputs/technology/systems/air_conditioning_systems.xls:ventilation
 -,get_database_air_conditioning_systems,ventilation,ECONOMIZER,"Boolean, economizer on",[-],"{TRUE, FALSE}",bool,black,inputs/technology/systems/air_conditioning_systems.xls:ventilation
 -,get_database_air_conditioning_systems,ventilation,HEAT_REC,"Boolean, heat recovery on",[-],"{TRUE, FALSE}",bool,black,inputs/technology/systems/air_conditioning_systems.xls:ventilation
@@ -231,25 +222,31 @@ network-layout,get_network_layout_nodes_shapefile,,Type,Weather a Plant or A Cus
 -,get_database_envelope_systems,CONSTRUCTION,Cm_Af,Internal heat capacity per unit of air conditioned area. Defined according to ISO 13790.,[J/Km2],{0.0...1},float,black,inputs/technology/systems/envelope_systems.xls:CONSTRUCTION
 -,get_database_envelope_systems,CONSTRUCTION,code,Type of construction,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:CONSTRUCTION
 -,get_database_envelope_systems,CONSTRUCTION,Description,Describes the Type of construction,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:CONSTRUCTION
--,get_database_envelope_systems,LEAKAGE,code,Type of Leakage,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:LEAKAGE
--,get_database_envelope_systems,LEAKAGE,Description,Describes the Type of Leakage,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:LEAKAGE
--,get_database_envelope_systems,LEAKAGE,n50,Air exchanges per hour at a pressure of 50 Pa.,[1/h],{0.0...10},float,black,inputs/technology/systems/envelope_systems.xls:LEAKAGE
+-,get_database_envelope_systems,TIGHTNESS,code,Type of tightness,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:TIGHTNESS
+-,get_database_envelope_systems,TIGHTNESS,Description,Describes the Type of tightness,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:TIGHTNESS
+-,get_database_envelope_systems,TIGHTNESS,n50,Air exchanges per hour at a pressure of 50 Pa.,[1/h],{0.0...10},float,black,inputs/technology/systems/envelope_systems.xls:TIGHTNESS
+-,get_database_envelope_systems,ROOF,GHG_ROOF_kgCO2m2,Embodied emissions per m2 of roof.(entire building life cycle),[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/systems/envelope_systems.xls:ROOF
 -,get_database_envelope_systems,ROOF,a_roof,Solar absorption coefficient. Defined according to ISO 13790.,[-],{0.0...1},float,black,inputs/technology/systems/envelope_systems.xls:ROOF
 -,get_database_envelope_systems,ROOF,code,Type of roof,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:ROOF
 -,get_database_envelope_systems,ROOF,Description,Describes the Type of roof,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:ROOF
 -,get_database_envelope_systems,ROOF,e_roof,Emissivity of external surface. Defined according to ISO 13790.,[-],{0.0...1},float,black,inputs/technology/systems/envelope_systems.xls:ROOF
 -,get_database_envelope_systems,ROOF,r_roof,Reflectance in the Red spectrum. Defined according Radiance. (long-wave),[-],{0.0...1},float,black,inputs/technology/systems/envelope_systems.xls:ROOF
 -,get_database_envelope_systems,ROOF,U_roof,Thermal transmittance of windows including linear losses (+10%). Defined according to ISO 13790.,[-],{0.1...n},float,black,inputs/technology/systems/envelope_systems.xls:ROOF
+-,get_database_envelope_systems,FLOOR,GHG_FLOOR_kgCO2m2,Embodied emissions per m2 of roof.(entire building life cycle),[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/systems/envelope_systems.xls:ROOF
+-,get_database_envelope_systems,FLOOR,code,Type of roof,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:ROOF
+-,get_database_envelope_systems,FLOOR,Description,Describes the Type of roof,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:ROOF
+-,get_database_envelope_systems,FLOOR,U_base,Thermal transmittance of floor including linear losses (+10%). Defined according to ISO 13790.,[-],{0.1...n},float,black,inputs/technology/systems/envelope_systems.xls:ROOF
 -,get_database_envelope_systems,SHADING,code,Type of shading,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:SHADING
 -,get_database_envelope_systems,SHADING,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:SHADING
 -,get_database_envelope_systems,SHADING,rf_sh,Shading coefficient when shading device is active. Defined according to ISO 13790.,[-],{0.0...1},float,black,inputs/technology/systems/envelope_systems.xls:SHADING
+-,get_database_envelope_systems,WALL,GHG_WALL_kgCO2m2,Embodied emissions per m2 of walls (entire building life cycle),[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/systems/envelope_systems.xls:WALL
 -,get_database_envelope_systems,WALL,a_wall,Solar absorption coefficient. Defined according to ISO 13790.,[-],{0.0...1},float,black,inputs/technology/systems/envelope_systems.xls:WALL
 -,get_database_envelope_systems,WALL,code,Type of wall,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:WALL
 -,get_database_envelope_systems,WALL,Description,Describes the Type of wall,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:WALL
 -,get_database_envelope_systems,WALL,e_wall,Emissivity of external surface. Defined according to ISO 13790.,[-],{0.0...1},float,black,inputs/technology/systems/envelope_systems.xls:WALL
 -,get_database_envelope_systems,WALL,r_wall,Reflectance in the Red spectrum. Defined according Radiance. (long-wave),[-],{0.0...1},float,black,inputs/technology/systems/envelope_systems.xls:WALL
--,get_database_envelope_systems,WALL,U_base,Thermal transmittance of basement including linear losses (+10%). Defined according to ISO 13790.,[-],{0.0...1},float,black,inputs/technology/systems/envelope_systems.xls:WALL
 -,get_database_envelope_systems,WALL,U_wall,Thermal transmittance of windows including linear losses (+10%). Defined according to ISO 13790.,[-],{0.1...n},float,black,inputs/technology/systems/envelope_systems.xls:WALL
+-,get_database_envelope_systems,WINDOW,GHG_WIN_kgCO2m2,Embodied emissions per m2 of windows.(entire building life cycle),[kg CO2-eq/m2],{0.0...n},float,black,inputs/technology/systems/envelope_systems.xls:WALL
 -,get_database_envelope_systems,WINDOW,code,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/systems/envelope_systems.xls:WINDOW
 -,get_database_envelope_systems,WINDOW,Description,Describes the source of the benchmark standards.,[-],[-],string,black,inputs/technology/systems/envelope_systems.xls:WINDOW
 -,get_database_envelope_systems,WINDOW,e_win,Emissivity of external surface. Defined according to ISO 13790.,[-],{0.0...1},float,black,inputs/technology/systems/envelope_systems.xls:WINDOW
@@ -390,8 +387,8 @@ network-layout,get_network_layout_nodes_shapefile,,Type,Weather a Plant or A Cus
 -,get_database_conversion_systems,CT,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:CT
 -,get_database_conversion_systems,CT,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/conversion_systems.xls:CT
 -,get_database_conversion_systems,DETAILED_ELEC_PRICES,hour,TODO,TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:DETAILED_ELEC_PRICES
--,get_database_conversion_systems,DETAILED_ELEC_PRICES,Opex_var_buy_USD2015perkWh,TODO,TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:DETAILED_ELEC_PRICES
--,get_database_conversion_systems,DETAILED_ELEC_PRICES,Opex_var_sell_USD2015perkWh,TODO,TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:DETAILED_ELEC_PRICES
+-,get_database_conversion_systems,DETAILED_ELEC_PRICES,Opex_var_buy_USD2015kWh,TODO,TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:DETAILED_ELEC_PRICES
+-,get_database_conversion_systems,DETAILED_ELEC_PRICES,Opex_var_sell_USD2015kWh,TODO,TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:DETAILED_ELEC_PRICES
 -,get_database_conversion_systems,DETAILED_ELEC_PRICES,year,TODO,TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:DETAILED_ELEC_PRICES
 -,get_database_conversion_systems,FC, Assumptions,items made by assumptions in this technology,[-],depends on the data availability,string,black,inputs/technology/systems/conversion_systems.xls:FC
 -,get_database_conversion_systems,FC,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:FC
@@ -408,11 +405,6 @@ network-layout,get_network_layout_nodes_shapefile,,Type,Weather a Plant or A Cus
 -,get_database_conversion_systems,FC,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:FC
 -,get_database_conversion_systems,FC,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:FC
 -,get_database_conversion_systems,FC,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/conversion_systems.xls:FC
--,get_database_conversion_systems,FEEDSTOCKS,CO2,TODO,TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:FEEDSTOCKS
--,get_database_conversion_systems,FEEDSTOCKS,code,TODO,TODO,TODO,string,black,inputs/technology/systems/conversion_systems.xls:FEEDSTOCKS
--,get_database_conversion_systems,FEEDSTOCKS,Opex_var_buy_USD2015perkWh,TODO,TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:FEEDSTOCKS
--,get_database_conversion_systems,FEEDSTOCKS,Opex_var_sell_USD2015perkWh,TODO,TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:FEEDSTOCKS
--,get_database_conversion_systems,FEEDSTOCKS,reference,TODO,TODO,TODO,string,black,inputs/technology/systems/conversion_systems.xls:FEEDSTOCKS
 -,get_database_conversion_systems,Furnace,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:Furnace
 -,get_database_conversion_systems,Furnace,assumption,items made by assumptions in this technology,[-],depends on the data availability,,black,inputs/technology/systems/conversion_systems.xls:Furnace
 -,get_database_conversion_systems,Furnace,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:Furnace
@@ -577,49 +569,49 @@ network-layout,get_network_layout_nodes_shapefile,,Type,Weather a Plant or A Cus
 -,get_database_conversion_systems,TES,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:TES
 -,get_database_conversion_systems,TES,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/conversion_systems.xls:TES
 -,get_database_feedstocks,NATURALGAS,hour,hour of a 24 hour day,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:NATURALGAS
--,get_database_feedstocks,NATURALGAS,CO2,Green House Gas Emisisons factor,[kg CO2-eq/MJ],{0.0...n},string,black,inputs/technology/feedstocks/feedstocks.xls:NATURALGAS
--,get_database_feedstocks,NATURALGAS,Opex_var_buy_USD2015perkWh,buying price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:NATURALGAS
--,get_database_feedstocks,NATURALGAS,Opex_var_sell_USD2015perkWh,selling price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:NATURALGAS
+-,get_database_feedstocks,NATURALGAS,GHG_kgCO2MJ,Non-renewable Green House Gas Emissions factor,[kg CO2-eq/MJ-oil eq],{0.0...n},string,black,inputs/technology/feedstocks/feedstocks.xls:NATURALGAS
+-,get_database_feedstocks,NATURALGAS,Opex_var_buy_USD2015kWh,buying price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:NATURALGAS
+-,get_database_feedstocks,NATURALGAS,Opex_var_sell_USD2015kWh,selling price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:NATURALGAS
 -,get_database_feedstocks,NATURALGAS,reference,reference,[-],[-],string,black,inputs/technology/feedstocks/feedstocks.xls:NATURALGAS
 -,get_database_feedstocks,BIOGAS,hour,hour of a 24 hour day,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:BIOGAS
--,get_database_feedstocks,BIOGAS,CO2,Green House Gas Emisisons factor,[kg CO2-eq/MJ],{0.0...n},string,black,inputs/technology/feedstocks/feedstocks.xls:BIOGAS
--,get_database_feedstocks,BIOGAS,Opex_var_buy_USD2015perkWh,buying price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:BIOGAS
--,get_database_feedstocks,BIOGAS,Opex_var_sell_USD2015perkWh,selling price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:BIOGAS
+-,get_database_feedstocks,BIOGAS,GHG_kgCO2MJ,Non-renewable Green House Gas Emissions factor,[kg CO2-eq/MJ-oil eq],{0.0...n},string,black,inputs/technology/feedstocks/feedstocks.xls:BIOGAS
+-,get_database_feedstocks,BIOGAS,Opex_var_buy_USD2015kWh,buying price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:BIOGAS
+-,get_database_feedstocks,BIOGAS,Opex_var_sell_USD2015kWh,selling price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:BIOGAS
 -,get_database_feedstocks,BIOGAS,reference,reference,[-],[-],string,black,inputs/technology/feedstocks/feedstocks.xls:BIOGAS
 -,get_database_feedstocks,GRID,hour,hour of a 24 hour day,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:GRID
--,get_database_feedstocks,GRID,CO2,Green House Gas Emisisons factor,[kg CO2-eq/MJ],{0.0...n},string,black,inputs/technology/feedstocks/feedstocks.xls:GRID
--,get_database_feedstocks,GRID,Opex_var_buy_USD2015perkWh,buying price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:GRID
--,get_database_feedstocks,GRID,Opex_var_sell_USD2015perkWh,selling price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:GRID
+-,get_database_feedstocks,GRID,GHG_kgCO2MJ,Non-renewable Green House Gas Emissions factor,[kg CO2-eq/MJ-oil eq],{0.0...n},string,black,inputs/technology/feedstocks/feedstocks.xls:GRID
+-,get_database_feedstocks,GRID,Opex_var_buy_USD2015kWh,buying price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:GRID
+-,get_database_feedstocks,GRID,Opex_var_sell_USD2015kWh,selling price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:GRID
 -,get_database_feedstocks,GRID,reference,reference,[-],[-],string,black,inputs/technology/feedstocks/feedstocks.xls:GRID
 -,get_database_feedstocks,SOLAR,hour,hour of a 24 hour day,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:SOLAR
--,get_database_feedstocks,SOLAR,CO2,Green House Gas Emisisons factor,[kg CO2-eq/MJ],{0.0...n},string,black,inputs/technology/feedstocks/feedstocks.xls:SOLAR
--,get_database_feedstocks,SOLAR,Opex_var_buy_USD2015perkWh,buying price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:SOLAR
--,get_database_feedstocks,SOLAR,Opex_var_sell_USD2015perkWh,selling price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:SOLAR
+-,get_database_feedstocks,SOLAR,GHG_kgCO2MJ,Non-renewable Green House Gas Emissions factor,[kg CO2-eq/MJ-oil eq],{0.0...n},string,black,inputs/technology/feedstocks/feedstocks.xls:SOLAR
+-,get_database_feedstocks,SOLAR,Opex_var_buy_USD2015kWh,buying price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:SOLAR
+-,get_database_feedstocks,SOLAR,Opex_var_sell_USD2015kWh,selling price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:SOLAR
 -,get_database_feedstocks,SOLAR,reference,reference,[-],[-],string,black,inputs/technology/feedstocks/feedstocks.xls:SOLAR
 -,get_database_feedstocks,OIL,hour,hour of a 24 hour day,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:OIL
--,get_database_feedstocks,OIL,CO2,Green House Gas Emisisons factor,[kg CO2-eq/MJ],{0.0...n},string,black,inputs/technology/feedstocks/feedstocks.xls:OIL
--,get_database_feedstocks,OIL,Opex_var_buy_USD2015perkWh,buying price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:OIL
--,get_database_feedstocks,OIL,Opex_var_sell_USD2015perkWh,selling price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:OIL
+-,get_database_feedstocks,OIL,GHG_kgCO2MJ,Non-renewable Green House Gas Emissions factor,[kg CO2-eq/MJ-oil eq],{0.0...n},string,black,inputs/technology/feedstocks/feedstocks.xls:OIL
+-,get_database_feedstocks,OIL,Opex_var_buy_USD2015kWh,buying price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:OIL
+-,get_database_feedstocks,OIL,Opex_var_sell_USD2015kWh,selling price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:OIL
 -,get_database_feedstocks,OIL,reference,reference,[-],[-],string,black,inputs/technology/feedstocks/feedstocks.xls:OIL
 -,get_database_feedstocks,COAL,hour,hour of a 24 hour day,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:COAL
--,get_database_feedstocks,COAL,CO2,Green House Gas Emisisons factor,[kg CO2-eq/MJ],{0.0...n},string,black,inputs/technology/feedstocks/feedstocks.xls:COAL
--,get_database_feedstocks,COAL,Opex_var_buy_USD2015perkWh,buying price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:COAL
--,get_database_feedstocks,COAL,Opex_var_sell_USD2015perkWh,selling price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:COAL
+-,get_database_feedstocks,COAL,GHG_kgCO2MJ,Non-renewable Green House Gas Emissions factor,[kg CO2-eq/MJ-oil eq],{0.0...n},string,black,inputs/technology/feedstocks/feedstocks.xls:COAL
+-,get_database_feedstocks,COAL,Opex_var_buy_USD2015kWh,buying price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:COAL
+-,get_database_feedstocks,COAL,Opex_var_sell_USD2015kWh,selling price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:COAL
 -,get_database_feedstocks,COAL,reference,reference,[-],[-],string,black,inputs/technology/feedstocks/feedstocks.xls:COAL
 -,get_database_feedstocks,WOOD,hour,hour of a 24 hour day,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:WOOD
--,get_database_feedstocks,WOOD,CO2,Green House Gas Emisisons factor,[kg CO2-eq/MJ],{0.0...n},string,black,inputs/technology/feedstocks/feedstocks.xls:WOOD
--,get_database_feedstocks,WOOD,Opex_var_buy_USD2015perkWh,buying price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:WOOD
--,get_database_feedstocks,WOOD,Opex_var_sell_USD2015perkWh,selling price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:WOOD
+-,get_database_feedstocks,WOOD,GHG_kgCO2MJ,Non-renewable Green House Gas Emissions factor,[kg CO2-eq/MJ-oil eq],{0.0...n},string,black,inputs/technology/feedstocks/feedstocks.xls:WOOD
+-,get_database_feedstocks,WOOD,Opex_var_buy_USD2015kWh,buying price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:WOOD
+-,get_database_feedstocks,WOOD,Opex_var_sell_USD2015kWh,selling price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:WOOD
 -,get_database_feedstocks,WOOD,reference,reference,[-],[-],string,black,inputs/technology/feedstocks/feedstocks.xls:WOOD
 -,get_database_feedstocks,WETBIOMASS,hour,hour of a 24 hour day,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:WETBIOMASS
--,get_database_feedstocks,WETBIOMASS,CO2,Green House Gas Emisisons factor,[kg CO2-eq/MJ],{0.0...n},string,black,inputs/technology/feedstocks/feedstocks.xls:WETBIOMASS
--,get_database_feedstocks,WETBIOMASS,Opex_var_buy_USD2015perkWh,buying price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:WETBIOMASS
--,get_database_feedstocks,WETBIOMASS,Opex_var_sell_USD2015perkWh,selling price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:WETBIOMASS
+-,get_database_feedstocks,WETBIOMASS,GHG_kgCO2MJ,Non-renewable Green House Gas Emissions factor,[kg CO2-eq/MJ-oil eq],{0.0...n},string,black,inputs/technology/feedstocks/feedstocks.xls:WETBIOMASS
+-,get_database_feedstocks,WETBIOMASS,Opex_var_buy_USD2015kWh,buying price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:WETBIOMASS
+-,get_database_feedstocks,WETBIOMASS,Opex_var_sell_USD2015kWh,selling price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:WETBIOMASS
 -,get_database_feedstocks,WETBIOMASS,reference,reference,[-],[-],string,black,inputs/technology/feedstocks/feedstocks.xls:WETBIOMASS
 -,get_database_feedstocks,DRYBIOMASS,hour,hour of a 24 hour day,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:DRYBIOMASS
--,get_database_feedstocks,DRYBIOMASS,CO2,Green House Gas Emisisons factor,[kg CO2-eq/MJ],{0.0...n},string,black,inputs/technology/feedstocks/feedstocks.xls:DRYBIOMASS
--,get_database_feedstocks,DRYBIOMASS,Opex_var_buy_USD2015perkWh,buying price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:DRYBIOMASS
--,get_database_feedstocks,DRYBIOMASS,Opex_var_sell_USD2015perkWh,selling price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:DRYBIOMASS
+-,get_database_feedstocks,DRYBIOMASS,GHG_kgCO2MJ,Non-renewable Green House Gas Emissions factor,[kg CO2-eq/MJ-oil eq],{0.0...n},string,black,inputs/technology/feedstocks/feedstocks.xls:DRYBIOMASS
+-,get_database_feedstocks,DRYBIOMASS,Opex_var_buy_USD2015kWh,buying price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:DRYBIOMASS
+-,get_database_feedstocks,DRYBIOMASS,Opex_var_sell_USD2015kWh,selling price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:DRYBIOMASS
 -,get_database_feedstocks,DRYBIOMASS,reference,reference,[-],[-],string,black,inputs/technology/feedstocks/feedstocks.xls:DRYBIOMASS
 -,get_terrain,,raster_value,TODO,TODO,TODO,TODO,black,inputs/topography/terrain.tif
 weather_helper,get_weather_file,,aerosol_opt_thousandths (index = 29),TODO,TODO,TODO,float,black,inputs/weather/weather.epw
@@ -724,8 +716,9 @@ demand,get_demand_results_file,,GRID_cre_kWh,kWh,Grid electricity requirements f
 demand,get_demand_results_file,,GRID_cs_kWh,kWh,Grid electricity requirements for space cooling,{0.0...n},float,blue,outputs/data/demand/b001.csv
 demand,get_demand_results_file,,GRID_data_kWh,kWh,Grid electricity requirements for servers,{0.0...n},float,blue,outputs/data/demand/b001.csv
 demand,get_demand_results_file,,GRID_hs_kWh,kWh,Grid electricity requirements for space heating,{0.0...n},float,red,outputs/data/demand/b001.csv
-demand,get_demand_results_file,,GRID_kWh,Grid total requirements of electricity = GRID_a + GRID_l + GRID_data + GRID_pro + GRID_aux + GRID_cdata + GRID_cre + GRID_hs + GRID_ww + GRID_cs,kWh,{0.0...n},float,green,outputs/data/demand/b001.csv
+demand,get_demand_results_file,,GRID_kWh,Grid total requirements of electricity = GRID_a + GRID_l + GRID_v +GRID_data + GRID_pro + GRID_aux + GRID_cdata + GRID_cre + GRID_hs + GRID_ww + GRID_cs,kWh,{0.0...n},float,green,outputs/data/demand/b001.csv
 demand,get_demand_results_file,,GRID_l_kWh,kWh,Grid electricity requirements for lights,{0.0...n},float,green_light,outputs/data/demand/b001.csv
+demand,get_demand_results_file,,GRID_v_kWh,kWh,Grid electricity requirements for Electromobility,{0.0...n},float,green_light,outputs/data/demand/b001.csv
 demand,get_demand_results_file,,GRID_pro_kWh,kWh,Grid electricity requirements for industrial processes,{0.0...n},float,brown,outputs/data/demand/b001.csv
 demand,get_demand_results_file,,GRID_ww_kWh,kWh,Grid electricity requirements for hot water supply,{0.0...n},float,orange,outputs/data/demand/b001.csv
 demand,get_demand_results_file,,I_rad_kWh,Radiative heat loss,kWh,{0.0...n},float,yellow_light,outputs/data/demand/b001.csv

@@ -301,7 +301,7 @@ Utilities:
     module: cea.utilities.create_mixed_use_type
     parameters: ['general:scenario', create-mixed-use-type]
     input-files:
-      - [get_use_types_properties]
+      - [get_database_use_types_properties]
 
   - name: test
     label: Test CEA
