@@ -1463,7 +1463,7 @@ get_database_envelope_systems:
       code:
         sample_data: T3
         types_found: [string]
-    LEAKAGE:
+    TIGHTNESS:
       Description:
         sample_data: Very Leaky
         types_found: [string]
