@@ -48,19 +48,37 @@ typology:
       sheet: STANDARD_DEFINITION
       column: STANDARD
   - name: 1ST_USE
-    type: str
+    type: choice
+    choice_properties:
+      lookup:
+        path: get_use_types_properties
+        sheet: INTERNAL_LOADS
+        column: code
+      none_value: NONE
   - name: 1ST_USE_R
     type: float
     constraints:
       max: 1
   - name: 2ND_USE
-    type: str
+    type: choice
+    choice_properties:
+      lookup:
+        path: get_use_types_properties
+        sheet: INTERNAL_LOADS
+        column: code
+      none_value: NONE
   - name: 2ND_USE_R
     type: float
     constraints:
       max: 1
   - name: 3RD_USE
-    type: str
+    type: choice
+    choice_properties:
+      lookup:
+        path: get_use_types_properties
+        sheet: INTERNAL_LOADS
+        column: code
+      none_value: NONE
   - name: 3RD_USE_R
     type: float
     constraints:
@@ -109,28 +127,32 @@ supply-systems:
     type: str
   - name: type_cs
     type: choice
-    location:
-      path: get_database_assemblies
-      sheet: COOLING
-      column: code
+    choice_properties:
+      lookup:
+        path: get_database_assemblies
+        sheet: COOLING
+        column: code
   - name: type_dhw
     type: choice
-    location:
-      path: get_database_assemblies
-      sheet: HOT_WATER
-      column: code
+    choice_properties:
+      lookup:
+        path: get_database_assemblies
+        sheet: HOT_WATER
+        column: code
   - name: type_el
     type: choice
-    location:
-      path: get_database_assemblies
-      sheet: ELECTRICITY
-      column: code
+    choice_properties:
+      lookup:
+        path: get_database_assemblies
+        sheet: ELECTRICITY
+        column: code
   - name: type_hs
     type: choice
-    location:
-      path: get_database_assemblies
-      sheet: HEATING
-      column: code
+    choice_properties:
+      lookup:
+        path: get_database_assemblies
+        sheet: HEATING
+        column: code
 architecture:
   parent: zone
   pk: Name
@@ -175,40 +197,46 @@ architecture:
       max: 1
   - name: type_cons
     type: choice
-    location:
-      path: get_database_envelope_systems
-      sheet: CONSTRUCTION
-      column: code
+    choice_properties:
+      lookup:
+        path: get_database_envelope_systems
+        sheet: CONSTRUCTION
+        column: code
   - name: type_leak
     type: choice
-    location:
-      path: get_database_envelope_systems
-      sheet: LEAKAGE
-      column: code
+    choice_properties:
+      lookup:
+        path: get_database_envelope_systems
+        sheet: LEAKAGE
+        column: code
   - name: type_roof
     type: choice
-    location:
-      path: get_database_envelope_systems
-      sheet: ROOF
-      column: code
+    choice_properties:
+      lookup:
+        path: get_database_envelope_systems
+        sheet: ROOF
+        column: code
   - name: type_shade
     type: choice
-    location:
-      path: get_database_envelope_systems
-      sheet: SHADING
-      column: code
+    choice_properties:
+      lookup:
+        path: get_database_envelope_systems
+        sheet: SHADING
+        column: code
   - name: type_wall
     type: choice
-    location:
-      path: get_database_envelope_systems
-      sheet: WALL
-      column: code
+    choice_properties:
+      lookup:
+        path: get_database_envelope_systems
+        sheet: WALL
+        column: code
   - name: type_win
     type: choice
-    location:
-      path: get_database_envelope_systems
-      sheet: WINDOW
-      column: code
+    choice_properties:
+      lookup:
+        path: get_database_envelope_systems
+        sheet: WINDOW
+        column: code
 indoor-comfort:
   parent: zone
   pk: Name
@@ -241,34 +269,39 @@ air-conditioning-systems:
       type: str
     - name: type_cs
       type: choice
-      location:
-        path: get_database_air_conditioning_systems
-        sheet: COOLING
-        column: code
+      choice_properties:
+        lookup:
+          path: get_database_air_conditioning_systems
+          sheet: COOLING
+          column: code
     - name: type_hs
       type: choice
-      location:
-        path: get_database_air_conditioning_systems
-        sheet: HEATING
-        column: code
+      choice_properties:
+        lookup:
+          path: get_database_air_conditioning_systems
+          sheet: HEATING
+          column: code
     - name: type_dhw
       type: choice
-      location:
-        path: get_database_air_conditioning_systems
-        sheet: HOT_WATER
-        column: code
+      choice_properties:
+        lookup:
+          path: get_database_air_conditioning_systems
+          sheet: HOT_WATER
+          column: code
     - name: type_ctrl
       type: choice
-      location:
-        path: get_database_air_conditioning_systems
-        sheet: CONTROLLER
-        column: code
+      choice_properties:
+        lookup:
+          path: get_database_air_conditioning_systems
+          sheet: CONTROLLER
+          column: code
     - name: type_vent
       type: choice
-      location:
-        path: get_database_air_conditioning_systems
-        sheet: VENTILATION
-        column: code
+      choice_properties:
+        lookup:
+          path: get_database_air_conditioning_systems
+          sheet: VENTILATION
+          column: code
     - name: heat_starts
       type: date
     - name: heat_ends
