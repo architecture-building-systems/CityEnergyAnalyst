@@ -102,7 +102,7 @@ def main(config):
     # print out all configuration variables used by this script
     print("Running create-new-project with project = %s" % config.create_new_project.project)
     print("Running create-new-project with scenario = %s" % config.create_new_project.scenario)
-    print("Running create-new-project with typology = %s" % config.create_new_project.occupancy)
+    print("Running create-new-project with typology = %s" % config.create_new_project.typology)
     print("Running create-new-project with zone = %s" % config.create_new_project.zone)
     print("Running create-new-project with terrain = %s" % config.create_new_project.terrain)
     print("Running create-new-project with output-path = %s" % config.create_new_project.output_path)
