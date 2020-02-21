@@ -836,6 +836,12 @@ get_database_construction_standards:
       type_wall:
         sample_data: T5
         types_found: [string]
+      type_floor:
+        sample_data: T5
+        types_found: [string]
+      type_base:
+        sample_data: T5
+        types_found: [string]
       type_win:
         sample_data: T4
         types_found: [string]
@@ -910,34 +916,6 @@ get_database_construction_standards:
       year_start:
         sample_data: !!python/long '2021'
         types_found: [long]
-    EMISSION_INTENSITY:
-      STANDARD:
-        sample_data: R
-        types_found: [string]
-      W_e_ag_kgm2:
-        types_found: [float]
-      W_e_bg_kgm2:
-        types_found: [float]
-      W_i_ag_kgm2:
-        types_found: [float]
-      W_i_bg_kgm2:
-        types_found: [float]
-      Win_kgm2:
-        types_found: [float]
-      F_i_kgm2:
-        types_found: [float]
-      F_e_kgm2:
-        types_found: [float]
-      R_kgm2:
-        types_found: [float]
-      Tech_kgm2:
-        types_found: [float]
-      Exca_kgm2:
-        types_found: [float]
-      Mobi_kgm2:
-        types_found: [float]
-      Reference:
-        types_found: [string]
   used_by: [archetypes_mapper]
 get_building_air_conditioning:
   created_by: [archetypes_mapper]
@@ -1008,6 +986,12 @@ get_building_architecture:
       sample_data: T1
       types_found: [string]
     type_wall:
+      sample_data: T5
+      types_found: [string]
+    type_floor:
+      sample_data: T5
+      types_found: [string]
+    type_base:
       sample_data: T5
       types_found: [string]
     type_win:
@@ -5750,6 +5734,12 @@ get_radiation_materials:
       sample_data: T4
       types_found: [string]
     type_wall:
+      sample_data: T5
+      types_found: [string]
+    type_floor:
+      sample_data: T5
+      types_found: [string]
+    type_base:
       sample_data: T5
       types_found: [string]
     type_win:
