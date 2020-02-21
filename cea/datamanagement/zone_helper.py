@@ -57,7 +57,7 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, buildings_he
             shapefile['building:levels'] = [3] * no_buildings
             shapefile['REFERENCE'] = "CEA - assumption"
         else:
-            shapefile['REFERENCE'] = ["OSM - median" if x is np.nan else "OSM - as it is" for x in
+            shapefile['REFERENCE'] = ["OSM - median values of all buildings" if x is np.nan else "OSM - as it is" for x in
                                         shapefile['building:levels']]
         if 'roof:levels' not in list_of_columns:
             shapefile['roof:levels'] = [1] * no_buildings
@@ -159,7 +159,7 @@ def calculate_typology_file(zone_df, year_construction, occupancy_type, occupanc
     typology_df['2ND_USE_R'] = 0.0
     typology_df['3RD_USE'] = "NONE"
     typology_df['3RD_USE_R'] = 0.0
-    typology_df['STANDARD'] = "T5" ##hardcoded for now
+    typology_df['STANDARD'] = "STANDARD3" ##hardcoded for now
     if occupancy_type == "Get it from open street maps":
         no_buildings = typology_df.shape[0]
         for index in range(no_buildings):
