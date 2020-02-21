@@ -46,7 +46,7 @@ def lca_embodied(year_to_calculate, locator):
     - zone.shp: shapefile with the geometry of each building in the zone of study
         locator.get_zone_geometry()
     - Archetypes_properties: csv file with the database of archetypes including embodied energy and emissions
-        locator.get_archetypes_properties()
+        locator.get_database_construction_standards()
 
     As a result, the following file is created:
 
