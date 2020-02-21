@@ -131,67 +131,46 @@ network-layout,get_network_layout_nodes_shapefile,,Name,Unique building ID. It m
 network-layout,get_network_layout_nodes_shapefile,,Type,Weather a Plant or A Customer,[-],alphanumeric,string,black,inputs/networks/dc/nodes.shp
 -,get_street_network,,geometry,Geometry,[-],[-],[-],black,inputs/networks/streets.shp
 -,get_street_network,,Id,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/networks/streets.shp
--,get_archetypes_properties,ARCHITECTURE,building_use,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
--,get_archetypes_properties,ARCHITECTURE,Es,Fraction of gross floor area with electrical demands.,[m2/m2],{0.0...1},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
--,get_archetypes_properties,ARCHITECTURE,Hs_ag,Fraction of above ground gross floor area air-conditioned.,[m2/m2],{0.0...1},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
--,get_archetypes_properties,ARCHITECTURE,Hs_bg,Fraction of below ground gross floor area air-conditioned ,[m2/m2],{0.0...1},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
--,get_archetypes_properties,ARCHITECTURE,Ns,Fraction of net gross floor area.,[m2/m2],{0.0...1},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
--,get_archetypes_properties,ARCHITECTURE,standard,Letter representing whereas the field represent construction properties of a building as newly constructed (C) or renovated (R),[-],{C or R},string,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
--,get_archetypes_properties,ARCHITECTURE,type_cons,Type of construction. It relates to the contents of the default database of Envelope Properties: construction,[code],{T1...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
--,get_archetypes_properties,ARCHITECTURE,type_leak,Leakage level. It relates to the contents of the default database of Envelope Properties: leakage,[code],{T1...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
--,get_archetypes_properties,ARCHITECTURE,type_roof,Roof construction type (relates to values in Default Database Construction Properties),[-],{T1...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
--,get_archetypes_properties,ARCHITECTURE,type_shade,Shading system type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
--,get_archetypes_properties,ARCHITECTURE,type_wall,Wall construction type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
--,get_archetypes_properties,ARCHITECTURE,type_win,Window type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
--,get_archetypes_properties,ARCHITECTURE,void_deck,Number of floors (from the ground up) with an open envelope (default = 0),[-],{0...n},integer,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
--,get_archetypes_properties,ARCHITECTURE,wwr_east,Window to wall ratio in in facades facing east,[m2/m2],{0.0...1},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
--,get_archetypes_properties,ARCHITECTURE,wwr_north,Window to wall ratio in in facades facing north,[m2/m2],{0.0...1},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
--,get_archetypes_properties,ARCHITECTURE,wwr_south,Window to wall ratio in in facades facing south,[m2/m2],{0.0...1},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
--,get_archetypes_properties,ARCHITECTURE,wwr_west,Window to wall ratio in in facades facing west,[m2/m2],{0.0...1},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
--,get_archetypes_properties,ARCHITECTURE,year_end,Upper limit of year interval where the building properties apply,[yr],{0...n},int,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
--,get_archetypes_properties,ARCHITECTURE,year_start,Lower limit of year interval where the building properties apply,[yr],{0...n},int,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
--,get_archetypes_properties,HVAC,building_use,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
--,get_archetypes_properties,HVAC,cool_ends,End of the cooling season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
--,get_archetypes_properties,HVAC,cool_starts,Start of the cooling season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
--,get_archetypes_properties,HVAC,heat_ends,End of the heating season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
--,get_archetypes_properties,HVAC,heat_starts,Start of the heating season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
--,get_archetypes_properties,HVAC,standard,Letter representing whereas the field represent construction properties of a building as newly constructed (C) or renovated (R),[-],{C or R},string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
--,get_archetypes_properties,HVAC,type_cs,Type of cooling supply system,[code],{T0...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
--,get_archetypes_properties,HVAC,type_ctrl,Type of heating and cooling control systems (relates to values in Default Database HVAC Properties),[code],{T1...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
--,get_archetypes_properties,HVAC,type_dhw,Type of hot water supply system,[code],{T0...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
--,get_archetypes_properties,HVAC,type_hs,Type of heating supply system,[code],{T0...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
--,get_archetypes_properties,HVAC,type_vent,Type of ventilation strategy (relates to values in Default Database HVAC Properties),[code],{T1...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
--,get_archetypes_properties,HVAC,year_end,Upper limit of year interval where the building properties apply,[yr],{0...n},int,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
--,get_archetypes_properties,HVAC,year_start,Lower limit of year interval where the building properties apply,[yr],{0...n},int,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
--,get_archetypes_properties,INDOOR_COMFORT,Code,Unique code for the material of the pipe.,[-],[-],string,black,inputs/technology/archetypes/construction_properties.xlsx:INDOOR_COMFORT
--,get_archetypes_properties,INDOOR_COMFORT,RH_max_pc,Upper bound of relative humidity,[%],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:INDOOR_COMFORT
--,get_archetypes_properties,INDOOR_COMFORT,RH_min_pc,Lower_bound of relative humidity,[%],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:INDOOR_COMFORT
--,get_archetypes_properties,INDOOR_COMFORT,Tcs_set_C,Setpoint temperature for cooling system,[C],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:INDOOR_COMFORT
--,get_archetypes_properties,INDOOR_COMFORT,Tcs_setb_C,Setback point of temperature for cooling system,[C],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:INDOOR_COMFORT
--,get_archetypes_properties,INDOOR_COMFORT,Ths_set_C,Setpoint temperature for heating system,[C],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:INDOOR_COMFORT
--,get_archetypes_properties,INDOOR_COMFORT,Ths_setb_C,Setback point of temperature for heating system,[C],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:INDOOR_COMFORT
--,get_archetypes_properties,INDOOR_COMFORT,Ve_lpspax,Indoor quality requirements of indoor ventilation per person,[l/s],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:INDOOR_COMFORT
--,get_archetypes_properties,INTERNAL_LOADS,Code,Unique code for the material of the pipe.,[-],[-],string,black,inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS
--,get_archetypes_properties,INTERNAL_LOADS,Ea_Wm2,Peak specific electrical load due to computers and devices,[W/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS
--,get_archetypes_properties,INTERNAL_LOADS,Ed_Wm2,Peak specific electrical load due to servers/data centres,[W/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS
--,get_archetypes_properties,INTERNAL_LOADS,El_Wm2,Peak specific electrical load due to artificial lighting,[W/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS
--,get_archetypes_properties,INTERNAL_LOADS,Epro_Wm2,Peak specific electrical load due to industrial processes,[W/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS
--,get_archetypes_properties,INTERNAL_LOADS,Occ_m2pax,Occupancy density,[m2/pax],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS
--,get_archetypes_properties,INTERNAL_LOADS,Qcpro_Wm2,Peak specific process cooling load,[W/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS
--,get_archetypes_properties,INTERNAL_LOADS,Qcre_Wm2,Peak specific cooling load due to refrigeration (cooling rooms),[W/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS
--,get_archetypes_properties,INTERNAL_LOADS,Qhpro_Wm2,Peak specific process heating load,[W/m2],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS
--,get_archetypes_properties,INTERNAL_LOADS,Qs_Wpax,Peak sensible heat load of people,[W/pax],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS
--,get_archetypes_properties,INTERNAL_LOADS,Vw_lpdpax,Peak specific fresh water consumption (includes cold and hot water),[lpd],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS
--,get_archetypes_properties,INTERNAL_LOADS,Vww_lpdpax,Peak specific daily hot water consumption,[lpd],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS
--,get_archetypes_properties,INTERNAL_LOADS,X_ghpax,Moisture released by occupancy at peak conditions,[gh/kg/p],{0.0...n},float,black,inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS
--,get_archetypes_properties,SUPPLY,building_use,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY
--,get_archetypes_properties,SUPPLY,standard,Letter representing whereas the field represent construction properties of a building as newly constructed (C) or renovated (R),[-],{C or R},string,black,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY
--,get_archetypes_properties,SUPPLY,type_cs,Type of cooling supply system,[code],{T0...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY
--,get_archetypes_properties,SUPPLY,type_dhw,Type of hot water supply system,[code],{T0...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY
--,get_archetypes_properties,SUPPLY,type_el,Type of electrical supply system,[code],{T0...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY
--,get_archetypes_properties,SUPPLY,type_hs,Type of heating supply system,[code],{T0...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY
--,get_archetypes_properties,SUPPLY,year_end,Upper limit of year interval where the building properties apply,[yr],{0...n},int,black,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY
--,get_archetypes_properties,SUPPLY,year_start,Lower limit of year interval where the building properties apply,[yr],{0...n},int,black,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY
+-,get_archetypes_properties,ENVELOPE_COMPONENTS,building_use,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
+-,get_archetypes_properties,ENVELOPE_COMPONENTS,Es,Fraction of gross floor area with electrical demands.,[m2/m2],{0.0...1},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
+-,get_archetypes_properties,ENVELOPE_COMPONENTS,Hs_ag,Fraction of above ground gross floor area air-conditioned.,[m2/m2],{0.0...1},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
+-,get_archetypes_properties,ENVELOPE_COMPONENTS,Hs_bg,Fraction of below ground gross floor area air-conditioned ,[m2/m2],{0.0...1},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
+-,get_archetypes_properties,ENVELOPE_COMPONENTS,Ns,Fraction of net gross floor area.,[m2/m2],{0.0...1},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
+-,get_archetypes_properties,ENVELOPE_COMPONENTS,STANDARD,Letter representing whereas the field represent construction properties of a building as newly constructed (C) or renovated (R),[-],{C or R},string,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
+-,get_archetypes_properties,ENVELOPE_COMPONENTS,type_cons,Type of construction. It relates to the contents of the default database of Envelope Properties: construction,[code],{T1...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
+-,get_archetypes_properties,ENVELOPE_COMPONENTS,type_leak,Leakage level. It relates to the contents of the default database of Envelope Properties: leakage,[code],{T1...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
+-,get_archetypes_properties,ENVELOPE_COMPONENTS,type_roof,Roof construction type (relates to values in Default Database Construction Properties),[-],{T1...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
+-,get_archetypes_properties,ENVELOPE_COMPONENTS,type_shade,Shading system type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
+-,get_archetypes_properties,ENVELOPE_COMPONENTS,type_wall,Wall construction type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
+-,get_archetypes_properties,ENVELOPE_COMPONENTS,type_win,Window type (relates to values in Default Database Construction Properties),[m2/m2],{T1...Tn},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
+-,get_archetypes_properties,ENVELOPE_COMPONENTS,void_deck,Number of floors (from the ground up) with an open envelope (default = 0),[-],{0...n},integer,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
+-,get_archetypes_properties,ENVELOPE_COMPONENTS,wwr_east,Window to wall ratio in in facades facing east,[m2/m2],{0.0...1},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
+-,get_archetypes_properties,ENVELOPE_COMPONENTS,wwr_north,Window to wall ratio in in facades facing north,[m2/m2],{0.0...1},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
+-,get_archetypes_properties,ENVELOPE_COMPONENTS,wwr_south,Window to wall ratio in in facades facing south,[m2/m2],{0.0...1},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
+-,get_archetypes_properties,ENVELOPE_COMPONENTS,wwr_west,Window to wall ratio in in facades facing west,[m2/m2],{0.0...1},float,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
+-,get_archetypes_properties,ENVELOPE_COMPONENTS,year_end,Upper limit of year interval where the building properties apply,[yr],{0...n},int,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
+-,get_archetypes_properties,ENVELOPE_COMPONENTS,year_start,Lower limit of year interval where the building properties apply,[yr],{0...n},int,black,inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE
+-,get_archetypes_properties,HVAC_COMPONENTS,building_use,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
+-,get_archetypes_properties,HVAC_COMPONENTS,cool_ends,End of the cooling season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
+-,get_archetypes_properties,HVAC_COMPONENTS,cool_starts,Start of the cooling season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
+-,get_archetypes_properties,HVAC_COMPONENTS,heat_ends,End of the heating season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
+-,get_archetypes_properties,HVAC_COMPONENTS,heat_starts,Start of the heating season - use 00|00 when there is none,[DD|MM],{00|00...31|12},string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
+-,get_archetypes_properties,HVAC_COMPONENTS,standard,Letter representing whereas the field represent construction properties of a building as newly constructed (C) or renovated (R),[-],{C or R},string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
+-,get_archetypes_properties,HVAC_COMPONENTS,type_cs,Type of cooling supply system,[code],{T0...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
+-,get_archetypes_properties,HVAC_COMPONENTS,type_ctrl,Type of heating and cooling control systems (relates to values in Default Database HVAC Properties),[code],{T1...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
+-,get_archetypes_properties,HVAC_COMPONENTS,type_dhw,Type of hot water supply system,[code],{T0...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
+-,get_archetypes_properties,HVAC_COMPONENTS,type_hs,Type of heating supply system,[code],{T0...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
+-,get_archetypes_properties,HVAC_COMPONENTS,type_vent,Type of ventilation strategy (relates to values in Default Database HVAC Properties),[code],{T1...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
+-,get_archetypes_properties,HVAC_COMPONENTS,year_end,Upper limit of year interval where the building properties apply,[yr],{0...n},int,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
+-,get_archetypes_properties,HVAC_COMPONENTS,year_start,Lower limit of year interval where the building properties apply,[yr],{0...n},int,black,inputs/technology/archetypes/construction_properties.xlsx:HVAC
+-,get_archetypes_properties,SUPPLY_ASSEMBLIES,building_use,Building use. It relates to the uses stored in the input database of Zone_occupancy,[-],Those stored in Zone_occupancy,string,black,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY
+-,get_archetypes_properties,SUPPLY_ASSEMBLIES,standard,Letter representing whereas the field represent construction properties of a building as newly constructed (C) or renovated (R),[-],{C or R},string,black,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY
+-,get_archetypes_properties,SUPPLY_ASSEMBLIES,type_cs,Type of cooling supply system,[code],{T0...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY
+-,get_archetypes_properties,SUPPLY_ASSEMBLIES,type_dhw,Type of hot water supply system,[code],{T0...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY
+-,get_archetypes_properties,SUPPLY_ASSEMBLIES,type_el,Type of electrical supply system,[code],{T0...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY
+-,get_archetypes_properties,SUPPLY_ASSEMBLIES,type_hs,Type of heating supply system,[code],{T0...Tn},string,black,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY
+-,get_archetypes_properties,SUPPLY_ASSEMBLIES,year_end,Upper limit of year interval where the building properties apply,[yr],{0...n},int,black,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY
+-,get_archetypes_properties,SUPPLY_ASSEMBLIES,year_start,Lower limit of year interval where the building properties apply,[yr],{0...n},int,black,inputs/technology/archetypes/construction_properties.xlsx:SUPPLY
 -,get_database_standard_schedules_use,,CH-SIA-2014,metadata,[-],TODO,string,black,inputs/technology/archetypes/schedules/RESTAURANT.csv
 -,get_database_standard_schedules_use,,METADATA,metadata,[-],TODO,string,black,inputs/technology/archetypes/schedules/RESTAURANT.csv
 -,get_database_standard_schedules_use,,RESTAURANT,metadata,[-],TODO,string,black,inputs/technology/archetypes/schedules/RESTAURANT.csv
@@ -303,14 +282,38 @@ network-layout,get_network_layout_nodes_shapefile,,Type,Weather a Plant or A Cus
 -,get_database_conversion_systems,Absorption_chiller,s_g,parameter in the characteristic equations to calculate the generator side,[-],depends on the source,float,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
 -,get_database_conversion_systems,Absorption_chiller,type,"type of absorption chiller (single, double, or triple)",[-],depends on the source,string,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
 -,get_database_conversion_systems,Absorption_chiller,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/conversion_systems.xls:Absorption_chiller
--,get_database_assemblies,SUPPLY,code,Type of all in one system,[-],alphanumeric,date,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
--,get_database_assemblies,SUPPLY,Description,Description of Type of all in one system,[-],alphanumeric,string,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
--,get_database_assemblies,SUPPLY,efficiency,efficiency of the all in one system,[-],{0.0...n},float,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
--,get_database_assemblies,SUPPLY,feedstock,feedstock used by the the all in one system,[-],alphanumeric,string,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
--,get_database_assemblies,SUPPLY,reference,Reference of the data,[-],alphanumeric,string,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
--,get_database_assemblies,SUPPLY,scale,"whether the all in one system is used at the building, or the district scale",[-],alphanumeric,string,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
--,get_database_assemblies,SUPPLY,system,"whether the all in one system is used for heating, cooling or electricity",[-],alphanumeric,string,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
--,get_database_assemblies,SUPPLY,CAPEX_USD2015kW,Capital costs per kW,[USD2015/kW],{0.0...n},float,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
+-,get_database_assemblies,HEATING,code,Type of all in one system,[-],alphanumeric,date,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
+-,get_database_assemblies,HEATING,Description,Description of Type of all in one system,[-],alphanumeric,string,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
+-,get_database_assemblies,HEATING,efficiency,efficiency of the all in one system,[-],{0.0...n},float,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
+-,get_database_assemblies,HEATING,feedstock,feedstock used by the the all in one system,[-],alphanumeric,string,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
+-,get_database_assemblies,HEATING,reference,Reference of the data,[-],alphanumeric,string,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
+-,get_database_assemblies,HEATING,scale,"whether the all in one system is used at the building, or the district scale",[-],alphanumeric,string,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
+-,get_database_assemblies,HEATING,system,"whether the all in one system is used for heating, cooling or electricity",[-],alphanumeric,string,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
+-,get_database_assemblies,HEATING,CAPEX_USD2015kW,Capital costs per kW,[USD2015/kW],{0.0...n},float,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
+-,get_database_assemblies,COOLING,code,Type of all in one system,[-],alphanumeric,date,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
+-,get_database_assemblies,COOLING,Description,Description of Type of all in one system,[-],alphanumeric,string,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
+-,get_database_assemblies,COOLING,efficiency,efficiency of the all in one system,[-],{0.0...n},float,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
+-,get_database_assemblies,COOLING,feedstock,feedstock used by the the all in one system,[-],alphanumeric,string,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
+-,get_database_assemblies,COOLING,reference,Reference of the data,[-],alphanumeric,string,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
+-,get_database_assemblies,COOLING,scale,"whether the all in one system is used at the building, or the district scale",[-],alphanumeric,string,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
+-,get_database_assemblies,COOLING,system,"whether the all in one system is used for heating, cooling or electricity",[-],alphanumeric,string,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
+-,get_database_assemblies,COOLING,CAPEX_USD2015kW,Capital costs per kW,[USD2015/kW],{0.0...n},float,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
+-,get_database_assemblies,ELECTRICITY,code,Type of all in one system,[-],alphanumeric,date,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
+-,get_database_assemblies,ELECTRICITY,Description,Description of Type of all in one system,[-],alphanumeric,string,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
+-,get_database_assemblies,ELECTRICITY,efficiency,efficiency of the all in one system,[-],{0.0...n},float,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
+-,get_database_assemblies,ELECTRICITY,feedstock,feedstock used by the the all in one system,[-],alphanumeric,string,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
+-,get_database_assemblies,ELECTRICITY,reference,Reference of the data,[-],alphanumeric,string,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
+-,get_database_assemblies,ELECTRICITY,scale,"whether the all in one system is used at the building, or the district scale",[-],alphanumeric,string,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
+-,get_database_assemblies,ELECTRICITY,system,"whether the all in one system is used for heating, cooling or electricity",[-],alphanumeric,string,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
+-,get_database_assemblies,ELECTRICITY,CAPEX_USD2015kW,Capital costs per kW,[USD2015/kW],{0.0...n},float,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
+-,get_database_assemblies,HOT_WATER,code,Type of all in one system,[-],alphanumeric,date,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
+-,get_database_assemblies,HOT_WATER,Description,Description of Type of all in one system,[-],alphanumeric,string,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
+-,get_database_assemblies,HOT_WATER,efficiency,efficiency of the all in one system,[-],{0.0...n},float,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
+-,get_database_assemblies,HOT_WATER,feedstock,feedstock used by the the all in one system,[-],alphanumeric,string,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
+-,get_database_assemblies,HOT_WATER,reference,Reference of the data,[-],alphanumeric,string,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
+-,get_database_assemblies,HOT_WATER,scale,"whether the all in one system is used at the building, or the district scale",[-],alphanumeric,string,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
+-,get_database_assemblies,HOT_WATER,system,"whether the all in one system is used for heating, cooling or electricity",[-],alphanumeric,string,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
+-,get_database_assemblies,HOT_WATER,CAPEX_USD2015kW,Capital costs per kW,[USD2015/kW],{0.0...n},float,black,inputs/technology/assemblies/assemblies.xls:SUPPLY
 -,get_database_conversion_systems,BH,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:BH
 -,get_database_conversion_systems,BH,assumption,items made by assumptions in this technology,[-],depends on the data availability,,black,inputs/technology/systems/conversion_systems.xls:BH
 -,get_database_conversion_systems,BH,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:BH
