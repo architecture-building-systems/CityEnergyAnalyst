@@ -387,8 +387,8 @@ network-layout,get_network_layout_nodes_shapefile,,Type,Weather a Plant or A Cus
 -,get_database_conversion_systems,CT,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:CT
 -,get_database_conversion_systems,CT,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/conversion_systems.xls:CT
 -,get_database_conversion_systems,DETAILED_ELEC_PRICES,hour,TODO,TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:DETAILED_ELEC_PRICES
--,get_database_conversion_systems,DETAILED_ELEC_PRICES,Opex_var_buy_USD2015perkWh,TODO,TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:DETAILED_ELEC_PRICES
--,get_database_conversion_systems,DETAILED_ELEC_PRICES,Opex_var_sell_USD2015perkWh,TODO,TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:DETAILED_ELEC_PRICES
+-,get_database_conversion_systems,DETAILED_ELEC_PRICES,Opex_var_buy_USD2015kWh,TODO,TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:DETAILED_ELEC_PRICES
+-,get_database_conversion_systems,DETAILED_ELEC_PRICES,Opex_var_sell_USD2015kWh,TODO,TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:DETAILED_ELEC_PRICES
 -,get_database_conversion_systems,DETAILED_ELEC_PRICES,year,TODO,TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:DETAILED_ELEC_PRICES
 -,get_database_conversion_systems,FC, Assumptions,items made by assumptions in this technology,[-],depends on the data availability,string,black,inputs/technology/systems/conversion_systems.xls:FC
 -,get_database_conversion_systems,FC,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:FC
@@ -405,11 +405,6 @@ network-layout,get_network_layout_nodes_shapefile,,Type,Weather a Plant or A Cus
 -,get_database_conversion_systems,FC,LT_yr,lifetime of this technology,year,depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:FC
 -,get_database_conversion_systems,FC,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:FC
 -,get_database_conversion_systems,FC,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/conversion_systems.xls:FC
--,get_database_conversion_systems,FEEDSTOCKS,CO2,TODO,TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:FEEDSTOCKS
--,get_database_conversion_systems,FEEDSTOCKS,code,TODO,TODO,TODO,string,black,inputs/technology/systems/conversion_systems.xls:FEEDSTOCKS
--,get_database_conversion_systems,FEEDSTOCKS,Opex_var_buy_USD2015perkWh,TODO,TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:FEEDSTOCKS
--,get_database_conversion_systems,FEEDSTOCKS,Opex_var_sell_USD2015perkWh,TODO,TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:FEEDSTOCKS
--,get_database_conversion_systems,FEEDSTOCKS,reference,TODO,TODO,TODO,string,black,inputs/technology/systems/conversion_systems.xls:FEEDSTOCKS
 -,get_database_conversion_systems,Furnace,a,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,long,black,inputs/technology/systems/conversion_systems.xls:Furnace
 -,get_database_conversion_systems,Furnace,assumption,items made by assumptions in this technology,[-],depends on the data availability,,black,inputs/technology/systems/conversion_systems.xls:Furnace
 -,get_database_conversion_systems,Furnace,b,"investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ",TODO,TODO,float,black,inputs/technology/systems/conversion_systems.xls:Furnace
@@ -574,49 +569,49 @@ network-layout,get_network_layout_nodes_shapefile,,Type,Weather a Plant or A Cus
 -,get_database_conversion_systems,TES,O&M_%,operation and maintanence cost factor (fraction of the investment cost),[-],depends on the source,long,black,inputs/technology/systems/conversion_systems.xls:TES
 -,get_database_conversion_systems,TES,unit,unit of the min/max capacity,TODO,depends on the source,string,black,inputs/technology/systems/conversion_systems.xls:TES
 -,get_database_feedstocks,NATURALGAS,hour,hour of a 24 hour day,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:NATURALGAS
--,get_database_feedstocks,NATURALGAS,CO2,Green House Gas Emisisons factor,[kg CO2-eq/MJ],{0.0...n},string,black,inputs/technology/feedstocks/feedstocks.xls:NATURALGAS
--,get_database_feedstocks,NATURALGAS,Opex_var_buy_USD2015perkWh,buying price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:NATURALGAS
--,get_database_feedstocks,NATURALGAS,Opex_var_sell_USD2015perkWh,selling price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:NATURALGAS
+-,get_database_feedstocks,NATURALGAS,GHG_kgCO2MJ,Non-renewable Green House Gas Emissions factor,[kg CO2-eq/MJ-oil eq],{0.0...n},string,black,inputs/technology/feedstocks/feedstocks.xls:NATURALGAS
+-,get_database_feedstocks,NATURALGAS,Opex_var_buy_USD2015kWh,buying price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:NATURALGAS
+-,get_database_feedstocks,NATURALGAS,Opex_var_sell_USD2015kWh,selling price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:NATURALGAS
 -,get_database_feedstocks,NATURALGAS,reference,reference,[-],[-],string,black,inputs/technology/feedstocks/feedstocks.xls:NATURALGAS
 -,get_database_feedstocks,BIOGAS,hour,hour of a 24 hour day,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:BIOGAS
--,get_database_feedstocks,BIOGAS,CO2,Green House Gas Emisisons factor,[kg CO2-eq/MJ],{0.0...n},string,black,inputs/technology/feedstocks/feedstocks.xls:BIOGAS
--,get_database_feedstocks,BIOGAS,Opex_var_buy_USD2015perkWh,buying price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:BIOGAS
--,get_database_feedstocks,BIOGAS,Opex_var_sell_USD2015perkWh,selling price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:BIOGAS
+-,get_database_feedstocks,BIOGAS,GHG_kgCO2MJ,Non-renewable Green House Gas Emissions factor,[kg CO2-eq/MJ-oil eq],{0.0...n},string,black,inputs/technology/feedstocks/feedstocks.xls:BIOGAS
+-,get_database_feedstocks,BIOGAS,Opex_var_buy_USD2015kWh,buying price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:BIOGAS
+-,get_database_feedstocks,BIOGAS,Opex_var_sell_USD2015kWh,selling price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:BIOGAS
 -,get_database_feedstocks,BIOGAS,reference,reference,[-],[-],string,black,inputs/technology/feedstocks/feedstocks.xls:BIOGAS
 -,get_database_feedstocks,GRID,hour,hour of a 24 hour day,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:GRID
--,get_database_feedstocks,GRID,CO2,Green House Gas Emisisons factor,[kg CO2-eq/MJ],{0.0...n},string,black,inputs/technology/feedstocks/feedstocks.xls:GRID
--,get_database_feedstocks,GRID,Opex_var_buy_USD2015perkWh,buying price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:GRID
--,get_database_feedstocks,GRID,Opex_var_sell_USD2015perkWh,selling price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:GRID
+-,get_database_feedstocks,GRID,GHG_kgCO2MJ,Non-renewable Green House Gas Emissions factor,[kg CO2-eq/MJ-oil eq],{0.0...n},string,black,inputs/technology/feedstocks/feedstocks.xls:GRID
+-,get_database_feedstocks,GRID,Opex_var_buy_USD2015kWh,buying price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:GRID
+-,get_database_feedstocks,GRID,Opex_var_sell_USD2015kWh,selling price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:GRID
 -,get_database_feedstocks,GRID,reference,reference,[-],[-],string,black,inputs/technology/feedstocks/feedstocks.xls:GRID
 -,get_database_feedstocks,SOLAR,hour,hour of a 24 hour day,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:SOLAR
--,get_database_feedstocks,SOLAR,CO2,Green House Gas Emisisons factor,[kg CO2-eq/MJ],{0.0...n},string,black,inputs/technology/feedstocks/feedstocks.xls:SOLAR
--,get_database_feedstocks,SOLAR,Opex_var_buy_USD2015perkWh,buying price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:SOLAR
--,get_database_feedstocks,SOLAR,Opex_var_sell_USD2015perkWh,selling price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:SOLAR
+-,get_database_feedstocks,SOLAR,GHG_kgCO2MJ,Non-renewable Green House Gas Emissions factor,[kg CO2-eq/MJ-oil eq],{0.0...n},string,black,inputs/technology/feedstocks/feedstocks.xls:SOLAR
+-,get_database_feedstocks,SOLAR,Opex_var_buy_USD2015kWh,buying price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:SOLAR
+-,get_database_feedstocks,SOLAR,Opex_var_sell_USD2015kWh,selling price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:SOLAR
 -,get_database_feedstocks,SOLAR,reference,reference,[-],[-],string,black,inputs/technology/feedstocks/feedstocks.xls:SOLAR
 -,get_database_feedstocks,OIL,hour,hour of a 24 hour day,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:OIL
--,get_database_feedstocks,OIL,CO2,Green House Gas Emisisons factor,[kg CO2-eq/MJ],{0.0...n},string,black,inputs/technology/feedstocks/feedstocks.xls:OIL
--,get_database_feedstocks,OIL,Opex_var_buy_USD2015perkWh,buying price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:OIL
--,get_database_feedstocks,OIL,Opex_var_sell_USD2015perkWh,selling price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:OIL
+-,get_database_feedstocks,OIL,GHG_kgCO2MJ,Non-renewable Green House Gas Emissions factor,[kg CO2-eq/MJ-oil eq],{0.0...n},string,black,inputs/technology/feedstocks/feedstocks.xls:OIL
+-,get_database_feedstocks,OIL,Opex_var_buy_USD2015kWh,buying price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:OIL
+-,get_database_feedstocks,OIL,Opex_var_sell_USD2015kWh,selling price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:OIL
 -,get_database_feedstocks,OIL,reference,reference,[-],[-],string,black,inputs/technology/feedstocks/feedstocks.xls:OIL
 -,get_database_feedstocks,COAL,hour,hour of a 24 hour day,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:COAL
--,get_database_feedstocks,COAL,CO2,Green House Gas Emisisons factor,[kg CO2-eq/MJ],{0.0...n},string,black,inputs/technology/feedstocks/feedstocks.xls:COAL
--,get_database_feedstocks,COAL,Opex_var_buy_USD2015perkWh,buying price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:COAL
--,get_database_feedstocks,COAL,Opex_var_sell_USD2015perkWh,selling price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:COAL
+-,get_database_feedstocks,COAL,GHG_kgCO2MJ,Non-renewable Green House Gas Emissions factor,[kg CO2-eq/MJ-oil eq],{0.0...n},string,black,inputs/technology/feedstocks/feedstocks.xls:COAL
+-,get_database_feedstocks,COAL,Opex_var_buy_USD2015kWh,buying price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:COAL
+-,get_database_feedstocks,COAL,Opex_var_sell_USD2015kWh,selling price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:COAL
 -,get_database_feedstocks,COAL,reference,reference,[-],[-],string,black,inputs/technology/feedstocks/feedstocks.xls:COAL
 -,get_database_feedstocks,WOOD,hour,hour of a 24 hour day,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:WOOD
--,get_database_feedstocks,WOOD,CO2,Green House Gas Emisisons factor,[kg CO2-eq/MJ],{0.0...n},string,black,inputs/technology/feedstocks/feedstocks.xls:WOOD
--,get_database_feedstocks,WOOD,Opex_var_buy_USD2015perkWh,buying price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:WOOD
--,get_database_feedstocks,WOOD,Opex_var_sell_USD2015perkWh,selling price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:WOOD
+-,get_database_feedstocks,WOOD,GHG_kgCO2MJ,Non-renewable Green House Gas Emissions factor,[kg CO2-eq/MJ-oil eq],{0.0...n},string,black,inputs/technology/feedstocks/feedstocks.xls:WOOD
+-,get_database_feedstocks,WOOD,Opex_var_buy_USD2015kWh,buying price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:WOOD
+-,get_database_feedstocks,WOOD,Opex_var_sell_USD2015kWh,selling price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:WOOD
 -,get_database_feedstocks,WOOD,reference,reference,[-],[-],string,black,inputs/technology/feedstocks/feedstocks.xls:WOOD
 -,get_database_feedstocks,WETBIOMASS,hour,hour of a 24 hour day,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:WETBIOMASS
--,get_database_feedstocks,WETBIOMASS,CO2,Green House Gas Emisisons factor,[kg CO2-eq/MJ],{0.0...n},string,black,inputs/technology/feedstocks/feedstocks.xls:WETBIOMASS
--,get_database_feedstocks,WETBIOMASS,Opex_var_buy_USD2015perkWh,buying price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:WETBIOMASS
--,get_database_feedstocks,WETBIOMASS,Opex_var_sell_USD2015perkWh,selling price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:WETBIOMASS
+-,get_database_feedstocks,WETBIOMASS,GHG_kgCO2MJ,Non-renewable Green House Gas Emissions factor,[kg CO2-eq/MJ-oil eq],{0.0...n},string,black,inputs/technology/feedstocks/feedstocks.xls:WETBIOMASS
+-,get_database_feedstocks,WETBIOMASS,Opex_var_buy_USD2015kWh,buying price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:WETBIOMASS
+-,get_database_feedstocks,WETBIOMASS,Opex_var_sell_USD2015kWh,selling price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:WETBIOMASS
 -,get_database_feedstocks,WETBIOMASS,reference,reference,[-],[-],string,black,inputs/technology/feedstocks/feedstocks.xls:WETBIOMASS
 -,get_database_feedstocks,DRYBIOMASS,hour,hour of a 24 hour day,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:DRYBIOMASS
--,get_database_feedstocks,DRYBIOMASS,CO2,Green House Gas Emisisons factor,[kg CO2-eq/MJ],{0.0...n},string,black,inputs/technology/feedstocks/feedstocks.xls:DRYBIOMASS
--,get_database_feedstocks,DRYBIOMASS,Opex_var_buy_USD2015perkWh,buying price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:DRYBIOMASS
--,get_database_feedstocks,DRYBIOMASS,Opex_var_sell_USD2015perkWh,selling price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:DRYBIOMASS
+-,get_database_feedstocks,DRYBIOMASS,GHG_kgCO2MJ,Non-renewable Green House Gas Emissions factor,[kg CO2-eq/MJ-oil eq],{0.0...n},string,black,inputs/technology/feedstocks/feedstocks.xls:DRYBIOMASS
+-,get_database_feedstocks,DRYBIOMASS,Opex_var_buy_USD2015kWh,buying price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:DRYBIOMASS
+-,get_database_feedstocks,DRYBIOMASS,Opex_var_sell_USD2015kWh,selling price,[-],{0...23},string,black,inputs/technology/feedstocks/feedstocks.xls:DRYBIOMASS
 -,get_database_feedstocks,DRYBIOMASS,reference,reference,[-],[-],string,black,inputs/technology/feedstocks/feedstocks.xls:DRYBIOMASS
 -,get_terrain,,raster_value,TODO,TODO,TODO,TODO,black,inputs/topography/terrain.tif
 weather_helper,get_weather_file,,aerosol_opt_thousandths (index = 29),TODO,TODO,TODO,float,black,inputs/weather/weather.epw

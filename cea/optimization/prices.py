@@ -20,18 +20,18 @@ class Prices(object):
     def __init__(self, supply_systems):
         pricing = supply_systems.FEEDSTOCKS
         self.NG_PRICE = np.tile(
-            pricing['NATURALGAS']['Opex_var_buy_USD2015perkWh'].values / 1000,  365)  # in USD/Wh for every hour of a year
+            pricing['NATURALGAS']['Opex_var_buy_USD2015kWh'].values / 1000,  365)  # in USD/Wh for every hour of a year
         self.BG_PRICE = np.tile(
-            pricing['BIOGAS']['Opex_var_buy_USD2015perkWh'].values / 1000,  365)   # in USD/Wh for every hour of a year
+            pricing['BIOGAS']['Opex_var_buy_USD2015kWh'].values / 1000,  365)   # in USD/Wh for every hour of a year
         self.WB_PRICE = np.tile(
-            pricing['WETBIOMASS']['Opex_var_buy_USD2015perkWh'].values / 1000,  365)   # in USD/Wh for every hour of a year
+            pricing['WETBIOMASS']['Opex_var_buy_USD2015kWh'].values / 1000,  365)   # in USD/Wh for every hour of a year
         self.DB_PRICE = np.tile(
-            pricing['DRYBIOMASS']['Opex_var_buy_USD2015perkWh'].values / 1000,  365)   # in USD/Wh for every hour of a year
+            pricing['DRYBIOMASS']['Opex_var_buy_USD2015kWh'].values / 1000,  365)   # in USD/Wh for every hour of a year
         self.SOLAR_PRICE = np.tile(
-            pricing['SOLAR']['Opex_var_buy_USD2015perkWh'].values / 1000,  365)  # in USD/Wh for every hour of a year
+            pricing['SOLAR']['Opex_var_buy_USD2015kWh'].values / 1000,  365)  # in USD/Wh for every hour of a year
         self.SOLAR_PRICE_EXPORT = np.tile(
-            pricing['SOLAR']['Opex_var_sell_USD2015perkWh'].values / 1000,  365)   # in USD/Wh for every hour of a year
+            pricing['SOLAR']['Opex_var_sell_USD2015kWh'].values / 1000,  365)   # in USD/Wh for every hour of a year
         self.ELEC_PRICE = np.tile(
-            pricing['GRID']['Opex_var_buy_USD2015perkWh'].values / 1000,  365)   # in USD/Wh for every hour of a year
+            pricing['GRID']['Opex_var_buy_USD2015kWh'].values / 1000,  365)   # in USD/Wh for every hour of a year
         self.ELEC_PRICE_EXPORT = np.tile(
-            pricing['GRID']['Opex_var_sell_USD2015perkWh'].values / 1000,  365)  # in USD/Wh for every hour of a year
+            pricing['GRID']['Opex_var_sell_USD2015kWh'].values / 1000,  365)  # in USD/Wh for every hour of a year
