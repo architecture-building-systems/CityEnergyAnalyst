@@ -86,7 +86,7 @@ Creating the installer
 - create the installer by right-clicking ``setup/cityenergyanalyst.nsi`` in Windows Explorer and choosing the "Compile
   NSIS Script" option.
 - upload the installer to the Release page.
-- update the document :doc:`installation-on-windows` to refer to the newest installer.
+- update the document :doc:`installation/installation-on-windows` to refer to the newest installer.
 
 .. _7z: https://www.7-zip.org/7z.html
 

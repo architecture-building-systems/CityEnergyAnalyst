@@ -4,7 +4,7 @@ RUN apt-get update -y && apt-get -y install gcc git libgl1-mesa-glx
 
 RUN conda env create -q -f /tmp/environment.yml -n cea
 RUN /bin/bash -c "source activate cea && \
-    pip install git+https://github.com/architecture-building-systems/CityEnergyAnalyst.git@1005-fix-installation-guide-for-ubuntu && \
+    pip install git+https://github.com/architecture-building-systems/CityEnergyAnalyst.git && \
     cea extract-reference-case --destination ~/ && \
     cea-config demand --scenario ~/reference-case-open/baseline && \
     cea-config radiation --daysim-bin-directory /root/Daysim/bin"
