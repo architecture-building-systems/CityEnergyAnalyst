@@ -231,6 +231,20 @@ architecture:
         path: get_database_envelope_systems
         sheet: WALL
         column: code
+  - name: type_floor
+    type: choice
+    choice_properties:
+      lookup:
+        path: get_database_envelope_systems
+        sheet: FLOOR
+        column: code
+  - name: type_base
+    type: choice
+    choice_properties:
+      lookup:
+        path: get_database_envelope_systems
+        sheet: FLOOR
+        column: code
   - name: type_win
     type: choice
     choice_properties:
@@ -311,36 +325,6 @@ air-conditioning-systems:
       type: date
     - name: cool_ends
       type: date
-emission-intensity:
-  parent: zone
-  pk: Name
-  type: dbf
-  location: get_building_emission_intensity
-  fields:
-  - name: Name
-    type: str
-  - name: W_e_ag_kgm2
-    type: float
-  - name: W_e_bg_kgm2
-    type: float
-  - name: W_i_ag_kgm2
-    type: float
-  - name: W_i_bg_kgm2
-    type: float
-  - name: Win_kgm2
-    type: float
-  - name: F_i_kgm2
-    type: float
-  - name: F_e_kgm2
-    type: float
-  - name: R_kgm2
-    type: float
-  - name: Tech_kgm2
-    type: float
-  - name: Exca_kgm2
-    type: float
-  - name: Mobi_kgm2
-    type: float
 
 
 
