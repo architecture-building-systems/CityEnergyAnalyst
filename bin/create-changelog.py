@@ -107,7 +107,7 @@ def main():
                 continue
             title = read_title(git_output)
             version = read_version(commit_id)
-            print('{date} - {version} - {pr} {title}'.format(
+            print('- {date} - {version} - {pr} {title}'.format(
                 date=date,
                 version=version,
                 pr=pr,
