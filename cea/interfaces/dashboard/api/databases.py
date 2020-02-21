@@ -13,44 +13,42 @@ api = Namespace("Databases", description="Database data for technologies in CEA"
 cea_database_path = os.path.dirname(cea.databases.__file__)
 
 DATABASES = OrderedDict([
-    ("archetypes", {
-        "CONSTRUCION_STANDARDS": {
-            "filename": "construction_properties.xlsx",
-            "schema_key": "get_archetypes_properties"
-        },
+    ("archetypes", OrderedDict([
+        ("CONSTRUCTION_STANDARDS", {
+            "filename": "CONSTRUCTION_STANDARDS.xlsx",
+            "schema_key": "get_database_construction_standards"
+        }),
         # FIXME: Find a way to include schema info
-        "USE_TYPES": None  # Handle manually
-    }),
-    ("assemblies", {
-        "SUPPLY": {
-            "filename": "supply.xls",
-            "schema_key": "get_database_assemblies"
-        },
-    }),
-    ("components", {
-        "HVAC": {
-            "filename": "air_conditioning.xls",
+        ("USE_TYPES", None)  # Handle manually
+    ])),
+    ("assemblies", OrderedDict([
+        ("SUPPLY", {
+            "filename": "SUPPLY.xls",
+            "schema_key": "get_database_supply_assemblies"
+        }),
+        ("HVAC", {
+            "filename": "HVAC.xls",
             "schema_key": "get_database_air_conditioning_systems"
-        },
-        "ENVELOPE": {
-            "filename": "envelope.xls",
+        }),
+        ("ENVELOPE", {
+            "filename": "ENVELOPE.xls",
             "schema_key": "get_database_envelope_systems"
-        },
-        "CONVERSION": {
-            "filename": "conversion.xls",
+        }),
+    ])),
+    ("components", OrderedDict([
+        ("CONVERSION", {
+            "filename": "CONVERSION.xls",
             "schema_key": "get_database_conversion_systems"
-        },
-        "DISTRIBUTION": {
-            "filename": "distribution.xls",
+        }),
+        ("DISTRIBUTION", {
+            "filename": "DISTRIBUTION.xls",
             "schema_key": "get_database_distribution_systems"
-        }
-    }),
-    ("feedstocks", {
-        "FEEDSTOCKS": {
-            "filename": "feedstocks.xls",
+        }),
+        ("FEEDSTOCKS", {
+            "filename": "FEEDSTOCKS.xls",
             "schema_key": "get_database_feedstocks"
-        },
-    })
+        })
+    ]))
 ])
 
 DATABASES_TYPE_MAP = {db_name: db_type for db_type, db_dict in DATABASES.items() for db_name in db_dict}
@@ -117,6 +115,14 @@ def use_type_properties_to_dict(db_path):
         df = xls.parse(sheet, keep_default_na=False).set_index('code').round(1)
         out[sheet] = df.to_dict(orient='index', into=OrderedDict)
     return out
+
+
+def use_type_properties_dict_to_file(db_dict, db_path):
+    with pandas.ExcelWriter(db_path) as writer:
+        for sheet_name, data in db_dict.items():
+            df = pandas.DataFrame.from_dict(data, orient='index').dropna(axis=0, how='all').reindex(data.keys())
+            df.index.name = 'code'
+            df.to_excel(writer, sheet_name=sheet_name)
 
 
 def database_to_dict(db_path):

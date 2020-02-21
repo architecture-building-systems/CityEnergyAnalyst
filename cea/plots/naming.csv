@@ -424,11 +424,9 @@ Emissions and Primary Energy,GHG_sys_connected_tonCO2,ton CO2-eq/yr,Annual emiss
 Emissions and Primary Energy,PEN_sys_disconnected_MJoil,MJ oil-eq/yr,Annual primary energy of decentralized energy systems,red_light
 Emissions and Primary Energy,PEN_sys_connected_MJoil,MJ oil-eq/yr,Annual primary energy of central energy system,red
 
-Emissions and Primary Energy,GHG_sys_embodied_tonCO2,ton CO2-eq/yr,Building construction and decomissioning,black
-Emissions and Primary Energy,GHG_sys_mobility_tonCO2,ton CO2-eq/yr,Commuting,grey_light
+Emissions and Primary Energy,GHG_sys_embodied_tonCO2,ton CO2-eq/yr,Annual building Embodied Emissions,grey_light
 Emissions and Primary Energy,O_ghg_ton,ton CO2-eq/yr,Energy system operation,grey
-Emissions and Primary Energy,GHG_sys_embodied_kgCO2m2,kg CO2-eq/m2.yr,Building construction and decomissioning,black
-Emissions and Primary Energy,GHG_sys_mobility_kgCO2m2,kg CO2-eq/m2.yr,Commuting,grey_light
+Emissions and Primary Energy,GHG_sys_embodied_kgCO2m2,kg CO2-eq/m2.yr,Annual building Embodied Emissions,black
 Emissions and Primary Energy,GHG_sys_kgCO2m2,kg CO2-eq/m2.yr,Energy system operation,grey
 
 Thermal Network,P_loss_%,-,Pumping energy,grey

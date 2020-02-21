@@ -95,6 +95,7 @@ VARIABLE_CEA_SCHEDULE_RELATION = {'Occ_m2pax': 'OCCUPANCY',
                                   'Qhpro_Wm2': 'PROCESSES',
                                   'Qcpro_Wm2': 'PROCESSES',
                                   'Epro_Wm2': 'PROCESSES',
+                                  'Ev_kWveh': 'ELECTROMOBILITY',
                                   }
 
 TEMPERATURE_VARIABLES = ['HEATING', 'COOLING']

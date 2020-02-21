@@ -787,17 +787,27 @@ SC_totals:
       sample_data: 0.0
       types_found: [float]
   used_by: [optimization]
-get_archetypes_properties:
+get_database_construction_standards:
   created_by: []
-  file_path: inputs/technology/archetypes/construction_properties.xlsx
+  file_path: inputs/technology/archetypes/CONSTRUCTION_STANDARDS.xlsx
   file_type: xlsx
   schema:
-    ENVELOPE_COMPONENTS:
+    STANDARD_DEFINITION:
       STANDARD:
         sample_data: R
         types_found: [string]
       Description:
         sample_data: UNIVERSITY
+        types_found: [string]
+      YEAR_END:
+        sample_data: !!python/long '2030'
+        types_found: [long]
+      YEAR_START:
+        sample_data: !!python/long '2021'
+        types_found: [long]
+    ENVELOPE_ASSEMBLIES:
+      STANDARD:
+        sample_data: R
         types_found: [string]
       Es:
         sample_data: 0.9
@@ -826,6 +836,12 @@ get_archetypes_properties:
       type_wall:
         sample_data: T5
         types_found: [string]
+      type_floor:
+        sample_data: T5
+        types_found: [string]
+      type_base:
+        sample_data: T5
+        types_found: [string]
       type_win:
         sample_data: T4
         types_found: [string]
@@ -844,18 +860,9 @@ get_archetypes_properties:
       wwr_west:
         sample_data: 0.31
         types_found: [float]
-      year_end:
-        sample_data: !!python/long '2030'
-        types_found: [long]
-      year_start:
-        sample_data: !!python/long '2021'
-        types_found: [long]
-    HVAC_COMPONENTS:
+    HVAC_ASSEMBLIES:
       STANDARD:
         sample_data: R
-        types_found: [string]
-      Description:
-        sample_data: UNIVERSITY
         types_found: [string]
       cool_ends:
         sample_data: 15|09
@@ -887,18 +894,9 @@ get_archetypes_properties:
       type_vent:
         sample_data: T2
         types_found: [string]
-      year_end:
-        sample_data: !!python/long '2030'
-        types_found: [long]
-      year_start:
-        sample_data: !!python/long '2021'
-        types_found: [long]
     SUPPLY_ASSEMBLIES:
       STANDARD:
         sample_data: R
-        types_found: [string]
-      Description:
-        sample_data: UNIVERSITY
         types_found: [string]
       type_cs:
         sample_data: T19
@@ -918,43 +916,6 @@ get_archetypes_properties:
       year_start:
         sample_data: !!python/long '2021'
         types_found: [long]
-    EMISSION_INTENSITY:
-      W_e_ag_kgm2:
-        types_found: [float]
-      W_e_bg_kgm2:
-        types_found: [float]
-      W_i_ag_kgm2:
-        types_found: [float]
-      W_i_bg_kgm2:
-        types_found: [float]
-      Win_kgm2:
-        types_found: [float]
-      F_i_kgm2:
-        types_found: [float]
-      F_e_kgm2:
-        types_found: [float]
-      R_kgm2:
-        types_found: [float]
-      Tech_kgm2:
-        types_found: [float]
-      Exca_kgm2:
-        types_found: [float]
-      Mobi_kgm2:
-        types_found: [float]
-      building_use:
-        sample_data: LIBRARY
-        types_found: [string]
-      standard:
-        sample_data: R
-        types_found: [string]
-      year_end:
-        sample_data: !!python/long '2030'
-        types_found: [long]
-      year_start:
-        sample_data: !!python/long '2021'
-        types_found: [long]
-      Reference:
-        types_found: [string]
   used_by: [archetypes_mapper]
 get_building_air_conditioning:
   created_by: [archetypes_mapper]
@@ -1025,6 +986,12 @@ get_building_architecture:
       sample_data: T1
       types_found: [string]
     type_wall:
+      sample_data: T5
+      types_found: [string]
+    type_floor:
+      sample_data: T5
+      types_found: [string]
+    type_base:
       sample_data: T5
       types_found: [string]
     type_win:
@@ -1359,6 +1326,11 @@ get_database_air_conditioning_systems:
       Description:
         sample_data: 'floor cooling (18/21)  '
         types_found: [string]
+      class_cs:
+        sample_data: NONE
+        types_found: [string]
+        choice:
+          values: [NONE, CEILING_COOLING, DECENTRALIZED_AC, CENTRAL_AC, HYBRID_AC, FLOOR_COOLING]
       Qcsmax_Wm2:
         sample_data: !!python/long '100'
         types_found: [long]
@@ -1409,6 +1381,11 @@ get_database_air_conditioning_systems:
       Description:
         sample_data: 'Floor heating (40/35) '
         types_found: [string]
+      class_hs:
+        sample_data: NONE
+        types_found: [string]
+        choice:
+          values: [NONE, RADIATOR, CENTRAL_AC, FLOOR_HEATING]
       Qhsmax_Wm2:
         sample_data: !!python/long '150'
         types_found: [long]
@@ -1480,7 +1457,7 @@ get_database_envelope_systems:
       code:
         sample_data: T3
         types_found: [string]
-    LEAKAGE:
+    TIGHTNESS:
       Description:
         sample_data: Very Leaky
         types_found: [string]
@@ -1509,6 +1486,9 @@ get_database_envelope_systems:
       r_roof:
         sample_data: 0.4
         types_found: [float]
+      GHG_ROOF_kgCO2m2:
+        sample_data: 100
+        types_found: [float]
     SHADING:
       Description:
         sample_data: venetian blinds
@@ -1523,9 +1503,6 @@ get_database_envelope_systems:
       Description:
         sample_data: concrete block exposed- NTU
         types_found: [string]
-      U_base:
-        sample_data: 1.7
-        types_found: [float]
       U_wall:
         sample_data: 3.2
         types_found: [float]
@@ -1540,6 +1517,9 @@ get_database_envelope_systems:
         types_found: [float]
       r_wall:
         sample_data: 0.4
+        types_found: [float]
+      GHG_WALL_kgCO2m2:
+        sample_data: 100
         types_found: [float]
     WINDOW:
       Description:
@@ -1559,6 +1539,22 @@ get_database_envelope_systems:
         types_found: [string]
       e_win:
         sample_data: 0.89
+        types_found: [float]
+      GHG_WIN_kgCO2m2:
+        sample_data: 100
+        types_found: [float]
+    FLOOR:
+      Description:
+        sample_data: window - SinBERBest Office
+        types_found: [string]
+      U_base:
+        sample_data: 2.2
+        types_found: [float]
+      code:
+        sample_data: T10
+        types_found: [string]
+      GHG_FLOOR_kgCO2m2:
+        sample_data: 100
         types_found: [float]
   used_by: [demand, radiation, schedule_maker]
 get_database_standard_schedules_use:
@@ -1582,13 +1578,13 @@ get_database_feedstocks:
   file_type: xls
   schema:
     NATURALGAS:
-      CO2:
+      GHG_kgCO2MJ:
         sample_data: 0.0075
         types_found: [float]
-      Opex_var_buy_USD2015perkWh:
+      Opex_var_buy_USD2015kWh:
         sample_data: 0.20800000000000002
         types_found: [float]
-      Opex_var_sell_USD2015perkWh:
+      Opex_var_sell_USD2015kWh:
         sample_data: 0.20800000000000002
         types_found: [float]
       hour:
@@ -1598,13 +1594,13 @@ get_database_feedstocks:
         sample_data: KBOB 2009/1:2016, ID 42.001 Kehrichtverbrennung, cost from CEA
         types_found: [string, null]
     BIOGAS:
-      CO2:
+      GHG_kgCO2MJ:
         sample_data: 0.0075
         types_found: [float]
-      Opex_var_buy_USD2015perkWh:
+      Opex_var_buy_USD2015kWh:
         sample_data: 0.20800000000000002
         types_found: [float]
-      Opex_var_sell_USD2015perkWh:
+      Opex_var_sell_USD2015kWh:
         sample_data: 0.20800000000000002
         types_found: [float]
       hour:
@@ -1614,13 +1610,13 @@ get_database_feedstocks:
         sample_data: KBOB 2009/1:2016, ID 42.001 Kehrichtverbrennung, cost from CEA
         types_found: [string, null]
     GRID:
-      CO2:
+      GHG_kgCO2MJ:
         sample_data: 0.0075
         types_found: [float]
-      Opex_var_buy_USD2015perkWh:
+      Opex_var_buy_USD2015kWh:
         sample_data: 0.20800000000000002
         types_found: [float]
-      Opex_var_sell_USD2015perkWh:
+      Opex_var_sell_USD2015kWh:
         sample_data: 0.20800000000000002
         types_found: [float]
       hour:
@@ -1630,13 +1626,13 @@ get_database_feedstocks:
         sample_data: KBOB 2009/1:2016, ID 42.001 Kehrichtverbrennung, cost from CEA
         types_found: [string, null]
     SOLAR:
-      CO2:
+      GHG_kgCO2MJ:
         sample_data: 0.0075
         types_found: [float]
-      Opex_var_buy_USD2015perkWh:
+      Opex_var_buy_USD2015kWh:
         sample_data: 0.20800000000000002
         types_found: [float]
-      Opex_var_sell_USD2015perkWh:
+      Opex_var_sell_USD2015kWh:
         sample_data: 0.20800000000000002
         types_found: [float]
       hour:
@@ -1646,13 +1642,13 @@ get_database_feedstocks:
         sample_data: KBOB 2009/1:2016, ID 42.001 Kehrichtverbrennung, cost from CEA
         types_found: [string, null]
     OIL:
-      CO2:
+      GHG_kgCO2MJ:
         sample_data: 0.0075
         types_found: [float]
-      Opex_var_buy_USD2015perkWh:
+      Opex_var_buy_USD2015kWh:
         sample_data: 0.20800000000000002
         types_found: [float]
-      Opex_var_sell_USD2015perkWh:
+      Opex_var_sell_USD2015kWh:
         sample_data: 0.20800000000000002
         types_found: [float]
       hour:
@@ -1662,13 +1658,13 @@ get_database_feedstocks:
         sample_data: KBOB 2009/1:2016, ID 42.001 Kehrichtverbrennung, cost from CEA
         types_found: [string, null]
     COAL:
-      CO2:
+      GHG_kgCO2MJ:
         sample_data: 0.0075
         types_found: [float]
-      Opex_var_buy_USD2015perkWh:
+      Opex_var_buy_USD2015kWh:
         sample_data: 0.20800000000000002
         types_found: [float]
-      Opex_var_sell_USD2015perkWh:
+      Opex_var_sell_USD2015kWh:
         sample_data: 0.20800000000000002
         types_found: [float]
       hour:
@@ -1678,13 +1674,13 @@ get_database_feedstocks:
         sample_data: KBOB 2009/1:2016, ID 42.001 Kehrichtverbrennung, cost from CEA
         types_found: [string, null]
     WOOD:
-      CO2:
+      GHG_kgCO2MJ:
         sample_data: 0.0075
         types_found: [float]
-      Opex_var_buy_USD2015perkWh:
+      Opex_var_buy_USD2015kWh:
         sample_data: 0.20800000000000002
         types_found: [float]
-      Opex_var_sell_USD2015perkWh:
+      Opex_var_sell_USD2015kWh:
         sample_data: 0.20800000000000002
         types_found: [float]
       hour:
@@ -1694,13 +1690,13 @@ get_database_feedstocks:
         sample_data: KBOB 2009/1:2016, ID 42.001 Kehrichtverbrennung, cost from CEA
         types_found: [string, null]
     WETBIOMASS:
-      CO2:
+      GHG_kgCO2MJ:
         sample_data: 0.0075
         types_found: [float]
-      Opex_var_buy_USD2015perkWh:
+      Opex_var_buy_USD2015kWh:
         sample_data: 0.20800000000000002
         types_found: [float]
-      Opex_var_sell_USD2015perkWh:
+      Opex_var_sell_USD2015kWh:
         sample_data: 0.20800000000000002
         types_found: [float]
       hour:
@@ -1710,13 +1706,13 @@ get_database_feedstocks:
         sample_data: KBOB 2009/1:2016, ID 42.001 Kehrichtverbrennung, cost from CEA
         types_found: [string, null]
     DRYBIOMASS:
-      CO2:
+      GHG_kgCO2MJ:
         sample_data: 0.0075
         types_found: [float]
-      Opex_var_buy_USD2015perkWh:
+      Opex_var_buy_USD2015kWh:
         sample_data: 0.20800000000000002
         types_found: [float]
-      Opex_var_sell_USD2015perkWh:
+      Opex_var_sell_USD2015kWh:
         sample_data: 0.20800000000000002
         types_found: [float]
       hour:
@@ -1726,7 +1722,7 @@ get_database_feedstocks:
         sample_data: KBOB 2009/1:2016, ID 42.001 Kehrichtverbrennung, cost from CEA
         types_found: [string, null]
   used_by: [decentralized, emissions, system_costs, optimization]
-get_database_assemblies:
+get_database_supply_assemblies:
   created_by: []
   file_path: inputs/technology/assemblies/supply.xls
   file_type: xls
@@ -1744,12 +1740,16 @@ get_database_assemblies:
       feedstock:
         sample_data: SOLAR
         types_found: [string]
+        choice:
+          values: [NONE, NATURALGAS, BIOGAS, GRID, SOLAR, OIL, COAL, WOOD, WETBIOMASS, DRYBIOMASS]
       reference:
         sample_data: educated guess
         types_found: [string]
       scale:
         sample_data: BUILDING
         types_found: [string]
+        choice:
+          values: [NONE, BUILDING, DISTRICT, CITY]
       system:
         sample_data: ELECTRICITY
         types_found: [string]
@@ -1778,12 +1778,16 @@ get_database_assemblies:
       feedstock:
         sample_data: SOLAR
         types_found: [string]
+        choice:
+          values: [NONE, NATURALGAS, BIOGAS, GRID, SOLAR, OIL, COAL, WOOD, WETBIOMASS, DRYBIOMASS]
       reference:
         sample_data: educated guess
         types_found: [string]
       scale:
         sample_data: BUILDING
         types_found: [string]
+        choice:
+          values: [NONE, BUILDING, DISTRICT, CITY]
       system:
         sample_data: ELECTRICITY
         types_found: [string]
@@ -1812,12 +1816,16 @@ get_database_assemblies:
       feedstock:
         sample_data: SOLAR
         types_found: [string]
+        choice:
+          values: [NONE, NATURALGAS, BIOGAS, GRID, SOLAR, OIL, COAL, WOOD, WETBIOMASS, DRYBIOMASS]
       reference:
         sample_data: educated guess
         types_found: [string]
       scale:
         sample_data: BUILDING
         types_found: [string]
+        choice:
+          values: [NONE, BUILDING, DISTRICT, CITY]
       system:
         sample_data: ELECTRICITY
         types_found: [string]
@@ -1846,12 +1854,16 @@ get_database_assemblies:
       feedstock:
         sample_data: SOLAR
         types_found: [string]
+        choice:
+          values: [NONE, NATURALGAS, BIOGAS, GRID, SOLAR, OIL, COAL, WOOD, WETBIOMASS, DRYBIOMASS]
       reference:
         sample_data: educated guess
         types_found: [string]
       scale:
         sample_data: BUILDING
         types_found: [string]
+        choice:
+          values: [NONE, BUILDING, DISTRICT, CITY]
       system:
         sample_data: ELECTRICITY
         types_found: [string]
@@ -2180,10 +2192,10 @@ get_database_conversion_systems:
         sample_data: W
         types_found: [string]
     DETAILED_ELEC_COSTS:
-      Opex_var_buy_USD2015perkWh:
+      Opex_var_buy_USD2015kWh:
         sample_data: 0.04936071505496888
         types_found: [float]
-      Opex_var_sell_USD2015perkWh:
+      Opex_var_sell_USD2015kWh:
         sample_data: 0.04936071505496888
         types_found: [float]
       hour:
@@ -2662,6 +2674,8 @@ get_database_conversion_systems:
       type:
         sample_data: ET
         types_found: [string]
+        choice:
+          values: [FP, ET]
       unit:
         sample_data: m2
         types_found: [string]
@@ -5767,6 +5781,12 @@ get_radiation_materials:
       sample_data: T4
       types_found: [string]
     type_wall:
+      sample_data: T5
+      types_found: [string]
+    type_floor:
+      sample_data: T5
+      types_found: [string]
+    type_base:
       sample_data: T5
       types_found: [string]
     type_win:
