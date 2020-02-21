@@ -338,6 +338,12 @@ Utilities:
 
 
 default:
+  - name: create-new-project
+    label: create-new-project
+    description: create-new-project
+    interfaces: [cli]
+    module: cea.datamanagement.create_new_project
+    parameters: [create-new-project]
 
   - name: zone-helper
     label: Zone helper

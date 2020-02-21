@@ -477,7 +477,7 @@ class WeatherPathParameter(Parameter):
 class WorkflowParameter(Parameter):
     typename = "WorkflowParameter"
     examples = {
-        "district-heating-system": os.path.join(os.path.dirname(__file__), "workflows", "district_heating_system.yml"),
+        "district-heating-system": os.path.join(os.path.dirname(__file__), "workflows", "emissions_assessment.yml"),
         "district-cooling-system": os.path.join(os.path.dirname(__file__), "workflows", "district_cooling_system.yml")
     }
 

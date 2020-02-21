@@ -31,8 +31,8 @@ __status__ = "Production"
 def create_new_project(locator, config):
     # Local variables
     zone_geometry_path = config.create_new_project.zone
-    surroundings_geometry_path = config.create_new_project.district
-    street_geometry_path = config.create_new_project.streets
+    surroundings_geometry_path = config.create_new_project.surroundings
+    street_geometry_path = ''
     terrain_path = config.create_new_project.terrain
     occupancy_path = config.create_new_project.occupancy
     age_path = config.create_new_project.age
@@ -41,14 +41,11 @@ def create_new_project(locator, config):
     zone, lat, lon = shapefile_to_WSG_and_UTM(zone_geometry_path)
     # verify if input file is correct for CEA, if not an exception will be released
     verify_input_geometry_zone(zone)
+    locator.ensure_parent_folder_exists(locator.get_zone_geometry())
     zone.to_file(locator.get_zone_geometry())
 
 
     # apply coordinate system of terrain into zone and save zone to disk.
-    terrain = raster_to_WSG_and_UTM(terrain_path, lat, lon)
-    driver = gdal.GetDriverByName('GTiff')
-    verify_input_terrain(terrain)
-    driver.CreateCopy(locator.get_terrain(), terrain)
 
     # now create the surroundings file if it does not exist
     if surroundings_geometry_path == '':
@@ -84,6 +81,7 @@ def create_new_project(locator, config):
         # verify if input file is correct for CEA, if not an exception will be released
         verify_input_occupancy(occupancy_file_test)
         # create new file
+        locator.ensure_parent_folder_exists(locator.get_building_occupancy())
         copyfile(occupancy_path, locator.get_building_occupancy())
 
     ## create age file
@@ -102,6 +100,7 @@ def create_new_project(locator, config):
         # verify if input file is correct for CEA, if not an exception will be released
         verify_input_age(age_file_test)
         # create new file
+        locator.ensure_parent_folder_exists(locator.get_building_age())
         copyfile(age_path, locator.get_building_age())
 
     # add other folders by calling the locator

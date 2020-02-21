@@ -139,4 +139,25 @@ def do_script_step(config, step):
 
 
 if __name__ == '__main__':
-    main(cea.config.Configuration())
+    path = r'C:\Users\HHM\Desktop\Inputs'
+    config = cea.config.Configuration()
+    project_name = os.path.join(path,'test')
+    location_zone = [os.path.join(path,r'zones\zone1.shp'), os.path.join(path,r'zones\zone.shp')]
+    location_surroundings = [os.path.join(path,r'surroundings\surroundings1.shp'), os.path.join(path,r'surroundings\surroundings.shp')]
+    location_occupancy = [os.path.join(path,r'occupancy\occupancy1.dbf'), os.path.join(path,r'occupancy\occupancy.dbf')]
+    location_age = [os.path.join(path,r'age\age1.dbf'), os.path.join(path,r'age\age.dbf')]
+    scenarios_names = ['FAR10_9_buildings_with_context', 'FAR10_1_building_with_context']
+
+    for surrounding, zone, scenario, age, occupancy in zip(location_surroundings, location_zone, scenarios_names, location_age, location_occupancy):
+        locator = cea.inputlocator.InputLocator(scenario)
+        config.multiprocessing = True
+        config.create_new_project.scenario = scenario
+        config.create_new_project.project = project_name
+        config.create_new_project.zone = zone
+        config.create_new_project.surroundings = surrounding
+        config.create_new_project.age = age
+        config.create_new_project.occupancy = occupancy
+        config.workflow.scenario = scenario
+        config.project = project_name
+        #config.scenario_name = scenario
+        main(config)

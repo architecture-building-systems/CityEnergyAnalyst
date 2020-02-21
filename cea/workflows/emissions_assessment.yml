@@ -1,0 +1,22 @@
+- script: create-new-project
+- config: .
+  "general:scenario-name": "${cea_workflow_scenario}"
+- script: data-helper
+  parameters:
+    region: SG
+
+- script: weather-helper
+  parameters:
+    weather: Singapore-Changi_2030_AB1_TMY
+
+- script: terrain-helper
+
+- script: radiation
+
+- script: schedule-maker
+
+- script: demand
+
+- script: photovoltaic
+
+- script: emissions
