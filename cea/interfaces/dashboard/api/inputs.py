@@ -338,7 +338,7 @@ class InputDatabaseAll(Resource):
                         out[db_type][db_name]['SCHEDULES'] = get_all_schedules_dict(
                             locator.get_database_use_types_folder())
                         out[db_type][db_name]['USE_TYPE_PROPERTIES'] = use_type_properties_to_dict(
-                            locator.get_use_types_properties())
+                            locator.get_database_use_types_properties())
                     else:
                         locator_method = db_props['schema_key']
                         out[db_type][db_name] = database_to_dict(locator.__getattribute__(locator_method)())
@@ -360,7 +360,7 @@ class InputDatabase(Resource):
                     out['SCHEDULES'] = get_all_schedules_dict(
                         locator.get_database_use_types_folder())
                     out['USE_TYPE_PROPERTIES'] = use_type_properties_to_dict(
-                        locator.get_use_types_properties())
+                        locator.get_database_use_types_properties())
                 else:
                     db_type = DATABASES_TYPE_MAP[db]
                     locator_method = DATABASES[db_type][db]['schema_key']
