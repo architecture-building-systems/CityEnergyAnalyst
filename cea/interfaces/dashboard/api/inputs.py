@@ -228,10 +228,10 @@ def get_building_properties():
                     continue
                 columns[column]['type'] = field['type']
                 if field['type'] == 'choice':
-                    path = getattr(locator, field['location']['path'])()
+                    path = getattr(locator, field['choice_properties']['lookup']['path'])()
                     columns[column]['path'] = path
                     # TODO: Try to optimize this step to decrease the number of file reading
-                    columns[column]['choices'] = get_choices(field['location'], path)
+                    columns[column]['choices'] = get_choices(field['choice_properties'], path)
                 if 'constraints' in field:
                     columns[column]['constraints'] = field['constraints']
                 columns[column]['description'] = db_glossary[column]['DESCRIPTION']
@@ -429,10 +429,14 @@ class InputDatabaseCheck(Resource):
         return {'message': 'Database in path seems to be valid.'}
 
 
-def get_choices(location, path):
-    df = pandas.read_excel(path, location['sheet'])
-    if 'filter' in location:
-        choices = df[df.eval(location['filter'])][location['column']].tolist()
-    else:
-        choices = df[location['column']].tolist()
-    return [{'value': choice, 'label': df.loc[df[location['column']] == choice, 'Description'].values[0]} for choice in choices]
+def get_choices(choice_properties, path):
+    lookup = choice_properties['lookup']
+    df = pandas.read_excel(path, lookup['sheet'])
+    choices = df[lookup['column']].tolist()
+    out = []
+    if 'none_value' in choice_properties:
+        out.append({'value': 'NONE', 'label': ''})
+    for choice in choices:
+        label = df.loc[df[lookup['column']] == choice, 'Description'].values[0] if 'Description' in df.columns else ''
+        out.append({'value': choice, 'label': label})
+    return out
