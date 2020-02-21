@@ -1,83 +1,14 @@
 
-get_archetypes_properties
--------------------------
-
-The following file is used by scripts: ['data_helper']
-
-
-
-.. csv-table:: **inputs/technology/archetypes/construction_properties.xlsx:ARCHITECTURE**
-    :header: "Variable", "Description"
-
-
-
-.. csv-table:: **inputs/technology/archetypes/construction_properties.xlsx:HVAC**
-    :header: "Variable", "Description"
-
-
-
-.. csv-table:: **inputs/technology/archetypes/construction_properties.xlsx:INDOOR_COMFORT**
-    :header: "Variable", "Description"
-
-
-
-.. csv-table:: **inputs/technology/archetypes/construction_properties.xlsx:INTERNAL_LOADS**
-    :header: "Variable", "Description"
-
-
-
-.. csv-table:: **inputs/technology/archetypes/construction_properties.xlsx:SUPPLY**
-    :header: "Variable", "Description"
-
-
-
-get_building_age
-----------------
-
-The following file is used by scripts: ['data_helper', 'emissions', 'demand']
-
-
-
-.. csv-table:: **inputs/building-properties/age.dbf**
-    :header: "Variable", "Description"
-
-     HVAC,Year of last retrofit of HVAC systems (0 if none) - Unit: [-]
-     Name,Unique building ID. It must start with a letter. - Unit: [-]
-     basement,Year of last retrofit of basement (0 if none) - Unit: [-]
-     built,Construction year - Unit: [-]
-     envelope,Year of last retrofit of building facades (0 if none) - Unit: [-]
-     partitions,Year of last retrofit of internal wall partitions(0 if none) - Unit: [-]
-     roof,Year of last retrofit of roof (0 if none) - Unit: [-]
-     windows,Year of last retrofit of windows (0 if none) - Unit: [-]
-
-
 get_building_occupancy
 ----------------------
 
-The following file is used by scripts: ['data_helper', 'emissions', 'demand']
+The following file is used by scripts: ['archetypes_mapper', 'demand', 'emissions']
 
 
 
 .. csv-table:: **inputs/building-properties/occupancy.dbf**
     :header: "Variable", "Description"
 
-     COOLROOM,Refrigeration rooms - Unit: [m2]
-     FOODSTORE,Food stores - Unit: [m2]
-     GYM,Gymnasiums - Unit: [m2]
-     HOSPITAL,Hospitals - Unit: [m2]
-     HOTEL,Hotels - Unit: [m2]
-     INDUSTRIAL,Light industry - Unit: [m2]
-     LIBRARY,Libraries - Unit: [m2]
-     MULTI_RES,Residential (multiple dwellings) - Unit: [m2]
-     Name,Unique building ID. It must start with a letter. - Unit: [-]
-     OFFICE,Offices - Unit: [m2]
-     PARKING,Parking - Unit: [m2]
-     RESTAURANT,Restaurants - Unit: [m2]
-     RETAIL,Retail - Unit: [m2]
-     SCHOOL,Schools - Unit: [m2]
-     SERVERROOM,Data center - Unit: [m2]
-     SINGLE_RES,Residential (single dwellings) - Unit: [m2]
-     SWIMMING,Swimming halls - Unit: [m2]
 
 
 get_database_air_conditioning_systems
@@ -87,118 +18,62 @@ The following file is used by scripts: ['demand']
 
 
 
-.. csv-table:: **inputs/technology/systems/air_conditioning_systems.xls:controller**
+.. csv-table:: **inputs/technology/systems/air_conditioning_systems.xls:CONTROLLER**
     :header: "Variable", "Description"
 
 
 
-.. csv-table:: **inputs/technology/systems/air_conditioning_systems.xls:cooling**
+.. csv-table:: **inputs/technology/systems/air_conditioning_systems.xls:COOLING**
     :header: "Variable", "Description"
 
 
 
-.. csv-table:: **inputs/technology/systems/air_conditioning_systems.xls:dhw**
+.. csv-table:: **inputs/technology/systems/air_conditioning_systems.xls:HEATING**
     :header: "Variable", "Description"
 
 
 
-.. csv-table:: **inputs/technology/systems/air_conditioning_systems.xls:heating**
+.. csv-table:: **inputs/technology/systems/air_conditioning_systems.xls:HOT_WATER**
     :header: "Variable", "Description"
 
 
 
-.. csv-table:: **inputs/technology/systems/air_conditioning_systems.xls:ventilation**
+.. csv-table:: **inputs/technology/systems/air_conditioning_systems.xls:VENTILATION**
     :header: "Variable", "Description"
 
 
 
-get_database_envelope_systems
------------------------------
-
-The following file is used by scripts: ['schedule_maker', 'radiation', 'demand']
-
-
-
-.. csv-table:: **inputs/technology/systems/envelope_systems.xls:CONSTRUCTION**
-    :header: "Variable", "Description"
-
-
-
-.. csv-table:: **inputs/technology/systems/envelope_systems.xls:TIGHTNESS**
-    :header: "Variable", "Description"
-
-
-
-.. csv-table:: **inputs/technology/systems/envelope_systems.xls:ROOF**
-    :header: "Variable", "Description"
-
-
-
-.. csv-table:: **inputs/technology/systems/envelope_systems.xls:SHADING**
-    :header: "Variable", "Description"
-
-
-
-.. csv-table:: **inputs/technology/systems/envelope_systems.xls:WALL**
-    :header: "Variable", "Description"
-
-
-
-.. csv-table:: **inputs/technology/systems/envelope_systems.xls:WINDOW**
-    :header: "Variable", "Description"
-
-
-
-get_database_lca_buildings
---------------------------
-
-The following file is used by scripts: ['emissions']
-
-
-
-.. csv-table:: **inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_EMISSIONS**
-    :header: "Variable", "Description"
-
-
-
-.. csv-table:: **inputs/technology/lifecycle/LCA_buildings.xlsx:EMBODIED_ENERGY**
-    :header: "Variable", "Description"
-
-
-
-get_database_lca_mobility
--------------------------
-
-The following file is used by scripts: ['emissions', 'operation_costs']
-
-
-
-.. csv-table:: **inputs/technology/lifecycle/LCA_mobility.xls:MOBILITY**
-    :header: "Variable", "Description"
-
-
-
-get_database_standard_schedules_use
+get_database_construction_standards
 -----------------------------------
 
-The following file is used by scripts: ['data_helper']
+The following file is used by scripts: ['archetypes_mapper']
 
 
 
-.. csv-table:: **inputs/technology/archetypes/schedules/RESTAURANT.csv**
+.. csv-table:: **inputs/technology/archetypes/CONSTRUCTION_STANDARDS.xlsx:ENVELOPE_ASSEMBLIES**
     :header: "Variable", "Description"
 
 
 
-get_database_supply_systems
----------------------------
-
-The following file is used by scripts: ['photovoltaic_thermal', 'decentralized', 'solar_collector', 'thermal_network', 'optimization', 'emissions', 'demand', 'photovoltaic', 'operation_costs']
-
-
-
-.. csv-table:: **inputs/technology/systems/supply_systems.xls:BUNDLES**
+.. csv-table:: **inputs/technology/archetypes/CONSTRUCTION_STANDARDS.xlsx:HVAC_ASSEMBLIES**
     :header: "Variable", "Description"
+
+
+
+.. csv-table:: **inputs/technology/archetypes/CONSTRUCTION_STANDARDS.xlsx:STANDARD_DEFINITION**
+    :header: "Variable", "Description"
+
+
+
+.. csv-table:: **inputs/technology/archetypes/CONSTRUCTION_STANDARDS.xlsx:SUPPLY_ASSEMBLIES**
+    :header: "Variable", "Description"
+
+
+
+get_database_conversion_systems
+-------------------------------
+
+The following file is used by scripts: ['decentralized', 'optimization', 'photovoltaic', 'photovoltaic_thermal', 'solar_collector']
 
 
 
@@ -232,17 +107,12 @@ The following file is used by scripts: ['photovoltaic_thermal', 'decentralized',
 
 
 
-.. csv-table:: **inputs/technology/systems/supply_systems.xls:DETAILED_ELEC_PRICES**
+.. csv-table:: **inputs/technology/systems/supply_systems.xls:DETAILED_ELEC_COSTS**
     :header: "Variable", "Description"
 
 
 
 .. csv-table:: **inputs/technology/systems/supply_systems.xls:FC**
-    :header: "Variable", "Description"
-
-
-
-.. csv-table:: **inputs/technology/systems/supply_systems.xls:FEEDSTOCKS**
     :header: "Variable", "Description"
 
 
@@ -258,11 +128,6 @@ The following file is used by scripts: ['photovoltaic_thermal', 'decentralized',
 
 
 .. csv-table:: **inputs/technology/systems/supply_systems.xls:HP**
-    :header: "Variable", "Description"
-
-
-
-.. csv-table:: **inputs/technology/systems/supply_systems.xls:PIPING**
     :header: "Variable", "Description"
 
 
@@ -292,35 +157,276 @@ The following file is used by scripts: ['photovoltaic_thermal', 'decentralized',
 
 
 
+get_database_distribution_systems
+---------------------------------
+
+The following file is used by scripts: ['optimization', 'thermal_network']
+
+
+
+.. csv-table:: **inputs/technology/systems/distribution_systems.xls:THERMAL_GRID**
+    :header: "Variable", "Description"
+
+     Code,no such column? - Unit: TODO
+     D_ext_m,external pipe diameter tolerance for the nominal diameter (DN) - Unit: [m]
+     D_ins_m,maximum pipe diameter tolerance for the nominal diameter (DN) - Unit: [m]
+     D_int_m,internal pipe diameter tolerance for the nominal diameter (DN) - Unit: [m]
+     Inv_USD2015perm,Typical cost of investment for a given pipe diameter. - Unit: [$/m]
+     Pipe_DN,Nominal pipe diameter - Unit: [-]
+     Vdot_max_m3s,maximum volumetric flow rate for the nominal diameter (DN) - Unit: [m3/s]
+     Vdot_min_m3s,minimum volumetric flow rate for the nominal diameter (DN) - Unit: [m3/s]
+
+
+get_database_envelope_systems
+-----------------------------
+
+The following file is used by scripts: ['demand', 'radiation', 'schedule_maker']
+
+
+
+.. csv-table:: **inputs/technology/systems/envelope_systems.xls:CONSTRUCTION**
+    :header: "Variable", "Description"
+
+     Cm_Af,Internal heat capacity per unit of air conditioned area. Defined according to ISO 13790. - Unit: [J/Km2]
+     Description,Describes the Type of construction - Unit: [-]
+     code,Type of construction - Unit: [-]
+
+
+.. csv-table:: **inputs/technology/systems/envelope_systems.xls:FLOOR**
+    :header: "Variable", "Description"
+
+
+
+.. csv-table:: **inputs/technology/systems/envelope_systems.xls:ROOF**
+    :header: "Variable", "Description"
+
+     Description,Describes the Type of roof - Unit: [-]
+     code,Type of roof - Unit: [-]
+     Description,Describes the Type of roof - Unit: [-]
+     GHG_ROOF_kgCO2m2,Embodied emissions per m2 of roof.(entire building life cycle) - Unit: [kg CO2-eq/m2]
+     U_roof,Thermal transmittance of windows including linear losses (+10%). Defined according to ISO 13790. - Unit: [-]
+     a_roof,Solar absorption coefficient. Defined according to ISO 13790. - Unit: [-]
+     code,Type of roof - Unit: [-]
+     e_roof,Emissivity of external surface. Defined according to ISO 13790. - Unit: [-]
+     r_roof,Reflectance in the Red spectrum. Defined according Radiance. (long-wave) - Unit: [-]
+
+
+.. csv-table:: **inputs/technology/systems/envelope_systems.xls:SHADING**
+    :header: "Variable", "Description"
+
+     Description,Describes the source of the benchmark standards. - Unit: [-]
+     code,Type of shading - Unit: [-]
+     rf_sh,Shading coefficient when shading device is active. Defined according to ISO 13790. - Unit: [-]
+
+
+.. csv-table:: **inputs/technology/systems/envelope_systems.xls:TIGHTNESS**
+    :header: "Variable", "Description"
+
+     Description,Describes the Type of tightness - Unit: [-]
+     code,Type of tightness - Unit: [-]
+     n50,Air exchanges per hour at a pressure of 50 Pa. - Unit: [1/h]
+
+
+.. csv-table:: **inputs/technology/systems/envelope_systems.xls:WALL**
+    :header: "Variable", "Description"
+
+     Description,Describes the Type of wall - Unit: [-]
+     GHG_WALL_kgCO2m2,Embodied emissions per m2 of walls (entire building life cycle) - Unit: [kg CO2-eq/m2]
+     U_wall,Thermal transmittance of windows including linear losses (+10%). Defined according to ISO 13790. - Unit: [-]
+     a_wall,Solar absorption coefficient. Defined according to ISO 13790. - Unit: [-]
+     code,Type of wall - Unit: [-]
+     e_wall,Emissivity of external surface. Defined according to ISO 13790. - Unit: [-]
+     r_wall,Reflectance in the Red spectrum. Defined according Radiance. (long-wave) - Unit: [-]
+
+
+.. csv-table:: **inputs/technology/systems/envelope_systems.xls:WINDOW**
+    :header: "Variable", "Description"
+
+     Description,Describes the source of the benchmark standards. - Unit: [-]
+     F_F,Window frame fraction coefficient. Defined according to ISO 13790. - Unit: [m2-frame/m2-window]
+     G_win,Solar heat gain coefficient. Defined according to ISO 13790. - Unit: [-]
+     U_win,Thermal transmittance of windows including linear losses (+10%). Defined according to ISO 13790. - Unit: [-]
+     code,Building use. It relates to the uses stored in the input database of Zone_occupancy - Unit: [-]
+     e_win,Emissivity of external surface. Defined according to ISO 13790. - Unit: [-]
+
+
+get_database_feedstocks
+-----------------------
+
+The following file is used by scripts: ['decentralized', 'emissions', 'system_costs', 'optimization']
+
+
+
+.. csv-table:: **inputs/technology/feedstocks/feedstocks.xls:BIOGAS**
+    :header: "Variable", "Description"
+
+     GHG_kgCO2MJ,Non-renewable Green House Gas Emissions factor - Unit: [kg CO2-eq/MJ-oil eq]
+     Opex_var_buy_USD2015kWh,buying price - Unit: [-]
+     Opex_var_sell_USD2015kWh,selling price - Unit: [-]
+     hour,hour of a 24 hour day - Unit: [-]
+     reference,reference - Unit: [-]
+
+
+.. csv-table:: **inputs/technology/feedstocks/feedstocks.xls:COAL**
+    :header: "Variable", "Description"
+
+     GHG_kgCO2MJ,Non-renewable Green House Gas Emissions factor - Unit: [kg CO2-eq/MJ-oil eq]
+     Opex_var_buy_USD2015kWh,buying price - Unit: [-]
+     Opex_var_sell_USD2015kWh,selling price - Unit: [-]
+     hour,hour of a 24 hour day - Unit: [-]
+     reference,reference - Unit: [-]
+
+
+.. csv-table:: **inputs/technology/feedstocks/feedstocks.xls:DRYBIOMASS**
+    :header: "Variable", "Description"
+
+     GHG_kgCO2MJ,Non-renewable Green House Gas Emissions factor - Unit: [kg CO2-eq/MJ-oil eq]
+     Opex_var_buy_USD2015kWh,buying price - Unit: [-]
+     Opex_var_sell_USD2015kWh,selling price - Unit: [-]
+     hour,hour of a 24 hour day - Unit: [-]
+     reference,reference - Unit: [-]
+
+
+.. csv-table:: **inputs/technology/feedstocks/feedstocks.xls:GRID**
+    :header: "Variable", "Description"
+
+     GHG_kgCO2MJ,Non-renewable Green House Gas Emissions factor - Unit: [kg CO2-eq/MJ-oil eq]
+     Opex_var_buy_USD2015kWh,buying price - Unit: [-]
+     Opex_var_sell_USD2015kWh,selling price - Unit: [-]
+     hour,hour of a 24 hour day - Unit: [-]
+     reference,reference - Unit: [-]
+
+
+.. csv-table:: **inputs/technology/feedstocks/feedstocks.xls:NATURALGAS**
+    :header: "Variable", "Description"
+
+     GHG_kgCO2MJ,Non-renewable Green House Gas Emissions factor - Unit: [kg CO2-eq/MJ-oil eq]
+     Opex_var_buy_USD2015kWh,buying price - Unit: [-]
+     Opex_var_sell_USD2015kWh,selling price - Unit: [-]
+     hour,hour of a 24 hour day - Unit: [-]
+     reference,reference - Unit: [-]
+
+
+.. csv-table:: **inputs/technology/feedstocks/feedstocks.xls:OIL**
+    :header: "Variable", "Description"
+
+     GHG_kgCO2MJ,Non-renewable Green House Gas Emissions factor - Unit: [kg CO2-eq/MJ-oil eq]
+     Opex_var_buy_USD2015kWh,buying price - Unit: [-]
+     Opex_var_sell_USD2015kWh,selling price - Unit: [-]
+     hour,hour of a 24 hour day - Unit: [-]
+     reference,reference - Unit: [-]
+
+
+.. csv-table:: **inputs/technology/feedstocks/feedstocks.xls:SOLAR**
+    :header: "Variable", "Description"
+
+     GHG_kgCO2MJ,Non-renewable Green House Gas Emissions factor - Unit: [kg CO2-eq/MJ-oil eq]
+     Opex_var_buy_USD2015kWh,buying price - Unit: [-]
+     Opex_var_sell_USD2015kWh,selling price - Unit: [-]
+     hour,hour of a 24 hour day - Unit: [-]
+     reference,reference - Unit: [-]
+
+
+.. csv-table:: **inputs/technology/feedstocks/feedstocks.xls:WETBIOMASS**
+    :header: "Variable", "Description"
+
+     GHG_kgCO2MJ,Non-renewable Green House Gas Emissions factor - Unit: [kg CO2-eq/MJ-oil eq]
+     Opex_var_buy_USD2015kWh,buying price - Unit: [-]
+     Opex_var_sell_USD2015kWh,selling price - Unit: [-]
+     hour,hour of a 24 hour day - Unit: [-]
+     reference,reference - Unit: [-]
+
+
+.. csv-table:: **inputs/technology/feedstocks/feedstocks.xls:WOOD**
+    :header: "Variable", "Description"
+
+     GHG_kgCO2MJ,Non-renewable Green House Gas Emissions factor - Unit: [kg CO2-eq/MJ-oil eq]
+     Opex_var_buy_USD2015kWh,buying price - Unit: [-]
+     Opex_var_sell_USD2015kWh,selling price - Unit: [-]
+     hour,hour of a 24 hour day - Unit: [-]
+     reference,reference - Unit: [-]
+
+
+get_database_standard_schedules_use
+-----------------------------------
+
+The following file is used by scripts: ['archetypes_mapper']
+
+
+
+.. csv-table:: **inputs/technology/archetypes/schedules/RESTAURANT.csv**
+    :header: "Variable", "Description"
+
+     CH-SIA-2014,metadata - Unit: [-]
+     METADATA,metadata - Unit: [-]
+     RESTAURANT,metadata - Unit: [-]
+
+
+get_database_supply_assemblies
+------------------------------
+
+The following file is used by scripts: ['demand', 'emissions', 'system_costs']
+
+
+
+.. csv-table:: **inputs/technology/assemblies/supply.xls:COOLING**
+    :header: "Variable", "Description"
+
+
+
+.. csv-table:: **inputs/technology/assemblies/supply.xls:ELECTRICITY**
+    :header: "Variable", "Description"
+
+
+
+.. csv-table:: **inputs/technology/assemblies/supply.xls:HEATING**
+    :header: "Variable", "Description"
+
+
+
+.. csv-table:: **inputs/technology/assemblies/supply.xls:HOT_WATER**
+    :header: "Variable", "Description"
+
+
+
 get_optimization_thermal_network_data_file
 ------------------------------------------
 
-The following file is used by scripts: ['optimization', 'optimization', 'optimization', 'optimization', 'optimization', 'optimization', 'optimization', 'optimization']
+The following file is used by scripts: ['optimization']
 
 
 
 .. csv-table:: **outputs/data/optimization/network/DH_Network_summary_result_0x19b.csv**
     :header: "Variable", "Description"
 
+     DATE,TODO - Unit: TODO
+     Q_DHNf_W,TODO - Unit: TODO
+     Q_DH_losses_W,TODO - Unit: TODO
+     Qcdata_netw_total_kWh,TODO - Unit: TODO
+     T_DHNf_re_K,TODO - Unit: TODO
+     T_DHNf_sup_K,TODO - Unit: TODO
+     mcpdata_netw_total_kWperC,TODO - Unit: TODO
+     mdot_DH_netw_total_kgpers,TODO - Unit: TODO
 
 
 get_street_network
 ------------------
 
-The following file is used by scripts: ['optimization', 'network_layout']
+The following file is used by scripts: ['network_layout', 'optimization']
 
 
 
 .. csv-table:: **inputs/networks/streets.shp**
     :header: "Variable", "Description"
 
-     geometry,TODO - Unit: TODO
+     Id,Unique building ID. It must start with a letter. - Unit: [-]
+     geometry,Geometry - Unit: [-]
 
 
 get_surroundings_geometry
 -------------------------
 
-The following file is used by scripts: ['schedule_maker', 'radiation']
+The following file is used by scripts: ['radiation', 'schedule_maker']
 
 
 
@@ -329,20 +435,23 @@ The following file is used by scripts: ['schedule_maker', 'radiation']
 
      Name,Unique building ID. It must start with a letter. - Unit: [-]
      floors_ag,Number of floors above ground (incl. ground floor) - Unit: [-]
-     geometry,TODO - Unit: TODO
+     floors_bg,Number of floors below ground (basement, etc) - Unit: [-]
+     geometry,Geometry - Unit: [-]
      height_ag,Height above ground (incl. ground floor) - Unit: [m]
+     height_bg,Height below ground (basement, etc) - Unit: [m]
 
 
 get_terrain
 -----------
 
-The following file is used by scripts: ['schedule_maker', 'radiation']
+The following file is used by scripts: ['radiation', 'schedule_maker']
 
 
 
 .. csv-table:: **inputs/topography/terrain.tif**
     :header: "Variable", "Description"
 
+     raster_value,TODO - Unit: TODO
 
 
 get_weather
@@ -352,7 +461,7 @@ The following file is used by scripts: ['weather_helper']
 
 
 
-.. csv-table:: **../../../../github/cityenergyanalyst/cea/databases/weather/Zug-inducity_1990_2010_TMY.epw**
+.. csv-table:: **databases/weather/Zug-inducity_1990_2010_TMY.epw**
     :header: "Variable", "Description"
 
 
@@ -360,7 +469,7 @@ The following file is used by scripts: ['weather_helper']
 get_zone_geometry
 -----------------
 
-The following file is used by scripts: ['schedule_maker', 'photovoltaic_thermal', 'decentralized', 'network_layout', 'radiation', 'demand', 'solar_collector', 'thermal_network', 'optimization', 'shallow_geothermal_potential', 'emissions', 'sewage_potential', 'data_helper', 'photovoltaic']
+The following file is used by scripts: ['archetypes_mapper', 'decentralized', 'demand', 'emissions', 'network_layout', 'optimization', 'photovoltaic', 'photovoltaic_thermal', 'radiation', 'schedule_maker', 'sewage_potential', 'shallow_geothermal_potential', 'solar_collector', 'thermal_network']
 
 
 
@@ -370,7 +479,7 @@ The following file is used by scripts: ['schedule_maker', 'photovoltaic_thermal'
      Name,Unique building ID. It must start with a letter. - Unit: [-]
      floors_ag,Number of floors above ground (incl. ground floor) - Unit: [-]
      floors_bg,Number of floors below ground (basement, etc) - Unit: [-]
-     geometry,TODO - Unit: TODO
-     height_ag,Aggregated height of the walls. - Unit: [m]
+     geometry,Geometry - Unit: [-]
+     height_ag, Height above ground (incl. ground floor) - Unit: [m]
      height_bg,Height below ground (basement, etc) - Unit: [m]
 
