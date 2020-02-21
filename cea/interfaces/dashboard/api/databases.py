@@ -15,39 +15,37 @@ cea_database_path = os.path.dirname(cea.databases.__file__)
 DATABASES = OrderedDict([
     ("archetypes", {
         "CONSTRUCION_STANDARDS": {
-            "filename": "construction_properties.xlsx",
-            "schema_key": "get_archetypes_properties"
+            "filename": "CONSTRUCTION_STANDARDS.xlsx",
+            "schema_key": "get_database_construction_standards"
         },
         # FIXME: Find a way to include schema info
         "USE_TYPES": None  # Handle manually
     }),
     ("assemblies", {
         "SUPPLY": {
-            "filename": "supply.xls",
-            "schema_key": "get_database_assemblies"
+            "filename": "SUPPLY.xls",
+            "schema_key": "get_database_supply_assemblies"
         },
-    }),
-    ("components", {
         "HVAC": {
-            "filename": "air_conditioning.xls",
+            "filename": "HVAC.xls",
             "schema_key": "get_database_air_conditioning_systems"
         },
         "ENVELOPE": {
-            "filename": "envelope.xls",
+            "filename": "ENVELOPE.xls",
             "schema_key": "get_database_envelope_systems"
         },
+    }),
+    ("components", {
         "CONVERSION": {
-            "filename": "conversion.xls",
+            "filename": "CONVERSION.xls",
             "schema_key": "get_database_conversion_systems"
         },
         "DISTRIBUTION": {
-            "filename": "distribution.xls",
+            "filename": "DISTRIBUTION.xls",
             "schema_key": "get_database_distribution_systems"
-        }
-    }),
-    ("feedstocks", {
+        },
         "FEEDSTOCKS": {
-            "filename": "feedstocks.xls",
+            "filename": "FEEDSTOCKS.xls",
             "schema_key": "get_database_feedstocks"
         },
     })
