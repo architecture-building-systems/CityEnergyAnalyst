@@ -1326,6 +1326,11 @@ get_database_air_conditioning_systems:
       Description:
         sample_data: 'floor cooling (18/21)  '
         types_found: [string]
+      class_cs:
+        sample_data: NONE
+        types_found: [string]
+        choice:
+          values: [NONE, CEILING_COOLING, DECENTRALIZED_AC, CENTRAL_AC, HYBRID_AC, FLOOR_COOLING]
       Qcsmax_Wm2:
         sample_data: !!python/long '100'
         types_found: [long]
@@ -1376,6 +1381,11 @@ get_database_air_conditioning_systems:
       Description:
         sample_data: 'Floor heating (40/35) '
         types_found: [string]
+      class_hs:
+        sample_data: NONE
+        types_found: [string]
+        choice:
+          values: [NONE, RADIATOR, CENTRAL_AC, FLOOR_HEATING]
       Qhsmax_Wm2:
         sample_data: !!python/long '150'
         types_found: [long]
