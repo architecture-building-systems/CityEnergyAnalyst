@@ -139,10 +139,18 @@ def zone_helper(locator, config):
                               poly, zone_output_path)
 
     # USE_A zone.shp file contents to get the contents of occupancy.dbf and age.dbf
-    calculate_typology_file(zone_df.copy(), year_construction, occupancy_type, typology_output_path)
+    calculate_typology_file(locator, zone_df, year_construction, occupancy_type, typology_output_path)
+
+def calc_category(standard_DB, year_array):
+
+    def category_assignment(year):
+        return (standard_DB[(standard_DB['YEAR_START'] <= year) & (standard_DB['YEAR_END'] >= year)].STANDARD.values[0])
+
+    category = np.vectorize(category_assignment)(year_array)
+    return category
 
 
-def calculate_typology_file(zone_df, year_construction, occupancy_type, occupancy_output_path):
+def calculate_typology_file(locator, zone_df, year_construction, occupancy_type, occupancy_output_path):
     """
     This script fills in the occupancy.dbf file with one occupancy type
     :param zone_df:
@@ -150,16 +158,20 @@ def calculate_typology_file(zone_df, year_construction, occupancy_type, occupanc
     :param occupancy_output_path:
     :return:
     """
+    #calculate construction year
     typology_df = calculate_age(zone_df, year_construction)
 
-    # get the occupancy form open street maps if indicated
+    #calculate the most likely construction standard
+    standard_database = pd.read_excel(locator.get_archetypes_properties(), sheet_name='STANDARD_DEFINITION')
+    typology_df['STANDARD'] = calc_category(standard_database, typology_df['YEAR'].values)
+
+    #Calculate the most likely use type
     typology_df['1ST_USE'] = 'MULTI_RES'
     typology_df['1ST_USE_R'] = 1.0
     typology_df['2ND_USE'] = "NONE"
     typology_df['2ND_USE_R'] = 0.0
     typology_df['3RD_USE'] = "NONE"
     typology_df['3RD_USE_R'] = 0.0
-    typology_df['STANDARD'] = "STANDARD3" ##hardcoded for now
     if occupancy_type == "Get it from open street maps":
         no_buildings = typology_df.shape[0]
         for index in range(no_buildings):
