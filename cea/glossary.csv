@@ -85,6 +85,7 @@ archetypes-mapper,get_building_comfort,,Ths_setb_C,Setback point of temperature 
 archetypes-mapper,get_building_comfort,,Ve_lpspax,Indoor quality requirements of indoor ventilation per person,[l/s],{0.0...n},float,black,inputs/building-properties/indoor_comfort.dbf
 archetypes-mapper,get_building_internal,,Ea_Wm2,Peak specific electrical load due to computers and devices,[W/m2],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
 archetypes-mapper,get_building_internal,,Ed_Wm2,Peak specific electrical load due to servers/data centres,[W/m2],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
+archetypes-mapper,get_building_internal,,Ev_kWveh,Peak specific charging capacity per vehicle,[kW/vehicle],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
 archetypes-mapper,get_building_internal,,El_Wm2,Peak specific electrical load due to artificial lighting,[W/m2],{0.0...n},float,black,inputs/building-properties/internal_loads.dbf
 archetypes-mapper,get_building_internal,,Epro_Wm2,Peak specific electrical load due to industrial processes,[W/m2],{0.0...n},string,black,inputs/building-properties/internal_loads.dbf
 archetypes-mapper,get_building_internal,,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/building-properties/internal_loads.dbf
