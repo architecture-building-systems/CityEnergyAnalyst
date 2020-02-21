@@ -49,11 +49,11 @@ def lca_operation(locator):
     ## get the supply systems for each building in the scenario
     supply_systems = gpdf.from_file(locator.get_building_supply()).drop('geometry', axis=1)
     ## get the non-renewable primary energy and greenhouse gas emissions factors for each supply system in the database
-    data_all_in_one_systems = pd.read_excel(locator.get_database_assemblies(), sheet_name='SUPPLY')
-    factors_heating = data_all_in_one_systems[data_all_in_one_systems['system'].isin(['HEATING', 'NONE'])]
-    factors_dhw = data_all_in_one_systems[data_all_in_one_systems['system'].isin(['HEATING', 'NONE'])]
-    factors_cooling = data_all_in_one_systems[data_all_in_one_systems['system'].isin(['COOLING', 'NONE'])]
-    factors_electricity = data_all_in_one_systems[data_all_in_one_systems['system'].isin(['ELECTRICITY', 'NONE'])]
+    data_all_in_one_systems = pd.read_excel(locator.get_database_assemblies(), sheet_name=None)
+    factors_heating = data_all_in_one_systems['HEATING']
+    factors_dhw = data_all_in_one_systems['HOT_WATER']
+    factors_cooling = data_all_in_one_systems['COOLING']
+    factors_electricity = data_all_in_one_systems['ELECTRICITY']
     factors_resources = pd.read_excel(locator.get_database_feedstocks(),sheet_name =None)
 
     #get the mean of all values for this

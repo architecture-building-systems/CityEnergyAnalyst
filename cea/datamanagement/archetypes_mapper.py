@@ -164,8 +164,8 @@ def internal_loads_mapper(list_uses, locator, occupant_densities, building_typol
 
 
 def supply_mapper(locator, building_typology_df):
-    supply_DB = pd.read_excel(locator.get_archetypes_properties(), 'SUPPLY')
-    prop_supply_df = building_typology_df.merge(supply_DB, left_on='STANDARD', right_on='code')
+    supply_DB = pd.read_excel(locator.get_archetypes_properties(), 'SUPPLY_ASSEMBLIES')
+    prop_supply_df = building_typology_df.merge(supply_DB, left_on='STANDARD', right_on='STANDARD')
     fields = ['Name',
               'type_cs',
               'type_hs',
@@ -176,7 +176,7 @@ def supply_mapper(locator, building_typology_df):
 
 def emission_intensity_mapper(locator, building_typology_df):
     emisison_intensity_DB = pd.read_excel(locator.get_archetypes_properties(), 'EMISSION_INTENSITY')
-    prop_emission_df = building_typology_df.merge(emisison_intensity_DB, left_on='STANDARD', right_on='code')
+    prop_emission_df = building_typology_df.merge(emisison_intensity_DB, left_on='STANDARD', right_on='STANDARD')
     fields = ['Name',
               'W_e_ag_kgm2',
               'W_e_bg_kgm2',
@@ -193,9 +193,9 @@ def emission_intensity_mapper(locator, building_typology_df):
 
 
 def aircon_mapper(locator, typology_df):
-    air_conditioning_DB = pd.read_excel(locator.get_archetypes_properties(), 'AIR_CONDITIONING')
+    air_conditioning_DB = pd.read_excel(locator.get_archetypes_properties(), 'HVAC_COMPONENTS')
     # define HVAC systems types
-    prop_HVAC_df = typology_df.merge(air_conditioning_DB, left_on='STANDARD', right_on='code')
+    prop_HVAC_df = typology_df.merge(air_conditioning_DB, left_on='STANDARD', right_on='STANDARD')
     # write to shapefile
     fields = ['Name',
               'type_cs',
@@ -211,8 +211,8 @@ def aircon_mapper(locator, typology_df):
 
 
 def architecture_mapper(locator, typology_df):
-    architecture_DB = pd.read_excel(locator.get_archetypes_properties(), 'ARCHITECTURE')
-    prop_architecture_df = typology_df.merge(architecture_DB, left_on='STANDARD', right_on='code')
+    architecture_DB = pd.read_excel(locator.get_archetypes_properties(), 'ENVELOPE_COMPONENTS')
+    prop_architecture_df = typology_df.merge(architecture_DB, left_on='STANDARD', right_on='STANDARD')
     fields = ['Name',
               'Hs_ag',
               'Hs_bg',
@@ -375,7 +375,7 @@ def get_prop_architecture(typology_df, architecture_DB):
     :rtype prop_architecture_df: DataFrame
     """
     # create prop_architecture_df based on the construction categories and archetype architecture database
-    prop_architecture_df = typology_df.merge(architecture_DB, left_on='STANDARD', right_on='code')
+    prop_architecture_df = typology_df.merge(architecture_DB, left_on='STANDARD', right_on='STANDARD')
     return prop_architecture_df
 
 

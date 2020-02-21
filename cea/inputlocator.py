@@ -598,7 +598,7 @@ class InputLocator(object):
     def get_database_assemblies(self):
         """Returns the database of supply components for cost analysis. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return os.path.join(self.get_databases_assemblies_folder(), 'assemblies.xls')
+        return os.path.join(self.get_databases_assemblies_folder(), 'supply.xls')
 
     def get_database_conversion_systems(self):
         """Returns the database of supply components for cost analysis. These are copied
