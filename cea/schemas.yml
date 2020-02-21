@@ -792,12 +792,22 @@ get_archetypes_properties:
   file_path: inputs/technology/archetypes/construction_properties.xlsx
   file_type: xlsx
   schema:
-    ENVELOPE_COMPONENTS:
+    STANDARD_DEFINITION:
       STANDARD:
         sample_data: R
         types_found: [string]
       Description:
         sample_data: UNIVERSITY
+        types_found: [string]
+      YEAR_END:
+        sample_data: !!python/long '2030'
+        types_found: [long]
+      YEAR_START:
+        sample_data: !!python/long '2021'
+        types_found: [long]
+    ENVELOPE_COMPONENTS:
+      STANDARD:
+        sample_data: R
         types_found: [string]
       Es:
         sample_data: 0.9
@@ -844,18 +854,9 @@ get_archetypes_properties:
       wwr_west:
         sample_data: 0.31
         types_found: [float]
-      year_end:
-        sample_data: !!python/long '2030'
-        types_found: [long]
-      year_start:
-        sample_data: !!python/long '2021'
-        types_found: [long]
     HVAC_COMPONENTS:
       STANDARD:
         sample_data: R
-        types_found: [string]
-      Description:
-        sample_data: UNIVERSITY
         types_found: [string]
       cool_ends:
         sample_data: 15|09
@@ -887,18 +888,9 @@ get_archetypes_properties:
       type_vent:
         sample_data: T2
         types_found: [string]
-      year_end:
-        sample_data: !!python/long '2030'
-        types_found: [long]
-      year_start:
-        sample_data: !!python/long '2021'
-        types_found: [long]
     SUPPLY_ASSEMBLIES:
       STANDARD:
         sample_data: R
-        types_found: [string]
-      Description:
-        sample_data: UNIVERSITY
         types_found: [string]
       type_cs:
         sample_data: T19
@@ -919,6 +911,9 @@ get_archetypes_properties:
         sample_data: !!python/long '2021'
         types_found: [long]
     EMISSION_INTENSITY:
+      STANDARD:
+        sample_data: R
+        types_found: [string]
       W_e_ag_kgm2:
         types_found: [float]
       W_e_bg_kgm2:
@@ -941,18 +936,6 @@ get_archetypes_properties:
         types_found: [float]
       Mobi_kgm2:
         types_found: [float]
-      building_use:
-        sample_data: LIBRARY
-        types_found: [string]
-      standard:
-        sample_data: R
-        types_found: [string]
-      year_end:
-        sample_data: !!python/long '2030'
-        types_found: [long]
-      year_start:
-        sample_data: !!python/long '2021'
-        types_found: [long]
       Reference:
         types_found: [string]
   used_by: [archetypes_mapper]
