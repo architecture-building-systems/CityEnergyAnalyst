@@ -9,7 +9,8 @@ import yaml
 from flask import current_app, request
 from flask_restplus import Namespace, Resource, abort
 from .databases import DATABASE_NAMES, DATABASES, DATABASES_TYPE_MAP, database_to_dict, database_dict_to_file, \
-    get_all_schedules_dict, schedule_to_dict, schedule_dict_to_file, use_type_properties_to_dict
+    get_all_schedules_dict, schedule_to_dict, schedule_dict_to_file, use_type_properties_to_dict, \
+    use_type_properties_dict_to_file
 
 import cea.inputlocator
 import cea.utilities.dbf
@@ -382,8 +383,10 @@ class InputDatabaseSave(Resource):
 
         for db_type in payload:
             for db_name in payload[db_type]:
-                if db_name == 'SCHEDULES':
-                    for archetype, schedule_dict in payload[db_type]['SCHEDULES'].items():
+                if db_name == 'USE_TYPES':
+                    use_type_properties_dict_to_file(payload[db_type]['USE_TYPES']['USE_TYPE_PROPERTIES'],
+                                                     locator.get_database_use_types_properties())
+                    for archetype, schedule_dict in payload[db_type]['USE_TYPES']['SCHEDULES'].items():
                         schedule_dict_to_file(
                             schedule_dict,
                             locator.get_database_standard_schedules_use(
