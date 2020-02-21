@@ -231,7 +231,7 @@ def calc_schedules(locator,
     yearly_array = get_yearly_vectors(date_range, days_in_schedule, occupant_load, monthly_multiplier) + base_load
     final_schedule[variable] = yearly_array * internal_loads_building[variable] *1000 #convert to Wh
 
-    # LIGHTING AND PROCESS ENERGY DEMAND SCHEDULES
+    # DATACENTRE AND PROCESS ENERGY DEMAND SCHEDULES
     for variable in ['Ed_Wm2', 'Epro_Wm2', 'Qcre_Wm2', 'Qhpro_Wm2', 'Qcpro_Wm2']:
         # these schedules are assumed to be independent of occupant presence and have no monthly variations
         array = daily_schedule_building[VARIABLE_CEA_SCHEDULE_RELATION[variable]]
