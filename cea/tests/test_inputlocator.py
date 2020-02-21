@@ -16,7 +16,7 @@ class TestInputLocator(unittest.TestCase):
             self.assertTrue(os.path.exists(self.locator.get_weather(weather)))
 
     def test_get_archetypes_properties(self):
-        archetypes_properties = self.locator.get_archetypes_properties()
+        archetypes_properties = self.locator.get_database_construction_standards()
         self.assertTrue(os.path.exists(archetypes_properties))
         self.assertTrue(os.path.realpath(archetypes_properties).startswith(
             os.path.realpath(self.locator.scenario)), msg='Path not in scenario: %s' % archetypes_properties)
