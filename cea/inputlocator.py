@@ -72,21 +72,20 @@ class InputLocator(object):
     def verify_database_template(self):
         """True, if the path is a valid template path - containing the same excel files as the standard regions."""
         default_template = os.path.join(self.db_path, 'CH')
+        missing_files = []
         for folder in os.listdir(default_template):
-            if not os.path.isdir(os.path.join(default_template, folder)):
-                continue
-            for file in os.listdir(os.path.join(default_template, folder)):
-                default_file_path = os.path.join(default_template, folder, file)
-                if not os.path.isfile(default_file_path):
-                    continue
-                if not os.path.splitext(default_file_path)[1] in {'.xls', '.xlsx'}:
-                    # we're only interested in the excel files
-                    continue
-                template_file_path = os.path.join(self.get_databases_folder(), folder, file)
-                if not os.path.exists(template_file_path):
-                    message = "Invalid user-specified region template - file not found: {template_file_path}".format(
-                        template_file_path=template_file_path)
-                    raise IOError(message)
+            if os.path.isdir(os.path.join(default_template, folder)):
+                # check inside folders
+                for file in os.listdir(os.path.join(default_template, folder)):
+                    default_file_path = os.path.join(default_template, folder, file)
+                    if os.path.isfile(default_file_path) and os.path.splitext(default_file_path)[1] in {'.xls', '.xlsx'}:
+                        # we're only interested in the excel files
+                        template_file_path = os.path.join(self.get_databases_folder(), folder, file)
+                        if not os.path.exists(template_file_path):
+                            missing_files.append(template_file_path)
+        if len(missing_files):
+            message = "Invalid user-specified region template - files not found: {}".format(', '.join(missing_files))
+            raise IOError(message)
         return True
 
     def get_input_folder(self):
