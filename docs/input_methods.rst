@@ -124,7 +124,7 @@ The following file is used by scripts: ['schedule_maker', 'radiation', 'demand']
 
 
 
-.. csv-table:: **inputs/technology/systems/envelope_systems.xls:LEAKAGE**
+.. csv-table:: **inputs/technology/systems/envelope_systems.xls:TIGHTNESS**
     :header: "Variable", "Description"
 
 

@@ -259,28 +259,6 @@ def task_run_emissions_operation():
             })],
         }
 
-
-def task_run_emissions_mobility():
-    """run the emissions mobility script for each reference case"""
-    import cea.analysis.lca.mobility
-
-    def run_emissions_mobility(scenario_path):
-        config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
-        config.scenario = scenario_path
-        cea.analysis.lca.mobility.main(config)
-
-    for reference_case, scenario_path in REFERENCE_CASES.items():
-        if _reference_cases and reference_case not in _reference_cases:
-            continue
-
-        yield {
-            'name': 'run_emissions_mobility:%(reference_case)s' % locals(),
-            'task_dep': ['run_demand:%(reference_case)s' % locals()],
-            'actions': [(run_emissions_mobility, [], {
-                'scenario_path': scenario_path,
-            })],
-        }
-
 def task_run_thermal_network():
     """run the thermal_network for the included reference case"""
     def run_thermal_network():

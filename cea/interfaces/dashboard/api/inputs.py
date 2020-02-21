@@ -9,7 +9,8 @@ import yaml
 from flask import current_app, request
 from flask_restplus import Namespace, Resource, abort
 from .databases import DATABASE_NAMES, DATABASES, DATABASES_TYPE_MAP, database_to_dict, database_dict_to_file, \
-    get_all_schedules_dict, schedule_to_dict, schedule_dict_to_file, use_type_properties_to_dict
+    get_all_schedules_dict, schedule_to_dict, schedule_dict_to_file, use_type_properties_to_dict, \
+    use_type_properties_dict_to_file
 
 import cea.inputlocator
 import cea.utilities.dbf
@@ -190,7 +191,7 @@ def get_building_properties():
     import cea.glossary
     # FIXME: Find a better way to ensure order of tabs
     tabs = ['zone', 'typology', 'architecture', 'internal-loads', 'indoor-comfort', 'air-conditioning-systems',
-            'supply-systems', 'emission-intensity', 'surroundings']
+            'supply-systems', 'surroundings']
 
     config = current_app.cea_config
     locator = cea.inputlocator.InputLocator(config.scenario)
@@ -228,10 +229,10 @@ def get_building_properties():
                     continue
                 columns[column]['type'] = field['type']
                 if field['type'] == 'choice':
-                    path = getattr(locator, field['location']['path'])()
+                    path = getattr(locator, field['choice_properties']['lookup']['path'])()
                     columns[column]['path'] = path
                     # TODO: Try to optimize this step to decrease the number of file reading
-                    columns[column]['choices'] = get_choices(field['location'], path)
+                    columns[column]['choices'] = get_choices(field['choice_properties'], path)
                 if 'constraints' in field:
                     columns[column]['constraints'] = field['constraints']
                 columns[column]['description'] = db_glossary[column]['DESCRIPTION']
@@ -338,7 +339,7 @@ class InputDatabaseAll(Resource):
                         out[db_type][db_name]['SCHEDULES'] = get_all_schedules_dict(
                             locator.get_database_use_types_folder())
                         out[db_type][db_name]['USE_TYPE_PROPERTIES'] = use_type_properties_to_dict(
-                            locator.get_use_types_properties())
+                            locator.get_database_use_types_properties())
                     else:
                         locator_method = db_props['schema_key']
                         out[db_type][db_name] = database_to_dict(locator.__getattribute__(locator_method)())
@@ -360,7 +361,7 @@ class InputDatabase(Resource):
                     out['SCHEDULES'] = get_all_schedules_dict(
                         locator.get_database_use_types_folder())
                     out['USE_TYPE_PROPERTIES'] = use_type_properties_to_dict(
-                        locator.get_use_types_properties())
+                        locator.get_database_use_types_properties())
                 else:
                     db_type = DATABASES_TYPE_MAP[db]
                     locator_method = DATABASES[db_type][db]['schema_key']
@@ -382,8 +383,10 @@ class InputDatabaseSave(Resource):
 
         for db_type in payload:
             for db_name in payload[db_type]:
-                if db_name == 'SCHEDULES':
-                    for archetype, schedule_dict in payload[db_type]['SCHEDULES'].items():
+                if db_name == 'USE_TYPES':
+                    use_type_properties_dict_to_file(payload[db_type]['USE_TYPES']['USE_TYPE_PROPERTIES'],
+                                                     locator.get_database_use_types_properties())
+                    for archetype, schedule_dict in payload[db_type]['USE_TYPES']['SCHEDULES'].items():
                         schedule_dict_to_file(
                             schedule_dict,
                             locator.get_database_standard_schedules_use(
@@ -429,10 +432,14 @@ class InputDatabaseCheck(Resource):
         return {'message': 'Database in path seems to be valid.'}
 
 
-def get_choices(location, path):
-    df = pandas.read_excel(path, location['sheet'])
-    if 'filter' in location:
-        choices = df[df.eval(location['filter'])][location['column']].tolist()
-    else:
-        choices = df[location['column']].tolist()
-    return [{'value': choice, 'label': df.loc[df[location['column']] == choice, 'Description'].values[0]} for choice in choices]
+def get_choices(choice_properties, path):
+    lookup = choice_properties['lookup']
+    df = pandas.read_excel(path, lookup['sheet'])
+    choices = df[lookup['column']].tolist()
+    out = []
+    if 'none_value' in choice_properties:
+        out.append({'value': 'NONE', 'label': ''})
+    for choice in choices:
+        label = df.loc[df[lookup['column']] == choice, 'Description'].values[0] if 'Description' in df.columns else ''
+        out.append({'value': choice, 'label': label})
+    return out

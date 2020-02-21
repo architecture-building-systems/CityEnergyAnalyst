@@ -116,6 +116,14 @@ class Scenarios(Resource):
 
         locator = cea.inputlocator.InputLocator(new_scenario_path)
 
+        # Run database_initializer to copy databases to input
+        if 'databases-path' in payload:
+            try:
+                cea.api.data_initializer(config, scenario=new_scenario_path, databases_path=payload['databases-path'])
+            except Exception as e:
+                trace = traceback.format_exc()
+                return {'message': 'data_initializer: {}'.format(e.message), 'trace': trace}, 500
+
         if payload['input-data'] == 'import':
             files = payload['files']
 
@@ -134,9 +142,6 @@ class Scenarios(Resource):
                     if 'surroundings' in files:
                         for filename in glob_shapefile_auxilaries(files['surroundings']):
                             shutil.copy(filename, locator.get_building_geometry_folder())
-                    if 'surroundings' in files:
-                        for filename in glob_shapefile_auxilaries(files['surroundings']):
-                            shutil.copy(filename, locator.get_building_geometry_folder())
                     if 'terrain' in files:
                         shutil.copyfile(files['terrain'], locator.get_terrain())
                     if 'streets' in files:
@@ -149,9 +154,9 @@ class Scenarios(Resource):
                         zone_df = geopandas.read_file(files['zone'])
                         if 'category' not in zone_df.columns:
                             # set 'MULTI_RES' as default
-                            calculate_typology_file(zone_df, None, 'MULTI_RES', locator.get_building_typology())
+                            calculate_typology_file(locator, zone_df, None, 'MULTI_RES', locator.get_building_typology())
                         else:
-                            calculate_typology_file(zone_df, None, 'Get it from open street maps', locator.get_building_typology())
+                            calculate_typology_file(locator, zone_df, None, 'Get it from open street maps', locator.get_building_typology())
                 except Exception as e:
                     trace = traceback.format_exc()
                     return {'message': e.message, 'trace': trace}, 500
@@ -190,14 +195,6 @@ class Scenarios(Resource):
                     except Exception as e:
                         trace = traceback.format_exc()
                         return {'message': '{}_helper: {}'.format(tool, e.message), 'trace': trace}, 500
-
-        # Run database_initializer to copy databases to input
-        if payload['databases-path'] != 'create':
-            try:
-                cea.api.data_initializer(config, scenario=new_scenario_path, databases_path=payload['databases-path'])
-            except Exception as e:
-                trace = traceback.format_exc()
-                return {'message': 'data_initializer: {}'.format(e.message), 'trace': trace}, 500
 
         return {'scenarios': list_scenario_names_for_project(config)}
 

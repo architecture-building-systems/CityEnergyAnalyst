@@ -65,7 +65,7 @@ def calc_mixed_schedule(locator, building_typology_df, buildings, list_var_names
     # get list of uses only with a valid value in building_occupancy_df
     list_uses = get_list_of_uses_in_case_study(building_typology_df)
 
-    internal_loads = pd.read_excel(locator.get_use_types_properties(), 'INTERNAL_LOADS')
+    internal_loads = pd.read_excel(locator.get_database_use_types_properties(), 'INTERNAL_LOADS')
     building_typology_df.set_index('Name', inplace=True)
     internal_loads = internal_loads.set_index('code')
 
@@ -173,7 +173,14 @@ def calc_single_mixed_schedule(list_uses, occupant_densities, building_typology_
 
                         elif schedule_type in ['SERVERS'] and internal_loads_df.loc[use, 'Ed_Wm2'] > 0.0:
                             share_time_occupancy_density = current_share_of_use * internal_loads_df.loc[use, 'Ed_Wm2']
+                            normalizing_value += share_time_occupancy_density
+                            current_schedule = np.vectorize(calc_average)(current_schedule,
+                                                                          schedule_data_all_uses.schedule_data[use][
+                                                                              schedule_type],
+                                                                          share_time_occupancy_density)
 
+                        elif schedule_type in ['ELECTROMOBILITY'] and internal_loads_df.loc[use, 'Ev_kWveh'] > 0.0:
+                            share_time_occupancy_density = current_share_of_use * internal_loads_df.loc[use, 'Ev_kWveh']
                             normalizing_value += share_time_occupancy_density
                             current_schedule = np.vectorize(calc_average)(current_schedule,
                                                                           schedule_data_all_uses.schedule_data[use][

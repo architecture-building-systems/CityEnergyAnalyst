@@ -53,6 +53,6 @@ class SupplySystemsDatabase(object):
             conversion_systems_worksheets = pd.read_excel(locator.get_database_conversion_systems(), sheet_name=None)
             distribution_systems_worksheets = pd.read_excel(locator.get_database_distribution_systems(), sheet_name=None)
             feedstocks_worksheets = pd.read_excel(locator.get_database_feedstocks(), sheet_name=None)
-            assemblies_worksheets = pd.read_excel(locator.get_database_assemblies(), sheet_name=None)
+            assemblies_worksheets = pd.read_excel(locator.get_database_supply_assemblies(), sheet_name=None)
             _locators[locator] = conversion_systems_worksheets, distribution_systems_worksheets, feedstocks_worksheets, assemblies_worksheets
         return conversion_systems_worksheets, distribution_systems_worksheets, feedstocks_worksheets, assemblies_worksheets
