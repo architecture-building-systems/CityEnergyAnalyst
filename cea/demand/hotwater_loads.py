@@ -369,10 +369,10 @@ def has_hot_water_technical_system(bpr):
     :return: True or False
     :rtype: bool
         """
-
-    if bpr.hvac['type_dhw'] in {'T1', 'T2', 'T3', 'T4'}:
+    supported = ['HVAC_HOTWATER_AS1', 'HVAC_HOTWATER_AS2', 'HVAC_HOTWATER_AS3', 'HVAC_HOTWATER_AS4']
+    if bpr.hvac['type_dhw'] in supported:
         return True
-    elif bpr.hvac['type_dhw'] in {'T0'}:
+    elif bpr.hvac['type_dhw'] in {'HVAC_HOTWATER_AS0'}:
         return False
     else:
-        raise ValueError('Invalid value for type_dhw: %s' % bpr.hvac['type_dhw'])
+        raise ValueError('Invalid value for type_dhw: %s. CEA suppors only teh next systems %s' %(bpr.hvac['type_dhw'], supported))
