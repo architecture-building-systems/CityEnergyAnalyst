@@ -263,8 +263,11 @@ class BuildingProperties(object):
 
 
         from cea.demand.control_heating_cooling_systems import has_heating_system, has_cooling_system
+        class prov(object):
+            def __init__(self, hvac):
+                self.hvac = hvac
         for building in locator.get_zone_building_names():
-            data = {'type_hs': hvac_temperatures.loc[building, 'type_hs'], 'type_cs': hvac_temperatures.loc[building, 'type_cs']}
+            data = prov({'type_hs':hvac_temperatures.loc[building, 'type_hs'], 'type_cs': hvac_temperatures.loc[building, 'type_cs']})
             has_system_heating_flag = has_heating_system(data)
             has_system_cooling_flag = has_cooling_system(data)
             if has_system_heating_flag and has_system_cooling_flag and np.max([df.loc[building, 'Hs_ag'], df.loc[building, 'Hs_bg']]) > 0.0:
@@ -891,7 +894,7 @@ def get_envelope_properties(locator, prop_architecture):
     prop_win = pd.read_excel(locator.get_database_envelope_systems(), 'WINDOW')
     prop_shading = pd.read_excel(locator.get_database_envelope_systems(), 'SHADING')
     prop_construction = pd.read_excel(locator.get_database_envelope_systems(), 'CONSTRUCTION')
-    prop_leakage = pd.read_excel(locator.get_database_envelope_systems(), 'LEAKAGE')
+    prop_leakage = pd.read_excel(locator.get_database_envelope_systems(), 'TIGHTNESS')
 
     df_construction = prop_architecture.merge(prop_construction, left_on='type_cons', right_on='code', how='left')
     df_leakage = prop_architecture.merge(prop_leakage, left_on='type_leak', right_on='code', how='left')

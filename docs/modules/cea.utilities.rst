@@ -25,6 +25,14 @@ cea.utilities.compile\_pyd\_files module
     :undoc-members:
     :show-inheritance:
 
+cea.utilities.create\_mixed\_use\_type module
+---------------------------------------------
+
+.. automodule:: cea.utilities.create_mixed_use_type
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cea.utilities.date module
 -------------------------
 
