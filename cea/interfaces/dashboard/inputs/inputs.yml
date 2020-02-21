@@ -44,7 +44,7 @@ typology:
   - name: STANDARD
     type: choice
     location:
-      path: get_archetypes_properties
+      path: get_database_construction_standards
       sheet: STANDARD_DEFINITION
       column: STANDARD
   - name: 1ST_USE
