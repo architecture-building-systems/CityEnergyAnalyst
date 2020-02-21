@@ -142,9 +142,6 @@ class Scenarios(Resource):
                     if 'surroundings' in files:
                         for filename in glob_shapefile_auxilaries(files['surroundings']):
                             shutil.copy(filename, locator.get_building_geometry_folder())
-                    if 'surroundings' in files:
-                        for filename in glob_shapefile_auxilaries(files['surroundings']):
-                            shutil.copy(filename, locator.get_building_geometry_folder())
                     if 'terrain' in files:
                         shutil.copyfile(files['terrain'], locator.get_terrain())
                     if 'streets' in files:
