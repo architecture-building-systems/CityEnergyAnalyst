@@ -154,9 +154,9 @@ class Scenarios(Resource):
                         zone_df = geopandas.read_file(files['zone'])
                         if 'category' not in zone_df.columns:
                             # set 'MULTI_RES' as default
-                            calculate_typology_file(zone_df, None, 'MULTI_RES', locator.get_building_typology())
+                            calculate_typology_file(locator, zone_df, None, 'MULTI_RES', locator.get_building_typology())
                         else:
-                            calculate_typology_file(zone_df, None, 'Get it from open street maps', locator.get_building_typology())
+                            calculate_typology_file(locator, zone_df, None, 'Get it from open street maps', locator.get_building_typology())
                 except Exception as e:
                     trace = traceback.format_exc()
                     return {'message': e.message, 'trace': trace}, 500
