@@ -55,7 +55,6 @@ typology:
         path: get_database_use_types_properties
         sheet: INTERNAL_LOADS
         column: code
-      none_value: NONE
   - name: 1ST_USE_R
     type: float
     constraints:
