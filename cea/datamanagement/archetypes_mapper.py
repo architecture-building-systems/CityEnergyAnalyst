@@ -225,6 +225,8 @@ def architecture_mapper(locator, typology_df):
               'wwr_south',
               'type_cons',
               'type_leak',
+              'type_floor',
+              'type_base',
               'type_roof',
               'type_wall',
               'type_win',
