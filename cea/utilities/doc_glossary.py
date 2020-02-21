@@ -46,11 +46,13 @@ def main(_):
                 details.add((locator_method, file_name))
         # if the locator_method references an input file
         # it should have been created by no script (i.e. used_by = empty list)
-        if schema[locator_method]['created_by'] == []:
-            input_locator_methods.add((locator_method, '-' * len(locator_method),str(schema[locator_method]['used_by'])))
+        if not schema[locator_method]['created_by']:
+            input_locator_methods.add(
+                (locator_method, '-' * len(locator_method), str(schema[locator_method]['used_by'])))
         # otherwise the locator_method references an output file
         else:
-            output_locator_methods.add((locator_method, '-' * len(locator_method), str(schema[locator_method]['used_by'])))
+            output_locator_methods.add(
+                (locator_method, '-' * len(locator_method), str(schema[locator_method]['used_by'])))
 
     input_locator_methods = sorted(input_locator_methods)
     output_locator_methods = sorted(output_locator_methods)

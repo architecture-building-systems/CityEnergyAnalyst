@@ -9,7 +9,7 @@ The following file is used by scripts: {{used_by}}
 
 .. csv-table:: **{{file_name}}**
     :header: "Variable", "Description"
-{% for SCRIPT, LOCATOR_METHOD, FILE_NAME, VARIABLE, DESCRIPTION, UNIT, VALUES, TYPE, COLOR in tuples -%}
+{% for SCRIPT, LOCATOR_METHOD, WORKSHEET, VARIABLE, DESCRIPTION, UNIT, VALUES, TYPE, COLOR, FILE_NAME in tuples -%}
 {% if locator_method == LOCATOR_METHOD and file_name == FILE_NAME %}
      {{VARIABLE}},{{DESCRIPTION}} - Unit: {{UNIT}}
 {%- endif -%}
