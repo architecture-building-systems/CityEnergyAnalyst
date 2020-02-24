@@ -12,8 +12,8 @@ CEA can be installed in Windows, Ubuntu and on the computer cluster of the ETH Z
 
 .. toctree::
 
-  - installation/installation-on-windows
-  - installation/installation-on-euler
+    installation/installation-on-windows
+    installation/installation-on-euler
 
 
 Cite
