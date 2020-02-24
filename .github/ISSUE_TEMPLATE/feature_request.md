@@ -7,14 +7,14 @@ assignees: JIMENOFONSECA
 
 ---
 
-**Describe which users can get a benefit of this**
-Describe who can get a benefit of this. Ex. Researcher, Student, Practitioner.
+**Describe the feature you would like to have**
+Ex. I would like to have [...]
 
-**Describe the solution you'd like**
-A clear and concise description of what you want to happen. Ex. I would like to have [...]
+**Describe the end purpose of this feature**
+Ex. So I could visualize/understand/know/apply etc..
 
-**Describe the purpose of the solution**
-A clear and concise description of why you need this. Ex. So I could do [...]
+**Describe the end-user of this feature**
+Ex. A Researcher, a Student, or a Practitioner.
 
-**Provide Aditional information if any**
-A list of links, screenshots or whatever you think that can help us to better understand better your idea.
+**Provide Aditional information if possible**
+EX. Screenshots, Links, Methods

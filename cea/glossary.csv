@@ -113,18 +113,6 @@ archetypes-mapper,get_building_supply,,type_cs,Type of cooling supply system,[co
 archetypes-mapper,get_building_supply,,type_dhw,Type of hot water supply system,[code],{T0...Tn},string,black,inputs/building-properties/supply_systems.dbf
 archetypes-mapper,get_building_supply,,type_el,Type of electrical supply system,[code],{T0...Tn},string,black,inputs/building-properties/supply_systems.dbf
 archetypes-mapper,get_building_supply,,type_hs,Type of heating supply system,[code],{T0...Tn},string,black,inputs/building-properties/supply_systems.dbf
-archetypes-mapper,get_building_emission_intensity,,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/building-properties/emission_intensity.dbf
-archetypes-mapper,get_building_emission_intensity,,W_e_ag_kgm2,Emissions of external walls below ground per wall area,[kg CO2-eq/m2],{0.0...n}, float,black,inputs/building-properties/emission_intensity.dbf
-archetypes-mapper,get_building_emission_intensity,,W_e_bg_kgm2,Emissions of external walls above ground per wall area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/building-properties/emission_intensity.dbf
-archetypes-mapper,get_building_emission_intensity,,W_i_ag_kgm2,Emissions of internal walls below ground per wall area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/building-properties/emission_intensity.dbf
-archetypes-mapper,get_building_emission_intensity,,W_i_bg_kgm2,Emissions of internal walls above ground per wall area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/building-properties/emission_intensity.dbf
-archetypes-mapper,get_building_emission_intensity,,Win_kgm2,Emissions of widows per window area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/building-properties/emission_intensity.dbf
-archetypes-mapper,get_building_emission_intensity,,F_i_kgm2,Emissions of internal floors per floor area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/building-properties/emission_intensity.dbf
-archetypes-mapper,get_building_emission_intensity,,F_e_kgm2,Emissions of basement floor per floor area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/building-properties/emission_intensity.dbf
-archetypes-mapper,get_building_emission_intensity,,R_kgm2,Emissions of roof per roof area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/building-properties/emission_intensity.dbf
-archetypes-mapper,get_building_emission_intensity,,Tech_kgm2,Emissions of technical installations per gross floor area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/building-properties/emission_intensity.dbf
-archetypes-mapper,get_building_emission_intensity,,Exca_kgm2,Emissions of excavations per basement floor area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/building-properties/emission_intensity.dbf
-archetypes-mapper,get_building_emission_intensity,,Mobi_kgm2,Emissions of induced mobility per gross floor area,[kg CO2-eq/m2],{0.0...n},float,black,inputs/building-properties/emission_intensity.dbf
 thermal-network,get_network_layout_edges_shapefile,,geometry,Geometry,[-],[-],[-],black,inputs/networks/dc/edges.shp
 thermal-network,get_network_layout_edges_shapefile,,Name,Unique building ID. It must start with a letter.,[-],alphanumeric,string,black,inputs/networks/dc/edges.shp
 thermal-network,get_network_layout_edges_shapefile,,Pipe_DN,Classifies nominal pipe diameters (DN) into typical bins. E.g. DN100 refers to pipes of approx. 100mm in diameter.,[DN#],alphanumeric,string,black,inputs/networks/dc/edges.shp

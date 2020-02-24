@@ -32,7 +32,9 @@ def create_new_project(locator, config):
     # Local variables
     zone_geometry_path = config.create_new_project.zone
     surroundings_geometry_path = config.create_new_project.surroundings
+
     street_geometry_path = ''
+
     terrain_path = config.create_new_project.terrain
     typology_path = config.create_new_project.typology
 
