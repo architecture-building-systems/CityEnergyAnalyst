@@ -2,9 +2,9 @@
 - config: .
   "general:scenario-name": "${cea_workflow_scenario}"
 - script: data-initializer
-- script: archetypes-mapper
   parameters:
-    region: SG
+    databases-path: SG
+- script: archetypes-mapper
 
 - script: weather-helper
   parameters:
