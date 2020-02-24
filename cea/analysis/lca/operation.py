@@ -56,9 +56,11 @@ def lca_operation(locator):
     factors_electricity = data_all_in_one_systems['ELECTRICITY']
     factors_resources = pd.read_excel(locator.get_database_feedstocks(),sheet_name =None)
 
-    #get the mean of all values for this
+    # get the mean of all values for this
     factors_resources_simple = [(name, values['GHG_kgCO2MJ'].mean()) for name, values in factors_resources.items()]
-    factors_resources_simple = pd.DataFrame(factors_resources_simple, columns=['code', 'GHG_kgCO2MJ'])
+    factors_resources_simple = pd.DataFrame(factors_resources_simple, columns=['code', 'GHG_kgCO2MJ']).append(
+        # append NONE choice with zero values
+        {'code': 'NONE'}, ignore_index=True).fillna(0)
 
     # local variables
     Qhs_flag = Qww_flag = Qcs_flag = E_flag = True
