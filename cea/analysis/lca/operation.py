@@ -55,6 +55,8 @@ def lca_operation(locator):
     factors_cooling = data_all_in_one_systems['COOLING']
     factors_electricity = data_all_in_one_systems['ELECTRICITY']
     factors_resources = pd.read_excel(locator.get_database_feedstocks(), sheet_name=None)
+    for sheet in factors_resources:
+        print(factors_resources[sheet])
 
     # get the mean of all values for this
     factors_resources_simple = [(name, values['GHG_kgCO2MJ'].mean()) for name, values in factors_resources.items()]
