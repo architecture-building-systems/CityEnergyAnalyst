@@ -86,8 +86,7 @@ def create_new_project(locator, config):
         # verify if input file is correct for CEA, if not an exception will be released
         verify_input_typology(occupancy_file_test)
         # create new file
-
-
+        locator.ensure_parent_folder_exists(locator.get_building_typology())
         copyfile(typology_path, locator.get_building_typology())
 
 

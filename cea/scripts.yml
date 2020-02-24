@@ -119,7 +119,6 @@ Life Cycle Analysis:
       - [get_building_typology]
       - [get_zone_geometry]
       - [get_building_supply]
-      - [get_building_emission_intensity]
 
   - name: system-costs
     label: System Costs

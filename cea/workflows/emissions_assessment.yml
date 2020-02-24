@@ -1,7 +1,7 @@
 - script: create-new-project
 - config: .
   "general:scenario-name": "${cea_workflow_scenario}"
-- script: data_initializer
+- script: data-initializer
 - script: archetypes-mapper
   parameters:
     region: SG
@@ -13,6 +13,8 @@
 - script: terrain-helper
 
 - script: schedule-maker
+
+- script: radiation
 
 - script: demand
 

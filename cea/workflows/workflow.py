@@ -139,14 +139,16 @@ def do_script_step(config, step):
 
 
 if __name__ == '__main__':
-    path = r'C:\Users\HHM\Desktop\Inputs'
+    path = r'C:\Users\HHM\Desktop\MVP\inputs'
     config = cea.config.Configuration()
     project_name = os.path.join(path,'test')
-    location_zone = [os.path.join(path,r'zones\zone1.shp'), os.path.join(path,r'zones\zone.shp')]
-    location_surroundings = [os.path.join(path,r'surroundings\surroundings1.shp'), os.path.join(path,r'surroundings\surroundings.shp')]
-    location_typology = [os.path.join(path,r'typology\typology1.dbf'), os.path.join(path,r'typology\typology2.dbf')]
-
-    scenarios_names = ['FAR10_9_buildings_with_context', 'FAR10_1_building_with_context']
+    location_zone = [os.path.join(path,r'podium\zones\zone_p_15_4.shp'), os.path.join(path,r'podium\zones\zone_p_15_6.shp')]
+    location_surroundings = [os.path.join(path,r'podium\surroundings\surroundings_p_15_4.shp'), os.path.join(path,r'podium\surroundings\surroundings_p_15_6.shp')]
+    location_typology = [os.path.join(path,r'podium\typologies_dbf\typology5.dbf'), os.path.join(path,r'podium\typologies_dbf\typology15.dbf')]
+    os.environ["RAYPATH"] = r'C:\Users\HHM\Documents\CityEnergyAnalyst\Dependencies\Daysim'
+    os.environ["GDAL_DATA"] = r'C:\Users\HHM\Documents\CityEnergyAnalyst\Dependencies\Python\Library\share\gdal'
+    os.environ["PROJ_LIB"] = r'C:\Users\HHM\Documents\CityEnergyAnalyst\Dependencies\Python\Library\share'
+    scenarios_names = ['p_25_4_5', 'p_15_6_15']
 
     for surroundings, zone, scenario, typology in zip(location_surroundings, location_zone, scenarios_names, location_typology):
         locator = cea.inputlocator.InputLocator(scenario)
