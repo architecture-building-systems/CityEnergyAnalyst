@@ -6,6 +6,7 @@ from __future__ import division
 from __future__ import print_function
 
 import os
+import sys
 import datetime
 import cea.config
 import cea.inputlocator
@@ -31,10 +32,36 @@ def run(config, script, **kwargs):
     print('-' * 80)
 
 
+def run_with_trace(config, script, **kwargs):
+    """Same as run, but use the trace-inputlocator functionality to capture InputLocator calls"""
+    from cea.tests.trace_inputlocator import create_trace_function, update_trace_data, meta_to_yaml
+
+    if "multiprocessing" in kwargs:
+        # we can only trace single processes
+        kwargs["multiprocessing"] = False
+
+    # stuff needed for trace-inputlocator
+    script_start = datetime.datetime.now()
+    results_set = set()
+    orig_trace = sys.gettrace()
+    sys.settrace(create_trace_function(results_set))
+
+    run(config, script, **kwargs)  # <------------------------------ this is where we run the script!
+
+    sys.settrace(orig_trace)
+
+    # update the trace data
+    trace_data = set()
+    update_trace_data(config, cea.inputlocator.InputLocator(config.scenario), results_set, script,
+                      script_start, trace_data)
+    meta_to_yaml(config, trace_data, config.trace_inputlocator.meta_output_file)
+
+
 def main(config):
     workflow_yml = config.workflow.workflow
     resume_yml = config.workflow.resume_file
     resume_mode_on = config.workflow.resume
+    trace_input = config.workflow.trace_input
 
     set_up_environment_variables(config)
 
@@ -53,7 +80,7 @@ def main(config):
                 # skip steps already completed while resuming
                 print("Skipping workflow step {i}: script={script}".format(i=i, script=step["script"]))
                 continue
-            do_script_step(config, step)
+            do_script_step(config, step, trace_input)
         elif "config" in step:
             config = do_config_step(config, step)
         else:
@@ -126,7 +153,7 @@ def set_parameter(config, parameter, value):
         parameter.set(parameter.decode(expanded_value))
 
 
-def do_script_step(config, step):
+def do_script_step(config, step, trace_input):
     """Run a script based on the step's "script" and "parameters" (optional) keys."""
     script = cea.scripts.by_name(step["script"])
     print("Workflow step: script={script}".format(script=script.name))
@@ -135,7 +162,11 @@ def do_script_step(config, step):
         parameters.update(step["parameters"])
     py_script = script.name.replace("-", "_")
     py_parameters = {k.replace("-", "_"): v for k, v in parameters.items()}
-    run(config, py_script, **py_parameters)
+
+    if trace_input:
+        run_with_trace(config, py_script, **py_parameters)
+    else:
+        run(config, py_script, **py_parameters)
 
 
 if __name__ == '__main__':
