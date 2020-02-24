@@ -1,5 +1,3 @@
-:orphan:
-
 Installation guide for Windows
 ==============================
 
