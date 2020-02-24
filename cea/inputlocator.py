@@ -592,7 +592,7 @@ class InputLocator(object):
     def get_database_use_types_properties(self):
         """Returns the database of construction properties to be used by the archetypes-mapper. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return os.path.join(self.get_database_use_types_folder(), 'use_types_properties.xlsx')
+        return os.path.join(self.get_database_use_types_folder(), 'USE_TYPE_PROPERTIES.xlsx')
 
     def get_database_supply_assemblies(self):
         """Returns the database of supply components for cost analysis. These are copied
