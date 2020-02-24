@@ -10,6 +10,7 @@ from datetime import datetime
 from jinja2 import Template
 import cea.inputlocator
 import pandas
+import pandas.errors
 import yaml
 from dateutil.parser import parse
 
@@ -49,10 +50,7 @@ def main(config):
     config.multiprocessing = False
     locator = cea.inputlocator.InputLocator(config.scenario)
 
-
     trace_data = set()  # set used for graphviz output -> {(direction, script, locator_method, path, file)}
-    building_specific_files = [] # list containing all building specific files e.g. B01.csv or B07_insolation.dbf
-
 
     for script_name in config.trace_inputlocator.scripts:
         script_func = getattr(cea.api, script_name.replace('-', '_'))
@@ -64,37 +62,42 @@ def main(config):
         script_func(config)  # <------------------------------ this is where we run the script!
         sys.settrace(orig_trace)
 
-        for locator_method, filename in results_set:
-            if os.path.isdir(filename):
-                continue
-            if locator_method == 'get_temporary_file':
-                # this file is probably already deleted (hopefully?) it's not
-                continue
-
-            mtime = datetime.fromtimestamp(os.path.getmtime(filename))
-            relative_filename = os.path.relpath(filename, config.scenario).replace('\\', '/')
-
-            if os.path.isfile(filename):
-                buildings = locator.get_zone_building_names()
-                for building in buildings:
-                    if os.path.basename(filename).find(building) != -1:
-                        building_specific_files.append(filename)
-                        filename = filename.replace(building, buildings[0])
-                        relative_filename = relative_filename.replace(building, buildings[0])
-
-            relative_filename = str(relative_filename)
-            file_path = os.path.dirname(relative_filename)
-            file_name = os.path.basename(relative_filename)
-            if script_start < mtime:
-                trace_data.add(('output', script_name, locator_method, file_path, file_name))
-            else:
-                trace_data.add(('input', script_name, locator_method, file_path, file_name))
+        update_trace_data(config, locator, results_set, script_name,
+                          script_start, trace_data)
     print trace_data
     scripts = sorted(set([td[1] for td in trace_data]))
     config.restricted_to = None
 
     meta_to_yaml(config, trace_data, config.trace_inputlocator.meta_output_file)
     print 'Trace Complete'
+
+
+def update_trace_data(config, locator, results_set, script_name, script_start,
+                      trace_data):
+    for locator_method, filename in results_set:
+        if os.path.isdir(filename):
+            continue
+        if locator_method == 'get_temporary_file':
+            # this file is probably already deleted (hopefully?) it's not
+            continue
+
+        mtime = datetime.fromtimestamp(os.path.getmtime(filename))
+        relative_filename = os.path.relpath(filename, config.scenario).replace('\\', '/')
+
+        if os.path.isfile(filename):
+            buildings = locator.get_zone_building_names()
+            for building in buildings:
+                if os.path.basename(filename).find(building) != -1:
+                    filename = filename.replace(building, buildings[0])
+                    relative_filename = relative_filename.replace(building, buildings[0])
+
+        relative_filename = str(relative_filename)
+        file_path = os.path.dirname(relative_filename)
+        file_name = os.path.basename(relative_filename)
+        if script_start < mtime:
+            trace_data.add(('output', script_name, locator_method, file_path, file_name))
+        else:
+            trace_data.add(('input', script_name, locator_method, file_path, file_name))
 
 
 def meta_to_yaml(config, trace_data, meta_output_file):
@@ -126,13 +129,14 @@ def meta_to_yaml(config, trace_data, meta_output_file):
             locator_meta[locator_method] = {}
             locator_meta[locator_method]['created_by'] = []
             locator_meta[locator_method]['used_by'] = []
+            print("Getting schema for {file_full_path}".format(file_full_path=file_full_path))
             locator_meta[locator_method]['schema'] = schema['%s' % file_type](file_full_path)
             locator_meta[locator_method]['file_path'] = file_full_path
             locator_meta[locator_method]['file_type'] = file_type
             locator_meta[locator_method]['description'] = eval('cea.inputlocator.InputLocator(cea.config).' + str(
                 locator_method) + '.__doc__')
 
-    #get the dependencies from trace_data
+    # get the dependencies from trace_data
     for direction, script, locator_method, folder_path, file_name in trace_data:
         file_full_path = os.path.join(config.scenario, folder_path, file_name)
         if not os.path.isfile(file_full_path):
@@ -249,7 +253,11 @@ def get_tif_schema(filename):
 
 
 def get_csv_schema(filename):
-    db = pandas.read_csv(filename)
+    try:
+        db = pandas.read_csv(filename)
+    except pandas.errors.EmptyDataError:
+        # csv file is empty
+        return None
     schema = {}
     for attr in db:
         attr = replace_repetitive_attr(attr)
