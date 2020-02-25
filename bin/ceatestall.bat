@@ -1,4 +1,4 @@
-REM script used to test the cea by the jenkins
+REM script used to test the cea by the jenkins when merging to master
 SET CEA=%USERPROFILE%\Documents\CityEnergyAnalyst
 SET PATH=%CEA%\Dependencies\Python;%CEA%\Dependencies\Python\Scripts;%CEA%\Dependencies\Daysim;%PATH%
 SET PYTHONHOME=%CEA%\Dependencies\Python
