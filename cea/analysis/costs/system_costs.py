@@ -34,21 +34,23 @@ def costs_main(locator, config):
     factors_resources = pd.read_excel(locator.get_database_feedstocks(), sheet_name=None)
 
     #get the mean of all values for this
-    factors_resources_simple = [(name, values['Opex_var_buy_USD2015perkWh'].mean()) for name, values in factors_resources.items()]
-    factors_resources_simple = pd.DataFrame(factors_resources_simple, columns=['code', 'Opex_var_buy_USD2015perkWh'])
+    factors_resources_simple = [(name, values['Opex_var_buy_USD2015kWh'].mean()) for name, values in factors_resources.items()]
+    factors_resources_simple = pd.DataFrame(factors_resources_simple, columns=['code', 'Opex_var_buy_USD2015kWh']).append(
+        # append NONE choice with zero values
+        {'code': 'NONE'}, ignore_index=True).fillna(0)
 
     # local variables
     # calculate the total operational non-renewable primary energy demand and CO2 emissions
     ## create data frame for each type of end use energy containing the type of supply system use, the final energy
     ## demand and the primary energy and emissions factors for each corresponding type of supply system
     heating_costs = factors_heating.merge(factors_resources_simple, left_on='feedstock', right_on='code')[
-        ['code_x', 'feedstock', 'Opex_var_buy_USD2015perkWh', 'CAPEX_USD2015kW', 'LT_yr', 'O&M_%', 'IR_%']]
+        ['code_x', 'feedstock', 'Opex_var_buy_USD2015kWh', 'CAPEX_USD2015kW', 'LT_yr', 'O&M_%', 'IR_%']]
     cooling_costs = factors_cooling.merge(factors_resources_simple, left_on='feedstock', right_on='code')[
-        ['code_x', 'feedstock', 'Opex_var_buy_USD2015perkWh', 'CAPEX_USD2015kW', 'LT_yr', 'O&M_%', 'IR_%']]
+        ['code_x', 'feedstock', 'Opex_var_buy_USD2015kWh', 'CAPEX_USD2015kW', 'LT_yr', 'O&M_%', 'IR_%']]
     dhw_costs = factors_dhw.merge(factors_resources_simple, left_on='feedstock', right_on='code')[
-        ['code_x', 'feedstock', 'Opex_var_buy_USD2015perkWh', 'CAPEX_USD2015kW', 'LT_yr', 'O&M_%', 'IR_%']]
+        ['code_x', 'feedstock', 'Opex_var_buy_USD2015kWh', 'CAPEX_USD2015kW', 'LT_yr', 'O&M_%', 'IR_%']]
     electricity_costs = factors_electricity.merge(factors_resources_simple, left_on='feedstock', right_on='code')[
-        ['code_x', 'feedstock', 'Opex_var_buy_USD2015perkWh', 'CAPEX_USD2015kW', 'LT_yr', 'O&M_%', 'IR_%']]
+        ['code_x', 'feedstock', 'Opex_var_buy_USD2015kWh', 'CAPEX_USD2015kW', 'LT_yr', 'O&M_%', 'IR_%']]
 
     heating = supply_systems.merge(demand, on='Name').merge(heating_costs, left_on='type_hs', right_on='code_x')
     dhw = supply_systems.merge(demand, on='Name').merge(dhw_costs, left_on='type_dhw', right_on='code_x')
@@ -63,7 +65,7 @@ def costs_main(locator, config):
             # calculate the total and relative costs
             heating[service + '_sys_total_capex_yr'] = heating[service + '0_kW'] * heating['CAPEX_USD2015kW']
             heating[service + '_sys_a_capex_yr'] = calc_inv_costs_annualized(heating[service + '_sys_total_capex_yr'], heating['IR_%']/100, heating['LT_yr'])
-            heating[service + '_sys_opex_yr'] = heating[service + '_MWhyr'] * heating['Opex_var_buy_USD2015perkWh'] * 1000 + heating[service + '_sys_total_capex_yr'] * heating['O&M_%']/100
+            heating[service + '_sys_opex_yr'] = heating[service + '_MWhyr'] * heating['Opex_var_buy_USD2015kWh'] * 1000 + heating[service + '_sys_total_capex_yr'] * heating['O&M_%']/100
             heating[service + '_sys_opex_m2yr'] = heating[service + '_sys_opex_yr'] / heating['Aocc_m2']
         except KeyError:
             print(heating)
@@ -78,7 +80,7 @@ def costs_main(locator, config):
         # calculate the total and relative costs
         dhw[service + '_sys_total_capex_yr'] = dhw[service + '0_kW'] * dhw['CAPEX_USD2015kW']
         dhw[service + '_sys_a_capex_yr'] =  calc_inv_costs_annualized(dhw[service + '_sys_total_capex_yr'], dhw['IR_%']/100, dhw['LT_yr'])
-        dhw[service + '_sys_opex_yr'] = dhw[service + '_MWhyr'] * dhw['Opex_var_buy_USD2015perkWh'] * 1000 + dhw[service + '_sys_total_capex_yr'] * dhw['O&M_%']/100
+        dhw[service + '_sys_opex_yr'] = dhw[service + '_MWhyr'] * dhw['Opex_var_buy_USD2015kWh'] * 1000 + dhw[service + '_sys_total_capex_yr'] * dhw['O&M_%']/100
         dhw[service + '_sys_opex_m2yr'] = dhw[service + '_sys_opex_yr'] / dhw['Aocc_m2']
 
     ## calculate the operational primary energy and emissions for cooling services
@@ -89,7 +91,7 @@ def costs_main(locator, config):
         # calculate the total and relative costs
         cooling[service + '_sys_total_capex_yr'] = cooling[service + '0_kW'] * cooling['CAPEX_USD2015kW']
         cooling[service + '_sys_a_capex_yr'] = calc_inv_costs_annualized(cooling[service + '_sys_total_capex_yr'], cooling['IR_%']/100, cooling['LT_yr'])
-        cooling[service + '_sys_opex_yr'] = cooling[service + '_MWhyr'] * cooling['Opex_var_buy_USD2015perkWh'] * 1000 + cooling[service + '_sys_total_capex_yr'] * cooling['O&M_%']/100
+        cooling[service + '_sys_opex_yr'] = cooling[service + '_MWhyr'] * cooling['Opex_var_buy_USD2015kWh'] * 1000 + cooling[service + '_sys_total_capex_yr'] * cooling['O&M_%']/100
         cooling[service + '_sys_opex_m2yr'] = cooling[service + '_sys_opex_yr'] / cooling['Aocc_m2']
 
     ## calculate the operational primary energy and emissions for electrical services
@@ -99,7 +101,7 @@ def costs_main(locator, config):
         # calculate the total and relative costs
         electricity[service + '_sys_total_capex_yr'] = electricity[service + '0_kW'] * electricity['CAPEX_USD2015kW']
         electricity[service + '_sys_a_capex_yr'] = calc_inv_costs_annualized(electricity[service + '_sys_total_capex_yr'], electricity['IR_%']/100, electricity['LT_yr']/100)
-        electricity[service + '_sys_opex_yr'] = electricity[service + '_MWhyr'] * electricity['Opex_var_buy_USD2015perkWh'] * 1000 + electricity[service + '_sys_total_capex_yr'] * electricity['O&M_%']/100
+        electricity[service + '_sys_opex_yr'] = electricity[service + '_MWhyr'] * electricity['Opex_var_buy_USD2015kWh'] * 1000 + electricity[service + '_sys_total_capex_yr'] * electricity['O&M_%']/100
         electricity[service + '_sys_opex_m2yr'] = electricity[service + '_sys_opex_yr'] / electricity['Aocc_m2']
 
     # plot also NFA area and costs
