@@ -20,22 +20,31 @@ def main():
             X = pd.read_csv(path_to_typical_days_files(path, 'X'), header=None)
             # cluster labels
             y = pd.read_csv(path_to_typical_days_files(path, 'label'), header=None)
-            day_count = pd.read_csv(path_to_typical_days_files(path, 'day_count'))
+            count_of_each_cluster = pd.read_csv(path_to_typical_days_files(path, settings.cluster_type + '_count'))
 
             # DBI
-            dbi, k = db_index(X.values, y.values, day_count)
+            dbi, k = db_index(X.values, y.values, count_of_each_cluster, settings.cluster_type)
             dbi_all[k] = dbi
 
             # ELDC (Errors in Load Duration Curves)
-            T_LDC_X, w_LDC_X, GI_LDC_X, ppl_LDC_X = get_LDC_from_X(X)
-            T_LDC_K, w_LDC_K, GI_LDC_K, ppl_LDC_K = get_LDC_from_K(X, day_count)
+            if settings.cluster_type == 'day':
+                T_LDC_X, w_LDC_X, GI_LDC_X, ppl_LDC_X = get_LDC_from_X_days(X)
+                T_LDC_K, w_LDC_K, GI_LDC_K, ppl_LDC_K = get_LDC_from_K_days(X, count_of_each_cluster)
+                X_dict = {'T': T_LDC_X, 'w_LDC_X': w_LDC_X, 'GI_LDC_X': GI_LDC_X, 'ppl_LDC_X': ppl_LDC_X}
+                pd.DataFrame.from_dict(X_dict).to_csv(os.path.join(path, 'X_LDC.csv'))
+            elif settings.cluster_type == 'hour':
+                T_LDC_X, w_LDC_X, GI_LDC_X, ppl_LDC_X = get_LDC_from_X_hours(X)
+                T_LDC_K, w_LDC_K, GI_LDC_K, ppl_LDC_K = get_LDC_from_K_hours(X, count_of_each_cluster)
+            k_dict = {'T': T_LDC_K, 'w_LDC_X': w_LDC_K, 'GI_LDC_X': GI_LDC_K, 'ppl_LDC_X': ppl_LDC_K}
+            pd.DataFrame.from_dict(k_dict).to_csv(os.path.join(path, 'k_LDC.csv'))
             T_ELDC_all[k] = calculate_ELDC(T_LDC_K, T_LDC_X)
             w_ELDC_all[k] = calculate_ELDC(w_LDC_K, w_LDC_X)
             GI_ELDC_all[k] = calculate_ELDC(GI_LDC_K, GI_LDC_X)
             ppl_ELDC_all[k] = calculate_ELDC(GI_LDC_K, GI_LDC_X)
 
             # Calendar view
-            plot_clusters_in_calendar_view(path, y, k)
+            if settings.cluster_type == 'day':
+                plot_clusters_in_calendar_view(path, y, k)
 
         # plot DBI
         plot_evaluation_for_all_k(dbi_all, 'dbi', path)
@@ -78,7 +87,7 @@ def calculate_ELDC(K_list, X_list):
     return error
 
 
-def get_LDC_from_X(X):
+def get_LDC_from_X_days(X):
     T_X = X.iloc[:, 0:24]
     T_LDC_X_array = df_to_sorted_array(T_X)
     w_X = X.iloc[:, 24:48]
@@ -90,7 +99,18 @@ def get_LDC_from_X(X):
     return T_LDC_X_array, w_LDC_X_array, GI_LDC_X_array, ppl_LDC_X_array
 
 
-def get_LDC_from_K(X, day_count):
+def get_LDC_from_X_hours(X):
+    T_LDC_X = X.iloc[:, 0].values
+    w_LDC_X = X.iloc[:, 1].values
+    GI_LDC_X = X.iloc[:,2].values
+    ppl_LDC_X = X.iloc[:,3].values
+    T_LDC_X[::-1].sort()
+    w_LDC_X[::-1].sort()
+    GI_LDC_X[::-1].sort()
+    ppl_LDC_X[::-1].sort()
+    return T_LDC_X, w_LDC_X, GI_LDC_X, ppl_LDC_X
+
+def get_LDC_from_K_days(X, day_count):
     T_LDC_K, w_LDC_K, GI_LDC_K, ppl_LDC_K = [], [], [], []
     for ix, day in enumerate(day_count['day']):
         count = day_count['count'][ix]
@@ -104,6 +124,19 @@ def get_LDC_from_K(X, day_count):
     ppl_LDC_K.sort(reverse=True)
     return T_LDC_K, w_LDC_K, GI_LDC_K, ppl_LDC_K
 
+def get_LDC_from_K_hours(X, hour_count):
+    T_LDC_K, w_LDC_K, GI_LDC_K, ppl_LDC_K = [], [], [], []
+    for ix, hour in enumerate(hour_count['hour']):
+        count = hour_count['count'][ix]
+        [T_LDC_K.extend([X.iloc[hour - 1, 0]]) for i in range(count)]
+        [w_LDC_K.extend([X.iloc[hour - 1, 1]]) for i in range(count)]
+        [GI_LDC_K.extend([X.iloc[hour - 1, 2]]) for i in range(count)]
+        [ppl_LDC_K.extend([X.iloc[hour - 1, 3]]) for i in range(count)]
+    T_LDC_K.sort(reverse=True)
+    w_LDC_K.sort(reverse=True)
+    GI_LDC_K.sort(reverse=True)
+    ppl_LDC_K.sort(reverse=True)
+    return T_LDC_K, w_LDC_K, GI_LDC_K, ppl_LDC_K
 
 def df_to_sorted_array(df):
     array = []
@@ -136,7 +169,7 @@ def plot_clusters_in_calendar_view(path, y, k):
     figure.savefig(os.path.join(path, 'calendar.png'))
 
 
-def db_index(X, y, day_count):
+def db_index(X, y, count_of_each_cluster, cluster_type):
     """
     Davies-Bouldin index is an internal evaluation method for
     clustering algorithms. Lower values indicate tighter clusters that
@@ -156,9 +189,9 @@ def db_index(X, y, day_count):
     for i, k in enumerate(uniqlbls):
         Xk = X[np.where(y == k)[0], ...]
         # Ak = np.mean(Xk, axis=0) # change to the medoid
-        day_ix = day_count.loc[day_count['k'] == k]['day'].values[0]
-        print(k, day_ix, Xk.shape[0])
-        Ak = X[day_ix - 1, ...]
+        index = count_of_each_cluster.loc[count_of_each_cluster['k'] == k][cluster_type].values[0]
+        print(k, index, Xk.shape[0])
+        Ak = X[index - 1, ...]
         centroid_arr[i, ...] = Ak
         sigma_arr[i, ...] = np.mean(cdist(Xk, Ak.reshape(1, -1)))
     # compute pairwise centroid distances, make diagonal elements non-zero
