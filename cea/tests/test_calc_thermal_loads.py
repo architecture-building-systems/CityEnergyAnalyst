@@ -28,7 +28,7 @@ class TestCalcThermalLoads(unittest.TestCase):
         import cea.examples
         cls.locator = cea.inputlocator.ReferenceCaseOpenLocator()
         cls.config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
-        weather_path = cls.locator.get_weather('Zug-inducity_1990_2010_TMY')
+        weather_path = cls.locator.get_weather('Zug_inducity_2009')
         cls.weather_data = epwreader.epw_reader(weather_path)[
             ['year', 'drybulb_C', 'wetbulb_C', 'relhum_percent', 'windspd_ms', 'skytemp_C']]
         year = cls.weather_data['year'][0]
@@ -51,19 +51,19 @@ class TestCalcThermalLoads(unittest.TestCase):
         cls.debug = cls.config.debug
 
     def test_calc_thermal_loads(self):
-        bpr = self.building_properties['B1001']
+        bpr = self.building_properties['B1011']
         self.config.general.multiprocessing = False
         self.config.schedule_maker.schedule_model = "deterministic"
-        schedule_maker_main(self.locator, self.config, building='B1001')
+        schedule_maker_main(self.locator, self.config, building='B1011')
 
-        result = calc_thermal_loads('B1001', bpr, self.weather_data, self.date_range, self.locator,
+        result = calc_thermal_loads('B1011', bpr, self.weather_data, self.date_range, self.locator,
                                     self.use_dynamic_infiltration_calculation, self.resolution_output,
                                     self.loads_output, self.massflows_output, self.temperatures_output,
                                     self.config, self.debug)
         self.assertIsNone(result)
-        self.assertTrue(os.path.exists(self.locator.get_demand_results_file('B1001')),
+        self.assertTrue(os.path.exists(self.locator.get_demand_results_file('B1011')),
                         'Building csv not produced')
-        self.assertTrue(os.path.exists(self.locator.get_temporary_file('B1001T.csv')),
+        self.assertTrue(os.path.exists(self.locator.get_temporary_file('B1011T.csv')),
                         'Building temp file not produced')
 
         # test the building csv file (output of the `calc_thermal_loads` call above)
