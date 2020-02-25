@@ -92,9 +92,9 @@ def calculate_mixed_use_archetype_values_results(locator):
     server_occ = float(occ_densities.ix['SERVERROOM', 'Occ_m2pax'])
     calculated_results = calculate_average_multiuse(
         fields=['X_ghpax', 'El_Wm2'],
-        properties_df=pd.DataFrame(data=[['B1001', 'OFFICE', 0.5, 'SERVERROOM', 0.5, 'NONE', 0.0, 0.0, 0.0, 0.0], ['B2', 'OFFICE', 0.6, 'LAB', 0.2, 'INDUSTRIAL', 0.2, 0.0, 0.0, 0.0]],
+        properties_df=pd.DataFrame(data=[['B1011', 'OFFICE', 0.5, 'SERVERROOM', 0.5, 'NONE', 0.0, 0.0, 0.0, 0.0], ['B1012', 'OFFICE', 0.6, 'LAB', 0.2, 'INDUSTRIAL', 0.2, 0.0, 0.0, 0.0]],
                                    columns=['Name', "1ST_USE", "1ST_USE_R", '2ND_USE', '2ND_USE_R', '3RD_USE', '3RD_USE_R', 'X_ghpax', 'El_Wm2', 'Occ_m2pax']),
-        occupant_densities={'OFFICE': 1 / office_occ, 'LAB': 1 / lab_occ, 'INDUSTRIAL': 1 / indus_occ, 'SERVERRROOM': 1 / server_occ},
+        occupant_densities={'OFFICE': 1.0 / office_occ, 'LAB': 1.0 / lab_occ, 'INDUSTRIAL': 1.0 / indus_occ, 'SERVERRROOM': 1.0},
         list_uses=['OFFICE', 'LAB', 'INDUSTRIAL', 'SERVERRROOM'],
         properties_DB=pd.read_excel(locator.get_database_use_types_properties(), 'INTERNAL_LOADS')).set_index('Name')
 
@@ -117,9 +117,9 @@ def create_data():
 
     # calculate schedules
     building_properties = BuildingProperties(locator, False)
-    bpr = building_properties['B01']
-    list_uses = ['OFFICE', 'INDUSTRIAL']
-    bpr.occupancy = {'OFFICE': 0.5, 'INDUSTRIAL': 0.5}
+    bpr = building_properties['B1011']
+    list_uses = ['OFFICE', 'SERVERROOM']
+    bpr.occupancy = {'OFFICE': 0.5, 'SERVERROOM': 0.5}
     # get year from weather file
     weather_path = locator.get_weather_file()
     weather_data = epwreader.epw_reader(weather_path)[['year']]
