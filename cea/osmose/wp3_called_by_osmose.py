@@ -63,6 +63,7 @@ def main(path_to_case):
 
     # results
     results_dict = {'pumping_kWh': annual_pumping_energy_kWh,
+                    'pump_size_kW': pump_size_kW,
                     'Cinv_pump': Cinv_pump,
                     'Cinv_hex': substation_A_hex_df['Cinv_hex'].sum(),
                     'Cinv_pipes': Cinv_network_pipes}
@@ -202,14 +203,15 @@ def calc_builing_substation_dTlm(Q_substation, building_function):
     run_folder = os.listdir(OSMOSE_PROJECT_PATH)[
         len(os.listdir(OSMOSE_PROJECT_PATH)) - 1]  # pick the last folder (by name)
     icc_folder_path = os.path.join(*[OSMOSE_PROJECT_PATH, run_folder, 's_001\\plots\\icc\\models'])
-    icc_base = 'icc_base_m_network_loc_loc' + building_function + '_t' + str(t_Qmax) + \
-               '_c' + building_function + '_DefaultHeatCascade.txt'
-    T_bui_list = get_Ts_Tr_from_txt(icc_base, icc_folder_path)
     icc_separated = 'icc_separated_m_network_loc_loc' + building_function + '_t' + str(t_Qmax) + \
                     '_c' + building_function + '_DefaultHeatCascade.txt'
     T_net_list = get_Ts_Tr_from_txt(icc_separated, icc_folder_path)
-    dTlm = calc_dTlm(T_bui_list, T_net_list)
+    icc_base = 'icc_base_m_network_loc_loc' + building_function + '_t' + str(t_Qmax) + \
+               '_c' + building_function + '_DefaultHeatCascade.txt'
+    T_bui_list = get_Ts_Tr_from_txt(icc_base, icc_folder_path)
 
+    dTlm = calc_dTlm(T_bui_list, T_net_list)
+    print(building_function, 'dTlm', dTlm)
     return dTlm, Q_max_substation
 
 def calc_dTlm(T_bui_list, T_net_list):
@@ -221,13 +223,18 @@ def calc_dTlm(T_bui_list, T_net_list):
 def get_Ts_Tr_from_txt(icc_file_name, icc_folder_path):
     x, y = get_txt_data(os.path.join(icc_folder_path, icc_file_name))
     if min(np.where(np.diff(x) == 0.0)[0]) == int(0):
-        Ts = y[1]  # for icc_base, the first two numbers are the same
+        idx_Ts = 1 # for icc_base, the first two numbers are the same
     else:
-        Ts = y[0]  # for icc_separated
-    if len(np.where(np.diff(x) > 0.0)[0]) > 0:
-        idx_Tr = np.where(np.diff(x) > 0.0)[0][0]
-    else:
-        idx_Tr = np.where(x == 0.0)[0][0]
+        idx_Ts = 0 # for icc_separated
+    Ts = y[idx_Ts]
+    # Q_network_kW = x[idx_Ts]
+    # if len(np.where(np.diff(x) > 0.0)[0]) > 0:
+    #     idx_Tr = np.where(np.diff(x) > 0.0)[0][-1]
+    # else:
+    #     idx_Tr = np.where(x == 0.0)[0][0]
+    idx_Tr = np.where(x == 0.0)[0][0]
+    while y[idx_Tr] > 32.0: # has to be below T_OA
+        idx_Tr = idx_Tr - 1
     Tr = y[idx_Tr]
     return [Ts, Tr]
 
@@ -244,17 +251,17 @@ def calc_Cinv_substation_hex(A_hex_m2):
     return C_inv_hex
 
 def calc_Cinv_pumps(plant_pumping_kW):
-    pump_size_kW = max(plant_pumping_kW)
-    if pump_size_kW <= 4.0 :
-        min_pump_size_kW = 0.5
-        if pump_size_kW < min_pump_size_kW :
-            Cinv_pump = 29.314 * min_pump_size_kW ** 0.5216
-        else: Cinv_pump = 29.314 * pump_size_kW ** 0.5216
-    elif(pump_size_kW <= 37.0) and (4.0 < pump_size_kW):
-        Cinv_pump = 4.323 * pump_size_kW ** 0.7464
+    pump_size_W = max(plant_pumping_kW) * 1000
+    if pump_size_W <= 4000 :
+        min_pump_size_W = 500
+        if pump_size_W < min_pump_size_W :
+            Cinv_pump = 29.314 * min_pump_size_W ** 0.5216
+        else: Cinv_pump = 29.314 * pump_size_W ** 0.5216
+    elif(pump_size_W <= 37.0) and (4.0 < pump_size_W):
+        Cinv_pump = 4.323 * pump_size_W ** 0.7464
     else:
-        Cinv_pump = 1.0168 * pump_size_kW ** 0.8873
-    return Cinv_pump, pump_size_kW
+        Cinv_pump = 1.0168 * pump_size_W ** 0.8873
+    return Cinv_pump, pump_size_W
 
 ##========== Pressure Calculations ======== ##
 
