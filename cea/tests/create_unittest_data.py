@@ -7,19 +7,20 @@ unit tests. You can safely ignore the output printed to STDOUT - it is used for 
 
 NOTE: Check first to make sure the core algorithms are correct, i.e. the changes to the outputs behave as expected.
 """
-import os
-import zipfile
-import tempfile
 import ConfigParser
 import json
+import os
+import tempfile
+import zipfile
+
 import pandas as pd
 
+from cea.demand.building_properties import BuildingProperties
 from cea.demand.schedule_maker.schedule_maker import schedule_maker_main
 from cea.demand.thermal_loads import calc_thermal_loads
-from cea.demand.building_properties import BuildingProperties
-from cea.utilities.date import get_dates_from_year
 from cea.inputlocator import InputLocator
 from cea.utilities import epwreader
+from cea.utilities.date import get_dates_from_year
 
 
 def main(output_file):
@@ -31,7 +32,7 @@ def main(output_file):
     locator = InputLocator(reference_case)
     config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
 
-    weather_path = locator.get_weather('Zug-inducity_1990_2010_TMY')
+    weather_path = locator.get_weather('Zug_inducity_2009')
     weather_data = epwreader.epw_reader(weather_path)[
         ['year', 'drybulb_C', 'wetbulb_C', 'relhum_percent', 'windspd_ms', 'skytemp_C']]
 
@@ -54,14 +55,14 @@ def main(output_file):
 
     schedule_maker_main(locator, config, building=None)
 
-    bpr = building_properties['B01']
-    result = calc_thermal_loads('B01', bpr, weather_data, date_range, locator,
+    bpr = building_properties['B1011']
+    result = calc_thermal_loads('B1011', bpr, weather_data, date_range, locator,
                                 use_dynamic_infiltration_calculation, resolution_outputs, loads_output,
                                 massflows_output, temperatures_output, config,
                                 debug)
 
     # test the building csv file
-    df = pd.read_csv(locator.get_demand_results_file('B01'))
+    df = pd.read_csv(locator.get_demand_results_file('B1011'))
 
     expected_columns = list(df.columns)
     print("expected_columns = %s" % repr(expected_columns))
@@ -70,7 +71,8 @@ def main(output_file):
     test_config.read(output_file)
 
     value_columns = [u"E_sys_kWh", u"Qcdata_sys_kWh", u"Qcre_sys_kWh", u"Qcs_sys_kWh", u"Qhs_sys_kWh", u"Qww_sys_kWh",
-                     u"Tcs_sys_re_C", u"Ths_sys_re_C", u"Tww_sys_re_C", u"Tcs_sys_sup_C", u"Ths_sys_sup_C", u"Tww_sys_sup_C"]
+                     u"Tcs_sys_re_C", u"Ths_sys_re_C", u"Tww_sys_re_C", u"Tcs_sys_sup_C", u"Ths_sys_sup_C",
+                     u"Tww_sys_sup_C"]
 
     values = [float(df[column].sum()) for column in value_columns]
     print("values = %s " % repr(values))
@@ -82,8 +84,21 @@ def main(output_file):
     test_config.set("test_calc_thermal_loads", "values", json.dumps(values))
 
     print("data for test_calc_thermal_loads_other_buildings:")
-    buildings = ['B01', 'B03', 'B02', 'B05', 'B04', 'B07', 'B06', 'B09',
-                 'B08']
+    buildings = ['B1013', 'B1012',
+                 'B1010',
+                 'B1000',
+                 'B1009',
+                 'B1011',
+                 'B1006',
+                 'B1003',
+                 'B1004',
+                 'B1001',
+                 'B1002',
+                 'B1005',
+                 'B1008',
+                 'B1007',
+                 'B1014'
+                 ]
 
     results = {}
     for building in buildings:
