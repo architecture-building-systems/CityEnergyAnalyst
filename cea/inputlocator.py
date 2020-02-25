@@ -26,7 +26,7 @@ class InputLocator(object):
     # SCENARIO
     def __init__(self, scenario):
         self.scenario = scenario
-        self.db_path = os.path.join(os.path.dirname(__file__), 'databases')
+        self.db_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'databases'))
         self.weather_path = os.path.join(self.db_path, 'weather')
 
     @staticmethod
@@ -592,7 +592,7 @@ class InputLocator(object):
     def get_database_use_types_properties(self):
         """Returns the database of construction properties to be used by the archetypes-mapper. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return os.path.join(self.get_database_use_types_folder(), 'use_types_properties.xlsx')
+        return os.path.join(self.get_database_use_types_folder(), 'USE_TYPE_PROPERTIES.xlsx')
 
     def get_database_supply_assemblies(self):
         """Returns the database of supply components for cost analysis. These are copied
@@ -679,10 +679,6 @@ class InputLocator(object):
     def get_building_supply(self):
         """scenario/inputs/building-properties/building_supply.dbf"""
         return os.path.join(self.get_building_properties_folder(), 'supply_systems.dbf')
-
-    def get_building_emission_intensity(self):
-        """scenario/inputs/building-properties/emission_intensity.dbf"""
-        return os.path.join(self.get_building_properties_folder(), 'emission_intensity.dbf')
 
     def get_building_internal(self):
         """scenario/inputs/building-properties/internal_loads.dbf"""

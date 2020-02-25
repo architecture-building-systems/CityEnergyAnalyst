@@ -1088,62 +1088,41 @@ get_building_internal:
       sample_data: 80.0
       types_found: [float]
   used_by: [demand, schedule_maker]
-get_building_occupancy:
+get_building_typology:
   created_by: []
-  file_path: inputs/building-properties/occupancy.dbf
+  file_path: inputs/building-properties/typology.dbf
   file_type: dbf
   schema:
-    COOLROOM:
+    YEAR:
+      sample_data: !!python/long '2017'
+      types_found: [long]
+    STANDARD:
+      sample_data: STANDARD0
+      types_found: [string]
+    1st_USE:
       sample_data: 0.0
       types_found: [float]
-    FOODSTORE:
+    1st_USE_R:
       sample_data: 0.0
       types_found: [float]
-    GYM:
+    2nd_USE:
+      sample_data: OFFICE
+      types_found: [string]
+    2nd_USE_R:
       sample_data: 0.0
       types_found: [float]
-    HOSPITAL:
-      sample_data: 0.0
-      types_found: [float]
-    HOTEL:
-      sample_data: 0.0
-      types_found: [float]
-    INDUSTRIAL:
-      sample_data: 0.0
-      types_found: [float]
-    LIBRARY:
-      sample_data: 0.0
-      types_found: [float]
-    MULTI_RES:
+    3rd_USE:
+      sample_data: RETAIL
+      types_found: [string]
+    3rd_USE_R:
       sample_data: 0.0
       types_found: [float]
     Name:
       sample_data: B09
       types_found: [string]
-    OFFICE:
-      sample_data: 0.5
-      types_found: [float]
-    PARKING:
-      sample_data: 0.5
-      types_found: [float]
-    RESTAURANT:
-      sample_data: 0.0
-      types_found: [float]
-    RETAIL:
-      sample_data: 0.0
-      types_found: [float]
-    SCHOOL:
-      sample_data: 0.0
-      types_found: [float]
-    SERVERROOM:
-      sample_data: 0.0
-      types_found: [float]
-    SINGLE_RES:
-      sample_data: 0.0
-      types_found: [float]
-    SWIMMING:
-      sample_data: 0.0
-      types_found: [float]
+    REFERENCE:
+      sample_data: User asumption
+      types_found: [string]
   used_by: [archetypes_mapper, demand, emissions]
 get_building_supply:
   created_by: [archetypes_mapper]
@@ -2191,19 +2170,6 @@ get_database_conversion_systems:
       unit:
         sample_data: W
         types_found: [string]
-    DETAILED_ELEC_COSTS:
-      Opex_var_buy_USD2015kWh:
-        sample_data: 0.04936071505496888
-        types_found: [float]
-      Opex_var_sell_USD2015kWh:
-        sample_data: 0.04936071505496888
-        types_found: [float]
-      hour:
-        sample_data: !!python/long '8759'
-        types_found: [long]
-      year:
-        sample_data: !!python/long '2017'
-        types_found: [long]
     FC:
       ' Assumptions':
         sample_data: everything
