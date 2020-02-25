@@ -9,7 +9,7 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 57,
+   "execution_count": 94,
    "metadata": {},
    "outputs": [],
    "source": [
@@ -26,12 +26,14 @@
     "\n",
     "config = cea.config.Configuration()\n",
     "locator = cea.inputlocator.InputLocator(scenario=config.scenario)\n",
-    "schemas = cea.scripts.schemas()"
+    "schemas = cea.scripts.schemas()\n",
+    "\n",
+    "OUTPUT_PATH = os.path.join(os.path.dirname(cea.config.__file__), \"..\", \"docs\", \"tables_diagram.gv\")"
    ]
   },
   {
    "cell_type": "code",
-   "execution_count": 58,
+   "execution_count": 75,
    "metadata": {},
    "outputs": [
     {
@@ -232,7 +234,7 @@
        "  'type': 'shp'}}"
       ]
      },
-     "execution_count": 58,
+     "execution_count": 75,
      "metadata": {},
      "output_type": "execute_result"
     }
@@ -248,7 +250,7 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 59,
+   "execution_count": 76,
    "metadata": {},
    "outputs": [],
    "source": [
@@ -264,7 +266,7 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 60,
+   "execution_count": 77,
    "metadata": {},
    "outputs": [],
    "source": [
@@ -278,7 +280,7 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 61,
+   "execution_count": 78,
    "metadata": {},
    "outputs": [
     {
@@ -417,7 +419,7 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 62,
+   "execution_count": 98,
    "metadata": {},
    "outputs": [
     {
@@ -443,16 +445,17 @@
        " ('get_database_use_types_properties', 'INTERNAL_LOADS')}"
       ]
      },
-     "execution_count": 62,
+     "execution_count": 98,
      "metadata": {},
      "output_type": "execute_result"
     }
    ],
    "source": [
     "databases = set()  # (lm, sheet)\n",
-    "connections = set()  # (ltable, lfield, rtable, sheet, rfield)\n",
+    "connections = set()  # con\n",
     "\n",
     "for ltable in inputs:\n",
+    "    lm = inputs[ltable][\"location\"]\n",
     "    for field in inputs[ltable][\"fields\"]:\n",
     "        if field[\"type\"] == \"choice\":\n",
     "            lfield = field[\"name\"]\n",
@@ -460,127 +463,127 @@
     "            sheet = field[\"choice_properties\"][\"lookup\"][\"sheet\"]\n",
     "            rfield = field[\"choice_properties\"][\"lookup\"][\"column\"]\n",
     "            databases.add((rtable, sheet))\n",
-    "            connections.add((ltable, lfield, rtable, sheet, rfield))\n",
+    "            connections.add((lm, lfield, rtable, sheet, rfield))\n",
     "\n",
     "databases"
    ]
   },
   {
    "cell_type": "code",
-   "execution_count": 73,
+   "execution_count": 99,
    "metadata": {},
    "outputs": [
     {
      "data": {
       "text/plain": [
-       "{('air-conditioning-systems',\n",
+       "{('get_building_air_conditioning',\n",
        "  'type_cs',\n",
        "  'get_database_air_conditioning_systems',\n",
        "  'COOLING',\n",
        "  'code'),\n",
-       " ('air-conditioning-systems',\n",
+       " ('get_building_air_conditioning',\n",
        "  'type_ctrl',\n",
        "  'get_database_air_conditioning_systems',\n",
        "  'CONTROLLER',\n",
        "  'code'),\n",
-       " ('air-conditioning-systems',\n",
+       " ('get_building_air_conditioning',\n",
        "  'type_dhw',\n",
        "  'get_database_air_conditioning_systems',\n",
        "  'HOT_WATER',\n",
        "  'code'),\n",
-       " ('air-conditioning-systems',\n",
+       " ('get_building_air_conditioning',\n",
        "  'type_hs',\n",
        "  'get_database_air_conditioning_systems',\n",
        "  'HEATING',\n",
        "  'code'),\n",
-       " ('air-conditioning-systems',\n",
+       " ('get_building_air_conditioning',\n",
        "  'type_vent',\n",
        "  'get_database_air_conditioning_systems',\n",
        "  'VENTILATION',\n",
        "  'code'),\n",
-       " ('architecture',\n",
+       " ('get_building_architecture',\n",
        "  'type_base',\n",
        "  'get_database_envelope_systems',\n",
        "  'FLOOR',\n",
        "  'code'),\n",
-       " ('architecture',\n",
+       " ('get_building_architecture',\n",
        "  'type_cons',\n",
        "  'get_database_envelope_systems',\n",
        "  'CONSTRUCTION',\n",
        "  'code'),\n",
-       " ('architecture',\n",
+       " ('get_building_architecture',\n",
        "  'type_floor',\n",
        "  'get_database_envelope_systems',\n",
        "  'FLOOR',\n",
        "  'code'),\n",
-       " ('architecture',\n",
+       " ('get_building_architecture',\n",
        "  'type_leak',\n",
        "  'get_database_envelope_systems',\n",
        "  'TIGHTNESS',\n",
        "  'code'),\n",
-       " ('architecture',\n",
+       " ('get_building_architecture',\n",
        "  'type_roof',\n",
        "  'get_database_envelope_systems',\n",
        "  'ROOF',\n",
        "  'code'),\n",
-       " ('architecture',\n",
+       " ('get_building_architecture',\n",
        "  'type_shade',\n",
        "  'get_database_envelope_systems',\n",
        "  'SHADING',\n",
        "  'code'),\n",
-       " ('architecture',\n",
+       " ('get_building_architecture',\n",
        "  'type_wall',\n",
        "  'get_database_envelope_systems',\n",
        "  'WALL',\n",
        "  'code'),\n",
-       " ('architecture',\n",
+       " ('get_building_architecture',\n",
        "  'type_win',\n",
        "  'get_database_envelope_systems',\n",
        "  'WINDOW',\n",
        "  'code'),\n",
-       " ('supply-systems',\n",
+       " ('get_building_supply',\n",
        "  'type_cs',\n",
        "  'get_database_supply_assemblies',\n",
        "  'COOLING',\n",
        "  'code'),\n",
-       " ('supply-systems',\n",
+       " ('get_building_supply',\n",
        "  'type_dhw',\n",
        "  'get_database_supply_assemblies',\n",
        "  'HOT_WATER',\n",
        "  'code'),\n",
-       " ('supply-systems',\n",
+       " ('get_building_supply',\n",
        "  'type_el',\n",
        "  'get_database_supply_assemblies',\n",
        "  'ELECTRICITY',\n",
        "  'code'),\n",
-       " ('supply-systems',\n",
+       " ('get_building_supply',\n",
        "  'type_hs',\n",
        "  'get_database_supply_assemblies',\n",
        "  'HEATING',\n",
        "  'code'),\n",
-       " ('typology',\n",
+       " ('get_building_typology',\n",
        "  '1ST_USE',\n",
        "  'get_database_use_types_properties',\n",
        "  'INTERNAL_LOADS',\n",
        "  'code'),\n",
-       " ('typology',\n",
+       " ('get_building_typology',\n",
        "  '2ND_USE',\n",
        "  'get_database_use_types_properties',\n",
        "  'INTERNAL_LOADS',\n",
        "  'code'),\n",
-       " ('typology',\n",
+       " ('get_building_typology',\n",
        "  '3RD_USE',\n",
        "  'get_database_use_types_properties',\n",
        "  'INTERNAL_LOADS',\n",
        "  'code'),\n",
-       " ('typology',\n",
+       " ('get_building_typology',\n",
        "  'STANDARD',\n",
        "  'get_database_construction_standards',\n",
        "  'STANDARD_DEFINITION',\n",
        "  'STANDARD')}"
       ]
      },
-     "execution_count": 73,
+     "execution_count": 99,
      "metadata": {},
      "output_type": "execute_result"
     }
@@ -591,18 +594,26 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 72,
+   "execution_count": 103,
    "metadata": {},
    "outputs": [
     {
-     "ename": "KeyError",
-     "evalue": "'get_database_use_types_properties'",
-     "output_type": "error",
-     "traceback": [
-      "\u001b[1;31m---------------------------------------------------------------------------\u001b[0m",
-      "\u001b[1;31mKeyError\u001b[0m                                  Traceback (most recent call last)",
-      "\u001b[1;32m<ipython-input-72-fb0a8996c7a3>\u001b[0m in \u001b[0;36m<module>\u001b[1;34m()\u001b[0m\n\u001b[0;32m     13\u001b[0m     \u001b[0mxlsx\u001b[0m \u001b[1;33m=\u001b[0m \u001b[0mos\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0mpath\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0mbasename\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0mgetattr\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0mlocator\u001b[0m\u001b[1;33m,\u001b[0m \u001b[0mlm\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m(\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0;32m     14\u001b[0m     \u001b[0mtable\u001b[0m \u001b[1;33m=\u001b[0m \u001b[1;34m\"{file}:{sheet}\"\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0mformat\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0mfile\u001b[0m\u001b[1;33m=\u001b[0m\u001b[0mxlsx\u001b[0m\u001b[1;33m,\u001b[0m \u001b[0msheet\u001b[0m\u001b[1;33m=\u001b[0m\u001b[0msheet\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[1;32m---> 15\u001b[1;33m     \u001b[0mfields\u001b[0m \u001b[1;33m=\u001b[0m \u001b[0mschemas\u001b[0m\u001b[1;33m[\u001b[0m\u001b[0mlm\u001b[0m\u001b[1;33m]\u001b[0m\u001b[1;33m[\u001b[0m\u001b[1;34m\"schema\"\u001b[0m\u001b[1;33m]\u001b[0m\u001b[1;33m[\u001b[0m\u001b[0msheet\u001b[0m\u001b[1;33m]\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0m\u001b[0;32m     16\u001b[0m     \u001b[0mTemplate\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0mdb_template\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0mrender\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0mlocator\u001b[0m\u001b[1;33m=\u001b[0m\u001b[0mlm\u001b[0m\u001b[1;33m,\u001b[0m \u001b[0msheet\u001b[0m\u001b[1;33m=\u001b[0m\u001b[0msheet\u001b[0m\u001b[1;33m,\u001b[0m \u001b[0mtable\u001b[0m\u001b[1;33m=\u001b[0m\u001b[0mtable\u001b[0m\u001b[1;33m,\u001b[0m \u001b[0mfields\u001b[0m\u001b[1;33m=\u001b[0m\u001b[0mfield\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n",
-      "\u001b[1;31mKeyError\u001b[0m: 'get_database_use_types_properties'"
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "get_database_envelope_systems_ROOF [shape=none, margin=0, label=<\n",
+      "    <table border=\"0\" cellborder=\"1\" cellspacing=\"0\" cellpadding=\"4\" >\n",
+      "        <tr><td bgcolor=\"lightgrey\">ENVELOPE.xls:ROOF</td></tr>\n",
+      "        <tr><td port=\"e_roof\" align=\"left\">float: e_roof</td></tr>\n",
+      "        <tr><td port=\"code\" align=\"left\">string: code</td></tr>\n",
+      "        <tr><td port=\"Description\" align=\"left\">string: Description</td></tr>\n",
+      "        <tr><td port=\"GHG_ROOF_kgCO2m2\" align=\"left\">float: GHG_ROOF_kgCO2m2</td></tr>\n",
+      "        <tr><td port=\"a_roof\" align=\"left\">float: a_roof</td></tr>\n",
+      "        <tr><td port=\"r_roof\" align=\"left\">float: r_roof</td></tr>\n",
+      "        <tr><td port=\"U_roof\" align=\"left\">float: U_roof</td></tr>\n",
+      "        \n",
+      "    </table>>];\n"
      ]
     }
    ],
@@ -621,36 +632,98 @@
     "for lm, sheet in databases:\n",
     "    xlsx = os.path.basename(getattr(locator, lm)())\n",
     "    table = \"{file}:{sheet}\".format(file=xlsx, sheet=sheet)\n",
-    "    fields = schemas[lm][\"schema\"][sheet]\n",
-    "    Template(db_template).render(locator=lm, sheet=sheet, table=table, fields=field)"
+    "    fields = []\n",
+    "    for fn in schemas[lm][\"schema\"][sheet].keys():\n",
+    "        name = fn.replace(\"&\", \"\")\n",
+    "        fields.append({\"name\": name, \"type\": schemas[lm][\"schema\"][sheet][fn][\"types_found\"][0]})\n",
+    "    db_defs.append(Template(db_template).render(locator=lm, sheet=sheet, table=table, fields=fields))\n",
+    "    \n",
+    "print db_defs[0]"
    ]
   },
   {
    "cell_type": "code",
-   "execution_count": 70,
+   "execution_count": 106,
    "metadata": {},
    "outputs": [
     {
      "data": {
       "text/plain": [
-       "{'Description': {'sample_data': 'concrete or rock pebbles finishing - Singapore',\n",
-       "  'types_found': ['string']},\n",
-       " 'GHG_ROOF_kgCO2m2': {'sample_data': 100, 'types_found': ['float']},\n",
-       " 'U_roof': {'sample_data': 0.6, 'types_found': ['float']},\n",
-       " 'a_roof': {'sample_data': 0.6, 'types_found': ['float']},\n",
-       " 'code': {'sample_data': 'T7', 'types_found': ['string']},\n",
-       " 'e_roof': {'sample_data': 0.94, 'types_found': ['float']},\n",
-       " 'r_roof': {'sample_data': 0.4, 'types_found': ['float']}}"
+       "['get_building_air_conditioning:\"type_cs\" -> get_database_air_conditioning_systems_COOLING:code;',\n",
+       " 'get_building_air_conditioning:\"type_ctrl\" -> get_database_air_conditioning_systems_CONTROLLER:code;',\n",
+       " 'get_building_typology:\"STANDARD\" -> get_database_construction_standards_STANDARD_DEFINITION:STANDARD;',\n",
+       " 'get_building_typology:\"2ND_USE\" -> get_database_use_types_properties_INTERNAL_LOADS:code;',\n",
+       " 'get_building_air_conditioning:\"type_dhw\" -> get_database_air_conditioning_systems_HOT_WATER:code;',\n",
+       " 'get_building_air_conditioning:\"type_vent\" -> get_database_air_conditioning_systems_VENTILATION:code;',\n",
+       " 'get_building_architecture:\"type_leak\" -> get_database_envelope_systems_TIGHTNESS:code;',\n",
+       " 'get_building_architecture:\"type_cons\" -> get_database_envelope_systems_CONSTRUCTION:code;',\n",
+       " 'get_building_architecture:\"type_base\" -> get_database_envelope_systems_FLOOR:code;',\n",
+       " 'get_building_supply:\"type_dhw\" -> get_database_supply_assemblies_HOT_WATER:code;',\n",
+       " 'get_building_air_conditioning:\"type_hs\" -> get_database_air_conditioning_systems_HEATING:code;',\n",
+       " 'get_building_architecture:\"type_floor\" -> get_database_envelope_systems_FLOOR:code;',\n",
+       " 'get_building_architecture:\"type_win\" -> get_database_envelope_systems_WINDOW:code;',\n",
+       " 'get_building_architecture:\"type_wall\" -> get_database_envelope_systems_WALL:code;',\n",
+       " 'get_building_supply:\"type_el\" -> get_database_supply_assemblies_ELECTRICITY:code;',\n",
+       " 'get_building_typology:\"1ST_USE\" -> get_database_use_types_properties_INTERNAL_LOADS:code;',\n",
+       " 'get_building_supply:\"type_cs\" -> get_database_supply_assemblies_COOLING:code;',\n",
+       " 'get_building_typology:\"3RD_USE\" -> get_database_use_types_properties_INTERNAL_LOADS:code;',\n",
+       " 'get_building_architecture:\"type_roof\" -> get_database_envelope_systems_ROOF:code;',\n",
+       " 'get_building_architecture:\"type_shade\" -> get_database_envelope_systems_SHADING:code;',\n",
+       " 'get_building_supply:\"type_hs\" -> get_database_supply_assemblies_HEATING:code;']"
       ]
      },
-     "execution_count": 70,
+     "execution_count": 106,
      "metadata": {},
      "output_type": "execute_result"
     }
    ],
    "source": [
-    "schemas[\"get_database_envelope_systems\"][\"schema\"][\"ROOF\"]"
+    "con_defs = []\n",
+    "\n",
+    "for ltable, lfield, rtable, sheet, rfield in connections:\n",
+    "    con_defs.append('{ltable}:\"{lfield}\" -> {rtable}_{sheet}:{rfield};'.format(ltable=ltable, lfield=lfield, rtable=rtable, sheet=sheet, rfield=rfield))\n",
+    "\n",
+    "con_defs"
    ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 108,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "diagram_template = \"\"\"\n",
+    "digraph tables_diagram {\n",
+    "\n",
+    "    graph [pad=\"0.5\", nodesep=\"0.5\", ranksep=\"2\"];\n",
+    "    node [shape=plain];\n",
+    "    rankdir=LR;\n",
+    "    \n",
+    "{% for table in tables %}\n",
+    "   {{table}}\n",
+    "{% endfor %}\n",
+    "\n",
+    "{% for db in dbs %}\n",
+    "    {{db}}\n",
+    "{% endfor %}\n",
+    "\n",
+    "{% for con in cons %}\n",
+    "    {{con}}\n",
+    "{% endfor %}\n",
+    "}\n",
+    "\"\"\"\n",
+    "\n",
+    "\n",
+    "with open(OUTPUT_PATH, 'w') as fp:\n",
+    "    fp.write(Template(diagram_template).render(tables=table_defs, dbs=db_defs, cons=con_defs))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
   },
   {
    "cell_type": "code",

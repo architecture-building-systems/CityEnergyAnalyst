@@ -967,13 +967,29 @@ get_database_use_types_properties:
         types_found: [float]
     INDOOR_COMFORT:
       code:
+        sample_data: MULTI_RES
+        types_found: [string]
       Tcs_set_C:
+        sample_data: 26.0
+        types_found: [float]
       Ths_set_C:
+        sample_data: 21.0
+        types_found: [float]
       Tcs_setb_C:
+        sample_data: 28.0
+        types_found: [float]
       Ths_setb_C:
+        sample_data: 18.0
+        types_found: [float]
       Ve_lpspax:
+        sample_data: 8.3
+        types_found: [float]
       RH_min_pc:
+        sample_data: 30.0
+        types_found: [float]
       RH_max_pc:
+        sample_data: 60.0
+        types_found: [float]
   used_by: [archetypes_mapper]
 get_building_air_conditioning:
   created_by: [archetypes_mapper]
@@ -1158,7 +1174,7 @@ get_building_typology:
       sample_data: STANDARD0
       types_found: [string]
     1st_USE:
-      sample_data: 0.0
+      sample_data: OFFICE
       types_found: [float]
     1st_USE_R:
       sample_data: 0.0
