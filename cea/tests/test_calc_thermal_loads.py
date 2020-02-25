@@ -51,23 +51,23 @@ class TestCalcThermalLoads(unittest.TestCase):
         cls.debug = cls.config.debug
 
     def test_calc_thermal_loads(self):
-        bpr = self.building_properties['B01']
+        bpr = self.building_properties['B1001']
         self.config.general.multiprocessing = False
         self.config.schedule_maker.schedule_model = "deterministic"
-        schedule_maker_main(self.locator, self.config, building='B01')
+        schedule_maker_main(self.locator, self.config, building='B1001')
 
-        result = calc_thermal_loads('B01', bpr, self.weather_data, self.date_range, self.locator,
+        result = calc_thermal_loads('B1001', bpr, self.weather_data, self.date_range, self.locator,
                                     self.use_dynamic_infiltration_calculation, self.resolution_output,
                                     self.loads_output, self.massflows_output, self.temperatures_output,
                                     self.config, self.debug)
         self.assertIsNone(result)
-        self.assertTrue(os.path.exists(self.locator.get_demand_results_file('B01')),
+        self.assertTrue(os.path.exists(self.locator.get_demand_results_file('B1001')),
                         'Building csv not produced')
-        self.assertTrue(os.path.exists(self.locator.get_temporary_file('B01T.csv')),
+        self.assertTrue(os.path.exists(self.locator.get_temporary_file('B1001T.csv')),
                         'Building temp file not produced')
 
         # test the building csv file (output of the `calc_thermal_loads` call above)
-        df = pd.read_csv(self.locator.get_demand_results_file('B01'))
+        df = pd.read_csv(self.locator.get_demand_results_file('B1001'))
 
         value_columns = json.loads(self.test_config.get('test_calc_thermal_loads', 'value_columns'))
         values = json.loads(self.test_config.get('test_calc_thermal_loads', 'values'))
