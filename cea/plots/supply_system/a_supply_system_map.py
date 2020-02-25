@@ -4,6 +4,8 @@ Show a Pareto curve plot for individuals in a given generation.
 from __future__ import division
 from __future__ import print_function
 
+import os
+
 import pandas as pd
 import geopandas
 import json
@@ -48,7 +50,7 @@ class SupplySystemMapPlot(cea.plots.supply_system.SupplySystemPlotBase):
         self.scenario = self.parameters['scenario-name']
         self.config = cea.config.Configuration()
         self.input_files = [(self.locator.get_optimization_slave_building_connectivity,
-                             [self.individual, self.generation])] if self.generation is not None else []
+                             [self.individual, self.generation])] if self.individual != 'today' else []
 
     @property
     def title(self):
@@ -123,14 +125,14 @@ class SupplySystemMapPlot(cea.plots.supply_system.SupplySystemPlotBase):
         building_connectivity = None
         data_processed = {}
 
-        if self.generation is not None:
+        if self.individual != 'today':
             # get data from generation
             building_connectivity = pd.read_csv(self.locator.get_optimization_slave_building_connectivity
                                                 (self.individual, self.generation))
             network_name = "gen_" + str(self.generation) + "_ind_" + str(self.individual)
         else:
             building_connectivity = get_building_connectivity(self.locator)
-            network_name = "base"
+            network_name = "today"
 
         for network in ['DH', 'DC']:
             data_processed[network] = {}
@@ -157,8 +159,16 @@ class SupplySystemMapPlot(cea.plots.supply_system.SupplySystemPlotBase):
         # Modify config inputs for this function
         self.config.network_layout.network_type = network_type
         self.config.network_layout.connected_buildings = connected_buildings
-        network_layout = NetworkLayout(network_layout=self.config.network_layout)
-        layout_network(network_layout, self.locator, output_name_network=network_name)
+
+        # Ignore demand and creating plants for layouts in map
+        self.config.network_layout.consider_only_buildings_with_demand = False
+        self.config.network_layout.create_plant = False
+
+        if network_name != 'today' or network_name == 'today' and newer_network_layout_exists(self.locator,
+                                                                                              network_type,
+                                                                                              network_name):
+            network_layout = NetworkLayout(network_layout=self.config.network_layout)
+            layout_network(network_layout, self.locator, output_name_network=network_name)
 
         # Output paths
         path_output_edges = self.locator.get_network_layout_edges_shapefile(network_type, network_name)
@@ -184,6 +194,19 @@ def get_building_connectivity(locator):
     return building_connectivity
 
 
+def newer_network_layout_exists(locator, network_type, network_name):
+    edges = locator.get_network_layout_edges_shapefile(
+        network_type, network_name)
+    nodes = locator.get_network_layout_nodes_shapefile(
+        network_type, network_name)
+    supply_system = locator.get_building_supply()
+
+    no_network_file = not os.path.isfile(edges) or not os.path.isfile(nodes)
+    supply_system_modified = os.path.getmtime(supply_system)
+
+    return no_network_file or supply_system_modified > os.path.getmtime(edges) or supply_system_modified > os.path.getmtime(nodes)
+
+
 def main():
     """Test this plot"""
     import cea.config
@@ -192,7 +215,7 @@ def main():
     cache = cea.plots.cache.NullPlotCache()
     SupplySystemMapPlot(config.project,
                         {'scenario-name': config.scenario_name,
-                         'system': config.plots_supply_system.system,},
+                         'system': config.plots_supply_system.system},
                         cache).plot(auto_open=True)
 
 
