@@ -5,9 +5,13 @@ include cea/databases/weather/*.epw
 recursive-include cea/databases *.xlsx *.xls *.txt *.csv
 
 include cea/default.config
+
 include cea/tests/test_calc_thermal_loads.config
 include cea/tests/test_schedules.config
-include cea/tests/radiation_data/*.csv
+include cea/tests/test_technologies.config
+include cea/tests/workflow_quick.yml
+include cea/tests/workflow_slow.yml
+
 include cea/examples/*.zip
 
 include cea/interfaces/dashboard/inputs/inputs.yml

@@ -54,11 +54,13 @@ def lca_operation(locator):
     factors_dhw = data_all_in_one_systems['HOT_WATER']
     factors_cooling = data_all_in_one_systems['COOLING']
     factors_electricity = data_all_in_one_systems['ELECTRICITY']
-    factors_resources = pd.read_excel(locator.get_database_feedstocks(),sheet_name =None)
+    factors_resources = pd.read_excel(locator.get_database_feedstocks(), sheet_name=None)
 
-    #get the mean of all values for this
+    # get the mean of all values for this
     factors_resources_simple = [(name, values['GHG_kgCO2MJ'].mean()) for name, values in factors_resources.items()]
-    factors_resources_simple = pd.DataFrame(factors_resources_simple, columns=['code', 'GHG_kgCO2MJ'])
+    factors_resources_simple = pd.DataFrame(factors_resources_simple, columns=['code', 'GHG_kgCO2MJ']).append(
+        # append NONE choice with zero values
+        {'code': 'NONE'}, ignore_index=True).fillna(0)
 
     # local variables
     Qhs_flag = Qww_flag = Qcs_flag = E_flag = True
@@ -137,13 +139,14 @@ def lca_operation(locator):
     result['GHG_sys_kgCO2m2'] = 0.0
     result['GHG_sys_tonCO2'] = 0.0
     all_services = electrical_services + cooling_services + heating_services + dhw_services
+    fields_to_plot = []
     for service in all_services:
         fields_to_plot += [service[2] + '_ghg_ton', service[2] + '_ghg_kgm2']
         result['GHG_sys_tonCO2'] += result[service[2] + '_ghg_ton']
         result['GHG_sys_kgCO2m2'] += result[service[2] + '_ghg_kgm2']
 
     # export the total operational non-renewable energy demand and emissions for each building
-    fields_to_plot += ['Name', 'GFA_m2', 'GHG_sys_tonCO2', 'GHG_sys_kgCO2m2']
+    fields_to_plot = ['Name', 'GFA_m2', 'GHG_sys_tonCO2', 'GHG_sys_kgCO2m2'] + fields_to_plot
     result[fields_to_plot].to_csv(locator.get_lca_operation(), index=False, float_format='%.2f')
 
 
