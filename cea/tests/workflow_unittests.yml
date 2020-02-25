@@ -1,0 +1,4 @@
+- config: .
+  "general:multiprocessing": on
+  "radiation:daysim-bin-directory": "${CEA_radiation_daysim-bin-directory}"
+- script: run-unit-tests

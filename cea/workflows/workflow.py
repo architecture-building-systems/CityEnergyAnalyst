@@ -129,7 +129,10 @@ def set_parameter(config, parameter, value):
 def do_script_step(config, step):
     """Run a script based on the step's "script" and "parameters" (optional) keys."""
     script = cea.scripts.by_name(step["script"])
+    print("")
+    print("=" * 80)
     print("Workflow step: script={script}".format(script=script.name))
+    print("=" * 80)
     parameters = {p.name: p.get() for s, p in config.matching_parameters(script.parameters)}
     if "parameters" in step:
         parameters.update(step["parameters"])
