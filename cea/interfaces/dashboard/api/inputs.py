@@ -255,7 +255,7 @@ def get_network(config, network_type, trigger_abort=True):
         network_type = network_type.upper()
         connected_buildings = building_connectivity[building_connectivity['{}_connectivity'.format(
             network_type)] == 1]['Name'].values.tolist()
-        network_name = 'base'
+        network_name = 'today'
 
         # Do not calculate if no connected buildings
         if len(connected_buildings) < 2:
