@@ -1,0 +1,137 @@
+/*
+Relationship between the input tables in the Input Editor and the databases from the Database Editor
+*/
+
+
+@startuml
+
+digraph tables_diagram {
+    graph[rankdir=LR, overlap=false, splines=true];
+    node [shape=record, fontsize="8" fontname="Verdana"];
+    edge [style=dashed];
+
+get_building_air_conditioning [shape=none, margin=0, label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="4" >
+        <tr><td bgcolor="lightblue">air-conditioning-systems</td></tr>
+        <tr><td port="Name" align="left">str: Name</td></tr>
+        <tr><td port="type_cs" align="left">choice: type_cs</td></tr>
+        <tr><td port="type_hs" align="left">choice: type_hs</td></tr>
+        <tr><td port="type_dhw" align="left">choice: type_dhw</td></tr>
+        <tr><td port="type_ctrl" align="left">choice: type_ctrl</td></tr>
+        <tr><td port="type_vent" align="left">choice: type_vent</td></tr>
+        <tr><td port="heat_starts" align="left">date: heat_starts</td></tr>
+        <tr><td port="heat_ends" align="left">date: heat_ends</td></tr>
+        <tr><td port="cool_starts" align="left">date: cool_starts</td></tr>
+        <tr><td port="cool_ends" align="left">date: cool_ends</td></tr>
+
+    </table>>];
+
+get_zone_geometry [shape=none, margin=0, label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="4" >
+        <tr><td bgcolor="lightblue">zone</td></tr>
+        <tr><td port="Name" align="left">str: Name</td></tr>
+        <tr><td port="floors_bg" align="left">int: floors_bg</td></tr>
+        <tr><td port="floors_ag" align="left">int: floors_ag</td></tr>
+        <tr><td port="height_bg" align="left">float: height_bg</td></tr>
+        <tr><td port="height_ag" align="left">float: height_ag</td></tr>
+        <tr><td port="REFERENCE" align="left">str: REFERENCE</td></tr>
+
+    </table>>];
+
+get_building_supply [shape=none, margin=0, label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="4" >
+        <tr><td bgcolor="lightblue">supply-systems</td></tr>
+        <tr><td port="Name" align="left">str: Name</td></tr>
+        <tr><td port="type_cs" align="left">choice: type_cs</td></tr>
+        <tr><td port="type_dhw" align="left">choice: type_dhw</td></tr>
+        <tr><td port="type_el" align="left">choice: type_el</td></tr>
+        <tr><td port="type_hs" align="left">choice: type_hs</td></tr>
+
+    </table>>];
+
+get_building_comfort [shape=none, margin=0, label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="4" >
+        <tr><td bgcolor="lightblue">indoor-comfort</td></tr>
+        <tr><td port="Name" align="left">str: Name</td></tr>
+        <tr><td port="Ths_set_C" align="left">float: Ths_set_C</td></tr>
+        <tr><td port="Ths_setb_C" align="left">float: Ths_setb_C</td></tr>
+        <tr><td port="Tcs_set_C" align="left">float: Tcs_set_C</td></tr>
+        <tr><td port="Tcs_setb_C" align="left">float: Tcs_setb_C</td></tr>
+        <tr><td port="RH_min_pc" align="left">float: RH_min_pc</td></tr>
+        <tr><td port="RH_max_pc" align="left">float: RH_max_pc</td></tr>
+        <tr><td port="Ve_lpspax" align="left">float: Ve_lpspax</td></tr>
+
+    </table>>];
+
+get_surroundings_geometry [shape=none, margin=0, label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="4" >
+        <tr><td bgcolor="lightblue">surroundings</td></tr>
+        <tr><td port="Name" align="left">str: Name</td></tr>
+        <tr><td port="floors_ag" align="left">int: floors_ag</td></tr>
+        <tr><td port="height_ag" align="left">float: height_ag</td></tr>
+        <tr><td port="REFERENCE" align="left">str: REFERENCE</td></tr>
+
+    </table>>];
+
+get_building_architecture [shape=none, margin=0, label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="4" >
+        <tr><td bgcolor="lightblue">architecture</td></tr>
+        <tr><td port="Name" align="left">str: Name</td></tr>
+        <tr><td port="void_deck" align="left">int: void_deck</td></tr>
+        <tr><td port="Es" align="left">float: Es</td></tr>
+        <tr><td port="Hs_ag" align="left">float: Hs_ag</td></tr>
+        <tr><td port="Hs_bg" align="left">float: Hs_bg</td></tr>
+        <tr><td port="Ns" align="left">float: Ns</td></tr>
+        <tr><td port="wwr_north" align="left">float: wwr_north</td></tr>
+        <tr><td port="wwr_east" align="left">float: wwr_east</td></tr>
+        <tr><td port="wwr_south" align="left">float: wwr_south</td></tr>
+        <tr><td port="wwr_west" align="left">float: wwr_west</td></tr>
+        <tr><td port="type_cons" align="left">choice: type_cons</td></tr>
+        <tr><td port="type_leak" align="left">choice: type_leak</td></tr>
+        <tr><td port="type_roof" align="left">choice: type_roof</td></tr>
+        <tr><td port="type_shade" align="left">choice: type_shade</td></tr>
+        <tr><td port="type_wall" align="left">choice: type_wall</td></tr>
+        <tr><td port="type_floor" align="left">choice: type_floor</td></tr>
+        <tr><td port="type_base" align="left">choice: type_base</td></tr>
+        <tr><td port="type_win" align="left">choice: type_win</td></tr>
+
+    </table>>];
+
+get_building_typology [shape=none, margin=0, label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="4" >
+        <tr><td bgcolor="lightblue">typology</td></tr>
+        <tr><td port="Name" align="left">str: Name</td></tr>
+        <tr><td port="YEAR" align="left">year: YEAR</td></tr>
+        <tr><td port="STANDARD" align="left">choice: STANDARD</td></tr>
+        <tr><td port="1ST_USE" align="left">choice: 1ST_USE</td></tr>
+        <tr><td port="1ST_USE_R" align="left">float: 1ST_USE_R</td></tr>
+        <tr><td port="2ND_USE" align="left">choice: 2ND_USE</td></tr>
+        <tr><td port="2ND_USE_R" align="left">float: 2ND_USE_R</td></tr>
+        <tr><td port="3RD_USE" align="left">choice: 3RD_USE</td></tr>
+        <tr><td port="3RD_USE_R" align="left">float: 3RD_USE_R</td></tr>
+        <tr><td port="REFERENCE" align="left">str: REFERENCE</td></tr>
+
+    </table>>];
+
+get_building_internal [shape=none, margin=0, label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="4" >
+        <tr><td bgcolor="lightblue">internal-loads</td></tr>
+        <tr><td port="Name" align="left">str: Name</td></tr>
+        <tr><td port="Occ_m2pax" align="left">float: Occ_m2pax</td></tr>
+        <tr><td port="Qs_Wpax" align="left">float: Qs_Wpax</td></tr>
+        <tr><td port="X_ghpax" align="left">float: X_ghpax</td></tr>
+        <tr><td port="Ea_Wm2" align="left">float: Ea_Wm2</td></tr>
+        <tr><td port="El_Wm2" align="left">float: El_Wm2</td></tr>
+        <tr><td port="Epro_Wm2" align="left">float: Epro_Wm2</td></tr>
+        <tr><td port="Qcre_Wm2" align="left">float: Qcre_Wm2</td></tr>
+        <tr><td port="Ed_Wm2" align="left">float: Ed_Wm2</td></tr>
+        <tr><td port="Ev_kWveh" align="left">float: Ev_kWveh</td></tr>
+        <tr><td port="Qcpro_Wm2" align="left">float: Qcpro_Wm2</td></tr>
+        <tr><td port="Qhpro_Wm2" align="left">float: Qhpro_Wm2</td></tr>
+        <tr><td port="Vww_lpdpax" align="left">float: Vww_lpdpax</td></tr>
+        <tr><td port="Vw_lpdpax" align="left">float: Vw_lpdpax</td></tr>
+
+    </table>>];
+}
+
+@enduml
