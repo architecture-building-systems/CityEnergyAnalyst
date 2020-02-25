@@ -26,7 +26,7 @@ class InputLocator(object):
     # SCENARIO
     def __init__(self, scenario):
         self.scenario = scenario
-        self.db_path = os.path.join(os.path.dirname(__file__), 'databases')
+        self.db_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'databases'))
         self.weather_path = os.path.join(self.db_path, 'weather')
 
     @staticmethod
