@@ -238,23 +238,23 @@ def task_run_embodied_energy():
         }
 
 
-def task_run_emissions_operation():
+def task_run_emissions():
     """run the emissions operation script for each reference case"""
-    import cea.analysis.lca.operation
+    import cea.analysis.lca
 
-    def run_emissions_operation(scenario_path):
+    def run_emissions(scenario_path):
         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         config.scenario = scenario_path
-        cea.analysis.lca.operation.main(config)
+        cea.analysis.lca.main(config)
 
     for reference_case, scenario_path in REFERENCE_CASES.items():
         if _reference_cases and reference_case not in _reference_cases:
             continue
 
         yield {
-            'name': 'run_emissions_operation:%(reference_case)s' % locals(),
+            'name': 'run_emissions:%(reference_case)s' % locals(),
             'task_dep': ['run_demand:%(reference_case)s' % locals()],
-            'actions': [(run_emissions_operation, [], {
+            'actions': [(run_emissions, [], {
                 'scenario_path': scenario_path,
             })],
         }
