@@ -4,6 +4,8 @@ Show a Pareto curve plot for individuals in a given generation.
 from __future__ import division
 from __future__ import print_function
 
+import os
+
 import pandas as pd
 import geopandas
 import json
@@ -162,8 +164,11 @@ class SupplySystemMapPlot(cea.plots.supply_system.SupplySystemPlotBase):
         self.config.network_layout.consider_only_buildings_with_demand = False
         self.config.network_layout.create_plant = False
 
-        network_layout = NetworkLayout(network_layout=self.config.network_layout)
-        layout_network(network_layout, self.locator, output_name_network=network_name)
+        if network_name != 'today' or network_name == 'today' and newer_network_layout_exists(self.locator,
+                                                                                              network_type,
+                                                                                              network_name):
+            network_layout = NetworkLayout(network_layout=self.config.network_layout)
+            layout_network(network_layout, self.locator, output_name_network=network_name)
 
         # Output paths
         path_output_edges = self.locator.get_network_layout_edges_shapefile(network_type, network_name)
@@ -189,6 +194,18 @@ def get_building_connectivity(locator):
     return building_connectivity
 
 
+def newer_network_layout_exists(locator, network_type, network_name):
+    edges = locator.get_network_layout_edges_shapefile(
+        network_type, network_name)
+    nodes = locator.get_network_layout_nodes_shapefile(
+        network_type, network_name)
+    supply_system = locator.get_building_supply()
+
+    supply_system_modified = os.path.getmtime(supply_system)
+
+    return supply_system_modified > os.path.getmtime(edges) or supply_system_modified > os.path.getmtime(nodes)
+
+
 def main():
     """Test this plot"""
     import cea.config
@@ -197,7 +214,7 @@ def main():
     cache = cea.plots.cache.NullPlotCache()
     SupplySystemMapPlot(config.project,
                         {'scenario-name': config.scenario_name,
-                         'system': config.plots_supply_system.system,},
+                         'system': config.plots_supply_system.system},
                         cache).plot(auto_open=True)
 
 

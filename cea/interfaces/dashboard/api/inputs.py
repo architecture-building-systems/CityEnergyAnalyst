@@ -14,7 +14,7 @@ from .databases import DATABASE_NAMES, DATABASES, DATABASES_TYPE_MAP, database_t
 
 import cea.inputlocator
 import cea.utilities.dbf
-from cea.plots.supply_system.a_supply_system_map import get_building_connectivity
+from cea.plots.supply_system.a_supply_system_map import get_building_connectivity, newer_network_layout_exists
 from cea.plots.variable_naming import get_color_array
 from cea.technologies.network_layout.main import layout_network, NetworkLayout
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
@@ -261,17 +261,8 @@ def get_network(config, network_type, trigger_abort=True):
         if len(connected_buildings) < 2:
             return None, [], None
 
-        edges = locator.get_network_layout_edges_shapefile(
-            network_type, network_name)
-        nodes = locator.get_network_layout_nodes_shapefile(
-            network_type, network_name)
-        supply_system = locator.get_building_supply()
-
-        no_network_file = not os.path.isfile(edges) or not os.path.isfile(nodes)
-        supply_system_modified = os.path.getmtime(supply_system)
-
         # Generate network files
-        if no_network_file or supply_system_modified > os.path.getmtime(edges) or supply_system_modified > os.path.getmtime(nodes):
+        if newer_network_layout_exists(locator, network_type, network_name):
             config.network_layout.network_type = network_type
             config.network_layout.connected_buildings = connected_buildings
             # Ignore demand and creating plants for layout in map
@@ -279,6 +270,9 @@ def get_network(config, network_type, trigger_abort=True):
             config.network_layout.create_plant = False
             network_layout = NetworkLayout(network_layout=config.network_layout)
             layout_network(network_layout, locator, output_name_network=network_name)
+
+        edges = locator.get_network_layout_edges_shapefile(network_type, network_name)
+        nodes = locator.get_network_layout_nodes_shapefile(network_type, network_name)
 
         network_json, crs = df_to_json(edges, trigger_abort=trigger_abort)
         nodes_json, _ = df_to_json(nodes, trigger_abort=trigger_abort)
