@@ -11,7 +11,14 @@ TECHS = ['HCS_base_LD', 'HCS_base_IEHX', 'HCS_base_ER0']
 timesteps = 24  # 168 (week) [5389]
 # timesteps = "typical days"  # 168 (week)
 # timesteps = 'dtw hours'
-typical_days_path = "E:\\WP2"
+
+## cluster evaluation ##
+# typical_days_path = "E:\\WP2"
+# cluster_type = 'day'
+typical_days_path = "E:\\WP2\\Typical_hours"
+cluster_type = 'hour'
+
+## post processing ##
 PLOTS = ['electricity_usages','air_flow','OAU_T_w_supply','exergy_usages', 'humidity_balance', 'humidity_storage', 'heat_balance']
 post_process_json = True    # True to extract information from out.json
 remove_json = True          # True to remove out.json after extracting information
@@ -25,7 +32,7 @@ specified_buildings = ["B005"]
 # specified_buildings = ["B001","B002","B005","B006","B009"]
 # specified_buildings = ["B003","B008"]
 # specified_buildings = ["B001","B002","B003","B004","B005","B006","B007","B008","B009","B010"]
-cases = ['WTP_CBD_m_WP1_OFF']
+cases = ['WTP_CBD_m_WP1_HOT']
 # cases = ['WTP_CBD_m_WP1_HOT']
 
 ## LAPTOP ##
