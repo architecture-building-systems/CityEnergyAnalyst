@@ -1,20 +1,20 @@
 - config: default
   "general:multiprocessing": on
-  "general:project": "${CEA_general_project}/../reference-case-cooling"
+  "general:project": "${CEA_general_project}/../reference-case-open"
   "radiation:daysim-bin-directory": "${CEA_radiation_daysim-bin-directory}"
 - script: extract-reference-case
   parameters:
     destination: "{general:project}/.."
-    case: cooling
+    case: open
 - config: .
   "general:scenario-name": baseline
 - script: data-initializer
   parameters:
     databases-path: SG
-    databases: [archetypes, lifecycle, systems]
+    databases: [archetypes, assemblies, components]
 - script: archetypes-mapper
   parameters:
-    input-databases: [comfort, architecture, air-conditioning, internal-loads, supply, schedules, emission-intensity]
+    input-databases: [comfort, architecture, air-conditioning, internal-loads, supply, schedules]
 - script: weather-helper
   parameters:
     weather: Singapore-Changi_1990_2010_TMY
