@@ -47,13 +47,13 @@ class TestScheduleCreation(unittest.TestCase):
         config.scenario = locator.scenario
 
         building_properties = BuildingProperties(locator, False)
-        bpr = building_properties['B01']
-        bpr.occupancy = {'OFFICE': 0.5, 'INDUSTRIAL': 0.5}
+        bpr = building_properties['B1011']
+        bpr.occupancy = {'OFFICE': 0.5, 'SERVERROOM': 0.5}
         bpr.comfort['mainuse'] = 'OFFICE'
 
         # calculate schedules
         schedule_maker_main(locator, config)
-        calculated_schedules = pd.read_csv(locator.get_schedule_model_file('B01')).set_index('DATE')
+        calculated_schedules = pd.read_csv(locator.get_schedule_model_file('B1011')).set_index('DATE')
 
         config = ConfigParser.SafeConfigParser()
         config.read(get_test_config_path())
@@ -87,13 +87,15 @@ def calculate_mixed_use_archetype_values_results(locator):
 
     occ_densities = pd.read_excel(locator.get_database_use_types_properties(), 'INTERNAL_LOADS').set_index('code')
     office_occ = float(occ_densities.ix['OFFICE', 'Occ_m2pax'])
-    gym_occ = float(occ_densities.ix['GYM', 'Occ_m2pax'])
+    lab_occ = float(occ_densities.ix['LAB', 'Occ_m2pax'])
+    indus_occ = float(occ_densities.ix['INDUSTRIAL', 'Occ_m2pax'])
+    server_occ = float(occ_densities.ix['SERVERROOM', 'Occ_m2pax'])
     calculated_results = calculate_average_multiuse(
         fields=['X_ghpax', 'El_Wm2'],
-        properties_df=pd.DataFrame(data=[['B1', 'OFFICE', 0.5, 'NONE', 0.5, 'NONE', 0.0, 0.0, 0.0, 0.0], ['B2', 'GYM', 0.75, 'OFFICE', 0.25, 'NONE', 0.0, 0.0, 0.0, 0.0]],
+        properties_df=pd.DataFrame(data=[['B1001', 'OFFICE', 0.5, 'SERVERROOM', 0.5, 'NONE', 0.0, 0.0, 0.0, 0.0], ['B2', 'OFFICE', 0.6, 'LAB', 0.2, 'INDUSTRIAL', 0.2, 0.0, 0.0, 0.0]],
                                    columns=['Name', "1ST_USE", "1ST_USE_R", '2ND_USE', '2ND_USE_R', '3RD_USE', '3RD_USE_R', 'X_ghpax', 'El_Wm2', 'Occ_m2pax']),
-        occupant_densities={'OFFICE': 1 / office_occ, 'GYM': 1 / gym_occ},
-        list_uses=['OFFICE', 'GYM'],
+        occupant_densities={'OFFICE': 1 / office_occ, 'LAB': 1 / lab_occ, 'INDUSTRIAL': 1 / indus_occ, 'SERVERRROOM': 1 / server_occ},
+        list_uses=['OFFICE', 'LAB', 'INDUSTRIAL', 'SERVERRROOM'],
         properties_DB=pd.read_excel(locator.get_database_use_types_properties(), 'INTERNAL_LOADS')).set_index('Name')
 
     return calculated_results
