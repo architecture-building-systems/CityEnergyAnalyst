@@ -130,7 +130,7 @@ class SupplySystemMapPlot(cea.plots.supply_system.SupplySystemPlotBase):
             network_name = "gen_" + str(self.generation) + "_ind_" + str(self.individual)
         else:
             building_connectivity = get_building_connectivity(self.locator)
-            network_name = "base"
+            network_name = "today"
 
         for network in ['DH', 'DC']:
             data_processed[network] = {}
