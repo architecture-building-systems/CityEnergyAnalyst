@@ -67,7 +67,7 @@ class TestCalcThermalLoads(unittest.TestCase):
                         'Building temp file not produced')
 
         # test the building csv file (output of the `calc_thermal_loads` call above)
-        df = pd.read_csv(self.locator.get_demand_results_file('B1001'))
+        df = pd.read_csv(self.locator.get_demand_results_file('B1011'))
 
         value_columns = json.loads(self.test_config.get('test_calc_thermal_loads', 'value_columns'))
         values = json.loads(self.test_config.get('test_calc_thermal_loads', 'values'))

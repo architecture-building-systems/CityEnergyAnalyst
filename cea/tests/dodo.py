@@ -216,36 +216,15 @@ def task_run_demand():
             })],
         }
 
-
-def task_run_embodied_energy():
-    """Run the embodied energy script for each reference case"""
-    import cea.analysis.lca.embodied
-
-    def run_embodied_energy(scenario_path):
-        config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
-        config.scenario = scenario_path
-        config.emissions.year_to_calculate = 2050
-        cea.analysis.lca.embodied.main(config=config)
-
-    for reference_case, scenario_path in REFERENCE_CASES.items():
-        if _reference_cases and reference_case not in _reference_cases:
-            continue
-
-        yield {
-            'name': 'run_embodied_energy:%(reference_case)s' % locals(),
-            'task_dep': ['download_reference_cases', 'run_archetypes_mapper:%s' % reference_case],
-            'actions': [(run_embodied_energy, [scenario_path])],
-        }
-
-
 def task_run_emissions():
     """run the emissions operation script for each reference case"""
-    import cea.analysis.lca
+    import cea.analysis.lca.main
 
     def run_emissions(scenario_path):
         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         config.scenario = scenario_path
-        cea.analysis.lca.main(config)
+        config.emissions.year_to_calculate = 2050
+        cea.analysis.lca.main.main(config)
 
     for reference_case, scenario_path in REFERENCE_CASES.items():
         if _reference_cases and reference_case not in _reference_cases:
