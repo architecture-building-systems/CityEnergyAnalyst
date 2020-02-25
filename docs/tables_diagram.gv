@@ -1,15 +1,12 @@
-/*
-Relationship between the input tables in the Input Editor and the databases from the Database Editor
-*/
-
-
 @startuml
-
 digraph tables_diagram {
-    graph[rankdir=LR, overlap=false, splines=true];
-    node [shape=record, fontsize="8" fontname="Verdana"];
-    edge [style=dashed];
 
+    graph [pad="0.5", nodesep="0.5", ranksep="2"];
+    node [shape=plain];
+    rankdir=LR;
+    
+
+   
 get_building_air_conditioning [shape=none, margin=0, label=<
     <table border="0" cellborder="1" cellspacing="0" cellpadding="4" >
         <tr><td bgcolor="lightblue">air-conditioning-systems</td></tr>
@@ -23,9 +20,10 @@ get_building_air_conditioning [shape=none, margin=0, label=<
         <tr><td port="heat_ends" align="left">date: heat_ends</td></tr>
         <tr><td port="cool_starts" align="left">date: cool_starts</td></tr>
         <tr><td port="cool_ends" align="left">date: cool_ends</td></tr>
-
+        
     </table>>];
 
+   
 get_zone_geometry [shape=none, margin=0, label=<
     <table border="0" cellborder="1" cellspacing="0" cellpadding="4" >
         <tr><td bgcolor="lightblue">zone</td></tr>
@@ -35,9 +33,10 @@ get_zone_geometry [shape=none, margin=0, label=<
         <tr><td port="height_bg" align="left">float: height_bg</td></tr>
         <tr><td port="height_ag" align="left">float: height_ag</td></tr>
         <tr><td port="REFERENCE" align="left">str: REFERENCE</td></tr>
-
+        
     </table>>];
 
+   
 get_building_supply [shape=none, margin=0, label=<
     <table border="0" cellborder="1" cellspacing="0" cellpadding="4" >
         <tr><td bgcolor="lightblue">supply-systems</td></tr>
@@ -46,9 +45,10 @@ get_building_supply [shape=none, margin=0, label=<
         <tr><td port="type_dhw" align="left">choice: type_dhw</td></tr>
         <tr><td port="type_el" align="left">choice: type_el</td></tr>
         <tr><td port="type_hs" align="left">choice: type_hs</td></tr>
-
+        
     </table>>];
 
+   
 get_building_comfort [shape=none, margin=0, label=<
     <table border="0" cellborder="1" cellspacing="0" cellpadding="4" >
         <tr><td bgcolor="lightblue">indoor-comfort</td></tr>
@@ -60,9 +60,10 @@ get_building_comfort [shape=none, margin=0, label=<
         <tr><td port="RH_min_pc" align="left">float: RH_min_pc</td></tr>
         <tr><td port="RH_max_pc" align="left">float: RH_max_pc</td></tr>
         <tr><td port="Ve_lpspax" align="left">float: Ve_lpspax</td></tr>
-
+        
     </table>>];
 
+   
 get_surroundings_geometry [shape=none, margin=0, label=<
     <table border="0" cellborder="1" cellspacing="0" cellpadding="4" >
         <tr><td bgcolor="lightblue">surroundings</td></tr>
@@ -70,9 +71,10 @@ get_surroundings_geometry [shape=none, margin=0, label=<
         <tr><td port="floors_ag" align="left">int: floors_ag</td></tr>
         <tr><td port="height_ag" align="left">float: height_ag</td></tr>
         <tr><td port="REFERENCE" align="left">str: REFERENCE</td></tr>
-
+        
     </table>>];
 
+   
 get_building_architecture [shape=none, margin=0, label=<
     <table border="0" cellborder="1" cellspacing="0" cellpadding="4" >
         <tr><td bgcolor="lightblue">architecture</td></tr>
@@ -94,9 +96,10 @@ get_building_architecture [shape=none, margin=0, label=<
         <tr><td port="type_floor" align="left">choice: type_floor</td></tr>
         <tr><td port="type_base" align="left">choice: type_base</td></tr>
         <tr><td port="type_win" align="left">choice: type_win</td></tr>
-
+        
     </table>>];
 
+   
 get_building_typology [shape=none, margin=0, label=<
     <table border="0" cellborder="1" cellspacing="0" cellpadding="4" >
         <tr><td bgcolor="lightblue">typology</td></tr>
@@ -110,9 +113,10 @@ get_building_typology [shape=none, margin=0, label=<
         <tr><td port="3RD_USE" align="left">choice: 3RD_USE</td></tr>
         <tr><td port="3RD_USE_R" align="left">float: 3RD_USE_R</td></tr>
         <tr><td port="REFERENCE" align="left">str: REFERENCE</td></tr>
-
+        
     </table>>];
 
+   
 get_building_internal [shape=none, margin=0, label=<
     <table border="0" cellborder="1" cellspacing="0" cellpadding="4" >
         <tr><td bgcolor="lightblue">internal-loads</td></tr>
@@ -130,8 +134,317 @@ get_building_internal [shape=none, margin=0, label=<
         <tr><td port="Qhpro_Wm2" align="left">float: Qhpro_Wm2</td></tr>
         <tr><td port="Vww_lpdpax" align="left">float: Vww_lpdpax</td></tr>
         <tr><td port="Vw_lpdpax" align="left">float: Vw_lpdpax</td></tr>
-
+        
     </table>>];
-}
 
+
+
+    
+get_database_envelope_systems_ROOF [shape=none, margin=0, label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="4" >
+        <tr><td bgcolor="lightgrey">ENVELOPE.xls:ROOF</td></tr>
+        <tr><td port="e_roof" align="left">float: e_roof</td></tr>
+        <tr><td port="code" align="left">string: code</td></tr>
+        <tr><td port="Description" align="left">string: Description</td></tr>
+        <tr><td port="GHG_ROOF_kgCO2m2" align="left">float: GHG_ROOF_kgCO2m2</td></tr>
+        <tr><td port="a_roof" align="left">float: a_roof</td></tr>
+        <tr><td port="r_roof" align="left">float: r_roof</td></tr>
+        <tr><td port="U_roof" align="left">float: U_roof</td></tr>
+        
+    </table>>];
+
+    
+get_database_envelope_systems_SHADING [shape=none, margin=0, label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="4" >
+        <tr><td bgcolor="lightgrey">ENVELOPE.xls:SHADING</td></tr>
+        <tr><td port="code" align="left">string: code</td></tr>
+        <tr><td port="Description" align="left">string: Description</td></tr>
+        <tr><td port="rf_sh" align="left">float: rf_sh</td></tr>
+        
+    </table>>];
+
+    
+get_database_supply_assemblies_HEATING [shape=none, margin=0, label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="4" >
+        <tr><td bgcolor="lightgrey">SUPPLY.xls:HEATING</td></tr>
+        <tr><td port="code" align="left">date: code</td></tr>
+        <tr><td port="Description" align="left">string: Description</td></tr>
+        <tr><td port="reference" align="left">string: reference</td></tr>
+        <tr><td port="efficiency" align="left">float: efficiency</td></tr>
+        <tr><td port="LT_yr" align="left">long: LT_yr</td></tr>
+        <tr><td port="IR_%" align="left">long: IR_%</td></tr>
+        <tr><td port="system" align="left">string: system</td></tr>
+        <tr><td port="OM_%" align="left">long: OM_%</td></tr>
+        <tr><td port="scale" align="left">string: scale</td></tr>
+        <tr><td port="CAPEX_USD2015kW" align="left">float: CAPEX_USD2015kW</td></tr>
+        <tr><td port="feedstock" align="left">string: feedstock</td></tr>
+        
+    </table>>];
+
+    
+get_database_air_conditioning_systems_HOT_WATER [shape=none, margin=0, label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="4" >
+        <tr><td bgcolor="lightgrey">HVAC.xls:HOT_WATER</td></tr>
+        <tr><td port="Qwwmax_Wm2" align="left">long: Qwwmax_Wm2</td></tr>
+        <tr><td port="code" align="left">string: code</td></tr>
+        <tr><td port="Description" align="left">string: Description</td></tr>
+        <tr><td port="Tsww0_C" align="left">long: Tsww0_C</td></tr>
+        
+    </table>>];
+
+    
+get_database_air_conditioning_systems_CONTROLLER [shape=none, margin=0, label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="4" >
+        <tr><td bgcolor="lightgrey">HVAC.xls:CONTROLLER</td></tr>
+        <tr><td port="dT_Qcs" align="left">float: dT_Qcs</td></tr>
+        <tr><td port="dT_Qhs" align="left">float: dT_Qhs</td></tr>
+        <tr><td port="code" align="left">string: code</td></tr>
+        <tr><td port="Description" align="left">string: Description</td></tr>
+        
+    </table>>];
+
+    
+get_database_air_conditioning_systems_VENTILATION [shape=none, margin=0, label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="4" >
+        <tr><td bgcolor="lightgrey">HVAC.xls:VENTILATION</td></tr>
+        <tr><td port="ECONOMIZER" align="left">bool: ECONOMIZER</td></tr>
+        <tr><td port="code" align="left">string: code</td></tr>
+        <tr><td port="NIGHT_FLSH" align="left">bool: NIGHT_FLSH</td></tr>
+        <tr><td port="Description" align="left">string: Description</td></tr>
+        <tr><td port="MECH_VENT" align="left">bool: MECH_VENT</td></tr>
+        <tr><td port="WIN_VENT" align="left">bool: WIN_VENT</td></tr>
+        <tr><td port="HEAT_REC" align="left">bool: HEAT_REC</td></tr>
+        
+    </table>>];
+
+    
+get_database_air_conditioning_systems_COOLING [shape=none, margin=0, label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="4" >
+        <tr><td bgcolor="lightgrey">HVAC.xls:COOLING</td></tr>
+        <tr><td port="Tscs0_scu_C" align="left">float: Tscs0_scu_C</td></tr>
+        <tr><td port="Qcsmax_Wm2" align="left">long: Qcsmax_Wm2</td></tr>
+        <tr><td port="code" align="left">string: code</td></tr>
+        <tr><td port="Description" align="left">string: Description</td></tr>
+        <tr><td port="dTcs0_aru_C" align="left">float: dTcs0_aru_C</td></tr>
+        <tr><td port="class_cs" align="left">string: class_cs</td></tr>
+        <tr><td port="dTcs0_ahu_C" align="left">float: dTcs0_ahu_C</td></tr>
+        <tr><td port="Tc_sup_air_aru_C" align="left">float: Tc_sup_air_aru_C</td></tr>
+        <tr><td port="Tscs0_ahu_C" align="left">float: Tscs0_ahu_C</td></tr>
+        <tr><td port="Tscs0_aru_C" align="left">float: Tscs0_aru_C</td></tr>
+        <tr><td port="Tc_sup_air_ahu_C" align="left">float: Tc_sup_air_ahu_C</td></tr>
+        <tr><td port="dTcs0_scu_C" align="left">float: dTcs0_scu_C</td></tr>
+        <tr><td port="dTcs_C" align="left">float: dTcs_C</td></tr>
+        
+    </table>>];
+
+    
+get_database_envelope_systems_WALL [shape=none, margin=0, label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="4" >
+        <tr><td bgcolor="lightgrey">ENVELOPE.xls:WALL</td></tr>
+        <tr><td port="code" align="left">string: code</td></tr>
+        <tr><td port="r_wall" align="left">float: r_wall</td></tr>
+        <tr><td port="Description" align="left">string: Description</td></tr>
+        <tr><td port="a_wall" align="left">float: a_wall</td></tr>
+        <tr><td port="U_wall" align="left">float: U_wall</td></tr>
+        <tr><td port="e_wall" align="left">float: e_wall</td></tr>
+        <tr><td port="GHG_WALL_kgCO2m2" align="left">float: GHG_WALL_kgCO2m2</td></tr>
+        
+    </table>>];
+
+    
+get_database_use_types_properties_INTERNAL_LOADS [shape=none, margin=0, label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="4" >
+        <tr><td bgcolor="lightgrey">USE_TYPE_PROPERTIES.xlsx:INTERNAL_LOADS</td></tr>
+        <tr><td port="El_Wm2" align="left">float: El_Wm2</td></tr>
+        <tr><td port="code" align="left">string: code</td></tr>
+        <tr><td port="Vww_lpdpax" align="left">float: Vww_lpdpax</td></tr>
+        <tr><td port="Occ_m2pax" align="left">float: Occ_m2pax</td></tr>
+        <tr><td port="Ed_Wm2" align="left">float: Ed_Wm2</td></tr>
+        <tr><td port="Ea_Wm2" align="left">float: Ea_Wm2</td></tr>
+        <tr><td port="Qcre_Wm2" align="left">float: Qcre_Wm2</td></tr>
+        <tr><td port="Ev_kWveh" align="left">float: Ev_kWveh</td></tr>
+        <tr><td port="Epro_Wm2" align="left">float: Epro_Wm2</td></tr>
+        <tr><td port="X_ghpax" align="left">float: X_ghpax</td></tr>
+        <tr><td port="Qhpro_Wm2" align="left">float: Qhpro_Wm2</td></tr>
+        <tr><td port="Vw_lpdpax" align="left">float: Vw_lpdpax</td></tr>
+        <tr><td port="Qs_Wpax" align="left">float: Qs_Wpax</td></tr>
+        <tr><td port="Qcpro_Wm2" align="left">float: Qcpro_Wm2</td></tr>
+        
+    </table>>];
+
+    
+get_database_envelope_systems_TIGHTNESS [shape=none, margin=0, label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="4" >
+        <tr><td bgcolor="lightgrey">ENVELOPE.xls:TIGHTNESS</td></tr>
+        <tr><td port="code" align="left">string: code</td></tr>
+        <tr><td port="Description" align="left">string: Description</td></tr>
+        <tr><td port="n50" align="left">long: n50</td></tr>
+        
+    </table>>];
+
+    
+get_database_air_conditioning_systems_HEATING [shape=none, margin=0, label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="4" >
+        <tr><td bgcolor="lightgrey">HVAC.xls:HEATING</td></tr>
+        <tr><td port="Tshs0_aru_C" align="left">float: Tshs0_aru_C</td></tr>
+        <tr><td port="code" align="left">string: code</td></tr>
+        <tr><td port="Description" align="left">string: Description</td></tr>
+        <tr><td port="Tshs0_shu_C" align="left">float: Tshs0_shu_C</td></tr>
+        <tr><td port="Tshs0_ahu_C" align="left">float: Tshs0_ahu_C</td></tr>
+        <tr><td port="Qhsmax_Wm2" align="left">long: Qhsmax_Wm2</td></tr>
+        <tr><td port="dThs0_aru_C" align="left">float: dThs0_aru_C</td></tr>
+        <tr><td port="dThs0_ahu_C" align="left">float: dThs0_ahu_C</td></tr>
+        <tr><td port="dThs0_shu_C" align="left">float: dThs0_shu_C</td></tr>
+        <tr><td port="dThs_C" align="left">float: dThs_C</td></tr>
+        <tr><td port="class_hs" align="left">string: class_hs</td></tr>
+        <tr><td port="Th_sup_air_aru_C" align="left">float: Th_sup_air_aru_C</td></tr>
+        <tr><td port="Th_sup_air_ahu_C" align="left">float: Th_sup_air_ahu_C</td></tr>
+        
+    </table>>];
+
+    
+get_database_supply_assemblies_HOT_WATER [shape=none, margin=0, label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="4" >
+        <tr><td bgcolor="lightgrey">SUPPLY.xls:HOT_WATER</td></tr>
+        <tr><td port="code" align="left">date: code</td></tr>
+        <tr><td port="Description" align="left">string: Description</td></tr>
+        <tr><td port="reference" align="left">string: reference</td></tr>
+        <tr><td port="efficiency" align="left">float: efficiency</td></tr>
+        <tr><td port="LT_yr" align="left">long: LT_yr</td></tr>
+        <tr><td port="IR_%" align="left">long: IR_%</td></tr>
+        <tr><td port="system" align="left">string: system</td></tr>
+        <tr><td port="OM_%" align="left">long: OM_%</td></tr>
+        <tr><td port="scale" align="left">string: scale</td></tr>
+        <tr><td port="CAPEX_USD2015kW" align="left">float: CAPEX_USD2015kW</td></tr>
+        <tr><td port="feedstock" align="left">string: feedstock</td></tr>
+        
+    </table>>];
+
+    
+get_database_supply_assemblies_COOLING [shape=none, margin=0, label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="4" >
+        <tr><td bgcolor="lightgrey">SUPPLY.xls:COOLING</td></tr>
+        <tr><td port="code" align="left">date: code</td></tr>
+        <tr><td port="Description" align="left">string: Description</td></tr>
+        <tr><td port="reference" align="left">string: reference</td></tr>
+        <tr><td port="efficiency" align="left">float: efficiency</td></tr>
+        <tr><td port="LT_yr" align="left">long: LT_yr</td></tr>
+        <tr><td port="IR_%" align="left">long: IR_%</td></tr>
+        <tr><td port="system" align="left">string: system</td></tr>
+        <tr><td port="OM_%" align="left">long: OM_%</td></tr>
+        <tr><td port="scale" align="left">string: scale</td></tr>
+        <tr><td port="CAPEX_USD2015kW" align="left">float: CAPEX_USD2015kW</td></tr>
+        <tr><td port="feedstock" align="left">string: feedstock</td></tr>
+        
+    </table>>];
+
+    
+get_database_construction_standards_STANDARD_DEFINITION [shape=none, margin=0, label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="4" >
+        <tr><td bgcolor="lightgrey">CONSTRUCTION_STANDARD.xlsx:STANDARD_DEFINITION</td></tr>
+        <tr><td port="STANDARD" align="left">string: STANDARD</td></tr>
+        <tr><td port="YEAR_START" align="left">long: YEAR_START</td></tr>
+        <tr><td port="Description" align="left">string: Description</td></tr>
+        <tr><td port="YEAR_END" align="left">long: YEAR_END</td></tr>
+        
+    </table>>];
+
+    
+get_database_supply_assemblies_ELECTRICITY [shape=none, margin=0, label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="4" >
+        <tr><td bgcolor="lightgrey">SUPPLY.xls:ELECTRICITY</td></tr>
+        <tr><td port="code" align="left">date: code</td></tr>
+        <tr><td port="Description" align="left">string: Description</td></tr>
+        <tr><td port="reference" align="left">string: reference</td></tr>
+        <tr><td port="efficiency" align="left">float: efficiency</td></tr>
+        <tr><td port="LT_yr" align="left">long: LT_yr</td></tr>
+        <tr><td port="IR_%" align="left">long: IR_%</td></tr>
+        <tr><td port="system" align="left">string: system</td></tr>
+        <tr><td port="OM_%" align="left">long: OM_%</td></tr>
+        <tr><td port="scale" align="left">string: scale</td></tr>
+        <tr><td port="CAPEX_USD2015kW" align="left">float: CAPEX_USD2015kW</td></tr>
+        <tr><td port="feedstock" align="left">string: feedstock</td></tr>
+        
+    </table>>];
+
+    
+get_database_envelope_systems_FLOOR [shape=none, margin=0, label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="4" >
+        <tr><td bgcolor="lightgrey">ENVELOPE.xls:FLOOR</td></tr>
+        <tr><td port="U_base" align="left">float: U_base</td></tr>
+        <tr><td port="code" align="left">string: code</td></tr>
+        <tr><td port="GHG_FLOOR_kgCO2m2" align="left">float: GHG_FLOOR_kgCO2m2</td></tr>
+        <tr><td port="Description" align="left">string: Description</td></tr>
+        
+    </table>>];
+
+    
+get_database_envelope_systems_WINDOW [shape=none, margin=0, label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="4" >
+        <tr><td bgcolor="lightgrey">ENVELOPE.xls:WINDOW</td></tr>
+        <tr><td port="F_F" align="left">float: F_F</td></tr>
+        <tr><td port="code" align="left">string: code</td></tr>
+        <tr><td port="Description" align="left">string: Description</td></tr>
+        <tr><td port="e_win" align="left">float: e_win</td></tr>
+        <tr><td port="G_win" align="left">float: G_win</td></tr>
+        <tr><td port="GHG_WIN_kgCO2m2" align="left">float: GHG_WIN_kgCO2m2</td></tr>
+        <tr><td port="U_win" align="left">float: U_win</td></tr>
+        
+    </table>>];
+
+    
+get_database_envelope_systems_CONSTRUCTION [shape=none, margin=0, label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="4" >
+        <tr><td bgcolor="lightgrey">ENVELOPE.xls:CONSTRUCTION</td></tr>
+        <tr><td port="code" align="left">string: code</td></tr>
+        <tr><td port="Description" align="left">string: Description</td></tr>
+        <tr><td port="Cm_Af" align="left">long: Cm_Af</td></tr>
+        
+    </table>>];
+
+
+
+    get_building_air_conditioning:"type_cs" -> get_database_air_conditioning_systems_COOLING:code;
+
+    get_building_air_conditioning:"type_ctrl" -> get_database_air_conditioning_systems_CONTROLLER:code;
+
+    get_building_typology:"STANDARD" -> get_database_construction_standards_STANDARD_DEFINITION:STANDARD;
+
+    get_building_typology:"2ND_USE" -> get_database_use_types_properties_INTERNAL_LOADS:code;
+
+    get_building_air_conditioning:"type_dhw" -> get_database_air_conditioning_systems_HOT_WATER:code;
+
+    get_building_air_conditioning:"type_vent" -> get_database_air_conditioning_systems_VENTILATION:code;
+
+    get_building_architecture:"type_leak" -> get_database_envelope_systems_TIGHTNESS:code;
+
+    get_building_architecture:"type_cons" -> get_database_envelope_systems_CONSTRUCTION:code;
+
+    get_building_architecture:"type_base" -> get_database_envelope_systems_FLOOR:code;
+
+    get_building_supply:"type_dhw" -> get_database_supply_assemblies_HOT_WATER:code;
+
+    get_building_air_conditioning:"type_hs" -> get_database_air_conditioning_systems_HEATING:code;
+
+    get_building_architecture:"type_floor" -> get_database_envelope_systems_FLOOR:code;
+
+    get_building_architecture:"type_win" -> get_database_envelope_systems_WINDOW:code;
+
+    get_building_architecture:"type_wall" -> get_database_envelope_systems_WALL:code;
+
+    get_building_supply:"type_el" -> get_database_supply_assemblies_ELECTRICITY:code;
+
+    get_building_typology:"1ST_USE" -> get_database_use_types_properties_INTERNAL_LOADS:code;
+
+    get_building_supply:"type_cs" -> get_database_supply_assemblies_COOLING:code;
+
+    get_building_typology:"3RD_USE" -> get_database_use_types_properties_INTERNAL_LOADS:code;
+
+    get_building_architecture:"type_roof" -> get_database_envelope_systems_ROOF:code;
+
+    get_building_architecture:"type_shade" -> get_database_envelope_systems_SHADING:code;
+
+    get_building_supply:"type_hs" -> get_database_supply_assemblies_HEATING:code;
+
+}
 @enduml
