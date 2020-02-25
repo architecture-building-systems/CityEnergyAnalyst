@@ -118,7 +118,7 @@ def create_data():
     # calculate schedules
     building_properties = BuildingProperties(locator, False)
     bpr = building_properties['B1011']
-    list_uses = ['OFFICE', 'SERVERROOM']
+    list_uses = ['OFFICE', 'LAB', 'INDUSTRIAL', 'SERVERRROOM']
     bpr.occupancy = {'OFFICE': 0.5, 'SERVERROOM': 0.5}
     # get year from weather file
     weather_path = locator.get_weather_file()
