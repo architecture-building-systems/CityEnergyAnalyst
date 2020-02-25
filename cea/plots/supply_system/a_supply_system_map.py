@@ -157,6 +157,11 @@ class SupplySystemMapPlot(cea.plots.supply_system.SupplySystemPlotBase):
         # Modify config inputs for this function
         self.config.network_layout.network_type = network_type
         self.config.network_layout.connected_buildings = connected_buildings
+
+        # Ignore demand and creating plants for layouts in map
+        self.config.network_layout.consider_only_buildings_with_demand = False
+        self.config.network_layout.create_plant = False
+
         network_layout = NetworkLayout(network_layout=self.config.network_layout)
         layout_network(network_layout, self.locator, output_name_network=network_name)
 
