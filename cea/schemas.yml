@@ -917,6 +917,64 @@ get_database_construction_standards:
         sample_data: !!python/long '2021'
         types_found: [long]
   used_by: [archetypes_mapper]
+get_database_use_types_properties:
+  created_by: []
+  file_path: inputs/technology/archetypes/use_types/USE_TYPE_PROPERTIES.xlsx
+  file_type: xls
+  schema:
+    INTERNAL_LOADS:
+      code:
+        sample_data: MULTI_RES
+        types_found: [string]
+      Occ_m2pax:
+        sample_data: 30.0
+        types_found: [float]
+      Qs_Wpax:
+        sample_data: 70.0
+        types_found: [float]
+      X_ghpax:
+        sample_data: 80.0
+        types_found: [float]
+      Ea_Wm2:
+        sample_data: 8.0
+        types_found: [float]
+      El_Wm2:
+        sample_data: 2.7
+        types_found: [float]
+      Epro_Wm2:
+        sample_data: 0.0
+        types_found: [float]
+      Ed_Wm2:
+        sample_data: 0.0
+        types_found: [float]
+      Vww_lpdpax:
+        sample_data: 35.0
+        types_found: [float]
+      Vw_lpdpax:
+        sample_data: 140.0
+        types_found: [float]
+      Qcre_Wm2:
+        sample_data: 0.0
+        types_found: [float]
+      Qhpro_Wm2:
+        sample_data: 0.0
+        types_found: [float]
+      Qcpro_Wm2:
+        sample_data: 0.0
+        types_found: [float]
+      Ev_kWveh:
+        sample_data: 0.0
+        types_found: [float]
+    INDOOR_COMFORT:
+      code:
+      Tcs_set_C:
+      Ths_set_C:
+      Tcs_setb_C:
+      Ths_setb_C:
+      Ve_lpspax:
+      RH_min_pc:
+      RH_max_pc:
+  used_by: [archetypes_mapper]
 get_building_air_conditioning:
   created_by: [archetypes_mapper]
   file_path: inputs/building-properties/air_conditioning_systems.dbf
