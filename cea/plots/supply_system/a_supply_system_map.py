@@ -48,7 +48,7 @@ class SupplySystemMapPlot(cea.plots.supply_system.SupplySystemPlotBase):
         self.scenario = self.parameters['scenario-name']
         self.config = cea.config.Configuration()
         self.input_files = [(self.locator.get_optimization_slave_building_connectivity,
-                             [self.individual, self.generation])] if self.generation is not None else []
+                             [self.individual, self.generation])] if self.individual != 'today' else []
 
     @property
     def title(self):
@@ -123,7 +123,7 @@ class SupplySystemMapPlot(cea.plots.supply_system.SupplySystemPlotBase):
         building_connectivity = None
         data_processed = {}
 
-        if self.generation is not None:
+        if self.individual != 'today':
             # get data from generation
             building_connectivity = pd.read_csv(self.locator.get_optimization_slave_building_connectivity
                                                 (self.individual, self.generation))
