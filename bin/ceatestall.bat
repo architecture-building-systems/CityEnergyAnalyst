@@ -7,7 +7,7 @@ SET GDAL_DATA=%CEA%\Dependencies\Python\Library\share\gdal
 SET PROJ_LIB=%CEA%\Dependencies\Python\Library\share
 SET RAYPATH=%CEA%\Dependencies\Daysim
 "%CEA%\Dependencies\Python\python.exe" -u -m pip install -e .
-cea test --reference-cases open --tasks all --verbosity 1
+cea test --workflow slow
 if %errorlevel% neq 0 exit /b %errorlevel%
 
 

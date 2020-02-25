@@ -24,6 +24,7 @@ REFERENCE_TIME = 3456
 
 class TestBuildingPreprocessing(unittest.TestCase):
     def test_mixed_use_archetype_values(self):
+        raise ValueError("oops")
         # test if a sample mixed use building gets standard results
         locator = ReferenceCaseOpenLocator()
         config = ConfigParser.SafeConfigParser()
