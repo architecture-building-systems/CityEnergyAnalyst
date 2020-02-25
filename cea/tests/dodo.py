@@ -259,6 +259,27 @@ def task_run_emissions_operation():
             })],
         }
 
+def task_run_system_costs():
+    """run the emissions operation script for each reference case"""
+    import cea.analysis.costs.system_costs
+
+    def run_system_costs(scenario_path):
+        config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
+        config.scenario = scenario_path
+        cea.analysis.costs.system_costs.main(config)
+
+    for reference_case, scenario_path in REFERENCE_CASES.items():
+        if _reference_cases and reference_case not in _reference_cases:
+            continue
+
+        yield {
+            'name': 'run_system_costs:%(reference_case)s' % locals(),
+            'task_dep': ['run_demand:%(reference_case)s' % locals()],
+            'actions': [(run_system_costs, [], {
+                'scenario_path': scenario_path,
+            })],
+        }
+
 def task_run_thermal_network():
     """run the thermal_network for the included reference case"""
     def run_thermal_network():
