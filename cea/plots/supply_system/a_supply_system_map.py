@@ -201,9 +201,10 @@ def newer_network_layout_exists(locator, network_type, network_name):
         network_type, network_name)
     supply_system = locator.get_building_supply()
 
+    no_network_file = not os.path.isfile(edges) or not os.path.isfile(nodes)
     supply_system_modified = os.path.getmtime(supply_system)
 
-    return supply_system_modified > os.path.getmtime(edges) or supply_system_modified > os.path.getmtime(nodes)
+    return no_network_file or supply_system_modified > os.path.getmtime(edges) or supply_system_modified > os.path.getmtime(nodes)
 
 
 def main():
