@@ -1,14 +1,17 @@
 
-get_building_occupancy
-----------------------
+get_building_typology
+---------------------
 
 The following file is used by scripts: ['archetypes_mapper', 'demand', 'emissions']
 
 
 
-.. csv-table:: **inputs/building-properties/occupancy.dbf**
+.. csv-table:: **inputs/building-properties/typology.dbf**
     :header: "Variable", "Description"
 
+     Name,Unique building ID. It must start with a letter. - Unit: [-]
+     STANDARD,Construction Standard - Unit: [code]
+     YEAR,Construction year - Unit: [-]
 
 
 get_database_air_conditioning_systems
@@ -103,11 +106,6 @@ The following file is used by scripts: ['decentralized', 'optimization', 'photov
 
 
 .. csv-table:: **inputs/technology/systems/supply_systems.xls:Chiller**
-    :header: "Variable", "Description"
-
-
-
-.. csv-table:: **inputs/technology/systems/supply_systems.xls:DETAILED_ELEC_COSTS**
     :header: "Variable", "Description"
 
 
@@ -385,6 +383,23 @@ The following file is used by scripts: ['demand', 'emissions', 'system_costs']
 
 
 .. csv-table:: **inputs/technology/assemblies/supply.xls:HOT_WATER**
+    :header: "Variable", "Description"
+
+
+
+get_database_use_types_properties
+---------------------------------
+
+The following file is used by scripts: ['archetypes_mapper']
+
+
+
+.. csv-table:: **inputs/technology/archetypes/use_types/USE_TYPE_PROPERTIES.xlsx:INDOOR_COMFORT**
+    :header: "Variable", "Description"
+
+
+
+.. csv-table:: **inputs/technology/archetypes/use_types/USE_TYPE_PROPERTIES.xlsx:INTERNAL_LOADS**
     :header: "Variable", "Description"
 
 
