@@ -22,7 +22,7 @@
 - script: schedule-maker
 - script: demand
 - script: emissions
-- script: operation-costs
+- script: system-costs
 - script: water-body-potential
 - script: sewage-potential
 - script: shallow-geothermal-potential
