@@ -18,6 +18,10 @@ timesteps = 24  # 168 (week) [5389]
 typical_days_path = "E:\\WP2\\Typical_hours"
 cluster_type = 'hour'
 
+## district to evaluate ##
+path_to_district_folder = 'C:\\SG_cases\\SDC_small'
+
+
 ## post processing ##
 PLOTS = ['electricity_usages','air_flow','OAU_T_w_supply','exergy_usages', 'humidity_balance', 'humidity_storage', 'heat_balance']
 post_process_json = True    # True to extract information from out.json
