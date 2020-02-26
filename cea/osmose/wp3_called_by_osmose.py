@@ -23,7 +23,7 @@ BUILDINGS_DEMANDS_COLUMNS = ['Name', 'Ths_sys_sup_aru_C', 'Ths_sys_sup_ahu_C', '
                              'mcpcs_sys_aru_kWperC', 'mcpcs_sys_scu_kWperC', 'E_sys_kWh']
 
 OSMOSE_PROJECT_PATH = "E:\\OSMOSE_projects\\HCS_mk\\results\\N_base"
-
+REPORTING = True
 def main(path_to_case):
     # INITIALIZE TIMER
     t0 = time.clock()
@@ -37,18 +37,21 @@ def main(path_to_case):
     edge_node_df, all_nodes_df, edge_length_df = get_network_info(path_to_case)
 
     ## 3. PIPE SIZING & COSTS
-    D_ins_m, Cinv_pipe_perm, \
+    Pipe_properties_df, Cinv_pipe_perm, \
     plant_index, plant_node = get_pipe_sizes(all_nodes_df, edge_node_df,
                                              substation_flow_rate_m3pers_df, path_to_case)
-    Cinv_network_pipes = calc_Cinv_network_pipes(edge_length_df, Cinv_pipe_perm)
+    Pipe_properties_df = Pipe_properties_df.join(edge_length_df, how='outer')
+    Cinv_network_pipes, L_network_m = calc_Cinv_network_pipes(edge_length_df, Cinv_pipe_perm)
 
     ## 5. SUBSTATION COSTS
     substation_A_hex_df['Cinv_hex'] = np.vectorize(calc_Cinv_substation_hex)(substation_A_hex_df)
 
     ## 6. PUMPING COSTS
-    pressure_losses_in_edges_Pa_df = calc_network_pressure_losses(D_ins_m, T_supply_K, all_nodes_df, edge_length_df,
-                                                                  edge_node_df, plant_index, plant_node,
+    pressure_losses_in_edges_Pa_df, \
+    network_operation_info = calc_network_pressure_losses(Pipe_properties_df, T_supply_K, all_nodes_df,
+                                                                  edge_length_df, edge_node_df, plant_index, plant_node,
                                                                   substation_flow_rate_m3pers_df)
+
 
     # electricity consumption # TODO:add substation head loss at critical building and plant
     plant_pressure_losses_Pa = pressure_losses_in_edges_Pa_df.sum(axis=1)
@@ -64,9 +67,11 @@ def main(path_to_case):
     # results
     results_dict = {'pumping_kWh': annual_pumping_energy_kWh,
                     'pump_size_kW': pump_size_kW,
+                    'network_length_m': L_network_m,
                     'Cinv_pump': Cinv_pump,
                     'Cinv_hex': substation_A_hex_df['Cinv_hex'].sum(),
                     'Cinv_pipes': Cinv_network_pipes}
+    results_dict.update(network_operation_info)
     import csv
     with open(os.path.join(path_to_case,'pass_to_osmose.csv'), 'w') as f:
         for key in results_dict.keys():
@@ -74,27 +79,55 @@ def main(path_to_case):
     return
 
 
-def calc_network_pressure_losses(D_ins_m, T_supply_K, all_nodes_df, edge_length_df, edge_node_df, plant_index,
+def calc_network_pressure_losses(Pipe_properties_df, T_supply_K, all_nodes_df, edge_length_df, edge_node_df, plant_index,
                                  plant_node, substation_flow_rate_m3pers_df):
+    D_int_m = Pipe_properties_df['D_int_m']
     # write building flowrates into node_flows_at_substations_df
     node_flowrates_at_substations_df = write_substation_flowrates_into_nodes(all_nodes_df, edge_node_df, plant_node,
                                                                              substation_flow_rate_m3pers_df)
     # calculate flowrate in each edge (Ax = b)
     flows_in_edges_m3pers_df = calculate_flow_in_edges(edge_node_df, node_flowrates_at_substations_df, plant_index)
+    massflows_in_edges_kgpers_df = flows_in_edges_m3pers_df*P_WATER_KGPERM3
     # calculate pressure losses in each edge
     pressure_losses_in_edges_Pa = []
+    specific_pressure_loss_Pa_per_m = []
+    velocity_edges_ms = []
     for edge in flows_in_edges_m3pers_df.columns:
-        pipe_diameter_m = D_ins_m[edge]
-        pipe_length_m = edge_length_df.get_value(edge, 'length_m')
-        pressure_losses_in_edges_Pa.append(np.vectorize(calc_pressure_losses)(pipe_diameter_m,
-                                                                              flows_in_edges_m3pers_df[edge].values,
-                                                                              pipe_length_m, T_supply_K))
+        pipe_diameter_m = D_int_m[edge]
+        pipe_length_m = edge_length_df.loc[edge,'length_m'] * 1.2 # TODO: assumption (turns and fittings)
+        pressure_losses_in_edge_Pa, \
+        specific_pressure_loss_in_edge_Pa_per_m, \
+        velocity_edge_ms = np.vectorize(calc_pressure_losses)(pipe_diameter_m,flows_in_edges_m3pers_df[edge].values,
+                                                                              pipe_length_m, T_supply_K)
+        pressure_losses_in_edges_Pa.append(pressure_losses_in_edge_Pa)
+        specific_pressure_loss_Pa_per_m.append(specific_pressure_loss_in_edge_Pa_per_m)
+        velocity_edges_ms.append(velocity_edge_ms)
+
     pressure_losses_in_edges_Pa_df = pd.DataFrame(pressure_losses_in_edges_Pa).T
     pressure_losses_in_edges_Pa_df = pd.DataFrame(pressure_losses_in_edges_Pa_df.values, columns=edge_node_df.columns)
 
     # TODO: supply and return
     # TODO: critical paths
-    return pressure_losses_in_edges_Pa_df
+    if REPORTING:
+        specific_pressure_losses_in_edges_Pa_df = pd.DataFrame(specific_pressure_loss_Pa_per_m).T
+        specific_pressure_losses_in_edges_Pa_df = pd.DataFrame(specific_pressure_losses_in_edges_Pa_df.values,
+                                                               columns=edge_node_df.columns)
+        specific_pressure_losses_in_edges_Pa_df.to_csv(
+            os.path.join(*[path_to_case, 'specific_pressure_losses_Paperm.csv']))
+
+        velocity_edges_ms_df = pd.DataFrame(velocity_edges_ms).T
+        velocity_edges_ms_df = pd.DataFrame(velocity_edges_ms_df.values, columns=edge_node_df.columns)
+        velocity_edges_ms_df.to_csv(os.path.join(*[path_to_case, 'velocity_edges_ms.csv']))
+
+        massflows_in_edges_kgpers_df.to_csv(os.path.join(*[path_to_case, 'mass_flow_edges_kgs.csv']))
+        Pipe_properties_df.to_csv(os.path.join(*[path_to_case, 'Pipe_properties.csv']))
+    network_operation_info = {}
+    network_operation_info['Ploss_max_Paperm'] = np.max(np.array(specific_pressure_loss_Pa_per_m))
+    network_operation_info['Ploss_mean_Paperm'] = np.mean(np.array(specific_pressure_loss_Pa_per_m))
+    network_operation_info['v_max_ms'] = np.max(np.array(velocity_edges_ms))
+    network_operation_info['v_mean_ms'] = np.mean(np.array(velocity_edges_ms))
+    network_operation_info['massflow_min_kgs'] = massflows_in_edges_kgpers_df.min().min()
+    return pressure_losses_in_edges_Pa_df, network_operation_info
 
 
 ## ====== Processing ============ #
@@ -133,8 +166,10 @@ def write_cea_demand_from_osmose(path_to_district_folder):
     dTlm_dict, substation_Qmax_dict = {}, {}
     for building_function in ['HOT', 'OFF', 'RET']:
         Q_substation = network_df.filter(like=building_function).filter(like='Hout')
-        dTlm_dict[building_function], substation_Qmax_dict[building_function] = \
-            calc_builing_substation_dTlm(Q_substation, building_function)
+        dTlm_dict[building_function] = 6
+        substation_Qmax_dict[building_function] = Q_substation.values.max()
+        # dTlm_dict[building_function], substation_Qmax_dict[building_function] = \
+        #     calc_builing_substation_dTlm(Q_substation, building_function)  # FIXME: cant use it during optimization, no plots
 
     # 4. allocate cooling loads and heat exchanger area to buildings
     substation_flow_rate_m3pers_df = pd.DataFrame()
@@ -188,7 +223,7 @@ def write_substation_flowrates_into_nodes(all_nodes_df, edge_node_df, plant_node
     building_nodes_df = all_nodes_df[['Name', 'Building']].set_index('Building')  # look-up table
     node_flows_at_substations_df = pd.DataFrame(columns=edge_node_df.index)  # empty df
     for building in substation_flow_rate_m3pers_df.columns:
-        node = building_nodes_df.get_value(building, 'Name')  # find node name
+        node = building_nodes_df.loc[building,'Name']  # find node name
         node_flows_at_substations_df[node] = substation_flow_rate_m3pers_df[building]
     node_flows_at_substations_df.fillna(0.0, inplace=True)
     node_flows_at_substations_df.drop(columns=[plant_node], inplace=True)
@@ -242,7 +277,8 @@ def get_Ts_Tr_from_txt(icc_file_name, icc_folder_path):
 
 def calc_Cinv_network_pipes(edge_length_df, Cinv_pipe_perm):
     Cinv_network_pipes = sum(edge_length_df['length_m'] * Cinv_pipe_perm * 2)
-    return Cinv_network_pipes
+    L_network_m = sum(edge_length_df['length_m'])
+    return Cinv_network_pipes, L_network_m
 
 def calc_Cinv_substation_hex(A_hex_m2):
 
@@ -272,10 +308,11 @@ def calc_pressure_losses(pipe_diameter_m, flow_per_edge_m3pers, pipe_length_m, T
 
     # calculate the pressure losses through a pipe using the Darcy-Weisbach equation
     mass_flow_rate_kgs = flow_per_edge_m3pers * P_WATER_KGPERM3
-    pressure_losses_edges_Paperm = darcy * 8 * mass_flow_rate_kgs ** 2 / (
+    pressure_losses_edge_Paperm = darcy * 8 * mass_flow_rate_kgs ** 2 / (
             math.pi ** 2 * pipe_diameter_m ** 5 * P_WATER_KGPERM3)
-    pressure_losses_edge_Pa = pressure_losses_edges_Paperm * pipe_length_m
-    return pressure_losses_edge_Pa
+    pressure_losses_edge_Pa = pressure_losses_edge_Paperm * pipe_length_m
+    velocity_edge_ms = flow_per_edge_m3pers / ((math.pi * pipe_diameter_m ** 2)/4)
+    return pressure_losses_edge_Pa, pressure_losses_edge_Paperm, velocity_edge_ms
 
 def calc_kinematic_viscosity(temperature):
     # check if list type, this can cause problems
@@ -342,15 +379,22 @@ def get_pipe_sizes(all_nodes_df, edge_node_df, substation_flow_rate_m3pers_df, p
     path_to_supply_systems = os.path.join(path_to_case, 'inputs\\technology\\systems\\supply_systems.xls')
     pipe_catalog_df = pd.read_excel(path_to_supply_systems, sheet_name='PIPING')
     # get pipe sizes
-    velocity_mpers = 2
-    peak_load_percentage = 70
-    Pipe_DN, D_ext_m, D_int_m, D_ins_m, Cinv_pipe = zip(
+    velocity_mpers = 2 #TODO: assumption
+    peak_load_percentage = 80 #TODO: assumption
+    Pipe_DN, D_ext_m, D_int_m, D_ins_m, Cinv_pipe, A_int_m2 = zip(
         *[calc_max_diameter(flow, pipe_catalog_df, velocity_ms=velocity_mpers,
                             peak_load_percentage=peak_load_percentage) for
           flow in max_flow_in_edges_m3pers])
-    D_ins_m = pd.Series(D_ins_m, index=edge_node_df.columns)
+    # D_ins_m = pd.Series(D_ins_m, index=edge_node_df.columns)
+    # A_int_m2 = pd.Series(A_int_m2, index=edge_node_df.columns)
+    Pipe_properties_df = pd.DataFrame(index=edge_node_df.columns)
+    Pipe_properties_df['D_ins_m'] = D_ins_m
+    Pipe_properties_df['A_int_m2'] = A_int_m2
+    Pipe_properties_df['D_int_m'] = D_int_m
+    Pipe_properties_df['Pipe_DN'] = Pipe_DN
+    # Pipe_properties_df['max_velocity_mpers'] = max_flow_in_edges_m3pers / A_int_m2
     Cinv_pipe_perm = pd.Series(Cinv_pipe, index=edge_node_df.columns)
-    return D_ins_m, Cinv_pipe_perm, plant_index, plant_node
+    return Pipe_properties_df, Cinv_pipe_perm, plant_index, plant_node
 
 def calc_max_diameter(volume_flow_m3s, pipe_catalog, velocity_ms, peak_load_percentage):
     """
@@ -363,14 +407,15 @@ def calc_max_diameter(volume_flow_m3s, pipe_catalog, velocity_ms, peak_load_perc
     """
     volume_flow_m3s_corrected_to_design = volume_flow_m3s * peak_load_percentage / 100
     diameter_m = math.sqrt((volume_flow_m3s_corrected_to_design / velocity_ms) * (4 / math.pi))
-    selection_of_catalog = pipe_catalog.ix[(pipe_catalog['D_int_m'] - diameter_m).abs().argsort()[:1]]
+    selection_of_catalog = pipe_catalog.iloc[(pipe_catalog['D_int_m'] - diameter_m).abs().argsort()[:1],:]
     D_int_m = selection_of_catalog['D_int_m'].values[0]
+    A_int_m2 = math.pi * (D_int_m ** 2) / 4
     Pipe_DN = selection_of_catalog['Pipe_DN'].values[0]
     D_ext_m = selection_of_catalog['D_ext_m'].values[0]
     D_ins_m = selection_of_catalog['D_ins_m'].values[0]
     Cinv_pipe = selection_of_catalog['Inv_USD2015perm'].values[0]
 
-    return Pipe_DN, D_ext_m, D_int_m, D_ins_m, Cinv_pipe
+    return Pipe_DN, D_ext_m, D_int_m, D_ins_m, Cinv_pipe, A_int_m2
 
 
 ##========== UTILITY FUNCTIONS ============ ##
@@ -399,5 +444,5 @@ def multiply_df_to_match_hours(reduced_df):
     return yearly_df
 
 if __name__ == '__main__':
-    path_to_case = 'C:\\SG_cases\\SDC'
+    path_to_case = 'C:\\SG_cases\\SDC_small'
     main(path_to_case)
