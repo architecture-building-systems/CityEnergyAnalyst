@@ -306,8 +306,15 @@ Utilities:
     label: Test CEA
     description: Run some tests on the CEA
     interfaces: [cli, arcgis dashboard]
-    module: cea.tests.dodo
+    module: cea.tests
     parameters: [test]
+
+  - name: run-unit-tests
+    label: Unit Tests
+    description: Run all the unit tests in the cea/tests folder
+    interfaces: [test, cli]
+    module: cea.tests.run_unit_tests
+    parameters: []
 
 default:
   - name: create-new-project
