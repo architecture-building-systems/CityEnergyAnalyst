@@ -17,7 +17,7 @@ weather_files = {'ABU': 'ABU_DHABI_TC-hourEPW.epw',
 
 for case in cases:
     # read weather file
-    weather_folder = 'C:\\CEA_cases\\weather\\Weather_Converter'
+    weather_folder = 'C:\\CEA_cases\\0_weather_databases\\Weather_Converter'
     file_name = weather_files[case.split('_')[0]]
     weather_path = os.path.join(weather_folder,file_name)
     weather_data = epwreader.epw_reader(weather_path)
