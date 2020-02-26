@@ -1,0 +1,13 @@
+- script: create-new-project
+- config: .
+  "general:scenario-name": "${cea_workflow_scenario}"
+- script: data-initializer
+  parameters:
+    databases-path: SG
+
+- script: archetypes-mapper
+
+- script: weather-helper
+  parameters:
+    weather: Singapore-Changi_2030_AB1_TMY
+- script: terrain-helper

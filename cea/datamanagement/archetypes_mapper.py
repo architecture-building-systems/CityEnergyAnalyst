@@ -13,12 +13,14 @@ import warnings
 
 import numpy as np
 import pandas as pd
+from shutil import copyfile
 
 import cea.config
 import cea.inputlocator
 from cea import InvalidOccupancyNameException
 from cea.datamanagement.schedule_helper import calc_mixed_schedule
 from cea.utilities.dbf import dbf_to_dataframe, dataframe_to_dbf
+
 
 
 __author__ = "Jimeno A. Fonseca"
@@ -168,7 +170,7 @@ def supply_mapper(locator, building_typology_df):
               'type_hs',
               'type_dhw',
               'type_el']
-    dataframe_to_dbf(prop_supply_df[fields], locator.get_building_supply())
+    copyfile(r'C:\Users\HHM\Desktop\MVP\inputs\supply_systems.dbf', locator.get_building_supply())
 
 def aircon_mapper(locator, typology_df):
     air_conditioning_DB = pd.read_excel(locator.get_database_construction_standards(), 'HVAC_ASSEMBLIES')
@@ -210,8 +212,7 @@ def architecture_mapper(locator, typology_df):
               'type_wall',
               'type_win',
               'type_shade']
-    dataframe_to_dbf(prop_architecture_df[fields], locator.get_building_architecture())
-
+    copyfile(r'C:\Users\HHM\Desktop\MVP\inputs\architecture.dbf', locator.get_building_architecture())
 
 def get_list_of_uses_in_case_study(building_typology_df):
     """

@@ -1,0 +1,7 @@
+
+
+- script: archetypes-mapper
+
+- script: weather-helper
+  parameters:
+    weather: Singapore-Changi_2030_AB1_TMY

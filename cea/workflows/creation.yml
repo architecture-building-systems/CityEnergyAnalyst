@@ -1,0 +1,7 @@
+- script: create-new-project
+- config: .
+  "general:scenario-name": "${cea_workflow_scenario}"
+- script: data-initializer
+  parameters:
+    databases-path: SG
+- script: terrain-helper
