@@ -1,3 +1,13 @@
+- 2020-02-27 - 2.31.0 - #2613 Database editor choice type
+- 2020-02-27 - 2.31.0 - #2610 ConfigParser error in workflow
+- 2020-02-27 - 2.31.0 - #2611 Fix to decentralized optimization script
+- 2020-02-27 - 2.31.0 - #2609 suppress DEBUG logging from matplotlib et al when multiprocessing radiation
+- 2020-02-27 - 2.31.0 - #2607 2541 documentation refactoring
+- 2020-02-25 - 2.31.0 - #2604 2595 2594 update reference cases
+- 2020-02-25 - 2.31.0 - #2603 Supply system bugfixes
+- 2020-02-25 - 2.31.0 - #2602 fix to systems costs
+- 2020-02-25 - 2.31.0 - #2599 update pip, skipping over the broken version of pip
+- 2020-02-21 - 2.31.0 - #2592 Release 2.31.0
 - 2020-02-21 - 2.30.0 - #2590 2586 add electric vehicles and embodied emissions as part of construction
 - 2020-02-21 - 2.30.0 - #2588 2586 plot fixes
 - 2020-02-21 - 2.30.0 - #2587 fixes to database
