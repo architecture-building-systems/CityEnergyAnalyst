@@ -36,8 +36,9 @@ class Configuration(object):
         self.sections = collections.OrderedDict([(section_name, Section(section_name, self))
                                                  for section_name in self.default_config.sections()])
 
-        # update cea.config with new options
-        self.save(config_file)
+        # Only write user config if it does not exist
+        if not os.path.exists(CEA_CONFIG):
+            self.save(config_file)
 
     def __getattr__(self, item):
         """Return either a Section object or the value of a Parameter"""
