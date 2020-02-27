@@ -1,5 +1,3 @@
-:orphan:
-
 Installation guide for Windows
 ==============================
 
@@ -14,7 +12,7 @@ Follow these instructions to install the CityEnergyAnalyst (CEA) on a Windows sy
 
 .. note:: For previous releases please check `here <https://github.com/architecture-building-systems/CityEnergyAnalyst/releases/>`__.
 
-.. note:: To install from the source check :doc:`here <installation-on-windows-manual>`
+.. note:: To install from the source check :doc:`here <installation/installation-on-windows-manual>`
 
 Interfaces
 ~~~~~~~~~~
@@ -64,10 +62,11 @@ In order to install the interface for Rhino/Grasshopper do:
 ArcGIS
 -------
 
-.. attention:: We ended support of Arcigs by the 1st of May of 2019. This means that there are not anymore
+.. attention:: We have ended support for the ArcGIS interface on 1st May 2019 and would not be providing any further
                tutorials nor advice on how to use this interface. You could still use this interface at your own risk.
-               We invite all CEA users to get acquainted with the CEA Dashboard. The CEA dashboard is our new 100% open source user interface.
-               We will aim to create a first tutorial on how to use this interface by mid-april of 2019.
+               We invite all CEA users to get acquainted with the CEA Dashboard. The CEA dashboard is our new
+               100% open source user interface.
+               We will aim to create a first tutorial on how to use this interface by mid-April 2019.
 
 In order to install the interface for ArcGIS do:
 

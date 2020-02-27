@@ -5,8 +5,8 @@ Being Agile with CEA
    :maxdepth: 2
    :caption: Contents
 
-   roles
-   user-personas
-   how-to-create-user-stories.rst
-   activities
-   communication
+   agile-with-CEA/roles
+   agile-with-CEA/user-personas
+   agile-with-CEA/how-to-create-user-stories.rst
+   agile-with-CEA/activities
+   agile-with-CEA/communication

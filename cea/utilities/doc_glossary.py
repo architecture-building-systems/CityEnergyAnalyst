@@ -46,11 +46,13 @@ def main(_):
                 details.add((locator_method, file_name))
         # if the locator_method references an input file
         # it should have been created by no script (i.e. used_by = empty list)
-        if schema[locator_method]['created_by'] == []:
-            input_locator_methods.add((locator_method, '-' * len(locator_method),str(schema[locator_method]['used_by'])))
+        if not schema[locator_method]['created_by']:
+            input_locator_methods.add(
+                (locator_method, '-' * len(locator_method), str(schema[locator_method]['used_by'])))
         # otherwise the locator_method references an output file
         else:
-            output_locator_methods.add((locator_method, '-' * len(locator_method), str(schema[locator_method]['used_by'])))
+            output_locator_methods.add(
+                (locator_method, '-' * len(locator_method), str(schema[locator_method]['used_by'])))
 
     input_locator_methods = sorted(input_locator_methods)
     output_locator_methods = sorted(output_locator_methods)
@@ -79,14 +81,14 @@ def main(_):
     # create the input_files.rst based of jinja2 template in docs/templates
     template_path = os.path.join(documentation_dir, 'templates', 'glossary.rst')
     template = Template(open(template_path, 'r').read())
-    output = template.render(headers=input_locator_methods, tuples=glossary_data, details=details)
+    output = template.render(locators=input_locator_methods, glossary_data=glossary_data, details=details)
     with open(os.path.join(documentation_dir,'input_methods.rst'), 'w') as gloss:
         gloss.write(output)
 
     # create the output_files.rst based of jinja2 template in docs/templates
     template_path = os.path.join(documentation_dir, 'templates', 'glossary.rst')
     template = Template(open(template_path, 'r').read())
-    output = template.render(headers=output_locator_methods, tuples=glossary_data, details=details)
+    output = template.render(locators=output_locator_methods, glossary_data=glossary_data, details=details)
     with open(os.path.join(documentation_dir,'output_methods.rst'), 'w') as gloss:
         gloss.write(output)
 
