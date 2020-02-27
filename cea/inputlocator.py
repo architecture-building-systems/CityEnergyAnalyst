@@ -26,7 +26,7 @@ class InputLocator(object):
     # SCENARIO
     def __init__(self, scenario):
         self.scenario = scenario
-        self.db_path = os.path.join(os.path.dirname(__file__), 'databases')
+        self.db_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'databases'))
         self.weather_path = os.path.join(self.db_path, 'weather')
 
     @staticmethod
@@ -353,16 +353,12 @@ class InputLocator(object):
         return os.path.join(self.get_optimization_decentralized_folder(),
                             'DiscOp_' + buildingname + '_result_heating_activation.csv')
 
-    def get_optimization_network_results_summary(self, network_type, key):
+    def get_optimization_network_results_summary(self, network_type, district_network_barcode):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        district_network_barcode_hex = hex(int(str(district_network_barcode), 2))
         path = os.path.join(self.get_optimization_network_results_folder(),
-                                network_type + '_' + 'Network_summary_result_' + hex(int(str(key), 2)) + '.csv')
+                            network_type + '_' + 'Network_summary_result_' + district_network_barcode_hex + '.csv')
         return path
-
-    def get_optimization_network_totals_folder_total(self, network_type, indCombi):
-        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
-        return os.path.join(self.get_optimization_network_totals_folder(),
-                            network_type + '_' + "Total_" + hex(int(str(indCombi), 2)) + ".csv")
 
     def get_optimization_network_results_folder(self):
         """scenario/outputs/data/optimization/network
@@ -492,14 +488,18 @@ class InputLocator(object):
 
     def get_optimization_substations_results_file(self, building_name, network_type_code, district_network_barcode):
         """scenario/outputs/data/optimization/substations/${building_name}_result.csv"""
+        if district_network_barcode == "":
+            district_network_barcode = "0"
         district_network_barcode_hex = hex(int(str(district_network_barcode), 2))
         return os.path.join(self.get_optimization_substations_folder(),
                             "%(district_network_barcode_hex)s%(network_type_code)s_%(building_name)s_result.csv" % locals())
 
-    def get_optimization_substations_total_file(self, genome, network_type):
+    def get_optimization_substations_total_file(self, district_network_barcode, network_type):
         """scenario/outputs/data/optimization/substations/Total_${genome}.csv"""
-        genome_hex = hex(int(str(genome), 2))
-        return os.path.join(self.get_optimization_substations_folder(),"Total_%(network_type)s_%(genome_hex)s.csv" % locals())
+        if district_network_barcode == "":
+            district_network_barcode = "0"
+        district_network_barcode_hex = hex(int(str(district_network_barcode), 2))
+        return os.path.join(self.get_optimization_substations_folder(),"Total_%(network_type)s_%(district_network_barcode_hex)s.csv" % locals())
 
     def get_optimization_clustering_folder(self):
         """scenario/outputs/data/optimization/clustering_sax

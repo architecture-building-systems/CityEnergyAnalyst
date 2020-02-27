@@ -198,6 +198,18 @@ class Database(Resource):
             abort(500, e.message)
 
 
+def convert_path_to_name(schema_dict):
+    import cea.inputlocator
+    locator = cea.inputlocator.InputLocator('')
+    for sheet_name, variable in schema_dict.items():
+        for variable_name, schema in variable.items():
+            if 'choice' in schema and 'lookup' in schema['choice']:
+                database_path = locator.__getattribute__(schema['choice']['lookup']['path'])()
+                schema['choice']['lookup']['database_category'] = os.path.basename(os.path.dirname(database_path))
+                schema['choice']['lookup']['database_name'] = os.path.basename(os.path.splitext(database_path)[0])
+    return schema_dict
+
+
 @api.route("/schema/<string:db>")
 class DatabaseSchema(Resource):
     def get(self, db):
@@ -212,7 +224,7 @@ class DatabaseSchema(Resource):
                     if db_name == 'USE_TYPES':
                         out[db_type][db_name] = schemas['get_database_standard_schedules_use']['schema']
                     else:
-                        out[db_type][db_name] = schemas[db_props['schema_key']]['schema']
+                        out[db_type][db_name] = convert_path_to_name(schemas[db_props['schema_key']]['schema'])
             return out
         elif db in DATABASE_NAMES:
             if db == 'USE_TYPES':

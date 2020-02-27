@@ -9,6 +9,9 @@ into 3D geometry with windows and roof equivalent to LOD3
 from __future__ import division
 from __future__ import print_function
 
+import cea
+cea.suppres_3rd_party_debug_loggers()
+
 import math
 import os
 import sys
@@ -270,7 +273,6 @@ def print_progress(i, n, args, result):
 
 
 def calc_building_geometry_zone(name, building_solid, data_preprocessed):
-
     # now get all surfaces and create windows only if the buildings are in the area of study
     window_list = []
     wall_list = []
