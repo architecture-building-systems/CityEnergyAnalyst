@@ -62,11 +62,11 @@ In order to install the interface for Rhino/Grasshopper do:
 ArcGIS
 -------
 
-.. attention:: We ended support of ArcGIS by the 1st of May of 2019. This means that do not provide any
+.. attention:: We have ended support for the ArcGIS interface on 1st May 2019 and would not be providing any further
                tutorials nor advice on how to use this interface. You could still use this interface at your own risk.
                We invite all CEA users to get acquainted with the CEA Dashboard. The CEA dashboard is our new
                100% open source user interface.
-               We will aim to create a first tutorial on how to use this interface by mid-april of 2019.
+               We will aim to create a first tutorial on how to use this interface by mid-April 2019.
 
 In order to install the interface for ArcGIS do:
 
