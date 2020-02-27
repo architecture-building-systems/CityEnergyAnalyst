@@ -7,6 +7,9 @@ import os
 import cea
 import cea.inputlocator
 
+SCRIPTS_PICKLE = os.path.abspath(os.path.join(os.path.dirname(cea.__file__), 'scripts.pickle'))
+SCRIPTS_YML = os.path.abspath(os.path.join(os.path.dirname(cea.__file__), 'scripts.yml'))
+
 
 class CeaScript(object):
     def __init__(self, script_dict, category):
@@ -85,15 +88,13 @@ class CeaScript(object):
 def _get_categories_dict():
     """Load the categories -> [script] mapping either from the YAML file or, in the case of arcgis / grasshopper,
     which don't support YAML, load from a pickled version generated on the call to ``cea install-toolbox``."""
-    scripts_yml = os.path.join(os.path.dirname(cea.__file__), 'scripts.yml')
-    scripts_pickle = os.path.join(os.path.dirname(cea.__file__), 'scripts.pickle')
     try:
         import yaml
         from cea.utilities.yaml_ordered_dict import OrderedDictYAMLLoader
-        categories = yaml.load(open(scripts_yml), OrderedDictYAMLLoader)
+        categories = yaml.load(open(SCRIPTS_YML), OrderedDictYAMLLoader)
     except ImportError:
         import pickle
-        categories = pickle.load(open(scripts_pickle))
+        categories = pickle.load(open(SCRIPTS_PICKLE))
     return categories
 
 
