@@ -1,0 +1,27 @@
+- config: .
+  "general:multiprocessing": on
+  "radiation:daysim-bin-directory": "${CEA_radiation_daysim-bin-directory}"
+- script: run-unit-tests
+- script: extract-reference-case
+  parameters:
+    destination: "{general:project}/.."
+    case: open
+- config: .
+  "general:scenario-name": baseline
+- script: data-initializer
+  parameters:
+    databases-path: CH
+    databases: [archetypes, assemblies, components]
+- script: archetypes-mapper
+  parameters:
+    input-databases: [comfort, architecture, air-conditioning, internal-loads, supply, schedules]
+- script: weather-helper
+  parameters:
+    weather: Zug_inducity_2009
+- script: schedule-maker
+- script: demand
+- script: emissions
+- script: system-costs
+- script: water-body-potential
+- script: sewage-potential
+- script: shallow-geothermal-potential

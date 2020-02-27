@@ -10,8 +10,10 @@ Install and set up
 
 CEA can be installed in Windows, Ubuntu and on the computer cluster of the ETH Zurich Euler. The latter is only available for students and faculty  of the ETH Zurich.
 
-- :doc:`installation-on-windows`.
-- :doc:`installation-on-euler`.
+.. toctree::
+
+    installation/installation-on-windows
+    installation/installation-on-euler
 
 
 Cite

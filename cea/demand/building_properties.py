@@ -270,7 +270,7 @@ class BuildingProperties(object):
             data = prov({'class_hs':hvac_temperatures.loc[building, 'class_hs'], 'class_cs': hvac_temperatures.loc[building, 'class_cs']})
             has_system_heating_flag = has_heating_system(data)
             has_system_cooling_flag = has_cooling_system(data)
-            if has_system_heating_flag and has_system_cooling_flag and np.max([df.loc[building, 'Hs_ag'], df.loc[building, 'Hs_bg']]) > 0.0:
+            if has_system_heating_flag == False and has_system_cooling_flag == False and np.max([df.loc[building, 'Hs_ag'], df.loc[building, 'Hs_bg']]) <= 0.0:
                 df.loc[building, 'Hs_ag'] = 0.0
                 df.loc[building, 'Hs_bg'] = 0.0
                 print('Building {building} has no heating and cooling system, Hs corrected to 0.'.format(

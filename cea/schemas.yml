@@ -794,8 +794,9 @@ get_database_construction_standards:
   schema:
     STANDARD_DEFINITION:
       STANDARD:
-        sample_data: R
+        sample_data: STANDARD1
         types_found: [string]
+        primary: true
       Description:
         sample_data: UNIVERSITY
         types_found: [string]
@@ -807,8 +808,9 @@ get_database_construction_standards:
         types_found: [long]
     ENVELOPE_ASSEMBLIES:
       STANDARD:
-        sample_data: R
+        sample_data: STANDARD1
         types_found: [string]
+        primary: true
       Es:
         sample_data: 0.9
         types_found: [float]
@@ -824,27 +826,75 @@ get_database_construction_standards:
       type_cons:
         sample_data: T3
         types_found: [string]
+        choice:
+          lookup:
+            path: get_database_envelope_systems
+            sheet: CONSTRUCTION
+            column: code
       type_leak:
         sample_data: T1
         types_found: [string]
+        choice:
+          lookup:
+            path: get_database_envelope_systems
+            sheet: TIGHTNESS
+            column: code
       type_roof:
         sample_data: T4
         types_found: [string]
+        choice:
+          lookup:
+            path: get_database_envelope_systems
+            sheet: ROOF
+            column: code
       type_shade:
         sample_data: T1
         types_found: [string]
+        choice:
+          lookup:
+            path: get_database_envelope_systems
+            sheet: SHADING
+            column: code
       type_wall:
         sample_data: T5
         types_found: [string]
+        choice:
+          lookup:
+            path: get_database_envelope_systems
+            sheet: WALL
+            column: code
+      type_part:
+        sample_data: T5
+        types_found: [string]
+        choice:
+          lookup:
+            path: get_database_envelope_systems
+            sheet: WALL
+            column: code
       type_floor:
         sample_data: T5
         types_found: [string]
+        choice:
+          lookup:
+            path: get_database_envelope_systems
+            sheet: FLOOR
+            column: code
       type_base:
         sample_data: T5
         types_found: [string]
+        choice:
+          lookup:
+            path: get_database_envelope_systems
+            sheet: FLOOR
+            column: code
       type_win:
         sample_data: T4
         types_found: [string]
+        choice:
+          lookup:
+            path: get_database_envelope_systems
+            sheet: WINDOW
+            column: code
       void_deck:
         sample_data: !!python/long '0'
         types_found: [long]
@@ -862,8 +912,9 @@ get_database_construction_standards:
         types_found: [float]
     HVAC_ASSEMBLIES:
       STANDARD:
-        sample_data: R
+        sample_data: STANDARD1
         types_found: [string]
+        primary: true
       cool_ends:
         sample_data: 15|09
         types_found: [string]
@@ -877,45 +928,168 @@ get_database_construction_standards:
         sample_data: 16|09
         types_found: [string]
       standard:
-        sample_data: R
+        sample_data: STANDARD1
         types_found: [string]
+        primary: true
       type_cs:
         sample_data: T3
         types_found: [string]
+        choice:
+          lookup:
+            path: get_database_air_conditioning_systems
+            sheet: COOLING
+            column: code
       type_ctrl:
         sample_data: T3
         types_found: [string]
+        choice:
+          lookup:
+            path: get_database_air_conditioning_systems
+            sheet: CONTROLLER
+            column: code
       type_dhw:
         sample_data: T2
         types_found: [string]
+        choice:
+          lookup:
+            path: get_database_air_conditioning_systems
+            sheet: HOT_WATER
+            column: code
       type_hs:
         sample_data: T3
         types_found: [string]
+        choice:
+          lookup:
+            path: get_database_air_conditioning_systems
+            sheet: HEATING
+            column: code
       type_vent:
         sample_data: T2
         types_found: [string]
+        choice:
+          lookup:
+            path: get_database_air_conditioning_systems
+            sheet: VENTILATION
+            column: code
     SUPPLY_ASSEMBLIES:
       STANDARD:
         sample_data: R
         types_found: [string]
+        primary: true
       type_cs:
         sample_data: T19
         types_found: [string]
+        choice:
+          lookup:
+            path: get_database_supply_assemblies
+            sheet: COOLING
+            column: code
       type_dhw:
         sample_data: T3
         types_found: [string]
+        choice:
+          lookup:
+            path: get_database_supply_assemblies
+            sheet: HOT_WATER
+            column: code
       type_el:
         sample_data: T24
         types_found: [string]
+        choice:
+          lookup:
+            path: get_database_supply_assemblies
+            sheet: ELECTRICITY
+            column: code
       type_hs:
         sample_data: T3
         types_found: [string]
+        choice:
+          lookup:
+            path: get_database_supply_assemblies
+            sheet: HEATING
+            column: code
       year_end:
         sample_data: !!python/long '2030'
         types_found: [long]
       year_start:
         sample_data: !!python/long '2021'
         types_found: [long]
+  used_by: [archetypes_mapper]
+get_database_use_types_properties:
+  created_by: []
+  file_path: inputs/technology/archetypes/use_types/USE_TYPE_PROPERTIES.xlsx
+  file_type: xls
+  schema:
+    INTERNAL_LOADS:
+      code:
+        sample_data: MULTI_RES
+        types_found: [string]
+        primary: true
+      Occ_m2pax:
+        sample_data: 30.0
+        types_found: [float]
+      Qs_Wpax:
+        sample_data: 70.0
+        types_found: [float]
+      X_ghpax:
+        sample_data: 80.0
+        types_found: [float]
+      Ea_Wm2:
+        sample_data: 8.0
+        types_found: [float]
+      El_Wm2:
+        sample_data: 2.7
+        types_found: [float]
+      Epro_Wm2:
+        sample_data: 0.0
+        types_found: [float]
+      Ed_Wm2:
+        sample_data: 0.0
+        types_found: [float]
+      Vww_lpdpax:
+        sample_data: 35.0
+        types_found: [float]
+      Vw_lpdpax:
+        sample_data: 140.0
+        types_found: [float]
+      Qcre_Wm2:
+        sample_data: 0.0
+        types_found: [float]
+      Qhpro_Wm2:
+        sample_data: 0.0
+        types_found: [float]
+      Qcpro_Wm2:
+        sample_data: 0.0
+        types_found: [float]
+      Ev_kWveh:
+        sample_data: 0.0
+        types_found: [float]
+    INDOOR_COMFORT:
+      code:
+        sample_data: MULTI_RES
+        types_found: [string]
+        primary: true
+      Tcs_set_C:
+        sample_data: 26.0
+        types_found: [float]
+      Ths_set_C:
+        sample_data: 21.0
+        types_found: [float]
+      Tcs_setb_C:
+        sample_data: 28.0
+        types_found: [float]
+      Ths_setb_C:
+        sample_data: 18.0
+        types_found: [float]
+      Ve_lpspax:
+        sample_data: 8.3
+        types_found: [float]
+      RH_min_pc:
+        sample_data: 30.0
+        types_found: [float]
+      RH_max_pc:
+        sample_data: 60.0
+        types_found: [float]
   used_by: [archetypes_mapper]
 get_building_air_conditioning:
   created_by: [archetypes_mapper]
@@ -1088,62 +1262,41 @@ get_building_internal:
       sample_data: 80.0
       types_found: [float]
   used_by: [demand, schedule_maker]
-get_building_occupancy:
+get_building_typology:
   created_by: []
-  file_path: inputs/building-properties/occupancy.dbf
+  file_path: inputs/building-properties/typology.dbf
   file_type: dbf
   schema:
-    COOLROOM:
+    YEAR:
+      sample_data: !!python/long '2017'
+      types_found: [long]
+    STANDARD:
+      sample_data: STANDARD0
+      types_found: [string]
+    1st_USE:
+      sample_data: OFFICE
+      types_found: [float]
+    1st_USE_R:
       sample_data: 0.0
       types_found: [float]
-    FOODSTORE:
+    2nd_USE:
+      sample_data: OFFICE
+      types_found: [string]
+    2nd_USE_R:
       sample_data: 0.0
       types_found: [float]
-    GYM:
-      sample_data: 0.0
-      types_found: [float]
-    HOSPITAL:
-      sample_data: 0.0
-      types_found: [float]
-    HOTEL:
-      sample_data: 0.0
-      types_found: [float]
-    INDUSTRIAL:
-      sample_data: 0.0
-      types_found: [float]
-    LIBRARY:
-      sample_data: 0.0
-      types_found: [float]
-    MULTI_RES:
+    3rd_USE:
+      sample_data: RETAIL
+      types_found: [string]
+    3rd_USE_R:
       sample_data: 0.0
       types_found: [float]
     Name:
       sample_data: B09
       types_found: [string]
-    OFFICE:
-      sample_data: 0.5
-      types_found: [float]
-    PARKING:
-      sample_data: 0.5
-      types_found: [float]
-    RESTAURANT:
-      sample_data: 0.0
-      types_found: [float]
-    RETAIL:
-      sample_data: 0.0
-      types_found: [float]
-    SCHOOL:
-      sample_data: 0.0
-      types_found: [float]
-    SERVERROOM:
-      sample_data: 0.0
-      types_found: [float]
-    SINGLE_RES:
-      sample_data: 0.0
-      types_found: [float]
-    SWIMMING:
-      sample_data: 0.0
-      types_found: [float]
+    REFERENCE:
+      sample_data: User asumption
+      types_found: [string]
   used_by: [archetypes_mapper, demand, emissions]
 get_building_supply:
   created_by: [archetypes_mapper]
@@ -1316,6 +1469,7 @@ get_database_air_conditioning_systems:
       code:
         sample_data: T4
         types_found: [string]
+        primary: true
       dT_Qcs:
         sample_data: 1.8
         types_found: [float]
@@ -1352,6 +1506,7 @@ get_database_air_conditioning_systems:
       code:
         sample_data: T5
         types_found: [string]
+        primary: true
       dTcs0_ahu_C:
         sample_data: 7.0
         types_found: [float, null]
@@ -1377,6 +1532,7 @@ get_database_air_conditioning_systems:
       code:
         sample_data: T4
         types_found: [string]
+        primary: true
     HEATING:
       Description:
         sample_data: 'Floor heating (40/35) '
@@ -1407,6 +1563,7 @@ get_database_air_conditioning_systems:
       code:
         sample_data: T4
         types_found: [string]
+        primary: true
       dThs0_ahu_C:
         sample_data: 20.0
         types_found: [float, null]
@@ -1441,6 +1598,7 @@ get_database_air_conditioning_systems:
       code:
         sample_data: T3
         types_found: [string]
+        primary: true
   used_by: [demand]
 get_database_envelope_systems:
   created_by: []
@@ -1457,6 +1615,7 @@ get_database_envelope_systems:
       code:
         sample_data: T3
         types_found: [string]
+        primary: true
     TIGHTNESS:
       Description:
         sample_data: Very Leaky
@@ -1464,6 +1623,7 @@ get_database_envelope_systems:
       code:
         sample_data: T6
         types_found: [string]
+        primary: true
       n50:
         sample_data: !!python/long '6'
         types_found: [long]
@@ -1480,6 +1640,7 @@ get_database_envelope_systems:
       code:
         sample_data: T7
         types_found: [string]
+        primary: true
       e_roof:
         sample_data: 0.94
         types_found: [float]
@@ -1496,6 +1657,7 @@ get_database_envelope_systems:
       code:
         sample_data: T2
         types_found: [string]
+        primary: true
       rf_sh:
         sample_data: 0.15
         types_found: [float]
@@ -1512,6 +1674,7 @@ get_database_envelope_systems:
       code:
         sample_data: T6
         types_found: [string]
+        primary: true
       e_wall:
         sample_data: 0.95
         types_found: [float]
@@ -1537,6 +1700,7 @@ get_database_envelope_systems:
       code:
         sample_data: T10
         types_found: [string]
+        primary: true
       e_win:
         sample_data: 0.89
         types_found: [float]
@@ -1553,6 +1717,7 @@ get_database_envelope_systems:
       code:
         sample_data: T10
         types_found: [string]
+        primary: true
       GHG_FLOOR_kgCO2m2:
         sample_data: 100
         types_found: [float]
@@ -1734,6 +1899,7 @@ get_database_supply_assemblies:
       code:
         sample_data: T25
         types_found: [date, string]
+        primary: true
       efficiency:
         sample_data: 0.99
         types_found: [float]
@@ -1772,6 +1938,7 @@ get_database_supply_assemblies:
       code:
         sample_data: T25
         types_found: [date, string]
+        primary: true
       efficiency:
         sample_data: 0.99
         types_found: [float]
@@ -1810,6 +1977,7 @@ get_database_supply_assemblies:
       code:
         sample_data: T25
         types_found: [date, string]
+        primary: true
       efficiency:
         sample_data: 0.99
         types_found: [float]
@@ -1848,6 +2016,7 @@ get_database_supply_assemblies:
       code:
         sample_data: T25
         types_found: [date, string]
+        primary: true
       efficiency:
         sample_data: 0.99
         types_found: [float]
@@ -2191,19 +2360,6 @@ get_database_conversion_systems:
       unit:
         sample_data: W
         types_found: [string]
-    DETAILED_ELEC_COSTS:
-      Opex_var_buy_USD2015kWh:
-        sample_data: 0.04936071505496888
-        types_found: [float]
-      Opex_var_sell_USD2015kWh:
-        sample_data: 0.04936071505496888
-        types_found: [float]
-      hour:
-        sample_data: !!python/long '8759'
-        types_found: [long]
-      year:
-        sample_data: !!python/long '2017'
-        types_found: [long]
     FC:
       ' Assumptions':
         sample_data: everything
@@ -2482,6 +2638,8 @@ get_database_conversion_systems:
       type:
         sample_data: PV
         types_found: [string]
+        choice:
+          values: [PV]
       unit:
         sample_data: W
         types_found: [string]
