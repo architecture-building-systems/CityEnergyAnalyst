@@ -49,8 +49,11 @@ class SupplySystemMapPlot(cea.plots.supply_system.SupplySystemPlotBase):
         super(SupplySystemMapPlot, self).__init__(project, parameters, cache)
         self.scenario = self.parameters['scenario-name']
         self.config = cea.config.Configuration()
-        self.input_files = [(self.locator.get_optimization_slave_building_connectivity,
-                             [self.individual, self.generation])] if self.individual != 'today' else []
+        self.input_files = [
+            (self.locator.get_optimization_slave_building_connectivity, [self.individual, self.generation])
+        ] if self.individual != 'today' else [
+            (self.locator.get_building_supply, [])
+        ]
 
     @property
     def title(self):
