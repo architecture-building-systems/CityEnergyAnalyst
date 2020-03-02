@@ -210,6 +210,14 @@ def calculate_typology_file(locator, zone_df, year_construction, occupancy_type,
     fields = COLUMNS_ZONE_TYPOLOGY
     dataframe_to_dbf(typology_df[fields+['REFERENCE']], occupancy_output_path)
 
+def cast_year(year):
+    try:
+        if year.split('-'):
+            return year.split('-')[0]
+        else:
+            return year
+    except:
+        raise Exception("We could not cast the value",year)
 
 def calculate_age(zone_df, year_construction):
     """
@@ -231,7 +239,7 @@ def calculate_age(zone_df, year_construction):
         else:
             zone_df['REFERENCE'] = ["OSM - median" if x is np.nan else "OSM - as it is" for x in zone_df['start_date']]
 
-        data_floors_sum_with_nan = [np.nan if x is np.nan else int(x) for x in zone_df['start_date']]
+        data_floors_sum_with_nan = [np.nan if x is np.nan else int(cast_year(x)) for x in zone_df['start_date']]
         data_osm_floors_joined = int(math.ceil(np.nanmedian(data_floors_sum_with_nan)))  # median so we get close to the worse case
         zone_df["YEAR"] = [int(x) if x is not np.nan else data_osm_floors_joined for x in data_floors_sum_with_nan]
     else:
