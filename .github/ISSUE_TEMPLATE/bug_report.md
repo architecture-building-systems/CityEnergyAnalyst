@@ -23,6 +23,6 @@ A clear and concise description of what you expected to happen.
 **Screenshots**
 If applicable, add screenshots to help explain your problem.
 
-**Desktop (please complete the following information):**
- - OS: [e.g. iOS]
- - Version [e.g. 22]
+**Hardware (please complete the following information):**
+ - OS and version: [e.g. iOS 10.7 or Windows 10]
+ - Version of CEA you are using [e.g. v. 2.31.1]
