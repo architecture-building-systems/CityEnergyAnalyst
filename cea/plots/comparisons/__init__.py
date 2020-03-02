@@ -68,41 +68,92 @@ class ComparisonsPlotBase(cea.plots.PlotBase):
             if generation == "today":
                 data_building_costs = pd.read_csv(locator_scenario.get_costs_operation_file())
                 data_raw_df = pd.DataFrame(data_building_costs.sum(axis=0)).T
-                data_raw_df['scenario_name'] = scenario_name+"<br>"+"sys_"+"today"
-                data_raw_df = self.normalize_data(data_raw_df, self.normalization, self.analysis_fields)
+                data_raw_df = self.normalize_data_costs(data_raw_df, self.normalization, self.analysis_fields)
             else:
                 data_raw_df = pd.read_csv(locator_scenario.get_optimization_slave_total_performance(individual, generation))
-                data_raw_df = self.normalize_data(data_raw_df, self.normalization, self.analysis_fields)
-                data_raw_df['scenario_name'] = scenario_name+"<br>"+"sys_"+generation+"_"+individual
+                data_raw_df = self.normalize_data_costs(data_raw_df, self.normalization, self.analysis_fields)
 
             data_raw_df['scenario_name'] = scenario_and_system
             data_processed = pd.concat([data_processed, data_raw_df], sort=True, ignore_index=True)
         return data_processed
 
-    def normalize_data(self, data_processed, normalization, analysis_fields):
+    @cea.plots.cache.cached
+    def preprocessing_annual_emissions_scenarios(self):
+        # Import multi-criteria data
+        # local variables
+        data_processed = pd.DataFrame()
+        for scenario_and_system, scenario_name, generation, individual, locator_scenario in self.scenarios_and_systems:
+            # get data
+            path_to_scenario = os.path.join(self.project, scenario_name)
+            locator_scenario = cea.inputlocator.InputLocator(path_to_scenario)
+
+            if generation == "today":
+                data_building_emissions = pd.read_csv(locator_scenario.get_lca_operation()).sum(axis=0)
+                data_building_emissions['GHG_sys_embodied_tonCO2'] = pd.read_csv(self.locator.get_lca_embodied())['GHG_sys_embodied_tonCO2'].sum()
+                data_raw_df = pd.DataFrame(data_building_emissions).T
+                data_raw_df = self.normalize_data_emissions(data_raw_df, self.normalization, self.analysis_fields)
+            else:
+                data_raw_df = pd.read_csv(locator_scenario.get_optimization_slave_total_performance(individual, generation))
+                data_raw_df = self.normalize_data_emissions(data_raw_df, self.normalization, self.analysis_fields)
+
+            data_raw_df['scenario_name'] = scenario_and_system
+            data_processed = pd.concat([data_processed, data_raw_df], sort=True, ignore_index=True)
+        return data_processed
+
+    def normalize_data_costs(self, data_processed, normalization, analysis_fields):
         if normalization == "gross floor area":
             data = pd.read_csv(self.locator.get_total_demand())
             normalizatioon_factor = sum(data['GFA_m2'])
             data_processed = data_processed.apply(
                 lambda x: x / normalizatioon_factor if x.name in analysis_fields else x)
-            data_processed['GHG_sys_tonCO2'] = data_processed['GHG_sys_tonCO2'] * 1000  # convert to kg
         elif normalization == "net floor area":
             data = pd.read_csv(self.locator.get_total_demand())
             normalizatioon_factor = sum(data['Aocc_m2'])
             data_processed = data_processed.apply(
                 lambda x: x / normalizatioon_factor if x.name in analysis_fields else x)
-            data_processed['GHG_sys_tonCO2'] = data_processed['GHG_sys_tonCO2'] * 1000  # convert to kg
         elif normalization == "air conditioned floor area":
             data = pd.read_csv(self.locator.get_total_demand())
             normalizatioon_factor = sum(data['Af_m2'])
             data_processed = data_processed.apply(
                 lambda x: x / normalizatioon_factor if x.name in analysis_fields else x)
-            data_processed['GHG_sys_tonCO2'] = data_processed['GHG_sys_tonCO2'] * 1000  # convert to kg
         elif normalization == "building occupancy":
             data = pd.read_csv(self.locator.get_total_demand())
             normalizatioon_factor = sum(data['people0'])
             data_processed = data_processed.apply(
                 lambda x: x / normalizatioon_factor if x.name in analysis_fields else x)
-            data_processed['GHG_sys_tonCO2'] = data_processed['GHG_sys_tonCO2'] * 1000  # convert to kg
+        return data_processed
 
+    def normalize_data_emissions(self, data_processed, normalization, analysis_fields):
+        if normalization == "gross floor area":
+            data = pd.read_csv(self.locator.get_total_demand())
+            normalizatioon_factor = sum(data['GFA_m2'])
+            data_processed = data_processed.apply(
+                lambda x: x / normalizatioon_factor if x.name in analysis_fields else x)
+            data_processed['GHG_sys_connected_tonCO2'] = data_processed['GHG_sys_connected_tonCO2'] * 1000  # convert to kg
+            data_processed['GHG_sys_disconnected_tonCO2'] = data_processed['GHG_sys_disconnected_tonCO2'] * 1000  # convert to kg
+            data_processed['GHG_sys_embodied_tonCO2'] = data_processed['GHG_sys_embodied_tonCO2'] * 1000  # convert to kg
+        elif normalization == "net floor area":
+            data = pd.read_csv(self.locator.get_total_demand())
+            normalizatioon_factor = sum(data['Aocc_m2'])
+            data_processed = data_processed.apply(
+                lambda x: x / normalizatioon_factor if x.name in analysis_fields else x)
+            data_processed['GHG_sys_connected_tonCO2'] = data_processed['GHG_sys_connected_tonCO2'] * 1000  # convert to kg
+            data_processed['GHG_sys_disconnected_tonCO2'] = data_processed['GHG_sys_disconnected_tonCO2'] * 1000  # convert to kg
+            data_processed['GHG_sys_embodied_tonCO2'] = data_processed['GHG_sys_embodied_tonCO2'] * 1000  # convert to kg
+        elif normalization == "air conditioned floor area":
+            data = pd.read_csv(self.locator.get_total_demand())
+            normalizatioon_factor = sum(data['Af_m2'])
+            data_processed = data_processed.apply(
+                lambda x: x / normalizatioon_factor if x.name in analysis_fields else x)
+            data_processed['GHG_sys_connected_tonCO2'] = data_processed['GHG_sys_connected_tonCO2'] * 1000  # convert to kg
+            data_processed['GHG_sys_disconnected_tonCO2'] = data_processed['GHG_sys_disconnected_tonCO2'] * 1000  # convert to kg
+            data_processed['GHG_sys_embodied_tonCO2'] = data_processed['GHG_sys_embodied_tonCO2'] * 1000  # convert to kg
+        elif normalization == "building occupancy":
+            data = pd.read_csv(self.locator.get_total_demand())
+            normalizatioon_factor = sum(data['people0'])
+            data_processed = data_processed.apply(
+                lambda x: x / normalizatioon_factor if x.name in analysis_fields else x)
+            data_processed['GHG_sys_connected_tonCO2'] = data_processed['GHG_sys_connected_tonCO2'] * 1000  # convert to kg
+            data_processed['GHG_sys_disconnected_tonCO2'] = data_processed['GHG_sys_disconnected_tonCO2'] * 1000  # convert to kg
+            data_processed['GHG_sys_embodied_tonCO2'] = data_processed['GHG_sys_embodied_tonCO2'] * 1000  # convert to kg
         return data_processed
