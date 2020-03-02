@@ -63,8 +63,6 @@ class ComparisonsAnnualCostsPlot(cea.plots.comparisons.ComparisonsPlotBase):
 
     def calc_graph(self):
         data = self.preprocessing_annual_costs_scenarios()
-        data = self.normalize_data(data, self.normalization, self.analysis_fields)
-        self.data_clean = data
         graph = []
         for field in self.analysis_fields:
             y = data[field].values
