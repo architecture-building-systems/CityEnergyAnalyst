@@ -28,7 +28,7 @@ class ComparisonsAnnualEmissionsPlot(cea.plots.comparisons.ComparisonsPlotBase):
                                 ]
         self.normalization = self.parameters['normalization']
         self.input_files = [(x[4].get_optimization_slave_total_performance, [x[3], x[2]]) if x[2] != "today" else
-                            (x[4].get_costs_operation_file, []) for x in self.scenarios_and_systems]
+                            (x[4].get_lca_embodied, []) for x in self.scenarios_and_systems]
         self.titley = self.calc_titles()
 
     def calc_titles(self):
