@@ -50,8 +50,10 @@ class SupplySystemMapPlot(cea.plots.supply_system.SupplySystemPlotBase):
         self.scenario = self.parameters['scenario-name']
         self.config = cea.config.Configuration()
         self.input_files = [
+            (self.locator.get_street_network, []),
             (self.locator.get_optimization_slave_building_connectivity, [self.individual, self.generation])
         ] if self.individual != 'today' else [
+            (self.locator.get_street_network, []),
             (self.locator.get_building_supply, [])
         ]
 
@@ -158,6 +160,8 @@ class SupplySystemMapPlot(cea.plots.supply_system.SupplySystemPlotBase):
         return data_processed
 
     def create_network_layout(self, connected_buildings, network_type, network_name):
+        # Set config to scenario of plot
+        self.config.scenario_name = self.scenario
 
         # Modify config inputs for this function
         self.config.network_layout.network_type = network_type
