@@ -210,14 +210,23 @@ def calculate_typology_file(locator, zone_df, year_construction, occupancy_type,
     fields = COLUMNS_ZONE_TYPOLOGY
     dataframe_to_dbf(typology_df[fields+['REFERENCE']], occupancy_output_path)
 
+
 def cast_year(year):
-    try:
-        if year.split('-'):
-            return year.split('-')[0]
-        else:
-            return year
-    except:
-        raise Exception("We could not cast the value",year)
+    import re
+    # `start-date` formats can be found here https://wiki.openstreetmap.org/wiki/Key:start_date#Formatting
+    if type(year) == str or type(year) == unicode:
+        # For year in `C19`
+        century_year = re.search(r'C(\d{2})', year)
+        if century_year:
+            return "{}00".format(century_year.group(1))
+        # For any four digits
+        four_digit = re.search(r'\d{4}', year)
+        if four_digit:
+            return four_digit.group(0)
+    else:
+        return year
+    raise ValueError("We could not cast the value", year)
+
 
 def calculate_age(zone_df, year_construction):
     """
