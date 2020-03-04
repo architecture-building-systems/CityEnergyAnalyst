@@ -648,15 +648,9 @@ class InputLocator(object):
     def get_surroundings_geometry(self):
         """scenario/inputs/building-geometry/surroundings.shp"""
         # NOTE: we renamed district.shp to surroundings.shp - this code will automaticaly upgrade old scenarios
-        old_file_path = os.path.join(self.get_building_geometry_folder(), 'district.shp')
-        new_file_path = os.path.join(self.get_building_geometry_folder(), 'surroundings.shp')
-        if os.path.exists(old_file_path) and not os.path.exists(new_file_path):
-            for file_extention in ['.shp', '.cpg', '.prj', '.shx', '.dbf']:
-                old_path = os.path.join(self.get_building_geometry_folder(), 'district' + file_extention)
-                new_path = os.path.join(self.get_building_geometry_folder(), 'surroundings' + file_extention)
-                os.rename(old_path, new_path)
-        self.check_cpg(new_file_path)
-        return new_file_path
+        shapefile_path = os.path.join(self.get_building_geometry_folder(), 'surroundings.shp')
+        self.check_cpg(shapefile_path)
+        return shapefile_path
 
     def check_cpg(self, shapefile_path):
         # ensures that the CPG file is the correct one

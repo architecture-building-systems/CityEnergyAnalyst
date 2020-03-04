@@ -284,6 +284,13 @@ Utilities:
     module: cea.datamanagement.data_initializer
     parameters: ['general:scenario', data-initializer]
 
+  - name: create-new-scenario
+    label: Create new scenario
+    description: Creates a new scenario
+    interfaces: [cli, dashboard]
+    module: cea.datamanagement.create_new_scenario
+    parameters: ['general:scenario', create-new-scenario]
+
   - name: rename-building
     label: Rename building
     description: Renames a building in the input files

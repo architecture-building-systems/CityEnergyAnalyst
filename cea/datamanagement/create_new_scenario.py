@@ -28,13 +28,19 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def create_new_project(locator, config):
+def create_new_scenario(locator, config):
     # Local variables
-    zone_geometry_path = config.create_new_project.zone
-    surroundings_geometry_path = config.create_new_project.surroundings
-    street_geometry_path = config.create_new_project.streets
-    terrain_path = config.create_new_project.terrain
-    typology_path = config.create_new_project.typology
+    zone_geometry_path = config.create_new_scenario.zone
+    surroundings_geometry_path = config.create_new_scenario.surroundings
+    street_geometry_path = config.create_new_scenario.streets
+    terrain_path = config.create_new_scenario.terrain
+    typology_path = config.create_new_scenario.typology
+
+    # the folders _before_ we try copying to them
+    locator.ensure_parent_folder_exists(locator.get_zone_geometry())
+    locator.ensure_parent_folder_exists(locator.get_terrain())
+    locator.ensure_parent_folder_exists(locator.get_building_typology())
+    locator.ensure_parent_folder_exists(locator.get_street_network())
 
     # import file
     zone, lat, lon = shapefile_to_WSG_and_UTM(zone_geometry_path)
@@ -43,26 +49,28 @@ def create_new_project(locator, config):
     zone.to_file(locator.get_zone_geometry())
 
     # apply coordinate system of terrain into zone and save zone to disk.
-    terrain = raster_to_WSG_and_UTM(terrain_path, lat, lon)
-    driver = gdal.GetDriverByName('GTiff')
-    verify_input_terrain(terrain)
-    driver.CreateCopy(locator.get_terrain(), terrain)
+    if terrain_path == '':
+        print("there is no terrain file, run pour datamanagement tools later on for this please")
+    else:
+        terrain = raster_to_WSG_and_UTM(terrain_path, lat, lon)
+        driver = gdal.GetDriverByName('GTiff')
+        verify_input_terrain(terrain)
+        driver.CreateCopy(locator.get_terrain(), terrain)
 
     # now create the surroundings file if it does not exist
     if surroundings_geometry_path == '':
-        print("there is no surroundings file, we proceed to create it based on the geometry of your zone")
-        zone.to_file(locator.get_surroundings_geometry())
+        print("there is no surroundings file, run pour datamanagement tools later on for this please")
     else:
         # import file
         surroundings, _, _ = shapefile_to_WSG_and_UTM(surroundings_geometry_path)
         # verify if input file is correct for CEA, if not an exception will be released
-        verify_input_geometry_surroundings(zone)
+        verify_input_geometry_surroundings(surroundings)
         # create new file
         surroundings.to_file(locator.get_surroundings_geometry())
 
     # now transfer the streets
     if street_geometry_path == '':
-        print("there is no street file, optimizaiton of cooling networks wont be possible")
+        print("there is no streets file, run pour datamanagement tools later on for this please")
     else:
         street, _, _ = shapefile_to_WSG_and_UTM(street_geometry_path)
         street.to_file(locator.get_street_network())
@@ -98,19 +106,19 @@ def create_new_project(locator, config):
 
 def main(config):
     # print out all configuration variables used by this script
-    print("Running create-new-project with project = %s" % config.create_new_project.project)
-    print("Running create-new-project with scenario = %s" % config.create_new_project.scenario)
-    print("Running create-new-project with typology = %s" % config.create_new_project.typology)
-    print("Running create-new-project with zone = %s" % config.create_new_project.zone)
-    print("Running create-new-project with terrain = %s" % config.create_new_project.terrain)
-    print("Running create-new-project with output-path = %s" % config.create_new_project.output_path)
+    print("Running create-new-scenario for project = %s" % config.create_new_scenario.project)
+    print("Running create-new-scenario with scenario = %s" % config.create_new_scenario.scenario)
+    print("Running create-new-scenario with typology = %s" % config.create_new_scenario.typology)
+    print("Running create-new-scenario with zone = %s" % config.create_new_scenario.zone)
+    print("Running create-new-scenario with terrain = %s" % config.create_new_scenario.terrain)
+    print("Running create-new-scenario with output-path = %s" % config.create_new_scenario.output_path)
 
-    scenario = os.path.join(config.create_new_project.output_path,
-                            config.create_new_project.project,
-                            config.create_new_project.scenario)
+    scenario = os.path.join(config.create_new_scenario.output_path,
+                            config.create_new_scenario.project,
+                            config.create_new_scenario.scenario)
 
     locator = cea.inputlocator.InputLocator(scenario)
-    create_new_project(locator, config)
+    create_new_scenario(locator, config)
 
     print("New project/scenario created in: %s" % scenario)
 
