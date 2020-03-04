@@ -129,34 +129,23 @@ class Scenarios(Resource):
 
             if files is not None:
                 try:
-                    # since we're creating a new scenario, go ahead and and make sure we have
-                    # the folders _before_ we try copying to them
-                    locator.ensure_parent_folder_exists(locator.get_zone_geometry())
-                    locator.ensure_parent_folder_exists(locator.get_terrain())
-                    locator.ensure_parent_folder_exists(locator.get_building_typology())
-                    locator.ensure_parent_folder_exists(locator.get_street_network())
+                    # Local variables
+                    if 'terrain' not in files:
+                        files['terrain'] = ''
+                    if 'streets' not in files:
+                        files['streets'] = ''
+                    if 'surroundings' not in files:
+                        files['surroundings'] = ''
+                    if 'typology' not in files:
+                        files['typology'] = ''
+                    cea.api.create_new_scenario(config,
+                                               scenario=new_scenario_path,
+                                               zone=files['zone'],
+                                               surroundings=files['surroundings'],
+                                               streets=files['streets'],
+                                               terrain=files['terrain'],
+                                               typology=files['typology'])
 
-                    if 'zone' in files:
-                        for filename in glob_shapefile_auxilaries(files['zone']):
-                            shutil.copy(filename, locator.get_building_geometry_folder())
-                    if 'surroundings' in files:
-                        for filename in glob_shapefile_auxilaries(files['surroundings']):
-                            shutil.copy(filename, locator.get_building_geometry_folder())
-                    if 'terrain' in files:
-                        shutil.copyfile(files['terrain'], locator.get_terrain())
-                    if 'streets' in files:
-                        shutil.copyfile(files['streets'], locator.get_street_network())
-
-                    from cea.datamanagement.zone_helper import calculate_age, calculate_typology_file
-                    if 'typology' in files and files['typology'] != '':
-                        shutil.copyfile(files['typology'], locator.get_building_typology())
-                    elif 'zone' in files:
-                        zone_df = geopandas.read_file(files['zone'])
-                        if 'category' not in zone_df.columns:
-                            # set 'MULTI_RES' as default
-                            calculate_typology_file(locator, zone_df, None, 'MULTI_RES', locator.get_building_typology())
-                        else:
-                            calculate_typology_file(locator, zone_df, None, 'Get it from open street maps', locator.get_building_typology())
                 except Exception as e:
                     trace = traceback.format_exc()
                     return {'message': e.message, 'trace': trace}, 500
