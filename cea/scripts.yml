@@ -45,6 +45,15 @@ Data Management:
     input-files:
       - [get_surroundings_geometry]
 
+  - name: database-migrator
+    label: Database migrator
+    description: Migrate older scenario inputs to the newest version
+    interfaces: [cli, dashboard]
+    module: cea.datamanagement.database_migrator
+    parameters: ["general:scenario"]
+    input-files:
+      - [get_database_construction_standards]
+
 Demand forecasting:
   - name: radiation
     label: Building Solar radiation
