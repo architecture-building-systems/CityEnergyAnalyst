@@ -9,7 +9,6 @@ from __future__ import print_function
 
 import os
 import cea
-import geopandas
 import pandas as pd
 import collections
 
@@ -117,6 +116,13 @@ def migrate_2_29_to_2_31(scenario):
     print("- removing occupancy.dbf and age.dbf")
     os.remove(age_dbf_path)
     os.remove(occupancy_dbf_path)
+    print("- removing invalid input-tables (NOTE: run archetypes-mapper again)")
+    for fname in {"supply_systems.dbf", "internal_loads.dbf", "indoor_comfort.dbf",
+                  "air_conditioning_systems.dbf", "architecture.dbf"}:
+        fpath = os.path.join(scenario, "inputs", "building-properties", fname)
+        if os.path.exists(fpath):
+            print("  - removing {fname}".format(fname=fname))
+            os.remove(fpath)
     print("- done")
     print("- NOTE: You'll need to run the archetpyes-mapper tool after this migration!")
 
