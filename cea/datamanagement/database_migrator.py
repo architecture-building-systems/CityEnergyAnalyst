@@ -102,15 +102,23 @@ def migrate_2_29_to_2_31(scenario):
 
         return typology_dbf
 
+    age_dbf_path = os.path.join(scenario, "inputs", "building-properties", "age.dbf")
+    occupancy_dbf_path = os.path.join(scenario, "inputs", "building-properties", "occupancy.dbf")
+
+    age_df = dbf_to_dataframe(age_dbf_path)
+    occupancy_df = dbf_to_dataframe(occupancy_dbf_path)
+
     locator = cea.inputlocator.InputLocator(scenario=scenario)
     standards_df = pd.read_excel(locator.get_database_construction_standards(), "STANDARD_DEFINITION")
-    age_dbf = dbf_to_dataframe(os.path.join(scenario, "inputs", "building-properties", "age.dbf"))
-    occupancy_dbf = dbf_to_dataframe(os.path.join(scenario, "inputs", "building-properties", "occupancy.dbf"))
-    typology_dbf = merge_age_and_occupancy_to_typology(age_dbf, occupancy_dbf, standards_df)
+    typology_df = merge_age_and_occupancy_to_typology(age_df, occupancy_df, standards_df)
 
     print("- writing typology.dbf")
-    dataframe_to_dbf(typology_dbf, locator.get_building_typology())
+    dataframe_to_dbf(typology_df, locator.get_building_typology())
+    print("- removing occupancy.dbf and age.dbf")
+    os.remove(age_dbf_path)
+    os.remove(occupancy_dbf_path)
     print("- done")
+    print("- NOTE: You'll need to run the archetpyes-mapper tool after this migration!")
 
 
 def is_2_31(scenario):
@@ -120,7 +128,7 @@ def is_2_31(scenario):
 
 def migrate_2_31_to_2_31_1(scenario):
     # nothing needs to be done. this is just an example of a migration - add your own in this fashion
-    pass
+    print("- (nothing to do)")
 
 
 def main(config):
