@@ -45,14 +45,6 @@ Data Management:
     input-files:
       - [get_surroundings_geometry]
 
-  - name: database-migrator
-    label: Database migrator
-    description: Migrate older scenario inputs to the newest version
-    interfaces: [cli, dashboard]
-    module: cea.datamanagement.database_migrator
-    parameters: ["general:scenario"]
-    input-files:
-      - [get_database_construction_standards]
 
 Demand forecasting:
   - name: radiation
@@ -293,6 +285,15 @@ Utilities:
     module: cea.datamanagement.data_initializer
     parameters: ['general:scenario', data-initializer]
 
+  - name: database-migrator
+    label: Database migrator
+    description: "Migrate older scenario inputs to the newest version. NOTE: This cannot be undone - save a copy of the scenario first"
+    interfaces: [cli, dashboard]
+    module: cea.datamanagement.database_migrator
+    parameters: ['general:scenario']
+    input-files:
+      - [get_database_construction_standards]
+
   - name: create-new-scenario
     label: Create new scenario
     description: Creates a new scenario
@@ -321,14 +322,14 @@ Utilities:
   - name: test
     label: Test CEA
     description: Run some tests on the CEA
-    interfaces: [cli, arcgis dashboard]
+    interfaces: [cli, arcgis, dashboard]
     module: cea.tests
     parameters: [test]
 
   - name: run-unit-tests
     label: Unit Tests
     description: Run all the unit tests in the cea/tests folder
-    interfaces: [test, cli]
+    interfaces: [test, cli, dashboard]
     module: cea.tests.run_unit_tests
     parameters: []
 

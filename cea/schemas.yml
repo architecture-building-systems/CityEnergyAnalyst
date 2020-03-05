@@ -1263,7 +1263,7 @@ get_building_internal:
       types_found: [float]
   used_by: [demand, schedule_maker]
 get_building_typology:
-  created_by: []
+  created_by: [database-migrator]
   file_path: inputs/building-properties/typology.dbf
   file_type: dbf
   schema:
