@@ -39,15 +39,17 @@ def data_initializer(locator,
             complete_databases_path = os.path.join(databases_path, 'archetypes')
             complete_output_directory = locator.get_databases_archetypes_folder()
             copy_tree(complete_databases_path, complete_output_directory)
-        except:
-            raise Exception("we could not find the 'archetypes' database in the path you indicated, please check the spelling")
+        except Exception as e:
+            print(e)
+            raise Exception("we might not have found the 'archetypes' database in the path you indicated, please check the spelling")
 
     if initialize_components_database:
         try:
             complete_databases_path = os.path.join(databases_path, 'components')
             complete_output_directory = locator.get_databases_systems_folder()
             copy_tree(complete_databases_path, complete_output_directory)
-        except:
+        except Exception as e:
+            print(e)
             raise Exception("we could not find the 'components' database in the path you indicated, please check the spelling")
 
     if initialize_assemblies_database:
@@ -55,7 +57,8 @@ def data_initializer(locator,
             complete_databases_path = os.path.join(databases_path, 'assemblies')
             complete_output_directory = locator.get_databases_assemblies_folder()
             copy_tree(complete_databases_path, complete_output_directory)
-        except:
+        except Exception as e:
+            print(e)
             raise Exception("we could not find the 'assemblies' database in the path you indicated, please check the spelling")
 
 def main(config):
