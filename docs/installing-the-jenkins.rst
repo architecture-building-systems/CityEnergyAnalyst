@@ -24,22 +24,18 @@ Installation of some prerequisites
 
 You will need to install these softwares:
 
-- Miniconda2 (Python 2.7, 64-bit, download here: https://conda.io/miniconda.html)
+- `CityEnergyAnalyst <https://github.com/architecture-building-systems/CityEnergyAnalyst/releases/latest>`_
+  (install with the ``Setup_CityEnergyAnalyst_<VERSION>.exe`` installer)
 
-  - this setup expects you installed Miniconda with the "Just for me" option. You might need to change some paths along
-    the way if you install for all users.
-  - to the default folder (`%USERPROFILE%\Miniconda2`),
-  - you don't need to add it to the PATH environment variable
-  - I registered it as the default Python 2.7 (but I don't think that is necessary)
-
-- git (I think any version will do, make sure `git.exe` is in your `PATH` by opening a command prompt and typing
-  `git --version`)s
+  - we'll be using the Python environment shipped with the CEA to test the CEA
+  - we'll also be using the `git.exe` shipped with the CEA
 
 Installation of Jenkins
 -----------------------
 
 - Download & install jenkins from https://jenkins.io
-  -  LTS version Jenkins 2.60.3 for Windows
+
+  -  LTS version Jenkins for Windows (last time this document was used, it was version 2.204.4)
   -  just double click the installer, next, next, next (all default values)
   -  set jenkins service to use local user
 
@@ -51,22 +47,22 @@ Installation of Jenkins
        - this will allow the Jenkins to have access to your user profile. You can create an account just for this
          service and use that for the rest of this guide.
 
-- open browser to http://localhost:8080
+- open browser to http://localhost:8080 (NOTE: the installer did this automatically last time tried)
 
   - follow instructions to enter initial admin password
 
-   - click "install suggested plugins"
-   - create first admin user
+    - click "install suggested plugins"
+    - create first admin user
 
-     - Username: *cea*
-     - Password: (same as *cityea* user in outlook, ask Jimeno or Daren for the password)
-     - Full name: *City Energy Analyst*
-     - E-mail address: *cea@arch.ethz.ch*
+      - Username: *cea*
+      - Password: (same as *cityea* user in outlook, ask Jimeno or Daren for the password)
+      - Full name: *City Energy Analyst*
+      - E-mail address: *cea@arch.ethz.ch*
 
-   - Click "Manage Jenkins"
+    - Click "Manage Jenkins"
 
-     - click "Configure System" (following this guide here: https://wiki.jenkins.io/display/JENKINS/Github+Plugin#GitHubPlugin-GitHubhooktriggerforGITScmpolling)
-     -  set "#  of executors" to 1 (let's just make it dead simple, no concurrency, less headache)
+      - click "Configure System" (following this guide here: https://wiki.jenkins.io/display/JENKINS/Github+Plugin#GitHubPlugin-GitHubhooktriggerforGITScmpolling)
+      -  set "#  of executors" to 1 (let's just make it dead simple, no concurrency, less headache)
 
 Installation of a tunnel to the Jenkins server
 ----------------------------------------------
@@ -99,8 +95,14 @@ to tunnel webhooks triggered by GitHub back to the Jenkins server.
   - press CTRL+C to shutdown the tunnel
 
 - copy the ``CityEnergyAnalyst\bin\ceajenkins.py`` file to ``%PROGRAMDATA%\ceajenkins``
-- open the Anaconda Prompt and do ``conda create --name ceajenkins python=2.7 pywin32``, then do ``activate ceajenkins``
-- open a new Anaconda Prompt with administrator rights (right click, then "Run as Administrator")
+
+    - if you haven't checked out the CEA, download it from the `CEA GitHub repository`_
+
+- open ``cmd.exe`` with admin rights (right click, then "Run as Administrator")
+- type ``set PATH=%USERPROFILE%\Documents\CityEnergyAnalyst\Dependencies\Python;%PATH%``
+
+  - this sets up access to the Python shipped with CEA - if you installed to a different location, modify accordingly
+
 - run ``python %PROGRAMDATA%\ceajenkins\ceajenkins.py install``
 - in order for the service to find required DLL's, ensure the PATH includes the following folders (use the windows
   search function to find the control panel item "Edit System Environment Variables"):
@@ -116,6 +118,8 @@ to tunnel webhooks triggered by GitHub back to the Jenkins server.
   - start the service!
   - you should now be able to access your Jenkins installation by going to https://ceajenkins.ngrok.io
     from any computer with access to the internet (test this)
+
+.. _`CEA GitHub repository`: https://raw.githubusercontent.com/architecture-building-systems/CityEnergyAnalyst/v2.31.1/bin/ceajenkins.py
 
 
 Global configuration of Jenkins
