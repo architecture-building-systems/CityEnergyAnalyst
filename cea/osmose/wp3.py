@@ -8,6 +8,7 @@ from cea.osmose.extract_demand_outputs import extract_cea_outputs_to_osmose_main
 from cea.osmose.wp1 import write_string_to_txt, osmose_one_run
 from cea.osmose import settings
 osmose_project_data_path = settings.osmose_project_data_path
+path_to_district_folder = settings.path_to_district_folder
 
 def extract_demand_output_district_to_osmose(path_to_district_folder, timesteps, season, specified_building):
 
@@ -31,6 +32,8 @@ def prepare_district_info(path_to_district_folder):
     district_df = occupancy_df[['HOTEL', 'OFFICE', 'RETAIL']]
     district_df['Af_m2'] = geometry_df['Af']
     path_to_district_demand_folder = os.path.join(path_to_district_folder, 'outputs\\data\\demand\\')
+    # output: path_to_case
+    write_string_to_txt(path_to_district_folder, osmose_project_data_path, 'path_to_case.txt')
     # output: building_info.csv
     district_df.to_csv(os.path.join(path_to_district_demand_folder, 'building_info.csv'))
     # output: path_to_district_demand.txt (path to save osmose outputs)
@@ -42,6 +45,7 @@ def prepare_district_info(path_to_district_folder):
 def write_input_parameter_to_osmose(geometry_df, occupancy_df, season, specified_building, timesteps):
     Af_per_function = calc_Af_per_function(geometry_df, occupancy_df)
     # write outputs for each function (input parameters to osmose)
+    m_ve_min_df = pd.DataFrame()
     for case in ['WTP_CBD_m_WP1_OFF', 'WTP_CBD_m_WP1_HOT', 'WTP_CBD_m_WP1_RET']:
         output_building, output_hcs = extract_cea_outputs_to_osmose_main(case, timesteps, season, specified_building,
                                                                          problem_type='district')
@@ -60,6 +64,8 @@ def write_input_parameter_to_osmose(geometry_df, occupancy_df, season, specified
                                           'Af_m2' in column or 'Vf_m3' in column)]
         scalar_df = output_hcs[columns_with_scalar_values] * Af_multiplication_factor
         output_hcs.update(scalar_df)
+        # get m_ve_min
+        m_ve_min_df['m_ve_min_'+case.split('_')[-1]] = output_hcs['m_ve_min']
         output_hcs.T.to_csv(path_to_osmose_project_hcs('B_' + case.split('_')[4], 'hcs'), header=False)  # save files
         # remove T_OAU_offcoil
         T_OAU_offcoil_df = output_hcs[[column for column in output_hcs.columns if 'T_OAU_offcoil' in column]]
@@ -71,7 +77,7 @@ def write_input_parameter_to_osmose(geometry_df, occupancy_df, season, specified
             file_name_extension = 'hcs_in' + str(i + 1)
             new_hcs_df.T.to_csv(path_to_osmose_project_hcs('B_' + case.split('_')[4], file_name_extension),
                                 header=False)
-
+    m_ve_min_df.T.to_csv(path_to_osmose_project_hcs('m_ve_min', 'all'), header=False)
 
 def calc_Af_per_function(geometry_df, occupancy_df):
     Af_per_function = {}
@@ -107,8 +113,7 @@ def reard_dbf_from_cea_input(path_to_district_folder, file_name):
 
 
 if __name__ == '__main__':
-    path_to_district_folder = 'C:\\SG_cases\\SDC'
-    timesteps = 24 # TODO: use typical hours
+    timesteps = settings.timesteps # TODO: use typical hours
     season = 'Summer'
-    specified_building = ['B005']
+    specified_building = ['B005'] # building to get demand
     extract_demand_output_district_to_osmose(path_to_district_folder, timesteps, season, specified_building)
