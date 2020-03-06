@@ -255,7 +255,7 @@ Next, we configure a Jenkins item for merging to master:
 
 - open `GitHub Webhooks`_
 
-  - (NOTE: This should already be set up for the CEA Repository, but here's how to re-set it just in case)
+  - (NOTE: This should already be set up for the CEA Repository, but here's how to configure it just in case)
   - dropdown "Add webhook"
 
     - Payload URL: ``http://ceajenkins.ngrok.io/git/notifyCommit?url=https://github.com/architecture-building-systems/CityEnergyAnalyst``
