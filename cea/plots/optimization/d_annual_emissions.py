@@ -33,8 +33,7 @@ class AnnualEmissionsPlot(cea.plots.optimization.GenerationPlotBase):
                                 ]
         self.normalization = self.parameters['normalization']
         self.input_files = [(self.locator.get_optimization_generation_total_performance_pareto, [self.generation]),
-                            (self.locator.get_lca_embodied, []),
-                            (self.locator.get_lca_mobility, [])]
+                            (self.locator.get_lca_embodied, [])]
         self.titley = self.calc_titles()
         self.data_clean = None
 
@@ -54,7 +53,7 @@ class AnnualEmissionsPlot(cea.plots.optimization.GenerationPlotBase):
     @property
     def title(self):
         if self.normalization != "none":
-            return "Annual emissions for generation {generation} normalized to {normalized}".format(
+            return "Annual Emissions for generation {generation} normalized to {normalized}".format(
                 generation=self.generation, normalized=self.normalization)
         else:
             return "Annual Emissions for generation {generation}".format(generation=self.generation)

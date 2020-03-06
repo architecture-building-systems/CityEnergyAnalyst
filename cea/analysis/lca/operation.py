@@ -69,7 +69,7 @@ def lca_operation(locator):
     ## demand and the primary energy and emissions factors for each corresponding type of supply system
 
     heating_factors = factors_heating.merge(factors_resources_simple, left_on='feedstock', right_on='code')[
-        ['code_x', 'feedstock','GHG_kgCO2MJ']]
+        ['code_x', 'feedstock', 'GHG_kgCO2MJ']]
     cooling_factors = factors_cooling.merge(factors_resources_simple, left_on='feedstock', right_on='code')[
         ['code_x', 'feedstock', 'GHG_kgCO2MJ']]
     dhw_factors = factors_dhw.merge(factors_resources_simple, left_on='feedstock', right_on='code')[
@@ -91,10 +91,9 @@ def lca_operation(locator):
                         (Qhs_flag, 'OIL_hs_MWhyr', 'OIL_hs', 'Af_m2'),
                         (Qhs_flag, 'WOOD_hs_MWhyr', 'WOOD_hs', 'Af_m2')]
     for x in heating_services:
-        fields_to_plot = ['Name', 'GFA_m2', x[2] + '_ghg_ton', x[2] + '_ghg_kgm2']
+        fields_to_plot = ['Name', 'GFA_m2', x[2] + '_tonCO2']
         # calculate the total (t GHG_kgCO2MJ-eq) and specific (kg GHG_kgCO2MJ-eq/m2) operational greenhouse gas emissions (O_ghg_)
         heating[fields_to_plot[2]] = heating[x[1]] * heating['GHG_kgCO2MJ'] * 3.6
-        heating[fields_to_plot[3]] = (heating[x[1]] * heating['GHG_kgCO2MJ'] * 3600) / heating['GFA_m2']
 
     ## calculate the operational primary energy and emissions for domestic hot water services
     dhw_services = [(Qww_flag, 'DH_ww_MWhyr', 'DH_ww'),
@@ -105,29 +104,24 @@ def lca_operation(locator):
                     (Qww_flag, 'WOOD_ww_MWhyr', 'WOOD_ww')]
 
     for x in dhw_services:
-        fields_to_plot = ['Name', 'GFA_m2', x[2] + '_ghg_ton', x[2] + '_ghg_kgm2']
+        fields_to_plot = ['Name', 'GFA_m2', x[2] + '_tonCO2']
         # calculate the total (t GHG_kgCO2MJ-eq) and specific (kg GHG_kgCO2MJ-eq/m2) operational greenhouse gas emissions (O_ghg_)
         dhw[fields_to_plot[2]] = dhw[x[1]] * dhw['GHG_kgCO2MJ'] * 3.6
-        dhw[fields_to_plot[3]] = (dhw[x[1]] * dhw['GHG_kgCO2MJ'] * 3600) / dhw['GFA_m2']
 
     ## calculate the operational primary energy and emissions for cooling services
     cooling_services = [(Qcs_flag, 'DC_cs_MWhyr', 'DC_cs'),
                         (Qcs_flag, 'DC_cdata_MWhyr', 'DC_cdata'),
                         (Qcs_flag, 'DC_cre_MWhyr', 'DC_cre')]
     for x in cooling_services:
-        fields_to_plot = ['Name', 'GFA_m2', x[2] + '_ghg_ton', x[2] + '_ghg_kgm2']
-        # calculate the total (t GHG_kgCO2MJ-eq) and specific (kg GHG_kgCO2MJ-eq/m2) operational greenhouse gas emissions (O_ghg_)
+        fields_to_plot = ['Name', 'GFA_m2', x[2] + '_tonCO2']
         cooling[fields_to_plot[2]] = cooling[x[1]] * cooling['GHG_kgCO2MJ'] * 3.6
-        cooling[fields_to_plot[3]] = (cooling[x[1]] * cooling['GHG_kgCO2MJ'] * 3600) / cooling['GFA_m2']
 
     ## calculate the operational primary energy and emissions for electrical services
     electrical_services = [(E_flag, 'GRID_MWhyr', 'GRID'),
                            (E_flag, 'PV_MWhyr', 'PV')]
     for x in electrical_services:
-        fields_to_plot = ['Name', 'GFA_m2', x[2] + '_ghg_ton', x[2] + '_ghg_kgm2']
-        # calculate the total (t GHG_kgCO2MJ-eq) and specific (kg GHG_kgCO2MJ-eq/m2) operational greenhouse gas emissions (O_ghg_)
+        fields_to_plot = ['Name', 'GFA_m2', x[2] + '_tonCO2']
         electricity[fields_to_plot[2]] = electricity[x[1]] * electricity['GHG_kgCO2MJ'] * 3.6
-        electricity[fields_to_plot[3]] = (electricity[x[1]] * electricity['GHG_kgCO2MJ'] * 3600) / electricity['GFA_m2']
 
     # create a dataframe with the results for each energy service
     result = heating.merge(dhw, on='Name', suffixes=['_a', '_b']).merge(cooling, on='Name', suffixes=['a', '_b']).merge(
@@ -136,17 +130,36 @@ def lca_operation(locator):
 
     # calculate the total operational non-renewable primary energy demand and emissions as a sum of the results for each
     # energy service used in the building
-    result['GHG_sys_kgCO2m2'] = 0.0
     result['GHG_sys_tonCO2'] = 0.0
     all_services = electrical_services + cooling_services + heating_services + dhw_services
     fields_to_plot = []
     for service in all_services:
-        fields_to_plot += [service[2] + '_ghg_ton', service[2] + '_ghg_kgm2']
-        result['GHG_sys_tonCO2'] += result[service[2] + '_ghg_ton']
-        result['GHG_sys_kgCO2m2'] += result[service[2] + '_ghg_kgm2']
+        fields_to_plot += [service[2] + '_tonCO2']
+
+    result['GHG_sys_connected_tonCO2'] = result['GRID_tonCO2'] + \
+                                         result['DH_hs_tonCO2'] + \
+                                         result['DH_ww_tonCO2'] + \
+                                         result['DC_cdata_tonCO2'] + \
+                                         result['DC_cs_tonCO2'] + \
+                                         result['DC_cre_tonCO2']
+
+    result['GHG_sys_disconnected_tonCO2'] = result['OIL_hs_tonCO2'] + \
+                                         result['NG_hs_tonCO2'] + \
+                                         result['WOOD_hs_tonCO2'] + \
+                                         result['COAL_hs_tonCO2'] + \
+                                         result['SOLAR_hs_tonCO2'] + \
+                                         result['PV_tonCO2'] + \
+                                         result['OIL_ww_tonCO2'] + \
+                                         result['NG_ww_tonCO2'] + \
+                                         result['WOOD_ww_tonCO2'] + \
+                                         result['COAL_ww_tonCO2'] + \
+                                         result['SOLAR_ww_tonCO2']
+
+    result['GHG_sys_tonCO2'] = result['GHG_sys_disconnected_tonCO2'] + result['GHG_sys_connected_tonCO2']
 
     # export the total operational non-renewable energy demand and emissions for each building
-    fields_to_plot = ['Name', 'GFA_m2', 'GHG_sys_tonCO2', 'GHG_sys_kgCO2m2'] + fields_to_plot
+    fields_to_plot = ['Name', 'GFA_m2', 'GHG_sys_tonCO2', 'GHG_sys_disconnected_tonCO2',
+                      'GHG_sys_connected_tonCO2'] + fields_to_plot
     result[fields_to_plot].to_csv(locator.get_lca_operation(), index=False, float_format='%.2f')
 
 
