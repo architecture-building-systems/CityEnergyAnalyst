@@ -79,7 +79,7 @@ def create_new_scenario(locator, config):
     if typology_path == '':
         print("there is no typology file, we proceed to create it based on the geometry of your zone")
         zone = Gdf.from_file(zone_geometry_path).drop('geometry', axis=1)
-        zone['STANDARD'] = 'T6'
+        zone['STANDARD'] = 'STANDARD1'
         zone['YEAR'] = 2020
         zone['1ST_USE'] = 'MULTI_RES'
         zone['1ST_USE_R'] = 1.0
