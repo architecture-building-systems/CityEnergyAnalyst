@@ -960,6 +960,13 @@ class MultiSystemParameter(MultiChoiceParameter):
             unique_systems_scenarios_list.extend([scenario_name+"_"+x for x in systems_scenario])
         return unique_systems_scenarios_list
 
+    def decode(self, value):
+        value = self.replace_references(value)
+        choices = parse_string_to_list(value)
+        if not len(choices):
+            return self.default
+        return [self.replace_references(choice) for choice in choices if self.replace_references(choice) in self._choices]
+
 
 class BuildingsParameter(MultiChoiceParameter):
     """A list of buildings in the zone"""
