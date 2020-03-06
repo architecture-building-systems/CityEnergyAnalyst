@@ -242,11 +242,12 @@ Next, we configure a Jenkins item for merging to master:
     - select "Git"
     - Repository URL: ``https://github.com/architecture-building-systems/CityEnergyAnalyst.git``
     - Credentials: (use the ones created above)
-    - Branches to build: ``origin/master``
+    - Branches to build: ``refs/heads/master``
 
   - section "Build Triggers":
 
     - check "GitHub hook trigger for GITScm polling"
+    - check "Poll SCM"
 
   - section "Build"
 
