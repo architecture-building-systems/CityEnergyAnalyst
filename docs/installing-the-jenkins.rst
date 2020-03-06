@@ -223,14 +223,13 @@ First, we configure a Jenkins item for pull requests:
 
 Next, we configure a Jenkins item for merging to master:
 
-- open browser to http://localhost:8080 and log in
+- open browser to https://ceajenkins.ngrok.io and log in
 - click "New Item"
 - Enter an item name: ``run cea test on merge to master``
 
   - Choose "Freestyle project"
   - Project name: "run cea test on merge to master"
-  - Description: "Check out the CityEnergyAnalyst, create a conda environment for it and run
-    ``cea test --reference-case all``"
+  - Description: "Check out the CityEnergyAnalyst, and run bin\ceatestall.bat"
   - check "Discard old builds"
 
     - Strategy: "Log Rotation"
@@ -243,6 +242,7 @@ Next, we configure a Jenkins item for merging to master:
     - select "Git"
     - Repository URL: ``https://github.com/architecture-building-systems/CityEnergyAnalyst.git``
     - Credentials: (use the ones created above)
+    - (click Advanced)
     - Refspec: ``+refs/heads/master:refs/remotes/origin/master``
     - Branches to build: ``refs/heads/master``
 
