@@ -568,6 +568,12 @@ def thermal_network_main(locator, thermal_network, processes=1):
     # edge flow rates (flow direction corresponding to edge_node_df)
     csv_outputs = {field: [getattr(htr, field) for htr in hourly_thermal_results]
                    for field in HourlyThermalResults._fields}
+    pumping_at_plant = calculate_pumping_at_plants(csv_outputs['pressure_loss_supply_edge_kW'], thermal_network)
+    pd.DataFrame(pumping_at_plant,
+                 columns=thermal_network.edge_node_df.columns).to_csv(
+        "C:\\reference-case-open\\baseline\\outputs\\data\\thermal-network\\dP_test.csv",
+        index=False,
+        float_format='%.3f')
     save_all_results_to_csv(csv_outputs, thermal_network)
 
     # identify all plants
@@ -606,6 +612,33 @@ def thermal_network_main(locator, thermal_network, processes=1):
             print('The following edges with corresponding minimum mass flows showed high thermal losses: \n \n')
             for key in thermal_network.problematic_edges:
                 print(key, thermal_network.problematic_edges[key])
+
+
+def calculate_pumping_at_plants(pressure_loss_supply_edges_kW, thermal_network):
+    plant_node = thermal_network.all_nodes_df[thermal_network.all_nodes_df['Type'] == 'PLANT'].index[0]
+    plant_head_kW = []
+    for dP_time in pressure_loss_supply_edges_kW:
+        G = nx.Graph()
+        G.add_nodes_from(thermal_network.all_nodes_df.index)
+        for ix, edge_name in enumerate(thermal_network.edge_df.index):
+            start_node = thermal_network.edge_df.loc[edge_name, 'start node']
+            end_node = thermal_network.edge_df.loc[edge_name, 'end node']
+            dP_kW = dP_time[ix]
+            G.add_edge(start_node, end_node, weight=dP_kW)
+        _, distances_dict = nx.dijkstra_predecessor_and_distance(G, source=plant_node)
+        critical_node = max(distances_dict, key=distances_dict.get)
+        path_to_critical_node = nx.shortest_path(G, source=plant_node)[critical_node]
+        # calcluate pressure losses along the critical path
+        total_dP_kW = 0
+        for i in range(len(path_to_critical_node)):
+            if i < len(path_to_critical_node) - 1:
+                start_node = path_to_critical_node[i]
+                end_node = path_to_critical_node[i+1]
+                dP_kW = G[start_node][end_node]
+                total_dP_kW = total_dP_kW + dP_kW
+        print(total_dP_kW, path_to_critical_node)
+        plant_head_kW.append(total_dP_kW)
+    return plant_head_kW
 
 
 def output_hex_specs_at_nodes(substation_HEX_Q, thermal_network):
