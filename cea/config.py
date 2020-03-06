@@ -939,6 +939,7 @@ class SystemParameter(ChoiceParameter):
             return self._choices[0]
         return str(value)
 
+
 class MultiSystemParameter(MultiChoiceParameter):
     """A (single) building in the zone"""
     typename = 'MultiSystemParameter'
@@ -959,6 +960,14 @@ class MultiSystemParameter(MultiChoiceParameter):
             unique_systems_scenarios_list.extend([scenario_name+"_"+x for x in systems_scenario])
         return unique_systems_scenarios_list
 
+    def decode(self, value):
+        value = self.replace_references(value)
+        choices = parse_string_to_list(value)
+        if not len(choices):
+            return self.default
+        return [self.replace_references(choice) for choice in choices if self.replace_references(choice) in self._choices]
+
+
 class BuildingsParameter(MultiChoiceParameter):
     """A list of buildings in the zone"""
     typename = 'BuildingsParameter'
@@ -976,10 +985,10 @@ class BuildingsParameter(MultiChoiceParameter):
 
 def get_scenarios_list(project_path):
     def is_valid_scenario(project_path, folder_name):
-        fodler_path = os.path.join(project_path, folder_name)
+        folder_path = os.path.join(project_path, folder_name)
         # a scenario must be a valid path
         # a scenario can't start with a . like `.config`
-        return all([os.path.isdir(fodler_path), not folder_name.startswith('.')])
+        return all([os.path.isdir(folder_path), not folder_name.startswith('.')])
 
     return [folder_name for folder_name in os.listdir(project_path)
             if is_valid_scenario(project_path, folder_name)]
@@ -988,13 +997,14 @@ def get_scenarios_list(project_path):
 def get_systems_list(scenario_path):
     locator = cea.inputlocator.InputLocator(scenario_path)
     checkpoints = glob.glob(os.path.join(locator.get_optimization_master_results_folder(), "*.json"))
-    interations = []
+    iterations = []
     for checkpoint in checkpoints:
         with open(checkpoint, 'rb') as f:
             data_checkpoint = json.load(f)
-            interations.extend(data_checkpoint['systems_to_show'])
-    unique_iterations = list(set(interations))
+            iterations.extend(data_checkpoint['systems_to_show'])
+    unique_iterations = list(set(iterations))
     return unique_iterations
+
 
 def parse_string_to_list(line):
     """Parse a line in the csv format into a list of strings"""
