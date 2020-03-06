@@ -253,11 +253,13 @@ Next, we configure a Jenkins item for merging to master:
 
     - Execute Windows batch command: ``bin\ceatestall.bat``
 
-- open GitHub Integrations & services (https://github.com/architecture-building-systems/CityEnergyAnalyst/settings/installations)
+- open `GitHub Webhooks`_
 
-  - dropdown "Add service"
+  - (NOTE: This should already be set up for the CEA Repository, but here's how to re-set it just in case)
+  - dropdown "Add webhook"
 
-    - select "Jenkins (GitHub plugin)"
-    - enter Jenkins hook url: ``https://ceajenkins.ngrok.io``
-    - click "Add service" to save
+    - Payload URL: ``http://ceajenkins.ngrok.io/git/notifyCommit?url=https://github.com/architecture-building-systems/CityEnergyAnalyst``
+    - under "Which events would you like to trigger this webhook?" select "Let me select individual events."
+    - select "Just the push event"
 
+..  _`GitHub Webhooks`:  https://github.com/architecture-building-systems/CityEnergyAnalyst/settings/hooks
