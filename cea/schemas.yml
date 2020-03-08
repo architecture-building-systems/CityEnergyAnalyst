@@ -794,35 +794,20 @@ get_database_construction_standards:
   schema:
     STANDARD_DEFINITION:
       STANDARD:
-        sample_data: STANDARD1
-        types_found: [string]
+        type: string
         primary: true
       Description:
-        sample_data: UNIVERSITY
-        types_found: [string]
-      YEAR_END:
-        sample_data: !!python/long '2030'
-        types_found: [long]
+        type: string
       YEAR_START:
-        sample_data: !!python/long '2021'
-        types_found: [long]
+        types_found: int
+        min: 0
+      YEAR_END:
+        type: int
+        min: 0
     ENVELOPE_ASSEMBLIES:
       STANDARD:
-        sample_data: STANDARD1
-        types_found: [string]
+        type: string
         primary: true
-      Es:
-        sample_data: 0.9
-        types_found: [float]
-      Hs_ag:
-        sample_data: 0.9
-        types_found: [float]
-      Hs_bg:
-        sample_data: !!python/long '0'
-        types_found: [long]
-      Ns:
-        sample_data: 0.9
-        types_found: [float]
       type_cons:
         sample_data: T3
         types_found: [string]
@@ -839,6 +824,14 @@ get_database_construction_standards:
             path: get_database_envelope_systems
             sheet: TIGHTNESS
             column: code
+      type_win:
+        sample_data: T4
+        types_found: [string]
+        choice:
+          lookup:
+            path: get_database_envelope_systems
+            sheet: WINDOW
+            column: code
       type_roof:
         sample_data: T4
         types_found: [string]
@@ -847,15 +840,7 @@ get_database_construction_standards:
             path: get_database_envelope_systems
             sheet: ROOF
             column: code
-      type_shade:
-        sample_data: T1
-        types_found: [string]
-        choice:
-          lookup:
-            path: get_database_envelope_systems
-            sheet: SHADING
-            column: code
-      type_wall:
+      type_part:
         sample_data: T5
         types_found: [string]
         choice:
@@ -863,7 +848,7 @@ get_database_construction_standards:
             path: get_database_envelope_systems
             sheet: WALL
             column: code
-      type_part:
+      type_wall:
         sample_data: T5
         types_found: [string]
         choice:
@@ -887,209 +872,196 @@ get_database_construction_standards:
             path: get_database_envelope_systems
             sheet: FLOOR
             column: code
-      type_win:
-        sample_data: T4
+      type_shade:
+        sample_data: T1
         types_found: [string]
         choice:
           lookup:
             path: get_database_envelope_systems
-            sheet: WINDOW
+            sheet: SHADING
             column: code
+      Es:
+        type: float
+        min: 0.0
+        max: 1.0
+      Ns:
+        type: float
+        min: 0.0
+        max: 1.0
+      Hs_ag:
+        type: float
+        min: 0.0
+        max: 1.0
+      Hs_bg:
+        type: float
+        min: 0.0
+        max: 1.0
       void_deck:
-        sample_data: !!python/long '0'
-        types_found: [long]
-      wwr_east:
-        sample_data: 0.31
-        types_found: [float]
+        type: float
+        min: 0
+        max: 1.0
       wwr_north:
-        sample_data: 0.31
-        types_found: [float]
+        type: float
+        min: 0
+        max: 1.0
       wwr_south:
-        sample_data: 0.31
-        types_found: [float]
+        type: float
+        min: 0
+        max: 1.0
+      wwr_east:
+        type: float
+        min: 0
+        max: 1.0
       wwr_west:
-        sample_data: 0.31
-        types_found: [float]
+        type: float
+        min: 0
+        max: 1.0
     HVAC_ASSEMBLIES:
       STANDARD:
-        sample_data: STANDARD1
-        types_found: [string]
+        type: string
         primary: true
-      cool_ends:
-        sample_data: 15|09
-        types_found: [string]
-      cool_starts:
-        sample_data: 15|05
-        types_found: [string]
-      heat_ends:
-        sample_data: 14|05
-        types_found: [string]
-      heat_starts:
-        sample_data: 16|09
-        types_found: [string]
-      standard:
-        sample_data: STANDARD1
-        types_found: [string]
-        primary: true
+      type_hs:
+        sample_data: T3
+        type: string
+        choice:
+          lookup:
+            path: get_database_air_conditioning_systems
+            sheet: HEATING
+            column: code
       type_cs:
         sample_data: T3
-        types_found: [string]
+        type: string
         choice:
           lookup:
             path: get_database_air_conditioning_systems
             sheet: COOLING
             column: code
+      type_dhw:
+        sample_data: T2
+        type: string
+        choice:
+          lookup:
+            path: get_database_air_conditioning_systems
+            sheet: HOT_WATER
+            column: code
       type_ctrl:
         sample_data: T3
-        types_found: [string]
+        type: string
         choice:
           lookup:
             path: get_database_air_conditioning_systems
             sheet: CONTROLLER
             column: code
-      type_dhw:
-        sample_data: T2
-        types_found: [string]
-        choice:
-          lookup:
-            path: get_database_air_conditioning_systems
-            sheet: HOT_WATER
-            column: code
-      type_hs:
-        sample_data: T3
-        types_found: [string]
-        choice:
-          lookup:
-            path: get_database_air_conditioning_systems
-            sheet: HEATING
-            column: code
       type_vent:
         sample_data: T2
-        types_found: [string]
+        type: string
         choice:
           lookup:
             path: get_database_air_conditioning_systems
             sheet: VENTILATION
             column: code
+      heat_starts:
+        type: string
+        regex: ^\d{2}|\d{2}$
+      heat_ends:
+        type: string
+        regex: ^\d{2}|\d{2}$
+      cool_starts:
+        type: string
+        regex: ^\d{2}|\d{2}$
+      cool_ends:
+        type: string
+        regex: ^\d{2}|\d{2}$
     SUPPLY_ASSEMBLIES:
       STANDARD:
-        sample_data: R
-        types_found: [string]
+        type: string
         primary: true
-      type_cs:
-        sample_data: T19
-        types_found: [string]
-        choice:
-          lookup:
-            path: get_database_supply_assemblies
-            sheet: COOLING
-            column: code
-      type_dhw:
-        sample_data: T3
-        types_found: [string]
-        choice:
-          lookup:
-            path: get_database_supply_assemblies
-            sheet: HOT_WATER
-            column: code
-      type_el:
-        sample_data: T24
-        types_found: [string]
-        choice:
-          lookup:
-            path: get_database_supply_assemblies
-            sheet: ELECTRICITY
-            column: code
       type_hs:
         sample_data: T3
-        types_found: [string]
+        type: string
         choice:
           lookup:
             path: get_database_supply_assemblies
             sheet: HEATING
             column: code
-      year_end:
-        sample_data: !!python/long '2030'
-        types_found: [long]
-      year_start:
-        sample_data: !!python/long '2021'
-        types_found: [long]
+      type_dhw:
+        sample_data: T3
+        type: string
+        choice:
+          lookup:
+            path: get_database_supply_assemblies
+            sheet: HOT_WATER
+            column: code
+      type_cs:
+        sample_data: T19
+        type: string
+        choice:
+          lookup:
+            path: get_database_supply_assemblies
+            sheet: COOLING
+            column: code
+      type_el:
+        sample_data: T24
+        type: string
+        choice:
+          lookup:
+            path: get_database_supply_assemblies
+            sheet: ELECTRICITY
+            column: code
   used_by: [archetypes_mapper]
 get_database_use_types_properties:
-  created_by: []
+  created_by: [data_initializer]
   file_path: inputs/technology/archetypes/use_types/USE_TYPE_PROPERTIES.xlsx
   file_type: xls
   schema:
     INTERNAL_LOADS:
       code:
-        sample_data: MULTI_RES
-        types_found: [string]
+        type: string
         primary: true
       Occ_m2pax:
-        sample_data: 30.0
-        types_found: [float]
+        type: float
       Qs_Wpax:
-        sample_data: 70.0
-        types_found: [float]
+        type: float
       X_ghpax:
-        sample_data: 80.0
-        types_found: [float]
+        type: float
       Ea_Wm2:
-        sample_data: 8.0
-        types_found: [float]
+        type: float
       El_Wm2:
-        sample_data: 2.7
-        types_found: [float]
+        type: float
       Epro_Wm2:
-        sample_data: 0.0
-        types_found: [float]
+        type: float
       Ed_Wm2:
-        sample_data: 0.0
-        types_found: [float]
+        type: float
       Vww_lpdpax:
-        sample_data: 35.0
-        types_found: [float]
+        type: float
       Vw_lpdpax:
-        sample_data: 140.0
-        types_found: [float]
+        type: float
       Qcre_Wm2:
-        sample_data: 0.0
-        types_found: [float]
+        type: float
       Qhpro_Wm2:
-        sample_data: 0.0
-        types_found: [float]
+        type: float
       Qcpro_Wm2:
-        sample_data: 0.0
-        types_found: [float]
+        type: float
       Ev_kWveh:
-        sample_data: 0.0
-        types_found: [float]
+        type: float
     INDOOR_COMFORT:
       code:
-        sample_data: MULTI_RES
-        types_found: [string]
+        type: string
         primary: true
       Tcs_set_C:
-        sample_data: 26.0
-        types_found: [float]
+        type: float
       Ths_set_C:
-        sample_data: 21.0
-        types_found: [float]
+        type: float
       Tcs_setb_C:
-        sample_data: 28.0
-        types_found: [float]
+        type: float
       Ths_setb_C:
-        sample_data: 18.0
-        types_found: [float]
+        type: float
       Ve_lpspax:
-        sample_data: 8.3
-        types_found: [float]
+        type: float
       RH_min_pc:
-        sample_data: 30.0
-        types_found: [float]
+        type: float
       RH_max_pc:
-        sample_data: 60.0
-        types_found: [float]
+        type: float
   used_by: [archetypes_mapper]
 get_building_air_conditioning:
   created_by: [archetypes_mapper]
@@ -1458,1462 +1430,2125 @@ get_costs_operation_file:
       types_found: [float]
   used_by: []
 get_database_air_conditioning_systems:
-  created_by: []
-  file_path: inputs/technology/systems/air_conditioning_systems.xls
+  created_by: [data_initializer]
+  file_path: inputs/technology/assemblies/HVAC.xls
   file_type: xls
   schema:
-    CONTROLLER:
-      Description:
-        sample_data: room temperature control (electromagnetically/electronically).
-        types_found: [string]
-      code:
-        sample_data: T4
-        types_found: [string]
-        primary: true
-      dT_Qcs:
-        sample_data: 1.8
-        types_found: [float]
-      dT_Qhs:
-        sample_data: 1.8
-        types_found: [float]
-    COOLING:
-      Description:
-        sample_data: 'floor cooling (18/21)  '
-        types_found: [string]
-      class_cs:
-        sample_data: NONE
-        types_found: [string]
-        choice:
-          values: [NONE, CEILING_COOLING, DECENTRALIZED_AC, CENTRAL_AC, HYBRID_AC, FLOOR_COOLING]
-      Qcsmax_Wm2:
-        sample_data: !!python/long '100'
-        types_found: [long]
-      Tc_sup_air_ahu_C:
-        sample_data: 18.0
-        types_found: [float, null]
-      Tc_sup_air_aru_C:
-        sample_data: 13.0
-        types_found: [float, null]
-      Tscs0_ahu_C:
-        sample_data: 7.5
-        types_found: [float, null]
-      Tscs0_aru_C:
-        sample_data: 7.5
-        types_found: [float, null]
-      Tscs0_scu_C:
-        sample_data: 18.0
-        types_found: [float, null]
-      code:
-        sample_data: T5
-        types_found: [string]
-        primary: true
-      dTcs0_ahu_C:
-        sample_data: 7.0
-        types_found: [float, null]
-      dTcs0_aru_C:
-        sample_data: 4.0
-        types_found: [float, null]
-      dTcs0_scu_C:
-        sample_data: 3.0
-        types_found: [float, null]
-      dTcs_C:
-        sample_data: 0.5
-        types_found: [float]
     HOT_WATER:
       Description:
-        sample_data: 'High temperature in the tropics (60/25) '
-        types_found: [string]
-      Qwwmax_Wm2:
-        sample_data: !!python/long '500'
-        types_found: [long]
-      Tsww0_C:
-        sample_data: !!python/long '60'
-        types_found: [long]
+        type: string
       code:
-        sample_data: T4
-        types_found: [string]
+        type: string
         primary: true
+      Tsww0_C:
+        type: float
+        min: 0.0
+      Qwwmax_Wm2:
+        type: float
+        min: 0.0
     HEATING:
       Description:
-        sample_data: 'Floor heating (40/35) '
-        types_found: [string]
+        type: string
+      code:
+        type: string
+        primary: true
       class_hs:
-        sample_data: NONE
-        types_found: [string]
+        type: string
         choice:
           values: [NONE, RADIATOR, CENTRAL_AC, FLOOR_HEATING]
       Qhsmax_Wm2:
-        sample_data: !!python/long '150'
-        types_found: [long]
-      Th_sup_air_ahu_C:
-        sample_data: 36.0
-        types_found: [float, null]
-      Th_sup_air_aru_C:
-        sample_data: 36.0
-        types_found: [float, null]
-      Tshs0_ahu_C:
-        sample_data: 40.0
-        types_found: [float, null]
-      Tshs0_aru_C:
-        sample_data: 40.0
-        types_found: [float, null]
-      Tshs0_shu_C:
-        sample_data: 40.0
-        types_found: [float, null]
-      code:
-        sample_data: T4
-        types_found: [string]
-        primary: true
-      dThs0_ahu_C:
-        sample_data: 20.0
-        types_found: [float, null]
-      dThs0_aru_C:
-        sample_data: 20.0
-        types_found: [float, null]
-      dThs0_shu_C:
-        sample_data: 5.0
-        types_found: [float, null]
+        type: float
+        min: 0.0
       dThs_C:
-        sample_data: -0.9
-        types_found: [float]
+        type: float
+      Tshs0_ahu_C:
+        type: float
+        min: 0.0
+        nullable: true
+      dThs0_ahu_C:
+        type: float
+        min: 0.0
+        nullable: true
+      Th_sup_air_ahu_C:
+        type: float
+        min: 0.0
+        nullable: true
+      Tshs0_aru_C:
+        type: float
+        min: 0.0
+        nullable: true
+      dThs0_aru_C:
+        type: float
+        min: 0.0
+        nullable: true
+      Th_sup_air_aru_C:
+        type: float
+        min: 0.0
+        nullable: true
+      Tshs0_shu_C:
+        type: float
+        min: 0.0
+        nullable: true
+      dThs0_shu_C:
+        type: float
+        min: 0.0
+        nullable: true
+    COOLING:
+      Description:
+        type: string
+      code:
+        type: string
+        primary: true
+      class_cs:
+        type: string
+        choice:
+          values: [NONE, CEILING_COOLING, DECENTRALIZED_AC, CENTRAL_AC, HYBRID_AC, FLOOR_COOLING]
+      convection_cs:
+        type: float
+      Qcsmax_Wm2:
+        type: float
+      dTcs_C:
+        type: float
+      Tscs0_ahu_C:
+        type: float
+        nullable: true
+      dTcs0_ahu_C:
+        type: float
+        nullable: true
+      Tc_sup_air_ahu_C:
+        type: float
+        nullable: true
+      Tscs0_aru_C:
+        type: float
+        nullable: true
+      dTcs0_aru_C:
+        type: float
+        nullable: true
+      Tc_sup_air_aru_C:
+        type: float
+        nullable: true
+      Tscs0_scu_C:
+        type: float
+        nullable: true
+      dTcs0_scu_C:
+        type: float
+        nullable: true
     VENTILATION:
       Description:
-        sample_data: Window ventilation - no night flushing
-        types_found: [string]
-      ECONOMIZER:
-        sample_data: false
-        types_found: [bool]
-      HEAT_REC:
-        sample_data: false
-        types_found: [bool]
-      MECH_VENT:
-        sample_data: false
-        types_found: [bool]
-      NIGHT_FLSH:
-        sample_data: false
-        types_found: [bool]
-      WIN_VENT:
-        sample_data: true
-        types_found: [bool]
+        type: string
       code:
-        sample_data: T3
-        types_found: [string]
+        type: string
         primary: true
+      MECH_VENT:
+        type: boolean
+      WIN_VENT:
+        type: boolean
+      HEAT_REC:
+        type: boolean
+      NIGHT_FLSH:
+        type: boolean
+      ECONOMIZER:
+        type: boolean
+    CONTROLLER:
+      Description:
+        type: string
+      code:
+        type: string
+        primary: true
+      dT_Qhs:
+        type: float
+      dT_Qcs:
+        type: float
   used_by: [demand]
 get_database_envelope_systems:
-  created_by: []
-  file_path: inputs/technology/systems/envelope_systems.xls
+  created_by: [data_initializer]
+  file_path: inputs/technology/assemblies/ENVELOPE.xls
   file_type: xls
   schema:
     CONSTRUCTION:
-      Cm_Af:
-        sample_data: !!python/long '300000'
-        types_found: [long]
       Description:
-        sample_data: Heavy construction
-        types_found: [string]
+        type: string
       code:
-        sample_data: T3
-        types_found: [string]
+        type: string
         primary: true
+      Cm_Af:
+        type: float
     TIGHTNESS:
       Description:
-        sample_data: Very Leaky
-        types_found: [string]
+        type: string
       code:
-        sample_data: T6
-        types_found: [string]
+        type: string
         primary: true
       n50:
-        sample_data: !!python/long '6'
-        types_found: [long]
-    ROOF:
-      Description:
-        sample_data: concrete or rock pebbles finishing - Singapore
-        types_found: [string]
-      U_roof:
-        sample_data: 0.6
-        types_found: [float]
-      a_roof:
-        sample_data: 0.6
-        types_found: [float]
-      code:
-        sample_data: T7
-        types_found: [string]
-        primary: true
-      e_roof:
-        sample_data: 0.94
-        types_found: [float]
-      r_roof:
-        sample_data: 0.4
-        types_found: [float]
-      GHG_ROOF_kgCO2m2:
-        sample_data: 100
-        types_found: [float]
-    SHADING:
-      Description:
-        sample_data: venetian blinds
-        types_found: [string]
-      code:
-        sample_data: T2
-        types_found: [string]
-        primary: true
-      rf_sh:
-        sample_data: 0.15
-        types_found: [float]
-    WALL:
-      Description:
-        sample_data: concrete block exposed- NTU
-        types_found: [string]
-      U_wall:
-        sample_data: 3.2
-        types_found: [float]
-      a_wall:
-        sample_data: 0.6
-        types_found: [float]
-      code:
-        sample_data: T6
-        types_found: [string]
-        primary: true
-      e_wall:
-        sample_data: 0.95
-        types_found: [float]
-      r_wall:
-        sample_data: 0.4
-        types_found: [float]
-      GHG_WALL_kgCO2m2:
-        sample_data: 100
-        types_found: [float]
+        type: float
     WINDOW:
       Description:
-        sample_data: window - SinBERBest Office
-        types_found: [string]
-      F_F:
-        sample_data: 0.2
-        types_found: [float]
-      G_win:
-        sample_data: 0.2
-        types_found: [float]
-      U_win:
-        sample_data: 2.2
-        types_found: [float]
+        type: string
       code:
-        sample_data: T10
-        types_found: [string]
+        type: string
         primary: true
+      U_win:
+        type: float
+      G_win:
+        type: float
       e_win:
-        sample_data: 0.89
-        types_found: [float]
+        type: float
+      F_F:
+        type: float
       GHG_WIN_kgCO2m2:
-        sample_data: 100
-        types_found: [float]
+        type: float
+    ROOF:
+      Description:
+        type: string
+      code:
+        type: string
+        primary: true
+      U_roof:
+        type: float
+      a_roof:
+        type: float
+      e_roof:
+        type: float
+      r_roof:
+        type: float
+      GHG_ROOF_kgCO2m2:
+        type: float
+    WALL:
+      Description:
+        type: string
+      code:
+        type: string
+        primary: true
+      U_wall:
+        type: float
+      a_wall:
+        type: float
+      e_wall:
+        type: float
+      r_wall:
+        type: float
+      GHG_WALL_kgCO2m2:
+        type: float
     FLOOR:
       Description:
-        sample_data: window - SinBERBest Office
-        types_found: [string]
-      U_base:
-        sample_data: 2.2
-        types_found: [float]
+        type: string
       code:
-        sample_data: T10
-        types_found: [string]
+        type: string
         primary: true
+      U_base:
+        type: float
       GHG_FLOOR_kgCO2m2:
-        sample_data: 100
-        types_found: [float]
+        type: float
+    SHADING:
+      Description:
+        type: string
+      code:
+        type: string
+        primary: true
+      rf_sh:
+        type: float
   used_by: [demand, radiation, schedule_maker]
 get_database_standard_schedules_use:
-  created_by: []
+  created_by: [data_initializer]
   file_path: inputs/technology/archetypes/schedules/RESTAURANT.csv
   file_type: csv
   schema:
-    CH-SIA-2014:
-      sample_data: 0.8
-      types_found: [float, null]
     METADATA:
-      sample_data: 0.8
-      types_found: [float, null]
-    RESTAURANT:
-      sample_data: 0.8
-      types_found: [float, null]
+      name:
+        type: string
+    MONTHLY_MULTIPLIER:
+      1:
+        type: float
+        min: 0.0
+        max: 1.0
+        min: 0.0
+        max: 1.0
+      2:
+        type: float
+        min: 0.0
+        max: 1.0
+      3:
+        type: float
+        min: 0.0
+        max: 1.0
+      4:
+        type: float
+        min: 0.0
+        max: 1.0
+      5:
+        type: float
+        min: 0.0
+        max: 1.0
+      6:
+        type: float
+        min: 0.0
+        max: 1.0
+      7:
+        type: float
+        min: 0.0
+        max: 1.0
+      8:
+        type: float
+        min: 0.0
+        max: 1.0
+      9:
+        type: float
+        min: 0.0
+        max: 1.0
+      10:
+        type: float
+        min: 0.0
+        max: 1.0
+      11:
+        type: float
+        min: 0.0
+        max: 1.0
+      12:
+        type: float
+        min: 0.0
+        max: 1.0
+    OCCUPANCY:
+      DAY:
+        type: string
+        choice:
+          values: [WEEKDAY, SATURDAY, SUNDAY]
+        primary: true
+      0:
+        type: float
+        min: 0.0
+        max: 1.0
+      1:
+        type: float
+        min: 0.0
+        max: 1.0
+      2:
+        type: float
+        min: 0.0
+        max: 1.0
+      3:
+        type: float
+        min: 0.0
+        max: 1.0
+      4:
+        type: float
+        min: 0.0
+        max: 1.0
+      5:
+        type: float
+        min: 0.0
+        max: 1.0
+      6:
+        type: float
+        min: 0.0
+        max: 1.0
+      7:
+        type: float
+        min: 0.0
+        max: 1.0
+      8:
+        type: float
+        min: 0.0
+        max: 1.0
+      9:
+        type: float
+        min: 0.0
+        max: 1.0
+      10:
+        type: float
+        min: 0.0
+        max: 1.0
+      11:
+        type: float
+        min: 0.0
+        max: 1.0
+      12:
+        type: float
+        min: 0.0
+        max: 1.0
+      13:
+        type: float
+        min: 0.0
+        max: 1.0
+      14:
+        type: float
+        min: 0.0
+        max: 1.0
+      15:
+        type: float
+        min: 0.0
+        max: 1.0
+      16:
+        type: float
+        min: 0.0
+        max: 1.0
+      17:
+        type: float
+        min: 0.0
+        max: 1.0
+      18:
+        type: float
+        min: 0.0
+        max: 1.0
+      19:
+        type: float
+        min: 0.0
+        max: 1.0
+      20:
+        type: float
+        min: 0.0
+        max: 1.0
+      21:
+        type: float
+        min: 0.0
+        max: 1.0
+      22:
+        type: float
+        min: 0.0
+        max: 1.0
+      23:
+        type: float
+        min: 0.0
+        max: 1.0
+    APPLIANCES:
+      DAY:
+        type: string
+        choice:
+          values: [WEEKDAY, SATURDAY, SUNDAY]
+        primary: true
+      0:
+        type: float
+        min: 0.0
+        max: 1.0
+      1:
+        type: float
+        min: 0.0
+        max: 1.0
+      2:
+        type: float
+        min: 0.0
+        max: 1.0
+      3:
+        type: float
+        min: 0.0
+        max: 1.0
+      4:
+        type: float
+        min: 0.0
+        max: 1.0
+      5:
+        type: float
+        min: 0.0
+        max: 1.0
+      6:
+        type: float
+        min: 0.0
+        max: 1.0
+      7:
+        type: float
+        min: 0.0
+        max: 1.0
+      8:
+        type: float
+        min: 0.0
+        max: 1.0
+      9:
+        type: float
+        min: 0.0
+        max: 1.0
+      10:
+        type: float
+        min: 0.0
+        max: 1.0
+      11:
+        type: float
+        min: 0.0
+        max: 1.0
+      12:
+        type: float
+        min: 0.0
+        max: 1.0
+      13:
+        type: float
+        min: 0.0
+        max: 1.0
+      14:
+        type: float
+        min: 0.0
+        max: 1.0
+      15:
+        type: float
+        min: 0.0
+        max: 1.0
+      16:
+        type: float
+        min: 0.0
+        max: 1.0
+      17:
+        type: float
+        min: 0.0
+        max: 1.0
+      18:
+        type: float
+        min: 0.0
+        max: 1.0
+      19:
+        type: float
+        min: 0.0
+        max: 1.0
+      20:
+        type: float
+        min: 0.0
+        max: 1.0
+      21:
+        type: float
+        min: 0.0
+        max: 1.0
+      22:
+        type: float
+        min: 0.0
+        max: 1.0
+      23:
+        type: float
+        min: 0.0
+        max: 1.0
+    LIGHTING:
+      DAY:
+        type: string
+        choice:
+          values: [WEEKDAY, SATURDAY, SUNDAY]
+        primary: true
+      0:
+        type: float
+        min: 0.0
+        max: 1.0
+      1:
+        type: float
+        min: 0.0
+        max: 1.0
+      2:
+        type: float
+        min: 0.0
+        max: 1.0
+      3:
+        type: float
+        min: 0.0
+        max: 1.0
+      4:
+        type: float
+        min: 0.0
+        max: 1.0
+      5:
+        type: float
+        min: 0.0
+        max: 1.0
+      6:
+        type: float
+        min: 0.0
+        max: 1.0
+      7:
+        type: float
+        min: 0.0
+        max: 1.0
+      8:
+        type: float
+        min: 0.0
+        max: 1.0
+      9:
+        type: float
+        min: 0.0
+        max: 1.0
+      10:
+        type: float
+        min: 0.0
+        max: 1.0
+      11:
+        type: float
+        min: 0.0
+        max: 1.0
+      12:
+        type: float
+        min: 0.0
+        max: 1.0
+      13:
+        type: float
+        min: 0.0
+        max: 1.0
+      14:
+        type: float
+        min: 0.0
+        max: 1.0
+      15:
+        type: float
+        min: 0.0
+        max: 1.0
+      16:
+        type: float
+        min: 0.0
+        max: 1.0
+      17:
+        type: float
+        min: 0.0
+        max: 1.0
+      18:
+        type: float
+        min: 0.0
+        max: 1.0
+      19:
+        type: float
+        min: 0.0
+        max: 1.0
+      20:
+        type: float
+        min: 0.0
+        max: 1.0
+      21:
+        type: float
+        min: 0.0
+        max: 1.0
+      22:
+        type: float
+        min: 0.0
+        max: 1.0
+      23:
+        type: float
+        min: 0.0
+        max: 1.0
+    WATER:
+      DAY:
+        type: string
+        choice:
+          values: [WEEKDAY, SATURDAY, SUNDAY]
+        primary: true
+      0:
+        type: float
+        min: 0.0
+        max: 1.0
+      1:
+        type: float
+        min: 0.0
+        max: 1.0
+      2:
+        type: float
+        min: 0.0
+        max: 1.0
+      3:
+        type: float
+        min: 0.0
+        max: 1.0
+      4:
+        type: float
+        min: 0.0
+        max: 1.0
+      5:
+        type: float
+        min: 0.0
+        max: 1.0
+      6:
+        type: float
+        min: 0.0
+        max: 1.0
+      7:
+        type: float
+        min: 0.0
+        max: 1.0
+      8:
+        type: float
+        min: 0.0
+        max: 1.0
+      9:
+        type: float
+        min: 0.0
+        max: 1.0
+      10:
+        type: float
+        min: 0.0
+        max: 1.0
+      11:
+        type: float
+        min: 0.0
+        max: 1.0
+      12:
+        type: float
+        min: 0.0
+        max: 1.0
+      13:
+        type: float
+        min: 0.0
+        max: 1.0
+      14:
+        type: float
+        min: 0.0
+        max: 1.0
+      15:
+        type: float
+        min: 0.0
+        max: 1.0
+      16:
+        type: float
+        min: 0.0
+        max: 1.0
+      17:
+        type: float
+        min: 0.0
+        max: 1.0
+      18:
+        type: float
+        min: 0.0
+        max: 1.0
+      19:
+        type: float
+        min: 0.0
+        max: 1.0
+      20:
+        type: float
+        min: 0.0
+        max: 1.0
+      21:
+        type: float
+        min: 0.0
+        max: 1.0
+      22:
+        type: float
+        min: 0.0
+        max: 1.0
+      23:
+        type: float
+        min: 0.0
+        max: 1.0
+    HEATING:
+      DAY:
+        type: string
+        choice:
+          values: [WEEKDAY, SATURDAY, SUNDAY]
+        primary: true
+      0:
+        type: string
+        choice:
+          values: [OFF, SETBACK, SETPOINT]
+      1:
+        type: string
+        choice:
+          values: [OFF, SETBACK, SETPOINT]
+      2:
+        type: string
+        choice:
+          values: [OFF, SETBACK, SETPOINT]
+      3:
+        type: string
+        choice:
+          values: [OFF, SETBACK, SETPOINT]
+      4:
+        type: string
+        choice:
+          values: [OFF, SETBACK, SETPOINT]
+      5:
+        type: string
+        choice:
+          values: [OFF, SETBACK, SETPOINT]
+      6:
+        type: string
+        choice:
+          values: [OFF, SETBACK, SETPOINT]
+      7:
+        type: string
+        choice:
+          values: [OFF, SETBACK, SETPOINT]
+      8:
+        type: string
+        choice:
+          values: [OFF, SETBACK, SETPOINT]
+      9:
+        type: string
+        choice:
+          values: [OFF, SETBACK, SETPOINT]
+      10:
+        type: string
+        choice:
+          values: [OFF, SETBACK, SETPOINT]
+      11:
+        type: string
+        choice:
+          values: [OFF, SETBACK, SETPOINT]
+      12:
+        type: string
+        choice:
+          values: [OFF, SETBACK, SETPOINT]
+      13:
+        type: string
+        choice:
+          values: [OFF, SETBACK, SETPOINT]
+      14:
+        type: string
+        choice:
+          values: [OFF, SETBACK, SETPOINT]
+      15:
+        type: string
+        choice:
+          values: [OFF, SETBACK, SETPOINT]
+      16:
+        type: string
+        choice:
+          values: [OFF, SETBACK, SETPOINT]
+      17:
+        type: string
+        choice:
+          values: [OFF, SETBACK, SETPOINT]
+      18:
+        type: string
+        choice:
+          values: [OFF, SETBACK, SETPOINT]
+      19:
+        type: string
+        choice:
+          values: [OFF, SETBACK, SETPOINT]
+      20:
+        type: string
+        choice:
+          values: [OFF, SETBACK, SETPOINT]
+      21:
+        type: string
+        choice:
+          values: [OFF, SETBACK, SETPOINT]
+      22:
+        type: string
+        choice:
+          values: [OFF, SETBACK, SETPOINT]
+      23:
+        type: string
+        choice:
+          values: [OFF, SETBACK, SETPOINT]
+    COOLING:
+      DAY:
+        type: string
+        choice:
+          values: [WEEKDAY, SATURDAY, SUNDAY]
+        primary: true
+      0:
+        type: string
+        choice:
+          values: [OFF, SETBACK, SETPOINT]
+      1:
+        type: string
+        choice:
+          values: [OFF, SETBACK, SETPOINT]
+      2:
+        type: string
+        choice:
+          values: [OFF, SETBACK, SETPOINT]
+      3:
+        type: string
+        choice:
+          values: [OFF, SETBACK, SETPOINT]
+      4:
+        type: string
+        choice:
+          values: [OFF, SETBACK, SETPOINT]
+      5:
+        type: string
+        choice:
+          values: [OFF, SETBACK, SETPOINT]
+      6:
+        type: string
+        choice:
+          values: [OFF, SETBACK, SETPOINT]
+      7:
+        type: string
+        choice:
+          values: [OFF, SETBACK, SETPOINT]
+      8:
+        type: string
+        choice:
+          values: [OFF, SETBACK, SETPOINT]
+      9:
+        type: string
+        choice:
+          values: [OFF, SETBACK, SETPOINT]
+      10:
+        type: string
+        choice:
+          values: [OFF, SETBACK, SETPOINT]
+      11:
+        type: string
+        choice:
+          values: [OFF, SETBACK, SETPOINT]
+      12:
+        type: string
+        choice:
+          values: [OFF, SETBACK, SETPOINT]
+      13:
+        type: string
+        choice:
+          values: [OFF, SETBACK, SETPOINT]
+      14:
+        type: string
+        choice:
+          values: [OFF, SETBACK, SETPOINT]
+      15:
+        type: string
+        choice:
+          values: [OFF, SETBACK, SETPOINT]
+      16:
+        type: string
+        choice:
+          values: [OFF, SETBACK, SETPOINT]
+      17:
+        type: string
+        choice:
+          values: [OFF, SETBACK, SETPOINT]
+      18:
+        type: string
+        choice:
+          values: [OFF, SETBACK, SETPOINT]
+      19:
+        type: string
+        choice:
+          values: [OFF, SETBACK, SETPOINT]
+      20:
+        type: string
+        choice:
+          values: [OFF, SETBACK, SETPOINT]
+      21:
+        type: string
+        choice:
+          values: [OFF, SETBACK, SETPOINT]
+      22:
+        type: string
+        choice:
+          values: [OFF, SETBACK, SETPOINT]
+      23:
+        type: string
+        choice:
+          values: [OFF, SETBACK, SETPOINT]
+    PROCESSES:
+      DAY:
+        type: string
+        choice:
+          values: [WEEKDAY, SATURDAY, SUNDAY]
+        primary: true
+      0:
+        type: float
+        min: 0.0
+        max: 1.0
+      1:
+        type: float
+        min: 0.0
+        max: 1.0
+      2:
+        type: float
+        min: 0.0
+        max: 1.0
+      3:
+        type: float
+        min: 0.0
+        max: 1.0
+      4:
+        type: float
+        min: 0.0
+        max: 1.0
+      5:
+        type: float
+        min: 0.0
+        max: 1.0
+      6:
+        type: float
+        min: 0.0
+        max: 1.0
+      7:
+        type: float
+        min: 0.0
+        max: 1.0
+      8:
+        type: float
+        min: 0.0
+        max: 1.0
+      9:
+        type: float
+        min: 0.0
+        max: 1.0
+      10:
+        type: float
+        min: 0.0
+        max: 1.0
+      11:
+        type: float
+        min: 0.0
+        max: 1.0
+      12:
+        type: float
+        min: 0.0
+        max: 1.0
+      13:
+        type: float
+        min: 0.0
+        max: 1.0
+      14:
+        type: float
+        min: 0.0
+        max: 1.0
+      15:
+        type: float
+        min: 0.0
+        max: 1.0
+      16:
+        type: float
+        min: 0.0
+        max: 1.0
+      17:
+        type: float
+        min: 0.0
+        max: 1.0
+      18:
+        type: float
+        min: 0.0
+        max: 1.0
+      19:
+        type: float
+        min: 0.0
+        max: 1.0
+      20:
+        type: float
+        min: 0.0
+        max: 1.0
+      21:
+        type: float
+        min: 0.0
+        max: 1.0
+      22:
+        type: float
+        min: 0.0
+        max: 1.0
+      23:
+        type: float
+        min: 0.0
+        max: 1.0
+    SERVERS:
+      DAY:
+        type: string
+        choice:
+          values: [WEEKDAY, SATURDAY, SUNDAY]
+        primary: true
+      0:
+        type: float
+        min: 0.0
+        max: 1.0
+      1:
+        type: float
+        min: 0.0
+        max: 1.0
+      2:
+        type: float
+        min: 0.0
+        max: 1.0
+      3:
+        type: float
+        min: 0.0
+        max: 1.0
+      4:
+        type: float
+        min: 0.0
+        max: 1.0
+      5:
+        type: float
+        min: 0.0
+        max: 1.0
+      6:
+        type: float
+        min: 0.0
+        max: 1.0
+      7:
+        type: float
+        min: 0.0
+        max: 1.0
+      8:
+        type: float
+        min: 0.0
+        max: 1.0
+      9:
+        type: float
+        min: 0.0
+        max: 1.0
+      10:
+        type: float
+        min: 0.0
+        max: 1.0
+      11:
+        type: float
+        min: 0.0
+        max: 1.0
+      12:
+        type: float
+        min: 0.0
+        max: 1.0
+      13:
+        type: float
+        min: 0.0
+        max: 1.0
+      14:
+        type: float
+        min: 0.0
+        max: 1.0
+      15:
+        type: float
+        min: 0.0
+        max: 1.0
+      16:
+        type: float
+        min: 0.0
+        max: 1.0
+      17:
+        type: float
+        min: 0.0
+        max: 1.0
+      18:
+        type: float
+        min: 0.0
+        max: 1.0
+      19:
+        type: float
+        min: 0.0
+        max: 1.0
+      20:
+        type: float
+        min: 0.0
+        max: 1.0
+      21:
+        type: float
+        min: 0.0
+        max: 1.0
+      22:
+        type: float
+        min: 0.0
+        max: 1.0
+      23:
+        type: float
+        min: 0.0
+        max: 1.0
+    ELECTROMOBILITY:
+      DAY:
+        type: string
+        choice:
+          values: [WEEKDAY, SATURDAY, SUNDAY]
+        primary: true
+      0:
+        type: float
+        min: 0.0
+        max: 1.0
+      1:
+        type: float
+        min: 0.0
+        max: 1.0
+      2:
+        type: float
+        min: 0.0
+        max: 1.0
+      3:
+        type: float
+        min: 0.0
+        max: 1.0
+      4:
+        type: float
+        min: 0.0
+        max: 1.0
+      5:
+        type: float
+        min: 0.0
+        max: 1.0
+      6:
+        type: float
+        min: 0.0
+        max: 1.0
+      7:
+        type: float
+        min: 0.0
+        max: 1.0
+      8:
+        type: float
+        min: 0.0
+        max: 1.0
+      9:
+        type: float
+        min: 0.0
+        max: 1.0
+      10:
+        type: float
+        min: 0.0
+        max: 1.0
+      11:
+        type: float
+        min: 0.0
+        max: 1.0
+      12:
+        type: float
+        min: 0.0
+        max: 1.0
+      13:
+        type: float
+        min: 0.0
+        max: 1.0
+      14:
+        type: float
+        min: 0.0
+        max: 1.0
+      15:
+        type: float
+        min: 0.0
+        max: 1.0
+      16:
+        type: float
+        min: 0.0
+        max: 1.0
+      17:
+        type: float
+        min: 0.0
+        max: 1.0
+      18:
+        type: float
+        min: 0.0
+        max: 1.0
+      19:
+        type: float
+        min: 0.0
+        max: 1.0
+      20:
+        type: float
+        min: 0.0
+        max: 1.0
+      21:
+        type: float
+        min: 0.0
+        max: 1.0
+      22:
+        type: float
+        min: 0.0
+        max: 1.0
+      23:
+        type: float
+        min: 0.0
+        max: 1.0
   used_by: [archetypes_mapper]
 get_database_feedstocks:
-  created_by: []
-  file_path: inputs/technology/feedstocks/feedstocks.xls
+  created_by: [data_initializer]
+  file_path: inputs/technology/components/FEEDSTOCKS.xls
   file_type: xls
   schema:
     NATURALGAS:
-      GHG_kgCO2MJ:
-        sample_data: 0.0075
-        types_found: [float]
-      Opex_var_buy_USD2015kWh:
-        sample_data: 0.20800000000000002
-        types_found: [float]
-      Opex_var_sell_USD2015kWh:
-        sample_data: 0.20800000000000002
-        types_found: [float]
       hour:
-        sample_data: 0
-        types_found: [int]
+        type: int
+        min: 0
+        max: 23
+        primary: true
+      GHG_kgCO2MJ:
+        type: float
+      Opex_var_buy_USD2015kWh:
+        type: float
+        min: 0.0
+      Opex_var_sell_USD2015kWh:
+        type: float
+        min: 0.0
       reference:
-        sample_data: KBOB 2009/1:2016, ID 42.001 Kehrichtverbrennung, cost from CEA
-        types_found: [string, null]
+        type: string
+        nullable: true
     BIOGAS:
-      GHG_kgCO2MJ:
-        sample_data: 0.0075
-        types_found: [float]
-      Opex_var_buy_USD2015kWh:
-        sample_data: 0.20800000000000002
-        types_found: [float]
-      Opex_var_sell_USD2015kWh:
-        sample_data: 0.20800000000000002
-        types_found: [float]
       hour:
-        sample_data: 0
-        types_found: [int]
+        type: int
+        min: 0
+        max: 23
+        primary: true
+      GHG_kgCO2MJ:
+        type: float
+      Opex_var_buy_USD2015kWh:
+        type: float
+        min: 0.0
+      Opex_var_sell_USD2015kWh:
+        type: float
+        min: 0.0
       reference:
-        sample_data: KBOB 2009/1:2016, ID 42.001 Kehrichtverbrennung, cost from CEA
-        types_found: [string, null]
+        type: string
+        nullable: true
     GRID:
-      GHG_kgCO2MJ:
-        sample_data: 0.0075
-        types_found: [float]
-      Opex_var_buy_USD2015kWh:
-        sample_data: 0.20800000000000002
-        types_found: [float]
-      Opex_var_sell_USD2015kWh:
-        sample_data: 0.20800000000000002
-        types_found: [float]
       hour:
-        sample_data: 0
-        types_found: [int]
+        type: int
+        min: 0
+        max: 23
+        primary: true
+      GHG_kgCO2MJ:
+        type: float
+      Opex_var_buy_USD2015kWh:
+        type: float
+        min: 0.0
+      Opex_var_sell_USD2015kWh:
+        type: float
+        min: 0.0
       reference:
-        sample_data: KBOB 2009/1:2016, ID 42.001 Kehrichtverbrennung, cost from CEA
-        types_found: [string, null]
+        type: string
+        nullable: true
     SOLAR:
-      GHG_kgCO2MJ:
-        sample_data: 0.0075
-        types_found: [float]
-      Opex_var_buy_USD2015kWh:
-        sample_data: 0.20800000000000002
-        types_found: [float]
-      Opex_var_sell_USD2015kWh:
-        sample_data: 0.20800000000000002
-        types_found: [float]
       hour:
-        sample_data: 0
-        types_found: [int]
+        type: int
+        min: 0
+        max: 23
+        primary: true
+      GHG_kgCO2MJ:
+        type: float
+      Opex_var_buy_USD2015kWh:
+        type: float
+        min: 0.0
+      Opex_var_sell_USD2015kWh:
+        type: float
+        min: 0.0
       reference:
-        sample_data: KBOB 2009/1:2016, ID 42.001 Kehrichtverbrennung, cost from CEA
-        types_found: [string, null]
+        type: string
+        nullable: true
     OIL:
-      GHG_kgCO2MJ:
-        sample_data: 0.0075
-        types_found: [float]
-      Opex_var_buy_USD2015kWh:
-        sample_data: 0.20800000000000002
-        types_found: [float]
-      Opex_var_sell_USD2015kWh:
-        sample_data: 0.20800000000000002
-        types_found: [float]
       hour:
-        sample_data: 0
-        types_found: [int]
+        type: int
+        min: 0
+        max: 23
+        primary: true
+      GHG_kgCO2MJ:
+        type: float
+      Opex_var_buy_USD2015kWh:
+        type: float
+        min: 0.0
+      Opex_var_sell_USD2015kWh:
+        type: float
+        min: 0.0
       reference:
-        sample_data: KBOB 2009/1:2016, ID 42.001 Kehrichtverbrennung, cost from CEA
-        types_found: [string, null]
+        type: string
+        nullable: true
     COAL:
-      GHG_kgCO2MJ:
-        sample_data: 0.0075
-        types_found: [float]
-      Opex_var_buy_USD2015kWh:
-        sample_data: 0.20800000000000002
-        types_found: [float]
-      Opex_var_sell_USD2015kWh:
-        sample_data: 0.20800000000000002
-        types_found: [float]
       hour:
-        sample_data: 0
-        types_found: [int]
+        type: int
+        min: 0
+        max: 23
+        primary: true
+      GHG_kgCO2MJ:
+        type: float
+      Opex_var_buy_USD2015kWh:
+        type: float
+        min: 0.0
+      Opex_var_sell_USD2015kWh:
+        type: float
+        min: 0.0
       reference:
-        sample_data: KBOB 2009/1:2016, ID 42.001 Kehrichtverbrennung, cost from CEA
-        types_found: [string, null]
+        type: string
+        nullable: true
     WOOD:
-      GHG_kgCO2MJ:
-        sample_data: 0.0075
-        types_found: [float]
-      Opex_var_buy_USD2015kWh:
-        sample_data: 0.20800000000000002
-        types_found: [float]
-      Opex_var_sell_USD2015kWh:
-        sample_data: 0.20800000000000002
-        types_found: [float]
       hour:
-        sample_data: 0
-        types_found: [int]
+        type: int
+        min: 0
+        max: 23
+        primary: true
+      GHG_kgCO2MJ:
+        type: float
+      Opex_var_buy_USD2015kWh:
+        type: float
+        min: 0.0
+      Opex_var_sell_USD2015kWh:
+        type: float
+        min: 0.0
       reference:
-        sample_data: KBOB 2009/1:2016, ID 42.001 Kehrichtverbrennung, cost from CEA
-        types_found: [string, null]
+        type: string
+        nullable: true
     WETBIOMASS:
-      GHG_kgCO2MJ:
-        sample_data: 0.0075
-        types_found: [float]
-      Opex_var_buy_USD2015kWh:
-        sample_data: 0.20800000000000002
-        types_found: [float]
-      Opex_var_sell_USD2015kWh:
-        sample_data: 0.20800000000000002
-        types_found: [float]
       hour:
-        sample_data: 0
-        types_found: [int]
+        type: int
+        min: 0
+        max: 23
+        primary: true
+      GHG_kgCO2MJ:
+        type: float
+      Opex_var_buy_USD2015kWh:
+        type: float
+        min: 0.0
+      Opex_var_sell_USD2015kWh:
+        type: float
+        min: 0.0
       reference:
-        sample_data: KBOB 2009/1:2016, ID 42.001 Kehrichtverbrennung, cost from CEA
-        types_found: [string, null]
+        type: string
+        nullable: true
     DRYBIOMASS:
-      GHG_kgCO2MJ:
-        sample_data: 0.0075
-        types_found: [float]
-      Opex_var_buy_USD2015kWh:
-        sample_data: 0.20800000000000002
-        types_found: [float]
-      Opex_var_sell_USD2015kWh:
-        sample_data: 0.20800000000000002
-        types_found: [float]
       hour:
-        sample_data: 0
-        types_found: [int]
+        type: int
+        min: 0
+        max: 23
+        primary: true
+      GHG_kgCO2MJ:
+        type: float
+      Opex_var_buy_USD2015kWh:
+        type: float
+        min: 0.0
+      Opex_var_sell_USD2015kWh:
+        type: float
+        min: 0.0
       reference:
-        sample_data: KBOB 2009/1:2016, ID 42.001 Kehrichtverbrennung, cost from CEA
-        types_found: [string, null]
+        type: string
+        nullable: true
   used_by: [decentralized, emissions, system_costs, optimization]
 get_database_supply_assemblies:
-  created_by: []
-  file_path: inputs/technology/assemblies/supply.xls
+  created_by: [data_initializer]
+  file_path: inputs/technology/assemblies/SUPPLY.xls
   file_type: xls
   schema:
     HEATING:
       Description:
-        sample_data: heatpump - air-air
-        types_found: [string]
+        type: string
       code:
-        sample_data: T25
-        types_found: [date, string]
+        type: string
         primary: true
-      efficiency:
-        sample_data: 0.99
-        types_found: [float]
       feedstock:
-        sample_data: SOLAR
-        types_found: [string]
+        type: string
         choice:
           values: [NONE, NATURALGAS, BIOGAS, GRID, SOLAR, OIL, COAL, WOOD, WETBIOMASS, DRYBIOMASS]
-      reference:
-        sample_data: educated guess
-        types_found: [string]
       scale:
-        sample_data: BUILDING
-        types_found: [string]
+        type: string
         choice:
           values: [NONE, BUILDING, DISTRICT, CITY]
-      system:
-        sample_data: ELECTRICITY
-        types_found: [string]
+      efficiency:
+        type: float
       CAPEX_USD2015kW:
-        sample_data: 200.0
-        types_found: [float]
-      IR_%:
-        sample_data: !!python/long '5'
-        types_found: [long]
+        type: float
+        min: 0.0
       LT_yr:
-        sample_data: !!python/long '25'
-        types_found: [long]
+        type: int
+        min: 0
+      IR_%:
+        type: float
+        min: 0.0
       O&M_%:
-        sample_data: !!python/long '5'
-        types_found: [long]
+        type: float
+      reference:
+        type: string
+        nullable: true
     HOT_WATER:
       Description:
-        sample_data: heatpump - air-air
-        types_found: [string]
+        type: string
       code:
-        sample_data: T25
-        types_found: [date, string]
+        type: string
         primary: true
-      efficiency:
-        sample_data: 0.99
-        types_found: [float]
       feedstock:
-        sample_data: SOLAR
-        types_found: [string]
+        type: string
         choice:
           values: [NONE, NATURALGAS, BIOGAS, GRID, SOLAR, OIL, COAL, WOOD, WETBIOMASS, DRYBIOMASS]
-      reference:
-        sample_data: educated guess
-        types_found: [string]
       scale:
-        sample_data: BUILDING
-        types_found: [string]
+        type: string
         choice:
           values: [NONE, BUILDING, DISTRICT, CITY]
-      system:
-        sample_data: ELECTRICITY
-        types_found: [string]
+      efficiency:
+        type: float
       CAPEX_USD2015kW:
-        sample_data: 200.0
-        types_found: [float]
-      IR_%:
-        sample_data: !!python/long '5'
-        types_found: [long]
+        type: float
+        min: 0.0
       LT_yr:
-        sample_data: !!python/long '25'
-        types_found: [long]
+        type: int
+        min: 0
+      IR_%:
+        type: float
+        min: 0.0
       O&M_%:
-        sample_data: !!python/long '5'
-        types_found: [long]
+        type: float
+      reference:
+        type: string
+        nullable: true
     COOLING:
       Description:
-        sample_data: heatpump - air-air
-        types_found: [string]
+        type: string
       code:
-        sample_data: T25
-        types_found: [date, string]
+        type: string
         primary: true
-      efficiency:
-        sample_data: 0.99
-        types_found: [float]
       feedstock:
-        sample_data: SOLAR
-        types_found: [string]
+        type: string
         choice:
           values: [NONE, NATURALGAS, BIOGAS, GRID, SOLAR, OIL, COAL, WOOD, WETBIOMASS, DRYBIOMASS]
-      reference:
-        sample_data: educated guess
-        types_found: [string]
       scale:
-        sample_data: BUILDING
-        types_found: [string]
+        type: string
         choice:
           values: [NONE, BUILDING, DISTRICT, CITY]
-      system:
-        sample_data: ELECTRICITY
-        types_found: [string]
+      efficiency:
+        type: float
       CAPEX_USD2015kW:
-        sample_data: 200.0
-        types_found: [float]
-      IR_%:
-        sample_data: !!python/long '5'
-        types_found: [long]
+        type: float
+        min: 0.0
       LT_yr:
-        sample_data: !!python/long '25'
-        types_found: [long]
+        type: int
+        min: 0
+      IR_%:
+        type: float
+        min: 0.0
       O&M_%:
-        sample_data: !!python/long '5'
-        types_found: [long]
+        type: float
+      reference:
+        type: string
+        nullable: true
     ELECTRICITY:
       Description:
-        sample_data: heatpump - air-air
-        types_found: [string]
+        type: string
       code:
-        sample_data: T25
-        types_found: [date, string]
+        type: string
         primary: true
-      efficiency:
-        sample_data: 0.99
-        types_found: [float]
       feedstock:
-        sample_data: SOLAR
-        types_found: [string]
+        type: string
         choice:
           values: [NONE, NATURALGAS, BIOGAS, GRID, SOLAR, OIL, COAL, WOOD, WETBIOMASS, DRYBIOMASS]
-      reference:
-        sample_data: educated guess
-        types_found: [string]
       scale:
-        sample_data: BUILDING
-        types_found: [string]
+        type: string
         choice:
           values: [NONE, BUILDING, DISTRICT, CITY]
-      system:
-        sample_data: ELECTRICITY
-        types_found: [string]
+      efficiency:
+        type: float
       CAPEX_USD2015kW:
-        sample_data: 200.0
-        types_found: [float]
-      IR_%:
-        sample_data: !!python/long '5'
-        types_found: [long]
+        type: float
+        min: 0.0
       LT_yr:
-        sample_data: !!python/long '25'
-        types_found: [long]
+        type: int
+        min: 0
+      IR_%:
+        type: float
+        min: 0.0
       O&M_%:
-        sample_data: !!python/long '5'
-        types_found: [long]
+        type: float
+      reference:
+        type: string
+        nullable: true
   used_by: [demand, emissions, system_costs]
 get_database_conversion_systems:
-  created_by: []
-  file_path: inputs/technology/systems/supply_systems.xls
+  created_by: [data_initializer]
+  file_path: inputs/technology/components/CONVERSION.xls
   file_type: xls
   schema:
-    Absorption_chiller:
-      Description:
-        sample_data: LiBr triple effect
-        types_found: [string]
-      IR_%:
-        sample_data: !!python/long '5'
-        types_found: [long]
-      LT_yr:
-        sample_data: !!python/long '25'
-        types_found: [long]
-      O&M_%:
-        sample_data: !!python/long '5'
-        types_found: [long]
-      a:
-        sample_data: !!python/long '0'
-        types_found: [long]
-      a_e:
-        sample_data: -2.14
-        types_found: [float]
-      a_g:
-        sample_data: -2.14
-        types_found: [float]
-      assumption:
-        sample_data: IR_%
-        types_found: [string]
-      b:
-        sample_data: 0.6424
-        types_found: [float]
-      c:
-        sample_data: !!python/long '1'
-        types_found: [long]
-      cap_max:
-        sample_data: !!python/long '1628200'
-        types_found: [long]
-      cap_min:
-        sample_data: !!python/long '116300'
-        types_found: [long]
-      code:
-        sample_data: ACH5
-        types_found: [string]
-      currency:
-        sample_data: USD-2015
-        types_found: [string]
-      d:
-        sample_data: !!python/long '0'
-        types_found: [long]
-      e:
-        sample_data: !!python/long '0'
-        types_found: [long]
-      e_e:
-        sample_data: 3.29
-        types_found: [float]
-      e_g:
-        sample_data: 3.29
-        types_found: [float]
-      m_cw:
-        sample_data: 62.0
-        types_found: [float]
-      m_hw:
-        sample_data: 10.0
-        types_found: [float]
-      r_e:
-        sample_data: -1171.7
-        types_found: [float]
-      r_g:
-        sample_data: -504.2
-        types_found: [float]
-      s_e:
-        sample_data: 14.6
-        types_found: [float]
-      s_g:
-        sample_data: 7.05
-        types_found: [float]
-      type:
-        sample_data: triple
-        types_found: [string]
-      unit:
-        sample_data: W
-        types_found: [string]
-    BH:
-      Description:
-        sample_data: borehole
-        types_found: [string]
-      IR_%:
-        sample_data: !!python/long '5'
-        types_found: [long]
-      LT_yr:
-        sample_data: !!python/long '50'
-        types_found: [long]
-      O&M_%:
-        sample_data: !!python/long '0'
-        types_found: [long]
-      a:
-        sample_data: !!python/long '0'
-        types_found: [long]
-      assumption:
-        types_found: [null]
-      b:
-        sample_data: 47.427937915742795
-        types_found: [float]
-      c:
-        sample_data: 0.74
-        types_found: [float]
-      cap_max:
-        sample_data: 10000000000
-        types_found: [long]
-      cap_min:
-        sample_data: !!python/long '1'
-        types_found: [long]
-      code:
-        sample_data: BH1
-        types_found: [string]
-      currency:
-        sample_data: USD-2015
-        types_found: [string]
-      d:
-        sample_data: !!python/long '0'
-        types_found: [long]
-      e:
-        sample_data: !!python/long '0'
-        types_found: [long]
-      unit:
-        sample_data: W
-        types_found: [string]
-    Boiler:
-      Description:
-        sample_data: condensing boiler
-        types_found: [string]
-      IR_%:
-        sample_data: !!python/long '5'
-        types_found: [long]
-      LT_yr:
-        sample_data: !!python/long '20'
-        types_found: [long]
-      O&M_%:
-        sample_data: !!python/long '5'
-        types_found: [long]
-      a:
-        sample_data: 93126.38580931263
-        types_found: [float]
-      assumption:
-        types_found: [null]
-      b:
-        sample_data: 0.015521064301552106
-        types_found: [float]
-      c:
-        sample_data: !!python/long '1'
-        types_found: [long]
-      cap_max:
-        sample_data: 10000000000
-        types_found: [long]
-      cap_min:
-        sample_data: !!python/long '320000'
-        types_found: [long]
-      code:
-        sample_data: BO1
-        types_found: [string]
-      currency:
-        sample_data: USD-2015
-        types_found: [string]
-      d:
-        sample_data: !!python/long '0'
-        types_found: [long]
-      e:
-        sample_data: !!python/long '0'
-        types_found: [long]
-      unit:
-        sample_data: W
-        types_found: [string]
-    CCGT:
-      Description:
-        sample_data: combined cycle gas turbine
-        types_found: [string]
-      IR_%:
-        sample_data: !!python/long '6'
-        types_found: [long]
-      LT_yr:
-        sample_data: !!python/long '25'
-        types_found: [long]
-      O&M_%:
-        sample_data: !!python/long '3'
-        types_found: [long]
-      a:
-        sample_data: !!python/long '0'
-        types_found: [long]
-      assumption:
-        types_found: [null]
-      b:
-        sample_data: 555.8316008316009
-        types_found: [float]
-      c:
-        sample_data: 0.5967
-        types_found: [float]
-      cap_max:
-        sample_data: 10000000000
-        types_found: [long]
-      cap_min:
-        sample_data: !!python/long '1'
-        types_found: [long]
-      code:
-        sample_data: CCGT1
-        types_found: [string]
-      currency:
-        sample_data: USD-2015
-        types_found: [string]
-      d:
-        sample_data: !!python/long '0'
-        types_found: [long]
-      e:
-        sample_data: !!python/long '0'
-        types_found: [long]
-      unit:
-        sample_data: W
-        types_found: [string]
-    CT:
-      Description:
-        sample_data: centralized cooling tower
-        types_found: [string]
-      IR_%:
-        sample_data: !!python/long '15'
-        types_found: [long]
-      LT_yr:
-        sample_data: !!python/long '20'
-        types_found: [long]
-      O&M_%:
-        sample_data: !!python/long '5'
-        types_found: [long]
-      a:
-        sample_data: 1457.3
-        types_found: [float]
-      assumption:
-        sample_data: all
-        types_found: [string]
-      b:
-        sample_data: 0.0161
-        types_found: [float]
-      c:
-        sample_data: !!python/long '1'
-        types_found: [long]
-      cap_max:
-        sample_data: 10000000000000000
-        types_found: [long]
-      cap_min:
-        sample_data: !!python/long '10000000'
-        types_found: [long]
-      code:
-        sample_data: CT1
-        types_found: [string]
-      currency:
-        sample_data: USD-2015
-        types_found: [string]
-      d:
-        sample_data: !!python/long '0'
-        types_found: [long]
-      e:
-        sample_data: !!python/long '0'
-        types_found: [long]
-      unit:
-        sample_data: W
-        types_found: [string]
-    Chiller:
-      Description:
-        sample_data: vapor compression chiller
-        types_found: [string]
-      IR_%:
-        sample_data: !!python/long '5'
-        types_found: [long]
-      LT_yr:
-        sample_data: !!python/long '25'
-        types_found: [long]
-      O&M_%:
-        sample_data: !!python/long '5'
-        types_found: [long]
-      a:
-        sample_data: 0.0
-        types_found: [float]
-      assumption:
-        sample_data: IR_%
-        types_found: [string]
-      b:
-        sample_data: 0.360631104
-        types_found: [float]
-      c:
-        sample_data: !!python/long '1'
-        types_found: [long]
-      cap_max:
-        sample_data: 10000000000
-        types_found: [long]
-      cap_min:
-        sample_data: !!python/long '1'
-        types_found: [long]
-      code:
-        sample_data: CH3
-        types_found: [string]
-      currency:
-        sample_data: USD-2015
-        types_found: [string]
-      d:
-        sample_data: !!python/long '0'
-        types_found: [long]
-      e:
-        sample_data: !!python/long '0'
-        types_found: [long]
-      unit:
-        sample_data: W
-        types_found: [string]
-    FC:
-      ' Assumptions':
-        sample_data: everything
-        types_found: [string, null]
-      Description:
-        sample_data: solid oxide fuel cell
-        types_found: [string]
-      IR_%:
-        sample_data: !!python/long '5'
-        types_found: [long]
-      LT_yr:
-        sample_data: !!python/long '10'
-        types_found: [long]
-      O&M_%:
-        sample_data: !!python/long '5'
-        types_found: [long]
-      a:
-        sample_data: !!python/long '0'
-        types_found: [long]
-      b:
-        sample_data: 13.721413721413722
-        types_found: [float]
-      c:
-        sample_data: !!python/long '1'
-        types_found: [long]
-      cap_max:
-        sample_data: 10000000000
-        types_found: [long]
-      cap_min:
-        sample_data: !!python/long '1'
-        types_found: [long]
-      code:
-        sample_data: FC1
-        types_found: [string]
-      currency:
-        sample_data: USD-2015
-        types_found: [string]
-      d:
-        sample_data: !!python/long '0'
-        types_found: [long]
-      e:
-        sample_data: !!python/long '0'
-        types_found: [long]
-      unit:
-        sample_data: W
-        types_found: [string]
-    Furnace:
-      Description:
-        sample_data: furnace combined with ORC
-        types_found: [string]
-      IR_%:
-        sample_data: !!python/long '5'
-        types_found: [long]
-      LT_yr:
-        sample_data: !!python/long '20'
-        types_found: [long]
-      O&M_%:
-        sample_data: !!python/long '5'
-        types_found: [long]
-      a:
-        sample_data: !!python/long '0'
-        types_found: [long]
-      assumption:
-        types_found: [null]
-      b:
-        sample_data: 0.743
-        types_found: [float]
-      c:
-        sample_data: !!python/long '1'
-        types_found: [long]
-      cap_max:
-        sample_data: !!python/long '50000000'
-        types_found: [long]
-      cap_min:
-        sample_data: !!python/long '5000000'
-        types_found: [long]
-      code:
-        sample_data: FU1
-        types_found: [string]
-      currency:
-        sample_data: USD-2015
-        types_found: [string]
-      d:
-        sample_data: !!python/long '0'
-        types_found: [long]
-      e:
-        sample_data: !!python/long '0'
-        types_found: [long]
-      unit:
-        sample_data: W
-        types_found: [string]
-    HEX:
-      Currency:
-        sample_data: USD-2015
-        types_found: [string]
-      Description:
-        sample_data: District substation heat exchanger
-        types_found: [string]
-      IR_%:
-        sample_data: !!python/long '5'
-        types_found: [long]
-      LT_yr:
-        sample_data: !!python/long '20'
-        types_found: [long]
-      O&M_%:
-        sample_data: !!python/long '5'
-        types_found: [long]
-      a:
-        sample_data: 3381.0
-        types_found: [float]
-      a_p:
-        sample_data: !!python/long '5056'
-        types_found: [long]
-      assumption:
-        sample_data: Values under 1 and above 50 are assumptions, as no datasheet
-          values are available in this area. a_p to e_p denote the pressure drop in
-          Pa
-        types_found: [string, null]
-      b:
-        sample_data: 229.8
-        types_found: [float]
-      b_p:
-        sample_data: 319.9
-        types_found: [float]
-      c:
-        sample_data: !!python/long '0'
-        types_found: [long]
-      c_p:
-        sample_data: 0.4153
-        types_found: [float]
-      cap_max:
-        sample_data: !!python/long '500'
-        types_found: [long]
-      cap_min:
-        sample_data: !!python/long '0'
-        types_found: [long]
-      code:
-        sample_data: HEX2
-        types_found: [string]
-      d:
-        sample_data: !!python/long '0'
-        types_found: [long]
-      d_p:
-        sample_data: !!python/long '-1271'
-        types_found: [long]
-      e:
-        sample_data: !!python/long '0'
-        types_found: [long]
-      e_p:
-        sample_data: 0.006833
-        types_found: [float]
-      unit:
-        sample_data: m^2
-        types_found: [string]
-    HP:
-      Description:
-        sample_data: water-water heat pump
-        types_found: [string]
-      IR_%:
-        sample_data: !!python/long '6'
-        types_found: [long]
-      LT_yr:
-        sample_data: !!python/long '25'
-        types_found: [long]
-      O&M_%:
-        sample_data: !!python/long '5'
-        types_found: [long]
-      a:
-        sample_data: !!python/long '0'
-        types_found: [long]
-      assumption:
-        types_found: [null]
-      b:
-        sample_data: 9.859201773835919
-        types_found: [float]
-      c:
-        sample_data: 1.0
-        types_found: [float]
-      cap_max:
-        sample_data: !!python/long '20000000'
-        types_found: [long]
-      cap_min:
-        sample_data: !!python/long '1000000'
-        types_found: [long]
-      code:
-        sample_data: HP2
-        types_found: [string]
-      currency:
-        sample_data: USD-2015
-        types_found: [string]
-      d:
-        sample_data: !!python/long '0'
-        types_found: [long]
-      e:
-        sample_data: -0.547150776053215
-        types_found: [float]
-      unit:
-        sample_data: W
-        types_found: [string]
     PV:
       Description:
-        sample_data: generic amorphous silicon panel
-        types_found: [string]
-      IR_%:
-        sample_data: !!python/long '5'
-        types_found: [long]
-      LT_yr:
-        sample_data: !!python/long '20'
-        types_found: [long]
-      O&M_%:
-        sample_data: !!python/long '1'
-        types_found: [long]
-      PV_Bref:
-        sample_data: 0.0026
-        types_found: [float]
-      PV_a0:
-        sample_data: 1.10044085
-        types_found: [float]
-      PV_a1:
-        sample_data: -0.06142323
-        types_found: [float]
-      PV_a2:
-        sample_data: -0.00442732
-        types_found: [float]
-      PV_a3:
-        sample_data: 0.000631504
-        types_found: [float]
-      PV_a4:
-        sample_data: -1.9184e-05
-        types_found: [float]
-      PV_n:
-        sample_data: 0.08
-        types_found: [float]
-      PV_noct:
-        sample_data: 38.1
-        types_found: [float]
-      PV_th:
-        sample_data: 0.002
-        types_found: [float]
-      a:
-        sample_data: !!python/long '0'
-        types_found: [long]
-      assumption:
-        sample_data: IR_%, capacity
-        types_found: [string]
-      b:
-        sample_data: 2.598752598752599
-        types_found: [float]
-      c:
-        sample_data: !!python/long '1'
-        types_found: [long]
-      cap_max:
-        sample_data: 10000000000
-        types_found: [long]
-      cap_min:
-        sample_data: !!python/long '200000'
-        types_found: [long]
+        type: string
       code:
-        sample_data: PV3
-        types_found: [string]
-      currency:
-        sample_data: USD-2015
-        types_found: [string]
-      d:
-        sample_data: !!python/long '0'
-        types_found: [long]
-      e:
-        sample_data: !!python/long '0'
-        types_found: [long]
-      misc_losses:
-        sample_data: 0.1
-        types_found: [float]
-      module_length_m:
-        sample_data: !!python/long '1'
-        types_found: [long]
+        type: string
       type:
-        sample_data: PV
-        types_found: [string]
+        type: string
         choice:
           values: [PV]
-      unit:
-        sample_data: W
-        types_found: [string]
-    PVT:
-      Description:
-        sample_data: generic PVT
-        types_found: [string]
-      IR_%:
-        sample_data: !!python/long '5'
-        types_found: [long]
-      LT_yr:
-        sample_data: !!python/long '20'
-        types_found: [long]
-      O&M_%:
-        sample_data: !!python/long '1'
-        types_found: [long]
-      a:
-        sample_data: !!python/long '0'
-        types_found: [long]
-      assumption:
-        sample_data: IR_%
-        types_found: [string]
-      b:
-        sample_data: 5.197505197505198
-        types_found: [float]
-      c:
-        sample_data: !!python/long '1'
-        types_found: [long]
-      cap_max:
-        sample_data: 10000000000
-        types_found: [long]
       cap_min:
-        sample_data: !!python/long '1'
-        types_found: [long]
-      code:
-        sample_data: PVT1
-        types_found: [string]
-      currency:
-        sample_data: USD-2015
-        types_found: [string]
-      d:
-        sample_data: !!python/long '0'
-        types_found: [long]
-      e:
-        sample_data: !!python/long '0'
-        types_found: [long]
-      unit:
-        sample_data: W
-        types_found: [string]
-    Pump:
-      Description:
-        sample_data: generic pump
-        types_found: [string]
-      IR_%:
-        sample_data: !!python/long '6'
-        types_found: [long]
-      LT_yr:
-        sample_data: !!python/long '25'
-        types_found: [long]
-      O&M_%:
-        sample_data: !!python/long '1'
-        types_found: [long]
-      a:
-        sample_data: !!python/long '0'
-        types_found: [long]
-      assumption:
-        sample_data: all
-        types_found: [string]
-      b:
-        sample_data: 1.016839916839917
-        types_found: [float]
-      c:
-        sample_data: 0.8873
-        types_found: [float]
+        type: float
       cap_max:
-        sample_data: 10000000000
-        types_found: [long]
-      cap_min:
-        sample_data: !!python/long '37000'
-        types_found: [long]
-      code:
-        sample_data: PU1
-        types_found: [string]
-      currency:
-        sample_data: USD-2015
-        types_found: [string]
-      d:
-        sample_data: !!python/long '0'
-        types_found: [long]
-      e:
-        sample_data: !!python/long '0'
-        types_found: [long]
+        type: float
       unit:
-        sample_data: W
-        types_found: [string]
+        type: string
+      module_length_m:
+        type: float
+        min: 0.0
+      PV_th:
+        type: float
+      PV_n:
+        type: float
+      PV_noct:
+        type: float
+      PV_Bref:
+        type: float
+      PV_a0:
+        type: float
+      PV_a1:
+        type: float
+      PV_a2:
+        type: float
+      PV_a3:
+        type: float
+      PV_a4:
+        type: float
+      misc_losses:
+        type: float
+      currency:
+        type: string
+      a:
+        type: float
+      b:
+        type: float
+      c:
+        type: float
+      d:
+        type: float
+      e:
+        type: float
+      LT_yr:
+        type: int
+        min: 0
+      O&M_%:
+        type: float
+      IR_%:
+        type: float
+        min: 0.0
+      assumption:
+        type: string
+        nullable: true
     SC:
       C_eff:
-        sample_data: !!python/long '39000'
-        types_found: [long]
+        type: float
       Cp_fluid:
-        sample_data: !!python/long '3680'
-        types_found: [long]
+        type: float
       Description:
-        sample_data: evacuated tube
-        types_found: [string]
+        type: string
       IAM_d:
-        sample_data: 0.91
-        types_found: [float]
+        type: float
       IR_%:
-        sample_data: !!python/long '5'
-        types_found: [long]
+        type: float
+        min: 0.0
       LT_yr:
-        sample_data: !!python/long '20'
-        types_found: [long]
+        type: int
+        min: 0
       O&M_%:
-        sample_data: !!python/long '5'
-        types_found: [long]
+        type: float
       a:
-        sample_data: !!python/long '0'
-        types_found: [long]
+        type: float
       aperture_area_ratio:
-        sample_data: 0.655
-        types_found: [float]
+        type: float
       assumption:
-        sample_data: IR_%
-        types_found: [string]
+        type: string
+        nullable: true
       b:
-        sample_data: 2130.977130977131
-        types_found: [float]
+        type: float
       c:
-        sample_data: !!python/long '1'
-        types_found: [long]
+        type: float
       c1:
-        sample_data: 0.89
-        types_found: [float]
+        type: float
       c2:
-        sample_data: 0.0199
-        types_found: [float]
+        type: float
       cap_max:
-        sample_data: 10000000000
-        types_found: [long]
+        type: float
       cap_min:
-        sample_data: !!python/long '1'
-        types_found: [long]
+        type: float
       code:
-        sample_data: SC2
-        types_found: [string]
+        type: string
       currency:
-        sample_data: USD-2015
-        types_found: [string]
+        type: string
       d:
-        sample_data: !!python/long '0'
-        types_found: [long]
+        type: float
       dP1:
-        sample_data: !!python/long '0'
-        types_found: [long]
+        type: float
       dP2:
-        sample_data: 2825.9464271206075
-        types_found: [float]
+        type: float
       dP3:
-        sample_data: 7771.352674581671
-        types_found: [float]
+        type: float
       dP4:
-        sample_data: 706.4866067801519
-        types_found: [float]
+        type: float
       e:
-        sample_data: !!python/long '0'
-        types_found: [long]
+        type: float
       mB0_r:
-        sample_data: 88.2
-        types_found: [float]
+        type: float
       mB_max_r:
-        sample_data: 147.12
-        types_found: [float]
+        type: float
       mB_min_r:
-        sample_data: 33.1
-        types_found: [float]
+        type: float
       module_area_m2:
-        sample_data: 4.322
-        types_found: [float]
+        type: float
       module_length_m:
-        sample_data: !!python/long '2'
-        types_found: [long]
+        type: float
       n0:
-        sample_data: 0.721
-        types_found: [float]
+        type: float
       t_max:
-        sample_data: !!python/long '196'
-        types_found: [long]
+        type: float
       type:
-        sample_data: ET
-        types_found: [string]
+        type: string
         choice:
           values: [FP, ET]
       unit:
-        sample_data: m2
-        types_found: [string]
+        type: string
+    PVT:
+      Description:
+        type: string
+      code:
+        type: string
+      cap_min:
+        type: float
+      cap_max:
+        type: float
+      unit:
+        type: string
+      currency:
+        type: string
+      a:
+        type: float
+      b:
+        type: float
+      c:
+        type: float
+      d:
+        type: float
+      e:
+        type: float
+      LT_yr:
+        type: int
+        min: 0
+      O&M_%:
+        type: float
+      IR_%:
+        type: float
+        min: 0.0
+      assumption:
+        type: string
+        nullable: true
+    Boiler:
+      Description:
+        type: string
+      code:
+        type: string
+      cap_min:
+        type: float
+      cap_max:
+        type: float
+      unit:
+        type: string
+      currency:
+        type: string
+      a:
+        type: float
+      b:
+        type: float
+      c:
+        type: float
+      d:
+        type: float
+      e:
+        type: float
+      LT_yr:
+        type: int
+        min: 0
+      O&M_%:
+        type: float
+      IR_%:
+        type: float
+        min: 0.0
+      assumption:
+        type: string
+        nullable: true
+    Furnace:
+      Description:
+        type: string
+      code:
+        type: string
+      cap_min:
+        type: float
+      cap_max:
+        type: float
+      unit:
+        type: string
+      currency:
+        type: string
+      a:
+        type: float
+      b:
+        type: float
+      c:
+        type: float
+      d:
+        type: float
+      e:
+        type: float
+      LT_yr:
+        type: int
+        min: 0
+      O&M_%:
+        type: float
+      IR_%:
+        type: float
+        min: 0.0
+      assumption:
+        type: string
+        nullable: true
+    FC:
+      Description:
+        type: string
+      code:
+        type: string
+      cap_min:
+        type: float
+      cap_max:
+        type: float
+      unit:
+        type: string
+      currency:
+        type: string
+      a:
+        type: float
+      b:
+        type: float
+      c:
+        type: float
+      d:
+        type: float
+      e:
+        type: float
+      LT_yr:
+        type: int
+        min: 0
+      O&M_%:
+        type: float
+      IR_%:
+        type: float
+        min: 0.0
+      assumption:
+        type: string
+        nullable: true
+    CCGT:
+      Description:
+        type: string
+      code:
+        type: string
+      cap_min:
+        type: float
+      cap_max:
+        type: float
+      unit:
+        type: string
+      currency:
+        type: string
+      a:
+        type: float
+      b:
+        type: float
+      c:
+        type: float
+      d:
+        type: float
+      e:
+        type: float
+      LT_yr:
+        type: int
+        min: 0
+      O&M_%:
+        type: float
+      IR_%:
+        type: float
+        min: 0.0
+      assumption:
+        type: string
+        nullable: true
+    Chiller:
+      Description:
+        type: string
+      code:
+        type: string
+      cap_min:
+        type: float
+      cap_max:
+        type: float
+      unit:
+        type: string
+      currency:
+        type: string
+      a:
+        type: float
+      b:
+        type: float
+      c:
+        type: float
+      d:
+        type: float
+      e:
+        type: float
+      LT_yr:
+        type: int
+        min: 0
+      O&M_%:
+        type: float
+      IR_%:
+        type: float
+        min: 0.0
+      assumption:
+        type: string
+        nullable: true
+    Absorption_chiller:
+      Description:
+        type: string
+      code:
+        type: string
+      type:
+        type: string
+        choice:
+          values: [single, double, triple]
+      cap_min:
+        type: float
+      cap_max:
+        type: float
+      unit:
+        type: string
+      currency:
+        type: string
+      a:
+        type: float
+      b:
+        type: float
+      c:
+        type: float
+      d:
+        type: float
+      e:
+        type: float
+      LT_yr:
+        type: int
+        min: 0
+      O&M_%:
+        type: float
+      IR_%:
+        type: float
+        min: 0.0
+      assumption:
+        type: string
+        nullable: true
+      s_e:
+        type: float
+      r_e:
+        type: float
+      s_g:
+        type: float
+      r_g:
+        type: float
+      a_e:
+        type: float
+      e_e:
+        type: float
+      a_g:
+        type: float
+      e_g:
+        type: float
+      m_cw:
+        type: float
+      m_hw:
+        type: float
+    CT:
+      Description:
+        type: string
+      code:
+        type: string
+      cap_min:
+        type: float
+      cap_max:
+        type: float
+      unit:
+        type: string
+      currency:
+        type: string
+      a:
+        type: float
+      b:
+        type: float
+      c:
+        type: float
+      d:
+        type: float
+      e:
+        type: float
+      LT_yr:
+        type: int
+        min: 0
+      O&M_%:
+        type: float
+      IR_%:
+        type: float
+        min: 0.0
+      assumption:
+        type: string
+        nullable: true
+    HEX:
+      Description:
+        type: string
+      code:
+        type: string
+      cap_min:
+        type: float
+      cap_max:
+        type: float
+      unit:
+        type: string
+      currency:
+        type: string
+      a:
+        type: float
+      b:
+        type: float
+      c:
+        type: float
+      d:
+        type: float
+      e:
+        type: float
+      a_p:
+        type: float
+      b_p:
+        type: float
+      c_p:
+        type: float
+      d_p:
+        type: float
+      e_p:
+        type: float
+      LT_yr:
+        type: int
+        min: 0
+      O&M_%:
+        type: float
+      IR_%:
+        type: float
+        min: 0.0
+      assumption:
+        type: string
+        nullable: true
+    BH:
+      Description:
+        type: string
+      code:
+        type: string
+      cap_min:
+        type: float
+      cap_max:
+        type: float
+      unit:
+        type: string
+      currency:
+        type: string
+      a:
+        type: float
+      b:
+        type: float
+      c:
+        type: float
+      d:
+        type: float
+      e:
+        type: float
+      LT_yr:
+        type: int
+        min: 0
+      O&M_%:
+        type: float
+      IR_%:
+        type: float
+        min: 0.0
+      assumption:
+        type: string
+        nullable: true
+    HP:
+      Description:
+        type: string
+      code:
+        type: string
+      cap_min:
+        type: float
+      cap_max:
+        type: float
+      unit:
+        type: string
+      currency:
+        type: string
+      a:
+        type: float
+      b:
+        type: float
+      c:
+        type: float
+      d:
+        type: float
+      e:
+        type: float
+      LT_yr:
+        type: int
+        min: 0
+      O&M_%:
+        type: float
+      IR_%:
+        type: float
+        min: 0.0
+      assumption:
+        type: string
+        nullable: true
     TES:
       Description:
-        sample_data: short-term storage tank
-        types_found: [string]
-      IR_%:
-        sample_data: !!python/long '6'
-        types_found: [long]
-      LT_yr:
-        sample_data: !!python/long '25'
-        types_found: [long]
-      O&M_%:
-        sample_data: !!python/long '1'
-        types_found: [long]
-      a:
-        sample_data: !!python/long '0'
-        types_found: [long]
-      assumption:
-        sample_data: cap_min, cap_max
-        types_found: [string]
-      b:
-        sample_data: 699.4740796393689
-        types_found: [float]
-      c:
-        sample_data: !!python/long '1'
-        types_found: [long]
-      cap_max:
-        sample_data: 10000000000
-        types_found: [long]
-      cap_min:
-        sample_data: !!python/long '0'
-        types_found: [long]
+        type: string
       code:
-        sample_data: TES2
-        types_found: [string]
+        type: string
+      cap_min:
+        type: float
+      cap_max:
+        type: float
+      unit:
+        type: string
       currency:
-        sample_data: USD-2015
-        types_found: [string]
+        type: string
+      a:
+        type: float
+      b:
+        type: float
+      c:
+        type: float
       d:
-        sample_data: !!python/long '0'
-        types_found: [long]
+        type: float
       e:
-        sample_data: 0.0
-        types_found: [float]
-      'unit ':
-        sample_data: m3
-        types_found: [string]
+        type: float
+      LT_yr:
+        type: int
+        min: 0
+      O&M_%:
+        type: float
+      IR_%:
+        type: float
+        min: 0.0
+      assumption:
+        type: string
+        nullable: true
+    Pump:
+      Description:
+        type: string
+      code:
+        type: string
+      cap_min:
+        type: float
+      cap_max:
+        type: float
+      unit:
+        type: string
+      currency:
+        type: string
+      a:
+        type: float
+      b:
+        type: float
+      c:
+        type: float
+      d:
+        type: float
+      e:
+        type: float
+      LT_yr:
+        type: int
+        min: 0
+      O&M_%:
+        type: float
+      IR_%:
+        type: float
+        min: 0.0
+      assumption:
+        type: string
+        nullable: true
   used_by: [decentralized, optimization, photovoltaic, photovoltaic_thermal, solar_collector]
 get_database_distribution_systems:
-  created_by: []
-  file_path: inputs/technology/systems/distribution_systems.xls
+  created_by: [data_initializer]
+  file_path: inputs/technology/components/DISTRIBUTION.xls
   file_type: xls
   schema:
     THERMAL_GRID:
       Code:
-        sample_data: DN1500
-        types_found: [string]
-      D_ext_m:
-        sample_data: 1.52869695
-        types_found: [float]
-      D_ins_m:
-        sample_data: 1.9947486772999998
-        types_found: [float]
-      D_int_m:
-        sample_data: 1.4941228500000001
-        types_found: [float]
-      Inv_USD2015perm:
-        sample_data: 9651.7762182
-        types_found: [float]
+        type: string
+        primary: true
       Pipe_DN:
-        sample_data: !!python/long '1500'
-        types_found: [long]
-      Vdot_max_m3s:
-        sample_data: 10.76274617420937
-        types_found: [float]
+        type: float
+      D_ext_m:
+        type: float
+      D_int_m:
+        type: float
+      D_ins_m:
+        type: float
       Vdot_min_m3s:
-        sample_data: 0.5169956864157574
-        types_found: [float]
+        type: float
+      Vdot_max_m3s:
+        type: float
+      Inv_USD2015perm:
+        type: float
   used_by: [optimization, thermal_network]
 get_demand_results_file:
   created_by: [demand]
