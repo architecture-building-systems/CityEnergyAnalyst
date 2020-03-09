@@ -260,6 +260,21 @@ The following file is used by scripts: ['decentralized', 'demand', 'emissions', 
      type_hs,Type of heating supply system - Unit: [code]
 
 
+get_building_typology
+---------------------
+
+The following file is used by scripts: ['archetypes_mapper', 'demand', 'emissions']
+
+
+
+.. csv-table:: **inputs/building-properties/typology.dbf**
+    :header: "Variable", "Description"
+
+     Name,Unique building ID. It must start with a letter. - Unit: [-]
+     STANDARD,Construction Standard - Unit: [code]
+     YEAR,Construction year - Unit: [-]
+
+
 get_building_weekly_schedules
 -----------------------------
 
@@ -324,6 +339,33 @@ The following file is used by scripts: []
      Capex_a_sys_disconnected_USD,TODO - Unit: TODO
      Opex_a_sys_connected_USD,TODO - Unit: TODO
      Opex_a_sys_disconnected_USD,TODO - Unit: TODO
+
+
+get_database_construction_standards
+-----------------------------------
+
+The following file is used by scripts: ['archetypes_mapper']
+
+
+
+.. csv-table:: **inputs/technology/archetypes/CONSTRUCTION_STANDARDS.xlsx:ENVELOPE_ASSEMBLIES**
+    :header: "Variable", "Description"
+
+
+
+.. csv-table:: **inputs/technology/archetypes/CONSTRUCTION_STANDARDS.xlsx:HVAC_ASSEMBLIES**
+    :header: "Variable", "Description"
+
+
+
+.. csv-table:: **inputs/technology/archetypes/CONSTRUCTION_STANDARDS.xlsx:STANDARD_DEFINITION**
+    :header: "Variable", "Description"
+
+
+
+.. csv-table:: **inputs/technology/archetypes/CONSTRUCTION_STANDARDS.xlsx:SUPPLY_ASSEMBLIES**
+    :header: "Variable", "Description"
+
 
 
 get_demand_results_file
