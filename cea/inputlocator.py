@@ -84,7 +84,7 @@ class InputLocator(object):
                         if not os.path.exists(template_file_path):
                             missing_files.append(template_file_path)
         if len(missing_files):
-            message = "Invalid user-specified region template - files not found: {}".format(', '.join(missing_files))
+            message = "Invalid database template - files not found: \n{}".format(', \n'.join(missing_files))
             raise IOError(message)
         return True
 
