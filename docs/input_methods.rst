@@ -1,19 +1,4 @@
 
-get_building_typology
----------------------
-
-The following file is used by scripts: ['archetypes_mapper', 'demand', 'emissions']
-
-
-
-.. csv-table:: **inputs/building-properties/typology.dbf**
-    :header: "Variable", "Description"
-
-     Name,Unique building ID. It must start with a letter. - Unit: [-]
-     STANDARD,Construction Standard - Unit: [code]
-     YEAR,Construction year - Unit: [-]
-
-
 get_database_air_conditioning_systems
 -------------------------------------
 
@@ -42,33 +27,6 @@ The following file is used by scripts: ['demand']
 
 
 .. csv-table:: **inputs/technology/systems/air_conditioning_systems.xls:VENTILATION**
-    :header: "Variable", "Description"
-
-
-
-get_database_construction_standards
------------------------------------
-
-The following file is used by scripts: ['archetypes_mapper']
-
-
-
-.. csv-table:: **inputs/technology/archetypes/CONSTRUCTION_STANDARDS.xlsx:ENVELOPE_ASSEMBLIES**
-    :header: "Variable", "Description"
-
-
-
-.. csv-table:: **inputs/technology/archetypes/CONSTRUCTION_STANDARDS.xlsx:HVAC_ASSEMBLIES**
-    :header: "Variable", "Description"
-
-
-
-.. csv-table:: **inputs/technology/archetypes/CONSTRUCTION_STANDARDS.xlsx:STANDARD_DEFINITION**
-    :header: "Variable", "Description"
-
-
-
-.. csv-table:: **inputs/technology/archetypes/CONSTRUCTION_STANDARDS.xlsx:SUPPLY_ASSEMBLIES**
     :header: "Variable", "Description"
 
 
