@@ -55,8 +55,14 @@ def is_2_29(scenario):
 
 def migrate_2_29_to_2_31(scenario):
     def lookup_standard(year, standards_df):
-        # find first standard that is similar to the year
-        standard = standards_df[(standards_df.YEAR_START < year) & (year < standards_df.YEAR_END)].iloc[0]
+        matched_standards = standards_df[(standards_df.YEAR_START <= year) & (year <= standards_df.YEAR_END)]
+        if len(matched_standards):
+            # find first standard that is similar to the year
+            standard = matched_standards.iloc[0]
+        else:
+            raise ValueError('Could not find a `STANDARD` in the databases to match the year `{}`.'
+                             'You can try adding it to the `CONSTRUCTION_STANDARDS` input database and try again.'
+                             .format(year))
         return standard.STANDARD
 
     def convert_occupancy(name, occupancy_dbf):
