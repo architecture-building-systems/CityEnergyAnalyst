@@ -1,3 +1,10 @@
+- 2020-03-09 - 2.31.1 - #2623 2584 migration script
+- 2020-03-06 - 2.31.1 - #2631 Configure GitHub for working with Jenkins
+- 2020-03-06 - 2.31.1 - #2630 Update installing-the-jenkins.rst
+- 2020-03-06 - 2.31.1 - #2629 Update installing-the-jenkins.rst
+- 2020-03-06 - 2.31.1 - #2627 2622 install jenkins on ita schlue w 06
+- 2020-03-06 - 2.31.1 - #2620 Emissions plot missing
+- 2020-02-27 - 2.31.1 - #2614 Release 2.31.1
 - 2020-02-27 - 2.31.0 - #2613 Database editor choice type
 - 2020-02-27 - 2.31.0 - #2610 ConfigParser error in workflow
 - 2020-02-27 - 2.31.0 - #2611 Fix to decentralized optimization script

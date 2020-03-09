@@ -17,10 +17,10 @@ cea.datamanagement.archetypes\_mapper module
     :undoc-members:
     :show-inheritance:
 
-cea.datamanagement.create\_new\_project module
-----------------------------------------------
+cea.datamanagement.create\_new\_scenario module
+-----------------------------------------------
 
-.. automodule:: cea.datamanagement.create_new_project
+.. automodule:: cea.datamanagement.create_new_scenario
     :members:
     :undoc-members:
     :show-inheritance:
@@ -29,6 +29,14 @@ cea.datamanagement.data\_initializer module
 -------------------------------------------
 
 .. automodule:: cea.datamanagement.data_initializer
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.datamanagement.database\_migrator module
+--------------------------------------------
+
+.. automodule:: cea.datamanagement.database_migrator
     :members:
     :undoc-members:
     :show-inheritance:

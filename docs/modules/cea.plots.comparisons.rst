@@ -6,13 +6,6 @@ cea.plots.comparisons package
     :undoc-members:
     :show-inheritance:
 
-Subpackages
------------
-
-.. toctree::
-
-    cea.plots.comparisons.old
-
 Submodules
 ----------
 
@@ -20,6 +13,14 @@ cea.plots.comparisons.Annual\_costs module
 ------------------------------------------
 
 .. automodule:: cea.plots.comparisons.Annual_costs
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.plots.comparisons.Annual\_emissions module
+----------------------------------------------
+
+.. automodule:: cea.plots.comparisons.Annual_emissions
     :members:
     :undoc-members:
     :show-inheritance:

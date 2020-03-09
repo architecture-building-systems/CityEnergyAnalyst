@@ -19,7 +19,7 @@ digraph trace_inputlocator {
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="WTP_CBD_h/inputs/building-geometry";
+        label="building-geometry";
         "surroundings.shp"
         "zone.shp"
     }
@@ -28,118 +28,150 @@ digraph trace_inputlocator {
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="WTP_CBD_h/inputs/building-properties";
-        "age.dbf"
+        label="building-properties";
+        "air_conditioning_systems.dbf"
         "architecture.dbf"
         "indoor_comfort.dbf"
-        "technical_systems.dbf"
         "internal_loads.dbf"
-        "occupancy.dbf"
         "supply_systems.dbf"
+        "typology.dbf"
     }
     subgraph cluster_2_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="WTP_CBD_h/inputs/networks";
-        "streets.shp"
+        label="building-properties/schedules";
+        "B001.csv"
     }
-    subgraph cluster_3_in {
+    subgraph cluster_3_out {
         style = filled;
-        color = "#E1F2F2";
+        color = "#aadcdd";
         fontsize = 20;
         rank=same;
-        label="WTP_CBD_h/inputs/topography";
-        "terrain.tif"
+        label="data/demand";
+        "B001.csv"
+        "Total_demand.csv"
     }
     subgraph cluster_4_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="cea/databases/weather";
-        "Singapore.epw"
+        label="data/occupancy";
+        "B001.csv"
     }
     subgraph cluster_5_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="databases/CH/archetypes";
-        "construction_properties.xlsx"
-        "occupancy_schedules.xlsx"
-        "system_controls.xlsx"
+        label="data/optimization/network";
+        "DH_Network_summary_result_0x19b.csv"
     }
     subgraph cluster_6_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="databases/CH/systems";
-        "envelope_systems.xls"
-        "supply_systems.xls"
-        "emission_systems.xls"
-        "thermal_networks.xls"
+        label="data/solar-radiation";
+        "B001_radiation.csv"
+        "B001_insolation_Whm2.json"
+        "B001_geometry.csv"
     }
     subgraph cluster_7_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="databases/SG/benchmarks";
-        "benchmark_2000W.xls"
+        label="networks";
+        "streets.shp"
     }
     subgraph cluster_8_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="databases/SG/lifecycle";
-        "LCA_buildings.xlsx"
-        "LCA_infrastructure.xlsx"
+        label="technology/archetypes/schedules";
+        "RESTAURANT.csv"
     }
-    subgraph cluster_9_out {
+    subgraph cluster_9_in {
         style = filled;
-        color = "#aadcdd";
+        color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="outputs/data/demand";
-        "B001.csv"
-        "Total_demand.csv"
+        label="technology/archetypes/use_types";
+        "USE_TYPE_PROPERTIES.xlsx"
     }
     subgraph cluster_10_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="outputs/data/solar-radiation";
-        "B001_insolation_Whm2.json"
-        "B001_geometry.csv"
+        label="technology/assemblies";
+        "supply.xls"
     }
-    "construction_properties.xlsx" -> "demand"[label="(get_archetypes_properties)"]
-    "occupancy_schedules.xlsx" -> "demand"[label="(get_archetypes_schedules)"]
-    "system_controls.xlsx" -> "demand"[label="(get_archetypes_system_controls)"]
-    "age.dbf" -> "demand"[label="(get_building_age)"]
+    subgraph cluster_11_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="technology/feedstocks";
+        "feedstocks.xls"
+    }
+    subgraph cluster_12_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="technology/systems";
+        "air_conditioning_systems.xls"
+        "supply_systems.xls"
+        "distribution_systems.xls"
+        "envelope_systems.xls"
+    }
+    subgraph cluster_13_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="topography";
+        "terrain.tif"
+    }
+    subgraph cluster_14_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="weather";
+        "Zug-inducity_1990_2010_TMY.epw"
+        "weather.epw"
+    }
+    "air_conditioning_systems.dbf" -> "demand"[label="(get_building_air_conditioning)"]
     "architecture.dbf" -> "demand"[label="(get_building_architecture)"]
     "indoor_comfort.dbf" -> "demand"[label="(get_building_comfort)"]
-    "technical_systems.dbf" -> "demand"[label="(get_building_air_conditioning)"]
     "internal_loads.dbf" -> "demand"[label="(get_building_internal)"]
-    "occupancy.dbf" -> "demand"[label="(get_building_occupancy)"]
     "supply_systems.dbf" -> "demand"[label="(get_building_supply)"]
-    "benchmark_2000W.xls" -> "demand"[label="(get_data_benchmark)"]
-    "surroundings.shp" -> "demand"[label="(get_district_geometry)"]
-    "envelope_systems.xls" -> "demand"[label="(get_envelope_systems)"]
-    "LCA_buildings.xlsx" -> "demand"[label="(get_life_cycle_inventory_building_systems)"]
-    "LCA_infrastructure.xlsx" -> "demand"[label="(get_life_cycle_inventory_supply_systems)"]
-    "B001_insolation_Whm2.json" -> "demand"[label="(get_radiation_building)"]
+    "typology.dbf" -> "demand"[label="(get_building_typology)"]
+    "B001.csv" -> "demand"[label="(get_building_weekly_schedules)"]
+    "air_conditioning_systems.xls" -> "demand"[label="(get_database_air_conditioning_systems)"]
+    "supply_systems.xls" -> "demand"[label="(get_database_conversion_systems)"]
+    "distribution_systems.xls" -> "demand"[label="(get_database_distribution_systems)"]
+    "envelope_systems.xls" -> "demand"[label="(get_database_envelope_systems)"]
+    "feedstocks.xls" -> "demand"[label="(get_database_feedstocks)"]
+    "RESTAURANT.csv" -> "demand"[label="(get_database_standard_schedules_use)"]
+    "supply.xls" -> "demand"[label="(get_database_supply_assemblies)"]
+    "USE_TYPE_PROPERTIES.xlsx" -> "demand"[label="(get_database_use_types_properties)"]
+    "DH_Network_summary_result_0x19b.csv" -> "demand"[label="(get_optimization_thermal_network_data_file)"]
+    "B001_radiation.csv" -> "demand"[label="(get_radiation_building)"]
+    "B001_insolation_Whm2.json" -> "demand"[label="(get_radiation_building_sensors)"]
     "B001_geometry.csv" -> "demand"[label="(get_radiation_metadata)"]
+    "B001.csv" -> "demand"[label="(get_schedule_model_file)"]
     "streets.shp" -> "demand"[label="(get_street_network)"]
-    "supply_systems.xls" -> "demand"[label="(get_supply_systems)"]
-    "emission_systems.xls" -> "demand"[label="(get_technical_emission_systems)"]
+    "surroundings.shp" -> "demand"[label="(get_surroundings_geometry)"]
     "terrain.tif" -> "demand"[label="(get_terrain)"]
-    "thermal_networks.xls" -> "demand"[label="(get_thermal_networks)"]
-    "Singapore.epw" -> "demand"[label="(get_weather)"]
+    "Zug-inducity_1990_2010_TMY.epw" -> "demand"[label="(get_weather)"]
+    "weather.epw" -> "demand"[label="(get_weather_file)"]
     "zone.shp" -> "demand"[label="(get_zone_geometry)"]
     "demand" -> "B001.csv"[label="(get_demand_results_file)"]
     "demand" -> "Total_demand.csv"[label="(get_total_demand)"]
