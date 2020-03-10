@@ -231,6 +231,10 @@ First, we configure a Jenkins item for pull requests:
 
     - Execute Windows batch command: ``bin\ceatest.bat``
 
+  - section "Build Environment"
+
+    - select "Delete workspace before build starts"
+
 Next, we configure a Jenkins item for merging to master:
 
 - open browser to https://ceajenkins.ngrok.io and log in
@@ -262,6 +266,10 @@ Next, we configure a Jenkins item for merging to master:
   - section "Build"
 
     - Execute Windows batch command: ``bin\ceatestall.bat``
+
+  - section "Build Environment"
+
+    - select "Delete workspace before build starts"
 
 - open `GitHub Webhooks`_
 
