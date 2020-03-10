@@ -2,6 +2,7 @@ from __future__ import division
 import numpy as np
 import pandas as pd
 import os
+from collections import OrderedDict
 from cea.utilities.physics import calc_rho_air
 from cea.plots.demand.comfort_chart import p_w_from_rh_p_and_ws, p_ws_from_t, hum_ratio_from_p_w_and_p
 import cea.osmose.settings as settings
@@ -132,8 +133,6 @@ def extract_cea_outputs_to_osmose_main(case, timesteps, season, specified_buildi
 
         ## CO2 limit and minimum air flow
         reduced_demand_df = calc_CO2_gains(output_hcs, reduced_demand_df)
-        output_building['v_CO2_in_infil_occupant_m3pers'] = reduced_demand_df['v_CO2_infil_window_m3pers'] + reduced_demand_df[
-            'v_CO2_occupant_m3pers']
         output_hcs['V_CO2_max_m3'] = reduced_demand_df['V_CO2_max_m3']
         output_hcs['V_CO2_min_m3'] = reduced_demand_df['V_CO2_min_m3']
         output_hcs['v_CO2_in_infil_occupant_m3pers'] = reduced_demand_df['v_CO2_infil_window_m3pers'] + reduced_demand_df[
@@ -176,7 +175,7 @@ def extract_cea_outputs_to_osmose_main(case, timesteps, season, specified_buildi
             output_building.T.to_csv(path_to_osmose_project_bui(building), header=False)
             output_hcs.T.to_csv(path_to_osmose_project_hcs(building, 'hcs'), header=False)
         else:
-            return output_building, output_hcs
+            return output_building, output_hcs, int(timesteps)
 
         # output_df.loc[:, 'Mf_air_kg'] = output_df['Vf_m3']*calc_rho_air(24)
 
@@ -248,7 +247,7 @@ def get_reduced_demand_df(case, building, end_t, start_t):
     if type(start_t) is int:
         reduced_demand_df = building_demand_df[start_t:end_t]
         reduced_demand_df = reduced_demand_df.reset_index()
-    elif type(start_t) is dict:
+    elif (type(start_t) is dict) or (type(start_t) is OrderedDict):
         list_of_df = []
         for interval in start_t.keys():
             reduced_demand_df = building_demand_df[start_t[interval]:end_t[interval]]
@@ -277,11 +276,11 @@ def get_timesteps_info(case, season, timesteps):
         op_time = np.ones(timesteps, dtype=int)
         periods = 1
     elif timesteps == 'typical days':
-        cluster_numbers_df = pd.read_excel(path_to_number_of_k_file(), sheet_name='number_of_clusters')
+        cluster_numbers_df = pd.read_excel(path_to_number_of_k_file(settings.typical_day_path), sheet_name='number_of_clusters')
         number_of_clusters = cluster_numbers_df[case.split('_')[4]][case.split('_')[0]]
         print('number of clusters: ', number_of_clusters)
-        day_count_df = pd.read_csv(path_to_typical_days_files(case, 'day_count', number_of_clusters))
-        typical_day_profiles = pd.read_csv(path_to_typical_days_files(case, 'profiles', number_of_clusters))
+        day_count_df = pd.read_csv(path_to_cluster_files(settings.typical_hours_path, case, 'day_count', number_of_clusters))
+        typical_day_profiles = pd.read_csv(path_to_cluster_files(settings.typical_hours_path, case, 'profiles', number_of_clusters))
         number_of_typical_days = day_count_df.shape[0]
         start_t, end_t = {}, {}
         op_time = []
@@ -296,6 +295,19 @@ def get_timesteps_info(case, season, timesteps):
                 count = day_count_df['count'][d]
                 op_time.extend(np.ones(24, dtype=int) * count)
         periods = len(op_time) / 24
+        timesteps = len(op_time)
+    elif timesteps == 'typical hours':
+        number_of_clusters = settings.number_of_typical_hours
+        print('number of clusters: ', number_of_clusters)
+        hour_count_df = pd.read_csv(path_to_cluster_files(settings.typical_hours_path, '', 'hour_count', number_of_clusters))
+        start_t, end_t = OrderedDict(), OrderedDict()
+        op_time = []
+        for d in range(number_of_clusters):
+            hour = hour_count_df['hour'][d]
+            start_t[int(hour)] = hour_count_df['hour'][d] - 1
+            end_t[int(hour)] = hour_count_df['hour'][d]
+            op_time.extend([hour_count_df['count'][d]])
+        periods = 1
         timesteps = len(op_time)
     elif timesteps == 'dtw hours':
         cluster_numbers_df = pd.read_excel(os.path.join(settings.typical_days_path, 'B005_HOT_DTW.xlsx'), header=None) # TODO: remove hard-coded value
@@ -480,16 +492,16 @@ def path_to_osmose_project_inputT(number):
     path_to_file = os.path.join(path_to_folder, 'input_T%s.%s' % (number, format))
     return path_to_file
 
-def path_to_typical_days_files(case, name, cluster_numbers):
+def path_to_cluster_files(path, case, name, cluster_numbers):
     format = 'csv'
-    path_to_folder = os.path.join(settings.typical_days_path, case)
+    path_to_folder = os.path.join(path, case)
     path_to_folder = os.path.join(path_to_folder, 'k_'+str(cluster_numbers))
     path_to_file = os.path.join(path_to_folder, '%s.%s' % (name, format))
     return path_to_file
 
-def path_to_number_of_k_file():
+def path_to_number_of_k_file(path):
     format = 'xlsx'
-    path_to_file = os.path.join(settings.typical_days_path, 'number_of_k.%s' % (format))
+    path_to_file = os.path.join(path, 'number_of_k.%s' % (format))
     return path_to_file
 
 def path_to_osmose_project_op():
@@ -502,8 +514,9 @@ def path_to_osmose_project_op():
 
 
 if __name__ == '__main__':
-    case = 'HKG_CBD_m_WP1_OFF'
-    timesteps = 168  # 168 (week)
-    specified_buildings = ["B010"]
+    case = 'WTP_CBD_m_WP1_OFF'
+    # timesteps = 168  # 168 (week)
+    timesteps = settings.timesteps
+    specified_buildings = ["B005"]
     season = 'Summer'
     extract_cea_outputs_to_osmose_main(case, timesteps, season, specified_buildings)
