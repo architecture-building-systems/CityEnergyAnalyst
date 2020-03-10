@@ -15,6 +15,7 @@ There are a few steps to take to setting up a Jenkins server:
 - installation of a tunnel to the Jenkins server
 - global configuration of Jenkins
 - configuration of the Jenkins items
+
   - cea test for new pull requests
   - cea test for merges to master
 
