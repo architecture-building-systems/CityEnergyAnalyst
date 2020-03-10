@@ -3,7 +3,7 @@ import pandas as pd
 import os
 import cea.osmose.settings as settings
 from scipy.spatial.distance import euclidean, cdist, pdist, squareform
-from cea.osmose.extract_demand_outputs import path_to_typical_days_files
+from cea.osmose.extract_demand_outputs import path_to_cluster_files
 import matplotlib.pyplot as plt
 import seaborn as sns
 
