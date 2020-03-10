@@ -89,13 +89,8 @@ def main(config):
 
         # write out information for resuming
         resume_dict[workflow_yml] = i
-        try:
-            with open(resume_yml, 'w') as resume_fp:
-                yaml.dump(resume_dict, resume_fp, indent=4)
-        except IOError:
-            # Permission denied?
-            resume_yml = os.path.join(tempfile.gettempdir(), "resume-workflow.yml")
-
+        with open(resume_yml, 'w') as resume_fp:
+            yaml.dump(resume_dict, resume_fp, indent=4)
 
 def read_resume_info(resume_yml, workflow_yml):
     try:
