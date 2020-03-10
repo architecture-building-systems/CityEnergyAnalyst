@@ -11,15 +11,15 @@ problem_dict = {
         'bounds':[[0,1],[10,15],[8,10],[2,4],[2,4],[0,1],[3,4],[7,9],[4,7]]
         },
     'Building': {
-        'num_vars': 9,
-        'names':['capex_weight', 'dT1', 'dT2', 'dT3', 'dT4', 'dT_sc', 'dTn', 'dTn_r', 'T5'],
-        'bounds':[[0,1],[10,15],[8,10],[2,4],[2,4],[0,1],[3,4],[7,9],[4,7]]
+        'num_vars': 7,
+        'names':['capex_weight', 'dT1', 'dT2', 'dT3', 'dT4', 'dT_sc', 'T5'],
+        'bounds':[[0,1],[10,15],[8,10],[2,4],[2,4],[0.01,5],[4,7]]
         },
 }
 
 problem_name = 'Building'
-number_of_samples = 100
-iterations = 10
+number_of_samples = 10
+iterations = 100000
 
 def main():
     # get problem
