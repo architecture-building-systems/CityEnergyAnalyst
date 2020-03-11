@@ -230,108 +230,109 @@ def thermal_network_simplified(locator, config, network_name):
             Q_demand_kWh_building[building_name] = substation_results[
                                                        "Q_space_cooling_data_center_and_refrigeration_W"] / 1000
 
-    # Create a water network model
-    import os
-    os.chdir(locator.get_thermal_network_folder())
-    wn = wntr.network.WaterNetworkModel()
 
-    # add loads
-    building_base_demand_m3s = {}
-    for building in volume_flow_m3pers_building.keys():
-        building_base_demand_m3s[building] = volume_flow_m3pers_building[building].max()
-        pattern_demand = (volume_flow_m3pers_building[building].values / building_base_demand_m3s[building]).tolist()
-        wn.add_pattern(building, pattern_demand)
+    import cea.utilities
+    with cea.utilities.pushd(locator.get_thermal_network_folder()):
+        # Create a water network model
+        wn = wntr.network.WaterNetworkModel()
 
-    # add nodes
-    consumer_nodes = []
-    building_nodes_pairs = {}
-    building_nodes_pairs_inversed = {}
-    for node in node_df.iterrows():
-        if node[1]["Type"] == "CONSUMER":
-            demand_pattern = node[1]['Building']
-            base_demand_m3s = building_base_demand_m3s[demand_pattern]
-            consumer_nodes.append(node[0])
-            building_nodes_pairs[node[0]] = demand_pattern
-            building_nodes_pairs_inversed[demand_pattern] = node[0]
-            wn.add_junction(node[0],
-                            base_demand=base_demand_m3s,
-                            demand_pattern=demand_pattern,
-                            elevation=thermal_transfer_unit_design_head_m,
-                            coordinates=node[1]["coordinates"])
-        elif node[1]["Type"] == "PLANT":
-            base_head = int(thermal_transfer_unit_design_head_m*1.2)
-            start_node = node[0]
-            name_node_plant = start_node
-            wn.add_reservoir(start_node,
-                             base_head=base_head,
-                             coordinates=node[1]["coordinates"])
-        else:
-            wn.add_junction(node[0],
-                            elevation=0,
-                            coordinates=node[1]["coordinates"])
+        # add loads
+        building_base_demand_m3s = {}
+        for building in volume_flow_m3pers_building.keys():
+            building_base_demand_m3s[building] = volume_flow_m3pers_building[building].max()
+            pattern_demand = (volume_flow_m3pers_building[building].values / building_base_demand_m3s[building]).tolist()
+            wn.add_pattern(building, pattern_demand)
 
-    # add pipes
-    for edge in edge_df.iterrows():
-        length_m = edge[1]["length_m"]
-        edge_name = edge[0]
-        wn.add_pipe(edge_name, edge[1]["start node"],
-                    edge[1]["end node"],
-                    length=length_m * (1 + fraction_equivalent_length),
-                    roughness=coefficient_friction_hazen_williams,
-                    minor_loss=0.0,
-                    status='OPEN')
+        # add nodes
+        consumer_nodes = []
+        building_nodes_pairs = {}
+        building_nodes_pairs_inversed = {}
+        for node in node_df.iterrows():
+            if node[1]["Type"] == "CONSUMER":
+                demand_pattern = node[1]['Building']
+                base_demand_m3s = building_base_demand_m3s[demand_pattern]
+                consumer_nodes.append(node[0])
+                building_nodes_pairs[node[0]] = demand_pattern
+                building_nodes_pairs_inversed[demand_pattern] = node[0]
+                wn.add_junction(node[0],
+                                base_demand=base_demand_m3s,
+                                demand_pattern=demand_pattern,
+                                elevation=thermal_transfer_unit_design_head_m,
+                                coordinates=node[1]["coordinates"])
+            elif node[1]["Type"] == "PLANT":
+                base_head = int(thermal_transfer_unit_design_head_m*1.2)
+                start_node = node[0]
+                name_node_plant = start_node
+                wn.add_reservoir(start_node,
+                                 base_head=base_head,
+                                 coordinates=node[1]["coordinates"])
+            else:
+                wn.add_junction(node[0],
+                                elevation=0,
+                                coordinates=node[1]["coordinates"])
 
-    # add options
-    wn.options.time.duration = 8759 * 3600   # this indicates epanet to do one year simulation
-    wn.options.time.hydraulic_timestep = 60 * 60
-    wn.options.time.pattern_timestep = 60 * 60
-    wn.options.solver.accuracy = 0.01
-    wn.options.solver.trials = 100
+        # add pipes
+        for edge in edge_df.iterrows():
+            length_m = edge[1]["length_m"]
+            edge_name = edge[0]
+            wn.add_pipe(edge_name, edge[1]["start node"],
+                        edge[1]["end node"],
+                        length=length_m * (1 + fraction_equivalent_length),
+                        roughness=coefficient_friction_hazen_williams,
+                        minor_loss=0.0,
+                        status='OPEN')
 
-    # 1st ITERATION GET MASS FLOWS AND CALCULATE DIAMETER
-    sim = wntr.sim.EpanetSimulator(wn)
-    results = sim.run_sim()
-    max_volume_flow_rates_m3s = results.link['flowrate'].abs().max()
-    pipe_names = max_volume_flow_rates_m3s.index.values
-    pipe_catalog = pd.read_excel(locator.get_database_distribution_systems(), sheet_name='THERMAL_GRID')
-    Pipe_DN, D_ext_m, D_int_m, D_ins_m = zip(
-        *[calc_max_diameter(flow, pipe_catalog, velocity_ms=velocity_ms, peak_load_percentage=peak_load_percentage) for
-          flow in max_volume_flow_rates_m3s])
-    pipe_dn = pd.Series(Pipe_DN, pipe_names)
-    diameter_int_m = pd.Series(D_int_m, pipe_names)
-    diameter_ext_m = pd.Series(D_ext_m, pipe_names)
-    diameter_ins_m = pd.Series(D_ins_m, pipe_names)
+        # add options
+        wn.options.time.duration = 8759 * 3600   # this indicates epanet to do one year simulation
+        wn.options.time.hydraulic_timestep = 60 * 60
+        wn.options.time.pattern_timestep = 60 * 60
+        wn.options.solver.accuracy = 0.01
+        wn.options.solver.trials = 100
 
-    # 2nd ITERATION GET PRESSURE POINTS AND MASSFLOWS FOR SIZING PUMPING NEEDS - this could be for all the year
-    # modify diameter and run simulations
-    edge_df['Pipe_DN'] = pipe_dn
-    edge_df['D_int_m'] = D_int_m
-    for edge in edge_df.iterrows():
-        edge_name = edge[0]
-        pipe = wn.get_link(edge_name)
-        pipe.diameter = diameter_int_m[edge_name]
-    sim = wntr.sim.EpanetSimulator(wn)
-    results = sim.run_sim()
+        # 1st ITERATION GET MASS FLOWS AND CALCULATE DIAMETER
+        sim = wntr.sim.EpanetSimulator(wn)
+        results = sim.run_sim()
+        max_volume_flow_rates_m3s = results.link['flowrate'].abs().max()
+        pipe_names = max_volume_flow_rates_m3s.index.values
+        pipe_catalog = pd.read_excel(locator.get_database_distribution_systems(), sheet_name='THERMAL_GRID')
+        Pipe_DN, D_ext_m, D_int_m, D_ins_m = zip(
+            *[calc_max_diameter(flow, pipe_catalog, velocity_ms=velocity_ms, peak_load_percentage=peak_load_percentage) for
+              flow in max_volume_flow_rates_m3s])
+        pipe_dn = pd.Series(Pipe_DN, pipe_names)
+        diameter_int_m = pd.Series(D_int_m, pipe_names)
+        diameter_ext_m = pd.Series(D_ext_m, pipe_names)
+        diameter_ins_m = pd.Series(D_ins_m, pipe_names)
 
-    # 3rd ITERATION GET FINAL UTILIZATION OF THE GRID (SUPPLY SIDE)
-    # get accumulated head loss per hour
-    unitary_head_ftperkft = results.link['headloss'].abs()
-    unitary_head_mperm = unitary_head_ftperkft * FT_TO_M / (FT_TO_M * 1000)
-    head_loss_m = unitary_head_mperm.copy()
-    for column in head_loss_m.columns.values:
-        length_m = edge_df.loc[column]['length_m']
-        head_loss_m[column] = head_loss_m[column] * length_m
-    reservoir_head_loss_m = head_loss_m.sum(axis=1) + thermal_transfer_unit_design_head_m*1.2 # fixme: only one thermal_transfer_unit_design_head_m from one substation?
+        # 2nd ITERATION GET PRESSURE POINTS AND MASSFLOWS FOR SIZING PUMPING NEEDS - this could be for all the year
+        # modify diameter and run simulations
+        edge_df['Pipe_DN'] = pipe_dn
+        edge_df['D_int_m'] = D_int_m
+        for edge in edge_df.iterrows():
+            edge_name = edge[0]
+            pipe = wn.get_link(edge_name)
+            pipe.diameter = diameter_int_m[edge_name]
+        sim = wntr.sim.EpanetSimulator(wn)
+        results = sim.run_sim()
 
-    # apply this pattern to the reservoir and get results
-    base_head = reservoir_head_loss_m.max()
-    pattern_head_m = (reservoir_head_loss_m.values / base_head).tolist()
-    wn.add_pattern('reservoir', pattern_head_m)
-    reservoir = wn.get_node(name_node_plant)
-    reservoir.head_timeseries.base_value = int(base_head)
-    reservoir.head_timeseries._pattern = 'reservoir'
-    sim = wntr.sim.EpanetSimulator(wn)
-    results = sim.run_sim()
+        # 3rd ITERATION GET FINAL UTILIZATION OF THE GRID (SUPPLY SIDE)
+        # get accumulated head loss per hour
+        unitary_head_ftperkft = results.link['headloss'].abs()
+        unitary_head_mperm = unitary_head_ftperkft * FT_TO_M / (FT_TO_M * 1000)
+        head_loss_m = unitary_head_mperm.copy()
+        for column in head_loss_m.columns.values:
+            length_m = edge_df.loc[column]['length_m']
+            head_loss_m[column] = head_loss_m[column] * length_m
+        reservoir_head_loss_m = head_loss_m.sum(axis=1) + thermal_transfer_unit_design_head_m*1.2 # fixme: only one thermal_transfer_unit_design_head_m from one substation?
+
+        # apply this pattern to the reservoir and get results
+        base_head = reservoir_head_loss_m.max()
+        pattern_head_m = (reservoir_head_loss_m.values / base_head).tolist()
+        wn.add_pattern('reservoir', pattern_head_m)
+        reservoir = wn.get_node(name_node_plant)
+        reservoir.head_timeseries.base_value = int(base_head)
+        reservoir.head_timeseries._pattern = 'reservoir'
+        sim = wntr.sim.EpanetSimulator(wn)
+        results = sim.run_sim()
 
     # POSTPROCESSING
 
