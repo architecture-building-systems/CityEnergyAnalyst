@@ -125,14 +125,14 @@ class InputFileValidator(object):
         if file_type in ['xlsx', 'xls']:
             errors = []
             for sheet, _data in data.items():
-                sheet_errors = self._run_all_tests(_data, df_schema['schema'][sheet], self.locator)
+                sheet_errors = self._run_all_tests(_data, df_schema['schema'][sheet])
                 if sheet_errors:
                     errors.append([{"sheet": str(sheet)}, sheet_errors])
             return errors
 
-        return self._run_all_tests(data, df_schema['schema'], self.locator)
+        return self._run_all_tests(data, df_schema['schema'])
 
-    def _run_all_tests(self, data, data_schema, locator):
+    def _run_all_tests(self, data, data_schema):
         """
         Runs all tests and reduce errors to a single list
         :param data: Dataframe of data to be tested
@@ -140,7 +140,7 @@ class InputFileValidator(object):
         :return: list of errors
         """
         return sum([self.assert_columns_names(data, data_schema),
-                    self.assert_column_values(data, data_schema, locator)], [])
+                    self.assert_column_values(data, data_schema)], [])
 
     @staticmethod
     def assert_columns_names(data, data_schema):
@@ -150,9 +150,7 @@ class InputFileValidator(object):
         return [[{'column': str(col)}, 'Column is missing'] for col in missing_columns] + \
                [[{'column': str(col)}, 'Column is not in schema'] for col in extra_columns]
 
-    @staticmethod
-    def assert_column_values(data, data_schema, locator):
-
+    def assert_column_values(self, data, data_schema):
         columns = data_schema.keys()
         # Only loop through valid columns that exist
         filter_columns = [col for col in columns if col in data.columns]
@@ -160,12 +158,29 @@ class InputFileValidator(object):
         for column in filter_columns:
             col_schema = data_schema[column]
             if 'choice' in col_schema:
-                pass
+                lookup_data = self._get_choice_lookup_data(col_schema)
+                column_errors = data[column].apply(ChoiceTypeValidator(col_schema, lookup_data).validate).dropna()
             else:
                 column_errors = data[column].apply(get_validator_func(col_schema)).dropna()
-                for index, error in column_errors.to_dict().items():
-                    errors.append([{'row': int(index), 'column': str(column)}, error])
+            for index, error in column_errors.to_dict().items():
+                errors.append([{'row': int(index), 'column': str(column)}, error])
         return errors
+
+    def _get_choice_lookup_data(self, schema):
+        lookup_prop = schema['choice'].get('lookup')
+        if self.locator and lookup_prop:
+            locator_method_name = lookup_prop['path']
+            data = None
+            # Simple cache lookup data results to prevent re-reading file
+            if locator_method_name in self._cache.keys():
+                data = self._cache[locator_method_name]
+            else:
+                file_type = self.schemas[locator_method_name]['file_type']
+                if file_type in ['xlsx', 'xls']:
+                    data = pd.read_excel(self.locator.__getattribute__(locator_method_name)(), sheet_name=None)
+
+            return data[lookup_prop['sheet']][lookup_prop['column']].tolist() if data else None
+        return None
 
 
 def get_validator_func(col_schema):
@@ -190,15 +205,16 @@ class BaseTypeValidator(object):
 
 
 class ChoiceTypeValidator(BaseTypeValidator):
-    def __init__(self, schema):
+    def __init__(self, schema, choices):
         super(ChoiceTypeValidator, self).__init__(schema)
         self.choice_properties = schema['choice']
+        self.choices = choices
         self.values = self.choice_properties.get('values')
 
     def validate(self, value):
         super(ChoiceTypeValidator, self).validate(value)
-        if self.values is not None and value not in self.values:
-            return 'value must be from choices {} : {}'.format(self.values, value)
+        if self.choices and value not in self.choices or self.values and value not in self.values:
+            return 'value must be from choices {} : got {}'.format([str(choice) for choice in self.choices or self.values], value)
         return None
 
 
@@ -265,7 +281,7 @@ if __name__ == '__main__':
 
     config = cea.config.Configuration()
     locator = cea.inputlocator.InputLocator(config.scenario)
-    validator = InputFileValidator()
+    validator = InputFileValidator(locator)
     locator_methods = ['get_database_construction_standards',
                        'get_database_use_types_properties',
                        'get_database_supply_assemblies',
