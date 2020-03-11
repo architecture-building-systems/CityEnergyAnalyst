@@ -115,9 +115,9 @@ class InputFileValidator(object):
         """
         Takes a dataframe and validates it based on the schema retrieved using the key i.e. locator_method_name
         from schemas.yml file
-        :param data:
-        :param locator_method_name:
-        :return: list of errors where errors are represented as [dict(), str()]
+        :param data: Dataframe of data to be tested
+        :param locator_method_name: Key for schema, which happens to be the locator_method_name of the data
+        :return: list of errors where errors are represented as [dict(), str()] being location and message of the error
         """
         df_schema = self.schemas[locator_method_name]
         file_type = df_schema['file_type']
@@ -186,7 +186,7 @@ class BaseTypeValidator(object):
 
     def validate(self, value):
         if not self.nullable and pd.isna(value):
-            return 'value cannot be null or empty: {}'.format(value)
+            return 'value cannot be null or empty: got {}'.format(value)
 
 
 class ChoiceTypeValidator(BaseTypeValidator):
@@ -210,7 +210,7 @@ class StringTypeValidator(BaseTypeValidator):
     def validate(self, value):
         super(StringTypeValidator, self).validate(value)
         if self.regex is not None and not re.search(self.regex, value):
-            return 'value is not in the proper format regex {} : {}'.format(self.regex, value)
+            return 'value is not in the proper format regex {} : got {}'.format(self.regex, value)
 
 
 class NumericTypeValidator(BaseTypeValidator):
@@ -222,8 +222,9 @@ class NumericTypeValidator(BaseTypeValidator):
     def validate(self, value):
         super(NumericTypeValidator, self).validate(value)
         if self.min is not None and value < self.min or self.max is not None and value > self.max:
-            return '{} must be in range {}, {}'.format(value, '[' + str(self.min) if self.min is not None else '(-inf',
-                                                       str(self.max) + ']' if self.max is not None else 'inf)')
+            return 'value must be in range {}, {}: got {}'.format('[' + str(self.min) if self.min is not None else '(-inf',
+                                                                  str(self.max) + ']' if self.max is not None else 'inf)',
+                                                                  value)
 
 
 class IntegerTypeValidator(NumericTypeValidator):
@@ -231,8 +232,8 @@ class IntegerTypeValidator(NumericTypeValidator):
         super(IntegerTypeValidator, self).__init__(schema)
 
     def validate(self, value):
-        if not type(value) in (int, long):
-            return 'value must be of type integer: {}'.format(value)
+        if type(value) not in (int, long):
+            return 'value must be of type integer: got {}'.format(value)
         super(IntegerTypeValidator, self).validate(value)
 
 
@@ -241,8 +242,8 @@ class FloatTypeValidator(NumericTypeValidator):
         super(FloatTypeValidator, self).__init__(schema)
 
     def validate(self, value):
-        if not type(value) in (int, long, float):
-            return 'value must be of type float: {}'.format(value)
+        if type(value) not in (int, long, float):
+            return 'value must be of type float: got {}'.format(value)
         super(FloatTypeValidator, self).validate(value)
 
 
@@ -253,7 +254,7 @@ class BooleanTypeValidator(BaseTypeValidator):
     def validate(self, value):
         super(BooleanTypeValidator, self).validate(value)
         if not isinstance(value, bool):
-            return 'value can only be True or False: {}'.format(value)
+            return 'value can only be True or False: got {}'.format(value)
 
 
 if __name__ == '__main__':
