@@ -1438,6 +1438,8 @@ get_database_air_conditioning_systems:
         type: string
         choice:
           values: [NONE, RADIATOR, CENTRAL_AC, FLOOR_HEATING]
+      convection_hs:
+        type: float
       Qhsmax_Wm2:
         type: float
       dThs_C:
@@ -2788,6 +2790,7 @@ get_database_supply_assemblies:
         min: 0.0
       O&M_%:
         type: float
+        min: 0.0
       reference:
         type: string
         nullable: true
@@ -2818,6 +2821,7 @@ get_database_supply_assemblies:
         min: 0.0
       O&M_%:
         type: float
+        min: 0.0
       reference:
         type: string
         nullable: true
@@ -2848,6 +2852,7 @@ get_database_supply_assemblies:
         min: 0.0
       O&M_%:
         type: float
+        min: 0.0
       reference:
         type: string
         nullable: true
@@ -2878,6 +2883,7 @@ get_database_supply_assemblies:
         min: 0.0
       O&M_%:
         type: float
+        min: 0.0
       reference:
         type: string
         nullable: true
@@ -2927,6 +2933,7 @@ get_database_conversion_systems:
         type: float
       currency:
         type: string
+        regex: ^[A-Z]{3}-\d{4}$
       a:
         type: float
       b:
@@ -2942,6 +2949,7 @@ get_database_conversion_systems:
         min: 0
       O&M_%:
         type: float
+        min: 0.0
       IR_%:
         type: float
         min: 0.0
@@ -2965,6 +2973,7 @@ get_database_conversion_systems:
         min: 0
       O&M_%:
         type: float
+        min: 0.0
       a:
         type: float
       aperture_area_ratio:
@@ -2988,6 +2997,7 @@ get_database_conversion_systems:
         type: string
       currency:
         type: string
+        regex: ^[A-Z]{3}-\d{4}$
       d:
         type: float
       dP1:
@@ -3033,6 +3043,7 @@ get_database_conversion_systems:
         type: string
       currency:
         type: string
+        regex: ^[A-Z]{3}-\d{4}$
       a:
         type: float
       b:
@@ -3048,6 +3059,7 @@ get_database_conversion_systems:
         min: 0
       O&M_%:
         type: float
+        min: 0.0
       IR_%:
         type: float
         min: 0.0
@@ -3067,6 +3079,7 @@ get_database_conversion_systems:
         type: string
       currency:
         type: string
+        regex: ^[A-Z]{3}-\d{4}$
       a:
         type: float
       b:
@@ -3082,6 +3095,7 @@ get_database_conversion_systems:
         min: 0
       O&M_%:
         type: float
+        min: 0.0
       IR_%:
         type: float
         min: 0.0
@@ -3101,6 +3115,7 @@ get_database_conversion_systems:
         type: string
       currency:
         type: string
+        regex: ^[A-Z]{3}-\d{4}$
       a:
         type: float
       b:
@@ -3116,6 +3131,7 @@ get_database_conversion_systems:
         min: 0
       O&M_%:
         type: float
+        min: 0.0
       IR_%:
         type: float
         min: 0.0
@@ -3135,6 +3151,7 @@ get_database_conversion_systems:
         type: string
       currency:
         type: string
+        regex: ^[A-Z]{3}-\d{4}$
       a:
         type: float
       b:
@@ -3150,6 +3167,7 @@ get_database_conversion_systems:
         min: 0
       O&M_%:
         type: float
+        min: 0.0
       IR_%:
         type: float
         min: 0.0
@@ -3169,6 +3187,7 @@ get_database_conversion_systems:
         type: string
       currency:
         type: string
+        regex: ^[A-Z]{3}-\d{4}$
       a:
         type: float
       b:
@@ -3184,6 +3203,7 @@ get_database_conversion_systems:
         min: 0
       O&M_%:
         type: float
+        min: 0.0
       IR_%:
         type: float
         min: 0.0
@@ -3203,6 +3223,7 @@ get_database_conversion_systems:
         type: string
       currency:
         type: string
+        regex: ^[A-Z]{3}-\d{4}$
       a:
         type: float
       b:
@@ -3218,6 +3239,7 @@ get_database_conversion_systems:
         min: 0
       O&M_%:
         type: float
+        min: 0.0
       IR_%:
         type: float
         min: 0.0
@@ -3241,6 +3263,7 @@ get_database_conversion_systems:
         type: string
       currency:
         type: string
+        regex: ^[A-Z]{3}-\d{4}$
       a:
         type: float
       b:
@@ -3256,6 +3279,7 @@ get_database_conversion_systems:
         min: 0
       O&M_%:
         type: float
+        min: 0.0
       IR_%:
         type: float
         min: 0.0
@@ -3295,6 +3319,7 @@ get_database_conversion_systems:
         type: string
       currency:
         type: string
+        regex: ^[A-Z]{3}-\d{4}$
       a:
         type: float
       b:
@@ -3310,6 +3335,7 @@ get_database_conversion_systems:
         min: 0
       O&M_%:
         type: float
+        min: 0.0
       IR_%:
         type: float
         min: 0.0
@@ -3329,6 +3355,7 @@ get_database_conversion_systems:
         type: string
       currency:
         type: string
+        regex: ^[A-Z]{3}-\d{4}$
       a:
         type: float
       b:
@@ -3354,6 +3381,7 @@ get_database_conversion_systems:
         min: 0
       O&M_%:
         type: float
+        min: 0.0
       IR_%:
         type: float
         min: 0.0
@@ -3373,6 +3401,7 @@ get_database_conversion_systems:
         type: string
       currency:
         type: string
+        regex: ^[A-Z]{3}-\d{4}$
       a:
         type: float
       b:
@@ -3388,6 +3417,7 @@ get_database_conversion_systems:
         min: 0
       O&M_%:
         type: float
+        min: 0.0
       IR_%:
         type: float
         min: 0.0
@@ -3407,6 +3437,7 @@ get_database_conversion_systems:
         type: string
       currency:
         type: string
+        regex: ^[A-Z]{3}-\d{4}$
       a:
         type: float
       b:
@@ -3422,6 +3453,7 @@ get_database_conversion_systems:
         min: 0
       O&M_%:
         type: float
+        min: 0.0
       IR_%:
         type: float
         min: 0.0
@@ -3441,6 +3473,7 @@ get_database_conversion_systems:
         type: string
       currency:
         type: string
+        regex: ^[A-Z]{3}-\d{4}$
       a:
         type: float
       b:
@@ -3456,6 +3489,7 @@ get_database_conversion_systems:
         min: 0
       O&M_%:
         type: float
+        min: 0.0
       IR_%:
         type: float
         min: 0.0
@@ -3475,6 +3509,7 @@ get_database_conversion_systems:
         type: string
       currency:
         type: string
+        regex: ^[A-Z]{3}-\d{4}$
       a:
         type: float
       b:
@@ -3490,6 +3525,7 @@ get_database_conversion_systems:
         min: 0
       O&M_%:
         type: float
+        min: 0.0
       IR_%:
         type: float
         min: 0.0
