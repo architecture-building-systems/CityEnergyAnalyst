@@ -123,7 +123,7 @@ def schemas():
     """Return the contents of the schemas.yml file"""
     import yaml
     schemas_yml = os.path.join(os.path.dirname(__file__), 'schemas.yml')
-    return yaml.load(open(schemas_yml))
+    return yaml.load(open(schemas_yml), Loader=yaml.CLoader)
 
 
 def get_schema_variables(schema):
