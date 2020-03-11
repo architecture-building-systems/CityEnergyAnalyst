@@ -799,7 +799,7 @@ get_database_construction_standards:
       Description:
         type: string
       YEAR_START:
-        types_found: int
+        type: int
         min: 0
       YEAR_END:
         type: int
@@ -809,72 +809,63 @@ get_database_construction_standards:
         type: string
         primary: true
       type_cons:
-        sample_data: T3
-        types_found: [string]
+        type: string
         choice:
           lookup:
             path: get_database_envelope_systems
             sheet: CONSTRUCTION
             column: code
       type_leak:
-        sample_data: T1
-        types_found: [string]
+        type: string
         choice:
           lookup:
             path: get_database_envelope_systems
             sheet: TIGHTNESS
             column: code
       type_win:
-        sample_data: T4
-        types_found: [string]
+        type: string
         choice:
           lookup:
             path: get_database_envelope_systems
             sheet: WINDOW
             column: code
       type_roof:
-        sample_data: T4
-        types_found: [string]
+        type: string
         choice:
           lookup:
             path: get_database_envelope_systems
             sheet: ROOF
             column: code
       type_part:
-        sample_data: T5
-        types_found: [string]
+        type: string
         choice:
           lookup:
             path: get_database_envelope_systems
             sheet: WALL
             column: code
       type_wall:
-        sample_data: T5
-        types_found: [string]
+        type: string
         choice:
           lookup:
             path: get_database_envelope_systems
             sheet: WALL
             column: code
       type_floor:
-        sample_data: T5
-        types_found: [string]
+        type: string
         choice:
           lookup:
             path: get_database_envelope_systems
             sheet: FLOOR
             column: code
       type_base:
-        sample_data: T5
-        types_found: [string]
+        type: string
         choice:
           lookup:
             path: get_database_envelope_systems
             sheet: FLOOR
             column: code
       type_shade:
-        sample_data: T1
-        types_found: [string]
+        type: string
         choice:
           lookup:
             path: get_database_envelope_systems
@@ -921,7 +912,6 @@ get_database_construction_standards:
         type: string
         primary: true
       type_hs:
-        sample_data: T3
         type: string
         choice:
           lookup:
@@ -929,7 +919,6 @@ get_database_construction_standards:
             sheet: HEATING
             column: code
       type_cs:
-        sample_data: T3
         type: string
         choice:
           lookup:
@@ -937,7 +926,6 @@ get_database_construction_standards:
             sheet: COOLING
             column: code
       type_dhw:
-        sample_data: T2
         type: string
         choice:
           lookup:
@@ -945,7 +933,6 @@ get_database_construction_standards:
             sheet: HOT_WATER
             column: code
       type_ctrl:
-        sample_data: T3
         type: string
         choice:
           lookup:
@@ -953,7 +940,6 @@ get_database_construction_standards:
             sheet: CONTROLLER
             column: code
       type_vent:
-        sample_data: T2
         type: string
         choice:
           lookup:
@@ -977,7 +963,6 @@ get_database_construction_standards:
         type: string
         primary: true
       type_hs:
-        sample_data: T3
         type: string
         choice:
           lookup:
@@ -985,7 +970,6 @@ get_database_construction_standards:
             sheet: HEATING
             column: code
       type_dhw:
-        sample_data: T3
         type: string
         choice:
           lookup:
@@ -993,7 +977,6 @@ get_database_construction_standards:
             sheet: HOT_WATER
             column: code
       type_cs:
-        sample_data: T19
         type: string
         choice:
           lookup:
@@ -1001,7 +984,6 @@ get_database_construction_standards:
             sheet: COOLING
             column: code
       type_el:
-        sample_data: T24
         type: string
         choice:
           lookup:
@@ -1458,40 +1440,31 @@ get_database_air_conditioning_systems:
           values: [NONE, RADIATOR, CENTRAL_AC, FLOOR_HEATING]
       Qhsmax_Wm2:
         type: float
-        min: 0.0
       dThs_C:
         type: float
       Tshs0_ahu_C:
         type: float
-        min: 0.0
         nullable: true
       dThs0_ahu_C:
         type: float
-        min: 0.0
         nullable: true
       Th_sup_air_ahu_C:
         type: float
-        min: 0.0
         nullable: true
       Tshs0_aru_C:
         type: float
-        min: 0.0
         nullable: true
       dThs0_aru_C:
         type: float
-        min: 0.0
         nullable: true
       Th_sup_air_aru_C:
         type: float
-        min: 0.0
         nullable: true
       Tshs0_shu_C:
         type: float
-        min: 0.0
         nullable: true
       dThs0_shu_C:
         type: float
-        min: 0.0
         nullable: true
     COOLING:
       Description:
@@ -1659,8 +1632,6 @@ get_database_standard_schedules_use:
     MONTHLY_MULTIPLIER:
       1:
         type: float
-        min: 0.0
-        max: 1.0
         min: 0.0
         max: 1.0
       2:
