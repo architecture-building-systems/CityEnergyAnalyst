@@ -1626,7 +1626,7 @@ get_database_envelope_systems:
 get_database_standard_schedules_use:
   created_by: [data_initializer]
   file_path: inputs/technology/archetypes/schedules/RESTAURANT.csv
-  file_type: csv
+  file_type: schedule
   schema:
     METADATA:
       name:
@@ -1686,10 +1686,6 @@ get_database_standard_schedules_use:
         choice:
           values: [WEEKDAY, SATURDAY, SUNDAY]
         primary: true
-      0:
-        type: float
-        min: 0.0
-        max: 1.0
       1:
         type: float
         min: 0.0
@@ -1779,6 +1775,10 @@ get_database_standard_schedules_use:
         min: 0.0
         max: 1.0
       23:
+        type: float
+        min: 0.0
+        max: 1.0
+      24:
         type: float
         min: 0.0
         max: 1.0
@@ -1788,10 +1788,6 @@ get_database_standard_schedules_use:
         choice:
           values: [WEEKDAY, SATURDAY, SUNDAY]
         primary: true
-      0:
-        type: float
-        min: 0.0
-        max: 1.0
       1:
         type: float
         min: 0.0
@@ -1881,6 +1877,10 @@ get_database_standard_schedules_use:
         min: 0.0
         max: 1.0
       23:
+        type: float
+        min: 0.0
+        max: 1.0
+      24:
         type: float
         min: 0.0
         max: 1.0
@@ -1890,10 +1890,6 @@ get_database_standard_schedules_use:
         choice:
           values: [WEEKDAY, SATURDAY, SUNDAY]
         primary: true
-      0:
-        type: float
-        min: 0.0
-        max: 1.0
       1:
         type: float
         min: 0.0
@@ -1983,6 +1979,10 @@ get_database_standard_schedules_use:
         min: 0.0
         max: 1.0
       23:
+        type: float
+        min: 0.0
+        max: 1.0
+      24:
         type: float
         min: 0.0
         max: 1.0
@@ -1992,10 +1992,6 @@ get_database_standard_schedules_use:
         choice:
           values: [WEEKDAY, SATURDAY, SUNDAY]
         primary: true
-      0:
-        type: float
-        min: 0.0
-        max: 1.0
       1:
         type: float
         min: 0.0
@@ -2085,6 +2081,10 @@ get_database_standard_schedules_use:
         min: 0.0
         max: 1.0
       23:
+        type: float
+        min: 0.0
+        max: 1.0
+      24:
         type: float
         min: 0.0
         max: 1.0
@@ -2094,214 +2094,210 @@ get_database_standard_schedules_use:
         choice:
           values: [WEEKDAY, SATURDAY, SUNDAY]
         primary: true
-      0:
-        type: string
-        choice:
-          values: [OFF, SETBACK, SETPOINT]
       1:
         type: string
         choice:
-          values: [OFF, SETBACK, SETPOINT]
+          values: ['OFF', 'SETBACK', 'SETPOINT']
       2:
         type: string
         choice:
-          values: [OFF, SETBACK, SETPOINT]
+          values: ['OFF', 'SETBACK', 'SETPOINT']
       3:
         type: string
         choice:
-          values: [OFF, SETBACK, SETPOINT]
+          values: ['OFF', 'SETBACK', 'SETPOINT']
       4:
         type: string
         choice:
-          values: [OFF, SETBACK, SETPOINT]
+          values: ['OFF', 'SETBACK', 'SETPOINT']
       5:
         type: string
         choice:
-          values: [OFF, SETBACK, SETPOINT]
+          values: ['OFF', 'SETBACK', 'SETPOINT']
       6:
         type: string
         choice:
-          values: [OFF, SETBACK, SETPOINT]
+          values: ['OFF', 'SETBACK', 'SETPOINT']
       7:
         type: string
         choice:
-          values: [OFF, SETBACK, SETPOINT]
+          values: ['OFF', 'SETBACK', 'SETPOINT']
       8:
         type: string
         choice:
-          values: [OFF, SETBACK, SETPOINT]
+          values: ['OFF', 'SETBACK', 'SETPOINT']
       9:
         type: string
         choice:
-          values: [OFF, SETBACK, SETPOINT]
+          values: ['OFF', 'SETBACK', 'SETPOINT']
       10:
         type: string
         choice:
-          values: [OFF, SETBACK, SETPOINT]
+          values: ['OFF', 'SETBACK', 'SETPOINT']
       11:
         type: string
         choice:
-          values: [OFF, SETBACK, SETPOINT]
+          values: ['OFF', 'SETBACK', 'SETPOINT']
       12:
         type: string
         choice:
-          values: [OFF, SETBACK, SETPOINT]
+          values: ['OFF', 'SETBACK', 'SETPOINT']
       13:
         type: string
         choice:
-          values: [OFF, SETBACK, SETPOINT]
+          values: ['OFF', 'SETBACK', 'SETPOINT']
       14:
         type: string
         choice:
-          values: [OFF, SETBACK, SETPOINT]
+          values: ['OFF', 'SETBACK', 'SETPOINT']
       15:
         type: string
         choice:
-          values: [OFF, SETBACK, SETPOINT]
+          values: ['OFF', 'SETBACK', 'SETPOINT']
       16:
         type: string
         choice:
-          values: [OFF, SETBACK, SETPOINT]
+          values: ['OFF', 'SETBACK', 'SETPOINT']
       17:
         type: string
         choice:
-          values: [OFF, SETBACK, SETPOINT]
+          values: ['OFF', 'SETBACK', 'SETPOINT']
       18:
         type: string
         choice:
-          values: [OFF, SETBACK, SETPOINT]
+          values: ['OFF', 'SETBACK', 'SETPOINT']
       19:
         type: string
         choice:
-          values: [OFF, SETBACK, SETPOINT]
+          values: ['OFF', 'SETBACK', 'SETPOINT']
       20:
         type: string
         choice:
-          values: [OFF, SETBACK, SETPOINT]
+          values: ['OFF', 'SETBACK', 'SETPOINT']
       21:
         type: string
         choice:
-          values: [OFF, SETBACK, SETPOINT]
+          values: ['OFF', 'SETBACK', 'SETPOINT']
       22:
         type: string
         choice:
-          values: [OFF, SETBACK, SETPOINT]
+          values: ['OFF', 'SETBACK', 'SETPOINT']
       23:
         type: string
         choice:
-          values: [OFF, SETBACK, SETPOINT]
+          values: ['OFF', 'SETBACK', 'SETPOINT']
+      24:
+        type: string
+        choice:
+          values: ['OFF', 'SETBACK', 'SETPOINT']
     COOLING:
       DAY:
         type: string
         choice:
           values: [WEEKDAY, SATURDAY, SUNDAY]
         primary: true
-      0:
-        type: string
-        choice:
-          values: [OFF, SETBACK, SETPOINT]
       1:
         type: string
         choice:
-          values: [OFF, SETBACK, SETPOINT]
+          values: ['OFF', 'SETBACK', 'SETPOINT']
       2:
         type: string
         choice:
-          values: [OFF, SETBACK, SETPOINT]
+          values: ['OFF', 'SETBACK', 'SETPOINT']
       3:
         type: string
         choice:
-          values: [OFF, SETBACK, SETPOINT]
+          values: ['OFF', 'SETBACK', 'SETPOINT']
       4:
         type: string
         choice:
-          values: [OFF, SETBACK, SETPOINT]
+          values: ['OFF', 'SETBACK', 'SETPOINT']
       5:
         type: string
         choice:
-          values: [OFF, SETBACK, SETPOINT]
+          values: ['OFF', 'SETBACK', 'SETPOINT']
       6:
         type: string
         choice:
-          values: [OFF, SETBACK, SETPOINT]
+          values: ['OFF', 'SETBACK', 'SETPOINT']
       7:
         type: string
         choice:
-          values: [OFF, SETBACK, SETPOINT]
+          values: ['OFF', 'SETBACK', 'SETPOINT']
       8:
         type: string
         choice:
-          values: [OFF, SETBACK, SETPOINT]
+          values: ['OFF', 'SETBACK', 'SETPOINT']
       9:
         type: string
         choice:
-          values: [OFF, SETBACK, SETPOINT]
+          values: ['OFF', 'SETBACK', 'SETPOINT']
       10:
         type: string
         choice:
-          values: [OFF, SETBACK, SETPOINT]
+          values: ['OFF', 'SETBACK', 'SETPOINT']
       11:
         type: string
         choice:
-          values: [OFF, SETBACK, SETPOINT]
+          values: ['OFF', 'SETBACK', 'SETPOINT']
       12:
         type: string
         choice:
-          values: [OFF, SETBACK, SETPOINT]
+          values: ['OFF', 'SETBACK', 'SETPOINT']
       13:
         type: string
         choice:
-          values: [OFF, SETBACK, SETPOINT]
+          values: ['OFF', 'SETBACK', 'SETPOINT']
       14:
         type: string
         choice:
-          values: [OFF, SETBACK, SETPOINT]
+          values: ['OFF', 'SETBACK', 'SETPOINT']
       15:
         type: string
         choice:
-          values: [OFF, SETBACK, SETPOINT]
+          values: ['OFF', 'SETBACK', 'SETPOINT']
       16:
         type: string
         choice:
-          values: [OFF, SETBACK, SETPOINT]
+          values: ['OFF', 'SETBACK', 'SETPOINT']
       17:
         type: string
         choice:
-          values: [OFF, SETBACK, SETPOINT]
+          values: ['OFF', 'SETBACK', 'SETPOINT']
       18:
         type: string
         choice:
-          values: [OFF, SETBACK, SETPOINT]
+          values: ['OFF', 'SETBACK', 'SETPOINT']
       19:
         type: string
         choice:
-          values: [OFF, SETBACK, SETPOINT]
+          values: ['OFF', 'SETBACK', 'SETPOINT']
       20:
         type: string
         choice:
-          values: [OFF, SETBACK, SETPOINT]
+          values: ['OFF', 'SETBACK', 'SETPOINT']
       21:
         type: string
         choice:
-          values: [OFF, SETBACK, SETPOINT]
+          values: ['OFF', 'SETBACK', 'SETPOINT']
       22:
         type: string
         choice:
-          values: [OFF, SETBACK, SETPOINT]
+          values: ['OFF', 'SETBACK', 'SETPOINT']
       23:
         type: string
         choice:
-          values: [OFF, SETBACK, SETPOINT]
+          values: ['OFF', 'SETBACK', 'SETPOINT']
+      24:
+        type: string
+        choice:
+          values: ['OFF', 'SETBACK', 'SETPOINT']
     PROCESSES:
       DAY:
         type: string
         choice:
           values: [WEEKDAY, SATURDAY, SUNDAY]
         primary: true
-      0:
-        type: float
-        min: 0.0
-        max: 1.0
       1:
         type: float
         min: 0.0
@@ -2391,6 +2387,10 @@ get_database_standard_schedules_use:
         min: 0.0
         max: 1.0
       23:
+        type: float
+        min: 0.0
+        max: 1.0
+      24:
         type: float
         min: 0.0
         max: 1.0
@@ -2400,10 +2400,6 @@ get_database_standard_schedules_use:
         choice:
           values: [WEEKDAY, SATURDAY, SUNDAY]
         primary: true
-      0:
-        type: float
-        min: 0.0
-        max: 1.0
       1:
         type: float
         min: 0.0
@@ -2493,6 +2489,10 @@ get_database_standard_schedules_use:
         min: 0.0
         max: 1.0
       23:
+        type: float
+        min: 0.0
+        max: 1.0
+      24:
         type: float
         min: 0.0
         max: 1.0
@@ -2502,10 +2502,6 @@ get_database_standard_schedules_use:
         choice:
           values: [WEEKDAY, SATURDAY, SUNDAY]
         primary: true
-      0:
-        type: float
-        min: 0.0
-        max: 1.0
       1:
         type: float
         min: 0.0
@@ -2595,6 +2591,10 @@ get_database_standard_schedules_use:
         min: 0.0
         max: 1.0
       23:
+        type: float
+        min: 0.0
+        max: 1.0
+      24:
         type: float
         min: 0.0
         max: 1.0

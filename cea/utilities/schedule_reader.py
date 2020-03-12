@@ -1,7 +1,10 @@
 from __future__ import division
 from __future__ import print_function
 
+import collections
 import csv
+import glob
+import os
 
 import pandas as pd
 
@@ -75,10 +78,36 @@ def save_cea_schedule(schedule_data, schedule_complementary_data, path_to_buildi
             csvwriter.writerow(row)
 
 
+def get_all_schedule_names(schedules_folder):
+    """Get all schedule names from path"""
+    schedule_files = glob.glob(os.path.join(schedules_folder, "*.csv"))
+    return [os.path.splitext(os.path.basename(schedule_file))[0] for schedule_file in schedule_files]
+
+
+def schedule_to_dataframe(schedule_path):
+    out = collections.OrderedDict()
+
+    with open(schedule_path) as f:
+        reader = csv.reader(f)
+        out['METADATA'] = pd.DataFrame({'name': [reader.next()[1]]})
+        out['MONTHLY_MULTIPLIER'] = pd.DataFrame({m + 1: [round(float(v), 2)] for m, v in enumerate(reader.next()[1:])},
+                                                 columns=[m for m in range(1, 13)])
+        # Filter empty columns
+        columns = [col for col in reader.next() if col != '']
+
+    schedule_data = pd.read_csv(schedule_path, skiprows=2, usecols=columns).set_index(['DAY', 'HOUR']).unstack()
+    for t, df in schedule_data.groupby(axis=1, level=0, sort=False):
+        df.columns = [i for i in range(1, 25)]
+        out[t] = df.reset_index()
+
+    return out
+
+
 def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     path_to_building_schedule = locator.get_database_standard_schedules_use('MULTI_RES')
-    read_cea_schedule(path_to_building_schedule)
+    # print(read_cea_schedule(path_to_building_schedule))
+    print(schedule_to_dataframe(path_to_building_schedule))
 
 
 if __name__ == '__main__':

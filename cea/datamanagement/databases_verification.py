@@ -8,6 +8,8 @@ from cea.scripts import schemas
 import pandas as pd
 import re
 
+from cea.utilities.schedule_reader import get_all_schedule_names
+
 COLUMNS_ZONE_GEOMETRY = ['Name', 'floors_bg', 'floors_ag', 'height_bg', 'height_ag']
 COLUMNS_SURROUNDINGS_GEOMETRY = ['Name', 'height_ag', 'floors_ag']
 COLUMNS_ZONE_TYPOLOGY = ['Name', 'STANDARD', 'YEAR', '1ST_USE', '1ST_USE_R', '2ND_USE', '2ND_USE_R', '3RD_USE', '3RD_USE_R']
@@ -121,7 +123,7 @@ class InputFileValidator(object):
         """
         file_type = data_schema['file_type']
 
-        if file_type in ['xlsx', 'xls']:
+        if file_type in ['xlsx', 'xls', 'schedule']:
             errors = []
             for sheet, _data in data.items():
                 sheet_errors = self._run_all_tests(_data, data_schema['schema'][sheet])
@@ -145,6 +147,12 @@ class InputFileValidator(object):
         return self.schemas[locator_method_name]
 
     def assert_columns_names(self, data, data_schema):
+        """
+        Check if column names in schema are found in the data provided
+        :param data: Dataframe of data to be tested
+        :param data_schema: Schema for dataframe
+        :return: list of errors
+        """
         columns = data_schema.keys()
         missing_columns = [col for col in columns if col not in data.columns]
         extra_columns = [col for col in data.columns if col not in columns]
@@ -152,6 +160,12 @@ class InputFileValidator(object):
                [[{'column': str(col)}, 'Column is not in schema'] for col in extra_columns]
 
     def assert_column_values(self, data, data_schema):
+        """
+        Check if column values in the data provide
+        :param data: Dataframe of data to be tested
+        :param data_schema: Schema for dataframe
+        :return: list of errors
+        """
         columns = data_schema.keys()
         # Only loop through valid columns that exist
         filter_columns = [col for col in columns if col in data.columns]
@@ -238,8 +252,10 @@ class NumericTypeValidator(BaseTypeValidator):
     def validate(self, value):
         super(NumericTypeValidator, self).validate(value)
         if self.min is not None and value < self.min or self.max is not None and value > self.max:
-            return 'value must be in range {}, {}: got {}'.format('[' + str(self.min) if self.min is not None else '(-inf',
-                                                                  str(self.max) + ']' if self.max is not None else 'inf)',
+            return 'value must be in range {}, {}: got {}'.format('[' + str(self.min)
+                                                                  if self.min is not None else '(-inf',
+                                                                  str(self.max) + ']'
+                                                                  if self.max is not None else 'inf)',
                                                                   value)
 
 
@@ -273,10 +289,11 @@ class BooleanTypeValidator(BaseTypeValidator):
             return 'value can only be True or False: got {}'.format(value)
 
 
-if __name__ == '__main__':
+def main():
     import cea.config
     import cea.inputlocator
     import cea.scripts
+    from cea.utilities.schedule_reader import schedule_to_dataframe
     import pprint
 
     config = cea.config.Configuration()
@@ -290,9 +307,20 @@ if __name__ == '__main__':
                        'get_database_conversion_systems',
                        'get_database_distribution_systems',
                        'get_database_feedstocks']
+
     for locator_method in locator_methods:
         df = pd.read_excel(locator.__getattribute__(locator_method)(), sheet_name=None)
         print('Validating {}'.format(locator_method))
-        errors = validator.validate(df, locator_method)
+        schema = validator.get_schema(locator_method)
+        errors = validator.validate(df, schema)
+        pprint.pprint(errors)
+    for use_types in get_all_schedule_names(locator.get_database_use_types_folder()):
+        df = schedule_to_dataframe(locator.get_database_standard_schedules_use(use_types))
+        print('Validating {}'.format(use_types))
+        _schema = validator.get_schema('get_database_standard_schedules_use')
+        errors = validator.validate(df, _schema)
         pprint.pprint(errors)
 
+
+if __name__ == '__main__':
+    main()
