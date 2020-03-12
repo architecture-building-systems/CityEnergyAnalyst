@@ -11,7 +11,7 @@ The following file is used by scripts: {{used_by}}
     :header: "Variable", "Description"
 {% for SCRIPT, LOCATOR_METHOD, WORKSHEET, VARIABLE, DESCRIPTION, UNIT, VALUES, TYPE, COLOR, FILE_NAME in glossary_data -%}
 {% if locator_method == LOCATOR_METHOD and file_name == FILE_NAME %}
-     {{VARIABLE}},{{DESCRIPTION}} - Unit: {{UNIT}}
+     ``{{VARIABLE}}``,{{DESCRIPTION}} - Unit: {{UNIT}}
 {%- endif -%}
 {% endfor %}
 {% endif %}

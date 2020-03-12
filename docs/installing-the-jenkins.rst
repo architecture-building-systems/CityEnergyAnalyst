@@ -15,6 +15,7 @@ There are a few steps to take to setting up a Jenkins server:
 - installation of a tunnel to the Jenkins server
 - global configuration of Jenkins
 - configuration of the Jenkins items
+
   - cea test for new pull requests
   - cea test for merges to master
 
@@ -98,16 +99,20 @@ to tunnel webhooks triggered by GitHub back to the Jenkins server.
 
     - if you haven't checked out the CEA, download it from the `CEA GitHub repository`_
 
+- copy the CEA Dependencies folder (after installing CEA, it should be in
+  ``%USERPROFILE%\Documents\CityEnergyAnalysts\Dependencies``) twice
+
+  - once to ``C:\ProgramData\ceajenkins\ceatest``
+  - once to ``C:\ProgramData\ceajenkins\ceatestall``
+  - (actually rename the folder ``Dependencies`` to ``ceatest`` and ``ceatestall`` respectively)
+
 - in order for the service to find required DLL's, ensure the PATH includes the following folders (use the windows
   search function to find the control panel item "Edit System Environment Variables"):
 
-  - ``C:\Users\<user>\Documents\CityEnergyAnalyst\Dependencies\Python\``
-  - ``C:\Users\<user>\Documents\CityEnergyAnalyst\Dependencies\Python\lib\site-packages\win32``
-  - ``C:\Users\<user>\Documents\CityEnergyAnalyst\Dependencies\Python\lib\site-packages\pywin32_system32``
-  - ``C:\Users\darthoma\Documents\CityEnergyAnalyst\Dependencies\cmder\vendor\git-for-windows\cmd\``
-  - make sure to replace ``<user>`` with your username (this should be the path to the Python installed by CEA)
+  - ``C:\ProgramData\ceajenkins\ceatestall\Python\``
+  - ``C:\ProgramData\ceajenkins\ceatestall\Python\lib\site-packages\win32``
+  - ``C:\ProgramData\ceajenkins\ceatestall\Python\lib\site-packages\pywin32_system32``
   - make sure you edit the System Variables, not the User Environment Variables
-  - this sets up access to the Python shipped with CEA - if you installed to a different location, modify accordingly
 
 - open ``cmd.exe`` with admin rights (right click, then "Run as Administrator")
 
@@ -182,6 +187,12 @@ https://github.com/jenkinsci/ghprb-plugin
 
 - click Save
 
+Finally, make sure Jenkins knows where to find ``git.exe`` - if it's not in ``%PATH%``:
+
+- open browser to https://ceajenkins.ngrok.io and log in
+- click "Manage Jenkins" and then "Global Tool Configuration"
+- set "Path to Git executable" to ``C:\ProgramData\ceajenkins\ceatestall\cmder\vendor\git-for-windows\bin\git.exe``
+
 
 Configuration of the Jenkins items
 ----------------------------------
@@ -221,6 +232,10 @@ First, we configure a Jenkins item for pull requests:
 
     - Execute Windows batch command: ``bin\ceatest.bat``
 
+  - section "Build Environment"
+
+    - select "Delete workspace before build starts"
+
 Next, we configure a Jenkins item for merging to master:
 
 - open browser to https://ceajenkins.ngrok.io and log in
@@ -252,6 +267,10 @@ Next, we configure a Jenkins item for merging to master:
   - section "Build"
 
     - Execute Windows batch command: ``bin\ceatestall.bat``
+
+  - section "Build Environment"
+
+    - select "Delete workspace before build starts"
 
 - open `GitHub Webhooks`_
 
