@@ -111,26 +111,25 @@ class InputFileValidator(object):
         self.schemas = schemas()
         self._cache = {}
 
-    def validate(self, data, locator_method_name):
+    def validate(self, data, data_schema):
         """
-        Takes a dataframe and validates it based on the schema retrieved using the key i.e. locator_method_name
+        Takes a dataframe and validates it based on the schema provided
         from schemas.yml file
         :param data: Dataframe of data to be tested
-        :param locator_method_name: Key for schema, which happens to be the locator_method_name of the data
+        :param data_schema: Schema of dataframe
         :return: list of errors where errors are represented as [dict(), str()] being location and message of the error
         """
-        df_schema = self.schemas[locator_method_name]
-        file_type = df_schema['file_type']
+        file_type = data_schema['file_type']
 
         if file_type in ['xlsx', 'xls']:
             errors = []
             for sheet, _data in data.items():
-                sheet_errors = self._run_all_tests(_data, df_schema['schema'][sheet])
+                sheet_errors = self._run_all_tests(_data, data_schema['schema'][sheet])
                 if sheet_errors:
                     errors.append([{"sheet": str(sheet)}, sheet_errors])
             return errors
 
-        return self._run_all_tests(data, df_schema['schema'])
+        return self._run_all_tests(data, data_schema['schema'])
 
     def _run_all_tests(self, data, data_schema):
         """
@@ -142,8 +141,10 @@ class InputFileValidator(object):
         return sum([self.assert_columns_names(data, data_schema),
                     self.assert_column_values(data, data_schema)], [])
 
-    @staticmethod
-    def assert_columns_names(data, data_schema):
+    def get_schema(self, locator_method_name):
+        return self.schemas[locator_method_name]
+
+    def assert_columns_names(self, data, data_schema):
         columns = data_schema.keys()
         missing_columns = [col for col in columns if col not in data.columns]
         extra_columns = [col for col in data.columns if col not in columns]
@@ -178,7 +179,6 @@ class InputFileValidator(object):
                 file_type = self.schemas[locator_method_name]['file_type']
                 if file_type in ['xlsx', 'xls']:
                     data = pd.read_excel(self.locator.__getattribute__(locator_method_name)(), sheet_name=None)
-
             return data[lookup_prop['sheet']][lookup_prop['column']].tolist() if data else None
         return None
 
