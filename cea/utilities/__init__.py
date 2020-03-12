@@ -6,14 +6,15 @@ def remap(x, in_min, in_max, out_min, out_max):
     return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
 
 
-def simple_memoize(func):
-    from functools import wraps
-    cache = {}
+def simple_memoize(obj):
+    import functools
 
-    @wraps(func)
-    def wrap(*args, **kwargs):
-        key = (args, frozenset(kwargs.items()))
+    cache = obj.cache = {}
+
+    @functools.wraps(obj)
+    def memoized_func(*args, **kwargs):
+        key = str(args) + str(kwargs)
         if key not in cache:
-            cache[key] = func(*args, **kwargs)
+            cache[key] = obj(*args, **kwargs)
         return cache[key]
-    return wrap
+    return memoized_func

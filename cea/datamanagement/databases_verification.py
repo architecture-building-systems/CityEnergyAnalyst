@@ -121,16 +121,16 @@ class InputFileValidator(object):
         :return: list of errors where errors are represented as [dict(), str()] being location and message of the error
         """
         file_type = data_schema['file_type']
-
+        errors = []
         if file_type in ['xlsx', 'xls', 'schedule']:
-            errors = []
             for sheet, _data in data.items():
                 sheet_errors = self._run_all_tests(_data, data_schema['schema'][sheet])
                 if sheet_errors:
                     errors.append([{"sheet": str(sheet)}, sheet_errors])
-            return errors
+        else:
+            errors = self._run_all_tests(data, data_schema['schema'])
 
-        return self._run_all_tests(data, data_schema['schema'])
+        return errors
 
     def _run_all_tests(self, data, data_schema):
         """
