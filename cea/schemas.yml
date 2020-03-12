@@ -793,203 +793,210 @@ get_database_construction_standards:
   file_type: xlsx
   schema:
     STANDARD_DEFINITION:
-      STANDARD:
-        type: string
-        primary: true
-      Description:
-        type: string
-      YEAR_START:
-        type: int
-        min: 0
-      YEAR_END:
-        type: int
-        min: 0
+      columns:
+        STANDARD:
+          type: string
+          primary: true
+        Description:
+          type: string
+        YEAR_START:
+          type: int
+          min: 0
+        YEAR_END:
+          type: int
+          min: 0
+      constraints:
+        YEAR:
+          YEAR_START < YEAR_END
     ENVELOPE_ASSEMBLIES:
-      STANDARD:
-        type: string
-        primary: true
-      type_cons:
-        type: string
-        choice:
-          lookup:
-            path: get_database_envelope_systems
-            sheet: CONSTRUCTION
-            column: code
-      type_leak:
-        type: string
-        choice:
-          lookup:
-            path: get_database_envelope_systems
-            sheet: TIGHTNESS
-            column: code
-      type_win:
-        type: string
-        choice:
-          lookup:
-            path: get_database_envelope_systems
-            sheet: WINDOW
-            column: code
-      type_roof:
-        type: string
-        choice:
-          lookup:
-            path: get_database_envelope_systems
-            sheet: ROOF
-            column: code
-      type_part:
-        type: string
-        choice:
-          lookup:
-            path: get_database_envelope_systems
-            sheet: WALL
-            column: code
-      type_wall:
-        type: string
-        choice:
-          lookup:
-            path: get_database_envelope_systems
-            sheet: WALL
-            column: code
-      type_floor:
-        type: string
-        choice:
-          lookup:
-            path: get_database_envelope_systems
-            sheet: FLOOR
-            column: code
-      type_base:
-        type: string
-        choice:
-          lookup:
-            path: get_database_envelope_systems
-            sheet: FLOOR
-            column: code
-      type_shade:
-        type: string
-        choice:
-          lookup:
-            path: get_database_envelope_systems
-            sheet: SHADING
-            column: code
-      Es:
-        type: float
-        min: 0.0
-        max: 1.0
-      Ns:
-        type: float
-        min: 0.0
-        max: 1.0
-      Hs_ag:
-        type: float
-        min: 0.0
-        max: 1.0
-      Hs_bg:
-        type: float
-        min: 0.0
-        max: 1.0
-      void_deck:
-        type: float
-        min: 0
-        max: 1.0
-      wwr_north:
-        type: float
-        min: 0
-        max: 1.0
-      wwr_south:
-        type: float
-        min: 0
-        max: 1.0
-      wwr_east:
-        type: float
-        min: 0
-        max: 1.0
-      wwr_west:
-        type: float
-        min: 0
-        max: 1.0
+      columns:
+        STANDARD:
+          type: string
+          primary: true
+        type_cons:
+          type: string
+          choice:
+            lookup:
+              path: get_database_envelope_systems
+              sheet: CONSTRUCTION
+              column: code
+        type_leak:
+          type: string
+          choice:
+            lookup:
+              path: get_database_envelope_systems
+              sheet: TIGHTNESS
+              column: code
+        type_win:
+          type: string
+          choice:
+            lookup:
+              path: get_database_envelope_systems
+              sheet: WINDOW
+              column: code
+        type_roof:
+          type: string
+          choice:
+            lookup:
+              path: get_database_envelope_systems
+              sheet: ROOF
+              column: code
+        type_part:
+          type: string
+          choice:
+            lookup:
+              path: get_database_envelope_systems
+              sheet: WALL
+              column: code
+        type_wall:
+          type: string
+          choice:
+            lookup:
+              path: get_database_envelope_systems
+              sheet: WALL
+              column: code
+        type_floor:
+          type: string
+          choice:
+            lookup:
+              path: get_database_envelope_systems
+              sheet: FLOOR
+              column: code
+        type_base:
+          type: string
+          choice:
+            lookup:
+              path: get_database_envelope_systems
+              sheet: FLOOR
+              column: code
+        type_shade:
+          type: string
+          choice:
+            lookup:
+              path: get_database_envelope_systems
+              sheet: SHADING
+              column: code
+        Es:
+          type: float
+          min: 0.0
+          max: 1.0
+        Ns:
+          type: float
+          min: 0.0
+          max: 1.0
+        Hs_ag:
+          type: float
+          min: 0.0
+          max: 1.0
+        Hs_bg:
+          type: float
+          min: 0.0
+          max: 1.0
+        void_deck:
+          type: float
+          min: 0
+          max: 1.0
+        wwr_north:
+          type: float
+          min: 0
+          max: 1.0
+        wwr_south:
+          type: float
+          min: 0
+          max: 1.0
+        wwr_east:
+          type: float
+          min: 0
+          max: 1.0
+        wwr_west:
+          type: float
+          min: 0
+          max: 1.0
     HVAC_ASSEMBLIES:
-      STANDARD:
-        type: string
-        primary: true
-      type_hs:
-        type: string
-        choice:
-          lookup:
-            path: get_database_air_conditioning_systems
-            sheet: HEATING
-            column: code
-      type_cs:
-        type: string
-        choice:
-          lookup:
-            path: get_database_air_conditioning_systems
-            sheet: COOLING
-            column: code
-      type_dhw:
-        type: string
-        choice:
-          lookup:
-            path: get_database_air_conditioning_systems
-            sheet: HOT_WATER
-            column: code
-      type_ctrl:
-        type: string
-        choice:
-          lookup:
-            path: get_database_air_conditioning_systems
-            sheet: CONTROLLER
-            column: code
-      type_vent:
-        type: string
-        choice:
-          lookup:
-            path: get_database_air_conditioning_systems
-            sheet: VENTILATION
-            column: code
-      heat_starts:
-        type: string
-        regex: ^\d{2}|\d{2}$
-      heat_ends:
-        type: string
-        regex: ^\d{2}|\d{2}$
-      cool_starts:
-        type: string
-        regex: ^\d{2}|\d{2}$
-      cool_ends:
-        type: string
-        regex: ^\d{2}|\d{2}$
+      columns:
+        STANDARD:
+          type: string
+          primary: true
+        type_hs:
+          type: string
+          choice:
+            lookup:
+              path: get_database_air_conditioning_systems
+              sheet: HEATING
+              column: code
+        type_cs:
+          type: string
+          choice:
+            lookup:
+              path: get_database_air_conditioning_systems
+              sheet: COOLING
+              column: code
+        type_dhw:
+          type: string
+          choice:
+            lookup:
+              path: get_database_air_conditioning_systems
+              sheet: HOT_WATER
+              column: code
+        type_ctrl:
+          type: string
+          choice:
+            lookup:
+              path: get_database_air_conditioning_systems
+              sheet: CONTROLLER
+              column: code
+        type_vent:
+          type: string
+          choice:
+            lookup:
+              path: get_database_air_conditioning_systems
+              sheet: VENTILATION
+              column: code
+        heat_starts:
+          type: string
+          regex: ^\d{2}|\d{2}$
+        heat_ends:
+          type: string
+          regex: ^\d{2}|\d{2}$
+        cool_starts:
+          type: string
+          regex: ^\d{2}|\d{2}$
+        cool_ends:
+          type: string
+          regex: ^\d{2}|\d{2}$
     SUPPLY_ASSEMBLIES:
-      STANDARD:
-        type: string
-        primary: true
-      type_hs:
-        type: string
-        choice:
-          lookup:
-            path: get_database_supply_assemblies
-            sheet: HEATING
-            column: code
-      type_dhw:
-        type: string
-        choice:
-          lookup:
-            path: get_database_supply_assemblies
-            sheet: HOT_WATER
-            column: code
-      type_cs:
-        type: string
-        choice:
-          lookup:
-            path: get_database_supply_assemblies
-            sheet: COOLING
-            column: code
-      type_el:
-        type: string
-        choice:
-          lookup:
-            path: get_database_supply_assemblies
-            sheet: ELECTRICITY
-            column: code
+      columns:
+        STANDARD:
+          type: string
+          primary: true
+        type_hs:
+          type: string
+          choice:
+            lookup:
+              path: get_database_supply_assemblies
+              sheet: HEATING
+              column: code
+        type_dhw:
+          type: string
+          choice:
+            lookup:
+              path: get_database_supply_assemblies
+              sheet: HOT_WATER
+              column: code
+        type_cs:
+          type: string
+          choice:
+            lookup:
+              path: get_database_supply_assemblies
+              sheet: COOLING
+              column: code
+        type_el:
+          type: string
+          choice:
+            lookup:
+              path: get_database_supply_assemblies
+              sheet: ELECTRICITY
+              column: code
   used_by: [archetypes_mapper]
 get_database_use_types_properties:
   created_by: [data_initializer]
@@ -997,53 +1004,55 @@ get_database_use_types_properties:
   file_type: xls
   schema:
     INTERNAL_LOADS:
-      code:
-        type: string
-        primary: true
-      Occ_m2pax:
-        type: float
-      Qs_Wpax:
-        type: float
-      X_ghpax:
-        type: float
-      Ea_Wm2:
-        type: float
-      El_Wm2:
-        type: float
-      Epro_Wm2:
-        type: float
-      Ed_Wm2:
-        type: float
-      Vww_lpdpax:
-        type: float
-      Vw_lpdpax:
-        type: float
-      Qcre_Wm2:
-        type: float
-      Qhpro_Wm2:
-        type: float
-      Qcpro_Wm2:
-        type: float
-      Ev_kWveh:
-        type: float
+      columns:
+        code:
+          type: string
+          primary: true
+        Occ_m2pax:
+          type: float
+        Qs_Wpax:
+          type: float
+        X_ghpax:
+          type: float
+        Ea_Wm2:
+          type: float
+        El_Wm2:
+          type: float
+        Epro_Wm2:
+          type: float
+        Ed_Wm2:
+          type: float
+        Vww_lpdpax:
+          type: float
+        Vw_lpdpax:
+          type: float
+        Qcre_Wm2:
+          type: float
+        Qhpro_Wm2:
+          type: float
+        Qcpro_Wm2:
+          type: float
+        Ev_kWveh:
+          type: float
     INDOOR_COMFORT:
-      code:
-        type: string
-        primary: true
-      Tcs_set_C:
-        type: float
-      Ths_set_C:
-        type: float
-      Tcs_setb_C:
-        type: float
-      Ths_setb_C:
-        type: float
-      Ve_lpspax:
-        type: float
-      RH_min_pc:
-        type: float
-      RH_max_pc:
-        type: float
+      columns:
+        code:
+          type: string
+          primary: true
+        Tcs_set_C:
+          type: float
+        Ths_set_C:
+          type: float
+        Tcs_setb_C:
+          type: float
+        Ths_setb_C:
+          type: float
+        Ve_lpspax:
+          type: float
+        RH_min_pc:
+          type: float
+        RH_max_pc:
+          type: float
   used_by: [archetypes_mapper]
 get_building_air_conditioning:
   created_by: [archetypes_mapper]
@@ -1417,123 +1426,128 @@ get_database_air_conditioning_systems:
   file_type: xls
   schema:
     HOT_WATER:
-      Description:
-        type: string
-      code:
-        type: string
-        primary: true
-      Tsww0_C:
-        type: float
-        min: 0.0
-      Qwwmax_Wm2:
-        type: float
-        min: 0.0
+      columns:
+        Description:
+          type: string
+        code:
+          type: string
+          primary: true
+        Tsww0_C:
+          type: float
+          min: 0.0
+        Qwwmax_Wm2:
+          type: float
+          min: 0.0
     HEATING:
-      Description:
-        type: string
-      code:
-        type: string
-        primary: true
-      class_hs:
-        type: string
-        choice:
-          values: [NONE, RADIATOR, CENTRAL_AC, FLOOR_HEATING]
-      convection_hs:
-        type: float
-      Qhsmax_Wm2:
-        type: float
-      dThs_C:
-        type: float
-      Tshs0_ahu_C:
-        type: float
-        nullable: true
-      dThs0_ahu_C:
-        type: float
-        nullable: true
-      Th_sup_air_ahu_C:
-        type: float
-        nullable: true
-      Tshs0_aru_C:
-        type: float
-        nullable: true
-      dThs0_aru_C:
-        type: float
-        nullable: true
-      Th_sup_air_aru_C:
-        type: float
-        nullable: true
-      Tshs0_shu_C:
-        type: float
-        nullable: true
-      dThs0_shu_C:
-        type: float
-        nullable: true
+      columns:
+        Description:
+          type: string
+        code:
+          type: string
+          primary: true
+        class_hs:
+          type: string
+          choice:
+            values: [NONE, RADIATOR, CENTRAL_AC, FLOOR_HEATING]
+        convection_hs:
+          type: float
+        Qhsmax_Wm2:
+          type: float
+        dThs_C:
+          type: float
+        Tshs0_ahu_C:
+          type: float
+          nullable: true
+        dThs0_ahu_C:
+          type: float
+          nullable: true
+        Th_sup_air_ahu_C:
+          type: float
+          nullable: true
+        Tshs0_aru_C:
+          type: float
+          nullable: true
+        dThs0_aru_C:
+          type: float
+          nullable: true
+        Th_sup_air_aru_C:
+          type: float
+          nullable: true
+        Tshs0_shu_C:
+          type: float
+          nullable: true
+        dThs0_shu_C:
+          type: float
+          nullable: true
     COOLING:
-      Description:
-        type: string
-      code:
-        type: string
-        primary: true
-      class_cs:
-        type: string
-        choice:
-          values: [NONE, CEILING_COOLING, DECENTRALIZED_AC, CENTRAL_AC, HYBRID_AC, FLOOR_COOLING]
-      convection_cs:
-        type: float
-      Qcsmax_Wm2:
-        type: float
-      dTcs_C:
-        type: float
-      Tscs0_ahu_C:
-        type: float
-        nullable: true
-      dTcs0_ahu_C:
-        type: float
-        nullable: true
-      Tc_sup_air_ahu_C:
-        type: float
-        nullable: true
-      Tscs0_aru_C:
-        type: float
-        nullable: true
-      dTcs0_aru_C:
-        type: float
-        nullable: true
-      Tc_sup_air_aru_C:
-        type: float
-        nullable: true
-      Tscs0_scu_C:
-        type: float
-        nullable: true
-      dTcs0_scu_C:
-        type: float
-        nullable: true
+      columns:
+        Description:
+          type: string
+        code:
+          type: string
+          primary: true
+        class_cs:
+          type: string
+          choice:
+            values: [NONE, CEILING_COOLING, DECENTRALIZED_AC, CENTRAL_AC, HYBRID_AC, FLOOR_COOLING]
+        convection_cs:
+          type: float
+        Qcsmax_Wm2:
+          type: float
+        dTcs_C:
+          type: float
+        Tscs0_ahu_C:
+          type: float
+          nullable: true
+        dTcs0_ahu_C:
+          type: float
+          nullable: true
+        Tc_sup_air_ahu_C:
+          type: float
+          nullable: true
+        Tscs0_aru_C:
+          type: float
+          nullable: true
+        dTcs0_aru_C:
+          type: float
+          nullable: true
+        Tc_sup_air_aru_C:
+          type: float
+          nullable: true
+        Tscs0_scu_C:
+          type: float
+          nullable: true
+        dTcs0_scu_C:
+          type: float
+          nullable: true
     VENTILATION:
-      Description:
-        type: string
-      code:
-        type: string
-        primary: true
-      MECH_VENT:
-        type: boolean
-      WIN_VENT:
-        type: boolean
-      HEAT_REC:
-        type: boolean
-      NIGHT_FLSH:
-        type: boolean
-      ECONOMIZER:
-        type: boolean
+      columns:
+        Description:
+          type: string
+        code:
+          type: string
+          primary: true
+        MECH_VENT:
+          type: boolean
+        WIN_VENT:
+          type: boolean
+        HEAT_REC:
+          type: boolean
+        NIGHT_FLSH:
+          type: boolean
+        ECONOMIZER:
+          type: boolean
     CONTROLLER:
-      Description:
-        type: string
-      code:
-        type: string
-        primary: true
-      dT_Qhs:
-        type: float
-      dT_Qcs:
-        type: float
+      columns:
+        Description:
+          type: string
+        code:
+          type: string
+          primary: true
+        dT_Qhs:
+          type: float
+        dT_Qcs:
+          type: float
   used_by: [demand]
 get_database_envelope_systems:
   created_by: [data_initializer]
@@ -1541,87 +1555,94 @@ get_database_envelope_systems:
   file_type: xls
   schema:
     CONSTRUCTION:
-      Description:
-        type: string
-      code:
-        type: string
-        primary: true
-      Cm_Af:
-        type: float
+      columns:
+        Description:
+          type: string
+        code:
+          type: string
+          primary: true
+        Cm_Af:
+          type: float
     TIGHTNESS:
-      Description:
-        type: string
-      code:
-        type: string
-        primary: true
-      n50:
-        type: float
+      columns:
+        Description:
+          type: string
+        code:
+          type: string
+          primary: true
+        n50:
+          type: float
     WINDOW:
-      Description:
-        type: string
-      code:
-        type: string
-        primary: true
-      U_win:
-        type: float
-      G_win:
-        type: float
-      e_win:
-        type: float
-      F_F:
-        type: float
-      GHG_WIN_kgCO2m2:
-        type: float
+      columns:
+        Description:
+          type: string
+        code:
+          type: string
+          primary: true
+        U_win:
+          type: float
+        G_win:
+          type: float
+        e_win:
+          type: float
+        F_F:
+          type: float
+        GHG_WIN_kgCO2m2:
+          type: float
     ROOF:
-      Description:
-        type: string
-      code:
-        type: string
-        primary: true
-      U_roof:
-        type: float
-      a_roof:
-        type: float
-      e_roof:
-        type: float
-      r_roof:
-        type: float
-      GHG_ROOF_kgCO2m2:
-        type: float
+      columns:
+        Description:
+          type: string
+        code:
+          type: string
+          primary: true
+        U_roof:
+          type: float
+        a_roof:
+          type: float
+        e_roof:
+          type: float
+        r_roof:
+          type: float
+        GHG_ROOF_kgCO2m2:
+          type: float
     WALL:
-      Description:
-        type: string
-      code:
-        type: string
-        primary: true
-      U_wall:
-        type: float
-      a_wall:
-        type: float
-      e_wall:
-        type: float
-      r_wall:
-        type: float
-      GHG_WALL_kgCO2m2:
-        type: float
+      columns:
+        Description:
+          type: string
+        code:
+          type: string
+          primary: true
+        U_wall:
+          type: float
+        a_wall:
+          type: float
+        e_wall:
+          type: float
+        r_wall:
+          type: float
+        GHG_WALL_kgCO2m2:
+          type: float
     FLOOR:
-      Description:
-        type: string
-      code:
-        type: string
-        primary: true
-      U_base:
-        type: float
-      GHG_FLOOR_kgCO2m2:
-        type: float
+      columns:
+        Description:
+          type: string
+        code:
+          type: string
+          primary: true
+        U_base:
+          type: float
+        GHG_FLOOR_kgCO2m2:
+          type: float
     SHADING:
-      Description:
-        type: string
-      code:
-        type: string
-        primary: true
-      rf_sh:
-        type: float
+      columns:
+        Description:
+          type: string
+        code:
+          type: string
+          primary: true
+        rf_sh:
+          type: float
   used_by: [demand, radiation, schedule_maker]
 get_database_standard_schedules_use:
   created_by: [data_initializer]
@@ -1629,975 +1650,986 @@ get_database_standard_schedules_use:
   file_type: schedule
   schema:
     METADATA:
-      name:
-        type: string
+      columns:
+        name:
+          type: string
     MONTHLY_MULTIPLIER:
-      1:
-        type: float
-        min: 0.0
-        max: 1.0
-      2:
-        type: float
-        min: 0.0
-        max: 1.0
-      3:
-        type: float
-        min: 0.0
-        max: 1.0
-      4:
-        type: float
-        min: 0.0
-        max: 1.0
-      5:
-        type: float
-        min: 0.0
-        max: 1.0
-      6:
-        type: float
-        min: 0.0
-        max: 1.0
-      7:
-        type: float
-        min: 0.0
-        max: 1.0
-      8:
-        type: float
-        min: 0.0
-        max: 1.0
-      9:
-        type: float
-        min: 0.0
-        max: 1.0
-      10:
-        type: float
-        min: 0.0
-        max: 1.0
-      11:
-        type: float
-        min: 0.0
-        max: 1.0
-      12:
-        type: float
-        min: 0.0
-        max: 1.0
+      columns:
+        1:
+          type: float
+          min: 0.0
+          max: 1.0
+        2:
+          type: float
+          min: 0.0
+          max: 1.0
+        3:
+          type: float
+          min: 0.0
+          max: 1.0
+        4:
+          type: float
+          min: 0.0
+          max: 1.0
+        5:
+          type: float
+          min: 0.0
+          max: 1.0
+        6:
+          type: float
+          min: 0.0
+          max: 1.0
+        7:
+          type: float
+          min: 0.0
+          max: 1.0
+        8:
+          type: float
+          min: 0.0
+          max: 1.0
+        9:
+          type: float
+          min: 0.0
+          max: 1.0
+        10:
+          type: float
+          min: 0.0
+          max: 1.0
+        11:
+          type: float
+          min: 0.0
+          max: 1.0
+        12:
+          type: float
+          min: 0.0
+          max: 1.0
     OCCUPANCY:
-      DAY:
-        type: string
-        choice:
-          values: [WEEKDAY, SATURDAY, SUNDAY]
-        primary: true
-      1:
-        type: float
-        min: 0.0
-        max: 1.0
-      2:
-        type: float
-        min: 0.0
-        max: 1.0
-      3:
-        type: float
-        min: 0.0
-        max: 1.0
-      4:
-        type: float
-        min: 0.0
-        max: 1.0
-      5:
-        type: float
-        min: 0.0
-        max: 1.0
-      6:
-        type: float
-        min: 0.0
-        max: 1.0
-      7:
-        type: float
-        min: 0.0
-        max: 1.0
-      8:
-        type: float
-        min: 0.0
-        max: 1.0
-      9:
-        type: float
-        min: 0.0
-        max: 1.0
-      10:
-        type: float
-        min: 0.0
-        max: 1.0
-      11:
-        type: float
-        min: 0.0
-        max: 1.0
-      12:
-        type: float
-        min: 0.0
-        max: 1.0
-      13:
-        type: float
-        min: 0.0
-        max: 1.0
-      14:
-        type: float
-        min: 0.0
-        max: 1.0
-      15:
-        type: float
-        min: 0.0
-        max: 1.0
-      16:
-        type: float
-        min: 0.0
-        max: 1.0
-      17:
-        type: float
-        min: 0.0
-        max: 1.0
-      18:
-        type: float
-        min: 0.0
-        max: 1.0
-      19:
-        type: float
-        min: 0.0
-        max: 1.0
-      20:
-        type: float
-        min: 0.0
-        max: 1.0
-      21:
-        type: float
-        min: 0.0
-        max: 1.0
-      22:
-        type: float
-        min: 0.0
-        max: 1.0
-      23:
-        type: float
-        min: 0.0
-        max: 1.0
-      24:
-        type: float
-        min: 0.0
-        max: 1.0
+      columns:
+        DAY:
+          type: string
+          choice:
+            values: [WEEKDAY, SATURDAY, SUNDAY]
+          primary: true
+        1:
+          type: float
+          min: 0.0
+          max: 1.0
+        2:
+          type: float
+          min: 0.0
+          max: 1.0
+        3:
+          type: float
+          min: 0.0
+          max: 1.0
+        4:
+          type: float
+          min: 0.0
+          max: 1.0
+        5:
+          type: float
+          min: 0.0
+          max: 1.0
+        6:
+          type: float
+          min: 0.0
+          max: 1.0
+        7:
+          type: float
+          min: 0.0
+          max: 1.0
+        8:
+          type: float
+          min: 0.0
+          max: 1.0
+        9:
+          type: float
+          min: 0.0
+          max: 1.0
+        10:
+          type: float
+          min: 0.0
+          max: 1.0
+        11:
+          type: float
+          min: 0.0
+          max: 1.0
+        12:
+          type: float
+          min: 0.0
+          max: 1.0
+        13:
+          type: float
+          min: 0.0
+          max: 1.0
+        14:
+          type: float
+          min: 0.0
+          max: 1.0
+        15:
+          type: float
+          min: 0.0
+          max: 1.0
+        16:
+          type: float
+          min: 0.0
+          max: 1.0
+        17:
+          type: float
+          min: 0.0
+          max: 1.0
+        18:
+          type: float
+          min: 0.0
+          max: 1.0
+        19:
+          type: float
+          min: 0.0
+          max: 1.0
+        20:
+          type: float
+          min: 0.0
+          max: 1.0
+        21:
+          type: float
+          min: 0.0
+          max: 1.0
+        22:
+          type: float
+          min: 0.0
+          max: 1.0
+        23:
+          type: float
+          min: 0.0
+          max: 1.0
+        24:
+          type: float
+          min: 0.0
+          max: 1.0
     APPLIANCES:
-      DAY:
-        type: string
-        choice:
-          values: [WEEKDAY, SATURDAY, SUNDAY]
-        primary: true
-      1:
-        type: float
-        min: 0.0
-        max: 1.0
-      2:
-        type: float
-        min: 0.0
-        max: 1.0
-      3:
-        type: float
-        min: 0.0
-        max: 1.0
-      4:
-        type: float
-        min: 0.0
-        max: 1.0
-      5:
-        type: float
-        min: 0.0
-        max: 1.0
-      6:
-        type: float
-        min: 0.0
-        max: 1.0
-      7:
-        type: float
-        min: 0.0
-        max: 1.0
-      8:
-        type: float
-        min: 0.0
-        max: 1.0
-      9:
-        type: float
-        min: 0.0
-        max: 1.0
-      10:
-        type: float
-        min: 0.0
-        max: 1.0
-      11:
-        type: float
-        min: 0.0
-        max: 1.0
-      12:
-        type: float
-        min: 0.0
-        max: 1.0
-      13:
-        type: float
-        min: 0.0
-        max: 1.0
-      14:
-        type: float
-        min: 0.0
-        max: 1.0
-      15:
-        type: float
-        min: 0.0
-        max: 1.0
-      16:
-        type: float
-        min: 0.0
-        max: 1.0
-      17:
-        type: float
-        min: 0.0
-        max: 1.0
-      18:
-        type: float
-        min: 0.0
-        max: 1.0
-      19:
-        type: float
-        min: 0.0
-        max: 1.0
-      20:
-        type: float
-        min: 0.0
-        max: 1.0
-      21:
-        type: float
-        min: 0.0
-        max: 1.0
-      22:
-        type: float
-        min: 0.0
-        max: 1.0
-      23:
-        type: float
-        min: 0.0
-        max: 1.0
-      24:
-        type: float
-        min: 0.0
-        max: 1.0
+      columns:
+        DAY:
+          type: string
+          choice:
+            values: [WEEKDAY, SATURDAY, SUNDAY]
+          primary: true
+        1:
+          type: float
+          min: 0.0
+          max: 1.0
+        2:
+          type: float
+          min: 0.0
+          max: 1.0
+        3:
+          type: float
+          min: 0.0
+          max: 1.0
+        4:
+          type: float
+          min: 0.0
+          max: 1.0
+        5:
+          type: float
+          min: 0.0
+          max: 1.0
+        6:
+          type: float
+          min: 0.0
+          max: 1.0
+        7:
+          type: float
+          min: 0.0
+          max: 1.0
+        8:
+          type: float
+          min: 0.0
+          max: 1.0
+        9:
+          type: float
+          min: 0.0
+          max: 1.0
+        10:
+          type: float
+          min: 0.0
+          max: 1.0
+        11:
+          type: float
+          min: 0.0
+          max: 1.0
+        12:
+          type: float
+          min: 0.0
+          max: 1.0
+        13:
+          type: float
+          min: 0.0
+          max: 1.0
+        14:
+          type: float
+          min: 0.0
+          max: 1.0
+        15:
+          type: float
+          min: 0.0
+          max: 1.0
+        16:
+          type: float
+          min: 0.0
+          max: 1.0
+        17:
+          type: float
+          min: 0.0
+          max: 1.0
+        18:
+          type: float
+          min: 0.0
+          max: 1.0
+        19:
+          type: float
+          min: 0.0
+          max: 1.0
+        20:
+          type: float
+          min: 0.0
+          max: 1.0
+        21:
+          type: float
+          min: 0.0
+          max: 1.0
+        22:
+          type: float
+          min: 0.0
+          max: 1.0
+        23:
+          type: float
+          min: 0.0
+          max: 1.0
+        24:
+          type: float
+          min: 0.0
+          max: 1.0
     LIGHTING:
-      DAY:
-        type: string
-        choice:
-          values: [WEEKDAY, SATURDAY, SUNDAY]
-        primary: true
-      1:
-        type: float
-        min: 0.0
-        max: 1.0
-      2:
-        type: float
-        min: 0.0
-        max: 1.0
-      3:
-        type: float
-        min: 0.0
-        max: 1.0
-      4:
-        type: float
-        min: 0.0
-        max: 1.0
-      5:
-        type: float
-        min: 0.0
-        max: 1.0
-      6:
-        type: float
-        min: 0.0
-        max: 1.0
-      7:
-        type: float
-        min: 0.0
-        max: 1.0
-      8:
-        type: float
-        min: 0.0
-        max: 1.0
-      9:
-        type: float
-        min: 0.0
-        max: 1.0
-      10:
-        type: float
-        min: 0.0
-        max: 1.0
-      11:
-        type: float
-        min: 0.0
-        max: 1.0
-      12:
-        type: float
-        min: 0.0
-        max: 1.0
-      13:
-        type: float
-        min: 0.0
-        max: 1.0
-      14:
-        type: float
-        min: 0.0
-        max: 1.0
-      15:
-        type: float
-        min: 0.0
-        max: 1.0
-      16:
-        type: float
-        min: 0.0
-        max: 1.0
-      17:
-        type: float
-        min: 0.0
-        max: 1.0
-      18:
-        type: float
-        min: 0.0
-        max: 1.0
-      19:
-        type: float
-        min: 0.0
-        max: 1.0
-      20:
-        type: float
-        min: 0.0
-        max: 1.0
-      21:
-        type: float
-        min: 0.0
-        max: 1.0
-      22:
-        type: float
-        min: 0.0
-        max: 1.0
-      23:
-        type: float
-        min: 0.0
-        max: 1.0
-      24:
-        type: float
-        min: 0.0
-        max: 1.0
+      columns:
+        DAY:
+          type: string
+          choice:
+            values: [WEEKDAY, SATURDAY, SUNDAY]
+          primary: true
+        1:
+          type: float
+          min: 0.0
+          max: 1.0
+        2:
+          type: float
+          min: 0.0
+          max: 1.0
+        3:
+          type: float
+          min: 0.0
+          max: 1.0
+        4:
+          type: float
+          min: 0.0
+          max: 1.0
+        5:
+          type: float
+          min: 0.0
+          max: 1.0
+        6:
+          type: float
+          min: 0.0
+          max: 1.0
+        7:
+          type: float
+          min: 0.0
+          max: 1.0
+        8:
+          type: float
+          min: 0.0
+          max: 1.0
+        9:
+          type: float
+          min: 0.0
+          max: 1.0
+        10:
+          type: float
+          min: 0.0
+          max: 1.0
+        11:
+          type: float
+          min: 0.0
+          max: 1.0
+        12:
+          type: float
+          min: 0.0
+          max: 1.0
+        13:
+          type: float
+          min: 0.0
+          max: 1.0
+        14:
+          type: float
+          min: 0.0
+          max: 1.0
+        15:
+          type: float
+          min: 0.0
+          max: 1.0
+        16:
+          type: float
+          min: 0.0
+          max: 1.0
+        17:
+          type: float
+          min: 0.0
+          max: 1.0
+        18:
+          type: float
+          min: 0.0
+          max: 1.0
+        19:
+          type: float
+          min: 0.0
+          max: 1.0
+        20:
+          type: float
+          min: 0.0
+          max: 1.0
+        21:
+          type: float
+          min: 0.0
+          max: 1.0
+        22:
+          type: float
+          min: 0.0
+          max: 1.0
+        23:
+          type: float
+          min: 0.0
+          max: 1.0
+        24:
+          type: float
+          min: 0.0
+          max: 1.0
     WATER:
-      DAY:
-        type: string
-        choice:
-          values: [WEEKDAY, SATURDAY, SUNDAY]
-        primary: true
-      1:
-        type: float
-        min: 0.0
-        max: 1.0
-      2:
-        type: float
-        min: 0.0
-        max: 1.0
-      3:
-        type: float
-        min: 0.0
-        max: 1.0
-      4:
-        type: float
-        min: 0.0
-        max: 1.0
-      5:
-        type: float
-        min: 0.0
-        max: 1.0
-      6:
-        type: float
-        min: 0.0
-        max: 1.0
-      7:
-        type: float
-        min: 0.0
-        max: 1.0
-      8:
-        type: float
-        min: 0.0
-        max: 1.0
-      9:
-        type: float
-        min: 0.0
-        max: 1.0
-      10:
-        type: float
-        min: 0.0
-        max: 1.0
-      11:
-        type: float
-        min: 0.0
-        max: 1.0
-      12:
-        type: float
-        min: 0.0
-        max: 1.0
-      13:
-        type: float
-        min: 0.0
-        max: 1.0
-      14:
-        type: float
-        min: 0.0
-        max: 1.0
-      15:
-        type: float
-        min: 0.0
-        max: 1.0
-      16:
-        type: float
-        min: 0.0
-        max: 1.0
-      17:
-        type: float
-        min: 0.0
-        max: 1.0
-      18:
-        type: float
-        min: 0.0
-        max: 1.0
-      19:
-        type: float
-        min: 0.0
-        max: 1.0
-      20:
-        type: float
-        min: 0.0
-        max: 1.0
-      21:
-        type: float
-        min: 0.0
-        max: 1.0
-      22:
-        type: float
-        min: 0.0
-        max: 1.0
-      23:
-        type: float
-        min: 0.0
-        max: 1.0
-      24:
-        type: float
-        min: 0.0
-        max: 1.0
+      columns:
+        DAY:
+          type: string
+          choice:
+            values: [WEEKDAY, SATURDAY, SUNDAY]
+          primary: true
+        1:
+          type: float
+          min: 0.0
+          max: 1.0
+        2:
+          type: float
+          min: 0.0
+          max: 1.0
+        3:
+          type: float
+          min: 0.0
+          max: 1.0
+        4:
+          type: float
+          min: 0.0
+          max: 1.0
+        5:
+          type: float
+          min: 0.0
+          max: 1.0
+        6:
+          type: float
+          min: 0.0
+          max: 1.0
+        7:
+          type: float
+          min: 0.0
+          max: 1.0
+        8:
+          type: float
+          min: 0.0
+          max: 1.0
+        9:
+          type: float
+          min: 0.0
+          max: 1.0
+        10:
+          type: float
+          min: 0.0
+          max: 1.0
+        11:
+          type: float
+          min: 0.0
+          max: 1.0
+        12:
+          type: float
+          min: 0.0
+          max: 1.0
+        13:
+          type: float
+          min: 0.0
+          max: 1.0
+        14:
+          type: float
+          min: 0.0
+          max: 1.0
+        15:
+          type: float
+          min: 0.0
+          max: 1.0
+        16:
+          type: float
+          min: 0.0
+          max: 1.0
+        17:
+          type: float
+          min: 0.0
+          max: 1.0
+        18:
+          type: float
+          min: 0.0
+          max: 1.0
+        19:
+          type: float
+          min: 0.0
+          max: 1.0
+        20:
+          type: float
+          min: 0.0
+          max: 1.0
+        21:
+          type: float
+          min: 0.0
+          max: 1.0
+        22:
+          type: float
+          min: 0.0
+          max: 1.0
+        23:
+          type: float
+          min: 0.0
+          max: 1.0
+        24:
+          type: float
+          min: 0.0
+          max: 1.0
     HEATING:
-      DAY:
-        type: string
-        choice:
-          values: [WEEKDAY, SATURDAY, SUNDAY]
-        primary: true
-      1:
-        type: string
-        choice:
-          values: ['OFF', 'SETBACK', 'SETPOINT']
-      2:
-        type: string
-        choice:
-          values: ['OFF', 'SETBACK', 'SETPOINT']
-      3:
-        type: string
-        choice:
-          values: ['OFF', 'SETBACK', 'SETPOINT']
-      4:
-        type: string
-        choice:
-          values: ['OFF', 'SETBACK', 'SETPOINT']
-      5:
-        type: string
-        choice:
-          values: ['OFF', 'SETBACK', 'SETPOINT']
-      6:
-        type: string
-        choice:
-          values: ['OFF', 'SETBACK', 'SETPOINT']
-      7:
-        type: string
-        choice:
-          values: ['OFF', 'SETBACK', 'SETPOINT']
-      8:
-        type: string
-        choice:
-          values: ['OFF', 'SETBACK', 'SETPOINT']
-      9:
-        type: string
-        choice:
-          values: ['OFF', 'SETBACK', 'SETPOINT']
-      10:
-        type: string
-        choice:
-          values: ['OFF', 'SETBACK', 'SETPOINT']
-      11:
-        type: string
-        choice:
-          values: ['OFF', 'SETBACK', 'SETPOINT']
-      12:
-        type: string
-        choice:
-          values: ['OFF', 'SETBACK', 'SETPOINT']
-      13:
-        type: string
-        choice:
-          values: ['OFF', 'SETBACK', 'SETPOINT']
-      14:
-        type: string
-        choice:
-          values: ['OFF', 'SETBACK', 'SETPOINT']
-      15:
-        type: string
-        choice:
-          values: ['OFF', 'SETBACK', 'SETPOINT']
-      16:
-        type: string
-        choice:
-          values: ['OFF', 'SETBACK', 'SETPOINT']
-      17:
-        type: string
-        choice:
-          values: ['OFF', 'SETBACK', 'SETPOINT']
-      18:
-        type: string
-        choice:
-          values: ['OFF', 'SETBACK', 'SETPOINT']
-      19:
-        type: string
-        choice:
-          values: ['OFF', 'SETBACK', 'SETPOINT']
-      20:
-        type: string
-        choice:
-          values: ['OFF', 'SETBACK', 'SETPOINT']
-      21:
-        type: string
-        choice:
-          values: ['OFF', 'SETBACK', 'SETPOINT']
-      22:
-        type: string
-        choice:
-          values: ['OFF', 'SETBACK', 'SETPOINT']
-      23:
-        type: string
-        choice:
-          values: ['OFF', 'SETBACK', 'SETPOINT']
-      24:
-        type: string
-        choice:
-          values: ['OFF', 'SETBACK', 'SETPOINT']
+      columns:
+        DAY:
+          type: string
+          choice:
+            values: [WEEKDAY, SATURDAY, SUNDAY]
+          primary: true
+        1:
+          type: string
+          choice:
+            values: ['OFF', 'SETBACK', 'SETPOINT']
+        2:
+          type: string
+          choice:
+            values: ['OFF', 'SETBACK', 'SETPOINT']
+        3:
+          type: string
+          choice:
+            values: ['OFF', 'SETBACK', 'SETPOINT']
+        4:
+          type: string
+          choice:
+            values: ['OFF', 'SETBACK', 'SETPOINT']
+        5:
+          type: string
+          choice:
+            values: ['OFF', 'SETBACK', 'SETPOINT']
+        6:
+          type: string
+          choice:
+            values: ['OFF', 'SETBACK', 'SETPOINT']
+        7:
+          type: string
+          choice:
+            values: ['OFF', 'SETBACK', 'SETPOINT']
+        8:
+          type: string
+          choice:
+            values: ['OFF', 'SETBACK', 'SETPOINT']
+        9:
+          type: string
+          choice:
+            values: ['OFF', 'SETBACK', 'SETPOINT']
+        10:
+          type: string
+          choice:
+            values: ['OFF', 'SETBACK', 'SETPOINT']
+        11:
+          type: string
+          choice:
+            values: ['OFF', 'SETBACK', 'SETPOINT']
+        12:
+          type: string
+          choice:
+            values: ['OFF', 'SETBACK', 'SETPOINT']
+        13:
+          type: string
+          choice:
+            values: ['OFF', 'SETBACK', 'SETPOINT']
+        14:
+          type: string
+          choice:
+            values: ['OFF', 'SETBACK', 'SETPOINT']
+        15:
+          type: string
+          choice:
+            values: ['OFF', 'SETBACK', 'SETPOINT']
+        16:
+          type: string
+          choice:
+            values: ['OFF', 'SETBACK', 'SETPOINT']
+        17:
+          type: string
+          choice:
+            values: ['OFF', 'SETBACK', 'SETPOINT']
+        18:
+          type: string
+          choice:
+            values: ['OFF', 'SETBACK', 'SETPOINT']
+        19:
+          type: string
+          choice:
+            values: ['OFF', 'SETBACK', 'SETPOINT']
+        20:
+          type: string
+          choice:
+            values: ['OFF', 'SETBACK', 'SETPOINT']
+        21:
+          type: string
+          choice:
+            values: ['OFF', 'SETBACK', 'SETPOINT']
+        22:
+          type: string
+          choice:
+            values: ['OFF', 'SETBACK', 'SETPOINT']
+        23:
+          type: string
+          choice:
+            values: ['OFF', 'SETBACK', 'SETPOINT']
+        24:
+          type: string
+          choice:
+            values: ['OFF', 'SETBACK', 'SETPOINT']
     COOLING:
-      DAY:
-        type: string
-        choice:
-          values: [WEEKDAY, SATURDAY, SUNDAY]
-        primary: true
-      1:
-        type: string
-        choice:
-          values: ['OFF', 'SETBACK', 'SETPOINT']
-      2:
-        type: string
-        choice:
-          values: ['OFF', 'SETBACK', 'SETPOINT']
-      3:
-        type: string
-        choice:
-          values: ['OFF', 'SETBACK', 'SETPOINT']
-      4:
-        type: string
-        choice:
-          values: ['OFF', 'SETBACK', 'SETPOINT']
-      5:
-        type: string
-        choice:
-          values: ['OFF', 'SETBACK', 'SETPOINT']
-      6:
-        type: string
-        choice:
-          values: ['OFF', 'SETBACK', 'SETPOINT']
-      7:
-        type: string
-        choice:
-          values: ['OFF', 'SETBACK', 'SETPOINT']
-      8:
-        type: string
-        choice:
-          values: ['OFF', 'SETBACK', 'SETPOINT']
-      9:
-        type: string
-        choice:
-          values: ['OFF', 'SETBACK', 'SETPOINT']
-      10:
-        type: string
-        choice:
-          values: ['OFF', 'SETBACK', 'SETPOINT']
-      11:
-        type: string
-        choice:
-          values: ['OFF', 'SETBACK', 'SETPOINT']
-      12:
-        type: string
-        choice:
-          values: ['OFF', 'SETBACK', 'SETPOINT']
-      13:
-        type: string
-        choice:
-          values: ['OFF', 'SETBACK', 'SETPOINT']
-      14:
-        type: string
-        choice:
-          values: ['OFF', 'SETBACK', 'SETPOINT']
-      15:
-        type: string
-        choice:
-          values: ['OFF', 'SETBACK', 'SETPOINT']
-      16:
-        type: string
-        choice:
-          values: ['OFF', 'SETBACK', 'SETPOINT']
-      17:
-        type: string
-        choice:
-          values: ['OFF', 'SETBACK', 'SETPOINT']
-      18:
-        type: string
-        choice:
-          values: ['OFF', 'SETBACK', 'SETPOINT']
-      19:
-        type: string
-        choice:
-          values: ['OFF', 'SETBACK', 'SETPOINT']
-      20:
-        type: string
-        choice:
-          values: ['OFF', 'SETBACK', 'SETPOINT']
-      21:
-        type: string
-        choice:
-          values: ['OFF', 'SETBACK', 'SETPOINT']
-      22:
-        type: string
-        choice:
-          values: ['OFF', 'SETBACK', 'SETPOINT']
-      23:
-        type: string
-        choice:
-          values: ['OFF', 'SETBACK', 'SETPOINT']
-      24:
-        type: string
-        choice:
-          values: ['OFF', 'SETBACK', 'SETPOINT']
+      columns:
+        DAY:
+          type: string
+          choice:
+            values: [WEEKDAY, SATURDAY, SUNDAY]
+          primary: true
+        1:
+          type: string
+          choice:
+            values: ['OFF', 'SETBACK', 'SETPOINT']
+        2:
+          type: string
+          choice:
+            values: ['OFF', 'SETBACK', 'SETPOINT']
+        3:
+          type: string
+          choice:
+            values: ['OFF', 'SETBACK', 'SETPOINT']
+        4:
+          type: string
+          choice:
+            values: ['OFF', 'SETBACK', 'SETPOINT']
+        5:
+          type: string
+          choice:
+            values: ['OFF', 'SETBACK', 'SETPOINT']
+        6:
+          type: string
+          choice:
+            values: ['OFF', 'SETBACK', 'SETPOINT']
+        7:
+          type: string
+          choice:
+            values: ['OFF', 'SETBACK', 'SETPOINT']
+        8:
+          type: string
+          choice:
+            values: ['OFF', 'SETBACK', 'SETPOINT']
+        9:
+          type: string
+          choice:
+            values: ['OFF', 'SETBACK', 'SETPOINT']
+        10:
+          type: string
+          choice:
+            values: ['OFF', 'SETBACK', 'SETPOINT']
+        11:
+          type: string
+          choice:
+            values: ['OFF', 'SETBACK', 'SETPOINT']
+        12:
+          type: string
+          choice:
+            values: ['OFF', 'SETBACK', 'SETPOINT']
+        13:
+          type: string
+          choice:
+            values: ['OFF', 'SETBACK', 'SETPOINT']
+        14:
+          type: string
+          choice:
+            values: ['OFF', 'SETBACK', 'SETPOINT']
+        15:
+          type: string
+          choice:
+            values: ['OFF', 'SETBACK', 'SETPOINT']
+        16:
+          type: string
+          choice:
+            values: ['OFF', 'SETBACK', 'SETPOINT']
+        17:
+          type: string
+          choice:
+            values: ['OFF', 'SETBACK', 'SETPOINT']
+        18:
+          type: string
+          choice:
+            values: ['OFF', 'SETBACK', 'SETPOINT']
+        19:
+          type: string
+          choice:
+            values: ['OFF', 'SETBACK', 'SETPOINT']
+        20:
+          type: string
+          choice:
+            values: ['OFF', 'SETBACK', 'SETPOINT']
+        21:
+          type: string
+          choice:
+            values: ['OFF', 'SETBACK', 'SETPOINT']
+        22:
+          type: string
+          choice:
+            values: ['OFF', 'SETBACK', 'SETPOINT']
+        23:
+          type: string
+          choice:
+            values: ['OFF', 'SETBACK', 'SETPOINT']
+        24:
+          type: string
+          choice:
+            values: ['OFF', 'SETBACK', 'SETPOINT']
     PROCESSES:
-      DAY:
-        type: string
-        choice:
-          values: [WEEKDAY, SATURDAY, SUNDAY]
-        primary: true
-      1:
-        type: float
-        min: 0.0
-        max: 1.0
-      2:
-        type: float
-        min: 0.0
-        max: 1.0
-      3:
-        type: float
-        min: 0.0
-        max: 1.0
-      4:
-        type: float
-        min: 0.0
-        max: 1.0
-      5:
-        type: float
-        min: 0.0
-        max: 1.0
-      6:
-        type: float
-        min: 0.0
-        max: 1.0
-      7:
-        type: float
-        min: 0.0
-        max: 1.0
-      8:
-        type: float
-        min: 0.0
-        max: 1.0
-      9:
-        type: float
-        min: 0.0
-        max: 1.0
-      10:
-        type: float
-        min: 0.0
-        max: 1.0
-      11:
-        type: float
-        min: 0.0
-        max: 1.0
-      12:
-        type: float
-        min: 0.0
-        max: 1.0
-      13:
-        type: float
-        min: 0.0
-        max: 1.0
-      14:
-        type: float
-        min: 0.0
-        max: 1.0
-      15:
-        type: float
-        min: 0.0
-        max: 1.0
-      16:
-        type: float
-        min: 0.0
-        max: 1.0
-      17:
-        type: float
-        min: 0.0
-        max: 1.0
-      18:
-        type: float
-        min: 0.0
-        max: 1.0
-      19:
-        type: float
-        min: 0.0
-        max: 1.0
-      20:
-        type: float
-        min: 0.0
-        max: 1.0
-      21:
-        type: float
-        min: 0.0
-        max: 1.0
-      22:
-        type: float
-        min: 0.0
-        max: 1.0
-      23:
-        type: float
-        min: 0.0
-        max: 1.0
-      24:
-        type: float
-        min: 0.0
-        max: 1.0
+      columns:
+        DAY:
+          type: string
+          choice:
+            values: [WEEKDAY, SATURDAY, SUNDAY]
+          primary: true
+        1:
+          type: float
+          min: 0.0
+          max: 1.0
+        2:
+          type: float
+          min: 0.0
+          max: 1.0
+        3:
+          type: float
+          min: 0.0
+          max: 1.0
+        4:
+          type: float
+          min: 0.0
+          max: 1.0
+        5:
+          type: float
+          min: 0.0
+          max: 1.0
+        6:
+          type: float
+          min: 0.0
+          max: 1.0
+        7:
+          type: float
+          min: 0.0
+          max: 1.0
+        8:
+          type: float
+          min: 0.0
+          max: 1.0
+        9:
+          type: float
+          min: 0.0
+          max: 1.0
+        10:
+          type: float
+          min: 0.0
+          max: 1.0
+        11:
+          type: float
+          min: 0.0
+          max: 1.0
+        12:
+          type: float
+          min: 0.0
+          max: 1.0
+        13:
+          type: float
+          min: 0.0
+          max: 1.0
+        14:
+          type: float
+          min: 0.0
+          max: 1.0
+        15:
+          type: float
+          min: 0.0
+          max: 1.0
+        16:
+          type: float
+          min: 0.0
+          max: 1.0
+        17:
+          type: float
+          min: 0.0
+          max: 1.0
+        18:
+          type: float
+          min: 0.0
+          max: 1.0
+        19:
+          type: float
+          min: 0.0
+          max: 1.0
+        20:
+          type: float
+          min: 0.0
+          max: 1.0
+        21:
+          type: float
+          min: 0.0
+          max: 1.0
+        22:
+          type: float
+          min: 0.0
+          max: 1.0
+        23:
+          type: float
+          min: 0.0
+          max: 1.0
+        24:
+          type: float
+          min: 0.0
+          max: 1.0
     SERVERS:
-      DAY:
-        type: string
-        choice:
-          values: [WEEKDAY, SATURDAY, SUNDAY]
-        primary: true
-      1:
-        type: float
-        min: 0.0
-        max: 1.0
-      2:
-        type: float
-        min: 0.0
-        max: 1.0
-      3:
-        type: float
-        min: 0.0
-        max: 1.0
-      4:
-        type: float
-        min: 0.0
-        max: 1.0
-      5:
-        type: float
-        min: 0.0
-        max: 1.0
-      6:
-        type: float
-        min: 0.0
-        max: 1.0
-      7:
-        type: float
-        min: 0.0
-        max: 1.0
-      8:
-        type: float
-        min: 0.0
-        max: 1.0
-      9:
-        type: float
-        min: 0.0
-        max: 1.0
-      10:
-        type: float
-        min: 0.0
-        max: 1.0
-      11:
-        type: float
-        min: 0.0
-        max: 1.0
-      12:
-        type: float
-        min: 0.0
-        max: 1.0
-      13:
-        type: float
-        min: 0.0
-        max: 1.0
-      14:
-        type: float
-        min: 0.0
-        max: 1.0
-      15:
-        type: float
-        min: 0.0
-        max: 1.0
-      16:
-        type: float
-        min: 0.0
-        max: 1.0
-      17:
-        type: float
-        min: 0.0
-        max: 1.0
-      18:
-        type: float
-        min: 0.0
-        max: 1.0
-      19:
-        type: float
-        min: 0.0
-        max: 1.0
-      20:
-        type: float
-        min: 0.0
-        max: 1.0
-      21:
-        type: float
-        min: 0.0
-        max: 1.0
-      22:
-        type: float
-        min: 0.0
-        max: 1.0
-      23:
-        type: float
-        min: 0.0
-        max: 1.0
-      24:
-        type: float
-        min: 0.0
-        max: 1.0
+      columns:
+        DAY:
+          type: string
+          choice:
+            values: [WEEKDAY, SATURDAY, SUNDAY]
+          primary: true
+        1:
+          type: float
+          min: 0.0
+          max: 1.0
+        2:
+          type: float
+          min: 0.0
+          max: 1.0
+        3:
+          type: float
+          min: 0.0
+          max: 1.0
+        4:
+          type: float
+          min: 0.0
+          max: 1.0
+        5:
+          type: float
+          min: 0.0
+          max: 1.0
+        6:
+          type: float
+          min: 0.0
+          max: 1.0
+        7:
+          type: float
+          min: 0.0
+          max: 1.0
+        8:
+          type: float
+          min: 0.0
+          max: 1.0
+        9:
+          type: float
+          min: 0.0
+          max: 1.0
+        10:
+          type: float
+          min: 0.0
+          max: 1.0
+        11:
+          type: float
+          min: 0.0
+          max: 1.0
+        12:
+          type: float
+          min: 0.0
+          max: 1.0
+        13:
+          type: float
+          min: 0.0
+          max: 1.0
+        14:
+          type: float
+          min: 0.0
+          max: 1.0
+        15:
+          type: float
+          min: 0.0
+          max: 1.0
+        16:
+          type: float
+          min: 0.0
+          max: 1.0
+        17:
+          type: float
+          min: 0.0
+          max: 1.0
+        18:
+          type: float
+          min: 0.0
+          max: 1.0
+        19:
+          type: float
+          min: 0.0
+          max: 1.0
+        20:
+          type: float
+          min: 0.0
+          max: 1.0
+        21:
+          type: float
+          min: 0.0
+          max: 1.0
+        22:
+          type: float
+          min: 0.0
+          max: 1.0
+        23:
+          type: float
+          min: 0.0
+          max: 1.0
+        24:
+          type: float
+          min: 0.0
+          max: 1.0
     ELECTROMOBILITY:
-      DAY:
-        type: string
-        choice:
-          values: [WEEKDAY, SATURDAY, SUNDAY]
-        primary: true
-      1:
-        type: float
-        min: 0.0
-        max: 1.0
-      2:
-        type: float
-        min: 0.0
-        max: 1.0
-      3:
-        type: float
-        min: 0.0
-        max: 1.0
-      4:
-        type: float
-        min: 0.0
-        max: 1.0
-      5:
-        type: float
-        min: 0.0
-        max: 1.0
-      6:
-        type: float
-        min: 0.0
-        max: 1.0
-      7:
-        type: float
-        min: 0.0
-        max: 1.0
-      8:
-        type: float
-        min: 0.0
-        max: 1.0
-      9:
-        type: float
-        min: 0.0
-        max: 1.0
-      10:
-        type: float
-        min: 0.0
-        max: 1.0
-      11:
-        type: float
-        min: 0.0
-        max: 1.0
-      12:
-        type: float
-        min: 0.0
-        max: 1.0
-      13:
-        type: float
-        min: 0.0
-        max: 1.0
-      14:
-        type: float
-        min: 0.0
-        max: 1.0
-      15:
-        type: float
-        min: 0.0
-        max: 1.0
-      16:
-        type: float
-        min: 0.0
-        max: 1.0
-      17:
-        type: float
-        min: 0.0
-        max: 1.0
-      18:
-        type: float
-        min: 0.0
-        max: 1.0
-      19:
-        type: float
-        min: 0.0
-        max: 1.0
-      20:
-        type: float
-        min: 0.0
-        max: 1.0
-      21:
-        type: float
-        min: 0.0
-        max: 1.0
-      22:
-        type: float
-        min: 0.0
-        max: 1.0
-      23:
-        type: float
-        min: 0.0
-        max: 1.0
-      24:
-        type: float
-        min: 0.0
-        max: 1.0
+      columns:
+        DAY:
+          type: string
+          choice:
+            values: [WEEKDAY, SATURDAY, SUNDAY]
+          primary: true
+        1:
+          type: float
+          min: 0.0
+          max: 1.0
+        2:
+          type: float
+          min: 0.0
+          max: 1.0
+        3:
+          type: float
+          min: 0.0
+          max: 1.0
+        4:
+          type: float
+          min: 0.0
+          max: 1.0
+        5:
+          type: float
+          min: 0.0
+          max: 1.0
+        6:
+          type: float
+          min: 0.0
+          max: 1.0
+        7:
+          type: float
+          min: 0.0
+          max: 1.0
+        8:
+          type: float
+          min: 0.0
+          max: 1.0
+        9:
+          type: float
+          min: 0.0
+          max: 1.0
+        10:
+          type: float
+          min: 0.0
+          max: 1.0
+        11:
+          type: float
+          min: 0.0
+          max: 1.0
+        12:
+          type: float
+          min: 0.0
+          max: 1.0
+        13:
+          type: float
+          min: 0.0
+          max: 1.0
+        14:
+          type: float
+          min: 0.0
+          max: 1.0
+        15:
+          type: float
+          min: 0.0
+          max: 1.0
+        16:
+          type: float
+          min: 0.0
+          max: 1.0
+        17:
+          type: float
+          min: 0.0
+          max: 1.0
+        18:
+          type: float
+          min: 0.0
+          max: 1.0
+        19:
+          type: float
+          min: 0.0
+          max: 1.0
+        20:
+          type: float
+          min: 0.0
+          max: 1.0
+        21:
+          type: float
+          min: 0.0
+          max: 1.0
+        22:
+          type: float
+          min: 0.0
+          max: 1.0
+        23:
+          type: float
+          min: 0.0
+          max: 1.0
+        24:
+          type: float
+          min: 0.0
+          max: 1.0
   used_by: [archetypes_mapper]
 get_database_feedstocks:
   created_by: [data_initializer]
@@ -2605,158 +2637,167 @@ get_database_feedstocks:
   file_type: xls
   schema:
     NATURALGAS:
-      hour:
-        type: int
-        min: 0
-        max: 23
-        primary: true
-      GHG_kgCO2MJ:
-        type: float
-      Opex_var_buy_USD2015kWh:
-        type: float
-        min: 0.0
-      Opex_var_sell_USD2015kWh:
-        type: float
-        min: 0.0
-      reference:
-        type: string
-        nullable: true
+      columns:
+        hour:
+          type: int
+          min: 0
+          max: 23
+          primary: true
+        GHG_kgCO2MJ:
+          type: float
+        Opex_var_buy_USD2015kWh:
+          type: float
+          min: 0.0
+        Opex_var_sell_USD2015kWh:
+          type: float
+          min: 0.0
+        reference:
+          type: string
+          nullable: true
     BIOGAS:
-      hour:
-        type: int
-        min: 0
-        max: 23
-        primary: true
-      GHG_kgCO2MJ:
-        type: float
-      Opex_var_buy_USD2015kWh:
-        type: float
-        min: 0.0
-      Opex_var_sell_USD2015kWh:
-        type: float
-        min: 0.0
-      reference:
-        type: string
-        nullable: true
+      columns:
+        hour:
+          type: int
+          min: 0
+          max: 23
+          primary: true
+        GHG_kgCO2MJ:
+          type: float
+        Opex_var_buy_USD2015kWh:
+          type: float
+          min: 0.0
+        Opex_var_sell_USD2015kWh:
+          type: float
+          min: 0.0
+        reference:
+          type: string
+          nullable: true
     GRID:
-      hour:
-        type: int
-        min: 0
-        max: 23
-        primary: true
-      GHG_kgCO2MJ:
-        type: float
-      Opex_var_buy_USD2015kWh:
-        type: float
-        min: 0.0
-      Opex_var_sell_USD2015kWh:
-        type: float
-        min: 0.0
-      reference:
-        type: string
-        nullable: true
+      columns:
+        hour:
+          type: int
+          min: 0
+          max: 23
+          primary: true
+        GHG_kgCO2MJ:
+          type: float
+        Opex_var_buy_USD2015kWh:
+          type: float
+          min: 0.0
+        Opex_var_sell_USD2015kWh:
+          type: float
+          min: 0.0
+        reference:
+          type: string
+          nullable: true
     SOLAR:
-      hour:
-        type: int
-        min: 0
-        max: 23
-        primary: true
-      GHG_kgCO2MJ:
-        type: float
-      Opex_var_buy_USD2015kWh:
-        type: float
-        min: 0.0
-      Opex_var_sell_USD2015kWh:
-        type: float
-        min: 0.0
-      reference:
-        type: string
-        nullable: true
+      columns:
+        hour:
+          type: int
+          min: 0
+          max: 23
+          primary: true
+        GHG_kgCO2MJ:
+          type: float
+        Opex_var_buy_USD2015kWh:
+          type: float
+          min: 0.0
+        Opex_var_sell_USD2015kWh:
+          type: float
+          min: 0.0
+        reference:
+          type: string
+          nullable: true
     OIL:
-      hour:
-        type: int
-        min: 0
-        max: 23
-        primary: true
-      GHG_kgCO2MJ:
-        type: float
-      Opex_var_buy_USD2015kWh:
-        type: float
-        min: 0.0
-      Opex_var_sell_USD2015kWh:
-        type: float
-        min: 0.0
-      reference:
-        type: string
-        nullable: true
+      columns:
+        hour:
+          type: int
+          min: 0
+          max: 23
+          primary: true
+        GHG_kgCO2MJ:
+          type: float
+        Opex_var_buy_USD2015kWh:
+          type: float
+          min: 0.0
+        Opex_var_sell_USD2015kWh:
+          type: float
+          min: 0.0
+        reference:
+          type: string
+          nullable: true
     COAL:
-      hour:
-        type: int
-        min: 0
-        max: 23
-        primary: true
-      GHG_kgCO2MJ:
-        type: float
-      Opex_var_buy_USD2015kWh:
-        type: float
-        min: 0.0
-      Opex_var_sell_USD2015kWh:
-        type: float
-        min: 0.0
-      reference:
-        type: string
-        nullable: true
+      columns:
+        hour:
+          type: int
+          min: 0
+          max: 23
+          primary: true
+        GHG_kgCO2MJ:
+          type: float
+        Opex_var_buy_USD2015kWh:
+          type: float
+          min: 0.0
+        Opex_var_sell_USD2015kWh:
+          type: float
+          min: 0.0
+        reference:
+          type: string
+          nullable: true
     WOOD:
-      hour:
-        type: int
-        min: 0
-        max: 23
-        primary: true
-      GHG_kgCO2MJ:
-        type: float
-      Opex_var_buy_USD2015kWh:
-        type: float
-        min: 0.0
-      Opex_var_sell_USD2015kWh:
-        type: float
-        min: 0.0
-      reference:
-        type: string
-        nullable: true
+      columns:
+        hour:
+          type: int
+          min: 0
+          max: 23
+          primary: true
+        GHG_kgCO2MJ:
+          type: float
+        Opex_var_buy_USD2015kWh:
+          type: float
+          min: 0.0
+        Opex_var_sell_USD2015kWh:
+          type: float
+          min: 0.0
+        reference:
+          type: string
+          nullable: true
     WETBIOMASS:
-      hour:
-        type: int
-        min: 0
-        max: 23
-        primary: true
-      GHG_kgCO2MJ:
-        type: float
-      Opex_var_buy_USD2015kWh:
-        type: float
-        min: 0.0
-      Opex_var_sell_USD2015kWh:
-        type: float
-        min: 0.0
-      reference:
-        type: string
-        nullable: true
+      columns:
+        hour:
+          type: int
+          min: 0
+          max: 23
+          primary: true
+        GHG_kgCO2MJ:
+          type: float
+        Opex_var_buy_USD2015kWh:
+          type: float
+          min: 0.0
+        Opex_var_sell_USD2015kWh:
+          type: float
+          min: 0.0
+        reference:
+          type: string
+          nullable: true
     DRYBIOMASS:
-      hour:
-        type: int
-        min: 0
-        max: 23
-        primary: true
-      GHG_kgCO2MJ:
-        type: float
-      Opex_var_buy_USD2015kWh:
-        type: float
-        min: 0.0
-      Opex_var_sell_USD2015kWh:
-        type: float
-        min: 0.0
-      reference:
-        type: string
-        nullable: true
+      columns:
+        hour:
+          type: int
+          min: 0
+          max: 23
+          primary: true
+        GHG_kgCO2MJ:
+          type: float
+        Opex_var_buy_USD2015kWh:
+          type: float
+          min: 0.0
+        Opex_var_sell_USD2015kWh:
+          type: float
+          min: 0.0
+        reference:
+          type: string
+          nullable: true
   used_by: [decentralized, emissions, system_costs, optimization]
 get_database_supply_assemblies:
   created_by: [data_initializer]
@@ -2764,129 +2805,133 @@ get_database_supply_assemblies:
   file_type: xls
   schema:
     HEATING:
-      Description:
-        type: string
-      code:
-        type: string
-        primary: true
-      feedstock:
-        type: string
-        choice:
-          values: [NONE, NATURALGAS, BIOGAS, GRID, SOLAR, OIL, COAL, WOOD, WETBIOMASS, DRYBIOMASS]
-      scale:
-        type: string
-        choice:
-          values: [NONE, BUILDING, DISTRICT, CITY]
-      efficiency:
-        type: float
-      CAPEX_USD2015kW:
-        type: float
-        min: 0.0
-      LT_yr:
-        type: int
-        min: 0
-      IR_%:
-        type: float
-        min: 0.0
-      O&M_%:
-        type: float
-        min: 0.0
-      reference:
-        type: string
-        nullable: true
+      columns:
+        Description:
+          type: string
+        code:
+          type: string
+          primary: true
+        feedstock:
+          type: string
+          choice:
+            values: [NONE, NATURALGAS, BIOGAS, GRID, SOLAR, OIL, COAL, WOOD, WETBIOMASS, DRYBIOMASS]
+        scale:
+          type: string
+          choice:
+            values: [NONE, BUILDING, DISTRICT, CITY]
+        efficiency:
+          type: float
+        CAPEX_USD2015kW:
+          type: float
+          min: 0.0
+        LT_yr:
+          type: int
+          min: 0
+        IR_%:
+          type: float
+          min: 0.0
+        O&M_%:
+          type: float
+          min: 0.0
+        reference:
+          type: string
+          nullable: true
     HOT_WATER:
-      Description:
-        type: string
-      code:
-        type: string
-        primary: true
-      feedstock:
-        type: string
-        choice:
-          values: [NONE, NATURALGAS, BIOGAS, GRID, SOLAR, OIL, COAL, WOOD, WETBIOMASS, DRYBIOMASS]
-      scale:
-        type: string
-        choice:
-          values: [NONE, BUILDING, DISTRICT, CITY]
-      efficiency:
-        type: float
-      CAPEX_USD2015kW:
-        type: float
-        min: 0.0
-      LT_yr:
-        type: int
-        min: 0
-      IR_%:
-        type: float
-        min: 0.0
-      O&M_%:
-        type: float
-        min: 0.0
-      reference:
-        type: string
-        nullable: true
+      columns:
+        Description:
+          type: string
+        code:
+          type: string
+          primary: true
+        feedstock:
+          type: string
+          choice:
+            values: [NONE, NATURALGAS, BIOGAS, GRID, SOLAR, OIL, COAL, WOOD, WETBIOMASS, DRYBIOMASS]
+        scale:
+          type: string
+          choice:
+            values: [NONE, BUILDING, DISTRICT, CITY]
+        efficiency:
+          type: float
+        CAPEX_USD2015kW:
+          type: float
+          min: 0.0
+        LT_yr:
+          type: int
+          min: 0
+        IR_%:
+          type: float
+          min: 0.0
+        O&M_%:
+          type: float
+          min: 0.0
+        reference:
+          type: string
+          nullable: true
     COOLING:
-      Description:
-        type: string
-      code:
-        type: string
-        primary: true
-      feedstock:
-        type: string
-        choice:
-          values: [NONE, NATURALGAS, BIOGAS, GRID, SOLAR, OIL, COAL, WOOD, WETBIOMASS, DRYBIOMASS]
-      scale:
-        type: string
-        choice:
-          values: [NONE, BUILDING, DISTRICT, CITY]
-      efficiency:
-        type: float
-      CAPEX_USD2015kW:
-        type: float
-        min: 0.0
-      LT_yr:
-        type: int
-        min: 0
-      IR_%:
-        type: float
-        min: 0.0
-      O&M_%:
-        type: float
-        min: 0.0
-      reference:
-        type: string
-        nullable: true
+      columns:
+        Description:
+          type: string
+        code:
+          type: string
+          primary: true
+        feedstock:
+          type: string
+          choice:
+            values: [NONE, NATURALGAS, BIOGAS, GRID, SOLAR, OIL, COAL, WOOD, WETBIOMASS, DRYBIOMASS]
+        scale:
+          type: string
+          choice:
+            values: [NONE, BUILDING, DISTRICT, CITY]
+        efficiency:
+          type: float
+        CAPEX_USD2015kW:
+          type: float
+          min: 0.0
+        LT_yr:
+          type: int
+          min: 0
+        IR_%:
+          type: float
+          min: 0.0
+        O&M_%:
+          type: float
+          min: 0.0
+        reference:
+          type: string
+          nullable: true
     ELECTRICITY:
-      Description:
-        type: string
-      code:
-        type: string
-        primary: true
-      feedstock:
-        type: string
-        choice:
-          values: [NONE, NATURALGAS, BIOGAS, GRID, SOLAR, OIL, COAL, WOOD, WETBIOMASS, DRYBIOMASS]
-      scale:
-        type: string
-        choice:
-          values: [NONE, BUILDING, DISTRICT, CITY]
-      efficiency:
-        type: float
-      CAPEX_USD2015kW:
-        type: float
-        min: 0.0
-      LT_yr:
-        type: int
-        min: 0
-      IR_%:
-        type: float
-        min: 0.0
-      O&M_%:
-        type: float
-        min: 0.0
-      reference:
-        type: string
-        nullable: true
+      columns:
+        Description:
+          type: string
+        code:
+          type: string
+          primary: true
+        feedstock:
+          type: string
+          choice:
+            values: [NONE, NATURALGAS, BIOGAS, GRID, SOLAR, OIL, COAL, WOOD, WETBIOMASS, DRYBIOMASS]
+        scale:
+          type: string
+          choice:
+            values: [NONE, BUILDING, DISTRICT, CITY]
+        efficiency:
+          type: float
+        CAPEX_USD2015kW:
+          type: float
+          min: 0.0
+        LT_yr:
+          type: int
+          min: 0
+        IR_%:
+          type: float
+          min: 0.0
+        O&M_%:
+          type: float
+          min: 0.0
+        reference:
+          type: string
+          nullable: true
   used_by: [demand, emissions, system_costs]
 get_database_conversion_systems:
   created_by: [data_initializer]
@@ -2894,644 +2939,659 @@ get_database_conversion_systems:
   file_type: xls
   schema:
     PV:
-      Description:
-        type: string
-      code:
-        type: string
-      type:
-        type: string
-        choice:
-          values: [PV]
-      cap_min:
-        type: float
-      cap_max:
-        type: float
-      unit:
-        type: string
-      module_length_m:
-        type: float
-        min: 0.0
-      PV_th:
-        type: float
-      PV_n:
-        type: float
-      PV_noct:
-        type: float
-      PV_Bref:
-        type: float
-      PV_a0:
-        type: float
-      PV_a1:
-        type: float
-      PV_a2:
-        type: float
-      PV_a3:
-        type: float
-      PV_a4:
-        type: float
-      misc_losses:
-        type: float
-      currency:
-        type: string
-        regex: ^[A-Z]{3}-\d{4}$
-      a:
-        type: float
-      b:
-        type: float
-      c:
-        type: float
-      d:
-        type: float
-      e:
-        type: float
-      LT_yr:
-        type: int
-        min: 0
-      O&M_%:
-        type: float
-        min: 0.0
-      IR_%:
-        type: float
-        min: 0.0
-      assumption:
-        type: string
-        nullable: true
+      columns:
+        Description:
+          type: string
+        code:
+          type: string
+        type:
+          type: string
+          choice:
+            values: [PV]
+        cap_min:
+          type: float
+        cap_max:
+          type: float
+        unit:
+          type: string
+        module_length_m:
+          type: float
+          min: 0.0
+        PV_th:
+          type: float
+        PV_n:
+          type: float
+        PV_noct:
+          type: float
+        PV_Bref:
+          type: float
+        PV_a0:
+          type: float
+        PV_a1:
+          type: float
+        PV_a2:
+          type: float
+        PV_a3:
+          type: float
+        PV_a4:
+          type: float
+        misc_losses:
+          type: float
+        currency:
+          type: string
+          regex: ^[A-Z]{3}-\d{4}$
+        a:
+          type: float
+        b:
+          type: float
+        c:
+          type: float
+        d:
+          type: float
+        e:
+          type: float
+        LT_yr:
+          type: int
+          min: 0
+        O&M_%:
+          type: float
+          min: 0.0
+        IR_%:
+          type: float
+          min: 0.0
+        assumption:
+          type: string
+          nullable: true
     SC:
-      C_eff:
-        type: float
-      Cp_fluid:
-        type: float
-      Description:
-        type: string
-      IAM_d:
-        type: float
-      IR_%:
-        type: float
-        min: 0.0
-      LT_yr:
-        type: int
-        min: 0
-      O&M_%:
-        type: float
-        min: 0.0
-      a:
-        type: float
-      aperture_area_ratio:
-        type: float
-      assumption:
-        type: string
-        nullable: true
-      b:
-        type: float
-      c:
-        type: float
-      c1:
-        type: float
-      c2:
-        type: float
-      cap_max:
-        type: float
-      cap_min:
-        type: float
-      code:
-        type: string
-      currency:
-        type: string
-        regex: ^[A-Z]{3}-\d{4}$
-      d:
-        type: float
-      dP1:
-        type: float
-      dP2:
-        type: float
-      dP3:
-        type: float
-      dP4:
-        type: float
-      e:
-        type: float
-      mB0_r:
-        type: float
-      mB_max_r:
-        type: float
-      mB_min_r:
-        type: float
-      module_area_m2:
-        type: float
-      module_length_m:
-        type: float
-      n0:
-        type: float
-      t_max:
-        type: float
-      type:
-        type: string
-        choice:
-          values: [FP, ET]
-      unit:
-        type: string
+      columns:
+        C_eff:
+          type: float
+        Cp_fluid:
+          type: float
+        Description:
+          type: string
+        IAM_d:
+          type: float
+        IR_%:
+          type: float
+          min: 0.0
+        LT_yr:
+          type: int
+          min: 0
+        O&M_%:
+          type: float
+          min: 0.0
+        a:
+          type: float
+        aperture_area_ratio:
+          type: float
+        assumption:
+          type: string
+          nullable: true
+        b:
+          type: float
+        c:
+          type: float
+        c1:
+          type: float
+        c2:
+          type: float
+        cap_max:
+          type: float
+        cap_min:
+          type: float
+        code:
+          type: string
+        currency:
+          type: string
+          regex: ^[A-Z]{3}-\d{4}$
+        d:
+          type: float
+        dP1:
+          type: float
+        dP2:
+          type: float
+        dP3:
+          type: float
+        dP4:
+          type: float
+        e:
+          type: float
+        mB0_r:
+          type: float
+        mB_max_r:
+          type: float
+        mB_min_r:
+          type: float
+        module_area_m2:
+          type: float
+        module_length_m:
+          type: float
+        n0:
+          type: float
+        t_max:
+          type: float
+        type:
+          type: string
+          choice:
+            values: [FP, ET]
+        unit:
+          type: string
     PVT:
-      Description:
-        type: string
-      code:
-        type: string
-      cap_min:
-        type: float
-      cap_max:
-        type: float
-      unit:
-        type: string
-      currency:
-        type: string
-        regex: ^[A-Z]{3}-\d{4}$
-      a:
-        type: float
-      b:
-        type: float
-      c:
-        type: float
-      d:
-        type: float
-      e:
-        type: float
-      LT_yr:
-        type: int
-        min: 0
-      O&M_%:
-        type: float
-        min: 0.0
-      IR_%:
-        type: float
-        min: 0.0
-      assumption:
-        type: string
-        nullable: true
+      columns:
+        Description:
+          type: string
+        code:
+          type: string
+        cap_min:
+          type: float
+        cap_max:
+          type: float
+        unit:
+          type: string
+        currency:
+          type: string
+          regex: ^[A-Z]{3}-\d{4}$
+        a:
+          type: float
+        b:
+          type: float
+        c:
+          type: float
+        d:
+          type: float
+        e:
+          type: float
+        LT_yr:
+          type: int
+          min: 0
+        O&M_%:
+          type: float
+          min: 0.0
+        IR_%:
+          type: float
+          min: 0.0
+        assumption:
+          type: string
+          nullable: true
     Boiler:
-      Description:
-        type: string
-      code:
-        type: string
-      cap_min:
-        type: float
-      cap_max:
-        type: float
-      unit:
-        type: string
-      currency:
-        type: string
-        regex: ^[A-Z]{3}-\d{4}$
-      a:
-        type: float
-      b:
-        type: float
-      c:
-        type: float
-      d:
-        type: float
-      e:
-        type: float
-      LT_yr:
-        type: int
-        min: 0
-      O&M_%:
-        type: float
-        min: 0.0
-      IR_%:
-        type: float
-        min: 0.0
-      assumption:
-        type: string
-        nullable: true
+      columns:
+        Description:
+          type: string
+        code:
+          type: string
+        cap_min:
+          type: float
+        cap_max:
+          type: float
+        unit:
+          type: string
+        currency:
+          type: string
+          regex: ^[A-Z]{3}-\d{4}$
+        a:
+          type: float
+        b:
+          type: float
+        c:
+          type: float
+        d:
+          type: float
+        e:
+          type: float
+        LT_yr:
+          type: int
+          min: 0
+        O&M_%:
+          type: float
+          min: 0.0
+        IR_%:
+          type: float
+          min: 0.0
+        assumption:
+          type: string
+          nullable: true
     Furnace:
-      Description:
-        type: string
-      code:
-        type: string
-      cap_min:
-        type: float
-      cap_max:
-        type: float
-      unit:
-        type: string
-      currency:
-        type: string
-        regex: ^[A-Z]{3}-\d{4}$
-      a:
-        type: float
-      b:
-        type: float
-      c:
-        type: float
-      d:
-        type: float
-      e:
-        type: float
-      LT_yr:
-        type: int
-        min: 0
-      O&M_%:
-        type: float
-        min: 0.0
-      IR_%:
-        type: float
-        min: 0.0
-      assumption:
-        type: string
-        nullable: true
+      columns:
+        Description:
+          type: string
+        code:
+          type: string
+        cap_min:
+          type: float
+        cap_max:
+          type: float
+        unit:
+          type: string
+        currency:
+          type: string
+          regex: ^[A-Z]{3}-\d{4}$
+        a:
+          type: float
+        b:
+          type: float
+        c:
+          type: float
+        d:
+          type: float
+        e:
+          type: float
+        LT_yr:
+          type: int
+          min: 0
+        O&M_%:
+          type: float
+          min: 0.0
+        IR_%:
+          type: float
+          min: 0.0
+        assumption:
+          type: string
+          nullable: true
     FC:
-      Description:
-        type: string
-      code:
-        type: string
-      cap_min:
-        type: float
-      cap_max:
-        type: float
-      unit:
-        type: string
-      currency:
-        type: string
-        regex: ^[A-Z]{3}-\d{4}$
-      a:
-        type: float
-      b:
-        type: float
-      c:
-        type: float
-      d:
-        type: float
-      e:
-        type: float
-      LT_yr:
-        type: int
-        min: 0
-      O&M_%:
-        type: float
-        min: 0.0
-      IR_%:
-        type: float
-        min: 0.0
-      assumption:
-        type: string
-        nullable: true
+      columns:
+        Description:
+          type: string
+        code:
+          type: string
+        cap_min:
+          type: float
+        cap_max:
+          type: float
+        unit:
+          type: string
+        currency:
+          type: string
+          regex: ^[A-Z]{3}-\d{4}$
+        a:
+          type: float
+        b:
+          type: float
+        c:
+          type: float
+        d:
+          type: float
+        e:
+          type: float
+        LT_yr:
+          type: int
+          min: 0
+        O&M_%:
+          type: float
+          min: 0.0
+        IR_%:
+          type: float
+          min: 0.0
+        assumption:
+          type: string
+          nullable: true
     CCGT:
-      Description:
-        type: string
-      code:
-        type: string
-      cap_min:
-        type: float
-      cap_max:
-        type: float
-      unit:
-        type: string
-      currency:
-        type: string
-        regex: ^[A-Z]{3}-\d{4}$
-      a:
-        type: float
-      b:
-        type: float
-      c:
-        type: float
-      d:
-        type: float
-      e:
-        type: float
-      LT_yr:
-        type: int
-        min: 0
-      O&M_%:
-        type: float
-        min: 0.0
-      IR_%:
-        type: float
-        min: 0.0
-      assumption:
-        type: string
-        nullable: true
+      columns:
+        Description:
+          type: string
+        code:
+          type: string
+        cap_min:
+          type: float
+        cap_max:
+          type: float
+        unit:
+          type: string
+        currency:
+          type: string
+          regex: ^[A-Z]{3}-\d{4}$
+        a:
+          type: float
+        b:
+          type: float
+        c:
+          type: float
+        d:
+          type: float
+        e:
+          type: float
+        LT_yr:
+          type: int
+          min: 0
+        O&M_%:
+          type: float
+          min: 0.0
+        IR_%:
+          type: float
+          min: 0.0
+        assumption:
+          type: string
+          nullable: true
     Chiller:
-      Description:
-        type: string
-      code:
-        type: string
-      cap_min:
-        type: float
-      cap_max:
-        type: float
-      unit:
-        type: string
-      currency:
-        type: string
-        regex: ^[A-Z]{3}-\d{4}$
-      a:
-        type: float
-      b:
-        type: float
-      c:
-        type: float
-      d:
-        type: float
-      e:
-        type: float
-      LT_yr:
-        type: int
-        min: 0
-      O&M_%:
-        type: float
-        min: 0.0
-      IR_%:
-        type: float
-        min: 0.0
-      assumption:
-        type: string
-        nullable: true
+      columns:
+        Description:
+          type: string
+        code:
+          type: string
+        cap_min:
+          type: float
+        cap_max:
+          type: float
+        unit:
+          type: string
+        currency:
+          type: string
+          regex: ^[A-Z]{3}-\d{4}$
+        a:
+          type: float
+        b:
+          type: float
+        c:
+          type: float
+        d:
+          type: float
+        e:
+          type: float
+        LT_yr:
+          type: int
+          min: 0
+        O&M_%:
+          type: float
+          min: 0.0
+        IR_%:
+          type: float
+          min: 0.0
+        assumption:
+          type: string
+          nullable: true
     Absorption_chiller:
-      Description:
-        type: string
-      code:
-        type: string
-      type:
-        type: string
-        choice:
-          values: [single, double, triple]
-      cap_min:
-        type: float
-      cap_max:
-        type: float
-      unit:
-        type: string
-      currency:
-        type: string
-        regex: ^[A-Z]{3}-\d{4}$
-      a:
-        type: float
-      b:
-        type: float
-      c:
-        type: float
-      d:
-        type: float
-      e:
-        type: float
-      LT_yr:
-        type: int
-        min: 0
-      O&M_%:
-        type: float
-        min: 0.0
-      IR_%:
-        type: float
-        min: 0.0
-      assumption:
-        type: string
-        nullable: true
-      s_e:
-        type: float
-      r_e:
-        type: float
-      s_g:
-        type: float
-      r_g:
-        type: float
-      a_e:
-        type: float
-      e_e:
-        type: float
-      a_g:
-        type: float
-      e_g:
-        type: float
-      m_cw:
-        type: float
-      m_hw:
-        type: float
+      columns:
+        Description:
+          type: string
+        code:
+          type: string
+        type:
+          type: string
+          choice:
+            values: [single, double, triple]
+        cap_min:
+          type: float
+        cap_max:
+          type: float
+        unit:
+          type: string
+        currency:
+          type: string
+          regex: ^[A-Z]{3}-\d{4}$
+        a:
+          type: float
+        b:
+          type: float
+        c:
+          type: float
+        d:
+          type: float
+        e:
+          type: float
+        LT_yr:
+          type: int
+          min: 0
+        O&M_%:
+          type: float
+          min: 0.0
+        IR_%:
+          type: float
+          min: 0.0
+        assumption:
+          type: string
+          nullable: true
+        s_e:
+          type: float
+        r_e:
+          type: float
+        s_g:
+          type: float
+        r_g:
+          type: float
+        a_e:
+          type: float
+        e_e:
+          type: float
+        a_g:
+          type: float
+        e_g:
+          type: float
+        m_cw:
+          type: float
+        m_hw:
+          type: float
     CT:
-      Description:
-        type: string
-      code:
-        type: string
-      cap_min:
-        type: float
-      cap_max:
-        type: float
-      unit:
-        type: string
-      currency:
-        type: string
-        regex: ^[A-Z]{3}-\d{4}$
-      a:
-        type: float
-      b:
-        type: float
-      c:
-        type: float
-      d:
-        type: float
-      e:
-        type: float
-      LT_yr:
-        type: int
-        min: 0
-      O&M_%:
-        type: float
-        min: 0.0
-      IR_%:
-        type: float
-        min: 0.0
-      assumption:
-        type: string
-        nullable: true
+      columns:
+        Description:
+          type: string
+        code:
+          type: string
+        cap_min:
+          type: float
+        cap_max:
+          type: float
+        unit:
+          type: string
+        currency:
+          type: string
+          regex: ^[A-Z]{3}-\d{4}$
+        a:
+          type: float
+        b:
+          type: float
+        c:
+          type: float
+        d:
+          type: float
+        e:
+          type: float
+        LT_yr:
+          type: int
+          min: 0
+        O&M_%:
+          type: float
+          min: 0.0
+        IR_%:
+          type: float
+          min: 0.0
+        assumption:
+          type: string
+          nullable: true
     HEX:
-      Description:
-        type: string
-      code:
-        type: string
-      cap_min:
-        type: float
-      cap_max:
-        type: float
-      unit:
-        type: string
-      currency:
-        type: string
-        regex: ^[A-Z]{3}-\d{4}$
-      a:
-        type: float
-      b:
-        type: float
-      c:
-        type: float
-      d:
-        type: float
-      e:
-        type: float
-      a_p:
-        type: float
-      b_p:
-        type: float
-      c_p:
-        type: float
-      d_p:
-        type: float
-      e_p:
-        type: float
-      LT_yr:
-        type: int
-        min: 0
-      O&M_%:
-        type: float
-        min: 0.0
-      IR_%:
-        type: float
-        min: 0.0
-      assumption:
-        type: string
-        nullable: true
+      columns:
+        Description:
+          type: string
+        code:
+          type: string
+        cap_min:
+          type: float
+        cap_max:
+          type: float
+        unit:
+          type: string
+        currency:
+          type: string
+          regex: ^[A-Z]{3}-\d{4}$
+        a:
+          type: float
+        b:
+          type: float
+        c:
+          type: float
+        d:
+          type: float
+        e:
+          type: float
+        a_p:
+          type: float
+        b_p:
+          type: float
+        c_p:
+          type: float
+        d_p:
+          type: float
+        e_p:
+          type: float
+        LT_yr:
+          type: int
+          min: 0
+        O&M_%:
+          type: float
+          min: 0.0
+        IR_%:
+          type: float
+          min: 0.0
+        assumption:
+          type: string
+          nullable: true
     BH:
-      Description:
-        type: string
-      code:
-        type: string
-      cap_min:
-        type: float
-      cap_max:
-        type: float
-      unit:
-        type: string
-      currency:
-        type: string
-        regex: ^[A-Z]{3}-\d{4}$
-      a:
-        type: float
-      b:
-        type: float
-      c:
-        type: float
-      d:
-        type: float
-      e:
-        type: float
-      LT_yr:
-        type: int
-        min: 0
-      O&M_%:
-        type: float
-        min: 0.0
-      IR_%:
-        type: float
-        min: 0.0
-      assumption:
-        type: string
-        nullable: true
+      columns:
+        Description:
+          type: string
+        code:
+          type: string
+        cap_min:
+          type: float
+        cap_max:
+          type: float
+        unit:
+          type: string
+        currency:
+          type: string
+          regex: ^[A-Z]{3}-\d{4}$
+        a:
+          type: float
+        b:
+          type: float
+        c:
+          type: float
+        d:
+          type: float
+        e:
+          type: float
+        LT_yr:
+          type: int
+          min: 0
+        O&M_%:
+          type: float
+          min: 0.0
+        IR_%:
+          type: float
+          min: 0.0
+        assumption:
+          type: string
+          nullable: true
     HP:
-      Description:
-        type: string
-      code:
-        type: string
-      cap_min:
-        type: float
-      cap_max:
-        type: float
-      unit:
-        type: string
-      currency:
-        type: string
-        regex: ^[A-Z]{3}-\d{4}$
-      a:
-        type: float
-      b:
-        type: float
-      c:
-        type: float
-      d:
-        type: float
-      e:
-        type: float
-      LT_yr:
-        type: int
-        min: 0
-      O&M_%:
-        type: float
-        min: 0.0
-      IR_%:
-        type: float
-        min: 0.0
-      assumption:
-        type: string
-        nullable: true
+      columns:
+        Description:
+          type: string
+        code:
+          type: string
+        cap_min:
+          type: float
+        cap_max:
+          type: float
+        unit:
+          type: string
+        currency:
+          type: string
+          regex: ^[A-Z]{3}-\d{4}$
+        a:
+          type: float
+        b:
+          type: float
+        c:
+          type: float
+        d:
+          type: float
+        e:
+          type: float
+        LT_yr:
+          type: int
+          min: 0
+        O&M_%:
+          type: float
+          min: 0.0
+        IR_%:
+          type: float
+          min: 0.0
+        assumption:
+          type: string
+          nullable: true
     TES:
-      Description:
-        type: string
-      code:
-        type: string
-      cap_min:
-        type: float
-      cap_max:
-        type: float
-      unit:
-        type: string
-      currency:
-        type: string
-        regex: ^[A-Z]{3}-\d{4}$
-      a:
-        type: float
-      b:
-        type: float
-      c:
-        type: float
-      d:
-        type: float
-      e:
-        type: float
-      LT_yr:
-        type: int
-        min: 0
-      O&M_%:
-        type: float
-        min: 0.0
-      IR_%:
-        type: float
-        min: 0.0
-      assumption:
-        type: string
-        nullable: true
+      columns:
+        Description:
+          type: string
+        code:
+          type: string
+        cap_min:
+          type: float
+        cap_max:
+          type: float
+        unit:
+          type: string
+        currency:
+          type: string
+          regex: ^[A-Z]{3}-\d{4}$
+        a:
+          type: float
+        b:
+          type: float
+        c:
+          type: float
+        d:
+          type: float
+        e:
+          type: float
+        LT_yr:
+          type: int
+          min: 0
+        O&M_%:
+          type: float
+          min: 0.0
+        IR_%:
+          type: float
+          min: 0.0
+        assumption:
+          type: string
+          nullable: true
     Pump:
-      Description:
-        type: string
-      code:
-        type: string
-      cap_min:
-        type: float
-      cap_max:
-        type: float
-      unit:
-        type: string
-      currency:
-        type: string
-        regex: ^[A-Z]{3}-\d{4}$
-      a:
-        type: float
-      b:
-        type: float
-      c:
-        type: float
-      d:
-        type: float
-      e:
-        type: float
-      LT_yr:
-        type: int
-        min: 0
-      O&M_%:
-        type: float
-        min: 0.0
-      IR_%:
-        type: float
-        min: 0.0
-      assumption:
-        type: string
-        nullable: true
+      columns:
+        Description:
+          type: string
+        code:
+          type: string
+        cap_min:
+          type: float
+        cap_max:
+          type: float
+        unit:
+          type: string
+        currency:
+          type: string
+          regex: ^[A-Z]{3}-\d{4}$
+        a:
+          type: float
+        b:
+          type: float
+        c:
+          type: float
+        d:
+          type: float
+        e:
+          type: float
+        LT_yr:
+          type: int
+          min: 0
+        O&M_%:
+          type: float
+          min: 0.0
+        IR_%:
+          type: float
+          min: 0.0
+        assumption:
+          type: string
+          nullable: true
   used_by: [decentralized, optimization, photovoltaic, photovoltaic_thermal, solar_collector]
 get_database_distribution_systems:
   created_by: [data_initializer]
@@ -3539,23 +3599,24 @@ get_database_distribution_systems:
   file_type: xls
   schema:
     THERMAL_GRID:
-      Code:
-        type: string
-        primary: true
-      Pipe_DN:
-        type: float
-      D_ext_m:
-        type: float
-      D_int_m:
-        type: float
-      D_ins_m:
-        type: float
-      Vdot_min_m3s:
-        type: float
-      Vdot_max_m3s:
-        type: float
-      Inv_USD2015perm:
-        type: float
+      columns:
+        Code:
+          type: string
+          primary: true
+        Pipe_DN:
+          type: float
+        D_ext_m:
+          type: float
+        D_int_m:
+          type: float
+        D_ins_m:
+          type: float
+        Vdot_min_m3s:
+          type: float
+        Vdot_max_m3s:
+          type: float
+        Inv_USD2015perm:
+          type: float
   used_by: [optimization, thermal_network]
 get_demand_results_file:
   created_by: [demand]
