@@ -17,10 +17,10 @@ cea.tests.create\_unittest\_data module
     :undoc-members:
     :show-inheritance:
 
-cea.tests.dodo module
----------------------
+cea.tests.run\_unit\_tests module
+---------------------------------
 
-.. automodule:: cea.tests.dodo
+.. automodule:: cea.tests.run_unit_tests
     :members:
     :undoc-members:
     :show-inheritance:
