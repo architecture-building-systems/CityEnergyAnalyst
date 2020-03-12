@@ -8,6 +8,7 @@ from cea.scripts import schemas
 import pandas as pd
 import re
 
+from cea.utilities import simple_memoize
 from cea.utilities.schedule_reader import get_all_schedule_names
 
 COLUMNS_ZONE_GEOMETRY = ['Name', 'floors_bg', 'floors_ag', 'height_bg', 'height_ag']
@@ -110,8 +111,6 @@ class InputFileValidator(object):
     def __init__(self, input_locator=None):
         # Need locator to read other files if lookup choice values
         self.locator = input_locator
-        self.schemas = schemas()
-        self._cache = {}
 
     def validate(self, data, data_schema):
         """
@@ -142,9 +141,6 @@ class InputFileValidator(object):
         """
         return sum([self.assert_columns_names(data, data_schema),
                     self.assert_column_values(data, data_schema)], [])
-
-    def get_schema(self, locator_method_name):
-        return self.schemas[locator_method_name]
 
     def assert_columns_names(self, data, data_schema):
         """
@@ -185,15 +181,15 @@ class InputFileValidator(object):
         lookup_prop = schema['choice'].get('lookup')
         if self.locator and lookup_prop:
             locator_method_name = lookup_prop['path']
-            data = None
-            # Simple cache lookup data results to prevent re-reading file
-            if locator_method_name in self._cache.keys():
-                data = self._cache[locator_method_name]
-            else:
-                file_type = self.schemas[locator_method_name]['file_type']
-                if file_type in ['xlsx', 'xls']:
-                    data = pd.read_excel(self.locator.__getattribute__(locator_method_name)(), sheet_name=None)
+            file_type = schemas()[locator_method_name]['file_type']
+            data = self._read_lookup_data_file(locator_method_name, file_type)
             return data[lookup_prop['sheet']][lookup_prop['column']].tolist() if data else None
+        return None
+
+    @simple_memoize
+    def _read_lookup_data_file(self, locator_method_name, file_type):
+        if file_type in ['xlsx', 'xls']:
+            return pd.read_excel(self.locator.__getattribute__(locator_method_name)(), sheet_name=None)
         return None
 
 
@@ -292,12 +288,12 @@ class BooleanTypeValidator(BaseTypeValidator):
 def main():
     import cea.config
     import cea.inputlocator
-    import cea.scripts
     from cea.utilities.schedule_reader import schedule_to_dataframe
     import pprint
 
     config = cea.config.Configuration()
     locator = cea.inputlocator.InputLocator(config.scenario)
+    _schemas = schemas()
     validator = InputFileValidator(locator)
     locator_methods = ['get_database_construction_standards',
                        'get_database_use_types_properties',
@@ -311,14 +307,14 @@ def main():
     for locator_method in locator_methods:
         df = pd.read_excel(locator.__getattribute__(locator_method)(), sheet_name=None)
         print('Validating {}'.format(locator_method))
-        schema = validator.get_schema(locator_method)
+        schema = _schemas[locator_method]
         errors = validator.validate(df, schema)
         pprint.pprint(errors)
     for use_types in get_all_schedule_names(locator.get_database_use_types_folder()):
         df = schedule_to_dataframe(locator.get_database_standard_schedules_use(use_types))
         print('Validating {}'.format(use_types))
-        _schema = validator.get_schema('get_database_standard_schedules_use')
-        errors = validator.validate(df, _schema)
+        schema = _schemas['get_database_standard_schedules_use']
+        errors = validator.validate(df, schema)
         pprint.pprint(errors)
 
 
