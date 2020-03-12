@@ -120,7 +120,6 @@ def for_interface(interface='cli'):
     return [script for script in list_scripts() if interface in script.interfaces]
 
 
-@simple_memoize
 def schemas():
     """Return the contents of the schemas.yml file"""
     import yaml

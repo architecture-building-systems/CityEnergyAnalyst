@@ -114,8 +114,7 @@ class InputFileValidator(object):
 
     def validate(self, data, data_schema):
         """
-        Takes a dataframe and validates it based on the schema provided
-        from schemas.yml file
+        Takes a dataframe and validates it based on the schema provided from schemas.yml file
         :param data: Dataframe of data to be tested
         :param data_schema: Schema of dataframe
         :return: list of errors where errors are represented as [dict(), str()] being location and message of the error
@@ -140,16 +139,17 @@ class InputFileValidator(object):
         :return: list of errors
         """
         return sum([self.assert_columns_names(data, data_schema),
-                    self.assert_column_values(data, data_schema)], [])
+                    self.assert_column_values(data, data_schema),
+                    self.assert_constraints(data, data_schema)], [])
 
     def assert_columns_names(self, data, data_schema):
         """
-        Check if column names in schema are found in the data provided
+        Check if column names in schema are found in data
         :param data: Dataframe of data to be tested
         :param data_schema: Schema for dataframe
         :return: list of errors
         """
-        columns = data_schema.keys()
+        columns = data_schema['columns'].keys()
         missing_columns = [col for col in columns if col not in data.columns]
         extra_columns = [col for col in data.columns if col not in columns]
         return [[{'column': str(col)}, 'Column is missing'] for col in missing_columns] + \
@@ -157,34 +157,59 @@ class InputFileValidator(object):
 
     def assert_column_values(self, data, data_schema):
         """
-        Check if column values in the data provide
+        Run validation on data column values based on column value types in specified in schema
         :param data: Dataframe of data to be tested
         :param data_schema: Schema for dataframe
         :return: list of errors
         """
-        columns = data_schema.keys()
+        columns = data_schema['columns'].keys()
         # Only loop through valid columns that exist
         filter_columns = [col for col in columns if col in data.columns]
         errors = []
         for column in filter_columns:
-            col_schema = data_schema[column]
+            col_schema = data_schema['columns'][column]
             if 'choice' in col_schema:
                 lookup_data = self._get_choice_lookup_data(col_schema)
                 column_errors = data[column].apply(ChoiceTypeValidator(col_schema, lookup_data).validate).dropna()
             else:
                 column_errors = data[column].apply(get_validator_func(col_schema)).dropna()
-            for index, error in column_errors.to_dict().items():
-                errors.append([{'row': int(index), 'column': str(column)}, error])
+            for index, error in column_errors.iteritems():
+                errors.append([{'row': int(index) + 1, 'column': str(column)}, error])
+        return errors
+
+    def assert_constraints(self, data, data_schema):
+        """
+        Check if columns fit constraints (row-based only) specified in schema
+        :param data: Dataframe of data to be tested
+        :param data_schema: Schema for dataframe
+        :return: list of errors
+        """
+        constraints = data_schema.get('constraints')
+        errors = []
+        if constraints:
+            for name, constraint in constraints.items():
+                try:
+                    result = data.eval(constraint)
+                    # Only process
+                    if type(result) == pd.Series and result.dtype == 'bool':
+                        for index, error in result[~result].iteritems():
+                            errors.append([{'row': int(index) + 1}, 'failed constraint: {}'.format(constraint)])
+                except Exception as e:
+                    print(e)
         return errors
 
     def _get_choice_lookup_data(self, schema):
         lookup_prop = schema['choice'].get('lookup')
         if self.locator and lookup_prop:
             locator_method_name = lookup_prop['path']
-            file_type = schemas()[locator_method_name]['file_type']
+            file_type = self._read_schemas()[locator_method_name]['file_type']
             data = self._read_lookup_data_file(locator_method_name, file_type)
             return data[lookup_prop['sheet']][lookup_prop['column']].tolist() if data else None
         return None
+
+    @simple_memoize
+    def _read_schemas(self):
+        return schemas()
 
     @simple_memoize
     def _read_lookup_data_file(self, locator_method_name, file_type):
