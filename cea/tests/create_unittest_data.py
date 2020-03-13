@@ -48,7 +48,7 @@ def main(output_file):
     temperatures_output = config.demand.temperatures_output
     use_dynamic_infiltration_calculation = config.demand.use_dynamic_infiltration_calculation
     debug = config.debug
-    building_properties = BuildingProperties(locator, config.demand.override_variables)
+    building_properties = BuildingProperties(locator)
 
     print("data for test_calc_thermal_loads:")
     print(building_properties.list_building_names())

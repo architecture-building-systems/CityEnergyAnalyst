@@ -35,10 +35,16 @@ class TestSchemas(unittest.TestCase):
         ignore = {"ensure_parent_folder_exists"}
         for m in dir(locator):
             if not callable(getattr(locator, m)):
+                # normal attributes (fields) are not locator methods
                 continue
             if m.startswith("_"):
+                # these are private methods, ignore
                 continue
             if m in ignore:
+                # keep a list of special methods to ignore
+                continue
+            if m.endswith("_folder"):
+                # not interested in folders
                 continue
             yield m
 

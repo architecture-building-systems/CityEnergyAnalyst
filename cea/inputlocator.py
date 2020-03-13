@@ -621,7 +621,6 @@ class InputLocator(object):
         to the scenario if they are not yet present, based on the configured region for the scenario."""
         return os.path.join(self.get_databases_folder(), 'components', 'FEEDSTOCKS.xls')
 
-
     def get_building_geometry_folder(self):
         """scenario/inputs/building-geometry/"""
         return os.path.join(self.scenario, 'inputs', 'building-geometry')
@@ -686,13 +685,6 @@ class InputLocator(object):
         This file is used in the embodied energy script (cea/embodied.py)
         and the demand script (cea/demand_main.py)"""
         return os.path.join(self.get_building_properties_folder(), 'architecture.dbf')
-
-    def get_building_overrides(self):
-        """scenario/inputs/building-properties/overrides.csv
-        This file contains overrides to the building properties input files. They are applied after reading
-        those files and are matched by column name.
-        """
-        return os.path.join(self.get_building_properties_folder(), 'variables_overrides.csv')
 
     def get_building_weekly_schedules_folder(self):
         """scenario/inputs/building-properties/schedules/"""
