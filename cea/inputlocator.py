@@ -127,16 +127,6 @@ class InputLocator(object):
         return os.path.join(self.get_electrical_and_thermal_network_optimization_slave_results_folder(gen_num),
                             'generation_%(gen_num)s_individuals.csv' % locals())
 
-    def get_electrical_and_thermal_network_optimization_all_individuals(self):
-        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
-        return os.path.join(self.get_electrical_and_thermal_network_optimization_results_folder(),
-                            'slave/All_individuals.csv' % locals())
-
-    def get_electrical_and_thermal_network_optimization_all_individuals(self):
-        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
-        return os.path.join(self.get_electrical_and_thermal_network_optimization_results_folder(),
-                            'slave/All_individuals.csv')
-
     def get_optimization_slave_results_folder(self):
         """Returns the folder containing the scenario's optimization Slave results (storage + operation pattern)"""
         return self._ensure_folder(self.get_optimization_results_folder(), "slave")
