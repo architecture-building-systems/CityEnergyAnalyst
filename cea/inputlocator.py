@@ -1031,11 +1031,6 @@ class InputLocator(object):
         check_cpg(shapefile_path)
         return shapefile_path
 
-    def get_minimum_spanning_tree(self):
-        shapefile_path = os.path.join(self.get_networks_folder(), "mst_network.shp")
-        check_cpg(shapefile_path)
-        return shapefile_path
-
     # OUTPUTS
 
     # SOLAR-RADIATION
