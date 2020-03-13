@@ -1389,11 +1389,6 @@ class InputLocator(object):
         """scenario/outputs/plots/timeseries"""
         return self._ensure_folder(self.scenario, 'outputs', 'plots', category)
 
-    def get_4D_demand_plot(self, period):
-        """scenario/outputs/plots/timeseries"""
-        return os.path.join(self.get_plots_folder('4D_plots'),
-                            'Demand_4D_plot_' + str(period[0]) + '_' + str(period[1]) + '.dbf')
-
     def get_4D_radiation_plot(self, period):
         """scenario/outputs/plots/timeseries"""
         return os.path.join(self.get_plots_folder('4D_plots'),
