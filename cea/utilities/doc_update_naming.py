@@ -42,11 +42,6 @@ def main(_):
     naming = pandas.read_csv(os.path.join(os.path.dirname(cea.config.__file__), 'plots', 'naming.csv'))
     naming = naming.set_index(naming['VARIABLE'])
 
-    # naming = pandas.read_csv(locator.get_naming(), sep=',')
-    # naming['key'] = naming['FILE_NAME'] + '!!!' + naming['VARIABLE']
-    # naming = naming.set_index(['key'])
-    # naming = naming.sort_values(by=['LOCATOR_METHOD', 'FILE_NAME', 'VARIABLE'])
-
     # cross reference all variables(in order of priority) with naming.csv, variables_gloss.csv for descriptions
     # cross reference all variables with variables_gloss.csv for TYPE and VALUES
     # if variable not found in either - TO DO labels

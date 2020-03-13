@@ -1026,11 +1026,6 @@ class InputLocator(object):
         check_cpg(shapefile_path)
         return shapefile_path
 
-    def get_network_input_paths(self, name):
-        shapefile_path = os.path.join(self.get_networks_folder(), "%s.shp" % name)
-        check_cpg(shapefile_path)
-        return shapefile_path
-
     # OUTPUTS
 
     # SOLAR-RADIATION
@@ -1247,10 +1242,6 @@ class InputLocator(object):
     def get_result_building_NN(self, name):
         """scenario/outputs/data/surrogate/neural_network_folder"""
         return os.path.join(self.get_neural_network_folder(), name + '.csv')
-
-    def get_naming(self):
-        """Returns plots/naming.csv"""
-        return os.path.join(os.path.dirname(cea.config.__file__), 'plots', 'naming.csv')
 
     def get_docs_folder(self):
         """Returns docs"""
