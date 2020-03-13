@@ -358,10 +358,10 @@ def extract_electricity_demand_buildings(master_to_slave_vars, building_names, l
     for name in building_names:  # adding the electricity demand of
         building_demand = pd.read_csv(locator.get_demand_results_file(name))
         # end-use electrical demands
-        Eal_req_W += building_demand['Eal_kWh'] * 1000
-        Edata_req_W += building_demand['Edata_kWh'] * 1000
-        Epro_req_W += building_demand['Epro_kWh'] * 1000
-        Eaux_req_W += building_demand['Eaux_kWh'] * 1000
+        Eal_req_W += (building_demand['Eal_kWh'] * 1000).values
+        Edata_req_W += (building_demand['Edata_kWh'] * 1000).values
+        Epro_req_W += (building_demand['Epro_kWh'] * 1000).values
+        Eaux_req_W += (building_demand['Eaux_kWh'] * 1000).values
 
     # when the two networks are present
     if master_to_slave_vars.DHN_exists and master_to_slave_vars.DCN_exists:
@@ -369,28 +369,29 @@ def extract_electricity_demand_buildings(master_to_slave_vars, building_names, l
             building_demand = pd.read_csv(locator.get_demand_results_file(name))
             if name in buildings_connected_to_district_heating and name in buildings_connected_to_district_cooling:
                 # if connected to the heating network
-                E_hs_ww_req_W += 0.0
-                E_cs_cre_cdata_req_W += 0.0
+                E_hs_ww_req_W += np.zeros(HOURS_IN_YEAR)
+                E_cs_cre_cdata_req_W += np.zeros(HOURS_IN_YEAR)
             elif name in buildings_connected_to_district_heating:
                 # if disconnected from the heating network
-                E_hs_ww_req_W += 0.0
+                E_hs_ww_req_W += np.zeros(HOURS_IN_YEAR)
                 if master_to_slave_vars.WasteServersHeatRecovery == 1:
-                    E_cs_cre_cdata_req_W += (building_demand['E_cs_kWh'] +
-                                             building_demand['E_cre_kWh']) * 1000  # to W
+                    E_cs_cre_cdata_req_W += ((building_demand['E_cs_kWh'] +
+                                             building_demand['E_cre_kWh']) * 1000).values  # to W
                 else:
-                    E_cs_cre_cdata_req_W += (building_demand['E_cs_kWh'] +
+                    E_cs_cre_cdata_req_W += ((building_demand['E_cs_kWh'] +
                                              building_demand['E_cre_kWh'] +
-                                             building_demand['E_cdata_kWh']) * 1000  # to W
+                                             building_demand['E_cdata_kWh']) * 1000).values  # to W
             elif name in buildings_connected_to_district_cooling:
-                E_hs_ww_req_W += (building_demand['E_hs_kWh'] + building_demand['E_ww_kWh']) * 1000  # to W
-                E_cs_cre_cdata_req_W += 0.0
+                E_hs_ww_req_W += ((building_demand['E_hs_kWh'] +
+                                  building_demand['E_ww_kWh']) * 1000).values  # to W
+                E_cs_cre_cdata_req_W += np.zeros(HOURS_IN_YEAR)
             else:
                 building_dencentralized_system_heating = pd.read_csv(
                     locator.get_optimization_decentralized_folder_building_result_heating_activation(name))
                 building_dencentralized_system_cooling = pd.read_csv(
                     locator.get_optimization_decentralized_folder_building_cooling_activation(name))
-                E_hs_ww_req_disconnected_W += building_dencentralized_system_heating['E_hs_ww_req_W']
-                E_cs_cre_cdata_req_disconnected_W += building_dencentralized_system_cooling['E_cs_cre_cdata_req_W']
+                E_hs_ww_req_disconnected_W += building_dencentralized_system_heating['E_hs_ww_req_W'].values
+                E_cs_cre_cdata_req_disconnected_W += building_dencentralized_system_cooling['E_cs_cre_cdata_req_W'].values
 
     # if only a district heating network exists.
     elif master_to_slave_vars.DHN_exists:
@@ -398,44 +399,39 @@ def extract_electricity_demand_buildings(master_to_slave_vars, building_names, l
             building_demand = pd.read_csv(locator.get_demand_results_file(name))
             if name in buildings_connected_to_district_heating:
                 # if connected to the heating network
-                E_hs_ww_req_W += 0.0  # because it is connected to the heating network
+                E_hs_ww_req_W += np.zeros(HOURS_IN_YEAR)  # because it is connected to the heating network
                 if master_to_slave_vars.WasteServersHeatRecovery == 1:
-                    E_cs_cre_cdata_req_W += (building_demand['E_cs_kWh'] +
-                                             building_demand['E_cre_kWh']) * 1000  # to W
+                    E_cs_cre_cdata_req_W += ((building_demand['E_cs_kWh'] +
+                                             building_demand['E_cre_kWh']) * 1000).values  # to W
                 else:
-                    E_cs_cre_cdata_req_W += (building_demand['E_cs_kWh'] +
+                    E_cs_cre_cdata_req_W += ((building_demand['E_cs_kWh'] +
                                              building_demand['E_cre_kWh'] +
-                                             building_demand['E_cdata_kWh']) * 1000  # to W
+                                             building_demand['E_cdata_kWh']) * 1000).values  # to W
             else:
                 # if not then get airconditioning loads of the baseline
-                E_cs_cre_cdata_req_W += (building_demand['E_cs_kWh'] +
+                E_cs_cre_cdata_req_W += ((building_demand['E_cs_kWh'] +
                                          building_demand['E_cre_kWh'] +
-                                         building_demand['E_cdata_kWh']) * 1000  # to W
+                                         building_demand['E_cdata_kWh']) * 1000).values  # to W
                 if name in building_names_heating:
                     # if there is a decentralized heating use it.
                     building_dencentralized_system = pd.read_csv(
                         locator.get_optimization_decentralized_folder_building_result_heating_activation(name))
-                    E_hs_ww_req_disconnected_W += building_dencentralized_system['E_hs_ww_req_W']
-                else:
-                    # if not (cae of building with electric load and not heating)
-                    E_hs_ww_req_disconnected_W += 0.0
+                    E_hs_ww_req_disconnected_W += building_dencentralized_system['E_hs_ww_req_W'].values
 
     # if only a district cooling network exists.
     elif master_to_slave_vars.DCN_exists:
         for name in building_names:
             building_demand = pd.read_csv(locator.get_demand_results_file(name))
-            E_hs_ww_req_W += (building_demand['E_hs_kWh'] + building_demand['E_ww_kWh']) * 1000  # to W
+            E_hs_ww_req_W += ((building_demand['E_hs_kWh'] +
+                               building_demand['E_ww_kWh']) * 1000).values  # to W
             if name in buildings_connected_to_district_cooling:
-                E_cs_cre_cdata_req_W += 0.0
+                E_cs_cre_cdata_req_W += np.zeros(HOURS_IN_YEAR)
             else:
                 if name in building_names_cooling:
                     # if there is a decentralized cooling use it.
                     building_dencentralized_system = pd.read_csv(
                         locator.get_optimization_decentralized_folder_building_cooling_activation(name))
-                    E_cs_cre_cdata_req_disconnected_W += building_dencentralized_system['E_cs_cre_cdata_req_W']
-                else:
-                    # if not (cae of building with electric load and not cooling
-                    E_cs_cre_cdata_req_disconnected_W += 0.0
+                    E_cs_cre_cdata_req_disconnected_W += building_dencentralized_system['E_cs_cre_cdata_req_W'].values
 
     E_req_buildings = {
         # end-use demands
