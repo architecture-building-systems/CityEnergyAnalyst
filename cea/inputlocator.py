@@ -117,11 +117,6 @@ class InputLocator(object):
         return self._ensure_folder(self.get_electrical_and_thermal_network_optimization_results_folder(),
                                    "slave/gen_%(gen_num)s" % locals())
 
-    def get_electrical_and_thermal_network_optimization_slave_storage_operation_data(self, ind_num, gen_num):
-        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
-        return os.path.join(self.get_electrical_and_thermal_network_optimization_slave_results_folder(gen_num),
-                            'ind_%(ind_num)s_StorageOperationData.csv' % locals())
-
     def get_optimization_slave_results_folder(self):
         """Returns the folder containing the scenario's optimization Slave results (storage + operation pattern)"""
         return self._ensure_folder(self.get_optimization_results_folder(), "slave")
@@ -428,11 +423,6 @@ class InputLocator(object):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
         return os.path.join(self.get_uncertainty_results_folder(),
                             'CheckPoint_uncertainty_' + str(generation))
-
-    def get_measurements(self):
-        """scenario/inputs/
-        Operation pattern for decentralized buildings"""
-        return self._ensure_folder(self.scenario, 'inputs', 'building-metering', )
 
     def get_optimization_decentralized_result_file(self, building_name):
         """scenario/outputs/data/optimization/decentralized/DiscOp_${building_name}_result.csv"""
