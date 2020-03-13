@@ -214,18 +214,6 @@ class InputLocator(object):
         return os.path.join(self.get_plots_folder(category), 'gen' + str(gen_num) +
                             '_ind_%(ind_num)s_yearly_energy_mix_based_on_technologies.csv' % locals())
 
-    def get_concept_network_on_streets(self, ind_num, gen_num):
-        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
-        return os.path.join(
-            self.get_electrical_and_thermal_network_optimization_slave_results_folder(gen_num),
-            "network_on_street_gen_" + str(gen_num) + "_ind_" + str(ind_num) + '.png')
-
-    def get_concept_network_plot(self, ind_num, gen_num):
-        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
-        return os.path.join(
-            self.get_electrical_and_thermal_network_optimization_slave_results_folder(gen_num),
-            "network_plot_" + str(gen_num) + "_ind_" + str(ind_num) + '.png')
-
     def get_optimization_connected_heating_capacity(self, ind_num, gen_num):
         return os.path.join(self.get_optimization_slave_generation_results_folder(gen_num),
                             'ind_%(ind_num)s_connected_heating_capacity.csv' % locals())
