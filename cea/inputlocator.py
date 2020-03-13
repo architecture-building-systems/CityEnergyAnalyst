@@ -1208,25 +1208,6 @@ class InputLocator(object):
         """scenario/outputs/data/surrogate/neural_network_folder"""
         return self._ensure_folder(self.scenario, 'outputs', 'surrogate_model', 'minmaxscalar')
 
-    def get_neural_network_model(self):
-        """scenario/outputs/data/surrogate/neural_network_folder"""
-        structure = os.path.join(self.get_neural_network_folder(), 'nn_structure.json')
-        matrix = os.path.join(self.get_neural_network_folder(), 'nn_matrix.h5')
-        return structure, matrix
-
-    def get_neural_network_resume(self):
-        """scenario/outputs/data/surrogate/neural_network_folder"""
-        model_resume = os.path.join(self.get_neural_network_folder(), 'model_resume.h5')
-        return model_resume
-
-    def get_neural_network_estimates(self):
-        """scenario/outputs/data/surrogate/neural_network_folder"""
-        return os.path.join(self.get_neural_network_folder(), 'model_estimates.csv')
-
-    def get_result_building_NN(self, name):
-        """scenario/outputs/data/surrogate/neural_network_folder"""
-        return os.path.join(self.get_neural_network_folder(), name + '.csv')
-
     def get_docs_folder(self):
         """Returns docs"""
         return os.path.join(os.path.dirname(cea.config.__file__), '..', 'docs')
