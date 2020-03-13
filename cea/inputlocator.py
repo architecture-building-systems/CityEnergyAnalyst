@@ -721,7 +721,7 @@ class InputLocator(object):
         return os.path.join(self.get_terrain_folder(), 'terrain.tif')
 
     def get_input_network_folder(self, network_type, network_name):
-        if network_name == '':  # in case there is no specfici networ name (default case)
+        if network_name == '':  # in case there is no specific network name (default case)
             return self._ensure_folder(self.get_thermal_network_folder(), network_type)
         else:
             return self._ensure_folder(self.get_thermal_network_folder(), network_type, network_name)
@@ -1236,12 +1236,6 @@ class InputLocator(object):
     def get_electric_substation_output_location(self):
         """scenario/inputs/building-geometry/zone.shp"""
         shapefile_path = os.path.join(self.get_input_network_folder('EL', ''), 'nodes_buildings.shp')
-        check_cpg(shapefile_path)
-        return shapefile_path
-
-    def get_electric_network_output_location(self, name):
-        """scenario/inputs/building-geometry/zone.shp"""
-        shapefile_path = os.path.join(self.get_input_network_folder('EL', ''), name + '.shp')
         check_cpg(shapefile_path)
         return shapefile_path
 
