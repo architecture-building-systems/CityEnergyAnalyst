@@ -1389,25 +1389,6 @@ class InputLocator(object):
         """scenario/outputs/plots/timeseries"""
         return self._ensure_folder(self.scenario, 'outputs', 'plots', category)
 
-    def get_4D_radiation_plot(self, period):
-        """scenario/outputs/plots/timeseries"""
-        return os.path.join(self.get_plots_folder('4D_plots'),
-                            'Radiation_4D_plot_' + str(period[0]) + '_' + str(period[1]) + '.dbf')
-
-    def get_4D_pv_plot(self, period):
-        """scenario/outputs/plots/timeseries"""
-        return os.path.join(self.get_plots_folder('4D_plots'),
-                            'PV_4D_plot_' + str(period[0]) + '_' + str(period[1]) + '.dbf')
-
-    def get_4D_pvt_plot(self, period):
-        """scenario/outputs/plots/timeseries"""
-        return os.path.join(self.get_plots_folder('4D_plots'),
-                            'PVT_4D_plot_' + str(period[0]) + '_' + str(period[1]) + '.dbf')
-
-    def get_4D_sc_plot(self, period):
-        """scenario/outputs/plots/timeseries"""
-        return os.path.join(self.get_plots_folder('4D_plots'),
-                            'SC_4D_plot_' + str(period[0]) + '_' + str(period[1]) + '.dbf')
 
     def get_timeseries_plots_file(self, building_name, category=''):
         """scenario/outputs/plots/timeseries/{building_name}.html
