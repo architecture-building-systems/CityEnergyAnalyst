@@ -1058,11 +1058,6 @@ class InputLocator(object):
             file_name = network_type + "_" + network_name + "_plant_thermal_load_kW.csv"
         return os.path.join(folder, file_name)
 
-    # OTHER
-    def get_daysim_mat(self):
-        """this gets the file that documents all of the radiance/default_materials"""
-        return os.path.join(self.get_solar_radiation_folder(), 'materials.rad')
-
     def get_networks_folder(self):
         return self._ensure_folder(self.scenario, 'inputs', 'networks')
 
