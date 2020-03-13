@@ -636,27 +636,21 @@ class InputLocator(object):
     def get_zone_geometry(self):
         """scenario/inputs/building-geometry/zone.shp"""
         shapefile_path = os.path.join(self.get_building_geometry_folder(), 'zone.shp')
-        self.check_cpg(shapefile_path)
+        check_cpg(shapefile_path)
         return shapefile_path
 
     def get_site_polygon(self):
         """scenario/inputs/building-geometry/site.shp"""
         shapefile_path = os.path.join(self.get_building_geometry_folder(), 'site.shp')
-        self.check_cpg(shapefile_path)
+        check_cpg(shapefile_path)
         return shapefile_path
 
     def get_surroundings_geometry(self):
         """scenario/inputs/building-geometry/surroundings.shp"""
         # NOTE: we renamed district.shp to surroundings.shp - this code will automaticaly upgrade old scenarios
         shapefile_path = os.path.join(self.get_building_geometry_folder(), 'surroundings.shp')
-        self.check_cpg(shapefile_path)
+        check_cpg(shapefile_path)
         return shapefile_path
-
-    def check_cpg(self, shapefile_path):
-        # ensures that the CPG file is the correct one
-        if os.path.isfile(shapefile_path):
-            from cea.utilities.standardize_coordinates import ensure_cpg_file
-            ensure_cpg_file(shapefile_path)
 
     def get_zone_building_names(self):
         """Return the list of buildings in the Zone"""
@@ -755,13 +749,13 @@ class InputLocator(object):
     def get_network_layout_edges_shapefile(self, network_type, network_name):
         """scenario/outputs/thermal-network/DH or DC/network-edges.shp"""
         shapefile_path = os.path.join(self.get_input_network_folder(network_type, network_name), 'edges.shp')
-        self.check_cpg(shapefile_path)
+        check_cpg(shapefile_path)
         return shapefile_path
 
     def get_network_layout_nodes_shapefile(self, network_type, network_name=""):
         """scenario/outputs/thermal-network/DH or DC/network-nodes.shp"""
         shapefile_path = os.path.join(self.get_input_network_folder(network_type, network_name), 'nodes.shp')
-        self.check_cpg(shapefile_path)
+        check_cpg(shapefile_path)
         return shapefile_path
 
     # THERMAL NETWORK OUTPUTS
@@ -1094,17 +1088,17 @@ class InputLocator(object):
 
     def get_street_network(self):
         shapefile_path = os.path.join(self.get_networks_folder(), "streets.shp")
-        self.check_cpg(shapefile_path)
+        check_cpg(shapefile_path)
         return shapefile_path
 
     def get_network_input_paths(self, name):
         shapefile_path = os.path.join(self.get_networks_folder(), "%s.shp" % name)
-        self.check_cpg(shapefile_path)
+        check_cpg(shapefile_path)
         return shapefile_path
 
     def get_minimum_spanning_tree(self):
         shapefile_path = os.path.join(self.get_networks_folder(), "mst_network.shp")
-        self.check_cpg(shapefile_path)
+        check_cpg(shapefile_path)
         return shapefile_path
 
     # OUTPUTS
@@ -1372,13 +1366,13 @@ class InputLocator(object):
     def get_electric_substation_output_location(self):
         """scenario/inputs/building-geometry/zone.shp"""
         shapefile_path = os.path.join(self.get_input_network_folder('EL', ''), 'nodes_buildings.shp')
-        self.check_cpg(shapefile_path)
+        check_cpg(shapefile_path)
         return shapefile_path
 
     def get_electric_network_output_location(self, name):
         """scenario/inputs/building-geometry/zone.shp"""
         shapefile_path = os.path.join(self.get_input_network_folder('EL', ''), name + '.shp')
-        self.check_cpg(shapefile_path)
+        check_cpg(shapefile_path)
         return shapefile_path
 
     # RETROFIT POTENTIAL
@@ -1547,6 +1541,13 @@ class InputLocator(object):
     def get_mpc_results_district_plot_grid(self, output_folder="mpc-district"):
         """scenario/outputs/data/optimization/substations/${building_name}_result.csv"""
         return os.path.join(self.get_plots_folder(output_folder), "electric_grid_graph.pdf")
+
+
+def check_cpg(shapefile_path):
+    # ensures that the CPG file is the correct one
+    if os.path.isfile(shapefile_path):
+        from cea.utilities.standardize_coordinates import ensure_cpg_file
+        ensure_cpg_file(shapefile_path)
 
 
 class ReferenceCaseOpenLocator(InputLocator):
