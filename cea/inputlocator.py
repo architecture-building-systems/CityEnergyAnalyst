@@ -1480,12 +1480,6 @@ class InputLocator(object):
         """scenario/outputs/data/surrogate/neural_network_folder"""
         return os.path.join(self.get_neural_network_folder(), name + '.csv')
 
-    def are_equal(self, path_a, path_b):
-        """Checks to see if two paths are equal"""
-        path_a = os.path.normcase(os.path.normpath(os.path.realpath(os.path.abspath(path_a))))
-        path_b = os.path.normcase(os.path.normpath(os.path.realpath(os.path.abspath(path_b))))
-        return path_a == path_b
-
     def get_naming(self):
         """Returns plots/naming.csv"""
         return os.path.join(os.path.dirname(cea.config.__file__), 'plots', 'naming.csv')
