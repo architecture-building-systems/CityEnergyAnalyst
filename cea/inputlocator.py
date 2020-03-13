@@ -708,12 +708,6 @@ class InputLocator(object):
         """
         return os.path.join(self.get_thermal_network_folder(), "PipesData_" + network + ".csv")
 
-    def get_network_layout_nodes_csv_file(self, network):
-        """scenario/outputs/data/optimization/network/layout/DH_NodesData.csv or DC_NodesData.csv
-        Network layout files for nodes of district heating or cooling networks
-        """
-        return os.path.join(self.get_thermal_network_folder(), "NodesData_" + network + ".csv")
-
     def get_nominal_edge_mass_flow_csv_file(self, network_type, network_name):
         """scenario/outputs/data/optimization/network/layout/DH_NodesData.csv or DC_NodesData.csv
         Network layout files for nodes of district heating or cooling networks
