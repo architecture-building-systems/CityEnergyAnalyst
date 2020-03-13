@@ -32,8 +32,10 @@ class TestSchemas(unittest.TestCase):
 
     def extract_locator_methods(self, locator):
         """Return the list of locator methods that point to files"""
-        ignore = {"scenario"}
+        ignore = {"ensure_parent_folder_exists"}
         for m in dir(locator):
+            if not callable(getattr(locator, m)):
+                continue
             if m.startswith("_"):
                 continue
             if m in ignore:
