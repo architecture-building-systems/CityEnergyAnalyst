@@ -1240,12 +1240,6 @@ class InputLocator(object):
         model_resume = os.path.join(self.get_neural_network_folder(), 'model_resume.h5')
         return model_resume
 
-    def get_minmaxscalar_model(self):
-        """scenario/outputs/data/surrogate/neural_network_folder"""
-        scalerX_file = os.path.join(self.get_neural_network_folder(), 'scalerX.save')
-        scalerT_file = os.path.join(self.get_neural_network_folder(), 'scalerT.save')
-        return scalerX_file, scalerT_file
-
     def get_neural_network_estimates(self):
         """scenario/outputs/data/surrogate/neural_network_folder"""
         return os.path.join(self.get_neural_network_folder(), 'model_estimates.csv')
@@ -1261,66 +1255,6 @@ class InputLocator(object):
     def get_docs_folder(self):
         """Returns docs"""
         return os.path.join(os.path.dirname(cea.config.__file__), '..', 'docs')
-
-    # MPC by Concept Project
-    def get_mpc_results_folder(self, output_folder="mpc-building"):
-        """scenario/outputs/data/optimization"""
-        return self._ensure_folder(self.scenario, 'outputs', 'data', output_folder)
-
-    def get_mpc_results_outputs(self, building, output_folder):
-        """scenario/outputs/data/optimization"""
-        return os.path.join(self.get_mpc_results_folder(output_folder), building + '_outputs.csv')
-
-    def get_mpc_results_controls(self, building, output_folder):
-        """scenario/outputs/data/optimization"""
-        return os.path.join(self.get_mpc_results_folder(output_folder), building + '_controls.csv')
-
-    def get_mpc_results_states(self, building, output_folder):
-        """scenario/outputs/data/optimization"""
-        return os.path.join(self.get_mpc_results_folder(output_folder), building + '_states.csv')
-
-    def get_mpc_results_min_outputs(self, building, output_folder):
-        """scenario/outputs/data/optimization"""
-        return os.path.join(self.get_mpc_results_folder(output_folder), building + '_outputs_minimum.csv')
-
-    def get_mpc_results_max_outputs(self, building, output_folder):
-        """scenario/outputs/data/optimization"""
-        return os.path.join(self.get_mpc_results_folder(output_folder), building + '_outputs_maximum.csv')
-
-    def get_mpc_results_predicted_temperature(self, output_folder):
-        """scenario/outputs/data/optimization"""
-        return os.path.join(self.get_mpc_results_folder(output_folder), 'predicted_temperature.csv')
-
-    def get_mpc_results_set_temperature(self, output_folder):
-        """scenario/outputs/data/optimization"""
-        return os.path.join(self.get_mpc_results_folder(output_folder), 'set_temperature.csv')
-
-    def get_mpc_results_min_temperature(self, output_folder):
-        """scenario/outputs/data/optimization"""
-        return os.path.join(self.get_mpc_results_folder(output_folder), 'minimum_temperature.csv')
-
-    def get_mpc_results_max_temperature(self, output_folder):
-        """scenario/outputs/data/optimization"""
-        return os.path.join(self.get_mpc_results_folder(output_folder), 'maximum_temperature.csv')
-
-    def get_mpc_results_electric_power(self, output_folder):
-        """scenario/outputs/data/optimization"""
-        return os.path.join(self.get_mpc_results_folder(output_folder), 'electric_power.csv')
-
-    def get_mpc_results_building_definitions_folder(self, output_folder="mpc-building"):
-        return self._ensure_folder(self.get_mpc_results_folder(output_folder), "building-definitions")
-
-    def get_mpc_results_building_definitions_file(self, file_name, output_folder="mpc-building"):
-        """scenario/outputs/data/optimization/substations/${building_name}_result.csv"""
-        return os.path.join(self.get_mpc_results_building_definitions_folder(output_folder), file_name + ".csv")
-
-    def get_mpc_results_district_plot_streets(self, output_folder="mpc-district"):
-        """scenario/outputs/data/optimization/substations/${building_name}_result.csv"""
-        return os.path.join(self.get_plots_folder(output_folder), "electric_grid_street.pdf")
-
-    def get_mpc_results_district_plot_grid(self, output_folder="mpc-district"):
-        """scenario/outputs/data/optimization/substations/${building_name}_result.csv"""
-        return os.path.join(self.get_plots_folder(output_folder), "electric_grid_graph.pdf")
 
 
 def check_cpg(shapefile_path):
