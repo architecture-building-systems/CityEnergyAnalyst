@@ -34,7 +34,7 @@ class BuildingProperties(object):
     G. Happle   BuildingPropsThermalLoads   27.05.2016
     """
 
-    def __init__(self, locator, override_variables=False):
+    def __init__(self, locator):
         """
         Read building properties from input shape files and construct a new BuildingProperties object.
 
@@ -73,14 +73,6 @@ class BuildingProperties(object):
 
         # get envelope properties
         prop_envelope = get_envelope_properties(locator, prop_architectures).set_index('Name')
-
-        # apply overrides
-        if override_variables:
-            self._overrides = pd.read_csv(locator.get_building_overrides()).set_index('Name')
-            prop_envelope = self.apply_overrides(prop_envelope)
-            prop_internal_loads = self.apply_overrides(prop_internal_loads)
-            prop_comfort = self.apply_overrides(prop_comfort)
-            prop_HVAC_result = self.apply_overrides(prop_HVAC_result)
 
         # get properties of rc demand model
         prop_rc_model = self.calc_prop_rc_model(locator, prop_typology, prop_envelope,
@@ -126,17 +118,6 @@ class BuildingProperties(object):
                 blength.append(delta2)
 
         return blength, bwidth
-
-    def apply_overrides(self, df):
-        """Apply the overrides to `df`. This works by checking each column in the `self._overrides` dataframe
-        and overwriting any columns in `df` with the same name.
-        `self._overrides` and `df` are assumed to have the same index.
-        """
-
-        shared_columns = set(self._overrides.columns) & set(df.columns)
-        for column in shared_columns:
-            df[column] = self._overrides[column]
-        return df
 
     def __len__(self):
         """return length of list_building_names"""

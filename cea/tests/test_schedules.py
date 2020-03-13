@@ -46,7 +46,7 @@ class TestScheduleCreation(unittest.TestCase):
         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         config.scenario = locator.scenario
 
-        building_properties = BuildingProperties(locator, False)
+        building_properties = BuildingProperties(locator)
         bpr = building_properties['B1011']
         bpr.occupancy = {'OFFICE': 0.5, 'SERVERROOM': 0.5}
         bpr.comfort['mainuse'] = 'OFFICE'
@@ -116,7 +116,7 @@ def create_data():
     locator = ReferenceCaseOpenLocator()
 
     # calculate schedules
-    building_properties = BuildingProperties(locator, False)
+    building_properties = BuildingProperties(locator)
     bpr = building_properties['B1011']
     list_uses = ['OFFICE', 'LAB', 'INDUSTRIAL', 'SERVERRROOM']
     bpr.occupancy = {'OFFICE': 0.5, 'SERVERROOM': 0.5}
