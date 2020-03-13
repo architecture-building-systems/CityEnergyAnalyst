@@ -702,12 +702,6 @@ class InputLocator(object):
     def get_thermal_network_folder(self):
         return self._ensure_folder(self.scenario, 'outputs', 'data', 'thermal-network')
 
-    def get_network_layout_pipes_csv_file(self, network):
-        """scenario/outputs/data/optimization/network/layout/DH_PipesData.csv or DC_PipesData.csv
-        Network layout files for pipes of district heating or cooling networks
-        """
-        return os.path.join(self.get_thermal_network_folder(), "PipesData_" + network + ".csv")
-
     def get_nominal_edge_mass_flow_csv_file(self, network_type, network_name):
         """scenario/outputs/data/optimization/network/layout/DH_NodesData.csv or DC_NodesData.csv
         Network layout files for nodes of district heating or cooling networks
@@ -1188,10 +1182,6 @@ class InputLocator(object):
         :param category:
         """
         return os.path.join(self.get_plots_folder(category), '%(building_name)s.html' % locals())
-
-    def get_networks_plots_file(self, network_name, category):
-        """scenario/outputs/plots/timeseries/{network_name}.html"""
-        return os.path.join(self.get_plots_folder(category), '%(network_name)s.png' % locals())
 
     # OTHER
     def get_temporary_folder(self):
