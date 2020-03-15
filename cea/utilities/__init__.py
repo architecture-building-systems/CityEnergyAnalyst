@@ -1,5 +1,6 @@
 import os
 
+
 def remap(x, in_min, in_max, out_min, out_max):
     """
     Scale x from range [in_min, in_max] to [out_min, out_max]
@@ -20,6 +21,8 @@ def simple_memoize(obj):
             cache[key] = obj(*args, **kwargs)
         return cache[key]
     return memoized_func
+
+
 class pushd(object):
     """
     Manage an os.chdir so that at the end of a with block, the path is set back to what it was

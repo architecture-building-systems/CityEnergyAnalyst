@@ -18,6 +18,7 @@ api.add_namespace(dashboard, path='/dashboards')
 api.add_namespace(glossary, path='/glossary')
 api.add_namespace(databases, path='/databases')
 
+
 @api.errorhandler
 def default_error_handler(error):
     """Default error handler"""
