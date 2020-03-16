@@ -175,6 +175,12 @@ class InputFileValidator(object):
                 column_errors = data[column].apply(get_validator_func(col_schema)).dropna()
             for index, error in column_errors.iteritems():
                 errors.append([{'row': int(index) + 1, 'column': str(column)}, error])
+
+            # Make sure values are unique
+            if 'primary' in col_schema:
+                duplicates = data[column][data[column].duplicated(keep=False)]
+                for index, col_value in duplicates.iteritems():
+                    errors.append([{'row': int(index) + 1, 'column': str(column)}, 'value is not unique: {}'.format(col_value)])
         return errors
 
     def assert_constraints(self, data, data_schema):
