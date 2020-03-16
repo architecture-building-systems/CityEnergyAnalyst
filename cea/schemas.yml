@@ -1651,7 +1651,7 @@ get_database_standard_schedules_use:
   schema:
     METADATA:
       columns:
-        name:
+        metadata:
           type: string
     MONTHLY_MULTIPLIER:
       columns:

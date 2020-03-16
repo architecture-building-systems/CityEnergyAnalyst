@@ -1,6 +1,5 @@
 import json
 import os
-import shutil
 from collections import OrderedDict
 
 import geopandas
@@ -8,15 +7,15 @@ import pandas
 import yaml
 from flask import current_app, request
 from flask_restplus import Namespace, Resource, abort
-from .databases import DATABASE_NAMES, DATABASES, DATABASES_TYPE_MAP, database_to_dict, database_dict_to_file, \
-    get_all_schedules_dict, schedule_to_dict, schedule_dict_to_file, use_type_properties_to_dict, \
-    use_type_properties_dict_to_file
 
 import cea.inputlocator
 import cea.utilities.dbf
+from cea.datamanagement.databases_verification import InputFileValidator
+from cea.interfaces.dashboard.api.databases import read_all_databases, DATABASES_SCHEMA_KEYS
 from cea.plots.supply_system.a_supply_system_map import get_building_connectivity, newer_network_layout_exists
 from cea.plots.variable_naming import get_color_array
 from cea.technologies.network_layout.main import layout_network, NetworkLayout
+from cea.utilities.schedule_reader import schedule_to_file, get_all_schedule_names, schedule_to_dataframe
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 
 api = Namespace('Inputs', description='Input data for CEA')
@@ -130,6 +129,7 @@ class AllInputs(Resource):
         store['schedules'] = {}
 
         return store
+
     def put(self):
         form = api.payload
         config = current_app.cea_config
@@ -182,8 +182,8 @@ class AllInputs(Resource):
 
         if schedules:
             for building in schedules:
-                schedule_dict_to_file(schedules[building], locator.get_building_weekly_schedules(building))
-
+                # dict_to_schedule(schedules[building], locator.get_building_weekly_schedules(building))
+                pass
         return out
 
 
@@ -313,65 +313,23 @@ class BuildingSchedule(Resource):
         locator = cea.inputlocator.InputLocator(config.scenario)
         try:
             schedule_path = locator.get_building_weekly_schedules(building)
-            return schedule_to_dict(schedule_path)
+            # return schedule_to_dict(schedule_path)
         except IOError as e:
             print(e)
             abort(500, 'File not found')
 
 
-# TODO: Could create and use method to parse databases since it is very similar to the one in `api/databases` endpoint
-@api.route('/databases/all')
-class InputDatabaseAll(Resource):
+@api.route('/databases')
+class InputDatabaseData(Resource):
     def get(self):
         config = current_app.cea_config
         locator = cea.inputlocator.InputLocator(config.scenario)
         try:
-            # All or nothing. Abort reading databases if encounter error
-            out = OrderedDict()
-            for db_type, db_dict in DATABASES.items():
-                out[db_type] = OrderedDict()
-                for db_name, db_props in db_dict.items():
-                    if db_name == 'USE_TYPES':
-                        out[db_type][db_name] = {}
-                        out[db_type][db_name]['SCHEDULES'] = get_all_schedules_dict(
-                            locator.get_database_use_types_folder())
-                        out[db_type][db_name]['USE_TYPE_PROPERTIES'] = use_type_properties_to_dict(
-                            locator.get_database_use_types_properties())
-                    else:
-                        locator_method = db_props['schema_key']
-                        out[db_type][db_name] = database_to_dict(locator.__getattribute__(locator_method)())
-            return out
+            return read_all_databases(locator.get_databases_folder())
         except IOError as e:
             print(e)
             abort(500, e.message)
 
-
-@api.route('/databases/<string:db>')
-class InputDatabase(Resource):
-    def get(self, db):
-        config = current_app.cea_config
-        locator = cea.inputlocator.InputLocator(config.scenario)
-        try:
-            if db in DATABASE_NAMES:
-                if db == 'USE_TYPES':
-                    out = OrderedDict()
-                    out['SCHEDULES'] = get_all_schedules_dict(
-                        locator.get_database_use_types_folder())
-                    out['USE_TYPE_PROPERTIES'] = use_type_properties_to_dict(
-                        locator.get_database_use_types_properties())
-                else:
-                    db_type = DATABASES_TYPE_MAP[db]
-                    locator_method = DATABASES[db_type][db]['schema_key']
-                    return database_to_dict(locator.__getattribute__(locator_method)())
-            else:
-                abort(400, "Could not find '{}' database. Try instead {}".format(db, ", ".join(DATABASE_NAMES)))
-        except IOError as e:
-            print(e)
-            abort(500, e.message)
-
-
-@api.route('/databases')
-class InputDatabaseSave(Resource):
     def put(self):
         config = current_app.cea_config
         # Preserve key order of json string (could be removed for python3)
@@ -381,8 +339,8 @@ class InputDatabaseSave(Resource):
         for db_type in payload:
             for db_name in payload[db_type]:
                 if db_name == 'USE_TYPES':
-                    use_type_properties_dict_to_file(payload[db_type]['USE_TYPES']['USE_TYPE_PROPERTIES'],
-                                                     locator.get_database_use_types_properties())
+                    database_dict_to_file(payload[db_type]['USE_TYPES']['USE_TYPE_PROPERTIES'],
+                                          locator.get_database_use_types_properties())
                     for archetype, schedule_dict in payload[db_type]['USE_TYPES']['SCHEDULES'].items():
                         schedule_dict_to_file(
                             schedule_dict,
@@ -391,29 +349,11 @@ class InputDatabaseSave(Resource):
                             )
                         )
                 else:
-                    locator_method = DATABASES[db_type][db_name]['schema_key']
+                    locator_method = DATABASES_SCHEMA_KEYS[db_name][0]
                     db_path = locator.__getattribute__(locator_method)()
                     database_dict_to_file(payload[db_type][db_name], db_path)
 
         return payload
-
-
-@api.route('/databases/copy')
-class InputDatabaseCopy(Resource):
-    def put(self):
-        config = current_app.cea_config
-        payload = api.payload
-        locator = cea.inputlocator.InputLocator(config.scenario)
-
-        if payload and 'path' in payload and 'name' in payload:
-            copy_path = os.path.join(payload['path'], payload['name'])
-            if os.path.exists(copy_path):
-                abort(500, 'Copy path {} already exists. Choose a different path/name.'.format(copy_path))
-            locator.ensure_parent_folder_exists(copy_path)
-            shutil.copytree(locator.get_databases_folder(), copy_path)
-            return {'message': 'Database copied to {}'.format(copy_path)}
-        else:
-            abort(500, "'path' and 'name' required")
 
 
 @api.route('/databases/check')
@@ -427,6 +367,21 @@ class InputDatabaseCheck(Resource):
             print(e)
             abort(500, e.message)
         return {'message': 'Database in path seems to be valid.'}
+
+
+def database_dict_to_file(db_dict, db_path):
+    with pandas.ExcelWriter(db_path) as writer:
+        for sheet_name, data in db_dict.items():
+            df = pandas.DataFrame(data).dropna(axis=0, how='all')
+            df.to_excel(writer, sheet_name=sheet_name, index=False)
+    print('Database file written to {}'.format(db_path))
+
+
+def schedule_dict_to_file(schedule_dict, schedule_path):
+    schedule = OrderedDict()
+    for key, data in schedule_dict.items():
+        schedule[key] = pandas.DataFrame(data)
+    schedule_to_file(schedule, schedule_path)
 
 
 def get_choices(choice_properties, path):
