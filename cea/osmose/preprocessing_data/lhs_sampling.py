@@ -18,7 +18,7 @@ problem_dict = {
 }
 
 problem_name = 'Building'
-number_of_samples = 10
+number_of_samples = 100
 iterations = 100000
 
 def main():
