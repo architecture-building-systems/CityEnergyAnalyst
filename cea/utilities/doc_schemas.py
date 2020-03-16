@@ -1,6 +1,7 @@
 """
-
+Create a schemas.yml-compatible entry given a locator method by reading the file from the current scenario.
 """
+
 from __future__ import division
 from __future__ import print_function
 
@@ -9,7 +10,7 @@ import cea.config
 import cea.inputlocator
 
 __author__ = "Daren Thomas"
-__copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
+__copyright__ = "Copyright 2020, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Daren Thomas"]
 __license__ = "MIT"
 __version__ = "0.1"
@@ -18,28 +19,21 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def template(locator, archetypes):
-    """this is where the action happens if it is more than a few lines in ``main``.
-    NOTE: ADD YOUR SCRIPT'S DOCUMENATION HERE (how)
-    NOTE: RENAME THIS FUNCTION (SHOULD PROBABLY BE THE SAME NAME AS THE MODULE)
-    """
-    pass
+def read_schema(scenario, locator_method, args=None):
+    print(args)
+    if not args:
+        args = []
+    locator = cea.inputlocator.InputLocator(scenario=scenario)
+    method = getattr(locator, locator_method)
+    path = method(*args)
+    return path
 
 
 def main(config):
     """
-    This is the main entry point to your script. Any parameters used by your script must be present in the ``config``
-    parameter. The CLI will call this ``main`` function passing in a ``config`` object after adjusting the configuration
-    to reflect parameters passed on the command line - this is how the ArcGIS interface interacts with the scripts
-    BTW.
-
-    :param config:
-    :type config: cea.config.Configuration
-    :return:
+    Read the schema entry for a locator method, compare it to the current entry and print out a new, updated version.
     """
-    locator = cea.inputlocator.InputLocator(config.scenario)
-
-    template(locator, config.scenario)
+    print(read_schema(config.scenario, config.schemas.locator_method, config.schemas.args))
 
 
 if __name__ == '__main__':
