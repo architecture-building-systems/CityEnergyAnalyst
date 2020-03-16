@@ -1,6 +1,56 @@
-Column Property
+schemas.yml
+###########
+The `schemas.yml` file is used to describe the input/output files used in CEA.
+
+e.g.
+::
+
+    get_database_construction_standards:
+      created_by: [data-initializer]
+      file_path: inputs/technology/archetypes/CONSTRUCTION_STANDARDS.xlsx
+      file_type: xlsx
+      schema:
+        STANDARD_DEFINITION:
+          columns:
+            STANDARD:
+              type: string
+              primary: true
+            Description:
+              type: string
+            YEAR_START:
+              type: int
+              min: 0
+            YEAR_END:
+              type: int
+              min: 0
+          constraints:
+            YEAR:
+              YEAR_START < YEAR_END
+        used_by: []
+
+Each file is represented by a key that is the name of the InputLocator method that points to it.
+
+It provides other information of the file based on these set of properties:
+    - created_by
+        - lists which script creates this file. Useful for script suggestions for missing files.
+    - file_path
+        - path where the file can be found relative to the path of the scenario
+    - file_type
+        - type of file which helps decide what kind of parser to use to read the data found in the file
+    - schema
+        - describes the data structure of the file and how it interacts with data from other files
+    - used_by
+        - lists which script uses this file.
+
+
+The *schema* of the file would be separated into two sections: **columns** and **constraints**
+Below we will describe the various properties used by *schema*.
+
+Columns Property
 ======================
-The schema will validate column values based on the type specified for that column
+The schema stores information regarding the values found in the columns of the given data and is described by giving the expected type of value.
+
+This information would be used by the `InputValidator` class to validate each value found in the column.
 
 Currently the schema supports types:
     - String
@@ -8,12 +58,10 @@ Currently the schema supports types:
     - Choice
     - Boolean
 
-which the `InputFileValidator` class would use to validate using `Validator` classes.
+Each of these types will inherit from a set of base properties.
 
-Base type
-------------
-
-Each type will inherit from a set of base properties listed here
+Base Properties
+---------------
 
 Properties:
 
@@ -23,6 +71,8 @@ Properties:
 String type
 ------------
 
+Inherits from Base Properties.
+
 Properties:
 
 - Regex. Value matches the given regular expression
@@ -30,6 +80,8 @@ Properties:
 
 Numeric type
 ------------
+
+Inherits from Base Properties.
 
 Tests:
 
@@ -60,6 +112,8 @@ Tests:
 Choice type
 ------------
 
+Inherits from Base Properties.
+
 Tests:
 
 - Checks if value is found in a list of values based on the properties set below
@@ -78,6 +132,9 @@ Tests:
 Boolean type
 ------------
 
+Inherits from Base Properties.
+
+
 Tests:
 
 - Checks if value is an instance of boolean (i.e. True or False)
@@ -89,7 +146,8 @@ Besides column-based validation, the schema also provides a simple* row-based va
 Provide a property as the name of the constraint and enter a boolean expression with column names of the table
 
 e.g.
+::
 
-constraints:
-    YEAR:
-        YEAR_START < YEAR_END
+    constraints:
+        YEAR:
+            YEAR_START < YEAR_END
