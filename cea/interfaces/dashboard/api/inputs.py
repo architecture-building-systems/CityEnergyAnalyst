@@ -369,6 +369,41 @@ class InputDatabaseCheck(Resource):
         return {'message': 'Database in path seems to be valid.'}
 
 
+@api.route("/databases/validate")
+class InputDatabaseValidate(Resource):
+    def get(self):
+        import cea.scripts
+        config = current_app.cea_config
+        locator = cea.inputlocator.InputLocator(config.scenario)
+        schemas = cea.scripts.schemas()
+        validator = InputFileValidator(locator)
+        out = OrderedDict()
+
+        for db_name, schema_keys in DATABASES_SCHEMA_KEYS.items():
+            for schema_key in schema_keys:
+                schema = schemas[schema_key]
+                if schema_key != 'get_database_standard_schedules_use':
+                    db_path = locator.__getattribute__(schema_key)()
+                    try:
+                        df = pandas.read_excel(db_path, sheet_name=None)
+                        errors = validator.validate(df, schema)
+                        if errors:
+                            out[db_name] = errors
+                    except IOError as e:
+                        out[db_name] = [{}, 'Could not find or read file: {}'.format(db_path)]
+                else:
+                    for use_type in get_all_schedule_names(locator.get_database_use_types_folder()):
+                        db_path = locator.__getattribute__(schema_key)(use_type)
+                        try:
+                            df = schedule_to_dataframe(db_path)
+                            errors = validator.validate(df, schema)
+                            if errors:
+                                out[use_type] = errors
+                        except IOError as e:
+                            out[use_type] = [{}, 'Could not find or read file: {}'.format(db_path)]
+        return out
+
+
 def database_dict_to_file(db_dict, db_path):
     with pandas.ExcelWriter(db_path) as writer:
         for sheet_name, data in db_dict.items():
