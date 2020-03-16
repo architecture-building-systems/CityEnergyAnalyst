@@ -11,11 +11,12 @@ from flask_restplus import Namespace, Resource, abort
 import cea.inputlocator
 import cea.utilities.dbf
 from cea.datamanagement.databases_verification import InputFileValidator
-from cea.interfaces.dashboard.api.databases import read_all_databases, DATABASES_SCHEMA_KEYS
+from cea.interfaces.dashboard.api.databases import read_all_databases, DATABASES_SCHEMA_KEYS, schedule_to_dict
 from cea.plots.supply_system.a_supply_system_map import get_building_connectivity, newer_network_layout_exists
 from cea.plots.variable_naming import get_color_array
 from cea.technologies.network_layout.main import layout_network, NetworkLayout
-from cea.utilities.schedule_reader import schedule_to_file, get_all_schedule_names, schedule_to_dataframe
+from cea.utilities.schedule_reader import schedule_to_file, get_all_schedule_names, schedule_to_dataframe, \
+    read_cea_schedule, save_cea_schedule
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 
 api = Namespace('Inputs', description='Input data for CEA')
@@ -182,8 +183,19 @@ class AllInputs(Resource):
 
         if schedules:
             for building in schedules:
-                # dict_to_schedule(schedules[building], locator.get_building_weekly_schedules(building))
-                pass
+                schedule_dict = schedules[building]
+                schedule_path = locator.get_building_weekly_schedules(building)
+                schedule_data = schedule_dict['SCHEDULES']
+                schedule_complementary_data = {'MONTHLY_MULTIPLIER': schedule_dict['MONTHLY_MULTIPLIER'],
+                                               'METADATA': schedule_dict['METADATA']}
+                data = pandas.DataFrame()
+                for day in ['WEEKDAY', 'SATURDAY', 'SUNDAY']:
+                    df = pandas.DataFrame({'HOUR': range(1, 25), 'DAY': [day] * 24})
+                    for schedule_type, schedule in schedule_data.items():
+                        df[schedule_type] = schedule[day]
+                    data = data.append(df, ignore_index=True)
+                save_cea_schedule(data.to_dict('list'), schedule_complementary_data, schedule_path)
+                print('Schedule file written to {}'.format(schedule_path))
         return out
 
 
@@ -313,7 +325,13 @@ class BuildingSchedule(Resource):
         locator = cea.inputlocator.InputLocator(config.scenario)
         try:
             schedule_path = locator.get_building_weekly_schedules(building)
-            # return schedule_to_dict(schedule_path)
+            schedule_data, schedule_complementary_data = read_cea_schedule(schedule_path)
+            df = pandas.DataFrame(schedule_data).set_index(['DAY', 'HOUR'])
+            out = {'SCHEDULES': {
+                schedule_type: {day: df.loc[day][schedule_type].values.tolist() for day in df.index.levels[0]}
+                for schedule_type in df.columns}}
+            out.update(schedule_complementary_data)
+            return out
         except IOError as e:
             print(e)
             abort(500, 'File not found')
