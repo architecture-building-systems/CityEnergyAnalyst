@@ -10,15 +10,25 @@ problem_dict = {
         'names':['capex_weight', 'dT1', 'dT2', 'dT3', 'dT4', 'dT_sc', 'dTn', 'dTn_r', 'T5'],
         'bounds':[[0,1],[10,15],[8,10],[2,4],[2,4],[0,1],[3,4],[7,9],[4,7]]
         },
+    "Networks" : {
+        'num_vars': 9,
+        'names':['capex_weight', 'dT1', 'dT2', 'dT3', 'dT4', 'dTn_1', 'dTn_2', 'dTn_3', 'T5'],
+        'bounds':[[0,1],[10,15],[8,10],[2,4],[2,4],[5,15],[5,15],[5,15],[4,7]]
+    },
     'Building': {
         'num_vars': 7,
         'names':['capex_weight', 'dT1', 'dT2', 'dT3', 'dT4', 'dT_sc', 'T5'],
-        'bounds':[[0,1],[10,15],[8,10],[2,4],[2,4],[0.01,5],[4,7]]
+        'bounds':[[0,1],[10,20],[8,10],[2,4],[2,4],[0.01,5],[4,7]]
         },
+    'Buildings': {
+        'num_vars': 8,
+        'names': ['capex_weight', 'dT1', 'dT2', 'dT3', 'dT4', 'dT5', 'dT_sc', 'T6'],
+        'bounds': [[0, 1], [20,30], [10, 20], [8, 10], [2, 4], [2, 4], [0.01, 15], [4, 7]]
+    },
 }
 
 problem_name = 'Building'
-number_of_samples = 100
+number_of_samples = 500
 iterations = 100000
 
 def main():
@@ -30,7 +40,7 @@ def main():
     # output_flat
     df = pd.DataFrame(lhs_samples)
     path_to_osmose_projects = 'E:\\OSMOSE_projects\\HCS_mk\\Projects\\'
-    df.to_csv(os.path.join(path_to_osmose_projects,problem_name + '_flat.dat'), index=False, header=False,
+    df.to_csv(os.path.join(path_to_osmose_projects, problem_name + '_flat.dat'), index=False, header=False,
               line_terminator=',\n', )
     print('file saved to ', path_to_osmose_projects)
     return
