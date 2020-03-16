@@ -457,7 +457,7 @@ Documentation:
 
   - name: schema
     label: schema
-    description: Create a schema definition for a locator method
+    description: Display schema information of an (existing) file given a locator method
     interfaces: [doc]
     module: cea.utilities.doc_schemas
     parameters: ["general:scenario", schemas]

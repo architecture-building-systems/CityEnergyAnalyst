@@ -702,11 +702,11 @@ class InputLocator(object):
     def get_thermal_network_folder(self):
         return self._ensure_folder(self.scenario, 'outputs', 'data', 'thermal-network')
 
-    def get_nominal_edge_mass_flow_csv_file(self, network_type, network_name):
+    def get_nominal_edge_mass_flow_csv_file(self, network_type, network_name=""):
         """scenario/outputs/data/optimization/network/layout/DH_NodesData.csv or DC_NodesData.csv
         Network layout files for nodes of district heating or cooling networks
         """
-        if len(network_name) is 0:
+        if not network_name:
             file_name = 'Nominal_EdgeMassFlow_at_design_' + network_type + '_' + '_kgpers.csv'
         else:
             file_name = 'Nominal_EdgeMassFlow_at_design_' + network_type + '_' + network_name + '_kgpers.csv'
