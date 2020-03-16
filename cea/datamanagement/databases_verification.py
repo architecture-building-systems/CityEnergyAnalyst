@@ -247,7 +247,9 @@ class ChoiceTypeValidator(BaseTypeValidator):
         self.values = self.choice_properties.get('values')
 
     def validate(self, value):
-        super(ChoiceTypeValidator, self).validate(value)
+        errors = super(ChoiceTypeValidator, self).validate(value)
+        if errors:
+            return errors
         if self.choices and value not in self.choices or self.values and value not in self.values:
             return 'value must be from choices {} : got {}'.format([str(choice) for choice in self.choices or self.values], value)
         return None
@@ -259,7 +261,9 @@ class StringTypeValidator(BaseTypeValidator):
         self.regex = schema.get('regex')
 
     def validate(self, value):
-        super(StringTypeValidator, self).validate(value)
+        errors = super(StringTypeValidator, self).validate(value)
+        if errors:
+            return errors
         if self.regex is not None and not re.search(self.regex, value):
             return 'value is not in the proper format regex {} : got {}'.format(self.regex, value)
 
@@ -271,7 +275,9 @@ class NumericTypeValidator(BaseTypeValidator):
         self.max = schema.get('max')
 
     def validate(self, value):
-        super(NumericTypeValidator, self).validate(value)
+        errors = super(NumericTypeValidator, self).validate(value)
+        if errors:
+            return errors
         if self.min is not None and value < self.min or self.max is not None and value > self.max:
             return 'value must be in range {}, {}: got {}'.format('[' + str(self.min)
                                                                   if self.min is not None else '(-inf',
@@ -287,7 +293,7 @@ class IntegerTypeValidator(NumericTypeValidator):
     def validate(self, value):
         if type(value) not in (int, long):
             return 'value must be of type integer: got {}'.format(value)
-        super(IntegerTypeValidator, self).validate(value)
+        return super(IntegerTypeValidator, self).validate(value)
 
 
 class FloatTypeValidator(NumericTypeValidator):
@@ -297,7 +303,7 @@ class FloatTypeValidator(NumericTypeValidator):
     def validate(self, value):
         if type(value) not in (int, long, float):
             return 'value must be of type float: got {}'.format(value)
-        super(FloatTypeValidator, self).validate(value)
+        return super(FloatTypeValidator, self).validate(value)
 
 
 class BooleanTypeValidator(BaseTypeValidator):
@@ -305,7 +311,9 @@ class BooleanTypeValidator(BaseTypeValidator):
         super(BooleanTypeValidator, self).__init__(schema)
 
     def validate(self, value):
-        super(BooleanTypeValidator, self).validate(value)
+        errors = super(BooleanTypeValidator, self).validate(value)
+        if errors:
+            return errors
         if not isinstance(value, bool):
             return 'value can only be True or False: got {}'.format(value)
 
