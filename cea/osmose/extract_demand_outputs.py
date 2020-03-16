@@ -112,7 +112,7 @@ def extract_cea_outputs_to_osmose_main(case, timesteps, season, specified_buildi
         # hot water demand
         output_building['Q_dhw_kWh'] = reduced_demand_df['Qww_sys']/1000
         output_building['Tww_sup_C'] = reduced_demand_df['Tww_sys_sup']
-        output_building['Tww_ret_C'] = reduced_demand_df['Tww_sys_re']
+        output_building['Tww_ret_C'] = reduced_demand_df['T_ext']   # to avoid heating from ambient air
         output_building = output_building.round(4)  # osmose does not read more decimals (observation)
         # output_building = output_building.drop(output_df.index[range(7)])
 
