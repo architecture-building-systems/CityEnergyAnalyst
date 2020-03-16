@@ -20,12 +20,11 @@ __status__ = "Production"
 
 
 def read_schema(scenario, locator_method, args=None):
-    print(args)
     if not args:
         args = []
     locator = cea.inputlocator.InputLocator(scenario=scenario)
     method = getattr(locator, locator_method)
-    path = method(*args)
+    path = method(**args)
     return path
 
 
