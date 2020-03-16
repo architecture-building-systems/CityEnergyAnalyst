@@ -69,6 +69,7 @@ def write_input_parameter_to_osmose(geometry_df, occupancy_df, season, specified
         output_hcs.update(scalar_df)
         # get m_ve_min
         m_ve_min_df['m_ve_min_'+case.split('_')[-1]] = output_hcs['m_ve_min']
+        m_ve_min_df['T_ext_wb'] = output_hcs['T_ext_wb']
         output_hcs.T.to_csv(path_to_osmose_project_hcs('B_' + case.split('_')[4], 'hcs'), header=False)  # save files
         # remove T_OAU_offcoil
         T_OAU_offcoil_df = output_hcs[[column for column in output_hcs.columns if 'T_OAU_offcoil' in column]]
