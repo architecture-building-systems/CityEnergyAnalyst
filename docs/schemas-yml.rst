@@ -42,7 +42,48 @@ It provides other information of the file based on these set of properties:
     - used_by
         - lists which script uses this file.
 
+File type
++++++++++
+*file_type* affects how CEA parses the information found in the *schema* property.
 
+This is because some file types would contain more than one table in them
+e.g. excel files usually contain multiple tables depending on the number of sheets that it has
+while .csv/.dbf files usually only contain one table.
+
+
+To workaround this, the level of keys found in schema would be different based on its type,
+where the table name for multiple table type files would encapsulate each *schema* properties
+as found in single table type files.
+
+e.g. single table type files
+::
+
+
+    $locator_method_name:
+      schema:
+        columns:
+            $column_name:
+                $column_properties
+        constraints:
+            $constraints
+
+
+e.g. multiple table type files
+::
+
+
+    $locator_method_name:
+      schema:
+        $table_name:
+            columns:
+                $column_name:
+                    $column_properties
+            constraints:
+                $constraints
+
+
+Schema
+++++++
 The *schema* of the file would be separated into two sections: **columns** and **constraints**
 Below we will describe the various properties used by *schema*.
 
