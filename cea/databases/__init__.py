@@ -90,23 +90,22 @@ def get_database_tree(db_path):
     return out
 
 
-def path_crawler(parent_path, out=None):
+def path_crawler(parent_path):
     """
-    Recursive function that looks for files in `parent_path`
+    Looks for database files in `parent_path`
     :param parent_path:
-    :param out:
     :return: list of files with its properties (i.e. name, extension, path) contained in `parent_path`
     """
-    if out is None:
-        out = []
+    out = list()
     if os.path.isfile(parent_path):
         name, ext = os.path.splitext(os.path.basename(parent_path))
-        if ext in FILE_EXTENSIONS:
-            out.append({'path': parent_path, 'name': name, 'extension': ext})
+        out.append({'path': parent_path, 'name': name, 'extension': ext})
     else:
-        for path in os.listdir(parent_path):
-            child_path = os.path.join(parent_path, path)
-            path_crawler(child_path, out)
+        for (dir_path, _, filenames) in os.walk(parent_path):
+            for f in filenames:
+                file_path = os.path.join(dir_path, f)
+                name, ext = os.path.splitext(os.path.basename(file_path))
+                out.append({'path': file_path, 'name': name, 'extension': ext})
     return out
 
 
