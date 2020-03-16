@@ -454,3 +454,10 @@ Documentation:
     interfaces: [doc]
     module: cea.utilities.doc_glossary
     parameters: []
+
+  - name: schema
+    label: schema
+    description: Create a schema definition for a locator method
+    interfaces: [doc]
+    module: cea.utilities.doc_schemas
+    parameters: ["general:scenario", schemas]
