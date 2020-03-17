@@ -27,9 +27,9 @@ problem_dict = {
     },
 }
 
-problem_name = 'Building'
-number_of_samples = 200
-iterations = 100000
+problem_name = 'Networks'
+number_of_samples = 300
+iterations = 100000   #10000 from Steffen
 
 def main():
     # get problem
