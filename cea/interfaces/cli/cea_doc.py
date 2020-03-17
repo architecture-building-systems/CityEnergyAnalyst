@@ -47,6 +47,10 @@ def main(config=None):
     config.restrict_to(cea_script.parameters)
     config.apply_command_line_args(args, cea_script.parameters)
 
+    # save the updates to the configuration file (re-running the same tool will result in the
+    # same parameters being set)
+    config.save(cea.config.CEA_CONFIG)
+
     script_module = importlib.import_module(cea_script.module)
     try:
         script_module.main(config)
