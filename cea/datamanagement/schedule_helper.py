@@ -206,21 +206,23 @@ def get_list_of_uses_in_case_study(building_typology_df):
     validates lists of uses in case study.
     refactored from archetypes_mapper function
 
-    :param building_typology_df: dataframe of occupancy.dbf input (can be read in archetypes-mapper or in building-properties)
+    :param building_typology_df: dataframe of typology.dbf input (can be read in archetypes-mapper or in building-properties)
     :type building_typology_df: pandas.DataFrame
     :return: list of uses in case study
     :rtype: pandas.DataFrame.Index
     """
     list_var_names = ["1ST_USE", '2ND_USE', '3RD_USE']
     list_var_values = ["1ST_USE_R", '2ND_USE_R', '3RD_USE_R']
+
     # validate list of uses
-    list_uses = []
-    n_records = building_typology_df.shape[0]
-    for row in range(n_records):
-        for var_name, var_value in zip(list_var_names,list_var_values):
-            if building_typology_df.loc[row, var_value] > 0.0:
-                list_uses.append(building_typology_df.loc[row, var_name])  # append valid uses
-    unique_uses = list(set(list_uses))
+    list_uses = set()
+
+    for var_name, var_value in zip(list_var_names, list_var_values):
+        uses_with_value = building_typology_df[var_value] > 0.0
+        filtered = building_typology_df[var_name][uses_with_value]
+        list_uses.update(filtered)
+
+    unique_uses = list(list_uses)
     return unique_uses
 
 
