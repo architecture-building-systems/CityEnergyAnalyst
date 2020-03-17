@@ -104,6 +104,7 @@ def update_trace_data(config, locator, results_set, script_name, script_start,
 
 
 def meta_to_yaml(config, trace_data, meta_output_file):
+    buildings = cea.inputlocator.InputLocator(config.scenario).get_zone_building_names()
 
     locator_meta = {}
 
@@ -119,7 +120,7 @@ def meta_to_yaml(config, trace_data, meta_output_file):
             locator_meta[locator_method]['created_by'] = []
             locator_meta[locator_method]['used_by'] = []
             print("Getting schema for {file_full_path}".format(file_full_path=file_full_path))
-            locator_meta[locator_method]['schema'] = cea.utilities.doc_schemas.read_schema_details(file_full_path, file_type)
+            locator_meta[locator_method]['schema'] = cea.utilities.doc_schemas.read_schema_details(file_full_path, file_type, buildings)
             locator_meta[locator_method]['file_path'] = file_full_path
             locator_meta[locator_method]['file_type'] = file_type
             locator_meta[locator_method]['description'] = eval('cea.inputlocator.InputLocator(cea.config).' + str(

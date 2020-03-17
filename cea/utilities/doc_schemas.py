@@ -10,7 +10,9 @@ from __future__ import print_function
 
 import os
 import yaml
+import json
 import pandas as pd
+from pandas.errors import EmptyDataError
 import dateutil.parser
 import cea.config
 import cea.inputlocator
@@ -29,18 +31,20 @@ def read_schema(scenario, locator_method, args=None):
     if not args:
         args = {}
     abs_path = read_path(args, locator_method, scenario)
-
     file_type = read_file_type(abs_path)
+
+    buildings = cea.inputlocator.InputLocator(scenario).get_zone_building_names()
+
     return {
         locator_method: {
             "file_path": read_file_path(abs_path, scenario, args),
             "file_type": file_type,
-            "schema": read_schema_details(abs_path, file_type),
+            "schema": read_schema_details(abs_path, file_type, buildings),
         }
     }
 
 
-def read_schema_details(abs_path, file_type):
+def read_schema_details(abs_path, file_type, buildings):
     """Read out the schema, based on the file_type"""
     schema_readers = {
         "xls": get_xls_schema,
@@ -54,7 +58,7 @@ def read_schema_details(abs_path, file_type):
         "shp": get_shp_schema,
         "html": get_html_schema,
     }
-    return schema_readers[file_type](abs_path)
+    return schema_readers[file_type](abs_path, buildings)
 
 
 def read_file_type(abs_path):
@@ -85,45 +89,48 @@ def read_file_path(abs_path, scenario, args):
     return file_path
 
 
-def get_csv_schema(filename):
+def get_csv_schema(filename, buildings):
     try:
-        db = pd.read_csv(filename)
-    except pd.errors.EmptyDataError:
+        df = pd.read_csv(filename)
+    except EmptyDataError:
         # csv file is empty
         return None
-    schema = {}
-    for attr in db:
-        attr = replace_repetitive_attr(attr)
-        schema[attr.encode('ascii', 'ignore')] = get_meta(db[attr])
+    schema = {"columns": {}}
+    for column_name in df.columns:
+        column_name = replace_repetitive_column_names(column_name, buildings)
+        column_name = column_name.encode('ascii', 'ignore')
+        schema["columns"][column_name] = get_column_schema(df[column_name])
     return schema
 
 
-def replace_repetitive_attr(attr):
-    scenario = cea.config.Configuration().__getattr__('scenario')
-    buildings = cea.inputlocator.InputLocator(scenario).get_zone_building_names()
-    if attr.find('srf') != -1:
-        attr = attr.replace(attr, 'srf0')
-    if attr.find('PIPE') != -1:
-        attr = attr.replace(attr, 'PIPE0')
-    if attr.find('NODE') != -1:
-        attr = attr.replace(attr, 'NODE0')
-    if attr in buildings:
-        attr = attr.replace(attr, buildings[0])
-    return attr
+def replace_repetitive_column_names(column_name, buildings):
+    """
+    Returns column_name _unless_ it's one of a few special cases (building names, PIPE names, NODE names, srf names)
+    :param str column_name: the name of the column
+    :return: column_name or similar (for repetitive column names)
+    """
+    if column_name.startswith('srf'):
+        column_name = "srf0"
+    if column_name.startswith('PIPE'):
+        column_name = "PIPE0"
+    if column_name.startswith('NODE'):
+        column_name = "NODE0"
+    if column_name in buildings:
+        column_name = buildings[0]
+    return column_name
 
 
-def get_json_schema(filename):
+def get_json_schema(filename, buildings):
     with open(filename, 'r') as f:
-        import json
-        db = json.load(f)
+        df = json.load(f)
     schema = {}
-    for attr in db:
-        attr = replace_repetitive_attr(attr)
-        schema[attr.encode('ascii', 'ignore')] = get_meta(db[attr])
+    for column_name in df.columns:
+        column_name = replace_repetitive_column_names(column_name, buildings)
+        schema[column_name.encode('ascii', 'ignore')] = get_column_schema(df[column_name])
     return schema
 
 
-def get_epw_schema(filename):
+def get_epw_schema(filename, _):
     epw_labels = ['year (index = 0)', 'month (index = 1)', 'day (index = 2)', 'hour (index = 3)',
                   'minute (index = 4)', 'datasource (index = 5)', 'drybulb_C (index = 6)',
                   'dewpoint_C (index = 7)',
@@ -148,57 +155,57 @@ def get_epw_schema(filename):
     db = pd.read_csv(filename, skiprows=8, header=None, names=epw_labels)
     schema = {}
     for attr in db:
-        schema[attr.encode('ascii', 'ignore')] = get_meta(db[attr])
+        schema[attr.encode('ascii', 'ignore')] = get_column_schema(db[attr])
     return schema
 
 
-def get_dbf_schema(filename):
+def get_dbf_schema(filename, _):
     import pysal
     db = pysal.open(filename, 'r')
     schema = {}
     for attr in db.header:
-        schema[attr.encode('ascii', 'ignore')] = get_meta(db.by_col(attr))
+        schema[attr.encode('ascii', 'ignore')] = get_column_schema(db.by_col(attr))
     return schema
 
 
-def get_shp_schema(filename):
+def get_shp_schema(filename, scenario):
     import geopandas
     db = geopandas.read_file(filename)
     schema = {}
     for attr in db:
-        attr = replace_repetitive_attr(attr)
-        meta = get_meta(db[attr])
+        attr = replace_repetitive_column_names(attr, scenario)
+        meta = get_column_schema(db[attr])
         if attr == 'geometry':
             meta['sample_data'] = '((x1 y1, x2 y2, ...))'
         schema[attr.encode('ascii', 'ignore')] = meta
     return schema
 
 
-def get_xls_schema(filename):
-    db = pd.read_excel(filename, sheet_name=None)
+def get_xls_schema(filename, _):
+    sheets = pd.read_excel(filename, sheet_name=None)
     schema = {}
-    for sheet in db:
-        meta = {}
-        nested_df = db[sheet]
+    for sheet in sheets.keys():
+        sheet_schema = {"columns": {}}
+        sheet_df = sheets[sheet]
         # if xls seems to have row attributes
-        if 'Unnamed: 1' in db[sheet].keys():
-            nested_df = db[sheet].T
+        if 'Unnamed: 1' in sheets[sheet].keys():
+            sheet_df = sheet_df.T
             # filter the nans
-            new_cols = []
-            for col in nested_df.columns:
-                if col == col:
-                    new_cols.append(col)
+            new_columns = []
+            for column_name in sheet_df.columns:
+                if column_name:
+                    new_columns.append(column_name)
             # change index to numbered
-            nested_df.index = range(len(nested_df))
+            sheet_df.index = range(len(sheet_df))
             # select only non-nan columns
-            nested_df = nested_df[new_cols]
-        for attr in nested_df:
-            meta[attr.encode('ascii', 'ignore')] = get_meta(nested_df[attr])
-        schema[sheet.encode('ascii', 'ignore')] = meta
+            sheet_df = sheet_df[new_columns]
+        for column_name in sheet_df.columns:
+            sheet_schema["columns"][column_name.encode('ascii', 'ignore')] = get_column_schema(sheet_df[column_name])
+        schema[sheet.encode('ascii', 'ignore')] = sheet_schema
     return schema
 
 
-def get_tif_schema(_):
+def get_tif_schema(_, __):
     return {
         'raster_value': {
             'sample_data': 1.0,
@@ -211,7 +218,7 @@ def get_html_schema(_):
     return None
 
 
-def get_meta(df_series):
+def get_column_schema(df_series):
     types_found = set()
     meta = {}
     for data in df_series:
