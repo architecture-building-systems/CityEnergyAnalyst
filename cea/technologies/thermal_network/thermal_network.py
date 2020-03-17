@@ -568,12 +568,6 @@ def thermal_network_main(locator, thermal_network, processes=1):
     # edge flow rates (flow direction corresponding to edge_node_df)
     csv_outputs = {field: [getattr(htr, field) for htr in hourly_thermal_results]
                    for field in HourlyThermalResults._fields}
-    pumping_at_plant = calculate_pressure_loss_critical_path(csv_outputs['pressure_loss_supply_edge_kW'], thermal_network)
-    pd.DataFrame(pumping_at_plant,
-                 columns=thermal_network.edge_node_df.columns).to_csv(
-        "C:\\reference-case-open\\baseline\\outputs\\data\\thermal-network\\dP_test.csv",
-        index=False,
-        float_format='%.3f')
     save_all_results_to_csv(csv_outputs, thermal_network)
 
     # identify all plants
@@ -637,7 +631,7 @@ def calculate_pressure_loss_critical_path(dP_timestep, thermal_network):
                 end_node = path_to_critical_node[i+1]
                 dP = G[start_node][end_node]['weight']
                 idx = int(G[start_node][end_node]['ix'])
-                print(start_node, end_node, idx, dP)
+                print(start_node, end_node, idx, dP) #TODO: delete
                 pressure_losses_in_critical_paths[idx] = dP
         # find substations
         substation_nodes_ix = []
@@ -645,7 +639,7 @@ def calculate_pressure_loss_critical_path(dP_timestep, thermal_network):
         for node in path_to_critical_node:
             if node_df.ix[node]['Type'] != 'NONE':
                 substation_nodes_ix.append(int(node.split('NODE')[1]))
-        print(substation_nodes_ix)
+        print(substation_nodes_ix) #TODO: delete
     else:
         pressure_losses_in_critical_paths = np.zeros(len(dP_all_edges))  # zero array
         substation_nodes_ix = []
@@ -1407,7 +1401,7 @@ def calc_pressure_nodes(t_supply_node__k, t_return_node__k, thermal_network, t):
     pressure_loss_critical_supply_kW = pressure_loss_critical_path_supply_pa * edge_mass_flow / P_WATER_KGPERM3 / 1000 / PUMP_ETA
     pressure_loss_critical_return_kW = pressure_loss_critical_path_return_pa * edge_mass_flow / P_WATER_KGPERM3 / 1000 / PUMP_ETA
     pressure_loss_nodes_kW = pressure_loss_nodes_pa * node_mass_flow / P_WATER_KGPERM3 / 1000 / PUMP_ETA
-    pressure_loss_critical_substations_kW = pressure_loss_critical_substations_pa * node_mass_flow / P_WATER_KGPERM3 / 1000 / PUMP_ETA
+    pressure_loss_critical_substations_kW = pressure_loss_critical_substations_pa * abs(node_mass_flow) / P_WATER_KGPERM3 / 1000 / PUMP_ETA
 
     pressure_loss_substations_pa = []
     pressure_loss_substations_kW = []
