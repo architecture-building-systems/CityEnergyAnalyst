@@ -28,7 +28,7 @@ problem_dict = {
 }
 
 problem_name = 'Building'
-number_of_samples = 500
+number_of_samples = 200
 iterations = 100000
 
 def main():
@@ -39,7 +39,8 @@ def main():
     scale_samples(lhs_samples, problem['bounds'])  # scale samples in-place
     # output_flat
     df = pd.DataFrame(lhs_samples)
-    path_to_osmose_projects = 'E:\\OSMOSE_projects\\HCS_mk\\Projects\\'
+    # path_to_osmose_projects = 'E:\\OSMOSE_projects\\HCS_mk\\Projects\\'
+    path_to_osmose_projects = 'C:\\Users\\Zhongming\\Documents\\HCS_mk\\Projects'
     df.to_csv(os.path.join(path_to_osmose_projects, problem_name + '_flat.dat'), index=False, header=False,
               line_terminator=',\n', )
     print('file saved to ', path_to_osmose_projects)
