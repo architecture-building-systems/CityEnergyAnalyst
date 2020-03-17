@@ -631,7 +631,6 @@ def calculate_pressure_loss_critical_path(dP_timestep, thermal_network):
                 end_node = path_to_critical_node[i+1]
                 dP = G[start_node][end_node]['weight']
                 idx = int(G[start_node][end_node]['ix'])
-                print(start_node, end_node, idx, dP) #TODO: delete
                 pressure_losses_in_critical_paths[idx] = dP
         # find substations
         substation_nodes_ix = []
@@ -639,7 +638,6 @@ def calculate_pressure_loss_critical_path(dP_timestep, thermal_network):
         for node in path_to_critical_node:
             if node_df.ix[node]['Type'] != 'NONE':
                 substation_nodes_ix.append(int(node.split('NODE')[1]))
-        print(substation_nodes_ix) #TODO: delete
     else:
         pressure_losses_in_critical_paths = np.zeros(len(dP_all_edges))  # zero array
         substation_nodes_ix = []
@@ -2874,7 +2872,6 @@ def calc_supply_temperatures(t, edge_node_df, mass_flow_df, k, thermal_network):
 
             delta_temp_0 = np.max(abs(t_e_out_old - t_e_out))  # exit condition
             temp_iter = temp_iter + 1
-            # if delta_temp_0 < temp_tolerance: print ('number of temp_iter: ', temp_iter) #todo: remove
 
         # set maximum/minimum allowable plant supply temperatures
         t_boiling_K = 100 + 273.15
