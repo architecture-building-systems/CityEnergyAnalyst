@@ -11,6 +11,7 @@ from __future__ import print_function
 import os
 import yaml
 import pandas as pd
+import dateutil.parser
 import cea.config
 import cea.inputlocator
 
@@ -197,13 +198,12 @@ def get_xls_schema(filename):
     return schema
 
 
-def get_tif_schema(filename):
-    schema = {}
-    schema['raster_value'] = {
-        'sample_data': 1.0,
-        'types_found': [float]
-    }
-    return schema
+def get_tif_schema(_):
+    return {
+        'raster_value': {
+            'sample_data': 1.0,
+            'types_found': [float]
+        }}
 
 
 def get_html_schema(_):
@@ -229,6 +229,17 @@ def get_meta(df_series):
             types_found.add(None)
     meta['types_found'] = list(types_found)
     return meta
+
+
+def is_date(value):
+    if not isinstance(value, basestring):
+        return False
+    try:
+        dateutil.parser.parse(value)
+        return True
+    except ValueError:
+        return False
+
 
 
 def main(config):
