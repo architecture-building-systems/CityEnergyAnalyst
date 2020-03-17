@@ -344,17 +344,26 @@ def main():
                        'get_database_feedstocks']
 
     for locator_method in locator_methods:
-        df = pd.read_excel(locator.__getattribute__(locator_method)(), sheet_name=None)
-        print('Validating {}'.format(locator_method))
+        db_path = locator.__getattribute__(locator_method)()
+        df = pd.read_excel(db_path, sheet_name=None)
+        print('Validating {}'.format(db_path))
         schema = _schemas[locator_method]
         errors = validator.validate(df, schema)
-        pprint.pprint(errors)
+        if errors:
+            pprint.pprint(errors)
+        else:
+            print("No errors found")
+
     for use_types in get_all_schedule_names(locator.get_database_use_types_folder()):
-        df = schedule_to_dataframe(locator.get_database_standard_schedules_use(use_types))
-        print('Validating {}'.format(use_types))
+        db_path = locator.get_database_standard_schedules_use(use_types)
+        df = schedule_to_dataframe(db_path)
+        print('Validating {}'.format(db_path))
         schema = _schemas['get_database_standard_schedules_use']
         errors = validator.validate(df, schema)
-        pprint.pprint(errors)
+        if errors:
+            pprint.pprint(errors)
+        else:
+            print("No errors found")
 
 
 if __name__ == '__main__':
