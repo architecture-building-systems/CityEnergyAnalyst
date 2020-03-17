@@ -14,7 +14,7 @@ import cea.config
 import cea.globalvar
 import cea.inputlocator
 import demand_writers
-from cea.demand import occupancy_model_matsim_import as occupancy_model
+from cea.demand import occupancy_model # occupancy_model_matsim_import as occupancy_model
 from cea.demand import thermal_loads
 from cea.demand.building_properties import BuildingProperties
 from cea.utilities import epwreader
@@ -86,8 +86,10 @@ def demand_calculation(locator, config):
     override_variables = config.demand.override_variables
     write_detailed_output = config.demand.write_detailed_output
     debug = config.debug
-    weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C',
-                                                         'relhum_percent', 'windspd_ms', 'skytemp_C']]
+    # weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C',
+    #                                                      'relhum_percent', 'windspd_ms', 'skytemp_C']]
+    weather_data = epwreader.epw_reader(locator.get_weather_file())[['year', 'drybulb_C', 'wetbulb_C',
+                                                                     'relhum_percent', 'windspd_ms', 'skytemp_C']]
     year = weather_data['year'][0]
 
     # CALCULATE OBJECT WITH PROPERTIES OF ALL BUILDINGS
