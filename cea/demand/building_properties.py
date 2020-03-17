@@ -9,6 +9,7 @@ Classes of building properties
 from __future__ import division
 
 import numpy as np
+import os
 import pandas as pd
 from geopandas import GeoDataFrame as Gdf
 
@@ -959,11 +960,25 @@ def calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, therm
 
     # read daysim radiation
     radiation_data = pd.read_json(locator.get_radiation_building(building_name))
+    # get ENVI-met solar data if available
+    if os.path.isfile(os.path.join(locator.get_microclimate_folder(), building_name + '.csv')):
+        print('ENVImet solar data for {} found, replacing DAYSIM values'.format(building_name))
+        microclimate_data_available = True
+        microclimate_data = pd.read_csv(os.path.join(locator.get_microclimate_folder(), building_name + '.csv'),
+                                        index_col='hoy')
+    else:
+        microclimate_data_available = False
+
     # sum wall
     # solar incident on all walls [W]
     I_sol_wall = np.array(
         [geometry_data_walls.ix[surface, 'AREA_m2'] * multiplier_wall * radiation_data[surface] for surface in
          geometry_data_walls.index]).sum(axis=0)
+    if microclimate_data_available:
+        I_sol_wall.loc[microclimate_data.index] = np.array(
+            [geometry_data_walls.loc[geometry_data_walls['orientation'] == orientation, 'AREA_m2'] * multiplier_wall * \
+             microclimate_data['I_sol_' + orientation + '_Wm2'] for orientation in ['north', 'south', 'east', 'west']]
+        ).sum(axis=0)
     # sensible gain on all walls [W]
     I_sol_wall = I_sol_wall * prop_envelope.ix[building_name, 'a_wall'] * thermal_resistance_surface * \
                  prop_rc_model.ix[building_name, 'U_wall']
@@ -972,6 +987,9 @@ def calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, therm
     # solar incident on all roofs [W]
     I_sol_roof = np.array([geometry_data_roofs.ix[surface, 'AREA_m2'] * radiation_data[surface] for surface in
                            geometry_data_roofs.index]).sum(axis=0)
+    if microclimate_data_available:
+        I_sol_roof.loc[microclimate_data.index] = np.array(geometry_data_roofs['AREA_m2'] *
+                                                           microclimate_data['I_sol_top_Wm2']).sum(axis=0)
     # sensible gain on all roofs [W]
     I_sol_roof = I_sol_roof * prop_envelope.ix[building_name, 'a_roof'] * thermal_resistance_surface * \
                  prop_rc_model.ix[building_name, 'U_roof']
@@ -984,6 +1002,11 @@ def calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, therm
 
     I_sol_win = [geometry_data_windows.ix[surface, 'AREA_m2'] * multiplier_win * radiation_data[surface]
                  for surface in geometry_data_windows.index]
+    if microclimate_data_available:
+        I_sol_win.loc[microclimate_data.index] = np.array(
+            [geometry_data_windows.loc[geometry_data_windows['orientation'] == orientation, 'AREA_m2'] *
+             multiplier_win * microclimate_data['I_sol_' + orientation + '_Wm2']
+             for orientation in ['north', 'south', 'east', 'west']]).sum(axis=0)
 
     I_sol_win = np.array([x * y * (1 - prop_envelope.ix[building_name, 'F_F']) for x, y in zip(I_sol_win, Fsh_win)]).sum(axis=0)
 
