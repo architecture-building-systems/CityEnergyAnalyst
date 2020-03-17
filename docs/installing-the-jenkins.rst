@@ -15,6 +15,7 @@ There are a few steps to take to setting up a Jenkins server:
 - installation of a tunnel to the Jenkins server
 - global configuration of Jenkins
 - configuration of the Jenkins items
+
   - cea test for new pull requests
   - cea test for merges to master
 
@@ -24,22 +25,18 @@ Installation of some prerequisites
 
 You will need to install these softwares:
 
-- Miniconda2 (Python 2.7, 64-bit, download here: https://conda.io/miniconda.html)
+- `CityEnergyAnalyst <https://github.com/architecture-building-systems/CityEnergyAnalyst/releases/latest>`_
+  (install with the ``Setup_CityEnergyAnalyst_<VERSION>.exe`` installer)
 
-  - this setup expects you installed Miniconda with the "Just for me" option. You might need to change some paths along
-    the way if you install for all users.
-  - to the default folder (`%USERPROFILE%\Miniconda2`),
-  - you don't need to add it to the PATH environment variable
-  - I registered it as the default Python 2.7 (but I don't think that is necessary)
-
-- git (I think any version will do, make sure `git.exe` is in your `PATH` by opening a command prompt and typing
-  `git --version`)s
+  - we'll be using the Python environment shipped with the CEA to test the CEA
+  - we'll also be using the `git.exe` shipped with the CEA
 
 Installation of Jenkins
 -----------------------
 
 - Download & install jenkins from https://jenkins.io
-  -  LTS version Jenkins 2.60.3 for Windows
+
+  -  LTS version Jenkins for Windows (last time this document was used, it was version 2.204.4)
   -  just double click the installer, next, next, next (all default values)
   -  set jenkins service to use local user
 
@@ -51,22 +48,22 @@ Installation of Jenkins
        - this will allow the Jenkins to have access to your user profile. You can create an account just for this
          service and use that for the rest of this guide.
 
-- open browser to http://localhost:8080
+- open browser to http://localhost:8080 (NOTE: the installer did this automatically last time tried)
 
   - follow instructions to enter initial admin password
 
-   - click "install suggested plugins"
-   - create first admin user
+    - click "install suggested plugins"
+    - create first admin user
 
-     - Username: *cea*
-     - Password: (same as *cityea* user in outlook, ask Jimeno or Daren for the password)
-     - Full name: *City Energy Analyst*
-     - E-mail address: *cea@arch.ethz.ch*
+      - Username: *cea*
+      - Password: (same as *cityea* user in outlook, ask Jimeno or Daren for the password)
+      - Full name: *City Energy Analyst*
+      - E-mail address: *cea@arch.ethz.ch*
 
-   - Click "Manage Jenkins"
+    - Click "Manage Jenkins"
 
-     - click "Configure System" (following this guide here: https://wiki.jenkins.io/display/JENKINS/Github+Plugin#GitHubPlugin-GitHubhooktriggerforGITScmpolling)
-     -  set "#  of executors" to 1 (let's just make it dead simple, no concurrency, less headache)
+      - click "Configure System" (following this guide here: https://wiki.jenkins.io/display/JENKINS/Github+Plugin#GitHubPlugin-GitHubhooktriggerforGITScmpolling)
+      -  set "#  of executors" to 1 (let's just make it dead simple, no concurrency, less headache)
 
 Installation of a tunnel to the Jenkins server
 ----------------------------------------------
@@ -99,14 +96,29 @@ to tunnel webhooks triggered by GitHub back to the Jenkins server.
   - press CTRL+C to shutdown the tunnel
 
 - copy the ``CityEnergyAnalyst\bin\ceajenkins.py`` file to ``%PROGRAMDATA%\ceajenkins``
-- open the Anaconda Prompt and do ``conda create --name ceajenkins python=2.7 pywin32``, then do ``activate ceajenkins``
-- open a new Anaconda Prompt with administrator rights (right click, then "Run as Administrator")
-- run ``python %PROGRAMDATA%\ceajenkins\ceajenkins.py install``
+
+    - if you haven't checked out the CEA, download it from the `CEA GitHub repository`_
+
+- copy the CEA Dependencies folder (after installing CEA, it should be in
+  ``%USERPROFILE%\Documents\CityEnergyAnalysts\Dependencies``) twice
+
+  - once to ``C:\ProgramData\ceajenkins\ceatest``
+  - once to ``C:\ProgramData\ceajenkins\ceatestall``
+  - (actually rename the folder ``Dependencies`` to ``ceatest`` and ``ceatestall`` respectively)
+
 - in order for the service to find required DLL's, ensure the PATH includes the following folders (use the windows
   search function to find the control panel item "Edit System Environment Variables"):
 
-  - ``%USERPROFILE%\Miniconda2\envs\ceajenkins\``
-  - ``%USERPROFILE%\Miniconda2\envs\ceajenkins\lib\site-packages\win32``
+  - ``C:\ProgramData\ceajenkins\ceatestall\Python\``
+  - ``C:\ProgramData\ceajenkins\ceatestall\Python\lib\site-packages\win32``
+  - ``C:\ProgramData\ceajenkins\ceatestall\Python\lib\site-packages\pywin32_system32``
+  - make sure you edit the System Variables, not the User Environment Variables
+
+- open ``cmd.exe`` with admin rights (right click, then "Run as Administrator")
+
+
+- run ``python %PROGRAMDATA%\ceajenkins\ceajenkins.py install``
+
 
 - open the windows services panel (just search for "Services" in the windows menu)
 
@@ -117,6 +129,8 @@ to tunnel webhooks triggered by GitHub back to the Jenkins server.
   - you should now be able to access your Jenkins installation by going to https://ceajenkins.ngrok.io
     from any computer with access to the internet (test this)
 
+.. _`CEA GitHub repository`: https://raw.githubusercontent.com/architecture-building-systems/CityEnergyAnalyst/v2.31.1/bin/ceajenkins.py
+
 
 Global configuration of Jenkins
 -------------------------------
@@ -125,12 +139,17 @@ Now that we have a tunnel set up, we can start configuring the Jenkins server, m
 
 .. _guide: https://wiki.jenkins.io/display/JENKINS/Github+Plugin#GitHubPlugin-GitHubhooktriggerforGITScmpolling
 
-- open browser to http://localhost:8080 and log in
+- open browser to http://ceajenkins.ngrok.io and log in
 - click "Manage Jenkins" and then "Configure System"
+
   - set "#  of executors" to 1 (let's just make it dead simple, no concurrency, less headache)
+  - in the "Jenkins Location" section set Jenkins URL to "https://ceajenkins.ngrok.io"
+
+    - (Jenkins might be smart enough to figure this out and has filled it in for you already)
+
   - scroll to "GitHub" section
   - click "Advanced"
-  - dropdown "Manage additional GitHub actions", click "Convert login and password to token
+  - dropdown "Manage additional GitHub actions", click "Convert login and password to token"
   - choose "From login and password", enter GitHub user and password, click "Create token credentials"
   - Click "Add GitHub Server"
 
@@ -144,23 +163,18 @@ Now that we have a tunnel set up, we can start configuring the Jenkins server, m
 
 Next, we make sure all the required Jenkins plugins are installed
 
-- open browser to http://localhost:8080 and log in
+- open browser to http://ceajenkins.ngrok.io and log in
 - click "Manage Jenkins" and then "Manage Plugins"
 
-  - install the following plugins / make sure they're installed:
+  - install the following plugin:
 
-    - github-api plugin (https://wiki.jenkins-ci.org/display/JENKINS/GitHub+API+Plugin)
-    - github plugin (https://wiki.jenkins-ci.org/display/JENKINS/GitHub+Plugin)
-    - git plugin (https://wiki.jenkins-ci.org/display/JENKINS/Git+Plugin)
-    - credentials plugin (https://wiki.jenkins-ci.org/display/JENKINS/Credentials+Plugin)
-    - plain credentials plugin (https://wiki.jenkins-ci.org/display/JENKINS/Plain+Credentials+Plugin)
-    - github pull request builder plugin (https://github.com/jenkinsci/ghprb-plugin)
+    - GitHub Pull Request Builder Plugin (https://github.com/jenkinsci/ghprb-plugin)
 
 
 Next, we configure the GitHub Pull Request Builder plugin, following the instructions here:
 https://github.com/jenkinsci/ghprb-plugin
 
-- open browser to http://localhost:8080 and log in
+- open browser to http://ceajenkins.ngrok.io and log in
 - click "Manage Jenkins" and then "Configure System"
 - scroll down to the "GitHub Pull Request Builder" section
 
@@ -173,19 +187,25 @@ https://github.com/jenkinsci/ghprb-plugin
 
 - click Save
 
+Finally, make sure Jenkins knows where to find ``git.exe`` - if it's not in ``%PATH%``:
+
+- open browser to https://ceajenkins.ngrok.io and log in
+- click "Manage Jenkins" and then "Global Tool Configuration"
+- set "Path to Git executable" to ``C:\ProgramData\ceajenkins\ceatestall\cmder\vendor\git-for-windows\bin\git.exe``
+
 
 Configuration of the Jenkins items
 ----------------------------------
 
 First, we configure a Jenkins item for pull requests:
 
-- open browser to http://localhost:8080 and log in
+- open browser to https://ceajenkins.ngrok.io and log in
 - click "New Item"
 - Enter an item name: ``run cea test for pull requests``
 
   - Choose "Freestyle project"
   - Project name: "run cea test for pull requests"
-  - Description: "Check out the CityEnergyAnalyst, create a conda environment for it and run ``cea test``"
+  - Description: "Check out the CityEnergyAnalyst, and run bin\ceatest.bat"
   - check "Discard old builds"
 
     - Strategy: "Log Rotation"
@@ -197,7 +217,7 @@ First, we configure a Jenkins item for pull requests:
 
     - select "Git"
     - Repository URL: ``https://github.com/architecture-building-systems/CityEnergyAnalyst.git``
-    - Credentials: (use the ones created above)
+    - Credentials: (add a new username/password credential)
     - Branches to build: ``${ghprbActualCommit}``
 
   - section "Build Triggers":
@@ -212,16 +232,19 @@ First, we configure a Jenkins item for pull requests:
 
     - Execute Windows batch command: ``bin\ceatest.bat``
 
+  - section "Build Environment"
+
+    - select "Delete workspace before build starts"
+
 Next, we configure a Jenkins item for merging to master:
 
-- open browser to http://localhost:8080 and log in
+- open browser to https://ceajenkins.ngrok.io and log in
 - click "New Item"
 - Enter an item name: ``run cea test on merge to master``
 
   - Choose "Freestyle project"
   - Project name: "run cea test on merge to master"
-  - Description: "Check out the CityEnergyAnalyst, create a conda environment for it and run
-    ``cea test --reference-case all``"
+  - Description: "Check out the CityEnergyAnalyst, and run bin\ceatestall.bat"
   - check "Discard old builds"
 
     - Strategy: "Log Rotation"
@@ -234,22 +257,28 @@ Next, we configure a Jenkins item for merging to master:
     - select "Git"
     - Repository URL: ``https://github.com/architecture-building-systems/CityEnergyAnalyst.git``
     - Credentials: (use the ones created above)
-    - Refspec: ``+refs/heads/master:refs/remotes/origin/master``
     - Branches to build: ``refs/heads/master``
 
   - section "Build Triggers":
 
     - check "GitHub hook trigger for GITScm polling"
+    - check "Poll SCM"
 
   - section "Build"
 
     - Execute Windows batch command: ``bin\ceatestall.bat``
 
-- open GitHub Integrations & services (https://github.com/architecture-building-systems/CityEnergyAnalyst/settings/installations)
+  - section "Build Environment"
 
-  - dropdown "Add service"
+    - select "Delete workspace before build starts"
 
-    - select "Jenkins (GitHub plugin)"
-    - enter Jenkins hook url: ``https://ceajenkins.ngrok.io``
-    - click "Add service" to save
+- open `GitHub Webhooks`_
 
+  - (NOTE: This should already be set up for the CEA Repository, but here's how to configure it just in case)
+  - dropdown "Add webhook"
+
+    - Payload URL: ``http://ceajenkins.ngrok.io/git/notifyCommit?url=https://github.com/architecture-building-systems/CityEnergyAnalyst``
+    - under "Which events would you like to trigger this webhook?" select "Let me select individual events."
+    - select "Just the push event"
+
+..  _`GitHub Webhooks`:  https://github.com/architecture-building-systems/CityEnergyAnalyst/settings/hooks

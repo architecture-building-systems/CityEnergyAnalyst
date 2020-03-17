@@ -1,0 +1,277 @@
+digraph trace_inputlocator {
+    rankdir="LR";
+    graph [overlap=false, fontname=arial];
+    node [shape=box, style=filled, color=white, fontsize=15, fontname=arial, fixedsize=true, width=5];
+    edge [fontname=arial, fontsize = 15]
+    newrank=true
+    subgraph cluster_legend {
+    fontsize=25
+    style=invis
+    "process"[style=filled, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname="arial"]
+    "inputs" [style=filled, shape=folder, color=white, fillcolor="#E1F2F2", fontsize=20]
+    "outputs"[style=filled, shape=folder, color=white, fillcolor="#aadcdd", fontsize=20]
+    "inputs"->"process"[style=invis]
+    "process"->"outputs"[style=invis]
+    }
+    "optimization"[style=filled, color=white, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname=arial];
+    subgraph cluster_0_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="building-geometry";
+        "surroundings.shp"
+        "zone.shp"
+    }
+    subgraph cluster_1_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="data/demand";
+        "B001.csv"
+        "Total_demand.csv"
+    }
+    subgraph cluster_2_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="data/optimization/decentralized";
+        "DiscOp_B001_result_heating.csv"
+        "DiscOp_B001_result_heating_activation.csv"
+    }
+    subgraph cluster_3_out {
+        style = filled;
+        color = "#aadcdd";
+        fontsize = 20;
+        rank=same;
+        label="data/optimization/master";
+        "CheckPoint_1"
+    }
+    subgraph cluster_4_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="data/optimization/network";
+        "DH_Network_summary_result_0x1be.csv"
+        "DH_Network_summary_result_0x19b.csv"
+    }
+    subgraph cluster_4_out {
+        style = filled;
+        color = "#aadcdd";
+        fontsize = 20;
+        rank=same;
+        label="data/optimization/network";
+        "DH_Network_summary_result_0x1be.csv"
+    }
+    subgraph cluster_5_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="data/optimization/substations";
+        "110011011DH_B001_result.csv"
+    }
+    subgraph cluster_5_out {
+        style = filled;
+        color = "#aadcdd";
+        fontsize = 20;
+        rank=same;
+        label="data/optimization/substations";
+        "110011011DH_B001_result.csv"
+        "Total_DH_111111111.csv"
+    }
+    subgraph cluster_6_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="data/potentials";
+        "Shallow_geothermal_potential.csv"
+        "Sewage_heat_potential.csv"
+        "Water_body_potential.csv"
+    }
+    subgraph cluster_7_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="data/potentials/solar";
+        "PVT_total.csv"
+        "PV_total.csv"
+        "SC_FP_total.csv"
+    }
+    subgraph cluster_8_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="data/thermal-network";
+        "DH__plant_pumping_pressure_loss_Pa.csv"
+        "DH__total_thermal_loss_edges_kW.csv"
+        "DH__metadata_edges.csv"
+    }
+    subgraph cluster_9_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="networks";
+        "streets.shp"
+    }
+    subgraph cluster_10_out {
+        style = filled;
+        color = "#aadcdd";
+        fontsize = 20;
+        rank=same;
+        label="optimization/slave/gen_0";
+        "ind_2_connected_heating_capacity.csv"
+        "ind_1_disconnected_heating_capacity.csv"
+        "ind_2_total_performance.csv"
+    }
+    subgraph cluster_11_out {
+        style = filled;
+        color = "#aadcdd";
+        fontsize = 20;
+        rank=same;
+        label="optimization/slave/gen_1";
+        "ind_1_connected_cooling_capacity.csv"
+        "ind_0_disconnected_cooling_capacity.csv"
+        "gen_1_connected_performance.csv"
+        "gen_1_total_performance_halloffame.csv"
+        "ind_2_buildings_connected_performance.csv"
+        "ind_2_Cooling_Activation_Pattern.csv"
+        "ind_1_Electricity_Activation_Pattern.csv"
+        "ind_1_Electricity_Requirements_Pattern.csv"
+    }
+    subgraph cluster_12_out {
+        style = filled;
+        color = "#aadcdd";
+        fontsize = 20;
+        rank=same;
+        label="optimization/slave/gen_2";
+        "ind_0_connected_electrical_capacity.csv"
+        "gen_2_disconnected_performance.csv"
+        "gen_2_total_performance.csv"
+        "gen_2_total_performance_pareto.csv"
+        "generation_2_individuals.csv"
+        "ind_1_building_connectivity.csv"
+        "ind_0_buildings_disconnected_performance.csv"
+        "ind_0_Heating_Activation_Pattern.csv"
+    }
+    subgraph cluster_13_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="technology/archetypes/schedules";
+        "RESTAURANT.csv"
+    }
+    subgraph cluster_14_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="technology/archetypes/use_types";
+        "USE_TYPE_PROPERTIES.xlsx"
+    }
+    subgraph cluster_15_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="technology/assemblies";
+        "supply.xls"
+    }
+    subgraph cluster_16_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="technology/feedstocks";
+        "feedstocks.xls"
+    }
+    subgraph cluster_17_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="technology/systems";
+        "air_conditioning_systems.xls"
+        "supply_systems.xls"
+        "distribution_systems.xls"
+        "envelope_systems.xls"
+    }
+    subgraph cluster_18_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="topography";
+        "terrain.tif"
+    }
+    subgraph cluster_19_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="weather";
+        "Zug-inducity_1990_2010_TMY.epw"
+        "weather.epw"
+    }
+    "PVT_total.csv" -> "optimization"[label="(PVT_totals)"]
+    "PV_total.csv" -> "optimization"[label="(PV_totals)"]
+    "SC_FP_total.csv" -> "optimization"[label="(SC_totals)"]
+    "air_conditioning_systems.xls" -> "optimization"[label="(get_database_air_conditioning_systems)"]
+    "supply_systems.xls" -> "optimization"[label="(get_database_conversion_systems)"]
+    "distribution_systems.xls" -> "optimization"[label="(get_database_distribution_systems)"]
+    "envelope_systems.xls" -> "optimization"[label="(get_database_envelope_systems)"]
+    "feedstocks.xls" -> "optimization"[label="(get_database_feedstocks)"]
+    "RESTAURANT.csv" -> "optimization"[label="(get_database_standard_schedules_use)"]
+    "supply.xls" -> "optimization"[label="(get_database_supply_assemblies)"]
+    "USE_TYPE_PROPERTIES.xlsx" -> "optimization"[label="(get_database_use_types_properties)"]
+    "B001.csv" -> "optimization"[label="(get_demand_results_file)"]
+    "Shallow_geothermal_potential.csv" -> "optimization"[label="(get_geothermal_potential)"]
+    "DH__plant_pumping_pressure_loss_Pa.csv" -> "optimization"[label="(get_network_total_pressure_drop_file)"]
+    "DH__total_thermal_loss_edges_kW.csv" -> "optimization"[label="(get_network_total_thermal_loss_file)"]
+    "DiscOp_B001_result_heating.csv" -> "optimization"[label="(get_optimization_decentralized_folder_building_result_heating)"]
+    "DiscOp_B001_result_heating_activation.csv" -> "optimization"[label="(get_optimization_decentralized_folder_building_result_heating_activation)"]
+    "DH_Network_summary_result_0x1be.csv" -> "optimization"[label="(get_optimization_network_results_summary)"]
+    "110011011DH_B001_result.csv" -> "optimization"[label="(get_optimization_substations_results_file)"]
+    "DH_Network_summary_result_0x19b.csv" -> "optimization"[label="(get_optimization_thermal_network_data_file)"]
+    "Sewage_heat_potential.csv" -> "optimization"[label="(get_sewage_heat_potential)"]
+    "streets.shp" -> "optimization"[label="(get_street_network)"]
+    "surroundings.shp" -> "optimization"[label="(get_surroundings_geometry)"]
+    "terrain.tif" -> "optimization"[label="(get_terrain)"]
+    "DH__metadata_edges.csv" -> "optimization"[label="(get_thermal_network_edge_list_file)"]
+    "Total_demand.csv" -> "optimization"[label="(get_total_demand)"]
+    "Water_body_potential.csv" -> "optimization"[label="(get_water_body_potential)"]
+    "Zug-inducity_1990_2010_TMY.epw" -> "optimization"[label="(get_weather)"]
+    "weather.epw" -> "optimization"[label="(get_weather_file)"]
+    "zone.shp" -> "optimization"[label="(get_zone_geometry)"]
+    "optimization" -> "CheckPoint_1"[label="(get_optimization_checkpoint)"]
+    "optimization" -> "ind_1_connected_cooling_capacity.csv"[label="(get_optimization_connected_cooling_capacity)"]
+    "optimization" -> "ind_0_connected_electrical_capacity.csv"[label="(get_optimization_connected_electricity_capacity)"]
+    "optimization" -> "ind_2_connected_heating_capacity.csv"[label="(get_optimization_connected_heating_capacity)"]
+    "optimization" -> "ind_0_disconnected_cooling_capacity.csv"[label="(get_optimization_disconnected_cooling_capacity)"]
+    "optimization" -> "ind_1_disconnected_heating_capacity.csv"[label="(get_optimization_disconnected_heating_capacity)"]
+    "optimization" -> "gen_1_connected_performance.csv"[label="(get_optimization_generation_connected_performance)"]
+    "optimization" -> "gen_2_disconnected_performance.csv"[label="(get_optimization_generation_disconnected_performance)"]
+    "optimization" -> "gen_2_total_performance.csv"[label="(get_optimization_generation_total_performance)"]
+    "optimization" -> "gen_1_total_performance_halloffame.csv"[label="(get_optimization_generation_total_performance_halloffame)"]
+    "optimization" -> "gen_2_total_performance_pareto.csv"[label="(get_optimization_generation_total_performance_pareto)"]
+    "optimization" -> "generation_2_individuals.csv"[label="(get_optimization_individuals_in_generation)"]
+    "optimization" -> "DH_Network_summary_result_0x1be.csv"[label="(get_optimization_network_results_summary)"]
+    "optimization" -> "ind_1_building_connectivity.csv"[label="(get_optimization_slave_building_connectivity)"]
+    "optimization" -> "ind_2_buildings_connected_performance.csv"[label="(get_optimization_slave_connected_performance)"]
+    "optimization" -> "ind_2_Cooling_Activation_Pattern.csv"[label="(get_optimization_slave_cooling_activation_pattern)"]
+    "optimization" -> "ind_0_buildings_disconnected_performance.csv"[label="(get_optimization_slave_disconnected_performance)"]
+    "optimization" -> "ind_1_Electricity_Activation_Pattern.csv"[label="(get_optimization_slave_electricity_activation_pattern)"]
+    "optimization" -> "ind_1_Electricity_Requirements_Pattern.csv"[label="(get_optimization_slave_electricity_requirements_data)"]
+    "optimization" -> "ind_0_Heating_Activation_Pattern.csv"[label="(get_optimization_slave_heating_activation_pattern)"]
+    "optimization" -> "ind_2_total_performance.csv"[label="(get_optimization_slave_total_performance)"]
+    "optimization" -> "110011011DH_B001_result.csv"[label="(get_optimization_substations_results_file)"]
+    "optimization" -> "Total_DH_111111111.csv"[label="(get_optimization_substations_total_file)"]
+    }
