@@ -108,7 +108,8 @@ def list_scripts():
 
 def by_name(script_name):
     for script in list_scripts():
-        if script.name == script_name:
+        # Convert script names that use "_" instead of "-"
+        if script.name == script_name.replace("_", "-"):
             return script
     raise cea.ScriptNotFoundException('Invalid script name: %s' % script_name)
 

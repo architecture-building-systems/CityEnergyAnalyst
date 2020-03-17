@@ -13,7 +13,7 @@ digraph trace_inputlocator {
     "inputs"->"process"[style=invis]
     "process"->"outputs"[style=invis]
     }
-    "emissions"[style=filled, color=white, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname=arial];
+    "database-migrator"[style=filled, color=white, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname=arial];
     subgraph cluster_0_in {
         style = filled;
         color = "#E1F2F2";
@@ -23,14 +23,12 @@ digraph trace_inputlocator {
         "surroundings.shp"
         "zone.shp"
     }
-    subgraph cluster_1_in {
+    subgraph cluster_1_out {
         style = filled;
-        color = "#E1F2F2";
+        color = "#aadcdd";
         fontsize = 20;
         rank=same;
         label="building-properties";
-        "architecture.dbf"
-        "supply_systems.dbf"
         "typology.dbf"
     }
     subgraph cluster_2_in {
@@ -38,28 +36,10 @@ digraph trace_inputlocator {
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="data/demand";
-        "Total_demand.csv"
-    }
-    subgraph cluster_3_out {
-        style = filled;
-        color = "#aadcdd";
-        fontsize = 20;
-        rank=same;
-        label="data/emissions";
-        "Total_LCA_embodied.csv"
-        "Total_LCA_mobility.csv"
-        "Total_LCA_operation.csv"
-    }
-    subgraph cluster_4_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
         label="data/optimization/network";
         "DH_Network_summary_result_0x19b.csv"
     }
-    subgraph cluster_5_in {
+    subgraph cluster_3_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -67,7 +47,7 @@ digraph trace_inputlocator {
         label="networks";
         "streets.shp"
     }
-    subgraph cluster_6_in {
+    subgraph cluster_4_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -75,7 +55,7 @@ digraph trace_inputlocator {
         label="technology/archetypes/schedules";
         "RESTAURANT.csv"
     }
-    subgraph cluster_7_in {
+    subgraph cluster_5_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -83,7 +63,7 @@ digraph trace_inputlocator {
         label="technology/archetypes/use_types";
         "USE_TYPE_PROPERTIES.xlsx"
     }
-    subgraph cluster_8_in {
+    subgraph cluster_6_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -91,7 +71,7 @@ digraph trace_inputlocator {
         label="technology/assemblies";
         "supply.xls"
     }
-    subgraph cluster_9_in {
+    subgraph cluster_7_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -99,7 +79,7 @@ digraph trace_inputlocator {
         label="technology/feedstocks";
         "feedstocks.xls"
     }
-    subgraph cluster_10_in {
+    subgraph cluster_8_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -110,7 +90,7 @@ digraph trace_inputlocator {
         "distribution_systems.xls"
         "envelope_systems.xls"
     }
-    subgraph cluster_11_in {
+    subgraph cluster_9_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -118,7 +98,7 @@ digraph trace_inputlocator {
         label="topography";
         "terrain.tif"
     }
-    subgraph cluster_12_in {
+    subgraph cluster_10_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -126,25 +106,19 @@ digraph trace_inputlocator {
         label="weather";
         "Zug-inducity_1990_2010_TMY.epw"
     }
-    "architecture.dbf" -> "emissions"[label="(get_building_architecture)"]
-    "supply_systems.dbf" -> "emissions"[label="(get_building_supply)"]
-    "typology.dbf" -> "emissions"[label="(get_building_typology)"]
-    "air_conditioning_systems.xls" -> "emissions"[label="(get_database_air_conditioning_systems)"]
-    "supply_systems.xls" -> "emissions"[label="(get_database_conversion_systems)"]
-    "distribution_systems.xls" -> "emissions"[label="(get_database_distribution_systems)"]
-    "envelope_systems.xls" -> "emissions"[label="(get_database_envelope_systems)"]
-    "feedstocks.xls" -> "emissions"[label="(get_database_feedstocks)"]
-    "RESTAURANT.csv" -> "emissions"[label="(get_database_standard_schedules_use)"]
-    "supply.xls" -> "emissions"[label="(get_database_supply_assemblies)"]
-    "USE_TYPE_PROPERTIES.xlsx" -> "emissions"[label="(get_database_use_types_properties)"]
-    "DH_Network_summary_result_0x19b.csv" -> "emissions"[label="(get_optimization_thermal_network_data_file)"]
-    "streets.shp" -> "emissions"[label="(get_street_network)"]
-    "surroundings.shp" -> "emissions"[label="(get_surroundings_geometry)"]
-    "terrain.tif" -> "emissions"[label="(get_terrain)"]
-    "Total_demand.csv" -> "emissions"[label="(get_total_demand)"]
-    "Zug-inducity_1990_2010_TMY.epw" -> "emissions"[label="(get_weather)"]
-    "zone.shp" -> "emissions"[label="(get_zone_geometry)"]
-    "emissions" -> "Total_LCA_embodied.csv"[label="(get_lca_embodied)"]
-    "emissions" -> "Total_LCA_mobility.csv"[label="(get_lca_mobility)"]
-    "emissions" -> "Total_LCA_operation.csv"[label="(get_lca_operation)"]
+    "air_conditioning_systems.xls" -> "database-migrator"[label="(get_database_air_conditioning_systems)"]
+    "supply_systems.xls" -> "database-migrator"[label="(get_database_conversion_systems)"]
+    "distribution_systems.xls" -> "database-migrator"[label="(get_database_distribution_systems)"]
+    "envelope_systems.xls" -> "database-migrator"[label="(get_database_envelope_systems)"]
+    "feedstocks.xls" -> "database-migrator"[label="(get_database_feedstocks)"]
+    "RESTAURANT.csv" -> "database-migrator"[label="(get_database_standard_schedules_use)"]
+    "supply.xls" -> "database-migrator"[label="(get_database_supply_assemblies)"]
+    "USE_TYPE_PROPERTIES.xlsx" -> "database-migrator"[label="(get_database_use_types_properties)"]
+    "DH_Network_summary_result_0x19b.csv" -> "database-migrator"[label="(get_optimization_thermal_network_data_file)"]
+    "streets.shp" -> "database-migrator"[label="(get_street_network)"]
+    "surroundings.shp" -> "database-migrator"[label="(get_surroundings_geometry)"]
+    "terrain.tif" -> "database-migrator"[label="(get_terrain)"]
+    "Zug-inducity_1990_2010_TMY.epw" -> "database-migrator"[label="(get_weather)"]
+    "zone.shp" -> "database-migrator"[label="(get_zone_geometry)"]
+    "database-migrator" -> "typology.dbf"[label="(get_building_typology)"]
     }
