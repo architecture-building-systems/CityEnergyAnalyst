@@ -8,19 +8,17 @@ T_b_CDD = 25.0
 TECHS = ['HCS_base_LD', 'HCS_base_IEHX', 'HCS_base_ER0']
 # timesteps = [5136, 5144, 5145, 5147, 5148]  # 168 (week) [5389]
 # timesteps = [5145]  # 168 (week) [5389]
-timesteps = 24  # 168 (week) [5389]
+timesteps = "typical hours"  # 168 (week) [5389]
+number_of_typical_hours = 62
 # timesteps = "typical days"  # 168 (week)
 # timesteps = 'dtw hours'
 
 ## cluster evaluation ##
-# typical_days_path = "E:\\WP2"
-# cluster_type = 'day'
-typical_days_path = "E:\\WP2\\Typical_hours"
-cluster_type = 'hour'
+cluster_type = 'hour'  # 'day' or 'hour'
 
 ## district to evaluate ##
 path_to_district_folder = 'C:\\SG_cases\\SDC_small'
-
+osmose_outMsg_path = "\\s_001\\opt\\hc_outmsg.txt"
 
 ## post processing ##
 PLOTS = ['electricity_usages','air_flow','OAU_T_w_supply','exergy_usages', 'humidity_balance', 'humidity_storage', 'heat_balance']
@@ -36,29 +34,35 @@ specified_buildings = ["B005"]
 # specified_buildings = ["B001","B002","B005","B006","B009"]
 # specified_buildings = ["B003","B008"]
 # specified_buildings = ["B001","B002","B003","B004","B005","B006","B007","B008","B009","B010"]
-cases = ['WTP_CBD_m_WP1_HOT']
+cases = ['WTP_CBD_m_WP1_RET']
 # cases = ['WTP_CBD_m_WP1_HOT']
 
 ## LAPTOP ##
 ampl_lic_path = "C:\\Users\\Shanshan\\Desktop\\ampl"
 # Branch mk
 osmose_project_path = "E:\\OSMOSE_projects\\HCS_mk\\Projects"
-# osmose_project_path = "E:\\ipese_new\\osmose_mk\\Projects"
-osmose_outMsg_path = "\\s_001\\opt\\hc_outmsg.txt"
+osmose_project_data_path = osmose_project_path + '\\data'
+result_destination = "E:\\HCS_results_1015"
+# cluster evaluation
+typical_days_path = "E:\\WP2\\Typical_hours"
 
+
+# osmose_project_path = "C:\\Users\\Zhongming\\Documents\\HCS_mk\\Projects\\"
+# osmose_project_path = "E:\\ipese_new\\osmose_mk\\Projects"
 # Branch master
 # osmose_project_path = "E:\\OSMOSE_projects\\HCS\\Projects"
 # osmose_outMsg_path = "\\scenario_1\\tmp\\OutMsg.txt"
 
-osmose_project_data_path = osmose_project_path + '\\data'
-result_destination = "E:\\HCS_results_1015"
 ## end ##
+
 
 ## WORK STATION ##
 # ampl_lic_path = "C:\\Users\\Zhongming\\Desktop\\SH\\ampl"
 # osmose_project_path = "C:\\Users\\Zhongming\\Documents\\HCS_mk\\Projects"
 # osmose_project_data_path = osmose_project_path + '\\data'
-# result_destination = "D:\\SH\\test_0805"
+# result_destination = "D:\\SH\\WP3_results"
+# # cluster evaluation
+# typical_hours_path = "D:\\SH\\WP3_results\\Typical_hours"
 ## end ##
 
 # == HKG Summer ==
