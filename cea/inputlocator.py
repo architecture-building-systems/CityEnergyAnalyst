@@ -467,6 +467,11 @@ class InputLocator(object):
     def get_weather_folder(self):
         return self._ensure_folder(self.get_input_folder(), 'weather')
 
+    def get_weather_file(self):
+        """inputs/weather/weather.epw
+        path to the weather file to use for simulation - run weather-helper to set this"""
+        return os.path.join(self.get_weather_folder(), "weather.epw")
+
     def get_region_specific_db_file(self, region):
         """get path to CEA databases according to the region"""
         technology_folder = os.path.join(self.db_path, region)
