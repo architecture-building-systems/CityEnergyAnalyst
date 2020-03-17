@@ -975,10 +975,14 @@ def calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, therm
         [geometry_data_walls.ix[surface, 'AREA_m2'] * multiplier_wall * radiation_data[surface] for surface in
          geometry_data_walls.index]).sum(axis=0)
     if microclimate_data_available:
-        I_sol_wall.loc[microclimate_data.index] = np.array(
-            [geometry_data_walls.loc[geometry_data_walls['orientation'] == orientation, 'AREA_m2'] * multiplier_wall * \
-             microclimate_data['I_sol_' + orientation + '_Wm2'] for orientation in ['north', 'south', 'east', 'west']]
-        ).sum(axis=0)
+        print('wall ratios: ', np.array(
+            [np.array(geometry_data_walls.loc[geometry_data_walls['orientation'] == orientation, 'AREA_m2']).sum() * \
+             multiplier_wall * microclimate_data['I_sol_' + orientation + '_Wm2']
+             for orientation in ['north', 'south', 'east', 'west']]).sum(axis=0) / I_sol_wall[microclimate_data.index])
+        I_sol_wall[microclimate_data.index] = np.array(
+            [np.array(geometry_data_walls.loc[geometry_data_walls['orientation'] == orientation, 'AREA_m2']).sum() *
+             multiplier_wall * microclimate_data['I_sol_' + orientation + '_Wm2']
+             for orientation in ['north', 'south', 'east', 'west']]).sum(axis=0)
     # sensible gain on all walls [W]
     I_sol_wall = I_sol_wall * prop_envelope.ix[building_name, 'a_wall'] * thermal_resistance_surface * \
                  prop_rc_model.ix[building_name, 'U_wall']
@@ -988,7 +992,9 @@ def calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, therm
     I_sol_roof = np.array([geometry_data_roofs.ix[surface, 'AREA_m2'] * radiation_data[surface] for surface in
                            geometry_data_roofs.index]).sum(axis=0)
     if microclimate_data_available:
-        I_sol_roof.loc[microclimate_data.index] = np.array(geometry_data_roofs['AREA_m2'] *
+        print('roof ratios: ', np.array(geometry_data_roofs['AREA_m2'].sum() * microclimate_data['I_sol_top_Wm2']) /
+              I_sol_wall[microclimate_data.index])
+        I_sol_roof[microclimate_data.index] = np.array(geometry_data_roofs['AREA_m2'].sum() *
                                                            microclimate_data['I_sol_top_Wm2']).sum(axis=0)
     # sensible gain on all roofs [W]
     I_sol_roof = I_sol_roof * prop_envelope.ix[building_name, 'a_roof'] * thermal_resistance_surface * \
@@ -1002,13 +1008,26 @@ def calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, therm
 
     I_sol_win = [geometry_data_windows.ix[surface, 'AREA_m2'] * multiplier_win * radiation_data[surface]
                  for surface in geometry_data_windows.index]
-    if microclimate_data_available:
-        I_sol_win.loc[microclimate_data.index] = np.array(
-            [geometry_data_windows.loc[geometry_data_windows['orientation'] == orientation, 'AREA_m2'] *
-             multiplier_win * microclimate_data['I_sol_' + orientation + '_Wm2']
-             for orientation in ['north', 'south', 'east', 'west']]).sum(axis=0)
 
     I_sol_win = np.array([x * y * (1 - prop_envelope.ix[building_name, 'F_F']) for x, y in zip(I_sol_win, Fsh_win)]).sum(axis=0)
+
+    if microclimate_data_available:
+        I_sol_microclimate = np.zeros(len(microclimate_data.index))
+        for orientation in ['north', 'south', 'east', 'west']:
+            Fsh = [np.vectorize(blinds.calc_blinds_activation)(microclimate_data['I_sol_' + orientation + '_Wm2'],
+                                                               prop_envelope.ix[building_name, 'G_win'],
+                                                               prop_envelope.ix[building_name, 'rf_sh'])
+                   for surface in geometry_data_windows.index
+                   if geometry_data_windows.loc[surface, 'orientation'] == orientation]
+            I_sol = [geometry_data_windows.ix[surface, 'AREA_m2'] * multiplier_win * \
+                     microclimate_data['I_sol_' + orientation + '_Wm2'] for surface in geometry_data_windows.index
+                     if geometry_data_windows.loc[surface, 'orientation'] == orientation]
+            I_sol_microclimate += np.array(
+                [x * y * (1 - prop_envelope.ix[building_name, 'F_F']) for x, y in zip(I_sol, Fsh)]).sum(axis=0)
+
+        print('window ratios: ', I_sol_microclimate / I_sol_win[microclimate_data.index])
+
+        I_sol_win[microclimate_data.index] = I_sol_microclimate
 
     # sum
     I_sol = I_sol_wall + I_sol_roof + I_sol_win
