@@ -4322,6 +4322,16 @@ get_network_total_thermal_loss_file:
         type: float
   used_by:
   - optimization
+get_nominal_edge_mass_flow_csv_file:
+  file_path: outputs\data\thermal-network\Nominal_EdgeMassFlow_at_design_{network_type}__kgpers.csv
+  file_type: csv
+  schema:
+    columns:
+      PIPE0:
+        type: float
+      'Unnamed: 0':
+        type: int
+        primary: true
 get_optimization_checkpoint:
   created_by:
   - optimization
@@ -5751,7 +5761,7 @@ get_optimization_thermal_network_data_file:
 get_radiation_building:
   created_by:
   - radiation
-  file_path: outputs/data/solar-radiation/B001_radiation.csv
+  file_path: outputs/data/solar-radiation/{building}_radiation.csv
   file_type: csv
   schema:
     columns:

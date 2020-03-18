@@ -424,23 +424,23 @@ class InputLocator(object):
         return os.path.join(self.get_uncertainty_results_folder(),
                             'CheckPoint_uncertainty_' + str(generation))
 
-    def get_optimization_decentralized_result_file(self, building_name):
-        """scenario/outputs/data/optimization/decentralized/DiscOp_${building_name}_result.csv"""
+    def get_optimization_decentralized_result_file(self, building):
+        """scenario/outputs/data/optimization/decentralized/DiscOp_${building}_result.csv"""
         return os.path.join(self.get_optimization_decentralized_folder(),
-                            "DiscOp_%(building_name)s_result.csv" % locals())
+                            "DiscOp_%(building)s_result.csv" % locals())
 
     def get_optimization_substations_folder(self):
         """scenario/outputs/data/optimization/substations
         Substation results for decentralized buildings"""
         return self._ensure_folder(self.get_optimization_results_folder(), "substations")
 
-    def get_optimization_substations_results_file(self, building_name, network_type_code, district_network_barcode):
-        """scenario/outputs/data/optimization/substations/${building_name}_result.csv"""
+    def get_optimization_substations_results_file(self, building, network_type_code, district_network_barcode):
+        """scenario/outputs/data/optimization/substations/${building}_result.csv"""
         if district_network_barcode == "":
             district_network_barcode = "0"
         district_network_barcode_hex = hex(int(str(district_network_barcode), 2))
         return os.path.join(self.get_optimization_substations_folder(),
-                            "%(district_network_barcode_hex)s%(network_type_code)s_%(building_name)s_result.csv" % locals())
+                            "%(district_network_barcode_hex)s%(network_type_code)s_%(building)s_result.csv" % locals())
 
     def get_optimization_substations_total_file(self, district_network_barcode, network_type):
         """scenario/outputs/data/optimization/substations/Total_${genome}.csv"""
@@ -638,9 +638,9 @@ class InputLocator(object):
         """scenario/inputs/building-properties/schedules/"""
         return self._ensure_folder(self.get_building_properties_folder(), 'schedules')
 
-    def get_building_weekly_schedules(self, building_name):
+    def get_building_weekly_schedules(self, building):
         """
-        scenario/inputs/building-properties/schedules/{building_name}.csv
+        scenario/inputs/building-properties/schedules/{building}.csv
         This file contains schedules of occupancy, appliance use, etc of each building.
 
         The format is a bit weird (e.g. not strictly a CSV table):
@@ -654,10 +654,10 @@ class InputLocator(object):
 
         Do not read this file yourself, instead, use :py:func`cea.utilities.schedule_reader.read_cea_schedule`
 
-        :param str building_name: The building to create the schedule for
+        :param str building: The building to create the schedule for
         :return:
         """
-        return os.path.join(self.get_building_weekly_schedules_folder(), '{}.csv'.format(building_name))
+        return os.path.join(self.get_building_weekly_schedules_folder(), '{}.csv'.format(building))
 
     def get_schedule_model_folder(self):
         """scenario/outputs/data/occupancy
@@ -665,16 +665,16 @@ class InputLocator(object):
         """
         return self._ensure_folder(self.scenario, 'outputs', 'data', 'occupancy')
 
-    def get_schedule_model_file(self, building_name):
+    def get_schedule_model_file(self, building):
         """
-        scenario/outputs/data/occupancy/{building_name}.csv
+        scenario/outputs/data/occupancy/{building}.csv
 
         This file contains schedules of occupancy, appliance use, etc of each building.
         Schedules are 8760 values per year
-        :param building_name: The building to get the schedule file for.
+        :param building: The building to get the schedule file for.
         :return:
         """
-        return os.path.join(self.get_schedule_model_folder(), '{}.csv'.format(building_name))
+        return os.path.join(self.get_schedule_model_folder(), '{}.csv'.format(building))
 
     def get_terrain(self):
         """scenario/inputs/topography/terrain.tif"""
@@ -1021,20 +1021,20 @@ class InputLocator(object):
         """scenario/outputs/data/solar-radiation"""
         return self._ensure_folder(self.scenario, 'outputs', 'data', 'solar-radiation')
 
-    def get_radiation_building(self, building_name):
-        """scenario/outputs/data/solar-radiation/${building_name}_insolation.json"""
-        return os.path.join(self.get_solar_radiation_folder(), '%s_radiation.csv' % building_name)
+    def get_radiation_building(self, building):
+        """scenario/outputs/data/solar-radiation/${building}_insolation.json"""
+        return os.path.join(self.get_solar_radiation_folder(), '%s_radiation.csv' % building)
 
-    def get_radiation_building_sensors(self, building_name):
-        """scenario/outputs/data/solar-radiation/${building_name}_insolation_Whm2.json"""
-        return os.path.join(self.get_solar_radiation_folder(), '%s_insolation_Whm2.json' % building_name)
+    def get_radiation_building_sensors(self, building):
+        """scenario/outputs/data/solar-radiation/${building}_insolation_Whm2.json"""
+        return os.path.join(self.get_solar_radiation_folder(), '%s_insolation_Whm2.json' % building)
 
-    def get_radiation_metadata(self, building_name):
-        """scenario/outputs/data/solar-radiation/{building_name}_geometrgy.csv"""
-        return os.path.join(self.get_solar_radiation_folder(), '%s_geometry.csv' % building_name)
+    def get_radiation_metadata(self, building):
+        """scenario/outputs/data/solar-radiation/{building}_geometrgy.csv"""
+        return os.path.join(self.get_solar_radiation_folder(), '%s_geometry.csv' % building)
 
     def get_radiation_materials(self):
-        """scenario/outputs/data/solar-radiation/{building_name}_geometrgy.csv"""
+        """scenario/outputs/data/solar-radiation/{building}_geometrgy.csv"""
         return os.path.join(self.get_solar_radiation_folder(), 'buidling_materials.csv')
 
             # SENSITIVITY ANALYSIS
@@ -1052,59 +1052,59 @@ class InputLocator(object):
     def solar_potential_folder(self):
         return self._ensure_folder(self.scenario, 'outputs', 'data', 'potentials', 'solar')
 
-    def PV_results(self, building_name):
-        """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
-        return os.path.join(self.solar_potential_folder(), '%s_PV.csv' % building_name)
+    def PV_results(self, building):
+        """scenario/outputs/data/potentials/solar/{building}_PV.csv"""
+        return os.path.join(self.solar_potential_folder(), '%s_PV.csv' % building)
 
-    def radiation_results(self, building_name):
-        """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
-        return os.path.join(self.solar_potential_folder(), '%s_radiation.csv' % building_name)
+    def radiation_results(self, building):
+        """scenario/outputs/data/potentials/solar/{building}_PV.csv"""
+        return os.path.join(self.solar_potential_folder(), '%s_radiation.csv' % building)
 
     def PV_totals(self):
-        """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
+        """scenario/outputs/data/potentials/solar/{building}_PV.csv"""
         return os.path.join(self.solar_potential_folder(), 'PV_total.csv')
 
     def PV_total_buildings(self):
-        """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
+        """scenario/outputs/data/potentials/solar/{building}_PV.csv"""
         return os.path.join(self.solar_potential_folder(), 'PV_total_buildings.csv')
 
-    def PV_metadata_results(self, building_name):
-        """scenario/outputs/data/potentials/solar/{building_name}_PV_sensors.csv"""
+    def PV_metadata_results(self, building):
+        """scenario/outputs/data/potentials/solar/{building}_PV_sensors.csv"""
         solar_potential_folder = os.path.join(self.scenario, 'outputs', 'data', 'potentials', 'solar')
-        return os.path.join(solar_potential_folder, '%s_PV_sensors.csv' % building_name)
+        return os.path.join(solar_potential_folder, '%s_PV_sensors.csv' % building)
 
-    def SC_results(self, building_name, panel_type):
-        """scenario/outputs/data/potentials/solar/{building_name}_SC.csv"""
-        return os.path.join(self.solar_potential_folder(), '%s_SC_%s.csv' % (building_name, panel_type))
+    def SC_results(self, building, panel_type):
+        """scenario/outputs/data/potentials/solar/{building}_SC.csv"""
+        return os.path.join(self.solar_potential_folder(), '%s_SC_%s.csv' % (building, panel_type))
 
     def SC_totals(self, panel_type):
-        """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
+        """scenario/outputs/data/potentials/solar/{building}_PV.csv"""
         return os.path.join(self.solar_potential_folder(), 'SC_%s_total.csv' % panel_type)
 
     def SC_total_buildings(self, panel_type):
-        """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
+        """scenario/outputs/data/potentials/solar/{building}_PV.csv"""
         return os.path.join(self.solar_potential_folder(), 'SC_%s_total_buildings.csv' % panel_type)
 
-    def SC_metadata_results(self, building_name, panel_type):
-        """scenario/outputs/data/potentials/solar/{building_name}_SC_sensors.csv"""
-        return os.path.join(self.solar_potential_folder(), '%s_SC_%s_sensors.csv' % (building_name, panel_type))
+    def SC_metadata_results(self, building, panel_type):
+        """scenario/outputs/data/potentials/solar/{building}_SC_sensors.csv"""
+        return os.path.join(self.solar_potential_folder(), '%s_SC_%s_sensors.csv' % (building, panel_type))
 
-    def PVT_results(self, building_name):
-        """scenario/outputs/data/potentials/solar/{building_name}_SC.csv"""
-        return os.path.join(self.solar_potential_folder(), '%s_PVT.csv' % building_name)
+    def PVT_results(self, building):
+        """scenario/outputs/data/potentials/solar/{building}_SC.csv"""
+        return os.path.join(self.solar_potential_folder(), '%s_PVT.csv' % building)
 
     def PVT_totals(self):
-        """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
+        """scenario/outputs/data/potentials/solar/{building}_PV.csv"""
         return os.path.join(self.solar_potential_folder(), 'PVT_total.csv')
 
     def PVT_total_buildings(self):
-        """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
+        """scenario/outputs/data/potentials/solar/{building}_PV.csv"""
         return os.path.join(self.solar_potential_folder(), 'PVT_total_buildings.csv')
 
-    def PVT_metadata_results(self, building_name):
-        """scenario/outputs/data/potentials/solar/{building_name}_SC_sensors.csv"""
+    def PVT_metadata_results(self, building):
+        """scenario/outputs/data/potentials/solar/{building}_SC_sensors.csv"""
         solar_potential_folder = os.path.join(self.scenario, 'outputs', 'data', 'potentials', 'solar')
-        return os.path.join(solar_potential_folder, '%s_PVT_sensors.csv' % building_name)
+        return os.path.join(solar_potential_folder, '%s_PVT_sensors.csv' % building)
 
     # DEMAND
 
@@ -1116,18 +1116,18 @@ class InputLocator(object):
         """scenario/outputs/data/demand/Total_demand.csv"""
         return os.path.join(self.get_demand_results_folder(), 'Total_demand.%(format)s' % locals())
 
-    def get_demand_results_file(self, building_name, format='csv'):
-        """scenario/outputs/data/demand/{building_name}.csv"""
-        return os.path.join(self.get_demand_results_folder(), '%(building_name)s.%(format)s' % locals())
+    def get_demand_results_file(self, building, format='csv'):
+        """scenario/outputs/data/demand/{building}.csv"""
+        return os.path.join(self.get_demand_results_folder(), '%(building)s.%(format)s' % locals())
 
     def get_predefined_hourly_setpoints_folder(self, type_of_district_network):
         return self._ensure_folder(self.scenario, 'inputs', 'predefined-hourly-setpoints',
                                    str(type_of_district_network))
 
-    def get_predefined_hourly_setpoints(self, building_name, type_of_district_network):
-        """scenario/outputs/data/demand/{building_name}_.csv"""
+    def get_predefined_hourly_setpoints(self, building, type_of_district_network):
+        """scenario/outputs/data/demand/{building}_.csv"""
         return os.path.join(self.get_predefined_hourly_setpoints_folder(type_of_district_network),
-                            str(building_name) + '_temperature.csv')
+                            str(building) + '_temperature.csv')
 
     # EMISSIONS
     def get_lca_emissions_results_folder(self):
@@ -1177,11 +1177,11 @@ class InputLocator(object):
         return self._ensure_folder(self.scenario, 'outputs', 'plots', category)
 
 
-    def get_timeseries_plots_file(self, building_name, category=''):
-        """scenario/outputs/plots/timeseries/{building_name}.html
+    def get_timeseries_plots_file(self, building, category=''):
+        """scenario/outputs/plots/timeseries/{building}.html
         :param category:
         """
-        return os.path.join(self.get_plots_folder(category), '%(building_name)s.html' % locals())
+        return os.path.join(self.get_plots_folder(category), '%(building)s.html' % locals())
 
     # OTHER
     def get_temporary_folder(self):
