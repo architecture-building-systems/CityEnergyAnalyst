@@ -55,8 +55,10 @@ class PlotBase(object):
             if parameter_name not in parameters:
                 try:
                     self.parameters[parameter_name] = cea.config.Configuration(cea.config.DEFAULT_CONFIG).get(
-                        'plots:{}'.format(parameter_name))
+                        self.expected_parameters[parameter_name])
                 except Exception:
+                    import traceback
+                    traceback.print_exc()
                     assert parameter_name in parameters, "Missing parameter {}".format(parameter_name)
 
     def missing_input_files(self):
@@ -157,7 +159,8 @@ class PlotBase(object):
     def plot_div(self):
         """Return the plot as an html <div/> for use in the dashboard. Override this method in subclasses"""
         if self.missing_input_files():
-            raise MissingInputDataException("Dear developer: Run check_input_files() first, before plotting!")
+            raise MissingInputDataException(
+                "Following input files are missing: {input_files}".format(input_files=self.missing_input_files()))
         return self.cache.lookup_plot_div(self, self._plot_div_producer)
 
     def _plot_div_producer(self):
@@ -170,7 +173,8 @@ class PlotBase(object):
     def table_div(self):
         """Returns the html div for a table, or an empty string if no table is to be produced"""
         if self.missing_input_files():
-            raise MissingInputDataException("Dear developer: Run check_input_files() first, before plotting!")
+            raise MissingInputDataException(
+                "Following input files are missing: {input_files}".format(input_files=self.missing_input_files()))
         return self.cache.lookup_table_div(self, self._table_div_producer)
 
     def _table_div_producer(self):

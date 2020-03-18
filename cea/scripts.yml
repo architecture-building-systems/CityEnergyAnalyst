@@ -333,6 +333,13 @@ Utilities:
     module: cea.tests.run_unit_tests
     parameters: []
 
+  - name: run-all-plots
+    label: Run all plots
+    description: Run all the plots for test purposes
+    interfaces: [test, cli]
+    module: cea.tests.run_all_plots
+    parameters: []
+
 default:
 
   - name: multi-criteria-analysis
