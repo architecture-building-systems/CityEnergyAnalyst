@@ -58,3 +58,4 @@
 - script: multi-criteria-analysis
   parameters:
     generation: 2
+- script: run-all-plots
