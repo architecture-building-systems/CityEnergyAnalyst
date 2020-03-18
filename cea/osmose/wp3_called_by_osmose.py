@@ -3,9 +3,7 @@ import numpy as np
 import networkx as nx
 import math
 import os
-import wntr
 import geopandas as gpd
-from cea.technologies.thermal_network.thermal_network import extract_network_from_shapefile
 import time
 
 HOURS_IN_YEAR = 8760
@@ -33,7 +31,7 @@ def main(path_to_case):
     ## 1. TRANSFORM OSMOSE DATA TO CEA FORMAT
     substation_flow_rate_m3pers_df, \
     T_supply_K, \
-    timesteps, \
+    op_time, \
     substation_A_hex_df = write_cea_demand_from_osmose(path_to_case)
 
     ## 2. GET NETWORK INFO
@@ -61,7 +59,7 @@ def main(path_to_case):
     plant_pressure_losses_Pa = total_pressure_losses_in_pipes_Pa * 1.1 # FIXME: assumption for substations
     plant_flow_rate_m3pers = substation_flow_rate_m3pers_df.sum(axis=1)
     plant_pumping_kW = plant_pressure_losses_Pa * plant_flow_rate_m3pers.values / 1000 / PUMP_ETA
-    annual_pumping_energy_kWh = sum(plant_pumping_kW)*int(HOURS_IN_YEAR / timesteps) # match yearly hours
+    annual_pumping_energy_kWh = sum(plant_pumping_kW*op_time) # match yearly hours
 
     # pump size
     Cinv_pump, pump_size_kW = calc_Cinv_pumps(plant_pumping_kW)
@@ -205,10 +203,10 @@ def write_cea_demand_from_osmose(path_to_district_folder):
 
 
     # 5. match yearly hours
-    timesteps = len(substation_flow_rate_m3pers_df.index)
+    op_time = district_cooling_demand_df['op_time'].values
     # substation_flow_rate_m3pers_df = multiply_df_to_match_hours(substation_flow_rate_m3pers_df)
     # substation_flow_rate_m3pers_df = substation_flow_rate_m3pers_df.drop(columns=['index'])
-    return substation_flow_rate_m3pers_df, T_supply_K, timesteps, substation_A_hex
+    return substation_flow_rate_m3pers_df, T_supply_K, op_time, substation_A_hex
 
 def get_network_info(path_to_case):
     path_to_thermal_network = os.path.join(path_to_case, 'outputs\\data\\thermal-network\\')
@@ -461,6 +459,94 @@ def read_shp(path_to_case):
     # get node and pipe information
     node_df, edge_df = extract_network_from_shapefile(network_edges_df, network_nodes_df)
     return node_df, edge_df
+
+def extract_network_from_shapefile(edge_shapefile_df, node_shapefile_df):
+    """
+    Extracts network data into DataFrames for pipes and nodes in the network
+
+    :param edge_shapefile_df: DataFrame containing all data imported from the edge shapefile
+    :param node_shapefile_df: DataFrame containing all data imported from the node shapefile
+    :type edge_shapefile_df: DataFrame
+    :type node_shapefile_df: DataFrame
+    :return node_df: DataFrame containing all nodes and their corresponding coordinates
+    :return edge_df: list of edges and their corresponding lengths and start and end nodes
+    :rtype node_df: DataFrame
+    :rtype edge_df: DataFrame
+
+    """
+    # set precision of coordinates
+    decimals = 6
+    # create node dictionary with plant and consumer nodes
+    node_dict = {}
+    node_shapefile_df.set_index("Name", inplace=True)
+    node_shapefile_df = node_shapefile_df.astype('object')
+    node_shapefile_df['coordinates'] = node_shapefile_df['geometry'].apply(lambda x: x.coords[0])
+    # sort node_df by index number
+    node_sorted_index = node_shapefile_df.index.to_series().str.split('NODE', expand=True)[1].apply(int).sort_values(
+        ascending=True)
+    node_shapefile_df = node_shapefile_df.reindex(index=node_sorted_index.index)
+    # assign node properties (plant/consumer/none)
+    node_shapefile_df['plant'] = ''
+    node_shapefile_df['consumer'] = ''
+    node_shapefile_df['none'] = ''
+
+    for node, row in node_shapefile_df.iterrows():
+        coord_node = row['geometry'].coords[0]
+        if row['Type'] == "PLANT":
+            node_shapefile_df.loc[node, 'plant'] = node
+        elif row['Type'] == "CONSUMER":  # TODO: add 'PROSUMER' by splitting nodes
+            node_shapefile_df.loc[node, 'consumer'] = node
+        else:
+            node_shapefile_df.loc[node, 'none'] = node
+        coord_node_round = (round(coord_node[0], decimals), round(coord_node[1], decimals))
+        node_dict[coord_node_round] = node
+
+    # create edge dictionary with pipe lengths and start and end nodes
+    # complete node dictionary with missing nodes (i.e., joints)
+    edge_shapefile_df.set_index("Name", inplace=True)
+    edge_shapefile_df = edge_shapefile_df.astype('object')
+    edge_shapefile_df['coordinates'] = edge_shapefile_df['geometry'].apply(lambda x: x.coords[0])
+    # sort edge_df by index number
+    edge_sorted_index = edge_shapefile_df.index.to_series().str.split('PIPE', expand=True)[1].apply(int).sort_values(
+        ascending=True)
+    edge_shapefile_df = edge_shapefile_df.reindex(index=edge_sorted_index.index)
+    # assign edge properties
+    edge_shapefile_df['pipe length'] = 0
+    edge_shapefile_df['start node'] = ''
+    edge_shapefile_df['end node'] = ''
+
+    for pipe, row in edge_shapefile_df.iterrows():
+        # get the length of the pipe and add to dataframe
+        edge_shapefile_df.loc[pipe, 'pipe length'] = row['geometry'].length
+        # get the start and end notes and add to dataframe
+        edge_coords = row['geometry'].coords
+        start_node = (round(edge_coords[0][0], decimals), round(edge_coords[0][1], decimals))
+        end_node = (round(edge_coords[1][0], decimals), round(edge_coords[1][1], decimals))
+        if start_node in node_dict.keys():
+            edge_shapefile_df.loc[pipe, 'start node'] = node_dict[start_node]
+        else:
+            print('The start node of ', pipe, 'has no match in node_dict, check precision of the coordinates.')
+        if end_node in node_dict.keys():
+            edge_shapefile_df.loc[pipe, 'end node'] = node_dict[end_node]
+        else:
+            print('The end node of ', pipe, 'has no match in node_dict, check precision of the coordinates.')
+
+    # # If a consumer node is not connected to the network, find the closest node and connect them with a new edge
+    # # this part of the code was developed for a case in which the node and edge shapefiles were not defined
+    # # consistently. This has not been a problem after all, but it could eventually be a useful feature.
+    # for node in node_dict:
+    #     if node not in pipe_nodes:
+    #         min_dist = 1000
+    #         closest_node = pipe_nodes[0]
+    #         for pipe_node in pipe_nodes:
+    #             dist = ((node[0] - pipe_node[0])**2 + (node[1] - pipe_node[1])**2)**.5
+    #             if dist < min_dist:
+    #                 min_dist = dist
+    #                 closest_node = pipe_node
+    #         j += 1
+    #         edge_dict['EDGE' + str(j)] = [min_dist, node_dict[closest_node][0], node_dict[node][0]]
+
+    return node_shapefile_df, edge_shapefile_df
 
 def write_substation_values_to_nodes(substation_flow_df, all_nodes_df, edge_node_df):
     node_flows_at_substations_df = np.nan_to_num(
