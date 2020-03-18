@@ -85,7 +85,7 @@ def read_file_path(abs_path, scenario, args):
     file_path = os.path.relpath(abs_path, scenario)
     for k, v in args.items():
         if v in file_path:
-            file_path = file_path.replace(v, "{%s}" % k.replace("_", "-"))
+            file_path = file_path.replace(v, "{%s}" % k)
     return file_path
 
 
@@ -220,22 +220,31 @@ def get_html_schema(_):
 
 def get_column_schema(df_series):
     types_found = set()
-    meta = {}
-    for data in df_series:
-        if data == data:
-            meta['sample_data'] = data
-            if is_date(data):
+    column_schema = {}
+    for value in df_series:
+        if value == value:
+            column_schema['sample_data'] = value
+            if is_date(value):
                 types_found.add('date')
-            elif isinstance(data, basestring):
-                meta['sample_data'] = data.encode('ascii', 'ignore')
+            elif isinstance(value, basestring):
+                column_schema['sample_data'] = value.encode('ascii', 'ignore')
                 types_found.add('string')
             else:
-                types_found.add(type(data).__name__)
+                types_found.add(type(value).__name__)
         # declare nans
-        if data != data:
+        if value != value:
             types_found.add(None)
-    meta['types_found'] = list(types_found)
-    return meta
+    column_schema['types_found'] = list(types_found)
+    column_schema["pandas"] = {
+        "type": df_series.dtype.name,
+        "kind": df_series.dtype.kind,
+    }
+    if df_series.dtype.kind in {"f", "i"}:
+        column_schema["pandas"]["desc"] = df_series.describe().to_dict()
+
+    kind_map = {"f": "float", "i": "int", "s": "string"}
+    column_schema["type"] = kind_map[df_series.dtype.kind]
+    return column_schema
 
 
 def is_date(value):

@@ -32,11 +32,15 @@ Each file is represented by a key that is the name of the InputLocator method th
 
 It provides other information of the file based on these set of properties:
     - created_by
-        - lists which script creates this file. Useful for script suggestions for missing files.
+        - lists which script creates this file. This is used to suggest scripts when input files
+          (as defined in ``scripts.yml``) are missing.
     - file_path
         - path where the file can be found relative to the path of the scenario
+        - arguments to the locator method are replaced in the string
+          (e.g. ``outputs/data/solar-radiation/{building}_radiation.csv``)
     - file_type
-        - type of file which helps decide what kind of parser to use to read the data found in the file
+        - type of file (extension) - indicates the parser to use to read the data found in the file
+          (one of ``{xls, xlsx, csv, dbf, shp, json}``)
     - schema
         - describes the data structure of the file and how it interacts with data from other files
     - used_by
@@ -44,15 +48,15 @@ It provides other information of the file based on these set of properties:
 
 File type
 +++++++++
-*file_type* affects how CEA parses the information found in the *schema* property.
 
-This is because some file types would contain more than one table in them
+``file_type`` affects how CEA parses the information found in the ``schema`` property.
+
+This is because some file types contain more than one table in them.
 e.g. excel files usually contain multiple tables depending on the number of sheets that it has
 while .csv/.dbf files usually only contain one table.
 
-
-To workaround this, the level of keys found in schema would be different based on its type,
-where the table name for multiple table type files would encapsulate each *schema* properties
+To workaround this, the level of keys found in ``schema`` is be different based on its type,
+where the table name for multiple table type files encapsulate each ``schema`` properties
 as found in single table type files.
 
 e.g. single table type files
@@ -60,6 +64,7 @@ e.g. single table type files
 
 
     $locator_method_name:
+      file_type: csv
       schema:
         columns:
             $column_name:
@@ -74,6 +79,7 @@ e.g. multiple table type files
 
     $locator_method_name:
       schema:
+        file_type: xlsx
         $table_name:
             columns:
                 $column_name:
@@ -84,20 +90,26 @@ e.g. multiple table type files
 
 Schema
 ++++++
-The *schema* of the file would be separated into two sections: **columns** and **constraints**
-Below we will describe the various properties used by *schema*.
+
+The ``schema`` of the file is be separated into two sections: ``columns`` and ``constraints``.
+
+(for Excel files, each worksheet has these two sections as explained above)
 
 Columns Property
-======================
-The schema stores information regarding the values found in the columns of the given data and is described by giving the expected type of value.
+================
 
-This information would be used by the `InputValidator` class to validate each value found in the column.
+The schema stores information regarding the values found in the columns of the given data and is described by giving
+the expected type of value.
 
-Currently the schema supports types:
-    - String
-    - Numeric (Float and Integer)
+This information is be used by the ``InputValidator`` class to validate each value found in the column.
+
+Currently the schema supports these types:
+
+    - ``string``
+    - ``float``
+    - ``int``
     - Choice
-    - Boolean
+    - ``boolean``
 
 Each of these types will inherit from a set of base properties.
 
