@@ -1,8 +1,11 @@
 import pandas as pd
 import numpy as np
+import networkx as nx
 import math
 import os
 import wntr
+import geopandas as gpd
+from cea.technologies.thermal_network.thermal_network import extract_network_from_shapefile
 import time
 
 HOURS_IN_YEAR = 8760
@@ -35,6 +38,7 @@ def main(path_to_case):
 
     ## 2. GET NETWORK INFO
     edge_node_df, all_nodes_df, edge_length_df = get_network_info(path_to_case)
+    node_df, edge_df = read_shp(path_to_case)
 
     ## 3. PIPE SIZING & COSTS
     Pipe_properties_df, Cinv_pipe_perm, \
@@ -47,16 +51,16 @@ def main(path_to_case):
     substation_A_hex_df['Cinv_hex'] = np.vectorize(calc_Cinv_substation_hex)(substation_A_hex_df)
 
     ## 6. PUMPING COSTS
-    pressure_losses_in_edges_Pa_df, \
-    network_operation_info = calc_network_pressure_losses(Pipe_properties_df, T_supply_K, all_nodes_df,
+    pressure_losses_in_critical_path, \
+    network_operation_info = calc_network_pressure_losses(Pipe_properties_df, T_supply_K, all_nodes_df, node_df, edge_df,
                                                                   edge_length_df, edge_node_df, plant_index, plant_node,
                                                                   substation_flow_rate_m3pers_df)
 
-
     # electricity consumption # TODO:add substation head loss at critical building and plant
-    plant_pressure_losses_Pa = pressure_losses_in_edges_Pa_df.sum(axis=1)
+    total_pressure_losses_in_pipes_Pa = pressure_losses_in_critical_path.sum(axis=1) * 2 # calculate supply side to approximate return side
+    plant_pressure_losses_Pa = total_pressure_losses_in_pipes_Pa * 1.1 # FIXME: assumption for substations
     plant_flow_rate_m3pers = substation_flow_rate_m3pers_df.sum(axis=1)
-    plant_pumping_kW = plant_pressure_losses_Pa.values * plant_flow_rate_m3pers.values / 1000 / PUMP_ETA
+    plant_pumping_kW = plant_pressure_losses_Pa * plant_flow_rate_m3pers.values / 1000 / PUMP_ETA
     annual_pumping_energy_kWh = sum(plant_pumping_kW)*int(HOURS_IN_YEAR / timesteps) # match yearly hours
 
     # pump size
@@ -79,7 +83,8 @@ def main(path_to_case):
     return
 
 
-def calc_network_pressure_losses(Pipe_properties_df, T_supply_K, all_nodes_df, edge_length_df, edge_node_df, plant_index,
+def calc_network_pressure_losses(Pipe_properties_df, T_supply_K, all_nodes_df, node_df, edge_df, edge_length_df,
+                                 edge_node_df, plant_index,
                                  plant_node, substation_flow_rate_m3pers_df):
     D_int_m = Pipe_properties_df['D_int_m']
     # write building flowrates into node_flows_at_substations_df
@@ -106,8 +111,8 @@ def calc_network_pressure_losses(Pipe_properties_df, T_supply_K, all_nodes_df, e
     pressure_losses_in_edges_Pa_df = pd.DataFrame(pressure_losses_in_edges_Pa).T
     pressure_losses_in_edges_Pa_df = pd.DataFrame(pressure_losses_in_edges_Pa_df.values, columns=edge_node_df.columns)
 
-    # TODO: supply and return
-    # TODO: critical paths
+    pressure_losses_in_critical_path = calc_pressure_loss_critical_path(pressure_losses_in_edges_Pa_df, node_df, edge_df)
+
     if REPORTING:
         specific_pressure_losses_in_edges_Pa_df = pd.DataFrame(specific_pressure_loss_Pa_per_m).T
         specific_pressure_losses_in_edges_Pa_df = pd.DataFrame(specific_pressure_losses_in_edges_Pa_df.values,
@@ -121,13 +126,15 @@ def calc_network_pressure_losses(Pipe_properties_df, T_supply_K, all_nodes_df, e
 
         massflows_in_edges_kgpers_df.to_csv(os.path.join(*[path_to_case, 'mass_flow_edges_kgs.csv']))
         Pipe_properties_df.to_csv(os.path.join(*[path_to_case, 'Pipe_properties.csv']))
+
+    # gather operation info
     network_operation_info = {}
     network_operation_info['Ploss_max_Paperm'] = np.max(np.array(specific_pressure_loss_Pa_per_m))
     network_operation_info['Ploss_mean_Paperm'] = np.mean(np.array(specific_pressure_loss_Pa_per_m))
     network_operation_info['v_max_ms'] = np.max(np.array(velocity_edges_ms))
     network_operation_info['v_mean_ms'] = np.mean(np.array(velocity_edges_ms))
     network_operation_info['massflow_min_kgs'] = massflows_in_edges_kgpers_df.min().min()
-    return pressure_losses_in_edges_Pa_df, network_operation_info
+    return pressure_losses_in_critical_path, network_operation_info
 
 
 ## ====== Processing ============ #
@@ -417,8 +424,43 @@ def calc_max_diameter(volume_flow_m3s, pipe_catalog, velocity_ms, peak_load_perc
 
     return Pipe_DN, D_ext_m, D_int_m, D_ins_m, Cinv_pipe, A_int_m2
 
+def calc_pressure_loss_critical_path(pressure_losses_in_edges_Pa_df, node_df, edge_df):
+    plant_node = node_df[node_df['Type'] == 'PLANT'].index[0]
+    pressure_losses_in_critical_path = np.zeros(np.shape(pressure_losses_in_edges_Pa_df.values))
+    for time, dP_time in enumerate(pressure_losses_in_edges_Pa_df.values):
+        if max(dP_time) > 0.0:
+            G = nx.Graph()
+            G.add_nodes_from(node_df.index)
+            for ix, edge_name in enumerate(edge_df.index):
+                start_node = edge_df.loc[edge_name, 'start node']
+                end_node = edge_df.loc[edge_name, 'end node']
+                dP_Pa = dP_time[ix]
+                G.add_edge(start_node, end_node, weight=dP_Pa, name=edge_name, ix=str(ix))
+            # find the path with the highest pressure drop
+            _, distances_dict = nx.dijkstra_predecessor_and_distance(G, source=plant_node)
+            critical_node = max(distances_dict, key=distances_dict.get)
+            path_to_critical_node = nx.shortest_path(G, source=plant_node)[critical_node]
+            # calculate pressure losses along the critical path
+            for i in range(len(path_to_critical_node)):
+                if i < len(path_to_critical_node) - 1:
+                    start_node = path_to_critical_node[i]
+                    end_node = path_to_critical_node[i+1]
+                    dP_Pa = G[start_node][end_node]['weight']
+                    ix_edge = int(G[start_node][end_node]['ix'])
+                    pressure_losses_in_critical_path[time][ix_edge] = dP_Pa
+    return pressure_losses_in_critical_path
+
 
 ##========== UTILITY FUNCTIONS ============ ##
+def read_shp(path_to_case):
+    path_to_thermal_network = os.path.join(path_to_case, 'outputs\\data\\thermal-network\\DC')
+    # import shapefiles containing the network's edges and nodes
+    network_edges_df = gpd.read_file(os.path.join('', *[path_to_thermal_network, "edges.shp"]))
+    network_nodes_df = gpd.read_file(os.path.join('', *[path_to_thermal_network, "nodes.shp"]))
+
+    # get node and pipe information
+    node_df, edge_df = extract_network_from_shapefile(network_edges_df, network_nodes_df)
+    return node_df, edge_df
 
 def write_substation_values_to_nodes(substation_flow_df, all_nodes_df, edge_node_df):
     node_flows_at_substations_df = np.nan_to_num(
