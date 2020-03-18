@@ -135,25 +135,6 @@ class InputLocator(object):
         return os.path.join(self.get_optimization_slave_generation_results_folder(gen_num),
                             'generation_%(gen_num)s_individuals.csv' % locals())
 
-    def get_optimization_all_individuals(self):
-        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
-        return os.path.join(self.get_optimization_results_folder(),
-                            'slave/All_individuals.csv')
-
-    def list_optimization_all_individuals(self):
-        """Return a list of "scenario/generation/individual" strings for scenario comparisons"""
-        import csv
-        scenario = os.path.basename(self.scenario)
-        all_individuals_csv = self.get_optimization_all_individuals()
-        result = []
-        if os.path.exists(all_individuals_csv):
-            reader = csv.DictReader(open(all_individuals_csv))
-            for row in reader:
-                generation = int(float(row['generation']))
-                individual = int(float(row['individual']))
-                result.append('%(scenario)s/%(generation)i/ind%(individual)i' % locals())
-        return result
-
     def get_optimization_slave_heating_opex_var_pattern(self, ind_num, gen_num):
         return os.path.join(self.get_optimization_slave_generation_results_folder(gen_num),
                             'ind_%(ind_num)s_Heating_Opex_var_pattern.csv' % locals())

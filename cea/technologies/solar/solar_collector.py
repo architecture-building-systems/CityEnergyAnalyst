@@ -61,8 +61,8 @@ def calc_SC(locator, config, latitude, longitude, weather_data, date_local, buil
 
     type_panel = config.solar.type_SCpanel
 
-    radiation_csv = locator.get_radiation_building_sensors(building_name=building_name)
-    metadata_csv = locator.get_radiation_metadata(building_name=building_name)
+    radiation_csv = locator.get_radiation_building_sensors(building=building_name)
+    metadata_csv = locator.get_radiation_metadata(building=building_name)
 
     # solar properties
     solar_properties = solar_equations.calc_sun_properties(latitude, longitude, weather_data, date_local, config)

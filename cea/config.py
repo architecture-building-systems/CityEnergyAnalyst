@@ -616,35 +616,6 @@ class StringParameter(Parameter):
     typename = 'StringParameter'
 
 
-class OptimizationIndividualParameter(Parameter):
-    typename = 'OptimizationIndividualParameter'
-
-    def initialize(self, parser):
-        # allow the project option to be set
-        self._project = parser.get(self.section.name, self.name + '.project')
-
-    def get_folders(self, project=None):
-        if not project:
-            project = self.replace_references(self._project)
-        return [folder for folder in os.listdir(project) if os.path.isdir(os.path.join(project, folder))]
-
-    def get_generations(self, scenario, project=None):
-        if not project:
-            project = self.replace_references(self._project)
-        locator = cea.inputlocator.InputLocator(os.path.join(project, scenario))
-        generations = list(sorted(set(individual.split('/')[1]
-                                      for individual in locator.list_optimization_all_individuals())))
-        return generations
-
-    def get_individuals(self, scenario, generation, project=None):
-        if not project:
-            project = self.replace_references(self._project)
-        locator = cea.inputlocator.InputLocator(os.path.join(project, scenario))
-        individuals = list(sorted(set(individual.split('/')[2]
-                                      for individual in locator.list_optimization_all_individuals())))
-        return individuals
-
-
 class OptimizationIndividualListParameter(ListParameter):
     typename = 'OptimizationIndividualListParameter'
 
