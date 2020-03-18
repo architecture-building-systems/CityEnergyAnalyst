@@ -390,21 +390,6 @@ class InputLocator(object):
         return os.path.join(self.get_optimization_master_results_folder(),
                             'CheckPoint_' + str(generation)+".json")
 
-    def get_optimization_checkpoint_initial(self):
-        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
-        return os.path.join(self.get_optimization_master_results_folder(),
-                            'CheckPoint_Initial')
-
-    def get_uncertainty_checkpoint(self, generation):
-        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
-        return os.path.join(self.get_uncertainty_results_folder(),
-                            'CheckPoint_uncertainty_' + str(generation))
-
-    def get_optimization_decentralized_result_file(self, building):
-        """scenario/outputs/data/optimization/decentralized/DiscOp_${building}_result.csv"""
-        return os.path.join(self.get_optimization_decentralized_folder(),
-                            "DiscOp_%(building)s_result.csv" % locals())
-
     def get_optimization_substations_folder(self):
         """scenario/outputs/data/optimization/substations
         Substation results for decentralized buildings"""
