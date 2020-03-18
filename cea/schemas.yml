@@ -4332,6 +4332,16 @@ get_nominal_edge_mass_flow_csv_file:
       'Unnamed: 0':
         type: int
         primary: true
+get_nominal_node_mass_flow_csv_file:
+  file_path: outputs\data\thermal-network\Nominal_NodeMassFlow_at_design_{network_type}__kgpers.csv
+  file_type: csv
+  schema:
+    columns:
+      NODE0:
+        type: float
+      'Unnamed: 0':
+        type: int
+        primary: true
 get_optimization_checkpoint:
   created_by:
   - optimization
