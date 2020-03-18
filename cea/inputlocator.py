@@ -395,11 +395,6 @@ class InputLocator(object):
         return os.path.join(self.get_optimization_master_results_folder(),
                             'CheckPoint_Initial')
 
-    def get_optimization_checkpoint_final(self):
-        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
-        return os.path.join(self.get_optimization_master_results_folder(),
-                            'Checkpoint_Final')
-
     def get_uncertainty_checkpoint(self, generation):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
         return os.path.join(self.get_uncertainty_results_folder(),
