@@ -59,7 +59,7 @@ def main(path_to_case):
     plant_pressure_losses_Pa = total_pressure_losses_in_pipes_Pa * 1.1 # FIXME: assumption for substations
     plant_flow_rate_m3pers = substation_flow_rate_m3pers_df.sum(axis=1)
     plant_pumping_kW = plant_pressure_losses_Pa * plant_flow_rate_m3pers.values / 1000 / PUMP_ETA
-    annual_pumping_energy_kWh = sum(plant_pumping_kW*op_time) # match yearly hours
+    annual_pumping_energy_kWh = np.nansum(plant_pumping_kW*op_time) # match yearly hours
 
     # pump size
     Cinv_pump, pump_size_kW = calc_Cinv_pumps(plant_pumping_kW)
