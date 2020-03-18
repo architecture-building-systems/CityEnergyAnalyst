@@ -895,6 +895,7 @@ class GenerationParameter(ChoiceParameter):
 class SystemParameter(ChoiceParameter):
     """A (single) building in the zone"""
     typename = 'SystemParameter'
+
     def initialize(self, parser):
         # skip the default ChoiceParameter initialization of _choices
         pass

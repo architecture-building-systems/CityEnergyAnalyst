@@ -143,7 +143,8 @@ class PlotBase(object):
     def plot(self, auto_open=False):
         """Plots the graphs to the filename (see output_path)"""
         if self.missing_input_files():
-            raise MissingInputDataException("Dear developer: Run check_input_files() first, before plotting!")
+            raise MissingInputDataException(
+                "Following input files are missing: {input_files}".format(input_files=self.missing_input_files()))
         # PLOT
         template_path = os.path.join(os.path.dirname(__file__), 'plot.html')
         template = jinja2.Template(open(template_path, 'r').read())
