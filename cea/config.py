@@ -963,7 +963,7 @@ class MultiSystemParameter(MultiChoiceParameter):
     def decode(self, value):
         value = self.replace_references(value)
         choices = parse_string_to_list(value)
-        if choices:  # Return default if choices is empty
+        if not choices:  # Return default if choices is empty
             return self.default
         return [self.replace_references(choice) for choice in choices if self.replace_references(choice) in self._choices]
 
