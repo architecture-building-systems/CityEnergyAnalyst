@@ -1393,7 +1393,7 @@ def calc_pressure_nodes(t_supply_node__k, t_return_node__k, thermal_network, t):
         pressure_loss_critical_substations_pa[ix] = pressure_loss_nodes_pa[ix]
 
     # calculate pumping energy
-    # TODO: here 70% pump efficiency assumed, better estimate according to massflows
+    # TODO: here a fixed, hard-coded pump efficiency is assumed, better estimate according to massflows
     pressure_loss_pipe_supply_kW = pressure_loss_pipe_supply__pa * edge_mass_flow / P_WATER_KGPERM3 / 1000 / PUMP_ETA
     pressure_loss_pipe_return_kW = pressure_loss_pipe_return__pa * edge_mass_flow / P_WATER_KGPERM3 / 1000 / PUMP_ETA
     pressure_loss_critical_supply_kW = pressure_loss_critical_path_supply_pa * edge_mass_flow / P_WATER_KGPERM3 / 1000 / PUMP_ETA
