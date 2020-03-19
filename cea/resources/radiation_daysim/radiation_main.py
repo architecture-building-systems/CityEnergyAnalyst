@@ -202,8 +202,7 @@ def check_daysim_bin_directory(path_hint):
     :param str path_hint: The path to check first, according to the `cea.config` file.
     :return: path_hint, contains the Daysim binaries - otherwise an exception occurrs.
     """
-    required_binaries = ["ds_illum", "epw2wea", "gen_dc", "isotrop_sky", "oconv", "radfiles2daysim", "rayinit",
-                         "rtrace_dc"]
+    required_binaries = ["ds_illum", "epw2wea", "gen_dc", "oconv", "radfiles2daysim", "rtrace_dc"]
     required_libs = ["rayinit.cal", "isotrop_sky.cal"]
 
     def contains_binaries(path):
@@ -274,7 +273,7 @@ class CEARad(py2radiance.Rad):
             print('`{}` completed'.format(cmd))
         else:
             # Stops script if commands fail (i.e non-zero exit code)
-            subprocess.check_call(cmd, cwd=cwd, stderr=subprocess.STDOUT)
+            subprocess.check_call(cmd, cwd=cwd, stderr=subprocess.STDOUT, env=os.environ)
 
     def execute_epw2wea(self, epwweatherfile, ground_reflectance=0.2):
         daysimdir_wea = self.daysimdir_wea
