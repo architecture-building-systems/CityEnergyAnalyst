@@ -463,6 +463,10 @@ def main(config):
     # BUGFIX for PyCharm: the PATH variable might not include the daysim-bin-directory, so we add it here
     os.environ["PATH"] = config.radiation.daysim_bin_directory + os.pathsep + os.environ["PATH"]
     os.environ["RAYPATH"] = config.radiation.daysim_bin_directory
+    if not "PROJ_LIB" in os.environ:
+        os.environ["PROJ_LIB"] = os.path.join(os.path.dirname(sys.executable), "Library", "share")
+    if not "GDAL_DATA" in os.environ:
+        os.environ["GDAL_DATA"] = os.path.join(os.path.dirname(sys.executable), "Library", "share", "gdal")
 
     print("verifying geometry files")
     print(locator.get_zone_geometry())
