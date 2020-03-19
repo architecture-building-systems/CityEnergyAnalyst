@@ -246,8 +246,8 @@ class CEARad(py2radiance.Rad):
 
     def run_cmd(self, cmd, cwd=None):
         # Verbose output if debug is true
+        print('Running command `{}`{}'.format(cmd, '' if cwd is None else ' in `{}`'.format(cwd)))
         if self.debug:
-            print('Running command `{}`{}'.format(cmd, '' if cwd is None else ' in `{}`'.format(cwd)))
             p = subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE)
             while p.poll() is None:
                 line = p.stdout.readline()
@@ -343,17 +343,16 @@ class CEARad(py2radiance.Rad):
             raise NameError("run .initialise_daysim function before running execute_gen_dc")
 
         # first specify the sensor pts
-        head, tail = os.path.split(sensor_filepath)
+        sensor_filename = os.path.basename(sensor_filepath)
         # move the pts file to the daysim folder
-        dest_filepath = os.path.join(daysim_pts_dir, tail)
+        dest_filepath = os.path.join(daysim_pts_dir, sensor_filename)
         shutil.move(sensor_filepath, dest_filepath)
         # write the sensor file location into the .hea
-        hea_file.write("\nsensor_file" + " " + os.path.join("pts", tail))
+        hea_file.write("\nsensor_file {rel_sensor_filename}".format(
+            rel_sensor_filename=os.path.join("pts", sensor_filename)))
         # write the shading header
         self.write_static_shading(hea_file)
         # write analysis result file
-        head, tail = os.path.split(hea_filepath)
-        tail = tail.replace(".hea", "")
         nsensors = len(self.sensor_positions)
         sensor_str = ""
         if output_unit == "w/m2":
@@ -391,13 +390,12 @@ class CEARad(py2radiance.Rad):
             else:
                 lines_modified.append(line)
 
-        temp_hea_filepath = os.path.join(self.daysimdir_tmp, tail + "temp.hea")
+        hea_basename = os.path.splitext(os.path.basename(hea_filepath))[0]
+        temp_hea_filepath = os.path.join(self.daysimdir_tmp, hea_basename + "temp.hea")
 
         with open(temp_hea_filepath, "w") as temp_hea_file:
             temp_hea_file.write('\n'.join(lines_modified))
 
-
-        _head, _tail = os.path.split(temp_hea_filepath)
         # execute gen_dc
         command1 = 'gen_dc "{}" -dir'.format(temp_hea_filepath)
         command2 = 'gen_dc "{}" -dif'.format(temp_hea_filepath)
@@ -447,6 +445,7 @@ def main(config):
 
     # BUGFIX for PyCharm: the PATH variable might not include the daysim-bin-directory, so we add it here
     os.environ["PATH"] = config.radiation.daysim_bin_directory + os.pathsep + os.environ["PATH"]
+    os.environ["RAYPATH"] = config.radiation.daysim_bin_directory
 
     print("verifying geometry files")
     print(locator.get_zone_geometry())
