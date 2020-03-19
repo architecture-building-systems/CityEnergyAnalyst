@@ -204,15 +204,24 @@ def check_daysim_bin_directory(path_hint):
     """
     required_binaries = ["ds_illum", "epw2wea", "gen_dc", "isotrop_sky", "oconv", "radfiles2daysim", "rayinit",
                          "rtrace_dc"]
+    required_libs = ["rayinit.cal", "isotrop_sky.cal"]
 
     def contains_binaries(path):
         """True if all the required binaries are found in path - note that binaries might have an extension"""
         try:
-            found_binaries = set(bin for bin, ext in map(os.path.splitext, os.listdir(path)))
+            found_binaries = set(bin for bin, _ in map(os.path.splitext, os.listdir(path)))
         except:
             # could not find the binaries, bogus path
             return False
         return all(bin in found_binaries for bin in required_binaries)
+
+    def contains_libs(path):
+        try:
+            found_libs = set(os.listdir(path))
+        except:
+            # could not find the libs, bogus path
+            return False
+        return all(lib in found_libs for lib in required_libs)
 
     def contains_whitespace(path):
         """True if path contains whitespace"""
@@ -222,6 +231,7 @@ def check_daysim_bin_directory(path_hint):
         path_hint,
         os.path.join(os.path.dirname(sys.executable), "..", "Daysim"),
     ]
+    # user might have a DAYSIM installation
     folders_to_check.extend(os.environ["RAYPATH"].split(";"))
     if sys.platform == "win32":
         folders_to_check.append(r"C:\Daysim\bin")
@@ -233,7 +243,14 @@ def check_daysim_bin_directory(path_hint):
             if contains_whitespace(path):
                 print("ATTENTION: Daysim binaries found in '{}', but its path contains whitespaces. Consider moving the binaries to another path to use them.")
                 continue
-            return path
+
+            if contains_libs(path):
+                return path
+            else:
+                # might be C:\Daysim\bin, try adding C:\Daysim\lib
+                lib_path = os.path.abspath(os.path.normpath(os.path.join(path, "..", "lib")))
+                if contains_libs(lib_path):
+                    return path + os.pathsep + lib_path
 
     raise ValueError("Could not find Daysim binaries - checked these paths: {}".format(", ".join(folders_to_check)))
 
