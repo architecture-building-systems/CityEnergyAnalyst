@@ -270,16 +270,14 @@ def calc_network_summary_DCN(locator, master_to_slave_vars):
     # if there is a district heating network on site and there is server_heating
     district_heating_network = master_to_slave_vars.DHN_exists
     if district_heating_network and master_to_slave_vars.WasteServersHeatRecovery == 1:
-        df = pd.read_csv(locator.get_optimization_network_results_summary('DC',
-                                                                          master_to_slave_vars.network_data_file_cooling))
+        df = pd.read_csv(locator.get_optimization_network_results_summary('DC',master_to_slave_vars.DCN_barcode))
         df = df.fillna(0)
         T_sup_K = df['T_DCNf_space_cooling_and_refrigeration_sup_K'].values
         T_re_K = df['T_DCNf_space_cooling_and_refrigeration_re_K'].values
         mdot_kgpers = df['mdot_cool_space_cooling_and_refrigeration_netw_all_kgpers'].values
         Q_cooling_req_W = df['Q_DCNf_space_cooling_and_refrigeration_W'].values
     else:
-        df = pd.read_csv(locator.get_optimization_network_results_summary('DC',
-                                                                          master_to_slave_vars.network_data_file_cooling))
+        df = pd.read_csv(locator.get_optimization_network_results_summary('DC',master_to_slave_vars.DCN_barcode))
         df = df.fillna(0)
         T_sup_K = df['T_DCNf_space_cooling_data_center_and_refrigeration_sup_K'].values
         T_re_K = df['T_DCNf_space_cooling_data_center_and_refrigeration_re_K'].values
