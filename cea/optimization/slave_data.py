@@ -39,6 +39,8 @@ class SlaveData(object):
         self.building_names_electricity = []
         self.buildings_connected_to_district_heating = "nan"
         self.buildings_connected_to_district_cooling = "nan"
+        self.DH_network_summary_individual = None
+        self.DC_network_summary_individual = None
 
         # HEATING TECHNOLOGIES
         # NG fired cogen
