@@ -3,6 +3,9 @@
 Installation guide for Ubuntu
 =============================
 
+.. note:: We don't support installing the CEA on Ubuntu system - there are currently a bunch of things that don't
+   work correctly. This guide shows how far we got. Use it if you're feeling adventurous and would like to help out.
+
 Follow these instructions to install the CEA on a Linux system (tested on Ubuntu 18.04.2 LTS with minimal installation
 configuration)
 
