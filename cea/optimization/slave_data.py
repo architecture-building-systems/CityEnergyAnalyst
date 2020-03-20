@@ -28,7 +28,6 @@ class SlaveData(object):
         self.individual_number = ""
         self.generation_number = ""
         self.num_total_buildings = 0
-        self.date = 0
         self.DHN_exists = False
         self.DCN_exists = False
         self.technologies_cooling_allowed = None
