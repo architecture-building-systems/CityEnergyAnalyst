@@ -249,6 +249,8 @@ def building_2d_to_3d(locator, geometry_terrain, config, height_col, nfloor_col)
     architecture_wwr_df = data_preprocessed.architecture_wwr_df
     zone_building_names = data_preprocessed.zone_building_names
     zone_building_solid_list = data_preprocessed.zone_building_solid_list
+    consider_intersections = config.radiation.consider_intersections
+
 
     # calculate geometry for the surroundings
     print('Generating geometry for surrounding buildings')
@@ -264,7 +266,8 @@ def building_2d_to_3d(locator, geometry_terrain, config, height_col, nfloor_col)
 
     geometry_3D_zone = calc_zone_geometry_multiprocessing(zone_building_names,
                                                           zone_building_solid_list,
-                                                          [data_preprocessed for x in range(n)])
+                                                          [data_preprocessed for x in range(n)],
+                                                          [consider_intersections for x in range(n)])
     return geometry_3D_zone, geometry_3D_surroundings
 
 
@@ -283,7 +286,7 @@ def are_buildings_close_to_eachother(x_1, y_1, solid2):
     else:
         return False
 
-def calc_building_geometry_zone(name, building_solid, data_preprocessed):
+def calc_building_geometry_zone(name, building_solid, data_preprocessed, consider_intersections):
     # now get all surfaces and create windows only if the buildings are in the area of study
     window_list = []
     wall_list = []
@@ -294,13 +297,14 @@ def calc_building_geometry_zone(name, building_solid, data_preprocessed):
     intersect_wall = []
 
     #check if buildings are close together and it merits to check the intersection
-    potentially_intersecting_solids = []
-    box =  calculate.get_bounding_box(building_solid)
-    x, y = box[0], box[1]
-    for solid in data_preprocessed.all_building_solid_list:
-        if are_buildings_close_to_eachother(x, y, solid):
-            potentially_intersecting_solids.append(solid)
-    data_preprocessed.potentially_intersecting_solids = potentially_intersecting_solids
+    if consider_intersections:
+        potentially_intersecting_solids = []
+        box =  calculate.get_bounding_box(building_solid)
+        x, y = box[0], box[1]
+        for solid in data_preprocessed.all_building_solid_list:
+            if are_buildings_close_to_eachother(x, y, solid):
+                potentially_intersecting_solids.append(solid)
+        data_preprocessed.potentially_intersecting_solids = potentially_intersecting_solids
 
     blockPrint()  # disable annoying printing of Python OCC
     # identify building surfaces according to angle:
