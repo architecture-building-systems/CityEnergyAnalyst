@@ -89,6 +89,7 @@ def evaluation_main(individual,
                                                                        district_cooling_network,
                                                                        technologies_heating_allowed,
                                                                        technologies_cooling_allowed,
+                                                                       weather_features,
                                                                        )
 
     # DISTRICT HEATING NETWORK

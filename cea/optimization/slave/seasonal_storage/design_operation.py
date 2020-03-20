@@ -23,8 +23,8 @@ from cea.technologies.constants import DT_HEAT
 from cea.utilities import epwreader
 
 
-def Storage_Design(CSV_NAME, T_storage_old_K, Q_in_storage_old_W, locator,
-                   STORAGE_SIZE_m3, solar_technologies_data, master_to_slave_vars, P_HP_max_W, config):
+def Storage_Design(T_storage_old_K, Q_in_storage_old_W, locator,
+                   STORAGE_SIZE_m3, solar_technologies_data, master_to_slave_vars, P_HP_max_W):
     """
 
     :param CSV_NAME:
@@ -55,7 +55,7 @@ def Storage_Design(CSV_NAME, T_storage_old_K, Q_in_storage_old_W, locator,
     Q_wasteheatServer_Wh, \
     T_DH_return_array_K, \
     T_DH_supply_array_K, \
-    mdot_heat_netw_total_kgpers = read_data_from_Network_summary(CSV_NAME, locator)
+    mdot_heat_netw_total_kgpers = read_data_from_Network_summary(master_to_slave_vars)
 
     # Get ground temperatures
     weather_path = locator.get_weather_file()
@@ -389,22 +389,18 @@ def get_heating_provided_by_onsite_energy_sources(Q_PVT_gen_W,
            Q_HP_SC_FP_W
 
 
-
-def read_data_from_Network_summary(CSV_NAME, locator):
+def read_data_from_Network_summary(master_to_slave_vars):
     # Import Network Data
-    Network_Data = pd.read_csv(locator.get_optimization_thermal_network_data_file(CSV_NAME))
+    Network_Data = master_to_slave_vars.DH_network_summary_individual
     # recover Network Data:
     mdot_heat_netw_total_kgpers = Network_Data['mdot_DH_netw_total_kgpers'].values
     Q_DH_networkload_W = Network_Data['Q_DHNf_W'].values
     T_DH_return_array_K = Network_Data['T_DHNf_re_K'].values
     T_DH_supply_array_K = Network_Data['T_DHNf_sup_K'].values
     Q_wasteheatServer_W = Network_Data['Qcdata_netw_total_kWh'].values * 1000
-    return Network_Data, Q_DH_networkload_W, Q_wasteheatServer_W, T_DH_return_array_K, T_DH_supply_array_K, mdot_heat_netw_total_kgpers
-
-
-""" DESCRIPTION FOR FUTHER USAGE"""
-# Q_missing_fin  : has to be replaced by other means, like a HP
-# Q_from_storage_fin : What is used from Storage
-# Q_aus_fin : how much energy was spent on Auxillary power !! NOT WORKING PROPERLY !!
-# Q_from_storage_fin : How much energy was used from the storage !! NOT WORKING PROPERLY !!
-# Q_missing_fin : How much energy is missing
+    return Network_Data, \
+           Q_DH_networkload_W, \
+           Q_wasteheatServer_W, \
+           T_DH_return_array_K, \
+           T_DH_supply_array_K, \
+           mdot_heat_netw_total_kgpers
