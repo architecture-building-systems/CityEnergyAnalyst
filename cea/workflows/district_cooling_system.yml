@@ -19,6 +19,8 @@
   parameters:
     weather: Singapore-Changi_1990_2010_TMY
 - script: radiation
+  parameters:
+    consider-intersections: false
 - script: schedule-maker
 - script: demand
 - script: emissions
@@ -50,8 +52,7 @@
 - script: decentralized
 - script: optimization
   parameters:
-    district-heating-network: false
-    district-cooling-network: true
+    network-type: DC
     number-of-generations: 2
     population-size: 5
     random-seed: 100

@@ -19,6 +19,8 @@
   parameters:
     weather: Zug-inducity_1990_2010_TMY
 - script: radiation
+  parameters:
+    consider-intersections: false
 - script: schedule-maker
 - script: demand
 - script: emissions
@@ -50,8 +52,7 @@
 - script: decentralized
 - script: optimization
   parameters:
-    district-heating-network: true
-    district-cooling-network: false
+    network-type: DH
     number-of-generations: 2
     population-size: 5
     random-seed: 100
