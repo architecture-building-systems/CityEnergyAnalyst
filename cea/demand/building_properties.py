@@ -687,8 +687,6 @@ def get_properties_technical_systems(locator, prop_HVAC):
 
     :param prop_HVAC: HVAC properties for each building (type of cooling system, control system, domestic hot water
                       system and heating system.
-                      The values can be looked up in the contributors manual:
-                      https://architecture-building-systems.gitbooks.io/cea-toolbox-for-arcgis-manual/content/building_properties.html#mechanical-systems
     :type prop_HVAC: geopandas.GeoDataFrame
 
     Sample data (first 5 rows)::
@@ -701,8 +699,6 @@ def get_properties_technical_systems(locator, prop_HVAC):
             4  B302034063      T0        T0       T0      T0       T0
 
     :returns: A DataFrame containing temperature data for each building in the scenario. More information can be
-              found in the contributors manual:
-              https://architecture-building-systems.gitbooks.io/cea-toolbox-for-arcgis-manual/content/delivery_technologies.html
     :rtype: DataFrame
 
     Each row contains the following fields:
