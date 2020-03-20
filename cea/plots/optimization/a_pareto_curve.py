@@ -129,9 +129,8 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.GenerationPlotBase)
                                  width=2)))
         graph.append(trace)
 
-
-
         return graph
+
 
 def calc_final_dataframe(individual_data):
     user_defined_mcda = individual_data.loc[individual_data["user_MCDA_rank"] < 2]
@@ -141,7 +140,7 @@ def calc_final_dataframe(individual_data):
         user_defined_mcda = user_defined_mcda.iloc[0].T
         user_defined_mcda["System option"] = individual
     # Now extend all dataframes
-    final_dataframe = user_defined_mcda
+    final_dataframe = user_defined_mcda.copy()
     final_dataframe.reset_index(drop=True, inplace=True)
     final_dataframe["Attribute"] = ["user defined MCDA"]
     return final_dataframe
