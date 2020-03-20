@@ -338,21 +338,21 @@ default:
   - name: multi-criteria-analysis
     label: Multicriteria analysis
     description: Multicriteria analysis
-    interfaces: [cli, arcgis]
+    interfaces: [cli]
     module: cea.analysis.multicriteria.main
     parameters: ['general:scenario', multi-criteria]
 
   - name: zone-helper
     label: Zone helper
     description: Query zone geometry from Open Street Maps
-    interfaces: [cli, arcgis]
+    interfaces: [cli]
     module: cea.datamanagement.zone_helper
     parameters: ['general:scenario', zone-helper]
 
   - name: plots
     label: Plots basic
     description: Create plots for the default energy system of an urban scenario
-    interfaces: [cli, arcgis]
+    interfaces: [cli]
     module: cea.plots.plots_main
     parameters: ['general:scenario', plots]
 
@@ -370,13 +370,6 @@ default:
     module: cea.interfaces.dashboard.dashboard
     parameters: ['general:debug']
 
-  - name: install-arcgis
-    label: install-arcgis
-    description: install-arcgis
-    interfaces: [cli]
-    module: cea.interfaces.arcgis.install_toolbox
-    parameters: ['general:debug']
-
   - name: excel-to-shapefile
     label: excel-to-shapefile
     description: excel-to-shapefile
@@ -390,13 +383,6 @@ default:
     interfaces: [cli]
     module: cea.examples.extract_reference_case
     parameters: [extract-reference-case]
-
-  - name: install-grasshopper
-    label: install-grasshopper
-    description: install-grasshopper
-    interfaces: [cli]
-    module: cea.interfaces.grasshopper.install_grasshopper
-    parameters: ['general:debug']
 
   - name: list-demand-graphs-fields
     label: list-demand-graphs-fields
