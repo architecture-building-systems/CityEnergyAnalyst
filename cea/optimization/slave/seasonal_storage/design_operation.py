@@ -55,7 +55,7 @@ def Storage_Design(CSV_NAME, T_storage_old_K, Q_in_storage_old_W, locator,
     Q_wasteheatServer_Wh, \
     T_DH_return_array_K, \
     T_DH_supply_array_K, \
-    mdot_heat_netw_total_kgpers = read_data_from_Network_summary(CSV_NAME, locator)
+    mdot_heat_netw_total_kgpers = read_data_from_Network_summary(master_to_slave_vars, locator)
 
     # Get ground temperatures
     weather_path = locator.get_weather_file()
@@ -390,9 +390,9 @@ def get_heating_provided_by_onsite_energy_sources(Q_PVT_gen_W,
 
 
 
-def read_data_from_Network_summary(CSV_NAME, locator):
+def read_data_from_Network_summary(master_to_slave, locator):
     # Import Network Data
-    Network_Data = pd.read_csv(locator.get_optimization_thermal_network_data_file(CSV_NAME))
+    Network_Data = pd.read_csv(locator.get_optimization_network_results_summary("DH", master_to_slave))
     # recover Network Data:
     mdot_heat_netw_total_kgpers = Network_Data['mdot_DH_netw_total_kgpers'].values
     Q_DH_networkload_W = Network_Data['Q_DHNf_W'].values
