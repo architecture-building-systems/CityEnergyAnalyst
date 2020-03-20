@@ -19,9 +19,6 @@ __status__ = "Production"
 class SlaveData(object):
     def __init__(self):
         # Name the file which should be loaded:
-        self.configKey = ""
-        self.network_data_file_heating = ""
-        self.network_data_file_cooling = ""
         self.number_of_buildings_connected_heating = 0
         self.number_of_buildings_connected_cooling = 0
         self.total_csv_name_heating = ""
