@@ -331,7 +331,7 @@ class InputLocator(object):
     def get_optimization_network_results_summary(self, network_type, district_network_barcode):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
         district_network_barcode_hex = hex(int(str(district_network_barcode), 2))
-        path = os.path.join(self.get_optimization_network_results_folder(),network_type + '_' + 'Network_summary_result_' + district_network_barcode_hex + '.csv')
+        path = os.path.join(self.get_optimization_network_results_folder(), network_type + '_' + 'Network_summary_result_' + district_network_barcode_hex + '.csv')
         return path
 
     def get_optimization_network_results_folder(self):
@@ -339,12 +339,6 @@ class InputLocator(object):
         Network summary results
         """
         return self._ensure_folder(self.get_optimization_results_folder(), "network")
-
-    def get_optimization_thermal_network_data_file(self, network_data_file):
-        """scenario/outputs/data/optimization/network
-        Network summary results
-        """
-        return os.path.join(self.get_optimization_network_results_folder(), '%(network_data_file)s' % locals())
 
     def get_optimization_network_layout_folder(self):
         """scenario/outputs/data/optimization/network/layout
