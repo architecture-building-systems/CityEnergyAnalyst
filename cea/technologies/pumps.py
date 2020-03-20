@@ -3,13 +3,15 @@
 pumps
 """
 from __future__ import division
-import os
+
+from math import log
+
+import numpy as np
 import pandas as pd
 from scipy.interpolate import interp1d
-from math import log
-import numpy as np
-from cea.optimization.constants import PUMP_ETA
+
 from cea.constants import DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3, HEAT_CAPACITY_OF_WATER_JPERKGK
+from cea.optimization.constants import PUMP_ETA
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -61,16 +63,23 @@ def calc_Ctot_pump(master_to_slave_vars, network_features, locator, network_type
 
     if network_type == "DH":
         multiplier_buildings_connected_to_total = master_to_slave_vars.number_of_buildings_connected_heating / master_to_slave_vars.num_total_buildings
-        data = pd.read_csv(locator.get_optimization_thermal_network_data_file(master_to_slave_vars.network_data_file_heating))
+        data = master_to_slave_vars.DH_network_summary_individual
         mdotA_kgpers = data["mdot_DH_netw_total_kgpers"].values
         mdotnMax_kgpers = np.max(mdotA_kgpers)
         deltaPmax = np.max(network_features.DeltaP_DHN) * multiplier_buildings_connected_to_total
-        Capex_a_pump_USD, Opex_fixed_pump_USD, Capex_pump_USD = calc_Cinv_pump(deltaPmax, mdotnMax_kgpers, PUMP_ETA, locator, 'PU1')  # investment of Machinery
-        P_motor_tot_W = network_features.DeltaP_DHN * multiplier_buildings_connected_to_total * (mdotA_kgpers / 1000) / PUMP_ETA
+        Capex_a_pump_USD, \
+        Opex_fixed_pump_USD, \
+        Capex_pump_USD = calc_Cinv_pump(deltaPmax,
+                                        mdotnMax_kgpers,
+                                        PUMP_ETA,
+                                        locator,
+                                        'PU1')  # investment of Machinery
+        P_motor_tot_W = network_features.DeltaP_DHN * multiplier_buildings_connected_to_total * (
+                mdotA_kgpers / 1000) / PUMP_ETA
 
     if network_type == "DC":
-        multiplier_buildings_connected_to_total =  master_to_slave_vars.number_of_buildings_connected_cooling / master_to_slave_vars.num_total_buildings
-        data = pd.read_csv(locator.get_optimization_thermal_network_data_file(master_to_slave_vars.network_data_file_cooling))
+        multiplier_buildings_connected_to_total = master_to_slave_vars.number_of_buildings_connected_cooling / master_to_slave_vars.num_total_buildings
+        data = master_to_slave_vars.DC_network_summary_individual
         if master_to_slave_vars.WasteServersHeatRecovery == 1:
             mdotA_kgpers = data["mdot_cool_space_cooling_and_refrigeration_netw_all_kgpers"].values
         else:
@@ -78,9 +87,15 @@ def calc_Ctot_pump(master_to_slave_vars, network_features, locator, network_type
 
         mdotnMax_kgpers = np.max(mdotA_kgpers)
         deltaPmax = np.max(network_features.DeltaP_DCN) * multiplier_buildings_connected_to_total
-        Capex_a_pump_USD, Opex_fixed_pump_USD, Capex_pump_USD = calc_Cinv_pump(deltaPmax, mdotnMax_kgpers, PUMP_ETA,
-                                             locator, 'PU1')  # investment of Machinery
-        P_motor_tot_W = network_features.DeltaP_DCN * multiplier_buildings_connected_to_total * (mdotA_kgpers / 1000) / PUMP_ETA
+        Capex_a_pump_USD, \
+        Opex_fixed_pump_USD, \
+        Capex_pump_USD = calc_Cinv_pump(deltaPmax,
+                                        mdotnMax_kgpers,
+                                        PUMP_ETA,
+                                        locator,
+                                        'PU1')  # investment of Machinery
+        P_motor_tot_W = network_features.DeltaP_DCN * multiplier_buildings_connected_to_total * (
+                mdotA_kgpers / 1000) / PUMP_ETA
 
     return Capex_a_pump_USD, Opex_fixed_pump_USD, Capex_pump_USD, P_motor_tot_W
 
@@ -144,12 +159,12 @@ def calc_Cinv_pump(deltaP, mdot_kgpers, eta_pumping, locator, technology_type):
         Inv_LT = pump_cost_data.iloc[0]['LT_yr']
         Inv_OM = pump_cost_data.iloc[0]['O&M_%'] / 100
 
-        InvC = Inv_a + Inv_b * (Pump_Array_W[pump_i]) ** Inv_c + (Inv_d + Inv_e * Pump_Array_W[pump_i]) * log(Pump_Array_W[pump_i])
+        InvC = Inv_a + Inv_b * (Pump_Array_W[pump_i]) ** Inv_c + (Inv_d + Inv_e * Pump_Array_W[pump_i]) * log(
+            Pump_Array_W[pump_i])
 
         Capex_a_pump_USD += InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
         Opex_fixed_pump_USD += InvC * Inv_OM
         Capex_pump_USD += InvC
-
 
     return Capex_a_pump_USD, Opex_fixed_pump_USD, Capex_pump_USD
 
@@ -157,13 +172,13 @@ def calc_Cinv_pump(deltaP, mdot_kgpers, eta_pumping, locator, technology_type):
 def calc_water_body_uptake_pumping(Q_gen_W,
                                    T_district_return_K,
                                    T_district_supply_K):
-
     # Values for the calculation of Delta P (from F. Muller network optimization code)
     # WARNING : current = values for Inducity - Zug
     DELTA_P_COEFF = 104.81
     DELTA_P_ORIGIN = 59016
 
-    mdot_DCN_kgpers = Q_gen_W / abs((T_district_return_K - T_district_supply_K)*HEAT_CAPACITY_OF_WATER_JPERKGK) #since it is used for heating and cooling
+    mdot_DCN_kgpers = Q_gen_W / abs((
+                                            T_district_return_K - T_district_supply_K) * HEAT_CAPACITY_OF_WATER_JPERKGK)  # since it is used for heating and cooling
     deltaP = 2 * (DELTA_P_COEFF * mdot_DCN_kgpers + DELTA_P_ORIGIN)
     E_used_Lake_W = deltaP * (mdot_DCN_kgpers / 1000) / PUMP_ETA
     if E_used_Lake_W == float("inf"):
