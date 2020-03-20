@@ -135,6 +135,8 @@ def thermal_networks_in_individual(locator,
         else:
             DH_network_summary_individual = pd.read_csv(
                 locator.get_optimization_network_results_summary('DH', DHN_barcode))
+    else:
+        DH_network_summary_individual = None
 
     if district_cooling_network:  # network exists
         if not os.path.exists(locator.get_optimization_network_results_summary('DC', DCN_barcode)):
@@ -152,6 +154,9 @@ def thermal_networks_in_individual(locator,
         else:
             DC_network_summary_individual = pd.read_csv(
                 locator.get_optimization_network_results_summary('DC', DCN_barcode))
+    else:
+        DC_network_summary_individual = None
+
 
     return DH_network_summary_individual, DC_network_summary_individual
 
@@ -191,9 +196,6 @@ def calc_master_to_slave_variables(locator, gen,
     :rtype: class
     """
 
-    # calculate local variables
-    num_total_buildings = len(building_names)
-
     # initialise class storing dynamic variables transfered from master to slave optimization
     master_to_slave_vars = slave_data.SlaveData()
 
@@ -226,7 +228,7 @@ def calc_master_to_slave_variables(locator, gen,
     master_to_slave_vars.DCN_barcode = DCN_barcode
 
     # store the total number of buildings in the district (independent of district cooling or heating)
-    master_to_slave_vars.num_total_buildings = num_total_buildings
+    master_to_slave_vars.num_total_buildings = len(building_names)
 
     # store the name of all buildings in the district (independent of district cooling or heating)
     master_to_slave_vars.building_names_all = building_names
