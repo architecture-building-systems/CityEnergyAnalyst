@@ -92,8 +92,10 @@ def district_heating_network(locator,
 
         # HEATING PLANT
         # Import Temperatures from Network Summary:
-        mdot_DH_kgpers, T_district_heating_return_K, T_district_heating_supply_K = calc_network_summary_DHN(locator,
-                                                                                                            master_to_slave_variables)
+        mdot_DH_kgpers, \
+        T_district_heating_return_K, \
+        T_district_heating_supply_K = calc_network_summary_DHN(locator,
+                                                               master_to_slave_variables)
 
         # FIXED ORDER ACTIVATION STARTS
         # Import Data - Sewage heat
@@ -327,8 +329,7 @@ def district_heating_network(locator,
 
 
 def calc_network_summary_DHN(locator, master_to_slave_vars):
-    network_data = pd.read_csv(
-        locator.get_optimization_thermal_network_data_file(master_to_slave_vars.network_data_file_heating))
+    network_data = pd.read_csv(locator.get_optimization_network_results_summary("DH",master_to_slave_vars.DHN_Barcode))
     tdhret_K = network_data['T_DHNf_re_K']
     mdot_DH_kgpers = network_data['mdot_DH_netw_total_kgpers']
     tdhsup_K = network_data['T_DHNf_sup_K']
