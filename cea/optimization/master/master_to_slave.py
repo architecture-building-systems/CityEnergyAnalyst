@@ -33,10 +33,9 @@ def export_data_to_master_to_slave_class(locator,
                                          technologies_cooling_allowed
                                          ):
     # RECALCULATE THE NOMINAL LOADS FOR HEATING AND COOLING, INCL SOME NAMES OF FILES
-    Q_cooling_nom_W, Q_heating_nom_W, \
-    Q_wasteheat_datacentre_nom_W, \
-    network_file_name_cooling, \
-    network_file_name_heating = extract_loads_individual(locator,
+    Q_cooling_nom_W, \
+    Q_heating_nom_W, \
+    Q_wasteheat_datacentre_nom_W = extract_loads_individual(locator,
                                                          DCN_barcode,
                                                          DHN_barcode,
                                                          district_heating_network,
@@ -51,8 +50,6 @@ def export_data_to_master_to_slave_class(locator,
                                                           building_names,
                                                           DHN_barcode,
                                                           DCN_barcode,
-                                                          network_file_name_heating,
-                                                          network_file_name_cooling,
                                                           Q_heating_nom_W,
                                                           Q_cooling_nom_W,
                                                           Q_wasteheat_datacentre_nom_W,
@@ -82,7 +79,6 @@ def extract_loads_individual(locator,
 
     # EVALUATE CASES TO CREATE A NETWORK OR NOT
     if district_heating_network:  # network exists
-        network_file_name_heating = "DH_Network_summary_result_" + hex(int(str(DHN_barcode), 2)) + ".csv"
         if not os.path.exists(locator.get_optimization_network_results_summary('DH', DHN_barcode)):
             total_demand = createTotalNtwCsv(DHN_barcode, locator, column_names_buildings_heating)
             num_total_buildings = len(column_names_buildings_heating)
@@ -107,10 +103,8 @@ def extract_loads_individual(locator,
     else:
         Q_heating_max_W = 0.0
         Q_wasteheat_datacentre_max_W = 0.0
-        network_file_name_heating = ""
 
     if district_cooling_network:  # network exists
-        network_file_name_cooling = "DC_Network_summary_result_" + hex(int(str(DCN_barcode), 2)) + ".csv"
         if not os.path.exists(locator.get_optimization_network_results_summary('DC', DCN_barcode)):
             total_demand = createTotalNtwCsv(DCN_barcode, locator, column_names_buildings_cooling)
             num_total_buildings = len(column_names_buildings_cooling)
@@ -130,12 +124,11 @@ def extract_loads_individual(locator,
         Q_cooling_max_W = Q_DCNf_W.max()
     else:
         Q_cooling_max_W = 0.0
-        network_file_name_cooling = ""
 
     Q_heating_nom_W = Q_heating_max_W * (1 + Q_MARGIN_FOR_NETWORK)
     Q_cooling_nom_W = Q_cooling_max_W * (1 + Q_MARGIN_FOR_NETWORK)
 
-    return Q_cooling_nom_W, Q_heating_nom_W, Q_wasteheat_datacentre_max_W, network_file_name_cooling, network_file_name_heating
+    return Q_cooling_nom_W, Q_heating_nom_W, Q_wasteheat_datacentre_max_W,
 
 
 # +++++++++++++++++++++++++++++++++++
@@ -147,14 +140,13 @@ def calc_master_to_slave_variables(locator, gen,
                                    building_names,
                                    DHN_barcode,
                                    DCN_barcode,
-                                   network_file_name_heating,
-                                   network_file_name_cooling,
                                    Q_heating_nom_W,
                                    Q_cooling_nom_W,
                                    Q_wasteheat_datacentre_nom_W,
                                    district_heating_network,
                                    district_cooling_network,
-                                   technologies_heating_allowed, technologies_cooling_allowed,
+                                   technologies_heating_allowed,
+                                   technologies_cooling_allowed,
                                    building_names_heating,
                                    building_names_cooling,
                                    building_names_electricity,
@@ -179,7 +171,6 @@ def calc_master_to_slave_variables(locator, gen,
 
     # initialise class storing dynamic variables transfered from master to slave optimization
     master_to_slave_vars = slave_data.SlaveData()
-    master_to_slave_vars = slave_data.SlaveData()
 
     # Store information aobut individual regarding the configuration of the network and curstomers connected
     if district_heating_network and DHN_barcode.count("1") > 0:
@@ -198,8 +189,6 @@ def calc_master_to_slave_variables(locator, gen,
                                                                                         DCN_barcode)
 
     # store the name of the file where the network configuration is stored
-    master_to_slave_vars.network_data_file_heating = network_file_name_heating
-    master_to_slave_vars.network_data_file_cooling = network_file_name_cooling
     master_to_slave_vars.technologies_heating_allowed = technologies_heating_allowed
     master_to_slave_vars.technologies_cooling_allowed = technologies_cooling_allowed
 
