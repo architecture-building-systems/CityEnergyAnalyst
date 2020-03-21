@@ -146,6 +146,7 @@ def write_cea_demand_from_osmose(path_to_district_folder):
     district_cooling_demand_df.rename(columns=district_cooling_demand_df.iloc[0], inplace=True)
     district_cooling_demand_df.drop(district_cooling_demand_df.index[0], inplace=True)
     network_df = district_cooling_demand_df.filter(like='network')  # reduce
+    op_time = district_cooling_demand_df['op_time'].values
 
     # 2. calculate demand per m2 per function
     cooling_loads = {}
@@ -184,6 +185,7 @@ def write_cea_demand_from_osmose(path_to_district_folder):
         building_function = building_info.loc[building][building_info.loc[building]==1].index.values[0]
         bui_func = building_function[:3]
         building_Af_m2 = building_info.loc[building]['Af_m2']
+        # initiate building_demand_df
         building_demand_df = pd.DataFrame(columns=BUILDINGS_DEMANDS_COLUMNS)
 
         # cooling loads
@@ -199,8 +201,8 @@ def write_cea_demand_from_osmose(path_to_district_folder):
         # fill nan with zeros
         building_demand_df['Name'] = building
         building_demand_df = building_demand_df.replace(np.nan, 0.0)
-        building_info.loc[building, 'Qcs_sys_MWhyr'] = sum(building_demand_df['Qcs_sys_ahu_kWh'])/1000.0
-
+        annual_demand_kWh = building_demand_df['Qcs_sys_ahu_kWh'].values * op_time
+        building_info.loc[building, 'Qcs_sys_MWhyr'] = sum(annual_demand_kWh)/1000.0
 
     # 5. match yearly hours
     op_time = district_cooling_demand_df['op_time'].values
