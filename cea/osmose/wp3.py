@@ -47,15 +47,41 @@ def prepare_district_info(path_to_district_folder):
 
 
 def write_input_parameter_to_osmose(geometry_df, occupancy_df, season, specified_building, timesteps):
-    Af_per_function = calc_Af_per_function(geometry_df, occupancy_df)
+    Af_per_function, Af_buildings = calc_Af_per_function(geometry_df, occupancy_df)
     # write outputs for each function (input parameters to osmose)
     m_ve_min_df = pd.DataFrame()
     for case in ['WTP_CBD_m_WP1_OFF', 'WTP_CBD_m_WP1_HOT', 'WTP_CBD_m_WP1_RET']:
-        output_building, output_hcs, timesteps_calc = extract_cea_outputs_to_osmose_main(case, timesteps, season, specified_building,
-                                                                         problem_type='district')
+        output_building, \
+        output_hcs, \
+        timesteps_calc = extract_cea_outputs_to_osmose_main(case, timesteps, season,
+                                                            specified_building,
+                                                            problem_type='district') #extrapolate demand from a specified building
         # get file and extrapolate
         building_Af_m2 = output_hcs['Af_m2'][0]
         Af_multiplication_factor = Af_per_function[case.split('_')[4]] / building_Af_m2
+        # save multiplication factor of each building to csv
+        df = pd.DataFrame()
+        df['mult'] = Af_buildings[case.split('_')[4]] / building_Af_m2
+        df_T = df.T
+        file_path = os.path.join('',*[osmose_project_data_path, specified_building[0] + '_' + case.split('_')[4] + '_mult.csv'])
+        df_T.to_csv(file_path, header=None, index=False)
+
+        # save specified building original values
+        output_building.T.to_csv(path_to_osmose_project_bui(specified_building[0] + '_' + case.split('_')[4]), header=False)  # save files
+        output_hcs.T.to_csv(path_to_osmose_project_hcs(specified_building[0] + '_' + case.split('_')[4], 'hcs'), header=False)  # save files
+        output_hcs_original = output_hcs.copy()
+        T_OAU_offcoil_df = output_hcs_original[[column for column in output_hcs.columns if 'T_OAU_offcoil' in column]]
+        output_hcs_original.drop(columns=[column for column in output_hcs.columns if 'T_OAU_offcoil' in column], inplace=True)
+        # save output_hcs for each T_OAU_offcoil
+        for i, column in enumerate(T_OAU_offcoil_df.columns):
+            new_hcs_df = output_hcs_original.copy()
+            new_hcs_df['T_OAU_offcoil'] = T_OAU_offcoil_df[column]
+            file_name_extension = 'hcs_in' + str(i + 1)
+            new_hcs_df.T.to_csv(path_to_osmose_project_hcs(specified_building[0] + '_' + case.split('_')[4], file_name_extension),
+                                header=False)
+
+
+
         ## output_building (scaled to Af)
         columns_with_scalar_values = [column for column in output_building.columns if 'Tww' not in column]
         scalar_df = output_building[columns_with_scalar_values] * Af_multiplication_factor
@@ -86,10 +112,12 @@ def write_input_parameter_to_osmose(geometry_df, occupancy_df, season, specified
 
 def calc_Af_per_function(geometry_df, occupancy_df):
     Af_per_function = {}
+    Af_buildings_per_function = {}
     for function in ['HOTEL', 'OFFICE', 'RETAIL']:
         buildings = occupancy_df[function][occupancy_df[function] == 1].index
         Af_per_function[function[:3]] = geometry_df['Af'][buildings].sum()
-    return Af_per_function
+        Af_buildings_per_function[function[:3]] = geometry_df.loc[buildings,'Af']
+    return Af_per_function, Af_buildings_per_function
 
 
 def get_building_Af_from_geometry(path_to_district_folder):
