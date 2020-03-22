@@ -44,16 +44,6 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-# Disable
-def blockPrint():
-    sys.stdout = open(os.devnull, 'w')
-
-
-# Restore
-def enablePrint():
-    sys.stdout = sys.__stdout__
-
-
 def identify_surfaces_type(occface_list):
     roof_list = []
     footprint_list = []
@@ -271,9 +261,8 @@ def building_2d_to_3d(locator, geometry_terrain, config, height_col, nfloor_col)
     return geometry_3D_zone, geometry_3D_surroundings
 
 
-def print_progress(i, n, args, result):
-    print(
-        "Generating geometry for building {i} completed out of {n}: {building}".format(i=i + 1, n=n, building=args[0]))
+def print_progress(i, n, args, _):
+    print("Generating geometry for building {i} completed out of {n}: {b}".format(i=i + 1, n=n, b=args[0]))
 
 
 def are_buildings_close_to_eachother(x_1, y_1, solid2):
@@ -306,7 +295,6 @@ def calc_building_geometry_zone(name, building_solid, data_preprocessed, conside
                 potentially_intersecting_solids.append(solid)
         data_preprocessed.potentially_intersecting_solids = potentially_intersecting_solids
 
-    blockPrint()  # disable annoying printing of Python OCC
     # identify building surfaces according to angle:
     face_list = py3dmodel.fetch.faces_frm_solid(building_solid)
     facade_list_north, facade_list_west, \
@@ -501,7 +489,10 @@ def calc_windows_walls(facade_list, wwr, data_processed):
 
 
 def calc_intersection_face_solid(index, data_processed):
-    if calculate.point_in_solid(data_processed.point_to_evaluate, data_processed.potentially_intersecting_solids[index]):
+    with cea.utilities.devnull():
+        point_in_solid = calculate.point_in_solid(data_processed.point_to_evaluate,
+                                                  data_processed.potentially_intersecting_solids[index])
+    if point_in_solid:
         intersects = 1
     else:
         intersects = 0

@@ -1,4 +1,5 @@
 import os
+import sys
 
 
 def remap(x, in_min, in_max, out_min, out_max):
@@ -36,3 +37,20 @@ class pushd(object):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         os.chdir(self.old_path)
+
+
+class devnull(object):
+    """
+    Suppress sys.stdout so that it goes to devnull for duration of the with block
+    """
+    def __init__(self):
+        self.stdout = sys.stdout
+
+    def __enter__(self):
+        sys.stdout = self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        sys.stdout = self.stdout
+
+    def write(self, _):
+        pass
