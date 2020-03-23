@@ -4,10 +4,11 @@ jobs: maintain a list of jobs to be simulated.
 from __future__ import division
 from __future__ import print_function
 
+import subprocess
+import psutil
+
 from flask_restplus import Namespace, Resource, fields, reqparse
 from flask import request, current_app
-from cea.interfaces.dashboard.tools.routes import kill_job, worker_processes
-
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
@@ -17,6 +18,7 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
+
 
 api = Namespace('Jobs', description='A job server for cea-worker processes')
 
@@ -41,6 +43,9 @@ job_info_request_parser.add_argument("script", type=str, required=True, location
 job_info_request_parser.add_argument("state", location="json")
 job_info_request_parser.add_argument("error", location="json")
 job_info_request_parser.add_argument("parameters", type=dict, location="json")
+
+
+worker_processes = {}  # jobid -> subprocess.Popen
 
 
 def next_id():
@@ -135,6 +140,16 @@ class JobError(Resource):
         return job
 
 
+@api.route('/start/<int:jobid>')
+class JobStart(Resource):
+    @api.marshal_with(job_info_model)
+    def post(self, jobid):
+        """Start a ``cea-worker`` subprocess for the script. (FUTURE: add support for cloud-based workers"""
+        print("tools/route_start: {jobid}".format(**locals()))
+        worker_processes[jobid] = subprocess.Popen(["python", "-m", "cea.worker", "{jobid}".format(jobid=jobid)])
+        return jobid
+
+
 @api.route("/cancel/<int:jobid>")
 class JobCanceled(Resource):
     @api.marshal_with(job_info_model)
@@ -145,3 +160,24 @@ class JobCanceled(Resource):
         kill_job(jobid)
         current_app.socketio.emit("cea-worker-canceled", api.marshal(job, job_info_model))
         return job
+
+
+def kill_job(jobid):
+    """Kill the processes associated with a jobid"""
+    if not jobid in worker_processes:
+        return
+
+    popen = worker_processes[jobid]
+    # using code from here: https://stackoverflow.com/a/4229404/2260
+    # to terminate child processes too
+    print("killing child processes of {jobid} ({pid})".format(jobid=jobid, pid=popen.pid))
+    try:
+        process = psutil.Process(popen.pid)
+    except psutil.NoSuchProcess:
+        return
+    children = process.children(recursive=True)
+    for child in children:
+        print("-- killing child {pid}".format(pid=child.pid))
+        child.kill()
+    process.kill()
+    del worker_processes[jobid]

@@ -31,14 +31,6 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def get_technology_related_databases(locator, region):
-    technology_database_template = locator.get_technology_template_for_region(region)
-    print("Copying technology databases from {source}".format(source=technology_database_template))
-    output_directory = locator.get_databases_folder()
-
-    from distutils.dir_util import copy_tree
-    copy_tree(technology_database_template, output_directory)
-
 
 def archetypes_mapper(locator,
                       update_architecture_dbf,
