@@ -4463,6 +4463,43 @@ get_optimization_decentralized_folder_building_cooling_activation:
       'Unnamed: 0':
         type: int
   used_by: [optimization]
+get_optimization_decentralized_folder_building_result_cooling:
+  created_by: [decentrlized]
+  file_path: outputs\data\optimization\decentralized\{building}_AHU_ARU_SCU_result_cooling.csv
+  file_type: csv
+  schema:
+    columns:
+      Best configuration:
+        type: float
+      Capacity_ACHHT_FP_W:
+        type: float
+      Capacity_ACH_SC_FP_W:
+        type: float
+      Capacity_BaseVCC_AS_W:
+        type: float
+      Capacity_DX_AS_W:
+        type: float
+      Capacity_VCCHT_AS_W:
+        type: float
+      Capaticy_ACH_SC_ET_W:
+        type: float
+      Capex_a_USD:
+        type: float
+      Capex_total_USD:
+        type: float
+      GHG_tonCO2:
+        type: float
+      Nominal heating load:
+        type: float
+      Opex_fixed_USD:
+        type: float
+      Opex_var_USD:
+        type: float
+      TAC_USD:
+        type: float
+      'Unnamed: 0':
+        type: int
+  used_by: [optimization]
 get_optimization_decentralized_folder_building_result_heating:
   created_by:
   - decentralized
