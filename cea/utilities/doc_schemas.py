@@ -74,6 +74,7 @@ def read_path(args, locator_method, scenario):
     locator = cea.inputlocator.InputLocator(scenario=scenario)
     method = getattr(locator, locator_method)
     path = method(**args)
+    path = path.replace("\\", "/")
     return path
 
 
@@ -242,9 +243,17 @@ def get_column_schema(df_series):
     if df_series.dtype.kind in {"f", "i"}:
         column_schema["pandas"]["desc"] = df_series.describe().to_dict()
 
-    kind_map = {"f": "float", "i": "int", "s": "string"}
-    column_schema["type"] = kind_map[df_series.dtype.kind]
+    column_type = lookup_column_type(df_series)
+    column_schema["type"] = column_type
     return column_schema
+
+
+def lookup_column_type(df_series):
+    kind_map = {"f": "float", "i": "int", "s": "string", "O": "object"}
+    column_type = kind_map[df_series.dtype.kind]
+    if column_type == "object":
+        column_type = type(df_series.values[0]).__name__
+    return column_type
 
 
 def is_date(value):
