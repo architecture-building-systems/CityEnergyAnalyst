@@ -42,10 +42,6 @@ class InputLocator(object):
         """Use os.makedirs to ensure the folders exist"""
         self._ensure_folder(os.path.dirname(file_path))
 
-    def get_project_path(self):
-        """Returns the parent folder of a scenario - this is called a project or 'case-study'"""
-        return os.path.dirname(self.scenario)
-
     # Paths to databases
     def get_databases_folder(self):
         """Returns the inputs folder of a scenario"""
@@ -876,18 +872,6 @@ class InputLocator(object):
     def get_radiation_materials(self):
         """scenario/outputs/data/solar-radiation/{building}_geometrgy.csv"""
         return os.path.join(self.get_solar_radiation_folder(), 'buidling_materials.csv')
-
-            # SENSITIVITY ANALYSIS
-    def get_sensitivity_output(self, method, samples):
-        """scenario/outputs/data/sensitivity-analysis/sensitivity_${METHOD}_${SAMPLES}.xls"""
-        return os.path.join(self.scenario, 'outputs', 'data', 'sensitivity-analysis',
-                            'sensitivity_%(method)s_%(samples)s.xls' % locals())
-
-    def get_sensitivity_plots_file(self, parameter):
-        """scenario/outputs/plots/sensitivity/${PARAMETER}.pdf"""
-        return os.path.join(self._ensure_folder(self.scenario, 'outputs', 'plots', 'sensitivity'), '%s.pdf' % parameter)
-
-    ## POTENTIALS #FIXME: find better placement for these two locators
 
     def solar_potential_folder(self):
         return self._ensure_folder(self.scenario, 'outputs', 'data', 'potentials', 'solar')
