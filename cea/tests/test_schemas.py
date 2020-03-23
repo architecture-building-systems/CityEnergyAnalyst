@@ -34,6 +34,7 @@ class TestSchemas(unittest.TestCase):
         """Return the list of locator methods that point to files"""
         ignore = {
             "ensure_parent_folder_exists",
+            "get_plant_nodes",
             "get_optimization_network_all_individuals_results_file",  # TODO: remove this when we know how
             "get_optimization_network_generation_individuals_results_file",  # TODO: remove this when we know how
             "get_optimization_network_individual_results_file",  # TODO: remove this when we know how
