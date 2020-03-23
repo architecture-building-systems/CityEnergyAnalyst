@@ -3,7 +3,7 @@ Data Management:
   - name: archetypes-mapper
     label: Archetypes Mapper
     description: Assign building properties and systems types from the Archetypes DataBase
-    interfaces: [cli, arcgis, dashboard]
+    interfaces: [cli, dashboard]
     module: cea.datamanagement.archetypes_mapper
     parameters: ['general:scenario', archetypes-mapper]
     input-files:
@@ -13,14 +13,14 @@ Data Management:
   - name: weather-helper
     label: Weather helper
     description: Sets the weather file to use for simulation for a scenario
-    interfaces: [cli, arcgis, dashboard]
+    interfaces: [cli, dashboard]
     module: cea.datamanagement.weather_helper
     parameters: ['general:scenario', weather-helper]
 
   - name: surroundings-helper
     label: Surroundings helper
     description: Query geometry of surrounding buildings from Open Street Maps
-    interfaces: [cli, arcgis, dashboard]
+    interfaces: [cli, dashboard]
     module: cea.datamanagement.surroundings_helper
     parameters: ['general:scenario', surroundings-helper]
     input-files:
@@ -29,7 +29,7 @@ Data Management:
   - name: terrain-helper
     label: Terrain helper
     description: Query topography with a fixed elevation
-    interfaces: [cli, arcgis, dashboard]
+    interfaces: [cli, dashboard]
     module: cea.datamanagement.terrain_helper
     parameters: ['general:scenario', terrain-helper]
     input-files:
@@ -39,7 +39,7 @@ Data Management:
   - name: streets-helper
     label: Streets helper
     description: Query streets geometry from Open Street Maps
-    interfaces: [cli, arcgis, dashboard]
+    interfaces: [cli, dashboard]
     module: cea.datamanagement.streets_helper
     parameters: ['general:scenario', streets-helper]
     input-files:
@@ -50,7 +50,7 @@ Demand forecasting:
   - name: radiation
     label: Building Solar radiation
     description: Use Daysim to calculate solar radiation for a scenario
-    interfaces: [cli, arcgis, dashboard]
+    interfaces: [cli, dashboard]
     module: cea.resources.radiation_daysim.radiation_main
     parameters: ['general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free', 'general:debug',
                  radiation]
@@ -83,7 +83,7 @@ Demand forecasting:
   - name: demand
     label: Building Energy demand
     description: Calculate the Demand
-    interfaces: [cli, arcgis, dashboard]
+    interfaces: [cli, dashboard]
     module: cea.demand.demand_main
     parameters: ['general:scenario',
                  'general:multiprocessing',
@@ -111,7 +111,7 @@ Life Cycle Analysis:
   - name: emissions
     label: Emissions
     description: Calculate emissions and primary energy due to building, construction, operation, dismantling and induced mobility
-    interfaces: [cli, arcgis, dashboard]
+    interfaces: [cli, dashboard]
     module: cea.analysis.lca.main
     parameters: ['general:scenario', emissions]
     input-files:
@@ -124,7 +124,7 @@ Life Cycle Analysis:
   - name: system-costs
     label: System Costs
     description: Calculate costs due to supply systems
-    interfaces: [cli, arcgis, dashboard]
+    interfaces: [cli, dashboard]
     module: cea.analysis.costs.system_costs
     parameters: ['general:scenario', costs]
     input-files:
@@ -135,21 +135,21 @@ Energy potentials:
   - name: shallow-geothermal-potential
     label: Shallow geothermal potential
     description: Calculate the heat extracted from a geothermal probes (up to 50 m length)
-    interfaces: [cli, arcgis, dashboard]
+    interfaces: [cli, dashboard]
     module: cea.resources.geothermal
     parameters: ['general:scenario', shallow-geothermal]
 
   - name: water-body-potential
     label: Water body potential
     description: Calculate the heat extracted from a lake or a water body
-    interfaces: [cli, arcgis, dashboard]
+    interfaces: [cli, dashboard]
     module: cea.resources.water_body_potential
     parameters: ['general:scenario', water-body]
 
   - name: photovoltaic-thermal
     label: Photovoltaic-thermal Panels
     description: Calculate electricity & heat production from photovoltaic / thermal technologies
-    interfaces: [cli, arcgis, dashboard]
+    interfaces: [cli, dashboard]
     module: cea.technologies.solar.photovoltaic_thermal
     parameters: ['general:scenario',
                  'general:multiprocessing',
@@ -172,7 +172,7 @@ Energy potentials:
   - name: photovoltaic
     label: Photovoltaic panels
     description: Calculate electricity production from solar photovoltaic technologies
-    interfaces: [cli, arcgis, dashboard]
+    interfaces: [cli, dashboard]
     module: cea.technologies.solar.photovoltaic
     parameters: ['general:scenario', 'general:multiprocessing', 'solar:type-pvpanel',
                  'general:number-of-cpus-to-keep-free',
@@ -188,7 +188,7 @@ Energy potentials:
   - name: sewage-potential
     label: Sewage heat potential
     description: Calculate the heat extracted from the sewage heat exchanger.
-    interfaces: [cli, arcgis, dashboard]
+    interfaces: [cli, dashboard]
     module: cea.resources.sewage_heat_exchanger
     parameters: ['general:scenario', sewage]
     input-files:
@@ -198,7 +198,7 @@ Energy potentials:
   - name: solar-collector
     label: Solar collectors
     description: Calculate heat production from solar collector technologies
-    interfaces: [cli, arcgis, dashboard]
+    interfaces: [cli, dashboard]
     module: cea.technologies.solar.solar_collector
     parameters: ['general:scenario', 'general:multiprocessing',
                  'general:number-of-cpus-to-keep-free', 'solar:type-scpanel',
@@ -216,7 +216,7 @@ Networks:
   - name: network-layout
     label: Thermal Network Part I (Layout)
     description: Create a potential layout of the network with the minimum spanning tree
-    interfaces: [cli, arcgis, dashboard]
+    interfaces: [cli, dashboard]
     module: cea.technologies.network_layout.main
     parameters: ['general:scenario', network-layout]
     input-files:
@@ -227,7 +227,7 @@ Networks:
   - name: thermal-network
     label: Thermal Network Part II (simulation)
     description: Solve the thermal hydraulic network
-    interfaces: [cli, arcgis, dashboard]
+    interfaces: [cli, dashboard]
     module: cea.technologies.thermal_network.thermal_network
     parameters: ['general:scenario', 'general:multiprocessing',
                  'general:number-of-cpus-to-keep-free', 'thermal-network',
@@ -251,14 +251,14 @@ Optimization:
   - name: decentralized
     label: Supply System Part I (decentralized)
     description: Run optimization for decentralized operation
-    interfaces: [cli, arcgis, dashboard]
+    interfaces: [cli, dashboard]
     module: cea.optimization.preprocessing.decentralized_building_main
     parameters: ['general:scenario', 'decentralized', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free']
 
   - name: optimization
     label: Supply System Part II (centralized)
     description: Run optimization for centralized operation
-    interfaces: [cli, arcgis, dashboard]
+    interfaces: [cli, dashboard]
     module: cea.optimization.optimization_main
     parameters: ['general:debug', 'general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free', optimization]
     input-files:
@@ -274,14 +274,14 @@ Utilities:
   - name: dbf-to-excel-to-dbf
     label: DBF to Excel to DBF
     description: dbf => xls => DBF
-    interfaces: [cli, arcgis, dashboard]
+    interfaces: [cli, dashboard]
     module: cea.utilities.dbf
     parameters: ['general:scenario', 'dbf-tools:input-file', 'dbf-tools:output-path','dbf-tools:output-file-name' ]
 
   - name: data-initializer
     label: Database Initializer
     description: Initialize databases for CEA
-    interfaces: [cli, arcgis, dashboard]
+    interfaces: [cli, dashboard]
     module: cea.datamanagement.data_initializer
     parameters: ['general:scenario', data-initializer]
 
@@ -304,7 +304,7 @@ Utilities:
   - name: rename-building
     label: Rename building
     description: Renames a building in the input files
-    interfaces: [cli, arcgis, dashboard]
+    interfaces: [cli, dashboard]
     module: cea.utilities.rename_building
     parameters: ['general:scenario', rename-building]
     input-files:
@@ -322,7 +322,7 @@ Utilities:
   - name: test
     label: Test CEA
     description: Run some tests on the CEA
-    interfaces: [cli, arcgis, dashboard]
+    interfaces: [cli, dashboard]
     module: cea.tests
     parameters: [test]
 
@@ -338,21 +338,21 @@ default:
   - name: multi-criteria-analysis
     label: Multicriteria analysis
     description: Multicriteria analysis
-    interfaces: [cli, arcgis]
+    interfaces: [cli]
     module: cea.analysis.multicriteria.main
     parameters: ['general:scenario', multi-criteria]
 
   - name: zone-helper
     label: Zone helper
     description: Query zone geometry from Open Street Maps
-    interfaces: [cli, arcgis]
+    interfaces: [cli]
     module: cea.datamanagement.zone_helper
     parameters: ['general:scenario', zone-helper]
 
   - name: plots
     label: Plots basic
     description: Create plots for the default energy system of an urban scenario
-    interfaces: [cli, arcgis]
+    interfaces: [cli]
     module: cea.plots.plots_main
     parameters: ['general:scenario', plots]
 
@@ -370,13 +370,6 @@ default:
     module: cea.interfaces.dashboard.dashboard
     parameters: ['general:debug']
 
-  - name: install-arcgis
-    label: install-arcgis
-    description: install-arcgis
-    interfaces: [cli]
-    module: cea.interfaces.arcgis.install_toolbox
-    parameters: ['general:debug']
-
   - name: excel-to-shapefile
     label: excel-to-shapefile
     description: excel-to-shapefile
@@ -390,13 +383,6 @@ default:
     interfaces: [cli]
     module: cea.examples.extract_reference_case
     parameters: [extract-reference-case]
-
-  - name: install-grasshopper
-    label: install-grasshopper
-    description: install-grasshopper
-    interfaces: [cli]
-    module: cea.interfaces.grasshopper.install_grasshopper
-    parameters: ['general:debug']
 
   - name: list-demand-graphs-fields
     label: list-demand-graphs-fields

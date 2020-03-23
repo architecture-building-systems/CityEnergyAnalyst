@@ -32,7 +32,7 @@ COLORS = {
 def read_inputs_field_types():
     """Parse the inputs.yaml file and create the dictionary of column types"""
     inputs = yaml.load(
-        open(os.path.join(os.path.dirname(__file__), '../inputs/inputs.yml')).read())
+        open(os.path.join(os.path.dirname(__file__), 'inputs.yml')).read())
 
     for db in inputs.keys():
         inputs[db]['fieldnames'] = [field['name']for field in inputs[db]['fields']]

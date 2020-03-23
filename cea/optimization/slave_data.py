@@ -19,9 +19,6 @@ __status__ = "Production"
 class SlaveData(object):
     def __init__(self):
         # Name the file which should be loaded:
-        self.configKey = ""
-        self.network_data_file_heating = ""
-        self.network_data_file_cooling = ""
         self.number_of_buildings_connected_heating = 0
         self.number_of_buildings_connected_cooling = 0
         self.total_csv_name_heating = ""
@@ -31,7 +28,6 @@ class SlaveData(object):
         self.individual_number = ""
         self.generation_number = ""
         self.num_total_buildings = 0
-        self.date = 0
         self.DHN_exists = False
         self.DCN_exists = False
         self.technologies_cooling_allowed = None
@@ -43,6 +39,8 @@ class SlaveData(object):
         self.building_names_electricity = []
         self.buildings_connected_to_district_heating = "nan"
         self.buildings_connected_to_district_cooling = "nan"
+        self.DH_network_summary_individual = None
+        self.DC_network_summary_individual = None
 
         # HEATING TECHNOLOGIES
         # NG fired cogen
