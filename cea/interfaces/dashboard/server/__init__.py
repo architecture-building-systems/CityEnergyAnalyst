@@ -7,9 +7,8 @@ from __future__ import division
 
 from flask import Blueprint, current_app
 from flask_restplus import Api, Resource
-from .jobs import api as jobs
+from .jobs import api as jobs, worker_processes, kill_job
 from .streams import api as streams
-from cea.interfaces.dashboard.tools.routes import shutdown_worker_processes
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
@@ -27,6 +26,12 @@ api = Api(blueprint)
 # there might potentially be more namespaces added in the future, e.g. a method for locating files etc.
 api.add_namespace(jobs, path='/jobs')
 api.add_namespace(streams, path='/streams')
+
+
+def shutdown_worker_processes():
+    """When shutting down the flask server, make sure any subprocesses are also terminated. See issue #2408."""
+    for jobid in worker_processes.keys():
+        kill_job(jobid)
 
 
 @api.route("/alive")
