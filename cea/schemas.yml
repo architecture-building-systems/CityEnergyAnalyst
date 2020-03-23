@@ -1657,207 +1657,297 @@ get_database_construction_standards:
     ENVELOPE_ASSEMBLIES:
       columns:
         Es:
+          description: Fraction of gross floor area with electrical demands.
           max: 1.0
           min: 0.0
           type: float
+          unit: '[m2/m2]'
         Hs_ag:
+          description: Fraction of above ground gross floor area air-conditioned.
           max: 1.0
           min: 0.0
           type: float
+          unit: '[m2/m2]'
         Hs_bg:
+          description: 'Fraction of below ground gross floor area air-conditioned '
           max: 1.0
           min: 0.0
           type: float
+          unit: '[m2/m2]'
         Ns:
+          description: Fraction of net gross floor area.
           max: 1.0
           min: 0.0
           type: float
+          unit: '[m2/m2]'
         STANDARD:
+          description: ' Unique ID of Construction Standard'
           primary: true
           type: string
+          unit: '[-]'
         type_base:
           choice:
             lookup:
               column: code
               path: get_database_envelope_systems
               sheet: FLOOR
+          description: Basement floor construction type (relates to values in Default
+            Database Construction Properties)
           type: string
+          unit: '[m2/m2]'
         type_cons:
           choice:
             lookup:
               column: code
               path: get_database_envelope_systems
               sheet: CONSTRUCTION
+          description: 'Type of construction. It relates to the contents of the default
+            database of Envelope Properties: construction'
           type: string
+          unit: '[code]'
         type_floor:
           choice:
             lookup:
               column: code
               path: get_database_envelope_systems
               sheet: FLOOR
+          description: Internal floor construction type (relates to values in Default
+            Database Construction Properties)
           type: string
+          unit: '[m2/m2]'
         type_leak:
           choice:
             lookup:
               column: code
               path: get_database_envelope_systems
               sheet: TIGHTNESS
+          description: 'Tightness level. It relates to the contents of the default
+            database of Envelope Properties: tightness'
           type: string
+          unit: '[code]'
         type_part:
           choice:
             lookup:
               column: code
               path: get_database_envelope_systems
               sheet: WALL
+          description: Internal partitions construction type (relates to values in
+            Default Database Construction Properties)
           type: string
+          unit: '[m2/m2]'
         type_roof:
           choice:
             lookup:
               column: code
               path: get_database_envelope_systems
               sheet: ROOF
+          description: Roof construction type (relates to values in Default Database
+            Construction Properties)
           type: string
+          unit: '[-]'
         type_shade:
           choice:
             lookup:
               column: code
               path: get_database_envelope_systems
               sheet: SHADING
+          description: Shading system type (relates to values in Default Database
+            Construction Properties)
           type: string
+          unit: '[m2/m2]'
         type_wall:
           choice:
             lookup:
               column: code
               path: get_database_envelope_systems
               sheet: WALL
+          description: External wall construction type (relates to values in Default
+            Database Construction Properties)
           type: string
+          unit: '[m2/m2]'
         type_win:
           choice:
             lookup:
               column: code
               path: get_database_envelope_systems
               sheet: WINDOW
+          description: Window type (relates to values in Default Database Construction
+            Properties)
           type: string
+          unit: '[m2/m2]'
         void_deck:
+          description: Number of floors (from the ground up) with an open envelope
+            (default = 0)
           max: 1.0
           min: 0
           type: float
+          unit: '[-]'
         wwr_east:
+          description: Window to wall ratio in in facades facing east
           max: 1.0
           min: 0
           type: float
+          unit: '[m2/m2]'
         wwr_north:
+          description: Window to wall ratio in in facades facing north
           max: 1.0
           min: 0
           type: float
+          unit: '[m2/m2]'
         wwr_south:
+          description: Window to wall ratio in in facades facing south
           max: 1.0
           min: 0
           type: float
+          unit: '[m2/m2]'
         wwr_west:
+          description: Window to wall ratio in in facades facing west
           max: 1.0
           min: 0
           type: float
+          unit: '[m2/m2]'
     HVAC_ASSEMBLIES:
       columns:
         STANDARD:
+          description: ' Unique ID of Construction Standard'
           primary: true
           type: string
+          unit: '[-]'
         cool_ends:
+          description: End of the cooling season - use 00|00 when there is none
           regex: ^\d{2}|\d{2}$
           type: string
+          unit: '[DD|MM]'
         cool_starts:
+          description: Start of the cooling season - use 00|00 when there is none
           regex: ^\d{2}|\d{2}$
           type: string
+          unit: '[DD|MM]'
         heat_ends:
+          description: End of the heating season - use 00|00 when there is none
           regex: ^\d{2}|\d{2}$
           type: string
+          unit: '[DD|MM]'
         heat_starts:
+          description: Start of the heating season - use 00|00 when there is none
           regex: ^\d{2}|\d{2}$
           type: string
+          unit: '[DD|MM]'
         type_cs:
           choice:
             lookup:
               column: code
               path: get_database_air_conditioning_systems
               sheet: COOLING
+          description: Type of cooling supply system
           type: string
+          unit: '[code]'
         type_ctrl:
           choice:
             lookup:
               column: code
               path: get_database_air_conditioning_systems
               sheet: CONTROLLER
+          description: Type of heating and cooling control systems (relates to values
+            in Default Database HVAC Properties)
           type: string
+          unit: '[code]'
         type_dhw:
           choice:
             lookup:
               column: code
               path: get_database_air_conditioning_systems
               sheet: HOT_WATER
+          description: Type of hot water supply system
           type: string
+          unit: '[code]'
         type_hs:
           choice:
             lookup:
               column: code
               path: get_database_air_conditioning_systems
               sheet: HEATING
+          description: Type of heating supply system
           type: string
+          unit: '[code]'
         type_vent:
           choice:
             lookup:
               column: code
               path: get_database_air_conditioning_systems
               sheet: VENTILATION
+          description: Type of ventilation strategy (relates to values in Default
+            Database HVAC Properties)
           type: string
+          unit: '[code]'
     STANDARD_DEFINITION:
       columns:
         Description:
+          description: Description of the construction standard
           type: string
+          unit: '[-]'
         STANDARD:
+          description: ' Unique ID of Construction Standard'
           primary: true
           type: string
+          unit: '[-]'
         YEAR_END:
+          description: Upper limit of year interval where the building properties
+            apply
           min: 0
           type: int
+          unit: '[yr]'
         YEAR_START:
+          description: Lower limit of year interval where the building properties
+            apply
           min: 0
           type: int
+          unit: '[yr]'
       constraints:
         YEAR: YEAR_START < YEAR_END
     SUPPLY_ASSEMBLIES:
       columns:
         STANDARD:
+          description: ' Unique ID of Construction Standard'
           primary: true
           type: string
+          unit: '[-]'
         type_cs:
           choice:
             lookup:
               column: code
               path: get_database_supply_assemblies
               sheet: COOLING
+          description: Type of cooling supply system
           type: string
+          unit: '[code]'
         type_dhw:
           choice:
             lookup:
               column: code
               path: get_database_supply_assemblies
               sheet: HOT_WATER
+          description: Type of hot water supply system
           type: string
+          unit: '[code]'
         type_el:
           choice:
             lookup:
               column: code
               path: get_database_supply_assemblies
               sheet: ELECTRICITY
+          description: Type of electrical supply system
           type: string
+          unit: '[code]'
         type_hs:
           choice:
             lookup:
               column: code
               path: get_database_supply_assemblies
               sheet: HEATING
+          description: Type of heating supply system
           type: string
+          unit: '[code]'
   used_by:
   - archetypes_mapper
 get_database_conversion_systems:
@@ -1869,663 +1959,1237 @@ get_database_conversion_systems:
     Absorption_chiller:
       columns:
         Description:
+          description: Describes the Type of Absorption Chiller
           type: string
+          unit: '[-]'
         IR_%:
+          description: interest rate charged on the loan for the capital cost
           min: 0.0
           type: float
+          unit: '[-]'
         LT_yr:
+          description: lifetime of this technology
           min: 0
           type: int
+          unit: year
         O&M_%:
+          description: operation and maintanence cost factor (fraction of the investment
+            cost)
           min: 0.0
           type: float
+          unit: '[-]'
         a:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         a_e:
+          description: 'parameter in the characteristic equations to calculate the
+            evaporator side '
           type: float
+          unit: '[-]'
         a_g:
+          description: parameter in the characteristic equations to calculate the
+            generator side
           type: float
+          unit: '[-]'
         assumption:
+          description: items made by assumptions in this technology
           nullable: true
           type: string
+          unit: '[-]'
         b:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         c:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         cap_max:
+          description: 'maximum capacity '
           type: float
+          unit: '[W]'
         cap_min:
+          description: minimum capacity
           type: float
+          unit: '[W]'
         code:
+          description: identifier of each unique equipment
           type: string
+          unit: '[-]'
         currency:
+          description: currency-year information of the investment cost function
           regex: ^[A-Z]{3}-\d{4}$
           type: string
+          unit: '[currency-year]'
         d:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         e:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         e_e:
+          description: 'parameter in the characteristic equations to calculate the
+            evaporator side '
           type: float
+          unit: TODO
         e_g:
+          description: parameter in the characteristic equations to calculate the
+            generator side
           type: float
+          unit: TODO
         m_cw:
+          description: external flow rate of cooling water at the condenser and absorber
           type: float
+          unit: TODO
         m_hw:
+          description: external flow rate of hot water at the generator
           type: float
+          unit: TODO
         r_e:
+          description: 'parameter in the characteristic equations to calculate the
+            evaporator side '
           type: float
+          unit: '[-]'
         r_g:
+          description: parameter in the characteristic equations to calculate the
+            generator side
           type: float
+          unit: '[-]'
         s_e:
+          description: 'parameter in the characteristic equations to calculate the
+            evaporator side '
           type: float
+          unit: '[kW/K]'
         s_g:
+          description: parameter in the characteristic equations to calculate the
+            generator side
           type: float
+          unit: '[-]'
         type:
           choice:
             values:
             - single
             - double
             - triple
+          description: type of absorption chiller (single, double, or triple)
           type: string
+          unit: '[-]'
         unit:
+          description: unit of the min/max capacity
           type: string
+          unit: TODO
     BH:
       columns:
         Description:
+          description: Describes the type of borehole heat exchanger
           type: string
+          unit: '[-]'
         IR_%:
+          description: interest rate charged on the loan for the capital cost
           min: 0.0
           type: float
+          unit: '[-]'
         LT_yr:
+          description: lifetime of this technology
           min: 0
           type: int
+          unit: year
         O&M_%:
+          description: operation and maintanence cost factor (fraction of the investment
+            cost)
           min: 0.0
           type: float
+          unit: '[-]'
         a:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         assumption:
+          description: items made by assumptions in this technology
           nullable: true
           type: string
+          unit: '[-]'
         b:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         c:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         cap_max:
+          description: 'maximum capacity '
           type: float
+          unit: '[W]'
         cap_min:
+          description: minimum capacity
           type: float
+          unit: '[W]'
         code:
+          description: identifier of each unique equipment
           type: string
+          unit: '[-]'
         currency:
+          description: currency-year information of the investment cost function
           regex: ^[A-Z]{3}-\d{4}$
           type: string
+          unit: '[currency-year]'
         d:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         e:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         unit:
+          description: unit of the min/max capacity
           type: string
+          unit: TODO
     Boiler:
       columns:
         Description:
+          description: Describes the type of boiler
           type: string
+          unit: '[-]'
         IR_%:
+          description: interest rate charged on the loan for the capital cost
           min: 0.0
           type: float
+          unit: '[-]'
         LT_yr:
+          description: lifetime of this technology
           min: 0
           type: int
+          unit: year
         O&M_%:
+          description: operation and maintanence cost factor (fraction of the investment
+            cost)
           min: 0.0
           type: float
+          unit: '[-]'
         a:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         assumption:
+          description: items made by assumptions in this technology
           nullable: true
           type: string
+          unit: '[-]'
         b:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         c:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         cap_max:
+          description: 'maximum capacity '
           type: float
+          unit: '[W]'
         cap_min:
+          description: minimum capacity
           type: float
+          unit: '[W]'
         code:
+          description: identifier of each unique equipment
           type: string
+          unit: '[-]'
         currency:
+          description: currency-year information of the investment cost function
           regex: ^[A-Z]{3}-\d{4}$
           type: string
+          unit: '[currency-year]'
         d:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         e:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         unit:
+          description: unit of the min/max capacity
           type: string
+          unit: TODO
     CCGT:
       columns:
         Description:
+          description: Describes the type of combined-cycle gas turbine
           type: string
+          unit: '[-]'
         IR_%:
+          description: interest rate charged on the loan for the capital cost
           min: 0.0
           type: float
+          unit: '[-]'
         LT_yr:
+          description: lifetime of this technology
           min: 0
           type: int
+          unit: year
         O&M_%:
+          description: operation and maintanence cost factor (fraction of the investment
+            cost)
           min: 0.0
           type: float
+          unit: '[-]'
         a:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         assumption:
+          description: items made by assumptions in this technology
           nullable: true
           type: string
+          unit: '[-]'
         b:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         c:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         cap_max:
+          description: 'maximum capacity '
           type: float
+          unit: '[W]'
         cap_min:
+          description: minimum capacity
           type: float
+          unit: '[W]'
         code:
+          description: identifier of each unique equipment
           type: string
+          unit: '[-]'
         currency:
+          description: currency-year information of the investment cost function
           regex: ^[A-Z]{3}-\d{4}$
           type: string
+          unit: '[currency-year]'
         d:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         e:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         unit:
+          description: unit of the min/max capacity
           type: string
+          unit: TODO
     CT:
       columns:
         Description:
+          description: Describes the type of cooling tower
           type: string
+          unit: '[-]'
         IR_%:
+          description: interest rate charged on the loan for the capital cost
           min: 0.0
           type: float
+          unit: '[-]'
         LT_yr:
+          description: lifetime of this technology
           min: 0
           type: int
+          unit: year
         O&M_%:
+          description: operation and maintanence cost factor (fraction of the investment
+            cost)
           min: 0.0
           type: float
+          unit: '[-]'
         a:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         assumption:
+          description: items made by assumptions in this technology
           nullable: true
           type: string
+          unit: '[-]'
         b:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         c:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         cap_max:
+          description: 'maximum capacity '
           type: float
+          unit: '[W]'
         cap_min:
+          description: minimum capacity
           type: float
+          unit: '[W]'
         code:
+          description: identifier of each unique equipment
           type: string
+          unit: '[-]'
         currency:
+          description: currency-year information of the investment cost function
           regex: ^[A-Z]{3}-\d{4}$
           type: string
+          unit: '[currency-year]'
         d:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         e:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         unit:
+          description: unit of the min/max capacity
           type: string
+          unit: TODO
     Chiller:
       columns:
         Description:
+          description: Describes the source of the benchmark standards.
           type: string
+          unit: '[-]'
         IR_%:
+          description: interest rate charged on the loan for the capital cost
           min: 0.0
           type: float
+          unit: '[-]'
         LT_yr:
+          description: lifetime of this technology
           min: 0
           type: int
+          unit: year
         O&M_%:
+          description: operation and maintanence cost factor (fraction of the investment
+            cost)
           min: 0.0
           type: float
+          unit: '[-]'
         a:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         assumption:
+          description: items made by assumptions in this technology
           nullable: true
           type: string
+          unit: '[-]'
         b:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         c:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         cap_max:
+          description: 'maximum capacity '
           type: float
+          unit: '[W]'
         cap_min:
+          description: minimum capacity
           type: float
+          unit: '[W]'
         code:
+          description: identifier of each unique equipment
           type: string
+          unit: '[-]'
         currency:
+          description: currency-year information of the investment cost function
           regex: ^[A-Z]{3}-\d{4}$
           type: string
+          unit: '[currency-year]'
         d:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         e:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         unit:
+          description: unit of the min/max capacity
           type: string
+          unit: TODO
     FC:
       columns:
         Description:
+          description: Describes the type of fuel cell
           type: string
+          unit: '[-]'
         IR_%:
+          description: interest rate charged on the loan for the capital cost
           min: 0.0
           type: float
+          unit: '[-]'
         LT_yr:
+          description: lifetime of this technology
           min: 0
           type: int
+          unit: year
         O&M_%:
+          description: operation and maintanence cost factor (fraction of the investment
+            cost)
           min: 0.0
           type: float
+          unit: '[-]'
         a:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         assumption:
           nullable: true
           type: string
         b:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         c:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         cap_max:
+          description: 'maximum capacity '
           type: float
+          unit: '[W]'
         cap_min:
+          description: minimum capacity
           type: float
+          unit: '[W]'
         code:
+          description: identifier of each unique equipment
           type: string
+          unit: '[-]'
         currency:
+          description: currency-year information of the investment cost function
           regex: ^[A-Z]{3}-\d{4}$
           type: string
+          unit: '[currency-year]'
         d:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         e:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         unit:
+          description: unit of the min/max capacity
           type: string
+          unit: TODO
     Furnace:
       columns:
         Description:
+          description: Describes the type of furnace
           type: string
+          unit: '[-]'
         IR_%:
+          description: interest rate charged on the loan for the capital cost
           min: 0.0
           type: float
+          unit: '[-]'
         LT_yr:
+          description: lifetime of this technology
           min: 0
           type: int
+          unit: year
         O&M_%:
+          description: operation and maintanence cost factor (fraction of the investment
+            cost)
           min: 0.0
           type: float
+          unit: '[-]'
         a:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         assumption:
+          description: items made by assumptions in this technology
           nullable: true
           type: string
+          unit: '[-]'
         b:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         c:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         cap_max:
+          description: 'maximum capacity '
           type: float
+          unit: '[W]'
         cap_min:
+          description: minimum capacity
           type: float
+          unit: '[W]'
         code:
+          description: identifier of each unique equipment
           type: string
+          unit: '[-]'
         currency:
+          description: currency-year information of the investment cost function
           regex: ^[A-Z]{3}-\d{4}$
           type: string
+          unit: '[currency-year]'
         d:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         e:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         unit:
+          description: unit of the min/max capacity
           type: string
+          unit: TODO
     HEX:
       columns:
         Description:
+          description: Describes the type of heat exchanger
           type: string
+          unit: '[-]'
         IR_%:
+          description: interest rate charged on the loan for the capital cost
           min: 0.0
           type: float
+          unit: '[-]'
         LT_yr:
+          description: lifetime of this technology
           min: 0
           type: int
+          unit: year
         O&M_%:
+          description: operation and maintanence cost factor (fraction of the investment
+            cost)
           min: 0.0
           type: float
+          unit: '[-]'
         a:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         a_p:
+          description: 'pressure loss function, f(x) = a_p + b_p*x^c_p + d_p*ln(x)
+            + e_p*x*ln*(x), where x is the capacity mass flow rate [W/K]   '
           type: float
+          unit: '[-]'
         assumption:
+          description: items made by assumptions in this technology
           nullable: true
           type: string
+          unit: '[-]'
         b:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         b_p:
+          description: 'pressure loss function, f(x) = a_p + b_p*x^c_p + d_p*ln(x)
+            + e_p*x*ln*(x), where x is the capacity mass flow rate [W/K]   '
           type: float
+          unit: TODO
         c:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         c_p:
+          description: 'pressure loss function, f(x) = a_p + b_p*x^c_p + d_p*ln(x)
+            + e_p*x*ln*(x), where x is the capacity mass flow rate [W/K]   '
           type: float
+          unit: TODO
         cap_max:
+          description: 'maximum capacity '
           type: float
+          unit: '[W] or [m2]'
         cap_min:
+          description: minimum capacity
           type: float
+          unit: '[W] or [m2]'
         code:
+          description: identifier of each unique equipment
           type: string
+          unit: '[-]'
         currency:
+          description: currency-year information of the investment cost function
           regex: ^[A-Z]{3}-\d{4}$
           type: string
+          unit: '[currency-year]'
         d:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         d_p:
+          description: 'pressure loss function, f(x) = a_p + b_p*x^c_p + d_p*ln(x)
+            + e_p*x*ln*(x), where x is the capacity mass flow rate [W/K]   '
           type: float
+          unit: TODO
         e:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         e_p:
+          description: 'pressure loss function, f(x) = a_p + b_p*x^c_p + d_p*ln(x)
+            + e_p*x*ln*(x), where x is the capacity mass flow rate [W/K]   '
           type: float
+          unit: TODO
         unit:
+          description: unit of the min/max capacity
           type: string
+          unit: TODO
     HP:
       columns:
         Description:
+          description: Describes the source of the heat pump
           type: string
+          unit: '[-]'
         IR_%:
+          description: interest rate charged on the loan for the capital cost
           min: 0.0
           type: float
+          unit: '[-]'
         LT_yr:
+          description: lifetime of this technology
           min: 0
           type: int
+          unit: year
         O&M_%:
+          description: operation and maintanence cost factor (fraction of the investment
+            cost)
           min: 0.0
           type: float
+          unit: '[-]'
         a:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         assumption:
+          description: items made by assumptions in this technology
           nullable: true
           type: string
+          unit: '[-]'
         b:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         c:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         cap_max:
+          description: 'maximum capacity '
           type: float
+          unit: '[W]'
         cap_min:
+          description: minimum capacity
           type: float
+          unit: '[W]'
         code:
+          description: identifier of each unique equipment
           type: string
+          unit: '[-]'
         currency:
+          description: currency-year information of the investment cost function
           regex: ^[A-Z]{3}-\d{4}$
           type: string
+          unit: '[currency-year]'
         d:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         e:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         unit:
+          description: unit of the min/max capacity
           type: string
+          unit: TODO
     PV:
       columns:
         Description:
+          description: Describes the source of the benchmark standards.
           type: string
+          unit: '[-]'
         IR_%:
+          description: interest rate charged on the loan for the capital cost
           min: 0.0
           type: float
+          unit: '[-]'
         LT_yr:
+          description: lifetime of this technology
           min: 0
           type: int
+          unit: year
         O&M_%:
+          description: operation and maintanence cost factor (fraction of the investment
+            cost)
           min: 0.0
           type: float
+          unit: '[-]'
         PV_Bref:
+          description: cell maximum power temperature coefficient
           type: float
+          unit: '[1/C]'
         PV_a0:
+          description: parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  +
+            a3*x**3 + a4*x**4, x is the relative air mass
           type: float
+          unit: '[-]'
         PV_a1:
+          description: parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  +
+            a3*x**3 + a4*x**4, x is the relative air mass
           type: float
+          unit: TODO
         PV_a2:
+          description: parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  +
+            a3*x**3 + a4*x**4, x is the relative air mass
           type: float
+          unit: TODO
         PV_a3:
+          description: parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  +
+            a3*x**3 + a4*x**4, x is the relative air mass
           type: float
+          unit: TODO
         PV_a4:
+          description: parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  +
+            a3*x**3 + a4*x**4, x is the relative air mass
           type: float
+          unit: TODO
         PV_n:
+          description: nominal efficiency
           type: float
+          unit: '[-]'
         PV_noct:
+          description: nominal operating cell temperature
           type: float
+          unit: '[C]'
         PV_th:
+          description: glazing thickness
           type: float
+          unit: '[m]'
         a:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         assumption:
+          description: items made by assumptions in this technology
           nullable: true
           type: string
+          unit: '[-]'
         b:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         c:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         cap_max:
+          description: 'maximum capacity '
           type: float
+          unit: '[W]'
         cap_min:
+          description: minimum capacity
           type: float
+          unit: '[W]'
         code:
+          description: identifier of each unique equipment
           type: string
+          unit: '[-]'
         currency:
+          description: currency-year information of the investment cost function
           regex: ^[A-Z]{3}-\d{4}$
           type: string
+          unit: '[currency-year]'
         d:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         e:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         misc_losses:
+          description: losses from cabling, resistances etc...
           type: float
+          unit: '[-]'
         module_length_m:
+          description: lengh of the PV module
           min: 0.0
           type: float
+          unit: '[m]'
         type:
           choice:
             values:
             - PV
+          description: redundant
           type: string
+          unit: TODO
         unit:
+          description: unit of the min/max capacity
           type: string
+          unit: TODO
     PVT:
       columns:
         Description:
+          description: Describes the type of photovoltaic thermal technology
           type: string
+          unit: '[-]'
         IR_%:
+          description: interest rate charged on the loan for the capital cost
           min: 0.0
           type: float
+          unit: '[-]'
         LT_yr:
+          description: lifetime of this technology
           min: 0
           type: int
+          unit: year
         O&M_%:
+          description: operation and maintanence cost factor (fraction of the investment
+            cost)
           min: 0.0
           type: float
+          unit: '[-]'
         a:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         assumption:
+          description: items made by assumptions in this technology
           nullable: true
           type: string
+          unit: '[-]'
         b:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         c:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         cap_max:
+          description: 'maximum capacity '
           type: float
+          unit: '[W]'
         cap_min:
+          description: minimum capacity
           type: float
+          unit: '[W]'
         code:
+          description: identifier of each unique equipment
           type: string
+          unit: '[-]'
         currency:
+          description: currency-year information of the investment cost function
           regex: ^[A-Z]{3}-\d{4}$
           type: string
+          unit: '[currency-year]'
         d:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         e:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         unit:
+          description: unit of the min/max capacity
           type: string
+          unit: TODO
     Pump:
       columns:
         Description:
+          description: Describes the source of the benchmark standards.
           type: string
+          unit: '[-]'
         IR_%:
+          description: interest rate charged on the loan for the capital cost
           min: 0.0
           type: float
+          unit: '[-]'
         LT_yr:
+          description: lifetime of this technology
           min: 0
           type: int
+          unit: year
         O&M_%:
+          description: operation and maintanence cost factor (fraction of the investment
+            cost)
           min: 0.0
           type: float
+          unit: '[-]'
         a:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         assumption:
+          description: items made by assumptions in this technology
           nullable: true
           type: string
+          unit: '[-]'
         b:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         c:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         cap_max:
+          description: 'maximum capacity '
           type: float
+          unit: '[W]'
         cap_min:
+          description: minimum capacity
           type: float
+          unit: '[W]'
         code:
+          description: identifier of each unique equipment
           type: string
+          unit: '[-]'
         currency:
+          description: currency-year information of the investment cost function
           regex: ^[A-Z]{3}-\d{4}$
           type: string
+          unit: '[currency-year]'
         d:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         e:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         unit:
+          description: unit of the min/max capacity
           type: string
+          unit: TODO
     SC:
       columns:
         C_eff:
+          description: 'thermal capacity of module '
           type: float
+          unit: '[J/M2k]'
         Cp_fluid:
+          description: heat capacity of the heat transfer fluid
           type: float
+          unit: '[J/kgK]'
         Description:
+          description: Describes the type of solar collector
           type: string
+          unit: '[-]'
         IAM_d:
+          description: incident angle modifier for diffuse radiation
           type: float
+          unit: '[-]'
         IR_%:
+          description: interest rate charged on the loan for the capital cost
           min: 0.0
           type: float
+          unit: '[-]'
         LT_yr:
+          description: lifetime of this technology
           min: 0
           type: int
+          unit: year
         O&M_%:
+          description: operation and maintanence cost factor (fraction of the investment
+            cost)
           min: 0.0
           type: float
+          unit: '[-]'
         a:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         aperture_area_ratio:
+          description: ratio of aperture area to panel area
           type: float
+          unit: '[-]'
         assumption:
+          description: items made by assumptions in this technology
           nullable: true
           type: string
+          unit: '[-]'
         b:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         c:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         c1:
+          description: collector heat loss coefficient at zero temperature difference
+            and wind speed
           type: float
+          unit: '[W/M2k]'
         c2:
+          description: ctemperature difference dependency of the heat loss coefficient
           type: float
+          unit: '[W/m2K2]'
         cap_max:
+          description: 'maximum capacity '
           type: float
+          unit: '[m2]'
         cap_min:
+          description: minimum capacity
           type: float
+          unit: '[m2]'
         code:
+          description: identifier of each unique equipment
           type: string
+          unit: '[-]'
         currency:
+          description: currency-year information of the investment cost function
           regex: ^[A-Z]{3}-\d{4}$
           type: string
+          unit: '[currency-year]'
         d:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         dP1:
+          description: pressure drop at zero flow rate
           type: float
+          unit: '[Pa/m2]'
         dP2:
+          description: pressure drop at nominal flow rate (mB0)
           type: float
+          unit: '[Pa/m2]'
         dP3:
+          description: pressure drop at maximum flow rate (mB_max)
           type: float
+          unit: '[Pa/m2]'
         dP4:
+          description: pressure drop at minimum flow rate (mB_min)
           type: float
+          unit: '[Pa/m2]'
         e:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         mB0_r:
+          description: nominal flow rate per aperture area
           type: float
+          unit: '[kg/m2/hr]'
         mB_max_r:
+          description: maximum flow rate per aperture area
           type: float
+          unit: '[kg/m2/hr]'
         mB_min_r:
+          description: minimum flow rate per aperture area
           type: float
+          unit: '[kg/m2/hr]'
         module_area_m2:
+          description: module area of a solar collector
           type: float
+          unit: '[m2]'
         module_length_m:
+          description: lengh of a solar collector module
           type: float
+          unit: '[m]'
         n0:
+          description: zero loss efficiency at normal incidence
           type: float
+          unit: '[-]'
         t_max:
+          description: maximum operating temperature
           type: float
+          unit: '[C]'
         type:
           choice:
             values:
             - FP
             - ET
+          description: 'type of the solar collector (FP: flate-plate or ET: evacuated-tube)'
           type: string
+          unit: TODO
         unit:
+          description: unit of the min/max capacity
           type: string
+          unit: TODO
     TES:
       columns:
         Description:
+          description: Describes the source of the benchmark standards.
           type: string
+          unit: '[-]'
         IR_%:
+          description: interest rate charged on the loan for the capital cost
           min: 0.0
           type: float
+          unit: '[-]'
         LT_yr:
+          description: lifetime of this technology
           min: 0
           type: int
+          unit: year
         O&M_%:
+          description: operation and maintanence cost factor (fraction of the investment
+            cost)
           min: 0.0
           type: float
+          unit: '[-]'
         a:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         assumption:
+          description: TODO
           nullable: true
           type: string
+          unit: TODO
         b:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         c:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         cap_max:
+          description: 'maximum capacity '
           type: float
+          unit: '[m3]'
         cap_min:
+          description: minimum capacity
           type: float
+          unit: '[m3]'
         code:
+          description: identifier of each unique equipment
           type: string
+          unit: '[-]'
         currency:
+          description: currency-year information of the investment cost function
           regex: ^[A-Z]{3}-\d{4}$
           type: string
+          unit: '[currency-year]'
         d:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         e:
+          description: 'investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
           type: float
+          unit: TODO
         unit:
+          description: unit of the min/max capacity
           type: string
+          unit: TODO
   used_by:
   - decentralized
   - optimization
@@ -2541,22 +3205,38 @@ get_database_distribution_systems:
     THERMAL_GRID:
       columns:
         Code:
+          description: no such column?
           primary: true
           type: string
+          unit: TODO
         D_ext_m:
+          description: external pipe diameter tolerance for the nominal diameter (DN)
           type: float
+          unit: '[m]'
         D_ins_m:
+          description: maximum pipe diameter tolerance for the nominal diameter (DN)
           type: float
+          unit: '[m]'
         D_int_m:
+          description: internal pipe diameter tolerance for the nominal diameter (DN)
           type: float
+          unit: '[m]'
         Inv_USD2015perm:
+          description: Typical cost of investment for a given pipe diameter.
           type: float
+          unit: '[$/m]'
         Pipe_DN:
+          description: Nominal pipe diameter
           type: float
+          unit: '[-]'
         Vdot_max_m3s:
+          description: maximum volumetric flow rate for the nominal diameter (DN)
           type: float
+          unit: '[m3/s]'
         Vdot_min_m3s:
+          description: minimum volumetric flow rate for the nominal diameter (DN)
           type: float
+          unit: '[m3/s]'
   used_by:
   - optimization
   - thermal_network
@@ -2569,92 +3249,171 @@ get_database_envelope_systems:
     CONSTRUCTION:
       columns:
         Cm_Af:
+          description: Internal heat capacity per unit of air conditioned area. Defined
+            according to ISO 13790.
           type: float
+          unit: '[J/Km2]'
         Description:
+          description: Describes the Type of construction
           type: string
+          unit: '[-]'
         code:
+          description: Type of construction
           primary: true
           type: string
+          unit: '[-]'
     FLOOR:
       columns:
         Description:
+          description: Describes the Type of roof
           type: string
+          unit: '[-]'
         GHG_FLOOR_kgCO2m2:
+          description: Embodied emissions per m2 of roof.(entire building life cycle)
           type: float
+          unit: '[kg CO2-eq/m2]'
         U_base:
+          description: Thermal transmittance of floor including linear losses (+10%).
+            Defined according to ISO 13790.
           type: float
+          unit: '[-]'
         code:
+          description: Type of roof
           primary: true
           type: string
+          unit: '[-]'
     ROOF:
       columns:
         Description:
+          description: Describes the Type of roof
           type: string
+          unit: '[-]'
         GHG_ROOF_kgCO2m2:
+          description: Embodied emissions per m2 of roof.(entire building life cycle)
           type: float
+          unit: '[kg CO2-eq/m2]'
         U_roof:
+          description: Thermal transmittance of windows including linear losses (+10%).
+            Defined according to ISO 13790.
           type: float
+          unit: '[-]'
         a_roof:
+          description: Solar absorption coefficient. Defined according to ISO 13790.
           type: float
+          unit: '[-]'
         code:
+          description: Type of roof
           primary: true
           type: string
+          unit: '[-]'
         e_roof:
+          description: Emissivity of external surface. Defined according to ISO 13790.
           type: float
+          unit: '[-]'
         r_roof:
+          description: Reflectance in the Red spectrum. Defined according Radiance.
+            (long-wave)
           type: float
+          unit: '[-]'
     SHADING:
       columns:
         Description:
+          description: Describes the source of the benchmark standards.
           type: string
+          unit: '[-]'
         code:
+          description: Type of shading
           primary: true
           type: string
+          unit: '[-]'
         rf_sh:
+          description: Shading coefficient when shading device is active. Defined
+            according to ISO 13790.
           type: float
+          unit: '[-]'
     TIGHTNESS:
       columns:
         Description:
+          description: Describes the Type of tightness
           type: string
+          unit: '[-]'
         code:
+          description: Type of tightness
           primary: true
           type: string
+          unit: '[-]'
         n50:
+          description: Air exchanges per hour at a pressure of 50 Pa.
           type: float
+          unit: '[1/h]'
     WALL:
       columns:
         Description:
+          description: Describes the Type of wall
           type: string
+          unit: '[-]'
         GHG_WALL_kgCO2m2:
+          description: Embodied emissions per m2 of walls (entire building life cycle)
           type: float
+          unit: '[kg CO2-eq/m2]'
         U_wall:
+          description: Thermal transmittance of windows including linear losses (+10%).
+            Defined according to ISO 13790.
           type: float
+          unit: '[-]'
         a_wall:
+          description: Solar absorption coefficient. Defined according to ISO 13790.
           type: float
+          unit: '[-]'
         code:
+          description: Type of wall
           primary: true
           type: string
+          unit: '[-]'
         e_wall:
+          description: Emissivity of external surface. Defined according to ISO 13790.
           type: float
+          unit: '[-]'
         r_wall:
+          description: Reflectance in the Red spectrum. Defined according Radiance.
+            (long-wave)
           type: float
+          unit: '[-]'
     WINDOW:
       columns:
         Description:
+          description: Describes the source of the benchmark standards.
           type: string
+          unit: '[-]'
         F_F:
+          description: Window frame fraction coefficient. Defined according to ISO
+            13790.
           type: float
+          unit: '[m2-frame/m2-window]'
         GHG_WIN_kgCO2m2:
+          description: Embodied emissions per m2 of windows.(entire building life
+            cycle)
           type: float
+          unit: '[kg CO2-eq/m2]'
         G_win:
+          description: Solar heat gain coefficient. Defined according to ISO 13790.
           type: float
+          unit: '[-]'
         U_win:
+          description: Thermal transmittance of windows including linear losses (+10%).
+            Defined according to ISO 13790.
           type: float
+          unit: '[-]'
         code:
+          description: Building use. It relates to the uses stored in the input database
+            of Zone_occupancy
           primary: true
           type: string
+          unit: '[-]'
         e_win:
+          description: Emissivity of external surface. Defined according to ISO 13790.
           type: float
+          unit: '[-]'
   used_by:
   - demand
   - radiation
@@ -2668,165 +3427,255 @@ get_database_feedstocks:
     BIOGAS:
       columns:
         GHG_kgCO2MJ:
+          description: Non-renewable Green House Gas Emissions factor
           type: float
+          unit: '[kg CO2-eq/MJ-oil eq]'
         Opex_var_buy_USD2015kWh:
+          description: buying price
           min: 0.0
           type: float
+          unit: '[-]'
         Opex_var_sell_USD2015kWh:
+          description: selling price
           min: 0.0
           type: float
+          unit: '[-]'
         hour:
+          description: hour of a 24 hour day
           max: 23
           min: 0
           primary: true
           type: int
+          unit: '[-]'
         reference:
+          description: reference
           nullable: true
           type: string
+          unit: '[-]'
     COAL:
       columns:
         GHG_kgCO2MJ:
+          description: Non-renewable Green House Gas Emissions factor
           type: float
+          unit: '[kg CO2-eq/MJ-oil eq]'
         Opex_var_buy_USD2015kWh:
+          description: buying price
           min: 0.0
           type: float
+          unit: '[-]'
         Opex_var_sell_USD2015kWh:
+          description: selling price
           min: 0.0
           type: float
+          unit: '[-]'
         hour:
+          description: hour of a 24 hour day
           max: 23
           min: 0
           primary: true
           type: int
+          unit: '[-]'
         reference:
+          description: reference
           nullable: true
           type: string
+          unit: '[-]'
     DRYBIOMASS:
       columns:
         GHG_kgCO2MJ:
+          description: Non-renewable Green House Gas Emissions factor
           type: float
+          unit: '[kg CO2-eq/MJ-oil eq]'
         Opex_var_buy_USD2015kWh:
+          description: buying price
           min: 0.0
           type: float
+          unit: '[-]'
         Opex_var_sell_USD2015kWh:
+          description: selling price
           min: 0.0
           type: float
+          unit: '[-]'
         hour:
+          description: hour of a 24 hour day
           max: 23
           min: 0
           primary: true
           type: int
+          unit: '[-]'
         reference:
+          description: reference
           nullable: true
           type: string
+          unit: '[-]'
     GRID:
       columns:
         GHG_kgCO2MJ:
+          description: Non-renewable Green House Gas Emissions factor
           type: float
+          unit: '[kg CO2-eq/MJ-oil eq]'
         Opex_var_buy_USD2015kWh:
+          description: buying price
           min: 0.0
           type: float
+          unit: '[-]'
         Opex_var_sell_USD2015kWh:
+          description: selling price
           min: 0.0
           type: float
+          unit: '[-]'
         hour:
+          description: hour of a 24 hour day
           max: 23
           min: 0
           primary: true
           type: int
+          unit: '[-]'
         reference:
+          description: reference
           nullable: true
           type: string
+          unit: '[-]'
     NATURALGAS:
       columns:
         GHG_kgCO2MJ:
+          description: Non-renewable Green House Gas Emissions factor
           type: float
+          unit: '[kg CO2-eq/MJ-oil eq]'
         Opex_var_buy_USD2015kWh:
+          description: buying price
           min: 0.0
           type: float
+          unit: '[-]'
         Opex_var_sell_USD2015kWh:
+          description: selling price
           min: 0.0
           type: float
+          unit: '[-]'
         hour:
+          description: hour of a 24 hour day
           max: 23
           min: 0
           primary: true
           type: int
+          unit: '[-]'
         reference:
+          description: reference
           nullable: true
           type: string
+          unit: '[-]'
     OIL:
       columns:
         GHG_kgCO2MJ:
+          description: Non-renewable Green House Gas Emissions factor
           type: float
+          unit: '[kg CO2-eq/MJ-oil eq]'
         Opex_var_buy_USD2015kWh:
+          description: buying price
           min: 0.0
           type: float
+          unit: '[-]'
         Opex_var_sell_USD2015kWh:
+          description: selling price
           min: 0.0
           type: float
+          unit: '[-]'
         hour:
+          description: hour of a 24 hour day
           max: 23
           min: 0
           primary: true
           type: int
+          unit: '[-]'
         reference:
+          description: reference
           nullable: true
           type: string
+          unit: '[-]'
     SOLAR:
       columns:
         GHG_kgCO2MJ:
+          description: Non-renewable Green House Gas Emissions factor
           type: float
+          unit: '[kg CO2-eq/MJ-oil eq]'
         Opex_var_buy_USD2015kWh:
+          description: buying price
           min: 0.0
           type: float
+          unit: '[-]'
         Opex_var_sell_USD2015kWh:
+          description: selling price
           min: 0.0
           type: float
+          unit: '[-]'
         hour:
+          description: hour of a 24 hour day
           max: 23
           min: 0
           primary: true
           type: int
+          unit: '[-]'
         reference:
+          description: reference
           nullable: true
           type: string
+          unit: '[-]'
     WETBIOMASS:
       columns:
         GHG_kgCO2MJ:
+          description: Non-renewable Green House Gas Emissions factor
           type: float
+          unit: '[kg CO2-eq/MJ-oil eq]'
         Opex_var_buy_USD2015kWh:
+          description: buying price
           min: 0.0
           type: float
+          unit: '[-]'
         Opex_var_sell_USD2015kWh:
+          description: selling price
           min: 0.0
           type: float
+          unit: '[-]'
         hour:
+          description: hour of a 24 hour day
           max: 23
           min: 0
           primary: true
           type: int
+          unit: '[-]'
         reference:
+          description: reference
           nullable: true
           type: string
+          unit: '[-]'
     WOOD:
       columns:
         GHG_kgCO2MJ:
+          description: Non-renewable Green House Gas Emissions factor
           type: float
+          unit: '[kg CO2-eq/MJ-oil eq]'
         Opex_var_buy_USD2015kWh:
+          description: buying price
           min: 0.0
           type: float
+          unit: '[-]'
         Opex_var_sell_USD2015kWh:
+          description: selling price
           min: 0.0
           type: float
+          unit: '[-]'
         hour:
+          description: hour of a 24 hour day
           max: 23
           min: 0
           primary: true
           type: int
+          unit: '[-]'
         reference:
+          description: reference
           nullable: true
           type: string
+          unit: '[-]'
   used_by:
   - decentralized
   - emissions
