@@ -1,3 +1,5 @@
+- 2020-03-22 - 2.32.0 - #2650 2597 gdal daysim variables from pycharm
+- 2020-03-20 - 2.32.0 - #2653 I2644 workflow not working
 - 2020-03-19 - 2.32.0 - #2643 I2021 pumping energy
 - 2020-03-17 - 2.32.0 - #2641 Database validation class
 - 2020-03-13 - 2.32.0 - #2639 2621 optimization fix
