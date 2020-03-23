@@ -4465,7 +4465,7 @@ get_optimization_decentralized_folder_building_cooling_activation:
   used_by: [optimization]
 get_optimization_decentralized_folder_building_result_cooling:
   created_by: [decentrlized]
-  file_path: outputs\data\optimization\decentralized\{building}_AHU_ARU_SCU_result_cooling.csv
+  file_path: outputs\data\optimization\decentralized\{building}_{configuration}_cooling.csv
   file_type: csv
   schema:
     columns:
