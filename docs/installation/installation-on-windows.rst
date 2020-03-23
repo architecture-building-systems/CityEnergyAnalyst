@@ -10,7 +10,7 @@ Follow these instructions to install the CityEnergyAnalyst (CEA) on a Windows sy
 
 .. note:: For installing the development version of CEA, tick the box "development version" during the installation.
 
-.. note:: For previous releases please check `here <https://github.com/architecture-building-systems/CityEnergyAnalyst/releases/>`__.
+.. note:: For previous releases check `here <https://github.com/architecture-building-systems/CityEnergyAnalyst/releases/>`__.
 
 .. note:: To install from the source check :doc:`here <installation/installation-on-windows-manual>`
 
@@ -22,11 +22,8 @@ There are different ways in which you can interact with the code of CEA.
 #. The command line interface: This is the command line to all the commands of CEA from your computer terminal
 #. The dashboard: This a web-based interface to CEA, open source and developed by the CEA team.
 #. The pycharm interface: this interface provides access to all the source code of CEA.
-#. The Rhino/Grasshopper interface: This a 3D modeling interface to CEA.
-#. The ArcGIS interface: This a GIS interface to CEA (Not supported anymore).
 
 The command line interface and dashboard interface are included during the installation of CEA.
-
 Other interfaces require a few additional steps to get them up and running.
 
 Pycharm
@@ -45,35 +42,5 @@ In order to access and work on the source code of CEA from pycharm do:
 #. Point to ``C:\Users\<you>\Documents\CityEnergyAnalyst\Dependencies\Python\python.exe``
 #. Click apply changes.
 
-Grasshopper
-------------
-
-.. attention:: This is a highly experimental interface to Rhino/Grasshopper, and we do not include any tutorials nor support to the public.
-               for the time being, just a few modules of CEA have been integrated. If you are interested in support or would like to furthermore activate this interface
-               contact shi@arch.ethz.ch
-
-In order to install the interface for Rhino/Grasshopper do:
-
-#. Download and install `Rhino 5.0 <https://www.rhino3d.com/download>`_ (requires a licence).
-#. Download and install the `Grasshopper for rhino 5.0 <https://www.grasshopper3d.com/page/download-1>`_.
-#. Follow the steps of the installation guide of the code base described above.
-#. In the CEA Console type ``cea install-grasshopper`` and press ENTER.
-
-ArcGIS
--------
-
-.. attention:: We have ended support for the ArcGIS interface on 1st May 2019 and would not be providing any further
-               tutorials nor advice on how to use this interface. You could still use this interface at your own risk.
-               We invite all CEA users to get acquainted with the CEA Dashboard. The CEA dashboard is our new
-               100% open source user interface.
-               We will aim to create a first tutorial on how to use this interface by mid-April 2019.
-
-In order to install the interface for ArcGIS do:
-
-#. Download and install `ArcGIS Desktop 10.5 or 10.6 <https://desktop.arcgis.com/en/arcmap/latest/get-started/installation-guide/introduction.htm>`_ (requires a licence).
-    * An `Esri account <https://www.arcgis.com/home/signin.html>`_ must be created to buy and download ArcGIS Desktop, located in Products: All Products.
-    * ETH affiliates are advised to access ArcGIS via the ETH IT Shop.
-#. Download and install the `ArcGIS Desktop Background Geoprocessing (64 Bit) <https://desktop.arcgis.com/en/arcmap/latest/analyze/executing-tools/64bit-background.htm>`_.
-#. Follow the steps of the installation guide of the code base described above.
-#. In the CEA Console type ``cea install-arcgis`` and press ENTER.
-
+.. attention:: We ended Support of Grashopper on 20.03.20. The legacy code can be found in our github repositry/legacy
+.. attention:: We ended Support of ArcGIS on 15.04.19. The legacy code can be found in our github repository/legacy

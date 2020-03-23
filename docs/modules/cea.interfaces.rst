@@ -11,8 +11,6 @@ Subpackages
 
 .. toctree::
 
-    cea.interfaces.arcgis
     cea.interfaces.cli
     cea.interfaces.dashboard
-    cea.interfaces.grasshopper
 
