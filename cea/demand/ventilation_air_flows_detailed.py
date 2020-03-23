@@ -837,12 +837,7 @@ def create_windows(df_prop_surfaces, gdf_building_architecture):
     # TODO: documentation
 
     # sort dataframe for name of building for default orientation generation
-    # FIXME remove this in the future
-    if pd.__version__ == '0.16.1':
-        # maintain compatibility with ArcGIS 10.4 pandas
-        df_prop_surfaces.sort(['Name'])
-    else:
-        df_prop_surfaces.sort_values('Name')
+    df_prop_surfaces.sort_values('Name')
     # default values
     # FIXME use real window angle in the future
     angle_window_default = 90  # (deg), 90° = vertical, 0° = horizontal

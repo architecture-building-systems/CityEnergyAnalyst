@@ -202,17 +202,25 @@ def check_daysim_bin_directory(path_hint):
     :param str path_hint: The path to check first, according to the `cea.config` file.
     :return: path_hint, contains the Daysim binaries - otherwise an exception occurrs.
     """
-    required_binaries = ["ds_illum", "epw2wea", "gen_dc", "isotrop_sky", "oconv", "radfiles2daysim", "rayinit",
-                         "rtrace_dc"]
+    required_binaries = ["ds_illum", "epw2wea", "gen_dc", "oconv", "radfiles2daysim", "rtrace_dc"]
+    required_libs = ["rayinit.cal", "isotrop_sky.cal"]
 
     def contains_binaries(path):
         """True if all the required binaries are found in path - note that binaries might have an extension"""
         try:
-            found_binaries = set(bin for bin, ext in map(os.path.splitext, os.listdir(path)))
+            found_binaries = set(bin for bin, _ in map(os.path.splitext, os.listdir(path)))
         except:
             # could not find the binaries, bogus path
             return False
         return all(bin in found_binaries for bin in required_binaries)
+
+    def contains_libs(path):
+        try:
+            found_libs = set(os.listdir(path))
+        except:
+            # could not find the libs, bogus path
+            return False
+        return all(lib in found_libs for lib in required_libs)
 
     def contains_whitespace(path):
         """True if path contains whitespace"""
@@ -222,6 +230,7 @@ def check_daysim_bin_directory(path_hint):
         path_hint,
         os.path.join(os.path.dirname(sys.executable), "..", "Daysim"),
     ]
+    # user might have a DAYSIM installation
     folders_to_check.extend(os.environ["RAYPATH"].split(";"))
     if sys.platform == "win32":
         folders_to_check.append(r"C:\Daysim\bin")
@@ -233,7 +242,14 @@ def check_daysim_bin_directory(path_hint):
             if contains_whitespace(path):
                 print("ATTENTION: Daysim binaries found in '{}', but its path contains whitespaces. Consider moving the binaries to another path to use them.")
                 continue
-            return path
+
+            if contains_libs(path):
+                return path
+            else:
+                # might be C:\Daysim\bin, try adding C:\Daysim\lib
+                lib_path = os.path.abspath(os.path.normpath(os.path.join(path, "..", "lib")))
+                if contains_libs(lib_path):
+                    return path + os.pathsep + lib_path
 
     raise ValueError("Could not find Daysim binaries - checked these paths: {}".format(", ".join(folders_to_check)))
 
@@ -246,8 +262,8 @@ class CEARad(py2radiance.Rad):
 
     def run_cmd(self, cmd, cwd=None):
         # Verbose output if debug is true
+        print('Running command `{}`{}'.format(cmd, '' if cwd is None else ' in `{}`'.format(cwd)))
         if self.debug:
-            print('Running command `{}`{}'.format(cmd, '' if cwd is None else ' in `{}`'.format(cwd)))
             p = subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE)
             while p.poll() is None:
                 line = p.stdout.readline()
@@ -257,7 +273,7 @@ class CEARad(py2radiance.Rad):
             print('`{}` completed'.format(cmd))
         else:
             # Stops script if commands fail (i.e non-zero exit code)
-            subprocess.check_call(cmd, cwd=cwd, stderr=subprocess.STDOUT)
+            subprocess.check_call(cmd, cwd=cwd, stderr=subprocess.STDOUT, env=os.environ)
 
     def execute_epw2wea(self, epwweatherfile, ground_reflectance=0.2):
         daysimdir_wea = self.daysimdir_wea
@@ -343,17 +359,16 @@ class CEARad(py2radiance.Rad):
             raise NameError("run .initialise_daysim function before running execute_gen_dc")
 
         # first specify the sensor pts
-        head, tail = os.path.split(sensor_filepath)
+        sensor_filename = os.path.basename(sensor_filepath)
         # move the pts file to the daysim folder
-        dest_filepath = os.path.join(daysim_pts_dir, tail)
+        dest_filepath = os.path.join(daysim_pts_dir, sensor_filename)
         shutil.move(sensor_filepath, dest_filepath)
         # write the sensor file location into the .hea
-        hea_file.write("\nsensor_file" + " " + os.path.join("pts", tail))
+        hea_file.write("\nsensor_file {rel_sensor_filename}".format(
+            rel_sensor_filename=os.path.join("pts", sensor_filename)))
         # write the shading header
         self.write_static_shading(hea_file)
         # write analysis result file
-        head, tail = os.path.split(hea_filepath)
-        tail = tail.replace(".hea", "")
         nsensors = len(self.sensor_positions)
         sensor_str = ""
         if output_unit == "w/m2":
@@ -391,13 +406,12 @@ class CEARad(py2radiance.Rad):
             else:
                 lines_modified.append(line)
 
-        temp_hea_filepath = os.path.join(self.daysimdir_tmp, tail + "temp.hea")
+        hea_basename = os.path.splitext(os.path.basename(hea_filepath))[0]
+        temp_hea_filepath = os.path.join(self.daysimdir_tmp, hea_basename + "temp.hea")
 
         with open(temp_hea_filepath, "w") as temp_hea_file:
             temp_hea_file.write('\n'.join(lines_modified))
 
-
-        _head, _tail = os.path.split(temp_hea_filepath)
         # execute gen_dc
         command1 = 'gen_dc "{}" -dir'.format(temp_hea_filepath)
         command2 = 'gen_dc "{}" -dif'.format(temp_hea_filepath)
@@ -447,6 +461,11 @@ def main(config):
 
     # BUGFIX for PyCharm: the PATH variable might not include the daysim-bin-directory, so we add it here
     os.environ["PATH"] = config.radiation.daysim_bin_directory + os.pathsep + os.environ["PATH"]
+    os.environ["RAYPATH"] = config.radiation.daysim_bin_directory
+    if not "PROJ_LIB" in os.environ:
+        os.environ["PROJ_LIB"] = os.path.join(os.path.dirname(sys.executable), "Library", "share")
+    if not "GDAL_DATA" in os.environ:
+        os.environ["GDAL_DATA"] = os.path.join(os.path.dirname(sys.executable), "Library", "share", "gdal")
 
     print("verifying geometry files")
     print(locator.get_zone_geometry())

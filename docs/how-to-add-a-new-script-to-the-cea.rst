@@ -85,8 +85,8 @@ The ``scripts.yml`` file (located in ``cea/``) tells the ``cea`` command line pr
 - the name of each script in the CEA
 - the module path of the script to run
 - the list of parameters that the script accepts
-- what interfaces (arcgis, cli, dashboard, grasshopper) the script is meant to be used with
-- the category to list the script under (for arcgis and dashboard interfaces)
+- what interfaces (cli, dashboard) the script is meant to be used with
+- the category to list the script under
 
 By adding your script to the ``scripts.yml`` file, your script becomes executable from the command line like this::
 
@@ -98,7 +98,7 @@ And you can use parameters like this:
 
 During development of your script, you will probably not be too interested in this feature - you will probably just be
 running your script from PyCharm. Please take the time to do this anyway, since it is a *requirement for adding it to
-the ArcGIS and dashboard interfaces* and other interfaces yet to come (e.g. Rhino/Grasshopper interface)
+the dashboard interface*.
 
 The name of your script should be the same as the module name and the core function name from
 `Step 2: Develop your script`_  - except replace any underscores (``_``) with dashes (``-``).
@@ -129,13 +129,13 @@ name
     was of accessing these scripts as functions with the script names replacing the dashes with underscores (``_``).
 
 label
-    A label to use in user interfaces (e.g. ArcGIS or the dashboard).
+    A label to use in in the user interface
 
 description
     A description of the tool. This should be short but also contain a relevant description of the functionality.
 
 interfaces
-    A list of interfaces the script is to be used with.
+    A list of interfaces the script is to be used with. (include "dashboard" for the script to show up in the GUI)
 
 module
     The fully qualified name (fqn) of the module that implements the script. This module is assumed to have a ``main``
@@ -147,8 +147,6 @@ parameters
     - use the notation ``section:parameter`` to specify a specific parameter defined in the ``default.config`` file.
     - use the notation ``section`` as a shorthand to specify that your script uses all the parameters from that section
       in the ``default.config`` file.
-    - by defining the parameters used by the script, interfaces such as the command line, ArcGIS and Rhino/Grasshopper
-      "know" what parameters to offer the user for a script.
 
 
 Step 4: Add a section to the ``default.config`` file for any parameters your script requires
@@ -175,45 +173,17 @@ Follow these steps to add a new parameter for your script:
 - add a line specifying the documentation for the parameter (key: ``parameter-name.help``, value: the text to show in
   interfaces for that parameter - future users of your tool will be grateful for good help texts!)
 - (optional) add a line specifying the category of the tool (key: ``parameter-name.category``, value: the category name)
-  The category is used in the ArcGIS interface to group parameters for tools with a lot of parameters.
-- (optional) add a line for tool-specific properties (e.g.: ``archetypes = comfort architecture HVAC internal-loads``)
+  The category is used in the interface to group advanced parameters for tools with a lot of parameters.
 
 
 Example::
 
-    [data-helper]
-    archetypes = comfort architecture HVAC internal-loads
-    archetypes.type = MultiChoiceParameter
-    archetypes.choices = comfort architecture HVAC internal-loads
-    archetypes.help = List of archetypes to process
+    [archetypes-mapper]
+    input-databases = comfort, architecture, air-conditioning, internal-loads, supply, schedules
+    input-databases.type = MultiChoiceParameter
+    input-databases.choices = comfort, architecture, air-conditioning, internal-loads, supply, schedules
+    input-databases.help = List of inputs to map from your databases to your new/existing scenario
 
 
 .. _kebab-case: http://wiki.c2.com/?KebabCase
 .. _snake_case: https://en.wikipedia.org/wiki/Snake_case
-
-Step 5: Add an ArcGIS interface (optional)
-------------------------------------------
-
-In general, all you need to do to add an ArcGIS interface for your script is to list 'arcgis' as one of the interfaces
-in the ``scripts.yml`` file. The module :py:mod:`cea.interfaces.arcgis.CityEnergyAnalyst` creates subclasses of
-:py:class:`cea.interfaces.arcgis.arcgishelper.CeaTool` for each such script.
-
-Should you want to modify the behavior, you can overwrite that definition simply by adding your own implementation of
-that class. To do so, create a class with the same name as your script (the ``name`` property) by removing the dashes,
-appending "Tool" and uppercasing the first letter of each word. Example: ``multi-criteria-analysis`` would become
-``MultiCriteriaAnalysisTool`` and you would define the class like this::
-
-    class MultiCriteriaAnalysisTool(CeaTool):
-        def __init__(self):
-            self.cea_tool = 'multi-criteria-analysis'
-            self.label = 'Multicriteria analysis'
-            self.description = 'Multicriteria analysis'
-            self.category = 'Analysis'
-            self.canRunInBackground = False
-
-
-The tools DemandTool and RadiationDaysimTool are implemented in this manner and can be used as examples.
-
-.. note:: You don't need to add your tool to the ``Toolbox.tools`` variable as you would normally need to in an
-    ArcGIS python toolbox - the :py:class`cea.interfaces.arcgis.CityEnergyAnalyst.Toolbox` class already implements
-    code to find all subclasses of :py:class`cea.interfaces.arcgis.arcgishelper.CeaTool` defined in the same file.

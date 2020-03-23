@@ -1,3 +1,11 @@
+- 2020-03-22 - 2.32.0 - #2650 2597 gdal daysim variables from pycharm
+- 2020-03-20 - 2.32.0 - #2653 I2644 workflow not working
+- 2020-03-19 - 2.32.0 - #2643 I2021 pumping energy
+- 2020-03-17 - 2.32.0 - #2641 Database validation class
+- 2020-03-13 - 2.32.0 - #2639 2621 optimization fix
+- 2020-03-12 - 2.32.0 - #2635 move os.chdir to cea.utilities.pushd, cool stuff.
+- 2020-03-10 - 2.32.0 - #2634 Jenkins fix merge to master
+- 2020-03-09 - 2.32.0 - #2632 Release 2.32
 - 2020-03-09 - 2.31.1 - #2623 2584 migration script
 - 2020-03-06 - 2.31.1 - #2631 Configure GitHub for working with Jenkins
 - 2020-03-06 - 2.31.1 - #2630 Update installing-the-jenkins.rst

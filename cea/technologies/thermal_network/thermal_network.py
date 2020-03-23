@@ -514,6 +514,43 @@ def thermal_network_main(locator, thermal_network, processes=1):
                 print(key, thermal_network.problematic_edges[key])
 
 
+def calculate_pressure_loss_critical_path(dP_timestep, thermal_network):
+    dP_all_edges = dP_timestep[0]
+    plant_node = thermal_network.all_nodes_df[thermal_network.all_nodes_df['Type'] == 'PLANT'].index[0]
+    if max(dP_all_edges) > 0.0:
+        pressure_losses_in_critical_paths = np.zeros(len(dP_all_edges))  # initialize array
+        G = nx.Graph() # initial networkx
+        G.add_nodes_from(thermal_network.all_nodes_df.index)
+        for ix, edge_name in enumerate(thermal_network.edge_df.index):
+            start_node = thermal_network.edge_df.loc[edge_name, 'start node']
+            end_node = thermal_network.edge_df.loc[edge_name, 'end node']
+            dP_one_edge = dP_all_edges[ix]
+            G.add_edge(start_node, end_node, weight=dP_one_edge, name=edge_name, ix=str(ix))
+        # find the path with the highest pressure drop
+        _, distances_dict = nx.dijkstra_predecessor_and_distance(G, source=plant_node)
+        critical_node = max(distances_dict, key=distances_dict.get)
+        path_to_critical_node = nx.shortest_path(G, source=plant_node)[critical_node]
+        # calculate pressure losses along the critical path
+        for i in range(len(path_to_critical_node)):
+            if i < len(path_to_critical_node) - 1:
+                start_node = path_to_critical_node[i]
+                end_node = path_to_critical_node[i+1]
+                dP = G[start_node][end_node]['weight']
+                idx = int(G[start_node][end_node]['ix'])
+                pressure_losses_in_critical_paths[idx] = dP
+        # find substations
+        substation_nodes_ix = []
+        node_df = thermal_network.all_nodes_df
+        for node in path_to_critical_node:
+            if node_df.ix[node]['Type'] != 'NONE':
+                substation_nodes_ix.append(int(node.split('NODE')[1]))
+    else:
+        pressure_losses_in_critical_paths = np.zeros(len(dP_all_edges))  # zero array
+        substation_nodes_ix = []
+
+    return pressure_losses_in_critical_paths, substation_nodes_ix
+
+
 def output_hex_specs_at_nodes(substation_HEX_Q, thermal_network):
     # merge with nodes df
     substation_HEX_Q['Building'] = substation_HEX_Q.index
@@ -1247,17 +1284,28 @@ def calc_pressure_nodes(t_supply_node__k, t_return_node__k, thermal_network, t):
     pipe_length_equivalent = pipe_length * (1 + thermal_network.equivalent_length_factor)
     pressure_loss_pipe_supply__pa = calc_pressure_loss_pipe(pipe_diameter, pipe_length_equivalent, edge_mass_flow,
                                                             temperature_supply_edges__k, 2)
+    pressure_loss_critical_path_supply_pa, \
+    substation_nodes_ix = calculate_pressure_loss_critical_path(pressure_loss_pipe_supply__pa, thermal_network)
     linear_pressure_loss_supply_Paperm = pressure_loss_pipe_supply__pa / pipe_length
     pressure_loss_pipe_return__pa = calc_pressure_loss_pipe(pipe_diameter, pipe_length_equivalent, edge_mass_flow,
                                                             temperature_return_edges__k, 2)
+    pressure_loss_critical_path_return_pa, _ = calculate_pressure_loss_critical_path(pressure_loss_pipe_return__pa, thermal_network)
     linear_pressure_loss_return_Paperm = pressure_loss_pipe_return__pa / pipe_length
 
+    # get the pressure drop at substations
     pressure_loss_nodes_pa = calc_pressure_loss_substations(thermal_network, t_supply_node__k, t)
+    pressure_loss_critical_substations_pa = np.zeros(len(pressure_loss_nodes_pa))
+    for ix in substation_nodes_ix:
+        pressure_loss_critical_substations_pa[ix] = pressure_loss_nodes_pa[ix]
 
-    # TODO: here 70% pump efficiency assumed, better estimate according to massflows
+    # calculate pumping energy
+    # TODO: here a fixed, hard-coded pump efficiency is assumed, better estimate according to massflows
     pressure_loss_pipe_supply_kW = pressure_loss_pipe_supply__pa * edge_mass_flow / P_WATER_KGPERM3 / 1000 / PUMP_ETA
     pressure_loss_pipe_return_kW = pressure_loss_pipe_return__pa * edge_mass_flow / P_WATER_KGPERM3 / 1000 / PUMP_ETA
+    pressure_loss_critical_supply_kW = pressure_loss_critical_path_supply_pa * edge_mass_flow / P_WATER_KGPERM3 / 1000 / PUMP_ETA
+    pressure_loss_critical_return_kW = pressure_loss_critical_path_return_pa * edge_mass_flow / P_WATER_KGPERM3 / 1000 / PUMP_ETA
     pressure_loss_nodes_kW = pressure_loss_nodes_pa * node_mass_flow / P_WATER_KGPERM3 / 1000 / PUMP_ETA
+    pressure_loss_critical_substations_kW = pressure_loss_critical_substations_pa * abs(node_mass_flow) / P_WATER_KGPERM3 / 1000 / PUMP_ETA
 
     pressure_loss_substations_pa = []
     pressure_loss_substations_kW = []
@@ -1267,7 +1315,6 @@ def calc_pressure_nodes(t_supply_node__k, t_return_node__k, thermal_network, t):
             if name == building:
                 # add value from this node-index to the list
                 # TODO: Fix for ecocampus case, not all buildings in network
-
                 pressure_loss_substations_pa.append(pressure_loss_nodes_pa[index])
                 pressure_loss_substations_kW.append(pressure_loss_nodes_kW[index])
 
@@ -1275,13 +1322,12 @@ def calc_pressure_nodes(t_supply_node__k, t_return_node__k, thermal_network, t):
     # # pressure losses at the supply plant are assumed to be included in the pipe losses as done by Oppelt et al., 2016
     # pressure_loss_system = sum(np.nan_to_num(pressure_loss_pipe_supply)[0]) + sum(
     #     np.nan_to_num(pressure_loss_pipe_return)[0])
-    pressure_loss_system__pa = calc_pressure_loss_system(pressure_loss_pipe_supply__pa, pressure_loss_pipe_return__pa,
-                                                         pressure_loss_substations_pa)
-    pressure_loss_total_kw = calc_pressure_loss_system(pressure_loss_pipe_supply_kW, pressure_loss_pipe_return_kW,
-                                                       pressure_loss_substations_kW)
-
-    pressure_loss_pipes_pa = pressure_loss_pipe_supply__pa + pressure_loss_pipe_return__pa
-    pressure_loss_pipes_kW = pressure_loss_pipe_supply_kW + pressure_loss_pipe_return_kW
+    pressure_loss_system__pa = calc_pressure_loss_system(pressure_loss_critical_path_supply_pa,
+                                                         pressure_loss_critical_path_return_pa,
+                                                         pressure_loss_critical_substations_pa)
+    pressure_loss_total_kw = calc_pressure_loss_system(pressure_loss_critical_supply_kW,
+                                                       pressure_loss_critical_return_kW,
+                                                       pressure_loss_critical_substations_kW)
 
     # solve for the pressure at each node based on Eq. 1 in Todini & Pilati for no = 0 (no nodes with fixed head):
     # A12 * H + F(Q) = -A10 * H0 = 0
@@ -1503,11 +1549,14 @@ def calc_pressure_loss_pipe(pipe_diameter_m, pipe_length_m, mass_flow_rate_kgs, 
 
 
 def calc_pressure_loss_system(pressure_loss_pipe_supply, pressure_loss_pipe_return, pressure_loss_substation):
-    pressure_loss_system = np.full(4, np.nan)
-    pressure_loss_system[0] = sum(np.nan_to_num(pressure_loss_pipe_supply)[0])
-    pressure_loss_system[1] = sum(np.nan_to_num(pressure_loss_pipe_return)[0])
-    pressure_loss_system[2] = sum(np.nan_to_num(pressure_loss_substation))
-    pressure_loss_system[3] = pressure_loss_system[0] + pressure_loss_system[1] + pressure_loss_system[2]
+    if max(np.nan_to_num(pressure_loss_pipe_supply)) > 0.0:
+        pressure_loss_system = np.full(4, np.nan)
+        pressure_loss_system[0] = sum(np.nan_to_num(pressure_loss_pipe_supply))
+        pressure_loss_system[1] = sum(np.nan_to_num(pressure_loss_pipe_return))
+        pressure_loss_system[2] = sum(np.nan_to_num(pressure_loss_substation))
+        pressure_loss_system[3] = pressure_loss_system[0] + pressure_loss_system[1] + pressure_loss_system[2]
+    else:
+        pressure_loss_system = np.full(4, 0.0)
     return pressure_loss_system
 
 
@@ -2729,7 +2778,6 @@ def calc_supply_temperatures(t, edge_node_df, mass_flow_df, k, thermal_network):
 
             delta_temp_0 = np.max(abs(t_e_out_old - t_e_out))  # exit condition
             temp_iter = temp_iter + 1
-            # if delta_temp_0 < temp_tolerance: print ('number of temp_iter: ', temp_iter) #todo: remove
 
         # set maximum/minimum allowable plant supply temperatures
         t_boiling_K = 100 + 273.15
