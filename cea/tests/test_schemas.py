@@ -28,14 +28,15 @@ class TestSchemas(unittest.TestCase):
         for method in self.extract_locator_methods(locator):
             self.assertIn(method, schemas.keys())
 
-        self.assertEqual(True, False)
-
     def extract_locator_methods(self, locator):
         """Return the list of locator methods that point to files"""
         ignore = {
             "ensure_parent_folder_exists",
             "get_plant_nodes",
             "get_temporary_file",
+            "get_weather_names",
+            "get_zone_building_names",
+            "verify_database_template",
             "get_optimization_network_all_individuals_results_file",  # TODO: remove this when we know how
             "get_optimization_network_generation_individuals_results_file",  # TODO: remove this when we know how
             "get_optimization_network_individual_results_file",  # TODO: remove this when we know how
