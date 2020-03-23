@@ -12351,6 +12351,14 @@ get_sewage_heat_potential:
         values: TODO
   used_by:
   - optimization
+get_site_polygon:
+  file_path: inputs\building-geometry\site.shp
+  file_type: shp
+  schema:
+    FID:
+      type: int
+    geometry:
+      type: Polygon
 get_street_network:
   created_by: []
   file_path: inputs/networks/streets.shp
