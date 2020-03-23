@@ -149,12 +149,6 @@ class InputLocator(object):
         return os.path.join(self.get_optimization_slave_generation_results_folder(gen_num),
                             'ind_%(ind_num)s_Cooling_Activation_Pattern.csv' % locals())
 
-    def get_optimization_slave_cooling_opex_var(self, ind_num, gen_num):
-
-        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
-        return os.path.join(self.get_optimization_slave_generation_results_folder(gen_num),
-                            'ind_%(ind_num)s_Cooling_Opex_var.csv' % locals())
-
     def get_optimization_slave_electricity_requirements_data(self, ind_num, gen_num):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
         return os.path.join(self.get_optimization_slave_generation_results_folder(gen_num),
