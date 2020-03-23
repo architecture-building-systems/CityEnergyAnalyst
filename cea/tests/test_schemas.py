@@ -39,6 +39,7 @@ class TestSchemas(unittest.TestCase):
             "get_optimization_network_generation_individuals_results_file",  # TODO: remove this when we know how
             "get_optimization_network_individual_results_file",  # TODO: remove this when we know how
             "get_optimization_network_layout_costs_file",  # TODO: remove this when we know how
+            "get_predefined_hourly_setpoints",  # TODO: remove this when we know how
         }
         for m in dir(locator):
             if not callable(getattr(locator, m)):
