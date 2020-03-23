@@ -35,11 +35,13 @@ class TestSchemas(unittest.TestCase):
         ignore = {
             "ensure_parent_folder_exists",
             "get_plant_nodes",
+            "get_temporary_file",
             "get_optimization_network_all_individuals_results_file",  # TODO: remove this when we know how
             "get_optimization_network_generation_individuals_results_file",  # TODO: remove this when we know how
             "get_optimization_network_individual_results_file",  # TODO: remove this when we know how
             "get_optimization_network_layout_costs_file",  # TODO: remove this when we know how
             "get_predefined_hourly_setpoints",  # TODO: remove this when we know how
+            "get_timeseries_plots_file",  # TODO: remove this when we know how
         }
         for m in dir(locator):
             if not callable(getattr(locator, m)):

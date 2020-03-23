@@ -74,7 +74,6 @@ def read_path(args, locator_method, scenario):
     locator = cea.inputlocator.InputLocator(scenario=scenario)
     method = getattr(locator, locator_method)
     path = method(**args)
-    path = path.replace("\\", "/")
     return path
 
 
@@ -87,7 +86,7 @@ def read_file_path(abs_path, scenario, args):
     for k, v in args.items():
         if v in file_path:
             file_path = file_path.replace(v, "{%s}" % k)
-    return file_path
+    return file_path.replace("\\", "/")
 
 
 def get_csv_schema(filename, buildings):
@@ -214,7 +213,7 @@ def get_tif_schema(_, __):
         }}
 
 
-def get_html_schema(_):
+def get_html_schema(_, __):
     """We don't need to keep a schema of html files - these are outputs anyway"""
     return None
 

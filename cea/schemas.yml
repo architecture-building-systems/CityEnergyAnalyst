@@ -12473,6 +12473,15 @@ get_thermal_network_edge_list_file:
         values: TODO
   used_by:
   - optimization
+get_thermal_network_edge_node_matrix_file:
+  file_path: outputs/data/thermal-network/{network_type}__EdgeNode.csv
+  file_type: csv
+  schema:
+    columns:
+      PIPE0:
+        type: float
+      'Unnamed: 0':
+        type: str
 get_thermal_network_layout_massflow_edges_file:
   created_by:
   - thermal_network

@@ -360,10 +360,6 @@ class InputLocator(object):
         weather_names = [os.path.splitext(f)[0] for f in os.listdir(self.weather_path)]
         return weather_names
 
-    def get_weather_dict(self):
-        """Return a dictionary with weather_name -> weather_path for the builtin weather files"""
-        return {name: self.get_weather(name) for name in self.get_weather_names()}
-
     def get_weather_folder(self):
         return self._ensure_folder(self.get_input_folder(), 'weather')
 
@@ -560,14 +556,14 @@ class InputLocator(object):
 
         return os.path.join(self.get_thermal_network_folder(), file_name)
 
-    def get_thermal_network_edge_node_matrix_file(self, network_type, network_name):
+    def get_thermal_network_edge_node_matrix_file(self, network_type, network_name=""):
         """scenario/outputs/data/optimization/network/layout/DH_EdgeNode.csv or DC_EdgeNode.csv
         Edge-node matrix for a heating or cooling network
         """
-        if len(network_name) is 0:
-            file_name = network_type + "_" + "_EdgeNode.csv"
-        else:
+        if network_name:
             file_name = network_type + "_" + network_name + "_EdgeNode.csv"
+        else:
+            file_name = network_type + "_" + "_EdgeNode.csv"
         return os.path.join(self.get_thermal_network_folder(), file_name)
 
     def get_thermal_network_node_types_csv_file(self, network_type, network_name):
@@ -999,7 +995,6 @@ class InputLocator(object):
     def get_plots_folder(self, category):
         """scenario/outputs/plots/timeseries"""
         return self._ensure_folder(self.scenario, 'outputs', 'plots', category)
-
 
     def get_timeseries_plots_file(self, building, category=''):
         """scenario/outputs/plots/timeseries/{building}.html
