@@ -8,6 +8,7 @@ import time
 
 HOURS_IN_YEAR = 8760
 PUMP_ETA = 0.8 # Circulating Pump
+Pa_to_mH2O = 1/9804  # pressure head
 P_WATER_KGPERM3 = 998.0  # water density kg/m3
 CP_KJPERKGK = 4.185  # [kJ/kg K]
 ROUGHNESS = 0.02 / 1000  # roughness coefficient for heating network pipe in m (for a steel pipe, from Li &
@@ -56,7 +57,7 @@ def main(path_to_case):
 
     # electricity consumption # TODO:add substation head loss at critical building and plant
     total_pressure_losses_in_pipes_Pa = pressure_losses_in_critical_path.sum(axis=1) * 2 # calculate supply side to approximate return side
-    plant_pressure_losses_Pa = total_pressure_losses_in_pipes_Pa * 1.1 # FIXME: assumption for substations
+    plant_pressure_losses_Pa = total_pressure_losses_in_pipes_Pa * 1.2 # FIXME: assumption for substations
     plant_flow_rate_m3pers = substation_flow_rate_m3pers_df.sum(axis=1)
     plant_pumping_kW = plant_pressure_losses_Pa * plant_flow_rate_m3pers.values / 1000 / PUMP_ETA
     annual_pumping_energy_kWh = np.nansum(plant_pumping_kW*op_time) # match yearly hours
@@ -420,7 +421,7 @@ def calc_max_diameter(volume_flow_m3s, pipe_catalog, velocity_ms, peak_load_perc
     Pipe_DN = selection_of_catalog['Pipe_DN'].values[0]
     D_ext_m = selection_of_catalog['D_ext_m'].values[0]
     D_ins_m = selection_of_catalog['D_ins_m'].values[0]
-    Cinv_pipe = selection_of_catalog['Inv_USD2015perm'].values[0]
+    Cinv_pipe = selection_of_catalog['Inv_USD2015perm'].values[0] + 1000 # TODO: fixed cost assumptions from matthais' paper
 
     return Pipe_DN, D_ext_m, D_int_m, D_ins_m, Cinv_pipe, A_int_m2
 
