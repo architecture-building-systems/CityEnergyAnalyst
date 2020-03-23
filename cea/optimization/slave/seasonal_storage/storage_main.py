@@ -44,11 +44,6 @@ def storage_optimization(locator, master_to_slave_vars, config):
     :rtype: Nonetype
     """
     print "Storage Optimization Ready"
-
-    CSV_NAME = master_to_slave_vars.network_data_file_heating
-
-    # Initiating
-
     T_storage_old_K = master_to_slave_vars.T_storage_zero
     Q_in_storage_old = master_to_slave_vars.Q_in_storage_zero
 
@@ -62,10 +57,9 @@ def storage_optimization(locator, master_to_slave_vars, config):
     ## initial storage size
     V_storage_initial_m3 = master_to_slave_vars.STORAGE_SIZE
     V0 = V_storage_initial_m3
-    Optimized_Data0, storage_dispatch = StDesOp.Storage_Design(CSV_NAME, T_storage_old_K, Q_in_storage_old, locator,
+    Optimized_Data0, storage_dispatch = StDesOp.Storage_Design(T_storage_old_K, Q_in_storage_old, locator,
                                                                V_storage_initial_m3, solar_technologies_data,
-                                                               master_to_slave_vars, 1e12,
-                                                               config)
+                                                               master_to_slave_vars, 1e12)
 
     Q_stored_max0_W, Q_rejected_final_W, Q_disc_seasonstart_W, T_st_max_K, T_st_min_K, \
     Q_storage_content_final_W, T_storage_final_K, Q_loss0_W, mdot_DH_fin0_kgpers, \
@@ -86,10 +80,10 @@ def storage_optimization(locator, master_to_slave_vars, config):
     T_initial_K = calc_T_initial_from_Q_and_V(Q_initial_W, T_ST_MIN, V_storage_initial_m3)
 
     # assume unlimited uptake to storage during first round optimisation (P_HP_max = 1e12)
-    Optimized_Data, storage_dispatch = StDesOp.Storage_Design(CSV_NAME, T_initial_K, Q_initial_W, locator,
+    Optimized_Data, storage_dispatch = StDesOp.Storage_Design(T_initial_K, Q_initial_W, locator,
                                                               V_storage_possible_needed, solar_technologies_data,
-                                                              master_to_slave_vars, P_HP_max,
-                                                              config)
+                                                              master_to_slave_vars, P_HP_max
+                                                              )
     Q_stored_max_opt_W, Q_rejected_fin_opt_W, Q_disc_seasonstart_opt_W, T_st_max_op_K, T_st_min_op_K, \
     Q_storage_content_fin_op_W, T_storage_fin_op_K, Q_loss1_W, mdot_DH_fin1_kgpers, Q_uncontrollable_final_W = Optimized_Data
 
@@ -107,10 +101,10 @@ def storage_optimization(locator, master_to_slave_vars, config):
         V2 = V_storage_possible_needed
         Q_initial_W = min(Q_disc_seasonstart_opt_W[0], Q_storage_content_fin_op_W[-1])
         T_initial_K = calc_T_initial_from_Q_and_V(Q_initial_W, T_ST_MIN, V_storage_possible_needed)
-        Optimized_Data2, storage_dispatch = StDesOp.Storage_Design(CSV_NAME, T_initial_K, Q_initial_W, locator,
+        Optimized_Data2, storage_dispatch = StDesOp.Storage_Design(T_initial_K, Q_initial_W, locator,
                                                                    V_storage_possible_needed, solar_technologies_data,
-                                                                   master_to_slave_vars, P_HP_max,
-                                                                   config)
+                                                                   master_to_slave_vars, P_HP_max
+                                                                   )
         Q_stored_max_opt2_W, Q_rejected_fin_opt2_W, Q_disc_seasonstart_opt2_W, T_st_max_op2_K, T_st_min_op2_K, \
         Q_storage_content_fin_op2_W, T_storage_fin_op2_K, Q_loss2_W, mdot_DH_fin2_kgpers, \
         Q_uncontrollable_final_W = Optimized_Data2
@@ -129,10 +123,10 @@ def storage_optimization(locator, master_to_slave_vars, config):
             Q_initial_W = min(Q_disc_seasonstart_opt2_W[0], Q_storage_content_fin_op2_W[-1])
             T_initial_K = calc_T_initial_from_Q_and_V(Q_initial_W, T_ST_MIN, V_storage_initial_m3)
 
-            Optimized_Data3, storage_dispatch = StDesOp.Storage_Design(CSV_NAME, T_initial_K, Q_initial_W, locator,
+            Optimized_Data3, storage_dispatch = StDesOp.Storage_Design(T_initial_K, Q_initial_W, locator,
                                                                        V_storage_possible_needed,
                                                                        solar_technologies_data, master_to_slave_vars,
-                                                                       P_HP_max, config)
+                                                                       P_HP_max)
             Q_stored_max_opt3_W, Q_rejected_fin_opt3_W, Q_disc_seasonstart_opt3_W, T_st_max_op3_K, T_st_min_op3_K, \
             Q_storage_content_fin_op3_W, T_storage_fin_op3_K, Q_loss3_W, mdot_DH_fin3_kgpers, \
             Q_uncontrollable_final_W = Optimized_Data3
@@ -149,11 +143,11 @@ def storage_optimization(locator, master_to_slave_vars, config):
                 Q_initial_W = min(Q_disc_seasonstart_opt3_W[0], Q_storage_content_fin_op3_W[-1])
                 T_initial_K = calc_T_initial_from_Q_and_V(Q_initial_W, T_ST_MIN, V_storage_initial_m3)
 
-                Optimized_Data4, storage_dispatch = StDesOp.Storage_Design(CSV_NAME, T_initial_K, Q_initial_W, locator,
+                Optimized_Data4, storage_dispatch = StDesOp.Storage_Design(T_initial_K, Q_initial_W, locator,
                                                                            V_storage_possible_needed,
                                                                            solar_technologies_data,
                                                                            master_to_slave_vars,
-                                                                           P_HP_max, config)
+                                                                           P_HP_max)
                 Q_stored_max_opt4_W, Q_rejected_fin_opt4_W, Q_disc_seasonstart_opt4_W, T_st_max_op4_K, T_st_min_op4_K, \
                 Q_storage_content_fin_op4_W, T_storage_fin_op4_K, Q_loss4_W, mdot_DH_fin4_kgpers, \
                 Q_uncontrollable_final_W = Optimized_Data4
@@ -179,11 +173,11 @@ def storage_optimization(locator, master_to_slave_vars, config):
                     else:
                         T_initial_K = calc_T_initial_from_Q_and_V(Q_initial_W, T_ST_MIN, V_storage_initial_m3)
 
-                    Optimized_Data5, storage_dispatch = StDesOp.Storage_Design(CSV_NAME, T_initial_K, Q_initial_W,
+                    Optimized_Data5, storage_dispatch = StDesOp.Storage_Design(T_initial_K, Q_initial_W,
                                                                                locator,
                                                                                V_storage_possible_needed,
                                                                                solar_technologies_data,
-                                                                               master_to_slave_vars, P_HP_max, config)
+                                                                               master_to_slave_vars, P_HP_max)
                     Q_stored_max_opt5, Q_rejected_fin_opt5, Q_disc_seasonstart_opt5, T_st_max_op5, T_st_min_op5, \
                     Q_storage_content_fin_op5, T_storage_fin_op5, Q_loss5, mdot_DH_fin5, Q_uncontrollable_final_W = Optimized_Data5
 
@@ -209,12 +203,12 @@ def storage_optimization(locator, master_to_slave_vars, config):
 
                         # leave initial values as we adjust the final outcome only, give back values from 5th round
 
-                        Optimized_Data6, storage_dispatch = StDesOp.Storage_Design(CSV_NAME, T_initial_K, Q_initial_W,
+                        Optimized_Data6, storage_dispatch = StDesOp.Storage_Design(T_initial_K, Q_initial_W,
                                                                                    locator,
                                                                                    V_storage_possible_needed,
                                                                                    solar_technologies_data,
                                                                                    master_to_slave_vars,
-                                                                                   P_HP_max, config)
+                                                                                   P_HP_max)
                         Q_stored_max_opt6, Q_rejected_fin_opt6, Q_disc_seasonstart_opt6, T_st_max_op6, T_st_min_op6, Q_storage_content_fin_op6, \
                         T_storage_fin_op6, Q_loss6, mdot_DH_fin6, Q_uncontrollable_final_W = Optimized_Data6
 
@@ -231,13 +225,13 @@ def storage_optimization(locator, master_to_slave_vars, config):
 
                             # leave initial values as we adjust the final outcome only, give back values from 5th round
 
-                            Optimized_Data7, storage_dispatch = StDesOp.Storage_Design(CSV_NAME, T_initial_K,
+                            Optimized_Data7, storage_dispatch = StDesOp.Storage_Design(T_initial_K,
                                                                                        Q_initial_W,
                                                                                        locator,
                                                                                        V_storage_possible_needed,
                                                                                        solar_technologies_data,
-                                                                                       master_to_slave_vars, P_HP_max,
-                                                                                       config)
+                                                                                       master_to_slave_vars, P_HP_max
+                                                                                       )
                             Q_stored_max_opt7, Q_rejected_fin_opt7, Q_disc_seasonstart_opt7, T_st_max_op7, T_st_min_op7, Q_storage_content_fin_op7, \
                             T_storage_fin_op7, Q_loss7, mdot_DH_fin7, Q_uncontrollable_final_W = Optimized_Data7
 
@@ -255,13 +249,13 @@ def storage_optimization(locator, master_to_slave_vars, config):
 
                                 # leave initial values as we adjust the final outcome only, give back values from 5th round
 
-                                Optimized_Data8, storage_dispatch = StDesOp.Storage_Design(CSV_NAME, T_initial_K,
+                                Optimized_Data8, storage_dispatch = StDesOp.Storage_Design(T_initial_K,
                                                                                            Q_initial_W,
                                                                                            locator,
                                                                                            V_storage_possible_needed,
                                                                                            solar_technologies_data,
                                                                                            master_to_slave_vars,
-                                                                                           P_HP_max, config)
+                                                                                           P_HP_max)
                                 Q_stored_max_opt8, Q_rejected_fin_opt8, Q_disc_seasonstart_opt8, T_st_max_op8, T_st_min_op8, Q_storage_content_fin_op8, \
                                 T_storage_fin_op8, Q_loss8, mdot_DH_fin8, Q_uncontrollable_final_W = Optimized_Data8
 
@@ -279,13 +273,13 @@ def storage_optimization(locator, master_to_slave_vars, config):
 
                                     # leave initial values as we adjust the final outcome only, give back values from 5th round
 
-                                    Optimized_Data9, storage_dispatch = StDesOp.Storage_Design(CSV_NAME, T_initial_K,
+                                    Optimized_Data9, storage_dispatch = StDesOp.Storage_Design(T_initial_K,
                                                                                                Q_initial_W,
                                                                                                locator,
                                                                                                V_storage_possible_needed,
                                                                                                solar_technologies_data,
                                                                                                master_to_slave_vars,
-                                                                                               P_HP_max, config)
+                                                                                               P_HP_max)
                                     Q_stored_max_opt9, Q_rejected_fin_opt9, Q_disc_seasonstart_opt9, T_st_max_op9, T_st_min_op9, Q_storage_content_fin_op9, \
                                     T_storage_fin_op9, Q_loss9, mdot_DH_fin9, Q_uncontrollable_final_W = Optimized_Data9
 
@@ -303,14 +297,13 @@ def storage_optimization(locator, master_to_slave_vars, config):
 
                                         # leave initial values as we adjust the final outcome only, give back values from 5th round
 
-                                        _, storage_dispatch = StDesOp.Storage_Design(CSV_NAME,
-                                                                                     T_initial_K,
+                                        _, storage_dispatch = StDesOp.Storage_Design(T_initial_K,
                                                                                      Q_initial_W,
                                                                                      locator,
                                                                                      V_storage_possible_needed,
                                                                                      solar_technologies_data,
                                                                                      master_to_slave_vars,
-                                                                                     P_HP_max, config)
+                                                                                     P_HP_max)
 
     return storage_dispatch
 

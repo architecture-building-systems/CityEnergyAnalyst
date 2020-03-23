@@ -32,8 +32,7 @@ def main(config):
     """
     This is the main entry point to your script. Any parameters used by your script must be present in the ``config``
     parameter. The CLI will call this ``main`` function passing in a ``config`` object after adjusting the configuration
-    to reflect parameters passed on the command line - this is how the ArcGIS interface interacts with the scripts
-    BTW.
+    to reflect parameters passed on the command line / user interface
 
     :param config:
     :type config: cea.config.Configuration

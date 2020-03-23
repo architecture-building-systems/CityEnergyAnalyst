@@ -666,8 +666,7 @@ def calc_generation_costs_capacity_installed_heating(locator,
     :rtype: tuple
     """
 
-    thermal_network = pd.read_csv(
-        locator.get_optimization_thermal_network_data_file(master_to_slave_vars.network_data_file_heating))
+    thermal_network = master_to_slave_vars.DH_network_summary_individual
     supply_systems = SupplySystemsDatabase(locator)
     GHP_cost_data = supply_systems.HP
     BH_cost_data = supply_systems.BH
