@@ -225,16 +225,6 @@ class InputLocator(object):
         return os.path.join(self.get_optimization_slave_generation_results_folder(gen_num),
                             'ind_%(ind_num)s_total_performance.csv' % locals())
 
-    def get_optimization_generation_electricity_performance(self, gen_num):
-        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
-        return os.path.join(self.get_optimization_slave_generation_results_folder(gen_num),
-                            'gen_%(gen_num)s_electricity_performance.csv' % locals())
-
-    def get_optimization_generation_heating_performance(self, gen_num):
-        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
-        return os.path.join(self.get_optimization_slave_generation_results_folder(gen_num),
-                            'gen_%(gen_num)s_heating_performance.csv' % locals())
-
     def get_optimization_generation_connected_performance(self, gen_num):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
         return os.path.join(self.get_optimization_slave_generation_results_folder(gen_num),
