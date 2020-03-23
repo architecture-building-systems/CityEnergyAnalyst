@@ -8584,7 +8584,7 @@ get_network_total_thermal_loss_file:
   used_by:
   - optimization
 get_nominal_edge_mass_flow_csv_file:
-  file_path: outputs\data\thermal-network\Nominal_EdgeMassFlow_at_design_{network_type}__kgpers.csv
+  file_path: outputs/data/thermal-network/Nominal_EdgeMassFlow_at_design_{network_type}__kgpers.csv
   file_type: csv
   schema:
     columns:
@@ -8600,7 +8600,7 @@ get_nominal_edge_mass_flow_csv_file:
         unit: TODO
         values: TODO
 get_nominal_node_mass_flow_csv_file:
-  file_path: outputs\data\thermal-network\Nominal_NodeMassFlow_at_design_{network_type}__kgpers.csv
+  file_path: outputs/data/thermal-network/Nominal_NodeMassFlow_at_design_{network_type}__kgpers.csv
   file_type: csv
   schema:
     columns:
@@ -8835,7 +8835,7 @@ get_optimization_connected_heating_capacity:
 get_optimization_decentralized_folder_building_cooling_activation:
   created_by:
   - decentralized
-  file_path: outputs\data\optimization\decentralized\{building}_{configuration}_cooling_activation.csv
+  file_path: outputs/data/optimization/decentralized/{building}_{configuration}_cooling_activation.csv
   file_type: csv
   schema:
     columns:
@@ -8864,7 +8864,7 @@ get_optimization_decentralized_folder_building_cooling_activation:
 get_optimization_decentralized_folder_building_result_cooling:
   created_by:
   - decentrlized
-  file_path: outputs\data\optimization\decentralized\{building}_{configuration}_cooling.csv
+  file_path: outputs/data/optimization/decentralized/{building}_{configuration}_cooling.csv
   file_type: csv
   schema:
     columns:
