@@ -4448,6 +4448,21 @@ get_optimization_connected_heating_capacity:
       Capacity_SeasonalStorage_WS_heat_connected_m3:
         type: float
   used_by: []
+get_optimization_decentralized_folder_building_cooling_activation:
+  created_by: [decentralized]
+  file_path: outputs\data\optimization\decentralized\{building}_{configuration}_cooling_activation.csv
+  file_type: csv
+  schema:
+    columns:
+      E_DX_AS_req_W:
+        type: float
+      E_cs_cre_cdata_req_W:
+        type: float
+      Q_DX_AS_gen_directload_W:
+        type: float
+      'Unnamed: 0':
+        type: int
+  used_by: [optimization]
 get_optimization_decentralized_folder_building_result_heating:
   created_by:
   - decentralized

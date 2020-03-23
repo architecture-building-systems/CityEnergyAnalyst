@@ -48,5 +48,6 @@ class TestSchemas(unittest.TestCase):
                 continue
             yield m
 
+
 if __name__ == '__main__':
     unittest.main()
