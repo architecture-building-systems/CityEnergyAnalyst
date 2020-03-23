@@ -28,6 +28,35 @@ class TestSchemas(unittest.TestCase):
         for method in self.extract_locator_methods(locator):
             self.assertIn(method, schemas.keys())
 
+    def test_all_schema_columns_documented(self):
+        schemas = cea.scripts.schemas()
+        for lm in schemas.keys():
+            schema = schemas[lm]["schema"]
+            if schemas[lm]["file_type"] in {"xls", "xlsx"}:
+                for ws in schema.keys():
+                    ws_schema = schema[ws]["columns"]
+                    for col in ws_schema.keys():
+                        self.assertNotEqual(ws_schema[col]["description"].strip(), "TODO",
+                                            "Missing descriptiong for {lm}/{ws}/{col}/description".format(
+                                                lm=lm, ws=ws, col=col))
+                        self.assertNotEqual(ws_schema[col]["unit"].strip(), "TODO",
+                                            "Missing descriptiong for {lm}/{ws}/{col}/unit".format(
+                                                lm=lm, ws=ws, col=col))
+                        self.assertNotEqual(ws_schema[col]["values"].strip(), "TODO",
+                                            "Missing descriptiong for {lm}/{ws}/{col}/description".format(
+                                                lm=lm, ws=ws, col=col))
+            elif schemas[lm]["file_type"] in {"shp", "dbf", "csv"}:
+                for col in schema["columns"].keys():
+                    self.assertNotEqual(schema["columns"][col]["description"].strip(), "TODO",
+                                        "Missing descriptiong for {lm}/{col}/description".format(
+                                            lm=lm, col=col))
+                    self.assertNotEqual(schema["columns"][col]["unit"].strip(), "TODO",
+                                        "Missing descriptiong for {lm}/{col}/description".format(
+                                            lm=lm, col=col))
+                    self.assertNotEqual(schema["columns"][col]["values"].strip(), "TODO",
+                                        "Missing descriptiong for {lm}/{col}/description".format(
+                                            lm=lm, col=col))
+
     def extract_locator_methods(self, locator):
         """Return the list of locator methods that point to files"""
         ignore = {
