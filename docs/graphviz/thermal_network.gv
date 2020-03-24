@@ -20,6 +20,7 @@ digraph trace_inputlocator {
         fontsize = 20;
         rank=same;
         label="building-geometry";
+        "site.shp"
         "surroundings.shp"
         "zone.shp"
     }
@@ -49,6 +50,16 @@ digraph trace_inputlocator {
         "110011011DH_B001_result.csv"
         "Total_DH_111111111.csv"
     }
+    subgraph cluster_4_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="data/thermal-network";
+        "Nominal_EdgeMassFlow_at_design_{network_type}__kgpers.csv"
+        "Nominal_NodeMassFlow_at_design_{network_type}__kgpers.csv"
+        "{network_type}__EdgeNode.csv"
+    }
     subgraph cluster_4_out {
         style = filled;
         color = "#aadcdd";
@@ -65,8 +76,11 @@ digraph trace_inputlocator {
         "DH__thermal_loss_edges_kW.csv"
         "DH__plant_pumping_pressure_loss_Pa.csv"
         "DH__total_thermal_loss_edges_kW.csv"
+        "Nominal_EdgeMassFlow_at_design_{network_type}__kgpers.csv"
+        "Nominal_NodeMassFlow_at_design_{network_type}__kgpers.csv"
         "DH__thermal_demand_per_building_W.csv"
         "DH__metadata_edges.csv"
+        "{network_type}__EdgeNode.csv"
         "DH__massflow_edges_kgs.csv"
         "DH__massflow_nodes_kgs.csv"
         "DH__metadata_nodes.csv"
@@ -97,45 +111,10 @@ digraph trace_inputlocator {
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="technology/archetypes/schedules";
-        "RESTAURANT.csv"
+        label="technology/components";
+        "DISTRIBUTION.xls"
     }
     subgraph cluster_8_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="technology/archetypes/use_types";
-        "USE_TYPE_PROPERTIES.xlsx"
-    }
-    subgraph cluster_9_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="technology/assemblies";
-        "supply.xls"
-    }
-    subgraph cluster_10_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="technology/feedstocks";
-        "feedstocks.xls"
-    }
-    subgraph cluster_11_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="technology/systems";
-        "air_conditioning_systems.xls"
-        "supply_systems.xls"
-        "distribution_systems.xls"
-        "envelope_systems.xls"
-    }
-    subgraph cluster_12_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -143,7 +122,7 @@ digraph trace_inputlocator {
         label="topography";
         "terrain.tif"
     }
-    subgraph cluster_13_in {
+    subgraph cluster_9_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -152,21 +131,18 @@ digraph trace_inputlocator {
         "Zug-inducity_1990_2010_TMY.epw"
         "weather.epw"
     }
-    "air_conditioning_systems.xls" -> "thermal_network"[label="(get_database_air_conditioning_systems)"]
-    "supply_systems.xls" -> "thermal_network"[label="(get_database_conversion_systems)"]
-    "distribution_systems.xls" -> "thermal_network"[label="(get_database_distribution_systems)"]
-    "envelope_systems.xls" -> "thermal_network"[label="(get_database_envelope_systems)"]
-    "feedstocks.xls" -> "thermal_network"[label="(get_database_feedstocks)"]
-    "RESTAURANT.csv" -> "thermal_network"[label="(get_database_standard_schedules_use)"]
-    "supply.xls" -> "thermal_network"[label="(get_database_supply_assemblies)"]
-    "USE_TYPE_PROPERTIES.xlsx" -> "thermal_network"[label="(get_database_use_types_properties)"]
+    "DISTRIBUTION.xls" -> "thermal_network"[label="(get_database_distribution_systems)"]
     "B001.csv" -> "thermal_network"[label="(get_demand_results_file)"]
     "edges.shp" -> "thermal_network"[label="(get_network_layout_edges_shapefile)"]
     "nodes.shp" -> "thermal_network"[label="(get_network_layout_nodes_shapefile)"]
+    "Nominal_EdgeMassFlow_at_design_{network_type}__kgpers.csv" -> "thermal_network"[label="(get_nominal_edge_mass_flow_csv_file)"]
+    "Nominal_NodeMassFlow_at_design_{network_type}__kgpers.csv" -> "thermal_network"[label="(get_nominal_node_mass_flow_csv_file)"]
     "DH_Network_summary_result_0x19b.csv" -> "thermal_network"[label="(get_optimization_thermal_network_data_file)"]
+    "site.shp" -> "thermal_network"[label="(get_site_polygon)"]
     "streets.shp" -> "thermal_network"[label="(get_street_network)"]
     "surroundings.shp" -> "thermal_network"[label="(get_surroundings_geometry)"]
     "terrain.tif" -> "thermal_network"[label="(get_terrain)"]
+    "{network_type}__EdgeNode.csv" -> "thermal_network"[label="(get_thermal_network_edge_node_matrix_file)"]
     "Total_demand.csv" -> "thermal_network"[label="(get_total_demand)"]
     "Zug-inducity_1990_2010_TMY.epw" -> "thermal_network"[label="(get_weather)"]
     "weather.epw" -> "thermal_network"[label="(get_weather_file)"]
@@ -181,10 +157,13 @@ digraph trace_inputlocator {
     "thermal_network" -> "DH__thermal_loss_edges_kW.csv"[label="(get_network_thermal_loss_edges_file)"]
     "thermal_network" -> "DH__plant_pumping_pressure_loss_Pa.csv"[label="(get_network_total_pressure_drop_file)"]
     "thermal_network" -> "DH__total_thermal_loss_edges_kW.csv"[label="(get_network_total_thermal_loss_file)"]
+    "thermal_network" -> "Nominal_EdgeMassFlow_at_design_{network_type}__kgpers.csv"[label="(get_nominal_edge_mass_flow_csv_file)"]
+    "thermal_network" -> "Nominal_NodeMassFlow_at_design_{network_type}__kgpers.csv"[label="(get_nominal_node_mass_flow_csv_file)"]
     "thermal_network" -> "110011011DH_B001_result.csv"[label="(get_optimization_substations_results_file)"]
     "thermal_network" -> "Total_DH_111111111.csv"[label="(get_optimization_substations_total_file)"]
     "thermal_network" -> "DH__thermal_demand_per_building_W.csv"[label="(get_thermal_demand_csv_file)"]
     "thermal_network" -> "DH__metadata_edges.csv"[label="(get_thermal_network_edge_list_file)"]
+    "thermal_network" -> "{network_type}__EdgeNode.csv"[label="(get_thermal_network_edge_node_matrix_file)"]
     "thermal_network" -> "DH__massflow_edges_kgs.csv"[label="(get_thermal_network_layout_massflow_edges_file)"]
     "thermal_network" -> "DH__massflow_nodes_kgs.csv"[label="(get_thermal_network_layout_massflow_nodes_file)"]
     "thermal_network" -> "DH__metadata_nodes.csv"[label="(get_thermal_network_node_types_csv_file)"]

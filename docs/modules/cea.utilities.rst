@@ -81,14 +81,6 @@ cea.utilities.doc\_schemas module
     :undoc-members:
     :show-inheritance:
 
-cea.utilities.doc\_update\_naming module
-----------------------------------------
-
-.. automodule:: cea.utilities.doc_update_naming
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 cea.utilities.epwreader module
 ------------------------------
 

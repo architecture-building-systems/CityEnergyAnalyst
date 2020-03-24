@@ -13,7 +13,7 @@ digraph trace_inputlocator {
     "inputs"->"process"[style=invis]
     "process"->"outputs"[style=invis]
     }
-    "multi_criteria_analysis"[style=filled, color=white, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname=arial];
+    "decentrlized"[style=filled, color=white, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname=arial];
     subgraph cluster_0_in {
         style = filled;
         color = "#E1F2F2";
@@ -29,8 +29,8 @@ digraph trace_inputlocator {
         color = "#aadcdd";
         fontsize = 20;
         rank=same;
-        label="data/multicriteria";
-        "gen_2_multi_criteria_analysis.csv"
+        label="data/optimization/decentralized";
+        "{building}_{configuration}_cooling.csv"
     }
     subgraph cluster_2_in {
         style = filled;
@@ -53,18 +53,10 @@ digraph trace_inputlocator {
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="optimization/slave/gen_2";
-        "gen_2_total_performance_pareto.csv"
-    }
-    subgraph cluster_5_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
         label="topography";
         "terrain.tif"
     }
-    subgraph cluster_6_in {
+    subgraph cluster_5_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -72,13 +64,12 @@ digraph trace_inputlocator {
         label="weather";
         "Zug-inducity_1990_2010_TMY.epw"
     }
-    "gen_2_total_performance_pareto.csv" -> "multi_criteria_analysis"[label="(get_optimization_generation_total_performance_pareto)"]
-    "DH_Network_summary_result_0x19b.csv" -> "multi_criteria_analysis"[label="(get_optimization_thermal_network_data_file)"]
-    "site.shp" -> "multi_criteria_analysis"[label="(get_site_polygon)"]
-    "streets.shp" -> "multi_criteria_analysis"[label="(get_street_network)"]
-    "surroundings.shp" -> "multi_criteria_analysis"[label="(get_surroundings_geometry)"]
-    "terrain.tif" -> "multi_criteria_analysis"[label="(get_terrain)"]
-    "Zug-inducity_1990_2010_TMY.epw" -> "multi_criteria_analysis"[label="(get_weather)"]
-    "zone.shp" -> "multi_criteria_analysis"[label="(get_zone_geometry)"]
-    "multi_criteria_analysis" -> "gen_2_multi_criteria_analysis.csv"[label="(get_multi_criteria_analysis)"]
+    "DH_Network_summary_result_0x19b.csv" -> "decentrlized"[label="(get_optimization_thermal_network_data_file)"]
+    "site.shp" -> "decentrlized"[label="(get_site_polygon)"]
+    "streets.shp" -> "decentrlized"[label="(get_street_network)"]
+    "surroundings.shp" -> "decentrlized"[label="(get_surroundings_geometry)"]
+    "terrain.tif" -> "decentrlized"[label="(get_terrain)"]
+    "Zug-inducity_1990_2010_TMY.epw" -> "decentrlized"[label="(get_weather)"]
+    "zone.shp" -> "decentrlized"[label="(get_zone_geometry)"]
+    "decentrlized" -> "{building}_{configuration}_cooling.csv"[label="(get_optimization_decentralized_folder_building_result_cooling)"]
     }
