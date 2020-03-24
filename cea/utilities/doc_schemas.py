@@ -171,13 +171,13 @@ def get_dbf_schema(filename, _):
 def get_shp_schema(filename, scenario):
     import geopandas
     db = geopandas.read_file(filename)
-    schema = {}
+    schema = {"columns": {}}
     for attr in db:
         attr = replace_repetitive_column_names(attr, scenario)
         meta = get_column_schema(db[attr])
         if attr == 'geometry':
             meta['sample_data'] = '((x1 y1, x2 y2, ...))'
-        schema[attr.encode('ascii', 'ignore')] = meta
+        schema["columns"][attr.encode('ascii', 'ignore')] = meta
     return schema
 
 
