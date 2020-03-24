@@ -1,19 +1,20 @@
-{% for locator_method, underline, used_by in locators %}
-{{locator_method}}
-{{underline}}
+{% for lm in schemas %}
+{{lm}}
+{% for c in lm %}-{% endfor %}
 
-The following file is used by scripts: {{used_by}}
+The following file is used by these scripts: {{used_by|join(",")}}
 
-{% for LOC_METH, file_name in details -%}
-{% if LOC_METH == locator_method %}
-
-.. csv-table:: **{{file_name}}**
+{% if "columns" in schemas[lm]["schema"] %}
+.. csv-table:: ``{{schemas[lm]["file_path"]}}``
     :header: "Variable", "Description"
-{% for SCRIPT, LOCATOR_METHOD, WORKSHEET, VARIABLE, DESCRIPTION, UNIT, VALUES, TYPE, COLOR, FILE_NAME in glossary_data -%}
-{% if locator_method == LOCATOR_METHOD and file_name == FILE_NAME %}
-     ``{{VARIABLE}}``,{{DESCRIPTION}} - Unit: {{UNIT}}
-{%- endif -%}
+    {% for col in schemas[lm]["schema"]["columns"] %}{{col}}, {{schemas[lm]["schema"]["columns"][col]["description"]}}{% endfor %}
+{% else %}
+{% for ws in schemas[lm]["schema"] %}
+
+.. csv-table:: ``{{schemas[lm]["file_path"]}}`` Worksheet: ``{{ws}}``
+    :header: "Variable", "Description"
+    {% for col in schemas[lm]["schema"][ws]["columns"] %}{{col}}, {{schemas[lm]["schema"][ws]["columns"][col]["description"]}}{% endfor %}
+
 {% endfor %}
 {% endif %}
-{%- endfor %}
 {% endfor %}

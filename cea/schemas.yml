@@ -8586,6 +8586,10 @@ get_network_total_thermal_loss_file:
 get_nominal_edge_mass_flow_csv_file:
   file_path: outputs/data/thermal-network/Nominal_EdgeMassFlow_at_design_{network_type}__kgpers.csv
   file_type: csv
+  created_by:
+  - thermal_network
+  used_by:
+  - thermal_network
   schema:
     columns:
       PIPE0:
@@ -8602,6 +8606,10 @@ get_nominal_edge_mass_flow_csv_file:
 get_nominal_node_mass_flow_csv_file:
   file_path: outputs/data/thermal-network/Nominal_NodeMassFlow_at_design_{network_type}__kgpers.csv
   file_type: csv
+  created_by:
+  - thermal_network
+  used_by:
+    - thermal_network
   schema:
     columns:
       NODE0:
@@ -12354,6 +12362,9 @@ get_sewage_heat_potential:
 get_site_polygon:
   file_path: inputs\building-geometry\site.shp
   file_type: shp
+  created_by: []
+  used_by:
+    - zone_helper
   schema:
     columns:
       FID:
@@ -12483,6 +12494,10 @@ get_thermal_network_edge_list_file:
 get_thermal_network_edge_node_matrix_file:
   file_path: outputs/data/thermal-network/{network_type}__EdgeNode.csv
   file_type: csv
+  created_by:
+  - thermal_network
+  used_by:
+    - thermal_network
   schema:
     columns:
       PIPE0:
