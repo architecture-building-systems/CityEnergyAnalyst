@@ -4,8 +4,11 @@ Provides the list of scripts known to the CEA - to be used by interfaces built o
 from __future__ import print_function
 
 import os
+import yaml
 import cea
 import cea.inputlocator
+
+__schemas = None
 
 SCRIPTS_PICKLE = os.path.abspath(os.path.join(os.path.dirname(cea.__file__), 'scripts.pickle'))
 SCRIPTS_YML = os.path.abspath(os.path.join(os.path.dirname(cea.__file__), 'scripts.yml'))
@@ -121,9 +124,11 @@ def for_interface(interface='cli'):
 
 def schemas():
     """Return the contents of the schemas.yml file"""
-    import yaml
-    schemas_yml = os.path.join(os.path.dirname(__file__), 'schemas.yml')
-    return yaml.load(open(schemas_yml), Loader=yaml.CLoader)
+    global __schemas
+    if not __schemas:
+        schemas_yml = os.path.join(os.path.dirname(__file__), 'schemas.yml')
+        __schemas = yaml.load(open(schemas_yml), Loader=yaml.CLoader)
+    return __schemas
 
 
 def get_schema_variables(schema):

@@ -57,6 +57,20 @@ class TestSchemas(unittest.TestCase):
                                         "Missing descriptiong for {lm}/{col}/description".format(
                                             lm=lm, col=col))
 
+    def test_each_lm_has_created_by(self):
+        schemas = cea.scripts.schemas()
+        for lm in schemas:
+            self.assertIn("created_by", schemas[lm], "{lm} missing created_by entry".format(lm=lm))
+            self.assertIsInstance(schemas[lm]["created_by"], list,
+                                  "created_by entry of {lm} must be a list".format(lm=lm))
+
+    def test_each_lm_has_used_by(self):
+        schemas = cea.scripts.schemas()
+        for lm in schemas:
+            self.assertIn("used_by", schemas[lm], "{lm} missing used_by entry".format(lm=lm))
+            self.assertIsInstance(schemas[lm]["used_by"], list,
+                                  "used_by entry of {lm} must be a list".format(lm=lm))
+
     def extract_locator_methods(self, locator):
         """Return the list of locator methods that point to files"""
         ignore = {
