@@ -2,76 +2,157 @@
 get_surroundings_geometry
 -------------------------
 
-The following file is used by these scripts: 
+path: ``inputs/building-geometry/surroundings.shp``
+
+The following file is used by these scripts: radiation, schedule_maker
 
 
-.. csv-table:: ``inputs/building-geometry/surroundings.shp``
+.. csv-table::
     :header: "Variable", "Description"
-    geometry, Geometryheight_bg, Height below ground (basement, etc)Name, Unique building ID. It must start with a letter.floors_bg, Number of floors below ground (basement, etc)height_ag, Height above ground (incl. ground floor)floors_ag, Number of floors above ground (incl. ground floor)
+
+    ``geometry``, "Geometry"
+    ``height_bg``, "Height below ground (basement, etc)"
+    ``Name``, "Unique building ID. It must start with a letter."
+    ``floors_bg``, "Number of floors below ground (basement, etc)"
+    ``height_ag``, "Height above ground (incl. ground floor)"
+    ``floors_ag``, "Number of floors above ground (incl. ground floor)"
+    
 
 
 get_zone_geometry
 -----------------
 
-The following file is used by these scripts: 
+path: ``inputs/building-geometry/zone.shp``
+
+The following file is used by these scripts: archetypes_mapper, decentralized, demand, emissions, network_layout, optimization, photovoltaic, photovoltaic_thermal, radiation, schedule_maker, sewage_potential, shallow_geothermal_potential, solar_collector, thermal_network
 
 
-.. csv-table:: ``inputs/building-geometry/zone.shp``
+.. csv-table::
     :header: "Variable", "Description"
-    geometry, Geometryheight_bg, Height below ground (basement, etc)Name, Unique building ID. It must start with a letter.floors_bg, Number of floors below ground (basement, etc)height_ag,  Height above ground (incl. ground floor)floors_ag, Number of floors above ground (incl. ground floor)
+
+    ``geometry``, "Geometry"
+    ``height_bg``, "Height below ground (basement, etc)"
+    ``Name``, "Unique building ID. It must start with a letter."
+    ``floors_bg``, "Number of floors below ground (basement, etc)"
+    ``height_ag``, " Height above ground (incl. ground floor)"
+    ``floors_ag``, "Number of floors above ground (incl. ground floor)"
+    
 
 
 get_terrain
 -----------
 
-The following file is used by these scripts: 
+path: ``inputs/topography/terrain.tif``
+
+The following file is used by these scripts: radiation, schedule_maker
 
 
-.. csv-table:: ``inputs/topography/terrain.tif``
+.. csv-table::
     :header: "Variable", "Description"
-    raster_value, TODO
+
+    ``raster_value``, "TODO"
+    
 
 
 get_street_network
 ------------------
 
-The following file is used by these scripts: 
+path: ``inputs/networks/streets.shp``
+
+The following file is used by these scripts: network_layout, optimization
 
 
-.. csv-table:: ``inputs/networks/streets.shp``
+.. csv-table::
     :header: "Variable", "Description"
-    geometry, GeometryId, Unique building ID. It must start with a letter.
+
+    ``geometry``, "Geometry"
+    ``Id``, "Unique building ID. It must start with a letter."
+    
 
 
 get_site_polygon
 ----------------
 
-The following file is used by these scripts: 
+path: ``inputs\building-geometry\site.shp``
+
+The following file is used by these scripts: zone_helper
 
 
-.. csv-table:: ``inputs\building-geometry\site.shp``
+.. csv-table::
     :header: "Variable", "Description"
-    geometry, TODOFID, TODO
+
+    ``geometry``, "TODO"
+    ``FID``, "TODO"
+    
 
 
 get_optimization_thermal_network_data_file
 ------------------------------------------
 
-The following file is used by these scripts: 
+path: ``outputs/data/optimization/network/DH_Network_summary_result_0x19b.csv``
+
+The following file is used by these scripts: optimization
 
 
-.. csv-table:: ``outputs/data/optimization/network/DH_Network_summary_result_0x19b.csv``
+.. csv-table::
     :header: "Variable", "Description"
-    Q_DHNf_W, TODOT_DHNf_sup_K, TODOT_DHNf_re_K, TODOmdot_DH_netw_total_kgpers, TODOmcpdata_netw_total_kWperC, TODOQ_DH_losses_W, TODODATE, TODOQcdata_netw_total_kWh, TODO
+
+    ``Q_DHNf_W``, "TODO"
+    ``T_DHNf_sup_K``, "TODO"
+    ``T_DHNf_re_K``, "TODO"
+    ``mdot_DH_netw_total_kgpers``, "TODO"
+    ``mcpdata_netw_total_kWperC``, "TODO"
+    ``Q_DH_losses_W``, "TODO"
+    ``DATE``, "TODO"
+    ``Qcdata_netw_total_kWh``, "TODO"
+    
 
 
 get_weather
 -----------
 
-The following file is used by these scripts: 
+path: ``databases/weather/Zug-inducity_1990_2010_TMY.epw``
+
+The following file is used by these scripts: weather_helper
 
 
-.. csv-table:: ``databases/weather/Zug-inducity_1990_2010_TMY.epw``
+.. csv-table::
     :header: "Variable", "Description"
-    snowdepth_cm (index = 30), TODOwindspd_ms (index = 21), TODOatmos_Pa (index = 9), Atmospheric pressurezenlum_lux (index = 19), TODOAlbedo (index = 32), Albedoceiling_hgt_m (index = 25), TODOrelhum_percent (index = 8), TODOdifhorrad_Whm2 (index = 15), TODOdifhorillum_lux (index = 18), TODOpresweathobs (index = 26), TODOdirnorillum_lux (index = 17), TODOdays_last_snow (index = 31), Days since last snowglohorrad_Whm2 (index = 13), TODOprecip_wtr_mm (index = 28), TODOminute (index = 4), TODOliq_precip_depth_mm (index = 33), TODOdirnorrad_Whm2 (index = 14), TODOexthorrad_Whm2 (index = 10), TODOvisibility_km (index = 24), TODOaerosol_opt_thousandths (index = 29), TODOopaqskycvr_tenths (index = 23), TODOpresweathcodes (index = 27), TODOmonth (index = 1), TODOday (index = 2), TODOyear (index = 0), TODOdatasource (index = 5), Source of datawinddir_deg (index = 20), TODOglohorillum_lux (index = 16), TODOdrybulb_C (index = 6), TODOdewpoint_C (index = 7), TODOtotskycvr_tenths (index = 22), TODOliq_precip_rate_Hour (index = 34), TODOhorirsky_Whm2 (index = 12), TODOhour (index = 3), TODOextdirrad_Whm2 (index = 11), TODO
+
+    ``snowdepth_cm (index = 30)``, "TODO"
+    ``windspd_ms (index = 21)``, "TODO"
+    ``atmos_Pa (index = 9)``, "Atmospheric pressure"
+    ``zenlum_lux (index = 19)``, "TODO"
+    ``Albedo (index = 32)``, "Albedo"
+    ``ceiling_hgt_m (index = 25)``, "TODO"
+    ``relhum_percent (index = 8)``, "TODO"
+    ``difhorrad_Whm2 (index = 15)``, "TODO"
+    ``difhorillum_lux (index = 18)``, "TODO"
+    ``presweathobs (index = 26)``, "TODO"
+    ``dirnorillum_lux (index = 17)``, "TODO"
+    ``days_last_snow (index = 31)``, "Days since last snow"
+    ``glohorrad_Whm2 (index = 13)``, "TODO"
+    ``precip_wtr_mm (index = 28)``, "TODO"
+    ``minute (index = 4)``, "TODO"
+    ``liq_precip_depth_mm (index = 33)``, "TODO"
+    ``dirnorrad_Whm2 (index = 14)``, "TODO"
+    ``exthorrad_Whm2 (index = 10)``, "TODO"
+    ``visibility_km (index = 24)``, "TODO"
+    ``aerosol_opt_thousandths (index = 29)``, "TODO"
+    ``opaqskycvr_tenths (index = 23)``, "TODO"
+    ``presweathcodes (index = 27)``, "TODO"
+    ``month (index = 1)``, "TODO"
+    ``day (index = 2)``, "TODO"
+    ``year (index = 0)``, "TODO"
+    ``datasource (index = 5)``, "Source of data"
+    ``winddir_deg (index = 20)``, "TODO"
+    ``glohorillum_lux (index = 16)``, "TODO"
+    ``drybulb_C (index = 6)``, "TODO"
+    ``dewpoint_C (index = 7)``, "TODO"
+    ``totskycvr_tenths (index = 22)``, "TODO"
+    ``liq_precip_rate_Hour (index = 34)``, "TODO"
+    ``horirsky_Whm2 (index = 12)``, "TODO"
+    ``hour (index = 3)``, "TODO"
+    ``extdirrad_Whm2 (index = 11)``, "TODO"
+    
 
