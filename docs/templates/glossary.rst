@@ -1,4 +1,4 @@
-{% for lm in schemas %}
+{% for lm in schemas|sort %}
 {{lm}}
 {% for c in lm %}-{% endfor %}
 
@@ -10,15 +10,15 @@ The following file is used by these scripts: {{ schemas[lm]["used_by"]|map("add_
 .. csv-table::
     :header: "Variable", "Description"
 
-    {% for col in schemas[lm]["schema"]["columns"] %}``{{col}}``, "{{schemas[lm]["schema"]["columns"][col]["description"]}}"
+    {% for col in schemas[lm]["schema"]["columns"]|sort %}``{{col}}``, "{{schemas[lm]["schema"]["columns"][col]["description"]}}"
     {% endfor %}
 {% else %}
-{% for ws in schemas[lm]["schema"] %}
+{% for ws in schemas[lm]["schema"]|sort %}
 
 .. csv-table:: Worksheet: ``{{ws}}``
     :header: "Variable", "Description"
 
-    {% for col in schemas[lm]["schema"][ws]["columns"] %}``{{col}}``, {{schemas[lm]["schema"][ws]["columns"][col]["description"]}}
+    {% for col in schemas[lm]["schema"][ws]["columns"]|sort %}``{{col}}``, {{schemas[lm]["schema"][ws]["columns"][col]["description"]}}
     {% endfor %}
 
 {% endfor %}
