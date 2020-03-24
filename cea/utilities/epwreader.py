@@ -27,9 +27,16 @@ def epw_reader(weather_path):
                   'snowdepth_cm', 'days_last_snow', 'Albedo', 'liq_precip_depth_mm', 'liq_precip_rate_Hour']
 
     result = pd.read_csv(weather_path, skiprows=8, header=None, names=epw_labels).drop('datasource', axis=1)
-    result = result.loc[0:HOURS_IN_YEAR-1]
-    result['date'] = pd.Series(pd.date_range(str(result["year"][0])+"/1/1", periods=HOURS_IN_YEAR, freq='H'))
-    result['dayofyear'] = pd.date_range(str(result["year"][0])+"/1/1", periods=HOURS_IN_YEAR, freq='H').dayofyear
+    year = result["year"][0]
+    date_range = pd.date_range(start=str(year), end=str(year+1), freq='H', closed='left')
+    result['date'] = date_range
+    result['dayofyear'] = date_range.dayofyear
+
+    num_of_hours = len(result)
+    # Check if leap year and remove extra day
+    if num_of_hours == HOURS_IN_YEAR + 24:
+        result = result[~((date_range.month == 2) & (date_range.day == 29))]
+
     result['ratio_diffhout'] = result['difhorrad_Whm2'] / result['glohorrad_Whm2']
     result['ratio_diffhout'] = result['ratio_diffhout'].replace(np.inf, np.nan)
     result['wetbulb_C'] = np.vectorize(calc_wetbulb)(result['drybulb_C'], result['relhum_percent'])
