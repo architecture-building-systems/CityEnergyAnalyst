@@ -39,12 +39,11 @@ def main(_=None):
     template_path = os.path.join(documentation_dir, 'templates', 'glossary.rst')
     template = Template(open(template_path, 'r').read())
 
-
     input_locators = {lm: schemas[lm] for lm in schemas if not schemas[lm]['created_by']}
     with open(os.path.join(documentation_dir, "input_methods.rst"), "w") as input_methods_fp:
         input_methods_fp.write(template.render(schemas=input_locators))
 
-    output_locators = {lm: schemas[lm] for lm in schemas if not schemas[lm]['created_by']}
+    output_locators = {lm: schemas[lm] for lm in schemas if schemas[lm]['created_by']}
     with open(os.path.join(documentation_dir, "output_methods.rst"), "w") as output_methods_fp:
         output_methods_fp.write(template.render(schemas=output_locators))
 
