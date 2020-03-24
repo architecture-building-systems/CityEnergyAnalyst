@@ -15,9 +15,11 @@ The following file is used by these scripts: {{ schemas[lm]["used_by"]|map("add_
 {% else %}
 {% for ws in schemas[lm]["schema"] %}
 
-.. csv-table:: ``{{schemas[lm]["file_path"]}}`` Worksheet: ``{{ws}}``
+.. csv-table:: Worksheet: ``{{ws}}``
     :header: "Variable", "Description"
-    {% for col in schemas[lm]["schema"][ws]["columns"] %}``{{col}}``, {{schemas[lm]["schema"][ws]["columns"][col]["description"]}}{% endfor %}
+
+    {% for col in schemas[lm]["schema"][ws]["columns"] %}``{{col}}``, {{schemas[lm]["schema"][ws]["columns"][col]["description"]}}
+    {% endfor %}
 
 {% endfor %}
 {% endif %}
