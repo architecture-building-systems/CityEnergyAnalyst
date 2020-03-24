@@ -4,7 +4,7 @@
 
 path: ``{{schemas[lm]["file_path"]}}``
 
-The following file is used by these scripts: {{ schemas[lm]["used_by"]|join(", ")}}
+The following file is used by these scripts: {{ schemas[lm]["used_by"]|map("add_backticks")|join(", ")}}
 
 {% if "columns" in schemas[lm]["schema"] %}
 .. csv-table::
