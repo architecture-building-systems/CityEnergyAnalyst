@@ -18,7 +18,6 @@ include cea/interfaces/dashboard/inputs/inputs.yml
 recursive-include cea/interfaces/dashboard *.html *.js *.css *.otf *.eot *.svg *.ttf *.woff *.woff2 *.png *.jpg *.gif *.ico
 
 include cea/plots/naming.csv
-include cea/glossary.csv
 
 include cea/workflows/district_cooling_system.yml
 include cea/workflows/district_heating_system.yml

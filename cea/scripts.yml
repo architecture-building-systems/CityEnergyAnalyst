@@ -434,13 +434,6 @@ Documentation:
     module: cea.utilities.doc_graphviz
     parameters: []
 
-  - name: update-naming
-    label: update-naming
-    description: Updates the naming.csv using the schemas.yml
-    interfaces: [doc]
-    module: cea.utilities.doc_update_naming
-    parameters: []
-
   - name: glossary
     label: glossary
     description: Updates the glossary documentation
