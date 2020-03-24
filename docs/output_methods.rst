@@ -565,27 +565,71 @@ The following file is used by these scripts: ``demand``, ``emissions``, ``system
 
 
 
-.. csv-table:: ``inputs/technology/assemblies/SUPPLY.xls`` Worksheet: ``ELECTRICITY``
+.. csv-table:: Worksheet: ``ELECTRICITY``
     :header: "Variable", "Description"
-    ``code``, TODO``Description``, TODO``reference``, TODO``O&M_%``, TODO``LT_yr``, TODO``IR_%``, TODO``CAPEX_USD2015kW``, TODO``efficiency``, TODO``scale``, TODO``feedstock``, TODO
+
+    ``code``, TODO
+    ``Description``, TODO
+    ``reference``, TODO
+    ``O&M_%``, TODO
+    ``LT_yr``, TODO
+    ``IR_%``, TODO
+    ``CAPEX_USD2015kW``, TODO
+    ``efficiency``, TODO
+    ``scale``, TODO
+    ``feedstock``, TODO
+    
 
 
 
-.. csv-table:: ``inputs/technology/assemblies/SUPPLY.xls`` Worksheet: ``HOT_WATER``
+.. csv-table:: Worksheet: ``HOT_WATER``
     :header: "Variable", "Description"
-    ``code``, TODO``Description``, TODO``reference``, TODO``O&M_%``, TODO``LT_yr``, TODO``IR_%``, TODO``CAPEX_USD2015kW``, TODO``efficiency``, TODO``scale``, TODO``feedstock``, TODO
+
+    ``code``, TODO
+    ``Description``, TODO
+    ``reference``, TODO
+    ``O&M_%``, TODO
+    ``LT_yr``, TODO
+    ``IR_%``, TODO
+    ``CAPEX_USD2015kW``, TODO
+    ``efficiency``, TODO
+    ``scale``, TODO
+    ``feedstock``, TODO
+    
 
 
 
-.. csv-table:: ``inputs/technology/assemblies/SUPPLY.xls`` Worksheet: ``COOLING``
+.. csv-table:: Worksheet: ``COOLING``
     :header: "Variable", "Description"
-    ``code``, TODO``Description``, TODO``reference``, TODO``O&M_%``, TODO``LT_yr``, TODO``IR_%``, TODO``CAPEX_USD2015kW``, TODO``efficiency``, TODO``scale``, TODO``feedstock``, TODO
+
+    ``code``, TODO
+    ``Description``, TODO
+    ``reference``, TODO
+    ``O&M_%``, TODO
+    ``LT_yr``, TODO
+    ``IR_%``, TODO
+    ``CAPEX_USD2015kW``, TODO
+    ``efficiency``, TODO
+    ``scale``, TODO
+    ``feedstock``, TODO
+    
 
 
 
-.. csv-table:: ``inputs/technology/assemblies/SUPPLY.xls`` Worksheet: ``HEATING``
+.. csv-table:: Worksheet: ``HEATING``
     :header: "Variable", "Description"
-    ``code``, TODO``Description``, TODO``reference``, TODO``O&M_%``, TODO``LT_yr``, TODO``IR_%``, TODO``CAPEX_USD2015kW``, TODO``efficiency``, TODO``scale``, TODO``feedstock``, TODO
+
+    ``code``, TODO
+    ``Description``, TODO
+    ``reference``, TODO
+    ``O&M_%``, TODO
+    ``LT_yr``, TODO
+    ``IR_%``, TODO
+    ``CAPEX_USD2015kW``, TODO
+    ``efficiency``, TODO
+    ``scale``, TODO
+    ``feedstock``, TODO
+    
 
 
 
@@ -616,15 +660,39 @@ The following file is used by these scripts: ``archetypes_mapper``
 
 
 
-.. csv-table:: ``inputs/technology/archetypes/use_types/USE_TYPE_PROPERTIES.xlsx`` Worksheet: ``INDOOR_COMFORT``
+.. csv-table:: Worksheet: ``INDOOR_COMFORT``
     :header: "Variable", "Description"
-    ``RH_max_pc``, TODO``code``, TODO``Tcs_set_C``, TODO``Ths_setb_C``, TODO``Ths_set_C``, TODO``Tcs_setb_C``, TODO``Ve_lpspax``, TODO``RH_min_pc``, TODO
+
+    ``RH_max_pc``, TODO
+    ``code``, TODO
+    ``Tcs_set_C``, TODO
+    ``Ths_setb_C``, TODO
+    ``Ths_set_C``, TODO
+    ``Tcs_setb_C``, TODO
+    ``Ve_lpspax``, TODO
+    ``RH_min_pc``, TODO
+    
 
 
 
-.. csv-table:: ``inputs/technology/archetypes/use_types/USE_TYPE_PROPERTIES.xlsx`` Worksheet: ``INTERNAL_LOADS``
+.. csv-table:: Worksheet: ``INTERNAL_LOADS``
     :header: "Variable", "Description"
-    ``El_Wm2``, TODO``code``, TODO``Qhpro_Wm2``, TODO``Occ_m2pax``, TODO``Ed_Wm2``, TODO``Ea_Wm2``, TODO``Qcre_Wm2``, TODO``Ev_kWveh``, TODO``Epro_Wm2``, TODO``X_ghpax``, TODO``Vww_lpdpax``, TODO``Vw_lpdpax``, TODO``Qs_Wpax``, TODO``Qcpro_Wm2``, TODO
+
+    ``El_Wm2``, TODO
+    ``code``, TODO
+    ``Qhpro_Wm2``, TODO
+    ``Occ_m2pax``, TODO
+    ``Ed_Wm2``, TODO
+    ``Ea_Wm2``, TODO
+    ``Qcre_Wm2``, TODO
+    ``Ev_kWveh``, TODO
+    ``Epro_Wm2``, TODO
+    ``X_ghpax``, TODO
+    ``Vww_lpdpax``, TODO
+    ``Vw_lpdpax``, TODO
+    ``Qs_Wpax``, TODO
+    ``Qcpro_Wm2``, TODO
+    
 
 
 
@@ -658,33 +726,81 @@ The following file is used by these scripts: ``demand``
 
 
 
-.. csv-table:: ``inputs/technology/assemblies/HVAC.xls`` Worksheet: ``HOT_WATER``
+.. csv-table:: Worksheet: ``HOT_WATER``
     :header: "Variable", "Description"
-    ``Qwwmax_Wm2``, TODO``code``, TODO``Description``, TODO``Tsww0_C``, TODO
+
+    ``Qwwmax_Wm2``, TODO
+    ``code``, TODO
+    ``Description``, TODO
+    ``Tsww0_C``, TODO
+    
 
 
 
-.. csv-table:: ``inputs/technology/assemblies/HVAC.xls`` Worksheet: ``CONTROLLER``
+.. csv-table:: Worksheet: ``CONTROLLER``
     :header: "Variable", "Description"
-    ``dT_Qcs``, TODO``dT_Qhs``, TODO``code``, TODO``Description``, TODO
+
+    ``dT_Qcs``, TODO
+    ``dT_Qhs``, TODO
+    ``code``, TODO
+    ``Description``, TODO
+    
 
 
 
-.. csv-table:: ``inputs/technology/assemblies/HVAC.xls`` Worksheet: ``COOLING``
+.. csv-table:: Worksheet: ``COOLING``
     :header: "Variable", "Description"
-    ``Tscs0_scu_C``, TODO``Qcsmax_Wm2``, TODO``code``, TODO``Description``, TODO``dTcs0_aru_C``, TODO``class_cs``, TODO``dTcs0_ahu_C``, TODO``Tc_sup_air_aru_C``, TODO``convection_cs``, TODO``Tscs0_ahu_C``, TODO``Tscs0_aru_C``, TODO``Tc_sup_air_ahu_C``, TODO``dTcs0_scu_C``, TODO``dTcs_C``, TODO
+
+    ``Tscs0_scu_C``, TODO
+    ``Qcsmax_Wm2``, TODO
+    ``code``, TODO
+    ``Description``, TODO
+    ``dTcs0_aru_C``, TODO
+    ``class_cs``, TODO
+    ``dTcs0_ahu_C``, TODO
+    ``Tc_sup_air_aru_C``, TODO
+    ``convection_cs``, TODO
+    ``Tscs0_ahu_C``, TODO
+    ``Tscs0_aru_C``, TODO
+    ``Tc_sup_air_ahu_C``, TODO
+    ``dTcs0_scu_C``, TODO
+    ``dTcs_C``, TODO
+    
 
 
 
-.. csv-table:: ``inputs/technology/assemblies/HVAC.xls`` Worksheet: ``VENTILATION``
+.. csv-table:: Worksheet: ``VENTILATION``
     :header: "Variable", "Description"
-    ``ECONOMIZER``, TODO``code``, TODO``NIGHT_FLSH``, TODO``Description``, TODO``MECH_VENT``, TODO``WIN_VENT``, TODO``HEAT_REC``, TODO
+
+    ``ECONOMIZER``, TODO
+    ``code``, TODO
+    ``NIGHT_FLSH``, TODO
+    ``Description``, TODO
+    ``MECH_VENT``, TODO
+    ``WIN_VENT``, TODO
+    ``HEAT_REC``, TODO
+    
 
 
 
-.. csv-table:: ``inputs/technology/assemblies/HVAC.xls`` Worksheet: ``HEATING``
+.. csv-table:: Worksheet: ``HEATING``
     :header: "Variable", "Description"
-    ``Tshs0_aru_C``, TODO``code``, TODO``Description``, TODO``Tshs0_shu_C``, TODO``Tshs0_ahu_C``, TODO``Qhsmax_Wm2``, TODO``dThs0_aru_C``, TODO``dThs0_ahu_C``, TODO``dThs0_shu_C``, TODO``convection_hs``, TODO``dThs_C``, TODO``class_hs``, TODO``Th_sup_air_aru_C``, TODO``Th_sup_air_ahu_C``, TODO
+
+    ``Tshs0_aru_C``, TODO
+    ``code``, TODO
+    ``Description``, TODO
+    ``Tshs0_shu_C``, TODO
+    ``Tshs0_ahu_C``, TODO
+    ``Qhsmax_Wm2``, TODO
+    ``dThs0_aru_C``, TODO
+    ``dThs0_ahu_C``, TODO
+    ``dThs0_shu_C``, TODO
+    ``convection_hs``, TODO
+    ``dThs_C``, TODO
+    ``class_hs``, TODO
+    ``Th_sup_air_aru_C``, TODO
+    ``Th_sup_air_ahu_C``, TODO
+    
 
 
 
@@ -1453,9 +1569,18 @@ The following file is used by these scripts: ``optimization``, ``thermal_network
 
 
 
-.. csv-table:: ``inputs/technology/components/DISTRIBUTION.xls`` Worksheet: ``THERMAL_GRID``
+.. csv-table:: Worksheet: ``THERMAL_GRID``
     :header: "Variable", "Description"
-    ``Code``, no such column?``Inv_USD2015perm``, Typical cost of investment for a given pipe diameter.``D_ins_m``, maximum pipe diameter tolerance for the nominal diameter (DN)``D_ext_m``, external pipe diameter tolerance for the nominal diameter (DN)``Pipe_DN``, Nominal pipe diameter``D_int_m``, internal pipe diameter tolerance for the nominal diameter (DN)``Vdot_max_m3s``, maximum volumetric flow rate for the nominal diameter (DN)``Vdot_min_m3s``, minimum volumetric flow rate for the nominal diameter (DN)
+
+    ``Code``, no such column?
+    ``Inv_USD2015perm``, Typical cost of investment for a given pipe diameter.
+    ``D_ins_m``, maximum pipe diameter tolerance for the nominal diameter (DN)
+    ``D_ext_m``, external pipe diameter tolerance for the nominal diameter (DN)
+    ``Pipe_DN``, Nominal pipe diameter
+    ``D_int_m``, internal pipe diameter tolerance for the nominal diameter (DN)
+    ``Vdot_max_m3s``, maximum volumetric flow rate for the nominal diameter (DN)
+    ``Vdot_min_m3s``, minimum volumetric flow rate for the nominal diameter (DN)
+    
 
 
 
@@ -1470,93 +1595,379 @@ The following file is used by these scripts: ``decentralized``, ``optimization``
 
 
 
-.. csv-table:: ``inputs/technology/components/CONVERSION.xls`` Worksheet: ``CCGT``
+.. csv-table:: Worksheet: ``CCGT``
     :header: "Variable", "Description"
-    ``a``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``c``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``b``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``cap_max``, maximum capacity ``Description``, Describes the type of combined-cycle gas turbine``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)``cap_min``, minimum capacity``LT_yr``, lifetime of this technology``IR_%``, interest rate charged on the loan for the capital cost``currency``, currency-year information of the investment cost function``code``, identifier of each unique equipment``assumption``, items made by assumptions in this technology``e``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``unit``, unit of the min/max capacity``d``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+
+    ``a``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``c``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``b``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``cap_max``, maximum capacity 
+    ``Description``, Describes the type of combined-cycle gas turbine
+    ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
+    ``cap_min``, minimum capacity
+    ``LT_yr``, lifetime of this technology
+    ``IR_%``, interest rate charged on the loan for the capital cost
+    ``currency``, currency-year information of the investment cost function
+    ``code``, identifier of each unique equipment
+    ``assumption``, items made by assumptions in this technology
+    ``e``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``unit``, unit of the min/max capacity
+    ``d``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    
 
 
 
-.. csv-table:: ``inputs/technology/components/CONVERSION.xls`` Worksheet: ``PV``
+.. csv-table:: Worksheet: ``PV``
     :header: "Variable", "Description"
-    ``code``, identifier of each unique equipment``cap_max``, maximum capacity ``PV_a2``, parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  + a3*x**3 + a4*x**4, x is the relative air mass``PV_a1``, parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  + a3*x**3 + a4*x**4, x is the relative air mass``PV_a0``, parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  + a3*x**3 + a4*x**4, x is the relative air mass``cap_min``, minimum capacity``LT_yr``, lifetime of this technology``module_length_m``, lengh of the PV module``IR_%``, interest rate charged on the loan for the capital cost``currency``, currency-year information of the investment cost function``PV_a4``, parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  + a3*x**3 + a4*x**4, x is the relative air mass``misc_losses``, losses from cabling, resistances etc...``PV_Bref``, cell maximum power temperature coefficient``PV_a3``, parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  + a3*x**3 + a4*x**4, x is the relative air mass``unit``, unit of the min/max capacity``d``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``a``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``c``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``b``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``e``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``Description``, Describes the source of the benchmark standards.``PV_n``, nominal efficiency``PV_noct``, nominal operating cell temperature``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)``assumption``, items made by assumptions in this technology``PV_th``, glazing thickness``type``, redundant
+
+    ``code``, identifier of each unique equipment
+    ``cap_max``, maximum capacity 
+    ``PV_a2``, parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  + a3*x**3 + a4*x**4, x is the relative air mass
+    ``PV_a1``, parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  + a3*x**3 + a4*x**4, x is the relative air mass
+    ``PV_a0``, parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  + a3*x**3 + a4*x**4, x is the relative air mass
+    ``cap_min``, minimum capacity
+    ``LT_yr``, lifetime of this technology
+    ``module_length_m``, lengh of the PV module
+    ``IR_%``, interest rate charged on the loan for the capital cost
+    ``currency``, currency-year information of the investment cost function
+    ``PV_a4``, parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  + a3*x**3 + a4*x**4, x is the relative air mass
+    ``misc_losses``, losses from cabling, resistances etc...
+    ``PV_Bref``, cell maximum power temperature coefficient
+    ``PV_a3``, parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  + a3*x**3 + a4*x**4, x is the relative air mass
+    ``unit``, unit of the min/max capacity
+    ``d``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``a``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``c``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``b``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``e``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``Description``, Describes the source of the benchmark standards.
+    ``PV_n``, nominal efficiency
+    ``PV_noct``, nominal operating cell temperature
+    ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
+    ``assumption``, items made by assumptions in this technology
+    ``PV_th``, glazing thickness
+    ``type``, redundant
+    
 
 
 
-.. csv-table:: ``inputs/technology/components/CONVERSION.xls`` Worksheet: ``PVT``
+.. csv-table:: Worksheet: ``PVT``
     :header: "Variable", "Description"
-    ``a``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``c``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``b``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``cap_max``, maximum capacity ``Description``, Describes the type of photovoltaic thermal technology``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)``cap_min``, minimum capacity``LT_yr``, lifetime of this technology``IR_%``, interest rate charged on the loan for the capital cost``currency``, currency-year information of the investment cost function``code``, identifier of each unique equipment``assumption``, items made by assumptions in this technology``e``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``unit``, unit of the min/max capacity``d``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+
+    ``a``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``c``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``b``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``cap_max``, maximum capacity 
+    ``Description``, Describes the type of photovoltaic thermal technology
+    ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
+    ``cap_min``, minimum capacity
+    ``LT_yr``, lifetime of this technology
+    ``IR_%``, interest rate charged on the loan for the capital cost
+    ``currency``, currency-year information of the investment cost function
+    ``code``, identifier of each unique equipment
+    ``assumption``, items made by assumptions in this technology
+    ``e``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``unit``, unit of the min/max capacity
+    ``d``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    
 
 
 
-.. csv-table:: ``inputs/technology/components/CONVERSION.xls`` Worksheet: ``HEX``
+.. csv-table:: Worksheet: ``HEX``
     :header: "Variable", "Description"
-    ``code``, identifier of each unique equipment``cap_max``, maximum capacity ``a_p``, pressure loss function, f(x) = a_p + b_p*x^c_p + d_p*ln(x) + e_p*x*ln*(x), where x is the capacity mass flow rate [W/K]   ``cap_min``, minimum capacity``LT_yr``, lifetime of this technology``c_p``, pressure loss function, f(x) = a_p + b_p*x^c_p + d_p*ln(x) + e_p*x*ln*(x), where x is the capacity mass flow rate [W/K]   ``e_p``, pressure loss function, f(x) = a_p + b_p*x^c_p + d_p*ln(x) + e_p*x*ln*(x), where x is the capacity mass flow rate [W/K]   ``b_p``, pressure loss function, f(x) = a_p + b_p*x^c_p + d_p*ln(x) + e_p*x*ln*(x), where x is the capacity mass flow rate [W/K]   ``unit``, unit of the min/max capacity``d``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``a``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``c``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``b``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``e``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``Description``, Describes the type of heat exchanger``currency``, currency-year information of the investment cost function``d_p``, pressure loss function, f(x) = a_p + b_p*x^c_p + d_p*ln(x) + e_p*x*ln*(x), where x is the capacity mass flow rate [W/K]   ``IR_%``, interest rate charged on the loan for the capital cost``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)``assumption``, items made by assumptions in this technology
+
+    ``code``, identifier of each unique equipment
+    ``cap_max``, maximum capacity 
+    ``a_p``, pressure loss function, f(x) = a_p + b_p*x^c_p + d_p*ln(x) + e_p*x*ln*(x), where x is the capacity mass flow rate [W/K]   
+    ``cap_min``, minimum capacity
+    ``LT_yr``, lifetime of this technology
+    ``c_p``, pressure loss function, f(x) = a_p + b_p*x^c_p + d_p*ln(x) + e_p*x*ln*(x), where x is the capacity mass flow rate [W/K]   
+    ``e_p``, pressure loss function, f(x) = a_p + b_p*x^c_p + d_p*ln(x) + e_p*x*ln*(x), where x is the capacity mass flow rate [W/K]   
+    ``b_p``, pressure loss function, f(x) = a_p + b_p*x^c_p + d_p*ln(x) + e_p*x*ln*(x), where x is the capacity mass flow rate [W/K]   
+    ``unit``, unit of the min/max capacity
+    ``d``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``a``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``c``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``b``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``e``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``Description``, Describes the type of heat exchanger
+    ``currency``, currency-year information of the investment cost function
+    ``d_p``, pressure loss function, f(x) = a_p + b_p*x^c_p + d_p*ln(x) + e_p*x*ln*(x), where x is the capacity mass flow rate [W/K]   
+    ``IR_%``, interest rate charged on the loan for the capital cost
+    ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
+    ``assumption``, items made by assumptions in this technology
+    
 
 
 
-.. csv-table:: ``inputs/technology/components/CONVERSION.xls`` Worksheet: ``HP``
+.. csv-table:: Worksheet: ``HP``
     :header: "Variable", "Description"
-    ``a``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``c``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``b``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``cap_max``, maximum capacity ``Description``, Describes the source of the heat pump``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)``cap_min``, minimum capacity``LT_yr``, lifetime of this technology``IR_%``, interest rate charged on the loan for the capital cost``currency``, currency-year information of the investment cost function``code``, identifier of each unique equipment``assumption``, items made by assumptions in this technology``e``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``unit``, unit of the min/max capacity``d``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+
+    ``a``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``c``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``b``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``cap_max``, maximum capacity 
+    ``Description``, Describes the source of the heat pump
+    ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
+    ``cap_min``, minimum capacity
+    ``LT_yr``, lifetime of this technology
+    ``IR_%``, interest rate charged on the loan for the capital cost
+    ``currency``, currency-year information of the investment cost function
+    ``code``, identifier of each unique equipment
+    ``assumption``, items made by assumptions in this technology
+    ``e``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``unit``, unit of the min/max capacity
+    ``d``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    
 
 
 
-.. csv-table:: ``inputs/technology/components/CONVERSION.xls`` Worksheet: ``BH``
+.. csv-table:: Worksheet: ``BH``
     :header: "Variable", "Description"
-    ``a``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``c``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``b``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``cap_max``, maximum capacity ``Description``, Describes the type of borehole heat exchanger``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)``cap_min``, minimum capacity``LT_yr``, lifetime of this technology``IR_%``, interest rate charged on the loan for the capital cost``currency``, currency-year information of the investment cost function``code``, identifier of each unique equipment``assumption``, items made by assumptions in this technology``e``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``unit``, unit of the min/max capacity``d``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+
+    ``a``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``c``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``b``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``cap_max``, maximum capacity 
+    ``Description``, Describes the type of borehole heat exchanger
+    ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
+    ``cap_min``, minimum capacity
+    ``LT_yr``, lifetime of this technology
+    ``IR_%``, interest rate charged on the loan for the capital cost
+    ``currency``, currency-year information of the investment cost function
+    ``code``, identifier of each unique equipment
+    ``assumption``, items made by assumptions in this technology
+    ``e``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``unit``, unit of the min/max capacity
+    ``d``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    
 
 
 
-.. csv-table:: ``inputs/technology/components/CONVERSION.xls`` Worksheet: ``CT``
+.. csv-table:: Worksheet: ``CT``
     :header: "Variable", "Description"
-    ``a``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``c``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``b``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``cap_max``, maximum capacity ``Description``, Describes the type of cooling tower``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)``cap_min``, minimum capacity``LT_yr``, lifetime of this technology``IR_%``, interest rate charged on the loan for the capital cost``currency``, currency-year information of the investment cost function``code``, identifier of each unique equipment``assumption``, items made by assumptions in this technology``e``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``unit``, unit of the min/max capacity``d``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+
+    ``a``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``c``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``b``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``cap_max``, maximum capacity 
+    ``Description``, Describes the type of cooling tower
+    ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
+    ``cap_min``, minimum capacity
+    ``LT_yr``, lifetime of this technology
+    ``IR_%``, interest rate charged on the loan for the capital cost
+    ``currency``, currency-year information of the investment cost function
+    ``code``, identifier of each unique equipment
+    ``assumption``, items made by assumptions in this technology
+    ``e``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``unit``, unit of the min/max capacity
+    ``d``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    
 
 
 
-.. csv-table:: ``inputs/technology/components/CONVERSION.xls`` Worksheet: ``Pump``
+.. csv-table:: Worksheet: ``Pump``
     :header: "Variable", "Description"
-    ``a``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``c``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``b``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``cap_max``, maximum capacity ``Description``, Describes the source of the benchmark standards.``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)``cap_min``, minimum capacity``LT_yr``, lifetime of this technology``IR_%``, interest rate charged on the loan for the capital cost``currency``, currency-year information of the investment cost function``code``, identifier of each unique equipment``assumption``, items made by assumptions in this technology``e``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``unit``, unit of the min/max capacity``d``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+
+    ``a``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``c``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``b``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``cap_max``, maximum capacity 
+    ``Description``, Describes the source of the benchmark standards.
+    ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
+    ``cap_min``, minimum capacity
+    ``LT_yr``, lifetime of this technology
+    ``IR_%``, interest rate charged on the loan for the capital cost
+    ``currency``, currency-year information of the investment cost function
+    ``code``, identifier of each unique equipment
+    ``assumption``, items made by assumptions in this technology
+    ``e``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``unit``, unit of the min/max capacity
+    ``d``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    
 
 
 
-.. csv-table:: ``inputs/technology/components/CONVERSION.xls`` Worksheet: ``FC``
+.. csv-table:: Worksheet: ``FC``
     :header: "Variable", "Description"
-    ``a``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``c``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``b``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``cap_max``, maximum capacity ``Description``, Describes the type of fuel cell``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)``cap_min``, minimum capacity``LT_yr``, lifetime of this technology``IR_%``, interest rate charged on the loan for the capital cost``currency``, currency-year information of the investment cost function``code``, identifier of each unique equipment``assumption``, TODO``e``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``unit``, unit of the min/max capacity``d``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+
+    ``a``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``c``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``b``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``cap_max``, maximum capacity 
+    ``Description``, Describes the type of fuel cell
+    ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
+    ``cap_min``, minimum capacity
+    ``LT_yr``, lifetime of this technology
+    ``IR_%``, interest rate charged on the loan for the capital cost
+    ``currency``, currency-year information of the investment cost function
+    ``code``, identifier of each unique equipment
+    ``assumption``, TODO
+    ``e``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``unit``, unit of the min/max capacity
+    ``d``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    
 
 
 
-.. csv-table:: ``inputs/technology/components/CONVERSION.xls`` Worksheet: ``Chiller``
+.. csv-table:: Worksheet: ``Chiller``
     :header: "Variable", "Description"
-    ``a``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``c``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``b``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``cap_max``, maximum capacity ``Description``, Describes the source of the benchmark standards.``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)``cap_min``, minimum capacity``LT_yr``, lifetime of this technology``IR_%``, interest rate charged on the loan for the capital cost``currency``, currency-year information of the investment cost function``code``, identifier of each unique equipment``assumption``, items made by assumptions in this technology``e``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``unit``, unit of the min/max capacity``d``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+
+    ``a``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``c``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``b``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``cap_max``, maximum capacity 
+    ``Description``, Describes the source of the benchmark standards.
+    ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
+    ``cap_min``, minimum capacity
+    ``LT_yr``, lifetime of this technology
+    ``IR_%``, interest rate charged on the loan for the capital cost
+    ``currency``, currency-year information of the investment cost function
+    ``code``, identifier of each unique equipment
+    ``assumption``, items made by assumptions in this technology
+    ``e``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``unit``, unit of the min/max capacity
+    ``d``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    
 
 
 
-.. csv-table:: ``inputs/technology/components/CONVERSION.xls`` Worksheet: ``Boiler``
+.. csv-table:: Worksheet: ``Boiler``
     :header: "Variable", "Description"
-    ``a``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``c``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``b``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``cap_max``, maximum capacity ``Description``, Describes the type of boiler``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)``cap_min``, minimum capacity``LT_yr``, lifetime of this technology``IR_%``, interest rate charged on the loan for the capital cost``currency``, currency-year information of the investment cost function``code``, identifier of each unique equipment``assumption``, items made by assumptions in this technology``e``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``unit``, unit of the min/max capacity``d``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+
+    ``a``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``c``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``b``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``cap_max``, maximum capacity 
+    ``Description``, Describes the type of boiler
+    ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
+    ``cap_min``, minimum capacity
+    ``LT_yr``, lifetime of this technology
+    ``IR_%``, interest rate charged on the loan for the capital cost
+    ``currency``, currency-year information of the investment cost function
+    ``code``, identifier of each unique equipment
+    ``assumption``, items made by assumptions in this technology
+    ``e``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``unit``, unit of the min/max capacity
+    ``d``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    
 
 
 
-.. csv-table:: ``inputs/technology/components/CONVERSION.xls`` Worksheet: ``SC``
+.. csv-table:: Worksheet: ``SC``
     :header: "Variable", "Description"
-    ``code``, identifier of each unique equipment``mB_max_r``, maximum flow rate per aperture area``LT_yr``, lifetime of this technology``module_length_m``, lengh of a solar collector module``currency``, currency-year information of the investment cost function``mB_min_r``, minimum flow rate per aperture area``cap_max``, maximum capacity ``C_eff``, thermal capacity of module ``t_max``, maximum operating temperature``unit``, unit of the min/max capacity``Description``, Describes the type of solar collector``assumption``, items made by assumptions in this technology``type``, type of the solar collector (FP: flate-plate or ET: evacuated-tube)``dP4``, pressure drop at minimum flow rate (mB_min)``dP3``, pressure drop at maximum flow rate (mB_max)``dP2``, pressure drop at nominal flow rate (mB0)``dP1``, pressure drop at zero flow rate``module_area_m2``, module area of a solar collector``cap_min``, minimum capacity``IAM_d``, incident angle modifier for diffuse radiation``c2``, ctemperature difference dependency of the heat loss coefficient``c1``, collector heat loss coefficient at zero temperature difference and wind speed``a``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``c``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``b``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``e``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``d``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``mB0_r``, nominal flow rate per aperture area``IR_%``, interest rate charged on the loan for the capital cost``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)``aperture_area_ratio``, ratio of aperture area to panel area``n0``, zero loss efficiency at normal incidence``Cp_fluid``, heat capacity of the heat transfer fluid
+
+    ``code``, identifier of each unique equipment
+    ``mB_max_r``, maximum flow rate per aperture area
+    ``LT_yr``, lifetime of this technology
+    ``module_length_m``, lengh of a solar collector module
+    ``currency``, currency-year information of the investment cost function
+    ``mB_min_r``, minimum flow rate per aperture area
+    ``cap_max``, maximum capacity 
+    ``C_eff``, thermal capacity of module 
+    ``t_max``, maximum operating temperature
+    ``unit``, unit of the min/max capacity
+    ``Description``, Describes the type of solar collector
+    ``assumption``, items made by assumptions in this technology
+    ``type``, type of the solar collector (FP: flate-plate or ET: evacuated-tube)
+    ``dP4``, pressure drop at minimum flow rate (mB_min)
+    ``dP3``, pressure drop at maximum flow rate (mB_max)
+    ``dP2``, pressure drop at nominal flow rate (mB0)
+    ``dP1``, pressure drop at zero flow rate
+    ``module_area_m2``, module area of a solar collector
+    ``cap_min``, minimum capacity
+    ``IAM_d``, incident angle modifier for diffuse radiation
+    ``c2``, ctemperature difference dependency of the heat loss coefficient
+    ``c1``, collector heat loss coefficient at zero temperature difference and wind speed
+    ``a``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``c``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``b``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``e``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``d``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``mB0_r``, nominal flow rate per aperture area
+    ``IR_%``, interest rate charged on the loan for the capital cost
+    ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
+    ``aperture_area_ratio``, ratio of aperture area to panel area
+    ``n0``, zero loss efficiency at normal incidence
+    ``Cp_fluid``, heat capacity of the heat transfer fluid
+    
 
 
 
-.. csv-table:: ``inputs/technology/components/CONVERSION.xls`` Worksheet: ``Furnace``
+.. csv-table:: Worksheet: ``Furnace``
     :header: "Variable", "Description"
-    ``a``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``c``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``b``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``cap_max``, maximum capacity ``Description``, Describes the type of furnace``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)``cap_min``, minimum capacity``LT_yr``, lifetime of this technology``IR_%``, interest rate charged on the loan for the capital cost``currency``, currency-year information of the investment cost function``code``, identifier of each unique equipment``assumption``, items made by assumptions in this technology``e``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``unit``, unit of the min/max capacity``d``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+
+    ``a``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``c``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``b``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``cap_max``, maximum capacity 
+    ``Description``, Describes the type of furnace
+    ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
+    ``cap_min``, minimum capacity
+    ``LT_yr``, lifetime of this technology
+    ``IR_%``, interest rate charged on the loan for the capital cost
+    ``currency``, currency-year information of the investment cost function
+    ``code``, identifier of each unique equipment
+    ``assumption``, items made by assumptions in this technology
+    ``e``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``unit``, unit of the min/max capacity
+    ``d``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    
 
 
 
-.. csv-table:: ``inputs/technology/components/CONVERSION.xls`` Worksheet: ``TES``
+.. csv-table:: Worksheet: ``TES``
     :header: "Variable", "Description"
-    ``a``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``c``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``b``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``cap_max``, maximum capacity ``Description``, Describes the source of the benchmark standards.``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)``cap_min``, minimum capacity``LT_yr``, lifetime of this technology``IR_%``, interest rate charged on the loan for the capital cost``currency``, currency-year information of the investment cost function``code``, identifier of each unique equipment``assumption``, TODO``e``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``unit``, unit of the min/max capacity``d``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+
+    ``a``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``c``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``b``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``cap_max``, maximum capacity 
+    ``Description``, Describes the source of the benchmark standards.
+    ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
+    ``cap_min``, minimum capacity
+    ``LT_yr``, lifetime of this technology
+    ``IR_%``, interest rate charged on the loan for the capital cost
+    ``currency``, currency-year information of the investment cost function
+    ``code``, identifier of each unique equipment
+    ``assumption``, TODO
+    ``e``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``unit``, unit of the min/max capacity
+    ``d``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    
 
 
 
-.. csv-table:: ``inputs/technology/components/CONVERSION.xls`` Worksheet: ``Absorption_chiller``
+.. csv-table:: Worksheet: ``Absorption_chiller``
     :header: "Variable", "Description"
-    ``code``, identifier of each unique equipment``cap_max``, maximum capacity ``e_e``, parameter in the characteristic equations to calculate the evaporator side ``cap_min``, minimum capacity``LT_yr``, lifetime of this technology``a_g``, parameter in the characteristic equations to calculate the generator side``currency``, currency-year information of the investment cost function``a_e``, parameter in the characteristic equations to calculate the evaporator side ``m_hw``, external flow rate of hot water at the generator``unit``, unit of the min/max capacity``d``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``a``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``c``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``b``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``e``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   ``Description``, Describes the Type of Absorption Chiller``IR_%``, interest rate charged on the loan for the capital cost``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)``m_cw``, external flow rate of cooling water at the condenser and absorber``assumption``, items made by assumptions in this technology``s_e``, parameter in the characteristic equations to calculate the evaporator side ``s_g``, parameter in the characteristic equations to calculate the generator side``e_g``, parameter in the characteristic equations to calculate the generator side``type``, type of absorption chiller (single, double, or triple)``r_e``, parameter in the characteristic equations to calculate the evaporator side ``r_g``, parameter in the characteristic equations to calculate the generator side
+
+    ``code``, identifier of each unique equipment
+    ``cap_max``, maximum capacity 
+    ``e_e``, parameter in the characteristic equations to calculate the evaporator side 
+    ``cap_min``, minimum capacity
+    ``LT_yr``, lifetime of this technology
+    ``a_g``, parameter in the characteristic equations to calculate the generator side
+    ``currency``, currency-year information of the investment cost function
+    ``a_e``, parameter in the characteristic equations to calculate the evaporator side 
+    ``m_hw``, external flow rate of hot water at the generator
+    ``unit``, unit of the min/max capacity
+    ``d``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``a``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``c``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``b``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``e``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``Description``, Describes the Type of Absorption Chiller
+    ``IR_%``, interest rate charged on the loan for the capital cost
+    ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
+    ``m_cw``, external flow rate of cooling water at the condenser and absorber
+    ``assumption``, items made by assumptions in this technology
+    ``s_e``, parameter in the characteristic equations to calculate the evaporator side 
+    ``s_g``, parameter in the characteristic equations to calculate the generator side
+    ``e_g``, parameter in the characteristic equations to calculate the generator side
+    ``type``, type of absorption chiller (single, double, or triple)
+    ``r_e``, parameter in the characteristic equations to calculate the evaporator side 
+    ``r_g``, parameter in the characteristic equations to calculate the generator side
+    
 
 
 
@@ -2200,27 +2611,69 @@ The following file is used by these scripts: ``archetypes_mapper``
 
 
 
-.. csv-table:: ``inputs/technology/archetypes/CONSTRUCTION_STANDARDS.xlsx`` Worksheet: ``HVAC_ASSEMBLIES``
+.. csv-table:: Worksheet: ``HVAC_ASSEMBLIES``
     :header: "Variable", "Description"
-    ``heat_ends``, End of the heating season - use 00|00 when there is none``type_ctrl``, Type of heating and cooling control systems (relates to values in Default Database HVAC Properties)``type_cs``, Type of cooling supply system``cool_starts``, Start of the cooling season - use 00|00 when there is none``STANDARD``,  Unique ID of Construction Standard``type_hs``, Type of heating supply system``heat_starts``, Start of the heating season - use 00|00 when there is none``type_vent``, Type of ventilation strategy (relates to values in Default Database HVAC Properties)``cool_ends``, End of the cooling season - use 00|00 when there is none``type_dhw``, Type of hot water supply system
+
+    ``heat_ends``, End of the heating season - use 00|00 when there is none
+    ``type_ctrl``, Type of heating and cooling control systems (relates to values in Default Database HVAC Properties)
+    ``type_cs``, Type of cooling supply system
+    ``cool_starts``, Start of the cooling season - use 00|00 when there is none
+    ``STANDARD``,  Unique ID of Construction Standard
+    ``type_hs``, Type of heating supply system
+    ``heat_starts``, Start of the heating season - use 00|00 when there is none
+    ``type_vent``, Type of ventilation strategy (relates to values in Default Database HVAC Properties)
+    ``cool_ends``, End of the cooling season - use 00|00 when there is none
+    ``type_dhw``, Type of hot water supply system
+    
 
 
 
-.. csv-table:: ``inputs/technology/archetypes/CONSTRUCTION_STANDARDS.xlsx`` Worksheet: ``ENVELOPE_ASSEMBLIES``
+.. csv-table:: Worksheet: ``ENVELOPE_ASSEMBLIES``
     :header: "Variable", "Description"
-    ``type_shade``, Shading system type (relates to values in Default Database Construction Properties)``type_part``, Internal partitions construction type (relates to values in Default Database Construction Properties)``Hs_bg``, Fraction of below ground gross floor area air-conditioned ``STANDARD``,  Unique ID of Construction Standard``wwr_north``, Window to wall ratio in in facades facing north``Hs_ag``, Fraction of above ground gross floor area air-conditioned.``Ns``, Fraction of net gross floor area.``type_roof``, Roof construction type (relates to values in Default Database Construction Properties)``type_wall``, External wall construction type (relates to values in Default Database Construction Properties)``type_base``, Basement floor construction type (relates to values in Default Database Construction Properties)``wwr_west``, Window to wall ratio in in facades facing west``type_cons``, Type of construction. It relates to the contents of the default database of Envelope Properties: construction``type_leak``, Tightness level. It relates to the contents of the default database of Envelope Properties: tightness``type_floor``, Internal floor construction type (relates to values in Default Database Construction Properties)``wwr_south``, Window to wall ratio in in facades facing south``wwr_east``, Window to wall ratio in in facades facing east``type_win``, Window type (relates to values in Default Database Construction Properties)``Es``, Fraction of gross floor area with electrical demands.``void_deck``, Number of floors (from the ground up) with an open envelope (default = 0)
+
+    ``type_shade``, Shading system type (relates to values in Default Database Construction Properties)
+    ``type_part``, Internal partitions construction type (relates to values in Default Database Construction Properties)
+    ``Hs_bg``, Fraction of below ground gross floor area air-conditioned 
+    ``STANDARD``,  Unique ID of Construction Standard
+    ``wwr_north``, Window to wall ratio in in facades facing north
+    ``Hs_ag``, Fraction of above ground gross floor area air-conditioned.
+    ``Ns``, Fraction of net gross floor area.
+    ``type_roof``, Roof construction type (relates to values in Default Database Construction Properties)
+    ``type_wall``, External wall construction type (relates to values in Default Database Construction Properties)
+    ``type_base``, Basement floor construction type (relates to values in Default Database Construction Properties)
+    ``wwr_west``, Window to wall ratio in in facades facing west
+    ``type_cons``, Type of construction. It relates to the contents of the default database of Envelope Properties: construction
+    ``type_leak``, Tightness level. It relates to the contents of the default database of Envelope Properties: tightness
+    ``type_floor``, Internal floor construction type (relates to values in Default Database Construction Properties)
+    ``wwr_south``, Window to wall ratio in in facades facing south
+    ``wwr_east``, Window to wall ratio in in facades facing east
+    ``type_win``, Window type (relates to values in Default Database Construction Properties)
+    ``Es``, Fraction of gross floor area with electrical demands.
+    ``void_deck``, Number of floors (from the ground up) with an open envelope (default = 0)
+    
 
 
 
-.. csv-table:: ``inputs/technology/archetypes/CONSTRUCTION_STANDARDS.xlsx`` Worksheet: ``SUPPLY_ASSEMBLIES``
+.. csv-table:: Worksheet: ``SUPPLY_ASSEMBLIES``
     :header: "Variable", "Description"
-    ``type_el``, Type of electrical supply system``type_hs``, Type of heating supply system``type_cs``, Type of cooling supply system``type_dhw``, Type of hot water supply system``STANDARD``,  Unique ID of Construction Standard
+
+    ``type_el``, Type of electrical supply system
+    ``type_hs``, Type of heating supply system
+    ``type_cs``, Type of cooling supply system
+    ``type_dhw``, Type of hot water supply system
+    ``STANDARD``,  Unique ID of Construction Standard
+    
 
 
 
-.. csv-table:: ``inputs/technology/archetypes/CONSTRUCTION_STANDARDS.xlsx`` Worksheet: ``STANDARD_DEFINITION``
+.. csv-table:: Worksheet: ``STANDARD_DEFINITION``
     :header: "Variable", "Description"
-    ``STANDARD``,  Unique ID of Construction Standard``YEAR_START``, Lower limit of year interval where the building properties apply``Description``, Description of the construction standard``YEAR_END``, Upper limit of year interval where the building properties apply
+
+    ``STANDARD``,  Unique ID of Construction Standard
+    ``YEAR_START``, Lower limit of year interval where the building properties apply
+    ``Description``, Description of the construction standard
+    ``YEAR_END``, Upper limit of year interval where the building properties apply
+    
 
 
 
@@ -2592,57 +3045,111 @@ The following file is used by these scripts: ``decentralized``, ``emissions``, `
 
 
 
-.. csv-table:: ``inputs/technology/components/FEEDSTOCKS.xls`` Worksheet: ``OIL``
+.. csv-table:: Worksheet: ``OIL``
     :header: "Variable", "Description"
-    ``Opex_var_buy_USD2015kWh``, buying price``Opex_var_sell_USD2015kWh``, selling price``GHG_kgCO2MJ``, Non-renewable Green House Gas Emissions factor``reference``, reference``hour``, hour of a 24 hour day
+
+    ``Opex_var_buy_USD2015kWh``, buying price
+    ``Opex_var_sell_USD2015kWh``, selling price
+    ``GHG_kgCO2MJ``, Non-renewable Green House Gas Emissions factor
+    ``reference``, reference
+    ``hour``, hour of a 24 hour day
+    
 
 
 
-.. csv-table:: ``inputs/technology/components/FEEDSTOCKS.xls`` Worksheet: ``COAL``
+.. csv-table:: Worksheet: ``COAL``
     :header: "Variable", "Description"
-    ``Opex_var_buy_USD2015kWh``, buying price``Opex_var_sell_USD2015kWh``, selling price``GHG_kgCO2MJ``, Non-renewable Green House Gas Emissions factor``reference``, reference``hour``, hour of a 24 hour day
+
+    ``Opex_var_buy_USD2015kWh``, buying price
+    ``Opex_var_sell_USD2015kWh``, selling price
+    ``GHG_kgCO2MJ``, Non-renewable Green House Gas Emissions factor
+    ``reference``, reference
+    ``hour``, hour of a 24 hour day
+    
 
 
 
-.. csv-table:: ``inputs/technology/components/FEEDSTOCKS.xls`` Worksheet: ``DRYBIOMASS``
+.. csv-table:: Worksheet: ``DRYBIOMASS``
     :header: "Variable", "Description"
-    ``Opex_var_buy_USD2015kWh``, buying price``Opex_var_sell_USD2015kWh``, selling price``GHG_kgCO2MJ``, Non-renewable Green House Gas Emissions factor``reference``, reference``hour``, hour of a 24 hour day
+
+    ``Opex_var_buy_USD2015kWh``, buying price
+    ``Opex_var_sell_USD2015kWh``, selling price
+    ``GHG_kgCO2MJ``, Non-renewable Green House Gas Emissions factor
+    ``reference``, reference
+    ``hour``, hour of a 24 hour day
+    
 
 
 
-.. csv-table:: ``inputs/technology/components/FEEDSTOCKS.xls`` Worksheet: ``BIOGAS``
+.. csv-table:: Worksheet: ``BIOGAS``
     :header: "Variable", "Description"
-    ``Opex_var_buy_USD2015kWh``, buying price``Opex_var_sell_USD2015kWh``, selling price``GHG_kgCO2MJ``, Non-renewable Green House Gas Emissions factor``reference``, reference``hour``, hour of a 24 hour day
+
+    ``Opex_var_buy_USD2015kWh``, buying price
+    ``Opex_var_sell_USD2015kWh``, selling price
+    ``GHG_kgCO2MJ``, Non-renewable Green House Gas Emissions factor
+    ``reference``, reference
+    ``hour``, hour of a 24 hour day
+    
 
 
 
-.. csv-table:: ``inputs/technology/components/FEEDSTOCKS.xls`` Worksheet: ``GRID``
+.. csv-table:: Worksheet: ``GRID``
     :header: "Variable", "Description"
-    ``Opex_var_buy_USD2015kWh``, buying price``Opex_var_sell_USD2015kWh``, selling price``GHG_kgCO2MJ``, Non-renewable Green House Gas Emissions factor``reference``, reference``hour``, hour of a 24 hour day
+
+    ``Opex_var_buy_USD2015kWh``, buying price
+    ``Opex_var_sell_USD2015kWh``, selling price
+    ``GHG_kgCO2MJ``, Non-renewable Green House Gas Emissions factor
+    ``reference``, reference
+    ``hour``, hour of a 24 hour day
+    
 
 
 
-.. csv-table:: ``inputs/technology/components/FEEDSTOCKS.xls`` Worksheet: ``SOLAR``
+.. csv-table:: Worksheet: ``SOLAR``
     :header: "Variable", "Description"
-    ``Opex_var_buy_USD2015kWh``, buying price``Opex_var_sell_USD2015kWh``, selling price``GHG_kgCO2MJ``, Non-renewable Green House Gas Emissions factor``reference``, reference``hour``, hour of a 24 hour day
+
+    ``Opex_var_buy_USD2015kWh``, buying price
+    ``Opex_var_sell_USD2015kWh``, selling price
+    ``GHG_kgCO2MJ``, Non-renewable Green House Gas Emissions factor
+    ``reference``, reference
+    ``hour``, hour of a 24 hour day
+    
 
 
 
-.. csv-table:: ``inputs/technology/components/FEEDSTOCKS.xls`` Worksheet: ``WOOD``
+.. csv-table:: Worksheet: ``WOOD``
     :header: "Variable", "Description"
-    ``Opex_var_buy_USD2015kWh``, buying price``Opex_var_sell_USD2015kWh``, selling price``GHG_kgCO2MJ``, Non-renewable Green House Gas Emissions factor``reference``, reference``hour``, hour of a 24 hour day
+
+    ``Opex_var_buy_USD2015kWh``, buying price
+    ``Opex_var_sell_USD2015kWh``, selling price
+    ``GHG_kgCO2MJ``, Non-renewable Green House Gas Emissions factor
+    ``reference``, reference
+    ``hour``, hour of a 24 hour day
+    
 
 
 
-.. csv-table:: ``inputs/technology/components/FEEDSTOCKS.xls`` Worksheet: ``NATURALGAS``
+.. csv-table:: Worksheet: ``NATURALGAS``
     :header: "Variable", "Description"
-    ``Opex_var_buy_USD2015kWh``, buying price``Opex_var_sell_USD2015kWh``, selling price``GHG_kgCO2MJ``, Non-renewable Green House Gas Emissions factor``reference``, reference``hour``, hour of a 24 hour day
+
+    ``Opex_var_buy_USD2015kWh``, buying price
+    ``Opex_var_sell_USD2015kWh``, selling price
+    ``GHG_kgCO2MJ``, Non-renewable Green House Gas Emissions factor
+    ``reference``, reference
+    ``hour``, hour of a 24 hour day
+    
 
 
 
-.. csv-table:: ``inputs/technology/components/FEEDSTOCKS.xls`` Worksheet: ``WETBIOMASS``
+.. csv-table:: Worksheet: ``WETBIOMASS``
     :header: "Variable", "Description"
-    ``Opex_var_buy_USD2015kWh``, buying price``Opex_var_sell_USD2015kWh``, selling price``GHG_kgCO2MJ``, Non-renewable Green House Gas Emissions factor``reference``, reference``hour``, hour of a 24 hour day
+
+    ``Opex_var_buy_USD2015kWh``, buying price
+    ``Opex_var_sell_USD2015kWh``, selling price
+    ``GHG_kgCO2MJ``, Non-renewable Green House Gas Emissions factor
+    ``reference``, reference
+    ``hour``, hour of a 24 hour day
+    
 
 
 
@@ -2657,69 +3164,318 @@ The following file is used by these scripts: ``archetypes_mapper``
 
 
 
-.. csv-table:: ``inputs/technology/archetypes/schedules/RESTAURANT.csv`` Worksheet: ``PROCESSES``
+.. csv-table:: Worksheet: ``PROCESSES``
     :header: "Variable", "Description"
-    ``1``, TODO``2``, TODO``3``, TODO``4``, TODO``5``, TODO``6``, TODO``7``, TODO``8``, TODO``9``, TODO``10``, TODO``11``, TODO``12``, TODO``13``, TODO``14``, TODO``15``, TODO``16``, TODO``17``, TODO``18``, TODO``19``, TODO``20``, TODO``21``, TODO``22``, TODO``23``, TODO``24``, TODO``DAY``, TODO
+
+    ``1``, TODO
+    ``2``, TODO
+    ``3``, TODO
+    ``4``, TODO
+    ``5``, TODO
+    ``6``, TODO
+    ``7``, TODO
+    ``8``, TODO
+    ``9``, TODO
+    ``10``, TODO
+    ``11``, TODO
+    ``12``, TODO
+    ``13``, TODO
+    ``14``, TODO
+    ``15``, TODO
+    ``16``, TODO
+    ``17``, TODO
+    ``18``, TODO
+    ``19``, TODO
+    ``20``, TODO
+    ``21``, TODO
+    ``22``, TODO
+    ``23``, TODO
+    ``24``, TODO
+    ``DAY``, TODO
+    
 
 
 
-.. csv-table:: ``inputs/technology/archetypes/schedules/RESTAURANT.csv`` Worksheet: ``ELECTROMOBILITY``
+.. csv-table:: Worksheet: ``ELECTROMOBILITY``
     :header: "Variable", "Description"
-    ``1``, TODO``2``, TODO``3``, TODO``4``, TODO``5``, TODO``6``, TODO``7``, TODO``8``, TODO``9``, TODO``10``, TODO``11``, TODO``12``, TODO``13``, TODO``14``, TODO``15``, TODO``16``, TODO``17``, TODO``18``, TODO``19``, TODO``20``, TODO``21``, TODO``22``, TODO``23``, TODO``24``, TODO``DAY``, TODO
+
+    ``1``, TODO
+    ``2``, TODO
+    ``3``, TODO
+    ``4``, TODO
+    ``5``, TODO
+    ``6``, TODO
+    ``7``, TODO
+    ``8``, TODO
+    ``9``, TODO
+    ``10``, TODO
+    ``11``, TODO
+    ``12``, TODO
+    ``13``, TODO
+    ``14``, TODO
+    ``15``, TODO
+    ``16``, TODO
+    ``17``, TODO
+    ``18``, TODO
+    ``19``, TODO
+    ``20``, TODO
+    ``21``, TODO
+    ``22``, TODO
+    ``23``, TODO
+    ``24``, TODO
+    ``DAY``, TODO
+    
 
 
 
-.. csv-table:: ``inputs/technology/archetypes/schedules/RESTAURANT.csv`` Worksheet: ``HEATING``
+.. csv-table:: Worksheet: ``HEATING``
     :header: "Variable", "Description"
-    ``1``, TODO``2``, TODO``3``, TODO``4``, TODO``5``, TODO``6``, TODO``7``, TODO``8``, TODO``9``, TODO``10``, TODO``11``, TODO``12``, TODO``13``, TODO``14``, TODO``15``, TODO``16``, TODO``17``, TODO``18``, TODO``19``, TODO``20``, TODO``21``, TODO``22``, TODO``23``, TODO``24``, TODO``DAY``, TODO
+
+    ``1``, TODO
+    ``2``, TODO
+    ``3``, TODO
+    ``4``, TODO
+    ``5``, TODO
+    ``6``, TODO
+    ``7``, TODO
+    ``8``, TODO
+    ``9``, TODO
+    ``10``, TODO
+    ``11``, TODO
+    ``12``, TODO
+    ``13``, TODO
+    ``14``, TODO
+    ``15``, TODO
+    ``16``, TODO
+    ``17``, TODO
+    ``18``, TODO
+    ``19``, TODO
+    ``20``, TODO
+    ``21``, TODO
+    ``22``, TODO
+    ``23``, TODO
+    ``24``, TODO
+    ``DAY``, TODO
+    
 
 
 
-.. csv-table:: ``inputs/technology/archetypes/schedules/RESTAURANT.csv`` Worksheet: ``OCCUPANCY``
+.. csv-table:: Worksheet: ``OCCUPANCY``
     :header: "Variable", "Description"
-    ``1``, TODO``2``, TODO``3``, TODO``4``, TODO``5``, TODO``6``, TODO``7``, TODO``8``, TODO``9``, TODO``10``, TODO``11``, TODO``12``, TODO``13``, TODO``14``, TODO``15``, TODO``16``, TODO``17``, TODO``18``, TODO``19``, TODO``20``, TODO``21``, TODO``22``, TODO``23``, TODO``24``, TODO``DAY``, TODO
+
+    ``1``, TODO
+    ``2``, TODO
+    ``3``, TODO
+    ``4``, TODO
+    ``5``, TODO
+    ``6``, TODO
+    ``7``, TODO
+    ``8``, TODO
+    ``9``, TODO
+    ``10``, TODO
+    ``11``, TODO
+    ``12``, TODO
+    ``13``, TODO
+    ``14``, TODO
+    ``15``, TODO
+    ``16``, TODO
+    ``17``, TODO
+    ``18``, TODO
+    ``19``, TODO
+    ``20``, TODO
+    ``21``, TODO
+    ``22``, TODO
+    ``23``, TODO
+    ``24``, TODO
+    ``DAY``, TODO
+    
 
 
 
-.. csv-table:: ``inputs/technology/archetypes/schedules/RESTAURANT.csv`` Worksheet: ``SERVERS``
+.. csv-table:: Worksheet: ``SERVERS``
     :header: "Variable", "Description"
-    ``1``, TODO``2``, TODO``3``, TODO``4``, TODO``5``, TODO``6``, TODO``7``, TODO``8``, TODO``9``, TODO``10``, TODO``11``, TODO``12``, TODO``13``, TODO``14``, TODO``15``, TODO``16``, TODO``17``, TODO``18``, TODO``19``, TODO``20``, TODO``21``, TODO``22``, TODO``23``, TODO``24``, TODO``DAY``, TODO
+
+    ``1``, TODO
+    ``2``, TODO
+    ``3``, TODO
+    ``4``, TODO
+    ``5``, TODO
+    ``6``, TODO
+    ``7``, TODO
+    ``8``, TODO
+    ``9``, TODO
+    ``10``, TODO
+    ``11``, TODO
+    ``12``, TODO
+    ``13``, TODO
+    ``14``, TODO
+    ``15``, TODO
+    ``16``, TODO
+    ``17``, TODO
+    ``18``, TODO
+    ``19``, TODO
+    ``20``, TODO
+    ``21``, TODO
+    ``22``, TODO
+    ``23``, TODO
+    ``24``, TODO
+    ``DAY``, TODO
+    
 
 
 
-.. csv-table:: ``inputs/technology/archetypes/schedules/RESTAURANT.csv`` Worksheet: ``WATER``
+.. csv-table:: Worksheet: ``WATER``
     :header: "Variable", "Description"
-    ``1``, TODO``2``, TODO``3``, TODO``4``, TODO``5``, TODO``6``, TODO``7``, TODO``8``, TODO``9``, TODO``10``, TODO``11``, TODO``12``, TODO``13``, TODO``14``, TODO``15``, TODO``16``, TODO``17``, TODO``18``, TODO``19``, TODO``20``, TODO``21``, TODO``22``, TODO``23``, TODO``24``, TODO``DAY``, TODO
+
+    ``1``, TODO
+    ``2``, TODO
+    ``3``, TODO
+    ``4``, TODO
+    ``5``, TODO
+    ``6``, TODO
+    ``7``, TODO
+    ``8``, TODO
+    ``9``, TODO
+    ``10``, TODO
+    ``11``, TODO
+    ``12``, TODO
+    ``13``, TODO
+    ``14``, TODO
+    ``15``, TODO
+    ``16``, TODO
+    ``17``, TODO
+    ``18``, TODO
+    ``19``, TODO
+    ``20``, TODO
+    ``21``, TODO
+    ``22``, TODO
+    ``23``, TODO
+    ``24``, TODO
+    ``DAY``, TODO
+    
 
 
 
-.. csv-table:: ``inputs/technology/archetypes/schedules/RESTAURANT.csv`` Worksheet: ``MONTHLY_MULTIPLIER``
+.. csv-table:: Worksheet: ``MONTHLY_MULTIPLIER``
     :header: "Variable", "Description"
-    ``1``, TODO``2``, TODO``3``, TODO``4``, TODO``5``, TODO``6``, TODO``7``, TODO``8``, TODO``9``, TODO``10``, TODO``11``, TODO``12``, TODO
+
+    ``1``, TODO
+    ``2``, TODO
+    ``3``, TODO
+    ``4``, TODO
+    ``5``, TODO
+    ``6``, TODO
+    ``7``, TODO
+    ``8``, TODO
+    ``9``, TODO
+    ``10``, TODO
+    ``11``, TODO
+    ``12``, TODO
+    
 
 
 
-.. csv-table:: ``inputs/technology/archetypes/schedules/RESTAURANT.csv`` Worksheet: ``COOLING``
+.. csv-table:: Worksheet: ``COOLING``
     :header: "Variable", "Description"
-    ``1``, TODO``2``, TODO``3``, TODO``4``, TODO``5``, TODO``6``, TODO``7``, TODO``8``, TODO``9``, TODO``10``, TODO``11``, TODO``12``, TODO``13``, TODO``14``, TODO``15``, TODO``16``, TODO``17``, TODO``18``, TODO``19``, TODO``20``, TODO``21``, TODO``22``, TODO``23``, TODO``24``, TODO``DAY``, TODO
+
+    ``1``, TODO
+    ``2``, TODO
+    ``3``, TODO
+    ``4``, TODO
+    ``5``, TODO
+    ``6``, TODO
+    ``7``, TODO
+    ``8``, TODO
+    ``9``, TODO
+    ``10``, TODO
+    ``11``, TODO
+    ``12``, TODO
+    ``13``, TODO
+    ``14``, TODO
+    ``15``, TODO
+    ``16``, TODO
+    ``17``, TODO
+    ``18``, TODO
+    ``19``, TODO
+    ``20``, TODO
+    ``21``, TODO
+    ``22``, TODO
+    ``23``, TODO
+    ``24``, TODO
+    ``DAY``, TODO
+    
 
 
 
-.. csv-table:: ``inputs/technology/archetypes/schedules/RESTAURANT.csv`` Worksheet: ``LIGHTING``
+.. csv-table:: Worksheet: ``LIGHTING``
     :header: "Variable", "Description"
-    ``1``, TODO``2``, TODO``3``, TODO``4``, TODO``5``, TODO``6``, TODO``7``, TODO``8``, TODO``9``, TODO``10``, TODO``11``, TODO``12``, TODO``13``, TODO``14``, TODO``15``, TODO``16``, TODO``17``, TODO``18``, TODO``19``, TODO``20``, TODO``21``, TODO``22``, TODO``23``, TODO``24``, TODO``DAY``, TODO
+
+    ``1``, TODO
+    ``2``, TODO
+    ``3``, TODO
+    ``4``, TODO
+    ``5``, TODO
+    ``6``, TODO
+    ``7``, TODO
+    ``8``, TODO
+    ``9``, TODO
+    ``10``, TODO
+    ``11``, TODO
+    ``12``, TODO
+    ``13``, TODO
+    ``14``, TODO
+    ``15``, TODO
+    ``16``, TODO
+    ``17``, TODO
+    ``18``, TODO
+    ``19``, TODO
+    ``20``, TODO
+    ``21``, TODO
+    ``22``, TODO
+    ``23``, TODO
+    ``24``, TODO
+    ``DAY``, TODO
+    
 
 
 
-.. csv-table:: ``inputs/technology/archetypes/schedules/RESTAURANT.csv`` Worksheet: ``APPLIANCES``
+.. csv-table:: Worksheet: ``APPLIANCES``
     :header: "Variable", "Description"
-    ``1``, TODO``2``, TODO``3``, TODO``4``, TODO``5``, TODO``6``, TODO``7``, TODO``8``, TODO``9``, TODO``10``, TODO``11``, TODO``12``, TODO``13``, TODO``14``, TODO``15``, TODO``16``, TODO``17``, TODO``18``, TODO``19``, TODO``20``, TODO``21``, TODO``22``, TODO``23``, TODO``24``, TODO``DAY``, TODO
+
+    ``1``, TODO
+    ``2``, TODO
+    ``3``, TODO
+    ``4``, TODO
+    ``5``, TODO
+    ``6``, TODO
+    ``7``, TODO
+    ``8``, TODO
+    ``9``, TODO
+    ``10``, TODO
+    ``11``, TODO
+    ``12``, TODO
+    ``13``, TODO
+    ``14``, TODO
+    ``15``, TODO
+    ``16``, TODO
+    ``17``, TODO
+    ``18``, TODO
+    ``19``, TODO
+    ``20``, TODO
+    ``21``, TODO
+    ``22``, TODO
+    ``23``, TODO
+    ``24``, TODO
+    ``DAY``, TODO
+    
 
 
 
-.. csv-table:: ``inputs/technology/archetypes/schedules/RESTAURANT.csv`` Worksheet: ``METADATA``
+.. csv-table:: Worksheet: ``METADATA``
     :header: "Variable", "Description"
+
     ``metadata``, TODO
+    
 
 
 
@@ -3066,45 +3822,86 @@ The following file is used by these scripts: ``demand``, ``radiation``, ``schedu
 
 
 
-.. csv-table:: ``inputs/technology/assemblies/ENVELOPE.xls`` Worksheet: ``WINDOW``
+.. csv-table:: Worksheet: ``WINDOW``
     :header: "Variable", "Description"
-    ``F_F``, Window frame fraction coefficient. Defined according to ISO 13790.``code``, Building use. It relates to the uses stored in the input database of Zone_occupancy``Description``, Describes the source of the benchmark standards.``e_win``, Emissivity of external surface. Defined according to ISO 13790.``G_win``, Solar heat gain coefficient. Defined according to ISO 13790.``GHG_WIN_kgCO2m2``, Embodied emissions per m2 of windows.(entire building life cycle)``U_win``, Thermal transmittance of windows including linear losses (+10%). Defined according to ISO 13790.
+
+    ``F_F``, Window frame fraction coefficient. Defined according to ISO 13790.
+    ``code``, Building use. It relates to the uses stored in the input database of Zone_occupancy
+    ``Description``, Describes the source of the benchmark standards.
+    ``e_win``, Emissivity of external surface. Defined according to ISO 13790.
+    ``G_win``, Solar heat gain coefficient. Defined according to ISO 13790.
+    ``GHG_WIN_kgCO2m2``, Embodied emissions per m2 of windows.(entire building life cycle)
+    ``U_win``, Thermal transmittance of windows including linear losses (+10%). Defined according to ISO 13790.
+    
 
 
 
-.. csv-table:: ``inputs/technology/assemblies/ENVELOPE.xls`` Worksheet: ``CONSTRUCTION``
+.. csv-table:: Worksheet: ``CONSTRUCTION``
     :header: "Variable", "Description"
-    ``code``, Type of construction``Description``, Describes the Type of construction``Cm_Af``, Internal heat capacity per unit of air conditioned area. Defined according to ISO 13790.
+
+    ``code``, Type of construction
+    ``Description``, Describes the Type of construction
+    ``Cm_Af``, Internal heat capacity per unit of air conditioned area. Defined according to ISO 13790.
+    
 
 
 
-.. csv-table:: ``inputs/technology/assemblies/ENVELOPE.xls`` Worksheet: ``TIGHTNESS``
+.. csv-table:: Worksheet: ``TIGHTNESS``
     :header: "Variable", "Description"
-    ``code``, Type of tightness``Description``, Describes the Type of tightness``n50``, Air exchanges per hour at a pressure of 50 Pa.
+
+    ``code``, Type of tightness
+    ``Description``, Describes the Type of tightness
+    ``n50``, Air exchanges per hour at a pressure of 50 Pa.
+    
 
 
 
-.. csv-table:: ``inputs/technology/assemblies/ENVELOPE.xls`` Worksheet: ``FLOOR``
+.. csv-table:: Worksheet: ``FLOOR``
     :header: "Variable", "Description"
-    ``U_base``, Thermal transmittance of floor including linear losses (+10%). Defined according to ISO 13790.``code``, Type of roof``GHG_FLOOR_kgCO2m2``, Embodied emissions per m2 of roof.(entire building life cycle)``Description``, Describes the Type of roof
+
+    ``U_base``, Thermal transmittance of floor including linear losses (+10%). Defined according to ISO 13790.
+    ``code``, Type of roof
+    ``GHG_FLOOR_kgCO2m2``, Embodied emissions per m2 of roof.(entire building life cycle)
+    ``Description``, Describes the Type of roof
+    
 
 
 
-.. csv-table:: ``inputs/technology/assemblies/ENVELOPE.xls`` Worksheet: ``WALL``
+.. csv-table:: Worksheet: ``WALL``
     :header: "Variable", "Description"
-    ``r_wall``, Reflectance in the Red spectrum. Defined according Radiance. (long-wave)``code``, Type of wall``Description``, Describes the Type of wall``a_wall``, Solar absorption coefficient. Defined according to ISO 13790.``U_wall``, Thermal transmittance of windows including linear losses (+10%). Defined according to ISO 13790.``e_wall``, Emissivity of external surface. Defined according to ISO 13790.``GHG_WALL_kgCO2m2``, Embodied emissions per m2 of walls (entire building life cycle)
+
+    ``r_wall``, Reflectance in the Red spectrum. Defined according Radiance. (long-wave)
+    ``code``, Type of wall
+    ``Description``, Describes the Type of wall
+    ``a_wall``, Solar absorption coefficient. Defined according to ISO 13790.
+    ``U_wall``, Thermal transmittance of windows including linear losses (+10%). Defined according to ISO 13790.
+    ``e_wall``, Emissivity of external surface. Defined according to ISO 13790.
+    ``GHG_WALL_kgCO2m2``, Embodied emissions per m2 of walls (entire building life cycle)
+    
 
 
 
-.. csv-table:: ``inputs/technology/assemblies/ENVELOPE.xls`` Worksheet: ``SHADING``
+.. csv-table:: Worksheet: ``SHADING``
     :header: "Variable", "Description"
-    ``code``, Type of shading``Description``, Describes the source of the benchmark standards.``rf_sh``, Shading coefficient when shading device is active. Defined according to ISO 13790.
+
+    ``code``, Type of shading
+    ``Description``, Describes the source of the benchmark standards.
+    ``rf_sh``, Shading coefficient when shading device is active. Defined according to ISO 13790.
+    
 
 
 
-.. csv-table:: ``inputs/technology/assemblies/ENVELOPE.xls`` Worksheet: ``ROOF``
+.. csv-table:: Worksheet: ``ROOF``
     :header: "Variable", "Description"
-    ``e_roof``, Emissivity of external surface. Defined according to ISO 13790.``code``, Type of roof``Description``, Describes the Type of roof``GHG_ROOF_kgCO2m2``, Embodied emissions per m2 of roof.(entire building life cycle)``a_roof``, Solar absorption coefficient. Defined according to ISO 13790.``r_roof``, Reflectance in the Red spectrum. Defined according Radiance. (long-wave)``U_roof``, Thermal transmittance of windows including linear losses (+10%). Defined according to ISO 13790.
+
+    ``e_roof``, Emissivity of external surface. Defined according to ISO 13790.
+    ``code``, Type of roof
+    ``Description``, Describes the Type of roof
+    ``GHG_ROOF_kgCO2m2``, Embodied emissions per m2 of roof.(entire building life cycle)
+    ``a_roof``, Solar absorption coefficient. Defined according to ISO 13790.
+    ``r_roof``, Reflectance in the Red spectrum. Defined according Radiance. (long-wave)
+    ``U_roof``, Thermal transmittance of windows including linear losses (+10%). Defined according to ISO 13790.
+    
 
 
 
