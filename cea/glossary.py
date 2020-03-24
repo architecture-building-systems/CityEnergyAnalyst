@@ -1,5 +1,5 @@
 """
-Contains some helper methods for working with glossary.csv
+Contains some helper methods for working with glossary data
 """
 from __future__ import print_function
 from __future__ import division
@@ -58,18 +58,6 @@ def glossary_row(script, file_path, col, lm, cd, worksheet):
         "COLOR": "",
         "FILE_NAME": ":".join((file_path, worksheet)) if worksheet else file_path
     }
-
-
-def read_glossary_dicts():
-    """Returns the glossary as a list of dicts"""
-    with open(_path_to_glossary_csv()) as f:
-        reader = csv.DictReader(f)
-        rows = list(reader)
-    return rows
-
-
-def _path_to_glossary_csv():
-    return os.path.join(os.path.dirname(__file__), 'glossary.csv')
 
 
 if __name__ == "__main__":
