@@ -4,7 +4,7 @@ get_surroundings_geometry
 
 path: ``inputs/building-geometry/surroundings.shp``
 
-The following file is used by these scripts: radiation, schedule_maker
+The following file is used by these scripts: ``radiation``, ``schedule_maker``
 
 
 .. csv-table::
@@ -24,7 +24,7 @@ get_zone_geometry
 
 path: ``inputs/building-geometry/zone.shp``
 
-The following file is used by these scripts: archetypes_mapper, decentralized, demand, emissions, network_layout, optimization, photovoltaic, photovoltaic_thermal, radiation, schedule_maker, sewage_potential, shallow_geothermal_potential, solar_collector, thermal_network
+The following file is used by these scripts: ``archetypes_mapper``, ``decentralized``, ``demand``, ``emissions``, ``network_layout``, ``optimization``, ``photovoltaic``, ``photovoltaic_thermal``, ``radiation``, ``schedule_maker``, ``sewage_potential``, ``shallow_geothermal_potential``, ``solar_collector``, ``thermal_network``
 
 
 .. csv-table::
@@ -44,7 +44,7 @@ get_terrain
 
 path: ``inputs/topography/terrain.tif``
 
-The following file is used by these scripts: radiation, schedule_maker
+The following file is used by these scripts: ``radiation``, ``schedule_maker``
 
 
 .. csv-table::
@@ -59,7 +59,7 @@ get_street_network
 
 path: ``inputs/networks/streets.shp``
 
-The following file is used by these scripts: network_layout, optimization
+The following file is used by these scripts: ``network_layout``, ``optimization``
 
 
 .. csv-table::
@@ -75,7 +75,7 @@ get_site_polygon
 
 path: ``inputs\building-geometry\site.shp``
 
-The following file is used by these scripts: zone_helper
+The following file is used by these scripts: ``zone_helper``
 
 
 .. csv-table::
@@ -91,7 +91,7 @@ get_optimization_thermal_network_data_file
 
 path: ``outputs/data/optimization/network/DH_Network_summary_result_0x19b.csv``
 
-The following file is used by these scripts: optimization
+The following file is used by these scripts: ``optimization``
 
 
 .. csv-table::
@@ -113,7 +113,7 @@ get_weather
 
 path: ``databases/weather/Zug-inducity_1990_2010_TMY.epw``
 
-The following file is used by these scripts: weather_helper
+The following file is used by these scripts: ``weather_helper``
 
 
 .. csv-table::
