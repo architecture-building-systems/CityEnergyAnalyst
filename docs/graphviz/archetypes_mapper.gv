@@ -20,6 +20,7 @@ digraph trace_inputlocator {
         fontsize = 20;
         rank=same;
         label="building-geometry";
+        "site.shp"
         "surroundings.shp"
         "zone.shp"
     }
@@ -81,7 +82,7 @@ digraph trace_inputlocator {
         fontsize = 20;
         rank=same;
         label="technology/archetypes/schedules";
-        "RESTAURANT.csv"
+        "{use}.csv"
     }
     subgraph cluster_7_in {
         style = filled;
@@ -96,37 +97,10 @@ digraph trace_inputlocator {
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="technology/assemblies";
-        "supply.xls"
-    }
-    subgraph cluster_9_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="technology/feedstocks";
-        "feedstocks.xls"
-    }
-    subgraph cluster_10_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="technology/systems";
-        "air_conditioning_systems.xls"
-        "supply_systems.xls"
-        "distribution_systems.xls"
-        "envelope_systems.xls"
-    }
-    subgraph cluster_11_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
         label="topography";
         "terrain.tif"
     }
-    subgraph cluster_12_in {
+    subgraph cluster_9_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -135,16 +109,11 @@ digraph trace_inputlocator {
         "Zug-inducity_1990_2010_TMY.epw"
     }
     "typology.dbf" -> "archetypes_mapper"[label="(get_building_typology)"]
-    "air_conditioning_systems.xls" -> "archetypes_mapper"[label="(get_database_air_conditioning_systems)"]
     "CONSTRUCTION_STANDARDS.xlsx" -> "archetypes_mapper"[label="(get_database_construction_standards)"]
-    "supply_systems.xls" -> "archetypes_mapper"[label="(get_database_conversion_systems)"]
-    "distribution_systems.xls" -> "archetypes_mapper"[label="(get_database_distribution_systems)"]
-    "envelope_systems.xls" -> "archetypes_mapper"[label="(get_database_envelope_systems)"]
-    "feedstocks.xls" -> "archetypes_mapper"[label="(get_database_feedstocks)"]
-    "RESTAURANT.csv" -> "archetypes_mapper"[label="(get_database_standard_schedules_use)"]
-    "supply.xls" -> "archetypes_mapper"[label="(get_database_supply_assemblies)"]
+    "{use}.csv" -> "archetypes_mapper"[label="(get_database_standard_schedules_use)"]
     "USE_TYPE_PROPERTIES.xlsx" -> "archetypes_mapper"[label="(get_database_use_types_properties)"]
     "DH_Network_summary_result_0x19b.csv" -> "archetypes_mapper"[label="(get_optimization_thermal_network_data_file)"]
+    "site.shp" -> "archetypes_mapper"[label="(get_site_polygon)"]
     "streets.shp" -> "archetypes_mapper"[label="(get_street_network)"]
     "surroundings.shp" -> "archetypes_mapper"[label="(get_surroundings_geometry)"]
     "terrain.tif" -> "archetypes_mapper"[label="(get_terrain)"]

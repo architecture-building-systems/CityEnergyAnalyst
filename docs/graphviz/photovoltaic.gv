@@ -20,6 +20,7 @@ digraph trace_inputlocator {
         fontsize = 20;
         rank=same;
         label="building-geometry";
+        "site.shp"
         "surroundings.shp"
         "zone.shp"
     }
@@ -48,7 +49,7 @@ digraph trace_inputlocator {
         fontsize = 20;
         rank=same;
         label="data/solar-radiation";
-        "B001_radiation.csv"
+        "{building}_radiation.csv"
         "B001_insolation_Whm2.json"
         "B001_geometry.csv"
     }
@@ -65,45 +66,10 @@ digraph trace_inputlocator {
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="technology/archetypes/schedules";
-        "RESTAURANT.csv"
+        label="technology/components";
+        "CONVERSION.xls"
     }
     subgraph cluster_6_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="technology/archetypes/use_types";
-        "USE_TYPE_PROPERTIES.xlsx"
-    }
-    subgraph cluster_7_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="technology/assemblies";
-        "supply.xls"
-    }
-    subgraph cluster_8_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="technology/feedstocks";
-        "feedstocks.xls"
-    }
-    subgraph cluster_9_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="technology/systems";
-        "air_conditioning_systems.xls"
-        "supply_systems.xls"
-        "distribution_systems.xls"
-        "envelope_systems.xls"
-    }
-    subgraph cluster_10_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -111,7 +77,7 @@ digraph trace_inputlocator {
         label="topography";
         "terrain.tif"
     }
-    subgraph cluster_11_in {
+    subgraph cluster_7_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -120,18 +86,12 @@ digraph trace_inputlocator {
         "Zug-inducity_1990_2010_TMY.epw"
         "weather.epw"
     }
-    "air_conditioning_systems.xls" -> "photovoltaic"[label="(get_database_air_conditioning_systems)"]
-    "supply_systems.xls" -> "photovoltaic"[label="(get_database_conversion_systems)"]
-    "distribution_systems.xls" -> "photovoltaic"[label="(get_database_distribution_systems)"]
-    "envelope_systems.xls" -> "photovoltaic"[label="(get_database_envelope_systems)"]
-    "feedstocks.xls" -> "photovoltaic"[label="(get_database_feedstocks)"]
-    "RESTAURANT.csv" -> "photovoltaic"[label="(get_database_standard_schedules_use)"]
-    "supply.xls" -> "photovoltaic"[label="(get_database_supply_assemblies)"]
-    "USE_TYPE_PROPERTIES.xlsx" -> "photovoltaic"[label="(get_database_use_types_properties)"]
+    "CONVERSION.xls" -> "photovoltaic"[label="(get_database_conversion_systems)"]
     "DH_Network_summary_result_0x19b.csv" -> "photovoltaic"[label="(get_optimization_thermal_network_data_file)"]
-    "B001_radiation.csv" -> "photovoltaic"[label="(get_radiation_building)"]
+    "{building}_radiation.csv" -> "photovoltaic"[label="(get_radiation_building)"]
     "B001_insolation_Whm2.json" -> "photovoltaic"[label="(get_radiation_building_sensors)"]
     "B001_geometry.csv" -> "photovoltaic"[label="(get_radiation_metadata)"]
+    "site.shp" -> "photovoltaic"[label="(get_site_polygon)"]
     "streets.shp" -> "photovoltaic"[label="(get_street_network)"]
     "surroundings.shp" -> "photovoltaic"[label="(get_surroundings_geometry)"]
     "terrain.tif" -> "photovoltaic"[label="(get_terrain)"]

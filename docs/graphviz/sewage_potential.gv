@@ -20,6 +20,7 @@ digraph trace_inputlocator {
         fontsize = 20;
         rank=same;
         label="building-geometry";
+        "site.shp"
         "surroundings.shp"
         "zone.shp"
     }
@@ -61,53 +62,10 @@ digraph trace_inputlocator {
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="technology/archetypes/schedules";
-        "RESTAURANT.csv"
-    }
-    subgraph cluster_6_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="technology/archetypes/use_types";
-        "USE_TYPE_PROPERTIES.xlsx"
-    }
-    subgraph cluster_7_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="technology/assemblies";
-        "supply.xls"
-    }
-    subgraph cluster_8_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="technology/feedstocks";
-        "feedstocks.xls"
-    }
-    subgraph cluster_9_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="technology/systems";
-        "air_conditioning_systems.xls"
-        "supply_systems.xls"
-        "distribution_systems.xls"
-        "envelope_systems.xls"
-    }
-    subgraph cluster_10_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
         label="topography";
         "terrain.tif"
     }
-    subgraph cluster_11_in {
+    subgraph cluster_6_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -115,16 +73,9 @@ digraph trace_inputlocator {
         label="weather";
         "Zug-inducity_1990_2010_TMY.epw"
     }
-    "air_conditioning_systems.xls" -> "sewage_potential"[label="(get_database_air_conditioning_systems)"]
-    "supply_systems.xls" -> "sewage_potential"[label="(get_database_conversion_systems)"]
-    "distribution_systems.xls" -> "sewage_potential"[label="(get_database_distribution_systems)"]
-    "envelope_systems.xls" -> "sewage_potential"[label="(get_database_envelope_systems)"]
-    "feedstocks.xls" -> "sewage_potential"[label="(get_database_feedstocks)"]
-    "RESTAURANT.csv" -> "sewage_potential"[label="(get_database_standard_schedules_use)"]
-    "supply.xls" -> "sewage_potential"[label="(get_database_supply_assemblies)"]
-    "USE_TYPE_PROPERTIES.xlsx" -> "sewage_potential"[label="(get_database_use_types_properties)"]
     "B001.csv" -> "sewage_potential"[label="(get_demand_results_file)"]
     "DH_Network_summary_result_0x19b.csv" -> "sewage_potential"[label="(get_optimization_thermal_network_data_file)"]
+    "site.shp" -> "sewage_potential"[label="(get_site_polygon)"]
     "streets.shp" -> "sewage_potential"[label="(get_street_network)"]
     "surroundings.shp" -> "sewage_potential"[label="(get_surroundings_geometry)"]
     "terrain.tif" -> "sewage_potential"[label="(get_terrain)"]

@@ -1,0 +1,110 @@
+digraph trace_inputlocator {
+    rankdir="LR";
+    graph [overlap=false, fontname=arial];
+    node [shape=box, style=filled, color=white, fontsize=15, fontname=arial, fixedsize=true, width=5];
+    edge [fontname=arial, fontsize = 15]
+    newrank=true
+    subgraph cluster_legend {
+    fontsize=25
+    style=invis
+    "process"[style=filled, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname="arial"]
+    "inputs" [style=filled, shape=folder, color=white, fillcolor="#E1F2F2", fontsize=20]
+    "outputs"[style=filled, shape=folder, color=white, fillcolor="#aadcdd", fontsize=20]
+    "inputs"->"process"[style=invis]
+    "process"->"outputs"[style=invis]
+    }
+    "data_initializer"[style=filled, color=white, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname=arial];
+    subgraph cluster_0_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="building-geometry";
+        "site.shp"
+        "surroundings.shp"
+        "zone.shp"
+    }
+    subgraph cluster_1_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="data/optimization/network";
+        "DH_Network_summary_result_0x19b.csv"
+    }
+    subgraph cluster_2_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="networks";
+        "streets.shp"
+    }
+    subgraph cluster_3_out {
+        style = filled;
+        color = "#aadcdd";
+        fontsize = 20;
+        rank=same;
+        label="technology/archetypes/schedules";
+        "{use}.csv"
+    }
+    subgraph cluster_4_out {
+        style = filled;
+        color = "#aadcdd";
+        fontsize = 20;
+        rank=same;
+        label="technology/archetypes/use_types";
+        "USE_TYPE_PROPERTIES.xlsx"
+    }
+    subgraph cluster_5_out {
+        style = filled;
+        color = "#aadcdd";
+        fontsize = 20;
+        rank=same;
+        label="technology/assemblies";
+        "HVAC.xls"
+        "ENVELOPE.xls"
+        "SUPPLY.xls"
+    }
+    subgraph cluster_6_out {
+        style = filled;
+        color = "#aadcdd";
+        fontsize = 20;
+        rank=same;
+        label="technology/components";
+        "CONVERSION.xls"
+        "DISTRIBUTION.xls"
+        "FEEDSTOCKS.xls"
+    }
+    subgraph cluster_7_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="topography";
+        "terrain.tif"
+    }
+    subgraph cluster_8_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="weather";
+        "Zug-inducity_1990_2010_TMY.epw"
+    }
+    "DH_Network_summary_result_0x19b.csv" -> "data_initializer"[label="(get_optimization_thermal_network_data_file)"]
+    "site.shp" -> "data_initializer"[label="(get_site_polygon)"]
+    "streets.shp" -> "data_initializer"[label="(get_street_network)"]
+    "surroundings.shp" -> "data_initializer"[label="(get_surroundings_geometry)"]
+    "terrain.tif" -> "data_initializer"[label="(get_terrain)"]
+    "Zug-inducity_1990_2010_TMY.epw" -> "data_initializer"[label="(get_weather)"]
+    "zone.shp" -> "data_initializer"[label="(get_zone_geometry)"]
+    "data_initializer" -> "HVAC.xls"[label="(get_database_air_conditioning_systems)"]
+    "data_initializer" -> "CONVERSION.xls"[label="(get_database_conversion_systems)"]
+    "data_initializer" -> "DISTRIBUTION.xls"[label="(get_database_distribution_systems)"]
+    "data_initializer" -> "ENVELOPE.xls"[label="(get_database_envelope_systems)"]
+    "data_initializer" -> "FEEDSTOCKS.xls"[label="(get_database_feedstocks)"]
+    "data_initializer" -> "{use}.csv"[label="(get_database_standard_schedules_use)"]
+    "data_initializer" -> "SUPPLY.xls"[label="(get_database_supply_assemblies)"]
+    "data_initializer" -> "USE_TYPE_PROPERTIES.xlsx"[label="(get_database_use_types_properties)"]
+    }

@@ -20,6 +20,7 @@ digraph trace_inputlocator {
         fontsize = 20;
         rank=same;
         label="building-geometry";
+        "site.shp"
         "surroundings.shp"
         "zone.shp"
     }
@@ -38,6 +39,8 @@ digraph trace_inputlocator {
         fontsize = 20;
         rank=same;
         label="data/optimization/decentralized";
+        "{building}_{configuration}_cooling_activation.csv"
+        "{building}_{configuration}_cooling.csv"
         "DiscOp_B001_result_heating.csv"
         "DiscOp_B001_result_heating_activation.csv"
     }
@@ -166,45 +169,12 @@ digraph trace_inputlocator {
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="technology/archetypes/schedules";
-        "RESTAURANT.csv"
+        label="technology/components";
+        "CONVERSION.xls"
+        "DISTRIBUTION.xls"
+        "FEEDSTOCKS.xls"
     }
     subgraph cluster_14_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="technology/archetypes/use_types";
-        "USE_TYPE_PROPERTIES.xlsx"
-    }
-    subgraph cluster_15_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="technology/assemblies";
-        "supply.xls"
-    }
-    subgraph cluster_16_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="technology/feedstocks";
-        "feedstocks.xls"
-    }
-    subgraph cluster_17_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="technology/systems";
-        "air_conditioning_systems.xls"
-        "supply_systems.xls"
-        "distribution_systems.xls"
-        "envelope_systems.xls"
-    }
-    subgraph cluster_18_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -212,7 +182,7 @@ digraph trace_inputlocator {
         label="topography";
         "terrain.tif"
     }
-    subgraph cluster_19_in {
+    subgraph cluster_15_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -224,24 +194,22 @@ digraph trace_inputlocator {
     "PVT_total.csv" -> "optimization"[label="(PVT_totals)"]
     "PV_total.csv" -> "optimization"[label="(PV_totals)"]
     "SC_FP_total.csv" -> "optimization"[label="(SC_totals)"]
-    "air_conditioning_systems.xls" -> "optimization"[label="(get_database_air_conditioning_systems)"]
-    "supply_systems.xls" -> "optimization"[label="(get_database_conversion_systems)"]
-    "distribution_systems.xls" -> "optimization"[label="(get_database_distribution_systems)"]
-    "envelope_systems.xls" -> "optimization"[label="(get_database_envelope_systems)"]
-    "feedstocks.xls" -> "optimization"[label="(get_database_feedstocks)"]
-    "RESTAURANT.csv" -> "optimization"[label="(get_database_standard_schedules_use)"]
-    "supply.xls" -> "optimization"[label="(get_database_supply_assemblies)"]
-    "USE_TYPE_PROPERTIES.xlsx" -> "optimization"[label="(get_database_use_types_properties)"]
+    "CONVERSION.xls" -> "optimization"[label="(get_database_conversion_systems)"]
+    "DISTRIBUTION.xls" -> "optimization"[label="(get_database_distribution_systems)"]
+    "FEEDSTOCKS.xls" -> "optimization"[label="(get_database_feedstocks)"]
     "B001.csv" -> "optimization"[label="(get_demand_results_file)"]
     "Shallow_geothermal_potential.csv" -> "optimization"[label="(get_geothermal_potential)"]
     "DH__plant_pumping_pressure_loss_Pa.csv" -> "optimization"[label="(get_network_total_pressure_drop_file)"]
     "DH__total_thermal_loss_edges_kW.csv" -> "optimization"[label="(get_network_total_thermal_loss_file)"]
+    "{building}_{configuration}_cooling_activation.csv" -> "optimization"[label="(get_optimization_decentralized_folder_building_cooling_activation)"]
+    "{building}_{configuration}_cooling.csv" -> "optimization"[label="(get_optimization_decentralized_folder_building_result_cooling)"]
     "DiscOp_B001_result_heating.csv" -> "optimization"[label="(get_optimization_decentralized_folder_building_result_heating)"]
     "DiscOp_B001_result_heating_activation.csv" -> "optimization"[label="(get_optimization_decentralized_folder_building_result_heating_activation)"]
     "DH_Network_summary_result_0x1be.csv" -> "optimization"[label="(get_optimization_network_results_summary)"]
     "110011011DH_B001_result.csv" -> "optimization"[label="(get_optimization_substations_results_file)"]
     "DH_Network_summary_result_0x19b.csv" -> "optimization"[label="(get_optimization_thermal_network_data_file)"]
     "Sewage_heat_potential.csv" -> "optimization"[label="(get_sewage_heat_potential)"]
+    "site.shp" -> "optimization"[label="(get_site_polygon)"]
     "streets.shp" -> "optimization"[label="(get_street_network)"]
     "surroundings.shp" -> "optimization"[label="(get_surroundings_geometry)"]
     "terrain.tif" -> "optimization"[label="(get_terrain)"]
