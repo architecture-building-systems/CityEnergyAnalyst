@@ -12355,10 +12355,17 @@ get_site_polygon:
   file_path: inputs\building-geometry\site.shp
   file_type: shp
   schema:
-    FID:
-      type: int
-    geometry:
-      type: Polygon
+    columns:
+      FID:
+        description: TODO
+        type: int
+        unit: TODO
+        values: TODO
+      geometry:
+        description: TODO
+        type: Polygon
+        unit: TODO
+        values: TODO
 get_street_network:
   created_by: []
   file_path: inputs/networks/streets.shp
@@ -12479,9 +12486,15 @@ get_thermal_network_edge_node_matrix_file:
   schema:
     columns:
       PIPE0:
+        description: TODO
         type: float
+        unit: TODO
+        values: TODO
       'Unnamed: 0':
+        description: TODO
         type: str
+        unit: TODO
+        values: TODO
 get_thermal_network_layout_massflow_edges_file:
   created_by:
   - thermal_network
