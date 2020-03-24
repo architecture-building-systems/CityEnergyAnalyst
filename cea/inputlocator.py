@@ -50,9 +50,6 @@ class InputLocator(object):
     def get_databases_archetypes_folder(self):
         return os.path.join(self.get_databases_folder(), 'archetypes')
 
-    def get_databases_feedstocks_folder(self):
-        return os.path.join(self.get_databases_folder(), 'feedstocks')
-
     def get_databases_assemblies_folder(self):
         return os.path.join(self.get_databases_folder(), 'assemblies')
 
@@ -99,19 +96,6 @@ class InputLocator(object):
     def get_optimization_master_results_folder(self):
         """Returns the folder containing the scenario's optimization Master Checkpoints"""
         return self._ensure_folder(self.get_optimization_results_folder(), "master")
-
-    def get_electrical_and_thermal_network_optimization_master_results_folder(self):
-        """scenario/outputs/data/optimization/master
-        Master checkpoints
-        """
-        return self._ensure_folder(self.get_electrical_and_thermal_network_optimization_results_folder(), "master")
-
-    def get_electrical_and_thermal_network_optimization_slave_results_folder(self, gen_num):
-        """scenario/outputs/data/optimization/slave
-        Slave results folder (storage + operation pattern)
-        """
-        return self._ensure_folder(self.get_electrical_and_thermal_network_optimization_results_folder(),
-                                   "slave/gen_%(gen_num)s" % locals())
 
     def get_optimization_slave_results_folder(self):
         """Returns the folder containing the scenario's optimization Slave results (storage + operation pattern)"""
@@ -275,12 +259,10 @@ class InputLocator(object):
         return os.path.join(self.get_optimization_network_results_folder(),
                             network_type + "_all_individuals.csv")
 
-
     def get_optimization_decentralized_folder(self):
         """scenario/outputs/data/optimization/decentralized
         Operation pattern for decentralized buildings"""
         return self._ensure_folder(self.get_optimization_results_folder(), "decentralized")
-
 
     def get_optimization_checkpoint(self, generation):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
@@ -399,7 +381,6 @@ class InputLocator(object):
         """Returns the database of supply components for cost analysis. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
         return os.path.join(self.get_databases_folder(), 'components', 'FEEDSTOCKS.xls')
-
 
     def get_building_geometry_folder(self):
         """scenario/inputs/building-geometry/"""
@@ -765,7 +746,6 @@ class InputLocator(object):
             file_name = network_type + "_" + network_name + "_pressure_losses_edges_kW.csv"
         return os.path.join(folder, file_name)
 
-
     def get_network_total_pressure_drop_file(self, network_type, network_name, representative_week=False):
         """scenario/outputs/data/optimization/network/layout/DH_P_DeltaP.csv or DC_P_DeltaP.csv
         Pressure drop over an entire district heating or cooling network at each time step
@@ -1006,26 +986,6 @@ class InputLocator(object):
     def get_temporary_file(self, filename):
         """Returns the path to a file in the temporary folder with the name `filename`"""
         return os.path.join(self.get_temporary_folder(), filename)
-
-    def get_surrogate_folder(self):
-        """scenario/outputs/data/surrogate"""
-        return self._ensure_folder(self.scenario, 'outputs', 'surrogate_model')
-
-    def get_nn_inout_folder(self):
-        """scenario/outputs/data/surrogate"""
-        return self._ensure_folder(self.scenario, 'outputs', 'surrogate_model', 'inputs_outputs')
-
-    def get_neural_network_folder(self):
-        """scenario/outputs/data/surrogate/neural_network_folder"""
-        return self._ensure_folder(self.scenario, 'outputs', 'surrogate_model', 'neural_network')
-
-    def get_minmaxscaler_folder(self):
-        """scenario/outputs/data/surrogate/neural_network_folder"""
-        return self._ensure_folder(self.scenario, 'outputs', 'surrogate_model', 'minmaxscalar')
-
-    def get_docs_folder(self):
-        """Returns docs"""
-        return os.path.join(os.path.dirname(cea.config.__file__), '..', 'docs')
 
 
 def check_cpg(shapefile_path):
