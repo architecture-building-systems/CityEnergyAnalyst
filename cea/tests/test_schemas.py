@@ -4,6 +4,7 @@ Tests to make sure the schemas.yml file is structurally sound.
 
 import unittest
 
+import os
 import cea.config
 import cea.inputlocator
 import cea.scripts
@@ -100,6 +101,29 @@ class TestSchemas(unittest.TestCase):
         for lm in schemas:
             self.assertIn(lm, dir(locator),
                           "schemas.yml contains {lm} but no corresponding method in InputLocator".format(lm=lm))
+
+    def test_each_folder_unique(self):
+        locator = cea.inputlocator.ReferenceCaseOpenLocator()
+        folders = {}  # map path -> lm
+        for attrib in dir(locator):
+            if attrib.endswith("_folder") and not attrib.startswith("_"):
+                method = getattr(locator, attrib)
+                parameters = {
+                    "network_type": "DC",
+                    "network_name": "",
+                    "gen_num": 1,
+                    "category": "demand",
+                    "type_of_district_network": "space-heating",
+                }
+                for p in list(parameters.keys()):
+                    if not p in method.__code__.co_varnames:
+                        del parameters[p]
+                folder = method(**parameters)
+                folder = os.path.normcase(os.path.normpath(os.path.abspath(folder)))
+                self.assertNotIn(folder, folders,
+                                 "{attrib} duplicates the result of {prev}".format(
+                                     attrib=attrib, prev=folders.get(folder, None)))
+                folders[folder] = attrib
 
 
 def extract_locator_methods(locator):
