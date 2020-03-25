@@ -94,6 +94,13 @@ class TestSchemas(unittest.TestCase):
             self.assertIsInstance(schemas[lm]["used_by"], list,
                                   "used_by entry of {lm} must be a list".format(lm=lm))
 
+    def test_each_lm_has_method(self):
+        schemas = cea.scripts.schemas()
+        locator = cea.inputlocator.InputLocator(None)
+        for lm in schemas:
+            self.assertIn(lm, dir(locator),
+                          "schemas.yml contains {lm} but no corresponding method in InputLocator".format(lm=lm))
+
 
 def extract_locator_methods(locator):
     """Return the list of locator methods that point to files"""
