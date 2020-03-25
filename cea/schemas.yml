@@ -10394,7 +10394,7 @@ get_sewage_heat_potential:
   used_by:
   - optimization
 get_site_polygon:
-  file_path: inputs\building-geometry\site.shp
+  file_path: inputs/building-geometry/site.shp
   file_type: shp
   created_by: []
   used_by:
