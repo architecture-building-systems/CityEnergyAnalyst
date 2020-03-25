@@ -57,18 +57,10 @@ digraph trace_inputlocator {
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="data/optimization/network";
-        "DH_Network_summary_result_0x19b.csv"
-    }
-    subgraph cluster_5_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
         label="networks";
         "streets.shp"
     }
-    subgraph cluster_6_in {
+    subgraph cluster_5_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -76,7 +68,7 @@ digraph trace_inputlocator {
         label="technology/assemblies";
         "SUPPLY.xls"
     }
-    subgraph cluster_7_in {
+    subgraph cluster_6_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -84,7 +76,7 @@ digraph trace_inputlocator {
         label="technology/components";
         "FEEDSTOCKS.xls"
     }
-    subgraph cluster_8_in {
+    subgraph cluster_7_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -92,7 +84,7 @@ digraph trace_inputlocator {
         label="topography";
         "terrain.tif"
     }
-    subgraph cluster_9_in {
+    subgraph cluster_8_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -105,7 +97,6 @@ digraph trace_inputlocator {
     "typology.dbf" -> "emissions"[label="(get_building_typology)"]
     "FEEDSTOCKS.xls" -> "emissions"[label="(get_database_feedstocks)"]
     "SUPPLY.xls" -> "emissions"[label="(get_database_supply_assemblies)"]
-    "DH_Network_summary_result_0x19b.csv" -> "emissions"[label="(get_optimization_thermal_network_data_file)"]
     "site.shp" -> "emissions"[label="(get_site_polygon)"]
     "streets.shp" -> "emissions"[label="(get_street_network)"]
     "surroundings.shp" -> "emissions"[label="(get_surroundings_geometry)"]

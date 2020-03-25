@@ -59,7 +59,6 @@ digraph trace_inputlocator {
         rank=same;
         label="data/optimization/network";
         "DH_Network_summary_result_0x1be.csv"
-        "DH_Network_summary_result_0x19b.csv"
     }
     subgraph cluster_4_out {
         style = filled;
@@ -143,7 +142,6 @@ digraph trace_inputlocator {
         "ind_1_connected_cooling_capacity.csv"
         "ind_0_disconnected_cooling_capacity.csv"
         "gen_1_connected_performance.csv"
-        "gen_1_total_performance_halloffame.csv"
         "ind_2_buildings_connected_performance.csv"
         "ind_2_Cooling_Activation_Pattern.csv"
         "ind_1_Electricity_Activation_Pattern.csv"
@@ -207,7 +205,6 @@ digraph trace_inputlocator {
     "DiscOp_B001_result_heating_activation.csv" -> "optimization"[label="(get_optimization_decentralized_folder_building_result_heating_activation)"]
     "DH_Network_summary_result_0x1be.csv" -> "optimization"[label="(get_optimization_network_results_summary)"]
     "110011011DH_B001_result.csv" -> "optimization"[label="(get_optimization_substations_results_file)"]
-    "DH_Network_summary_result_0x19b.csv" -> "optimization"[label="(get_optimization_thermal_network_data_file)"]
     "Sewage_heat_potential.csv" -> "optimization"[label="(get_sewage_heat_potential)"]
     "site.shp" -> "optimization"[label="(get_site_polygon)"]
     "streets.shp" -> "optimization"[label="(get_street_network)"]
@@ -228,7 +225,6 @@ digraph trace_inputlocator {
     "optimization" -> "gen_1_connected_performance.csv"[label="(get_optimization_generation_connected_performance)"]
     "optimization" -> "gen_2_disconnected_performance.csv"[label="(get_optimization_generation_disconnected_performance)"]
     "optimization" -> "gen_2_total_performance.csv"[label="(get_optimization_generation_total_performance)"]
-    "optimization" -> "gen_1_total_performance_halloffame.csv"[label="(get_optimization_generation_total_performance_halloffame)"]
     "optimization" -> "gen_2_total_performance_pareto.csv"[label="(get_optimization_generation_total_performance_pareto)"]
     "optimization" -> "generation_2_individuals.csv"[label="(get_optimization_individuals_in_generation)"]
     "optimization" -> "DH_Network_summary_result_0x1be.csv"[label="(get_optimization_network_results_summary)"]

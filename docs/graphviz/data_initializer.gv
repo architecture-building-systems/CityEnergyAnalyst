@@ -29,18 +29,10 @@ digraph trace_inputlocator {
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="data/optimization/network";
-        "DH_Network_summary_result_0x19b.csv"
-    }
-    subgraph cluster_2_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
         label="networks";
         "streets.shp"
     }
-    subgraph cluster_3_out {
+    subgraph cluster_2_out {
         style = filled;
         color = "#aadcdd";
         fontsize = 20;
@@ -48,7 +40,7 @@ digraph trace_inputlocator {
         label="technology/archetypes/schedules";
         "{use}.csv"
     }
-    subgraph cluster_4_out {
+    subgraph cluster_3_out {
         style = filled;
         color = "#aadcdd";
         fontsize = 20;
@@ -56,7 +48,7 @@ digraph trace_inputlocator {
         label="technology/archetypes/use_types";
         "USE_TYPE_PROPERTIES.xlsx"
     }
-    subgraph cluster_5_out {
+    subgraph cluster_4_out {
         style = filled;
         color = "#aadcdd";
         fontsize = 20;
@@ -66,7 +58,7 @@ digraph trace_inputlocator {
         "ENVELOPE.xls"
         "SUPPLY.xls"
     }
-    subgraph cluster_6_out {
+    subgraph cluster_5_out {
         style = filled;
         color = "#aadcdd";
         fontsize = 20;
@@ -76,7 +68,7 @@ digraph trace_inputlocator {
         "DISTRIBUTION.xls"
         "FEEDSTOCKS.xls"
     }
-    subgraph cluster_7_in {
+    subgraph cluster_6_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -84,7 +76,7 @@ digraph trace_inputlocator {
         label="topography";
         "terrain.tif"
     }
-    subgraph cluster_8_in {
+    subgraph cluster_7_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -92,7 +84,6 @@ digraph trace_inputlocator {
         label="weather";
         "Zug-inducity_1990_2010_TMY.epw"
     }
-    "DH_Network_summary_result_0x19b.csv" -> "data_initializer"[label="(get_optimization_thermal_network_data_file)"]
     "site.shp" -> "data_initializer"[label="(get_site_polygon)"]
     "streets.shp" -> "data_initializer"[label="(get_street_network)"]
     "surroundings.shp" -> "data_initializer"[label="(get_surroundings_geometry)"]
