@@ -3,14 +3,15 @@ doc_graphviz.py
 
 Creates the graphviz output used to visualize script dependencies.
 This file relies on the schemas.yml to create the graphviz plots.
-
 """
+
+from __future__ import print_function
+from __future__ import division
 
 import os
 import cea.config
 import cea.scripts
 from jinja2 import Template
-import os
 
 __author__ = "Jack Hawthorne"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -69,24 +70,23 @@ def get_list_of_digraphs(documentation_dir, schema_scripts):
 
 
 def main(_):
-    import cea
-    schema = cea.scripts.schemas()
-    schema_scripts = cea.scripts.get_schema_scripts(schema)
+    schemas = cea.scripts.schemas()
+    schema_scripts = cea.scripts.get_schema_scripts()
     documentation_dir = os.path.join(os.path.dirname(cea.config.__file__), '..', 'docs')
 
     graphviz_data = {}
 
     for script in schema_scripts:
         trace_data = set()
-        for locator_method in schema:
-            file_path = schema[locator_method]['file_path'].replace('\\', '/')
+        for locator_method in schemas:
+            file_path = schemas[locator_method]['file_path'].replace('\\', '/')
             file_name = file_path.rsplit('/', 1)[1]
             path = file_path.rsplit('/', 1)[0]
-            if script in schema[locator_method]['created_by']:
+            if script in schemas[locator_method]['created_by']:
                 trace_data.add(('output', script, locator_method, path, file_name))
-            elif schema[locator_method]['created_by'] == []:
+            elif schemas[locator_method]['created_by'] == []:
                 trace_data.add(('input', script, locator_method, path, file_name))
-            if script in schema[locator_method]['used_by']:
+            if script in schemas[locator_method]['used_by']:
                 trace_data.add(('input', script, locator_method, path, file_name))
         graphviz_data[script] = trace_data
 
@@ -98,10 +98,9 @@ def main(_):
 
     output = template.render(list_of_digraphs=list_of_digraphs)
 
-    with open(os.path.join(documentation_dir,'script-data-flow.rst'), 'w') as cea:
-        cea.write(output)
+    with open(os.path.join(documentation_dir,'script-data-flow.rst'), 'w') as fp:
+        fp.write(output)
 
-    print '~~~~~~~~ script-data-flow.rst updated ~~~~~~~~\n'
 
 if __name__ == '__main__':
-    main(cea.config.Configuration(), cea.scripts.schemas())
+    main(cea.config.Configuration())

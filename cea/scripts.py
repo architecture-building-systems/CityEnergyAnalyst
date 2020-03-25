@@ -185,13 +185,14 @@ def get_schema_variables(schema):
     return schema_variables
 
 
-def get_schema_scripts(schema):
+def get_schema_scripts():
+    schemas_dict = schemas()
     schema_scripts = set()
-    for locator_method in schema:
-        if len(schema[locator_method]['used_by']) > 0:
-            for script in schema[locator_method]['used_by']:
+    for locator_method in schemas_dict:
+        if schemas_dict[locator_method]['used_by']:
+            for script in schemas_dict[locator_method]['used_by']:
                 schema_scripts.add(script)
-        if len(schema[locator_method]['created_by']) > 0:
-            for script in schema[locator_method]['created_by']:
+        if schemas_dict[locator_method]['created_by'] > 0:
+            for script in schemas_dict[locator_method]['created_by']:
                 schema_scripts.add(script)
     return schema_scripts

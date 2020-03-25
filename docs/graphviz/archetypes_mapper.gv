@@ -57,18 +57,10 @@ digraph trace_inputlocator {
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="data/optimization/network";
-        "DH_Network_summary_result_0x19b.csv"
-    }
-    subgraph cluster_4_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
         label="networks";
         "streets.shp"
     }
-    subgraph cluster_5_in {
+    subgraph cluster_4_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -76,7 +68,7 @@ digraph trace_inputlocator {
         label="technology/archetypes";
         "CONSTRUCTION_STANDARDS.xlsx"
     }
-    subgraph cluster_6_in {
+    subgraph cluster_5_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -84,7 +76,7 @@ digraph trace_inputlocator {
         label="technology/archetypes/schedules";
         "{use}.csv"
     }
-    subgraph cluster_7_in {
+    subgraph cluster_6_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -92,7 +84,7 @@ digraph trace_inputlocator {
         label="technology/archetypes/use_types";
         "USE_TYPE_PROPERTIES.xlsx"
     }
-    subgraph cluster_8_in {
+    subgraph cluster_7_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -100,7 +92,7 @@ digraph trace_inputlocator {
         label="topography";
         "terrain.tif"
     }
-    subgraph cluster_9_in {
+    subgraph cluster_8_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -112,7 +104,6 @@ digraph trace_inputlocator {
     "CONSTRUCTION_STANDARDS.xlsx" -> "archetypes_mapper"[label="(get_database_construction_standards)"]
     "{use}.csv" -> "archetypes_mapper"[label="(get_database_standard_schedules_use)"]
     "USE_TYPE_PROPERTIES.xlsx" -> "archetypes_mapper"[label="(get_database_use_types_properties)"]
-    "DH_Network_summary_result_0x19b.csv" -> "archetypes_mapper"[label="(get_optimization_thermal_network_data_file)"]
     "site.shp" -> "archetypes_mapper"[label="(get_site_polygon)"]
     "streets.shp" -> "archetypes_mapper"[label="(get_street_network)"]
     "surroundings.shp" -> "archetypes_mapper"[label="(get_surroundings_geometry)"]

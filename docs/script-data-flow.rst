@@ -51,18 +51,10 @@ multi_criteria_analysis
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="data/optimization/network";
-        "DH_Network_summary_result_0x19b.csv"
-    }
-    subgraph cluster_3_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
         label="networks";
         "streets.shp"
     }
-    subgraph cluster_4_in {
+    subgraph cluster_3_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -70,7 +62,7 @@ multi_criteria_analysis
         label="optimization/slave/gen_2";
         "gen_2_total_performance_pareto.csv"
     }
-    subgraph cluster_5_in {
+    subgraph cluster_4_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -78,7 +70,7 @@ multi_criteria_analysis
         label="topography";
         "terrain.tif"
     }
-    subgraph cluster_6_in {
+    subgraph cluster_5_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -87,7 +79,6 @@ multi_criteria_analysis
         "Zug-inducity_1990_2010_TMY.epw"
     }
     "gen_2_total_performance_pareto.csv" -> "multi_criteria_analysis"[label="(get_optimization_generation_total_performance_pareto)"]
-    "DH_Network_summary_result_0x19b.csv" -> "multi_criteria_analysis"[label="(get_optimization_thermal_network_data_file)"]
     "site.shp" -> "multi_criteria_analysis"[label="(get_site_polygon)"]
     "streets.shp" -> "multi_criteria_analysis"[label="(get_street_network)"]
     "surroundings.shp" -> "multi_criteria_analysis"[label="(get_surroundings_geometry)"]
@@ -127,15 +118,7 @@ photovoltaic
         "surroundings.shp"
         "zone.shp"
     }
-    subgraph cluster_1_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="data/optimization/network";
-        "DH_Network_summary_result_0x19b.csv"
-    }
-    subgraph cluster_2_out {
+    subgraph cluster_1_out {
         style = filled;
         color = "#aadcdd";
         fontsize = 20;
@@ -146,7 +129,7 @@ photovoltaic
         "PV_total_buildings.csv"
         "PV_total.csv"
     }
-    subgraph cluster_3_in {
+    subgraph cluster_2_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -156,7 +139,7 @@ photovoltaic
         "B001_insolation_Whm2.json"
         "B001_geometry.csv"
     }
-    subgraph cluster_4_in {
+    subgraph cluster_3_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -164,7 +147,7 @@ photovoltaic
         label="networks";
         "streets.shp"
     }
-    subgraph cluster_5_in {
+    subgraph cluster_4_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -172,7 +155,7 @@ photovoltaic
         label="technology/components";
         "CONVERSION.xls"
     }
-    subgraph cluster_6_in {
+    subgraph cluster_5_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -180,7 +163,7 @@ photovoltaic
         label="topography";
         "terrain.tif"
     }
-    subgraph cluster_7_in {
+    subgraph cluster_6_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -190,7 +173,6 @@ photovoltaic
         "weather.epw"
     }
     "CONVERSION.xls" -> "photovoltaic"[label="(get_database_conversion_systems)"]
-    "DH_Network_summary_result_0x19b.csv" -> "photovoltaic"[label="(get_optimization_thermal_network_data_file)"]
     "{building}_radiation.csv" -> "photovoltaic"[label="(get_radiation_building)"]
     "B001_insolation_Whm2.json" -> "photovoltaic"[label="(get_radiation_building_sensors)"]
     "B001_geometry.csv" -> "photovoltaic"[label="(get_radiation_metadata)"]
@@ -264,15 +246,7 @@ decentralized
         "DiscOp_B001_result_heating.csv"
         "DiscOp_B001_result_heating_activation.csv"
     }
-    subgraph cluster_4_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="data/optimization/network";
-        "DH_Network_summary_result_0x19b.csv"
-    }
-    subgraph cluster_5_out {
+    subgraph cluster_4_out {
         style = filled;
         color = "#aadcdd";
         fontsize = 20;
@@ -280,7 +254,7 @@ decentralized
         label="data/optimization/substations";
         "110011011DH_B001_result.csv"
     }
-    subgraph cluster_6_in {
+    subgraph cluster_5_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -288,7 +262,7 @@ decentralized
         label="data/potentials/solar";
         "B001_SC_ET.csv"
     }
-    subgraph cluster_7_in {
+    subgraph cluster_6_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -296,7 +270,7 @@ decentralized
         label="networks";
         "streets.shp"
     }
-    subgraph cluster_8_in {
+    subgraph cluster_7_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -305,7 +279,7 @@ decentralized
         "CONVERSION.xls"
         "FEEDSTOCKS.xls"
     }
-    subgraph cluster_9_in {
+    subgraph cluster_8_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -313,7 +287,7 @@ decentralized
         label="topography";
         "terrain.tif"
     }
-    subgraph cluster_10_in {
+    subgraph cluster_9_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -327,7 +301,6 @@ decentralized
     "CONVERSION.xls" -> "decentralized"[label="(get_database_conversion_systems)"]
     "FEEDSTOCKS.xls" -> "decentralized"[label="(get_database_feedstocks)"]
     "B001.csv" -> "decentralized"[label="(get_demand_results_file)"]
-    "DH_Network_summary_result_0x19b.csv" -> "decentralized"[label="(get_optimization_thermal_network_data_file)"]
     "site.shp" -> "decentralized"[label="(get_site_polygon)"]
     "streets.shp" -> "decentralized"[label="(get_street_network)"]
     "surroundings.shp" -> "decentralized"[label="(get_surroundings_geometry)"]
@@ -380,15 +353,7 @@ radiation
         label="building-properties";
         "architecture.dbf"
     }
-    subgraph cluster_2_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="data/optimization/network";
-        "DH_Network_summary_result_0x19b.csv"
-    }
-    subgraph cluster_3_out {
+    subgraph cluster_2_out {
         style = filled;
         color = "#aadcdd";
         fontsize = 20;
@@ -399,7 +364,7 @@ radiation
         "buidling_materials.csv"
         "B001_geometry.csv"
     }
-    subgraph cluster_4_in {
+    subgraph cluster_3_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -407,7 +372,7 @@ radiation
         label="networks";
         "streets.shp"
     }
-    subgraph cluster_5_in {
+    subgraph cluster_4_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -415,7 +380,7 @@ radiation
         label="technology/assemblies";
         "ENVELOPE.xls"
     }
-    subgraph cluster_6_in {
+    subgraph cluster_5_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -423,7 +388,7 @@ radiation
         label="topography";
         "terrain.tif"
     }
-    subgraph cluster_7_in {
+    subgraph cluster_6_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -434,7 +399,6 @@ radiation
     }
     "architecture.dbf" -> "radiation"[label="(get_building_architecture)"]
     "ENVELOPE.xls" -> "radiation"[label="(get_database_envelope_systems)"]
-    "DH_Network_summary_result_0x19b.csv" -> "radiation"[label="(get_optimization_thermal_network_data_file)"]
     "site.shp" -> "radiation"[label="(get_site_polygon)"]
     "streets.shp" -> "radiation"[label="(get_street_network)"]
     "surroundings.shp" -> "radiation"[label="(get_surroundings_geometry)"]
@@ -483,18 +447,10 @@ zone_helper
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="data/optimization/network";
-        "DH_Network_summary_result_0x19b.csv"
-    }
-    subgraph cluster_2_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
         label="networks";
         "streets.shp"
     }
-    subgraph cluster_3_in {
+    subgraph cluster_2_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -502,7 +458,7 @@ zone_helper
         label="topography";
         "terrain.tif"
     }
-    subgraph cluster_4_in {
+    subgraph cluster_3_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -510,7 +466,6 @@ zone_helper
         label="weather";
         "Zug-inducity_1990_2010_TMY.epw"
     }
-    "DH_Network_summary_result_0x19b.csv" -> "zone_helper"[label="(get_optimization_thermal_network_data_file)"]
     "site.shp" -> "zone_helper"[label="(get_site_polygon)"]
     "streets.shp" -> "zone_helper"[label="(get_street_network)"]
     "surroundings.shp" -> "zone_helper"[label="(get_surroundings_geometry)"]
@@ -582,18 +537,10 @@ archetypes_mapper
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="data/optimization/network";
-        "DH_Network_summary_result_0x19b.csv"
-    }
-    subgraph cluster_4_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
         label="networks";
         "streets.shp"
     }
-    subgraph cluster_5_in {
+    subgraph cluster_4_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -601,7 +548,7 @@ archetypes_mapper
         label="technology/archetypes";
         "CONSTRUCTION_STANDARDS.xlsx"
     }
-    subgraph cluster_6_in {
+    subgraph cluster_5_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -609,7 +556,7 @@ archetypes_mapper
         label="technology/archetypes/schedules";
         "{use}.csv"
     }
-    subgraph cluster_7_in {
+    subgraph cluster_6_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -617,7 +564,7 @@ archetypes_mapper
         label="technology/archetypes/use_types";
         "USE_TYPE_PROPERTIES.xlsx"
     }
-    subgraph cluster_8_in {
+    subgraph cluster_7_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -625,7 +572,7 @@ archetypes_mapper
         label="topography";
         "terrain.tif"
     }
-    subgraph cluster_9_in {
+    subgraph cluster_8_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -637,7 +584,6 @@ archetypes_mapper
     "CONSTRUCTION_STANDARDS.xlsx" -> "archetypes_mapper"[label="(get_database_construction_standards)"]
     "{use}.csv" -> "archetypes_mapper"[label="(get_database_standard_schedules_use)"]
     "USE_TYPE_PROPERTIES.xlsx" -> "archetypes_mapper"[label="(get_database_use_types_properties)"]
-    "DH_Network_summary_result_0x19b.csv" -> "archetypes_mapper"[label="(get_optimization_thermal_network_data_file)"]
     "site.shp" -> "archetypes_mapper"[label="(get_site_polygon)"]
     "streets.shp" -> "archetypes_mapper"[label="(get_street_network)"]
     "surroundings.shp" -> "archetypes_mapper"[label="(get_surroundings_geometry)"]
@@ -691,15 +637,7 @@ sewage_potential
         "B001.csv"
         "Total_demand.csv"
     }
-    subgraph cluster_2_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="data/optimization/network";
-        "DH_Network_summary_result_0x19b.csv"
-    }
-    subgraph cluster_3_out {
+    subgraph cluster_2_out {
         style = filled;
         color = "#aadcdd";
         fontsize = 20;
@@ -707,7 +645,7 @@ sewage_potential
         label="data/potentials";
         "Sewage_heat_potential.csv"
     }
-    subgraph cluster_4_in {
+    subgraph cluster_3_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -715,7 +653,7 @@ sewage_potential
         label="networks";
         "streets.shp"
     }
-    subgraph cluster_5_in {
+    subgraph cluster_4_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -723,7 +661,7 @@ sewage_potential
         label="topography";
         "terrain.tif"
     }
-    subgraph cluster_6_in {
+    subgraph cluster_5_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -732,7 +670,6 @@ sewage_potential
         "Zug-inducity_1990_2010_TMY.epw"
     }
     "B001.csv" -> "sewage_potential"[label="(get_demand_results_file)"]
-    "DH_Network_summary_result_0x19b.csv" -> "sewage_potential"[label="(get_optimization_thermal_network_data_file)"]
     "site.shp" -> "sewage_potential"[label="(get_site_polygon)"]
     "streets.shp" -> "sewage_potential"[label="(get_street_network)"]
     "surroundings.shp" -> "sewage_potential"[label="(get_surroundings_geometry)"]
@@ -773,15 +710,7 @@ photovoltaic_thermal
         "surroundings.shp"
         "zone.shp"
     }
-    subgraph cluster_1_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="data/optimization/network";
-        "DH_Network_summary_result_0x19b.csv"
-    }
-    subgraph cluster_2_out {
+    subgraph cluster_1_out {
         style = filled;
         color = "#aadcdd";
         fontsize = 20;
@@ -792,7 +721,7 @@ photovoltaic_thermal
         "PVT_total_buildings.csv"
         "PVT_total.csv"
     }
-    subgraph cluster_3_in {
+    subgraph cluster_2_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -802,7 +731,7 @@ photovoltaic_thermal
         "B001_insolation_Whm2.json"
         "B001_geometry.csv"
     }
-    subgraph cluster_4_in {
+    subgraph cluster_3_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -810,7 +739,7 @@ photovoltaic_thermal
         label="networks";
         "streets.shp"
     }
-    subgraph cluster_5_in {
+    subgraph cluster_4_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -818,7 +747,7 @@ photovoltaic_thermal
         label="technology/components";
         "CONVERSION.xls"
     }
-    subgraph cluster_6_in {
+    subgraph cluster_5_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -826,7 +755,7 @@ photovoltaic_thermal
         label="topography";
         "terrain.tif"
     }
-    subgraph cluster_7_in {
+    subgraph cluster_6_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -836,7 +765,6 @@ photovoltaic_thermal
         "weather.epw"
     }
     "CONVERSION.xls" -> "photovoltaic_thermal"[label="(get_database_conversion_systems)"]
-    "DH_Network_summary_result_0x19b.csv" -> "photovoltaic_thermal"[label="(get_optimization_thermal_network_data_file)"]
     "{building}_radiation.csv" -> "photovoltaic_thermal"[label="(get_radiation_building)"]
     "B001_insolation_Whm2.json" -> "photovoltaic_thermal"[label="(get_radiation_building_sensors)"]
     "B001_geometry.csv" -> "photovoltaic_thermal"[label="(get_radiation_metadata)"]
@@ -883,15 +811,7 @@ solar_collector
         "surroundings.shp"
         "zone.shp"
     }
-    subgraph cluster_1_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="data/optimization/network";
-        "DH_Network_summary_result_0x19b.csv"
-    }
-    subgraph cluster_2_out {
+    subgraph cluster_1_out {
         style = filled;
         color = "#aadcdd";
         fontsize = 20;
@@ -902,7 +822,7 @@ solar_collector
         "SC_ET_total_buildings.csv"
         "SC_FP_total.csv"
     }
-    subgraph cluster_3_in {
+    subgraph cluster_2_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -912,7 +832,7 @@ solar_collector
         "B001_insolation_Whm2.json"
         "B001_geometry.csv"
     }
-    subgraph cluster_4_in {
+    subgraph cluster_3_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -920,7 +840,7 @@ solar_collector
         label="networks";
         "streets.shp"
     }
-    subgraph cluster_5_in {
+    subgraph cluster_4_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -928,7 +848,7 @@ solar_collector
         label="technology/components";
         "CONVERSION.xls"
     }
-    subgraph cluster_6_in {
+    subgraph cluster_5_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -936,7 +856,7 @@ solar_collector
         label="topography";
         "terrain.tif"
     }
-    subgraph cluster_7_in {
+    subgraph cluster_6_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -946,7 +866,6 @@ solar_collector
         "weather.epw"
     }
     "CONVERSION.xls" -> "solar_collector"[label="(get_database_conversion_systems)"]
-    "DH_Network_summary_result_0x19b.csv" -> "solar_collector"[label="(get_optimization_thermal_network_data_file)"]
     "{building}_radiation.csv" -> "solar_collector"[label="(get_radiation_building)"]
     "B001_insolation_Whm2.json" -> "solar_collector"[label="(get_radiation_building_sensors)"]
     "B001_geometry.csv" -> "solar_collector"[label="(get_radiation_metadata)"]
@@ -993,15 +912,7 @@ water_body_potential
         "surroundings.shp"
         "zone.shp"
     }
-    subgraph cluster_1_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="data/optimization/network";
-        "DH_Network_summary_result_0x19b.csv"
-    }
-    subgraph cluster_2_out {
+    subgraph cluster_1_out {
         style = filled;
         color = "#aadcdd";
         fontsize = 20;
@@ -1009,7 +920,7 @@ water_body_potential
         label="data/potentials";
         "Water_body_potential.csv"
     }
-    subgraph cluster_3_in {
+    subgraph cluster_2_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -1017,7 +928,7 @@ water_body_potential
         label="networks";
         "streets.shp"
     }
-    subgraph cluster_4_in {
+    subgraph cluster_3_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -1025,7 +936,7 @@ water_body_potential
         label="topography";
         "terrain.tif"
     }
-    subgraph cluster_5_in {
+    subgraph cluster_4_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -1033,7 +944,6 @@ water_body_potential
         label="weather";
         "Zug-inducity_1990_2010_TMY.epw"
     }
-    "DH_Network_summary_result_0x19b.csv" -> "water_body_potential"[label="(get_optimization_thermal_network_data_file)"]
     "site.shp" -> "water_body_potential"[label="(get_site_polygon)"]
     "streets.shp" -> "water_body_potential"[label="(get_street_network)"]
     "surroundings.shp" -> "water_body_potential"[label="(get_surroundings_geometry)"]
@@ -1086,18 +996,10 @@ decentrlized
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="data/optimization/network";
-        "DH_Network_summary_result_0x19b.csv"
-    }
-    subgraph cluster_3_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
         label="networks";
         "streets.shp"
     }
-    subgraph cluster_4_in {
+    subgraph cluster_3_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -1105,7 +1007,7 @@ decentrlized
         label="topography";
         "terrain.tif"
     }
-    subgraph cluster_5_in {
+    subgraph cluster_4_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -1113,7 +1015,6 @@ decentrlized
         label="weather";
         "Zug-inducity_1990_2010_TMY.epw"
     }
-    "DH_Network_summary_result_0x19b.csv" -> "decentrlized"[label="(get_optimization_thermal_network_data_file)"]
     "site.shp" -> "decentrlized"[label="(get_site_polygon)"]
     "streets.shp" -> "decentrlized"[label="(get_street_network)"]
     "surroundings.shp" -> "decentrlized"[label="(get_surroundings_geometry)"]
@@ -1166,18 +1067,10 @@ database-migrator
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="data/optimization/network";
-        "DH_Network_summary_result_0x19b.csv"
-    }
-    subgraph cluster_3_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
         label="networks";
         "streets.shp"
     }
-    subgraph cluster_4_in {
+    subgraph cluster_3_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -1185,7 +1078,7 @@ database-migrator
         label="topography";
         "terrain.tif"
     }
-    subgraph cluster_5_in {
+    subgraph cluster_4_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -1193,7 +1086,6 @@ database-migrator
         label="weather";
         "Zug-inducity_1990_2010_TMY.epw"
     }
-    "DH_Network_summary_result_0x19b.csv" -> "database-migrator"[label="(get_optimization_thermal_network_data_file)"]
     "site.shp" -> "database-migrator"[label="(get_site_polygon)"]
     "streets.shp" -> "database-migrator"[label="(get_street_network)"]
     "surroundings.shp" -> "database-migrator"[label="(get_surroundings_geometry)"]
@@ -1242,15 +1134,7 @@ thermal_network
         "B001.csv"
         "Total_demand.csv"
     }
-    subgraph cluster_2_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="data/optimization/network";
-        "DH_Network_summary_result_0x19b.csv"
-    }
-    subgraph cluster_3_out {
+    subgraph cluster_2_out {
         style = filled;
         color = "#aadcdd";
         fontsize = 20;
@@ -1259,7 +1143,7 @@ thermal_network
         "110011011DH_B001_result.csv"
         "Total_DH_111111111.csv"
     }
-    subgraph cluster_4_in {
+    subgraph cluster_3_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -1269,7 +1153,7 @@ thermal_network
         "Nominal_NodeMassFlow_at_design_{network_type}__kgpers.csv"
         "{network_type}__EdgeNode.csv"
     }
-    subgraph cluster_4_out {
+    subgraph cluster_3_out {
         style = filled;
         color = "#aadcdd";
         fontsize = 20;
@@ -1298,7 +1182,7 @@ thermal_network
         "DH__pumping_load_due_to_substations_kW.csv"
         "DH__velocity_edges_mpers.csv"
     }
-    subgraph cluster_5_in {
+    subgraph cluster_4_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -1307,7 +1191,7 @@ thermal_network
         "edges.shp"
         "nodes.shp"
     }
-    subgraph cluster_6_in {
+    subgraph cluster_5_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -1315,7 +1199,7 @@ thermal_network
         label="networks";
         "streets.shp"
     }
-    subgraph cluster_7_in {
+    subgraph cluster_6_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -1323,7 +1207,7 @@ thermal_network
         label="technology/components";
         "DISTRIBUTION.xls"
     }
-    subgraph cluster_8_in {
+    subgraph cluster_7_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -1331,7 +1215,7 @@ thermal_network
         label="topography";
         "terrain.tif"
     }
-    subgraph cluster_9_in {
+    subgraph cluster_8_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -1346,7 +1230,6 @@ thermal_network
     "nodes.shp" -> "thermal_network"[label="(get_network_layout_nodes_shapefile)"]
     "Nominal_EdgeMassFlow_at_design_{network_type}__kgpers.csv" -> "thermal_network"[label="(get_nominal_edge_mass_flow_csv_file)"]
     "Nominal_NodeMassFlow_at_design_{network_type}__kgpers.csv" -> "thermal_network"[label="(get_nominal_node_mass_flow_csv_file)"]
-    "DH_Network_summary_result_0x19b.csv" -> "thermal_network"[label="(get_optimization_thermal_network_data_file)"]
     "site.shp" -> "thermal_network"[label="(get_site_polygon)"]
     "streets.shp" -> "thermal_network"[label="(get_street_network)"]
     "surroundings.shp" -> "thermal_network"[label="(get_surroundings_geometry)"]
@@ -1455,20 +1338,12 @@ demand
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="data/optimization/network";
-        "DH_Network_summary_result_0x19b.csv"
-    }
-    subgraph cluster_6_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
         label="data/solar-radiation";
         "{building}_radiation.csv"
         "B001_insolation_Whm2.json"
         "B001_geometry.csv"
     }
-    subgraph cluster_7_in {
+    subgraph cluster_6_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -1476,7 +1351,7 @@ demand
         label="networks";
         "streets.shp"
     }
-    subgraph cluster_8_in {
+    subgraph cluster_7_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -1486,7 +1361,7 @@ demand
         "ENVELOPE.xls"
         "SUPPLY.xls"
     }
-    subgraph cluster_9_in {
+    subgraph cluster_8_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -1494,7 +1369,7 @@ demand
         label="topography";
         "terrain.tif"
     }
-    subgraph cluster_10_in {
+    subgraph cluster_9_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -1513,7 +1388,6 @@ demand
     "HVAC.xls" -> "demand"[label="(get_database_air_conditioning_systems)"]
     "ENVELOPE.xls" -> "demand"[label="(get_database_envelope_systems)"]
     "SUPPLY.xls" -> "demand"[label="(get_database_supply_assemblies)"]
-    "DH_Network_summary_result_0x19b.csv" -> "demand"[label="(get_optimization_thermal_network_data_file)"]
     "{building}_radiation.csv" -> "demand"[label="(get_radiation_building)"]
     "B001_insolation_Whm2.json" -> "demand"[label="(get_radiation_building_sensors)"]
     "B001_geometry.csv" -> "demand"[label="(get_radiation_metadata)"]
@@ -1564,18 +1438,10 @@ data_initializer
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="data/optimization/network";
-        "DH_Network_summary_result_0x19b.csv"
-    }
-    subgraph cluster_2_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
         label="networks";
         "streets.shp"
     }
-    subgraph cluster_3_out {
+    subgraph cluster_2_out {
         style = filled;
         color = "#aadcdd";
         fontsize = 20;
@@ -1583,7 +1449,7 @@ data_initializer
         label="technology/archetypes/schedules";
         "{use}.csv"
     }
-    subgraph cluster_4_out {
+    subgraph cluster_3_out {
         style = filled;
         color = "#aadcdd";
         fontsize = 20;
@@ -1591,7 +1457,7 @@ data_initializer
         label="technology/archetypes/use_types";
         "USE_TYPE_PROPERTIES.xlsx"
     }
-    subgraph cluster_5_out {
+    subgraph cluster_4_out {
         style = filled;
         color = "#aadcdd";
         fontsize = 20;
@@ -1601,7 +1467,7 @@ data_initializer
         "ENVELOPE.xls"
         "SUPPLY.xls"
     }
-    subgraph cluster_6_out {
+    subgraph cluster_5_out {
         style = filled;
         color = "#aadcdd";
         fontsize = 20;
@@ -1611,7 +1477,7 @@ data_initializer
         "DISTRIBUTION.xls"
         "FEEDSTOCKS.xls"
     }
-    subgraph cluster_7_in {
+    subgraph cluster_6_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -1619,7 +1485,7 @@ data_initializer
         label="topography";
         "terrain.tif"
     }
-    subgraph cluster_8_in {
+    subgraph cluster_7_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -1627,7 +1493,6 @@ data_initializer
         label="weather";
         "Zug-inducity_1990_2010_TMY.epw"
     }
-    "DH_Network_summary_result_0x19b.csv" -> "data_initializer"[label="(get_optimization_thermal_network_data_file)"]
     "site.shp" -> "data_initializer"[label="(get_site_polygon)"]
     "streets.shp" -> "data_initializer"[label="(get_street_network)"]
     "surroundings.shp" -> "data_initializer"[label="(get_surroundings_geometry)"]
@@ -1705,18 +1570,10 @@ schedule_maker
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="data/optimization/network";
-        "DH_Network_summary_result_0x19b.csv"
-    }
-    subgraph cluster_5_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
         label="networks";
         "streets.shp"
     }
-    subgraph cluster_6_in {
+    subgraph cluster_5_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -1724,7 +1581,7 @@ schedule_maker
         label="technology/assemblies";
         "ENVELOPE.xls"
     }
-    subgraph cluster_7_in {
+    subgraph cluster_6_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -1732,7 +1589,7 @@ schedule_maker
         label="topography";
         "terrain.tif"
     }
-    subgraph cluster_8_in {
+    subgraph cluster_7_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -1746,7 +1603,6 @@ schedule_maker
     "internal_loads.dbf" -> "schedule_maker"[label="(get_building_internal)"]
     "B001.csv" -> "schedule_maker"[label="(get_building_weekly_schedules)"]
     "ENVELOPE.xls" -> "schedule_maker"[label="(get_database_envelope_systems)"]
-    "DH_Network_summary_result_0x19b.csv" -> "schedule_maker"[label="(get_optimization_thermal_network_data_file)"]
     "site.shp" -> "schedule_maker"[label="(get_site_polygon)"]
     "streets.shp" -> "schedule_maker"[label="(get_street_network)"]
     "surroundings.shp" -> "schedule_maker"[label="(get_surroundings_geometry)"]
@@ -1816,18 +1672,10 @@ system_costs
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="data/optimization/network";
-        "DH_Network_summary_result_0x19b.csv"
-    }
-    subgraph cluster_5_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
         label="networks";
         "streets.shp"
     }
-    subgraph cluster_6_in {
+    subgraph cluster_5_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -1835,7 +1683,7 @@ system_costs
         label="technology/assemblies";
         "SUPPLY.xls"
     }
-    subgraph cluster_7_in {
+    subgraph cluster_6_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -1843,7 +1691,7 @@ system_costs
         label="technology/components";
         "FEEDSTOCKS.xls"
     }
-    subgraph cluster_8_in {
+    subgraph cluster_7_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -1851,7 +1699,7 @@ system_costs
         label="topography";
         "terrain.tif"
     }
-    subgraph cluster_9_in {
+    subgraph cluster_8_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -1862,7 +1710,6 @@ system_costs
     "supply_systems.dbf" -> "system_costs"[label="(get_building_supply)"]
     "FEEDSTOCKS.xls" -> "system_costs"[label="(get_database_feedstocks)"]
     "SUPPLY.xls" -> "system_costs"[label="(get_database_supply_assemblies)"]
-    "DH_Network_summary_result_0x19b.csv" -> "system_costs"[label="(get_optimization_thermal_network_data_file)"]
     "site.shp" -> "system_costs"[label="(get_site_polygon)"]
     "streets.shp" -> "system_costs"[label="(get_street_network)"]
     "surroundings.shp" -> "system_costs"[label="(get_surroundings_geometry)"]
@@ -1911,15 +1758,7 @@ network_layout
         label="data/demand";
         "Total_demand.csv"
     }
-    subgraph cluster_2_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="data/optimization/network";
-        "DH_Network_summary_result_0x19b.csv"
-    }
-    subgraph cluster_3_out {
+    subgraph cluster_2_out {
         style = filled;
         color = "#aadcdd";
         fontsize = 20;
@@ -1928,7 +1767,7 @@ network_layout
         "edges.shp"
         "nodes.shp"
     }
-    subgraph cluster_4_in {
+    subgraph cluster_3_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -1936,7 +1775,7 @@ network_layout
         label="networks";
         "streets.shp"
     }
-    subgraph cluster_5_in {
+    subgraph cluster_4_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -1944,7 +1783,7 @@ network_layout
         label="topography";
         "terrain.tif"
     }
-    subgraph cluster_6_in {
+    subgraph cluster_5_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -1952,7 +1791,6 @@ network_layout
         label="weather";
         "Zug-inducity_1990_2010_TMY.epw"
     }
-    "DH_Network_summary_result_0x19b.csv" -> "network_layout"[label="(get_optimization_thermal_network_data_file)"]
     "site.shp" -> "network_layout"[label="(get_site_polygon)"]
     "streets.shp" -> "network_layout"[label="(get_street_network)"]
     "surroundings.shp" -> "network_layout"[label="(get_surroundings_geometry)"]
@@ -1999,18 +1837,10 @@ weather_helper
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="data/optimization/network";
-        "DH_Network_summary_result_0x19b.csv"
-    }
-    subgraph cluster_2_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
         label="networks";
         "streets.shp"
     }
-    subgraph cluster_3_in {
+    subgraph cluster_2_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -2018,7 +1848,7 @@ weather_helper
         label="topography";
         "terrain.tif"
     }
-    subgraph cluster_4_in {
+    subgraph cluster_3_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -2026,7 +1856,7 @@ weather_helper
         label="weather";
         "Zug-inducity_1990_2010_TMY.epw"
     }
-    subgraph cluster_4_out {
+    subgraph cluster_3_out {
         style = filled;
         color = "#aadcdd";
         fontsize = 20;
@@ -2034,7 +1864,6 @@ weather_helper
         label="weather";
         "weather.epw"
     }
-    "DH_Network_summary_result_0x19b.csv" -> "weather_helper"[label="(get_optimization_thermal_network_data_file)"]
     "site.shp" -> "weather_helper"[label="(get_site_polygon)"]
     "streets.shp" -> "weather_helper"[label="(get_street_network)"]
     "surroundings.shp" -> "weather_helper"[label="(get_surroundings_geometry)"]
@@ -2109,7 +1938,6 @@ optimization
         rank=same;
         label="data/optimization/network";
         "DH_Network_summary_result_0x1be.csv"
-        "DH_Network_summary_result_0x19b.csv"
     }
     subgraph cluster_4_out {
         style = filled;
@@ -2193,7 +2021,6 @@ optimization
         "ind_1_connected_cooling_capacity.csv"
         "ind_0_disconnected_cooling_capacity.csv"
         "gen_1_connected_performance.csv"
-        "gen_1_total_performance_halloffame.csv"
         "ind_2_buildings_connected_performance.csv"
         "ind_2_Cooling_Activation_Pattern.csv"
         "ind_1_Electricity_Activation_Pattern.csv"
@@ -2257,7 +2084,6 @@ optimization
     "DiscOp_B001_result_heating_activation.csv" -> "optimization"[label="(get_optimization_decentralized_folder_building_result_heating_activation)"]
     "DH_Network_summary_result_0x1be.csv" -> "optimization"[label="(get_optimization_network_results_summary)"]
     "110011011DH_B001_result.csv" -> "optimization"[label="(get_optimization_substations_results_file)"]
-    "DH_Network_summary_result_0x19b.csv" -> "optimization"[label="(get_optimization_thermal_network_data_file)"]
     "Sewage_heat_potential.csv" -> "optimization"[label="(get_sewage_heat_potential)"]
     "site.shp" -> "optimization"[label="(get_site_polygon)"]
     "streets.shp" -> "optimization"[label="(get_street_network)"]
@@ -2278,7 +2104,6 @@ optimization
     "optimization" -> "gen_1_connected_performance.csv"[label="(get_optimization_generation_connected_performance)"]
     "optimization" -> "gen_2_disconnected_performance.csv"[label="(get_optimization_generation_disconnected_performance)"]
     "optimization" -> "gen_2_total_performance.csv"[label="(get_optimization_generation_total_performance)"]
-    "optimization" -> "gen_1_total_performance_halloffame.csv"[label="(get_optimization_generation_total_performance_halloffame)"]
     "optimization" -> "gen_2_total_performance_pareto.csv"[label="(get_optimization_generation_total_performance_pareto)"]
     "optimization" -> "generation_2_individuals.csv"[label="(get_optimization_individuals_in_generation)"]
     "optimization" -> "DH_Network_summary_result_0x1be.csv"[label="(get_optimization_network_results_summary)"]
@@ -2324,15 +2149,7 @@ shallow_geothermal_potential
         "surroundings.shp"
         "zone.shp"
     }
-    subgraph cluster_1_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="data/optimization/network";
-        "DH_Network_summary_result_0x19b.csv"
-    }
-    subgraph cluster_2_out {
+    subgraph cluster_1_out {
         style = filled;
         color = "#aadcdd";
         fontsize = 20;
@@ -2340,7 +2157,7 @@ shallow_geothermal_potential
         label="data/potentials";
         "Shallow_geothermal_potential.csv"
     }
-    subgraph cluster_3_in {
+    subgraph cluster_2_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -2348,7 +2165,7 @@ shallow_geothermal_potential
         label="networks";
         "streets.shp"
     }
-    subgraph cluster_4_in {
+    subgraph cluster_3_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -2356,7 +2173,7 @@ shallow_geothermal_potential
         label="topography";
         "terrain.tif"
     }
-    subgraph cluster_5_in {
+    subgraph cluster_4_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -2365,7 +2182,6 @@ shallow_geothermal_potential
         "Zug-inducity_1990_2010_TMY.epw"
         "weather.epw"
     }
-    "DH_Network_summary_result_0x19b.csv" -> "shallow_geothermal_potential"[label="(get_optimization_thermal_network_data_file)"]
     "site.shp" -> "shallow_geothermal_potential"[label="(get_site_polygon)"]
     "streets.shp" -> "shallow_geothermal_potential"[label="(get_street_network)"]
     "surroundings.shp" -> "shallow_geothermal_potential"[label="(get_surroundings_geometry)"]
@@ -2439,18 +2255,10 @@ emissions
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="data/optimization/network";
-        "DH_Network_summary_result_0x19b.csv"
-    }
-    subgraph cluster_5_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
         label="networks";
         "streets.shp"
     }
-    subgraph cluster_6_in {
+    subgraph cluster_5_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -2458,7 +2266,7 @@ emissions
         label="technology/assemblies";
         "SUPPLY.xls"
     }
-    subgraph cluster_7_in {
+    subgraph cluster_6_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -2466,7 +2274,7 @@ emissions
         label="technology/components";
         "FEEDSTOCKS.xls"
     }
-    subgraph cluster_8_in {
+    subgraph cluster_7_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -2474,7 +2282,7 @@ emissions
         label="topography";
         "terrain.tif"
     }
-    subgraph cluster_9_in {
+    subgraph cluster_8_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -2487,7 +2295,6 @@ emissions
     "typology.dbf" -> "emissions"[label="(get_building_typology)"]
     "FEEDSTOCKS.xls" -> "emissions"[label="(get_database_feedstocks)"]
     "SUPPLY.xls" -> "emissions"[label="(get_database_supply_assemblies)"]
-    "DH_Network_summary_result_0x19b.csv" -> "emissions"[label="(get_optimization_thermal_network_data_file)"]
     "site.shp" -> "emissions"[label="(get_site_polygon)"]
     "streets.shp" -> "emissions"[label="(get_street_network)"]
     "surroundings.shp" -> "emissions"[label="(get_surroundings_geometry)"]
@@ -2535,18 +2342,10 @@ data-initializer
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="data/optimization/network";
-        "DH_Network_summary_result_0x19b.csv"
-    }
-    subgraph cluster_2_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
         label="networks";
         "streets.shp"
     }
-    subgraph cluster_3_out {
+    subgraph cluster_2_out {
         style = filled;
         color = "#aadcdd";
         fontsize = 20;
@@ -2554,7 +2353,7 @@ data-initializer
         label="technology/archetypes";
         "CONSTRUCTION_STANDARDS.xlsx"
     }
-    subgraph cluster_4_in {
+    subgraph cluster_3_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -2562,7 +2361,7 @@ data-initializer
         label="topography";
         "terrain.tif"
     }
-    subgraph cluster_5_in {
+    subgraph cluster_4_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -2570,7 +2369,6 @@ data-initializer
         label="weather";
         "Zug-inducity_1990_2010_TMY.epw"
     }
-    "DH_Network_summary_result_0x19b.csv" -> "data-initializer"[label="(get_optimization_thermal_network_data_file)"]
     "site.shp" -> "data-initializer"[label="(get_site_polygon)"]
     "streets.shp" -> "data-initializer"[label="(get_street_network)"]
     "surroundings.shp" -> "data-initializer"[label="(get_surroundings_geometry)"]

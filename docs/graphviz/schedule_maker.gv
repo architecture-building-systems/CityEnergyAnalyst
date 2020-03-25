@@ -55,18 +55,10 @@ digraph trace_inputlocator {
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="data/optimization/network";
-        "DH_Network_summary_result_0x19b.csv"
-    }
-    subgraph cluster_5_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
         label="networks";
         "streets.shp"
     }
-    subgraph cluster_6_in {
+    subgraph cluster_5_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -74,7 +66,7 @@ digraph trace_inputlocator {
         label="technology/assemblies";
         "ENVELOPE.xls"
     }
-    subgraph cluster_7_in {
+    subgraph cluster_6_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -82,7 +74,7 @@ digraph trace_inputlocator {
         label="topography";
         "terrain.tif"
     }
-    subgraph cluster_8_in {
+    subgraph cluster_7_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -96,7 +88,6 @@ digraph trace_inputlocator {
     "internal_loads.dbf" -> "schedule_maker"[label="(get_building_internal)"]
     "B001.csv" -> "schedule_maker"[label="(get_building_weekly_schedules)"]
     "ENVELOPE.xls" -> "schedule_maker"[label="(get_database_envelope_systems)"]
-    "DH_Network_summary_result_0x19b.csv" -> "schedule_maker"[label="(get_optimization_thermal_network_data_file)"]
     "site.shp" -> "schedule_maker"[label="(get_site_polygon)"]
     "streets.shp" -> "schedule_maker"[label="(get_street_network)"]
     "surroundings.shp" -> "schedule_maker"[label="(get_surroundings_geometry)"]

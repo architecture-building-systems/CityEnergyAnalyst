@@ -67,20 +67,12 @@ digraph trace_inputlocator {
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="data/optimization/network";
-        "DH_Network_summary_result_0x19b.csv"
-    }
-    subgraph cluster_6_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
         label="data/solar-radiation";
         "{building}_radiation.csv"
         "B001_insolation_Whm2.json"
         "B001_geometry.csv"
     }
-    subgraph cluster_7_in {
+    subgraph cluster_6_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -88,7 +80,7 @@ digraph trace_inputlocator {
         label="networks";
         "streets.shp"
     }
-    subgraph cluster_8_in {
+    subgraph cluster_7_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -98,7 +90,7 @@ digraph trace_inputlocator {
         "ENVELOPE.xls"
         "SUPPLY.xls"
     }
-    subgraph cluster_9_in {
+    subgraph cluster_8_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -106,7 +98,7 @@ digraph trace_inputlocator {
         label="topography";
         "terrain.tif"
     }
-    subgraph cluster_10_in {
+    subgraph cluster_9_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -125,7 +117,6 @@ digraph trace_inputlocator {
     "HVAC.xls" -> "demand"[label="(get_database_air_conditioning_systems)"]
     "ENVELOPE.xls" -> "demand"[label="(get_database_envelope_systems)"]
     "SUPPLY.xls" -> "demand"[label="(get_database_supply_assemblies)"]
-    "DH_Network_summary_result_0x19b.csv" -> "demand"[label="(get_optimization_thermal_network_data_file)"]
     "{building}_radiation.csv" -> "demand"[label="(get_radiation_building)"]
     "B001_insolation_Whm2.json" -> "demand"[label="(get_radiation_building_sensors)"]
     "B001_geometry.csv" -> "demand"[label="(get_radiation_metadata)"]

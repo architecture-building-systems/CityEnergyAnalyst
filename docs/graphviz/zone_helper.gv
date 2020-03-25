@@ -29,18 +29,10 @@ digraph trace_inputlocator {
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="data/optimization/network";
-        "DH_Network_summary_result_0x19b.csv"
-    }
-    subgraph cluster_2_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
         label="networks";
         "streets.shp"
     }
-    subgraph cluster_3_in {
+    subgraph cluster_2_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -48,7 +40,7 @@ digraph trace_inputlocator {
         label="topography";
         "terrain.tif"
     }
-    subgraph cluster_4_in {
+    subgraph cluster_3_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -56,7 +48,6 @@ digraph trace_inputlocator {
         label="weather";
         "Zug-inducity_1990_2010_TMY.epw"
     }
-    "DH_Network_summary_result_0x19b.csv" -> "zone_helper"[label="(get_optimization_thermal_network_data_file)"]
     "site.shp" -> "zone_helper"[label="(get_site_polygon)"]
     "streets.shp" -> "zone_helper"[label="(get_street_network)"]
     "surroundings.shp" -> "zone_helper"[label="(get_surroundings_geometry)"]
