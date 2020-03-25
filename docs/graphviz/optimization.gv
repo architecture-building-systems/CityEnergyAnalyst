@@ -1,4 +1,4 @@
-digraph trace_inputlocator {
+digraph optimization {
     rankdir="LR";
     graph [overlap=false, fontname=arial];
     node [shape=box, style=filled, color=white, fontsize=15, fontname=arial, fixedsize=true, width=5];
@@ -19,32 +19,13 @@ digraph trace_inputlocator {
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="building-geometry";
-        "site.shp"
-        "surroundings.shp"
-        "zone.shp"
-    }
-    subgraph cluster_1_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="data/demand";
-        "B001.csv"
-        "Total_demand.csv"
-    }
-    subgraph cluster_2_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
         label="data/optimization/decentralized";
         "{building}_{configuration}_cooling_activation.csv"
         "{building}_{configuration}_cooling.csv"
         "DiscOp_B001_result_heating.csv"
         "DiscOp_B001_result_heating_activation.csv"
     }
-    subgraph cluster_3_out {
+    subgraph cluster_1_out {
         style = filled;
         color = "#aadcdd";
         fontsize = 20;
@@ -52,7 +33,7 @@ digraph trace_inputlocator {
         label="data/optimization/master";
         "CheckPoint_1"
     }
-    subgraph cluster_4_in {
+    subgraph cluster_2_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -60,7 +41,7 @@ digraph trace_inputlocator {
         label="data/optimization/network";
         "DH_Network_summary_result_0x1be.csv"
     }
-    subgraph cluster_4_out {
+    subgraph cluster_2_out {
         style = filled;
         color = "#aadcdd";
         fontsize = 20;
@@ -68,7 +49,7 @@ digraph trace_inputlocator {
         label="data/optimization/network";
         "DH_Network_summary_result_0x1be.csv"
     }
-    subgraph cluster_5_in {
+    subgraph cluster_3_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -76,7 +57,7 @@ digraph trace_inputlocator {
         label="data/optimization/substations";
         "110011011DH_B001_result.csv"
     }
-    subgraph cluster_5_out {
+    subgraph cluster_3_out {
         style = filled;
         color = "#aadcdd";
         fontsize = 20;
@@ -85,17 +66,7 @@ digraph trace_inputlocator {
         "110011011DH_B001_result.csv"
         "Total_DH_111111111.csv"
     }
-    subgraph cluster_6_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="data/potentials";
-        "Shallow_geothermal_potential.csv"
-        "Sewage_heat_potential.csv"
-        "Water_body_potential.csv"
-    }
-    subgraph cluster_7_in {
+    subgraph cluster_4_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -105,25 +76,41 @@ digraph trace_inputlocator {
         "PV_total.csv"
         "SC_FP_total.csv"
     }
+    subgraph cluster_5_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="inputs/building-geometry";
+        "zone.shp"
+    }
+    subgraph cluster_6_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="inputs/networks";
+        "streets.shp"
+    }
+    subgraph cluster_7_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="inputs/technology/components";
+        "CONVERSION.xls"
+        "DISTRIBUTION.xls"
+        "FEEDSTOCKS.xls"
+    }
     subgraph cluster_8_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="data/thermal-network";
-        "DH__plant_pumping_pressure_loss_Pa.csv"
-        "DH__total_thermal_loss_edges_kW.csv"
-        "DH__metadata_edges.csv"
+        label="inputs/weather";
+        "weather.epw"
     }
-    subgraph cluster_9_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="networks";
-        "streets.shp"
-    }
-    subgraph cluster_10_out {
+    subgraph cluster_9_out {
         style = filled;
         color = "#aadcdd";
         fontsize = 20;
@@ -133,7 +120,7 @@ digraph trace_inputlocator {
         "ind_1_disconnected_heating_capacity.csv"
         "ind_2_total_performance.csv"
     }
-    subgraph cluster_11_out {
+    subgraph cluster_10_out {
         style = filled;
         color = "#aadcdd";
         fontsize = 20;
@@ -147,7 +134,7 @@ digraph trace_inputlocator {
         "ind_1_Electricity_Activation_Pattern.csv"
         "ind_1_Electricity_Requirements_Pattern.csv"
     }
-    subgraph cluster_12_out {
+    subgraph cluster_11_out {
         style = filled;
         color = "#aadcdd";
         fontsize = 20;
@@ -162,32 +149,34 @@ digraph trace_inputlocator {
         "ind_0_buildings_disconnected_performance.csv"
         "ind_0_Heating_Activation_Pattern.csv"
     }
+    subgraph cluster_12_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="outputs/data/demand";
+        "B001.csv"
+        "Total_demand.csv"
+    }
     subgraph cluster_13_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="technology/components";
-        "CONVERSION.xls"
-        "DISTRIBUTION.xls"
-        "FEEDSTOCKS.xls"
+        label="outputs/data/potentials";
+        "Shallow_geothermal_potential.csv"
+        "Sewage_heat_potential.csv"
+        "Water_body_potential.csv"
     }
     subgraph cluster_14_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="topography";
-        "terrain.tif"
-    }
-    subgraph cluster_15_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="weather";
-        "Zug-inducity_1990_2010_TMY.epw"
-        "weather.epw"
+        label="outputs/data/thermal-network";
+        "DH__plant_pumping_pressure_loss_Pa.csv"
+        "DH__total_thermal_loss_edges_kW.csv"
+        "DH__metadata_edges.csv"
     }
     "PVT_total.csv" -> "optimization"[label="(PVT_totals)"]
     "PV_total.csv" -> "optimization"[label="(PV_totals)"]
@@ -206,14 +195,10 @@ digraph trace_inputlocator {
     "DH_Network_summary_result_0x1be.csv" -> "optimization"[label="(get_optimization_network_results_summary)"]
     "110011011DH_B001_result.csv" -> "optimization"[label="(get_optimization_substations_results_file)"]
     "Sewage_heat_potential.csv" -> "optimization"[label="(get_sewage_heat_potential)"]
-    "site.shp" -> "optimization"[label="(get_site_polygon)"]
     "streets.shp" -> "optimization"[label="(get_street_network)"]
-    "surroundings.shp" -> "optimization"[label="(get_surroundings_geometry)"]
-    "terrain.tif" -> "optimization"[label="(get_terrain)"]
     "DH__metadata_edges.csv" -> "optimization"[label="(get_thermal_network_edge_list_file)"]
     "Total_demand.csv" -> "optimization"[label="(get_total_demand)"]
     "Water_body_potential.csv" -> "optimization"[label="(get_water_body_potential)"]
-    "Zug-inducity_1990_2010_TMY.epw" -> "optimization"[label="(get_weather)"]
     "weather.epw" -> "optimization"[label="(get_weather_file)"]
     "zone.shp" -> "optimization"[label="(get_zone_geometry)"]
     "optimization" -> "CheckPoint_1"[label="(get_optimization_checkpoint)"]

@@ -1,4 +1,4 @@
-digraph trace_inputlocator {
+digraph radiation {
     rankdir="LR";
     graph [overlap=false, fontname=arial];
     node [shape=box, style=filled, color=white, fontsize=15, fontname=arial, fixedsize=true, width=5];
@@ -19,8 +19,7 @@ digraph trace_inputlocator {
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="building-geometry";
-        "site.shp"
+        label="inputs/building-geometry";
         "surroundings.shp"
         "zone.shp"
     }
@@ -29,60 +28,48 @@ digraph trace_inputlocator {
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="building-properties";
+        label="inputs/building-properties";
         "architecture.dbf"
     }
-    subgraph cluster_2_out {
+    subgraph cluster_2_in {
         style = filled;
-        color = "#aadcdd";
+        color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="data/solar-radiation";
-        "{building}_radiation.csv"
-        "B001_insolation_Whm2.json"
-        "buidling_materials.csv"
-        "B001_geometry.csv"
+        label="inputs/technology/assemblies";
+        "ENVELOPE.xls"
     }
     subgraph cluster_3_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="networks";
-        "streets.shp"
+        label="inputs/topography";
+        "terrain.tif"
     }
     subgraph cluster_4_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="technology/assemblies";
-        "ENVELOPE.xls"
-    }
-    subgraph cluster_5_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="topography";
-        "terrain.tif"
-    }
-    subgraph cluster_6_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="weather";
-        "Zug-inducity_1990_2010_TMY.epw"
+        label="inputs/weather";
         "weather.epw"
+    }
+    subgraph cluster_5_out {
+        style = filled;
+        color = "#aadcdd";
+        fontsize = 20;
+        rank=same;
+        label="outputs/data/solar-radiation";
+        "{building}_radiation.csv"
+        "B001_insolation_Whm2.json"
+        "buidling_materials.csv"
+        "B001_geometry.csv"
     }
     "architecture.dbf" -> "radiation"[label="(get_building_architecture)"]
     "ENVELOPE.xls" -> "radiation"[label="(get_database_envelope_systems)"]
-    "site.shp" -> "radiation"[label="(get_site_polygon)"]
-    "streets.shp" -> "radiation"[label="(get_street_network)"]
     "surroundings.shp" -> "radiation"[label="(get_surroundings_geometry)"]
     "terrain.tif" -> "radiation"[label="(get_terrain)"]
-    "Zug-inducity_1990_2010_TMY.epw" -> "radiation"[label="(get_weather)"]
     "weather.epw" -> "radiation"[label="(get_weather_file)"]
     "zone.shp" -> "radiation"[label="(get_zone_geometry)"]
     "radiation" -> "{building}_radiation.csv"[label="(get_radiation_building)"]

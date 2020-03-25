@@ -1,5 +1,5 @@
 {% if scripts|length > 1 %}
-digraph trace_inputlocator {
+digraph {{script_name}} {
     rankdir="LR";
     graph [overlap = false, fontname=arial];
     {% for script in scripts %}
@@ -20,7 +20,7 @@ digraph trace_inputlocator {
 
 {% else %}
 
-digraph trace_inputlocator {
+digraph {{script_name}} {
     rankdir="LR";
     graph [overlap=false, fontname=arial];
     node [shape=box, style=filled, color=white, fontsize=15, fontname=arial, fixedsize=true, width={{width}}];

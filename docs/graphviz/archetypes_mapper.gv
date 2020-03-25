@@ -1,4 +1,4 @@
-digraph trace_inputlocator {
+digraph archetypes_mapper {
     rankdir="LR";
     graph [overlap=false, fontname=arial];
     node [shape=box, style=filled, color=white, fontsize=15, fontname=arial, fixedsize=true, width=5];
@@ -19,9 +19,7 @@ digraph trace_inputlocator {
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="building-geometry";
-        "site.shp"
-        "surroundings.shp"
+        label="inputs/building-geometry";
         "zone.shp"
     }
     subgraph cluster_1_in {
@@ -29,7 +27,7 @@ digraph trace_inputlocator {
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="building-properties";
+        label="inputs/building-properties";
         "typology.dbf"
     }
     subgraph cluster_1_out {
@@ -37,7 +35,7 @@ digraph trace_inputlocator {
         color = "#aadcdd";
         fontsize = 20;
         rank=same;
-        label="building-properties";
+        label="inputs/building-properties";
         "air_conditioning_systems.dbf"
         "architecture.dbf"
         "indoor_comfort.dbf"
@@ -49,7 +47,7 @@ digraph trace_inputlocator {
         color = "#aadcdd";
         fontsize = 20;
         rank=same;
-        label="building-properties/schedules";
+        label="inputs/building-properties/schedules";
         "B001.csv"
     }
     subgraph cluster_3_in {
@@ -57,18 +55,10 @@ digraph trace_inputlocator {
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="networks";
-        "streets.shp"
-    }
-    subgraph cluster_4_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="technology/archetypes";
+        label="inputs/technology/archetypes";
         "CONSTRUCTION_STANDARDS.xlsx"
     }
-    subgraph cluster_5_in {
+    subgraph cluster_4_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -76,7 +66,7 @@ digraph trace_inputlocator {
         label="technology/archetypes/schedules";
         "{use}.csv"
     }
-    subgraph cluster_6_in {
+    subgraph cluster_5_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -84,31 +74,10 @@ digraph trace_inputlocator {
         label="technology/archetypes/use_types";
         "USE_TYPE_PROPERTIES.xlsx"
     }
-    subgraph cluster_7_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="topography";
-        "terrain.tif"
-    }
-    subgraph cluster_8_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="weather";
-        "Zug-inducity_1990_2010_TMY.epw"
-    }
     "typology.dbf" -> "archetypes_mapper"[label="(get_building_typology)"]
     "CONSTRUCTION_STANDARDS.xlsx" -> "archetypes_mapper"[label="(get_database_construction_standards)"]
     "{use}.csv" -> "archetypes_mapper"[label="(get_database_standard_schedules_use)"]
     "USE_TYPE_PROPERTIES.xlsx" -> "archetypes_mapper"[label="(get_database_use_types_properties)"]
-    "site.shp" -> "archetypes_mapper"[label="(get_site_polygon)"]
-    "streets.shp" -> "archetypes_mapper"[label="(get_street_network)"]
-    "surroundings.shp" -> "archetypes_mapper"[label="(get_surroundings_geometry)"]
-    "terrain.tif" -> "archetypes_mapper"[label="(get_terrain)"]
-    "Zug-inducity_1990_2010_TMY.epw" -> "archetypes_mapper"[label="(get_weather)"]
     "zone.shp" -> "archetypes_mapper"[label="(get_zone_geometry)"]
     "archetypes_mapper" -> "air_conditioning_systems.dbf"[label="(get_building_air_conditioning)"]
     "archetypes_mapper" -> "architecture.dbf"[label="(get_building_architecture)"]

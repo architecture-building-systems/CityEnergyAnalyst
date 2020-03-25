@@ -1,4 +1,4 @@
-digraph trace_inputlocator {
+digraph solar_collector {
     rankdir="LR";
     graph [overlap=false, fontname=arial];
     node [shape=box, style=filled, color=white, fontsize=15, fontname=arial, fixedsize=true, width=5];
@@ -14,17 +14,7 @@ digraph trace_inputlocator {
     "process"->"outputs"[style=invis]
     }
     "solar_collector"[style=filled, color=white, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname=arial];
-    subgraph cluster_0_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="building-geometry";
-        "site.shp"
-        "surroundings.shp"
-        "zone.shp"
-    }
-    subgraph cluster_1_out {
+    subgraph cluster_0_out {
         style = filled;
         color = "#aadcdd";
         fontsize = 20;
@@ -35,58 +25,44 @@ digraph trace_inputlocator {
         "SC_ET_total_buildings.csv"
         "SC_FP_total.csv"
     }
+    subgraph cluster_1_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="inputs/building-geometry";
+        "zone.shp"
+    }
     subgraph cluster_2_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="data/solar-radiation";
-        "{building}_radiation.csv"
-        "B001_insolation_Whm2.json"
-        "B001_geometry.csv"
+        label="inputs/technology/components";
+        "CONVERSION.xls"
     }
     subgraph cluster_3_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="networks";
-        "streets.shp"
+        label="inputs/weather";
+        "weather.epw"
     }
     subgraph cluster_4_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="technology/components";
-        "CONVERSION.xls"
-    }
-    subgraph cluster_5_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="topography";
-        "terrain.tif"
-    }
-    subgraph cluster_6_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="weather";
-        "Zug-inducity_1990_2010_TMY.epw"
-        "weather.epw"
+        label="outputs/data/solar-radiation";
+        "{building}_radiation.csv"
+        "B001_insolation_Whm2.json"
+        "B001_geometry.csv"
     }
     "CONVERSION.xls" -> "solar_collector"[label="(get_database_conversion_systems)"]
     "{building}_radiation.csv" -> "solar_collector"[label="(get_radiation_building)"]
     "B001_insolation_Whm2.json" -> "solar_collector"[label="(get_radiation_building_sensors)"]
     "B001_geometry.csv" -> "solar_collector"[label="(get_radiation_metadata)"]
-    "site.shp" -> "solar_collector"[label="(get_site_polygon)"]
-    "streets.shp" -> "solar_collector"[label="(get_street_network)"]
-    "surroundings.shp" -> "solar_collector"[label="(get_surroundings_geometry)"]
-    "terrain.tif" -> "solar_collector"[label="(get_terrain)"]
-    "Zug-inducity_1990_2010_TMY.epw" -> "solar_collector"[label="(get_weather)"]
     "weather.epw" -> "solar_collector"[label="(get_weather_file)"]
     "zone.shp" -> "solar_collector"[label="(get_zone_geometry)"]
     "solar_collector" -> "B001_SC_ET_sensors.csv"[label="(SC_metadata_results)"]

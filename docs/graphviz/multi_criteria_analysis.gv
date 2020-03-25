@@ -1,4 +1,4 @@
-digraph trace_inputlocator {
+digraph multi_criteria_analysis {
     rankdir="LR";
     graph [overlap=false, fontname=arial];
     node [shape=box, style=filled, color=white, fontsize=15, fontname=arial, fixedsize=true, width=5];
@@ -19,57 +19,17 @@ digraph trace_inputlocator {
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="building-geometry";
-        "site.shp"
-        "surroundings.shp"
-        "zone.shp"
+        label="optimization/slave/gen_2";
+        "gen_2_total_performance_pareto.csv"
     }
     subgraph cluster_1_out {
         style = filled;
         color = "#aadcdd";
         fontsize = 20;
         rank=same;
-        label="data/multicriteria";
+        label="outputs/data/multicriteria";
         "gen_2_multi_criteria_analysis.csv"
     }
-    subgraph cluster_2_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="networks";
-        "streets.shp"
-    }
-    subgraph cluster_3_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="optimization/slave/gen_2";
-        "gen_2_total_performance_pareto.csv"
-    }
-    subgraph cluster_4_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="topography";
-        "terrain.tif"
-    }
-    subgraph cluster_5_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="weather";
-        "Zug-inducity_1990_2010_TMY.epw"
-    }
     "gen_2_total_performance_pareto.csv" -> "multi_criteria_analysis"[label="(get_optimization_generation_total_performance_pareto)"]
-    "site.shp" -> "multi_criteria_analysis"[label="(get_site_polygon)"]
-    "streets.shp" -> "multi_criteria_analysis"[label="(get_street_network)"]
-    "surroundings.shp" -> "multi_criteria_analysis"[label="(get_surroundings_geometry)"]
-    "terrain.tif" -> "multi_criteria_analysis"[label="(get_terrain)"]
-    "Zug-inducity_1990_2010_TMY.epw" -> "multi_criteria_analysis"[label="(get_weather)"]
-    "zone.shp" -> "multi_criteria_analysis"[label="(get_zone_geometry)"]
     "multi_criteria_analysis" -> "gen_2_multi_criteria_analysis.csv"[label="(get_multi_criteria_analysis)"]
     }
