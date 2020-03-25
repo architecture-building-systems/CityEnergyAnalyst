@@ -19,6 +19,8 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+from cea.constants import HOURS_IN_YEAR
+
 
 def create_sensor_input_file(rad, chunk_n):
     sensor_file_path = os.path.join(rad.data_folder_path, "points_" + str(chunk_n) + ".pts")
@@ -210,6 +212,12 @@ def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, settings, max_glob
     # check inconsistencies and replace by max value of weather file
     print('Fixing inconsistencies, if any')
     solar_res = np.clip(solar_res, a_min=0.0, a_max=max_global)
+
+    # Check if leap year and remove extra day
+    if solar_res.shape[1] == HOURS_IN_YEAR + 24:
+        print('Removing leap day')
+        leap_day_hours = range(1416, 1440)
+        solar_res = np.delete(solar_res, leap_day_hours, axis=1)
 
     print("Writing results to disk")
     index = 0
