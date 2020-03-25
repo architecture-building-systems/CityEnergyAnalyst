@@ -1,4 +1,4 @@
-digraph trace_inputlocator {
+digraph decentralized {
     rankdir="LR";
     graph [overlap=false, fontname=arial];
     node [shape=box, style=filled, color=white, fontsize=15, fontname=arial, fixedsize=true, width=5];
@@ -14,34 +14,7 @@ digraph trace_inputlocator {
     "process"->"outputs"[style=invis]
     }
     "decentralized"[style=filled, color=white, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname=arial];
-    subgraph cluster_0_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="building-geometry";
-        "site.shp"
-        "surroundings.shp"
-        "zone.shp"
-    }
-    subgraph cluster_1_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="building-properties";
-        "supply_systems.dbf"
-    }
-    subgraph cluster_2_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="data/demand";
-        "B001.csv"
-        "Total_demand.csv"
-    }
-    subgraph cluster_3_out {
+    subgraph cluster_0_out {
         style = filled;
         color = "#aadcdd";
         fontsize = 20;
@@ -51,7 +24,7 @@ digraph trace_inputlocator {
         "DiscOp_B001_result_heating.csv"
         "DiscOp_B001_result_heating_activation.csv"
     }
-    subgraph cluster_4_out {
+    subgraph cluster_1_out {
         style = filled;
         color = "#aadcdd";
         fontsize = 20;
@@ -59,7 +32,7 @@ digraph trace_inputlocator {
         label="data/optimization/substations";
         "110011011DH_B001_result.csv"
     }
-    subgraph cluster_5_in {
+    subgraph cluster_2_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
@@ -67,51 +40,54 @@ digraph trace_inputlocator {
         label="data/potentials/solar";
         "B001_SC_ET.csv"
     }
+    subgraph cluster_3_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="inputs/building-geometry";
+        "zone.shp"
+    }
+    subgraph cluster_4_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="inputs/building-properties";
+        "supply_systems.dbf"
+    }
+    subgraph cluster_5_in {
+        style = filled;
+        color = "#E1F2F2";
+        fontsize = 20;
+        rank=same;
+        label="inputs/technology/components";
+        "CONVERSION.xls"
+        "FEEDSTOCKS.xls"
+    }
     subgraph cluster_6_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="networks";
-        "streets.shp"
+        label="inputs/weather";
+        "weather.epw"
     }
     subgraph cluster_7_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="technology/components";
-        "CONVERSION.xls"
-        "FEEDSTOCKS.xls"
-    }
-    subgraph cluster_8_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="topography";
-        "terrain.tif"
-    }
-    subgraph cluster_9_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="weather";
-        "Zug-inducity_1990_2010_TMY.epw"
-        "weather.epw"
+        label="outputs/data/demand";
+        "B001.csv"
+        "Total_demand.csv"
     }
     "B001_SC_ET.csv" -> "decentralized"[label="(SC_results)"]
     "supply_systems.dbf" -> "decentralized"[label="(get_building_supply)"]
     "CONVERSION.xls" -> "decentralized"[label="(get_database_conversion_systems)"]
     "FEEDSTOCKS.xls" -> "decentralized"[label="(get_database_feedstocks)"]
     "B001.csv" -> "decentralized"[label="(get_demand_results_file)"]
-    "site.shp" -> "decentralized"[label="(get_site_polygon)"]
-    "streets.shp" -> "decentralized"[label="(get_street_network)"]
-    "surroundings.shp" -> "decentralized"[label="(get_surroundings_geometry)"]
-    "terrain.tif" -> "decentralized"[label="(get_terrain)"]
     "Total_demand.csv" -> "decentralized"[label="(get_total_demand)"]
-    "Zug-inducity_1990_2010_TMY.epw" -> "decentralized"[label="(get_weather)"]
     "weather.epw" -> "decentralized"[label="(get_weather_file)"]
     "zone.shp" -> "decentralized"[label="(get_zone_geometry)"]
     "decentralized" -> "{building}_{configuration}_cooling_activation.csv"[label="(get_optimization_decentralized_folder_building_cooling_activation)"]

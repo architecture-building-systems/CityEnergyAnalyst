@@ -1,4 +1,4 @@
-digraph trace_inputlocator {
+digraph database-migrator {
     rankdir="LR";
     graph [overlap=false, fontname=arial];
     node [shape=box, style=filled, color=white, fontsize=15, fontname=arial, fixedsize=true, width=5];
@@ -14,53 +14,13 @@ digraph trace_inputlocator {
     "process"->"outputs"[style=invis]
     }
     "database-migrator"[style=filled, color=white, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname=arial];
-    subgraph cluster_0_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="building-geometry";
-        "site.shp"
-        "surroundings.shp"
-        "zone.shp"
-    }
-    subgraph cluster_1_out {
+    subgraph cluster_0_out {
         style = filled;
         color = "#aadcdd";
         fontsize = 20;
         rank=same;
-        label="building-properties";
+        label="inputs/building-properties";
         "typology.dbf"
     }
-    subgraph cluster_2_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="networks";
-        "streets.shp"
-    }
-    subgraph cluster_3_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="topography";
-        "terrain.tif"
-    }
-    subgraph cluster_4_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="weather";
-        "Zug-inducity_1990_2010_TMY.epw"
-    }
-    "site.shp" -> "database-migrator"[label="(get_site_polygon)"]
-    "streets.shp" -> "database-migrator"[label="(get_street_network)"]
-    "surroundings.shp" -> "database-migrator"[label="(get_surroundings_geometry)"]
-    "terrain.tif" -> "database-migrator"[label="(get_terrain)"]
-    "Zug-inducity_1990_2010_TMY.epw" -> "database-migrator"[label="(get_weather)"]
-    "zone.shp" -> "database-migrator"[label="(get_zone_geometry)"]
     "database-migrator" -> "typology.dbf"[label="(get_building_typology)"]
     }

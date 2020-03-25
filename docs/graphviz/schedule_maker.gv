@@ -1,4 +1,4 @@
-digraph trace_inputlocator {
+digraph schedule_maker {
     rankdir="LR";
     graph [overlap=false, fontname=arial];
     node [shape=box, style=filled, color=white, fontsize=15, fontname=arial, fixedsize=true, width=5];
@@ -19,8 +19,7 @@ digraph trace_inputlocator {
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="building-geometry";
-        "site.shp"
+        label="inputs/building-geometry";
         "surroundings.shp"
         "zone.shp"
     }
@@ -29,7 +28,7 @@ digraph trace_inputlocator {
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="building-properties";
+        label="inputs/building-properties";
         "architecture.dbf"
         "indoor_comfort.dbf"
         "internal_loads.dbf"
@@ -39,60 +38,48 @@ digraph trace_inputlocator {
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="building-properties/schedules";
+        label="inputs/building-properties/schedules";
         "B001.csv"
     }
-    subgraph cluster_3_out {
+    subgraph cluster_3_in {
         style = filled;
-        color = "#aadcdd";
+        color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="data/occupancy";
-        "B001.csv"
+        label="inputs/technology/assemblies";
+        "ENVELOPE.xls"
     }
     subgraph cluster_4_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="networks";
-        "streets.shp"
+        label="inputs/topography";
+        "terrain.tif"
     }
     subgraph cluster_5_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="technology/assemblies";
-        "ENVELOPE.xls"
-    }
-    subgraph cluster_6_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="topography";
-        "terrain.tif"
-    }
-    subgraph cluster_7_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="weather";
-        "Zug-inducity_1990_2010_TMY.epw"
+        label="inputs/weather";
         "weather.epw"
+    }
+    subgraph cluster_6_out {
+        style = filled;
+        color = "#aadcdd";
+        fontsize = 20;
+        rank=same;
+        label="outputs/data/occupancy";
+        "B001.csv"
     }
     "architecture.dbf" -> "schedule_maker"[label="(get_building_architecture)"]
     "indoor_comfort.dbf" -> "schedule_maker"[label="(get_building_comfort)"]
     "internal_loads.dbf" -> "schedule_maker"[label="(get_building_internal)"]
     "B001.csv" -> "schedule_maker"[label="(get_building_weekly_schedules)"]
     "ENVELOPE.xls" -> "schedule_maker"[label="(get_database_envelope_systems)"]
-    "site.shp" -> "schedule_maker"[label="(get_site_polygon)"]
-    "streets.shp" -> "schedule_maker"[label="(get_street_network)"]
     "surroundings.shp" -> "schedule_maker"[label="(get_surroundings_geometry)"]
     "terrain.tif" -> "schedule_maker"[label="(get_terrain)"]
-    "Zug-inducity_1990_2010_TMY.epw" -> "schedule_maker"[label="(get_weather)"]
     "weather.epw" -> "schedule_maker"[label="(get_weather_file)"]
     "zone.shp" -> "schedule_maker"[label="(get_zone_geometry)"]
     "schedule_maker" -> "B001.csv"[label="(get_schedule_model_file)"]
