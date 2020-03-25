@@ -9,6 +9,42 @@ The CEA team
 Starting from version 2.9.1 the credits are structured alphabetically (surname) and split into the categories of developers,
 scrum master, project owner, project sponsor and collaborators.
 
+- Version 3.0.2 - March 2020
+
+    Developers:
+    * [Amr Elesawy](http://www.systems.arch.ethz.ch/about-us/team/team-zurich/amr-elesawy.html)
+    * [Jimeno A. Fonseca](http://www.systems.arch.ethz.ch/about-us/team/team-singapore/jimeno-fonseca.html)
+    * [Gabriel Happle](http://www.systems.arch.ethz.ch/about-us/team/team-singapore/gabriel-happle.html)
+    * [Shanshan Hsieh](http://www.systems.arch.ethz.ch/about-us/team/team-singapore/shanshan-hsieh.html)
+    * [Reynold Mok](http://https://cityenergyanalyst.com/community)
+    * [Martín Mosteiro Romero](http://www.systems.arch.ethz.ch/about-us/team/team-zurich/martin-mosteiro-romero.html)
+    * [Zhongming Shi](http://www.systems.arch.ethz.ch/about-us/team/team-singapore/zhongming-shi.html)
+    * [Bhargava Krishna Sreepathi ](http://www.systems.arch.ethz.ch/about-us/team/team-singapore/sreepathi-bhargava-krishna.html)
+    * [Daren Thomas](http://www.systems.arch.ethz.ch/about-us/team/team-zurich/daren-thomas.html)
+
+    Scrum master:
+    * [Daren Thomas](http://www.systems.arch.ethz.ch/about-us/team/team-zurich/daren-thomas.html)
+
+    Project owner:
+    * [Jimeno A. Fonseca](http://www.systems.arch.ethz.ch/about-us/team/team-singapore/jimeno-fonseca.html)
+
+    Project sponsor:
+    * [Arno Schlueter](http://www.systems.arch.ethz.ch/about-us/team/arno-schlueter.html)
+
+    Collaborators:
+    * Sebastian Troiztsch
+    * Jose Bello
+    * Kian Wee Chen
+    * Jack Hawthorne
+    * Fazel Khayatian
+    * Victor Marty
+    * Paul Neitzel
+    * Thuy-An Nguyen
+    * Bo Lie Ong
+    * Lennart Rogenhofer
+    * Toivo Säwén
+    * Tim Vollrath
+    
 - Version 3.0.0 - March 2020
 
     Developers:
