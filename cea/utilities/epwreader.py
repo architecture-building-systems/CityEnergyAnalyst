@@ -35,7 +35,8 @@ def epw_reader(weather_path):
     num_of_hours = len(result)
     # Check if leap year and remove extra day
     if num_of_hours == HOURS_IN_YEAR + 24:
-        result = result[~((date_range.month == 2) & (date_range.day == 29))]
+        leap_day_hours = range(1416, 1440)
+        result = result.drop(leap_day_hours).reset_index()
 
     result['ratio_diffhout'] = result['difhorrad_Whm2'] / result['glohorrad_Whm2']
     result['ratio_diffhout'] = result['ratio_diffhout'].replace(np.inf, np.nan)
