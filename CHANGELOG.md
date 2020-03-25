@@ -1,3 +1,6 @@
+- 2020-03-23 - 3.0.1 - #2654 End of support for Grasshopper
+- 2020-03-23 - 3.0.1 - #2652 Clean up unused javascript files
+- 2020-03-23 - 3.0.1 - #2659 CityEnergyAnalyst v3.0.1
 - 2020-03-22 - 2.32.0 - #2650 2597 gdal daysim variables from pycharm
 - 2020-03-20 - 2.32.0 - #2653 I2644 workflow not working
 - 2020-03-19 - 2.32.0 - #2643 I2021 pumping energy
