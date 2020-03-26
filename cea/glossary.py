@@ -24,7 +24,7 @@ __glossary_df = None  # keep a copy of this as it won't be changed during runtim
 def read_glossary_df():
     """Returns the glossary as a DataFrame, created from the schemas.yml file. NOTE: This is used by the GUI."""
     global __glossary_df
-    if not __glossary_df:
+    if __glossary_df is None:
         schemas = cea.scripts.schemas()
         glossary_df = pd.DataFrame(columns=["SCRIPT", "LOCATOR_METHOD", "WORKSHEET", "VARIABLE",
                                             "DESCRIPTION", "UNIT", "VALUES", "TYPE", "COLOR", "FILE_NAME"])
