@@ -1,4 +1,4 @@
-digraph database-migrator {
+digraph database_migrator {
     rankdir="LR";
     graph [overlap=false, fontname=arial];
     node [shape=box, style=filled, color=white, fontsize=15, fontname=arial, fixedsize=true, width=5];

@@ -13,15 +13,16 @@ digraph optimization {
     "inputs"->"process"[style=invis]
     "process"->"outputs"[style=invis]
     }
-    "optimization"[style=filled, color=white, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname=arial];
+    "optimization"[style=filled, color=white, fillcolor="#3FC0C2", shape=note, 
+                   fontsize=20, fontname=arial];
     subgraph cluster_0_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
         label="data/optimization/decentralized";
-        "{building}_{configuration}_cooling_activation.csv"
-        "{building}_{configuration}_cooling.csv"
+        "B1000_CONFIG_cooling_activation.csv"
+        "B1000_CONFIG_cooling.csv"
         "DiscOp_B001_result_heating.csv"
         "DiscOp_B001_result_heating_activation.csv"
     }
@@ -188,8 +189,8 @@ digraph optimization {
     "Shallow_geothermal_potential.csv" -> "optimization"[label="(get_geothermal_potential)"]
     "DH__plant_pumping_pressure_loss_Pa.csv" -> "optimization"[label="(get_network_total_pressure_drop_file)"]
     "DH__total_thermal_loss_edges_kW.csv" -> "optimization"[label="(get_network_total_thermal_loss_file)"]
-    "{building}_{configuration}_cooling_activation.csv" -> "optimization"[label="(get_optimization_decentralized_folder_building_cooling_activation)"]
-    "{building}_{configuration}_cooling.csv" -> "optimization"[label="(get_optimization_decentralized_folder_building_result_cooling)"]
+    "B1000_CONFIG_cooling_activation.csv" -> "optimization"[label="(get_optimization_decentralized_folder_building_cooling_activation)"]
+    "B1000_CONFIG_cooling.csv" -> "optimization"[label="(get_optimization_decentralized_folder_building_result_cooling)"]
     "DiscOp_B001_result_heating.csv" -> "optimization"[label="(get_optimization_decentralized_folder_building_result_heating)"]
     "DiscOp_B001_result_heating_activation.csv" -> "optimization"[label="(get_optimization_decentralized_folder_building_result_heating_activation)"]
     "DH_Network_summary_result_0x1be.csv" -> "optimization"[label="(get_optimization_network_results_summary)"]

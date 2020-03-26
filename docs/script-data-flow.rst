@@ -706,7 +706,7 @@ database-migrator
 -----------------
 .. graphviz::
 
-    digraph database-migrator {
+    digraph database_migrator {
     rankdir="LR";
     graph [overlap=false, fontname=arial];
     node [shape=box, style=filled, color=white, fontsize=15, fontname=arial, fixedsize=true, width=5];
@@ -991,72 +991,6 @@ demand
     "zone.shp" -> "demand"[label="(get_zone_geometry)"]
     "demand" -> "B001.csv"[label="(get_demand_results_file)"]
     "demand" -> "Total_demand.csv"[label="(get_total_demand)"]
-    }
-
-data_initializer
-----------------
-.. graphviz::
-
-    digraph data_initializer {
-    rankdir="LR";
-    graph [overlap=false, fontname=arial];
-    node [shape=box, style=filled, color=white, fontsize=15, fontname=arial, fixedsize=true, width=5];
-    edge [fontname=arial, fontsize = 15]
-    newrank=true
-    subgraph cluster_legend {
-    fontsize=25
-    style=invis
-    "process"[style=filled, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname="arial"]
-    "inputs" [style=filled, shape=folder, color=white, fillcolor="#E1F2F2", fontsize=20]
-    "outputs"[style=filled, shape=folder, color=white, fillcolor="#aadcdd", fontsize=20]
-    "inputs"->"process"[style=invis]
-    "process"->"outputs"[style=invis]
-    }
-    "data_initializer"[style=filled, color=white, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname=arial];
-    subgraph cluster_0_out {
-        style = filled;
-        color = "#aadcdd";
-        fontsize = 20;
-        rank=same;
-        label="inputs/technology/assemblies";
-        "HVAC.xls"
-        "ENVELOPE.xls"
-        "SUPPLY.xls"
-    }
-    subgraph cluster_1_out {
-        style = filled;
-        color = "#aadcdd";
-        fontsize = 20;
-        rank=same;
-        label="inputs/technology/components";
-        "CONVERSION.xls"
-        "DISTRIBUTION.xls"
-        "FEEDSTOCKS.xls"
-    }
-    subgraph cluster_2_out {
-        style = filled;
-        color = "#aadcdd";
-        fontsize = 20;
-        rank=same;
-        label="technology/archetypes/schedules";
-        "{use}.csv"
-    }
-    subgraph cluster_3_out {
-        style = filled;
-        color = "#aadcdd";
-        fontsize = 20;
-        rank=same;
-        label="technology/archetypes/use_types";
-        "USE_TYPE_PROPERTIES.xlsx"
-    }
-    "data_initializer" -> "HVAC.xls"[label="(get_database_air_conditioning_systems)"]
-    "data_initializer" -> "CONVERSION.xls"[label="(get_database_conversion_systems)"]
-    "data_initializer" -> "DISTRIBUTION.xls"[label="(get_database_distribution_systems)"]
-    "data_initializer" -> "ENVELOPE.xls"[label="(get_database_envelope_systems)"]
-    "data_initializer" -> "FEEDSTOCKS.xls"[label="(get_database_feedstocks)"]
-    "data_initializer" -> "{use}.csv"[label="(get_database_standard_schedules_use)"]
-    "data_initializer" -> "SUPPLY.xls"[label="(get_database_supply_assemblies)"]
-    "data_initializer" -> "USE_TYPE_PROPERTIES.xlsx"[label="(get_database_use_types_properties)"]
     }
 
 schedule_maker
@@ -1685,7 +1619,7 @@ data-initializer
 ----------------
 .. graphviz::
 
-    digraph data-initializer {
+    digraph data_initializer {
     rankdir="LR";
     graph [overlap=false, fontname=arial];
     node [shape=box, style=filled, color=white, fontsize=15, fontname=arial, fixedsize=true, width=5];
@@ -1709,5 +1643,49 @@ data-initializer
         label="inputs/technology/archetypes";
         "CONSTRUCTION_STANDARDS.xlsx"
     }
+    subgraph cluster_1_out {
+        style = filled;
+        color = "#aadcdd";
+        fontsize = 20;
+        rank=same;
+        label="inputs/technology/assemblies";
+        "HVAC.xls"
+        "ENVELOPE.xls"
+        "SUPPLY.xls"
+    }
+    subgraph cluster_2_out {
+        style = filled;
+        color = "#aadcdd";
+        fontsize = 20;
+        rank=same;
+        label="inputs/technology/components";
+        "CONVERSION.xls"
+        "DISTRIBUTION.xls"
+        "FEEDSTOCKS.xls"
+    }
+    subgraph cluster_3_out {
+        style = filled;
+        color = "#aadcdd";
+        fontsize = 20;
+        rank=same;
+        label="technology/archetypes/schedules";
+        "{use}.csv"
+    }
+    subgraph cluster_4_out {
+        style = filled;
+        color = "#aadcdd";
+        fontsize = 20;
+        rank=same;
+        label="technology/archetypes/use_types";
+        "USE_TYPE_PROPERTIES.xlsx"
+    }
+    "data-initializer" -> "HVAC.xls"[label="(get_database_air_conditioning_systems)"]
     "data-initializer" -> "CONSTRUCTION_STANDARDS.xlsx"[label="(get_database_construction_standards)"]
+    "data-initializer" -> "CONVERSION.xls"[label="(get_database_conversion_systems)"]
+    "data-initializer" -> "DISTRIBUTION.xls"[label="(get_database_distribution_systems)"]
+    "data-initializer" -> "ENVELOPE.xls"[label="(get_database_envelope_systems)"]
+    "data-initializer" -> "FEEDSTOCKS.xls"[label="(get_database_feedstocks)"]
+    "data-initializer" -> "{use}.csv"[label="(get_database_standard_schedules_use)"]
+    "data-initializer" -> "SUPPLY.xls"[label="(get_database_supply_assemblies)"]
+    "data-initializer" -> "USE_TYPE_PROPERTIES.xlsx"[label="(get_database_use_types_properties)"]
     }

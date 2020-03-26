@@ -30,6 +30,11 @@ def create_graphviz_files(graphviz_data, documentation_dir):
     :param documentation_dir: folder with the documentation in it ($repo/docs)
     :return: None
     """
+    if os.path.exists(os.path.join(documentation_dir, "graphviz")):
+        for fname in os.listdir(os.path.join(documentation_dir, "graphviz")):
+            print("deleting {fname}".format(fname=fname))
+            os.remove(os.path.join(documentation_dir, "graphviz", fname))
+
     for script_name in graphviz_data:
         # creating new variable to preserve original trace_data used by other methods
         trace_data = shorten_trace_data_paths(sorted(graphviz_data[script_name]))
@@ -44,7 +49,7 @@ def create_graphviz_files(graphviz_data, documentation_dir):
         width = 5
 
         # jinja2 template setup and execution
-        template_path = os.path.join(documentation_dir, 'templates/graphviz_template.gv')
+        template_path = os.path.join(documentation_dir, "templates", "graphviz_template.gv")
         template = Template(open(template_path, 'r').read())
         digraph = template.render(tracedata=trace_data, script_name=script_name, scripts=scripts, db_group=db_group,
                                   width=width)
