@@ -18,7 +18,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def epw_reader(weather_path):
+def epw_to_dataframe(weather_path):
     epw_labels = ['year', 'month', 'day', 'hour', 'minute', 'datasource', 'drybulb_C', 'dewpoint_C', 'relhum_percent',
                   'atmos_Pa', 'exthorrad_Whm2', 'extdirrad_Whm2', 'horirsky_Whm2', 'glohorrad_Whm2',
                   'dirnorrad_Whm2', 'difhorrad_Whm2', 'glohorillum_lux', 'dirnorillum_lux', 'difhorillum_lux',
@@ -26,7 +26,13 @@ def epw_reader(weather_path):
                   'ceiling_hgt_m', 'presweathobs', 'presweathcodes', 'precip_wtr_mm', 'aerosol_opt_thousandths',
                   'snowdepth_cm', 'days_last_snow', 'Albedo', 'liq_precip_depth_mm', 'liq_precip_rate_Hour']
 
-    result = pd.read_csv(weather_path, skiprows=8, header=None, names=epw_labels).drop('datasource', axis=1)
+    df = pd.read_csv(weather_path, skiprows=8, header=None, names=epw_labels).drop('datasource', axis=1)
+    return df
+
+
+def epw_reader(weather_path):
+    result = epw_to_dataframe(weather_path)
+
     year = result["year"][0]
     date_range = pd.date_range(start=str(year), end=str(year+1), freq='H', closed='left')
     result['date'] = date_range
