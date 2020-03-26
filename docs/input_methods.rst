@@ -1,30 +1,8 @@
 
-get_optimization_thermal_network_data_file
-------------------------------------------
-
-path: ``outputs/data/optimization/network/DH_Network_summary_result_0x19b.csv``
-
-The following file is used by these scripts: ``optimization``
-
-
-.. csv-table::
-    :header: "Variable", "Description"
-
-    ``DATE``, "TODO"
-    ``mcpdata_netw_total_kWperC``, "TODO"
-    ``mdot_DH_netw_total_kgpers``, "TODO"
-    ``Q_DH_losses_W``, "TODO"
-    ``Q_DHNf_W``, "TODO"
-    ``Qcdata_netw_total_kWh``, "TODO"
-    ``T_DHNf_re_K``, "TODO"
-    ``T_DHNf_sup_K``, "TODO"
-    
-
-
 get_site_polygon
 ----------------
 
-path: ``inputs\building-geometry\site.shp``
+path: ``inputs/building-geometry/site.shp``
 
 The following file is used by these scripts: ``zone_helper``
 

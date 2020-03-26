@@ -2112,42 +2112,6 @@ The following file is used by these scripts:
     
 
 
-get_optimization_generation_total_performance_halloffame
---------------------------------------------------------
-
-path: ``outputs/data/optimization/slave/gen_1/gen_1_total_performance_halloffame.csv``
-
-The following file is used by these scripts: 
-
-
-.. csv-table::
-    :header: "Variable", "Description"
-
-    ``Capex_a_sys_connected_USD``, "TODO"
-    ``Capex_a_sys_disconnected_USD``, "TODO"
-    ``Capex_a_sys_USD``, "TODO"
-    ``Capex_total_sys_connected_USD``, "TODO"
-    ``Capex_total_sys_disconnected_USD``, "TODO"
-    ``Capex_total_sys_USD``, "TODO"
-    ``generation``, "TODO"
-    ``GHG_sys_connected_tonCO2``, "TODO"
-    ``GHG_sys_disconnected_tonCO2``, "TODO"
-    ``GHG_sys_tonCO2``, "TODO"
-    ``individual``, "TODO"
-    ``individual_name``, "TODO"
-    ``Opex_a_sys_connected_USD``, "TODO"
-    ``Opex_a_sys_disconnected_USD``, "TODO"
-    ``Opex_a_sys_USD``, "TODO"
-    ``PEN_sys_connected_MJoil``, "TODO"
-    ``PEN_sys_disconnected_MJoil``, "TODO"
-    ``PEN_sys_MJoil``, "TODO"
-    ``TAC_sys_connected_USD``, "TODO"
-    ``TAC_sys_disconnected_USD``, "TODO"
-    ``TAC_sys_USD``, "TODO"
-    ``Unnamed: 0``, "TODO"
-    
-
-
 get_optimization_generation_total_performance_pareto
 ----------------------------------------------------
 
