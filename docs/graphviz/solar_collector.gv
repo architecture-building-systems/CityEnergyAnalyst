@@ -5,13 +5,13 @@ digraph solar_collector {
     edge [fontname=arial, fontsize = 15]
     newrank=true
     subgraph cluster_legend {
-    fontsize=25
-    style=invis
-    "process"[style=filled, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname="arial"]
-    "inputs" [style=filled, shape=folder, color=white, fillcolor="#E1F2F2", fontsize=20]
-    "outputs"[style=filled, shape=folder, color=white, fillcolor="#aadcdd", fontsize=20]
-    "inputs"->"process"[style=invis]
-    "process"->"outputs"[style=invis]
+        fontsize=25
+        style=invis
+        "process"[style=filled, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname="arial"]
+        "inputs" [style=filled, shape=folder, color=white, fillcolor="#E1F2F2", fontsize=20]
+        "outputs"[style=filled, shape=folder, color=white, fillcolor="#aadcdd", fontsize=20]
+        "inputs"->"process"[style=invis]
+        "process"->"outputs"[style=invis]
     }
     "solar_collector"[style=filled, color=white, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname=arial];
     subgraph cluster_0_out {
@@ -20,10 +20,10 @@ digraph solar_collector {
         fontsize = 20;
         rank=same;
         label="data/potentials/solar";
-        "B001_SC_ET_sensors.csv"
-        "B001_SC_ET.csv"
-        "SC_ET_total_buildings.csv"
-        "SC_FP_total.csv"
+        SC_metadata_results[label="B001_SC_ET_sensors.csv"];
+        SC_results[label="B001_SC_ET.csv"];
+        SC_total_buildings[label="SC_ET_total_buildings.csv"];
+        SC_totals[label="SC_FP_total.csv"];
     }
     subgraph cluster_1_in {
         style = filled;
@@ -31,7 +31,7 @@ digraph solar_collector {
         fontsize = 20;
         rank=same;
         label="inputs/building-geometry";
-        "zone.shp"
+        get_zone_geometry[label="zone.shp"];
     }
     subgraph cluster_2_in {
         style = filled;
@@ -39,7 +39,7 @@ digraph solar_collector {
         fontsize = 20;
         rank=same;
         label="inputs/technology/components";
-        "CONVERSION.xls"
+        get_database_conversion_systems[label="CONVERSION.xls"];
     }
     subgraph cluster_3_in {
         style = filled;
@@ -47,7 +47,7 @@ digraph solar_collector {
         fontsize = 20;
         rank=same;
         label="inputs/weather";
-        "weather.epw"
+        get_weather_file[label="weather.epw"];
     }
     subgraph cluster_4_in {
         style = filled;
@@ -55,18 +55,18 @@ digraph solar_collector {
         fontsize = 20;
         rank=same;
         label="outputs/data/solar-radiation";
-        "{building}_radiation.csv"
-        "B001_insolation_Whm2.json"
-        "B001_geometry.csv"
+        get_radiation_building[label="{building}_radiation.csv"];
+        get_radiation_building_sensors[label="B001_insolation_Whm2.json"];
+        get_radiation_metadata[label="B001_geometry.csv"];
     }
-    "CONVERSION.xls" -> "solar_collector"[label="(get_database_conversion_systems)"]
-    "{building}_radiation.csv" -> "solar_collector"[label="(get_radiation_building)"]
-    "B001_insolation_Whm2.json" -> "solar_collector"[label="(get_radiation_building_sensors)"]
-    "B001_geometry.csv" -> "solar_collector"[label="(get_radiation_metadata)"]
-    "weather.epw" -> "solar_collector"[label="(get_weather_file)"]
-    "zone.shp" -> "solar_collector"[label="(get_zone_geometry)"]
-    "solar_collector" -> "B001_SC_ET_sensors.csv"[label="(SC_metadata_results)"]
-    "solar_collector" -> "B001_SC_ET.csv"[label="(SC_results)"]
-    "solar_collector" -> "SC_ET_total_buildings.csv"[label="(SC_total_buildings)"]
-    "solar_collector" -> "SC_FP_total.csv"[label="(SC_totals)"]
+    get_database_conversion_systems -> "solar_collector"[label="(get_database_conversion_systems)"];
+    get_radiation_building -> "solar_collector"[label="(get_radiation_building)"];
+    get_radiation_building_sensors -> "solar_collector"[label="(get_radiation_building_sensors)"];
+    get_radiation_metadata -> "solar_collector"[label="(get_radiation_metadata)"];
+    get_weather_file -> "solar_collector"[label="(get_weather_file)"];
+    get_zone_geometry -> "solar_collector"[label="(get_zone_geometry)"];
+    "solar_collector" -> SC_metadata_results[label="(SC_metadata_results)"];
+    "solar_collector" -> SC_results[label="(SC_results)"];
+    "solar_collector" -> SC_total_buildings[label="(SC_total_buildings)"];
+    "solar_collector" -> SC_totals[label="(SC_totals)"];
     }

@@ -1637,7 +1637,7 @@ get_building_supply:
   - system_costs
 get_building_typology:
   created_by:
-  - database-migrator
+  - database_migrator
   file_path: inputs/building-properties/typology.dbf
   file_type: dbf
   schema:
@@ -2196,7 +2196,7 @@ get_database_air_conditioning_systems:
   - demand
 get_database_construction_standards:
   created_by:
-  - data-initializer
+  - data_initializer
   file_path: inputs/technology/archetypes/CONSTRUCTION_STANDARDS.xlsx
   file_type: xlsx
   schema:

@@ -5,13 +5,13 @@ digraph schedule_maker {
     edge [fontname=arial, fontsize = 15]
     newrank=true
     subgraph cluster_legend {
-    fontsize=25
-    style=invis
-    "process"[style=filled, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname="arial"]
-    "inputs" [style=filled, shape=folder, color=white, fillcolor="#E1F2F2", fontsize=20]
-    "outputs"[style=filled, shape=folder, color=white, fillcolor="#aadcdd", fontsize=20]
-    "inputs"->"process"[style=invis]
-    "process"->"outputs"[style=invis]
+        fontsize=25
+        style=invis
+        "process"[style=filled, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname="arial"]
+        "inputs" [style=filled, shape=folder, color=white, fillcolor="#E1F2F2", fontsize=20]
+        "outputs"[style=filled, shape=folder, color=white, fillcolor="#aadcdd", fontsize=20]
+        "inputs"->"process"[style=invis]
+        "process"->"outputs"[style=invis]
     }
     "schedule_maker"[style=filled, color=white, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname=arial];
     subgraph cluster_0_in {
@@ -20,8 +20,8 @@ digraph schedule_maker {
         fontsize = 20;
         rank=same;
         label="inputs/building-geometry";
-        "surroundings.shp"
-        "zone.shp"
+        get_surroundings_geometry[label="surroundings.shp"];
+        get_zone_geometry[label="zone.shp"];
     }
     subgraph cluster_1_in {
         style = filled;
@@ -29,9 +29,9 @@ digraph schedule_maker {
         fontsize = 20;
         rank=same;
         label="inputs/building-properties";
-        "architecture.dbf"
-        "indoor_comfort.dbf"
-        "internal_loads.dbf"
+        get_building_architecture[label="architecture.dbf"];
+        get_building_comfort[label="indoor_comfort.dbf"];
+        get_building_internal[label="internal_loads.dbf"];
     }
     subgraph cluster_2_in {
         style = filled;
@@ -39,7 +39,7 @@ digraph schedule_maker {
         fontsize = 20;
         rank=same;
         label="inputs/building-properties/schedules";
-        "B001.csv"
+        get_building_weekly_schedules[label="B001.csv"];
     }
     subgraph cluster_3_in {
         style = filled;
@@ -47,7 +47,7 @@ digraph schedule_maker {
         fontsize = 20;
         rank=same;
         label="inputs/technology/assemblies";
-        "ENVELOPE.xls"
+        get_database_envelope_systems[label="ENVELOPE.xls"];
     }
     subgraph cluster_4_in {
         style = filled;
@@ -55,7 +55,7 @@ digraph schedule_maker {
         fontsize = 20;
         rank=same;
         label="inputs/topography";
-        "terrain.tif"
+        get_terrain[label="terrain.tif"];
     }
     subgraph cluster_5_in {
         style = filled;
@@ -63,7 +63,7 @@ digraph schedule_maker {
         fontsize = 20;
         rank=same;
         label="inputs/weather";
-        "weather.epw"
+        get_weather_file[label="weather.epw"];
     }
     subgraph cluster_6_out {
         style = filled;
@@ -71,16 +71,16 @@ digraph schedule_maker {
         fontsize = 20;
         rank=same;
         label="outputs/data/occupancy";
-        "B001.csv"
+        get_schedule_model_file[label="B001.csv"];
     }
-    "architecture.dbf" -> "schedule_maker"[label="(get_building_architecture)"]
-    "indoor_comfort.dbf" -> "schedule_maker"[label="(get_building_comfort)"]
-    "internal_loads.dbf" -> "schedule_maker"[label="(get_building_internal)"]
-    "B001.csv" -> "schedule_maker"[label="(get_building_weekly_schedules)"]
-    "ENVELOPE.xls" -> "schedule_maker"[label="(get_database_envelope_systems)"]
-    "surroundings.shp" -> "schedule_maker"[label="(get_surroundings_geometry)"]
-    "terrain.tif" -> "schedule_maker"[label="(get_terrain)"]
-    "weather.epw" -> "schedule_maker"[label="(get_weather_file)"]
-    "zone.shp" -> "schedule_maker"[label="(get_zone_geometry)"]
-    "schedule_maker" -> "B001.csv"[label="(get_schedule_model_file)"]
+    get_building_architecture -> "schedule_maker"[label="(get_building_architecture)"];
+    get_building_comfort -> "schedule_maker"[label="(get_building_comfort)"];
+    get_building_internal -> "schedule_maker"[label="(get_building_internal)"];
+    get_building_weekly_schedules -> "schedule_maker"[label="(get_building_weekly_schedules)"];
+    get_database_envelope_systems -> "schedule_maker"[label="(get_database_envelope_systems)"];
+    get_surroundings_geometry -> "schedule_maker"[label="(get_surroundings_geometry)"];
+    get_terrain -> "schedule_maker"[label="(get_terrain)"];
+    get_weather_file -> "schedule_maker"[label="(get_weather_file)"];
+    get_zone_geometry -> "schedule_maker"[label="(get_zone_geometry)"];
+    "schedule_maker" -> get_schedule_model_file[label="(get_schedule_model_file)"];
     }

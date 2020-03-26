@@ -5,13 +5,13 @@ digraph weather_helper {
     edge [fontname=arial, fontsize = 15]
     newrank=true
     subgraph cluster_legend {
-    fontsize=25
-    style=invis
-    "process"[style=filled, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname="arial"]
-    "inputs" [style=filled, shape=folder, color=white, fillcolor="#E1F2F2", fontsize=20]
-    "outputs"[style=filled, shape=folder, color=white, fillcolor="#aadcdd", fontsize=20]
-    "inputs"->"process"[style=invis]
-    "process"->"outputs"[style=invis]
+        fontsize=25
+        style=invis
+        "process"[style=filled, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname="arial"]
+        "inputs" [style=filled, shape=folder, color=white, fillcolor="#E1F2F2", fontsize=20]
+        "outputs"[style=filled, shape=folder, color=white, fillcolor="#aadcdd", fontsize=20]
+        "inputs"->"process"[style=invis]
+        "process"->"outputs"[style=invis]
     }
     "weather_helper"[style=filled, color=white, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname=arial];
     subgraph cluster_0_in {
@@ -20,7 +20,7 @@ digraph weather_helper {
         fontsize = 20;
         rank=same;
         label="databases/weather";
-        "Zug-inducity_1990_2010_TMY.epw"
+        get_weather[label="Zug-inducity_1990_2010_TMY.epw"];
     }
     subgraph cluster_1_out {
         style = filled;
@@ -28,8 +28,8 @@ digraph weather_helper {
         fontsize = 20;
         rank=same;
         label="inputs/weather";
-        "weather.epw"
+        get_weather_file[label="weather.epw"];
     }
-    "Zug-inducity_1990_2010_TMY.epw" -> "weather_helper"[label="(get_weather)"]
-    "weather_helper" -> "weather.epw"[label="(get_weather_file)"]
+    get_weather -> "weather_helper"[label="(get_weather)"];
+    "weather_helper" -> get_weather_file[label="(get_weather_file)"];
     }

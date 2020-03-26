@@ -5,13 +5,13 @@ digraph archetypes_mapper {
     edge [fontname=arial, fontsize = 15]
     newrank=true
     subgraph cluster_legend {
-    fontsize=25
-    style=invis
-    "process"[style=filled, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname="arial"]
-    "inputs" [style=filled, shape=folder, color=white, fillcolor="#E1F2F2", fontsize=20]
-    "outputs"[style=filled, shape=folder, color=white, fillcolor="#aadcdd", fontsize=20]
-    "inputs"->"process"[style=invis]
-    "process"->"outputs"[style=invis]
+        fontsize=25
+        style=invis
+        "process"[style=filled, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname="arial"]
+        "inputs" [style=filled, shape=folder, color=white, fillcolor="#E1F2F2", fontsize=20]
+        "outputs"[style=filled, shape=folder, color=white, fillcolor="#aadcdd", fontsize=20]
+        "inputs"->"process"[style=invis]
+        "process"->"outputs"[style=invis]
     }
     "archetypes_mapper"[style=filled, color=white, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname=arial];
     subgraph cluster_0_in {
@@ -20,7 +20,7 @@ digraph archetypes_mapper {
         fontsize = 20;
         rank=same;
         label="inputs/building-geometry";
-        "zone.shp"
+        get_zone_geometry[label="zone.shp"];
     }
     subgraph cluster_1_in {
         style = filled;
@@ -28,7 +28,7 @@ digraph archetypes_mapper {
         fontsize = 20;
         rank=same;
         label="inputs/building-properties";
-        "typology.dbf"
+        get_building_typology[label="typology.dbf"];
     }
     subgraph cluster_1_out {
         style = filled;
@@ -36,11 +36,11 @@ digraph archetypes_mapper {
         fontsize = 20;
         rank=same;
         label="inputs/building-properties";
-        "air_conditioning_systems.dbf"
-        "architecture.dbf"
-        "indoor_comfort.dbf"
-        "internal_loads.dbf"
-        "supply_systems.dbf"
+        get_building_air_conditioning[label="air_conditioning_systems.dbf"];
+        get_building_architecture[label="architecture.dbf"];
+        get_building_comfort[label="indoor_comfort.dbf"];
+        get_building_internal[label="internal_loads.dbf"];
+        get_building_supply[label="supply_systems.dbf"];
     }
     subgraph cluster_2_out {
         style = filled;
@@ -48,7 +48,7 @@ digraph archetypes_mapper {
         fontsize = 20;
         rank=same;
         label="inputs/building-properties/schedules";
-        "B001.csv"
+        get_building_weekly_schedules[label="B001.csv"];
     }
     subgraph cluster_3_in {
         style = filled;
@@ -56,7 +56,7 @@ digraph archetypes_mapper {
         fontsize = 20;
         rank=same;
         label="inputs/technology/archetypes";
-        "CONSTRUCTION_STANDARDS.xlsx"
+        get_database_construction_standards[label="CONSTRUCTION_STANDARDS.xlsx"];
     }
     subgraph cluster_4_in {
         style = filled;
@@ -64,7 +64,7 @@ digraph archetypes_mapper {
         fontsize = 20;
         rank=same;
         label="technology/archetypes/schedules";
-        "{use}.csv"
+        get_database_standard_schedules_use[label="{use}.csv"];
     }
     subgraph cluster_5_in {
         style = filled;
@@ -72,17 +72,17 @@ digraph archetypes_mapper {
         fontsize = 20;
         rank=same;
         label="technology/archetypes/use_types";
-        "USE_TYPE_PROPERTIES.xlsx"
+        get_database_use_types_properties[label="USE_TYPE_PROPERTIES.xlsx"];
     }
-    "typology.dbf" -> "archetypes_mapper"[label="(get_building_typology)"]
-    "CONSTRUCTION_STANDARDS.xlsx" -> "archetypes_mapper"[label="(get_database_construction_standards)"]
-    "{use}.csv" -> "archetypes_mapper"[label="(get_database_standard_schedules_use)"]
-    "USE_TYPE_PROPERTIES.xlsx" -> "archetypes_mapper"[label="(get_database_use_types_properties)"]
-    "zone.shp" -> "archetypes_mapper"[label="(get_zone_geometry)"]
-    "archetypes_mapper" -> "air_conditioning_systems.dbf"[label="(get_building_air_conditioning)"]
-    "archetypes_mapper" -> "architecture.dbf"[label="(get_building_architecture)"]
-    "archetypes_mapper" -> "indoor_comfort.dbf"[label="(get_building_comfort)"]
-    "archetypes_mapper" -> "internal_loads.dbf"[label="(get_building_internal)"]
-    "archetypes_mapper" -> "supply_systems.dbf"[label="(get_building_supply)"]
-    "archetypes_mapper" -> "B001.csv"[label="(get_building_weekly_schedules)"]
+    get_building_typology -> "archetypes_mapper"[label="(get_building_typology)"];
+    get_database_construction_standards -> "archetypes_mapper"[label="(get_database_construction_standards)"];
+    get_database_standard_schedules_use -> "archetypes_mapper"[label="(get_database_standard_schedules_use)"];
+    get_database_use_types_properties -> "archetypes_mapper"[label="(get_database_use_types_properties)"];
+    get_zone_geometry -> "archetypes_mapper"[label="(get_zone_geometry)"];
+    "archetypes_mapper" -> get_building_air_conditioning[label="(get_building_air_conditioning)"];
+    "archetypes_mapper" -> get_building_architecture[label="(get_building_architecture)"];
+    "archetypes_mapper" -> get_building_comfort[label="(get_building_comfort)"];
+    "archetypes_mapper" -> get_building_internal[label="(get_building_internal)"];
+    "archetypes_mapper" -> get_building_supply[label="(get_building_supply)"];
+    "archetypes_mapper" -> get_building_weekly_schedules[label="(get_building_weekly_schedules)"];
     }

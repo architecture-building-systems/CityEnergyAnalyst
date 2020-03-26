@@ -5,13 +5,13 @@ digraph decentrlized {
     edge [fontname=arial, fontsize = 15]
     newrank=true
     subgraph cluster_legend {
-    fontsize=25
-    style=invis
-    "process"[style=filled, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname="arial"]
-    "inputs" [style=filled, shape=folder, color=white, fillcolor="#E1F2F2", fontsize=20]
-    "outputs"[style=filled, shape=folder, color=white, fillcolor="#aadcdd", fontsize=20]
-    "inputs"->"process"[style=invis]
-    "process"->"outputs"[style=invis]
+        fontsize=25
+        style=invis
+        "process"[style=filled, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname="arial"]
+        "inputs" [style=filled, shape=folder, color=white, fillcolor="#E1F2F2", fontsize=20]
+        "outputs"[style=filled, shape=folder, color=white, fillcolor="#aadcdd", fontsize=20]
+        "inputs"->"process"[style=invis]
+        "process"->"outputs"[style=invis]
     }
     "decentrlized"[style=filled, color=white, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname=arial];
     subgraph cluster_0_out {
@@ -20,7 +20,7 @@ digraph decentrlized {
         fontsize = 20;
         rank=same;
         label="data/optimization/decentralized";
-        "{building}_{configuration}_cooling.csv"
+        get_optimization_decentralized_folder_building_result_cooling[label="{building}_{configuration}_cooling.csv"];
     }
-    "decentrlized" -> "{building}_{configuration}_cooling.csv"[label="(get_optimization_decentralized_folder_building_result_cooling)"]
+    "decentrlized" -> get_optimization_decentralized_folder_building_result_cooling[label="(get_optimization_decentralized_folder_building_result_cooling)"];
     }
