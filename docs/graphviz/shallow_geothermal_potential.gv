@@ -5,13 +5,13 @@ digraph shallow_geothermal_potential {
     edge [fontname=arial, fontsize = 15]
     newrank=true
     subgraph cluster_legend {
-    fontsize=25
-    style=invis
-    "process"[style=filled, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname="arial"]
-    "inputs" [style=filled, shape=folder, color=white, fillcolor="#E1F2F2", fontsize=20]
-    "outputs"[style=filled, shape=folder, color=white, fillcolor="#aadcdd", fontsize=20]
-    "inputs"->"process"[style=invis]
-    "process"->"outputs"[style=invis]
+        fontsize=25
+        style=invis
+        "process"[style=filled, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname="arial"]
+        "inputs" [style=filled, shape=folder, color=white, fillcolor="#E1F2F2", fontsize=20]
+        "outputs"[style=filled, shape=folder, color=white, fillcolor="#aadcdd", fontsize=20]
+        "inputs"->"process"[style=invis]
+        "process"->"outputs"[style=invis]
     }
     "shallow_geothermal_potential"[style=filled, color=white, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname=arial];
     subgraph cluster_0_in {
@@ -20,7 +20,7 @@ digraph shallow_geothermal_potential {
         fontsize = 20;
         rank=same;
         label="inputs/building-geometry";
-        "zone.shp"
+        get_zone_geometry[label="zone.shp"];
     }
     subgraph cluster_1_in {
         style = filled;
@@ -28,7 +28,7 @@ digraph shallow_geothermal_potential {
         fontsize = 20;
         rank=same;
         label="inputs/weather";
-        "weather.epw"
+        get_weather_file[label="weather.epw"];
     }
     subgraph cluster_2_out {
         style = filled;
@@ -36,9 +36,9 @@ digraph shallow_geothermal_potential {
         fontsize = 20;
         rank=same;
         label="outputs/data/potentials";
-        "Shallow_geothermal_potential.csv"
+        get_geothermal_potential[label="Shallow_geothermal_potential.csv"];
     }
-    "weather.epw" -> "shallow_geothermal_potential"[label="(get_weather_file)"]
-    "zone.shp" -> "shallow_geothermal_potential"[label="(get_zone_geometry)"]
-    "shallow_geothermal_potential" -> "Shallow_geothermal_potential.csv"[label="(get_geothermal_potential)"]
+    get_weather_file -> "shallow_geothermal_potential"[label="(get_weather_file)"];
+    get_zone_geometry -> "shallow_geothermal_potential"[label="(get_zone_geometry)"];
+    "shallow_geothermal_potential" -> get_geothermal_potential[label="(get_geothermal_potential)"];
     }

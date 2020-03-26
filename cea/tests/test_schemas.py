@@ -133,6 +133,16 @@ class TestSchemas(unittest.TestCase):
                                      attrib=attrib, prev=folders.get(folder, None)))
                 folders[folder] = attrib
 
+    def test_scripts_use_underscores_not_hyphen(self):
+        schemas = cea.scripts.schemas()
+        for lm in schemas:
+            used_by = schemas[lm]["used_by"]
+            created_by = schemas[lm]["created_by"]
+            for script in used_by:
+                self.assertNotIn("-", script, "{lm} used_by script {script} contains hyphen".format(**locals()))
+            for script in created_by:
+                self.assertNotIn("-", script, "{lm} created_by script {script} contains hyphen".format(**locals()))
+
 
 def extract_locator_methods(locator):
     """Return the list of locator methods that point to files"""

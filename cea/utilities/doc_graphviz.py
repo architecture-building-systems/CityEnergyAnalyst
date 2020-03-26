@@ -36,8 +36,10 @@ def create_graphviz_files(graphviz_data, documentation_dir):
             os.remove(os.path.join(documentation_dir, "graphviz", fname))
 
     for script_name in graphviz_data:
+        print("Creating graph for: {script_name}".format(**locals()))
         # creating new variable to preserve original trace_data used by other methods
         trace_data = shorten_trace_data_paths(sorted(graphviz_data[script_name]))
+        trace_data = unique_users_creators(trace_data)
 
         # set of unique scripts
         scripts = sorted(set([td[1] for td in trace_data]))
@@ -56,6 +58,19 @@ def create_graphviz_files(graphviz_data, documentation_dir):
         digraph = remove_extra_lines(digraph)
         with open(os.path.join(documentation_dir, "graphviz", "{script}.gv".format(script=script_name)), 'w') as f:
             f.write(digraph)
+
+
+def unique_users_creators(trace_data):
+    """
+    Make sure that the data does not define the same script as producer _and_ consumer at the same time. Prefer
+    producer.
+
+    :param trace_data: list of tuples of form (0:input/output, 1:script, 2:locator_method, 3:folder_name, 4:file_name)
+    :return: trace_data, filtered
+    """
+    input_lms = set(t[2] for t in trace_data if t[0] == "input")
+    trace_data = [t for t in trace_data if t[0] == "input" or t[2] not in input_lms]
+    return trace_data
 
 
 def remove_extra_lines(digraph):
