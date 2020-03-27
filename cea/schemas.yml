@@ -1549,6 +1549,11 @@ get_building_internal:
         type: string
         unit: '[W/m2]'
         values: '{0.0...n}'
+      Ev_kWveh:
+        description: TODO
+        type: string
+        unit: TODO
+        values: '{0.0...n}'
       Name:
         description: Unique building ID. It must start with a letter.
         type: string

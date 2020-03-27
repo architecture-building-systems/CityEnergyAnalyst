@@ -16,6 +16,8 @@ from pandas.errors import EmptyDataError
 import dateutil.parser
 import cea.config
 import cea.inputlocator
+import cea.utilities.dbf
+import geopandas
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2020, Architecture and Building Systems - ETH Zurich"
@@ -100,7 +102,7 @@ def get_csv_schema(filename, buildings):
         column_name = replace_repetitive_column_names(column_name, buildings)
         column_name = column_name.encode('ascii', 'ignore')
         schema["columns"][column_name] = get_column_schema(df[column_name])
-    return schema
+    return extract_df_schema(df, buildings)
 
 
 def replace_repetitive_column_names(column_name, buildings):
@@ -159,26 +161,25 @@ def get_epw_schema(filename, _):
     return schema
 
 
-def get_dbf_schema(filename, _):
-    import pysal
-    db = pysal.open(filename, 'r')
-    schema = {}
-    for attr in db.header:
-        schema[attr.encode('ascii', 'ignore')] = get_column_schema(db.by_col(attr))
-    return schema
+def get_dbf_schema(filename, buildings):
+    db = cea.utilities.dbf.dbf_to_dataframe(filename)
+    return extract_df_schema(db, buildings)
 
 
-def get_shp_schema(filename, scenario):
-    import geopandas
-    db = geopandas.read_file(filename)
+def extract_df_schema(df, scenario):
     schema = {"columns": {}}
-    for attr in db:
+    for attr in df:
         attr = replace_repetitive_column_names(attr, scenario)
-        meta = get_column_schema(db[attr])
+        meta = get_column_schema(df[attr])
         if attr == 'geometry':
             meta['sample_data'] = '((x1 y1, x2 y2, ...))'
         schema["columns"][attr.encode('ascii', 'ignore')] = meta
     return schema
+
+
+def get_shp_schema(filename, scenario):
+    df = geopandas.read_file(filename)
+    return extract_df_schema(df, scenario)
 
 
 def get_xls_schema(filename, _):
