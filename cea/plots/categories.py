@@ -103,18 +103,24 @@ class PlotCategory(object):
 if __name__ == '__main__':
     config = cea.config.Configuration()
     cache = cea.plots.cache.NullPlotCache()
+    errors = []
 
     for category in list_categories():
         print('category:', category.name, ':', category.label)
         for plot_class in category.plots:
-            print('plot_class:', plot_class)
-            parameters = {
-                k: config.get(v) for k, v in plot_class.expected_parameters.items()
-            }
-            plot = plot_class(config.project, parameters=parameters, cache=cache)
-            assert plot.name, 'plot missing name: %s' % plot
-            assert plot.category_name == category.name
-            print('plot:', plot.name, '/', plot.id(), '/', plot.title)
+            try:
+                print('plot_class:', plot_class)
+                parameters = {
+                    k: config.get(v) for k, v in plot_class.expected_parameters.items()
+                }
+                plot = plot_class(config.project, parameters=parameters, cache=cache)
+                assert plot.name, 'plot missing name: %s' % plot
+                assert plot.category_name == category.name
+                print('plot:', plot.name, '/', plot.id(), '/', plot.title)
 
-            # plot the plot!
-            plot.plot()
+                # plot the plot!
+                plot.plot()
+            except Exception as e:
+                errors.append(e)
+
+    print('errors', errors)
