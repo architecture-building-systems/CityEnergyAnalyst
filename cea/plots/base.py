@@ -165,7 +165,31 @@ class PlotBase(object):
         fig['layout'] = dict(fig['layout'], **{'margin': dict(l=50, r=50, t=50, b=50), 'hovermode': 'closest', 'font': dict(size=10)})
         fig['layout']['yaxis'] = dict(fig['layout']['yaxis'], **{'hoverformat': ".2f"})
         div = plotly.offline.plot(fig, output_type='div', include_plotlyjs=False, show_link=False)
+        df = self._plot_data_to_dataframe(fig.data)
         return div
+
+    def _plot_data_to_dataframe(self, plotly_data):
+        from pprint import pprint
+        import pandas as pd
+
+        data = []
+        for trace in plotly_data:
+            name = trace.get('name')
+            x = trace.get('x')
+            y = trace.get('y')
+            if x is not None and y is not None:
+                if trace.type not in ['scattergl']:
+                    df = pd.DataFrame({name: list(y)}, index=list(x))
+                    data.append(df)
+                else:
+                    print(trace.type)
+        if data:
+            data = pd.concat(data, axis=1)
+            data.to_csv(os.path.splitext(self.output_path)[0] + '.csv')
+        else:
+            data = None
+        print(data)
+        return data
 
     def table_div(self):
         """Returns the html div for a table, or an empty string if no table is to be produced"""
