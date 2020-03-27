@@ -15,17 +15,31 @@ Product Sponsor (PS)
 
 The Project Sponsor is the person that has overall responsibility and accountability. His/her main responsibilities are:
 
+
+4. Participate in Review events at least.
+
+====================================================================================================================
+Resposibilities
+--------------------------------------------------------------------------------------------------------------------
 1. Guarantee that our vision be successful by finding and securing the budget and ensuring that high-level organizational risks are mitigated.
 2. Champion the project based on whether the work fits our research needs and overall strategy.
 3. Empower the Product Owner to act for him/her on a more tactical basis.
-4. Participate in Review events at least.
 
-======================
-Resposibilities
-----------------------
-1. a
-2. b
-======================
+====================================================================================================================
+
+====================================================================================================================
+Engagement
+--------------------------------------------------------------------------------------------------------------------
+1. Participate in "Roadmap Planning and Review" events.
+.. hlist:: :columns: 1
+* Frequency: Quarterly
+* Agenda:
+    * Demonstration
+    * Bottlenecks
+    * Planning
+* Attendees: all CEA team
+
+====================================================================================================================
 
 Product Owner (PO)
 -------------------
