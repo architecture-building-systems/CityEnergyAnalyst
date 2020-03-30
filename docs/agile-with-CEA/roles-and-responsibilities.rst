@@ -43,25 +43,25 @@ The Product Owner is the voice of the customer and performs all tactical operati
 
 Responsibilities
 ****************
-1. Guarantee our product success by acting as a conduit/facilitator for communication between the team and the customers.
+#. Guarantee our product success by acting as a conduit/facilitator for communication between the team and the customers.
     * Usability Tests
     * Teaching Activities
     * Maintain Documentation
     * Maintain CEA website
     * Maintain cea@arch.ethz.ch
     * Distribute Newsletters
-2. Prioritizing and selecting user stories
+#. Prioritizing and selecting user stories
     * Grooming the product backlogs with the help of SM
         * Must-have
         * Should-have
         * Won't have
-3. Break down the overall vision into feasible and tactical pieces of work for the development team to understand and create.
-4. Coordinate in Roadmap Planning and Review events.
+#. Break down the overall vision into feasible and tactical pieces of work for the development team to understand and create.
+#. Coordinate in Roadmap Planning and Review events.
 
 Engagement
 **********
-1. Participate in the Review meetings.
-2. One day per week on communication and task prioritizing.
+#. Participate in the Review meetings.
+#. One day per week on communication and task prioritizing.
 
 
 
@@ -72,14 +72,15 @@ The Scrum Master is the servant leader and maintainer of agile practices.
 
 Responsibilities
 ****************
-1. Guarantee the success of our processes by maintain all agile practices (including :doc:`activities`).
-2. Coordinate the training of new developers.
+#. Guarantee the success of our processes by maintain all agile practices (including :doc:`activities`).
+#. Coordinate the training of new developers.
     #. Introduce the functionalities in the CEA.
     #. Introduce the CEA-ecosystem
-3. Coordinate the training of the team
+#. Coordinate the training of the team
     #. Pair-programming sessions
     #. Refresher course on programming
-4. Support the Product Owner on setting priorities and grooming the backlog.
+#. Support the Product Owner on setting priorities and grooming the backlog.
+#. Maintaining the internal communication channel (slack).
 
 
 Development Team (DT)
