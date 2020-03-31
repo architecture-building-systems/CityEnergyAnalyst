@@ -171,10 +171,9 @@ class PlotBase(object):
         div = plotly.offline.plot(fig, output_type='div', include_plotlyjs=False, show_link=False)
         return div
 
-    def _plot_figure_producer(self):
+    def _plot_data_producer(self):
         try:
-            plotly_data = self.cache.lookup_plot_data(self, self.calc_graph)
-            return plotly.graph_objs.Figure(data=plotly_data, layout=self.layout)
+            return self.cache.lookup_plot_data(self, self.calc_graph)
         except NotImplementedError:  # if self.calc_graph() is not implemented
             return None
 
@@ -183,15 +182,13 @@ class PlotBase(object):
         import collections
         import re
 
-        plot_figure = self._plot_figure_producer()
+        plotly_data = self._plot_data_producer()
 
-        # Return None if plotly figure does not exist
-        if plot_figure is None:
+        # Return None if plotly data does not exist
+        if plotly_data is None:
             return None
 
-        plotly_data = plot_figure.data
-        x_axis = plot_figure['layout']['xaxis']['title']
-        y_axis = plot_figure['layout']['yaxis']['title']
+        x_axis = self.layout['xaxis']['title'] if 'xaxis' in self.layout else ''
 
         data = []
         scatter_plots = collections.OrderedDict()
@@ -200,17 +197,16 @@ class PlotBase(object):
             x = trace.get('x')
             y = trace.get('y')
             if x is not None and y is not None and len(x) == len(y):
-                if trace.yaxis:  # Assign correct title if plot contains multiple y_axis
-                    y_axis = plot_figure['layout']['yaxis{}'.format(trace.yaxis.split('y')[1])]['title']
+                if 'yaxis' in trace:  # Assign correct title if plot contains multiple y_axis
+                    y_axis_num = trace['yaxis'].split('y')[1]
 
-                if trace.type == 'bar':
                     column_name = name
                     units = re.search(r'\[.*?\]', y_axis)
                     if units:
                         column_name = '{} {}'.format(name, units.group())
                     df = pd.DataFrame({x_axis: list(x), column_name: list(y)}).set_index(x_axis)
                     data.append(df)
-                elif trace.type == 'scattergl' and name is not None:
+                elif trace['type'] == 'scattergl' and name is not None:
                     column_name = y_axis
                     df = pd.DataFrame({x_axis: list(x), column_name: list(y)}).set_index(x_axis)
                     scatter_plots[name] = df
