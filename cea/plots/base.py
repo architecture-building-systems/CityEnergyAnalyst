@@ -224,16 +224,19 @@ class PlotBase(object):
                 except Exception as e:
                     print(e)
             # Export data as .csv
-            data.to_csv(os.path.splitext(self.output_path)[0] + '.csv')
+            output_path = os.path.splitext(self.output_path)[0] + '.csv'
+            data.to_csv(output_path)
         elif scatter_plots:
             # Export data as .xlsx
-            with pd.ExcelWriter(os.path.splitext(self.output_path)[0] + '.xlsx') as writer:
+            output_path = os.path.splitext(self.output_path)[0] + '.xlsx'
+            with pd.ExcelWriter(output_path) as writer:
                 for data_name, scatter_data in scatter_plots.items():
                     sheet_name = data_name[:31]  # Sheet name cannot be more than 31 characters
                     scatter_data.to_excel(writer, sheet_name=sheet_name)
         else:  # Return None if could not parse any data from plot
-            data = None
-        return data
+            output_path = None
+
+        return output_path
 
     def table_div(self):
         """Returns the html div for a table, or an empty string if no table is to be produced"""
