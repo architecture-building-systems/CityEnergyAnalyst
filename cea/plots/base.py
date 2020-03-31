@@ -161,13 +161,12 @@ class PlotBase(object):
         return self.cache.lookup_plot_div(self, self._plot_div_producer)
 
     def _plot_div_producer(self):
-        fig = self._plot_figure_producer()
-        fig['layout'].update({
-            'margin': dict(l=50, r=50, t=50, b=50),
-            'hovermode': 'closest',
-            'font': dict(size=10),
-            'yaxis': dict(hoverformat=".2f")
-        })
+        fig = plotly.graph_objs.Figure(data=self._plot_data_producer(), layout=self.layout)
+        fig['layout'].update(dict(hovermode='closest'))
+        fig['layout']['yaxis'].update(dict(hoverformat=".2f"))
+        fig['layout']['margin'].update(dict(l=50, r=50, t=50, b=50))
+        fig['layout']['font'].update(dict(size=10))
+
         div = plotly.offline.plot(fig, output_type='div', include_plotlyjs=False, show_link=False)
         return div
 
