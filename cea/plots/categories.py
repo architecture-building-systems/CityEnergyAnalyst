@@ -101,6 +101,7 @@ class PlotCategory(object):
 
 
 if __name__ == '__main__':
+    from pprint import pprint
     config = cea.config.Configuration()
     cache = cea.plots.cache.NullPlotCache()
     errors = []
@@ -120,7 +121,11 @@ if __name__ == '__main__':
 
                 # plot the plot!
                 plot.plot()
-            except Exception as e:
-                errors.append(e)
 
-    print('errors', errors)
+                # write plot data
+                plot.plot_data_to_file()
+
+            except Exception as e:
+                errors.append({'plot': plot_class, 'error': e})
+
+    pprint(errors)
