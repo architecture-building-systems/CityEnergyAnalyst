@@ -161,16 +161,34 @@ class PlotBase(object):
         return self.cache.lookup_plot_div(self, self._plot_div_producer)
 
     def _plot_div_producer(self):
-        fig = plotly.graph_objs.Figure(data=self.calc_graph(), layout=self.layout)
-        fig['layout'] = dict(fig['layout'], **{'margin': dict(l=50, r=50, t=50, b=50), 'hovermode': 'closest', 'font': dict(size=10)})
-        fig['layout']['yaxis'] = dict(fig['layout']['yaxis'], **{'hoverformat': ".2f"})
+        fig = self._plot_figure_producer()
+        fig['layout'].update({
+            'margin': dict(l=50, r=50, t=50, b=50),
+            'hovermode': 'closest',
+            'font': dict(size=10),
+            'yaxis': dict(hoverformat=".2f")
+        })
         div = plotly.offline.plot(fig, output_type='div', include_plotlyjs=False, show_link=False)
-        df = self._plot_data_to_dataframe(fig.data)
         return div
 
-    def _plot_data_to_dataframe(self, plotly_data):
-        from pprint import pprint
+    def _plot_figure_producer(self):
+        try:
+            plotly_data = self.cache.lookup_plot_data(self, self.calc_graph)
+            return plotly.graph_objs.Figure(data=plotly_data, layout=self.layout)
+        except NotImplementedError:  # if self.calc_graph() is not implemented
+            return None
+
+    def plot_data_to_file(self):
         import pandas as pd
+        import collections
+        import re
+
+        plot_figure = self._plot_figure_producer()
+
+        # Return None if plotly figure does not exist
+        if plot_figure is None:
+            return None
+
         plotly_data = plot_figure.data
         x_axis = plot_figure['layout']['xaxis']['title']
         y_axis = plot_figure['layout']['yaxis']['title']
