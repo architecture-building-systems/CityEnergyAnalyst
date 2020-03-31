@@ -43,7 +43,7 @@ class GenerationPlotBase(cea.plots.PlotBase):
         super(GenerationPlotBase, self).__init__(project, parameters, cache)
         self.category_path = os.path.join('testing', 'optimization-overview')
         self.generation = self.parameters['generation']
-        self.generation_noun = 'generation' if self.generation == 1 else 'generations'
+        self.generation_noun = 'generation' if self.generation == '1' else 'generations'
 
     @cea.plots.cache.cached
     def process_today_system_performance(self):
