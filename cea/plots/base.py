@@ -171,24 +171,50 @@ class PlotBase(object):
     def _plot_data_to_dataframe(self, plotly_data):
         from pprint import pprint
         import pandas as pd
+        plotly_data = plot_figure.data
+        x_axis = plot_figure['layout']['xaxis']['title']
+        y_axis = plot_figure['layout']['yaxis']['title']
 
         data = []
+        scatter_plots = collections.OrderedDict()
         for trace in plotly_data:
             name = trace.get('name')
             x = trace.get('x')
             y = trace.get('y')
-            if x is not None and y is not None:
-                if trace.type not in ['scattergl']:
-                    df = pd.DataFrame({name: list(y)}, index=list(x))
+            if x is not None and y is not None and len(x) == len(y):
+                if trace.yaxis:  # Assign correct title if plot contains multiple y_axis
+                    y_axis = plot_figure['layout']['yaxis{}'.format(trace.yaxis.split('y')[1])]['title']
+
+                if trace.type == 'bar':
+                    column_name = name
+                    units = re.search(r'\[.*?\]', y_axis)
+                    if units:
+                        column_name = '{} {}'.format(name, units.group())
+                    df = pd.DataFrame({x_axis: list(x), column_name: list(y)}).set_index(x_axis)
                     data.append(df)
-                else:
-                    print(trace.type)
+                elif trace.type == 'scattergl' and name is not None:
+                    column_name = y_axis
+                    df = pd.DataFrame({x_axis: list(x), column_name: list(y)}).set_index(x_axis)
+                    scatter_plots[name] = df
+
         if data:
             data = pd.concat(data, axis=1)
+            # Try to merge any scatter plots with bar data which have the same index name
+            for data_name, scatter_data in scatter_plots.items():
+                try:
+                    data = pd.concat([data, scatter_data], axis=1)
+                except Exception as e:
+                    print(e)
+            # Export data as .csv
             data.to_csv(os.path.splitext(self.output_path)[0] + '.csv')
-        else:
+        elif scatter_plots:
+            # Export data as .xlsx
+            with pd.ExcelWriter(os.path.splitext(self.output_path)[0] + '.xlsx') as writer:
+                for data_name, scatter_data in scatter_plots.items():
+                    sheet_name = data_name[:31]  # Sheet name cannot be more than 31 characters
+                    scatter_data.to_excel(writer, sheet_name=sheet_name)
+        else:  # Return None if could not parse any data from plot
             data = None
-        print(data)
         return data
 
     def table_div(self):
