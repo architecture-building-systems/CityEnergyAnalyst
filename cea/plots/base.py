@@ -185,9 +185,11 @@ class PlotBase(object):
 
         # Return None if plotly data does not exist
         if plotly_data is None:
+            print("Unable to find plot data found for '{}'".format(self.name))
             return None
 
         x_axis = self.layout['xaxis']['title'] if 'xaxis' in self.layout else ''
+        y_axis = self.layout['yaxis']['title']
 
         data = []
         scatter_plots = collections.OrderedDict()
@@ -198,7 +200,9 @@ class PlotBase(object):
             if x is not None and y is not None and len(x) == len(y):
                 if 'yaxis' in trace:  # Assign correct title if plot contains multiple y_axis
                     y_axis_num = trace['yaxis'].split('y')[1]
+                    y_axis = self.layout['yaxis{}'.format(y_axis_num)]['title'] or y_axis
 
+                if trace['type'] == 'bar':
                     column_name = name
                     units = re.search(r'\[.*?\]', y_axis)
                     if units:
@@ -231,6 +235,7 @@ class PlotBase(object):
         else:  # Return None if could not parse any data from plot
             output_path = None
 
+        print("Written '{}' plot data to {}".format(self.name, output_path))
         return output_path
 
     def table_div(self):
