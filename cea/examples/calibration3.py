@@ -16,6 +16,7 @@ from collections import OrderedDict
 from hyperopt import fmin, tpe, hp, Trials
 import pandas as pd
 from cea.constants import MONTHS_IN_YEAR_NAMES
+from cea.examples.validation import get_measured_building_names
 
 __author__ = "Luis Santos"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -26,7 +27,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-def modify_monthly_multiplier (locator, config):
+def modify_monthly_multiplier (locator, config, measured_building_names):
 
     ##create building input schedules to set monthly multiplier
     data_helper.data_helper(locator, config.data_helper.region, overwrite_technology_folder=False,
@@ -35,10 +36,6 @@ def modify_monthly_multiplier (locator, config):
                 update_schedule_operation_cea=True, buildings=[])
 
     ##calculate monthly multiplier based on buildings real consumption
-    monthly_measured_data = pd.read_csv(locator.get_monthly_measurements())
-    measured_building_names = monthly_measured_data.Name.values
-    measured_building_names = list(measured_building_names)
-
     for building_name in measured_building_names:
         monthly_measured_data = pd.read_csv(locator.get_monthly_measurements())
         fields_to_extract = ['Name'] + MONTHS_IN_YEAR_NAMES
@@ -54,7 +51,6 @@ def modify_monthly_multiplier (locator, config):
 
         # save cea schedule format
         save_cea_schedule(data_schedule, data_metadata, path_to_schedule)
-    return measured_building_names
 
 def calc_score(static_params, dynamic_params):
     """
@@ -84,7 +80,8 @@ def calc_score(static_params, dynamic_params):
     for scenario in scenario_list:
         config.scenario = scenario
         locator = cea.inputlocator.InputLocator(config.scenario)
-        measured_building_names = modify_monthly_multiplier(locator, config)
+        measured_building_names = get_measured_building_names(locator)
+        measured_building_names = modify_monthly_multiplier(locator, config, measured_building_names)
 
         #store for later use
         locators_of_scenarios.append(locator)
