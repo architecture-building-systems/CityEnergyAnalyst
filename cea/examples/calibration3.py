@@ -4,7 +4,6 @@ This tool calibrates a set of inputs from CEA to reduce the error between model 
 from __future__ import division
 from __future__ import print_function
 
-import os
 import cea.config
 import cea.inputlocator
 from cea.utilities.dbf import dbf_to_dataframe, dataframe_to_dbf
@@ -13,24 +12,10 @@ from cea.demand import demand_main, schedule_maker
 from cea.demand.schedule_maker import schedule_maker
 from cea.examples import validation
 from cea.utilities.schedule_reader import read_cea_schedule, save_cea_schedule
-import numpy as np
-from scipy.optimize import minimize
-from hyperopt import hp
 from collections import OrderedDict
-from sklearn.linear_model import LogisticRegression
-import hyperopt.pyll
-from hyperopt.pyll import scope
-import pickle
-import time
-import matplotlib.pyplot as plt
-from hyperopt import fmin, tpe, hp, STATUS_OK, Trials
-from hyperopt.plotting import main_plot_history,main_plot_histogram
+from hyperopt import fmin, tpe, hp, Trials
 import pandas as pd
-from sklearn.metrics import mean_squared_error
-from math import sqrt
-from cea.constants import MONTHS_IN_YEAR, MONTHS_IN_YEAR_NAMES
-
-from sklearn.externals import joblib
+from cea.constants import MONTHS_IN_YEAR_NAMES
 
 __author__ = "Luis Santos"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -71,85 +56,97 @@ def modify_monthly_multiplier (locator, config):
         save_cea_schedule(data_schedule, data_metadata, path_to_schedule)
     return measured_building_names
 
-def calc_score(static_params, params):
+def calc_score(static_params, dynamic_params):
     """
     This tool reduces the error between observed (real life measured data) and predicted (output of the model data) values by changing some of CEA inputs.
     Annual data is compared in terms of MBE and monthly data in terms of NMBE and CvRMSE (follwing ASHRAE Guideline 14-2002).
     A new input folder with measurements has to be created, with a csv each for monthly and annual data provided as input for this tool.
     A new output csv is generated providing the calibration results (iteration number, parameters tested and results(score metric))
     """
-    locator = static_params['locator']
-    config = static_params['config']
-    measured_building_names = static_params['measured_building_names']
-
     ## define set of CEA inputs to be calibrated and initial guess values
-    Es = params['Es']
-    Ns = params['Ns']
-    Occ_m2pax = params['Occ_m2pax']
-    Vww_lpdpax = params['Vww_lpdpax']
-    Ea_Wm2 = params['Ea_Wm2']
-    El_Wm2 = params['El_Wm2']
+    Es = dynamic_params['Es']
+    Ns = dynamic_params['Ns']
+    Occ_m2pax = dynamic_params['Occ_m2pax']
+    Vww_lpdpax = dynamic_params['Vww_lpdpax']
+    Ea_Wm2 = dynamic_params['Ea_Wm2']
+    El_Wm2 = dynamic_params['El_Wm2']
 
     ##define fixed constant parameters (to be redefined by CEA config file)
     Hs_ag = 0
     Tcs_set_C = 40
     Tcs_setb_C = 40
 
-    ## overwrite inputs with corresponding initial values
-    df_arch = dbf_to_dataframe(locator.get_building_architecture())
-    df_arch.Es = Es
-    df_arch.Ns = Ns
-    df_arch.Hs_ag = Hs_ag
-    df_arch = dataframe_to_dbf(df_arch, locator.get_building_architecture())
+    scenario_list = static_params['scenario_list']
+    config = static_params['config']
 
-    df_intload = dbf_to_dataframe(locator.get_building_internal())
-    df_intload.Occ_m2pax = Occ_m2pax
-    df_intload.Vww_lpdpax = Vww_lpdpax
-    df_intload.Ea_Wm2 = Ea_Wm2
-    df_intload.El_Wm2 = El_Wm2
-    df_intload = dataframe_to_dbf(df_intload, locator.get_building_internal())
+    locators_of_scenarios =[]
+    measured_building_names_of_scenarios =[]
+    for scenario in scenario_list:
+        config.scenario = scenario
+        locator = cea.inputlocator.InputLocator(config.scenario)
+        measured_building_names = modify_monthly_multiplier(locator, config)
 
-    df_comfort = dbf_to_dataframe(locator.get_building_comfort())
-    df_comfort.Tcs_set_C = Tcs_set_C
-    df_comfort.Tcs_setb_C = Tcs_setb_C
-    df_comfort = dataframe_to_dbf(df_comfort, locator.get_building_comfort())
+        #store for later use
+        locators_of_scenarios.append(locator)
+        measured_building_names_of_scenarios.append(measured_building_names_of_scenarios)
 
-    ## run building schedules and energy demand
-    config.schedule_maker.buildings = measured_building_names
-    schedule_maker.schedule_maker_main(locator, config)
-    config.demand.buildings = measured_building_names
-    demand_main.demand_calculation(locator, config)
+        ## overwrite inputs with corresponding initial values
+        df_arch = dbf_to_dataframe(locator.get_building_architecture())
+        df_arch.Es = Es
+        df_arch.Ns = Ns
+        df_arch.Hs_ag = Hs_ag
+        dataframe_to_dbf(df_arch, locator.get_building_architecture())
+
+        df_intload = dbf_to_dataframe(locator.get_building_internal())
+        df_intload.Occ_m2pax = Occ_m2pax
+        df_intload.Vww_lpdpax = Vww_lpdpax
+        df_intload.Ea_Wm2 = Ea_Wm2
+        df_intload.El_Wm2 = El_Wm2
+        dataframe_to_dbf(df_intload, locator.get_building_internal())
+
+        df_comfort = dbf_to_dataframe(locator.get_building_comfort())
+        df_comfort.Tcs_set_C = Tcs_set_C
+        df_comfort.Tcs_setb_C = Tcs_setb_C
+        dataframe_to_dbf(df_comfort, locator.get_building_comfort())
+
+        ## run building schedules and energy demand
+        config.schedule_maker.buildings = measured_building_names
+        schedule_maker.schedule_maker_main(locator, config)
+        config.demand.buildings = measured_building_names
+        demand_main.demand_calculation(locator, config)
 
     #calculate the score
-    score = validation.validation(locator, measured_building_names)
+    score = validation.validation(scenario_list=scenario_list,
+                                  locators_of_scenarios=locators_of_scenarios,
+                                  measured_building_names_of_scenarios=measured_building_names_of_scenarios)
 
     return score
 
     ## save the iteration number, the value of each parameter tested and the score obtained ***
 
 
-def calibration(config, locator):
-    measured_building_names = modify_monthly_multiplier(locator, config)
+def calibration(config, list_scenarios):
+
     max_evals = 2
 
     #  define a search space
-    SPACE = OrderedDict([('Es', hp.uniform('Es', 0.6, 1.0)),
+    DYNAMIC_PARAMETERS = OrderedDict([('Es', hp.uniform('Es', 0.6, 1.0)),
                          ('Ns', hp.uniform('Ns', 0.7, 1.0)),
                          ('Occ_m2pax', hp.uniform('Occ_m2pax', 30.0, 60.0)),
                          ('Vww_lpdpax', hp.uniform('Vww_lpdpax', 20.0, 40.0)),
                          ('Ea_Wm2', hp.uniform('Ea_Wm2', 1.0, 5.0)),
                          ('El_Wm2', hp.uniform('El_Wm2', 1.0, 5.0))
                          ])
-    STATIC_PARAMS = {'locator': locator, 'config': config, 'measured_building_names':measured_building_names}
+    STATIC_PARAMS = {'scenario_list': list_scenarios, 'config': config}
 
     #define the objective
-    def objective(params):
-        return -1.0 * calc_score(STATIC_PARAMS, params)
+    def objective(dynamic_params):
+        return -1.0 * calc_score(STATIC_PARAMS, dynamic_params)
 
     #run the algorithm
     trials = Trials()
     best = fmin(objective,
-                space=SPACE,
+                space=DYNAMIC_PARAMETERS,
                 algo=tpe.suggest,
                 max_evals=max_evals,
                 trials=trials)
@@ -184,28 +181,8 @@ def main(config):
     :type config: cea.config.Configuration
     :return:
     """
-
-
-    # assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
-    #
-    # list_scenarios = ['C:\CEA\HDB_calibration\LCZ1_Yishun', 'C:\CEA\HDB_calibration\LCZ4_Tampines']
-    # for scenario in list_scenarios:
-    #     config.scenario = scenario
-    #     locator = cea.inputlocator.InputLocator(config.scenario)
-    # calibration(config, locator)
-
     list_scenarios = ['C:\CEA\HDB_calibration\LCZ1_Yishun', 'C:\CEA\HDB_calibration\LCZ4_Tampines']
-    for scenario in list_scenarios:
-        config.scenario = scenario
-        assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
-        locator = cea.inputlocator.InputLocator(config.scenario)
-        calibration(config, locator)
-
-    # monthly_measured_data = pd.read_csv(locator.get_monthly_measurements())
-    # measured_building_names = monthly_measured_data.Name.values
-    # measured_building_names = list(measured_building_names)
-    # building_names = measured_building_names
-    # return building_names
+    calibration(config, list_scenarios)
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
