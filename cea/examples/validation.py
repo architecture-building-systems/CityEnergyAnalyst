@@ -74,7 +74,7 @@ def validation(scenario_list,
             # loop in the measured buildings of this scenario
             for building_name in measured_building_names:  # number of buildings that have real data available
                 # extract measured data (format: BuildingID (corresponding to CEA model) | ZipCode (optional) | monthly energy consumed (kWh) (Jan-Dec)
-                print(building_name)
+                print('For building',building_name, 'the errors are')
                 fields_to_extract = ['Name'] + MONTHS_IN_YEAR_NAMES
                 monthly_measured_demand = monthly_measured_data[fields_to_extract].set_index('Name')
                 monthly_measured_demand = monthly_measured_demand.loc[building_name]
@@ -107,8 +107,8 @@ def validation(scenario_list,
                 list_of_scores.append(ind_score_building)
         n_calib = sum(number_of_calibrated)
         score = sum(list_of_scores)
-    print(n_calib)
-    print(score)
+    print('The number of calibrated buildings is',n_calib)
+    print('The final score is',score)
     return score
 
 
@@ -116,11 +116,11 @@ def calc_errors_per_building(load, monthly_data):
     biased_error = monthly_data['measurements'] - monthly_data[load + '_kWh']
     normalized_mean_biased_error = ((biased_error.sum() / 12) / monthly_data[
         'measurements'].mean()) * 100  # %
-    print(normalized_mean_biased_error)
+    print('NMBE:',normalized_mean_biased_error)
     mean_squared_error = calc_mean_squared_error(monthly_data['measurements'], monthly_data[load + '_kWh'])
     root_mean_squared_error = sqrt(mean_squared_error)  # root mean squared error
     cv_root_mean_squared_error = root_mean_squared_error * 100 / monthly_data['measurements'].mean()
-    print(cv_root_mean_squared_error)
+    print('CVRMSE:',cv_root_mean_squared_error)
     return cv_root_mean_squared_error, normalized_mean_biased_error
 
 
