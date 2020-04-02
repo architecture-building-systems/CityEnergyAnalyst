@@ -17,6 +17,8 @@ from hyperopt import fmin, tpe, hp, Trials
 import pandas as pd
 from cea.constants import MONTHS_IN_YEAR_NAMES
 from cea.examples.validation import get_measured_building_names
+import glob2
+import os
 
 __author__ = "Luis Santos"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -27,13 +29,14 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-def modify_monthly_multiplier (locator, config, measured_building_names):
 
+def modify_monthly_multiplier(locator, config, measured_building_names):
     ##create building input schedules to set monthly multiplier
     data_helper.data_helper(locator, config.data_helper.region, overwrite_technology_folder=False,
-                update_architecture_dbf=False, update_HVAC_systems_dbf=False, update_indoor_comfort_dbf=False,
-                update_internal_loads_dbf=False, update_supply_systems_dbf=False,
-                update_schedule_operation_cea=True, buildings=[])
+                            update_architecture_dbf=False, update_HVAC_systems_dbf=False,
+                            update_indoor_comfort_dbf=False,
+                            update_internal_loads_dbf=False, update_supply_systems_dbf=False,
+                            update_schedule_operation_cea=True, buildings=[])
 
     ##calculate monthly multiplier based on buildings real consumption
     for building_name in measured_building_names:
@@ -43,14 +46,15 @@ def modify_monthly_multiplier (locator, config, measured_building_names):
         monthly_measured_demand = monthly_measured_demand.loc[building_name]
         monthly_measured_demand = pd.DataFrame({'Month': monthly_measured_demand.index.values,
                                                 'measurements': monthly_measured_demand.values})
-        monthly_measured_load = monthly_measured_demand.measurements/max(monthly_measured_demand.measurements)
+        monthly_measured_load = monthly_measured_demand.measurements / max(monthly_measured_demand.measurements)
 
         path_to_schedule = locator.get_building_weekly_schedules(building_name)
         data_schedule, data_metadata = read_cea_schedule(path_to_schedule)
-        data_metadata["MONTHLY_MULTIPLIER"]=list(monthly_measured_load.round(2))
+        data_metadata["MONTHLY_MULTIPLIER"] = list(monthly_measured_load.round(2))
 
         # save cea schedule format
         save_cea_schedule(data_schedule, data_metadata, path_to_schedule)
+
 
 def calc_score(static_params, dynamic_params):
     """
@@ -75,17 +79,17 @@ def calc_score(static_params, dynamic_params):
     scenario_list = static_params['scenario_list']
     config = static_params['config']
 
-    locators_of_scenarios =[]
-    measured_building_names_of_scenarios =[]
+    locators_of_scenarios = []
+    measured_building_names_of_scenarios = []
     for scenario in scenario_list:
         config.scenario = scenario
         locator = cea.inputlocator.InputLocator(config.scenario)
         measured_building_names = get_measured_building_names(locator)
-        measured_building_names = modify_monthly_multiplier(locator, config, measured_building_names)
+        modify_monthly_multiplier(locator, config, measured_building_names)
 
-        #store for later use
+        # store for later use
         locators_of_scenarios.append(locator)
-        measured_building_names_of_scenarios.append(measured_building_names_of_scenarios)
+        measured_building_names_of_scenarios.append(measured_building_names)
 
         ## overwrite inputs with corresponding initial values
         df_arch = dbf_to_dataframe(locator.get_building_architecture())
@@ -112,7 +116,7 @@ def calc_score(static_params, dynamic_params):
         config.demand.buildings = measured_building_names
         demand_main.demand_calculation(locator, config)
 
-    #calculate the score
+    # calculate the score
     score = validation.validation(scenario_list=scenario_list,
                                   locators_of_scenarios=locators_of_scenarios,
                                   measured_building_names_of_scenarios=measured_building_names_of_scenarios)
@@ -123,24 +127,23 @@ def calc_score(static_params, dynamic_params):
 
 
 def calibration(config, list_scenarios):
-
     max_evals = 2
 
     #  define a search space
     DYNAMIC_PARAMETERS = OrderedDict([('Es', hp.uniform('Es', 0.6, 1.0)),
-                         ('Ns', hp.uniform('Ns', 0.7, 1.0)),
-                         ('Occ_m2pax', hp.uniform('Occ_m2pax', 30.0, 60.0)),
-                         ('Vww_lpdpax', hp.uniform('Vww_lpdpax', 20.0, 40.0)),
-                         ('Ea_Wm2', hp.uniform('Ea_Wm2', 1.0, 5.0)),
-                         ('El_Wm2', hp.uniform('El_Wm2', 1.0, 5.0))
-                         ])
+                                      ('Ns', hp.uniform('Ns', 0.7, 1.0)),
+                                      ('Occ_m2pax', hp.uniform('Occ_m2pax', 30.0, 60.0)),
+                                      ('Vww_lpdpax', hp.uniform('Vww_lpdpax', 20.0, 40.0)),
+                                      ('Ea_Wm2', hp.uniform('Ea_Wm2', 1.0, 5.0)),
+                                      ('El_Wm2', hp.uniform('El_Wm2', 1.0, 5.0))
+                                      ])
     STATIC_PARAMS = {'scenario_list': list_scenarios, 'config': config}
 
-    #define the objective
+    # define the objective
     def objective(dynamic_params):
         return -1.0 * calc_score(STATIC_PARAMS, dynamic_params)
 
-    #run the algorithm
+    # run the algorithm
     trials = Trials()
     best = fmin(objective,
                 space=DYNAMIC_PARAMETERS,
@@ -149,24 +152,38 @@ def calibration(config, list_scenarios):
                 trials=trials)
     print(best)
     print('Best Params: {}'.format(best))
-    print (trials.losses())
-    results=[]
+    print(trials.losses())
+    results = []
     for counter in range(0, max_evals):
-
-        results_it = [counter,trials.trials[counter]['misc']['vals']['Ea_Wm2'][0],trials.trials[counter]['misc']['vals']['El_Wm2'][0], trials.trials[counter]['misc']['vals']['Es'][0],trials.trials[counter]['misc']['vals']['Ns'][0],
-          trials.trials[counter]['misc']['vals']['Occ_m2pax'][0],trials.trials[counter]['misc']['vals']['Vww_lpdpax'][0],trials.losses()[counter]]
+        results_it = [counter,
+                      trials.trials[counter]['misc']['vals']['Ea_Wm2'][0],
+                      trials.trials[counter]['misc']['vals']['El_Wm2'][0],
+                      trials.trials[counter]['misc']['vals']['Es'][0],
+                      trials.trials[counter]['misc']['vals']['Ns'][0],
+                      trials.trials[counter]['misc']['vals']['Occ_m2pax'][0],
+                      trials.trials[counter]['misc']['vals']['Vww_lpdpax'][0],
+                      trials.losses()[counter]]
         results.append(results_it)
-    results=pd.DataFrame(results)
-    path=locator.get_calibrationresults()
-    results.to_csv(path, index=False)
-        # results = pd.DataFrame(results_it)
-        #
-        # results.to_csv('calibration_it.csv')
-        # print (results)
-        # print(counter,trials.trials[counter]['misc']['vals']['Ea_Wm2'],trials.trials[counter]['misc']['vals']['El_Wm2'], trials.trials[counter]['misc']['vals']['Es'],trials.trials[counter]['misc']['vals']['Ns'],
-        #   trials.trials[counter]['misc']['vals']['Occ_m2pax'],trials.trials[counter]['misc']['vals']['Vww_lpdpax'],trials.losses()[counter])
+    results = pd.DataFrame(results)
+    results.columns = ['eval', 'Ea_Wm2', 'El_Wm2', 'Es',
+                       'Ns', 'Occ_m2pax', 'Vww_lpdpax', 'losses']
+    project_path = config.project
+    output_path = (project_path + r'/output/calibration/')
 
-    x=1
+    if not os.path.exists(output_path):
+        os.makedirs(output_path)
+    file_name = output_path+'calibration_results.csv'
+    results.to_csv(file_name, index=False)
+    # results = pd.DataFrame(results_it)
+    #
+    # results.to_csv('calibration_it.csv')
+    # print (results)
+    # print(counter,trials.trials[counter]['misc']['vals']['Ea_Wm2'],trials.trials[counter]['misc']['vals']['El_Wm2'], trials.trials[counter]['misc']['vals']['Es'],trials.trials[counter]['misc']['vals']['Ns'],
+    #   trials.trials[counter]['misc']['vals']['Occ_m2pax'],trials.trials[counter]['misc']['vals']['Vww_lpdpax'],trials.losses()[counter])
+
+    x = 1
+
+
 def main(config):
     """
     This is the main entry point to your script. Any parameters used by your script must be present in the ``config``
@@ -178,8 +195,16 @@ def main(config):
     :type config: cea.config.Configuration
     :return:
     """
-    list_scenarios = ['C:\CEA\HDB_calibration\LCZ1_Yishun', 'C:\CEA\HDB_calibration\LCZ4_Tampines']
+    project_path = config.project
+    measurement_files = sorted(glob2.glob(project_path + '/**/monthly_measurements.csv'))
+
+    list_scenarios = []
+    for f in measurement_files:
+        list_scenarios.append(os.path.dirname(os.path.dirname(os.path.dirname(f))))
+    print(list_scenarios)
+
     calibration(config, list_scenarios)
+
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
