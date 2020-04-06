@@ -23,7 +23,9 @@ Responsibilities
 
 Engagement
 **********
-#. Participate in the Roadmap Planning and Review events.
+#. Participate in the Roadmap Planning and Review (including :doc:`Events`).
+
+
 
 ===========================================================
  Engagement
@@ -39,14 +41,7 @@ Engagement
 +---------------------------------------------------------------------------------------------------+
 
 
-Roadmap Planning and Review events
-**********************************
-* Frequency: Quarterly
-* Agenda:
-    #. Demonstration
-    #. Bottlenecks
-    #. Planning
-* Attendees: all CEA team
+
 
 
 Product Owner (PO)
