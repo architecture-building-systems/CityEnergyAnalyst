@@ -65,10 +65,11 @@ Responsibilities
 ============ =====================================================================================================
 Label        Description
 ============ =====================================================================================================
-Must-have    These are issues related to the features defined in the roadmap and bugs.
-Should-have  These are issues that can't be categorized for the moment.
-Won't have    - Features that are not in the roadmap.
-              - Features that are hard to maintain. These features can become external modules of the CEA.
+Must-have    - Features defined in the roadmap and bugs.
+             - Bugs.
+Should-have  - Issues that can't be categorized for the moment.
+Won't have   - Features that are not in the roadmap.
+             - Features that are hard to maintain. These features can become external modules of the CEA.
 ============ =====================================================================================================
 The product owner categorize the incoming issues into these three labels:
     * Must-have: These are issues related to the features from the roadmap and bugs.
