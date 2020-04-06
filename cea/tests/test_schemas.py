@@ -60,33 +60,41 @@ class TestSchemas(unittest.TestCase):
             else:
                 self.assertIn("columns", schemas[lm]["schema"], "Missing columns for {lm}".format(lm=lm))
 
-    def fixme_test_all_schema_columns_documented(self):
+    def test_all_schema_columns_documented(self):
         schemas = cea.scripts.schemas()
+        skip_lms = {
+            "get_building_weekly_schedules",
+            "get_optimization_individuals_in_generation",
+            "get_optimization_slave_cooling_activation_pattern",
+        }
         for lm in schemas.keys():
+            if lm in skip_lms:
+                # these can't be documented properly due to the file format
+                continue
             schema = schemas[lm]["schema"]
             if schemas[lm]["file_type"] in {"xls", "xlsx"}:
                 for ws in schema.keys():
                     ws_schema = schema[ws]["columns"]
                     for col in ws_schema.keys():
                         self.assertNotEqual(ws_schema[col]["description"].strip(), "TODO",
-                                            "Missing descriptiong for {lm}/{ws}/{col}/description".format(
+                                            "Missing description for {lm}/{ws}/{col}/description".format(
                                                 lm=lm, ws=ws, col=col))
                         self.assertNotEqual(ws_schema[col]["unit"].strip(), "TODO",
-                                            "Missing descriptiong for {lm}/{ws}/{col}/unit".format(
+                                            "Missing description for {lm}/{ws}/{col}/unit".format(
                                                 lm=lm, ws=ws, col=col))
                         self.assertNotEqual(ws_schema[col]["values"].strip(), "TODO",
-                                            "Missing descriptiong for {lm}/{ws}/{col}/description".format(
+                                            "Missing description for {lm}/{ws}/{col}/description".format(
                                                 lm=lm, ws=ws, col=col))
             elif schemas[lm]["file_type"] in {"shp", "dbf", "csv"}:
                 for col in schema["columns"].keys():
                     self.assertNotEqual(schema["columns"][col]["description"].strip(), "TODO",
-                                        "Missing descriptiong for {lm}/{col}/description".format(
+                                        "Missing description for {lm}/{col}/description".format(
                                             lm=lm, col=col))
                     self.assertNotEqual(schema["columns"][col]["unit"].strip(), "TODO",
-                                        "Missing descriptiong for {lm}/{col}/description".format(
+                                        "Missing description for {lm}/{col}/description".format(
                                             lm=lm, col=col))
                     self.assertNotEqual(schema["columns"][col]["values"].strip(), "TODO",
-                                        "Missing descriptiong for {lm}/{col}/description".format(
+                                        "Missing description for {lm}/{col}/description".format(
                                             lm=lm, col=col))
 
     def test_each_lm_has_created_by(self):

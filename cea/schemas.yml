@@ -1716,15 +1716,15 @@ get_building_weekly_schedules:
   schema:
     columns:
       METADATA:
-        description: TODO
+        description: Describes meta data for this schedule (e.g. provenance of values)
+        type: str
+        unit: "[-]"
+        values: alphanumeric
+      MONTHLY_MULTIPLIER:
+        description: Monthly multiplier for the values in the schedule
         type: float
-        unit: TODO
-        values: TODO
-      mixed-schedule:
-        description: TODO
-        type: float
-        unit: TODO
-        values: TODO
+        unit: "[-]"
+        values: "{0.0...1.0}"
   used_by:
   - demand
   - schedule_maker
