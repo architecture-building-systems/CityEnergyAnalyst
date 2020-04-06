@@ -47,8 +47,9 @@ Responsibilities
 
 
 
-The **product backlogs** contains issues that is labelled as Must-have and Should-have. Here are the details of the labels
-used to categorize new issues in the CEA:
+The **product backlogs** contains issues that is labelled as Must-have and Should-have.
+Here are the details of the labels used to categorize new issues in the CEA:
+
 ============ =====================================================================================================
 Label        Description
 ============ =====================================================================================================
