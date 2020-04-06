@@ -56,7 +56,7 @@ Here are the details of the labels used to categorize new issues in the CEA:
 ============ =====================================================================================================
 Label        Description
 ============ =====================================================================================================
-Must-have    - Features defined in the roadmap and bugs.
+Must-have    - Features defined in the roadmap.
              - Bugs.
 Should-have  - Issues that can't be categorized for the moment.
 Won't have   - Features that are not in the roadmap.
