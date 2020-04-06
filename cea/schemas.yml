@@ -1192,11 +1192,6 @@ SC_total_buildings:
         type: float
         unit: '[m2]'
         values: '{0.0...n}'
-      'Unnamed: 0':
-        description: TODO
-        type: TODO
-        unit: TODO
-        values: TODO
       radiation_kWh:
         description: Total radiatiative potential.
         type: float
