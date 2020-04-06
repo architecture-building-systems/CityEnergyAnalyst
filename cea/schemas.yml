@@ -795,7 +795,6 @@ PV_total_buildings:
         values: '{0.0...n}'
       'Unnamed: 0':
         description: TODO
-        type: TODO
         unit: TODO
         values: TODO
       radiation_kWh:
@@ -803,11 +802,6 @@ PV_total_buildings:
         type: float
         unit: '[kWh]'
         values: '{0.0...n}'
-      Name:
-        description: Unique building ID. It must start with a letter.
-        type: string
-        unit: '[-]'
-        values: alphanumeric
   used_by: []
 PV_totals:
   created_by:
@@ -1721,15 +1715,15 @@ get_building_weekly_schedules:
   schema:
     columns:
       METADATA:
-        description: Describes meta data for this schedule (e.g. provenance of values)
+        description: TODO
         type: str
-        unit: "[-]"
-        values: alphanumeric
+        unit: TODO
+        values: TODO
       MONTHLY_MULTIPLIER:
-        description: Monthly multiplier for the values in the schedule
+        description: TODO
         type: float
-        unit: "[-]"
-        values: "{0.0...1.0}"
+        unit: TODO
+        values: TODO
   used_by:
   - demand
   - schedule_maker
@@ -5010,68 +5004,68 @@ get_database_standard_schedules_use:
       APPLIANCES:
         description: TODO
         type: float
-        unit: /m2
-        values: '[0.0, 1.0]'
+        unit: TODO
+        values: TODO
       COOLING:
         description: TODO
         type: str
-        unit: null
-        values: '{OFF, SETPOINT}'
+        unit: TODO
+        values: TODO
       DAY:
         description: TODO
         type: str
-        unit: null
-        values: '{WEEKDAY, SATURDAY, SUNDAY}'
+        unit: TODO
+        values: TODO
       ELECTROMOBILITY:
         description: TODO
         type: float
-        unit: /m2
-        values: '[0.0, 1.0]'
+        unit: TODO
+        values: TODO
       HEATING:
         description: TODO
         type: str
-        unit: null
-        values: '{OFF, SETPOINT}'
+        unit: TODO
+        values: TODO
       HOUR:
         description: TODO
         type: int
-        unit: null
-        values: 1..24
+        unit: TODO
+        values: TODO
       LIGHTING:
         description: TODO
         type: float
-        unit: /m2
-        values: '[0.0, 1.0]'
+        unit: TODO
+        values: TODO
       METADATA:
-        description: TODO
+        description: metadata
         type: str
-        unit: null
-        values: null
+        unit: '[-]'
+        values: TODO
       MONTHLY_MULTIPLIER:
         description: TODO
         type: List[float]
-        unit: '[-]'
-        values: 0..1
+        unit: TODO
+        values: TODO
       OCCUPANCY:
         description: TODO
         type: float
-        unit: /m2
-        values: '[0.0, 1.0]'
+        unit: TODO
+        values: TODO
       PROCESSES:
         description: TODO
         type: float
-        unit: /m2
-        values: '[0.0, 1.0]'
+        unit: TODO
+        values: TODO
       SERVERS:
         description: TODO
         type: float
-        unit: /m2
-        values: '[0.0, 1.0]'
+        unit: TODO
+        values: TODO
       WATER:
         description: TODO
         type: float
-        unit: /m2
-        values: '[0.0, 1.0]'
+        unit: TODO
+        values: TODO
   used_by:
   - archetypes_mapper
 get_database_supply_assemblies:
@@ -7255,37 +7249,37 @@ get_optimization_connected_cooling_capacity:
           Collector (Flat Plate) for Decentralized Building
         type: float
         unit: '[W]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       Capacity_ACH_SC_FP_cool_disconnected_W:
         description: Thermal Capacity of Absorption Chiller and Solar Collector (Flat
           Plate) for Decentralized Building
         type: float
         unit: '[W]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       Capacity_BaseVCC_AS_cool_disconnected_W:
         description: Thermal Capacity of Base load Vapor Compression Chiller for Decentralized
           Building
         type: float
         unit: '[W]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       Capacity_DX_AS_cool_disconnected_W:
         description: Thermal Capacity of Direct Expansion Air-Source for Decentralized
           Building
         type: float
         unit: '[W]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       Capacity_VCCHT_AS_cool_disconnected_W:
         description: Thermal Capacity of High-Temperature Vapor Compression Chiller
           (Air-Source) for Decentralized Building
         type: float
         unit: '[W]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       Capaticy_ACH_SC_ET_cool_disconnected_W:
         description: Thermal Capacity of Absorption Chiller and Solar Collector (Evacuated
           Tube)for Decentralized Building
         type: float
         unit: '[W]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       Name:
         description: Unique building ID. It must start with a letter
         type: string
@@ -7709,37 +7703,37 @@ get_optimization_disconnected_cooling_capacity:
           Collector (Flat Plate) for Decentralized Building
         type: float
         unit: '[W]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       Capacity_ACH_SC_FP_cool_disconnected_W:
         description: Thermal Capacity of Absorption Chiller and Solar Collector (Flat
           Plate) for Decentralized Building
         type: float
         unit: '[W]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       Capacity_BaseVCC_AS_cool_disconnected_W:
         description: Thermal Capacity of Base load Vapor Compression Chiller for Decentralized
           Building
         type: float
         unit: '[W]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       Capacity_DX_AS_cool_disconnected_W:
         description: Thermal Capacity of Direct Expansion Air-Source for Decentralized
           Building
         type: float
         unit: '[W]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       Capacity_VCCHT_AS_cool_disconnected_W:
         description: Thermal Capacity of High-Temperature Vapor Compression Chiller
           (Air-Source) for Decentralized Building
         type: float
         unit: '[W]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       Capaticy_ACH_SC_ET_cool_disconnected_W:
         description: Thermal Capacity of Absorption Chiller and Solar Collector (Evacuated
           Tube)for Decentralized Building
         type: float
         unit: '[W]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       Name:
         description: Unique building ID. It must start with a letter
         type: string
@@ -8162,67 +8156,67 @@ get_optimization_generation_disconnected_performance:
         description: Annualized Capital Costs in Disconnected Buildings due to cooling
         type: float
         unit: '[USD 2015/yr]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       Capex_a_heating_disconnected_USD:
         description: Annualized Capital Costs in Disconnected Buildings due to heating
         type: float
         unit: '[USD 2015/yr]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       Capex_total_cooling_disconnected_USD:
         description: Total Capital Costs in Disconnected Buildings due to cooling
         type: float
         unit: '[USD 2015]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       Capex_total_heating_disconnected_USD:
         description: Total Capital Costs in Disconnected Buildings due to heating
         type: float
         unit: '[USD 2015]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       GHG_cooling_disconnected_tonCO2:
         description: Green House Gas Emissions of Disconnected Buildings due to Cooling
         type: float
         unit: '[ton Co2-eq/yr]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       GHG_heating_disconnected_tonCO2:
         description: Green House Gas Emissions of Disconnected Buildings due to Heating
         type: float
         unit: '[ton Co2-eq/yr]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       Opex_fixed_cooling_disconnected_USD:
         description: Fixed Operational Costs in Disconnected Buildings due to cooling
         type: float
         unit: '[USD 2015/yr]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       Opex_fixed_heating_disconnected_USD:
         description: Fixed Operational Costs in Disconnected Buildings due to heating
         type: float
         unit: '[USD 2015/yr]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       Opex_var_cooling_disconnected_USD:
         description: Variable Operational Costs in Disconnected Buildings due to cooling
         type: float
         unit: '[USD 2015/yr]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       Opex_var_heating_disconnected_USD:
         description: Variable Operational Costs in Disconnected Buildings due to heating
         type: float
         unit: '[USD 2015/yr]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       'Unnamed: 0':
         description: Index
         type: long
         unit: '[-]'
-        values: '{0...n}'
+        values: !!python/str "{0\uFFFDn}"
       generation:
         description: No. Generation or Iteration (genetic Algorithm)
         type: long
         unit: '[-]'
-        values: '{0.0...n}'
+        values: !!python/str "{0\uFFFDn}"
       individual:
         description: No. Individual unique ID
         type: long
         unit: '[-]'
-        values: '{0.0...n}'
+        values: !!python/str "{0\uFFFDn}"
       individual_name:
         description: Name of  Individual unique ID
         type: string
@@ -8240,92 +8234,92 @@ get_optimization_generation_total_performance:
         description: Annualized Capital Costs of Central Plant and Decentralized Buildings
         type: float
         unit: '[USD 2015/yr]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       Capex_a_sys_connected_USD:
         description: Annualized Capital Costs of Central Plant
         type: float
         unit: '[USD 2015/yr]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       Capex_a_sys_disconnected_USD:
         description: Annualized Capital Costs of Decentralized Buildings
         type: float
         unit: '[USD 2015/yr]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       Capex_total_sys_USD:
         description: Total Capital Costs of Central Plant and  Decentralized Buildings
         type: float
         unit: '[USD 2015]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       Capex_total_sys_connected_USD:
         description: Total Capital Costs of Central Plant
         type: float
         unit: '[USD 2015]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       Capex_total_sys_disconnected_USD:
         description: Total Capital Costs of Decentralized Buildings
         type: float
         unit: '[USD 2015]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       GHG_sys_connected_tonCO2:
         description: Green House Gas Emissions Central Plant
         type: float
         unit: '[ton CO2-eq/yr]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       GHG_sys_disconnected_tonCO2:
         description: Green House Gas Emissions of Decentralized Buildings
         type: float
         unit: '[ton CO2-eq/yr]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       GHG_sys_tonCO2:
         description: Green House Gas Emissions Central Plant and Decentralized Buildings
         type: float
         unit: '[ton CO2-eq/yr]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       Opex_a_sys_USD:
         description: Operation Costs of Central Plant and Decentralized Buildings
         type: float
         unit: '[USD 2015/yr]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       Opex_a_sys_connected_USD:
         description: 'Operation Costs of Central Plant '
         type: float
         unit: '[USD 2015/yr]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       Opex_a_sys_disconnected_USD:
         description: Operation Costs of Decentralized Buildings
         type: float
         unit: '[USD 2015/yr]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       TAC_sys_USD:
         description: Total Anualized Costs of Central Plant and Decentralized Buildings
         type: float
         unit: '[USD 2015/yr]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       TAC_sys_connected_USD:
         description: Total Anualized Costs of Central Plant
         type: float
         unit: '[USD 2015/yr]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       TAC_sys_disconnected_USD:
         description: Total Anualized Costs of Decentralized Buildings
         type: float
         unit: '[USD 2015/yr]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       'Unnamed: 0':
         description: Index
         type: long
         unit: '[-]'
-        values: '{0...n}'
+        values: !!python/str "{0\uFFFDn}"
       generation:
         description: No. Generation or Iteration (genetic Algorithm)
         type: long
         unit: '[-]'
-        values: '{0...n}'
+        values: !!python/str "{0\uFFFDn}"
       individual:
         description: No. Individual unique ID
         type: long
         unit: '[-]'
-        values: '{0...n}'
+        values: !!python/str "{0\uFFFDn}"
       individual_name:
         description: Name of  Individual unique ID
         type: string
@@ -8343,92 +8337,92 @@ get_optimization_generation_total_performance_pareto:
         description: Annualized Capital Costs of Central Plant and Decentralized Buildings
         type: float
         unit: '[USD 2015/yr]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       Capex_a_sys_connected_USD:
         description: Annualized Capital Costs of Central Plant
         type: float
         unit: '[USD 2015/yr]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       Capex_a_sys_disconnected_USD:
         description: Annualized Capital Costs of Decentralized Buildings
         type: float
         unit: '[USD 2015/yr]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       Capex_total_sys_USD:
         description: Total Capital Costs of Central Plant and  Decentralized Buildings
         type: float
         unit: '[USD 2015]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       Capex_total_sys_connected_USD:
         description: Total Capital Costs of Central Plant
         type: float
         unit: '[USD 2015]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       Capex_total_sys_disconnected_USD:
         description: Total Capital Costs of Decentralized Buildings
         type: float
         unit: '[USD 2015]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       GHG_sys_connected_tonCO2:
         description: Green House Gas Emissions Central Plant
         type: float
         unit: '[ton CO2-eq/yr]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       GHG_sys_disconnected_tonCO2:
         description: Green House Gas Emissions of Decentralized Buildings
         type: float
         unit: '[ton CO2-eq/yr]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       GHG_sys_tonCO2:
         description: Green House Gas Emissions Central Plant and Decentralized Buildings
         type: float
         unit: '[ton CO2-eq/yr]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       Opex_a_sys_USD:
         description: Operation Costs of Central Plant and Decentralized Buildings
         type: float
         unit: '[USD 2015/yr]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       Opex_a_sys_connected_USD:
         description: 'Operation Costs of Central Plant '
         type: float
         unit: '[USD 2015/yr]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       Opex_a_sys_disconnected_USD:
         description: Operation Costs of Decentralized Buildings
         type: float
         unit: '[USD 2015/yr]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       TAC_sys_USD:
         description: Total Anualized Costs of Central Plant and Decentralized Buildings
         type: float
         unit: '[USD 2015/yr]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       TAC_sys_connected_USD:
         description: Total Anualized Costs of Central Plant
         type: float
         unit: '[USD 2015/yr]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       TAC_sys_disconnected_USD:
         description: Total Anualized Costs of Decentralized Buildings
         type: float
         unit: '[USD 2015/yr]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       'Unnamed: 0':
         description: Index
         type: long
         unit: '[-]'
-        values: '{0...n}'
+        values: !!python/str "{0\uFFFDn}"
       generation:
         description: No. Generation or Iteration (genetic Algorithm)
         type: long
         unit: '[-]'
-        values: '{0...n}'
+        values: !!python/str "{0\uFFFDn}"
       individual:
         description: No. Individual unique ID
         type: long
         unit: '[-]'
-        values: '{0...n}'
+        values: !!python/str "{0\uFFFDn}"
       individual_name:
         description: Name of  Individual unique ID
         type: string
@@ -9016,52 +9010,52 @@ get_optimization_slave_disconnected_performance:
         description: Annualized Capital Costs in Disconnected Buildings due to cooling
         type: float
         unit: '[USD 2015/yr]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       Capex_a_heating_disconnected_USD:
         description: Annualized Capital Costs in Disconnected Buildings due to heating
         type: float
         unit: '[USD 2015/yr]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       Capex_total_cooling_disconnected_USD:
         description: Total Capital Costs in Disconnected Buildings due to cooling
         type: float
         unit: '[USD 2015]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       Capex_total_heating_disconnected_USD:
         description: Total Capital Costs in Disconnected Buildings due to heating
         type: float
         unit: '[USD 2015]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       GHG_cooling_disconnected_tonCO2:
         description: Green House Gas Emissions of Disconnected Buildings due to Cooling
         type: float
         unit: '[ton Co2-eq/yr]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       GHG_heating_disconnected_tonCO2:
         description: Green House Gas Emissions of Disconnected Buildings due to Heating
         type: float
         unit: '[ton Co2-eq/yr]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       Opex_fixed_cooling_disconnected_USD:
         description: Fixed Operational Costs in Disconnected Buildings due to cooling
         type: float
         unit: '[USD 2015/yr]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       Opex_fixed_heating_disconnected_USD:
         description: Fixed Operational Costs in Disconnected Buildings due to heating
         type: float
         unit: '[USD 2015/yr]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       Opex_var_cooling_disconnected_USD:
         description: Variable Operational Costs in Disconnected Buildings due to cooling
         type: float
         unit: '[USD 2015/yr]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
       Opex_var_heating_disconnected_USD:
         description: Variable Operational Costs in Disconnected Buildings due to heating
         type: float
         unit: '[USD 2015/yr]'
-        values: '{0.0...n}'
+        values: !!python/str "{0.0\uFFFDn}"
   used_by: []
 get_optimization_slave_electricity_activation_pattern:
   created_by:

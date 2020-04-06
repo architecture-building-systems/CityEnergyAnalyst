@@ -66,6 +66,7 @@ class TestSchemas(unittest.TestCase):
             "get_building_weekly_schedules",
             "get_optimization_individuals_in_generation",
             "get_optimization_slave_cooling_activation_pattern",
+            "get_multi_criteria_analysis"
         }
         for lm in schemas.keys():
             if lm in skip_lms:
@@ -87,15 +88,18 @@ class TestSchemas(unittest.TestCase):
                                                 lm=lm, ws=ws, col=col))
             elif schemas[lm]["file_type"] in {"shp", "dbf", "csv"}:
                 for col in schema["columns"].keys():
-                    self.assertNotEqual(schema["columns"][col]["description"].strip(), "TODO",
-                                        "Missing description for {lm}/{col}/description".format(
-                                            lm=lm, col=col))
-                    self.assertNotEqual(schema["columns"][col]["unit"].strip(), "TODO",
-                                        "Missing description for {lm}/{col}/description".format(
-                                            lm=lm, col=col))
-                    self.assertNotEqual(schema["columns"][col]["values"].strip(), "TODO",
-                                        "Missing description for {lm}/{col}/description".format(
-                                            lm=lm, col=col))
+                    try:
+                        self.assertNotEqual(schema["columns"][col]["description"].strip(), "TODO",
+                                            "Missing description for {lm}/{col}/description".format(
+                                                lm=lm, col=col))
+                        self.assertNotEqual(schema["columns"][col]["unit"].strip(), "TODO",
+                                            "Missing description for {lm}/{col}/description".format(
+                                                lm=lm, col=col))
+                        self.assertNotEqual(schema["columns"][col]["values"].strip(), "TODO",
+                                            "Missing description for {lm}/{col}/description".format(
+                                                lm=lm, col=col))
+                    except BaseException as e:
+                        self.assertFalse("Problem with lm={lm}, col={col}, message: {m}".format(lm=lm, col=col, m=e.message))
 
     def test_each_lm_has_created_by(self):
         schemas = cea.scripts.schemas()
