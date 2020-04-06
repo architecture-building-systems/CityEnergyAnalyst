@@ -46,22 +46,27 @@ Product Owner (PO)
 -------------------
 
 The Product Owner is the voice of the customer and performs all tactical operations.
++----------------------------------------------------------------------------------------------------------------+
+| Responsibilities                                                                                               |
++================================================================================================================+
+|#. Guarantee our product success by acting as a conduit/facilitator for communication between the team and the  |
+|   customers. This can be done by:                                                                              |
+|    * Conducting Usability Tests                                                                                |
+|    * Organizing Teaching Activities                                                                            |
+|    * Maintaining Documentation                                                                                 |
+|    * Maintaining CEA website                                                                                   |
+|    * Maintaining cea@arch.ethz.ch                                                                              |
+|    * Distributing Newsletters                                                                                  |
+|#. Prioritizing and selecting user stories. This entails grooming the product backlogs with the help of the     |
+|   Srcum Master.                                                                                                |
+|#. Break down the overall vision into feasible and tactical pieces of work for the development team to          |
+|   understand and create.                                                                                       |
+|#. Coordinate in Roadmap Planning and Review events.                                                            |
++----------------------------------------------------------------------------------------------------------------+
 
-Responsibilities
-****************
-#. Guarantee our product success by acting as a conduit/facilitator for communication between the team and the customers.
-   This can be done by:
-    * Conducting Usability Tests
-    * Organizing Teaching Activities
-    * Maintaining Documentation
-    * Maintaining CEA website
-    * Maintaining cea@arch.ethz.ch
-    * Distributing Newsletters
-#. Prioritizing and selecting user stories.
-   This entails grooming the product backlogs with the help of the Srcum Master.
-#. Break down the overall vision into feasible and tactical pieces of work for the development team to understand and create.
-#. Coordinate in Roadmap Planning and Review events.
 
+The product backlogs contains issues that is labelled as Must-have and Should-have. Here are the details of the labels
+used to categorize new issues in the CEA:
 ============ =====================================================================================================
 Label        Description
 ============ =====================================================================================================
@@ -71,16 +76,14 @@ Should-have  - Issues that can't be categorized for the moment.
 Won't have   - Features that are not in the roadmap.
              - Features that are hard to maintain. These features can become external modules of the CEA.
 ============ =====================================================================================================
-The product owner categorize the incoming issues into these three labels:
-    * Must-have: These are issues related to the features from the roadmap and bugs.
-    * Should-have: These are issues related to th
-    * Won't have
 
-Engagement
-**********
-#. Participate in the Review meetings.
-#. One day per week on communication and task prioritizing.
 
++----------------------------------------------------------------------------------------------------------------+
+| Engagement                                                                                                     |
++================================================================================================================+
+|#. Participate in the Review meetings.                                                                          |
+|#. One day per week on communication and task prioritizing.                                                     |
++----------------------------------------------------------------------------------------------------------------+
 
 
 Scrum Master (SM)
