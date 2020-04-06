@@ -2,7 +2,7 @@ Activities
 ===========
 
 This is a guide of Activities carried out during the development of CEA. This activities are part of our concept of operation
-udner responsability of our the Scrum Master
+under responsibilities of our the Scrum Master
 
 Planning event
 ---------------
