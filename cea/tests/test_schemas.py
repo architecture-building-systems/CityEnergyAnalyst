@@ -66,7 +66,8 @@ class TestSchemas(unittest.TestCase):
             "get_building_weekly_schedules",
             "get_optimization_individuals_in_generation",
             "get_optimization_slave_cooling_activation_pattern",
-            "get_multi_criteria_analysis"
+            "get_multi_criteria_analysis",
+            "get_optimization_decentralized_folder_building_result_heating",
         }
         for lm in schemas.keys():
             if lm in skip_lms:
@@ -99,7 +100,7 @@ class TestSchemas(unittest.TestCase):
                                             "Missing description for {lm}/{col}/description".format(
                                                 lm=lm, col=col))
                     except BaseException as e:
-                        self.assertFalse("Problem with lm={lm}, col={col}, message: {m}".format(lm=lm, col=col, m=e.message))
+                        self.fail("Problem with lm={lm}, col={col}, message: {m}".format(lm=lm, col=col, m=e.message))
 
     def test_each_lm_has_created_by(self):
         schemas = cea.scripts.schemas()
