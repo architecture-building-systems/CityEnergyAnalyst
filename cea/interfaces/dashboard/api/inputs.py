@@ -206,9 +206,7 @@ def get_building_properties():
     tabs = ['zone', 'typology', 'architecture', 'internal-loads', 'indoor-comfort', 'air-conditioning-systems',
             'supply-systems', 'surroundings']
 
-    #config = current_app.cea_config
-    import cea.config
-    config = cea.config.Configuration()
+    config = current_app.cea_config
 
     schemas = cea.scripts.schemas()
     locator = cea.inputlocator.InputLocator(config.scenario)
