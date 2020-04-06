@@ -33,17 +33,20 @@ The Product Owner is the voice of the customer and performs all tactical operati
 Responsibilities
 ****************
 #. Guarantee our product success by acting as a conduit/facilitator for communication between the team and the customers.
-   This can be done by:
+#. Prioritizing and selecting user stories. This entails grooming the **product backlogs** with the help of the
+   Srcum Master.
+#. Break down the overall vision into feasible and tactical pieces of work for the development team to understand and create.
+#. Coordinate the :doc:`Events`.
+
+
+The means to communication to the customers include:
+
     * Conducting Usability Tests
     * Organizing Teaching Activities
     * Maintaining Documentation
     * Maintaining CEA website
     * Maintaining cea@arch.ethz.ch
     * Distributing Newsletters
-#. Prioritizing and selecting user stories. This entails grooming the **product backlogs** with the help of the
-   Srcum Master.
-#. Break down the overall vision into feasible and tactical pieces of work for the development team to understand and create.
-#. Coordinate the :doc:`Events`.
 
 
 
