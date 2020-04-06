@@ -803,6 +803,11 @@ PV_total_buildings:
         type: float
         unit: '[kWh]'
         values: '{0.0...n}'
+      Name:
+        description: Unique building ID. It must start with a letter.
+        type: string
+        unit: '[-]'
+        values: alphanumeric
   used_by: []
 PV_totals:
   created_by:
