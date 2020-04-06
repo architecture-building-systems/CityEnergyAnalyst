@@ -13,7 +13,9 @@ While this event is mainly an update to the product sponsors, it is also open to
 
 Agenda
 ------
+
 A typical agenda includes the following items:
+
 #. Demonstration of the newest development in the CEA.
 #. Bottlenecks that are faced by the development team.
 #. Planning for the next quarter.
