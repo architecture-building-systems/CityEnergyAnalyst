@@ -743,6 +743,10 @@ PV_total_buildings:
         type: float
         unit: '[kWh]'
         values: '{0.0...n}'
+      Name:
+        description: Unique building ID. It must start with a letter.
+        unit: '[-]'
+        values: alphanumeric
       PV_roofs_top_E_kWh:
         description: Electricity production from photovoltaic panels on roof tops
         type: float
@@ -793,10 +797,6 @@ PV_total_buildings:
         type: float
         unit: '[kWh]'
         values: '{0.0...n}'
-      'Unnamed: 0':
-        description: TODO
-        unit: TODO
-        values: TODO
       radiation_kWh:
         description: Total radiatiative potential.
         type: float
@@ -10043,11 +10043,6 @@ get_optimization_substations_total_file:
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
-      'Unnamed: 0':
-        description: TODO
-        type: long
-        unit: TODO
-        values: TODO
       WOOD_hs0_kW:
         description: Nominal WOOD requirement for space heating supply
         type: float
