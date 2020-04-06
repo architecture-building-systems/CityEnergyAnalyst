@@ -50,19 +50,30 @@ The Product Owner is the voice of the customer and performs all tactical operati
 Responsibilities
 ****************
 #. Guarantee our product success by acting as a conduit/facilitator for communication between the team and the customers.
-    * Usability Tests
-    * Teaching Activities
-    * Maintain Documentation
-    * Maintain CEA website
-    * Maintain cea@arch.ethz.ch
-    * Distribute Newsletters
-#. Prioritizing and selecting user stories
-    * Grooming the product backlogs with the help of SM
-        * Must-have
-        * Should-have
-        * Won't have
+   This can be done by:
+    * Conducting Usability Tests
+    * Organizing Teaching Activities
+    * Maintaining Documentation
+    * Maintaining CEA website
+    * Maintaining cea@arch.ethz.ch
+    * Distributing Newsletters
+#. Prioritizing and selecting user stories.
+   This entails grooming the product backlogs with the help of the Srcum Master.
 #. Break down the overall vision into feasible and tactical pieces of work for the development team to understand and create.
 #. Coordinate in Roadmap Planning and Review events.
+
+============ =====================================================================================================
+Label        Description
+============ =====================================================================================================
+Must-have    These are issues related to the features defined in the roadmap and bugs.
+Should-have  These are issues that can't be categorized for the moment.
+Won't have    - Features that are not in the roadmap.
+              - Features that are hard to maintain. These features can become external modules of the CEA.
+============ =====================================================================================================
+The product owner categorize the incoming issues into these three labels:
+    * Must-have: These are issues related to the features from the roadmap and bugs.
+    * Should-have: These are issues related to th
+    * Won't have
 
 Engagement
 **********
