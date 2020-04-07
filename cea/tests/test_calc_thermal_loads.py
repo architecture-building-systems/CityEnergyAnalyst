@@ -10,7 +10,7 @@ import cea.inputlocator
 from cea.demand.schedule_maker.schedule_maker import schedule_maker_main
 from cea.demand.building_properties import BuildingProperties
 from cea.demand.thermal_loads import calc_thermal_loads
-from cea.utilities.date import get_dates_from_year
+from cea.utilities.date import get_date_range_hours_from_year
 from cea.utilities import epwreader
 
 
@@ -32,7 +32,7 @@ class TestCalcThermalLoads(unittest.TestCase):
         cls.weather_data = epwreader.epw_reader(weather_path)[
             ['year', 'drybulb_C', 'wetbulb_C', 'relhum_percent', 'windspd_ms', 'skytemp_C']]
         year = cls.weather_data['year'][0]
-        cls.date_range = get_dates_from_year(year)
+        cls.date_range = get_date_range_hours_from_year(year)
         cls.test_config = ConfigParser.SafeConfigParser()
         cls.test_config.read(os.path.join(os.path.dirname(__file__), 'test_calc_thermal_loads.config'))
 
