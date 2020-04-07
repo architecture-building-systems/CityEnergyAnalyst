@@ -106,7 +106,7 @@ class TestSchemas(unittest.TestCase):
 
     def test_each_column_has_type(self):
         schemas = cea.scripts.schemas()
-        valid_types = {"string", "int", "float", "date"}
+        valid_types = {"string", "int", "float", "date", "Point"}
         for lm in schemas.keys():
             if lm in SKIP_LMS:
                 # these can't be documented properly due to the file format
