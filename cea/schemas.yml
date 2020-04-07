@@ -6618,11 +6618,6 @@ get_multi_criteria_analysis:
         type: float
         unit: '[-]'
         values: '[0.0...n]'
-      normalized_prim:
-        description: .nan
-        type: float
-        unit: .nan
-        values: .nan
       user_MCDA:
         description: Best system accoridng to user mult-criteria weights
         type: float
@@ -6692,7 +6687,7 @@ get_network_layout_edges_shapefile:
         description: Geometry
         type: LineString
         unit: '[-]'
-        values: shapely.geometry.linestring.LineString
+        values: '[-]'
       length_m:
         description: lenth of this edge
         type: float
@@ -6726,7 +6721,7 @@ get_network_layout_nodes_shapefile:
         description: Geometry
         type: Point
         unit: '[-]'
-        values: shapely.geometry.point.Point
+        values: '[-]'
   used_by:
   - thermal_network
 get_network_linear_pressure_drop_edges:
@@ -10462,7 +10457,7 @@ get_street_network:
         description: Geometry
         type: LineString
         unit: '[-]'
-        values: shapely.geometry.linestring.LineString
+        values: '[-]'
   used_by:
   - network_layout
   - optimization
@@ -10491,7 +10486,7 @@ get_surroundings_geometry:
         description: Shapefile POLYGON
         type: Polygon
         unit: '[-]'
-        values: shapely.geometry.polygon.Polygon
+        values: '[-]'
       height_ag:
         description: Height above ground (incl. ground floor)
         type: float
@@ -11915,7 +11910,7 @@ get_zone_geometry:
         description: Shapefile POLYGON
         type: Polygon
         unit: '[-]'
-        values: shapely.geometry.polygon.Polygon
+        values: '[-]'
       height_ag:
         description: Height above ground (incl. ground floor)
         type: float
