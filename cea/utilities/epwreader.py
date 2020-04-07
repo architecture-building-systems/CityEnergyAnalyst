@@ -17,6 +17,8 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+from cea.utilities.date import get_date_range_hours_from_year
+
 
 def epw_to_dataframe(weather_path):
     epw_labels = ['year', 'month', 'day', 'hour', 'minute', 'datasource', 'drybulb_C', 'dewpoint_C', 'relhum_percent',
@@ -34,15 +36,9 @@ def epw_reader(weather_path):
     result = epw_to_dataframe(weather_path)
 
     year = result["year"][0]
-    date_range = pd.date_range(start=str(year), end=str(year+1), freq='H', closed='left')
+    date_range = get_date_range_hours_from_year(year)
     result['date'] = date_range
     result['dayofyear'] = date_range.dayofyear
-
-    num_of_hours = len(result)
-    # Check if leap year and remove extra day
-    if num_of_hours == HOURS_IN_YEAR + 24:
-        leap_day_hours = range(1416, 1440)
-        result = result.drop(leap_day_hours).reset_index()
 
     result['ratio_diffhout'] = result['difhorrad_Whm2'] / result['glohorrad_Whm2']
     result['ratio_diffhout'] = result['ratio_diffhout'].replace(np.inf, np.nan)
