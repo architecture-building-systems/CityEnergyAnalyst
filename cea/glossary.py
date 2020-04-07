@@ -30,6 +30,9 @@ def read_glossary_df():
                                             "DESCRIPTION", "UNIT", "VALUES", "TYPE", "COLOR", "FILE_NAME"])
         rows = []
         for lm in schemas:
+            if lm == "get_database_standard_schedules_use":
+                # the schema for schedules is non-standard
+                continue
             script = schemas[lm]["created_by"][0] if schemas[lm]["created_by"] else "-"
             file_path = schemas[lm]["file_path"]
             if schemas[lm]["file_type"] in {"xls", "xlsx"}:

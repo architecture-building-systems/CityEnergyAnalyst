@@ -47,6 +47,9 @@ class TestSchemas(unittest.TestCase):
     def test_all_columns_have_description(self):
         schemas = cea.scripts.schemas()
         for lm in schemas:
+            if lm == "get_database_standard_schedules_use":
+                # the schema for schedules is non-standard
+                continue
             if schemas[lm]["file_type"] in {"xls", "xlsx"}:
                 for ws in schemas[lm]["schema"]:
                     for col in schemas[lm]["schema"][ws]["columns"]:
@@ -60,6 +63,9 @@ class TestSchemas(unittest.TestCase):
     def test_all_schemas_have_a_columns_entry(self):
         schemas = cea.scripts.schemas()
         for lm in schemas:
+            if lm == "get_database_standard_schedules_use":
+                # the schema for schedules is non-standard
+                continue
             if schemas[lm]["file_type"] in {"xls", "xlsx"}:
                 for ws in schemas[lm]["schema"]:
                     self.assertIn("columns", schemas[lm]["schema"][ws], "Missing columns for {lm}/{ws}".format(
@@ -185,7 +191,7 @@ class TestSchemas(unittest.TestCase):
 
     def test_read_glossary_df(self):
         import cea.glossary
-        glossary_df = cea.glossary.read_glossary_df()
+        cea.glossary.read_glossary_df()
 
 
 def extract_locator_methods(locator):

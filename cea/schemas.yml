@@ -4761,75 +4761,1161 @@ get_database_feedstocks:
 get_database_standard_schedules_use:
   created_by:
   - data_initializer
-  file_path: inputs/technology/archetypes/schedules/{use}.csv
+  file_path: inputs/technology/archetypes/schedules/RESTAURANT.csv
   file_type: schedule
   schema:
-    columns:
-      APPLIANCES:
-        description: TODO
-        type: float
-        unit: TODO
-        values: TODO
-      COOLING:
-        description: TODO
-        type: string
-        unit: TODO
-        values: TODO
-      DAY:
-        description: TODO
-        type: string
-        unit: TODO
-        values: TODO
-      ELECTROMOBILITY:
-        description: TODO
-        type: float
-        unit: TODO
-        values: TODO
-      HEATING:
-        description: TODO
-        type: string
-        unit: TODO
-        values: TODO
-      HOUR:
-        description: TODO
-        type: int
-        unit: TODO
-        values: TODO
-      LIGHTING:
-        description: TODO
-        type: float
-        unit: TODO
-        values: TODO
-      METADATA:
-        description: metadata
-        type: string
-        unit: '[-]'
-        values: TODO
-      MONTHLY_MULTIPLIER:
-        description: TODO
-        type: List[float]
-        unit: TODO
-        values: TODO
-      OCCUPANCY:
-        description: TODO
-        type: float
-        unit: TODO
-        values: TODO
-      PROCESSES:
-        description: TODO
-        type: float
-        unit: TODO
-        values: TODO
-      SERVERS:
-        description: TODO
-        type: float
-        unit: TODO
-        values: TODO
-      WATER:
-        description: TODO
-        type: float
-        unit: TODO
-        values: TODO
+    APPLIANCES:
+      columns:
+        1:
+          max: 1.0
+          min: 0.0
+          type: float
+        2:
+          max: 1.0
+          min: 0.0
+          type: float
+        3:
+          max: 1.0
+          min: 0.0
+          type: float
+        4:
+          max: 1.0
+          min: 0.0
+          type: float
+        5:
+          max: 1.0
+          min: 0.0
+          type: float
+        6:
+          max: 1.0
+          min: 0.0
+          type: float
+        7:
+          max: 1.0
+          min: 0.0
+          type: float
+        8:
+          max: 1.0
+          min: 0.0
+          type: float
+        9:
+          max: 1.0
+          min: 0.0
+          type: float
+        10:
+          max: 1.0
+          min: 0.0
+          type: float
+        11:
+          max: 1.0
+          min: 0.0
+          type: float
+        12:
+          max: 1.0
+          min: 0.0
+          type: float
+        13:
+          max: 1.0
+          min: 0.0
+          type: float
+        14:
+          max: 1.0
+          min: 0.0
+          type: float
+        15:
+          max: 1.0
+          min: 0.0
+          type: float
+        16:
+          max: 1.0
+          min: 0.0
+          type: float
+        17:
+          max: 1.0
+          min: 0.0
+          type: float
+        18:
+          max: 1.0
+          min: 0.0
+          type: float
+        19:
+          max: 1.0
+          min: 0.0
+          type: float
+        20:
+          max: 1.0
+          min: 0.0
+          type: float
+        21:
+          max: 1.0
+          min: 0.0
+          type: float
+        22:
+          max: 1.0
+          min: 0.0
+          type: float
+        23:
+          max: 1.0
+          min: 0.0
+          type: float
+        24:
+          max: 1.0
+          min: 0.0
+          type: float
+        DAY:
+          choice:
+            values:
+            - WEEKDAY
+            - SATURDAY
+            - SUNDAY
+          primary: true
+          type: string
+    COOLING:
+      columns:
+        1:
+          choice:
+            values:
+            - 'OFF'
+            - SETBACK
+            - SETPOINT
+          type: string
+        2:
+          choice:
+            values:
+            - 'OFF'
+            - SETBACK
+            - SETPOINT
+          type: string
+        3:
+          choice:
+            values:
+            - 'OFF'
+            - SETBACK
+            - SETPOINT
+          type: string
+        4:
+          choice:
+            values:
+            - 'OFF'
+            - SETBACK
+            - SETPOINT
+          type: string
+        5:
+          choice:
+            values:
+            - 'OFF'
+            - SETBACK
+            - SETPOINT
+          type: string
+        6:
+          choice:
+            values:
+            - 'OFF'
+            - SETBACK
+            - SETPOINT
+          type: string
+        7:
+          choice:
+            values:
+            - 'OFF'
+            - SETBACK
+            - SETPOINT
+          type: string
+        8:
+          choice:
+            values:
+            - 'OFF'
+            - SETBACK
+            - SETPOINT
+          type: string
+        9:
+          choice:
+            values:
+            - 'OFF'
+            - SETBACK
+            - SETPOINT
+          type: string
+        10:
+          choice:
+            values:
+            - 'OFF'
+            - SETBACK
+            - SETPOINT
+          type: string
+        11:
+          choice:
+            values:
+            - 'OFF'
+            - SETBACK
+            - SETPOINT
+          type: string
+        12:
+          choice:
+            values:
+            - 'OFF'
+            - SETBACK
+            - SETPOINT
+          type: string
+        13:
+          choice:
+            values:
+            - 'OFF'
+            - SETBACK
+            - SETPOINT
+          type: string
+        14:
+          choice:
+            values:
+            - 'OFF'
+            - SETBACK
+            - SETPOINT
+          type: string
+        15:
+          choice:
+            values:
+            - 'OFF'
+            - SETBACK
+            - SETPOINT
+          type: string
+        16:
+          choice:
+            values:
+            - 'OFF'
+            - SETBACK
+            - SETPOINT
+          type: string
+        17:
+          choice:
+            values:
+            - 'OFF'
+            - SETBACK
+            - SETPOINT
+          type: string
+        18:
+          choice:
+            values:
+            - 'OFF'
+            - SETBACK
+            - SETPOINT
+          type: string
+        19:
+          choice:
+            values:
+            - 'OFF'
+            - SETBACK
+            - SETPOINT
+          type: string
+        20:
+          choice:
+            values:
+            - 'OFF'
+            - SETBACK
+            - SETPOINT
+          type: string
+        21:
+          choice:
+            values:
+            - 'OFF'
+            - SETBACK
+            - SETPOINT
+          type: string
+        22:
+          choice:
+            values:
+            - 'OFF'
+            - SETBACK
+            - SETPOINT
+          type: string
+        23:
+          choice:
+            values:
+            - 'OFF'
+            - SETBACK
+            - SETPOINT
+          type: string
+        24:
+          choice:
+            values:
+            - 'OFF'
+            - SETBACK
+            - SETPOINT
+          type: string
+        DAY:
+          choice:
+            values:
+            - WEEKDAY
+            - SATURDAY
+            - SUNDAY
+          primary: true
+          type: string
+    ELECTROMOBILITY:
+      columns:
+        1:
+          max: 1.0
+          min: 0.0
+          type: float
+        2:
+          max: 1.0
+          min: 0.0
+          type: float
+        3:
+          max: 1.0
+          min: 0.0
+          type: float
+        4:
+          max: 1.0
+          min: 0.0
+          type: float
+        5:
+          max: 1.0
+          min: 0.0
+          type: float
+        6:
+          max: 1.0
+          min: 0.0
+          type: float
+        7:
+          max: 1.0
+          min: 0.0
+          type: float
+        8:
+          max: 1.0
+          min: 0.0
+          type: float
+        9:
+          max: 1.0
+          min: 0.0
+          type: float
+        10:
+          max: 1.0
+          min: 0.0
+          type: float
+        11:
+          max: 1.0
+          min: 0.0
+          type: float
+        12:
+          max: 1.0
+          min: 0.0
+          type: float
+        13:
+          max: 1.0
+          min: 0.0
+          type: float
+        14:
+          max: 1.0
+          min: 0.0
+          type: float
+        15:
+          max: 1.0
+          min: 0.0
+          type: float
+        16:
+          max: 1.0
+          min: 0.0
+          type: float
+        17:
+          max: 1.0
+          min: 0.0
+          type: float
+        18:
+          max: 1.0
+          min: 0.0
+          type: float
+        19:
+          max: 1.0
+          min: 0.0
+          type: float
+        20:
+          max: 1.0
+          min: 0.0
+          type: float
+        21:
+          max: 1.0
+          min: 0.0
+          type: float
+        22:
+          max: 1.0
+          min: 0.0
+          type: float
+        23:
+          max: 1.0
+          min: 0.0
+          type: float
+        24:
+          max: 1.0
+          min: 0.0
+          type: float
+        DAY:
+          choice:
+            values:
+            - WEEKDAY
+            - SATURDAY
+            - SUNDAY
+          primary: true
+          type: string
+    HEATING:
+      columns:
+        1:
+          choice:
+            values:
+            - 'OFF'
+            - SETBACK
+            - SETPOINT
+          type: string
+        2:
+          choice:
+            values:
+            - 'OFF'
+            - SETBACK
+            - SETPOINT
+          type: string
+        3:
+          choice:
+            values:
+            - 'OFF'
+            - SETBACK
+            - SETPOINT
+          type: string
+        4:
+          choice:
+            values:
+            - 'OFF'
+            - SETBACK
+            - SETPOINT
+          type: string
+        5:
+          choice:
+            values:
+            - 'OFF'
+            - SETBACK
+            - SETPOINT
+          type: string
+        6:
+          choice:
+            values:
+            - 'OFF'
+            - SETBACK
+            - SETPOINT
+          type: string
+        7:
+          choice:
+            values:
+            - 'OFF'
+            - SETBACK
+            - SETPOINT
+          type: string
+        8:
+          choice:
+            values:
+            - 'OFF'
+            - SETBACK
+            - SETPOINT
+          type: string
+        9:
+          choice:
+            values:
+            - 'OFF'
+            - SETBACK
+            - SETPOINT
+          type: string
+        10:
+          choice:
+            values:
+            - 'OFF'
+            - SETBACK
+            - SETPOINT
+          type: string
+        11:
+          choice:
+            values:
+            - 'OFF'
+            - SETBACK
+            - SETPOINT
+          type: string
+        12:
+          choice:
+            values:
+            - 'OFF'
+            - SETBACK
+            - SETPOINT
+          type: string
+        13:
+          choice:
+            values:
+            - 'OFF'
+            - SETBACK
+            - SETPOINT
+          type: string
+        14:
+          choice:
+            values:
+            - 'OFF'
+            - SETBACK
+            - SETPOINT
+          type: string
+        15:
+          choice:
+            values:
+            - 'OFF'
+            - SETBACK
+            - SETPOINT
+          type: string
+        16:
+          choice:
+            values:
+            - 'OFF'
+            - SETBACK
+            - SETPOINT
+          type: string
+        17:
+          choice:
+            values:
+            - 'OFF'
+            - SETBACK
+            - SETPOINT
+          type: string
+        18:
+          choice:
+            values:
+            - 'OFF'
+            - SETBACK
+            - SETPOINT
+          type: string
+        19:
+          choice:
+            values:
+            - 'OFF'
+            - SETBACK
+            - SETPOINT
+          type: string
+        20:
+          choice:
+            values:
+            - 'OFF'
+            - SETBACK
+            - SETPOINT
+          type: string
+        21:
+          choice:
+            values:
+            - 'OFF'
+            - SETBACK
+            - SETPOINT
+          type: string
+        22:
+          choice:
+            values:
+            - 'OFF'
+            - SETBACK
+            - SETPOINT
+          type: string
+        23:
+          choice:
+            values:
+            - 'OFF'
+            - SETBACK
+            - SETPOINT
+          type: string
+        24:
+          choice:
+            values:
+            - 'OFF'
+            - SETBACK
+            - SETPOINT
+          type: string
+        DAY:
+          choice:
+            values:
+            - WEEKDAY
+            - SATURDAY
+            - SUNDAY
+          primary: true
+          type: string
+    LIGHTING:
+      columns:
+        1:
+          max: 1.0
+          min: 0.0
+          type: float
+        2:
+          max: 1.0
+          min: 0.0
+          type: float
+        3:
+          max: 1.0
+          min: 0.0
+          type: float
+        4:
+          max: 1.0
+          min: 0.0
+          type: float
+        5:
+          max: 1.0
+          min: 0.0
+          type: float
+        6:
+          max: 1.0
+          min: 0.0
+          type: float
+        7:
+          max: 1.0
+          min: 0.0
+          type: float
+        8:
+          max: 1.0
+          min: 0.0
+          type: float
+        9:
+          max: 1.0
+          min: 0.0
+          type: float
+        10:
+          max: 1.0
+          min: 0.0
+          type: float
+        11:
+          max: 1.0
+          min: 0.0
+          type: float
+        12:
+          max: 1.0
+          min: 0.0
+          type: float
+        13:
+          max: 1.0
+          min: 0.0
+          type: float
+        14:
+          max: 1.0
+          min: 0.0
+          type: float
+        15:
+          max: 1.0
+          min: 0.0
+          type: float
+        16:
+          max: 1.0
+          min: 0.0
+          type: float
+        17:
+          max: 1.0
+          min: 0.0
+          type: float
+        18:
+          max: 1.0
+          min: 0.0
+          type: float
+        19:
+          max: 1.0
+          min: 0.0
+          type: float
+        20:
+          max: 1.0
+          min: 0.0
+          type: float
+        21:
+          max: 1.0
+          min: 0.0
+          type: float
+        22:
+          max: 1.0
+          min: 0.0
+          type: float
+        23:
+          max: 1.0
+          min: 0.0
+          type: float
+        24:
+          max: 1.0
+          min: 0.0
+          type: float
+        DAY:
+          choice:
+            values:
+            - WEEKDAY
+            - SATURDAY
+            - SUNDAY
+          primary: true
+          type: string
+    METADATA:
+      columns:
+        metadata:
+          type: string
+    MONTHLY_MULTIPLIER:
+      columns:
+        1:
+          max: 1.0
+          min: 0.0
+          type: float
+        2:
+          max: 1.0
+          min: 0.0
+          type: float
+        3:
+          max: 1.0
+          min: 0.0
+          type: float
+        4:
+          max: 1.0
+          min: 0.0
+          type: float
+        5:
+          max: 1.0
+          min: 0.0
+          type: float
+        6:
+          max: 1.0
+          min: 0.0
+          type: float
+        7:
+          max: 1.0
+          min: 0.0
+          type: float
+        8:
+          max: 1.0
+          min: 0.0
+          type: float
+        9:
+          max: 1.0
+          min: 0.0
+          type: float
+        10:
+          max: 1.0
+          min: 0.0
+          type: float
+        11:
+          max: 1.0
+          min: 0.0
+          type: float
+        12:
+          max: 1.0
+          min: 0.0
+          type: float
+    OCCUPANCY:
+      columns:
+        1:
+          max: 1.0
+          min: 0.0
+          type: float
+        2:
+          max: 1.0
+          min: 0.0
+          type: float
+        3:
+          max: 1.0
+          min: 0.0
+          type: float
+        4:
+          max: 1.0
+          min: 0.0
+          type: float
+        5:
+          max: 1.0
+          min: 0.0
+          type: float
+        6:
+          max: 1.0
+          min: 0.0
+          type: float
+        7:
+          max: 1.0
+          min: 0.0
+          type: float
+        8:
+          max: 1.0
+          min: 0.0
+          type: float
+        9:
+          max: 1.0
+          min: 0.0
+          type: float
+        10:
+          max: 1.0
+          min: 0.0
+          type: float
+        11:
+          max: 1.0
+          min: 0.0
+          type: float
+        12:
+          max: 1.0
+          min: 0.0
+          type: float
+        13:
+          max: 1.0
+          min: 0.0
+          type: float
+        14:
+          max: 1.0
+          min: 0.0
+          type: float
+        15:
+          max: 1.0
+          min: 0.0
+          type: float
+        16:
+          max: 1.0
+          min: 0.0
+          type: float
+        17:
+          max: 1.0
+          min: 0.0
+          type: float
+        18:
+          max: 1.0
+          min: 0.0
+          type: float
+        19:
+          max: 1.0
+          min: 0.0
+          type: float
+        20:
+          max: 1.0
+          min: 0.0
+          type: float
+        21:
+          max: 1.0
+          min: 0.0
+          type: float
+        22:
+          max: 1.0
+          min: 0.0
+          type: float
+        23:
+          max: 1.0
+          min: 0.0
+          type: float
+        24:
+          max: 1.0
+          min: 0.0
+          type: float
+        DAY:
+          choice:
+            values:
+            - WEEKDAY
+            - SATURDAY
+            - SUNDAY
+          primary: true
+          type: string
+    PROCESSES:
+      columns:
+        1:
+          max: 1.0
+          min: 0.0
+          type: float
+        2:
+          max: 1.0
+          min: 0.0
+          type: float
+        3:
+          max: 1.0
+          min: 0.0
+          type: float
+        4:
+          max: 1.0
+          min: 0.0
+          type: float
+        5:
+          max: 1.0
+          min: 0.0
+          type: float
+        6:
+          max: 1.0
+          min: 0.0
+          type: float
+        7:
+          max: 1.0
+          min: 0.0
+          type: float
+        8:
+          max: 1.0
+          min: 0.0
+          type: float
+        9:
+          max: 1.0
+          min: 0.0
+          type: float
+        10:
+          max: 1.0
+          min: 0.0
+          type: float
+        11:
+          max: 1.0
+          min: 0.0
+          type: float
+        12:
+          max: 1.0
+          min: 0.0
+          type: float
+        13:
+          max: 1.0
+          min: 0.0
+          type: float
+        14:
+          max: 1.0
+          min: 0.0
+          type: float
+        15:
+          max: 1.0
+          min: 0.0
+          type: float
+        16:
+          max: 1.0
+          min: 0.0
+          type: float
+        17:
+          max: 1.0
+          min: 0.0
+          type: float
+        18:
+          max: 1.0
+          min: 0.0
+          type: float
+        19:
+          max: 1.0
+          min: 0.0
+          type: float
+        20:
+          max: 1.0
+          min: 0.0
+          type: float
+        21:
+          max: 1.0
+          min: 0.0
+          type: float
+        22:
+          max: 1.0
+          min: 0.0
+          type: float
+        23:
+          max: 1.0
+          min: 0.0
+          type: float
+        24:
+          max: 1.0
+          min: 0.0
+          type: float
+        DAY:
+          choice:
+            values:
+            - WEEKDAY
+            - SATURDAY
+            - SUNDAY
+          primary: true
+          type: string
+    SERVERS:
+      columns:
+        1:
+          max: 1.0
+          min: 0.0
+          type: float
+        2:
+          max: 1.0
+          min: 0.0
+          type: float
+        3:
+          max: 1.0
+          min: 0.0
+          type: float
+        4:
+          max: 1.0
+          min: 0.0
+          type: float
+        5:
+          max: 1.0
+          min: 0.0
+          type: float
+        6:
+          max: 1.0
+          min: 0.0
+          type: float
+        7:
+          max: 1.0
+          min: 0.0
+          type: float
+        8:
+          max: 1.0
+          min: 0.0
+          type: float
+        9:
+          max: 1.0
+          min: 0.0
+          type: float
+        10:
+          max: 1.0
+          min: 0.0
+          type: float
+        11:
+          max: 1.0
+          min: 0.0
+          type: float
+        12:
+          max: 1.0
+          min: 0.0
+          type: float
+        13:
+          max: 1.0
+          min: 0.0
+          type: float
+        14:
+          max: 1.0
+          min: 0.0
+          type: float
+        15:
+          max: 1.0
+          min: 0.0
+          type: float
+        16:
+          max: 1.0
+          min: 0.0
+          type: float
+        17:
+          max: 1.0
+          min: 0.0
+          type: float
+        18:
+          max: 1.0
+          min: 0.0
+          type: float
+        19:
+          max: 1.0
+          min: 0.0
+          type: float
+        20:
+          max: 1.0
+          min: 0.0
+          type: float
+        21:
+          max: 1.0
+          min: 0.0
+          type: float
+        22:
+          max: 1.0
+          min: 0.0
+          type: float
+        23:
+          max: 1.0
+          min: 0.0
+          type: float
+        24:
+          max: 1.0
+          min: 0.0
+          type: float
+        DAY:
+          choice:
+            values:
+            - WEEKDAY
+            - SATURDAY
+            - SUNDAY
+          primary: true
+          type: string
+    WATER:
+      columns:
+        1:
+          max: 1.0
+          min: 0.0
+          type: float
+        2:
+          max: 1.0
+          min: 0.0
+          type: float
+        3:
+          max: 1.0
+          min: 0.0
+          type: float
+        4:
+          max: 1.0
+          min: 0.0
+          type: float
+        5:
+          max: 1.0
+          min: 0.0
+          type: float
+        6:
+          max: 1.0
+          min: 0.0
+          type: float
+        7:
+          max: 1.0
+          min: 0.0
+          type: float
+        8:
+          max: 1.0
+          min: 0.0
+          type: float
+        9:
+          max: 1.0
+          min: 0.0
+          type: float
+        10:
+          max: 1.0
+          min: 0.0
+          type: float
+        11:
+          max: 1.0
+          min: 0.0
+          type: float
+        12:
+          max: 1.0
+          min: 0.0
+          type: float
+        13:
+          max: 1.0
+          min: 0.0
+          type: float
+        14:
+          max: 1.0
+          min: 0.0
+          type: float
+        15:
+          max: 1.0
+          min: 0.0
+          type: float
+        16:
+          max: 1.0
+          min: 0.0
+          type: float
+        17:
+          max: 1.0
+          min: 0.0
+          type: float
+        18:
+          max: 1.0
+          min: 0.0
+          type: float
+        19:
+          max: 1.0
+          min: 0.0
+          type: float
+        20:
+          max: 1.0
+          min: 0.0
+          type: float
+        21:
+          max: 1.0
+          min: 0.0
+          type: float
+        22:
+          max: 1.0
+          min: 0.0
+          type: float
+        23:
+          max: 1.0
+          min: 0.0
+          type: float
+        24:
+          max: 1.0
+          min: 0.0
+          type: float
+        DAY:
+          choice:
+            values:
+            - WEEKDAY
+            - SATURDAY
+            - SUNDAY
+          primary: true
+          type: string
   used_by:
   - archetypes_mapper
 get_database_supply_assemblies:
