@@ -23,8 +23,6 @@ SKIP_LMS = {
     "get_building_weekly_schedules",
     "get_optimization_individuals_in_generation",
     "get_optimization_slave_cooling_activation_pattern",
-    "get_multi_criteria_analysis",
-    "get_optimization_decentralized_folder_building_result_heating",
 }
 
 
