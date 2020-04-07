@@ -1759,12 +1759,12 @@ get_costs_operation_file:
         values: '{0.0...n}'
       Capex_a_sys_connected_USD:
         description: Annualized capital expenditures for connected buildings
-        type: TYPE
+        type: float
         unit: $USD(2015)/yr
         values: '{0.0...n}'
       Capex_a_sys_disconnected_USD:
         description: Annualized capital expenditures for disconnected buildings
-        type: TYPE
+        type: float
         unit: $USD(2015)/yr
         values: '{0.0...n}'
       DC_cdata_cost_m2yr:
@@ -6723,9 +6723,9 @@ get_network_layout_nodes_shapefile:
         values: '{"PLANT","CONSUMER","NONE"}'
       geometry:
         description: Geometry
-        type: '[-]'
+        type: Point
         unit: '[-]'
-        values: '[-]'
+        values: shapely.geometry.point.Point
   used_by:
   - thermal_network
 get_network_linear_pressure_drop_edges:
@@ -10913,97 +10913,97 @@ get_total_demand:
         values: '{0.0...n}'
       GRID_a_MWhyr:
         description: Grid electricity requirements for appliances
-        type: TYPE
+        type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
       GRID_aux0_kW:
         description: Nominal grid electricity requirements for auxiliary loads
-        type: TYPE
+        type: float
         unit: '[kW]'
         values: '{0.0...n}'
       GRID_aux_MWhyr:
         description: Grid electricity requirements for auxiliary loads
-        type: TYPE
+        type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
       GRID_cdata0_kW:
         description: Nominal grid electricity requirements for servers cooling
-        type: TYPE
+        type: float
         unit: '[kW]'
         values: '{0.0...n}'
       GRID_cdata_MWhyr:
         description: Grid electricity requirements for servers cooling
-        type: TYPE
+        type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
       GRID_cre0_kW:
         description: Nominal grid electricity requirements for refrigeration
-        type: TYPE
+        type: float
         unit: '[kW]'
         values: '{0.0...n}'
       GRID_cre_MWhyr:
         description: Grid electricity requirements for refrigeration
-        type: TYPE
+        type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
       GRID_cs0_kW:
         description: Nominal grid electricity requirements for space cooling
-        type: TYPE
+        type: float
         unit: '[kW]'
         values: '{0.0...n}'
       GRID_cs_MWhyr:
         description: Grid electricity requirements for space cooling
-        type: TYPE
+        type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
       GRID_data0_kW:
         description: Nominal grid electricity requirements for servers
-        type: TYPE
+        type: float
         unit: '[kW]'
         values: '{0.0...n}'
       GRID_data_MWhyr:
         description: Grid electricity requirements for servers
-        type: TYPE
+        type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
       GRID_hs0_kW:
         description: Nominal grid electricity requirements for space heating
-        type: TYPE
+        type: float
         unit: '[kW]'
         values: '{0.0...n}'
       GRID_hs_MWhyr:
         description: Grid electricity requirements for space heating
-        type: TYPE
+        type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
       GRID_l0_kW:
         description: Nominal grid electricity consumption for lights
-        type: TYPE
+        type: float
         unit: '[kW]'
         values: '{0.0...n}'
       GRID_l_MWhyr:
         description: Grid electricity requirements for lights
-        type: TYPE
+        type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
       GRID_pro0_kW:
         description: Nominal grid electricity requirements for industrial processes
-        type: TYPE
+        type: float
         unit: '[kW]'
         values: '{0.0...n}'
       GRID_pro_MWhyr:
         description: Grid electricity requirements for industrial processes
-        type: TYPE
+        type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
       GRID_ww0_kW:
         description: Nominal grid electricity requirements for hot water supply
-        type: TYPE
+        type: float
         unit: '[kW]'
         values: '{0.0...n}'
       GRID_ww_MWhyr:
         description: Grid electricity requirements for hot water supply
-        type: TYPE
+        type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
       NG_hs0_kW:
