@@ -76,3 +76,10 @@ def route_plot(dashboard_index, plot_index):
                                    lm.__name__ for lm, _ in plot.missing_input_files())), 404
 
     return render_template('plot.html', plot_div=plot_div, plot_title=plot_title)
+
+
+@blueprint.app_errorhandler(500)
+def internal_error(error):
+    import traceback
+    error_trace = traceback.format_exc()
+    return error_trace, 500
