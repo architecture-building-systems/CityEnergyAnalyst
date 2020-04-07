@@ -1131,6 +1131,7 @@ SC_total_buildings:
         values: '{0.0...n}'
       Name:
         description: Unique building ID.
+        type: string
         unit: '[-]'
         values: alphanumeric
       Q_SC_gen_kWh:
@@ -1712,7 +1713,7 @@ get_building_weekly_schedules:
     columns:
       METADATA:
         description: TODO
-        type: str
+        type: string
         unit: TODO
         values: TODO
       MONTHLY_MULTIPLIER:
@@ -4771,12 +4772,12 @@ get_database_standard_schedules_use:
         values: TODO
       COOLING:
         description: TODO
-        type: str
+        type: string
         unit: TODO
         values: TODO
       DAY:
         description: TODO
-        type: str
+        type: string
         unit: TODO
         values: TODO
       ELECTROMOBILITY:
@@ -4786,7 +4787,7 @@ get_database_standard_schedules_use:
         values: TODO
       HEATING:
         description: TODO
-        type: str
+        type: string
         unit: TODO
         values: TODO
       HOUR:
@@ -4801,7 +4802,7 @@ get_database_standard_schedules_use:
         values: TODO
       METADATA:
         description: metadata
-        type: str
+        type: string
         unit: '[-]'
         values: TODO
       MONTHLY_MULTIPLIER:
@@ -9866,22 +9867,22 @@ get_optimization_substations_total_file:
         values: '{0.0...n}'
       Qhs_lat_ahu0_kW:
         description: Nominal AHU latent heat demand.
-        type: .nan
+        type: float
         unit: '[kW]'
         values: '{0.0...n}'
       Qhs_lat_ahu_MWhyr:
         description: AHU latent heat demand
-        type: .nan
+        type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
       Qhs_lat_aru0_kW:
         description: Nominal ARU latent heat demand.
-        type: .nan
+        type: float
         unit: '[kW]'
         values: '{0.0...n}'
       Qhs_lat_aru_MWhyr:
         description: ARU latent heat demand
-        type: .nan
+        type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
       Qhs_lat_sys0_kW:
@@ -10459,9 +10460,9 @@ get_street_network:
         values: alphanumeric
       geometry:
         description: Geometry
-        type: '[-]'
+        type: LineString
         unit: '[-]'
-        values: '[-]'
+        values: shapely.geometry.linestring.LineString
   used_by:
   - network_layout
   - optimization
@@ -10577,7 +10578,7 @@ get_thermal_network_edge_node_matrix_file:
         values: '{-1, 0, 1}'
       'Unnamed: 0':
         description: Names of the nodes in the network
-        type: str
+        type: string
         unit: '[-]'
         values: '{NODE0...NODEn}'
   used_by:
@@ -11912,9 +11913,9 @@ get_zone_geometry:
         values: '{0...n}'
       geometry:
         description: Shapefile POLYGON
-        type: '[-]'
+        type: Polygon
         unit: '[-]'
-        values: '[-]'
+        values: shapely.geometry.polygon.Polygon
       height_ag:
         description: Height above ground (incl. ground floor)
         type: float
