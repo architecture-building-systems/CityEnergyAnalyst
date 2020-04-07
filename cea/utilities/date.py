@@ -1,14 +1,22 @@
 import pandas as pd
 
 from cea.constants import HOURS_IN_YEAR
+from calendar import isleap
 
 
-def get_dates_from_year(year):
+def get_date_range_hours_from_year(year):
     """
-    creates date range for the year of the calculation
-    :param year: year of first row in weather file
+    creates date range in hours for the year excluding leap day
+    :param year: year of date range
     :type year: int
     :return: pd.date_range with 8760 values
     :rtype: pandas.data_range
     """
-    return pd.date_range(str(year) + '/01/01', periods=HOURS_IN_YEAR, freq='H')
+
+    date_range = pd.date_range(start=str(year), end=str(year + 1), freq='H', closed='left')
+
+    # Check if leap year and remove extra day
+    if isleap(year):
+        date_range = date_range[~((date_range.month == 2) & (date_range.day == 29))]
+
+    return date_range
