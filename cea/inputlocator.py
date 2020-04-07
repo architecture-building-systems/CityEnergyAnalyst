@@ -493,7 +493,7 @@ class InputLocator(object):
         else:
             return self._ensure_folder(self.get_thermal_network_folder(), network_type, network_name)
 
-    def get_network_layout_edges_shapefile(self, network_type, network_name):
+    def get_network_layout_edges_shapefile(self, network_type, network_name=""):
         """scenario/outputs/thermal-network/DH or DC/network-edges.shp"""
         shapefile_path = os.path.join(self.get_input_network_folder(network_type, network_name), 'edges.shp')
         check_cpg(shapefile_path)

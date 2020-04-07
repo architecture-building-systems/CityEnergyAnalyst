@@ -88,7 +88,7 @@ PVT_metadata_results:
       intersection:
         description: 'flag to indicate whether this surface is intersecting with another
           surface (0: no intersection, 1: intersected)'
-        type: TYPE
+        type: int
         unit: '[-]'
         values: '{0,1}'
       orientation:
@@ -614,7 +614,7 @@ PV_metadata_results:
       intersection:
         description: 'flag to indicate whether this surface is intersecting with another
           surface (0: no intersection, 1: intersected)'
-        type: TYPE
+        type: int
         unit: '[-]'
         values: '{0,1}'
       orientation:
@@ -973,7 +973,7 @@ SC_metadata_results:
       intersection:
         description: 'flag to indicate whether this surface is intersecting with another
           surface (0: no intersection, 1: intersected)'
-        type: TYPE
+        type: int
         unit: '[-]'
         values: '{0,1}'
       orientation:
@@ -1884,12 +1884,12 @@ get_costs_operation_file:
         values: '{0.0...n}'
       Opex_a_sys_connected_USD:
         description: Annual operational expenditures for connected buildings
-        type: TYPE
+        type: float
         unit: $USD(2015)/yr
         values: '{0.0...n}'
       Opex_a_sys_disconnected_USD:
         description: Annual operational expenditures for disconnected buildings
-        type: TYPE
+        type: float
         unit: $USD(2015)/yr
         values: '{0.0...n}'
       PV_cost_m2yr:
@@ -5362,7 +5362,7 @@ get_demand_results_file:
         values: '{0.0...n}'
       Ea_kWh:
         description: End-use electricity for appliances
-        type: TYPE
+        type: float
         unit: '[kWh]'
         values: '{0.0...n}'
       Eal_kWh:
@@ -5382,7 +5382,7 @@ get_demand_results_file:
         values: '{0.0...n}'
       El_kWh:
         description: End-use electricity for lights
-        type: TYPE
+        type: float
         unit: '[kWh]'
         values: '{0.0...n}'
       Epro_kWh:
@@ -6574,22 +6574,22 @@ get_multi_criteria_analysis:
         values: '[0.0...n]'
       'Unnamed: 0':
         description: Index
-        type: long
+        type: int
         unit: '[-]'
         values: '[0...n]'
       'Unnamed: 0.1':
         description: Index
-        type: long
+        type: int
         unit: '[-]'
         values: '[0.0...n]'
       generation:
         description: Generation or iteration
-        type: long
+        type: int
         unit: '[-]'
         values: '[0...n]'
       individual:
         description: system number
-        type: long
+        type: int
         unit: '[-]'
         values: '[0...n]'
       individual_name:
@@ -6689,12 +6689,12 @@ get_network_layout_edges_shapefile:
         values: alphanumeric
       geometry:
         description: Geometry
-        type: '[-]'
+        type: LineString
         unit: '[-]'
-        values: '[-]'
+        values: shapely.geometry.linestring.LineString
       length_m:
         description: lenth of this edge
-        type: TYPE
+        type: float
         unit: '[m]'
         values: '{0.0...n}'
   used_by:
@@ -7308,7 +7308,7 @@ get_optimization_decentralized_folder_building_result_heating:
         values: '{0.0...n}'
       'Unnamed: 0':
         description: Index
-        type: long
+        type: int
         unit: '[-]'
         values: '{0...n}'
   used_by:
@@ -7322,12 +7322,12 @@ get_optimization_decentralized_folder_building_result_heating_activation:
     columns:
       BackupBoiler_Status:
         description: Status of the BackupBoiler (1=on, 0 =off)
-        type: long
+        type: int
         unit: '[-]'
         values: '{0...1}'
       Boiler_Status:
         description: Status of the Base load Boiler (1=on, 0 =off)
-        type: long
+        type: int
         unit: '[-]'
         values: '{0...1}'
       E_hs_ww_req_W:
@@ -7338,7 +7338,7 @@ get_optimization_decentralized_folder_building_result_heating_activation:
         values: '{0.0...n}'
       GHP_Status:
         description: Status of the ground-source heat pump (1=on, 0 =off)
-        type: long
+        type: int
         unit: '[-]'
         values: '{0...1}'
       NG_BackupBoiler_req_Wh:
@@ -7368,7 +7368,7 @@ get_optimization_decentralized_folder_building_result_heating_activation:
         values: '{0.0...n}'
       'Unnamed: 0':
         description: Index
-        type: long
+        type: int
         unit: '[-]'
         values: '{0...n}'
   used_by:
@@ -7805,17 +7805,17 @@ get_optimization_generation_connected_performance:
         values: '{0.0...n}'
       'Unnamed: 0':
         description: Index
-        type: long
+        type: int
         unit: '[-]'
         values: '{0...n}'
       generation:
         description: Number of the Generation or Iteration (Genetic algorithm)
-        type: long
+        type: int
         unit: '[-]'
         values: '{0...n}'
       individual:
         description: Unique numerical ID of individual
-        type: long
+        type: int
         unit: '[-]'
         values: '{0...n}'
       individual_name:
@@ -7883,17 +7883,17 @@ get_optimization_generation_disconnected_performance:
         values: '{0.0...n}'
       'Unnamed: 0':
         description: Index
-        type: long
+        type: int
         unit: '[-]'
         values: '{0...n}'
       generation:
         description: No. Generation or Iteration (genetic Algorithm)
-        type: long
+        type: int
         unit: '[-]'
         values: '{0...n}'
       individual:
         description: No. Individual unique ID
-        type: long
+        type: int
         unit: '[-]'
         values: '{0...n}'
       individual_name:
@@ -7986,17 +7986,17 @@ get_optimization_generation_total_performance:
         values: '{0.0...n}'
       'Unnamed: 0':
         description: Index
-        type: long
+        type: int
         unit: '[-]'
         values: '{0...n}'
       generation:
         description: No. Generation or Iteration (genetic Algorithm)
-        type: long
+        type: int
         unit: '[-]'
         values: '{0...n}'
       individual:
         description: No. Individual unique ID
-        type: long
+        type: int
         unit: '[-]'
         values: '{0...n}'
       individual_name:
@@ -8089,17 +8089,17 @@ get_optimization_generation_total_performance_pareto:
         values: '{0.0...n}'
       'Unnamed: 0':
         description: Index
-        type: long
+        type: int
         unit: '[-]'
         values: '{0...n}'
       generation:
         description: No. Generation or Iteration (genetic Algorithm)
-        type: long
+        type: int
         unit: '[-]'
         values: '{0...n}'
       individual:
         description: No. Individual unique ID
-        type: long
+        type: int
         unit: '[-]'
         values: '{0...n}'
       individual_name:
@@ -8118,47 +8118,47 @@ get_optimization_individuals_in_generation:
     columns:
       B01_DH:
         description: TODO
-        type: long
+        type: int
         unit: TODO
         values: TODO
       B02_DH:
         description: TODO
-        type: long
+        type: int
         unit: TODO
         values: TODO
       B03_DH:
         description: TODO
-        type: long
+        type: int
         unit: TODO
         values: TODO
       B04_DH:
         description: TODO
-        type: long
+        type: int
         unit: TODO
         values: TODO
       B05_DH:
         description: TODO
-        type: long
+        type: int
         unit: TODO
         values: TODO
       B06_DH:
         description: TODO
-        type: long
+        type: int
         unit: TODO
         values: TODO
       B07_DH:
         description: TODO
-        type: long
+        type: int
         unit: TODO
         values: TODO
       B08_DH:
         description: TODO
-        type: long
+        type: int
         unit: TODO
         values: TODO
       B09_DH:
         description: TODO
-        type: long
+        type: int
         unit: TODO
         values: TODO
       DB_Cogen:
@@ -8218,7 +8218,7 @@ get_optimization_individuals_in_generation:
         values: TODO
       'Unnamed: 0':
         description: TODO
-        type: long
+        type: int
         unit: TODO
         values: TODO
       WB_Cogen:
@@ -8233,12 +8233,12 @@ get_optimization_individuals_in_generation:
         values: TODO
       generation:
         description: TODO
-        type: long
+        type: int
         unit: TODO
         values: TODO
       individual:
         description: TODO
-        type: long
+        type: int
         unit: TODO
         values: TODO
   used_by: []
@@ -8301,13 +8301,13 @@ get_optimization_slave_building_connectivity:
       DC_connectivity:
         description: Flag to know if building is connected to District Heating or
           not
-        type: long
+        type: int
         unit: '[-]'
         values: '{0...1}'
       DH_connectivity:
         description: Flag to know if building is connected to District Cooling or
           not
-        type: long
+        type: int
         unit: '[-]'
         values: '{0...1}'
       Name:
@@ -10282,7 +10282,7 @@ get_radiation_metadata:
       intersection:
         description: 'flag to indicate whether this surface is intersecting with another
           surface (0: no intersection, 1: intersected)'
-        type: TYPE
+        type: float
         unit: '[-]'
         values: '{0,1}'
       orientation:
@@ -10488,9 +10488,9 @@ get_surroundings_geometry:
         values: '{0...n}'
       geometry:
         description: Shapefile POLYGON
-        type: '[-]'
+        type: Polygon
         unit: '[-]'
-        values: '[-]'
+        values: shapely.geometry.polygon.Polygon
       height_ag:
         description: Height above ground (incl. ground floor)
         type: float
@@ -10527,7 +10527,7 @@ get_thermal_demand_csv_file:
     columns:
       B01:
         description: Thermal demand for building B01 at each simulation time step
-        type: TYPE
+        type: float
         unit: '[Wh]'
         values: '{0.0...n}'
   used_by: []
@@ -10546,7 +10546,7 @@ get_thermal_network_edge_list_file:
       Pipe_DN:
         description: Nominal pipe diameter (e.g. DN100 refers to pipes of approx.
           100 mm in diameter)
-        type: long
+        type: int
         unit: '[-]'
         values: '{0...n}'
       Type_mat:
@@ -10833,12 +10833,12 @@ get_total_demand:
         values: '{0.0...n}'
       Ea0_kW:
         description: Nominal end-use electricity for appliances
-        type: TYPE
+        type: float
         unit: '[kW]'
         values: '{0.0...n}'
       Ea_MWhyr:
         description: End-use electricity for appliances
-        type: TYPE
+        type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
       Eal0_kW:
@@ -10873,12 +10873,12 @@ get_total_demand:
         values: '{0.0...n}'
       El0_kW:
         description: Nominal end-use electricity for lights
-        type: TYPE
+        type: float
         unit: '[kW]'
         values: '{0.0...n}'
       El_MWhyr:
         description: End-use electricity for lights
-        type: TYPE
+        type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
       Epro0_kW:
@@ -10908,7 +10908,7 @@ get_total_demand:
         values: '{0.0...n}'
       GRID_a0_kW:
         description: Nominal grid electricity requirements for appliances
-        type: TYPE
+        type: float
         unit: '[kW]'
         values: '{0.0...n}'
       GRID_a_MWhyr:
@@ -11715,12 +11715,12 @@ get_weather_file:
         values: TODO
       atmos_Pa (index = 9):
         description: TODO
-        type: long
+        type: int
         unit: TODO
         values: TODO
       ceiling_hgt_m (index = 25):
         description: TODO
-        type: long
+        type: int
         unit: TODO
         values: TODO
       datasource (index = 5):
@@ -11730,12 +11730,12 @@ get_weather_file:
         values: TODO
       day (index = 2):
         description: TODO
-        type: long
+        type: int
         unit: TODO
         values: TODO
       days_last_snow (index = 31):
         description: TODO
-        type: long
+        type: int
         unit: TODO
         values: TODO
       dewpoint_C (index = 7):
@@ -11745,22 +11745,22 @@ get_weather_file:
         values: TODO
       difhorillum_lux (index = 18):
         description: TODO
-        type: long
+        type: int
         unit: TODO
         values: TODO
       difhorrad_Whm2 (index = 15):
         description: TODO
-        type: long
+        type: int
         unit: TODO
         values: TODO
       dirnorillum_lux (index = 17):
         description: TODO
-        type: long
+        type: int
         unit: TODO
         values: TODO
       dirnorrad_Whm2 (index = 14):
         description: TODO
-        type: long
+        type: int
         unit: TODO
         values: TODO
       drybulb_C (index = 6):
@@ -11770,32 +11770,32 @@ get_weather_file:
         values: TODO
       extdirrad_Whm2 (index = 11):
         description: TODO
-        type: long
+        type: int
         unit: TODO
         values: TODO
       exthorrad_Whm2 (index = 10):
         description: TODO
-        type: long
+        type: int
         unit: TODO
         values: TODO
       glohorillum_lux (index = 16):
         description: TODO
-        type: long
+        type: int
         unit: TODO
         values: TODO
       glohorrad_Whm2 (index = 13):
         description: TODO
-        type: long
+        type: int
         unit: TODO
         values: TODO
       horirsky_Whm2 (index = 12):
         description: TODO
-        type: long
+        type: int
         unit: TODO
         values: TODO
       hour (index = 3):
         description: TODO
-        type: long
+        type: int
         unit: TODO
         values: TODO
       liq_precip_depth_mm (index = 33):
@@ -11810,57 +11810,57 @@ get_weather_file:
         values: TODO
       minute (index = 4):
         description: TODO
-        type: long
+        type: int
         unit: TODO
         values: TODO
       month (index = 1):
         description: TODO
-        type: long
+        type: int
         unit: TODO
         values: TODO
       opaqskycvr_tenths (index = 23):
         description: TODO
-        type: long
+        type: int
         unit: TODO
         values: TODO
       precip_wtr_mm (index = 28):
         description: TODO
-        type: long
+        type: int
         unit: TODO
         values: TODO
       presweathcodes (index = 27):
         description: TODO
-        type: long
+        type: int
         unit: TODO
         values: TODO
       presweathobs (index = 26):
         description: TODO
-        type: long
+        type: int
         unit: TODO
         values: TODO
       relhum_percent (index = 8):
         description: TODO
-        type: long
+        type: int
         unit: TODO
         values: TODO
       snowdepth_cm (index = 30):
         description: TODO
-        type: long
+        type: int
         unit: TODO
         values: TODO
       totskycvr_tenths (index = 22):
         description: TODO
-        type: long
+        type: int
         unit: TODO
         values: TODO
       visibility_km (index = 24):
         description: TODO
-        type: long
+        type: int
         unit: TODO
         values: TODO
       winddir_deg (index = 20):
         description: TODO
-        type: long
+        type: int
         unit: TODO
         values: TODO
       windspd_ms (index = 21):
@@ -11870,12 +11870,12 @@ get_weather_file:
         values: TODO
       year (index = 0):
         description: TODO
-        type: long
+        type: int
         unit: TODO
         values: TODO
       zenlum_lux (index = 19):
         description: TODO
-        type: long
+        type: int
         unit: TODO
         values: TODO
   used_by:
