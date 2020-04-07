@@ -299,7 +299,7 @@ Utilities:
     description: Creates a new scenario
     interfaces: [cli, dashboard]
     module: cea.datamanagement.create_new_scenario
-    parameters: ['general:scenario', create-new-scenario]
+    parameters: [create-new-scenario]
 
   - name: rename-building
     label: Rename building
