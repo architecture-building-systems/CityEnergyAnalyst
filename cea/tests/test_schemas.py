@@ -18,6 +18,15 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+# FIXME: remove this once we have fixed the remaining problems...
+SKIP_LMS = {
+    "get_building_weekly_schedules",
+    "get_optimization_individuals_in_generation",
+    "get_optimization_slave_cooling_activation_pattern",
+    "get_multi_criteria_analysis",
+    "get_optimization_decentralized_folder_building_result_heating",
+}
+
 
 class TestSchemas(unittest.TestCase):
 
@@ -62,15 +71,8 @@ class TestSchemas(unittest.TestCase):
 
     def test_all_schema_columns_documented(self):
         schemas = cea.scripts.schemas()
-        skip_lms = {
-            "get_building_weekly_schedules",
-            "get_optimization_individuals_in_generation",
-            "get_optimization_slave_cooling_activation_pattern",
-            "get_multi_criteria_analysis",
-            "get_optimization_decentralized_folder_building_result_heating",
-        }
         for lm in schemas.keys():
-            if lm in skip_lms:
+            if lm in SKIP_LMS:
                 # these can't be documented properly due to the file format
                 continue
             schema = schemas[lm]["schema"]
@@ -101,6 +103,33 @@ class TestSchemas(unittest.TestCase):
                                                 lm=lm, col=col))
                     except BaseException as e:
                         self.fail("Problem with lm={lm}, col={col}, message: {m}".format(lm=lm, col=col, m=e.message))
+
+    def test_each_column_has_type(self):
+        schemas = cea.scripts.schemas()
+        valid_types = {"string", "int", "float", "date"}
+        for lm in schemas.keys():
+            if lm in SKIP_LMS:
+                # these can't be documented properly due to the file format
+                continue
+            schema = schemas[lm]["schema"]
+            if schemas[lm]["file_type"] in {"xls", "xlsx"}:
+                for ws in schema.keys():
+                    ws_schema = schema[ws]["columns"]
+                    for col in ws_schema.keys():
+                        self.assertIn("type", ws_schema[col],
+                                      "Missing type definition for {lm}/{ws}/{col}".format(
+                                                lm=lm, ws=ws, col=col))
+                        col_type = ws_schema[col]["type"]
+                        self.assertIn(col_type, valid_types,
+                                      "Invalid type definition for {lm}/{ws}/{col}: {type}".format(
+                                                lm=lm, ws=ws, col=col, type=col_type))
+            elif schemas[lm]["file_type"] in {"shp", "dbf", "csv"}:
+                for col in schema["columns"].keys():
+                    self.assertIn("type", schema["columns"][col],
+                                  "Missing type definition for {lm}/{col}".format(lm=lm, col=col))
+                    col_type = schema["columns"][col]["type"]
+                    self.assertIn(col_type, valid_types,
+                                  "Invalid type definition for {lm}/{col}: {type}".format(lm=lm, col=col, type=col_type))
 
     def test_each_lm_has_created_by(self):
         schemas = cea.scripts.schemas()
@@ -155,6 +184,10 @@ class TestSchemas(unittest.TestCase):
                 self.assertNotIn("-", script, "{lm} used_by script {script} contains hyphen".format(**locals()))
             for script in created_by:
                 self.assertNotIn("-", script, "{lm} created_by script {script} contains hyphen".format(**locals()))
+
+    def test_read_glossary_df(self):
+        import cea.glossary
+        glossary_df = cea.glossary.read_glossary_df()
 
 
 def extract_locator_methods(locator):

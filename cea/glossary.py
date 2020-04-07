@@ -51,18 +51,23 @@ def read_glossary_df():
 
 
 def glossary_row(script, file_path, col, lm, cd, worksheet):
-    return {
-        "SCRIPT": script,
-        "LOCATOR_METHOD": lm,
-        "WORKSHEET": worksheet,
-        "VARIABLE": col,
-        "DESCRIPTION": cd["description"],
-        "UNIT": cd["unit"],
-        "VALUES": cd["values"],
-        "TYPE": cd["type"],
-        "COLOR": "",
-        "FILE_NAME": ":".join((file_path, worksheet)) if worksheet else file_path
-    }
+    try:
+        return {
+            "SCRIPT": script,
+            "LOCATOR_METHOD": lm,
+            "WORKSHEET": worksheet,
+            "VARIABLE": col,
+            "DESCRIPTION": cd["description"],
+            "UNIT": cd["unit"],
+            "VALUES": cd["values"],
+            "TYPE": cd["type"],
+            "COLOR": "",
+            "FILE_NAME": ":".join((file_path, worksheet)) if worksheet else file_path
+        }
+    except KeyError as ex:
+        raise KeyError(
+            "Failed to create glossary_row({script}, {file_path}, {col}, {lm}, {cd}, {worksheet}: {ex.message}".format(
+                **locals()))
 
 
 if __name__ == "__main__":
