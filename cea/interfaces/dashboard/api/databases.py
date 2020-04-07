@@ -111,5 +111,26 @@ class DatabaseSchema(Resource):
         for db_name, db_schema_keys in DATABASES_SCHEMA_KEYS.items():
             out[db_name] = {}
             for db_schema_key in db_schema_keys:
-                out[db_name].update(convert_path_to_name(schemas[db_schema_key]['schema']))
+                try:
+                    out[db_name].update(convert_path_to_name(schemas[db_schema_key]['schema']))
+                except KeyError as ex:
+                    raise KeyError("Could not convert_path_to_name for {db_name}/{db_schema_key}. {ex.message}".format(
+                        **locals()))
         return out
+
+
+if __name__ == "__main__":
+    def test():
+        import cea.scripts
+
+        schemas = cea.scripts.schemas()
+        out = {}
+        for db_name, db_schema_keys in DATABASES_SCHEMA_KEYS.items():
+            out[db_name] = {}
+            for db_schema_key in db_schema_keys:
+                try:
+                    out[db_name].update(convert_path_to_name(schemas[db_schema_key]['schema']))
+                except KeyError as ex:
+                    raise KeyError("Could not convert_path_to_name for {db_name}/{db_schema_key}. {ex.message}".format(
+                        **locals()))
+    test()
