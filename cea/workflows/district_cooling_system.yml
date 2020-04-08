@@ -10,14 +10,14 @@
   "general:scenario-name": baseline
 - script: data-initializer
   parameters:
-    databases-path: SG
+    databases-path: CH
     databases: [archetypes, assemblies, components]
 - script: archetypes-mapper
   parameters:
     input-databases: [comfort, architecture, air-conditioning, internal-loads, supply, schedules]
 - script: weather-helper
   parameters:
-    weather: Singapore-Changi_1990_2010_TMY
+    weather: Zug-inducity_1990_2010_TMY
 - script: radiation
   parameters:
     consider-intersections: false
