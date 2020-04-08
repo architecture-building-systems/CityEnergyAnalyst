@@ -12,6 +12,7 @@ import cea.inputlocator
 import collections
 import datetime
 import glob
+import tempfile
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -435,6 +436,37 @@ class FileParameter(Parameter):
             raise ValueError("Can't decode value for non-nullable FileParameter %s." % self.name)
         else:
             return value
+
+
+class ResumeFileParameter(FileParameter):
+    """Path to the workflow:resume-file - this is generally ${TEMP}/resume-workflow.yml. Makes sure it is writeable"""
+    typename = "ResumeFileParameter"
+
+    def encode(self, value):
+        return self.check_path(str(value))
+
+    def check_path(self, path):
+        """Make sure I can read/write that file"""
+        if not path:
+            path = os.path.join(tempfile.gettempdir(), "resume-workflow.yml")
+        try:
+            if os.path.exists(path):
+                # make sure we can write to this file
+                with open(path, "r") as fp:
+                    contents = fp.read()
+            else:
+                contents = json.dumps(dict())
+
+            with open(path, "w") as fp:
+                fp.write(contents)
+
+        except IOError:
+            # let's just assume we can always write to the temp folder...
+            path = os.path.join(tempfile.gettempdir(), "resume-workflow.yml")
+        return path
+
+    def decode(self, value):
+        return self.check_path(str(value))
 
 
 class JsonParameter(Parameter):
