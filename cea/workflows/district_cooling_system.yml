@@ -45,6 +45,7 @@
   parameters:
     network-type: DC
     network-model: simplified
+    consider-only-buildings-with-demand: off
 - script: thermal-network
   parameters:
     network-type: DC
