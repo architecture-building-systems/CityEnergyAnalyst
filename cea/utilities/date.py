@@ -17,6 +17,6 @@ def get_date_range_hours_from_year(year):
 
     # Check if leap year and remove extra day
     if isleap(year):
-        date_range = date_range[~((date_range.month == 2) & (date_range.day == 29))]
+        date_range[~((date_range.month == 2) & (date_range.day == 29))]
 
     return date_range
