@@ -6,7 +6,8 @@ import pandas as pd
 import math
 import cea.inputlocator
 import numpy as np
-from cea.constants import HOURS_IN_YEAR, BOLTZMANN, KELVIN_OFFSET
+from cea.constants import BOLTZMANN, KELVIN_OFFSET
+from calendar import isleap
 
 __author__ = "Clayton Miller"
 __copyright__ = "Copyright 2014, Architecture and Building Systems - ETH Zurich"
@@ -16,8 +17,6 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
-
-from cea.utilities.date import get_date_range_hours_from_year
 
 
 def epw_to_dataframe(weather_path):
@@ -36,9 +35,11 @@ def epw_reader(weather_path):
     result = epw_to_dataframe(weather_path)
 
     year = result["year"][0]
-    date_range = get_date_range_hours_from_year(year)
+    date_range = pd.date_range(start=str(year), end=str(year + 1), freq='H', closed='left')
     result['date'] = date_range
     result['dayofyear'] = date_range.dayofyear
+    if isleap(year):
+        result = result[~((date_range.month == 2) & (date_range.day == 29))].reset_index()
 
     result['ratio_diffhout'] = result['difhorrad_Whm2'] / result['glohorrad_Whm2']
     result['ratio_diffhout'] = result['ratio_diffhout'].replace(np.inf, np.nan)
