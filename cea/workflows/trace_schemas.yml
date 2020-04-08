@@ -30,11 +30,11 @@
 - script: solar-collector
   parameters:
     type-scpanel: FP
-    buildings: B1000
+    buildings: [B1000]
 - script: solar-collector
   parameters:
     type-scpanel: ET
-    buildings: B1000
+    buildings: [B1000]
 - script: photovoltaic-thermal
   parameters:
     type-scpanel: FP
