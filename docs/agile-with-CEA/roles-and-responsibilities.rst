@@ -5,7 +5,8 @@ by Dr. Jimeno A. Fonseca, 2020
 updated by Shanshan Hsieh, March 2020
 
 This is a guide of roles and responsibilities in CEA. We use this to more formally coordinate our work.
-To check who is currently holding each position, we invite you to check www.cityenergyanalyst.com/people for more information.
+To check who is currently holding each position, we invite you to check `here
+<www.cityenergyanalyst.com/people>`_ for more information.
 
 .. image:: project_responsibilities.png
     :align: center
