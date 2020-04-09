@@ -63,18 +63,18 @@ def validation(scenario_list,
     ## monthly validation
     if monthly:
         print("monthly validation")
-        list_of_scores = []
-        number_of_calibrated = []
+        validation_output = pd.DataFrame(columns=['scenario', 'calibrated_buildings', 'scenario_score'])
         for scenario, locator, measured_building_names in zip(scenario_list, locators_of_scenarios,
                                                               measured_building_names_of_scenarios):
-
+            list_of_scores = []
+            number_of_calibrated = []
             # get measured data for buiildings in this scenario
             monthly_measured_data = pd.read_csv(locator.get_monthly_measurements())
 
             # loop in the measured buildings of this scenario
             for building_name in measured_building_names:  # number of buildings that have real data available
                 # extract measured data (format: BuildingID (corresponding to CEA model) | ZipCode (optional) | monthly energy consumed (kWh) (Jan-Dec)
-                print('For building',building_name, 'the errors are')
+                print('For building', building_name, 'the errors are')
                 fields_to_extract = ['Name'] + MONTHS_IN_YEAR_NAMES
                 monthly_measured_demand = monthly_measured_data[fields_to_extract].set_index('Name')
                 monthly_measured_demand = monthly_measured_demand.loc[building_name]
@@ -102,13 +102,28 @@ def validation(scenario_list,
                 ind_calib_building, ind_score_building = calc_group_score(cv_root_mean_squared_error, monthly_data,
                                                                           normalized_mean_biased_error)
 
-                #appending list of variables for later use
+                # appending list of variables for later use
                 number_of_calibrated.append(ind_calib_building)
                 list_of_scores.append(ind_score_building)
-        n_calib = sum(number_of_calibrated)
-        score = sum(list_of_scores)
-    print('The number of calibrated buildings is',n_calib)
-    print('The final score is',score)
+            n_scenario_calib = sum(number_of_calibrated)
+            scenario_score = sum(list_of_scores)
+            scenario_name = os.path.basename(scenario)
+            validation_output = validation_output.append({'scenario': scenario_name, 'calibrated_buildings': n_scenario_calib, 'scenario_score': scenario_score}, ignore_index=True)
+        n_calib = validation_output['calibrated_buildings'].sum()
+        score = validation_output['scenario_score'].sum()
+        validation_output = validation_output.append({'scenario': 'Total', 'calibrated_buildings': n_calib, 'score': score}, ignore_index=True)
+
+    config = cea.config.Configuration()
+    project_path = config.project
+    output_path = (project_path + r'/output/calibration/')
+
+    if not os.path.exists(output_path):
+        os.makedirs(output_path)
+    file_name = output_path + 'scores.csv'
+    validation_output.to_csv(file_name, index=False)
+
+    print('The number of calibrated buildings is', n_calib)
+    print('The final score is', score)
     return score
 
 
@@ -116,11 +131,11 @@ def calc_errors_per_building(load, monthly_data):
     biased_error = monthly_data['measurements'] - monthly_data[load + '_kWh']
     normalized_mean_biased_error = ((biased_error.sum() / 12) / monthly_data[
         'measurements'].mean()) * 100  # %
-    print('NMBE:',normalized_mean_biased_error)
+    print('NMBE:', normalized_mean_biased_error)
     mean_squared_error = calc_mean_squared_error(monthly_data['measurements'], monthly_data[load + '_kWh'])
     root_mean_squared_error = sqrt(mean_squared_error)  # root mean squared error
     cv_root_mean_squared_error = root_mean_squared_error * 100 / monthly_data['measurements'].mean()
-    print('CVRMSE:',cv_root_mean_squared_error)
+    print('CVRMSE:', cv_root_mean_squared_error)
     return cv_root_mean_squared_error, normalized_mean_biased_error
 
 
@@ -134,11 +149,13 @@ def calc_group_score(cv_root_mean_squared_error, monthly_data, normalized_mean_b
     ind_score_building = ind_calib_building * sum(monthly_data['measurements'])
     return ind_calib_building, ind_score_building
 
+
 def get_measured_building_names(locator):
     monthly_measured_data = pd.read_csv(locator.get_monthly_measurements())
     measured_building_names = monthly_measured_data.Name.values
     measured_building_names = list(measured_building_names)
     return measured_building_names
+
 
 def main(config):
     """
@@ -156,7 +173,7 @@ def main(config):
     measured_building_names = get_measured_building_names(locator)
     scenario_list = [config.scenario]
     locators_of_scenarios = [locator]
-    measured_building_names_of_scenarios =[measured_building_names]
+    measured_building_names_of_scenarios = [measured_building_names]
 
     validation(scenario_list,
                locators_of_scenarios,
@@ -165,6 +182,7 @@ def main(config):
                monthly=True,
                load='GRID',
                )
+
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
