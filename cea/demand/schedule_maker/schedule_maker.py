@@ -18,7 +18,7 @@ from cea.datamanagement.schedule_helper import read_cea_schedule
 from cea.demand.building_properties import calc_useful_areas
 from cea.demand.constants import VARIABLE_CEA_SCHEDULE_RELATION
 from cea.utilities import epwreader
-from cea.utilities.date import get_dates_from_year
+from cea.utilities.date import get_date_range_hours_from_year
 from cea.utilities.dbf import dbf_to_dataframe
 
 __author__ = "Jimeno A. Fonseca"
@@ -69,7 +69,7 @@ def schedule_maker_main(locator, config, building=None):
     year = weather_data['year'][0]
 
     # create date range for the calculation year
-    date_range = get_dates_from_year(year)
+    date_range = get_date_range_hours_from_year(year)
 
 
     # SCHEDULE MAKER

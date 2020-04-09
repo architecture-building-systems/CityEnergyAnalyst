@@ -120,11 +120,10 @@ def create_data():
     bpr = building_properties['B1011']
     list_uses = ['OFFICE', 'LAB', 'INDUSTRIAL', 'SERVERRROOM']
     bpr.occupancy = {'OFFICE': 0.5, 'SERVERROOM': 0.5}
-    # get year from weather file
+
+    # read weather file
     weather_path = locator.get_weather_file()
-    weather_data = epwreader.epw_reader(weather_path)[['year']]
-    year = weather_data['year'][0]
-    date = pd.date_range(str(year) + '/01/01', periods=HOURS_IN_YEAR, freq='H')
+    weather_data = epwreader.epw_reader(weather_path)
 
     calculated_schedules = schedule_maker_main(locator, config)
     if not test_config.has_section('test_mixed_use_schedules'):
