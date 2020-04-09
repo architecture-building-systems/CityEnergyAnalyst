@@ -753,6 +753,10 @@ class InputLocator(object):
         """scenario/outputs/data/calibration_results/calibrationresults.csv"""
         return os.path.join(self.scenario, 'outputs','data','calibration_results', 'calibrationresults.csv')
 
+    def get_project_calibrationresults(self):
+        """project/outputs/calibration_results/calibrationresults.csv"""
+        return os.path.join(self.project, 'outputs', 'calibration_results', 'calibrationresults.csv')
+
     def get_totaloccupancy(self):
         """scenario/outputs/data/totaloccupancy.csv"""
         return os.path.join(self.scenario, "outputs", "data", "totaloccupancy.csv")
@@ -1113,6 +1117,10 @@ class InputLocator(object):
         return os.path.join(self.get_measurements_folder(), 'annual_measurements.csv')
 
     def get_monthly_measurements(self):
+        return os.path.join(self.get_measurements_folder(), 'monthly_measurements.csv')
+
+    def get_global_monthly_measurements(self):
+
         return os.path.join(self.get_measurements_folder(), 'monthly_measurements.csv')
 
     # OUTPUTS

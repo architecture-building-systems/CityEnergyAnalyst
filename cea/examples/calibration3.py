@@ -127,7 +127,7 @@ def calc_score(static_params, dynamic_params):
 
 
 def calibration(config, list_scenarios):
-    max_evals = 10
+    max_evals = 3
 
     #  define a search space
     DYNAMIC_PARAMETERS = OrderedDict([('Es', hp.uniform('Es', 0.6, 1.0)),
@@ -174,12 +174,6 @@ def calibration(config, list_scenarios):
         os.makedirs(output_path)
     file_name = output_path+'calibration_results.csv'
     results.to_csv(file_name, index=False)
-    # results = pd.DataFrame(results_it)
-    #
-    # results.to_csv('calibration_it.csv')
-    # print (results)
-    # print(counter,trials.trials[counter]['misc']['vals']['Ea_Wm2'],trials.trials[counter]['misc']['vals']['El_Wm2'], trials.trials[counter]['misc']['vals']['Es'],trials.trials[counter]['misc']['vals']['Ns'],
-    #   trials.trials[counter]['misc']['vals']['Occ_m2pax'],trials.trials[counter]['misc']['vals']['Vww_lpdpax'],trials.losses()[counter])
 
     x = 1
 
@@ -204,7 +198,6 @@ def main(config):
     print(list_scenarios)
 
     calibration(config, list_scenarios)
-
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
