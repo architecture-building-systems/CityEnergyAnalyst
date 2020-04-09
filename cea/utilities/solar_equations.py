@@ -22,6 +22,8 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+from cea.utilities.date import get_date_range_hours_from_year
+
 
 def _ephem_setup(latitude, longitude, altitude, pressure, temperature):
     # observer
@@ -90,7 +92,7 @@ SunProperties = collections.namedtuple('SunProperties', ['g', 'Sz', 'Az', 'ha', 
 def calc_datetime_local_from_weather_file(weather_data, latitude, longitude):
     # read date from the weather file
     year = weather_data['year'][0]
-    datetime = pd.date_range(str(year) + '/01/01', periods=HOURS_IN_YEAR, freq='H')
+    datetime = get_date_range_hours_from_year(year)
 
     # get local time zone
     etc_timezone = get_local_etc_timezone(latitude, longitude)
