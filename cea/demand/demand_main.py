@@ -16,7 +16,7 @@ import demand_writers
 from cea.demand import thermal_loads
 from cea.demand.building_properties import BuildingProperties
 from cea.utilities import epwreader
-from cea.utilities.date import get_dates_from_year
+from cea.utilities.date import get_date_range_hours_from_year
 
 warnings.filterwarnings("ignore")
 
@@ -79,7 +79,7 @@ def demand_calculation(locator, config):
                                                        'relhum_percent', 'windspd_ms', 'skytemp_C']]
     year = weather_data['year'][0]
     # create date range for the calculation year
-    date_range = get_dates_from_year(year)
+    date_range = get_date_range_hours_from_year(year)
 
     # CALCULATE OBJECT WITH PROPERTIES OF ALL BUILDINGS
     building_properties = BuildingProperties(locator)
