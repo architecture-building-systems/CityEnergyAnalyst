@@ -246,4 +246,7 @@ class DashboardPlotInputFiles(Resource):
         dashboard = dashboards[dashboard_index]
         plot = dashboard.plots[plot_index]
 
-        return [locator_method(*args) for locator_method, args in plot.input_files]
+        data_path = plot.plot_data_to_file()
+        input_paths = [locator_method(*args) for locator_method, args in plot.input_files]
+
+        return {'inputs': input_paths, 'data': [data_path] if data_path else []}

@@ -9,10 +9,13 @@ from __future__ import print_function
 
 import functools
 import hashlib
+import json
 import os
+import pickle
 import time
 
 import pandas as pd
+from plotly.utils import PlotlyJSONEncoder
 
 
 class PlotCache(object):
@@ -76,6 +79,24 @@ class PlotCache(object):
             with open(div_file, 'r') as div_fp:
                 table_div = div_fp.read()
         return table_div
+
+    def lookup_plot_data(self, plot, producer):
+        """Lookup the cache of a plotly graph data created with plot.calc_graph"""
+        data_path = os.path.join(plot.category_name, plot.id())
+        data_file = self._cached_data_file(data_path, plot.parameters) + '.graphdata'
+        cache_timestamp = self.cache_timestamp(data_file)
+        if cache_timestamp < self.newest_dependency(plot.input_files):
+            plot_data = producer()
+            folder = os.path.dirname(data_file)
+            if not os.path.exists(folder):
+                os.makedirs(folder)
+            with open(data_file, 'w') as data_json_path:
+                data_json = json.dumps(plot_data, cls=PlotlyJSONEncoder)
+                data_json_path.write(data_json)
+        else:
+            with open(data_file, 'r') as data_json_path:
+                plot_data = json.loads(data_json_path.read())
+        return plot_data
 
     def cache_timestamp(self, path):
         """Return a timestamp (like ``os.path.getmtime``) to compare to. Returns 0 if there is no data in the cache"""
@@ -144,6 +165,9 @@ class NullPlotCache(PlotCache):
         return producer()
 
     def lookup_table_div(self, plot, producer):
+        return producer()
+
+    def lookup_plot_data(self, plot, producer):
         return producer()
 
 
