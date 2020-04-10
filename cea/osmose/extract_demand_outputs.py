@@ -253,7 +253,7 @@ def get_reduced_demand_df(case, building, end_t, start_t):
             reduced_demand_df = building_demand_df[start_t[interval]:end_t[interval]]
             # reduced_demand_df = reduced_demand_df.reset_index()
             list_of_df.append(reduced_demand_df)
-            print 'interval', interval, ', hour:', start_t[interval]
+            # print 'interval', interval, ', hour:', start_t[interval]
         reduced_demand_df = pd.concat(list_of_df, ignore_index=True)
         reduced_demand_df = reduced_demand_df.reset_index()
     else:
@@ -298,7 +298,7 @@ def get_timesteps_info(case, season, timesteps):
         timesteps = len(op_time)
     elif timesteps == 'typical hours':
         number_of_clusters = settings.number_of_typical_hours
-        print('number of clusters: ', number_of_clusters)
+        print('number of typical hours: ', number_of_clusters)
         hour_count_df = pd.read_csv(path_to_cluster_files(settings.typical_hours_path, '', 'hour_count', number_of_clusters))
         start_t, end_t = OrderedDict(), OrderedDict()
         op_time = []
