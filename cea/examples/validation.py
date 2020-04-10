@@ -13,6 +13,7 @@ from sklearn.metrics import mean_squared_error as calc_mean_squared_error
 import cea.config
 import cea.inputlocator
 from cea.constants import MONTHS_IN_YEAR_NAMES
+import cea.examples.global_variables as global_variables
 
 __author__ = "Luis Santos"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -22,7 +23,6 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
-
 
 def validation(scenario_list,
                locators_of_scenarios,
@@ -62,12 +62,14 @@ def validation(scenario_list,
 
     ## monthly validation
     if monthly:
+        number_of_buildings = 0
         print("monthly validation")
-        validation_output = pd.DataFrame(columns=['scenario', 'calibrated_buildings', 'scenario_score'])
+        validation_output = pd.DataFrame(columns=['scenario', 'calibrated_buildings', 'score'])
         for scenario, locator, measured_building_names in zip(scenario_list, locators_of_scenarios,
                                                               measured_building_names_of_scenarios):
             list_of_scores = []
             number_of_calibrated = []
+            number_of_buildings = number_of_buildings + len(measured_building_names)
             # get measured data for buiildings in this scenario
             monthly_measured_data = pd.read_csv(locator.get_monthly_measurements())
 
@@ -108,19 +110,12 @@ def validation(scenario_list,
             n_scenario_calib = sum(number_of_calibrated)
             scenario_score = sum(list_of_scores)
             scenario_name = os.path.basename(scenario)
-            validation_output = validation_output.append({'scenario': scenario_name, 'calibrated_buildings': n_scenario_calib, 'scenario_score': scenario_score}, ignore_index=True)
+            validation_output = validation_output.append({'scenario': scenario_name, 'calibrated_buildings': n_scenario_calib, 'score': scenario_score}, ignore_index=True)
         n_calib = validation_output['calibrated_buildings'].sum()
-        score = validation_output['scenario_score'].sum()
-        validation_output = validation_output.append({'scenario': 'Total', 'calibrated_buildings': n_calib, 'score': score}, ignore_index=True)
+        score = validation_output['score'].sum()
 
-    config = cea.config.Configuration()
-    project_path = config.project
-    output_path = (project_path + r'/output/calibration/')
-
-    if not os.path.exists(output_path):
-        os.makedirs(output_path)
-    file_name = output_path + 'scores.csv'
-    validation_output.to_csv(file_name, index=False)
+        global_variables.global_validation_n_calibrated.append(n_calib)
+        global_variables.global_validation_percentage.append((n_calib/number_of_buildings)*100)
 
     print('The number of calibrated buildings is', n_calib)
     print('The final score is', score)

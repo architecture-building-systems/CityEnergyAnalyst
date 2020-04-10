@@ -4,6 +4,7 @@ This tool calibrates a set of inputs from CEA to reduce the error between model 
 from __future__ import division
 from __future__ import print_function
 
+
 import cea.config
 import cea.inputlocator
 from cea.utilities.dbf import dbf_to_dataframe, dataframe_to_dbf
@@ -28,6 +29,7 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
+
 
 
 def modify_monthly_multiplier(locator, config, measured_building_names):
@@ -127,7 +129,7 @@ def calc_score(static_params, dynamic_params):
 
 
 def calibration(config, list_scenarios):
-    max_evals = 3
+    max_evals = 10
 
     #  define a search space
     DYNAMIC_PARAMETERS = OrderedDict([('Es', hp.uniform('Es', 0.6, 1.0)),
@@ -153,7 +155,12 @@ def calibration(config, list_scenarios):
     print(best)
     print('Best Params: {}'.format(best))
     print(trials.losses())
-    results = []
+
+    import cea.examples.global_variables as global_variables
+    validation_n_calib = pd.DataFrame(global_variables.global_validation_n_calibrated)
+    validation_percentage = pd.DataFrame(global_variables.global_validation_percentage)
+
+    results = pd.DataFrame()
     for counter in range(0, max_evals):
         results_it = [counter,
                       trials.trials[counter]['misc']['vals']['Ea_Wm2'][0],
@@ -162,11 +169,15 @@ def calibration(config, list_scenarios):
                       trials.trials[counter]['misc']['vals']['Ns'][0],
                       trials.trials[counter]['misc']['vals']['Occ_m2pax'][0],
                       trials.trials[counter]['misc']['vals']['Vww_lpdpax'][0],
-                      trials.losses()[counter]]
-        results.append(results_it)
-    results = pd.DataFrame(results)
+                      trials.losses()[counter]
+                      ]
+        results_it = pd.DataFrame([results_it])
+        results = results.append(results_it)
+    results.reset_index(drop=True, inplace=True)
+    results = pd.concat([results, validation_n_calib, validation_percentage],  axis=1, sort=False).sort_index()
+
     results.columns = ['eval', 'Ea_Wm2', 'El_Wm2', 'Es',
-                       'Ns', 'Occ_m2pax', 'Vww_lpdpax', 'losses']
+                       'Ns', 'Occ_m2pax', 'Vww_lpdpax', 'score_weighted_demand', 'buildings_calibrated', 'percentage_buildings_calibrated_%']
     project_path = config.project
     output_path = (project_path + r'/output/calibration/')
 
@@ -174,9 +185,6 @@ def calibration(config, list_scenarios):
         os.makedirs(output_path)
     file_name = output_path+'calibration_results.csv'
     results.to_csv(file_name, index=False)
-
-    x = 1
-
 
 def main(config):
     """
@@ -195,9 +203,9 @@ def main(config):
     list_scenarios = []
     for f in measurement_files:
         list_scenarios.append(os.path.dirname(os.path.dirname(os.path.dirname(f))))
-    print(list_scenarios)
+    print(list_scenarios[:])
 
-    calibration(config, list_scenarios)
+    calibration(config, list_scenarios[:])
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
