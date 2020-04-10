@@ -187,6 +187,7 @@ def write_string_to_txt(content, osmose_project_path, filename):
     file_path = os.path.join(osmose_project_path, filename)
     with open(file_path, "w") as text_file:
         text_file.write(content)
+    print(filename, 'saved to ', file_path)
     return np.nan
 
 
