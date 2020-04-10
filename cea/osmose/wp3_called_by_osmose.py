@@ -5,6 +5,7 @@ import math
 import os
 import geopandas as gpd
 import time
+from cea.osmose import settings
 
 HOURS_IN_YEAR = 8760
 PUMP_ETA = 0.8 # Circulating Pump
@@ -24,7 +25,7 @@ BUILDINGS_DEMANDS_COLUMNS = ['Name', 'Ths_sys_sup_aru_C', 'Ths_sys_sup_ahu_C', '
                              'mcphs_sys_ahu_kWperC', 'mcphs_sys_shu_kWperC', 'mcpcs_sys_ahu_kWperC',
                              'mcpcs_sys_aru_kWperC', 'mcpcs_sys_scu_kWperC', 'E_sys_kWh']
 
-OSMOSE_PROJECT_PATH = "E:\\OSMOSE_projects\\HCS_mk\\results\\N_base"
+OSMOSE_PROJECT_PATH = os.path.join(*["E:\\OSMOSE_projects\\HCS_mk\\results\\", settings.TECHS[0]])  # ONLY USED IN calc_builing_substation_dTlm
 REPORTING = True
 def main(path_to_case):
     # INITIALIZE TIMER
@@ -50,16 +51,14 @@ def main(path_to_case):
     substation_A_hex_df['Cinv_hex'] = np.vectorize(calc_Cinv_substation_hex)(substation_A_hex_df)
 
     ## 6. PUMPING COSTS
-    pressure_losses_in_critical_path, \
+    plant_pressure_losses_Pa, \
     network_operation_info = calc_network_pressure_losses(Pipe_properties_df, T_supply_K, all_nodes_df, node_df, edge_df,
                                                                   edge_length_df, edge_node_df, plant_index, plant_node,
                                                                   substation_flow_rate_m3pers_df)
 
-    # electricity consumption # TODO:add substation head loss at critical building and plant
-    total_pressure_losses_in_pipes_Pa = pressure_losses_in_critical_path.sum(axis=1) * 2 # calculate supply side to approximate return side
-    plant_pressure_losses_Pa = total_pressure_losses_in_pipes_Pa * 1.2 # FIXME: assumption for substations
+    # electricity consumption
     plant_flow_rate_m3pers = substation_flow_rate_m3pers_df.sum(axis=1)
-    plant_pumping_kW = plant_pressure_losses_Pa * plant_flow_rate_m3pers.values / 1000 / PUMP_ETA
+    plant_pumping_kW = (plant_pressure_losses_Pa / 1000) * plant_flow_rate_m3pers.values / PUMP_ETA
     annual_pumping_energy_kWh = np.nansum(plant_pumping_kW*op_time) # match yearly hours
 
     # pump size
@@ -79,6 +78,7 @@ def main(path_to_case):
     with open(os.path.join(path_to_case,'pass_to_osmose.csv'), 'w') as f:
         for key in results_dict.keys():
             f.write("%s,%s\n" % (key, str(results_dict[key])))
+    print('save results to ', os.path.join(path_to_case,'pass_to_osmose.csv'))
     return
 
 
@@ -110,7 +110,15 @@ def calc_network_pressure_losses(Pipe_properties_df, T_supply_K, all_nodes_df, n
     pressure_losses_in_edges_Pa_df = pd.DataFrame(pressure_losses_in_edges_Pa).T
     pressure_losses_in_edges_Pa_df = pd.DataFrame(pressure_losses_in_edges_Pa_df.values, columns=edge_node_df.columns)
 
-    pressure_losses_in_critical_path = calc_pressure_loss_critical_path(pressure_losses_in_edges_Pa_df, node_df, edge_df)
+    pressure_losses_in_critical_path, \
+    pressure_losses_in_substations = calc_pressure_loss_critical_path(pressure_losses_in_edges_Pa_df,
+                                                                        node_df, edge_df, edge_node_df,
+                                                                        Pipe_properties_df, flows_in_edges_m3pers_df,
+                                                                        T_supply_K)
+    # calculate pump head at plant
+    total_pressure_losses_in_pipes_Pa = pressure_losses_in_critical_path.sum(axis=1) * 2  # calculate supply side to approximate return side
+    plant_pressure_losses_Pa = total_pressure_losses_in_pipes_Pa + pressure_losses_in_substations.sum(axis=1)
+
 
     if REPORTING:
         specific_pressure_losses_in_edges_Pa_df = pd.DataFrame(specific_pressure_loss_Pa_per_m).T
@@ -133,7 +141,7 @@ def calc_network_pressure_losses(Pipe_properties_df, T_supply_K, all_nodes_df, n
     network_operation_info['v_max_ms'] = np.max(np.array(velocity_edges_ms))
     network_operation_info['v_mean_ms'] = np.mean(np.array(velocity_edges_ms))
     network_operation_info['massflow_min_kgs'] = massflows_in_edges_kgpers_df.min().min()
-    return pressure_losses_in_critical_path, network_operation_info
+    return plant_pressure_losses_Pa, network_operation_info
 
 
 ## ====== Processing ============ #
@@ -164,7 +172,7 @@ def write_cea_demand_from_osmose(path_to_district_folder):
         cooling_loads[building_function] = specific_cooling_load.rename(columns={building_substation_demand_kWh.columns[0]:building_function})
 
     # 3. calculate substation heat exchanger area
-    U_substation = 1000 # W/m2K # TODO: calculate
+    U_substation = 800 # W/m2K # Celine Weber
     # plant
     dTlm_plant = 5.0 # TODO: calculate
     Qmax_plant = network_df.filter(like='locP').filter(like='Hin').values.max()
@@ -190,7 +198,7 @@ def write_cea_demand_from_osmose(path_to_district_folder):
         building_demand_df = pd.DataFrame(columns=BUILDINGS_DEMANDS_COLUMNS)
 
         # cooling loads
-        building_demand_df['Qcs_sys_ahu_kWh'] = (cooling_loads[bui_func] * building_Af_m2)[bui_func] # TODO: check unit
+        building_demand_df['Qcs_sys_ahu_kWh'] = (cooling_loads[bui_func] * building_Af_m2)[bui_func]
         building_demand_df['mcpcs_sys_ahu_kWperC'] = building_demand_df['Qcs_sys_ahu_kWh'] / (cooling_loads['Tr'] - cooling_loads['Ts'])
         substation_flow_rate_m3pers = building_demand_df['mcpcs_sys_ahu_kWperC'] / CP_KJPERKGK / P_WATER_KGPERM3
         substation_flow_rate_m3pers_df[building] = substation_flow_rate_m3pers
@@ -245,6 +253,7 @@ def calc_builing_substation_dTlm(Q_substation, building_function):
     t_Qmax = idx_Qmax + 1
     run_folder = os.listdir(OSMOSE_PROJECT_PATH)[
         len(os.listdir(OSMOSE_PROJECT_PATH)) - 1]  # pick the last folder (by name)
+    print('got OSMOSE result from: ', os.path.join(*[OSMOSE_PROJECT_PATH, run_folder]))
     icc_folder_path = os.path.join(*[OSMOSE_PROJECT_PATH, run_folder, 's_001\\plots\\icc\\models'])
     icc_separated = 'icc_separated_m_network_loc_loc' + building_function + '_t' + str(t_Qmax) + \
                     '_c' + building_function + '_DefaultHeatCascade.txt'
@@ -284,28 +293,42 @@ def get_Ts_Tr_from_txt(icc_file_name, icc_folder_path):
 ## ========= Cost Calculations ============ ##
 
 def calc_Cinv_network_pipes(edge_length_df, Cinv_pipe_perm):
+    # Xiang Li, 2015
     Cinv_network_pipes = sum(edge_length_df['length_m'] * Cinv_pipe_perm * 2)
     L_network_m = sum(edge_length_df['length_m'])
     return Cinv_network_pipes, L_network_m
 
 def calc_Cinv_substation_hex(A_hex_m2):
-
-    C_inv_hex = 7000 + 260 * A_hex_m2 ** 0.8
-
-    return C_inv_hex
+    # Kermani, 2018
+    C_inv_hex_2013 = 7000 + 360 * A_hex_m2 ** 0.8
+    C_inv_hex_2018 = (556.8 / 402) * C_inv_hex_2013
+    return C_inv_hex_2018
 
 def calc_Cinv_pumps(plant_pumping_kW):
+    # Tim Vollrath, 2015
     pump_size_W = max(plant_pumping_kW) * 1000
-    if pump_size_W <= 4000 :
-        min_pump_size_W = 500
-        if pump_size_W < min_pump_size_W :
-            Cinv_pump = 29.314 * min_pump_size_W ** 0.5216
-        else: Cinv_pump = 29.314 * pump_size_W ** 0.5216
-    elif(pump_size_W <= 37.0) and (4.0 < pump_size_W):
-        Cinv_pump = 4.323 * pump_size_W ** 0.7464
+    # get size per pump
+    min_size_W, max_size_W = 500.0, 375000375.0
+    if pump_size_W > max_size_W:
+        number_of_pumps = math.ceil(pump_size_W/max_size_W)
+        size_per_pump_W = pump_size_W / number_of_pumps
+    elif pump_size_W < min_size_W:
+        number_of_pumps = 1
+        size_per_pump_W = min_size_W
     else:
-        Cinv_pump = 1.0168 * pump_size_W ** 0.8873
-    return Cinv_pump, pump_size_W
+        number_of_pumps = 1
+        size_per_pump_W = pump_size_W
+    # get price per pump
+    if size_per_pump_W <= 4000.0 :
+        Cinv_per_pump = 29.314 * size_per_pump_W ** 0.5216
+    elif(pump_size_W <= 37000.0) and (4000.0 < pump_size_W):
+        Cinv_per_pump = 4.323 * size_per_pump_W ** 0.7464
+    elif pump_size_W <= max_size_W:
+        Cinv_per_pump = 1.0168 * size_per_pump_W ** 0.8873
+    # outputs
+    Cinv_pump = Cinv_per_pump * number_of_pumps
+    pump_capacity_kW = (size_per_pump_W * number_of_pumps) / 1000
+    return Cinv_pump, pump_capacity_kW
 
 ##========== Pressure Calculations ======== ##
 
@@ -425,9 +448,11 @@ def calc_max_diameter(volume_flow_m3s, pipe_catalog, velocity_ms, peak_load_perc
 
     return Pipe_DN, D_ext_m, D_int_m, D_ins_m, Cinv_pipe, A_int_m2
 
-def calc_pressure_loss_critical_path(pressure_losses_in_edges_Pa_df, node_df, edge_df):
+def calc_pressure_loss_critical_path(pressure_losses_in_edges_Pa_df, node_df, edge_df, edge_node_df,
+                                     Pipe_properties_df, flows_in_edges_m3pers_df, T_supply_K):
     plant_node = node_df[node_df['Type'] == 'PLANT'].index[0]
     pressure_losses_in_critical_path = np.zeros(np.shape(pressure_losses_in_edges_Pa_df.values))
+    pressure_losses_in_substations = np.zeros([len(pressure_losses_in_edges_Pa_df.values), 2])
     for time, dP_time in enumerate(pressure_losses_in_edges_Pa_df.values):
         if max(dP_time) > 0.0:
             G = nx.Graph()
@@ -449,7 +474,18 @@ def calc_pressure_loss_critical_path(pressure_losses_in_edges_Pa_df, node_df, ed
                     dP_Pa = G[start_node][end_node]['weight']
                     ix_edge = int(G[start_node][end_node]['ix'])
                     pressure_losses_in_critical_path[time][ix_edge] = dP_Pa
-    return pressure_losses_in_critical_path
+            # substations
+            pipe_plant = edge_node_df.columns[edge_node_df.loc[plant_node, :] == -1.0].values[0]
+            D_int_plant_m = Pipe_properties_df.loc[pipe_plant, 'D_int_m']
+            plant_flow_m3pers = flows_in_edges_m3pers_df.loc[time, pipe_plant]
+            dP_plant_Pa, _, _ = calc_pressure_losses(D_int_plant_m, plant_flow_m3pers, D_int_plant_m * 9, T_supply_K)
+            pipe_end = edge_node_df.columns[edge_node_df.loc[critical_node, :] == 1.0].values[0]
+            D_int_end_m = Pipe_properties_df.loc[pipe_end,'D_int_m']
+            end_flow_m3pers = flows_in_edges_m3pers_df.loc[time, pipe_end]
+            dP_end_Pa, _, _ = calc_pressure_losses(D_int_end_m, end_flow_m3pers, D_int_end_m * 9, T_supply_K)
+            pressure_losses_in_substations[time] = [dP_plant_Pa, dP_end_Pa]
+
+    return pressure_losses_in_critical_path, pressure_losses_in_substations
 
 
 ##========== UTILITY FUNCTIONS ============ ##
@@ -497,7 +533,7 @@ def extract_network_from_shapefile(edge_shapefile_df, node_shapefile_df):
         coord_node = row['geometry'].coords[0]
         if row['Type'] == "PLANT":
             node_shapefile_df.loc[node, 'plant'] = node
-        elif row['Type'] == "CONSUMER":  # TODO: add 'PROSUMER' by splitting nodes
+        elif row['Type'] == "CONSUMER":
             node_shapefile_df.loc[node, 'consumer'] = node
         else:
             node_shapefile_df.loc[node, 'none'] = node
@@ -566,7 +602,6 @@ def get_txt_data(file_path):
     return x, y
 
 def multiply_df_to_match_hours(reduced_df):
-    # TODO: change to the actual weight
     HOURS_IN_YEAR = 8760
     hours_osmose = len(reduced_df.index)
     list_with_reduced_dfs = [reduced_df] * int(HOURS_IN_YEAR / hours_osmose)
