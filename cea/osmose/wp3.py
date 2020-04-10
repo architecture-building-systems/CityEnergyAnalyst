@@ -22,15 +22,16 @@ def extract_demand_output_district_to_osmose(path_to_district_folder, timesteps,
     write_osmose_general_inputs(result_destination, periods, timesteps_calc)
 
     ## 3. Run osmose
-    # result_path, run_folder = osmose_one_run('N_base')
-    result_path, run_folder = osmose_one_run('B_coil')
-    print(result_path, run_folder)
+    for tech in settings.TECHS:
+        # result_path, run_folder = osmose_one_run('N_base')
+        result_path, run_folder = osmose_one_run(tech)
+        print(result_path, run_folder)
 
 def prepare_district_info(path_to_district_folder):
     # read building function and GFA from district
     occupancy_df = reard_dbf_from_cea_input(path_to_district_folder, 'occupancy')
     occupancy_df = occupancy_df.set_index('Name')
-    # calculate Af
+    # calculate Aftech
     geometry_df = get_building_Af_from_geometry(path_to_district_folder)
     # gather all info in district_df
     district_df = occupancy_df[['HOTEL', 'OFFICE', 'RETAIL']]
@@ -47,10 +48,13 @@ def prepare_district_info(path_to_district_folder):
 
 
 def write_input_parameter_to_osmose(geometry_df, occupancy_df, season, specified_building, timesteps):
+    print('writing parameters to osmose')
+
     Af_per_function, Af_buildings = calc_Af_per_function(geometry_df, occupancy_df)
     # write outputs for each function (input parameters to osmose)
     m_ve_min_df = pd.DataFrame()
     for case in ['WTP_CBD_m_WP1_OFF', 'WTP_CBD_m_WP1_HOT', 'WTP_CBD_m_WP1_RET']:
+        print(case)
         output_building, \
         output_hcs, \
         timesteps_calc = extract_cea_outputs_to_osmose_main(case, timesteps, season,
