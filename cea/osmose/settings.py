@@ -31,7 +31,7 @@ new_calculation = False
 
 # GENERAL INPUTS
 season = 'Summer'
-specified_buildings = ["B005"]
+specified_buildings = ["B005"]  # in WTP case
 # specified_buildings = ["B001","B002","B005","B006","B009"]
 # specified_buildings = ["B003","B008"]
 # specified_buildings = ["B001","B002","B003","B004","B005","B006","B007","B008","B009","B010"]
