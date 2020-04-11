@@ -253,7 +253,7 @@ def get_reduced_demand_df(case, building, end_t, start_t):
             reduced_demand_df = building_demand_df[start_t[interval]:end_t[interval]]
             # reduced_demand_df = reduced_demand_df.reset_index()
             list_of_df.append(reduced_demand_df)
-            # print 'interval', interval, ', hour:', start_t[interval]
+            print 'interval', interval, ', hour:', start_t[interval]
         reduced_demand_df = pd.concat(list_of_df, ignore_index=True)
         reduced_demand_df = reduced_demand_df.reset_index()
     else:
@@ -478,6 +478,7 @@ def path_to_osmose_project_bui(building_name):
     format = 'csv'
     path_to_folder = settings.osmose_project_data_path
     path_to_file = os.path.join(path_to_folder, '%s_from_cea.%s' % (building_name, format))
+    print('saved ', path_to_file)
     return path_to_file
 
 def path_to_osmose_project_hcs(building_name, extension):
