@@ -15,6 +15,11 @@ problem_dict = {
         'names':['capex_weight', 'dT1', 'dT2', 'dT3', 'dT4', 'dTn_1', 'dTn_2', 'dTn_3', 'T5'],
         'bounds':[[0,1],[10,15],[8,10],[2,4],[2,4],[5,15],[5,15],[5,15],[4,7]]
     },
+    "Networks_fixed": {
+        'num_vars': 9,
+        'names': ['capex_weight', 'dT1', 'dT2', 'dT3', 'dT4', 'dTn_1', 'dTn_2', 'dTn_3', 'T5'],
+        'bounds': [[0, 1], [20, 21], [8, 9], [2, 3], [2, 3], [10, 11], [10, 11], [5, 6], [4, 10]]
+    },
     'Building': {
         'num_vars': 7,
         'names':['capex_weight', 'dT1', 'dT2', 'dT3', 'dT4', 'dT_sc', 'T5'],
@@ -46,5 +51,23 @@ def main():
     print('file saved to ', path_to_osmose_projects)
     return
 
+def main2():
+    samples = []
+    for T5 in np.arange(4,11,0.5):
+        for capex_weight in np.arange(0,1,0.2):
+            dTn_1 = 12 - (T5-4)
+            row = [capex_weight, 0.0, 0.0, 0.0, 0.0, dTn_1, 30, 30, T5]
+            samples.append(row)
+    df = pd.DataFrame(samples)
+    # path_to_osmose_projects = 'E:\\OSMOSE_projects\\HCS_mk\\Projects\\'
+    path_to_osmose_projects = 'C:\\Users\\Zhongming\\Documents\\HCS_mk\\Projects'
+    df.to_csv(os.path.join(path_to_osmose_projects, 'T5_flat.dat'), index=False, header=False,
+              line_terminator=',\n', )
+    print('file saved to ', path_to_osmose_projects)
+    # 'names': ['capex_weight', 'dT1', 'dT2', 'dT3', 'dT4', 'dTn_1', 'dTn_2', 'dTn_3', 'T5'],
+
+    return
+
 if __name__ == '__main__':
     main()
+
