@@ -298,7 +298,7 @@ def get_timesteps_info(case, season, timesteps):
         timesteps = len(op_time)
     elif timesteps == 'typical hours':
         number_of_clusters = settings.number_of_typical_hours
-        print('number of clusters: ', number_of_clusters)
+        print('number of typical hours: ', number_of_clusters)
         hour_count_df = pd.read_csv(path_to_cluster_files(settings.typical_hours_path, '', 'hour_count', number_of_clusters))
         start_t, end_t = OrderedDict(), OrderedDict()
         op_time = []
@@ -478,6 +478,7 @@ def path_to_osmose_project_bui(building_name):
     format = 'csv'
     path_to_folder = settings.osmose_project_data_path
     path_to_file = os.path.join(path_to_folder, '%s_from_cea.%s' % (building_name, format))
+    print('saved ', path_to_file)
     return path_to_file
 
 def path_to_osmose_project_hcs(building_name, extension):
