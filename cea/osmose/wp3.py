@@ -83,9 +83,7 @@ def write_input_parameter_to_osmose(geometry_df, occupancy_df, season, specified
             file_name_extension = 'hcs_in' + str(i + 1)
             new_hcs_df.T.to_csv(path_to_osmose_project_hcs(specified_building[0] + '_' + case.split('_')[4], file_name_extension),
                                 header=False)
-
-
-
+        ## TODO: this part might be redundant
         ## output_building (scaled to Af)
         columns_with_scalar_values = [column for column in output_building.columns if 'Tww' not in column]
         scalar_df = output_building[columns_with_scalar_values] * Af_multiplication_factor
