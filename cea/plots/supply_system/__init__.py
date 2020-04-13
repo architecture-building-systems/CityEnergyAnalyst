@@ -4,6 +4,7 @@ from __future__ import print_function
 import os
 
 import pandas as pd
+import pandas.errors
 
 import cea.plots
 
@@ -129,7 +130,7 @@ class SupplySystemPlotBase(cea.plots.PlotBase):
         ramping = []  # store how much it needs to import or export
         ramping.append(data_el_exports_imports.loc[lenght - 1, "E_GRID_directload_W"]
                        - data_el_exports_imports.loc[0, "E_GRID_directload_W"])
-        for hour in range(0, lenght-1):
+        for hour in range(0, lenght - 1):
             ramping.append(data_el_exports_imports.loc[hour, "E_GRID_directload_W"]
                            - data_el_exports_imports.loc[hour + 1, "E_GRID_directload_W"])
 
@@ -142,42 +143,41 @@ class SupplySystemPlotBase(cea.plots.PlotBase):
     def process_connected_capacities_kW(self):
         try:
             heat = pd.read_csv(self.locator.get_optimization_connected_heating_capacity(self.individual,
-                                                                                   self.generation))
-        except:
+                                                                                        self.generation))
+        except pd.errors.EmptyDataError:
             heat = pd.DataFrame()
 
         try:
             cool = pd.read_csv(self.locator.get_optimization_connected_cooling_capacity(self.individual,
-                                                                               self.generation))
-        except:
+                                                                                        self.generation))
+        except pd.errors.EmptyDataError:
             cool = pd.DataFrame()
 
-
         elec = pd.read_csv(self.locator.get_optimization_connected_electricity_capacity(self.individual,
-                                                                               self.generation))
+                                                                                        self.generation))
 
         dataframe = heat.join(cool).join(elec)
-        return dataframe / 1E3 # to kW
+        return dataframe / 1E3  # to kW
 
     @cea.plots.cache.cached
     def process_disconnected_capacities_kW(self):
         try:
             heat = pd.read_csv(self.locator.get_optimization_disconnected_heating_capacity(self.individual,
-                                                                               self.generation))
-        except:
+                                                                                           self.generation))
+        except pd.errors.EmptyDataError:
             heat = None
 
         try:
             cool = pd.read_csv(self.locator.get_optimization_disconnected_cooling_capacity(self.individual,
-                                                                               self.generation))
-        except:
-            cool =None
+                                                                                           self.generation))
+        except pd.errors.EmptyDataError:
+            cool = None
 
-        if heat is None:
-            dataframe = cool.set_index('Name')
-        elif cool is None:
+        if heat is not None:
             dataframe = heat.set_index('Name')
+        elif cool is not None:
+            dataframe = cool.set_index('Name')
         else:
             dataframe = heat.merge(cool, on='Name', how='outer').set_index('Name')
             dataframe.fillna(0.0, inplace=True)
-        return dataframe / 1E3 # to kW
+        return dataframe / 1E3  # to kW
