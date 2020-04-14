@@ -727,7 +727,7 @@ class DatabasePathParameter(Parameter):
         elif os.path.exists(value) and os.path.isdir(value) and self.is_valid_template(value):
             database_path = value
         else:
-            raise cea.ConfigError("Invalid region path: {}".format(value))
+            raise cea.ConfigError("Invalid database path: {}".format(value))
         return database_path
 
     @property
