@@ -45,6 +45,13 @@ class SupplySystemPlotBase(cea.plots.PlotBase):
         self.individual = self.system.split("_")[2]
         self.input_files = []
 
+    # FIXME: Temp fix for #2648
+    def missing_input_files(self):
+        if self.individual == 'today' and self.__class__.__name__ != 'SupplySystemMapPlot':
+            raise NotImplementedError('Plot for `{}` has not been implemented. Try another system.'.format(self.system))
+        else:
+            super(SupplySystemPlotBase, self).missing_input_files()
+
     @cea.plots.cache.cached
     def process_individual_dispatch_curve_heating(self):
         data_heating = pd.read_csv(

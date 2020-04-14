@@ -50,6 +50,8 @@ def route_div(dashboard_index, plot_index):
         plot_div = plot.plot_div()
     except MissingInputDataException:
         return render_missing_data(plot.missing_input_files())
+    except NotImplementedError as e:
+        return make_response('<p>{message}</p>'.format(message=e.message), 404)
     # BUGFIX for (#2102 - Can't add the same plot twice in a dashboard)
     # update id of div to include dashboard_index and plot_index
     if plot_div.startswith("<div id="):
@@ -69,6 +71,8 @@ def route_plot(dashboard_index, plot_index):
         plot_div = plot.plot_div()
     except MissingInputDataException:
         return render_missing_data(plot.missing_input_files())
+    except NotImplementedError as e:
+        return make_response('<p>{message}</p>'.format(message=e.message), 404)
     return render_template('plot.html', plot_div=plot_div, plot_title=plot_title)
 
 
