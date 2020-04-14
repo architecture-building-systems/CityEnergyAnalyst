@@ -30,7 +30,6 @@ class PVPotentialPlot(cea.plots.technology_potentials.SolarTechnologyPotentialsP
 
     def __init__(self, project, parameters, cache):
         super(PVPotentialPlot, self).__init__(project, parameters, cache)
-        self.timeframe = self.parameters['timeframe']
         self.normalization = self.parameters['normalization']
         self.input_files = [(self.locator.PV_totals, [])] + [(self.locator.PV_results, [building])
                                                              for building in self.buildings]
