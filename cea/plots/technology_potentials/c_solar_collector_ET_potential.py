@@ -30,7 +30,6 @@ class SCETPotentialPlot(cea.plots.technology_potentials.SolarTechnologyPotential
 
     def __init__(self, project, parameters, cache):
         super(SCETPotentialPlot, self).__init__(project, parameters, cache)
-        self.timeframe = self.parameters['timeframe']
         self.normalization = self.parameters['normalization']
         self.input_files = [(self.locator.SC_results, [building, 'ET']) for building in self.buildings]
 
