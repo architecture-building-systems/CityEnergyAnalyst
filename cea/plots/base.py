@@ -285,10 +285,10 @@ class PlotBase(object):
         if 'DATE' in dataframe.columns:
             time_data = dataframe.set_index('DATE')
         else:
-            time_data = dataframe
+            time_data = dataframe.copy()
 
-        # Try to convert index to datetime
-        time_data.index = pd.to_datetime(time_data.index)
+        # Remove timezone data (found in technology potential files)
+        time_data.index = pd.to_datetime(time_data.index.map(lambda x: pd.Timestamp(x))).tz_localize(None)
 
         if self.timeframe == "daily":
             time_data = time_data.resample('D').sum()
