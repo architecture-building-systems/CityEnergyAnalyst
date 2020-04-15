@@ -11,6 +11,7 @@ from shapely.ops import split, linemerge, snap
 
 import cea.config
 import cea.inputlocator
+from cea.constants import SHAPEFILE_TOLERANCE
 from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_geographic_coordinate_system
 
 __author__ = "Jimeno A. Fonseca"
@@ -205,7 +206,7 @@ def snappy_endings(lines, max_distance, crs):
     return df
 
 
-def split_line_by_nearest_points(gdf_line, gdf_points, tolerance, crs):
+def split_line_by_nearest_points(gdf_line, gdf_points, tolerance_grid_snap, crs):
     """
     Split the union of lines with the union of points resulting
 
@@ -228,7 +229,7 @@ def split_line_by_nearest_points(gdf_line, gdf_points, tolerance, crs):
     # returns GeometryCollection
     # snap_points = snap(coords, line, tolerance)
     # snap_points._crs = crs
-    split_line = split(line, snap(snap_points, line, tolerance))
+    split_line = split(line, snap(snap_points, line, tolerance_grid_snap))
     split_line._crs = crs
     segments = [feature for feature in split_line if feature.length > 0.01]
 
@@ -381,18 +382,6 @@ def create_terminals(buiding_centroids, crs, street_network):
     return lines_to_buildings
 
 
-def simplify_points_accurracy(buiding_centroids, decimals, crs):
-    new_points = []
-    names = []
-    for point, name in zip(buiding_centroids.geometry, buiding_centroids.Name):
-        x = round(point.x, decimals)
-        y = round(point.y, decimals)
-        new_points.append(Point(x, y))
-        names.append(name)
-    df = gdf(geometry=new_points, crs=crs)
-    df["Name"] = names
-    return df
-
 
 def simplify_liness_accurracy(lines, decimals, crs):
     new_lines = []
@@ -407,18 +396,17 @@ def simplify_liness_accurracy(lines, decimals, crs):
     return df
 
 
-def calc_connectivity_network(path_streets_shp, path_connection_point_buildings_shp, path_potential_network):
+def calc_connectivity_network(path_streets_shp, building_centroids_df, temp_path_potential_network_shp):
     """
     This script outputs a potential network connecting a series of building points to the closest street network
     the street network is assumed to be a good path to the district heating or cooling network
 
     :param path_streets_shp: path to street shapefile
-    :param path_connection_point_buildings_shp: path to substations in buildings (or close by)
+    :param building_centroids_df: path to substations in buildings (or close by)
     :param path_potential_network: output path shapefile
     :return:
     """
-    # first get the building centroids and the street network
-    buiding_centroids = gdf.from_file(path_connection_point_buildings_shp)
+    # first get the street network
     street_network = gdf.from_file(path_streets_shp)
 
     # check coordinate system
@@ -428,17 +416,13 @@ def calc_connectivity_network(path_streets_shp, path_connection_point_buildings_
     street_network = street_network.to_crs(get_projected_coordinate_system(lat, lon))
     crs = street_network.crs
 
-    # # decrease the number of units of the points
-    tolerance = 6
-    buiding_centroids = simplify_points_accurracy(buiding_centroids, tolerance, crs)
-    street_network = simplify_liness_accurracy(street_network.geometry.values, tolerance, crs)
+    street_network = simplify_liness_accurracy(street_network.geometry.values, SHAPEFILE_TOLERANCE, crs)
 
     # create terminals/branches form street to buildings
-    prototype_network = create_terminals(buiding_centroids, crs, street_network)
+    prototype_network = create_terminals(building_centroids_df, crs, street_network)
     config = cea.config.Configuration()
     locator=cea.inputlocator.InputLocator(scenario=config.scenario)
     prototype_network.to_file(locator.get_temporary_file("prototype_network.shp"), driver='ESRI Shapefile')
-
 
     # first split in intersections
     prototype_network = one_linestring_per_intersection(prototype_network.geometry.values,
@@ -454,19 +438,12 @@ def calc_connectivity_network(path_streets_shp, path_connection_point_buildings_
     gdf_points_snapped, prototype_network = snap_points(gdf_points_snapped, prototype_network,
                                                         crs)
     # get segments
-    gdf_segments = split_line_by_nearest_points(prototype_network, gdf_points_snapped, 1.0, crs)
+    potential_network_df = split_line_by_nearest_points(prototype_network, gdf_points_snapped, 1.0, crs)
 
     # calculate Shape_len field
-    gdf_segments["Shape_Leng"] = gdf_segments["geometry"].apply(lambda x: x.length)
+    potential_network_df["Shape_Leng"] = potential_network_df["geometry"].apply(lambda x: x.length)
 
-    # add length to segments
-    # gdf_segments.plot()
-    # import matplotlib.pyplot as plt
-    # gdf_points.plot()
-    # gdf_points_snapped.plot()
-    # plt.show()
-    # x=1
-    gdf_segments.to_file(path_potential_network, driver='ESRI Shapefile')
+    potential_network_df.to_file(temp_path_potential_network_shp, driver='ESRI Shapefile')
 
     return crs
 
