@@ -73,7 +73,6 @@ def demand_calculation(locator, config):
     loads_output = config.demand.loads_output
     massflows_output = config.demand.massflows_output
     temperatures_output = config.demand.temperatures_output
-    override_variables = config.demand.override_variables
     debug = config.debug
     weather_path = locator.get_weather_file()
     weather_data = epwreader.epw_reader(weather_path)[['year', 'drybulb_C', 'wetbulb_C',
@@ -83,7 +82,7 @@ def demand_calculation(locator, config):
     date_range = get_date_range_hours_from_year(year)
 
     # CALCULATE OBJECT WITH PROPERTIES OF ALL BUILDINGS
-    building_properties = BuildingProperties(locator, override_variables)
+    building_properties = BuildingProperties(locator)
 
     # add a message i2065 of warning. This needs a more elegant solution
     def calc_buildings_less_100m2(building_properties):

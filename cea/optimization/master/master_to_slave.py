@@ -337,20 +337,34 @@ def calc_connected_names(building_names, barcode):
 
 
 def calc_available_area_solar(locator, buildings, share_allowed, technology):
+    """
+    :param cea.inputlocator.InputLocator locator:
+    :param buildings:
+    :param share_allowed:
+    :param technology:
+    :return:
+    """
     area_m2 = 0.0
-    for building_name in buildings:
-        solar_technology_potential = pd.read_csv(
-            os.path.join(locator.get_potentials_solar_folder(), building_name + '_' + technology + '.csv'))
+    locator_methods = {"PVT": locator.PVT_results, "PV": locator.PV_results}
+    for building in buildings:
+        solar_technology_potential = pd.read_csv(locator_methods[technology](building))
         area_m2 += solar_technology_potential['Area_' + technology + '_m2'][0]
 
     return area_m2 * share_allowed
 
 
-def calc_available_area_solar_collectors(locator, buildings, share_allowed, technology):
+def calc_available_area_solar_collectors(locator, buildings, share_allowed, panel_type):
+    """
+
+    :param cea.inputlocator.InputLocator locator:
+    :param buildings:
+    :param share_allowed:
+    :param str panel_type:
+    :return:
+    """
     area_m2 = 0.0
-    for building_name in buildings:
-        solar_technology_potential = pd.read_csv(
-            os.path.join(locator.get_potentials_solar_folder(), building_name + '_' + technology + '.csv'))
+    for building in buildings:
+        solar_technology_potential = pd.read_csv(locator.SC_results(building, panel_type))
         area_m2 += solar_technology_potential['Area_SC_m2'][0]
 
     return area_m2 * share_allowed
@@ -432,8 +446,7 @@ def master_to_slave_district_heating_technologies(Q_heating_nom_W,
         buildings = master_to_slave_vars.buildings_connected_to_district_heating
         share_allowed = individual_with_names_dict['SC_ET']
         master_to_slave_vars.SC_ET_on = 1
-        master_to_slave_vars.A_SC_ET_m2 = calc_available_area_solar_collectors(locator, buildings, share_allowed,
-                                                                               'SC_ET')
+        master_to_slave_vars.A_SC_ET_m2 = calc_available_area_solar_collectors(locator, buildings, share_allowed, "ET")
         master_to_slave_vars.SC_ET_share = share_allowed
 
     if 'SC_FP' in technologies_heating_allowed and individual_with_names_dict[
@@ -441,8 +454,7 @@ def master_to_slave_district_heating_technologies(Q_heating_nom_W,
         buildings = master_to_slave_vars.buildings_connected_to_district_heating
         share_allowed = individual_with_names_dict['SC_FP']
         master_to_slave_vars.SC_FP_on = 1
-        master_to_slave_vars.A_SC_FP_m2 = calc_available_area_solar_collectors(locator, buildings, share_allowed,
-                                                                               "SC_FP")
+        master_to_slave_vars.A_SC_FP_m2 = calc_available_area_solar_collectors(locator, buildings, share_allowed, "FP")
         master_to_slave_vars.SC_FP_share = share_allowed
 
     return master_to_slave_vars

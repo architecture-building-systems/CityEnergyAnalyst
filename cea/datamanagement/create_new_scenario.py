@@ -98,7 +98,6 @@ def create_new_scenario(locator, config):
         copyfile(typology_path, locator.get_building_typology())
 
     # add other folders by calling the locator
-    locator.get_measurements()
     locator.get_input_network_folder("DH", "")
     locator.get_input_network_folder("DC", "")
     locator.get_weather_folder()
