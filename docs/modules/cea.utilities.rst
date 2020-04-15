@@ -73,10 +73,10 @@ cea.utilities.doc\_html module
     :undoc-members:
     :show-inheritance:
 
-cea.utilities.doc\_update\_naming module
-----------------------------------------
+cea.utilities.doc\_schemas module
+---------------------------------
 
-.. automodule:: cea.utilities.doc_update_naming
+.. automodule:: cea.utilities.doc_schemas
     :members:
     :undoc-members:
     :show-inheritance:

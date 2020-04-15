@@ -303,10 +303,15 @@ def calc_district_system_electricity_generated(locator,
 
 
 def calc_available_generation_PV(locator, buildings, share_allowed):
+    """
+    :param cea.inputlocator.InputLocator locator:
+    :param buildings:
+    :param share_allowed:
+    :return:
+    """
     E_PV_gen_kWh = np.zeros(HOURS_IN_YEAR)
-    for building_name in buildings:
-        building_PVT = pd.read_csv(
-            os.path.join(locator.get_potentials_solar_folder(), building_name + '_PV.csv')).fillna(value=0.0)
+    for building in buildings:
+        building_PVT = pd.read_csv(locator.PV_results(building)).fillna(value=0.0)
         E_PV_gen_kWh += building_PVT['E_PV_gen_kWh']
     E_PVT_gen_Wh = E_PV_gen_kWh * share_allowed * 1000
     return E_PVT_gen_Wh

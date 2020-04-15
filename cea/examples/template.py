@@ -38,7 +38,6 @@ def main(config):
     :type config: cea.config.Configuration
     :return:
     """
-    assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(config.scenario)
 
     template(locator, config.scenario)
