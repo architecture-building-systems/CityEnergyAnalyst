@@ -333,6 +333,13 @@ Utilities:
     module: cea.tests.run_unit_tests
     parameters: []
 
+  - name: run-all-plots
+    label: Run all plots
+    description: Run all the plots for test purposes
+    interfaces: [test, cli]
+    module: cea.tests.run_all_plots
+    parameters: ["general:project", "general:scenario"]
+
 default:
 
   - name: multi-criteria-analysis
@@ -427,16 +434,16 @@ Documentation:
     module: cea.utilities.doc_graphviz
     parameters: []
 
-  - name: update-naming
-    label: update-naming
-    description: Updates the naming.csv using the schemas.yml
-    interfaces: [doc]
-    module: cea.utilities.doc_update_naming
-    parameters: []
-
   - name: glossary
     label: glossary
     description: Updates the glossary documentation
     interfaces: [doc]
     module: cea.utilities.doc_glossary
     parameters: []
+
+  - name: schema
+    label: schema
+    description: Display schema information of an (existing) file given a locator method
+    interfaces: [doc]
+    module: cea.utilities.doc_schemas
+    parameters: ["general:scenario", schemas]

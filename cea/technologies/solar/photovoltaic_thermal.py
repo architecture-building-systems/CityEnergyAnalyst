@@ -104,8 +104,8 @@ def calc_PVT(locator, config, latitude, longitude, weather_data, date_local, bui
         Final = calc_PVT_generation(sensor_groups, weather_data, date_local, solar_properties, latitude,
                                     tot_bui_height_m, panel_properties_SC, panel_properties_PV, config)
 
-        Final.to_csv(locator.PVT_results(building_name=building_name), index=True, float_format='%.2f')
-        sensors_metadata_cat.to_csv(locator.PVT_metadata_results(building_name=building_name), index=True,
+        Final.to_csv(locator.PVT_results(building=building_name), index=True, float_format='%.2f')
+        sensors_metadata_cat.to_csv(locator.PVT_metadata_results(building=building_name), index=True,
                                     index_label='SURFACE',
                                     float_format='%.2f')  # print selected metadata of the selected sensors
 
@@ -127,13 +127,13 @@ def calc_PVT(locator, config, latitude, longitude, weather_data, date_local, bui
              'mcp_PVT_kWperC': 0.0, 'Eaux_PVT_kWh': 0.0,
              'Q_PVT_l_kWh': 0.0, 'E_PVT_gen_kWh': 0.0, 'Area_PVT_m2': 0.0,
              'radiation_kWh': 0.0}, index=range(HOURS_IN_YEAR))
-        Final.to_csv(locator.PVT_results(building_name=building_name), index=False, float_format='%.2f', na_rep='nan')
+        Final.to_csv(locator.PVT_results(building=building_name), index=False, float_format='%.2f', na_rep='nan')
         sensors_metadata_cat = pd.DataFrame(
             {'SURFACE': 0, 'AREA_m2': 0, 'BUILDING': 0, 'TYPE': 0, 'Xcoor': 0, 'Xdir': 0, 'Ycoor': 0, 'Ydir': 0,
              'Zcoor': 0, 'Zdir': 0, 'orientation': 0, 'total_rad_Whm2': 0, 'tilt_deg': 0, 'B_deg': 0,
              'array_spacing_m': 0, 'surface_azimuth_deg': 0, 'area_installed_module_m2': 0,
              'CATteta_z': 0, 'CATB': 0, 'CATGB': 0, 'type_orientation': 0}, index=range(2))
-        sensors_metadata_cat.to_csv(locator.PVT_metadata_results(building_name=building_name), index=False,
+        sensors_metadata_cat.to_csv(locator.PVT_metadata_results(building=building_name), index=False,
                                     float_format='%.2f')
 
     return

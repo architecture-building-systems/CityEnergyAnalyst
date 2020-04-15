@@ -1,19 +1,26 @@
-{% for locator_method, underline, used_by in locators %}
-{{locator_method}}
-{{underline}}
+{% for lm in schemas|sort %}
+{{lm}}
+{% for c in lm %}-{% endfor %}
 
-The following file is used by scripts: {{used_by}}
+path: ``{{schemas[lm]["file_path"]}}``
 
-{% for LOC_METH, file_name in details -%}
-{% if LOC_METH == locator_method %}
+The following file is used by these scripts: {{ schemas[lm]["used_by"]|map("add_backticks")|join(", ")}}
 
-.. csv-table:: **{{file_name}}**
+{% if "columns" in schemas[lm]["schema"] %}
+.. csv-table::
     :header: "Variable", "Description"
-{% for SCRIPT, LOCATOR_METHOD, WORKSHEET, VARIABLE, DESCRIPTION, UNIT, VALUES, TYPE, COLOR, FILE_NAME in glossary_data -%}
-{% if locator_method == LOCATOR_METHOD and file_name == FILE_NAME %}
-     ``{{VARIABLE}}``,{{DESCRIPTION}} - Unit: {{UNIT}}
-{%- endif -%}
+
+    {% for col in schemas[lm]["schema"]["columns"]|sort %}``{{col}}``, "{{schemas[lm]["schema"]["columns"][col]["description"]}}"
+    {% endfor %}
+{% else %}
+{% for ws in schemas[lm]["schema"]|sort %}
+
+.. csv-table:: Worksheet: ``{{ws}}``
+    :header: "Variable", "Description"
+
+    {% for col in schemas[lm]["schema"][ws]["columns"]|sort %}``{{col}}``, {{schemas[lm]["schema"][ws]["columns"][col]["description"]}}
+    {% endfor %}
+
 {% endfor %}
 {% endif %}
-{%- endfor %}
 {% endfor %}

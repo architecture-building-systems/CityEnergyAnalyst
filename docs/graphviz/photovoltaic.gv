@@ -1,145 +1,72 @@
-digraph trace_inputlocator {
+digraph photovoltaic {
     rankdir="LR";
     graph [overlap=false, fontname=arial];
     node [shape=box, style=filled, color=white, fontsize=15, fontname=arial, fixedsize=true, width=5];
     edge [fontname=arial, fontsize = 15]
     newrank=true
     subgraph cluster_legend {
-    fontsize=25
-    style=invis
-    "process"[style=filled, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname="arial"]
-    "inputs" [style=filled, shape=folder, color=white, fillcolor="#E1F2F2", fontsize=20]
-    "outputs"[style=filled, shape=folder, color=white, fillcolor="#aadcdd", fontsize=20]
-    "inputs"->"process"[style=invis]
-    "process"->"outputs"[style=invis]
+        fontsize=25
+        style=invis
+        "process"[style=filled, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname="arial"]
+        "inputs" [style=filled, shape=folder, color=white, fillcolor="#E1F2F2", fontsize=20]
+        "outputs"[style=filled, shape=folder, color=white, fillcolor="#aadcdd", fontsize=20]
+        "inputs"->"process"[style=invis]
+        "process"->"outputs"[style=invis]
     }
     "photovoltaic"[style=filled, color=white, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname=arial];
-    subgraph cluster_0_in {
+    subgraph cluster_0_out {
         style = filled;
-        color = "#E1F2F2";
+        color = "#aadcdd";
         fontsize = 20;
         rank=same;
-        label="building-geometry";
-        "surroundings.shp"
-        "zone.shp"
+        label="data/potentials/solar";
+        PV_metadata_results[label="B001_PV_sensors.csv"];
+        PV_results[label="B001_PV.csv"];
+        PV_total_buildings[label="PV_total_buildings.csv"];
+        PV_totals[label="PV_total.csv"];
     }
     subgraph cluster_1_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="data/optimization/network";
-        "DH_Network_summary_result_0x19b.csv"
+        label="inputs/building-geometry";
+        get_zone_geometry[label="zone.shp"];
     }
-    subgraph cluster_2_out {
+    subgraph cluster_2_in {
         style = filled;
-        color = "#aadcdd";
+        color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="data/potentials/solar";
-        "B001_PV_sensors.csv"
-        "B001_PV.csv"
-        "PV_total_buildings.csv"
-        "PV_total.csv"
+        label="inputs/technology/components";
+        get_database_conversion_systems[label="CONVERSION.xls"];
     }
     subgraph cluster_3_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="data/solar-radiation";
-        "B001_radiation.csv"
-        "B001_insolation_Whm2.json"
-        "B001_geometry.csv"
+        label="inputs/weather";
+        get_weather_file[label="weather.epw"];
     }
     subgraph cluster_4_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="networks";
-        "streets.shp"
+        label="outputs/data/solar-radiation";
+        get_radiation_building[label="{building}_radiation.csv"];
+        get_radiation_building_sensors[label="B001_insolation_Whm2.json"];
+        get_radiation_metadata[label="B001_geometry.csv"];
     }
-    subgraph cluster_5_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="technology/archetypes/schedules";
-        "RESTAURANT.csv"
-    }
-    subgraph cluster_6_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="technology/archetypes/use_types";
-        "USE_TYPE_PROPERTIES.xlsx"
-    }
-    subgraph cluster_7_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="technology/assemblies";
-        "supply.xls"
-    }
-    subgraph cluster_8_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="technology/feedstocks";
-        "feedstocks.xls"
-    }
-    subgraph cluster_9_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="technology/systems";
-        "air_conditioning_systems.xls"
-        "supply_systems.xls"
-        "distribution_systems.xls"
-        "envelope_systems.xls"
-    }
-    subgraph cluster_10_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="topography";
-        "terrain.tif"
-    }
-    subgraph cluster_11_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="weather";
-        "Zug-inducity_1990_2010_TMY.epw"
-        "weather.epw"
-    }
-    "air_conditioning_systems.xls" -> "photovoltaic"[label="(get_database_air_conditioning_systems)"]
-    "supply_systems.xls" -> "photovoltaic"[label="(get_database_conversion_systems)"]
-    "distribution_systems.xls" -> "photovoltaic"[label="(get_database_distribution_systems)"]
-    "envelope_systems.xls" -> "photovoltaic"[label="(get_database_envelope_systems)"]
-    "feedstocks.xls" -> "photovoltaic"[label="(get_database_feedstocks)"]
-    "RESTAURANT.csv" -> "photovoltaic"[label="(get_database_standard_schedules_use)"]
-    "supply.xls" -> "photovoltaic"[label="(get_database_supply_assemblies)"]
-    "USE_TYPE_PROPERTIES.xlsx" -> "photovoltaic"[label="(get_database_use_types_properties)"]
-    "DH_Network_summary_result_0x19b.csv" -> "photovoltaic"[label="(get_optimization_thermal_network_data_file)"]
-    "B001_radiation.csv" -> "photovoltaic"[label="(get_radiation_building)"]
-    "B001_insolation_Whm2.json" -> "photovoltaic"[label="(get_radiation_building_sensors)"]
-    "B001_geometry.csv" -> "photovoltaic"[label="(get_radiation_metadata)"]
-    "streets.shp" -> "photovoltaic"[label="(get_street_network)"]
-    "surroundings.shp" -> "photovoltaic"[label="(get_surroundings_geometry)"]
-    "terrain.tif" -> "photovoltaic"[label="(get_terrain)"]
-    "Zug-inducity_1990_2010_TMY.epw" -> "photovoltaic"[label="(get_weather)"]
-    "weather.epw" -> "photovoltaic"[label="(get_weather_file)"]
-    "zone.shp" -> "photovoltaic"[label="(get_zone_geometry)"]
-    "photovoltaic" -> "B001_PV_sensors.csv"[label="(PV_metadata_results)"]
-    "photovoltaic" -> "B001_PV.csv"[label="(PV_results)"]
-    "photovoltaic" -> "PV_total_buildings.csv"[label="(PV_total_buildings)"]
-    "photovoltaic" -> "PV_total.csv"[label="(PV_totals)"]
+    get_database_conversion_systems -> "photovoltaic"[label="(get_database_conversion_systems)"];
+    get_radiation_building -> "photovoltaic"[label="(get_radiation_building)"];
+    get_radiation_building_sensors -> "photovoltaic"[label="(get_radiation_building_sensors)"];
+    get_radiation_metadata -> "photovoltaic"[label="(get_radiation_metadata)"];
+    get_weather_file -> "photovoltaic"[label="(get_weather_file)"];
+    get_zone_geometry -> "photovoltaic"[label="(get_zone_geometry)"];
+    "photovoltaic" -> PV_metadata_results[label="(PV_metadata_results)"];
+    "photovoltaic" -> PV_results[label="(PV_results)"];
+    "photovoltaic" -> PV_total_buildings[label="(PV_total_buildings)"];
+    "photovoltaic" -> PV_totals[label="(PV_totals)"];
     }

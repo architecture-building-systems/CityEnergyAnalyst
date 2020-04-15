@@ -1,5 +1,5 @@
 {% if scripts|length > 1 %}
-digraph trace_inputlocator {
+digraph {{script_name|replace("-", "_")}} {
     rankdir="LR";
     graph [overlap = false, fontname=arial];
     {% for script in scripts %}
@@ -20,7 +20,7 @@ digraph trace_inputlocator {
 
 {% else %}
 
-digraph trace_inputlocator {
+digraph {{script_name|replace("-", "_")}} {
     rankdir="LR";
     graph [overlap=false, fontname=arial];
     node [shape=box, style=filled, color=white, fontsize=15, fontname=arial, fixedsize=true, width={{width}}];
@@ -29,13 +29,13 @@ digraph trace_inputlocator {
     newrank=true
 
     subgraph cluster_legend {
-    fontsize=25
-    style=invis
-    "process"[style=filled, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname="arial"]
-    "inputs" [style=filled, shape=folder, color=white, fillcolor="#E1F2F2", fontsize=20]
-    "outputs"[style=filled, shape=folder, color=white, fillcolor="#aadcdd", fontsize=20]
-    "inputs"->"process"[style=invis]
-    "process"->"outputs"[style=invis]
+        fontsize=25
+        style=invis
+        "process"[style=filled, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname="arial"]
+        "inputs" [style=filled, shape=folder, color=white, fillcolor="#E1F2F2", fontsize=20]
+        "outputs"[style=filled, shape=folder, color=white, fillcolor="#aadcdd", fontsize=20]
+        "inputs"->"process"[style=invis]
+        "process"->"outputs"[style=invis]
     }
 
     {% for script in scripts %}
@@ -60,7 +60,7 @@ digraph trace_inputlocator {
                 {% endif %}
                 {% set count_in.a = 1 %}
 
-        "{{file}}"
+        {{locator}}[label="{{file}}"];
 
         {% elif db_group[db] == path and direction == 'output' %}
             {% if count_out.a == 0 %}
@@ -76,7 +76,9 @@ digraph trace_inputlocator {
         label="{{db_group[db]}}";
             {% endif %}
             {% set count_out.a = 1 %}
-        "{{file}}"
+
+        {{locator}}[label="{{file}}"];
+
             {% endif %}
         {% endfor %}
     }
@@ -84,9 +86,9 @@ digraph trace_inputlocator {
 
     {% for direction, script, locator, path, file in tracedata %}
         {% if direction == 'input' %}
-    "{{file}}" -> "{{script}}"[label="({{locator}})"]
+    {{locator}} -> "{{script}}"[label="({{locator}})"];
         {% else %}
-    "{{script}}" -> "{{file}}"[label="({{locator}})"]
+    "{{script}}" -> {{locator}}[label="({{locator}})"];
         {% endif %}
     {% endfor %}
     }

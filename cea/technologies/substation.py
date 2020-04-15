@@ -50,7 +50,7 @@ def substation_main_heating(locator, total_demand, buildings_name_with_heating, 
         for name in buildings_name_with_heating:
             substation_demand = total_demand[(total_demand.Name == name)]
             substation_demand.to_csv(locator.get_optimization_substations_total_file(DHN_barcode, 'DH'), sep=',',
-                                     float_format='%.3f')
+                                     index=False, float_format='%.3f')
 
             # calculate substation parameters per building
             substation_model_heating(name,
@@ -128,7 +128,7 @@ def substation_main_cooling(locator, total_demand, buildings_name_with_cooling, 
         for name in buildings_name_with_cooling:
             substation_demand = total_demand[(total_demand.Name == name)]
             substation_demand.to_csv(locator.get_optimization_substations_total_file(DCN_barcode, 'DC'), sep=',',
-                                     float_format='%.3f')
+                                     index=False, float_format='%.3f')
             # calculate substation parameters per building
             substation_model_cooling(name, buildings_dict[name],
                                      DCN_supply['T_DC_supply_to_cs_ref_C'],

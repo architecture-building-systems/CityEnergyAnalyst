@@ -16,9 +16,10 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def layout_network(network_layout, locator, plant_building_names=[], input_path_name='streets', output_name_network="",
-                   optimization_flag=False):
+def layout_network(network_layout, locator, plant_building_names=None, output_name_network="", optimization_flag=False):
     # Local variables
+    if plant_building_names is None:
+        plant_building_names = []
     weight_field = 'Shape_Leng'
     total_demand_location = locator.get_total_demand()
     path_potential_network = locator.get_temporary_file("potential_network.shp")  # shapefile, location of output.
@@ -31,18 +32,12 @@ def layout_network(network_layout, locator, plant_building_names=[], input_path_
     consider_only_buildings_with_demand = network_layout.consider_only_buildings_with_demand
     allow_looped_networks = network_layout.allow_looped_networks
 
-    if input_path_name == 'streets':  # point to default location of streets file
-        path_streets_shp = locator.get_street_network()  # shapefile with the stations
-        input_buildings_shp = locator.get_zone_geometry()
-        output_substations_shp = locator.get_temporary_file("nodes_buildings.shp")
-        # Calculate points where the substations will be located
-        calc_substation_location(input_buildings_shp, output_substations_shp, connected_buildings,
-                                 consider_only_buildings_with_demand, type_network, total_demand_location)
-    elif input_path_name == 'electrical_grid':  # point to location of electrical grid
-        path_streets_shp = locator.get_electric_network_output_location(input_path_name)
-        output_substations_shp = locator.get_electric_substation_output_location()
-    else:
-        raise Exception("the value of the variable input_path_name is not valid")
+    path_streets_shp = locator.get_street_network()  # shapefile with the stations
+    input_buildings_shp = locator.get_zone_geometry()
+    output_substations_shp = locator.get_temporary_file("nodes_buildings.shp")
+    # Calculate points where the substations will be located
+    calc_substation_location(input_buildings_shp, output_substations_shp, connected_buildings,
+                             consider_only_buildings_with_demand, type_network, total_demand_location)
 
     # Calculate potential network
     crs_projected = calc_connectivity_network(path_streets_shp, output_substations_shp,
