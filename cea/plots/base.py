@@ -301,7 +301,7 @@ class PlotBase(object):
             time_data = time_data.resample('W').sum()
         elif self.timeframe == "monthly":
             time_data = time_data.resample('M').sum()
-            time_data.index = time_data.index.strftime('%B')
+            time_data.index = time_data.index.strftime('%b %Y')
         elif self.timeframe == "yearly":
             time_data = time_data.resample('Y').sum()
             time_data.index = time_data.index.strftime('Year %Y')
