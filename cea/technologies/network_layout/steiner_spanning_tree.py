@@ -1,20 +1,21 @@
 """
 This script calculates the minimum spanning tree of a shapefile network
 """
+from __future__ import division
 
 import math
 import os
-from typing import List
+
 import networkx as nx
-import numpy as np
 import pandas as pd
 from geopandas import GeoDataFrame as gdf
 from networkx.algorithms.approximation.steinertree import steiner_tree
-from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_geographic_coordinate_system
 from shapely.geometry import LineString
+from typing import List
 
 import cea.config
 import cea.inputlocator
+from cea.constants import SHAPEFILE_TOLERANCE
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -26,20 +27,32 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calc_steiner_spanning_tree(crs_projected, input_network_shp, output_network_folder, building_nodes_shp,
-                               output_edges, output_nodes, weight_field, type_mat_default, pipe_diameter_default,
-                               type_network, total_demand_location, create_plant, allow_looped_networks,
-                               optimization_flag, plant_building_names, disconnected_building_names):
+def calc_steiner_spanning_tree(crs_projected,
+                               temp_path_potential_network_shp,
+                               output_network_folder,
+                               temp_path_building_centroids_shp,
+                               path_output_edges_shp,
+                               path_output_nodes_shp,
+                               weight_field,
+                               type_mat_default,
+                               pipe_diameter_default,
+                               type_network,
+                               total_demand_location,
+                               create_plant,
+                               allow_looped_networks,
+                               optimization_flag,
+                               plant_building_names,
+                               disconnected_building_names):
     """
     Calculate the minimum spanning tree of the network. Note that this function can't be run in parallel in it's
     present form.
 
     :param str crs_projected: e.g. "+proj=utm +zone=48N +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
-    :param str input_network_shp: e.g. "TEMP/potential_network.shp"
+    :param str temp_path_potential_network_shp: e.g. "TEMP/potential_network.shp"
     :param str output_network_folder: "{general:scenario}/inputs/networks/DC"
-    :param str building_nodes_shp: e.g. "%TEMP%/nodes_buildings.shp"
-    :param str output_edges: "{general:scenario}/inputs/networks/DC/edges.shp"
-    :param str output_nodes: "{general:scenario}/inputs/networks/DC/nodes.shp"
+    :param str temp_path_building_centroids_shp: e.g. "%TEMP%/nodes_buildings.shp"
+    :param str path_output_edges_shp: "{general:scenario}/inputs/networks/DC/edges.shp"
+    :param str path_output_nodes_shp: "{general:scenario}/inputs/networks/DC/nodes.shp"
     :param str weight_field: e.g. "Shape_Leng"
     :param str type_mat_default: e.g. "T1"
     :param float pipe_diameter_default: e.g. 150
@@ -50,112 +63,96 @@ def calc_steiner_spanning_tree(crs_projected, input_network_shp, output_network_
     :param bool optimization_flag:
     :param List[str] plant_building_names: e.g. ``['B001']``
     :param List[str] disconnected_building_names: e.g. ``['B002', 'B010', 'B004', 'B005', 'B009']``
-    :return: ``(mst_edges, new_mst_nodes)``
+    :return: ``(mst_edges, mst_nodes)``
     """
-    # read shapefile into networkx format into a directed graph, this is the potential network
-    graph = nx.read_shp(input_network_shp)
-    nodes_graph = nx.read_shp(building_nodes_shp)
+    # read shapefile into networkx format into a directed potential_network_graph, this is the potential network
+    potential_network_graph = nx.read_shp(temp_path_potential_network_shp)
+    building_nodes_graph = nx.read_shp(temp_path_building_centroids_shp)
 
-    # tolerance
-    tolerance = 6
-
-    # transform to an undirected graph
-    iterator_edges = graph.edges(data=True)
-
-    # get graph
+    # transform to an undirected potential_network_graph
+    iterator_edges = potential_network_graph.edges(data=True)
     G = nx.Graph()
     for (x, y, data) in iterator_edges:
-        x = (round(x[0], tolerance), round(x[1], tolerance))
-        y = (round(y[0], tolerance), round(y[1], tolerance))
+        x = (round(x[0], SHAPEFILE_TOLERANCE), round(x[1], SHAPEFILE_TOLERANCE))
+        y = (round(y[0], SHAPEFILE_TOLERANCE), round(y[1], SHAPEFILE_TOLERANCE))
         G.add_edge(x, y, weight=data[weight_field])
 
-    # get nodes
-    iterator_nodes = nodes_graph.nodes(data=False)
-    terminal_nodes = [(round(node[0], tolerance), round(node[1], tolerance)) for node in iterator_nodes]
+    # get the building nodes and coordinates
+    iterator_nodes = building_nodes_graph.nodes(data=True)
+    terminal_nodes_coordinates = []
+    terminal_nodes_names = []
+    for coordinates, data in iterator_nodes._nodes.items():
+        building_name = data['Name']
+        if building_name in disconnected_building_names:
+            print("Building {} is considered to be disconnected and it is not included".format(building_name))
+        else:
+            terminal_nodes_coordinates.append(
+                (round(coordinates[0], SHAPEFILE_TOLERANCE), round(coordinates[1], SHAPEFILE_TOLERANCE)))
+            terminal_nodes_names.append(data['Name'])
 
-    if len(disconnected_building_names) > 0:
-        # identify coordinates of disconnected buildings and remove form terminal nodes list
-        all_building_nodes_df = gdf.from_file(building_nodes_shp)
-        all_building_nodes_df.loc[:, 'coordinates'] = all_building_nodes_df['geometry'].apply(
-            lambda x: (round(x.coords[0][0], tolerance), round(x.coords[0][1], tolerance)))
-        disconnected_building_coordinates = []
-        for building in disconnected_building_names:
-            # skip disconnected buildings that were filtered out because they had no demand
-            if building in list(all_building_nodes_df['Name']):
-                index = np.where(all_building_nodes_df['Name'] == building)[0]
-                disconnected_building_coordinates.append(all_building_nodes_df['coordinates'].values[index][0])
-        for disconnected_building in disconnected_building_coordinates:
-            terminal_nodes = [i for i in terminal_nodes if i != disconnected_building]
-
-    # calculate steiner spanning tree of undirected graph
+    # calculate steiner spanning tree of undirected potential_network_graph
     try:
-        mst_non_directed = nx.Graph(steiner_tree(G, terminal_nodes))
+        mst_non_directed = nx.Graph(steiner_tree(G, terminal_nodes_coordinates))
+        nx.write_shp(mst_non_directed, output_network_folder)  # need to write to disk and then import again
+        mst_nodes = gdf.from_file(path_output_nodes_shp)
+        mst_edges = gdf.from_file(path_output_edges_shp)
     except:
         raise ValueError('There was an error while creating the Steiner tree. '
                          'Check the streets.shp for isolated/disconnected streets (lines) and erase them, '
                          'the Steiner tree does not support disconnected graphs.')
 
-    nx.write_shp(mst_non_directed, output_network_folder)  # writes nodes.shp and edges.shp
+    # POPULATE FIELDS IN NODES
+    pointer_coordinates_building_names = dict(zip(terminal_nodes_coordinates, terminal_nodes_names))
 
-    # populate fields Building, Type, Name
-    mst_nodes = gdf.from_file(output_nodes)
-    building_nodes_df = gdf.from_file(building_nodes_shp)
-    building_nodes_df.loc[:, 'coordinates'] = building_nodes_df['geometry'].apply(
-        lambda x: (round(x.coords[0][0], tolerance), round(x.coords[0][1], tolerance)))
+    def populate_fields(coordinate):
+        if coordinate in terminal_nodes_coordinates:
+            return pointer_coordinates_building_names[coordinate]
+        else:
+            return "NONE"
 
-    # if there are disconnected buildings
-    if len(disconnected_building_names) > 0:
-        for disconnected_building in disconnected_building_coordinates:
-            building_id = int(np.where(building_nodes_df['coordinates'] == disconnected_building)[0])
-            building_nodes_df = building_nodes_df.drop(building_nodes_df.index[building_id])
-    mst_nodes.loc[:, 'coordinates'] = mst_nodes['geometry'].apply(
-        lambda x: (round(x.coords[0][0], tolerance), round(x.coords[0][1], tolerance)))
-    names_temporary = ["NODE" + str(x) for x in mst_nodes['FID']]
-    new_mst_nodes = mst_nodes.merge(building_nodes_df, suffixes=['', '_y'], on="coordinates", how='outer')
-    new_mst_nodes.fillna(
-        value={"Name": "NONE", "floors_bg": "NONE", "floors_ag": "NONE", "height_bg": "NONE", "height_ag": "NONE"},
-        inplace=True)
-    new_mst_nodes.loc[:, 'Building'] = new_mst_nodes['Name']
-    new_mst_nodes.loc[:, 'Name'] = names_temporary
-    new_mst_nodes.loc[:, 'Type'] = new_mst_nodes['Building'].apply(lambda x: 'CONSUMER' if x != "NONE" else x)
+    mst_nodes['coordinates'] = mst_nodes['geometry'].apply(
+        lambda x: (round(x.coords[0][0], SHAPEFILE_TOLERANCE), round(x.coords[0][1], SHAPEFILE_TOLERANCE)))
+    mst_nodes['Building'] = mst_nodes['coordinates'].apply(lambda x: populate_fields(x))
+    mst_nodes['Name'] = mst_nodes['FID'].apply(lambda x: "NODE" + str(x))
+    mst_nodes['Type'] = mst_nodes['Building'].apply(lambda x: 'CONSUMER' if x != "NONE" else "NONE")
 
-    # populate fields Type_mat, Name, Pipe_Dn
-    mst_edges = gdf.from_file(output_edges)
+    # do some checks to see that the building names was not compromised
+    if len(terminal_nodes_names) != (len(mst_nodes['Building'].unique()) - 1):
+        raise ValueError('There was an error while populating the nodes fields. '
+                         'One or more buidlings could not be matched to nodes of the network'
+                         'Try changing the constant SHAPEFILE_TOLERANCE in cea to fix this')
+
+    # POPULATE FIELDS IN EDGES
     mst_edges.loc[:, 'Type_mat'] = type_mat_default
     mst_edges.loc[:, 'Pipe_DN'] = pipe_diameter_default
     mst_edges.loc[:, 'Name'] = ["PIPE" + str(x) for x in mst_edges.index]
 
     if allow_looped_networks:
         # add loops to the network by connecting None nodes that exist in the potential network
-        mst_edges, new_mst_nodes = add_loops_to_network(G, mst_non_directed, new_mst_nodes, mst_edges, type_mat_default,
-                                                        pipe_diameter_default)
+        mst_edges, mst_nodes = add_loops_to_network(G,
+                                                    mst_non_directed,
+                                                    mst_nodes,
+                                                    mst_edges,
+                                                    type_mat_default,
+                                                    pipe_diameter_default)
         # mst_edges.drop(['weight'], inplace=True, axis=1)
 
     if create_plant:
         if optimization_flag == False:
-            building_anchor = calc_coord_anchor(total_demand_location, new_mst_nodes, type_network)
-            new_mst_nodes, mst_edges = add_plant_close_to_anchor(building_anchor, new_mst_nodes, mst_edges,
-                                                                 type_mat_default, pipe_diameter_default)
+            building_anchor = calc_coord_anchor(total_demand_location, mst_nodes, type_network)
+            mst_nodes, mst_edges = add_plant_close_to_anchor(building_anchor, mst_nodes, mst_edges,
+                                                             type_mat_default, pipe_diameter_default)
         else:
             for building in plant_building_names:
-                building_anchor = building_node_from_name(building, new_mst_nodes)
-                new_mst_nodes, mst_edges = add_plant_close_to_anchor(building_anchor, new_mst_nodes, mst_edges,
-                                                                     type_mat_default, pipe_diameter_default)
+                building_anchor = building_node_from_name(building, mst_nodes)
+                mst_nodes, mst_edges = add_plant_close_to_anchor(building_anchor, mst_nodes, mst_edges,
+                                                                 type_mat_default, pipe_diameter_default)
 
-    fields_nodes = ['Name', 'Building', 'Type', 'geometry']
-    new_mst_nodes = new_mst_nodes[fields_nodes]
-
-    mst_edges['length_m'] = mst_edges['weight']
-    fields_edges = ['Name', 'length_m', 'Pipe_DN', 'Type_mat', 'geometry']
-    mst_edges = mst_edges[fields_edges]
-
-    nx.write_shp(mst_non_directed, output_network_folder)
-
-    # get coordinate system and reproject to UTM
+    # GET COORDINATE AND SAVE FINAL VERSION TO DISK
     mst_edges.crs = crs_projected
-    new_mst_nodes.crs = crs_projected
-    mst_edges.to_file(output_edges, driver='ESRI Shapefile')
-    new_mst_nodes.to_file(output_nodes, driver='ESRI Shapefile')
+    mst_nodes.crs = crs_projected
+    mst_edges[['geometry', 'Type_mat', 'Name', 'Pipe_DN']].to_file(path_output_edges_shp, driver='ESRI Shapefile')
+    mst_nodes[['geometry', 'Building', 'Name', 'Type']].to_file(path_output_nodes_shp, driver='ESRI Shapefile')
 
 
 def add_loops_to_network(G, mst_non_directed, new_mst_nodes, mst_edges, type_mat, pipe_dn):
@@ -288,7 +285,7 @@ def add_plant_close_to_anchor(building_anchor, new_mst_nodes, mst_edges, type_ma
             if 0 < distance < delta:
                 delta = distance
                 node_id = node[1].Name
-    pd.options.mode.chained_assignment = None #avoid warning
+    pd.options.mode.chained_assignment = None  # avoid warning
     # create copy of selected node and add to list of all nodes
     copy_of_new_mst_nodes.geometry = copy_of_new_mst_nodes.translate(xoff=1, yoff=1)
     selected_node = copy_of_new_mst_nodes[copy_of_new_mst_nodes["Name"] == node_id]
