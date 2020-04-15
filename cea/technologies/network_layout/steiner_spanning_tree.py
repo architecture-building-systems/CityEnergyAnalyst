@@ -151,7 +151,8 @@ def calc_steiner_spanning_tree(crs_projected,
     # GET COORDINATE AND SAVE FINAL VERSION TO DISK
     mst_edges.crs = crs_projected
     mst_nodes.crs = crs_projected
-    mst_edges[['geometry', 'Type_mat', 'Name', 'Pipe_DN']].to_file(path_output_edges_shp, driver='ESRI Shapefile')
+    mst_edges['length_m'] = mst_edges['weight']
+    mst_edges[['geometry','length_m', 'Type_mat', 'Name', 'Pipe_DN']].to_file(path_output_edges_shp, driver='ESRI Shapefile')
     mst_nodes[['geometry', 'Building', 'Name', 'Type']].to_file(path_output_nodes_shp, driver='ESRI Shapefile')
 
 
