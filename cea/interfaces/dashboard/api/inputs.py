@@ -10,6 +10,7 @@ from flask_restplus import Namespace, Resource, abort
 
 import cea.inputlocator
 import cea.utilities.dbf
+import cea.scripts
 from cea.datamanagement.databases_verification import InputFileValidator
 from cea.interfaces.dashboard.api.databases import read_all_databases, DATABASES_SCHEMA_KEYS, schedule_to_dict
 from cea.plots.supply_system.a_supply_system_map import get_building_connectivity, newer_network_layout_exists
@@ -206,34 +207,34 @@ def get_building_properties():
             'supply-systems', 'surroundings']
 
     config = current_app.cea_config
+
+    schemas = cea.scripts.schemas()
     locator = cea.inputlocator.InputLocator(config.scenario)
     store = {'tables': {}, 'columns': {}, 'order': tabs}
-    glossary = cea.glossary.read_glossary_df()
-    filenames = glossary['FILE_NAME'].str.split(pat='/').str[-1]
     for db in INPUTS:
         db_info = INPUTS[db]
-        location = getattr(locator, db_info['location'])()
+        locator_method = db_info['location']
+        file_path = getattr(locator, locator_method)()
+        file_type = db_info['type']
+        field_names = db_info['fieldnames']
         try:
-            if db_info['type'] == 'shp':
-                table_df = geopandas.GeoDataFrame.from_file(location)
+            if file_type == 'shp':
+                table_df = geopandas.GeoDataFrame.from_file(file_path)
                 table_df = pandas.DataFrame(
                     table_df.drop(columns='geometry'))
-                if 'REFERENCE' in db_info['fieldnames'] and 'REFERENCE' not in table_df.columns:
+                if 'REFERENCE' in field_names and 'REFERENCE' not in table_df.columns:
                     table_df['REFERENCE'] = None
                 store['tables'][db] = json.loads(
                     table_df.set_index('Name').to_json(orient='index'))
             else:
-                assert db_info['type'] == 'dbf', 'Unexpected database type: %s' % db_info['type']
-                table_df = cea.utilities.dbf.dbf_to_dataframe(location)
-                if 'REFERENCE' in db_info['fieldnames'] and 'REFERENCE' not in table_df.columns:
+                assert file_type == 'dbf', 'Unexpected database type: %s' % file_type
+                table_df = cea.utilities.dbf.dbf_to_dataframe(file_path)
+                if 'REFERENCE' in field_names and 'REFERENCE' not in table_df.columns:
                     table_df['REFERENCE'] = None
                 store['tables'][db] = json.loads(
                     table_df.set_index('Name').to_json(orient='index'))
 
             columns = OrderedDict()
-            db_glossary = json.loads(glossary[filenames == '%s.%s' % (db.replace('-', '_'), db_info['type'])]
-                                     [['VARIABLE', 'UNIT', 'DESCRIPTION']].set_index('VARIABLE').to_json(orient='index'))
-
             for field in db_info['fields']:
                 column = field['name']
                 columns[column] = {}
@@ -247,8 +248,8 @@ def get_building_properties():
                     columns[column]['choices'] = get_choices(field['choice_properties'], path)
                 if 'constraints' in field:
                     columns[column]['constraints'] = field['constraints']
-                columns[column]['description'] = db_glossary[column]['DESCRIPTION']
-                columns[column]['unit'] = db_glossary[column]['UNIT']
+                columns[column]['description'] = schemas[locator_method]["schema"]["columns"][column]["description"]
+                columns[column]['unit'] = schemas[locator_method]["schema"]["columns"][column]["unit"]
             store['columns'][db] = columns
 
         except IOError as e:
@@ -448,3 +449,7 @@ def get_choices(choice_properties, path):
         label = df.loc[df[lookup['column']] == choice, 'Description'].values[0] if 'Description' in df.columns else ''
         out.append({'value': choice, 'label': label})
     return out
+
+
+if __name__ == "__main__":
+    print(get_building_properties())
