@@ -58,135 +58,131 @@ def costs_main(locator, config):
     electricity = supply_systems.merge(demand, on='Name').merge(electricity_costs, left_on='type_el', right_on='code_x')
 
     fields_to_plot = []
-    heating_services = ['DH_hs', 'OIL_hs', 'NG_hs', 'WOOD_hs', 'COAL_hs', 'SOLAR_hs']
+
+    ### calculate Capex for the Heating systems and their Operation & Maintenance contribution to the Opex
+    heating_services = ['QH_sys']
     for service in heating_services:
         try:
-            fields_to_plot.extend([service + '_sys_opex_yr', service + '_sys_total_capex_yr', service + '_sys_a_capex_yr',  service + '_sys_opex_m2yr'])
+            fields_to_plot.extend([service + '_total_capex', service + '_capex_yr', service + '_OM_yr', service + '_OM_m2yr'])
             # calculate the total and relative costs
-            heating[service + '_sys_total_capex_yr'] = heating[service + '0_kW'] * heating['CAPEX_USD2015kW']
-            heating[service + '_sys_a_capex_yr'] = calc_inv_costs_annualized(heating[service + '_sys_total_capex_yr'], heating['IR_%']/100, heating['LT_yr'])
-            heating[service + '_sys_opex_yr'] = heating[service + '_MWhyr'] * heating['Opex_var_buy_USD2015kWh'] * 1000 + heating[service + '_sys_total_capex_yr'] * heating['O&M_%']/100
+            heating[service + '_total_capex'] = heating[service + '0_kW'] * heating['CAPEX_USD2015kW']
+            heating[service + '_capex_yr'] = calc_inv_costs_annualized(heating[service + '_total_capex'], heating['IR_%']/100, heating['LT_yr'])
+            heating[service + '_OM_yr'] = heating[service + '_total_capex'] * heating['O&M_%']/100
+            heating[service + '_OM_m2yr'] = heating[service + '_OM_yr'] / heating['Aocc_m2']
+        except KeyError:
+            print(heating)
+            print(list(heating.columns))
+            raise
+
+    ### calculate Capex for the Hot water systems and their Operation & Maintenance contribution to the Opex
+    dhw_services = ['Qww_sys']
+    for service in dhw_services:
+        fields_to_plot.extend([service + '_total_capex', service + '_capex_yr', service + '_OM_yr', service + '_OM_m2yr'])
+        # calculate the total and relative costs
+        # calculate the total and relative costs
+        dhw[service + '_total_capex'] = dhw[service + '0_kW'] * dhw['CAPEX_USD2015kW']
+        dhw[service + '_capex_yr'] = calc_inv_costs_annualized(dhw[service + '_total_capex'], dhw['IR_%']/100, dhw['LT_yr'])
+        dhw[service + '_OM_yr'] = dhw[service + '_total_capex'] * dhw['O&M_%']/100
+        dhw[service + '_OM_m2yr'] = dhw[service + '_OM_yr'] / dhw['Aocc_m2']
+
+    ### calculate Capex for the cooling systems and their Operation & Maintenance contribution to the Opex
+    cooling_services = ['QC_sys']
+    for service in cooling_services:
+        fields_to_plot.extend([service + '_total_capex', service+ '_capex_yr', service + '_OM_yr', service + '_OM_m2yr'])
+        # change price to that of local electricity mix
+        # calculate the total and relative costs
+        cooling[service + '_total_capex'] = cooling[service + '0_kW'] * cooling['CAPEX_USD2015kW']
+        cooling[service + '_capex_yr'] = calc_inv_costs_annualized(cooling[service + '_total_capex'], cooling['IR_%']/100, cooling['LT_yr'])
+        cooling[service + '_OM_yr'] = cooling[service + '_total_capex'] * cooling['O&M_%']/100
+        cooling[service + '_OM_m2yr'] = cooling[service + '_OM_yr'] / cooling['Aocc_m2']
+
+    print(cooling[service + '_total_capex'])
+    print(cooling['O&M_%'])
+    ###  Calculate Capex for the electrical systems(E/I&C and PV) and their Operation & Maintenance contribution to the Opex
+    electricity_services = ['GRID', 'PV']
+    for service in electricity_services:
+        fields_to_plot.extend([service + '_sys_total_capex', service+ '_sys_capex_yr', service + '_sys_OM_yr', service + '_sys_OM_m2yr'])
+        electricity[service + '_sys_total_capex'] = electricity[service + '0_kW'] * electricity['CAPEX_USD2015kW']
+        electricity[service + '_sys_capex_yr'] = calc_inv_costs_annualized(electricity[service + '_sys_total_capex'], electricity['IR_%']/100, electricity['LT_yr']/100)
+        electricity[service + '_sys_OM_yr'] = electricity[service + '_sys_total_capex'] * electricity['O&M_%']/100
+        electricity[service + '_sys_OM_m2yr'] = electricity[service + '_sys_OM_yr'] / electricity['Aocc_m2']
+
+    ### calculate the Opex of feedstock consumption for heating
+    heating_services = ['OIL_hs', 'NG_hs', 'WOOD_hs', 'COAL_hs'] # DH and Solar are internal
+    for service in heating_services:
+        try:
+            fields_to_plot.extend([service + '_sys_opex_yr', service + '_sys_opex_m2yr'])
+            heating[service + '_sys_opex_yr'] = heating[service + '_MWhyr'] * heating['Opex_var_buy_USD2015kWh'] * 1000
             heating[service + '_sys_opex_m2yr'] = heating[service + '_sys_opex_yr'] / heating['Aocc_m2']
         except KeyError:
             print(heating)
             print(list(heating.columns))
             raise
 
-    # for cooling services
-    dhw_services = ['DH_ww', 'OIL_ww', 'NG_ww', 'WOOD_ww', 'COAL_ww', 'SOLAR_ww']
+    ### calculate the Opex of feedstock consumption for dhw
+    dhw_services = ['OIL_ww', 'NG_ww', 'WOOD_ww', 'COAL_ww'] # DH and Solar are internal
     for service in dhw_services:
-        fields_to_plot.extend([service + '_sys_opex_yr', service + '_sys_total_capex_yr', service + '_sys_a_capex_yr', service + '_sys_opex_m2yr'])
-        # calculate the total and relative costs
-        # calculate the total and relative costs
-        dhw[service + '_sys_total_capex_yr'] = dhw[service + '0_kW'] * dhw['CAPEX_USD2015kW']
-        dhw[service + '_sys_a_capex_yr'] =  calc_inv_costs_annualized(dhw[service + '_sys_total_capex_yr'], dhw['IR_%']/100, dhw['LT_yr'])
-        dhw[service + '_sys_opex_yr'] = dhw[service + '_MWhyr'] * dhw['Opex_var_buy_USD2015kWh'] * 1000 + dhw[service + '_sys_total_capex_yr'] * dhw['O&M_%']/100
+        fields_to_plot.extend([service + '_sys_opex_yr', service + '_sys_opex_m2yr'])
+        dhw[service + '_sys_opex_yr'] = dhw[service + '_MWhyr'] * dhw['Opex_var_buy_USD2015kWh'] * 1000
         dhw[service + '_sys_opex_m2yr'] = dhw[service + '_sys_opex_yr'] / dhw['Aocc_m2']
 
-    ## calculate the operational primary energy and emissions for cooling services
-    cooling_services = ['DC_cs', 'DC_cdata', 'DC_cre']
-    for service in cooling_services:
-        fields_to_plot.extend([service + '_sys_opex_yr', service + '_sys_total_capex_yr', service + '_sys_a_capex_yr', service + '_sys_opex_m2yr'])
-        # change price to that of local electricity mix
-        # calculate the total and relative costs
-        cooling[service + '_sys_total_capex_yr'] = cooling[service + '0_kW'] * cooling['CAPEX_USD2015kW']
-        cooling[service + '_sys_a_capex_yr'] = calc_inv_costs_annualized(cooling[service + '_sys_total_capex_yr'], cooling['IR_%']/100, cooling['LT_yr'])
-        cooling[service + '_sys_opex_yr'] = cooling[service + '_MWhyr'] * cooling['Opex_var_buy_USD2015kWh'] * 1000 + cooling[service + '_sys_total_capex_yr'] * cooling['O&M_%']/100
-        cooling[service + '_sys_opex_m2yr'] = cooling[service + '_sys_opex_yr'] / cooling['Aocc_m2']
+    # cooling_services = ['DC_cs', 'DC_cdata', 'DC_cre'] # represented in GRID_MWhyr, no other feedstock used for cooling at the moment
 
-    ## calculate the operational primary energy and emissions for electrical services
-    electrical_services = ['GRID', 'PV']
-    for service in electrical_services:
-        fields_to_plot.extend([service + '_sys_opex_yr', service + '_sys_total_capex_yr', service+ '_sys_a_capex_yr', service + '_sys_opex_m2yr'])
-        # calculate the total and relative costs
-        electricity[service + '_sys_total_capex_yr'] = electricity[service + '0_kW'] * electricity['CAPEX_USD2015kW']
-        electricity[service + '_sys_a_capex_yr'] = calc_inv_costs_annualized(electricity[service + '_sys_total_capex_yr'], electricity['IR_%']/100, electricity['LT_yr']/100)
-        electricity[service + '_sys_opex_yr'] = electricity[service + '_MWhyr'] * electricity['Opex_var_buy_USD2015kWh'] * 1000 + electricity[service + '_sys_total_capex_yr'] * electricity['O&M_%']/100
+    ### calculate the Opex of feedstock consumption for electricity
+    electricity_services = ['GRID']  # PV is internal
+    for service in electricity_services:
+        fields_to_plot.extend([service + '_sys_opex_yr', service + '_sys_opex_m2yr'])
+        electricity[service + '_sys_opex_yr'] = electricity[service + '_MWhyr'] * electricity['Opex_var_buy_USD2015kWh'] * 1000
         electricity[service + '_sys_opex_m2yr'] = electricity[service + '_sys_opex_yr'] / electricity['Aocc_m2']
 
     # plot also NFA area and costs
     fields_to_plot.extend(['Aocc_m2'])
 
-    # embodied emissions
+    # CapEx
     if capital:
-        fields_to_plot.extend(['Capex_a_sys_disconnected_USD',
-                             'Capex_a_sys_connected_USD',
-                             'Capex_total_sys_connected_USD',
-                             'Capex_total_sys_disconnected_USD',
-                               'Capex_total_sys_USD', 'TAC_sys_USD'
-                               ])
-    # operation emissions
+        fields_to_plot.extend(['Capex_total_sys_USD', 'Capex_a_sys_USD', 'TAC_sys_USD'])
+    # OpEx
     if operational:
-        fields_to_plot.extend(['Opex_a_sys_connected_USD',
-                             'Opex_a_sys_disconnected_USD',
-                             'Opex_a_sys_USD'])
+        fields_to_plot.extend(['Opex_O&M_a_USD', 'Opex_feedstock_a_USD', 'Opex_a_sys_USD'])
 
     # create and save results
     result = heating.merge(dhw, on='Name', suffixes=('', '_dhw'))
     result = result.merge(cooling, on='Name', suffixes=('', '_cooling'))
-    result = result.merge(electricity, on='Name', suffixes=('', '_ electricity'))
+    result = result.merge(electricity, on='Name', suffixes=('', '_electricity'))
 
     # add totals:
-    result['Opex_a_sys_connected_USD'] = result['GRID_sys_opex_yr'] + \
-                                         result['DH_hs_sys_opex_yr'] + \
-                                         result['DH_ww_sys_opex_yr'] + \
-                                         result['DC_cdata_sys_opex_yr'] + \
-                                         result['DC_cs_sys_opex_yr'] + \
-                                         result['DC_cre_sys_opex_yr']
+    result['Opex_O&M_a_USD'] = result['QH_sys_OM_yr'] + \
+                                result['Qww_sys_OM_yr'] + \
+                                result['QC_sys_OM_yr'] + \
+                                result['GRID_sys_OM_yr'] + \
+                                result['PV_sys_OM_yr']
 
-    result['Opex_a_sys_disconnected_USD'] = result['OIL_hs_sys_opex_yr'] + \
-                                            result['NG_hs_sys_opex_yr'] + \
-                                            result['WOOD_hs_sys_opex_yr'] + \
-                                            result['COAL_hs_sys_opex_yr'] + \
-                                            result['SOLAR_hs_sys_opex_yr'] + \
-                                            result['PV_sys_opex_yr'] + \
-                                            result['OIL_ww_sys_opex_yr'] + \
-                                            result['NG_ww_sys_opex_yr'] + \
-                                            result['WOOD_ww_sys_opex_yr'] + \
-                                            result['COAL_ww_sys_opex_yr'] + \
-                                            result['SOLAR_ww_sys_opex_yr']
+    result['Opex_feedstock_a_USD'] = result['OIL_hs_sys_opex_yr'] + \
+                                    result['NG_hs_sys_opex_yr'] + \
+                                    result['WOOD_hs_sys_opex_yr'] + \
+                                    result['COAL_hs_sys_opex_yr'] + \
+                                    result['OIL_ww_sys_opex_yr'] + \
+                                    result['NG_ww_sys_opex_yr'] + \
+                                    result['WOOD_ww_sys_opex_yr'] + \
+                                    result['COAL_ww_sys_opex_yr'] + \
+                                    result['GRID_sys_opex_yr']
 
-    result['Capex_a_sys_connected_USD'] =  result['GRID_sys_a_capex_yr'] + \
-                                         result['DH_hs_sys_a_capex_yr'] + \
-                                         result['DH_ww_sys_a_capex_yr'] + \
-                                         result['DC_cdata_sys_a_capex_yr'] + \
-                                         result['DC_cs_sys_a_capex_yr'] + \
-                                         result['DC_cre_sys_a_capex_yr']
+    result['Capex_total_sys_USD'] = result['QH_sys_total_capex'] + \
+                                result['Qww_sys_total_capex'] + \
+                                result['QC_sys_total_capex'] + \
+                                result['GRID_sys_total_capex'] + \
+                                result['PV_sys_total_capex']
 
-    result['Capex_a_sys_disconnected_USD'] =  result['OIL_hs_sys_a_capex_yr'] + \
-                                            result['NG_hs_sys_a_capex_yr'] + \
-                                            result['WOOD_hs_sys_a_capex_yr'] + \
-                                            result['COAL_hs_sys_a_capex_yr'] + \
-                                            result['SOLAR_hs_sys_a_capex_yr'] + \
-                                            result['PV_sys_a_capex_yr'] + \
-                                            result['OIL_ww_sys_a_capex_yr'] + \
-                                            result['NG_ww_sys_a_capex_yr'] + \
-                                            result['WOOD_ww_sys_a_capex_yr'] + \
-                                            result['COAL_ww_sys_a_capex_yr'] + \
-                                            result['SOLAR_ww_sys_a_capex_yr']
 
-    result['Capex_total_sys_connected_USD'] =  result['GRID_sys_total_capex_yr'] + \
-                                         result['DH_hs_sys_total_capex_yr'] + \
-                                         result['DH_ww_sys_total_capex_yr'] + \
-                                         result['DC_cdata_sys_total_capex_yr'] + \
-                                         result['DC_cs_sys_total_capex_yr'] + \
-                                         result['DC_cre_sys_total_capex_yr']
 
-    result['Capex_total_sys_disconnected_USD'] =  result['OIL_hs_sys_total_capex_yr'] + \
-                                            result['NG_hs_sys_total_capex_yr'] + \
-                                            result['WOOD_hs_sys_total_capex_yr'] + \
-                                            result['COAL_hs_sys_total_capex_yr'] + \
-                                            result['SOLAR_hs_sys_total_capex_yr'] + \
-                                            result['PV_sys_total_capex_yr'] + \
-                                            result['OIL_ww_sys_total_capex_yr'] + \
-                                            result['NG_ww_sys_total_capex_yr'] + \
-                                            result['WOOD_ww_sys_total_capex_yr'] + \
-                                            result['COAL_ww_sys_total_capex_yr'] + \
-                                            result['SOLAR_ww_sys_total_capex_yr']
+    result['Capex_a_sys_USD'] = result['QH_sys_capex_yr'] + \
+                                result['Qww_sys_capex_yr'] + \
+                                result['QC_sys_capex_yr'] + \
+                                result['GRID_sys_capex_yr'] + \
+                                result['PV_sys_capex_yr']
 
-    result['Capex_total_sys_USD'] = result['Capex_total_sys_disconnected_USD'] + result['Capex_total_sys_connected_USD']
-    result['TAC_sys_USD'] = result['Capex_a_sys_disconnected_USD'] + result['Capex_a_sys_connected_USD']
-    result['Opex_a_sys_USD'] = result['Opex_a_sys_disconnected_USD'] + result['Opex_a_sys_connected_USD']
+    result['Opex_a_sys_USD'] = result['Opex_O&M_a_USD'] + result['Opex_feedstock_a_USD']
+    result['TAC_sys_USD'] = result['Capex_a_sys_USD'] + result['Opex_a_sys_USD']
 
     result[['Name'] + fields_to_plot].to_csv(
         locator.get_costs_operation_file(), index=False, float_format='%.2f')
