@@ -39,7 +39,6 @@ class SolarPotentialPlotBase(cea.plots.PlotBase):
     def __init__(self, project, parameters, cache):
         super(SolarPotentialPlotBase, self).__init__(project, parameters, cache)
         self.category_path = os.path.join('new_basic', 'solar-potential')
-        self.timeframe = self.parameters['timeframe']
         self.normalization = self.parameters['normalization']
         self.input_files = [(self.locator.get_radiation_metadata, [building]) for building in self.buildings] + \
                            [(self.locator.get_radiation_building_sensors, [building]) for building in self.buildings]
@@ -90,39 +89,22 @@ class SolarPotentialPlotBase(cea.plots.PlotBase):
                     data_processed[energy] = data_processed[energy] / data_processed[area]
         return data_processed
 
-    def timeframe_data(self, data):
-        if self.timeframe == "daily":
-            data.index = pd.to_datetime(data.index)
-            data = data.resample('D').sum()
-        elif self.timeframe == "weekly":
-            data.index = pd.to_datetime(data.index)
-            data = data.resample('W').sum()
-        elif self.timeframe == "monthly":
-            data.index = pd.to_datetime(data.index)
-            data = data.resample('M').sum()
-        elif self.timeframe == "yearly":
-            data.index = pd.to_datetime(data.index)
-            data = data.resample('Y').sum()
-        return data
-
     def add_solar_fields(self, df1, df2):
         """Add the demand analysis fields together - use this in reduce to sum up the summable parts of the dfs"""
         fields = self.solar_analysis_fields + self.solar_analysis_fields_area
         df1[fields] = df2[fields] + df1[fields]
         return df1
 
-    @cea.plots.cache.cached
     def solar_hourly_aggregated_kW(self):
         data = self._calculate_input_data_aggregated_kW()
         data_normalized = self.normalize_data(data,
                                               self.buildings,
                                               self.solar_analysis_fields,
                                               self.solar_analysis_fields_area)
-        solar_hourly_aggregated_kW = self.timeframe_data(data_normalized)
+        solar_hourly_aggregated_kW = self.resample_time_data(data_normalized)
 
         return solar_hourly_aggregated_kW
 
-    @cea.plots.cache.cached
     def _calculate_input_data_aggregated_kW(self):
         """This is the data all the solar-potential plots are based on."""
         # get extra data of weather and date

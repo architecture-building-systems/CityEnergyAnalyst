@@ -941,6 +941,8 @@ class SystemParameter(ChoiceParameter):
 
     def encode(self, value):
         if not str(value) in self._choices:
+            if len(self._choices) > 1:
+                return self._choices[1]
             return self._choices[0]
         return str(value)
 
