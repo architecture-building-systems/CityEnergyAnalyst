@@ -33,7 +33,7 @@ The Product Owner is the voice of the customer and performs all tactical operati
 
 Responsibilities
 ****************
-#. Guarantee our product success by acting as a conduit/facilitator for communication between the team and the customers.
+1. Guarantee our product success by acting as a conduit/facilitator for communication between the team and the customers.
 
 The means to communication to the customers include:
 
@@ -44,11 +44,11 @@ The means to communication to the customers include:
     * Maintaining cea@arch.ethz.ch
     * Distributing Newsletters
 
-#. Coordinate the :doc:`Events`.
+2. Coordinate the :doc:`Events`.
 
-#. Break down the overall vision into feasible and tactical pieces of work for the development team to understand and create.
+3. Break down the overall vision into feasible and tactical pieces of work for the development team to understand and create.
 
-#. Prioritizing and selecting user stories. This entails grooming the **product backlogs** with the help of the
+4. Prioritizing and selecting user stories. This entails grooming the **product backlogs** with the help of the
    Srcum Master.
 
 The **product backlogs** contains issues that is labelled as Must-have and Should-have.
@@ -66,8 +66,8 @@ Won't have   - Features that are not in the roadmap.
 
 Engagement
 **********
-#. Participate in the Review meetings (part of the :doc:`activities`).
-#. One day per week on communication and task prioritizing.
+#. Participate in the :doc:`activities`.
+#. One day per week on communication to the customer team and event coordination.
 
 
 
