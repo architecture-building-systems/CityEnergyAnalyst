@@ -1,4 +1,4 @@
-digraph water_body_potential {
+digraph zone_helper {
     rankdir="LR";
     graph [overlap=false, fontname=arial];
     node [shape=box, style=filled, color=white, fontsize=15, fontname=arial, fixedsize=true, width=5];
@@ -13,14 +13,14 @@ digraph water_body_potential {
         "inputs"->"process"[style=invis]
         "process"->"outputs"[style=invis]
     }
-    "water_body_potential"[style=filled, color=white, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname=arial];
-    subgraph cluster_0_out {
+    "zone_helper"[style=filled, color=white, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname=arial];
+    subgraph cluster_0_in {
         style = filled;
-        color = "#aadcdd";
+        color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="outputs/data/potentials";
-        get_water_body_potential[label="Water_body_potential.csv"];
+        label="inputs/building-geometry";
+        get_site_polygon[label="site.shp"];
     }
-    "water_body_potential" -> get_water_body_potential[label="(get_water_body_potential)"];
+    get_site_polygon -> "zone_helper"[label="(get_site_polygon)"];
     }

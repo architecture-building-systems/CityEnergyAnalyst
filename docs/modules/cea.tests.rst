@@ -17,6 +17,14 @@ cea.tests.create\_unittest\_data module
     :undoc-members:
     :show-inheritance:
 
+cea.tests.run\_all\_plots module
+--------------------------------
+
+.. automodule:: cea.tests.run_all_plots
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cea.tests.run\_unit\_tests module
 ---------------------------------
 
@@ -77,6 +85,14 @@ cea.tests.test\_schedules module
 --------------------------------
 
 .. automodule:: cea.tests.test_schedules
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.tests.test\_schemas module
+------------------------------
+
+.. automodule:: cea.tests.test_schemas
     :members:
     :undoc-members:
     :show-inheritance:

@@ -20,7 +20,7 @@ from cea.demand.schedule_maker.schedule_maker import schedule_maker_main
 from cea.demand.thermal_loads import calc_thermal_loads
 from cea.inputlocator import InputLocator
 from cea.utilities import epwreader
-from cea.utilities.date import get_dates_from_year
+from cea.utilities.date import get_date_range_hours_from_year
 
 
 def main(output_file):
@@ -41,14 +41,14 @@ def main(output_file):
     cea.datamanagement.archetypes_mapper.archetypes_mapper(locator, True, True, True, True, True, True, [])
 
     year = weather_data['year'][0]
-    date_range = get_dates_from_year(year)
+    date_range = get_date_range_hours_from_year(year)
     resolution_outputs = config.demand.resolution_output
     loads_output = config.demand.loads_output
     massflows_output = config.demand.massflows_output
     temperatures_output = config.demand.temperatures_output
     use_dynamic_infiltration_calculation = config.demand.use_dynamic_infiltration_calculation
     debug = config.debug
-    building_properties = BuildingProperties(locator, config.demand.override_variables)
+    building_properties = BuildingProperties(locator)
 
     print("data for test_calc_thermal_loads:")
     print(building_properties.list_building_names())

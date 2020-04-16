@@ -338,7 +338,7 @@ def read_solar_technologies_data(locator, master_to_slave_vars):
         Q_SC_ET_gen_Wh, Tscr_th_SC_ET_K, Area_SC_ET_m2, E_SC_ET_req_Wh = calc_available_generation_solar(locator,
                                                                                                          buildings,
                                                                                                          share_allowed,
-                                                                                                         type="SC_ET")
+                                                                                                         panel_type="ET")
     else:
         Q_SC_ET_gen_Wh = np.zeros(HOURS_IN_YEAR)
         Tscr_th_SC_ET_K = np.zeros(HOURS_IN_YEAR)
@@ -351,7 +351,7 @@ def read_solar_technologies_data(locator, master_to_slave_vars):
         Q_SC_FP_gen_Wh, Tscr_th_SC_FP_K, Area_SC_FP_m2, E_SC_FP_req_Wh = calc_available_generation_solar(locator,
                                                                                                          buildings,
                                                                                                          share_allowed,
-                                                                                                         type="SC_FP")
+                                                                                                         panel_type="FP")
     else:
         Q_SC_FP_gen_Wh = np.zeros(HOURS_IN_YEAR)
         Tscr_th_SC_FP_K = np.zeros(HOURS_IN_YEAR)
@@ -387,15 +387,20 @@ def read_solar_technologies_data(locator, master_to_slave_vars):
 
 
 def calc_available_generation_PVT(locator, buildings, share_allowed):
+    """
+    :param cea.inputlocator.InputLocator locator:
+    :param buildings:
+    :param share_allowed:
+    :return:
+    """
     A_PVT_m2 = 0.0
     E_PVT_gen_kWh = np.zeros(HOURS_IN_YEAR)
     Q_PVT_gen_kWh = np.zeros(HOURS_IN_YEAR)
     E_PVT_req_kWh = np.zeros(HOURS_IN_YEAR)
     mcp_x_T = np.zeros(HOURS_IN_YEAR)
     mcp = np.zeros(HOURS_IN_YEAR)
-    for building_name in buildings:
-        building_PVT = pd.read_csv(
-            os.path.join(locator.get_potentials_solar_folder(), building_name + '_PVT.csv')).fillna(value=0.0)
+    for building in buildings:
+        building_PVT = pd.read_csv(locator.PVT_results(building)).fillna(value=0.0)
         E_PVT_gen_kWh += building_PVT['E_PVT_gen_kWh']
         Q_PVT_gen_kWh += building_PVT['Q_PVT_gen_kWh']
         E_PVT_req_kWh += building_PVT['Eaux_PVT_kWh']
@@ -413,15 +418,21 @@ def calc_available_generation_PVT(locator, buildings, share_allowed):
     return E_PVT_gen_Wh, Q_PVT_gen_Wh, Area_PVT_m2, Tscr_th_PVT_K, E_PVT_req_Wh
 
 
-def calc_available_generation_solar(locator, buildings, share_allowed, type):
+def calc_available_generation_solar(locator, buildings, share_allowed, panel_type):
+    """
+    :param cea.inputlocator.InputLocator locator:
+    :param buildings:
+    :param share_allowed:
+    :param panel_type:
+    :return:
+    """
     A_PVT_m2 = 0.0
     Q_PVT_gen_kWh = np.zeros(HOURS_IN_YEAR)
     E_SC_req_kWh = np.zeros(HOURS_IN_YEAR)
     mcp_x_T = np.zeros(HOURS_IN_YEAR)
     mcp = np.zeros(HOURS_IN_YEAR)
     for building_name in buildings:
-        data = pd.read_csv(
-            os.path.join(locator.get_potentials_solar_folder(), building_name + '_' + type + '.csv')).fillna(value=0.0)
+        data = pd.read_csv(locator.SC_results(building_name, panel_type)).fillna(value=0.0)
         Q_PVT_gen_kWh += data['Q_SC_gen_kWh']
         E_SC_req_kWh += data['Eaux_SC_kWh']
         A_PVT_m2 += data['Area_SC_m2'][0]

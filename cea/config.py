@@ -12,6 +12,7 @@ import cea.inputlocator
 import collections
 import datetime
 import glob
+import tempfile
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -143,6 +144,7 @@ class Configuration(object):
                             parameter.replace_references(
                                 command_line_args[parameter.name])))
                 except:
+                    import traceback; traceback.print_exc()
                     raise ValueError('ERROR setting %s:%s to %s' % (
                         section.name, parameter.name, command_line_args[parameter.name]))
                 del command_line_args[parameter.name]
@@ -436,6 +438,37 @@ class FileParameter(Parameter):
             return value
 
 
+class ResumeFileParameter(FileParameter):
+    """Path to the workflow:resume-file - this is generally ${TEMP}/resume-workflow.yml. Makes sure it is writeable"""
+    typename = "ResumeFileParameter"
+
+    def encode(self, value):
+        return self.check_path(str(value))
+
+    def check_path(self, path):
+        """Make sure I can read/write that file"""
+        if not path:
+            path = os.path.join(tempfile.gettempdir(), "resume-workflow.yml")
+        try:
+            if os.path.exists(path):
+                # make sure we can write to this file
+                with open(path, "r") as fp:
+                    contents = fp.read()
+            else:
+                contents = json.dumps(dict())
+
+            with open(path, "w") as fp:
+                fp.write(contents)
+
+        except IOError:
+            # let's just assume we can always write to the temp folder...
+            path = os.path.join(tempfile.gettempdir(), "resume-workflow.yml")
+        return path
+
+    def decode(self, value):
+        return self.check_path(str(value))
+
+
 class JsonParameter(Parameter):
     """A parameter that gets / sets JSON data (useful for dictionaries, lists etc.)"""
     typename = 'JsonParameter'
@@ -615,35 +648,6 @@ class StringParameter(Parameter):
     typename = 'StringParameter'
 
 
-class OptimizationIndividualParameter(Parameter):
-    typename = 'OptimizationIndividualParameter'
-
-    def initialize(self, parser):
-        # allow the project option to be set
-        self._project = parser.get(self.section.name, self.name + '.project')
-
-    def get_folders(self, project=None):
-        if not project:
-            project = self.replace_references(self._project)
-        return [folder for folder in os.listdir(project) if os.path.isdir(os.path.join(project, folder))]
-
-    def get_generations(self, scenario, project=None):
-        if not project:
-            project = self.replace_references(self._project)
-        locator = cea.inputlocator.InputLocator(os.path.join(project, scenario))
-        generations = list(sorted(set(individual.split('/')[1]
-                                      for individual in locator.list_optimization_all_individuals())))
-        return generations
-
-    def get_individuals(self, scenario, generation, project=None):
-        if not project:
-            project = self.replace_references(self._project)
-        locator = cea.inputlocator.InputLocator(os.path.join(project, scenario))
-        individuals = list(sorted(set(individual.split('/')[2]
-                                      for individual in locator.list_optimization_all_individuals())))
-        return individuals
-
-
 class OptimizationIndividualListParameter(ListParameter):
     typename = 'OptimizationIndividualListParameter'
 
@@ -723,7 +727,7 @@ class DatabasePathParameter(Parameter):
         elif os.path.exists(value) and os.path.isdir(value) and self.is_valid_template(value):
             database_path = value
         else:
-            raise cea.ConfigError("Invalid region path: {}".format(value))
+            raise cea.ConfigError("Invalid database path: {}".format(value))
         return database_path
 
     @property
@@ -923,6 +927,7 @@ class GenerationParameter(ChoiceParameter):
 class SystemParameter(ChoiceParameter):
     """A (single) building in the zone"""
     typename = 'SystemParameter'
+
     def initialize(self, parser):
         # skip the default ChoiceParameter initialization of _choices
         pass
