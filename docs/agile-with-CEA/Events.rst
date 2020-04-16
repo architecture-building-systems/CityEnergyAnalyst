@@ -8,7 +8,7 @@ This event should be scheduled **quarterly**.
 
 Attendees
 ---------
-While this event is mainly an update to the product sponsors, it is also open to the entire CEA team.
+While this event is mainly an update to the product sponsors, it is also open to the entire CEA team and the customer team.
 
 
 Agenda
