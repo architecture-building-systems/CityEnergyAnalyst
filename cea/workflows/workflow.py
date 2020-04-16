@@ -13,6 +13,7 @@ import cea.inputlocator
 import cea.api
 import cea.scripts
 import yaml
+import tempfile
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
@@ -87,10 +88,9 @@ def main(config):
             raise ValueError("Invalid step configuration: {i} - {step}".format(i=i, step=step))
 
         # write out information for resuming
+        resume_dict[workflow_yml] = i
         with open(resume_yml, 'w') as resume_fp:
-            resume_dict[workflow_yml] = i
             yaml.dump(resume_dict, resume_fp, indent=4)
-
 
 def read_resume_info(resume_yml, workflow_yml):
     try:

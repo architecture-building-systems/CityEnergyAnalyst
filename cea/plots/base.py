@@ -55,8 +55,10 @@ class PlotBase(object):
             if parameter_name not in parameters:
                 try:
                     self.parameters[parameter_name] = cea.config.Configuration(cea.config.DEFAULT_CONFIG).get(
-                        'plots:{}'.format(parameter_name))
+                        self.expected_parameters[parameter_name])
                 except Exception:
+                    import traceback
+                    traceback.print_exc()
                     assert parameter_name in parameters, "Missing parameter {}".format(parameter_name)
 
     def missing_input_files(self):
@@ -141,7 +143,8 @@ class PlotBase(object):
     def plot(self, auto_open=False):
         """Plots the graphs to the filename (see output_path)"""
         if self.missing_input_files():
-            raise MissingInputDataException("Dear developer: Run check_input_files() first, before plotting!")
+            raise MissingInputDataException(
+                "Following input files are missing: {input_files}".format(input_files=self.missing_input_files()))
         # PLOT
         template_path = os.path.join(os.path.dirname(__file__), 'plot.html')
         template = jinja2.Template(open(template_path, 'r').read())
@@ -157,20 +160,93 @@ class PlotBase(object):
     def plot_div(self):
         """Return the plot as an html <div/> for use in the dashboard. Override this method in subclasses"""
         if self.missing_input_files():
-            raise MissingInputDataException("Dear developer: Run check_input_files() first, before plotting!")
+            raise MissingInputDataException(
+                "Following input files are missing: {input_files}".format(input_files=self.missing_input_files()))
         return self.cache.lookup_plot_div(self, self._plot_div_producer)
 
     def _plot_div_producer(self):
-        fig = plotly.graph_objs.Figure(data=self.calc_graph(), layout=self.layout)
-        fig['layout'] = dict(fig['layout'], **{'margin': dict(l=50, r=50, t=50, b=50), 'hovermode': 'closest', 'font': dict(size=10)})
-        fig['layout']['yaxis'] = dict(fig['layout']['yaxis'], **{'hoverformat': ".2f"})
+        fig = plotly.graph_objs.Figure(data=self._plot_data_producer(), layout=self.layout)
+        fig['layout'].update(dict(hovermode='closest'))
+        fig['layout']['yaxis'].update(dict(hoverformat=".2f"))
+        fig['layout']['margin'].update(dict(l=50, r=50, t=50, b=50))
+        fig['layout']['font'].update(dict(size=10))
+
         div = plotly.offline.plot(fig, output_type='div', include_plotlyjs=False, show_link=False)
         return div
+
+    def _plot_data_producer(self):
+        try:
+            return self.cache.lookup_plot_data(self, self.calc_graph)
+        except NotImplementedError:  # if self.calc_graph() is not implemented
+            return None
+
+    def plot_data_to_file(self):
+        import pandas as pd
+        import collections
+        import re
+
+        plotly_data = self._plot_data_producer()
+
+        # Return None if plotly data does not exist
+        if plotly_data is None:
+            print("Unable to find plot data found for '{}'".format(self.name))
+            return None
+
+        x_axis = self.layout['xaxis']['title'] if 'xaxis' in self.layout else ''
+        y_axis = self.layout['yaxis']['title']
+
+        data = []
+        scatter_plots = collections.OrderedDict()
+        for trace in plotly_data:
+            name = trace.get('name')
+            x = trace.get('x')
+            y = trace.get('y')
+            if x is not None and y is not None and len(x) == len(y):
+                if 'yaxis' in trace:  # Assign correct title if plot contains multiple y_axis
+                    y_axis_num = trace['yaxis'].split('y')[1]
+                    y_axis = self.layout['yaxis{}'.format(y_axis_num)]['title'] or y_axis
+
+                if trace['type'] == 'bar':
+                    column_name = name
+                    units = re.search(r'\[.*?\]', y_axis)
+                    if units:
+                        column_name = '{} {}'.format(name, units.group())
+                    df = pd.DataFrame({x_axis: list(x), column_name: list(y)}).set_index(x_axis)
+                    data.append(df)
+                elif trace['type'] == 'scattergl' and name is not None:
+                    column_name = y_axis
+                    df = pd.DataFrame({x_axis: list(x), column_name: list(y)}).set_index(x_axis)
+                    scatter_plots[name] = df
+
+        if data:
+            data = pd.concat(data, axis=1)
+            # Try to merge any scatter plots with bar data which have the same index name
+            for data_name, scatter_data in scatter_plots.items():
+                try:
+                    data = pd.concat([data, scatter_data], axis=1)
+                except Exception as e:
+                    print(e)
+            # Export data as .csv
+            output_path = os.path.splitext(self.output_path)[0] + '.csv'
+            data.to_csv(output_path)
+        elif scatter_plots:
+            # Export data as .xlsx
+            output_path = os.path.splitext(self.output_path)[0] + '.xlsx'
+            with pd.ExcelWriter(output_path) as writer:
+                for data_name, scatter_data in scatter_plots.items():
+                    sheet_name = data_name[:31]  # Sheet name cannot be more than 31 characters
+                    scatter_data.to_excel(writer, sheet_name=sheet_name)
+        else:  # Return None if could not parse any data from plot
+            output_path = None
+
+        print("Written '{}' plot data to {}".format(self.name, output_path))
+        return output_path
 
     def table_div(self):
         """Returns the html div for a table, or an empty string if no table is to be produced"""
         if self.missing_input_files():
-            raise MissingInputDataException("Dear developer: Run check_input_files() first, before plotting!")
+            raise MissingInputDataException(
+                "Following input files are missing: {input_files}".format(input_files=self.missing_input_files()))
         return self.cache.lookup_table_div(self, self._table_div_producer)
 
     def _table_div_producer(self):
