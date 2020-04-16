@@ -34,11 +34,6 @@ The Product Owner is the voice of the customer and performs all tactical operati
 Responsibilities
 ****************
 #. Guarantee our product success by acting as a conduit/facilitator for communication between the team and the customers.
-#. Prioritizing and selecting user stories. This entails grooming the **product backlogs** with the help of the
-   Srcum Master.
-#. Break down the overall vision into feasible and tactical pieces of work for the development team to understand and create.
-#. Coordinate the :doc:`Events`.
-
 
 The means to communication to the customers include:
 
@@ -49,7 +44,12 @@ The means to communication to the customers include:
     * Maintaining cea@arch.ethz.ch
     * Distributing Newsletters
 
+#. Coordinate the :doc:`Events`.
 
+#. Break down the overall vision into feasible and tactical pieces of work for the development team to understand and create.
+
+#. Prioritizing and selecting user stories. This entails grooming the **product backlogs** with the help of the
+   Srcum Master.
 
 The **product backlogs** contains issues that is labelled as Must-have and Should-have.
 Here are the details of the labels used to categorize new issues in the CEA:
@@ -78,7 +78,7 @@ The Scrum Master is the servant leader and maintainer of agile practices.
 
 Responsibilities
 ****************
-#. Guarantee the success of our processes by maintain all agile practices (including :doc:`activities`).
+#. Coordinate all :doc:`activities` that form the agile practices of the CEA.
 #. Coordinate the training of new developers.
     #. Introduce the functionalities in the CEA.
     #. Introduce the CEA-ecosystem
