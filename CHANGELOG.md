@@ -1,3 +1,13 @@
+- 2020-04-17 - 3.0.3a0 - #2692 I2689 network layout
+- 2020-04-16 - 3.0.3a0 - #2691 Block _sys_today_ supply plots
+- 2020-04-16 - 3.0.3a0 - #2698 added a fix for _ensure_folder method in /cea/inputlocator.py
+- 2020-04-16 - 3.0.3a0 - #2694 CityEnergyAnalyst v3.0.3a0
+- 2020-04-15 - 3.0.2 - #2673 2637 single point of reference for variables
+- 2020-04-09 - 3.0.2 - #2677 Plot data export
+- 2020-04-09 - 3.0.2 - #2666 Remove leap day from weather data
+- 2020-04-08 - 3.0.2 - #2633 2561 cea workflow resume-file now defaults to temp folder
+- 2020-04-01 - 3.0.2 - #2668 Rename optimization plot titles
+- 2020-03-25 - 3.0.2 - #2669 Release 3.0.2
 - 2020-03-23 - 3.0.1 - #2654 End of support for Grasshopper
 - 2020-03-23 - 3.0.1 - #2652 Clean up unused javascript files
 - 2020-03-23 - 3.0.1 - #2659 CityEnergyAnalyst v3.0.1
