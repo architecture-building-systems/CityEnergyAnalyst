@@ -41,6 +41,7 @@ scrum master, project owner, project sponsor and collaborators.
     * Paul Neitzel
     * Thuy-An Nguyen
     * Bo Lie Ong
+    * Emanuel Riegelbauer
     * Lennart Rogenhofer
     * Toivo Säwén
     * Sebastian Troiztsch    

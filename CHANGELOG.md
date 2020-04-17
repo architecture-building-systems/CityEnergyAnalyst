@@ -1,3 +1,4 @@
+- 2020-04-17 - 3.0.3a0 - #2685 2661 update assembly database
 - 2020-04-17 - 3.0.3a0 - #2692 I2689 network layout
 - 2020-04-16 - 3.0.3a0 - #2691 Block _sys_today_ supply plots
 - 2020-04-16 - 3.0.3a0 - #2698 added a fix for _ensure_folder method in /cea/inputlocator.py
