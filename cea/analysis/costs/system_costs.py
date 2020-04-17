@@ -103,7 +103,7 @@ def costs_main(locator, config):
     for service in electricity_services:
         fields_to_plot.extend([service + '_sys_total_capex', service+ '_sys_capex_yr', service + '_sys_OM_yr', service + '_sys_OM_m2yr'])
         electricity[service + '_sys_total_capex'] = electricity[service + '0_kW'] * electricity['CAPEX_USD2015kW']
-        electricity[service + '_sys_capex_yr'] = calc_inv_costs_annualized(electricity[service + '_sys_total_capex'], electricity['IR_%']/100, electricity['LT_yr']/100)
+        electricity[service + '_sys_capex_yr'] = calc_inv_costs_annualized(electricity[service + '_sys_total_capex'], electricity['IR_%']/100, electricity['LT_yr'])
         electricity[service + '_sys_OM_yr'] = electricity[service + '_sys_total_capex'] * electricity['O&M_%']/100
         electricity[service + '_sys_OM_m2yr'] = electricity[service + '_sys_OM_yr'] / electricity['Aocc_m2']
 
@@ -189,7 +189,8 @@ def costs_main(locator, config):
 
 
 def calc_inv_costs_annualized(InvC, Inv_IR, Inv_LT):
-    return InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+    return (InvC * Inv_IR)/(1-(1+Inv_IR)**(-Inv_LT))
+    # InvC * Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
 
 def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
