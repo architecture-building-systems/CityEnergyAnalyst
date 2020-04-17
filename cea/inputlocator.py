@@ -562,7 +562,7 @@ class InputLocator(object):
         if os.path.exists(nodes_csv):
             import pandas as pd
             nodes_df = pd.read_csv(nodes_csv)
-            return list(nodes_df[nodes_df['Type'] == 'PLANT']['Name'].values)
+            return list(nodes_df[nodes_df['Type'] == 'PLANT']['Building'].values)
         return []
 
     def get_thermal_network_edge_list_file(self, network_type, network_name=''):

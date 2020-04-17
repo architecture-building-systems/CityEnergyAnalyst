@@ -152,7 +152,7 @@ def main():
     import cea.config
     import cea.plots.cache
     config = cea.config.Configuration()
-    cache = cea.plots.cache.PlotCache(config.project)
+    # cache = cea.plots.cache.PlotCache(config.project)
     cache = cea.plots.cache.NullPlotCache()
     SupplyReturnAmbientCurvePlot(config.project,
                                  {'network-type': config.plots.network_type,
@@ -160,7 +160,6 @@ def main():
                                   'network-name': config.plots.network_name,
                                   'plant-node': config.plots.plant_node},
                                  cache).plot(auto_open=True)
-
 
 
 if __name__ == '__main__':

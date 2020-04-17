@@ -58,7 +58,7 @@
 - script: multi-criteria-analysis
   parameters:
     generation: 2
-- config: .
-  "plots:network-type": DH
-  "plots:network-name": ""
 - script: run-all-plots
+  parameters:
+    network-type: DH
+    network-name: ""

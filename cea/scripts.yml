@@ -338,7 +338,7 @@ Utilities:
     description: Run all the plots for test purposes
     interfaces: [test, cli]
     module: cea.tests.run_all_plots
-    parameters: ["general:project", "general:scenario"]
+    parameters: ["general:project", "general:scenario", "plots", "plots-comparisons", "plots-optimization", "plots-supply-system"]
 
 default:
 
