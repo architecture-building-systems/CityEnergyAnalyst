@@ -11,7 +11,7 @@ import wntr
 import cea.config
 import cea.inputlocator
 import cea.technologies.substation as substation
-from cea.constants import P_WATER_KGPERM3, FT_WATER_TO_PA, FT_TO_M, M_WATER_TO_PA, HEAT_CAPACITY_OF_WATER_JPERKGK
+from cea.constants import P_WATER_KGPERM3, FT_WATER_TO_PA, FT_TO_M, M_WATER_TO_PA, HEAT_CAPACITY_OF_WATER_JPERKGK, SHAPEFILE_TOLERANCE
 from cea.optimization.constants import PUMP_ETA
 from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
 from cea.technologies.thermal_network.thermal_network_loss import calc_temperature_out_per_pipe
@@ -58,8 +58,6 @@ def extract_network_from_shapefile(edge_shapefile_df, node_shapefile_df):
     :rtype edge_df: DataFrame
 
     """
-    # set precision of coordinates
-    decimals = 6
     # create node dictionary with plant and consumer nodes
     node_dict = {}
     node_shapefile_df.set_index("Name", inplace=True)
@@ -72,7 +70,7 @@ def extract_network_from_shapefile(edge_shapefile_df, node_shapefile_df):
 
     for node, row in node_shapefile_df.iterrows():
         coord_node = row['geometry'].coords[0]
-        coord_node_round = (round(coord_node[0], decimals), round(coord_node[1], decimals))
+        coord_node_round = (round(coord_node[0], SHAPEFILE_TOLERANCE), round(coord_node[1], SHAPEFILE_TOLERANCE))
         node_dict[coord_node_round] = node
 
     # create edge dictionary with pipe lengths and start and end nodes
@@ -92,8 +90,8 @@ def extract_network_from_shapefile(edge_shapefile_df, node_shapefile_df):
         # get the length of the pipe and add to dataframe
         edge_coords = row['geometry'].coords
         edge_shapefile_df.loc[pipe, 'length_m'] = row['geometry'].length
-        start_node = (round(edge_coords[0][0], decimals), round(edge_coords[0][1], decimals))
-        end_node = (round(edge_coords[1][0], decimals), round(edge_coords[1][1], decimals))
+        start_node = (round(edge_coords[0][0], SHAPEFILE_TOLERANCE), round(edge_coords[0][1], SHAPEFILE_TOLERANCE))
+        end_node = (round(edge_coords[1][0], SHAPEFILE_TOLERANCE), round(edge_coords[1][1], SHAPEFILE_TOLERANCE))
         if start_node in node_dict.keys():
             edge_shapefile_df.loc[pipe, 'start node'] = node_dict[start_node]
         else:
