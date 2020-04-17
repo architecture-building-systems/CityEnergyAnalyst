@@ -192,23 +192,8 @@ def calc_Qcs_sys(bpr, tsd):
     efficiency_average_year = bpr.supply['eff_cs']
     if scale_technology == "BUILDING":
         if energy_source == "GRID":
-            t_source = (tsd['T_ext'] + 273)
-
-            # heat pump energy for the 3 components
-            # ahu
-            E_for_Qcs_sys_ahu = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcs_sys_ahu'],
-                                                                   (tsd['Tcs_sys_sup_ahu'] + 273),
-                                                                   (tsd['Tcs_sys_re_ahu'] + 273), t_source)
-            # aru
-            E_for_Qcs_sys_aru = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcs_sys_aru'],
-                                                                   (tsd['Tcs_sys_sup_aru'] + 273),
-                                                                   (tsd['Tcs_sys_re_aru'] + 273), t_source)
-            # scu
-            E_for_Qcs_sys_scu = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcs_sys_scu'],
-                                                                   (tsd['Tcs_sys_sup_scu'] + 273),
-                                                                   (tsd['Tcs_sys_re_scu'] + 273), t_source)
             # sum
-            tsd['E_cs'] = E_for_Qcs_sys_scu + E_for_Qcs_sys_aru + E_for_Qcs_sys_ahu
+            tsd['E_cs'] = abs(tsd['Qcs_sys']) / efficiency_average_year
             tsd['DC_cs'] = np.zeros(HOURS_IN_YEAR)
         elif energy_source == "NONE":
             tsd['E_cs'] = np.zeros(HOURS_IN_YEAR)
