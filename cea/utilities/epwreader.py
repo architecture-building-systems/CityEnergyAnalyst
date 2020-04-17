@@ -8,6 +8,7 @@ import cea.inputlocator
 import numpy as np
 from cea.constants import BOLTZMANN, KELVIN_OFFSET
 from calendar import isleap
+from cea.constants import HOURS_IN_YEAR
 
 __author__ = "Clayton Miller"
 __copyright__ = "Copyright 2014, Architecture and Building Systems - ETH Zurich"
@@ -36,10 +37,21 @@ def epw_reader(weather_path):
 
     year = result["year"][0]
     date_range = pd.date_range(start=str(year), end=str(year + 1), freq='H', closed='left')
-    result['date'] = date_range
-    result['dayofyear'] = date_range.dayofyear
+
     if isleap(year):
-        result = result[~((date_range.month == 2) & (date_range.day == 29))].reset_index()
+        if result.shape[0] == (HOURS_IN_YEAR+24):
+            result['date'] = date_range
+            result['dayofyear'] = date_range.dayofyear
+            result = result[~((date_range.month == 2) & (date_range.day == 29))].reset_index()
+        elif result.shape[0] == HOURS_IN_YEAR:
+            print("you have a leap year, but the weather file was modified already, we account for this "
+                  "no need of further action")
+            date_range = date_range[~((date_range.month == 2) & (date_range.day == 29))]
+            result['date'] = date_range
+            result['dayofyear'] = date_range.dayofyear
+    else:
+        result['date'] = date_range
+        result['dayofyear'] = date_range.dayofyear
 
     result['ratio_diffhout'] = result['difhorrad_Whm2'] / result['glohorrad_Whm2']
     result['ratio_diffhout'] = result['ratio_diffhout'].replace(np.inf, np.nan)
