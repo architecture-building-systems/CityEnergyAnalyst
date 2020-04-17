@@ -41,7 +41,6 @@ class DispatchCurveDistrictCoolingPlot(cea.plots.supply_system.SupplySystemPlotB
         ]
 
         self.analysis_field_demand = ['Q_districtcooling_sys_req_W']
-        self.timeframe = self.parameters['timeframe']
         self.input_files = [(self.locator.get_optimization_slave_cooling_activation_pattern,
                              [self.individual, self.generation])]
 

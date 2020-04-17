@@ -7,6 +7,8 @@ import cea.plots.categories
 import re
 import os
 
+from cea import MissingInputDataException
+
 blueprint = Blueprint(
     'plots_blueprint',
     __name__,
@@ -35,46 +37,42 @@ def load_plot(dashboard, plot_index):
     return plot
 
 
+def render_missing_data(missing_files):
+    return render_template('missing_input_files.html',
+                           missing_input_files=[lm(*args) for lm, args in missing_files],
+                           script_suggestions=script_suggestions(lm.__name__ for lm, _ in missing_files)), 404
+
 @blueprint.route('/div/<int:dashboard_index>/<int:plot_index>')
 def route_div(dashboard_index, plot_index):
     """Return the plot as a div to be used in an AJAX call"""
+    plot = load_plot(dashboard_index, plot_index)
     try:
-        plot = load_plot(dashboard_index, plot_index)
-    except Exception as ex:
-        return abort(500, ex)
-    if not plot.missing_input_files():
         plot_div = plot.plot_div()
-        # BUGFIX for (#2102 - Can't add the same plot twice in a dashboard)
-        # update id of div to include dashboard_index and plot_index
-        if plot_div.startswith("<div id="):
-            div_id = re.match('<div id="([0-9a-f-]+)"', plot_div).group(1)
-            plot_div = plot_div.replace(div_id, "{div_id}-{dashboard_index}-{plot_index}".format(
-                div_id=div_id, dashboard_index=dashboard_index, plot_index=plot_index))
-        return make_response(plot_div, 200)
-    else:
-        return render_template('missing_input_files.html',
-                               missing_input_files=[lm(*args) for lm, args in plot.missing_input_files()],
-                               script_suggestions=script_suggestions(lm.__name__ for lm, _ in plot.missing_input_files())), 404
+    except MissingInputDataException:
+        return render_missing_data(plot.missing_input_files())
+    except NotImplementedError as e:
+        return make_response('<p>{message}</p>'.format(message=e.message), 404)
+    # BUGFIX for (#2102 - Can't add the same plot twice in a dashboard)
+    # update id of div to include dashboard_index and plot_index
+    if plot_div.startswith("<div id="):
+        div_id = re.match('<div id="([0-9a-f-]+)"', plot_div).group(1)
+        plot_div = plot_div.replace(div_id, "{div_id}-{dashboard_index}-{plot_index}".format(
+            div_id=div_id, dashboard_index=dashboard_index, plot_index=plot_index))
+    return make_response(plot_div, 200)
 
 
 @blueprint.route('/plot/<int:dashboard_index>/<int:plot_index>')
 def route_plot(dashboard_index, plot_index):
+    plot = load_plot(dashboard_index, plot_index)
+    plot_title = plot.title
+    if 'scenario-name' in plot.parameters:
+        plot_title += ' - {}'.format(plot.parameters['scenario-name'])
     try:
-        plot = load_plot(dashboard_index, plot_index)
-        plot_title = plot.title
-        if 'scenario-name' in plot.parameters:
-            plot_title += ' - {}'.format(plot.parameters['scenario-name'])
-    except Exception as ex:
-        return abort(500, ex)
-
-    if not plot.missing_input_files():
         plot_div = plot.plot_div()
-    else:
-        return render_template('missing_input_files.html',
-                               missing_input_files=[lm(*args) for lm, args in plot.missing_input_files()],
-                               script_suggestions=script_suggestions(
-                                   lm.__name__ for lm, _ in plot.missing_input_files())), 404
-
+    except MissingInputDataException:
+        return render_missing_data(plot.missing_input_files())
+    except NotImplementedError as e:
+        return make_response('<p>{message}</p>'.format(message=e.message), 404)
     return render_template('plot.html', plot_div=plot_div, plot_title=plot_title)
 
 

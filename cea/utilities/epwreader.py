@@ -6,7 +6,7 @@ import pandas as pd
 import math
 import cea.inputlocator
 import numpy as np
-from cea.constants import BOLTZMANN, KELVIN_OFFSET
+from cea.constants import BOLTZMANN, KELVIN_OFFSET, HOURS_IN_YEAR
 from calendar import isleap
 from cea.constants import HOURS_IN_YEAR
 
@@ -33,32 +33,35 @@ def epw_to_dataframe(weather_path):
 
 
 def epw_reader(weather_path):
-    result = epw_to_dataframe(weather_path)
+    epw_data = epw_to_dataframe(weather_path)
 
-    year = result["year"][0]
-    date_range = pd.date_range(start=str(year), end=str(year + 1), freq='H', closed='left')
-
+    year = epw_data["year"][0]
+    # Create date range from epw data
+    date_range = pd.DatetimeIndex(pd.to_datetime(dict(year=epw_data.year, month=epw_data.month, day=epw_data.day, hour=epw_data.hour-1))
+    )
     if isleap(year):
-        if result.shape[0] == (HOURS_IN_YEAR+24):
-            result['date'] = date_range
-            result['dayofyear'] = date_range.dayofyear
-            result = result[~((date_range.month == 2) & (date_range.day == 29))].reset_index()
-        elif result.shape[0] == HOURS_IN_YEAR:
+        if epw_data.shape[0] == (HOURS_IN_YEAR+24):
+            epw_data['date'] = date_range
+            epw_data['dayofyear'] = date_range.dayofyear
+            epw_data = result[~((date_range.month == 2) & (date_range.day == 29))].reset_index()
+        elif epw_data.shape[0] == HOURS_IN_YEAR:
             print("you have a leap year, but the weather file was modified already, we account for this "
                   "no need of further action")
             date_range = date_range[~((date_range.month == 2) & (date_range.day == 29))]
-            result['date'] = date_range
-            result['dayofyear'] = date_range.dayofyear
+            epw_data['date'] = date_range
+            epw_data['dayofyear'] = date_range.dayofyear
     else:
-        result['date'] = date_range
-        result['dayofyear'] = date_range.dayofyear
+        if len(epw_data) != HOURS_IN_YEAR:
+            raise Exception('Incorrect number of rows. Expected {}, got {}'.format(HOURS_IN_YEAR, len(epw_data)))
+        epw_data['date'] = date_range
+        epw_data['dayofyear'] = date_range.dayofyear
 
-    result['ratio_diffhout'] = result['difhorrad_Whm2'] / result['glohorrad_Whm2']
-    result['ratio_diffhout'] = result['ratio_diffhout'].replace(np.inf, np.nan)
-    result['wetbulb_C'] = np.vectorize(calc_wetbulb)(result['drybulb_C'], result['relhum_percent'])
-    result['skytemp_C'] = np.vectorize(calc_skytemp)(result['drybulb_C'], result['dewpoint_C'], result['opaqskycvr_tenths'])
+    epw_data['ratio_diffhout'] = epw_data['difhorrad_Whm2'] / epw_data['glohorrad_Whm2']
+    epw_data['ratio_diffhout'] = epw_data['ratio_diffhout'].replace(np.inf, np.nan)
+    epw_data['wetbulb_C'] = np.vectorize(calc_wetbulb)(epw_data['drybulb_C'], epw_data['relhum_percent'])
+    epw_data['skytemp_C'] = np.vectorize(calc_skytemp)(epw_data['drybulb_C'], epw_data['dewpoint_C'], epw_data['opaqskycvr_tenths'])
 
-    return result
+    return epw_data
 
 
 def calc_skytemp(Tdrybulb, Tdewpoint, N):
