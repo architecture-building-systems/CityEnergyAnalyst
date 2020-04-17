@@ -8,6 +8,7 @@ import cea.inputlocator
 import numpy as np
 from cea.constants import BOLTZMANN, KELVIN_OFFSET, HOURS_IN_YEAR
 from calendar import isleap
+from cea.constants import HOURS_IN_YEAR
 
 __author__ = "Clayton Miller"
 __copyright__ = "Copyright 2014, Architecture and Building Systems - ETH Zurich"
@@ -36,17 +37,24 @@ def epw_reader(weather_path):
 
     year = epw_data["year"][0]
     # Create date range from epw data
-    date_range = pd.DatetimeIndex(
-        pd.to_datetime(dict(year=epw_data.year, month=epw_data.month, day=epw_data.day, hour=epw_data.hour-1))
+    date_range = pd.DatetimeIndex(pd.to_datetime(dict(year=epw_data.year, month=epw_data.month, day=epw_data.day, hour=epw_data.hour-1))
     )
-    epw_data['date'] = date_range
-    epw_data['dayofyear'] = date_range.dayofyear
     if isleap(year):
-        epw_data = epw_data[~((date_range.month == 2) & (date_range.day == 29))].reset_index()
-
-    # Make sure data has the correct number of rows
-    if len(epw_data) != HOURS_IN_YEAR:
-        raise Exception('Incorrect number of rows. Expected {}, got {}'.format(HOURS_IN_YEAR, len(epw_data)))
+        if epw_data.shape[0] == (HOURS_IN_YEAR+24):
+            epw_data['date'] = date_range
+            epw_data['dayofyear'] = date_range.dayofyear
+            epw_data = result[~((date_range.month == 2) & (date_range.day == 29))].reset_index()
+        elif epw_data.shape[0] == HOURS_IN_YEAR:
+            print("you have a leap year, but the weather file was modified already, we account for this "
+                  "no need of further action")
+            date_range = date_range[~((date_range.month == 2) & (date_range.day == 29))]
+            epw_data['date'] = date_range
+            epw_data['dayofyear'] = date_range.dayofyear
+    else:
+        if len(epw_data) != HOURS_IN_YEAR:
+            raise Exception('Incorrect number of rows. Expected {}, got {}'.format(HOURS_IN_YEAR, len(epw_data)))
+        epw_data['date'] = date_range
+        epw_data['dayofyear'] = date_range.dayofyear
 
     epw_data['ratio_diffhout'] = epw_data['difhorrad_Whm2'] / epw_data['glohorrad_Whm2']
     epw_data['ratio_diffhout'] = epw_data['ratio_diffhout'].replace(np.inf, np.nan)
