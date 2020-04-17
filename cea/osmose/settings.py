@@ -19,6 +19,7 @@ cluster_type = 'hour'  # 'day' or 'hour'
 
 ## district to evaluate ##
 path_to_district_folder = 'C:\\SG_cases\\SDC_small'
+output_cea_demand = True
 osmose_outMsg_path = "\\s_001\\opt\\hc_outmsg.txt"
 
 ## post processing ##

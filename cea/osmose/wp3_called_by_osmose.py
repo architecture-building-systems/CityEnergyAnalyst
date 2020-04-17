@@ -213,6 +213,12 @@ def write_cea_demand_from_osmose(path_to_district_folder):
         annual_demand_kWh = building_demand_df['Qcs_sys_ahu_kWh'].values * op_time
         building_info.loc[building, 'Qcs_sys_MWhyr'] = sum(annual_demand_kWh)/1000.0
 
+        if settings.output_cea_demand:
+            building_demand_df['Tcs_sys_sup_ahu_C'] = 7.5  # only used in thermal_network calculation
+            building_demand_df['Tcs_sys_re_ahu_C'] = 14.5  # only used in thermal_network calculation
+            building_demand_df.to_csv(os.path.join(path_to_district_demand_folder, building + '.csv'))
+        
+
     # 5. match yearly hours
     op_time = district_cooling_demand_df['op_time'].values
     # substation_flow_rate_m3pers_df = multiply_df_to_match_hours(substation_flow_rate_m3pers_df)
