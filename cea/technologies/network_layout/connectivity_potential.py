@@ -11,7 +11,7 @@ from shapely.ops import split, linemerge, snap
 
 import cea.config
 import cea.inputlocator
-from cea.constants import SHAPEFILE_TOLERANCE
+from cea.constants import SHAPEFILE_TOLERANCE, SNAP_TOLERANCE
 from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_geographic_coordinate_system
 
 __author__ = "Jimeno A. Fonseca"
@@ -287,8 +287,7 @@ def near_analysis(buiding_centroids, street_network, crs):
     return df
 
 
-def snap_points(points, lines, crs):
-    tolerance = 0.5
+def snap_points(points, lines, tolerance, crs):
     length = lines.shape[0]
     for i in range(length):
         for point in points.geometry:
@@ -301,7 +300,7 @@ def snap_points(points, lines, crs):
             if (point.x, point.y) in line.coords:
                 x = "nothing"
             else:
-                if  distance_to_line < tolerance:
+                if distance_to_line < tolerance:
                     buff = point.buffer(0.1)
                     ### Split the line on the buffer
                     geometry = split(line, buff)
@@ -344,7 +343,7 @@ def one_linestring_per_intersection(lines, crs):
         bounding_box = box(*lines_merged.bounds)
         lines_merged = lines_merged.intersection(bounding_box)
     except:
-        #if the bounding_box fails, then revert to lines merge.
+        # if the bounding_box fails, then revert to lines merge.
         print('bounding box method did not work, falling to a more simple method, no need to worry')
 
     # merge the result
@@ -376,11 +375,9 @@ def create_terminals(buiding_centroids, crs, street_network):
     lines_to_buildings = all_points.groupby(['Name'])['geometry'].apply(lambda x: LineString(x.tolist()))
     lines_to_buildings = gdf(lines_to_buildings, geometry='geometry', crs=crs)
 
-
     lines_to_buildings = lines_to_buildings.append(street_network).reset_index(drop=True)
     lines_to_buildings.crs = crs
     return lines_to_buildings
-
 
 
 def simplify_liness_accurracy(lines, decimals, crs):
@@ -421,22 +418,22 @@ def calc_connectivity_network(path_streets_shp, building_centroids_df, temp_path
     # create terminals/branches form street to buildings
     prototype_network = create_terminals(building_centroids_df, crs, street_network)
     config = cea.config.Configuration()
-    locator=cea.inputlocator.InputLocator(scenario=config.scenario)
-    prototype_network.to_file(locator.get_temporary_file("prototype_network.shp"), driver='ESRI Shapefile')
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
     # first split in intersections
     prototype_network = one_linestring_per_intersection(prototype_network.geometry.values,
                                                         crs)
-
     # snap endings of all vectors to ending of all other vectors
-    prototype_network = snappy_endings(prototype_network.geometry.values, 0.5, crs)
+    prototype_network = snappy_endings(prototype_network.geometry.values, SNAP_TOLERANCE, crs)
 
     # calculate intersections
     gdf_points_snapped = calculate_end_points_intersections(prototype_network, crs)
 
     # snap these points to the lines and transform lines
-    gdf_points_snapped, prototype_network = snap_points(gdf_points_snapped, prototype_network,
-                                                        crs)
+    gdf_points_snapped, prototype_network = snap_points(gdf_points_snapped, prototype_network, SNAP_TOLERANCE, crs)
+
+    # save for verification purposes
+    prototype_network.to_file(locator.get_temporary_file("prototype_network.shp"), driver='ESRI Shapefile')
     # get segments
     potential_network_df = split_line_by_nearest_points(prototype_network, gdf_points_snapped, 1.0, crs)
 
@@ -446,6 +443,7 @@ def calc_connectivity_network(path_streets_shp, building_centroids_df, temp_path
     potential_network_df.to_file(temp_path_potential_network_shp, driver='ESRI Shapefile')
 
     return crs
+
 
 def main(config):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
