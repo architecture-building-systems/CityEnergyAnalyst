@@ -1,17 +1,17 @@
-digraph trace_inputlocator {
+digraph multi_criteria_analysis {
     rankdir="LR";
     graph [overlap=false, fontname=arial];
     node [shape=box, style=filled, color=white, fontsize=15, fontname=arial, fixedsize=true, width=5];
     edge [fontname=arial, fontsize = 15]
     newrank=true
     subgraph cluster_legend {
-    fontsize=25
-    style=invis
-    "process"[style=filled, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname="arial"]
-    "inputs" [style=filled, shape=folder, color=white, fillcolor="#E1F2F2", fontsize=20]
-    "outputs"[style=filled, shape=folder, color=white, fillcolor="#aadcdd", fontsize=20]
-    "inputs"->"process"[style=invis]
-    "process"->"outputs"[style=invis]
+        fontsize=25
+        style=invis
+        "process"[style=filled, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname="arial"]
+        "inputs" [style=filled, shape=folder, color=white, fillcolor="#E1F2F2", fontsize=20]
+        "outputs"[style=filled, shape=folder, color=white, fillcolor="#aadcdd", fontsize=20]
+        "inputs"->"process"[style=invis]
+        "process"->"outputs"[style=invis]
     }
     "multi_criteria_analysis"[style=filled, color=white, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname=arial];
     subgraph cluster_0_in {
@@ -19,115 +19,17 @@ digraph trace_inputlocator {
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="building-geometry";
-        "surroundings.shp"
-        "zone.shp"
+        label="optimization/slave/gen_2";
+        get_optimization_generation_total_performance_pareto[label="gen_2_total_performance_pareto.csv"];
     }
     subgraph cluster_1_out {
         style = filled;
         color = "#aadcdd";
         fontsize = 20;
         rank=same;
-        label="data/multicriteria";
-        "gen_2_multi_criteria_analysis.csv"
+        label="outputs/data/multicriteria";
+        get_multi_criteria_analysis[label="gen_2_multi_criteria_analysis.csv"];
     }
-    subgraph cluster_2_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="data/optimization/network";
-        "DH_Network_summary_result_0x19b.csv"
-    }
-    subgraph cluster_3_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="networks";
-        "streets.shp"
-    }
-    subgraph cluster_4_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="optimization/slave/gen_2";
-        "gen_2_total_performance_pareto.csv"
-    }
-    subgraph cluster_5_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="technology/archetypes/schedules";
-        "RESTAURANT.csv"
-    }
-    subgraph cluster_6_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="technology/archetypes/use_types";
-        "USE_TYPE_PROPERTIES.xlsx"
-    }
-    subgraph cluster_7_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="technology/assemblies";
-        "supply.xls"
-    }
-    subgraph cluster_8_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="technology/feedstocks";
-        "feedstocks.xls"
-    }
-    subgraph cluster_9_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="technology/systems";
-        "air_conditioning_systems.xls"
-        "supply_systems.xls"
-        "distribution_systems.xls"
-        "envelope_systems.xls"
-    }
-    subgraph cluster_10_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="topography";
-        "terrain.tif"
-    }
-    subgraph cluster_11_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="weather";
-        "Zug-inducity_1990_2010_TMY.epw"
-    }
-    "air_conditioning_systems.xls" -> "multi_criteria_analysis"[label="(get_database_air_conditioning_systems)"]
-    "supply_systems.xls" -> "multi_criteria_analysis"[label="(get_database_conversion_systems)"]
-    "distribution_systems.xls" -> "multi_criteria_analysis"[label="(get_database_distribution_systems)"]
-    "envelope_systems.xls" -> "multi_criteria_analysis"[label="(get_database_envelope_systems)"]
-    "feedstocks.xls" -> "multi_criteria_analysis"[label="(get_database_feedstocks)"]
-    "RESTAURANT.csv" -> "multi_criteria_analysis"[label="(get_database_standard_schedules_use)"]
-    "supply.xls" -> "multi_criteria_analysis"[label="(get_database_supply_assemblies)"]
-    "USE_TYPE_PROPERTIES.xlsx" -> "multi_criteria_analysis"[label="(get_database_use_types_properties)"]
-    "gen_2_total_performance_pareto.csv" -> "multi_criteria_analysis"[label="(get_optimization_generation_total_performance_pareto)"]
-    "DH_Network_summary_result_0x19b.csv" -> "multi_criteria_analysis"[label="(get_optimization_thermal_network_data_file)"]
-    "streets.shp" -> "multi_criteria_analysis"[label="(get_street_network)"]
-    "surroundings.shp" -> "multi_criteria_analysis"[label="(get_surroundings_geometry)"]
-    "terrain.tif" -> "multi_criteria_analysis"[label="(get_terrain)"]
-    "Zug-inducity_1990_2010_TMY.epw" -> "multi_criteria_analysis"[label="(get_weather)"]
-    "zone.shp" -> "multi_criteria_analysis"[label="(get_zone_geometry)"]
-    "multi_criteria_analysis" -> "gen_2_multi_criteria_analysis.csv"[label="(get_multi_criteria_analysis)"]
+    get_optimization_generation_total_performance_pareto -> "multi_criteria_analysis"[label="(get_optimization_generation_total_performance_pareto)"];
+    "multi_criteria_analysis" -> get_multi_criteria_analysis[label="(get_multi_criteria_analysis)"];
     }

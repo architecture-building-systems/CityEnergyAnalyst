@@ -42,7 +42,6 @@ class LoadCurveSupplyPlot(cea.plots.demand.DemandPlotBase):
                                 'GRID_hs_kWh',
                                 'GRID_cdata_kWh',
                                 'GRID_cre_kWh']
-        self.timeframe = self.parameters['timeframe']
 
     @property
     def layout(self):

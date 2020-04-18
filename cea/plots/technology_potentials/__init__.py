@@ -105,28 +105,12 @@ class SolarTechnologyPotentialsPlotBase(cea.plots.PlotBase):
                     data_processed[energy] = data_processed[energy] / data_processed[area]
         return data_processed
 
-    def timeframe_data(self, data_PV):
-        if self.timeframe == "daily":
-            data_PV.index = pd.to_datetime(data_PV.index)
-            data_PV = data_PV.resample('D').sum()
-        elif self.timeframe == "weekly":
-            data_PV.index = pd.to_datetime(data_PV.index)
-            data_PV = data_PV.resample('W').sum()
-        elif self.timeframe == "monthly":
-            data_PV.index = pd.to_datetime(data_PV.index)
-            data_PV = data_PV.resample('M').sum()
-        elif self.timeframe == "yearly":
-            data_PV.index = pd.to_datetime(data_PV.index)
-            data_PV = data_PV.resample('Y').sum()
-        return data_PV
-
     # FOR PV PANELS
-    @cea.plots.cache.cached
     def PV_hourly_aggregated_kW(self):
         data = self._calculate_PV_hourly_aggregated_kW()
         data_normalized = self.normalize_data(data, self.buildings, self.pv_analysis_fields,
                                               self.pv_analysis_fields_area)
-        PV_hourly_aggregated_kW = self.timeframe_data(data_normalized)
+        PV_hourly_aggregated_kW = self.resample_time_data(data_normalized)
 
         return PV_hourly_aggregated_kW
 
@@ -146,14 +130,13 @@ class SolarTechnologyPotentialsPlotBase(cea.plots.PlotBase):
         return pv_hourly_aggregated_kW
 
     # FOR SOLAR COLLECTORS
-    @cea.plots.cache.cached
     def SC_ET_hourly_aggregated_kW(self):
         data = self._calculate_SC_ET_hourly_aggregated_kW()
         data_normalized = self.normalize_data(data,
                                               self.buildings,
                                               self.sc_et_analysis_fields,
                                               self.sc_et_analysis_fields_area)
-        SC_et_hourly_aggregated_kW = self.timeframe_data(data_normalized)
+        SC_et_hourly_aggregated_kW = self.resample_time_data(data_normalized)
 
         return SC_et_hourly_aggregated_kW
 
