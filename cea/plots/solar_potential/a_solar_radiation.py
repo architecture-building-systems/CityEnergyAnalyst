@@ -44,19 +44,21 @@ class SolarRadiationPlot(cea.plots.solar_potential.SolarPotentialPlotBase):
         if set(self.buildings) != set(self.locator.get_zone_building_names()):
             if len(self.buildings) == 1:
                 if self.normalization == "none":
-                    return "%s for Building %s " % (self.name, self.buildings[0])
+                    return "%s for Building %s (%s)" % (self.name, self.buildings[0], self.timeframe)
                 else:
-                    return "%s for Building %s normalized to %s" % (self.name, self.buildings[0], self.normalization)
+                    return "%s for Building %s normalized to %s (%s)" % (
+                        self.name, self.buildings[0], self.normalization, self.timeframe)
             else:
                 if self.normalization == "none":
-                    return "%s for Selected Buildings" % self.name
+                    return "%s for Selected Buildings (%s)" % (self.name, self.timeframe)
                 else:
-                    return "%s for Selected Buildings normalized to %s" % (self.name, self.normalization)
+                    return "%s for Selected Buildings normalized to %s (%s)" % (
+                        self.name, self.normalization, self.timeframe)
         else:
             if self.normalization == "none":
-                return "%s for District" % self.name
+                return "%s for District (%s)" % (self.name, self.timeframe)
             else:
-                return "%s for District normalized to %s" % (self.name, self.normalization)
+                return "%s for District normalized to %s (%s)" % (self.name, self.normalization, self.timeframe)
 
     def calc_graph(self):
         data = self.solar_hourly_aggregated_kW()

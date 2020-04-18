@@ -11,6 +11,7 @@ import re
 import jinja2
 import plotly.graph_objs
 import plotly.offline
+import pandas as pd
 
 import cea.config
 import cea.inputlocator
@@ -55,9 +56,13 @@ class PlotBase(object):
             if parameter_name not in parameters:
                 try:
                     self.parameters[parameter_name] = cea.config.Configuration(cea.config.DEFAULT_CONFIG).get(
-                        'plots:{}'.format(parameter_name))
+                        self.expected_parameters[parameter_name])
                 except Exception:
+                    import traceback
+                    traceback.print_exc()
                     assert parameter_name in parameters, "Missing parameter {}".format(parameter_name)
+
+        self.timeframe = self.parameters['timeframe'] if 'timeframe' in self.expected_parameters else None
 
     def missing_input_files(self):
         """Return the list of missing input files for this plot"""
@@ -128,7 +133,7 @@ class PlotBase(object):
         """
         import numpy as np
         fields = [field for field in fields if field in data.columns]
-        return [field for field in fields if np.isclose(data[field].sum(), 1e-8)==False]
+        return [field for field in fields if np.isclose(data[field].sum(), 1e-8) == False]
 
     def calc_graph(self):
         """Calculate a plotly Data object as to be passed to the data attribute of Figure"""
@@ -141,7 +146,8 @@ class PlotBase(object):
     def plot(self, auto_open=False):
         """Plots the graphs to the filename (see output_path)"""
         if self.missing_input_files():
-            raise MissingInputDataException("Dear developer: Run check_input_files() first, before plotting!")
+            raise MissingInputDataException(
+                "Following input files are missing: {input_files}".format(input_files=self.missing_input_files()))
         # PLOT
         template_path = os.path.join(os.path.dirname(__file__), 'plot.html')
         template = jinja2.Template(open(template_path, 'r').read())
@@ -157,7 +163,8 @@ class PlotBase(object):
     def plot_div(self):
         """Return the plot as an html <div/> for use in the dashboard. Override this method in subclasses"""
         if self.missing_input_files():
-            raise MissingInputDataException("Dear developer: Run check_input_files() first, before plotting!")
+            raise MissingInputDataException(
+                "Following input files are missing: {input_files}".format(input_files=self.missing_input_files()))
         return self.cache.lookup_plot_div(self, self._plot_div_producer)
 
     def _plot_div_producer(self):
@@ -241,7 +248,8 @@ class PlotBase(object):
     def table_div(self):
         """Returns the html div for a table, or an empty string if no table is to be produced"""
         if self.missing_input_files():
-            raise MissingInputDataException("Dear developer: Run check_input_files() first, before plotting!")
+            raise MissingInputDataException(
+                "Following input files are missing: {input_files}".format(input_files=self.missing_input_files()))
         return self.cache.lookup_table_div(self, self._table_div_producer)
 
     def _table_div_producer(self):
@@ -277,3 +285,24 @@ class PlotBase(object):
                                          b in zone_building_names]
                                         or zone_building_names)
         return self.parameters['buildings']
+
+    def resample_time_data(self, dataframe):
+        if 'DATE' in dataframe.columns:
+            time_data = dataframe.set_index('DATE')
+        else:
+            time_data = dataframe.copy()
+
+        # Remove timezone data (found in technology potential files)
+        time_data.index = pd.to_datetime(time_data.index.map(lambda x: pd.Timestamp(x))).tz_localize(None)
+
+        if self.timeframe == "daily":
+            time_data = time_data.resample('D').sum()
+        elif self.timeframe == "weekly":
+            time_data = time_data.resample('W').sum()
+        elif self.timeframe == "monthly":
+            time_data = time_data.resample('M').sum()
+            time_data.index = time_data.index.strftime('%b %Y')
+        elif self.timeframe == "yearly":
+            time_data = time_data.resample('Y').sum()
+            time_data.index = time_data.index.strftime('Year %Y')
+        return time_data

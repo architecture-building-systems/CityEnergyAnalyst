@@ -30,7 +30,6 @@ class SCETPotentialPlot(cea.plots.technology_potentials.SolarTechnologyPotential
 
     def __init__(self, project, parameters, cache):
         super(SCETPotentialPlot, self).__init__(project, parameters, cache)
-        self.timeframe = self.parameters['timeframe']
         self.normalization = self.parameters['normalization']
         self.input_files = [(self.locator.SC_results, [building, 'ET']) for building in self.buildings]
 
@@ -59,19 +58,21 @@ class SCETPotentialPlot(cea.plots.technology_potentials.SolarTechnologyPotential
         if set(self.buildings) != set(self.locator.get_zone_building_names()):
             if len(self.buildings) == 1:
                 if self.normalization == "none":
-                    return "%s for Building %s " % (self.name, self.buildings[0])
+                    return "%s for Building %s (%s)" % (self.name, self.buildings[0], self.timeframe)
                 else:
-                    return "%s for Building %s normalized to %s" % (self.name, self.buildings[0], self.normalization)
+                    return "%s for Building %s normalized to %s (%s)" % (
+                        self.name, self.buildings[0], self.normalization, self.timeframe)
             else:
                 if self.normalization == "none":
-                    return "%s for Selected Buildings" % self.name
+                    return "%s for Selected Buildings (%s)" % (self.name, self.timeframe)
                 else:
-                    return "%s for Selected Buildings normalized to %s" % (self.name, self.normalization)
+                    return "%s for Selected Buildings normalized to %s (%s)" % (
+                        self.name, self.normalization, self.timeframe)
         else:
             if self.normalization == "none":
-                return "%s for District" % self.name
+                return "%s for District (%s)" % (self.name, self.timeframe)
             else:
-                return "%s for District normalized to %s" % (self.name, self.normalization)
+                return "%s for District normalized to %s (%s)" % (self.name, self.normalization, self.timeframe)
 
     def calc_graph(self):
         data = self.SC_ET_hourly_aggregated_kW()
@@ -84,7 +85,7 @@ class SCETPotentialPlot(cea.plots.technology_potentials.SolarTechnologyPotential
                 y = data[field].values / 1E3  # to MW
 
             name = NAMING[field]
-            trace = go.Bar(x=data.index, y=y, name=name, marker=dict(color=COLOR[field]),showlegend=True)
+            trace = go.Bar(x=data.index, y=y, name=name, marker=dict(color=COLOR[field]), showlegend=True)
             traces.append(trace)
         return traces
 
@@ -98,19 +99,19 @@ def main():
     locator = cea.inputlocator.InputLocator(config.scenario)
     cache = cea.plots.cache.PlotCache(config.project)
     SCETPotentialPlot(config.project, {'buildings': None,
-                                     'scenario-name': config.scenario_name,
-                                     'timeframe': config.plots.timeframe,
-                                     'normalization': config.plots.normalization},
+                                       'scenario-name': config.scenario_name,
+                                       'timeframe': config.plots.timeframe,
+                                       'normalization': config.plots.normalization},
                       cache).plot(auto_open=True)
     SCETPotentialPlot(config.project, {'buildings': locator.get_zone_building_names()[0:2],
-                                     'scenario-name': config.scenario_name,
-                                     'timeframe': config.plots.timeframe,
-                                     'normalization': config.plots.normalization},
+                                       'scenario-name': config.scenario_name,
+                                       'timeframe': config.plots.timeframe,
+                                       'normalization': config.plots.normalization},
                       cache).plot(auto_open=True)
     SCETPotentialPlot(config.project, {'buildings': [locator.get_zone_building_names()[0]],
-                                     'scenario-name': config.scenario_name,
-                                     'timeframe': config.plots.timeframe,
-                                     'normalization': config.plots.normalization},
+                                       'scenario-name': config.scenario_name,
+                                       'timeframe': config.plots.timeframe,
+                                       'normalization': config.plots.normalization},
                       cache).plot(auto_open=True)
 
 

@@ -5,6 +5,7 @@ it is highly recommended to keep those constants in a separate file in the subfo
 declare the constants closest to the point of usage.
 """
 from __future__ import absolute_import
+from __future__ import division
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -14,6 +15,11 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
+
+
+#Shapefiles precision of decimals
+SHAPEFILE_TOLERANCE = 6 #this is precision of milimiters
+SNAP_TOLERANCE = 0.1 # this is precision in meters increase if having problems.
 
 HEAT_CAPACITY_OF_WATER_VAPOR_JPERKGK = 1859  # specific heat capacity of water vapor in KJ/kgK
 ASPECT_RATIO = 3.3  # tank height aspect ratio, H=(4*V*AR^2/pi)^(1/3), taken from commercial tank geometry (jenni.ch)

@@ -36,7 +36,6 @@ class LoadCurvePlot(cea.plots.demand.DemandPlotBase):
                                 "Qcs_sys_kWh",
                                 'Qcdata_sys_kWh',
                                 'Qcre_sys_kWh']
-        self.timeframe = self.parameters['timeframe']
 
     @property
     def layout(self):

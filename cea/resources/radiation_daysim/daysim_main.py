@@ -155,7 +155,7 @@ def calc_sensors_zone(geometry_3D_zone, locator, settings):
     return sensors_coords_zone, sensors_dir_zone, sensors_total_number_list, names_zone, sensors_code_zone, sensor_intersection_zone
 
 
-def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, settings, max_global, weatherfile):
+def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, settings, max_global, weatherfile, debug=False):
     # folder for data work
     daysim_dir = locator.get_temporary_file("temp" + str(chunk_n))
     print('isolation_daysim: daysim_dir={daysim_dir}'.format(daysim_dir=daysim_dir))
@@ -228,51 +228,60 @@ def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, settings, max_glob
                                             sensors_number_zone,
                                             sensors_code_zone,
                                             sensor_intersection_zone):
-        # select sensors and plot to disk
+        # select sensors data
         selection_of_results = solar_res[index:index + sensors_number_building]
-        result = [(array * (1.0 - scalar)).tolist() for array, scalar in
+        result = [(array * (1.0 - intersection)).tolist() for array, intersection in
                   zip(selection_of_results, sensor_intersection_building)]
         items_sensor_name_and_result = dict(zip(sensor_code_building, result))
-        with open(locator.get_radiation_building_sensors(building_name), 'w') as outfile:
-            json.dump(items_sensor_name_and_result, outfile)
         index = index + sensors_number_building
 
         # create summary and save to disk
-        geometry = pd.read_csv(locator.get_radiation_metadata(building_name))
-        geometry['code'] = geometry['TYPE'] + '_' + geometry['orientation'] + '_kW'
-        solar_analysis_fields = ['windows_east_kW',
-                                 'windows_west_kW',
-                                 'windows_south_kW',
-                                 'windows_north_kW',
-                                 'walls_east_kW',
-                                 'walls_west_kW',
-                                 'walls_south_kW',
-                                 'walls_north_kW',
-                                 'roofs_top_kW']
-        solar_analysis_fields_area = ['windows_east_m2',
-                                      'windows_west_m2',
-                                      'windows_south_m2',
-                                      'windows_north_m2',
-                                      'walls_east_m2',
-                                      'walls_west_m2',
-                                      'walls_south_m2',
-                                      'walls_north_m2',
-                                      'roofs_top_m2']
-        dict_not_aggregated = {}
-        for field, field_area in zip(solar_analysis_fields, solar_analysis_fields_area):
-            select_sensors = geometry.loc[geometry['code'] == field].set_index('SURFACE')
-            area_m2 = select_sensors['AREA_m2'].sum()
-            array_field = np.array([select_sensors.ix[surface, 'AREA_m2'] *
-                                    np.array(items_sensor_name_and_result[surface])
-                                    for surface in select_sensors.index]).sum(axis=0)
-            dict_not_aggregated[field] = array_field / 1000  # in kWh
-            dict_not_aggregated[field_area] = area_m2
+        write_aggregated_results(building_name, items_sensor_name_and_result, locator, weatherfile)
 
-        data_aggregated_kW = (pd.DataFrame(dict_not_aggregated)).round(2)
-        data_aggregated_kW["Date"] = weatherfile["date"]
-        data_aggregated_kW.set_index('Date', inplace=True)
-        data_aggregated_kW.to_csv(locator.get_radiation_building(building_name))
+        if debug:
+            write_sensor_results(building_name, items_sensor_name_and_result, locator)
 
     # erase daysim folder to avoid conflicts after every iteration
     print('Removing results folder')
     shutil.rmtree(daysim_dir)
+
+
+def write_sensor_results(building_name, items_sensor_name_and_result, locator):
+    with open(locator.get_radiation_building_sensors(building_name), 'w') as outfile:
+        json.dump(items_sensor_name_and_result, outfile)
+
+
+def write_aggregated_results(building_name, items_sensor_name_and_result, locator, weatherfile):
+    geometry = pd.read_csv(locator.get_radiation_metadata(building_name))
+    geometry['code'] = geometry['TYPE'] + '_' + geometry['orientation'] + '_kW'
+    solar_analysis_fields = ['windows_east_kW',
+                             'windows_west_kW',
+                             'windows_south_kW',
+                             'windows_north_kW',
+                             'walls_east_kW',
+                             'walls_west_kW',
+                             'walls_south_kW',
+                             'walls_north_kW',
+                             'roofs_top_kW']
+    solar_analysis_fields_area = ['windows_east_m2',
+                                  'windows_west_m2',
+                                  'windows_south_m2',
+                                  'windows_north_m2',
+                                  'walls_east_m2',
+                                  'walls_west_m2',
+                                  'walls_south_m2',
+                                  'walls_north_m2',
+                                  'roofs_top_m2']
+    dict_not_aggregated = {}
+    for field, field_area in zip(solar_analysis_fields, solar_analysis_fields_area):
+        select_sensors = geometry.loc[geometry['code'] == field].set_index('SURFACE')
+        area_m2 = select_sensors['AREA_m2'].sum()
+        array_field = np.array([select_sensors.ix[surface, 'AREA_m2'] *
+                                np.array(items_sensor_name_and_result[surface])
+                                for surface in select_sensors.index]).sum(axis=0)
+        dict_not_aggregated[field] = array_field / 1000  # in kWh
+        dict_not_aggregated[field_area] = area_m2
+    data_aggregated_kW = (pd.DataFrame(dict_not_aggregated)).round(2)
+    data_aggregated_kW["Date"] = weatherfile["date"]
+    data_aggregated_kW.set_index('Date', inplace=True)
+    data_aggregated_kW.to_csv(locator.get_radiation_building(building_name))

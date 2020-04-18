@@ -1,17 +1,17 @@
-digraph trace_inputlocator {
+digraph archetypes_mapper {
     rankdir="LR";
     graph [overlap=false, fontname=arial];
     node [shape=box, style=filled, color=white, fontsize=15, fontname=arial, fixedsize=true, width=5];
     edge [fontname=arial, fontsize = 15]
     newrank=true
     subgraph cluster_legend {
-    fontsize=25
-    style=invis
-    "process"[style=filled, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname="arial"]
-    "inputs" [style=filled, shape=folder, color=white, fillcolor="#E1F2F2", fontsize=20]
-    "outputs"[style=filled, shape=folder, color=white, fillcolor="#aadcdd", fontsize=20]
-    "inputs"->"process"[style=invis]
-    "process"->"outputs"[style=invis]
+        fontsize=25
+        style=invis
+        "process"[style=filled, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname="arial"]
+        "inputs" [style=filled, shape=folder, color=white, fillcolor="#E1F2F2", fontsize=20]
+        "outputs"[style=filled, shape=folder, color=white, fillcolor="#aadcdd", fontsize=20]
+        "inputs"->"process"[style=invis]
+        "process"->"outputs"[style=invis]
     }
     "archetypes_mapper"[style=filled, color=white, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname=arial];
     subgraph cluster_0_in {
@@ -19,141 +19,70 @@ digraph trace_inputlocator {
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="building-geometry";
-        "surroundings.shp"
-        "zone.shp"
+        label="inputs/building-geometry";
+        get_zone_geometry[label="zone.shp"];
     }
     subgraph cluster_1_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="building-properties";
-        "typology.dbf"
+        label="inputs/building-properties";
+        get_building_typology[label="typology.dbf"];
     }
     subgraph cluster_1_out {
         style = filled;
         color = "#aadcdd";
         fontsize = 20;
         rank=same;
-        label="building-properties";
-        "air_conditioning_systems.dbf"
-        "architecture.dbf"
-        "indoor_comfort.dbf"
-        "internal_loads.dbf"
-        "supply_systems.dbf"
+        label="inputs/building-properties";
+        get_building_air_conditioning[label="air_conditioning_systems.dbf"];
+        get_building_architecture[label="architecture.dbf"];
+        get_building_comfort[label="indoor_comfort.dbf"];
+        get_building_internal[label="internal_loads.dbf"];
+        get_building_supply[label="supply_systems.dbf"];
     }
     subgraph cluster_2_out {
         style = filled;
         color = "#aadcdd";
         fontsize = 20;
         rank=same;
-        label="building-properties/schedules";
-        "B001.csv"
+        label="inputs/building-properties/schedules";
+        get_building_weekly_schedules[label="B001.csv"];
     }
     subgraph cluster_3_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="data/optimization/network";
-        "DH_Network_summary_result_0x19b.csv"
+        label="inputs/technology/archetypes";
+        get_database_construction_standards[label="CONSTRUCTION_STANDARDS.xlsx"];
     }
     subgraph cluster_4_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="networks";
-        "streets.shp"
+        label="technology/archetypes/schedules";
+        get_database_standard_schedules_use[label="{use}.csv"];
     }
     subgraph cluster_5_in {
         style = filled;
         color = "#E1F2F2";
         fontsize = 20;
         rank=same;
-        label="technology/archetypes";
-        "CONSTRUCTION_STANDARDS.xlsx"
-    }
-    subgraph cluster_6_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="technology/archetypes/schedules";
-        "RESTAURANT.csv"
-    }
-    subgraph cluster_7_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
         label="technology/archetypes/use_types";
-        "USE_TYPE_PROPERTIES.xlsx"
+        get_database_use_types_properties[label="USE_TYPE_PROPERTIES.xlsx"];
     }
-    subgraph cluster_8_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="technology/assemblies";
-        "supply.xls"
-    }
-    subgraph cluster_9_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="technology/feedstocks";
-        "feedstocks.xls"
-    }
-    subgraph cluster_10_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="technology/systems";
-        "air_conditioning_systems.xls"
-        "supply_systems.xls"
-        "distribution_systems.xls"
-        "envelope_systems.xls"
-    }
-    subgraph cluster_11_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="topography";
-        "terrain.tif"
-    }
-    subgraph cluster_12_in {
-        style = filled;
-        color = "#E1F2F2";
-        fontsize = 20;
-        rank=same;
-        label="weather";
-        "Zug-inducity_1990_2010_TMY.epw"
-    }
-    "typology.dbf" -> "archetypes_mapper"[label="(get_building_typology)"]
-    "air_conditioning_systems.xls" -> "archetypes_mapper"[label="(get_database_air_conditioning_systems)"]
-    "CONSTRUCTION_STANDARDS.xlsx" -> "archetypes_mapper"[label="(get_database_construction_standards)"]
-    "supply_systems.xls" -> "archetypes_mapper"[label="(get_database_conversion_systems)"]
-    "distribution_systems.xls" -> "archetypes_mapper"[label="(get_database_distribution_systems)"]
-    "envelope_systems.xls" -> "archetypes_mapper"[label="(get_database_envelope_systems)"]
-    "feedstocks.xls" -> "archetypes_mapper"[label="(get_database_feedstocks)"]
-    "RESTAURANT.csv" -> "archetypes_mapper"[label="(get_database_standard_schedules_use)"]
-    "supply.xls" -> "archetypes_mapper"[label="(get_database_supply_assemblies)"]
-    "USE_TYPE_PROPERTIES.xlsx" -> "archetypes_mapper"[label="(get_database_use_types_properties)"]
-    "DH_Network_summary_result_0x19b.csv" -> "archetypes_mapper"[label="(get_optimization_thermal_network_data_file)"]
-    "streets.shp" -> "archetypes_mapper"[label="(get_street_network)"]
-    "surroundings.shp" -> "archetypes_mapper"[label="(get_surroundings_geometry)"]
-    "terrain.tif" -> "archetypes_mapper"[label="(get_terrain)"]
-    "Zug-inducity_1990_2010_TMY.epw" -> "archetypes_mapper"[label="(get_weather)"]
-    "zone.shp" -> "archetypes_mapper"[label="(get_zone_geometry)"]
-    "archetypes_mapper" -> "air_conditioning_systems.dbf"[label="(get_building_air_conditioning)"]
-    "archetypes_mapper" -> "architecture.dbf"[label="(get_building_architecture)"]
-    "archetypes_mapper" -> "indoor_comfort.dbf"[label="(get_building_comfort)"]
-    "archetypes_mapper" -> "internal_loads.dbf"[label="(get_building_internal)"]
-    "archetypes_mapper" -> "supply_systems.dbf"[label="(get_building_supply)"]
-    "archetypes_mapper" -> "B001.csv"[label="(get_building_weekly_schedules)"]
+    get_building_typology -> "archetypes_mapper"[label="(get_building_typology)"];
+    get_database_construction_standards -> "archetypes_mapper"[label="(get_database_construction_standards)"];
+    get_database_standard_schedules_use -> "archetypes_mapper"[label="(get_database_standard_schedules_use)"];
+    get_database_use_types_properties -> "archetypes_mapper"[label="(get_database_use_types_properties)"];
+    get_zone_geometry -> "archetypes_mapper"[label="(get_zone_geometry)"];
+    "archetypes_mapper" -> get_building_air_conditioning[label="(get_building_air_conditioning)"];
+    "archetypes_mapper" -> get_building_architecture[label="(get_building_architecture)"];
+    "archetypes_mapper" -> get_building_comfort[label="(get_building_comfort)"];
+    "archetypes_mapper" -> get_building_internal[label="(get_building_internal)"];
+    "archetypes_mapper" -> get_building_supply[label="(get_building_supply)"];
+    "archetypes_mapper" -> get_building_weekly_schedules[label="(get_building_weekly_schedules)"];
     }
