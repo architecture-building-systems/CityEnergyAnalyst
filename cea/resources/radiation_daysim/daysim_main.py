@@ -155,7 +155,7 @@ def calc_sensors_zone(geometry_3D_zone, locator, settings):
     return sensors_coords_zone, sensors_dir_zone, sensors_total_number_list, names_zone, sensors_code_zone, sensor_intersection_zone
 
 
-def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, settings, max_global, weatherfile, debug=False):
+def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, settings, max_global, weatherfile):
     # folder for data work
     daysim_dir = locator.get_temporary_file("temp" + str(chunk_n))
     print('isolation_daysim: daysim_dir={daysim_dir}'.format(daysim_dir=daysim_dir))
@@ -238,7 +238,7 @@ def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, settings, max_glob
         # create summary and save to disk
         write_aggregated_results(building_name, items_sensor_name_and_result, locator, weatherfile)
 
-        if debug:
+        if settings.write_sensor_data:
             write_sensor_results(building_name, items_sensor_name_and_result, locator)
 
     # erase daysim folder to avoid conflicts after every iteration

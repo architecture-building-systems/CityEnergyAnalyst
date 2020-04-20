@@ -163,7 +163,7 @@ def reader_surface_properties(locator, input_shp):
     return surface_properties.set_index('Name').round(decimals=2)
 
 
-def radiation_singleprocessing(rad, geometry_3D_zone, locator, settings, debug=False):
+def radiation_singleprocessing(rad, geometry_3D_zone, locator, settings):
 
     weather_path = locator.get_weather_file()
     # check inconsistencies and replace by max value of weather file
@@ -183,7 +183,7 @@ def radiation_singleprocessing(rad, geometry_3D_zone, locator, settings, debug=F
                 chunks.append([bldg_dict])
 
     for chunk_n, building_dict in enumerate(chunks):
-        daysim_main.isolation_daysim(chunk_n, rad, building_dict, locator, settings, max_global, weatherfile, debug)
+        daysim_main.isolation_daysim(chunk_n, rad, building_dict, locator, settings, max_global, weatherfile)
 
 
 def check_daysim_bin_directory(path_hint):
@@ -499,7 +499,7 @@ def main(config):
     print("\tradiation_main: rad.rad_file_path: {}".format(rad.rad_file_path))
 
     time1 = time.time()
-    radiation_singleprocessing(rad, geometry_3D_zone, locator, config.radiation, config.debug)
+    radiation_singleprocessing(rad, geometry_3D_zone, locator, config.radiation)
 
     print("Daysim simulation finished in %.2f mins" % ((time.time() - time1) / 60.0))
 
