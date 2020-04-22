@@ -1,9 +1,9 @@
 import os
-import shutil
-import tempfile
 import unittest
 import cea.config
 import cea.inputlocator
+from cea import MissingInputDataException
+
 
 class TestCheckForRadiationInputInDemandScript(unittest.TestCase):
     """
@@ -27,5 +27,5 @@ class TestCheckForRadiationInputInDemandScript(unittest.TestCase):
 
         config = cea.config.Configuration(config_file=cea.config.DEFAULT_CONFIG)
         config.scenario = locator.scenario
-        self.assertRaises(ValueError, cea.demand.demand_main.main, config=config)
+        self.assertRaises(MissingInputDataException, cea.demand.demand_main.main, config=config)
         cea.inputlocator.ReferenceCaseOpenLocator.already_extracted = False
