@@ -49,12 +49,12 @@ class NetworkLayoutOperationPeak(cea.plots.thermal_networks.ThermalNetworksMapPl
         edges_df["Peak pressure loss [kPa/m]"] = P_loss_kPaperm_peak.values
         edges_df["Peak mass flow rate [kg/s]"] = Mass_flow_kgs_peak.values
 
-        if self.velocity_mps_pipes is not None: #backward compatibility with detailed thermal network (which does not include this output)
+        if self.velocity_mps_pipes is not None:  # backward compatibility with detailed thermal network (which does not include this output)
             velocity_ms_peak = self.velocity_mps_pipes.max().round(1)  # in kgs
             edges_df["Peak velocity [m/s]"] = velocity_ms_peak.values
 
         # color the edges based on aggregated pipe heat loss
-        if self.thermal_loss_edges_Wperm is not None: #backward compatibility with detailed thermal network (which does not include this output)
+        if self.thermal_loss_edges_Wperm is not None:  # backward compatibility with detailed thermal network (which does not include this output)
             yearly_thermal_loss = (self.thermal_loss_edges_Wperm.max()).round(2)
             edges_df["Peak Thermal losses [W/m]"] = yearly_thermal_loss.values
 

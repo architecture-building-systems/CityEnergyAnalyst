@@ -4,8 +4,7 @@ inputlocator.py - locate input files by name based on the reference folder struc
 import os
 import shutil
 import tempfile
-
-import cea.config
+import time
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -35,7 +34,12 @@ class InputLocator(object):
         If it doesn't exist yet, attempt to make it with `os.makedirs`."""
         folder = os.path.join(*components)
         if not os.path.exists(folder):
-            os.makedirs(folder)
+            try:
+                os.makedirs(folder)
+            except OSError as e:
+                time.sleep(0.5)
+                if not os.path.exists(folder):
+                    raise e
         return folder
 
     def ensure_parent_folder_exists(self, file_path):
@@ -558,7 +562,7 @@ class InputLocator(object):
         if os.path.exists(nodes_csv):
             import pandas as pd
             nodes_df = pd.read_csv(nodes_csv)
-            return list(nodes_df[nodes_df['Type'] == 'PLANT']['Name'].values)
+            return list(nodes_df[nodes_df['Type'] == 'PLANT']['Building'].values)
         return []
 
     def get_thermal_network_edge_list_file(self, network_type, network_name=''):
