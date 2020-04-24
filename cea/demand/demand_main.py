@@ -13,6 +13,7 @@ import cea.config
 import cea.inputlocator
 import cea.utilities.parallel
 import demand_writers
+from cea import MissingInputDataException
 from cea.demand import thermal_loads
 from cea.demand.building_properties import BuildingProperties
 from cea.utilities import epwreader
@@ -147,20 +148,19 @@ def main(config):
           config.demand.use_dynamic_infiltration_calculation)
     print('Running demand calculation with multiprocessing=%s' % config.multiprocessing)
     if config.debug:
-        print('Running demand in debug mode: Instant visulaization of tsd activated.')
+        print('Running demand in debug mode: Instant visualization of tsd activated.')
         print('Running demand calculation with write detailed output')
 
-    if not radiation_files_exist(config, locator):
-        raise ValueError("Missing radiation data in scenario. Consider running radiation script first.")
+    if not radiation_files_exist(locator):
+        raise MissingInputDataException("Missing radiation data in scenario. Consider running radiation script first.")
 
     demand_calculation(locator=locator, config=config)
 
 
-def radiation_files_exist(config, locator):
+def radiation_files_exist(locator):
     # verify that the necessary radiation files exist
     def daysim_results_exist(building_name):
-        return os.path.exists(locator.get_radiation_metadata(building_name)) and os.path.exists(
-            locator.get_radiation_building_sensors(building_name))
+        return os.path.exists(locator.get_radiation_building(building_name))
 
     return all(daysim_results_exist(building_name) for building_name in locator.get_zone_building_names())
 

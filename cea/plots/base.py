@@ -11,6 +11,7 @@ import re
 import jinja2
 import plotly.graph_objs
 import plotly.offline
+import pandas as pd
 
 import cea.config
 import cea.inputlocator
@@ -60,6 +61,8 @@ class PlotBase(object):
                     import traceback
                     traceback.print_exc()
                     assert parameter_name in parameters, "Missing parameter {}".format(parameter_name)
+
+        self.timeframe = self.parameters['timeframe'] if 'timeframe' in self.expected_parameters else None
 
     def missing_input_files(self):
         """Return the list of missing input files for this plot"""
@@ -130,7 +133,7 @@ class PlotBase(object):
         """
         import numpy as np
         fields = [field for field in fields if field in data.columns]
-        return [field for field in fields if np.isclose(data[field].sum(), 1e-8)==False]
+        return [field for field in fields if np.isclose(data[field].sum(), 1e-8) == False]
 
     def calc_graph(self):
         """Calculate a plotly Data object as to be passed to the data attribute of Figure"""
@@ -282,3 +285,24 @@ class PlotBase(object):
                                          b in zone_building_names]
                                         or zone_building_names)
         return self.parameters['buildings']
+
+    def resample_time_data(self, dataframe):
+        if 'DATE' in dataframe.columns:
+            time_data = dataframe.set_index('DATE')
+        else:
+            time_data = dataframe.copy()
+
+        # Remove timezone data (found in technology potential files)
+        time_data.index = pd.to_datetime(time_data.index.map(lambda x: pd.Timestamp(x))).tz_localize(None)
+
+        if self.timeframe == "daily":
+            time_data = time_data.resample('D').sum()
+        elif self.timeframe == "weekly":
+            time_data = time_data.resample('W').sum()
+        elif self.timeframe == "monthly":
+            time_data = time_data.resample('M').sum()
+            time_data.index = time_data.index.strftime('%b %Y')
+        elif self.timeframe == "yearly":
+            time_data = time_data.resample('Y').sum()
+            time_data.index = time_data.index.strftime('Year %Y')
+        return time_data

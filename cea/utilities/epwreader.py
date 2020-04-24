@@ -6,7 +6,7 @@ import pandas as pd
 import math
 import cea.inputlocator
 import numpy as np
-from cea.constants import BOLTZMANN, KELVIN_OFFSET
+from cea.constants import BOLTZMANN, KELVIN_OFFSET, HOURS_IN_YEAR
 from calendar import isleap
 
 __author__ = "Clayton Miller"
@@ -17,6 +17,8 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
+
+from cea.utilities.date import get_date_range_hours_from_year
 
 
 def epw_to_dataframe(weather_path):
@@ -32,21 +34,34 @@ def epw_to_dataframe(weather_path):
 
 
 def epw_reader(weather_path):
-    result = epw_to_dataframe(weather_path)
+    epw_data = epw_to_dataframe(weather_path)
 
-    year = result["year"][0]
-    date_range = pd.date_range(start=str(year), end=str(year + 1), freq='H', closed='left')
-    result['date'] = date_range
-    result['dayofyear'] = date_range.dayofyear
+    year = epw_data["year"][0]
+    # Create date range from epw data
+    date_range = pd.DatetimeIndex(
+        pd.to_datetime(dict(year=epw_data.year, month=epw_data.month, day=epw_data.day, hour=epw_data.hour - 1))
+    )
+    epw_data['date'] = date_range
+    epw_data['dayofyear'] = date_range.dayofyear
     if isleap(year):
-        result = result[~((date_range.month == 2) & (date_range.day == 29))].reset_index()
+        epw_data = epw_data[~((date_range.month == 2) & (date_range.day == 29))].reset_index()
 
-    result['ratio_diffhout'] = result['difhorrad_Whm2'] / result['glohorrad_Whm2']
-    result['ratio_diffhout'] = result['ratio_diffhout'].replace(np.inf, np.nan)
-    result['wetbulb_C'] = np.vectorize(calc_wetbulb)(result['drybulb_C'], result['relhum_percent'])
-    result['skytemp_C'] = np.vectorize(calc_skytemp)(result['drybulb_C'], result['dewpoint_C'], result['opaqskycvr_tenths'])
+    # Make sure data has the correct number of rows
+    if len(epw_data) != HOURS_IN_YEAR:
+        # Check for missing dates from expected date range
+        expected_date_index = get_date_range_hours_from_year(year)
+        difference = expected_date_index.difference(epw_data.index)
+        if len(difference):
+            print('Dates missing:', difference)
+        raise Exception('Incorrect number of rows. Expected {}, got {}'.format(HOURS_IN_YEAR, len(epw_data)))
 
-    return result
+    epw_data['ratio_diffhout'] = epw_data['difhorrad_Whm2'] / epw_data['glohorrad_Whm2']
+    epw_data['ratio_diffhout'] = epw_data['ratio_diffhout'].replace(np.inf, np.nan)
+    epw_data['wetbulb_C'] = np.vectorize(calc_wetbulb)(epw_data['drybulb_C'], epw_data['relhum_percent'])
+    epw_data['skytemp_C'] = np.vectorize(calc_skytemp)(epw_data['drybulb_C'], epw_data['dewpoint_C'],
+                                                       epw_data['opaqskycvr_tenths'])
+
+    return epw_data
 
 
 def calc_skytemp(Tdrybulb, Tdewpoint, N):
@@ -62,7 +77,8 @@ def calc_skytemp(Tdrybulb, Tdewpoint, N):
     :return: sky temperature [C]
     """
 
-    sky_e = (0.787 + 0.764 * math.log((Tdewpoint + KELVIN_OFFSET) / KELVIN_OFFSET)) * (1 + 0.0224 * N - 0.0035 * N ** 2 + 0.00028 * N ** 3)
+    sky_e = (0.787 + 0.764 * math.log((Tdewpoint + KELVIN_OFFSET) / KELVIN_OFFSET)) * (
+            1 + 0.0224 * N - 0.0035 * N ** 2 + 0.00028 * N ** 3)
     hor_IR = sky_e * BOLTZMANN * (Tdrybulb + KELVIN_OFFSET) ** 4
     sky_T = ((hor_IR / BOLTZMANN) ** 0.25) - KELVIN_OFFSET
 
@@ -71,7 +87,7 @@ def calc_skytemp(Tdrybulb, Tdewpoint, N):
 
 def calc_wetbulb(Tdrybulb, RH):
     Tw = Tdrybulb * math.atan(0.151977 * ((RH + 8.313659) ** (0.5))) + math.atan(Tdrybulb + RH) - math.atan(
-        RH - 1.676331) + (0.00391838 * (RH** (3 / 2))) * math.atan(0.023101*RH) - 4.686035
+        RH - 1.676331) + (0.00391838 * (RH ** (3 / 2))) * math.atan(0.023101 * RH) - 4.686035
 
     return Tw  # wetbulb temperature in C
 
@@ -79,8 +95,11 @@ def calc_wetbulb(Tdrybulb, RH):
 def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     # for the interface, the user should pick a file out of of those in ...DB/Weather/...
-    epw_reader(weather_path=(locator.get_weather_file()))
+    epw_data = epw_reader(weather_path=(locator.get_weather_file()))
+    print(epw_data)
 
 
 if __name__ == '__main__':
+    import cea.config
+
     main(cea.config.Configuration())
