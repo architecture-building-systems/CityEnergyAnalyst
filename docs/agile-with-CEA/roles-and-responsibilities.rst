@@ -24,7 +24,7 @@ Responsibilities
 
 Engagement
 **********
-#. Participate in the :doc:`Events`.
+#. Participate in the :doc:`events`.
 
 Product Owner (PO)
 -------------------
@@ -44,7 +44,7 @@ The means to communication to the customers include:
     * Maintaining cea@arch.ethz.ch
     * Distributing Newsletters
 
-2. Coordinate the :doc:`Events`.
+2. Coordinate the :doc:`events`.
 
 3. Break down the overall vision into feasible and tactical pieces of work for the development team to understand and create.
 
