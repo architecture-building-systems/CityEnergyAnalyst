@@ -92,7 +92,7 @@ Responsibilities
 Development Team (DT)
 ---------------------
 
-The Development team is the group of individuals who build CEA. His/her main responsabilities are:
+The Development team is the group of individuals who build CEA. His/her main responsibilities are:
 
 #. Create the best working software possible.
 #. Design, analyze, develop, test and document new features in CEA.
