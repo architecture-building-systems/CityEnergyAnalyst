@@ -158,6 +158,7 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.viewcode',
               'sphinx.ext.graphviz',
               'sphinx.ext.intersphinx',
+              'sphinx.ext.autosectionlabel'
               # 'sphinx.ext.githubpages',
               ]
 
