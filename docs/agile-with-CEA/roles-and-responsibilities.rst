@@ -44,7 +44,7 @@ The means to communication to the customers include:
     * Maintaining cea@arch.ethz.ch
     * Distributing Newsletters
 
-2. Coordinate the :ref:`Roadmap planning and Review Event <activities:theevent>`.
+2. Coordinate the :ref:`activities:Roadmap planning and review event`.
 
 3. Break down the overall vision into feasible and tactical pieces of work for the development team to understand and create.
 
