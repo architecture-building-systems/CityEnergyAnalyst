@@ -82,7 +82,7 @@ Attendees: Scrum Master and Development Team.
 
 Roadmap planning and review event
 ---------------------------------
-.. _link-event:
+.. _theevent:
 
 * Duration: 1 - 2 hours.
 * Frequency: quarterly
@@ -92,7 +92,8 @@ Roadmap planning and review event
     #. Planning for the next quarter.
 
 Attendees: Scrum Master, Product Owner, Product Sponsor, and Development Team.
-Note: While this event is mainly an update to the product sponsors, it is also open to the entire CEA team and the customer team.
+
+NOTE: While this event is mainly an update to the product sponsors, it is also open to the entire CEA team and the customer team.
 
 Retrospective
 -------------
