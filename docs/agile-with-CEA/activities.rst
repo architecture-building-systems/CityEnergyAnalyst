@@ -80,9 +80,9 @@ the DT.
 
 Attendees: Scrum Master and Development Team.
 
+.. _theevent:
 Roadmap planning and review event
 ---------------------------------
-.. _theevent:
 
 * Duration: 1 - 2 hours.
 * Frequency: quarterly
