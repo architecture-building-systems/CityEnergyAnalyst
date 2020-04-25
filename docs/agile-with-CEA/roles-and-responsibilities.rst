@@ -24,7 +24,7 @@ Responsibilities
 
 Engagement
 **********
-#. Participate in the :doc:`events`.
+#. Participate in the :ref:`Roadmap planning and Review Event <activities:link-event>`.
 
 Product Owner (PO)
 -------------------

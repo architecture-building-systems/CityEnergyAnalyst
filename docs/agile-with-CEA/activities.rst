@@ -80,16 +80,19 @@ the DT.
 
 Attendees: Scrum Master and Development Team.
 
-Review event
--------------
+Roadmap planning and review event
+---------------------------------
+.. _link-event:
 
 * Duration: 1 - 2 hours.
-* Frequency: at the end of the sprint
-* Scope: Present a realtime DEMO and receive feedback of the Product Sponsor.
-
-NOTE: This is currently not being done as frequently as stated above - roughly every 2-3 Months.
+* Frequency: quarterly
+* Scope:
+    #. Demonstration of the newest development in the CEA.
+    #. Bottlenecks that are faced by the development team.
+    #. Planning for the next quarter.
 
 Attendees: Scrum Master, Product Owner, Product Sponsor, and Development Team.
+Note: While this event is mainly an update to the product sponsors, it is also open to the entire CEA team and the customer team.
 
 Retrospective
 -------------
