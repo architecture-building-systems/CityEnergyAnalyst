@@ -101,7 +101,7 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.GenerationPlotBase)
         ys = data_today[self.objectives[1]].values
         name = "Today"
         trace = go.Scattergl(x=xs, y=ys, mode='markers', name="Today's system", text=name,
-                             marker=dict(size='18', color='black', line=dict(color='black',width=2)))
+                             marker=dict(size=18, color='black', line=dict(color='black',width=2)))
         graph.append(trace)
 
         # PUT THE PARETO CURVE INSIDE
@@ -114,7 +114,7 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.GenerationPlotBase)
         individual_names = data['individual_name'].values
 
         trace = go.Scattergl(x=xs, y=ys, mode='markers', name='Pareto optimal systems', text=individual_names,
-                             marker=dict(size='18', color=zs,
+                             marker=dict(size=18, color=zs,
                                          colorbar=go.ColorBar(title=self.titlez, titleside='bottom'),
                                          colorscale='Jet', showscale=True, opacity=0.8))
         graph.append(trace)
@@ -125,7 +125,7 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.GenerationPlotBase)
         ys = final_dataframe[self.objectives[1]].values
         name = final_dataframe["Attribute"].values
         trace = go.Scattergl(x=xs, y=ys, mode='markers', name="Multi-criteria system", text=name,
-                             marker=dict(size='18', color='white', line=dict(
+                             marker=dict(size=18, color='white', line=dict(
                                  color='black',
                                  width=2)))
         graph.append(trace)
