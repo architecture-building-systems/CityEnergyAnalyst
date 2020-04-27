@@ -181,6 +181,14 @@ class PlotBase(object):
         fig['layout']['margin'].update(dict(l=50, r=50, t=50, b=50))
         fig['layout']['font'].update(dict(size=10))
 
+        if self.timeframe in ['daily', 'weekly']:
+            # Try to get plot year from data
+            try:
+                plot_year = fig['data'][0]['x'][0].year
+                fig['layout']['xaxis']['rangebreaks'] = [dict(values=["{year}-02-29".format(year=plot_year)])]
+            except Exception as e:
+                print(e)
+
         div = plotly.offline.plot(fig, output_type='div', include_plotlyjs=False, show_link=False)
         return div
 
