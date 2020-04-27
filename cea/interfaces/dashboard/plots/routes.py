@@ -52,6 +52,7 @@ def route_div(dashboard_index, plot_index):
         return render_missing_data(plot.missing_input_files())
     except NotImplementedError as e:
         return make_response('<p>{message}</p>'.format(message=e.message), 404)
+    # Remove parent <div> if exists due to plotly v4
     if plot_div.startswith("<div>"):
         plot_div = plot_div[5:-5].strip()
     # BUGFIX for (#2102 - Can't add the same plot twice in a dashboard)
