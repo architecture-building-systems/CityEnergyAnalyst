@@ -37,7 +37,7 @@ class PeakLoadCurvePlot(cea.plots.demand.DemandPlotBase):
             building_data = self.data.iloc[0]
             traces = []
             area = building_data["GFA_m2"]
-            x = ["Absolute [kW]", "Relative [kW/m2]"]
+            x = ["Absolute [kW]", "Relative [W/m2]"]
             for field in analysis_fields:
                 name = NAMING[field]
                 y = [building_data[field], building_data[field] / area * 1000]
