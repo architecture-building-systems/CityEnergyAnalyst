@@ -59,6 +59,7 @@ class ThermalNetwork(object):
                                   and, if it is a consumer or plant, the name of the corresponding building (2 x n)
     :ivar DataFrame edge_df:
     """
+    loops_cache = {}  # {edge_nodes_df.to_string(): find_loops(edge_nodes_df)
 
     def __init__(self, locator, network_name, thermal_network_section=None):
         self.locator = locator
@@ -298,6 +299,50 @@ class ThermalNetwork(object):
         self.edge_df = edge_df
         self.building_names = building_names
 
+    def find_loops(self, edge_node_df=None):
+        """
+        This function converts the input matrix into a networkx type graph and identifies all fundamental loops
+        of the network. The group of fundamental loops is defined as the series of linear independent loops which
+        can be combined to form all other loops.
+
+        :param pd.DataFrame edge_node_df: DataFrame consisting of n rows (number of nodes) and e columns (number of edges)
+                            and indicating the direction of flow of each edge e at node n: if e points to n,
+                            value is 1; if e leaves node n, -1; else, 0. E.g. a plant will only have exiting flows,
+                            so only negative values                               (n x e)
+
+        :return: loops: list of all fundamental loops in the network
+        :return: graph: networkx dictionary type graph of network
+
+        :rtype: loops: list
+        :rtype: graph: dictionary
+        """
+        if edge_node_df is None:
+            edge_node_df = self.edge_node_df
+
+        # check to see if we've already computed the loops
+        edge_node_str = edge_node_df.to_string()
+        if edge_node_str in ThermalNetwork.loops_cache:
+            return ThermalNetwork.loops_cache[edge_node_str]
+
+        edge_node_df_t = np.transpose(edge_node_df)  # transpose matrix to more intuitively setup graph
+
+        graph = nx.Graph()  # set up networkx type graph
+
+        for i in range(edge_node_df_t.shape[0]):
+            new_edge = [0, 0]
+            for j in range(0, edge_node_df_t.shape[1]):
+                if edge_node_df_t.iloc[i][edge_node_df_t.columns[j]] == 1:
+                    new_edge[0] = j
+                elif edge_node_df_t.iloc[i][edge_node_df_t.columns[j]] == -1:
+                    new_edge[1] = j
+            graph.add_edge(new_edge[0], new_edge[1], edge_number=i)  # add edges to graph
+            # edge number necessary to later identify which edges are in loop since graph is a dictionary
+
+        loops = nx.cycle_basis(graph, 0)  # identifies all linear independent loops
+
+        ThermalNetwork.loops_cache[edge_node_str] = (loops, graph)
+        return loops, graph
+
 
 # collect the results of each call to hourly_thermal_calculation in a record
 HourlyThermalResults = collections.namedtuple('HourlyThermalResults',
@@ -315,6 +360,7 @@ HourlyThermalResults = collections.namedtuple('HourlyThermalResults',
                                                'edge_mass_flows', 'node_mass_flows',
                                                'velocities_in_supply_edges_mpers',
                                                'pressure_loss_supply_edge_kW'])
+
 
 def thermal_network_main(locator, thermal_network, processes=1):
     """
@@ -964,7 +1010,7 @@ def hourly_thermal_calculation(t, thermal_network):
 # ===========================
 
 def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df, pipe_diameter_m, pipe_length_m,
-                         T_edge_K):
+                         T_edge_K, find_loops):
     """
     This function carries out the steady-state mass flow rate calculation for a predefined network with predefined mass
     flow rates at each substation based on the method from Todini et al. (1987), Ikonen et al. (2016), Oppelt et al.
@@ -981,6 +1027,8 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df, pi
     :param pipe_diameter_m: vector containing the pipe diameter in m for each edge e in the network      (e x 1)
     :param pipe_length_m: vector containing the length in m of each edge e in the network                (e x 1)
     :param T_edge_K: matrix containing the temperature of the water in each edge e at time t             (t x e)
+
+    :param find_loops: function that returns the loops in a thermal network
 
     :type all_nodes_df: DataFrame(t x n)
     :type edge_node_df: DataFrame
@@ -1116,44 +1164,6 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df, pi
 
     mass_flow_edge = np.round(mass_flow_edge, decimals=5)
     return mass_flow_edge
-
-
-def find_loops(edge_node_df):
-    """
-    This function converts the input matrix into a networkx type graph and identifies all fundamental loops
-    of the network. The group of fundamental loops is defined as the series of linear independent loops which
-    can be combined to form all other loops.
-
-    :param edge_node_df: DataFrame consisting of n rows (number of nodes) and e columns (number of edges)
-                        and indicating the direction of flow of each edge e at node n: if e points to n,
-                        value is 1; if e leaves node n, -1; else, 0. E.g. a plant will only have exiting flows,
-                        so only negative values                               (n x e)
-
-    :type edge_node_df: DataFrame
-
-    :return: loops: list of all fundamental loops in the network
-    :return: graph: networkx dictionary type graph of network
-
-    :rtype: loops: list
-    :rtype: graph: dictionary
-    """
-    edge_node_df_t = np.transpose(edge_node_df)  # transpose matrix to more intuitively setup graph
-
-    graph = nx.Graph()  # set up networkx type graph
-
-    for i in range(edge_node_df_t.shape[0]):
-        new_edge = [0, 0]
-        for j in range(0, edge_node_df_t.shape[1]):
-            if edge_node_df_t.iloc[i][edge_node_df_t.columns[j]] == 1:
-                new_edge[0] = j
-            elif edge_node_df_t.iloc[i][edge_node_df_t.columns[j]] == -1:
-                new_edge[1] = j
-        graph.add_edge(new_edge[0], new_edge[1], edge_number=i)  # add edges to graph
-        # edge number necessary to later identify which edges are in loop since graph is a dictionary
-
-    loops = nx.cycle_basis(graph, 0)  # identifies all linear independent loops
-
-    return loops, graph
 
 
 def calc_assign_diameter(max_flow, pipe_catalog):
@@ -1731,7 +1741,7 @@ def calc_max_edge_flowrate(thermal_network, processes=1):
             data=np.zeros((HOURS_IN_YEAR, len(thermal_network.building_names))),
             columns=thermal_network.building_names.values)  # stores values for 8760 timesteps
 
-    loops, graph = find_loops(thermal_network.edge_node_df)
+    loops, graph = thermal_network.find_loops()
 
     if loops:
         print('Fundamental loops in network: ', loops)
@@ -1941,7 +1951,8 @@ def hourly_mass_flow_calculation(t, diameter_guess, thermal_network):
             # solve mass flow rates on edges
             mass_flow_edges_for_t = calc_mass_flow_edges(thermal_network.edge_node_df.copy(), required_flow_rate_df,
                                                          thermal_network.all_nodes_df, diameter_guess,
-                                                         thermal_network.edge_df['pipe length'], T_edge_K_initial)
+                                                         thermal_network.edge_df['pipe length'], T_edge_K_initial,
+                                                         thermal_network.find_loops)
         else:
             mass_flow_edges_for_t = np.zeros(len(thermal_network.edge_node_df.columns))
 
@@ -2217,7 +2228,7 @@ def initial_diameter_guess(thermal_network):
                         calc_mass_flow_edges(thermal_network_reduced.edge_node_df.copy(), required_flow_rate_df,
                                              thermal_network_reduced.all_nodes_df,
                                              diameter_guess, thermal_network_reduced.edge_df['pipe length'].values,
-                                             T_edge_initial_K)]
+                                             T_edge_initial_K, thermal_network_reduced.find_loops)]
                     thermal_network_reduced.node_mass_flow_df[:][t:t + 1] = required_flow_rate_df.values
 
                 iteration, \
@@ -2395,7 +2406,9 @@ def solve_network_temperatures(thermal_network, t):
                                                                thermal_network.all_nodes_df,
                                                                thermal_network.pipe_properties[:][
                                                                'D_int_m':'D_int_m'].values[0],
-                                                               thermal_network.edge_df['pipe length'], t_edge__k)
+                                                               thermal_network.edge_df['pipe length'],
+                                                               t_edge__k,
+                                                               thermal_network.find_loops)
 
                 # make sure all mass flows are positive and edge node matrix is updated
                 edge_mass_flow_df_2_kgs, \
@@ -2447,7 +2460,8 @@ def solve_network_temperatures(thermal_network, t):
                                                                        thermal_network.pipe_properties[:][
                                                                        'D_int_m':'D_int_m'].values[0],
                                                                        thermal_network.edge_df['pipe length'],
-                                                                       t_edge__k)
+                                                                       t_edge__k,
+                                                                       thermal_network.find_loops)
                         VF_iter = VF_iter + 1
                     elif dt_nodes_max >= dt_tolerance and VF_iter >= 10:
                         for node in nodes_insufficient:
