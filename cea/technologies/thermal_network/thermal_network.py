@@ -1004,7 +1004,8 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df, pi
     edge_node_df = edge_node_df.copy()
     loops, graph = find_loops(edge_node_df)  # identifies all linear independent loops
     if loops:
-        # print('Fundamental loops in the network:', loops) #returns nodes that define loop, useful for visiual verification in testing phase,
+        # print('Fundamental loops in the network:', loops)  # returns nodes that define loop, useful for visiual
+        # verification in testing phase,
 
         sum_delta_m_num = np.zeros((1, len(loops)))[0]
 
@@ -1092,7 +1093,7 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df, pi
         # print('Looped massflows converged after ', iterations, ' iterations.')
 
     else:  # no loops
-        ## remove one equation (at plant node) to build a well-determined matrix, A.
+        # remove one equation (at plant node) to build a well-determined matrix, A.
         plant_index = np.where(all_nodes_df['Type'] == 'PLANT')[0][0]  # find index of the first plant node
         A = edge_node_df.drop(edge_node_df.index[plant_index])
         b = np.nan_to_num(mass_flow_substation_df.T)
@@ -1153,6 +1154,7 @@ def find_loops(edge_node_df):
     loops = nx.cycle_basis(graph, 0)  # identifies all linear independent loops
 
     return loops, graph
+
 
 def calc_assign_diameter(max_flow, pipe_catalog):
     if max_flow < pipe_catalog['mdot_min_kgs'].min():
