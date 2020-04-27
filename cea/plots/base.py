@@ -168,6 +168,13 @@ class PlotBase(object):
         return self.cache.lookup_plot_div(self, self._plot_div_producer)
 
     def _plot_div_producer(self):
+        # Set default color template to 'none' for plotly version 4
+        try:
+            import plotly.io as pio
+            pio.templates.default = 'none'
+        except ImportError:
+            pass
+
         fig = plotly.graph_objs.Figure(data=self._plot_data_producer(), layout=self.layout)
         fig['layout'].update(dict(hovermode='closest'))
         fig['layout']['yaxis'].update(dict(hoverformat=".2f"))
