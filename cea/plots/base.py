@@ -181,7 +181,7 @@ class PlotBase(object):
         fig['layout']['margin'].update(dict(l=50, r=50, t=50, b=50))
         fig['layout']['font'].update(dict(size=10))
 
-        if self.timeframe in ['daily', 'weekly']:
+        if self.timeframe is not None:
             # Try to get plot year from data
             try:
                 plot_year = fig['data'][0]['x'][0].year
