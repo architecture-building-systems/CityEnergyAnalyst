@@ -224,6 +224,11 @@ class PlotBase(object):
                     y_axis_num = trace['yaxis'].split('y')[1]
                     y_axis = self.layout['yaxis{}'.format(y_axis_num)]['title'] or y_axis
 
+                # Fix for plotly v4
+                if hasattr(x_axis, 'text'):
+                    x_axis = x_axis.text
+                    y_axis = y_axis.text
+
                 if trace['type'] == 'bar':
                     column_name = name
                     units = re.search(r'\[.*?\]', y_axis)
