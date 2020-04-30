@@ -53,28 +53,33 @@ def costs_main(locator, config):
                   costs_cooling_services_dict.items() + costs_electricity_services_dict.items())
 
     # sum up for all fields
-    #create a dict to map from the convention of fields to the final variables
+    # create a dict to map from the convention of fields to the final variables
     mapping_dict = {'_capex_total_USD': 'Capex_total_sys_USD',
-                   '_opex_fixed_USD': 'Opex_fixed_sys_USD',
-                   '_opex_var_USD': 'Opex_var_sys_USD',
-                   '_opex_USD': 'Opex_sys_USD',
-                   # all system annualized
-                   '_capex_a_USD': 'Capex_a_sys_USD',
-                   '_opex_a_var_USD': 'Opex_a_var_sys_USD',
-                   '_opex_a_fixed_USD': 'Opex_a_fixed_sys_USD',
-                   '_opex_a_USD': 'Opex_a_sys_USD',
-                   '_TAC_USD': 'TAC_sys_USD',
-                   # disconnected system
-                   '_capex_total_disconnected_USD': 'Capex_total_sys_disconnected_USD',
-                   '_opex_disconnected_USD': 'Opex_sys_disconnected_USD',
-                   '_capex_a_disconnected_USD': 'Capex_a_sys_disconnected_USD',
-                   '_opex_a_disconnected_USD': 'Opex_a_sys_disconnected_USD',
-                   # connected system
-                   '_capex_total_connected_USD': 'Capex_total_sys_connected_USD',
-                   '_opex_connected_USD': 'Opex_sys_connected_USD',
-                   '_capex_a_connected_USD': 'Capex_a_sys_connected_USD',
-                   '_opex_a_connected_USD':'Opex_a_sys_connected_USD'
-                   }
+                    '_opex_fixed_USD': 'Opex_fixed_sys_USD',
+                    '_opex_var_USD': 'Opex_var_sys_USD',
+                    '_opex_USD': 'Opex_sys_USD',
+                    # all system annualized
+                    '_capex_a_USD': 'Capex_a_sys_USD',
+                    '_opex_a_var_USD': 'Opex_a_var_sys_USD',
+                    '_opex_a_fixed_USD': 'Opex_a_fixed_sys_USD',
+                    '_opex_a_USD': 'Opex_a_sys_USD',
+                    '_TAC_USD': 'TAC_sys_USD',
+                    # building_scale_systems
+                    '_capex_total_building_scale_USD': 'Capex_total_sys_building_scale_USD',
+                    '_opex_building_scale_USD': 'Opex_sys_building_scale_USD',
+                    '_capex_a_building_scale_USD': 'Capex_a_sys_building_scale_USD',
+                    '_opex_a_building_scale_USD': 'Opex_a_sys_building_scale_USD',
+                    # district_scale_systems
+                    '_capex_total_district_scale_USD': 'Capex_total_sys_district_scale_USD',
+                    '_opex_district_scale_USD': 'Opex_sys_district_scale_USD',
+                    '_capex_a_district_scale_USD': 'Capex_a_sys_district_scale_USD',
+                    '_opex_a_district_scale_USD': 'Opex_a_sys_district_scale_USD',
+                    # city_scale_systems
+                    '_capex_total_city_scale_USD': 'Capex_total_sys_city_scale_USD',
+                    '_opex_city_scale_USD': 'Opex_sys_city_scale_USD',
+                    '_capex_a_city_scale_USD': 'Capex_a_sys_city_scale_USD',
+                    '_opex_a_city_scale_USD': 'Opex_a_sys_city_scale_USD',
+                    }
     # initialize the names of the variables in the result to zero
     n_buildings = demand.shape[0]
     for _, value in mapping_dict.items():
@@ -104,7 +109,8 @@ def calc_costs_per_energy_service(database, heating_services):
 
         result[service + '_opex_fixed_USD'] = (result[service + '_capex_total_USD'] * database['O&M_%'].values / 100)
 
-        result[service + '_opex_var_USD'] = database[service + '_MWhyr'].values * database['Opex_var_buy_USD2015kWh'].values * 1000
+        result[service + '_opex_var_USD'] = database[service + '_MWhyr'].values * database[
+            'Opex_var_buy_USD2015kWh'].values * 1000
 
         result[service + '_opex_USD'] = result[service + '_opex_fixed_USD'] + result[service + '_opex_var_USD']
 
@@ -129,32 +135,42 @@ def calc_costs_per_energy_service(database, heating_services):
 
         # GET CONNECTED AND DISCONNECTED
         for field in ['_capex_total_USD', '_capex_a_USD', '_opex_USD', '_opex_a_USD']:
-            field_connected = field.split("_USD")[0] + "_connected_USD"
-            field_disconnected = field.split("_USD")[0] + "_disconnected_USD"
-            result[service + field_connected], \
-            result[service + field_disconnected] = np.vectorize(calc_connected_disconnected)(result[service + field],
-                                                                                             database['scale'])
+            field_district = field.split("_USD")[0] + "_district_scale_USD"
+            field_building_scale = field.split("_USD")[0] + "_building_scale_USD"
+            field_city_scale = field.split("_USD")[0] + "_building_scale_USD"
+            result[service + field_district], \
+            result[service + field_building_scale],\
+            result[service + field_city_scale]= np.vectorize(calc_district_scale_disconnected)(
+                result[service + field],
+                database['scale'])
     return result
 
 
-def calc_connected_disconnected(value, flag_scale):
+def calc_district_scale_disconnected(value, flag_scale):
     if flag_scale == "BUILDING":
-        connected = 0.0
-        disconnected = value
+        district = 0.0
+        building = value
+        city = 0.0
     elif flag_scale == "DISTRICT":
-        connected = value
-        disconnected = 0.0
+        district = value
+        building = 0.0
+        city = 0.0
     elif flag_scale == "CITY":
-        connected = value
-        disconnected = 0.0
+        district = 0.0
+        building = 0.0
+        city = value
     elif flag_scale == "NONE":
         if value == 0.0:
-            connected = 0.0
-            disconnected = 0.0
+            district = 0.0
+            building = 0.0
+            city = 0.0
         else:
             raise ValueError("the scale is NONE but somehow there is a cost here?"
                              " the inputs of SUPPLY database may be wrong")
-    return connected, disconnected
+    else:
+        raise ValueError("the scale in the system is {}, this is not a valid argument"
+                         "valid argumetns are CITY, DISTRICT, BUILDING, NONE".format(flag_scale))
+    return district, building, city
 
 
 def get_databases(demand, locator):

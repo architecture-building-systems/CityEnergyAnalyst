@@ -212,10 +212,10 @@ def calc_Ctot_cooling_plants(network_info):
     return Opex_fixed_plant, Opex_var_plant, Capex_a_chiller, Capex_a_CT
 
 
-def calc_Ctot_cs_disconnected_loads(network_info):
+def calc_Ctot_cs_building_scale_loads(network_info):
     """
     Calculates the space cooling cost of disconnected loads at the building level.
-    The calculation for entirely disconnected buildings is done in calc_Ctot_cs_disconnected_buildings.
+    The calculation for entirely disconnected buildings is done in calc_Ctot_cs_building_scale_buildings.
     :param Thermal_Network network_info: an object storing information of the current network
     :return:
     """
@@ -229,9 +229,9 @@ def calc_Ctot_cs_disconnected_loads(network_info):
         # Make sure files to read in exist
         for system in disconnected_systems:
             for building in optimal_network.building_names:
-                assert optimal_network.locator.get_optimization_disconnected_folder_building_result_heating(building), "Missing diconnected building files. Please run disconnected_buildings_heating first."
+                assert optimal_network.locator.get_optimization_building_scale_folder_building_result_heating(building), "Missing diconnected building files. Please run disconnected_buildings_heating first."
             # Read in disconnected cost of all buildings
-                disconnected_cost = optimal_network.locator.get_optimization_disconnected_folder_building_result_heating(building)
+                disconnected_cost = optimal_network.locator.get_optimization_building_scale_folder_building_result_heating(building)
     '''
     if network_info.network_type == 'DC':
         supplied_systems = []
@@ -368,10 +368,10 @@ def find_supplied_systems_annual(network_info, building_demand, full_systems, di
     return systems
 
 
-def calc_Ctot_cs_disconnected_buildings(network_info):
+def calc_Ctot_cs_building_scale_buildings(network_info):
     """
     Caculates the space cooling cost of disconnected buildings.
-    The calculation for partially disconnected buildings is done in calc_Ctot_cs_disconnected_loads.
+    The calculation for partially disconnected buildings is done in calc_Ctot_cs_building_scale_loads.
     :param network_info: an object storing information of the current network
     :return:
     """
@@ -469,9 +469,9 @@ def calc_Ctot_cs_district(network_info):
         # no heat supplied by centralized plant/network, this makes sure that the network cost is 0.
         Capex_a_netw = 0
     # calculate costs of disconnected loads
-    Ctot_dis_loads, Opex_tot_dis_loads, Capex_a_dis_loads = calc_Ctot_cs_disconnected_loads(network_info)
+    Ctot_dis_loads, Opex_tot_dis_loads, Capex_a_dis_loads = calc_Ctot_cs_building_scale_loads(network_info)
     # calculate costs of disconnected buildings
-    Ctot_dis_buildings, Opex_tot_dis_buildings, Capex_a_dis_buildings = calc_Ctot_cs_disconnected_buildings(
+    Ctot_dis_buildings, Opex_tot_dis_buildings, Capex_a_dis_buildings = calc_Ctot_cs_building_scale_buildings(
         network_info)
     # calculate costs of HEX at connected buildings
 
@@ -587,10 +587,10 @@ def main(config):
     # calculate annual space cooling demands
     if network_type == 'DC':
         annual_demand_district_MWh = total_demand['Qcs_sys_MWhyr'].sum()
-        annual_demand_disconnected_MWh = 0
+        annual_demand_building_scale_MWh = 0
         for building_index in disconnected_buildings_index:
-            annual_demand_disconnected_MWh += total_demand.ix[building_index, 'Qcs_sys_MWhyr']
-        annual_demand_network_MWh = annual_demand_district_MWh - annual_demand_disconnected_MWh
+            annual_demand_building_scale_MWh += total_demand.ix[building_index, 'Qcs_sys_MWhyr']
+        annual_demand_network_MWh = annual_demand_district_MWh - annual_demand_building_scale_MWh
     else:
         raise ValueError('This optimization procedure is not ready for district heating yet!')
 
@@ -604,7 +604,7 @@ def main(config):
     cost_output['opex_per_MWh'] = round(cost_output['annual_opex'] / annual_demand_district_MWh, 2)
     cost_output['capex_per_MWh'] = round(cost_output['annual_capex'] / annual_demand_district_MWh, 2)
     cost_output['annual_demand_district_MWh'] = round(annual_demand_district_MWh, 2)
-    cost_output['annual_demand_disconnected_MWh'] = round(annual_demand_disconnected_MWh, 2)
+    cost_output['annual_demand_building_scale_MWh'] = round(annual_demand_building_scale_MWh, 2)
     cost_output['annual_demand_network_MWh'] = round(annual_demand_network_MWh, 2)
     cost_output['opex_plant'] = round(cost_storage_df.ix['opex_plant'][0], 2)
     cost_output['opex_pump'] = round(cost_storage_df.ix['opex_pump'][0], 2)
