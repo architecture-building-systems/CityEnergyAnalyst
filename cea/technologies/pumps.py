@@ -63,11 +63,11 @@ def calc_Ctot_pump(master_to_slave_vars, network_features, locator, network_type
     """
 
     if network_type == "DH":
-        multiplier_buildings_connected_to_total = master_to_slave_vars.number_of_buildings_connected_heating / master_to_slave_vars.num_total_buildings
+        multiplier_buildings_district_scale_to_total = master_to_slave_vars.number_of_buildings_district_scale_heating / master_to_slave_vars.num_total_buildings
         data = master_to_slave_vars.DH_network_summary_individual
         mdotA_kgpers = data["mdot_DH_netw_total_kgpers"].values
         mdotnMax_kgpers = np.max(mdotA_kgpers)
-        deltaPmax = np.max(network_features.DeltaP_DHN) * multiplier_buildings_connected_to_total
+        deltaPmax = np.max(network_features.DeltaP_DHN) * multiplier_buildings_district_scale_to_total
         Capex_a_pump_USD, \
         Opex_fixed_pump_USD, \
         Capex_pump_USD = calc_Cinv_pump(deltaPmax,
@@ -75,11 +75,11 @@ def calc_Ctot_pump(master_to_slave_vars, network_features, locator, network_type
                                         PUMP_ETA,
                                         locator,
                                         'PU1')  # investment of Machinery
-        P_motor_tot_W = network_features.DeltaP_DHN * multiplier_buildings_connected_to_total * (
+        P_motor_tot_W = network_features.DeltaP_DHN * multiplier_buildings_district_scale_to_total * (
                 mdotA_kgpers / 1000) / PUMP_ETA
 
     if network_type == "DC":
-        multiplier_buildings_connected_to_total = master_to_slave_vars.number_of_buildings_connected_cooling / master_to_slave_vars.num_total_buildings
+        multiplier_buildings_district_scale_to_total = master_to_slave_vars.number_of_buildings_district_scale_cooling / master_to_slave_vars.num_total_buildings
         data = master_to_slave_vars.DC_network_summary_individual
         if master_to_slave_vars.WasteServersHeatRecovery == 1:
             mdotA_kgpers = data["mdot_cool_space_cooling_and_refrigeration_netw_all_kgpers"].values
@@ -87,7 +87,7 @@ def calc_Ctot_pump(master_to_slave_vars, network_features, locator, network_type
             mdotA_kgpers = data["mdot_cool_space_cooling_data_center_and_refrigeration_netw_all_kgpers"].values
 
         mdotnMax_kgpers = np.max(mdotA_kgpers)
-        deltaPmax = np.max(network_features.DeltaP_DCN) * multiplier_buildings_connected_to_total
+        deltaPmax = np.max(network_features.DeltaP_DCN) * multiplier_buildings_district_scale_to_total
         Capex_a_pump_USD, \
         Opex_fixed_pump_USD, \
         Capex_pump_USD = calc_Cinv_pump(deltaPmax,
@@ -95,7 +95,7 @@ def calc_Ctot_pump(master_to_slave_vars, network_features, locator, network_type
                                         PUMP_ETA,
                                         locator,
                                         'PU1')  # investment of Machinery
-        P_motor_tot_W = network_features.DeltaP_DCN * multiplier_buildings_connected_to_total * (
+        P_motor_tot_W = network_features.DeltaP_DCN * multiplier_buildings_district_scale_to_total * (
                 mdotA_kgpers / 1000) / PUMP_ETA
 
     return Capex_a_pump_USD, Opex_fixed_pump_USD, Capex_pump_USD, P_motor_tot_W

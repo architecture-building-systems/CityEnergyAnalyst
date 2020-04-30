@@ -136,14 +136,14 @@ def lca_operation(locator):
     for service in all_services:
         fields_to_plot += [service[2] + '_tonCO2']
 
-    result['GHG_sys_connected_tonCO2'] = result['GRID_tonCO2'] + \
+    result['GHG_sys_district_scale_tonCO2'] = result['GRID_tonCO2'] + \
                                          result['DH_hs_tonCO2'] + \
                                          result['DH_ww_tonCO2'] + \
                                          result['DC_cdata_tonCO2'] + \
                                          result['DC_cs_tonCO2'] + \
                                          result['DC_cre_tonCO2']
 
-    result['GHG_sys_disconnected_tonCO2'] = result['OIL_hs_tonCO2'] + \
+    result['GHG_sys_building_scale_tonCO2'] = result['OIL_hs_tonCO2'] + \
                                          result['NG_hs_tonCO2'] + \
                                          result['WOOD_hs_tonCO2'] + \
                                          result['COAL_hs_tonCO2'] + \
@@ -155,11 +155,11 @@ def lca_operation(locator):
                                          result['COAL_ww_tonCO2'] + \
                                          result['SOLAR_ww_tonCO2']
 
-    result['GHG_sys_tonCO2'] = result['GHG_sys_disconnected_tonCO2'] + result['GHG_sys_connected_tonCO2']
+    result['GHG_sys_tonCO2'] = result['GHG_sys_building_scale_tonCO2'] + result['GHG_sys_district_scale_tonCO2']
 
     # export the total operational non-renewable energy demand and emissions for each building
-    fields_to_plot = ['Name', 'GFA_m2', 'GHG_sys_tonCO2', 'GHG_sys_disconnected_tonCO2',
-                      'GHG_sys_connected_tonCO2'] + fields_to_plot
+    fields_to_plot = ['Name', 'GFA_m2', 'GHG_sys_tonCO2', 'GHG_sys_building_scale_tonCO2',
+                      'GHG_sys_district_scale_tonCO2'] + fields_to_plot
     result[fields_to_plot].to_csv(locator.get_lca_operation(), index=False, float_format='%.2f')
 
 

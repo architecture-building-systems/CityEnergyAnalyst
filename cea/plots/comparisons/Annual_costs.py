@@ -22,10 +22,12 @@ class ComparisonsAnnualCostsPlot(cea.plots.comparisons.ComparisonsPlotBase):
 
     def __init__(self, project, parameters, cache):
         super(ComparisonsAnnualCostsPlot, self).__init__(project, parameters, cache)
-        self.analysis_fields = ["Capex_a_sys_connected_USD",
-                                "Capex_a_sys_disconnected_USD",
-                                "Opex_a_sys_connected_USD",
-                                "Opex_a_sys_disconnected_USD"]
+        self.analysis_fields = ["Capex_a_sys_district_scale_USD",
+                                "Capex_a_sys_building_scale_USD",
+                                "Opex_a_sys_district_scale_USD",
+                                "Opex_a_sys_building_scale_USD",
+                                'Capex_a_sys_city_scale_USD',
+                                'Opex_a_sys_city_scale_USD']
         self.normalization = self.parameters['normalization']
         self.input_files = [(x[4].get_optimization_slave_total_performance, [x[3], x[2]]) if x[2] != "today" else
                             (x[4].get_costs_operation_file, []) for x in self.scenarios_and_systems]

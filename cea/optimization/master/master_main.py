@@ -71,10 +71,10 @@ def objective_function(individual,
 
     TAC_sys_USD, \
     GHG_sys_tonCO2, \
-    buildings_connected_costs, \
-    buildings_connected_emissions, \
-    buildings_disconnected_costs, \
-    buildings_disconnected_emissions, \
+    buildings_district_scale_costs, \
+    buildings_district_scale_emissions, \
+    buildings_building_scale_costs, \
+    buildings_building_scale_emissions, \
     district_heating_generation_dispatch, \
     district_cooling_generation_dispatch, \
     district_electricity_dispatch, \
@@ -84,8 +84,8 @@ def objective_function(individual,
     district_heating_capacity_installed, \
     district_cooling_capacity_installed, \
     district_electricity_capacity_installed, \
-    buildings_disconnected_heating_capacities, \
-    buildings_disconnected_cooling_capacities = evaluation.evaluation_main(individual,
+    buildings_building_scale_heating_capacities, \
+    buildings_building_scale_cooling_capacities = evaluation.evaluation_main(individual,
                                                              building_names_all,
                                                              locator,
                                                              network_features,
@@ -112,10 +112,10 @@ def objective_function(individual,
                      weather_features.date,
                      individual_number,
                      generation_number,
-                     buildings_connected_costs,
-                     buildings_connected_emissions,
-                     buildings_disconnected_costs,
-                     buildings_disconnected_emissions,
+                     buildings_district_scale_costs,
+                     buildings_district_scale_emissions,
+                     buildings_building_scale_costs,
+                     buildings_building_scale_emissions,
                      district_heating_generation_dispatch,
                      district_cooling_generation_dispatch,
                      district_electricity_dispatch,
@@ -125,8 +125,8 @@ def objective_function(individual,
                      district_heating_capacity_installed,
                      district_cooling_capacity_installed,
                      district_electricity_capacity_installed,
-                     buildings_disconnected_heating_capacities,
-                     buildings_disconnected_cooling_capacities)
+                     buildings_building_scale_heating_capacities,
+                     buildings_building_scale_cooling_capacities)
 
     return TAC_sys_USD, GHG_sys_tonCO2
 
@@ -553,11 +553,11 @@ def save_generation_dataframes(generation,
     for ind, DCN_barcode, DHN_barcode in zip(individual_list, DCN_network_list_selected, DHN_network_list_selected):
         performance_connected = pd.concat([performance_connected,
                                            pd.read_csv(
-                                               locator.get_optimization_slave_connected_performance(ind, generation))],
+                                               locator.get_optimization_slave_district_scale_performance(ind, generation))],
                                           ignore_index=True)
 
         performance_disconnected = pd.concat([performance_disconnected, pd.read_csv(
-            locator.get_optimization_slave_disconnected_performance(ind, generation))], ignore_index=True)
+            locator.get_optimization_slave_building_scale_performance(ind, generation))], ignore_index=True)
         performance_totals = pd.concat([performance_totals,
                                         pd.read_csv(
                                             locator.get_optimization_slave_total_performance(ind, generation))],
@@ -574,8 +574,8 @@ def save_generation_dataframes(generation,
     performance_totals['generation'] = generation
 
     # save all results to disk
-    performance_disconnected.to_csv(locator.get_optimization_generation_disconnected_performance(generation))
-    performance_connected.to_csv(locator.get_optimization_generation_connected_performance(generation))
+    performance_disconnected.to_csv(locator.get_optimization_generation_building_scale_performance(generation))
+    performance_connected.to_csv(locator.get_optimization_generation_district_scale_performance(generation))
     performance_totals.to_csv(locator.get_optimization_generation_total_performance(generation))
 
 
@@ -609,16 +609,16 @@ def create_empty_individual(column_names,
     heating_unit_share_float = [0.0] * len(heating_unit_names_share)
     cooling_unit_share_float = [0.0] * len(cooling_unit_names_share)
 
-    DH_buildings_connected_int = [0] * len(column_names_buildings_heating)
-    DC_buildings_connected_int = [0] * len(column_names_buildings_cooling)
+    DH_buildings_district_scale_int = [0] * len(column_names_buildings_heating)
+    DC_buildings_district_scale_int = [0] * len(column_names_buildings_cooling)
 
     # 1 cases are possible
     if district_heating_network:
         individual = heating_unit_share_float + \
-                     DH_buildings_connected_int
+                     DH_buildings_district_scale_int
     elif district_cooling_network:
         individual = cooling_unit_share_float + \
-                     DC_buildings_connected_int
+                     DC_buildings_district_scale_int
     else:
         raise Exception('option not available')
 
