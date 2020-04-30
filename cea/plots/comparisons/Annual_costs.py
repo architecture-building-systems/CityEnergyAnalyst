@@ -86,7 +86,7 @@ def main():
     ComparisonsAnnualCostsPlot(config.project,
                                {'scenarios-and-systems': config.plots_comparisons.scenarios_and_systems,
                                 'normalization': config.plots_comparisons.normalization},
-                               cache).plot(auto_open=True)
+                                cache).plot(auto_open=True)
 
 
 if __name__ == '__main__':
