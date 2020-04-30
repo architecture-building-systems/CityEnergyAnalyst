@@ -137,16 +137,15 @@ def calc_costs_per_energy_service(database, heating_services):
         for field in ['_capex_total_USD', '_capex_a_USD', '_opex_USD', '_opex_a_USD']:
             field_district = field.split("_USD")[0] + "_district_scale_USD"
             field_building_scale = field.split("_USD")[0] + "_building_scale_USD"
-            field_city_scale = field.split("_USD")[0] + "_building_scale_USD"
+            field_city_scale = field.split("_USD")[0] + "_city_scale_USD"
             result[service + field_district], \
-            result[service + field_building_scale],\
-            result[service + field_city_scale]= np.vectorize(calc_district_scale_disconnected)(
-                result[service + field],
-                database['scale'])
+            result[service + field_building_scale], \
+            result[service + field_city_scale] = np.vectorize(calc_scale_costs)(result[service + field],
+                                                                                database['scale'])
     return result
 
 
-def calc_district_scale_disconnected(value, flag_scale):
+def calc_scale_costs(value, flag_scale):
     if flag_scale == "BUILDING":
         district = 0.0
         building = value
