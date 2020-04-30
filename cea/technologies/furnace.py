@@ -10,6 +10,7 @@ import pandas as pd
 from scipy import interpolate
 from cea.technologies.constants import FURNACE_FUEL_COST_WET, FURNACE_FUEL_COST_DRY, FURNACE_MIN_LOAD, \
     FURNACE_MIN_ELECTRIC, BOILER_P_AUX
+from cea.analysis.costs.equations import calc_capex_annualized, calc_opex_annualized
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -205,13 +206,13 @@ def calc_Cinv_furnace(Q_design_W, locator, technology_type):
     Inv_c = furnace_cost_data.iloc[0]['c']
     Inv_d = furnace_cost_data.iloc[0]['d']
     Inv_e = furnace_cost_data.iloc[0]['e']
-    Inv_IR = (furnace_cost_data.iloc[0]['IR_%']) / 100
+    Inv_IR = furnace_cost_data.iloc[0]['IR_%']
     Inv_LT = furnace_cost_data.iloc[0]['LT_yr']
     Inv_OM = furnace_cost_data.iloc[0]['O&M_%'] / 100
 
     InvC = Inv_a + Inv_b * (Q_design_W) ** Inv_c + (Inv_d + Inv_e * Q_design_W) * log(Q_design_W)
 
-    Capex_a_furnace_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+    Capex_a_furnace_USD = calc_capex_annualized(InvC, Inv_IR, Inv_LT)
     Opex_fixed_furnace_USD = InvC * Inv_OM
     Capex_furnace_USD = InvC
 
