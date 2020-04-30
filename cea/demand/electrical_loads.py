@@ -80,24 +80,7 @@ def calc_Ef(bpr, tsd):
     total_el_demand = (tsd['Ea'] + tsd['El'] + tsd['Edata'] + tsd['Epro'] + tsd['Eaux'] +
                        tsd['Ev'] + tsd['E_ww'] + tsd['E_cs'] + tsd['E_hs'] + tsd['E_cdata'] + tsd['E_cre'])
 
-    if scale_technology == "BUILDING":
-        if energy_source == "SOLAR":
-            tsd['GRID'] = np.zeros(HOURS_IN_YEAR)
-            tsd['GRID_a'] = np.zeros(HOURS_IN_YEAR)
-            tsd['GRID_l'] = np.zeros(HOURS_IN_YEAR)
-            tsd['GRID_v'] = np.zeros(HOURS_IN_YEAR)
-            tsd['GRID_data'] = np.zeros(HOURS_IN_YEAR)
-            tsd['GRID_pro'] = np.zeros(HOURS_IN_YEAR)
-            tsd['GRID_aux'] = np.zeros(HOURS_IN_YEAR)
-            tsd['GRID_ww'] = np.zeros(HOURS_IN_YEAR)
-            tsd['GRID_cs'] = np.zeros(HOURS_IN_YEAR)
-            tsd['GRID_hs'] = np.zeros(HOURS_IN_YEAR)
-            tsd['GRID_cdata'] = np.zeros(HOURS_IN_YEAR)
-            tsd['GRID_cre'] = np.zeros(HOURS_IN_YEAR)
-            tsd['PV'] = total_el_demand
-        else:
-            raise Exception('check potential error in input database of LCA infrastructure / ELECTRICITY')
-    elif scale_technology == "CITY":
+    if scale_technology == "CITY":
         if energy_source == "GRID":
             tsd['GRID'] = total_el_demand
             tsd['GRID_a'] = tsd['Ea']
@@ -111,7 +94,6 @@ def calc_Ef(bpr, tsd):
             tsd['GRID_hs'] = tsd['E_hs']
             tsd['GRID_cdata'] = tsd['E_cdata']
             tsd['GRID_cre'] = tsd['E_cre']
-            tsd['PV'] = np.zeros(HOURS_IN_YEAR)
         else:
             raise Exception('check potential error in input database of LCA infrastructure / ELECTRICITY')
     elif scale_technology == "NONE":
@@ -127,7 +109,6 @@ def calc_Ef(bpr, tsd):
         tsd['GRID_hs'] = np.zeros(HOURS_IN_YEAR)
         tsd['GRID_cdata'] = np.zeros(HOURS_IN_YEAR)
         tsd['GRID_cre'] = np.zeros(HOURS_IN_YEAR)
-        tsd['PV'] = np.zeros(HOURS_IN_YEAR)
     else:
         raise Exception('check potential error in input database of LCA infrastructure / ELECTRICITY')
 
