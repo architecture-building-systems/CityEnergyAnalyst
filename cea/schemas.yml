@@ -1759,12 +1759,12 @@ get_costs_operation_file:
         unit: $USD(2015)/yr
         values: '{0.0...n}'
       Capex_a_sys_district_scale_USD:
-        description: Annualized capital expenditures for connected buildings
+        description: Annualized capital expenditures of district-scale systems
         type: float
         unit: $USD(2015)/yr
         values: '{0.0...n}'
       Capex_a_sys_building_scale_USD:
-        description: Annualized capital expenditures for disconnected buildings
+        description: Annualized capital expenditures of building-scale systems
         type: float
         unit: $USD(2015)/yr
         values: '{0.0...n}'
@@ -1884,12 +1884,12 @@ get_costs_operation_file:
         unit: $USD(2015)/yr
         values: '{0.0...n}'
       Opex_a_sys_district_scale_USD:
-        description: Annual operational expenditures for connected buildings
+        description: Annual operational expenditures of district-scale systems
         type: float
         unit: $USD(2015)/yr
         values: '{0.0...n}'
       Opex_a_sys_building_scale_USD:
-        description: Annual operational expenditures for disconnected buildings
+        description: Annual operational expenditures of building-scale systems
         type: float
         unit: $USD(2015)/yr
         values: '{0.0...n}'
@@ -5998,8 +5998,7 @@ get_database_supply_assemblies:
             - BUILDING
             - DISTRICT
             - CITY
-          description: whether the all in one system is used at the building, or the
-            district scale
+          description: whether the all in one system is used at the building, or the district scale
           type: string
           unit: '[-]'
           values: alphanumeric
@@ -8736,7 +8735,7 @@ get_optimization_generation_district_scale_performance:
         unit: '[USD 2015]'
         values: '{0.0...n}'
       GHG_DB_district_scale_tonCO2yr:
-        description: Green House Gas Emissions of Dry-Biomass at district scale
+        description: Green House Gas Emissions of Dry-Biomass of district-scale systems
         type: float
         unit: '[ton CO2-eq/yr]'
         values: '{0.0...n}'
@@ -8751,12 +8750,12 @@ get_optimization_generation_district_scale_performance:
         unit: '[ton CO2-eq/yr]'
         values: '{0.0...n}'
       GHG_NG_district_scale_tonCO2yr:
-        description: Green House Gas Emissions of Natural Gas at district scale
+        description: Green House Gas Emissions of Natural Gas of district-scale systems
         type: float
         unit: '[ton CO2-eq/yr]'
         values: '{0.0...n}'
       GHG_WB_district_scale_tonCO2yr:
-        description: Green House Gas Emissions of Wet-Biomass at district scale
+        description: Green House Gas Emissions of Wet-Biomass of district-scale systems
         type: float
         unit: '[ton CO2-eq/yr]'
         values: '{0.0...n}'
@@ -8997,7 +8996,7 @@ get_optimization_generation_total_performance:
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
       Capex_a_sys_district_scale_USD:
-        description: Annualized Capital Costs at district scale
+        description: Annualized Capital Costs of district-scale systems
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
@@ -9007,12 +9006,12 @@ get_optimization_generation_total_performance:
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
       Capex_total_sys_USD:
-        description: Total Capital Costs at district scale and  Decentralized Buildings
+        description: Total Capital Costs of district-scale systems and  Decentralized Buildings
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
       Capex_total_sys_district_scale_USD:
-        description: Total Capital Costs at district scale
+        description: Total Capital Costs of district-scale systems
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
@@ -9042,7 +9041,7 @@ get_optimization_generation_total_performance:
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
       Opex_a_sys_district_scale_USD:
-        description: 'Operation Costs at district scale '
+        description: 'Operation Costs of district-scale systems '
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
@@ -9057,7 +9056,7 @@ get_optimization_generation_total_performance:
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
       TAC_sys_district_scale_USD:
-        description: Total Anualized Costs at district scale
+        description: Total Anualized Costs of district-scale systems
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
@@ -9100,7 +9099,7 @@ get_optimization_generation_total_performance_pareto:
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
       Capex_a_sys_district_scale_USD:
-        description: Annualized Capital Costs at district scale
+        description: Annualized Capital Costs of district-scale systems
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
@@ -9110,12 +9109,12 @@ get_optimization_generation_total_performance_pareto:
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
       Capex_total_sys_USD:
-        description: Total Capital Costs at district scale and  Decentralized Buildings
+        description: Total Capital Costs of district-scale systems and  Decentralized Buildings
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
       Capex_total_sys_district_scale_USD:
-        description: Total Capital Costs at district scale
+        description: Total Capital Costs of district-scale systems
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
@@ -9145,7 +9144,7 @@ get_optimization_generation_total_performance_pareto:
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
       Opex_a_sys_district_scale_USD:
-        description: 'Operation Costs at district scale '
+        description: 'Operation Costs of district-scale systems '
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
@@ -9160,7 +9159,7 @@ get_optimization_generation_total_performance_pareto:
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
       TAC_sys_district_scale_USD:
-        description: Total Anualized Costs at district scale
+        description: Total Anualized Costs of district-scale systems
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
@@ -10195,7 +10194,7 @@ get_optimization_slave_total_performance:
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
       Capex_a_sys_district_scale_USD:
-        description: Annualized Capital Costs at district scale
+        description: Annualized Capital Costs of district-scale systems
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
@@ -10210,7 +10209,7 @@ get_optimization_slave_total_performance:
         unit: '[USD 2015]'
         values: '{0.0...n}'
       Capex_total_sys_district_scale_USD:
-        description: Total Capital Costs at district scale
+        description: Total Capital Costs of district-scale systems
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
@@ -10240,7 +10239,7 @@ get_optimization_slave_total_performance:
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
       Opex_a_sys_district_scale_USD:
-        description: Operation Costs at district scale
+        description: Operation Costs of district-scale systems
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
@@ -10255,7 +10254,7 @@ get_optimization_slave_total_performance:
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
       TAC_sys_district_scale_USD:
-        description: Total Anualized Costs at district scale
+        description: Total Anualized Costs of district-scale systems
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
