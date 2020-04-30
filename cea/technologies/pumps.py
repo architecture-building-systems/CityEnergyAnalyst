@@ -12,6 +12,7 @@ from scipy.interpolate import interp1d
 
 from cea.constants import DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3, HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.optimization.constants import PUMP_ETA
+from cea.analysis.costs.equations import calc_capex_annualized, calc_opex_annualized
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -155,14 +156,14 @@ def calc_Cinv_pump(deltaP, mdot_kgpers, eta_pumping, locator, technology_type):
         Inv_c = pump_cost_data.iloc[0]['c']
         Inv_d = pump_cost_data.iloc[0]['d']
         Inv_e = pump_cost_data.iloc[0]['e']
-        Inv_IR = (pump_cost_data.iloc[0]['IR_%']) / 100
+        Inv_IR = pump_cost_data.iloc[0]['IR_%']
         Inv_LT = pump_cost_data.iloc[0]['LT_yr']
         Inv_OM = pump_cost_data.iloc[0]['O&M_%'] / 100
 
         InvC = Inv_a + Inv_b * (Pump_Array_W[pump_i]) ** Inv_c + (Inv_d + Inv_e * Pump_Array_W[pump_i]) * log(
             Pump_Array_W[pump_i])
 
-        Capex_a_pump_USD += InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+        Capex_a_pump_USD += calc_capex_annualized(InvC, Inv_IR, Inv_LT)
         Opex_fixed_pump_USD += InvC * Inv_OM
         Capex_pump_USD += InvC
 
