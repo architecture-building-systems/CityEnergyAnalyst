@@ -17,6 +17,7 @@ from cea.constants import HOURS_IN_YEAR
 from cea.technologies.heat_exchangers import calc_Cinv_HEX_hisaka
 from cea.utilities import epwreader
 from cea.technologies.supply_systems_database import SupplySystemsDatabase
+from cea.analysis.costs.equations import calc_capex_annualized, calc_opex_annualized
 
 __author__ = "Lennart Rogenhofer, Shanshan Hsieh"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -82,9 +83,9 @@ def calc_Capex_a_network_pipes(network_info):
     else:
         InvC = network_info.network_features.pipesCosts_DCN_USD
     # Assume lifetime of 25 years and 5 % IR
-    Inv_IR = 0.05
+    Inv_IR = 5
     Inv_LT = 25 #TODO: find reference
-    Capex_a_netw = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+    Capex_a_netw = calc_capex_annualized(InvC, Inv_IR, Inv_LT)
     return Capex_a_netw
 
 
