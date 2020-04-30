@@ -1,3 +1,9 @@
+- 2020-04-30 - 3.1.0 - #2709 Update plotly version
+- 2020-04-25 - 3.1.0 - #2678 I2672 roles and responsibility
+- 2020-04-24 - 3.1.0 - #2706 Fix epwreader
+- 2020-04-22 - 3.1.0 - #2705 update naming of database
+- 2020-04-18 - 3.1.0 - #2701 extended system efficiency calculation to all building scale cooling systems
+- 2020-04-17 - 3.1.0 - #2702 Release 3.1.0
 - 2020-04-17 - 3.0.3a0 - #2685 2661 update assembly database
 - 2020-04-17 - 3.0.3a0 - #2692 I2689 network layout
 - 2020-04-16 - 3.0.3a0 - #2691 Block _sys_today_ supply plots
