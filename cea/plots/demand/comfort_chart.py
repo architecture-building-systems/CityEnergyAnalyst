@@ -268,7 +268,7 @@ def create_relative_humidity_lines():
     for rh_line in rh_lines:
 
         y_data = calc_constant_rh_curve(t_axis, rh_line, P_ATM)
-        trace = go.Scattergl(x=t_axis, y=y_data, mode='line', name="{:.0%} relative humidity".format(rh_line),
+        trace = go.Scattergl(x=t_axis, y=y_data, mode='lines', name="{:.0%} relative humidity".format(rh_line),
                            line=dict(color=COLORS_TO_RGB['grey_light'], width=1), showlegend=False)
         traces.append(trace)
 

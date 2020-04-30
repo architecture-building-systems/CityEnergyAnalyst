@@ -83,7 +83,7 @@ def main():
     import cea.plots.cache
     config = cea.config.Configuration()
     locator = cea.inputlocator.InputLocator(config.scenario)
-    cache = cea.plots.cache.PlotCache(config.project)
+    cache = cea.plots.cache.NullPlotCache()
     SolarRadiationPlot(config.project, {'buildings': None,
                                         'scenario-name': config.scenario_name,
                                         'timeframe': config.plots.timeframe,
