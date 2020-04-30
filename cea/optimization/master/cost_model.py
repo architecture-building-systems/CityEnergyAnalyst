@@ -28,6 +28,7 @@ from cea.optimization.constants import VCC_CODE_CENTRALIZED
 from cea.optimization.master.emissions_model import calc_emissions_Whyr_to_tonCO2yr
 from cea.technologies.pumps import calc_Cinv_pump
 from cea.technologies.supply_systems_database import SupplySystemsDatabase
+from cea.analysis.costs.equations import calc_capex_annualized, calc_opex_annualized
 
 __author__ = "Tim Vollrath"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -95,11 +96,11 @@ def calc_network_costs_heating(locator, master_to_slave_vars, network_features, 
     ratio_connected = num_buildings_connected / num_all_buildings
 
     # Capital costs
-    Inv_IR = 0.05
-    Inv_LT = 20
+    Inv_IR_percent = 5
+    Inv_LT_yr = 20
     Inv_OM = 0.10
     Capex_Network_USD = pipesCosts_USD * ratio_connected
-    Capex_a_Network_USD = Capex_Network_USD * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+    Capex_a_Network_USD = calc_capex_annualized(Capex_Network_USD, Inv_IR_percent, Inv_LT_yr)
     Opex_fixed_Network_USD = Capex_Network_USD * Inv_OM
 
     # costs of pumps
@@ -163,15 +164,15 @@ def calc_substations_costs_heating(building_names, district_network_barcode, loc
             Inv_c = HEX_cost_data.iloc[0]['c']
             Inv_d = HEX_cost_data.iloc[0]['d']
             Inv_e = HEX_cost_data.iloc[0]['e']
-            Inv_IR = (HEX_cost_data.iloc[0]['IR_%']) / 100
+            Inv_IR = HEX_cost_data.iloc[0]['IR_%']
             Inv_LT = HEX_cost_data.iloc[0]['LT_yr']
             Inv_OM = HEX_cost_data.iloc[0]['O&M_%'] / 100
 
-            InvC_USD = Inv_a + Inv_b * (Q_max_W) ** Inv_c + (Inv_d + Inv_e * Q_max_W) * log(Q_max_W)
-            Capex_a_USD = InvC_USD * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-            Opex_fixed_USD = InvC_USD * Inv_OM
+            Capex_total_USD = Inv_a + Inv_b * (Q_max_W) ** Inv_c + (Inv_d + Inv_e * Q_max_W) * log(Q_max_W)
+            Capex_a_USD = calc_capex_annualized(Capex_total_USD, Inv_IR, Inv_LT)
+            Opex_fixed_USD = Capex_total_USD * Inv_OM
 
-            Capex_Substations_USD += InvC_USD
+            Capex_Substations_USD += Capex_total_USD
             Capex_a_Substations_USD += Capex_a_USD
             Opex_fixed_Substations_USD += Opex_fixed_USD
 
@@ -318,11 +319,11 @@ def calc_network_costs_cooling(locator, master_to_slave_vars, network_features, 
     ratio_connected = num_buildings_connected / num_all_buildings
 
     # Capital costs
-    Inv_IR = 0.05
+    Inv_IR = 5
     Inv_LT = 20
     Inv_OM = 0.10
     Capex_Network_USD = pipesCosts_USD * ratio_connected
-    Capex_a_Network_USD = Capex_Network_USD * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+    Capex_a_Network_USD = calc_capex_annualized(Capex_Network_USD, Inv_IR, Inv_LT)
     Opex_fixed_Network_USD = Capex_Network_USD * Inv_OM
 
     # costs of pumps
@@ -396,15 +397,15 @@ def calc_substations_costs_cooling(building_names, master_to_slave_vars, distric
             Inv_c = HEX_cost_data.iloc[0]['c']
             Inv_d = HEX_cost_data.iloc[0]['d']
             Inv_e = HEX_cost_data.iloc[0]['e']
-            Inv_IR = (HEX_cost_data.iloc[0]['IR_%']) / 100
+            Inv_IR = HEX_cost_data.iloc[0]['IR_%']
             Inv_LT = HEX_cost_data.iloc[0]['LT_yr']
             Inv_OM = HEX_cost_data.iloc[0]['O&M_%'] / 100
 
-            InvC_USD = Inv_a + Inv_b * (Q_max_W) ** Inv_c + (Inv_d + Inv_e * Q_max_W) * log(Q_max_W)
-            Capex_a_USD = InvC_USD * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-            Opex_fixed_USD = InvC_USD * Inv_OM
+            Capex_total_USD = Inv_a + Inv_b * (Q_max_W) ** Inv_c + (Inv_d + Inv_e * Q_max_W) * log(Q_max_W)
+            Capex_a_USD = calc_capex_annualized(Capex_total_USD, Inv_IR, Inv_LT)
+            Opex_fixed_USD = Capex_total_USD * Inv_OM
 
-            Capex_Substations_USD += InvC_USD
+            Capex_Substations_USD += Capex_total_USD
             Capex_a_Substations_USD += Capex_a_USD
             Opex_fixed_Substations_USD += Opex_fixed_USD
 
