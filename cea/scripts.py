@@ -7,6 +7,7 @@ import os
 import yaml
 import cea
 import cea.inputlocator
+from cea.utilities.yaml_ordered_dict import OrderedDictYAMLLoader
 
 __schemas = None
 
@@ -93,7 +94,6 @@ def _get_categories_dict():
     which don't support YAML, load from a pickled version generated on the call to ``cea install-toolbox``."""
     try:
         import yaml
-        from cea.utilities.yaml_ordered_dict import OrderedDictYAMLLoader
         categories = yaml.load(open(SCRIPTS_YML), OrderedDictYAMLLoader)
     except ImportError:
         import pickle
@@ -127,7 +127,7 @@ def schemas():
     global __schemas
     if not __schemas:
         schemas_yml = os.path.join(os.path.dirname(__file__), 'schemas.yml')
-        __schemas = yaml.load(open(schemas_yml), Loader=yaml.CLoader)
+        __schemas = yaml.load(open(schemas_yml), Loader=OrderedDictYAMLLoader)
     return __schemas
 
 
