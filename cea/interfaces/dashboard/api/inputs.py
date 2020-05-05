@@ -28,25 +28,26 @@ COLORS = {
     'disconnected': get_color_array('grey')
 }
 
-input_databases = OrderedDict([
-    ('get_zone_geometry', 'zone'),
-    ('get_building_typology', 'typology'),
-    ('get_building_architecture', 'architecture'),
-    ('get_building_internal', 'internal-loads'),
-    ('get_building_comfort', 'indoor-comfort'),
-    ('get_building_air_conditioning', 'air-conditioning-systems'),
-    ('get_building_supply', 'supply-systems'),
-    ('get_surroundings_geometry', 'surroundings'),
-])
+# List of input databases (db_name, locator/schema_key)
+input_databases = [
+    ('zone', 'get_zone_geometry'),
+    ('typology', 'get_building_typology'),
+    ('architecture', 'get_building_architecture'),
+    ('internal-loads', 'get_building_internal'),
+    ('indoor-comfort', 'get_building_comfort'),
+    ('air-conditioning-systems', 'get_building_air_conditioning'),
+    ('supply-systems', 'get_building_supply'),
+    ('surroundings', 'get_surroundings_geometry')
+]
 
 
 def get_input_database_schemas():
     """Parse the inputs.yaml file and create the dictionary of column types"""
     schemas = cea.scripts.schemas()
     input_database_schemas = OrderedDict()
-    for locator, name in input_databases.items():
+    for db_name, locator in input_databases:
         schema = schemas[locator]
-        input_database_schemas[name] = {
+        input_database_schemas[db_name] = {
             'file_type': schema['file_type'],
             'location': locator,
             'columns': schema['schema']['columns']
