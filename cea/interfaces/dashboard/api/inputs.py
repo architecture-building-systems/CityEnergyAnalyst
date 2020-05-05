@@ -28,16 +28,15 @@ COLORS = {
     'disconnected': get_color_array('grey')
 }
 
-
 input_databases = OrderedDict([
     ('get_zone_geometry', 'zone'),
-    ('get_surroundings_geometry', 'surroundings'),
     ('get_building_typology', 'typology'),
-    ('get_building_internal', 'internal-loads'),
-    ('get_building_supply', 'supply-systems'),
     ('get_building_architecture', 'architecture'),
+    ('get_building_internal', 'internal-loads'),
     ('get_building_comfort', 'indoor-comfort'),
-    ('get_building_air_conditioning', 'air-conditioning-systems')
+    ('get_building_air_conditioning', 'air-conditioning-systems'),
+    ('get_building_supply', 'supply-systems'),
+    ('get_surroundings_geometry', 'surroundings'),
 ])
 
 
@@ -205,14 +204,11 @@ class AllInputs(Resource):
 
 def get_building_properties():
     import cea.glossary
-    # FIXME: Find a better way to ensure order of tabs
-    tabs = ['zone', 'typology', 'architecture', 'internal-loads', 'indoor-comfort', 'air-conditioning-systems',
-            'supply-systems', 'surroundings']
 
     config = current_app.cea_config
 
     locator = cea.inputlocator.InputLocator(config.scenario)
-    store = {'tables': {}, 'columns': {}, 'order': tabs}
+    store = {'tables': OrderedDict(), 'columns': OrderedDict()}
     for db in INPUTS:
         db_info = INPUTS[db]
         locator_method = db_info['location']
