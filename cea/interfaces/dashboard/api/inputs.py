@@ -29,7 +29,7 @@ COLORS = {
 }
 
 # List of input databases (db_name, locator/schema_key)
-input_databases = [
+INPUT_DATABASES = [
     ('zone', 'get_zone_geometry'),
     ('typology', 'get_building_typology'),
     ('architecture', 'get_building_architecture'),
@@ -42,10 +42,10 @@ input_databases = [
 
 
 def get_input_database_schemas():
-    """Parse the inputs.yaml file and create the dictionary of column types"""
+    """Parse the schemas.yml file and create the dictionary of column types"""
     schemas = cea.scripts.schemas()
     input_database_schemas = OrderedDict()
-    for db_name, locator in input_databases:
+    for db_name, locator in INPUT_DATABASES:
         schema = schemas[locator]
         input_database_schemas[db_name] = {
             'file_type': schema['file_type'],
