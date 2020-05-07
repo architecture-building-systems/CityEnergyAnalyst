@@ -66,7 +66,7 @@ def plot_carnot_from_icc_txt(path, t_list, T_ref_list, line_types, plot_type, mo
     set_plot_parameters(ax1, PLOT_SPECS['carnot_fraction'])
     fig1 = plt.gcf()
     os.chdir("..\\")
-    print('saving fig to...', os.path.abspath(os.curdir))
+    print('saving fig to...', os.path.abspath(os.curdir), fig_name)
     fig1.savefig(fig_name, transparent=True)
     return
 
