@@ -207,7 +207,10 @@ class Configuration(object):
         return self.get_parameter(fqname).get()
 
     def get_parameter(self, fqname):
-        """Given a string of the form "section:parameter", return the parameter object"""
+        """Given a string of the form "section:parameter", return the parameter object
+
+        :rtype: cea.config.Parameter
+        """
         section, parameter = fqname.split(':')
         try:
             return self.sections[section].parameters[parameter]
