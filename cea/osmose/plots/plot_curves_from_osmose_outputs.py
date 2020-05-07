@@ -10,6 +10,8 @@ from matplotlib import rcParams
 
 rcParams['mathtext.default'] = 'regular'
 
+
+
 # # fix on times new roman font
 # del matplotlib.font_manager.weight_dict['roman']
 # matplotlib.font_manager._rebuild()
@@ -43,7 +45,7 @@ def plot_base_and_separated(path, t, plot_type, model_name):
 
 def set_plot_parameters(ax1, plot_specs):
     fontname = 'Times New Roman'
-    fontsize = 24
+    fontsize = 8
     # set the legend
     # ax1.legend(loc='lower left', shadow=False, fancybox=True,
     #            fontsize=fontsize, prop={'family': 'Times New Roman', 'size': str(fontsize)})
@@ -74,6 +76,15 @@ def set_plot_parameters(ax1, plot_specs):
 
 
 def load_data_from_txt(path, plot_type, line_type, txt_name, t):
+    """
+    reads '.txt' files that contains plot data
+    :param path: path to the folder of the .txt file
+    :param plot_type:
+    :param line_type: "base" or "seperated"
+    :param txt_name:
+    :param t:
+    :return:
+    """
     os.chdir(path)
     if txt_name == '':
         file_name = plot_type + '_' + line_type + '_m_loc_loc1_t' + str(t) + '_c1_DefaultHeatCascade.txt'
