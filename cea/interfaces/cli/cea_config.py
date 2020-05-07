@@ -35,14 +35,25 @@ def main(config=None):
         print_help()
         sys.exit(1)
     script_name = args.pop(0)
-    cea_script = cea.scripts.by_name(script_name)
-    config.restrict_to(cea_script.parameters)
-    config.apply_command_line_args(args, cea_script.parameters)
+    if script_name == "write":
+        for fqname, value in cea.config.parse_command_line_args(args).items():
+            parameter = config.get_parameter(fqname)
+            parameter.set(parameter.decode(parameter.replace_references(value)))
+    elif script_name == "read":
+        for fqname in args:
+            parameter = config.get_parameter(fqname)
+            print("- {fqname} = {parameter_value}".format(fqname=fqname, parameter_value = parameter.get()))
+            print("  (default: {default})".format(default=parameter.default))
+    else:
+        cea_script = cea.scripts.by_name(script_name)
+        config.restrict_to(cea_script.parameters)
+        config.apply_command_line_args(args, cea_script.parameters)
+        cea_script.print_script_configuration(config, verb='Configuring')
 
     # save the updates to the configuration file (re-running the same tool will result in the
     # same parameters being set)
     config.save(cea.config.CEA_CONFIG)
-    cea_script.print_script_configuration(config, verb='Configuring')
+
 
 
 def print_help():
