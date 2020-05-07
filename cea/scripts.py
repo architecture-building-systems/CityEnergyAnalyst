@@ -122,12 +122,15 @@ def for_interface(interface='cli'):
     return [script for script in list_scripts() if interface in script.interfaces]
 
 
-def schemas():
+def schemas(plugins=None):
     """Return the contents of the schemas.yml file"""
     global __schemas
     if not __schemas:
         schemas_yml = os.path.join(os.path.dirname(__file__), 'schemas.yml')
         __schemas = yaml.load(open(schemas_yml), Loader=yaml.CLoader)
+        if plugins:
+            for plugin in plugins:
+                __schemas.update(plugin.schemas)
     return __schemas
 
 
@@ -186,6 +189,7 @@ def get_schema_variables(schema):
 
 
 def get_schema_scripts():
+    """Returns the list of scripts actually mentioned in the schemas.yml file"""
     schemas_dict = schemas()
     schema_scripts = set()
     for locator_method in schemas_dict:

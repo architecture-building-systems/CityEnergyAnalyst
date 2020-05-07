@@ -625,6 +625,30 @@ class ListParameter(Parameter):
         return parse_string_to_list(value)
 
 
+class PluginListParameter(ListParameter):
+    """A list of cea.plugin.Plugin instances"""
+    typename = "PluginListParameter"
+
+    def decode(self, value):
+        plugin_fqnames = parse_string_to_list(value)
+        return [self.instantiate_plugin(plugin_fqname) for plugin_fqname in plugin_fqnames]
+
+    def instantiate_plugin(self, plugin_fqname):
+        try:
+            import importlib
+            plugin_path = plugin_fqname.split(".")
+            plugin_module = ".".join(plugin_path[:-1])
+            plugin_class = plugin_path[-1]
+            module = importlib.import_module(plugin_module)
+            instance = getattr(module, plugin_class)()
+            return instance
+        except BaseException as ex:
+            raise ValueError("Could not instantiate plugin {plugin_fqname} ({msg})".format(
+                plugin_fqname=plugin_fqname, msg=ex.message))
+
+
+
+
 class SubfoldersParameter(ListParameter):
     """A list of subfolder names of a parent folder."""
     typename = 'SubfoldersParameter'
