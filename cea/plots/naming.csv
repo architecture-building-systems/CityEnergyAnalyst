@@ -355,7 +355,7 @@ Cost Analysis,Opex_var_Lake_USD,$USD(2015),OPEX of free-cooling from lake,blue_l
 Cost Analysis,Opex_var_VCC_USD,$USD(2015),OPEX of vapor compression chiller,brown_light
 Cost Analysis,Opex_var_VCC_backup_USD,$USD(2015),OPEX of back-up vapor compression chiller,blue_light
 Cost Analysis,Opex_var_pumps_USD,$USD(2015),OPEX of thermal network pumps,orange
-Cost Analysis,Capex_Total_USD,$USD(2015),Total annualized CAPEX,orange
+Cost Analysis,Capex_Total_USD,$USD(2015),Equivalent annual CAPEX,orange
 Cost Analysis,Opex_Total_USD,$USD(2015),Total OPEX,blue
 Cost Analysis,Capex_SC_USD,$USD(2015),Annualized CAPEX of solar collectors,blue
 Cost Analysis,Capex_PVT_USD,$USD(2015),Annualized CAPEX of photovoltaic-thermal,red
@@ -415,7 +415,7 @@ Cost Analysis,Electricity_Costs_USD,$USD(2015),Operation costs GRID electricity 
 Cost Analysis,Electricitycosts_USD,$USD(2015),Operation costs GRID electricity supplied to all buildings appliances and hot water demand,grey
 Cost Analysis,Electricitycosts_for_appliances_USD,$USD(2015),Operation costs GRID electricity supplied to all buildings appliances,grey
 Cost Analysis,Electricitycosts_for_hotwater_USD,$USD(2015),Operation costs GRID electricity supplied to hot water demand,green_light
-Cost Analysis,TAC_USD,$USD(2015),Total annual cost (include CAPEX and OPEX).,red_light
+Cost Analysis,TAC_USD,$USD(2015),Equivalent Annual Costs (include CAPEX and OPEX).,red_light
 Cost Analysis,CO2_ton_per_yr,ton CO2-eq/yr,Annual CO2 equivalent emission.,red_light
 Cost Analysis,Primary_Energy_GJ_per_yr,GJ/yr,Annual primary energy consumption.,red_light
 Cost Analysis,Network_costs_USD,$USD(2015),Annualized CAPEX of installing the district network,red_light
@@ -552,7 +552,7 @@ Urban,SWIMMING,m2,Swimming halls,purple
 
 
 potential_duplicate,individual_name,-,System Option,red
-potential_duplicate,TAC_sys_USD,$USD(2015)/yr,Total annualized costs of energy system ($USD(2015)/yr),red
+potential_duplicate,TAC_sys_USD,$USD(2015)/yr,Equivalent annual costs of energy system ($USD(2015)/yr),red
 potential_duplicate,GHG_sys_tonCO2,ton CO2-eq/yr,Green house gas emissions of energy system (ton CO2-eq/yr),red
 potential_duplicate,PEN_sys_MJoil,MJ oil-eq/yr,Primary energy of energy system (MJ oil-eq/yr),red
 potential_duplicate,Capex_total_sys_USD,$USD(2015),Total CAPEX of energy system ($USD(2015)),red
