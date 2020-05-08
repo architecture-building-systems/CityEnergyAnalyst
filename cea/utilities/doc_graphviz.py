@@ -11,6 +11,7 @@ from __future__ import division
 import os
 import cea.config
 import cea.scripts
+import cea.schemas
 from jinja2 import Template
 
 __author__ = "Jack Hawthorne"
@@ -21,6 +22,7 @@ __version__ = "2.14"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
+
 
 
 def create_graphviz_files(graphviz_data, documentation_dir):
@@ -105,8 +107,8 @@ def get_list_of_digraphs(documentation_dir, schema_scripts):
 
 
 def main(_):
-    schemas = cea.scripts.schemas()
-    schema_scripts = cea.scripts.get_schema_scripts()
+    schemas = cea.schemas.schemas()
+    schema_scripts = schemas.get_schema_scripts()
     documentation_dir = os.path.join(os.path.dirname(cea.config.__file__), '..', 'docs')
 
     graphviz_data = {}

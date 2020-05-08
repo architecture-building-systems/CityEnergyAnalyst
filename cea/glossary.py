@@ -4,9 +4,7 @@ Contains some helper methods for working with glossary data
 from __future__ import print_function
 from __future__ import division
 
-import os
-import csv
-import cea.scripts
+import cea.schemas
 import pandas as pd
 
 __author__ = "Daren Thomas"
@@ -25,7 +23,7 @@ def read_glossary_df():
     """Returns the glossary as a DataFrame, created from the schemas.yml file. NOTE: This is used by the GUI."""
     global __glossary_df
     if __glossary_df is None:
-        schemas = cea.scripts.schemas()
+        schemas = cea.schemas.schemas()
         glossary_df = pd.DataFrame(columns=["SCRIPT", "LOCATOR_METHOD", "WORKSHEET", "VARIABLE",
                                             "DESCRIPTION", "UNIT", "VALUES", "TYPE", "COLOR", "FILE_NAME"])
         rows = []

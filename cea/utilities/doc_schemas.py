@@ -15,6 +15,7 @@ import pandas as pd
 from pandas.errors import EmptyDataError
 import dateutil.parser
 import cea.config
+import cea.schemas
 import cea.inputlocator
 import cea.utilities.dbf
 import geopandas
@@ -271,7 +272,7 @@ def main(config):
     """
     Read the schema entry for a locator method, compare it to the current entry and print out a new, updated version.
     """
-    print(yaml.safe_dump(read_schema(config.scenario, config.schemas.locator_method, config.schemas.args), default_flow_style=False))
+    print(yaml.safe_dump(read_schema(config.scenario, schemas.schemas.locator_method, schemas.schemas.args), default_flow_style=False))
 
 
 if __name__ == '__main__':

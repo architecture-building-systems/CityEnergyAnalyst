@@ -4,6 +4,7 @@ from collections import OrderedDict
 from flask_restplus import Namespace, Resource, abort
 import pandas as pd
 
+import cea.schemas
 from cea.databases import get_regions, get_database_tree, databases_folder_path
 from cea.utilities.schedule_reader import schedule_to_dataframe
 
@@ -106,7 +107,7 @@ def convert_path_to_name(schema_dict):
 class DatabaseSchema(Resource):
     def get(self):
         import cea.scripts
-        schemas = cea.scripts.schemas()
+        schemas = cea.schemas.schemas()
         out = {}
         for db_name, db_schema_keys in DATABASES_SCHEMA_KEYS.items():
             out[db_name] = {}
@@ -123,7 +124,7 @@ if __name__ == "__main__":
     def test():
         import cea.scripts
 
-        schemas = cea.scripts.schemas()
+        schemas = cea.schemas.schemas()
         out = {}
         for db_name, db_schema_keys in DATABASES_SCHEMA_KEYS.items():
             out[db_name] = {}

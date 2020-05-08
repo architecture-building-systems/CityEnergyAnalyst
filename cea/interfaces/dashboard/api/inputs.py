@@ -11,6 +11,7 @@ from flask_restplus import Namespace, Resource, abort
 import cea.inputlocator
 import cea.utilities.dbf
 import cea.scripts
+import cea.schemas
 from cea.datamanagement.databases_verification import InputFileValidator
 from cea.interfaces.dashboard.api.databases import read_all_databases, DATABASES_SCHEMA_KEYS, schedule_to_dict
 from cea.plots.supply_system.a_supply_system_map import get_building_connectivity, newer_network_layout_exists
@@ -208,7 +209,7 @@ def get_building_properties():
 
     config = current_app.cea_config
 
-    schemas = cea.scripts.schemas()
+    schemas = cea.schemas.schemas()
     locator = cea.inputlocator.InputLocator(config.scenario)
     store = {'tables': {}, 'columns': {}, 'order': tabs}
     for db in INPUTS:
@@ -394,7 +395,7 @@ class InputDatabaseValidate(Resource):
         import cea.scripts
         config = current_app.cea_config
         locator = cea.inputlocator.InputLocator(config.scenario)
-        schemas = cea.scripts.schemas()
+        schemas = cea.schemas.schemas()
         validator = InputFileValidator(locator)
         out = OrderedDict()
 
