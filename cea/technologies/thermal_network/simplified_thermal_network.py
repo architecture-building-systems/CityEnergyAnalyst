@@ -236,10 +236,12 @@ def thermal_network_simplified(locator, config, network_name):
 
         # add loads
         building_base_demand_m3s = {}
+        total_demand_kgs = []
         for building in volume_flow_m3pers_building.keys():
             building_base_demand_m3s[building] = volume_flow_m3pers_building[building].max()
             pattern_demand = (volume_flow_m3pers_building[building].values / building_base_demand_m3s[building]).tolist()
             wn.add_pattern(building, pattern_demand)
+            total_demand_kgs.append(volume_flow_m3pers_building[building] * P_WATER_KGPERM3)
 
         # add nodes
         consumer_nodes = []
@@ -521,7 +523,7 @@ def thermal_network_simplified(locator, config, network_name):
     edge_df[fields_edges].to_csv(locator.get_thermal_network_edge_list_file(network_type, network_name), index=False)
     fields_nodes = ['Building', 'Type']
     node_df[fields_nodes].to_csv(locator.get_thermal_network_node_types_csv_file(network_type, network_name),
-                                 index=False)
+                                 index=True)
 
     # correct diameter of network and save to the shapefile
     from cea.utilities.dbf import dataframe_to_dbf, dbf_to_dataframe
