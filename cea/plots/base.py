@@ -168,11 +168,26 @@ class PlotBase(object):
         return self.cache.lookup_plot_div(self, self._plot_div_producer)
 
     def _plot_div_producer(self):
+        # Set default color template to 'none' for plotly version 4
+        try:
+            import plotly.io as pio
+            pio.templates.default = 'none'
+        except ImportError:
+            pass
+
         fig = plotly.graph_objs.Figure(data=self._plot_data_producer(), layout=self.layout)
         fig['layout'].update(dict(hovermode='closest'))
         fig['layout']['yaxis'].update(dict(hoverformat=".2f"))
         fig['layout']['margin'].update(dict(l=50, r=50, t=50, b=50))
         fig['layout']['font'].update(dict(size=10))
+
+        if self.timeframe is not None:
+            # Try to get plot year from data
+            try:
+                plot_year = fig['data'][0]['x'][0].year
+                fig['layout']['xaxis']['rangebreaks'] = [dict(values=["{year}-02-29".format(year=plot_year)])]
+            except Exception as e:
+                print(e)
 
         div = plotly.offline.plot(fig, output_type='div', include_plotlyjs=False, show_link=False)
         return div
@@ -208,6 +223,11 @@ class PlotBase(object):
                 if 'yaxis' in trace:  # Assign correct title if plot contains multiple y_axis
                     y_axis_num = trace['yaxis'].split('y')[1]
                     y_axis = self.layout['yaxis{}'.format(y_axis_num)]['title'] or y_axis
+
+                # Fix for plotly v4
+                if hasattr(x_axis, 'text'):
+                    x_axis = x_axis.text
+                    y_axis = y_axis.text
 
                 if trace['type'] == 'bar':
                     column_name = name
