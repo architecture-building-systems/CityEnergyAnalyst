@@ -1,5 +1,7 @@
 from __future__ import print_function
 
+import cea.schemas
+
 """
 doc_glossary.py
 
@@ -33,7 +35,7 @@ def add_backticks(s):
 
 
 def main(_=None):
-    schemas = cea.scripts.schemas()
+    schemas = cea.schemas.schemas()
     documentation_dir = os.path.join(os.path.dirname(cea.config.__file__), '..', 'docs')
     environment.DEFAULT_FILTERS['add_backticks'] = add_backticks
     template_path = os.path.join(documentation_dir, 'templates', 'glossary.rst')

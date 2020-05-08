@@ -2,6 +2,7 @@
 inputlocator.py - locate input files by name based on the reference folder structure.
 """
 import os
+import cea.schemas
 import shutil
 import tempfile
 import time
@@ -23,10 +24,20 @@ class InputLocator(object):
     """
 
     # SCENARIO
-    def __init__(self, scenario):
+    def __init__(self, scenario, plugins=None):
         self.scenario = scenario
         self.db_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'databases'))
         self.weather_path = os.path.join(self.db_path, 'weather')
+        self.wrap_locator_methods()
+
+    def wrap_locator_methods(self):
+        """
+        For each locator method defined in scripts.yml, wrap it in a callable object (preserving the
+        original interface) that allows for read() and write() operations.
+        """
+        schemas = cea.schemas.schemas()
+        for lm in schemas.keys():
+            setattr(self, lm, cea.schemas.create_schema_io(lm, schemas[lm]))
 
     @staticmethod
     def _ensure_folder(*components):

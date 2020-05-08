@@ -5,8 +5,8 @@ import cea.plots
 import cea.plots.categories
 
 import re
-import os
 
+import cea.schemas
 from cea import MissingInputDataException
 
 blueprint = Blueprint(
@@ -21,7 +21,7 @@ blueprint = Blueprint(
 def script_suggestions(locator_names):
     """Return a list of CeaScript objects that produce the output for each locator name"""
     import cea.scripts
-    schemas = cea.scripts.schemas()
+    schemas = cea.schemas.schemas()
     script_names = []
     for name in locator_names:
         script_names.extend(schemas[name]['created_by'])
