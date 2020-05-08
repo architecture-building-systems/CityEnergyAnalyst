@@ -50,6 +50,7 @@ class NetworkOptimizationFeatures(object):
         node_id = mass_flow_nodes_df.loc[mass_flow_nodes_df.loc['Type'] == "Plant", 'Name']
         return mass_flow_df[node_id].values
 
+
     def pipe_costs(self, locator, network_name, network_type):
         edges_file = pd.read_csv(locator.get_thermal_network_edge_list_file(network_type, network_name))
         piping_cost_data = pd.read_excel(locator.get_database_distribution_systems(), sheet_name="THERMAL_GRID")

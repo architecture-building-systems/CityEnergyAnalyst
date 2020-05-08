@@ -154,6 +154,9 @@ VCC_T_COOL_IN = 30 + 273.0  # entering condenser water temperature [K]
 VCC_MIN_LOAD = 0.1  # min load for cooling power
 VCC_CODE_CENTRALIZED = 'CH1'
 VCC_CODE_DECENTRALIZED = 'CH3'
+COMPRESSOR_TYPE_LIMIT_LOW = 1055056  # in W, according to ASHRAE 90.1 Appendix G. below this limit (300 RT), one water-cooled screw chiller should be implemented
+COMPRESSOR_TYPE_LIMIT_HIGH = 2110112  # in W, according to ASHRAE 90.1 Appendix G. below this limit (600 RT), two water-cooled screw chiller should be implemented, while above 2 centrifugal water source chllers hall be implemented, not larger then 800 RT (2813 kW)
+ASHRAE_CAPACITY_LIMIT = 2813482 # in W, according to ASHRAE 90.1 Appendix G, chiller shall notbe larger than 800 RT
 
 # Absorption chiller
 ACH_T_IN_FROM_CHP_K = 150.0 + 273.0  # hot water from CHP to the generator of ACH

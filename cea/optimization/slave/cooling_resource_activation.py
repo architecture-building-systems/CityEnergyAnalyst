@@ -7,8 +7,10 @@ import cea.technologies.chiller_vapor_compression as chiller_vapor_compression
 import cea.technologies.cooling_tower as CTModel
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.optimization.constants import VCC_T_COOL_IN, DT_COOL, ACH_T_IN_FROM_CHP_K
+from cea.technologies.constants import G_VALUE_CENTRALIZED  # this is where to differentiate chiller performances
 from cea.technologies.pumps import calc_water_body_uptake_pumping
 import cea.technologies.chiller_absorption
+import pandas as pd
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -20,10 +22,11 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calc_vcc_operation(Qc_from_VCC_W, T_DCN_re_K, T_DCN_sup_K, T_source_K):
-    from cea.technologies.constants import G_VALUE_CENTRALIZED  # this is where to differentiate chiller performances
-    VCC_operation = chiller_vapor_compression.calc_VCC(Qc_from_VCC_W, T_DCN_sup_K, T_DCN_re_K, T_source_K,
-                                                       G_VALUE_CENTRALIZED)
+def calc_vcc_operation(Qc_from_VCC_W, T_DCN_re_K, T_DCN_sup_K, T_source_K, chiller_size, max_VCC_capacity, scale):
+    g_value = G_VALUE_CENTRALIZED # get the isentropic efficiency of the district cooling
+    Qc_from_VCC_W = min(Qc_from_VCC_W, chiller_size) # The chiller can not supply more cooling than the installed capacity allows
+    VCC_operation = chiller_vapor_compression.calc_VCC(chiller_size, Qc_from_VCC_W, T_DCN_sup_K, T_DCN_re_K, T_source_K,
+                                                       g_value, max_VCC_capacity, scale)
 
     # unpack outputs
     Qc_VCC_W = VCC_operation['q_chw_W']
@@ -36,10 +39,13 @@ def calc_vcc_CT_operation(Qc_from_VCC_W,
                           T_DCN_re_K,
                           T_DCN_sup_K,
                           T_source_K,
-                          size_chiller_CT):
-    from cea.technologies.constants import G_VALUE_CENTRALIZED  # this is where to differentiate chiller performances
-    VCC_operation = chiller_vapor_compression.calc_VCC(Qc_from_VCC_W, T_DCN_sup_K, T_DCN_re_K, T_source_K,
-                                                       G_VALUE_CENTRALIZED)
+                          size_chiller_CT,
+                          max_VCC_capacity,
+                          scale):
+
+    g_value = G_VALUE_CENTRALIZED
+    VCC_operation = chiller_vapor_compression.calc_VCC(size_chiller_CT, Qc_from_VCC_W, T_DCN_sup_K, T_DCN_re_K, T_source_K,
+                                                       g_value, max_VCC_capacity, scale)
 
     # unpack outputs
     Qc_CT_VCC_W = VCC_operation['q_cw_W']
@@ -90,7 +96,8 @@ def cooling_resource_activator(Q_thermal_req,
                                T_ground_K,
                                master_to_slave_variables,
                                absorption_chiller,
-                               CCGT_operation_data):
+                               CCGT_operation_data,
+                               max_VCC_capacity):
     """
 
     :param Q_thermal_req:
@@ -105,6 +112,7 @@ def cooling_resource_activator(Q_thermal_req,
     :param CCGT_operation_data:
     :return:
     """
+    scale = 'DISTRICT'
     ## initializing unmet cooling load and requirements from daily storage for this hour
     Q_cooling_unmet_W = Q_thermal_req
     Q_DailyStorage_gen_directload_W = 0.0
@@ -187,30 +195,31 @@ def cooling_resource_activator(Q_thermal_req,
         Q_Trigen_NG_gen_directload_W = 0.0
 
     # Base VCC water-source
-    if master_to_slave_variables.WS_BaseVCC_on == 1 and Q_cooling_unmet_W > 0.0 and not np.isclose(
+    if master_to_slave_variables.WS_BaseVCC_on == 1 and Q_cooling_unmet_W > 0.0 and T_source_average_Lake_K < VCC_T_COOL_IN and not np.isclose(
             T_district_cooling_supply_K,
             T_district_cooling_return_K):
         # Free cooling possible from the lake
-        if Q_cooling_unmet_W > Q_therm_Lake_W:
-            Q_BaseVCC_WS_gen_directload_W = Q_therm_Lake_W
+        size_WS_BaseVCC_W = master_to_slave_variables.WS_BaseVCC_size_W
+        if Q_cooling_unmet_W > min(size_WS_BaseVCC_W, Q_therm_Lake_W): # min funtion to deal with both constraints at the same time, limiting  factors being the size and the temal capacity of lake
+            Q_BaseVCC_WS_gen_directload_W = min(size_WS_BaseVCC_W, Q_therm_Lake_W)
             Qc_BaseVCC_WS_gen_storage_W = 0.0
-            Qc_from_storage_W = daily_storage_class.discharge_storage(Q_cooling_unmet_W - Q_therm_Lake_W)
+            Qc_from_storage_W = daily_storage_class.discharge_storage(Q_cooling_unmet_W - min(size_WS_BaseVCC_W, Q_therm_Lake_W))
             Q_BaseVCC_WS_gen_W = Q_BaseVCC_WS_gen_directload_W + Qc_BaseVCC_WS_gen_storage_W
-            Q_therm_Lake_W -= Q_BaseVCC_WS_gen_W  # discount availability
         else:
             Q_BaseVCC_WS_gen_directload_W = Q_cooling_unmet_W
-            Qc_BaseVCC_WS_gen_storage_W = daily_storage_class.charge_storage(Q_therm_Lake_W - Q_cooling_unmet_W)
+            Qc_BaseVCC_WS_gen_storage_W = daily_storage_class.charge_storage(min(size_WS_BaseVCC_W, Q_therm_Lake_W) - Q_cooling_unmet_W)
             Qc_from_storage_W = 0.0
             Q_BaseVCC_WS_gen_W = Q_BaseVCC_WS_gen_directload_W + Qc_BaseVCC_WS_gen_storage_W
-            Q_therm_Lake_W -= Q_BaseVCC_WS_gen_W  # discount availability
-
-        if T_source_average_Lake_K <= T_district_cooling_supply_K - DT_COOL:
+        if (T_district_cooling_supply_K - DT_COOL) < T_source_average_Lake_K < VCC_T_COOL_IN: # if lake temperature lower than CT source, use compression chillers with lake water as source
+            WS_BaseVCC_capacity = master_to_slave_variables.WS_BaseVCC_size_W
             Q_BaseVCC_WS_gen_W, \
             E_BaseVCC_WS_req_W = calc_vcc_operation(Q_BaseVCC_WS_gen_W,
                                                     T_district_cooling_return_K,
                                                     T_district_cooling_supply_K,
                                                     T_source_average_Lake_K,
-                                                    )
+                                                    WS_BaseVCC_capacity,
+                                                    max_VCC_capacity,
+                                                    scale)
 
             # Delta P from linearization after distribution optimization
             E_pump_WS_req_W = calc_water_body_uptake_pumping(Q_BaseVCC_WS_gen_W,
@@ -220,13 +229,15 @@ def cooling_resource_activator(Q_thermal_req,
             E_BaseVCC_WS_req_W += E_pump_WS_req_W
 
 
-        else:  # bypass, do not use chiller
+        elif T_source_average_Lake_K <= (T_district_cooling_supply_K - DT_COOL):  # bypass, do not use chiller but use heat exchange to cool the water directly
             E_pump_WS_req_W = calc_water_body_uptake_pumping(Q_BaseVCC_WS_gen_W,
                                                              T_district_cooling_return_K,
                                                              T_district_cooling_supply_K)
             E_BaseVCC_WS_req_W = E_pump_WS_req_W
-
-        Q_cooling_unmet_W = Q_cooling_unmet_W - Q_BaseVCC_WS_gen_directload_W - Qc_from_storage_W
+        else:
+            print("no lake water source baseload VCC was used")
+        Q_therm_Lake_W -= Q_BaseVCC_WS_gen_W  # discount availability
+        Q_cooling_unmet_W = Q_cooling_unmet_W - Q_BaseVCC_WS_gen_W - Qc_from_storage_W + Qc_BaseVCC_WS_gen_storage_W # the provided cooling equals the produced cooling plus the cooling from storage minus the stored cooling
         Q_DailyStorage_gen_directload_W += Qc_from_storage_W
     else:
         Q_BaseVCC_WS_gen_W = 0.0
@@ -234,44 +245,50 @@ def cooling_resource_activator(Q_thermal_req,
         Q_BaseVCC_WS_gen_directload_W = 0.0
 
     # Peak VCC water-source
-    if master_to_slave_variables.WS_PeakVCC_on == 1 and Q_cooling_unmet_W > 0.0 and not np.isclose(
+    if master_to_slave_variables.WS_PeakVCC_on == 1 and Q_cooling_unmet_W > 0.0 and T_source_average_Lake_K < VCC_T_COOL_IN and not np.isclose(
             T_district_cooling_supply_K,
             T_district_cooling_return_K):
         # Free cooling possible from the lake
-        if Q_cooling_unmet_W > Q_therm_Lake_W:
-            Q_PeakVCC_WS_gen_directload_W = Q_therm_Lake_W
+        size_WS_PeakVCC_W = master_to_slave_variables.WS_PeakVCC_size_W
+        if Q_cooling_unmet_W > min(size_WS_PeakVCC_W, Q_therm_Lake_W):
+            Q_PeakVCC_WS_gen_directload_W = min(size_WS_PeakVCC_W, Q_therm_Lake_W)
             Qc_PeakVCC_WS_gen_storage_W = 0.0
-            Qc_from_storage_W = daily_storage_class.discharge_storage(Q_cooling_unmet_W - Q_therm_Lake_W)
+            Qc_from_storage_W = daily_storage_class.discharge_storage(Q_cooling_unmet_W - min(size_WS_PeakVCC_W, Q_therm_Lake_W))
             Q_PeakVCC_WS_gen_W = Q_PeakVCC_WS_gen_directload_W + Qc_PeakVCC_WS_gen_storage_W
-            Q_therm_Lake_W -= Q_PeakVCC_WS_gen_W  # discount availability
         else:
             Q_PeakVCC_WS_gen_directload_W = Q_cooling_unmet_W
-            Qc_PeakVCC_WS_gen_storage_W = daily_storage_class.charge_storage(Q_therm_Lake_W - Q_cooling_unmet_W)
+            Qc_PeakVCC_WS_gen_storage_W = daily_storage_class.charge_storage(min(size_WS_PeakVCC_W, Q_therm_Lake_W) - Q_cooling_unmet_W)
             Qc_from_storage_W = 0.0
             Q_PeakVCC_WS_gen_W = Q_PeakVCC_WS_gen_directload_W + Qc_PeakVCC_WS_gen_storage_W
-            Q_therm_Lake_W -= Q_PeakVCC_WS_gen_W  # discount availability
 
-        if T_source_average_Lake_K <= T_district_cooling_supply_K - DT_COOL:
+        if (T_district_cooling_supply_K - DT_COOL) < T_source_average_Lake_K < VCC_T_COOL_IN:
+            WS_PeakVCC_capacity = master_to_slave_variables.WS_PeakVCC_size_W
             Q_PeakVCC_WS_gen_W, \
             E_PeakVCC_WS_req_W = calc_vcc_operation(Q_PeakVCC_WS_gen_W,
                                                     T_district_cooling_return_K,
                                                     T_district_cooling_supply_K,
                                                     T_source_average_Lake_K,
-                                                    )
+                                                    WS_PeakVCC_capacity,
+                                                    max_VCC_capacity,
+                                                    scale)
             E_pump_WS_req_W = calc_water_body_uptake_pumping(Q_PeakVCC_WS_gen_W,
                                                              T_district_cooling_return_K,
                                                              T_district_cooling_supply_K)
 
             E_PeakVCC_WS_req_W += E_pump_WS_req_W
 
-        else:  # bypass, do not use chiller
+        elif T_source_average_Lake_K <= (T_district_cooling_supply_K - DT_COOL):  # bypass, do not use VCC but use heat exchange to cool the water directly
             E_pump_WS_req_W = calc_water_body_uptake_pumping(Q_PeakVCC_WS_gen_W,
                                                              T_district_cooling_return_K,
                                                              T_district_cooling_supply_K)
             E_PeakVCC_WS_req_W = E_pump_WS_req_W
 
-        Q_cooling_unmet_W = Q_cooling_unmet_W - Q_PeakVCC_WS_gen_directload_W - Qc_from_storage_W
+        else:
+            print("no lake water source baseload VCC was used")
+        Q_therm_Lake_W -= Q_PeakVCC_WS_gen_W  # discount availability
+        Q_cooling_unmet_W = Q_cooling_unmet_W - Q_PeakVCC_WS_gen_W - Qc_from_storage_W + Qc_PeakVCC_WS_gen_storage_W # the provided cooling equals the produced cooling plus the cooling from storage minus
         Q_DailyStorage_gen_directload_W += Qc_from_storage_W
+
     else:
         Q_PeakVCC_WS_gen_directload_W = 0.0
         Q_PeakVCC_WS_gen_W = 0.0
@@ -298,9 +315,9 @@ def cooling_resource_activator(Q_thermal_req,
                                                    T_district_cooling_return_K,
                                                    T_district_cooling_supply_K,
                                                    VCC_T_COOL_IN,
-                                                   size_AS_BaseVCC_W
-                                                   )
-
+                                                   size_AS_BaseVCC_W,
+                                                   max_VCC_capacity,
+                                                   scale)
         Q_cooling_unmet_W = Q_cooling_unmet_W - Q_BaseVCC_AS_gen_directload_W - Qc_from_storage_W
         Q_DailyStorage_gen_directload_W += Qc_from_storage_W
     else:
@@ -329,7 +346,9 @@ def cooling_resource_activator(Q_thermal_req,
                                                    T_district_cooling_return_K,
                                                    T_district_cooling_supply_K,
                                                    VCC_T_COOL_IN,
-                                                   size_AS_PeakVCC_W)
+                                                   size_AS_PeakVCC_W,
+                                                   max_VCC_capacity,
+                                                   scale)
 
         Q_cooling_unmet_W = Q_cooling_unmet_W - Q_PeakVCC_AS_gen_directload_W - Qc_from_storage_W
         Q_DailyStorage_gen_directload_W += Qc_from_storage_W
