@@ -56,25 +56,31 @@ def main():
                           }
 
     ## collect data and paths
-    paths_to_model_folder, T_max_dict, T_ref_dict = {}, {}, {}
+    paths_to_model_folder, annual_exergy_MWh_dict, T_max_dict, T_ref_dict = {}, {}, {}, {}
     for tech in run_folders_to_compare.keys():
         run_folder = run_folders_to_compare[tech]
         path_to_run_folder = os.path.join('', *[path_to_base_folder, tech, run_folder])
         model_folder = [path_to_base_folder, tech, run_folder, 's_001\\plots\\icc\\models']
         paths_to_model_folder[tech] = os.path.join('', *model_folder)
+        calc_annual_exergy(annual_exergy_MWh_dict, path_to_base_folder, run_folder, tech)
         T_max_dict[tech] = calc_T_max(path_to_run_folder)
         T_ref_dict[tech] = calc_T_ref(path_to_run_folder)
 
     ## plotting
     for t in [85]:
         line_types = ['base'] # 'base', 'separated'
-        plot_carnot_from_icc_txt_techs(paths_to_model_folder, t, T_ref_dict, line_types, 'icc', 'all_chillers')
+        plot_carnot_from_icc_txt_techs(paths_to_model_folder, t, T_ref_dict, line_types, 'icc', 'all_chillers',
+                                       annual_exergy_MWh_dict)
+
+
+
+
 
 ##===================
 ## plotting scripts
 ##===================
 
-def plot_carnot_from_icc_txt_techs(paths, t, T_ref_dict, line_types, plot_type, txt_name):
+def plot_carnot_from_icc_txt_techs(paths, t, T_ref_dict, line_types, plot_type, txt_name, annual_exergy_MWh_dict):
     """
     plot icc from txt with both carnot and temperature axis
     :param paths:
@@ -114,8 +120,8 @@ def plot_carnot_from_icc_txt_techs(paths, t, T_ref_dict, line_types, plot_type, 
             table_data[tech] = exergy
 
     ## add legend
-    ax1.legend(bbox_to_anchor=[0.03, 0.03], loc='lower left', fontsize=8, frameon=False)
-
+    # ax1.legend(bbox_to_anchor=[0.03, 0.03], loc='lower left', fontsize=8, frameon=False)
+    ax1.legend(bbox_to_anchor=[0.05, -0.58], loc='lower left', fontsize=8, frameon=False)
 
     ## build second y-axis (Temperature)
     ax2 = ax1.twinx()
@@ -125,16 +131,25 @@ def plot_carnot_from_icc_txt_techs(paths, t, T_ref_dict, line_types, plot_type, 
     ## exergy table
     # input data of exergy table in the right order
     table_rows = []
+    row_labels = []
     for tech in ['HCS_base_coil', 'HCS_base_ER0', 'HCS_base_3for2', 'HCS_base_IEHX']:
-        table_rows.append([table_data[tech]])
+        table_rows.append([table_data[tech], annual_exergy_MWh_dict[tech]])
+        row_labels.append(CONFIG_TABLE[tech])
 
     # make exergy table
-    col_widths = [0.27]
+    col_widths = [0.2]
     bbox_width = sum(col_widths)
-    table = plt.table(cellText=table_rows, cellLoc='left', bbox=[0.35, 0.058, bbox_width, 0.305], # [x,y,width,height]
-                      colWidths=col_widths, colLabels=['exergy [kW]'])
+    table = plt.table(cellText=table_rows, cellLoc='center', colLabels=['1 p.m.','annual'], #rowLabels=row_labels
+                      bbox=[0.4, -0.55, bbox_width * 2, 0.305],) # [x,y,width,height])
+    table.scale(1, 1)
+    ax1.text(1200, -0.121, 'Exergy [kWh]', horizontalalignment='left', fontsize=8, fontweight='bold',
+             bbox={'edgecolor': 'none', 'facecolor': '#586748','alpha': 0.01, 'pad': 1})
+        # , bbox=[0.35, 0.058, bbox_width * 2, 0.305], # [x,y,width,height]
+        #               colWidths=col_widths, colLabels=['exergy [kW]'])
+    # table = plt.table(cellText=table_rows, cellLoc='left', bbox=[0.35, 0.058, bbox_width, 0.305], # [x,y,width,height]
+    #                   colWidths=col_widths, colLabels=['exergy [kW]'])
     set_table_fontsize(table, 8)
-    set_table_linewidth(table, 0)  # if remove line: 0, if default: comment out
+    # set_table_linewidth(table, 2)  # if remove line: 0, if default: comment out
 
     ## save the figure
     # ax1.set_title('t = ' + str(t), fontdict={'fontsize': 8, 'fontweight': 'medium'}, pad=20)
@@ -229,6 +244,12 @@ def calc_T_ref(path_to_run_folder):
     outputs_df = outputs_df[1:]
     T_ref_list = outputs_df['T_OA'] + 273.15
     return T_ref_list.values
+
+def calc_annual_exergy(annual_exergy_MWh_dict, path_to_base_folder, run_folder, tech):
+    # get total exergy
+    path_to_total_csv = [path_to_base_folder, tech, run_folder, 'total.csv']
+    exergy_df = pd.read_csv(os.path.join('', *path_to_total_csv), usecols=['exergy_kWh'])
+    annual_exergy_MWh_dict[tech] = round((exergy_df.values.sum()) * 52 / 1000)
 
 
 
