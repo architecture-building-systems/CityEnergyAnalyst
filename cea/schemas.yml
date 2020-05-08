@@ -11765,6 +11765,7 @@ get_total_demand:
   - demand
   file_path: outputs/data/demand/Total_demand.csv
   file_type: csv
+  float_format: "%.3f"
   schema:
     columns:
       Af_m2:
