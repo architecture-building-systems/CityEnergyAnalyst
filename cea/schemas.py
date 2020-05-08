@@ -134,16 +134,30 @@ class CsvSchemaIo(SchemaIo):
     """Read and write csv files - and attempt to validate them."""
     def read(self, *args, **kwargs):
         df = pd.read_csv(self(*args, **kwargs))
+        self.validate(df)
         return df
 
     def write(self, df, *args, **kwargs):
         """
         :type df: pd.Dataframe
         """
+        self.validate(df)
         csvargs={}
         if "float_format" in self.schema:
             csvargs["float_format"] = self.schema["float_format"]
         df.to_csv(self(*args, **kwargs), index=False, **csvargs)
+
+    def validate(self, df):
+        """Check to make sure the Dataframe conforms to the schema"""
+        expected_columns = set(self.schema["schema"]["columns"].keys())
+        found_columns = set(df.columns.values)
+        if not found_columns == expected_columns:
+            missing_columns = expected_columns - found_columns
+            extra_columns = found_columns - expected_columns
+            raise ValueError("Dataframe does not conform to schemas.yml specification for {lm}"
+                             "(missing: {missing_columns}, extra: {extra_columns}".format(
+                lm=self.lm, missing_columns=missing_columns, extra_columns=extra_columns))
+
 
 
 
