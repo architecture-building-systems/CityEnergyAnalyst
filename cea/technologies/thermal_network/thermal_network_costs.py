@@ -107,7 +107,7 @@ def calc_Ctot_network_pump(network_info):
     deltaP_kW = pd.read_csv(network_info.locator.get_network_energy_pumping_requirements_file(network_type, ''))
     deltaP_kW = deltaP_kW['pressure_loss_total_kW'].sum()
 
-    Opex_var = deltaP_kW * 1000 * network_info.prices.ELEC_PRICE
+    Opex_var = deltaP_kW * 1000 * network_info.prices.ELEC_PRICE # why not returned?
 
     if network_info.network_type == 'DH':
         deltaPmax = np.max(network_info.network_features.DeltaP_DHN)
