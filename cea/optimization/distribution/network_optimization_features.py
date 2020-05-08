@@ -2,9 +2,8 @@
 Network optimization
 """
 from __future__ import division
+
 import pandas as pd
-import numpy as np
-from cea.constants import HOURS_IN_YEAR
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -23,41 +22,33 @@ class NetworkOptimizationFeatures(object):
     Unfortunately his work only worked for this case study and could not be used else where
     See the paper of Fonseca et al 2015 of the city energy analyst for more info on how that procedure used to work.
     """
-    def __init__(self, district_heating_network, district_cooling_network,  locator):
-        self.pipesCosts_DHN_USD = 0.0    # USD-2015
-        self.pipesCosts_DCN_USD = 0.0     # USD-2015
-        self.DeltaP_DHN = np.zeros(HOURS_IN_YEAR)         # Pa
-        self.DeltaP_DCN = np.zeros(HOURS_IN_YEAR)        # Pa
-        self.thermallosses_DHN = 0.0
-        self.thermallosses_DCN = 0.0
+
+    def __init__(self, district_heating_network, district_cooling_network, locator):
         self.network_names = ['']
-        self.district_heating_network = district_heating_network
-        self.district_cooling_network = district_cooling_network
-
 
         for network_name in self.network_names:
-            if self.district_heating_network:
-                pressure_drop_Pa = pd.read_csv(locator.get_network_total_pressure_drop_file("DH", network_name))
-                self.DeltaP_DHN = self.DeltaP_DHN + pressure_drop_Pa['pressure_loss_total_Pa'].values
-            if self.district_cooling_network:
-                pressure_drop_Pa = pd.read_csv(locator.get_network_total_pressure_drop_file("DC", network_name))
-                self.DeltaP_DCN = self.DeltaP_DCN + pressure_drop_Pa['pressure_loss_total_Pa'].values
+            if district_heating_network:
+                self.DeltaP_DHN = pd.read_csv(locator.get_network_total_pressure_drop_file("DH", network_name))[
+                    'pressure_loss_total_Pa'].values
+                self.mass_flow_rate_DHN = self.mass_flow_rate_plant(self, locator, network_name, "DH")
+                self.thermallosses_DHN = pd.read_csv(locator.get_network_total_thermal_loss_file("DH", network_name))[
+                    'thermal_loss_total_kW'].values
+                self.pipesCosts_DHN_USD = self.pipe_costs(locator, network_name, "DH")
 
-        for network_name in self.network_names:
-            if self.district_heating_network:
-                thermal_losses_kW = pd.read_csv(locator.get_network_total_thermal_loss_file("DH", network_name))
-                self.thermallosses_DHN = self.thermallosses_DHN + thermal_losses_kW['thermal_loss_total_kW'].values
-            if self.district_cooling_network:
-                thermal_losses_kW = pd.read_csv(locator.get_network_total_thermal_loss_file("DC", network_name))
-                self.thermallosses_DCN = self.thermallosses_DCN + thermal_losses_kW['thermal_loss_total_kW'].values
+            if district_cooling_network:
+                self.DeltaP_DCN = pd.read_csv(locator.get_network_total_pressure_drop_file("DC", network_name))[
+                    'pressure_loss_total_Pa'].values
+                self.mass_flow_rate_DCN = self.mass_flow_rate_plant(self, locator, network_name, "DC")
+                self.thermallosses_DCN = pd.read_csv(locator.get_network_total_thermal_loss_file("DC", network_name))[
+                    'thermal_loss_total_kW'].values
+                self.pipesCosts_DCN_USD = self.pipe_costs(locator, network_name, "DC")
 
-        for network_name in self.network_names:
-            if self.district_heating_network:
-                pipe_cost = self.pipe_costs(locator, network_name, "DH")
-                self.pipesCosts_DHN_USD = self.pipesCosts_DHN_USD + pipe_cost
-            if self.district_cooling_network:
-                pipe_cost = self.pipe_costs(locator, network_name, "DC")
-                self.pipesCosts_DCN_USD = self.pipesCosts_DCN_USD + pipe_cost
+    def mass_flow_rate_plant(self, locator, network_name, network_type):
+        mass_flow_df = pd.read_csv((locator.get_thermal_network_layout_massflow_nodes_file(network_type, network_name)))
+        mass_flow_nodes_df = pd.read_csv((locator.get_thermal_network_node_types_csv_file(network_type, network_name)))
+        # identify the node with the plant
+        node_id = mass_flow_nodes_df.loc[mass_flow_nodes_df.loc['Type'] == "Plant", 'Name']
+        return mass_flow_df[node_id].values
 
     def pipe_costs(self, locator, network_name, network_type):
         edges_file = pd.read_csv(locator.get_thermal_network_edge_list_file(network_type, network_name))

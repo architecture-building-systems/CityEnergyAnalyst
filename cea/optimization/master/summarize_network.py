@@ -57,8 +57,8 @@ def network_main(locator, buildings_in_this_network, ground_temp, num_tot_buildi
     ntwk_length = pipes_tot_length * num_buildings_network / num_tot_buildings
 
     # empty vectors
-    buildings = []
-    substations = []
+    demand_df = []
+    substation_df = []
     Qcdata_netw_total_kWh = np.zeros(HOURS_IN_YEAR)
     mcpdata_netw_total_kWperC = np.zeros(HOURS_IN_YEAR)
     mdot_heat_netw_all_kgpers = np.zeros(HOURS_IN_YEAR)
@@ -78,22 +78,22 @@ def network_main(locator, buildings_in_this_network, ground_temp, num_tot_buildi
     if network_type == "DH":
         iteration = 0
         for building_name in buildings_in_this_network:
-            buildings.append(pd.read_csv(locator.get_demand_results_file(building_name)))
-            substations.append(pd.read_csv(locator.get_optimization_substations_results_file(building_name, network_type, key)))
-            mdot_heat_netw_all_kgpers += substations[iteration].mdot_DH_result_kgpers.values
+            demand_df.append(pd.read_csv(locator.get_demand_results_file(building_name)))
+            substation_df.append(pd.read_csv(locator.get_optimization_substations_results_file(building_name, network_type, key)))
+            mdot_heat_netw_all_kgpers += substation_df[iteration].mdot_DH_result_kgpers.values
 
-            Q_DH_building_netw_total_W += (substations[iteration].Q_heating_W.values +
-                                           substations[iteration].Q_dhw_W.values)
+            Q_DH_building_netw_total_W += (substation_df[iteration].Q_heating_W.values +
+                                           substation_df[iteration].Q_dhw_W.values)
 
-            sum_tret_mdot_heat += substations[iteration].T_return_DH_result_K.values * substations[
+            sum_tret_mdot_heat += substation_df[iteration].T_return_DH_result_K.values * substation_df[
                 iteration].mdot_DH_result_kgpers.values
 
-            Qcdata_netw_total_kWh += buildings[iteration].Qcdata_sys_kWh.values
-            mcpdata_netw_total_kWperC += buildings[iteration].mcpcdata_sys_kWperC.values
+            Qcdata_netw_total_kWh += demand_df[iteration].Qcdata_sys_kWh.values
+            mcpdata_netw_total_kWperC += demand_df[iteration].mcpcdata_sys_kWperC.values
 
             # evaluate minimum flows
             mdot_heat_netw_min_kgpers = np.vectorize(calc_min_flow)(mdot_heat_netw_min_kgpers,
-                                                                    substations[iteration].mdot_DH_result_kgpers.values)
+                                                                    substation_df[iteration].mdot_DH_result_kgpers.values)
 
             iteration += 1
 
@@ -140,39 +140,32 @@ def network_main(locator, buildings_in_this_network, ground_temp, num_tot_buildi
     if network_type == "DC":
         iteration = 0
         for building_name in buildings_in_this_network:
-            buildings.append(pd.read_csv(locator.get_demand_results_file(building_name)))
-            substations.append(
-                pd.read_csv(locator.get_optimization_substations_results_file(building_name, network_type, key)))
+            #get demand and substation file of buildings in this network
+            demand_df = pd.read_csv(locator.get_demand_results_file(building_name))
+            substation_df = pd.read_csv(locator.get_optimization_substations_results_file(building_name, network_type, key))
 
-            Qcdata_netw_total_kWh += buildings[iteration].Qcdata_sys_kWh.values
-            mcpdata_netw_total_kWperC += buildings[iteration].mcpcdata_sys_kWperC.values
+            #add to demand of servers
+            Qcdata_netw_total_kWh += demand_df['Qcdata_sys_kWh'].values
+            mcpdata_netw_total_kWperC += demand_df['mcpcdata_sys_kWperC'].values
 
-            mdot_cool_space_cooling_and_refrigeration_netw_all_kgpers += substations[
-                iteration].mdot_space_cooling_and_refrigeration_result_kgpers.values
-            mdot_cool_space_cooling_data_center_and_refrigeration_netw_all_kgpers += substations[
-                iteration].mdot_space_cooling_data_center_and_refrigeration_result_kgpers.values
+            mdot_cool_space_cooling_and_refrigeration_netw_all_kgpers += substation_df['mdot_space_cooling_and_refrigeration_result_kgpers'].values
+            mdot_cool_space_cooling_data_center_and_refrigeration_netw_all_kgpers += substation_df['mdot_space_cooling_data_center_and_refrigeration_result_kgpers'].values
 
-            Q_DC_building_netw_space_cooling_and_refrigeration_total_W += (
-                substations[iteration].Q_space_cooling_and_refrigeration_W.values)
-            Q_DC_building_netw_space_cooling_data_center_and_refrigeration_total_W += (
-                substations[iteration].Q_space_cooling_data_center_and_refrigeration_W.values)
+            Q_DC_building_netw_space_cooling_and_refrigeration_total_W += substation_df['Q_space_cooling_and_refrigeration_W'].values
+            Q_DC_building_netw_space_cooling_data_center_and_refrigeration_total_W += substation_df['Q_space_cooling_data_center_and_refrigeration_W'].values
 
-            sum_tret_mdot_cool_space_cooling_and_refrigeration += substations[
-                                                                      iteration].T_return_DC_space_cooling_and_refrigeration_result_K.values * \
-                                                                  substations[
-                                                                      iteration].mdot_space_cooling_and_refrigeration_result_kgpers.values
-            sum_tret_mdot_cool_space_cooling_data_center_and_refrigeration += substations[
-                                                                                  iteration].T_return_DC_space_cooling_data_center_and_refrigeration_result_K.values * \
-                                                                              substations[
-                                                                                  iteration].mdot_space_cooling_data_center_and_refrigeration_result_kgpers.values
+            sum_tret_mdot_cool_space_cooling_and_refrigeration += substation_df['T_return_DC_space_cooling_and_refrigeration_result_K'].values * \
+                                                                  substation_df['mdot_space_cooling_and_refrigeration_result_kgpers'].values
+            sum_tret_mdot_cool_space_cooling_data_center_and_refrigeration += substation_df['T_return_DC_space_cooling_data_center_and_refrigeration_result_K'].values * \
+                                                                              substation_df['mdot_space_cooling_data_center_and_refrigeration_result_kgpers'].values
 
             # evaluate minimum flows
             mdot_cool_space_cooling_and_refrigeration_netw_min_kgpers = np.vectorize(calc_min_flow)(
                 mdot_cool_space_cooling_and_refrigeration_netw_min_kgpers,
-                substations[iteration].mdot_space_cooling_and_refrigeration_result_kgpers.values)
+                substation_df[iteration].mdot_space_cooling_and_refrigeration_result_kgpers.values)
             mdot_cool_space_cooling_data_center_and_refrigeration_netw_min_kgpers = np.vectorize(calc_min_flow)(
                 mdot_cool_space_cooling_data_center_and_refrigeration_netw_min_kgpers,
-                substations[iteration].mdot_space_cooling_data_center_and_refrigeration_result_kgpers.values)
+                substation_df[iteration].mdot_space_cooling_data_center_and_refrigeration_result_kgpers.values)
             iteration += 1
 
         # calculate thermal losses of distribution
