@@ -38,10 +38,10 @@ class NetworkOptimizationFeatures(object):
         for network_name in self.network_names:
             if self.district_heating_network:
                 pressure_drop_Pa = pd.read_csv(locator.get_network_total_pressure_drop_file("DH", network_name))
-                self.DeltaP_DHN = self.DeltaP_DHN + pressure_drop_Pa['pressure_loss_total_Pa'].values
+                self.DeltaP_DHN = pressure_drop_Pa['pressure_loss_total_Pa'].values
             if self.district_cooling_network:
                 pressure_drop_Pa = pd.read_csv(locator.get_network_total_pressure_drop_file("DC", network_name))
-                self.DeltaP_DCN = self.DeltaP_DCN + pressure_drop_Pa['pressure_loss_total_Pa'].values
+                self.DeltaP_DCN = pressure_drop_Pa['pressure_loss_total_Pa'].values
 
         for network_name in self.network_names:
             if self.district_heating_network:

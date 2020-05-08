@@ -96,6 +96,7 @@ def calc_Ctot_pump(master_to_slave_vars, network_features, locator, network_type
                                         'PU1')  # investment of Machinery
         P_motor_tot_W = network_features.DeltaP_DCN * multiplier_buildings_connected_to_total * (
                 mdotA_kgpers / 1000) / PUMP_ETA
+        # head_loss_substations_kW = (head_loss_substations_Pa * (flow_rate_substations_m3s * 3600)) / (3.6E6 * PUMP_ETA)
 
     return Capex_a_pump_USD, Opex_fixed_pump_USD, Capex_pump_USD, P_motor_tot_W
 
