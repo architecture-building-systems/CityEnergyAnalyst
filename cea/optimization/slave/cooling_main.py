@@ -84,6 +84,7 @@ def district_cooling_network(locator,
         technology_type = VCC_CODE_CENTRALIZED
         VCC_database = VCC_database[VCC_database['code'] == technology_type]
         max_VCC_capacity = int(VCC_database['cap_max'])
+        # G_VALUE = VCC_database['ISENTROPIC_EFFICIENCY'] # create vessel to carry down gvalue and max_VCC_capacity to VCC module
 
 
         # initialize variables

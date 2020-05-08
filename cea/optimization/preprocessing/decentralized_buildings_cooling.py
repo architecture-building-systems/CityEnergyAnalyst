@@ -143,7 +143,6 @@ def disconnected_cooling_for_building(building_name, supply_systems, lca, locato
     operation_results[0][1] = Qc_nom_AHU_ARU_SCU_W  # 1: DX_AS
     system_COP = np.nanmean(np.divide(q_DX_chw_Wh[None, :], el_DX_hourly_Wh[None, :]).flatten())
     operation_results[0][9] += system_COP
-    # print('system COP of config 0 DX mean is: ', system_COP)
     ## 1. VCC (AHU + ARU + SCU) + CT
     print('{building_name} Config 1: Vapor Compression Chillers -> AHU,ARU,SCU'.format(building_name=building_name))
     # VCC operation
@@ -157,9 +156,7 @@ def disconnected_cooling_for_building(building_name, supply_systems, lca, locato
     el_total_Wh = el_VCC_Wh + el_CT_Wh
     operation_results[1][7] += sum(prices.ELEC_PRICE * el_total_Wh)  # CHF
     operation_results[1][8] += sum(calc_emissions_Whyr_to_tonCO2yr(el_total_Wh, lca.EL_TO_CO2_EQ)) # ton CO2
-    ### temporary: calculate the COP
     system_COP = np.nanmean(np.divide(q_VCC_chw_Wh[None, :], el_total_Wh[None, :]).flatten())
-    print('system COP of config 1 Decentralized VCC+CT mean is: ', system_COP)
     operation_results[1][9] += system_COP
     cooling_dispatch[1] = {'Q_BaseVCC_AS_gen_directload_W': q_VCC_chw_Wh,
                            'E_BaseVCC_AS_req_W': el_VCC_Wh,
@@ -344,8 +341,6 @@ def disconnected_cooling_for_building(building_name, supply_systems, lca, locato
         system_COP = np.nanmean(np.divide((q_CT_VCC_to_AHU_ARU_and_single_ACH_to_SCU_Wh[None, :] + q_gas_for_boiler_Wh[None, :]),
                                           el_total_Wh[None, :]).flatten())
         operation_results[5][9] += system_COP
-        # print('system COP of config 5 Vapor Compression Chillers(LT)  mean is: ', system_COP)
-
 
     ## Calculate Capex/Opex
     # Initialize arrays

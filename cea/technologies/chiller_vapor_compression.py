@@ -46,7 +46,8 @@ def calc_VCC(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_chw_re_K, T_cw_in_
         q_cw_W = 0.0
 
     elif q_chw_load_Wh > 0.0:
-        COP = calc_COP_with_carnot_efficiency(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, g_value, max_chiller_size, scale)
+        COP = calc_COP_with_carnot_efficiency(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, g_value,
+                                              max_chiller_size, scale)
         if COP < 0.0:
             print ('Negative COP: ', COP, T_chw_sup_K, T_chw_re_K, q_chw_load_Wh)
 
@@ -70,10 +71,12 @@ def calc_COP(T_cw_in_K, T_chw_re_K, q_chw_load_Wh):
     return COP
 
 
-def calc_COP_with_carnot_efficiency(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, g_value, max_chiller_size, scale):
-    PLF = load_distribution.calc_averaged_PLF(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, max_chiller_size, scale) #calculates the weighted average Part load factor across all chillers based on load distribution
+def calc_COP_with_carnot_efficiency(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, g_value, max_chiller_size,
+                                    scale):
+    PLF = load_distribution.calc_averaged_PLF(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K,
+                                              max_chiller_size,
+                                              scale)  # calculates the weighted average Part load factor across all chillers based on load distribution
     cop_chiller = g_value * T_chw_sup_K / (T_cw_in_K - T_chw_sup_K) * PLF
-    # print('COP is:', cop_chiller)
     return cop_chiller
 
 # Investment costs
@@ -194,7 +197,8 @@ def main():
     T_chw_re_K = 273.15 + 11
     T_cw_in_K = 273.15 + 28
     g_value = G_VALUE_CENTRALIZED
-    chiller_operation = calc_VCC(peak_cooling_load, Qc_W, T_chw_sup_K, T_chw_re_K, T_cw_in_K, g_value, max_chiller_size, scale)
+    chiller_operation = calc_VCC(peak_cooling_load, Qc_W, T_chw_sup_K, T_chw_re_K, T_cw_in_K, g_value, max_chiller_size,
+                                 scale)
     print chiller_operation
 
 
