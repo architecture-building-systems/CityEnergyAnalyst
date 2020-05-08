@@ -1,7 +1,10 @@
 import os
-
+import pandas as pd
 import yaml
+import functools
 
+# keep a cache of schemas.yml - this will never change so avoid re-reading it.
+# FIXME: actually... if we add in plugins it _might_ change...
 __schemas = None
 
 
@@ -83,3 +86,66 @@ def get_schema_scripts():
             for script in schemas_dict[locator_method]['created_by']:
                 schema_scripts.add(script)
     return schema_scripts
+
+
+def create_schema_io(lm, schema, original_function):
+    """
+    Returns a wrapper object that can be used to replace original_function - the interface remains largely
+    the same.
+    :param str lm: the name of the locator method being wrapped
+    :param dict schema: the configuration of this locator method as defined in schemas.yml
+    :param original_function: the original locator method - so we can call it
+    :return: SchemaIo instance
+    """
+    file_type = schema["file_type"]
+    file_type_to_schema_io = {
+        "csv": CsvSchemaIo
+    }
+    if file_type not in file_type_to_schema_io:
+        # just return the default - no read() and write() possible
+        return SchemaIo(lm, schema, original_function)
+    return file_type_to_schema_io[file_type](lm, schema, original_function)
+
+
+class SchemaIo(object):
+    """A base class for reading and writing files using schemas.yml for validation
+    The default just wraps the function - read() and write() will throw errors and should be implemented
+    in subclasses
+    """
+    def __init__(self, lm, schema, original_function):
+        self.lm = lm
+        self.schema = schema
+        self.original_function = original_function
+        functools.update_wrapper(self, original_function)
+
+    def __call__(self, *args, **kwargs):
+        return self.original_function(*args, **kwargs)
+
+    def read(self, *args, **kwargs):
+        raise AttributeError("{lm}: don't know how to read file_type {file_type}".format(
+            lm=self.lm, file_type=self.schema["file_type"]))
+
+    def write(self, df, *args, **kwargs):
+        raise AttributeError("{lm}: don't know how to write file_type {file_type}".format(
+            lm=self.lm, file_type=self.schema["file_type"]))
+
+
+class CsvSchemaIo(SchemaIo):
+    """Read and write csv files - and attempt to validate them."""
+    def read(self, *args, **kwargs):
+        df = pd.read_csv(self(*args, **kwargs))
+        return df
+
+    def write(self, df, *args, **kwargs):
+        """
+        :type df: pd.Dataframe
+        """
+        csvargs={}
+        if "float_format" in self.schema:
+            csvargs["float_format"] = self.schema["float_format"]
+        df.to_csv(self(*args, **kwargs), index=False, **csvargs)
+
+
+
+
+

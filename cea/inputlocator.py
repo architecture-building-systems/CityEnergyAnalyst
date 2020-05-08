@@ -37,7 +37,7 @@ class InputLocator(object):
         """
         schemas = cea.schemas.schemas()
         for lm in schemas.keys():
-            setattr(self, lm, cea.schemas.create_schema_io(lm, schemas[lm]))
+            setattr(self, lm, cea.schemas.create_schema_io(lm, schemas[lm], getattr(self, lm)))
 
     @staticmethod
     def _ensure_folder(*components):
