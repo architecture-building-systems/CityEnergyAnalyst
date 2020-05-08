@@ -114,10 +114,15 @@ def calc_Ctot_network_pump(network_info):
     else:
         deltaPmax = np.max(network_info.network_features.DeltaP_DCN)
 
-    Capex_a, Opex_a_fixed, Capex_total = pumps.calc_Cinv_pump(deltaPmax, mdotnMax_kgpers, PUMP_ETA,
-                                               network_info.locator, 'PU1')  # investment of Machinery
+    # get pumping energy and peak load
+    peak_pump_power_W = pumps.calc_pump_power(mdotnMax_kgpers, deltaPmax)
 
-    return Capex_a, Opex_a_fixed, Opex_var
+    Capex_a_pump_USD, Opex_fixed_pump_USD, Capex_pump_USD = pumps. calc_Cinv_pump(peak_pump_power_W,
+                                                                               network_info.locator,
+                                                                               'PU1')
+
+
+    return Capex_a_pump_USD, Opex_fixed_pump_USD, Opex_var
 
 
 def calc_Ctot_cooling_plants(network_info):
