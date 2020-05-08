@@ -5,6 +5,7 @@ from __future__ import division
 import pandas as pd
 from math import log, ceil
 import numpy as np
+import cea.optimization.load_distribution as load_distribution
 
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.technologies.constants import G_VALUE_CENTRALIZED, G_VALUE_DECENTRALIZED, CHILLER_DELTA_T_HEX_CT, \
@@ -23,7 +24,7 @@ __status__ = "Production"
 
 # technical model
 
-def calc_VCC(q_chw_load_Wh, T_chw_sup_K, T_chw_re_K, T_cw_in_K, g_value):
+def calc_VCC(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_chw_re_K, T_cw_in_K, g_value, max_chiller_size, scale):
     """
     For th e operation of a Vapor-compressor chiller between a district cooling network and a condenser with fresh water
     to a cooling tower following [D.J. Swider, 2003]_.
@@ -45,11 +46,13 @@ def calc_VCC(q_chw_load_Wh, T_chw_sup_K, T_chw_re_K, T_cw_in_K, g_value):
         q_cw_W = 0.0
 
     elif q_chw_load_Wh > 0.0:
-        COP = calc_COP_with_carnot_efficiency(T_chw_sup_K, T_cw_in_K, g_value)
+        COP = calc_COP_with_carnot_efficiency(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, g_value,
+                                              max_chiller_size, scale)
         if COP < 0.0:
             print ('Negative COP: ', COP, T_chw_sup_K, T_chw_re_K, q_chw_load_Wh)
 
         # calculate chiller outputs
+        # print('COP is: ', COP)
         wdot_W = q_chw_load_Wh / COP
         q_cw_W = wdot_W + q_chw_load_Wh  # heat rejected to the cold water (cw) loop
     else:
@@ -68,13 +71,15 @@ def calc_COP(T_cw_in_K, T_chw_re_K, q_chw_load_Wh):
     return COP
 
 
-def calc_COP_with_carnot_efficiency(T_evap_K, T_cond_K, g_value):
-    cop_chiller = g_value * T_evap_K / (T_cond_K - T_evap_K)
+def calc_COP_with_carnot_efficiency(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, g_value, max_chiller_size,
+                                    scale):
+    PLF = load_distribution.calc_averaged_PLF(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K,
+                                              max_chiller_size,
+                                              scale)  # calculates the weighted average Part load factor across all chillers based on load distribution
+    cop_chiller = g_value * T_chw_sup_K / (T_cw_in_K - T_chw_sup_K) * PLF
     return cop_chiller
 
 # Investment costs
-
-
 def calc_Cinv_VCC(Q_nom_W, locator, technology_type):
     """
     Annualized investment costs for the vapor compressor chiller
@@ -184,12 +189,16 @@ def get_max_VCC_unit_size(locator, VCC_code='CH3'):
     return max_VCC_unit_size_W
 
 def main():
-    Qc_W = 10
+    scale = 'DISTRICT'
+    peak_cooling_load = 1500000
+    Qc_W = 1000000
+    max_chiller_size = 3500000
     T_chw_sup_K = 273.15 + 6
     T_chw_re_K = 273.15 + 11
     T_cw_in_K = 273.15 + 28
     g_value = G_VALUE_CENTRALIZED
-    chiller_operation = calc_VCC(Qc_W, T_chw_sup_K, T_chw_re_K, T_cw_in_K, g_value)
+    chiller_operation = calc_VCC(peak_cooling_load, Qc_W, T_chw_sup_K, T_chw_re_K, T_cw_in_K, g_value, max_chiller_size,
+                                 scale)
     print chiller_operation
 
 
