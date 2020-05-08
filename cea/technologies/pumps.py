@@ -101,8 +101,8 @@ def calc_Ctot_pump(master_to_slave_vars, network_features, locator, network_type
 
 # investment and maintenance costs
 
-def calc_pump_power(mdot_kgpers, deltaP_Pa):
-    E_pump_W = mdot_kgpers * deltaP_Pa / P_WATER_KGPERM3 / PUMP_ETA
+def calc_pump_power(mass_flow_rate_kgs, pressure_loss_Pa):
+    E_pump_W = mass_flow_rate_kgs * pressure_loss_Pa / P_WATER_KGPERM3 / PUMP_ETA
     return E_pump_W
 
 
