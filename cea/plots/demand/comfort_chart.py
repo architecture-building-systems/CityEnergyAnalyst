@@ -268,7 +268,7 @@ def create_relative_humidity_lines():
     for rh_line in rh_lines:
 
         y_data = calc_constant_rh_curve(t_axis, rh_line, P_ATM)
-        trace = go.Scattergl(x=t_axis, y=y_data, mode='line', name="{:.0%} relative humidity".format(rh_line),
+        trace = go.Scattergl(x=t_axis, y=y_data, mode='lines', name="{:.0%} relative humidity".format(rh_line),
                            line=dict(color=COLORS_TO_RGB['grey_light'], width=1), showlegend=False)
         traces.append(trace)
 
@@ -471,10 +471,10 @@ def datetime_in_season(dt, season_start, season_end):
 
 def p_ws_from_t(t_celsius):
     """
-    Calculate water vapor saturation pressure over liquid water for the temperature range of 0 to 200Â°C
+    Calculate water vapor saturation pressure over liquid water for the temperature range of 0 to 200°C
     Eq (6) in "CHAPTER 6 - PSYCHROMETRICS" in "2001 ASHRAE Fundamentals Handbook (SI)"
 
-    :param t_celsius: temperature [Â°C]
+    :param t_celsius: temperature [°C]
     :type t_celsius: double
     :return: water vapor saturation pressure [Pa]
     :rtype: double
@@ -491,7 +491,7 @@ def p_ws_from_t(t_celsius):
     C12 = -1.4452093E-08
     C13 = 6.5459673E+00
 
-    return math.exp(C8/t+C9+C10*t+C11*t**2+C12*t**3+C13*math.log1p(t))
+    return math.exp(C8/t+C9+C10*t+C11*t**2+C12*t**3+C13*math.log(t))
 
 
 def p_w_from_rh_p_and_ws(rh, p_ws):
