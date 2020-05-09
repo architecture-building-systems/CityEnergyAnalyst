@@ -57,12 +57,13 @@ def main():
 
     ## collect data and paths
     paths_to_model_folder, annual_exergy_MWh_dict, T_max_dict, T_ref_dict = {}, {}, {}, {}
+    Af_m2_dict = {}
     for tech in run_folders_to_compare.keys():
         run_folder = run_folders_to_compare[tech]
         path_to_run_folder = os.path.join('', *[path_to_base_folder, tech, run_folder])
         model_folder = [path_to_base_folder, tech, run_folder, 's_001\\plots\\icc\\models']
         paths_to_model_folder[tech] = os.path.join('', *model_folder)
-        calc_annual_exergy(annual_exergy_MWh_dict, path_to_base_folder, run_folder, tech)
+        Af_m2_dict[tech], annual_exergy_MWh_dict[tech] = calc_annual_exergy(path_to_base_folder, run_folder, tech)
         T_max_dict[tech] = calc_T_max(path_to_run_folder)
         T_ref_dict[tech] = calc_T_ref(path_to_run_folder)
 
@@ -70,7 +71,7 @@ def main():
     for t in [85]:
         line_types = ['base'] # 'base', 'separated'
         plot_carnot_from_icc_txt_techs(paths_to_model_folder, t, T_ref_dict, line_types, 'icc', 'all_chillers',
-                                       annual_exergy_MWh_dict)
+                                       annual_exergy_MWh_dict, Af_m2_dict)
 
 
 
@@ -80,7 +81,8 @@ def main():
 ## plotting scripts
 ##===================
 
-def plot_carnot_from_icc_txt_techs(paths, t, T_ref_dict, line_types, plot_type, txt_name, annual_exergy_MWh_dict):
+def plot_carnot_from_icc_txt_techs(paths, t, T_ref_dict, line_types, plot_type, txt_name,
+                                   annual_exergy_MWh_dict, Af_m2_dict):
     """
     plot icc from txt with both carnot and temperature axis
     :param paths:
@@ -116,12 +118,13 @@ def plot_carnot_from_icc_txt_techs(paths, t, T_ref_dict, line_types, plot_type, 
             ax1.fill_between(x, y_carnot, y_origin, facecolor=COLOR_CODES[tech], alpha=0.4)
             # calculate exergy
             area = np.round(np.trapz(y_carnot, x))
-            exergy = np.round(area)
-            table_data[tech] = exergy
+            exergy_Wh_m2 = np.round(area*1000/Af_m2_dict[tech],2)
+            table_data[tech] = exergy_Wh_m2
 
     ## add legend
     # ax1.legend(bbox_to_anchor=[0.03, 0.03], loc='lower left', fontsize=8, frameon=False)
-    ax1.legend(bbox_to_anchor=[0.05, -0.58], loc='lower left', fontsize=8, frameon=False)
+    ax1.legend(bbox_to_anchor=[0.02, -0.54], loc='lower left', fontsize=8, frameon=False,
+               columnspacing=0.8, labelspacing=0.4, handletextpad=0.5)
 
     ## build second y-axis (Temperature)
     ax2 = ax1.twinx()
@@ -137,18 +140,16 @@ def plot_carnot_from_icc_txt_techs(paths, t, T_ref_dict, line_types, plot_type, 
         row_labels.append(CONFIG_TABLE[tech])
 
     # make exergy table
-    col_widths = [0.2]
+    col_widths = [0.3]
     bbox_width = sum(col_widths)
-    table = plt.table(cellText=table_rows, cellLoc='center', colLabels=['1 p.m.','annual'], #rowLabels=row_labels
-                      bbox=[0.4, -0.55, bbox_width * 2, 0.305],) # [x,y,width,height])
+    col_labels = ['1 p.m.\n[Wh/m2]','annual\n[kWh/m2/yr]']
+    table = plt.table(cellText=table_rows, cellLoc='center', colLabels=col_labels, #rowLabels=row_labels
+                      bbox=[0.33, -0.505, bbox_width * 2, 0.305],) # [x,y,width,height])
     table.scale(1, 1)
-    ax1.text(1200, -0.121, 'Exergy [kWh]', horizontalalignment='left', fontsize=8, fontweight='bold',
+    ax1.text(820, -0.118, 'Exergy Requirement', horizontalalignment='left', fontsize=8, fontweight='bold',
              bbox={'edgecolor': 'none', 'facecolor': '#586748','alpha': 0.01, 'pad': 1})
-        # , bbox=[0.35, 0.058, bbox_width * 2, 0.305], # [x,y,width,height]
-        #               colWidths=col_widths, colLabels=['exergy [kW]'])
-    # table = plt.table(cellText=table_rows, cellLoc='left', bbox=[0.35, 0.058, bbox_width, 0.305], # [x,y,width,height]
-    #                   colWidths=col_widths, colLabels=['exergy [kW]'])
     set_table_fontsize(table, 8)
+    set_table_row_height(table, col_labels, 0.34, table_rows, 0.2)
     # set_table_linewidth(table, 2)  # if remove line: 0, if default: comment out
 
     ## save the figure
@@ -168,7 +169,12 @@ def plot_carnot_from_icc_txt_techs(paths, t, T_ref_dict, line_types, plot_type, 
     return
 
 
-
+def set_table_row_height(table, col_labels, title_height, table_rows, row_height):
+    cellDict = table.get_celld()
+    for i in range(0, len(col_labels)):
+        cellDict[(0, i)].set_height(title_height)
+        for j in range(1, len(table_rows) + 1):
+            cellDict[(j, i)].set_height(row_height)
 
 
 ##===================
@@ -245,12 +251,14 @@ def calc_T_ref(path_to_run_folder):
     T_ref_list = outputs_df['T_OA'] + 273.15
     return T_ref_list.values
 
-def calc_annual_exergy(annual_exergy_MWh_dict, path_to_base_folder, run_folder, tech):
+def calc_annual_exergy(path_to_base_folder, run_folder, tech):
     # get total exergy
     path_to_total_csv = [path_to_base_folder, tech, run_folder, 'total.csv']
-    exergy_df = pd.read_csv(os.path.join('', *path_to_total_csv), usecols=['exergy_kWh'])
-    annual_exergy_MWh_dict[tech] = round((exergy_df.values.sum()) * 52 / 1000)
-
+    total_df = pd.read_csv(os.path.join('', *path_to_total_csv), usecols=['exergy_kWh', 'Af_m2'])
+    Af_m2 = total_df.loc[0,'Af_m2']
+    exergy_df = total_df.filter(like='exergy_kWh')
+    annual_exergy_kWh_m2 = round((exergy_df.values.sum()) * 52 / Af_m2, 2)
+    return Af_m2, annual_exergy_kWh_m2
 
 
 #=============
