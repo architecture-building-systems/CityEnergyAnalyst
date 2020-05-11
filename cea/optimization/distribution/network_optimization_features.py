@@ -28,16 +28,16 @@ class NetworkOptimizationFeatures(object):
 
         for network_name in self.network_names:
             if district_heating_network:
-                self.DeltaP_DHN = pd.read_csv(locator.get_network_total_pressure_drop_file("DH", network_name))[
-                    'pressure_loss_total_Pa'].values
+                self.E_pump_DHN_W = pd.read_csv(locator.get_network_energy_pumping_requirements_file("DH", network_name))[
+                    'pressure_loss_total_kW'].values * 1000
                 self.mass_flow_rate_DHN = self.mass_flow_rate_plant(locator, network_name, "DH")
                 self.thermallosses_DHN = pd.read_csv(locator.get_network_total_thermal_loss_file("DH", network_name))[
                     'thermal_loss_total_kW'].values
                 self.pipesCosts_DHN_USD = self.pipe_costs(locator, network_name, "DH")
 
             if district_cooling_network:
-                self.DeltaP_DCN = pd.read_csv(locator.get_network_total_pressure_drop_file("DC", network_name))[
-                    'pressure_loss_total_Pa'].values
+                self.E_pump_DCN_W = pd.read_csv(locator.get_network_energy_pumping_requirements_file("DC", network_name))[
+                    'pressure_loss_total_kW'].values * 1000
                 self.mass_flow_rate_DCN = self.mass_flow_rate_plant(locator, network_name, "DC")
                 self.thermallosses_DCN = pd.read_csv(locator.get_network_total_thermal_loss_file("DC", network_name))[
                     'thermal_loss_total_kW'].values

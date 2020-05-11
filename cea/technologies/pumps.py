@@ -64,18 +64,16 @@ def calc_Ctot_pump(master_to_slave_vars, network_features, locator, network_type
 
     if network_type == "DH":
         # local variables
-        nominal_pressure_loss_Pa = network_features.DeltaP_DHN
+        nominal_E_pump_W = network_features.E_pump_DHN_W
         nominal_massflowrate_kgs = network_features.mass_flow_rate_DHN
 
         #get the mass flow rate of this neworkt and the pressireloss
         data = master_to_slave_vars.DH_network_summary_individual
         mass_flow_rate_kgs = data["mdot_DH_netw_total_kgpers"].values
-        pressure_loss_Pa = nominal_pressure_loss_Pa * (mass_flow_rate_kgs / nominal_massflowrate_kgs)
-
 
     if network_type == "DC":
         # local variables
-        nominal_pressure_loss_Pa = network_features.DeltaP_DCN
+        nominal_E_pump_W = network_features.E_pump_DCN_W
         nominal_massflowrate_kgs = network_features.mass_flow_rate_DCN
 
         #get the mass flow rate of this neworkt and the pressireloss
@@ -84,11 +82,9 @@ def calc_Ctot_pump(master_to_slave_vars, network_features, locator, network_type
             mass_flow_rate_kgs = data["mdot_cool_space_cooling_and_refrigeration_netw_all_kgpers"].values
         else:
             mass_flow_rate_kgs = data["mdot_cool_space_cooling_data_center_and_refrigeration_netw_all_kgpers"].values
-        pressure_loss_Pa = nominal_pressure_loss_Pa * (mass_flow_rate_kgs / nominal_massflowrate_kgs)
-
 
     #get pumping energy and peak load
-    E_pump_W = calc_pump_power(mass_flow_rate_kgs, pressure_loss_Pa)
+    E_pump_W = nominal_E_pump_W * (mass_flow_rate_kgs / nominal_massflowrate_kgs)
     peak_pump_power_W = np.max(E_pump_W)
 
     #get costs
