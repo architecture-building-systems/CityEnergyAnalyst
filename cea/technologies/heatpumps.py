@@ -10,6 +10,7 @@ from cea.optimization.constants import HP_DELTA_T_COND, HP_DELTA_T_EVAP, HP_ETA_
     GHP_AUXRATIO, HP_MAX_T_COND, GHP_ETA_EX, GHP_CMAX_SIZE_TH, HP_MAX_SIZE, HP_COP_MAX, HP_COP_MIN
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 import numpy as np
+from cea.analysis.costs.equations import calc_capex_annualized, calc_opex_annualized
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -367,13 +368,13 @@ def calc_Cinv_HP(HP_Size, locator, technology_type):
             Inv_c = HP_cost_data.iloc[0]['c']
             Inv_d = HP_cost_data.iloc[0]['d']
             Inv_e = HP_cost_data.iloc[0]['e']
-            Inv_IR = (HP_cost_data.iloc[0]['IR_%']) / 100
+            Inv_IR = HP_cost_data.iloc[0]['IR_%']
             Inv_LT = HP_cost_data.iloc[0]['LT_yr']
             Inv_OM = HP_cost_data.iloc[0]['O&M_%'] / 100
 
             InvC = Inv_a + Inv_b * (HP_Size) ** Inv_c + (Inv_d + Inv_e * HP_Size) * log(HP_Size)
 
-            Capex_a_HP_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+            Capex_a_HP_USD = calc_capex_annualized(InvC, Inv_IR, Inv_LT)
             Opex_fixed_HP_USD = InvC * Inv_OM
             Capex_HP_USD = InvC
 
@@ -390,13 +391,13 @@ def calc_Cinv_HP(HP_Size, locator, technology_type):
                 Inv_c = HP_cost_data.iloc[0]['c']
                 Inv_d = HP_cost_data.iloc[0]['d']
                 Inv_e = HP_cost_data.iloc[0]['e']
-                Inv_IR = (HP_cost_data.iloc[0]['IR_%']) / 100
+                Inv_IR = HP_cost_data.iloc[0]['IR_%']
                 Inv_LT = HP_cost_data.iloc[0]['LT_yr']
                 Inv_OM = HP_cost_data.iloc[0]['O&M_%'] / 100
 
                 InvC = Inv_a + Inv_b * (Q_nom_each_chiller) ** Inv_c + (Inv_d + Inv_e * Q_nom_each_chiller) * log(Q_nom_each_chiller)
 
-                Capex_a_HP_USD += InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+                Capex_a_HP_USD += calc_capex_annualized(InvC, Inv_IR, Inv_LT)
                 Opex_fixed_HP_USD += InvC * Inv_OM
                 Capex_HP_USD += InvC
     else:
@@ -427,13 +428,13 @@ def calc_Cinv_GHP(GHP_Size_W, GHP_cost_data, BH_cost_data):
     Inv_c = GHP_cost_data.iloc[0]['c']
     Inv_d = GHP_cost_data.iloc[0]['d']
     Inv_e = GHP_cost_data.iloc[0]['e']
-    Inv_IR = (GHP_cost_data.iloc[0]['IR_%']) / 100
+    Inv_IR = GHP_cost_data.iloc[0]['IR_%']
     Inv_LT = GHP_cost_data.iloc[0]['LT_yr']
     Inv_OM = GHP_cost_data.iloc[0]['O&M_%'] / 100
 
     InvC_GHP = Inv_a + Inv_b * (GHP_Size_W) ** Inv_c + (Inv_d + Inv_e * GHP_Size_W) * log(GHP_Size_W)
 
-    Capex_a_GHP_USD = InvC_GHP * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+    Capex_a_GHP_USD = calc_capex_annualized(InvC_GHP, Inv_IR, Inv_LT)
     Opex_fixed_GHP_USD = InvC_GHP * Inv_OM
 
     # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
@@ -448,13 +449,13 @@ def calc_Cinv_GHP(GHP_Size_W, GHP_cost_data, BH_cost_data):
     Inv_c = BH_cost_data.iloc[0]['c']
     Inv_d = BH_cost_data.iloc[0]['d']
     Inv_e = BH_cost_data.iloc[0]['e']
-    Inv_IR = (BH_cost_data.iloc[0]['IR_%']) / 100
+    Inv_IR = BH_cost_data.iloc[0]['IR_%']
     Inv_LT = BH_cost_data.iloc[0]['LT_yr']
     Inv_OM = BH_cost_data.iloc[0]['O&M_%'] / 100
 
     InvC_BH = Inv_a + Inv_b * (GHP_Size_W) ** Inv_c + (Inv_d + Inv_e * GHP_Size_W) * log(GHP_Size_W)
 
-    Capex_a_BH_USD = InvC_BH * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+    Capex_a_BH_USD = calc_capex_annualized(InvC_BH, Inv_IR, Inv_LT)
     Opex_fixed_BH_USD = InvC_BH * Inv_OM
 
     Capex_a_GHP_total_USD = Capex_a_BH_USD + Capex_a_GHP_USD

@@ -11,11 +11,20 @@ class PeakLoadSupplyPlot(cea.plots.demand.DemandPlotBase):
 
     def __init__(self, project, parameters, cache):
         super(PeakLoadSupplyPlot, self).__init__(project, parameters, cache)
-        self.analysis_fields = ["DH_hs0_kW", "DH_ww0_kW", 'SOLAR_ww0_kW', 'SOLAR_hs0_kW', "DC_cs0_kW", 'DC_cdata0_kW',
+        self.analysis_fields = ["DH_hs0_kW",
+                                "DH_ww0_kW",
+                                "DC_cs0_kW",
+                                'DC_cdata0_kW',
                                 'DC_cre0_kW',
-                                'GRID0_kW', 'PV0_kW', 'NG_hs0_kW', 'COAL_hs0_kW', 'OIL_hs0_kW', 'WOOD_hs0_kW',
-                                'NG_ww0_kW', 'COAL_ww0_kW',
-                                'OIL_ww0_kW', 'WOOD_ww0_kW']
+                                'GRID0_kW',
+                                'NG_hs0_kW',
+                                'COAL_hs0_kW',
+                                'OIL_hs0_kW',
+                                'WOOD_hs0_kW',
+                                'NG_ww0_kW',
+                                'COAL_ww0_kW',
+                                'OIL_ww0_kW',
+                                'WOOD_ww0_kW']
 
     @property
     def layout(self):

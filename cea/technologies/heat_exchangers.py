@@ -8,6 +8,7 @@ import pandas as pd
 import numpy as np
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.technologies.constants import MAX_NODE_FLOW
+from cea.analysis.costs.equations import calc_capex_annualized, calc_opex_annualized
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -50,13 +51,13 @@ def calc_Cinv_HEX(Q_design_W, locator, config, technology_type):
         Inv_c = HEX_cost_data.iloc[0]['c']
         Inv_d = HEX_cost_data.iloc[0]['d']
         Inv_e = HEX_cost_data.iloc[0]['e']
-        Inv_IR = (HEX_cost_data.iloc[0]['IR_%']) / 100
+        Inv_IR = HEX_cost_data.iloc[0]['IR_%']
         Inv_LT = HEX_cost_data.iloc[0]['LT_yr']
         Inv_OM = HEX_cost_data.iloc[0]['O&M_%'] / 100
 
         InvC = Inv_a + Inv_b * (Q_design_W) ** Inv_c + (Inv_d + Inv_e * Q_design_W) * log(Q_design_W)
 
-        Capex_a_HEX_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+        Capex_a_HEX_USD = calc_capex_annualized(InvC, Inv_IR, Inv_LT)
         Opex_fixed_HEX_USD = InvC * Inv_OM
         Capex_HEX_USD = InvC
 
@@ -80,7 +81,7 @@ def calc_Cinv_HEX_hisaka(network_info):
     c = HEX_prices['c']['District substation heat exchanger']
     d = HEX_prices['d']['District substation heat exchanger']
     e = HEX_prices['e']['District substation heat exchanger']
-    Inv_IR = (HEX_prices['IR_%']['District substation heat exchanger']) / 100
+    Inv_IR = HEX_prices['IR_%']['District substation heat exchanger']
     Inv_LT = HEX_prices['LT_yr']['District substation heat exchanger']
     Inv_OM = HEX_prices['O&M_%']['District substation heat exchanger'] / 100
 
@@ -88,8 +89,8 @@ def calc_Cinv_HEX_hisaka(network_info):
     # read in nodes list
     all_nodes = pd.read_csv(network_info.locator.get_thermal_network_node_types_csv_file(network_info.network_type,
                                                                                          network_info.network_name))
-    Capex_a = 0
-    Opex_a_fixed = 0
+    Capex_a = 0.0
+    Opex_a_fixed = 0.0
 
     substation_node_id_list = []
     # add buildings to node id list
@@ -130,7 +131,7 @@ def calc_Cinv_HEX_hisaka(network_info):
 
                     Capex_substation_hex = Capex_substation_hex + (a + b * mcp_sub ** c + d * np.log(mcp_sub) + e * mcp_sub * np.log(mcp_sub))
 
-            Capex_a_substation_hex = Capex_substation_hex * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+            Capex_a_substation_hex = calc_capex_annualized(Capex_substation_hex, Inv_IR, Inv_LT)
             Opex_fixed_substation_hex = Capex_substation_hex * Inv_OM
 
             # aggregate all substation costs in a network

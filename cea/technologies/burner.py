@@ -4,9 +4,10 @@ gas burners
 """
 
 from __future__ import division
-from scipy.interpolate import interp1d
+
 from math import log, ceil
-import pandas as pd
+
+from cea.analysis.costs.equations import calc_capex_annualized
 from cea.technologies.constants import BOILER_P_AUX
 
 __author__ = "Shanshan Hsieh"
@@ -72,7 +73,7 @@ def burner_op_cost(Q_load_W, Q_design_W, FuelType, lca, prices):
     ELEC_PRICE = prices.ELEC_PRICE
 
     C_boil_therm = Q_load_W / eta_burner * GAS_PRICE + (
-                                                       BOILER_P_AUX * ELEC_PRICE) * Q_load_W  # CHF / Wh - cost of thermal energy
+            BOILER_P_AUX * ELEC_PRICE) * Q_load_W  # CHF / Wh - cost of thermal energy
     C_boil_per_Wh = 1 / eta_burner * GAS_PRICE + BOILER_P_AUX * ELEC_PRICE
     E_aux_W = BOILER_P_AUX * Q_load_W
 
@@ -113,13 +114,13 @@ def calc_Cinv_burner(Q_design_W, boiler_cost_data, technology_type):
             Inv_c = boiler_cost_data.iloc[0]['c']
             Inv_d = boiler_cost_data.iloc[0]['d']
             Inv_e = boiler_cost_data.iloc[0]['e']
-            Inv_IR = (boiler_cost_data.iloc[0]['IR_%']) / 100
+            Inv_IR = boiler_cost_data.iloc[0]['IR_%']
             Inv_LT = boiler_cost_data.iloc[0]['LT_yr']
             Inv_OM = boiler_cost_data.iloc[0]['O&M_%'] / 100
 
             InvC = Inv_a + Inv_b * (Q_design_W) ** Inv_c + (Inv_d + Inv_e * Q_design_W) * log(Q_design_W)
 
-            Capex_a_burner_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+            Capex_a_burner_USD = calc_capex_annualized(InvC, Inv_IR, Inv_LT)
             Opex_fixed_burner_USD = InvC * Inv_OM
             Capex_burner_USD = InvC
 
@@ -135,15 +136,14 @@ def calc_Cinv_burner(Q_design_W, boiler_cost_data, technology_type):
             Inv_c = boiler_cost_data.iloc[0]['c']
             Inv_d = boiler_cost_data.iloc[0]['d']
             Inv_e = boiler_cost_data.iloc[0]['e']
-            Inv_IR = (boiler_cost_data.iloc[0]['IR_%']) / 100
+            Inv_IR = boiler_cost_data.iloc[0]['IR_%']
             Inv_LT = boiler_cost_data.iloc[0]['LT_yr']
             Inv_OM = boiler_cost_data.iloc[0]['O&M_%'] / 100
 
             InvC = (Inv_a + Inv_b * (Q_nom_W) ** Inv_c + (Inv_d + Inv_e * Q_nom_W) * log(Q_nom_W)) * number_of_boilers
 
-            Capex_a_burner_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+            Capex_a_burner_USD = calc_capex_annualized(InvC, Inv_IR, Inv_LT)
             Opex_fixed_burner_USD = InvC * Inv_OM
             Capex_burner_USD = InvC
-
 
     return Capex_a_burner_USD, Opex_fixed_burner_USD, Capex_burner_USD
