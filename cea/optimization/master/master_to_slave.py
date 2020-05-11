@@ -295,7 +295,7 @@ def master_to_slave_district_cooling_technologies(Q_cooling_nom_W,
     if 'AS_BaseVCC' in technologies_cooling_allowed and individual_with_names_dict['AS_BaseVCC'] >= mimimum_valuedc(
             'AS_BaseVCC'):
         master_to_slave_vars.AS_BaseVCC_on = 1
-        master_to_slave_vars.AS_BaseVCC_size_W = individual_with_names_dict['WS_BaseVCC'] * Q_cooling_nom_W
+        master_to_slave_vars.AS_BaseVCC_size_W = individual_with_names_dict['AS_BaseVCC'] * Q_cooling_nom_W
 
     # Air source (Cooling Tower) peak vapor compression chiller
     if 'AS_PeakVCC' in technologies_cooling_allowed and individual_with_names_dict['AS_PeakVCC'] >= mimimum_valuedc(
