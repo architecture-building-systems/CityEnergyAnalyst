@@ -1,24 +1,48 @@
+"""
+Maintain access to the schemas (input- and output file descriptions) used by the CEA. These are stored in the
+``schemas.yml`` file. Reading it is supposed to be done through the :py:func:`cea.schemas.schemas`. The plugins
+parameter allows reading in schemas from ``schemas.yml`` files defined in plugins.
+"""
+
+from __future__ import print_function
+from __future__ import division
+
 import os
 import pandas as pd
 import yaml
 import warnings
 import functools
+from typing import List, Callable
+
+__author__ = "Daren Thomas"
+__copyright__ = "Copyright 2020, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Daren Thomas"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
 
 # keep a cache of schemas.yml - this will never change so avoid re-reading it.
+# since we can actually call schemas with a varying list of plugins, store the resulting schemas dict
+# in a dict indexed by the
 # FIXME: actually... if we add in plugins it _might_ change...
-__schemas = None
+__schemas = {}
 
 
-def schemas(plugins=None):
-    """Return the contents of the schemas.yml file"""
+def schemas(plugins):
+    """Return the contents of the schemas.yml file
+    :parameter plugins: the list of plugins to generate the schemas for. Use ``config.plugins`` for this.
+    :type plugins: List[cea.plugin.CeaPlugin]
+    """
     global __schemas
-    if not __schemas:
+    key = ":".join(str(p) for p in plugins)
+    if not key in __schemas:
         schemas_yml = os.path.join(os.path.dirname(__file__), 'schemas.yml')
-        __schemas = yaml.load(open(schemas_yml), Loader=yaml.CLoader)
-        if plugins:
-            for plugin in plugins:
-                __schemas.update(plugin.schemas)
-    return __schemas
+        __schemas[key] = yaml.load(open(schemas_yml), Loader=yaml.CLoader)
+        for plugin in plugins:
+            __schemas[key].update(plugin.schemas)
+    return __schemas[key]
 
 
 def get_schema_variables(schema):
@@ -89,15 +113,18 @@ def get_schema_scripts():
     return schema_scripts
 
 
-def create_schema_io(lm, schema, original_function):
+def create_schema_io(lm, schema, original_function=None):
     """
     Returns a wrapper object that can be used to replace original_function - the interface remains largely
     the same.
     :param str lm: the name of the locator method being wrapped
     :param dict schema: the configuration of this locator method as defined in schemas.yml
-    :param original_function: the original locator method - so we can call it
+    :param original_function: the original locator method - so we can call it. Created from schema["file_path"] if None
     :return: SchemaIo instance
     """
+    if not original_function:
+        original_function = create_locator_method(lm, schema)
+
     file_type = schema["file_type"]
     file_type_to_schema_io = {
         "csv": CsvSchemaIo
@@ -106,6 +133,24 @@ def create_schema_io(lm, schema, original_function):
         # just return the default - no read() and write() possible
         return SchemaIo(lm, schema, original_function)
     return file_type_to_schema_io[file_type](lm, schema, original_function)
+
+
+def create_locator_method(lm, schema):
+    """
+    Returns a function that works as an InputLocator method - it reads the
+    :param cea.inputlocator.InputLocator self: The locator this method will be bound to`
+    :param str lm: the name of the locator method
+    :param dict schema: the configuration of this locator method as defined in schemas.yml
+    :return: the locator method (note, only kwargs are used, if at all)
+    """
+    file_path = schema["file_path"]
+
+    def locator_method(self, *args, **kwargs):
+        return file_path.format(**kwargs)
+
+    locator_method.func_name = lm
+    locator_method.func_doc = file_path
+    return locator_method
 
 
 class SchemaIo(object):
@@ -118,6 +163,14 @@ class SchemaIo(object):
         self.schema = schema
         self.original_function = original_function
         functools.update_wrapper(self, original_function)
+
+    def __str__(self):
+        return "<{class_name}({lm}): {doc}>".format(class_name=self.__class__.__name__, lm=self.lm,
+                                                    doc=self.original_function.func_doc)
+
+    def __repr__(self):
+        return "<{class_name}({lm}): {doc}>".format(class_name=self.__class__.__name__, lm=self.lm,
+                                                    doc=self.original_function.func_doc)
 
     def __call__(self, *args, **kwargs):
         return self.original_function(*args, **kwargs)

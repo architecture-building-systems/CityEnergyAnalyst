@@ -489,7 +489,7 @@ class WeatherPathParameter(Parameter):
     typename = 'WeatherPathParameter'
 
     def initialize(self, parser):
-        self.locator = cea.inputlocator.InputLocator(None)
+        self.locator = cea.inputlocator.InputLocator(None, [])
         self._extensions = ['epw']
 
     def decode(self, value):
@@ -737,7 +737,7 @@ class DatabasePathParameter(Parameter):
     typename = "DatabasePathParameter"
 
     def initialize(self, parser):
-        self.locator = cea.inputlocator.InputLocator(None)
+        self.locator = cea.inputlocator.InputLocator(None, [])
         self._choices = {p: os.path.join(self.locator.db_path, p) for p in os.listdir(self.locator.db_path)
                          if os.path.isdir(os.path.join(self.locator.db_path, p)) and p != 'weather'}
 
@@ -793,7 +793,7 @@ class PlantNodeParameter(ChoiceParameter):
 
     @property
     def _choices(self):
-        locator = cea.inputlocator.InputLocator(scenario=self.config.scenario)
+        locator = cea.inputlocator.InputLocator(scenario=self.config.scenario, plugins=[])
         network_type = self.config.get(self.network_type_fqn)
         network_name = self.config.get(self.network_name_fqn)
         return locator.get_plant_nodes(network_type, network_name)
@@ -891,7 +891,7 @@ class SingleBuildingParameter(ChoiceParameter):
     @property
     def _choices(self):
         # set the `._choices` attribute to the list buildings in the project
-        locator = cea.inputlocator.InputLocator(self.config.scenario)
+        locator = cea.inputlocator.InputLocator(self.config.scenario, plugins=[])
         building_names = locator.get_zone_building_names()
         if not building_names:
             raise cea.ConfigError("Either no buildings in zone or no zone geometry found.")
@@ -919,7 +919,7 @@ class GenerationParameter(ChoiceParameter):
     def _choices(self):
         import glob
         # set the `._choices` attribute to the list buildings in the project
-        locator = cea.inputlocator.InputLocator(self.config.scenario)
+        locator = cea.inputlocator.InputLocator(self.config.scenario, plugins=[])
         checkpoints = glob.glob(os.path.join(locator.get_optimization_master_results_folder(),"*.json"))
         interations = []
         for checkpoint in checkpoints:
@@ -1013,7 +1013,7 @@ class BuildingsParameter(MultiChoiceParameter):
     @property
     def _choices(self):
         # set the `._choices` attribute to the list buildings in the project
-        locator = cea.inputlocator.InputLocator(self.config.scenario)
+        locator = cea.inputlocator.InputLocator(self.config.scenario, plugins=[])
         return locator.get_zone_building_names()
 
 
@@ -1029,7 +1029,7 @@ def get_scenarios_list(project_path):
 
 
 def get_systems_list(scenario_path):
-    locator = cea.inputlocator.InputLocator(scenario_path)
+    locator = cea.inputlocator.InputLocator(scenario_path, plugins=[])
     checkpoints = glob.glob(os.path.join(locator.get_optimization_master_results_folder(), "*.json"))
     iterations = []
     for checkpoint in checkpoints:

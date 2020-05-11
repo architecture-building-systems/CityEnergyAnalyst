@@ -24,20 +24,27 @@ class InputLocator(object):
     """
 
     # SCENARIO
-    def __init__(self, scenario, plugins=None):
+    def __init__(self, scenario, plugins):
         self.scenario = scenario
         self.db_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'databases'))
         self.weather_path = os.path.join(self.db_path, 'weather')
-        self.wrap_locator_methods()
+        self._wrap_locator_methods(plugins)
 
-    def wrap_locator_methods(self):
+    def _wrap_locator_methods(self, plugins):
         """
         For each locator method defined in scripts.yml, wrap it in a callable object (preserving the
         original interface) that allows for read() and write() operations.
         """
-        schemas = cea.schemas.schemas()
+        schemas = cea.schemas.schemas(plugins)
         for lm in schemas.keys():
-            setattr(self, lm, cea.schemas.create_schema_io(lm, schemas[lm], getattr(self, lm)))
+            if lm == "demand_summary":
+                print("HERE!")
+            if hasattr(self, lm):
+                # allow cea.inputlocator.InputLocator to define locator methods
+                setattr(self, lm, cea.schemas.create_schema_io(lm, schemas[lm], getattr(self, lm)))
+            else:
+                # create locator methods based on schemas if not overriden in InputLocator
+                setattr(self, lm, cea.schemas.create_schema_io(lm, schemas[lm]))
 
     @staticmethod
     def _ensure_folder(*components):
