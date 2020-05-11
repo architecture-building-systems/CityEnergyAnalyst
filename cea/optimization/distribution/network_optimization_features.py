@@ -38,7 +38,7 @@ class NetworkOptimizationFeatures(object):
             if district_cooling_network:
                 self.DeltaP_DCN = pd.read_csv(locator.get_network_total_pressure_drop_file("DC", network_name))[
                     'pressure_loss_total_Pa'].values
-                self.mass_flow_rate_DCN = self.mass_flow_rate_plant(self, locator, network_name, "DC")
+                self.mass_flow_rate_DCN = self.mass_flow_rate_plant(locator, network_name, "DC")
                 self.thermallosses_DCN = pd.read_csv(locator.get_network_total_thermal_loss_file("DC", network_name))[
                     'thermal_loss_total_kW'].values
                 self.pipesCosts_DCN_USD = self.pipe_costs(locator, network_name, "DC")
@@ -47,7 +47,7 @@ class NetworkOptimizationFeatures(object):
         mass_flow_df = pd.read_csv((locator.get_thermal_network_layout_massflow_nodes_file(network_type, network_name)))
         mass_flow_nodes_df = pd.read_csv((locator.get_thermal_network_node_types_csv_file(network_type, network_name)))
         # identify the node with the plant
-        node_id = mass_flow_nodes_df.loc[mass_flow_nodes_df.loc['Type'] == "Plant", 'Name']
+        node_id = mass_flow_nodes_df.loc[mass_flow_nodes_df['Type'] == "PLANT", 'Name'].item()
         return mass_flow_df[node_id].values
 
 
