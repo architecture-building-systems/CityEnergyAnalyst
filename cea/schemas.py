@@ -113,10 +113,11 @@ def get_schema_scripts():
     return schema_scripts
 
 
-def create_schema_io(lm, schema, original_function=None):
+def create_schema_io(locator, lm, schema, original_function=None):
     """
     Returns a wrapper object that can be used to replace original_function - the interface remains largely
     the same.
+    :param cea.inputlocator.InputLocator locator: The locator we're attaching methods to.
     :param str lm: the name of the locator method being wrapped
     :param dict schema: the configuration of this locator method as defined in schemas.yml
     :param original_function: the original locator method - so we can call it. Created from schema["file_path"] if None
@@ -131,8 +132,8 @@ def create_schema_io(lm, schema, original_function=None):
     }
     if file_type not in file_type_to_schema_io:
         # just return the default - no read() and write() possible
-        return SchemaIo(lm, schema, original_function)
-    return file_type_to_schema_io[file_type](lm, schema, original_function)
+        return SchemaIo(locator, lm, schema, original_function)
+    return file_type_to_schema_io[file_type](locator, lm, schema, original_function)
 
 
 def create_locator_method(lm, schema):
@@ -158,7 +159,8 @@ class SchemaIo(object):
     The default just wraps the function - read() and write() will throw errors and should be implemented
     in subclasses
     """
-    def __init__(self, lm, schema, original_function):
+    def __init__(self, locator, lm, schema, original_function):
+        self.locator = locator
         self.lm = lm
         self.schema = schema
         self.original_function = original_function
@@ -173,7 +175,7 @@ class SchemaIo(object):
                                                     doc=self.original_function.func_doc)
 
     def __call__(self, *args, **kwargs):
-        return self.original_function(*args, **kwargs)
+        return self.original_function(self.locator, *args, **kwargs)
 
     def read(self, *args, **kwargs):
         raise AttributeError("{lm}: don't know how to read file_type {file_type}".format(

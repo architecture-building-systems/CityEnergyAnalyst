@@ -41,10 +41,10 @@ class InputLocator(object):
                 print("HERE!")
             if hasattr(self, lm):
                 # allow cea.inputlocator.InputLocator to define locator methods
-                setattr(self, lm, cea.schemas.create_schema_io(lm, schemas[lm], getattr(self, lm)))
+                setattr(self, lm, cea.schemas.create_schema_io(self, lm, schemas[lm], getattr(self.__class__, lm)))
             else:
                 # create locator methods based on schemas if not overriden in InputLocator
-                setattr(self, lm, cea.schemas.create_schema_io(lm, schemas[lm]))
+                setattr(self, lm, cea.schemas.create_schema_io(self, lm, schemas[lm]))
 
     @staticmethod
     def _ensure_folder(*components):
