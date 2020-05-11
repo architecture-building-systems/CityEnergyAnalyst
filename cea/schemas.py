@@ -146,7 +146,7 @@ def create_locator_method(lm, schema):
     file_path = schema["file_path"]
 
     def locator_method(self, *args, **kwargs):
-        return file_path.format(**kwargs)
+        return os.path.join(self.scenario, file_path.format(**kwargs))
 
     locator_method.func_name = lm
     locator_method.func_doc = file_path
