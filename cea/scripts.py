@@ -6,7 +6,7 @@ from __future__ import print_function
 import os
 import cea
 import cea.inputlocator
-from schemas import schemas
+from cea.schemas import schemas
 
 SCRIPTS_PICKLE = os.path.abspath(os.path.join(os.path.dirname(cea.__file__), 'scripts.pickle'))
 SCRIPTS_YML = os.path.abspath(os.path.join(os.path.dirname(cea.__file__), 'scripts.yml'))
