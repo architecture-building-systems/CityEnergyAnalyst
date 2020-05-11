@@ -111,7 +111,7 @@ class InstalledCapacities(cea.plots.supply_system.SupplySystemPlotBase):
         graph = []
         total_connected = data_connected[analysis_fields_connected].sum(axis=1)[0]
         for field in analysis_fields_connected:
-            x = ['Technology for connected buildings']
+            x = ['Technology for district scale system']
             y = data_connected[field]
             total_perc = (y[0] / total_connected * 100).round(2)
             total_perc_txt = [str(round(y[0])) + " kW (" + str(total_perc) + " %)"]
