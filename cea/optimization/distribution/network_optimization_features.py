@@ -29,7 +29,7 @@ class NetworkOptimizationFeatures(object):
         for network_name in self.network_names:
             if district_heating_network:
                 self.DeltaP_DHN = pd.read_csv(locator.get_network_total_pressure_drop_file("DH", network_name))[
-                    'pressure_loss_total_Pa'].values
+                    'pressure_loss_substations_Pa'].values
                 self.mass_flow_rate_DHN = self.mass_flow_rate_plant(self, locator, network_name, "DH")
                 self.thermallosses_DHN = pd.read_csv(locator.get_network_total_thermal_loss_file("DH", network_name))[
                     'thermal_loss_total_kW'].values
@@ -37,7 +37,7 @@ class NetworkOptimizationFeatures(object):
 
             if district_cooling_network:
                 self.DeltaP_DCN = pd.read_csv(locator.get_network_total_pressure_drop_file("DC", network_name))[
-                    'pressure_loss_total_Pa'].values
+                    'pressure_loss_substations_Pa'].values
                 self.mass_flow_rate_DCN = self.mass_flow_rate_plant(locator, network_name, "DC")
                 self.thermallosses_DCN = pd.read_csv(locator.get_network_total_thermal_loss_file("DC", network_name))[
                     'thermal_loss_total_kW'].values
