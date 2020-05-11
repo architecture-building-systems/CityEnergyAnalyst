@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 import yaml
+import warnings
 import functools
 
 # keep a cache of schemas.yml - this will never change so avoid re-reading it.
@@ -154,7 +155,7 @@ class CsvSchemaIo(SchemaIo):
         if not found_columns == expected_columns:
             missing_columns = expected_columns - found_columns
             extra_columns = found_columns - expected_columns
-            raise ValueError("Dataframe does not conform to schemas.yml specification for {lm}"
+            warnings.warn("Dataframe does not conform to schemas.yml specification for {lm}"
                              "(missing: {missing_columns}, extra: {extra_columns}".format(
                 lm=self.lm, missing_columns=missing_columns, extra_columns=extra_columns))
 

@@ -4,7 +4,7 @@ This tool is used as to check the format of each database
 """
 from __future__ import division
 from __future__ import print_function
-from schemas import schemas
+from cea.schemas import schemas
 import pandas as pd
 import re
 
