@@ -259,20 +259,19 @@ def district_cooling_network(locator,
         "E_BaseVCC_AS_req_W": E_BaseVCC_AS_req_W,
         "E_PeakVCC_AS_req_W": E_PeakVCC_AS_req_W,
         "E_BackupVCC_AS_req_W": E_BackupVCC_AS_req_W,
+        "Cooling System Efficiency ": (Q_BaseVCC_WS_gen_W + Q_PeakVCC_WS_gen_W +
+                                              Q_BaseVCC_AS_gen_W + Q_PeakVCC_AS_gen_W +
+                                              Q_BackupVCC_AS_gen_W) / (E_used_district_cooling_network_W +
+                                              E_BaseVCC_WS_req_W + E_PeakVCC_WS_req_W +
+                                              E_BaseVCC_AS_req_W + E_PeakVCC_AS_req_W +
+                                              E_BackupVCC_AS_req_W)
     }
 
     district_cooling_fuel_requirements_dispatch = {
         # fuels
         "NG_Trigen_req_W": NG_Trigen_req_W
     }
-    cooling_load = (Q_BaseVCC_AS_gen_W[None, :] + Q_PeakVCC_AS_gen_W[None, :] + Q_BackupVCC_AS_gen_W[None, :])
-    electricity_demand = (E_used_district_cooling_network_W[None, :] + E_BaseVCC_AS_req_W[None, :]
-                                + E_PeakVCC_AS_req_W[None, :] + E_BackupVCC_AS_req_W[None, :])
-    sum_cooling_load = np.nansum(cooling_load)
-    sum_electricity_demand = np.nansum(electricity_demand)
-    AS_VCC_system_COP = sum_cooling_load/sum_electricity_demand
 
-    print('AS_VCC_system_COP is : ', AS_VCC_system_COP)
     # PLOT RESULTS
 
     return district_cooling_costs, \

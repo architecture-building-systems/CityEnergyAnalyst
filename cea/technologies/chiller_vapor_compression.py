@@ -5,9 +5,8 @@ from __future__ import division
 import pandas as pd
 from math import log, ceil
 import numpy as np
-import cea.optimization.load_distribution as load_distribution
+import cea.technologies.load_distribution as load_distribution
 
-from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.technologies.constants import G_VALUE_CENTRALIZED, G_VALUE_DECENTRALIZED, CHILLER_DELTA_T_HEX_CT, \
     CHILLER_DELTA_T_APPROACH, T_EVAP_AHU, T_EVAP_ARU, T_EVAP_SCU, DT_NETWORK_CENTRALIZED, CENTRALIZED_AUX_PERCENTAGE, \
     DECENTRALIZED_AUX_PERCENTAGE
