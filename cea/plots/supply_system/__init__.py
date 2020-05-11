@@ -92,34 +92,34 @@ class SupplySystemPlotBase(cea.plots.PlotBase):
         data_el_exports_imports["E_GRID_ramping_W"] = ramping
         return data_el_exports_imports
 
-    def process_connected_capacities_kW(self):
+    def process_district_scale_capacities_kW(self):
         try:
-            heat = pd.read_csv(self.locator.get_optimization_connected_heating_capacity(self.individual,
+            heat = pd.read_csv(self.locator.get_optimization_district_scale_heating_capacity(self.individual,
                                                                                         self.generation))
         except pd.errors.EmptyDataError:
             heat = pd.DataFrame()
 
         try:
-            cool = pd.read_csv(self.locator.get_optimization_connected_cooling_capacity(self.individual,
+            cool = pd.read_csv(self.locator.get_optimization_district_scale_cooling_capacity(self.individual,
                                                                                         self.generation))
         except pd.errors.EmptyDataError:
             cool = pd.DataFrame()
 
-        elec = pd.read_csv(self.locator.get_optimization_connected_electricity_capacity(self.individual,
+        elec = pd.read_csv(self.locator.get_optimization_district_scale_electricity_capacity(self.individual,
                                                                                         self.generation))
 
         dataframe = heat.join(cool).join(elec)
         return dataframe / 1E3  # to kW
 
-    def process_disconnected_capacities_kW(self):
+    def process_building_scale_capacities_kW(self):
         try:
-            heat = pd.read_csv(self.locator.get_optimization_disconnected_heating_capacity(self.individual,
+            heat = pd.read_csv(self.locator.get_optimization_building_scale_heating_capacity(self.individual,
                                                                                            self.generation))
         except pd.errors.EmptyDataError:
             heat = None
 
         try:
-            cool = pd.read_csv(self.locator.get_optimization_disconnected_cooling_capacity(self.individual,
+            cool = pd.read_csv(self.locator.get_optimization_building_scale_cooling_capacity(self.individual,
                                                                                            self.generation))
         except pd.errors.EmptyDataError:
             cool = None

@@ -130,8 +130,8 @@ def evaluation_main(individual,
 
     # electricity_main.extract_fuels_demand_buildings(master_to_slave_vars, building_names_all, locator)
     print("DISTRICT ENERGY SYSTEM - COSTS, PRIMARY ENERGY AND EMISSIONS OF CONNECTED BUILDINGS")
-    buildings_connected_costs, \
-    buildings_connected_emissions = cost_model.buildings_connected_costs_and_emissions(district_heating_fixed_costs,
+    buildings_district_scale_costs, \
+    buildings_district_scale_emissions = cost_model.buildings_district_scale_costs_and_emissions(district_heating_fixed_costs,
                                                                                        district_cooling_fixed_costs,
                                                                                        district_electricity_fixed_costs,
                                                                                        district_electricity_dispatch,
@@ -142,20 +142,20 @@ def evaluation_main(individual,
                                                                                        lca)
 
     print("DISTRICT ENERGY SYSTEM - COSTS, PRIMARY ENERGY AND EMISSIONS OF DISCONNECTED BUILDINGS")
-    buildings_disconnected_costs, \
-    buildings_disconnected_emissions, \
-    buildings_disconnected_heating_capacities, \
-    buildings_disconnected_cooling_capacities = cost_model.buildings_disconnected_costs_and_emissions(
+    buildings_building_scale_costs, \
+    buildings_building_scale_emissions, \
+    buildings_building_scale_heating_capacities, \
+    buildings_building_scale_cooling_capacities = cost_model.buildings_building_scale_costs_and_emissions(
         building_names_heating,
         building_names_cooling,
         locator,
         master_to_slave_vars)
 
     print("AGGREGATING RESULTS")
-    TAC_sys_USD, GHG_sys_tonCO2, performance_totals = summarize_results_individual(buildings_connected_costs,
-                                                                                   buildings_connected_emissions,
-                                                                                   buildings_disconnected_costs,
-                                                                                   buildings_disconnected_emissions)
+    TAC_sys_USD, GHG_sys_tonCO2, performance_totals = summarize_results_individual(buildings_district_scale_costs,
+                                                                                   buildings_district_scale_emissions,
+                                                                                   buildings_building_scale_costs,
+                                                                                   buildings_building_scale_emissions)
 
 
     print ('Total TAC in USD = ' + str(TAC_sys_USD))
@@ -163,10 +163,10 @@ def evaluation_main(individual,
 
     return TAC_sys_USD, \
            GHG_sys_tonCO2, \
-           buildings_connected_costs, \
-           buildings_connected_emissions, \
-           buildings_disconnected_costs, \
-           buildings_disconnected_emissions, \
+           buildings_district_scale_costs, \
+           buildings_district_scale_emissions, \
+           buildings_building_scale_costs, \
+           buildings_building_scale_emissions, \
            district_heating_generation_dispatch, \
            district_cooling_generation_dispatch, \
            district_electricity_dispatch, \
@@ -176,6 +176,6 @@ def evaluation_main(individual,
            district_heating_capacity_installed, \
            district_cooling_capacity_installed, \
            district_electricity_capacity_installed, \
-           buildings_disconnected_heating_capacities, \
-           buildings_disconnected_cooling_capacities
+           buildings_building_scale_heating_capacities, \
+           buildings_building_scale_cooling_capacities
 

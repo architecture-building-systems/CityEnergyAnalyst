@@ -10,6 +10,7 @@ import cea.technologies.load_distribution as load_distribution
 from cea.technologies.constants import G_VALUE_CENTRALIZED, G_VALUE_DECENTRALIZED, CHILLER_DELTA_T_HEX_CT, \
     CHILLER_DELTA_T_APPROACH, T_EVAP_AHU, T_EVAP_ARU, T_EVAP_SCU, DT_NETWORK_CENTRALIZED, CENTRALIZED_AUX_PERCENTAGE, \
     DECENTRALIZED_AUX_PERCENTAGE
+from cea.analysis.costs.equations import calc_capex_annualized, calc_opex_annualized
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -109,11 +110,11 @@ def calc_Cinv_VCC(Q_nom_W, locator, technology_type):
             Inv_c = VCC_cost_data.iloc[0]['c']
             Inv_d = VCC_cost_data.iloc[0]['d']
             Inv_e = VCC_cost_data.iloc[0]['e']
-            Inv_IR = (VCC_cost_data.iloc[0]['IR_%']) / 100
+            Inv_IR = VCC_cost_data.iloc[0]['IR_%']
             Inv_LT = VCC_cost_data.iloc[0]['LT_yr']
             Inv_OM = VCC_cost_data.iloc[0]['O&M_%'] / 100
             InvC = Inv_a + Inv_b * (Q_nom_W) ** Inv_c + (Inv_d + Inv_e * Q_nom_W) * log(Q_nom_W)
-            Capex_a_VCC_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+            Capex_a_VCC_USD = calc_capex_annualized(InvC, Inv_IR, Inv_LT)
             Opex_fixed_VCC_USD = InvC * Inv_OM
             Capex_VCC_USD = InvC
         else:  # more than one unit of ACH are activated
@@ -127,12 +128,12 @@ def calc_Cinv_VCC(Q_nom_W, locator, technology_type):
                 Inv_c = VCC_cost_data.iloc[0]['c']
                 Inv_d = VCC_cost_data.iloc[0]['d']
                 Inv_e = VCC_cost_data.iloc[0]['e']
-                Inv_IR = (VCC_cost_data.iloc[0]['IR_%']) / 100
+                Inv_IR = VCC_cost_data.iloc[0]['IR_%']
                 Inv_LT = VCC_cost_data.iloc[0]['LT_yr']
                 Inv_OM = VCC_cost_data.iloc[0]['O&M_%'] / 100
                 InvC = Inv_a + Inv_b * (Q_nom_each_chiller) ** Inv_c + (Inv_d + Inv_e * Q_nom_each_chiller) * log(
                     Q_nom_each_chiller)
-                Capex_a1 = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+                Capex_a1 = calc_capex_annualized(InvC, Inv_IR, Inv_LT)
                 Capex_a_VCC_USD = Capex_a_VCC_USD + Capex_a1
                 Opex_fixed_VCC_USD = Opex_fixed_VCC_USD + InvC * Inv_OM
                 Capex_VCC_USD = Capex_VCC_USD + InvC

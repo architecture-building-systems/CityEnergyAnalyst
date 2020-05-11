@@ -3,15 +3,17 @@ costs according to supply systems
 """
 from __future__ import division
 
+import numpy as np
 import pandas as pd
 from geopandas import GeoDataFrame as gpdf
 
 import cea.config
 import cea.inputlocator
+from cea.analysis.costs.equations import calc_capex_annualized, calc_opex_annualized
 
 __author__ = "Jimeno A. Fonseca"
-__copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Jimeno A. Fonseca"]
+__copyright__ = "Copyright 2020, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Jimeno A. Fonseca", " Emanuel Riegelbauer"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -24,7 +26,153 @@ def costs_main(locator, config):
     capital = config.costs.capital
     operational = config.costs.operational
 
+    # get demand
     demand = pd.read_csv(locator.get_total_demand())
+
+    # get the databases for each main system
+    cooling_db, hot_water_db, electricity_db, heating_db = get_databases(demand, locator)
+
+    # COSTS DUE TO HEATING SERIVICES (EXCEPT HOTWATER)
+    heating_final_services = ['OIL_hs', 'NG_hs', 'WOOD_hs', 'COAL_hs', 'GRID_hs', 'DH_hs']
+    costs_heating_services_dict = calc_costs_per_energy_service(heating_db, heating_final_services)
+
+    # COSTS DUE TO HOT WATER SERVICES
+    hot_water_final_services = ['OIL_ww', 'NG_ww', 'WOOD_ww', 'COAL_ww', 'GRID_ww', 'DH_ww']
+    costs_hot_water_services_dict = calc_costs_per_energy_service(hot_water_db, hot_water_final_services)
+
+    # COSTS DUE TO COOLING SERVICES
+    cooling_final_services = ['GRID_cs', 'GRID_cdata', 'GRID_cre', 'DC_cs']
+    costs_cooling_services_dict = calc_costs_per_energy_service(cooling_db, cooling_final_services)
+
+    # COSTS DUE TO ELECTRICITY SERVICES
+    electricity_final_services = ['GRID_pro', 'GRID_l', 'GRID_aux', 'GRID_v', 'GRID_a', 'GRID_data']
+    costs_electricity_services_dict = calc_costs_per_energy_service(electricity_db, electricity_final_services)
+
+    # COMBINE INTO ONE DICT
+    result = dict(costs_heating_services_dict.items() + costs_hot_water_services_dict.items() +
+                  costs_cooling_services_dict.items() + costs_electricity_services_dict.items())
+
+    # sum up for all fields
+    # create a dict to map from the convention of fields to the final variables
+    mapping_dict = {'_capex_total_USD': 'Capex_total_sys_USD',
+                    '_opex_fixed_USD': 'Opex_fixed_sys_USD',
+                    '_opex_var_USD': 'Opex_var_sys_USD',
+                    '_opex_USD': 'Opex_sys_USD',
+                    # all system annualized
+                    '_capex_a_USD': 'Capex_a_sys_USD',
+                    '_opex_a_var_USD': 'Opex_a_var_sys_USD',
+                    '_opex_a_fixed_USD': 'Opex_a_fixed_sys_USD',
+                    '_opex_a_USD': 'Opex_a_sys_USD',
+                    '_TAC_USD': 'TAC_sys_USD',
+                    # building_scale_systems
+                    '_capex_total_building_scale_USD': 'Capex_total_sys_building_scale_USD',
+                    '_opex_building_scale_USD': 'Opex_sys_building_scale_USD',
+                    '_capex_a_building_scale_USD': 'Capex_a_sys_building_scale_USD',
+                    '_opex_a_building_scale_USD': 'Opex_a_sys_building_scale_USD',
+                    # district_scale_systems
+                    '_capex_total_district_scale_USD': 'Capex_total_sys_district_scale_USD',
+                    '_opex_district_scale_USD': 'Opex_sys_district_scale_USD',
+                    '_capex_a_district_scale_USD': 'Capex_a_sys_district_scale_USD',
+                    '_opex_a_district_scale_USD': 'Opex_a_sys_district_scale_USD',
+                    # city_scale_systems
+                    '_capex_total_city_scale_USD': 'Capex_total_sys_city_scale_USD',
+                    '_opex_city_scale_USD': 'Opex_sys_city_scale_USD',
+                    '_capex_a_city_scale_USD': 'Capex_a_sys_city_scale_USD',
+                    '_opex_a_city_scale_USD': 'Opex_a_sys_city_scale_USD',
+                    }
+    # initialize the names of the variables in the result to zero
+    n_buildings = demand.shape[0]
+    for _, value in mapping_dict.items():
+        result[value] = np.zeros(n_buildings)
+
+    # loop inside the results and sum the results
+    for field in result.keys():
+        for key, value in mapping_dict.items():
+            if key in field:
+                result[value] += result[field]
+
+    # add name and create dataframe
+    result.update({'Name': demand.Name.values})
+    result_out = pd.DataFrame(result)
+
+    # save dataframe
+    result_out.to_csv(locator.get_costs_operation_file(), index=False, float_format='%.2f')
+
+
+def calc_costs_per_energy_service(database, heating_services):
+    result = {}
+    for service in heating_services:
+        # TOTALS
+        result[service + '_capex_total_USD'] = (database[service + '0_kW'].values *
+                                                database['efficiency'].values *  # because it is based on the end use
+                                                database['CAPEX_USD2015kW'].values)
+
+        result[service + '_opex_fixed_USD'] = (result[service + '_capex_total_USD'] * database['O&M_%'].values / 100)
+
+        result[service + '_opex_var_USD'] = database[service + '_MWhyr'].values * database[
+            'Opex_var_buy_USD2015kWh'].values * 1000
+
+        result[service + '_opex_USD'] = result[service + '_opex_fixed_USD'] + result[service + '_opex_var_USD']
+
+        # ANNUALIZED
+        result[service + '_capex_a_USD'] = np.vectorize(calc_capex_annualized)(result[service + '_capex_total_USD'],
+                                                                               database['IR_%'],
+                                                                               database['LT_yr'])
+
+        result[service + '_opex_a_fixed_USD'] = np.vectorize(calc_opex_annualized)(result[service + '_opex_fixed_USD'],
+                                                                                   database['IR_%'],
+                                                                                   database['LT_yr'])
+
+        result[service + '_opex_a_var_USD'] = np.vectorize(calc_opex_annualized)(result[service + '_opex_var_USD'],
+                                                                                 database['IR_%'],
+                                                                                 database['LT_yr'])
+
+        result[service + '_opex_a_USD'] = np.vectorize(calc_opex_annualized)(result[service + '_opex_USD'],
+                                                                             database['IR_%'],
+                                                                             database['LT_yr'])
+
+        result[service + '_TAC_USD'] = result[service + '_opex_a_USD'] + result[service + '_capex_a_USD']
+
+        # GET CONNECTED AND DISCONNECTED
+        for field in ['_capex_total_USD', '_capex_a_USD', '_opex_USD', '_opex_a_USD']:
+            field_district = field.split("_USD")[0] + "_district_scale_USD"
+            field_building_scale = field.split("_USD")[0] + "_building_scale_USD"
+            field_city_scale = field.split("_USD")[0] + "_city_scale_USD"
+            result[service + field_district], \
+            result[service + field_building_scale], \
+            result[service + field_city_scale] = np.vectorize(calc_scale_costs)(result[service + field],
+                                                                                database['scale'])
+    return result
+
+
+def calc_scale_costs(value, flag_scale):
+    if flag_scale == "BUILDING":
+        district = 0.0
+        building = value
+        city = 0.0
+    elif flag_scale == "DISTRICT":
+        district = value
+        building = 0.0
+        city = 0.0
+    elif flag_scale == "CITY":
+        district = 0.0
+        building = 0.0
+        city = value
+    elif flag_scale == "NONE":
+        if value == 0.0:
+            district = 0.0
+            building = 0.0
+            city = 0.0
+        else:
+            raise ValueError("the scale is NONE but somehow there is a cost here?"
+                             " the inputs of SUPPLY database may be wrong")
+    else:
+        raise ValueError("the scale in the system is {}, this is not a valid argument"
+                         "valid argumetns are CITY, DISTRICT, BUILDING, NONE".format(flag_scale))
+    return district, building, city
+
+
+def get_databases(demand, locator):
     supply_systems = gpdf.from_file(locator.get_building_supply()).drop('geometry', axis=1)
     data_all_in_one_systems = pd.read_excel(locator.get_database_supply_assemblies(), sheet_name=None)
     factors_heating = data_all_in_one_systems['HEATING']
@@ -32,175 +180,42 @@ def costs_main(locator, config):
     factors_cooling = data_all_in_one_systems['COOLING']
     factors_electricity = data_all_in_one_systems['ELECTRICITY']
     factors_resources = pd.read_excel(locator.get_database_feedstocks(), sheet_name=None)
-
-    #get the mean of all values for this
-    factors_resources_simple = [(name, values['Opex_var_buy_USD2015kWh'].mean()) for name, values in factors_resources.items()]
-    factors_resources_simple = pd.DataFrame(factors_resources_simple, columns=['code', 'Opex_var_buy_USD2015kWh']).append(
+    # get the mean of all values for this
+    factors_resources_simple = [(name, values['Opex_var_buy_USD2015kWh'].mean()) for name, values in
+                                factors_resources.items()]
+    factors_resources_simple = pd.DataFrame(factors_resources_simple,
+                                            columns=['code', 'Opex_var_buy_USD2015kWh']).append(
         # append NONE choice with zero values
         {'code': 'NONE'}, ignore_index=True).fillna(0)
-
     # local variables
     # calculate the total operational non-renewable primary energy demand and CO2 emissions
     ## create data frame for each type of end use energy containing the type of supply system use, the final energy
     ## demand and the primary energy and emissions factors for each corresponding type of supply system
     heating_costs = factors_heating.merge(factors_resources_simple, left_on='feedstock', right_on='code')[
-        ['code_x', 'feedstock', 'Opex_var_buy_USD2015kWh', 'CAPEX_USD2015kW', 'LT_yr', 'O&M_%', 'IR_%']]
+        ['code_x', 'feedstock', 'scale', 'efficiency', 'Opex_var_buy_USD2015kWh', 'CAPEX_USD2015kW', 'LT_yr', 'O&M_%',
+         'IR_%']]
     cooling_costs = factors_cooling.merge(factors_resources_simple, left_on='feedstock', right_on='code')[
-        ['code_x', 'feedstock', 'Opex_var_buy_USD2015kWh', 'CAPEX_USD2015kW', 'LT_yr', 'O&M_%', 'IR_%']]
+        ['code_x', 'feedstock', 'scale', 'efficiency', 'Opex_var_buy_USD2015kWh', 'CAPEX_USD2015kW', 'LT_yr', 'O&M_%',
+         'IR_%']]
     dhw_costs = factors_dhw.merge(factors_resources_simple, left_on='feedstock', right_on='code')[
-        ['code_x', 'feedstock', 'Opex_var_buy_USD2015kWh', 'CAPEX_USD2015kW', 'LT_yr', 'O&M_%', 'IR_%']]
+        ['code_x', 'feedstock', 'scale', 'efficiency', 'Opex_var_buy_USD2015kWh', 'CAPEX_USD2015kW', 'LT_yr', 'O&M_%',
+         'IR_%']]
     electricity_costs = factors_electricity.merge(factors_resources_simple, left_on='feedstock', right_on='code')[
-        ['code_x', 'feedstock', 'Opex_var_buy_USD2015kWh', 'CAPEX_USD2015kW', 'LT_yr', 'O&M_%', 'IR_%']]
-
+        ['code_x', 'feedstock', 'scale', 'efficiency', 'Opex_var_buy_USD2015kWh', 'CAPEX_USD2015kW', 'LT_yr', 'O&M_%',
+         'IR_%']]
     heating = supply_systems.merge(demand, on='Name').merge(heating_costs, left_on='type_hs', right_on='code_x')
     dhw = supply_systems.merge(demand, on='Name').merge(dhw_costs, left_on='type_dhw', right_on='code_x')
     cooling = supply_systems.merge(demand, on='Name').merge(cooling_costs, left_on='type_cs', right_on='code_x')
     electricity = supply_systems.merge(demand, on='Name').merge(electricity_costs, left_on='type_el', right_on='code_x')
+    return cooling, dhw, electricity, heating
 
-    fields_to_plot = []
-    heating_services = ['DH_hs', 'OIL_hs', 'NG_hs', 'WOOD_hs', 'COAL_hs', 'SOLAR_hs']
-    for service in heating_services:
-        try:
-            fields_to_plot.extend([service + '_sys_opex_yr', service + '_sys_total_capex_yr', service + '_sys_a_capex_yr',  service + '_sys_opex_m2yr'])
-            # calculate the total and relative costs
-            heating[service + '_sys_total_capex_yr'] = heating[service + '0_kW'] * heating['CAPEX_USD2015kW']
-            heating[service + '_sys_a_capex_yr'] = calc_inv_costs_annualized(heating[service + '_sys_total_capex_yr'], heating['IR_%']/100, heating['LT_yr'])
-            heating[service + '_sys_opex_yr'] = heating[service + '_MWhyr'] * heating['Opex_var_buy_USD2015kWh'] * 1000 + heating[service + '_sys_total_capex_yr'] * heating['O&M_%']/100
-            heating[service + '_sys_opex_m2yr'] = heating[service + '_sys_opex_yr'] / heating['Aocc_m2']
-        except KeyError:
-            print(heating)
-            print(list(heating.columns))
-            raise
-
-    # for cooling services
-    dhw_services = ['DH_ww', 'OIL_ww', 'NG_ww', 'WOOD_ww', 'COAL_ww', 'SOLAR_ww']
-    for service in dhw_services:
-        fields_to_plot.extend([service + '_sys_opex_yr', service + '_sys_total_capex_yr', service + '_sys_a_capex_yr', service + '_sys_opex_m2yr'])
-        # calculate the total and relative costs
-        # calculate the total and relative costs
-        dhw[service + '_sys_total_capex_yr'] = dhw[service + '0_kW'] * dhw['CAPEX_USD2015kW']
-        dhw[service + '_sys_a_capex_yr'] =  calc_inv_costs_annualized(dhw[service + '_sys_total_capex_yr'], dhw['IR_%']/100, dhw['LT_yr'])
-        dhw[service + '_sys_opex_yr'] = dhw[service + '_MWhyr'] * dhw['Opex_var_buy_USD2015kWh'] * 1000 + dhw[service + '_sys_total_capex_yr'] * dhw['O&M_%']/100
-        dhw[service + '_sys_opex_m2yr'] = dhw[service + '_sys_opex_yr'] / dhw['Aocc_m2']
-
-    ## calculate the operational primary energy and emissions for cooling services
-    cooling_services = ['DC_cs', 'DC_cdata', 'DC_cre']
-    for service in cooling_services:
-        fields_to_plot.extend([service + '_sys_opex_yr', service + '_sys_total_capex_yr', service + '_sys_a_capex_yr', service + '_sys_opex_m2yr'])
-        # change price to that of local electricity mix
-        # calculate the total and relative costs
-        cooling[service + '_sys_total_capex_yr'] = cooling[service + '0_kW'] * cooling['CAPEX_USD2015kW']
-        cooling[service + '_sys_a_capex_yr'] = calc_inv_costs_annualized(cooling[service + '_sys_total_capex_yr'], cooling['IR_%']/100, cooling['LT_yr'])
-        cooling[service + '_sys_opex_yr'] = cooling[service + '_MWhyr'] * cooling['Opex_var_buy_USD2015kWh'] * 1000 + cooling[service + '_sys_total_capex_yr'] * cooling['O&M_%']/100
-        cooling[service + '_sys_opex_m2yr'] = cooling[service + '_sys_opex_yr'] / cooling['Aocc_m2']
-
-    ## calculate the operational primary energy and emissions for electrical services
-    electrical_services = ['GRID', 'PV']
-    for service in electrical_services:
-        fields_to_plot.extend([service + '_sys_opex_yr', service + '_sys_total_capex_yr', service+ '_sys_a_capex_yr', service + '_sys_opex_m2yr'])
-        # calculate the total and relative costs
-        electricity[service + '_sys_total_capex_yr'] = electricity[service + '0_kW'] * electricity['CAPEX_USD2015kW']
-        electricity[service + '_sys_a_capex_yr'] = calc_inv_costs_annualized(electricity[service + '_sys_total_capex_yr'], electricity['IR_%']/100, electricity['LT_yr']/100)
-        electricity[service + '_sys_opex_yr'] = electricity[service + '_MWhyr'] * electricity['Opex_var_buy_USD2015kWh'] * 1000 + electricity[service + '_sys_total_capex_yr'] * electricity['O&M_%']/100
-        electricity[service + '_sys_opex_m2yr'] = electricity[service + '_sys_opex_yr'] / electricity['Aocc_m2']
-
-    # plot also NFA area and costs
-    fields_to_plot.extend(['Aocc_m2'])
-
-    # embodied emissions
-    if capital:
-        fields_to_plot.extend(['Capex_a_sys_disconnected_USD',
-                             'Capex_a_sys_connected_USD',
-                             'Capex_total_sys_connected_USD',
-                             'Capex_total_sys_disconnected_USD',
-                               'Capex_total_sys_USD', 'TAC_sys_USD'
-                               ])
-    # operation emissions
-    if operational:
-        fields_to_plot.extend(['Opex_a_sys_connected_USD',
-                             'Opex_a_sys_disconnected_USD',
-                             'Opex_a_sys_USD'])
-
-    # create and save results
-    result = heating.merge(dhw, on='Name', suffixes=('', '_dhw'))
-    result = result.merge(cooling, on='Name', suffixes=('', '_cooling'))
-    result = result.merge(electricity, on='Name', suffixes=('', '_ electricity'))
-
-    # add totals:
-    result['Opex_a_sys_connected_USD'] = result['GRID_sys_opex_yr'] + \
-                                         result['DH_hs_sys_opex_yr'] + \
-                                         result['DH_ww_sys_opex_yr'] + \
-                                         result['DC_cdata_sys_opex_yr'] + \
-                                         result['DC_cs_sys_opex_yr'] + \
-                                         result['DC_cre_sys_opex_yr']
-
-    result['Opex_a_sys_disconnected_USD'] = result['OIL_hs_sys_opex_yr'] + \
-                                            result['NG_hs_sys_opex_yr'] + \
-                                            result['WOOD_hs_sys_opex_yr'] + \
-                                            result['COAL_hs_sys_opex_yr'] + \
-                                            result['SOLAR_hs_sys_opex_yr'] + \
-                                            result['PV_sys_opex_yr'] + \
-                                            result['OIL_ww_sys_opex_yr'] + \
-                                            result['NG_ww_sys_opex_yr'] + \
-                                            result['WOOD_ww_sys_opex_yr'] + \
-                                            result['COAL_ww_sys_opex_yr'] + \
-                                            result['SOLAR_ww_sys_opex_yr']
-
-    result['Capex_a_sys_connected_USD'] =  result['GRID_sys_a_capex_yr'] + \
-                                         result['DH_hs_sys_a_capex_yr'] + \
-                                         result['DH_ww_sys_a_capex_yr'] + \
-                                         result['DC_cdata_sys_a_capex_yr'] + \
-                                         result['DC_cs_sys_a_capex_yr'] + \
-                                         result['DC_cre_sys_a_capex_yr']
-
-    result['Capex_a_sys_disconnected_USD'] =  result['OIL_hs_sys_a_capex_yr'] + \
-                                            result['NG_hs_sys_a_capex_yr'] + \
-                                            result['WOOD_hs_sys_a_capex_yr'] + \
-                                            result['COAL_hs_sys_a_capex_yr'] + \
-                                            result['SOLAR_hs_sys_a_capex_yr'] + \
-                                            result['PV_sys_a_capex_yr'] + \
-                                            result['OIL_ww_sys_a_capex_yr'] + \
-                                            result['NG_ww_sys_a_capex_yr'] + \
-                                            result['WOOD_ww_sys_a_capex_yr'] + \
-                                            result['COAL_ww_sys_a_capex_yr'] + \
-                                            result['SOLAR_ww_sys_a_capex_yr']
-
-    result['Capex_total_sys_connected_USD'] =  result['GRID_sys_total_capex_yr'] + \
-                                         result['DH_hs_sys_total_capex_yr'] + \
-                                         result['DH_ww_sys_total_capex_yr'] + \
-                                         result['DC_cdata_sys_total_capex_yr'] + \
-                                         result['DC_cs_sys_total_capex_yr'] + \
-                                         result['DC_cre_sys_total_capex_yr']
-
-    result['Capex_total_sys_disconnected_USD'] =  result['OIL_hs_sys_total_capex_yr'] + \
-                                            result['NG_hs_sys_total_capex_yr'] + \
-                                            result['WOOD_hs_sys_total_capex_yr'] + \
-                                            result['COAL_hs_sys_total_capex_yr'] + \
-                                            result['SOLAR_hs_sys_total_capex_yr'] + \
-                                            result['PV_sys_total_capex_yr'] + \
-                                            result['OIL_ww_sys_total_capex_yr'] + \
-                                            result['NG_ww_sys_total_capex_yr'] + \
-                                            result['WOOD_ww_sys_total_capex_yr'] + \
-                                            result['COAL_ww_sys_total_capex_yr'] + \
-                                            result['SOLAR_ww_sys_total_capex_yr']
-
-    result['Capex_total_sys_USD'] = result['Capex_total_sys_disconnected_USD'] + result['Capex_total_sys_connected_USD']
-    result['TAC_sys_USD'] = result['Capex_a_sys_disconnected_USD'] + result['Capex_a_sys_connected_USD']
-    result['Opex_a_sys_USD'] = result['Opex_a_sys_disconnected_USD'] + result['Opex_a_sys_connected_USD']
-
-    result[['Name'] + fields_to_plot].to_csv(
-        locator.get_costs_operation_file(), index=False, float_format='%.2f')
-
-
-def calc_inv_costs_annualized(InvC, Inv_IR, Inv_LT):
-    return InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
 
 def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
     print('Running system-costs with scenario = %s' % config.scenario)
 
-    costs_main(locator=locator,config=config)
+    costs_main(locator=locator, config=config)
 
 
 if __name__ == '__main__':

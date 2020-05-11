@@ -23,6 +23,7 @@ from cea.technologies.solar import constants
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
 from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile
+from cea.analysis.costs.equations import calc_capex_annualized, calc_opex_annualized
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -698,7 +699,7 @@ def calc_Cinv_pv(total_module_area_m2, locator, technology=0):
     """
     PV_cost_data = pd.read_excel(locator.get_database_conversion_systems(), sheet_name="PV")
     technology_code = list(set(PV_cost_data['code']))
-    PV_cost_data[PV_cost_data['code'] == technology_code[technology]]
+    PV_cost_data = PV_cost_data[PV_cost_data['code'] == technology_code[technology]]
     nominal_efficiency = PV_cost_data[PV_cost_data['code'] == technology_code[technology]]['PV_n'].max()
     P_nominal_W = total_module_area_m2 * (constants.STC_RADIATION_Wperm2 * nominal_efficiency)
     # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
@@ -712,13 +713,13 @@ def calc_Cinv_pv(total_module_area_m2, locator, technology=0):
     Inv_c = PV_cost_data.iloc[0]['c']
     Inv_d = PV_cost_data.iloc[0]['d']
     Inv_e = PV_cost_data.iloc[0]['e']
-    Inv_IR = (PV_cost_data.iloc[0]['IR_%']) / 100
+    Inv_IR = PV_cost_data.iloc[0]['IR_%']
     Inv_LT = PV_cost_data.iloc[0]['LT_yr']
     Inv_OM = PV_cost_data.iloc[0]['O&M_%'] / 100
 
     InvC = Inv_a + Inv_b * (P_nominal_W) ** Inv_c + (Inv_d + Inv_e * P_nominal_W) * log(P_nominal_W)
 
-    Capex_a_PV_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+    Capex_a_PV_USD = calc_capex_annualized(InvC, Inv_IR, Inv_LT)
     Opex_fixed_PV_USD = InvC * Inv_OM
     Capex_PV_USD = InvC
 
