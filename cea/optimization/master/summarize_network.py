@@ -162,10 +162,10 @@ def network_main(locator, buildings_in_this_network, ground_temp, num_tot_buildi
             # evaluate minimum flows
             mdot_cool_space_cooling_and_refrigeration_netw_min_kgpers = np.vectorize(calc_min_flow)(
                 mdot_cool_space_cooling_and_refrigeration_netw_min_kgpers,
-                substation_df[iteration].mdot_space_cooling_and_refrigeration_result_kgpers.values)
+                substation_df.mdot_space_cooling_and_refrigeration_result_kgpers.values)
             mdot_cool_space_cooling_data_center_and_refrigeration_netw_min_kgpers = np.vectorize(calc_min_flow)(
                 mdot_cool_space_cooling_data_center_and_refrigeration_netw_min_kgpers,
-                substation_df[iteration].mdot_space_cooling_data_center_and_refrigeration_result_kgpers.values)
+                substation_df.mdot_space_cooling_data_center_and_refrigeration_result_kgpers.values)
             iteration += 1
 
         # calculate thermal losses of distribution
