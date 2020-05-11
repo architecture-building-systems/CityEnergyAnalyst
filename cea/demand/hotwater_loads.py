@@ -156,7 +156,6 @@ def calc_Qwwf(bpr, tsd):
     if scale_technology == "BUILDING":
         if energy_source == "GRID":
             tsd['E_ww'] =  tsd['Qww_sys']/ efficiency_average_year
-            tsd['SOLAR_ww'] = np.zeros(HOURS_IN_YEAR)
             tsd['DH_ww'] = np.zeros(HOURS_IN_YEAR)
             tsd['NG_ww'] = np.zeros(HOURS_IN_YEAR)
             tsd['COAL_ww'] = np.zeros(HOURS_IN_YEAR)
@@ -169,7 +168,6 @@ def calc_Qwwf(bpr, tsd):
             tsd['WOOD_ww'] = np.zeros(HOURS_IN_YEAR)
             tsd['DH_ww'] = np.zeros(HOURS_IN_YEAR)
             tsd['E_ww'] = np.zeros(HOURS_IN_YEAR)
-            tsd['SOLAR_ww'] = np.zeros(HOURS_IN_YEAR)
         elif energy_source == "OIL":
             tsd['NG_ww'] = np.zeros(HOURS_IN_YEAR)
             tsd['COAL_ww'] = np.zeros(HOURS_IN_YEAR)
@@ -177,7 +175,6 @@ def calc_Qwwf(bpr, tsd):
             tsd['WOOD_ww'] = np.zeros(HOURS_IN_YEAR)
             tsd['DH_ww'] = np.zeros(HOURS_IN_YEAR)
             tsd['E_ww'] = np.zeros(HOURS_IN_YEAR)
-            tsd['SOLAR_ww'] = np.zeros(HOURS_IN_YEAR)
         elif energy_source == "COAL":
             tsd['NG_ww'] = np.zeros(HOURS_IN_YEAR)
             tsd['COAL_ww'] = tsd['Qww_sys'] / efficiency_average_year
@@ -185,7 +182,6 @@ def calc_Qwwf(bpr, tsd):
             tsd['WOOD_ww'] = np.zeros(HOURS_IN_YEAR)
             tsd['DH_ww'] = np.zeros(HOURS_IN_YEAR)
             tsd['E_ww'] = np.zeros(HOURS_IN_YEAR)
-            tsd['SOLAR_ww'] = np.zeros(HOURS_IN_YEAR)
         elif energy_source == "WOOD":
             tsd['NG_ww'] = np.zeros(HOURS_IN_YEAR)
             tsd['COAL_ww'] = np.zeros(HOURS_IN_YEAR)
@@ -193,7 +189,6 @@ def calc_Qwwf(bpr, tsd):
             tsd['WOOD_ww'] = tsd['Qww_sys'] / efficiency_average_year
             tsd['DH_ww'] = np.zeros(HOURS_IN_YEAR)
             tsd['E_ww'] = np.zeros(HOURS_IN_YEAR)
-            tsd['SOLAR_ww'] = np.zeros(HOURS_IN_YEAR)
         elif energy_source == "SOLAR":
             tsd['NG_ww'] = np.zeros(HOURS_IN_YEAR)
             tsd['COAL_ww'] = np.zeros(HOURS_IN_YEAR)
@@ -209,7 +204,6 @@ def calc_Qwwf(bpr, tsd):
             tsd['WOOD_ww'] = np.zeros(HOURS_IN_YEAR)
             tsd['DH_ww'] = np.zeros(HOURS_IN_YEAR)
             tsd['E_ww'] = np.zeros(HOURS_IN_YEAR)
-            tsd['SOLAR_ww'] = np.zeros(HOURS_IN_YEAR)
         else:
             raise Exception('check potential error in input database of LCA infrastructure / HOTWATER')
     elif scale_technology == "DISTRICT":
@@ -219,7 +213,6 @@ def calc_Qwwf(bpr, tsd):
             tsd['WOOD_ww'] = np.zeros(HOURS_IN_YEAR)
             tsd['DH_ww'] = tsd['Qww_sys'] / efficiency_average_year
             tsd['E_ww'] = np.zeros(HOURS_IN_YEAR)
-            tsd['SOLAR_ww'] = np.zeros(HOURS_IN_YEAR)
     elif scale_technology == "NONE":
             tsd['NG_ww'] = np.zeros(HOURS_IN_YEAR)
             tsd['COAL_ww'] = np.zeros(HOURS_IN_YEAR)
@@ -227,7 +220,6 @@ def calc_Qwwf(bpr, tsd):
             tsd['WOOD_ww'] = np.zeros(HOURS_IN_YEAR)
             tsd['DH_ww'] = np.zeros(HOURS_IN_YEAR)
             tsd['E_ww'] = np.zeros(HOURS_IN_YEAR)
-            tsd['SOLAR_ww'] = np.zeros(HOURS_IN_YEAR)
     else:
         raise Exception('check potential error in input database of LCA infrastructure / HOTWATER')
 

@@ -5,16 +5,16 @@ Demand model of thermal loads
 from __future__ import division
 
 import numpy as np
-from cea.constants import HOURS_IN_YEAR, HOURS_PRE_CONDITIONING
 import pandas as pd
-from cea.demand.latent_loads import convert_rh_to_moisture_content
+
+from cea.constants import HOURS_IN_YEAR, HOURS_PRE_CONDITIONING
 from cea.demand import demand_writers
-from cea.demand import latent_loads
 from cea.demand import hourly_procedure_heating_cooling_system_load, ventilation_air_flows_simple
+from cea.demand import latent_loads
 from cea.demand import sensible_loads, electrical_loads, hotwater_loads, refrigeration_loads, datacenter_loads
 from cea.demand import ventilation_air_flows_detailed, control_heating_cooling_systems
+from cea.demand.latent_loads import convert_rh_to_moisture_content
 from cea.demand.set_point_from_predefined_file import calc_set_point_from_predefined_file
-from cea.technologies import heatpumps
 from cea.utilities import reporting
 
 
@@ -139,7 +139,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, date_range, locator,
         tsd = electrical_loads.calc_Eaux_fw(tsd, bpr, schedules)
         tsd['Qww'] = tsd['DH_ww'] = tsd['Qww_sys'] = np.zeros(HOURS_IN_YEAR)
         tsd['mcpww_sys'] = tsd['Tww_sys_re'] = tsd['Tww_sys_sup'] = np.zeros(HOURS_IN_YEAR)
-        tsd['Eaux_ww'] = tsd['SOLAR_ww'] = np.zeros(HOURS_IN_YEAR)
+        tsd['Eaux_ww'] = np.zeros(HOURS_IN_YEAR)
         tsd['NG_ww'] = tsd['COAL_ww'] = tsd['OIL_ww'] = tsd['WOOD_ww'] = np.zeros(HOURS_IN_YEAR)
         tsd['E_ww'] = np.zeros(HOURS_IN_YEAR)
 
@@ -167,7 +167,6 @@ def calc_QH_sys_QC_sys(tsd):
 
 def write_results(bpr, building_name, date, loads_output, locator, massflows_output,
                   resolution_outputs, temperatures_output, tsd, debug):
-
     if resolution_outputs == 'hourly':
         writer = demand_writers.HourlyDemandWriter(loads_output, massflows_output, temperatures_output)
     elif resolution_outputs == 'monthly':
@@ -231,7 +230,6 @@ def calc_Qhs_sys(bpr, tsd):
     if scale_technology == "BUILDING":
         if energy_source == "GRID":
             tsd['E_hs'] = tsd['Qhs_sys'] / efficiency_average_year
-            tsd['SOLAR_hs'] = np.zeros(HOURS_IN_YEAR)
             tsd['DH_hs'] = np.zeros(HOURS_IN_YEAR)
             tsd['NG_hs'] = np.zeros(HOURS_IN_YEAR)
             tsd['COAL_hs'] = np.zeros(HOURS_IN_YEAR)
@@ -244,7 +242,6 @@ def calc_Qhs_sys(bpr, tsd):
             tsd['WOOD_hs'] = np.zeros(HOURS_IN_YEAR)
             tsd['DH_hs'] = np.zeros(HOURS_IN_YEAR)
             tsd['E_hs'] = np.zeros(HOURS_IN_YEAR)
-            tsd['SOLAR_hs'] = np.zeros(HOURS_IN_YEAR)
         elif energy_source == "OIL":
             tsd['NG_hs'] = np.zeros(HOURS_IN_YEAR)
             tsd['COAL_hs'] = np.zeros(HOURS_IN_YEAR)
@@ -252,7 +249,6 @@ def calc_Qhs_sys(bpr, tsd):
             tsd['WOOD_hs'] = np.zeros(HOURS_IN_YEAR)
             tsd['DH_hs'] = np.zeros(HOURS_IN_YEAR)
             tsd['E_hs'] = np.zeros(HOURS_IN_YEAR)
-            tsd['SOLAR_hs'] = np.zeros(HOURS_IN_YEAR)
         elif energy_source == "COAL":
             tsd['NG_hs'] = np.zeros(HOURS_IN_YEAR)
             tsd['COAL_hs'] = tsd['Qhs_sys'] / efficiency_average_year
@@ -268,15 +264,6 @@ def calc_Qhs_sys(bpr, tsd):
             tsd['WOOD_hs'] = tsd['Qhs_sys'] / efficiency_average_year
             tsd['DH_hs'] = np.zeros(HOURS_IN_YEAR)
             tsd['E_hs'] = np.zeros(HOURS_IN_YEAR)
-            tsd['SOLAR_hs'] = np.zeros(HOURS_IN_YEAR)
-        elif energy_source == "SOLAR":
-            tsd['NG_hs'] = np.zeros(HOURS_IN_YEAR)
-            tsd['COAL_hs'] = np.zeros(HOURS_IN_YEAR)
-            tsd['OIL_hs'] = np.zeros(HOURS_IN_YEAR)
-            tsd['WOOD_hs'] = np.zeros(HOURS_IN_YEAR)
-            tsd['SOLAR_hs'] = tsd['Qhs_sys'] / efficiency_average_year
-            tsd['DH_hs'] = np.zeros(HOURS_IN_YEAR)
-            tsd['E_hs'] = np.zeros(HOURS_IN_YEAR)
         elif energy_source == "NONE":
             tsd['NG_hs'] = np.zeros(HOURS_IN_YEAR)
             tsd['COAL_hs'] = np.zeros(HOURS_IN_YEAR)
@@ -284,7 +271,6 @@ def calc_Qhs_sys(bpr, tsd):
             tsd['WOOD_hs'] = np.zeros(HOURS_IN_YEAR)
             tsd['DH_hs'] = np.zeros(HOURS_IN_YEAR)
             tsd['E_hs'] = np.zeros(HOURS_IN_YEAR)
-            tsd['SOLAR_hs'] = np.zeros(HOURS_IN_YEAR)
         else:
             raise Exception('check potential error in input database of LCA infrastructure / HEATING')
     elif scale_technology == "DISTRICT":
@@ -294,7 +280,6 @@ def calc_Qhs_sys(bpr, tsd):
         tsd['WOOD_hs'] = np.zeros(HOURS_IN_YEAR)
         tsd['DH_hs'] = tsd['Qhs_sys'] / efficiency_average_year
         tsd['E_hs'] = np.zeros(HOURS_IN_YEAR)
-        tsd['SOLAR_hs'] = np.zeros(HOURS_IN_YEAR)
     elif scale_technology == "NONE":
         tsd['NG_hs'] = np.zeros(HOURS_IN_YEAR)
         tsd['COAL_hs'] = np.zeros(HOURS_IN_YEAR)
@@ -302,7 +287,6 @@ def calc_Qhs_sys(bpr, tsd):
         tsd['WOOD_hs'] = np.zeros(HOURS_IN_YEAR)
         tsd['DH_hs'] = np.zeros(HOURS_IN_YEAR)
         tsd['E_hs'] = np.zeros(HOURS_IN_YEAR)
-        tsd['SOLAR_hs'] = np.zeros(HOURS_IN_YEAR)
     else:
         raise Exception('check potential error in input database of LCA infrastructure / HEATING')
     return tsd
@@ -545,17 +529,48 @@ def update_timestep_data_no_conditioned_area(tsd):
                    'OIL_ww',
                    'WOOD_ww',
                    'vfw_m3perh',
-                   'SOLAR_hs',
-                   'DH_hs', 'Qhs_sys', 'Qhs',
-                   'SOLAR_ww', 'DH_ww', 'Qww_sys', 'Qww',
-                   'DC_cs', 'DC_cs_lat', 'Qcs_sys', 'Qcs',
-                   'DC_cdata', 'Qcdata_sys', 'Qcdata',
-                   'DC_cre', 'Qcre_sys', 'Qcre',
-                   'Eaux', 'Ehs_lat_aux', 'Eaux_hs', 'Eaux_cs', 'Eaux_ve', 'Eaux_ww', 'Eaux_fw',
-                   'E_sys', 'PV', 'GRID', 'E_ww', 'E_hs', 'E_cs', 'E_cre', 'E_cdata', 'E_pro',
-                   'Epro', 'Edata', 'Ea', 'El', 'Eal', 'Ev',
-                   'mcphs_sys', 'mcpcs_sys', 'mcptw'
-                                             'mcpww_sys', 'mcpcdata_sys', 'mcpcre_sys',
+                   'DH_hs',
+                   'Qhs_sys', 'Qhs',
+                   'DH_ww',
+                   'Qww_sys',
+                   'Qww',
+                   'DC_cs',
+                   'DC_cs_lat',
+                   'Qcs_sys',
+                   'Qcs',
+                   'DC_cdata',
+                   'Qcdata_sys',
+                   'Qcdata',
+                   'DC_cre',
+                   'Qcre_sys',
+                   'Qcre',
+                   'Eaux',
+                   'Ehs_lat_aux',
+                   'Eaux_hs',
+                   'Eaux_cs',
+                   'Eaux_ve',
+                   'Eaux_ww',
+                   'Eaux_fw',
+                   'E_sys',
+                   'GRID',
+                   'E_ww',
+                   'E_hs',
+                   'E_cs',
+                   'E_cre',
+                   'E_cdata',
+                   'E_pro',
+                   'Epro',
+                   'Edata',
+                   'Ea',
+                   'El',
+                   'Eal',
+                   'Ev',
+                   'mcphs_sys',
+                   'mcpcs_sys',
+                   'mcptw'
+                   'mcpww_sys',
+                   'mcpcdata_sys',
+                   'mcpcre_sys',
                    'Tcdata_sys_re', 'Tcdata_sys_sup',
                    'Tcre_sys_re', 'Tcre_sys_sup',
                    'Tww_sys_sup', 'Tww_sys_re',

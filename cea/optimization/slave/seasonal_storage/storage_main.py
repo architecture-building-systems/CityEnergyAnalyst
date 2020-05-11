@@ -334,7 +334,7 @@ def read_solar_technologies_data(locator, master_to_slave_vars):
     # Import Solar Data
     if master_to_slave_vars.SC_ET_on == 1 and master_to_slave_vars.SC_ET_share > 0.0:
         share_allowed = master_to_slave_vars.SC_ET_share
-        buildings = master_to_slave_vars.buildings_connected_to_district_heating
+        buildings = master_to_slave_vars.buildings_district_scale_to_district_heating
         Q_SC_ET_gen_Wh, Tscr_th_SC_ET_K, Area_SC_ET_m2, E_SC_ET_req_Wh = calc_available_generation_solar(locator,
                                                                                                          buildings,
                                                                                                          share_allowed,
@@ -346,7 +346,7 @@ def read_solar_technologies_data(locator, master_to_slave_vars):
 
     # SC_FP
     if master_to_slave_vars.SC_FP_on == 1 and master_to_slave_vars.SC_FP_share > 0.0:
-        buildings = master_to_slave_vars.buildings_connected_to_district_heating
+        buildings = master_to_slave_vars.buildings_district_scale_to_district_heating
         share_allowed = master_to_slave_vars.SC_FP_share
         Q_SC_FP_gen_Wh, Tscr_th_SC_FP_K, Area_SC_FP_m2, E_SC_FP_req_Wh = calc_available_generation_solar(locator,
                                                                                                          buildings,
@@ -359,7 +359,7 @@ def read_solar_technologies_data(locator, master_to_slave_vars):
 
     # PVT
     if master_to_slave_vars.PVT_on == 1 and master_to_slave_vars.PVT_share > 0.0:
-        buildings = master_to_slave_vars.buildings_connected_to_district_heating
+        buildings = master_to_slave_vars.buildings_district_scale_to_district_heating
         share_allowed = master_to_slave_vars.PVT_share
         E_PVT_gen_Wh, Q_PVT_gen_Wh, Area_PVT_m2, Tscr_th_PVT_K, E_PVT_req_Wh = calc_available_generation_PVT(locator,
                                                                                                              buildings,
