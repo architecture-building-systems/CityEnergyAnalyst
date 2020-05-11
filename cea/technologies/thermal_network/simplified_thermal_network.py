@@ -451,7 +451,7 @@ def thermal_network_simplified(locator, config, network_name):
                                      accumulated_head_loss_return_kW + \
                                      accumulated_head_loss_substations_kW
     head_loss_system_Pa = pd.DataFrame({"pressure_loss_supply_Pa": accumulated_head_loss_supply_Pa,
-                                        "pressure_loss_return_Pa": accumulated_head_loss_supply_kW,
+                                        "pressure_loss_return_Pa": accumulated_head_loss_supply_Pa,
                                         "pressure_loss_substations_Pa": accumulated_head_loss_substations_Pa,
                                         "pressure_loss_total_Pa": accumulated_head_loss_total_Pa})
     head_loss_system_Pa.to_csv(locator.get_network_total_pressure_drop_file(network_type, network_name),
