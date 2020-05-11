@@ -1758,13 +1758,13 @@ get_costs_operation_file:
         type: float
         unit: $USD(2015)/yr
         values: '{0.0...n}'
-      Capex_a_sys_connected_USD:
-        description: Annualized capital expenditures for connected buildings
+      Capex_a_sys_district_scale_USD:
+        description: Annualized capital expenditures of district-scale systems
         type: float
         unit: $USD(2015)/yr
         values: '{0.0...n}'
-      Capex_a_sys_disconnected_USD:
-        description: Annualized capital expenditures for disconnected buildings
+      Capex_a_sys_building_scale_USD:
+        description: Annualized capital expenditures of building-scale systems
         type: float
         unit: $USD(2015)/yr
         values: '{0.0...n}'
@@ -1883,13 +1883,13 @@ get_costs_operation_file:
         type: float
         unit: $USD(2015)/yr
         values: '{0.0...n}'
-      Opex_a_sys_connected_USD:
-        description: Annual operational expenditures for connected buildings
+      Opex_a_sys_district_scale_USD:
+        description: Annual operational expenditures of district-scale systems
         type: float
         unit: $USD(2015)/yr
         values: '{0.0...n}'
-      Opex_a_sys_disconnected_USD:
-        description: Annual operational expenditures for disconnected buildings
+      Opex_a_sys_building_scale_USD:
+        description: Annual operational expenditures of building-scale systems
         type: float
         unit: $USD(2015)/yr
         values: '{0.0...n}'
@@ -5998,8 +5998,7 @@ get_database_supply_assemblies:
             - BUILDING
             - DISTRICT
             - CITY
-          description: whether the all in one system is used at the building, or the
-            district scale
+          description: whether the all in one system is used at the building, or the district scale
           type: string
           unit: '[-]'
           values: alphanumeric
@@ -7575,32 +7574,32 @@ get_multi_criteria_analysis:
   schema:
     columns:
       Capex_a_sys_USD:
-        description: Capital costs of all the system
+        description: Capital costs of all systems
         type: float
         unit: '[USD 2015]'
         values: '[0.0...n]'
-      Capex_a_sys_connected_USD:
-        description: Capital costs of connected buildings
+      Capex_a_sys_district_scale_USD:
+        description: Capital costs of district-scale systems
         type: float
         unit: '[USD 2015]'
         values: '[0.0...n]'
-      Capex_a_sys_disconnected_USD:
-        description: Annualized Capital costs of disconnected buildings
+      Capex_a_sys_building_scale_USD:
+        description: Annualized Capital costs of building-scale systems
         type: float
         unit: '[USD 2015/yr]'
         values: '[0.0...n]'
       Capex_total_sys_USD:
-        description: Capital costs of all the system
+        description: Capital costs of all systems
         type: float
         unit: '[USD 2015]'
         values: '[0.0...n]'
-      Capex_total_sys_connected_USD:
-        description: Capital costs of connected buildings
+      Capex_total_sys_district_scale_USD:
+        description: Capital costs of district-scale systems
         type: float
         unit: '[USD 2015]'
         values: '[0.0...n]'
-      Capex_total_sys_disconnected_USD:
-        description: Capital costs of disconnected buildings
+      Capex_total_sys_building_scale_USD:
+        description: Capital costs of building-scale systems
         type: float
         unit: '[USD 2015]'
         values: '[0.0...n]'
@@ -7609,33 +7608,33 @@ get_multi_criteria_analysis:
         type: float
         unit: '[-]'
         values: '[0.0...n]'
-      GHG_sys_connected_tonCO2:
-        description: Green house gas emissions of dconnected buildings
+      GHG_sys_district_scale_tonCO2:
+        description: Green house gas emissions of building-scale systems
         type: float
         unit: '[ton CO2-eq/yr]'
         values: '[0.0...n]'
-      GHG_sys_disconnected_tonCO2:
-        description: Green house gas emissions of disconnected buildings
+      GHG_sys_building_scale_tonCO2:
+        description: Green house gas emissions of building-scale systems
         type: float
         unit: '[ton CO2-eq/yr]'
         values: '[0.0...n]'
       GHG_sys_tonCO2:
-        description: Green house gas emissions of all system
+        description: Green house gas emissions of all systems
         type: float
         unit: '[ton CO2-eq]'
         values: '[0.0...n]'
       Opex_a_sys_USD:
-        description: Operational costs of all the system
+        description: Operational costs of all systems
         type: float
         unit: '[USD 2015/yr]'
         values: '[0.0...n]'
-      Opex_a_sys_connected_USD:
-        description: Operational costs of connected buildings
+      Opex_a_sys_district_scale_USD:
+        description: Operational costs of district-scale systems
         type: float
         unit: '[USD 2015/yr]'
         values: '[0.0...n]'
-      Opex_a_sys_disconnected_USD:
-        description: Operational costs of disconnected buildings
+      Opex_a_sys_building_scale_USD:
+        description: Operational costs of building-scale systems
         type: float
         unit: '[USD 2015/yr]'
         values: '[0.0...n]'
@@ -7645,17 +7644,17 @@ get_multi_criteria_analysis:
         unit: '[-]'
         values: '[0...n]'
       TAC_sys_USD:
-        description: Total annualized costs of all system
+        description: Equivalent annual costs of all systems
         type: float
         unit: '[USD 2015/yr]'
         values: '[0.0...n]'
-      TAC_sys_connected_USD:
-        description: Total annualized costs connected buildings
+      TAC_sys_district_scale_USD:
+        description: Equivalent annual of district-scale systems
         type: float
         unit: '[USD 2015/yr]'
         values: '[0.0...n]'
-      TAC_sys_disconnected_USD:
-        description: Total annualized costs of disconnected buildings
+      TAC_sys_building_scale_USD:
+        description: Equivalent annual costs of building-scale systems
         type: float
         unit: '[USD 2015/yr]'
         values: '[0.0...n]'
@@ -8035,44 +8034,44 @@ get_optimization_checkpoint:
         unit: TODO
         values: TODO
   used_by: []
-get_optimization_connected_cooling_capacity:
+get_optimization_district_scale_cooling_capacity:
   created_by:
   - optimization
-  file_path: outputs/data/optimization/slave/gen_1/ind_1_connected_cooling_capacity.csv
+  file_path: outputs/data/optimization/slave/gen_1/ind_1_district_scale_cooling_capacity.csv
   file_type: csv
   schema:
     columns:
-      Capacity_ACHHT_FP_cool_disconnected_W:
+      Capacity_ACHHT_FP_cool_building_scale_W:
         description: Thermal Capacity of High-Temperature Absorption Chiller and Solar
           Collector (Flat Plate) for Decentralized Building
         type: float
         unit: '[W]'
         values: '{0.0...n}'
-      Capacity_ACH_SC_FP_cool_disconnected_W:
+      Capacity_ACH_SC_FP_cool_building_scale_W:
         description: Thermal Capacity of Absorption Chiller and Solar Collector (Flat
           Plate) for Decentralized Building
         type: float
         unit: '[W]'
         values: '{0.0...n}'
-      Capacity_BaseVCC_AS_cool_disconnected_W:
+      Capacity_BaseVCC_AS_cool_building_scale_W:
         description: Thermal Capacity of Base load Vapor Compression Chiller for Decentralized
           Building
         type: float
         unit: '[W]'
         values: '{0.0...n}'
-      Capacity_DX_AS_cool_disconnected_W:
+      Capacity_DX_AS_cool_building_scale_W:
         description: Thermal Capacity of Direct Expansion Air-Source for Decentralized
           Building
         type: float
         unit: '[W]'
         values: '{0.0...n}'
-      Capacity_VCCHT_AS_cool_disconnected_W:
+      Capacity_VCCHT_AS_cool_building_scale_W:
         description: Thermal Capacity of High-Temperature Vapor Compression Chiller
           (Air-Source) for Decentralized Building
         type: float
         unit: '[W]'
         values: '{0.0...n}'
-      Capaticy_ACH_SC_ET_cool_disconnected_W:
+      Capaticy_ACH_SC_ET_cool_building_scale_W:
         description: Thermal Capacity of Absorption Chiller and Solar Collector (Evacuated
           Tube)for Decentralized Building
         type: float
@@ -8084,125 +8083,125 @@ get_optimization_connected_cooling_capacity:
         unit: '[-]'
         values: alphanumeric
   used_by: []
-get_optimization_connected_electricity_capacity:
+get_optimization_district_scale_electricity_capacity:
   created_by:
   - optimization
-  file_path: outputs/data/optimization/slave/gen_2/ind_0_connected_electrical_capacity.csv
+  file_path: outputs/data/optimization/slave/gen_2/ind_0_district_scale_electrical_capacity.csv
   file_type: csv
   schema:
     columns:
-      Capacity_GRID_el_connected_W:
+      Capacity_GRID_el_district_scale_W:
         description: Electrical Capacity Required from the local Grid
         type: float
         unit: '[W]'
         values: '{0.0...n}'
-      Capacity_PV_el_connected_W:
+      Capacity_PV_el_district_scale_W:
         description: Electrical Capacity of PV in central Plant
         type: float
         unit: '[W]'
         values: '{0.0...n}'
-      Capacity_PV_el_connected_m2:
+      Capacity_PV_el_district_scale_m2:
         description: Area Coverage of PV in central Plant
         type: float
         unit: '[m2]'
         values: '{0.0...n}'
   used_by: []
-get_optimization_connected_heating_capacity:
+get_optimization_district_scale_heating_capacity:
   created_by:
   - optimization
-  file_path: outputs/data/optimization/slave/gen_0/ind_2_connected_heating_capacity.csv
+  file_path: outputs/data/optimization/slave/gen_0/ind_2_district_scale_heating_capacity.csv
   file_type: csv
   schema:
     columns:
-      Capacity_BackupBoiler_NG_heat_connected_W:
+      Capacity_BackupBoiler_NG_heat_district_scale_W:
         description: Thermal Capacity of Back-up Boiler - Natural Gas in central plant
         type: float
         unit: '[W]'
         values: '{0.0...n}'
-      Capacity_BaseBoiler_NG_heat_connected_W:
+      Capacity_BaseBoiler_NG_heat_district_scale_W:
         description: Thermal Capacity of Base Load Boiler - Natural Gas  in central
           plant
         type: float
         unit: '[W]'
         values: '{0.0...n}'
-      Capacity_CHP_DB_el_connected_W:
+      Capacity_CHP_DB_el_district_scale_W:
         description: Electrical Capacity of CHP Dry-Biomass in central plant
         type: float
         unit: '[W]'
         values: '{0.0...n}'
-      Capacity_CHP_DB_heat_connected_W:
+      Capacity_CHP_DB_heat_district_scale_W:
         description: ThermalCapacity of CHP Dry-Biomass in central plant
         type: float
         unit: '[W]'
         values: '{0.0...n}'
-      Capacity_CHP_NG_el_connected_W:
+      Capacity_CHP_NG_el_district_scale_W:
         description: Electrical Capacity of CHP Natural-Gas in central plant
         type: float
         unit: '[W]'
         values: '{0.0...n}'
-      Capacity_CHP_NG_heat_connected_W:
+      Capacity_CHP_NG_heat_district_scale_W:
         description: Thermal Capacity of CHP Natural-Gas in central plant
         type: float
         unit: '[W]'
         values: '{0.0...n}'
-      Capacity_CHP_WB_el_connected_W:
+      Capacity_CHP_WB_el_district_scale_W:
         description: Electrical Capacity of CHP Wet-Biomass in central plant
         type: float
         unit: '[W]'
         values: '{0.0...n}'
-      Capacity_CHP_WB_heat_connected_W:
+      Capacity_CHP_WB_heat_district_scale_W:
         description: Thermal Capacity of CHP Wet-Biomass in central plant
         type: float
         unit: '[W]'
         values: '{0.0...n}'
-      Capacity_HP_DS_heat_connected_W:
+      Capacity_HP_DS_heat_district_scale_W:
         description: Thermal Capacity of Heat Pump Server-Source in central plant
         type: float
         unit: '[W]'
         values: '{0.0...n}'
-      Capacity_HP_GS_heat_connected_W:
+      Capacity_HP_GS_heat_district_scale_W:
         description: Thermal Capacity of Heat Pump Ground-Source in central plant
         type: float
         unit: '[W]'
         values: '{0.0...n}'
-      Capacity_HP_SS_heat_connected_W:
+      Capacity_HP_SS_heat_district_scale_W:
         description: Thermal Capacity of Heat Pump Sewage-Source in central plant
         type: float
         unit: '[W]'
         values: '{0.0...n}'
-      Capacity_HP_WS_heat_connected_W:
+      Capacity_HP_WS_heat_district_scale_W:
         description: Thermal Capacity of Heat Pump Water-Source in central plant
         type: float
         unit: '[W]'
         values: '{0.0...n}'
-      Capacity_PVT_el_connected_W:
+      Capacity_PVT_el_district_scale_W:
         description: Electrical Capacity of PVT Field in central plant
         type: float
         unit: '[W]'
         values: '{0.0...n}'
-      Capacity_PVT_heat_connected_W:
+      Capacity_PVT_heat_district_scale_W:
         description: Thermal Capacity of PVT panels in central plant
         type: float
         unit: '[W]'
         values: '{0.0...n}'
-      Capacity_PeakBoiler_NG_heat_connected_W:
+      Capacity_PeakBoiler_NG_heat_district_scale_W:
         description: Thermal Capacity of Peak Boiler - Natural Gas in central plant
         type: float
         unit: '[W]'
         values: '{0.0...n}'
-      Capacity_SC_ET_heat_connected_W:
+      Capacity_SC_ET_heat_district_scale_W:
         description: Thermal Capacity of Solar Collectors (Evacuated-tube) in central
           plant
         type: float
         unit: '[W]'
         values: '{0.0...n}'
-      Capacity_SC_FP_heat_connected_W:
+      Capacity_SC_FP_heat_district_scale_W:
         description: Thermal Capacity of Solar Collectors (Flat-plate) in central
           plant
         type: float
         unit: '[W]'
         values: '{0.0...n}'
-      Capacity_SeasonalStorage_WS_heat_connected_W:
+      Capacity_SeasonalStorage_WS_heat_district_scale_W:
         description: Thermal Capacity of Seasonal Thermal Storage in central plant
         type: float
         unit: '[W]'
@@ -8455,44 +8454,44 @@ get_optimization_decentralized_folder_building_result_heating_activation:
         values: '{0...n}'
   used_by:
   - optimization
-get_optimization_disconnected_cooling_capacity:
+get_optimization_building_scale_cooling_capacity:
   created_by:
   - optimization
-  file_path: outputs/data/optimization/slave/gen_1/ind_0_disconnected_cooling_capacity.csv
+  file_path: outputs/data/optimization/slave/gen_1/ind_0_building_scale_cooling_capacity.csv
   file_type: csv
   schema:
     columns:
-      Capacity_ACHHT_FP_cool_disconnected_W:
+      Capacity_ACHHT_FP_cool_building_scale_W:
         description: Thermal Capacity of High-Temperature Absorption Chiller and Solar
           Collector (Flat Plate) for Decentralized Building
         type: float
         unit: '[W]'
         values: '{0.0...n}'
-      Capacity_ACH_SC_FP_cool_disconnected_W:
+      Capacity_ACH_SC_FP_cool_building_scale_W:
         description: Thermal Capacity of Absorption Chiller and Solar Collector (Flat
           Plate) for Decentralized Building
         type: float
         unit: '[W]'
         values: '{0.0...n}'
-      Capacity_BaseVCC_AS_cool_disconnected_W:
+      Capacity_BaseVCC_AS_cool_building_scale_W:
         description: Thermal Capacity of Base load Vapor Compression Chiller for Decentralized
           Building
         type: float
         unit: '[W]'
         values: '{0.0...n}'
-      Capacity_DX_AS_cool_disconnected_W:
+      Capacity_DX_AS_cool_building_scale_W:
         description: Thermal Capacity of Direct Expansion Air-Source for Decentralized
           Building
         type: float
         unit: '[W]'
         values: '{0.0...n}'
-      Capacity_VCCHT_AS_cool_disconnected_W:
+      Capacity_VCCHT_AS_cool_building_scale_W:
         description: Thermal Capacity of High-Temperature Vapor Compression Chiller
           (Air-Source) for Decentralized Building
         type: float
         unit: '[W]'
         values: '{0.0...n}'
-      Capaticy_ACH_SC_ET_cool_disconnected_W:
+      Capaticy_ACH_SC_ET_cool_building_scale_W:
         description: Thermal Capacity of Absorption Chiller and Solar Collector (Evacuated
           Tube)for Decentralized Building
         type: float
@@ -8504,24 +8503,24 @@ get_optimization_disconnected_cooling_capacity:
         unit: '[-]'
         values: alphanumeric
   used_by: []
-get_optimization_disconnected_heating_capacity:
+get_optimization_building_scale_heating_capacity:
   created_by:
   - optimization
-  file_path: outputs/data/optimization/slave/gen_0/ind_1_disconnected_heating_capacity.csv
+  file_path: outputs/data/optimization/slave/gen_0/ind_1_building_scale_heating_capacity.csv
   file_type: csv
   schema:
     columns:
-      Capacity_BaseBoiler_NG_heat_disconnected_W:
+      Capacity_BaseBoiler_NG_heat_building_scale_W:
         description: Thermal capacity of Base load boiler for Decentralized building
         type: float
         unit: '[W]'
         values: '{0.0...n}'
-      Capacity_FC_NG_heat_disconnected_W:
+      Capacity_FC_NG_heat_building_scale_W:
         description: Thermal capacity of Fuel Cell for Decentralized building
         type: float
         unit: '[W]'
         values: '{0.0...n}'
-      Capacity_GS_HP_heat_disconnected_W:
+      Capacity_GS_HP_heat_building_scale_W:
         description: Thermal capacity of ground-source heat pump for Decentralized
           building
         type: float
@@ -8533,353 +8532,353 @@ get_optimization_disconnected_heating_capacity:
         unit: '[-]'
         values: alphanumeric
   used_by: []
-get_optimization_generation_connected_performance:
+get_optimization_generation_district_scale_performance:
   created_by:
   - optimization
-  file_path: outputs/data/optimization/slave/gen_1/gen_1_connected_performance.csv
+  file_path: outputs/data/optimization/slave/gen_1/gen_1_district_scale_performance.csv
   file_type: csv
   schema:
     columns:
-      Capex_a_BackupBoiler_NG_connected_USD:
+      Capex_a_BackupBoiler_NG_district_scale_USD:
         description: Annualized Capital Costs of Back-up Boiler Natural Gas in Central
           Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Capex_a_BaseBoiler_NG_connected_USD:
+      Capex_a_BaseBoiler_NG_district_scale_USD:
         description: Annualized Capital Costs of Base Load Boiler Boiler Natural Gas
           in Central Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Capex_a_CHP_NG_connected_USD:
+      Capex_a_CHP_NG_district_scale_USD:
         description: Annualized Capital Costs of CHP Natural Gas in Central Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Capex_a_DHN_connected_USD:
+      Capex_a_DHN_district_scale_USD:
         description: Annualized Capital Costs of District Heating Network
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Capex_a_Furnace_dry_connected_USD:
+      Capex_a_Furnace_dry_district_scale_USD:
         description: Annualized Capital Costs of CHP Dry-Biomass in Central Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Capex_a_Furnace_wet_connected_USD:
+      Capex_a_Furnace_wet_district_scale_USD:
         description: Annualized Capital Costs of CHP Wet-Biomass in Central Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Capex_a_GHP_connected_USD:
+      Capex_a_GHP_district_scale_USD:
         description: Annualized Capital Costs of Ground-Source Heat Pump in Central
           Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Capex_a_GRID_connected_USD:
+      Capex_a_GRID_district_scale_USD:
         description: Annualized Capital Costs of connection to local electrical grid
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Capex_a_HP_Lake_connected_USD:
+      Capex_a_HP_Lake_district_scale_USD:
         description: Annualized Capital Costs of Lake-Source Heat Pump in Central
           Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Capex_a_HP_Server_connected_USD:
+      Capex_a_HP_Server_district_scale_USD:
         description: Annualized Capital Costs of Server-Source Heat Pump in Central
           Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Capex_a_HP_Sewage_connected_USD:
+      Capex_a_HP_Sewage_district_scale_USD:
         description: Annualized Capital Costs of Sewage-Source Heat Pump in Central
           Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Capex_a_PVT_connected_USD:
+      Capex_a_PVT_district_scale_USD:
         description: Annualized Capital Costs of PVT Panels in Central Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Capex_a_PV_connected_USD:
+      Capex_a_PV_district_scale_USD:
         description: Annualized Capital Costs of Photovoltaic Panels in Central Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Capex_a_PeakBoiler_NG_connected_USD:
+      Capex_a_PeakBoiler_NG_district_scale_USD:
         description: Annualized Capital Costs of Peak Load Boiler Boiler Natural Gas
           in Central Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Capex_a_SC_ET_connected_USD:
+      Capex_a_SC_ET_district_scale_USD:
         description: Annualized Capital Costs of Solar Collectors (evacuated-Tube)
           in Central Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Capex_a_SC_FP_connected_USD:
+      Capex_a_SC_FP_district_scale_USD:
         description: Annualized Capital Costs of Solar Collectors (Flat-Plate) in
           Central Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Capex_a_SeasonalStorage_WS_connected_USD:
+      Capex_a_SeasonalStorage_WS_district_scale_USD:
         description: Annualized Capital Costs of Seasonal Thermal Storage in Central
           Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Capex_a_SubstationsHeating_connected_USD:
+      Capex_a_SubstationsHeating_district_scale_USD:
         description: 'Annualized Capital Costs of Thermal Substations '
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Capex_total_BackupBoiler_NG_connected_USD:
+      Capex_total_BackupBoiler_NG_district_scale_USD:
         description: Total Capital Costs of Back-up Boiler Natural Gas in Central
           Plant
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
-      Capex_total_BaseBoiler_NG_connected_USD:
+      Capex_total_BaseBoiler_NG_district_scale_USD:
         description: Total Capital Costs of Base Load Boiler Boiler Natural Gas in
           Central Plant
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
-      Capex_total_CHP_NG_connected_USD:
+      Capex_total_CHP_NG_district_scale_USD:
         description: Total Capital Costs of CHP Natural Gas in Central Plant
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
-      Capex_total_DHN_connected_USD:
+      Capex_total_DHN_district_scale_USD:
         description: Total Capital Costs of District Heating Network
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
-      Capex_total_Furnace_dry_connected_USD:
+      Capex_total_Furnace_dry_district_scale_USD:
         description: Total Capital Costs of CHP Dry-Biomass in Central Plant
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
-      Capex_total_Furnace_wet_connected_USD:
+      Capex_total_Furnace_wet_district_scale_USD:
         description: Total Capital Costs of CHP Wet-Biomass in Central Plant
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
-      Capex_total_GHP_connected_USD:
+      Capex_total_GHP_district_scale_USD:
         description: Total Capital Costs of Ground-Source Heat Pump in Central Plant
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
-      Capex_total_GRID_connected_USD:
+      Capex_total_GRID_district_scale_USD:
         description: Total Capital Costs of connection to local electrical grid
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
-      Capex_total_HP_Lake_connected_USD:
+      Capex_total_HP_Lake_district_scale_USD:
         description: Total Capital Costs of Lake-Source Heat Pump in Central Plant
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
-      Capex_total_HP_Server_connected_USD:
+      Capex_total_HP_Server_district_scale_USD:
         description: Total Capital Costs of Server-Source Heat Pump in Central Plant
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
-      Capex_total_HP_Sewage_connected_USD:
+      Capex_total_HP_Sewage_district_scale_USD:
         description: Total Capital Costs of Sewage-Source Heat Pump in Central Plant
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
-      Capex_total_PVT_connected_USD:
+      Capex_total_PVT_district_scale_USD:
         description: Total Capital Costs of PVT Panels in Central Plant
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
-      Capex_total_PV_connected_USD:
+      Capex_total_PV_district_scale_USD:
         description: Total Capital Costs of Photovoltaic Panels in Central Plant
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
-      Capex_total_PeakBoiler_NG_connected_USD:
+      Capex_total_PeakBoiler_NG_district_scale_USD:
         description: Total Capital Costs of Peak Load Boiler Boiler Natural Gas in
           Central Plant
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
-      Capex_total_SC_ET_connected_USD:
+      Capex_total_SC_ET_district_scale_USD:
         description: Total Capital Costs of Solar Collectors (evacuated-Tube) in Central
           Plant
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
-      Capex_total_SC_FP_connected_USD:
+      Capex_total_SC_FP_district_scale_USD:
         description: Total Capital Costs of Solar Collectors (Flat-Plate) in Central
           Plant
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
-      Capex_total_SeasonalStorage_WS_connected_USD:
+      Capex_total_SeasonalStorage_WS_district_scale_USD:
         description: Total Capital Costs of Seasonal Thermal Storage in Central Plant
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
-      Capex_total_SubstationsHeating_connected_USD:
+      Capex_total_SubstationsHeating_district_scale_USD:
         description: 'Total Capital Costs of Thermal Substations '
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
-      GHG_DB_connected_tonCO2yr:
-        description: Green House Gas Emissions of Dry-Biomass of Central Plant
+      GHG_DB_district_scale_tonCO2yr:
+        description: Green House Gas Emissions of Dry-Biomass of district-scale systems
         type: float
         unit: '[ton CO2-eq/yr]'
         values: '{0.0...n}'
-      GHG_GRID_exports_connected_tonCO2yr:
+      GHG_GRID_exports_district_scale_tonCO2yr:
         description: Green House Gas Emissions of Exports of Electricity
         type: float
         unit: '[ton CO2-eq/yr]'
         values: '{0.0...n}'
-      GHG_GRID_imports_connected_tonCO2yr:
+      GHG_GRID_imports_district_scale_tonCO2yr:
         description: Green House Gas Emissions of Import of Electricity
         type: float
         unit: '[ton CO2-eq/yr]'
         values: '{0.0...n}'
-      GHG_NG_connected_tonCO2yr:
-        description: Green House Gas Emissions of Natural Gas of Central Plant
+      GHG_NG_district_scale_tonCO2yr:
+        description: Green House Gas Emissions of Natural Gas of district-scale systems
         type: float
         unit: '[ton CO2-eq/yr]'
         values: '{0.0...n}'
-      GHG_WB_connected_tonCO2yr:
-        description: Green House Gas Emissions of Wet-Biomass of Central Plant
+      GHG_WB_district_scale_tonCO2yr:
+        description: Green House Gas Emissions of Wet-Biomass of district-scale systems
         type: float
         unit: '[ton CO2-eq/yr]'
         values: '{0.0...n}'
-      Opex_fixed_BackupBoiler_NG_connected_USD:
+      Opex_fixed_BackupBoiler_NG_district_scale_USD:
         description: Fixed Operation Costs of Back-up Boiler Natural Gas in Central
           Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_fixed_BaseBoiler_NG_connected_USD:
+      Opex_fixed_BaseBoiler_NG_district_scale_USD:
         description: Fixed Operation Costs of Base Load Boiler Boiler Natural Gas
           in Central Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_fixed_CHP_NG_connected_USD:
+      Opex_fixed_CHP_NG_district_scale_USD:
         description: Fixed Operation Costs of CHP Natural Gas in Central Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_fixed_DHN_connected_USD:
+      Opex_fixed_DHN_district_scale_USD:
         description: Fixed Operation Costs of District Heating Network
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_fixed_Furnace_dry_connected_USD:
+      Opex_fixed_Furnace_dry_district_scale_USD:
         description: Fixed Operation Costs of CHP Dry-Biomass in Central Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_fixed_Furnace_wet_connected_USD:
+      Opex_fixed_Furnace_wet_district_scale_USD:
         description: Fixed Operation Costs of CHP Wet-Biomass in Central Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_fixed_GHP_connected_USD:
+      Opex_fixed_GHP_district_scale_USD:
         description: Fixed Operation Costs of Ground-Source Heat Pump in Central Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_fixed_GRID_connected_USD:
+      Opex_fixed_GRID_district_scale_USD:
         description: Fixed Operation Costs of Electricity in Buildings Connected to
           Central Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_fixed_HP_Lake_connected_USD:
+      Opex_fixed_HP_Lake_district_scale_USD:
         description: Fixed Operation Costs of Lake-Source Heat Pump in Central Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_fixed_HP_Server_connected_USD:
+      Opex_fixed_HP_Server_district_scale_USD:
         description: Fixed Operation Costs of Server-Source Heat Pump in Central Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_fixed_HP_Sewage_connected_USD:
+      Opex_fixed_HP_Sewage_district_scale_USD:
         description: Fixed Operation Costs of Sewage-Source Heat Pump in Central Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_fixed_PVT_connected_USD:
+      Opex_fixed_PVT_district_scale_USD:
         description: Fixed Operation Costs of PVT Panels in Central Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_fixed_PV_connected_USD:
+      Opex_fixed_PV_district_scale_USD:
         description: Fixed Operation Costs of Photovoltaic Panels in Central Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_fixed_PeakBoiler_NG_connected_USD:
+      Opex_fixed_PeakBoiler_NG_district_scale_USD:
         description: Fixed Operation Costs of Peak Load Boiler Boiler Natural Gas
           in Central Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_fixed_SC_ET_connected_USD:
+      Opex_fixed_SC_ET_district_scale_USD:
         description: Fixed Operation Costs of Solar Collectors (evacuated-Tube) in
           Central Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_fixed_SC_FP_connected_USD:
+      Opex_fixed_SC_FP_district_scale_USD:
         description: Fixed Operation Costs of Solar Collectors (Flat-Plate) in Central
           Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_fixed_SeasonalStorage_WS_connected_USD:
+      Opex_fixed_SeasonalStorage_WS_district_scale_USD:
         description: Fixed Operation Costs of Seasonal Thermal Storage in Central
           Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_fixed_SubstationsHeating_connected_USD:
+      Opex_fixed_SubstationsHeating_district_scale_USD:
         description: 'Fixed Operation Costs of Thermal Substations '
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_var_DB_connected_USD:
+      Opex_var_DB_district_scale_USD:
         description: Variable Operation Costs due to consumption of Dry-Biomass in
           Central Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_var_GRID_exports_connected_USD:
+      Opex_var_GRID_exports_district_scale_USD:
         description: Variable Operation Costs due to electricity exported
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_var_GRID_imports_connected_USD:
+      Opex_var_GRID_imports_district_scale_USD:
         description: 'Variable Operation Costs due to electricity imported '
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_var_NG_connected_USD:
+      Opex_var_NG_district_scale_USD:
         description: Variable Operation Costs due to consumption of Natural Gas in
           Central Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_var_WB_connected_USD:
+      Opex_var_WB_district_scale_USD:
         description: Variable Operation Costs due to consumption of Wet-Biomass in
           Central Plant
         type: float
@@ -8906,60 +8905,60 @@ get_optimization_generation_connected_performance:
         unit: '[-]'
         values: alphanumeric
   used_by: []
-get_optimization_generation_disconnected_performance:
+get_optimization_generation_building_scale_performance:
   created_by:
   - optimization
-  file_path: outputs/data/optimization/slave/gen_2/gen_2_disconnected_performance.csv
+  file_path: outputs/data/optimization/slave/gen_2/gen_2_building_scale_performance.csv
   file_type: csv
   schema:
     columns:
-      Capex_a_cooling_disconnected_USD:
-        description: Annualized Capital Costs in Disconnected Buildings due to cooling
+      Capex_a_cooling_building_scale_USD:
+        description: Annualized Capital Costs of building-scale systems due to cooling
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Capex_a_heating_disconnected_USD:
-        description: Annualized Capital Costs in Disconnected Buildings due to heating
+      Capex_a_heating_building_scale_USD:
+        description: Annualized Capital Costs of building-scale systems due to heating
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Capex_total_cooling_disconnected_USD:
-        description: Total Capital Costs in Disconnected Buildings due to cooling
+      Capex_total_cooling_building_scale_USD:
+        description: Total Capital Costs of building-scale systems due to cooling
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
-      Capex_total_heating_disconnected_USD:
-        description: Total Capital Costs in Disconnected Buildings due to heating
+      Capex_total_heating_building_scale_USD:
+        description: Total Capital Costs of building-scale systems due to heating
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
-      GHG_cooling_disconnected_tonCO2:
-        description: Green House Gas Emissions of Disconnected Buildings due to Cooling
+      GHG_cooling_building_scale_tonCO2:
+        description: Green House Gas Emissions of building-scale systems due to Cooling
         type: float
         unit: '[ton Co2-eq/yr]'
         values: '{0.0...n}'
-      GHG_heating_disconnected_tonCO2:
-        description: Green House Gas Emissions of Disconnected Buildings due to Heating
+      GHG_heating_building_scale_tonCO2:
+        description: Green House Gas Emissions of building-scale systems due to Heating
         type: float
         unit: '[ton Co2-eq/yr]'
         values: '{0.0...n}'
-      Opex_fixed_cooling_disconnected_USD:
-        description: Fixed Operational Costs in Disconnected Buildings due to cooling
+      Opex_fixed_cooling_building_scale_USD:
+        description: Fixed Operational Costs of building-scale systems due to cooling
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_fixed_heating_disconnected_USD:
-        description: Fixed Operational Costs in Disconnected Buildings due to heating
+      Opex_fixed_heating_building_scale_USD:
+        description: Fixed Operational Costs of building-scale systems due to heating
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_var_cooling_disconnected_USD:
-        description: Variable Operational Costs in Disconnected Buildings due to cooling
+      Opex_var_cooling_building_scale_USD:
+        description: Variable Operational Costs of building-scale systems due to cooling
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_var_heating_disconnected_USD:
-        description: Variable Operational Costs in Disconnected Buildings due to heating
+      Opex_var_heating_building_scale_USD:
+        description: Variable Operational Costs of building-scale systems due to heating
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
@@ -8992,77 +8991,77 @@ get_optimization_generation_total_performance:
   schema:
     columns:
       Capex_a_sys_USD:
-        description: Annualized Capital Costs of Central Plant and Decentralized Buildings
+        description: Annualized Capital Costs of all systems
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Capex_a_sys_connected_USD:
-        description: Annualized Capital Costs of Central Plant
+      Capex_a_sys_district_scale_USD:
+        description: Annualized Capital Costs of district-scale systems
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Capex_a_sys_disconnected_USD:
-        description: Annualized Capital Costs of Decentralized Buildings
+      Capex_a_sys_building_scale_USD:
+        description: Annualized Capital Costs of building-scale systems
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
       Capex_total_sys_USD:
-        description: Total Capital Costs of Central Plant and  Decentralized Buildings
+        description: Total Capital Costs of district-scale systems and  Decentralized Buildings
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
-      Capex_total_sys_connected_USD:
-        description: Total Capital Costs of Central Plant
+      Capex_total_sys_district_scale_USD:
+        description: Total Capital Costs of district-scale systems
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
-      Capex_total_sys_disconnected_USD:
-        description: Total Capital Costs of Decentralized Buildings
+      Capex_total_sys_building_scale_USD:
+        description: Total Capital Costs of building-scale systems
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
-      GHG_sys_connected_tonCO2:
+      GHG_sys_district_scale_tonCO2:
         description: Green House Gas Emissions Central Plant
         type: float
         unit: '[ton CO2-eq/yr]'
         values: '{0.0...n}'
-      GHG_sys_disconnected_tonCO2:
-        description: Green House Gas Emissions of Decentralized Buildings
+      GHG_sys_building_scale_tonCO2:
+        description: Green House Gas Emissions of building-scale systems
         type: float
         unit: '[ton CO2-eq/yr]'
         values: '{0.0...n}'
       GHG_sys_tonCO2:
-        description: Green House Gas Emissions Central Plant and Decentralized Buildings
+        description: Green House Gas Emissions of all systems
         type: float
         unit: '[ton CO2-eq/yr]'
         values: '{0.0...n}'
       Opex_a_sys_USD:
-        description: Operation Costs of Central Plant and Decentralized Buildings
+        description: Operation Costs of all systems
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_a_sys_connected_USD:
-        description: 'Operation Costs of Central Plant '
+      Opex_a_sys_district_scale_USD:
+        description: 'Operation Costs of district-scale systems '
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_a_sys_disconnected_USD:
-        description: Operation Costs of Decentralized Buildings
+      Opex_a_sys_building_scale_USD:
+        description: Operation Costs of building-scale systems
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
       TAC_sys_USD:
-        description: Total Anualized Costs of Central Plant and Decentralized Buildings
+        description: Total Anualized Costs of all systems
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      TAC_sys_connected_USD:
-        description: Total Anualized Costs of Central Plant
+      TAC_sys_district_scale_USD:
+        description: Total Anualized Costs of district-scale systems
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      TAC_sys_disconnected_USD:
-        description: Total Anualized Costs of Decentralized Buildings
+      TAC_sys_building_scale_USD:
+        description: Total Anualized Costs of building-scale systems
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
@@ -9095,77 +9094,77 @@ get_optimization_generation_total_performance_pareto:
   schema:
     columns:
       Capex_a_sys_USD:
-        description: Annualized Capital Costs of Central Plant and Decentralized Buildings
+        description: Annualized Capital Costs of all systems
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Capex_a_sys_connected_USD:
-        description: Annualized Capital Costs of Central Plant
+      Capex_a_sys_district_scale_USD:
+        description: Annualized Capital Costs of district-scale systems
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Capex_a_sys_disconnected_USD:
-        description: Annualized Capital Costs of Decentralized Buildings
+      Capex_a_sys_building_scale_USD:
+        description: Annualized Capital Costs of building-scale systems
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
       Capex_total_sys_USD:
-        description: Total Capital Costs of Central Plant and  Decentralized Buildings
+        description: Total Capital Costs of district-scale systems and  Decentralized Buildings
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
-      Capex_total_sys_connected_USD:
-        description: Total Capital Costs of Central Plant
+      Capex_total_sys_district_scale_USD:
+        description: Total Capital Costs of district-scale systems
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
-      Capex_total_sys_disconnected_USD:
-        description: Total Capital Costs of Decentralized Buildings
+      Capex_total_sys_building_scale_USD:
+        description: Total Capital Costs of building-scale systems
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
-      GHG_sys_connected_tonCO2:
+      GHG_sys_district_scale_tonCO2:
         description: Green House Gas Emissions Central Plant
         type: float
         unit: '[ton CO2-eq/yr]'
         values: '{0.0...n}'
-      GHG_sys_disconnected_tonCO2:
-        description: Green House Gas Emissions of Decentralized Buildings
+      GHG_sys_building_scale_tonCO2:
+        description: Green House Gas Emissions of building-scale systems
         type: float
         unit: '[ton CO2-eq/yr]'
         values: '{0.0...n}'
       GHG_sys_tonCO2:
-        description: Green House Gas Emissions Central Plant and Decentralized Buildings
+        description: Green House Gas Emissions of all systems
         type: float
         unit: '[ton CO2-eq/yr]'
         values: '{0.0...n}'
       Opex_a_sys_USD:
-        description: Operation Costs of Central Plant and Decentralized Buildings
+        description: Operation Costs of all systems
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_a_sys_connected_USD:
-        description: 'Operation Costs of Central Plant '
+      Opex_a_sys_district_scale_USD:
+        description: 'Operation Costs of district-scale systems '
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_a_sys_disconnected_USD:
-        description: Operation Costs of Decentralized Buildings
+      Opex_a_sys_building_scale_USD:
+        description: Operation Costs of building-scale systems
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
       TAC_sys_USD:
-        description: Total Anualized Costs of Central Plant and Decentralized Buildings
+        description: Total Anualized Costs of all systems
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      TAC_sys_connected_USD:
-        description: Total Anualized Costs of Central Plant
+      TAC_sys_district_scale_USD:
+        description: Total Anualized Costs of district-scale systems
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      TAC_sys_disconnected_USD:
-        description: Total Anualized Costs of Decentralized Buildings
+      TAC_sys_building_scale_USD:
+        description: Total Anualized Costs of building-scale systems
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
@@ -9398,341 +9397,341 @@ get_optimization_slave_building_connectivity:
         unit: '[-]'
         values: alphanumeric
   used_by: []
-get_optimization_slave_connected_performance:
+get_optimization_slave_district_scale_performance:
   created_by:
   - optimization
-  file_path: outputs/data/optimization/slave/gen_1/ind_2_buildings_connected_performance.csv
+  file_path: outputs/data/optimization/slave/gen_1/ind_2_buildings_district_scale_performance.csv
   file_type: csv
   schema:
     columns:
-      Capex_a_BackupBoiler_NG_connected_USD:
+      Capex_a_BackupBoiler_NG_district_scale_USD:
         description: Annualized Capital Costs of Back-up Boiler Natural Gas in Central
           Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Capex_a_BaseBoiler_NG_connected_USD:
+      Capex_a_BaseBoiler_NG_district_scale_USD:
         description: Annualized Capital Costs of Base load Boiler Natural Gas in Central
           Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Capex_a_CHP_NG_connected_USD:
+      Capex_a_CHP_NG_district_scale_USD:
         description: Annualized Capital Costs of CHP Natural Gas in Central Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Capex_a_DHN_connected_USD:
+      Capex_a_DHN_district_scale_USD:
         description: Annualized Capital Costs of District Heating Network
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Capex_a_Furnace_dry_connected_USD:
+      Capex_a_Furnace_dry_district_scale_USD:
         description: Annualized Capital Costs of CHP Dry-Biomass in Central Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Capex_a_Furnace_wet_connected_USD:
+      Capex_a_Furnace_wet_district_scale_USD:
         description: Annualized Capital Costs of CHP Wet-Biomass in Central Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Capex_a_GHP_connected_USD:
+      Capex_a_GHP_district_scale_USD:
         description: Annualized Capital Costs of Ground-Source Heat-Pump in Central
           Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Capex_a_GRID_connected_USD:
+      Capex_a_GRID_district_scale_USD:
         description: Annualized Capital Costs of connection to local grid
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Capex_a_HP_Lake_connected_USD:
+      Capex_a_HP_Lake_district_scale_USD:
         description: Annualized Capital Costs of Lake-Source Heat Pump in Central
           Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Capex_a_HP_Server_connected_USD:
+      Capex_a_HP_Server_district_scale_USD:
         description: Annualized Capital Costs of Server-Source Heat Pump in Central
           Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Capex_a_HP_Sewage_connected_USD:
+      Capex_a_HP_Sewage_district_scale_USD:
         description: Annualized Capital Costs of Sewage-Source Heat Pump in Central
           Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Capex_a_PVT_connected_USD:
+      Capex_a_PVT_district_scale_USD:
         description: Annualized Capital Costs of PVT panels
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Capex_a_PV_connected_USD:
+      Capex_a_PV_district_scale_USD:
         description: Annualized Capital Costs of PV panels
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Capex_a_PeakBoiler_NG_connected_USD:
+      Capex_a_PeakBoiler_NG_district_scale_USD:
         description: Annualized Capital Costs of Peak Boiler in Central Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Capex_a_SC_ET_connected_USD:
+      Capex_a_SC_ET_district_scale_USD:
         description: Annualized Capital Costs of Solar collectors (evacuated Tubes)
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Capex_a_SC_FP_connected_USD:
+      Capex_a_SC_FP_district_scale_USD:
         description: Annualized Capital Costs of Solar collectors (Flat-Plate)
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Capex_a_SeasonalStorage_WS_connected_USD:
+      Capex_a_SeasonalStorage_WS_district_scale_USD:
         description: Annualized Capital Costs of Seasonal Thermal Storage in Central
           Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Capex_a_SubstationsHeating_connected_USD:
+      Capex_a_SubstationsHeating_district_scale_USD:
         description: Annualized Capital Costs of Heating Substations
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Capex_total_BackupBoiler_NG_connected_USD:
+      Capex_total_BackupBoiler_NG_district_scale_USD:
         description: Total Capital Costs of Back-up Boiler Natural Gas in Central
           Plant
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
-      Capex_total_BaseBoiler_NG_connected_USD:
+      Capex_total_BaseBoiler_NG_district_scale_USD:
         description: Total Capital Costs of Base load Boiler Natural Gas in Central
           Plant
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
-      Capex_total_CHP_NG_connected_USD:
+      Capex_total_CHP_NG_district_scale_USD:
         description: Total Capital Costs of CHP Natural Gas in Central Plant
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
-      Capex_total_DHN_connected_USD:
+      Capex_total_DHN_district_scale_USD:
         description: Total Capital Costs of District Heating Network
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
-      Capex_total_Furnace_dry_connected_USD:
+      Capex_total_Furnace_dry_district_scale_USD:
         description: Total Capital Costs of CHP Dry-Biomass in Central Plant
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
-      Capex_total_Furnace_wet_connected_USD:
+      Capex_total_Furnace_wet_district_scale_USD:
         description: Total Capital Costs of CHP Wet-Biomass in Central Plant
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
-      Capex_total_GHP_connected_USD:
+      Capex_total_GHP_district_scale_USD:
         description: Total Capital Costs of Ground-Source Heat-Pump in Central Plant
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
-      Capex_total_GRID_connected_USD:
+      Capex_total_GRID_district_scale_USD:
         description: Total Capital Costs of connection to local grid
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
-      Capex_total_HP_Lake_connected_USD:
+      Capex_total_HP_Lake_district_scale_USD:
         description: Total Capital Costs of Lake-Source Heat Pump in Central Plant
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
-      Capex_total_HP_Server_connected_USD:
+      Capex_total_HP_Server_district_scale_USD:
         description: Total Capital Costs of Server-Source Heat Pump in Central Plant
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
-      Capex_total_HP_Sewage_connected_USD:
+      Capex_total_HP_Sewage_district_scale_USD:
         description: Total Capital Costs of Sewage-Source Heat Pump in Central Plant
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
-      Capex_total_PVT_connected_USD:
+      Capex_total_PVT_district_scale_USD:
         description: Total Capital Costs of PVT panels
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
-      Capex_total_PV_connected_USD:
+      Capex_total_PV_district_scale_USD:
         description: Total Capital Costs of PV panels
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
-      Capex_total_PeakBoiler_NG_connected_USD:
+      Capex_total_PeakBoiler_NG_district_scale_USD:
         description: Total Capital Costs of Peak Boiler in Central Plant
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
-      Capex_total_SC_ET_connected_USD:
+      Capex_total_SC_ET_district_scale_USD:
         description: Total Capital Costs of Solar collectors (evacuated Tubes)
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
-      Capex_total_SC_FP_connected_USD:
+      Capex_total_SC_FP_district_scale_USD:
         description: Total Capital Costs of Solar collectors (Flat-Plate)
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
-      Capex_total_SeasonalStorage_WS_connected_USD:
+      Capex_total_SeasonalStorage_WS_district_scale_USD:
         description: Total Capital Costs of Seasonal Thermal Storage
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
-      Capex_total_SubstationsHeating_connected_USD:
+      Capex_total_SubstationsHeating_district_scale_USD:
         description: Total Capital Costs of Heating Substations
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
-      GHG_DB_connected_tonCO2yr:
+      GHG_DB_district_scale_tonCO2yr:
         description: Green House Gas Emissions of Dry-Biomass in Central plant
         type: float
         unit: '[ton CO2-eq/yr]'
         values: '{0.0...n}'
-      GHG_GRID_exports_connected_tonCO2yr:
+      GHG_GRID_exports_district_scale_tonCO2yr:
         description: Green House Gas Emissions of  Electricity Exports in Central
           Plant
         type: float
         unit: '[ton CO2-eq/yr]'
         values: '{0.0...n}'
-      GHG_GRID_imports_connected_tonCO2yr:
+      GHG_GRID_imports_district_scale_tonCO2yr:
         description: Green House Gas Emissions of  Electricity Import in Central Plant
         type: float
         unit: '[ton CO2-eq/yr]'
         values: '{0.0...n}'
-      GHG_NG_connected_tonCO2yr:
+      GHG_NG_district_scale_tonCO2yr:
         description: Green House Gas Emissions of Natural Gas in Central plant
         type: float
         unit: '[ton CO2-eq/yr]'
         values: '{0.0...n}'
-      GHG_WB_connected_tonCO2yr:
+      GHG_WB_district_scale_tonCO2yr:
         description: Green House Gas Emissions of Wet-Biomass in Central plant
         type: float
         unit: '[ton CO2-eq/yr]'
         values: '{0.0...n}'
-      Opex_fixed_BackupBoiler_NG_connected_USD:
+      Opex_fixed_BackupBoiler_NG_district_scale_USD:
         description: Fixed Operation Costs of Back-up Boiler Natural Gas in Central
           Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_fixed_BaseBoiler_NG_connected_USD:
+      Opex_fixed_BaseBoiler_NG_district_scale_USD:
         description: Fixed Operation Costs of Base load Boiler Natural Gas in Central
           Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_fixed_CHP_NG_connected_USD:
+      Opex_fixed_CHP_NG_district_scale_USD:
         description: Fixed Operation Costs of CHP Natural Gas in Central Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_fixed_DHN_connected_USD:
+      Opex_fixed_DHN_district_scale_USD:
         description: Fixed Operation Costs of District Heating Network
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_fixed_Furnace_dry_connected_USD:
+      Opex_fixed_Furnace_dry_district_scale_USD:
         description: Fixed Operation Costs of CHP Dry-Biomass in Central Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_fixed_Furnace_wet_connected_USD:
+      Opex_fixed_Furnace_wet_district_scale_USD:
         description: Fixed Operation Costs of CHP Wet-Biomass in Central Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_fixed_GHP_connected_USD:
+      Opex_fixed_GHP_district_scale_USD:
         description: Fixed Operation Costs of Ground-Source Heat-Pump in Central Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_fixed_GRID_connected_USD:
+      Opex_fixed_GRID_district_scale_USD:
         description: Fixed Operation Costs of connection to local grid
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_fixed_HP_Lake_connected_USD:
+      Opex_fixed_HP_Lake_district_scale_USD:
         description: Fixed Operation Costs of Lake-Source Heat Pump in Central Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_fixed_HP_Server_connected_USD:
+      Opex_fixed_HP_Server_district_scale_USD:
         description: Fixed Operation Costs of Server-Source Heat Pump in Central Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_fixed_HP_Sewage_connected_USD:
+      Opex_fixed_HP_Sewage_district_scale_USD:
         description: Fixed Operation Costs of Sewage-Source Heat Pump in Central Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_fixed_PVT_connected_USD:
+      Opex_fixed_PVT_district_scale_USD:
         description: Fixed Operation Costs of PVT panels
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_fixed_PV_connected_USD:
+      Opex_fixed_PV_district_scale_USD:
         description: Fixed Operation Costs of PV panels
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_fixed_PeakBoiler_NG_connected_USD:
+      Opex_fixed_PeakBoiler_NG_district_scale_USD:
         description: Fixed Operation Costs of Peak Boiler in Central Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_fixed_SC_ET_connected_USD:
+      Opex_fixed_SC_ET_district_scale_USD:
         description: Fixed Operation Costs of Solar collectors (evacuated Tubes)
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_fixed_SC_FP_connected_USD:
+      Opex_fixed_SC_FP_district_scale_USD:
         description: Fixed Operation Costs of Solar collectors (Flat-Plate)
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_fixed_SeasonalStorage_WS_connected_USD:
+      Opex_fixed_SeasonalStorage_WS_district_scale_USD:
         description: Fixed Operation Costs of Seasonal Thermal Storage
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_fixed_SubstationsHeating_connected_USD:
+      Opex_fixed_SubstationsHeating_district_scale_USD:
         description: Fixed Operation Costs of Heating Substations
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_var_DB_connected_USD:
+      Opex_var_DB_district_scale_USD:
         description: Variable Operation Costs
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_var_GRID_exports_connected_USD:
+      Opex_var_GRID_exports_district_scale_USD:
         description: Variable Operation Costs
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_var_GRID_imports_connected_USD:
+      Opex_var_GRID_imports_district_scale_USD:
         description: Variable Operation Costs
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_var_NG_connected_USD:
+      Opex_var_NG_district_scale_USD:
         description: Variable Operation Costs
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_var_WB_connected_USD:
+      Opex_var_WB_district_scale_USD:
         description: Variable Operation Costs
         type: float
         unit: '[USD 2015/yr]'
@@ -9751,60 +9750,60 @@ get_optimization_slave_cooling_activation_pattern:
         unit: TODO
         values: TODO
   used_by: []
-get_optimization_slave_disconnected_performance:
+get_optimization_slave_building_scale_performance:
   created_by:
   - optimization
-  file_path: outputs/data/optimization/slave/gen_2/ind_0_buildings_disconnected_performance.csv
+  file_path: outputs/data/optimization/slave/gen_2/ind_0_buildings_building_scale_performance.csv
   file_type: csv
   schema:
     columns:
-      Capex_a_cooling_disconnected_USD:
-        description: Annualized Capital Costs in Disconnected Buildings due to cooling
+      Capex_a_cooling_building_scale_USD:
+        description: Annualized Capital Costs of building-scale systems due to cooling
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Capex_a_heating_disconnected_USD:
-        description: Annualized Capital Costs in Disconnected Buildings due to heating
+      Capex_a_heating_building_scale_USD:
+        description: Annualized Capital Costs of building-scale systems due to heating
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Capex_total_cooling_disconnected_USD:
-        description: Total Capital Costs in Disconnected Buildings due to cooling
+      Capex_total_cooling_building_scale_USD:
+        description: Total Capital Costs of building-scale systems due to cooling
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
-      Capex_total_heating_disconnected_USD:
-        description: Total Capital Costs in Disconnected Buildings due to heating
+      Capex_total_heating_building_scale_USD:
+        description: Total Capital Costs of building-scale systems due to heating
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
-      GHG_cooling_disconnected_tonCO2:
-        description: Green House Gas Emissions of Disconnected Buildings due to Cooling
+      GHG_cooling_building_scale_tonCO2:
+        description: Green House Gas Emissions of building-scale systems due to Cooling
         type: float
         unit: '[ton Co2-eq/yr]'
         values: '{0.0...n}'
-      GHG_heating_disconnected_tonCO2:
-        description: Green House Gas Emissions of Disconnected Buildings due to Heating
+      GHG_heating_building_scale_tonCO2:
+        description: Green House Gas Emissions of building-scale systems due to Heating
         type: float
         unit: '[ton Co2-eq/yr]'
         values: '{0.0...n}'
-      Opex_fixed_cooling_disconnected_USD:
-        description: Fixed Operational Costs in Disconnected Buildings due to cooling
+      Opex_fixed_cooling_building_scale_USD:
+        description: Fixed Operational Costs of building-scale systems due to cooling
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_fixed_heating_disconnected_USD:
-        description: Fixed Operational Costs in Disconnected Buildings due to heating
+      Opex_fixed_heating_building_scale_USD:
+        description: Fixed Operational Costs of building-scale systems due to heating
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_var_cooling_disconnected_USD:
-        description: Variable Operational Costs in Disconnected Buildings due to cooling
+      Opex_var_cooling_building_scale_USD:
+        description: Variable Operational Costs of building-scale systems due to cooling
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_var_heating_disconnected_USD:
-        description: Variable Operational Costs in Disconnected Buildings due to heating
+      Opex_var_heating_building_scale_USD:
+        description: Variable Operational Costs of building-scale systems due to heating
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
@@ -10000,15 +9999,15 @@ get_optimization_slave_electricity_requirements_data:
         type: float
         unit: '[Wh]'
         values: '{0.0...n}'
-      E_cs_cre_cdata_req_connected_W:
+      E_cs_cre_cdata_req_district_scale_W:
         description: Electricity Required for space cooling, server cooling and refrigeration
           of Buildings Connected to Network
         type: float
         unit: '[Wh]'
         values: '{0.0...n}'
-      E_cs_cre_cdata_req_disconnected_W:
+      E_cs_cre_cdata_req_building_scale_W:
         description: Electricity Required for space cooling, server cooling and refrigeration
-          of Disconnected Buildings
+          of building-scale systems
         type: float
         unit: '[Wh]'
         values: '{0.0...n}'
@@ -10017,15 +10016,14 @@ get_optimization_slave_electricity_requirements_data:
         type: float
         unit: '[Wh]'
         values: '{0.0...n}'
-      E_hs_ww_req_connected_W:
+      E_hs_ww_req_district_scale_W:
         description: Electricity Required for space heating and hotwater of Buildings
           Connected to Network
         type: float
         unit: '[Wh]'
         values: '{0.0...n}'
-      E_hs_ww_req_disconnected_W:
-        description: Electricity Required for space heating and hotwater of Disconnected
-          Buildings
+      E_hs_ww_req_building_scale_W:
+        description: Electricity Required for space heating and hotwater of building-scale systems
         type: float
         unit: '[Wh]'
         values: '{0.0...n}'
@@ -10191,77 +10189,77 @@ get_optimization_slave_total_performance:
   schema:
     columns:
       Capex_a_sys_USD:
-        description: Annualized Capital Costs of Central Plant and Decentralized Buildings
+        description: Annualized Capital Costs of all systems
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Capex_a_sys_connected_USD:
-        description: Annualized Capital Costs of Central Plant
+      Capex_a_sys_district_scale_USD:
+        description: Annualized Capital Costs of district-scale systems
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Capex_a_sys_disconnected_USD:
-        description: Annualized Capital Costs of Decentralized Buildings
+      Capex_a_sys_building_scale_USD:
+        description: Annualized Capital Costs of building-scale systems
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
       Capex_total_sys_USD:
-        description: Total Capital Costs of Central Plant and  Decentralized Buildings
+        description: Total Capital Costs of all systems
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
-      Capex_total_sys_connected_USD:
-        description: Total Capital Costs of Central Plant
+      Capex_total_sys_district_scale_USD:
+        description: Total Capital Costs of district-scale systems
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
-      Capex_total_sys_disconnected_USD:
-        description: Total Capital Costs of Decentralized Buildings
+      Capex_total_sys_building_scale_USD:
+        description: Total Capital Costs of building-scale systems
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
-      GHG_sys_connected_tonCO2:
+      GHG_sys_district_scale_tonCO2:
         description: Green House Gas Emissions Central Plant
         type: float
         unit: '[ton CO2-eq/yr]'
         values: '{0.0...n}'
-      GHG_sys_disconnected_tonCO2:
-        description: Green House Gas Emissions of Decentralized Buildings
+      GHG_sys_building_scale_tonCO2:
+        description: Green House Gas Emissions of building-scale systems
         type: float
         unit: '[ton CO2-eq/yr]'
         values: '{0.0...n}'
       GHG_sys_tonCO2:
-        description: Green House Gas Emissions Central Plant and Decentralized Buildings
+        description: Green House Gas Emissions of all systems
         type: float
         unit: '[ton CO2-eq/yr]'
         values: '{0.0...n}'
       Opex_a_sys_USD:
-        description: Operation Costs of Central Plant and Decentralized Buildings
+        description: Operation Costs of all systems
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_a_sys_connected_USD:
-        description: 'Operation Costs of Central Plant '
+      Opex_a_sys_district_scale_USD:
+        description: Operation Costs of district-scale systems
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      Opex_a_sys_disconnected_USD:
-        description: Operation Costs of Decentralized Buildings
+      Opex_a_sys_building_scale_USD:
+        description: Operation Costs of building-scale systems
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
       TAC_sys_USD:
-        description: Total Anualized Costs of Central Plant and Decentralized Buildings
+        description: Total Anualized Costs of all systems
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      TAC_sys_connected_USD:
-        description: Total Anualized Costs of Central Plant
+      TAC_sys_district_scale_USD:
+        description: Total Anualized Costs of district-scale systems
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      TAC_sys_disconnected_USD:
-        description: Total Anualized Costs of Decentralized Buildings
+      TAC_sys_building_scale_USD:
+        description: Total Anualized Costs of building-scale systems
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
