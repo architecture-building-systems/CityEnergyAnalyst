@@ -185,6 +185,10 @@ class SchemaIo(object):
         raise AttributeError("{lm}: don't know how to write file_type {file_type}".format(
             lm=self.lm, file_type=self.schema["file_type"]))
 
+    def new(self):
+        raise AttributeError("{lm}: don't know how to create a new Dataframe for file_type {file_type}".format(
+            lm=self.lm, file_type=self.schema["file_type"]))
+
 
 class CsvSchemaIo(SchemaIo):
     """Read and write csv files - and attempt to validate them."""
@@ -214,8 +218,5 @@ class CsvSchemaIo(SchemaIo):
                              "(missing: {missing_columns}, extra: {extra_columns}".format(
                 lm=self.lm, missing_columns=missing_columns, extra_columns=extra_columns))
 
-
-
-
-
-
+    def new(self):
+        return pd.DataFrame(columns=(self.schema["schema"]["columns"].keys()))
