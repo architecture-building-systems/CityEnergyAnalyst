@@ -137,23 +137,23 @@ def lca_operation(locator):
         fields_to_plot += [service[2] + '_tonCO2']
 
     result['GHG_sys_district_scale_tonCO2'] = result['GRID_tonCO2'] + \
-                                         result['DH_hs_tonCO2'] + \
-                                         result['DH_ww_tonCO2'] + \
-                                         result['DC_cdata_tonCO2'] + \
-                                         result['DC_cs_tonCO2'] + \
-                                         result['DC_cre_tonCO2']
+                                              result['DH_hs_tonCO2'] + \
+                                              result['DH_ww_tonCO2'] + \
+                                              result['DC_cdata_tonCO2'] + \
+                                              result['DC_cs_tonCO2'] + \
+                                              result['DC_cre_tonCO2']
 
     result['GHG_sys_building_scale_tonCO2'] = result['OIL_hs_tonCO2'] + \
-                                         result['NG_hs_tonCO2'] + \
-                                         result['WOOD_hs_tonCO2'] + \
-                                         result['COAL_hs_tonCO2'] + \
-                                         result['SOLAR_hs_tonCO2'] + \
-                                         result['PV_tonCO2'] + \
-                                         result['OIL_ww_tonCO2'] + \
-                                         result['NG_ww_tonCO2'] + \
-                                         result['WOOD_ww_tonCO2'] + \
-                                         result['COAL_ww_tonCO2'] + \
-                                         result['SOLAR_ww_tonCO2']
+                                              result['NG_hs_tonCO2'] + \
+                                              result['WOOD_hs_tonCO2'] + \
+                                              result['COAL_hs_tonCO2'] + \
+                                              result['SOLAR_hs_tonCO2'] + \
+                                              result['PV_tonCO2'] + \
+                                              result['OIL_ww_tonCO2'] + \
+                                              result['NG_ww_tonCO2'] + \
+                                              result['WOOD_ww_tonCO2'] + \
+                                              result['COAL_ww_tonCO2'] + \
+                                              result['SOLAR_ww_tonCO2']
 
     result['GHG_sys_tonCO2'] = result['GHG_sys_building_scale_tonCO2'] + result['GHG_sys_district_scale_tonCO2']
 
