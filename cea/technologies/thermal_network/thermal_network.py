@@ -841,7 +841,9 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
                          thermal_network.all_nodes_df.Type == 'PLANT'].Building.values)).to_csv(
             thermal_network.locator.get_thermal_network_plant_heat_requirement_file(
                 thermal_network.network_type,
-                thermal_network.network_name, representative_week), index=False,
+                thermal_network.network_name, representative_week),
+            index=False,
+            header=['thermal_load_kW'],
             float_format='%.3f')
 
         # node temperatures
