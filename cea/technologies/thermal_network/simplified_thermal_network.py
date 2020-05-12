@@ -452,15 +452,10 @@ def thermal_network_simplified(locator, config, network_name):
                                index=False)
 
     # $ POSTPROCESSING - PLANT HEAT REQUIREMENT
-    if network_type == "DH":
-        Plant_load_kWh = thermal_losses_supply_kWh.sum(axis=1) * 2 + Q_demand_kWh_building.sum(
-            axis=1) - accumulated_head_loss_total_kW.values
-    elif network_type == "DC":
-        Plant_load_kWh = thermal_losses_supply_kWh.sum(axis=1) * 2 + Q_demand_kWh_building.sum(
-            axis=1) + accumulated_head_loss_total_kW.values
-
-    Plant_load_kWh.to_csv(locator.get_thermal_network_plant_heat_requirement_file(network_type, network_name),
-                          header=['NONE'], index=False)
+    plant_load_kWh = thermal_losses_supply_kWh.sum(axis=1) * 2 + Q_demand_kWh_building.sum(
+        axis=1) - accumulated_head_loss_total_kW.values
+    plant_load_kWh.to_csv(locator.get_thermal_network_plant_heat_requirement_file(network_type, network_name),
+                          header=['thermal_load_kW'], index=False)
 
     # pressure losses per piping system
     pressure_loss_supply_edge_kW.to_csv(
