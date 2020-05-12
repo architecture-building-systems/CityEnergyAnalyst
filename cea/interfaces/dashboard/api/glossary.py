@@ -1,4 +1,5 @@
 from flask_restplus import Namespace, Resource
+from flask import current_app
 
 from cea.glossary import read_glossary_df
 
@@ -8,7 +9,7 @@ api = Namespace('Glossary', description='Glossary for variables used in CEA')
 @api.route('/')
 class Glossary(Resource):
     def get(self):
-        glossary = read_glossary_df()
+        glossary = read_glossary_df(plugins=current_app.cea_config.plugins)
         groups = glossary.groupby('SCRIPT')
         data = []
         for group in groups.groups:

@@ -93,6 +93,7 @@ class Configuration(object):
         that a script creates it's own config file somewhere down the line. This is hard to check anyway.
         """
         self.restricted_to = [p.fqname for s, p in self.matching_parameters(option_list)]
+        self.restricted_to.append("general:plugins")
         if 'general:scenario' in self.restricted_to:
             # since general:scenario is forced to be "{general:project}/{general:scenario-name}",
             # allow those two too
