@@ -209,7 +209,7 @@ def get_building_properties():
 
     config = current_app.cea_config
 
-    schemas = cea.schemas.schemas()
+    schemas = cea.schemas.schemas(plugins=[])
     locator = cea.inputlocator.InputLocator(config.scenario)
     store = {'tables': {}, 'columns': {}, 'order': tabs}
     for db in INPUTS:
@@ -395,7 +395,7 @@ class InputDatabaseValidate(Resource):
         import cea.scripts
         config = current_app.cea_config
         locator = cea.inputlocator.InputLocator(config.scenario)
-        schemas = cea.schemas.schemas()
+        schemas = cea.schemas.schemas(plugins=[])
         validator = InputFileValidator(locator)
         out = OrderedDict()
 
