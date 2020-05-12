@@ -1828,7 +1828,7 @@ def calc_max_edge_flowrate(thermal_network, processes=1):
         thermal_network.thermal_demand.to_csv(
             thermal_network.locator.get_thermal_demand_csv_file(thermal_network.network_type,
                                                                 thermal_network.network_name),
-            columns=thermal_network.building_names)
+            columns=thermal_network.building_names, index=False)
 
     return thermal_network.edge_mass_flow_df
 
