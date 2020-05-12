@@ -109,7 +109,7 @@ def print_valid_script_names(plugins):
     import itertools
     print("")
     print("SCRIPT can be one of:")
-    scripts = sorted(cea.scripts.for_interface('cli'), key=lambda s: s.category)
+    scripts = sorted(cea.scripts.for_interface('cli', plugins=plugins), key=lambda s: s.category)
     for category, group in itertools.groupby(scripts, lambda s: s.category):
         print(textwrap.fill("[%s]:  %s" % (category, ', '.join(s.name for s in sorted(group, key=lambda s: s.name))),
                             subsequent_indent='    ', break_on_hyphens=False))

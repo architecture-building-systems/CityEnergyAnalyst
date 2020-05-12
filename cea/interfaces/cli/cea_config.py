@@ -45,7 +45,7 @@ def main(config=None):
             print("- {fqname} = {parameter_value}".format(fqname=fqname, parameter_value = parameter.get()))
             print("  (default: {default})".format(default=parameter.default))
     else:
-        cea_script = cea.scripts.by_name(script_name)
+        cea_script = cea.scripts.by_name(script_name, plugins=config.plugins)
         config.restrict_to(cea_script.parameters)
         config.apply_command_line_args(args, cea_script.parameters)
         cea_script.print_script_configuration(config, verb='Configuring')
