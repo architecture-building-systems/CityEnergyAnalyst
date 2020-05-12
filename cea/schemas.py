@@ -146,7 +146,7 @@ def create_locator_method(lm, schema):
     file_path = schema["file_path"]
 
     def locator_method(self, *args, **kwargs):
-        return os.path.join(self.scenario, file_path.format(**kwargs))
+        return os.path.join(self.scenario, file_path.format(**kwargs).replace("/", os.path.sep))
 
     locator_method.func_name = lm
     locator_method.func_doc = file_path
@@ -158,6 +158,7 @@ class SchemaIo(object):
     The default just wraps the function - read() and write() will throw errors and should be implemented
     in subclasses
     """
+
     def __init__(self, locator, lm, schema, original_function):
         self.locator = locator
         self.lm = lm
@@ -191,6 +192,7 @@ class SchemaIo(object):
 
 class CsvSchemaIo(SchemaIo):
     """Read and write csv files - and attempt to validate them."""
+
     def read(self, *args, **kwargs):
         df = pd.read_csv(self(*args, **kwargs))
         self.validate(df)
@@ -201,10 +203,14 @@ class CsvSchemaIo(SchemaIo):
         :type df: pd.Dataframe
         """
         self.validate(df)
-        csvargs={}
+        csv_args = {}
         if "float_format" in self.schema:
-            csvargs["float_format"] = self.schema["float_format"]
-        df.to_csv(self(*args, **kwargs), index=False, **csvargs)
+            csv_args["float_format"] = self.schema["float_format"]
+        path_to_csv = self(*args, **kwargs)
+        parent_folder = os.path.dirname(path_to_csv)
+        if not os.path.exists(parent_folder):
+            os.makedirs(parent_folder)
+        df.to_csv(path_to_csv, index=False, **csv_args)
 
     def validate(self, df):
         """Check to make sure the Dataframe conforms to the schema"""
@@ -214,7 +220,7 @@ class CsvSchemaIo(SchemaIo):
             missing_columns = expected_columns - found_columns
             extra_columns = found_columns - expected_columns
             warnings.warn("Dataframe does not conform to schemas.yml specification for {lm}"
-                             "(missing: {missing_columns}, extra: {extra_columns}".format(
+                          "(missing: {missing_columns}, extra: {extra_columns}".format(
                 lm=self.lm, missing_columns=missing_columns, extra_columns=extra_columns))
 
     def new(self):
