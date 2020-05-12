@@ -7,6 +7,7 @@ from __future__ import division
 import os
 import yaml
 import inspect
+from cea.utilities.yaml_ordered_dict import OrderedDictYAMLLoader
 
 
 __author__ = "Daren Thomas"
@@ -30,8 +31,11 @@ class CeaPlugin(object):
 
     @property
     def scripts(self):
-        """Return a list of scripts - each is a subclass of :py:class`cea.scripts.CeaScript`"""
-        return []
+        """Return the scripts.yml dictionary."""
+        scripts_yml = os.path.join(os.path.dirname(inspect.getmodule(self).__file__), "scripts.yml")
+        with open(scripts_yml, "r") as scripts_yml_fp:
+            scripts = yaml.load(scripts_yml_fp, OrderedDictYAMLLoader)
+        return scripts
 
     @property
     def plots(self):

@@ -139,7 +139,6 @@ def create_schema_io(locator, lm, schema, original_function=None):
 def create_locator_method(lm, schema):
     """
     Returns a function that works as an InputLocator method - it reads the
-    :param cea.inputlocator.InputLocator self: The locator this method will be bound to`
     :param str lm: the name of the locator method
     :param dict schema: the configuration of this locator method as defined in schemas.yml
     :return: the locator method (note, only kwargs are used, if at all)

@@ -32,13 +32,11 @@ class InputLocator(object):
 
     def _wrap_locator_methods(self, plugins):
         """
-        For each locator method defined in scripts.yml, wrap it in a callable object (preserving the
+        For each locator method defined in schemas.yml, wrap it in a callable object (preserving the
         original interface) that allows for read() and write() operations.
         """
         schemas = cea.schemas.schemas(plugins)
         for lm in schemas.keys():
-            if lm == "demand_summary":
-                print("HERE!")
             if hasattr(self, lm):
                 # allow cea.inputlocator.InputLocator to define locator methods
                 setattr(self, lm, cea.schemas.create_schema_io(self, lm, schemas[lm], getattr(self.__class__, lm)))

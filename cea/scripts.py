@@ -5,10 +5,13 @@ from __future__ import print_function
 
 import os
 import cea
+import yaml
 import cea.inputlocator
 from cea.schemas import schemas
+from cea.utilities.yaml_ordered_dict import OrderedDictYAMLLoader
+from cea.plugin import CeaPlugin
+from typing import List
 
-SCRIPTS_PICKLE = os.path.abspath(os.path.join(os.path.dirname(cea.__file__), 'scripts.pickle'))
 SCRIPTS_YML = os.path.abspath(os.path.join(os.path.dirname(cea.__file__), 'scripts.yml'))
 
 
@@ -43,7 +46,7 @@ class CeaScript(object):
             print("  (default: %s)" % parameter.default)
 
     def print_missing_input_files(self, config):
-        schema_data = schemas()
+        schema_data = schemas(config.plugins)
         print()
         print("---------------------------")
         print("ERROR: Missing input files:")
@@ -64,7 +67,7 @@ class CeaScript(object):
         # get a locator without triggering the restricted to
         restricted_to = config.restricted_to
         config.restricted_to = None
-        locator = cea.inputlocator.InputLocator(config.scenario)
+        locator = cea.inputlocator.InputLocator(config.scenario, config.plugins)
         config.restricted_to = restricted_to
 
         for locator_spec in self.input_files:
@@ -86,37 +89,39 @@ class CeaScript(object):
         return result
 
 
-def _get_categories_dict():
-    """Load the categories -> [script] mapping either from the YAML file or, in the case of dashboard,
-    which don't support YAML, load from a pickled version generated on the call to ``cea install-toolbox``."""
-    try:
-        import yaml
-        from cea.utilities.yaml_ordered_dict import OrderedDictYAMLLoader
-        categories = yaml.load(open(SCRIPTS_YML), OrderedDictYAMLLoader)
-    except ImportError:
-        import pickle
-        categories = pickle.load(open(SCRIPTS_PICKLE))
-    return categories
+def list_scripts(plugins):
+    """List all scripts in scripts.yml and those defined in configured plugins
+    :parameter List[CeaPlugin] plugins: the list of plugins to include in the search for scripts.
+    """
+    scripts_by_category = yaml.load(open(SCRIPTS_YML), OrderedDictYAMLLoader)
+    for plugin in plugins:
+        scripts_by_category.update(plugin.scripts)
 
-
-def list_scripts():
-    """List all scripts"""
-    categories = _get_categories_dict()
-    for category in categories.keys():
-        for script_dict in categories[category]:
+    for category in scripts_by_category.keys():
+        for script_dict in scripts_by_category[category]:
             yield CeaScript(script_dict, category)
 
 
-def by_name(script_name):
-    for script in list_scripts():
+def by_name(script_name, plugins):
+    """
+    Returns a CeaScript object by name.
+
+    :parameter str script_name: The name of the script to return (e.g. "demand")
+    :parameter List[CeaPlugin]: The list of plugins to include in the search.
+    """
+    for script in list_scripts(plugins):
         # Convert script names that use "_" instead of "-"
         if script.name == script_name.replace("_", "-"):
             return script
     raise cea.ScriptNotFoundException('Invalid script name: %s' % script_name)
 
 
-def for_interface(interface='cli'):
-    """Return the list of CeaScript instances that are listed for the interface"""
-    return [script for script in list_scripts() if interface in script.interfaces]
+def for_interface(interface, plugins):
+    """Return the list of CeaScript instances that are listed for the interface
+
+    :parameter str interface: The interface to filter the scripts by (see interfaces key in scripts.yml) e.g. "cli"
+    :parameter List[CeaPlugin] plugins: The list of plugins to include in the search.
+    """
+    return [script for script in list_scripts(plugins) if interface in script.interfaces]
 
 
