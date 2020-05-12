@@ -193,7 +193,7 @@ class TestSchemas(unittest.TestCase):
 
     def test_read_glossary_df(self):
         import cea.glossary
-        cea.glossary.read_glossary_df()
+        cea.glossary.read_glossary_df(plugins=[])
 
 
 def extract_locator_methods(locator):
