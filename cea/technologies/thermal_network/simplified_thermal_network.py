@@ -518,10 +518,9 @@ def thermal_network_simplified(locator, config, network_name):
 
     # summary of edges used for the calculation
     fields_edges = ['length_m', 'Pipe_DN', 'Type_mat', 'D_int_m']
-    edge_df[fields_edges].to_csv(locator.get_thermal_network_edge_list_file(network_type, network_name), index=False)
-    fields_nodes = ['Building', 'Type']
-    node_df[fields_nodes].to_csv(locator.get_thermal_network_node_types_csv_file(network_type, network_name),
-                                 index=False)
+    edge_df[fields_edges].to_csv(locator.get_thermal_network_edge_list_file(network_type, network_name))
+    fields_nodes = ['Type', 'Building']
+    node_df[fields_nodes].to_csv(locator.get_thermal_network_node_types_csv_file(network_type, network_name))
 
     # correct diameter of network and save to the shapefile
     from cea.utilities.dbf import dataframe_to_dbf, dbf_to_dataframe
