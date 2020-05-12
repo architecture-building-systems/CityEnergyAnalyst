@@ -496,7 +496,7 @@ def thermal_network_main(locator, thermal_network, processes=1):
     # Output substation HEX node data
     all_nodes_df_output.to_csv(
         thermal_network.locator.get_thermal_network_node_types_csv_file(thermal_network.network_type,
-                                                                        thermal_network.network_name))
+                                                                        thermal_network.network_name), index=False)
 
     print("Completed thermal-hydraulic calculation.\n")
 
