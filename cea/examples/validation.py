@@ -136,11 +136,12 @@ def calc_errors_per_building(load, monthly_data):
 
 def calc_group_score(cv_root_mean_squared_error, monthly_data, normalized_mean_biased_error):
     # indicates if the building is calibrated or not
-    if abs(normalized_mean_biased_error) < 5 and cv_root_mean_squared_error < 15:
+    if abs(normalized_mean_biased_error) < 5 and cv_root_mean_squared_error < 15: #LS#NMBE<5 and CVRMSE <15 for ASHRAE monthly
         ind_calib_building = 1
     else:
         ind_calib_building = 0
     # weights the calibration by building energy consumption
+    #ind_score_building = ind_calib_building * 1 #LS#to test max number of buildings calibrated
     ind_score_building = ind_calib_building * sum(monthly_data['measurements'])
     return ind_calib_building, ind_score_building
 
