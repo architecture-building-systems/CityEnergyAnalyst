@@ -3,8 +3,8 @@ This tool calibrates a set of inputs from CEA to reduce the error between model 
 """
 from __future__ import division
 from __future__ import print_function
-#import random (initialize) npy.random.randint(low=1, high=100, size= number of buildings)/1000 - for every parameter.
-#initalize seed numpy randomly npy.random.seed (once call the function) - inside put the seed
+
+from hyperopt.pyll import scope
 
 import cea.config
 import cea.inputlocator
@@ -17,6 +17,7 @@ from cea.utilities.schedule_reader import read_cea_schedule, save_cea_schedule
 from collections import OrderedDict
 from hyperopt import fmin, tpe, hp, Trials
 import pandas as pd
+import numpy as np
 from cea.constants import MONTHS_IN_YEAR_NAMES
 from cea.examples.validation import get_measured_building_names
 import glob2
@@ -67,7 +68,9 @@ def calc_score(static_params, dynamic_params):
     A new output csv is generated providing the calibration results (iteration number, parameters tested and results(score metric))
     """
     ## define set of CEA inputs to be calibrated and initial guess values
-    #seed
+    SEED = dynamic_params['SEED']
+    np.random.seed (SEED)                   #initalize seed numpy randomly npy.random.seed (once call the function) - inside put the seed
+     #import random (initialize) npy.random.randint(low=1, high=100, size= number of buildings)/1000 - for every parameter.
     Hs_ag = dynamic_params['Hs_ag']
     Tcs_set_C = dynamic_params['Tcs_set_C']
     Es = dynamic_params['Es']
@@ -82,8 +85,8 @@ def calc_score(static_params, dynamic_params):
     #Tcs_set_C = 28
     Tcs_setb_C = 40
     void_deck = 1
-    #height_bg = 0
-    #floors_bg = 0
+    height_bg = 0
+    floors_bg = 0
 
     scenario_list = static_params['scenario_list']
     config = static_params['config']
@@ -101,27 +104,37 @@ def calc_score(static_params, dynamic_params):
         measured_building_names_of_scenarios.append(measured_building_names)
 
         ## overwrite inputs with corresponding initial values
+
+        # Changes and saves variables related to the architecture
         df_arch = dbf_to_dataframe(locator.get_building_architecture())
-        df_arch.Es = Es #create vector for each variable of same size Es*rand(seed) oscilation 0.1 -0.2 in the param 0.6, 0.58, 0.62
-        df_arch.Ns = Ns
-        df_arch.Hs_ag = Hs_ag
+        number_of_buildings = df_arch.shape[0]
+        Rand_it = np.random.randint(low=-150, high=150, size=number_of_buildings) / 1000
+        df_arch.Es = Es*(1+Rand_it)
+        df_arch.Ns = Ns*(1+Rand_it)
+        df_arch.Hs_ag = Hs_ag*(1+Rand_it)
         df_arch.void_deck = void_deck
         dataframe_to_dbf(df_arch, locator.get_building_architecture())
 
+        # Changes and saves variables related to intetnal loads
         df_intload = dbf_to_dataframe(locator.get_building_internal())
-        df_intload.Occ_m2pax = Occ_m2pax
-        df_intload.Vww_lpdpax = Vww_lpdpax
-        df_intload.Ea_Wm2 = Ea_Wm2
-        df_intload.El_Wm2 = El_Wm2
+        df_intload.Occ_m2pax = Occ_m2pax*(1+Rand_it)
+        df_intload.Vww_lpdpax = Vww_lpdpax*(1+Rand_it)
+        df_intload.Ea_Wm2 = Ea_Wm2*(1+Rand_it)
+        df_intload.El_Wm2 = El_Wm2*(1+Rand_it)
         dataframe_to_dbf(df_intload, locator.get_building_internal())
 
+        #Changes and saves variables related to comfort
         df_comfort = dbf_to_dataframe(locator.get_building_comfort())
-        df_comfort.Tcs_set_C = Tcs_set_C
+        df_comfort.Tcs_set_C = Tcs_set_C*(1+Rand_it)
         df_comfort.Tcs_setb_C = Tcs_setb_C
         dataframe_to_dbf(df_comfort, locator.get_building_comfort())
 
-        #df_zone = dbf_to_dataframe(locator.get_building_architecture())
-        #dataframe_to_dbf(df_zone, locator.get_building_architecture())
+
+        # Changes and saves variables related to zone
+        df_zone = dbf_to_dataframe(locator.get_zone_geometry().split('.')[0]+'.dbf')
+        df_zone.height_bg = height_bg
+        df_zone.floors_bg = floors_bg
+        dataframe_to_dbf(df_zone, locator.get_zone_geometry().split('.')[0]+'.dbf')
 
         ## run building schedules and energy demand
         config.schedule_maker.buildings = measured_building_names
@@ -140,17 +153,18 @@ def calc_score(static_params, dynamic_params):
 
 
 def calibration(config, list_scenarios):
-    max_evals = 100
+    max_evals = 1000
 
     #  define a search space
-    DYNAMIC_PARAMETERS = OrderedDict([('Hs_ag', hp.uniform('Hs_ag', 0.1, 0.4)),
+    DYNAMIC_PARAMETERS = OrderedDict([('SEED', scope.int(hp.uniform('SEED', 0.0, 100.0))),
+                                      ('Hs_ag', hp.uniform('Hs_ag', 0.1, 0.4)),
                                       ('Tcs_set_C', hp.uniform('Tcs_set_C', 23, 27)),
-                                      ('Es', hp.uniform('Es', 0.4, 1.0)), #0.4, 1           #0.4, 0.8 (for hh calib)    #rand
-                                      ('Ns', hp.uniform('Ns', 0.4, 0.8)), #0.4, 0.8         #0.4, 0.8 (for hh calib)
-                                      ('Occ_m2pax', hp.uniform('Occ_m2pax', 30.0, 60.0)),
-                                      ('Vww_lpdpax', hp.uniform('Vww_lpdpax', 20.0, 40.0)),
-                                      ('Ea_Wm2', hp.uniform('Ea_Wm2', 1.0, 5.0)),
-                                      ('El_Wm2', hp.uniform('El_Wm2', 1.0, 5.0))
+                                      ('Es', hp.uniform('Es', 0.4, 0.8)),
+                                      ('Ns', hp.uniform('Ns', 0.4, 0.8)),
+                                      ('Occ_m2pax', hp.uniform('Occ_m2pax', 35.0, 55.0)),
+                                      ('Vww_lpdpax', hp.uniform('Vww_lpdpax', 25.0, 35.0)),
+                                      ('Ea_Wm2', hp.uniform('Ea_Wm2', 1.0, 4.0)),
+                                      ('El_Wm2', hp.uniform('El_Wm2', 1.0, 4.0))
                                       ])
     STATIC_PARAMS = {'scenario_list': list_scenarios, 'config': config}
 
@@ -176,6 +190,7 @@ def calibration(config, list_scenarios):
     results = pd.DataFrame()
     for counter in range(0, max_evals):
         results_it = [counter,
+                      trials.trials[counter]['misc']['vals']['SEED'][0],
                       trials.trials[counter]['misc']['vals']['Hs_ag'][0],
                       trials.trials[counter]['misc']['vals']['Tcs_set_C'][0],
                       trials.trials[counter]['misc']['vals']['Ea_Wm2'][0],
@@ -191,7 +206,7 @@ def calibration(config, list_scenarios):
     results.reset_index(drop=True, inplace=True)
     results = pd.concat([results, validation_n_calib, validation_percentage],  axis=1, sort=False).sort_index()
 
-    results.columns = ['eval', 'Hs_ag','Tcs_set_C', 'Ea_Wm2', 'El_Wm2', 'Es',
+    results.columns = ['eval', 'SEED','Hs_ag','Tcs_set_C', 'Ea_Wm2', 'El_Wm2', 'Es',
                        'Ns', 'Occ_m2pax', 'Vww_lpdpax', 'score_weighted_demand', 'buildings_calibrated', 'percentage_buildings_calibrated_%']
     project_path = config.project
     output_path = (project_path + r'/output/calibration/')
