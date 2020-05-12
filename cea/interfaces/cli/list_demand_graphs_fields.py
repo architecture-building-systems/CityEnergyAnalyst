@@ -8,6 +8,7 @@ import pandas as pd
 import cea.config
 import cea.inputlocator
 
+
 def demand_graph_fields(scenario):
     """Lists the available fields for the demand graphs - these are fields that are present in both the
     building demand results files as well as the totals file (albeit with different units)."""
