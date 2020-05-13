@@ -35,7 +35,7 @@ def main(config):
             config.plots_supply_system.system = ""
 
     try:
-        for category in cea.plots.categories.list_categories():
+        for category in cea.plots.categories.list_categories(plugins=[]):
             # create the new dashboard
             print("Plotting category {category}".format(category=category.label))
 

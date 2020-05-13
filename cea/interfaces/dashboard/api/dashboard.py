@@ -11,7 +11,7 @@ api = Namespace('Dashboard', description='Dashboard plots')
 
 LAYOUTS = ['row', 'grid']
 CATEGORIES = {c.name: {'label': c.label, 'plots': [{'id': p.id(), 'name': p.name} for p in c.plots]}
-              for c in cea.plots.categories.list_categories()}
+              for c in cea.plots.categories.list_categories(plugins=current_app.cea_config.plugins)}
 
 
 

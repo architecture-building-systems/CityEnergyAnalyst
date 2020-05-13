@@ -5,7 +5,7 @@ from __future__ import print_function
 from __future__ import division
 
 import os
-from typing import Generator
+from typing import Generator, Sequence
 import yaml
 import inspect
 import cea.plots.categories
@@ -38,7 +38,7 @@ class CeaPlugin(object):
         return scripts
 
     @property
-    def plots(self):
+    def plot_categories(self):
         """
         Return a list of :py:class`cea.plots.PlotCategory` instances to add to the GUI. The default implementation
         uses the ``plots.yml`` file to create PluginPlotCategory instances that use PluginPlotBase to provide a
@@ -48,8 +48,8 @@ class CeaPlugin(object):
         """
         plots_yml = os.path.join(os.path.dirname(inspect.getmodule(self).__file__), "plots.yml")
         with open(plots_yml, "r") as plots_yml_fp:
-            plots = yaml.load(plots_yml_fp, OrderedDictYAMLLoader)
-        return [PluginPlotCategory(category_label, plots[category_label], self) for category_label in plots.keys()]
+            categories = yaml.load(plots_yml_fp, OrderedDictYAMLLoader)
+        return [PluginPlotCategory(category_label, categories[category_label], self) for category_label in categories.keys()]
 
     @property
     def schemas(self):
@@ -77,35 +77,41 @@ class PluginPlotCategory(cea.plots.categories.PlotCategory):
     easier to understand as they use the cufflinks library.
     """
 
-    def __init__(self, category_label, plots_dict, plugin):
+    def __init__(self, category_label, plots, plugin):
         """Ignore calling super class' constructor as we use a totally different mechanism for building plots here
         :param str category_label: The category label shown in the interface
-        :param dict plots_dict: A dictionary mapping plot labels to plot definitions
+        :param Sequence[dict] plots: A dictionary mapping plot labels to plot definitions
         """
         self.label = category_label
         self.name = identifier(category_label)
-        self.plots_dict = plots_dict
+        self.plot_configs = plots
         self.plugin = plugin
 
     @property
-    def plots(self):
+    def plots(category):
         """
         Return a list of Plot classes to be used in the Dashboard.
 
         :rtype: Generator[PluginPlotBase]
         """
-        for plot_label, plot_config in self.plots_dict.items():
-            plugin = self.plugin
+        for plot_config in category.plot_configs:
+            plot_label = plot_config["label"]
+            plugin = category.plugin
+
             class Plot(PluginPlotBase):
                 name = plot_label
-                category_name = self.name
-                category_path = self.name
+                category_name = category.name
+                category_path = category.name
                 expected_parameters = plot_config.get("expected-parameters", {})
 
                 def __init__(self, project, parameters, cache):
                     super(Plot, self).__init__(project, parameters, cache, plugin, plot_config)
 
-            Plot.__name__ = identifier(plot_label, sep="_")
+                    # for some reason these are being over-written in the call to super
+                    self.category_name = category.name
+                    self.category_path = category.name
+
+            # Plot.__name__ = identifier(plot_label, sep="_")
             yield Plot
 
 
@@ -132,6 +138,10 @@ class PluginPlotBase(cea.plots.PlotBase):
         if not os.path.exists(self.locator_method(**self.locator_kwargs)):
             result.append((self.locator_method, self.locator_kwargs.values()))
         return result
+
+    @property
+    def title(self):
+        return self.plot_config["label"]
 
     @property
     def locator(self):
@@ -171,3 +181,28 @@ class PluginPlotBase(cea.plots.PlotBase):
     def calc_table(self):
         raise DeprecationWarning("cea.plots.PlotBase.calc_table is not used anymore and will be removed in future")
 
+    @property
+    def output_path(self):
+        """override the cea.plots.PlotBase.output_path"""
+        file_name = self.id()
+        return self.locator.get_timeseries_plots_file(file_name, self.category_path)
+
+
+if __name__ == "__main__":
+    # try to plot the first plugin found
+    # FIXME: remove this before commit
+    import cea.config
+    import cea.plots.cache
+    config = cea.config.Configuration()
+    cache = cea.plots.cache.NullPlotCache()
+    plugin = config.plugins[0]
+    category = list(plugin.plot_categories)[0]
+    plot_class = list(category.plots)[0]
+
+    print(plot_class.expected_parameters)
+    print(plot_class.name)
+    print(plot_class.category_path)
+
+    plot = plot_class(config.project, {"scenario-name": config.scenario_name}, cache)
+    print(plot.category_path)
+    print(plot.plot(auto_open=True))

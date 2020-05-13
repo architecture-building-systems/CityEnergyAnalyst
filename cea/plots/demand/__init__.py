@@ -173,7 +173,7 @@ def main():
     import time
 
     def plot_the_whole_category(cache):
-        for category in list_categories():
+        for category in list_categories(plugins=[]):
             if category.label != label:
                 # skip other categories
                 continue
