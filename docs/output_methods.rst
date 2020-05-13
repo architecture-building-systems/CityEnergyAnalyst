@@ -175,8 +175,8 @@ The following file is used by these scripts:
     :header: "Variable", "Description"
 
     ``Aocc_m2``, "TODO"
-    ``Capex_a_sys_connected_USD``, "TODO"
-    ``Capex_a_sys_disconnected_USD``, "TODO"
+    ``Capex_a_sys_district_scale_USD``, "TODO"
+    ``Capex_a_sys_building_scale_USD``, "TODO"
     ``COAL_hs_cost_m2yr``, "TODO"
     ``COAL_hs_cost_yr``, "Operation costs of coal due to space heating"
     ``COAL_ww_cost_m2yr``, "TODO"
@@ -202,8 +202,8 @@ The following file is used by these scripts:
     ``OIL_hs_cost_yr``, "Operation costs of oil due to space heating"
     ``OIL_ww_cost_m2yr``, "TODO"
     ``OIL_ww_cost_yr``, "Operation costs of oil due to hotwater"
-    ``Opex_a_sys_connected_USD``, "TODO"
-    ``Opex_a_sys_disconnected_USD``, "TODO"
+    ``Opex_a_sys_district_scale_USD``, "TODO"
+    ``Opex_a_sys_building_scale_USD``, "TODO"
     ``PV_cost_m2yr``, "Electricity supply from PV"
     ``PV_cost_yr``, "Electricity supply from PV"
     ``SOLAR_hs_cost_m2yr``, "TODO"
@@ -1465,16 +1465,16 @@ The following file is used by these scripts:
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``Capex_a_sys_connected_USD``, "TODO"
-    ``Capex_a_sys_disconnected_USD``, "TODO"
+    ``Capex_a_sys_district_scale_USD``, "TODO"
+    ``Capex_a_sys_building_scale_USD``, "TODO"
     ``Capex_a_sys_USD``, "TODO"
-    ``Capex_total_sys_connected_USD``, "TODO"
-    ``Capex_total_sys_disconnected_USD``, "TODO"
+    ``Capex_total_sys_district_scale_USD``, "TODO"
+    ``Capex_total_sys_building_scale_USD``, "TODO"
     ``Capex_total_sys_USD``, "TODO"
     ``generation``, "TODO"
     ``GHG_rank``, "TODO"
-    ``GHG_sys_connected_tonCO2``, "TODO"
-    ``GHG_sys_disconnected_tonCO2``, "TODO"
+    ``GHG_sys_district_scale_tonCO2``, "TODO"
+    ``GHG_sys_building_scale_tonCO2``, "TODO"
     ``GHG_sys_tonCO2``, "TODO"
     ``individual``, "TODO"
     ``individual_name``, "TODO"
@@ -1483,16 +1483,16 @@ The following file is used by these scripts:
     ``normalized_Opex``, "TODO"
     ``normalized_prim``, "TODO"
     ``normalized_TAC``, "TODO"
-    ``Opex_a_sys_connected_USD``, "TODO"
-    ``Opex_a_sys_disconnected_USD``, "TODO"
+    ``Opex_a_sys_district_scale_USD``, "TODO"
+    ``Opex_a_sys_building_scale_USD``, "TODO"
     ``Opex_a_sys_USD``, "TODO"
     ``PEN_rank``, "TODO"
-    ``PEN_sys_connected_MJoil``, "TODO"
-    ``PEN_sys_disconnected_MJoil``, "TODO"
+    ``PEN_sys_district_scale_MJoil``, "TODO"
+    ``PEN_sys_building_scale_MJoil``, "TODO"
     ``PEN_sys_MJoil``, "TODO"
     ``TAC_rank``, "TODO"
-    ``TAC_sys_connected_USD``, "TODO"
-    ``TAC_sys_disconnected_USD``, "TODO"
+    ``TAC_sys_district_scale_USD``, "TODO"
+    ``TAC_sys_building_scale_USD``, "TODO"
     ``TAC_sys_USD``, "TODO"
     ``Unnamed: 0``, "TODO"
     ``Unnamed: 0.1``, "TODO"
@@ -1748,10 +1748,10 @@ The following file is used by these scripts:
     
 
 
-get_optimization_connected_cooling_capacity
+get_optimization_district_scale_cooling_capacity
 -------------------------------------------
 
-path: ``outputs/data/optimization/slave/gen_1/ind_1_connected_cooling_capacity.csv``
+path: ``outputs/data/optimization/slave/gen_1/ind_1_district_scale_cooling_capacity.csv``
 
 The following file is used by these scripts: 
 
@@ -1759,20 +1759,20 @@ The following file is used by these scripts:
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``Capacity_ACH_SC_FP_cool_disconnected_W``, "TODO"
-    ``Capacity_ACHHT_FP_cool_disconnected_W``, "TODO"
-    ``Capacity_BaseVCC_AS_cool_disconnected_W``, "TODO"
-    ``Capacity_DX_AS_cool_disconnected_W``, "TODO"
-    ``Capacity_VCCHT_AS_cool_disconnected_W``, "TODO"
-    ``Capaticy_ACH_SC_ET_cool_disconnected_W``, "TODO"
+    ``Capacity_ACH_SC_FP_cool_building_scale_W``, "TODO"
+    ``Capacity_ACHHT_FP_cool_building_scale_W``, "TODO"
+    ``Capacity_BaseVCC_AS_cool_building_scale_W``, "TODO"
+    ``Capacity_DX_AS_cool_building_scale_W``, "TODO"
+    ``Capacity_VCCHT_AS_cool_building_scale_W``, "TODO"
+    ``Capaticy_ACH_SC_ET_cool_building_scale_W``, "TODO"
     ``Name``, "TODO"
     
 
 
-get_optimization_connected_electricity_capacity
+get_optimization_district_scale_electricity_capacity
 -----------------------------------------------
 
-path: ``outputs/data/optimization/slave/gen_2/ind_0_connected_electrical_capacity.csv``
+path: ``outputs/data/optimization/slave/gen_2/ind_0_district_scale_electrical_capacity.csv``
 
 The following file is used by these scripts: 
 
@@ -1780,16 +1780,16 @@ The following file is used by these scripts:
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``Capacity_GRID_el_connected_W``, "TODO"
-    ``Capacity_PV_el_connected_m2``, "TODO"
-    ``Capacity_PV_el_connected_W``, "TODO"
+    ``Capacity_GRID_el_district_scale_W``, "TODO"
+    ``Capacity_PV_el_district_scale_m2``, "TODO"
+    ``Capacity_PV_el_district_scale_W``, "TODO"
     
 
 
-get_optimization_connected_heating_capacity
+get_optimization_district_scale_heating_capacity
 -------------------------------------------
 
-path: ``outputs/data/optimization/slave/gen_0/ind_2_connected_heating_capacity.csv``
+path: ``outputs/data/optimization/slave/gen_0/ind_2_district_scale_heating_capacity.csv``
 
 The following file is used by these scripts: 
 
@@ -1797,28 +1797,28 @@ The following file is used by these scripts:
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``Capacity_BackupBoiler_NG_heat_connected_W``, "TODO"
-    ``Capacity_BaseBoiler_NG_heat_connected_W``, "TODO"
-    ``Capacity_CHP_DB_el_connected_W``, "TODO"
-    ``Capacity_CHP_DB_heat_connected_W``, "TODO"
-    ``Capacity_CHP_NG_el_connected_W``, "TODO"
-    ``Capacity_CHP_NG_heat_connected_W``, "TODO"
-    ``Capacity_CHP_WB_el_connected_W``, "TODO"
-    ``Capacity_CHP_WB_heat_connected_W``, "TODO"
-    ``Capacity_HP_DS_heat_connected_W``, "TODO"
-    ``Capacity_HP_GS_heat_connected_W``, "TODO"
-    ``Capacity_HP_SS_heat_connected_W``, "TODO"
-    ``Capacity_HP_WS_heat_connected_W``, "TODO"
-    ``Capacity_PeakBoiler_NG_heat_connected_W``, "TODO"
-    ``Capacity_PVT_connected_m2``, "TODO"
-    ``Capacity_PVT_el_connected_W``, "TODO"
-    ``Capacity_PVT_heat_connected_W``, "TODO"
-    ``Capacity_SC_ET_connected_m2``, "TODO"
-    ``Capacity_SC_ET_heat_connected_W``, "TODO"
-    ``Capacity_SC_FP_connected_m2``, "TODO"
-    ``Capacity_SC_FP_heat_connected_W``, "TODO"
-    ``Capacity_SeasonalStorage_WS_heat_connected_m3``, "TODO"
-    ``Capacity_SeasonalStorage_WS_heat_connected_W``, "TODO"
+    ``Capacity_BackupBoiler_NG_heat_district_scale_W``, "TODO"
+    ``Capacity_BaseBoiler_NG_heat_district_scale_W``, "TODO"
+    ``Capacity_CHP_DB_el_district_scale_W``, "TODO"
+    ``Capacity_CHP_DB_heat_district_scale_W``, "TODO"
+    ``Capacity_CHP_NG_el_district_scale_W``, "TODO"
+    ``Capacity_CHP_NG_heat_district_scale_W``, "TODO"
+    ``Capacity_CHP_WB_el_district_scale_W``, "TODO"
+    ``Capacity_CHP_WB_heat_district_scale_W``, "TODO"
+    ``Capacity_HP_DS_heat_district_scale_W``, "TODO"
+    ``Capacity_HP_GS_heat_district_scale_W``, "TODO"
+    ``Capacity_HP_SS_heat_district_scale_W``, "TODO"
+    ``Capacity_HP_WS_heat_district_scale_W``, "TODO"
+    ``Capacity_PeakBoiler_NG_heat_district_scale_W``, "TODO"
+    ``Capacity_PVT_district_scale_m2``, "TODO"
+    ``Capacity_PVT_el_district_scale_W``, "TODO"
+    ``Capacity_PVT_heat_district_scale_W``, "TODO"
+    ``Capacity_SC_ET_district_scale_m2``, "TODO"
+    ``Capacity_SC_ET_heat_district_scale_W``, "TODO"
+    ``Capacity_SC_FP_district_scale_m2``, "TODO"
+    ``Capacity_SC_FP_heat_district_scale_W``, "TODO"
+    ``Capacity_SeasonalStorage_WS_heat_district_scale_m3``, "TODO"
+    ``Capacity_SeasonalStorage_WS_heat_district_scale_W``, "TODO"
     
 
 
@@ -1920,10 +1920,10 @@ The following file is used by these scripts: ``optimization``
     
 
 
-get_optimization_disconnected_cooling_capacity
+get_optimization_building_scale_cooling_capacity
 ----------------------------------------------
 
-path: ``outputs/data/optimization/slave/gen_1/ind_0_disconnected_cooling_capacity.csv``
+path: ``outputs/data/optimization/slave/gen_1/ind_0_building_scale_cooling_capacity.csv``
 
 The following file is used by these scripts: 
 
@@ -1931,20 +1931,20 @@ The following file is used by these scripts:
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``Capacity_ACH_SC_FP_cool_disconnected_W``, "TODO"
-    ``Capacity_ACHHT_FP_cool_disconnected_W``, "TODO"
-    ``Capacity_BaseVCC_AS_cool_disconnected_W``, "TODO"
-    ``Capacity_DX_AS_cool_disconnected_W``, "TODO"
-    ``Capacity_VCCHT_AS_cool_disconnected_W``, "TODO"
-    ``Capaticy_ACH_SC_ET_cool_disconnected_W``, "TODO"
+    ``Capacity_ACH_SC_FP_cool_building_scale_W``, "TODO"
+    ``Capacity_ACHHT_FP_cool_building_scale_W``, "TODO"
+    ``Capacity_BaseVCC_AS_cool_building_scale_W``, "TODO"
+    ``Capacity_DX_AS_cool_building_scale_W``, "TODO"
+    ``Capacity_VCCHT_AS_cool_building_scale_W``, "TODO"
+    ``Capaticy_ACH_SC_ET_cool_building_scale_W``, "TODO"
     ``Name``, "TODO"
     
 
 
-get_optimization_disconnected_heating_capacity
+get_optimization_building_scale_heating_capacity
 ----------------------------------------------
 
-path: ``outputs/data/optimization/slave/gen_0/ind_1_disconnected_heating_capacity.csv``
+path: ``outputs/data/optimization/slave/gen_0/ind_1_building_scale_heating_capacity.csv``
 
 The following file is used by these scripts: 
 
@@ -1952,17 +1952,17 @@ The following file is used by these scripts:
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``Capacity_BaseBoiler_NG_heat_disconnected_W``, "TODO"
-    ``Capacity_FC_NG_heat_disconnected_W``, "TODO"
-    ``Capacity_GS_HP_heat_disconnected_W``, "TODO"
+    ``Capacity_BaseBoiler_NG_heat_building_scale_W``, "TODO"
+    ``Capacity_FC_NG_heat_building_scale_W``, "TODO"
+    ``Capacity_GS_HP_heat_building_scale_W``, "TODO"
     ``Name``, "TODO"
     
 
 
-get_optimization_generation_connected_performance
+get_optimization_generation_district_scale_performance
 -------------------------------------------------
 
-path: ``outputs/data/optimization/slave/gen_1/gen_1_connected_performance.csv``
+path: ``outputs/data/optimization/slave/gen_1/gen_1_district_scale_performance.csv``
 
 The following file is used by these scripts: 
 
@@ -1970,86 +1970,86 @@ The following file is used by these scripts:
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``Capex_a_BackupBoiler_NG_connected_USD``, "TODO"
-    ``Capex_a_BaseBoiler_NG_connected_USD``, "TODO"
-    ``Capex_a_CHP_NG_connected_USD``, "TODO"
-    ``Capex_a_DHN_connected_USD``, "TODO"
-    ``Capex_a_Furnace_dry_connected_USD``, "TODO"
-    ``Capex_a_Furnace_wet_connected_USD``, "TODO"
-    ``Capex_a_GHP_connected_USD``, "TODO"
-    ``Capex_a_GRID_connected_USD``, "TODO"
-    ``Capex_a_HP_Lake_connected_USD``, "TODO"
-    ``Capex_a_HP_Server_connected_USD``, "TODO"
-    ``Capex_a_HP_Sewage_connected_USD``, "TODO"
-    ``Capex_a_PeakBoiler_NG_connected_USD``, "TODO"
-    ``Capex_a_PV_connected_USD``, "TODO"
-    ``Capex_a_PVT_connected_USD``, "TODO"
-    ``Capex_a_SC_ET_connected_USD``, "TODO"
-    ``Capex_a_SC_FP_connected_USD``, "TODO"
-    ``Capex_a_SeasonalStorage_WS_connected_USD``, "TODO"
-    ``Capex_a_SubstationsHeating_connected_USD``, "TODO"
-    ``Capex_total_BackupBoiler_NG_connected_USD``, "TODO"
-    ``Capex_total_BaseBoiler_NG_connected_USD``, "TODO"
-    ``Capex_total_CHP_NG_connected_USD``, "TODO"
-    ``Capex_total_DHN_connected_USD``, "TODO"
-    ``Capex_total_Furnace_dry_connected_USD``, "TODO"
-    ``Capex_total_Furnace_wet_connected_USD``, "TODO"
-    ``Capex_total_GHP_connected_USD``, "TODO"
-    ``Capex_total_GRID_connected_USD``, "TODO"
-    ``Capex_total_HP_Lake_connected_USD``, "TODO"
-    ``Capex_total_HP_Server_connected_USD``, "TODO"
-    ``Capex_total_HP_Sewage_connected_USD``, "TODO"
-    ``Capex_total_PeakBoiler_NG_connected_USD``, "TODO"
-    ``Capex_total_PV_connected_USD``, "TODO"
-    ``Capex_total_PVT_connected_USD``, "TODO"
-    ``Capex_total_SC_ET_connected_USD``, "TODO"
-    ``Capex_total_SC_FP_connected_USD``, "TODO"
-    ``Capex_total_SeasonalStorage_WS_connected_USD``, "TODO"
-    ``Capex_total_SubstationsHeating_connected_USD``, "TODO"
+    ``Capex_a_BackupBoiler_NG_district_scale_USD``, "TODO"
+    ``Capex_a_BaseBoiler_NG_district_scale_USD``, "TODO"
+    ``Capex_a_CHP_NG_district_scale_USD``, "TODO"
+    ``Capex_a_DHN_district_scale_USD``, "TODO"
+    ``Capex_a_Furnace_dry_district_scale_USD``, "TODO"
+    ``Capex_a_Furnace_wet_district_scale_USD``, "TODO"
+    ``Capex_a_GHP_district_scale_USD``, "TODO"
+    ``Capex_a_GRID_district_scale_USD``, "TODO"
+    ``Capex_a_HP_Lake_district_scale_USD``, "TODO"
+    ``Capex_a_HP_Server_district_scale_USD``, "TODO"
+    ``Capex_a_HP_Sewage_district_scale_USD``, "TODO"
+    ``Capex_a_PeakBoiler_NG_district_scale_USD``, "TODO"
+    ``Capex_a_PV_district_scale_USD``, "TODO"
+    ``Capex_a_PVT_district_scale_USD``, "TODO"
+    ``Capex_a_SC_ET_district_scale_USD``, "TODO"
+    ``Capex_a_SC_FP_district_scale_USD``, "TODO"
+    ``Capex_a_SeasonalStorage_WS_district_scale_USD``, "TODO"
+    ``Capex_a_SubstationsHeating_district_scale_USD``, "TODO"
+    ``Capex_total_BackupBoiler_NG_district_scale_USD``, "TODO"
+    ``Capex_total_BaseBoiler_NG_district_scale_USD``, "TODO"
+    ``Capex_total_CHP_NG_district_scale_USD``, "TODO"
+    ``Capex_total_DHN_district_scale_USD``, "TODO"
+    ``Capex_total_Furnace_dry_district_scale_USD``, "TODO"
+    ``Capex_total_Furnace_wet_district_scale_USD``, "TODO"
+    ``Capex_total_GHP_district_scale_USD``, "TODO"
+    ``Capex_total_GRID_district_scale_USD``, "TODO"
+    ``Capex_total_HP_Lake_district_scale_USD``, "TODO"
+    ``Capex_total_HP_Server_district_scale_USD``, "TODO"
+    ``Capex_total_HP_Sewage_district_scale_USD``, "TODO"
+    ``Capex_total_PeakBoiler_NG_district_scale_USD``, "TODO"
+    ``Capex_total_PV_district_scale_USD``, "TODO"
+    ``Capex_total_PVT_district_scale_USD``, "TODO"
+    ``Capex_total_SC_ET_district_scale_USD``, "TODO"
+    ``Capex_total_SC_FP_district_scale_USD``, "TODO"
+    ``Capex_total_SeasonalStorage_WS_district_scale_USD``, "TODO"
+    ``Capex_total_SubstationsHeating_district_scale_USD``, "TODO"
     ``generation``, "TODO"
-    ``GHG_DB_connected_tonCO2yr``, "TODO"
-    ``GHG_GRID_exports_connected_tonCO2yr``, "TODO"
-    ``GHG_GRID_imports_connected_tonCO2yr``, "TODO"
-    ``GHG_NG_connected_tonCO2yr``, "TODO"
-    ``GHG_WB_connected_tonCO2yr``, "TODO"
+    ``GHG_DB_district_scale_tonCO2yr``, "TODO"
+    ``GHG_GRID_exports_district_scale_tonCO2yr``, "TODO"
+    ``GHG_GRID_imports_district_scale_tonCO2yr``, "TODO"
+    ``GHG_NG_district_scale_tonCO2yr``, "TODO"
+    ``GHG_WB_district_scale_tonCO2yr``, "TODO"
     ``individual``, "TODO"
     ``individual_name``, "TODO"
-    ``Opex_fixed_BackupBoiler_NG_connected_USD``, "TODO"
-    ``Opex_fixed_BaseBoiler_NG_connected_USD``, "TODO"
-    ``Opex_fixed_CHP_NG_connected_USD``, "TODO"
-    ``Opex_fixed_DHN_connected_USD``, "TODO"
-    ``Opex_fixed_Furnace_dry_connected_USD``, "TODO"
-    ``Opex_fixed_Furnace_wet_connected_USD``, "TODO"
-    ``Opex_fixed_GHP_connected_USD``, "TODO"
-    ``Opex_fixed_GRID_connected_USD``, "TODO"
-    ``Opex_fixed_HP_Lake_connected_USD``, "TODO"
-    ``Opex_fixed_HP_Server_connected_USD``, "TODO"
-    ``Opex_fixed_HP_Sewage_connected_USD``, "TODO"
-    ``Opex_fixed_PeakBoiler_NG_connected_USD``, "TODO"
-    ``Opex_fixed_PV_connected_USD``, "TODO"
-    ``Opex_fixed_PVT_connected_USD``, "TODO"
-    ``Opex_fixed_SC_ET_connected_USD``, "TODO"
-    ``Opex_fixed_SC_FP_connected_USD``, "TODO"
-    ``Opex_fixed_SeasonalStorage_WS_connected_USD``, "TODO"
-    ``Opex_fixed_SubstationsHeating_connected_USD``, "TODO"
-    ``Opex_var_DB_connected_USD``, "TODO"
-    ``Opex_var_GRID_exports_connected_USD``, "TODO"
-    ``Opex_var_GRID_imports_connected_USD``, "TODO"
-    ``Opex_var_NG_connected_USD``, "TODO"
-    ``Opex_var_WB_connected_USD``, "TODO"
-    ``PEN_DB_connected_MJoilyr``, "TODO"
-    ``PEN_GRID_exports_connected_MJoilyr``, "TODO"
-    ``PEN_GRID_imports_connected_MJoilyr``, "TODO"
-    ``PEN_NG_connected_MJoilyr``, "TODO"
-    ``PEN_WB_connected_MJoilyr``, "TODO"
+    ``Opex_fixed_BackupBoiler_NG_district_scale_USD``, "TODO"
+    ``Opex_fixed_BaseBoiler_NG_district_scale_USD``, "TODO"
+    ``Opex_fixed_CHP_NG_district_scale_USD``, "TODO"
+    ``Opex_fixed_DHN_district_scale_USD``, "TODO"
+    ``Opex_fixed_Furnace_dry_district_scale_USD``, "TODO"
+    ``Opex_fixed_Furnace_wet_district_scale_USD``, "TODO"
+    ``Opex_fixed_GHP_district_scale_USD``, "TODO"
+    ``Opex_fixed_GRID_district_scale_USD``, "TODO"
+    ``Opex_fixed_HP_Lake_district_scale_USD``, "TODO"
+    ``Opex_fixed_HP_Server_district_scale_USD``, "TODO"
+    ``Opex_fixed_HP_Sewage_district_scale_USD``, "TODO"
+    ``Opex_fixed_PeakBoiler_NG_district_scale_USD``, "TODO"
+    ``Opex_fixed_PV_district_scale_USD``, "TODO"
+    ``Opex_fixed_PVT_district_scale_USD``, "TODO"
+    ``Opex_fixed_SC_ET_district_scale_USD``, "TODO"
+    ``Opex_fixed_SC_FP_district_scale_USD``, "TODO"
+    ``Opex_fixed_SeasonalStorage_WS_district_scale_USD``, "TODO"
+    ``Opex_fixed_SubstationsHeating_district_scale_USD``, "TODO"
+    ``Opex_var_DB_district_scale_USD``, "TODO"
+    ``Opex_var_GRID_exports_district_scale_USD``, "TODO"
+    ``Opex_var_GRID_imports_district_scale_USD``, "TODO"
+    ``Opex_var_NG_district_scale_USD``, "TODO"
+    ``Opex_var_WB_district_scale_USD``, "TODO"
+    ``PEN_DB_district_scale_MJoilyr``, "TODO"
+    ``PEN_GRID_exports_district_scale_MJoilyr``, "TODO"
+    ``PEN_GRID_imports_district_scale_MJoilyr``, "TODO"
+    ``PEN_NG_district_scale_MJoilyr``, "TODO"
+    ``PEN_WB_district_scale_MJoilyr``, "TODO"
     ``Unnamed: 0``, "TODO"
     
 
 
-get_optimization_generation_disconnected_performance
+get_optimization_generation_building_scale_performance
 ----------------------------------------------------
 
-path: ``outputs/data/optimization/slave/gen_2/gen_2_disconnected_performance.csv``
+path: ``outputs/data/optimization/slave/gen_2/gen_2_building_scale_performance.csv``
 
 The following file is used by these scripts: 
 
@@ -2057,21 +2057,21 @@ The following file is used by these scripts:
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``Capex_a_cooling_disconnected_USD``, "TODO"
-    ``Capex_a_heating_disconnected_USD``, "TODO"
-    ``Capex_total_cooling_disconnected_USD``, "TODO"
-    ``Capex_total_heating_disconnected_USD``, "TODO"
+    ``Capex_a_cooling_building_scale_USD``, "TODO"
+    ``Capex_a_heating_building_scale_USD``, "TODO"
+    ``Capex_total_cooling_building_scale_USD``, "TODO"
+    ``Capex_total_heating_building_scale_USD``, "TODO"
     ``generation``, "TODO"
-    ``GHG_cooling_disconnected_tonCO2``, "TODO"
-    ``GHG_heating_disconnected_tonCO2``, "TODO"
+    ``GHG_cooling_building_scale_tonCO2``, "TODO"
+    ``GHG_heating_building_scale_tonCO2``, "TODO"
     ``individual``, "TODO"
     ``individual_name``, "TODO"
-    ``Opex_fixed_cooling_disconnected_USD``, "TODO"
-    ``Opex_fixed_heating_disconnected_USD``, "TODO"
-    ``Opex_var_cooling_disconnected_USD``, "TODO"
-    ``Opex_var_heating_disconnected_USD``, "TODO"
-    ``PEN_cooling_disconnected_MJoil``, "TODO"
-    ``PEN_heating_disconnected_MJoil``, "TODO"
+    ``Opex_fixed_cooling_building_scale_USD``, "TODO"
+    ``Opex_fixed_heating_building_scale_USD``, "TODO"
+    ``Opex_var_cooling_building_scale_USD``, "TODO"
+    ``Opex_var_heating_building_scale_USD``, "TODO"
+    ``PEN_cooling_building_scale_MJoil``, "TODO"
+    ``PEN_heating_building_scale_MJoil``, "TODO"
     ``Unnamed: 0``, "TODO"
     
 
@@ -2087,26 +2087,26 @@ The following file is used by these scripts:
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``Capex_a_sys_connected_USD``, "TODO"
-    ``Capex_a_sys_disconnected_USD``, "TODO"
+    ``Capex_a_sys_district_scale_USD``, "TODO"
+    ``Capex_a_sys_building_scale_USD``, "TODO"
     ``Capex_a_sys_USD``, "TODO"
-    ``Capex_total_sys_connected_USD``, "TODO"
-    ``Capex_total_sys_disconnected_USD``, "TODO"
+    ``Capex_total_sys_district_scale_USD``, "TODO"
+    ``Capex_total_sys_building_scale_USD``, "TODO"
     ``Capex_total_sys_USD``, "TODO"
     ``generation``, "TODO"
-    ``GHG_sys_connected_tonCO2``, "TODO"
-    ``GHG_sys_disconnected_tonCO2``, "TODO"
+    ``GHG_sys_district_scale_tonCO2``, "TODO"
+    ``GHG_sys_building_scale_tonCO2``, "TODO"
     ``GHG_sys_tonCO2``, "TODO"
     ``individual``, "TODO"
     ``individual_name``, "TODO"
-    ``Opex_a_sys_connected_USD``, "TODO"
-    ``Opex_a_sys_disconnected_USD``, "TODO"
+    ``Opex_a_sys_district_scale_USD``, "TODO"
+    ``Opex_a_sys_building_scale_USD``, "TODO"
     ``Opex_a_sys_USD``, "TODO"
-    ``PEN_sys_connected_MJoil``, "TODO"
-    ``PEN_sys_disconnected_MJoil``, "TODO"
+    ``PEN_sys_district_scale_MJoil``, "TODO"
+    ``PEN_sys_building_scale_MJoil``, "TODO"
     ``PEN_sys_MJoil``, "TODO"
-    ``TAC_sys_connected_USD``, "TODO"
-    ``TAC_sys_disconnected_USD``, "TODO"
+    ``TAC_sys_district_scale_USD``, "TODO"
+    ``TAC_sys_building_scale_USD``, "TODO"
     ``TAC_sys_USD``, "TODO"
     ``Unnamed: 0``, "TODO"
     
@@ -2123,26 +2123,26 @@ The following file is used by these scripts: ``multi_criteria_analysis``
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``Capex_a_sys_connected_USD``, "TODO"
-    ``Capex_a_sys_disconnected_USD``, "TODO"
+    ``Capex_a_sys_district_scale_USD``, "TODO"
+    ``Capex_a_sys_building_scale_USD``, "TODO"
     ``Capex_a_sys_USD``, "TODO"
-    ``Capex_total_sys_connected_USD``, "TODO"
-    ``Capex_total_sys_disconnected_USD``, "TODO"
+    ``Capex_total_sys_district_scale_USD``, "TODO"
+    ``Capex_total_sys_building_scale_USD``, "TODO"
     ``Capex_total_sys_USD``, "TODO"
     ``generation``, "TODO"
-    ``GHG_sys_connected_tonCO2``, "TODO"
-    ``GHG_sys_disconnected_tonCO2``, "TODO"
+    ``GHG_sys_district_scale_tonCO2``, "TODO"
+    ``GHG_sys_building_scale_tonCO2``, "TODO"
     ``GHG_sys_tonCO2``, "TODO"
     ``individual``, "TODO"
     ``individual_name``, "TODO"
-    ``Opex_a_sys_connected_USD``, "TODO"
-    ``Opex_a_sys_disconnected_USD``, "TODO"
+    ``Opex_a_sys_district_scale_USD``, "TODO"
+    ``Opex_a_sys_building_scale_USD``, "TODO"
     ``Opex_a_sys_USD``, "TODO"
-    ``PEN_sys_connected_MJoil``, "TODO"
-    ``PEN_sys_disconnected_MJoil``, "TODO"
+    ``PEN_sys_district_scale_MJoil``, "TODO"
+    ``PEN_sys_building_scale_MJoil``, "TODO"
     ``PEN_sys_MJoil``, "TODO"
-    ``TAC_sys_connected_USD``, "TODO"
-    ``TAC_sys_disconnected_USD``, "TODO"
+    ``TAC_sys_district_scale_USD``, "TODO"
+    ``TAC_sys_building_scale_USD``, "TODO"
     ``TAC_sys_USD``, "TODO"
     ``Unnamed: 0``, "TODO"
     
@@ -2226,10 +2226,10 @@ The following file is used by these scripts:
     
 
 
-get_optimization_slave_connected_performance
+get_optimization_slave_district_scale_performance
 --------------------------------------------
 
-path: ``outputs/data/optimization/slave/gen_1/ind_2_buildings_connected_performance.csv``
+path: ``outputs/data/optimization/slave/gen_1/ind_2_buildings_district_scale_performance.csv``
 
 The following file is used by these scripts: 
 
@@ -2237,75 +2237,75 @@ The following file is used by these scripts:
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``Capex_a_BackupBoiler_NG_connected_USD``, "TODO"
-    ``Capex_a_BaseBoiler_NG_connected_USD``, "TODO"
-    ``Capex_a_CHP_NG_connected_USD``, "TODO"
-    ``Capex_a_DHN_connected_USD``, "TODO"
-    ``Capex_a_Furnace_dry_connected_USD``, "TODO"
-    ``Capex_a_Furnace_wet_connected_USD``, "TODO"
-    ``Capex_a_GHP_connected_USD``, "TODO"
-    ``Capex_a_GRID_connected_USD``, "TODO"
-    ``Capex_a_HP_Lake_connected_USD``, "TODO"
-    ``Capex_a_HP_Server_connected_USD``, "TODO"
-    ``Capex_a_HP_Sewage_connected_USD``, "TODO"
-    ``Capex_a_PeakBoiler_NG_connected_USD``, "TODO"
-    ``Capex_a_PV_connected_USD``, "TODO"
-    ``Capex_a_PVT_connected_USD``, "TODO"
-    ``Capex_a_SC_ET_connected_USD``, "TODO"
-    ``Capex_a_SC_FP_connected_USD``, "TODO"
-    ``Capex_a_SeasonalStorage_WS_connected_USD``, "TODO"
-    ``Capex_a_SubstationsHeating_connected_USD``, "TODO"
-    ``Capex_total_BackupBoiler_NG_connected_USD``, "TODO"
-    ``Capex_total_BaseBoiler_NG_connected_USD``, "TODO"
-    ``Capex_total_CHP_NG_connected_USD``, "TODO"
-    ``Capex_total_DHN_connected_USD``, "TODO"
-    ``Capex_total_Furnace_dry_connected_USD``, "TODO"
-    ``Capex_total_Furnace_wet_connected_USD``, "TODO"
-    ``Capex_total_GHP_connected_USD``, "TODO"
-    ``Capex_total_GRID_connected_USD``, "TODO"
-    ``Capex_total_HP_Lake_connected_USD``, "TODO"
-    ``Capex_total_HP_Server_connected_USD``, "TODO"
-    ``Capex_total_HP_Sewage_connected_USD``, "TODO"
-    ``Capex_total_PeakBoiler_NG_connected_USD``, "TODO"
-    ``Capex_total_PV_connected_USD``, "TODO"
-    ``Capex_total_PVT_connected_USD``, "TODO"
-    ``Capex_total_SC_ET_connected_USD``, "TODO"
-    ``Capex_total_SC_FP_connected_USD``, "TODO"
-    ``Capex_total_SeasonalStorage_WS_connected_USD``, "TODO"
-    ``Capex_total_SubstationsHeating_connected_USD``, "TODO"
-    ``GHG_DB_connected_tonCO2yr``, "TODO"
-    ``GHG_GRID_exports_connected_tonCO2yr``, "TODO"
-    ``GHG_GRID_imports_connected_tonCO2yr``, "TODO"
-    ``GHG_NG_connected_tonCO2yr``, "TODO"
-    ``GHG_WB_connected_tonCO2yr``, "TODO"
-    ``Opex_fixed_BackupBoiler_NG_connected_USD``, "TODO"
-    ``Opex_fixed_BaseBoiler_NG_connected_USD``, "TODO"
-    ``Opex_fixed_CHP_NG_connected_USD``, "TODO"
-    ``Opex_fixed_DHN_connected_USD``, "TODO"
-    ``Opex_fixed_Furnace_dry_connected_USD``, "TODO"
-    ``Opex_fixed_Furnace_wet_connected_USD``, "TODO"
-    ``Opex_fixed_GHP_connected_USD``, "TODO"
-    ``Opex_fixed_GRID_connected_USD``, "TODO"
-    ``Opex_fixed_HP_Lake_connected_USD``, "TODO"
-    ``Opex_fixed_HP_Server_connected_USD``, "TODO"
-    ``Opex_fixed_HP_Sewage_connected_USD``, "TODO"
-    ``Opex_fixed_PeakBoiler_NG_connected_USD``, "TODO"
-    ``Opex_fixed_PV_connected_USD``, "TODO"
-    ``Opex_fixed_PVT_connected_USD``, "TODO"
-    ``Opex_fixed_SC_ET_connected_USD``, "TODO"
-    ``Opex_fixed_SC_FP_connected_USD``, "TODO"
-    ``Opex_fixed_SeasonalStorage_WS_connected_USD``, "TODO"
-    ``Opex_fixed_SubstationsHeating_connected_USD``, "TODO"
-    ``Opex_var_DB_connected_USD``, "TODO"
-    ``Opex_var_GRID_exports_connected_USD``, "TODO"
-    ``Opex_var_GRID_imports_connected_USD``, "TODO"
-    ``Opex_var_NG_connected_USD``, "TODO"
-    ``Opex_var_WB_connected_USD``, "TODO"
-    ``PEN_DB_connected_MJoilyr``, "TODO"
-    ``PEN_GRID_exports_connected_MJoilyr``, "TODO"
-    ``PEN_GRID_imports_connected_MJoilyr``, "TODO"
-    ``PEN_NG_connected_MJoilyr``, "TODO"
-    ``PEN_WB_connected_MJoilyr``, "TODO"
+    ``Capex_a_BackupBoiler_NG_district_scale_USD``, "TODO"
+    ``Capex_a_BaseBoiler_NG_district_scale_USD``, "TODO"
+    ``Capex_a_CHP_NG_district_scale_USD``, "TODO"
+    ``Capex_a_DHN_district_scale_USD``, "TODO"
+    ``Capex_a_Furnace_dry_district_scale_USD``, "TODO"
+    ``Capex_a_Furnace_wet_district_scale_USD``, "TODO"
+    ``Capex_a_GHP_district_scale_USD``, "TODO"
+    ``Capex_a_GRID_district_scale_USD``, "TODO"
+    ``Capex_a_HP_Lake_district_scale_USD``, "TODO"
+    ``Capex_a_HP_Server_district_scale_USD``, "TODO"
+    ``Capex_a_HP_Sewage_district_scale_USD``, "TODO"
+    ``Capex_a_PeakBoiler_NG_district_scale_USD``, "TODO"
+    ``Capex_a_PV_district_scale_USD``, "TODO"
+    ``Capex_a_PVT_district_scale_USD``, "TODO"
+    ``Capex_a_SC_ET_district_scale_USD``, "TODO"
+    ``Capex_a_SC_FP_district_scale_USD``, "TODO"
+    ``Capex_a_SeasonalStorage_WS_district_scale_USD``, "TODO"
+    ``Capex_a_SubstationsHeating_district_scale_USD``, "TODO"
+    ``Capex_total_BackupBoiler_NG_district_scale_USD``, "TODO"
+    ``Capex_total_BaseBoiler_NG_district_scale_USD``, "TODO"
+    ``Capex_total_CHP_NG_district_scale_USD``, "TODO"
+    ``Capex_total_DHN_district_scale_USD``, "TODO"
+    ``Capex_total_Furnace_dry_district_scale_USD``, "TODO"
+    ``Capex_total_Furnace_wet_district_scale_USD``, "TODO"
+    ``Capex_total_GHP_district_scale_USD``, "TODO"
+    ``Capex_total_GRID_district_scale_USD``, "TODO"
+    ``Capex_total_HP_Lake_district_scale_USD``, "TODO"
+    ``Capex_total_HP_Server_district_scale_USD``, "TODO"
+    ``Capex_total_HP_Sewage_district_scale_USD``, "TODO"
+    ``Capex_total_PeakBoiler_NG_district_scale_USD``, "TODO"
+    ``Capex_total_PV_district_scale_USD``, "TODO"
+    ``Capex_total_PVT_district_scale_USD``, "TODO"
+    ``Capex_total_SC_ET_district_scale_USD``, "TODO"
+    ``Capex_total_SC_FP_district_scale_USD``, "TODO"
+    ``Capex_total_SeasonalStorage_WS_district_scale_USD``, "TODO"
+    ``Capex_total_SubstationsHeating_district_scale_USD``, "TODO"
+    ``GHG_DB_district_scale_tonCO2yr``, "TODO"
+    ``GHG_GRID_exports_district_scale_tonCO2yr``, "TODO"
+    ``GHG_GRID_imports_district_scale_tonCO2yr``, "TODO"
+    ``GHG_NG_district_scale_tonCO2yr``, "TODO"
+    ``GHG_WB_district_scale_tonCO2yr``, "TODO"
+    ``Opex_fixed_BackupBoiler_NG_district_scale_USD``, "TODO"
+    ``Opex_fixed_BaseBoiler_NG_district_scale_USD``, "TODO"
+    ``Opex_fixed_CHP_NG_district_scale_USD``, "TODO"
+    ``Opex_fixed_DHN_district_scale_USD``, "TODO"
+    ``Opex_fixed_Furnace_dry_district_scale_USD``, "TODO"
+    ``Opex_fixed_Furnace_wet_district_scale_USD``, "TODO"
+    ``Opex_fixed_GHP_district_scale_USD``, "TODO"
+    ``Opex_fixed_GRID_district_scale_USD``, "TODO"
+    ``Opex_fixed_HP_Lake_district_scale_USD``, "TODO"
+    ``Opex_fixed_HP_Server_district_scale_USD``, "TODO"
+    ``Opex_fixed_HP_Sewage_district_scale_USD``, "TODO"
+    ``Opex_fixed_PeakBoiler_NG_district_scale_USD``, "TODO"
+    ``Opex_fixed_PV_district_scale_USD``, "TODO"
+    ``Opex_fixed_PVT_district_scale_USD``, "TODO"
+    ``Opex_fixed_SC_ET_district_scale_USD``, "TODO"
+    ``Opex_fixed_SC_FP_district_scale_USD``, "TODO"
+    ``Opex_fixed_SeasonalStorage_WS_district_scale_USD``, "TODO"
+    ``Opex_fixed_SubstationsHeating_district_scale_USD``, "TODO"
+    ``Opex_var_DB_district_scale_USD``, "TODO"
+    ``Opex_var_GRID_exports_district_scale_USD``, "TODO"
+    ``Opex_var_GRID_imports_district_scale_USD``, "TODO"
+    ``Opex_var_NG_district_scale_USD``, "TODO"
+    ``Opex_var_WB_district_scale_USD``, "TODO"
+    ``PEN_DB_district_scale_MJoilyr``, "TODO"
+    ``PEN_GRID_exports_district_scale_MJoilyr``, "TODO"
+    ``PEN_GRID_imports_district_scale_MJoilyr``, "TODO"
+    ``PEN_NG_district_scale_MJoilyr``, "TODO"
+    ``PEN_WB_district_scale_MJoilyr``, "TODO"
     
 
 
@@ -2324,10 +2324,10 @@ The following file is used by these scripts:
     
 
 
-get_optimization_slave_disconnected_performance
+get_optimization_slave_building_scale_performance
 -----------------------------------------------
 
-path: ``outputs/data/optimization/slave/gen_2/ind_0_buildings_disconnected_performance.csv``
+path: ``outputs/data/optimization/slave/gen_2/ind_0_buildings_building_scale_performance.csv``
 
 The following file is used by these scripts: 
 
@@ -2335,18 +2335,18 @@ The following file is used by these scripts:
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``Capex_a_cooling_disconnected_USD``, "TODO"
-    ``Capex_a_heating_disconnected_USD``, "TODO"
-    ``Capex_total_cooling_disconnected_USD``, "TODO"
-    ``Capex_total_heating_disconnected_USD``, "TODO"
-    ``GHG_cooling_disconnected_tonCO2``, "TODO"
-    ``GHG_heating_disconnected_tonCO2``, "TODO"
-    ``Opex_fixed_cooling_disconnected_USD``, "TODO"
-    ``Opex_fixed_heating_disconnected_USD``, "TODO"
-    ``Opex_var_cooling_disconnected_USD``, "TODO"
-    ``Opex_var_heating_disconnected_USD``, "TODO"
-    ``PEN_cooling_disconnected_MJoil``, "TODO"
-    ``PEN_heating_disconnected_MJoil``, "TODO"
+    ``Capex_a_cooling_building_scale_USD``, "TODO"
+    ``Capex_a_heating_building_scale_USD``, "TODO"
+    ``Capex_total_cooling_building_scale_USD``, "TODO"
+    ``Capex_total_heating_building_scale_USD``, "TODO"
+    ``GHG_cooling_building_scale_tonCO2``, "TODO"
+    ``GHG_heating_building_scale_tonCO2``, "TODO"
+    ``Opex_fixed_cooling_building_scale_USD``, "TODO"
+    ``Opex_fixed_heating_building_scale_USD``, "TODO"
+    ``Opex_var_cooling_building_scale_USD``, "TODO"
+    ``Opex_var_heating_building_scale_USD``, "TODO"
+    ``PEN_cooling_building_scale_MJoil``, "TODO"
+    ``PEN_heating_building_scale_MJoil``, "TODO"
     
 
 
@@ -2395,8 +2395,8 @@ The following file is used by these scripts:
     ``E_BaseBoiler_req_W``, "TODO"
     ``E_BaseVCC_AS_req_W``, "TODO"
     ``E_BaseVCC_WS_req_W``, "TODO"
-    ``E_cs_cre_cdata_req_connected_W``, "TODO"
-    ``E_cs_cre_cdata_req_disconnected_W``, "TODO"
+    ``E_cs_cre_cdata_req_district_scale_W``, "TODO"
+    ``E_cs_cre_cdata_req_building_scale_W``, "TODO"
     ``E_DCN_req_W``, "TODO"
     ``E_DHN_req_W``, "TODO"
     ``E_electricalnetwork_sys_req_W``, "TODO"
@@ -2407,8 +2407,8 @@ The following file is used by these scripts:
     ``E_HP_SC_FP_req_W``, "TODO"
     ``E_HP_Server_req_W``, "TODO"
     ``E_HP_Sew_req_W``, "TODO"
-    ``E_hs_ww_req_connected_W``, "TODO"
-    ``E_hs_ww_req_disconnected_W``, "TODO"
+    ``E_hs_ww_req_district_scale_W``, "TODO"
+    ``E_hs_ww_req_building_scale_W``, "TODO"
     ``E_PeakBoiler_req_W``, "TODO"
     ``E_PeakVCC_AS_req_W``, "TODO"
     ``E_PeakVCC_WS_req_W``, "TODO"
@@ -2470,23 +2470,23 @@ The following file is used by these scripts:
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``Capex_a_sys_connected_USD``, "TODO"
-    ``Capex_a_sys_disconnected_USD``, "TODO"
+    ``Capex_a_sys_district_scale_USD``, "TODO"
+    ``Capex_a_sys_building_scale_USD``, "TODO"
     ``Capex_a_sys_USD``, "TODO"
-    ``Capex_total_sys_connected_USD``, "TODO"
-    ``Capex_total_sys_disconnected_USD``, "TODO"
+    ``Capex_total_sys_district_scale_USD``, "TODO"
+    ``Capex_total_sys_building_scale_USD``, "TODO"
     ``Capex_total_sys_USD``, "TODO"
-    ``GHG_sys_connected_tonCO2``, "TODO"
-    ``GHG_sys_disconnected_tonCO2``, "TODO"
+    ``GHG_sys_district_scale_tonCO2``, "TODO"
+    ``GHG_sys_building_scale_tonCO2``, "TODO"
     ``GHG_sys_tonCO2``, "TODO"
-    ``Opex_a_sys_connected_USD``, "TODO"
-    ``Opex_a_sys_disconnected_USD``, "TODO"
+    ``Opex_a_sys_district_scale_USD``, "TODO"
+    ``Opex_a_sys_building_scale_USD``, "TODO"
     ``Opex_a_sys_USD``, "TODO"
-    ``PEN_sys_connected_MJoil``, "TODO"
-    ``PEN_sys_disconnected_MJoil``, "TODO"
+    ``PEN_sys_district_scale_MJoil``, "TODO"
+    ``PEN_sys_building_scale_MJoil``, "TODO"
     ``PEN_sys_MJoil``, "TODO"
-    ``TAC_sys_connected_USD``, "TODO"
-    ``TAC_sys_disconnected_USD``, "TODO"
+    ``TAC_sys_district_scale_USD``, "TODO"
+    ``TAC_sys_building_scale_USD``, "TODO"
     ``TAC_sys_USD``, "TODO"
     
 

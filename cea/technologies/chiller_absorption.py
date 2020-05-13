@@ -9,6 +9,7 @@ import numpy as np
 from math import log, ceil
 import sympy
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
+from cea.analysis.costs.equations import calc_capex_annualized, calc_opex_annualized
 
 __author__ = "Shanshan Hsieh"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -289,12 +290,12 @@ def calc_Cinv_ACH(Q_nom_W, Absorption_chiller_cost_data, ACH_type):
             Inv_c = Absorption_chiller_cost_data.iloc[0]['c']
             Inv_d = Absorption_chiller_cost_data.iloc[0]['d']
             Inv_e = Absorption_chiller_cost_data.iloc[0]['e']
-            Inv_IR = (Absorption_chiller_cost_data.iloc[0]['IR_%']) / 100
+            Inv_IR = Absorption_chiller_cost_data.iloc[0]['IR_%']
             Inv_LT = Absorption_chiller_cost_data.iloc[0]['LT_yr']
             Inv_OM = Absorption_chiller_cost_data.iloc[0]['O&M_%'] / 100
 
             InvC = Inv_a + Inv_b * (Q_nom_W) ** Inv_c + (Inv_d + Inv_e * Q_nom_W) * log(Q_nom_W)
-            Capex_a_ACH_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+            Capex_a_ACH_USD = calc_capex_annualized(InvC, Inv_IR, Inv_LT)
             Opex_fixed_ACH_USD = InvC * Inv_OM
             Capex_ACH_USD = InvC
         else:
@@ -310,12 +311,12 @@ def calc_Cinv_ACH(Q_nom_W, Absorption_chiller_cost_data, ACH_type):
                 Inv_c = Absorption_chiller_cost_data.iloc[0]['c']
                 Inv_d = Absorption_chiller_cost_data.iloc[0]['d']
                 Inv_e = Absorption_chiller_cost_data.iloc[0]['e']
-                Inv_IR = (Absorption_chiller_cost_data.iloc[0]['IR_%']) / 100
+                Inv_IR = Absorption_chiller_cost_data.iloc[0]['IR_%']
                 Inv_LT = Absorption_chiller_cost_data.iloc[0]['LT_yr']
                 Inv_OM = Absorption_chiller_cost_data.iloc[0]['O&M_%'] / 100
 
                 InvC = Inv_a + Inv_b * (Q_nom_each_chiller) ** Inv_c + (Inv_d + Inv_e * Q_nom_each_chiller) * log(Q_nom_each_chiller)
-                Capex_a1 = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+                Capex_a1 = calc_capex_annualized(InvC, Inv_IR, Inv_LT)
                 Capex_a_ACH_USD = Capex_a_ACH_USD + Capex_a1
                 Opex_fixed_ACH_USD = Opex_fixed_ACH_USD + InvC * Inv_OM
                 Capex_ACH_USD = Capex_ACH_USD + InvC

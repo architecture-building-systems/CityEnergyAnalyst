@@ -206,13 +206,13 @@ def calc_master_to_slave_variables(locator, gen,
         master_to_slave_vars.DCN_exists = True
 
     # store how many buildings are connected to district heating or cooling
-    master_to_slave_vars.number_of_buildings_connected_heating = DHN_barcode.count("1")
-    master_to_slave_vars.number_of_buildings_connected_cooling = DCN_barcode.count("1")
+    master_to_slave_vars.number_of_buildings_district_scale_heating = DHN_barcode.count("1")
+    master_to_slave_vars.number_of_buildings_district_scale_cooling = DCN_barcode.count("1")
 
     # store the names of the buildings connected to district heating or district cooling
-    master_to_slave_vars.buildings_connected_to_district_heating = calc_connected_names(building_names_heating,
+    master_to_slave_vars.buildings_district_scale_to_district_heating = calc_district_scale_names(building_names_heating,
                                                                                         DHN_barcode)
-    master_to_slave_vars.buildings_connected_to_district_cooling = calc_connected_names(building_names_cooling,
+    master_to_slave_vars.buildings_district_scale_to_district_cooling = calc_district_scale_names(building_names_cooling,
                                                                                         DCN_barcode)
 
     #these are dataframes describing the opeartion of the thermal networks in the individual
@@ -328,7 +328,7 @@ def master_to_slave_district_cooling_technologies(Q_cooling_nom_W,
     return master_to_slave_vars
 
 
-def calc_connected_names(building_names, barcode):
+def calc_district_scale_names(building_names, barcode):
     connected_buildings = []
     for name, index in zip(building_names, barcode):
         if index == '1':
@@ -435,7 +435,7 @@ def master_to_slave_district_heating_technologies(Q_heating_nom_W,
     # SOLAR TECHNOLOGIES
     if 'PVT' in technologies_heating_allowed and individual_with_names_dict[
         'PVT'] > 0.0:  # different in this case, because solar technologies can have shares close to 0.0
-        buildings = master_to_slave_vars.buildings_connected_to_district_heating
+        buildings = master_to_slave_vars.buildings_district_scale_to_district_heating
         share_allowed = individual_with_names_dict['PVT']
         master_to_slave_vars.PVT_on = 1
         master_to_slave_vars.A_PVT_m2 = calc_available_area_solar(locator, buildings, share_allowed, 'PVT')
@@ -443,7 +443,7 @@ def master_to_slave_district_heating_technologies(Q_heating_nom_W,
 
     if 'SC_ET' in technologies_heating_allowed and individual_with_names_dict[
         'SC_ET'] > 0.0:  # different in this case, because solar technologies can have shares close to 0.0
-        buildings = master_to_slave_vars.buildings_connected_to_district_heating
+        buildings = master_to_slave_vars.buildings_district_scale_to_district_heating
         share_allowed = individual_with_names_dict['SC_ET']
         master_to_slave_vars.SC_ET_on = 1
         master_to_slave_vars.A_SC_ET_m2 = calc_available_area_solar_collectors(locator, buildings, share_allowed, "ET")
@@ -451,7 +451,7 @@ def master_to_slave_district_heating_technologies(Q_heating_nom_W,
 
     if 'SC_FP' in technologies_heating_allowed and individual_with_names_dict[
         'SC_FP'] > 0.0:  # different in this case, because solar technologies can have shares close to 0.0
-        buildings = master_to_slave_vars.buildings_connected_to_district_heating
+        buildings = master_to_slave_vars.buildings_district_scale_to_district_heating
         share_allowed = individual_with_names_dict['SC_FP']
         master_to_slave_vars.SC_FP_on = 1
         master_to_slave_vars.A_SC_FP_m2 = calc_available_area_solar_collectors(locator, buildings, share_allowed, "FP")
