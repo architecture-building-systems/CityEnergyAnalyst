@@ -64,6 +64,10 @@ class PlotBase(object):
 
         self.timeframe = self.parameters['timeframe'] if 'timeframe' in self.expected_parameters else None
 
+    @property
+    def input_files(self):
+        return []
+
     def missing_input_files(self):
         """Return the list of missing input files for this plot"""
         result = []
