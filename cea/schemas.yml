@@ -11558,6 +11558,7 @@ get_surroundings_geometry:
         values: alphanumeric
       floors_ag:
         description: Number of floors above ground (incl. ground floor, Minimum one floor is needed)
+        min: 1
         type: int
         unit: '[-]'
         values: '{1...n}'
@@ -11573,6 +11574,7 @@ get_surroundings_geometry:
         values: '[-]'
       height_ag:
         description: Height above ground (incl. ground floor, Minimum one floor is needed)
+        min: 2.0
         type: float
         unit: '[m]'
         values: '{2.0...n}'
@@ -12982,6 +12984,7 @@ get_zone_geometry:
         values: alphanumeric
       floors_ag:
         description: Number of floors above ground (incl. ground floor, minimum one floor is needed)
+        min: 1
         type: int
         unit: '[-]'
         values: '{1...n}'
@@ -12997,6 +13000,7 @@ get_zone_geometry:
         values: '[-]'
       height_ag:
         description: Height above ground (incl. ground floor, minimum one floor is needed)
+        min: 2.0
         type: float
         unit: '[m]'
         values: '{2.0...n}'
