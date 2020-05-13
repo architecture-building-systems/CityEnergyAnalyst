@@ -8220,11 +8220,6 @@ get_optimization_decentralized_folder_building_cooling_activation:
         type: float
         unit: '[Wh]'
         values: '{0.0...n}'
-      'Unnamed: 0':
-        description: Index column
-        type: int
-        unit: '[-]'
-        values: '{0...n}'
   used_by:
   - optimization
 get_optimization_decentralized_folder_building_result_cooling:
