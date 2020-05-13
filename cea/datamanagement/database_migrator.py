@@ -124,7 +124,7 @@ def migrate_2_29_to_2_31(scenario):
     os.remove(occupancy_dbf_path)
     print("- removing invalid input-tables (NOTE: run archetypes-mapper again)")
     for fname in {"supply_systems.dbf", "internal_loads.dbf", "indoor_comfort.dbf",
-                  "air_conditioning_systems.dbf", "architecture.dbf"}:
+                  "air_conditioning.dbf", "architecture.dbf"}:
         fpath = os.path.join(scenario, "inputs", "building-properties", fname)
         if os.path.exists(fpath):
             print("  - removing {fname}".format(fname=fname))
