@@ -99,9 +99,9 @@ def get_schema_variables(schema):
     return schema_variables
 
 
-def get_schema_scripts():
+def get_schema_scripts(plugins):
     """Returns the list of scripts actually mentioned in the schemas.yml file"""
-    schemas_dict = schemas()
+    schemas_dict = schemas(plugins)
     schema_scripts = set()
     for locator_method in schemas_dict:
         if schemas_dict[locator_method]['used_by']:

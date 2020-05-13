@@ -118,7 +118,8 @@ class Dashboard(object):
         self.config = config
         self.name = dashboard_dict['name']
         self.cache = cache
-        self.plots = [load_plot(config.project, plot_dict, cache) for plot_dict in dashboard_dict['plots']]
+        self.plots = [load_plot(config.project, plot_dict, cache, config.plugins) for plot_dict in
+                      dashboard_dict['plots']]
         try:
             layout = dashboard_dict['layout']
             self.layout = 'grid' if layout == 'map' else layout
@@ -130,13 +131,15 @@ class Dashboard(object):
             except KeyError:
                 self.grid_width = [1] * len(self.plots)
 
-    def add_plot(self, category, plot_id, index=None):
+    def add_plot(self, category, plot_id, plugins, index=None):
         """Add a new plot to the specified index in the dashboard"""
-        plot_class = cea.plots.categories.load_plot_by_id(category, plot_id)
+        plot_class = cea.plots.categories.load_plot_by_id(category, plot_id, plugins)
         parameters = plot_class.get_default_parameters(self.config)
 
         plot = plot_class(self.config.project, parameters, self.cache)
 
+        if not index:
+            index = len(self.plots)
         if index == len(self.plots):
             self.plots.append(plot)
         else:
@@ -167,13 +170,13 @@ class Dashboard(object):
         return out
 
 
-def load_plot(project, plot_definition, cache):
+def load_plot(project, plot_definition, cache, plugins):
     """Load a plot based on a plot definition dictionary as used in the dashboard_yml file"""
     if plot_definition['plot'] == 'empty':
         return None
     category_name = plot_definition['category']
     plot_id = plot_definition['plot']
-    plot_class = cea.plots.categories.load_plot_by_id(category_name, plot_id)
+    plot_class = cea.plots.categories.load_plot_by_id(category_name, plot_id, plugins)
     parameters = plot_definition['parameters']
     return plot_class(project, parameters, cache)
 

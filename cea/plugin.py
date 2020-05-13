@@ -103,6 +103,8 @@ class PluginPlotCategory(cea.plots.categories.PlotCategory):
                 category_name = category.name
                 category_path = category.name
                 expected_parameters = plot_config.get("expected-parameters", {})
+                if not "scenario-name" in expected_parameters:
+                    expected_parameters["scenario-name"] = "general:scenario-name"
 
                 def __init__(self, project, parameters, cache):
                     super(Plot, self).__init__(project, parameters, cache, plugin, plot_config)
@@ -152,8 +154,11 @@ class PluginPlotBase(cea.plots.PlotBase):
 
         :rtype: cea.inputlocator.InputLocator
         """
-        scenario = os.path.join(self.project, self.parameters['scenario-name'])
-        return cea.inputlocator.InputLocator(scenario=scenario, plugins=[self.plugin])
+        try:
+            scenario = os.path.join(self.project, self.parameters['scenario-name'])
+            return cea.inputlocator.InputLocator(scenario=scenario, plugins=[self.plugin])
+        except KeyError as error:
+            raise KeyError("{key} not found in {parameters}".format(key=error.message, parameters=self.parameters))
 
     @property
     def layout(self):

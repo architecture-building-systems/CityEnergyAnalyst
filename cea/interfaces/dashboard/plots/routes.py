@@ -21,11 +21,12 @@ blueprint = Blueprint(
 def script_suggestions(locator_names):
     """Return a list of CeaScript objects that produce the output for each locator name"""
     import cea.scripts
-    schemas = cea.schemas.schemas()
+    plugins = current_app.cea_config.plugins
+    schemas = cea.schemas.schemas(plugins=plugins)
     script_names = []
     for name in locator_names:
         script_names.extend(schemas[name]['created_by'])
-    return [cea.scripts.by_name(n) for n in sorted(set(script_names))]
+    return [cea.scripts.by_name(n, plugins=plugins) for n in sorted(set(script_names))]
 
 
 def load_plot(dashboard, plot_index):
