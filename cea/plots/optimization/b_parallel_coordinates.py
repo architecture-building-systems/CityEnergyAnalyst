@@ -43,27 +43,27 @@ class ParallelCoordinatesForOneGenerationPlot(cea.plots.optimization.GenerationP
     def calc_titles(self):
         title = 'System No.'
         if self.normalization == "gross floor area":
-            titlex = 'Total annualized costs <br>[USD$(2015)/m2.yr]'
+            titlex = 'Equivalent annual costs <br>[USD$(2015)/m2.yr]'
             titley = 'GHG emissions <br>[kg CO2-eq/m2.yr]'
             titlez = 'Investment costs <br>[USD$(2015)/m2]'
             titlel = 'Operation costs <br>[USD$(2015)/m2.yr]'
         elif self.normalization == "net floor area":
-            titlex = 'Total annualized costs <br>[USD$(2015)/m2.yr]'
+            titlex = 'Equivalent annual costs <br>[USD$(2015)/m2.yr]'
             titley = 'GHG emissions <br>[kg CO2-eq/m2.yr]'
             titlez = 'Investment costs <br>[USD$(2015)/m2]'
             titlel = 'Operation costs <br>[USD$(2015)/m2.yr]'
         elif self.normalization == "air conditioned floor area":
-            titlex = 'Total annualized costs <br>[USD$(2015)/m2.yr]'
+            titlex = 'Equivalent annual costs <br>[USD$(2015)/m2.yr]'
             titley = 'GHG emissions <br>[kg CO2-eq/m2.yr]'
             titlez = 'Investment costs <br>[USD$(2015)/m2.yr]'
             titlel = 'Operation costs <br>[USD$(2015)/m2.yr]'
         elif self.normalization == "building occupancy":
-            titlex = 'Total annualized costs <br>[USD$(2015)/pax.yr]'
+            titlex = 'Equivalent annual costs <br>[USD$(2015)/pax.yr]'
             titley = 'GHG emissions <br>[kg CO2-eq/pax.yr]'
             titlez = 'Investment costs <br>[USD$(2015)/pax]'
             titlel = 'Operation costs <br>[USD$(2015)/pax.yr]'
         else:
-            titlex = 'Total annualized costs <br>[USD$(2015)/yr]'
+            titlex = 'Equivalent annual costs <br>[USD$(2015)/yr]'
             titley = 'GHG emissions <br>[ton CO2-eq/yr]'
             titlez = 'Investment costs <br>[USD$(2015)]'
             titlel = 'Operation costs <br>[USD$(2015)/yr]'

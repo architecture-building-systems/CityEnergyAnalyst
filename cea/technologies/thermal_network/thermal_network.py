@@ -496,7 +496,7 @@ def thermal_network_main(locator, thermal_network, processes=1):
     # Output substation HEX node data
     all_nodes_df_output.to_csv(
         thermal_network.locator.get_thermal_network_node_types_csv_file(thermal_network.network_type,
-                                                                        thermal_network.network_name))
+                                                                        thermal_network.network_name), index=False)
 
     print("Completed thermal-hydraulic calculation.\n")
 
@@ -841,7 +841,9 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
                          thermal_network.all_nodes_df.Type == 'PLANT'].Building.values)).to_csv(
             thermal_network.locator.get_thermal_network_plant_heat_requirement_file(
                 thermal_network.network_type,
-                thermal_network.network_name, representative_week), index=False,
+                thermal_network.network_name, representative_week),
+            index=False,
+            header=['thermal_load_kW'],
             float_format='%.3f')
 
         # node temperatures
@@ -1828,7 +1830,7 @@ def calc_max_edge_flowrate(thermal_network, processes=1):
         thermal_network.thermal_demand.to_csv(
             thermal_network.locator.get_thermal_demand_csv_file(thermal_network.network_type,
                                                                 thermal_network.network_name),
-            columns=thermal_network.building_names)
+            columns=thermal_network.building_names, index=False)
 
     return thermal_network.edge_mass_flow_df
 

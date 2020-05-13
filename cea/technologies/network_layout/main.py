@@ -31,7 +31,7 @@ def layout_network(network_layout, locator, plant_building_names=None, output_na
     pipe_diameter_default = network_layout.pipe_diameter
     type_network = network_layout.network_type
     create_plant = True #always create a plant or there will be errors in the thermal network simulation...
-    list_connected_buildings = network_layout.connected_buildings
+    list_district_scale_buildings = network_layout.connected_buildings
     consider_only_buildings_with_demand = network_layout.consider_only_buildings_with_demand
     allow_looped_networks = network_layout.allow_looped_networks
 
@@ -41,7 +41,7 @@ def layout_network(network_layout, locator, plant_building_names=None, output_na
     # Calculate points where the substations will be located (building centroids)
     building_centroids_df = calc_building_centroids(path_zone_shp,
                                                     temp_path_building_centroids_shp,
-                                                    list_connected_buildings,
+                                                    list_district_scale_buildings,
                                                     consider_only_buildings_with_demand,
                                                     type_network,
                                                     total_demand_location)
@@ -56,11 +56,11 @@ def layout_network(network_layout, locator, plant_building_names=None, output_na
     path_output_nodes_shp = locator.get_network_layout_nodes_shapefile(type_network, output_name_network)
     output_network_folder = locator.get_input_network_folder(type_network, output_name_network)
 
-    if list_connected_buildings != []:
+    if list_district_scale_buildings != []:
         building_names = locator.get_zone_building_names()
-        disconnected_building_names = [x for x in list_connected_buildings if x not in building_names]
+        disconnected_building_names = [x for x in list_district_scale_buildings if x not in building_names]
     else:
-        # if list_connected_buildings is left blank, we assume all buildings are connected (no disconnected buildings)
+        # if list_district_scale_buildings is left blank, we assume all buildings are connected (no disconnected buildings)
         disconnected_building_names = []
     calc_steiner_spanning_tree(crs_projected,
                                temp_path_potential_network_shp,

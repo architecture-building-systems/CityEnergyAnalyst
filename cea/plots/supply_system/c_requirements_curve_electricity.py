@@ -63,10 +63,10 @@ class RequirementsCurveDistrictElectricityPlot(cea.plots.supply_system.SupplySys
             'Epro_req_W',
             'Eaux_req_W',
             # system requirements (by decentralized units)
-            'E_hs_ww_req_connected_W',
-            'E_cs_cre_cdata_req_connected_W',
-            'E_hs_ww_req_disconnected_W',
-            'E_cs_cre_cdata_req_disconnected_W'
+            'E_hs_ww_req_district_scale_W',
+            'E_cs_cre_cdata_req_district_scale_W',
+            'E_hs_ww_req_building_scale_W',
+            'E_cs_cre_cdata_req_building_scale_W'
 
         ]
         self.analysis_field_demand = ['E_electricalnetwork_sys_req_W']

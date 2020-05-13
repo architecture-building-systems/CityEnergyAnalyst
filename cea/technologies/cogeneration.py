@@ -13,6 +13,7 @@ from cea.optimization.constants import GT_MIN_PART_LOAD, LHV_NG, LHV_BG, GT_MAX_
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.technologies.constants import SPEC_VOLUME_STEAM
 import cea.resources.natural_gas as ngas
+from cea.analysis.costs.equations import calc_capex_annualized, calc_opex_annualized
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -442,13 +443,13 @@ def calc_Cinv_CCGT(CC_size_W, CCGT_cost_data):
     Inv_c = CCGT_cost_data.iloc[0]['c']
     Inv_d = CCGT_cost_data.iloc[0]['d']
     Inv_e = CCGT_cost_data.iloc[0]['e']
-    Inv_IR = (CCGT_cost_data.iloc[0]['IR_%']) / 100
+    Inv_IR = CCGT_cost_data.iloc[0]['IR_%']
     Inv_LT = CCGT_cost_data.iloc[0]['LT_yr']
     Inv_OM = CCGT_cost_data.iloc[0]['O&M_%'] / 100
 
     InvC = Inv_a + Inv_b * (CC_size_W) ** Inv_c + (Inv_d + Inv_e * CC_size_W) * log(CC_size_W)
 
-    Capex_a_CCGT_USD = (InvC+connection_costs) * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+    Capex_a_CCGT_USD = calc_capex_annualized((InvC+connection_costs), Inv_IR, Inv_LT)
     Opex_fixed_CCGT_USD = InvC * Inv_OM
     Capex_CCGT_USD = InvC
 
@@ -476,13 +477,13 @@ def calc_Cinv_FC(P_design_W, FC_cost_data):
     Inv_c = FC_cost_data.iloc[0]['c']
     Inv_d = FC_cost_data.iloc[0]['d']
     Inv_e = FC_cost_data.iloc[0]['e']
-    Inv_IR = (FC_cost_data.iloc[0]['IR_%']) / 100
+    Inv_IR = FC_cost_data.iloc[0]['IR_%']
     Inv_LT = FC_cost_data.iloc[0]['LT_yr']
     Inv_OM = FC_cost_data.iloc[0]['O&M_%'] / 100
 
     InvC = Inv_a + Inv_b * (P_design_W) ** Inv_c + (Inv_d + Inv_e * P_design_W) * log(P_design_W)
 
-    Capex_a_FC_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+    Capex_a_FC_USD = calc_capex_annualized(InvC, Inv_IR, Inv_LT)
     Opex_fixed_FC_USD = InvC * Inv_OM
     Capex_FC_USD = InvC
 
