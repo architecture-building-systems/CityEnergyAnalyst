@@ -418,7 +418,7 @@ def disconnected_cooling_for_building(building_name, supply_systems, lca, locato
     # save activation for the best supply system configuration
     best_activation_df = pd.DataFrame.from_dict(cooling_dispatch[indexBest])  #
     best_activation_df.to_csv(
-        locator.get_optimization_decentralized_folder_building_cooling_activation(building_name))
+        locator.get_optimization_decentralized_folder_building_cooling_activation(building_name), index=False)
 
 
 def calc_VCC_operation(T_chw_re_K, T_chw_sup_K, mdot_kgpers):
