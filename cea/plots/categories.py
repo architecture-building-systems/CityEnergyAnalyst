@@ -44,11 +44,6 @@ def list_categories():
             continue
 
 
-def is_valid_category(category):
-    """True, if category is the name (not the label) of a valid CEA plot category"""
-    return category in set(c.name for c in list_categories())
-
-
 def load_category(category_name):
     """Returns a PlotsCategory object if is_valid_category(category), else None"""
     for c in list_categories():
