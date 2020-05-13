@@ -574,9 +574,9 @@ def save_generation_dataframes(generation,
     performance_totals['generation'] = generation
 
     # save all results to disk
-    performance_disconnected.to_csv(locator.get_optimization_generation_building_scale_performance(generation))
-    performance_connected.to_csv(locator.get_optimization_generation_district_scale_performance(generation))
-    performance_totals.to_csv(locator.get_optimization_generation_total_performance(generation))
+    performance_disconnected.to_csv(locator.get_optimization_generation_building_scale_performance(generation), index=False)
+    performance_connected.to_csv(locator.get_optimization_generation_district_scale_performance(generation), index=False)
+    performance_totals.to_csv(locator.get_optimization_generation_total_performance(generation), index=False)
 
 
 def save_generation_individuals(columns_of_saved_files, generation, invalid_ind, locator):
@@ -589,7 +589,7 @@ def save_generation_individuals(columns_of_saved_files, generation, invalid_ind,
 
     individuals_info['individual'] = individual_list
     individuals_info['generation'] = generation
-    individuals_info.to_csv(locator.get_optimization_individuals_in_generation(generation))
+    individuals_info.to_csv(locator.get_optimization_individuals_in_generation(generation), index=False)
 
 
 def create_empty_individual(column_names,
