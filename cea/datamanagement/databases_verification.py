@@ -13,7 +13,9 @@ from cea.utilities.schedule_reader import get_all_schedule_names
 
 COLUMNS_ZONE_GEOMETRY = ['Name', 'floors_bg', 'floors_ag', 'height_bg', 'height_ag']
 COLUMNS_SURROUNDINGS_GEOMETRY = ['Name', 'height_ag', 'floors_ag']
-COLUMNS_ZONE_TYPOLOGY = ['Name', 'STANDARD', 'YEAR', '1ST_USE', '1ST_USE_R', '2ND_USE', '2ND_USE_R', '3RD_USE', '3RD_USE_R']
+COLUMNS_ZONE_TYPOLOGY = ['Name', 'STANDARD', 'YEAR', '1ST_USE', '1ST_USE_R', '2ND_USE', '2ND_USE_R', '3RD_USE',
+                         '3RD_USE_R']
+
 
 def assert_columns_names(zone_df, columns):
     try:
@@ -108,9 +110,10 @@ def verify_input_terrain(terrain_raster):
 
 
 class InputFileValidator(object):
-    def __init__(self, input_locator=None):
+    def __init__(self, input_locator=None, plugins=None):
         # Need locator to read other files if lookup choice values
         self.locator = input_locator
+        self.plugins = plugins if not plugins is None else []
 
     def validate(self, data, data_schema):
         """
@@ -180,7 +183,8 @@ class InputFileValidator(object):
             if 'primary' in col_schema:
                 duplicates = data[column][data[column].duplicated(keep=False)]
                 for index, col_value in duplicates.iteritems():
-                    errors.append([{'row': int(index) + 1, 'column': str(column)}, 'value is not unique: {}'.format(col_value)])
+                    errors.append(
+                        [{'row': int(index) + 1, 'column': str(column)}, 'value is not unique: {}'.format(col_value)])
         return errors
 
     def assert_constraints(self, data, data_schema):
@@ -208,14 +212,10 @@ class InputFileValidator(object):
         lookup_prop = schema['choice'].get('lookup')
         if self.locator and lookup_prop:
             locator_method_name = lookup_prop['path']
-            file_type = self._read_schemas()[locator_method_name]['file_type']
+            file_type = schemas(self.plugins)[locator_method_name]['file_type']
             data = self._read_lookup_data_file(locator_method_name, file_type)
             return data[lookup_prop['sheet']][lookup_prop['column']].tolist() if data else None
         return None
-
-    @simple_memoize
-    def _read_schemas(self):
-        return schemas()
 
     @simple_memoize
     def _read_lookup_data_file(self, locator_method_name, file_type):
@@ -257,7 +257,8 @@ class ChoiceTypeValidator(BaseTypeValidator):
         if errors:
             return errors
         if self.choices and value not in self.choices or self.values and value not in self.values:
-            return 'value must be from choices {} : got {}'.format([str(choice) for choice in self.choices or self.values], value)
+            return 'value must be from choices {} : got {}'.format(
+                [str(choice) for choice in self.choices or self.values], value)
         return None
 
 
@@ -333,7 +334,7 @@ def main():
     config = cea.config.Configuration()
     locator = cea.inputlocator.InputLocator(config.scenario)
     _schemas = schemas()
-    validator = InputFileValidator(locator)
+    validator = InputFileValidator(locator, plugins=config.plugins)
     locator_methods = ['get_database_construction_standards',
                        'get_database_use_types_properties',
                        'get_database_supply_assemblies',

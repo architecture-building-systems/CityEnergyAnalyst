@@ -47,7 +47,6 @@ def list_categories(plugins):
             yield plot_category
 
 
-
 def load_category(category_name, plugins):
     """Returns a PlotsCategory object if is_valid_category(category), else None"""
     for c in list_categories(plugins=plugins):
@@ -56,18 +55,9 @@ def load_category(category_name, plugins):
     return None
 
 
-def load_plot(category_name, plot_name):
-    category = load_category(category_name)
-    if category:
-        for plot in category.plots:
-            if plot.__name__ == plot_name:
-                return plot
-    return None
-
-
-def load_plot_by_id(category_name, plot_id):
+def load_plot_by_id(category_name, plot_id, plugins):
     """plot_id is a web-friendly way of expressing the plot's name (which is more english friendly)"""
-    category = load_category(category_name)
+    category = load_category(category_name, plugins)
     if category:
         for plot in category.plots:
             if plot.id() == plot_id:

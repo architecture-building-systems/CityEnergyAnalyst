@@ -396,7 +396,7 @@ class InputDatabaseValidate(Resource):
         config = current_app.cea_config
         locator = cea.inputlocator.InputLocator(config.scenario)
         schemas = cea.schemas.schemas(plugins=[])
-        validator = InputFileValidator(locator)
+        validator = InputFileValidator(locator, plugins=config.plugins)
         out = OrderedDict()
 
         for db_name, schema_keys in DATABASES_SCHEMA_KEYS.items():
