@@ -5,7 +5,7 @@ from __future__ import division
 import pandas as pd
 from math import ceil, log
 from cea.technologies.constants import CT_MIN_PARTLOAD_RATIO
-
+from cea.analysis.costs.equations import calc_capex_annualized, calc_opex_annualized
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Thuy-An Nguyen", "Tim Vollrath", "Jimeno A. Fonseca"]
@@ -114,13 +114,13 @@ def calc_Cinv_CT(Q_nom_CT_W, locator, technology_type):
             Inv_c = CT_cost_data.iloc[0]['c']
             Inv_d = CT_cost_data.iloc[0]['d']
             Inv_e = CT_cost_data.iloc[0]['e']
-            Inv_IR = (CT_cost_data.iloc[0]['IR_%']) / 100
+            Inv_IR = CT_cost_data.iloc[0]['IR_%']
             Inv_LT = CT_cost_data.iloc[0]['LT_yr']
             Inv_OM = CT_cost_data.iloc[0]['O&M_%'] / 100
 
             InvC = Inv_a + Inv_b * (Q_nom_CT_W) ** Inv_c + (Inv_d + Inv_e * Q_nom_CT_W) * log(Q_nom_CT_W)
 
-            Capex_a_CT_USD =  InvC * (Inv_IR) * (1+ Inv_IR) ** Inv_LT / ((1+Inv_IR) ** Inv_LT - 1)
+            Capex_a_CT_USD = calc_capex_annualized(InvC, Inv_IR, Inv_LT)
             Opex_fixed_CT_USD = InvC * Inv_OM
             Capex_CT_USD = InvC
 
@@ -136,11 +136,11 @@ def calc_Cinv_CT(Q_nom_CT_W, locator, technology_type):
                 Inv_c = CT_cost_data.iloc[0]['c']
                 Inv_d = CT_cost_data.iloc[0]['d']
                 Inv_e = CT_cost_data.iloc[0]['e']
-                Inv_IR = (CT_cost_data.iloc[0]['IR_%']) / 100
+                Inv_IR = CT_cost_data.iloc[0]['IR_%']
                 Inv_LT = CT_cost_data.iloc[0]['LT_yr']
                 Inv_OM = CT_cost_data.iloc[0]['O&M_%'] / 100
                 InvC = Inv_a + Inv_b * (Q_nom_each_CT) ** Inv_c + (Inv_d + Inv_e * Q_nom_each_CT) * log(Q_nom_each_CT)
-                Capex_a1 = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+                Capex_a1 = calc_capex_annualized(InvC, Inv_IR, Inv_LT)
                 Capex_a_CT_USD = Capex_a_CT_USD + Capex_a1
                 Opex_fixed_CT_USD = Opex_fixed_CT_USD + InvC * Inv_OM
                 Capex_CT_USD = Capex_CT_USD + InvC

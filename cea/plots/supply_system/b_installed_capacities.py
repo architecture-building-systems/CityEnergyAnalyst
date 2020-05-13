@@ -29,47 +29,47 @@ class InstalledCapacities(cea.plots.supply_system.SupplySystemPlotBase):
 
     def __init__(self, project, parameters, cache):
         super(InstalledCapacities, self).__init__(project, parameters, cache)
-        self.analysis_fields_connected_heating = ['Capacity_BackupBoiler_NG_heat_connected_W',
-                                                  'Capacity_PeakBoiler_NG_heat_connected_W',
-                                                  'Capacity_BaseBoiler_NG_heat_connected_W',
-                                                  'Capacity_CHP_DB_heat_connected_W',
-                                                  'Capacity_CHP_NG_heat_connected_W',
-                                                  'Capacity_CHP_WB_heat_connected_W',
-                                                  'Capacity_HP_DS_heat_connected_W',
-                                                  'Capacity_HP_GS_heat_connected_W',
-                                                  'Capacity_HP_SS_heat_connected_W',
-                                                  'Capacity_HP_WS_heat_connected_W',
-                                                  'Capacity_SC_ET_heat_connected_W',
-                                                  'Capacity_SC_FP_heat_connected_W',
-                                                  'Capacity_PVT_heat_connected_W',
-                                                  'Capacity_SeasonalStorage_WS_heat_connected_W']
+        self.analysis_fields_district_scale_heating = ['Capacity_BackupBoiler_NG_heat_district_scale_W',
+                                                  'Capacity_PeakBoiler_NG_heat_district_scale_W',
+                                                  'Capacity_BaseBoiler_NG_heat_district_scale_W',
+                                                  'Capacity_CHP_DB_heat_district_scale_W',
+                                                  'Capacity_CHP_NG_heat_district_scale_W',
+                                                  'Capacity_CHP_WB_heat_district_scale_W',
+                                                  'Capacity_HP_DS_heat_district_scale_W',
+                                                  'Capacity_HP_GS_heat_district_scale_W',
+                                                  'Capacity_HP_SS_heat_district_scale_W',
+                                                  'Capacity_HP_WS_heat_district_scale_W',
+                                                  'Capacity_SC_ET_heat_district_scale_W',
+                                                  'Capacity_SC_FP_heat_district_scale_W',
+                                                  'Capacity_PVT_heat_district_scale_W',
+                                                  'Capacity_SeasonalStorage_WS_heat_district_scale_W']
 
-        self.analysis_fields_connected_cooling = ["Capacity_TrigenCCGT_heat_NG_connected_W",
-                                                  "Capacity_TrigenACH_cool_NG_connected_W",
-                                                  "Capacity_BaseVCC_WS_cool_connected_W",
-                                                  "Capacity_PeakVCC_WS_cool_connected_W",
-                                                  "Capacity_BaseVCC_AS_cool_connected_W",
-                                                  "Capacity_PeakVCC_AS_cool_connected_W",
-                                                  "Capacity_BackupVCC_AS_cool_connected_W",
-                                                  "Capacity_DailyStorage_WS_cool_connected_W"]
+        self.analysis_fields_district_scale_cooling = ["Capacity_TrigenCCGT_heat_NG_district_scale_W",
+                                                  "Capacity_TrigenACH_cool_NG_district_scale_W",
+                                                  "Capacity_BaseVCC_WS_cool_district_scale_W",
+                                                  "Capacity_PeakVCC_WS_cool_district_scale_W",
+                                                  "Capacity_BaseVCC_AS_cool_district_scale_W",
+                                                  "Capacity_PeakVCC_AS_cool_district_scale_W",
+                                                  "Capacity_BackupVCC_AS_cool_district_scale_W",
+                                                  "Capacity_DailyStorage_WS_cool_district_scale_W"]
 
-        self.analysis_fields_connected_electricity = ['Capacity_PV_el_connected_W',
-                                                      'Capacity_PVT_el_connected_W',
-                                                      'Capacity_CHP_WB_el_connected_W',
-                                                      'Capacity_CHP_NG_el_connected_W',
-                                                      'Capacity_CHP_DB_el_connected_W',
-                                                      "Capacity_TrigenCCGT_el_NG_connected_W",
-                                                      'Capacity_GRID_el_connected_W',
+        self.analysis_fields_district_scale_electricity = ['Capacity_PV_el_district_scale_W',
+                                                      'Capacity_PVT_el_district_scale_W',
+                                                      'Capacity_CHP_WB_el_district_scale_W',
+                                                      'Capacity_CHP_NG_el_district_scale_W',
+                                                      'Capacity_CHP_DB_el_district_scale_W',
+                                                      "Capacity_TrigenCCGT_el_NG_district_scale_W",
+                                                      'Capacity_GRID_el_district_scale_W',
                                                       ]
-        self.analysis_fields_disconnected_heating = ['Capacity_BaseBoiler_NG_heat_disconnected_W',
-                                                     'Capacity_FC_NG_heat_disconnected_W',
-                                                     'Capacity_GS_HP_heat_disconnected_W']
-        self.analysis_fields_disconnected_cooling = ['Capacity_DX_AS_cool_disconnected_W',
-                                                     'Capacity_BaseVCC_AS_cool_disconnected_W',
-                                                     'Capacity_VCCHT_AS_cool_disconnected_W',
-                                                     'Capacity_ACH_SC_FP_cool_disconnected_W',
-                                                     'Capaticy_ACH_SC_ET_cool_disconnected_W',
-                                                     'Capacity_ACHHT_FP_cool_disconnected_W']
+        self.analysis_fields_building_scale_heating = ['Capacity_BaseBoiler_NG_heat_building_scale_W',
+                                                     'Capacity_FC_NG_heat_building_scale_W',
+                                                     'Capacity_GS_HP_heat_building_scale_W']
+        self.analysis_fields_building_scale_cooling = ['Capacity_DX_AS_cool_building_scale_W',
+                                                     'Capacity_BaseVCC_AS_cool_building_scale_W',
+                                                     'Capacity_VCCHT_AS_cool_building_scale_W',
+                                                     'Capacity_ACH_SC_FP_cool_building_scale_W',
+                                                     'Capaticy_ACH_SC_ET_cool_building_scale_W',
+                                                     'Capacity_ACHHT_FP_cool_building_scale_W']
         self.input_files = [(self.locator.get_optimization_slave_electricity_requirements_data,
                              [self.individual, self.generation])]
 
@@ -93,25 +93,25 @@ class InstalledCapacities(cea.plots.supply_system.SupplySystemPlotBase):
     def calc_graph(self):
         # GET BARCHART OF CONNECTED BUILDINGS
         # get data
-        data_connected = self.process_connected_capacities_kW()
-        data_disconnected = self.process_disconnected_capacities_kW()
+        data_connected = self.process_district_scale_capacities_kW()
+        data_disconnected = self.process_building_scale_capacities_kW()
 
         # organize fiels according to heating, cooling and electricity
-        analysis_fields_connected_heating = self.analysis_fields_connected_heating
-        analysis_fields_connected_cooling = self.analysis_fields_connected_cooling
-        analysis_fields_connected_electricity = self.analysis_fields_connected_electricity
-        analysis_fields_disconnected_heating = self.analysis_fields_disconnected_heating
-        analysis_fields_disconnected_cooling = self.analysis_fields_disconnected_cooling
-        fields = analysis_fields_connected_heating + analysis_fields_connected_cooling + analysis_fields_connected_electricity
+        analysis_fields_district_scale_heating = self.analysis_fields_district_scale_heating
+        analysis_fields_district_scale_cooling = self.analysis_fields_district_scale_cooling
+        analysis_fields_district_scale_electricity = self.analysis_fields_district_scale_electricity
+        analysis_fields_building_scale_heating = self.analysis_fields_building_scale_heating
+        analysis_fields_building_scale_cooling = self.analysis_fields_building_scale_cooling
+        fields = analysis_fields_district_scale_heating + analysis_fields_district_scale_cooling + analysis_fields_district_scale_electricity
         analysis_fields_connected = self.remove_unused_fields(data_connected, fields)
-        fields = analysis_fields_disconnected_heating + analysis_fields_disconnected_cooling
+        fields = analysis_fields_building_scale_heating + analysis_fields_building_scale_cooling
         analysis_fields_disconnected = self.remove_unused_fields(data_disconnected, fields)
 
         # iterate and create plots
         graph = []
         total_connected = data_connected[analysis_fields_connected].sum(axis=1)[0]
         for field in analysis_fields_connected:
-            x = ['Technology for connected buildings']
+            x = ['Technology for district scale system']
             y = data_connected[field]
             total_perc = (y[0] / total_connected * 100).round(2)
             total_perc_txt = [str(round(y[0])) + " kW (" + str(total_perc) + " %)"]

@@ -27,8 +27,8 @@ class AnnualEmissionsPlot(cea.plots.optimization.GenerationPlotBase):
 
     def __init__(self, project, parameters, cache):
         super(AnnualEmissionsPlot, self).__init__(project, parameters, cache)
-        self.analysis_fields = ["GHG_sys_connected_tonCO2",
-                                "GHG_sys_disconnected_tonCO2",
+        self.analysis_fields = ["GHG_sys_district_scale_tonCO2",
+                                "GHG_sys_building_scale_tonCO2",
                                 "GHG_sys_embodied_tonCO2",
                                 ]
         self.normalization = self.parameters['normalization']

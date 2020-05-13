@@ -12,6 +12,7 @@ from scipy.interpolate import interp1d
 
 from cea.constants import DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3, HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.optimization.constants import PUMP_ETA
+from cea.analysis.costs.equations import calc_capex_annualized, calc_opex_annualized
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -62,11 +63,11 @@ def calc_Ctot_pump(master_to_slave_vars, network_features, locator, network_type
     """
 
     if network_type == "DH":
-        multiplier_buildings_connected_to_total = master_to_slave_vars.number_of_buildings_connected_heating / master_to_slave_vars.num_total_buildings
+        multiplier_buildings_district_scale_to_total = master_to_slave_vars.number_of_buildings_district_scale_heating / master_to_slave_vars.num_total_buildings
         data = master_to_slave_vars.DH_network_summary_individual
         mdotA_kgpers = data["mdot_DH_netw_total_kgpers"].values
         mdotnMax_kgpers = np.max(mdotA_kgpers)
-        deltaPmax = np.max(network_features.DeltaP_DHN) * multiplier_buildings_connected_to_total
+        deltaPmax = np.max(network_features.DeltaP_DHN) * multiplier_buildings_district_scale_to_total
         Capex_a_pump_USD, \
         Opex_fixed_pump_USD, \
         Capex_pump_USD = calc_Cinv_pump(deltaPmax,
@@ -74,11 +75,11 @@ def calc_Ctot_pump(master_to_slave_vars, network_features, locator, network_type
                                         PUMP_ETA,
                                         locator,
                                         'PU1')  # investment of Machinery
-        P_motor_tot_W = network_features.DeltaP_DHN * multiplier_buildings_connected_to_total * (
+        P_motor_tot_W = network_features.DeltaP_DHN * multiplier_buildings_district_scale_to_total * (
                 mdotA_kgpers / 1000) / PUMP_ETA
 
     if network_type == "DC":
-        multiplier_buildings_connected_to_total = master_to_slave_vars.number_of_buildings_connected_cooling / master_to_slave_vars.num_total_buildings
+        multiplier_buildings_district_scale_to_total = master_to_slave_vars.number_of_buildings_district_scale_cooling / master_to_slave_vars.num_total_buildings
         data = master_to_slave_vars.DC_network_summary_individual
         if master_to_slave_vars.WasteServersHeatRecovery == 1:
             mdotA_kgpers = data["mdot_cool_space_cooling_and_refrigeration_netw_all_kgpers"].values
@@ -86,7 +87,7 @@ def calc_Ctot_pump(master_to_slave_vars, network_features, locator, network_type
             mdotA_kgpers = data["mdot_cool_space_cooling_data_center_and_refrigeration_netw_all_kgpers"].values
 
         mdotnMax_kgpers = np.max(mdotA_kgpers)
-        deltaPmax = np.max(network_features.DeltaP_DCN) * multiplier_buildings_connected_to_total
+        deltaPmax = np.max(network_features.DeltaP_DCN) * multiplier_buildings_district_scale_to_total
         Capex_a_pump_USD, \
         Opex_fixed_pump_USD, \
         Capex_pump_USD = calc_Cinv_pump(deltaPmax,
@@ -94,7 +95,7 @@ def calc_Ctot_pump(master_to_slave_vars, network_features, locator, network_type
                                         PUMP_ETA,
                                         locator,
                                         'PU1')  # investment of Machinery
-        P_motor_tot_W = network_features.DeltaP_DCN * multiplier_buildings_connected_to_total * (
+        P_motor_tot_W = network_features.DeltaP_DCN * multiplier_buildings_district_scale_to_total * (
                 mdotA_kgpers / 1000) / PUMP_ETA
 
     return Capex_a_pump_USD, Opex_fixed_pump_USD, Capex_pump_USD, P_motor_tot_W
@@ -155,14 +156,14 @@ def calc_Cinv_pump(deltaP, mdot_kgpers, eta_pumping, locator, technology_type):
         Inv_c = pump_cost_data.iloc[0]['c']
         Inv_d = pump_cost_data.iloc[0]['d']
         Inv_e = pump_cost_data.iloc[0]['e']
-        Inv_IR = (pump_cost_data.iloc[0]['IR_%']) / 100
+        Inv_IR = pump_cost_data.iloc[0]['IR_%']
         Inv_LT = pump_cost_data.iloc[0]['LT_yr']
         Inv_OM = pump_cost_data.iloc[0]['O&M_%'] / 100
 
         InvC = Inv_a + Inv_b * (Pump_Array_W[pump_i]) ** Inv_c + (Inv_d + Inv_e * Pump_Array_W[pump_i]) * log(
             Pump_Array_W[pump_i])
 
-        Capex_a_pump_USD += InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+        Capex_a_pump_USD += calc_capex_annualized(InvC, Inv_IR, Inv_LT)
         Opex_fixed_pump_USD += InvC * Inv_OM
         Capex_pump_USD += InvC
 
