@@ -27,10 +27,10 @@ class AnnualCostsPlot(cea.plots.optimization.GenerationPlotBase):
 
     def __init__(self, project, parameters, cache):
         super(AnnualCostsPlot, self).__init__(project, parameters, cache)
-        self.analysis_fields = ["Capex_a_sys_connected_USD",
-                                "Capex_a_sys_disconnected_USD",
-                                "Opex_a_sys_connected_USD",
-                                "Opex_a_sys_disconnected_USD"
+        self.analysis_fields = ["Capex_a_sys_district_scale_USD",
+                                "Capex_a_sys_building_scale_USD",
+                                "Opex_a_sys_district_scale_USD",
+                                "Opex_a_sys_building_scale_USD"
                                 ]
         self.normalization = self.parameters['normalization']
         self.input_files = [(self.locator.get_optimization_generation_total_performance_pareto, [self.generation])]

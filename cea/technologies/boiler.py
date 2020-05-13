@@ -9,6 +9,7 @@ from math import log, ceil
 import pandas as pd
 import numpy as np
 from cea.technologies.constants import BOILER_P_AUX
+from cea.analysis.costs.equations import calc_capex_annualized, calc_opex_annualized
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -196,13 +197,13 @@ def calc_Cinv_boiler(Q_design_W, technology_type, boiler_cost_data):
             Inv_c = boiler_cost_data.iloc[0]['c']
             Inv_d = boiler_cost_data.iloc[0]['d']
             Inv_e = boiler_cost_data.iloc[0]['e']
-            Inv_IR = (boiler_cost_data.iloc[0]['IR_%']) / 100.0
+            Inv_IR = boiler_cost_data.iloc[0]['IR_%']
             Inv_LT = boiler_cost_data.iloc[0]['LT_yr']
             Inv_OM = boiler_cost_data.iloc[0]['O&M_%'] / 100.0
 
             InvC = Inv_a + Inv_b * (Q_design_W) ** Inv_c + (Inv_d + Inv_e * Q_design_W) * log(Q_design_W)
 
-            Capex_a_Boiler_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+            Capex_a_Boiler_USD = calc_capex_annualized(InvC, Inv_IR, Inv_LT)
             Opex_a_fix_Boiler_USD = InvC * Inv_OM
             Capex_Boiler_USD = InvC
 
@@ -218,13 +219,13 @@ def calc_Cinv_boiler(Q_design_W, technology_type, boiler_cost_data):
             Inv_c = boiler_cost_data.iloc[0]['c']
             Inv_d = boiler_cost_data.iloc[0]['d']
             Inv_e = boiler_cost_data.iloc[0]['e']
-            Inv_IR = (boiler_cost_data.iloc[0]['IR_%']) / 100.0
+            Inv_IR = boiler_cost_data.iloc[0]['IR_%']
             Inv_LT = boiler_cost_data.iloc[0]['LT_yr']
             Inv_OM = boiler_cost_data.iloc[0]['O&M_%'] / 100.0
 
             InvC = (Inv_a + Inv_b * (Q_nom_W) ** Inv_c + (Inv_d + Inv_e * Q_nom_W) * log(Q_nom_W)) * number_of_boilers
 
-            Capex_a_Boiler_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+            Capex_a_Boiler_USD = calc_capex_annualized(InvC, Inv_IR, Inv_LT)
             Opex_a_fix_Boiler_USD = InvC * Inv_OM
             Capex_Boiler_USD = InvC
 

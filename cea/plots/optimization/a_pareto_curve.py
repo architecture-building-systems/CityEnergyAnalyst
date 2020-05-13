@@ -49,23 +49,23 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.GenerationPlotBase)
 
     def calc_titles(self):
         if self.normalization == "gross floor area":
-            titlex = 'Total annualized costs [USD$(2015)/m2.yr]'
+            titlex = 'Equivalent annual costs [USD$(2015)/m2.yr]'
             titley = 'GHG emissions [kg CO2-eq/m2.yr]'
             titlez = 'Investment costs <br>[USD$(2015)/m2]'
         elif self.normalization == "net floor area":
-            titlex = 'Total annualized costs [USD$(2015)/m2.yr]'
+            titlex = 'Equivalent annual costs [USD$(2015)/m2.yr]'
             titley = 'GHG emissions [kg CO2-eq/m2.yr]'
             titlez = 'Investment costs <br>[USD$(2015)/m2]'
         elif self.normalization == "air conditioned floor area":
-            titlex = 'Total annualized costs [USD$(2015)/m2.yr]'
+            titlex = 'Equivalent annual costs [USD$(2015)/m2.yr]'
             titley = 'GHG emissions [kg CO2-eq/m2.yr]'
             titlez = 'Investment costs <br>[USD$(2015)/m2.yr]'
         elif self.normalization == "building occupancy":
-            titlex = 'Total annualized costs [USD$(2015)/pax.yr]'
+            titlex = 'Equivalent annual costs [USD$(2015)/pax.yr]'
             titley = 'GHG emissions [kg CO2-eq/pax.yr]'
             titlez = 'Investment costs <br>[USD$(2015)/pax]'
         else:
-            titlex = 'Total annualized costs [USD$(2015)/yr]'
+            titlex = 'Equivalent annual costs [USD$(2015)/yr]'
             titley = 'GHG emissions [ton CO2-eq/yr]'
             titlez = 'Investment costs <br>[USD$(2015)]'
 

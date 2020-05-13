@@ -28,6 +28,7 @@ from cea.optimization.constants import VCC_CODE_CENTRALIZED
 from cea.optimization.master.emissions_model import calc_emissions_Whyr_to_tonCO2yr
 from cea.technologies.pumps import calc_Cinv_pump
 from cea.technologies.supply_systems_database import SupplySystemsDatabase
+from cea.analysis.costs.equations import calc_capex_annualized, calc_opex_annualized
 
 __author__ = "Tim Vollrath"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -39,48 +40,48 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def buildings_disconnected_costs_and_emissions(column_names_buildings_heating,
+def buildings_building_scale_costs_and_emissions(column_names_buildings_heating,
                                                column_names_buildings_cooling, locator, master_to_slave_vars):
     DHN_barcode = master_to_slave_vars.DHN_barcode
     DCN_barcode = master_to_slave_vars.DCN_barcode
 
     # DISCONNECTED BUILDINGS  - HEATING LOADS
-    GHG_heating_sys_disconnected_tonCO2yr, \
-    Capex_total_heating_sys_disconnected_USD, \
-    Capex_a_heating_sys_disconnected_USD, \
+    GHG_heating_sys_building_scale_tonCO2yr, \
+    Capex_total_heating_sys_building_scale_USD, \
+    Capex_a_heating_sys_building_scale_USD, \
     Opex_var_heating_sys_disconnected, \
-    Opex_fixed_heating_sys_disconnected_USD, \
+    Opex_fixed_heating_sys_building_scale_USD, \
     capacity_installed_heating_sys_df = calc_costs_emissions_decentralized_DH(DHN_barcode,
                                                                               column_names_buildings_heating,
                                                                               locator)
 
     # DISCONNECTED BUILDINGS - COOLING LOADS
-    GHG_cooling_sys_disconnected_tonCO2yr, \
-    Capex_total_cooling_sys_disconnected_USD, \
-    Capex_a_cooling_sys_disconnected_USD, \
+    GHG_cooling_sys_building_scale_tonCO2yr, \
+    Capex_total_cooling_sys_building_scale_USD, \
+    Capex_a_cooling_sys_building_scale_USD, \
     Opex_var_cooling_sys_disconnected, \
-    Opex_fixed_cooling_sys_disconnected_USD, \
+    Opex_fixed_cooling_sys_building_scale_USD, \
     capacity_installed_cooling_sys_df = calc_costs_emissions_decentralized_DC(DCN_barcode,
                                                                               column_names_buildings_cooling,
                                                                               locator)
 
     disconnected_costs = {
         # heating
-        "Capex_a_heating_disconnected_USD": Capex_a_heating_sys_disconnected_USD,
-        "Capex_total_heating_disconnected_USD": Capex_total_heating_sys_disconnected_USD,
-        "Opex_var_heating_disconnected_USD": Opex_var_heating_sys_disconnected,
-        "Opex_fixed_heating_disconnected_USD": Opex_fixed_heating_sys_disconnected_USD,
+        "Capex_a_heating_building_scale_USD": Capex_a_heating_sys_building_scale_USD,
+        "Capex_total_heating_building_scale_USD": Capex_total_heating_sys_building_scale_USD,
+        "Opex_var_heating_building_scale_USD": Opex_var_heating_sys_disconnected,
+        "Opex_fixed_heating_building_scale_USD": Opex_fixed_heating_sys_building_scale_USD,
         # cooling
-        "Capex_a_cooling_disconnected_USD": Capex_a_cooling_sys_disconnected_USD,
-        "Capex_total_cooling_disconnected_USD": Capex_total_cooling_sys_disconnected_USD,
-        "Opex_var_cooling_disconnected_USD": Opex_var_cooling_sys_disconnected,
-        "Opex_fixed_cooling_disconnected_USD": Opex_fixed_cooling_sys_disconnected_USD,
+        "Capex_a_cooling_building_scale_USD": Capex_a_cooling_sys_building_scale_USD,
+        "Capex_total_cooling_building_scale_USD": Capex_total_cooling_sys_building_scale_USD,
+        "Opex_var_cooling_building_scale_USD": Opex_var_cooling_sys_disconnected,
+        "Opex_fixed_cooling_building_scale_USD": Opex_fixed_cooling_sys_building_scale_USD,
     }
 
     disconnected_emissions = {
         # CO2 EMISSIONS
-        "GHG_heating_disconnected_tonCO2": GHG_heating_sys_disconnected_tonCO2yr,
-        "GHG_cooling_disconnected_tonCO2": GHG_cooling_sys_disconnected_tonCO2yr,
+        "GHG_heating_building_scale_tonCO2": GHG_heating_sys_building_scale_tonCO2yr,
+        "GHG_cooling_building_scale_tonCO2": GHG_cooling_sys_building_scale_tonCO2yr,
     }
 
     return disconnected_costs, disconnected_emissions, capacity_installed_heating_sys_df, capacity_installed_cooling_sys_df
@@ -89,17 +90,17 @@ def buildings_disconnected_costs_and_emissions(column_names_buildings_heating,
 def calc_network_costs_heating(locator, master_to_slave_vars, network_features, network_type):
     # Intitialize class
     pipesCosts_USD = network_features.pipesCosts_DHN_USD
-    num_buildings_connected = master_to_slave_vars.number_of_buildings_connected_heating
+    num_buildings_connected = master_to_slave_vars.number_of_buildings_district_scale_heating
 
     num_all_buildings = master_to_slave_vars.num_total_buildings
     ratio_connected = num_buildings_connected / num_all_buildings
 
     # Capital costs
-    Inv_IR = 0.05
-    Inv_LT = 20
+    Inv_IR_percent = 5
+    Inv_LT_yr = 20
     Inv_OM = 0.10
     Capex_Network_USD = pipesCosts_USD * ratio_connected
-    Capex_a_Network_USD = Capex_Network_USD * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+    Capex_a_Network_USD = calc_capex_annualized(Capex_Network_USD, Inv_IR_percent, Inv_LT_yr)
     Opex_fixed_Network_USD = Capex_Network_USD * Inv_OM
 
     # costs of pumps
@@ -125,14 +126,14 @@ def calc_network_costs_heating(locator, master_to_slave_vars, network_features, 
                                                                        locator)
 
     performance = {
-        'Capex_a_DHN_connected_USD': Capex_a_Network_USD,
-        "Capex_a_SubstationsHeating_connected_USD": Capex_a_SubstationsHeating_USD,
+        'Capex_a_DHN_district_scale_USD': Capex_a_Network_USD,
+        "Capex_a_SubstationsHeating_district_scale_USD": Capex_a_SubstationsHeating_USD,
 
-        "Capex_total_DHN_connected_USD": Capex_Network_USD,
-        "Capex_total_SubstationsHeating_connected_USD": Capex_SubstationsHeating_USD,
+        "Capex_total_DHN_district_scale_USD": Capex_Network_USD,
+        "Capex_total_SubstationsHeating_district_scale_USD": Capex_SubstationsHeating_USD,
 
-        "Opex_fixed_DHN_connected_USD": Opex_fixed_Network_USD,
-        "Opex_fixed_SubstationsHeating_connected_USD": Opex_fixed_SubstationsHeating_USD,
+        "Opex_fixed_DHN_district_scale_USD": Opex_fixed_Network_USD,
+        "Opex_fixed_SubstationsHeating_district_scale_USD": Opex_fixed_SubstationsHeating_USD,
     }
     return performance, P_motor_tot_W
 
@@ -163,22 +164,22 @@ def calc_substations_costs_heating(building_names, district_network_barcode, loc
             Inv_c = HEX_cost_data.iloc[0]['c']
             Inv_d = HEX_cost_data.iloc[0]['d']
             Inv_e = HEX_cost_data.iloc[0]['e']
-            Inv_IR = (HEX_cost_data.iloc[0]['IR_%']) / 100
+            Inv_IR = HEX_cost_data.iloc[0]['IR_%']
             Inv_LT = HEX_cost_data.iloc[0]['LT_yr']
             Inv_OM = HEX_cost_data.iloc[0]['O&M_%'] / 100
 
-            InvC_USD = Inv_a + Inv_b * (Q_max_W) ** Inv_c + (Inv_d + Inv_e * Q_max_W) * log(Q_max_W)
-            Capex_a_USD = InvC_USD * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-            Opex_fixed_USD = InvC_USD * Inv_OM
+            Capex_total_USD = Inv_a + Inv_b * (Q_max_W) ** Inv_c + (Inv_d + Inv_e * Q_max_W) * log(Q_max_W)
+            Capex_a_USD = calc_capex_annualized(Capex_total_USD, Inv_IR, Inv_LT)
+            Opex_fixed_USD = Capex_total_USD * Inv_OM
 
-            Capex_Substations_USD += InvC_USD
+            Capex_Substations_USD += Capex_total_USD
             Capex_a_Substations_USD += Capex_a_USD
             Opex_fixed_Substations_USD += Opex_fixed_USD
 
     return Capex_Substations_USD, Capex_a_Substations_USD, Opex_fixed_Substations_USD
 
 
-def calc_variable_costs_connected_buildings(sum_natural_gas_imports_W,
+def calc_variable_costs_district_scale_buildings(sum_natural_gas_imports_W,
                                             sum_wet_biomass_imports_W,
                                             sum_dry_biomass_imports_W,
                                             sum_electricity_imports_W,
@@ -186,45 +187,45 @@ def calc_variable_costs_connected_buildings(sum_natural_gas_imports_W,
                                             prices,
                                             ):
     # COSTS
-    Opex_var_NG_sys_connected_USD = sum(sum_natural_gas_imports_W * prices.NG_PRICE)
-    Opex_var_WB_sys_connected_USD = sum(sum_wet_biomass_imports_W * prices.WB_PRICE)
-    Opex_var_DB_sys_connected_USD = sum(sum_dry_biomass_imports_W * prices.DB_PRICE)
-    Opex_var_GRID_buy_sys_connected_USD = sum(sum_electricity_imports_W * prices.ELEC_PRICE)
-    Opex_var_GRID_sell_sys_connected_USD = -sum(sum_electricity_exports_W * prices.ELEC_PRICE_EXPORT)
+    Opex_var_NG_sys_district_scale_USD = sum(sum_natural_gas_imports_W * prices.NG_PRICE)
+    Opex_var_WB_sys_district_scale_USD = sum(sum_wet_biomass_imports_W * prices.WB_PRICE)
+    Opex_var_DB_sys_district_scale_USD = sum(sum_dry_biomass_imports_W * prices.DB_PRICE)
+    Opex_var_GRID_buy_sys_district_scale_USD = sum(sum_electricity_imports_W * prices.ELEC_PRICE)
+    Opex_var_GRID_sell_sys_district_scale_USD = -sum(sum_electricity_exports_W * prices.ELEC_PRICE_EXPORT)
 
     district_variable_costs = {
-        "Opex_var_NG_connected_USD": Opex_var_NG_sys_connected_USD,
-        "Opex_var_WB_connected_USD": Opex_var_WB_sys_connected_USD,
-        "Opex_var_DB_connected_USD": Opex_var_DB_sys_connected_USD,
-        "Opex_var_GRID_imports_connected_USD": Opex_var_GRID_buy_sys_connected_USD,
-        "Opex_var_GRID_exports_connected_USD": Opex_var_GRID_sell_sys_connected_USD
+        "Opex_var_NG_district_scale_USD": Opex_var_NG_sys_district_scale_USD,
+        "Opex_var_WB_district_scale_USD": Opex_var_WB_sys_district_scale_USD,
+        "Opex_var_DB_district_scale_USD": Opex_var_DB_sys_district_scale_USD,
+        "Opex_var_GRID_imports_district_scale_USD": Opex_var_GRID_buy_sys_district_scale_USD,
+        "Opex_var_GRID_exports_district_scale_USD": Opex_var_GRID_sell_sys_district_scale_USD
     }
 
     return district_variable_costs
 
 
-def calc_emissions_connected_buildings(sum_natural_gas_imports_W,
+def calc_emissions_district_scale_buildings(sum_natural_gas_imports_W,
                                        sum_wet_biomass_imports_W,
                                        sum_dry_biomass_imports_W,
                                        sum_electricity_imports_W,
                                        sum_electricity_exports_W,
                                        lca):
     # SUMMARIZE
-    GHG_NG_connected_tonCO2yr = sum(calc_emissions_Whyr_to_tonCO2yr(sum_natural_gas_imports_W, lca.NG_TO_CO2_EQ))
-    GHG_WB_connected_tonCO2yr = sum(calc_emissions_Whyr_to_tonCO2yr(sum_wet_biomass_imports_W, lca.WETBIOMASS_TO_CO2_EQ))
-    GHG_DB_connected_tonCO2yr = sum(calc_emissions_Whyr_to_tonCO2yr(sum_dry_biomass_imports_W, lca.DRYBIOMASS_TO_CO2_EQ))
-    GHG_GRID_imports_connected_tonCO2yr = sum(calc_emissions_Whyr_to_tonCO2yr(sum_electricity_imports_W, lca.EL_TO_CO2_EQ))
-    GHG_GRID_exports_connected_tonCO2yr = - sum(calc_emissions_Whyr_to_tonCO2yr(sum_electricity_exports_W, lca.EL_TO_CO2_EQ))
+    GHG_NG_district_scale_tonCO2yr = sum(calc_emissions_Whyr_to_tonCO2yr(sum_natural_gas_imports_W, lca.NG_TO_CO2_EQ))
+    GHG_WB_district_scale_tonCO2yr = sum(calc_emissions_Whyr_to_tonCO2yr(sum_wet_biomass_imports_W, lca.WETBIOMASS_TO_CO2_EQ))
+    GHG_DB_district_scale_tonCO2yr = sum(calc_emissions_Whyr_to_tonCO2yr(sum_dry_biomass_imports_W, lca.DRYBIOMASS_TO_CO2_EQ))
+    GHG_GRID_imports_district_scale_tonCO2yr = sum(calc_emissions_Whyr_to_tonCO2yr(sum_electricity_imports_W, lca.EL_TO_CO2_EQ))
+    GHG_GRID_exports_district_scale_tonCO2yr = - sum(calc_emissions_Whyr_to_tonCO2yr(sum_electricity_exports_W, lca.EL_TO_CO2_EQ))
 
-    buildings_connected_emissions_primary_energy = {
-        "GHG_NG_connected_tonCO2yr": GHG_NG_connected_tonCO2yr,
-        "GHG_WB_connected_tonCO2yr": GHG_WB_connected_tonCO2yr,
-        "GHG_DB_connected_tonCO2yr": GHG_DB_connected_tonCO2yr,
-        "GHG_GRID_imports_connected_tonCO2yr": GHG_GRID_imports_connected_tonCO2yr,
-        "GHG_GRID_exports_connected_tonCO2yr": GHG_GRID_exports_connected_tonCO2yr,
+    buildings_district_scale_emissions_primary_energy = {
+        "GHG_NG_district_scale_tonCO2yr": GHG_NG_district_scale_tonCO2yr,
+        "GHG_WB_district_scale_tonCO2yr": GHG_WB_district_scale_tonCO2yr,
+        "GHG_DB_district_scale_tonCO2yr": GHG_DB_district_scale_tonCO2yr,
+        "GHG_GRID_imports_district_scale_tonCO2yr": GHG_GRID_imports_district_scale_tonCO2yr,
+        "GHG_GRID_exports_district_scale_tonCO2yr": GHG_GRID_exports_district_scale_tonCO2yr,
     }
 
-    return buildings_connected_emissions_primary_energy
+    return buildings_district_scale_emissions_primary_energy
 
 
 def summary_fuel_electricity_consumption(district_cooling_fuel_requirements_dispatch,
@@ -249,8 +250,8 @@ def summary_fuel_electricity_consumption(district_cooling_fuel_requirements_disp
     # dispatch, this is only for calculation of emissions purposes
     # it avoids double counting when calculating emissions due to decentralized buildings)
     sum_electricity_imports_W = (data['E_GRID_directload_W'] -
-                                 district_electricity_demands['E_hs_ww_req_disconnected_W'] -
-                                 district_electricity_demands['E_cs_cre_cdata_req_disconnected_W'])
+                                 district_electricity_demands['E_hs_ww_req_building_scale_W'] -
+                                 district_electricity_demands['E_cs_cre_cdata_req_building_scale_W'])
 
     sum_electricity_exports_W = (data['E_CHP_gen_export_W'] +
                                  data['E_Furnace_dry_gen_export_W'] +
@@ -266,7 +267,7 @@ def summary_fuel_electricity_consumption(district_cooling_fuel_requirements_disp
            sum_electricity_exports_W
 
 
-def buildings_connected_costs_and_emissions(district_heating_costs,
+def buildings_district_scale_costs_and_emissions(district_heating_costs,
                                             district_cooling_costs,
                                             district_microgrid_costs,
                                             district_microgrid_requirements_dispatch,
@@ -287,7 +288,7 @@ def buildings_connected_costs_and_emissions(district_heating_costs,
                                                                      district_electricity_demands)
 
     # CALCULATE all_COSTS
-    district_variable_costs = calc_variable_costs_connected_buildings(sum_natural_gas_imports_W,
+    district_variable_costs = calc_variable_costs_district_scale_buildings(sum_natural_gas_imports_W,
                                                                       sum_wet_biomass_imports_W,
                                                                       sum_dry_biomass_imports_W,
                                                                       sum_electricity_imports_W,
@@ -300,7 +301,7 @@ def buildings_connected_costs_and_emissions(district_heating_costs,
     connected_costs = dict(join2, **district_variable_costs)
 
     # CALCULATE EMISSIONS
-    connected_emissions = calc_emissions_connected_buildings(sum_natural_gas_imports_W,
+    connected_emissions = calc_emissions_district_scale_buildings(sum_natural_gas_imports_W,
                                                              sum_wet_biomass_imports_W,
                                                              sum_dry_biomass_imports_W,
                                                              sum_electricity_imports_W,
@@ -312,17 +313,17 @@ def buildings_connected_costs_and_emissions(district_heating_costs,
 def calc_network_costs_cooling(locator, master_to_slave_vars, network_features, network_type, prices):
     # Intitialize class
     pipesCosts_USD = network_features.pipesCosts_DCN_USD
-    num_buildings_connected = master_to_slave_vars.number_of_buildings_connected_cooling
+    num_buildings_connected = master_to_slave_vars.number_of_buildings_district_scale_cooling
 
     num_all_buildings = master_to_slave_vars.num_total_buildings
     ratio_connected = num_buildings_connected / num_all_buildings
 
     # Capital costs
-    Inv_IR = 0.05
+    Inv_IR = 5
     Inv_LT = 20
     Inv_OM = 0.10
     Capex_Network_USD = pipesCosts_USD * ratio_connected
-    Capex_a_Network_USD = Capex_Network_USD * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+    Capex_a_Network_USD = calc_capex_annualized(Capex_Network_USD, Inv_IR, Inv_LT)
     Opex_fixed_Network_USD = Capex_Network_USD * Inv_OM
 
     # costs of pumps
@@ -350,14 +351,14 @@ def calc_network_costs_cooling(locator, master_to_slave_vars, network_features, 
     Opex_fixed_Network_USD += Opex_fixed_pump_USD
 
     performance = {
-        'Capex_a_DCN_connected_USD': Capex_a_Network_USD,
-        "Capex_a_SubstationsCooling_connected_USD": Capex_a_Substations_USD,
+        'Capex_a_DCN_district_scale_USD': Capex_a_Network_USD,
+        "Capex_a_SubstationsCooling_district_scale_USD": Capex_a_Substations_USD,
 
-        "Capex_total_DCN_connected_USD": Capex_Network_USD,
-        "Capex_total_SubstationsCooling_connected_USD": Capex_Substations_USD,
+        "Capex_total_DCN_district_scale_USD": Capex_Network_USD,
+        "Capex_total_SubstationsCooling_district_scale_USD": Capex_Substations_USD,
 
-        "Opex_fixed_DCN_connected_USD": Opex_fixed_Network_USD,
-        "Opex_fixed_SubstationsCooling_connected_USD": Opex_fixed_Substations_USD,
+        "Opex_fixed_DCN_district_scale_USD": Opex_fixed_Network_USD,
+        "Opex_fixed_SubstationsCooling_district_scale_USD": Opex_fixed_Substations_USD,
 
     }
     return performance, P_motor_tot_W
@@ -396,15 +397,15 @@ def calc_substations_costs_cooling(building_names, master_to_slave_vars, distric
             Inv_c = HEX_cost_data.iloc[0]['c']
             Inv_d = HEX_cost_data.iloc[0]['d']
             Inv_e = HEX_cost_data.iloc[0]['e']
-            Inv_IR = (HEX_cost_data.iloc[0]['IR_%']) / 100
+            Inv_IR = HEX_cost_data.iloc[0]['IR_%']
             Inv_LT = HEX_cost_data.iloc[0]['LT_yr']
             Inv_OM = HEX_cost_data.iloc[0]['O&M_%'] / 100
 
-            InvC_USD = Inv_a + Inv_b * (Q_max_W) ** Inv_c + (Inv_d + Inv_e * Q_max_W) * log(Q_max_W)
-            Capex_a_USD = InvC_USD * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-            Opex_fixed_USD = InvC_USD * Inv_OM
+            Capex_total_USD = Inv_a + Inv_b * (Q_max_W) ** Inv_c + (Inv_d + Inv_e * Q_max_W) * log(Q_max_W)
+            Capex_a_USD = calc_capex_annualized(Capex_total_USD, Inv_IR, Inv_LT)
+            Opex_fixed_USD = Capex_total_USD * Inv_OM
 
-            Capex_Substations_USD += InvC_USD
+            Capex_Substations_USD += Capex_total_USD
             Capex_a_Substations_USD += Capex_a_USD
             Opex_fixed_Substations_USD += Opex_fixed_USD
 
@@ -428,13 +429,13 @@ def calc_generation_costs_cooling_storage(locator,
     # PLOT RESULTS
     performance = {
         # annualized capex
-        "Capex_a_DailyStorage_WS_connected_USD": Capex_a_Tank_USD,
+        "Capex_a_DailyStorage_WS_district_scale_USD": Capex_a_Tank_USD,
 
         # total capex
-        "Capex_total_DailyStorage_WS_connected_USD": Capex_Tank_USD,
+        "Capex_total_DailyStorage_WS_district_scale_USD": Capex_Tank_USD,
 
         # opex fixed
-        "Opex_fixed_DailyStorage_WS_connected_USD": Opex_fixed_Tank_USD,
+        "Opex_fixed_DailyStorage_WS_district_scale_USD": Opex_fixed_Tank_USD,
     }
 
     return performance
@@ -594,41 +595,41 @@ def calc_generation_costs_capacity_installed_cooling(locator,
 
     # PLOT RESULTS
     capacity_installed = {
-        "Capacity_TrigenCCGT_heat_NG_connected_W": Capacity_NG_Trigen_th_W,
-        "Capacity_TrigenACH_cool_NG_connected_W": Capacity_NG_Trigen_ACH_W,
-        "Capacity_TrigenCCGT_el_NG_connected_W": Capacity_NG_Trigen_el_W,
-        "Capacity_BaseVCC_WS_cool_connected_W": Capacity_BaseVCC_WS_W,
-        "Capacity_PeakVCC_WS_cool_connected_W": Capacity_PeakVCC_WS_W,
-        "Capacity_BaseVCC_AS_cool_connected_W": Capacity_BaseVCC_AS_W,
-        "Capacity_PeakVCC_AS_cool_connected_W": Capacity_PeakVCC_AS_W,
-        "Capacity_BackupVCC_AS_cool_connected_W": Capacity_BackupVCC_AS_W,
-        "Capacity_DailyStorage_WS_cool_connected_W": Capacity_DailyStorage_W,
+        "Capacity_TrigenCCGT_heat_NG_district_scale_W": Capacity_NG_Trigen_th_W,
+        "Capacity_TrigenACH_cool_NG_district_scale_W": Capacity_NG_Trigen_ACH_W,
+        "Capacity_TrigenCCGT_el_NG_district_scale_W": Capacity_NG_Trigen_el_W,
+        "Capacity_BaseVCC_WS_cool_district_scale_W": Capacity_BaseVCC_WS_W,
+        "Capacity_PeakVCC_WS_cool_district_scale_W": Capacity_PeakVCC_WS_W,
+        "Capacity_BaseVCC_AS_cool_district_scale_W": Capacity_BaseVCC_AS_W,
+        "Capacity_PeakVCC_AS_cool_district_scale_W": Capacity_PeakVCC_AS_W,
+        "Capacity_BackupVCC_AS_cool_district_scale_W": Capacity_BackupVCC_AS_W,
+        "Capacity_DailyStorage_WS_cool_district_scale_W": Capacity_DailyStorage_W,
     }
 
     performance_costs = {
         # annualized capex
-        "Capex_a_Trigen_NG_connected_USD": Capex_a_Trigen_NG_USD,
-        "Capex_a_BaseVCC_WS_connected_USD": Capex_a_BaseVCC_WS_USD,
-        "Capex_a_PeakVCC_WS_connected_USD": Capex_a_PeakVCC_WS_USD,
-        "Capex_a_BaseVCC_AS_connected_USD": Capex_a_BaseVCC_AS_USD,
-        "Capex_a_PeakVCC_AS_connected_USD": Capex_a_PeakVCC_AS_USD,
-        "Capex_a_BackupVCC_AS_connected_USD": Capex_a_BackupVCC_AS_USD,
+        "Capex_a_Trigen_NG_district_scale_USD": Capex_a_Trigen_NG_USD,
+        "Capex_a_BaseVCC_WS_district_scale_USD": Capex_a_BaseVCC_WS_USD,
+        "Capex_a_PeakVCC_WS_district_scale_USD": Capex_a_PeakVCC_WS_USD,
+        "Capex_a_BaseVCC_AS_district_scale_USD": Capex_a_BaseVCC_AS_USD,
+        "Capex_a_PeakVCC_AS_district_scale_USD": Capex_a_PeakVCC_AS_USD,
+        "Capex_a_BackupVCC_AS_district_scale_USD": Capex_a_BackupVCC_AS_USD,
 
         # total capex
-        "Capex_total_Trigen_NG_connected_USD": Capex_Trigen_NG_USD,
-        "Capex_total_BaseVCC_WS_connected_USD": Capex_BaseVCC_WS_USD,
-        "Capex_total_PeakVCC_WS_connected_USD": Capex_PeakVCC_WS_USD,
-        "Capex_total_BaseVCC_AS_connected_USD": Capex_BaseVCC_AS_USD,
-        "Capex_total_PeakVCC_AS_connected_USD": Capex_PeakVCC_AS_USD,
-        "Capex_total_BackupVCC_AS_connected_USD": Capex_BackupVCC_AS_USD,
+        "Capex_total_Trigen_NG_district_scale_USD": Capex_Trigen_NG_USD,
+        "Capex_total_BaseVCC_WS_district_scale_USD": Capex_BaseVCC_WS_USD,
+        "Capex_total_PeakVCC_WS_district_scale_USD": Capex_PeakVCC_WS_USD,
+        "Capex_total_BaseVCC_AS_district_scale_USD": Capex_BaseVCC_AS_USD,
+        "Capex_total_PeakVCC_AS_district_scale_USD": Capex_PeakVCC_AS_USD,
+        "Capex_total_BackupVCC_AS_district_scale_USD": Capex_BackupVCC_AS_USD,
 
         # opex fixed
-        "Opex_fixed_Trigen_NG_connected_USD": Opex_fixed_Trigen_NG_USD,
-        "Opex_fixed_BaseVCC_WS_connected_USD": Opex_fixed_BaseVCC_WS_USD,
-        "Opex_fixed_PeakVCC_WS_connected_USD": Opex_fixed_PeakVCC_WS_USD,
-        "Opex_fixed_BaseVCC_AS_connected_USD": Opex_fixed_BaseVCC_AS_USD,
-        "Opex_fixed_PeakVCC_AS_connected_USD": Opex_fixed_PeakVCC_AS_USD,
-        "Opex_fixed_BackupVCC_AS_connected_USD": Opex_fixed_BackupVCC_AS_USD,
+        "Opex_fixed_Trigen_NG_district_scale_USD": Opex_fixed_Trigen_NG_USD,
+        "Opex_fixed_BaseVCC_WS_district_scale_USD": Opex_fixed_BaseVCC_WS_USD,
+        "Opex_fixed_PeakVCC_WS_district_scale_USD": Opex_fixed_PeakVCC_WS_USD,
+        "Opex_fixed_BaseVCC_AS_district_scale_USD": Opex_fixed_BaseVCC_AS_USD,
+        "Opex_fixed_PeakVCC_AS_district_scale_USD": Opex_fixed_PeakVCC_AS_USD,
+        "Opex_fixed_BackupVCC_AS_district_scale_USD": Opex_fixed_BackupVCC_AS_USD,
     }
 
     return performance_costs, capacity_installed
@@ -884,74 +885,74 @@ def calc_generation_costs_capacity_installed_heating(locator,
     Capacity_seasonal_storage_W = storage_activation_data['Q_storage_max_W']
 
     capacity_installed = {
-        "Capacity_CHP_NG_heat_connected_W": Capacity_CHP_NG_heat_W,
-        "Capacity_CHP_NG_el_connected_W": Capacity_CHP_NG_el_W,
-        "Capacity_CHP_WB_heat_connected_W": Capacity_furnace_wet_heat_W,
-        "Capacity_CHP_WB_el_connected_W": Capacity_furnace_wet_el_W,
-        "Capacity_CHP_DB_heat_connected_W": Capacity_furnace_dry_heat_W,
-        "Capacity_CHP_DB_el_connected_W": Capacity_furnace_dry_el_W,
-        "Capacity_BaseBoiler_NG_heat_connected_W": Capacity_BaseBoiler_NG_W,
-        "Capacity_PeakBoiler_NG_heat_connected_W": Capacity_PeakBoiler_NG_W,
-        "Capacity_BackupBoiler_NG_heat_connected_W": Capacity_BackupBoiler_NG_W,
-        "Capacity_HP_WS_heat_connected_W": Capacity_WS_HP_W,
-        "Capacity_HP_SS_heat_connected_W": Capacity_SS_HP_W,
-        "Capacity_HP_GS_heat_connected_W": Capacity_GS_HP_W,
-        "Capacity_HP_DS_heat_connected_W": Capacity_DS_HP_W,
-        "Capacity_SC_ET_heat_connected_W": Capacity_SC_ET_W,
-        "Capacity_SC_FP_heat_connected_W": Capacity_SC_FP_W,
-        "Capacity_SC_ET_connected_m2": Capacity_SC_ET_area_m2,
-        "Capacity_SC_FP_connected_m2": Capacity_SC_FP_m2,
-        "Capacity_PVT_connected_m2": Capacity_PVT_m2,
-        "Capacity_PVT_el_connected_W": Capacity_PVT_el_W,
-        "Capacity_PVT_heat_connected_W": Capacity_PVT_th_W,
-        "Capacity_SeasonalStorage_WS_heat_connected_W": Capacity_seasonal_storage_W,
-        "Capacity_SeasonalStorage_WS_heat_connected_m3": Capacity_seasonal_storage_m3,
+        "Capacity_CHP_NG_heat_district_scale_W": Capacity_CHP_NG_heat_W,
+        "Capacity_CHP_NG_el_district_scale_W": Capacity_CHP_NG_el_W,
+        "Capacity_CHP_WB_heat_district_scale_W": Capacity_furnace_wet_heat_W,
+        "Capacity_CHP_WB_el_district_scale_W": Capacity_furnace_wet_el_W,
+        "Capacity_CHP_DB_heat_district_scale_W": Capacity_furnace_dry_heat_W,
+        "Capacity_CHP_DB_el_district_scale_W": Capacity_furnace_dry_el_W,
+        "Capacity_BaseBoiler_NG_heat_district_scale_W": Capacity_BaseBoiler_NG_W,
+        "Capacity_PeakBoiler_NG_heat_district_scale_W": Capacity_PeakBoiler_NG_W,
+        "Capacity_BackupBoiler_NG_heat_district_scale_W": Capacity_BackupBoiler_NG_W,
+        "Capacity_HP_WS_heat_district_scale_W": Capacity_WS_HP_W,
+        "Capacity_HP_SS_heat_district_scale_W": Capacity_SS_HP_W,
+        "Capacity_HP_GS_heat_district_scale_W": Capacity_GS_HP_W,
+        "Capacity_HP_DS_heat_district_scale_W": Capacity_DS_HP_W,
+        "Capacity_SC_ET_heat_district_scale_W": Capacity_SC_ET_W,
+        "Capacity_SC_FP_heat_district_scale_W": Capacity_SC_FP_W,
+        "Capacity_SC_ET_district_scale_m2": Capacity_SC_ET_area_m2,
+        "Capacity_SC_FP_district_scale_m2": Capacity_SC_FP_m2,
+        "Capacity_PVT_district_scale_m2": Capacity_PVT_m2,
+        "Capacity_PVT_el_district_scale_W": Capacity_PVT_el_W,
+        "Capacity_PVT_heat_district_scale_W": Capacity_PVT_th_W,
+        "Capacity_SeasonalStorage_WS_heat_district_scale_W": Capacity_seasonal_storage_W,
+        "Capacity_SeasonalStorage_WS_heat_district_scale_m3": Capacity_seasonal_storage_m3,
     }
 
     performance_costs = {
-        "Capex_a_SC_ET_connected_USD": Capex_a_SC_ET_USD + Capex_a_HP_SC_ET_USD + Capex_a_HEX_SC_ET_USD,
-        "Capex_a_SC_FP_connected_USD": Capex_a_SC_FP_USD + Capex_a_HP_SC_FP_USD + Capex_a_HEX_SC_FP_USD,
-        "Capex_a_PVT_connected_USD": Capex_a_PVT_USD + Capex_a_HP_PVT_USD + Capex_a_HEX_PVT_USD,
-        "Capex_a_HP_Server_connected_USD": Capex_a_wasteserver_HP_USD + Capex_a_wasteserver_HEX_USD,
-        "Capex_a_HP_Sewage_connected_USD": Capex_a_Sewage_USD,
-        "Capex_a_HP_Lake_connected_USD": Capex_a_Lake_USD,
-        "Capex_a_GHP_connected_USD": Capex_a_GHP_USD,
-        "Capex_a_CHP_NG_connected_USD": Capex_a_CHP_NG_USD,
-        "Capex_a_Furnace_wet_connected_USD": Capex_a_furnace_wet_USD,
-        "Capex_a_Furnace_dry_connected_USD": Capex_a_furnace_dry_USD,
-        "Capex_a_BaseBoiler_NG_connected_USD": Capex_a_BaseBoiler_NG_USD,
-        "Capex_a_PeakBoiler_NG_connected_USD": Capex_a_PeakBoiler_NG_USD,
-        "Capex_a_BackupBoiler_NG_connected_USD": Capex_a_BackupBoiler_NG_USD,
+        "Capex_a_SC_ET_district_scale_USD": Capex_a_SC_ET_USD + Capex_a_HP_SC_ET_USD + Capex_a_HEX_SC_ET_USD,
+        "Capex_a_SC_FP_district_scale_USD": Capex_a_SC_FP_USD + Capex_a_HP_SC_FP_USD + Capex_a_HEX_SC_FP_USD,
+        "Capex_a_PVT_district_scale_USD": Capex_a_PVT_USD + Capex_a_HP_PVT_USD + Capex_a_HEX_PVT_USD,
+        "Capex_a_HP_Server_district_scale_USD": Capex_a_wasteserver_HP_USD + Capex_a_wasteserver_HEX_USD,
+        "Capex_a_HP_Sewage_district_scale_USD": Capex_a_Sewage_USD,
+        "Capex_a_HP_Lake_district_scale_USD": Capex_a_Lake_USD,
+        "Capex_a_GHP_district_scale_USD": Capex_a_GHP_USD,
+        "Capex_a_CHP_NG_district_scale_USD": Capex_a_CHP_NG_USD,
+        "Capex_a_Furnace_wet_district_scale_USD": Capex_a_furnace_wet_USD,
+        "Capex_a_Furnace_dry_district_scale_USD": Capex_a_furnace_dry_USD,
+        "Capex_a_BaseBoiler_NG_district_scale_USD": Capex_a_BaseBoiler_NG_USD,
+        "Capex_a_PeakBoiler_NG_district_scale_USD": Capex_a_PeakBoiler_NG_USD,
+        "Capex_a_BackupBoiler_NG_district_scale_USD": Capex_a_BackupBoiler_NG_USD,
 
         # total_capex
-        "Capex_total_SC_ET_connected_USD": Capex_SC_ET_USD + Capex_HP_SC_ET_USD + Capex_HEX_SC_ET_USD,
-        "Capex_total_SC_FP_connected_USD": Capex_SC_FP_USD + Capex_HP_SC_FP_USD + Capex_HEX_SC_FP_USD,
-        "Capex_total_PVT_connected_USD": Capex_PVT_USD + Capex_HP_PVT_USD + Capex_HEX_PVT_USD,
-        "Capex_total_HP_Server_connected_USD": Capex_wasteserver_HP_USD + Capex_wasteserver_HEX_USD,
-        "Capex_total_HP_Sewage_connected_USD": Capex_Sewage_USD,
-        "Capex_total_HP_Lake_connected_USD": Capex_Lake_USD,
-        "Capex_total_GHP_connected_USD": Capex_GHP_USD,
-        "Capex_total_CHP_NG_connected_USD": Capex_CHP_NG_USD,
-        "Capex_total_Furnace_wet_connected_USD": Capex_furnace_wet_USD,
-        "Capex_total_Furnace_dry_connected_USD": Capex_furnace_dry_USD,
-        "Capex_total_BaseBoiler_NG_connected_USD": Capex_BaseBoiler_NG_USD,
-        "Capex_total_PeakBoiler_NG_connected_USD": Capex_PeakBoiler_NG_USD,
-        "Capex_total_BackupBoiler_NG_connected_USD": Capex_BackupBoiler_NG_USD,
+        "Capex_total_SC_ET_district_scale_USD": Capex_SC_ET_USD + Capex_HP_SC_ET_USD + Capex_HEX_SC_ET_USD,
+        "Capex_total_SC_FP_district_scale_USD": Capex_SC_FP_USD + Capex_HP_SC_FP_USD + Capex_HEX_SC_FP_USD,
+        "Capex_total_PVT_district_scale_USD": Capex_PVT_USD + Capex_HP_PVT_USD + Capex_HEX_PVT_USD,
+        "Capex_total_HP_Server_district_scale_USD": Capex_wasteserver_HP_USD + Capex_wasteserver_HEX_USD,
+        "Capex_total_HP_Sewage_district_scale_USD": Capex_Sewage_USD,
+        "Capex_total_HP_Lake_district_scale_USD": Capex_Lake_USD,
+        "Capex_total_GHP_district_scale_USD": Capex_GHP_USD,
+        "Capex_total_CHP_NG_district_scale_USD": Capex_CHP_NG_USD,
+        "Capex_total_Furnace_wet_district_scale_USD": Capex_furnace_wet_USD,
+        "Capex_total_Furnace_dry_district_scale_USD": Capex_furnace_dry_USD,
+        "Capex_total_BaseBoiler_NG_district_scale_USD": Capex_BaseBoiler_NG_USD,
+        "Capex_total_PeakBoiler_NG_district_scale_USD": Capex_PeakBoiler_NG_USD,
+        "Capex_total_BackupBoiler_NG_district_scale_USD": Capex_BackupBoiler_NG_USD,
 
         # opex fixed costs
-        "Opex_fixed_SC_ET_connected_USD": Opex_fixed_SC_ET_USD,
-        "Opex_fixed_SC_FP_connected_USD": Opex_fixed_SC_FP_USD,
-        "Opex_fixed_PVT_connected_USD": Opex_fixed_PVT_USD,
-        "Opex_fixed_HP_Server_connected_USD": Opex_fixed_wasteserver_HP_USD + Opex_fixed_wasteserver_HEX_USD,
-        "Opex_fixed_HP_Sewage_connected_USD": Opex_fixed_Sewage_USD,
-        "Opex_fixed_HP_Lake_connected_USD": Opex_fixed_Lake_USD,
-        "Opex_fixed_GHP_connected_USD": Opex_fixed_GHP_USD,
-        "Opex_fixed_CHP_NG_connected_USD": Opex_fixed_CHP_NG_USD,
-        "Opex_fixed_Furnace_wet_connected_USD": Opex_fixed_furnace_wet_USD,
-        "Opex_fixed_Furnace_dry_connected_USD": Opex_fixed_furnace_dry_USD,
-        "Opex_fixed_BaseBoiler_NG_connected_USD": Opex_fixed_BaseBoiler_NG_USD,
-        "Opex_fixed_PeakBoiler_NG_connected_USD": Opex_fixed_PeakBoiler_NG_USD,
-        "Opex_fixed_BackupBoiler_NG_connected_USD": Opex_fixed_BackupBoiler_NG_USD,
+        "Opex_fixed_SC_ET_district_scale_USD": Opex_fixed_SC_ET_USD,
+        "Opex_fixed_SC_FP_district_scale_USD": Opex_fixed_SC_FP_USD,
+        "Opex_fixed_PVT_district_scale_USD": Opex_fixed_PVT_USD,
+        "Opex_fixed_HP_Server_district_scale_USD": Opex_fixed_wasteserver_HP_USD + Opex_fixed_wasteserver_HEX_USD,
+        "Opex_fixed_HP_Sewage_district_scale_USD": Opex_fixed_Sewage_USD,
+        "Opex_fixed_HP_Lake_district_scale_USD": Opex_fixed_Lake_USD,
+        "Opex_fixed_GHP_district_scale_USD": Opex_fixed_GHP_USD,
+        "Opex_fixed_CHP_NG_district_scale_USD": Opex_fixed_CHP_NG_USD,
+        "Opex_fixed_Furnace_wet_district_scale_USD": Opex_fixed_furnace_wet_USD,
+        "Opex_fixed_Furnace_dry_district_scale_USD": Opex_fixed_furnace_dry_USD,
+        "Opex_fixed_BaseBoiler_NG_district_scale_USD": Opex_fixed_BaseBoiler_NG_USD,
+        "Opex_fixed_PeakBoiler_NG_district_scale_USD": Opex_fixed_PeakBoiler_NG_USD,
+        "Opex_fixed_BackupBoiler_NG_district_scale_USD": Opex_fixed_BackupBoiler_NG_USD,
 
     }
 
@@ -984,9 +985,9 @@ def calc_seasonal_storage_costs(config, locator, storage_activation_data):
                                                                                               'HP2')
 
     performance_costs = {
-        "Capex_a_SeasonalStorage_WS_connected_USD": Capex_a_storage_USD + Capex_a_HP_storage_USD,
-        "Capex_total_SeasonalStorage_WS_connected_USD": Capex_storage_USD + Capex_HP_storage_USD,
-        "Opex_fixed_SeasonalStorage_WS_connected_USD": Opex_fixed_storage_USD + Opex_fixed_HP_storage_USD,
+        "Capex_a_SeasonalStorage_WS_district_scale_USD": Capex_a_storage_USD + Capex_a_HP_storage_USD,
+        "Capex_total_SeasonalStorage_WS_district_scale_USD": Capex_storage_USD + Capex_HP_storage_USD,
+        "Opex_fixed_SeasonalStorage_WS_district_scale_USD": Opex_fixed_storage_USD + Opex_fixed_HP_storage_USD,
     }
 
     return performance_costs
@@ -994,70 +995,70 @@ def calc_seasonal_storage_costs(config, locator, storage_activation_data):
 
 def calc_costs_emissions_decentralized_DC(DCN_barcode, buildings_names_with_cooling_load, locator,
                                           ):
-    GHG_sys_disconnected_tonCO2yr = 0.0
-    Capex_a_sys_disconnected_USD = 0.0
+    GHG_sys_building_scale_tonCO2yr = 0.0
+    Capex_a_sys_building_scale_USD = 0.0
     Opex_var_sys_disconnected = 0.0
-    Capex_total_sys_disconnected_USD = 0.0
-    Opex_fixed_sys_disconnected_USD = 0.0
+    Capex_total_sys_building_scale_USD = 0.0
+    Opex_fixed_sys_building_scale_USD = 0.0
     capacity_installed_df = pd.DataFrame()
     for (index, building_name) in zip(DCN_barcode, buildings_names_with_cooling_load):
         if index == "0":  # choose the best decentralized configuration
             df = pd.read_csv(locator.get_optimization_decentralized_folder_building_result_cooling(building_name,
                                                                                                    configuration='AHU_ARU_SCU'))
             dfBest = df[df["Best configuration"] == 1]
-            GHG_sys_disconnected_tonCO2yr += dfBest["GHG_tonCO2"].iloc[0]  # [ton CO2]
-            Capex_total_sys_disconnected_USD += dfBest["Capex_total_USD"].iloc[0]
-            Capex_a_sys_disconnected_USD += dfBest["Capex_a_USD"].iloc[0]
+            GHG_sys_building_scale_tonCO2yr += dfBest["GHG_tonCO2"].iloc[0]  # [ton CO2]
+            Capex_total_sys_building_scale_USD += dfBest["Capex_total_USD"].iloc[0]
+            Capex_a_sys_building_scale_USD += dfBest["Capex_a_USD"].iloc[0]
             Opex_var_sys_disconnected += dfBest["Opex_var_USD"].iloc[0]
-            Opex_fixed_sys_disconnected_USD += dfBest["Opex_fixed_USD"].iloc[0]
+            Opex_fixed_sys_building_scale_USD += dfBest["Opex_fixed_USD"].iloc[0]
 
             data = pd.DataFrame({'Name': building_name,
-                                 'Capacity_DX_AS_cool_disconnected_W': dfBest["Capacity_DX_AS_W"].iloc[0],
-                                 'Capacity_BaseVCC_AS_cool_disconnected_W': dfBest["Capacity_BaseVCC_AS_W"].iloc[0],
-                                 'Capacity_VCCHT_AS_cool_disconnected_W': dfBest["Capacity_VCCHT_AS_W"].iloc[0],
-                                 'Capacity_ACH_SC_FP_cool_disconnected_W': dfBest["Capacity_ACH_SC_FP_W"].iloc[0],
-                                 'Capaticy_ACH_SC_ET_cool_disconnected_W': dfBest["Capaticy_ACH_SC_ET_W"].iloc[0],
-                                 'Capacity_ACHHT_FP_cool_disconnected_W': dfBest["Capacity_ACHHT_FP_W"].iloc[0]},
+                                 'Capacity_DX_AS_cool_building_scale_W': dfBest["Capacity_DX_AS_W"].iloc[0],
+                                 'Capacity_BaseVCC_AS_cool_building_scale_W': dfBest["Capacity_BaseVCC_AS_W"].iloc[0],
+                                 'Capacity_VCCHT_AS_cool_building_scale_W': dfBest["Capacity_VCCHT_AS_W"].iloc[0],
+                                 'Capacity_ACH_SC_FP_cool_building_scale_W': dfBest["Capacity_ACH_SC_FP_W"].iloc[0],
+                                 'Capaticy_ACH_SC_ET_cool_building_scale_W': dfBest["Capaticy_ACH_SC_ET_W"].iloc[0],
+                                 'Capacity_ACHHT_FP_cool_building_scale_W': dfBest["Capacity_ACHHT_FP_W"].iloc[0]},
                                 index=[0])
             capacity_installed_df = pd.concat([capacity_installed_df, data], ignore_index=True)
 
-    return GHG_sys_disconnected_tonCO2yr, \
-           Capex_total_sys_disconnected_USD, \
-           Capex_a_sys_disconnected_USD, \
+    return GHG_sys_building_scale_tonCO2yr, \
+           Capex_total_sys_building_scale_USD, \
+           Capex_a_sys_building_scale_USD, \
            Opex_var_sys_disconnected, \
-           Opex_fixed_sys_disconnected_USD, \
+           Opex_fixed_sys_building_scale_USD, \
            capacity_installed_df
 
 
 def calc_costs_emissions_decentralized_DH(DHN_barcode, buildings_names_with_heating_load, locator):
-    GHG_sys_disconnected_tonCO2yr = 0.0
-    Capex_a_sys_disconnected_USD = 0.0
+    GHG_sys_building_scale_tonCO2yr = 0.0
+    Capex_a_sys_building_scale_USD = 0.0
     CostDiscBuild = 0.0
     Opex_var_sys_disconnected = 0.0
-    Capex_total_sys_disconnected_USD = 0.0
-    Opex_fixed_sys_disconnected_USD = 0.0
+    Capex_total_sys_building_scale_USD = 0.0
+    Opex_fixed_sys_building_scale_USD = 0.0
     capacity_installed_df = pd.DataFrame()
     for (index, building_name) in zip(DHN_barcode, buildings_names_with_heating_load):
         if index == "0":
             df = pd.read_csv(locator.get_optimization_decentralized_folder_building_result_heating(building_name))
             dfBest = df[df["Best configuration"] == 1]
             CostDiscBuild += dfBest["TAC_USD"].iloc[0]  # [USD]
-            GHG_sys_disconnected_tonCO2yr += dfBest["GHG_tonCO2"].iloc[0]  # [ton CO2]
-            Capex_total_sys_disconnected_USD += dfBest["Capex_total_USD"].iloc[0]
-            Capex_a_sys_disconnected_USD += dfBest["Capex_a_USD"].iloc[0]
+            GHG_sys_building_scale_tonCO2yr += dfBest["GHG_tonCO2"].iloc[0]  # [ton CO2]
+            Capex_total_sys_building_scale_USD += dfBest["Capex_total_USD"].iloc[0]
+            Capex_a_sys_building_scale_USD += dfBest["Capex_a_USD"].iloc[0]
             Opex_var_sys_disconnected += dfBest["Opex_var_USD"].iloc[0]
-            Opex_fixed_sys_disconnected_USD += dfBest["Opex_fixed_USD"].iloc[0]
+            Opex_fixed_sys_building_scale_USD += dfBest["Opex_fixed_USD"].iloc[0]
 
             data = pd.DataFrame({'Name': building_name,
-                                 'Capacity_BaseBoiler_NG_heat_disconnected_W': dfBest["Capacity_BaseBoiler_NG_W"].iloc[
+                                 'Capacity_BaseBoiler_NG_heat_building_scale_W': dfBest["Capacity_BaseBoiler_NG_W"].iloc[
                                      0],
-                                 'Capacity_FC_NG_heat_disconnected_W': dfBest["Capacity_FC_NG_W"].iloc[0],
-                                 'Capacity_GS_HP_heat_disconnected_W': dfBest["Capacity_GS_HP_W"].iloc[0]}, index=[0])
+                                 'Capacity_FC_NG_heat_building_scale_W': dfBest["Capacity_FC_NG_W"].iloc[0],
+                                 'Capacity_GS_HP_heat_building_scale_W': dfBest["Capacity_GS_HP_W"].iloc[0]}, index=[0])
             capacity_installed_df = pd.concat([capacity_installed_df, data], ignore_index=True)
 
-    return GHG_sys_disconnected_tonCO2yr, \
-           Capex_total_sys_disconnected_USD, \
-           Capex_a_sys_disconnected_USD, \
+    return GHG_sys_building_scale_tonCO2yr, \
+           Capex_total_sys_building_scale_USD, \
+           Capex_a_sys_building_scale_USD, \
            Opex_var_sys_disconnected, \
-           Opex_fixed_sys_disconnected_USD, \
+           Opex_fixed_sys_building_scale_USD, \
            capacity_installed_df

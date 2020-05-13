@@ -23,7 +23,7 @@ from cea.technologies.solar import constants
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
 from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile
-
+from cea.analysis.costs.equations import calc_capex_annualized, calc_opex_annualized
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Jimeno A. Fonseca", "Shanshan Hsieh", "Daren Thomas"]
@@ -938,13 +938,13 @@ def calc_Cinv_SC(Area_m2, locator, panel_type):
         Inv_c = SC_cost_data['c'].values[0]
         Inv_d = SC_cost_data['d'].values[0]
         Inv_e = SC_cost_data['e'].values[0]
-        Inv_IR = (SC_cost_data['IR_%'].values[0]) / 100
+        Inv_IR = SC_cost_data['IR_%'].values[0]
         Inv_LT = SC_cost_data['LT_yr'].values[0]
         Inv_OM = SC_cost_data['O&M_%'].values[0] / 100
 
         InvC = Inv_a + Inv_b * (Area_m2) ** Inv_c + (Inv_d + Inv_e * Area_m2) * log(Area_m2)
 
-        Capex_a_SC_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+        Capex_a_SC_USD = calc_capex_annualized(InvC, Inv_IR, Inv_LT)
         Opex_fixed_SC_USD = InvC * Inv_OM
         Capex_SC_USD = InvC
     else:

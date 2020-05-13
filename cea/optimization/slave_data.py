@@ -19,8 +19,8 @@ __status__ = "Production"
 class SlaveData(object):
     def __init__(self):
         # Name the file which should be loaded:
-        self.number_of_buildings_connected_heating = 0
-        self.number_of_buildings_connected_cooling = 0
+        self.number_of_buildings_district_scale_heating = 0
+        self.number_of_buildings_district_scale_cooling = 0
         self.total_csv_name_heating = ""
         self.total_csv_name_cooling = ""
         self.DCN_barcode = ""
@@ -37,8 +37,8 @@ class SlaveData(object):
         self.building_names_heating = []
         self.building_names_cooling = []
         self.building_names_electricity = []
-        self.buildings_connected_to_district_heating = "nan"
-        self.buildings_connected_to_district_cooling = "nan"
+        self.buildings_district_scale_to_district_heating = "nan"
+        self.buildings_district_scale_to_district_cooling = "nan"
         self.DH_network_summary_individual = None
         self.DC_network_summary_individual = None
 

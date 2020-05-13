@@ -51,9 +51,9 @@ def fuel_imports(master_to_slave_vars, heating_dispatch,
     NG_total_W = NG_total_heating_W + NG_total_cooling_W
 
     naturalgas_dispatch = {
-        "NG_GRID_connected_W": NG_total_W,
-        "NG_GRID_heating_connected_W": NG_total_heating_W,
-        "NG_GRID_cooling_connected_W": NG_total_cooling_W,
+        "NG_GRID_district_scale_W": NG_total_W,
+        "NG_GRID_heating_district_scale_W": NG_total_heating_W,
+        "NG_GRID_cooling_district_scale_W": NG_total_cooling_W,
         "NG_CHP_req_W": NG_used_CHP_W,
         "NG_BaseBoiler_req_W": NG_used_BaseBoiler_W,
         "NG_PeakBoiler_req_W": NG_used_PeakBoiler_W,

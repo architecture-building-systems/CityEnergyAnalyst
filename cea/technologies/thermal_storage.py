@@ -5,7 +5,7 @@ thermal storage
 from __future__ import division
 import pandas as pd
 from math import log
-
+from cea.analysis.costs.equations import calc_capex_annualized, calc_opex_annualized
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Thuy-An Nguyen", "Tim Vollrath", "Jimeno A. Fonseca"]
@@ -45,18 +45,16 @@ def calc_Cinv_storage(V_tank_m3, locator, config, technology_type):
         Inv_c = storage_cost_data.iloc[0]['c']
         Inv_d = storage_cost_data.iloc[0]['d']
         Inv_e = storage_cost_data.iloc[0]['e']
-        Inv_IR = (storage_cost_data.iloc[0]['IR_%']) / 100
+        Inv_IR = storage_cost_data.iloc[0]['IR_%']
         Inv_LT = storage_cost_data.iloc[0]['LT_yr']
         Inv_OM = storage_cost_data.iloc[0]['O&M_%'] / 100
 
-        InvC = Inv_a + Inv_b * (V_tank_m3) ** Inv_c + (Inv_d + Inv_e * V_tank_m3) * log(V_tank_m3)
-
-        Capex_a_storage_USD = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-        Opex_fixed_storage_USD = InvC * Inv_OM
-        Capex_storage_USD = InvC
+        Capex_total_USD = Inv_a + Inv_b * (V_tank_m3) ** Inv_c + (Inv_d + Inv_e * V_tank_m3) * log(V_tank_m3)
+        Capex_a_storage_USD = calc_capex_annualized(Capex_total_USD, Inv_IR, Inv_LT)
+        Opex_fixed_storage_USD = Capex_total_USD * Inv_OM
     else:
         Capex_a_storage_USD = 0.0
         Opex_fixed_storage_USD = 0.0
-        Capex_storage_USD = 0.0
+        Capex_total_USD = 0.0
 
-    return Capex_a_storage_USD, Opex_fixed_storage_USD, Capex_storage_USD
+    return Capex_a_storage_USD, Opex_fixed_storage_USD, Capex_total_USD
