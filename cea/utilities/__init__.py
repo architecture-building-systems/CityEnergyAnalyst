@@ -19,7 +19,7 @@ def identifier(s, sep="-"):
     :param str use_underscores: if set to true, underscores ("_") will be used instead of dashes ("-")
     :rtype: str
     """
-    return "".join(c if c in string.ascii_lowercase else "-" for c in s.lower())
+    return "".join(c if c in string.ascii_lowercase else sep for c in s.lower())
 
 
 def simple_memoize(obj):

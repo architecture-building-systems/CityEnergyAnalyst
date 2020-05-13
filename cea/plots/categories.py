@@ -23,7 +23,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def list_categories():
+def list_categories(plugins):
     """List all the categories implemented in the CEA"""
     import cea.plots
     for importer, modname, ispkg in pkgutil.iter_modules(cea.plots.__path__, cea.plots.__name__ + '.'):
@@ -42,11 +42,15 @@ def list_categories():
             # this module does not follow the conventions outlined in ``cea.plots.__init__.py`` and will be
             # ignored
             continue
+    for plugin in plugins:
+        for plot_category in plugin.plot_categories:
+            yield plot_category
 
 
-def load_category(category_name):
+
+def load_category(category_name, plugins):
     """Returns a PlotsCategory object if is_valid_category(category), else None"""
-    for c in list_categories():
+    for c in list_categories(plugins=plugins):
         if c.name == category_name:
             return c
     return None
@@ -101,7 +105,7 @@ if __name__ == '__main__':
     cache = cea.plots.cache.NullPlotCache()
     errors = []
 
-    for category in list_categories():
+    for category in list_categories(plugins=config.plugins):
         print('category:', category.name, ':', category.label)
         for plot_class in category.plots:
             try:
