@@ -8869,11 +8869,6 @@ get_optimization_generation_district_scale_performance:
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      'Unnamed: 0':
-        description: Index
-        type: int
-        unit: '[-]'
-        values: '{0...n}'
       generation:
         description: Number of the Generation or Iteration (Genetic algorithm)
         type: int
@@ -8947,11 +8942,6 @@ get_optimization_generation_building_scale_performance:
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      'Unnamed: 0':
-        description: Index
-        type: int
-        unit: '[-]'
-        values: '{0...n}'
       generation:
         description: No. Generation or Iteration (genetic Algorithm)
         type: int
@@ -9050,11 +9040,6 @@ get_optimization_generation_total_performance:
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      'Unnamed: 0':
-        description: Index
-        type: int
-        unit: '[-]'
-        values: '{0...n}'
       generation:
         description: No. Generation or Iteration (genetic Algorithm)
         type: int
@@ -9275,11 +9260,6 @@ get_optimization_individuals_in_generation:
       SS_HP:
         description: TODO
         type: float
-        unit: TODO
-        values: TODO
-      'Unnamed: 0':
-        description: TODO
-        type: int
         unit: TODO
         values: TODO
       WB_Cogen:
