@@ -452,15 +452,10 @@ def thermal_network_simplified(locator, config, network_name):
                                index=False)
 
     # $ POSTPROCESSING - PLANT HEAT REQUIREMENT
-    if network_type == "DH":
-        Plant_load_kWh = thermal_losses_supply_kWh.sum(axis=1) * 2 + Q_demand_kWh_building.sum(
-            axis=1) - accumulated_head_loss_total_kW.values
-    elif network_type == "DC":
-        Plant_load_kWh = thermal_losses_supply_kWh.sum(axis=1) * 2 + Q_demand_kWh_building.sum(
-            axis=1) + accumulated_head_loss_total_kW.values
-
-    Plant_load_kWh.to_csv(locator.get_thermal_network_plant_heat_requirement_file(network_type, network_name),
-                          header=['NONE'], index=False)
+    plant_load_kWh = thermal_losses_supply_kWh.sum(axis=1) * 2 + Q_demand_kWh_building.sum(
+        axis=1) - accumulated_head_loss_total_kW.values
+    plant_load_kWh.to_csv(locator.get_thermal_network_plant_heat_requirement_file(network_type, network_name),
+                          header=['thermal_load_kW'], index=False)
 
     # pressure losses per piping system
     pressure_loss_supply_edge_kW.to_csv(
@@ -518,10 +513,9 @@ def thermal_network_simplified(locator, config, network_name):
 
     # summary of edges used for the calculation
     fields_edges = ['length_m', 'Pipe_DN', 'Type_mat', 'D_int_m']
-    edge_df[fields_edges].to_csv(locator.get_thermal_network_edge_list_file(network_type, network_name), index=False)
-    fields_nodes = ['Building', 'Type']
-    node_df[fields_nodes].to_csv(locator.get_thermal_network_node_types_csv_file(network_type, network_name),
-                                 index=False)
+    edge_df[fields_edges].to_csv(locator.get_thermal_network_edge_list_file(network_type, network_name))
+    fields_nodes = ['Type', 'Building']
+    node_df[fields_nodes].to_csv(locator.get_thermal_network_node_types_csv_file(network_type, network_name))
 
     # correct diameter of network and save to the shapefile
     from cea.utilities.dbf import dataframe_to_dbf, dbf_to_dataframe
