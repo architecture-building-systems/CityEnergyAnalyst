@@ -1,5 +1,6 @@
 import os
 import sys
+import string
 
 
 def remap(x, in_min, in_max, out_min, out_max):
@@ -8,6 +9,17 @@ def remap(x, in_min, in_max, out_min, out_max):
     Based on this StackOverflow answer: https://stackoverflow.com/a/43567380/2260
     """
     return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
+
+
+def identifier(s, sep="-"):
+    """
+    First, all characters are lowercased, then, any character that is not in ascii_lowercase is replaced with ``sep``.
+
+    :param str s: the string to create an identifier of
+    :param str use_underscores: if set to true, underscores ("_") will be used instead of dashes ("-")
+    :rtype: str
+    """
+    return "".join(c if c in string.ascii_lowercase else "-" for c in s.lower())
 
 
 def simple_memoize(obj):
