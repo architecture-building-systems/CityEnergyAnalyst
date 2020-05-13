@@ -7658,16 +7658,6 @@ get_multi_criteria_analysis:
         type: float
         unit: '[USD 2015/yr]'
         values: '[0.0...n]'
-      'Unnamed: 0':
-        description: Index
-        type: int
-        unit: '[-]'
-        values: '[0...n]'
-      'Unnamed: 0.1':
-        description: Index
-        type: int
-        unit: '[-]'
-        values: '[0.0...n]'
       generation:
         description: Generation or iteration
         type: int
@@ -9168,11 +9158,6 @@ get_optimization_generation_total_performance_pareto:
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      'Unnamed: 0':
-        description: Index
-        type: int
-        unit: '[-]'
-        values: '{0...n}'
       generation:
         description: No. Generation or Iteration (genetic Algorithm)
         type: int
