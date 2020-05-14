@@ -7744,7 +7744,7 @@ get_network_layout_edges_shapefile:
   schema:
     columns:
       Name:
-        description: Unique building ID. It must start with a letter.
+        description: Unique network pipe ID.
         type: string
         unit: '[-]'
         values: alphanumeric
@@ -11578,6 +11578,11 @@ get_thermal_network_edge_list_file:
   file_type: csv
   schema:
     columns:
+      Name:
+        description: Unique network pipe ID.
+        type: string
+        unit: '[-]'
+        values: alphanumeric
       D_int_m:
         description: Internal pipe diameter for the nominal diameter
         type: float
@@ -11655,6 +11660,11 @@ get_thermal_network_node_types_csv_file:
   file_type: csv
   schema:
     columns:
+      Name:
+        description: Unique network node ID.
+        type: string
+        unit: '[-]'
+        values: alphanumeric
       Building:
         description: Unique building ID. It must start with a letter.
         type: string
@@ -11673,7 +11683,7 @@ get_thermal_network_plant_heat_requirement_file:
   file_type: csv
   schema:
     columns:
-      NONE:
+      thermal_load_kW:
         description: Thermal load supplied by the plant at each time step
         type: float
         unit: '[kWh]'
