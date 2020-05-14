@@ -278,13 +278,13 @@ class InputLocator(object):
         Substation results for decentralized buildings"""
         return self._ensure_folder(self.get_optimization_results_folder(), "substations")
 
-    def get_optimization_substations_results_file(self, building, network_type_code, district_network_barcode):
+    def get_optimization_substations_results_file(self, building, network_type, district_network_barcode):
         """scenario/outputs/data/optimization/substations/${building}_result.csv"""
         if district_network_barcode == "":
             district_network_barcode = "0"
         district_network_barcode_hex = hex(int(str(district_network_barcode), 2))
         return os.path.join(self.get_optimization_substations_folder(),
-                            "%(district_network_barcode_hex)s%(network_type_code)s_%(building)s_result.csv" % locals())
+                            "%(district_network_barcode_hex)s%(network_type)s_%(building)s_result.csv" % locals())
 
     def get_optimization_substations_total_file(self, district_network_barcode, network_type):
         """scenario/outputs/data/optimization/substations/Total_${genome}.csv"""
@@ -562,7 +562,8 @@ class InputLocator(object):
         if os.path.exists(nodes_csv):
             import pandas as pd
             nodes_df = pd.read_csv(nodes_csv)
-            return list(nodes_df[nodes_df['Type'] == 'PLANT']['Building'].values)
+            is_plant = nodes_df['Type'] == 'PLANT'
+            return list(nodes_df[is_plant]['Name'].values)
         return []
 
     def get_thermal_network_edge_list_file(self, network_type, network_name=''):
