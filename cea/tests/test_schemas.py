@@ -31,7 +31,7 @@ SKIP_LMS = {
 class TestSchemas(unittest.TestCase):
 
     def test_all_locator_methods_described(self):
-        schemas = cea.schemas.schemas()
+        schemas = cea.schemas.schemas(plugins=[])
         config = cea.config.Configuration()
         locator = cea.inputlocator.InputLocator(config.scenario)
 
@@ -39,7 +39,7 @@ class TestSchemas(unittest.TestCase):
             self.assertIn(method, schemas.keys())
 
     def test_all_locator_methods_have_a_file_path(self):
-        schemas = cea.schemas.schemas()
+        schemas = cea.schemas.schemas(plugins=[])
 
         for lm in schemas:
             self.assertIn("file_path", schemas[lm], "{lm} does not have a file_path".format(lm=lm))
@@ -47,7 +47,7 @@ class TestSchemas(unittest.TestCase):
             self.assertNotIn("\\", schemas[lm]["file_path"], "{lm} has backslashes in it's file_path".format(lm=lm))
 
     def test_all_columns_have_description(self):
-        schemas = cea.schemas.schemas()
+        schemas = cea.schemas.schemas(plugins=[])
         for lm in schemas:
             if lm == "get_database_standard_schedules_use":
                 # the schema for schedules is non-standard
@@ -63,7 +63,7 @@ class TestSchemas(unittest.TestCase):
                                   "Missing description for {lm}/{col}".format(lm=lm, col=col))
 
     def test_all_schemas_have_a_columns_entry(self):
-        schemas = cea.schemas.schemas()
+        schemas = cea.schemas.schemas(plugins=[])
         for lm in schemas:
             if lm == "get_database_standard_schedules_use":
                 # the schema for schedules is non-standard
@@ -76,7 +76,7 @@ class TestSchemas(unittest.TestCase):
                 self.assertIn("columns", schemas[lm]["schema"], "Missing columns for {lm}".format(lm=lm))
 
     def test_all_schema_columns_documented(self):
-        schemas = cea.schemas.schemas()
+        schemas = cea.schemas.schemas(plugins=[])
         for lm in schemas.keys():
             if lm in SKIP_LMS:
                 # these can't be documented properly due to the file format
@@ -111,7 +111,7 @@ class TestSchemas(unittest.TestCase):
                         self.fail("Problem with lm={lm}, col={col}, message: {m}".format(lm=lm, col=col, m=e.message))
 
     def test_each_column_has_type(self):
-        schemas = cea.schemas.schemas()
+        schemas = cea.schemas.schemas(plugins=[])
         valid_types = {"string", "int", "boolean", "float", "date", "Point", "Polygon", "LineString"}
         for lm in schemas.keys():
             if lm in SKIP_LMS:
@@ -138,21 +138,21 @@ class TestSchemas(unittest.TestCase):
                                   "Invalid type definition for {lm}/{col}: {type}".format(lm=lm, col=col, type=col_type))
 
     def test_each_lm_has_created_by(self):
-        schemas = cea.schemas.schemas()
+        schemas = cea.schemas.schemas(plugins=[])
         for lm in schemas:
             self.assertIn("created_by", schemas[lm], "{lm} missing created_by entry".format(lm=lm))
             self.assertIsInstance(schemas[lm]["created_by"], list,
                                   "created_by entry of {lm} must be a list".format(lm=lm))
 
     def test_each_lm_has_used_by(self):
-        schemas = cea.schemas.schemas()
+        schemas = cea.schemas.schemas(plugins=[])
         for lm in schemas:
             self.assertIn("used_by", schemas[lm], "{lm} missing used_by entry".format(lm=lm))
             self.assertIsInstance(schemas[lm]["used_by"], list,
                                   "used_by entry of {lm} must be a list".format(lm=lm))
 
     def test_each_lm_has_method(self):
-        schemas = cea.schemas.schemas()
+        schemas = cea.schemas.schemas(plugins=[])
         locator = cea.inputlocator.InputLocator(None)
         for lm in schemas:
             self.assertIn(lm, dir(locator),
@@ -182,7 +182,7 @@ class TestSchemas(unittest.TestCase):
                 folders[folder] = attrib
 
     def test_scripts_use_underscores_not_hyphen(self):
-        schemas = cea.schemas.schemas()
+        schemas = cea.schemas.schemas(plugins=[])
         for lm in schemas:
             used_by = schemas[lm]["used_by"]
             created_by = schemas[lm]["created_by"]

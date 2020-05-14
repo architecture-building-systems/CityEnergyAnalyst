@@ -3,6 +3,7 @@ Manage configuration information for the CEA. The Configuration class is built d
 in ``default.config``.
 """
 from __future__ import print_function
+from __future__ import division
 
 import os
 import re
@@ -22,6 +23,7 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
+
 
 DEFAULT_CONFIG = os.path.join(os.path.dirname(__file__), 'default.config')
 CEA_CONFIG = os.path.expanduser('~/cea.config')
@@ -631,23 +633,9 @@ class PluginListParameter(ListParameter):
     typename = "PluginListParameter"
 
     def decode(self, value):
+        from cea.plugin import instantiate_plugin
         plugin_fqnames = parse_string_to_list(value)
-        return [self.instantiate_plugin(plugin_fqname) for plugin_fqname in plugin_fqnames]
-
-    def instantiate_plugin(self, plugin_fqname):
-        try:
-            import importlib
-            plugin_path = plugin_fqname.split(".")
-            plugin_module = ".".join(plugin_path[:-1])
-            plugin_class = plugin_path[-1]
-            module = importlib.import_module(plugin_module)
-            instance = getattr(module, plugin_class)()
-            return instance
-        except BaseException as ex:
-            raise ValueError("Could not instantiate plugin {plugin_fqname} ({msg})".format(
-                plugin_fqname=plugin_fqname, msg=ex.message))
-
-
+        return [instantiate_plugin(plugin_fqname) for plugin_fqname in plugin_fqnames]
 
 
 class SubfoldersParameter(ListParameter):
