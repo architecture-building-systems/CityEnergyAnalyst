@@ -7754,7 +7754,7 @@ get_network_layout_edges_shapefile:
   schema:
     columns:
       Name:
-        description: Unique building ID. It must start with a letter.
+        description: Unique network pipe ID.
         type: string
         unit: '[-]'
         values: alphanumeric
@@ -11557,10 +11557,11 @@ get_surroundings_geometry:
         unit: '[-]'
         values: alphanumeric
       floors_ag:
-        description: Number of floors above ground (incl. ground floor)
+        description: Number of floors above ground (incl. ground floor, Minimum one floor is needed)
+        min: 1
         type: int
         unit: '[-]'
-        values: '{0...n}'
+        values: '{1...n}'
       floors_bg:
         description: Number of floors below ground (basement)
         type: int
@@ -11572,10 +11573,11 @@ get_surroundings_geometry:
         unit: '[-]'
         values: '[-]'
       height_ag:
-        description: Height above ground (incl. ground floor)
+        description: Height above ground (incl. ground floor, Minimum one floor is needed)
+        min: 2.0
         type: float
         unit: '[m]'
-        values: '{0.0...n}'
+        values: '{2.0...n}'
       height_bg:
         description: Height below ground (basement)
         type: float
@@ -11618,6 +11620,11 @@ get_thermal_network_edge_list_file:
   file_type: csv
   schema:
     columns:
+      Name:
+        description: Unique network pipe ID.
+        type: string
+        unit: '[-]'
+        values: alphanumeric
       D_int_m:
         description: Internal pipe diameter for the nominal diameter
         type: float
@@ -11695,6 +11702,11 @@ get_thermal_network_node_types_csv_file:
   file_type: csv
   schema:
     columns:
+      Name:
+        description: Unique network node ID.
+        type: string
+        unit: '[-]'
+        values: alphanumeric
       Building:
         description: Unique building ID. It must start with a letter.
         type: string
@@ -11713,7 +11725,7 @@ get_thermal_network_plant_heat_requirement_file:
   file_type: csv
   schema:
     columns:
-      NONE:
+      thermal_load_kW:
         description: Thermal load supplied by the plant at each time step
         type: float
         unit: '[kWh]'
@@ -12981,10 +12993,11 @@ get_zone_geometry:
         unit: '[-]'
         values: alphanumeric
       floors_ag:
-        description: Number of floors above ground (incl. ground floor)
+        description: Number of floors above ground (incl. ground floor, minimum one floor is needed)
+        min: 1
         type: int
         unit: '[-]'
-        values: '{0...n}'
+        values: '{1...n}'
       floors_bg:
         description: Number of floors below ground (basement)
         type: int
@@ -12996,10 +13009,11 @@ get_zone_geometry:
         unit: '[-]'
         values: '[-]'
       height_ag:
-        description: Height above ground (incl. ground floor)
+        description: Height above ground (incl. ground floor, minimum one floor is needed)
+        min: 2.0
         type: float
         unit: '[m]'
-        values: '{0.0...n}'
+        values: '{2.0...n}'
       height_bg:
         description: Height below ground (basement)
         type: float

@@ -14,6 +14,7 @@ import cea.technologies.substation as substation
 from cea.constants import P_WATER_KGPERM3, FT_WATER_TO_PA, FT_TO_M, M_WATER_TO_PA, HEAT_CAPACITY_OF_WATER_JPERKGK, \
     SHAPEFILE_TOLERANCE
 from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
+from cea.technologies.thermal_network.thermal_network_loss import calc_temperature_out_per_pipe
 from cea.resources import geothermal
 from cea.technologies.constants import NETWORK_DEPTH
 from cea.technologies.pumps import calc_pump_power
@@ -458,15 +459,10 @@ def thermal_network_simplified(locator, config, network_name):
                                index=False)
 
     # $ POSTPROCESSING - PLANT HEAT REQUIREMENT
-    if network_type == "DH":
-        Plant_load_kWh = thermal_losses_supply_kWh.sum(axis=1) * 2 + Q_demand_kWh_building.sum(
-            axis=1) - accumulated_head_loss_total_kW.values
-    elif network_type == "DC":
-        Plant_load_kWh = thermal_losses_supply_kWh.sum(axis=1) * 2 + Q_demand_kWh_building.sum(
-            axis=1) + accumulated_head_loss_total_kW.values
-
-    Plant_load_kWh.to_csv(locator.get_thermal_network_plant_heat_requirement_file(network_type, network_name),
-                          header=['NONE'], index=False)
+    plant_load_kWh = thermal_losses_supply_kWh.sum(axis=1) * 2 + Q_demand_kWh_building.sum(
+        axis=1) - accumulated_head_loss_total_kW.values
+    plant_load_kWh.to_csv(locator.get_thermal_network_plant_heat_requirement_file(network_type, network_name),
+                          header=['thermal_load_kW'], index=False)
 
     # pressure losses per piping system
     pressure_loss_supply_edge_kW.to_csv(
@@ -528,6 +524,9 @@ def thermal_network_simplified(locator, config, network_name):
     fields_nodes = ['Building', 'Type']
     node_df[fields_nodes].to_csv(locator.get_thermal_network_node_types_csv_file(network_type, network_name),
                                  index=True)
+    edge_df[fields_edges].to_csv(locator.get_thermal_network_edge_list_file(network_type, network_name))
+    fields_nodes = ['Type', 'Building']
+    node_df[fields_nodes].to_csv(locator.get_thermal_network_node_types_csv_file(network_type, network_name))
 
     # correct diameter of network and save to the shapefile
     from cea.utilities.dbf import dataframe_to_dbf, dbf_to_dataframe
