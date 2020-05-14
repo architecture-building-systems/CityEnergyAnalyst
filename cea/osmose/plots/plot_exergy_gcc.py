@@ -30,8 +30,8 @@ COLOR_CODES = {'HCS_base_3for2': '#C96A50', 'HCS_base_coil': '#3E9AA3', 'HCS_bas
                'HCS_base': '#707070'}
 KEY_TABLE = {'HCS_base_ER0': 'HCS_ER0', 'HCS_base_coil': 'HCS_coil', 'HCS_base_3for2': 'HCS_3for2',
              'HCS_base_IEHX': 'HCS_IEHX', 'HCS_base_LD': 'HCS_LD', 'HCS_base': 'HCS_base'}
-CONFIG_TABLE = {'HCS_base_coil':'Config.1', 'HCS_base_ER0':'Config.2',
-                'HCS_base_3for2': 'Config.3', 'HCS_base_IEHX':'Config.5'}
+CONFIG_TABLE = {'HCS_base_coil':'Config|1', 'HCS_base_ER0':'Config|2',
+                'HCS_base_3for2': 'Config|3', 'HCS_base_IEHX':'Config|5'}
 Y_CARNOT_RANGE = [0.0, -0.1]
 PLOT_SPECS = {'icc':{'ylabel':'Temperature [C]', 'xlabel':'Cooling Load [kW]', 'ylim':(273,350)},
               'carnot':{'ylabel':'Carnot factor [-]', 'xlabel':'Cooling Load [kW]',
@@ -118,6 +118,11 @@ def plot_carnot_from_icc_txt_techs(paths, t, T_ref_dict, line_types, plot_type, 
             if case == '':
                 case = 'B' + path.split('run_')[1].split('_B')[0]
             x, y = load_data_from_txt(path, plot_type, line_type, txt_name, t)
+            # clean up the repeating x-y pairs
+            idx_to_delete = np.where(x==x.max())[0]
+            idx_to_delete = idx_to_delete[:(len(idx_to_delete)-1)]
+            x = np.delete(x,idx_to_delete)
+            y = np.delete(y,idx_to_delete)
             # plot x,y
             y_carnot = np.vectorize(calc_carnot_factor)(T_ref, y + 273.15)
             ax1.plot(x, y_carnot, '-', color=COLOR_CODES[tech], label=CONFIG_TABLE[tech])
@@ -155,7 +160,7 @@ def plot_carnot_from_icc_txt_techs(paths, t, T_ref_dict, line_types, plot_type, 
     table = plt.table(cellText=table_rows, cellLoc='center', colLabels=col_labels, rowLabels=row_labels,
                       bbox=[0.22, -0.6, bbox_width * 2, 0.4],) # [x,y,width,height])
     table.scale(1, 1)
-    ax1.text(820, -0.118, 'Exergy Requirement', horizontalalignment='left', fontsize=8, fontweight='bold',
+    ax1.text(820, -0.118, 'Exergy Requirement', horizontalalignment='left', fontsize=8, fontweight='normal',
              bbox={'edgecolor': 'none', 'facecolor': '#586748','alpha': 0.01, 'pad': 1})
     set_table_fontsize(table, 8)
     set_table_row_height(table, col_labels, 0.34, table_rows, 0.2)

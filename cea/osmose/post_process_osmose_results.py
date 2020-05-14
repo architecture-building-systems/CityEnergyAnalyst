@@ -683,13 +683,13 @@ if __name__ == '__main__':
     result_path_folder = 'C:\\Users\\Shanshan\\Documents\\WP1_results\\WP1_results_1130'
     # result_path_folder = 'E:\\results_1130\\'
     # TECHS = ['HCS_base', 'HCS_base_coil', 'HCS_base_3for2', 'HCS_base_ER0', 'HCS_base_IEHX', 'HCS_base_LD']
-    TECHS = ['HCS_base']
+    TECHS = ['HCS_base_ER0']
 
     for tech in TECHS:
         tech_folder_path = os.path.join(result_path_folder, tech)
         folders_list = os.listdir(tech_folder_path)
-        for folder in folders_list:
-        # for folder in ['run_007_OFF_B005_1_24']:
+        # for folder in folders_list:
+        for folder in ['run_013_RET_B005_1_168']:
             if 'run' in folder:
                 folder_path = os.path.join(tech_folder_path, folder)
                 file_list = os.listdir(folder_path)

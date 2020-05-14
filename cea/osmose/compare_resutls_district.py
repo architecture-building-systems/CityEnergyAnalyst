@@ -63,7 +63,8 @@ def main(path_result_folder, case, time_steps):
             qc_all_tech_per_building_dict[label] = qc_sys_scu_percent
         # plot qc box plot
         techs = ordered_el_compare_df.columns
-        plot_heat_removed_stack_all_techs(building, time_steps, techs, qc_all_tech_per_building_dict, path_district_result_folder, case)
+        plot_heat_removed_stack_all_techs(building, time_steps, techs, qc_all_tech_per_building_dict,
+                                          path_district_result_folder, case)
 
         # ex_Wh_per_Af
         if 'ex_overlap_bar' in PLOTS:
@@ -459,7 +460,7 @@ if __name__ == '__main__':
     #          "WTP_CBD_m_WP1_RET", "WTP_CBD_m_WP1_OFF", "WTP_CBD_m_WP1_HOT"]
     # cases = ['WTP_CBD_m_WP1_RET']
     cases = ['WTP_CBD_m_WP1_HOT', 'WTP_CBD_m_WP1_OFF', 'WTP_CBD_m_WP1_RET']
-    #cases = ["HKG_CBD_m_WP1_RET", "HKG_CBD_m_WP1_OFF", "HKG_CBD_m_WP1_HOT"]
+    # cases = ["HKG_CBD_m_WP1_RET", "HKG_CBD_m_WP1_OFF", "HKG_CBD_m_WP1_HOT"]
     # cases = ["ABU_CBD_m_WP1_RET", "ABU_CBD_m_WP1_OFF", "ABU_CBD_m_WP1_HOT"]
     # cases = ["MDL_CBD_m_WP1_RET", "MDL_CBD_m_WP1_OFF", "MDL_CBD_m_WP1_HOT"]
     # cases = ['WTP_CBD_m_WP1_OFF', 'WTP_CBD_m_WP1_RET']
