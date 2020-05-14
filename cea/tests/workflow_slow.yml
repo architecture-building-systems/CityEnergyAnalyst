@@ -12,9 +12,6 @@
   parameters:
     databases-path: CH
     databases: [archetypes, assemblies, components]
-- script: archetypes-mapper
-  parameters:
-    input-databases: [comfort, architecture, air-conditioning, internal-loads, supply, schedules]
 - script: weather-helper
   parameters:
     weather: Zug_inducity_2009
@@ -43,15 +40,23 @@
   parameters:
     network-type: DH
     network-model: simplified
+- script: network-layout
+  parameters:
+    network-type: DC
+    network-model: simplified
 - script: thermal-network
   parameters:
     network-type: DH
+    network-model: simplified
+- script: thermal-network
+  parameters:
+    network-type: DC
     network-model: simplified
 - script: decentralized
 - script: optimization
   parameters:
     district-heating-network: true
-    district-cooling-network: false
+    district-cooling-network: true
     number-of-generations: 2
     population-size: 5
     random-seed: 100
@@ -61,4 +66,8 @@
 - script: run-all-plots
   parameters:
     network-type: DH
+    network-name: ""
+- script: run-all-plots
+  parameters:
+    network-type: DC
     network-name: ""
