@@ -414,7 +414,7 @@ def disconnected_cooling_for_building(building_name, supply_systems, lca, locato
     }
     performance_results_df = pd.DataFrame(performance_results)
     performance_results_df.to_csv(
-        locator.get_optimization_decentralized_folder_building_result_cooling(building_name))
+        locator.get_optimization_decentralized_folder_building_result_cooling(building_name), index=False)
     # save activation for the best supply system configuration
     best_activation_df = pd.DataFrame.from_dict(cooling_dispatch[indexBest])  #
     best_activation_df.to_csv(
