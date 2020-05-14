@@ -4,6 +4,7 @@ A base class for creating CEA plugins. Subclass this class in your own namespace
 from __future__ import print_function
 from __future__ import division
 
+import importlib
 import os
 from typing import Generator, Sequence
 import yaml
@@ -211,3 +212,17 @@ if __name__ == "__main__":
     plot = plot_class(config.project, {"scenario-name": config.scenario_name}, cache)
     print(plot.category_path)
     print(plot.plot(auto_open=True))
+
+
+def instantiate_plugin(plugin_fqname):
+    """Return a new CeaPlugin based on it's fully qualified name - this is how the config object creates plugins"""
+    try:
+        plugin_path = plugin_fqname.split(".")
+        plugin_module = ".".join(plugin_path[:-1])
+        plugin_class = plugin_path[-1]
+        module = importlib.import_module(plugin_module)
+        instance = getattr(module, plugin_class)()
+        return instance
+    except BaseException as ex:
+        raise ValueError("Could not instantiate plugin {plugin_fqname} ({msg})".format(
+            plugin_fqname=plugin_fqname, msg=ex.message))
