@@ -113,17 +113,19 @@ class SupplySystemPlotBase(cea.plots.PlotBase):
 
     def process_building_scale_capacities_kW(self):
         try:
-            heating_cap = pd.read_csv(self.locator.get_optimization_building_scale_heating_capacity(self.individual,
-                                                                                                    self.generation))
+            heating_cap = pd.read_csv(
+                self.locator.get_optimization_building_scale_heating_capacity(self.individual,
+                                                                              self.generation)).set_index('Name')
         except pd.errors.EmptyDataError:
             heating_cap = pd.DataFrame()
 
         try:
-            cooling_cap = pd.read_csv(self.locator.get_optimization_building_scale_cooling_capacity(self.individual,
-                                                                                                    self.generation))
+            cooling_cap = pd.read_csv(
+                self.locator.get_optimization_building_scale_cooling_capacity(self.individual,
+                                                                              self.generation)).set_index('Name')
         except pd.errors.EmptyDataError:
             cooling_cap = pd.DataFrame()
 
-        building_capacities = pd.concat([heating_cap, cooling_cap], axis=1, sort=False).set_index('Name')
+        building_capacities = pd.concat([heating_cap, cooling_cap], axis=1, sort=False).fillna(0.0)
 
         return building_capacities / 1E3  # to kW
