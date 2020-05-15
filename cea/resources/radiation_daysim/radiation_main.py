@@ -263,17 +263,18 @@ class CEARad(py2radiance.Rad):
     def run_cmd(self, cmd, cwd=None):
         # Verbose output if debug is true
         print('Running command `{}`{}'.format(cmd, '' if cwd is None else ' in `{}`'.format(cwd)))
-        if self.debug:
-            p = subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE)
-            while p.poll() is None:
-                line = p.stdout.readline()
-                if len(line.strip()):
-                    print(line)
-            print(p.stdout.read())
-            print('`{}` completed'.format(cmd))
-        else:
+        try:
             # Stops script if commands fail (i.e non-zero exit code)
             subprocess.check_call(cmd, cwd=cwd, stderr=subprocess.STDOUT, env=os.environ)
+        except TypeError as error:
+            if error.message == "environment can only contain strings":
+                for key in os.environ.keys():
+                    value = os.environ[key]
+                    if not isinstance(value, str):
+                        print("Bad ENVIRON key: {key}={value} ({value_type})".format(
+                            key=key, value=value, value_type=type(value)))
+            raise error
+
 
     def execute_epw2wea(self, epwweatherfile, ground_reflectance=0.2):
         daysimdir_wea = self.daysimdir_wea
