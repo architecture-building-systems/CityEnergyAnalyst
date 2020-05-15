@@ -94,41 +94,36 @@ class SupplySystemPlotBase(cea.plots.PlotBase):
 
     def process_district_scale_capacities_kW(self):
         try:
-            heat = pd.read_csv(self.locator.get_optimization_district_scale_heating_capacity(self.individual,
-                                                                                        self.generation))
+            heating_cap = pd.read_csv(self.locator.get_optimization_district_scale_heating_capacity(self.individual,
+                                                                                                    self.generation))
         except pd.errors.EmptyDataError:
-            heat = pd.DataFrame()
+            heating_cap = pd.DataFrame()
 
         try:
-            cool = pd.read_csv(self.locator.get_optimization_district_scale_cooling_capacity(self.individual,
-                                                                                        self.generation))
+            cooling_cap = pd.read_csv(self.locator.get_optimization_district_scale_cooling_capacity(self.individual,
+                                                                                                    self.generation))
         except pd.errors.EmptyDataError:
-            cool = pd.DataFrame()
+            cooling_cap = pd.DataFrame()
 
-        elec = pd.read_csv(self.locator.get_optimization_district_scale_electricity_capacity(self.individual,
-                                                                                        self.generation))
+        electricity_cap = pd.read_csv(self.locator.get_optimization_district_scale_electricity_capacity(self.individual,
+                                                                                                        self.generation))
 
-        dataframe = heat.join(cool).join(elec)
-        return dataframe / 1E3  # to kW
+        district_capacities = pd.concat([heating_cap, cooling_cap, electricity_cap], axis=1, sort=False)
+        return district_capacities / 1E3  # to kW
 
     def process_building_scale_capacities_kW(self):
         try:
-            heat = pd.read_csv(self.locator.get_optimization_building_scale_heating_capacity(self.individual,
-                                                                                           self.generation))
+            heating_cap = pd.read_csv(self.locator.get_optimization_building_scale_heating_capacity(self.individual,
+                                                                                                    self.generation))
         except pd.errors.EmptyDataError:
-            heat = None
+            heating_cap = pd.DataFrame()
 
         try:
-            cool = pd.read_csv(self.locator.get_optimization_building_scale_cooling_capacity(self.individual,
-                                                                                           self.generation))
+            cooling_cap = pd.read_csv(self.locator.get_optimization_building_scale_cooling_capacity(self.individual,
+                                                                                                    self.generation))
         except pd.errors.EmptyDataError:
-            cool = None
+            cooling_cap = pd.DataFrame()
 
-        if heat is not None:
-            dataframe = heat.set_index('Name')
-        elif cool is not None:
-            dataframe = cool.set_index('Name')
-        else:
-            dataframe = heat.merge(cool, on='Name', how='outer').set_index('Name')
-            dataframe.fillna(0.0, inplace=True)
-        return dataframe / 1E3  # to kW
+        building_capacities = pd.concat([heating_cap, cooling_cap], axis=1, sort=False).set_index('Name')
+
+        return building_capacities / 1E3  # to kW
