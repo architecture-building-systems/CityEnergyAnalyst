@@ -12,9 +12,6 @@
   parameters:
     databases-path: CH
     databases: [archetypes, assemblies, components]
-- script: archetypes-mapper
-  parameters:
-    input-databases: [comfort, architecture, air-conditioning, internal-loads, supply, schedules]
 - script: weather-helper
   parameters:
     weather: Zug-inducity_1990_2010_TMY
