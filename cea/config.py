@@ -1012,12 +1012,12 @@ def get_scenarios_list(project_path):
 def get_systems_list(scenario_path):
     locator = cea.inputlocator.InputLocator(scenario_path)
     checkpoints = glob.glob(os.path.join(locator.get_optimization_master_results_folder(), "*.json"))
-    iterations = []
+    iterations = set()
     for checkpoint in checkpoints:
         with open(checkpoint, 'rb') as f:
             data_checkpoint = json.load(f)
-            iterations.extend(data_checkpoint['systems_to_show'])
-    unique_iterations = list(set(iterations))
+            iterations.update(data_checkpoint['systems_to_show'])
+    unique_iterations = [str(x) for x in iterations]
     return unique_iterations
 
 
@@ -1063,12 +1063,14 @@ def validate_coord_tuple(coord_tuple):
     return coord_tuple
 
 
-if __name__ == '__main__':
-    test_strings = ['(1, 1), (1, 1), (1, 1)',
-                    '(3,3),(a,3),',
-                    '(-43, -432)']
-    for test in test_strings:
-        try:
-            print(parse_string_coordinate_list(test))
-        except ValueError as e:
-            print(test, e)
+# if __name__ == '__main__':
+#     test_strings = ['(1, 1), (1, 1), (1, 1)',
+#                     '(3,3),(a,3),',
+#                     '(-43, -432)']
+#     for test in test_strings:
+#         try:
+#             print(parse_string_coordinate_list(test))
+#         except ValueError as e:
+#             print(test, e)
+
+
