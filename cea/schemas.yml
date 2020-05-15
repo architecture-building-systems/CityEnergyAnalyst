@@ -7769,16 +7769,6 @@ get_multi_criteria_analysis:
         type: float
         unit: '[USD 2015/yr]'
         values: '[0.0...n]'
-      'Unnamed: 0':
-        description: Index
-        type: int
-        unit: '[-]'
-        values: '[0...n]'
-      'Unnamed: 0.1':
-        description: Index
-        type: int
-        unit: '[-]'
-        values: '[0.0...n]'
       generation:
         description: Generation or iteration
         type: int
@@ -8341,11 +8331,6 @@ get_optimization_decentralized_folder_building_cooling_activation:
         type: float
         unit: '[Wh]'
         values: '{0.0...n}'
-      'Unnamed: 0':
-        description: Index column
-        type: int
-        unit: '[-]'
-        values: '{0...n}'
   used_by:
   - optimization
 get_optimization_decentralized_folder_building_result_cooling:
@@ -8995,11 +8980,6 @@ get_optimization_generation_district_scale_performance:
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      'Unnamed: 0':
-        description: Index
-        type: int
-        unit: '[-]'
-        values: '{0...n}'
       generation:
         description: Number of the Generation or Iteration (Genetic algorithm)
         type: int
@@ -9073,11 +9053,6 @@ get_optimization_generation_building_scale_performance:
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      'Unnamed: 0':
-        description: Index
-        type: int
-        unit: '[-]'
-        values: '{0...n}'
       generation:
         description: No. Generation or Iteration (genetic Algorithm)
         type: int
@@ -9176,11 +9151,6 @@ get_optimization_generation_total_performance:
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      'Unnamed: 0':
-        description: Index
-        type: int
-        unit: '[-]'
-        values: '{0...n}'
       generation:
         description: No. Generation or Iteration (genetic Algorithm)
         type: int
@@ -9279,11 +9249,6 @@ get_optimization_generation_total_performance_pareto:
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      'Unnamed: 0':
-        description: Index
-        type: int
-        unit: '[-]'
-        values: '{0...n}'
       generation:
         description: No. Generation or Iteration (genetic Algorithm)
         type: int
@@ -9406,11 +9371,6 @@ get_optimization_individuals_in_generation:
       SS_HP:
         description: TODO
         type: float
-        unit: TODO
-        values: TODO
-      'Unnamed: 0':
-        description: TODO
-        type: int
         unit: TODO
         values: TODO
       WB_Cogen:
@@ -11668,15 +11628,27 @@ get_surroundings_geometry:
         unit: '[-]'
         values: alphanumeric
       floors_ag:
-        description: Number of floors above ground (incl. ground floor)
+        description: Number of floors above ground (incl. ground floor, Minimum one floor is needed)
+        min: 1
+        type: int
+        unit: '[-]'
+        values: '{1...n}'
+      floors_bg:
+        description: Number of floors below ground (basement)
         type: int
         unit: '[-]'
         values: '{0...n}'
+      geometry:
+        description: Shapefile POLYGON
+        type: Polygon
+        unit: '[-]'
+        values: '[-]'
       height_ag:
-        description: Height above ground (incl. ground floor)
+        description: Height above ground (incl. ground floor, Minimum one floor is needed)
+        min: 2.0
         type: float
         unit: '[m]'
-        values: '{0.0...n}'
+        values: '{2.0...n}'
       geometry:
         description: Shapefile POLYGON
         type: Polygon
@@ -13098,20 +13070,22 @@ get_zone_geometry:
         unit: '[-]'
         values: alphanumeric
       floors_ag:
-        description: Number of floors above ground (incl. ground floor)
+        description: Number of floors above ground (incl. ground floor, minimum one floor is needed)
+        min: 1
         type: int
         unit: '[-]'
-        values: '{0...n}'
+        values: '{1...n}'
       floors_bg:
         description: Number of floors below ground (basement)
         type: int
         unit: '[-]'
         values: '{0...n}'
       height_ag:
-        description: Height above ground (incl. ground floor)
+        description: Height above ground (incl. ground floor, minimum one floor is needed)
+        min: 2.0
         type: float
         unit: '[m]'
-        values: '{0.0...n}'
+        values: '{2.0...n}'
       height_bg:
         description: Height below ground (basement)
         type: float
