@@ -124,11 +124,6 @@ class SupplySystemPlotBase(cea.plots.PlotBase):
         except pd.errors.EmptyDataError:
             cooling_cap = pd.DataFrame()
 
-        if not heating_cap.empty:
-            building_capacities = heating_cap.set_index('Name')
-        elif not cooling_cap.empty:
-            building_capacities = cooling_cap.set_index('Name')
-        else:
-            building_capacities = heating_cap.merge(cooling_cap, on='Name', how='outer').set_index('Name')
-            building_capacities.fillna(0.0, inplace=True)
+        building_capacities = pd.concat([heating_cap, cooling_cap], axis=1, sort=False).set_index('Name')
+
         return building_capacities / 1E3  # to kW
