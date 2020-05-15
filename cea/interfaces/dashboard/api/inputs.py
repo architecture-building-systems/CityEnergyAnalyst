@@ -4,7 +4,6 @@ from collections import OrderedDict
 
 import geopandas
 import pandas
-import yaml
 from flask import current_app, request
 from flask_restplus import Namespace, Resource, abort
 
@@ -12,7 +11,7 @@ import cea.inputlocator
 import cea.utilities.dbf
 import cea.scripts
 from cea.datamanagement.databases_verification import InputFileValidator
-from cea.interfaces.dashboard.api.databases import read_all_databases, DATABASES_SCHEMA_KEYS, schedule_to_dict
+from cea.interfaces.dashboard.api.databases import read_all_databases, DATABASES_SCHEMA_KEYS
 from cea.plots.supply_system.a_supply_system_map import get_building_connectivity, newer_network_layout_exists
 from cea.plots.variable_naming import get_color_array
 from cea.technologies.network_layout.main import layout_network, NetworkLayout
@@ -29,34 +28,37 @@ COLORS = {
     'disconnected': get_color_array('grey')
 }
 
+# List of input databases (db_name, locator/schema_key)
+INPUT_DATABASES = [
+    ('zone', 'get_zone_geometry'),
+    ('typology', 'get_building_typology'),
+    ('architecture', 'get_building_architecture'),
+    ('internal-loads', 'get_building_internal'),
+    ('indoor-comfort', 'get_building_comfort'),
+    ('air-conditioning-systems', 'get_building_air_conditioning'),
+    ('supply-systems', 'get_building_supply'),
+    ('surroundings', 'get_surroundings_geometry')
+]
 
-def read_inputs_field_types():
-    """Parse the inputs.yaml file and create the dictionary of column types"""
-    inputs = yaml.load(
-        open(os.path.join(os.path.dirname(__file__), 'inputs.yml')).read())
 
-    for db in inputs.keys():
-        inputs[db]['fieldnames'] = [field['name']for field in inputs[db]['fields']]
-    return inputs
+def get_input_database_schemas():
+    """Parse the schemas.yml file and create the dictionary of column types"""
+    schemas = cea.scripts.schemas()
+    input_database_schemas = OrderedDict()
+    for db_name, locator in INPUT_DATABASES:
+        schema = schemas[locator]
+        input_database_schemas[db_name] = {
+            'file_type': schema['file_type'],
+            'location': locator,
+            'columns': schema['schema']['columns']
+        }
+    return input_database_schemas
 
 
-INPUTS = read_inputs_field_types()
+INPUTS = get_input_database_schemas()
 INPUT_KEYS = INPUTS.keys()
 GEOJSON_KEYS = ['zone', 'surroundings', 'streets', 'dc', 'dh']
 NETWORK_KEYS = ['dc', 'dh']
-
-# INPUT_MODEL = api.model('Input', {
-#     'fields': fields.List(fields.String, description='Column names')
-# })
-
-# GEOJSON_MODEL = api.model('GeoJSON',{
-#     'test': fields.String()
-# })
-
-# BUILDING_PROPS_MODEL = api.model('Building Properties', {
-#     'geojsons': fields.List(fields.Nested(GEOJSON_MODEL)),
-#     'tables': fields.List(fields.String)
-# })
 
 
 @api.route('/')
@@ -72,8 +74,8 @@ class InputBuildingProperties(Resource):
             abort(400, 'Input file not found: %s' % db, choices=INPUT_KEYS)
         db_info = INPUTS[db]
         columns = OrderedDict()
-        for field in db_info['fields']:
-            columns[field['name']] = field['type']
+        for column_name, column in db_info['columns'].items():
+            columns[column_name] = column['type']
         return columns
 
 
@@ -91,7 +93,7 @@ class InputGeojson(Resource):
             config = current_app.cea_config
             locator = cea.inputlocator.InputLocator(config.scenario)
             location = getattr(locator, db_info['location'])()
-            if db_info['type'] != 'shp':
+            if db_info['file_type'] != 'shp':
                 abort(400, 'Invalid database for geojson: %s' % location)
             return df_to_json(location, bbox=True)[0]
         elif kind in NETWORK_KEYS:
@@ -148,9 +150,10 @@ class AllInputs(Resource):
         for db in INPUTS:
             db_info = INPUTS[db]
             location = getattr(locator, db_info['location'])()
+            file_type = db_info['file_type']
 
             if len(tables[db]) != 0:
-                if db_info['type'] == 'shp':
+                if file_type == 'shp':
                     from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
                     table_df = geopandas.GeoDataFrame.from_features(geojsons[db]['features'],
                                                                     crs=get_geographic_coordinate_system())
@@ -160,7 +163,7 @@ class AllInputs(Resource):
 
                     table_df = pandas.DataFrame(table_df.drop(columns='geometry'))
                     out['tables'][db] = json.loads(table_df.set_index('Name').to_json(orient='index'))
-                elif db_info['type'] == 'dbf':
+                elif file_type == 'dbf':
                     table_df = pandas.read_json(json.dumps(tables[db]), orient='index')
 
                     # Make sure index name is 'Name;
@@ -173,13 +176,13 @@ class AllInputs(Resource):
             else:  # delete file if empty
                 out['tables'][db] = {}
                 if os.path.isfile(location):
-                    if db_info['type'] == 'shp':
+                    if file_type == 'shp':
                         import glob
                         for filepath in glob.glob(os.path.join(locator.get_building_geometry_folder(), '%s.*' % db)):
                             os.remove(filepath)
-                    elif db_info['type'] == 'dbf':
+                    elif file_type == 'dbf':
                         os.remove(location)
-                if db_info['type'] == 'shp':
+                if file_type == 'shp':
                     out['geojsons'][db] = {}
 
         if schedules:
@@ -202,54 +205,51 @@ class AllInputs(Resource):
 
 def get_building_properties():
     import cea.glossary
-    # FIXME: Find a better way to ensure order of tabs
-    tabs = ['zone', 'typology', 'architecture', 'internal-loads', 'indoor-comfort', 'air-conditioning-systems',
-            'supply-systems', 'surroundings']
 
     config = current_app.cea_config
 
-    schemas = cea.scripts.schemas()
     locator = cea.inputlocator.InputLocator(config.scenario)
-    store = {'tables': {}, 'columns': {}, 'order': tabs}
+    store = {'tables': OrderedDict(), 'columns': OrderedDict()}
     for db in INPUTS:
         db_info = INPUTS[db]
         locator_method = db_info['location']
         file_path = getattr(locator, locator_method)()
-        file_type = db_info['type']
-        field_names = db_info['fieldnames']
+        file_type = db_info['file_type']
+        db_columns = db_info['columns']
         try:
             if file_type == 'shp':
                 table_df = geopandas.GeoDataFrame.from_file(file_path)
                 table_df = pandas.DataFrame(
                     table_df.drop(columns='geometry'))
-                if 'REFERENCE' in field_names and 'REFERENCE' not in table_df.columns:
+                if 'geometry' in db_columns:
+                    del db_columns['geometry']
+                if 'REFERENCE' in db_columns and 'REFERENCE' not in table_df.columns:
                     table_df['REFERENCE'] = None
                 store['tables'][db] = json.loads(
                     table_df.set_index('Name').to_json(orient='index'))
             else:
                 assert file_type == 'dbf', 'Unexpected database type: %s' % file_type
                 table_df = cea.utilities.dbf.dbf_to_dataframe(file_path)
-                if 'REFERENCE' in field_names and 'REFERENCE' not in table_df.columns:
+                if 'REFERENCE' in db_columns and 'REFERENCE' not in table_df.columns:
                     table_df['REFERENCE'] = None
                 store['tables'][db] = json.loads(
                     table_df.set_index('Name').to_json(orient='index'))
 
             columns = OrderedDict()
-            for field in db_info['fields']:
-                column = field['name']
-                columns[column] = {}
-                if column == 'REFERENCE':
+            for column_name, column in db_columns.items():
+                columns[column_name] = {}
+                if column_name == 'REFERENCE':
                     continue
-                columns[column]['type'] = field['type']
-                if field['type'] == 'choice':
-                    path = getattr(locator, field['choice_properties']['lookup']['path'])()
-                    columns[column]['path'] = path
+                columns[column_name]['type'] = column['type']
+                if 'choice' in column:
+                    path = getattr(locator, column['choice']['lookup']['path'])()
+                    columns[column_name]['path'] = path
                     # TODO: Try to optimize this step to decrease the number of file reading
-                    columns[column]['choices'] = get_choices(field['choice_properties'], path)
-                if 'constraints' in field:
-                    columns[column]['constraints'] = field['constraints']
-                columns[column]['description'] = schemas[locator_method]["schema"]["columns"][column]["description"]
-                columns[column]['unit'] = schemas[locator_method]["schema"]["columns"][column]["unit"]
+                    columns[column_name]['choices'] = get_choices(column['choice'], path)
+                if 'constraints' in column:
+                    columns[column_name]['constraints'] = column['constraints']
+                columns[column_name]['description'] = column["description"]
+                columns[column_name]['unit'] = column["unit"]
             store['columns'][db] = columns
 
         except IOError as e:
@@ -444,7 +444,7 @@ def get_choices(choice_properties, path):
     choices = df[lookup['column']].tolist()
     out = []
     if 'none_value' in choice_properties:
-        out.append({'value': 'NONE', 'label': ''})
+        out.append({'value': choice_properties['none_value'], 'label': ''})
     for choice in choices:
         label = df.loc[df[lookup['column']] == choice, 'Description'].values[0] if 'Description' in df.columns else ''
         out.append({'value': choice, 'label': label})
@@ -452,4 +452,4 @@ def get_choices(choice_properties, path):
 
 
 if __name__ == "__main__":
-    print(get_building_properties())
+    print(get_input_database_schemas())
