@@ -27,6 +27,8 @@ __status__ = "Production"
 # since we can actually call schemas with a varying list of plugins, store the resulting schemas dict
 # in a dict indexed by the
 # FIXME: actually... if we add in plugins it _might_ change...
+from cea.utilities.yaml_ordered_dict import OrderedDictYAMLLoader
+
 __schemas = {}
 
 
@@ -39,7 +41,7 @@ def schemas(plugins):
     key = ":".join(str(p) for p in plugins)
     if not key in __schemas:
         schemas_yml = os.path.join(os.path.dirname(__file__), 'schemas.yml')
-        __schemas[key] = yaml.load(open(schemas_yml), Loader=yaml.CLoader)
+        __schemas[key] = yaml.load(open(schemas_yml), Loader=OrderedDictYAMLLoader)
         for plugin in plugins:
             __schemas[key].update(plugin.schemas)
     return __schemas[key]
