@@ -6,6 +6,7 @@ from __future__ import print_function
 import os
 import cea
 import yaml
+import cea
 import cea.inputlocator
 from cea.schemas import schemas
 from cea.utilities.yaml_ordered_dict import OrderedDictYAMLLoader
