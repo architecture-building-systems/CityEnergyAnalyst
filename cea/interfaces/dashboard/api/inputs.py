@@ -44,7 +44,7 @@ INPUT_DATABASES = [
 
 def get_input_database_schemas():
     """Parse the schemas.yml file and create the dictionary of column types"""
-    schemas = cea.scripts.schemas()
+    schemas = cea.schemas.schemas(plugins=[])
     input_database_schemas = OrderedDict()
     for db_name, locator in INPUT_DATABASES:
         schema = schemas[locator]
