@@ -1,3 +1,13 @@
+- 2020-05-15 - 3.2.0 - #2735 cea test --workflow slow now runs through
+- 2020-05-15 - 3.2.0 - #2723 Remove inputs.yaml
+- 2020-05-15 - 3.2.0 - #2728 Remove "Unnamed: 0" columns in output files of optimization, decentralized and mulit-criteria-analysis scripts
+- 2020-05-14 - 3.2.0 - #2734 update the district-cooling-system workflow to use SG weather
+- 2020-05-14 - 3.2.0 - #2729 CEA cannot work with only underground structures
+- 2020-05-13 - 3.2.0 - #2714 Small performance optimization for detailed thermal-network script
+- 2020-05-13 - 3.2.0 - #2727 Thermal network script output format
+- 2020-05-11 - 3.2.0 - #2725 #2693 capex all cooling systems, @daren-thomas never mind, I found the error and fixed it
+- 2020-05-06 - 3.2.0 - #2721 fixes issue 2073
+- 2020-04-30 - 3.2.0 - #2719 Release 3.2.0
 - 2020-04-30 - 3.1.0 - #2709 Update plotly version
 - 2020-04-25 - 3.1.0 - #2678 I2672 roles and responsibility
 - 2020-04-24 - 3.1.0 - #2706 Fix epwreader
