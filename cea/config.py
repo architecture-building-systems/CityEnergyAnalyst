@@ -775,6 +775,13 @@ class PlantNodeParameter(ChoiceParameter):
         """Allow encoding None, because not all scenarios have a thermal network"""
         if value is None:
             return ""
+        elif not self._choices:
+            print('No plant nodes can be found, ignoring `{value}`'.format(value=value))
+            return ""
+        elif value not in self._choices:
+            first_choice = self._choices[0]
+            print('Plant node `{value}` not found. Using {first_choice}'.format(value=value, first_choice=first_choice))
+            return str(first_choice)
         else:
             return super(PlantNodeParameter, self).encode(value)
 
