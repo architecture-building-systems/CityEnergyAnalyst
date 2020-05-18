@@ -209,7 +209,6 @@ def get_building_properties():
 
     config = current_app.cea_config
 
-    schemas = cea.schemas.schemas(plugins=[])
     locator = cea.inputlocator.InputLocator(config.scenario)
     store = {'tables': OrderedDict(), 'columns': OrderedDict()}
     for db in INPUTS:
