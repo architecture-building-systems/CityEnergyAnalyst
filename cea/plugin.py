@@ -9,6 +9,7 @@ import os
 from typing import Generator, Sequence
 import yaml
 import inspect
+import cea.config
 import cea.plots.categories
 import cea.inputlocator
 from cea.utilities.yaml_ordered_dict import OrderedDictYAMLLoader
@@ -63,6 +64,22 @@ class CeaPlugin(object):
         with open(schemas_yml, "r") as schemas_yml_fp:
             schemas = yaml.load(schemas_yml_fp, Loader=yaml.CLoader)
         return schemas
+
+    @property
+    def config(self):
+        """
+        Return the configuration for this plugin - the `cea.config.Configuration` object will include these.
+
+        The format is expected to be the same format as `default.config` in the CEA.
+
+        :rtype: ConfigParser.SafeConfigParser
+        """
+        import ConfigParser
+        plugin_config = os.path.join(os.path.dirname(inspect.getmodule(self).__file__), "plugin.config")
+        parser = ConfigParser.SafeConfigParser()
+        parser.read(plugin_config)
+        return parser
+
 
     def __str__(self):
         """To enable encoding in cea.config.PluginListParameter, return the fqname of the class"""
@@ -226,3 +243,30 @@ def instantiate_plugin(plugin_fqname):
     except BaseException as ex:
         raise ValueError("Could not instantiate plugin {plugin_fqname} ({msg})".format(
             plugin_fqname=plugin_fqname, msg=ex.message))
+
+
+def add_plugins(default_config, user_config):
+    """
+    Patch in the plugin configurations during __init__ and __setstate__
+
+    :param ConfigParser.SafeConfigParser default_config:
+    :param ConfigParser.SafeConfigParser user_config:
+    :return: (modifies default_config and user_config in-place)
+    :rtype: None
+    """
+    plugin_fqnames = cea.config.parse_string_to_list(user_config.get("general", "plugins"))
+    for plugin in [instantiate_plugin(plugin_fqname) for plugin_fqname in plugin_fqnames]:
+        for section_name in plugin.config.sections():
+            if section_name in default_config.sections():
+                raise ValueError("Plugin tried to redefine config section {section_name}".format(
+                    section_name=section_name))
+            default_config.add_section(section_name)
+            if not user_config.has_section(section_name):
+                user_config.add_section(section_name)
+            for option_name in plugin.config.options(section_name):
+                if option_name in default_config.options(section_name):
+                    raise ValueError("Plugin tried to redefine parameter {section_name}:{option_name}".format(
+                        section_name=section_name, option_name=option_name))
+                default_config.set(section_name, option_name, plugin.config.get(section_name, option_name))
+                if not "." in option_name and not user_config.has_option(section_name, option_name):
+                    user_config.set(section_name, option_name, default_config.get(section_name, option_name))

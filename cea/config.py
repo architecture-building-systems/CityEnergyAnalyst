@@ -14,6 +14,7 @@ import collections
 import datetime
 import glob
 import tempfile
+import cea.plugin
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -36,6 +37,9 @@ class Configuration(object):
         self.default_config.read(DEFAULT_CONFIG)
         self.user_config = ConfigParser.SafeConfigParser()
         self.user_config.read([DEFAULT_CONFIG, config_file])
+
+        cea.plugin.add_plugins(self.default_config, self.user_config)
+
         self.sections = collections.OrderedDict([(section_name, Section(section_name, self))
                                                  for section_name in self.default_config.sections()])
 
@@ -81,6 +85,9 @@ class Configuration(object):
         self.default_config.read(DEFAULT_CONFIG)
         self.user_config = ConfigParser.SafeConfigParser()
         self.user_config.readfp(StringIO.StringIO(state))
+
+        add_plugins(self.default_config, self.user_config)
+
         self.sections = {section_name: Section(section_name, config=self)
                          for section_name in self.default_config.sections()}
 
@@ -1036,3 +1043,7 @@ def parse_string_to_list(line):
     line = line.replace('\n', ' ')
     line = line.replace('\r', ' ')
     return [field.strip() for field in line.split(',') if field.strip()]
+
+
+if __name__ == "__main__":
+    config = Configuration()
