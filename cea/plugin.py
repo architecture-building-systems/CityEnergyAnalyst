@@ -191,7 +191,7 @@ class PluginPlotBase(cea.plots.PlotBase):
         cufflinks.go_offline()
 
         df = self.locator_method.read(**self.locator_kwargs)
-        fig = df.iplot(asFigure=True, **self.layout)
+        fig = df.iplot(asFigure=True, colors=self.locator_method.colors(), **self.layout)
         div = plotly.offline.plot(fig, output_type='div', include_plotlyjs=False, show_link=False)
         return div
 

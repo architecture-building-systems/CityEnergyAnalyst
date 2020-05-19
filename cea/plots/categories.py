@@ -12,6 +12,8 @@ import cea.plots
 import cea.config
 import cea.inputlocator
 import cea.plots.cache
+import cea.plots.base
+from typing import Type
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -56,14 +58,25 @@ def load_category(category_name, plugins):
 
 
 def load_plot_by_id(category_name, plot_id, plugins):
-    """plot_id is a web-friendly way of expressing the plot's name (which is more english friendly)"""
+    """
+    plot_id is a web-friendly way of expressing the plot's name (which is more english friendly)
+    """
     category = load_category(category_name, plugins)
     if category:
         for plot in category.plots:
-            if plot.id() == plot_id:
+            if plot.id() == plot_id or plot.id() == plot_id.replace("-", "_"):
                 return plot
+        else:
+            print("ERROR: Could not find plot {plot}".format(plot=plot_id))
+            return None
     print('ERROR: Could not find plot category {category}'.format(category=category_name))
     return None
+
+
+def list_plots(plugins):
+    for plot_category in list_categories(plugins):
+        for plot_class in plot_category.plots:
+            yield plot_category, plot_class
 
 
 class PlotCategory(object):
