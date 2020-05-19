@@ -46,8 +46,8 @@ def main(*args):
     parameters = {k: config.get(v) for k, v in plot_class.expected_parameters.items() }
     parameters.update(cea.config.parse_command_line_args(plot_args))
     plot = plot_class(config.project, parameters, cache)
-    plot.plot()
+    plot.plot(auto_open=True)
 
 
 if __name__ == "__main__":
-    main("demand", "energy-balance")
+    main("demand-summary", "total-system-demand")

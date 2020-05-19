@@ -12,7 +12,7 @@ import pandas as pd
 import yaml
 import warnings
 import functools
-from cea.plots.colors import COLORS_TO_RGB
+from cea.plots.colors import color_to_rgb
 from typing import List, Dict
 
 __author__ = "Daren Thomas"
@@ -239,8 +239,5 @@ class CsvSchemaIo(SchemaIo):
         result = {}
         columns = self.schema["schema"]["columns"]
         for column in columns.keys():
-            if "color" in columns[column]:
-                result[column] = COLORS_TO_RGB(columns[column]["color"])
-            else:
-                result[column] = COLORS_TO_RGB("black")
+            result[column] = color_to_rgb(columns[column].get("plot-color", "black"))
         return result

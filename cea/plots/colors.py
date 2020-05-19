@@ -47,3 +47,10 @@ COLORS_TO_RGB = {"red": "rgb(240,75,91)",
                  "orange": "rgb(245,131,69)",
                  "orange_light": "rgb(248,159,109)",
                  "orange_lighter": "rgb(254,220,198)"}
+
+
+def color_to_rgb(color):
+    try:
+        return COLORS_TO_RGB[color]
+    except KeyError:
+        return COLORS_TO_RGB["black"]
