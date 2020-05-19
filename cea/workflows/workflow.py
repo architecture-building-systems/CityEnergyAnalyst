@@ -117,7 +117,7 @@ def set_up_environment_variables(config):
     for section in config.sections.values():
         for parameter in section.parameters.values():
             variable = "CEA_{section}_{parameter}".format(section=section.name, parameter=parameter.name)
-            os.environ[variable] = parameter.get_raw()
+            os.environ[variable] = str(parameter.get_raw())
 
 
 def do_config_step(config, step):

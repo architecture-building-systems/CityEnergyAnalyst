@@ -15,5 +15,6 @@
     workflow: district-cooling-system
 - script: run-all-plots
   parameters:
+    plant-node: NODE41
     network-type: DC
     network-name: ""
