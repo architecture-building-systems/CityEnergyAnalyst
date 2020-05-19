@@ -1051,22 +1051,22 @@ SC_results:
         values: '{0.0...n}'
       SC_ET_walls_east_Q_kWh:
         description: Heat production from solar collectors on east facades
-        type: int
+        type: float
         unit: '[kWh]'
         values: '{0.0...n}'
       SC_ET_walls_east_m2:
         description: Collector surface area on east facades.
-        type: int
+        type: float
         unit: '[m2]'
         values: '{0.0...n}'
       SC_ET_walls_north_Q_kWh:
         description: Heat production from solar collectors on north facades
-        type: int
+        type: float
         unit: '[kWh]'
         values: '{0.0...n}'
       SC_ET_walls_north_m2:
         description: Collector surface area on north facades.
-        type: int
+        type: float
         unit: '[m2]'
         values: '{0.0...n}'
       SC_ET_walls_south_Q_kWh:
@@ -1081,12 +1081,12 @@ SC_results:
         values: '{0.0...n}'
       SC_ET_walls_west_Q_kWh:
         description: Heat production from solar collectors on west facades
-        type: int
+        type: float
         unit: '[kWh]'
         values: '{0.0...n}'
       SC_ET_walls_west_m2:
         description: Collector surface area on west facades.
-        type: int
+        type: float
         unit: '[m2]'
         values: '{0.0...n}'
       T_SC_re_C:
@@ -1244,22 +1244,22 @@ SC_totals:
         values: '{0.0...n}'
       SC_FP_walls_east_Q_kWh:
         description: Heat production from solar collectors on east facades
-        type: int
+        type: float
         unit: '[kWh]'
         values: '{0.0...n}'
       SC_FP_walls_east_m2:
         description: Collector surface area on east facades.
-        type: int
+        type: float
         unit: '[m2]'
         values: '{0.0...n}'
       SC_FP_walls_north_Q_kWh:
         description: Heat production from solar collectors on north facades
-        type: int
+        type: float
         unit: '[kWh]'
         values: '{0.0...n}'
       SC_FP_walls_north_m2:
         description: Collector surface area on north facades.
-        type: int
+        type: float
         unit: '[m2]'
         values: '{0.0...n}'
       SC_FP_walls_south_Q_kWh:
@@ -1274,12 +1274,12 @@ SC_totals:
         values: '{0.0...n}'
       SC_FP_walls_west_Q_kWh:
         description: Heat production from solar collectors on west facades
-        type: int
+        type: float
         unit: '[kWh]'
         values: '{0.0...n}'
       SC_FP_walls_west_m2:
         description: Collector surface area on west facades.
-        type: int
+        type: float
         unit: '[m2]'
         values: '{0.0...n}'
       T_SC_re_C:
@@ -1518,7 +1518,7 @@ get_building_architecture:
       type_base:
         description: Basement floor construction assembly (relates to "code" in ENVELOPE
           assemblies)
-        type: float
+        type: string
         unit: '[-]'
         values: alphanumeric
         choice:
@@ -2297,13 +2297,13 @@ get_database_air_conditioning_systems:
           min: 0.0
           type: float
           unit: '[W/m2]'
-          values: '{0.0....n}'
+          values: '{0.0...n}'
         Tsww0_C:
           description: Typical supply water temperature.
           min: 0.0
           type: float
           unit: '[C]'
-          values: '{0.0....n}'
+          values: '{0.0...n}'
         code:
           description: Unique ID of the hot water supply system
           primary: true
@@ -2960,7 +2960,7 @@ get_database_conversion_systems:
           min: 0
           type: int
           unit: year
-          values: '{0.0...n}'
+          values: '{0...n}'
         O&M_%:
           description: operation and maintanence cost factor (fraction of the investment
             cost)
@@ -3048,7 +3048,7 @@ get_database_conversion_systems:
           min: 0
           type: int
           unit: year
-          values: '{0.0...n}'
+          values: '{0...n}'
         O&M_%:
           description: operation and maintanence cost factor (fraction of the investment
             cost)
@@ -3089,7 +3089,7 @@ get_database_conversion_systems:
           description: minimum capacity
           type: float
           unit: '[W]'
-          values: '{"W"}'
+          values: '{0.0...n}'
         code:
           description: identifier of each unique equipment
           type: string
@@ -3612,7 +3612,7 @@ get_database_conversion_systems:
           min: 0
           type: int
           unit: year
-          values: '{0.0...n}'
+          values: '{0...n}'
         O&M_%:
           description: operation and maintanence cost factor (fraction of the investment
             cost)
@@ -3701,7 +3701,7 @@ get_database_conversion_systems:
           min: 0
           type: int
           unit: year
-          values: '{0.0...n}'
+          values: '{0...n}'
         O&M_%:
           description: operation and maintanence cost factor (fraction of the investment
             cost)
@@ -3859,7 +3859,7 @@ get_database_conversion_systems:
           min: 0
           type: int
           unit: year
-          values: '{0.0...n}'
+          values: '{0...n}'
         O&M_%:
           description: operation and maintanence cost factor (fraction of the investment
             cost)
@@ -3948,7 +3948,7 @@ get_database_conversion_systems:
           min: 0
           type: int
           unit: year
-          values: '{0.0...n}'
+          values: '{0...n}'
         O&M_%:
           description: operation and maintanence cost factor (fraction of the investment
             cost)
@@ -4052,7 +4052,7 @@ get_database_conversion_systems:
           min: 0
           type: int
           unit: year
-          values: '{0.0...n}'
+          values: '{0...n}'
         O&M_%:
           description: operation and maintanence cost factor (fraction of the investment
             cost)
@@ -4221,7 +4221,7 @@ get_database_conversion_systems:
           min: 0
           type: int
           unit: year
-          values: '{0.0...n}'
+          values: '{0...n}'
         O&M_%:
           description: operation and maintanence cost factor (fraction of the investment
             cost)
@@ -4316,37 +4316,37 @@ get_database_distribution_systems:
           description: external pipe diameter tolerance for the nominal diameter (DN)
           type: float
           unit: '[m]'
-          values: '{0.0....n}'
+          values: '{0.0...n}'
         D_ins_m:
           description: maximum pipe diameter tolerance for the nominal diameter (DN)
           type: float
           unit: '[m]'
-          values: '{0.0....n}'
+          values: '{0.0...n}'
         D_int_m:
           description: internal pipe diameter tolerance for the nominal diameter (DN)
           type: float
           unit: '[m]'
-          values: '{0.0....n}'
+          values: '{0.0...n}'
         Inv_USD2015perm:
           description: Typical cost of investment for a given pipe diameter.
           type: float
           unit: '[$/m]'
-          values: '{0.0....n}'
+          values: '{0.0...n}'
         Pipe_DN:
           description: Nominal pipe diameter
           type: float
           unit: '[-]'
-          values: '{0....n}'
+          values: '{0...n}'
         Vdot_max_m3s:
           description: maximum volumetric flow rate for the nominal diameter (DN)
           type: float
           unit: '[m3/s]'
-          values: '{0.0....n}'
+          values: '{0.0...n}'
         Vdot_min_m3s:
           description: minimum volumetric flow rate for the nominal diameter (DN)
           type: float
           unit: '[m3/s]'
-          values: '{0.0....n}'
+          values: '{0.0...n}'
   used_by:
   - optimization
   - thermal_network
@@ -7688,97 +7688,97 @@ get_multi_criteria_analysis:
         description: Capital costs of all systems
         type: float
         unit: '[USD 2015]'
-        values: '[0.0...n]'
+        values: '{0.0...n}'
       Capex_a_sys_district_scale_USD:
         description: Capital costs of district-scale systems
         type: float
         unit: '[USD 2015]'
-        values: '[0.0...n]'
+        values: '{0.0...n}'
       Capex_a_sys_building_scale_USD:
         description: Annualized Capital costs of building-scale systems
         type: float
         unit: '[USD 2015/yr]'
-        values: '[0.0...n]'
+        values: '{0.0...n}'
       Capex_total_sys_USD:
         description: Capital costs of all systems
         type: float
         unit: '[USD 2015]'
-        values: '[0.0...n]'
+        values: '{0.0...n}'
       Capex_total_sys_district_scale_USD:
         description: Capital costs of district-scale systems
         type: float
         unit: '[USD 2015]'
-        values: '[0.0...n]'
+        values: '{0.0...n}'
       Capex_total_sys_building_scale_USD:
         description: Capital costs of building-scale systems
         type: float
         unit: '[USD 2015]'
-        values: '[0.0...n]'
+        values: '{0.0...n}'
       GHG_rank:
         description: Rank for emissions
         type: float
         unit: '[-]'
-        values: '[0.0...n]'
+        values: '{0.0...n}'
       GHG_sys_district_scale_tonCO2:
         description: Green house gas emissions of building-scale systems
         type: float
         unit: '[ton CO2-eq/yr]'
-        values: '[0.0...n]'
+        values: '{0.0...n}'
       GHG_sys_building_scale_tonCO2:
         description: Green house gas emissions of building-scale systems
         type: float
         unit: '[ton CO2-eq/yr]'
-        values: '[0.0...n]'
+        values: '{0.0...n}'
       GHG_sys_tonCO2:
         description: Green house gas emissions of all systems
         type: float
         unit: '[ton CO2-eq]'
-        values: '[0.0...n]'
+        values: '{0.0...n}'
       Opex_a_sys_USD:
         description: Operational costs of all systems
         type: float
         unit: '[USD 2015/yr]'
-        values: '[0.0...n]'
+        values: '{0.0...n}'
       Opex_a_sys_district_scale_USD:
         description: Operational costs of district-scale systems
         type: float
         unit: '[USD 2015/yr]'
-        values: '[0.0...n]'
+        values: '{0.0...n}'
       Opex_a_sys_building_scale_USD:
         description: Operational costs of building-scale systems
         type: float
         unit: '[USD 2015/yr]'
-        values: '[0.0...n]'
+        values: '{0.0...n}'
       TAC_rank:
         description: Rank of TAC
         type: float
         unit: '[-]'
-        values: '[0...n]'
+        values: '{0...n}'
       TAC_sys_USD:
         description: Equivalent annual costs of all systems
         type: float
         unit: '[USD 2015/yr]'
-        values: '[0.0...n]'
+        values: '{0.0...n}'
       TAC_sys_district_scale_USD:
         description: Equivalent annual of district-scale systems
         type: float
         unit: '[USD 2015/yr]'
-        values: '[0.0...n]'
+        values: '{0.0...n}'
       TAC_sys_building_scale_USD:
         description: Equivalent annual costs of building-scale systems
         type: float
         unit: '[USD 2015/yr]'
-        values: '[0.0...n]'
+        values: '{0.0...n}'
       generation:
         description: Generation or iteration
         type: int
         unit: '[-]'
-        values: '[0...n]'
+        values: '{0...n}'
       individual:
         description: system number
         type: int
         unit: '[-]'
-        values: '[0...n]'
+        values: '{0...n}'
       individual_name:
         description: Name of system
         type: string
@@ -7788,32 +7788,32 @@ get_multi_criteria_analysis:
         description: normalization of CAPEX
         type: float
         unit: '[-]'
-        values: '[0.0...n]'
+        values: '{0.0...n}'
       normalized_Opex:
         description: Normalization of OPEX
         type: float
         unit: '[-]'
-        values: '[0.0...n]'
+        values: '{0.0...n}'
       normalized_TAC:
         description: normalization of TAC
         type: float
         unit: '[-]'
-        values: '[0.0...n]'
+        values: '{0.0...n}'
       normalized_emissions:
         description: normalization of GHG
         type: float
         unit: '[-]'
-        values: '[0.0...n]'
+        values: '{0.0...n}'
       user_MCDA:
         description: Best system accoridng to user mult-criteria weights
         type: float
         unit: '[-]'
-        values: '[0...n]'
+        values: '{0...n}'
       user_MCDA_rank:
         description: Rank of Best system according to user mult-criteria weights
         type: float
         unit: '[-]'
-        values: '[0.0...n]'
+        values: '{0.0...n}'
   used_by: []
 get_network_energy_pumping_requirements_file:
   created_by:
@@ -11726,7 +11726,7 @@ get_thermal_network_edge_node_matrix_file:
         description: 'Indicates the direction of flow of PIPE0 with respect to each
           node NODEn: if equal to PIPE0 and NODEn are not connected / if equal to
           1 PIPE0 enters NODEn / if equal to -1 PIPE0 leaves NODEn'
-        type: float
+        type: int
         unit: '[-]'
         values: '{-1, 0, 1}'
       'Unnamed: 0':
