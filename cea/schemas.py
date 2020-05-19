@@ -12,7 +12,8 @@ import pandas as pd
 import yaml
 import warnings
 import functools
-from typing import List, Callable
+from cea.plots.colors import COLORS_TO_RGB
+from typing import List, Dict
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2020, Architecture and Building Systems - ETH Zurich"
@@ -26,7 +27,6 @@ __status__ = "Production"
 # keep a cache of schemas.yml - this will never change so avoid re-reading it.
 # since we can actually call schemas with a varying list of plugins, store the resulting schemas dict
 # in a dict indexed by the
-# FIXME: actually... if we add in plugins it _might_ change...
 from cea.utilities.yaml_ordered_dict import OrderedDictYAMLLoader
 
 __schemas = {}
@@ -227,3 +227,20 @@ class CsvSchemaIo(SchemaIo):
 
     def new(self):
         return pd.DataFrame(columns=(self.schema["schema"]["columns"].keys()))
+
+    def colors(self):
+        """
+        Returns the colors for the columns in the schema, defaulting to black if not specified. Result is a dict
+        mapping column name to "rgb(219, 64, 82)" format as used in plotly.
+
+        Note that schemas.yml specifies colors using names taken from
+        :type: Dict[str, str]
+        """
+        result = {}
+        columns = self.schema["schema"]["columns"]
+        for column in columns.keys():
+            if "color" in columns[column]:
+                result[column] = COLORS_TO_RGB(columns[column]["color"])
+            else:
+                result[column] = COLORS_TO_RGB("black")
+        return result

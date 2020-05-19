@@ -72,6 +72,7 @@ setup(name='cityenergyanalyst',
           'console_scripts': ['cea=cea.interfaces.cli.cli:main',
                               'cea-config=cea.interfaces.cli.cea_config:main',
                               'cea-doc=cea.interfaces.cli.cea_doc:main',
-                              'cea-worker=cea.worker:main'],
+                              'cea-worker=cea.worker:main',
+                              "cea-plot=cea.plots.plot_cli:main"],
       },
       )

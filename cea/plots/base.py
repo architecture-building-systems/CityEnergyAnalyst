@@ -40,7 +40,7 @@ class PlotBase(object):
     @classmethod
     def id(cls):
         name = re.sub('\s+\(.*\)', '', cls.name)  # remove parenthesis
-        return name.lower().replace(' ', '_').replace('/', '_')  # use for js/html etc.
+        return name.lower().replace(' ', '-').replace('/', '-')  # use for js/html etc.
 
     def __init__(self, project, parameters, cache):
         self.cache = cache  # a PlotCache implementation for reading cached data

@@ -14,7 +14,6 @@ import collections
 import datetime
 import glob
 import tempfile
-import cea.plugin
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -38,6 +37,7 @@ class Configuration(object):
         self.user_config = ConfigParser.SafeConfigParser()
         self.user_config.read([DEFAULT_CONFIG, config_file])
 
+        import cea.plugin
         cea.plugin.add_plugins(self.default_config, self.user_config)
 
         self.sections = collections.OrderedDict([(section_name, Section(section_name, self))
@@ -80,13 +80,15 @@ class Configuration(object):
     def __setstate__(self, state):
         """read in the user_config and re-initialize the state (this basically follows the __init__)"""
         import StringIO
+        import cea.plugin
+
         self.restricted_to = None
         self.default_config = ConfigParser.SafeConfigParser()
         self.default_config.read(DEFAULT_CONFIG)
         self.user_config = ConfigParser.SafeConfigParser()
         self.user_config.readfp(StringIO.StringIO(state))
 
-        add_plugins(self.default_config, self.user_config)
+        cea.plugin.add_plugins(self.default_config, self.user_config)
 
         self.sections = {section_name: Section(section_name, config=self)
                          for section_name in self.default_config.sections()}
