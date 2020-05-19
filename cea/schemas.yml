@@ -1317,53 +1317,81 @@ get_building_air_conditioning:
         type: string
         unit: '[-]'
         values: alphanumeric
-      cool_ends:
-        description: End of the cooling season - use 00|00 when there is none
-        type: string
-        unit: '[DD|MM]'
-        values: '{00|00...31|12}'
-      cool_starts:
-        description: Start of the cooling season - use 00|00 when there is none
-        type: string
-        unit: '[DD|MM]'
-        values: '{00|00...31|12}'
-      heat_ends:
-        description: End of the heating season - use 00|00 when there is none
-        type: string
-        unit: '[DD|MM]'
-        values: '{00|00...31|12}'
-      heat_starts:
-        description: Start of the heating season - use 00|00 when there is none
-        type: string
-        unit: '[DD|MM]'
-        values: '{00|00...31|12}'
       type_cs:
         description: Type of cooling HVAC assembly (relates to "code" in HVAC assemblies)
         type: string
         unit: '[-]'
         values: alphanumeric
+        choice:
+          lookup:
+            path: get_database_air_conditioning_systems
+            sheet: COOLING
+            column: code
+      type_hs:
+        description: Type of heating HVAC assembly (relates to "code" in HVAC assemblies)
+        type: string
+        unit: '[-]'
+        values: alphanumeric
+        choice:
+          lookup:
+            path: get_database_air_conditioning_systems
+            sheet: HEATING
+            column: code
+      type_dhw:
+        description: Type of hot water HVAC assembly (relates to "code" in HVAC assemblies)
+        type: string
+        unit: '[-]'
+        values: alphanumeric
+        choice:
+          lookup:
+            path: get_database_air_conditioning_systems
+            sheet: HOT_WATER
+            column: code
       type_ctrl:
         description: Type of heating and cooling control HVAC  assembly (relates to
           "code" in HVAC assemblies)
         type: string
         unit: '[-]'
         values: alphanumeric
-      type_dhw:
-        description: Type of hot water HVAC assembly (relates to "code" in HVAC assemblies)
-        type: string
-        unit: '[-]'
-        values: alphanumeric
-      type_hs:
-        description: Type of heating HVAC assembly (relates to "code" in HVAC assemblies)
-        type: string
-        unit: '[-]'
-        values: alphanumeric
+        choice:
+          lookup:
+            path: get_database_air_conditioning_systems
+            sheet: CONTROLLER
+            column: code
       type_vent:
         description: Type of ventilation HVAC assembly (relates to "code" in HVAC
           assemblies)
         type: string
         unit: '[-]'
         values: alphanumeric
+        choice:
+          lookup:
+            path: get_database_air_conditioning_systems
+            sheet: VENTILATION
+            column: code
+      heat_starts:
+        description: Start of the heating season - use 00|00 when there is none
+        type: string
+        unit: '[DD|MM]'
+        values: '{00|00...31|12}'
+      heat_ends:
+        description: End of the heating season - use 00|00 when there is none
+        type: string
+        regex: ^\d{2}|\d{2}$
+        unit: '[DD|MM]'
+        values: '{00|00...31|12}'
+      cool_starts:
+        description: Start of the cooling season - use 00|00 when there is none
+        type: string
+        regex: ^\d{2}|\d{2}$
+        unit: '[DD|MM]'
+        values: '{00|00...31|12}'
+      cool_ends:
+        description: End of the cooling season - use 00|00 when there is none
+        type: string
+        regex: ^\d{2}|\d{2}$
+        unit: '[DD|MM]'
+        values: '{00|00...31|12}'
   used_by:
   - demand
 get_building_architecture:
@@ -1373,6 +1401,17 @@ get_building_architecture:
   file_type: dbf
   schema:
     columns:
+      Name:
+        description: Unique building ID. It must start with a letter.
+        type: string
+        unit: '[-]'
+        values: alphanumeric
+      void_deck:
+        description: Number of floors (from the ground up) with an open envelope (default
+          = 0)
+        type: int
+        unit: '[-]'
+        values: '{0...n}'
       Es:
         description: Fraction of gross floor area with electrical demands.
         type: float
@@ -1388,73 +1427,18 @@ get_building_architecture:
         type: float
         unit: '[m2/m2]'
         values: '{0.0...1}'
-      Name:
-        description: Unique building ID. It must start with a letter.
-        type: string
-        unit: '[-]'
-        values: alphanumeric
       Ns:
         description: Fraction of net gross floor area.
         type: float
         unit: '[m2/m2]'
         values: '{0.0...1}'
-      type_base:
-        description: Basement floor construction assembly (relates to "code" in ENVELOPE
-          assemblies)
-        type: float
-        unit: '[-]'
-        values: alphanumeric
-      type_cons:
-        description: Type of construction assembly (relates to "code" in ENVELOPE
-          assemblies)
-        type: string
-        unit: '[-]'
-        values: alphanumeric
-      type_floor:
-        description: Internal floor construction assembly (relates to "code" in ENVELOPE
-          assemblies)
-        type: float
-        unit: '[-]'
-        values: alphanumeric
-      type_leak:
-        description: Tightness level assembly (relates to "code" in ENVELOPE assemblies)
-        type: string
-        unit: '[-]'
-        values: alphanumeric
-      type_roof:
-        description: Roof construction assembly (relates to "code" in ENVELOPE assemblies)
-        type: string
-        unit: '[-]'
-        values: alphanumeric
-      type_shade:
-        description: Shading system assembly (relates to "code" in ENVELOPE assemblies)
-        type: float
-        unit: '[-]'
-        values: alphanumeric
-      type_wall:
-        description: External wall construction assembly (relates to "code" in ENVELOPE
-          assemblies)
-        type: float
-        unit: '[-]'
-        values: alphanumeric
-      type_win:
-        description: Window assembly (relates to "code" in ENVELOPE assemblies)
-        type: float
-        unit: '[-]'
-        values: alphanumeric
-      void_deck:
-        description: Number of floors (from the ground up) with an open envelope (default
-          = 0)
-        type: int
-        unit: '[-]'
-        values: '{0...n}'
-      wwr_east:
-        description: Window to wall ratio in in facades facing east
+      wwr_north:
+        description: Window to wall ratio in in facades facing north
         type: float
         unit: '[m2/m2]'
         values: '{0.0...1}'
-      wwr_north:
-        description: Window to wall ratio in in facades facing north
+      wwr_east:
+        description: Window to wall ratio in in facades facing east
         type: float
         unit: '[m2/m2]'
         values: '{0.0...1}'
@@ -1468,6 +1452,90 @@ get_building_architecture:
         type: float
         unit: '[m2/m2]'
         values: '{0.0...1}'
+      type_cons:
+        description: Type of construction assembly (relates to "code" in ENVELOPE
+          assemblies)
+        type: string
+        unit: '[-]'
+        values: alphanumeric
+        choice:
+          lookup:
+            path: get_database_envelope_systems
+            sheet: CONSTRUCTION
+            column: code
+      type_leak:
+        description: Tightness level assembly (relates to "code" in ENVELOPE assemblies)
+        type: string
+        unit: '[-]'
+        values: alphanumeric
+        choice:
+          lookup:
+            path: get_database_envelope_systems
+            sheet: TIGHTNESS
+            column: code
+      type_roof:
+        description: Roof construction assembly (relates to "code" in ENVELOPE assemblies)
+        type: string
+        unit: '[-]'
+        values: alphanumeric
+        choice:
+          lookup:
+            path: get_database_envelope_systems
+            sheet: ROOF
+            column: code
+      type_shade:
+        description: Shading system assembly (relates to "code" in ENVELOPE assemblies)
+        type: string
+        unit: '[-]'
+        values: alphanumeric
+        choice:
+          lookup:
+            path: get_database_envelope_systems
+            sheet: SHADING
+            column: code
+      type_wall:
+        description: External wall construction assembly (relates to "code" in ENVELOPE
+          assemblies)
+        type: string
+        unit: '[-]'
+        values: alphanumeric
+        choice:
+          lookup:
+            path: get_database_envelope_systems
+            sheet: WALL
+            column: code
+      type_floor:
+        description: Internal floor construction assembly (relates to "code" in ENVELOPE
+          assemblies)
+        type: string
+        unit: '[-]'
+        values: alphanumeric
+        choice:
+          lookup:
+            path: get_database_envelope_systems
+            sheet: FLOOR
+            column: code
+      type_base:
+        description: Basement floor construction assembly (relates to "code" in ENVELOPE
+          assemblies)
+        type: float
+        unit: '[-]'
+        values: alphanumeric
+        choice:
+          lookup:
+            path: get_database_envelope_systems
+            sheet: FLOOR
+            column: code
+      type_win:
+        description: Window assembly (relates to "code" in ENVELOPE assemblies)
+        type: string
+        unit: '[-]'
+        values: alphanumeric
+        choice:
+          lookup:
+            path: get_database_envelope_systems
+            sheet: WINDOW
+            column: code
   used_by:
   - demand
   - emissions
@@ -1485,16 +1553,6 @@ get_building_comfort:
         type: string
         unit: '[-]'
         values: alphanumeric
-      RH_max_pc:
-        description: Upper bound of relative humidity
-        type: float
-        unit: '[%]'
-        values: '{0.0...n}'
-      RH_min_pc:
-        description: Lower_bound of relative humidity
-        type: float
-        unit: '[%]'
-        values: '{0.0...n}'
       Tcs_set_C:
         description: Setpoint temperature for cooling system
         type: float
@@ -1515,6 +1573,16 @@ get_building_comfort:
         type: float
         unit: '[C]'
         values: '{0.0...n}'
+      RH_min_pc:
+        description: Lower_bound of relative humidity
+        type: float
+        unit: '[%]'
+        values: '{0.0...n}'
+      RH_max_pc:
+        description: Upper bound of relative humidity
+        type: float
+        unit: '[%]'
+        values: '{0.0...n}'
       Ve_lpspax:
         description: Indoor quality requirements of indoor ventilation per person
         type: float
@@ -1530,13 +1598,28 @@ get_building_internal:
   file_type: dbf
   schema:
     columns:
+      Name:
+        description: Unique building ID. It must start with a letter.
+        type: string
+        unit: '[-]'
+        values: alphanumeric
+      Occ_m2pax:
+        description: Occupancy density
+        type: float
+        unit: '[m2/pax]'
+        values: '{0.0...n}'
+      Qs_Wpax:
+        description: Peak sensible heat load of people
+        type: float
+        unit: '[W/pax]'
+        values: '{0.0...n}'
+      X_ghpax:
+        description: Moisture released by occupancy at peak conditions
+        type: float
+        unit: '[g/h/p]'
+        values: '{0.0...n}'
       Ea_Wm2:
         description: Peak specific electrical load due to computers and devices
-        type: float
-        unit: '[W/m2]'
-        values: '{0.0...n}'
-      Ed_Wm2:
-        description: Peak specific electrical load due to servers/data centres
         type: float
         unit: '[W/m2]'
         values: '{0.0...n}'
@@ -1550,28 +1633,23 @@ get_building_internal:
         type: string
         unit: '[W/m2]'
         values: '{0.0...n}'
+      Qcre_Wm2:
+        description: Peak specific cooling load due to refrigeration (cooling rooms)
+        type: float
+        unit: '[W/m2]'
+        values: '{0.0...n}'
+      Ed_Wm2:
+        description: Peak specific electrical load due to servers/data centres
+        type: float
+        unit: '[W/m2]'
+        values: '{0.0...n}'
       Ev_kWveh:
         description: Peak specific cooling load due to electromobility
         type: string
         unit: '[W/m2]'
         values: '{0.0...n}'
-      Name:
-        description: Unique building ID. It must start with a letter.
-        type: string
-        unit: '[-]'
-        values: alphanumeric
-      Occ_m2pax:
-        description: Occupancy density
-        type: float
-        unit: '[m2/pax]'
-        values: '{0.0...n}'
       Qcpro_Wm2:
         description: Peak specific process cooling load
-        type: float
-        unit: '[W/m2]'
-        values: '{0.0...n}'
-      Qcre_Wm2:
-        description: Peak specific cooling load due to refrigeration (cooling rooms)
         type: float
         unit: '[W/m2]'
         values: '{0.0...n}'
@@ -1580,26 +1658,16 @@ get_building_internal:
         type: float
         unit: '[W/m2]'
         values: '{0.0...n}'
-      Qs_Wpax:
-        description: Peak sensible heat load of people
+      Vww_lpdpax:
+        description: Peak specific daily hot water consumption
         type: float
-        unit: '[W/pax]'
+        unit: '[lpd]'
         values: '{0.0...n}'
       Vw_lpdpax:
         description: Peak specific fresh water consumption (includes cold and hot
           water)
         type: float
         unit: '[lpd]'
-        values: '{0.0...n}'
-      Vww_lpdpax:
-        description: Peak specific daily hot water consumption
-        type: float
-        unit: '[lpd]'
-        values: '{0.0...n}'
-      X_ghpax:
-        description: Moisture released by occupancy at peak conditions
-        type: float
-        unit: '[g/h/p]'
         values: '{0.0...n}'
   used_by:
   - demand
@@ -1621,23 +1689,43 @@ get_building_supply:
         type: string
         unit: '[-]'
         values: alphanumeric
+        choice:
+          lookup:
+            path: get_database_supply_assemblies
+            sheet: COOLING
+            column: code
       type_dhw:
         description: Type of hot water supply assembly (refers to "code" in SUPPLY
           assemblies)
         type: string
         unit: '[-]'
         values: alphanumeric
+        choice:
+          lookup:
+            path: get_database_supply_assemblies
+            sheet: HOT_WATER
+            column: code
       type_el:
         description: Type of electrical supply assembly (refers to "code" in SUPPLY
           assemblies)
         type: string
         unit: '[-]'
         values: alphanumeric
+        choice:
+          lookup:
+            path: get_database_supply_assemblies
+            sheet: ELECTRICITY
+            column: code
       type_hs:
         description: Type of heating supply assembly (refers to "code" in SUPPLY assemblies)
         type: string
         unit: '[-]'
         values: alphanumeric
+        choice:
+          lookup:
+            path: get_database_supply_assemblies
+            sheet: HEATING
+            column: code
   used_by:
   - decentralized
   - demand
@@ -1650,11 +1738,36 @@ get_building_typology:
   file_type: dbf
   schema:
     columns:
-      1ST_USE:
-        description: First (Main) Use type of the building
-        type: float
+      Name:
+        description: Unique building ID. It must start with a letter.
+        type: string
         unit: '[-]'
         values: alphanumeric
+      YEAR:
+        description: Construction year
+        type: int
+        unit: '[-]'
+        values: '{0...n}'
+      STANDARD:
+        description: Construction Standard (relates to "code" in Supply Assemblies)
+        type: string
+        unit: '[-]'
+        values: alphanumeric
+        choice:
+          lookup:
+            path: get_database_construction_standards
+            sheet: STANDARD_DEFINITION
+            column: STANDARD
+      1ST_USE:
+        description: First (Main) Use type of the building
+        type: string
+        unit: '[-]'
+        values: alphanumeric
+        choice:
+          lookup:
+            path: get_database_use_types_properties
+            sheet: INTERNAL_LOADS
+            column: code
       1ST_USE_R:
         description: Fraction of gross floor area for first Use Type
         type: float
@@ -1665,6 +1778,12 @@ get_building_typology:
         type: string
         unit: '[-]'
         values: alphanumeric
+        choice:
+          lookup:
+            path: get_database_use_types_properties
+            sheet: INTERNAL_LOADS
+            column: code
+          none_value: NONE
       2ND_USE_R:
         description: Fraction of gross floor area for second Use Type
         type: float
@@ -1675,31 +1794,23 @@ get_building_typology:
         type: string
         unit: '[-]'
         values: alphanumeric
+        choice:
+          lookup:
+            path: get_database_use_types_properties
+            sheet: INTERNAL_LOADS
+            column: code
+          none_value: NONE
       3RD_USE_R:
         description: Fraction of gross floor area for third Use Type
         type: float
         unit: '[m2/m2]'
         values: '{0.0...1.0}'
-      Name:
-        description: Unique building ID. It must start with a letter.
-        type: string
-        unit: '[-]'
-        values: alphanumeric
       REFERENCE:
         description: Reference to data (if any)
         type: string
         unit: '[-]'
         values: alphanumeric
-      STANDARD:
-        description: Construction Standard (relates to "code" in Supply Assemblies)
-        type: string
-        unit: '[-]'
-        values: alphanumeric
-      YEAR:
-        description: Construction year
-        type: int
-        unit: '[-]'
-        values: '{0...n}'
+        nullable: true
   used_by:
   - archetypes_mapper
   - demand
@@ -7658,16 +7769,6 @@ get_multi_criteria_analysis:
         type: float
         unit: '[USD 2015/yr]'
         values: '[0.0...n]'
-      'Unnamed: 0':
-        description: Index
-        type: int
-        unit: '[-]'
-        values: '[0...n]'
-      'Unnamed: 0.1':
-        description: Index
-        type: int
-        unit: '[-]'
-        values: '[0.0...n]'
       generation:
         description: Generation or iteration
         type: int
@@ -8230,11 +8331,6 @@ get_optimization_decentralized_folder_building_cooling_activation:
         type: float
         unit: '[Wh]'
         values: '{0.0...n}'
-      'Unnamed: 0':
-        description: Index column
-        type: int
-        unit: '[-]'
-        values: '{0...n}'
   used_by:
   - optimization
 get_optimization_decentralized_folder_building_result_cooling:
@@ -8884,11 +8980,6 @@ get_optimization_generation_district_scale_performance:
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      'Unnamed: 0':
-        description: Index
-        type: int
-        unit: '[-]'
-        values: '{0...n}'
       generation:
         description: Number of the Generation or Iteration (Genetic algorithm)
         type: int
@@ -8962,11 +9053,6 @@ get_optimization_generation_building_scale_performance:
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      'Unnamed: 0':
-        description: Index
-        type: int
-        unit: '[-]'
-        values: '{0...n}'
       generation:
         description: No. Generation or Iteration (genetic Algorithm)
         type: int
@@ -9065,11 +9151,6 @@ get_optimization_generation_total_performance:
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      'Unnamed: 0':
-        description: Index
-        type: int
-        unit: '[-]'
-        values: '{0...n}'
       generation:
         description: No. Generation or Iteration (genetic Algorithm)
         type: int
@@ -9168,11 +9249,6 @@ get_optimization_generation_total_performance_pareto:
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
-      'Unnamed: 0':
-        description: Index
-        type: int
-        unit: '[-]'
-        values: '{0...n}'
       generation:
         description: No. Generation or Iteration (genetic Algorithm)
         type: int
@@ -9295,11 +9371,6 @@ get_optimization_individuals_in_generation:
       SS_HP:
         description: TODO
         type: float
-        unit: TODO
-        values: TODO
-      'Unnamed: 0':
-        description: TODO
-        type: int
         unit: TODO
         values: TODO
       WB_Cogen:
@@ -11562,27 +11633,23 @@ get_surroundings_geometry:
         type: int
         unit: '[-]'
         values: '{1...n}'
-      floors_bg:
-        description: Number of floors below ground (basement)
-        type: int
-        unit: '[-]'
-        values: '{0...n}'
-      geometry:
-        description: Shapefile POLYGON
-        type: Polygon
-        unit: '[-]'
-        values: '[-]'
       height_ag:
         description: Height above ground (incl. ground floor, Minimum one floor is needed)
         min: 2.0
         type: float
         unit: '[m]'
         values: '{2.0...n}'
-      height_bg:
-        description: Height below ground (basement)
-        type: float
-        unit: '[m]'
-        values: '{0.0...n}'
+      geometry:
+        description: Shapefile POLYGON
+        type: Polygon
+        unit: '[-]'
+        values: '[-]'
+      REFERENCE:
+        description: Reference to data (if any)
+        type: string
+        unit: '[-]'
+        values: alphanumeric
+        nullable: true
   used_by:
   - radiation
   - schedule_maker
@@ -13003,11 +13070,6 @@ get_zone_geometry:
         type: int
         unit: '[-]'
         values: '{0...n}'
-      geometry:
-        description: Shapefile POLYGON
-        type: Polygon
-        unit: '[-]'
-        values: '[-]'
       height_ag:
         description: Height above ground (incl. ground floor, minimum one floor is needed)
         min: 2.0
@@ -13019,6 +13081,17 @@ get_zone_geometry:
         type: float
         unit: '[m]'
         values: '{0.0...n}'
+      geometry:
+        description: Shapefile POLYGON
+        type: Polygon
+        unit: '[-]'
+        values: '[-]'
+      REFERENCE:
+        description: Reference to data (if any)
+        type: string
+        unit: '[-]'
+        values: alphanumeric
+        nullable: true
   used_by:
   - archetypes_mapper
   - decentralized
