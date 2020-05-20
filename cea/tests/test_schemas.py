@@ -200,7 +200,8 @@ class TestSchemas(unittest.TestCase):
         schemas = cea.schemas.schemas(plugins=[])
 
         def compare_column_to_unit(column_name, unit):
-            if column_name in {"m_cw", "m_hw", "s_e"}:
+            if column_name in {"m_cw", "m_hw", "s_e", "PV_Bref", "PV_noct", "PV_th", "C_eff", "Cp_fluid", "c1", "c2",
+                               "cap_max", "cap_min", "x_int"}:
                 # excluding these - manually checked
                 return True
             if unit in {"NA", "[-]", "[datetime]", "[DD|MM]", "[m2/m2]"}:
@@ -211,10 +212,14 @@ class TestSchemas(unittest.TestCase):
                 return unit_from_col == "[pc]"
             if column_name.startswith("dT_"):
                 return unit == "[C]"
+            if column_name.startswith("dP"):
+                return unit == "[Pa/m2]"
             if column_name.startswith("cap_"):
                 return unit == "[W]"
             if column_name.endswith("_USD"):
                 return unit == "[$USD(2015)/yr]"
+            if unit == "[kg CO2-eq/m2.yr]":
+                return column_name.endswith("kgCO2m2")
             if unit.startswith("[$USD(2015)/"):
                 return column_name.endswith("_cost_" + unit.split("/")[1].replace(".", "").replace("]", ""))
             if "/" in unit:
@@ -223,7 +228,7 @@ class TestSchemas(unittest.TestCase):
                 return unit_from_col == unit
 
         for lm in schemas:
-            if lm in SKIP_LMS:
+            if lm in SKIP_LMS or lm.startswith("get_database_"):
                 continue
             schema = schemas[lm]["schema"]
             if schemas[lm]["file_type"] in {"xls", "xlsx"}:
