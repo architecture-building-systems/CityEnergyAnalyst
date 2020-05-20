@@ -4024,7 +4024,7 @@ get_database_conversion_systems:
         C_eff:
           description: 'thermal capacity of module '
           type: float
-          unit: '[J/M2k]'
+          unit: '[J/m2k]'
           values: '{0.0...n}'
         Cp_fluid:
           description: heat capacity of the heat transfer fluid
@@ -6499,7 +6499,7 @@ get_demand_results_file:
       DATE:
         description: Time stamp for each day of the year ascending in hour intervals.
         type: date
-        unit: '[smalldatetime]'
+        unit: '[datetime]'
         values: YYYY-MM-DD hh:mm:ss
       DC_cdata_kWh:
         description: District cooling for data center cooling demand
@@ -7187,7 +7187,7 @@ get_geothermal_potential:
       QGHP_kW:
         description: geothermal heat potential
         type: float
-        unit: '[kWh]'
+        unit: '[kW]'
         values: '{0.0...n}'
       Ts_C:
         description: ground temperature
@@ -7212,7 +7212,7 @@ get_lca_embodied:
         description: Embodied emissions per conditioned floor area due to building
           construction and decomissioning
         type: float
-        unit: kg CO2-eq/m2.yr
+        unit: "[kg CO2-eq/m2.yr]"
         values: '{0.0...n}'
       GHG_sys_embodied_tonCO2:
         description: Embodied emissions due to building construction and decomissioning
@@ -7241,7 +7241,7 @@ get_lca_mobility:
         description: Operational emissions per unit of conditioned floor area due
           to mobility
         type: float
-        unit: kg CO2-eq/m2.yr
+        unit: "[kg CO2-eq/m2.yr]"
         values: '{0.0...n}'
       GHG_sys_mobility_tonCO2:
         description: Operational emissions due to mobility
@@ -7433,7 +7433,7 @@ get_lca_operation:
       GHG_sys_kgCO2m2:
         description: Total operational emissions per unit of conditioned floor area
         type: float
-        unit: kg CO2-eq/m2.yr
+        unit: "[kg CO2-eq/m2.yr]"
         values: '{0.0...n}'
       GHG_sys_tonCO2:
         description: Total operational emissions
