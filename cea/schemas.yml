@@ -179,7 +179,7 @@ PVT_results:
       PVT_walls_east_m2:
         description: Collector surface area on east facades.
         type: float
-        unit: '[kWh]'
+        unit: '[m2]'
         values: '{0.0...n}'
       PVT_walls_north_E_kWh:
         description: Electricity production from photovoltaic-thermal panels on north
@@ -195,13 +195,13 @@ PVT_results:
       PVT_walls_north_m2:
         description: Collector surface area on north facades.
         type: float
-        unit: '[kWh]'
+        unit: '[m2]'
         values: '{0.0...n}'
       PVT_walls_south_E_kWh:
         description: Electricity production from photovoltaic-thermal panels on south
           facades
         type: float
-        unit: kWh
+        unit: "[kWh]"
         values: '{0.0...n}'
       PVT_walls_south_Q_kWh:
         description: Heat production from photovoltaic-thermal panels on south facades
@@ -211,7 +211,7 @@ PVT_results:
       PVT_walls_south_m2:
         description: Collector surface area on south facades.
         type: float
-        unit: '[kWh]'
+        unit: '[m2]'
         values: '{0.0...n}'
       PVT_walls_west_E_kWh:
         description: Electricity production from photovoltaic-thermal panels on west
@@ -297,12 +297,12 @@ PVT_total_buildings:
       PVT_roofs_top_Q_kWh:
         description: Heat production from photovoltaic-thermal panels on roof tops
         type: float
-        unit: kWh
+        unit: "[kWh]"
         values: '{0.0...n}'
       PVT_roofs_top_m2:
         description: Collector surface area on roof tops.
         type: float
-        unit: '[kWh]'
+        unit: '[m2]'
         values: '{0.0...n}'
       PVT_walls_east_E_kWh:
         description: Electricity production from photovoltaic-thermal panels on east
@@ -313,18 +313,18 @@ PVT_total_buildings:
       PVT_walls_east_Q_kWh:
         description: Heat production from photovoltaic-thermal panels on east facades
         type: float
-        unit: kWh
+        unit: "[kWh]"
         values: '{0.0...n}'
       PVT_walls_east_m2:
         description: Collector surface area on east facades.
         type: float
-        unit: '[kWh]'
+        unit: '[m2]'
         values: '{0.0...n}'
       PVT_walls_north_E_kWh:
         description: Electricity production from photovoltaic-thermal panels on north
           facades
         type: float
-        unit: kWh
+        unit: "[kWh]"
         values: '{0.0...n}'
       PVT_walls_north_Q_kWh:
         description: Heat production from photovoltaic-thermal panels on north facades
@@ -334,7 +334,7 @@ PVT_total_buildings:
       PVT_walls_north_m2:
         description: Collector surface area on north facades.
         type: float
-        unit: '[kWh]'
+        unit: '[m2]'
         values: '{0.0...n}'
       PVT_walls_south_E_kWh:
         description: Electricity production from photovoltaic-thermal panels on south
@@ -350,7 +350,7 @@ PVT_total_buildings:
       PVT_walls_south_m2:
         description: Collector surface area on south facades.
         type: float
-        unit: '[kWh]'
+        unit: '[m2]'
         values: '{0.0...n}'
       PVT_walls_west_E_kWh:
         description: Electricity production from photovoltaic-thermal panels on west
@@ -361,7 +361,7 @@ PVT_total_buildings:
       PVT_walls_west_Q_kWh:
         description: Heat production from photovoltaic-thermal panels on west facades
         type: float
-        unit: kWh
+        unit: "[kWh]"
         values: '{0.0...n}'
       PVT_walls_west_m2:
         description: West facing wall collector surface area.
@@ -425,7 +425,7 @@ PVT_totals:
       PVT_roofs_top_m2:
         description: Collector surface area on roof tops.
         type: float
-        unit: '[kWh]'
+        unit: '[m2]'
         values: '{0.0...n}'
       PVT_walls_east_E_kWh:
         description: Electricity production from photovoltaic-thermal panels on east
@@ -441,7 +441,7 @@ PVT_totals:
       PVT_walls_east_m2:
         description: Collector surface area on east facades.
         type: float
-        unit: '[kWh]'
+        unit: '[m2]'
         values: '{0.0...n}'
       PVT_walls_north_E_kWh:
         description: Electricity production from photovoltaic-thermal panels on north
@@ -457,7 +457,7 @@ PVT_totals:
       PVT_walls_north_m2:
         description: Collector surface area on north facades.
         type: float
-        unit: '[kWh]'
+        unit: '[m2]'
         values: '{0.0...n}'
       PVT_walls_south_E_kWh:
         description: Electricity production from photovoltaic-thermal panels on south
@@ -473,7 +473,7 @@ PVT_totals:
       PVT_walls_south_m2:
         description: Collector surface area on south facades.
         type: float
-        unit: '[kWh]'
+        unit: '[m2]'
         values: '{0.0...n}'
       PVT_walls_west_E_kWh:
         description: Electricity production from photovoltaic-thermal panels on west
@@ -515,7 +515,7 @@ PVT_totals:
         description: Capacity flow rate (mass flow* specific heat capacity) of the
           hot water delivered by the collector.
         type: float
-        unit: '[kW/Cap]'
+        unit: '[kW/C]'
         values: '{0.0...n}'
       radiation_kWh:
         description: Total radiatiative potential.
@@ -678,7 +678,7 @@ PV_results:
       PV_roofs_top_m2:
         description: Collector surface area on roof tops.
         type: float
-        unit: '[kWh]'
+        unit: '[m2]'
         values: '{0.0...n}'
       PV_walls_east_E_kWh:
         description: Electricity production from photovoltaic panels on east facades
@@ -688,7 +688,7 @@ PV_results:
       PV_walls_east_m2:
         description: Collector surface area on east facades.
         type: float
-        unit: '[kWh]'
+        unit: '[m2]'
         values: '{0.0...n}'
       PV_walls_north_E_kWh:
         description: Electricity production from photovoltaic panels on north facades
@@ -698,7 +698,7 @@ PV_results:
       PV_walls_north_m2:
         description: Collector surface area on north facades.
         type: float
-        unit: '[kWh]'
+        unit: '[m2]'
         values: '{0.0...n}'
       PV_walls_south_E_kWh:
         description: Electricity production from photovoltaic panels on south facades
@@ -708,7 +708,7 @@ PV_results:
       PV_walls_south_m2:
         description: Collector surface area on south facades.
         type: float
-        unit: '[kWh]'
+        unit: '[m2]'
         values: '{0.0...n}'
       PV_walls_west_E_kWh:
         description: Electricity production from photovoltaic panels on west facades
@@ -718,7 +718,7 @@ PV_results:
       PV_walls_west_m2:
         description: West facing wall collector surface area.
         type: float
-        unit: '[kWh]'
+        unit: '[m2]'
         values: '{0.0...n}'
       radiation_kWh:
         description: Total radiatiative potential.
@@ -756,7 +756,7 @@ PV_total_buildings:
       PV_roofs_top_m2:
         description: Collector surface area on roof tops.
         type: float
-        unit: '[kWh]'
+        unit: '[m2]'
         values: '{0.0...n}'
       PV_walls_east_E_kWh:
         description: Electricity production from photovoltaic panels on east facades
@@ -766,7 +766,7 @@ PV_total_buildings:
       PV_walls_east_m2:
         description: Collector surface area on east facades.
         type: float
-        unit: '[kWh]'
+        unit: '[m2]'
         values: '{0.0...n}'
       PV_walls_north_E_kWh:
         description: Electricity production from photovoltaic panels on north facades
@@ -776,7 +776,7 @@ PV_total_buildings:
       PV_walls_north_m2:
         description: Collector surface area on north facades.
         type: float
-        unit: '[kWh]'
+        unit: '[m2]'
         values: '{0.0...n}'
       PV_walls_south_E_kWh:
         description: Electricity production from photovoltaic panels on south facades
@@ -786,7 +786,7 @@ PV_total_buildings:
       PV_walls_south_m2:
         description: Collector surface area on south facades.
         type: float
-        unit: '[kWh]'
+        unit: '[m2]'
         values: '{0.0...n}'
       PV_walls_west_E_kWh:
         description: Electricity production from photovoltaic panels on west facades
@@ -796,7 +796,7 @@ PV_total_buildings:
       PV_walls_west_m2:
         description: West facing wall collector surface area.
         type: float
-        unit: '[kWh]'
+        unit: '[m2]'
         values: '{0.0...n}'
       radiation_kWh:
         description: Total radiatiative potential.
@@ -834,7 +834,7 @@ PV_totals:
       PV_roofs_top_m2:
         description: Collector surface area on roof tops.
         type: float
-        unit: '[kWh]'
+        unit: '[m2]'
         values: '{0.0...n}'
       PV_walls_east_E_kWh:
         description: Electricity production from photovoltaic panels on east facades
@@ -844,7 +844,7 @@ PV_totals:
       PV_walls_east_m2:
         description: Collector surface area on east facades.
         type: float
-        unit: '[kWh]'
+        unit: '[m2]'
         values: '{0.0...n}'
       PV_walls_north_E_kWh:
         description: Electricity production from photovoltaic panels on north facades
@@ -854,7 +854,7 @@ PV_totals:
       PV_walls_north_m2:
         description: Collector surface area on north facades.
         type: float
-        unit: '[kWh]'
+        unit: '[m2]'
         values: '{0.0...n}'
       PV_walls_south_E_kWh:
         description: Electricity production from photovoltaic panels on south facades
@@ -864,7 +864,7 @@ PV_totals:
       PV_walls_south_m2:
         description: Collector surface area on south facades.
         type: float
-        unit: '[kWh]'
+        unit: '[m2]'
         values: '{0.0...n}'
       PV_walls_west_E_kWh:
         description: Electricity production from photovoltaic panels on west facades
@@ -874,7 +874,7 @@ PV_totals:
       PV_walls_west_m2:
         description: West facing wall collector surface area.
         type: float
-        unit: '[kWh]'
+        unit: '[m2]'
         values: '{0.0...n}'
       radiation_kWh:
         description: Total radiatiative potential.
@@ -1586,7 +1586,7 @@ get_building_comfort:
       Ve_lpspax:
         description: Indoor quality requirements of indoor ventilation per person
         type: float
-        unit: '[l/s]'
+        unit: '[lpspax]'  # FIXME: this unit is wrong!
         values: '{0.0...n}'
   used_by:
   - demand
@@ -1616,7 +1616,7 @@ get_building_internal:
       X_ghpax:
         description: Moisture released by occupancy at peak conditions
         type: float
-        unit: '[g/h/p]'
+        unit: '[ghpax]'  # FIXME: this unit is wrong!
         values: '{0.0...n}'
       Ea_Wm2:
         description: Peak specific electrical load due to computers and devices
@@ -1646,7 +1646,7 @@ get_building_internal:
       Ev_kWveh:
         description: Peak specific cooling load due to electromobility
         type: string
-        unit: '[W/m2]'
+        unit: '[kWveh]'
         values: '{0.0...n}'
       Qcpro_Wm2:
         description: Peak specific process cooling load
@@ -1661,13 +1661,13 @@ get_building_internal:
       Vww_lpdpax:
         description: Peak specific daily hot water consumption
         type: float
-        unit: '[lpd]'
+        unit: '[lpdpax]'
         values: '{0.0...n}'
       Vw_lpdpax:
         description: Peak specific fresh water consumption (includes cold and hot
           water)
         type: float
-        unit: '[lpd]'
+        unit: '[lpdpax]'
         values: '{0.0...n}'
   used_by:
   - demand
@@ -1851,121 +1851,121 @@ get_costs_operation_file:
         description: Operation costs of coal due to space heating per unit conditioned
           floor area
         type: float
-        unit: $USD(2015)/m2.yr
+        unit: "[$USD(2015)/m2.yr]"
         values: '{0.0...n}'
       COAL_hs_cost_yr:
         description: Operation costs of coal due to space heating
         type: float
-        unit: $USD(2015)/yr
+        unit: "[$USD(2015)/yr]"
         values: '{0.0...n}'
       COAL_ww_cost_m2yr:
         description: Operation costs of coal due to hotwater per unit conditioned
           floor area
         type: float
-        unit: $USD(2015)/m2.yr
+        unit: "[$USD(2015)/m2.yr]"
         values: '{0.0...n}'
       COAL_ww_cost_yr:
         description: Operation costs of coal due to hotwater
         type: float
-        unit: $USD(2015)/yr
+        unit: "[$USD(2015)/yr]"
         values: '{0.0...n}'
       Capex_a_sys_district_scale_USD:
         description: Annualized capital expenditures of district-scale systems
         type: float
-        unit: $USD(2015)/yr
+        unit: "[$USD(2015)/yr]"
         values: '{0.0...n}'
       Capex_a_sys_building_scale_USD:
         description: Annualized capital expenditures of building-scale systems
         type: float
-        unit: $USD(2015)/yr
+        unit: "[$USD(2015)/yr]"
         values: '{0.0...n}'
       DC_cdata_cost_m2yr:
         description: Operation costs of district cooling due to data center cooling
           per unit conditioned floor area
         type: float
-        unit: $USD(2015)/m2.yr
+        unit: "[$USD(2015)/m2.yr]"
         values: '{0.0...n}'
       DC_cdata_cost_yr:
         description: Operation costs of district cooling due to data center cooling
         type: float
-        unit: $USD(2015)/yr
+        unit: "[$USD(2015)/yr]"
         values: '{0.0...n}'
       DC_cre_cost_m2yr:
         description: Operation costs of district cooling due to cool room refrigeration
           per unit conditioned floor area
         type: float
-        unit: $USD(2015)/m2.yr
+        unit: "[$USD(2015)/m2.yr]"
         values: '{0.0...n}'
       DC_cre_cost_yr:
         description: Operation costs of district cooling due to cool room refrigeration
         type: float
-        unit: $USD(2015)/yr
+        unit: "[$USD(2015)/yr]"
         values: '{0.0...n}'
       DC_cs_cost_m2yr:
         description: Operation costs of district cooling due to space cooling per
           unit conditioned floor area
         type: float
-        unit: $USD(2015)/m2.yr
+        unit: "[$USD(2015)/m2.yr]"
         values: '{0.0...n}'
       DC_cs_cost_yr:
         description: Operation costs of district cooling due to space cooling
         type: float
-        unit: $USD(2015)/yr
+        unit: "[$USD(2015)/yr]"
         values: '{0.0...n}'
       DH_hs_cost_m2yr:
         description: Operation costs of district heating due to space heating per
           unit conditioned floor area
         type: float
-        unit: $USD(2015)/m2.yr
+        unit: "[$USD(2015)/m2.yr]"
         values: '{0.0...n}'
       DH_hs_cost_yr:
         description: Operation costs of district heating due to space heating
         type: float
-        unit: $USD(2015)/yr
+        unit: "[$USD(2015)/yr]"
         values: '{0.0...n}'
       DH_ww_cost_m2yr:
         description: Operation costs of district heating due to domestic hot water
           per unit conditioned floor area
         type: float
-        unit: $USD(2015)/m2.yr
+        unit: "[$USD(2015)/m2.yr]"
         values: '{0.0...n}'
       DH_ww_cost_yr:
         description: Operation costs of district heating due to domestic hot water
         type: float
-        unit: $USD(2015)/yr
+        unit: "[$USD(2015)/yr]"
         values: '{0.0...n}'
       GRID_cost_m2yr:
         description: Operation costs due to electricity supply from the grid per unit
           conditioned floor area
         type: float
-        unit: $USD(2015)/m2.yr
+        unit: "[$USD(2015)/m2.yr]"
         values: '{0.0...n}'
       GRID_cost_yr:
         description: Operation costs due to electricity supply from the grid
         type: float
-        unit: $USD(2015)/yr
+        unit: "[$USD(2015)/yr]"
         values: '{0.0...n}'
       NG_hs_cost_m2yr:
         description: Operation costs of natural gas due to space heating per unit
           conditioned floor area
         type: float
-        unit: $USD(2015)/m2.yr
+        unit: "[$USD(2015)/m2.yr]"
         values: '{0.0...n}'
       NG_hs_cost_yr:
         description: Operation costs of natural gas due to space heating
         type: float
-        unit: $USD(2015)/yr
+        unit: "[$USD(2015)/yr]"
         values: '{0.0...n}'
       NG_ww_cost_m2yr:
         description: Operation costs of natural gas due to domestic hot water per
           unit conditioned floor area
         type: float
-        unit: $USD(2015)/m2.yr
+        unit: "[$USD(2015)/m2.yr]"
         values: '{0.0...n}'
       NG_ww_cost_yr:
         description: Operation costs of natural gas due to domestic hot water
         type: float
-        unit: $USD(2015)/yr
+        unit: "[$USD(2015)/yr]"
         values: '{0.0...n}'
       Name:
         description: Unique building ID. It must start with a letter.
@@ -1976,88 +1976,88 @@ get_costs_operation_file:
         description: Operation costs of oil due to space heating per unit conditioned
           floor area
         type: float
-        unit: $USD(2015)/m2.yr
+        unit: "[$USD(2015)/m2.yr]"
         values: '{0.0...n}'
       OIL_hs_cost_yr:
         description: Operation costs of oil due to space heating
         type: float
-        unit: $USD(2015)/yr
+        unit: "[$USD(2015)/yr]"
         values: '{0.0...n}'
       OIL_ww_cost_m2yr:
         description: Operation costs of oil due to domestic hot water per unit conditioned
           floor area
         type: float
-        unit: $USD(2015)/m2.yr
+        unit: "[$USD(2015)/m2.yr]"
         values: '{0.0...n}'
       OIL_ww_cost_yr:
         description: Operation costs of oil due to domestic hot water
         type: float
-        unit: $USD(2015)/yr
+        unit: "[$USD(2015)/yr]"
         values: '{0.0...n}'
       Opex_a_sys_district_scale_USD:
         description: Annual operational expenditures of district-scale systems
         type: float
-        unit: $USD(2015)/yr
+        unit: "[$USD(2015)/yr]"
         values: '{0.0...n}'
       Opex_a_sys_building_scale_USD:
         description: Annual operational expenditures of building-scale systems
         type: float
-        unit: $USD(2015)/yr
+        unit: "[$USD(2015)/yr]"
         values: '{0.0...n}'
       PV_cost_m2yr:
         description: Operation costs due to electricity supply from PV per unit conditioned
           floor area
         type: float
-        unit: $USD(2015)/m2.yr
+        unit: "[$USD(2015)/m2.yr]"
         values: '{0.0...n}'
       PV_cost_yr:
         description: Operation costs due to electricity supply from PV
         type: float
-        unit: $USD(2015)/yr
+        unit: "[$USD(2015)/yr]"
         values: '{0.0...n}'
       SOLAR_hs_cost_m2yr:
         description: Operation costs due to solar collectors for space heating per
           unit conditioned floor area
         type: float
-        unit: $USD(2015)/m2.yr
+        unit: "[$USD(2015)/m2.yr]"
         values: '{0.0...n}'
       SOLAR_hs_cost_yr:
         description: Operation costs due to solar collectors for space heating
         type: float
-        unit: $USD(2015)/yr
+        unit: "[$USD(2015)/yr]"
         values: '{0.0...n}'
       SOLAR_ww_cost_m2yr:
         description: Operation costs due to solar collectors for domestic hot water
           per unit conditioned floor area
         type: float
-        unit: $USD(2015)/m2.yr
+        unit: "[$USD(2015)/m2.yr]"
         values: '{0.0...n}'
       SOLAR_ww_cost_yr:
         description: Operation costs due to solar collectors for domestic hot water
         type: float
-        unit: $USD(2015)/yr
+        unit: "[$USD(2015)/yr]"
         values: '{0.0...n}'
       WOOD_hs_cost_m2yr:
         description: Operation costs of wood due to space heating per unit conditioned
           floor area
         type: float
-        unit: $USD(2015)/m2.yr
+        unit: "[$USD(2015)/m2.yr]"
         values: '{0.0...n}'
       WOOD_hs_cost_yr:
         description: Operation costs of wood due to space heating
         type: float
-        unit: $USD(2015)/yr
+        unit: "[$USD(2015)/yr]"
         values: '{0.0...n}'
       WOOD_ww_cost_m2yr:
         description: Operation costs of wood due to domestic hot water per unit conditioned
           floor area
         type: float
-        unit: $USD(2015)/m2.yr
+        unit: "[$USD(2015)/m2.yr]"
         values: '{0.0...n}'
       WOOD_ww_cost_yr:
         description: Operation costs of wood due to domestic hot water
         type: float
-        unit: $USD(2015)/yr
+        unit: "[$USD(2015)/yr]"
         values: '{0.0...n}'
   used_by: []
 get_database_air_conditioning_systems:
@@ -2441,10 +2441,10 @@ get_database_construction_standards:
               column: code
               path: get_database_envelope_systems
               sheet: WALL
-          description: Internal partitions constructionassembly (relates to "code"
+          description: Internal partitions construction assembly (relates to "code"
             in ENVELOPE assemblies)
           type: string
-          unit: '[m2/m2]'
+          unit: 'NA'
           values: alphanumeric
         type_roof:
           choice:
@@ -2454,7 +2454,7 @@ get_database_construction_standards:
               sheet: ROOF
           description: Roof construction assembly (relates to "code" in ENVELOPE assemblies)
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
         type_shade:
           choice:
@@ -2464,7 +2464,7 @@ get_database_construction_standards:
               sheet: SHADING
           description: Shading system assembly (relates to "code" in ENVELOPE assemblies)
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
         type_wall:
           choice:
@@ -2475,7 +2475,7 @@ get_database_construction_standards:
           description: External wall construction assembly (relates to "code" in ENVELOPE
             assemblies)
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
         type_win:
           choice:
@@ -2485,7 +2485,7 @@ get_database_construction_standards:
               sheet: WINDOW
           description: Window assembly (relates to "code" in ENVELOPE assemblies)
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
         void_deck:
           description: Number of floors (from the ground up) with an open envelope
@@ -2529,7 +2529,7 @@ get_database_construction_standards:
           description: ' Unique ID of Construction Standard'
           primary: true
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
         cool_ends:
           description: End of the cooling season - use 00|00 when there is none
@@ -2563,7 +2563,7 @@ get_database_construction_standards:
               sheet: COOLING
           description: Type of cooling HVAC assembly (relates to "code" in HVAC assemblies)
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
         type_ctrl:
           choice:
@@ -2574,7 +2574,7 @@ get_database_construction_standards:
           description: Type of heating and cooling control HVAC  assembly (relates
             to "code" in HVAC assemblies)
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
         type_dhw:
           choice:
@@ -2585,7 +2585,7 @@ get_database_construction_standards:
           description: Type of hot water HVAC assembly (relates to "code" in HVAC
             assemblies)
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
         type_hs:
           choice:
@@ -2595,7 +2595,7 @@ get_database_construction_standards:
               sheet: HEATING
           description: Type of heating HVAC assembly (relates to "code" in HVAC assemblies)
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
         type_vent:
           choice:
@@ -2606,34 +2606,34 @@ get_database_construction_standards:
           description: Type of ventilation HVAC assembly (relates to "code" in HVAC
             assemblies)
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
     STANDARD_DEFINITION:
       columns:
         Description:
           description: Description of the construction standard
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
         STANDARD:
           description: ' Unique ID of Construction Standard'
           primary: true
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: '{code}'
         YEAR_END:
           description: Upper limit of year interval where the building properties
             apply
           min: 0
           type: int
-          unit: '[yr]'
+          unit: '[-]'
           values: '{0...n}'
         YEAR_START:
           description: Lower limit of year interval where the building properties
             apply
           min: 0
           type: int
-          unit: '[yr]'
+          unit: '[-]'
           values: '{0...n}'
       constraints:
         YEAR: YEAR_START < YEAR_END
@@ -2643,7 +2643,7 @@ get_database_construction_standards:
           description: Unique ID of Construction Standard
           primary: true
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
         type_cs:
           choice:
@@ -2654,7 +2654,7 @@ get_database_construction_standards:
           description: Type of cooling supply assembly (refers to "code" in SUPPLY
             assemblies)
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
         type_dhw:
           choice:
@@ -2665,7 +2665,7 @@ get_database_construction_standards:
           description: Type of hot water supply assembly (refers to "code" in SUPPLY
             assemblies)
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
         type_el:
           choice:
@@ -2676,7 +2676,7 @@ get_database_construction_standards:
           description: Type of electrical supply assembly (refers to "code" in SUPPLY
             assemblies)
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
         type_hs:
           choice:
@@ -2687,7 +2687,7 @@ get_database_construction_standards:
           description: Type of heating supply assembly (refers to "code" in SUPPLY
             assemblies)
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
   used_by:
   - archetypes_mapper
@@ -2702,8 +2702,8 @@ get_database_conversion_systems:
         Description:
           description: Describes the Type of Absorption Chiller
           type: string
-          unit: '[-]'
-          values: '[-]'
+          unit: 'NA'
+          values: 'NA'
         IR_%:
           description: interest rate charged on the loan for the capital cost
           min: 0.0
@@ -2714,7 +2714,7 @@ get_database_conversion_systems:
           description: lifetime of this technology
           min: 0
           type: int
-          unit: year
+          unit: "[yr]"
           values: '{0...n}'
         O&M_%:
           description: operation and maintanence cost factor (fraction of the investment
@@ -2772,14 +2772,14 @@ get_database_conversion_systems:
         code:
           description: identifier of each unique equipment
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
         currency:
           description: currency-year information of the investment cost function,
             should be unified to USD
           regex: ^[A-Z]{3}-\d{4}$
           type: string
-          unit: '[currency-year]'
+          unit: NA
           values: '{"USD-2015"}'
         d:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
@@ -2847,20 +2847,20 @@ get_database_conversion_systems:
             - triple
           description: 'type of absorption chiller '
           type: string
-          unit: '[-]'
-          values: '{"single", "doubld", "triple"}'
+          unit: 'NA'
+          values: '{"single", "double", "triple"}'
         unit:
           description: unit of the min/max capacity
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: '{"W"}'
     BH:
       columns:
         Description:
           description: Describes the type of borehole heat exchanger
           type: string
-          unit: '[-]'
-          values: '[-]'
+          unit: 'NA'
+          values: 'NA'
         IR_%:
           description: interest rate charged on the loan for the capital cost
           min: 0.0
@@ -2871,7 +2871,7 @@ get_database_conversion_systems:
           description: lifetime of this technology
           min: 0
           type: int
-          unit: year
+          unit: "[yr]"
           values: '{0...n}'
         O&M_%:
           description: operation and maintanence cost factor (fraction of the investment
@@ -2890,7 +2890,7 @@ get_database_conversion_systems:
           description: items made by assumptions in this technology
           nullable: true
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: depends on the data availability
         b:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
@@ -2917,13 +2917,13 @@ get_database_conversion_systems:
         code:
           description: identifier of each unique equipment
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
         currency:
           description: currency-year information of the investment cost function
           regex: ^[A-Z]{3}-\d{4}$
           type: string
-          unit: '[currency-year]'
+          unit: NA
           values: '{"USD-2015"}'
         d:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
@@ -2947,8 +2947,8 @@ get_database_conversion_systems:
         Description:
           description: Describes the type of boiler
           type: string
-          unit: '[-]'
-          values: '[-]'
+          unit: 'NA'
+          values: 'NA'
         IR_%:
           description: interest rate charged on the loan for the capital cost
           min: 0.0
@@ -2978,7 +2978,7 @@ get_database_conversion_systems:
           description: items made by assumptions in this technology
           nullable: true
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: depends on the data availability
         b:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
@@ -3005,13 +3005,13 @@ get_database_conversion_systems:
         code:
           description: identifier of each unique equipment
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
         currency:
           description: currency-year information of the investment cost function
           regex: ^[A-Z]{3}-\d{4}$
           type: string
-          unit: '[currency-year]'
+          unit: NA
           values: '{"USD-2015"}'
         d:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
@@ -3035,8 +3035,8 @@ get_database_conversion_systems:
         Description:
           description: Describes the type of combined-cycle gas turbine
           type: string
-          unit: '[-]'
-          values: '[-]'
+          unit: 'NA'
+          values: 'NA'
         IR_%:
           description: interest rate charged on the loan for the capital cost
           min: 0.0
@@ -3066,7 +3066,7 @@ get_database_conversion_systems:
           description: items made by assumptions in this technology
           nullable: true
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: depends on the data availability
         b:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
@@ -3093,14 +3093,14 @@ get_database_conversion_systems:
         code:
           description: identifier of each unique equipment
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
         currency:
           description: currency-year information of the investment cost function,
             should be unified to USD
           regex: ^[A-Z]{3}-\d{4}$
           type: string
-          unit: '[currency-year]'
+          unit: NA
           values: '{"USD-2015"}'
         d:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
@@ -3124,8 +3124,8 @@ get_database_conversion_systems:
         Description:
           description: Describes the type of cooling tower
           type: string
-          unit: '[-]'
-          values: '[-]'
+          unit: 'NA'
+          values: 'NA'
         IR_%:
           description: interest rate charged on the loan for the capital cost
           min: 0.0
@@ -3155,7 +3155,7 @@ get_database_conversion_systems:
           description: items made by assumptions in this technology
           nullable: true
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: depends on the data availability
         b:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
@@ -3182,14 +3182,14 @@ get_database_conversion_systems:
         code:
           description: identifier of each unique equipment
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
         currency:
           description: currency-year information of the investment cost function,
             should be unified to USD
           regex: ^[A-Z]{3}-\d{4}$
           type: string
-          unit: '[currency-year]'
+          unit: NA
           values: '{"USD-2015"}'
         d:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
@@ -3213,8 +3213,8 @@ get_database_conversion_systems:
         Description:
           description: Describes the source of the benchmark standards.
           type: string
-          unit: '[-]'
-          values: '[-]'
+          unit: 'NA'
+          values: 'NA'
         IR_%:
           description: interest rate charged on the loan for the capital cost
           min: 0.0
@@ -3244,7 +3244,7 @@ get_database_conversion_systems:
           description: items made by assumptions in this technology
           nullable: true
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: depends on the data availability
         b:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
@@ -3271,14 +3271,14 @@ get_database_conversion_systems:
         code:
           description: identifier of each unique equipment
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
         currency:
           description: currency-year information of the investment cost function,
             should be unified to USD
           regex: ^[A-Z]{3}-\d{4}$
           type: string
-          unit: '[currency-year]'
+          unit: NA
           values: '{"USD-2015"}'
         d:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
@@ -3302,8 +3302,8 @@ get_database_conversion_systems:
         Description:
           description: Describes the type of fuel cell
           type: string
-          unit: '[-]'
-          values: '[-]'
+          unit: 'NA'
+          values: 'NA'
         IR_%:
           description: interest rate charged on the loan for the capital cost
           min: 0.0
@@ -3333,7 +3333,7 @@ get_database_conversion_systems:
           description: items made by assumptions in this technology
           nullable: true
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: depends on the data availability
         b:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
@@ -3360,14 +3360,14 @@ get_database_conversion_systems:
         code:
           description: identifier of each unique equipment
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
         currency:
           description: currency-year information of the investment cost function,
             should be unified to USD
           regex: ^[A-Z]{3}-\d{4}$
           type: string
-          unit: '[currency-year]'
+          unit: NA
           values: '{"USD-2015"}'
         d:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
@@ -3391,8 +3391,8 @@ get_database_conversion_systems:
         Description:
           description: Describes the type of furnace
           type: string
-          unit: '[-]'
-          values: '[-]'
+          unit: 'NA'
+          values: 'NA'
         IR_%:
           description: interest rate charged on the loan for the capital cost
           min: 0.0
@@ -3422,7 +3422,7 @@ get_database_conversion_systems:
           description: items made by assumptions in this technology
           nullable: true
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: depends on the data availability
         b:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
@@ -3449,14 +3449,14 @@ get_database_conversion_systems:
         code:
           description: identifier of each unique equipment
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
         currency:
           description: currency-year information of the investment cost function,
             should be unified to USD
           regex: ^[A-Z]{3}-\d{4}$
           type: string
-          unit: '[currency-year]'
+          unit: NA
           values: '{"USD-2015"}'
         d:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
@@ -3480,8 +3480,8 @@ get_database_conversion_systems:
         Description:
           description: Describes the type of heat exchanger
           type: string
-          unit: '[-]'
-          values: '[-]'
+          unit: 'NA'
+          values: 'NA'
         IR_%:
           description: interest rate charged on the loan for the capital cost
           min: 0.0
@@ -3517,7 +3517,7 @@ get_database_conversion_systems:
           description: items made by assumptions in this technology
           nullable: true
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: depends on the data availability
         b:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
@@ -3556,14 +3556,14 @@ get_database_conversion_systems:
         code:
           description: identifier of each unique equipment
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
         currency:
           description: currency-year information of the investment cost function,
             should be unified to USD
           regex: ^[A-Z]{3}-\d{4}$
           type: string
-          unit: '[currency-year]'
+          unit: NA
           values: '{"USD-2015"}'
         d:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
@@ -3592,15 +3592,15 @@ get_database_conversion_systems:
         unit:
           description: unit of the min/max capacity
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: '{"W","m2"}'
     HP:
       columns:
         Description:
           description: Describes the source of the heat pump
           type: string
-          unit: '[-]'
-          values: '[-]'
+          unit: 'NA'
+          values: 'NA'
         IR_%:
           description: interest rate charged on the loan for the capital cost
           min: 0.0
@@ -3630,7 +3630,7 @@ get_database_conversion_systems:
           description: items made by assumptions in this technology
           nullable: true
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: depends on the data availability
         b:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
@@ -3657,14 +3657,14 @@ get_database_conversion_systems:
         code:
           description: identifier of each unique equipment
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
         currency:
           description: currency-year information of the investment cost function,
             should be unified to USD
           regex: ^[A-Z]{3}-\d{4}$
           type: string
-          unit: '[currency-year]'
+          unit: NA
           values: '{"USD-2015"}'
         d:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
@@ -3681,15 +3681,15 @@ get_database_conversion_systems:
         unit:
           description: unit of the min/max capacity
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: '{"W"}'
     PV:
       columns:
         Description:
           description: Describes the source of the benchmark standards.
           type: string
-          unit: '[-]'
-          values: '[-]'
+          unit: 'NA'
+          values: 'NA'
         IR_%:
           description: interest rate charged on the loan for the capital cost
           min: 0.0
@@ -3769,13 +3769,13 @@ get_database_conversion_systems:
           description: items made by assumptions in this technology
           nullable: true
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: depends on the data availability
         b:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
             + d*ln(x) + e*x*ln*(x), where x is the capacity '
           type: float
-          unit: '[-]'
+          unit: 'NA'
           values: '{0.0...n}'
         c:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
@@ -3796,14 +3796,14 @@ get_database_conversion_systems:
         code:
           description: identifier of each unique equipment
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
         currency:
           description: currency-year information of the investment cost function,
             should be unified to USD
           regex: ^[A-Z]{3}-\d{4}$
           type: string
-          unit: '[currency-year]'
+          unit: NA
           values: '{"USD-2015"}'
         d:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
@@ -3834,20 +3834,20 @@ get_database_conversion_systems:
             - PV
           description: redundant
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: '{"PV"}'
         unit:
           description: unit of the min/max capacity
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: '{"W"}'
     PVT:
       columns:
         Description:
           description: Describes the type of photovoltaic thermal technology
           type: string
-          unit: '[-]'
-          values: '[-]'
+          unit: 'NA'
+          values: 'NA'
         IR_%:
           description: interest rate charged on the loan for the capital cost
           min: 0.0
@@ -3877,7 +3877,7 @@ get_database_conversion_systems:
           description: items made by assumptions in this technology
           nullable: true
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: depends on the data availability
         b:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
@@ -3904,14 +3904,14 @@ get_database_conversion_systems:
         code:
           description: identifier of each unique equipment
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
         currency:
           description: currency-year information of the investment cost function,
             should be unified to USD
           regex: ^[A-Z]{3}-\d{4}$
           type: string
-          unit: '[currency-year]'
+          unit: NA
           values: '{"USD-2015"}'
         d:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
@@ -3928,15 +3928,15 @@ get_database_conversion_systems:
         unit:
           description: unit of the min/max capacity
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: '{"W"}'
     Pump:
       columns:
         Description:
           description: Describes the source of the benchmark standards.
           type: string
-          unit: '[-]'
-          values: '[-]'
+          unit: 'NA'
+          values: 'NA'
         IR_%:
           description: interest rate charged on the loan for the capital cost
           min: 0.0
@@ -3966,7 +3966,7 @@ get_database_conversion_systems:
           description: items made by assumptions in this technology
           nullable: true
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: depends on the data availability
         b:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
@@ -3993,14 +3993,14 @@ get_database_conversion_systems:
         code:
           description: identifier of each unique equipment
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
         currency:
           description: currency-year information of the investment cost function,
             should be unified to USD
           regex: ^[A-Z]{3}-\d{4}$
           type: string
-          unit: '[currency-year]'
+          unit: NA
           values: '{"USD-2015"}'
         d:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
@@ -4017,7 +4017,7 @@ get_database_conversion_systems:
         unit:
           description: unit of the min/max capacity
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: '{"W"}'
     SC:
       columns:
@@ -4034,8 +4034,8 @@ get_database_conversion_systems:
         Description:
           description: Describes the type of solar collector
           type: string
-          unit: '[-]'
-          values: '[-]'
+          unit: 'NA'
+          values: 'NA'
         IAM_d:
           description: incident angle modifier for diffuse radiation
           type: float
@@ -4075,7 +4075,7 @@ get_database_conversion_systems:
           description: items made by assumptions in this technology
           nullable: true
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: depends on the data availability
         b:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
@@ -4113,14 +4113,14 @@ get_database_conversion_systems:
         code:
           description: identifier of each unique equipment
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
         currency:
           description: currency-year information of the investment cost function,
             should be unified to USD
           regex: ^[A-Z]{3}-\d{4}$
           type: string
-          unit: '[currency-year]'
+          unit: NA
           values: '{"USD-2015"}'
         d:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
@@ -4196,20 +4196,20 @@ get_database_conversion_systems:
             - ET
           description: 'type of the solar collector (FP: flate-plate or ET: evacuated-tube)'
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: '{"FP","ET"}'
         unit:
           description: unit of the min/max capacity
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: '{"m2"}'
     TES:
       columns:
         Description:
           description: Describes the source of the benchmark standards.
           type: string
-          unit: '[-]'
-          values: '[-]'
+          unit: 'NA'
+          values: 'NA'
         IR_%:
           description: interest rate charged on the loan for the capital cost
           min: 0.0
@@ -4239,7 +4239,7 @@ get_database_conversion_systems:
           description: items made by assumptions in this technology
           nullable: true
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: depends on the data availability
         b:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
@@ -4266,14 +4266,14 @@ get_database_conversion_systems:
         code:
           description: identifier of each unique equipment
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
         currency:
           description: currency-year information of the investment cost function,
             should be unified to USD
           regex: ^[A-Z]{3}-\d{4}$
           type: string
-          unit: '[currency-year]'
+          unit: NA
           values: '{"USD-2015"}'
         d:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
@@ -4290,7 +4290,7 @@ get_database_conversion_systems:
         unit:
           description: unit of the min/max capacity
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: '{"m3"}'
   used_by:
   - decentralized
@@ -4310,7 +4310,7 @@ get_database_distribution_systems:
           description: pipe ID from the manufacterer
           primary: true
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
         D_ext_m:
           description: external pipe diameter tolerance for the nominal diameter (DN)
@@ -4367,21 +4367,21 @@ get_database_envelope_systems:
         Description:
           description: Describes the Type of construction
           type: string
-          unit: '[-]'
-          values: '[-]'
+          unit: 'NA'
+          values: 'NA'
         code:
           description: Type of construction
           primary: true
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
     FLOOR:
       columns:
         Description:
           description: Describes the Type of roof
           type: string
-          unit: '[-]'
-          values: '[-]'
+          unit: 'NA'
+          values: 'NA'
         GHG_FLOOR_kgCO2m2:
           description: Embodied emissions per m2 of roof.(entire building life cycle)
           type: float
@@ -4397,15 +4397,15 @@ get_database_envelope_systems:
           description: Type of roof
           primary: true
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
     ROOF:
       columns:
         Description:
           description: Describes the Type of roof
           type: string
-          unit: '[-]'
-          values: '[-]'
+          unit: 'NA'
+          values: 'NA'
         GHG_ROOF_kgCO2m2:
           description: Embodied emissions per m2 of roof.(entire building life cycle)
           type: float
@@ -4426,7 +4426,7 @@ get_database_envelope_systems:
           description: Type of roof
           primary: true
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
         e_roof:
           description: Emissivity of external surface. Defined according to ISO 13790.
@@ -4444,13 +4444,13 @@ get_database_envelope_systems:
         Description:
           description: Describes the source of the benchmark standards.
           type: string
-          unit: '[-]'
-          values: '[-]'
+          unit: 'NA'
+          values: 'NA'
         code:
           description: Type of shading
           primary: true
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
         rf_sh:
           description: Shading coefficient when shading device is active. Defined
@@ -4463,13 +4463,13 @@ get_database_envelope_systems:
         Description:
           description: Describes the Type of tightness
           type: string
-          unit: '[-]'
-          values: '[-]'
+          unit: 'NA'
+          values: 'NA'
         code:
           description: Type of tightness
           primary: true
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
         n50:
           description: Air exchanges per hour at a pressure of 50 Pa.
@@ -4481,8 +4481,8 @@ get_database_envelope_systems:
         Description:
           description: Describes the Type of wall
           type: string
-          unit: '[-]'
-          values: '[-]'
+          unit: 'NA'
+          values: 'NA'
         GHG_WALL_kgCO2m2:
           description: Embodied emissions per m2 of walls (entire building life cycle)
           type: float
@@ -4503,7 +4503,7 @@ get_database_envelope_systems:
           description: Type of wall
           primary: true
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
         e_wall:
           description: Emissivity of external surface. Defined according to ISO 13790.
@@ -4521,8 +4521,8 @@ get_database_envelope_systems:
         Description:
           description: Describes the source of the benchmark standards.
           type: string
-          unit: '[-]'
-          values: '[-]'
+          unit: 'NA'
+          values: 'NA'
         F_F:
           description: Window frame fraction coefficient. Defined according to ISO
             13790.
@@ -4550,7 +4550,7 @@ get_database_envelope_systems:
           description: Window type code to relate to other databases
           primary: true
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
         e_win:
           description: Emissivity of external surface. Defined according to ISO 13790.
@@ -4598,8 +4598,8 @@ get_database_feedstocks:
           description: reference
           nullable: true
           type: string
-          unit: '[-]'
-          values: '[-]'
+          unit: 'NA'
+          values: 'NA'
     COAL:
       columns:
         GHG_kgCO2MJ:
@@ -4631,8 +4631,8 @@ get_database_feedstocks:
           description: reference
           nullable: true
           type: string
-          unit: '[-]'
-          values: '[-]'
+          unit: 'NA'
+          values: 'NA'
     DRYBIOMASS:
       columns:
         GHG_kgCO2MJ:
@@ -4664,8 +4664,8 @@ get_database_feedstocks:
           description: reference
           nullable: true
           type: string
-          unit: '[-]'
-          values: '[-]'
+          unit: 'NA'
+          values: 'NA'
     GRID:
       columns:
         GHG_kgCO2MJ:
@@ -4697,8 +4697,8 @@ get_database_feedstocks:
           description: reference
           nullable: true
           type: string
-          unit: '[-]'
-          values: '[-]'
+          unit: 'NA'
+          values: 'NA'
     NATURALGAS:
       columns:
         GHG_kgCO2MJ:
@@ -4730,8 +4730,8 @@ get_database_feedstocks:
           description: reference
           nullable: true
           type: string
-          unit: '[-]'
-          values: '[-]'
+          unit: 'NA'
+          values: 'NA'
     OIL:
       columns:
         GHG_kgCO2MJ:
@@ -4763,8 +4763,8 @@ get_database_feedstocks:
           description: reference
           nullable: true
           type: string
-          unit: '[-]'
-          values: '[-]'
+          unit: 'NA'
+          values: 'NA'
     SOLAR:
       columns:
         GHG_kgCO2MJ:
@@ -4796,8 +4796,8 @@ get_database_feedstocks:
           description: reference
           nullable: true
           type: string
-          unit: '[-]'
-          values: '[-]'
+          unit: 'NA'
+          values: 'NA'
     WETBIOMASS:
       columns:
         GHG_kgCO2MJ:
@@ -4829,8 +4829,8 @@ get_database_feedstocks:
           description: reference
           nullable: true
           type: string
-          unit: '[-]'
-          values: '[-]'
+          unit: 'NA'
+          values: 'NA'
     WOOD:
       columns:
         GHG_kgCO2MJ:
@@ -4862,8 +4862,8 @@ get_database_feedstocks:
           description: reference
           nullable: true
           type: string
-          unit: '[-]'
-          values: '[-]'
+          unit: 'NA'
+          values: 'NA'
   used_by:
   - decentralized
   - emissions
@@ -6046,8 +6046,8 @@ get_database_supply_assemblies:
         Description:
           description: description
           type: string
-          unit: '[-]'
-          values: '[-]'
+          unit: 'NA'
+          values: 'NA'
         IR_%:
           description: interest rate charged on the loan for the capital cost
           min: 0.0
@@ -6071,7 +6071,7 @@ get_database_supply_assemblies:
           description: Code of cooling supply assembly
           primary: true
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
         efficiency:
           description: efficiency of the all in one system
@@ -6094,14 +6094,14 @@ get_database_supply_assemblies:
           description: feedstock used by the the all in one system (refers to the
             FEEDSTOCK database)
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
         reference:
           description: reference
           nullable: true
           type: string
-          unit: '[-]'
-          values: '[-]'
+          unit: 'NA'
+          values: 'NA'
         scale:
           choice:
             values:
@@ -6111,7 +6111,7 @@ get_database_supply_assemblies:
             - CITY
           description: whether the all in one system is used at the building, or the district scale
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
     ELECTRICITY:
       columns:
@@ -6124,7 +6124,7 @@ get_database_supply_assemblies:
         Description:
           description: Description of Type of all in one system
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
         IR_%:
           description: interest rate charged on the loan for the capital cost
@@ -6149,7 +6149,7 @@ get_database_supply_assemblies:
           description: Type of all in one system
           primary: true
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
         efficiency:
           description: efficiency of the all in one system
@@ -6172,13 +6172,13 @@ get_database_supply_assemblies:
           description: feedstock used by the the all in one system (refers to the
             FEEDSTOCK database)
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
         reference:
           description: Reference of the data
           nullable: true
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
         scale:
           choice:
@@ -6190,7 +6190,7 @@ get_database_supply_assemblies:
           description: whether the all in one system is used at the building, or the
             district scale
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
     HEATING:
       columns:
@@ -6203,7 +6203,7 @@ get_database_supply_assemblies:
         Description:
           description: Description of Type of all in one system
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
         IR_%:
           description: interest rate charged on the loan for the capital cost
@@ -6228,7 +6228,7 @@ get_database_supply_assemblies:
           description: Type of all in one system
           primary: true
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
         efficiency:
           description: efficiency of the all in one system
@@ -6251,13 +6251,13 @@ get_database_supply_assemblies:
           description: feedstock used by the the all in one system (refers to the
             FEEDSTOCK database)
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
         reference:
           description: Reference of the data
           nullable: true
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
         scale:
           choice:
@@ -6269,7 +6269,7 @@ get_database_supply_assemblies:
           description: whether the all in one system is used at the building, or the
             district scale
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
     HOT_WATER:
       columns:
@@ -6282,7 +6282,7 @@ get_database_supply_assemblies:
         Description:
           description: Description of Type of all in one system
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
         IR_%:
           description: interest rate charged on the loan for the capital cost
@@ -6307,7 +6307,7 @@ get_database_supply_assemblies:
           description: Type of all in one system
           primary: true
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
         efficiency:
           description: efficiency of the all in one system
@@ -6330,13 +6330,13 @@ get_database_supply_assemblies:
           description: feedstock used by the the all in one system (refers to the
             FEEDSTOCK database)
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
         reference:
           description: Reference of the data
           nullable: true
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
         scale:
           choice:
@@ -6348,7 +6348,7 @@ get_database_supply_assemblies:
           description: whether the all in one system is used at the building, or the
             district scale
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
   used_by:
   - demand
@@ -6401,7 +6401,7 @@ get_database_use_types_properties:
           description: use type code (refers to building use type)
           primary: true
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
     INTERNAL_LOADS:
       columns:
@@ -6475,7 +6475,7 @@ get_database_use_types_properties:
           description: use type code (refers to building use type)
           primary: true
           type: string
-          unit: '[-]'
+          unit: 'NA'
           values: alphanumeric
   used_by:
   - archetypes_mapper
@@ -6672,7 +6672,7 @@ get_demand_results_file:
       Name:
         description: Unique building ID. It must start with a letter.
         type: string
-        unit: '[-]'
+        unit: 'NA'
         values: alphanumeric
       OIL_hs_kWh:
         description: OIL requirement for space heating supply
@@ -7222,7 +7222,7 @@ get_lca_embodied:
       Name:
         description: Unique building ID. It must start with a letter.
         type: string
-        unit: '[-]'
+        unit: 'NA'
         values: alphanumeric
   used_by: []
 get_lca_mobility:
@@ -7251,7 +7251,7 @@ get_lca_mobility:
       Name:
         description: Unique building ID. It must start with a letter.
         type: string
-        unit: '[-]'
+        unit: 'NA'
         values: alphanumeric
   used_by: []
 get_lca_operation:
@@ -7512,7 +7512,7 @@ get_lca_operation:
       Name:
         description: Unique building ID. It must start with a letter.
         type: string
-        unit: '[-]'
+        unit: 'NA'
         values: alphanumeric
       OIL_hs_ghg_kgm2:
         description: Operational emissions per unit of conditioned floor area of the
@@ -7782,7 +7782,7 @@ get_multi_criteria_analysis:
       individual_name:
         description: Name of system
         type: string
-        unit: '[-]'
+        unit: 'NA'
         values: alphanumeric
       normalized_Capex_total:
         description: normalization of CAPEX
@@ -7857,23 +7857,23 @@ get_network_layout_edges_shapefile:
       Name:
         description: Unique network pipe ID.
         type: string
-        unit: '[-]'
+        unit: 'NA'
         values: alphanumeric
       Pipe_DN:
         description: Classifies nominal pipe diameters (DN) into typical bins.
         type: string
-        unit: '[-]'
+        unit: 'NA'
         values: alphanumeric
       Type_mat:
         description: Material type
         type: string
-        unit: '[-]'
+        unit: 'NA'
         values: alphanumeric
       geometry:
         description: Geometry
         type: LineString
-        unit: '[-]'
-        values: '[-]'
+        unit: 'NA'
+        values: 'NA'
       length_m:
         description: lenth of this edge
         type: float
@@ -7891,23 +7891,23 @@ get_network_layout_nodes_shapefile:
       Building:
         description: Unique building ID. e.g. "B01"
         type: string
-        unit: '[-]'
+        unit: 'NA'
         values: alphanumeric
       Name:
         description: Unique node ID. e.g. "NODE1"
         type: string
-        unit: '[-]'
+        unit: 'NA'
         values: alphanumeric
       Type:
         description: Type of node.
         type: string
-        unit: '[-]'
+        unit: 'NA'
         values: '{"PLANT","CONSUMER","NONE"}'
       geometry:
         description: Geometry
         type: Point
-        unit: '[-]'
-        values: '[-]'
+        unit: 'NA'
+        values: 'NA'
   used_by:
   - thermal_network
 get_network_linear_pressure_drop_edges:
@@ -8181,7 +8181,7 @@ get_optimization_district_scale_cooling_capacity:
       Name:
         description: Unique building ID. It must start with a letter
         type: string
-        unit: '[-]'
+        unit: 'NA'
         values: alphanumeric
   used_by: []
 get_optimization_district_scale_electricity_capacity:
@@ -8596,7 +8596,7 @@ get_optimization_building_scale_cooling_capacity:
       Name:
         description: Unique building ID. It must start with a letter
         type: string
-        unit: '[-]'
+        unit: 'NA'
         values: alphanumeric
   used_by: []
 get_optimization_building_scale_heating_capacity:
@@ -8625,7 +8625,7 @@ get_optimization_building_scale_heating_capacity:
       Name:
         description: Unique building ID. It must start with a letter
         type: string
-        unit: '[-]'
+        unit: 'NA'
         values: alphanumeric
   used_by: []
 get_optimization_generation_district_scale_performance:
@@ -8993,7 +8993,7 @@ get_optimization_generation_district_scale_performance:
       individual_name:
         description: Unique alphanumerical ID of individual
         type: string
-        unit: '[-]'
+        unit: 'NA'
         values: alphanumeric
   used_by: []
 get_optimization_generation_building_scale_performance:
@@ -9066,7 +9066,7 @@ get_optimization_generation_building_scale_performance:
       individual_name:
         description: Name of  Individual unique ID
         type: string
-        unit: '[-]'
+        unit: 'NA'
         values: alphanumeric
   used_by: []
 get_optimization_generation_total_performance:
@@ -9164,7 +9164,7 @@ get_optimization_generation_total_performance:
       individual_name:
         description: Name of  Individual unique ID
         type: string
-        unit: '[-]'
+        unit: 'NA'
         values: alphanumeric
   used_by: []
 get_optimization_generation_total_performance_pareto:
@@ -9262,7 +9262,7 @@ get_optimization_generation_total_performance_pareto:
       individual_name:
         description: Name of  Individual unique ID
         type: string
-        unit: '[-]'
+        unit: 'NA'
         values: alphanumeric
   used_by:
   - multi_criteria_analysis
@@ -9465,7 +9465,7 @@ get_optimization_slave_building_connectivity:
       Name:
         description: Unique building ID. It must start with a letter.)
         type: string
-        unit: '[-]'
+        unit: 'NA'
         values: alphanumeric
   used_by: []
 get_optimization_slave_district_scale_performance:
@@ -10733,7 +10733,7 @@ get_optimization_substations_total_file:
       Name:
         description: Unique building ID. It must start with a letter.
         type: string
-        unit: '[-]'
+        unit: 'NA'
         values: alphanumeric
       OIL_hs0_kW:
         description: Nominal OIL requirement for space heating supply
@@ -11330,7 +11330,7 @@ get_radiation_materials:
       Name:
         description: Unique building ID. It must start with a letter.
         type: string
-        unit: '[-]'
+        unit: 'NA'
         values: alphanumeric
       r_roof:
         description: Reflectance in the Red spectrum. Defined according Radiance.
@@ -11348,29 +11348,29 @@ get_radiation_materials:
         description: Basement floor construction assembly (relates to "code" in ENVELOPE
           assemblies)
         type: string
-        unit: '[-]'
+        unit: 'NA'
         values: alphanumeric
       type_floor:
         description: Internal floor construction assembly (relates to "code" in ENVELOPE
           assemblies)
         type: string
-        unit: '[-]'
+        unit: 'NA'
         values: alphanumeric
       type_roof:
         description: Roof construction assembly (relates to "code" in ENVELOPE assemblies)
         type: string
-        unit: '[-]'
+        unit: 'NA'
         values: alphanumeric
       type_wall:
         description: External wall construction assembly (relates to "code" in ENVELOPE
           assemblies)
         type: string
-        unit: '[-]'
+        unit: 'NA'
         values: alphanumeric
       type_win:
         description: Window assembly (relates to "code" in ENVELOPE assemblies)
         type: string
-        unit: '[-]'
+        unit: 'NA'
         values: alphanumeric
   used_by: []
 get_radiation_metadata:
@@ -11388,17 +11388,17 @@ get_radiation_metadata:
       BUILDING:
         description: Unique building ID. It must start with a letter.
         type: string
-        unit: '[-]'
+        unit: 'NA'
         values: alphanumeric
       SURFACE:
         description: Unique surface ID for each building exterior surface.
         type: string
-        unit: '[-]'
+        unit: 'NA'
         values: '{srf0...srfn}'
       TYPE:
         description: Surface typology.
         type: string
-        unit: '[-]'
+        unit: 'NA'
         values: '{"walls","windows","roofs"}'
       Xcoor:
         description: Describes the position of the x vector.
@@ -11439,7 +11439,7 @@ get_radiation_metadata:
       orientation:
         description: Orientation of the surface (north/east/south/west/top)
         type: string
-        unit: '[-]'
+        unit: 'NA'
         values: '{"north","east","west","south","top"}'
   used_by:
   - demand
@@ -11593,8 +11593,8 @@ get_site_polygon:
       geometry:
         description: Shapefile POLYGON
         type: Polygon
-        unit: '[-]'
-        values: '[-]'
+        unit: 'NA'
+        values: 'NA'
   used_by:
   - zone_helper
 get_street_network:
@@ -11606,13 +11606,13 @@ get_street_network:
       Id:
         description: Unique building ID. It must start with a letter.
         type: string
-        unit: '[-]'
+        unit: 'NA'
         values: alphanumeric
       geometry:
         description: Geometry
         type: LineString
-        unit: '[-]'
-        values: '[-]'
+        unit: 'NA'
+        values: 'NA'
   used_by:
   - network_layout
   - optimization
@@ -11625,7 +11625,7 @@ get_surroundings_geometry:
       Name:
         description: Unique building ID. It must start with a letter.
         type: string
-        unit: '[-]'
+        unit: 'NA'
         values: alphanumeric
       floors_ag:
         description: Number of floors above ground (incl. ground floor, Minimum one floor is needed)
@@ -11642,12 +11642,12 @@ get_surroundings_geometry:
       geometry:
         description: Shapefile POLYGON
         type: Polygon
-        unit: '[-]'
-        values: '[-]'
+        unit: 'NA'
+        values: 'NA'
       REFERENCE:
         description: Reference to data (if any)
         type: string
-        unit: '[-]'
+        unit: 'NA'
         values: alphanumeric
         nullable: true
   used_by:
@@ -11690,7 +11690,7 @@ get_thermal_network_edge_list_file:
       Name:
         description: Unique network pipe ID.
         type: string
-        unit: '[-]'
+        unit: 'NA'
         values: alphanumeric
       D_int_m:
         description: Internal pipe diameter for the nominal diameter
@@ -11706,7 +11706,7 @@ get_thermal_network_edge_list_file:
       Type_mat:
         description: Material of the pipes
         type: string
-        unit: '[-]'
+        unit: 'NA'
         values: alphanumeric
       length_m:
         description: Length of each pipe in the network
@@ -11732,7 +11732,7 @@ get_thermal_network_edge_node_matrix_file:
       'Unnamed: 0':
         description: Names of the nodes in the network
         type: string
-        unit: '[-]'
+        unit: 'NA'
         values: '{NODE0...NODEn}'
   used_by:
   - thermal_network
@@ -11772,17 +11772,17 @@ get_thermal_network_node_types_csv_file:
       Name:
         description: Unique network node ID.
         type: string
-        unit: '[-]'
+        unit: 'NA'
         values: alphanumeric
       Building:
         description: Unique building ID. It must start with a letter.
         type: string
-        unit: '[-]'
+        unit: 'NA'
         values: alphanumeric
       Type:
         description: 'Type of node: "PLANT" / "CONSUMER" / "NONE" (if it is neither)'
         type: string
-        unit: '[-]'
+        unit: 'NA'
         values: alphanumeric
   used_by: []
 get_thermal_network_plant_heat_requirement_file:
@@ -12189,7 +12189,7 @@ get_total_demand:
       Name:
         description: Unique building ID. It must start with a letter.
         type: string
-        unit: '[-]'
+        unit: 'NA'
         values: alphanumeric
       OIL_hs0_kW:
         description: Nominal OIL requirement for space heating supply
@@ -13058,7 +13058,7 @@ get_zone_geometry:
       Name:
         description: Unique building ID. It must start with a letter.
         type: string
-        unit: '[-]'
+        unit: 'NA'
         values: alphanumeric
       floors_ag:
         description: Number of floors above ground (incl. ground floor, minimum one floor is needed)
@@ -13085,12 +13085,12 @@ get_zone_geometry:
       geometry:
         description: Shapefile POLYGON
         type: Polygon
-        unit: '[-]'
-        values: '[-]'
+        unit: 'NA'
+        values: 'NA'
       REFERENCE:
         description: Reference to data (if any)
         type: string
-        unit: '[-]'
+        unit: 'NA'
         values: alphanumeric
         nullable: true
   used_by:
