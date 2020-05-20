@@ -180,6 +180,15 @@ class SchemaIo(object):
         return self.original_function(self.locator, *args, **kwargs)
 
     def read(self, *args, **kwargs):
+        """
+        Open the file indicated by the locator method and return it as a Dataframe.
+        args and kwargs are passed to the original (undecorated) locator method to figure out the location of the
+        file.
+
+        :param args:
+        :param kwargs:
+        :rtype: pd.DataFrame
+        """
         raise AttributeError("{lm}: don't know how to read file_type {file_type}".format(
             lm=self.lm, file_type=self.schema["file_type"]))
 
@@ -221,6 +230,15 @@ class CsvSchemaIo(SchemaIo):
     """Read and write csv files - and attempt to validate them."""
 
     def read(self, *args, **kwargs):
+        """
+        Open the file indicated by the locator method and return it as a Dataframe.
+        args and kwargs are passed to the original (undecorated) locator method to figure out the location of the
+        file.
+
+        :param args:
+        :param kwargs:
+        :rtype: pd.DataFrame
+        """
         df = pd.read_csv(self(*args, **kwargs))
         self.validate(df)
         return df
