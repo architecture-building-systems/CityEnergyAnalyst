@@ -195,62 +195,6 @@ class TestSchemas(unittest.TestCase):
         import cea.glossary
         cea.glossary.read_glossary_df(plugins=[])
 
-    def test_units(self):
-        """The units and the column names should match"""
-        schemas = cea.schemas.schemas(plugins=[])
-
-        def compare_column_to_unit(column_name, unit):
-            if column_name in {"m_cw", "m_hw", "s_e", "PV_Bref", "PV_noct", "PV_th", "C_eff", "Cp_fluid", "c1", "c2",
-                               "cap_max", "cap_min", "x_int"}:
-                # excluding these - manually checked
-                return True
-            if unit in {"NA", "[-]", "[datetime]", "[DD|MM]", "[m2/m2]"}:
-                # ignore these columns, manually tested
-                return True
-            unit_from_col = "[{unit}]".format(unit=column_name.split("_")[-1])
-            if unit == "[%]":
-                return unit_from_col == "[pc]"
-            if column_name.startswith("dT_"):
-                return unit == "[C]"
-            if column_name.startswith("dP"):
-                return unit == "[Pa/m2]"
-            if column_name.startswith("cap_"):
-                return unit == "[W]"
-            if column_name.endswith("_USD"):
-                return unit == "[$USD(2015)/yr]"
-            if unit == "[kg CO2-eq/m2.yr]":
-                return column_name.endswith("kgCO2m2")
-            if unit.startswith("[$USD(2015)/"):
-                return column_name.endswith("_cost_" + unit.split("/")[1].replace(".", "").replace("]", ""))
-            if "/" in unit:
-                return unit_from_col in {unit.replace("/", ""), unit.replace("/", "per")}
-            else:
-                return unit_from_col == unit
-
-        for lm in schemas:
-            if lm in SKIP_LMS or lm.startswith("get_database_"):
-                continue
-            schema = schemas[lm]["schema"]
-            if schemas[lm]["file_type"] in {"xls", "xlsx"}:
-                for ws in schema.keys():
-                    ws_schema = schema[ws]["columns"]
-                    for col in ws_schema.keys():
-                        self.assertIn("unit", ws_schema[col],
-                                      "Missing unit definition for {lm}/{ws}/{col}".format(
-                                                lm=lm, ws=ws, col=col))
-                        col_unit = ws_schema[col]["unit"]
-                        self.assertTrue(compare_column_to_unit(column_name=col, unit=col_unit),
-                                        "Unit mismatch for {lm}/{ws}/{col}: expected {unit}".format(
-                                            lm=lm, ws=ws, col=col, unit=col_unit))
-            elif schemas[lm]["file_type"] in {"shp", "dbf", "csv"}:
-                for col in schema["columns"].keys():
-                    self.assertIn("unit", schema["columns"][col],
-                                  "Missing unit definition for {lm}/{col}".format(lm=lm, col=col))
-                    col_unit = schema["columns"][col]["unit"]
-                    self.assertTrue(compare_column_to_unit(column_name=col, unit=col_unit),
-                                      "Unit mismatch for {lm}/{col}: expected {unit}".format(lm=lm, col=col,
-                                                                                             unit=col_unit))
-
 
 def extract_locator_methods(locator):
     """Return the list of locator methods that point to files"""
