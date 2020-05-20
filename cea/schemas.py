@@ -12,8 +12,7 @@ import pandas as pd
 import yaml
 import warnings
 import functools
-from cea.plots.colors import color_to_rgb
-from typing import List, Dict
+from typing import List
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2020, Architecture and Building Systems - ETH Zurich"
@@ -28,6 +27,7 @@ __status__ = "Production"
 # since we can actually call schemas with a varying list of plugins, store the resulting schemas dict
 # in a dict indexed by the
 from cea.utilities.yaml_ordered_dict import OrderedDictYAMLLoader
+from plots.colors import color_to_rgb
 
 __schemas = {}
 
@@ -191,6 +191,31 @@ class SchemaIo(object):
         raise AttributeError("{lm}: don't know how to create a new Dataframe for file_type {file_type}".format(
             lm=self.lm, file_type=self.schema["file_type"]))
 
+    def validate(self, df):
+        """Check to make sure the Dataframe conforms to the schema"""
+        expected_columns = set(self.schema["schema"]["columns"].keys())
+        found_columns = set(df.columns.values)
+        if not found_columns == expected_columns:
+            missing_columns = expected_columns - found_columns
+            extra_columns = found_columns - expected_columns
+            warnings.warn("Dataframe does not conform to schemas.yml specification for {lm}"
+                          "(missing: {missing_columns}, extra: {extra_columns}".format(
+                lm=self.lm, missing_columns=missing_columns, extra_columns=extra_columns))
+
+    def colors(self):
+        """
+        Returns the colors for the columns in the schema, defaulting to black if not specified. Result is a dict
+        mapping column name to "rgb(219, 64, 82)" format as used in plotly.
+
+        Note that schemas.yml specifies colors using names taken from
+        :type: Dict[str, str]
+        """
+        result = {}
+        columns = self.schema["schema"]["columns"]
+        for column in columns.keys():
+            result[column] = color_to_rgb(columns[column].get("plot-color", "black"))
+        return result
+
 
 class CsvSchemaIo(SchemaIo):
     """Read and write csv files - and attempt to validate them."""
@@ -214,30 +239,5 @@ class CsvSchemaIo(SchemaIo):
             os.makedirs(parent_folder)
         df.to_csv(path_to_csv, index=False, **csv_args)
 
-    def validate(self, df):
-        """Check to make sure the Dataframe conforms to the schema"""
-        expected_columns = set(self.schema["schema"]["columns"].keys())
-        found_columns = set(df.columns.values)
-        if not found_columns == expected_columns:
-            missing_columns = expected_columns - found_columns
-            extra_columns = found_columns - expected_columns
-            warnings.warn("Dataframe does not conform to schemas.yml specification for {lm}"
-                          "(missing: {missing_columns}, extra: {extra_columns}".format(
-                lm=self.lm, missing_columns=missing_columns, extra_columns=extra_columns))
-
     def new(self):
         return pd.DataFrame(columns=(self.schema["schema"]["columns"].keys()))
-
-    def colors(self):
-        """
-        Returns the colors for the columns in the schema, defaulting to black if not specified. Result is a dict
-        mapping column name to "rgb(219, 64, 82)" format as used in plotly.
-
-        Note that schemas.yml specifies colors using names taken from
-        :type: Dict[str, str]
-        """
-        result = {}
-        columns = self.schema["schema"]["columns"]
-        for column in columns.keys():
-            result[column] = color_to_rgb(columns[column].get("plot-color", "black"))
-        return result
