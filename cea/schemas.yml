@@ -2935,12 +2935,12 @@ get_database_conversion_systems:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
             + d*ln(x) + e*x*ln*(x)  '
           type: float
-          unit: ' f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   '
+          unit: NA
           values: '{0.0...n}'
         unit:
           description: unit of the min/max capacity
           type: string
-          unit: '[W]'
+          unit: NA
           values: '{"W"}'
     Boiler:
       columns:
@@ -2959,7 +2959,7 @@ get_database_conversion_systems:
           description: lifetime of this technology
           min: 0
           type: int
-          unit: year
+          unit: "[yr]"
           values: '{0.0...n}'
         O&M_%:
           description: operation and maintanence cost factor (fraction of the investment
@@ -3028,7 +3028,7 @@ get_database_conversion_systems:
         unit:
           description: unit of the min/max capacity
           type: string
-          unit: '[W]'
+          unit: NA
           values: '{"W"}'
     CCGT:
       columns:
@@ -3047,7 +3047,7 @@ get_database_conversion_systems:
           description: lifetime of this technology
           min: 0
           type: int
-          unit: year
+          unit: "[yr]"
           values: '{0.0...n}'
         O&M_%:
           description: operation and maintanence cost factor (fraction of the investment
@@ -3117,7 +3117,7 @@ get_database_conversion_systems:
         unit:
           description: unit of the min/max capacity
           type: string
-          unit: '[W]'
+          unit: NA
           values: '{"W"}'
     CT:
       columns:
@@ -3136,7 +3136,7 @@ get_database_conversion_systems:
           description: lifetime of this technology
           min: 0
           type: int
-          unit: year
+          unit: "[yr]"
           values: '{0...n}'
         O&M_%:
           description: operation and maintanence cost factor (fraction of the investment
@@ -3206,7 +3206,7 @@ get_database_conversion_systems:
         unit:
           description: unit of the min/max capacity
           type: string
-          unit: '[W]'
+          unit: NA
           values: '{"W"}'
     Chiller:
       columns:
@@ -3225,7 +3225,7 @@ get_database_conversion_systems:
           description: lifetime of this technology
           min: 0
           type: int
-          unit: year
+          unit: "[yr]"
           values: '{0...n}'
         O&M_%:
           description: operation and maintanence cost factor (fraction of the investment
@@ -3295,7 +3295,7 @@ get_database_conversion_systems:
         unit:
           description: unit of the min/max capacity
           type: string
-          unit: '[W]'
+          unit: NA
           values: '{"W"}'
     FC:
       columns:
@@ -3314,7 +3314,7 @@ get_database_conversion_systems:
           description: lifetime of this technology
           min: 0
           type: int
-          unit: year
+          unit: "[yr]"
           values: '{0...n}'
         O&M_%:
           description: operation and maintanence cost factor (fraction of the investment
@@ -3384,7 +3384,7 @@ get_database_conversion_systems:
         unit:
           description: unit of the min/max capacity
           type: string
-          unit: '[W]'
+          unit: NA
           values: '{"W"}'
     Furnace:
       columns:
@@ -3403,7 +3403,7 @@ get_database_conversion_systems:
           description: lifetime of this technology
           min: 0
           type: int
-          unit: year
+          unit: "[yr]"
           values: '{0...n}'
         O&M_%:
           description: operation and maintanence cost factor (fraction of the investment
@@ -3473,7 +3473,7 @@ get_database_conversion_systems:
         unit:
           description: unit of the min/max capacity
           type: string
-          unit: '[W]'
+          unit: NA
           values: '{"W"}'
     HEX:
       columns:
@@ -3492,7 +3492,7 @@ get_database_conversion_systems:
           description: lifetime of this technology
           min: 0
           type: int
-          unit: year
+          unit: "[yr]"
           values: '{0...n}'
         O&M_%:
           description: operation and maintanence cost factor (fraction of the investment
@@ -3546,12 +3546,12 @@ get_database_conversion_systems:
         cap_max:
           description: 'maximum capacity '
           type: float
-          unit: '[W] or [m2]'
+          unit: NA  # [W] or [m2]
           values: '{0.0...n}'
         cap_min:
           description: minimum capacity
           type: float
-          unit: '[W] or [m2]'
+          unit: NA  # [W] or [m2]
           values: '{0.0...n}'
         code:
           description: identifier of each unique equipment
@@ -3611,7 +3611,7 @@ get_database_conversion_systems:
           description: lifetime of this technology
           min: 0
           type: int
-          unit: year
+          unit: "[yr]"
           values: '{0.0...n}'
         O&M_%:
           description: operation and maintanence cost factor (fraction of the investment
@@ -3700,7 +3700,7 @@ get_database_conversion_systems:
           description: lifetime of this technology
           min: 0
           type: int
-          unit: year
+          unit: "[yr]"
           values: '{0.0...n}'
         O&M_%:
           description: operation and maintanence cost factor (fraction of the investment
@@ -3858,7 +3858,7 @@ get_database_conversion_systems:
           description: lifetime of this technology
           min: 0
           type: int
-          unit: year
+          unit: "[yr]"
           values: '{0.0...n}'
         O&M_%:
           description: operation and maintanence cost factor (fraction of the investment
@@ -3947,7 +3947,7 @@ get_database_conversion_systems:
           description: lifetime of this technology
           min: 0
           type: int
-          unit: year
+          unit: "[yr]"
           values: '{0.0...n}'
         O&M_%:
           description: operation and maintanence cost factor (fraction of the investment
@@ -4051,7 +4051,7 @@ get_database_conversion_systems:
           description: lifetime of this technology
           min: 0
           type: int
-          unit: year
+          unit: "[yr]"
           values: '{0.0...n}'
         O&M_%:
           description: operation and maintanence cost factor (fraction of the investment
@@ -4220,7 +4220,7 @@ get_database_conversion_systems:
           description: lifetime of this technology
           min: 0
           type: int
-          unit: year
+          unit: "[yr]"
           values: '{0.0...n}'
         O&M_%:
           description: operation and maintanence cost factor (fraction of the investment
