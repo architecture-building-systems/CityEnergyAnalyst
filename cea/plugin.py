@@ -9,6 +9,7 @@ import os
 from typing import Generator, Sequence
 import yaml
 import inspect
+import cea.schemas
 import cea.config
 import cea.plots.categories
 import cea.inputlocator
@@ -35,6 +36,8 @@ class CeaPlugin(object):
     def scripts(self):
         """Return the scripts.yml dictionary."""
         scripts_yml = os.path.join(os.path.dirname(inspect.getmodule(self).__file__), "scripts.yml")
+        if not os.path.exists(scripts_yml):
+            return {}
         with open(scripts_yml, "r") as scripts_yml_fp:
             scripts = yaml.load(scripts_yml_fp, OrderedDictYAMLLoader)
         return scripts
@@ -49,6 +52,8 @@ class CeaPlugin(object):
         .. _cufflinks: https://plotly.com/python/cufflinks/
         """
         plots_yml = os.path.join(os.path.dirname(inspect.getmodule(self).__file__), "plots.yml")
+        if not os.path.exists(plots_yml):
+            return {}
         with open(plots_yml, "r") as plots_yml_fp:
             categories = yaml.load(plots_yml_fp, OrderedDictYAMLLoader)
         return [PluginPlotCategory(category_label, categories[category_label], self) for category_label in categories.keys()]
@@ -61,6 +66,8 @@ class CeaPlugin(object):
         folder as the plugin class will trigger the default behavior)
         """
         schemas_yml = os.path.join(os.path.dirname(inspect.getmodule(self).__file__), "schemas.yml")
+        if not os.path.exists(schemas_yml):
+            return {}
         with open(schemas_yml, "r") as schemas_yml_fp:
             schemas = yaml.load(schemas_yml_fp, Loader=yaml.CLoader)
         return schemas
@@ -77,9 +84,10 @@ class CeaPlugin(object):
         import ConfigParser
         plugin_config = os.path.join(os.path.dirname(inspect.getmodule(self).__file__), "plugin.config")
         parser = ConfigParser.SafeConfigParser()
+        if not os.path.exists(plugin_config):
+            return parser
         parser.read(plugin_config)
         return parser
-
 
     def __str__(self):
         """To enable encoding in cea.config.PluginListParameter, return the fqname of the class"""
@@ -143,7 +151,7 @@ class PluginPlotBase(cea.plots.PlotBase):
         super(PluginPlotBase, self).__init__(project, parameters, cache)
         self.plugin = plugin
         self.plot_config = plot_config
-        self.locator_method = getattr(self.locator, self.plot_config["data"]["location"])
+        self.locator_method = getattr(self.locator, self.plot_config["data"]["location"])  # type: cea.schemas.SchemaIo
         self.locator_kwargs = {arg: self.parameters[arg] for arg in self.plot_config["data"].get("args", [])}
         self.input_files = [(self.locator_method, self.locator_kwargs)]
 
@@ -190,12 +198,22 @@ class PluginPlotBase(cea.plots.PlotBase):
 
         cufflinks.go_offline()
 
+        # load the data
         df = self.locator_method.read(**self.locator_kwargs)
         if "index" in self.plot_config["data"]:
             df = df.set_index(self.plot_config["data"]["index"])
         if "fields" in self.plot_config["data"]:
             df = df[self.plot_config["data"]["fields"]]
-        fig = df.iplot(asFigure=True, colors=self.locator_method.colors(), theme="white", **self.layout)
+
+        # rename the columns (for the legend)
+        schema = self.locator_method.schema["schema"]["columns"]
+        columns_mapping = {c: schema[c]["description"] for c in schema.keys()}
+        df = df.rename(columns=columns_mapping)
+
+        # colors need to be re-mapped because we renamed the columns
+        colors = {columns_mapping[k]: v for k, v in self.locator_method.colors().items()}
+
+        fig = df.iplot(asFigure=True, colors=colors, theme="white", **self.layout)
         div = plotly.offline.plot(fig, output_type='div', include_plotlyjs=False, show_link=False)
         return div
 

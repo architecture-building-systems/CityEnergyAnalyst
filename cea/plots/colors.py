@@ -53,4 +53,8 @@ def color_to_rgb(color):
     try:
         return COLORS_TO_RGB[color]
     except KeyError:
+        import re
+        if re.match("rgb\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)", color):
+            # already an rgb formatted color
+            return color
         return COLORS_TO_RGB["black"]
