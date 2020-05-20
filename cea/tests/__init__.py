@@ -8,6 +8,8 @@ from __future__ import print_function
 import os
 import shutil
 import tempfile
+import coverage
+
 import cea.config
 import cea.inputlocator
 import cea.workflows.workflow
@@ -35,7 +37,19 @@ def main(config):
         # make sure we're working on a clean slate
         shutil.rmtree(default_config.project)
 
+    cov = coverage.Coverage()
+    cov.start()
     cea.workflows.workflow.main(default_config)
+    cov.stop()
+
+    print("=" * 80)
+    print("Coverage Summary:")
+    print("=" * 80)
+    cov.report()
+
+    coverage_report_path = os.path.join(default_config.project, 'coverage_report')
+    cov.html_report(directory=coverage_report_path)
+    print("\nCoverage report saved in '{coverage_report_path}'".format(coverage_report_path=coverage_report_path))
 
 
 if __name__ == '__main__':
