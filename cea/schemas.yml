@@ -7217,7 +7217,7 @@ get_lca_embodied:
       GHG_sys_embodied_tonCO2:
         description: Embodied emissions due to building construction and decomissioning
         type: float
-        unit: ton CO2-eq/yr
+        unit: "[ton CO2-eq/yr]"
         values: '{0.0...n}'
       Name:
         description: Unique building ID. It must start with a letter.
@@ -7246,7 +7246,7 @@ get_lca_mobility:
       GHG_sys_mobility_tonCO2:
         description: Operational emissions due to mobility
         type: float
-        unit: ton CO2-eq/yr
+        unit: "[ton CO2-eq/yr]"
         values: '{0.0...n}'
       Name:
         description: Unique building ID. It must start with a letter.
@@ -7265,7 +7265,7 @@ get_lca_operation:
         description: Operational emissions per unit of conditioned floor area of the
           coal powererd heating system
         type: float
-        unit: '[kg/m2 -yr]'
+        unit: '[kg/m2yr]'
         values: '{0.0...n}'
       COAL_hs_ghg_ton:
         description: Operational emissions of the coal powered heating system
@@ -7335,7 +7335,7 @@ get_lca_operation:
         description: Operational emissions per unit of conditioned floor area for
           district cooling system for cool room refrigeration
         type: float
-        unit: '[kg/m2 -yr]'
+        unit: '[kg/m2yr]'
         values: '{0.0...n}'
       DC_cre_ghg_ton:
         description: Operational emissions for district cooling system for cool room
@@ -7359,7 +7359,7 @@ get_lca_operation:
         description: Operational emissions per unit of conditioned floor area of the
           district cooling
         type: float
-        unit: '[kg/m2 -yr]'
+        unit: '[kg/m2yr]'
         values: '{0.0...n}'
       DC_cs_ghg_ton:
         description: Operational emissions of the district cooling
@@ -7382,7 +7382,7 @@ get_lca_operation:
         description: Operational emissions per unit of conditioned floor area of the
           district heating system
         type: float
-        unit: '[kg/m2 -yr]'
+        unit: '[kg/m2yr]'
         values: '{0.0...n}'
       DH_hs_ghg_ton:
         description: Operational emissions of the district heating system
@@ -7405,7 +7405,7 @@ get_lca_operation:
         description: Operational emissions per unit of conditioned floor area of the
           district heating domestic hot water system
         type: float
-        unit: '[kg/m2 -yr]'
+        unit: '[kg/m2yr]'
         values: '{0.0...n}'
       DH_ww_ghg_ton:
         description: Operational emissions of the district heating powered domestic
@@ -7438,13 +7438,13 @@ get_lca_operation:
       GHG_sys_tonCO2:
         description: Total operational emissions
         type: float
-        unit: ton CO2-eq/yr
+        unit: "[ton CO2-eq/yr]"
         values: '{0.0...n}'
       GRID_ghg_kgm2:
         description: Operational emissions per unit of conditioned floor area from
           grid electricity
         type: float
-        unit: '[kg/m2 -yr]'
+        unit: '[kg/m2yr]'
         values: '{0.0...n}'
       GRID_ghg_ton:
         description: Operational emissions of the electrictiy from the grid
@@ -7466,7 +7466,7 @@ get_lca_operation:
         description: Operational emissions per unit of conditioned floor area of the
           natural gas powered heating system
         type: float
-        unit: '[kg/m2 -yr]'
+        unit: '[kg/m2yr]'
         values: '{0.0...n}'
       NG_hs_ghg_ton:
         description: Operational emissions of the natural gas powered heating system
@@ -7489,7 +7489,7 @@ get_lca_operation:
         description: Operational emissions per unit of conditioned floor area of the
           gas powered domestic hot water system
         type: float
-        unit: '[kg/m2 -yr]'
+        unit: '[kg/m2yr]'
         values: '{0.0...n}'
       NG_ww_ghg_ton:
         description: Operational emissions of the solar powered domestic hot water
@@ -7518,7 +7518,7 @@ get_lca_operation:
         description: Operational emissions per unit of conditioned floor area of the
           oil powered heating system
         type: float
-        unit: '[kg/m2 -yr]'
+        unit: '[kg/m2yr]'
         values: '{0.0...n}'
       OIL_hs_ghg_ton:
         description: Operational emissions of the oil powered heating system
@@ -7541,7 +7541,7 @@ get_lca_operation:
         description: Operational emissions per unit of conditioned floor area of the
           oil powered domestic hot water system
         type: float
-        unit: '[kg/m2 -yr]'
+        unit: '[kg/m2yr]'
         values: '{0.0...n}'
       OIL_ww_ghg_ton:
         description: Operational emissions of the oil powered domestic hot water system
@@ -7564,7 +7564,7 @@ get_lca_operation:
         description: Operational emissions per unit of conditioned floor area for
           PV-System
         type: float
-        unit: '[kg/m2 -yr]'
+        unit: '[kg/m2yr]'
         values: '{0.0...n}'
       PV_ghg_ton:
         description: Operational emissions of the PV-System
@@ -7586,7 +7586,7 @@ get_lca_operation:
         description: Operational emissions per unit of conditioned floor area of the
           solar powered heating system
         type: float
-        unit: '[kg/m2 -yr]'
+        unit: '[kg/m2yr]'
         values: '{0.0...n}'
       SOLAR_hs_ghg_ton:
         description: Operational emissions of the solar powered heating system
@@ -7609,7 +7609,7 @@ get_lca_operation:
         description: Operational emissions per unit of conditioned floor area of the
           solar powered domestic hot water system
         type: float
-        unit: '[kg/m2 -yr]'
+        unit: '[kg/m2yr]'
         values: '{0.0...n}'
       SOLAR_ww_ghg_ton:
         description: Operational emissions of the solar powered domestic hot water
@@ -7633,7 +7633,7 @@ get_lca_operation:
         description: Operational emissions per unit of conditioned floor area of the
           wood powered heating system
         type: float
-        unit: '[kg/m2 -yr]'
+        unit: '[kg/m2yr]'
         values: '{0.0...n}'
       WOOD_hs_ghg_ton:
         description: Operational emissions of the wood powered heating system
@@ -7656,7 +7656,7 @@ get_lca_operation:
         description: Operational emissions per unit of conditioned floor area of the
           wood powered domestic hot water system
         type: float
-        unit: '[kg/m2 -yr]'
+        unit: '[kg/m2yr]'
         values: '{0.0...n}'
       WOOD_ww_ghg_ton:
         description: Operational emissions of the wood powered domestic hot water
