@@ -20,6 +20,11 @@ problem_dict = {
         'names': ['capex_weight', 'dT1', 'dT2', 'dT3', 'dT4', 'dTn_1', 'dTn_2', 'dTn_3', 'T5'],
         'bounds': [[0, 1], [20, 21], [8, 9], [2, 3], [2, 3], [10, 11], [10, 11], [5, 6], [4, 10]]
     },
+    "Networks_new": {
+        'num_vars': 6,
+        'names': ['dT1', 'dT2', 'dTn_1', 'dTn_2', 'dTn_3', 'T3'],
+        'bounds': [[1,4], [1,4], [5, 15], [5, 15], [5, 15], [4, 7]]
+    },
     "d_Networks_LT": {
         'num_vars': 20,
         'names': ['capex_weight', 'dT1', 'dT2', 'dT3', 'dT4', 'dT_sc', 'dTn_1', 'dTn_2', 'dTn_3',
@@ -50,7 +55,7 @@ problem_dict = {
     },
 }
 
-problem_name = 'd_Networks_HT'
+problem_name = 'Networks_new'
 number_of_samples = 300
 iterations = 50000   #10000 from Steffen
 
