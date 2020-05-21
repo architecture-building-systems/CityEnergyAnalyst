@@ -1,7 +1,7 @@
 """
 Tests to make sure the schemas.yml file is structurally sound.
 """
-
+import re
 import unittest
 
 import os
@@ -195,6 +195,45 @@ class TestSchemas(unittest.TestCase):
         import cea.glossary
         cea.glossary.read_glossary_df(plugins=[])
 
+    def test_numerical_ranges(self):
+        def check_range(schema):
+            if 'type' in schema and schema['type'] in ['float', 'int']:
+                if "values" in schema:
+                    values = schema['values']
+
+                    values_min, values_max = parse_numerical_range_value(values, schema['type'])
+                    schema_min = schema.get('min')
+                    schema_max = schema.get('max')
+
+                    if values_min != schema_min or values_max != schema_max:
+                        raise ValueError(
+                            'values property do not match range properties. '
+                            'values: {values}, min: {schema_min}, max: {schema_max}'.format(
+                                values=values, schema_min=schema_min, schema_max=schema_max))
+
+        schemas = cea.scripts.schemas()
+        for lm in schemas:
+            if lm == "get_database_standard_schedules_use" or lm in SKIP_LMS:
+                # the schema for schedules is non-standard
+                continue
+            if schemas[lm]["file_type"] in {"xls", "xlsx"}:
+                for ws in schemas[lm]["schema"]:
+                    for col, col_schema in schemas[lm]["schema"][ws]["columns"].items():
+                        try:
+                            check_range(col_schema)
+                        except ValueError as e:
+                            col_label = ":".join([lm, ws, col])
+                            print("Error in column {col_label}:\n{message}\n".format(col_label=col_label,
+                                                                                     message=e.message))
+            else:
+                for col, col_schema in schemas[lm]["schema"]["columns"].items():
+                    try:
+                        check_range(col_schema)
+                    except ValueError as e:
+                        col_label = ":".join([lm, col])
+                        print(
+                            "Error in column {col_label}:\n{message}\n".format(col_label=col_label, message=e.message))
+
 
 def extract_locator_methods(locator):
     """Return the list of locator methods that point to files"""
@@ -226,6 +265,26 @@ def extract_locator_methods(locator):
             # not interested in folders
             continue
         yield m
+
+
+def parse_numerical_range_value(value, num_type):
+    def parse_string_num(string_num):
+        if string_num == 'n':
+            return None
+        elif num_type == 'float':
+            return float(string_num)
+        elif num_type == 'int':
+            return int(string_num)
+        else:
+            raise TypeError("Unable to cast type `{type}`".format(type=num_type))
+
+    num = r'-?\d+(?:.\d+)?'
+    num_or_n = r'{num}|n'.format(num=num)
+    regex = r'{{({num_or_n})...({num_or_n})}}'.format(num_or_n=num_or_n)
+    match = re.match(regex, value)
+    if match is None:
+        raise ValueError("values property not in '{{n...n}}' format. Got: '{value}'".format(value=value))
+    return parse_string_num(match.group(1)), parse_string_num(match.group(2))
 
 
 if __name__ == '__main__':
