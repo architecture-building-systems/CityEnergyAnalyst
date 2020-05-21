@@ -26,7 +26,6 @@ __status__ = "Production"
 
 def main(config):
     workflow_yml = os.path.join(os.path.dirname(__file__), "workflow_{workflow}.yml".format(workflow=config.test.workflow))
-    coverage_report_path = config.test.coverage_report_path
 
     default_config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
     default_config.project = os.path.expandvars("${TEMP}/reference-case-open")
@@ -48,10 +47,8 @@ def main(config):
     print("=" * 80)
     cov.report()
 
-    if coverage_report_path is None:
-        coverage_report_path = os.path.join(default_config.project, '.coverage-report')
-
-    # cov.html_report(directory=coverage_report_path)
+    coverage_report_path = os.path.join(default_config.project, 'coverage_report')
+    cov.html_report(directory=coverage_report_path)
     print("\nCoverage report saved in '{coverage_report_path}'".format(coverage_report_path=coverage_report_path))
 
 

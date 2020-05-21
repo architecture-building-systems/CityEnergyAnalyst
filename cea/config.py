@@ -1005,17 +1005,6 @@ class CoordinateListParameter(ListParameter):
         return coord_list
 
 
-class CoveragePathParameter(PathParameter):
-    typename = 'CoveragePathParameter'
-
-    def decode(self, value):
-        # Allow empty
-        if value is '':
-            return None
-        else:
-            return super(CoveragePathParameter, self).decode(value)
-
-
 def get_scenarios_list(project_path):
     def is_valid_scenario(project_path, folder_name):
         folder_path = os.path.join(project_path, folder_name)
