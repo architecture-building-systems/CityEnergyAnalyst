@@ -34,46 +34,56 @@ def main(path_to_case):
     substation_flow_rate_m3pers_df, \
     T_supply_K, \
     op_time, \
-    substation_A_hex_df = write_cea_demand_from_osmose(path_to_case)
+    substation_A_hex_df, \
+    plant_exists = write_cea_demand_from_osmose(path_to_case)
 
-    ## 2. GET NETWORK INFO
-    edge_node_df, all_nodes_df, edge_length_df = get_network_info(path_to_case)
-    node_df, edge_df = read_shp(path_to_case)
+    if plant_exists:
+        ## 2. GET NETWORK INFO
+        edge_node_df, all_nodes_df, edge_length_df = get_network_info(path_to_case)
+        node_df, edge_df = read_shp(path_to_case)
 
-    ## 3. PIPE SIZING & COSTS
-    Pipe_properties_df, Cinv_pipe_perm, \
-    plant_index, plant_node = get_pipe_sizes(all_nodes_df, edge_node_df,
-                                             substation_flow_rate_m3pers_df, path_to_case)
-    Pipe_properties_df = Pipe_properties_df.join(edge_length_df, how='outer')
-    Cinv_network_pipes, L_network_m = calc_Cinv_network_pipes(edge_length_df, Cinv_pipe_perm)
+        ## 3. PIPE SIZING & COSTS
+        Pipe_properties_df, Cinv_pipe_perm, \
+        plant_index, plant_node = get_pipe_sizes(all_nodes_df, edge_node_df,
+                                                 substation_flow_rate_m3pers_df, path_to_case)
+        Pipe_properties_df = Pipe_properties_df.join(edge_length_df, how='outer')
+        Cinv_network_pipes, L_network_m = calc_Cinv_network_pipes(edge_length_df, Cinv_pipe_perm)
 
-    ## 5. SUBSTATION COSTS
-    substation_A_hex_df['Cinv_hex'] = np.vectorize(calc_Cinv_substation_hex)(substation_A_hex_df)
+        ## 5. SUBSTATION COSTS
+        substation_A_hex_df['Cinv_hex'] = np.vectorize(calc_Cinv_substation_hex)(substation_A_hex_df)
 
-    ## 6. PUMPING COSTS
-    plant_pressure_losses_Pa, \
-    network_operation_info = calc_network_pressure_losses(Pipe_properties_df, T_supply_K, all_nodes_df, node_df, edge_df,
-                                                                  edge_length_df, edge_node_df, plant_index, plant_node,
-                                                                  substation_flow_rate_m3pers_df)
+        ## 6. PUMPING COSTS
+        plant_pressure_losses_Pa, \
+        network_operation_info = calc_network_pressure_losses(Pipe_properties_df, T_supply_K, all_nodes_df, node_df, edge_df,
+                                                                      edge_length_df, edge_node_df, plant_index, plant_node,
+                                                                      substation_flow_rate_m3pers_df)
 
-    # electricity consumption
-    plant_flow_rate_m3pers = substation_flow_rate_m3pers_df.sum(axis=1)
-    plant_pumping_kW = (plant_pressure_losses_Pa / 1000) * plant_flow_rate_m3pers.values / PUMP_ETA
-    annual_pumping_energy_kWh = np.nansum(plant_pumping_kW*op_time) # match yearly hours
+        # electricity consumption
+        plant_flow_rate_m3pers = substation_flow_rate_m3pers_df.sum(axis=1)
+        plant_pumping_kW = (plant_pressure_losses_Pa / 1000) * plant_flow_rate_m3pers.values / PUMP_ETA
+        annual_pumping_energy_kWh = np.nansum(plant_pumping_kW*op_time) # match yearly hours
 
-    # pump size
-    Cinv_pump, pump_size_kW = calc_Cinv_pumps(plant_pumping_kW)
-    time_elapsed = time.clock() - t0
-    print('done - time elapsed: %d.2f seconds' % time_elapsed)
+        # pump size
+        Cinv_pump, pump_size_kW = calc_Cinv_pumps(plant_pumping_kW)
+        time_elapsed = time.clock() - t0
+        print('done - time elapsed: %d.2f seconds' % time_elapsed)
+        # results
+        results_dict = {'pumping_kWh': annual_pumping_energy_kWh,
+                        'pump_size_kW': pump_size_kW,
+                        'network_length_m': L_network_m,
+                        'Cinv_pump': Cinv_pump,
+                        'Cinv_hex': substation_A_hex_df['Cinv_hex'].sum(),
+                        'Cinv_pipes': Cinv_network_pipes}
+        results_dict.update(network_operation_info)
+    else:
+        results_dict = {'pumping_kWh': 0.0,
+                        'pump_size_kW': 0.0,
+                        'network_length_m': 0.0,
+                        'Cinv_pump': 0.0,
+                        'Cinv_hex': 0.0,
+                        'Cinv_pipes': 0.0}
 
-    # results
-    results_dict = {'pumping_kWh': annual_pumping_energy_kWh,
-                    'pump_size_kW': pump_size_kW,
-                    'network_length_m': L_network_m,
-                    'Cinv_pump': Cinv_pump,
-                    'Cinv_hex': substation_A_hex_df['Cinv_hex'].sum(),
-                    'Cinv_pipes': Cinv_network_pipes}
-    results_dict.update(network_operation_info)
+
     import csv
     with open(os.path.join(path_to_case,'pass_to_osmose.csv'), 'w') as f:
         for key in results_dict.keys():
@@ -157,83 +167,89 @@ def write_cea_demand_from_osmose(path_to_district_folder):
     network_df = district_cooling_demand_df.filter(like='network')  # reduce
     op_time = district_cooling_demand_df['op_time'].values
 
-    # 2. calculate demand per m2 per function
-    cooling_loads = {}
-    T_net_df = pd.DataFrame()
-    Af_total_m2 = {}
-    network_lists = network_df.filter(like='locP').filter(like='Hin').filter(like='return').columns
-    for network in network_lists:
-        network_name = network.split('_Hin')[0]
-        Hin = network_df[network]
-        Tout = network_df[network_name + '_Tout']
-        Tin = network_df[network_name + '_Tin']
-        T_net_df[network_name + '_Ts'] = np.where(Hin >= 0.0, Tout, 0.0)
-        T_net_df[network_name + '_Tr'] = np.where(Hin >= 0.0, Tin, 0.0)
-    T_net_df['Ts'] = T_net_df.filter(like='Ts').sum(axis=1)
-    T_net_df['Tr'] = T_net_df.filter(like='Tr').sum(axis=1)
-    T_supply_K = T_net_df['Ts'].mean() + 273.15
-
-    for building_function in ['OFF', 'HOT', 'RET']:
-        building_substation_demand_kWh = network_df.filter(like='supply').filter(like=building_function).filter(like='Hout').sum(axis=1)
-        Af_m2 = district_cooling_demand_df.filter(like='Af_m2').filter(like=building_function).iloc[0].values[0]
-        Af_total_m2[building_function] = Af_m2
-        specific_cooling_load = building_substation_demand_kWh / Af_m2
-        # cooling_loads[building_function] = specific_cooling_load.rename(columns={building_substation_demand_kWh.columns[0]:building_function})
-        cooling_loads[building_function] = specific_cooling_load
-
-    # 3. calculate substation heat exchanger area
-    U_substation = 800 # W/m2K # Celine Weber
-    # plant
-    dTlm_plant = 5.0 # TODO: calculate
-    Qmax_plant = network_df.filter(like='locP').filter(like='Hin').values.max()
-    A_hex_plant_m2 = (Qmax_plant)/(U_substation * dTlm_plant)
-    # building
-    dTlm_dict, substation_Qmax_dict = {}, {}
-    for building_function in ['HOT', 'OFF', 'RET']:
-        Q_substation = network_df.filter(like=building_function).filter(like='Hout').sum(axis=1)
-        dTlm_dict[building_function] = 6
-        substation_Qmax_dict[building_function] = Q_substation.values.max()
-        # dTlm_dict[building_function], substation_Qmax_dict[building_function] = \
-        #     calc_builing_substation_dTlm(Q_substation, building_function)  # FIXME: cant use it during optimization, no plots
-
-    # 4. allocate cooling loads and heat exchanger area to buildings
+    # initialization for 4.
+    T_supply_K = 0.0
     substation_flow_rate_m3pers_df = pd.DataFrame()
     substation_A_hex = pd.DataFrame(columns=['A_hex_m2'])
-    substation_A_hex.loc['plant'] = [A_hex_plant_m2]
-    for building in building_info.index:
-        building_function = building_info.loc[building][building_info.loc[building]==1].index.values[0]
-        bui_func = building_function[:3]
-        building_Af_m2 = building_info.loc[building]['Af_m2']
-        # initiate building_demand_df
-        building_demand_df = pd.DataFrame(columns=BUILDINGS_DEMANDS_COLUMNS)
+    # Check if network exists
+    plant_exists = False
+    Qmax_plant_columns = network_df.filter(like='locP').filter(like='Hin').columns
+    if len(Qmax_plant_columns) > 0.0:
+        # 2. calculate demand per m2 per function
+        cooling_loads = {}
+        T_net_df = pd.DataFrame()
+        Af_total_m2 = {}
+        network_lists = network_df.filter(like='locP').filter(like='Hin').filter(like='return').columns
+        for network in network_lists:
+            network_name = network.split('_Hin')[0]
+            Hin = network_df[network]
+            Tout = network_df[network_name + '_Tout']
+            Tin = network_df[network_name + '_Tin']
+            T_net_df[network_name + '_Ts'] = np.where(Hin >= 0.0, Tout, 0.0)
+            T_net_df[network_name + '_Tr'] = np.where(Hin >= 0.0, Tin, 0.0)
+        T_net_df['Ts'] = T_net_df.filter(like='Ts').sum(axis=1)
+        T_net_df['Tr'] = T_net_df.filter(like='Tr').sum(axis=1)
+        T_supply_K = T_net_df['Ts'].mean() + 273.15
 
-        # cooling loads
-        building_demand_df['Qcs_sys_ahu_kWh'] = (cooling_loads[bui_func] * building_Af_m2)
-        building_demand_df['mcpcs_sys_ahu_kWperC'] = building_demand_df['Qcs_sys_ahu_kWh'] / (T_net_df['Tr'] - T_net_df['Ts'])
-        substation_flow_rate_m3pers = building_demand_df['mcpcs_sys_ahu_kWperC'] / CP_KJPERKGK / P_WATER_KGPERM3
-        substation_flow_rate_m3pers_df[building] = substation_flow_rate_m3pers
+        for building_function in ['OFF', 'HOT', 'RET']:
+            building_substation_demand_kWh = network_df.filter(like='supply').filter(like=building_function).filter(like='Hout').sum(axis=1)
+            Af_m2 = district_cooling_demand_df.filter(like='Af_m2').filter(like=building_function).iloc[0].values[0]
+            Af_total_m2[building_function] = Af_m2
+            specific_cooling_load = building_substation_demand_kWh / Af_m2
+            # cooling_loads[building_function] = specific_cooling_load.rename(columns={building_substation_demand_kWh.columns[0]:building_function})
+            cooling_loads[building_function] = specific_cooling_load
 
-        # substation heat exchanger areas
-        substation_Qmax = substation_Qmax_dict[bui_func] * (building_Af_m2 / building_Af_m2)
-        substation_A_hex.loc[building] = [substation_Qmax / (U_substation * dTlm_dict[bui_func])]
+        # 3. calculate substation heat exchanger area
+        U_substation = 800 # W/m2K # Celine Weber
+        # plant
+        dTlm_plant = 5.0 # TODO: calculate
+        Qmax_plant = network_df.filter(like='locP').filter(like='Hin').values.max()
+        plant_exists = True
+        A_hex_plant_m2 = (Qmax_plant)/(U_substation * dTlm_plant)
+        # building
+        dTlm_dict, substation_Qmax_dict = {}, {}
+        for building_function in ['HOT', 'OFF', 'RET']:
+            Q_substation = network_df.filter(like=building_function).filter(like='Hout').sum(axis=1)
+            dTlm_dict[building_function] = 6
+            substation_Qmax_dict[building_function] = Q_substation.values.max()
+            # dTlm_dict[building_function], substation_Qmax_dict[building_function] = \
+            #     calc_builing_substation_dTlm(Q_substation, building_function)  # FIXME: cant use it during optimization, no plots
 
-        # fill nan with zeros
-        building_demand_df['Name'] = building
-        building_demand_df = building_demand_df.replace(np.nan, 0.0)
-        annual_demand_kWh = building_demand_df['Qcs_sys_ahu_kWh'].values * op_time
-        building_info.loc[building, 'Qcs_sys_MWhyr'] = sum(annual_demand_kWh)/1000.0
+        # 4. allocate cooling loads and heat exchanger area to buildings
+        substation_A_hex.loc['plant'] = [A_hex_plant_m2]
+        for building in building_info.index:
+            building_function = building_info.loc[building][building_info.loc[building]==1].index.values[0]
+            bui_func = building_function[:3]
+            building_Af_m2 = building_info.loc[building]['Af_m2']
+            # initiate building_demand_df
+            building_demand_df = pd.DataFrame(columns=BUILDINGS_DEMANDS_COLUMNS)
 
-        if settings.output_cea_demand:
-            building_demand_df['Tcs_sys_sup_ahu_C'] = 7.5  # only used in thermal_network calculation
-            building_demand_df['Tcs_sys_re_ahu_C'] = 14.5  # only used in thermal_network calculation
-            building_demand_df.to_csv(os.path.join(path_to_district_demand_folder, building + '.csv'))
-        
+            # cooling loads
+            building_demand_df['Qcs_sys_ahu_kWh'] = (cooling_loads[bui_func] * building_Af_m2)
+            building_demand_df['mcpcs_sys_ahu_kWperC'] = building_demand_df['Qcs_sys_ahu_kWh'] / (T_net_df['Tr'] - T_net_df['Ts'])
+            substation_flow_rate_m3pers = building_demand_df['mcpcs_sys_ahu_kWperC'] / CP_KJPERKGK / P_WATER_KGPERM3
+            substation_flow_rate_m3pers_df[building] = substation_flow_rate_m3pers
+
+            # substation heat exchanger areas
+            substation_Qmax = substation_Qmax_dict[bui_func] * (building_Af_m2 / building_Af_m2)
+            substation_A_hex.loc[building] = [substation_Qmax / (U_substation * dTlm_dict[bui_func])]
+
+            # fill nan with zeros
+            building_demand_df['Name'] = building
+            building_demand_df = building_demand_df.replace(np.nan, 0.0)
+            annual_demand_kWh = building_demand_df['Qcs_sys_ahu_kWh'].values * op_time
+            building_info.loc[building, 'Qcs_sys_MWhyr'] = sum(annual_demand_kWh)/1000.0
+
+            if settings.output_cea_demand:
+                building_demand_df['Tcs_sys_sup_ahu_C'] = 7.5  # only used in thermal_network calculation
+                building_demand_df['Tcs_sys_re_ahu_C'] = 14.5  # only used in thermal_network calculation
+                building_demand_df.to_csv(os.path.join(path_to_district_demand_folder, building + '.csv'))
 
     # 5. match yearly hours
     op_time = district_cooling_demand_df['op_time'].values
     # substation_flow_rate_m3pers_df = multiply_df_to_match_hours(substation_flow_rate_m3pers_df)
     # substation_flow_rate_m3pers_df = substation_flow_rate_m3pers_df.drop(columns=['index'])
-    return substation_flow_rate_m3pers_df, T_supply_K, op_time, substation_A_hex
+    return substation_flow_rate_m3pers_df, T_supply_K, op_time, substation_A_hex, plant_exists
 
 def get_network_info(path_to_case):
     path_to_thermal_network = os.path.join(path_to_case, 'outputs\\data\\thermal-network\\')
