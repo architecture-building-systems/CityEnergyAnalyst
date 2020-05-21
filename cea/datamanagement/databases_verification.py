@@ -333,7 +333,7 @@ def main():
 
     config = cea.config.Configuration()
     locator = cea.inputlocator.InputLocator(config.scenario)
-    _schemas = schemas()
+    _schemas = schemas(plugins=[])
     validator = InputFileValidator(locator, plugins=config.plugins)
     locator_methods = ['get_database_construction_standards',
                        'get_database_use_types_properties',
