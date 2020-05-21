@@ -4686,7 +4686,7 @@ get_database_conversion_systems:
           min: 0
           type: int
           unit: "[yr]"
-          values: '{0...n}
+          values: '{0...n}'
         O&M_%:
           description: operation and maintanence cost factor (fraction of the investment
             cost)
