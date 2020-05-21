@@ -160,6 +160,9 @@ class SupplySystemMapPlot(cea.plots.supply_system.SupplySystemPlotBase):
         return data_processed
 
     def create_network_layout(self, connected_buildings, network_type, network_name):
+        # Make sure that project path is correct
+        self.config.project = self.project
+
         # Set config to scenario of plot
         self.config.scenario_name = self.scenario
 
