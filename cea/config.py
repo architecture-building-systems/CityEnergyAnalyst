@@ -1081,14 +1081,4 @@ def validate_coord_tuple(coord_tuple):
     return coord_tuple
 
 
-# if __name__ == '__main__':
-#     test_strings = ['(1, 1), (1, 1), (1, 1)',
-#                     '(3,3),(a,3),',
-#                     '(-43, -432)']
-#     for test in test_strings:
-#         try:
-#             print(parse_string_coordinate_list(test))
-#         except ValueError as e:
-#             print(test, e)
-
 
