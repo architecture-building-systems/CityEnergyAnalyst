@@ -25,6 +25,19 @@ problem_dict = {
         'names': ['dT1', 'dT2', 'dTn_1', 'dTn_2', 'dTn_3', 'T3'],
         'bounds': [[1,4], [1,4], [5, 15], [5, 15], [5, 15], [4, 7]]
     },
+    "c_Networks": {
+        'num_vars': 15,
+        'names': ['dTn_1', 'dTn_2',
+                  'HOT_OAU_dT2', 'HOT_OAU_T1', 'HOT_RAU_dT2', 'HOT_RAU_T1',
+                  'N_dT2',
+                  'OFF_OAU_dT2', 'OFF_OAU_T1', 'OFF_RAU_dT2', 'OFF_RAU_T1',
+                  'RET_OAU_dT2', 'RET_OAU_T1', 'RET_RAU_dT2', 'RET_RAU_T1'],
+        'bounds': [[5, 15], [5, 15],
+                   [1, 3], [8,11], [1, 3], [8,11],
+                   [1, 3],
+                   [1, 3], [8, 11], [1, 3], [8, 11],
+                   [1, 3], [8, 11], [1, 3], [8, 11]]
+    },
     "d_Networks_LT": {
         'num_vars': 20,
         'names': ['capex_weight', 'dT1', 'dT2', 'dT3', 'dT4', 'dT_sc', 'dTn_1', 'dTn_2', 'dTn_3',
@@ -55,9 +68,9 @@ problem_dict = {
     },
 }
 
-problem_name = 'Networks_new'
+problem_name = 'c_Networks'
 number_of_samples = 300
-iterations = 50000   #10000 from Steffen
+iterations = 10000   #10000 from Steffen
 
 def main():
     # get problem
