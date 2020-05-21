@@ -775,6 +775,13 @@ class PlantNodeParameter(ChoiceParameter):
         """Allow encoding None, because not all scenarios have a thermal network"""
         if value is None:
             return ""
+        elif not self._choices:
+            print('No plant nodes can be found, ignoring `{value}`'.format(value=value))
+            return ""
+        elif value not in self._choices:
+            first_choice = self._choices[0]
+            print('Plant node `{value}` not found. Using {first_choice}'.format(value=value, first_choice=first_choice))
+            return str(first_choice)
         else:
             return super(PlantNodeParameter, self).encode(value)
 
@@ -795,8 +802,9 @@ class ScenarioNameParameter(ChoiceParameter):
         pass
 
     def encode(self, value):
+        # FIXME: Should raise exception instead of choosing a different scenario?
         """Make sure the scenario folder exists"""
-        if not os.path.exists(os.path.join(self.config.project, value)):
+        if value not in self._choices:
             return self._choices[0]
         return str(value)
 
@@ -806,16 +814,7 @@ class ScenarioNameParameter(ChoiceParameter):
 
     @property
     def _choices(self):
-        # set the `._choices` attribute to the list of scenarios in the project
-        def is_valid_scenario(folder_name):
-            fodler_path = os.path.join(self.config.project, folder_name)
-            return all([
-                os.path.isdir(fodler_path),  # a scenario must be a valid path
-                not folder_name.startswith('.'),  # a scenario can't start with a . like `.config`
-            ])
-
-        return [folder_name for folder_name in os.listdir(self.config.project)
-                if is_valid_scenario(folder_name)]
+        return get_scenarios_list(self.config.project)
 
 
 class ScenarioParameter(Parameter):
@@ -990,6 +989,22 @@ class BuildingsParameter(MultiChoiceParameter):
         return locator.get_zone_building_names()
 
 
+class CoordinateListParameter(ListParameter):
+    typename = 'CoordinateListParameter'
+
+    def encode(self, value):
+        if isinstance(value, basestring):
+            value = self.decode(value)
+        strings = [str(validate_coord_tuple(coord_tuple)) for coord_tuple in value]
+        return ', '.join(strings)
+
+    def decode(self, value):
+        coord_list = parse_string_coordinate_list(value)
+        if len(set(coord_list)) < 3:
+            raise ValueError('Requires 3 distinct coordinate points to create a polygon. Got: {}'.format(coord_list))
+        return coord_list
+
+
 def get_scenarios_list(project_path):
     def is_valid_scenario(project_path, folder_name):
         folder_path = os.path.join(project_path, folder_name)
@@ -1004,12 +1019,12 @@ def get_scenarios_list(project_path):
 def get_systems_list(scenario_path):
     locator = cea.inputlocator.InputLocator(scenario_path)
     checkpoints = glob.glob(os.path.join(locator.get_optimization_master_results_folder(), "*.json"))
-    iterations = []
+    iterations = set()
     for checkpoint in checkpoints:
         with open(checkpoint, 'rb') as f:
             data_checkpoint = json.load(f)
-            iterations.extend(data_checkpoint['systems_to_show'])
-    unique_iterations = list(set(iterations))
+            iterations.update(data_checkpoint['systems_to_show'])
+    unique_iterations = [str(x) for x in iterations]
     return unique_iterations
 
 
@@ -1020,3 +1035,39 @@ def parse_string_to_list(line):
     line = line.replace('\n', ' ')
     line = line.replace('\r', ' ')
     return [field.strip() for field in line.split(',') if field.strip()]
+
+
+def parse_string_coordinate_list(string_tuples):
+    """Parse a string of comma-separated coordinate tuples into a list of tuples"""
+    numerical = r'\d+(\.\d+)?'
+    capture_group = r'\((-?{numerical},\s?-?{numerical})\)'.format(numerical=numerical)
+    string_format = r'^(?:{capture_group},\s?)*(?:{capture_group})$'.format(capture_group=capture_group)
+
+    match_string_format = re.match(string_format, string_tuples)
+    if match_string_format is None:
+        raise ValueError("Input is not in a valid format.\n"
+                         "Expected example: (1,1),(-1,-1),(0,0)\n"
+                         "Got: {}".format(string_tuples))
+
+    coordinates_list = []
+    for match in re.finditer(capture_group, string_tuples):
+        coord_string = match.group(1)
+        coord_tuple = tuple([float(coord.strip()) for coord in coord_string.split(',')])
+        validate_coord_tuple(coord_tuple)
+        coordinates_list.append(coord_tuple)
+
+    return coordinates_list
+
+
+def validate_coord_tuple(coord_tuple):
+    """Validates a (lat, long) tuple, throws exception if not valid"""
+
+    lat, lon = coord_tuple
+    if lat < -90 or lat > 90:
+        raise ValueError('Latitude must be between -90 and 90. Got {}'.format(lat))
+    if lon < -180 or lon > 180:
+        raise ValueError('Longitude must be between -180 and 180. Got {}'.format(lon))
+    return coord_tuple
+
+
+

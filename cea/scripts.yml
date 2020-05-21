@@ -356,6 +356,13 @@ default:
     module: cea.datamanagement.zone_helper
     parameters: ['general:scenario', zone-helper]
 
+  - name: create-polygon
+    label: Create Polygon
+    description: Creates a polygon shapefile from a list of comma-separated coordinate tuples
+    interfaces: [cli]
+    module: cea.utilities.create_polygon
+    parameters: ['general:scenario', create-polygon]
+
   - name: plots
     label: Plots basic
     description: Create plots for the default energy system of an urban scenario
