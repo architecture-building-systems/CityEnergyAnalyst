@@ -38,6 +38,19 @@ problem_dict = {
                    [1, 3], [8, 11], [1, 3], [8, 11],
                    [1, 3], [8, 11], [1, 3], [8, 11]]
     },
+    "d_LT_Networks": {
+        'num_vars': 18,
+        'names': ['dTn_1', 'dTn_2',
+                  'HOT_OAU_dT2', 'HOT_OAU_T1', 'HOT_RAU_dT2', 'HOT_RAU_T1', 'HOT_T_HP',
+                  'N_dT2',
+                  'OFF_OAU_dT2', 'OFF_OAU_T1', 'OFF_RAU_dT2', 'OFF_RAU_T1', 'OFF_T_HP',
+                  'RET_OAU_dT2', 'RET_OAU_T1', 'RET_RAU_dT2', 'RET_RAU_T1', 'RET_T_HP'],
+        'bounds': [[5, 15], [5, 15],
+                   [1, 3], [8, 11], [1, 3], [8, 11], [14,18],
+                   [1, 3],
+                   [1, 3], [8, 11], [1, 3], [8, 11], [14,18],
+                   [1, 3], [8, 11], [1, 3], [8, 11], [14,18]]
+    },
     "d_Networks_LT": {
         'num_vars': 20,
         'names': ['capex_weight', 'dT1', 'dT2', 'dT3', 'dT4', 'dT_sc', 'dTn_1', 'dTn_2', 'dTn_3',
@@ -68,8 +81,8 @@ problem_dict = {
     },
 }
 
-problem_name = 'c_Networks'
-number_of_samples = 300
+problem_name = 'd_LT_Networks'
+number_of_samples = 20
 iterations = 10000   #10000 from Steffen
 
 def main():
