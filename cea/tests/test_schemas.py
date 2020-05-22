@@ -211,7 +211,7 @@ class TestSchemas(unittest.TestCase):
                             'values: {values}, min: {schema_min}, max: {schema_max}'.format(
                                 values=values, schema_min=schema_min, schema_max=schema_max))
 
-        schemas = cea.scripts.schemas()
+        schemas = cea.scripts.schemas(plugins=[])
         for lm in schemas:
             if lm == "get_database_standard_schedules_use" or lm in SKIP_LMS:
                 # the schema for schedules is non-standard
