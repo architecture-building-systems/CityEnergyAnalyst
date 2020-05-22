@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from __future__ import division
 from __future__ import print_function
 
@@ -34,20 +33,21 @@ class BuildingProperties(object):
     G. Happle   BuildingPropsThermalLoads   27.05.2016
     """
 
-    def __init__(self, locator):
+    def __init__(self, locator, building_names):
         """
         Read building properties from input shape files and construct a new BuildingProperties object.
 
         :param locator: an InputLocator for locating the input files
         :type locator: cea.inputlocator.InputLocator
 
-        :param override_variables: override_variables from config
-        :type override_variables: bool
+        :param building_names: list of buildings to read properties
+        :type building_names: List
 
         :returns: BuildingProperties
         :rtype: BuildingProperties
         """
 
+        self.building_names = building_names
         print("read input files")
         prop_geometry = Gdf.from_file(locator.get_zone_geometry())
         prop_geometry['footprint'] = prop_geometry.area
@@ -79,7 +79,7 @@ class BuildingProperties(object):
                                                 prop_geometry, prop_HVAC_result)
 
         # get solar properties
-        solar = get_prop_solar(locator, prop_rc_model, prop_envelope).set_index('Name')
+        solar = get_prop_solar(locator, building_names, prop_rc_model, prop_envelope).set_index('Name')
 
         # df_windows = geometry_reader.create_windows(surface_properties, prop_envelope)
         # TODO: to check if the Win_op and height of window is necessary.
@@ -121,11 +121,11 @@ class BuildingProperties(object):
 
     def __len__(self):
         """return length of list_building_names"""
-        return len(self.list_building_names())
+        return len(self.building_names)
 
     def list_building_names(self):
         """get list of all building names"""
-        return self._prop_RC_model.index
+        return self.building_names
 
     def list_uses(self):
         """get list of all uses (typology types)"""
@@ -247,7 +247,7 @@ class BuildingProperties(object):
         class prov(object):
             def __init__(self, hvac):
                 self.hvac = hvac
-        for building in locator.get_zone_building_names():
+        for building in self.building_names:
             data = prov({'class_hs':hvac_temperatures.loc[building, 'class_hs'], 'class_cs': hvac_temperatures.loc[building, 'class_cs']})
             has_system_heating_flag = has_heating_system(data)
             has_system_cooling_flag = has_cooling_system(data)
@@ -336,7 +336,7 @@ class BuildingProperties(object):
         envelope['Aroof'] = np.nan
 
         # call all building geometry files in a loop
-        for building_name in locator.get_zone_building_names():
+        for building_name in self.building_names:
             geometry_data = pd.read_csv(locator.get_radiation_building(building_name))
             envelope.ix[building_name, 'Awall_ag'] = geometry_data['walls_east_m2'][0] + \
                                                   geometry_data['walls_west_m2'][0] + \
@@ -906,12 +906,13 @@ def get_envelope_properties(locator, prop_architecture):
     return envelope_prop
 
 
-def get_prop_solar(locator, prop_rc_model, prop_envelope):
+def get_prop_solar(locator, building_names, prop_rc_model, prop_envelope):
     """
     Gets the sensible solar gains from calc_Isol_daysim and stores in a dataframe containing building 'Name' and
     I_sol (incident solar gains).
 
     :param locator: an InputLocator for locating the input files
+    :param building_names: List of buildings
     :param prop_rc_model: RC model properties of a building by name.
     :param prop_envelope: dataframe containing the building envelope properties.
     :return: dataframe containing the sensible solar gains for each building by name called result.
@@ -924,11 +925,11 @@ def get_prop_solar(locator, prop_rc_model, prop_envelope):
     list_Isol = []
 
     # for every building
-    for building_name in locator.get_zone_building_names():
+    for building_name in building_names:
         I_sol = calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, thermal_resistance_surface)
         list_Isol.append(I_sol)
 
-    result = pd.DataFrame({'Name': list(locator.get_zone_building_names()), 'I_sol': list_Isol})
+    result = pd.DataFrame({'Name': list(building_names), 'I_sol': list_Isol})
 
     return result
 

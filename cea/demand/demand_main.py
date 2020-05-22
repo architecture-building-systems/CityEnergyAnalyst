@@ -68,7 +68,7 @@ def demand_calculation(locator, config):
     t0 = time.clock()
 
     # LOCAL VARIABLES
-    building_names = config.demand.buildings
+    building_names = config.demand.buildings or locator.get_zone_building_names()
     use_dynamic_infiltration = config.demand.use_dynamic_infiltration_calculation
     resolution_output = config.demand.resolution_output
     loads_output = config.demand.loads_output
@@ -82,8 +82,11 @@ def demand_calculation(locator, config):
     # create date range for the calculation year
     date_range = get_date_range_hours_from_year(year)
 
+    # SPECIFY NUMBER OF BUILDINGS TO SIMULATE
+    print('Running demand calculation for the following buildings=%s' % building_names)
+
     # CALCULATE OBJECT WITH PROPERTIES OF ALL BUILDINGS
-    building_properties = BuildingProperties(locator)
+    building_properties = BuildingProperties(locator, building_names)
 
     # add a message i2065 of warning. This needs a more elegant solution
     def calc_buildings_less_100m2(building_properties):
@@ -100,13 +103,6 @@ def demand_calculation(locator, config):
     list_buildings_less_100m2 = calc_buildings_less_100m2(building_properties)
     if list_buildings_less_100m2 != []:
         print('Warning! The following list of buildings have less than 100 m2 of gross floor area, CEA might fail: %s' % list_buildings_less_100m2)
-
-    # SPECIFY NUMBER OF BUILDINGS TO SIMULATE
-    if not building_names:
-        building_names = locator.get_zone_building_names()
-        print('Running demand calculation for all buildings in the zone')
-    else:
-        print('Running demand calculation for the following buildings=%s' % building_names)
 
     # DEMAND CALCULATION
     n = len(building_names)
@@ -151,18 +147,20 @@ def main(config):
         print('Running demand in debug mode: Instant visualization of tsd activated.')
         print('Running demand calculation with write detailed output')
 
-    if not radiation_files_exist(locator):
+    if not radiation_files_exist(locator, config):
         raise MissingInputDataException("Missing radiation data in scenario. Consider running radiation script first.")
 
     demand_calculation(locator=locator, config=config)
 
 
-def radiation_files_exist(locator):
+def radiation_files_exist(locator, config):
     # verify that the necessary radiation files exist
     def daysim_results_exist(building_name):
         return os.path.exists(locator.get_radiation_building(building_name))
 
-    return all(daysim_results_exist(building_name) for building_name in locator.get_zone_building_names())
+    building_names = config.demand.buildings or locator.get_zone_building_names()
+
+    return all(daysim_results_exist(building_name) for building_name in building_names)
 
 
 if __name__ == '__main__':
