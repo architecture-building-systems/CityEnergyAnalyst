@@ -132,7 +132,7 @@ def demand_calculation(locator, config):
     return totals, time_series
 
 
-def print_progress(i, n, args, result):
+def print_progress(i, n, args, _):
     print("Building No. {i} completed out of {n}: {building}".format(i=i + 1, n=n, building=args[0]))
 
 

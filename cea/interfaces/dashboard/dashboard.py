@@ -1,5 +1,5 @@
 from flask import Flask
-from flask_socketio import SocketIO, emit
+from flask_socketio import SocketIO
 
 import cea.config
 import cea.plots
@@ -28,7 +28,6 @@ def main(config):
     app.cea_config = config
     app.plot_cache = plot_cache
     app.socketio = socketio
-
 
     print("start socketio.run")
     socketio.run(app, host='localhost', port=5050)
