@@ -1,7 +1,3 @@
-from __future__ import print_function
-
-import cea.schemas
-
 """
 doc_glossary.py
 
@@ -9,11 +5,11 @@ Builds input_files.rst and output_files.rst using a jinja 2 template located in 
 and output_files.rst are referenced by glossary.rst.
 
 """
+from __future__ import print_function
 
 import os
 import cea.config
-import cea.scripts
-import cea.glossary
+import cea.schemas
 from jinja2 import Template, environment
 
 __author__ = "Jack Hawthorne"
@@ -25,6 +21,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+
 def add_backticks(s):
     """
     Adds double-backticks to the beginning and end of s for mono-spaced rst output.
@@ -35,7 +32,7 @@ def add_backticks(s):
 
 
 def main(_=None):
-    schemas = cea.schemas.schemas()
+    schemas = cea.schemas.schemas(plugins=[])
     documentation_dir = os.path.join(os.path.dirname(cea.config.__file__), '..', 'docs')
     environment.DEFAULT_FILTERS['add_backticks'] = add_backticks
     template_path = os.path.join(documentation_dir, 'templates', 'glossary.rst')
