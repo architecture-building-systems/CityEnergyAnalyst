@@ -1094,5 +1094,6 @@ def validate_coord_tuple(coord_tuple):
         raise ValueError('Longitude must be between -180 and 180. Got {}'.format(lon))
     return coord_tuple
 
-
-
+ 
+if __name__ == "__main__":
+    config = Configuration()

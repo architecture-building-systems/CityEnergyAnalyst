@@ -3307,7 +3307,7 @@ get_database_conversion_systems:
           min: 0
           type: int
           unit: "[yr]"
-          values: '{0.0...n}'
+          values: '{0...n}'
         O&M_%:
           description: operation and maintanence cost factor (fraction of the investment
             cost)
@@ -3402,7 +3402,7 @@ get_database_conversion_systems:
           min: 0
           type: int
           unit: "[yr]"
-          values: '{0.0...n}'
+          values: '{0...n}'
         O&M_%:
           description: operation and maintanence cost factor (fraction of the investment
             cost)
@@ -4013,7 +4013,7 @@ get_database_conversion_systems:
           min: 0
           type: int
           unit: "[yr]"
-          values: '{0.0...n}'
+          values: '{0...n}'
         O&M_%:
           description: operation and maintanence cost factor (fraction of the investment
             cost)
@@ -4109,7 +4109,7 @@ get_database_conversion_systems:
           min: 0
           type: int
           unit: "[yr]"
-          values: '{0.0...n}'
+          values: '{0...n}'
         O&M_%:
           description: operation and maintanence cost factor (fraction of the investment
             cost)
@@ -4286,7 +4286,7 @@ get_database_conversion_systems:
           min: 0
           type: int
           unit: "[yr]"
-          values: '{0.0...n}'
+          values: '{0...n}'
         O&M_%:
           description: operation and maintanence cost factor (fraction of the investment
             cost)
@@ -4382,7 +4382,7 @@ get_database_conversion_systems:
           min: 0
           type: int
           unit: "[yr]"
-          values: '{0.0...n}'
+          values: '{0...n}'
         O&M_%:
           description: operation and maintanence cost factor (fraction of the investment
             cost)
@@ -4496,7 +4496,7 @@ get_database_conversion_systems:
           min: 0
           type: int
           unit: "[yr]"
-          values: '{0.0...n}'
+          values: '{0...n}'
         O&M_%:
           description: operation and maintanence cost factor (fraction of the investment
             cost)
@@ -4686,7 +4686,7 @@ get_database_conversion_systems:
           min: 0
           type: int
           unit: "[yr]"
-          values: '{0.0...n}'
+          values: '{0...n}'
         O&M_%:
           description: operation and maintanence cost factor (fraction of the investment
             cost)
@@ -6631,7 +6631,8 @@ get_database_supply_assemblies:
             - BUILDING
             - DISTRICT
             - CITY
-          description: whether the all in one system is used at the building, or the district scale
+          description: whether the all in one system is used at the building, or the
+            district scale
           type: string
           unit: 'NA'
           values: alphanumeric
@@ -9964,6 +9965,7 @@ get_optimization_generation_building_scale_performance:
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
+        min: 0.0
       Capex_a_heating_building_scale_USD:
         description: Annualized Capital Costs of building-scale systems due to heating
         type: float
@@ -10062,7 +10064,8 @@ get_optimization_generation_total_performance:
         values: '{0.0...n}'
         min: 0.0
       Capex_total_sys_USD:
-        description: Total Capital Costs of district-scale systems and  Decentralized Buildings
+        description: Total Capital Costs of district-scale systems and  Decentralized
+          Buildings
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
@@ -10177,7 +10180,8 @@ get_optimization_generation_total_performance_pareto:
         values: '{0.0...n}'
         min: 0.0
       Capex_total_sys_USD:
-        description: Total Capital Costs of district-scale systems and  Decentralized Buildings
+        description: Total Capital Costs of district-scale systems and  Decentralized
+          Buildings
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
@@ -11216,7 +11220,8 @@ get_optimization_slave_electricity_requirements_data:
         values: '{0.0...n}'
         min: 0.0
       E_hs_ww_req_building_scale_W:
-        description: Electricity Required for space heating and hotwater of building-scale systems
+        description: Electricity Required for space heating and hotwater of building-scale
+          systems
         type: float
         unit: '[Wh]'
         values: '{0.0...n}'
@@ -13012,13 +13017,15 @@ get_surroundings_geometry:
         unit: 'NA'
         values: alphanumeric
       floors_ag:
-        description: Number of floors above ground (incl. ground floor, Minimum one floor is needed)
+        description: Number of floors above ground (incl. ground floor, Minimum one
+          floor is needed)
         min: 1
         type: int
         unit: '[-]'
         values: '{1...n}'
       height_ag:
-        description: Height above ground (incl. ground floor, Minimum one floor is needed)
+        description: Height above ground (incl. ground floor, Minimum one floor is
+          needed)
         min: 2.0
         type: float
         unit: '[m]'
@@ -14616,7 +14623,8 @@ get_zone_geometry:
         unit: 'NA'
         values: alphanumeric
       floors_ag:
-        description: Number of floors above ground (incl. ground floor, minimum one floor is needed)
+        description: Number of floors above ground (incl. ground floor, minimum one
+          floor is needed)
         min: 1
         type: int
         unit: '[-]'
@@ -14628,7 +14636,8 @@ get_zone_geometry:
         values: '{0...n}'
         min: 0
       height_ag:
-        description: Height above ground (incl. ground floor, minimum one floor is needed)
+        description: Height above ground (incl. ground floor, minimum one floor is
+          needed)
         min: 2.0
         type: float
         unit: '[m]'

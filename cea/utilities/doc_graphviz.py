@@ -10,7 +10,6 @@ from __future__ import division
 
 import os
 import cea.config
-import cea.scripts
 import cea.schemas
 from jinja2 import Template
 
@@ -22,7 +21,6 @@ __version__ = "2.14"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
-
 
 
 def create_graphviz_files(graphviz_data, documentation_dir):
@@ -107,8 +105,8 @@ def get_list_of_digraphs(documentation_dir, schema_scripts):
 
 
 def main(_):
-    schemas = cea.schemas.schemas()
-    schema_scripts = schemas.get_schema_scripts()
+    schemas = cea.schemas.schemas(plugins=[])
+    schema_scripts = cea.schemas.get_schema_scripts(plugins=[])
     documentation_dir = os.path.join(os.path.dirname(cea.config.__file__), '..', 'docs')
 
     graphviz_data = {}
@@ -131,7 +129,7 @@ def main(_):
     template_path = os.path.join(documentation_dir, "templates", "graphviz_template.rst")
     template = Template(open(template_path, 'r').read())
 
-    with open(os.path.join(documentation_dir,'script-data-flow.rst'), 'w') as fp:
+    with open(os.path.join(documentation_dir, 'script-data-flow.rst'), 'w') as fp:
         fp.write(template.render(list_of_digraphs=list_of_digraphs))
 
 
