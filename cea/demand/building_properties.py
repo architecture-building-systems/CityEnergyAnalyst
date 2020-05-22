@@ -33,7 +33,7 @@ class BuildingProperties(object):
     G. Happle   BuildingPropsThermalLoads   27.05.2016
     """
 
-    def __init__(self, locator, building_names):
+    def __init__(self, locator, building_names=None):
         """
         Read building properties from input shape files and construct a new BuildingProperties object.
 
@@ -46,6 +46,9 @@ class BuildingProperties(object):
         :returns: BuildingProperties
         :rtype: BuildingProperties
         """
+
+        if building_names is None:
+            building_names = locator.get_zone_building_names()
 
         self.building_names = building_names
         print("read input files")
