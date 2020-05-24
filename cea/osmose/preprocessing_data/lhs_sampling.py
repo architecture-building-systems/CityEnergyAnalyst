@@ -92,9 +92,14 @@ problem_dict = {
         'names': ['capex_weight', 'dT1', 'dT2', 'dT3', 'dT4', 'dT_sc', 'dT5'],
         'bounds': [[0, 1], [20, 25], [10, 20], [2, 6], [2, 6], [0.01, 30], [4, 7]]
     },
+    'd_Buildings': {
+        'num_vars': 6,
+        'names': ['HP_dT', 'OAU_T1', 'OAU_dT1', 'RAU_T1', 'RAU_dT2', 'T_SCU'],
+        'bounds': [[1, 3], [8, 11], [1, 3], [8, 11], [1, 3], [16, 20]]
+    },
 }
 
-problem_name = 'd_HT_Networks'
+problem_name = 'd_Buildings'
 number_of_samples = 20
 iterations = 10000   #10000 from Steffen
 
