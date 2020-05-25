@@ -227,7 +227,8 @@ def calc_delta_theta_int_inc_heating(bpr):
     __credits__ = ["Shanshan Hsieh", "Daren Thomas"]
 
     try:
-        delta_theta_int_inc_heating = 0.0 if has_heating_system(bpr) == False else (bpr.hvac['dT_Qhs'] + bpr.hvac['dThs_C'])
+        delta_theta_int_inc_heating = (0.0 if not has_heating_system(bpr.hvac["class_hs"])
+                                       else (bpr.hvac['dT_Qhs'] + bpr.hvac['dThs_C']))
 
     except KeyError:
         raise ValueError(
@@ -262,7 +263,8 @@ def calc_delta_theta_int_inc_cooling(bpr):
 
     try:
 
-        delta_theta_int_inc_cooling = 0.0 if has_cooling_system(bpr) == False else (bpr.hvac['dT_Qcs'] + bpr.hvac['dTcs_C'])
+        delta_theta_int_inc_cooling = (0.0 if not has_cooling_system(bpr.hvac["class_cs"])
+                                       else (bpr.hvac['dT_Qcs'] + bpr.hvac['dTcs_C']))
     except KeyError:
         raise ValueError(
             'Invalid system / control combination: %s, %s' % (bpr.hvac['class_cs'], bpr.hvac['type_ctrl']))

@@ -178,7 +178,7 @@ def calc_temperatures_emission_systems(bpr, tsd):
     #
     # TEMPERATURES HEATING SYSTEMS
     #
-    if not control_heating_cooling_systems.has_heating_system(bpr):
+    if not control_heating_cooling_systems.has_heating_system(bpr.hvac["class_hs"]):
         # if no heating system
 
         tsd['Ths_sys_sup_ahu'] = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
@@ -287,8 +287,8 @@ def calc_temperatures_emission_systems(bpr, tsd):
     #
     # TEMPERATURES COOLING SYSTEMS
     #
-    if not control_heating_cooling_systems.has_cooling_system(bpr):
-        # if no heating system
+    if not control_heating_cooling_systems.has_cooling_system(bpr.hvac["class_cs"]):
+        # if no cooling system
 
         tsd['Tcs_sys_sup_ahu'] = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
         tsd['Tcs_sys_re_ahu'] = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
