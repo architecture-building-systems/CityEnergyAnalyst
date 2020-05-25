@@ -8,6 +8,7 @@ from __future__ import print_function
 from __future__ import division
 
 import os
+import cPickle
 import pandas as pd
 import yaml
 import warnings
@@ -27,7 +28,6 @@ __status__ = "Production"
 # since we can actually call schemas with a varying list of plugins, store the resulting schemas dict
 # in a dict indexed by the
 from cea.utilities.yaml_ordered_dict import OrderedDictYAMLLoader
-from plots.colors import color_to_rgb
 
 __schemas = {}
 
@@ -37,11 +37,30 @@ def schemas(plugins):
     :parameter plugins: the list of plugins to generate the schemas for. Use ``config.plugins`` for this.
     :type plugins: List[cea.plugin.CeaPlugin]
     """
+    # loading schemas.yml is quite expensive - try to avoid it as much as possible by
+    # maintaining a cache of the schemas - using the plugin list as a key
     global __schemas
     key = ":".join(str(p) for p in plugins)
-    if not key in __schemas:
+
+    if key not in __schemas:
+        # load schemas.yml from disk - here again we use a cache: a pickled version is stored in the user folder.
         schemas_yml = os.path.join(os.path.dirname(__file__), 'schemas.yml')
-        __schemas[key] = yaml.load(open(schemas_yml), Loader=OrderedDictYAMLLoader)
+        schemas_pickle = os.path.expanduser("~/schemas.yml.pickle")
+
+        # compare the dates of the two files - use the pickle if it's newer
+        if os.path.exists(schemas_pickle) and os.path.getctime(schemas_pickle) > os.path.getctime(schemas_yml):
+            with open(schemas_pickle, "r") as schemas_pickle_fp:
+                schemas_dict = cPickle.load(schemas_pickle_fp)
+        else:
+            # ok. this will take a while to read...
+            schemas_dict = yaml.load(open(schemas_yml), Loader=OrderedDictYAMLLoader)
+            # ... so write out a pickle for next time
+            with open(schemas_pickle, "w") as schemas_pickle_fp:
+                cPickle.dump(schemas_dict, schemas_pickle_fp)
+
+        __schemas[key] = schemas_dict
+
+        # add the plugins - these don't use caches as their schemas.yml are (probably) much shorter
         for plugin in plugins:
             __schemas[key].update(plugin.schemas)
     return __schemas[key]
@@ -219,6 +238,8 @@ class SchemaIo(object):
         Note that schemas.yml specifies colors using names taken from
         :type: Dict[str, str]
         """
+        from plots.colors import color_to_rgb
+
         result = {}
         columns = self.schema["schema"]["columns"]
         for column in columns.keys():

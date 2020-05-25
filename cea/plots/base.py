@@ -9,9 +9,6 @@ import os
 import re
 
 import jinja2
-import plotly.graph_objs
-import plotly.offline
-import pandas as pd
 
 import cea.config
 import cea.inputlocator
@@ -96,6 +93,8 @@ class PlotBase(object):
 
     def totals_bar_plot(self):
         """Creates a plot based on the totals data in percentages."""
+        import plotly.graph_objs
+
         traces = []
         data = self.data
         data['total'] = data[self.analysis_fields].sum(axis=1)
@@ -168,6 +167,9 @@ class PlotBase(object):
         return self.cache.lookup_plot_div(self, self._plot_div_producer)
 
     def _plot_div_producer(self):
+        import plotly.graph_objs
+        import plotly.offline
+
         # Set default color template to 'none' for plotly version 4
         try:
             import plotly.io as pio
@@ -307,6 +309,8 @@ class PlotBase(object):
         return self.parameters['buildings']
 
     def resample_time_data(self, dataframe):
+        import pandas as pd
+
         if 'DATE' in dataframe.columns:
             time_data = dataframe.set_index('DATE')
         else:
