@@ -6,6 +6,7 @@ from __future__ import division
 
 import importlib
 import os
+import configparser
 from typing import Generator, Sequence
 import yaml
 import inspect
@@ -79,11 +80,11 @@ class CeaPlugin(object):
 
         The format is expected to be the same format as `default.config` in the CEA.
 
-        :rtype: ConfigParser.SafeConfigParser
+        :rtype: configparser.ConfigParser
         """
-        import ConfigParser
+
         plugin_config = os.path.join(os.path.dirname(inspect.getmodule(self).__file__), "plugin.config")
-        parser = ConfigParser.SafeConfigParser()
+        parser = configparser.ConfigParser()
         if not os.path.exists(plugin_config):
             return parser
         parser.read(plugin_config)
@@ -271,8 +272,8 @@ def add_plugins(default_config, user_config):
     """
     Patch in the plugin configurations during __init__ and __setstate__
 
-    :param ConfigParser.SafeConfigParser default_config:
-    :param ConfigParser.SafeConfigParser user_config:
+    :param configparser.ConfigParser default_config:
+    :param configparser.ConfigParser user_config:
     :return: (modifies default_config and user_config in-place)
     :rtype: None
     """
