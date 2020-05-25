@@ -14,6 +14,7 @@ import collections
 import datetime
 import glob
 import tempfile
+from cea.utilities import unique
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -23,7 +24,6 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
-
 
 DEFAULT_CONFIG = os.path.join(os.path.dirname(__file__), 'default.config')
 CEA_CONFIG = os.path.expanduser('~/cea.config')
@@ -649,17 +649,12 @@ class PluginListParameter(ListParameter):
 
     def encode(self, list_of_plugins):
         """Make sure we don't duplicate any of the plugins"""
-        seen = set()
-        unique_plugins = []
-        for plugin in list_of_plugins:
-            if not plugin in seen:
-                unique_plugins.append(plugin)
-                seen.add(plugin)
+        unique_plugins = unique(list_of_plugins)
         return super(PluginListParameter, self).encode(unique_plugins)
 
     def decode(self, value):
         from cea.plugin import instantiate_plugin
-        plugin_fqnames = parse_string_to_list(value)
+        plugin_fqnames = unique(parse_string_to_list(value))
         return [instantiate_plugin(plugin_fqname) for plugin_fqname in plugin_fqnames]
 
 
