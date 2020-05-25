@@ -1,11 +1,10 @@
-from __future__ import division
-from __future__ import print_function
-
 """
 Classes of building properties
 """
 
 from __future__ import division
+from __future__ import print_function
+
 
 import numpy as np
 import pandas as pd
@@ -15,6 +14,16 @@ from collections import namedtuple
 from cea.demand import constants
 from cea.utilities.dbf import dbf_to_dataframe
 from cea.technologies import blinds
+from typing import List
+
+__author__ = "Gabriel Happle"
+__copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Gabriel Happle", "Jimeno A. Fonseca", "Daren Thomas", "Jack Hawthorne", "Reynold Mok"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
 
 # import constants
 H_F = constants.H_F
@@ -40,8 +49,7 @@ class BuildingProperties(object):
         :param locator: an InputLocator for locating the input files
         :type locator: cea.inputlocator.InputLocator
 
-        :param building_names: list of buildings to read properties
-        :type building_names: List
+        :param List[str] building_names: list of buildings to read properties
 
         :returns: BuildingProperties
         :rtype: BuildingProperties
@@ -245,16 +253,13 @@ class BuildingProperties(object):
         df = df.merge(typology, left_index=True, right_index=True)
         df = df.merge(hvac_temperatures, left_index=True, right_index=True)
 
-
         from cea.demand.control_heating_cooling_systems import has_heating_system, has_cooling_system
-        class prov(object):
-            def __init__(self, hvac):
-                self.hvac = hvac
+
         for building in self.building_names:
-            data = prov({'class_hs':hvac_temperatures.loc[building, 'class_hs'], 'class_cs': hvac_temperatures.loc[building, 'class_cs']})
-            has_system_heating_flag = has_heating_system(data)
-            has_system_cooling_flag = has_cooling_system(data)
-            if has_system_heating_flag == False and has_system_cooling_flag == False and np.max([df.loc[building, 'Hs_ag'], df.loc[building, 'Hs_bg']]) <= 0.0:
+            has_system_heating_flag = has_heating_system(hvac_temperatures.loc[building, 'class_hs'])
+            has_system_cooling_flag = has_cooling_system(hvac_temperatures.loc[building, 'class_cs'])
+            if (not has_system_heating_flag and not has_system_cooling_flag  and
+                    np.max([df.loc[building, 'Hs_ag'], df.loc[building, 'Hs_bg']]) <= 0.0):
                 df.loc[building, 'Hs_ag'] = 0.0
                 df.loc[building, 'Hs_bg'] = 0.0
                 print('Building {building} has no heating and cooling system, Hs corrected to 0.'.format(
