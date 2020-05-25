@@ -32,7 +32,7 @@ class OrderedDictYAMLLoader(yaml.Loader):
             key = self.construct_object(key_node, deep=deep)
             try:
                 hash(key)
-            except TypeError, exc:
+            except TypeError as exc:
                 raise yaml.constructor.ConstructorError('while constructing a mapping',
                     node.start_mark, 'found unacceptable key (%s)' % exc, key_node.start_mark)
             value = self.construct_object(value_node, deep=deep)
