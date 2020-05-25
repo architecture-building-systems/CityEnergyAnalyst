@@ -1,6 +1,7 @@
 import os
 import sys
 import string
+from typing import Sequence, List
 
 
 def remap(x, in_min, in_max, out_min, out_max):
@@ -66,3 +67,19 @@ class devnull(object):
 
     def write(self, _):
         pass
+
+
+def unique(sequence):
+    """
+    Return only the unique elements in sequence, preserving order.
+
+    :param Sequence[T] sequence: the sequence to unique-ify
+    :rtype: List[T]
+    """
+    seen = set()
+    result = []
+    for item in sequence:
+        if not item in seen:
+            result.append(item)
+            seen.add(item)
+    return result
