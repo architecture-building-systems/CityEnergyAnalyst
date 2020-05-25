@@ -20,17 +20,18 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def main(config=None):
+def main(args=None):
     """
 
     :param cea.config.Configuration config: the configuration file to use (instead of creating a new one)
     :return:
     """
-    if not config:
-        config = cea.config.Configuration()
+    if args is None:
+        args = sys.argv[1:]  # drop the script name from the arguments
+
+    config = cea.config.Configuration()
 
     # handle arguments
-    args = sys.argv[1:]  # drop the script name from the arguments
     if not len(args) or args[0].lower() == '--help':
         print_help()
         sys.exit(1)
@@ -55,10 +56,10 @@ def main(config=None):
     config.save(cea.config.CEA_CONFIG)
 
 
-
 def print_help():
     """Print out the help message for the ``cea-config`` tool"""
     print("usage: cea-config SCRIPT [OPTIONS]")
 
+
 if __name__ == '__main__':
-    main(cea.config.Configuration())
+    main(args=["write", "--general:plugins", "cea_plugin_template.DemandSummaryPlugin"])

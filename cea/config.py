@@ -8,7 +8,7 @@ from __future__ import division
 import os
 import re
 import json
-import ConfigParser
+import configparser
 import cea.inputlocator
 import collections
 import datetime
@@ -32,9 +32,9 @@ CEA_CONFIG = os.path.expanduser('~/cea.config')
 class Configuration(object):
     def __init__(self, config_file=CEA_CONFIG):
         self.restricted_to = None
-        self.default_config = ConfigParser.SafeConfigParser()
+        self.default_config = configparser.ConfigParser()
         self.default_config.read(DEFAULT_CONFIG)
-        self.user_config = ConfigParser.SafeConfigParser()
+        self.user_config = configparser.ConfigParser()
         self.user_config.read([DEFAULT_CONFIG, config_file])
 
         import cea.plugin
@@ -83,9 +83,9 @@ class Configuration(object):
         import cea.plugin
 
         self.restricted_to = None
-        self.default_config = ConfigParser.SafeConfigParser()
+        self.default_config = configparser.ConfigParser()
         self.default_config.read(DEFAULT_CONFIG)
-        self.user_config = ConfigParser.SafeConfigParser()
+        self.user_config = configparser.ConfigParser()
         self.user_config.readfp(StringIO.StringIO(state))
 
         cea.plugin.add_plugins(self.default_config, self.user_config)
@@ -193,7 +193,7 @@ class Configuration(object):
             # don't overwrite the default.config
             return
 
-        parser = ConfigParser.SafeConfigParser()
+        parser = configparser.ConfigParser()
         for section in self.sections.values():
             parser.add_section(section.name)
             for parameter in section.parameters.values():
@@ -313,7 +313,7 @@ def construct_parameter(parameter_name, section, config):
                                                                                                        section.name)
     try:
         parameter_type = config.default_config.get(section.name, parameter_name + '.type')
-    except ConfigParser.NoOptionError:
+    except configparser.NoOptionError:
         parameter_type = 'StringParameter'
 
     if not parameter_type in globals():
@@ -341,11 +341,11 @@ class Parameter(object):
         self.config = config
         try:
             self.help = config.default_config.get(section.name, self.name + ".help", raw=True)
-        except ConfigParser.NoOptionError:
+        except configparser.NoOptionError:
             self.help = "FIXME: Add help to %s:%s" % (section.name, self.name)
         try:
             self.category = config.default_config.get(section.name, self.name + ".category", raw=True)
-        except ConfigParser.NoOptionError:
+        except configparser.NoOptionError:
             self.category = None
 
         # give subclasses a chance to specialize their behavior
@@ -393,7 +393,7 @@ class Parameter(object):
     def replace_references(self, encoded_value):
         # expand references (like ``{general:scenario}``)
         def lookup_config(matchobj):
-            return self.config.sections[matchobj.group(1)].parameters[matchobj.group(2)].get()
+            return self.config.sections[matchobj.group(1)].parameters[matchobj.group(2)].get_raw()
 
         encoded_value = re.sub('{([a-z0-9-]+):([a-z0-9-]+)}', lookup_config, encoded_value)
         return encoded_value
@@ -412,7 +412,7 @@ class PathParameter(Parameter):
             self._direction = parser.get(self.section.name, self.name + '.direction')
             if not self._direction in {'input', 'output'}:
                 self._direction = 'input'
-        except ConfigParser.NoOptionError:
+        except configparser.NoOptionError:
             self._direction = 'input'
 
     def decode(self, value):
@@ -430,12 +430,12 @@ class FileParameter(Parameter):
             self._direction = parser.get(self.section.name, self.name + '.direction')
             if not self._direction in {'input', 'output'}:
                 self._direction = 'input'
-        except ConfigParser.NoOptionError:
+        except configparser.NoOptionError:
             self._direction = 'input'
 
         try:
             self.nullable = parser.getboolean(self.section.name, self.name + '.nullable')
-        except ConfigParser.NoOptionError:
+        except configparser.NoOptionError:
             self.nullable = False
 
     def encode(self, value):
@@ -501,8 +501,14 @@ class WeatherPathParameter(Parameter):
     typename = 'WeatherPathParameter'
 
     def initialize(self, parser):
-        self.locator = cea.inputlocator.InputLocator(None, [])
+        self._locator = None # cache the InputLocator in case we need it again as they can be expensive to create
         self._extensions = ['epw']
+
+    @property
+    def locator(self):
+        if self._locator is None:
+            self._locator = cea.inputlocator.InputLocator(None, [])
+        return self._locator
 
     def decode(self, value):
         if value == '':
@@ -563,7 +569,7 @@ class IntegerParameter(Parameter):
     def initialize(self, parser):
         try:
             self.nullable = parser.getboolean(self.section.name, self.name + '.nullable')
-        except ConfigParser.NoOptionError:
+        except configparser.NoOptionError:
             self.nullable = False
 
     def encode(self, value):
@@ -592,12 +598,12 @@ class RealParameter(Parameter):
         # allow user to override the amount of decimal places to use
         try:
             self._decimal_places = int(parser.get(self.section.name, self.name + '.decimal-places'))
-        except ConfigParser.NoOptionError:
+        except configparser.NoOptionError:
             self._decimal_places = 4
 
         try:
             self.nullable = parser.getboolean(self.section.name, self.name + '.nullable')
-        except ConfigParser.NoOptionError:
+        except configparser.NoOptionError:
             self.nullable = False
 
     def encode(self, value):
@@ -640,6 +646,16 @@ class ListParameter(Parameter):
 class PluginListParameter(ListParameter):
     """A list of cea.plugin.Plugin instances"""
     typename = "PluginListParameter"
+
+    def encode(self, list_of_plugins):
+        """Make sure we don't duplicate any of the plugins"""
+        seen = set()
+        unique_plugins = []
+        for plugin in list_of_plugins:
+            if not plugin in seen:
+                unique_plugins.append(plugin)
+                seen.add(plugin)
+        return super(PluginListParameter, self).encode(unique_plugins)
 
     def decode(self, value):
         from cea.plugin import instantiate_plugin

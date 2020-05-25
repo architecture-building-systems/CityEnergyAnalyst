@@ -4,11 +4,11 @@ Test cea.technologies
 
 import unittest
 import numpy as np
-import ConfigParser
+import configparser
 import json
 import os
 from cea.technologies.cooling_tower import calc_CT_partload_factor, calc_CT
-from cea.tests.test_schedules import get_test_config_path
+
 
 class TestCoolingTower(unittest.TestCase):
     def test_CT_partload_factor(self):
@@ -23,11 +23,10 @@ class TestCoolingTower(unittest.TestCase):
         Q_nom_W = max(q_hot_Wh)
         el_W = np.vectorize(calc_CT)(q_hot_Wh, Q_nom_W)
 
-        config = ConfigParser.SafeConfigParser()
+        config = configparser.ConfigParser()
         config.read(get_test_config_path())
         reference_results = json.loads(config.get('test_calc_CT', 'expected_results'))
         np.testing.assert_allclose(el_W, reference_results)
-
 
 
 def get_test_config_path():
