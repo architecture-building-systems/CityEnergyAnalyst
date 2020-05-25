@@ -229,7 +229,7 @@ def calc_Eaux_Qhs_Qcs(tsd, bpr):
     else:
         b = 2
 
-    if control_heating_cooling_systems.has_heating_system(bpr):
+    if control_heating_cooling_systems.has_heating_system(bpr.hvac["class_hs"]):
 
         # for all subsystems
         Eaux_hs_ahu = np.vectorize(calc_Eauxf_hs_dis)(Qhs_sys_ahu, Qhs_sys_0_ahu, deltaP_kPa, b, Ths_sup_ahu,
@@ -242,7 +242,7 @@ def calc_Eaux_Qhs_Qcs(tsd, bpr):
     else:
         tsd['Eaux_hs'] = np.zeros(HOURS_IN_YEAR)
 
-    if control_heating_cooling_systems.has_cooling_system(bpr):
+    if control_heating_cooling_systems.has_cooling_system(bpr.hvac["class_cs"]):
 
         # for all subsystems
         Eaux_cs_ahu = np.vectorize(calc_Eauxf_cs_dis)(Qcs_sys_ahu, Qcs_sys_0_ahu, deltaP_kPa, b, Tcs_sup_ahu,
