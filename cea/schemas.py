@@ -10,6 +10,7 @@ from __future__ import division
 import os
 import cPickle
 import pandas as pd
+import geopandas
 import yaml
 import warnings
 import functools
@@ -151,6 +152,7 @@ def create_schema_io(locator, lm, schema, original_function=None):
     file_type_to_schema_io = {
         "csv": CsvSchemaIo,
         "dbf": DbfSchemaIo,
+        "shp": ShapefileSchemaIo,
     }
     if file_type not in file_type_to_schema_io:
         # just return the default - no read() and write() possible
@@ -284,7 +286,7 @@ class CsvSchemaIo(SchemaIo):
 
 
 class DbfSchemaIo(SchemaIo):
-    """Read and write csv files - and attempt to validate them."""
+    """Read and write .dbf files - and attempt to validate them."""
 
     def read(self, *args, **kwargs):
         """
@@ -314,3 +316,44 @@ class DbfSchemaIo(SchemaIo):
             os.makedirs(parent_folder)
 
         dataframe_to_dbf(df, path_to_dbf)
+
+
+class ShapefileSchemaIo(SchemaIo):
+    """Read and write .shp files - and attempt to validate them."""
+
+    def read(self, *args, **kwargs):
+        """
+        Open the file indicated by the locator method and return it as a DataFrame.
+        args and kwargs are passed to the original (undecorated) locator method to figure out the location of the
+        file.
+
+        :param args:
+        :param kwargs:
+        :rtype: geopandas.GeoDataFrame
+        """
+
+        # make sure it's in the correct projection
+        from cea.utilities.standardize_coordinates import shapefile_to_WSG_and_UTM
+        df, _, __ = shapefile_to_WSG_and_UTM(self(*args, **kwargs))
+        self.validate(df)
+
+        return df
+
+    def write(self, df, *args, **kwargs):
+        """
+        :type df: geopandas.GeoDataFrame
+        """
+        from cea.utilities.standardize_coordinates import (get_lat_lon_projected_shapefile,
+                                                           get_projected_coordinate_system)
+        self.validate(df)
+        path_to_shp = self(*args, **kwargs)
+
+        parent_folder = os.path.dirname(path_to_shp)
+        if not os.path.exists(parent_folder):
+            os.makedirs(parent_folder)
+        lat, lon = get_lat_lon_projected_shapefile(df)
+
+        # get coordinate system and re project to UTM
+        df = df.to_crs(get_projected_coordinate_system(lat, lon))
+
+        df.to_file(path_to_shp)
