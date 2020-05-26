@@ -138,7 +138,7 @@ class Dashboard(object):
 
         plot = plot_class(self.config.project, parameters, self.cache)
 
-        if not index:
+        if index is None:
             index = len(self.plots)
         if index == len(self.plots):
             self.plots.append(plot)
