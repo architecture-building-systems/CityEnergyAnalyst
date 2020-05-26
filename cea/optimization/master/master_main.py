@@ -509,7 +509,7 @@ def save_final_generation_pareto_individuals(toolbox,
     performance_totals_pareto['individual'] = individual_number_list
     performance_totals_pareto['individual_name'] = systems_name_list
     performance_totals_pareto['generation'] = generation_number_list
-    performance_totals_pareto.to_csv(locator.get_optimization_generation_total_performance_pareto(generation))
+    performance_totals_pareto.to_csv(locator.get_optimization_generation_total_performance_pareto(generation), index=False)
 
     return systems_name_list
 
@@ -535,6 +535,7 @@ def save_generation_pareto_individuals(locator, generation, record_individuals_t
     performance_totals_pareto['individual'] = individual_list
     performance_totals_pareto['individual_name'] = systems_name_list
     performance_totals_pareto['generation'] = generation_list
+    performance_totals_pareto.to_csv(locator.get_optimization_generation_total_performance_pareto(generation), index=False)
 
     return systems_name_list
 
