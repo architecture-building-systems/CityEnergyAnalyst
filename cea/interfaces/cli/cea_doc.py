@@ -39,10 +39,10 @@ def main(config=None):
         print_help(config, args[1:])
         sys.exit(1)
     script_name = args.pop(0)
-    cea_script = cea.scripts.by_name(script_name)
+    cea_script = cea.scripts.by_name(script_name, plugins=config.plugins)
     if not 'doc' in cea_script.interfaces:
         print('Invalid script for cea-doc')
-        print_valid_script_names()
+        print_valid_script_names(config.plugins)
         sys.exit(ScriptNotFoundException.rc)
     config.restrict_to(cea_script.parameters)
     config.apply_command_line_args(args, cea_script.parameters)
@@ -70,10 +70,10 @@ def print_help(config, remaining_args):
     if remaining_args:
         script_name = remaining_args[0]
         try:
-            cea_script = cea.scripts.by_name(script_name)
+            cea_script = cea.scripts.by_name(script_name, plugins=config.plugins)
         except:
             print("Invalid value for SCRIPT.")
-            print_valid_script_names()
+            print_valid_script_names(plugins=config.plugins)
             return
         script_module = importlib.import_module(cea_script.module)
         print(script_module.__doc__)
@@ -88,16 +88,16 @@ def print_help(config, remaining_args):
         print("       to run a specific script")
         print("usage: cea --help SCRIPT")
         print("       to get additional help specific to a script")
-        print_valid_script_names()
+        print_valid_script_names(plugins=config.plugins)
 
 
-def print_valid_script_names():
+def print_valid_script_names(plugins):
     """Print out the list of scripts by category."""
     import textwrap
     import itertools
     print("")
     print("SCRIPT can be one of:")
-    scripts = sorted(cea.scripts.for_interface('doc'), key=lambda s: s.category)
+    scripts = sorted(cea.scripts.for_interface('doc', plugins=plugins), key=lambda s: s.category)
     for category, group in itertools.groupby(scripts, lambda s: s.category):
         print(textwrap.fill("[%s]:  %s" % (category, ', '.join(s.name for s in sorted(group, key=lambda s: s.name))),
                             subsequent_indent='    ', break_on_hyphens=False))

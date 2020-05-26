@@ -10,9 +10,15 @@ from utils import deconstruct_parameters
 api = Namespace('Dashboard', description='Dashboard plots')
 
 LAYOUTS = ['row', 'grid']
-CATEGORIES = {c.name: {'label': c.label, 'plots': [{'id': p.id(), 'name': p.name} for p in c.plots]}
-              for c in cea.plots.categories.list_categories()}
+CATEGORIES = None
 
+
+def get_categories(plugins):
+    global CATEGORIES
+    if not CATEGORIES:
+        CATEGORIES = {c.name: {'label': c.label, 'plots': [{'id': p.id(), 'name': p.name} for p in c.plots]}
+                      for c in cea.plots.categories.list_categories(plugins=plugins)}
+    return CATEGORIES
 
 
 def dashboard_to_dict(dashboard):
@@ -147,7 +153,7 @@ class DashboardPlotCategories(Resource):
     """
 
     def get(self):
-        return CATEGORIES
+        return get_categories(current_app.cea_config.plugins)
 
 
 @api.route('/plot-categories/<string:category_name>/plots/<string:plot_id>/parameters')
@@ -157,7 +163,8 @@ class DashboardPlotCategoriesParameters(Resource):
     """
 
     def get(self, category_name, plot_id):
-        plot_class = cea.plots.categories.load_plot_by_id(category_name, plot_id)
+        config = current_app.cea_config
+        plot_class = cea.plots.categories.load_plot_by_id(category_name, plot_id, config.plugins)
         return get_parameters_from_plot_class(plot_class, request.args.get('scenario'))
 
 
@@ -185,7 +192,7 @@ class DashboardPlot(Resource):
         dashboard = dashboards[dashboard_index]
 
         if 'category' in form and 'plot_id' in form:
-            dashboard.add_plot(form['category'], form['plot_id'], plot_index)
+            dashboard.add_plot(form['category'], form['plot_id'], plugins=config.plugins, index=plot_index)
 
         # Set parameters if included in form and plot exists
         if 'parameters' in form:

@@ -1,7 +1,11 @@
 """
 inputlocator.py - locate input files by name based on the reference folder structure.
 """
+from __future__ import print_function
+from __future__ import division
+
 import os
+import cea.schemas
 import shutil
 import tempfile
 import time
@@ -23,10 +27,46 @@ class InputLocator(object):
     """
 
     # SCENARIO
-    def __init__(self, scenario):
+    def __init__(self, scenario, plugins=None):
+        if not plugins:
+            plugins = []
         self.scenario = scenario
         self.db_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'databases'))
         self.weather_path = os.path.join(self.db_path, 'weather')
+        self._wrap_locator_methods(plugins)
+        self.plugins = plugins
+
+    def __getstate__(self):
+        """Make sure we can pickle an InputLocator..."""
+        return {
+            "scenario": self.scenario,
+            "db_path": self.db_path,
+            "weather_path": self.weather_path,
+            "plugins": [str(p) for p in self.plugins]
+        }
+
+    def __setstate__(self, state):
+        from cea.plugin import instantiate_plugin
+
+        self.scenario = state["scenario"]
+        self.db_path = state["db_path"]
+        self.weather_path = state["weather_path"]
+        self.plugins = [instantiate_plugin(plugin_fqname) for plugin_fqname in state["plugins"]]
+        self._wrap_locator_methods(self.plugins)
+
+    def _wrap_locator_methods(self, plugins):
+        """
+        For each locator method defined in schemas.yml, wrap it in a callable object (preserving the
+        original interface) that allows for read() and write() operations.
+        """
+        schemas = cea.schemas.schemas(plugins)
+        for lm in schemas.keys():
+            if hasattr(self, lm):
+                # allow cea.inputlocator.InputLocator to define locator methods
+                setattr(self, lm, cea.schemas.create_schema_io(self, lm, schemas[lm], getattr(self.__class__, lm)))
+            else:
+                # create locator methods based on schemas if not overriden in InputLocator
+                setattr(self, lm, cea.schemas.create_schema_io(self, lm, schemas[lm]))
 
     @staticmethod
     def _ensure_folder(*components):

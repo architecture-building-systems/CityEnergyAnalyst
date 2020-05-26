@@ -20,7 +20,8 @@ class ToolList(Resource):
         from itertools import groupby
         from collections import OrderedDict
 
-        tools = cea.scripts.for_interface('dashboard')
+        config = current_app.cea_config
+        tools = cea.scripts.for_interface('dashboard', plugins=config.plugins)
         result = OrderedDict()
         for category, group in groupby(tools, lambda t: t.category):
             result[category] = [
@@ -33,7 +34,7 @@ class ToolList(Resource):
 class Tool(Resource):
     def get(self, tool_name):
         config = current_app.cea_config
-        script = cea.scripts.by_name(tool_name)
+        script = cea.scripts.by_name(tool_name, plugins=config.plugins)
 
         parameters = []
         categories = {}
@@ -91,5 +92,5 @@ class ToolSave(Resource):
 def parameters_for_script(script_name, config):
     """Return a list consisting of :py:class:`cea.config.Parameter` objects for each parameter of a script"""
     parameters = [p for _, p in config.matching_parameters(
-        cea.scripts.by_name(script_name).parameters)]
+        cea.scripts.by_name(script_name, plugins=config.plugins).parameters)]
     return parameters
