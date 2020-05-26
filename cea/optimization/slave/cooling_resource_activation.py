@@ -97,6 +97,7 @@ def cooling_resource_activator(Q_thermal_req,
                                master_to_slave_variables,
                                absorption_chiller,
                                CCGT_operation_data,
+                               min_VCC_capacity,
                                max_VCC_capacity):
     """
 
