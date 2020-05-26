@@ -1,7 +1,7 @@
 """
 Provide a cli interface to plotting - for testing plots from the command line.
 
-Useage: cea-plot CATEGORY PLOT-ID [--PARAMETER VALUE]*
+Usage: cea-plot CATEGORY PLOT-ID [--PARAMETER VALUE]*
 
 (e.g. cea-plot energy-demand energy-balance --building B001 --scenario-name baseline)
 """
@@ -26,6 +26,14 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
+def print_usage(plugins):
+    print("Usage: cea-plot CATEGORY PLOT-ID [--PARAMETER VALUE]*")
+    print("Choose from:")
+    for plot_category, plot_class in cea.plots.categories.list_plots(plugins):
+        print("{category}/{plot}".format(category=plot_category.name, plot=plot_class.id()))
+    return
+
+
 def main(*args):
     config = cea.config.Configuration()
     cache = cea.plots.cache.NullPlotCache()
@@ -33,6 +41,11 @@ def main(*args):
     # handle arguments
     if not args:
         args = sys.argv[1:]  # drop the script name (plot_cli.py) from the arguments
+
+    if len(args) < 3:
+        print_usage(config.plugins)
+        return
+
     category_name, plot_id, plot_args = args[0], args[1], args[2:]
 
     plot_class = cea.plots.categories.load_plot_by_id(category_name, plot_id, config.plugins)
