@@ -11,14 +11,12 @@ import wntr
 import cea.config
 import cea.inputlocator
 import cea.technologies.substation as substation
-from cea.constants import P_WATER_KGPERM3, FT_WATER_TO_PA, FT_TO_M, M_WATER_TO_PA, HEAT_CAPACITY_OF_WATER_JPERKGK, \
-    SHAPEFILE_TOLERANCE
+from cea.constants import P_WATER_KGPERM3, FT_WATER_TO_PA, FT_TO_M, M_WATER_TO_PA, HEAT_CAPACITY_OF_WATER_JPERKGK, SHAPEFILE_TOLERANCE
+from cea.optimization.constants import PUMP_ETA
 from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
 from cea.technologies.thermal_network.thermal_network_loss import calc_temperature_out_per_pipe
 from cea.resources import geothermal
 from cea.technologies.constants import NETWORK_DEPTH
-from cea.technologies.pumps import calc_pump_power
-from cea.technologies.thermal_network.thermal_network_loss import calc_temperature_out_per_pipe
 from cea.utilities.epwreader import epw_reader
 
 __author__ = "Jimeno A. Fonseca"
@@ -159,14 +157,12 @@ def calc_linear_thermal_loss_coefficient(diamter_ext_m, diamter_int_m, diameter_
     K_WperKm = 2 * math.pi / resistance_mKperW
     return K_WperKm
 
-
 def calc_thermal_loss_per_pipe(T_in_K, m_kgpers, T_ground_K, k_kWperK):
     T_out_K = calc_temperature_out_per_pipe(T_in_K, m_kgpers, k_kWperK, T_ground_K)
     DT = T_in_K - T_out_K
     Q_loss_kWh = DT * m_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK / 1000
 
     return Q_loss_kWh
-
 
 def thermal_network_simplified(locator, config, network_name):
     # local variables
@@ -205,7 +201,7 @@ def thermal_network_simplified(locator, config, network_name):
                 locator.get_optimization_substations_results_file(building_name, "DH", DHN_barcode))
             volume_flow_m3pers_building[building_name] = substation_results["mdot_DH_result_kgpers"] / P_WATER_KGPERM3
             T_sup_K_building[building_name] = substation_results["T_supply_DH_result_K"]
-            T_re_K_building[building_name] = np.where(substation_results["T_return_DH_result_K"] > 273.15,
+            T_re_K_building[building_name] = np.where(substation_results["T_return_DH_result_K"] >273.15,
                                                       substation_results["T_return_DH_result_K"], np.nan)
             Q_demand_kWh_building[building_name] = (substation_results["Q_heating_W"] + substation_results[
                 "Q_dhw_W"]) / 1000
@@ -232,6 +228,7 @@ def thermal_network_simplified(locator, config, network_name):
             Q_demand_kWh_building[building_name] = substation_results[
                                                        "Q_space_cooling_data_center_and_refrigeration_W"] / 1000
 
+
     import cea.utilities
     with cea.utilities.pushd(locator.get_thermal_network_folder()):
         # Create a water network model
@@ -239,13 +236,10 @@ def thermal_network_simplified(locator, config, network_name):
 
         # add loads
         building_base_demand_m3s = {}
-        total_demand_kgs = []
         for building in volume_flow_m3pers_building.keys():
             building_base_demand_m3s[building] = volume_flow_m3pers_building[building].max()
-            pattern_demand = (
-                        volume_flow_m3pers_building[building].values / building_base_demand_m3s[building]).tolist()
+            pattern_demand = (volume_flow_m3pers_building[building].values / building_base_demand_m3s[building]).tolist()
             wn.add_pattern(building, pattern_demand)
-            total_demand_kgs.append(volume_flow_m3pers_building[building] * P_WATER_KGPERM3)
 
         # add nodes
         consumer_nodes = []
@@ -264,7 +258,7 @@ def thermal_network_simplified(locator, config, network_name):
                                 elevation=thermal_transfer_unit_design_head_m,
                                 coordinates=node[1]["coordinates"])
             elif node[1]["Type"] == "PLANT":
-                base_head = int(thermal_transfer_unit_design_head_m * 1.2)
+                base_head = int(thermal_transfer_unit_design_head_m*1.2)
                 start_node = node[0]
                 name_node_plant = start_node
                 wn.add_reservoir(start_node,
@@ -287,7 +281,7 @@ def thermal_network_simplified(locator, config, network_name):
                         status='OPEN')
 
         # add options
-        wn.options.time.duration = 8759 * 3600  # this indicates epanet to do one year simulation
+        wn.options.time.duration = 8759 * 3600   # this indicates epanet to do one year simulation
         wn.options.time.hydraulic_timestep = 60 * 60
         wn.options.time.pattern_timestep = 60 * 60
         wn.options.solver.accuracy = 0.01
@@ -300,8 +294,7 @@ def thermal_network_simplified(locator, config, network_name):
         pipe_names = max_volume_flow_rates_m3s.index.values
         pipe_catalog = pd.read_excel(locator.get_database_distribution_systems(), sheet_name='THERMAL_GRID')
         Pipe_DN, D_ext_m, D_int_m, D_ins_m = zip(
-            *[calc_max_diameter(flow, pipe_catalog, velocity_ms=velocity_ms, peak_load_percentage=peak_load_percentage)
-              for
+            *[calc_max_diameter(flow, pipe_catalog, velocity_ms=velocity_ms, peak_load_percentage=peak_load_percentage) for
               flow in max_volume_flow_rates_m3s])
         pipe_dn = pd.Series(Pipe_DN, pipe_names)
         diameter_int_m = pd.Series(D_int_m, pipe_names)
@@ -327,8 +320,7 @@ def thermal_network_simplified(locator, config, network_name):
         for column in head_loss_m.columns.values:
             length_m = edge_df.loc[column]['length_m']
             head_loss_m[column] = head_loss_m[column] * length_m
-        reservoir_head_loss_m = head_loss_m.sum(
-            axis=1) + thermal_transfer_unit_design_head_m * 1.2  # fixme: only one thermal_transfer_unit_design_head_m from one substation?
+        reservoir_head_loss_m = head_loss_m.sum(axis=1) + thermal_transfer_unit_design_head_m*1.2 # fixme: only one thermal_transfer_unit_design_head_m from one substation?
 
         # apply this pattern to the reservoir and get results
         base_head = reservoir_head_loss_m.max()
@@ -356,7 +348,7 @@ def thermal_network_simplified(locator, config, network_name):
     head_loss_substations_ft = results.node['head'][consumer_nodes].abs()
     head_loss_substations_Pa = head_loss_substations_ft * FT_WATER_TO_PA
 
-    # POSTPORCESSING MASSFLOW RATES
+    #POSTPORCESSING MASSFLOW RATES
     # MASS_FLOW_RATE (EDGES)
     flow_rate_supply_m3s = results.link['flowrate'].abs()
     massflow_supply_kgs = flow_rate_supply_m3s * P_WATER_KGPERM3
@@ -374,6 +366,7 @@ def thermal_network_simplified(locator, config, network_name):
         np.vectorize(calc_linear_thermal_loss_coefficient)(diameter_ext_m, diameter_int_m, diameter_ins_m), pipe_names)
     average_temperature_supply_K = T_sup_K_building.mean(axis=1)
 
+
     thermal_losses_supply_kWh = results.link['headloss'].copy()
     thermal_losses_supply_kWh.reset_index(inplace=True, drop=True)
     thermal_losses_supply_Wperm = thermal_losses_supply_kWh.copy()
@@ -383,10 +376,10 @@ def thermal_network_simplified(locator, config, network_name):
         k_WperKm_pipe = thermal_coeffcient_WperKm[pipe]
         k_kWperK = k_WperKm_pipe * length_m / 1000
         thermal_losses_supply_kWh[pipe] = np.vectorize(calc_thermal_loss_per_pipe)(average_temperature_supply_K.values,
-                                                                                   massflow_kgs.values,
-                                                                                   temperature_of_the_ground_K,
-                                                                                   k_kWperK,
-                                                                                   )
+                                                                     massflow_kgs.values,
+                                                                     temperature_of_the_ground_K,
+                                                                     k_kWperK,
+                                                                     )
 
         thermal_losses_supply_Wperm[pipe] = (thermal_losses_supply_kWh[pipe] / length_m) * 1000
 
@@ -400,10 +393,10 @@ def thermal_network_simplified(locator, config, network_name):
         k_WperKm_pipe = thermal_coeffcient_WperKm[pipe]
         k_kWperK = k_WperKm_pipe * length_m / 1000
         thermal_losses_return_kWh[pipe] = np.vectorize(calc_thermal_loss_per_pipe)(average_temperature_return_K.values,
-                                                                                   massflow_kgs.values,
-                                                                                   temperature_of_the_ground_K,
-                                                                                   k_kWperK,
-                                                                                   )
+                                                                     massflow_kgs.values,
+                                                                     temperature_of_the_ground_K,
+                                                                     k_kWperK,
+                                                                     )
     # WRITE TO DISK
 
     # LINEAR PRESSURE LOSSES (EDGES)
@@ -440,19 +433,19 @@ def thermal_network_simplified(locator, config, network_name):
     # pressure losses total
     # $ POSTPROCESSING - PUMPING NEEDS PER HOUR OF THE YEAR (TIMES 2 to account for return)
     flow_rate_substations_m3s = results.node['demand'][consumer_nodes].abs()
-
-    pressure_loss_supply_edge_kW = calc_pump_power((flow_rate_supply_m3s * P_WATER_KGPERM3),
-                                                   head_loss_supply_network_Pa) / 1000
-    pressure_loss_substations_kW = calc_pump_power((flow_rate_substations_m3s * P_WATER_KGPERM3),
-                                               head_loss_substations_Pa) / 1000
+    head_loss_supply_kWperm = (linear_pressure_loss_Paperm * (flow_rate_supply_m3s * 3600)) / (3.6E6 * PUMP_ETA)
+    head_loss_return_kWperm = head_loss_supply_kWperm.copy()
+    pressure_loss_supply_edge_kW = (head_loss_supply_network_Pa * (flow_rate_supply_m3s * 3600)) / (3.6E6 * PUMP_ETA)
+    head_loss_return_kW = pressure_loss_supply_edge_kW.copy()
+    head_loss_substations_kW = (head_loss_substations_Pa * (flow_rate_substations_m3s * 3600)) / (3.6E6 * PUMP_ETA)
     accumulated_head_loss_supply_kW = pressure_loss_supply_edge_kW.sum(axis=1)
-    accumulated_head_loss_return_kW = accumulated_head_loss_supply_kW
-    accumulated_head_loss_substations_kW = pressure_loss_substations_kW.sum(axis=1)
+    accumulated_head_loss_return_kW = head_loss_return_kW.sum(axis=1)
+    accumulated_head_loss_substations_kW = head_loss_substations_kW.sum(axis=1)
     accumulated_head_loss_total_kW = accumulated_head_loss_supply_kW + \
                                      accumulated_head_loss_return_kW + \
                                      accumulated_head_loss_substations_kW
     head_loss_system_Pa = pd.DataFrame({"pressure_loss_supply_Pa": accumulated_head_loss_supply_Pa,
-                                        "pressure_loss_return_Pa": accumulated_head_loss_supply_Pa,
+                                        "pressure_loss_return_Pa": accumulated_head_loss_return_Pa,
                                         "pressure_loss_substations_Pa": accumulated_head_loss_substations_Pa,
                                         "pressure_loss_total_Pa": accumulated_head_loss_total_Pa})
     head_loss_system_Pa.to_csv(locator.get_network_total_pressure_drop_file(network_type, network_name),
@@ -469,8 +462,8 @@ def thermal_network_simplified(locator, config, network_name):
         locator.get_thermal_network_pressure_losses_edges_file(network_type, network_name), index=False)
 
     # pressure losses per substation
-    pressure_loss_substations_kW = pressure_loss_substations_kW.rename(columns=building_nodes_pairs)
-    pressure_loss_substations_kW.to_csv(locator.get_thermal_network_substation_ploss_file(network_type, network_name),
+    head_loss_substations_kW = head_loss_substations_kW.rename(columns=building_nodes_pairs)
+    head_loss_substations_kW.to_csv(locator.get_thermal_network_substation_ploss_file(network_type, network_name),
                                     index=False)
 
     # pumping needs losses total
@@ -516,14 +509,10 @@ def thermal_network_simplified(locator, config, network_name):
     for node in node_df.index.values:
         T_return_K_nodes[node] = average_year
     T_return_K_nodes.to_csv(locator.get_network_temperature_return_nodes_file(network_type, network_name),
-                            index=False)
+                         index=False)
 
     # summary of edges used for the calculation
     fields_edges = ['length_m', 'Pipe_DN', 'Type_mat', 'D_int_m']
-    edge_df[fields_edges].to_csv(locator.get_thermal_network_edge_list_file(network_type, network_name), index=False)
-    fields_nodes = ['Building', 'Type']
-    node_df[fields_nodes].to_csv(locator.get_thermal_network_node_types_csv_file(network_type, network_name),
-                                 index=True)
     edge_df[fields_edges].to_csv(locator.get_thermal_network_edge_list_file(network_type, network_name))
     fields_nodes = ['Type', 'Building']
     node_df[fields_nodes].to_csv(locator.get_thermal_network_node_types_csv_file(network_type, network_name))
