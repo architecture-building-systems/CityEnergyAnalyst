@@ -10,6 +10,7 @@ from flask_restplus import Namespace, Resource, abort
 import cea.inputlocator
 import cea.utilities.dbf
 import cea.scripts
+import cea.schemas
 from cea.datamanagement.databases_verification import InputFileValidator
 from cea.interfaces.dashboard.api.databases import read_all_databases, DATABASES_SCHEMA_KEYS
 from cea.plots.supply_system.a_supply_system_map import get_building_connectivity, newer_network_layout_exists
@@ -43,7 +44,7 @@ INPUT_DATABASES = [
 
 def get_input_database_schemas():
     """Parse the schemas.yml file and create the dictionary of column types"""
-    schemas = cea.scripts.schemas()
+    schemas = cea.schemas.schemas(plugins=[])
     input_database_schemas = OrderedDict()
     for db_name, locator in INPUT_DATABASES:
         schema = schemas[locator]
@@ -394,8 +395,8 @@ class InputDatabaseValidate(Resource):
         import cea.scripts
         config = current_app.cea_config
         locator = cea.inputlocator.InputLocator(config.scenario)
-        schemas = cea.scripts.schemas()
-        validator = InputFileValidator(locator)
+        schemas = cea.schemas.schemas(plugins=[])
+        validator = InputFileValidator(locator, plugins=config.plugins)
         out = OrderedDict()
 
         for db_name, schema_keys in DATABASES_SCHEMA_KEYS.items():

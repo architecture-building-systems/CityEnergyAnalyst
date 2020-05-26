@@ -11,12 +11,9 @@ import functools
 import hashlib
 import json
 import os
-import pickle
 import time
 
 import pandas as pd
-from plotly.utils import PlotlyJSONEncoder
-
 
 class PlotCache(object):
     """A cache for plot data. Use the ``lookup`` method to retrieve data from the cache."""
@@ -82,6 +79,8 @@ class PlotCache(object):
 
     def lookup_plot_data(self, plot, producer):
         """Lookup the cache of a plotly graph data created with plot.calc_graph"""
+        from plotly.utils import PlotlyJSONEncoder
+
         data_path = os.path.join(plot.category_name, plot.id())
         data_file = self._cached_data_file(data_path, plot.parameters) + '.graphdata'
         cache_timestamp = self.cache_timestamp(data_file)

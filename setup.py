@@ -18,6 +18,7 @@ with open('README.rst', 'r') as f:
     LONG_DESCRIPTION = f.read()
 
 INSTALL_REQUIRES = ['SALib==1.2',  # last version to work with python2
+                    "cufflinks",
                     'deap==1.3.0',
                     'doit==0.29.0',
                     'ephem',
@@ -72,6 +73,7 @@ setup(name='cityenergyanalyst',
           'console_scripts': ['cea=cea.interfaces.cli.cli:main',
                               'cea-config=cea.interfaces.cli.cea_config:main',
                               'cea-doc=cea.interfaces.cli.cea_doc:main',
-                              'cea-worker=cea.worker:main'],
+                              'cea-worker=cea.worker:main',
+                              "cea-plot=cea.plots.plot_cli:main"],
       },
       )

@@ -3,16 +3,18 @@ Manage configuration information for the CEA. The Configuration class is built d
 in ``default.config``.
 """
 from __future__ import print_function
+from __future__ import division
 
 import os
 import re
 import json
-import ConfigParser
+import configparser
 import cea.inputlocator
 import collections
 import datetime
 import glob
 import tempfile
+from cea.utilities import unique
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -30,10 +32,14 @@ CEA_CONFIG = os.path.expanduser('~/cea.config')
 class Configuration(object):
     def __init__(self, config_file=CEA_CONFIG):
         self.restricted_to = None
-        self.default_config = ConfigParser.SafeConfigParser()
+        self.default_config = configparser.ConfigParser()
         self.default_config.read(DEFAULT_CONFIG)
-        self.user_config = ConfigParser.SafeConfigParser()
+        self.user_config = configparser.ConfigParser()
         self.user_config.read([DEFAULT_CONFIG, config_file])
+
+        import cea.plugin
+        cea.plugin.add_plugins(self.default_config, self.user_config)
+
         self.sections = collections.OrderedDict([(section_name, Section(section_name, self))
                                                  for section_name in self.default_config.sections()])
 
@@ -74,11 +80,16 @@ class Configuration(object):
     def __setstate__(self, state):
         """read in the user_config and re-initialize the state (this basically follows the __init__)"""
         import StringIO
+        import cea.plugin
+
         self.restricted_to = None
-        self.default_config = ConfigParser.SafeConfigParser()
+        self.default_config = configparser.ConfigParser()
         self.default_config.read(DEFAULT_CONFIG)
-        self.user_config = ConfigParser.SafeConfigParser()
+        self.user_config = configparser.ConfigParser()
         self.user_config.readfp(StringIO.StringIO(state))
+
+        cea.plugin.add_plugins(self.default_config, self.user_config)
+
         self.sections = {section_name: Section(section_name, config=self)
                          for section_name in self.default_config.sections()}
 
@@ -93,6 +104,7 @@ class Configuration(object):
         that a script creates it's own config file somewhere down the line. This is hard to check anyway.
         """
         self.restricted_to = [p.fqname for s, p in self.matching_parameters(option_list)]
+        self.restricted_to.append("general:plugins")
         if 'general:scenario' in self.restricted_to:
             # since general:scenario is forced to be "{general:project}/{general:scenario-name}",
             # allow those two too
@@ -181,7 +193,7 @@ class Configuration(object):
             # don't overwrite the default.config
             return
 
-        parser = ConfigParser.SafeConfigParser()
+        parser = configparser.ConfigParser()
         for section in self.sections.values():
             parser.add_section(section.name)
             for parameter in section.parameters.values():
@@ -207,7 +219,10 @@ class Configuration(object):
         return self.get_parameter(fqname).get()
 
     def get_parameter(self, fqname):
-        """Given a string of the form "section:parameter", return the parameter object"""
+        """Given a string of the form "section:parameter", return the parameter object
+
+        :rtype: cea.config.Parameter
+        """
         section, parameter = fqname.split(':')
         try:
             return self.sections[section].parameters[parameter]
@@ -298,7 +313,7 @@ def construct_parameter(parameter_name, section, config):
                                                                                                        section.name)
     try:
         parameter_type = config.default_config.get(section.name, parameter_name + '.type')
-    except ConfigParser.NoOptionError:
+    except configparser.NoOptionError:
         parameter_type = 'StringParameter'
 
     if not parameter_type in globals():
@@ -326,11 +341,11 @@ class Parameter(object):
         self.config = config
         try:
             self.help = config.default_config.get(section.name, self.name + ".help", raw=True)
-        except ConfigParser.NoOptionError:
+        except configparser.NoOptionError:
             self.help = "FIXME: Add help to %s:%s" % (section.name, self.name)
         try:
             self.category = config.default_config.get(section.name, self.name + ".category", raw=True)
-        except ConfigParser.NoOptionError:
+        except configparser.NoOptionError:
             self.category = None
 
         # give subclasses a chance to specialize their behavior
@@ -378,7 +393,7 @@ class Parameter(object):
     def replace_references(self, encoded_value):
         # expand references (like ``{general:scenario}``)
         def lookup_config(matchobj):
-            return self.config.sections[matchobj.group(1)].parameters[matchobj.group(2)].get()
+            return self.config.sections[matchobj.group(1)].parameters[matchobj.group(2)].get_raw()
 
         encoded_value = re.sub('{([a-z0-9-]+):([a-z0-9-]+)}', lookup_config, encoded_value)
         return encoded_value
@@ -397,7 +412,7 @@ class PathParameter(Parameter):
             self._direction = parser.get(self.section.name, self.name + '.direction')
             if not self._direction in {'input', 'output'}:
                 self._direction = 'input'
-        except ConfigParser.NoOptionError:
+        except configparser.NoOptionError:
             self._direction = 'input'
 
     def decode(self, value):
@@ -415,12 +430,12 @@ class FileParameter(Parameter):
             self._direction = parser.get(self.section.name, self.name + '.direction')
             if not self._direction in {'input', 'output'}:
                 self._direction = 'input'
-        except ConfigParser.NoOptionError:
+        except configparser.NoOptionError:
             self._direction = 'input'
 
         try:
             self.nullable = parser.getboolean(self.section.name, self.name + '.nullable')
-        except ConfigParser.NoOptionError:
+        except configparser.NoOptionError:
             self.nullable = False
 
     def encode(self, value):
@@ -486,8 +501,14 @@ class WeatherPathParameter(Parameter):
     typename = 'WeatherPathParameter'
 
     def initialize(self, parser):
-        self.locator = cea.inputlocator.InputLocator(None)
+        self._locator = None # cache the InputLocator in case we need it again as they can be expensive to create
         self._extensions = ['epw']
+
+    @property
+    def locator(self):
+        if self._locator is None:
+            self._locator = cea.inputlocator.InputLocator(None, [])
+        return self._locator
 
     def decode(self, value):
         if value == '':
@@ -548,7 +569,7 @@ class IntegerParameter(Parameter):
     def initialize(self, parser):
         try:
             self.nullable = parser.getboolean(self.section.name, self.name + '.nullable')
-        except ConfigParser.NoOptionError:
+        except configparser.NoOptionError:
             self.nullable = False
 
     def encode(self, value):
@@ -577,12 +598,12 @@ class RealParameter(Parameter):
         # allow user to override the amount of decimal places to use
         try:
             self._decimal_places = int(parser.get(self.section.name, self.name + '.decimal-places'))
-        except ConfigParser.NoOptionError:
+        except configparser.NoOptionError:
             self._decimal_places = 4
 
         try:
             self.nullable = parser.getboolean(self.section.name, self.name + '.nullable')
-        except ConfigParser.NoOptionError:
+        except configparser.NoOptionError:
             self.nullable = False
 
     def encode(self, value):
@@ -620,6 +641,21 @@ class ListParameter(Parameter):
 
     def decode(self, value):
         return parse_string_to_list(value)
+
+
+class PluginListParameter(ListParameter):
+    """A list of cea.plugin.Plugin instances"""
+    typename = "PluginListParameter"
+
+    def encode(self, list_of_plugins):
+        """Make sure we don't duplicate any of the plugins"""
+        unique_plugins = unique(list_of_plugins)
+        return super(PluginListParameter, self).encode(unique_plugins)
+
+    def decode(self, value):
+        from cea.plugin import instantiate_plugin
+        plugin_fqnames = unique(parse_string_to_list(value))
+        return [instantiate_plugin(plugin_fqname) for plugin_fqname in plugin_fqnames]
 
 
 class SubfoldersParameter(ListParameter):
@@ -710,7 +746,7 @@ class DatabasePathParameter(Parameter):
     typename = "DatabasePathParameter"
 
     def initialize(self, parser):
-        self.locator = cea.inputlocator.InputLocator(None)
+        self.locator = cea.inputlocator.InputLocator(None, [])
         self._choices = {p: os.path.join(self.locator.db_path, p) for p in os.listdir(self.locator.db_path)
                          if os.path.isdir(os.path.join(self.locator.db_path, p)) and p != 'weather'}
 
@@ -766,7 +802,7 @@ class PlantNodeParameter(ChoiceParameter):
 
     @property
     def _choices(self):
-        locator = cea.inputlocator.InputLocator(scenario=self.config.scenario)
+        locator = cea.inputlocator.InputLocator(scenario=self.config.scenario, plugins=[])
         network_type = self.config.get(self.network_type_fqn)
         network_name = self.config.get(self.network_name_fqn)
         return locator.get_plant_nodes(network_type, network_name)
@@ -863,7 +899,7 @@ class SingleBuildingParameter(ChoiceParameter):
     @property
     def _choices(self):
         # set the `._choices` attribute to the list buildings in the project
-        locator = cea.inputlocator.InputLocator(self.config.scenario)
+        locator = cea.inputlocator.InputLocator(self.config.scenario, plugins=[])
         building_names = locator.get_zone_building_names()
         if not building_names:
             raise cea.ConfigError("Either no buildings in zone or no zone geometry found.")
@@ -891,7 +927,7 @@ class GenerationParameter(ChoiceParameter):
     def _choices(self):
         import glob
         # set the `._choices` attribute to the list buildings in the project
-        locator = cea.inputlocator.InputLocator(self.config.scenario)
+        locator = cea.inputlocator.InputLocator(self.config.scenario, plugins=[])
         checkpoints = glob.glob(os.path.join(locator.get_optimization_master_results_folder(),"*.json"))
         interations = []
         for checkpoint in checkpoints:
@@ -985,7 +1021,7 @@ class BuildingsParameter(MultiChoiceParameter):
     @property
     def _choices(self):
         # set the `._choices` attribute to the list buildings in the project
-        locator = cea.inputlocator.InputLocator(self.config.scenario)
+        locator = cea.inputlocator.InputLocator(self.config.scenario, plugins=[])
         return locator.get_zone_building_names()
 
 
@@ -1017,7 +1053,7 @@ def get_scenarios_list(project_path):
 
 
 def get_systems_list(scenario_path):
-    locator = cea.inputlocator.InputLocator(scenario_path)
+    locator = cea.inputlocator.InputLocator(scenario_path, plugins=[])
     checkpoints = glob.glob(os.path.join(locator.get_optimization_master_results_folder(), "*.json"))
     iterations = set()
     for checkpoint in checkpoints:
@@ -1069,5 +1105,6 @@ def validate_coord_tuple(coord_tuple):
         raise ValueError('Longitude must be between -180 and 180. Got {}'.format(lon))
     return coord_tuple
 
-
-
+ 
+if __name__ == "__main__":
+    config = Configuration()

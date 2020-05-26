@@ -1,5 +1,6 @@
 import unittest
 import os
+import pickle
 import cea.inputlocator
 
 class TestInputLocator(unittest.TestCase):
@@ -26,3 +27,9 @@ class TestInputLocator(unittest.TestCase):
         self.assertTrue(os.path.exists(supply_systems_cost))
         self.assertTrue(os.path.realpath(supply_systems_cost).startswith(
             os.path.realpath(self.locator.scenario)), msg='Path not in scenario: %s' % supply_systems_cost)
+
+    def test_pickle_inputlocator(self):
+        """Make sure the InputLocator can be pickled - we need this, e.g. for multiprocessing"""
+        locator = pickle.loads(pickle.dumps(self.locator))
+        self.assertEqual(locator.scenario, self.locator.scenario)
+        self.assertEqual(locator.get_total_demand(), self.locator.get_total_demand())

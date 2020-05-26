@@ -12,6 +12,8 @@ import cea.plots
 import cea.config
 import cea.inputlocator
 import cea.plots.cache
+import cea.plots.base
+from typing import Type
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -23,7 +25,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def list_categories():
+def list_categories(plugins):
     """List all the categories implemented in the CEA"""
     import cea.plots
     for importer, modname, ispkg in pkgutil.iter_modules(cea.plots.__path__, cea.plots.__name__ + '.'):
@@ -42,39 +44,39 @@ def list_categories():
             # this module does not follow the conventions outlined in ``cea.plots.__init__.py`` and will be
             # ignored
             continue
+    for plugin in plugins:
+        for plot_category in plugin.plot_categories:
+            yield plot_category
 
 
-def is_valid_category(category):
-    """True, if category is the name (not the label) of a valid CEA plot category"""
-    return category in set(c.name for c in list_categories())
-
-
-def load_category(category_name):
+def load_category(category_name, plugins):
     """Returns a PlotsCategory object if is_valid_category(category), else None"""
-    for c in list_categories():
+    for c in list_categories(plugins=plugins):
         if c.name == category_name:
             return c
     return None
 
 
-def load_plot(category_name, plot_name):
-    category = load_category(category_name)
+def load_plot_by_id(category_name, plot_id, plugins):
+    """
+    plot_id is a web-friendly way of expressing the plot's name (which is more english friendly)
+    """
+    category = load_category(category_name, plugins)
     if category:
         for plot in category.plots:
-            if plot.__name__ == plot_name:
+            if plot.id() == plot_id or plot.id() == plot_id.replace("-", "_"):
                 return plot
-    return None
-
-
-def load_plot_by_id(category_name, plot_id):
-    """plot_id is a web-friendly way of expressing the plot's name (which is more english friendly)"""
-    category = load_category(category_name)
-    if category:
-        for plot in category.plots:
-            if plot.id() == plot_id:
-                return plot
+        else:
+            print("ERROR: Could not find plot {plot}".format(plot=plot_id))
+            return None
     print('ERROR: Could not find plot category {category}'.format(category=category_name))
     return None
+
+
+def list_plots(plugins):
+    for plot_category in list_categories(plugins):
+        for plot_class in plot_category.plots:
+            yield plot_category, plot_class
 
 
 class PlotCategory(object):
@@ -106,7 +108,7 @@ if __name__ == '__main__':
     cache = cea.plots.cache.NullPlotCache()
     errors = []
 
-    for category in list_categories():
+    for category in list_categories(plugins=config.plugins):
         print('category:', category.name, ':', category.label)
         for plot_class in category.plots:
             try:
