@@ -28,7 +28,9 @@ __status__ = "Production"
 
 def print_usage(plugins):
     print("Usage: cea-plot CATEGORY PLOT-ID [--PARAMETER VALUE]*")
+    print("")
     print("Choose from:")
+    print("")
     for plot_category, plot_class in cea.plots.categories.list_plots(plugins):
         print("{category}/{plot}".format(category=plot_category.name, plot=plot_class.id()))
     return
@@ -42,7 +44,7 @@ def main(*args):
     if not args:
         args = sys.argv[1:]  # drop the script name (plot_cli.py) from the arguments
 
-    if len(args) < 3:
+    if len(args) < 2:
         print_usage(config.plugins)
         return
 
