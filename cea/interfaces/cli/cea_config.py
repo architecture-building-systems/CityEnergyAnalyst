@@ -9,6 +9,7 @@ import sys
 import cea.config
 import cea.inputlocator
 import cea.scripts
+from typing import List
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -22,8 +23,7 @@ __status__ = "Production"
 
 def main(args=None):
     """
-
-    :param cea.config.Configuration config: the configuration file to use (instead of creating a new one)
+    :param List[str] args: the arguments to use - when not running from the command line, for testing.
     :return:
     """
     if args is None:
