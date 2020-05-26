@@ -13,9 +13,10 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+
 def shapefile_to_WSG_and_UTM(shapefile_path):
 
-    #read the CPG and repalce whateever is there with ISO, and save
+    # read the CPG and replace whateever is there with ISO, and save
     ensure_cpg_file(shapefile_path)
 
     # get coordinate system and project to WSG 84
