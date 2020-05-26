@@ -149,7 +149,8 @@ def create_schema_io(locator, lm, schema, original_function=None):
 
     file_type = schema["file_type"]
     file_type_to_schema_io = {
-        "csv": CsvSchemaIo
+        "csv": CsvSchemaIo,
+        "dbf": DbfSchemaIo,
     }
     if file_type not in file_type_to_schema_io:
         # just return the default - no read() and write() possible
@@ -280,3 +281,36 @@ class CsvSchemaIo(SchemaIo):
 
     def new(self):
         return pd.DataFrame(columns=(self.schema["schema"]["columns"].keys()))
+
+
+class DbfSchemaIo(SchemaIo):
+    """Read and write csv files - and attempt to validate them."""
+
+    def read(self, *args, **kwargs):
+        """
+        Open the file indicated by the locator method and return it as a DataFrame.
+        args and kwargs are passed to the original (undecorated) locator method to figure out the location of the
+        file.
+
+        :param args:
+        :param kwargs:
+        :rtype: pd.DataFrame
+        """
+        from cea.utilities.dbf import dbf_to_dataframe
+        df = dbf_to_dataframe(self(*args, **kwargs))
+        self.validate(df)
+        return df
+
+    def write(self, df, *args, **kwargs):
+        """
+        :type df: pd.Dataframe
+        """
+        self.validate(df)
+        from cea.utilities.dbf import dataframe_to_dbf
+        path_to_dbf = self(*args, **kwargs)
+
+        parent_folder = os.path.dirname(path_to_dbf)
+        if not os.path.exists(parent_folder):
+            os.makedirs(parent_folder)
+
+        dataframe_to_dbf(df, path_to_dbf)
