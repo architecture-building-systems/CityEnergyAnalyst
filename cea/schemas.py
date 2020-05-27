@@ -232,6 +232,11 @@ class SchemaIo(object):
             found_columns = {c for c in found_columns if not c.startswith("PIPE")}
             found_columns.add("PIPE0")
 
+        # handle some extra cases
+        if "NODE0" in expected_columns:
+            found_columns = {c for c in found_columns if not c.startswith("NODE")}
+            found_columns.add("NODE0")
+
         if not found_columns == expected_columns:
             missing_columns = expected_columns - found_columns
             extra_columns = found_columns - expected_columns
