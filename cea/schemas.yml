@@ -13112,7 +13112,7 @@ get_thermal_network_edge_node_matrix_file:
         type: int
         unit: '[-]'
         values: '{-1, 0, 1}'
-      'Unnamed: 0':
+      'NODE':
         description: Names of the nodes in the network
         type: string
         unit: 'NA'
