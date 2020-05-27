@@ -8883,13 +8883,6 @@ get_nominal_edge_mass_flow_csv_file:
         unit: '[kg/s]'
         values: '{0.0...n}'
         min: 0.0
-      'Unnamed: 0':
-        description: Index
-        primary: true
-        type: int
-        unit: '[-]'
-        values: '{0...n}'
-        min: 0
   used_by:
   - thermal_network
 get_nominal_node_mass_flow_csv_file:
