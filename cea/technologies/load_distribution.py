@@ -2,7 +2,7 @@ import numpy as np
 from cea.optimization.constants import COMPRESSOR_TYPE_LIMIT_LOW, COMPRESSOR_TYPE_LIMIT_HIGH, ASHRAE_CAPACITY_LIMIT
 from math import ceil
 
-def calc_averaged_PLF(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, max_chiller_size, scale):
+def calc_averaged_PLF(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, min_chiller_size, max_chiller_size, scale):
     design_capacity = peak_cooling_load  # * 1.15 # for future implementation, a safety factor could be introduced, in conflict with the master_to_slave_variables.WS_BaseVCC_size_W
     if scale == 'BUILDING':
         if design_capacity <= COMPRESSOR_TYPE_LIMIT_LOW: # if design cooling load smaller lower limit, implement one screw chiller
@@ -17,13 +17,20 @@ def calc_averaged_PLF(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, 
             source_type = 'WATER'
             compressor_type = 'CENTRIFUGAL'
             n_units = ceil(design_capacity / ASHRAE_CAPACITY_LIMIT) # according to ASHRAE 90.1 Appendix G, chiller shall not be large then 800 tons (2813 kW)
+        cooling_capacity_per_unit = design_capacity / n_units  # calculate the capacity per chiller installed
 
     if scale == 'DISTRICT':
         source_type = 'WATER'
         compressor_type = 'CENTRIFUGAL'
-        n_units = max(2, ceil(design_capacity / max_chiller_size)) # have minimum of 2 chillers
-
-    cooling_capacity_per_unit = design_capacity/n_units # calculate the capacity per chiller installed
+        if design_capacity <= (2*min_chiller_size):
+            n_units = 1
+            cooling_capacity_per_unit = max(design_capacity, min_chiller_size)
+        elif (2*min_chiller_size) <= design_capacity <= max_chiller_size:
+            n_units = 2
+            cooling_capacity_per_unit = design_capacity / n_units
+        elif design_capacity >= max_chiller_size:
+            n_units = max(2, ceil(design_capacity / max_chiller_size)) # have minimum size of capacity to quailfy as DCS, have minimum of 2 chillers
+            cooling_capacity_per_unit = design_capacity / n_units
 
     available_capacity_per_unit = calc_available_capacity(cooling_capacity_per_unit, source_type, compressor_type, T_chw_sup_K, T_cw_in_K) # calculate the available capacity(dependent on conditions)
 
