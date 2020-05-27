@@ -480,11 +480,11 @@ def thermal_network_main(locator, thermal_network, processes=1):
                 edge_mass_flow_for_csv = edge_mass_flow_for_csv.append(edge_mass_flow_for_csv.mean(), ignore_index=True)
             edge_mass_flow_for_csv.to_csv(
                 thermal_network.locator.get_nominal_edge_mass_flow_csv_file(thermal_network.network_type,
-                                                                            thermal_network.network_name))
+                                                                            thermal_network.network_name), index=False)
         else:
             thermal_network.edge_mass_flow_df.to_csv(
                 thermal_network.locator.get_nominal_edge_mass_flow_csv_file(thermal_network.network_type,
-                                                                            thermal_network.network_name))
+                                                                            thermal_network.network_name), index=False)
 
     # assign pipe id/od according to maximum edge mass flow
     thermal_network.pipe_properties = assign_pipes_to_edges(thermal_network)
