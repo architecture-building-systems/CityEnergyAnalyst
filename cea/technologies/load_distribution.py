@@ -1,19 +1,23 @@
 import numpy as np
 from cea.optimization.constants import COMPRESSOR_TYPE_LIMIT_LOW, COMPRESSOR_TYPE_LIMIT_HIGH, ASHRAE_CAPACITY_LIMIT
 from math import ceil
+from cea.utilities.physics import kelvin_to_fahrenheit
 
 def calc_averaged_PLF(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, min_chiller_size, max_chiller_size, scale):
-    design_capacity = peak_cooling_load  # * 1.15 # for future implementation, a safety factor could be introduced, in conflict with the master_to_slave_variables.WS_BaseVCC_size_W
+    design_capacity = peak_cooling_load  # * 1.15 # for future implementation, a safety factor could be introduced. As of now this would be in conflict with the master_to_slave_variables.WS_BaseVCC_size_W
+    """
+    Design of the chillers in order to define the part load for given cooling load
+    """
     if scale == 'BUILDING':
-        if design_capacity <= COMPRESSOR_TYPE_LIMIT_LOW: # if design cooling load smaller lower limit, implement one screw chiller
+        if design_capacity <= COMPRESSOR_TYPE_LIMIT_LOW: # according to ASHRAE 90.1 Appendix G: if design cooling load smaller than lower limit, implement one screw chiller
             source_type = 'WATER'
             compressor_type = 'SCREW'
             n_units = 1
-        if COMPRESSOR_TYPE_LIMIT_LOW < design_capacity < COMPRESSOR_TYPE_LIMIT_HIGH:
+        if COMPRESSOR_TYPE_LIMIT_LOW < design_capacity < COMPRESSOR_TYPE_LIMIT_HIGH: # according to ASHRAE 90.1 Appendix G: if design cooling load between limits, implement two screw chillers
             source_type = 'WATER'
             compressor_type = 'SCREW'
             n_units = 2
-        if design_capacity >= COMPRESSOR_TYPE_LIMIT_HIGH:
+        if design_capacity >= COMPRESSOR_TYPE_LIMIT_HIGH: # according to ASHRAE 90.1 Appendix G: if design cooling load larger than upper limit, implement centrifugal chillers
             source_type = 'WATER'
             compressor_type = 'CENTRIFUGAL'
             n_units = ceil(design_capacity / ASHRAE_CAPACITY_LIMIT) # according to ASHRAE 90.1 Appendix G, chiller shall not be large then 800 tons (2813 kW)
@@ -22,13 +26,13 @@ def calc_averaged_PLF(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, 
     if scale == 'DISTRICT':
         source_type = 'WATER'
         compressor_type = 'CENTRIFUGAL'
-        if design_capacity <= (2*min_chiller_size):
+        if design_capacity <= (2*min_chiller_size): # design one chiller for small scale DCS
             n_units = 1
             cooling_capacity_per_unit = max(design_capacity, min_chiller_size)
-        elif (2*min_chiller_size) <= design_capacity <= max_chiller_size:
+        elif (2*min_chiller_size) <= design_capacity <= max_chiller_size: # design two chillers above the twice the minimum chiller size
             n_units = 2
             cooling_capacity_per_unit = design_capacity / n_units
-        elif design_capacity >= max_chiller_size:
+        elif design_capacity >= max_chiller_size: # design a minimum of 2 chillers if above the maximum chiller size
             n_units = max(2, ceil(design_capacity / max_chiller_size)) # have minimum size of capacity to quailfy as DCS, have minimum of 2 chillers
             cooling_capacity_per_unit = design_capacity / n_units
 
@@ -68,7 +72,7 @@ def calc_PLF(PLR, source_type, compressor_type):
 
 def calc_available_capacity(rated_capacity, source_type, compressor_type, T_chw_sup_K, T_cw_in_K):
     """
-    calculates the available Chiller capacity taking the rated capacity as well as
+    calculates the available Chiller capacity based on the rated capacity as well as
     T_chw_sup_K: supplied chilled water temperature in Kelvin
     T_cw_in_K: condenser water supply temperature in Kelvin
     coefficients taken from https://comnet.org/index.php/382-chillers  TODO: create database entry dependent on technology
@@ -94,19 +98,15 @@ def calc_available_capacity(rated_capacity, source_type, compressor_type, T_chw_
     available_capacity = rated_capacity * (q_a + q_b*t_chws_F + q_c*t_chws_F**2 + q_d*t_cws_F + q_e * t_cws_F**2 + q_f*t_chws_F*t_cws_F)
     return available_capacity
 
-def kelvin_to_fahrenheit(T_Kelvin):
-    # converts the temperature from Kelvin to Fahrenheit
-    T_Celsius = T_Kelvin - 273.15
-    T_Fahrenheit = (T_Celsius*9/5)+32
-    return T_Fahrenheit
-
 def main():
-    max_chiller_size = 3500
-    peak_cooling_load = 10000
-    q_chw_load_Wh = 5000
+    scale = 'DISTRICT'
+    max_chiller_size = 14000000
+    min_chiller_size = 1000000
+    peak_cooling_load = 40000000
+    q_chw_load_Wh = 25000000
     T_chw_sup_K = 273.15 + 6
     T_cw_in_K = 273.15 + 28
-    a = calc_averaged_PLF(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, max_chiller_size)
+    a = calc_averaged_PLF(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, min_chiller_size, max_chiller_size, scale)
     print('averaged PLF is:', a)
 
 if __name__ == '__main__':

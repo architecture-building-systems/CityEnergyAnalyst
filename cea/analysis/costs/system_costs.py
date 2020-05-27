@@ -159,7 +159,7 @@ def calc_scale_costs(value, flag_scale):
         building = 0.0
         city = value
     elif flag_scale == "NONE":
-        if value == 0.0:
+        if value == 0.0 or np.isnan(value):
             district = 0.0
             building = 0.0
             city = 0.0
