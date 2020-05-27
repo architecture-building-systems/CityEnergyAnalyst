@@ -1,4 +1,4 @@
-import ConfigParser
+import configparser
 import json
 import os
 import unittest
@@ -33,7 +33,7 @@ class TestCalcThermalLoads(unittest.TestCase):
             ['year', 'drybulb_C', 'wetbulb_C', 'relhum_percent', 'windspd_ms', 'skytemp_C']]
         year = cls.weather_data['year'][0]
         cls.date_range = get_date_range_hours_from_year(year)
-        cls.test_config = ConfigParser.SafeConfigParser()
+        cls.test_config = configparser.ConfigParser()
         cls.test_config.read(os.path.join(os.path.dirname(__file__), 'test_calc_thermal_loads.config'))
 
         # run properties script
