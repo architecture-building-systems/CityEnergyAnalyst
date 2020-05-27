@@ -83,6 +83,7 @@ def disconnected_cooling_for_building(building_name, supply_systems, lca, locato
     VCC_database = pd.read_excel(locator.get_database_conversion_systems(), sheet_name="Chiller")
     technology_type = VCC_CODE_DECENTRALIZED
     VCC_database = VCC_database[VCC_database['code'] == technology_type]
+    min_chiller_size = VCC_database['cap_min']
     max_VCC_capacity = VCC_database['cap_max']
 
     ## Calculate cooling loads for different combinations
@@ -147,7 +148,7 @@ def disconnected_cooling_for_building(building_name, supply_systems, lca, locato
     print('{building_name} Config 1: Vapor Compression Chillers -> AHU,ARU,SCU'.format(building_name=building_name))
     # VCC operation
     el_VCC_Wh, q_VCC_cw_Wh, q_VCC_chw_Wh = calc_VCC_operation(T_re_AHU_ARU_SCU_K, T_sup_AHU_ARU_SCU_K,
-                                                              mdot_AHU_ARU_SCU_kgpers, max_VCC_capacity)
+                                                              mdot_AHU_ARU_SCU_kgpers, min_chiller_size, max_VCC_capacity)
     VCC_Status = np.where(q_VCC_chw_Wh > 0.0, 1, 0)
     # CT operation
     q_CT_VCC_to_AHU_ARU_SCU_Wh = q_VCC_cw_Wh
@@ -265,12 +266,12 @@ def disconnected_cooling_for_building(building_name, supply_systems, lca, locato
         # VCC (AHU + ARU) operation
         el_VCC_to_AHU_ARU_Wh, \
         q_cw_VCC_to_AHU_ARU_Wh, \
-        q_chw_VCC_to_AHU_ARU_Wh = calc_VCC_operation(T_re_AHU_ARU_K, T_sup_AHU_ARU_K, mdot_AHU_ARU_kgpers, max_VCC_capacity)
+        q_chw_VCC_to_AHU_ARU_Wh = calc_VCC_operation(T_re_AHU_ARU_K, T_sup_AHU_ARU_K, mdot_AHU_ARU_kgpers, min_chiller_size, max_VCC_capacity)
         VCC_LT_Status = np.where(q_chw_VCC_to_AHU_ARU_Wh > 0.0, 1, 0)
         # VCC(SCU) operation
         el_VCC_to_SCU_Wh, \
         q_cw_VCC_to_SCU_Wh, \
-        q_chw_VCC_to_SCU_Wh = calc_VCC_operation(T_re_SCU_K, T_sup_SCU_K, mdot_SCU_kgpers, max_VCC_capacity)
+        q_chw_VCC_to_SCU_Wh = calc_VCC_operation(T_re_SCU_K, T_sup_SCU_K, mdot_SCU_kgpers, min_chiller_size, max_VCC_capacity)
         VCC_HT_Status = np.where(q_chw_VCC_to_AHU_ARU_Wh > 0.0, 1, 0)
         # CT operation
         q_CT_VCC_to_AHU_ARU_and_VCC_to_SCU_W = q_cw_VCC_to_AHU_ARU_Wh + q_cw_VCC_to_SCU_Wh
@@ -444,7 +445,7 @@ def disconnected_cooling_for_building(building_name, supply_systems, lca, locato
         locator.get_optimization_decentralized_folder_building_cooling_activation(building_name))
 
 
-def calc_VCC_operation(T_chw_re_K, T_chw_sup_K, mdot_kgpers, max_VCC_capacity):
+def calc_VCC_operation(T_chw_re_K, T_chw_sup_K, mdot_kgpers, min_chiller_size, max_VCC_capacity):
     from cea.optimization.constants import VCC_T_COOL_IN
     from cea.technologies.constants import G_VALUE_DECENTRALIZED
     q_chw_Wh = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_chw_re_K - T_chw_sup_K)
@@ -457,6 +458,7 @@ def calc_VCC_operation(T_chw_re_K, T_chw_sup_K, mdot_kgpers, max_VCC_capacity):
                                                                      T_chw_re_K,
                                                                      VCC_T_COOL_IN,
                                                                      G_VALUE_DECENTRALIZED,
+                                                                     min_chiller_size,
                                                                      max_VCC_capacity,
                                                                      scale)
     q_cw_Wh = np.asarray([x['q_cw_W'] for x in VCC_operation])

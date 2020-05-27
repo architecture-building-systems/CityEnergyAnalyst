@@ -24,7 +24,24 @@ __status__ = "Production"
 
 # technical model
 
-def calc_VCC(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_chw_re_K, T_cw_in_K, g_value, max_chiller_size, scale):
+class VaporCompressionChiller(object):
+    __slots__ = ["max_capacity", "min_capacity", "G_VALUE"]
+
+    def __init__(self, chiller_prop, ACH_type):
+        self.chiller_prop = chiller_prop[chiller_prop['type'] == ACH_type]
+
+        # external flow rate of hot water at the generator
+        self.m_hw_kgpers = chiller_prop['m_hw'].values[0]
+        self.s_e = chiller_prop['s_e'].values[0]
+        self.r_e = chiller_prop['r_e'].values[0]
+        self.s_g = chiller_prop['s_g'].values[0]
+        self.r_g = chiller_prop['r_g'].values[0]
+        self.a_e = chiller_prop['a_e'].values[0]
+        self.e_e = chiller_prop['e_e'].values[0]
+        self.a_g = chiller_prop['a_g'].values[0]
+        self.e_g = chiller_prop['e_g'].values[0]
+
+def calc_VCC(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_chw_re_K, T_cw_in_K, g_value, min_chiller_size, max_chiller_size, scale):
     """
     For th e operation of a Vapor-compressor chiller between a district cooling network and a condenser with fresh water
     to a cooling tower following [D.J. Swider, 2003]_.
@@ -47,7 +64,7 @@ def calc_VCC(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_chw_re_K, T_cw_in_
 
     elif q_chw_load_Wh > 0.0:
         COP = calc_COP_with_carnot_efficiency(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, g_value,
-                                              max_chiller_size, scale)
+                                              min_chiller_size, max_chiller_size, scale)
         if COP < 0.0:
             print ('Negative COP: ', COP, T_chw_sup_K, T_chw_re_K, q_chw_load_Wh)
 
@@ -71,11 +88,10 @@ def calc_COP(T_cw_in_K, T_chw_re_K, q_chw_load_Wh):
     return COP
 
 
-def calc_COP_with_carnot_efficiency(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, g_value, max_chiller_size,
-                                    scale):
+def calc_COP_with_carnot_efficiency(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, g_value,
+                                    min_chiller_size, max_chiller_size, scale):
     PLF = load_distribution.calc_averaged_PLF(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K,
-                                              max_chiller_size,
-                                              scale)  # calculates the weighted average Part load factor across all chillers based on load distribution
+                                              min_chiller_size, max_chiller_size, scale)  # calculates the weighted average Part load factor across all chillers based on load distribution
     cop_chiller = g_value * T_chw_sup_K / (T_cw_in_K - T_chw_sup_K) * PLF
     return cop_chiller
 
@@ -193,12 +209,13 @@ def main():
     peak_cooling_load = 1500000
     Qc_W = 1000000
     max_chiller_size = 3500000
+    min_chiller_size = 1000000
     T_chw_sup_K = 273.15 + 6
     T_chw_re_K = 273.15 + 11
     T_cw_in_K = 273.15 + 28
     g_value = G_VALUE_CENTRALIZED
-    chiller_operation = calc_VCC(peak_cooling_load, Qc_W, T_chw_sup_K, T_chw_re_K, T_cw_in_K, g_value, max_chiller_size,
-                                 scale)
+    chiller_operation = calc_VCC(peak_cooling_load, Qc_W, T_chw_sup_K, T_chw_re_K, T_cw_in_K, g_value, min_chiller_size,
+                                 max_chiller_size, scale)
     print chiller_operation
 
 

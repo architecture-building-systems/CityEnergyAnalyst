@@ -22,11 +22,11 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calc_vcc_operation(Qc_from_VCC_W, T_DCN_re_K, T_DCN_sup_K, T_source_K, chiller_size, max_VCC_capacity, scale):
+def calc_vcc_operation(Qc_from_VCC_W, T_DCN_re_K, T_DCN_sup_K, T_source_K, chiller_size, min_VCC_capacity, max_VCC_capacity, scale):
     g_value = G_VALUE_CENTRALIZED # get the isentropic efficiency of the district cooling
     Qc_from_VCC_W = min(Qc_from_VCC_W, chiller_size) # The chiller can not supply more cooling than the installed capacity allows
     VCC_operation = chiller_vapor_compression.calc_VCC(chiller_size, Qc_from_VCC_W, T_DCN_sup_K, T_DCN_re_K, T_source_K,
-                                                       g_value, max_VCC_capacity, scale)
+                                                       g_value, min_VCC_capacity, max_VCC_capacity, scale)
 
     # unpack outputs
     Qc_VCC_W = VCC_operation['q_chw_W']
@@ -40,12 +40,13 @@ def calc_vcc_CT_operation(Qc_from_VCC_W,
                           T_DCN_sup_K,
                           T_source_K,
                           size_chiller_CT,
+                          min_VCC_capacity,
                           max_VCC_capacity,
                           scale):
 
     g_value = G_VALUE_CENTRALIZED
     VCC_operation = chiller_vapor_compression.calc_VCC(size_chiller_CT, Qc_from_VCC_W, T_DCN_sup_K, T_DCN_re_K, T_source_K,
-                                                       g_value, max_VCC_capacity, scale)
+                                                       g_value, min_VCC_capacity, max_VCC_capacity, scale)
 
     # unpack outputs
     Qc_CT_VCC_W = VCC_operation['q_cw_W']
@@ -219,6 +220,7 @@ def cooling_resource_activator(Q_thermal_req,
                                                     T_district_cooling_supply_K,
                                                     T_source_average_Lake_K,
                                                     WS_BaseVCC_capacity,
+                                                    min_VCC_capacity,
                                                     max_VCC_capacity,
                                                     scale)
 
@@ -270,6 +272,7 @@ def cooling_resource_activator(Q_thermal_req,
                                                     T_district_cooling_supply_K,
                                                     T_source_average_Lake_K,
                                                     WS_PeakVCC_capacity,
+                                                    min_VCC_capacity,
                                                     max_VCC_capacity,
                                                     scale)
             E_pump_WS_req_W = calc_water_body_uptake_pumping(Q_PeakVCC_WS_gen_W,
@@ -317,6 +320,7 @@ def cooling_resource_activator(Q_thermal_req,
                                                    T_district_cooling_supply_K,
                                                    VCC_T_COOL_IN,
                                                    size_AS_BaseVCC_W,
+                                                   min_VCC_capacity,
                                                    max_VCC_capacity,
                                                    scale)
         Q_cooling_unmet_W = Q_cooling_unmet_W - Q_BaseVCC_AS_gen_directload_W - Qc_from_storage_W
@@ -348,6 +352,7 @@ def cooling_resource_activator(Q_thermal_req,
                                                    T_district_cooling_supply_K,
                                                    VCC_T_COOL_IN,
                                                    size_AS_PeakVCC_W,
+                                                   min_VCC_capacity,
                                                    max_VCC_capacity,
                                                    scale)
 
@@ -360,7 +365,7 @@ def cooling_resource_activator(Q_thermal_req,
         Q_PeakVCC_AS_gen_directload_W = 0.0
 
     if Q_cooling_unmet_W > 1.0E-3:
-        Q_BackupVCC_AS_gen_W = Q_cooling_unmet_W  # this will become the back-up boiler
+        Q_BackupVCC_AS_gen_W = Q_cooling_unmet_W  # this will become the back-up chiller
         Q_BackupVCC_AS_directload_W = Q_cooling_unmet_W
     else:
         Q_BackupVCC_AS_gen_W = 0.0

@@ -168,7 +168,7 @@ def calc_scale_costs(value, flag_scale):
                              " the inputs of SUPPLY database may be wrong")
     else:
         raise ValueError("the scale in the system is {}, this is not a valid argument"
-                         "valid argumetns are CITY, DISTRICT, BUILDING, NONE".format(flag_scale))
+                         "valid arguments are CITY, DISTRICT, BUILDING, NONE".format(flag_scale))
     return district, building, city
 
 
