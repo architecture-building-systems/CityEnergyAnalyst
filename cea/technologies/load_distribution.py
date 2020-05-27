@@ -3,6 +3,18 @@ from cea.optimization.constants import COMPRESSOR_TYPE_LIMIT_LOW, COMPRESSOR_TYP
 from math import ceil
 
 def calc_averaged_PLF(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, min_chiller_size, max_chiller_size, scale):
+    """
+    TODO: add documentation here please
+
+    :param float peak_cooling_load:
+    :param float q_chw_load_Wh:
+    :param float T_chw_sup_K:
+    :param float T_cw_in_K:
+    :param float min_chiller_size:
+    :param float max_chiller_size:
+    :param str scale: either "BUILDING" or "DISTRICT"
+    :return:
+    """
     design_capacity = peak_cooling_load  # * 1.15 # for future implementation, a safety factor could be introduced, in conflict with the master_to_slave_variables.WS_BaseVCC_size_W
     if scale == 'BUILDING':
         if design_capacity <= COMPRESSOR_TYPE_LIMIT_LOW: # if design cooling load smaller lower limit, implement one screw chiller
