@@ -1,13 +1,14 @@
 """
 Tests to make sure the schemas.yml file is structurally sound.
 """
-
+import re
 import unittest
 
 import os
 import cea.config
 import cea.inputlocator
 import cea.scripts
+import cea.schemas
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -19,6 +20,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 # FIXME: remove this once we have fixed the remaining problems...
+
 SKIP_LMS = {
     "get_building_weekly_schedules",
     "get_optimization_individuals_in_generation",
@@ -29,7 +31,7 @@ SKIP_LMS = {
 class TestSchemas(unittest.TestCase):
 
     def test_all_locator_methods_described(self):
-        schemas = cea.scripts.schemas()
+        schemas = cea.schemas.schemas(plugins=[])
         config = cea.config.Configuration()
         locator = cea.inputlocator.InputLocator(config.scenario)
 
@@ -37,7 +39,7 @@ class TestSchemas(unittest.TestCase):
             self.assertIn(method, schemas.keys())
 
     def test_all_locator_methods_have_a_file_path(self):
-        schemas = cea.scripts.schemas()
+        schemas = cea.schemas.schemas(plugins=[])
 
         for lm in schemas:
             self.assertIn("file_path", schemas[lm], "{lm} does not have a file_path".format(lm=lm))
@@ -45,7 +47,7 @@ class TestSchemas(unittest.TestCase):
             self.assertNotIn("\\", schemas[lm]["file_path"], "{lm} has backslashes in it's file_path".format(lm=lm))
 
     def test_all_columns_have_description(self):
-        schemas = cea.scripts.schemas()
+        schemas = cea.schemas.schemas(plugins=[])
         for lm in schemas:
             if lm == "get_database_standard_schedules_use":
                 # the schema for schedules is non-standard
@@ -61,7 +63,7 @@ class TestSchemas(unittest.TestCase):
                                   "Missing description for {lm}/{col}".format(lm=lm, col=col))
 
     def test_all_schemas_have_a_columns_entry(self):
-        schemas = cea.scripts.schemas()
+        schemas = cea.schemas.schemas(plugins=[])
         for lm in schemas:
             if lm == "get_database_standard_schedules_use":
                 # the schema for schedules is non-standard
@@ -74,7 +76,7 @@ class TestSchemas(unittest.TestCase):
                 self.assertIn("columns", schemas[lm]["schema"], "Missing columns for {lm}".format(lm=lm))
 
     def test_all_schema_columns_documented(self):
-        schemas = cea.scripts.schemas()
+        schemas = cea.schemas.schemas(plugins=[])
         for lm in schemas.keys():
             if lm in SKIP_LMS:
                 # these can't be documented properly due to the file format
@@ -109,7 +111,7 @@ class TestSchemas(unittest.TestCase):
                         self.fail("Problem with lm={lm}, col={col}, message: {m}".format(lm=lm, col=col, m=e.message))
 
     def test_each_column_has_type(self):
-        schemas = cea.scripts.schemas()
+        schemas = cea.schemas.schemas(plugins=[])
         valid_types = {"string", "int", "boolean", "float", "date", "Point", "Polygon", "LineString"}
         for lm in schemas.keys():
             if lm in SKIP_LMS:
@@ -136,21 +138,21 @@ class TestSchemas(unittest.TestCase):
                                   "Invalid type definition for {lm}/{col}: {type}".format(lm=lm, col=col, type=col_type))
 
     def test_each_lm_has_created_by(self):
-        schemas = cea.scripts.schemas()
+        schemas = cea.schemas.schemas(plugins=[])
         for lm in schemas:
             self.assertIn("created_by", schemas[lm], "{lm} missing created_by entry".format(lm=lm))
             self.assertIsInstance(schemas[lm]["created_by"], list,
                                   "created_by entry of {lm} must be a list".format(lm=lm))
 
     def test_each_lm_has_used_by(self):
-        schemas = cea.scripts.schemas()
+        schemas = cea.schemas.schemas(plugins=[])
         for lm in schemas:
             self.assertIn("used_by", schemas[lm], "{lm} missing used_by entry".format(lm=lm))
             self.assertIsInstance(schemas[lm]["used_by"], list,
                                   "used_by entry of {lm} must be a list".format(lm=lm))
 
     def test_each_lm_has_method(self):
-        schemas = cea.scripts.schemas()
+        schemas = cea.schemas.schemas(plugins=[])
         locator = cea.inputlocator.InputLocator(None)
         for lm in schemas:
             self.assertIn(lm, dir(locator),
@@ -180,7 +182,7 @@ class TestSchemas(unittest.TestCase):
                 folders[folder] = attrib
 
     def test_scripts_use_underscores_not_hyphen(self):
-        schemas = cea.scripts.schemas()
+        schemas = cea.schemas.schemas(plugins=[])
         for lm in schemas:
             used_by = schemas[lm]["used_by"]
             created_by = schemas[lm]["created_by"]
@@ -191,7 +193,46 @@ class TestSchemas(unittest.TestCase):
 
     def test_read_glossary_df(self):
         import cea.glossary
-        cea.glossary.read_glossary_df()
+        cea.glossary.read_glossary_df(plugins=[])
+
+    def test_numerical_ranges(self):
+        def check_range(schema):
+            if 'type' in schema and schema['type'] in ['float', 'int']:
+                if "values" in schema:
+                    values = schema['values']
+
+                    values_min, values_max = parse_numerical_range_value(values, schema['type'])
+                    schema_min = schema.get('min')
+                    schema_max = schema.get('max')
+
+                    if values_min != schema_min or values_max != schema_max:
+                        raise ValueError(
+                            'values property do not match range properties. '
+                            'values: {values}, min: {schema_min}, max: {schema_max}'.format(
+                                values=values, schema_min=schema_min, schema_max=schema_max))
+
+        schemas = cea.schemas.schemas(plugins=[])
+        for lm in schemas:
+            if lm == "get_database_standard_schedules_use" or lm in SKIP_LMS:
+                # the schema for schedules is non-standard
+                continue
+            if schemas[lm]["file_type"] in {"xls", "xlsx"}:
+                for ws in schemas[lm]["schema"]:
+                    for col, col_schema in schemas[lm]["schema"][ws]["columns"].items():
+                        try:
+                            check_range(col_schema)
+                        except ValueError as e:
+                            col_label = ":".join([lm, ws, col])
+                            print("Error in column {col_label}:\n{message}\n".format(col_label=col_label,
+                                                                                     message=e.message))
+            else:
+                for col, col_schema in schemas[lm]["schema"]["columns"].items():
+                    try:
+                        check_range(col_schema)
+                    except ValueError as e:
+                        col_label = ":".join([lm, col])
+                        print(
+                            "Error in column {col_label}:\n{message}\n".format(col_label=col_label, message=e.message))
 
 
 def extract_locator_methods(locator):
@@ -224,6 +265,26 @@ def extract_locator_methods(locator):
             # not interested in folders
             continue
         yield m
+
+
+def parse_numerical_range_value(value, num_type):
+    def parse_string_num(string_num):
+        if string_num == 'n':
+            return None
+        elif num_type == 'float':
+            return float(string_num)
+        elif num_type == 'int':
+            return int(string_num)
+        else:
+            raise TypeError("Unable to cast type `{type}`".format(type=num_type))
+
+    num = r'-?\d+(?:.\d+)?'
+    num_or_n = r'{num}|n'.format(num=num)
+    regex = r'{{({num_or_n})...({num_or_n})}}'.format(num_or_n=num_or_n)
+    match = re.match(regex, value)
+    if match is None:
+        raise ValueError("values property not in '{{n...n}}' format. Got: '{value}'".format(value=value))
+    return parse_string_num(match.group(1)), parse_string_num(match.group(2))
 
 
 if __name__ == '__main__':

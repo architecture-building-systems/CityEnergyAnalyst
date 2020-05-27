@@ -4,7 +4,7 @@ file `test_schedules.config` that can be created by running this file. Note, how
 test data - you should only do this if you are sure that the new data is correct.
 """
 
-import ConfigParser
+import configparser
 import json
 import os
 import unittest
@@ -26,7 +26,7 @@ class TestBuildingPreprocessing(unittest.TestCase):
     def test_mixed_use_archetype_values(self):
         # test if a sample mixed use building gets standard results
         locator = ReferenceCaseOpenLocator()
-        config = ConfigParser.SafeConfigParser()
+        config = configparser.ConfigParser()
         config.read(get_test_config_path())
 
         calculated_results = calculate_mixed_use_archetype_values_results(locator).to_dict()
@@ -55,7 +55,7 @@ class TestScheduleCreation(unittest.TestCase):
         schedule_maker_main(locator, config)
         calculated_schedules = pd.read_csv(locator.get_schedule_model_file('B1011')).set_index('DATE')
 
-        config = ConfigParser.SafeConfigParser()
+        config = configparser.ConfigParser()
         config.read(get_test_config_path())
         reference_results = json.loads(config.get('test_mixed_use_schedules', 'reference_results'))
 
@@ -104,7 +104,7 @@ def calculate_mixed_use_archetype_values_results(locator):
 def create_data():
     """Create test data to compare against - run this the first time you make changes that affect the results. Note,
     this will overwrite the previous test data."""
-    test_config = ConfigParser.SafeConfigParser()
+    test_config = configparser.ConfigParser()
     test_config.read(get_test_config_path())
     if not test_config.has_section('test_mixed_use_archetype_values'):
         test_config.add_section('test_mixed_use_archetype_values')

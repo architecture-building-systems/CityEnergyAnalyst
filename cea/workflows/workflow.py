@@ -117,7 +117,7 @@ def set_up_environment_variables(config):
     for section in config.sections.values():
         for parameter in section.parameters.values():
             variable = "CEA_{section}_{parameter}".format(section=section.name, parameter=parameter.name)
-            os.environ[variable] = parameter.get_raw()
+            os.environ[variable] = str(parameter.get_raw())
 
 
 def do_config_step(config, step):
@@ -155,7 +155,7 @@ def set_parameter(config, parameter, value):
 
 def do_script_step(config, step, trace_input):
     """Run a script based on the step's "script" and "parameters" (optional) keys."""
-    script = cea.scripts.by_name(step["script"])
+    script = cea.scripts.by_name(step["script"], plugins=config.plugins)
     print("")
     print("=" * 80)
     print("Workflow step: script={script}".format(script=script.name))
