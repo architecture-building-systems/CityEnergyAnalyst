@@ -290,10 +290,11 @@ class ThermalNetwork(object):
             self.edge_node_df = pd.read_csv(
                 self.locator.get_thermal_network_edge_node_matrix_file(self.network_type,
                                                                        self.network_name),
-                index_col=0)
+                index_col="NODE")
         else:
             edge_node_df.to_csv(
-                self.locator.get_thermal_network_edge_node_matrix_file(self.network_type, self.network_name))
+                self.locator.get_thermal_network_edge_node_matrix_file(self.network_type, self.network_name),
+                index=True, index_label="NODE")
             self.edge_node_df = edge_node_df.copy()
         self.all_nodes_df = all_nodes_df
         self.edge_df = edge_df
