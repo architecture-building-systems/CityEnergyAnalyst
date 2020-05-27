@@ -25,16 +25,16 @@
     type-scpanel: ET
 - script: network-layout
   parameters:
-    network-type: DH
+    network-type: DC
     network-model: simplified
 - script: thermal-network
   parameters:
-    network-type: DH
+    network-type: DC
     network-model: simplified
 - script: decentralized
 - script: optimization
   parameters:
-    network-type: DH
+    network-type: DC
     number-of-generations: 2
     population-size: 5
     random-seed: 100
