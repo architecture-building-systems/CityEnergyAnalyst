@@ -23,24 +23,6 @@ __status__ = "Production"
 
 
 # technical model
-
-class VaporCompressionChiller(object):
-    __slots__ = ["max_capacity", "min_capacity", "G_VALUE"]
-
-    def __init__(self, chiller_prop, ACH_type):
-        self.chiller_prop = chiller_prop[chiller_prop['type'] == ACH_type]
-
-        # external flow rate of hot water at the generator
-        self.m_hw_kgpers = chiller_prop['m_hw'].values[0]
-        self.s_e = chiller_prop['s_e'].values[0]
-        self.r_e = chiller_prop['r_e'].values[0]
-        self.s_g = chiller_prop['s_g'].values[0]
-        self.r_g = chiller_prop['r_g'].values[0]
-        self.a_e = chiller_prop['a_e'].values[0]
-        self.e_e = chiller_prop['e_e'].values[0]
-        self.a_g = chiller_prop['a_g'].values[0]
-        self.e_g = chiller_prop['e_g'].values[0]
-
 def calc_VCC(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_chw_re_K, T_cw_in_K, g_value, min_chiller_size, max_chiller_size, scale):
     """
     For th e operation of a Vapor-compressor chiller between a district cooling network and a condenser with fresh water
