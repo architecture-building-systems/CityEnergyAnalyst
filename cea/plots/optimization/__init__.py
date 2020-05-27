@@ -118,7 +118,7 @@ if __name__ == '__main__':
 
 
     def plot_category(cache):
-        for category in list_categories():
+        for category in list_categories(plugins=[]):
             if category.label != label:
                 continue
             print('category:', category.name, ':', category.label)

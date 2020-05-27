@@ -35,7 +35,7 @@ def main(config):
             config.plots_supply_system.system = ""
 
     try:
-        for category in cea.plots.categories.list_categories():
+        for category in cea.plots.categories.list_categories(plugins=[]):
             # create the new dashboard
             print("Plotting category {category}".format(category=category.label))
 
@@ -48,6 +48,7 @@ def main(config):
                 print("    - plotting div (len={len})".format(len=len(plot.plot_div())))
     finally:
         shutil.rmtree(cache_folder, ignore_errors=True)
+
 
 if __name__ == "__main__":
     main(cea.config.Configuration())

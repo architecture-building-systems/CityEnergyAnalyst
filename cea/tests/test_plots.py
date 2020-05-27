@@ -24,6 +24,6 @@ class TestCategories(unittest.TestCase):
         Test to make sure each plot defines the ``category_name`` attribute and that it is
         the same as the category the plot is defined in.
         """
-        for category in cea.plots.categories.list_categories():
+        for category in cea.plots.categories.list_categories(plugins=[]):
             for plot in category.plots:
                 self.assertEqual(plot.category_name, category.name)

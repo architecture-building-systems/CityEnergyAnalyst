@@ -40,7 +40,7 @@ def calc_heating_cooling_loads(bpr, tsd, t):
         # +++++++++++++++++++++++++++++++++++++++++++
 
         # check system
-        if not control_heating_cooling_systems.has_heating_system(bpr) \
+        if not control_heating_cooling_systems.has_heating_system(bpr.hvac["class_hs"]) \
                 or not control_heating_cooling_systems.heating_system_is_active(tsd, t):
 
             # no system = no loads
@@ -82,8 +82,8 @@ def calc_heating_cooling_loads(bpr, tsd, t):
         # +++++++++++++++++++++++++++++++++++++++++++
 
         # check system
-        if not control_heating_cooling_systems.has_cooling_system(bpr)\
-                or not control_heating_cooling_systems.cooling_system_is_active(bpr, tsd, t):
+        if (not control_heating_cooling_systems.has_cooling_system(bpr.hvac["class_cs"])
+                or not control_heating_cooling_systems.cooling_system_is_active(bpr, tsd, t)):
 
             # no system = no loads
             rc_model_temperatures = calc_rc_no_loads(bpr, tsd, t)
