@@ -11,15 +11,18 @@ osmose_project_data_path = settings.osmose_project_data_path
 path_to_district_folder = settings.path_to_district_folder
 result_destination = settings.result_destination
 
+RESET_INPUTS = True
+
 def extract_demand_output_district_to_osmose(path_to_district_folder, timesteps, season, specified_building):
 
-    ## 1. Prepare district info and file connections
-    geometry_df, occupancy_df = prepare_district_info(path_to_district_folder)
+    if RESET_INPUTS:
+        ## 1. Prepare district info and file connections
+        geometry_df, occupancy_df = prepare_district_info(path_to_district_folder)
 
-    ## 2. Write input parameters to
-    periods = 1
-    timesteps_calc = write_input_parameter_to_osmose(geometry_df, occupancy_df, season, specified_building, timesteps)
-    write_osmose_general_inputs(result_destination, periods, timesteps_calc)
+        ## 2. Write input parameters to
+        periods = 1
+        timesteps_calc = write_input_parameter_to_osmose(geometry_df, occupancy_df, season, specified_building, timesteps)
+        write_osmose_general_inputs(result_destination, periods, timesteps_calc)
 
     ## 3. Run osmose
     for tech in settings.TECHS:
