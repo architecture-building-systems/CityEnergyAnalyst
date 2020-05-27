@@ -7,7 +7,7 @@ unit tests. You can safely ignore the output printed to STDOUT - it is used for 
 
 NOTE: Check first to make sure the core algorithms are correct, i.e. the changes to the outputs behave as expected.
 """
-import ConfigParser
+import configparser
 import json
 import os
 import tempfile
@@ -67,7 +67,7 @@ def main(output_file):
     expected_columns = list(df.columns)
     print("expected_columns = %s" % repr(expected_columns))
 
-    test_config = ConfigParser.SafeConfigParser()
+    test_config = configparser.ConfigParser()
     test_config.read(output_file)
 
     value_columns = [u"E_sys_kWh", u"Qcdata_sys_kWh", u"Qcre_sys_kWh", u"Qcs_sys_kWh", u"Qhs_sys_kWh", u"Qww_sys_kWh",
@@ -80,7 +80,7 @@ def main(output_file):
     if not test_config.has_section("test_calc_thermal_loads"):
         test_config.add_section("test_calc_thermal_loads")
     test_config.set("test_calc_thermal_loads", "value_columns", json.dumps(value_columns))
-    print values
+    print(values)
     test_config.set("test_calc_thermal_loads", "values", json.dumps(values))
 
     print("data for test_calc_thermal_loads_other_buildings:")

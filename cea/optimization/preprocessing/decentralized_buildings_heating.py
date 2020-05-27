@@ -311,11 +311,11 @@ def disconnected_heating_for_building(building_name, supply_systems, T_ground_K,
         "Best configuration": Best[:, 0]}
     results_to_csv = pd.DataFrame(performance_results)
     fName_result = locator.get_optimization_decentralized_folder_building_result_heating(building_name)
-    results_to_csv.to_csv(fName_result, sep=',')
+    results_to_csv.to_csv(fName_result, sep=',', index=False)
     # save activation for the best supply system configuration
     best_activation_df = pd.DataFrame.from_dict(heating_dispatch[indexBest])  #
     best_activation_df.to_csv(
-        locator.get_optimization_decentralized_folder_building_result_heating_activation(building_name))
+        locator.get_optimization_decentralized_folder_building_result_heating_activation(building_name), index=False)
 
 
 def calc_GHP_operation(QnomGHP_W, T_ground_K, Texit_GHP_nom_K, Tret_K, Tsup_K, mdot_kgpers, q_load_Wh):

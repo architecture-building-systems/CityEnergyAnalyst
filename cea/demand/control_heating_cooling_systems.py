@@ -16,43 +16,43 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def has_heating_system(bpr):
+def has_heating_system(hvac_class_hs):
     """
     determines whether a building has a heating system installed or not
 
-    :param bpr: BuildingPropertiesRow
-    :type bpr: cea.demand.building_properties.BuildingPropertiesRow
-    :return: True or False
+    :param str hvac_class_hs: Heating system class of the HVAC unit
+    :return: True, if the building has a (supported) heating system or False
     :rtype: bool
     """
 
-    supported1 = ['RADIATOR', 'FLOOR_HEATING', 'CENTRAL_AC']
-    supported2 = ['NONE']
-    if bpr.hvac['class_hs'] in supported1:
+    supported = ['RADIATOR', 'FLOOR_HEATING', 'CENTRAL_AC']
+    unsupported = ['NONE']
+    if hvac_class_hs in supported:
         return True
-    elif bpr.hvac['class_hs'] in supported2:
+    elif hvac_class_hs in unsupported:
         return False
     else:
-        raise ValueError('Invalid value for class_cs: %s. CEA only supports the following systems %s' %(bpr.hvac['class_hs'], supported1.extend(supported2)))
+        raise ValueError('Invalid value for class_cs: %s. CEA only supports the following systems %s' % (
+            hvac_class_hs, supported.extend(unsupported)))
 
 
-def has_cooling_system(bpr):
+def has_cooling_system(hvac_class_cs):
     """
     determines whether a building has a cooling system installed or not
 
-    :param bpr: BuildingPropertiesRow
-    :type bpr: cea.demand.building_properties.BuildingPropertiesRow
-    :return: True or False
+    :param str hvac_class_cs: Cooling system class of the HVAC unit
+    :return: True, if the building has a (supported) cooling system or False
     :rtype: bool
     """
-    supported1 = ['CEILING_COOLING', 'FLOOR_COOLING', 'DECENTRALIZED_AC', 'CENTRAL_AC', 'HYBRID_AC']
-    supported2 = ['NONE']
-    if bpr.hvac['class_cs'] in supported1:
+    supported = ['CEILING_COOLING', 'FLOOR_COOLING', 'DECENTRALIZED_AC', 'CENTRAL_AC', 'HYBRID_AC']
+    unsupported = ['NONE']
+    if hvac_class_cs in supported:
         return True
-    elif bpr.hvac['class_cs'] in supported2:
+    elif hvac_class_cs in unsupported:
         return False
     else:
-        raise ValueError('Invalid value for class_cs: %s. CEA only supports the following systems %s' %(bpr.hvac['class_cs'], supported1.extend(supported2)))
+        raise ValueError('Invalid value for class_cs: %s. CEA only supports the following systems %s' % (
+            hvac_class_cs, supported.extend(unsupported)))
 
 
 def has_radiator_heating_system(bpr):

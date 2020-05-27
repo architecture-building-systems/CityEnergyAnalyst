@@ -4,9 +4,7 @@ Contains some helper methods for working with glossary data
 from __future__ import print_function
 from __future__ import division
 
-import os
-import csv
-import cea.scripts
+import cea.schemas
 import pandas as pd
 
 __author__ = "Daren Thomas"
@@ -21,11 +19,11 @@ __status__ = "Production"
 __glossary_df = None  # keep a copy of this as it won't be changed during runtime. ever.
 
 
-def read_glossary_df():
+def read_glossary_df(plugins):
     """Returns the glossary as a DataFrame, created from the schemas.yml file. NOTE: This is used by the GUI."""
     global __glossary_df
     if __glossary_df is None:
-        schemas = cea.scripts.schemas()
+        schemas = cea.schemas.schemas(plugins)
         glossary_df = pd.DataFrame(columns=["SCRIPT", "LOCATOR_METHOD", "WORKSHEET", "VARIABLE",
                                             "DESCRIPTION", "UNIT", "VALUES", "TYPE", "COLOR", "FILE_NAME"])
         rows = []
@@ -74,4 +72,4 @@ def glossary_row(script, file_path, col, lm, cd, worksheet):
 
 
 if __name__ == "__main__":
-    print(read_glossary_df())
+    print(read_glossary_df(plugins=[]))

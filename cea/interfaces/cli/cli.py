@@ -6,14 +6,13 @@ The rest of the command line arguments are passed to the ``cea.config.Configurat
 """
 
 import sys
-import os
 import importlib
 import datetime
-import ConfigParser
 import cea.config
 import cea.scripts
 import cea
-
+from typing import List
+from cea.plugin import CeaPlugin
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -48,7 +47,7 @@ def main(config=None):
         print('City Energy Analyst version %s' % cea.__version__)
         sys.exit(0)
     script_name = args.pop(0)
-    cea_script = cea.scripts.by_name(script_name)
+    cea_script = cea.scripts.by_name(script_name, config.plugins)
     config.restrict_to(cea_script.parameters)
     config.apply_command_line_args(args, cea_script.parameters)
 
@@ -80,10 +79,10 @@ def print_help(config, remaining_args):
     if remaining_args:
         script_name = remaining_args[0]
         try:
-            cea_script = cea.scripts.by_name(script_name)
+            cea_script = cea.scripts.by_name(script_name, config.plugins)
         except:
             print("Invalid value for SCRIPT.")
-            print_valid_script_names()
+            print_valid_script_names(config.plugins)
             return
         script_module = importlib.import_module(cea_script.module)
         print(script_module.__doc__)
@@ -98,16 +97,19 @@ def print_help(config, remaining_args):
         print("       to run a specific script")
         print("usage: cea --help SCRIPT")
         print("       to get additional help specific to a script")
-        print_valid_script_names()
+        print_valid_script_names(config.plugins)
 
 
-def print_valid_script_names():
-    """Print out the list of scripts by category."""
+def print_valid_script_names(plugins):
+    """Print out the list of scripts by category.
+
+    :parameter List[CeaPlugin] plugins: the list of plugins to include in the search for script names.
+    """
     import textwrap
     import itertools
     print("")
     print("SCRIPT can be one of:")
-    scripts = sorted(cea.scripts.for_interface('cli'), key=lambda s: s.category)
+    scripts = sorted(cea.scripts.for_interface('cli', plugins=plugins), key=lambda s: s.category)
     for category, group in itertools.groupby(scripts, lambda s: s.category):
         print(textwrap.fill("[%s]:  %s" % (category, ', '.join(s.name for s in sorted(group, key=lambda s: s.name))),
                             subsequent_indent='    ', break_on_hyphens=False))

@@ -11,14 +11,19 @@ def register_scripts():
     import cea.scripts
     import importlib
 
-
     def script_wrapper(cea_script):
+        # defines script_runner using closures so that it's tied to a specific cea script.
         module_path = cea_script.module
         script_module = importlib.import_module(module_path)
 
         def script_runner(config=None, **kwargs):
-            if config is None:
+            # each cea script is represented by this function - but assigned the name of the script at module
+            # level. this is done when the module is read. Note that we use the LazyLoader below to only actually
+            # import the module when it's accessed the first time to save startup time (scripts are often run
+            # infrequently and most are not run at all during an average cea session)
+            if not config:
                 config = cea.config.Configuration()
+
             option_list = cea_script.parameters
             config.restrict_to(option_list)
             for section, parameter in config.matching_parameters(option_list):
@@ -63,7 +68,7 @@ def register_scripts():
 
             return getattr(self._runner, item)
 
-    for cea_script in sorted(cea.scripts.list_scripts()):
+    for cea_script in sorted(cea.scripts.list_scripts(cea.config.Configuration().plugins)):
         # print("cea.api: loading cea_script: {script}".format(script=cea_script))
         script_py_name = cea_script.name.replace('-', '_')
         globals()[script_py_name] = LazyLoader(cea_script)
