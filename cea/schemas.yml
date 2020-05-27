@@ -9270,12 +9270,6 @@ get_optimization_decentralized_folder_building_result_cooling:
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
         min: 0.0
-      'Unnamed: 0':
-        description: Index
-        type: int
-        unit: '[-]'
-        values: '{0...n}'
-        min: 0
   used_by:
   - optimization
 get_optimization_decentralized_folder_building_result_heating:
@@ -9351,12 +9345,6 @@ get_optimization_decentralized_folder_building_result_heating:
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
         min: 0.0
-      'Unnamed: 0':
-        description: Index
-        type: int
-        unit: '[-]'
-        values: '{0...n}'
-        min: 0
   used_by:
   - optimization
 get_optimization_decentralized_folder_building_result_heating_activation:
