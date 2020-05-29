@@ -226,9 +226,21 @@ class SchemaIo(object):
         """Check to make sure the Dataframe conforms to the schema"""
         expected_columns = set(self.schema["schema"]["columns"].keys())
         found_columns = set(df.columns.values)
+
+        # handle some extra cases
+        if "PIPE0" in expected_columns:
+            found_columns = {c for c in found_columns if not c.startswith("PIPE")}
+            found_columns.add("PIPE0")
+
+        # handle some extra cases
+        if "NODE0" in expected_columns:
+            found_columns = {c for c in found_columns if not c.startswith("NODE")}
+            found_columns.add("NODE0")
+
         if not found_columns == expected_columns:
             missing_columns = expected_columns - found_columns
             extra_columns = found_columns - expected_columns
+
             warnings.warn("Dataframe does not conform to schemas.yml specification for {lm}"
                           "(missing: {missing_columns}, extra: {extra_columns}".format(
                 lm=self.lm, missing_columns=missing_columns, extra_columns=extra_columns))

@@ -1,0 +1,43 @@
+# run the whole cooling system workflow (simplified thermal-networks) for the current scenario
+# starting at radiation
+- script: radiation
+  parameters:
+    consider-intersections: false
+- script: schedule-maker
+- script: demand
+- script: emissions
+- script: system-costs
+- script: water-body-potential
+- script: sewage-potential
+- script: shallow-geothermal-potential
+- script: photovoltaic
+- script: solar-collector
+  parameters:
+    type-scpanel: FP
+- script: solar-collector
+  parameters:
+    type-scpanel: ET
+- script: photovoltaic-thermal
+  parameters:
+    type-scpanel: FP
+- script: photovoltaic-thermal
+  parameters:
+    type-scpanel: ET
+- script: network-layout
+  parameters:
+    network-type: DC
+    network-model: simplified
+- script: thermal-network
+  parameters:
+    network-type: DC
+    network-model: simplified
+- script: decentralized
+- script: optimization
+  parameters:
+    network-type: DC
+    number-of-generations: 2
+    population-size: 5
+    random-seed: 100
+- script: multi-criteria-analysis
+  parameters:
+    generation: 2
