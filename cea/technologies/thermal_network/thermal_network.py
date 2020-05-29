@@ -290,10 +290,11 @@ class ThermalNetwork(object):
             self.edge_node_df = pd.read_csv(
                 self.locator.get_thermal_network_edge_node_matrix_file(self.network_type,
                                                                        self.network_name),
-                index_col=0)
+                index_col="NODE")
         else:
             edge_node_df.to_csv(
-                self.locator.get_thermal_network_edge_node_matrix_file(self.network_type, self.network_name))
+                self.locator.get_thermal_network_edge_node_matrix_file(self.network_type, self.network_name),
+                index=True, index_label="NODE")
             self.edge_node_df = edge_node_df.copy()
         self.all_nodes_df = all_nodes_df
         self.edge_df = edge_df
@@ -479,11 +480,11 @@ def thermal_network_main(locator, thermal_network, processes=1):
                 edge_mass_flow_for_csv = edge_mass_flow_for_csv.append(edge_mass_flow_for_csv.mean(), ignore_index=True)
             edge_mass_flow_for_csv.to_csv(
                 thermal_network.locator.get_nominal_edge_mass_flow_csv_file(thermal_network.network_type,
-                                                                            thermal_network.network_name))
+                                                                            thermal_network.network_name), index=False)
         else:
             thermal_network.edge_mass_flow_df.to_csv(
                 thermal_network.locator.get_nominal_edge_mass_flow_csv_file(thermal_network.network_type,
-                                                                            thermal_network.network_name))
+                                                                            thermal_network.network_name), index=False)
 
     # assign pipe id/od according to maximum edge mass flow
     thermal_network.pipe_properties = assign_pipes_to_edges(thermal_network)
@@ -1823,7 +1824,8 @@ def calc_max_edge_flowrate(thermal_network, processes=1):
         node_mass_flow_for_csv = extrapolate_datapoints_for_representative_weeks(thermal_network.node_mass_flow_df)
         node_mass_flow_for_csv.to_csv(
             thermal_network.locator.get_nominal_node_mass_flow_csv_file(thermal_network.network_type,
-                                                                        thermal_network.network_name))
+                                                                        thermal_network.network_name),
+            index=False)
 
         # output csv files with aggregated demand
         thermal_demand_for_csv = extrapolate_datapoints_for_representative_weeks(thermal_network.thermal_demand)
@@ -1836,7 +1838,8 @@ def calc_max_edge_flowrate(thermal_network, processes=1):
         # Nominal node mass flow
         thermal_network.node_mass_flow_df.to_csv(
             thermal_network.locator.get_nominal_node_mass_flow_csv_file(thermal_network.network_type,
-                                                                        thermal_network.network_name))
+                                                                        thermal_network.network_name),
+            index=False)
 
         # output csv files with aggregated demand
         thermal_network.thermal_demand.to_csv(
@@ -1861,7 +1864,6 @@ def load_node_flowrate_from_previous_run(thermal_network):
     """Bypass the calculation of calc_max_edge_flowrate and use the results form the previous run"""
     node_mass_flow_df = pd.read_csv(
         thermal_network.locator.get_nominal_node_mass_flow_csv_file(thermal_network.network_type, thermal_network.network_name))
-    del node_mass_flow_df['Unnamed: 0']
     # max_edge_mass_flow_df = pd.DataFrame(data=[(edge_mass_flow_df.abs()).max(axis=0)],
     #                                     columns=thermal_network.edge_node_df.columns)
     return node_mass_flow_df

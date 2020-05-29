@@ -417,7 +417,7 @@ class PathParameter(Parameter):
 
     def decode(self, value):
         """Always return a canonical path"""
-        return os.path.normpath(os.path.abspath(value))
+        return str(os.path.normpath(os.path.abspath(value)))
 
 
 class FileParameter(Parameter):

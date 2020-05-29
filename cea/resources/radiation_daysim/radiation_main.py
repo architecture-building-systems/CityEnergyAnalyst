@@ -244,12 +244,12 @@ def check_daysim_bin_directory(path_hint):
                 continue
 
             if contains_libs(path):
-                return path
+                return str(path)
             else:
                 # might be C:\Daysim\bin, try adding C:\Daysim\lib
                 lib_path = os.path.abspath(os.path.normpath(os.path.join(path, "..", "lib")))
                 if contains_libs(lib_path):
-                    return path + os.pathsep + lib_path
+                    return str(path + os.pathsep + lib_path)
 
     raise ValueError("Could not find Daysim binaries - checked these paths: {}".format(", ".join(folders_to_check)))
 
@@ -461,8 +461,9 @@ def main(config):
     config.radiation.daysim_bin_directory = check_daysim_bin_directory(config.radiation.daysim_bin_directory)
 
     # BUGFIX for PyCharm: the PATH variable might not include the daysim-bin-directory, so we add it here
-    os.environ["PATH"] = config.radiation.daysim_bin_directory + os.pathsep + os.environ["PATH"]
-    os.environ["RAYPATH"] = config.radiation.daysim_bin_directory
+    os.environ["PATH"] = "{bin}{pathsep}{path}".format(bin=config.radiation.daysim_bin_directory, pathsep=os.pathsep,
+                                                       path=os.environ["PATH"])
+    os.environ["RAYPATH"] = str(config.radiation.daysim_bin_directory)
     if not "PROJ_LIB" in os.environ:
         os.environ["PROJ_LIB"] = os.path.join(os.path.dirname(sys.executable), "Library", "share")
     if not "GDAL_DATA" in os.environ:
