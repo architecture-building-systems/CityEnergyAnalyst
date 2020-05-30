@@ -98,7 +98,6 @@ class Project(Resource):
 class Scenarios(Resource):
     def post(self):
         """Create new scenario"""
-        payload = api.payload
         config = cea.config.Configuration()
         project_path = api.payload.get('projectPath')
         if project_path is not None:
@@ -115,57 +114,52 @@ class Scenarios(Resource):
         locator = cea.inputlocator.InputLocator(new_scenario_path)
 
         # Run database_initializer to copy databases to input
-        if 'databases-path' in payload:
+        databases_path = api.payload.get('databases-path')
+        if databases_path is not None:
             try:
-                cea.api.data_initializer(config, scenario=new_scenario_path, databases_path=payload['databases-path'])
+                cea.api.data_initializer(config, scenario=new_scenario_path, databases_path=databases_path)
             except Exception as e:
                 trace = traceback.format_exc()
                 return {'message': 'data_initializer: {}'.format(e.message), 'trace': trace}, 500
 
-        if payload['input-data'] == 'import':
-            files = payload['files']
-
+        input_data = api.payload.get('input-data')
+        if input_data == 'import':
+            files = api.payload.get('files')
             if files is not None:
                 try:
-                    # Local variables
-                    if 'terrain' not in files:
-                        files['terrain'] = ''
-                    if 'streets' not in files:
-                        files['streets'] = ''
-                    if 'surroundings' not in files:
-                        files['surroundings'] = ''
-                    if 'typology' not in files:
-                        files['typology'] = ''
                     cea.api.create_new_scenario(config,
-                                               scenario=new_scenario_path,
-                                               zone=files['zone'],
-                                               surroundings=files['surroundings'],
-                                               streets=files['streets'],
-                                               terrain=files['terrain'],
-                                               typology=files['typology'])
-
+                                                scenario=new_scenario_path,
+                                                zone=files.get('zone'),
+                                                surroundings=files.get('surroundings', ''),
+                                                streets=files.get('streets', ''),
+                                                terrain=files.get('terrain', ''),
+                                                typology=files.get('typology', ''))
                 except Exception as e:
                     trace = traceback.format_exc()
-                    return {'message': e.message, 'trace': trace}, 500
+                    return {'message': 'create_new_scenario: {}'.format(e.message), 'trace': trace}, 500
 
-        elif payload['input-data'] == 'copy':
+        elif input_data == 'copy':
+            source_scenario_name = api.payload.get('copy-scenario')
             try:
-                source_scenario = os.path.join(config.project, payload['copy-scenario'])
+                source_scenario = os.path.join(config.project, source_scenario_name)
                 shutil.copytree(cea.inputlocator.InputLocator(source_scenario).get_input_folder(),
                                 locator.get_input_folder())
             except OSError as e:
                 trace = traceback.format_exc()
                 return {'message': e.message, 'trace': trace}, 500
 
-        elif payload['input-data'] == 'generate':
-            tools = payload['tools']
+        elif input_data == 'generate':
+            tools = api.payload.get('tools')
             if tools is not None:
                 for tool in tools:
                     try:
                         if tool == 'zone':
                             # FIXME: Setup a proper endpoint for site creation
+                            site_geojson = api.payload.get('geojson')
+                            if site_geojson is None:
+                                raise ValueError('Could not find GeoJson for site polygon')
                             site = geopandas.GeoDataFrame(crs=get_geographic_coordinate_system(),
-                                                          geometry=[shape(payload['geojson']['features'][0]['geometry'])])
+                                                          geometry=[shape(site_geojson['features'][0]['geometry'])])
                             site_path = locator.get_site_polygon()
                             locator.ensure_parent_folder_exists(site_path)
                             site.to_file(site_path)
