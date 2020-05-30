@@ -5,7 +5,7 @@ from functools import wraps
 import traceback
 
 import geopandas
-from flask import current_app
+from flask import current_app, request
 from flask_restplus import Namespace, Resource, fields, abort
 from staticmap import StaticMap, Polygon
 from shapely.geometry import shape
@@ -22,82 +22,55 @@ api = Namespace('Project', description='Current project for CEA')
 
 PROJECT_PATH_MODEL = api.model('Project Path', {
     'path': fields.String(description='Path of Project'),
-    'scenario': fields.String(description='Path of Scenario')
 })
 
-PROJECT_MODEL = api.inherit('Project', PROJECT_PATH_MODEL, {
+SCENARIO_PATH_MODEL = api.inherit('Project', PROJECT_PATH_MODEL, {
+    'scenario': fields.String(description='Name of Scenario')
+})
+
+PROJECT_MODEL = api.inherit('Project', SCENARIO_PATH_MODEL, {
     'name': fields.String(description='Name of Project'),
-    'scenario': fields.String(description='Name of Current Scenario'),
     'scenarios': fields.List(fields.String, description='Name of Current Scenario')
-})
-
-NEW_PROJECT_MODEL = api.model('New Project', {
-    'name': fields.String(description='Name of Project'),
-    'path': fields.String(description='Path of Project')
 })
 
 
 @api.route('/')
 class Project(Resource):
     @api.marshal_with(PROJECT_MODEL)
+    @api.doc(params={'path': 'Path of Project'})
     def get(self):
-        config = current_app.cea_config
-        name = os.path.basename(config.project)
-        if not os.path.exists(config.project):
-            abort(400, 'Project path does not exist')
-        if not os.path.exists(config.scenario):
-            config.scenario_name = ''
-            config.save()
-        return {'name': name, 'path': config.project, 'scenario': config.scenario_name,
+        _path = request.args.get('path')
+        if _path is None:
+            config = current_app.cea_config
+            scenario = config.scenario_name
+        else:
+            if not os.path.exists(_path):
+                abort(400, 'Project path: "{project_path}" does not exist'.format(project_path=_path))
+            # Prevent changing current_app config
+            config = cea.config.Configuration()
+            config.project = _path
+            scenario = None
+
+        return {'name': os.path.basename(config.project), 'path': config.project, 'scenario': scenario,
                 'scenarios': list_scenario_names_for_project(config)}
 
-    @api.doc(body=PROJECT_PATH_MODEL, responses={200: 'Success', 400: 'Invalid Path given'})
-    def put(self):
-        """Update Project"""
-        config = current_app.cea_config
-        payload = api.payload
-
-        if 'path' in payload:
-            path = payload['path']
-            if os.path.exists(path):
-                config.project = path
-                if 'scenario' not in payload:
-                    config.scenario_name = ''
-                    config.save()
-                    return {'message': 'Project path changed'}
-            else:
-                abort(400, 'Path given does not exist')
-
-        if 'scenario' in payload:
-            scenario = payload['scenario']
-            choices = list_scenario_names_for_project(config)
-            if scenario in choices:
-                config.scenario_name = scenario
-                config.save()
-                return {'message': 'Scenario changed'}
-            else:
-                abort(400, 'Scenario does not exist', choices=choices)
-
-    @api.doc(body=NEW_PROJECT_MODEL, responses={200: 'Success'})
     def post(self):
-        """Create new project"""
-        config = current_app.cea_config
-        payload = api.payload
+        """Create new project folder"""
+        name = api.payload.get('name')
+        project_path = api.payload.get('path')
 
-        if 'path' in payload:
-            path = payload['path']
-            name = payload['name']
-            project_path = os.path.join(path, name)
+        if name is not None and project_path is not None:
+            project_path = os.path.join(project_path, name)
             try:
                 os.makedirs(project_path)
             except OSError as e:
                 abort(400, str(e))
 
-            config.project = project_path
-            config.scenario_name = ''
-            config.save()
-
-            return {'message': 'Project created at {}'.format(project_path)}
+            return {'message': 'Project folder created', 'path': project_path}
+        else:
+            abort(400, 'Parameters not valid - Project Name: {name}, Project Path: {project_path}'.format(
+                name=name, project_path=project_path
+            ))
 
 
 @api.route('/scenario/')
