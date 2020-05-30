@@ -72,6 +72,27 @@ class Project(Resource):
                 name=name, project_path=project_path
             ))
 
+    @api.expect(SCENARIO_PATH_MODEL)
+    def put(self):
+        """Update Project info in config"""
+        config = current_app.cea_config
+        path = api.payload.get('path')
+        scenario = api.payload.get('scenario')
+
+        if path is not None and scenario is not None:
+            # Project path must exist but scenario does not have to
+            if os.path.exists(path):
+                config.project = path
+                config.scenario_name = scenario
+                config.save()
+                return {'message': 'Project path in config changed', 'path': path}
+            else:
+                abort(400, 'Project path: "{project_path}" does not exist'.format(project_path=path))
+        else:
+            abort(400,
+                  'Parameters not valid - Project Path: {project_path}, Scenario: {scenario}'.format(project_path=path,
+                                                                                                     scenario=scenario))
+
 
 @api.route('/scenario/')
 class Scenarios(Resource):
