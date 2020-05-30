@@ -37,18 +37,18 @@ PROJECT_MODEL = api.inherit('Project', SCENARIO_PATH_MODEL, {
 @api.route('/')
 class Project(Resource):
     @api.marshal_with(PROJECT_MODEL)
-    @api.doc(params={'path': 'Path of Project'})
+    @api.doc(params={'path': 'Path of Project (Leave blank to use path in config)'})
     def get(self):
-        _path = request.args.get('path')
-        if _path is None:
+        project_path = request.args.get('path')
+        if project_path is None:
             config = current_app.cea_config
             scenario = config.scenario_name
         else:
-            if not os.path.exists(_path):
-                abort(400, 'Project path: "{project_path}" does not exist'.format(project_path=_path))
+            if not os.path.exists(project_path):
+                abort(400, 'Project path: "{project_path}" does not exist'.format(project_path=project_path))
             # Prevent changing current_app config
             config = cea.config.Configuration()
-            config.project = _path
+            config.project = project_path
             scenario = None
 
         return {'name': os.path.basename(config.project), 'path': config.project, 'scenario': scenario,
