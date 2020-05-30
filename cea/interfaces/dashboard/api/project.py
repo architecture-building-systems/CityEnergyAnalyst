@@ -24,7 +24,7 @@ PROJECT_PATH_MODEL = api.model('Project Path', {
     'path': fields.String(description='Path of Project'),
 })
 
-SCENARIO_PATH_MODEL = api.inherit('Project', PROJECT_PATH_MODEL, {
+SCENARIO_PATH_MODEL = api.inherit('Scenario Path', PROJECT_PATH_MODEL, {
     'scenario': fields.String(description='Name of Scenario')
 })
 
@@ -227,7 +227,6 @@ class ScenarioImage(Resource):
         project_path = request.args.get('projectPath')
         if project_path is None:
             config = current_app.cea_config
-            scenario = config.scenario_name
         else:
             if not os.path.exists(project_path):
                 abort(400, 'Project path: "{project_path}" does not exist'.format(project_path=project_path))
