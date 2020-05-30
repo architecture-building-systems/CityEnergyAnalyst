@@ -98,10 +98,14 @@ class Project(Resource):
 class Scenarios(Resource):
     def post(self):
         """Create new scenario"""
-        config = current_app.cea_config
         payload = api.payload
-        new_scenario_path = os.path.join(config.project, payload['name'])
+        config = cea.config.Configuration()
+        project_path = api.payload.get('projectPath')
+        if project_path is not None:
+            config.project = project_path
 
+        scenario_name = api.payload.get('name')
+        new_scenario_path = os.path.join(config.project, scenario_name)
         # Make sure that the scenario folder exists
         try:
             os.makedirs(new_scenario_path)
