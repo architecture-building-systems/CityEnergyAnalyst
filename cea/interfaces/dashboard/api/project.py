@@ -222,8 +222,18 @@ class Scenario(Resource):
 
 @api.route('/scenario/<string:scenario>/image')
 class ScenarioImage(Resource):
+    @api.doc(params={'projectPath': 'Path of Project (Leave blank to use path in config)'})
     def get(self, scenario):
-        config = current_app.cea_config
+        project_path = request.args.get('projectPath')
+        if project_path is None:
+            config = current_app.cea_config
+            scenario = config.scenario_name
+        else:
+            if not os.path.exists(project_path):
+                abort(400, 'Project path: "{project_path}" does not exist'.format(project_path=project_path))
+            config = cea.config.Configuration()
+            config.project = project_path
+
         choices = list_scenario_names_for_project(config)
         if scenario in choices:
             locator = cea.inputlocator.InputLocator(os.path.join(config.project, scenario))
