@@ -85,7 +85,7 @@ class Project(Resource):
                 config.project = path
                 config.scenario_name = scenario
                 config.save()
-                return {'message': 'Project path in config changed', 'path': path}
+                return {'message': 'Updated project info in config', 'path': path, 'scenario': scenario}
             else:
                 abort(400, 'Project path: "{project_path}" does not exist'.format(project_path=path))
         else:
