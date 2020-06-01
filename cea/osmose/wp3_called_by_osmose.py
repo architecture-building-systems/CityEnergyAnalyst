@@ -71,6 +71,7 @@ def main(path_to_case):
         results_dict = {'pumping_kWh': annual_pumping_energy_kWh,
                         'pump_size_kW': pump_size_kW,
                         'network_length_m': L_network_m,
+                        'D_pipe_mean_m': Pipe_properties_df['D_int_m'].mean(),
                         'Cinv_pump': Cinv_pump,
                         'Cinv_hex': substation_A_hex_df['Cinv_hex'].sum(),
                         'Cinv_pipes': Cinv_network_pipes}
@@ -79,16 +80,17 @@ def main(path_to_case):
         results_dict = {'pumping_kWh': 0.0,
                         'pump_size_kW': 0.0,
                         'network_length_m': 0.0,
+                        'D_pipe_mean_m': 0.0,
                         'Cinv_pump': 0.0,
                         'Cinv_hex': 0.0,
                         'Cinv_pipes': 0.0}
 
 
     import csv
-    with open(os.path.join(path_to_case,'pass_to_osmose.csv'), 'w') as f:
+    with open(os.path.join(path_to_case, 'pass_to_osmose.csv'), 'w') as f:
         for key in results_dict.keys():
             f.write("%s,%s\n" % (key, str(results_dict[key])))
-    print('save results to ', os.path.join(path_to_case,'pass_to_osmose.csv'))
+    print('save results to ', os.path.join(path_to_case, 'pass_to_osmose.csv'))
     return
 
 
@@ -212,6 +214,8 @@ def write_cea_demand_from_osmose(path_to_district_folder):
             Q_substation = network_df.filter(like=building_function).filter(like='Hout').sum(axis=1)
             dTlm_dict[building_function] = 6
             substation_Qmax_dict[building_function] = Q_substation.values.max()
+            if Q_substation.values.max() <= 0.001:
+                print('network not connected to ', building_function)
             # dTlm_dict[building_function], substation_Qmax_dict[building_function] = \
             #     calc_builing_substation_dTlm(Q_substation, building_function)  # FIXME: cant use it during optimization, no plots
 
@@ -231,7 +235,7 @@ def write_cea_demand_from_osmose(path_to_district_folder):
             substation_flow_rate_m3pers_df[building] = substation_flow_rate_m3pers
 
             # substation heat exchanger areas
-            substation_Qmax = substation_Qmax_dict[bui_func] * (building_Af_m2 / building_Af_m2)
+            substation_Qmax = substation_Qmax_dict[bui_func] * (building_Af_m2 / Af_total_m2[bui_func])
             substation_A_hex.loc[building] = [substation_Qmax / (U_substation * dTlm_dict[bui_func])]
 
             # fill nan with zeros
