@@ -190,14 +190,14 @@ def calc_averaged_PLF(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, 
     """
     Calculates the part load factor of installed Vapor compression chillers for a given cooling load.
     Includes the design of the chillers based on peak load and chiller plant scale to define the part load ratio.
-    :param float peak_cooling_load:
-    :param float q_chw_load_Wh:
-    :param float T_chw_sup_K:
-    :param float T_cw_in_K:
-    :param float min_chiller_size:
-    :param float max_chiller_size:
+    :param float peak_cooling_load: in W
+    :param float q_chw_load_Wh: in W
+    :param float T_chw_sup_K: in Kelvin
+    :param float T_cw_in_K: in Kelvin
+    :param float min_chiller_size: in W
+    :param float max_chiller_size: in W
     :param str scale: either "BUILDING" or "DISTRICT"
-    :return float averaged_PLF: averaged part load factor over all chillers
+    :return float averaged_PLF: averaged part load factor over all chillers [0..1]
     """
     design_capacity = peak_cooling_load  # * 1.15 # for future implementation, a safety factor could be introduced. As of now this would be in conflict with the master_to_slave_variables.WS_BaseVCC_size_W
     if scale == 'BUILDING':
