@@ -51,6 +51,19 @@ problem_dict = {
                    [1, 3], [8, 11], [1, 3], [8, 11], [14,18],
                    [1, 3], [8, 11], [1, 3], [8, 11], [14,18]]
     },
+    "d_LT_Networks_dhw": {
+        'num_vars': 21,
+        'names': ['dTn_1', 'dTn_2',
+                  'HOT_dT1', 'HOT_dT2', 'HOT_dTsc', 'HOT_OAU_dT2', 'HOT_OAU_T1', 'HOT_RAU_dT2', 'HOT_RAU_T1', 'HOT_T_HP',
+                  'N_dT2',
+                  'OFF_OAU_dT2', 'OFF_OAU_T1', 'OFF_RAU_dT2', 'OFF_RAU_T1', 'OFF_T_HP',
+                  'RET_OAU_dT2', 'RET_OAU_T1', 'RET_RAU_dT2', 'RET_RAU_T1', 'RET_T_HP'],
+        'bounds': [[5, 15], [5, 15],
+                   [20, 30], [10, 18], [0, 20], [1, 3], [8, 11], [1, 3], [8, 11], [14, 18],
+                   [1, 3],
+                   [1, 3], [8, 11], [1, 3], [8, 11], [14, 18],
+                   [1, 3], [8, 11], [1, 3], [8, 11], [14, 18]]
+    },
     "d_HT_Networks": {
         'num_vars': 17,
         'names': ['dTn_1',
@@ -99,8 +112,8 @@ problem_dict = {
     },
 }
 
-problem_name = 'd_Buildings'
-number_of_samples = 20
+problem_name = 'd_LT_Networks_dhw'
+number_of_samples = 100
 iterations = 10000   #10000 from Steffen
 
 def main():
