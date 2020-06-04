@@ -8,12 +8,6 @@ class TestLoadDistribution(unittest.TestCase):
         result = calc_averaged_PLF(40000000, 25000000, 279.15, 301.15, 1758000, 14000000, "DISTRICT")
         self.assertAlmostEqual(0.9735208306617418, result)
 
-    # def test_calc_averaged_PLF_bad_scale(self):
-    #     # are we passing in correct scale values?
-    #     result = calc_averaged_PLF(40000000, 25000000, 279.15, 301.15, 1758000, 14000000, "")
-    #     result = calc_averaged_PLF(40000000, 25000000, 279.15, 301.15, 1758000, 14000000, "WHAT???")
-    #     self.assertEqual(AssertionError, AssertionError)
-
     def test_calc_available_capacity(self):
         result = calc_available_capacity(13333333.3333333, 'WATER', 'CENTRIFUGAL', 279.15, 301.15)
         self.assertAlmostEqual(12793205.269333301, result)
