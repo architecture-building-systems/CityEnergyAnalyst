@@ -35,3 +35,8 @@ def calc_rho_air(temp_air):
 
     return rho_air
 
+def kelvin_to_fahrenheit(T_Kelvin):
+    # converts the temperature from Kelvin to Fahrenheit
+    T_Celsius = T_Kelvin - 273.15
+    T_Fahrenheit = (T_Celsius*9/5)+32
+    return T_Fahrenheit

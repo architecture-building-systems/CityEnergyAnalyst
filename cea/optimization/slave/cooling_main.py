@@ -12,13 +12,13 @@ import pandas as pd
 import cea.inputlocator
 
 from cea.constants import HOURS_IN_YEAR
-from cea.optimization.constants import T_TANK_FULLY_DISCHARGED_K, DT_COOL, VCC_T_COOL_IN, ACH_T_IN_FROM_CHP_K
+from cea.optimization.constants import T_TANK_FULLY_DISCHARGED_K, DT_COOL, VCC_T_COOL_IN, ACH_T_IN_FROM_CHP_K, VCC_CODE_CENTRALIZED
 from cea.optimization.master import cost_model
 from cea.optimization.slave.cooling_resource_activation import calc_vcc_CT_operation, cooling_resource_activator
 from cea.optimization.slave.daily_storage.load_leveling import LoadLevelingDailyStorage
 from cea.technologies.cogeneration import calc_cop_CCGT
 from cea.technologies.thermal_network.thermal_network import calculate_ground_temperature
-from cea.technologies.chiller_absorption import  AbsorptionChiller
+from cea.technologies.chiller_absorption import AbsorptionChiller
 from cea.technologies.supply_systems_database import SupplySystemsDatabase
 
 __author__ = "Sreepathi Bhargava Krishna"
@@ -81,6 +81,13 @@ def district_cooling_network(locator,
         absorption_chiller = AbsorptionChiller(pd.read_excel(locator.get_database_conversion_systems(), sheet_name="Absorption_chiller"), 'double')
         CCGT_prop = calc_cop_CCGT(master_to_slave_variables.NG_Trigen_ACH_size_W, ACH_T_IN_FROM_CHP_K, "NG")
 
+        VCC_database = pd.read_excel(locator.get_database_conversion_systems(), sheet_name="Chiller")
+        technology_type = VCC_CODE_CENTRALIZED
+        VCC_database = VCC_database[VCC_database['code'] == technology_type]
+        max_VCC_capacity = int(VCC_database['cap_max'])
+        min_VCC_capacity = int(VCC_database['cap_min'])
+        # G_VALUE = VCC_database['ISENTROPIC_EFFICIENCY'] # create vessel to carry down gvalue and max_VCC_capacity, min_VCC_capacity to VCC module
+
         # initialize variables
         Q_Trigen_NG_gen_W = np.zeros(HOURS_IN_YEAR)
         Q_BaseVCC_WS_gen_W = np.zeros(HOURS_IN_YEAR)
@@ -118,7 +125,9 @@ def district_cooling_network(locator,
                                                         T_ground_K[hour],
                                                         master_to_slave_variables,
                                                         absorption_chiller,
-                                                        CCGT_prop)
+                                                        CCGT_prop,
+                                                        min_VCC_capacity,
+                                                        max_VCC_capacity)
 
                 Q_DailyStorage_gen_directload_W[hour] = thermal_output['Q_DailyStorage_gen_directload_W']
                 Q_Trigen_NG_gen_directload_W[hour] = thermal_output['Q_Trigen_NG_gen_directload_W']
@@ -147,6 +156,7 @@ def district_cooling_network(locator,
         master_to_slave_variables.NG_Trigen_CCGT_size_electrical_W = E_Trigen_NG_gen_W.max()
 
         # BACK-UPP VCC - AIR SOURCE
+        scale = 'DISTRICT'
         master_to_slave_variables.AS_BackupVCC_size_W = np.amax(Q_BackupVCC_AS_gen_W)
         size_chiller_CT = master_to_slave_variables.AS_BackupVCC_size_W
         if master_to_slave_variables.AS_BackupVCC_size_W != 0.0:
@@ -155,7 +165,10 @@ def district_cooling_network(locator,
                                                                                              T_district_cooling_return_K,
                                                                                              T_district_cooling_supply_K,
                                                                                              VCC_T_COOL_IN,
-                                                                                             size_chiller_CT)
+                                                                                             size_chiller_CT,
+                                                                                             min_VCC_capacity,
+                                                                                             max_VCC_capacity,
+                                                                                             scale)
         else:
             E_BackupVCC_AS_req_W = np.zeros(HOURS_IN_YEAR)
 
