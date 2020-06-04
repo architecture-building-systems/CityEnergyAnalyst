@@ -49,6 +49,10 @@ CHILLER_DELTA_T_HEX_CT = 1.5 # K , Approximation,  approach temperature of the H
 CENTRALIZED_AUX_PERCENTAGE = 38 # % , Power needed by auxiliary Chiller and CT, calculation based on UTown plant
 DECENTRALIZED_AUX_PERCENTAGE = 27 # % , Power needed by auxiliary Chiller and CT, backwards calulation based on Clark D (CUNDALL). Chiller energy efficiency 2013.
 
+COMPRESSOR_TYPE_LIMIT_LOW = 1055056  # in W, according to ASHRAE 90.1 Appendix G. below this limit (300 RT), one water-cooled screw chiller should be implemented
+COMPRESSOR_TYPE_LIMIT_HIGH = 2110112  # in W, according to ASHRAE 90.1 Appendix G. below this limit (600 RT), two water-cooled screw chiller should be implemented, while above 2 centrifugal water source chllers hall be implemented, not larger then 800 RT (2813 kW)
+ASHRAE_CAPACITY_LIMIT = 2813482 # in W, according to ASHRAE 90.1 Appendix G, chiller shall notbe larger than 800 RT
+
 # Cooling Towers
 CT_MIN_PARTLOAD_RATIO = 0.15 # from Grahovac, M. et al. (2012). VC CHILLERS AND PV PANELS: A GENERIC PLANNING TOOL PROVIDING THE OPTIMAL DIMENSIONS TO MINIMIZE COSTS OR EMISSIONS.
 

@@ -159,7 +159,7 @@ def calc_scale_costs(value, flag_scale):
         building = 0.0
         city = value
     elif flag_scale == "NONE":
-        if value == 0.0:
+        if value == 0.0 or np.isnan(value):
             district = 0.0
             building = 0.0
             city = 0.0
@@ -168,7 +168,7 @@ def calc_scale_costs(value, flag_scale):
                              " the inputs of SUPPLY database may be wrong")
     else:
         raise ValueError("the scale in the system is {}, this is not a valid argument"
-                         "valid argumetns are CITY, DISTRICT, BUILDING, NONE".format(flag_scale))
+                         "valid arguments are CITY, DISTRICT, BUILDING, NONE".format(flag_scale))
     return district, building, city
 
 
