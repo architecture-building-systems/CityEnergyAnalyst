@@ -109,8 +109,23 @@ def calc_costs_per_energy_service(database, heating_services):
 
         result[service + '_opex_fixed_USD'] = (result[service + '_capex_total_USD'] * database['O&M_%'].values / 100)
 
-        result[service + '_opex_var_USD'] = database[service + '_MWhyr'].values * database[
-            'Opex_var_buy_USD2015kWh'].values * 1000
+        ### if monthly demand of a building > 2000 kWh -- 25 % electricity price reduction
+        set_building = set(['GRID_cs', 'GRID_cdata', 'GRID_cre'])
+        reduction_factor = 0.75
+        lower_limit = 2  # MWh/month
+        if service in set_building:
+            feedstock_price_list = []
+            for i, feedstock_price in enumerate(database['Opex_var_buy_USD2015kWh'].values):
+                if database[service + '_MWhyr'].values[i]/12 >= lower_limit:
+                    feedstock_price_list.append(feedstock_price*reduction_factor)
+                elif database[service + '_MWhyr'].values[i]/12 < lower_limit:
+                    feedstock_price_list.append(feedstock_price)
+        elif service == 'DC_cs' and (sum(database[service + '_MWhyr'].values)/12 > lower_limit):
+            feedstock_price_list = database['Opex_var_buy_USD2015kWh'].values*reduction_factor
+        else:
+            feedstock_price_list = database['Opex_var_buy_USD2015kWh'].values
+        result[service + '_opex_var_USD'] = database[service + '_MWhyr'].values * feedstock_price_list * 1000
+
 
         result[service + '_opex_USD'] = result[service + '_opex_fixed_USD'] + result[service + '_opex_var_USD']
 
