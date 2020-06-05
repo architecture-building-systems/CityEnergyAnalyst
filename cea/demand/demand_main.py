@@ -129,7 +129,7 @@ def demand_calculation(locator, config):
 
     # WRITE TOTAL YEARLY VALUES
     writer_totals = demand_writers.YearlyDemandWriter(loads_output, massflows_output, temperatures_output)
-    totals, time_series = writer_totals.write_to_csv(building_names, locator)
+    totals, time_series = writer_totals.write_to_csv(building_names, locator, building_properties)
     time_elapsed = time.clock() - t0
     print('done - time elapsed: %d.2 seconds' % time_elapsed)
 

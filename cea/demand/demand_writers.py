@@ -227,16 +227,44 @@ class YearlyDemandWriter(DemandWriter):
     def __init__(self, loads, massflows, temperatures):
         super(YearlyDemandWriter, self).__init__(loads, massflows, temperatures)
 
-    def write_to_csv(self, list_buildings, locator):
+    def write_to_csv(self, list_buildings, locator, bpr):
         """read in the temporary results files and append them to the Totals.csv file."""
         df = None
+        building_frame = []
+        district_scale_buildings = []
+        field = ['QC_sys_kWh']
         for name in list_buildings:
             temporary_file = locator.get_temporary_file('%(name)sT.csv' % locals())
             if df is None:
                 df = pd.read_csv(temporary_file)
             else:
                 df = df.append(pd.read_csv(temporary_file), ignore_index=True)
-        df.to_csv(locator.get_total_demand('csv'), index=False, float_format='%.3f')
+            if bpr[name].supply['scale_cs'] == "DISTRICT":
+                district_scale_buildings.append(name)
+                building_file = locator.get_demand_results_file('%(name)s' % locals())
+                building_frame.append(pd.read_csv(building_file, skipinitialspace=True, usecols=field))
+        ### calculate true coincident capacity and electricity cooling demand
+        def coincident_peak(inputlist):
+            return sum([sublist for sublist in inputlist]).max()
+        coincident_capacity = coincident_peak(building_frame)['QC_sys_kWh']
+        for name in district_scale_buildings:
+            df.loc[df['Name'] == name]['QC_sys0_kW'] = df.loc[df['Name'] == name]['QC_sys0_kW']/\
+                                                        df.loc[df['Name'].isin(district_scale_buildings)]['QC_sys0_kW'].sum()\
+                                                        * coincident_capacity # calculates the relative capacity building and multiply with coincident capacity
+            ### recalculate the centralized COP dependent on the installed coincident capacity and redefine the cooling demands
+            # def func(x, a, b):
+            #     return a + b * np.log(x)
+            # a =
+            # b =
+            # if district_capacity <= min(x):
+            #     cop = min(y)
+            # elif district_capacity >= max(x):
+            #     cop = func(max(x), a, b)
+            # else:
+            #     cop = append(func(district_capacity, a, b)
+
+            # df.loc[df['Name'] == name]['DC_cs_Mwhyr'] = df.loc[df['Name'] == name]['Qcs_sys_MWhyr'] / cop
+            df.to_csv(locator.get_total_demand('csv'), index=False, float_format='%.3f')
 
         """read saved data of monthly values and return as totals"""
         monthly_data_buildings = [pd.read_csv(locator.get_demand_results_file(building_name, 'csv')) for building_name
