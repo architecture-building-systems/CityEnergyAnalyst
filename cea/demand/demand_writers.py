@@ -243,28 +243,33 @@ class YearlyDemandWriter(DemandWriter):
                 district_scale_buildings.append(name)
                 building_file = locator.get_demand_results_file('%(name)s' % locals())
                 building_frame.append(pd.read_csv(building_file, skipinitialspace=True, usecols=field))
+
         ### calculate true coincident capacity and electricity cooling demand
         def coincident_peak(inputlist):
             return sum([sublist for sublist in inputlist]).max()
-        coincident_capacity = coincident_peak(building_frame)['QC_sys_kWh']
-        for name in district_scale_buildings:
-            df.loc[df['Name'] == name]['QC_sys0_kW'] = df.loc[df['Name'] == name]['QC_sys0_kW']/\
-                                                        df.loc[df['Name'].isin(district_scale_buildings)]['QC_sys0_kW'].sum()\
-                                                        * coincident_capacity # calculates the relative capacity building and multiply with coincident capacity
-            ### recalculate the centralized COP dependent on the installed coincident capacity and redefine the cooling demands
-            # def func(x, a, b):
-            #     return a + b * np.log(x)
-            # a =
-            # b =
-            # if district_capacity <= min(x):
-            #     cop = min(y)
-            # elif district_capacity >= max(x):
-            #     cop = func(max(x), a, b)
-            # else:
-            #     cop = append(func(district_capacity, a, b)
 
-            # df.loc[df['Name'] == name]['DC_cs_Mwhyr'] = df.loc[df['Name'] == name]['Qcs_sys_MWhyr'] / cop
-            df.to_csv(locator.get_total_demand('csv'), index=False, float_format='%.3f')
+        energy_list = ['QC_sys_kWh', 'Qcs_sys_kWh', 'Qcre_sys_kWh', 'Qcdata_sys_kWh', 'DC_cs_kWh', 'DC_cre_kWh', 'DC_cdata_kWh']
+        capacity_list = ['QC_sys0_kW', 'Qcs_sys0_kW', 'Qcre_sys0_kW', 'Qcdata_sys0_kW', 'DC_cs0_kW', 'DC_cre0_kW', 'DC_cdata0_kW']
+        for (energy, capacity) in zip(energy_list, capacity_list):
+            coincident_capacity = coincident_peak(building_frame)[energy]
+            for name in district_scale_buildings:
+                df.loc[df['Name'] == name][capacity] = (
+                        df.loc[df['Name'] == name][capacity] / df.loc[df['Name'].isin(district_scale_buildings)][
+                    capacity].sum() * coincident_capacity)  # calculates the relative capacity building and multiply with coincident capacity
+                ### recalculate the centralized COP dependent on the installed coincident capacity and redefine the cooling demands
+                # def func(x, a, b):
+                #     return a + b * np.log(x)
+                # a =
+                # b =
+                # if district_capacity <= min(x):
+                #     cop = min(y)
+                # elif district_capacity >= max(x):
+                #     cop = func(max(x), a, b)
+                # else:
+                #     cop = append(func(district_capacity, a, b)
+
+                # df.loc[df['Name'] == name]['DC_cs_Mwhyr'] = df.loc[df['Name'] == name]['Qcs_sys_MWhyr'] / cop
+        df.to_csv(locator.get_total_demand('csv'), index=False, float_format='%.3f')
 
         """read saved data of monthly values and return as totals"""
         monthly_data_buildings = [pd.read_csv(locator.get_demand_results_file(building_name, 'csv')) for building_name
