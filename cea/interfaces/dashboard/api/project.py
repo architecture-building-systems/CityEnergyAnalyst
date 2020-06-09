@@ -183,7 +183,7 @@ class Scenarios(Resource):
                         trace = traceback.format_exc()
                         return {'message': '{}_helper: {}'.format(tool, e.message), 'trace': trace}, 500
 
-        return {'scenarios': list_scenario_names_for_project(config)}
+        return {'scenarios_list': list_scenario_names_for_project(config)}
 
 
 def glob_shapefile_auxilaries(shapefile_path):
@@ -217,15 +217,15 @@ class Scenario(Resource):
         """Update scenario"""
         config = current_app.cea_config
         scenario_path = os.path.join(config.project, scenario)
-        payload = api.payload
+        new_scenario_name = api.payload.get('name')
         try:
-            if 'name' in payload:
-                new_path = os.path.join(config.project, payload['name'])
+            if new_scenario_name is not None:
+                new_path = os.path.join(config.project, new_scenario_name)
                 os.rename(scenario_path, new_path)
                 if config.scenario_name == scenario:
-                    config.scenario_name = payload['name']
+                    config.scenario_name = new_scenario_name
                     config.save()
-                return {'name': payload['name']}
+                return {'name': new_scenario_name}
         except OSError:
             abort(400, 'Make sure that the scenario you are trying to rename is not open in any application. '
                        'Try and refresh the page again.')
