@@ -18,7 +18,7 @@ __status__ = "Production"
 
 
 #Shapefiles precision of decimals
-SHAPEFILE_TOLERANCE = 6 #this is precision of milimiters
+SHAPEFILE_TOLERANCE = 15 #this is precision of milimiters
 SNAP_TOLERANCE = 0.1 # this is precision in meters increase if having problems.
 
 HEAT_CAPACITY_OF_WATER_VAPOR_JPERKGK = 1859  # specific heat capacity of water vapor in KJ/kgK
