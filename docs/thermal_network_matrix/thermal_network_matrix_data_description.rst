@@ -294,40 +294,6 @@ Description of DataFrames and Lists written to csv by the thermal_network_matrix
 
 sorted in order of creation in the script
 
-
-ThermalNetwork.all_nodes_df
-----------------------------
-
-:type: DataFrame
-:shape: (number_of_nodes, 2)
-:Columns: - Type
-          - Building
-:Index: All Nodes ([NODE0, ...])
-
-
-ThermalNetwork.edge_df
------------------------------
-
-:type: GeoDataFrame
-:shape: (number_of_edges, 15),
-:Columns: - Type_mat
-          - Pipe_DN_x
-          - geometry
-          - coordinates
-          - pipe length
-          - start node
-          - end node
-          - Pipe_DN_y
-          - D_ext_m
-          - D_int_m
-          - D_ins_m
-          - Vdot_min_m3s
-          - Vdot_max_m3s
-          - mdot_min_kgs
-          - mdot_max_kgs
-:Index: All Edges ([PIPE0, ...])
-
-
 csv_outputs['T_supply_nodes']
 -----------------------------
 
