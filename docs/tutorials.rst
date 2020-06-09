@@ -29,7 +29,6 @@ Collection of outdated information about past functionality of CEA (use at your 
 #. `What are the input databases of CEA? <https://docs.google.com/presentation/d/14cgSAhNGnjTDLx_rco9mWU9FFLk0s50FBd_ud9AK7pU/edit?usp=sharing>`__
 #. `What are the default databases of CEA? <https://docs.google.com/presentation/d/1xMG-Vhmqh0jwdLih6WgwFzJrzhlPGdocQKdzZvYnviI/edit?usp=sharing>`__
 #. `How to edit the input databases of CEA? <https://docs.google.com/presentation/d/16LXsu0vbllRL-in_taABuiThJ2uMP9Q05m3ORdaQrvU/edit?usp=sharing>`__
-#. :doc:`config-file-guide`
 #. :doc:`new-project-guide`
 #. :doc:`cea-workflow-guide`
 #. `How to create your own input geometry? <https://cityenergyanalyst.com/creating-multiple-scenarios#create-new-geometry>`__
