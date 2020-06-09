@@ -12,7 +12,7 @@ Follow these instructions to install the CityEnergyAnalyst (CEA) on a Windows sy
 
 .. note:: For previous releases check `here <https://github.com/architecture-building-systems/CityEnergyAnalyst/releases/>`__.
 
-.. note:: To install from the source check :doc:`here <installation/installation-on-windows-manual>`
+.. note:: To install from the source check :doc:`installation-on-windows-manual`
 
 Interfaces
 ~~~~~~~~~~
