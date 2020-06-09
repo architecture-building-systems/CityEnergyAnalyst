@@ -72,7 +72,7 @@ def moo_optimization(locator, weather_file, config):
         district_heating_network = False
         district_cooling_network = True
     else:
-        raise Exception("no valid values for 'network-type' inpuit parameter")
+        raise Exception("no valid values for 'network-type' input parameter")
 
     # GET NAMES_OF BUILDINGS THAT HAVE HEATING, COOLING AND ELECTRICITY LOAD SEPARATELY
     buildings_heating_demand = get_building_names_with_load(total_demand, load_name='QH_sys_MWhyr')

@@ -11,6 +11,7 @@ import pandas as pd
 from scipy.interpolate import interp1d
 
 from cea.constants import DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3, HEAT_CAPACITY_OF_WATER_JPERKGK
+from cea.constants import P_WATER_KGPERM3
 from cea.optimization.constants import PUMP_ETA
 from cea.analysis.costs.equations import calc_capex_annualized, calc_opex_annualized
 
@@ -63,47 +64,46 @@ def calc_Ctot_pump(master_to_slave_vars, network_features, locator, network_type
     """
 
     if network_type == "DH":
-        multiplier_buildings_district_scale_to_total = master_to_slave_vars.number_of_buildings_district_scale_heating / master_to_slave_vars.num_total_buildings
+        # local variables
+        nominal_E_pump_W = network_features.E_pump_DHN_W
+        nominal_massflowrate_kgs = network_features.mass_flow_rate_DHN
+
+        #get the mass flow rate of this neworkt and the pressireloss
         data = master_to_slave_vars.DH_network_summary_individual
-        mdotA_kgpers = data["mdot_DH_netw_total_kgpers"].values
-        mdotnMax_kgpers = np.max(mdotA_kgpers)
-        deltaPmax = np.max(network_features.DeltaP_DHN) * multiplier_buildings_district_scale_to_total
-        Capex_a_pump_USD, \
-        Opex_fixed_pump_USD, \
-        Capex_pump_USD = calc_Cinv_pump(deltaPmax,
-                                        mdotnMax_kgpers,
-                                        PUMP_ETA,
-                                        locator,
-                                        'PU1')  # investment of Machinery
-        P_motor_tot_W = network_features.DeltaP_DHN * multiplier_buildings_district_scale_to_total * (
-                mdotA_kgpers / 1000) / PUMP_ETA
+        mass_flow_rate_kgs = data["mdot_DH_netw_total_kgpers"].values
 
     if network_type == "DC":
-        multiplier_buildings_district_scale_to_total = master_to_slave_vars.number_of_buildings_district_scale_cooling / master_to_slave_vars.num_total_buildings
+        # local variables
+        nominal_E_pump_W = network_features.E_pump_DCN_W
+        nominal_massflowrate_kgs = network_features.mass_flow_rate_DCN
+
+        #get the mass flow rate of this neworkt and the pressireloss
         data = master_to_slave_vars.DC_network_summary_individual
         if master_to_slave_vars.WasteServersHeatRecovery == 1:
-            mdotA_kgpers = data["mdot_cool_space_cooling_and_refrigeration_netw_all_kgpers"].values
+            mass_flow_rate_kgs = data["mdot_cool_space_cooling_and_refrigeration_netw_all_kgpers"].values
         else:
-            mdotA_kgpers = data["mdot_cool_space_cooling_data_center_and_refrigeration_netw_all_kgpers"].values
+            mass_flow_rate_kgs = data["mdot_cool_space_cooling_data_center_and_refrigeration_netw_all_kgpers"].values
 
-        mdotnMax_kgpers = np.max(mdotA_kgpers)
-        deltaPmax = np.max(network_features.DeltaP_DCN) * multiplier_buildings_district_scale_to_total
-        Capex_a_pump_USD, \
-        Opex_fixed_pump_USD, \
-        Capex_pump_USD = calc_Cinv_pump(deltaPmax,
-                                        mdotnMax_kgpers,
-                                        PUMP_ETA,
-                                        locator,
-                                        'PU1')  # investment of Machinery
-        P_motor_tot_W = network_features.DeltaP_DCN * multiplier_buildings_district_scale_to_total * (
-                mdotA_kgpers / 1000) / PUMP_ETA
+    #get pumping energy and peak load
+    E_pump_W = nominal_E_pump_W * (mass_flow_rate_kgs / nominal_massflowrate_kgs)
+    peak_pump_power_W = np.max(E_pump_W)
 
-    return Capex_a_pump_USD, Opex_fixed_pump_USD, Capex_pump_USD, P_motor_tot_W
+    #get costs
+    Capex_a_pump_USD, \
+    Opex_fixed_pump_USD, \
+    Capex_pump_USD = calc_Cinv_pump(peak_pump_power_W, locator, 'PU1')  # investment of Machinery
+
+    return Capex_a_pump_USD, Opex_fixed_pump_USD, Capex_pump_USD, E_pump_W
 
 
 # investment and maintenance costs
 
-def calc_Cinv_pump(deltaP, mdot_kgpers, eta_pumping, locator, technology_type):
+def calc_pump_power(mass_flow_rate_kgs, pressure_loss_Pa):
+    E_pump_W = mass_flow_rate_kgs * pressure_loss_Pa / P_WATER_KGPERM3 / PUMP_ETA
+    return E_pump_W
+
+
+def calc_Cinv_pump(pump_peak_W, locator, technology_type):
     """
     Calculates the cost of a pumping device.
     if the nominal load (electric) > 375kW, a new pump is installed
@@ -121,15 +121,12 @@ def calc_Cinv_pump(deltaP, mdot_kgpers, eta_pumping, locator, technology_type):
     :returns InvCa: annualized investment costs in CHF/year
     """
 
-    E_pumping_required_W = mdot_kgpers * deltaP / DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3
-    P_motor_tot_W = E_pumping_required_W / eta_pumping  # electricty to run the motor
-
     Pump_max_kW = 375.0
     Pump_min_kW = 0.5
-    nPumps = int(np.ceil(P_motor_tot_W / 1000.0 / Pump_max_kW))
+    nPumps = int(np.ceil(pump_peak_W / 1000.0 / Pump_max_kW))
     # if the nominal load (electric) > 375kW, a new pump is installed
     Pump_Array_W = np.zeros((nPumps))
-    Pump_Remain_W = P_motor_tot_W
+    Pump_Remain_W = pump_peak_W
 
     Capex_a_pump_USD = 0.0
     Opex_fixed_pump_USD = 0.0

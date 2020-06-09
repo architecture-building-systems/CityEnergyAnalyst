@@ -486,9 +486,10 @@ def calc_generation_costs_capacity_installed_cooling(locator,
         DELTA_P_ORIGIN = 59016
         mdotnMax_kgpers = mdotnMax_kgpers * master_to_slave_variables.WS_BaseVCC_size_W / master_to_slave_variables.Q_cooling_nom_W  # weighted do the max installed
         deltaPmax = 2 * (DELTA_P_COEFF * mdotnMax_kgpers + DELTA_P_ORIGIN)
-        Capex_a_pump_USD, Opex_fixed_pump_USD, Capex_pump_USD = calc_Cinv_pump(deltaPmax,
-                                                                               mdotnMax_kgpers,
-                                                                               PUMP_ETA,
+        # get pumping energy and peak load
+        peak_pump_power_W = PumpModel.calc_pump_power(mdotnMax_kgpers, deltaPmax)
+
+        Capex_a_pump_USD, Opex_fixed_pump_USD, Capex_pump_USD = calc_Cinv_pump(peak_pump_power_W,
                                                                                locator,
                                                                                'PU1')
 
@@ -516,9 +517,11 @@ def calc_generation_costs_capacity_installed_cooling(locator,
         DELTA_P_ORIGIN = 59016
         mdotnMax_kgpers = mdotnMax_kgpers * master_to_slave_variables.WS_PeakVCC_size_W / master_to_slave_variables.Q_cooling_nom_W  # weighted do the max installed
         deltaPmax = 2 * (DELTA_P_COEFF * mdotnMax_kgpers + DELTA_P_ORIGIN)
-        Capex_a_pump_USD, Opex_fixed_pump_USD, Capex_pump_USD = calc_Cinv_pump(deltaPmax,
-                                                                               mdotnMax_kgpers,
-                                                                               PUMP_ETA,
+
+        # get pumping energy and peak load
+        peak_pump_power_W = PumpModel.calc_pump_power(mdotnMax_kgpers, deltaPmax)
+
+        Capex_a_pump_USD, Opex_fixed_pump_USD, Capex_pump_USD = calc_Cinv_pump(peak_pump_power_W,
                                                                                locator,
                                                                                'PU1')
 
@@ -752,11 +755,13 @@ def calc_generation_costs_capacity_installed_heating(locator,
         DELTA_P_ORIGIN = 59016
         mdotnMax_kgpers = mdotnMax_kgpers * master_to_slave_vars.HPLake_maxSize_W / master_to_slave_vars.Q_heating_nom_W  # weighted do the max installed
         deltaPmax = 2 * (DELTA_P_COEFF * mdotnMax_kgpers + DELTA_P_ORIGIN)
-        Capex_a_pump_USD, Opex_fixed_pump_USD, Capex_pump_USD = calc_Cinv_pump(deltaPmax,
-                                                                               mdotnMax_kgpers,
-                                                                               PUMP_ETA,
+        # get pumping energy and peak load
+        peak_pump_power_W = PumpModel.calc_pump_power(mdotnMax_kgpers, deltaPmax)
+
+        Capex_a_pump_USD, Opex_fixed_pump_USD, Capex_pump_USD = calc_Cinv_pump(peak_pump_power_W,
                                                                                locator,
                                                                                'PU1')
+
         Capex_a_Lake_USD += Capex_a_pump_USD
         Opex_fixed_Lake_USD += Opex_fixed_pump_USD
         Capex_Lake_USD += Capex_pump_USD
