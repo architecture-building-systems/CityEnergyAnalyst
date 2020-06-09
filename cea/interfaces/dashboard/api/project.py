@@ -220,7 +220,7 @@ class Scenario(Resource):
                     config.scenario_name = payload['name']
                     config.save()
                 return {'name': payload['name']}
-        except WindowsError:
+        except OSError:
             abort(400, 'Make sure that the scenario you are trying to rename is not open in any application. '
                        'Try and refresh the page again.')
 
@@ -234,7 +234,7 @@ class Scenario(Resource):
                 config.save()
             shutil.rmtree(scenario_path)
             return {'scenarios': list_scenario_names_for_project(config)}
-        except WindowsError:
+        except OSError:
             abort(400, 'Make sure that the scenario you are trying to delete is not open in any application. '
                        'Try and refresh the page again.')
 
