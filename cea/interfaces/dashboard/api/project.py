@@ -136,10 +136,10 @@ class Scenarios(Resource):
                     cea.api.create_new_scenario(config,
                                                 scenario=new_scenario_path,
                                                 zone=files.get('zone'),
-                                                surroundings=files.get('surroundings', ''),
-                                                streets=files.get('streets', ''),
-                                                terrain=files.get('terrain', ''),
-                                                typology=files.get('typology', ''))
+                                                surroundings=files.get('surroundings'),
+                                                streets=files.get('streets'),
+                                                terrain=files.get('terrain'),
+                                                typology=files.get('typology'))
                 except Exception as e:
                     trace = traceback.format_exc()
                     return {'message': 'create_new_scenario: {}'.format(e.message), 'trace': trace}, 500
