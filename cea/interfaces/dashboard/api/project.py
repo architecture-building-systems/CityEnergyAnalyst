@@ -21,77 +21,83 @@ api = Namespace('Project', description='Current project for CEA')
 
 
 PROJECT_PATH_MODEL = api.model('Project Path', {
-    'path': fields.String(description='Path of Project'),
+    'project': fields.String(description='Path of Project'),
 })
 
 SCENARIO_PATH_MODEL = api.inherit('Scenario Path', PROJECT_PATH_MODEL, {
-    'scenario': fields.String(description='Name of Scenario')
+    'scenario_name': fields.String(description='Name of Scenario')
 })
 
 PROJECT_MODEL = api.inherit('Project', SCENARIO_PATH_MODEL, {
-    'name': fields.String(description='Name of Project'),
-    'scenarios': fields.List(fields.String, description='Name of Current Scenario')
+    'project_name': fields.String(description='Name of Project'),
+    'scenarios_list': fields.List(fields.String, description='List of Scenarios found in Project')
+})
+
+NEW_PROJECT_MODEL = api.model('New Project', {
+    'project_name': fields.String(description='Name of Project'),
+    'project_root': fields.String(description='Root path of Project')
 })
 
 
 @api.route('/')
 class Project(Resource):
     @api.marshal_with(PROJECT_MODEL)
-    @api.doc(params={'path': 'Path of Project (Leave blank to use path in config)'})
+    @api.doc(params={'project': 'Path of Project (Leave blank to use path in config)'})
     def get(self):
-        project_path = request.args.get('path')
-        if project_path is None:
+        project = request.args.get('project')
+        if project is None:
             config = current_app.cea_config
-            scenario = config.scenario_name
+            scenario_name = config.scenario_name
         else:
-            if not os.path.exists(project_path):
-                abort(400, 'Project path: "{project_path}" does not exist'.format(project_path=project_path))
+            if not os.path.exists(project):
+                abort(400, 'Project path: "{project}" does not exist'.format(project=project))
             # Prevent changing current_app config
             config = cea.config.Configuration()
-            config.project = project_path
-            scenario = None
+            config.project = project
+            scenario_name = None
 
-        return {'name': os.path.basename(config.project), 'path': config.project, 'scenario': scenario,
-                'scenarios': list_scenario_names_for_project(config)}
+        return {'project_name': os.path.basename(config.project), 'project': config.project,
+                'scenario_name': scenario_name, 'scenarios_list': list_scenario_names_for_project(config)}
 
+    @api.expect(NEW_PROJECT_MODEL)
     def post(self):
         """Create new project folder"""
-        name = api.payload.get('name')
-        project_path = api.payload.get('path')
+        project_name = api.payload.get('project_name')
+        project_root = api.payload.get('project_root')
 
-        if name is not None and project_path is not None:
-            project_path = os.path.join(project_path, name)
+        if project_name and project_root:
+            project = os.path.join(project_root, project_name)
             try:
-                os.makedirs(project_path)
+                os.makedirs(project)
             except OSError as e:
                 abort(400, str(e))
 
-            return {'message': 'Project folder created', 'path': project_path}
+            return {'message': 'Project folder created', 'project': project}
         else:
-            abort(400, 'Parameters not valid - Project Name: {name}, Project Path: {project_path}'.format(
-                name=name, project_path=project_path
+            abort(400, 'Parameters not valid - project_name: {project_name}, project_root: {project_root}'.format(
+                project_name=project_name, project_root=project_root
             ))
 
     @api.expect(SCENARIO_PATH_MODEL)
     def put(self):
         """Update Project info in config"""
         config = current_app.cea_config
-        path = api.payload.get('path')
-        scenario = api.payload.get('scenario')
+        project = api.payload.get('project')
+        scenario_name = api.payload.get('scenario_name')
 
-        if path is not None and scenario is not None:
+        if project and scenario_name:
             # Project path must exist but scenario does not have to
-            if os.path.exists(path):
-                config.project = path
-                config.scenario_name = scenario
+            if os.path.exists(project):
+                config.project = project
+                config.scenario_name = scenario_name
                 config.save()
-                return {'message': 'Updated project info in config', 'path': path, 'scenario': scenario}
+                return {'message': 'Updated project info in config', 'project': project, 'scenario_name': scenario_name}
             else:
-                abort(400, 'Project path: "{project_path}" does not exist'.format(project_path=path))
+                abort(400, 'project: "{project}" does not exist'.format(project=project))
         else:
             abort(400,
-                  'Parameters not valid - Project Path: {project_path}, Scenario: {scenario}'.format(project_path=path,
-                                                                                                     scenario=scenario))
+                  'Parameters not valid - project: {project}, scenario_name: {scenario_name}'.format(
+                      project=project, scenario_name=scenario_name))
 
 
 @api.route('/scenario/')
@@ -99,11 +105,11 @@ class Scenarios(Resource):
     def post(self):
         """Create new scenario"""
         config = cea.config.Configuration()
-        project_path = api.payload.get('projectPath')
-        if project_path is not None:
-            config.project = project_path
+        project = api.payload.get('project')
+        if project is not None:
+            config.project = project
 
-        scenario_name = api.payload.get('name')
+        scenario_name = api.payload.get('scenario_name')
         new_scenario_path = os.path.join(config.project, scenario_name)
         # Make sure that the scenario folder exists
         try:
@@ -114,7 +120,7 @@ class Scenarios(Resource):
         locator = cea.inputlocator.InputLocator(new_scenario_path)
 
         # Run database_initializer to copy databases to input
-        databases_path = api.payload.get('databases-path')
+        databases_path = api.payload.get('databases_path')
         if databases_path is not None:
             try:
                 cea.api.data_initializer(config, scenario=new_scenario_path, databases_path=databases_path)
@@ -122,7 +128,7 @@ class Scenarios(Resource):
                 trace = traceback.format_exc()
                 return {'message': 'data_initializer: {}'.format(e.message), 'trace': trace}, 500
 
-        input_data = api.payload.get('input-data')
+        input_data = api.payload.get('input_data')
         if input_data == 'import':
             files = api.payload.get('files')
             if files is not None:
@@ -139,7 +145,7 @@ class Scenarios(Resource):
                     return {'message': 'create_new_scenario: {}'.format(e.message), 'trace': trace}, 500
 
         elif input_data == 'copy':
-            source_scenario_name = api.payload.get('copy-scenario')
+            source_scenario_name = api.payload.get('copy_scenario')
             try:
                 source_scenario = os.path.join(config.project, source_scenario_name)
                 shutil.copytree(cea.inputlocator.InputLocator(source_scenario).get_input_folder(),
@@ -241,16 +247,16 @@ class Scenario(Resource):
 
 @api.route('/scenario/<string:scenario>/image')
 class ScenarioImage(Resource):
-    @api.doc(params={'projectPath': 'Path of Project (Leave blank to use path in config)'})
+    @api.doc(params={'project': 'Path of Project (Leave blank to use path in config)'})
     def get(self, scenario):
-        project_path = request.args.get('projectPath')
-        if project_path is None:
+        project = request.args.get('project')
+        if project is None:
             config = current_app.cea_config
         else:
-            if not os.path.exists(project_path):
-                abort(400, 'Project path: "{project_path}" does not exist'.format(project_path=project_path))
+            if not os.path.exists(project):
+                abort(400, 'Project path: "{project}" does not exist'.format(project=project))
             config = cea.config.Configuration()
-            config.project = project_path
+            config.project = project
 
         choices = list_scenario_names_for_project(config)
         if scenario in choices:
