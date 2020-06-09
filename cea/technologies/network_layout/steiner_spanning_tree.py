@@ -99,7 +99,8 @@ def calc_steiner_spanning_tree(crs_projected,
     except:
         raise ValueError('There was an error while creating the Steiner tree. '
                          'Check the streets.shp for isolated/disconnected streets (lines) and erase them, '
-                         'the Steiner tree does not support disconnected graphs.')
+                         'the Steiner tree does not support disconnected graphs.'
+                         'If no disconnected streets can be found, try increasing the SHAPEFILE_TOLERANCE in cea.constants and run again')
 
     # POPULATE FIELDS IN NODES
     pointer_coordinates_building_names = dict(zip(terminal_nodes_coordinates, terminal_nodes_names))
