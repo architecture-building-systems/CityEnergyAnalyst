@@ -183,7 +183,9 @@ class Scenarios(Resource):
                         trace = traceback.format_exc()
                         return {'message': '{}_helper: {}'.format(tool, e.message), 'trace': trace}, 500
 
+        config.restricted_to = None
         return {'scenarios_list': list_scenario_names_for_project(config)}
+
 
 
 def glob_shapefile_auxilaries(shapefile_path):

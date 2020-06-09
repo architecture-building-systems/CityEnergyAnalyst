@@ -108,17 +108,22 @@ def calc_Ctot_network_pump(network_info):
     deltaP_kW = pd.read_csv(network_info.locator.get_network_energy_pumping_requirements_file(network_type, ''))
     deltaP_kW = deltaP_kW['pressure_loss_total_kW'].sum()
 
-    Opex_var = deltaP_kW * 1000 * network_info.prices.ELEC_PRICE
+    Opex_var = deltaP_kW * 1000 * network_info.prices.ELEC_PRICE # why not returned?
 
     if network_info.network_type == 'DH':
         deltaPmax = np.max(network_info.network_features.DeltaP_DHN)
     else:
         deltaPmax = np.max(network_info.network_features.DeltaP_DCN)
 
-    Capex_a, Opex_a_fixed, Capex_total = pumps.calc_Cinv_pump(deltaPmax, mdotnMax_kgpers, PUMP_ETA,
-                                               network_info.locator, 'PU1')  # investment of Machinery
+    # get pumping energy and peak load
+    peak_pump_power_W = pumps.calc_pump_power(mdotnMax_kgpers, deltaPmax)
 
-    return Capex_a, Opex_a_fixed, Opex_var
+    Capex_a_pump_USD, Opex_fixed_pump_USD, Capex_pump_USD = pumps. calc_Cinv_pump(peak_pump_power_W,
+                                                                               network_info.locator,
+                                                                               'PU1')
+
+
+    return Capex_a_pump_USD, Opex_fixed_pump_USD, Opex_var
 
 
 def calc_Ctot_cooling_plants(network_info):
