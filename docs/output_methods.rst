@@ -15,11 +15,11 @@ The following file is used by these scripts: ``demand``
     ``heat_ends``, "End of the heating season - use 00|00 when there is none"
     ``heat_starts``, "Start of the heating season - use 00|00 when there is none"
     ``Name``, "Unique building ID. It must start with a letter."
-    ``type_cs``, "Type of cooling supply system"
-    ``type_ctrl``, "Type of heating and cooling control systems (relates to values in Default Database HVAC Properties)"
-    ``type_dhw``, "Type of hot water supply system"
-    ``type_hs``, "Type of heating supply system"
-    ``type_vent``, "Type of ventilation strategy (relates to values in Default Database HVAC Properties)"
+    ``type_cs``, "Type of cooling HVAC assembly (relates to ""code"" in HVAC assemblies)"
+    ``type_ctrl``, "Type of heating and cooling control HVAC  assembly (relates to ""code"" in HVAC assemblies)"
+    ``type_dhw``, "Type of hot water HVAC assembly (relates to ""code"" in HVAC assemblies)"
+    ``type_hs``, "Type of heating HVAC assembly (relates to ""code"" in HVAC assemblies)"
+    ``type_vent``, "Type of ventilation HVAC assembly (relates to ""code"" in HVAC assemblies)"
     
 
 
@@ -39,14 +39,14 @@ The following file is used by these scripts: ``demand``, ``emissions``, ``radiat
     ``Hs_bg``, "Fraction of below ground gross floor area air-conditioned."
     ``Name``, "Unique building ID. It must start with a letter."
     ``Ns``, "Fraction of net gross floor area."
-    ``type_base``, "Basement floor construction type (relates to values in Default Database Construction Properties)"
-    ``type_cons``, "Type of construction. It relates to the contents of the default database of Envelope Properties: construction"
-    ``type_floor``, "Internal floor construction type (relates to values in Default Database Construction Properties)"
-    ``type_leak``, "Tightness level. It relates to the contents of the default database of Envelope Properties: tightness"
-    ``type_roof``, "Roof construction type (relates to values in Default Database Construction Properties)"
-    ``type_shade``, "Shading system type (relates to values in Default Database Construction Properties)"
-    ``type_wall``, "External wall construction type (relates to values in Default Database Construction Properties)"
-    ``type_win``, "Window type (relates to values in Default Database Construction Properties)"
+    ``type_base``, "Basement floor construction assembly (relates to ""code"" in ENVELOPE assemblies)"
+    ``type_cons``, "Type of construction assembly (relates to ""code"" in ENVELOPE assemblies)"
+    ``type_floor``, "Internal floor construction assembly (relates to ""code"" in ENVELOPE assemblies)"
+    ``type_leak``, "Tightness level assembly (relates to ""code"" in ENVELOPE assemblies)"
+    ``type_roof``, "Roof construction assembly (relates to ""code"" in ENVELOPE assemblies)"
+    ``type_shade``, "Shading system assembly (relates to ""code"" in ENVELOPE assemblies)"
+    ``type_wall``, "External wall construction assembly (relates to ""code"" in ENVELOPE assemblies)"
+    ``type_win``, "Window assembly (relates to ""code"" in ENVELOPE assemblies)"
     ``void_deck``, "Number of floors (from the ground up) with an open envelope (default = 0)"
     ``wwr_east``, "Window to wall ratio in in facades facing east"
     ``wwr_north``, "Window to wall ratio in in facades facing north"
@@ -92,6 +92,7 @@ The following file is used by these scripts: ``demand``, ``schedule_maker``
     ``Ed_Wm2``, "Peak specific electrical load due to servers/data centres"
     ``El_Wm2``, "Peak specific electrical load due to artificial lighting"
     ``Epro_Wm2``, "Peak specific electrical load due to industrial processes"
+    ``Ev_kWveh``, "Peak specific cooling load due to electromobility"
     ``Name``, "Unique building ID. It must start with a letter."
     ``Occ_m2pax``, "Occupancy density"
     ``Qcpro_Wm2``, "Peak specific process cooling load"
@@ -116,10 +117,10 @@ The following file is used by these scripts: ``decentralized``, ``demand``, ``em
     :header: "Variable", "Description"
 
     ``Name``, "Unique building ID. It must start with a letter."
-    ``type_cs``, "Type of cooling supply system"
-    ``type_dhw``, "Type of hot water supply system"
-    ``type_el``, "Type of electrical supply system"
-    ``type_hs``, "Type of heating supply system"
+    ``type_cs``, "Type of cooling supply assembly (refers to ""code"" in SUPPLY assemblies)"
+    ``type_dhw``, "Type of hot water supply assembly (refers to ""code"" in SUPPLY assemblies)"
+    ``type_el``, "Type of electrical supply assembly (refers to ""code"" in SUPPLY assemblies)"
+    ``type_hs``, "Type of heating supply assembly (refers to ""code"" in SUPPLY assemblies)"
     
 
 
@@ -134,15 +135,15 @@ The following file is used by these scripts: ``archetypes_mapper``, ``demand``, 
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``1st_USE``, "TODO"
-    ``1st_USE_R``, "TODO"
-    ``2nd_USE``, "TODO"
-    ``2nd_USE_R``, "TODO"
-    ``3rd_USE``, "TODO"
-    ``3rd_USE_R``, "TODO"
+    ``1ST_USE``, "First (Main) Use type of the building"
+    ``1ST_USE_R``, "Fraction of gross floor area for first Use Type"
+    ``2ND_USE``, "Second Use type of the building"
+    ``2ND_USE_R``, "Fraction of gross floor area for second Use Type"
+    ``3RD_USE``, "Third Use type of the building"
+    ``3RD_USE_R``, "Fraction of gross floor area for third Use Type"
     ``Name``, "Unique building ID. It must start with a letter."
-    ``REFERENCE``, "TODO"
-    ``STANDARD``, "Construction Standard"
+    ``REFERENCE``, "Reference to data (if any)"
+    ``STANDARD``, "Construction Standard (relates to ""code"" in Supply Assemblies)"
     ``YEAR``, "Construction year"
     
 
@@ -159,7 +160,7 @@ The following file is used by these scripts: ``demand``, ``schedule_maker``
     :header: "Variable", "Description"
 
     ``METADATA``, "TODO"
-    ``mixed-schedule``, "TODO"
+    ``MONTHLY_MULTIPLIER``, "TODO"
     
 
 
@@ -174,46 +175,46 @@ The following file is used by these scripts:
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``Aocc_m2``, "TODO"
-    ``Capex_a_sys_district_scale_USD``, "TODO"
-    ``Capex_a_sys_building_scale_USD``, "TODO"
-    ``COAL_hs_cost_m2yr``, "TODO"
+    ``Aocc_m2``, "Occupied floor area (heated/cooled)"
+    ``Capex_a_sys_building_scale_USD``, "Annualized capital expenditures of building-scale systems"
+    ``Capex_a_sys_district_scale_USD``, "Annualized capital expenditures of district-scale systems"
+    ``COAL_hs_cost_m2yr``, "Operation costs of coal due to space heating per unit conditioned floor area"
     ``COAL_hs_cost_yr``, "Operation costs of coal due to space heating"
-    ``COAL_ww_cost_m2yr``, "TODO"
+    ``COAL_ww_cost_m2yr``, "Operation costs of coal due to hotwater per unit conditioned floor area"
     ``COAL_ww_cost_yr``, "Operation costs of coal due to hotwater"
-    ``DC_cdata_cost_m2yr``, "TODO"
-    ``DC_cdata_cost_yr``, "Operation costs due to space heating"
-    ``DC_cre_cost_m2yr``, "TODO"
-    ``DC_cre_cost_yr``, "Operation costs due to hotwater"
-    ``DC_cs_cost_m2yr``, "TODO"
-    ``DC_cs_cost_yr``, "Operation costs due to space cooling"
-    ``DH_hs_cost_m2yr``, "TODO"
-    ``DH_hs_cost_yr``, "Operation costs due to space heating"
-    ``DH_ww_cost_m2yr``, "TODO"
-    ``DH_ww_cost_yr``, "Operation costs due to hotwater"
-    ``GRID_cost_m2yr``, "Electricity supply from the grid"
-    ``GRID_cost_yr``, "Electricity supply from the grid"
+    ``DC_cdata_cost_m2yr``, "Operation costs of district cooling due to data center cooling per unit conditioned floor area"
+    ``DC_cdata_cost_yr``, "Operation costs of district cooling due to data center cooling"
+    ``DC_cre_cost_m2yr``, "Operation costs of district cooling due to cool room refrigeration per unit conditioned floor area"
+    ``DC_cre_cost_yr``, "Operation costs of district cooling due to cool room refrigeration"
+    ``DC_cs_cost_m2yr``, "Operation costs of district cooling due to space cooling per unit conditioned floor area"
+    ``DC_cs_cost_yr``, "Operation costs of district cooling due to space cooling"
+    ``DH_hs_cost_m2yr``, "Operation costs of district heating due to space heating per unit conditioned floor area"
+    ``DH_hs_cost_yr``, "Operation costs of district heating due to space heating"
+    ``DH_ww_cost_m2yr``, "Operation costs of district heating due to domestic hot water per unit conditioned floor area"
+    ``DH_ww_cost_yr``, "Operation costs of district heating due to domestic hot water"
+    ``GRID_cost_m2yr``, "Operation costs due to electricity supply from the grid per unit conditioned floor area"
+    ``GRID_cost_yr``, "Operation costs due to electricity supply from the grid"
     ``Name``, "Unique building ID. It must start with a letter."
-    ``NG_hs_cost_m2yr``, "TODO"
-    ``NG_hs_cost_yr``, "Operation costs of NG due to space heating"
-    ``NG_ww_cost_m2yr``, "TODO"
-    ``NG_ww_cost_yr``, "Operation costs of NG due to hotwater"
-    ``OIL_hs_cost_m2yr``, "TODO"
+    ``NG_hs_cost_m2yr``, "Operation costs of natural gas due to space heating per unit conditioned floor area"
+    ``NG_hs_cost_yr``, "Operation costs of natural gas due to space heating"
+    ``NG_ww_cost_m2yr``, "Operation costs of natural gas due to domestic hot water per unit conditioned floor area"
+    ``NG_ww_cost_yr``, "Operation costs of natural gas due to domestic hot water"
+    ``OIL_hs_cost_m2yr``, "Operation costs of oil due to space heating per unit conditioned floor area"
     ``OIL_hs_cost_yr``, "Operation costs of oil due to space heating"
-    ``OIL_ww_cost_m2yr``, "TODO"
-    ``OIL_ww_cost_yr``, "Operation costs of oil due to hotwater"
-    ``Opex_a_sys_district_scale_USD``, "TODO"
-    ``Opex_a_sys_building_scale_USD``, "TODO"
-    ``PV_cost_m2yr``, "Electricity supply from PV"
-    ``PV_cost_yr``, "Electricity supply from PV"
-    ``SOLAR_hs_cost_m2yr``, "TODO"
-    ``SOLAR_hs_cost_yr``, "Operation costs due to solar collectors for hotwater"
-    ``SOLAR_ww_cost_m2yr``, "TODO"
-    ``SOLAR_ww_cost_yr``, "Operation costs due to solar collectors for space heating"
-    ``WOOD_hs_cost_m2yr``, "TODO"
+    ``OIL_ww_cost_m2yr``, "Operation costs of oil due to domestic hot water per unit conditioned floor area"
+    ``OIL_ww_cost_yr``, "Operation costs of oil due to domestic hot water"
+    ``Opex_a_sys_building_scale_USD``, "Annual operational expenditures of building-scale systems"
+    ``Opex_a_sys_district_scale_USD``, "Annual operational expenditures of district-scale systems"
+    ``PV_cost_m2yr``, "Operation costs due to electricity supply from PV per unit conditioned floor area"
+    ``PV_cost_yr``, "Operation costs due to electricity supply from PV"
+    ``SOLAR_hs_cost_m2yr``, "Operation costs due to solar collectors for space heating per unit conditioned floor area"
+    ``SOLAR_hs_cost_yr``, "Operation costs due to solar collectors for space heating"
+    ``SOLAR_ww_cost_m2yr``, "Operation costs due to solar collectors for domestic hot water per unit conditioned floor area"
+    ``SOLAR_ww_cost_yr``, "Operation costs due to solar collectors for domestic hot water"
+    ``WOOD_hs_cost_m2yr``, "Operation costs of wood due to space heating per unit conditioned floor area"
     ``WOOD_hs_cost_yr``, "Operation costs of wood due to space heating"
-    ``WOOD_ww_cost_m2yr``, "TODO"
-    ``WOOD_ww_cost_yr``, "Operation costs of wood due to hotwater"
+    ``WOOD_ww_cost_m2yr``, "Operation costs of wood due to domestic hot water per unit conditioned floor area"
+    ``WOOD_ww_cost_yr``, "Operation costs of wood due to domestic hot water"
     
 
 
@@ -230,10 +231,10 @@ The following file is used by these scripts: ``demand``
 .. csv-table:: Worksheet: ``CONTROLLER``
     :header: "Variable", "Description"
 
-    ``code``, TODO
-    ``Description``, TODO
-    ``dT_Qcs``, TODO
-    ``dT_Qhs``, TODO
+    ``code``, Unique ID of the controller
+    ``Description``, Describes the type of controller
+    ``dT_Qcs``, correction temperature of emission losses due to control system of cooling
+    ``dT_Qhs``, correction temperature of emission losses due to control system of heating
     
 
 
@@ -241,20 +242,20 @@ The following file is used by these scripts: ``demand``
 .. csv-table:: Worksheet: ``COOLING``
     :header: "Variable", "Description"
 
-    ``class_cs``, TODO
-    ``code``, TODO
-    ``convection_cs``, TODO
-    ``Description``, TODO
-    ``dTcs0_ahu_C``, TODO
-    ``dTcs0_aru_C``, TODO
-    ``dTcs0_scu_C``, TODO
-    ``dTcs_C``, TODO
-    ``Qcsmax_Wm2``, TODO
-    ``Tc_sup_air_ahu_C``, TODO
-    ``Tc_sup_air_aru_C``, TODO
-    ``Tscs0_ahu_C``, TODO
-    ``Tscs0_aru_C``, TODO
-    ``Tscs0_scu_C``, TODO
+    ``class_cs``, Type or class of the cooling system
+    ``code``, Unique ID of the heating system
+    ``convection_cs``, Convective part of the power of the heating system in relation to the total power
+    ``Description``, Describes the type of cooling system
+    ``dTcs0_ahu_C``, Nominal temperature increase on the water side of the air-handling units
+    ``dTcs0_aru_C``, Nominal temperature increase on the water side of the air-recirculation units
+    ``dTcs0_scu_C``, Nominal temperature increase on the water side of the sensible cooling units
+    ``dTcs_C``, Set-point correction for space emission systems
+    ``Qcsmax_Wm2``, Maximum heat flow permitted by cooling system per m2 gross floor area 
+    ``Tc_sup_air_ahu_C``, Supply air temperature of the air-handling units
+    ``Tc_sup_air_aru_C``, Supply air temperature of the air-recirculation units
+    ``Tscs0_ahu_C``, Nominal supply temperature of the water side of the air-handling units
+    ``Tscs0_aru_C``, Nominal supply temperature of the water side of the air-recirculation units
+    ``Tscs0_scu_C``, Nominal supply temperature of the water side of the sensible cooling units
     
 
 
@@ -262,20 +263,20 @@ The following file is used by these scripts: ``demand``
 .. csv-table:: Worksheet: ``HEATING``
     :header: "Variable", "Description"
 
-    ``class_hs``, TODO
-    ``code``, TODO
-    ``convection_hs``, TODO
-    ``Description``, TODO
-    ``dThs0_ahu_C``, TODO
-    ``dThs0_aru_C``, TODO
-    ``dThs0_shu_C``, TODO
-    ``dThs_C``, TODO
-    ``Qhsmax_Wm2``, TODO
-    ``Th_sup_air_ahu_C``, TODO
-    ``Th_sup_air_aru_C``, TODO
-    ``Tshs0_ahu_C``, TODO
-    ``Tshs0_aru_C``, TODO
-    ``Tshs0_shu_C``, TODO
+    ``class_hs``, Type or class of the heating system
+    ``code``, Unique ID of the heating system
+    ``convection_hs``, Convective part of the power of the heating system in relation to the total power
+    ``Description``, Description
+    ``dThs0_ahu_C``, Nominal temperature increase on the water side of the air-handling units
+    ``dThs0_aru_C``, Nominal temperature increase on the water side of the air-recirculation units
+    ``dThs0_shu_C``, Nominal temperature increase on the water side of the sensible heating units
+    ``dThs_C``, correction temperature of emission losses due to type of heating system
+    ``Qhsmax_Wm2``, Maximum heat flow permitted by heating system per m2 gross floor area 
+    ``Th_sup_air_ahu_C``, Supply air temperature of the air-recirculation units
+    ``Th_sup_air_aru_C``, Supply air temperature of the air-handling units
+    ``Tshs0_ahu_C``, Nominal supply temperature of the water side of the air-handling units
+    ``Tshs0_aru_C``, Nominal supply temperature of the water side of the air-recirculation units
+    ``Tshs0_shu_C``, Nominal supply temperature of the water side of the sensible heating units
     
 
 
@@ -283,10 +284,10 @@ The following file is used by these scripts: ``demand``
 .. csv-table:: Worksheet: ``HOT_WATER``
     :header: "Variable", "Description"
 
-    ``code``, TODO
-    ``Description``, TODO
-    ``Qwwmax_Wm2``, TODO
-    ``Tsww0_C``, TODO
+    ``code``, Unique ID of the hot water supply system
+    ``Description``, Describes the Type of hot water supply system
+    ``Qwwmax_Wm2``, Maximum heat flow permitted by hot water system per m2 gross floor area 
+    ``Tsww0_C``, Typical supply water temperature.
     
 
 
@@ -294,13 +295,13 @@ The following file is used by these scripts: ``demand``
 .. csv-table:: Worksheet: ``VENTILATION``
     :header: "Variable", "Description"
 
-    ``code``, TODO
-    ``Description``, TODO
-    ``ECONOMIZER``, TODO
-    ``HEAT_REC``, TODO
-    ``MECH_VENT``, TODO
-    ``NIGHT_FLSH``, TODO
-    ``WIN_VENT``, TODO
+    ``code``, Unique ID of the type of ventilation
+    ``Description``, Describes the Type of ventilation
+    ``ECONOMIZER``, Boolean, economizer on
+    ``HEAT_REC``, Boolean, heat recovery on
+    ``MECH_VENT``, Boolean, mechanical ventilation on
+    ``NIGHT_FLSH``, Boolean, night flush on
+    ``WIN_VENT``, Boolean, window ventilation on
     
 
 
@@ -324,15 +325,15 @@ The following file is used by these scripts: ``archetypes_mapper``
     ``Hs_bg``, Fraction of below ground gross floor area air-conditioned 
     ``Ns``, Fraction of net gross floor area.
     ``STANDARD``,  Unique ID of Construction Standard
-    ``type_base``, Basement floor construction type (relates to values in Default Database Construction Properties)
-    ``type_cons``, Type of construction. It relates to the contents of the default database of Envelope Properties: construction
-    ``type_floor``, Internal floor construction type (relates to values in Default Database Construction Properties)
-    ``type_leak``, Tightness level. It relates to the contents of the default database of Envelope Properties: tightness
-    ``type_part``, Internal partitions construction type (relates to values in Default Database Construction Properties)
-    ``type_roof``, Roof construction type (relates to values in Default Database Construction Properties)
-    ``type_shade``, Shading system type (relates to values in Default Database Construction Properties)
-    ``type_wall``, External wall construction type (relates to values in Default Database Construction Properties)
-    ``type_win``, Window type (relates to values in Default Database Construction Properties)
+    ``type_base``, Basement floor construction assembly (relates to "code" in ENVELOPE assemblies)
+    ``type_cons``, Type of construction assembly (relates to "code" in ENVELOPE assemblies)
+    ``type_floor``, Internal floor construction assembly (relates to "code" in ENVELOPE assemblies)
+    ``type_leak``, Tightness level assembly (relates to "code" in ENVELOPE assemblies)
+    ``type_part``, Internal partitions construction assembly (relates to "code" in ENVELOPE assemblies)
+    ``type_roof``, Roof construction assembly (relates to "code" in ENVELOPE assemblies)
+    ``type_shade``, Shading system assembly (relates to "code" in ENVELOPE assemblies)
+    ``type_wall``, External wall construction assembly (relates to "code" in ENVELOPE assemblies)
+    ``type_win``, Window assembly (relates to "code" in ENVELOPE assemblies)
     ``void_deck``, Number of floors (from the ground up) with an open envelope (default = 0)
     ``wwr_east``, Window to wall ratio in in facades facing east
     ``wwr_north``, Window to wall ratio in in facades facing north
@@ -350,11 +351,11 @@ The following file is used by these scripts: ``archetypes_mapper``
     ``heat_ends``, End of the heating season - use 00|00 when there is none
     ``heat_starts``, Start of the heating season - use 00|00 when there is none
     ``STANDARD``,  Unique ID of Construction Standard
-    ``type_cs``, Type of cooling supply system
-    ``type_ctrl``, Type of heating and cooling control systems (relates to values in Default Database HVAC Properties)
-    ``type_dhw``, Type of hot water supply system
-    ``type_hs``, Type of heating supply system
-    ``type_vent``, Type of ventilation strategy (relates to values in Default Database HVAC Properties)
+    ``type_cs``, Type of cooling HVAC assembly (relates to "code" in HVAC assemblies)
+    ``type_ctrl``, Type of heating and cooling control HVAC  assembly (relates to "code" in HVAC assemblies)
+    ``type_dhw``, Type of hot water HVAC assembly (relates to "code" in HVAC assemblies)
+    ``type_hs``, Type of heating HVAC assembly (relates to "code" in HVAC assemblies)
+    ``type_vent``, Type of ventilation HVAC assembly (relates to "code" in HVAC assemblies)
     
 
 
@@ -373,11 +374,11 @@ The following file is used by these scripts: ``archetypes_mapper``
 .. csv-table:: Worksheet: ``SUPPLY_ASSEMBLIES``
     :header: "Variable", "Description"
 
-    ``STANDARD``,  Unique ID of Construction Standard
-    ``type_cs``, Type of cooling supply system
-    ``type_dhw``, Type of hot water supply system
-    ``type_el``, Type of electrical supply system
-    ``type_hs``, Type of heating supply system
+    ``STANDARD``, Unique ID of Construction Standard
+    ``type_cs``, Type of cooling supply assembly (refers to "code" in SUPPLY assemblies)
+    ``type_dhw``, Type of hot water supply assembly (refers to "code" in SUPPLY assemblies)
+    ``type_el``, Type of electrical supply assembly (refers to "code" in SUPPLY assemblies)
+    ``type_hs``, Type of heating supply assembly (refers to "code" in SUPPLY assemblies)
     
 
 
@@ -396,19 +397,19 @@ The following file is used by these scripts: ``decentralized``, ``optimization``
 .. csv-table:: Worksheet: ``Absorption_chiller``
     :header: "Variable", "Description"
 
-    ``a``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``a``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity 
     ``a_e``, parameter in the characteristic equations to calculate the evaporator side 
     ``a_g``, parameter in the characteristic equations to calculate the generator side
     ``assumption``, items made by assumptions in this technology
-    ``b``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
-    ``c``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``b``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity 
+    ``c``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity 
     ``cap_max``, maximum capacity 
     ``cap_min``, minimum capacity
     ``code``, identifier of each unique equipment
-    ``currency``, currency-year information of the investment cost function
-    ``d``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``currency``, currency-year information of the investment cost function, should be unified to USD
+    ``d``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity 
     ``Description``, Describes the Type of Absorption Chiller
-    ``e``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``e``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity 
     ``e_e``, parameter in the characteristic equations to calculate the evaporator side 
     ``e_g``, parameter in the characteristic equations to calculate the generator side
     ``IR_%``, interest rate charged on the loan for the capital cost
@@ -420,7 +421,7 @@ The following file is used by these scripts: ``decentralized``, ``optimization``
     ``r_g``, parameter in the characteristic equations to calculate the generator side
     ``s_e``, parameter in the characteristic equations to calculate the evaporator side 
     ``s_g``, parameter in the characteristic equations to calculate the generator side
-    ``type``, type of absorption chiller (single, double, or triple)
+    ``type``, type of absorption chiller 
     ``unit``, unit of the min/max capacity
     
 
@@ -429,17 +430,17 @@ The following file is used by these scripts: ``decentralized``, ``optimization``
 .. csv-table:: Worksheet: ``BH``
     :header: "Variable", "Description"
 
-    ``a``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``a``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)  
     ``assumption``, items made by assumptions in this technology
-    ``b``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
-    ``c``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``b``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)  
+    ``c``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)  
     ``cap_max``, maximum capacity 
     ``cap_min``, minimum capacity
     ``code``, identifier of each unique equipment
     ``currency``, currency-year information of the investment cost function
-    ``d``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``d``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)  
     ``Description``, Describes the type of borehole heat exchanger
-    ``e``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``e``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)  
     ``IR_%``, interest rate charged on the loan for the capital cost
     ``LT_yr``, lifetime of this technology
     ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
@@ -451,17 +452,17 @@ The following file is used by these scripts: ``decentralized``, ``optimization``
 .. csv-table:: Worksheet: ``Boiler``
     :header: "Variable", "Description"
 
-    ``a``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``a``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)  
     ``assumption``, items made by assumptions in this technology
-    ``b``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
-    ``c``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``b``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)  
+    ``c``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)  
     ``cap_max``, maximum capacity 
     ``cap_min``, minimum capacity
     ``code``, identifier of each unique equipment
     ``currency``, currency-year information of the investment cost function
-    ``d``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``d``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)  
     ``Description``, Describes the type of boiler
-    ``e``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``e``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)  
     ``IR_%``, interest rate charged on the loan for the capital cost
     ``LT_yr``, lifetime of this technology
     ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
@@ -473,17 +474,17 @@ The following file is used by these scripts: ``decentralized``, ``optimization``
 .. csv-table:: Worksheet: ``CCGT``
     :header: "Variable", "Description"
 
-    ``a``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``a``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)  
     ``assumption``, items made by assumptions in this technology
-    ``b``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
-    ``c``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``b``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)  
+    ``c``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)  
     ``cap_max``, maximum capacity 
     ``cap_min``, minimum capacity
     ``code``, identifier of each unique equipment
-    ``currency``, currency-year information of the investment cost function
-    ``d``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``currency``, currency-year information of the investment cost function, should be unified to USD
+    ``d``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)  
     ``Description``, Describes the type of combined-cycle gas turbine
-    ``e``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``e``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)  
     ``IR_%``, interest rate charged on the loan for the capital cost
     ``LT_yr``, lifetime of this technology
     ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
@@ -495,17 +496,17 @@ The following file is used by these scripts: ``decentralized``, ``optimization``
 .. csv-table:: Worksheet: ``Chiller``
     :header: "Variable", "Description"
 
-    ``a``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``a``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)  
     ``assumption``, items made by assumptions in this technology
-    ``b``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
-    ``c``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``b``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)  
+    ``c``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)  
     ``cap_max``, maximum capacity 
     ``cap_min``, minimum capacity
     ``code``, identifier of each unique equipment
-    ``currency``, currency-year information of the investment cost function
-    ``d``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``currency``, currency-year information of the investment cost function, should be unified to USD
+    ``d``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)  
     ``Description``, Describes the source of the benchmark standards.
-    ``e``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``e``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)  
     ``IR_%``, interest rate charged on the loan for the capital cost
     ``LT_yr``, lifetime of this technology
     ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
@@ -517,17 +518,17 @@ The following file is used by these scripts: ``decentralized``, ``optimization``
 .. csv-table:: Worksheet: ``CT``
     :header: "Variable", "Description"
 
-    ``a``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``a``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)  
     ``assumption``, items made by assumptions in this technology
-    ``b``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
-    ``c``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``b``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)  
+    ``c``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)  
     ``cap_max``, maximum capacity 
     ``cap_min``, minimum capacity
     ``code``, identifier of each unique equipment
-    ``currency``, currency-year information of the investment cost function
-    ``d``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``currency``, currency-year information of the investment cost function, should be unified to USD
+    ``d``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)  
     ``Description``, Describes the type of cooling tower
-    ``e``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``e``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)  
     ``IR_%``, interest rate charged on the loan for the capital cost
     ``LT_yr``, lifetime of this technology
     ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
@@ -539,17 +540,17 @@ The following file is used by these scripts: ``decentralized``, ``optimization``
 .. csv-table:: Worksheet: ``FC``
     :header: "Variable", "Description"
 
-    ``a``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
-    ``assumption``, TODO
-    ``b``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
-    ``c``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``a``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)  
+    ``assumption``, items made by assumptions in this technology
+    ``b``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)  
+    ``c``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)  
     ``cap_max``, maximum capacity 
     ``cap_min``, minimum capacity
     ``code``, identifier of each unique equipment
-    ``currency``, currency-year information of the investment cost function
-    ``d``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``currency``, currency-year information of the investment cost function, should be unified to USD
+    ``d``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)  
     ``Description``, Describes the type of fuel cell
-    ``e``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``e``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)  
     ``IR_%``, interest rate charged on the loan for the capital cost
     ``LT_yr``, lifetime of this technology
     ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
@@ -561,17 +562,17 @@ The following file is used by these scripts: ``decentralized``, ``optimization``
 .. csv-table:: Worksheet: ``Furnace``
     :header: "Variable", "Description"
 
-    ``a``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``a``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)  
     ``assumption``, items made by assumptions in this technology
-    ``b``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
-    ``c``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``b``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)  
+    ``c``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)  
     ``cap_max``, maximum capacity 
     ``cap_min``, minimum capacity
     ``code``, identifier of each unique equipment
-    ``currency``, currency-year information of the investment cost function
-    ``d``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``currency``, currency-year information of the investment cost function, should be unified to USD
+    ``d``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)  
     ``Description``, Describes the type of furnace
-    ``e``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``e``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)  
     ``IR_%``, interest rate charged on the loan for the capital cost
     ``LT_yr``, lifetime of this technology
     ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
@@ -583,22 +584,22 @@ The following file is used by these scripts: ``decentralized``, ``optimization``
 .. csv-table:: Worksheet: ``HEX``
     :header: "Variable", "Description"
 
-    ``a``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
-    ``a_p``, pressure loss function, f(x) = a_p + b_p*x^c_p + d_p*ln(x) + e_p*x*ln*(x), where x is the capacity mass flow rate [W/K]   
+    ``a``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)  
+    ``a_p``, parameter in the pressure loss function, f(x) = a_p + b_p*x^c_p + d_p*ln(x) + e_p*x*ln*(x),  where x is the capacity mass flow rate [W/K] 
     ``assumption``, items made by assumptions in this technology
-    ``b``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
-    ``b_p``, pressure loss function, f(x) = a_p + b_p*x^c_p + d_p*ln(x) + e_p*x*ln*(x), where x is the capacity mass flow rate [W/K]   
-    ``c``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
-    ``c_p``, pressure loss function, f(x) = a_p + b_p*x^c_p + d_p*ln(x) + e_p*x*ln*(x), where x is the capacity mass flow rate [W/K]   
+    ``b``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)  
+    ``b_p``, parameter in the pressure loss function, f(x) = a_p + b_p*x^c_p + d_p*ln(x) + e_p*x*ln*(x),  where x is the capacity mass flow rate [W/K] 
+    ``c``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)  
+    ``c_p``, parameter in the pressure loss function, f(x) = a_p + b_p*x^c_p + d_p*ln(x) + e_p*x*ln*(x),  where x is the capacity mass flow rate [W/K] 
     ``cap_max``, maximum capacity 
     ``cap_min``, minimum capacity
     ``code``, identifier of each unique equipment
-    ``currency``, currency-year information of the investment cost function
-    ``d``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
-    ``d_p``, pressure loss function, f(x) = a_p + b_p*x^c_p + d_p*ln(x) + e_p*x*ln*(x), where x is the capacity mass flow rate [W/K]   
+    ``currency``, currency-year information of the investment cost function, should be unified to USD
+    ``d``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)  
+    ``d_p``, parameter in the pressure loss function, f(x) = a_p + b_p*x^c_p + d_p*ln(x) + e_p*x*ln*(x),  where x is the capacity mass flow rate [W/K] 
     ``Description``, Describes the type of heat exchanger
-    ``e``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
-    ``e_p``, pressure loss function, f(x) = a_p + b_p*x^c_p + d_p*ln(x) + e_p*x*ln*(x), where x is the capacity mass flow rate [W/K]   
+    ``e``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)  
+    ``e_p``, parameter in the pressure loss function, f(x) = a_p + b_p*x^c_p + d_p*ln(x) + e_p*x*ln*(x),  where x is the capacity mass flow rate [W/K] 
     ``IR_%``, interest rate charged on the loan for the capital cost
     ``LT_yr``, lifetime of this technology
     ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
@@ -610,17 +611,17 @@ The following file is used by these scripts: ``decentralized``, ``optimization``
 .. csv-table:: Worksheet: ``HP``
     :header: "Variable", "Description"
 
-    ``a``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``a``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity 
     ``assumption``, items made by assumptions in this technology
-    ``b``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
-    ``c``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``b``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity 
+    ``c``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity 
     ``cap_max``, maximum capacity 
     ``cap_min``, minimum capacity
     ``code``, identifier of each unique equipment
-    ``currency``, currency-year information of the investment cost function
-    ``d``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``currency``, currency-year information of the investment cost function, should be unified to USD
+    ``d``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity 
     ``Description``, Describes the source of the heat pump
-    ``e``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``e``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity 
     ``IR_%``, interest rate charged on the loan for the capital cost
     ``LT_yr``, lifetime of this technology
     ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
@@ -632,17 +633,17 @@ The following file is used by these scripts: ``decentralized``, ``optimization``
 .. csv-table:: Worksheet: ``Pump``
     :header: "Variable", "Description"
 
-    ``a``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``a``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity 
     ``assumption``, items made by assumptions in this technology
-    ``b``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
-    ``c``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``b``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity 
+    ``c``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity 
     ``cap_max``, maximum capacity 
     ``cap_min``, minimum capacity
     ``code``, identifier of each unique equipment
-    ``currency``, currency-year information of the investment cost function
-    ``d``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``currency``, currency-year information of the investment cost function, should be unified to USD
+    ``d``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity 
     ``Description``, Describes the source of the benchmark standards.
-    ``e``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``e``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity 
     ``IR_%``, interest rate charged on the loan for the capital cost
     ``LT_yr``, lifetime of this technology
     ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
@@ -654,27 +655,27 @@ The following file is used by these scripts: ``decentralized``, ``optimization``
 .. csv-table:: Worksheet: ``PV``
     :header: "Variable", "Description"
 
-    ``a``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``a``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity 
     ``assumption``, items made by assumptions in this technology
-    ``b``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
-    ``c``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``b``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity 
+    ``c``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity 
     ``cap_max``, maximum capacity 
     ``cap_min``, minimum capacity
     ``code``, identifier of each unique equipment
-    ``currency``, currency-year information of the investment cost function
-    ``d``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``currency``, currency-year information of the investment cost function, should be unified to USD
+    ``d``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity 
     ``Description``, Describes the source of the benchmark standards.
-    ``e``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``e``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity 
     ``IR_%``, interest rate charged on the loan for the capital cost
     ``LT_yr``, lifetime of this technology
     ``misc_losses``, losses from cabling, resistances etc...
     ``module_length_m``, lengh of the PV module
     ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
-    ``PV_a0``, parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  + a3*x**3 + a4*x**4, x is the relative air mass
-    ``PV_a1``, parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  + a3*x**3 + a4*x**4, x is the relative air mass
-    ``PV_a2``, parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  + a3*x**3 + a4*x**4, x is the relative air mass
-    ``PV_a3``, parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  + a3*x**3 + a4*x**4, x is the relative air mass
-    ``PV_a4``, parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  + a3*x**3 + a4*x**4, x is the relative air mass
+    ``PV_a0``, parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  + a3*x**3 + a4*x**4, where  x is the relative air mass
+    ``PV_a1``, parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  + a3*x**3 + a4*x**4, where  x is the relative air mass
+    ``PV_a2``, parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  + a3*x**3 + a4*x**4, where  x is the relative air mass
+    ``PV_a3``, parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  + a3*x**3 + a4*x**4, where  x is the relative air mass
+    ``PV_a4``, parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  + a3*x**3 + a4*x**4, where  x is the relative air mass
     ``PV_Bref``, cell maximum power temperature coefficient
     ``PV_n``, nominal efficiency
     ``PV_noct``, nominal operating cell temperature
@@ -688,17 +689,17 @@ The following file is used by these scripts: ``decentralized``, ``optimization``
 .. csv-table:: Worksheet: ``PVT``
     :header: "Variable", "Description"
 
-    ``a``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``a``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity 
     ``assumption``, items made by assumptions in this technology
-    ``b``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
-    ``c``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``b``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity 
+    ``c``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity 
     ``cap_max``, maximum capacity 
     ``cap_min``, minimum capacity
     ``code``, identifier of each unique equipment
-    ``currency``, currency-year information of the investment cost function
-    ``d``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``currency``, currency-year information of the investment cost function, should be unified to USD
+    ``d``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity 
     ``Description``, Describes the type of photovoltaic thermal technology
-    ``e``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``e``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity 
     ``IR_%``, interest rate charged on the loan for the capital cost
     ``LT_yr``, lifetime of this technology
     ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
@@ -710,11 +711,11 @@ The following file is used by these scripts: ``decentralized``, ``optimization``
 .. csv-table:: Worksheet: ``SC``
     :header: "Variable", "Description"
 
-    ``a``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``a``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity 
     ``aperture_area_ratio``, ratio of aperture area to panel area
     ``assumption``, items made by assumptions in this technology
-    ``b``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
-    ``c``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``b``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity 
+    ``c``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity 
     ``c1``, collector heat loss coefficient at zero temperature difference and wind speed
     ``c2``, ctemperature difference dependency of the heat loss coefficient
     ``C_eff``, thermal capacity of module 
@@ -722,14 +723,14 @@ The following file is used by these scripts: ``decentralized``, ``optimization``
     ``cap_min``, minimum capacity
     ``code``, identifier of each unique equipment
     ``Cp_fluid``, heat capacity of the heat transfer fluid
-    ``currency``, currency-year information of the investment cost function
-    ``d``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``currency``, currency-year information of the investment cost function, should be unified to USD
+    ``d``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity 
     ``Description``, Describes the type of solar collector
     ``dP1``, pressure drop at zero flow rate
     ``dP2``, pressure drop at nominal flow rate (mB0)
     ``dP3``, pressure drop at maximum flow rate (mB_max)
     ``dP4``, pressure drop at minimum flow rate (mB_min)
-    ``e``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``e``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity 
     ``IAM_d``, incident angle modifier for diffuse radiation
     ``IR_%``, interest rate charged on the loan for the capital cost
     ``LT_yr``, lifetime of this technology
@@ -750,17 +751,17 @@ The following file is used by these scripts: ``decentralized``, ``optimization``
 .. csv-table:: Worksheet: ``TES``
     :header: "Variable", "Description"
 
-    ``a``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
-    ``assumption``, TODO
-    ``b``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
-    ``c``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``a``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity 
+    ``assumption``, items made by assumptions in this technology
+    ``b``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity 
+    ``c``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity 
     ``cap_max``, maximum capacity 
     ``cap_min``, minimum capacity
     ``code``, identifier of each unique equipment
-    ``currency``, currency-year information of the investment cost function
-    ``d``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``currency``, currency-year information of the investment cost function, should be unified to USD
+    ``d``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity 
     ``Description``, Describes the source of the benchmark standards.
-    ``e``, investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)   
+    ``e``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity 
     ``IR_%``, interest rate charged on the loan for the capital cost
     ``LT_yr``, lifetime of this technology
     ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
@@ -783,7 +784,7 @@ The following file is used by these scripts: ``optimization``, ``thermal_network
 .. csv-table:: Worksheet: ``THERMAL_GRID``
     :header: "Variable", "Description"
 
-    ``Code``, no such column?
+    ``Code``, pipe ID from the manufacterer
     ``D_ext_m``, external pipe diameter tolerance for the nominal diameter (DN)
     ``D_ins_m``, maximum pipe diameter tolerance for the nominal diameter (DN)
     ``D_int_m``, internal pipe diameter tolerance for the nominal diameter (DN)
@@ -878,7 +879,7 @@ The following file is used by these scripts: ``demand``, ``radiation``, ``schedu
 .. csv-table:: Worksheet: ``WINDOW``
     :header: "Variable", "Description"
 
-    ``code``, Building use. It relates to the uses stored in the input database of Zone_occupancy
+    ``code``, Window type code to relate to other databases
     ``Description``, Describes the source of the benchmark standards.
     ``e_win``, Emissivity of external surface. Defined according to ISO 13790.
     ``F_F``, Window frame fraction coefficient. Defined according to ISO 13790.
@@ -1012,28 +1013,327 @@ The following file is used by these scripts: ``decentralized``, ``emissions``, `
 get_database_standard_schedules_use
 -----------------------------------
 
-path: ``inputs/technology/archetypes/schedules/{use}.csv``
+path: ``inputs/technology/archetypes/schedules/RESTAURANT.csv``
 
 The following file is used by these scripts: ``archetypes_mapper``
 
 
-.. csv-table::
+
+
+.. csv-table:: Worksheet: ``APPLIANCES``
     :header: "Variable", "Description"
 
-    ``APPLIANCES``, "TODO"
-    ``COOLING``, "TODO"
-    ``DAY``, "TODO"
-    ``ELECTROMOBILITY``, "TODO"
-    ``HEATING``, "TODO"
-    ``HOUR``, "TODO"
-    ``LIGHTING``, "TODO"
-    ``METADATA``, "TODO"
-    ``MONTHLY_MULTIPLIER``, "TODO"
-    ``OCCUPANCY``, "TODO"
-    ``PROCESSES``, "TODO"
-    ``SERVERS``, "TODO"
-    ``WATER``, "TODO"
+    ``1``, 
+    ``2``, 
+    ``3``, 
+    ``4``, 
+    ``5``, 
+    ``6``, 
+    ``7``, 
+    ``8``, 
+    ``9``, 
+    ``10``, 
+    ``11``, 
+    ``12``, 
+    ``13``, 
+    ``14``, 
+    ``15``, 
+    ``16``, 
+    ``17``, 
+    ``18``, 
+    ``19``, 
+    ``20``, 
+    ``21``, 
+    ``22``, 
+    ``23``, 
+    ``24``, 
+    ``DAY``, 
     
+
+
+
+.. csv-table:: Worksheet: ``COOLING``
+    :header: "Variable", "Description"
+
+    ``1``, 
+    ``2``, 
+    ``3``, 
+    ``4``, 
+    ``5``, 
+    ``6``, 
+    ``7``, 
+    ``8``, 
+    ``9``, 
+    ``10``, 
+    ``11``, 
+    ``12``, 
+    ``13``, 
+    ``14``, 
+    ``15``, 
+    ``16``, 
+    ``17``, 
+    ``18``, 
+    ``19``, 
+    ``20``, 
+    ``21``, 
+    ``22``, 
+    ``23``, 
+    ``24``, 
+    ``DAY``, 
+    
+
+
+
+.. csv-table:: Worksheet: ``ELECTROMOBILITY``
+    :header: "Variable", "Description"
+
+    ``1``, 
+    ``2``, 
+    ``3``, 
+    ``4``, 
+    ``5``, 
+    ``6``, 
+    ``7``, 
+    ``8``, 
+    ``9``, 
+    ``10``, 
+    ``11``, 
+    ``12``, 
+    ``13``, 
+    ``14``, 
+    ``15``, 
+    ``16``, 
+    ``17``, 
+    ``18``, 
+    ``19``, 
+    ``20``, 
+    ``21``, 
+    ``22``, 
+    ``23``, 
+    ``24``, 
+    ``DAY``, 
+    
+
+
+
+.. csv-table:: Worksheet: ``HEATING``
+    :header: "Variable", "Description"
+
+    ``1``, 
+    ``2``, 
+    ``3``, 
+    ``4``, 
+    ``5``, 
+    ``6``, 
+    ``7``, 
+    ``8``, 
+    ``9``, 
+    ``10``, 
+    ``11``, 
+    ``12``, 
+    ``13``, 
+    ``14``, 
+    ``15``, 
+    ``16``, 
+    ``17``, 
+    ``18``, 
+    ``19``, 
+    ``20``, 
+    ``21``, 
+    ``22``, 
+    ``23``, 
+    ``24``, 
+    ``DAY``, 
+    
+
+
+
+.. csv-table:: Worksheet: ``LIGHTING``
+    :header: "Variable", "Description"
+
+    ``1``, 
+    ``2``, 
+    ``3``, 
+    ``4``, 
+    ``5``, 
+    ``6``, 
+    ``7``, 
+    ``8``, 
+    ``9``, 
+    ``10``, 
+    ``11``, 
+    ``12``, 
+    ``13``, 
+    ``14``, 
+    ``15``, 
+    ``16``, 
+    ``17``, 
+    ``18``, 
+    ``19``, 
+    ``20``, 
+    ``21``, 
+    ``22``, 
+    ``23``, 
+    ``24``, 
+    ``DAY``, 
+    
+
+
+
+.. csv-table:: Worksheet: ``METADATA``
+    :header: "Variable", "Description"
+
+    ``metadata``, 
+    
+
+
+
+.. csv-table:: Worksheet: ``MONTHLY_MULTIPLIER``
+    :header: "Variable", "Description"
+
+    ``1``, 
+    ``2``, 
+    ``3``, 
+    ``4``, 
+    ``5``, 
+    ``6``, 
+    ``7``, 
+    ``8``, 
+    ``9``, 
+    ``10``, 
+    ``11``, 
+    ``12``, 
+    
+
+
+
+.. csv-table:: Worksheet: ``OCCUPANCY``
+    :header: "Variable", "Description"
+
+    ``1``, 
+    ``2``, 
+    ``3``, 
+    ``4``, 
+    ``5``, 
+    ``6``, 
+    ``7``, 
+    ``8``, 
+    ``9``, 
+    ``10``, 
+    ``11``, 
+    ``12``, 
+    ``13``, 
+    ``14``, 
+    ``15``, 
+    ``16``, 
+    ``17``, 
+    ``18``, 
+    ``19``, 
+    ``20``, 
+    ``21``, 
+    ``22``, 
+    ``23``, 
+    ``24``, 
+    ``DAY``, 
+    
+
+
+
+.. csv-table:: Worksheet: ``PROCESSES``
+    :header: "Variable", "Description"
+
+    ``1``, 
+    ``2``, 
+    ``3``, 
+    ``4``, 
+    ``5``, 
+    ``6``, 
+    ``7``, 
+    ``8``, 
+    ``9``, 
+    ``10``, 
+    ``11``, 
+    ``12``, 
+    ``13``, 
+    ``14``, 
+    ``15``, 
+    ``16``, 
+    ``17``, 
+    ``18``, 
+    ``19``, 
+    ``20``, 
+    ``21``, 
+    ``22``, 
+    ``23``, 
+    ``24``, 
+    ``DAY``, 
+    
+
+
+
+.. csv-table:: Worksheet: ``SERVERS``
+    :header: "Variable", "Description"
+
+    ``1``, 
+    ``2``, 
+    ``3``, 
+    ``4``, 
+    ``5``, 
+    ``6``, 
+    ``7``, 
+    ``8``, 
+    ``9``, 
+    ``10``, 
+    ``11``, 
+    ``12``, 
+    ``13``, 
+    ``14``, 
+    ``15``, 
+    ``16``, 
+    ``17``, 
+    ``18``, 
+    ``19``, 
+    ``20``, 
+    ``21``, 
+    ``22``, 
+    ``23``, 
+    ``24``, 
+    ``DAY``, 
+    
+
+
+
+.. csv-table:: Worksheet: ``WATER``
+    :header: "Variable", "Description"
+
+    ``1``, 
+    ``2``, 
+    ``3``, 
+    ``4``, 
+    ``5``, 
+    ``6``, 
+    ``7``, 
+    ``8``, 
+    ``9``, 
+    ``10``, 
+    ``11``, 
+    ``12``, 
+    ``13``, 
+    ``14``, 
+    ``15``, 
+    ``16``, 
+    ``17``, 
+    ``18``, 
+    ``19``, 
+    ``20``, 
+    ``21``, 
+    ``22``, 
+    ``23``, 
+    ``24``, 
+    ``DAY``, 
+    
+
+
 
 
 get_database_supply_assemblies
@@ -1049,16 +1349,16 @@ The following file is used by these scripts: ``demand``, ``emissions``, ``system
 .. csv-table:: Worksheet: ``COOLING``
     :header: "Variable", "Description"
 
-    ``CAPEX_USD2015kW``, TODO
-    ``code``, TODO
-    ``Description``, TODO
-    ``efficiency``, TODO
-    ``feedstock``, TODO
-    ``IR_%``, TODO
-    ``LT_yr``, TODO
-    ``O&M_%``, TODO
-    ``reference``, TODO
-    ``scale``, TODO
+    ``CAPEX_USD2015kW``, Capital costs per kW
+    ``code``, Code of cooling supply assembly
+    ``Description``, description
+    ``efficiency``, efficiency of the all in one system
+    ``feedstock``, feedstock used by the the all in one system (refers to the FEEDSTOCK database)
+    ``IR_%``, interest rate charged on the loan for the capital cost
+    ``LT_yr``, lifetime of assembly
+    ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
+    ``reference``, reference
+    ``scale``, whether the all in one system is used at the building, or the district scale
     
 
 
@@ -1066,16 +1366,16 @@ The following file is used by these scripts: ``demand``, ``emissions``, ``system
 .. csv-table:: Worksheet: ``ELECTRICITY``
     :header: "Variable", "Description"
 
-    ``CAPEX_USD2015kW``, TODO
-    ``code``, TODO
-    ``Description``, TODO
-    ``efficiency``, TODO
-    ``feedstock``, TODO
-    ``IR_%``, TODO
-    ``LT_yr``, TODO
-    ``O&M_%``, TODO
-    ``reference``, TODO
-    ``scale``, TODO
+    ``CAPEX_USD2015kW``, Capital costs per kW
+    ``code``, Type of all in one system
+    ``Description``, Description of Type of all in one system
+    ``efficiency``, efficiency of the all in one system
+    ``feedstock``, feedstock used by the the all in one system (refers to the FEEDSTOCK database)
+    ``IR_%``, interest rate charged on the loan for the capital cost
+    ``LT_yr``, lifetime of assembly
+    ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
+    ``reference``, Reference of the data
+    ``scale``, whether the all in one system is used at the building, or the district scale
     
 
 
@@ -1083,16 +1383,16 @@ The following file is used by these scripts: ``demand``, ``emissions``, ``system
 .. csv-table:: Worksheet: ``HEATING``
     :header: "Variable", "Description"
 
-    ``CAPEX_USD2015kW``, TODO
-    ``code``, TODO
-    ``Description``, TODO
-    ``efficiency``, TODO
-    ``feedstock``, TODO
-    ``IR_%``, TODO
-    ``LT_yr``, TODO
-    ``O&M_%``, TODO
-    ``reference``, TODO
-    ``scale``, TODO
+    ``CAPEX_USD2015kW``, Capital costs per kW
+    ``code``, Type of all in one system
+    ``Description``, Description of Type of all in one system
+    ``efficiency``, efficiency of the all in one system
+    ``feedstock``, feedstock used by the the all in one system (refers to the FEEDSTOCK database)
+    ``IR_%``, interest rate charged on the loan for the capital cost
+    ``LT_yr``, lifetime of assembly
+    ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
+    ``reference``, Reference of the data
+    ``scale``, whether the all in one system is used at the building, or the district scale
     
 
 
@@ -1100,16 +1400,16 @@ The following file is used by these scripts: ``demand``, ``emissions``, ``system
 .. csv-table:: Worksheet: ``HOT_WATER``
     :header: "Variable", "Description"
 
-    ``CAPEX_USD2015kW``, TODO
-    ``code``, TODO
-    ``Description``, TODO
-    ``efficiency``, TODO
-    ``feedstock``, TODO
-    ``IR_%``, TODO
-    ``LT_yr``, TODO
-    ``O&M_%``, TODO
-    ``reference``, TODO
-    ``scale``, TODO
+    ``CAPEX_USD2015kW``, Capital costs per kW
+    ``code``, Type of all in one system
+    ``Description``, Description of Type of all in one system
+    ``efficiency``, efficiency of the all in one system
+    ``feedstock``, feedstock used by the the all in one system (refers to the FEEDSTOCK database)
+    ``IR_%``, interest rate charged on the loan for the capital cost
+    ``LT_yr``, lifetime of assembly
+    ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
+    ``reference``, Reference of the data
+    ``scale``, whether the all in one system is used at the building, or the district scale
     
 
 
@@ -1128,14 +1428,14 @@ The following file is used by these scripts: ``archetypes_mapper``
 .. csv-table:: Worksheet: ``INDOOR_COMFORT``
     :header: "Variable", "Description"
 
-    ``code``, TODO
-    ``RH_max_pc``, TODO
-    ``RH_min_pc``, TODO
-    ``Tcs_set_C``, TODO
-    ``Tcs_setb_C``, TODO
-    ``Ths_set_C``, TODO
-    ``Ths_setb_C``, TODO
-    ``Ve_lpspax``, TODO
+    ``code``, use type code (refers to building use type)
+    ``RH_max_pc``, Upper bound of relative humidity
+    ``RH_min_pc``, Lower_bound of relative humidity
+    ``Tcs_set_C``, Setpoint temperature for cooling system
+    ``Tcs_setb_C``, Setback point of temperature for cooling system
+    ``Ths_set_C``, Setpoint temperature for heating system
+    ``Ths_setb_C``, Setback point of temperature for heating system
+    ``Ve_lpspax``, Indoor quality requirements of indoor ventilation per person
     
 
 
@@ -1143,20 +1443,20 @@ The following file is used by these scripts: ``archetypes_mapper``
 .. csv-table:: Worksheet: ``INTERNAL_LOADS``
     :header: "Variable", "Description"
 
-    ``code``, TODO
-    ``Ea_Wm2``, TODO
-    ``Ed_Wm2``, TODO
-    ``El_Wm2``, TODO
-    ``Epro_Wm2``, TODO
-    ``Ev_kWveh``, TODO
-    ``Occ_m2pax``, TODO
-    ``Qcpro_Wm2``, TODO
-    ``Qcre_Wm2``, TODO
-    ``Qhpro_Wm2``, TODO
-    ``Qs_Wpax``, TODO
-    ``Vw_lpdpax``, TODO
-    ``Vww_lpdpax``, TODO
-    ``X_ghpax``, TODO
+    ``code``, use type code (refers to building use type)
+    ``Ea_Wm2``, Peak specific electrical load due to computers and devices
+    ``Ed_Wm2``, Peak specific electrical load due to servers/data centres
+    ``El_Wm2``, Peak specific electrical load due to artificial lighting
+    ``Epro_Wm2``, Peak specific electrical load due to industrial processes
+    ``Ev_kWveh``, Peak specific cooling load due to electromobility
+    ``Occ_m2pax``, Occupancy density
+    ``Qcpro_Wm2``, Peak specific process cooling load
+    ``Qcre_Wm2``, Peak specific cooling load due to refrigeration (cooling rooms)
+    ``Qhpro_Wm2``, Peak specific process heating load
+    ``Qs_Wpax``, Peak sensible heat load of people
+    ``Vw_lpdpax``, Peak specific fresh water consumption (includes cold and hot water)
+    ``Vww_lpdpax``, Peak specific daily hot water consumption
+    ``X_ghpax``, Moisture released by occupancy at peak conditions
     
 
 
@@ -1187,23 +1487,23 @@ The following file is used by these scripts: ``decentralized``, ``optimization``
     ``E_hs_kWh``, "Heating system electricity consumption."
     ``E_sys_kWh``, "End-use total electricity system consumption = Ea + El + Edata + Epro + Eaux "
     ``E_ww_kWh``, "Hot water system electricity consumption."
-    ``Ea_kWh``, "TODO"
+    ``Ea_kWh``, "End-use electricity for appliances"
     ``Eal_kWh``, "End-use electricity consumption of appliances and lights"
     ``Eaux_kWh``, "End-use auxiliary electricity consumption."
     ``Edata_kWh``, "End-use data centre electricity consumption."
-    ``El_kWh``, "TODO"
+    ``El_kWh``, "End-use electricity for lights"
     ``Epro_kWh``, "End-use electricity consumption for industrial processes."
-    ``GRID_a_kWh``, "kWh"
-    ``GRID_aux_kWh``, "kWh"
-    ``GRID_cdata_kWh``, "kWh"
-    ``GRID_cre_kWh``, "kWh"
-    ``GRID_cs_kWh``, "kWh"
-    ``GRID_data_kWh``, "kWh"
-    ``GRID_hs_kWh``, "kWh"
+    ``GRID_a_kWh``, "Grid electricity requirements for appliances"
+    ``GRID_aux_kWh``, "Grid electricity requirements for auxiliary loads"
+    ``GRID_cdata_kWh``, "Grid electricity requirements for servers cooling"
+    ``GRID_cre_kWh``, "Grid electricity requirements for refrigeration"
+    ``GRID_cs_kWh``, "Grid electricity requirements for space cooling"
+    ``GRID_data_kWh``, "Grid electricity requirements for servers"
+    ``GRID_hs_kWh``, "Grid electricity requirements for space heating"
     ``GRID_kWh``, "Grid total requirements of electricity = GRID_a + GRID_l + GRID_v +GRID_data + GRID_pro + GRID_aux + GRID_cdata + GRID_cre + GRID_hs + GRID_ww + GRID_cs"
-    ``GRID_l_kWh``, "kWh"
-    ``GRID_pro_kWh``, "kWh"
-    ``GRID_ww_kWh``, "kWh"
+    ``GRID_l_kWh``, "Grid electricity requirements for lights"
+    ``GRID_pro_kWh``, "Grid electricity requirements for industrial processes"
+    ``GRID_ww_kWh``, "Grid electricity requirements for hot water supply"
     ``I_rad_kWh``, "Radiative heat loss"
     ``I_sol_and_I_rad_kWh``, "Net radiative heat gain"
     ``I_sol_kWh``, "Solar heat gain"
@@ -1320,9 +1620,9 @@ The following file is used by these scripts: ``optimization``
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``Area_avail_m2``, "TODO"
-    ``QGHP_kW``, "TODO"
-    ``Ts_C``, "TODO"
+    ``Area_avail_m2``, "areas available to install ground source heat pumps"
+    ``QGHP_kW``, "geothermal heat potential"
+    ``Ts_C``, "ground temperature"
     
 
 
@@ -1338,8 +1638,8 @@ The following file is used by these scripts:
     :header: "Variable", "Description"
 
     ``GFA_m2``, "Gross floor area"
-    ``GHG_sys_embodied_kgCO2m2``, "Building construction and decomissioning"
-    ``GHG_sys_embodied_tonCO2``, "Building construction and decomissioning"
+    ``GHG_sys_embodied_kgCO2m2``, "Embodied emissions per conditioned floor area due to building construction and decomissioning"
+    ``GHG_sys_embodied_tonCO2``, "Embodied emissions due to building construction and decomissioning"
     ``Name``, "Unique building ID. It must start with a letter."
     
 
@@ -1356,8 +1656,8 @@ The following file is used by these scripts:
     :header: "Variable", "Description"
 
     ``GFA_m2``, "Gross floor area"
-    ``GHG_sys_mobility_kgCO2m2``, "Commuting"
-    ``GHG_sys_mobility_tonCO2``, "Commuting"
+    ``GHG_sys_mobility_kgCO2m2``, "Operational emissions per unit of conditioned floor area due to mobility"
+    ``GHG_sys_mobility_tonCO2``, "Operational emissions due to mobility"
     ``Name``, "Unique building ID. It must start with a letter."
     
 
@@ -1373,82 +1673,76 @@ The following file is used by these scripts:
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``COAL_hs_ghg_kgm2``, "Emissions due to operational energy per unit of conditioned floor area of the coal powererd heating system"
-    ``COAL_hs_ghg_ton``, "Emissions due to operational energy of the coal powered heating system"
+    ``COAL_hs_ghg_kgm2``, "Operational emissions per unit of conditioned floor area of the coal powererd heating system"
+    ``COAL_hs_ghg_ton``, "Operational emissions of the coal powered heating system"
     ``COAL_hs_nre_pen_GJ``, "Operational primary energy demand (non-renewable) for coal powered heating system"
     ``COAL_hs_nre_pen_MJm2``, "Operational primary energy demand per unit of conditioned floor area (non-renewable) of the coal powered heating system"
-    ``COAL_ww_ghg_kgm2``, "Emissions due to operational energy per unit of conditionend floor area of the coal powered domestic hot water system"
-    ``COAL_ww_ghg_ton``, "Emissions due to operational energy of the coal powered domestic hot water system"
+    ``COAL_ww_ghg_kgm2``, "Operational emissions per unit of conditioned floor area of the coal powered domestic hot water system"
+    ``COAL_ww_ghg_ton``, "Operational emissions of the coal powered domestic hot water system"
     ``COAL_ww_nre_pen_GJ``, "Operational primary energy demand (non-renewable) for coal powered domestic hot water system"
     ``COAL_ww_nre_pen_MJm2``, "Operational primary energy demand per unit of conditioned floor area (non-renewable) of the coal powered domestic hot water system"
-    ``DC_cdata_ghg_kgm2``, "Emissions due to operational energy per unit of conditioned floor area of the district cooling for the data center"
-    ``DC_cdata_ghg_ton``, "Emissions due to operational energy of the district cooling for the data center"
-    ``DC_cdata_nre_pen_GJ``, "Operational primary energy demand (non-renewable) for district cooling system of the data center"
-    ``DC_cdata_nre_pen_MJm2``, "Operational primary energy demand per unit of conditioned floor area (non-renewable) of the dstrict cooling for the data center"
-    ``DC_cre_ghg_kgm2``, "TODO"
-    ``DC_cre_ghg_ton``, "TODO"
-    ``DC_cre_nre_pen_GJ``, "Operational primary energy demand (non-renewable) for district cooling system for cooling and refrigeration"
-    ``DC_cre_nre_pen_MJm2``, "Operational primary energy demand per unit of conditioned floor area (non-renewable) of the dstrict cooling for cooling and refrigeration"
-    ``DC_cs_ghg_kgm2``, "Emissions due to operational energy per unit of conditioned floor area of the district cooling"
-    ``DC_cs_ghg_ton``, "Emissions due to operational energy of the district cooling"
+    ``DC_cdata_ghg_kgm2``, "Operational emissions per unit of conditioned floor area of the district cooling for the data center"
+    ``DC_cdata_ghg_ton``, "Operational emissions of the district cooling for the data center"
+    ``DC_cdata_nre_pen_GJ``, "Operational primary energy demand (non-renewable) for district cooling system for cool room refrigeration"
+    ``DC_cdata_nre_pen_MJm2``, "Operational primary energy demand per unit of conditioned floor area (non-renewable) for district cooling for cool room refrigeration"
+    ``DC_cre_ghg_kgm2``, "Operational emissions per unit of conditioned floor area for district cooling system for cool room refrigeration"
+    ``DC_cre_ghg_ton``, "Operational emissions for district cooling system for cool room refrigeration"
+    ``DC_cre_nre_pen_GJ``, "Operational primary energy demand (non-renewable) for district cooling system for cool room refrigeration"
+    ``DC_cre_nre_pen_MJm2``, "Operational primary energy demand per unit of conditioned floor area (non-renewable)  for cool room refrigeration"
+    ``DC_cs_ghg_kgm2``, "Operational emissions per unit of conditioned floor area of the district cooling"
+    ``DC_cs_ghg_ton``, "Operational emissions of the district cooling"
     ``DC_cs_nre_pen_GJ``, "Operational primary energy demand (non-renewable) for district cooling system"
     ``DC_cs_nre_pen_MJm2``, "Operational primary energy demand per unit of conditioned floor area (non-renewable) of the district cooling"
-    ``DH_hs_ghg_kgm2``, "Emissions due to operational energy per unit of conditioned floor area of the district heating system"
-    ``DH_hs_ghg_ton``, "Emissions due to operational energy of the district heating system"
+    ``DH_hs_ghg_kgm2``, "Operational emissions per unit of conditioned floor area of the district heating system"
+    ``DH_hs_ghg_ton``, "Operational emissions of the district heating system"
     ``DH_hs_nre_pen_GJ``, "Operational primary energy demand (non-renewable) for district heating system"
     ``DH_hs_nre_pen_MJm2``, "Operational primary energy demand per unit of conditioned floor area (non-renewable) of the district heating system"
-    ``DH_ww_ghg_kgm2``, "Emissions due to operational energy per unit of conditioned floor area of the district heating domestic hot water system"
-    ``DH_ww_ghg_ton``, "Emissions due to operational energy of the district heating powered domestic hot water system"
+    ``DH_ww_ghg_kgm2``, "Operational emissions per unit of conditioned floor area of the district heating domestic hot water system"
+    ``DH_ww_ghg_ton``, "Operational emissions of the district heating powered domestic hot water system"
     ``DH_ww_nre_pen_GJ``, "Operational primary energy demand (non-renewable) for district heating powered domestic hot water system"
     ``DH_ww_nre_pen_MJm2``, "Operational primary energy demand per unit of conditioned floor area (non-renewable) of the district heating domestic hot water system"
     ``GFA_m2``, "Gross floor area"
-    ``GFA_m2.1``, "TODO"
-    ``GHG_sys_kgCO2m2``, "Energy system operation"
-    ``GHG_sys_tonCO2``, "Energy system operation"
-    ``GRID_ghg_kgm2``, "Emissions due to operational energy per unit of conditioned floor area from grid electricity"
-    ``GRID_ghg_ton``, "Emissions due to operational energy of the electrictiy from the grid"
+    ``GHG_sys_kgCO2m2``, "Total operational emissions per unit of conditioned floor area"
+    ``GHG_sys_tonCO2``, "Total operational emissions"
+    ``GRID_ghg_kgm2``, "Operational emissions per unit of conditioned floor area from grid electricity"
+    ``GRID_ghg_ton``, "Operational emissions of the electrictiy from the grid"
     ``GRID_nre_pen_GJ``, "Operational primary energy demand (non-renewable) from the grid"
     ``GRID_nre_pen_MJm2``, "Operational primary energy demand per unit of conditioned floor area (non-renewable) from grid electricity"
     ``Name``, "Unique building ID. It must start with a letter."
-    ``Name.1``, "TODO"
-    ``NG_hs_ghg_kgm2``, "Emissions due to operational energy per unit of conditioned floor area of the natural gas powered heating system"
-    ``NG_hs_ghg_ton``, "Emissions due to operational energy of the natural gas powered heating system"
+    ``NG_hs_ghg_kgm2``, "Operational emissions per unit of conditioned floor area of the natural gas powered heating system"
+    ``NG_hs_ghg_ton``, "Operational emissions of the natural gas powered heating system"
     ``NG_hs_nre_pen_GJ``, "Operational primary energy demand (non-renewable) for natural gas powered heating system"
     ``NG_hs_nre_pen_MJm2``, "Operational primary energy demand per unit of conditioned floor area (non-renewable) of the natural gas powered heating system"
-    ``NG_ww_ghg_kgm2``, "Emissions due to operational energy per unit of conditioned floor area of the gas powered domestic hot water system"
-    ``NG_ww_ghg_ton``, "Emissions due to operational energy of the solar powered domestic hot water system"
+    ``NG_ww_ghg_kgm2``, "Operational emissions per unit of conditioned floor area of the gas powered domestic hot water system"
+    ``NG_ww_ghg_ton``, "Operational emissions of the solar powered domestic hot water system"
     ``NG_ww_nre_pen_GJ``, "Operational primary energy demand (non-renewable) for natural gas powered domestic hot water system"
     ``NG_ww_nre_pen_MJm2``, "Operational primary energy demand per unit of conditioned floor area (non-renewable) of the natural gas powered domestic hot water system"
-    ``OIL_hs_ghg_kgm2``, "Emissions due to operational energy per unit of conditioned floor area of the oil powered heating system"
-    ``OIL_hs_ghg_ton``, "Emissions due to operational energy of the oil powered heating system"
+    ``OIL_hs_ghg_kgm2``, "Operational emissions per unit of conditioned floor area of the oil powered heating system"
+    ``OIL_hs_ghg_ton``, "Operational emissions of the oil powered heating system"
     ``OIL_hs_nre_pen_GJ``, "Operational primary energy demand (non-renewable) for oil powered heating system"
     ``OIL_hs_nre_pen_MJm2``, "Operational primary energy demand per unit of conditioned floor area (non-renewable) of the oil powered heating system"
-    ``OIL_ww_ghg_kgm2``, "Emissions due to operational energy per unit of conditioned floor area of the oil powered domestic hot water system"
-    ``OIL_ww_ghg_ton``, "Emissions due to operational energy of the oil powered domestic hot water system"
+    ``OIL_ww_ghg_kgm2``, "Operational emissions per unit of conditioned floor area of the oil powered domestic hot water system"
+    ``OIL_ww_ghg_ton``, "Operational emissions of the oil powered domestic hot water system"
     ``OIL_ww_nre_pen_GJ``, "Operational primary energy demand (non-renewable) for oil powered domestic hot water system"
     ``OIL_ww_nre_pen_MJm2``, "Operational primary energy demand per unit of conditioned floor area (non-renewable) of the oil powered domestic hot water system"
-    ``PV_ghg_kgm2``, "Emissions due to operational energy per unit of conditioned floor area for PV-System"
-    ``PV_ghg_kgm2.1``, "TODO"
-    ``PV_ghg_ton``, "Emissions due to operational energy of the PV-System"
-    ``PV_ghg_ton.1``, "TODO"
+    ``PV_ghg_kgm2``, "Operational emissions per unit of conditioned floor area for PV-System"
+    ``PV_ghg_ton``, "Operational emissions of the PV-System"
     ``PV_nre_pen_GJ``, "Operational primary energy demand (non-renewable) for PV-System"
-    ``PV_nre_pen_GJ.1``, "TODO"
     ``PV_nre_pen_MJm2``, "Operational primary energy demand per unit of conditioned floor area (non-renewable) for PV System"
-    ``PV_nre_pen_MJm2.1``, "TODO"
-    ``SOLAR_hs_ghg_kgm2``, "Emissions due to operational energy per unit of conditioned floor area of the solar powered heating system"
-    ``SOLAR_hs_ghg_ton``, "Emissions due to operational energy of the solar powered heating system"
+    ``SOLAR_hs_ghg_kgm2``, "Operational emissions per unit of conditioned floor area of the solar powered heating system"
+    ``SOLAR_hs_ghg_ton``, "Operational emissions of the solar powered heating system"
     ``SOLAR_hs_nre_pen_GJ``, "Operational primary energy demand (non-renewable) of the solar powered heating system"
     ``SOLAR_hs_nre_pen_MJm2``, "Operational primary energy demand per unit of conditioned floor area (non-renewable) of the solar powered heating system"
-    ``SOLAR_ww_ghg_kgm2``, "Emissions due to operational energy per unit of conditioned floor area of the solar powered domestic hot water system"
-    ``SOLAR_ww_ghg_ton``, "Emissions due to operational energy of the solar powered domestic hot water system"
+    ``SOLAR_ww_ghg_kgm2``, "Operational emissions per unit of conditioned floor area of the solar powered domestic hot water system"
+    ``SOLAR_ww_ghg_ton``, "Operational emissions of the solar powered domestic hot water system"
     ``SOLAR_ww_nre_pen_GJ``, "Operational primary energy demand (non-renewable) for solar powered domestic hot water system"
     ``SOLAR_ww_nre_pen_MJm2``, "Operational primary energy demand per unit of conditioned floor area (non-renewable) of the solar poweed domestic hot water system"
-    ``WOOD_hs_ghg_kgm2``, "Emissions due to operational energy per unit of conditioned floor area of the wood powered heating system"
-    ``WOOD_hs_ghg_ton``, "Emissions due to operational energy of the wood powered heating system"
+    ``WOOD_hs_ghg_kgm2``, "Operational emissions per unit of conditioned floor area of the wood powered heating system"
+    ``WOOD_hs_ghg_ton``, "Operational emissions of the wood powered heating system"
     ``WOOD_hs_nre_pen_GJ``, "Operational primary energy demand (non-renewable) for wood powered heating system"
     ``WOOD_hs_nre_pen_MJm2``, "Operational primary energy demand per unit of conditioned floor area (non-renewable) of the wood powered heating system"
-    ``WOOD_ww_ghg_kgm2``, "Emissions due to operational energy per unit of conditioned floor area of the wood powered domestic hot water system"
-    ``WOOD_ww_ghg_ton``, "Emissions due to operational energy of the wood powered domestic hot water system"
+    ``WOOD_ww_ghg_kgm2``, "Operational emissions per unit of conditioned floor area of the wood powered domestic hot water system"
+    ``WOOD_ww_ghg_ton``, "Operational emissions of the wood powered domestic hot water system"
     ``WOOD_ww_nre_pen_GJ``, "Operational primary energy demand (non-renewable) for wood powered domestic hot water system"
     ``WOOD_ww_nre_pen_MJm2``, "Operational primary energy demand per unit of conditioned floor area (non-renewable) of the wood powered domestic hot water system"
     
@@ -1465,39 +1759,32 @@ The following file is used by these scripts:
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``Capex_a_sys_district_scale_USD``, "TODO"
-    ``Capex_a_sys_building_scale_USD``, "TODO"
-    ``Capex_a_sys_USD``, "TODO"
-    ``Capex_total_sys_district_scale_USD``, "TODO"
-    ``Capex_total_sys_building_scale_USD``, "TODO"
-    ``Capex_total_sys_USD``, "TODO"
-    ``generation``, "TODO"
-    ``GHG_rank``, "TODO"
-    ``GHG_sys_district_scale_tonCO2``, "TODO"
-    ``GHG_sys_building_scale_tonCO2``, "TODO"
-    ``GHG_sys_tonCO2``, "TODO"
-    ``individual``, "TODO"
-    ``individual_name``, "TODO"
-    ``normalized_Capex_total``, "TODO"
-    ``normalized_emissions``, "TODO"
-    ``normalized_Opex``, "TODO"
-    ``normalized_prim``, "TODO"
-    ``normalized_TAC``, "TODO"
-    ``Opex_a_sys_district_scale_USD``, "TODO"
-    ``Opex_a_sys_building_scale_USD``, "TODO"
-    ``Opex_a_sys_USD``, "TODO"
-    ``PEN_rank``, "TODO"
-    ``PEN_sys_district_scale_MJoil``, "TODO"
-    ``PEN_sys_building_scale_MJoil``, "TODO"
-    ``PEN_sys_MJoil``, "TODO"
-    ``TAC_rank``, "TODO"
-    ``TAC_sys_district_scale_USD``, "TODO"
-    ``TAC_sys_building_scale_USD``, "TODO"
-    ``TAC_sys_USD``, "TODO"
-    ``Unnamed: 0``, "TODO"
-    ``Unnamed: 0.1``, "TODO"
-    ``user_MCDA``, "TODO"
-    ``user_MCDA_rank``, "TODO"
+    ``Capex_a_sys_building_scale_USD``, "Annualized Capital costs of building-scale systems"
+    ``Capex_a_sys_district_scale_USD``, "Capital costs of district-scale systems"
+    ``Capex_a_sys_USD``, "Capital costs of all systems"
+    ``Capex_total_sys_building_scale_USD``, "Capital costs of building-scale systems"
+    ``Capex_total_sys_district_scale_USD``, "Capital costs of district-scale systems"
+    ``Capex_total_sys_USD``, "Capital costs of all systems"
+    ``generation``, "Generation or iteration"
+    ``GHG_rank``, "Rank for emissions"
+    ``GHG_sys_building_scale_tonCO2``, "Green house gas emissions of building-scale systems"
+    ``GHG_sys_district_scale_tonCO2``, "Green house gas emissions of building-scale systems"
+    ``GHG_sys_tonCO2``, "Green house gas emissions of all systems"
+    ``individual``, "system number"
+    ``individual_name``, "Name of system"
+    ``normalized_Capex_total``, "normalization of CAPEX"
+    ``normalized_emissions``, "normalization of GHG"
+    ``normalized_Opex``, "Normalization of OPEX"
+    ``normalized_TAC``, "normalization of TAC"
+    ``Opex_a_sys_building_scale_USD``, "Operational costs of building-scale systems"
+    ``Opex_a_sys_district_scale_USD``, "Operational costs of district-scale systems"
+    ``Opex_a_sys_USD``, "Operational costs of all systems"
+    ``TAC_rank``, "Rank of TAC"
+    ``TAC_sys_building_scale_USD``, "Equivalent annual costs of building-scale systems"
+    ``TAC_sys_district_scale_USD``, "Equivalent annual of district-scale systems"
+    ``TAC_sys_USD``, "Equivalent annual costs of all systems"
+    ``user_MCDA``, "Best system accoridng to user mult-criteria weights"
+    ``user_MCDA_rank``, "Rank of Best system according to user mult-criteria weights"
     
 
 
@@ -1512,10 +1799,10 @@ The following file is used by these scripts:
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``pressure_loss_return_kW``, "TODO"
-    ``pressure_loss_substations_kW``, "TODO"
-    ``pressure_loss_supply_kW``, "TODO"
-    ``pressure_loss_total_kW``, "TODO"
+    ``pressure_loss_return_kW``, "pumping electricity required to overcome pressure losses in the return network"
+    ``pressure_loss_substations_kW``, "pumping electricity required to overcome pressure losses in the substations"
+    ``pressure_loss_supply_kW``, "pumping electricity required to overcome pressure losses in the supply network"
+    ``pressure_loss_total_kW``, "pumping electricity required to overcome pressure losses in the entire network"
     
 
 
@@ -1531,9 +1818,9 @@ The following file is used by these scripts: ``thermal_network``
     :header: "Variable", "Description"
 
     ``geometry``, "Geometry"
-    ``length_m``, "TODO"
-    ``Name``, "Unique building ID. It must start with a letter."
-    ``Pipe_DN``, "Classifies nominal pipe diameters (DN) into typical bins. E.g. DN100 refers to pipes of approx. 100mm in diameter."
+    ``length_m``, "lenth of this edge"
+    ``Name``, "Unique network pipe ID."
+    ``Pipe_DN``, "Classifies nominal pipe diameters (DN) into typical bins."
     ``Type_mat``, "Material type"
     
 
@@ -1549,10 +1836,10 @@ The following file is used by these scripts: ``thermal_network``
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``Building``, "Unique building ID. It must start with a letter."
+    ``Building``, "Unique building ID. e.g. ""B01"""
     ``geometry``, "Geometry"
-    ``Name``, "Unique building ID. It must start with a letter."
-    ``Type``, "Weather a Plant or A Customer"
+    ``Name``, "Unique node ID. e.g. ""NODE1"""
+    ``Type``, "Type of node."
     
 
 
@@ -1567,7 +1854,7 @@ The following file is used by these scripts:
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``PIPE0``, "TODO"
+    ``PIPE0``, "linear pressure drop in this pipe section"
     
 
 
@@ -1582,7 +1869,7 @@ The following file is used by these scripts:
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``PIPE0``, "TODO"
+    ``PIPE0``, "linear thermal losses in thie pipe section"
     
 
 
@@ -1597,7 +1884,7 @@ The following file is used by these scripts:
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``NODE0``, "TODO"
+    ``NODE0``, "pressure at this node"
     
 
 
@@ -1612,8 +1899,8 @@ The following file is used by these scripts:
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``temperature_return_K``, "TODO"
-    ``temperature_supply_K``, "TODO"
+    ``temperature_return_K``, "Plant return temperature at each time step"
+    ``temperature_supply_K``, "Plant supply temperature at each time step"
     
 
 
@@ -1628,7 +1915,7 @@ The following file is used by these scripts:
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``NODE0``, "TODO"
+    ``NODE0``, "Return temperature at node NODE0 (outlet temperature of NODE0) at each time step"
     
 
 
@@ -1643,7 +1930,7 @@ The following file is used by these scripts:
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``NODE0``, "TODO"
+    ``NODE0``, "Supply temperature at node NODE0 (inlet temperature of NODE0) at each time step"
     
 
 
@@ -1658,7 +1945,7 @@ The following file is used by these scripts:
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``PIPE0``, "TODO"
+    ``PIPE0``, "Thermal losses along pipe PIPE0 at each time step"
     
 
 
@@ -1673,10 +1960,10 @@ The following file is used by these scripts: ``optimization``
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``pressure_loss_return_Pa``, "TODO"
-    ``pressure_loss_substations_Pa``, "TODO"
-    ``pressure_loss_supply_Pa``, "TODO"
-    ``pressure_loss_total_Pa``, "TODO"
+    ``pressure_loss_return_Pa``, "Pressure losses in the return network at each time step"
+    ``pressure_loss_substations_Pa``, "Pressure losses in all substations at each time step"
+    ``pressure_loss_supply_Pa``, "Pressure losses in the supply network at each time step"
+    ``pressure_loss_total_Pa``, "Total pressure losses in the entire thermal network at each time step"
     
 
 
@@ -1691,9 +1978,9 @@ The following file is used by these scripts: ``optimization``
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``thermal_loss_return_kW``, "TODO"
-    ``thermal_loss_supply_kW``, "TODO"
-    ``thermal_loss_total_kW``, "TODO"
+    ``thermal_loss_return_kW``, "Thermal losses in the supply network at each time step"
+    ``thermal_loss_supply_kW``, "Thermal losses in the return network at each time step"
+    ``thermal_loss_total_kW``, "Thermal losses in the entire thermal network at each time step"
     
 
 
@@ -1708,8 +1995,7 @@ The following file is used by these scripts: ``thermal_network``
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``PIPE0``, "TODO"
-    ``Unnamed: 0``, "TODO"
+    ``PIPE0``, "Mass flow rate in pipe PIPE0 at design operating conditions"
     
 
 
@@ -1724,8 +2010,46 @@ The following file is used by these scripts: ``thermal_network``
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``NODE0``, "TODO"
-    ``Unnamed: 0``, "TODO"
+    ``NODE0``, "Mass flow rate in node NODE0 at design operating conditions"
+    
+
+
+get_optimization_building_scale_cooling_capacity
+------------------------------------------------
+
+path: ``outputs/data/optimization/slave/gen_1/ind_0_building_scale_cooling_capacity.csv``
+
+The following file is used by these scripts: 
+
+
+.. csv-table::
+    :header: "Variable", "Description"
+
+    ``Capacity_ACH_SC_FP_cool_building_scale_W``, "Thermal Capacity of Absorption Chiller and Solar Collector (Flat Plate) for Decentralized Building"
+    ``Capacity_ACHHT_FP_cool_building_scale_W``, "Thermal Capacity of High-Temperature Absorption Chiller and Solar Collector (Flat Plate) for Decentralized Building"
+    ``Capacity_BaseVCC_AS_cool_building_scale_W``, "Thermal Capacity of Base load Vapor Compression Chiller for Decentralized Building"
+    ``Capacity_DX_AS_cool_building_scale_W``, "Thermal Capacity of Direct Expansion Air-Source for Decentralized Building"
+    ``Capacity_VCCHT_AS_cool_building_scale_W``, "Thermal Capacity of High-Temperature Vapor Compression Chiller (Air-Source) for Decentralized Building"
+    ``Capaticy_ACH_SC_ET_cool_building_scale_W``, "Thermal Capacity of Absorption Chiller and Solar Collector (Evacuated Tube)for Decentralized Building"
+    ``Name``, "Unique building ID. It must start with a letter"
+    
+
+
+get_optimization_building_scale_heating_capacity
+------------------------------------------------
+
+path: ``outputs/data/optimization/slave/gen_0/ind_1_building_scale_heating_capacity.csv``
+
+The following file is used by these scripts: 
+
+
+.. csv-table::
+    :header: "Variable", "Description"
+
+    ``Capacity_BaseBoiler_NG_heat_building_scale_W``, "Thermal capacity of Base load boiler for Decentralized building"
+    ``Capacity_FC_NG_heat_building_scale_W``, "Thermal capacity of Fuel Cell for Decentralized building"
+    ``Capacity_GS_HP_heat_building_scale_W``, "Thermal capacity of ground-source heat pump for Decentralized building"
+    ``Name``, "Unique building ID. It must start with a letter"
     
 
 
@@ -1748,80 +2072,6 @@ The following file is used by these scripts:
     
 
 
-get_optimization_district_scale_cooling_capacity
--------------------------------------------
-
-path: ``outputs/data/optimization/slave/gen_1/ind_1_district_scale_cooling_capacity.csv``
-
-The following file is used by these scripts: 
-
-
-.. csv-table::
-    :header: "Variable", "Description"
-
-    ``Capacity_ACH_SC_FP_cool_building_scale_W``, "TODO"
-    ``Capacity_ACHHT_FP_cool_building_scale_W``, "TODO"
-    ``Capacity_BaseVCC_AS_cool_building_scale_W``, "TODO"
-    ``Capacity_DX_AS_cool_building_scale_W``, "TODO"
-    ``Capacity_VCCHT_AS_cool_building_scale_W``, "TODO"
-    ``Capaticy_ACH_SC_ET_cool_building_scale_W``, "TODO"
-    ``Name``, "TODO"
-    
-
-
-get_optimization_district_scale_electricity_capacity
------------------------------------------------
-
-path: ``outputs/data/optimization/slave/gen_2/ind_0_district_scale_electrical_capacity.csv``
-
-The following file is used by these scripts: 
-
-
-.. csv-table::
-    :header: "Variable", "Description"
-
-    ``Capacity_GRID_el_district_scale_W``, "TODO"
-    ``Capacity_PV_el_district_scale_m2``, "TODO"
-    ``Capacity_PV_el_district_scale_W``, "TODO"
-    
-
-
-get_optimization_district_scale_heating_capacity
--------------------------------------------
-
-path: ``outputs/data/optimization/slave/gen_0/ind_2_district_scale_heating_capacity.csv``
-
-The following file is used by these scripts: 
-
-
-.. csv-table::
-    :header: "Variable", "Description"
-
-    ``Capacity_BackupBoiler_NG_heat_district_scale_W``, "TODO"
-    ``Capacity_BaseBoiler_NG_heat_district_scale_W``, "TODO"
-    ``Capacity_CHP_DB_el_district_scale_W``, "TODO"
-    ``Capacity_CHP_DB_heat_district_scale_W``, "TODO"
-    ``Capacity_CHP_NG_el_district_scale_W``, "TODO"
-    ``Capacity_CHP_NG_heat_district_scale_W``, "TODO"
-    ``Capacity_CHP_WB_el_district_scale_W``, "TODO"
-    ``Capacity_CHP_WB_heat_district_scale_W``, "TODO"
-    ``Capacity_HP_DS_heat_district_scale_W``, "TODO"
-    ``Capacity_HP_GS_heat_district_scale_W``, "TODO"
-    ``Capacity_HP_SS_heat_district_scale_W``, "TODO"
-    ``Capacity_HP_WS_heat_district_scale_W``, "TODO"
-    ``Capacity_PeakBoiler_NG_heat_district_scale_W``, "TODO"
-    ``Capacity_PVT_district_scale_m2``, "TODO"
-    ``Capacity_PVT_el_district_scale_W``, "TODO"
-    ``Capacity_PVT_heat_district_scale_W``, "TODO"
-    ``Capacity_SC_ET_district_scale_m2``, "TODO"
-    ``Capacity_SC_ET_heat_district_scale_W``, "TODO"
-    ``Capacity_SC_FP_district_scale_m2``, "TODO"
-    ``Capacity_SC_FP_heat_district_scale_W``, "TODO"
-    ``Capacity_SeasonalStorage_WS_heat_district_scale_m3``, "TODO"
-    ``Capacity_SeasonalStorage_WS_heat_district_scale_W``, "TODO"
-    
-
-
 get_optimization_decentralized_folder_building_cooling_activation
 -----------------------------------------------------------------
 
@@ -1833,10 +2083,9 @@ The following file is used by these scripts: ``optimization``
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``E_cs_cre_cdata_req_W``, "TODO"
-    ``E_DX_AS_req_W``, "TODO"
-    ``Q_DX_AS_gen_directload_W``, "TODO"
-    ``Unnamed: 0``, "TODO"
+    ``E_cs_cre_cdata_req_W``, "Electricity requirements due to space cooling, servers cooling and refrigeration"
+    ``E_DX_AS_req_W``, "Electricity requirements of Air-Source direct expansion chiller"
+    ``Q_DX_AS_gen_directload_W``, "Thermal energy generated by Air-Source direct expansion chiller"
     
 
 
@@ -1851,21 +2100,20 @@ The following file is used by these scripts: ``optimization``
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``Best configuration``, "TODO"
-    ``Capacity_ACH_SC_FP_W``, "TODO"
-    ``Capacity_ACHHT_FP_W``, "TODO"
-    ``Capacity_BaseVCC_AS_W``, "TODO"
-    ``Capacity_DX_AS_W``, "TODO"
-    ``Capacity_VCCHT_AS_W``, "TODO"
-    ``Capaticy_ACH_SC_ET_W``, "TODO"
-    ``Capex_a_USD``, "TODO"
-    ``Capex_total_USD``, "TODO"
-    ``GHG_tonCO2``, "TODO"
-    ``Nominal heating load``, "TODO"
-    ``Opex_fixed_USD``, "TODO"
-    ``Opex_var_USD``, "TODO"
-    ``TAC_USD``, "TODO"
-    ``Unnamed: 0``, "TODO"
+    ``Best configuration``, "Index of best configuration simulated"
+    ``Capacity_ACH_SC_FP_W``, "Thermal Capacity of Absorption Chiller connected to Flat-plate Solar Collector"
+    ``Capacity_ACHHT_FP_W``, "Thermal Capacity of High Temperature Absorption Chiller connected to Solar Collector (flat Plate)"
+    ``Capacity_BaseVCC_AS_W``, "Thermal Capacity of Base Vapor compression chiller (air-source)"
+    ``Capacity_DX_AS_W``, "Thermal Capacity of Direct-Expansion Unit Air-source"
+    ``Capacity_VCCHT_AS_W``, "Thermal Capacity of High Temperature Vapor compression chiller (air-source)"
+    ``Capaticy_ACH_SC_ET_W``, "Thermal Capacity of Absorption Chiller connected to Evacuated-Tube Solar Collector"
+    ``Capex_a_USD``, "Annualized Capital Costs"
+    ``Capex_total_USD``, "Total Capital Costs"
+    ``GHG_tonCO2``, "Annual Green House Gas Emissions"
+    ``Nominal heating load``, "Nominal heat load"
+    ``Opex_fixed_USD``, "Fixed Annual Operational Costs"
+    ``Opex_var_USD``, "Variable Annual Operational Costs"
+    ``TAC_USD``, "Total Annualized Costs"
     
 
 
@@ -1880,19 +2128,17 @@ The following file is used by these scripts: ``optimization``
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``Best configuration``, "TODO"
-    ``Capacity_BaseBoiler_NG_W``, "TODO"
-    ``Capacity_FC_NG_W``, "TODO"
-    ``Capacity_GS_HP_W``, "TODO"
-    ``Capex_a_USD``, "TODO"
-    ``Capex_total_USD``, "TODO"
-    ``GHG_tonCO2``, "TODO"
-    ``Nominal heating load``, "TODO"
-    ``Opex_fixed_USD``, "TODO"
-    ``Opex_var_USD``, "TODO"
-    ``PEN_MJoil``, "TODO"
-    ``TAC_USD``, "TODO"
-    ``Unnamed: 0``, "TODO"
+    ``Best configuration``, "Index of best configuration simulated"
+    ``Capacity_BaseBoiler_NG_W``, "Thermal capacity of Baseload Boiler NG"
+    ``Capacity_FC_NG_W``, "Thermal Capacity of Fuel Cell NG"
+    ``Capacity_GS_HP_W``, "Thermal Capacity of Ground Source Heat Pump"
+    ``Capex_a_USD``, "Annualized Capital Costs"
+    ``Capex_total_USD``, "Total Capital Costs"
+    ``GHG_tonCO2``, "Annual Green House Gas Emissions"
+    ``Nominal heating load``, "Nominal heat load"
+    ``Opex_fixed_USD``, "Fixed Annual Operational Costs"
+    ``Opex_var_USD``, "Variable Annual Operational Costs"
+    ``TAC_USD``, "Total Annualized Costs"
     
 
 
@@ -1907,23 +2153,22 @@ The following file is used by these scripts: ``optimization``
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``BackupBoiler_Status``, "TODO"
-    ``Boiler_Status``, "TODO"
-    ``E_hs_ww_req_W``, "TODO"
-    ``GHP_Status``, "TODO"
-    ``NG_BackupBoiler_req_Wh``, "TODO"
-    ``NG_Boiler_req_Wh``, "TODO"
-    ``Q_BackupBoiler_gen_directload_W``, "TODO"
-    ``Q_Boiler_gen_directload_W``, "TODO"
-    ``Q_GHP_gen_directload_W``, "TODO"
-    ``Unnamed: 0``, "TODO"
+    ``BackupBoiler_Status``, "Status of the BackupBoiler (1=on, 0 =off)"
+    ``Boiler_Status``, "Status of the Base load Boiler (1=on, 0 =off)"
+    ``E_hs_ww_req_W``, "Electricity Requirements for hot water and space heating (if required)"
+    ``GHP_Status``, "Status of the ground-source heat pump (1=on, 0 =off)"
+    ``NG_BackupBoiler_req_Wh``, "Requirements of Natural Gas for Back-up Boiler"
+    ``NG_Boiler_req_Wh``, "Requirements of Natural Gas for Base load Boiler"
+    ``Q_BackupBoiler_gen_directload_W``, "Thermal generation of Back-up Boiler to direct load"
+    ``Q_Boiler_gen_directload_W``, "Thermal generation of Base load Boiler to direct load"
+    ``Q_GHP_gen_directload_W``, "Thermal generation of ground-source heat pump to direct load"
     
 
 
-get_optimization_building_scale_cooling_capacity
-----------------------------------------------
+get_optimization_district_scale_cooling_capacity
+------------------------------------------------
 
-path: ``outputs/data/optimization/slave/gen_1/ind_0_building_scale_cooling_capacity.csv``
+path: ``outputs/data/optimization/slave/gen_1/ind_1_district_scale_cooling_capacity.csv``
 
 The following file is used by these scripts: 
 
@@ -1931,20 +2176,20 @@ The following file is used by these scripts:
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``Capacity_ACH_SC_FP_cool_building_scale_W``, "TODO"
-    ``Capacity_ACHHT_FP_cool_building_scale_W``, "TODO"
-    ``Capacity_BaseVCC_AS_cool_building_scale_W``, "TODO"
-    ``Capacity_DX_AS_cool_building_scale_W``, "TODO"
-    ``Capacity_VCCHT_AS_cool_building_scale_W``, "TODO"
-    ``Capaticy_ACH_SC_ET_cool_building_scale_W``, "TODO"
-    ``Name``, "TODO"
+    ``Capacity_ACH_SC_FP_cool_building_scale_W``, "Thermal Capacity of Absorption Chiller and Solar Collector (Flat Plate) for Decentralized Building"
+    ``Capacity_ACHHT_FP_cool_building_scale_W``, "Thermal Capacity of High-Temperature Absorption Chiller and Solar Collector (Flat Plate) for Decentralized Building"
+    ``Capacity_BaseVCC_AS_cool_building_scale_W``, "Thermal Capacity of Base load Vapor Compression Chiller for Decentralized Building"
+    ``Capacity_DX_AS_cool_building_scale_W``, "Thermal Capacity of Direct Expansion Air-Source for Decentralized Building"
+    ``Capacity_VCCHT_AS_cool_building_scale_W``, "Thermal Capacity of High-Temperature Vapor Compression Chiller (Air-Source) for Decentralized Building"
+    ``Capaticy_ACH_SC_ET_cool_building_scale_W``, "Thermal Capacity of Absorption Chiller and Solar Collector (Evacuated Tube)for Decentralized Building"
+    ``Name``, "Unique building ID. It must start with a letter"
     
 
 
-get_optimization_building_scale_heating_capacity
-----------------------------------------------
+get_optimization_district_scale_electricity_capacity
+----------------------------------------------------
 
-path: ``outputs/data/optimization/slave/gen_0/ind_1_building_scale_heating_capacity.csv``
+path: ``outputs/data/optimization/slave/gen_2/ind_0_district_scale_electrical_capacity.csv``
 
 The following file is used by these scripts: 
 
@@ -1952,17 +2197,16 @@ The following file is used by these scripts:
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``Capacity_BaseBoiler_NG_heat_building_scale_W``, "TODO"
-    ``Capacity_FC_NG_heat_building_scale_W``, "TODO"
-    ``Capacity_GS_HP_heat_building_scale_W``, "TODO"
-    ``Name``, "TODO"
+    ``Capacity_GRID_el_district_scale_W``, "Electrical Capacity Required from the local Grid"
+    ``Capacity_PV_el_district_scale_m2``, "Area Coverage of PV in central Plant"
+    ``Capacity_PV_el_district_scale_W``, "Electrical Capacity of PV in central Plant"
     
 
 
-get_optimization_generation_district_scale_performance
--------------------------------------------------
+get_optimization_district_scale_heating_capacity
+------------------------------------------------
 
-path: ``outputs/data/optimization/slave/gen_1/gen_1_district_scale_performance.csv``
+path: ``outputs/data/optimization/slave/gen_0/ind_2_district_scale_heating_capacity.csv``
 
 The following file is used by these scripts: 
 
@@ -1970,84 +2214,29 @@ The following file is used by these scripts:
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``Capex_a_BackupBoiler_NG_district_scale_USD``, "TODO"
-    ``Capex_a_BaseBoiler_NG_district_scale_USD``, "TODO"
-    ``Capex_a_CHP_NG_district_scale_USD``, "TODO"
-    ``Capex_a_DHN_district_scale_USD``, "TODO"
-    ``Capex_a_Furnace_dry_district_scale_USD``, "TODO"
-    ``Capex_a_Furnace_wet_district_scale_USD``, "TODO"
-    ``Capex_a_GHP_district_scale_USD``, "TODO"
-    ``Capex_a_GRID_district_scale_USD``, "TODO"
-    ``Capex_a_HP_Lake_district_scale_USD``, "TODO"
-    ``Capex_a_HP_Server_district_scale_USD``, "TODO"
-    ``Capex_a_HP_Sewage_district_scale_USD``, "TODO"
-    ``Capex_a_PeakBoiler_NG_district_scale_USD``, "TODO"
-    ``Capex_a_PV_district_scale_USD``, "TODO"
-    ``Capex_a_PVT_district_scale_USD``, "TODO"
-    ``Capex_a_SC_ET_district_scale_USD``, "TODO"
-    ``Capex_a_SC_FP_district_scale_USD``, "TODO"
-    ``Capex_a_SeasonalStorage_WS_district_scale_USD``, "TODO"
-    ``Capex_a_SubstationsHeating_district_scale_USD``, "TODO"
-    ``Capex_total_BackupBoiler_NG_district_scale_USD``, "TODO"
-    ``Capex_total_BaseBoiler_NG_district_scale_USD``, "TODO"
-    ``Capex_total_CHP_NG_district_scale_USD``, "TODO"
-    ``Capex_total_DHN_district_scale_USD``, "TODO"
-    ``Capex_total_Furnace_dry_district_scale_USD``, "TODO"
-    ``Capex_total_Furnace_wet_district_scale_USD``, "TODO"
-    ``Capex_total_GHP_district_scale_USD``, "TODO"
-    ``Capex_total_GRID_district_scale_USD``, "TODO"
-    ``Capex_total_HP_Lake_district_scale_USD``, "TODO"
-    ``Capex_total_HP_Server_district_scale_USD``, "TODO"
-    ``Capex_total_HP_Sewage_district_scale_USD``, "TODO"
-    ``Capex_total_PeakBoiler_NG_district_scale_USD``, "TODO"
-    ``Capex_total_PV_district_scale_USD``, "TODO"
-    ``Capex_total_PVT_district_scale_USD``, "TODO"
-    ``Capex_total_SC_ET_district_scale_USD``, "TODO"
-    ``Capex_total_SC_FP_district_scale_USD``, "TODO"
-    ``Capex_total_SeasonalStorage_WS_district_scale_USD``, "TODO"
-    ``Capex_total_SubstationsHeating_district_scale_USD``, "TODO"
-    ``generation``, "TODO"
-    ``GHG_DB_district_scale_tonCO2yr``, "TODO"
-    ``GHG_GRID_exports_district_scale_tonCO2yr``, "TODO"
-    ``GHG_GRID_imports_district_scale_tonCO2yr``, "TODO"
-    ``GHG_NG_district_scale_tonCO2yr``, "TODO"
-    ``GHG_WB_district_scale_tonCO2yr``, "TODO"
-    ``individual``, "TODO"
-    ``individual_name``, "TODO"
-    ``Opex_fixed_BackupBoiler_NG_district_scale_USD``, "TODO"
-    ``Opex_fixed_BaseBoiler_NG_district_scale_USD``, "TODO"
-    ``Opex_fixed_CHP_NG_district_scale_USD``, "TODO"
-    ``Opex_fixed_DHN_district_scale_USD``, "TODO"
-    ``Opex_fixed_Furnace_dry_district_scale_USD``, "TODO"
-    ``Opex_fixed_Furnace_wet_district_scale_USD``, "TODO"
-    ``Opex_fixed_GHP_district_scale_USD``, "TODO"
-    ``Opex_fixed_GRID_district_scale_USD``, "TODO"
-    ``Opex_fixed_HP_Lake_district_scale_USD``, "TODO"
-    ``Opex_fixed_HP_Server_district_scale_USD``, "TODO"
-    ``Opex_fixed_HP_Sewage_district_scale_USD``, "TODO"
-    ``Opex_fixed_PeakBoiler_NG_district_scale_USD``, "TODO"
-    ``Opex_fixed_PV_district_scale_USD``, "TODO"
-    ``Opex_fixed_PVT_district_scale_USD``, "TODO"
-    ``Opex_fixed_SC_ET_district_scale_USD``, "TODO"
-    ``Opex_fixed_SC_FP_district_scale_USD``, "TODO"
-    ``Opex_fixed_SeasonalStorage_WS_district_scale_USD``, "TODO"
-    ``Opex_fixed_SubstationsHeating_district_scale_USD``, "TODO"
-    ``Opex_var_DB_district_scale_USD``, "TODO"
-    ``Opex_var_GRID_exports_district_scale_USD``, "TODO"
-    ``Opex_var_GRID_imports_district_scale_USD``, "TODO"
-    ``Opex_var_NG_district_scale_USD``, "TODO"
-    ``Opex_var_WB_district_scale_USD``, "TODO"
-    ``PEN_DB_district_scale_MJoilyr``, "TODO"
-    ``PEN_GRID_exports_district_scale_MJoilyr``, "TODO"
-    ``PEN_GRID_imports_district_scale_MJoilyr``, "TODO"
-    ``PEN_NG_district_scale_MJoilyr``, "TODO"
-    ``PEN_WB_district_scale_MJoilyr``, "TODO"
-    ``Unnamed: 0``, "TODO"
+    ``Capacity_BackupBoiler_NG_heat_district_scale_W``, "Thermal Capacity of Back-up Boiler - Natural Gas in central plant"
+    ``Capacity_BaseBoiler_NG_heat_district_scale_W``, "Thermal Capacity of Base Load Boiler - Natural Gas  in central plant"
+    ``Capacity_CHP_DB_el_district_scale_W``, "Electrical Capacity of CHP Dry-Biomass in central plant"
+    ``Capacity_CHP_DB_heat_district_scale_W``, "ThermalCapacity of CHP Dry-Biomass in central plant"
+    ``Capacity_CHP_NG_el_district_scale_W``, "Electrical Capacity of CHP Natural-Gas in central plant"
+    ``Capacity_CHP_NG_heat_district_scale_W``, "Thermal Capacity of CHP Natural-Gas in central plant"
+    ``Capacity_CHP_WB_el_district_scale_W``, "Electrical Capacity of CHP Wet-Biomass in central plant"
+    ``Capacity_CHP_WB_heat_district_scale_W``, "Thermal Capacity of CHP Wet-Biomass in central plant"
+    ``Capacity_HP_DS_heat_district_scale_W``, "Thermal Capacity of Heat Pump Server-Source in central plant"
+    ``Capacity_HP_GS_heat_district_scale_W``, "Thermal Capacity of Heat Pump Ground-Source in central plant"
+    ``Capacity_HP_SS_heat_district_scale_W``, "Thermal Capacity of Heat Pump Sewage-Source in central plant"
+    ``Capacity_HP_WS_heat_district_scale_W``, "Thermal Capacity of Heat Pump Water-Source in central plant"
+    ``Capacity_PeakBoiler_NG_heat_district_scale_W``, "Thermal Capacity of Peak Boiler - Natural Gas in central plant"
+    ``Capacity_PVT_el_district_scale_W``, "Electrical Capacity of PVT Field in central plant"
+    ``Capacity_PVT_heat_district_scale_W``, "Thermal Capacity of PVT panels in central plant"
+    ``Capacity_SC_ET_heat_district_scale_W``, "Thermal Capacity of Solar Collectors (Evacuated-tube) in central plant"
+    ``Capacity_SC_FP_heat_district_scale_W``, "Thermal Capacity of Solar Collectors (Flat-plate) in central plant"
+    ``Capacity_SeasonalStorage_WS_heat_district_scale_W``, "Thermal Capacity of Seasonal Thermal Storage in central plant"
     
 
 
 get_optimization_generation_building_scale_performance
-----------------------------------------------------
+------------------------------------------------------
 
 path: ``outputs/data/optimization/slave/gen_2/gen_2_building_scale_performance.csv``
 
@@ -2057,22 +2246,100 @@ The following file is used by these scripts:
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``Capex_a_cooling_building_scale_USD``, "TODO"
-    ``Capex_a_heating_building_scale_USD``, "TODO"
-    ``Capex_total_cooling_building_scale_USD``, "TODO"
-    ``Capex_total_heating_building_scale_USD``, "TODO"
-    ``generation``, "TODO"
-    ``GHG_cooling_building_scale_tonCO2``, "TODO"
-    ``GHG_heating_building_scale_tonCO2``, "TODO"
-    ``individual``, "TODO"
-    ``individual_name``, "TODO"
-    ``Opex_fixed_cooling_building_scale_USD``, "TODO"
-    ``Opex_fixed_heating_building_scale_USD``, "TODO"
-    ``Opex_var_cooling_building_scale_USD``, "TODO"
-    ``Opex_var_heating_building_scale_USD``, "TODO"
-    ``PEN_cooling_building_scale_MJoil``, "TODO"
-    ``PEN_heating_building_scale_MJoil``, "TODO"
-    ``Unnamed: 0``, "TODO"
+    ``Capex_a_cooling_building_scale_USD``, "Annualized Capital Costs of building-scale systems due to cooling"
+    ``Capex_a_heating_building_scale_USD``, "Annualized Capital Costs of building-scale systems due to heating"
+    ``Capex_total_cooling_building_scale_USD``, "Total Capital Costs of building-scale systems due to cooling"
+    ``Capex_total_heating_building_scale_USD``, "Total Capital Costs of building-scale systems due to heating"
+    ``generation``, "No. Generation or Iteration (genetic Algorithm)"
+    ``GHG_cooling_building_scale_tonCO2``, "Green House Gas Emissions of building-scale systems due to Cooling"
+    ``GHG_heating_building_scale_tonCO2``, "Green House Gas Emissions of building-scale systems due to Heating"
+    ``individual``, "No. Individual unique ID"
+    ``individual_name``, "Name of  Individual unique ID"
+    ``Opex_fixed_cooling_building_scale_USD``, "Fixed Operational Costs of building-scale systems due to cooling"
+    ``Opex_fixed_heating_building_scale_USD``, "Fixed Operational Costs of building-scale systems due to heating"
+    ``Opex_var_cooling_building_scale_USD``, "Variable Operational Costs of building-scale systems due to cooling"
+    ``Opex_var_heating_building_scale_USD``, "Variable Operational Costs of building-scale systems due to heating"
+    
+
+
+get_optimization_generation_district_scale_performance
+------------------------------------------------------
+
+path: ``outputs/data/optimization/slave/gen_1/gen_1_district_scale_performance.csv``
+
+The following file is used by these scripts: 
+
+
+.. csv-table::
+    :header: "Variable", "Description"
+
+    ``Capex_a_BackupBoiler_NG_district_scale_USD``, "Annualized Capital Costs of Back-up Boiler Natural Gas in Central Plant"
+    ``Capex_a_BaseBoiler_NG_district_scale_USD``, "Annualized Capital Costs of Base Load Boiler Boiler Natural Gas in Central Plant"
+    ``Capex_a_CHP_NG_district_scale_USD``, "Annualized Capital Costs of CHP Natural Gas in Central Plant"
+    ``Capex_a_DHN_district_scale_USD``, "Annualized Capital Costs of District Heating Network"
+    ``Capex_a_Furnace_dry_district_scale_USD``, "Annualized Capital Costs of CHP Dry-Biomass in Central Plant"
+    ``Capex_a_Furnace_wet_district_scale_USD``, "Annualized Capital Costs of CHP Wet-Biomass in Central Plant"
+    ``Capex_a_GHP_district_scale_USD``, "Annualized Capital Costs of Ground-Source Heat Pump in Central Plant"
+    ``Capex_a_GRID_district_scale_USD``, "Annualized Capital Costs of connection to local electrical grid"
+    ``Capex_a_HP_Lake_district_scale_USD``, "Annualized Capital Costs of Lake-Source Heat Pump in Central Plant"
+    ``Capex_a_HP_Server_district_scale_USD``, "Annualized Capital Costs of Server-Source Heat Pump in Central Plant"
+    ``Capex_a_HP_Sewage_district_scale_USD``, "Annualized Capital Costs of Sewage-Source Heat Pump in Central Plant"
+    ``Capex_a_PeakBoiler_NG_district_scale_USD``, "Annualized Capital Costs of Peak Load Boiler Boiler Natural Gas in Central Plant"
+    ``Capex_a_PV_district_scale_USD``, "Annualized Capital Costs of Photovoltaic Panels in Central Plant"
+    ``Capex_a_PVT_district_scale_USD``, "Annualized Capital Costs of PVT Panels in Central Plant"
+    ``Capex_a_SC_ET_district_scale_USD``, "Annualized Capital Costs of Solar Collectors (evacuated-Tube) in Central Plant"
+    ``Capex_a_SC_FP_district_scale_USD``, "Annualized Capital Costs of Solar Collectors (Flat-Plate) in Central Plant"
+    ``Capex_a_SeasonalStorage_WS_district_scale_USD``, "Annualized Capital Costs of Seasonal Thermal Storage in Central Plant"
+    ``Capex_a_SubstationsHeating_district_scale_USD``, "Annualized Capital Costs of Thermal Substations "
+    ``Capex_total_BackupBoiler_NG_district_scale_USD``, "Total Capital Costs of Back-up Boiler Natural Gas in Central Plant"
+    ``Capex_total_BaseBoiler_NG_district_scale_USD``, "Total Capital Costs of Base Load Boiler Boiler Natural Gas in Central Plant"
+    ``Capex_total_CHP_NG_district_scale_USD``, "Total Capital Costs of CHP Natural Gas in Central Plant"
+    ``Capex_total_DHN_district_scale_USD``, "Total Capital Costs of District Heating Network"
+    ``Capex_total_Furnace_dry_district_scale_USD``, "Total Capital Costs of CHP Dry-Biomass in Central Plant"
+    ``Capex_total_Furnace_wet_district_scale_USD``, "Total Capital Costs of CHP Wet-Biomass in Central Plant"
+    ``Capex_total_GHP_district_scale_USD``, "Total Capital Costs of Ground-Source Heat Pump in Central Plant"
+    ``Capex_total_GRID_district_scale_USD``, "Total Capital Costs of connection to local electrical grid"
+    ``Capex_total_HP_Lake_district_scale_USD``, "Total Capital Costs of Lake-Source Heat Pump in Central Plant"
+    ``Capex_total_HP_Server_district_scale_USD``, "Total Capital Costs of Server-Source Heat Pump in Central Plant"
+    ``Capex_total_HP_Sewage_district_scale_USD``, "Total Capital Costs of Sewage-Source Heat Pump in Central Plant"
+    ``Capex_total_PeakBoiler_NG_district_scale_USD``, "Total Capital Costs of Peak Load Boiler Boiler Natural Gas in Central Plant"
+    ``Capex_total_PV_district_scale_USD``, "Total Capital Costs of Photovoltaic Panels in Central Plant"
+    ``Capex_total_PVT_district_scale_USD``, "Total Capital Costs of PVT Panels in Central Plant"
+    ``Capex_total_SC_ET_district_scale_USD``, "Total Capital Costs of Solar Collectors (evacuated-Tube) in Central Plant"
+    ``Capex_total_SC_FP_district_scale_USD``, "Total Capital Costs of Solar Collectors (Flat-Plate) in Central Plant"
+    ``Capex_total_SeasonalStorage_WS_district_scale_USD``, "Total Capital Costs of Seasonal Thermal Storage in Central Plant"
+    ``Capex_total_SubstationsHeating_district_scale_USD``, "Total Capital Costs of Thermal Substations "
+    ``generation``, "Number of the Generation or Iteration (Genetic algorithm)"
+    ``GHG_DB_district_scale_tonCO2yr``, "Green House Gas Emissions of Dry-Biomass of district-scale systems"
+    ``GHG_GRID_exports_district_scale_tonCO2yr``, "Green House Gas Emissions of Exports of Electricity"
+    ``GHG_GRID_imports_district_scale_tonCO2yr``, "Green House Gas Emissions of Import of Electricity"
+    ``GHG_NG_district_scale_tonCO2yr``, "Green House Gas Emissions of Natural Gas of district-scale systems"
+    ``GHG_WB_district_scale_tonCO2yr``, "Green House Gas Emissions of Wet-Biomass of district-scale systems"
+    ``individual``, "Unique numerical ID of individual"
+    ``individual_name``, "Unique alphanumerical ID of individual"
+    ``Opex_fixed_BackupBoiler_NG_district_scale_USD``, "Fixed Operation Costs of Back-up Boiler Natural Gas in Central Plant"
+    ``Opex_fixed_BaseBoiler_NG_district_scale_USD``, "Fixed Operation Costs of Base Load Boiler Boiler Natural Gas in Central Plant"
+    ``Opex_fixed_CHP_NG_district_scale_USD``, "Fixed Operation Costs of CHP Natural Gas in Central Plant"
+    ``Opex_fixed_DHN_district_scale_USD``, "Fixed Operation Costs of District Heating Network"
+    ``Opex_fixed_Furnace_dry_district_scale_USD``, "Fixed Operation Costs of CHP Dry-Biomass in Central Plant"
+    ``Opex_fixed_Furnace_wet_district_scale_USD``, "Fixed Operation Costs of CHP Wet-Biomass in Central Plant"
+    ``Opex_fixed_GHP_district_scale_USD``, "Fixed Operation Costs of Ground-Source Heat Pump in Central Plant"
+    ``Opex_fixed_GRID_district_scale_USD``, "Fixed Operation Costs of Electricity in Buildings Connected to Central Plant"
+    ``Opex_fixed_HP_Lake_district_scale_USD``, "Fixed Operation Costs of Lake-Source Heat Pump in Central Plant"
+    ``Opex_fixed_HP_Server_district_scale_USD``, "Fixed Operation Costs of Server-Source Heat Pump in Central Plant"
+    ``Opex_fixed_HP_Sewage_district_scale_USD``, "Fixed Operation Costs of Sewage-Source Heat Pump in Central Plant"
+    ``Opex_fixed_PeakBoiler_NG_district_scale_USD``, "Fixed Operation Costs of Peak Load Boiler Boiler Natural Gas in Central Plant"
+    ``Opex_fixed_PV_district_scale_USD``, "Fixed Operation Costs of Photovoltaic Panels in Central Plant"
+    ``Opex_fixed_PVT_district_scale_USD``, "Fixed Operation Costs of PVT Panels in Central Plant"
+    ``Opex_fixed_SC_ET_district_scale_USD``, "Fixed Operation Costs of Solar Collectors (evacuated-Tube) in Central Plant"
+    ``Opex_fixed_SC_FP_district_scale_USD``, "Fixed Operation Costs of Solar Collectors (Flat-Plate) in Central Plant"
+    ``Opex_fixed_SeasonalStorage_WS_district_scale_USD``, "Fixed Operation Costs of Seasonal Thermal Storage in Central Plant"
+    ``Opex_fixed_SubstationsHeating_district_scale_USD``, "Fixed Operation Costs of Thermal Substations "
+    ``Opex_var_DB_district_scale_USD``, "Variable Operation Costs due to consumption of Dry-Biomass in Central Plant"
+    ``Opex_var_GRID_exports_district_scale_USD``, "Variable Operation Costs due to electricity exported"
+    ``Opex_var_GRID_imports_district_scale_USD``, "Variable Operation Costs due to electricity imported "
+    ``Opex_var_NG_district_scale_USD``, "Variable Operation Costs due to consumption of Natural Gas in Central Plant"
+    ``Opex_var_WB_district_scale_USD``, "Variable Operation Costs due to consumption of Wet-Biomass in Central Plant"
     
 
 
@@ -2087,28 +2354,24 @@ The following file is used by these scripts:
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``Capex_a_sys_district_scale_USD``, "TODO"
-    ``Capex_a_sys_building_scale_USD``, "TODO"
-    ``Capex_a_sys_USD``, "TODO"
-    ``Capex_total_sys_district_scale_USD``, "TODO"
-    ``Capex_total_sys_building_scale_USD``, "TODO"
-    ``Capex_total_sys_USD``, "TODO"
-    ``generation``, "TODO"
-    ``GHG_sys_district_scale_tonCO2``, "TODO"
-    ``GHG_sys_building_scale_tonCO2``, "TODO"
-    ``GHG_sys_tonCO2``, "TODO"
-    ``individual``, "TODO"
-    ``individual_name``, "TODO"
-    ``Opex_a_sys_district_scale_USD``, "TODO"
-    ``Opex_a_sys_building_scale_USD``, "TODO"
-    ``Opex_a_sys_USD``, "TODO"
-    ``PEN_sys_district_scale_MJoil``, "TODO"
-    ``PEN_sys_building_scale_MJoil``, "TODO"
-    ``PEN_sys_MJoil``, "TODO"
-    ``TAC_sys_district_scale_USD``, "TODO"
-    ``TAC_sys_building_scale_USD``, "TODO"
-    ``TAC_sys_USD``, "TODO"
-    ``Unnamed: 0``, "TODO"
+    ``Capex_a_sys_building_scale_USD``, "Annualized Capital Costs of building-scale systems"
+    ``Capex_a_sys_district_scale_USD``, "Annualized Capital Costs of district-scale systems"
+    ``Capex_a_sys_USD``, "Annualized Capital Costs of all systems"
+    ``Capex_total_sys_building_scale_USD``, "Total Capital Costs of building-scale systems"
+    ``Capex_total_sys_district_scale_USD``, "Total Capital Costs of district-scale systems"
+    ``Capex_total_sys_USD``, "Total Capital Costs of district-scale systems and  Decentralized Buildings"
+    ``generation``, "No. Generation or Iteration (genetic Algorithm)"
+    ``GHG_sys_building_scale_tonCO2``, "Green House Gas Emissions of building-scale systems"
+    ``GHG_sys_district_scale_tonCO2``, "Green House Gas Emissions Central Plant"
+    ``GHG_sys_tonCO2``, "Green House Gas Emissions of all systems"
+    ``individual``, "No. Individual unique ID"
+    ``individual_name``, "Name of  Individual unique ID"
+    ``Opex_a_sys_building_scale_USD``, "Operation Costs of building-scale systems"
+    ``Opex_a_sys_district_scale_USD``, "Operation Costs of district-scale systems "
+    ``Opex_a_sys_USD``, "Operation Costs of all systems"
+    ``TAC_sys_building_scale_USD``, "Total Anualized Costs of building-scale systems"
+    ``TAC_sys_district_scale_USD``, "Total Anualized Costs of district-scale systems"
+    ``TAC_sys_USD``, "Total Anualized Costs of all systems"
     
 
 
@@ -2123,28 +2386,24 @@ The following file is used by these scripts: ``multi_criteria_analysis``
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``Capex_a_sys_district_scale_USD``, "TODO"
-    ``Capex_a_sys_building_scale_USD``, "TODO"
-    ``Capex_a_sys_USD``, "TODO"
-    ``Capex_total_sys_district_scale_USD``, "TODO"
-    ``Capex_total_sys_building_scale_USD``, "TODO"
-    ``Capex_total_sys_USD``, "TODO"
-    ``generation``, "TODO"
-    ``GHG_sys_district_scale_tonCO2``, "TODO"
-    ``GHG_sys_building_scale_tonCO2``, "TODO"
-    ``GHG_sys_tonCO2``, "TODO"
-    ``individual``, "TODO"
-    ``individual_name``, "TODO"
-    ``Opex_a_sys_district_scale_USD``, "TODO"
-    ``Opex_a_sys_building_scale_USD``, "TODO"
-    ``Opex_a_sys_USD``, "TODO"
-    ``PEN_sys_district_scale_MJoil``, "TODO"
-    ``PEN_sys_building_scale_MJoil``, "TODO"
-    ``PEN_sys_MJoil``, "TODO"
-    ``TAC_sys_district_scale_USD``, "TODO"
-    ``TAC_sys_building_scale_USD``, "TODO"
-    ``TAC_sys_USD``, "TODO"
-    ``Unnamed: 0``, "TODO"
+    ``Capex_a_sys_building_scale_USD``, "Annualized Capital Costs of building-scale systems"
+    ``Capex_a_sys_district_scale_USD``, "Annualized Capital Costs of district-scale systems"
+    ``Capex_a_sys_USD``, "Annualized Capital Costs of all systems"
+    ``Capex_total_sys_building_scale_USD``, "Total Capital Costs of building-scale systems"
+    ``Capex_total_sys_district_scale_USD``, "Total Capital Costs of district-scale systems"
+    ``Capex_total_sys_USD``, "Total Capital Costs of district-scale systems and  Decentralized Buildings"
+    ``generation``, "No. Generation or Iteration (genetic Algorithm)"
+    ``GHG_sys_building_scale_tonCO2``, "Green House Gas Emissions of building-scale systems"
+    ``GHG_sys_district_scale_tonCO2``, "Green House Gas Emissions Central Plant"
+    ``GHG_sys_tonCO2``, "Green House Gas Emissions of all systems"
+    ``individual``, "No. Individual unique ID"
+    ``individual_name``, "Name of  Individual unique ID"
+    ``Opex_a_sys_building_scale_USD``, "Operation Costs of building-scale systems"
+    ``Opex_a_sys_district_scale_USD``, "Operation Costs of district-scale systems "
+    ``Opex_a_sys_USD``, "Operation Costs of all systems"
+    ``TAC_sys_building_scale_USD``, "Total Anualized Costs of building-scale systems"
+    ``TAC_sys_district_scale_USD``, "Total Anualized Costs of district-scale systems"
+    ``TAC_sys_USD``, "Total Anualized Costs of all systems"
     
 
 
@@ -2181,7 +2440,6 @@ The following file is used by these scripts:
     ``SC_ET``, "TODO"
     ``SC_FP``, "TODO"
     ``SS_HP``, "TODO"
-    ``Unnamed: 0``, "TODO"
     ``WB_Cogen``, "TODO"
     ``WS_HP``, "TODO"
     
@@ -2198,14 +2456,14 @@ The following file is used by these scripts: ``optimization``
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``DATE``, "TODO"
-    ``mcpdata_netw_total_kWperC``, "TODO"
-    ``mdot_DH_netw_total_kgpers``, "TODO"
-    ``Q_DH_losses_W``, "TODO"
-    ``Q_DHNf_W``, "TODO"
-    ``Qcdata_netw_total_kWh``, "TODO"
-    ``T_DHNf_re_K``, "TODO"
-    ``T_DHNf_sup_K``, "TODO"
+    ``DATE``, "Time stamp (hourly) for one year"
+    ``mcpdata_netw_total_kWperC``, "Capacity mass flow reate for server cooling of this network"
+    ``mdot_DH_netw_total_kgpers``, "Total mass flow rate in this district heating network"
+    ``Q_DH_losses_W``, "Thermal losses of this district heating network"
+    ``Q_DHNf_W``, "Total thermal demand of district heating network"
+    ``Qcdata_netw_total_kWh``, "Thermal Demand  for server cooling in this network"
+    ``T_DHNf_re_K``, "Average Temperature of return of this district heating network"
+    ``T_DHNf_sup_K``, "Average Temperature of supply of this district heating network"
     
 
 
@@ -2220,16 +2478,16 @@ The following file is used by these scripts:
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``DC_connectivity``, "TODO"
-    ``DH_connectivity``, "TODO"
-    ``Name``, "TODO"
+    ``DC_connectivity``, "Flag to know if building is connected to District Heating or not"
+    ``DH_connectivity``, "Flag to know if building is connected to District Cooling or not"
+    ``Name``, "Unique building ID. It must start with a letter.)"
     
 
 
-get_optimization_slave_district_scale_performance
---------------------------------------------
+get_optimization_slave_building_scale_performance
+-------------------------------------------------
 
-path: ``outputs/data/optimization/slave/gen_1/ind_2_buildings_district_scale_performance.csv``
+path: ``outputs/data/optimization/slave/gen_2/ind_0_buildings_building_scale_performance.csv``
 
 The following file is used by these scripts: 
 
@@ -2237,75 +2495,16 @@ The following file is used by these scripts:
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``Capex_a_BackupBoiler_NG_district_scale_USD``, "TODO"
-    ``Capex_a_BaseBoiler_NG_district_scale_USD``, "TODO"
-    ``Capex_a_CHP_NG_district_scale_USD``, "TODO"
-    ``Capex_a_DHN_district_scale_USD``, "TODO"
-    ``Capex_a_Furnace_dry_district_scale_USD``, "TODO"
-    ``Capex_a_Furnace_wet_district_scale_USD``, "TODO"
-    ``Capex_a_GHP_district_scale_USD``, "TODO"
-    ``Capex_a_GRID_district_scale_USD``, "TODO"
-    ``Capex_a_HP_Lake_district_scale_USD``, "TODO"
-    ``Capex_a_HP_Server_district_scale_USD``, "TODO"
-    ``Capex_a_HP_Sewage_district_scale_USD``, "TODO"
-    ``Capex_a_PeakBoiler_NG_district_scale_USD``, "TODO"
-    ``Capex_a_PV_district_scale_USD``, "TODO"
-    ``Capex_a_PVT_district_scale_USD``, "TODO"
-    ``Capex_a_SC_ET_district_scale_USD``, "TODO"
-    ``Capex_a_SC_FP_district_scale_USD``, "TODO"
-    ``Capex_a_SeasonalStorage_WS_district_scale_USD``, "TODO"
-    ``Capex_a_SubstationsHeating_district_scale_USD``, "TODO"
-    ``Capex_total_BackupBoiler_NG_district_scale_USD``, "TODO"
-    ``Capex_total_BaseBoiler_NG_district_scale_USD``, "TODO"
-    ``Capex_total_CHP_NG_district_scale_USD``, "TODO"
-    ``Capex_total_DHN_district_scale_USD``, "TODO"
-    ``Capex_total_Furnace_dry_district_scale_USD``, "TODO"
-    ``Capex_total_Furnace_wet_district_scale_USD``, "TODO"
-    ``Capex_total_GHP_district_scale_USD``, "TODO"
-    ``Capex_total_GRID_district_scale_USD``, "TODO"
-    ``Capex_total_HP_Lake_district_scale_USD``, "TODO"
-    ``Capex_total_HP_Server_district_scale_USD``, "TODO"
-    ``Capex_total_HP_Sewage_district_scale_USD``, "TODO"
-    ``Capex_total_PeakBoiler_NG_district_scale_USD``, "TODO"
-    ``Capex_total_PV_district_scale_USD``, "TODO"
-    ``Capex_total_PVT_district_scale_USD``, "TODO"
-    ``Capex_total_SC_ET_district_scale_USD``, "TODO"
-    ``Capex_total_SC_FP_district_scale_USD``, "TODO"
-    ``Capex_total_SeasonalStorage_WS_district_scale_USD``, "TODO"
-    ``Capex_total_SubstationsHeating_district_scale_USD``, "TODO"
-    ``GHG_DB_district_scale_tonCO2yr``, "TODO"
-    ``GHG_GRID_exports_district_scale_tonCO2yr``, "TODO"
-    ``GHG_GRID_imports_district_scale_tonCO2yr``, "TODO"
-    ``GHG_NG_district_scale_tonCO2yr``, "TODO"
-    ``GHG_WB_district_scale_tonCO2yr``, "TODO"
-    ``Opex_fixed_BackupBoiler_NG_district_scale_USD``, "TODO"
-    ``Opex_fixed_BaseBoiler_NG_district_scale_USD``, "TODO"
-    ``Opex_fixed_CHP_NG_district_scale_USD``, "TODO"
-    ``Opex_fixed_DHN_district_scale_USD``, "TODO"
-    ``Opex_fixed_Furnace_dry_district_scale_USD``, "TODO"
-    ``Opex_fixed_Furnace_wet_district_scale_USD``, "TODO"
-    ``Opex_fixed_GHP_district_scale_USD``, "TODO"
-    ``Opex_fixed_GRID_district_scale_USD``, "TODO"
-    ``Opex_fixed_HP_Lake_district_scale_USD``, "TODO"
-    ``Opex_fixed_HP_Server_district_scale_USD``, "TODO"
-    ``Opex_fixed_HP_Sewage_district_scale_USD``, "TODO"
-    ``Opex_fixed_PeakBoiler_NG_district_scale_USD``, "TODO"
-    ``Opex_fixed_PV_district_scale_USD``, "TODO"
-    ``Opex_fixed_PVT_district_scale_USD``, "TODO"
-    ``Opex_fixed_SC_ET_district_scale_USD``, "TODO"
-    ``Opex_fixed_SC_FP_district_scale_USD``, "TODO"
-    ``Opex_fixed_SeasonalStorage_WS_district_scale_USD``, "TODO"
-    ``Opex_fixed_SubstationsHeating_district_scale_USD``, "TODO"
-    ``Opex_var_DB_district_scale_USD``, "TODO"
-    ``Opex_var_GRID_exports_district_scale_USD``, "TODO"
-    ``Opex_var_GRID_imports_district_scale_USD``, "TODO"
-    ``Opex_var_NG_district_scale_USD``, "TODO"
-    ``Opex_var_WB_district_scale_USD``, "TODO"
-    ``PEN_DB_district_scale_MJoilyr``, "TODO"
-    ``PEN_GRID_exports_district_scale_MJoilyr``, "TODO"
-    ``PEN_GRID_imports_district_scale_MJoilyr``, "TODO"
-    ``PEN_NG_district_scale_MJoilyr``, "TODO"
-    ``PEN_WB_district_scale_MJoilyr``, "TODO"
+    ``Capex_a_cooling_building_scale_USD``, "Annualized Capital Costs of building-scale systems due to cooling"
+    ``Capex_a_heating_building_scale_USD``, "Annualized Capital Costs of building-scale systems due to heating"
+    ``Capex_total_cooling_building_scale_USD``, "Total Capital Costs of building-scale systems due to cooling"
+    ``Capex_total_heating_building_scale_USD``, "Total Capital Costs of building-scale systems due to heating"
+    ``GHG_cooling_building_scale_tonCO2``, "Green House Gas Emissions of building-scale systems due to Cooling"
+    ``GHG_heating_building_scale_tonCO2``, "Green House Gas Emissions of building-scale systems due to Heating"
+    ``Opex_fixed_cooling_building_scale_USD``, "Fixed Operational Costs of building-scale systems due to cooling"
+    ``Opex_fixed_heating_building_scale_USD``, "Fixed Operational Costs of building-scale systems due to heating"
+    ``Opex_var_cooling_building_scale_USD``, "Variable Operational Costs of building-scale systems due to cooling"
+    ``Opex_var_heating_building_scale_USD``, "Variable Operational Costs of building-scale systems due to heating"
     
 
 
@@ -2324,10 +2523,10 @@ The following file is used by these scripts:
     
 
 
-get_optimization_slave_building_scale_performance
------------------------------------------------
+get_optimization_slave_district_scale_performance
+-------------------------------------------------
 
-path: ``outputs/data/optimization/slave/gen_2/ind_0_buildings_building_scale_performance.csv``
+path: ``outputs/data/optimization/slave/gen_1/ind_2_buildings_district_scale_performance.csv``
 
 The following file is used by these scripts: 
 
@@ -2335,18 +2534,70 @@ The following file is used by these scripts:
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``Capex_a_cooling_building_scale_USD``, "TODO"
-    ``Capex_a_heating_building_scale_USD``, "TODO"
-    ``Capex_total_cooling_building_scale_USD``, "TODO"
-    ``Capex_total_heating_building_scale_USD``, "TODO"
-    ``GHG_cooling_building_scale_tonCO2``, "TODO"
-    ``GHG_heating_building_scale_tonCO2``, "TODO"
-    ``Opex_fixed_cooling_building_scale_USD``, "TODO"
-    ``Opex_fixed_heating_building_scale_USD``, "TODO"
-    ``Opex_var_cooling_building_scale_USD``, "TODO"
-    ``Opex_var_heating_building_scale_USD``, "TODO"
-    ``PEN_cooling_building_scale_MJoil``, "TODO"
-    ``PEN_heating_building_scale_MJoil``, "TODO"
+    ``Capex_a_BackupBoiler_NG_district_scale_USD``, "Annualized Capital Costs of Back-up Boiler Natural Gas in Central Plant"
+    ``Capex_a_BaseBoiler_NG_district_scale_USD``, "Annualized Capital Costs of Base load Boiler Natural Gas in Central Plant"
+    ``Capex_a_CHP_NG_district_scale_USD``, "Annualized Capital Costs of CHP Natural Gas in Central Plant"
+    ``Capex_a_DHN_district_scale_USD``, "Annualized Capital Costs of District Heating Network"
+    ``Capex_a_Furnace_dry_district_scale_USD``, "Annualized Capital Costs of CHP Dry-Biomass in Central Plant"
+    ``Capex_a_Furnace_wet_district_scale_USD``, "Annualized Capital Costs of CHP Wet-Biomass in Central Plant"
+    ``Capex_a_GHP_district_scale_USD``, "Annualized Capital Costs of Ground-Source Heat-Pump in Central Plant"
+    ``Capex_a_GRID_district_scale_USD``, "Annualized Capital Costs of connection to local grid"
+    ``Capex_a_HP_Lake_district_scale_USD``, "Annualized Capital Costs of Lake-Source Heat Pump in Central Plant"
+    ``Capex_a_HP_Server_district_scale_USD``, "Annualized Capital Costs of Server-Source Heat Pump in Central Plant"
+    ``Capex_a_HP_Sewage_district_scale_USD``, "Annualized Capital Costs of Sewage-Source Heat Pump in Central Plant"
+    ``Capex_a_PeakBoiler_NG_district_scale_USD``, "Annualized Capital Costs of Peak Boiler in Central Plant"
+    ``Capex_a_PV_district_scale_USD``, "Annualized Capital Costs of PV panels"
+    ``Capex_a_PVT_district_scale_USD``, "Annualized Capital Costs of PVT panels"
+    ``Capex_a_SC_ET_district_scale_USD``, "Annualized Capital Costs of Solar collectors (evacuated Tubes)"
+    ``Capex_a_SC_FP_district_scale_USD``, "Annualized Capital Costs of Solar collectors (Flat-Plate)"
+    ``Capex_a_SeasonalStorage_WS_district_scale_USD``, "Annualized Capital Costs of Seasonal Thermal Storage in Central Plant"
+    ``Capex_a_SubstationsHeating_district_scale_USD``, "Annualized Capital Costs of Heating Substations"
+    ``Capex_total_BackupBoiler_NG_district_scale_USD``, "Total Capital Costs of Back-up Boiler Natural Gas in Central Plant"
+    ``Capex_total_BaseBoiler_NG_district_scale_USD``, "Total Capital Costs of Base load Boiler Natural Gas in Central Plant"
+    ``Capex_total_CHP_NG_district_scale_USD``, "Total Capital Costs of CHP Natural Gas in Central Plant"
+    ``Capex_total_DHN_district_scale_USD``, "Total Capital Costs of District Heating Network"
+    ``Capex_total_Furnace_dry_district_scale_USD``, "Total Capital Costs of CHP Dry-Biomass in Central Plant"
+    ``Capex_total_Furnace_wet_district_scale_USD``, "Total Capital Costs of CHP Wet-Biomass in Central Plant"
+    ``Capex_total_GHP_district_scale_USD``, "Total Capital Costs of Ground-Source Heat-Pump in Central Plant"
+    ``Capex_total_GRID_district_scale_USD``, "Total Capital Costs of connection to local grid"
+    ``Capex_total_HP_Lake_district_scale_USD``, "Total Capital Costs of Lake-Source Heat Pump in Central Plant"
+    ``Capex_total_HP_Server_district_scale_USD``, "Total Capital Costs of Server-Source Heat Pump in Central Plant"
+    ``Capex_total_HP_Sewage_district_scale_USD``, "Total Capital Costs of Sewage-Source Heat Pump in Central Plant"
+    ``Capex_total_PeakBoiler_NG_district_scale_USD``, "Total Capital Costs of Peak Boiler in Central Plant"
+    ``Capex_total_PV_district_scale_USD``, "Total Capital Costs of PV panels"
+    ``Capex_total_PVT_district_scale_USD``, "Total Capital Costs of PVT panels"
+    ``Capex_total_SC_ET_district_scale_USD``, "Total Capital Costs of Solar collectors (evacuated Tubes)"
+    ``Capex_total_SC_FP_district_scale_USD``, "Total Capital Costs of Solar collectors (Flat-Plate)"
+    ``Capex_total_SeasonalStorage_WS_district_scale_USD``, "Total Capital Costs of Seasonal Thermal Storage"
+    ``Capex_total_SubstationsHeating_district_scale_USD``, "Total Capital Costs of Heating Substations"
+    ``GHG_DB_district_scale_tonCO2yr``, "Green House Gas Emissions of Dry-Biomass in Central plant"
+    ``GHG_GRID_exports_district_scale_tonCO2yr``, "Green House Gas Emissions of  Electricity Exports in Central Plant"
+    ``GHG_GRID_imports_district_scale_tonCO2yr``, "Green House Gas Emissions of  Electricity Import in Central Plant"
+    ``GHG_NG_district_scale_tonCO2yr``, "Green House Gas Emissions of Natural Gas in Central plant"
+    ``GHG_WB_district_scale_tonCO2yr``, "Green House Gas Emissions of Wet-Biomass in Central plant"
+    ``Opex_fixed_BackupBoiler_NG_district_scale_USD``, "Fixed Operation Costs of Back-up Boiler Natural Gas in Central Plant"
+    ``Opex_fixed_BaseBoiler_NG_district_scale_USD``, "Fixed Operation Costs of Base load Boiler Natural Gas in Central Plant"
+    ``Opex_fixed_CHP_NG_district_scale_USD``, "Fixed Operation Costs of CHP Natural Gas in Central Plant"
+    ``Opex_fixed_DHN_district_scale_USD``, "Fixed Operation Costs of District Heating Network"
+    ``Opex_fixed_Furnace_dry_district_scale_USD``, "Fixed Operation Costs of CHP Dry-Biomass in Central Plant"
+    ``Opex_fixed_Furnace_wet_district_scale_USD``, "Fixed Operation Costs of CHP Wet-Biomass in Central Plant"
+    ``Opex_fixed_GHP_district_scale_USD``, "Fixed Operation Costs of Ground-Source Heat-Pump in Central Plant"
+    ``Opex_fixed_GRID_district_scale_USD``, "Fixed Operation Costs of connection to local grid"
+    ``Opex_fixed_HP_Lake_district_scale_USD``, "Fixed Operation Costs of Lake-Source Heat Pump in Central Plant"
+    ``Opex_fixed_HP_Server_district_scale_USD``, "Fixed Operation Costs of Server-Source Heat Pump in Central Plant"
+    ``Opex_fixed_HP_Sewage_district_scale_USD``, "Fixed Operation Costs of Sewage-Source Heat Pump in Central Plant"
+    ``Opex_fixed_PeakBoiler_NG_district_scale_USD``, "Fixed Operation Costs of Peak Boiler in Central Plant"
+    ``Opex_fixed_PV_district_scale_USD``, "Fixed Operation Costs of PV panels"
+    ``Opex_fixed_PVT_district_scale_USD``, "Fixed Operation Costs of PVT panels"
+    ``Opex_fixed_SC_ET_district_scale_USD``, "Fixed Operation Costs of Solar collectors (evacuated Tubes)"
+    ``Opex_fixed_SC_FP_district_scale_USD``, "Fixed Operation Costs of Solar collectors (Flat-Plate)"
+    ``Opex_fixed_SeasonalStorage_WS_district_scale_USD``, "Fixed Operation Costs of Seasonal Thermal Storage"
+    ``Opex_fixed_SubstationsHeating_district_scale_USD``, "Fixed Operation Costs of Heating Substations"
+    ``Opex_var_DB_district_scale_USD``, "Variable Operation Costs"
+    ``Opex_var_GRID_exports_district_scale_USD``, "Variable Operation Costs"
+    ``Opex_var_GRID_imports_district_scale_USD``, "Variable Operation Costs"
+    ``Opex_var_NG_district_scale_USD``, "Variable Operation Costs"
+    ``Opex_var_WB_district_scale_USD``, "Variable Operation Costs"
     
 
 
@@ -2361,20 +2612,20 @@ The following file is used by these scripts:
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``DATE``, "TODO"
-    ``E_CHP_gen_directload_W``, "TODO"
-    ``E_CHP_gen_export_W``, "TODO"
-    ``E_Furnace_dry_gen_directload_W``, "TODO"
-    ``E_Furnace_dry_gen_export_W``, "TODO"
-    ``E_Furnace_wet_gen_directload_W``, "TODO"
-    ``E_Furnace_wet_gen_export_W``, "TODO"
-    ``E_GRID_directload_W``, "TODO"
-    ``E_PV_gen_directload_W``, "TODO"
-    ``E_PV_gen_export_W``, "TODO"
-    ``E_PVT_gen_directload_W``, "TODO"
-    ``E_PVT_gen_export_W``, "TODO"
-    ``E_Trigen_gen_directload_W``, "TODO"
-    ``E_Trigen_gen_export_W``, "TODO"
+    ``DATE``, "Time stamp (hourly) for one year"
+    ``E_CHP_gen_directload_W``, "Electricity Generated to direct load by CHP Natural Gas"
+    ``E_CHP_gen_export_W``, "Electricity Exported by CHP Natural Gas"
+    ``E_Furnace_dry_gen_directload_W``, "Electricity Generated to direct load by CHP Dry Biomass"
+    ``E_Furnace_dry_gen_export_W``, "Electricity Exported by CHP Dry Biomass"
+    ``E_Furnace_wet_gen_directload_W``, "Electricity Generated to direct load by CHP Wet Biomass"
+    ``E_Furnace_wet_gen_export_W``, "Electricity Exported by CHP Wet Biomass"
+    ``E_GRID_directload_W``, "Electricity Imported from the local grid"
+    ``E_PV_gen_directload_W``, "Electricity Generated to direct load by PV panels"
+    ``E_PV_gen_export_W``, "Electricity Exported by PV panels"
+    ``E_PVT_gen_directload_W``, "Electricity Generated to direct load by PVT panels"
+    ``E_PVT_gen_export_W``, "Electricity Exported by PVT panels"
+    ``E_Trigen_gen_directload_W``, "Electricity Generated to direct load by Trigen CHP Natural Gas"
+    ``E_Trigen_gen_export_W``, "Electricity Exported by Trigen CHP Natural Gas"
     
 
 
@@ -2389,35 +2640,35 @@ The following file is used by these scripts:
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``DATE``, "TODO"
-    ``E_BackupBoiler_req_W``, "TODO"
-    ``E_BackupVCC_AS_req_W``, "TODO"
-    ``E_BaseBoiler_req_W``, "TODO"
-    ``E_BaseVCC_AS_req_W``, "TODO"
-    ``E_BaseVCC_WS_req_W``, "TODO"
-    ``E_cs_cre_cdata_req_district_scale_W``, "TODO"
-    ``E_cs_cre_cdata_req_building_scale_W``, "TODO"
-    ``E_DCN_req_W``, "TODO"
-    ``E_DHN_req_W``, "TODO"
-    ``E_electricalnetwork_sys_req_W``, "TODO"
-    ``E_GHP_req_W``, "TODO"
-    ``E_HP_Lake_req_W``, "TODO"
-    ``E_HP_PVT_req_W``, "TODO"
-    ``E_HP_SC_ET_req_W``, "TODO"
-    ``E_HP_SC_FP_req_W``, "TODO"
-    ``E_HP_Server_req_W``, "TODO"
-    ``E_HP_Sew_req_W``, "TODO"
-    ``E_hs_ww_req_district_scale_W``, "TODO"
-    ``E_hs_ww_req_building_scale_W``, "TODO"
-    ``E_PeakBoiler_req_W``, "TODO"
-    ``E_PeakVCC_AS_req_W``, "TODO"
-    ``E_PeakVCC_WS_req_W``, "TODO"
-    ``E_Storage_charging_req_W``, "TODO"
-    ``E_Storage_discharging_req_W``, "TODO"
-    ``Eal_req_W``, "TODO"
-    ``Eaux_req_W``, "TODO"
-    ``Edata_req_W``, "TODO"
-    ``Epro_req_W``, "TODO"
+    ``DATE``, "Time stamp (hourly) for one year"
+    ``E_BackupBoiler_req_W``, "Electricity (auxiliary) Required by Back-up Boiler"
+    ``E_BackupVCC_AS_req_W``, "Electricity Required by Back-up Vapor Compression Chiller (Air-Source)"
+    ``E_BaseBoiler_req_W``, "Electricity (auxiliary) Required by Base Load Boiler"
+    ``E_BaseVCC_AS_req_W``, "Electricity Required by Base Load Vapor Compression Chiller (Air-Source)"
+    ``E_BaseVCC_WS_req_W``, "Electricity Required by Base Load Vapor Compression Chiller (Water-Source)"
+    ``E_cs_cre_cdata_req_building_scale_W``, "Electricity Required for space cooling, server cooling and refrigeration of building-scale systems"
+    ``E_cs_cre_cdata_req_district_scale_W``, "Electricity Required for space cooling, server cooling and refrigeration of Buildings Connected to Network"
+    ``E_DCN_req_W``, "Electricity Required for Chilled water Pumping in District Cooling Network"
+    ``E_DHN_req_W``, "Electricity Required for Chilled water Pumping in District Heating Network"
+    ``E_electricalnetwork_sys_req_W``, "Total Electricity Requirements"
+    ``E_GHP_req_W``, "Electricity Required by Ground-Source Heat Pumps"
+    ``E_HP_Lake_req_W``, "Electricity Required by Lake-Source Heat Pumps"
+    ``E_HP_PVT_req_W``, "Electricity Required by Auxiliary Heat Pumps of PVT panels"
+    ``E_HP_SC_ET_req_W``, "Electricity Required by Auxiliary Heat Pumps of Solar collectors (Evacuated tubes)"
+    ``E_HP_SC_FP_req_W``, "Electricity Required by Auxiliary Heat Pumps of Solar collectors (Evacuated Flat Plate)"
+    ``E_HP_Server_req_W``, "Electricity Required by Server-Source Heat Pumps"
+    ``E_HP_Sew_req_W``, "Electricity Required by Sewage-Source Heat Pumps"
+    ``E_hs_ww_req_building_scale_W``, "Electricity Required for space heating and hotwater of building-scale systems"
+    ``E_hs_ww_req_district_scale_W``, "Electricity Required for space heating and hotwater of Buildings Connected to Network"
+    ``E_PeakBoiler_req_W``, "Electricity (auxiliary) Required by Peak-Boiler"
+    ``E_PeakVCC_AS_req_W``, "Electricity Required by Peak Vapor Compression Chiller (Air-Source)"
+    ``E_PeakVCC_WS_req_W``, "Electricity Required by Peak Vapor Compression Chiller (Water-Source)"
+    ``E_Storage_charging_req_W``, "Electricity Required by Auxiliary Heatpumps for charging Seasonal Thermal Storage"
+    ``E_Storage_discharging_req_W``, "Electricity Required by Auxiliary Heatpumps for discharging Seasonal Thermal Storage"
+    ``Eal_req_W``, "Electricity Required for Appliances and Lighting in all Buildings"
+    ``Eaux_req_W``, "Electricity Required for Fans and others in all Buildings"
+    ``Edata_req_W``, "Electricity Required for Servers in all Buildings"
+    ``Epro_req_W``, "Electricity Required for Industrial Processes in all Buildings"
     
 
 
@@ -2432,30 +2683,30 @@ The following file is used by these scripts:
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``DATE``, "TODO"
-    ``E_CHP_gen_W``, "TODO"
-    ``E_Furnace_dry_gen_W``, "TODO"
-    ``E_Furnace_wet_gen_W``, "TODO"
-    ``E_PVT_gen_W``, "TODO"
-    ``Q_BackupBoiler_gen_directload_W``, "TODO"
-    ``Q_BaseBoiler_gen_directload_W``, "TODO"
-    ``Q_CHP_gen_directload_W``, "TODO"
-    ``Q_districtheating_sys_req_W``, "TODO"
-    ``Q_Furnace_dry_gen_directload_W``, "TODO"
-    ``Q_Furnace_wet_gen_directload_W``, "TODO"
-    ``Q_GHP_gen_directload_W``, "TODO"
-    ``Q_HP_Lake_gen_directload_W``, "TODO"
-    ``Q_HP_Server_gen_directload_W``, "TODO"
-    ``Q_HP_Server_storage_W``, "TODO"
-    ``Q_HP_Sew_gen_directload_W``, "TODO"
-    ``Q_PeakBoiler_gen_directload_W``, "TODO"
-    ``Q_PVT_gen_directload_W``, "TODO"
-    ``Q_PVT_gen_storage_W``, "TODO"
-    ``Q_SC_ET_gen_directload_W``, "TODO"
-    ``Q_SC_ET_gen_storage_W``, "TODO"
-    ``Q_SC_FP_gen_directload_W``, "TODO"
-    ``Q_SC_FP_gen_storage_W``, "TODO"
-    ``Q_Storage_gen_directload_W``, "TODO"
+    ``DATE``, "Time stamp (hourly) for one year"
+    ``E_CHP_gen_W``, "Electricity Generation by CHP Natural Gas"
+    ``E_Furnace_dry_gen_W``, "Electricity Generation by CHP Dry-Biomass"
+    ``E_Furnace_wet_gen_W``, "Electricity Generation by CHP Wet-Biomass"
+    ``E_PVT_gen_W``, "Electricity Generation by PVT"
+    ``Q_BackupBoiler_gen_directload_W``, "Thermal generation of Back-up Boiler to direct load"
+    ``Q_BaseBoiler_gen_directload_W``, "Thermal generation of Base load Boiler to direct load"
+    ``Q_CHP_gen_directload_W``, "Thermal generation of CHP Natural Gas to direct load"
+    ``Q_districtheating_sys_req_W``, "Thermal requirements of District Heating Network"
+    ``Q_Furnace_dry_gen_directload_W``, "Thermal generation of CHP Dry-Biomass to direct load"
+    ``Q_Furnace_wet_gen_directload_W``, "Thermal generation of CHP Wet-Biomass to direct load"
+    ``Q_GHP_gen_directload_W``, "Thermal generation of ground-source heat pump to direct load"
+    ``Q_HP_Lake_gen_directload_W``, "Thermal generation of Lake-Source Heatpump to direct load"
+    ``Q_HP_Server_gen_directload_W``, "Thermal generation of Server-Source Heatpump to direct load"
+    ``Q_HP_Server_storage_W``, "Thermal generation of Server-Source Heatpump to Seasonal Thermal Storage"
+    ``Q_HP_Sew_gen_directload_W``, "Thermal generation of Sewage-Source Heatpump to direct load"
+    ``Q_PeakBoiler_gen_directload_W``, "Thermal generation of Peak Boiler to direct load"
+    ``Q_PVT_gen_directload_W``, "Thermal generation of PVT  to direct load"
+    ``Q_PVT_gen_storage_W``, "Thermal generation of PVT  to Seasonal Thermal Storage"
+    ``Q_SC_ET_gen_directload_W``, "Thermal generation of Solar Collectors (Evacuated Tubes) to direct load"
+    ``Q_SC_ET_gen_storage_W``, "Thermal generation of Solar Collectors (Evacuated Tubes)  to Seasonal Thermal Storage"
+    ``Q_SC_FP_gen_directload_W``, "Thermal generation of Solar Collectors (Flat Plate) to direct load"
+    ``Q_SC_FP_gen_storage_W``, "Thermal generation of Solar Collectors (Flat Plate)  to Seasonal Thermal Storage"
+    ``Q_Storage_gen_directload_W``, "Discharge from Storage to Direct Load"
     
 
 
@@ -2470,24 +2721,21 @@ The following file is used by these scripts:
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``Capex_a_sys_district_scale_USD``, "TODO"
-    ``Capex_a_sys_building_scale_USD``, "TODO"
-    ``Capex_a_sys_USD``, "TODO"
-    ``Capex_total_sys_district_scale_USD``, "TODO"
-    ``Capex_total_sys_building_scale_USD``, "TODO"
-    ``Capex_total_sys_USD``, "TODO"
-    ``GHG_sys_district_scale_tonCO2``, "TODO"
-    ``GHG_sys_building_scale_tonCO2``, "TODO"
-    ``GHG_sys_tonCO2``, "TODO"
-    ``Opex_a_sys_district_scale_USD``, "TODO"
-    ``Opex_a_sys_building_scale_USD``, "TODO"
-    ``Opex_a_sys_USD``, "TODO"
-    ``PEN_sys_district_scale_MJoil``, "TODO"
-    ``PEN_sys_building_scale_MJoil``, "TODO"
-    ``PEN_sys_MJoil``, "TODO"
-    ``TAC_sys_district_scale_USD``, "TODO"
-    ``TAC_sys_building_scale_USD``, "TODO"
-    ``TAC_sys_USD``, "TODO"
+    ``Capex_a_sys_building_scale_USD``, "Annualized Capital Costs of building-scale systems"
+    ``Capex_a_sys_district_scale_USD``, "Annualized Capital Costs of district-scale systems"
+    ``Capex_a_sys_USD``, "Annualized Capital Costs of all systems"
+    ``Capex_total_sys_building_scale_USD``, "Total Capital Costs of building-scale systems"
+    ``Capex_total_sys_district_scale_USD``, "Total Capital Costs of district-scale systems"
+    ``Capex_total_sys_USD``, "Total Capital Costs of all systems"
+    ``GHG_sys_building_scale_tonCO2``, "Green House Gas Emissions of building-scale systems"
+    ``GHG_sys_district_scale_tonCO2``, "Green House Gas Emissions Central Plant"
+    ``GHG_sys_tonCO2``, "Green House Gas Emissions of all systems"
+    ``Opex_a_sys_building_scale_USD``, "Operation Costs of building-scale systems"
+    ``Opex_a_sys_district_scale_USD``, "Operation Costs of district-scale systems"
+    ``Opex_a_sys_USD``, "Operation Costs of all systems"
+    ``TAC_sys_building_scale_USD``, "Total Anualized Costs of building-scale systems"
+    ``TAC_sys_district_scale_USD``, "Total Anualized Costs of district-scale systems"
+    ``TAC_sys_USD``, "Total Anualized Costs of all systems"
     
 
 
@@ -2502,13 +2750,13 @@ The following file is used by these scripts: ``optimization``
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``A_hex_dhw_design_m2``, "TODO"
-    ``A_hex_heating_design_m2``, "TODO"
-    ``mdot_DH_result_kgpers``, "TODO"
-    ``Q_dhw_W``, "TODO"
-    ``Q_heating_W``, "TODO"
-    ``T_return_DH_result_K``, "TODO"
-    ``T_supply_DH_result_K``, "TODO"
+    ``A_hex_dhw_design_m2``, "Substation heat exchanger area to supply domestic hot water"
+    ``A_hex_heating_design_m2``, "Substation heat exchanger area to supply space heating"
+    ``mdot_DH_result_kgpers``, "Substation flow rate on the DH side."
+    ``Q_dhw_W``, "Substation heat requirement to supply domestic hot water"
+    ``Q_heating_W``, "Substation heat requirement to supply space heating"
+    ``T_return_DH_result_K``, "Substation return temperature of the district heating network"
+    ``T_supply_DH_result_K``, "Substation supply temperature of the district heating network."
     
 
 
@@ -2523,167 +2771,166 @@ The following file is used by these scripts:
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``Af_m2``, "TODO"
-    ``Aocc_m2``, "TODO"
-    ``Aroof_m2``, "TODO"
-    ``COAL_hs0_kW``, "TODO"
-    ``COAL_hs_MWhyr``, "TODO"
-    ``COAL_ww0_kW``, "TODO"
-    ``COAL_ww_MWhyr``, "TODO"
-    ``DC_cdata0_kW``, "TODO"
-    ``DC_cdata_MWhyr``, "TODO"
-    ``DC_cre0_kW``, "TODO"
-    ``DC_cre_MWhyr``, "TODO"
-    ``DC_cs0_kW``, "TODO"
-    ``DC_cs_MWhyr``, "TODO"
-    ``DH_hs0_kW``, "TODO"
-    ``DH_hs_MWhyr``, "TODO"
-    ``DH_ww0_kW``, "TODO"
-    ``DH_ww_MWhyr``, "TODO"
-    ``E_cdata0_kW``, "TODO"
-    ``E_cdata_MWhyr``, "TODO"
-    ``E_cre0_kW``, "TODO"
-    ``E_cre_MWhyr``, "TODO"
-    ``E_cs0_kW``, "TODO"
-    ``E_cs_MWhyr``, "TODO"
-    ``E_hs0_kW``, "TODO"
-    ``E_hs_MWhyr``, "TODO"
-    ``E_sys0_kW``, "TODO"
-    ``E_sys_MWhyr``, "TODO"
-    ``E_ww0_kW``, "TODO"
-    ``E_ww_MWhyr``, "TODO"
-    ``Ea0_kW``, "TODO"
-    ``Ea_MWhyr``, "TODO"
-    ``Eal0_kW``, "TODO"
-    ``Eal_MWhyr``, "TODO"
-    ``Eaux0_kW``, "TODO"
-    ``Eaux_MWhyr``, "TODO"
-    ``Edata0_kW``, "TODO"
-    ``Edata_MWhyr``, "TODO"
-    ``El0_kW``, "TODO"
-    ``El_MWhyr``, "TODO"
-    ``Epro0_kW``, "TODO"
-    ``Epro_MWhyr``, "TODO"
-    ``GFA_m2``, "TODO"
-    ``GRID0_kW``, "TODO"
-    ``GRID_a0_kW``, "TODO"
-    ``GRID_a_MWhyr``, "TODO"
-    ``GRID_aux0_kW``, "TODO"
-    ``GRID_aux_MWhyr``, "TODO"
-    ``GRID_cdata0_kW``, "TODO"
-    ``GRID_cdata_MWhyr``, "TODO"
-    ``GRID_cre0_kW``, "TODO"
-    ``GRID_cre_MWhyr``, "TODO"
-    ``GRID_cs0_kW``, "TODO"
-    ``GRID_cs_MWhyr``, "TODO"
-    ``GRID_data0_kW``, "TODO"
-    ``GRID_data_MWhyr``, "TODO"
-    ``GRID_hs0_kW``, "TODO"
-    ``GRID_hs_MWhyr``, "TODO"
-    ``GRID_l0_kW``, "TODO"
-    ``GRID_l_MWhyr``, "TODO"
-    ``GRID_MWhyr``, "TODO"
-    ``GRID_pro0_kW``, "TODO"
-    ``GRID_pro_MWhyr``, "TODO"
-    ``GRID_ww0_kW``, "TODO"
-    ``GRID_ww_MWhyr``, "TODO"
-    ``Name``, "TODO"
-    ``NG_hs0_kW``, "TODO"
-    ``NG_hs_MWhyr``, "TODO"
-    ``NG_ww0_kW``, "TODO"
-    ``NG_ww_MWhyr``, "TODO"
-    ``OIL_hs0_kW``, "TODO"
-    ``OIL_hs_MWhyr``, "TODO"
-    ``OIL_ww0_kW``, "TODO"
-    ``OIL_ww_MWhyr``, "TODO"
-    ``people0``, "TODO"
-    ``PV0_kW``, "TODO"
-    ``PV_MWhyr``, "TODO"
-    ``QC_sys0_kW``, "TODO"
-    ``QC_sys_MWhyr``, "TODO"
-    ``Qcdata0_kW``, "TODO"
-    ``Qcdata_MWhyr``, "TODO"
-    ``Qcdata_sys0_kW``, "TODO"
-    ``Qcdata_sys_MWhyr``, "TODO"
-    ``Qcpro_sys0_kW``, "TODO"
-    ``Qcpro_sys_MWhyr``, "TODO"
-    ``Qcre0_kW``, "TODO"
-    ``Qcre_MWhyr``, "TODO"
-    ``Qcre_sys0_kW``, "TODO"
-    ``Qcre_sys_MWhyr``, "TODO"
-    ``Qcs0_kW``, "TODO"
-    ``Qcs_dis_ls0_kW``, "TODO"
-    ``Qcs_dis_ls_MWhyr``, "TODO"
-    ``Qcs_em_ls0_kW``, "TODO"
-    ``Qcs_em_ls_MWhyr``, "TODO"
-    ``Qcs_lat_ahu0_kW``, "TODO"
-    ``Qcs_lat_ahu_MWhyr``, "TODO"
-    ``Qcs_lat_aru0_kW``, "TODO"
-    ``Qcs_lat_aru_MWhyr``, "TODO"
-    ``Qcs_lat_sys0_kW``, "TODO"
-    ``Qcs_lat_sys_MWhyr``, "TODO"
-    ``Qcs_MWhyr``, "TODO"
-    ``Qcs_sen_ahu0_kW``, "TODO"
-    ``Qcs_sen_ahu_MWhyr``, "TODO"
-    ``Qcs_sen_aru0_kW``, "TODO"
-    ``Qcs_sen_aru_MWhyr``, "TODO"
-    ``Qcs_sen_scu0_kW``, "TODO"
-    ``Qcs_sen_scu_MWhyr``, "TODO"
-    ``Qcs_sen_sys0_kW``, "TODO"
-    ``Qcs_sen_sys_MWhyr``, "TODO"
-    ``Qcs_sys0_kW``, "TODO"
-    ``Qcs_sys_ahu0_kW``, "TODO"
-    ``Qcs_sys_ahu_MWhyr``, "TODO"
-    ``Qcs_sys_aru0_kW``, "TODO"
-    ``Qcs_sys_aru_MWhyr``, "TODO"
-    ``Qcs_sys_MWhyr``, "TODO"
-    ``Qcs_sys_scu0_kW``, "TODO"
-    ``Qcs_sys_scu_MWhyr``, "TODO"
-    ``QH_sys0_kW``, "TODO"
-    ``QH_sys_MWhyr``, "TODO"
-    ``Qhpro_sys0_kW``, "TODO"
-    ``Qhpro_sys_MWhyr``, "TODO"
-    ``Qhs0_kW``, "TODO"
-    ``Qhs_dis_ls0_kW``, "TODO"
-    ``Qhs_dis_ls_MWhyr``, "TODO"
-    ``Qhs_em_ls0_kW``, "TODO"
-    ``Qhs_em_ls_MWhyr``, "TODO"
-    ``Qhs_lat_ahu0_kW``, "TODO"
-    ``Qhs_lat_ahu_MWhyr``, "TODO"
-    ``Qhs_lat_aru0_kW``, "TODO"
-    ``Qhs_lat_aru_MWhyr``, "TODO"
-    ``Qhs_lat_sys0_kW``, "TODO"
-    ``Qhs_lat_sys_MWhyr``, "TODO"
-    ``Qhs_MWhyr``, "TODO"
-    ``Qhs_sen_ahu0_kW``, "TODO"
-    ``Qhs_sen_ahu_MWhyr``, "TODO"
-    ``Qhs_sen_aru0_kW``, "TODO"
-    ``Qhs_sen_aru_MWhyr``, "TODO"
-    ``Qhs_sen_shu0_kW``, "TODO"
-    ``Qhs_sen_shu_MWhyr``, "TODO"
-    ``Qhs_sen_sys0_kW``, "TODO"
-    ``Qhs_sen_sys_MWhyr``, "TODO"
-    ``Qhs_sys0_kW``, "TODO"
-    ``Qhs_sys_ahu0_kW``, "TODO"
-    ``Qhs_sys_ahu_MWhyr``, "TODO"
-    ``Qhs_sys_aru0_kW``, "TODO"
-    ``Qhs_sys_aru_MWhyr``, "TODO"
-    ``Qhs_sys_MWhyr``, "TODO"
-    ``Qhs_sys_shu0_kW``, "TODO"
-    ``Qhs_sys_shu_MWhyr``, "TODO"
-    ``Qww0_kW``, "TODO"
-    ``Qww_MWhyr``, "TODO"
-    ``Qww_sys0_kW``, "TODO"
-    ``Qww_sys_MWhyr``, "TODO"
-    ``SOLAR_hs0_kW``, "TODO"
-    ``SOLAR_hs_MWhyr``, "TODO"
-    ``SOLAR_ww0_kW``, "TODO"
-    ``SOLAR_ww_MWhyr``, "TODO"
-    ``Unnamed: 0``, "TODO"
-    ``WOOD_hs0_kW``, "TODO"
-    ``WOOD_hs_MWhyr``, "TODO"
-    ``WOOD_ww0_kW``, "TODO"
-    ``WOOD_ww_MWhyr``, "TODO"
+    ``Af_m2``, "Conditioned floor area (heated/cooled)"
+    ``Aocc_m2``, "Occupied floor area (heated/cooled)"
+    ``Aroof_m2``, "Roof area"
+    ``COAL_hs0_kW``, "Nominal Coal requirement for space heating supply"
+    ``COAL_hs_MWhyr``, "Coal requirement for space heating supply"
+    ``COAL_ww0_kW``, "Nominal Coal requirement for hotwater supply"
+    ``COAL_ww_MWhyr``, "Coal requirement for hotwater supply"
+    ``DC_cdata0_kW``, "Nominal district cooling for final data center cooling demand"
+    ``DC_cdata_MWhyr``, "District cooling for data center cooling demand"
+    ``DC_cre0_kW``, "Nominal district cooling for refrigeration demand"
+    ``DC_cre_MWhyr``, "District cooling for refrigeration demand"
+    ``DC_cs0_kW``, "Nominal district cooling for space cooling demand"
+    ``DC_cs_MWhyr``, "District cooling for space cooling demand"
+    ``DH_hs0_kW``, "Nominal energy requirement by district heating (space heating supply)"
+    ``DH_hs_MWhyr``, "Energy requirement by district heating (space heating supply)"
+    ``DH_ww0_kW``, "Nominal Energy requirement by district heating (hotwater supply)"
+    ``DH_ww_MWhyr``, "Energy requirement by district heating (hotwater supply)"
+    ``E_cdata0_kW``, "Nominal Data centre cooling specific electricity consumption."
+    ``E_cdata_MWhyr``, "Electricity consumption due to data center cooling"
+    ``E_cre0_kW``, "Nominal Refrigeration system electricity consumption."
+    ``E_cre_MWhyr``, "Electricity consumption due to refrigeration"
+    ``E_cs0_kW``, "Nominal Cooling system electricity consumption."
+    ``E_cs_MWhyr``, "Electricity consumption due to space cooling"
+    ``E_hs0_kW``, "Nominal Heating system electricity consumption."
+    ``E_hs_MWhyr``, "Electricity consumption due to space heating"
+    ``E_sys0_kW``, "Nominal end-use electricity demand"
+    ``E_sys_MWhyr``, "End-use electricity demand"
+    ``E_ww0_kW``, "Nominal Domestic hot water electricity consumption."
+    ``E_ww_MWhyr``, "Electricity consumption due to hot water"
+    ``Ea0_kW``, "Nominal end-use electricity for appliances"
+    ``Ea_MWhyr``, "End-use electricity for appliances"
+    ``Eal0_kW``, "Nominal Total net electricity for all sources and sinks."
+    ``Eal_MWhyr``, "Electricity consumption due to appliances and lighting"
+    ``Eaux0_kW``, "Nominal Auxiliary electricity consumption."
+    ``Eaux_MWhyr``, "Electricity consumption due to auxiliary equipment"
+    ``Edata0_kW``, "Nominal Data centre electricity consumption."
+    ``Edata_MWhyr``, "Electricity consumption for data centers"
+    ``El0_kW``, "Nominal end-use electricity for lights"
+    ``El_MWhyr``, "End-use electricity for lights"
+    ``Epro0_kW``, "Nominal Industrial processes electricity consumption."
+    ``Epro_MWhyr``, "Electricity supplied to industrial processes"
+    ``GFA_m2``, "Gross floor area"
+    ``GRID0_kW``, "Nominal Grid electricity consumption"
+    ``GRID_a0_kW``, "Nominal grid electricity requirements for appliances"
+    ``GRID_a_MWhyr``, "Grid electricity requirements for appliances"
+    ``GRID_aux0_kW``, "Nominal grid electricity requirements for auxiliary loads"
+    ``GRID_aux_MWhyr``, "Grid electricity requirements for auxiliary loads"
+    ``GRID_cdata0_kW``, "Nominal grid electricity requirements for servers cooling"
+    ``GRID_cdata_MWhyr``, "Grid electricity requirements for servers cooling"
+    ``GRID_cre0_kW``, "Nominal grid electricity requirements for refrigeration"
+    ``GRID_cre_MWhyr``, "Grid electricity requirements for refrigeration"
+    ``GRID_cs0_kW``, "Nominal grid electricity requirements for space cooling"
+    ``GRID_cs_MWhyr``, "Grid electricity requirements for space cooling"
+    ``GRID_data0_kW``, "Nominal grid electricity requirements for servers"
+    ``GRID_data_MWhyr``, "Grid electricity requirements for servers"
+    ``GRID_hs0_kW``, "Nominal grid electricity requirements for space heating"
+    ``GRID_hs_MWhyr``, "Grid electricity requirements for space heating"
+    ``GRID_l0_kW``, "Nominal grid electricity consumption for lights"
+    ``GRID_l_MWhyr``, "Grid electricity requirements for lights"
+    ``GRID_MWhyr``, "Grid electricity consumption"
+    ``GRID_pro0_kW``, "Nominal grid electricity requirements for industrial processes"
+    ``GRID_pro_MWhyr``, "Grid electricity requirements for industrial processes"
+    ``GRID_ww0_kW``, "Nominal grid electricity requirements for hot water supply"
+    ``GRID_ww_MWhyr``, "Grid electricity requirements for hot water supply"
+    ``Name``, "Unique building ID. It must start with a letter."
+    ``NG_hs0_kW``, "Nominal NG requirement for space heating supply"
+    ``NG_hs_MWhyr``, "NG requirement for space heating supply"
+    ``NG_ww0_kW``, "Nominal NG requirement for hotwater supply"
+    ``NG_ww_MWhyr``, "NG requirement for hotwater supply"
+    ``OIL_hs0_kW``, "Nominal OIL requirement for space heating supply"
+    ``OIL_hs_MWhyr``, "OIL requirement for space heating supply"
+    ``OIL_ww0_kW``, "Nominal OIL requirement for hotwater supply"
+    ``OIL_ww_MWhyr``, "OIL requirement for hotwater supply"
+    ``people0``, "Nominal occupancy"
+    ``PV0_kW``, "Nominal PV electricity consumption"
+    ``PV_MWhyr``, "PV electricity consumption"
+    ``QC_sys0_kW``, "Nominal Total system cooling demand."
+    ``QC_sys_MWhyr``, "Total system cooling demand"
+    ``Qcdata0_kW``, "Nominal Data centre cooling demand."
+    ``Qcdata_MWhyr``, "Data centre cooling demand"
+    ``Qcdata_sys0_kW``, "Nominal end-use data center cooling demand"
+    ``Qcdata_sys_MWhyr``, "End-use data center cooling demand"
+    ``Qcpro_sys0_kW``, "Nominal process cooling demand."
+    ``Qcpro_sys_MWhyr``, "Yearly processes cooling demand."
+    ``Qcre0_kW``, "Nominal Refrigeration cooling demand."
+    ``Qcre_MWhyr``, "Refrigeration cooling demand for the system"
+    ``Qcre_sys0_kW``, " Nominal refrigeration cooling demand"
+    ``Qcre_sys_MWhyr``, "End-use refrigeration demand"
+    ``Qcs0_kW``, "Nominal Total cooling demand."
+    ``Qcs_dis_ls0_kW``, "Nominal Cool distribution losses."
+    ``Qcs_dis_ls_MWhyr``, "Cool distribution losses"
+    ``Qcs_em_ls0_kW``, "Nominal Cool emission losses."
+    ``Qcs_em_ls_MWhyr``, "Cool emission losses"
+    ``Qcs_lat_ahu0_kW``, "Nominal AHU latent cool demand."
+    ``Qcs_lat_ahu_MWhyr``, "AHU latent cool demand"
+    ``Qcs_lat_aru0_kW``, "Nominal ARU latent cool demand."
+    ``Qcs_lat_aru_MWhyr``, "ARU latent cool demand"
+    ``Qcs_lat_sys0_kW``, "Nominal System latent cool demand."
+    ``Qcs_lat_sys_MWhyr``, "System latent cool demand"
+    ``Qcs_MWhyr``, "Total cool demand"
+    ``Qcs_sen_ahu0_kW``, "Nominal AHU system cool demand."
+    ``Qcs_sen_ahu_MWhyr``, "AHU system cool demand"
+    ``Qcs_sen_aru0_kW``, "Nominal ARU system cool demand."
+    ``Qcs_sen_aru_MWhyr``, "ARU system cool demand"
+    ``Qcs_sen_scu0_kW``, "Nominal SCU system cool demand."
+    ``Qcs_sen_scu_MWhyr``, "SCU system cool demand"
+    ``Qcs_sen_sys0_kW``, "Nominal Sensible system cool demand."
+    ``Qcs_sen_sys_MWhyr``, "Sensible system cool demand"
+    ``Qcs_sys0_kW``, "Nominal end-use space cooling demand"
+    ``Qcs_sys_ahu0_kW``, "Nominal AHU system cool demand."
+    ``Qcs_sys_ahu_MWhyr``, "AHU system cool demand"
+    ``Qcs_sys_aru0_kW``, "Nominal ARU system cool demand."
+    ``Qcs_sys_aru_MWhyr``, "ARU system cool demand"
+    ``Qcs_sys_MWhyr``, "End-use space cooling demand"
+    ``Qcs_sys_scu0_kW``, "Nominal SCU system cool demand."
+    ``Qcs_sys_scu_MWhyr``, "SCU system cool demand"
+    ``QH_sys0_kW``, "Nominal total building heating demand."
+    ``QH_sys_MWhyr``, "Total building heating demand"
+    ``Qhpro_sys0_kW``, "Nominal process heat demand."
+    ``Qhpro_sys_MWhyr``, "Yearly processes heat demand."
+    ``Qhs0_kW``, "Nominal Total heating demand."
+    ``Qhs_dis_ls0_kW``, "Nominal Heating system distribution losses."
+    ``Qhs_dis_ls_MWhyr``, "Heating system distribution losses"
+    ``Qhs_em_ls0_kW``, "Nominal Heating emission losses."
+    ``Qhs_em_ls_MWhyr``, "Heating system emission losses"
+    ``Qhs_lat_ahu0_kW``, "Nominal AHU latent heat demand."
+    ``Qhs_lat_ahu_MWhyr``, "AHU latent heat demand"
+    ``Qhs_lat_aru0_kW``, "Nominal ARU latent heat demand."
+    ``Qhs_lat_aru_MWhyr``, "ARU latent heat demand"
+    ``Qhs_lat_sys0_kW``, "Nominal System latent heat demand."
+    ``Qhs_lat_sys_MWhyr``, "System latent heat demand"
+    ``Qhs_MWhyr``, "Total heating demand"
+    ``Qhs_sen_ahu0_kW``, "Nominal AHU sensible heat demand."
+    ``Qhs_sen_ahu_MWhyr``, "AHU sensible heat demand"
+    ``Qhs_sen_aru0_kW``, "ARU sensible heat demand"
+    ``Qhs_sen_aru_MWhyr``, "ARU sensible heat demand"
+    ``Qhs_sen_shu0_kW``, "Nominal SHU sensible heat demand."
+    ``Qhs_sen_shu_MWhyr``, "SHU sensible heat demand"
+    ``Qhs_sen_sys0_kW``, "Nominal HVAC systems sensible heat demand."
+    ``Qhs_sen_sys_MWhyr``, "SHU sensible heat demand"
+    ``Qhs_sys0_kW``, "Nominal end-use space heating demand"
+    ``Qhs_sys_ahu0_kW``, "Nominal AHU sensible heat demand."
+    ``Qhs_sys_ahu_MWhyr``, "AHU system heat demand"
+    ``Qhs_sys_aru0_kW``, "Nominal ARU sensible heat demand."
+    ``Qhs_sys_aru_MWhyr``, "ARU sensible heat demand"
+    ``Qhs_sys_MWhyr``, "End-use space heating demand"
+    ``Qhs_sys_shu0_kW``, "Nominal SHU sensible heat demand."
+    ``Qhs_sys_shu_MWhyr``, "SHU sensible heat demand"
+    ``Qww0_kW``, "Nominal DHW heat demand."
+    ``Qww_MWhyr``, "DHW heat demand"
+    ``Qww_sys0_kW``, "Nominal end-use hotwater demand"
+    ``Qww_sys_MWhyr``, "End-use hotwater demand"
+    ``SOLAR_hs0_kW``, "Nominal solar thermal energy requirement for space heating supply"
+    ``SOLAR_hs_MWhyr``, "Solar thermal energy requirement for space heating supply"
+    ``SOLAR_ww0_kW``, "Nominal solar thermal energy requirement for hotwater supply"
+    ``SOLAR_ww_MWhyr``, "Solar thermal energy requirement for hotwater supply"
+    ``WOOD_hs0_kW``, "Nominal WOOD requirement for space heating supply"
+    ``WOOD_hs_MWhyr``, "WOOD requirement for space heating supply"
+    ``WOOD_ww0_kW``, "Nominal WOOD requirement for hotwater supply"
+    ``WOOD_ww_MWhyr``, "WOOD requirement for hotwater supply"
     
 
 
@@ -2698,25 +2945,25 @@ The following file is used by these scripts: ``demand``, ``photovoltaic``, ``pho
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``Date``, "TODO"
-    ``roofs_top_kW``, "TODO"
-    ``roofs_top_m2``, "TODO"
-    ``walls_east_kW``, "TODO"
-    ``walls_east_m2``, "TODO"
-    ``walls_north_kW``, "TODO"
-    ``walls_north_m2``, "TODO"
-    ``walls_south_kW``, "TODO"
-    ``walls_south_m2``, "TODO"
-    ``walls_west_kW``, "TODO"
-    ``walls_west_m2``, "TODO"
-    ``windows_east_kW``, "TODO"
-    ``windows_east_m2``, "TODO"
-    ``windows_north_kW``, "TODO"
-    ``windows_north_m2``, "TODO"
-    ``windows_south_kW``, "TODO"
-    ``windows_south_m2``, "TODO"
-    ``windows_west_kW``, "TODO"
-    ``windows_west_m2``, "TODO"
+    ``Date``, "Date and time in hourly steps"
+    ``roofs_top_kW``, "solar incident on the roof tops"
+    ``roofs_top_m2``, "roof top area"
+    ``walls_east_kW``, "solar incident on the east facing facades excluding windows"
+    ``walls_east_m2``, "area of the east facing facades excluding windows"
+    ``walls_north_kW``, "solar incident on the north facing facades excluding windows"
+    ``walls_north_m2``, "area of the north facing facades excluding windows"
+    ``walls_south_kW``, "solar incident on the south facing facades excluding windows"
+    ``walls_south_m2``, "area of the south facing facades excluding windows"
+    ``walls_west_kW``, "solar incident on the west facing facades excluding windows"
+    ``walls_west_m2``, "area of the south facing facades excluding windows"
+    ``windows_east_kW``, "solar incident on windows on the south facing facades"
+    ``windows_east_m2``, "window area on the east facing facades"
+    ``windows_north_kW``, "solar incident on windows on the south facing facades"
+    ``windows_north_m2``, "window area on the north facing facades"
+    ``windows_south_kW``, "solar incident on windows on the south facing facades"
+    ``windows_south_m2``, "window area on the south facing facades"
+    ``windows_west_kW``, "solar incident on windows on the west facing facades"
+    ``windows_west_m2``, "window area on the west facing facades"
     
 
 
@@ -2746,15 +2993,15 @@ The following file is used by these scripts:
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``G_win``, "TODO"
-    ``Name``, "TODO"
-    ``r_roof``, "TODO"
-    ``r_wall``, "TODO"
-    ``type_base``, "TODO"
-    ``type_floor``, "TODO"
-    ``type_roof``, "TODO"
-    ``type_wall``, "TODO"
-    ``type_win``, "TODO"
+    ``G_win``, "Solar heat gain coefficient. Defined according to ISO 13790."
+    ``Name``, "Unique building ID. It must start with a letter."
+    ``r_roof``, "Reflectance in the Red spectrum. Defined according Radiance. (long-wave)"
+    ``r_wall``, "Reflectance in the Red spectrum. Defined according Radiance. (long-wave)"
+    ``type_base``, "Basement floor construction assembly (relates to ""code"" in ENVELOPE assemblies)"
+    ``type_floor``, "Internal floor construction assembly (relates to ""code"" in ENVELOPE assemblies)"
+    ``type_roof``, "Roof construction assembly (relates to ""code"" in ENVELOPE assemblies)"
+    ``type_wall``, "External wall construction assembly (relates to ""code"" in ENVELOPE assemblies)"
+    ``type_win``, "Window assembly (relates to ""code"" in ENVELOPE assemblies)"
     
 
 
@@ -2771,7 +3018,7 @@ The following file is used by these scripts: ``demand``, ``photovoltaic``, ``pho
 
     ``AREA_m2``, "Surface area."
     ``BUILDING``, "Unique building ID. It must start with a letter."
-    ``intersection``, "TODO"
+    ``intersection``, "flag to indicate whether this surface is intersecting with another surface (0: no intersection, 1: intersected)"
     ``orientation``, "Orientation of the surface (north/east/south/west/top)"
     ``SURFACE``, "Unique surface ID for each building exterior surface."
     ``TYPE``, "Surface typology."
@@ -2795,22 +3042,22 @@ The following file is used by these scripts: ``demand``
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``DATE``, "TODO"
-    ``Ea_W``, "TODO"
-    ``Ed_W``, "TODO"
-    ``El_W``, "TODO"
-    ``Epro_W``, "TODO"
-    ``people_pax``, "TODO"
-    ``Qcpro_W``, "TODO"
-    ``Qcre_W``, "TODO"
-    ``Qhpro_W``, "TODO"
-    ``Qs_W``, "TODO"
-    ``Tcs_set_C``, "TODO"
-    ``Ths_set_C``, "TODO"
-    ``Ve_lps``, "TODO"
-    ``Vw_lph``, "TODO"
-    ``Vww_lph``, "TODO"
-    ``X_gh``, "TODO"
+    ``DATE``, "Time stamp for each day of the year ascending in hourly intervals"
+    ``Ea_W``, "Electrical load due to processes"
+    ``Ed_W``, "Electrical load due to servers/data centers"
+    ``El_W``, "Electrical load due to lighting"
+    ``Epro_W``, "Electrical load due to processes"
+    ``people_pax``, "Number of people in the building"
+    ``Qcpro_W``, "Process cooling load"
+    ``Qcre_W``, "Cooling load due to cool room refrigeration"
+    ``Qhpro_W``, "Process heat load"
+    ``Qs_W``, "Sensible heat load of people"
+    ``Tcs_set_C``, "Set point temperature of space cooling system"
+    ``Ths_set_C``, "Set point temperature of space heating system"
+    ``Ve_lps``, "Ventilation rate"
+    ``Vw_lph``, "Fresh water consumption (includes cold and hot water)"
+    ``Vww_lph``, "Domestic hot water consumption"
+    ``X_gh``, "Moisture released by occupants"
     
 
 
@@ -2825,13 +3072,13 @@ The following file is used by these scripts: ``optimization``
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``mww_zone_kWperC``, "TODO"
-    ``Qsw_kW``, "TODO"
-    ``T_in_HP_C``, "TODO"
-    ``T_in_sw_C``, "TODO"
-    ``T_out_HP_C``, "TODO"
-    ``T_out_sw_C``, "TODO"
-    ``Ts_C``, "TODO"
+    ``mww_zone_kWperC``, "heat capacity of total sewage in a zone"
+    ``Qsw_kW``, "heat extracted from sewage flows"
+    ``T_in_HP_C``, "Inlet temperature of the sweage heapump"
+    ``T_in_sw_C``, "Inlet temperature of sewage flows"
+    ``T_out_HP_C``, "Outlet temperature of the sewage heatpump"
+    ``T_out_sw_C``, "Outlet temperature of sewage flows"
+    ``Ts_C``, "Average temperature of sewage flows"
     
 
 
@@ -2846,7 +3093,7 @@ The following file is used by these scripts:
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``B01``, "TODO"
+    ``B01``, "Thermal demand for building B01 at each simulation time step"
     
 
 
@@ -2861,10 +3108,11 @@ The following file is used by these scripts: ``optimization``
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``D_int_m``, "TODO"
-    ``length_m``, "TODO"
-    ``Pipe_DN``, "TODO"
-    ``Type_mat``, "TODO"
+    ``D_int_m``, "Internal pipe diameter for the nominal diameter"
+    ``length_m``, "Length of each pipe in the network"
+    ``Name``, "Unique network pipe ID."
+    ``Pipe_DN``, "Nominal pipe diameter (e.g. DN100 refers to pipes of approx. 100 mm in diameter)"
+    ``Type_mat``, "Material of the pipes"
     
 
 
@@ -2879,8 +3127,8 @@ The following file is used by these scripts: ``thermal_network``
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``PIPE0``, "TODO"
-    ``Unnamed: 0``, "TODO"
+    ``NODE``, "Names of the nodes in the network"
+    ``PIPE0``, "Indicates the direction of flow of PIPE0 with respect to each node NODEn: if equal to PIPE0 and NODEn are not connected / if equal to 1 PIPE0 enters NODEn / if equal to -1 PIPE0 leaves NODEn"
     
 
 
@@ -2895,7 +3143,7 @@ The following file is used by these scripts:
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``PIPE0``, "TODO"
+    ``PIPE0``, "Mass flow rate in pipe PIPE0 at each time step"
     
 
 
@@ -2910,7 +3158,7 @@ The following file is used by these scripts:
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``NODE0``, "TODO"
+    ``NODE0``, "Mass flow rate in node NODE0 at each time step"
     
 
 
@@ -2925,8 +3173,9 @@ The following file is used by these scripts:
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``Building``, "TODO"
-    ``Type``, "TODO"
+    ``Building``, "Unique building ID. It must start with a letter."
+    ``Name``, "Unique network node ID."
+    ``Type``, "Type of node: ""PLANT"" / ""CONSUMER"" / ""NONE"" (if it is neither)"
     
 
 
@@ -2941,7 +3190,7 @@ The following file is used by these scripts:
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``NONE``, "TODO"
+    ``thermal_load_kW``, "Thermal load supplied by the plant at each time step"
     
 
 
@@ -2956,7 +3205,7 @@ The following file is used by these scripts:
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``PIPE0``, "TODO"
+    ``PIPE0``, "Pressure losses at pipe PIPE0 at each time step"
     
 
 
@@ -2971,7 +3220,7 @@ The following file is used by these scripts:
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``B01``, "TODO"
+    ``B01``, "Pumping load at building substation B01 for each timestep"
     
 
 
@@ -2986,7 +3235,7 @@ The following file is used by these scripts:
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``PIPE0``, "TODO"
+    ``PIPE0``, "Flow velocity of heating/cooling medium in pipe PIPE0"
     
 
 
@@ -3030,41 +3279,41 @@ The following file is used by these scripts: ``decentralized``, ``emissions``, `
     ``E_sys_MWhyr``, "End-use electricity demand"
     ``E_ww0_kW``, "Nominal Domestic hot water electricity consumption."
     ``E_ww_MWhyr``, "Electricity consumption due to hot water"
-    ``Ea0_kW``, "TODO"
-    ``Ea_MWhyr``, "TODO"
+    ``Ea0_kW``, "Nominal end-use electricity for appliances"
+    ``Ea_MWhyr``, "End-use electricity for appliances"
     ``Eal0_kW``, "Nominal Total net electricity for all sources and sinks."
     ``Eal_MWhyr``, "Electricity consumption due to appliances and lighting"
     ``Eaux0_kW``, "Nominal Auxiliary electricity consumption."
     ``Eaux_MWhyr``, "Electricity consumption due to auxiliary equipment"
     ``Edata0_kW``, "Nominal Data centre electricity consumption."
     ``Edata_MWhyr``, "Electricity consumption for data centers"
-    ``El0_kW``, "TODO"
-    ``El_MWhyr``, "TODO"
+    ``El0_kW``, "Nominal end-use electricity for lights"
+    ``El_MWhyr``, "End-use electricity for lights"
     ``Epro0_kW``, "Nominal Industrial processes electricity consumption."
     ``Epro_MWhyr``, "Electricity supplied to industrial processes"
     ``GFA_m2``, "Gross floor area"
     ``GRID0_kW``, "Nominal Grid electricity consumption"
-    ``GRID_a0_kW``, "TODO"
-    ``GRID_a_MWhyr``, "TODO"
-    ``GRID_aux0_kW``, "TODO"
-    ``GRID_aux_MWhyr``, "TODO"
-    ``GRID_cdata0_kW``, "TODO"
-    ``GRID_cdata_MWhyr``, "TODO"
-    ``GRID_cre0_kW``, "TODO"
-    ``GRID_cre_MWhyr``, "TODO"
-    ``GRID_cs0_kW``, "TODO"
-    ``GRID_cs_MWhyr``, "TODO"
-    ``GRID_data0_kW``, "TODO"
-    ``GRID_data_MWhyr``, "TODO"
-    ``GRID_hs0_kW``, "TODO"
-    ``GRID_hs_MWhyr``, "TODO"
-    ``GRID_l0_kW``, "TODO"
-    ``GRID_l_MWhyr``, "TODO"
+    ``GRID_a0_kW``, "Nominal grid electricity requirements for appliances"
+    ``GRID_a_MWhyr``, "Grid electricity requirements for appliances"
+    ``GRID_aux0_kW``, "Nominal grid electricity requirements for auxiliary loads"
+    ``GRID_aux_MWhyr``, "Grid electricity requirements for auxiliary loads"
+    ``GRID_cdata0_kW``, "Nominal grid electricity requirements for servers cooling"
+    ``GRID_cdata_MWhyr``, "Grid electricity requirements for servers cooling"
+    ``GRID_cre0_kW``, "Nominal grid electricity requirements for refrigeration"
+    ``GRID_cre_MWhyr``, "Grid electricity requirements for refrigeration"
+    ``GRID_cs0_kW``, "Nominal grid electricity requirements for space cooling"
+    ``GRID_cs_MWhyr``, "Grid electricity requirements for space cooling"
+    ``GRID_data0_kW``, "Nominal grid electricity requirements for servers"
+    ``GRID_data_MWhyr``, "Grid electricity requirements for servers"
+    ``GRID_hs0_kW``, "Nominal grid electricity requirements for space heating"
+    ``GRID_hs_MWhyr``, "Grid electricity requirements for space heating"
+    ``GRID_l0_kW``, "Nominal grid electricity consumption for lights"
+    ``GRID_l_MWhyr``, "Grid electricity requirements for lights"
     ``GRID_MWhyr``, "Grid electricity consumption"
-    ``GRID_pro0_kW``, "TODO"
-    ``GRID_pro_MWhyr``, "TODO"
-    ``GRID_ww0_kW``, "TODO"
-    ``GRID_ww_MWhyr``, "TODO"
+    ``GRID_pro0_kW``, "Nominal grid electricity requirements for industrial processes"
+    ``GRID_pro_MWhyr``, "Grid electricity requirements for industrial processes"
+    ``GRID_ww0_kW``, "Nominal grid electricity requirements for hot water supply"
+    ``GRID_ww_MWhyr``, "Grid electricity requirements for hot water supply"
     ``Name``, "Unique building ID. It must start with a letter."
     ``NG_hs0_kW``, "Nominal NG requirement for space heating supply"
     ``NG_hs_MWhyr``, "NG requirement for space heating supply"
@@ -3175,8 +3424,8 @@ The following file is used by these scripts: ``optimization``
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``QLake_kW``, "TODO"
-    ``Ts_C``, "TODO"
+    ``QLake_kW``, "thermal potential from water body"
+    ``Ts_C``, "average temperature of the water body"
     
 
 
@@ -3248,10 +3497,10 @@ The following file is used by these scripts:
     ``CATB``, "Category according to the tilt angle of the panel"
     ``CATGB``, "Category according to the annual radiation on the panel surface"
     ``CATteta_z``, "Category according to the surface azimuth of the panel"
-    ``intersection``, "TODO"
+    ``intersection``, "flag to indicate whether this surface is intersecting with another surface (0: no intersection, 1: intersected)"
     ``orientation``, "Orientation of the surface (north/east/south/west/top)"
-    ``surface``, "Unique surface ID for each building exterior surface."
     ``SURFACE``, "Unique surface ID for each building exterior surface."
+    ``surface``, "Unique surface ID for each building exterior surface."
     ``surface_azimuth_deg``, "Azimuth angle of the panel surface e.g. south facing = 180 deg"
     ``tilt_deg``, "Tilt angle of roof or walls"
     ``total_rad_Whm2``, "Total radiatiative potential of a given surfaces area."
@@ -3307,6 +3556,7 @@ The following file is used by these scripts:
 
     ``Area_PV_m2``, "Total area of investigated collector."
     ``E_PV_gen_kWh``, "Total electricity generated by the collector."
+    ``Name``, "Unique building ID. It must start with a letter."
     ``PV_roofs_top_E_kWh``, "Electricity production from photovoltaic panels on roof tops"
     ``PV_roofs_top_m2``, "Collector surface area on roof tops."
     ``PV_walls_east_E_kWh``, "Electricity production from photovoltaic panels on east facades"
@@ -3318,7 +3568,6 @@ The following file is used by these scripts:
     ``PV_walls_west_E_kWh``, "Electricity production from photovoltaic panels on west facades"
     ``PV_walls_west_m2``, "West facing wall collector surface area."
     ``radiation_kWh``, "Total radiatiative potential."
-    ``Unnamed: 0``, "TODO"
     
 
 
@@ -3369,10 +3618,10 @@ The following file is used by these scripts:
     ``CATB``, "Category according to the tilt angle of the panel"
     ``CATGB``, "Category according to the annual radiation on the panel surface"
     ``CATteta_z``, "Category according to the surface azimuth of the panel"
-    ``intersection``, "TODO"
+    ``intersection``, "flag to indicate whether this surface is intersecting with another surface (0: no intersection, 1: intersected)"
     ``orientation``, "Orientation of the surface (north/east/south/west/top)"
-    ``surface``, "Unique surface ID for each building exterior surface."
     ``SURFACE``, "Unique surface ID for each building exterior surface."
+    ``surface``, "Unique surface ID for each building exterior surface."
     ``surface_azimuth_deg``, "Azimuth angle of the panel surface e.g. south facing = 180 deg"
     ``tilt_deg``, "Tilt angle of roof or walls"
     ``total_rad_Whm2``, "Total radiatiative potential of a given surfaces area."
@@ -3421,7 +3670,7 @@ The following file is used by these scripts:
     ``Q_PVT_gen_kWh``, "Total heat generated by the collector."
     ``Q_PVT_l_kWh``, "Collector heat loss."
     ``radiation_kWh``, "Total radiatiative potential."
-    ``T_PVT_re_C``, "Collector heating supply temperature."
+    ``T_PVT_re_C``, "Collector hot water return temperature."
     ``T_PVT_sup_C``, "Collector heating supply temperature."
     
 
@@ -3440,7 +3689,7 @@ The following file is used by these scripts:
     ``Area_PVT_m2``, "Total area of investigated collector."
     ``E_PVT_gen_kWh``, "Total electricity generated by the collector."
     ``Eaux_PVT_kWh``, "Auxiliary electricity consumed by the collector."
-    ``Name``, "TODO"
+    ``Name``, "Unique building ID."
     ``PVT_roofs_top_E_kWh``, "Electricity production from photovoltaic-thermal panels on roof tops"
     ``PVT_roofs_top_m2``, "Collector surface area on roof tops."
     ``PVT_roofs_top_Q_kWh``, "Heat production from photovoltaic-thermal panels on roof tops"
@@ -3520,10 +3769,10 @@ The following file is used by these scripts:
     ``CATB``, "Category according to the tilt angle of the panel"
     ``CATGB``, "Category according to the annual radiation on the panel surface"
     ``CATteta_z``, "Category according to the surface azimuth of the panel"
-    ``intersection``, "TODO"
+    ``intersection``, "flag to indicate whether this surface is intersecting with another surface (0: no intersection, 1: intersected)"
     ``orientation``, "Orientation of the surface (north/east/south/west/top)"
-    ``surface``, "Unique surface ID for each building exterior surface."
     ``SURFACE``, "Unique surface ID for each building exterior surface."
+    ``surface``, "Unique surface ID for each building exterior surface."
     ``surface_azimuth_deg``, "Azimuth angle of the panel surface e.g. south facing = 180 deg"
     ``tilt_deg``, "Tilt angle of roof or walls"
     ``total_rad_Whm2``, "Total radiatiative potential of a given surfaces area."
@@ -3549,25 +3798,25 @@ The following file is used by these scripts: ``decentralized``
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``Area_SC_m2``, "TODO"
+    ``Area_SC_m2``, "Total area of investigated collector."
     ``Date``, "Date and time in hourly steps."
-    ``Eaux_SC_kWh``, "TODO"
-    ``mcp_SC_kWperC``, "TODO"
-    ``Q_SC_gen_kWh``, "TODO"
-    ``Q_SC_l_kWh``, "TODO"
+    ``Eaux_SC_kWh``, "Auxiliary electricity consumed by the collector."
+    ``mcp_SC_kWperC``, "Capacity flow rate (mass flow* specific heat capacity) of the hot water delivered by the collector."
+    ``Q_SC_gen_kWh``, "Total heat generated by the collector."
+    ``Q_SC_l_kWh``, "Collector heat loss."
     ``radiation_kWh``, "Total radiatiative potential."
-    ``SC_ET_roofs_top_m2``, "TODO"
-    ``SC_ET_roofs_top_Q_kWh``, "TODO"
-    ``SC_ET_walls_east_m2``, "TODO"
-    ``SC_ET_walls_east_Q_kWh``, "TODO"
-    ``SC_ET_walls_north_m2``, "TODO"
-    ``SC_ET_walls_north_Q_kWh``, "TODO"
-    ``SC_ET_walls_south_m2``, "TODO"
-    ``SC_ET_walls_south_Q_kWh``, "TODO"
-    ``SC_ET_walls_west_m2``, "TODO"
-    ``SC_ET_walls_west_Q_kWh``, "TODO"
-    ``T_SC_re_C``, "TODO"
-    ``T_SC_sup_C``, "TODO"
+    ``SC_ET_roofs_top_m2``, "Collector surface area on roof tops."
+    ``SC_ET_roofs_top_Q_kWh``, "Heat production from solar collectors on roof tops"
+    ``SC_ET_walls_east_m2``, "Collector surface area on east facades."
+    ``SC_ET_walls_east_Q_kWh``, "Heat production from solar collectors on east facades"
+    ``SC_ET_walls_north_m2``, "Collector surface area on north facades."
+    ``SC_ET_walls_north_Q_kWh``, "Heat production from solar collectors on north facades"
+    ``SC_ET_walls_south_m2``, "Collector surface area on south facades."
+    ``SC_ET_walls_south_Q_kWh``, "Heat production from solar collectors on south facades"
+    ``SC_ET_walls_west_m2``, "Collector surface area on west facades."
+    ``SC_ET_walls_west_Q_kWh``, "Heat production from solar collectors on west facades"
+    ``T_SC_re_C``, "Collector hot water return temperature."
+    ``T_SC_sup_C``, "Collector hot water supply temperature."
     
 
 
@@ -3582,22 +3831,22 @@ The following file is used by these scripts:
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``Area_SC_m2``, "TODO"
-    ``Eaux_SC_kWh``, "TODO"
-    ``Q_SC_gen_kWh``, "TODO"
-    ``Q_SC_l_kWh``, "TODO"
+    ``Area_SC_m2``, "Total area of investigated collector."
+    ``Eaux_SC_kWh``, "Auxiliary electricity consumed by the collector."
+    ``Name``, "Unique building ID."
+    ``Q_SC_gen_kWh``, "Total heat generated by the collector."
+    ``Q_SC_l_kWh``, "Collector heat loss."
     ``radiation_kWh``, "Total radiatiative potential."
-    ``SC_ET_roofs_top_m2``, "TODO"
-    ``SC_ET_roofs_top_Q_kWh``, "TODO"
-    ``SC_ET_walls_east_m2``, "TODO"
-    ``SC_ET_walls_east_Q_kWh``, "TODO"
-    ``SC_ET_walls_north_m2``, "TODO"
-    ``SC_ET_walls_north_Q_kWh``, "TODO"
-    ``SC_ET_walls_south_m2``, "TODO"
-    ``SC_ET_walls_south_Q_kWh``, "TODO"
-    ``SC_ET_walls_west_m2``, "TODO"
-    ``SC_ET_walls_west_Q_kWh``, "TODO"
-    ``Unnamed: 0``, "TODO"
+    ``SC_ET_roofs_top_m2``, "Roof top collector surface area."
+    ``SC_ET_roofs_top_Q_kWh``, "Heat production from solar collectors on roof tops"
+    ``SC_ET_walls_east_m2``, "East facing wall collector surface area."
+    ``SC_ET_walls_east_Q_kWh``, "Heat production from solar collectors on east facades"
+    ``SC_ET_walls_north_m2``, "North facing wall collector surface area."
+    ``SC_ET_walls_north_Q_kWh``, "Heat production from solar collectors on west facades"
+    ``SC_ET_walls_south_m2``, "South facing wall collector surface area."
+    ``SC_ET_walls_south_Q_kWh``, "Heat production from solar collectors on south facades"
+    ``SC_ET_walls_west_m2``, "West facing wall collector surface area."
+    ``SC_ET_walls_west_Q_kWh``, "Heat production from solar collectors on west facades"
     
 
 
@@ -3612,24 +3861,24 @@ The following file is used by these scripts: ``optimization``
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``Area_SC_m2``, "TODO"
+    ``Area_SC_m2``, "Collector surface area on south facades."
     ``Date``, "Date and time in hourly steps."
-    ``Eaux_SC_kWh``, "TODO"
-    ``mcp_SC_kWperC``, "TODO"
-    ``Q_SC_gen_kWh``, "TODO"
-    ``Q_SC_l_kWh``, "TODO"
+    ``Eaux_SC_kWh``, "Auxiliary electricity consumed by the collector."
+    ``mcp_SC_kWperC``, "Capacity flow rate (mass flow* specific heat capacity) of the hot water delivered by the collector."
+    ``Q_SC_gen_kWh``, "Total heat generated by the collector."
+    ``Q_SC_l_kWh``, "Collector heat loss."
     ``radiation_kWh``, "Total radiatiative potential."
-    ``SC_FP_roofs_top_m2``, "TODO"
-    ``SC_FP_roofs_top_Q_kWh``, "TODO"
-    ``SC_FP_walls_east_m2``, "TODO"
-    ``SC_FP_walls_east_Q_kWh``, "TODO"
-    ``SC_FP_walls_north_m2``, "TODO"
-    ``SC_FP_walls_north_Q_kWh``, "TODO"
-    ``SC_FP_walls_south_m2``, "TODO"
-    ``SC_FP_walls_south_Q_kWh``, "TODO"
-    ``SC_FP_walls_west_m2``, "TODO"
-    ``SC_FP_walls_west_Q_kWh``, "TODO"
-    ``T_SC_re_C``, "TODO"
-    ``T_SC_sup_C``, "TODO"
+    ``SC_FP_roofs_top_m2``, "Collector surface area on roof tops."
+    ``SC_FP_roofs_top_Q_kWh``, "Heat production from solar collectors on roof tops"
+    ``SC_FP_walls_east_m2``, "Collector surface area on east facades."
+    ``SC_FP_walls_east_Q_kWh``, "Heat production from solar collectors on east facades"
+    ``SC_FP_walls_north_m2``, "Collector surface area on north facades."
+    ``SC_FP_walls_north_Q_kWh``, "Heat production from solar collectors on north facades"
+    ``SC_FP_walls_south_m2``, "Collector surface area on south facades."
+    ``SC_FP_walls_south_Q_kWh``, "Heat production from solar collectors on south facades"
+    ``SC_FP_walls_west_m2``, "Collector surface area on west facades."
+    ``SC_FP_walls_west_Q_kWh``, "Heat production from solar collectors on west facades"
+    ``T_SC_re_C``, "Collector hot water return temperature."
+    ``T_SC_sup_C``, "Collector hot water supply temperature."
     
 
