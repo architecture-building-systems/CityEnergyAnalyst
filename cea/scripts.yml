@@ -363,13 +363,6 @@ default:
     module: cea.utilities.create_polygon
     parameters: ['general:scenario', create-polygon]
 
-  - name: plots
-    label: Plots basic
-    description: Create plots for the default energy system of an urban scenario
-    interfaces: [cli]
-    module: cea.plots.plots_main
-    parameters: ['general:scenario', plots]
-
   - name: compile
     label: compile
     description: compile
