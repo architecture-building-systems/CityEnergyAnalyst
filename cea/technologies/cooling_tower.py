@@ -2,6 +2,8 @@
 System Modeling: Cooling tower
 """
 from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 import pandas as pd
 from math import ceil, log
 from cea.technologies.constants import CT_MIN_PARTLOAD_RATIO
@@ -153,7 +155,7 @@ def main():
     q_hot_Wh = np.arange(0.0, 1E3, 100)
     Q_nom_W = 1E3
     wdot_W = np.vectorize(calc_CT)(q_hot_Wh, Q_nom_W)
-    print wdot_W
+    print(wdot_W)
 
 
 

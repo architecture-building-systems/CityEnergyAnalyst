@@ -26,6 +26,9 @@ INPUT / OUTPUT FILES
 SIDE EFFECTS
     - if no data file is given, the loaded geometry will not change color
 """
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
 
 import os
 import math
@@ -201,7 +204,7 @@ def visualize(arepeating_timer):
             self.timer_count = 0
 
         def execute(self, obj, event):
-            print "\r", self.timer_count,
+            print("\r", self.timer_count, end=' ')
             for name in data_lib:
                 data_array = data_lib[name][self.timer_count]
                 data_max = np.max(data)

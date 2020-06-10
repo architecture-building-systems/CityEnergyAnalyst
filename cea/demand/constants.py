@@ -2,6 +2,9 @@
 """
 This file contains the constants used in the building energy demand calculations
 """
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 __author__ = "Gabriel Happle"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Gabriel Happle"]

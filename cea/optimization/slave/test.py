@@ -1,3 +1,6 @@
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
 # FIXME: what is this for? can we remove it?
 
 def main():
@@ -8,7 +11,7 @@ def main():
 
     series = pd.Series(data['KWH'].values, index=index)
     resample = series.resample('1H').mean()
-    print resample.sum()
+    print(resample.sum())
 
 if __name__ == '__main__':
     main()

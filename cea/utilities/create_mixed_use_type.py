@@ -3,6 +3,7 @@ This script creates a new use-type by aggregating values from a list of differen
 """
 from __future__ import division
 from __future__ import print_function
+from __future__ import absolute_import
 
 import os
 

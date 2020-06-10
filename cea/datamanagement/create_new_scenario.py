@@ -4,6 +4,7 @@ A tool to create a new project / scenario with the CEA.
 
 from __future__ import division
 from __future__ import print_function
+from __future__ import absolute_import
 
 import os
 from shutil import copyfile

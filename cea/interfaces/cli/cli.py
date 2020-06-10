@@ -4,6 +4,9 @@ it to look up a module to import in ``scripts.yml``, imports that and then calls
 
 The rest of the command line arguments are passed to the ``cea.config.Configuration`` object for processing.
 """
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
 
 import sys
 import importlib

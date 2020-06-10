@@ -3,6 +3,7 @@ Hydraulic - thermal network
 """
 from __future__ import division
 from __future__ import print_function
+from __future__ import absolute_import
 
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 

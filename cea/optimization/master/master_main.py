@@ -1,4 +1,6 @@
 from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import json
 import multiprocessing
@@ -385,7 +387,7 @@ def non_dominated_sorting_genetic_algorithm(locator,
             DHN_network_list_tested.append(DHN_barcode)
 
         if config.debug:
-            print "Saving results for generation", gen, "\n"
+            print("Saving results for generation", gen, "\n")
             valid_generation = [gen]
             save_generation_dataframes(gen, invalid_ind, locator, DCN_network_list_tested, DHN_network_list_tested)
             save_generation_individuals(column_names, gen, invalid_ind, locator)
@@ -395,7 +397,7 @@ def non_dominated_sorting_genetic_algorithm(locator,
             valid_generation = []
 
         if gen == NGEN and config.debug == False:  # final generation re-evaluate paretofront
-            print "Saving results for generation", gen, "\n"
+            print("Saving results for generation", gen, "\n")
             valid_generation = [gen]
             systems_name_list = save_final_generation_pareto_individuals(toolbox,
                                                      locator,
@@ -420,7 +422,7 @@ def non_dominated_sorting_genetic_algorithm(locator,
                                                      column_names)
 
         # Create Checkpoint if necessary
-        print "Creating CheckPoint", gen, "\n"
+        print("Creating CheckPoint", gen, "\n")
         with open(locator.get_optimization_checkpoint(gen), "wb") as fp:
             cp = dict(generation=gen,
                       selected_population=pop,

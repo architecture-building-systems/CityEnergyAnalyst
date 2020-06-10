@@ -3,6 +3,8 @@ Sensible Heat Storage - Fully Mixed tank
 """
 
 from __future__ import division
+from __future__ import absolute_import
+from __future__ import print_function
 
 import math
 
@@ -202,7 +204,7 @@ def calc_tank_temperature(T_start_C, q_loss_W, q_discharged_W, q_charged_W, V_ta
 # use the optimized (numba_cc) versions of the ode function in this module if available
 try:
     # import Numba AOT versions of the functions above, overwriting them
-    from storagetank_cc import (ode)
+    from .storagetank_cc import (ode)
 except ImportError:
     # fall back to using the python version
     # print('failed to import from storagetank_cc.pyd, falling back to pure python functions')

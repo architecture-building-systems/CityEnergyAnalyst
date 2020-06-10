@@ -2,6 +2,8 @@
 Vapor-compressor chiller
 """
 from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 import pandas as pd
 from math import log, ceil
 import numpy as np
@@ -48,7 +50,7 @@ def calc_VCC(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_chw_re_K, T_cw_in_
         COP = calc_COP_with_carnot_efficiency(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, g_value,
                                               min_chiller_size, max_chiller_size, scale)
         if COP < 0.0:
-            print ('Negative COP: ', COP, T_chw_sup_K, T_chw_re_K, q_chw_load_Wh)
+            print(('Negative COP: ', COP, T_chw_sup_K, T_chw_re_K, q_chw_load_Wh))
 
         # calculate chiller outputs
         # print('COP is: ', COP)
@@ -164,7 +166,7 @@ def calc_VCC_COP(weather_data, load_types, centralized=True):
         elif load_type == 'scu':
             T_evap_K = min(T_evap_K, T_EVAP_SCU)
         else:
-            print 'Undefined cooling load_type for chiller COP calculation.'
+            print('Undefined cooling load_type for chiller COP calculation.')
     if centralized == True:  # Todo: improve this to a better approximation than a static value DT_Network
         # for the centralized case we have to supply somewhat colder, currently based on CEA calculation for MIX_m case
         T_evap_K = T_evap_K - DT_NETWORK_CENTRALIZED
@@ -313,7 +315,7 @@ def main():
     g_value = G_VALUE_CENTRALIZED
     chiller_operation = calc_VCC(peak_cooling_load, Qc_W, T_chw_sup_K, T_chw_re_K, T_cw_in_K, g_value, min_chiller_size,
                                  max_chiller_size, scale)
-    print chiller_operation
+    print(chiller_operation)
 
 
 if __name__ == '__main__':

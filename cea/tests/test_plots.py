@@ -4,6 +4,7 @@ from __future__ import division
 """
 Unittests for the plots framework of the CEA.
 """
+from __future__ import absolute_import
 
 import unittest
 import cea.plots.categories

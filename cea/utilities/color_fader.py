@@ -1,6 +1,9 @@
 """
 Interpolate colors to create a gradient. This is based on code from here: https://stackoverflow.com/a/50784012/2260
 """
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
 import matplotlib as mpl
 import numpy as np

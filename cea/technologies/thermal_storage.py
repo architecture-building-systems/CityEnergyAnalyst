@@ -3,6 +3,8 @@ thermal storage
 """
 
 from __future__ import division
+from __future__ import absolute_import
+from __future__ import print_function
 import pandas as pd
 from math import log
 from cea.analysis.costs.equations import calc_capex_annualized, calc_opex_annualized

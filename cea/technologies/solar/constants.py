@@ -2,6 +2,9 @@
 """
 Parameters used for solar technologies
 """
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
 # pressure losses in building pipes connecting to SC/PVT
 dpl_Paperm = 200

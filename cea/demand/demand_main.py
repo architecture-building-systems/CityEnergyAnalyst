@@ -3,6 +3,8 @@
 Analytical energy demand model algorithm
 """
 from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import os
 import time
@@ -12,7 +14,7 @@ from itertools import repeat
 import cea.config
 import cea.inputlocator
 import cea.utilities.parallel
-import demand_writers
+from . import demand_writers
 from cea import MissingInputDataException
 from cea.demand import thermal_loads
 from cea.demand.building_properties import BuildingProperties

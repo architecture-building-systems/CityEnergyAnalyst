@@ -1,5 +1,6 @@
 from __future__ import division
 from __future__ import print_function
+from __future__ import absolute_import
 
 import collections
 import csv
@@ -94,7 +95,7 @@ def schedule_to_dataframe(schedule_path):
         out['MONTHLY_MULTIPLIER'] = pd.DataFrame({m + 1: [round(float(v), 2)] for m, v in enumerate(reader.next()[1:])},
                                                  columns=[m for m in range(1, 13)])
         # Filter empty columns
-        columns = [col for col in reader.next() if col != '']
+        columns = [col for col in next(reader) if col != '']
 
     schedule_data = pd.read_csv(schedule_path, skiprows=2, usecols=columns).set_index(['DAY', 'HOUR']).unstack().reindex(['WEEKDAY', 'SATURDAY', 'SUNDAY'])
     for t, df in schedule_data.groupby(axis=1, level=0, sort=False):

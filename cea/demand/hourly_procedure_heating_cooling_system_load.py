@@ -2,6 +2,8 @@
 
 
 from __future__ import division
+from __future__ import absolute_import
+from __future__ import print_function
 import warnings
 import numpy as np
 from cea.demand import airconditioning_model, rc_model_SIA, control_heating_cooling_systems, \

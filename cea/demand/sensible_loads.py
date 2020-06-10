@@ -4,6 +4,8 @@ Sensible space heating and space cooling loads
 EN-13970
 """
 from __future__ import division
+from __future__ import absolute_import
+from __future__ import print_function
 import numpy as np
 from cea.demand import control_heating_cooling_systems, constants
 from cea.constants import HOURS_IN_YEAR, BOLTZMANN, KELVIN_OFFSET

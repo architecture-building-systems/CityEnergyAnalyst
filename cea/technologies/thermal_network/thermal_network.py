@@ -3,6 +3,7 @@ Hydraulic - thermal network
 """
 from __future__ import division
 from __future__ import print_function
+from __future__ import absolute_import
 
 import collections
 import math
@@ -1662,7 +1663,7 @@ def calc_kinematic_viscosity(temperature):
     :return: kinematic viscosity in m2/s
     """
     # check if list type, this can cause problems
-    if isinstance(temperature, (list,)):
+    if isinstance(temperature, list):
         temperature = np.array(temperature)
     return 2.652623e-8 * math.e ** (557.5447 * (temperature - 140) ** -1)
 

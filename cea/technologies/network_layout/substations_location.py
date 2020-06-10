@@ -4,6 +4,8 @@ it is estimated as the centroid of buildings.
 """
 
 from __future__ import division
+from __future__ import absolute_import
+from __future__ import print_function
 
 import pandas as pd
 from geopandas import GeoDataFrame as gdf

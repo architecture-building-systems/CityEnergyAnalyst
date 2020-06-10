@@ -2,6 +2,8 @@
 Provides the list of scripts known to the CEA - to be used by interfaces built on top of the CEA.
 """
 from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
 
 import os
 import cea

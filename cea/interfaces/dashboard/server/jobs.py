@@ -3,6 +3,7 @@ jobs: maintain a list of jobs to be simulated.
 """
 from __future__ import division
 from __future__ import print_function
+from __future__ import absolute_import
 
 import subprocess
 import psutil

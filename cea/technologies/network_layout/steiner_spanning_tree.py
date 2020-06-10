@@ -2,6 +2,8 @@
 This script calculates the minimum spanning tree of a shapefile network
 """
 from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import math
 import os
@@ -187,7 +189,7 @@ def add_loops_to_network(G, mst_non_directed, new_mst_nodes, mst_edges, type_mat
                                 added_a_loop = True
                             mst_edges.reset_index(inplace=True, drop=True)
     if not added_a_loop:
-        print 'No first degree loop added. Trying two nodes apart.'
+        print('No first degree loop added. Trying two nodes apart.')
         # Identify all NONE type nodes in the steiner tree
         for node_number, node_coords in zip(new_mst_nodes.index, new_mst_nodes['coordinates']):
             if new_mst_nodes['Type'][node_number] == 'NONE':
@@ -246,7 +248,7 @@ def add_loops_to_network(G, mst_non_directed, new_mst_nodes, mst_edges, type_mat
                                             added_a_loop = True
                                         mst_edges.reset_index(inplace=True, drop=True)
     if not added_a_loop:
-        print 'No loops added.'
+        print('No loops added.')
     return mst_edges, new_mst_nodes
 
 

@@ -4,6 +4,8 @@ This file imports the price details from the cost database as a class. This help
 of the corresponding values in individual files.
 """
 from __future__ import division
+from __future__ import absolute_import
+from __future__ import print_function
 
 import warnings
 

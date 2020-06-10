@@ -4,6 +4,7 @@ The /server api blueprint is used by cea-worker processes to manage jobs and fil
 
 from __future__ import print_function
 from __future__ import division
+from __future__ import absolute_import
 
 from flask import Blueprint, current_app
 from flask_restplus import Api, Resource

@@ -6,6 +6,7 @@ The cache object is passed to the `calc_graph` method and the plot is responsibl
 
 from __future__ import division
 from __future__ import print_function
+from __future__ import absolute_import
 
 import functools
 import hashlib

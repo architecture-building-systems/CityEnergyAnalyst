@@ -2,6 +2,8 @@
 Energyplus file reader
 """
 from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 import pandas as pd
 import math
 import cea.inputlocator
@@ -52,7 +54,7 @@ def epw_reader(weather_path):
         expected_date_index = get_date_range_hours_from_year(year)
         difference = expected_date_index.difference(epw_data.index)
         if len(difference):
-            print('Dates missing:', difference)
+            print(('Dates missing:', difference))
         raise Exception('Incorrect number of rows. Expected {}, got {}'.format(HOURS_IN_YEAR, len(epw_data)))
 
     epw_data['ratio_diffhout'] = epw_data['difhorrad_Whm2'] / epw_data['glohorrad_Whm2']

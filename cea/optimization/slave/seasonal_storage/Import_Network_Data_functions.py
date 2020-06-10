@@ -6,6 +6,9 @@ Import Network Data:
     Namely : Thermal (J+) and Solar Data (J+) 
             
 """
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 import pandas as pd
 import numpy as np
 from cea.constants import HOURS_IN_YEAR

@@ -4,6 +4,9 @@ Disconnected buildings
 This computes the close-to-optimal supply system for single buildings.
 
 """
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
 import cea.config
 import cea.inputlocator
 import pandas as pd
@@ -40,7 +43,7 @@ def disconnected_building_main(locator, total_demand, config, prices, lca):
                                                                             buildings_name_with_cooling,
                                                                             total_demand,
                                                                             config, prices, lca)
-    print "done."
+    print("done.")
 
 
 def main(config):

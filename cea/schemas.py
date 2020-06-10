@@ -6,6 +6,7 @@ parameter allows reading in schemas from ``schemas.yml`` files defined in plugin
 
 from __future__ import print_function
 from __future__ import division
+from __future__ import absolute_import
 
 import os
 import cPickle
@@ -172,8 +173,8 @@ def create_locator_method(lm, schema):
     def locator_method(self, *args, **kwargs):
         return os.path.join(self.scenario, file_path.format(**kwargs).replace("/", os.path.sep))
 
-    locator_method.func_name = lm
-    locator_method.func_doc = file_path
+    locator_method.__name__ = lm
+    locator_method.__doc__ = file_path
     return locator_method
 
 
@@ -192,11 +193,11 @@ class SchemaIo(object):
 
     def __str__(self):
         return "<{class_name}({lm}): {doc}>".format(class_name=self.__class__.__name__, lm=self.lm,
-                                                    doc=self.original_function.func_doc)
+                                                    doc=self.original_function.__doc__)
 
     def __repr__(self):
         return "<{class_name}({lm}): {doc}>".format(class_name=self.__class__.__name__, lm=self.lm,
-                                                    doc=self.original_function.func_doc)
+                                                    doc=self.original_function.__doc__)
 
     def __call__(self, *args, **kwargs):
         return self.original_function(self.locator, *args, **kwargs)
@@ -253,7 +254,7 @@ class SchemaIo(object):
         Note that schemas.yml specifies colors using names taken from
         :type: Dict[str, str]
         """
-        from plots.colors import color_to_rgb
+        from .plots.colors import color_to_rgb
 
         result = {}
         columns = self.schema["schema"]["columns"]
