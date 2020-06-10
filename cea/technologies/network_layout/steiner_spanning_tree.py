@@ -122,7 +122,7 @@ def calc_steiner_spanning_tree(crs_projected,
     if len(terminal_nodes_names) != (len(mst_nodes['Building'].unique()) - 1):
         raise ValueError('There was an error while populating the nodes fields. '
                          'One or more buildings could not be matched to nodes of the network. '
-                         'Try increasing the constant SNAP_TOLERANCE in cea/constants.py to try to fix this')
+                         'Try changing the constant SNAP_TOLERANCE in cea/constants.py to try to fix this')
 
     # POPULATE FIELDS IN EDGES
     mst_edges.loc[:, 'Type_mat'] = type_mat_default
