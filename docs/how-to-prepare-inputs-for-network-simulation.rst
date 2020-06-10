@@ -13,14 +13,14 @@ These files can be generated with the **Network Layout Tool** (cea>technologies>
 
 Example network
 ---------------
-.. image:: network_shapefiles.png
+.. image:: _static/network_shapefiles.png
     :align: center
     :width: 250
 
 
 Edges.shp
 ---------
-.. image:: edges_shapefile.png
+.. image:: _static/edges_shapefile.png
     :align: center
 
 - **Shape**: Polyline (Geometry Type)
@@ -30,7 +30,7 @@ Edges.shp
 
 Nodes.shp
 ---------
-.. image:: nodes_shapefile.png
+.. image:: _static/nodes_shapefile.png
     :align: center
 
 - **Shape**: Point (Geometry Type)
