@@ -10,8 +10,8 @@ The following file is used by these scripts: ``zone_helper``
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``FID``, "TODO"
-    ``geometry``, "TODO"
+    ``FID``, "Shapefile ID"
+    ``geometry``, "Shapefile POLYGON"
     
 
 
@@ -42,12 +42,11 @@ The following file is used by these scripts: ``radiation``, ``schedule_maker``
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``floors_ag``, "Number of floors above ground (incl. ground floor)"
-    ``floors_bg``, "Number of floors below ground (basement, etc)"
-    ``geometry``, "Geometry"
-    ``height_ag``, "Height above ground (incl. ground floor)"
-    ``height_bg``, "Height below ground (basement, etc)"
+    ``floors_ag``, "Number of floors above ground (incl. ground floor, Minimum one floor is needed)"
+    ``geometry``, "Shapefile POLYGON"
+    ``height_ag``, "Height above ground (incl. ground floor, Minimum one floor is needed)"
     ``Name``, "Unique building ID. It must start with a letter."
+    ``REFERENCE``, "Reference to data (if any)"
     
 
 
@@ -126,11 +125,12 @@ The following file is used by these scripts: ``archetypes_mapper``, ``decentrali
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``floors_ag``, "Number of floors above ground (incl. ground floor)"
-    ``floors_bg``, "Number of floors below ground (basement, etc)"
-    ``geometry``, "Geometry"
-    ``height_ag``, " Height above ground (incl. ground floor)"
-    ``height_bg``, "Height below ground (basement, etc)"
+    ``floors_ag``, "Number of floors above ground (incl. ground floor, minimum one floor is needed)"
+    ``floors_bg``, "Number of floors below ground (basement)"
+    ``geometry``, "Shapefile POLYGON"
+    ``height_ag``, "Height above ground (incl. ground floor, minimum one floor is needed)"
+    ``height_bg``, "Height below ground (basement)"
     ``Name``, "Unique building ID. It must start with a letter."
+    ``REFERENCE``, "Reference to data (if any)"
     
 
