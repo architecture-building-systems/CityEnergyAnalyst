@@ -110,12 +110,16 @@ class Scenarios(Resource):
             config.project = project
 
         scenario_name = api.payload.get('scenario_name')
-        new_scenario_path = os.path.join(config.project, scenario_name)
-        # Make sure that the scenario folder exists
-        try:
-            os.makedirs(new_scenario_path)
-        except OSError as e:
-            print(e.message)
+        if scenario_name is not None:
+            new_scenario_path = os.path.join(config.project, str(scenario_name).strip())
+            # Make sure that the scenario folder exists
+            try:
+                os.makedirs(new_scenario_path)
+            except OSError as e:
+                trace = traceback.format_exc()
+                return {'message': e.message, 'trace': trace}, 500
+        else:
+            return {'message': 'scenario_name parameter cannot be empty'}, 500
 
         locator = cea.inputlocator.InputLocator(new_scenario_path)
 
