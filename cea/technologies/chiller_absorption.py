@@ -121,7 +121,7 @@ def calc_operating_conditions(absorption_chiller, input_conditions):
     :param input_conditions:
     :type input_conditions: dict
     :return: a dict with operating conditions of the chilled water, cooling water and hot water loops in a absorption
-    chiller.
+             chiller.
 
     To improve speed, the system of equations was solved using sympy for the output variable ``q_hw_kW`` which is
     then used to compute the remaining output variables. The following code was used to create the expression to

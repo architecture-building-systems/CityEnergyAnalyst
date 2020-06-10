@@ -839,10 +839,12 @@ class ScenarioNameParameter(ChoiceParameter):
         pass
 
     def encode(self, value):
-        # FIXME: Should raise exception instead of choosing a different scenario?
         """Make sure the scenario folder exists"""
-        if value not in self._choices:
-            return self._choices[0]
+        if value == '':
+            raise ValueError('scenario-name cannot be empty')
+        elif self._choices and value not in self._choices:
+            print('WARNING: Scenario "{value}" does not exist. Valid choices: {choices}'
+                  .format(value=value, choices=','.join(self._choices)))
         return str(value)
 
     def decode(self, value):
