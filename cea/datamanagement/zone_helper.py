@@ -264,14 +264,51 @@ def polygon_to_zone(buildings_floors, buildings_floors_below_ground, buildings_h
     lat = poly.geometry[0].centroid.coords.xy[1][0]
     # get footprints of all the district
     poly = ox.footprints.create_footprints_gdf(polygon=poly['geometry'].values[0])
+
+    # clean geometries
+    poly = clean_geometries(poly)
+
     # clean attributes of height, name and number of floors
     result, result_allfields = clean_attributes(poly, buildings_height, buildings_floors, buildings_height_below_ground,
-                              buildings_floors_below_ground, key="B")
+                                                buildings_floors_below_ground, key="B")
     result = result.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
+
     # save to shapefile
     result.to_file(shapefile_out_path)
 
     return result_allfields
+
+
+def clean_geometries(gdf):
+    """
+    Takes in a GeoPandas DataFrame and making sure all geometries are of type 'Polygon' and remove any entries that do
+    not have any geometries
+    :param gdf: GeoPandas DataFrame containing geometries
+    :return:
+    """
+    def flatten_geometries(geometry):
+        """
+        Flatten polygon collections into a single polygon by using their union
+        :param geometry: Type of Shapely geometry
+        :return:
+        """
+        from shapely.ops import cascaded_union
+        if geometry.type in ['GeometryCollection', 'MultiPoint', 'MultiLineString', 'MultiPolygon']:
+            polygons = [poly for poly in geometry]
+            if not polygons:
+                return None
+            else:
+                return cascaded_union(polygons)
+        elif geometry.type != 'Polygon':
+            print("Discarding geometry of type: {geometry_type}".format(geometry_type=geometry.type))
+            return None
+        else:
+            return geometry
+
+    gdf.geometry = gdf.geometry.apply(flatten_geometries)
+    non_empty_geometries = gdf['geometry'].notnull()
+    cleaned_gdf = gdf[non_empty_geometries]
+    return cleaned_gdf
 
 
 def main(config):
