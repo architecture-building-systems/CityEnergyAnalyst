@@ -311,12 +311,5 @@ class ScenarioImage(Resource):
 
 
 def list_scenario_names_for_project(config):
-    try:
-        return config.get_parameter('general:scenario-name')._choices
-    except WindowsError:
-        # Return empty list if unable to find project
-        return []
-    except Exception as e:
-        raise e
-
+    return config.get_parameter('general:scenario-name')._choices
 
