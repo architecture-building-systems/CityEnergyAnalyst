@@ -1891,10 +1891,11 @@ get_building_internal:
         values: '{0.0...n}'
         min: 0.0
       Ev_kWveh:
-        description: Peak specific cooling load due to electromobility
+        description: Peak capacity of electric battery per vehicle
         type: string
-        unit: '[kWveh]'
+        unit: '[kW/veh]'
         values: '{0.0...n}'
+        min: 0.0
       Qcpro_Wm2:
         description: Peak specific process cooling load
         type: float
@@ -5681,101 +5682,125 @@ get_database_standard_schedules_use:
     ELECTROMOBILITY:
       columns:
         1:
-          max: 1.0
-          min: 0.0
-          type: float
+          description: Average number of electric vehicles in this hour
+          max: 10000
+          min: 0
+          type: integer
         2:
-          max: 1.0
-          min: 0.0
-          type: float
+          description: Average number of electric vehicles in this hour
+          max: 10000
+          min: 0
+          type: integer
         3:
-          max: 1.0
-          min: 0.0
-          type: float
+          description: Average number of electric vehicles in this hour
+          max: 10000
+          min: 0
+          type: integer
         4:
-          max: 1.0
-          min: 0.0
-          type: float
+          description: Average number of electric vehicles in this hour
+          max: 10000
+          min: 0
+          type: integer
         5:
-          max: 1.0
-          min: 0.0
-          type: float
+          description: Average number of electric vehicles in this hour
+          max: 10000
+          min: 0
+          type: integer
         6:
-          max: 1.0
-          min: 0.0
-          type: float
+          description: Average number of electric vehicles in this hour
+          max: 10000
+          min: 0
+          type: integer
         7:
-          max: 1.0
-          min: 0.0
-          type: float
+          description: Average number of electric vehicles in this hour
+          max: 10000
+          min: 0
+          type: integer
         8:
-          max: 1.0
-          min: 0.0
-          type: float
+          description: Average number of electric vehicles in this hour
+          max: 10000
+          min: 0
+          type: integer
         9:
-          max: 1.0
-          min: 0.0
-          type: float
+          description: Average number of electric vehicles in this hour
+          max: 10000
+          min: 0
+          type: integer
         10:
-          max: 1.0
-          min: 0.0
-          type: float
+          description: Average number of electric vehicles in this hour
+          max: 10000
+          min: 0
+          type: integer
         11:
-          max: 1.0
-          min: 0.0
-          type: float
+          description: Average number of electric vehicles in this hour
+          max: 10000
+          min: 0
+          type: integer
         12:
-          max: 1.0
-          min: 0.0
-          type: float
+          description: Average number of electric vehicles in this hour
+          max: 10000
+          min: 0
+          type: integer
         13:
-          max: 1.0
-          min: 0.0
-          type: float
+          description: Average number of electric vehicles in this hour
+          max: 10000
+          min: 0
+          type: integer
         14:
-          max: 1.0
-          min: 0.0
-          type: float
+          description: Average number of electric vehicles in this hour
+          max: 10000
+          min: 0
+          type: integer
         15:
-          max: 1.0
-          min: 0.0
-          type: float
+          description: Average number of electric vehicles in this hour
+          max: 10000
+          min: 0
+          type: integer
         16:
-          max: 1.0
-          min: 0.0
-          type: float
+          description: Average number of electric vehicles in this hour
+          max: 10000
+          min: 0
+          type: integer
         17:
-          max: 1.0
-          min: 0.0
-          type: float
+          description: Average number of electric vehicles in this hour
+          max: 10000
+          min: 0
+          type: integer
         18:
-          max: 1.0
-          min: 0.0
-          type: float
+          description: Average number of electric vehicles in this hour
+          max: 10000
+          min: 0
+          type: integer
         19:
-          max: 1.0
-          min: 0.0
-          type: float
+          description: Average number of electric vehicles in this hour
+          max: 10000
+          min: 0
+          type: integer
         20:
-          max: 1.0
-          min: 0.0
-          type: float
+          description: Average number of electric vehicles in this hour
+          max: 10000
+          min: 0
+          type: integer
         21:
-          max: 1.0
-          min: 0.0
-          type: float
+          description: Average number of electric vehicles in this hour
+          max: 10000
+          min: 0
+          type: integer
         22:
-          max: 1.0
-          min: 0.0
-          type: float
+          description: Average number of electric vehicles in this hour
+          max: 10000
+          min: 0
+          type: integer
         23:
-          max: 1.0
-          min: 0.0
-          type: float
+          description: Average number of electric vehicles in this hour
+          max: 10000
+          min: 0
+          type: integer
         24:
-          max: 1.0
-          min: 0.0
-          type: float
+          description: Average number of electric vehicles in this hour
+          max: 10000
+          min: 0
+          type: integer
         DAY:
           choice:
             values:
@@ -6969,9 +6994,9 @@ get_database_use_types_properties:
           values: '{0.0...n}'
           min: 0.0
         Ev_kWveh:
-          description: Peak specific cooling load due to electromobility
+          description: Peak capacity of electrical battery per vehicle
           type: float
-          unit: '[W/m2]'
+          unit: '[kW/veh]'
           values: '{0.0...n}'
           min: 0.0
         Occ_m2pax:
