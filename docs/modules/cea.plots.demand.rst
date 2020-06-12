@@ -97,14 +97,6 @@ cea.plots.demand.load\_duration\_curve\_supply module
     :undoc-members:
     :show-inheritance:
 
-cea.plots.demand.main module
-----------------------------
-
-.. automodule:: cea.plots.demand.main
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 cea.plots.demand.peak\_load module
 ----------------------------------
 
