@@ -6950,8 +6950,7 @@ get_database_use_types_properties:
           description: Setback point of temperature for heating system
           type: float
           unit: '[C]'
-          values: '{0.0...n}'
-          min: 0.0
+          values: '{n...n}'
         Ve_lpspax:
           description: Indoor quality requirements of indoor ventilation per person
           type: float
