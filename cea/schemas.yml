@@ -3059,15 +3059,13 @@ get_database_conversion_systems:
             evaporator side '
           type: float
           unit: '[-]'
-          values: '{0.0...n}'
-          min: 0.0
+          values: '{n...n}'
         a_g:
           description: parameter in the characteristic equations to calculate the
             generator side
           type: float
           unit: '[-]'
-          values: '{0.0...n}'
-          min: 0.0
+          values: '{n...n}'
         assumption:
           description: items made by assumptions in this technology
           nullable: true
@@ -3157,15 +3155,13 @@ get_database_conversion_systems:
             evaporator side '
           type: float
           unit: '[-]'
-          values: '{0.0...n}'
-          min: 0.0
+          values: '{n...n}'
         r_g:
           description: parameter in the characteristic equations to calculate the
             generator side
           type: float
           unit: '[-]'
-          values: '{0.0...n}'
-          min: 0.0
+          values: '{n...n}'
         s_e:
           description: 'parameter in the characteristic equations to calculate the
             evaporator side '
@@ -3896,8 +3892,7 @@ get_database_conversion_systems:
             + d*ln(x) + e*x*ln*(x)  '
           type: float
           unit: '[-]'
-          values: '{0.0...n}'
-          min: 0.0
+          values: '{n...n}'
         a_p:
           description: 'parameter in the pressure loss function, f(x) = a_p + b_p*x^c_p
             + d_p*ln(x) + e_p*x*ln*(x),  where x is the capacity mass flow rate [W/K] '
@@ -3975,8 +3970,7 @@ get_database_conversion_systems:
             + d_p*ln(x) + e_p*x*ln*(x),  where x is the capacity mass flow rate [W/K] '
           type: float
           unit: '[-]'
-          values: '{0.0...n}'
-          min: 0.0
+          values: '{n...n}'
         e:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
             + d*ln(x) + e*x*ln*(x)  '
@@ -4085,8 +4079,7 @@ get_database_conversion_systems:
             + d*ln(x) + e*x*ln*(x), where x is the capacity '
           type: float
           unit: '[-]'
-          values: '{0.0...n}'
-          min: 0.0
+          values: '{n...n}'
         unit:
           description: unit of the min/max capacity
           type: string
@@ -4130,36 +4123,39 @@ get_database_conversion_systems:
             a3*x**3 + a4*x**4, where  x is the relative air mass
           type: float
           unit: '[-]'
-          values: '{0.0...n}'
-          min: 0.0
+          values: '{n...n}'
         PV_a1:
           description: parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  +
             a3*x**3 + a4*x**4, where  x is the relative air mass
           type: float
           unit: '[-]'
-          values: '{0.0...n}'
-          min: 0.0
+          values: '{-0.1...0.1}'
+          min: -0.1
+          max: 0.1
         PV_a2:
           description: parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  +
             a3*x**3 + a4*x**4, where  x is the relative air mass
           type: float
           unit: '[-]'
-          values: '{0.0...n}'
-          min: 0.0
+          values: '{-0.1...0.1}'
+          min: -0.1
+          max: 0.1
         PV_a3:
           description: parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  +
             a3*x**3 + a4*x**4, where  x is the relative air mass
           type: float
           unit: '[-]'
-          values: '{0.0...n}'
-          min: 0.0
+          values: '{-0.1...0.1}'
+          min: -0.1
+          max: 0.1
         PV_a4:
           description: parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  +
             a3*x**3 + a4*x**4, where  x is the relative air mass
           type: float
           unit: '[-]'
-          values: '{0.0...n}'
-          min: 0.0
+          values: '{-0.1...0.1}'
+          min: -0.1
+          max: 0.1
         PV_n:
           description: nominal efficiency
           type: float
@@ -4758,8 +4754,7 @@ get_database_conversion_systems:
             + d*ln(x) + e*x*ln*(x), where x is the capacity '
           type: float
           unit: '[-]'
-          values: '{0.0...n}'
-          min: 0.0
+          values: '{n...n}'
         unit:
           description: unit of the min/max capacity
           type: string
@@ -6953,8 +6948,7 @@ get_database_use_types_properties:
           description: Setback point of temperature for heating system
           type: float
           unit: '[C]'
-          values: '{0.0...n}'
-          min: 0.0
+          values: '{n...n}'
         Ve_lpspax:
           description: Indoor quality requirements of indoor ventilation per person
           type: float
