@@ -4123,9 +4123,7 @@ get_database_conversion_systems:
             a3*x**3 + a4*x**4, where  x is the relative air mass
           type: float
           unit: '[-]'
-          values: '{-0.1...0.1}'
-          min: -0.1
-          max: 0.1
+          values: '{n...n}'
         PV_a1:
           description: parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  +
             a3*x**3 + a4*x**4, where  x is the relative air mass
