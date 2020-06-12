@@ -14,6 +14,7 @@ import warnings
 import numpy as np
 import pandas as pd
 
+from typing import List, Tuple
 import cea.config
 import cea.inputlocator
 from cea import InvalidOccupancyNameException
@@ -281,21 +282,23 @@ def calc_comparison(array_second, array_max):
             array_max = array_second
     return array_max
 
+
 def correct_archetype_areas(prop_architecture_df, architecture_DB, list_uses):
     """
     Corrects the heated area 'Hs_ag' and 'Hs_bg' for buildings with multiple uses.
 
     :var prop_architecture_df: DataFrame containing each building's occupancy, construction and renovation data as
-        well as the architectural properties obtained from the archetypes.
+         well as the architectural properties obtained from the archetypes.
     :type prop_architecture_df: DataFrame
     :var architecture_DB: architecture database for each archetype
     :type architecture_DB: DataFrame
     :var list_uses: list of all occupancy types in the project
     :type list_uses: list[str]
 
-    :return Hs_ag_list, Hs_bg_list, Ns_list, Es_list: the corrected values for 'Hs_ag', 'Hs_bg', 'Ns' and 'Es' for each
-    building
-    :type Hs_ag_list, Hs_bg_list, Ns_list, Es_list:: list[float]
+    :return: Hs_ag_list, Hs_bg_list, Ns_list, Es_list: the corrected values for 'Hs_ag', 'Hs_bg', 'Ns' and 'Es' for each
+             building
+
+    :rtype Tuple[List[float], List[float], List[float], List[float]]
     """
 
     indexed_DB = architecture_DB.set_index('Code')
