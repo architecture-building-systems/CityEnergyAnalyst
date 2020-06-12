@@ -1,3 +1,4 @@
+- 2020-06-12 - 3.3.0 - #2771 Update range values
 - 2020-06-12 - 3.3.0 - #2766 Return empty list if unable to find project
 - 2020-06-12 - 3.3.0 - #2768 Fixing electro-mobility documentation
 - 2020-06-12 - 3.3.0 - #2762 2761 Fix network layout error
