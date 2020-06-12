@@ -48,7 +48,7 @@ digraph data_initializer {
         fontsize = 20;
         rank=same;
         label="technology/archetypes/schedules";
-        get_database_standard_schedules_use[label="{use}.csv"];
+        get_database_standard_schedules_use[label="RESTAURANT.csv"];
     }
     subgraph cluster_4_out {
         style = filled;
