@@ -5685,122 +5685,122 @@ get_database_standard_schedules_use:
           description: Average number of electric vehicles in this hour
           max: 10000
           min: 0
-          type: integer
+          type: int
         2:
           description: Average number of electric vehicles in this hour
           max: 10000
           min: 0
-          type: integer
+          type: int
         3:
           description: Average number of electric vehicles in this hour
           max: 10000
           min: 0
-          type: integer
+          type: int
         4:
           description: Average number of electric vehicles in this hour
           max: 10000
           min: 0
-          type: integer
+          type: int
         5:
           description: Average number of electric vehicles in this hour
           max: 10000
           min: 0
-          type: integer
+          type: int
         6:
           description: Average number of electric vehicles in this hour
           max: 10000
           min: 0
-          type: integer
+          type: int
         7:
           description: Average number of electric vehicles in this hour
           max: 10000
           min: 0
-          type: integer
+          type: int
         8:
           description: Average number of electric vehicles in this hour
           max: 10000
           min: 0
-          type: integer
+          type: int
         9:
           description: Average number of electric vehicles in this hour
           max: 10000
           min: 0
-          type: integer
+          type: int
         10:
           description: Average number of electric vehicles in this hour
           max: 10000
           min: 0
-          type: integer
+          type: int
         11:
           description: Average number of electric vehicles in this hour
           max: 10000
           min: 0
-          type: integer
+          type: int
         12:
           description: Average number of electric vehicles in this hour
           max: 10000
           min: 0
-          type: integer
+          type: int
         13:
           description: Average number of electric vehicles in this hour
           max: 10000
           min: 0
-          type: integer
+          type: int
         14:
           description: Average number of electric vehicles in this hour
           max: 10000
           min: 0
-          type: integer
+          type: int
         15:
           description: Average number of electric vehicles in this hour
           max: 10000
           min: 0
-          type: integer
+          type: int
         16:
           description: Average number of electric vehicles in this hour
           max: 10000
           min: 0
-          type: integer
+          type: int
         17:
           description: Average number of electric vehicles in this hour
           max: 10000
           min: 0
-          type: integer
+          type: int
         18:
           description: Average number of electric vehicles in this hour
           max: 10000
           min: 0
-          type: integer
+          type: int
         19:
           description: Average number of electric vehicles in this hour
           max: 10000
           min: 0
-          type: integer
+          type: int
         20:
           description: Average number of electric vehicles in this hour
           max: 10000
           min: 0
-          type: integer
+          type: int
         21:
           description: Average number of electric vehicles in this hour
           max: 10000
           min: 0
-          type: integer
+          type: int
         22:
           description: Average number of electric vehicles in this hour
           max: 10000
           min: 0
-          type: integer
+          type: int
         23:
           description: Average number of electric vehicles in this hour
           max: 10000
           min: 0
-          type: integer
+          type: int
         24:
           description: Average number of electric vehicles in this hour
           max: 10000
           min: 0
-          type: integer
+          type: int
         DAY:
           choice:
             values:
