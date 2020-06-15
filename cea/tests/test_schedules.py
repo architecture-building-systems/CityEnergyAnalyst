@@ -89,10 +89,10 @@ def calculate_mixed_use_archetype_values_results(locator):
     config file."""
 
     occ_densities = pd.read_excel(locator.get_database_use_types_properties(), 'INTERNAL_LOADS').set_index('code')
-    office_occ = float(occ_densities.ix['OFFICE', 'Occ_m2pax'])
-    lab_occ = float(occ_densities.ix['LAB', 'Occ_m2pax'])
-    indus_occ = float(occ_densities.ix['INDUSTRIAL', 'Occ_m2pax'])
-    server_occ = float(occ_densities.ix['SERVERROOM', 'Occ_m2pax'])
+    office_occ = float(occ_densities.loc['OFFICE', 'Occ_m2pax'])
+    lab_occ = float(occ_densities.loc['LAB', 'Occ_m2pax'])
+    indus_occ = float(occ_densities.loc['INDUSTRIAL', 'Occ_m2pax'])
+    server_occ = float(occ_densities.loc['SERVERROOM', 'Occ_m2pax'])
     calculated_results = calculate_average_multiuse(
         fields=['X_ghpax', 'El_Wm2'],
         properties_df=pd.DataFrame(data=[['B1011', 'OFFICE', 0.5, 'SERVERROOM', 0.5, 'NONE', 0.0, 0.0, 0.0, 0.0], ['B1012', 'OFFICE', 0.6, 'LAB', 0.2, 'INDUSTRIAL', 0.2, 0.0, 0.0, 0.0]],
