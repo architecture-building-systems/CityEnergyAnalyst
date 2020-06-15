@@ -615,5 +615,5 @@ def get_hours(bpr):
     hour_start_simulation = hour_start_simulation - HOURS_PRE_CONDITIONING
 
     t = hour_start_simulation
-    for i in xrange(hours_simulation_total):
+    for i in range(hours_simulation_total):
         yield (t + i) % HOURS_IN_YEAR
