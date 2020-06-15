@@ -1045,6 +1045,10 @@ class CoordinateListParameter(ListParameter):
 
 
 def get_scenarios_list(project_path):
+    # return empty list if project path does not exist
+    if not os.path.exists(project_path):
+        return []
+
     def is_valid_scenario(project_path, folder_name):
         folder_path = os.path.join(project_path, folder_name)
         # a scenario must be a valid path

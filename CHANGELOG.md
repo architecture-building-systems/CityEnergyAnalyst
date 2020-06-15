@@ -1,3 +1,16 @@
+- 2020-06-12 - 3.3.0 - #2771 Update range values
+- 2020-06-12 - 3.3.0 - #2766 Return empty list if unable to find project
+- 2020-06-12 - 3.3.0 - #2768 Fixing electro-mobility documentation
+- 2020-06-12 - 3.3.0 - #2762 2761 Fix network layout error
+- 2020-06-10 - 3.3.0 - #2763 2699 guide for modifying scripts
+- 2020-06-10 - 3.3.0 - #2754 Prevent scenario name from being empty string
+- 2020-06-04 - 3.3.0 - #2733 #2732 - VCC Partial load COP
+- 2020-05-29 - 3.3.0 - #2748 2667 clean up unnamed in schemas yml
+- 2020-05-27 - 3.3.0 - #2731 CEA plugin architecture
+- 2020-05-25 - 3.3.0 - #2741 2739 Allow running of demand when selecting buildings
+- 2020-05-21 - 3.3.0 - #2740 Run code coverage on CEA test
+- 2020-05-15 - 3.3.0 - #2737 Avoid setting index for empty building_capacities
+- 2020-05-15 - 3.3.0 - #2736 release-3.3.0
 - 2020-05-15 - 3.2.0 - #2735 cea test --workflow slow now runs through
 - 2020-05-15 - 3.2.0 - #2723 Remove inputs.yaml
 - 2020-05-15 - 3.2.0 - #2728 Remove "Unnamed: 0" columns in output files of optimization, decentralized and mulit-criteria-analysis scripts
