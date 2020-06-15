@@ -108,7 +108,7 @@ def calc_score(static_params, dynamic_params):
         # Changes and saves variables related to the architecture
         df_arch = dbf_to_dataframe(locator.get_building_architecture())
         number_of_buildings = df_arch.shape[0]
-        Rand_it = np.random.randint(low=-150, high=150, size=number_of_buildings) / 1000
+        Rand_it = np.random.randint(low=-30, high=30, size=number_of_buildings) / 100
         df_arch.Es = Es*(1+Rand_it)
         df_arch.Ns = Ns*(1+Rand_it)
         df_arch.Hs_ag = Hs_ag*(1+Rand_it)
@@ -153,18 +153,40 @@ def calc_score(static_params, dynamic_params):
 
 
 def calibration(config, list_scenarios):
-    max_evals = 1000
+    max_evals = 300
 
     #  define a search space
+    # DYNAMIC_PARAMETERS = OrderedDict([('SEED', scope.int(hp.uniform('SEED', 0.0, 100.0))),
+    #                                   ('Hs_ag', hp.uniform('Hs_ag', 0.1, 0.4)),
+    #                                   ('Tcs_set_C', hp.uniform('Tcs_set_C', 23, 27)),
+    #                                   ('Es', hp.uniform('Es', 0.4, 0.8)),
+    #                                   ('Ns', hp.uniform('Ns', 0.4, 0.8)),
+    #                                   ('Occ_m2pax', hp.uniform('Occ_m2pax', 35.0, 55.0)),
+    #                                   ('Vww_lpdpax', hp.uniform('Vww_lpdpax', 25.0, 35.0)),
+    #                                   ('Ea_Wm2', hp.uniform('Ea_Wm2', 1.0, 4.0)),
+    #                                   ('El_Wm2', hp.uniform('El_Wm2', 1.0, 4.0))
+    #                                   ])
+
+    # DYNAMIC_PARAMETERS = OrderedDict([('SEED', scope.int(hp.uniform('SEED', 0.0, 100.0))),
+    #                                   ('Hs_ag', hp.uniform('Hs_ag', 0.175, 0.176)),
+    #                                   ('Tcs_set_C', hp.uniform('Tcs_set_C', 24, 24.1)),
+    #                                   ('Es', hp.uniform('Es', 0.5, 0.51)),
+    #                                   ('Ns', hp.uniform('Ns', 0.5, 0.51)),
+    #                                   ('Occ_m2pax', hp.uniform('Occ_m2pax', 40.0, 40.1)),
+    #                                   ('Vww_lpdpax', hp.uniform('Vww_lpdpax', 27.5, 27.6)),
+    #                                   ('Ea_Wm2', hp.uniform('Ea_Wm2', 1.75, 1.76)),
+    #                                   ('El_Wm2', hp.uniform('El_Wm2', 1.75, 1.76))
+    #                                   ])
+
     DYNAMIC_PARAMETERS = OrderedDict([('SEED', scope.int(hp.uniform('SEED', 0.0, 100.0))),
-                                      ('Hs_ag', hp.uniform('Hs_ag', 0.1, 0.4)),
-                                      ('Tcs_set_C', hp.uniform('Tcs_set_C', 23, 27)),
-                                      ('Es', hp.uniform('Es', 0.4, 0.8)),
-                                      ('Ns', hp.uniform('Ns', 0.4, 0.8)),
-                                      ('Occ_m2pax', hp.uniform('Occ_m2pax', 35.0, 55.0)),
-                                      ('Vww_lpdpax', hp.uniform('Vww_lpdpax', 25.0, 35.0)),
-                                      ('Ea_Wm2', hp.uniform('Ea_Wm2', 1.0, 4.0)),
-                                      ('El_Wm2', hp.uniform('El_Wm2', 1.0, 4.0))
+                                      ('Hs_ag', hp.uniform('Hs_ag', 0.1, 0.25)),
+                                      ('Tcs_set_C', hp.uniform('Tcs_set_C', 24, 26)),
+                                      ('Es', hp.uniform('Es', 0.4, 0.6)),
+                                      ('Ns', hp.uniform('Ns', 0.4, 0.6)),
+                                      ('Occ_m2pax', hp.uniform('Occ_m2pax', 35.0, 45.0)),
+                                      ('Vww_lpdpax', hp.uniform('Vww_lpdpax', 25.0, 30.0)),
+                                      ('Ea_Wm2', hp.uniform('Ea_Wm2', 1, 2.5)),
+                                      ('El_Wm2', hp.uniform('El_Wm2', 1, 2.5))
                                       ])
     STATIC_PARAMS = {'scenario_list': list_scenarios, 'config': config}
 
