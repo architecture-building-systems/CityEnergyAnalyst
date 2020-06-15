@@ -7,7 +7,8 @@ from __future__ import absolute_import
 
 import os
 
-import osmnx as ox
+import osmnx
+import osmnx.utils_graph
 from geopandas import GeoDataFrame as Gdf
 
 import cea.config
@@ -48,7 +49,7 @@ def geometry_extractor_osm(locator, config):
     extra_border = 0.0010 # adding extra 150m (in degrees equivalent) to avoid errors of no data
 
     #get the bounding box coordinates
-    if list_of_bounding_box == []:
+    if not list_of_bounding_box:
         # the list is empty, we then revert to get the bounding box for the district
         assert os.path.exists(
             locator.get_surroundings_geometry()), 'Get surroundings geometry file first or the coordinates of the area where to extract the streets from in the next format: lon_min, lat_min, lon_max, lat_max: %s'
@@ -65,14 +66,14 @@ def geometry_extractor_osm(locator, config):
         lat_min = list_of_bounding_box[1]-extra_border
         lon_max = list_of_bounding_box[2]+extra_border
         lat_max = list_of_bounding_box[3]+extra_border
-    elif len(list_of_bounding_box) != 4:
+    else:
         raise ValueError(
             "Please indicate the coordinates of the area where to extract the streets from in the next format: lon_min, lat_min, lon_max, lat_max")
 
-    #get and clean the streets
-    G = ox.graph_from_bbox(north=lat_max, south=lat_min, east=lon_max, west=lon_min,
-                           network_type=type_of_streets)
-    data = ox.save_load.graph_to_gdfs(G, nodes=False, edges=True, node_geometry=False, fill_edge_geometry=True)
+    # get and clean the streets
+    G = osmnx.graph_from_bbox(north=lat_max, south=lat_min, east=lon_max, west=lon_min,
+                              network_type=type_of_streets)
+    data = osmnx.utils_graph.graph_to_gdfs(G, nodes=False, edges=True, node_geometry=False, fill_edge_geometry=True)
 
     #project coordinate system
     data = data.to_crs(get_projected_coordinate_system(float(lat_min), float(lon_min)))

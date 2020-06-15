@@ -264,7 +264,7 @@ def polygon_to_zone(buildings_floors, buildings_floors_below_ground, buildings_h
     lon = poly.geometry[0].centroid.coords.xy[0][0]
     lat = poly.geometry[0].centroid.coords.xy[1][0]
     # get footprints of all the district
-    poly = ox.footprints.create_footprints_gdf(polygon=poly['geometry'].values[0])
+    poly = ox.footprints.footprints_from_polygon(polygon=poly['geometry'].values[0])
     # clean attributes of height, name and number of floors
     result, result_allfields = clean_attributes(poly, buildings_height, buildings_floors, buildings_height_below_ground,
                               buildings_floors_below_ground, key="B")
