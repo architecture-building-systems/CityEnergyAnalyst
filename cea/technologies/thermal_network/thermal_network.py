@@ -198,7 +198,7 @@ class ThermalNetwork(object):
 
         """
 
-        t0 = time.clock()
+        t0 = time.perf_counter()
 
         # import shapefiles containing the network's edges and nodes
         network_edges_df = gpd.read_file(
@@ -285,7 +285,7 @@ class ThermalNetwork(object):
             raise ValueError('Please erase ', (plant_counter - number_of_plants),
                              ' end node(s) that are neither buildings nor plants.')
 
-        print(time.clock() - t0, "seconds process time for Network Summary\n")
+        print(time.perf_counter() - t0, "seconds process time for Network Summary\n")
 
         if self.load_max_edge_flowrate_from_previous_run:
             self.edge_node_df = pd.read_csv(

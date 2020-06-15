@@ -61,7 +61,7 @@ def calc_PV(locator, config, latitude, longitude, weather_data, datetime_local, 
 
     """
 
-    t0 = time.clock()
+    t0 = time.perf_counter()
     radiation_path = locator.get_radiation_building_sensors(building_name)
     metadata_csv_path = locator.get_radiation_metadata(building_name)
 
@@ -100,7 +100,7 @@ def calc_PV(locator, config, latitude, longitude, weather_data, datetime_local, 
                                     index_label='SURFACE',
                                     float_format='%.2f')  # print selected metadata of the selected sensors
 
-        print(building_name, 'done - time elapsed: %.2f seconds' % (time.clock() - t0))
+        print(building_name, 'done - time elapsed: %.2f seconds' % (time.perf_counter() - t0))
     else:  # This loop is activated when a building has not sufficient solar potential
         final = pd.DataFrame(
             {'Date': datetime_local, 'PV_walls_north_E_kWh': 0, 'PV_walls_north_m2': 0, 'PV_walls_south_E_kWh': 0,

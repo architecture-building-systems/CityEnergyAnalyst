@@ -60,7 +60,7 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
     best configuration (Cost, CO2, Primary Energy)
     """
 
-    t0 = time.clock()
+    t0 = time.perf_counter()
     supply_systems = SupplySystemsDatabase(locator)
 
     n = len(building_names)
@@ -73,7 +73,7 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
         repeat(prices, n),
         repeat(total_demand, n))
 
-    print(time.clock() - t0, "seconds process time for the decentralized Building Routine \n")
+    print(time.perf_counter() - t0, "seconds process time for the decentralized Building Routine \n")
 
 
 def disconnected_cooling_for_building(building_name, supply_systems, lca, locator, prices, total_demand):

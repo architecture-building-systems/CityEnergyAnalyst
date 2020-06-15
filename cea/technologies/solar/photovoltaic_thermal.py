@@ -66,7 +66,7 @@ def calc_PVT(locator, config, latitude, longitude, weather_data, date_local, bui
     :return: Building_PVT.csv with solar collectors heat generation potential of each building, Building_PVT_sensors.csv
              with sensor data of each PVT panel.
     """
-    t0 = time.clock()
+    t0 = time.perf_counter()
 
     radiation_json_path = locator.get_radiation_building_sensors(building_name)
     metadata_csv_path = locator.get_radiation_metadata(building_name)
@@ -111,7 +111,7 @@ def calc_PVT(locator, config, latitude, longitude, weather_data, date_local, bui
                                     index_label='SURFACE',
                                     float_format='%.2f')  # print selected metadata of the selected sensors
 
-        print('Building', building_name, 'done - time elapsed:', (time.clock() - t0), ' seconds')
+        print('Building', building_name, 'done - time elapsed:', (time.perf_counter() - t0), ' seconds')
 
     else:  # This block is activated when a building has not sufficient solar potential
         Final = pd.DataFrame(

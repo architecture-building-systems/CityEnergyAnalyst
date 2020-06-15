@@ -67,7 +67,7 @@ def demand_calculation(locator, config):
     """
 
     # INITIALIZE TIMER
-    t0 = time.clock()
+    t0 = time.perf_counter()
 
     # LOCAL VARIABLES
     building_names = config.demand.buildings or locator.get_zone_building_names()
@@ -128,7 +128,7 @@ def demand_calculation(locator, config):
     # WRITE TOTAL YEARLY VALUES
     writer_totals = demand_writers.YearlyDemandWriter(loads_output, massflows_output, temperatures_output)
     totals, time_series = writer_totals.write_to_csv(building_names, locator)
-    time_elapsed = time.clock() - t0
+    time_elapsed = time.perf_counter() - t0
     print('done - time elapsed: %d.2 seconds' % time_elapsed)
 
     return totals, time_series
