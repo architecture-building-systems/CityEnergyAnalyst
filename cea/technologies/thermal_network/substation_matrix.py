@@ -655,7 +655,7 @@ def calc_plate_HEX(NTU, cr):
     :return:
         eff: efficiency of heat exchange
     '''
-    eff = 1 - scipy.exp((1 / cr) * (NTU ** 0.22) * (scipy.exp(-cr * (NTU) ** 0.78) - 1))
+    eff = 1 - np.exp((1 / cr) * (NTU ** 0.22) * (np.exp(-cr * (NTU) ** 0.78) - 1))
     return eff
 
 
@@ -669,8 +669,9 @@ def calc_shell_HEX(NTU, cr):
     :return:
         eff: efficiency of heat exchange
     '''
-    eff = 2 * ((1 + cr + (1 + cr ** 2) ** (1 / 2)) * (
-            (1 + scipy.exp(-(NTU) * (1 + cr ** 2))) / (1 - scipy.exp(-(NTU) * (1 + cr ** 2))))) ** -1
+    one_plus_cr_squared = (1 + cr ** 2)
+    eff = 2 * ((1 + cr + one_plus_cr_squared ** (1 / 2)) * (
+            (1 + np.exp(-(NTU) * one_plus_cr_squared)) / (1 - np.exp(-(NTU) * one_plus_cr_squared)))) ** -1
     return eff
 
 

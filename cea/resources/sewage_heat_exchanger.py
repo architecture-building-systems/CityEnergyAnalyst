@@ -163,7 +163,7 @@ def calc_sewageheat(mcp_kWC_zone, tin_C, w_HEX_m, Vf_ms, h0, min_lps, L_HEX_m, t
         tb1 = tin_C
         ta1 = tin_C - ((tin_C - tmin_C) + ATmin / 2)
         alpha = h0 * A_HEX * (1 / mcpa - 1 / mcp_kWC_total)
-        n = ( 1 - scipy.exp( -alpha ) ) / (1 - mcpa / mcp_kWC_total * scipy.exp(-alpha))
+        n = ( 1 - np.exp( -alpha ) ) / (1 - mcpa / mcp_kWC_total * np.exp(-alpha))
         tb2 = tb1 + mcpa / mcp_kWC_total * n * (ta1 - tb1)
         Q_source = mcp_kWC_total * (tb1 - tb2)
         ta2 = ta1 + Q_source / mcpa

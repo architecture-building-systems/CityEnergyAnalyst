@@ -1,10 +1,10 @@
 from __future__ import print_function
 from __future__ import division
+from __future__ import absolute_import
 
 """
 Unittests for the plots framework of the CEA.
 """
-from __future__ import absolute_import
 
 import unittest
 import cea.plots.categories
