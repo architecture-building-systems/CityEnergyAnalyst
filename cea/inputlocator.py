@@ -569,7 +569,7 @@ class InputLocator(object):
         """scenario/outputs/data/optimization/network/layout/DH_NodesData.csv or DC_NodesData.csv
         Network layout files for nodes of district heating or cooling networks
         """
-        if len(network_name) is 0:
+        if not network_name:
             file_name = 'Nominal_NodeMassFlow_at_design_' + network_type + '_' + '_kgpers.csv'
         else:
             file_name = 'Nominal_NodeMassFlow_at_design_' + network_type + '_' + network_name + '_kgpers.csv'
@@ -590,7 +590,7 @@ class InputLocator(object):
         """scenario/outputs/data/optimization/network/layout/DH_Nodes.csv or DC_NodesData.csv
         Network layout files for nodes of district heating or cooling networks
         """
-        if len(network_name) is 0:
+        if not network_name:
             file_name = network_type + '_' + "_metadata_nodes.csv"
         else:
             file_name = network_type + '_' + network_name + '_metadata_nodes.csv'
@@ -611,7 +611,7 @@ class InputLocator(object):
         """scenario/outputs/data/optimization/network/layout/DH_AllEdges.csv or DC_AllEdges.csv
         List of edges in a district heating or cooling network and their start and end nodes
         """
-        if len(network_name) is 0:
+        if not network_name:
             file_name = network_type + "_" + "_metadata_edges.csv"
         else:
             file_name = network_type + "_" + network_name + "_metadata_edges.csv"
@@ -631,7 +631,7 @@ class InputLocator(object):
             folder = self.get_representative_week_thermal_network_layout_folder()
         else:
             folder = self.get_thermal_network_folder()
-        if len(network_name) is 0:
+        if not network_name:
             file_name = network_type + "_" + "_massflow_edges_kgs.csv"
         else:
             file_name = network_type + "_" + network_name + "_massflow_edges_kgs.csv"
@@ -645,7 +645,7 @@ class InputLocator(object):
             folder = self.get_representative_week_thermal_network_layout_folder()
         else:
             folder = self.get_thermal_network_folder()
-        if len(network_name) is 0:
+        if not network_name:
             file_name = network_type + "_" + "_velocity_edges_mpers.csv"
         else:
             file_name = network_type + "_" + network_name + "_velocity_edges_mpers.csv"
@@ -659,7 +659,7 @@ class InputLocator(object):
             folder = self.get_representative_week_thermal_network_layout_folder()
         else:
             folder = self.get_thermal_network_folder()
-        if len(network_name) is 0:
+        if not network_name:
             file_name = network_type + "_" + "_massflow_nodes_kgs.csv"
         else:
             file_name = network_type + "_" + network_name + "_massflow_nodes_kgs.csv"
@@ -674,7 +674,7 @@ class InputLocator(object):
             folder = self.get_representative_week_thermal_network_layout_folder()
         else:
             folder = self.get_thermal_network_folder()
-        if len(network_name) is 0:
+        if not network_name:
             file_name = network_type + "_" + "_temperature_supply_nodes_K.csv"
         else:
             file_name = network_type + "_" + network_name + "_temperature_supply_nodes_K.csv"
@@ -689,7 +689,7 @@ class InputLocator(object):
             folder = self.get_representative_week_thermal_network_layout_folder()
         else:
             folder = self.get_thermal_network_folder()
-        if len(network_name) is 0:
+        if not network_name:
             file_name = network_type + "_" + "_temperature_return_nodes_K.csv"
         else:
             file_name = network_type + "_" + network_name + "_temperature_return_nodes_K.csv"
@@ -703,7 +703,7 @@ class InputLocator(object):
             folder = self.get_representative_week_thermal_network_layout_folder()
         else:
             folder = self.get_thermal_network_folder()
-        if len(network_name) is 0:
+        if not network_name:
             file_name = network_type + "_" + "_temperature_plant_K.csv"
         else:
             file_name = network_type + "_" + network_name + "_temperature_plant_K.csv"
@@ -715,7 +715,7 @@ class InputLocator(object):
             folder = self.get_representative_week_thermal_network_layout_folder()
         else:
             folder = self.get_thermal_network_folder()
-        if len(network_name) is 0:
+        if not network_name:
             file_name = network_type + "_" + "_pumping_load_due_to_substations_kW.csv"
         else:
             file_name = network_type + "_" + network_name + "_pumping_load_due_to_substations_kW.csv"
@@ -730,7 +730,7 @@ class InputLocator(object):
         else:
             folder = self.get_thermal_network_folder()
 
-        if len(network_name) is 0:
+        if not network_name:
             file_name = network_type + "_" + "_thermal_demand_per_building_W.csv"
         else:
             file_name = network_type + "_" + network_name + "_thermal_demand_per_building_W.csv"
@@ -743,7 +743,7 @@ class InputLocator(object):
             folder = self.get_representative_week_thermal_network_layout_folder()
         else:
             folder = self.get_thermal_network_folder()
-        if len(network_name) is 0:
+        if not network_name:
             file_name = network_type + "_" + "_thermal_loss_edges_kW.csv"
         else:
             file_name = network_type + "_" + network_name + "_thermal_loss_edges_kW.csv"
@@ -755,7 +755,7 @@ class InputLocator(object):
             folder = self.get_representative_week_thermal_network_layout_folder()
         else:
             folder = self.get_thermal_network_folder()
-        if len(network_name) is 0:
+        if not network_name:
             file_name = network_type + "_" + "_linear_thermal_loss_edges_Wperm.csv"
         else:
             file_name = network_type + "_" + network_name + "_linear_thermal_loss_edges_Wperm.csv"
@@ -767,7 +767,7 @@ class InputLocator(object):
             folder = self.get_representative_week_thermal_network_layout_folder()
         else:
             folder = self.get_thermal_network_folder()
-        if len(network_name) is 0:
+        if not network_name:
             file_name = network_type + "_" + "_total_thermal_loss_edges_kW.csv"
         else:
             file_name = network_type + "_" + network_name + "_total_thermal_loss_edges_kW.csv"
@@ -780,7 +780,7 @@ class InputLocator(object):
             folder = self.get_representative_week_thermal_network_layout_folder()
         else:
             folder = self.get_thermal_network_folder()
-        if len(network_name) is 0:
+        if not network_name:
             file_name = network_type + "_" + "_pressure_losses_edges_kW.csv"
         else:
             file_name = network_type + "_" + network_name + "_pressure_losses_edges_kW.csv"
@@ -794,7 +794,7 @@ class InputLocator(object):
             folder = self.get_representative_week_thermal_network_layout_folder()
         else:
             folder = self.get_thermal_network_folder()
-        if len(network_name) is 0:
+        if not network_name:
             file_name = network_type + "_" + "_plant_pumping_pressure_loss_Pa.csv"
         else:
             file_name = network_type + "_" + network_name + "_plant_pumping_pressure_loss_Pa.csv"
@@ -808,7 +808,7 @@ class InputLocator(object):
             folder = self.get_representative_week_thermal_network_layout_folder()
         else:
             folder = self.get_thermal_network_folder()
-        if len(network_name) is 0:
+        if not network_name:
             file_name = network_type + "_" + "_linear_pressure_drop_edges_Paperm.csv"
         else:
             file_name = network_type + "_" + network_name + "_linear_pressure_drop_edges_Paperm.csv"
@@ -822,7 +822,7 @@ class InputLocator(object):
             folder = self.get_representative_week_thermal_network_layout_folder()
         else:
             folder = self.get_thermal_network_folder()
-        if len(network_name) is 0:
+        if not network_name:
             file_name = network_type + "_" + "_pressure_at_nodes_Pa.csv"
         else:
             file_name = network_type + "_" + network_name + "_pressure_at_nodes_Pa.csv"
@@ -837,7 +837,7 @@ class InputLocator(object):
             folder = self.get_representative_week_thermal_network_layout_folder()
         else:
             folder = self.get_thermal_network_folder()
-        if len(network_name) is 0:
+        if not network_name:
             file_name = network_type + "_" + "_plant_pumping_load_kW.csv"
         else:
             file_name = network_type + "_" + network_name + "_plant_pumping_load_kW.csv"
@@ -852,7 +852,7 @@ class InputLocator(object):
             folder = self.get_representative_week_thermal_network_layout_folder()
         else:
             folder = self.get_thermal_network_folder()
-        if len(network_name) is 0:
+        if not network_name:
             file_name = network_type + "_" + "_plant_thermal_load_kW.csv"
         else:
             file_name = network_type + "_" + network_name + "_plant_thermal_load_kW.csv"
