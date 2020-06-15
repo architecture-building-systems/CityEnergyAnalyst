@@ -6,7 +6,6 @@ import collections
 import csv
 import glob
 import os
-
 import pandas as pd
 
 import cea
@@ -32,9 +31,6 @@ COLUMNS_SCHEDULES = ['DAY',
                      'COOLING',
                      'PROCESSES',
                      'SERVERS']
-
-DAY = ['WEEKDAY'] * 24 + ['SATURDAY'] * 24 + ['SUNDAY'] * 24
-HOUR = range(1, 25) + range(1, 25) + range(1, 25)
 
 
 def read_cea_schedule(path_to_cea_schedule):

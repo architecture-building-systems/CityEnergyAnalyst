@@ -19,7 +19,7 @@ from __future__ import absolute_import
 import multiprocessing
 import sys
 import logging
-from itertools import repeat, izip
+from itertools import repeat
 from cea.utilities.workerstream import stream_from_queue, QueueWorkerStream
 
 __author__ = "Daren Thomas"
@@ -145,7 +145,7 @@ def single_process_wrapper(func, on_complete):
         args = [list(a) for a in args]
         n = len(args[0])
         map_result = []
-        for i, instance_args in enumerate(izip(*args)):
+        for i, instance_args in enumerate(zip(*args)):
             result = func(*instance_args)
             if on_complete:
                 on_complete(i, n, instance_args, result)
