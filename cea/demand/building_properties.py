@@ -6,7 +6,6 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-
 import numpy as np
 import pandas as pd
 from geopandas import GeoDataFrame as Gdf
@@ -145,43 +144,43 @@ class BuildingProperties(object):
 
     def get_prop_supply_systems(self, name_building):
         """get geometry of a building by name"""
-        return self._prop_supply_systems.ix[name_building].to_dict()
+        return self._prop_supply_systems.loc[name_building].to_dict()
 
     def get_prop_geometry(self, name_building):
         """get geometry of a building by name"""
-        return self._prop_geometry.ix[name_building].to_dict()
+        return self._prop_geometry.loc[name_building].to_dict()
 
     def get_prop_envelope(self, name_building):
         """get the architecture and thermal properties of a building by name"""
-        return self._prop_envelope.ix[name_building].to_dict()
+        return self._prop_envelope.loc[name_building].to_dict()
 
     def get_prop_typology(self, name_building):
         """get the typology properties of a building by name"""
-        return self._prop_typology.ix[name_building].to_dict()
+        return self._prop_typology.loc[name_building].to_dict()
 
     def get_prop_hvac(self, name_building):
         """get HVAC properties of a building by name"""
-        return self._prop_HVAC_result.ix[name_building].to_dict()
+        return self._prop_HVAC_result.loc[name_building].to_dict()
 
     def get_prop_rc_model(self, name_building):
         """get RC-model properties of a building by name"""
-        return self._prop_RC_model.ix[name_building].to_dict()
+        return self._prop_RC_model.loc[name_building].to_dict()
 
     def get_prop_comfort(self, name_building):
         """get comfort properties of a building by name"""
-        return self._prop_comfort.ix[name_building].to_dict()
+        return self._prop_comfort.loc[name_building].to_dict()
 
     def get_prop_internal_loads(self, name_building):
         """get internal loads properties of a building by name"""
-        return self._prop_internal_loads.ix[name_building].to_dict()
+        return self._prop_internal_loads.loc[name_building].to_dict()
 
     def get_prop_age(self, name_building):
         """get age properties of a building by name"""
-        return self._prop_age.ix[name_building].to_dict()
+        return self._prop_age.loc[name_building].to_dict()
 
     def get_solar(self, name_building):
         """get solar properties of a building by name"""
-        return self._solar.ix[name_building]
+        return self._solar.loc[name_building]
 
     def calc_prop_rc_model(self, locator, typology, envelope, geometry, hvac_temperatures):
         """
@@ -259,7 +258,7 @@ class BuildingProperties(object):
         for building in self.building_names:
             has_system_heating_flag = has_heating_system(hvac_temperatures.loc[building, 'class_hs'])
             has_system_cooling_flag = has_cooling_system(hvac_temperatures.loc[building, 'class_cs'])
-            if (not has_system_heating_flag and not has_system_cooling_flag  and
+            if (not has_system_heating_flag and not has_system_cooling_flag and
                     np.max([df.loc[building, 'Hs_ag'], df.loc[building, 'Hs_bg']]) <= 0.0):
                 df.loc[building, 'Hs_ag'] = 0.0
                 df.loc[building, 'Hs_bg'] = 0.0
@@ -294,7 +293,8 @@ class BuildingProperties(object):
         df['Htr_em'] = 1 / (1 / df['Htr_op'] - 1 / df['Htr_ms'])  # Coupling conductance 2 in W/K
         df['Htr_is'] = H_IS * df['Atot']
 
-        fields = ['Atot', 'Awin_ag', 'Am', 'Aef', 'Af', 'Cm', 'Htr_is', 'Htr_em', 'Htr_ms', 'Htr_op', 'Hg', 'HD', 'Aroof',
+        fields = ['Atot', 'Awin_ag', 'Am', 'Aef', 'Af', 'Cm', 'Htr_is', 'Htr_em', 'Htr_ms', 'Htr_op', 'Hg', 'HD',
+                  'Aroof',
                   'U_wall', 'U_roof', 'U_win', 'U_base', 'Htr_w', 'GFA_m2', 'Aocc', 'Aop_bg', 'empty_envelope_ratio',
                   'Awall_ag', 'footprint']
         result = df[fields]
@@ -347,15 +347,15 @@ class BuildingProperties(object):
         # call all building geometry files in a loop
         for building_name in self.building_names:
             geometry_data = pd.read_csv(locator.get_radiation_building(building_name))
-            envelope.ix[building_name, 'Awall_ag'] = geometry_data['walls_east_m2'][0] + \
-                                                  geometry_data['walls_west_m2'][0] + \
-                                                  geometry_data['walls_south_m2'][0] +\
-                                                  geometry_data['walls_north_m2'][0]
-            envelope.ix[building_name, 'Awin_ag'] = geometry_data['windows_east_m2'][0] + \
-                                                  geometry_data['windows_west_m2'][0] + \
-                                                  geometry_data['windows_south_m2'][0] +\
-                                                  geometry_data['windows_north_m2'][0]
-            envelope.ix[building_name, 'Aroof'] = geometry_data['roofs_top_m2'][0]
+            envelope.loc[building_name, 'Awall_ag'] = (geometry_data['walls_east_m2'][0] +
+                                                       geometry_data['walls_west_m2'][0] +
+                                                       geometry_data['walls_south_m2'][0] +
+                                                       geometry_data['walls_north_m2'][0])
+            envelope.loc[building_name, 'Awin_ag'] = (geometry_data['windows_east_m2'][0] +
+                                                      geometry_data['windows_west_m2'][0] +
+                                                      geometry_data['windows_south_m2'][0] +
+                                                      geometry_data['windows_north_m2'][0])
+            envelope.loc[building_name, 'Aroof'] = geometry_data['roofs_top_m2'][0]
 
         df = envelope.merge(geometry, left_index=True, right_index=True)
 
@@ -970,21 +970,21 @@ def calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, therm
                   radiation_data['walls_south_kW']).values * 1000  # in W
 
     # sensible gain on all walls [W]
-    I_sol_wall = I_sol_wall * \
-                 prop_envelope.ix[building_name, 'a_wall'] * \
-                 thermal_resistance_surface * \
-                 prop_rc_model.ix[building_name, 'U_wall'] * \
-                 prop_rc_model.ix[building_name, 'empty_envelope_ratio']
+    I_sol_wall = (I_sol_wall *
+                  prop_envelope.loc[building_name, 'a_wall'] *
+                  thermal_resistance_surface *
+                  prop_rc_model.loc[building_name, 'U_wall'] *
+                  prop_rc_model.loc[building_name, 'empty_envelope_ratio'])
 
     # sum roof
     # solar incident on all roofs [W]
     I_sol_roof = radiation_data['roofs_top_kW'].values * 1000  # in W
 
     # sensible gain on all roofs [W]
-    I_sol_roof = I_sol_roof * \
-                 prop_envelope.ix[building_name, 'a_roof'] * \
-                 thermal_resistance_surface * \
-                 prop_rc_model.ix[building_name, 'U_roof']
+    I_sol_roof = (I_sol_roof *
+                  prop_envelope.loc[building_name, 'a_roof'] *
+                  thermal_resistance_surface *
+                  prop_rc_model.loc[building_name, 'U_roof'])
 
     # sum window, considering shading
     I_sol_win = (radiation_data['windows_east_kW'] +
@@ -993,13 +993,13 @@ def calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, therm
                  radiation_data['windows_south_kW']).values * 1000  # in W
 
     Fsh_win = np.vectorize(blinds.calc_blinds_activation)(I_sol_win,
-                                                          prop_envelope.ix[building_name, 'G_win'],
-                                                          prop_envelope.ix[building_name, 'rf_sh'])
+                                                          prop_envelope.loc[building_name, 'G_win'],
+                                                          prop_envelope.loc[building_name, 'rf_sh'])
 
-    I_sol_win = I_sol_win * \
-                Fsh_win * \
-                (1 - prop_envelope.ix[building_name, 'F_F']) * \
-                prop_rc_model.ix[building_name, 'empty_envelope_ratio']
+    I_sol_win = (I_sol_win *
+                 Fsh_win *
+                 (1 - prop_envelope.loc[building_name, 'F_F']) *
+                 prop_rc_model.loc[building_name, 'empty_envelope_ratio'])
 
     # sum
     I_sol = I_sol_wall + I_sol_roof + I_sol_win

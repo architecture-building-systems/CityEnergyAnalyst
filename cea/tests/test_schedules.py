@@ -15,7 +15,6 @@ import unittest
 import pandas as pd
 
 import cea.config
-from cea.constants import HOURS_IN_YEAR
 from cea.datamanagement.archetypes_mapper import calculate_average_multiuse
 from cea.demand.building_properties import BuildingProperties
 from cea.demand.schedule_maker.schedule_maker import schedule_maker_main
@@ -47,6 +46,7 @@ class TestScheduleCreation(unittest.TestCase):
     def test_mixed_use_schedules(self):
         locator = ReferenceCaseOpenLocator()
         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
+        config.multiprocessing = False
         config.scenario = locator.scenario
 
         building_properties = BuildingProperties(locator)
@@ -58,13 +58,13 @@ class TestScheduleCreation(unittest.TestCase):
         schedule_maker_main(locator, config)
         calculated_schedules = pd.read_csv(locator.get_schedule_model_file('B1011')).set_index('DATE')
 
-        config = configparser.ConfigParser()
-        config.read(get_test_config_path())
-        reference_results = json.loads(config.get('test_mixed_use_schedules', 'reference_results'))
+        test_config = configparser.ConfigParser()
+        test_config.read(get_test_config_path())
+        reference_results = json.loads(test_config.get('test_mixed_use_schedules', 'reference_results'))
 
         for schedule in reference_results:
             if (isinstance(calculated_schedules[schedule][REFERENCE_TIME], str)) and (isinstance(
-                    reference_results[schedule], unicode)):
+                    reference_results[schedule], str)):
                 self.assertEqual(calculated_schedules[schedule][REFERENCE_TIME], reference_results[schedule],
                                  msg="Schedule '{}' at time {}, {} != {}".format(schedule, str(REFERENCE_TIME),
                                                                                  calculated_schedules[schedule][

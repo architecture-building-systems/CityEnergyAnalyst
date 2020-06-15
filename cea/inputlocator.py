@@ -455,9 +455,9 @@ class InputLocator(object):
         """Return the list of buildings in the Zone"""
         if not os.path.exists(self.get_zone_geometry()):
             return []
-        from geopandas import GeoDataFrame as gdf
-        zone_building_names = sorted(gdf.from_file(self.get_zone_geometry())['Name'].values)
-        return [b.encode('utf-8') if isinstance(b, str) else str(b) for b in zone_building_names]
+        import geopandas
+        zone_building_names = sorted(geopandas.GeoDataFrame.from_file(self.get_zone_geometry())['Name'].values)
+        return zone_building_names
 
     def get_building_typology(self):
         """scenario/inputs/building-properties/building_occupancy.dbf"""

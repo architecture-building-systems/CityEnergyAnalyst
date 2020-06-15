@@ -194,7 +194,7 @@ def calc_single_mixed_schedule(list_uses, occupant_densities, building_typology_
 
     # add hour and day of the week
     DAY = {'DAY': ['WEEKDAY'] * 24 + ['SATURDAY'] * 24 + ['SUNDAY'] * 24}
-    HOUR = {'HOUR': range(1, 25) + range(1, 25) + range(1, 25)}
+    HOUR = {'HOUR': list(range(1, 25)) * 3}
     schedule_new_data.update(DAY)
     schedule_new_data.update(HOUR)
 
