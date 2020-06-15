@@ -85,24 +85,24 @@ def calc_mixed_schedule(locator, building_typology_df, buildings, list_var_names
 
 def calc_single_mixed_schedule(list_uses, occupant_densities, building_typology_df, internal_loads_df, building, schedule_data_all_uses, list_var_names, list_var_values, metadata='mixed-schedule'):
     """
-        Builds the ``cea.inputlocator.InputLocator#get_building_weekly_schedules`` for each building in the zone,
-        combining the occupancy types as indicated in the inputs.
+    Builds the ``cea.inputlocator.InputLocator#get_building_weekly_schedules`` for each building in the zone,
+    combining the occupancy types as indicated in the inputs.
 
-        :param list_uses: list of uses in the project
-        :type list_uses: list[str]
-        :param occupant_densities: Dictionary containing the number of people per square meter for each occupancy type based
-        on the archetypes
-        :type occupant_densities: dict
-        :param building_typology_df: ``occupancy.dbf``, with an added column "mainuse"
-        :type building_typology_df: pandas.DataFrame
-        :param building: name of buildings to calculate the schedules for
-        :type building: str
-        :param list_var_names: List of column names in building_typology_df that contain the names of use-types being caculated
-        :type list_var_names: list[str]
-        :param list_var_values: List of column names in building_typology_df that contain values of use-type ratio in respect to list_var_names
-        :type list_var_values: list[str]
-        :return:
-        """
+    :param list_uses: list of uses in the project
+    :type list_uses: list[str]
+    :param occupant_densities: Dictionary containing the number of people per square meter for each occupancy type based
+           on the archetypes
+    :type occupant_densities: dict
+    :param building_typology_df: ``occupancy.dbf``, with an added column "mainuse"
+    :type building_typology_df: pandas.DataFrame
+    :param building: name of buildings to calculate the schedules for
+    :type building: str
+    :param list_var_names: List of column names in building_typology_df that contain the names of use-types being caculated
+    :type list_var_names: list[str]
+    :param list_var_values: List of column names in building_typology_df that contain values of use-type ratio in respect to list_var_names
+    :type list_var_values: list[str]
+    :return:
+    """
 
     schedule_new_data = {}
     # First name in `list_var_names` would be treated as main use

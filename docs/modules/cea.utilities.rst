@@ -33,6 +33,14 @@ cea.utilities.create\_mixed\_use\_type module
     :undoc-members:
     :show-inheritance:
 
+cea.utilities.create\_polygon module
+------------------------------------
+
+.. automodule:: cea.utilities.create_polygon
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cea.utilities.date module
 -------------------------
 

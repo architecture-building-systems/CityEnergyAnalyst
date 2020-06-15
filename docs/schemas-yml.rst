@@ -1,3 +1,5 @@
+:orphan:
+
 schemas.yml
 ###########
 The `schemas.yml` file is used to describe the input/output files used in CEA.

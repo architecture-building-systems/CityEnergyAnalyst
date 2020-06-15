@@ -10,7 +10,7 @@ The following file is used by these scripts: {{ schemas[lm]["used_by"]|map("add_
 .. csv-table::
     :header: "Variable", "Description"
 
-    {% for col in schemas[lm]["schema"]["columns"]|sort %}``{{col}}``, "{{schemas[lm]["schema"]["columns"][col]["description"]}}"
+    {% for col in schemas[lm]["schema"]["columns"]|sort %}``{{col}}``, "{{schemas[lm]["schema"]["columns"][col]["description"]|replace('"', '""')}}"
     {% endfor %}
 {% else %}
 {% for ws in schemas[lm]["schema"]|sort %}

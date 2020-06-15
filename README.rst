@@ -1,9 +1,21 @@
+|pic1| |pic2| |pic3|
+
+.. |pic1| image:: https://img.shields.io/github/license/architecture-building-systems/CityEnergyAnalyst
+    :alt: GitHub license
+.. |pic2| image:: https://img.shields.io/github/repo-size/architecture-building-systems/CityEnergyAnalyst
+    :alt: Repo Size
+.. |pic3| image:: https://raw.githubusercontent.com/architecture-building-systems/CityEnergyAnalyst/image-data/badge-lines-of-code.svg
+    :alt: Lines of code
+
 .. image:: https://static1.squarespace.com/static/587d65bdbebafb893ba24447/t/587d845d29687f2d2febee75/1492591264954/?format=1500w
-    :height: 50 px
-    :width: 150 px
-    :scale: 50 %
+    :height: 420 px
+    :width: 1500 px
+    :scale: 25 %
     :alt: City Energy Analyst (CEA) logo
     :target: https://www.cityenergyanalyst.com
+
+City Energy Analyst (CEA)
+--------------------------
 
 The  `City Energy Analyst (CEA) <https://www.cityenergyanalyst.com/>`_ is an urban energy simulation platform and one
 of the first open-source computational tools for the design of low-carbon and highly efficient neighborhoods and districts
@@ -26,7 +38,6 @@ Cite us:
 --------
 
 For V2.9.1 (stable):    |V2.9.1|
-
 
 .. |V2.9.1| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.1487867.svg
    :target: https://doi.org/10.5281/zenodo.1487867

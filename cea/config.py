@@ -838,10 +838,12 @@ class ScenarioNameParameter(ChoiceParameter):
         pass
 
     def encode(self, value):
-        # FIXME: Should raise exception instead of choosing a different scenario?
         """Make sure the scenario folder exists"""
-        if value not in self._choices:
-            return self._choices[0]
+        if value == '':
+            raise ValueError('scenario-name cannot be empty')
+        elif self._choices and value not in self._choices:
+            print('WARNING: Scenario "{value}" does not exist. Valid choices: {choices}'
+                  .format(value=value, choices=','.join(self._choices)))
         return str(value)
 
     def decode(self, value):
@@ -1042,6 +1044,10 @@ class CoordinateListParameter(ListParameter):
 
 
 def get_scenarios_list(project_path):
+    # return empty list if project path does not exist
+    if not os.path.exists(project_path):
+        return []
+
     def is_valid_scenario(project_path, folder_name):
         folder_path = os.path.join(project_path, folder_name)
         # a scenario must be a valid path

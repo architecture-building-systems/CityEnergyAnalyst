@@ -49,6 +49,14 @@ cea.tests.test\_check\_for\_radiation\_input\_in\_demand\_script module
     :undoc-members:
     :show-inheritance:
 
+cea.tests.test\_chiller\_vapor\_compression module
+--------------------------------------------------
+
+.. automodule:: cea.tests.test_chiller_vapor_compression
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cea.tests.test\_config module
 -----------------------------
 
@@ -69,6 +77,14 @@ cea.tests.test\_inputlocator module
 -----------------------------------
 
 .. automodule:: cea.tests.test_inputlocator
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.tests.test\_inputs\_setup\_workflow module
+----------------------------------------------
+
+.. automodule:: cea.tests.test_inputs_setup_workflow
     :members:
     :undoc-members:
     :show-inheritance:

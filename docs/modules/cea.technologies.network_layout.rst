@@ -49,4 +49,12 @@ cea.technologies.network\_layout.substations\_location module
     :undoc-members:
     :show-inheritance:
 
+cea.technologies.network\_layout.utility module
+-----------------------------------------------
+
+.. automodule:: cea.technologies.network_layout.utility
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 

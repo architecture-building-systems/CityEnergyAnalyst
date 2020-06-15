@@ -67,6 +67,22 @@ cea.inputlocator module
     :undoc-members:
     :show-inheritance:
 
+cea.plugin module
+-----------------
+
+.. automodule:: cea.plugin
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.schemas module
+------------------
+
+.. automodule:: cea.schemas
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cea.scripts module
 ------------------
 

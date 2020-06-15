@@ -26,7 +26,7 @@ Each pareto-optimum solution implies a unique energy supply system configuration
 energy supply technologies and sizes.
 All possible configurations that is incorporated in the CEA is presented in this figure:
 
-.. image:: supply_system_superstructure.png
+.. image:: _static/supply_system_superstructure.png
     :align: center
 
 Supply technology selection and sizing
@@ -74,7 +74,7 @@ provided are to act like a beacon in the research. The next figure presents a co
 of crossover-prob and mutate-prob. The first row presents the Generational distance for every generation for each of the
 three cases. The second row presents the pareto curves for each curve.
 
-.. image:: Optimization_tests.png
+.. image:: _static/Optimization_tests.png
     :align: center
 
 NOTE: As Genetic Algorithm, which is stochastic in nature, is being used as an optimization algorithm, the results

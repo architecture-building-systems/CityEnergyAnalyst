@@ -46,10 +46,18 @@ cea.plots.categories module
     :undoc-members:
     :show-inheritance:
 
-cea.plots.plots\_main module
-----------------------------
+cea.plots.colors module
+-----------------------
 
-.. automodule:: cea.plots.plots_main
+.. automodule:: cea.plots.colors
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.plots.plot\_cli module
+--------------------------
+
+.. automodule:: cea.plots.plot_cli
     :members:
     :undoc-members:
     :show-inheritance:

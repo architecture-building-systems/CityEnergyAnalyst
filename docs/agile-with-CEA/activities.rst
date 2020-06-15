@@ -80,7 +80,6 @@ the DT.
 
 Attendees: Scrum Master and Development Team.
 
-.. _theevent:
 Roadmap planning and review event
 ---------------------------------
 

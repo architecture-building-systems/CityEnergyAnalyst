@@ -12,16 +12,17 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-# If extensions (or modules to document with autodoc) are in another directory,
-# add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
-#
+
 import os
 import sys
 from mock import Mock as MagicMock
 import cea
 
-sys.path.insert(0, os.path.abspath('../cea'))
+# If extensions (or modules to document with autodoc) are in another directory,
+# add these directories to sys.path here. If the directory is relative to the
+# documentation root, use os.path.abspath to make it absolute, like shown here.
+
+sys.path.insert(0, os.path.abspath(os.path.join(__file__, '../cea')))
 
 
 # mock out some imports so we don't have conflicts on the readthedocs server...
@@ -293,6 +294,9 @@ texinfo_documents = [
 intersphinx_mapping = {'python': ('https://docs.python.org/2.7', None)}
 
 
+# prefix each section label with the name of the document it is in, followed by a colon
+autosectionlabel_prefix_document = True
+
 
 # ## Add documentation for python special methods (with exclusions)
 
@@ -304,6 +308,7 @@ def autodoc_skip_member(app, what, name, obj, skip, options):
             return skip
         else:
             return False
+
 
 def setup(app):
     app.connect('autodoc-skip-member', autodoc_skip_member)
