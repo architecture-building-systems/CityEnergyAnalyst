@@ -1,5 +1,6 @@
 from __future__ import division
 from __future__ import print_function
+from __future__ import absolute_import
 
 """
 Organizes the plots for the CEA. The dashboard uses the package structure of cea.plots to group the plots into
@@ -12,7 +13,6 @@ Each module contained such a sub-package is considered a plot.
 
 The module ``cea.plots.categories`` contains helper-methods for dealing with the categories.
 """
-from __future__ import absolute_import
 
 import os
 import yaml
