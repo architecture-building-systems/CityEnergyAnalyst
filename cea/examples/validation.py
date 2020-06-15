@@ -101,8 +101,8 @@ def validation(scenario_list,
                 # calculate errors
                 cv_root_mean_squared_error, normalized_mean_biased_error = calc_errors_per_building(load, monthly_data)
 
-                ind_calib_building, ind_score_building = calc_group_score(cv_root_mean_squared_error, monthly_data,
-                                                                          normalized_mean_biased_error)
+                ind_calib_building, ind_score_building = calc_building_score(cv_root_mean_squared_error, monthly_data,
+                                                                             normalized_mean_biased_error)
 
                 # appending list of variables for later use
                 number_of_calibrated.append(ind_calib_building)
@@ -134,7 +134,7 @@ def calc_errors_per_building(load, monthly_data):
     return cv_root_mean_squared_error, normalized_mean_biased_error
 
 
-def calc_group_score(cv_root_mean_squared_error, monthly_data, normalized_mean_biased_error):
+def calc_building_score(cv_root_mean_squared_error, monthly_data, normalized_mean_biased_error):
     # indicates if the building is calibrated or not
     if abs(normalized_mean_biased_error) < 5 and cv_root_mean_squared_error < 15: #LS#NMBE<5 and CVRMSE <15 for ASHRAE monthly
         ind_calib_building = 1
