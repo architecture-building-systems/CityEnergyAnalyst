@@ -1,0 +1,42 @@
+digraph radiation_rewrite {
+    node [shape=rect];
+    splines=ortho;
+    rankdir=LR;
+
+    subgraph cluster_inputs {
+        label="INPUTS";
+        node [shape=note];
+
+        zone_shp [label="zone.shp"];
+        surroundings_shp [label="surroundings.shp"];
+        architecture_dbf [label="architecture.dbf"];
+        ENVELOPE_xls [label="ENVELOPE.xls"];
+    }
+
+    subgraph cluster_outputs {
+        label="OUTPUTS";
+        node [shape=note];
+
+        building_materials_csv [label="building_materials.csv"];
+    }
+
+    subgraph cluster_radiation_main {
+        label="radiation_main.py";
+
+        main;
+        reader_surface_properties;
+
+        main -> reader_surface_properties;
+        
+    }
+
+
+    /* inputs and outputs */
+    edge[style=dashed];   
+    zone_shp -> main;
+    surroundings_shp -> main;
+    architecture_dbf -> main;
+    ENVELOPE_xls -> reader_surface_properties;
+
+    main -> building_materials_csv [];
+}

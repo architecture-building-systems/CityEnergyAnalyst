@@ -152,7 +152,7 @@ def reader_surface_properties(locator, input_shp):
     surface_database_roof = pd.read_excel(locator.get_database_envelope_systems(), "ROOF")
     surface_database_walls = pd.read_excel(locator.get_database_envelope_systems(), "WALL")
 
-    # querry data
+    # query data
     df = architectural_properties.merge(surface_database_windows, left_on='type_win', right_on='code')
     df2 = architectural_properties.merge(surface_database_roof, left_on='type_roof', right_on='code')
     df3 = architectural_properties.merge(surface_database_walls, left_on='type_wall', right_on='code')

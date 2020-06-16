@@ -12659,7 +12659,7 @@ get_radiation_building_sensors:
 get_radiation_materials:
   created_by:
   - radiation
-  file_path: outputs/data/solar-radiation/buidling_materials.csv
+  file_path: outputs/data/solar-radiation/building_materials.csv
   file_type: csv
   schema:
     columns:

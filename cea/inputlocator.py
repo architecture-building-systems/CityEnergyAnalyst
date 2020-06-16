@@ -886,8 +886,8 @@ class InputLocator(object):
         return os.path.join(self.get_solar_radiation_folder(), '%s_geometry.csv' % building)
 
     def get_radiation_materials(self):
-        """scenario/outputs/data/solar-radiation/{building}_geometrgy.csv"""
-        return os.path.join(self.get_solar_radiation_folder(), 'buidling_materials.csv')
+        """scenario/outputs/data/solar-radiation/building_materials.csv"""
+        return os.path.join(self.get_solar_radiation_folder(), 'building_materials.csv')
 
     def solar_potential_folder(self):
         return self._ensure_folder(self.scenario, 'outputs', 'data', 'potentials', 'solar')
