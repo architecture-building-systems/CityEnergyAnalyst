@@ -2,7 +2,9 @@ name: cea-python3
 channels:
   - conda-forge
   - defaults
+  - pythonocc
 dependencies:
+  - pythonocc-core
   - affine=2.3.0
   - attrs=19.3.0
   - boost-cpp=1.72.0

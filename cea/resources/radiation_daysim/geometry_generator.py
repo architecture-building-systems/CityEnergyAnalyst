@@ -25,8 +25,8 @@ import py4design.py3dmodel.construct as construct
 import py4design.py3dmodel.fetch as fetch
 import py4design.py3dmodel.modify as modify
 import py4design.py3dmodel.utility as utility
-from OCC.IntCurvesFace import IntCurvesFace_ShapeIntersector
-from OCC.gp import gp_Pnt, gp_Lin, gp_Ax1, gp_Dir
+from OCC.Core.IntCurvesFace import IntCurvesFace_ShapeIntersector
+from OCC.Core.gp import gp_Pnt, gp_Lin, gp_Ax1, gp_Dir
 from geopandas import GeoDataFrame as gdf
 from py4design import py3dmodel as py3dmodel
 from py4design import urbangeom
