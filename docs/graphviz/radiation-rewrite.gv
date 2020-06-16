@@ -18,6 +18,15 @@ digraph radiation_rewrite {
         node [shape=note];
 
         building_materials_csv [label="building_materials.csv"];
+        default_materials_rad [label="default_materials.rad"];
+    }
+
+    
+
+    subgraph cluster_geometry_generator {
+        label="geometry_generator.py";
+
+        geometry_main;
     }
 
     subgraph cluster_radiation_main {
@@ -27,6 +36,7 @@ digraph radiation_rewrite {
         reader_surface_properties;
 
         main -> reader_surface_properties;
+        main -> geometry_main;
         
     }
 
@@ -38,5 +48,6 @@ digraph radiation_rewrite {
     architecture_dbf -> main;
     ENVELOPE_xls -> reader_surface_properties;
 
-    main -> building_materials_csv [];
+    main -> building_materials_csv;
+    main -> default_materials_rad;
 }

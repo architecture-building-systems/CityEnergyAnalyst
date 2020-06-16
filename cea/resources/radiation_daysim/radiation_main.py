@@ -138,16 +138,17 @@ def buildings_to_radiance(rad, building_surface_properties, geometry_3D_zone, ge
     return
 
 
-def reader_surface_properties(locator, input_shp):
+def reader_surface_properties(locator, architecture_dbf) -> pd.DataFrame:
     """
-    This function returns a dataframe with the emissivity values of walls, roof, and windows
-    of every building in the scene
-    :param input_shp:
+    This function returns a DataFrame with the emissivity values of walls, roof, and windows
+    of every building in the scene.
+    :param str architecture_dbf: path to the architecture.dbf file
+    :rtype: pd.DataFrame
     :return:
     """
 
     # local variables
-    architectural_properties = gpdf.from_file(input_shp).drop('geometry', axis=1)
+    architectural_properties = gpdf.from_file(architecture_dbf).drop('geometry', axis=1)
     surface_database_windows = pd.read_excel(locator.get_database_envelope_systems(), "WINDOW")
     surface_database_roof = pd.read_excel(locator.get_database_envelope_systems(), "ROOF")
     surface_database_walls = pd.read_excel(locator.get_database_envelope_systems(), "WALL")
@@ -478,7 +479,7 @@ def main(config):
     # import material properties of buildings
     print("getting geometry materials")
     building_surface_properties = reader_surface_properties(locator=locator,
-                                                            input_shp=locator.get_building_architecture())
+                                                            architecture_dbf=locator.get_building_architecture())
     building_surface_properties.to_csv(locator.get_radiation_materials())
     print("creating 3D geometry and surfaces")
     # create geometrical faces of terrain and buildingsL
