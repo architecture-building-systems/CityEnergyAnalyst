@@ -173,9 +173,10 @@ def write_cea_demand_from_osmose(path_to_district_folder):
     T_supply_K = 0.0
     substation_flow_rate_m3pers_df = pd.DataFrame()
     substation_A_hex = pd.DataFrame(columns=['A_hex_m2'])
+    dTlm_dict, substation_Qmax_dict = {}, {}
     # Check if network exists
     plant_exists = False
-    Qmax_plant_columns = network_df.filter(like='locP').filter(like='Hin').columns
+    Qmax_plant_columns = network_df.filter(like='locP').filter(like='Hin').columns if network_df.shape[1] > 0.0 else []
     if len(Qmax_plant_columns) > 0.0:
         # 2. calculate demand per m2 per function
         cooling_loads = {}
@@ -209,7 +210,6 @@ def write_cea_demand_from_osmose(path_to_district_folder):
         plant_exists = True
         A_hex_plant_m2 = (Qmax_plant)/(U_substation * dTlm_plant)
         # building
-        dTlm_dict, substation_Qmax_dict = {}, {}
         for building_function in ['HOT', 'OFF', 'RET']:
             Q_substation = network_df.filter(like=building_function).filter(like='Hout').sum(axis=1)
             dTlm_dict[building_function] = 6
