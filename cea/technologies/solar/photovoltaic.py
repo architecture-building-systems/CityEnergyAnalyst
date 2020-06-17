@@ -166,11 +166,11 @@ def calc_pv_generation(sensor_groups, weather_data, date_local, solar_properties
     total_el_output_PV_kWh = [0 for i in range(number_groups)]
     total_radiation_kWh = [0 for i in range(number_groups)]
 
-    potential = pd.DataFrame(index=[range(HOURS_IN_YEAR)])
+    potential = pd.DataFrame(index=range(HOURS_IN_YEAR))
     panel_orientations = ['walls_south', 'walls_north', 'roofs_top', 'walls_east', 'walls_west']
     for panel_orientation in panel_orientations:
-        potential['PV_' + panel_orientation + '_E_kWh'] = 0
-        potential['PV_' + panel_orientation + '_m2'] = 0
+        potential['PV_' + panel_orientation + '_E_kWh'] = np.zeros(HOURS_IN_YEAR)
+        potential['PV_' + panel_orientation + '_m2'] = np.zeros(HOURS_IN_YEAR)
 
     eff_nom = panel_properties_PV['PV_n']
 
@@ -746,7 +746,7 @@ def calc_Crem_pv(E_nom):
     KEV_interpolated_kW = interpolate.interp1d(P_installed_in_kW, KEV_regime, kind="linear")
     KEV_obtained_in_RpPerkWh = 0
     if (E_nom / 1000) > P_installed_in_kW[-1]:
-        number_of_installations = int(math.ceil(E_nom / P_installed_in_kW[-1]))
+        number_of_installations = int(ceil(E_nom / P_installed_in_kW[-1]))
         E_nom_per_chiller = E_nom / number_of_installations
         for i in range(number_of_installations):
             KEV_obtained_in_RpPerkWh = KEV_obtained_in_RpPerkWh + KEV_interpolated_kW(E_nom_per_chiller / 1000.0)
