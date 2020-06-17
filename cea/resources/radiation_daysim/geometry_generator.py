@@ -180,8 +180,8 @@ class BuildingData(object):
         return out
 
 
-def process_geometries(geometry, raster_np, x, y, range_floors, floor_to_floor_height):
-    _raster, _x, _y = extract_raster(geometry, raster_np, x, y)
+def process_geometries(geometry, height_map, x_coords, y_coords, range_floors, floor_to_floor_height):
+    _raster, _x, _y = extract_raster(geometry, height_map, x_coords, y_coords)
     _, terrain_geometry = raster_to_tin(_raster, _x, _y)
     terrain_intersection_curves = calc_terrain_intersection_curves(terrain_geometry)
     # burn buildings footprint into the terrain and return the location of the new face
@@ -535,18 +535,18 @@ def raster_to_numpy(raster):
     return a, x_coords, y_coords
 
 
-def raster_to_tin(a, x, y):
+def raster_to_tin(raster_np, x_coords, y_coords):
     # if the raster file is below sea level, the entire case study is lifted to the lowest point is at altitude 0
-    if (a * (a > -1e3)).min() < 0:
-        a -= (a * (a > -1e3)).min()
+    if (raster_np * (raster_np > -1e3)).min() < 0:
+        raster_np -= (raster_np * (raster_np > -1e3)).min()
 
-    (y_index, x_index) = np.nonzero(a >= 0)
-    x_coords = x[x_index]
-    y_coords = y[y_index]
+    (y_index, x_index) = np.nonzero(raster_np >= 0)
+    _x_coords = x_coords[x_index]
+    _y_coords = y_coords[y_index]
 
-    elevation_mean = int(a[y_index, x_index].mean())
+    elevation_mean = int(raster_np[y_index, x_index].mean())
 
-    raster_points = [(x, y, z) for x, y, z in zip(x_coords, y_coords, a[y_index, x_index])]
+    raster_points = [(x, y, z) for x, y, z in zip(_x_coords, _y_coords, raster_np[y_index, x_index])]
 
     tin_occface_list = construct.delaunay3d(raster_points)
 
