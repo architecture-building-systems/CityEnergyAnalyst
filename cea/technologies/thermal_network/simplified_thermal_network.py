@@ -134,7 +134,7 @@ def get_thermal_network_from_shapefile(locator, network_type, network_name):
 def calc_max_diameter(volume_flow_m3s, pipe_catalog, velocity_ms, peak_load_percentage):
     volume_flow_m3s_corrected_to_design = volume_flow_m3s * peak_load_percentage / 100
     diameter_m = math.sqrt((volume_flow_m3s_corrected_to_design / velocity_ms) * (4 / math.pi))
-    selection_of_catalog = pipe_catalog.ix[(pipe_catalog['D_int_m'] - diameter_m).abs().argsort()[:1]]
+    selection_of_catalog = pipe_catalog.iloc[(pipe_catalog['D_int_m'] - diameter_m).abs().argsort()[:1]]
     D_int_m = selection_of_catalog['D_int_m'].values[0]
     Pipe_DN = selection_of_catalog['Pipe_DN'].values[0]
     D_ext_m = selection_of_catalog['D_ext_m'].values[0]
