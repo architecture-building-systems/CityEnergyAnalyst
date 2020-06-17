@@ -3071,7 +3071,7 @@ def calc_return_temperatures(t_ground, edge_node_df, mass_flow_df, mass_flow_sub
                 if not np.isnan(t_node[i]):
                     for edge in range(z_note.shape[1]):
                         if t_e_in[i, edge] != 0:
-                            t_e_in[i, edge] = map(list, t_return.values)[0][i]
+                            t_e_in[i, edge] = t_return.values[0, i]
                         # calculate pipe outlet
                         calc_t_out(i, edge, k, m_d, z, t_e_in, t_e_out, t_ground, z_note, thermal_network)
 
