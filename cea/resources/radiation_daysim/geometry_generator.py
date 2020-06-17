@@ -9,15 +9,13 @@ into 3D geometry with windows and roof equivalent to LOD3
 from __future__ import division
 from __future__ import print_function
 
+from itertools import repeat
 import cea
 cea.suppres_3rd_party_debug_loggers()
 
 import math
-import os
-import sys
 import time
 
-import gdal
 import numpy as np
 import py4design.py3dmodel.calculate as calculate
 import py4design.py3dmodel.construct as construct
@@ -126,7 +124,8 @@ class BuildingDataFinale(object):
 
 
 class BuildingData(object):
-    def __init__(self, locator, settings, geometry_terrain, height_col, nfloor_col):
+    def __init__(self, locator, settings, zone_df, surroundings_buildings_df, terrain_raster, height_col, nfloor_col, num_processes):
+        self.num_processes = num_processes
         self.point_to_evaluate = ''
         self.potentially_intersecting_solids = ''
         self.locator = locator
@@ -134,22 +133,19 @@ class BuildingData(object):
         self.nfloor_col = nfloor_col
         self.settings = settings
         self.architecture_wwr_df = gdf.from_file(self.locator.get_building_architecture()).set_index('Name')
+        self.terrain_raster = terrain_raster
 
-        self.terrain_intersection_curves = self.terrain_intersection_curves(geometry_terrain)
-
-        self.zone_buildings_df = gdf.from_file(self.locator.get_zone_geometry()).set_index('Name')
+        self.zone_buildings_df = zone_df.set_index('Name')
         self.zone_building_names = self.zone_buildings_df.index.values
-        self.zone_building_solid_list = np.vectorize(self.calc_zone_building_solids)(self.zone_building_names)
+        self.zone_building_solid_list = self.calc_zone_building_solids()
 
-        self.surroundings_buildings_df = self.surroundings_building_records().set_index('Name')
+        self.surroundings_buildings_df = self.surroundings_building_records(surroundings_buildings_df).set_index('Name')
         self.surroundings_building_names = self.surroundings_buildings_df.index.values
-        self.surroundings_building_solid_list = np.vectorize(self.calc_surrounding_building_solids, otypes=[object])(self.surroundings_building_names)
+        self.surroundings_building_solid_list = self.calc_surrounding_building_solids()
 
-        self.all_building_solid_list = np.append(self.zone_building_solid_list,
-                                                          self.surroundings_building_solid_list)
+        self.all_building_solid_list = np.append(self.zone_building_solid_list, self.surroundings_building_solid_list)
 
-    def surroundings_building_records(self):
-        surroundings_buildings_df = gdf.from_file(self.locator.get_surroundings_geometry())
+    def surroundings_building_records(self, surroundings_buildings_df):
         # clear in case there are repetitive buildings in the zone file
         surroundings_buildings_df = surroundings_buildings_df.loc[
             ~surroundings_buildings_df["Name"].isin(self.zone_building_names)]
@@ -157,47 +153,63 @@ class BuildingData(object):
 
         return surroundings_buildings_df
 
-    def terrain_intersection_curves(self, geometry_terrain):
-        # make shell out of tin_occface_list and create OCC object
-        terrain_shell = construct.make_shell(geometry_terrain)
-        terrain_intersection_curves = IntCurvesFace_ShapeIntersector()
-        terrain_intersection_curves.Load(terrain_shell, 1e-6)
-        return terrain_intersection_curves
-
-    def calc_zone_building_solids(self, name):
-        height = float(self.zone_buildings_df.loc[name, self.height_col])
-        nfloors = int(self.zone_buildings_df.loc[name, self.nfloor_col])
-
+    def calc_zone_building_solids(self):
         # simplify geometry  for buildings of interest
-        range_floors = range(nfloors + 1)
+        geometries = self.zone_buildings_df.geometry.map(
+            lambda x: x.simplify(self.settings.zone_geometry, preserve_topology=True))
+
+        height = self.zone_buildings_df[self.height_col].astype(float)
+        nfloors = self.zone_buildings_df[self.nfloor_col].astype(int)
+        range_floors = nfloors.map(lambda x: range(x + 1))
         floor_to_floor_height = height / nfloors
-        geometry = self.zone_buildings_df.loc[name].geometry.simplify(self.settings.zone_geometry,
-                                                                     preserve_topology=True)
 
-        # burn buildings footprint into the terrain and return the location of the new face
-        face_footprint = burn_buildings(geometry, self.terrain_intersection_curves)
+        raster_np, x, y = raster_to_numpy(self.terrain_raster)
 
-        # create floors and form a solid
-        building_solid = calc_solid(face_footprint, range_floors, floor_to_floor_height)
+        out = cea.utilities.parallel.vectorize(process_geometries, self.num_processes,
+                                               on_complete=print_terrain_intersection_progress)(
+            geometries, repeat(raster_np, len(geometries)), repeat(x, len(geometries)), repeat(y, len(geometries)),
+            range_floors, floor_to_floor_height)
 
-        return building_solid
+        return out
 
-    def calc_surrounding_building_solids(self, name):
-        height = float(self.surroundings_buildings_df.loc[name, self.height_col])
+    def calc_surrounding_building_solids(self):
+        # simplify geometry  for buildings of interest
+        geometries = self.surroundings_buildings_df.geometry.map(
+            lambda x: x.simplify(self.settings.surrounding_geometry, preserve_topology=True))
 
-        # simplify geometry tol =1 for buildings of interest, tol = 5 for surroundings
-        range_floors = [0, 1]
-        floor_to_floor_height = height
-        geometry = self.surroundings_buildings_df.loc[name].geometry.simplify(self.settings.surrounding_geometry,
-                                                                             preserve_topology=True)
+        height = self.surroundings_buildings_df[self.height_col].astype(float)
+        nfloors = self.surroundings_buildings_df[self.nfloor_col].astype(int)
+        range_floors = nfloors.map(lambda x: range(x + 1))
+        floor_to_floor_height = height / nfloors
 
-        # burn buildings footprint into the terrain and return the location of the new face
-        face_footprint = burn_buildings(geometry, self.terrain_intersection_curves)
+        raster_np, x, y = raster_to_numpy(self.terrain_raster)
 
-        # create floors and form a solid
-        building_solid = calc_solid(face_footprint, range_floors, floor_to_floor_height)
+        out = cea.utilities.parallel.vectorize(process_geometries, self.num_processes,
+                                               on_complete=print_terrain_intersection_progress)(
+            geometries, repeat(raster_np, len(geometries)), repeat(x, len(geometries)), repeat(y, len(geometries)),
+            range_floors, floor_to_floor_height)
 
-        return building_solid
+        return out
+
+
+def process_geometries(geometry, raster_np, x, y, range_floors, floor_to_floor_height):
+    _raster, _x, _y = extract_raster(geometry, raster_np, x, y)
+    _, terrain_geometry = raster_to_tin(_raster, _x, _y)
+    terrain_intersection_curves = calc_terrain_intersection_curves(terrain_geometry)
+    # burn buildings footprint into the terrain and return the location of the new face
+    face_footprint = burn_buildings(geometry, terrain_intersection_curves)
+    # create floors and form a solid
+    building_solid = calc_solid(face_footprint, range_floors, floor_to_floor_height)
+
+    return building_solid
+
+
+def calc_terrain_intersection_curves(terrain_geometry):
+    # make shell out of tin_occface_list and create OCC object
+    terrain_shell = construct.make_shell(terrain_geometry)
+    terrain_intersection_curves = IntCurvesFace_ShapeIntersector()
+    terrain_intersection_curves.Load(terrain_shell, 1e-6)
+    return terrain_intersection_curves
 
 
 def calc_building_geometry_surroundings(name, building_solid):
@@ -217,7 +229,7 @@ def calc_building_geometry_surroundings(name, building_solid):
     return geometry_3D_surroundings
 
 
-def building_2d_to_3d(locator, geometry_terrain, config, height_col, nfloor_col):
+def building_2d_to_3d(locator, zone_df, surroundings_df, terrain_raster, config, height_col, nfloor_col):
     """
     :param locator: InputLocator - provides paths to files in a scenario
     :type locator: cea.inputlocator.InputLocator
@@ -232,10 +244,10 @@ def building_2d_to_3d(locator, geometry_terrain, config, height_col, nfloor_col)
     settings = config.radiation
 
     # preprocess data
-    data_preprocessed = BuildingData(locator, settings, geometry_terrain, height_col, nfloor_col)
+    data_preprocessed = BuildingData(locator, settings, zone_df, surroundings_df, terrain_raster, height_col, nfloor_col, config.get_number_of_processes())
     surrounding_building_names = data_preprocessed.surroundings_building_names
     surroundings_building_solid_list = data_preprocessed.surroundings_building_solid_list
-    all_building_solid_list  = data_preprocessed.all_building_solid_list
+    all_building_solid_list = data_preprocessed.all_building_solid_list
     architecture_wwr_df = data_preprocessed.architecture_wwr_df
     zone_building_names = data_preprocessed.zone_building_names
     zone_building_solid_list = data_preprocessed.zone_building_solid_list
@@ -261,15 +273,19 @@ def building_2d_to_3d(locator, geometry_terrain, config, height_col, nfloor_col)
     return geometry_3D_zone, geometry_3D_surroundings
 
 
-def print_progress(i, n, args, _):
-    print("Generating geometry for building {i} completed out of {n}: {b}".format(i=i + 1, n=n, b=args[0]))
+def print_progress(i, n, _, __):
+    print("Generating geometry for building {i} completed out of {n}".format(i=i + 1, n=n))
+
+
+def print_terrain_intersection_progress(i, n, _, __):
+    print("Calculation for building {i} completed out of {n}".format(i=i + 1, n=n))
 
 
 def are_buildings_close_to_eachother(x_1, y_1, solid2):
     box2 = calculate.get_bounding_box(solid2)
     x_2 = box2[0]
     y_2 = box2[1]
-    delta = math.sqrt((y_2- y_1)**2 + (x_2-x_1)**2)
+    delta = math.sqrt((y_2 - y_1)**2 + (x_2-x_1)**2)
     if delta <= 100:
         return True
     else:
@@ -499,20 +515,46 @@ def calc_intersection_face_solid(index, data_processed):
     return intersects
 
 
-def raster_to_tin(input_terrain_raster):
-    # read raster records
-    raster_dataset = gdal.Open(input_terrain_raster)
-    band = raster_dataset.GetRasterBand(1)
-    a = band.ReadAsArray(0, 0, raster_dataset.RasterXSize, raster_dataset.RasterYSize)
+def extract_raster(geometry, height_map, x_coords, y_coords):
+    minx, miny, maxx, maxy = geometry.bounds
 
+    x_start = np.where(minx > x_coords)
+    x_end = np.where(maxx < x_coords)
+    y_start = np.where(maxy < y_coords)
+    y_end = np.where(miny > y_coords)
+
+    x_start = x_start[0][-1]
+    x_end = x_end[0][0]
+    y_start = y_start[0][-1]
+    y_end = y_end[0][0]
+
+    new_height_map = height_map[y_start:y_end+1, x_start:x_end+1]
+    new_x_coords = x_coords[x_start:x_end+1]
+    new_y_coords = y_coords[y_start:y_end+1]
+
+    return new_height_map, new_x_coords, new_y_coords
+
+
+def raster_to_numpy(raster):
+    band = raster.GetRasterBand(1)
+    a = band.ReadAsArray()
+    (y, x) = np.shape(a)
+
+    (upper_left_x, x_size, x_rotation, upper_left_y, y_rotation, y_size) = raster.GetGeoTransform()
+    x_coords = np.arange(start=0, stop=x) * x_size + upper_left_x + (x_size / 2)  # add half the cell size
+    y_coords = np.arange(start=0, stop=y) * y_size + upper_left_y + (y_size / 2)  # to centre the point
+
+    return a, x_coords, y_coords
+
+
+def raster_to_tin(a, x, y):
     # if the raster file is below sea level, the entire case study is lifted to the lowest point is at altitude 0
     if (a * (a > -1e3)).min() < 0:
         a -= (a * (a > -1e3)).min()
 
     (y_index, x_index) = np.nonzero(a >= 0)
-    (upper_left_x, x_size, x_rotation, upper_left_y, y_rotation, y_size) = raster_dataset.GetGeoTransform()
-    x_coords = x_index * x_size + upper_left_x + (x_size / 2)  # add half the cell size
-    y_coords = y_index * y_size + upper_left_y + (y_size / 2)  # to centre the point
+    x_coords = x[x_index]
+    y_coords = y[y_index]
 
     elevation_mean = int(a[y_index, x_index].mean())
 
@@ -533,12 +575,16 @@ def standardize_coordinate_systems(locator):
 
 
 def geometry_main(locator, config):
+    print("Standardizing coordinate systems")
+    zone_df, surroundings_df, terrain_raster = standardize_coordinate_systems(locator)
+
     # list of faces of terrain
     print("Reading terrain geometry")
-    elevation_mean, geometry_terrain = raster_to_tin(locator.get_terrain())
+    height_map, x_coords, y_coords = raster_to_numpy(terrain_raster)
+    elevation_mean, geometry_terrain = raster_to_tin(height_map, x_coords, y_coords)
     # transform buildings 2D to 3D and add windows
     print("Creating 3D building surfaces")
-    geometry_3D_zone, geometry_3D_surroundings = building_2d_to_3d(locator, geometry_terrain, config,
+    geometry_3D_zone, geometry_3D_surroundings = building_2d_to_3d(locator, zone_df, surroundings_df, terrain_raster, config,
                                                                height_col='height_ag', nfloor_col="floors_ag")
 
     return elevation_mean, geometry_terrain, geometry_3D_zone, geometry_3D_surroundings
