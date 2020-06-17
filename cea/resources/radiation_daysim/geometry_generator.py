@@ -154,40 +154,28 @@ class BuildingData(object):
         return surroundings_buildings_df
 
     def calc_zone_building_solids(self):
-        # simplify geometry  for buildings of interest
-        geometries = self.zone_buildings_df.geometry.map(
-            lambda x: x.simplify(self.settings.zone_geometry, preserve_topology=True))
-
-        height = self.zone_buildings_df[self.height_col].astype(float)
-        nfloors = self.zone_buildings_df[self.nfloor_col].astype(int)
-        range_floors = nfloors.map(lambda x: range(x + 1))
-        floor_to_floor_height = height / nfloors
-
-        raster_np, x, y = raster_to_numpy(self.terrain_raster)
-
-        out = cea.utilities.parallel.vectorize(process_geometries, self.num_processes,
-                                               on_complete=print_terrain_intersection_progress)(
-            geometries, repeat(raster_np, len(geometries)), repeat(x, len(geometries)), repeat(y, len(geometries)),
-            range_floors, floor_to_floor_height)
-
-        return out
+        return self._calc_building_solids(self.zone_buildings_df, self.settings.zone_geometry)
 
     def calc_surrounding_building_solids(self):
-        # simplify geometry  for buildings of interest
-        geometries = self.surroundings_buildings_df.geometry.map(
-            lambda x: x.simplify(self.settings.surrounding_geometry, preserve_topology=True))
+        return self._calc_building_solids(self.surroundings_buildings_df, self.settings.surrounding_geometry)
 
-        height = self.surroundings_buildings_df[self.height_col].astype(float)
-        nfloors = self.surroundings_buildings_df[self.nfloor_col].astype(int)
-        range_floors = nfloors.map(lambda x: range(x + 1))
+    def _calc_building_solids(self, buildings_df, geometry_simplification):
+        # simplify geometry  for buildings of interest
+        geometries = buildings_df.geometry.map(
+            lambda geometry: geometry.simplify(geometry_simplification, preserve_topology=True))
+
+        height = buildings_df[self.height_col].astype(float)
+        nfloors = buildings_df[self.nfloor_col].astype(int)
+        range_floors = nfloors.map(lambda floors: range(floors + 1))
         floor_to_floor_height = height / nfloors
 
-        raster_np, x, y = raster_to_numpy(self.terrain_raster)
+        height_map, x_coords, y_coords = raster_to_numpy(self.terrain_raster)
 
+        n = len(geometries)
         out = cea.utilities.parallel.vectorize(process_geometries, self.num_processes,
                                                on_complete=print_terrain_intersection_progress)(
-            geometries, repeat(raster_np, len(geometries)), repeat(x, len(geometries)), repeat(y, len(geometries)),
-            range_floors, floor_to_floor_height)
+            geometries, repeat(height_map, n), repeat(x_coords, n), repeat(y_coords, n), range_floors,
+            floor_to_floor_height)
 
         return out
 
