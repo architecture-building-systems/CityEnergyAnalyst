@@ -1,6 +1,6 @@
+from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
-from __future__ import absolute_import
 
 import json
 import multiprocessing
@@ -9,6 +9,7 @@ import warnings
 from itertools import repeat
 from math import factorial
 from math import sqrt
+from typing import Any, Dict, List, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -34,7 +35,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("error")
 NOBJ = 2  # number of objectives
 creator.create("FitnessMin", base.Fitness, weights=(-1.0,) * NOBJ)
 creator.create("Individual", list, typecode='d', fitness=creator.FitnessMin)
@@ -516,13 +517,13 @@ def save_final_generation_pareto_individuals(toolbox,
     return systems_name_list
 
 
-def save_generation_pareto_individuals(locator, generation, record_individuals_tested, paretofrontier):
+def save_generation_pareto_individuals(locator, generation, record_individuals_tested, pareto_frontier):
     performance_totals_pareto = pd.DataFrame()
     individual_list = []
     generation_list = []
 
     for i, record in enumerate(record_individuals_tested['individual_code']):
-        if record in paretofrontier:
+        if record in pareto_frontier:
             ind = record_individuals_tested['individual_id'][i]
             gen = record_individuals_tested['generation'][i]
             individual_list.append(ind)
@@ -593,14 +594,14 @@ def save_generation_individuals(columns_of_saved_files, generation, invalid_ind,
     individuals_info.to_csv(locator.get_optimization_individuals_in_generation(generation), index=False)
 
 
-def create_empty_individual(column_names,
-                            column_names_buildings_heating,
-                            column_names_buildings_cooling,
-                            district_heating_network,
-                            district_cooling_network,
-                            technologies_heating_allowed,
-                            technologies_cooling_allowed,
-                            ):
+def create_empty_individual(column_names: List[str],
+                            column_names_buildings_heating: List[str],
+                            column_names_buildings_cooling: List[str],
+                            district_heating_network: bool,
+                            district_cooling_network: bool,
+                            technologies_heating_allowed: List[str],
+                            technologies_cooling_allowed: List[str],
+                            ) -> Dict[str, Union[float, int]]:
     # local variables
     heating_unit_names_share = [x[0] for x in DH_CONVERSION_TECHNOLOGIES_SHARE.items() if
                                 x[0] in technologies_heating_allowed]
@@ -628,13 +629,13 @@ def create_empty_individual(column_names,
     return individual_with_names_dict
 
 
-def get_column_names_individual(district_heating_network,
-                                district_cooling_network,
-                                building_names_heating,
-                                building_names_cooling,
-                                technologies_heating_allowed,
-                                technologies_cooling_allowed,
-                                ):
+def get_column_names_individual(district_heating_network: bool,
+                                district_cooling_network: bool,
+                                building_names_heating: List[str],
+                                building_names_cooling: List[str],
+                                technologies_heating_allowed: List[str],
+                                technologies_cooling_allowed: List[str],
+                                ) -> Tuple[List[str], List[str], List[Any], List[str], List[Any]]:
     # 2 cases are possible
     if district_heating_network:
         # local variables
@@ -675,10 +676,10 @@ def calc_gd(n, X2, Y2):
     return gd
 
 
-def calc_performance_metrics(generational_distance_n_minus_1, paretofrontier):
-    number_of_individuals = len([paretofrontier])
-    X2 = [paretofrontier[x].fitness.values[0] for x in range(number_of_individuals)]
-    Y2 = [paretofrontier[x].fitness.values[1] for x in range(number_of_individuals)]
+def calc_performance_metrics(generational_distance_n_minus_1, pareto_frontier):
+    number_of_individuals = len([pareto_frontier])
+    X2 = [pareto_frontier[x].fitness.values[0] for x in range(number_of_individuals)]
+    Y2 = [pareto_frontier[x].fitness.values[1] for x in range(number_of_individuals)]
 
     generational_distance = calc_gd(number_of_individuals, X2, Y2)
     difference_generational_distance = abs(generational_distance_n_minus_1 - generational_distance)
