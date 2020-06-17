@@ -65,7 +65,7 @@ def substation_HEX_design_main(buildings_demands, substation_systems, thermal_ne
         # calculate substation parameters (A,UA) per building and store to .csv (target)
         substation_HEX = substation_HEX_sizing(buildings_demands[name], substation_systems, thermal_network)
         # write into dataframe
-        substations_HEX_specs.ix[name] = substation_HEX
+        substations_HEX_specs.loc[name] = substation_HEX
         if substations_Q.empty:
             substations_Q = pd.DataFrame(substation_HEX[2])
         else:
@@ -293,7 +293,7 @@ def substation_return_model_main(thermal_network, T_substation_supply, t, consum
             # calculate DH substation return temperature and substation flow rate
             T_substation_return_K, \
             mcp_sub, thermal_demand[name] = calc_substation_return_DH(building, T_substation_supply_K,
-                                                                      thermal_network.substations_HEX_specs.ix[name],
+                                                                      thermal_network.substations_HEX_specs.loc[name],
                                                                       thermal_network, name, t)
         else:
             for key in thermal_network.substation_cooling_systems:
@@ -301,11 +301,9 @@ def substation_return_model_main(thermal_network, T_substation_supply, t, consum
                 if not name in thermal_network.cc_old[key][t].columns:
                     thermal_network.cc_old[key][t][name] = 0.0
             # calculate DC substation return temperature and substation flow rate
-            T_substation_return_K, mcp_sub, thermal_demand[name] = calc_substation_return_DC(building,
-                                                                                             T_substation_supply_K,
-                                                                                             thermal_network.substations_HEX_specs.ix[
-                                                                                                 name],
-                                                                                             thermal_network, name, t)
+            T_substation_return_K, mcp_sub, thermal_demand[name] = calc_substation_return_DC(
+                building, T_substation_supply_K, thermal_network.substations_HEX_specs.loc[name], thermal_network, name,
+                t)
 
         T_return_all_K[name] = [T_substation_return_K]
         mdot_sum_all_kgs[name] = [mcp_sub / (HEAT_CAPACITY_OF_WATER_JPERKGK / 1000)]  # [kg/s]
