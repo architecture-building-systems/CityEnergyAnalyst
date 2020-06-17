@@ -523,6 +523,15 @@ def raster_to_tin(input_terrain_raster):
     return elevation_mean, tin_occface_list
 
 
+def standardize_coordinate_systems(locator):
+    from cea.utilities.standardize_coordinates import shapefile_to_WSG_and_UTM, raster_to_WSG_and_UTM
+    zone_df, lat, lon = shapefile_to_WSG_and_UTM(locator.get_zone_geometry())
+    surroundings_df, _, _ = shapefile_to_WSG_and_UTM(locator.get_surroundings_geometry())
+    terrain_raster = raster_to_WSG_and_UTM(locator.get_terrain(), lat, lon)
+
+    return zone_df, surroundings_df, terrain_raster
+
+
 def geometry_main(locator, config):
     # list of faces of terrain
     print("Reading terrain geometry")
