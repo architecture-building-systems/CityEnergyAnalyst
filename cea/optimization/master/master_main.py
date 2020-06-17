@@ -147,42 +147,33 @@ def calc_dictionary_of_all_individuals_tested(dictionary_individuals, gen, inval
     return dictionary_individuals
 
 
-def non_dominated_sorting_genetic_algorithm(locator,
-                                            building_names_all,
-                                            district_heating_network,
-                                            district_cooling_network,
-                                            building_names_heating,
-                                            building_names_cooling,
-                                            building_names_electricity,
-                                            network_features,
-                                            weather_features,
-                                            config,
-                                            prices,
-                                            lca):
+def non_dominated_sorting_genetic_algorithm(config, locator, building_names_all, district_heating_network,
+                                            district_cooling_network, building_names_heating, building_names_cooling,
+                                            building_names_electricity, preprocessing_result):
     # LOCAL VARIABLES
-    NGEN = config.optimization.number_of_generations  # number of generations
-    MU = config.optimization.population_size  # int(H + (4 - H % 4)) # number of individuals to select
-    RANDOM_SEED = config.optimization.random_seed
-    CXPB = config.optimization.crossover_prob
-    MUTPB = config.optimization.mutation_prob
-    technologies_heating_allowed = config.optimization.technologies_DH
-    technologies_cooling_allowed = config.optimization.technologies_DC
-    mutation_method_integer = config.optimization.mutation_method_integer
-    mutation_method_continuous = config.optimization.mutation_method_continuous
-    crossover_method_integer = config.optimization.crossover_method_integer
-    crossover_method_continuous = config.optimization.crossover_method_continuous
+    NGEN: int = config.optimization.number_of_generations  # number of generations
+    MU: int = config.optimization.population_size  # int(H + (4 - H % 4)) # number of individuals to select
+    RANDOM_SEED: int = config.optimization.random_seed
+    CXPB: float = config.optimization.crossover_prob
+    MUTPB: float = config.optimization.mutation_prob
+    technologies_heating_allowed: List[str] = config.optimization.technologies_DH
+    technologies_cooling_allowed: List[str] = config.optimization.technologies_DC
+    mutation_method_integer: str = config.optimization.mutation_method_integer
+    mutation_method_continuous: str = config.optimization.mutation_method_continuous
+    crossover_method_integer: str = config.optimization.crossover_method_integer
+    crossover_method_continuous: str = config.optimization.crossover_method_continuous
 
     # SET-UP EVOLUTIONARY ALGORITHM
     # Hyperparameters
     P = 12
     ref_points = tools.uniform_reference_points(NOBJ, P)
-    if MU == None:
+    if MU is None:
         H = factorial(NOBJ + P - 1) / (factorial(P) * factorial(NOBJ - 1))
         MU = int(H + (4 - H % 4))
     random.seed(RANDOM_SEED)
     np.random.seed(RANDOM_SEED)
 
-    # SET-UP INDIVIDUAL STRUCTURE INCLUIDING HOW EVERY POINT IS CALLED (COLUM_NAMES)
+    # SET-UP INDIVIDUAL STRUCTURE INCLUDING HOW EVERY POINT IS CALLED (COLUMN_NAMES)
     column_names, \
     heating_unit_names_share, \
     cooling_unit_names_share, \
@@ -290,11 +281,11 @@ def non_dominated_sorting_genetic_algorithm(locator,
                                                   repeat(building_names_cooling, len(invalid_ind)),
                                                   repeat(building_names_electricity, len(invalid_ind)),
                                                   repeat(locator, len(invalid_ind)),
-                                                  repeat(network_features, len(invalid_ind)),
-                                                  repeat(weather_features, len(invalid_ind)),
+                                                  repeat(preprocessing_result.network_features, len(invalid_ind)),
+                                                  repeat(preprocessing_result.weather_features, len(invalid_ind)),
                                                   repeat(config, len(invalid_ind)),
-                                                  repeat(prices, len(invalid_ind)),
-                                                  repeat(lca, len(invalid_ind)),
+                                                  repeat(preprocessing_result.prices, len(invalid_ind)),
+                                                  repeat(preprocessing_result.lca, len(invalid_ind)),
                                                   repeat(district_heating_network, len(invalid_ind)),
                                                   repeat(district_cooling_network, len(invalid_ind)),
                                                   repeat(technologies_heating_allowed, len(invalid_ind)),
@@ -326,7 +317,7 @@ def non_dominated_sorting_genetic_algorithm(locator,
     # Begin the generational process
     # Initialization of variables
     for gen in range(1, NGEN + 1):
-        print ("Evaluating Generation %s of %s generations" % (gen, NGEN + 1))
+        print("Evaluating Generation %s of %s generations" % (gen, NGEN + 1))
         # Select and clone the next generation individuals
         offspring = algorithms.varAnd(pop, toolbox, CXPB, MUTPB)
 
@@ -342,11 +333,11 @@ def non_dominated_sorting_genetic_algorithm(locator,
                                     repeat(building_names_cooling, len(invalid_ind)),
                                     repeat(building_names_electricity, len(invalid_ind)),
                                     repeat(locator, len(invalid_ind)),
-                                    repeat(network_features, len(invalid_ind)),
-                                    repeat(weather_features, len(invalid_ind)),
+                                    repeat(preprocessing_result.network_features, len(invalid_ind)),
+                                    repeat(preprocessing_result.weather_features, len(invalid_ind)),
                                     repeat(config, len(invalid_ind)),
-                                    repeat(prices, len(invalid_ind)),
-                                    repeat(lca, len(invalid_ind)),
+                                    repeat(preprocessing_result.prices, len(invalid_ind)),
+                                    repeat(preprocessing_result.lca, len(invalid_ind)),
                                     repeat(district_heating_network, len(invalid_ind)),
                                     repeat(district_cooling_network, len(invalid_ind)),
                                     repeat(technologies_heating_allowed, len(invalid_ind)),

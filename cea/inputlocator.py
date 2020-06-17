@@ -70,7 +70,7 @@ class InputLocator(object):
                 setattr(self, lm, cea.schemas.create_schema_io(self, lm, schemas[lm]))
 
     @staticmethod
-    def _ensure_folder(*components):
+    def _ensure_folder(*components) -> str:
         """Return the `*components` joined together as a path to a folder and ensure that that folder exists on disc.
         If it doesn't exist yet, attempt to make it with `os.makedirs`."""
         folder = os.path.join(*components)
@@ -126,7 +126,7 @@ class InputLocator(object):
             raise IOError(message)
         return True
 
-    def get_input_folder(self):
+    def get_input_folder(self) -> str:
         """Returns the inputs folder of a scenario"""
         return os.path.join(self.scenario, "inputs")
 
@@ -349,7 +349,7 @@ class InputLocator(object):
         """scenario/outputs/data/potentials/geothermal/geothermal.csv"""
         return os.path.join(self.get_potentials_folder(), "Shallow_geothermal_potential.csv")
 
-    def get_weather_file(self):
+    def get_weather_file(self) -> str:
         """inputs/weather/weather.epw
         path to the weather file to use for simulation - run weather-helper to set this"""
         return os.path.join(self.get_weather_folder(), "weather.epw")
