@@ -602,9 +602,9 @@ def create_empty_individual(column_names,
                             technologies_cooling_allowed,
                             ):
     # local variables
-    heating_unit_names_share = [x[0] for x in DH_CONVERSION_TECHNOLOGIES_SHARE.iteritems() if
+    heating_unit_names_share = [x[0] for x in DH_CONVERSION_TECHNOLOGIES_SHARE.items() if
                                 x[0] in technologies_heating_allowed]
-    cooling_unit_names_share = [x[0] for x in DC_CONVERSION_TECHNOLOGIES_SHARE.iteritems() if
+    cooling_unit_names_share = [x[0] for x in DC_CONVERSION_TECHNOLOGIES_SHARE.items() if
                                 x[0] in technologies_cooling_allowed]
 
     heating_unit_share_float = [0.0] * len(heating_unit_names_share)
@@ -638,7 +638,7 @@ def get_column_names_individual(district_heating_network,
     # 2 cases are possible
     if district_heating_network:
         # local variables
-        heating_unit_names_share = [x[0] for x in DH_CONVERSION_TECHNOLOGIES_SHARE.iteritems() if
+        heating_unit_names_share = [x[0] for x in DH_CONVERSION_TECHNOLOGIES_SHARE.items() if
                                     x[0] in technologies_heating_allowed]
         column_names_buildings_heating = [x + "_" + DH_ACRONYM for x in building_names_heating]
         cooling_unit_names_share = []
@@ -647,7 +647,7 @@ def get_column_names_individual(district_heating_network,
                        column_names_buildings_heating
     elif district_cooling_network:
         # local variables
-        cooling_unit_names_share = [x[0] for x in DC_CONVERSION_TECHNOLOGIES_SHARE.iteritems() if
+        cooling_unit_names_share = [x[0] for x in DC_CONVERSION_TECHNOLOGIES_SHARE.items() if
                                     x[0] in technologies_cooling_allowed]
         column_names_buildings_cooling = [x + "_" + DC_ACRONYM for x in building_names_cooling]
         heating_unit_names_share = []
