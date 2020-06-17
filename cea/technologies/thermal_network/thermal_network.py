@@ -12,6 +12,7 @@ import random
 import time
 from itertools import repeat, chain
 from math import ceil
+from typing import List
 
 import geopandas as gpd
 import networkx as nx
@@ -577,7 +578,7 @@ def calculate_pressure_loss_critical_path(dP_timestep, thermal_network):
         # find the path with the highest pressure drop
         _, distances_dict = nx.dijkstra_predecessor_and_distance(G, source=plant_node)
         critical_node = max(distances_dict, key=distances_dict.get)
-        path_to_critical_node = nx.shortest_path(G, source=plant_node)[critical_node]
+        path_to_critical_node: List[str] = nx.shortest_path(G, source=plant_node)[critical_node]
         # calculate pressure losses along the critical path
         for i in range(len(path_to_critical_node)):
             if i < len(path_to_critical_node) - 1:
@@ -590,7 +591,7 @@ def calculate_pressure_loss_critical_path(dP_timestep, thermal_network):
         substation_nodes_ix = []
         node_df = thermal_network.all_nodes_df
         for node in path_to_critical_node:
-            if node_df.ix[node]['Type'] != 'NONE':
+            if node_df.loc[node]['Type'] != 'NONE':
                 substation_nodes_ix.append(int(node.split('NODE')[1]))
     else:
         pressure_losses_in_critical_paths = np.zeros(len(dP_all_edges))  # zero array
