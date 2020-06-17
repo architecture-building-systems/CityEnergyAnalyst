@@ -105,7 +105,7 @@ def schedule_to_file(schedule, schedule_path):
     schedule_df = pd.DataFrame()
     metadata = ['METADATA']
     multiplier = ['MONTHLY_MULTIPLIER']
-    for key, data in schedule.iteritems():
+    for key, data in schedule.items():
         if key == 'METADATA':
             metadata += [schedule['METADATA']['metadata'].iloc[0]]
         elif key == 'MONTHLY_MULTIPLIER':
