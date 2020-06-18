@@ -10,6 +10,8 @@ import random
 
 from cea.optimization.constants import DH_CONVERSION_TECHNOLOGIES_SHARE, DC_CONVERSION_TECHNOLOGIES_SHARE
 from cea.optimization.master.validation import validation_main
+from cea.optimization.master.master_main import  ColumnNamesIndividualResult
+from typing import Dict, Union
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -21,15 +23,12 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def generate_main(individual_with_names_dict,
-                  column_names,
-                  column_names_buildings_heating,
-                  column_names_buildings_cooling,
+def generate_main(individual_with_names_dict: Dict[str, Union[float, int]],
+                  column_names_individual: ColumnNamesIndividualResult,
                   district_heating_network,
                   district_cooling_network,
                   technologies_heating_allowed,
-                  technologies_cooling_allowed,
-                  ):
+                  technologies_cooling_allowed):
     """
     Creates an individual configuration for the evolutionary algorithm.
     The individual is divided into four parts namely Heating technologies, Cooling Technologies, Heating Network
@@ -56,29 +55,25 @@ def generate_main(individual_with_names_dict,
         populated_individual_with_name_dict = populate_individual(individual_with_names_dict,
                                                                   DH_CONVERSION_TECHNOLOGIES_SHARE,
                                                                   technologies_heating_allowed,
-                                                                  column_names_buildings_heating)
+                                                                  column_names_individual.column_names_buildings_heating)
     elif district_cooling_network:
         populated_individual_with_name_dict = populate_individual(individual_with_names_dict,
                                                                   DC_CONVERSION_TECHNOLOGIES_SHARE,
                                                                   technologies_cooling_allowed,
-                                                                  column_names_buildings_cooling)
+                                                                  column_names_individual.column_names_buildings_cooling)
     else:
         raise Exception("option not existent")
 
     populated_individual_with_name_dict = validation_main(populated_individual_with_name_dict,
-                                                          column_names_buildings_heating,
-                                                          column_names_buildings_cooling,
+                                                          column_names_individual.column_names_buildings_heating,
+                                                          column_names_individual.column_names_buildings_cooling,
                                                           district_heating_network,
                                                           district_cooling_network,
                                                           technologies_heating_allowed,
-                                                          technologies_cooling_allowed
-                                                          )
+                                                          technologies_cooling_allowed)
 
     # CONVERT BACK INTO AN INDIVIDUAL STRING IMPORTANT TO USE column_names to keep the order
-    individual = []
-    for column in column_names:
-        individual.append(populated_individual_with_name_dict[column])
-
+    individual = [populated_individual_with_name_dict[column] for column in column_names_individual.column_names]
     return individual
 
 

@@ -32,6 +32,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
+
 class WeatherFeatures(object):
     def __init__(self, weather_file, locator):
         self.weather_data = epwreader.epw_reader(weather_file)

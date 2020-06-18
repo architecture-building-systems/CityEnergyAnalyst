@@ -22,7 +22,7 @@ from .constants import DH_ACRONYM, DC_ACRONYM
 
 from typing import List
 
-warnings.filterwarnings("error")
+warnings.filterwarnings("always")
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"

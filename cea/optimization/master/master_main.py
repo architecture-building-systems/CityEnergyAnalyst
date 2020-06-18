@@ -9,7 +9,7 @@ import warnings
 from itertools import repeat
 from math import factorial
 from math import sqrt
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union, NamedTuple
 
 import numpy as np
 import pandas as pd
@@ -35,7 +35,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
-warnings.filterwarnings("error")
+warnings.filterwarnings("always")
 NOBJ = 2  # number of objectives
 creator.create("FitnessMin", base.Fitness, weights=(-1.0,) * NOBJ)
 creator.create("Individual", list, typecode='d', fitness=creator.FitnessMin)
@@ -174,26 +174,15 @@ def non_dominated_sorting_genetic_algorithm(config, locator, building_names_all,
     np.random.seed(RANDOM_SEED)
 
     # SET-UP INDIVIDUAL STRUCTURE INCLUDING HOW EVERY POINT IS CALLED (COLUMN_NAMES)
-    column_names, \
-    heating_unit_names_share, \
-    cooling_unit_names_share, \
-    column_names_buildings_heating, \
-    column_names_buildings_cooling = get_column_names_individual(district_heating_network,
-                                                                 district_cooling_network,
-                                                                 building_names_heating,
-                                                                 building_names_cooling,
-                                                                 technologies_heating_allowed,
-                                                                 technologies_cooling_allowed,
-
-                                                                 )
-    individual_with_names_dict = create_empty_individual(column_names,
-                                                         column_names_buildings_heating,
-                                                         column_names_buildings_cooling,
+    column_names_individual = get_column_names_individual(district_heating_network,
+                                                          district_cooling_network,
+                                                          building_names_heating,
+                                                          building_names_cooling,
+                                                          technologies_heating_allowed,
+                                                          technologies_cooling_allowed)
+    individual_with_names_dict = create_empty_individual(column_names_individual,
                                                          district_heating_network,
-                                                         district_cooling_network,
-                                                         technologies_heating_allowed,
-                                                         technologies_cooling_allowed,
-                                                         )
+                                                         district_cooling_network)
 
     # DEAP LIBRARY REFERENCE_POINT CLASSES AND TOOLS
     # reference points
@@ -201,9 +190,7 @@ def non_dominated_sorting_genetic_algorithm(config, locator, building_names_all,
     toolbox.register("generate",
                      generate_main,
                      individual_with_names_dict=individual_with_names_dict,
-                     column_names=column_names,
-                     column_names_buildings_heating=column_names_buildings_heating,
-                     column_names_buildings_cooling=column_names_buildings_cooling,
+                     column_names_individual=column_names_individual,
                      district_heating_network=district_heating_network,
                      district_cooling_network=district_cooling_network,
                      technologies_heating_allowed=technologies_heating_allowed,
@@ -585,39 +572,12 @@ def save_generation_individuals(columns_of_saved_files, generation, invalid_ind,
     individuals_info.to_csv(locator.get_optimization_individuals_in_generation(generation), index=False)
 
 
-def create_empty_individual(column_names: List[str],
-                            column_names_buildings_heating: List[str],
-                            column_names_buildings_cooling: List[str],
-                            district_heating_network: bool,
-                            district_cooling_network: bool,
-                            technologies_heating_allowed: List[str],
-                            technologies_cooling_allowed: List[str],
-                            ) -> Dict[str, Union[float, int]]:
-    # local variables
-    heating_unit_names_share = [x[0] for x in DH_CONVERSION_TECHNOLOGIES_SHARE.items() if
-                                x[0] in technologies_heating_allowed]
-    cooling_unit_names_share = [x[0] for x in DC_CONVERSION_TECHNOLOGIES_SHARE.items() if
-                                x[0] in technologies_cooling_allowed]
-
-    heating_unit_share_float = [0.0] * len(heating_unit_names_share)
-    cooling_unit_share_float = [0.0] * len(cooling_unit_names_share)
-
-    DH_buildings_district_scale_int = [0] * len(column_names_buildings_heating)
-    DC_buildings_district_scale_int = [0] * len(column_names_buildings_cooling)
-
-    # 1 cases are possible
-    if district_heating_network:
-        individual = heating_unit_share_float + \
-                     DH_buildings_district_scale_int
-    elif district_cooling_network:
-        individual = cooling_unit_share_float + \
-                     DC_buildings_district_scale_int
-    else:
-        raise Exception('option not available')
-
-    individual_with_names_dict = dict(zip(column_names, individual))
-
-    return individual_with_names_dict
+class ColumnNamesIndividualResult(NamedTuple):
+    column_names: List[str]
+    heating_unit_names_share: List[str]
+    cooling_unit_names_share: List[str]
+    column_names_buildings_heating: List[str]
+    column_names_buildings_cooling: List[str]
 
 
 def get_column_names_individual(district_heating_network: bool,
@@ -625,35 +585,70 @@ def get_column_names_individual(district_heating_network: bool,
                                 building_names_heating: List[str],
                                 building_names_cooling: List[str],
                                 technologies_heating_allowed: List[str],
-                                technologies_cooling_allowed: List[str],
-                                ) -> Tuple[List[str], List[str], List[Any], List[str], List[Any]]:
-    # 2 cases are possible
-    if district_heating_network:
-        # local variables
-        heating_unit_names_share = [x[0] for x in DH_CONVERSION_TECHNOLOGIES_SHARE.items() if
-                                    x[0] in technologies_heating_allowed]
-        column_names_buildings_heating = [x + "_" + DH_ACRONYM for x in building_names_heating]
-        cooling_unit_names_share = []
-        column_names_buildings_cooling = []
-        column_names = heating_unit_names_share + \
-                       column_names_buildings_heating
-    elif district_cooling_network:
-        # local variables
-        cooling_unit_names_share = [x[0] for x in DC_CONVERSION_TECHNOLOGIES_SHARE.items() if
-                                    x[0] in technologies_cooling_allowed]
-        column_names_buildings_cooling = [x + "_" + DC_ACRONYM for x in building_names_cooling]
-        heating_unit_names_share = []
-        column_names_buildings_heating = []
-        column_names = cooling_unit_names_share + \
-                       column_names_buildings_cooling
-    else:
-        raise Exception('One or more attributes where not selected')
+                                technologies_cooling_allowed: List[str]) -> ColumnNamesIndividualResult:
+    assert_district_heating_xor_cooling_network(district_cooling_network, district_heating_network)
 
-    return column_names, \
-           heating_unit_names_share, \
-           cooling_unit_names_share, \
-           column_names_buildings_heating, \
-           column_names_buildings_cooling
+    if district_heating_network:
+        return get_column_names_individual_heating(building_names_heating, technologies_heating_allowed)
+    else:
+        # local variables
+        return get_column_names_individual_cooling(building_names_cooling, technologies_cooling_allowed)
+
+
+def assert_district_heating_xor_cooling_network(district_cooling_network:bool, district_heating_network:bool) -> None:
+    """
+    Ensure that district_cooling_network (exclusive or) district_heating_network is True.
+
+    :param district_cooling_network: True, if we're simulating a district cooling network
+    :param district_heating_network: True, if we're simulationg a district heating network
+    """
+    assert district_heating_network != district_cooling_network, "Only one network type possible"
+    assert district_heating_network or district_cooling_network, "No network type selected"
+
+
+def get_column_names_individual_cooling(building_names_cooling: List[str],
+                                        technologies_cooling_allowed: List[str]) -> ColumnNamesIndividualResult:
+    cooling_unit_names_share = [tech for tech in DC_CONVERSION_TECHNOLOGIES_SHARE.keys() if
+                                tech in technologies_cooling_allowed]
+    column_names_buildings_cooling = ["{building}_{DC}".format(building=building, DC=DC_ACRONYM)
+                                      for building in building_names_cooling]
+    column_names = cooling_unit_names_share + column_names_buildings_cooling
+    return ColumnNamesIndividualResult(column_names, [], cooling_unit_names_share, [],
+                                       column_names_buildings_cooling)
+
+
+def get_column_names_individual_heating(building_names_heating: List[str],
+                                        technologies_heating_allowed: List[str]) -> ColumnNamesIndividualResult:
+    heating_unit_names_share = [tech for tech in DH_CONVERSION_TECHNOLOGIES_SHARE.keys() if
+                                tech in technologies_heating_allowed]
+    column_names_buildings_heating = ["{building}_{DH}".format(building=building, DH=DH_ACRONYM)
+                                      for building in building_names_heating]
+    column_names = heating_unit_names_share + column_names_buildings_heating
+    return ColumnNamesIndividualResult(column_names, heating_unit_names_share, [], column_names_buildings_heating, [])
+
+
+def create_empty_individual(column_names_individual: ColumnNamesIndividualResult,
+                            district_heating_network: bool,
+                            district_cooling_network: bool) -> Dict[str, Union[float, int]]:
+    assert_district_heating_xor_cooling_network(district_cooling_network, district_heating_network)
+
+    # local variables
+    heating_unit_names_share = column_names_individual.heating_unit_names_share
+    cooling_unit_names_share = column_names_individual.cooling_unit_names_share
+
+    heating_unit_share_float = [0.0] * len(heating_unit_names_share)
+    cooling_unit_share_float = [0.0] * len(cooling_unit_names_share)
+
+    DH_buildings_district_scale_int = [0] * len(column_names_individual.column_names_buildings_heating)
+    DC_buildings_district_scale_int = [0] * len(column_names_individual.column_names_buildings_cooling)
+
+    # 1 cases are possible
+    if district_heating_network:
+        individual = heating_unit_share_float + DH_buildings_district_scale_int
+    else:
+        individual = cooling_unit_share_float + DC_buildings_district_scale_int
+
+    return dict(zip(column_names_individual.column_names, individual))
 
 
 def calc_euclidean_distance(x2, y2):
