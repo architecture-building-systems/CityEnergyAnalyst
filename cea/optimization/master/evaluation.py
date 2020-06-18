@@ -32,9 +32,6 @@ def evaluation_main(individual: IndividualList,
                     lca,
                     individual_number,
                     generation_number,
-                    column_names_individual,
-                    column_names_buildings_heating,
-                    column_names_buildings_cooling,
                     building_names_heating,
                     building_names_cooling,
                     building_names_electricity,
@@ -67,23 +64,17 @@ def evaluation_main(individual: IndividualList,
     """
 
     # CREATE THE INDIVIDUAL BARCODE AND INDIVIDUAL WITH HER COLUMN NAME AS A DICT
-    DHN_barcode, DCN_barcode, individual_with_name_dict, building_connectivity_dict = individual_to_barcode(individual,
-                                                                                                            blueprint,
-                                                                                                            building_names_all,
-                                                                                                            building_names_heating,
-                                                                                                            building_names_cooling,
-                                                                                                            column_names_individual,
-                                                                                                            column_names_buildings_heating,
-                                                                                                            column_names_buildings_cooling)
+    individual_dict = IndividualDict.from_individual_list(individual, blueprint)
+    DHN_barcode, DCN_barcode = individual_to_barcode(individual_dict, blueprint)
 
     print("EVALUATING THE NEXT SYSTEM OPTION/INDIVIDUAL")
-    print(individual_with_name_dict)
+    print(individual_dict)
     # CREATE CLASS AND PASS KEY CHARACTERISTICS OF INDIVIDUAL
     # THIS CLASS SHOULD CONTAIN ALL VARIABLES THAT MAKE AN INDIVIDUAL CONFIGURATION
     master_to_slave_vars = master.export_data_to_master_to_slave_class(locator,
                                                                        generation_number,
                                                                        individual_number,
-                                                                       individual_with_name_dict,
+                                                                       individual_dict,
                                                                        building_names_all,
                                                                        building_names_heating,
                                                                        building_names_cooling,
@@ -177,7 +168,6 @@ def evaluation_main(individual: IndividualList,
            district_electricity_dispatch, \
            district_electricity_demands, \
            performance_totals, \
-           building_connectivity_dict, \
            district_heating_capacity_installed, \
            district_cooling_capacity_installed, \
            district_electricity_capacity_installed, \

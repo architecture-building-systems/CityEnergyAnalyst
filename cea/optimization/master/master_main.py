@@ -22,7 +22,7 @@ from cea.optimization.constants import (DH_CONVERSION_TECHNOLOGIES_SHARE, DC_CON
 from cea.optimization.master import evaluation
 from cea.optimization.master.crossover import crossover_main
 from cea.optimization.master.data_saver import save_results
-from cea.optimization.master.generation import generate_main
+from cea.optimization.master.generation import generate_main, calc_building_connectivity_dict
 from cea.optimization.master.generation import individual_to_barcode
 from cea.optimization.master.mutations import mutation_main
 from cea.optimization.master.normalization import scaler_for_normalization, normalize_fitnesses
@@ -77,8 +77,6 @@ def objective_function(individual: IndividualList,
                        generation_number: int,
                        blueprint: IndividualBlueprint,
                        building_names_all,
-                       column_names_buildings_heating,
-                       column_names_buildings_cooling,
                        building_names_heating,
                        building_names_cooling,
                        building_names_electricity,
@@ -92,7 +90,6 @@ def objective_function(individual: IndividualList,
                        district_cooling_network,
                        technologies_heating_allowed,
                        technologies_cooling_allowed,
-                       column_names,
                        print_final_results=False):
     """
     Objective function is used to calculate the costs, CO2, primary energy and the variables corresponding to the
@@ -115,35 +112,31 @@ def objective_function(individual: IndividualList,
     district_electricity_dispatch, \
     district_electricity_demands, \
     performance_totals, \
-    building_connectivity_dict, \
     district_heating_capacity_installed, \
     district_cooling_capacity_installed, \
     district_electricity_capacity_installed, \
     buildings_building_scale_heating_capacities, \
     buildings_building_scale_cooling_capacities = evaluation.evaluation_main(individual,
-                                                            blueprint,
-                                                             building_names_all,
-                                                             locator,
-                                                             network_features,
-                                                             weather_features,
-                                                             config,
-                                                             prices, lca,
-                                                             individual_number,
-                                                             generation_number,
-                                                             column_names,
-                                                             column_names_buildings_heating,
-                                                             column_names_buildings_cooling,
-                                                             building_names_heating,
-                                                             building_names_cooling,
-                                                             building_names_electricity,
-                                                             district_heating_network,
-                                                             district_cooling_network,
-                                                             technologies_heating_allowed,
-                                                             technologies_cooling_allowed,
-                                                             )
+                                                                             blueprint,
+                                                                             building_names_all,
+                                                                             locator,
+                                                                             network_features,
+                                                                             weather_features,
+                                                                             config,
+                                                                             prices, lca,
+                                                                             individual_number,
+                                                                             generation_number,
+                                                                             building_names_heating,
+                                                                             building_names_cooling,
+                                                                             building_names_electricity,
+                                                                             district_heating_network,
+                                                                             district_cooling_network,
+                                                                             technologies_heating_allowed,
+                                                                             technologies_cooling_allowed)
 
     if config.debug or print_final_results:  # print for the last generation and
         print("SAVING RESULTS TO DISK")
+        individual_dict = IndividualDict.from_individual_list(individual, blueprint)
         save_results(locator,
                      weather_features.date,
                      individual_number,
@@ -157,7 +150,7 @@ def objective_function(individual: IndividualList,
                      district_electricity_dispatch,
                      district_electricity_demands,
                      performance_totals,
-                     building_connectivity_dict,
+                     calc_building_connectivity_dict(individual_dict, blueprint),
                      district_heating_capacity_installed,
                      district_cooling_capacity_installed,
                      district_electricity_capacity_installed,
@@ -207,13 +200,13 @@ def non_dominated_sorting_genetic_algorithm(config, locator, building_names_all,
     np.random.seed(RANDOM_SEED)
 
     # SET-UP INDIVIDUAL STRUCTURE INCLUDING HOW EVERY POINT IS CALLED (COLUMN_NAMES)
-    individual_blueprint = get_column_names_individual(district_heating_network,
-                                                          district_cooling_network,
-                                                          building_names_heating,
-                                                          building_names_cooling,
-                                                          technologies_heating_allowed,
-                                                          technologies_cooling_allowed)
-    individual_with_names_dict = create_empty_individual(individual_blueprint,
+    blueprint = get_column_names_individual(district_heating_network,
+                                            district_cooling_network,
+                                            building_names_heating,
+                                            building_names_cooling,
+                                            technologies_heating_allowed,
+                                            technologies_cooling_allowed)
+    individual_with_names_dict = create_empty_individual(blueprint,
                                                          district_heating_network,
                                                          district_cooling_network)
 
@@ -223,7 +216,7 @@ def non_dominated_sorting_genetic_algorithm(config, locator, building_names_all,
     toolbox.register("generate",
                      generate_main,
                      individual_with_names_dict=individual_with_names_dict,
-                     column_names_individual=individual_blueprint)
+                     column_names_individual=blueprint)
     toolbox.register("individual",
                      tools.initIterate,
                      creator.Individual,
@@ -235,13 +228,13 @@ def non_dominated_sorting_genetic_algorithm(config, locator, building_names_all,
     toolbox.register("mate",
                      crossover_main,
                      cx_prob=CXPB,
-                     blueprint=individual_blueprint,
+                     blueprint=blueprint,
                      crossover_method_integer=crossover_method_integer,
                      crossover_method_continuous=crossover_method_continuous)
     toolbox.register("mutate",
                      mutation_main,
                      mut_prob=MUTPB,
-                     blueprint=individual_blueprint,
+                     blueprint=blueprint,
                      mutation_method_integer=mutation_method_integer,
                      mutation_method_continuous=mutation_method_continuous
                      )
@@ -276,7 +269,7 @@ def non_dominated_sorting_genetic_algorithm(config, locator, building_names_all,
     fitnesses = toolbox.map(toolbox.evaluate, zip(invalid_individuals,  # individual
                                                   range(i_count),  # individual_number
                                                   repeat(0, i_count),  # generation_number
-                                                  repeat(individual_blueprint, i_count),
+                                                  repeat(blueprint, i_count),
                                                   repeat(building_names_all, i_count),  # building_names_all
                                                   repeat(column_names_buildings_heating, i_count),  # column_names_buildings_heating
                                                   repeat(column_names_buildings_cooling, i_count),
@@ -370,14 +363,11 @@ def non_dominated_sorting_genetic_algorithm(config, locator, building_names_all,
 
         DHN_network_list_tested = []
         DCN_network_list_tested = []
+
         for individual in invalid_individuals:
-            DHN_barcode, DCN_barcode, individual_with_name_dict, _ = individual_to_barcode(individual,
-                                                                                           building_names_all,
-                                                                                           building_names_heating,
-                                                                                           building_names_cooling,
-                                                                                           column_names,
-                                                                                           column_names_buildings_heating,
-                                                                                           column_names_buildings_cooling)
+            individual_dict = IndividualDict.from_individual_list(individual, blueprint)
+            DHN_barcode, DCN_barcode, = individual_to_barcode(individual_dict, blueprint)
+
             DCN_network_list_tested.append(DCN_barcode)
             DHN_network_list_tested.append(DHN_barcode)
 
@@ -385,7 +375,7 @@ def non_dominated_sorting_genetic_algorithm(config, locator, building_names_all,
             print("Saving results for generation", gen, "\n")
             valid_generation = [gen]
             save_generation_dataframes(gen, invalid_individuals, locator, DCN_network_list_tested, DHN_network_list_tested)
-            save_generation_individuals(column_names, gen, invalid_individuals, locator)
+            save_generation_individuals(blueprint.column_names, gen, invalid_individuals, locator)
             systems_name_list = save_generation_pareto_individuals(locator, gen, record_individuals_tested, pareto_frontier)
         else:
             systems_name_list = []

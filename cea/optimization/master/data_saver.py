@@ -5,6 +5,7 @@ from __future__ import absolute_import
 
 import pandas as pd
 
+
 def save_results(locator,
                  date_array,
                  individual_number,

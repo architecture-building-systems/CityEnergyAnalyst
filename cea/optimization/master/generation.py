@@ -8,10 +8,9 @@ from __future__ import print_function
 
 import random
 
-from cea.optimization.constants import DH_CONVERSION_TECHNOLOGIES_SHARE, DC_CONVERSION_TECHNOLOGIES_SHARE
 from cea.optimization.master.validation import validation_main
 from cea.optimization.master.master_main import IndividualBlueprint, IndividualDict, IndividualList
-from typing import Dict, Union, List, Any
+from typing import Tuple, Dict, List
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -73,22 +72,16 @@ def populate_individual(empty_individual_with_names_dict: IndividualDict,
     return empty_individual_with_names_dict
 
 
-def individual_to_barcode(individual: IndividualList,
-                          blueprint: IndividualBlueprint,
-                          building_names_all,
-                          building_names_heating,
-                          building_names_cooling):
+def individual_to_barcode(individual_dict: IndividualDict,
+                          blueprint: IndividualBlueprint) -> Tuple[str, str]:
     """
     Reads the 0-1 combination of connected/disconnected buildings
-    and creates a list of strings type barcode i.e. ("12311111123012")
-    :param individual: list containing the combination of connected/disconnected buildings
-    :type individual: list
-    :return: indCombi: list of strings
-    :rtype: list
-    """
-    # pair individual values with their names
-    individual_dict = IndividualDict.from_individual_list(individual, blueprint)
+    and creates a list of strings type barcode i.e. ("10110110")
 
+    1 stands for connected to network, 0 stands for disconnected from network
+
+    :param individual_dict: mapping of gene to gene expressions
+    """
     # FIXME: remove the network distinction - we only ever do one type of network!
     if blueprint.district_heating_network:
         DHN_barcode = "".join(str(individual_dict[building]) for building in blueprint.buildings)
@@ -96,39 +89,20 @@ def individual_to_barcode(individual: IndividualList,
     else:
         DHN_barcode = ""
         DCN_barcode = "".join(str(individual_dict[building]) for building in blueprint.buildings)
-
-    # calc building connectivity
-    building_connectivity_dict = calc_building_connectivity_dict(building_names_all,
-                                                                 building_names_heating,
-                                                                 building_names_cooling,
-                                                                 DHN_barcode,
-                                                                 DCN_barcode)
-
-    return DHN_barcode, DCN_barcode, individual_dict, building_connectivity_dict
+    return DHN_barcode, DCN_barcode
 
 
-def calc_building_connectivity_dict(building_names_all,
-                                    building_names_heating,
-                                    building_names_cooling,
-                                    DHN_barcode,
-                                    DCN_barcode):
-    data_heating_connections = []
-    data_cooling_connections = []
-    data_connectivity_heating = dict(zip(building_names_heating, DHN_barcode))
-    data_connectivity_cooling = dict(zip(building_names_cooling, DCN_barcode))
-    for building in building_names_all:
-        if building in data_connectivity_heating.keys():
-            data_heating_connections.append(data_connectivity_heating[building])
-        else:
-            data_heating_connections.append('0') #if it is not inside the network then it is disconnected
-
-        if building in data_connectivity_cooling.keys():
-            data_cooling_connections.append(data_connectivity_cooling[building])
-        else:
-            data_cooling_connections.append('0') #if it is not inside the network then it is disconnected
+def calc_building_connectivity_dict(individual_dict: IndividualDict,
+                                    blueprint: IndividualBlueprint) -> Dict[str, List[str]]:
+    if blueprint.district_heating_network:
+        data_heating_connections = [str(individual_dict[building] for building in blueprint.buildings)]
+        data_cooling_connections = ["0" for _ in blueprint.buildings]
+    else:
+        data_cooling_connections = [str(individual_dict[building] for building in blueprint.buildings)]
+        data_heating_connections = ["0" for _ in blueprint.buildings]
 
     building_connectivity_dict = {
-        "Name": building_names_all,
+        "Name": blueprint.buildings,
         "DH_connectivity": data_heating_connections,
         "DC_connectivity": data_cooling_connections,
     }
