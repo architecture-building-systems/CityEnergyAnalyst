@@ -372,7 +372,7 @@ def non_dominated_sorting_genetic_algorithm(config, locator, building_names_all,
 
         # Create Checkpoint if necessary
         print("Creating CheckPoint", gen, "\n")
-        with open(locator.get_optimization_checkpoint(gen), "wb") as fp:
+        with open(locator.get_optimization_checkpoint(gen), "w") as fp:
             cp = dict(generation=gen,
                       selected_population=pop,
                       tested_population=invalid_individuals,
