@@ -691,7 +691,6 @@ def calc_properties_PV_db(database_path, config):
 
 
 # investment and maintenance costs
-# FIXME: it looks like this function is never used!!! (REMOVE)
 def calc_Cinv_pv(total_module_area_m2, locator, technology=0):
     """
     To calculate capital cost of PV modules, assuming 20 year system lifetime.
@@ -705,8 +704,8 @@ def calc_Cinv_pv(total_module_area_m2, locator, technology=0):
     P_nominal_W = total_module_area_m2 * (constants.STC_RADIATION_Wperm2 * nominal_efficiency)
     # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
     # capacity for the corresponding technology from the database
-    if P_nominal_W < PV_cost_data['cap_min'][0]:
-        P_nominal_W = PV_cost_data['cap_min'][0]
+    if P_nominal_W < PV_cost_data['cap_min'].values[0]:
+        P_nominal_W = PV_cost_data['cap_min'].values[0]
     PV_cost_data = PV_cost_data[
         (PV_cost_data['cap_min'] <= P_nominal_W) & (PV_cost_data['cap_max'] > P_nominal_W)]
     Inv_a = PV_cost_data.iloc[0]['a']

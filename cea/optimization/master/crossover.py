@@ -83,14 +83,15 @@ def crossover_main(ind1: IndividualList,
 
     # apply back to the individual
     for i, tech in enumerate(blueprint.tech_names_share):
-        ind1_with_name_dict[tech] = tech_share_ind1
-        ind2_with_name_dict[tech] = tech_share_ind2
+        ind1_with_name_dict[tech] = tech_share_ind1[i]
+        ind2_with_name_dict[tech] = tech_share_ind2[i]
 
     # validate the individuals
     ind1_with_name_dict = validation_main(ind1_with_name_dict, blueprint)
     ind2_with_name_dict = validation_main(ind2_with_name_dict, blueprint)
 
     # now pass all the values mutated to the original individual
-    ind1 = ind1_with_name_dict.to_individual_list(blueprint)
-    ind2 = ind2_with_name_dict.to_individual_list(blueprint)
+    # NOTE: ind1 is actually of type "toolbox.Individual" (or similar) and not strictly an IndividualList...
+    ind1[:] = ind1_with_name_dict.to_individual_list(blueprint)
+    ind2[:] = ind2_with_name_dict.to_individual_list(blueprint)
     return ind1, ind2

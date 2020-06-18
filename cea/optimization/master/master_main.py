@@ -251,7 +251,7 @@ def non_dominated_sorting_genetic_algorithm(config, locator, building_names_all,
                                                   repeat(district_cooling_network, i_count),
                                                   repeat(technologies_heating_allowed, i_count),
                                                   repeat(technologies_cooling_allowed, i_count)))
-
+    fitnesses = list(fitnesses)
     # normalization of the first generation
     scaler_dict = scaler_for_normalization(NOBJ, fitnesses)
     fitnesses = normalize_fitnesses(scaler_dict, fitnesses)

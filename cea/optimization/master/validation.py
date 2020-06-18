@@ -55,6 +55,8 @@ def validate_minimum_limit(individual_with_name_dict: IndividualDict,
     for technology_name, limits in column_names_individual.conversion_technologies.items():
         if technology_name in column_names_individual.tech_names_share:
             minimum = limits["minimum"]
+            print("DEBUG: individual_dict[tech]={v} < minimum={minimum}?".format(
+                v=individual_with_name_dict[technology_name], minimum=minimum))
             if individual_with_name_dict[technology_name] < minimum:
                 individual_with_name_dict[technology_name] = 0.0  # 0.0 denotes off
             else:
