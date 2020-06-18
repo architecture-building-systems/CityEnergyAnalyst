@@ -9,6 +9,8 @@ from __future__ import print_function
 from deap import tools
 
 from cea.optimization.master.validation import validation_main
+from cea.optimization.master.master_main import IndividualList, IndividualDict, IndividualBlueprint
+from typing import Tuple
 
 
 class MutationMethodInteger(object):
@@ -39,74 +41,32 @@ class MutationMethodContinuos(object):
             return tools.mutShuffleIndexes(individual, probability)[0]
 
 
-def mutation_main(individual,
-                  indpb,
-                  column_names,
-                  heating_unit_names_share,
-                  cooling_unit_names_share,
-                  column_names_buildings_heating,
-                  column_names_buildings_cooling,
-                  district_heating_network,
-                  district_cooling_network,
-                  technologies_heating_allowed,
-                  technologies_cooling_allowed,
-                  mutation_method_integer,
-                  mutation_method_continuous
-                  ):
+def mutation_main(individual: IndividualList,
+                  mut_prob: float,
+                  blueprint: IndividualBlueprint,
+                  mutation_method_integer: str,
+                  mutation_method_continuous: str) -> Tuple[IndividualList]:
     mutation_integer = MutationMethodInteger(mutation_method_integer)
     mutation_continuous = MutationMethodContinuos(mutation_method_continuous)
+
     # create dict of individual with his/her name
-    individual_with_name_dict = dict(zip(column_names, individual))
+    individual_dict = IndividualDict.from_individual_list(individual, blueprint)
 
-    if district_heating_network:
+    # MUTATE BUILDINGS CONNECTED
+    connections = [individual_dict[column] for column in blueprint.buildings]
+    connections_mutated = mutation_integer.mutate(connections, mut_prob)
+    for building, mutated_value in zip(blueprint.buildings, connections_mutated):
+        individual_dict[building] = mutated_value
 
-        # MUTATE BUILDINGS CONNECTED
-        buildings_heating = [individual_with_name_dict[column] for column in column_names_buildings_heating]
-        # apply mutations
-        buildings_heating_mutated = mutation_integer.mutate(buildings_heating, indpb)
-        # take back to the individual
-        for column, mutated_value in zip(column_names_buildings_heating, buildings_heating_mutated):
-            individual_with_name_dict[column] = mutated_value
-
-        # MUTATE SUPPLY SYSTEM UNITS SHARE
-        heating_units_share = [individual_with_name_dict[column] for column in heating_unit_names_share]
-        # apply mutations
-        heating_units_share_mutated = mutation_continuous.mutate(heating_units_share, indpb)
-        # takeback to teh individual
-        for column, mutated_value in zip(heating_unit_names_share, heating_units_share_mutated):
-            individual_with_name_dict[column] = mutated_value
-
-    if district_cooling_network:
-
-        # MUTATE BUILDINGS CONNECTED
-        buildings_cooling = [individual_with_name_dict[column] for column in column_names_buildings_cooling]
-        # apply mutations
-        buildings_cooling_mutated = mutation_integer.mutate(buildings_cooling, indpb)
-        # take back to teh individual
-        for column, mutated_value in zip(column_names_buildings_cooling, buildings_cooling_mutated):
-            individual_with_name_dict[column] = mutated_value
-
-        # MUTATE SUPPLY SYSTEM UNITS SHARE
-        cooling_units_share = [individual_with_name_dict[column] for column in cooling_unit_names_share]
-        NDIM = len(cooling_units_share)
-        # apply mutations
-        cooling_units_share_mutated = mutation_continuous.mutate(cooling_units_share, indpb)
-        # takeback to teh individual
-        for column, mutated_value in zip(cooling_unit_names_share, cooling_units_share_mutated):
-            individual_with_name_dict[column] = mutated_value
+    # MUTATE SUPPLY SYSTEM UNITS SHARE
+    tech_share = [individual_dict[tech] for tech in blueprint.tech_names_share]
+    tech_share_mutated = mutation_continuous.mutate(tech_share, mut_prob)
+    for tech, mutated_value in zip(blueprint.tech_names_share, tech_share_mutated):
+        individual_dict[tech] = mutated_value
 
     # now validate individual
-    individual_with_name_dict = validation_main(individual_with_name_dict,
-                                                column_names_buildings_heating,
-                                                column_names_buildings_cooling,
-                                                district_heating_network,
-                                                district_cooling_network,
-                                                technologies_heating_allowed,
-                                                technologies_cooling_allowed,
-                                                )
+    individual_dict = validation_main(individual_dict, blueprint)
 
     # now pass all the values mutated to the original individual
-    for i, column in enumerate(column_names):
-        individual[i] = individual_with_name_dict[column]
-
-    return individual,  # add the, because deap needs this
+    individual = individual_dict.to_individual_list(blueprint)
+    return (individual,)  # add the, because deap needs this (deap requires a tuple result)

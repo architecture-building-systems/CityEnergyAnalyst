@@ -9,12 +9,13 @@ from __future__ import print_function
 from deap import tools
 
 from cea.optimization.master.validation import validation_main
-
+from cea.optimization.master.master_main import IndividualDict, IndividualList, IndividualBlueprint
+from typing import Tuple
 
 class CrossOverMethodsInteger(object):
     """
-        mutation methods for integers
-      """
+    mutation methods for integers
+    """
 
     def __init__(self, crossover_method):
         self.method = crossover_method
@@ -50,111 +51,46 @@ class CrossOverMethodsContinuous(object):
             return tools.cxESTwoPoint(individual_1,
                                       individual_2)
 
-def crossover_main(ind1, ind2, indpb,
-                   column_names,
-                   heating_unit_names_share,
-                   cooling_unit_names_share,
-                   column_names_buildings_heating,
-                   column_names_buildings_cooling,
-                   district_heating_network,
-                   district_cooling_network,
-                   technologies_heating_allowed,
-                   technologies_cooling_allowed,
+
+def crossover_main(ind1: IndividualList,
+                   ind2: IndividualList,
+                   cx_prob: float,
+                   blueprint: IndividualBlueprint,
                    crossover_method_integer,
                    crossover_method_continuous
-                   ):
+                   ) -> Tuple[IndividualList, IndividualList]:
     crossover_integer = CrossOverMethodsInteger(crossover_method_integer)
     crossover_continuous = CrossOverMethodsContinuous(crossover_method_continuous)
 
     # create dict of individual with his/her name
-    ind1_with_name_dict = dict(zip(column_names, ind1))
-    ind2_with_name_dict = dict(zip(column_names, ind2))
+    ind1_with_name_dict = IndividualDict.from_individual_list(ind1, blueprint)
+    ind2_with_name_dict = IndividualDict.from_individual_list(ind2, blueprint)
 
-    if district_heating_network:
+    # MUTATE BUILDINGS CONNECTED
+    connections_ind1 = [ind1_with_name_dict[column] for column in blueprint.buildings]
+    connections_ind2 = [ind2_with_name_dict[column] for column in blueprint.buildings]
+    connections_ind1, connections_ind2 = crossover_integer.crossover(connections_ind1, connections_ind2, cx_prob)
 
-        # MUTATE BUILDINGS CONNECTED
-        buildings_heating_ind1 = [ind1_with_name_dict[column] for column in column_names_buildings_heating]
-        buildings_heating_ind2 = [ind2_with_name_dict[column] for column in column_names_buildings_heating]
-        # apply crossover
-        buildings_heating_ind1, \
-        buildings_heating_ind2 = crossover_integer.crossover(buildings_heating_ind1,
-                                                             buildings_heating_ind2,
-                                                             indpb)
-        # take back to the individual
-        for column, cross_over_value in zip(column_names_buildings_heating, buildings_heating_ind1):
-            ind1_with_name_dict[column] = cross_over_value
-        for column, cross_over_value in zip(column_names_buildings_heating, buildings_heating_ind2):
-            ind2_with_name_dict[column] = cross_over_value
+    # apply back to the individual
+    for i, building in enumerate(blueprint.buildings):
+        ind1_with_name_dict[building] = connections_ind1[i]
+        ind2_with_name_dict[building] = connections_ind2[i]
 
-        # MUTATE SUPPLY SYSTEM UNITS SHARE
-        heating_units_share_ind1 = [ind1_with_name_dict[column] for column in heating_unit_names_share]
-        heating_units_share_ind2 = [ind2_with_name_dict[column] for column in heating_unit_names_share]
-        # apply crossover
-        heating_units_share_ind1, \
-        heating_units_share_ind2 = crossover_continuous.crossover(heating_units_share_ind1,
-                                                                  heating_units_share_ind2,
-                                                                  indpb)
-        # takeback to the individual
-        for column, cross_over_value in zip(heating_unit_names_share, heating_units_share_ind1):
-            ind1_with_name_dict[column] = cross_over_value
-        for column, cross_over_value in zip(heating_unit_names_share, heating_units_share_ind2):
-            ind2_with_name_dict[column] = cross_over_value
+    # MUTATE SUPPLY SYSTEM UNITS SHARE
+    tech_share_ind1 = [ind1_with_name_dict[column] for column in blueprint.tech_names_share]
+    tech_share_ind2 = [ind2_with_name_dict[column] for column in blueprint.tech_names_share]
+    tech_share_ind1, tech_share_ind2 = crossover_continuous.crossover(tech_share_ind1, tech_share_ind2, cx_prob)
 
-    if district_cooling_network:
+    # apply back to the individual
+    for i, tech in enumerate(blueprint.tech_names_share):
+        ind1_with_name_dict[tech] = tech_share_ind1
+        ind2_with_name_dict[tech] = tech_share_ind2
 
-        # CROSSOVER BUILDINGS CONNECTED
-        buildings_cooling_ind1 = [ind1_with_name_dict[column] for column in column_names_buildings_cooling]
-        buildings_cooling_ind2 = [ind2_with_name_dict[column] for column in column_names_buildings_cooling]
-        # apply crossover
-        buildings_cooling_ind1, \
-        buildings_cooling_ind2 = crossover_integer.crossover(buildings_cooling_ind1,
-                                                             buildings_cooling_ind2,
-                                                             indpb)
-        # take back to teh individual
-        for column, cross_over_value in zip(column_names_buildings_cooling, buildings_cooling_ind1):
-            ind1_with_name_dict[column] = cross_over_value
-        for column, cross_over_value in zip(column_names_buildings_cooling, buildings_cooling_ind2):
-            ind2_with_name_dict[column] = cross_over_value
-
-        # CROSSOVER SUPPLY SYSTEM UNITS SHARE
-        cooling_units_share_ind1 = [ind1_with_name_dict[column] for column in cooling_unit_names_share]
-        cooling_units_share_ind2 = [ind2_with_name_dict[column] for column in cooling_unit_names_share]
-        # apply crossover
-        cooling_units_share_ind1, \
-        cooling_units_share_ind2 = crossover_continuous.crossover(cooling_units_share_ind1,
-                                                                  cooling_units_share_ind2,
-                                                                  indpb)
-        # takeback to teh individual
-        for column, cross_over_value in zip(cooling_unit_names_share, cooling_units_share_ind1):
-            ind1_with_name_dict[column] = cross_over_value
-        for column, cross_over_value in zip(cooling_unit_names_share, cooling_units_share_ind2):
-            ind2_with_name_dict[column] = cross_over_value
-
-    # now validate individual
-    # now validate individual
-    ind1_with_name_dict = validation_main(ind1_with_name_dict,
-                                          column_names_buildings_heating,
-                                          column_names_buildings_cooling,
-                                          district_heating_network,
-                                          district_cooling_network,
-                                          technologies_heating_allowed,
-                                          technologies_cooling_allowed,
-                                          )
-
-    ind2_with_name_dict = validation_main(ind2_with_name_dict,
-                                          column_names_buildings_heating,
-                                          column_names_buildings_cooling,
-                                          district_heating_network,
-                                          district_cooling_network,
-                                          technologies_heating_allowed,
-                                          technologies_cooling_allowed,
-                                          )
+    # validate the individuals
+    ind1_with_name_dict = validation_main(ind1_with_name_dict, blueprint)
+    ind2_with_name_dict = validation_main(ind2_with_name_dict, blueprint)
 
     # now pass all the values mutated to the original individual
-    for i, column in enumerate(column_names):
-        ind1[i] = ind1_with_name_dict[column]
-
-    for i, column in enumerate(column_names):
-        ind2[i] = ind2_with_name_dict[column]
-
+    ind1 = ind1_with_name_dict.to_individual_list(blueprint)
+    ind2 = ind2_with_name_dict.to_individual_list(blueprint)
     return ind1, ind2

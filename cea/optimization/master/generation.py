@@ -10,8 +10,8 @@ import random
 
 from cea.optimization.constants import DH_CONVERSION_TECHNOLOGIES_SHARE, DC_CONVERSION_TECHNOLOGIES_SHARE
 from cea.optimization.master.validation import validation_main
-from cea.optimization.master.master_main import  ColumnNamesIndividualResult
-from typing import Dict, Union
+from cea.optimization.master.master_main import IndividualBlueprint, IndividualDict, IndividualList
+from typing import Dict, Union, List, Any
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -23,22 +23,24 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def generate_main(individual_with_names_dict: Dict[str, Union[float, int]],
-                  column_names_individual: ColumnNamesIndividualResult,
-                  district_heating_network,
-                  district_cooling_network,
-                  technologies_heating_allowed,
-                  technologies_cooling_allowed):
+def generate_main(individual_dict: IndividualDict,
+                  blueprint: IndividualBlueprint) -> IndividualList:
     """
     Creates an individual configuration for the evolutionary algorithm.
     The individual is divided into four parts namely Heating technologies, Cooling Technologies, Heating Network
     and Cooling Network
+
+    FIXME: This description below seems to be outdated - from an era when we used strings to represent the individuals
+    It looks like we now just have a list of floats and ints, with floats representing the ratios and the ints
+    representing building connections to the network.
+
     Heating Technologies: This block consists of heating technologies associated with % of the peak capacity each
     technology is going to supply, i.e. 10.1520.2030, which translates into technology 1 corresponding to 15% of peak
     capacity, technology 2 corresponding to 20% and technology 3 corresponding to 0%. 0% can also be just done by replacing
     3 with 0. The technologies block is then followed by supply temperature of the DHN and the number of units it is
     supplied to among AHU, ARU, SHU. So if it is 6 degrees C supplied by DHN to AHU and ARU, it is represented as 6.02.
     The temperature is represented with 1 decimal point.
+
     Cooling Technologies: This follows the same syntax as heating technologies, but will be represented with cooling
     technologies. The block length of heating and cooling can be different.
     Heating Network: Network of buildings connected to centralized heating
@@ -51,55 +53,31 @@ def generate_main(individual_with_names_dict: Dict[str, Union[float, int]],
     """
 
     # POPULATE INDIVIDUAL WE KEEP A DATAFRAME SO IT IS EASIER FOR THE PROGRAMMER TO KNOW WHAT IS GOING ON
-    if district_heating_network:
-        populated_individual_with_name_dict = populate_individual(individual_with_names_dict,
-                                                                  DH_CONVERSION_TECHNOLOGIES_SHARE,
-                                                                  technologies_heating_allowed,
-                                                                  column_names_individual.column_names_buildings_heating)
-    elif district_cooling_network:
-        populated_individual_with_name_dict = populate_individual(individual_with_names_dict,
-                                                                  DC_CONVERSION_TECHNOLOGIES_SHARE,
-                                                                  technologies_cooling_allowed,
-                                                                  column_names_individual.column_names_buildings_cooling)
-    else:
-        raise Exception("option not existent")
-
-    populated_individual_with_name_dict = validation_main(populated_individual_with_name_dict,
-                                                          column_names_individual.column_names_buildings_heating,
-                                                          column_names_individual.column_names_buildings_cooling,
-                                                          district_heating_network,
-                                                          district_cooling_network,
-                                                          technologies_heating_allowed,
-                                                          technologies_cooling_allowed)
+    populated_individual_dict = populate_individual(individual_dict, blueprint)
+    populated_individual_dict = validation_main(populated_individual_dict, blueprint)
 
     # CONVERT BACK INTO AN INDIVIDUAL STRING IMPORTANT TO USE column_names to keep the order
-    individual = [populated_individual_with_name_dict[column] for column in column_names_individual.column_names]
-    return individual
+    return populated_individual_dict.to_individual_list(blueprint)
 
 
-def populate_individual(empty_individual_with_names_dict,
-                        name_share_conversion_technologies,
-                        technologies_allowed,
-                        columns_buildings_name):
+def populate_individual(empty_individual_with_names_dict: IndividualDict,
+                        column_names_individual: IndividualBlueprint, ) -> IndividualDict:
     # do it for the share of the units that are activated
-    for column, limits in name_share_conversion_technologies.items():
-        if column in technologies_allowed:
-            empty_individual_with_names_dict[column] = round(random.uniform(0.0, 1.0),2)
+    for tech in column_names_individual.tech_names_share:
+        empty_individual_with_names_dict[tech] = round(random.uniform(0.0, 1.0), 2)
 
     # do it for the buildings
-    for column in columns_buildings_name:
-        empty_individual_with_names_dict[column] = random.randint(0, 1)
+    for building in column_names_individual.buildings:
+        empty_individual_with_names_dict[building] = random.randint(0, 1)
 
     return empty_individual_with_names_dict
 
 
-def individual_to_barcode(individual,
+def individual_to_barcode(individual: IndividualList,
+                          blueprint: IndividualBlueprint,
                           building_names_all,
                           building_names_heating,
-                          building_names_cooling,
-                          column_names,
-                          column_names_buildings_heating,
-                          column_names_buildings_cooling):
+                          building_names_cooling):
     """
     Reads the 0-1 combination of connected/disconnected buildings
     and creates a list of strings type barcode i.e. ("12311111123012")
@@ -109,16 +87,15 @@ def individual_to_barcode(individual,
     :rtype: list
     """
     # pair individual values with their names
-    individual_with_name_dict = dict(zip(column_names, individual))
-    DHN_barcode = ""
-    for name in column_names_buildings_heating:
-        if name in individual_with_name_dict.keys():
-            DHN_barcode += str(int(individual_with_name_dict[name]))
+    individual_dict = IndividualDict.from_individual_list(individual, blueprint)
 
-    DCN_barcode = ""
-    for name in column_names_buildings_cooling:
-        if name in individual_with_name_dict.keys():
-            DCN_barcode += str(int(individual_with_name_dict[name]))
+    # FIXME: remove the network distinction - we only ever do one type of network!
+    if blueprint.district_heating_network:
+        DHN_barcode = "".join(str(individual_dict[building]) for building in blueprint.buildings)
+        DCN_barcode = ""
+    else:
+        DHN_barcode = ""
+        DCN_barcode = "".join(str(individual_dict[building]) for building in blueprint.buildings)
 
     # calc building connectivity
     building_connectivity_dict = calc_building_connectivity_dict(building_names_all,
@@ -127,7 +104,7 @@ def individual_to_barcode(individual,
                                                                  DHN_barcode,
                                                                  DCN_barcode)
 
-    return DHN_barcode, DCN_barcode, individual_with_name_dict, building_connectivity_dict
+    return DHN_barcode, DCN_barcode, individual_dict, building_connectivity_dict
 
 
 def calc_building_connectivity_dict(building_names_all,
