@@ -9,16 +9,16 @@ import warnings
 from itertools import repeat
 from math import factorial
 from math import sqrt
-from typing import Any, Dict, List, Tuple, Union, NamedTuple, NewType
+from typing import List
 
 import numpy as np
 import pandas as pd
 from deap import algorithms
 from deap import tools, creator, base
 
-from cea.optimization.constants import (DH_CONVERSION_TECHNOLOGIES_SHARE, DC_CONVERSION_TECHNOLOGIES_SHARE, DH_ACRONYM,
-                                        DC_ACRONYM, DH_CONVERSION_TECHNOLOGIES_WITH_SPACE_RESTRICTIONS,
-                                        DC_CONVERSION_TECHNOLOGIES_WITH_SPACE_RESTRICTIONS)
+import cea.inputlocator
+import cea.config
+
 from cea.optimization.master import evaluation
 from cea.optimization.master.crossover import crossover_main
 from cea.optimization.master.data_saver import save_results
@@ -26,6 +26,9 @@ from cea.optimization.master.generation import generate_main, calc_building_conn
 from cea.optimization.master.generation import individual_to_barcode
 from cea.optimization.master.mutations import mutation_main
 from cea.optimization.master.normalization import scaler_for_normalization, normalize_fitnesses
+from optimization.master.individual import IndividualList, IndividualBlueprint, IndividualDict, create_empty_individual, \
+    create_individual_blueprint
+from optimization.preprocessing.preprocessing_main import PreprocessingResult
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -35,35 +38,6 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
-
-# Type used to represent an individual in the deap toolbox
-IndividualList = NewType("IndividualList", List[Union[float, int]])
-
-
-class IndividualBlueprint(NamedTuple):
-    """Describes the blueprint of an individual"""
-    column_names: List[str]
-    tech_names_share: List[str]
-    buildings: List[str]
-    conversion_technologies: Dict[str, Dict[str, float]]
-    conversion_technologies_with_space_restrictions: List[str]
-    district_heating_network: bool  # district_cooling_network == not district_heating_network
-
-
-class IndividualDict(Dict[str, Union[float, int]]):
-    """
-    Type name for the structure we use to represent an individual in dictionary form
-    """
-
-    @classmethod
-    def from_individual_list(cls, individual: IndividualList,
-                             blueprint: IndividualBlueprint) -> "IndividualDict":
-        return IndividualDict(zip(blueprint.column_names, individual))
-
-    def to_individual_list(self, blueprint: IndividualBlueprint) -> IndividualList:
-        return IndividualList([self[gene] for gene in blueprint.column_names])
-
-
 
 warnings.filterwarnings("always")
 
@@ -80,16 +54,13 @@ def objective_function(individual: IndividualList,
                        building_names_heating,
                        building_names_cooling,
                        building_names_electricity,
-                       locator,
-                       network_features,
-                       weather_features,
-                       config,
-                       prices,
-                       lca,
-                       district_heating_network,
-                       district_cooling_network,
-                       technologies_heating_allowed,
-                       technologies_cooling_allowed,
+                       locator: cea.inputlocator.InputLocator,
+                       preprocessing_result: PreprocessingResult,
+                       config: cea.config.Configuration,
+                       district_heating_network: bool,
+                       district_cooling_network: bool,
+                       technologies_heating_allowed: List[str],
+                       technologies_cooling_allowed: List[str],
                        print_final_results=False):
     """
     Objective function is used to calculate the costs, CO2, primary energy and the variables corresponding to the
@@ -120,10 +91,8 @@ def objective_function(individual: IndividualList,
                                                                              blueprint,
                                                                              building_names_all,
                                                                              locator,
-                                                                             network_features,
-                                                                             weather_features,
+                                                                             preprocessing_result,
                                                                              config,
-                                                                             prices, lca,
                                                                              individual_number,
                                                                              generation_number,
                                                                              building_names_heating,
@@ -138,7 +107,7 @@ def objective_function(individual: IndividualList,
         print("SAVING RESULTS TO DISK")
         individual_dict = IndividualDict.from_individual_list(individual, blueprint)
         save_results(locator,
-                     weather_features.date,
+                     preprocessing_result.weather_features.date,
                      individual_number,
                      generation_number,
                      buildings_district_scale_costs,
@@ -175,7 +144,8 @@ def calc_dictionary_of_all_individuals_tested(dictionary_individuals, gen, inval
 
 def non_dominated_sorting_genetic_algorithm(config, locator, building_names_all, district_heating_network,
                                             district_cooling_network, building_names_heating, building_names_cooling,
-                                            building_names_electricity, preprocessing_result):
+                                            building_names_electricity,
+                                            preprocessing_result: PreprocessingResult):
     # LOCAL VARIABLES
     NGEN: int = config.optimization.number_of_generations  # number of generations
     MU: int = config.optimization.population_size  # int(H + (4 - H % 4)) # number of individuals to select
@@ -200,7 +170,7 @@ def non_dominated_sorting_genetic_algorithm(config, locator, building_names_all,
     np.random.seed(RANDOM_SEED)
 
     # SET-UP INDIVIDUAL STRUCTURE INCLUDING HOW EVERY POINT IS CALLED (COLUMN_NAMES)
-    blueprint = get_column_names_individual(district_heating_network,
+    blueprint = create_individual_blueprint(district_heating_network,
                                             district_cooling_network,
                                             building_names_heating,
                                             building_names_cooling,
@@ -215,8 +185,8 @@ def non_dominated_sorting_genetic_algorithm(config, locator, building_names_all,
     toolbox = base.Toolbox()
     toolbox.register("generate",
                      generate_main,
-                     individual_with_names_dict=individual_with_names_dict,
-                     column_names_individual=blueprint)
+                     individual_dict=individual_with_names_dict,
+                     blueprint=blueprint)
     toolbox.register("individual",
                      tools.initIterate,
                      creator.Individual,
@@ -271,22 +241,16 @@ def non_dominated_sorting_genetic_algorithm(config, locator, building_names_all,
                                                   repeat(0, i_count),  # generation_number
                                                   repeat(blueprint, i_count),
                                                   repeat(building_names_all, i_count),  # building_names_all
-                                                  repeat(column_names_buildings_heating, i_count),  # column_names_buildings_heating
-                                                  repeat(column_names_buildings_cooling, i_count),
                                                   repeat(building_names_heating, i_count),
                                                   repeat(building_names_cooling, i_count),
                                                   repeat(building_names_electricity, i_count),
                                                   repeat(locator, i_count),
-                                                  repeat(preprocessing_result.network_features, i_count),
-                                                  repeat(preprocessing_result.weather_features, i_count),
+                                                  repeat(preprocessing_result, i_count),
                                                   repeat(config, i_count),
-                                                  repeat(preprocessing_result.prices, i_count),
-                                                  repeat(preprocessing_result.lca, i_count),
                                                   repeat(district_heating_network, i_count),
                                                   repeat(district_cooling_network, i_count),
                                                   repeat(technologies_heating_allowed, i_count),
-                                                  repeat(technologies_cooling_allowed, i_count),
-                                                  repeat(column_names, i_count)))
+                                                  repeat(technologies_cooling_allowed, i_count)))
 
     # normalization of the first generation
     scaler_dict = scaler_for_normalization(NOBJ, fitnesses)
@@ -320,25 +284,23 @@ def non_dominated_sorting_genetic_algorithm(config, locator, building_names_all,
         # Evaluate the individuals with an invalid fitness
         invalid_individuals = [ind for ind in offspring if not ind.fitness.valid]
         invalid_individuals = [ind for ind in invalid_individuals if ind not in pop]
+        i_count = len(invalid_individuals)
         fitnesses = toolbox.map(toolbox.evaluate,
-                                zip(invalid_individuals, range(len(invalid_individuals)), repeat(gen, len(invalid_individuals)),
-                                    repeat(building_names_all, len(invalid_individuals)),
-                                    repeat(column_names_buildings_heating, len(invalid_individuals)),
-                                    repeat(column_names_buildings_cooling, len(invalid_individuals)),
-                                    repeat(building_names_heating, len(invalid_individuals)),
-                                    repeat(building_names_cooling, len(invalid_individuals)),
-                                    repeat(building_names_electricity, len(invalid_individuals)),
-                                    repeat(locator, len(invalid_individuals)),
-                                    repeat(preprocessing_result.network_features, len(invalid_individuals)),
-                                    repeat(preprocessing_result.weather_features, len(invalid_individuals)),
-                                    repeat(config, len(invalid_individuals)),
-                                    repeat(preprocessing_result.prices, len(invalid_individuals)),
-                                    repeat(preprocessing_result.lca, len(invalid_individuals)),
-                                    repeat(district_heating_network, len(invalid_individuals)),
-                                    repeat(district_cooling_network, len(invalid_individuals)),
-                                    repeat(technologies_heating_allowed, len(invalid_individuals)),
-                                    repeat(technologies_cooling_allowed, len(invalid_individuals)),
-                                    repeat(column_names, len(invalid_individuals))))
+                                zip(invalid_individuals,
+                                    range(i_count),  # individual_number
+                                    repeat(gen, i_count),  # generation_number
+                                    repeat(blueprint, i_count),
+                                    repeat(building_names_all, i_count),
+                                    repeat(building_names_heating, i_count),
+                                    repeat(building_names_cooling, i_count),
+                                    repeat(building_names_electricity, i_count),
+                                    repeat(locator, i_count),
+                                    repeat(preprocessing_result, i_count),
+                                    repeat(config, i_count),
+                                    repeat(district_heating_network, i_count),
+                                    repeat(district_cooling_network, i_count),
+                                    repeat(technologies_heating_allowed, i_count),
+                                    repeat(technologies_cooling_allowed, i_count)))
         # normalization of the second generation on
         fitnesses = normalize_fitnesses(scaler_dict, fitnesses)
 
@@ -358,7 +320,7 @@ def non_dominated_sorting_genetic_algorithm(config, locator, building_names_all,
         performance_metrics = calc_performance_metrics(generational_distances[-1], pareto_frontier)
         generational_distances.append(performance_metrics[0])
         difference_generational_distances.append(performance_metrics[1])
-        logbook.record(gen=gen, evals=len(invalid_individuals), **record)
+        logbook.record(gen=gen, evals=i_count, **record)
         print(logbook.stream)
 
         DHN_network_list_tested = []
@@ -381,9 +343,11 @@ def non_dominated_sorting_genetic_algorithm(config, locator, building_names_all,
             systems_name_list = []
             valid_generation = []
 
-        if gen == NGEN and config.debug == False:  # final generation re-evaluate paretofront
+        if gen == NGEN and not config.debug:  # final generation re-evaluate paretofront
             print("Saving results for generation", gen, "\n")
             valid_generation = [gen]
+            column_names_buildings_heating = blueprint.buildings if district_heating_network else []
+            column_names_buildings_cooling = blueprint.buildings if district_cooling_network else []
             systems_name_list = save_final_generation_pareto_individuals(toolbox,
                                                      locator,
                                                      gen,
@@ -395,16 +359,16 @@ def non_dominated_sorting_genetic_algorithm(config, locator, building_names_all,
                                                      building_names_heating,
                                                      building_names_cooling,
                                                      building_names_electricity,
-                                                     network_features,
-                                                     weather_features,
+                                                     preprocessing_result.network_features,
+                                                     preprocessing_result.weather_features,
                                                      config,
-                                                     prices,
-                                                     lca,
+                                                     preprocessing_result.prices,
+                                                     preprocessing_result.lca,
                                                      district_heating_network,
                                                      district_cooling_network,
                                                      technologies_heating_allowed,
                                                      technologies_cooling_allowed,
-                                                     column_names)
+                                                     blueprint.column_names)
 
         # Create Checkpoint if necessary
         print("Creating CheckPoint", gen, "\n")
@@ -415,7 +379,7 @@ def non_dominated_sorting_genetic_algorithm(config, locator, building_names_all,
                       generational_distances=generational_distances,
                       difference_generational_distances = difference_generational_distances,
                       systems_to_show=systems_name_list,
-                      generation_to_show =valid_generation,
+                      generation_to_show=valid_generation,
                       )
             json.dump(cp, fp)
     if config.multiprocessing:
@@ -576,88 +540,6 @@ def save_generation_individuals(columns_of_saved_files, generation, invalid_ind,
     individuals_info['individual'] = individual_list
     individuals_info['generation'] = generation
     individuals_info.to_csv(locator.get_optimization_individuals_in_generation(generation), index=False)
-
-
-def get_column_names_individual(district_heating_network: bool,
-                                district_cooling_network: bool,
-                                building_names_heating: List[str],
-                                building_names_cooling: List[str],
-                                technologies_heating_allowed: List[str],
-                                technologies_cooling_allowed: List[str]) -> IndividualBlueprint:
-    assert_district_heating_xor_cooling_network(district_cooling_network, district_heating_network)
-
-    if district_heating_network:
-        return get_column_names_individual_heating(building_names_heating, technologies_heating_allowed)
-    else:
-        # local variables
-        return get_column_names_individual_cooling(building_names_cooling, technologies_cooling_allowed)
-
-
-def assert_district_heating_xor_cooling_network(district_cooling_network:bool, district_heating_network:bool) -> None:
-    """
-    Ensure that district_cooling_network (exclusive or) district_heating_network is True.
-
-    :param district_cooling_network: True, if we're simulating a district cooling network
-    :param district_heating_network: True, if we're simulationg a district heating network
-    """
-    assert district_heating_network != district_cooling_network, "Only one network type possible"
-    assert district_heating_network or district_cooling_network, "No network type selected"
-
-
-def get_column_names_individual_cooling(building_names_cooling: List[str],
-                                        technologies_cooling_allowed: List[str]) -> IndividualBlueprint:
-    cooling_unit_names_share = [tech for tech in DC_CONVERSION_TECHNOLOGIES_SHARE.keys() if
-                                tech in technologies_cooling_allowed]
-    column_names_buildings_cooling = ["{building}_{DC}".format(building=building, DC=DC_ACRONYM)
-                                      for building in building_names_cooling]
-    column_names = cooling_unit_names_share + column_names_buildings_cooling
-    return IndividualBlueprint(
-        column_names=column_names,
-        tech_names_share=cooling_unit_names_share,
-        column_names_buildings=column_names_buildings_cooling,
-        conversion_technologies=DC_CONVERSION_TECHNOLOGIES_SHARE,
-        conversion_technologies_with_space_restrictions=DC_CONVERSION_TECHNOLOGIES_WITH_SPACE_RESTRICTIONS,
-        district_heating_network=False)
-
-
-def get_column_names_individual_heating(building_names_heating: List[str],
-                                        technologies_heating_allowed: List[str]) -> IndividualBlueprint:
-    heating_unit_names_share = [tech for tech in DH_CONVERSION_TECHNOLOGIES_SHARE.keys() if
-                                tech in technologies_heating_allowed]
-    column_names_buildings_heating = ["{building}_{DH}".format(building=building, DH=DH_ACRONYM)
-                                      for building in building_names_heating]
-    column_names = heating_unit_names_share + column_names_buildings_heating
-    return IndividualBlueprint(
-        column_names=column_names,
-        tech_names_share=heating_unit_names_share,
-        column_names_buildings=column_names_buildings_heating,
-        conversion_technologies=DH_CONVERSION_TECHNOLOGIES_SHARE,
-        conversion_technologies_with_space_restrictions=DH_CONVERSION_TECHNOLOGIES_WITH_SPACE_RESTRICTIONS,
-        district_heating_network=True)
-
-
-def create_empty_individual(column_names_individual: IndividualBlueprint,
-                            district_heating_network: bool,
-                            district_cooling_network: bool) -> IndividualDict:
-    assert_district_heating_xor_cooling_network(district_cooling_network, district_heating_network)
-
-    # local variables
-    heating_unit_names_share = column_names_individual.heating_unit_names_share
-    cooling_unit_names_share = column_names_individual.cooling_unit_names_share
-
-    heating_unit_share_float = [0.0] * len(heating_unit_names_share)
-    cooling_unit_share_float = [0.0] * len(cooling_unit_names_share)
-
-    DH_buildings_district_scale_int = [0] * len(column_names_individual.column_names_buildings_heating)
-    DC_buildings_district_scale_int = [0] * len(column_names_individual.column_names_buildings_cooling)
-
-    # 1 cases are possible
-    if district_heating_network:
-        individual = heating_unit_share_float + DH_buildings_district_scale_int
-    else:
-        individual = cooling_unit_share_float + DC_buildings_district_scale_int
-
-    return dict(zip(column_names_individual.column_names, individual))
 
 
 def calc_euclidean_distance(x2, y2):

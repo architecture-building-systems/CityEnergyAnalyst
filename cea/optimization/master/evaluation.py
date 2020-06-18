@@ -7,6 +7,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import cea.inputlocator
+import cea.config
 from cea.optimization.master import cost_model
 from cea.optimization.master import master_to_slave as master
 from cea.optimization.master.generation import individual_to_barcode
@@ -14,7 +15,9 @@ from cea.optimization.master.performance_aggregation import summarize_results_in
 from cea.optimization.slave import cooling_main
 from cea.optimization.slave import electricity_main
 from cea.optimization.slave import heating_main
-from cea.optimization.master.master_main import IndividualBlueprint, IndividualList, IndividualDict
+from optimization.master.individual import IndividualList, IndividualBlueprint, IndividualDict
+from optimization.preprocessing.preprocessing_main import PreprocessingResult
+from typing import List
 
 # +++++++++++++++++++++++++++++++++++++
 # Main objective function evaluation
@@ -23,23 +26,19 @@ from cea.optimization.master.master_main import IndividualBlueprint, IndividualL
 
 def evaluation_main(individual: IndividualList,
                     blueprint: IndividualBlueprint,
-                    building_names_all,
-                    locator,
-                    network_features,
-                    weather_features,
-                    config,
-                    prices,
-                    lca,
-                    individual_number,
-                    generation_number,
-                    building_names_heating,
-                    building_names_cooling,
-                    building_names_electricity,
-                    district_heating_network,
-                    district_cooling_network,
-                    technologies_heating_allowed,
-                    technologies_cooling_allowed
-                    ):
+                    building_names_all: List[str],
+                    locator: cea.inputlocator.InputLocator,
+                    preprocessing_result: PreprocessingResult,
+                    config: cea.config.Configuration,
+                    individual_number: int,
+                    generation_number: int,
+                    building_names_heating: List[str],
+                    building_names_cooling: List[str],
+                    building_names_electricity: List[str],
+                    district_heating_network: bool,
+                    district_cooling_network: bool,
+                    technologies_heating_allowed: List[str],
+                    technologies_cooling_allowed: List[str]):
     """
     This function evaluates an individual
 
@@ -85,8 +84,7 @@ def evaluation_main(individual: IndividualList,
                                                                        district_cooling_network,
                                                                        technologies_heating_allowed,
                                                                        technologies_cooling_allowed,
-                                                                       weather_features,
-                                                                       )
+                                                                       preprocessing_result.weather_features)
 
     # DISTRICT HEATING NETWORK
     print("DISTRICT HEATING OPERATION")
@@ -97,7 +95,7 @@ def evaluation_main(individual: IndividualList,
     district_heating_capacity_installed = heating_main.district_heating_network(locator,
                                                                                 master_to_slave_vars,
                                                                                 config,
-                                                                                network_features,
+                                                                                preprocessing_result.network_features,
                                                                                 )
 
     # DISTRICT COOLING NETWORK:
@@ -109,8 +107,8 @@ def evaluation_main(individual: IndividualList,
     district_cooling_capacity_installed = cooling_main.district_cooling_network(locator,
                                                                                 master_to_slave_vars,
                                                                                 config,
-                                                                                prices,
-                                                                                network_features)
+                                                                                preprocessing_result.prices,
+                                                                                preprocessing_result.network_features)
 
     # ELECTRICITY CONSUMPTION CALCULATIONS
     print("DISTRICT ELECTRICITY GRID OPERATION")
@@ -134,8 +132,8 @@ def evaluation_main(individual: IndividualList,
                                                                                        district_heating_fuel_requirements_dispatch,
                                                                                        district_cooling_fuel_requirements_dispatch,
                                                                                        district_electricity_demands,
-                                                                                       prices,
-                                                                                       lca)
+                                                                                       preprocessing_result.prices,
+                                                                                       preprocessing_result.lca)
 
     print("DISTRICT ENERGY SYSTEM - COSTS, PRIMARY ENERGY AND EMISSIONS OF DISCONNECTED BUILDINGS")
     buildings_building_scale_costs, \

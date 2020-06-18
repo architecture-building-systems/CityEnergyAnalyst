@@ -1,18 +1,15 @@
 """
 Validation
-
 """
+
 from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
 
 import random
 
-from cea.optimization.constants import (DH_CONVERSION_TECHNOLOGIES_WITH_SPACE_RESTRICTIONS,
-                                        DH_CONVERSION_TECHNOLOGIES_SHARE, DC_CONVERSION_TECHNOLOGIES_SHARE,
-                                        DC_CONVERSION_TECHNOLOGIES_WITH_SPACE_RESTRICTIONS)
-from typing import Dict, Union, List
-from .master_main import IndividualBlueprint, IndividualDict
+from typing import List
+from .individual import IndividualBlueprint, IndividualDict
 
 
 def validation_main(individual_with_name_dict: IndividualDict,

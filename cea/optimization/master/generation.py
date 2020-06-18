@@ -9,7 +9,7 @@ from __future__ import print_function
 import random
 
 from cea.optimization.master.validation import validation_main
-from cea.optimization.master.master_main import IndividualBlueprint, IndividualDict, IndividualList
+from optimization.master.individual import IndividualList, IndividualBlueprint, IndividualDict
 from typing import Tuple, Dict, List
 
 __author__ = "Jimeno A. Fonseca"

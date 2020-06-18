@@ -9,7 +9,7 @@ from __future__ import print_function
 from deap import tools
 
 from cea.optimization.master.validation import validation_main
-from cea.optimization.master.master_main import IndividualList, IndividualDict, IndividualBlueprint
+from optimization.master.individual import IndividualList, IndividualBlueprint, IndividualDict
 from typing import Tuple
 
 
