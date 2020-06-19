@@ -147,13 +147,9 @@ Uploading to PyPI
     - cityenergyanalyst-2.2-py2-none-any.whl
     - cityenergyanalyst-2.2.tar.gz
 
-- use twine to upload to PyPI
+- use twine to upload to PyPI (``twine upload dist/*``)
 
-::
-
-    twine upload dist/*
-
-  - you can get twine_ with ``pip install twine``
+  - you can get twine_ with ``pip install twine`` (it should be pre-installed in the CEA Console)
   - the command above assumes you have set the ``TWINE_PASSWORD`` and ``TWINE_USERNAME`` environment variables
     if not, use the ``--username`` and ``--password`` positional arguments
   - ask the repository admins for username and password

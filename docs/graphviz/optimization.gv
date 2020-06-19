@@ -107,8 +107,8 @@ digraph optimization {
         fontsize = 20;
         rank=same;
         label="optimization/slave/gen_0";
-        get_optimization_district_scale_heating_capacity[label="ind_2_district_scale_heating_capacity.csv"];
         get_optimization_building_scale_heating_capacity[label="ind_1_building_scale_heating_capacity.csv"];
+        get_optimization_district_scale_heating_capacity[label="ind_2_district_scale_heating_capacity.csv"];
         get_optimization_slave_total_performance[label="ind_2_total_performance.csv"];
     }
     subgraph cluster_10_out {
@@ -117,11 +117,11 @@ digraph optimization {
         fontsize = 20;
         rank=same;
         label="optimization/slave/gen_1";
-        get_optimization_district_scale_cooling_capacity[label="ind_1_district_scale_cooling_capacity.csv"];
         get_optimization_building_scale_cooling_capacity[label="ind_0_building_scale_cooling_capacity.csv"];
+        get_optimization_district_scale_cooling_capacity[label="ind_1_district_scale_cooling_capacity.csv"];
         get_optimization_generation_district_scale_performance[label="gen_1_district_scale_performance.csv"];
-        get_optimization_slave_district_scale_performance[label="ind_2_buildings_district_scale_performance.csv"];
         get_optimization_slave_cooling_activation_pattern[label="ind_2_Cooling_Activation_Pattern.csv"];
+        get_optimization_slave_district_scale_performance[label="ind_2_buildings_district_scale_performance.csv"];
         get_optimization_slave_electricity_activation_pattern[label="ind_1_Electricity_Activation_Pattern.csv"];
         get_optimization_slave_electricity_requirements_data[label="ind_1_Electricity_Requirements_Pattern.csv"];
     }
@@ -192,21 +192,21 @@ digraph optimization {
     get_water_body_potential -> "optimization"[label="(get_water_body_potential)"];
     get_weather_file -> "optimization"[label="(get_weather_file)"];
     get_zone_geometry -> "optimization"[label="(get_zone_geometry)"];
+    "optimization" -> get_optimization_building_scale_cooling_capacity[label="(get_optimization_building_scale_cooling_capacity)"];
+    "optimization" -> get_optimization_building_scale_heating_capacity[label="(get_optimization_building_scale_heating_capacity)"];
     "optimization" -> get_optimization_checkpoint[label="(get_optimization_checkpoint)"];
     "optimization" -> get_optimization_district_scale_cooling_capacity[label="(get_optimization_district_scale_cooling_capacity)"];
     "optimization" -> get_optimization_district_scale_electricity_capacity[label="(get_optimization_district_scale_electricity_capacity)"];
     "optimization" -> get_optimization_district_scale_heating_capacity[label="(get_optimization_district_scale_heating_capacity)"];
-    "optimization" -> get_optimization_building_scale_cooling_capacity[label="(get_optimization_building_scale_cooling_capacity)"];
-    "optimization" -> get_optimization_building_scale_heating_capacity[label="(get_optimization_building_scale_heating_capacity)"];
-    "optimization" -> get_optimization_generation_district_scale_performance[label="(get_optimization_generation_district_scale_performance)"];
     "optimization" -> get_optimization_generation_building_scale_performance[label="(get_optimization_generation_building_scale_performance)"];
+    "optimization" -> get_optimization_generation_district_scale_performance[label="(get_optimization_generation_district_scale_performance)"];
     "optimization" -> get_optimization_generation_total_performance[label="(get_optimization_generation_total_performance)"];
     "optimization" -> get_optimization_generation_total_performance_pareto[label="(get_optimization_generation_total_performance_pareto)"];
     "optimization" -> get_optimization_individuals_in_generation[label="(get_optimization_individuals_in_generation)"];
     "optimization" -> get_optimization_slave_building_connectivity[label="(get_optimization_slave_building_connectivity)"];
-    "optimization" -> get_optimization_slave_district_scale_performance[label="(get_optimization_slave_district_scale_performance)"];
-    "optimization" -> get_optimization_slave_cooling_activation_pattern[label="(get_optimization_slave_cooling_activation_pattern)"];
     "optimization" -> get_optimization_slave_building_scale_performance[label="(get_optimization_slave_building_scale_performance)"];
+    "optimization" -> get_optimization_slave_cooling_activation_pattern[label="(get_optimization_slave_cooling_activation_pattern)"];
+    "optimization" -> get_optimization_slave_district_scale_performance[label="(get_optimization_slave_district_scale_performance)"];
     "optimization" -> get_optimization_slave_electricity_activation_pattern[label="(get_optimization_slave_electricity_activation_pattern)"];
     "optimization" -> get_optimization_slave_electricity_requirements_data[label="(get_optimization_slave_electricity_requirements_data)"];
     "optimization" -> get_optimization_slave_heating_activation_pattern[label="(get_optimization_slave_heating_activation_pattern)"];

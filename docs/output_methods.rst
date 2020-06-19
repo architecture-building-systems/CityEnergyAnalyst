@@ -92,7 +92,7 @@ The following file is used by these scripts: ``demand``, ``schedule_maker``
     ``Ed_Wm2``, "Peak specific electrical load due to servers/data centres"
     ``El_Wm2``, "Peak specific electrical load due to artificial lighting"
     ``Epro_Wm2``, "Peak specific electrical load due to industrial processes"
-    ``Ev_kWveh``, "Peak specific cooling load due to electromobility"
+    ``Ev_kWveh``, "Peak capacity of electric battery per vehicle"
     ``Name``, "Unique building ID. It must start with a letter."
     ``Occ_m2pax``, "Occupancy density"
     ``Qcpro_Wm2``, "Peak specific process cooling load"
@@ -1087,30 +1087,30 @@ The following file is used by these scripts: ``archetypes_mapper``
 .. csv-table:: Worksheet: ``ELECTROMOBILITY``
     :header: "Variable", "Description"
 
-    ``1``, 
-    ``2``, 
-    ``3``, 
-    ``4``, 
-    ``5``, 
-    ``6``, 
-    ``7``, 
-    ``8``, 
-    ``9``, 
-    ``10``, 
-    ``11``, 
-    ``12``, 
-    ``13``, 
-    ``14``, 
-    ``15``, 
-    ``16``, 
-    ``17``, 
-    ``18``, 
-    ``19``, 
-    ``20``, 
-    ``21``, 
-    ``22``, 
-    ``23``, 
-    ``24``, 
+    ``1``, Average number of electric vehicles in this hour
+    ``2``, Average number of electric vehicles in this hour
+    ``3``, Average number of electric vehicles in this hour
+    ``4``, Average number of electric vehicles in this hour
+    ``5``, Average number of electric vehicles in this hour
+    ``6``, Average number of electric vehicles in this hour
+    ``7``, Average number of electric vehicles in this hour
+    ``8``, Average number of electric vehicles in this hour
+    ``9``, Average number of electric vehicles in this hour
+    ``10``, Average number of electric vehicles in this hour
+    ``11``, Average number of electric vehicles in this hour
+    ``12``, Average number of electric vehicles in this hour
+    ``13``, Average number of electric vehicles in this hour
+    ``14``, Average number of electric vehicles in this hour
+    ``15``, Average number of electric vehicles in this hour
+    ``16``, Average number of electric vehicles in this hour
+    ``17``, Average number of electric vehicles in this hour
+    ``18``, Average number of electric vehicles in this hour
+    ``19``, Average number of electric vehicles in this hour
+    ``20``, Average number of electric vehicles in this hour
+    ``21``, Average number of electric vehicles in this hour
+    ``22``, Average number of electric vehicles in this hour
+    ``23``, Average number of electric vehicles in this hour
+    ``24``, Average number of electric vehicles in this hour
     ``DAY``, 
     
 
@@ -1448,7 +1448,7 @@ The following file is used by these scripts: ``archetypes_mapper``
     ``Ed_Wm2``, Peak specific electrical load due to servers/data centres
     ``El_Wm2``, Peak specific electrical load due to artificial lighting
     ``Epro_Wm2``, Peak specific electrical load due to industrial processes
-    ``Ev_kWveh``, Peak specific cooling load due to electromobility
+    ``Ev_kWveh``, Peak capacity of electrical battery per vehicle
     ``Occ_m2pax``, Occupancy density
     ``Qcpro_Wm2``, Peak specific process cooling load
     ``Qcre_Wm2``, Peak specific cooling load due to refrigeration (cooling rooms)

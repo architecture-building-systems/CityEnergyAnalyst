@@ -1891,10 +1891,11 @@ get_building_internal:
         values: '{0.0...n}'
         min: 0.0
       Ev_kWveh:
-        description: Peak specific cooling load due to electromobility
+        description: Peak capacity of electric battery per vehicle
         type: string
-        unit: '[kWveh]'
+        unit: '[kW/veh]'
         values: '{0.0...n}'
+        min: 0.0
       Qcpro_Wm2:
         description: Peak specific process cooling load
         type: float
@@ -3058,15 +3059,13 @@ get_database_conversion_systems:
             evaporator side '
           type: float
           unit: '[-]'
-          values: '{0.0...n}'
-          min: 0.0
+          values: '{n...n}'
         a_g:
           description: parameter in the characteristic equations to calculate the
             generator side
           type: float
           unit: '[-]'
-          values: '{0.0...n}'
-          min: 0.0
+          values: '{n...n}'
         assumption:
           description: items made by assumptions in this technology
           nullable: true
@@ -3156,15 +3155,13 @@ get_database_conversion_systems:
             evaporator side '
           type: float
           unit: '[-]'
-          values: '{0.0...n}'
-          min: 0.0
+          values: '{n...n}'
         r_g:
           description: parameter in the characteristic equations to calculate the
             generator side
           type: float
           unit: '[-]'
-          values: '{0.0...n}'
-          min: 0.0
+          values: '{n...n}'
         s_e:
           description: 'parameter in the characteristic equations to calculate the
             evaporator side '
@@ -3895,8 +3892,7 @@ get_database_conversion_systems:
             + d*ln(x) + e*x*ln*(x)  '
           type: float
           unit: '[-]'
-          values: '{0.0...n}'
-          min: 0.0
+          values: '{n...n}'
         a_p:
           description: 'parameter in the pressure loss function, f(x) = a_p + b_p*x^c_p
             + d_p*ln(x) + e_p*x*ln*(x),  where x is the capacity mass flow rate [W/K] '
@@ -3974,8 +3970,7 @@ get_database_conversion_systems:
             + d_p*ln(x) + e_p*x*ln*(x),  where x is the capacity mass flow rate [W/K] '
           type: float
           unit: '[-]'
-          values: '{0.0...n}'
-          min: 0.0
+          values: '{n...n}'
         e:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
             + d*ln(x) + e*x*ln*(x)  '
@@ -4084,8 +4079,7 @@ get_database_conversion_systems:
             + d*ln(x) + e*x*ln*(x), where x is the capacity '
           type: float
           unit: '[-]'
-          values: '{0.0...n}'
-          min: 0.0
+          values: '{n...n}'
         unit:
           description: unit of the min/max capacity
           type: string
@@ -4129,36 +4123,39 @@ get_database_conversion_systems:
             a3*x**3 + a4*x**4, where  x is the relative air mass
           type: float
           unit: '[-]'
-          values: '{0.0...n}'
-          min: 0.0
+          values: '{n...n}'
         PV_a1:
           description: parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  +
             a3*x**3 + a4*x**4, where  x is the relative air mass
           type: float
           unit: '[-]'
-          values: '{0.0...n}'
-          min: 0.0
+          values: '{-0.1...0.1}'
+          min: -0.1
+          max: 0.1
         PV_a2:
           description: parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  +
             a3*x**3 + a4*x**4, where  x is the relative air mass
           type: float
           unit: '[-]'
-          values: '{0.0...n}'
-          min: 0.0
+          values: '{-0.1...0.1}'
+          min: -0.1
+          max: 0.1
         PV_a3:
           description: parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  +
             a3*x**3 + a4*x**4, where  x is the relative air mass
           type: float
           unit: '[-]'
-          values: '{0.0...n}'
-          min: 0.0
+          values: '{-0.1...0.1}'
+          min: -0.1
+          max: 0.1
         PV_a4:
           description: parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  +
             a3*x**3 + a4*x**4, where  x is the relative air mass
           type: float
           unit: '[-]'
-          values: '{0.0...n}'
-          min: 0.0
+          values: '{-0.1...0.1}'
+          min: -0.1
+          max: 0.1
         PV_n:
           description: nominal efficiency
           type: float
@@ -4757,8 +4754,7 @@ get_database_conversion_systems:
             + d*ln(x) + e*x*ln*(x), where x is the capacity '
           type: float
           unit: '[-]'
-          values: '{0.0...n}'
-          min: 0.0
+          values: '{n...n}'
         unit:
           description: unit of the min/max capacity
           type: string
@@ -5681,101 +5677,125 @@ get_database_standard_schedules_use:
     ELECTROMOBILITY:
       columns:
         1:
-          max: 1.0
-          min: 0.0
-          type: float
+          description: Average number of electric vehicles in this hour
+          max: 10000
+          min: 0
+          type: int
         2:
-          max: 1.0
-          min: 0.0
-          type: float
+          description: Average number of electric vehicles in this hour
+          max: 10000
+          min: 0
+          type: int
         3:
-          max: 1.0
-          min: 0.0
-          type: float
+          description: Average number of electric vehicles in this hour
+          max: 10000
+          min: 0
+          type: int
         4:
-          max: 1.0
-          min: 0.0
-          type: float
+          description: Average number of electric vehicles in this hour
+          max: 10000
+          min: 0
+          type: int
         5:
-          max: 1.0
-          min: 0.0
-          type: float
+          description: Average number of electric vehicles in this hour
+          max: 10000
+          min: 0
+          type: int
         6:
-          max: 1.0
-          min: 0.0
-          type: float
+          description: Average number of electric vehicles in this hour
+          max: 10000
+          min: 0
+          type: int
         7:
-          max: 1.0
-          min: 0.0
-          type: float
+          description: Average number of electric vehicles in this hour
+          max: 10000
+          min: 0
+          type: int
         8:
-          max: 1.0
-          min: 0.0
-          type: float
+          description: Average number of electric vehicles in this hour
+          max: 10000
+          min: 0
+          type: int
         9:
-          max: 1.0
-          min: 0.0
-          type: float
+          description: Average number of electric vehicles in this hour
+          max: 10000
+          min: 0
+          type: int
         10:
-          max: 1.0
-          min: 0.0
-          type: float
+          description: Average number of electric vehicles in this hour
+          max: 10000
+          min: 0
+          type: int
         11:
-          max: 1.0
-          min: 0.0
-          type: float
+          description: Average number of electric vehicles in this hour
+          max: 10000
+          min: 0
+          type: int
         12:
-          max: 1.0
-          min: 0.0
-          type: float
+          description: Average number of electric vehicles in this hour
+          max: 10000
+          min: 0
+          type: int
         13:
-          max: 1.0
-          min: 0.0
-          type: float
+          description: Average number of electric vehicles in this hour
+          max: 10000
+          min: 0
+          type: int
         14:
-          max: 1.0
-          min: 0.0
-          type: float
+          description: Average number of electric vehicles in this hour
+          max: 10000
+          min: 0
+          type: int
         15:
-          max: 1.0
-          min: 0.0
-          type: float
+          description: Average number of electric vehicles in this hour
+          max: 10000
+          min: 0
+          type: int
         16:
-          max: 1.0
-          min: 0.0
-          type: float
+          description: Average number of electric vehicles in this hour
+          max: 10000
+          min: 0
+          type: int
         17:
-          max: 1.0
-          min: 0.0
-          type: float
+          description: Average number of electric vehicles in this hour
+          max: 10000
+          min: 0
+          type: int
         18:
-          max: 1.0
-          min: 0.0
-          type: float
+          description: Average number of electric vehicles in this hour
+          max: 10000
+          min: 0
+          type: int
         19:
-          max: 1.0
-          min: 0.0
-          type: float
+          description: Average number of electric vehicles in this hour
+          max: 10000
+          min: 0
+          type: int
         20:
-          max: 1.0
-          min: 0.0
-          type: float
+          description: Average number of electric vehicles in this hour
+          max: 10000
+          min: 0
+          type: int
         21:
-          max: 1.0
-          min: 0.0
-          type: float
+          description: Average number of electric vehicles in this hour
+          max: 10000
+          min: 0
+          type: int
         22:
-          max: 1.0
-          min: 0.0
-          type: float
+          description: Average number of electric vehicles in this hour
+          max: 10000
+          min: 0
+          type: int
         23:
-          max: 1.0
-          min: 0.0
-          type: float
+          description: Average number of electric vehicles in this hour
+          max: 10000
+          min: 0
+          type: int
         24:
-          max: 1.0
-          min: 0.0
-          type: float
+          description: Average number of electric vehicles in this hour
+          max: 10000
+          min: 0
+          type: int
         DAY:
           choice:
             values:
@@ -6928,8 +6948,7 @@ get_database_use_types_properties:
           description: Setback point of temperature for heating system
           type: float
           unit: '[C]'
-          values: '{0.0...n}'
-          min: 0.0
+          values: '{n...n}'
         Ve_lpspax:
           description: Indoor quality requirements of indoor ventilation per person
           type: float
@@ -6969,9 +6988,9 @@ get_database_use_types_properties:
           values: '{0.0...n}'
           min: 0.0
         Ev_kWveh:
-          description: Peak specific cooling load due to electromobility
+          description: Peak capacity of electrical battery per vehicle
           type: float
-          unit: '[W/m2]'
+          unit: '[kW/veh]'
           values: '{0.0...n}'
           min: 0.0
         Occ_m2pax:

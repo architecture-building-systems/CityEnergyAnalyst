@@ -49,7 +49,7 @@ def schemas(plugins):
         schemas_pickle = os.path.expanduser("~/schemas.yml.pickle")
 
         # compare the dates of the two files - use the pickle if it's newer
-        if os.path.exists(schemas_pickle) and os.path.getctime(schemas_pickle) > os.path.getctime(schemas_yml):
+        if os.path.exists(schemas_pickle) and os.path.getmtime(schemas_pickle) > os.path.getmtime(schemas_yml):
             with open(schemas_pickle, "r") as schemas_pickle_fp:
                 schemas_dict = cPickle.load(schemas_pickle_fp)
         else:
