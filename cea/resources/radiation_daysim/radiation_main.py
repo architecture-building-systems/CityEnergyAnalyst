@@ -481,7 +481,7 @@ def main(config):
     building_surface_properties.to_csv(locator.get_radiation_materials())
     print("creating 3D geometry and surfaces")
     # create geometrical faces of terrain and buildingsL
-    elevation, geometry_terrain, geometry_3D_zone, geometry_3D_surroundings = geometry_generator.geometry_main(locator,
+    geometry_terrain, geometry_3D_zone, geometry_3D_surroundings = geometry_generator.geometry_main(locator,
                                                                                                                config)
 
     print("Sending the scene: geometry and materials to daysim")
