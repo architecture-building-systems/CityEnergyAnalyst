@@ -13,7 +13,7 @@ __status__ = "Production"
 from typing import NewType, List, Union, NamedTuple, Dict
 
 # Type used to represent an individual in the deap toolbox
-from optimization.constants import DC_CONVERSION_TECHNOLOGIES_SHARE, DC_ACRONYM, \
+from cea.optimization.constants import DC_CONVERSION_TECHNOLOGIES_SHARE, DC_ACRONYM, \
     DC_CONVERSION_TECHNOLOGIES_WITH_SPACE_RESTRICTIONS, DH_CONVERSION_TECHNOLOGIES_SHARE, DH_ACRONYM, \
     DH_CONVERSION_TECHNOLOGIES_WITH_SPACE_RESTRICTIONS
 
