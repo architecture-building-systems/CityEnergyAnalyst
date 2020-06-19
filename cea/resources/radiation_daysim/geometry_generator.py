@@ -10,6 +10,11 @@ from __future__ import division
 from __future__ import print_function
 
 from itertools import repeat
+
+import gdal
+import geopandas as gpd
+import osr
+
 import cea
 cea.suppres_3rd_party_debug_loggers()
 
@@ -554,10 +559,15 @@ def raster_to_tin(raster_np, x_coords, y_coords):
 
 
 def standardize_coordinate_systems(locator):
-    from cea.utilities.standardize_coordinates import shapefile_to_WSG_and_UTM, raster_to_WSG_and_UTM
-    zone_df, lat, lon = shapefile_to_WSG_and_UTM(locator.get_zone_geometry())
-    surroundings_df, _, _ = shapefile_to_WSG_and_UTM(locator.get_surroundings_geometry())
-    terrain_raster = raster_to_WSG_and_UTM(locator.get_terrain(), lat, lon)
+    zone_df = gpd.read_file(locator.get_zone_geometry())
+    surroundings_df = gpd.read_file(locator.get_surroundings_geometry())
+    terrain_raster = gdal.Open(locator.get_terrain())
+
+    # Get projection of terrain and apply to zone and surroundings
+    terrian_projection = terrain_raster.GetProjection()
+    proj4_str = osr.SpatialReference(wkt=terrian_projection).ExportToProj4()
+    zone_df.to_crs(proj4_str)
+    surroundings_df.to_crs(proj4_str)
 
     return zone_df, surroundings_df, terrain_raster
 
