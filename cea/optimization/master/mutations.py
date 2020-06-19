@@ -53,9 +53,9 @@ def mutation_main(individual: IndividualList,
     individual_dict = IndividualDict.from_individual_list(individual, blueprint)
 
     # MUTATE BUILDINGS CONNECTED
-    connections = [individual_dict[column] for column in blueprint.buildings]
+    connections = [individual_dict[column] for column in blueprint.building_columns]
     connections_mutated = mutation_integer.mutate(connections, mut_prob)
-    for building, mutated_value in zip(blueprint.buildings, connections_mutated):
+    for building, mutated_value in zip(blueprint.building_columns, connections_mutated):
         individual_dict[building] = mutated_value
 
     # MUTATE SUPPLY SYSTEM UNITS SHARE

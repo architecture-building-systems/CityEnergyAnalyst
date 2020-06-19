@@ -67,12 +67,12 @@ def crossover_main(ind1: IndividualList,
     ind2_with_name_dict = IndividualDict.from_individual_list(ind2, blueprint)
 
     # MUTATE BUILDINGS CONNECTED
-    connections_ind1 = [ind1_with_name_dict[column] for column in blueprint.buildings]
-    connections_ind2 = [ind2_with_name_dict[column] for column in blueprint.buildings]
+    connections_ind1 = [ind1_with_name_dict[column] for column in blueprint.building_columns]
+    connections_ind2 = [ind2_with_name_dict[column] for column in blueprint.building_columns]
     connections_ind1, connections_ind2 = crossover_integer.crossover(connections_ind1, connections_ind2, cx_prob)
 
     # apply back to the individual
-    for i, building in enumerate(blueprint.buildings):
+    for i, building in enumerate(blueprint.building_columns):
         ind1_with_name_dict[building] = connections_ind1[i]
         ind2_with_name_dict[building] = connections_ind2[i]
 

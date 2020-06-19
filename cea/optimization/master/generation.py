@@ -66,7 +66,7 @@ def populate_individual(empty_individual_with_names_dict: IndividualDict,
         empty_individual_with_names_dict[tech] = round(random.uniform(0.0, 1.0), 2)
 
     # do it for the buildings
-    for building in column_names_individual.buildings:
+    for building in column_names_individual.building_columns:
         empty_individual_with_names_dict[building] = random.randint(0, 1)
 
     return empty_individual_with_names_dict
@@ -84,25 +84,25 @@ def individual_to_barcode(individual_dict: IndividualDict,
     """
     # FIXME: remove the network distinction - we only ever do one type of network!
     if blueprint.district_heating_network:
-        DHN_barcode = "".join(str(individual_dict[building]) for building in blueprint.buildings)
+        DHN_barcode = "".join(str(individual_dict[building]) for building in blueprint.building_columns)
         DCN_barcode = ""
     else:
         DHN_barcode = ""
-        DCN_barcode = "".join(str(individual_dict[building]) for building in blueprint.buildings)
+        DCN_barcode = "".join(str(individual_dict[building]) for building in blueprint.building_columns)
     return DHN_barcode, DCN_barcode
 
 
 def calc_building_connectivity_dict(individual_dict: IndividualDict,
                                     blueprint: IndividualBlueprint) -> Dict[str, List[str]]:
     if blueprint.district_heating_network:
-        data_heating_connections = [str(individual_dict[building]) for building in blueprint.buildings]
-        data_cooling_connections = ["0" for _ in blueprint.buildings]
+        data_heating_connections = [str(individual_dict[building]) for building in blueprint.building_columns]
+        data_cooling_connections = ["0" for _ in blueprint.building_columns]
     else:
-        data_heating_connections = ["0" for _ in blueprint.buildings]
-        data_cooling_connections = [str(individual_dict[building]) for building in blueprint.buildings]
+        data_heating_connections = ["0" for _ in blueprint.building_columns]
+        data_cooling_connections = [str(individual_dict[building]) for building in blueprint.building_columns]
 
     building_connectivity_dict = {
-        "Name": blueprint.buildings,
+        "Name": blueprint.building_names,
         "DH_connectivity": data_heating_connections,
         "DC_connectivity": data_cooling_connections,
     }

@@ -24,7 +24,8 @@ class IndividualBlueprint(NamedTuple):
     """Describes the blueprint of an individual"""
     column_names: List[str]
     tech_names_share: List[str]
-    buildings: List[str]
+    building_columns: List[str]  # the columns names
+    building_names: List[str]  # the names as they appear in zone.shp
     conversion_technologies: Dict[str, Dict[str, float]]
     conversion_technologies_with_space_restrictions: List[str]
     district_heating_network: bool  # district_cooling_network == not district_heating_network
@@ -56,7 +57,7 @@ def create_empty_individual(blueprint: IndividualBlueprint,
                             district_cooling_network: bool) -> IndividualDict:
     assert_district_heating_xor_cooling_network(district_cooling_network, district_heating_network)
 
-    individual: IndividualList = [0.0] * len(blueprint.tech_names_share) + [0] * len(blueprint.buildings)
+    individual: IndividualList = [0.0] * len(blueprint.tech_names_share) + [0] * len(blueprint.building_columns)
     return IndividualDict.from_individual_list(individual, blueprint)
 
 
@@ -97,6 +98,7 @@ def create_cooling_blueprint(building_names_cooling: List[str],
         column_names=column_names,
         tech_names_share=cooling_unit_names_share,
         buildings=column_names_buildings_cooling,
+        building_names=building_names_cooling,
         conversion_technologies=DC_CONVERSION_TECHNOLOGIES_SHARE,
         conversion_technologies_with_space_restrictions=DC_CONVERSION_TECHNOLOGIES_WITH_SPACE_RESTRICTIONS,
         district_heating_network=False)
@@ -113,6 +115,7 @@ def create_heating_blueprint(building_names_heating: List[str],
         column_names=column_names,
         tech_names_share=heating_unit_names_share,
         buildings=column_names_buildings_heating,
+        building_names=building_names_heating,
         conversion_technologies=DH_CONVERSION_TECHNOLOGIES_SHARE,
         conversion_technologies_with_space_restrictions=DH_CONVERSION_TECHNOLOGIES_WITH_SPACE_RESTRICTIONS,
         district_heating_network=True)

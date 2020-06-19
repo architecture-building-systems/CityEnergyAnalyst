@@ -14,9 +14,9 @@ from .individual import IndividualBlueprint, IndividualDict
 
 def validation_main(individual_with_name_dict: IndividualDict,
                     column_names_individual: IndividualBlueprint) -> IndividualDict:
-    validate_buildings_value(individual_with_name_dict, column_names_individual.buildings)
+    validate_buildings_value(individual_with_name_dict, column_names_individual.building_columns)
     validate_network_connections(individual_with_name_dict,
-                                 column_names_individual.buildings)
+                                 column_names_individual.building_columns)
 
     validate_minimum_limit(individual_with_name_dict, column_names_individual)
     validate_sum_technology_shares(individual_with_name_dict, column_names_individual)
