@@ -81,7 +81,7 @@ def main(config):
                 # skip steps already completed while resuming
                 print("Skipping workflow step {i}: script={script}".format(i=i, script=step["script"]))
                 continue
-            do_script_step(config, step, trace_input)
+            do_script_step(config, i, step, trace_input)
         elif "config" in step:
             config = do_config_step(config, step)
         else:
@@ -91,6 +91,7 @@ def main(config):
         resume_dict[workflow_yml] = i
         with open(resume_yml, 'w') as resume_fp:
             yaml.dump(resume_dict, resume_fp, indent=4)
+
 
 def read_resume_info(resume_yml, workflow_yml):
     try:
@@ -153,12 +154,12 @@ def set_parameter(config, parameter, value):
         parameter.set(parameter.decode(expanded_value))
 
 
-def do_script_step(config, step, trace_input):
+def do_script_step(config, i, step, trace_input):
     """Run a script based on the step's "script" and "parameters" (optional) keys."""
     script = cea.scripts.by_name(step["script"], plugins=config.plugins)
     print("")
     print("=" * 80)
-    print("Workflow step: script={script}".format(script=script.name))
+    print("Workflow step {i}: script={script}".format(i=i, script=script.name))
     print("=" * 80)
     parameters = {p.name: p.get() for s, p in config.matching_parameters(script.parameters)}
     if "parameters" in step:

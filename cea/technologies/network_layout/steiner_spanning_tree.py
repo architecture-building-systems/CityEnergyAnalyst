@@ -99,7 +99,9 @@ def calc_steiner_spanning_tree(crs_projected,
     except:
         raise ValueError('There was an error while creating the Steiner tree. '
                          'Check the streets.shp for isolated/disconnected streets (lines) and erase them, '
-                         'the Steiner tree does not support disconnected graphs.')
+                         'the Steiner tree does not support disconnected graphs. '
+                         'If no disconnected streets can be found, try increasing the SHAPEFILE_TOLERANCE in cea.constants and run again. '
+                         'Otherwise, try using the Feature to Line tool of ArcMap with a tolerance of around 10m to solve the issue.')
 
     # POPULATE FIELDS IN NODES
     pointer_coordinates_building_names = dict(zip(terminal_nodes_coordinates, terminal_nodes_names))
@@ -119,7 +121,7 @@ def calc_steiner_spanning_tree(crs_projected,
     # do some checks to see that the building names was not compromised
     if len(terminal_nodes_names) != (len(mst_nodes['Building'].unique()) - 1):
         raise ValueError('There was an error while populating the nodes fields. '
-                         'One or more buildings could not be matched to nodes of the network'
+                         'One or more buildings could not be matched to nodes of the network. '
                          'Try changing the constant SNAP_TOLERANCE in cea/constants.py to try to fix this')
 
     # POPULATE FIELDS IN EDGES
