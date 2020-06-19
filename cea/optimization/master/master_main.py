@@ -28,7 +28,7 @@ from cea.optimization.master.mutations import mutation_main
 from cea.optimization.master.normalization import scaler_for_normalization, normalize_fitnesses
 from cea.optimization.master.individual import IndividualList, IndividualBlueprint, IndividualDict, create_empty_individual, \
     create_individual_blueprint
-from optimization.preprocessing.preprocessing_main import PreprocessingResult
+from cea.optimization.preprocessing.preprocessing_main import PreprocessingResult
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
