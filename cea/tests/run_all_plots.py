@@ -5,9 +5,9 @@ Load all the plot classes and generate the plots for test purposes
 whole workflow to be present)
 """
 
-from __future__ import division
-from __future__ import print_function
-from __future__ import absolute_import
+
+
+
 
 import shutil
 import tempfile

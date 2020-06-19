@@ -1,6 +1,6 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import division
+
+
+
 # FIXME: what is this for? can we remove it?
 
 def main():

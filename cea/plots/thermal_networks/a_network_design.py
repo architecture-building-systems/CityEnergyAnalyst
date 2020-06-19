@@ -4,9 +4,9 @@ Map plots for network pressure losses: Aggregated and peak.
 Adapted from code by Lennart Rogenhofer.
 """
 
-from __future__ import division
-from __future__ import print_function
-from __future__ import absolute_import
+
+
+
 
 from cea.plots.variable_naming import get_color_array
 import pandas as pd

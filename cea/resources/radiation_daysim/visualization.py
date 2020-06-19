@@ -26,9 +26,9 @@ INPUT / OUTPUT FILES
 SIDE EFFECTS
     - if no data file is given, the loaded geometry will not change color
 """
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import division
+
+
+
 
 import os
 import math

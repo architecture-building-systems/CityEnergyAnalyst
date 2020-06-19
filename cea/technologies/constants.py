@@ -4,9 +4,9 @@ Constants used throughout the cea.technologies package.
 History lesson: This is a first step at removing the `cea.globalvars.GlobalVariables` object.
 """
 
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
+
+
+
 
 # Heat Exchangers
 U_COOL = 2500.0  # W/m2K

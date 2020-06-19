@@ -2,9 +2,9 @@
 This script extracts terrain elevation from NASA - SRTM
 https://www2.jpl.nasa.gov/srtm/
 """
-from __future__ import division
-from __future__ import print_function
-from __future__ import absolute_import
+
+
+
 
 import os
 

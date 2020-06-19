@@ -27,9 +27,6 @@ We need to grab:
 
 The output is written to ../CHANGELOG.md.
 """
-from __future__ import print_function
-from __future__ import division
-
 import subprocess
 import dateutil.parser
 import re

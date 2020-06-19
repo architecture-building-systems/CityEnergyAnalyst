@@ -9,9 +9,9 @@ with it's own distutils entry-point (``cea-worker``) with it's own semantics for
 integer argument, the jobid, that is used to fetch all other information from the /server/jobs api, as well
 as an URL for locating the /server/jobs api.
 """
-from __future__ import division
-from __future__ import print_function
-from __future__ import absolute_import
+
+
+
 
 import sys
 import requests

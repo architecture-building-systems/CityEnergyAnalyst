@@ -1,9 +1,9 @@
 """
 System Modeling: Cooling tower
 """
-from __future__ import division
-from __future__ import print_function
-from __future__ import absolute_import
+
+
+
 import pandas as pd
 from math import ceil, log
 from cea.technologies.constants import CT_MIN_PARTLOAD_RATIO

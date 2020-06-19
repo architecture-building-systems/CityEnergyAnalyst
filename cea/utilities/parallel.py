@@ -12,9 +12,9 @@ not applying this technique to the demand script.
 This module exports the function `map` which is intended to replace both ``map_async`` and the builtin ``map`` function
 (which was used when ``config.multiprocessing == False``). This simplifies multiprocessing.
 """
-from __future__ import division
-from __future__ import print_function
-from __future__ import absolute_import
+
+
+
 
 import multiprocessing
 import sys

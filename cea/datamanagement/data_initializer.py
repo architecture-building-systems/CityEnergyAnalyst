@@ -5,9 +5,9 @@ Initializes the database of cea
 # HISTORY:
 # J. A. Fonseca  script development          03.02.20
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+
+
+
 
 import cea.config
 import cea.inputlocator

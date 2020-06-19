@@ -8,8 +8,6 @@ WHY? because the trace-inputlocator only has the GraphViz output of the last cal
 version re-creates the trace-data from the (merged) yaml file (the yaml output is merged if pre-existing in the output
 file).
 """
-from __future__ import print_function
-
 import yaml
 import cea.config
 from cea.tests.trace_inputlocator import create_graphviz_output

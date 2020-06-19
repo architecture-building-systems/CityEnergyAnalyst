@@ -1,6 +1,6 @@
-from __future__ import division
-from __future__ import print_function
-from __future__ import absolute_import
+
+
+
 
 """
 Organizes the plots for the CEA. The dashboard uses the package structure of cea.plots to group the plots into

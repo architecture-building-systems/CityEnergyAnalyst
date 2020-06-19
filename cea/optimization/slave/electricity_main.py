@@ -5,9 +5,9 @@ This file takes in the values of the electricity activation pattern (which is on
 network and corresponding district energy systems) and adds in the electricity requirement of decentralized buildings
 and recalculates the imports from grid and exports to the grid
 """
-from __future__ import division
-from __future__ import print_function
-from __future__ import absolute_import
+
+
+
 
 import os
 

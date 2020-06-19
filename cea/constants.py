@@ -4,9 +4,9 @@ This file contains the constants used in many folders in CEA. IF few constants a
 it is highly recommended to keep those constants in a separate file in the subfolder. This is to make sure we
 declare the constants closest to the point of usage.
 """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+
+
+
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
