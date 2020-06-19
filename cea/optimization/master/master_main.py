@@ -416,7 +416,7 @@ def save_final_generation_pareto_individuals(toolbox,
     # evaluate once again and print results for the pareto curve
     print_final_results = True
     n_times = len(individuals_in_pareto_list)
-    toolbox.map(toolbox.evaluate, zip(individuals_in_pareto_list,
+    fitnesses = toolbox.map(toolbox.evaluate, zip(individuals_in_pareto_list,
                                       individual_number_list,
                                       generation_number_list,
                                       repeat(blueprint, n_times),
@@ -432,6 +432,9 @@ def save_final_generation_pareto_individuals(toolbox,
                                       repeat(technologies_heating_allowed, n_times),
                                       repeat(technologies_cooling_allowed, n_times),
                                       repeat(print_final_results, n_times)))
+
+    # toolbox.map returns a lazy map-result (new in Python 3?) - the evaluation only happens when we iterate over it
+    fitnesses = list(fitnesses)
 
     for individual_number, generation_number in zip(individual_number_list, generation_number_list):
         performance_totals_pareto = pd.concat([performance_totals_pareto,
@@ -518,8 +521,8 @@ def save_generation_individuals(columns_of_saved_files, generation, invalid_ind,
     individual_list = range(len(invalid_ind))
     individuals_info = pd.DataFrame()
     for ind in invalid_ind:
-        infividual_dict = pd.DataFrame(dict(zip(columns_of_saved_files, [[x] for x in ind])))
-        individuals_info = pd.concat([infividual_dict, individuals_info], ignore_index=True)
+        individual_df = pd.DataFrame(dict(zip(columns_of_saved_files, [[x] for x in ind])))
+        individuals_info = pd.concat([individual_df, individuals_info], ignore_index=True)
 
     individuals_info['individual'] = individual_list
     individuals_info['generation'] = generation

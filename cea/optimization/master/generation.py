@@ -95,11 +95,11 @@ def individual_to_barcode(individual_dict: IndividualDict,
 def calc_building_connectivity_dict(individual_dict: IndividualDict,
                                     blueprint: IndividualBlueprint) -> Dict[str, List[str]]:
     if blueprint.district_heating_network:
-        data_heating_connections = [str(individual_dict[building] for building in blueprint.buildings)]
+        data_heating_connections = [str(individual_dict[building]) for building in blueprint.buildings]
         data_cooling_connections = ["0" for _ in blueprint.buildings]
     else:
-        data_cooling_connections = [str(individual_dict[building] for building in blueprint.buildings)]
         data_heating_connections = ["0" for _ in blueprint.buildings]
+        data_cooling_connections = [str(individual_dict[building]) for building in blueprint.buildings]
 
     building_connectivity_dict = {
         "Name": blueprint.buildings,
