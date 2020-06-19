@@ -24,7 +24,8 @@ __status__ = "Production"
 
 
 def main(config):
-    workflow_yml = os.path.join(os.path.dirname(__file__), "workflow_{workflow}.yml".format(workflow=config.test.workflow))
+    workflow_yml = os.path.join(os.path.dirname(__file__),
+                                "workflow_{workflow}.yml".format(workflow=config.test.workflow))
 
     default_config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
     default_config.project = os.path.expandvars("${TEMP}/reference-case-open")

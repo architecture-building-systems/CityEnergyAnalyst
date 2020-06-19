@@ -68,5 +68,5 @@ def mutation_main(individual: IndividualList,
     individual_dict = validation_main(individual_dict, blueprint)
 
     # now pass all the values mutated to the original individual
-    individual = individual_dict.to_individual_list(blueprint)
+    individual = individual_dict.to_individual_list(blueprint, individual)
     return (individual,)  # add the, because deap needs this (deap requires a tuple result)

@@ -92,6 +92,6 @@ def crossover_main(ind1: IndividualList,
 
     # now pass all the values mutated to the original individual
     # NOTE: ind1 is actually of type "toolbox.Individual" (or similar) and not strictly an IndividualList...
-    ind1[:] = ind1_with_name_dict.to_individual_list(blueprint)
-    ind2[:] = ind2_with_name_dict.to_individual_list(blueprint)
+    ind1 = ind1_with_name_dict.to_individual_list(blueprint, ind1)
+    ind2 = ind2_with_name_dict.to_individual_list(blueprint, ind2)
     return ind1, ind2

@@ -40,8 +40,15 @@ class IndividualDict(Dict[str, Union[float, int]]):
                              blueprint: IndividualBlueprint) -> "IndividualDict":
         return IndividualDict(zip(blueprint.column_names, individual))
 
-    def to_individual_list(self, blueprint: IndividualBlueprint) -> IndividualList:
-        return IndividualList([self[gene] for gene in blueprint.column_names])
+    def to_individual_list(self, blueprint: IndividualBlueprint, individual: List) -> IndividualList:
+        """
+        Implementation Note: individual is sometimes not just an IndividualList - it can also be a deap
+        object - so we don't return a _new_ list, instead, we replace the _contents_ of the individual
+        parameter. If you don't have such an individual, just pass in an empty list (e.g. when generating the first
+        individuals).
+        """
+        individual[:] = [self[gene] for gene in blueprint.column_names]
+        return IndividualList(individual)
 
 
 def create_empty_individual(blueprint: IndividualBlueprint,

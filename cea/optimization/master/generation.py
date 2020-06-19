@@ -56,7 +56,7 @@ def generate_main(individual_dict: IndividualDict,
     populated_individual_dict = validation_main(populated_individual_dict, blueprint)
 
     # CONVERT BACK INTO AN INDIVIDUAL STRING IMPORTANT TO USE column_names to keep the order
-    return populated_individual_dict.to_individual_list(blueprint)
+    return populated_individual_dict.to_individual_list(blueprint, [])
 
 
 def populate_individual(empty_individual_with_names_dict: IndividualDict,
