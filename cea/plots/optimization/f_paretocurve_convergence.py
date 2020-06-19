@@ -38,7 +38,7 @@ class OptimizationPerformance(cea.plots.optimization.GenerationPlotBase):
     def calc_convergence_metrics(self):
         with open(self.locator.get_optimization_checkpoint(self.generation), 'rb') as f:
             data_checkpoint = json.load(f)
-        convergence_metrics = {'generation': range(1, int(self.generation) + 1),
+        convergence_metrics = {'generation': list(range(1, int(self.generation) + 1)),
                                'Generational Distance': data_checkpoint['generational_distances'],
                                'Delta of Generational Distance': data_checkpoint['difference_generational_distances']}
         return convergence_metrics
@@ -62,24 +62,24 @@ class OptimizationPerformance(cea.plots.optimization.GenerationPlotBase):
             self.category_name)
 
     def calc_graph(self):
-        data = self.calc_convergence_metrics()
+        convergence_metrics = self.calc_convergence_metrics()
         traces = []
         for field in self.analysis_fieldsy:
-            x = data['generation']
-            y = data[field]
+            x = convergence_metrics['generation']
+            y = convergence_metrics[field]
             trace = go.Scattergl(x=x, y=y, name=field)
             traces.append(trace)
 
-        total_distance = sum(data['Delta of Generational Distance'])
+        total_distance = sum(convergence_metrics['Delta of Generational Distance'])
         y_cumulative = []
-        for i in range(len(data['generation'])):
+        for i in range(len(convergence_metrics['generation'])):
             if i == 0:
-                y_acum =  data['Delta of Generational Distance'][i]/total_distance *100
+                y_acum =  convergence_metrics['Delta of Generational Distance'][i]/total_distance *100
             else:
-                y_acum += data['Delta of Generational Distance'][i]/total_distance *100
+                y_acum += convergence_metrics['Delta of Generational Distance'][i]/total_distance *100
             y_cumulative.append(y_acum)
 
-        x = data['generation']
+        x = convergence_metrics['generation']
         trace = go.Scattergl(x=x, y=y_cumulative, yaxis='y2', name='Cumulative Generational Distance')
         traces.append(trace)
 
