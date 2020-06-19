@@ -333,7 +333,7 @@ class ThermalNetworksMapPlotBase(ThermalNetworksPlotBase):
         edges = self.edges_df.to_json(show_bbox=True)
         nodes = self.nodes_df.to_json(show_bbox=True)
 
-        hash = hashlib.md5(str(random.random()) + edges + nodes).hexdigest()
+        hash = hashlib.md5((str(random.random()) + edges + nodes).encode("utf-8")).hexdigest()
         template = os.path.join(os.path.dirname(__file__), "network_plot.html")
         div = Template(open(template).read()).render(hash=hash, edges=edges, nodes=nodes,
                                                      zone=zone, district=district)

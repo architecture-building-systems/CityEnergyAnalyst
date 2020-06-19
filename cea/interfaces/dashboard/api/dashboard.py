@@ -28,7 +28,7 @@ def dashboard_to_dict(dashboard):
     out = dashboard.to_dict()
     for i, plot in enumerate(out['plots']):
         if plot['plot'] != 'empty':
-            plot['hash'] = hashlib.md5(repr(sorted(plot.items()))).hexdigest()
+            plot['hash'] = hashlib.md5(repr(sorted(plot.items())).encode("utf-8")).hexdigest()
             plot['title'] = dashboard.plots[i].title
     return out
 
