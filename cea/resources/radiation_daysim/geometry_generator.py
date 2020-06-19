@@ -187,7 +187,7 @@ class BuildingData(object):
 
 def process_geometries(geometry, height_map, x_coords, y_coords, range_floors, floor_to_floor_height):
     _raster, _x, _y = extract_raster(geometry, height_map, x_coords, y_coords)
-    _, terrain_geometry = raster_to_tin(_raster, _x, _y)
+    terrain_geometry = raster_to_tin(_raster, _x, _y)
     terrain_intersection_curves = calc_terrain_intersection_curves(terrain_geometry)
     # burn buildings footprint into the terrain and return the location of the new face
     face_footprint = burn_buildings(geometry, terrain_intersection_curves)
@@ -549,13 +549,11 @@ def raster_to_tin(raster_np, x_coords, y_coords):
     _x_coords = x_coords[x_index]
     _y_coords = y_coords[y_index]
 
-    elevation_mean = int(raster_np[y_index, x_index].mean())
-
     raster_points = [(x, y, z) for x, y, z in zip(_x_coords, _y_coords, raster_np[y_index, x_index])]
 
     tin_occface_list = construct.delaunay3d(raster_points)
 
-    return elevation_mean, tin_occface_list
+    return tin_occface_list
 
 
 def standardize_coordinate_systems(locator):
@@ -579,13 +577,13 @@ def geometry_main(locator, config):
     # list of faces of terrain
     print("Reading terrain geometry")
     height_map, x_coords, y_coords = raster_to_numpy(terrain_raster)
-    elevation_mean, geometry_terrain = raster_to_tin(height_map, x_coords, y_coords)
+    geometry_terrain = raster_to_tin(height_map, x_coords, y_coords)
     # transform buildings 2D to 3D and add windows
     print("Creating 3D building surfaces")
     geometry_3D_zone, geometry_3D_surroundings = building_2d_to_3d(locator, zone_df, surroundings_df, terrain_raster, config,
                                                                height_col='height_ag', nfloor_col="floors_ag")
 
-    return elevation_mean, geometry_terrain, geometry_3D_zone, geometry_3D_surroundings
+    return geometry_terrain, geometry_3D_zone, geometry_3D_surroundings
 
 
 if __name__ == '__main__':
@@ -595,7 +593,7 @@ if __name__ == '__main__':
 
     # run routine City GML LOD 1
     time1 = time.time()
-    elevation_mean, geometry_terrain, geometry_3D_zone, geometry_3D_surroundings = geometry_main(locator, config)
+    geometry_terrain, geometry_3D_zone, geometry_3D_surroundings = geometry_main(locator, config)
 
 
     # to visualize the results
