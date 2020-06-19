@@ -26,7 +26,7 @@ from cea.optimization.master.generation import generate_main, calc_building_conn
 from cea.optimization.master.generation import individual_to_barcode
 from cea.optimization.master.mutations import mutation_main
 from cea.optimization.master.normalization import scaler_for_normalization, normalize_fitnesses
-from optimization.master.individual import IndividualList, IndividualBlueprint, IndividualDict, create_empty_individual, \
+from cea.optimization.master.individual import IndividualList, IndividualBlueprint, IndividualDict, create_empty_individual, \
     create_individual_blueprint
 from optimization.preprocessing.preprocessing_main import PreprocessingResult
 
@@ -235,22 +235,22 @@ def non_dominated_sorting_genetic_algorithm(config, locator, building_names_all,
 
     # Evaluate the individuals with an invalid fitness
     invalid_individuals = [ind for ind in pop if not ind.fitness.valid]
-    i_count = len(invalid_individuals)
+    n_times = len(invalid_individuals)
     fitnesses = toolbox.map(toolbox.evaluate, zip(invalid_individuals,  # individual
-                                                  range(i_count),  # individual_number
-                                                  repeat(0, i_count),  # generation_number
-                                                  repeat(blueprint, i_count),
-                                                  repeat(building_names_all, i_count),  # building_names_all
-                                                  repeat(building_names_heating, i_count),
-                                                  repeat(building_names_cooling, i_count),
-                                                  repeat(building_names_electricity, i_count),
-                                                  repeat(locator, i_count),
-                                                  repeat(preprocessing_result, i_count),
-                                                  repeat(config, i_count),
-                                                  repeat(district_heating_network, i_count),
-                                                  repeat(district_cooling_network, i_count),
-                                                  repeat(technologies_heating_allowed, i_count),
-                                                  repeat(technologies_cooling_allowed, i_count)))
+                                                  range(n_times),  # individual_number
+                                                  repeat(0, n_times),  # generation_number
+                                                  repeat(blueprint, n_times),
+                                                  repeat(building_names_all, n_times),  # building_names_all
+                                                  repeat(building_names_heating, n_times),
+                                                  repeat(building_names_cooling, n_times),
+                                                  repeat(building_names_electricity, n_times),
+                                                  repeat(locator, n_times),
+                                                  repeat(preprocessing_result, n_times),
+                                                  repeat(config, n_times),
+                                                  repeat(district_heating_network, n_times),
+                                                  repeat(district_cooling_network, n_times),
+                                                  repeat(technologies_heating_allowed, n_times),
+                                                  repeat(technologies_cooling_allowed, n_times)))
     fitnesses = list(fitnesses)
     # normalization of the first generation
     scaler_dict = scaler_for_normalization(NOBJ, fitnesses)
@@ -266,7 +266,7 @@ def non_dominated_sorting_genetic_algorithm(config, locator, building_names_all,
     performance_metrics = calc_performance_metrics(0.0, pareto_frontier)
     generational_distances.append(performance_metrics[0])
     difference_generational_distances.append(performance_metrics[1])
-    logbook.record(gen=0, evals=i_count, **record)
+    logbook.record(gen=0, evals=n_times, **record)
 
     # create a dictionary to store which individuals that are being calculated
     record_individuals_tested = {'generation': [], "individual_id": [], "individual_code": []}
@@ -284,23 +284,23 @@ def non_dominated_sorting_genetic_algorithm(config, locator, building_names_all,
         # Evaluate the individuals with an invalid fitness
         invalid_individuals = [ind for ind in offspring if not ind.fitness.valid]
         invalid_individuals = [ind for ind in invalid_individuals if ind not in pop]
-        i_count = len(invalid_individuals)
+        n_times = len(invalid_individuals)
         fitnesses = toolbox.map(toolbox.evaluate,
                                 zip(invalid_individuals,
-                                    range(i_count),  # individual_number
-                                    repeat(gen, i_count),  # generation_number
-                                    repeat(blueprint, i_count),
-                                    repeat(building_names_all, i_count),
-                                    repeat(building_names_heating, i_count),
-                                    repeat(building_names_cooling, i_count),
-                                    repeat(building_names_electricity, i_count),
-                                    repeat(locator, i_count),
-                                    repeat(preprocessing_result, i_count),
-                                    repeat(config, i_count),
-                                    repeat(district_heating_network, i_count),
-                                    repeat(district_cooling_network, i_count),
-                                    repeat(technologies_heating_allowed, i_count),
-                                    repeat(technologies_cooling_allowed, i_count)))
+                                    range(n_times),  # individual_number
+                                    repeat(gen, n_times),  # generation_number
+                                    repeat(blueprint, n_times),
+                                    repeat(building_names_all, n_times),
+                                    repeat(building_names_heating, n_times),
+                                    repeat(building_names_cooling, n_times),
+                                    repeat(building_names_electricity, n_times),
+                                    repeat(locator, n_times),
+                                    repeat(preprocessing_result, n_times),
+                                    repeat(config, n_times),
+                                    repeat(district_heating_network, n_times),
+                                    repeat(district_cooling_network, n_times),
+                                    repeat(technologies_heating_allowed, n_times),
+                                    repeat(technologies_cooling_allowed, n_times)))
         # normalization of the second generation on
         fitnesses = normalize_fitnesses(scaler_dict, fitnesses)
 
@@ -320,7 +320,7 @@ def non_dominated_sorting_genetic_algorithm(config, locator, building_names_all,
         performance_metrics = calc_performance_metrics(generational_distances[-1], pareto_frontier)
         generational_distances.append(performance_metrics[0])
         difference_generational_distances.append(performance_metrics[1])
-        logbook.record(gen=gen, evals=i_count, **record)
+        logbook.record(gen=gen, evals=n_times, **record)
         print(logbook.stream)
 
         DHN_network_list_tested = []
@@ -346,29 +346,23 @@ def non_dominated_sorting_genetic_algorithm(config, locator, building_names_all,
         if gen == NGEN and not config.debug:  # final generation re-evaluate paretofront
             print("Saving results for generation", gen, "\n")
             valid_generation = [gen]
-            column_names_buildings_heating = blueprint.buildings if district_heating_network else []
-            column_names_buildings_cooling = blueprint.buildings if district_cooling_network else []
-            systems_name_list = save_final_generation_pareto_individuals(toolbox,
-                                                     locator,
-                                                     gen,
-                                                     record_individuals_tested,
-                                                     pareto_frontier,
-                                                     building_names_all,
-                                                     column_names_buildings_heating,
-                                                     column_names_buildings_cooling,
-                                                     building_names_heating,
-                                                     building_names_cooling,
-                                                     building_names_electricity,
-                                                     preprocessing_result.network_features,
-                                                     preprocessing_result.weather_features,
-                                                     config,
-                                                     preprocessing_result.prices,
-                                                     preprocessing_result.lca,
-                                                     district_heating_network,
-                                                     district_cooling_network,
-                                                     technologies_heating_allowed,
-                                                     technologies_cooling_allowed,
-                                                     blueprint.column_names)
+            systems_name_list = save_final_generation_pareto_individuals(
+                toolbox,
+                locator,
+                gen,
+                record_individuals_tested,
+                pareto_frontier,
+                blueprint,
+                preprocessing_result,
+                building_names_all,
+                building_names_heating,
+                building_names_cooling,
+                building_names_electricity,
+                config,
+                district_heating_network,
+                district_cooling_network,
+                technologies_heating_allowed,
+                technologies_cooling_allowed)
 
         # Create Checkpoint if necessary
         print("Creating CheckPoint", gen, "\n")
@@ -389,65 +383,55 @@ def non_dominated_sorting_genetic_algorithm(config, locator, building_names_all,
 
 
 def save_final_generation_pareto_individuals(toolbox,
-                                             locator,
+                                             locator: cea.inputlocator.InputLocator,
                                              generation,
                                              record_individuals_tested,
-                                             paretofrontier,
+                                             pareto_frontier,
+                                             blueprint: IndividualBlueprint,
+                                             preprocessing_result: PreprocessingResult,
                                              building_names_all,
-                                             column_names_buildings_heating,
-                                             column_names_buildings_cooling,
                                              building_names_heating,
                                              building_names_cooling,
                                              building_names_electricity,
-                                             network_features,
-                                             weather_features,
-                                             config,
-                                             prices,
-                                             lca,
+                                             config: cea.config.Configuration,
                                              district_heating_network,
                                              district_cooling_network,
                                              technologies_heating_allowed,
-                                             technologies_cooling_allowed,
-                                             column_names):
-    #local variables
+                                             technologies_cooling_allowed):
     performance_totals_pareto = pd.DataFrame()
     individual_number_list = []
     generation_number_list = []
-    individual_in_pareto_list = []
+    individuals_in_pareto_list = []
     for i, record in enumerate(record_individuals_tested['individual_code']):
-        if record in paretofrontier:
+        if record in pareto_frontier:
             individual_number = record_individuals_tested['individual_id'][i]
             generation_number = record_individuals_tested['generation'][i]
             individual = record_individuals_tested['individual_code'][i]
             individual_number_list.append(individual_number)
             generation_number_list.append(generation_number)
-            individual_in_pareto_list.append(individual)
+            individuals_in_pareto_list.append(individual)
 
-    save_generation_individuals(column_names, generation, individual_in_pareto_list, locator)
+    save_generation_individuals(blueprint.column_names, generation, individuals_in_pareto_list, locator)
 
-    #evaluate once again and print results for the pareto curve
+    # evaluate once again and print results for the pareto curve
     print_final_results = True
-    toolbox.map(toolbox.evaluate, zip(individual_in_pareto_list,
+    n_times = len(individuals_in_pareto_list)
+    toolbox.map(toolbox.evaluate, zip(individuals_in_pareto_list,
                                       individual_number_list,
                                       generation_number_list,
-                                      repeat(building_names_all, len(individual_in_pareto_list)),
-                                      repeat(column_names_buildings_heating, len(individual_in_pareto_list)),
-                                      repeat(column_names_buildings_cooling, len(individual_in_pareto_list)),
-                                      repeat(building_names_heating, len(individual_in_pareto_list)),
-                                      repeat(building_names_cooling, len(individual_in_pareto_list)),
-                                      repeat(building_names_electricity, len(individual_in_pareto_list)),
-                                      repeat(locator, len(individual_in_pareto_list)),
-                                      repeat(network_features, len(individual_in_pareto_list)),
-                                      repeat(weather_features, len(individual_in_pareto_list)),
-                                      repeat(config, len(individual_in_pareto_list)),
-                                      repeat(prices, len(individual_in_pareto_list)),
-                                      repeat(lca, len(individual_in_pareto_list)),
-                                      repeat(district_heating_network, len(individual_in_pareto_list)),
-                                      repeat(district_cooling_network, len(individual_in_pareto_list)),
-                                      repeat(technologies_heating_allowed, len(individual_in_pareto_list)),
-                                      repeat(technologies_cooling_allowed, len(individual_in_pareto_list)),
-                                      repeat(column_names, len(individual_in_pareto_list)),
-                                      repeat(print_final_results, len(individual_in_pareto_list))))
+                                      repeat(blueprint, n_times),
+                                      repeat(building_names_all, n_times),
+                                      repeat(building_names_heating, n_times),
+                                      repeat(building_names_cooling, n_times),
+                                      repeat(building_names_electricity, n_times),
+                                      repeat(locator, n_times),
+                                      repeat(preprocessing_result, n_times),
+                                      repeat(config, n_times),
+                                      repeat(district_heating_network, n_times),
+                                      repeat(district_cooling_network, n_times),
+                                      repeat(technologies_heating_allowed, n_times),
+                                      repeat(technologies_cooling_allowed, n_times),
+                                      repeat(print_final_results, n_times)))
 
     for individual_number, generation_number in zip(individual_number_list, generation_number_list):
         performance_totals_pareto = pd.concat([performance_totals_pareto,

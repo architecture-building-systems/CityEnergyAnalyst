@@ -15,7 +15,7 @@ from cea.optimization.master.performance_aggregation import summarize_results_in
 from cea.optimization.slave import cooling_main
 from cea.optimization.slave import electricity_main
 from cea.optimization.slave import heating_main
-from optimization.master.individual import IndividualList, IndividualBlueprint, IndividualDict
+from cea.optimization.master.individual import IndividualList, IndividualBlueprint, IndividualDict
 from optimization.preprocessing.preprocessing_main import PreprocessingResult
 from typing import List
 
