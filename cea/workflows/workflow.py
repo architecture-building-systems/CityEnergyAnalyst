@@ -162,7 +162,8 @@ def do_script_step(config, i, step, trace_input):
     print("=" * 80)
     print("Workflow step {i}: script={script}".format(i=i, script=script.name))
     print("=" * 80)
-    parameters = {p.name: p.get() for s, p in config.matching_parameters(script.parameters)}
+    with config.ignore_restrictions():
+        parameters = {p.name: p.get() for s, p in config.matching_parameters(script.parameters)}
     if "parameters" in step:
         parameters.update(step["parameters"])
     py_script = script.name.replace("-", "_")
