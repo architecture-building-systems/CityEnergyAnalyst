@@ -508,18 +508,18 @@ def calc_intersection_face_solid(index, data_processed):
     return intersects
 
 
-def extract_raster(geometry, height_map, x_coords, y_coords):
+def extract_raster(geometry, height_map, x_coords, y_coords, extra_points=5):
     minx, miny, maxx, maxy = geometry.bounds
 
-    x_start = np.where(minx > x_coords)
-    x_end = np.where(maxx < x_coords)
-    y_start = np.where(maxy < y_coords)
-    y_end = np.where(miny > y_coords)
+    x_start = np.where(minx > x_coords)[0]
+    x_end = np.where(maxx < x_coords)[0]
+    y_start = np.where(maxy < y_coords)[0]
+    y_end = np.where(miny > y_coords)[0]
 
-    x_start = x_start[0][-1]
-    x_end = x_end[0][0]
-    y_start = y_start[0][-1]
-    y_end = y_end[0][0]
+    x_start = max(x_start[-1] - extra_points, 0)
+    x_end = min(x_end[0] + extra_points, len(x_coords))
+    y_start = max(y_start[-1] - extra_points, 0)
+    y_end = min(y_end[0] + extra_points, len(y_coords))
 
     new_height_map = height_map[y_start:y_end+1, x_start:x_end+1]
     new_x_coords = x_coords[x_start:x_end+1]
