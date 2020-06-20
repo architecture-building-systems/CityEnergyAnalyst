@@ -128,57 +128,21 @@ class BuildingDataFinale(object):
         self.all_building_solid_list = all_building_solid_list
 
 
-class BuildingData(object):
-    def __init__(self, locator, settings, zone_df, surroundings_buildings_df, elevation_map, height_col, nfloor_col, num_processes):
-        self.num_processes = num_processes
-        self.point_to_evaluate = ''
-        self.potentially_intersecting_solids = ''
-        self.locator = locator
-        self.height_col = height_col
-        self.nfloor_col = nfloor_col
-        self.settings = settings
-        self.elevation_map = elevation_map
+def calc_building_solids(buildings_df, geometry_simplification, height_col_name, nfloor_col_name, elevation_map, num_processes):
+    # simplify geometry for buildings of interest
+    geometries = buildings_df.geometry.map(
+        lambda geometry: geometry.simplify(geometry_simplification, preserve_topology=True))
 
-        self.architecture_wwr_df = gdf.from_file(self.locator.get_building_architecture()).set_index('Name')
+    height = buildings_df[height_col_name].astype(float)
+    nfloors = buildings_df[nfloor_col_name].astype(int)
+    range_floors = nfloors.map(lambda floors: range(floors + 1))
+    floor_to_floor_height = height / nfloors
 
-        self.zone_buildings_df = zone_df.set_index('Name')
-        self.zone_building_names = self.zone_buildings_df.index.values
-        self.zone_building_solid_list = self.calc_zone_building_solids()
-
-        self.surroundings_buildings_df = self.surroundings_building_records(surroundings_buildings_df).set_index('Name')
-        self.surroundings_building_names = self.surroundings_buildings_df.index.values
-        self.surroundings_building_solid_list = self.calc_surrounding_building_solids()
-
-    def surroundings_building_records(self, surroundings_buildings_df):
-        # clear in case there are repetitive buildings in the zone file
-        surroundings_buildings_df = surroundings_buildings_df.loc[
-            ~surroundings_buildings_df["Name"].isin(self.zone_building_names)]
-        surroundings_buildings_df.reset_index(inplace=True, drop=True)
-
-        return surroundings_buildings_df
-
-    def calc_zone_building_solids(self):
-        return self._calc_building_solids(self.zone_buildings_df, self.settings.zone_geometry)
-
-    def calc_surrounding_building_solids(self):
-        return self._calc_building_solids(self.surroundings_buildings_df, self.settings.surrounding_geometry)
-
-    def _calc_building_solids(self, buildings_df, geometry_simplification):
-        # simplify geometry  for buildings of interest
-        geometries = buildings_df.geometry.map(
-            lambda geometry: geometry.simplify(geometry_simplification, preserve_topology=True))
-
-        height = buildings_df[self.height_col].astype(float)
-        nfloors = buildings_df[self.nfloor_col].astype(int)
-        range_floors = nfloors.map(lambda floors: range(floors + 1))
-        floor_to_floor_height = height / nfloors
-
-        n = len(geometries)
-        out = cea.utilities.parallel.vectorize(process_geometries, self.num_processes,
-                                               on_complete=print_terrain_intersection_progress)(
-            geometries, repeat(self.elevation_map, n), range_floors, floor_to_floor_height)
-
-        return out
+    n = len(geometries)
+    out = cea.utilities.parallel.vectorize(process_geometries, num_processes,
+                                           on_complete=print_terrain_intersection_progress)(
+        geometries, repeat(elevation_map, n), range_floors, floor_to_floor_height)
+    return out
 
 
 def process_geometries(geometry, elevation_map, range_floors, floor_to_floor_height):
@@ -208,7 +172,7 @@ def calc_building_geometry_surroundings(name, building_solid):
     return geometry_3D_surroundings
 
 
-def building_2d_to_3d(locator, zone_df, surroundings_df, terrain_raster, config, height_col, nfloor_col):
+def building_2d_to_3d(locator, zone_df, surroundings_df, elevation_map, config, height_col, nfloor_col):
     """
     :param locator: InputLocator - provides paths to files in a scenario
     :type locator: cea.inputlocator.InputLocator
@@ -219,29 +183,38 @@ def building_2d_to_3d(locator, zone_df, surroundings_df, terrain_raster, config,
     :return:
     """
 
-    # settings: parameters that configure the level of simplification of geometry
-    settings = config.radiation
+    num_processes = config.get_number_of_processes()
 
-    # preprocess data
-    data_preprocessed = BuildingData(locator, settings, zone_df, surroundings_df, terrain_raster, height_col, nfloor_col, config.get_number_of_processes())
-    surrounding_building_names = data_preprocessed.surroundings_building_names
-    surroundings_building_solid_list = data_preprocessed.surroundings_building_solid_list
-    architecture_wwr_df = data_preprocessed.architecture_wwr_df
-    zone_building_names = data_preprocessed.zone_building_names
-    zone_building_solid_list = data_preprocessed.zone_building_solid_list
+    zone_buildings_df = zone_df.set_index('Name')
+    zone_building_names = zone_buildings_df.index.values
+    zone_simplification = config.radiation.zone_geometry
+    zone_building_solid_list = calc_building_solids(zone_buildings_df, zone_simplification, height_col, nfloor_col,
+                                                    elevation_map, num_processes)
+
+    # clear in case there are repetitive buildings in the zone file
+    filter_zone_buildings = ~surroundings_df["Name"].isin(zone_building_names)
+    surroundings_buildings_df = surroundings_df[filter_zone_buildings].set_index('Name')
+    surroundings_building_names = surroundings_buildings_df.index.values
+    surroundings_simplification = config.radiation.surrounding_geometry
+    surroundings_building_solid_list = calc_building_solids(surroundings_buildings_df, surroundings_simplification,
+                                                            height_col, nfloor_col, elevation_map, num_processes)
+
+    architecture_wwr_df = gdf.from_file(locator.get_building_architecture()).set_index('Name')
     consider_intersections = config.radiation.consider_intersections
     all_building_solid_list = np.append(zone_building_solid_list, surroundings_building_solid_list)
 
     # calculate geometry for the surroundings
     print('Generating geometry for surrounding buildings')
-    data_preprocessed = BuildingDataFinale(surroundings_building_solid_list, all_building_solid_list, architecture_wwr_df)
-    geometry_3D_surroundings = [calc_building_geometry_surroundings(x,y) for x,y in zip(surrounding_building_names, surroundings_building_solid_list)]
+    data_preprocessed = BuildingDataFinale(surroundings_building_solid_list, all_building_solid_list,
+                                           architecture_wwr_df)
+    geometry_3D_surroundings = [calc_building_geometry_surroundings(x, y) for x, y in
+                                zip(surroundings_building_names, surroundings_building_solid_list)]
 
     # calculate geometry for the zone of analysis
     print('Generating geometry for buildings in the zone of analysis')
     n = len(zone_building_names)
     calc_zone_geometry_multiprocessing = cea.utilities.parallel.vectorize(calc_building_geometry_zone,
-                                                                          config.get_number_of_processes(),
+                                                                          num_processes,
                                                                           on_complete=print_progress)
 
     geometry_3D_zone = calc_zone_geometry_multiprocessing(zone_building_names,
