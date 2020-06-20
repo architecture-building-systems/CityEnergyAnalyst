@@ -53,7 +53,7 @@ def generate_sensor_surfaces(occface, wall_dim, roof_dim, srf_type, orientation,
     return sensor_dir, sensor_cord, sensor_type, sensor_area, sensor_orientation, sensor_intersection
 
 
-def calc_sensors_building(building_geometry_dict, settings, ):
+def calc_sensors_building(building_geometry, settings, ):
     sensor_dir_list = []
     sensor_cord_list = []
     sensor_type_list = []
@@ -64,19 +64,19 @@ def calc_sensors_building(building_geometry_dict, settings, ):
     sensor_vertical_grid_dim = settings.walls_grid
     sensor_horizontal_grid_dim = settings.roof_grid
     for srf_type in surfaces_types:
-        occface_list = building_geometry_dict[srf_type]
+        occface_list = getattr(building_geometry, srf_type)
         if srf_type == 'roofs':
             orientation_list = ['top'] * len(occface_list)
             normals_list = [(0.0, 0.0, 1.0)] * len(occface_list)
             interesection_list = [0] * len(occface_list)
         elif srf_type == 'windows':
-            orientation_list = building_geometry_dict["orientation_" + srf_type]
-            normals_list = building_geometry_dict["normals_" + srf_type]
+            orientation_list = getattr(building_geometry, "orientation_{srf_type}".format(srf_type=srf_type))
+            normals_list = getattr(building_geometry, "normals_{srf_type}".format(srf_type=srf_type))
             interesection_list = [0] * len(occface_list)
         else:
-            orientation_list = building_geometry_dict["orientation_" + srf_type]
-            normals_list = building_geometry_dict["normals_" + srf_type]
-            interesection_list = building_geometry_dict["intersect_" + srf_type]
+            orientation_list = getattr(building_geometry, "orientation_{srf_type}".format(srf_type=srf_type))
+            normals_list = getattr(building_geometry, "normals_{srf_type}".format(srf_type=srf_type))
+            interesection_list = getattr(building_geometry, "intersect_{srf_type}".format(srf_type=srf_type))
         for orientation, normal, face, intersection in zip(orientation_list, normals_list, occface_list,
                                                            interesection_list):
             sensor_dir, \
@@ -101,16 +101,16 @@ def calc_sensors_building(building_geometry_dict, settings, ):
     return sensor_dir_list, sensor_cord_list, sensor_type_list, sensor_area_list, sensor_orientation_list, sensor_intersection_list
 
 
-def calc_sensors_zone(geometry_3D_zone, locator, settings):
+def calc_sensors_zone(building_geometries, locator, settings):
     sensors_coords_zone = []
     sensors_dir_zone = []
     sensors_total_number_list = []
     names_zone = []
     sensors_code_zone = []
     sensor_intersection_zone = []
-    for building_geometry in geometry_3D_zone:
+    for building_geometry in building_geometries:
         # building name
-        building_name = building_geometry["name"]
+        building_name = building_geometry.name
         # get sensors in the building
         sensors_dir_building, \
         sensors_coords_building, \
@@ -155,7 +155,7 @@ def calc_sensors_zone(geometry_3D_zone, locator, settings):
     return sensors_coords_zone, sensors_dir_zone, sensors_total_number_list, names_zone, sensors_code_zone, sensor_intersection_zone
 
 
-def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, settings, max_global, weatherfile):
+def isolation_daysim(chunk_n, rad, building_geometries, locator, settings, max_global, weatherfile):
     # folder for data work
     daysim_dir = locator.get_temporary_file("temp" + str(chunk_n))
     print('isolation_daysim: daysim_dir={daysim_dir}'.format(daysim_dir=daysim_dir))
@@ -182,7 +182,7 @@ def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, settings, max_glob
     sensors_number_zone, \
     names_zone, \
     sensors_code_zone, \
-    sensor_intersection_zone = calc_sensors_zone(geometry_3D_zone, locator, settings)
+    sensor_intersection_zone = calc_sensors_zone(building_geometries, locator, settings)
     rad.set_sensor_points(sensors_coords_zone, sensors_dir_zone)
     create_sensor_input_file(rad, chunk_n)
     print("\tisolation_daysim: rad.sensor_file_path: {}".format(rad.sensor_file_path))
