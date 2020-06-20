@@ -122,7 +122,6 @@ class BuildingDataFinale(object):
     def __init__(self, surroundings_building_solid_list, all_building_solid_list, architecture_wwr_df):
         self.point_to_evaluate = ''
         self.potentially_intersecting_solids = ''
-        self.point_to_evaluate = ''
         self.surroundings_building_solid_list = surroundings_building_solid_list
         self.architecture_wwr_df = architecture_wwr_df
         self.all_building_solid_list = all_building_solid_list
@@ -183,11 +182,14 @@ def building_2d_to_3d(locator, zone_df, surroundings_df, elevation_map, config, 
     :return:
     """
 
+    # Config variables
     num_processes = config.get_number_of_processes()
+    zone_simplification = config.radiation.zone_geometry
+    surroundings_simplification = config.radiation.surrounding_geometry
+
 
     zone_buildings_df = zone_df.set_index('Name')
     zone_building_names = zone_buildings_df.index.values
-    zone_simplification = config.radiation.zone_geometry
     zone_building_solid_list = calc_building_solids(zone_buildings_df, zone_simplification, height_col, nfloor_col,
                                                     elevation_map, num_processes)
 
@@ -195,7 +197,6 @@ def building_2d_to_3d(locator, zone_df, surroundings_df, elevation_map, config, 
     filter_zone_buildings = ~surroundings_df["Name"].isin(zone_building_names)
     surroundings_buildings_df = surroundings_df[filter_zone_buildings].set_index('Name')
     surroundings_building_names = surroundings_buildings_df.index.values
-    surroundings_simplification = config.radiation.surrounding_geometry
     surroundings_building_solid_list = calc_building_solids(surroundings_buildings_df, surroundings_simplification,
                                                             height_col, nfloor_col, elevation_map, num_processes)
 
@@ -544,9 +545,28 @@ def standardize_coordinate_systems(locator):
     return zone_df, surroundings_df, terrain_raster
 
 
+def check_terrain_bounds(zone_df, surroundings_df, terrain_raster):
+    # minx, miny, maxx, maxy
+    zone_bounds = zone_df.geometry.total_bounds
+    surroundings_bounds = surroundings_df.geometry.total_bounds
+    geometry_bounds = (min(zone_bounds[0], surroundings_bounds[0]), min(zone_bounds[1], surroundings_bounds[1]),
+                       max(zone_bounds[2], surroundings_bounds[2]), max(zone_bounds[3], surroundings_bounds[3]))
+
+    (upper_left_x, x_size, x_rotation, upper_left_y, y_rotation, y_size) = terrain_raster.GetGeoTransform()
+    minx = upper_left_x
+    maxy = upper_left_y
+    maxx = minx + x_size * terrain_raster.RasterXSize
+    miny = maxy + y_size * terrain_raster.RasterYSize
+
+    if minx > geometry_bounds[0] or miny > geometry_bounds[1] or maxx < geometry_bounds[2] or maxy < geometry_bounds[3]:
+        raise ValueError('Terrain provided does not cover all building geometries')
+
+
 def geometry_main(locator, config):
     print("Standardizing coordinate systems")
     zone_df, surroundings_df, terrain_raster = standardize_coordinate_systems(locator)
+
+    check_terrain_bounds(zone_df, surroundings_df, terrain_raster)
 
     # Create a triangulated irregular network of terrain from raster
     print("Reading terrain geometry")
