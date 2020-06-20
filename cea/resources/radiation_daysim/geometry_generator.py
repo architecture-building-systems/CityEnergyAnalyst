@@ -168,10 +168,8 @@ def calc_building_geometry_surroundings(name, building_solid):
                                 "orientation_windows": [],
                                 "normals_windows": [],
                                 "normals_walls": [],
-                                "intersect_windows": [],
                                 "intersect_walls": []}
-
-    return geometry_3D_surroundings
+    return BuildingGeometry(**geometry_3D_surroundings)
 
 
 def building_2d_to_3d(locator, zone_df, surroundings_df, elevation_map, config):
@@ -220,8 +218,8 @@ def building_2d_to_3d(locator, zone_df, surroundings_df, elevation_map, config):
 
     geometry_3D_zone = calc_zone_geometry_multiprocessing(zone_building_names,
                                                           zone_building_solid_list,
-                                                          [data_preprocessed for x in range(n)],
-                                                          [consider_intersections for x in range(n)])
+                                                          repeat(data_preprocessed, n),
+                                                          repeat(consider_intersections, n))
     return geometry_3D_zone, geometry_3D_surroundings
 
 
@@ -243,6 +241,17 @@ def are_buildings_close_to_eachother(x_1, y_1, solid2):
     else:
         return False
 
+
+class BuildingGeometry(object):
+    __slots__ = ["name", "windows", "walls", "roofs", "footprint", "orientation_walls", "orientation_windows",
+                 "normals_windows", "normals_walls", "intersect_walls"]
+
+    def __init__(self, **kwargs):
+        for key in self.__slots__:
+            if key in kwargs:
+                setattr(self, key, kwargs[key])
+
+
 def calc_building_geometry_zone(name, building_solid, data_preprocessed, consider_intersections):
     # now get all surfaces and create windows only if the buildings are in the area of study
     window_list = []
@@ -253,7 +262,7 @@ def calc_building_geometry_zone(name, building_solid, data_preprocessed, conside
     normals_win = []
     intersect_wall = []
 
-    #check if buildings are close together and it merits to check the intersection
+    # check if buildings are close together and it merits to check the intersection
     if consider_intersections:
         potentially_intersecting_solids = []
         box =  calculate.get_bounding_box(building_solid)
@@ -336,7 +345,7 @@ def calc_building_geometry_zone(name, building_solid, data_preprocessed, conside
                         "normals_windows": normals_win, "normals_walls": normals_walls,
                         "intersect_walls": intersect_wall}
     print("Building %s done" %name)
-    return geometry_3D_zone
+    return BuildingGeometry(**geometry_3D_zone)
 
 
 def burn_buildings(geometry, elevation_map):

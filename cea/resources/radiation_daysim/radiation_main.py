@@ -110,16 +110,16 @@ def buildings_to_radiance(rad, building_surface_properties, geometry_3D_zone, ge
     # translate buildings into radiance surface
     fcnt = 0
     for bcnt, building_surfaces in enumerate(geometry_3D_zone):
-        building_name = building_surfaces['name']
-        for pypolygon in building_surfaces['windows']:
+        building_name = building_surfaces.name
+        for pypolygon in building_surfaces.windows:
             create_radiance_srf(pypolygon, "win" + str(bcnt) + str(fcnt),
                                 "win" + str(building_surface_properties['type_win'][building_name]), rad)
             fcnt += 1
-        for pypolygon in building_surfaces['walls']:
+        for pypolygon in building_surfaces.walls:
             create_radiance_srf(pypolygon, "wall" + str(bcnt) + str(fcnt),
                                 "wall" + str(building_surface_properties['type_wall'][building_name]), rad)
             fcnt += 1
-        for pypolygon in building_surfaces['roofs']:
+        for pypolygon in building_surfaces.roofs:
             create_radiance_srf(pypolygon, "roof" + str(bcnt) + str(fcnt),
                                 "roof" + str(building_surface_properties['type_roof'][building_name]), rad)
             fcnt += 1
@@ -127,10 +127,10 @@ def buildings_to_radiance(rad, building_surface_properties, geometry_3D_zone, ge
     for building_surfaces in geometry_3D_surroundings:
         ## for the surrounding buildings only, walls and roofs
         id = 0
-        for pypolygon in building_surfaces['walls']:
+        for pypolygon in building_surfaces.walls:
             create_radiance_srf(pypolygon, "surroundingbuildings" + str(id), "reflectance0.2", rad)
             id += 1
-        for pypolygon in building_surfaces['roofs']:
+        for pypolygon in building_surfaces.roofs:
             create_radiance_srf(pypolygon, "surroundingbuildings" + str(id), "reflectance0.2", rad)
             id += 1
 
@@ -178,12 +178,12 @@ def radiation_singleprocessing(rad, geometry_3D_zone, locator, settings):
     else:
         list_of_building_names = settings.buildings
         chunks = []
-        for bldg_dict in geometry_3D_zone:
-            if bldg_dict['name'] in list_of_building_names:
-                chunks.append([bldg_dict])
+        for building_geometry in geometry_3D_zone:
+            if building_geometry.name in list_of_building_names:
+                chunks.append([building_geometry])
 
-    for chunk_n, building_dict in enumerate(chunks):
-        daysim_main.isolation_daysim(chunk_n, rad, building_dict, locator, settings, max_global, weatherfile)
+    for chunk_n, building_geometries in enumerate(chunks):
+        daysim_main.isolation_daysim(chunk_n, rad, building_geometries, locator, settings, max_global, weatherfile)
 
 
 def check_daysim_bin_directory(path_hint):
@@ -481,8 +481,7 @@ def main(config):
     building_surface_properties.to_csv(locator.get_radiation_materials())
     print("creating 3D geometry and surfaces")
     # create geometrical faces of terrain and buildingsL
-    geometry_terrain, geometry_3D_zone, geometry_3D_surroundings = geometry_generator.geometry_main(locator,
-                                                                                                               config)
+    geometry_terrain, geometry_3D_zone, geometry_3D_surroundings = geometry_generator.geometry_main(locator, config)
 
     print("Sending the scene: geometry and materials to daysim")
     # send materials
