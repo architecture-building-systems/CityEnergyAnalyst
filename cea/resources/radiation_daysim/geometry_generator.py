@@ -129,7 +129,7 @@ class BuildingDataFinale(object):
 
 
 class BuildingData(object):
-    def __init__(self, locator, settings, zone_df, surroundings_buildings_df, terrain_raster, height_col, nfloor_col, num_processes):
+    def __init__(self, locator, settings, zone_df, surroundings_buildings_df, elevation_map, height_col, nfloor_col, num_processes):
         self.num_processes = num_processes
         self.point_to_evaluate = ''
         self.potentially_intersecting_solids = ''
@@ -137,8 +137,9 @@ class BuildingData(object):
         self.height_col = height_col
         self.nfloor_col = nfloor_col
         self.settings = settings
+        self.elevation_map = elevation_map
+
         self.architecture_wwr_df = gdf.from_file(self.locator.get_building_architecture()).set_index('Name')
-        self.terrain_raster = terrain_raster
 
         self.zone_buildings_df = zone_df.set_index('Name')
         self.zone_building_names = self.zone_buildings_df.index.values
@@ -147,8 +148,6 @@ class BuildingData(object):
         self.surroundings_buildings_df = self.surroundings_building_records(surroundings_buildings_df).set_index('Name')
         self.surroundings_building_names = self.surroundings_buildings_df.index.values
         self.surroundings_building_solid_list = self.calc_surrounding_building_solids()
-
-        self.all_building_solid_list = np.append(self.zone_building_solid_list, self.surroundings_building_solid_list)
 
     def surroundings_building_records(self, surroundings_buildings_df):
         # clear in case there are repetitive buildings in the zone file
@@ -174,35 +173,22 @@ class BuildingData(object):
         range_floors = nfloors.map(lambda floors: range(floors + 1))
         floor_to_floor_height = height / nfloors
 
-        height_map, x_coords, y_coords = raster_to_numpy(self.terrain_raster)
-
         n = len(geometries)
         out = cea.utilities.parallel.vectorize(process_geometries, self.num_processes,
                                                on_complete=print_terrain_intersection_progress)(
-            geometries, repeat(height_map, n), repeat(x_coords, n), repeat(y_coords, n), range_floors,
-            floor_to_floor_height)
+            geometries, repeat(self.elevation_map, n), range_floors, floor_to_floor_height)
 
         return out
 
 
-def process_geometries(geometry, height_map, x_coords, y_coords, range_floors, floor_to_floor_height):
-    _raster, _x, _y = extract_raster(geometry, height_map, x_coords, y_coords)
-    terrain_geometry = raster_to_tin(_raster, _x, _y)
-    terrain_intersection_curves = calc_terrain_intersection_curves(terrain_geometry)
+def process_geometries(geometry, elevation_map, range_floors, floor_to_floor_height):
+    elevation_map_for_geometry = elevation_map.get_elevation_map_from_geometry(geometry)
     # burn buildings footprint into the terrain and return the location of the new face
-    face_footprint = burn_buildings(geometry, terrain_intersection_curves)
+    face_footprint = burn_buildings(geometry, elevation_map_for_geometry)
     # create floors and form a solid
     building_solid = calc_solid(face_footprint, range_floors, floor_to_floor_height)
 
     return building_solid
-
-
-def calc_terrain_intersection_curves(terrain_geometry):
-    # make shell out of tin_occface_list and create OCC object
-    terrain_shell = construct.make_shell(terrain_geometry)
-    terrain_intersection_curves = IntCurvesFace_ShapeIntersector()
-    terrain_intersection_curves.Load(terrain_shell, 1e-6)
-    return terrain_intersection_curves
 
 
 def calc_building_geometry_surroundings(name, building_solid):
@@ -240,12 +226,11 @@ def building_2d_to_3d(locator, zone_df, surroundings_df, terrain_raster, config,
     data_preprocessed = BuildingData(locator, settings, zone_df, surroundings_df, terrain_raster, height_col, nfloor_col, config.get_number_of_processes())
     surrounding_building_names = data_preprocessed.surroundings_building_names
     surroundings_building_solid_list = data_preprocessed.surroundings_building_solid_list
-    all_building_solid_list = data_preprocessed.all_building_solid_list
     architecture_wwr_df = data_preprocessed.architecture_wwr_df
     zone_building_names = data_preprocessed.zone_building_names
     zone_building_solid_list = data_preprocessed.zone_building_solid_list
     consider_intersections = config.radiation.consider_intersections
-
+    all_building_solid_list = np.append(zone_building_solid_list, surroundings_building_solid_list)
 
     # calculate geometry for the surroundings
     print('Generating geometry for surrounding buildings')
@@ -380,7 +365,7 @@ def calc_building_geometry_zone(name, building_solid, data_preprocessed, conside
     return geometry_3D_zone
 
 
-def burn_buildings(geometry, terrain_intersection_curves):
+def burn_buildings(geometry, elevation_map):
     if geometry.has_z:
         # remove elevation - we'll add it back later by intersecting with the topography
         point_list_2D = ((a, b) for (a, b, _) in geometry.exterior.coords)
@@ -392,6 +377,12 @@ def burn_buildings(geometry, terrain_intersection_curves):
     face = construct.make_polygon(point_list_3D)
     # get the midpt of the face
     face_midpt = calculate.face_midpt(face)
+
+    terrain_tin = elevation_map.generate_tin()
+    # make shell out of tin_occface_list and create OCC object
+    terrain_shell = construct.make_shell(terrain_tin)
+    terrain_intersection_curves = IntCurvesFace_ShapeIntersector()
+    terrain_intersection_curves.Load(terrain_shell, 1e-6)
 
     # project the face_midpt to the terrain and get the elevation
     inter_pt, inter_face = calc_intersection(terrain_intersection_curves, face_midpt, (0, 0, 1))
@@ -508,27 +499,7 @@ def calc_intersection_face_solid(index, data_processed):
     return intersects
 
 
-def extract_raster(geometry, height_map, x_coords, y_coords, extra_points=5):
-    minx, miny, maxx, maxy = geometry.bounds
-
-    x_start = np.where(minx > x_coords)[0]
-    x_end = np.where(maxx < x_coords)[0]
-    y_start = np.where(maxy < y_coords)[0]
-    y_end = np.where(miny > y_coords)[0]
-
-    x_start = max(x_start[-1] - extra_points, 0)
-    x_end = min(x_end[0] + extra_points, len(x_coords))
-    y_start = max(y_start[-1] - extra_points, 0)
-    y_end = min(y_end[0] + extra_points, len(y_coords))
-
-    new_height_map = height_map[y_start:y_end+1, x_start:x_end+1]
-    new_x_coords = x_coords[x_start:x_end+1]
-    new_y_coords = y_coords[y_start:y_end+1]
-
-    return new_height_map, new_x_coords, new_y_coords
-
-
-def raster_to_numpy(raster):
+def raster_to_elevation_map(raster):
     band = raster.GetRasterBand(1)
     a = band.ReadAsArray()
     (y, x) = np.shape(a)
@@ -537,23 +508,53 @@ def raster_to_numpy(raster):
     x_coords = np.arange(start=0, stop=x) * x_size + upper_left_x + (x_size / 2)  # add half the cell size
     y_coords = np.arange(start=0, stop=y) * y_size + upper_left_y + (y_size / 2)  # to centre the point
 
-    return a, x_coords, y_coords
+    return ElevationMap(a, x_coords, y_coords)
 
 
-def raster_to_tin(raster_np, x_coords, y_coords):
-    # if the raster file is below sea level, the entire case study is lifted to the lowest point is at altitude 0
-    if (raster_np * (raster_np > -1e3)).min() < 0:
-        raster_np -= (raster_np * (raster_np > -1e3)).min()
+class ElevationMap(object):
+    __slots__ = ['elevation_map', 'x_coords', 'y_coords']
 
-    (y_index, x_index) = np.nonzero(raster_np >= 0)
-    _x_coords = x_coords[x_index]
-    _y_coords = y_coords[y_index]
+    def __init__(self, elevation_map, x_coords, y_coords):
+        self.elevation_map = elevation_map
+        self.x_coords = x_coords
+        self.y_coords = y_coords
 
-    raster_points = [(x, y, z) for x, y, z in zip(_x_coords, _y_coords, raster_np[y_index, x_index])]
+    def get_elevation_map_from_geometry(self, geometry, extra_points=5):
+        minx, miny, maxx, maxy = geometry.bounds
 
-    tin_occface_list = construct.delaunay3d(raster_points)
+        x_start = np.where(minx > self.x_coords)[0]
+        x_end = np.where(maxx < self.x_coords)[0]
+        y_start = np.where(maxy < self.y_coords)[0]
+        y_end = np.where(miny > self.y_coords)[0]
 
-    return tin_occface_list
+        x_start = max(x_start[-1] - extra_points, 0)
+        x_end = min(x_end[0] + extra_points, len(self.x_coords))
+        y_start = max(y_start[-1] - extra_points, 0)
+        y_end = min(y_end[0] + extra_points, len(self.y_coords))
+
+        new_elevation_map = self.elevation_map[y_start:y_end + 1, x_start:x_end + 1]
+        new_x_coords = self.x_coords[x_start:x_end + 1]
+        new_y_coords = self.y_coords[y_start:y_end + 1]
+
+        return ElevationMap(new_elevation_map, new_x_coords, new_y_coords)
+
+    def generate_tin(self):
+        below_sea_level = (self.elevation_map * (self.elevation_map > -1e3)).min() < 0
+        if below_sea_level:
+            print('Warning: Some heights are below sea level')
+            # if height is below sea level, the entire case study is lifted to the lowest point is at altitude 0
+            print('Adjusting elevation map to above sea level')
+            self.elevation_map -= (self.elevation_map * (self.elevation_map > -1e3)).min()
+
+        (y_index, x_index) = np.nonzero(self.elevation_map >= 0)
+        _x_coords = self.x_coords[x_index]
+        _y_coords = self.y_coords[y_index]
+
+        raster_points = [(x, y, z) for x, y, z in zip(_x_coords, _y_coords, self.elevation_map[y_index, x_index])]
+
+        tin_occface_list = construct.delaunay3d(raster_points)
+
+        return tin_occface_list
 
 
 def standardize_coordinate_systems(locator):
@@ -574,16 +575,17 @@ def geometry_main(locator, config):
     print("Standardizing coordinate systems")
     zone_df, surroundings_df, terrain_raster = standardize_coordinate_systems(locator)
 
-    # list of faces of terrain
+    # Create a triangulated irregular network of terrain from raster
     print("Reading terrain geometry")
-    height_map, x_coords, y_coords = raster_to_numpy(terrain_raster)
-    geometry_terrain = raster_to_tin(height_map, x_coords, y_coords)
+    elevation_map = raster_to_elevation_map(terrain_raster)
+    terrain_tin = elevation_map.generate_tin()
+
     # transform buildings 2D to 3D and add windows
     print("Creating 3D building surfaces")
-    geometry_3D_zone, geometry_3D_surroundings = building_2d_to_3d(locator, zone_df, surroundings_df, terrain_raster, config,
+    geometry_3D_zone, geometry_3D_surroundings = building_2d_to_3d(locator, zone_df, surroundings_df, elevation_map, config,
                                                                height_col='height_ag', nfloor_col="floors_ag")
 
-    return geometry_terrain, geometry_3D_zone, geometry_3D_surroundings
+    return terrain_tin, geometry_3D_zone, geometry_3D_surroundings
 
 
 if __name__ == '__main__':
