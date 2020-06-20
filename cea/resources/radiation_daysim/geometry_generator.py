@@ -127,7 +127,10 @@ class BuildingDataFinale(object):
         self.all_building_solid_list = all_building_solid_list
 
 
-def calc_building_solids(buildings_df, geometry_simplification, height_col_name, nfloor_col_name, elevation_map, num_processes):
+def calc_building_solids(buildings_df, geometry_simplification, elevation_map, num_processes):
+    height_col_name = 'height_ag'
+    nfloor_col_name = "floors_ag"
+
     # simplify geometry for buildings of interest
     geometries = buildings_df.geometry.map(
         lambda geometry: geometry.simplify(geometry_simplification, preserve_topology=True))
@@ -171,14 +174,12 @@ def calc_building_geometry_surroundings(name, building_solid):
     return geometry_3D_surroundings
 
 
-def building_2d_to_3d(locator, zone_df, surroundings_df, elevation_map, config, height_col, nfloor_col):
+def building_2d_to_3d(locator, zone_df, surroundings_df, elevation_map, config):
     """
     :param locator: InputLocator - provides paths to files in a scenario
     :type locator: cea.inputlocator.InputLocator
     :param config: the configuration object to use
     :type config: cea.config.Configuration
-    :param height_col: name of the columns storing the height of buildings
-    :param nfloor_col: name ofthe column storing the number of floors in buildings.
     :return:
     """
 
@@ -187,18 +188,17 @@ def building_2d_to_3d(locator, zone_df, surroundings_df, elevation_map, config, 
     zone_simplification = config.radiation.zone_geometry
     surroundings_simplification = config.radiation.surrounding_geometry
 
-
     zone_buildings_df = zone_df.set_index('Name')
     zone_building_names = zone_buildings_df.index.values
-    zone_building_solid_list = calc_building_solids(zone_buildings_df, zone_simplification, height_col, nfloor_col,
-                                                    elevation_map, num_processes)
+    zone_building_solid_list = calc_building_solids(zone_buildings_df, zone_simplification, elevation_map,
+                                                    num_processes)
 
     # clear in case there are repetitive buildings in the zone file
     filter_zone_buildings = ~surroundings_df["Name"].isin(zone_building_names)
     surroundings_buildings_df = surroundings_df[filter_zone_buildings].set_index('Name')
     surroundings_building_names = surroundings_buildings_df.index.values
     surroundings_building_solid_list = calc_building_solids(surroundings_buildings_df, surroundings_simplification,
-                                                            height_col, nfloor_col, elevation_map, num_processes)
+                                                            elevation_map, num_processes)
 
     architecture_wwr_df = gdf.from_file(locator.get_building_architecture()).set_index('Name')
     consider_intersections = config.radiation.consider_intersections
@@ -575,8 +575,7 @@ def geometry_main(locator, config):
 
     # transform buildings 2D to 3D and add windows
     print("Creating 3D building surfaces")
-    geometry_3D_zone, geometry_3D_surroundings = building_2d_to_3d(locator, zone_df, surroundings_df, elevation_map, config,
-                                                               height_col='height_ag', nfloor_col="floors_ag")
+    geometry_3D_zone, geometry_3D_surroundings = building_2d_to_3d(locator, zone_df, surroundings_df, elevation_map, config)
 
     return terrain_tin, geometry_3D_zone, geometry_3D_surroundings
 
