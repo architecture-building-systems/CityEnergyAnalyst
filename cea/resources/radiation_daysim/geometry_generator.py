@@ -396,10 +396,7 @@ def burn_buildings(geometry, elevation_map):
     inter_pt, inter_face = calc_intersection(terrain_intersection_curves, face_midpt, (0, 0, 1))
 
     # reconstruct the footprint with the elevation
-    try:
-        loc_pt = (inter_pt.X(), inter_pt.Y(), inter_pt.Z())
-    except:
-        raise ValueError('ERROR: this usually happens when buildings do not overlap with the terrain, try to check if this is the case')
+    loc_pt = (inter_pt.X(), inter_pt.Y(), inter_pt.Z())
     face = fetch.topo2topotype(modify.move(face_midpt, loc_pt, face))
     return face
 
