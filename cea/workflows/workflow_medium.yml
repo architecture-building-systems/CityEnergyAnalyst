@@ -107,7 +107,7 @@
 - script: network-layout
   parameters:
     network-type: DC
-    consider-only-buildings-with-demand: off
+    consider-only-buildings-with-demand: on
 - script: thermal-network
   parameters:
     network-type: DC

@@ -238,7 +238,7 @@ def thermal_network_simplified(locator, config, network_name):
 
         # add loads
         building_base_demand_m3s = {}
-        for building in volume_flow_m3pers_building.keys():
+        for building in building_names:
             building_base_demand_m3s[building] = volume_flow_m3pers_building[building].max()
             pattern_demand = (volume_flow_m3pers_building[building].values / building_base_demand_m3s[building]).tolist()
             wn.add_pattern(building, pattern_demand)
@@ -247,36 +247,39 @@ def thermal_network_simplified(locator, config, network_name):
         consumer_nodes = []
         building_nodes_pairs = {}
         building_nodes_pairs_inversed = {}
-        for node in node_df.iterrows():
-            if node[1]["Type"] == "CONSUMER":
-                demand_pattern = node[1]['Building']
-                base_demand_m3s = building_base_demand_m3s[demand_pattern]
-                consumer_nodes.append(node[0])
-                building_nodes_pairs[node[0]] = demand_pattern
-                building_nodes_pairs_inversed[demand_pattern] = node[0]
-                wn.add_junction(node[0],
+        for node_name, node_data in node_df.iterrows():
+            if node_data["Type"] == "CONSUMER":
+                demand_pattern = node_data['Building']
+                if demand_pattern in building_names:
+                    base_demand_m3s = building_base_demand_m3s[demand_pattern]
+                else:
+                    base_demand_m3s = 0.0
+                consumer_nodes.append(node_name)
+                building_nodes_pairs[node_name] = demand_pattern
+                building_nodes_pairs_inversed[demand_pattern] = node_name
+                wn.add_junction(node_name,
                                 base_demand=base_demand_m3s,
                                 demand_pattern=demand_pattern,
                                 elevation=thermal_transfer_unit_design_head_m,
-                                coordinates=node[1]["coordinates"])
-            elif node[1]["Type"] == "PLANT":
+                                coordinates=node_data["coordinates"])
+            elif node_data["Type"] == "PLANT":
                 base_head = int(thermal_transfer_unit_design_head_m*1.2)
-                start_node = node[0]
+                start_node = node_name
                 name_node_plant = start_node
                 wn.add_reservoir(start_node,
                                  base_head=base_head,
-                                 coordinates=node[1]["coordinates"])
+                                 coordinates=node_data["coordinates"])
             else:
-                wn.add_junction(node[0],
+                wn.add_junction(node_name,
                                 elevation=0,
-                                coordinates=node[1]["coordinates"])
+                                coordinates=node_data["coordinates"])
 
         # add pipes
-        for edge in edge_df.iterrows():
-            length_m = edge[1]["length_m"]
-            edge_name = edge[0]
-            wn.add_pipe(edge_name, edge[1]["start node"],
-                        edge[1]["end node"],
+        for edge_name, edge_data in edge_df.iterrows():
+            length_m = edge_data["length_m"]
+            edge_name = edge_name
+            wn.add_pipe(edge_name, edge_data["start node"],
+                        edge_data["end node"],
                         length=length_m * (1 + fraction_equivalent_length),
                         roughness=coefficient_friction_hazen_williams,
                         minor_loss=0.0,
