@@ -20,6 +20,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 from cea.constants import HOURS_IN_YEAR
+from cea.resources.radiation_daysim.geometry_generator import BuildingGeometry
 
 
 def create_sensor_input_file(rad, chunk_n):
@@ -101,16 +102,15 @@ def calc_sensors_building(building_geometry, settings, ):
     return sensor_dir_list, sensor_cord_list, sensor_type_list, sensor_area_list, sensor_orientation_list, sensor_intersection_list
 
 
-def calc_sensors_zone(building_geometries, locator, settings):
+def calc_sensors_zone(building_names, locator, settings, geometry_pickle_dir):
     sensors_coords_zone = []
     sensors_dir_zone = []
     sensors_total_number_list = []
     names_zone = []
     sensors_code_zone = []
     sensor_intersection_zone = []
-    for building_geometry in building_geometries:
-        # building name
-        building_name = building_geometry.name
+    for building_name in building_names:
+        building_geometry = BuildingGeometry().load(os.path.join(geometry_pickle_dir, 'zone', building_name))
         # get sensors in the building
         sensors_dir_building, \
         sensors_coords_building, \
@@ -155,7 +155,7 @@ def calc_sensors_zone(building_geometries, locator, settings):
     return sensors_coords_zone, sensors_dir_zone, sensors_total_number_list, names_zone, sensors_code_zone, sensor_intersection_zone
 
 
-def isolation_daysim(chunk_n, rad, building_geometries, locator, settings, max_global, weatherfile):
+def isolation_daysim(chunk_n, rad, building_names, locator, settings, max_global, weatherfile, geometry_pickle_dir):
     # folder for data work
     daysim_dir = locator.get_temporary_file("temp" + str(chunk_n))
     print('isolation_daysim: daysim_dir={daysim_dir}'.format(daysim_dir=daysim_dir))
@@ -182,7 +182,7 @@ def isolation_daysim(chunk_n, rad, building_geometries, locator, settings, max_g
     sensors_number_zone, \
     names_zone, \
     sensors_code_zone, \
-    sensor_intersection_zone = calc_sensors_zone(building_geometries, locator, settings)
+    sensor_intersection_zone = calc_sensors_zone(building_names, locator, settings, geometry_pickle_dir)
     rad.set_sensor_points(sensors_coords_zone, sensors_dir_zone)
     create_sensor_input_file(rad, chunk_n)
     print("\tisolation_daysim: rad.sensor_file_path: {}".format(rad.sensor_file_path))

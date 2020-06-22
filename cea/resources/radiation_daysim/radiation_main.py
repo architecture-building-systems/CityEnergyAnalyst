@@ -7,8 +7,12 @@ from __future__ import division
 import os
 import shutil
 import sys
+import tempfile
+
 import pandas as pd
 import time
+
+from cea.resources.radiation_daysim.geometry_generator import BuildingGeometry
 from cea.utilities import epwreader
 import math
 from cea.resources.radiation_daysim import daysim_main, geometry_generator
@@ -106,31 +110,33 @@ def terrain_to_radiance(rad, tin_occface_terrain):
         create_radiance_srf(face, "terrain_srf" + str(id), "reflectance0.2", rad)
 
 
-def buildings_to_radiance(rad, building_surface_properties, geometry_3D_zone, geometry_3D_surroundings):
+def buildings_to_radiance(rad, building_surface_properties, zone_building_names, surroundings_building_names,
+                          geometry_pickle_dir):
     # translate buildings into radiance surface
     fcnt = 0
-    for bcnt, building_surfaces in enumerate(geometry_3D_zone):
-        building_name = building_surfaces.name
-        for pypolygon in building_surfaces.windows:
+    for bcnt, building_name in enumerate(zone_building_names):
+        building_geometry = BuildingGeometry().load(os.path.join(geometry_pickle_dir, 'zone', building_name))
+        for pypolygon in building_geometry.windows:
             create_radiance_srf(pypolygon, "win" + str(bcnt) + str(fcnt),
                                 "win" + str(building_surface_properties['type_win'][building_name]), rad)
             fcnt += 1
-        for pypolygon in building_surfaces.walls:
+        for pypolygon in building_geometry.walls:
             create_radiance_srf(pypolygon, "wall" + str(bcnt) + str(fcnt),
                                 "wall" + str(building_surface_properties['type_wall'][building_name]), rad)
             fcnt += 1
-        for pypolygon in building_surfaces.roofs:
+        for pypolygon in building_geometry.roofs:
             create_radiance_srf(pypolygon, "roof" + str(bcnt) + str(fcnt),
                                 "roof" + str(building_surface_properties['type_roof'][building_name]), rad)
             fcnt += 1
 
-    for building_surfaces in geometry_3D_surroundings:
+    for building_name in surroundings_building_names:
+        building_geometry = BuildingGeometry().load(os.path.join(geometry_pickle_dir, 'surroundings', building_name))
         ## for the surrounding buildings only, walls and roofs
         id = 0
-        for pypolygon in building_surfaces.walls:
+        for pypolygon in building_geometry.walls:
             create_radiance_srf(pypolygon, "surroundingbuildings" + str(id), "reflectance0.2", rad)
             id += 1
-        for pypolygon in building_surfaces.roofs:
+        for pypolygon in building_geometry.roofs:
             create_radiance_srf(pypolygon, "surroundingbuildings" + str(id), "reflectance0.2", rad)
             id += 1
 
@@ -163,7 +169,7 @@ def reader_surface_properties(locator, input_shp):
     return surface_properties.set_index('Name').round(decimals=2)
 
 
-def radiation_singleprocessing(rad, geometry_3D_zone, locator, settings):
+def radiation_singleprocessing(rad, zone_building_names, locator, settings, geometry_pickle_dir):
 
     weather_path = locator.get_weather_file()
     # check inconsistencies and replace by max value of weather file
@@ -172,18 +178,19 @@ def radiation_singleprocessing(rad, geometry_3D_zone, locator, settings):
 
     if settings.buildings == []:
         # get chunks of buildings to iterate
-        chunks = [geometry_3D_zone[i:i + settings.n_buildings_in_chunk] for i in
-                  range(0, len(geometry_3D_zone),
+        chunks = [zone_building_names[i:i + settings.n_buildings_in_chunk] for i in
+                  range(0, len(zone_building_names),
                         settings.n_buildings_in_chunk)]
     else:
         list_of_building_names = settings.buildings
         chunks = []
-        for building_geometry in geometry_3D_zone:
-            if building_geometry.name in list_of_building_names:
-                chunks.append([building_geometry])
+        for building_name in zone_building_names:
+            if building_name in list_of_building_names:
+                chunks.append([building_name])
 
-    for chunk_n, building_geometries in enumerate(chunks):
-        daysim_main.isolation_daysim(chunk_n, rad, building_geometries, locator, settings, max_global, weatherfile)
+    for chunk_n, building_names in enumerate(chunks):
+        daysim_main.isolation_daysim(
+            chunk_n, rad, building_names, locator, settings, max_global, weatherfile, geometry_pickle_dir)
 
 
 def check_daysim_bin_directory(path_hint):
@@ -479,9 +486,16 @@ def main(config):
     building_surface_properties = reader_surface_properties(locator=locator,
                                                             input_shp=locator.get_building_architecture())
     building_surface_properties.to_csv(locator.get_radiation_materials())
+
     print("creating 3D geometry and surfaces")
-    # create geometrical faces of terrain and buildingsL
-    geometry_terrain, geometry_3D_zone, geometry_3D_surroundings = geometry_generator.geometry_main(locator, config)
+    geometry_pickle_dir = os.path.join(
+        locator.get_temporary_folder(), "{}_radiation_geometry_pickle".format(config.scenario_name))
+    if os.path.exists(geometry_pickle_dir):
+        shutil.rmtree(geometry_pickle_dir)
+    print("Saving geometry pickle files in: {}".format(geometry_pickle_dir))
+    # create geometrical faces of terrain and buildings
+    geometry_terrain, zone_building_names, surroundings_building_names = geometry_generator.geometry_main(
+        locator, config, geometry_pickle_dir)
 
     print("Sending the scene: geometry and materials to daysim")
     # send materials
@@ -494,13 +508,16 @@ def main(config):
     # send terrain
     terrain_to_radiance(rad, geometry_terrain)
     # send buildings
-    buildings_to_radiance(rad, building_surface_properties, geometry_3D_zone, geometry_3D_surroundings)
+    buildings_to_radiance(
+        rad, building_surface_properties, zone_building_names, surroundings_building_names, geometry_pickle_dir)
     # create scene out of all this
     rad.create_rad_input_file()
     print("\tradiation_main: rad.rad_file_path: {}".format(rad.rad_file_path))
 
     time1 = time.time()
-    radiation_singleprocessing(rad, geometry_3D_zone, locator, config.radiation)
+    radiation_singleprocessing(rad, zone_building_names, locator, config.radiation, geometry_pickle_dir)
+
+    shutil.rmtree(geometry_pickle_dir)
 
     print("Daysim simulation finished in %.2f mins" % ((time.time() - time1) / 60.0))
 
