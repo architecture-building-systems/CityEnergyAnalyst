@@ -9,6 +9,8 @@ into 3D geometry with windows and roof equivalent to LOD3
 from __future__ import division
 from __future__ import print_function
 
+import cPickle
+import os
 from itertools import repeat
 
 import gdal
@@ -148,7 +150,7 @@ def process_geometries(geometry, elevation_map, range_floors, floor_to_floor_hei
     return building_solid
 
 
-def calc_building_geometry_surroundings(name, building_solid):
+def calc_building_geometry_surroundings(name, building_solid, geometry_pickle_dir):
     facade_list, roof_list, footprint_list = urbangeom.identify_building_surfaces(building_solid)
     geometry_3D_surroundings = {"name": name,
                                 "windows": [],
@@ -160,10 +162,13 @@ def calc_building_geometry_surroundings(name, building_solid):
                                 "normals_windows": [],
                                 "normals_walls": [],
                                 "intersect_walls": []}
-    return BuildingGeometry(**geometry_3D_surroundings)
+
+    building_geometry = BuildingGeometry(**geometry_3D_surroundings)
+    building_geometry.save(os.path.join(geometry_pickle_dir, 'surroundings', str(name)))
+    return name
 
 
-def building_2d_to_3d(locator, zone_df, surroundings_df, elevation_map, config):
+def building_2d_to_3d(locator, zone_df, surroundings_df, elevation_map, config, geometry_pickle_dir):
     """
     :param locator: InputLocator - provides paths to files in a scenario
     :type locator: cea.inputlocator.InputLocator
@@ -191,11 +196,10 @@ def building_2d_to_3d(locator, zone_df, surroundings_df, elevation_map, config):
                                                             elevation_map, num_processes)
 
     architecture_wwr_df = gdf.from_file(locator.get_building_architecture()).set_index('Name')
-    all_building_solid_list = np.append(zone_building_solid_list, surroundings_building_solid_list)
 
     # calculate geometry for the surroundings
     print('Generating geometry for surrounding buildings')
-    geometry_3D_surroundings = [calc_building_geometry_surroundings(x, y) for x, y in
+    geometry_3D_surroundings = [calc_building_geometry_surroundings(x, y, geometry_pickle_dir) for x, y in
                                 zip(surroundings_building_names, surroundings_building_solid_list)]
 
     # calculate geometry for the zone of analysis
@@ -205,10 +209,15 @@ def building_2d_to_3d(locator, zone_df, surroundings_df, elevation_map, config):
                                                                           num_processes,
                                                                           on_complete=print_progress)
 
+    if consider_intersections:
+        all_building_solid_list = np.append(zone_building_solid_list, surroundings_building_solid_list)
+    else:
+        all_building_solid_list = []
     geometry_3D_zone = calc_zone_geometry_multiprocessing(zone_building_names,
                                                           zone_building_solid_list,
                                                           repeat(all_building_solid_list, n),
                                                           repeat(architecture_wwr_df, n),
+                                                          repeat(geometry_pickle_dir, n),
                                                           repeat(consider_intersections, n))
     return geometry_3D_zone, geometry_3D_surroundings
 
@@ -238,11 +247,36 @@ class BuildingGeometry(object):
 
     def __init__(self, **kwargs):
         for key in self.__slots__:
-            if key in kwargs:
-                setattr(self, key, kwargs[key])
+            value = kwargs.get(key)
+            setattr(self, key, value)
+
+    def __getstate__(self):
+        return [getattr(self, k, None) for k in self.__slots__]
+
+    def __setstate__(self, data):
+        for k, v in zip(self.__slots__, data):
+            setattr(self, k, v)
+
+    @classmethod
+    def load(cls, pickle_location):
+        with open(pickle_location, 'rb') as fp:
+            values = cPickle.load(fp)
+            obj = cls()
+            obj.__setstate__(values)
+        return obj
+
+    def save(self, pickle_location):
+        dir_name = os.path.dirname(pickle_location)
+        if not os.path.exists(dir_name):
+            os.makedirs(dir_name)
+
+        with open(pickle_location, 'wb') as f:
+            cPickle.dump(self.__getstate__(), f)
+        return pickle_location
 
 
-def calc_building_geometry_zone(name, building_solid, all_building_solid_list, architecture_wwr_df, consider_intersections):
+def calc_building_geometry_zone(name, building_solid, all_building_solid_list, architecture_wwr_df,
+                                geometry_pickle_dir, consider_intersections):
     # now get all surfaces and create windows only if the buildings are in the area of study
     window_list = []
     wall_list = []
@@ -334,8 +368,9 @@ def calc_building_geometry_zone(name, building_solid, all_building_solid_list, a
                         "normals_windows": normals_win, "normals_walls": normals_walls,
                         "intersect_walls": intersect_wall}
 
-    buidling_geometry = BuildingGeometry(**geometry_3D_zone)
-    pickle.dump(buidling_geometry)
+    building_geometry = BuildingGeometry(**geometry_3D_zone)
+    building_geometry.save(os.path.join(geometry_pickle_dir, 'zone', str(name)))
+    return name
 
 
 def burn_buildings(geometry, elevation_map):
@@ -560,7 +595,7 @@ def check_terrain_bounds(zone_df, surroundings_df, terrain_raster):
         raise ValueError('Terrain provided does not cover all building geometries')
 
 
-def geometry_main(locator, config):
+def geometry_main(locator, config, geometry_pickle_dir):
     print("Standardizing coordinate systems")
     zone_df, surroundings_df, terrain_raster = standardize_coordinate_systems(locator)
 
@@ -573,7 +608,8 @@ def geometry_main(locator, config):
 
     # transform buildings 2D to 3D and add windows
     print("Creating 3D building surfaces")
-    geometry_3D_zone, geometry_3D_surroundings = building_2d_to_3d(locator, zone_df, surroundings_df, elevation_map, config)
+    geometry_3D_zone, geometry_3D_surroundings = building_2d_to_3d(locator, zone_df, surroundings_df, elevation_map,
+                                                                   config, geometry_pickle_dir)
 
     return terrain_tin, geometry_3D_zone, geometry_3D_surroundings
 
