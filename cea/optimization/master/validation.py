@@ -77,12 +77,13 @@ def validate_network_connections(individual_with_name_dict: IndividualDict,
     lim_inf = 0
     lim_sup = 1
     connections = [individual_with_name_dict[building_name] for building_name in column_names_buildings]
-    if sum(connections) < 2:
+    while sum(connections) < 2:
         # connect a random unconnected building
         unconnected_buildings = [building_name for building_name in column_names_buildings
                                  if individual_with_name_dict[building_name] == 0]
         the_chosen_one = random.choice(unconnected_buildings)
         individual_with_name_dict[the_chosen_one] = 1
+        connections = [individual_with_name_dict[building_name] for building_name in column_names_buildings]
 
     # logically, this should always be true
     assert sum([individual_with_name_dict[building_name] for building_name in column_names_buildings]) >= 2

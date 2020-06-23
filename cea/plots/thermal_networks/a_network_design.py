@@ -99,15 +99,16 @@ class NetworkLayoutOperationPeak(cea.plots.thermal_networks.ThermalNetworksMapPl
         Q_loss_kWh = self.total_thermal_losses_kWh.values
         Peak_load_MWh = round((annual_loads + Q_loss_kWh).max()/1000,1)
 
-        if self.mass_flow_kgs_nodes is not None: #backward compatibility with detailed thermal network (which does not include this output)
-            Mass_flow_kgs_peak = self.mass_flow_kgs_nodes.max().round(1)
-            nodes_df["Peak mass flow rate [kg/s]"] = Mass_flow_kgs_peak.values
+        if self.mass_flow_kgs_nodes is not None:
+            # backward compatibility with detailed thermal network (which does not include this output)
+            mass_flow_kgs_peak = self.mass_flow_kgs_nodes.max().round(1)
+            nodes_df["Peak mass flow rate [kg/s]"] = mass_flow_kgs_peak.values
 
         peak_demands = self.buildings_hourly.apply(pd.Series.max)
         pumping_peak = self.plant_pumping_requirement_kWh.max().round(1)
 
         def get_peak_building_demand(row):
-            if row["Type"] == "CONSUMER":
+            if row["Type"] == "CONSUMER" and row.Building in index_max.index.values:
                 return peak_demands[row["Building"]]
             else:
                 return None
@@ -187,7 +188,8 @@ class NetworkLayoutOperationPeak(cea.plots.thermal_networks.ThermalNetworksMapPl
         def radius_from_demand(row):
             if row["Type"] == "CONSUMER":
                 building = row["Building"]
-                return scale * demand[building] / max_demand
+                demand_building = demand[building] if building in demand else 0.0
+                return scale * demand_building / max_demand
             elif row["Type"] == "PLANT":
                 return scale
             else:

@@ -2,9 +2,6 @@
 inputlocator.py - locate input files by name based on the reference folder structure.
 """
 
-
-
-
 import os
 import cea.schemas
 import shutil
@@ -116,7 +113,8 @@ class InputLocator(object):
                 # check inside folders
                 for file in os.listdir(os.path.join(default_template, folder)):
                     default_file_path = os.path.join(default_template, folder, file)
-                    if os.path.isfile(default_file_path) and os.path.splitext(default_file_path)[1] in {'.xls', '.xlsx'}:
+                    if os.path.isfile(default_file_path) and os.path.splitext(default_file_path)[1] in {'.xls',
+                                                                                                        '.xlsx'}:
                         # we're only interested in the excel files
                         template_file_path = os.path.join(self.get_databases_folder(), folder, file)
                         if not os.path.exists(template_file_path):
@@ -148,7 +146,8 @@ class InputLocator(object):
 
     def get_optimization_slave_generation_results_folder(self, gen_num):
         """Returns the folder containing the scenario's optimization Slave results (storage + operation pattern)"""
-        return self._ensure_folder(os.path.join(self.get_optimization_slave_results_folder(), "gen_%(gen_num)s" % locals()))
+        return self._ensure_folder(
+            os.path.join(self.get_optimization_slave_results_folder(), "gen_%(gen_num)s" % locals()))
 
     def get_optimization_individuals_in_generation(self, gen_num):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
@@ -312,7 +311,7 @@ class InputLocator(object):
     def get_optimization_checkpoint(self, generation):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
         return os.path.join(self.get_optimization_master_results_folder(),
-                            'CheckPoint_' + str(generation)+".json")
+                            'CheckPoint_' + str(generation) + ".json")
 
     def get_optimization_substations_folder(self):
         """scenario/outputs/data/optimization/substations
@@ -332,7 +331,8 @@ class InputLocator(object):
         if district_network_barcode == "":
             district_network_barcode = "0"
         district_network_barcode_hex = hex(int(str(district_network_barcode), 2))
-        return os.path.join(self.get_optimization_substations_folder(),"Total_%(network_type)s_%(district_network_barcode_hex)s.csv" % locals())
+        return os.path.join(self.get_optimization_substations_folder(),
+                            "Total_%(network_type)s_%(district_network_barcode_hex)s.csv" % locals())
 
     # POTENTIAL
     def get_potentials_folder(self):
@@ -695,9 +695,8 @@ class InputLocator(object):
             file_name = network_type + "_" + network_name + "_temperature_return_nodes_K.csv"
         return os.path.join(folder, file_name)
 
-
     def get_network_temperature_plant(self, network_type, network_name,
-                                                           representative_week=False):
+                                      representative_week=False):
 
         if representative_week == True:
             folder = self.get_representative_week_thermal_network_layout_folder()
@@ -725,7 +724,7 @@ class InputLocator(object):
         """scenario/outputs/data/optimization/network/layout/DH_NodesData.csv or DC_NodesData.csv
         Network layout files for nodes of district heating or cooling networks
         """
-        if representative_week == True:
+        if representative_week:
             folder = self.get_representative_week_thermal_network_layout_folder()
         else:
             folder = self.get_thermal_network_folder()
@@ -736,10 +735,9 @@ class InputLocator(object):
             file_name = network_type + "_" + network_name + "_thermal_demand_per_building_W.csv"
         return os.path.join(folder, file_name)
 
-
     def get_network_thermal_loss_edges_file(self, network_type, network_name, representative_week=False):
         """scenario/outputs/data/optimization/network/layout/DH_qloss_System_kw.csv"""
-        if representative_week == True:
+        if representative_week:
             folder = self.get_representative_week_thermal_network_layout_folder()
         else:
             folder = self.get_thermal_network_folder()
