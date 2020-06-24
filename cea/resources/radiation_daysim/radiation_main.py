@@ -115,7 +115,7 @@ def buildings_to_radiance(rad, building_surface_properties, zone_building_names,
     # translate buildings into radiance surface
     fcnt = 0
     for bcnt, building_name in enumerate(zone_building_names):
-        building_geometry = BuildingGeometry().load(os.path.join(geometry_pickle_dir, 'zone', building_name))
+        building_geometry = BuildingGeometry.load(os.path.join(geometry_pickle_dir, 'zone', building_name))
         for pypolygon in building_geometry.windows:
             create_radiance_srf(pypolygon, "win" + str(bcnt) + str(fcnt),
                                 "win" + str(building_surface_properties['type_win'][building_name]), rad)
@@ -130,7 +130,7 @@ def buildings_to_radiance(rad, building_surface_properties, zone_building_names,
             fcnt += 1
 
     for building_name in surroundings_building_names:
-        building_geometry = BuildingGeometry().load(os.path.join(geometry_pickle_dir, 'surroundings', building_name))
+        building_geometry = BuildingGeometry.load(os.path.join(geometry_pickle_dir, 'surroundings', building_name))
         ## for the surrounding buildings only, walls and roofs
         id = 0
         for pypolygon in building_geometry.walls:
@@ -139,8 +139,6 @@ def buildings_to_radiance(rad, building_surface_properties, zone_building_names,
         for pypolygon in building_geometry.roofs:
             create_radiance_srf(pypolygon, "surroundingbuildings" + str(id), "reflectance0.2", rad)
             id += 1
-
-    return
 
 
 def reader_surface_properties(locator, input_shp):
