@@ -15,11 +15,13 @@ ${StrRep}
 
 
 # download CEA conda env from here
-!define CEA_ENV_URL "https://github.com/architecture-building-systems/CityEnergyAnalyst/releases/download/v3.1.0/Dependencies.7z"
+;!define CEA_ENV_URL "https://github.com/architecture-building-systems/CityEnergyAnalyst/releases/download/v3.1.0/Dependencies.7z"
+!define CEA_ENV_URL "https://www.dropbox.com/s/8i8392arvh8bubo/Dependencies.7z?dl=1"
 !define CEA_ENV_FILENAME "Dependencies.7z"
 !define RELATIVE_GIT_PATH "Dependencies\cmder\vendor\git-for-windows\bin\git.exe"
 !define CEA_REPO_URL "https://github.com/architecture-building-systems/CityEnergyAnalyst.git"
-!define CEA_ELECTRON_URL "https://github.com/architecture-building-systems/CityEnergyAnalyst/releases/download/v${VER}/win-unpacked.7z"
+;!define CEA_ELECTRON_URL "https://github.com/architecture-building-systems/CityEnergyAnalyst/releases/download/v${VER}/win-unpacked.7z"
+!define CEA_ELECTRON_URL "https://www.dropbox.com/s/gun6bpj6lxjae7m/win-unpacked.7z?dl=1"
 
 !define CEA_TITLE "City Energy Analyst"
 
@@ -85,32 +87,28 @@ Section "Base Installation" Base_Installation_Section
     # make sure cmder can access our python (and the cea command)
     DetailPrint "Setting up CEA Console"
     CreateDirectory $INSTDIR\Dependencies\cmder\config\profile.d
-    FileOpen $0 "$INSTDIR\Dependencies\cmder\config\profile.d\cea_path.bat" w
-    FileWrite $0 "SET PATH=$INSTDIR\Dependencies\Python;$INSTDIR\Dependencies\Python\Scripts;$INSTDIR\Dependencies\Daysim;%PATH%"
+    FileOpen $0 "$INSTDIR\Dependencies\cmder\config\profile.d\cea.bat" w
+    FileWrite $0 "CALL $INSTDIR\Dependencies\Python\Scripts\activate.bat"
+    FileWrite $0 "$\r$\n" ; we write a new line
+    FileWrite $0 "SET PATH=$INSTDIR\Dependencies\Daysim;%PATH%"
     FileWrite $0 "$\r$\n" ; we write a new line
     FileWrite $0 "SET PYTHONHOME=$INSTDIR\Dependencies\Python"
     FileWrite $0 "$\r$\n" ; we write a new line
-    FileWrite $0 "SET RAYPATH=$INSTDIR\Dependencies\Daysim"
+    FileWrite $0 "SET RAYPATH=$INSTDIR\d\Daysim"
     FileWrite $0 "$\r$\n" ; we write a new line
-    FileWrite $0 "SET GDAL_DATA=$INSTDIR\Dependencies\Python\Library\share\gdal"
-    FileWrite $0 "$\r$\n" ; we write a new line
-    FileWrite $0 "SET PROJ_LIB=$INSTDIR\Dependencies\Python\Library\share"
-    FileWrite $0 "$\r$\n" ; we write a new line
+    FileWrite $0 "SET PROMPT=(CEA v${VER}) \$P\$G"
+    FileWrite $0 "$\r$\n" ; we write a new lin
     FileWrite $0 "ALIAS find=$\"$INSTDIR\Dependencies\cmder\vendor\git-for-windows\usr\bin\find.exe$\" $$*"
     FileClose $0
 
     # create a batch file for running the dashboard with some environment variables set (for DAYSIM etc.)
     DetailPrint "Setting up CEA Dashboard"
     FileOpen $0 "$INSTDIR\dashboard.bat" w
-    FileWrite $0 "SET PATH=$INSTDIR\Dependencies\Python;$INSTDIR\Dependencies\Python\Scripts;$INSTDIR\Dependencies\Daysim;%PATH%"
+    FileWrite $0 "CALL $INSTDIR\Dependencies\Python\Scripts\activate.bat"
+    FileWrite $0 "$\r$\n" ; we write a new line
+    FileWrite $0 "SET PATH=$INSTDIR\Dependencies\Daysim;%PATH%"
     FileWrite $0 "$\r$\n" ; we write a new line
     FileWrite $0 "SET PYTHONHOME=$INSTDIR\Dependencies\Python"
-    FileWrite $0 "$\r$\n" ; we write a new line
-    FileWrite $0 "SET PYTHONHOME=$INSTDIR\Dependencies\Python"
-    FileWrite $0 "$\r$\n" ; we write a new line
-    FileWrite $0 "SET GDAL_DATA=$INSTDIR\Dependencies\Python\Library\share\gdal"
-    FileWrite $0 "$\r$\n" ; we write a new line
-    FileWrite $0 "SET PROJ_LIB=$INSTDIR\Dependencies\Python\Library\share"
     FileWrite $0 "$\r$\n" ; we write a new line
     FileWrite $0 "SET RAYPATH=$INSTDIR\Dependencies\Daysim"
     FileWrite $0 "$\r$\n" ; we write a new line
