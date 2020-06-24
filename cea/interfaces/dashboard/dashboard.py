@@ -38,4 +38,5 @@ def main(config):
 
 
 if __name__ == '__main__':
+    __package__ = "cea.interfaces.dashboard"
     main(cea.config.Configuration())
