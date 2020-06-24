@@ -503,18 +503,6 @@ def calc_intersection_face_solid(point_to_evaluate, potentially_intersecting_sol
     return intersects
 
 
-def raster_to_elevation_map(raster):
-    band = raster.GetRasterBand(1)
-    a = band.ReadAsArray()
-    (y, x) = np.shape(a)
-
-    (upper_left_x, x_size, x_rotation, upper_left_y, y_rotation, y_size) = raster.GetGeoTransform()
-    x_coords = np.arange(start=0, stop=x) * x_size + upper_left_x + (x_size / 2)  # add half the cell size
-    y_coords = np.arange(start=0, stop=y) * y_size + upper_left_y + (y_size / 2)  # to centre the point
-
-    return ElevationMap(a, x_coords, y_coords)
-
-
 class ElevationMap(object):
     __slots__ = ['elevation_map', 'x_coords', 'y_coords']
 
@@ -522,6 +510,18 @@ class ElevationMap(object):
         self.elevation_map = elevation_map
         self.x_coords = x_coords
         self.y_coords = y_coords
+
+    @classmethod
+    def read_raster(cls, raster):
+        band = raster.GetRasterBand(1)
+        a = band.ReadAsArray()
+        (y, x) = np.shape(a)
+
+        (upper_left_x, x_size, x_rotation, upper_left_y, y_rotation, y_size) = raster.GetGeoTransform()
+        x_coords = np.arange(start=0, stop=x) * x_size + upper_left_x + (x_size / 2)  # add half the cell size
+        y_coords = np.arange(start=0, stop=y) * y_size + upper_left_y + (y_size / 2)  # to centre the point
+
+        return cls(a, x_coords, y_coords)
 
     def get_elevation_map_from_geometry(self, geometry, extra_points=5):
         minx, miny, maxx, maxy = geometry.bounds
@@ -600,7 +600,7 @@ def geometry_main(locator, config, geometry_pickle_dir):
 
     # Create a triangulated irregular network of terrain from raster
     print("Reading terrain geometry")
-    elevation_map = raster_to_elevation_map(terrain_raster)
+    elevation_map = ElevationMap.read_raster(terrain_raster)
     terrain_tin = elevation_map.generate_tin()
 
     # transform buildings 2D to 3D and add windows
