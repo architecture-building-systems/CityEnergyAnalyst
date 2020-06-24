@@ -18,6 +18,7 @@ import geopandas as gpd
 import osr
 
 import cea
+
 cea.suppres_3rd_party_debug_loggers()
 
 import math
@@ -32,7 +33,6 @@ import py4design.py3dmodel.utility as utility
 from OCC.IntCurvesFace import IntCurvesFace_ShapeIntersector
 from OCC.gp import gp_Pnt, gp_Lin, gp_Ax1, gp_Dir
 from geopandas import GeoDataFrame as gdf
-from py4design import py3dmodel as py3dmodel
 from py4design import urbangeom
 
 import cea.config
@@ -62,12 +62,12 @@ def identify_surfaces_type(occface_list):
     # distinguishing between facade, roof and footprint.
     for f in occface_list:
         # get the normal of each face
-        n = py3dmodel.calculate.face_normal(f)
+        n = calculate.face_normal(f)
         flatten_n = [n[0], n[1], 0]  # need to flatten to erase Z just to consider vertical surfaces.
-        angle_to_vertical = py3dmodel.calculate.angle_bw_2_vecs(vec_vertical, n)
+        angle_to_vertical = calculate.angle_bw_2_vecs(vec_vertical, n)
         # means its a facade
         if angle_to_vertical > 45 and angle_to_vertical < 135:
-            angle_to_horizontal = py3dmodel.calculate.angle_bw_2_vecs_w_ref(vec_horizontal, flatten_n, vec_vertical)
+            angle_to_horizontal = calculate.angle_bw_2_vecs_w_ref(vec_horizontal, flatten_n, vec_vertical)
             if (0 <= angle_to_horizontal <= 45) or (315 <= angle_to_horizontal <= 360):
                 facade_list_north.append(f)
             elif (45 < angle_to_horizontal < 135):
@@ -296,7 +296,7 @@ def calc_building_geometry_zone(name, building_solid, all_building_solid_list, a
                 potentially_intersecting_solids.append(solid)
 
     # identify building surfaces according to angle:
-    face_list = py3dmodel.fetch.faces_frm_solid(building_solid)
+    face_list = fetch.faces_frm_solid(building_solid)
     facade_list_north, facade_list_west, \
     facade_list_east, facade_list_south, roof_list, footprint_list = identify_surfaces_type(face_list)
 
@@ -449,11 +449,11 @@ def calc_windows_walls(facade_list, wwr, potentially_intersecting_solids):
     for surface_facade in facade_list:
         # get coordinates of surface
         ref_pypt = calculate.face_midpt(surface_facade)
-        standard_normal = py3dmodel.calculate.face_normal(surface_facade)  # to avoid problems with fuzzy normals
+        standard_normal = calculate.face_normal(surface_facade)  # to avoid problems with fuzzy normals
 
         # evaluate if the surface intersects any other solid (important to erase non-active surfaces in the building
         # simulation model)
-        point_to_evaluate = py3dmodel.modify.move_pt(ref_pypt, standard_normal, 0.1)  # tol of 10cm
+        point_to_evaluate = modify.move_pt(ref_pypt, standard_normal, 0.1)  # tol of 10cm
 
         if number_intersecting_solids:
             # flag weather it intersects a surrounding geometry
