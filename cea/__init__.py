@@ -1,4 +1,4 @@
-__version__ = "3.5.0a2"
+__version__ = "3.5.0a3"
 
 
 class ConfigError(Exception):
