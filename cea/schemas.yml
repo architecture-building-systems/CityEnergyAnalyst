@@ -8100,39 +8100,6 @@ get_lca_embodied:
                 unit: NA
                 values: alphanumeric
     used_by: []
-get_lca_mobility:
-    created_by:
-    - emissions
-    file_path: outputs/data/emissions/Total_LCA_mobility.csv
-    file_type: csv
-    parameters: []
-    schema:
-        columns:
-            GFA_m2:
-                description: Gross floor area
-                min: 0.0
-                type: float
-                unit: '[m2]'
-                values: '{0.0...n}'
-            GHG_sys_mobility_kgCO2m2:
-                description: Operational emissions per unit of conditioned floor area
-                    due to mobility
-                min: 0.0
-                type: float
-                unit: '[kg CO2-eq/m2.yr]'
-                values: '{0.0...n}'
-            GHG_sys_mobility_tonCO2:
-                description: Operational emissions due to mobility
-                min: 0.0
-                type: float
-                unit: '[ton CO2-eq/yr]'
-                values: '{0.0...n}'
-            Name:
-                description: Unique building ID. It must start with a letter.
-                type: string
-                unit: NA
-                values: alphanumeric
-    used_by: []
 get_lca_operation:
     created_by:
     - emissions

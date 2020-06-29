@@ -978,10 +978,6 @@ class InputLocator(object):
         """scenario/outputs/data/emissions/Total_LCA_operation.csv"""
         return os.path.join(self.get_lca_emissions_results_folder(), 'Total_LCA_operation.csv')
 
-    def get_lca_mobility(self):
-        """scenario/outputs/data/emissions/Total_LCA_mobility.csv"""
-        return os.path.join(self.get_lca_emissions_results_folder(), 'Total_LCA_mobility.csv')
-
     # COSTS
     def get_costs_folder(self):
         """scenario/outputs/data/costs"""
