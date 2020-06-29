@@ -9422,7 +9422,7 @@ get_optimization_decentralized_folder_building_result_cooling:
 get_optimization_decentralized_folder_building_result_heating:
     created_by:
     - decentralized
-    file_path: outputs/data/optimization/decentralized/DiscOp_B001_result_heating.csv
+    file_path: outputs/data/optimization/decentralized/DiscOp_{building}_result_heating.csv
     file_type: csv
     parameters:
     - building
@@ -9499,7 +9499,7 @@ get_optimization_decentralized_folder_building_result_heating:
 get_optimization_decentralized_folder_building_result_heating_activation:
     created_by:
     - decentralized
-    file_path: outputs/data/optimization/decentralized/DiscOp_B001_result_heating_activation.csv
+    file_path: outputs/data/optimization/decentralized/DiscOp_{building}_result_heating_activation.csv
     file_type: csv
     parameters:
     - building
@@ -11878,7 +11878,7 @@ get_optimization_substations_results_file:
     - decentralized
     - optimization
     - thermal_network
-    file_path: outputs/data/optimization/substations/110011011DH_B001_result.csv
+    file_path: outputs/data/optimization/substations/110011011DH_{building}_result.csv
     file_type: csv
     parameters:
     - building
@@ -13043,7 +13043,7 @@ get_radiation_building:
 get_radiation_building_sensors:
     created_by:
     - radiation
-    file_path: outputs/data/solar-radiation/B001_insolation_Whm2.json
+    file_path: outputs/data/solar-radiation/{building}_insolation_Whm2.json
     file_type: json
     parameters:
     - building
@@ -13127,7 +13127,7 @@ get_radiation_materials:
 get_radiation_metadata:
     created_by:
     - radiation
-    file_path: outputs/data/solar-radiation/B001_geometry.csv
+    file_path: outputs/data/solar-radiation/{building}_geometry.csv
     file_type: csv
     parameters:
     - building
@@ -13212,7 +13212,7 @@ get_radiation_metadata:
 get_schedule_model_file:
     created_by:
     - schedule_maker
-    file_path: outputs/data/occupancy/B001.csv
+    file_path: outputs/data/occupancy/{building}.csv
     file_type: csv
     parameters:
     - building
@@ -13464,7 +13464,7 @@ get_terrain:
 get_thermal_demand_csv_file:
     created_by:
     - thermal_network
-    file_path: outputs/data/thermal-network/DH__thermal_demand_per_building_W.csv
+    file_path: outputs/data/thermal-network/{network_type}__thermal_demand_per_building_W.csv
     file_type: csv
     parameters:
     - network_type
@@ -13483,7 +13483,7 @@ get_thermal_demand_csv_file:
 get_thermal_network_edge_list_file:
     created_by:
     - thermal_network
-    file_path: outputs/data/thermal-network/DH__metadata_edges.csv
+    file_path: outputs/data/thermal-network/{network_type}__metadata_edges.csv
     file_type: csv
     parameters:
     - network_type
@@ -13549,7 +13549,7 @@ get_thermal_network_edge_node_matrix_file:
 get_thermal_network_layout_massflow_edges_file:
     created_by:
     - thermal_network
-    file_path: outputs/data/thermal-network/DH__massflow_edges_kgs.csv
+    file_path: outputs/data/thermal-network/{network_type}__massflow_edges_kgs.csv
     file_type: csv
     parameters:
     - network_type
@@ -13567,7 +13567,7 @@ get_thermal_network_layout_massflow_edges_file:
 get_thermal_network_layout_massflow_nodes_file:
     created_by:
     - thermal_network
-    file_path: outputs/data/thermal-network/DH__massflow_nodes_kgs.csv
+    file_path: outputs/data/thermal-network/{network_type}__massflow_nodes_kgs.csv
     file_type: csv
     parameters:
     - network_type
@@ -13585,7 +13585,7 @@ get_thermal_network_layout_massflow_nodes_file:
 get_thermal_network_node_types_csv_file:
     created_by:
     - thermal_network
-    file_path: outputs/data/thermal-network/DH__metadata_nodes.csv
+    file_path: outputs/data/thermal-network/{network_type}__metadata_nodes.csv
     file_type: csv
     parameters:
     - network_type
@@ -13612,7 +13612,7 @@ get_thermal_network_node_types_csv_file:
 get_thermal_network_plant_heat_requirement_file:
     created_by:
     - thermal_network
-    file_path: outputs/data/thermal-network/DH__plant_thermal_load_kW.csv
+    file_path: outputs/data/thermal-network/{network_type}__plant_thermal_load_kW.csv
     file_type: csv
     parameters:
     - network_type
@@ -13630,7 +13630,7 @@ get_thermal_network_plant_heat_requirement_file:
 get_thermal_network_pressure_losses_edges_file:
     created_by:
     - thermal_network
-    file_path: outputs/data/thermal-network/DH__pressure_losses_edges_kW.csv
+    file_path: outputs/data/thermal-network/{network_type}__pressure_losses_edges_kW.csv
     file_type: csv
     parameters:
     - network_type
@@ -13648,7 +13648,7 @@ get_thermal_network_pressure_losses_edges_file:
 get_thermal_network_substation_ploss_file:
     created_by:
     - thermal_network
-    file_path: outputs/data/thermal-network/DH__pumping_load_due_to_substations_kW.csv
+    file_path: outputs/data/thermal-network/{network_type}__pumping_load_due_to_substations_kW.csv
     file_type: csv
     parameters:
     - network_type
@@ -13666,7 +13666,7 @@ get_thermal_network_substation_ploss_file:
 get_thermal_network_velocity_edges_file:
     created_by:
     - thermal_network
-    file_path: outputs/data/thermal-network/DH__velocity_edges_mpers.csv
+    file_path: outputs/data/thermal-network/{network_type}__velocity_edges_mpers.csv
     file_type: csv
     parameters:
     - network_type
