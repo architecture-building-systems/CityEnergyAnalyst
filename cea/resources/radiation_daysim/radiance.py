@@ -3,6 +3,11 @@ import os
 import shutil
 import subprocess
 
+from collections import deque
+
+from cea import suppres_3rd_party_debug_loggers
+suppres_3rd_party_debug_loggers()
+
 import py4design.py2radiance as py2radiance
 from py4design.py3dmodel.fetch import points_frm_occface
 
@@ -13,6 +18,7 @@ class CEARad(py2radiance.Rad):
     """Overrides some methods of py4design.rad that run DAYSIM commands"""
     def __init__(self, base_file_path, data_folder_path, debug=False):
         super(CEARad, self).__init__(base_file_path, data_folder_path)
+        self.surfaces = deque()
         self.debug = debug
 
     def run_cmd(self, cmd, cwd=None):
@@ -205,6 +211,7 @@ class RadSurface(object):
     :param OCC.TopoDS.TopoDS_Face occ_face: Polygon (OCC TopoDS_Face) of surface
     :param str material: Name of material
     """
+    __slots__ = ['name', 'points', 'material']
 
     def __init__(self, name, occ_face, material):
         self.name = name
@@ -315,43 +322,58 @@ def terrain_to_radiance(rad, tin_occface_terrain):
     rad.surfaces.extend(terrain_surfaces)
 
 
+def zone_building_to_radiance(building_geometry, building_surface_properties):
+    building_name = building_geometry.name
+    building_surfaces = []
+
+    # windows
+    for num, occ_face in enumerate(building_geometry.windows):
+        surface_name = "win_{building_name}_{num}".format(building_name=building_name, num=num)
+        material_name = "win_{material}".format(material=building_surface_properties['type_win'][building_name])
+        building_surfaces.append(RadSurface(surface_name, occ_face, material_name))
+
+    # walls
+    for num, occ_face in enumerate(building_geometry.walls):
+        surface_name = "wall_{building_name}_{num}".format(building_name=building_name, num=num)
+        material_name = "wall_{material}".format(material=building_surface_properties['type_wall'][building_name])
+        building_surfaces.append(RadSurface(surface_name, occ_face, material_name))
+
+    # roofs
+    for num, occ_face in enumerate(building_geometry.roofs):
+        surface_name = "roof_{building_name}_{num}".format(building_name=building_name, num=num)
+        material_name = "roof_{material}".format(material=building_surface_properties['type_roof'][building_name])
+        building_surfaces.append(RadSurface(surface_name, occ_face, material_name))
+
+    return building_surfaces
+
+
+def surrounding_building_to_radiance(building_geometry):
+    building_name = building_geometry.name
+    building_surfaces = []
+
+    # walls
+    for num, occ_face in enumerate(building_geometry.walls):
+        surface_name = "surrounding_buildings_wall_{building_name}_{num}".format(building_name=building_name, num=num)
+        building_surfaces.append(RadSurface(surface_name, occ_face, "reflectance0.2"))
+
+    # roofs
+    for num, occ_face in enumerate(building_geometry.roofs):
+        surface_name = "surrounding_buildings_roof_{building_name}_{num}".format(building_name=building_name, num=num)
+        building_surfaces.append(RadSurface(surface_name, occ_face, "reflectance0.2"))
+
+    return building_surfaces
+
+
 def buildings_to_radiance(rad, building_surface_properties, zone_building_names, surroundings_building_names,
                           geometry_pickle_dir):
 
-    # translate buildings into radiance surface
     for building_name in zone_building_names:
         building_geometry = BuildingGeometry.load(os.path.join(geometry_pickle_dir, 'zone', building_name))
+        surfaces = zone_building_to_radiance(building_geometry, building_surface_properties)
+        rad.surfaces.extend(surfaces)
 
-        # windows
-        for num, occ_face in enumerate(building_geometry.windows):
-            surface_name = "win_{building_name}_{num}".format(building_name=building_name, num=num)
-            material_name = "win_{material}".format(material=building_surface_properties['type_win'][building_name])
-            rad.surfaces.append(RadSurface(surface_name, occ_face, material_name))
-
-        # walls
-        for num, occ_face in enumerate(building_geometry.walls):
-            surface_name = "wall_{building_name}_{num}".format(building_name=building_name, num=num)
-            material_name = "wall_{material}".format(material=building_surface_properties['type_wall'][building_name])
-            rad.surfaces.append(RadSurface(surface_name, occ_face, material_name))
-
-        # roofs
-        for num, occ_face in enumerate(building_geometry.roofs):
-            surface_name = "roof_{building_name}_{num}".format(building_name=building_name, num=num)
-            material_name = "roof_{material}".format(material=building_surface_properties['type_roof'][building_name])
-            rad.surfaces.append(RadSurface(surface_name, occ_face, material_name))
-
-    # Only create wall and roof surfaces for surrounding buildings
     for building_name in surroundings_building_names:
         building_geometry = BuildingGeometry.load(os.path.join(geometry_pickle_dir, 'surroundings', building_name))
+        surfaces = surrounding_building_to_radiance(building_geometry)
+        rad.surfaces.extend(surfaces)
 
-        # walls
-        for num, occ_face in enumerate(building_geometry.walls):
-            surface_name = "surrounding_buildings_wall_{building_name}_{num}".format(building_name=building_name,
-                                                                                     num=num)
-            rad.surfaces.append(RadSurface(surface_name, occ_face, "reflectance0.2"))
-
-        # roofs
-        for num, occ_face in enumerate(building_geometry.roofs):
-            surface_name = "surrounding_buildings_roof_{building_name}_{num}".format(building_name=building_name,
-                                                                                     num=num)
-            rad.surfaces.append(RadSurface(surface_name, occ_face, "reflectance0.2"))
