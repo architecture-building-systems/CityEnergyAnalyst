@@ -110,7 +110,7 @@ def calc_sensors_zone(building_names, locator, settings, geometry_pickle_dir):
     sensors_code_zone = []
     sensor_intersection_zone = []
     for building_name in building_names:
-        building_geometry = BuildingGeometry().load(os.path.join(geometry_pickle_dir, 'zone', building_name))
+        building_geometry = BuildingGeometry.load(os.path.join(geometry_pickle_dir, 'zone', building_name))
         # get sensors in the building
         sensors_dir_building, \
         sensors_coords_building, \

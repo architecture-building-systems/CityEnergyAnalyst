@@ -4,7 +4,7 @@ import shutil
 import subprocess
 
 import py4design.py2radiance as py2radiance
-import py4design.py3dmodel.fetch as fetch
+from py4design.py3dmodel.fetch import points_frm_occface
 
 from cea.resources.radiation_daysim.geometry_generator import BuildingGeometry
 
@@ -196,46 +196,45 @@ class CEARad(py2radiance.Rad):
         f.close()
         self.run_cmd(command1)
 
-class RadSurface(py2radiance.Surface):
+
+class RadSurface(object):
     """
     An object that contains all the surface information running a Radiance/Daysim simulation.
 
-    Parameters
-    ----------
-    name :  str
-        The name of the surface.
-
-    points :  pyptlist
-        List of points defining the surface. Pyptlist is a list of tuples of floats. A pypt is a tuple that documents the xyz coordinates of a
-        pt e.g. (x,y,z), thus a pyptlist is a list of tuples e.g. [(x1,y1,z1), (x2,y2,z2), ...]
-
-    material :  str
-        The name of the material of the surface. The material name must be in the base.rad file.
-
-    Attributes
-    ----------
-    see Parameters.
+    :param str name: Name of surface
+    :param OCC.TopoDS.TopoDS_Face occ_face: Polygon (OCC TopoDS_Face) of surface
+    :param str material: Name of material
     """
 
-    def __init__(self, name, points, material):
-        """Initialises the RadSurface class"""
-        super(RadSurface, self).__init__(name, points, material)
+    def __init__(self, name, occ_face, material):
+        self.name = name
+        self.points = points_frm_occface(occ_face)
+        self.material = material
 
     def rad(self):
         """
-        This function writes the surface information into Radiance readable string.
+        Returns surface information as Radiance string format.
 
-        Returns
-        -------
-        rad surface :  str
-            The surface writtenn into radiance readable string.
+        Format from Radiance manual:
+        `modifier` `type` `identifier`
+        `number of string arguments` `string arguments`
+        `number of integer arguments` `integer arguments`
+        `number of decimal arguments` `decimal arguments`
 
+        In this case,
+        `modifier` would be the name of the material
+        `type` would be 'polygon'
+        there will be no string or integer arguments
+        decimal arguments would be points of vertices
+
+        :returns str: The surface written into radiance readable string.
         """
+
         num_of_points = len(self.points) * 3
         points = ""
         for point in self.points:
-            points = points + "    {point_x}  {point_y}  {point_z}\n".format(point_x=(point[0]), point_y=str(point[1]),
-                                                                            point_z=str(point[2]))
+            points = points + "{point_x}  {point_y}  {point_z}\n".format(point_x=point[0], point_y=point[1],
+                                                                         point_z=point[2])
         surface = "{material} polygon {name}\n" \
                   "0\n" \
                   "0\n" \
@@ -244,17 +243,12 @@ class RadSurface(py2radiance.Surface):
         return surface
 
 
-def create_radiance_srf(occface, srfname, srfmat):
-    bface_pts = fetch.points_frm_occface(occface)
-    return RadSurface(srfname, bface_pts, srfmat)
-
-
 def calc_transmissivity(G_value):
     """
     Calculate window transmissivity from its transmittance using an empirical equation from Radiance.
 
-    :param G_value: Solar energy transmittance of windows (dimensionless)
-    :return: Transmissivity
+    :param float G_value: Solar energy transmittance of windows (dimensionless)
+    :return float: Transmissivity
 
     [RADIANCE, 2010] The Radiance 4.0 Synthetic Imaging System. Lawrence Berkeley National Laboratory.
     """
@@ -272,7 +266,7 @@ def add_rad_mat(daysim_mat_file, ageometry_table):
 
         written_mat_name_list = []
         for geo in ageometry_table.index.values:
-            mat_name = "wall" + str(ageometry_table['type_wall'][geo])
+            mat_name = "wall_" + str(ageometry_table['type_wall'][geo])
             if mat_name not in written_mat_name_list:
                 mat_value1 = ageometry_table['r_wall'][geo]
                 mat_value2 = mat_value1
@@ -287,7 +281,7 @@ def add_rad_mat(daysim_mat_file, ageometry_table):
 
                 written_mat_name_list.append(mat_name)
 
-            mat_name = "win" + str(ageometry_table['type_win'][geo])
+            mat_name = "win_" + str(ageometry_table['type_win'][geo])
             if mat_name not in written_mat_name_list:
                 mat_value1 = calc_transmissivity(ageometry_table['G_win'][geo])
                 mat_value2 = mat_value1
@@ -298,7 +292,7 @@ def add_rad_mat(daysim_mat_file, ageometry_table):
                 write_file.writelines('\n' + string + '\n')
                 written_mat_name_list.append(mat_name)
 
-            mat_name = "roof" + str(ageometry_table['type_roof'][geo])
+            mat_name = "roof_" + str(ageometry_table['type_roof'][geo])
             if mat_name not in written_mat_name_list:
                 mat_value1 = ageometry_table['r_roof'][geo]
                 mat_value2 = mat_value1
@@ -316,37 +310,48 @@ def add_rad_mat(daysim_mat_file, ageometry_table):
 
 
 def terrain_to_radiance(rad, tin_occface_terrain):
-    terrain_surfaces = [create_radiance_srf(face, "terrain_srf" + str(num), "reflectance0.2") for num, face in
+    terrain_surfaces = [RadSurface("terrain_srf" + str(num), face,  "reflectance0.2") for num, face in
                         enumerate(tin_occface_terrain)]
     rad.surfaces.extend(terrain_surfaces)
 
 
 def buildings_to_radiance(rad, building_surface_properties, zone_building_names, surroundings_building_names,
                           geometry_pickle_dir):
-    # translate buildings into radiance surface
-    fcnt = 0
-    for bcnt, building_name in enumerate(zone_building_names):
-        building_geometry = BuildingGeometry.load(os.path.join(geometry_pickle_dir, 'zone', building_name))
-        for pypolygon in building_geometry.windows:
-            rad.surfaces.append(create_radiance_srf(pypolygon, "win" + str(bcnt) + str(fcnt),
-                                "win" + str(building_surface_properties['type_win'][building_name])))
-            fcnt += 1
-        for pypolygon in building_geometry.walls:
-            rad.surfaces.append(create_radiance_srf(pypolygon, "wall" + str(bcnt) + str(fcnt),
-                                "wall" + str(building_surface_properties['type_wall'][building_name])))
-            fcnt += 1
-        for pypolygon in building_geometry.roofs:
-            rad.surfaces.append(create_radiance_srf(pypolygon, "roof" + str(bcnt) + str(fcnt),
-                                "roof" + str(building_surface_properties['type_roof'][building_name])))
-            fcnt += 1
 
+    # translate buildings into radiance surface
+    for building_name in zone_building_names:
+        building_geometry = BuildingGeometry.load(os.path.join(geometry_pickle_dir, 'zone', building_name))
+
+        # windows
+        for num, occ_face in enumerate(building_geometry.windows):
+            surface_name = "win_{building_name}_{num}".format(building_name=building_name, num=num)
+            material_name = "win_{material}".format(material=building_surface_properties['type_win'][building_name])
+            rad.surfaces.append(RadSurface(surface_name, occ_face, material_name))
+
+        # walls
+        for num, occ_face in enumerate(building_geometry.walls):
+            surface_name = "wall_{building_name}_{num}".format(building_name=building_name, num=num)
+            material_name = "wall_{material}".format(material=building_surface_properties['type_wall'][building_name])
+            rad.surfaces.append(RadSurface(surface_name, occ_face, material_name))
+
+        # roofs
+        for num, occ_face in enumerate(building_geometry.roofs):
+            surface_name = "roof_{building_name}_{num}".format(building_name=building_name, num=num)
+            material_name = "roof_{material}".format(material=building_surface_properties['type_roof'][building_name])
+            rad.surfaces.append(RadSurface(surface_name, occ_face, material_name))
+
+    # Only create wall and roof surfaces for surrounding buildings
     for building_name in surroundings_building_names:
         building_geometry = BuildingGeometry.load(os.path.join(geometry_pickle_dir, 'surroundings', building_name))
-        ## for the surrounding buildings only, walls and roofs
-        id = 0
-        for pypolygon in building_geometry.walls:
-            rad.surfaces.append(create_radiance_srf(pypolygon, "surroundingbuildings" + str(id), "reflectance0.2"))
-            id += 1
-        for pypolygon in building_geometry.roofs:
-            rad.surfaces.append(create_radiance_srf(pypolygon, "surroundingbuildings" + str(id), "reflectance0.2"))
-            id += 1
+
+        # walls
+        for num, occ_face in enumerate(building_geometry.walls):
+            surface_name = "surrounding_buildings_wall_{building_name}_{num}".format(building_name=building_name,
+                                                                                     num=num)
+            rad.surfaces.append(RadSurface(surface_name, occ_face, "reflectance0.2"))
+
+        # roofs
+        for num, occ_face in enumerate(building_geometry.roofs):
+            surface_name = "surrounding_buildings_roof_{building_name}_{num}".format(building_name=building_name,
+                                                                                     num=num)
+            rad.surfaces.append(RadSurface(surface_name, occ_face, "reflectance0.2"))
