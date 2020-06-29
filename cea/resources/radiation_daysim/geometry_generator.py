@@ -188,9 +188,7 @@ def building_2d_to_3d(locator, zone_df, surroundings_df, elevation_map, config, 
     zone_building_solid_list = calc_building_solids(zone_buildings_df, zone_simplification, elevation_map,
                                                     num_processes)
 
-    # clear in case there are repetitive buildings in the zone file
-    filter_zone_buildings = ~surroundings_df["Name"].isin(zone_building_names)
-    surroundings_buildings_df = surroundings_df[filter_zone_buildings].set_index('Name')
+    surroundings_buildings_df = surroundings_df.set_index('Name')
     surroundings_building_names = surroundings_buildings_df.index.values
     surroundings_building_solid_list = calc_building_solids(surroundings_buildings_df, surroundings_simplification,
                                                             elevation_map, num_processes)
@@ -595,6 +593,10 @@ def check_terrain_bounds(zone_df, surroundings_df, terrain_raster):
 def geometry_main(locator, config, geometry_pickle_dir):
     print("Standardizing coordinate systems")
     zone_df, surroundings_df, terrain_raster = standardize_coordinate_systems(locator)
+
+    # clear in case there are repeated buildings from zone in surroundings file
+    filter_surrounding_buildings = ~surroundings_df["Name"].isin(zone_df["Name"])
+    surroundings_df = surroundings_df[filter_surrounding_buildings]
 
     check_terrain_bounds(zone_df, surroundings_df, terrain_raster)
 
