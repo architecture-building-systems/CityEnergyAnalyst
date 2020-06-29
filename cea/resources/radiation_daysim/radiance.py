@@ -36,7 +36,6 @@ class CEARad(py2radiance.Rad):
                             key=key, value=value, value_type=type(value)))
             raise error
 
-
     def execute_epw2wea(self, epwweatherfile, ground_reflectance=0.2):
         daysimdir_wea = self.daysimdir_wea
         if daysimdir_wea == None:
@@ -316,10 +315,9 @@ def add_rad_mat(daysim_mat_file, ageometry_table):
         write_file.close()
 
 
-def terrain_to_radiance(rad, tin_occface_terrain):
-    terrain_surfaces = [RadSurface("terrain_srf" + str(num), face,  "reflectance0.2") for num, face in
-                        enumerate(tin_occface_terrain)]
-    rad.surfaces.extend(terrain_surfaces)
+def terrain_to_radiance(tin_occface_terrain):
+    return [RadSurface("terrain_srf" + str(num), face,  "reflectance0.2")
+            for num, face in enumerate(tin_occface_terrain)]
 
 
 def zone_building_to_radiance(building_geometry, building_surface_properties):
@@ -364,16 +362,20 @@ def surrounding_building_to_radiance(building_geometry):
     return building_surfaces
 
 
-def buildings_to_radiance(rad, building_surface_properties, zone_building_names, surroundings_building_names,
-                          geometry_pickle_dir):
+def create_rad_geometry(file_path, geometry_terrain, building_surface_properties, zone_building_names,
+                        surroundings_building_names, geometry_pickle_dir):
 
-    for building_name in zone_building_names:
-        building_geometry = BuildingGeometry.load(os.path.join(geometry_pickle_dir, 'zone', building_name))
-        surfaces = zone_building_to_radiance(building_geometry, building_surface_properties)
-        rad.surfaces.extend(surfaces)
+    with open(file_path, "w") as rad_file:
 
-    for building_name in surroundings_building_names:
-        building_geometry = BuildingGeometry.load(os.path.join(geometry_pickle_dir, 'surroundings', building_name))
-        surfaces = surrounding_building_to_radiance(building_geometry)
-        rad.surfaces.extend(surfaces)
+        for terrain_surface in terrain_to_radiance(geometry_terrain):
+            rad_file.write(terrain_surface.rad())
 
+        for building_name in zone_building_names:
+            building_geometry = BuildingGeometry.load(os.path.join(geometry_pickle_dir, 'zone', building_name))
+            for building_surface in zone_building_to_radiance(building_geometry, building_surface_properties):
+                rad_file.write(building_surface.rad())
+
+        for building_name in surroundings_building_names:
+            building_geometry = BuildingGeometry.load(os.path.join(geometry_pickle_dir, 'surroundings', building_name))
+            for building_surface in surrounding_building_to_radiance(building_geometry):
+                rad_file.write(building_surface.rad())
