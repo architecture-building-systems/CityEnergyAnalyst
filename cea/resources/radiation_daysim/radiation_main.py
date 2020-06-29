@@ -145,6 +145,7 @@ def check_daysim_bin_directory(path_hint):
 
     raise ValueError("Could not find Daysim binaries - checked these paths: {}".format(", ".join(folders_to_check)))
 
+
 def main(config):
     """
     This function makes the calculation of solar insolation in X sensor points for every building in the zone
@@ -187,8 +188,7 @@ def main(config):
     print("creating 3D geometry and surfaces")
     geometry_pickle_dir = os.path.join(
         locator.get_temporary_folder(), "{}_radiation_geometry_pickle".format(config.scenario_name))
-    if os.path.exists(geometry_pickle_dir):
-        shutil.rmtree(geometry_pickle_dir)
+
     print("Saving geometry pickle files in: {}".format(geometry_pickle_dir))
     # create geometrical faces of terrain and buildings
     geometry_terrain, zone_building_names, surroundings_building_names = geometry_generator.geometry_main(
@@ -213,8 +213,6 @@ def main(config):
 
     time1 = time.time()
     radiation_singleprocessing(rad, zone_building_names, locator, config.radiation, geometry_pickle_dir)
-
-    shutil.rmtree(geometry_pickle_dir)
 
     print("Daysim simulation finished in %.2f mins" % ((time.time() - time1) / 60.0))
 
