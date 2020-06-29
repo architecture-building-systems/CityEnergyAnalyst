@@ -8926,27 +8926,27 @@ get_optimization_checkpoint:
   file_type: ''
   schema:
     columns:
-      !!python/unicode 'difference_generational_distances':
+      difference_generational_distances:
         description: TODO
         type: TODO
         unit: TODO
         values: TODO
-      !!python/unicode 'generation':
+      generation:
         description: TODO
         type: TODO
         unit: TODO
         values: TODO
-      !!python/unicode 'generational_distances':
+      generational_distances:
         description: TODO
         type: TODO
         unit: TODO
         values: TODO
-      !!python/unicode 'selected_population':
+      selected_population:
         description: TODO
         type: TODO
         unit: TODO
         values: TODO
-      !!python/unicode 'tested_population':
+      tested_population:
         description: TODO
         type: TODO
         unit: TODO
