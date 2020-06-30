@@ -3,9 +3,8 @@ import os
 import shutil
 import subprocess
 
-from collections import deque
-
 from cea import suppres_3rd_party_debug_loggers
+
 suppres_3rd_party_debug_loggers()
 
 import py4design.py2radiance as py2radiance
@@ -16,6 +15,7 @@ from cea.resources.radiation_daysim.geometry_generator import BuildingGeometry
 
 class CEARad(py2radiance.Rad):
     """Overrides some methods of py4design.rad that run DAYSIM commands"""
+
     def __init__(self, base_file_path, data_folder_path, debug=False):
         super(CEARad, self).__init__(base_file_path, data_folder_path)
         self.debug = debug
@@ -61,27 +61,34 @@ class CEARad(py2radiance.Rad):
                            "wea_data_short_file {wea_short_filepath}\n" \
                            "wea_data_short_file_units 1\n" \
                            "lower_direct_threshold 2\n" \
-                           "lower_diffuse_threshold 2".format(site_header=site_header_str,
-                                                              ground_reflectance=ground_reflectance,
-                                                              wea_short_filepath=wea_short_filepath)
+                           "lower_diffuse_threshold 2\n".format(site_header=site_header_str,
+                                                                ground_reflectance=ground_reflectance,
+                                                                wea_short_filepath=wea_short_filepath)
             hea_file.write(weather_info)
 
     def execute_radfiles2daysim(self):
         hea_filepath = self.hea_file
-        head, tail = os.path.split(hea_filepath)
-        radfilename = tail.replace(".hea", "")
-        radgeomfilepath = self.rad_file_path
-        radmaterialfile = self.base_file_path
-        if radgeomfilepath == None or radmaterialfile == None:
-            raise NameError("run .create_rad function before running radfiles2daysim")
+        rad_material_filepath = self.base_file_path
+        rad_geometry_filepath = self.rad_file_path
 
-        hea_file = open(hea_filepath, "a")
-        hea_file.write("\nmaterial_file" + " " + os.path.join("rad", radfilename + "_material.rad"))
-        hea_file.write("\ngeometry_file" + " " + os.path.join("rad", radfilename + "_geometry.rad"))
-        hea_file.write("\nradiance_source_files 2," + radgeomfilepath + "," + radmaterialfile)
-        hea_file.close()
+        hea_file_dir, hea_filename = os.path.split(hea_filepath)
+        daysim_material_filename = hea_filename.replace(".hea", "_material.rad")
+        daysim_geometry_filename = hea_filename.replace(".hea", "_geometry.rad")
+
+        with open(hea_filepath, "a") as hea_file:
+            building_info = "\n" \
+                            "material_file {daysim_material_filepath}\n" \
+                            "geometry_file {daysim_geometry_filepath}\n" \
+                            "radiance_source_files 2, {rad_material_filepath}, {rad_geometry_filepath}\n".format(
+                daysim_material_filepath=os.path.join("rad", daysim_material_filename),
+                daysim_geometry_filepath=os.path.join("rad", daysim_geometry_filename),
+                rad_material_filepath=rad_material_filepath,
+                rad_geometry_filepath=rad_geometry_filepath
+            )
+
+            hea_file.write(building_info)
+
         command1 = 'radfiles2daysim "{}" -g -m -d'.format(hea_filepath)
-
         self.run_cmd(command1)
 
     def execute_gen_dc(self, output_unit):
@@ -212,7 +219,8 @@ class RadSurface(object):
                   "0\n" \
                   "0\n" \
                   "{num_of_points}\n" \
-                  "{points}".format(material=self.material, name=self.name, num_of_points=num_of_points, points=points)
+                  "{points}\n".format(material=self.material, name=self.name, num_of_points=num_of_points,
+                                      points=points)
         return surface
 
 
@@ -283,7 +291,7 @@ def add_rad_mat(daysim_mat_file, ageometry_table):
 
 
 def terrain_to_radiance(tin_occface_terrain):
-    return [RadSurface("terrain_srf" + str(num), face,  "reflectance0.2")
+    return [RadSurface("terrain_srf" + str(num), face, "reflectance0.2")
             for num, face in enumerate(tin_occface_terrain)]
 
 
