@@ -36,52 +36,36 @@ class CEARad(py2radiance.Rad):
                             key=key, value=value, value_type=type(value)))
             raise error
 
-    def execute_epw2wea(self, epwweatherfile, ground_reflectance=0.2):
+    def execute_epw2wea(self, epw_filepath, ground_reflectance=0.2):
         daysimdir_wea = self.daysimdir_wea
-        if daysimdir_wea == None:
-            raise NameError("run .initialise_daysim function before running execute_epw2wea")
-        head, tail = os.path.split(epwweatherfile)
-        wfilename_no_extension = tail.replace(".epw", "")
-        weaweatherfilename = wfilename_no_extension + "_60min.wea"
-        weaweatherfile = os.path.join(daysimdir_wea, weaweatherfilename)
-        command1 = 'epw2wea "{}" "{}"'.format(epwweatherfile, weaweatherfile)
-
-
-        # TODO: Might not need `shell`. Check on a Windows machine that has a space in the username
-        proc = subprocess.Popen(command1, stdout=subprocess.PIPE, shell=True)
-        site_headers = proc.stdout.read()
-        site_headers_list = site_headers.split("\r\n")
         hea_filepath = self.hea_file
-        hea_file = open(hea_filepath, "a")
-        for site_header in site_headers_list:
-            if site_header:
-                hea_file.write("\n" + site_header)
 
-        hea_file.write("\nground_reflectance" + " " + str(ground_reflectance))
-        # get the directory of the long weatherfile
-        hea_file.write("\nwea_data_file" + " " + os.path.join(head, wfilename_no_extension + "_60min.wea"))
-        hea_file.write("\ntime_step" + " " + "60")
-        hea_file.write("\nwea_data_short_file" + " " + os.path.join("wea", wfilename_no_extension + "_60min.wea"))
-        hea_file.write("\nwea_data_short_file_units" + " " + "1")
-        hea_file.write("\nlower_direct_threshold" + " " + "2")
-        hea_file.write("\nlower_diffuse_threshold" + " " + "2")
-        hea_file.close()
-        # check for the sunuphours
-        results = open(weaweatherfile, "r")
-        result_lines = results.readlines()
-        result_lines = result_lines[6:]
-        sunuphrs = 0
-        for result in result_lines:
-            words = result.replace("\n", "")
-            words1 = words.split(" ")
-            direct = float(words1[-1])
-            diffuse = float(words1[-2])
-            total = direct + diffuse
-            if total > 0:
-                sunuphrs = sunuphrs + 1
+        epw_file_dir, epw_filename = os.path.split(epw_filepath)
+        wea_filename = epw_filename.replace(".epw", "_60min.wea")
+        wea_filepath = os.path.join(daysimdir_wea, wea_filename)
+        wea_short_filepath = os.path.join("wea", wea_filename)
 
-        results.close()
-        self.sunuphrs = sunuphrs
+        command1 = 'epw2wea "{epw_filepath}" "{wea_filepath}"'.format(epw_filepath=epw_filepath,
+                                                                      wea_filepath=wea_filepath)
+        print('Running command `{command}`'.format(command=command1))
+        # get site information from stdout of epw2wea
+        proc = subprocess.Popen(command1, stdout=subprocess.PIPE)
+        site_headers = proc.stdout.read()
+        site_header_str = "\n".join(site_headers.split("\r\n"))
+
+        # write weather info to header file
+        with open(hea_filepath, "a") as hea_file:
+            weather_info = "\n" \
+                           "{site_header}\n" \
+                           "ground_reflectance {ground_reflectance}\n" \
+                           "time_step 60\n" \
+                           "wea_data_short_file {wea_short_filepath}\n" \
+                           "wea_data_short_file_units 1\n" \
+                           "lower_direct_threshold 2\n" \
+                           "lower_diffuse_threshold 2".format(site_header=site_header_str,
+                                                              ground_reflectance=ground_reflectance,
+                                                              wea_short_filepath=wea_short_filepath)
+            hea_file.write(weather_info)
 
     def execute_radfiles2daysim(self):
         hea_filepath = self.hea_file
