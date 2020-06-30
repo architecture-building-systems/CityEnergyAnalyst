@@ -28,16 +28,17 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def reader_surface_properties(locator, input_shp):
+def reader_surface_properties(locator):
     """
     This function returns a dataframe with the emissivity values of walls, roof, and windows
     of every building in the scene
-    :param input_shp:
-    :return:
+
+    :param cea.inputlocator.InputLocator locator: CEA InputLocator
+    :returns pd.DataFrame: Dataframe with the emissivity values
     """
 
     # local variables
-    architectural_properties = gpdf.from_file(input_shp).drop('geometry', axis=1)
+    architectural_properties = gpdf.from_file(locator.get_building_architecture())
     surface_database_windows = pd.read_excel(locator.get_database_envelope_systems(), "WINDOW")
     surface_database_roof = pd.read_excel(locator.get_database_envelope_systems(), "ROOF")
     surface_database_walls = pd.read_excel(locator.get_database_envelope_systems(), "WALL")
@@ -175,20 +176,21 @@ def main(config):
         os.environ["GDAL_DATA"] = os.path.join(os.path.dirname(sys.executable), "Library", "share", "gdal")
 
     print("verifying geometry files")
-    print(locator.get_zone_geometry())
-    verify_input_geometry_zone(gpdf.from_file(locator.get_zone_geometry()))
-    verify_input_geometry_surroundings(gpdf.from_file(locator.get_surroundings_geometry()))
+    zone_path = locator.get_zone_geometry()
+    surroundings_path = locator.get_surroundings_geometry()
+    print("zone: {zone_path}\nsurroundings: {surroundings_path}".format(zone_path=zone_path,
+                                                                        surroundings_path=surroundings_path))
+    verify_input_geometry_zone(gpdf.from_file(zone_path))
+    verify_input_geometry_surroundings(gpdf.from_file(surroundings_path))
 
     # import material properties of buildings
-    print("getting geometry materials")
-    building_surface_properties = reader_surface_properties(locator=locator,
-                                                            input_shp=locator.get_building_architecture())
+    print("Getting geometry materials")
+    building_surface_properties = reader_surface_properties(locator)
     building_surface_properties.to_csv(locator.get_radiation_materials())
 
-    print("creating 3D geometry and surfaces")
+    print("Creating 3D geometry and surfaces")
     geometry_pickle_dir = os.path.join(
         locator.get_temporary_folder(), "{}_radiation_geometry_pickle".format(config.scenario_name))
-
     print("Saving geometry pickle files in: {}".format(geometry_pickle_dir))
     # create geometrical faces of terrain and buildings
     geometry_terrain, zone_building_names, surroundings_building_names = geometry_generator.geometry_main(

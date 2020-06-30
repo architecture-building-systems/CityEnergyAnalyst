@@ -195,7 +195,6 @@ def isolation_daysim(chunk_n, rad, building_names, locator, settings, max_global
                          'will eventually crash a daysim instance. To solve it, please reconfigure the radiation tool. '
                          'Just reduce the number of buildings per chunk and try again')
 
-    # add_elevation_weather_file(weather_path)
     print('Transforming weather files to daysim format')
     rad.execute_epw2wea(locator.get_weather_file(), ground_reflectance=settings.albedo)
     print('Transforming radiance files to daysim format')

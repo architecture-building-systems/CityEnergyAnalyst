@@ -183,6 +183,7 @@ def building_2d_to_3d(locator, zone_df, surroundings_df, elevation_map, config, 
     surroundings_simplification = config.radiation.surrounding_geometry
     consider_intersections = config.radiation.consider_intersections
 
+    print('Calculating terrain intersection of building geometries')
     zone_buildings_df = zone_df.set_index('Name')
     zone_building_names = zone_buildings_df.index.values
     zone_building_solid_list = calc_building_solids(zone_buildings_df, zone_simplification, elevation_map,
@@ -225,7 +226,7 @@ def print_progress(i, n, _, __):
 
 
 def print_terrain_intersection_progress(i, n, _, __):
-    print("Calculation for building {i} completed out of {n}".format(i=i + 1, n=n))
+    print("Calculation of terrain intersection for building {i} completed out of {n}".format(i=i + 1, n=n))
 
 
 def are_buildings_close_to_eachother(x_1, y_1, solid2):
