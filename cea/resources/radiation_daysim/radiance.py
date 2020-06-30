@@ -18,7 +18,6 @@ class CEARad(py2radiance.Rad):
     """Overrides some methods of py4design.rad that run DAYSIM commands"""
     def __init__(self, base_file_path, data_folder_path, debug=False):
         super(CEARad, self).__init__(base_file_path, data_folder_path)
-        self.surfaces = deque()
         self.debug = debug
 
     def run_cmd(self, cmd, cwd=None):
