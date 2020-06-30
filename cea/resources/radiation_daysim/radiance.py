@@ -88,55 +88,33 @@ class CEARad(py2radiance.Rad):
 
             hea_file.write(building_info)
 
-        command1 = 'radfiles2daysim "{}" -g -m -d'.format(hea_filepath)
+        command1 = 'radfiles2daysim "{hea_filepath}" -g -m -d'.format(hea_filepath=hea_filepath)
         self.run_cmd(command1)
 
     def execute_gen_dc(self, output_unit):
         hea_filepath = self.hea_file
-        hea_file = open(hea_filepath, "a")
-        sensor_filepath = self.sensor_file_path
-        if sensor_filepath == None:
-            raise NameError(
-                "run .set_sensor_points and create_sensor_input_file function before running execute_gen_dc")
-
         daysim_pts_dir = self.daysimdir_pts
-        if daysim_pts_dir == None:
-            raise NameError("run .initialise_daysim function before running execute_gen_dc")
+        sensor_filepath = self.sensor_file_path
 
-        # first specify the sensor pts
-        sensor_filename = os.path.basename(sensor_filepath)
-        # move the pts file to the daysim folder
-        dest_filepath = os.path.join(daysim_pts_dir, sensor_filename)
-        shutil.move(sensor_filepath, dest_filepath)
-        # write the sensor file location into the .hea
-        hea_file.write("\nsensor_file {rel_sensor_filename}".format(
-            rel_sensor_filename=os.path.join("pts", sensor_filename)))
-        # write the shading header
-        self.write_static_shading(hea_file)
-        # write analysis result file
-        nsensors = len(self.sensor_positions)
-        sensor_str = ""
-        if output_unit == "w/m2":
-            hea_file.write("\noutput_units" + " " + "1")
-            for scnt in range(nsensors):
-                # 0 = lux, 2 = w/m2
-                if scnt == nsensors - 1:
-                    sensor_str = sensor_str + "2"
-                else:
-                    sensor_str = sensor_str + "2 "
+        with open(hea_filepath, "a") as hea_file:
+            # first specify the sensor pts
+            sensor_filename = os.path.basename(sensor_filepath)
+            # move the pts file to the daysim folder
+            dest_filepath = os.path.join(daysim_pts_dir, sensor_filename)
+            shutil.move(sensor_filepath, dest_filepath)
+            # write the sensor file location into the .hea
+            hea_file.write("\nsensor_file {rel_sensor_filename}".format(
+                rel_sensor_filename=os.path.join("pts", sensor_filename)))
+            # write the shading header
+            self.write_static_shading(hea_file)
 
-        if output_unit == "lux":
-            hea_file.write("\noutput_units" + " " + "2")
-            for scnt in range(nsensors):
-                # 0 = lux, 2 = w/m2
-                if scnt == nsensors - 1:
-                    sensor_str = sensor_str + "0"
-                else:
-                    sensor_str = sensor_str + "0 "
+            # write analysis result file
+            if output_unit == "w/m2":
+                hea_file.write("\noutput_units" + " " + "1")
 
-        hea_file.write("\nsensor_file_unit " + sensor_str)
+            if output_unit == "lux":
+                hea_file.write("\noutput_units" + " " + "2")
 
-        hea_file.close()
         # copy the .hea file into the tmp directory
         with open(hea_filepath, "r") as hea_file_read:
             lines = hea_file_read.readlines()
@@ -144,18 +122,16 @@ class CEARad(py2radiance.Rad):
         tmp_directory = os.path.join(self.daysimdir_tmp, "")
 
         # update path to tmp_directory in temp_hea_file
-        lines_modified = []
-        for line in lines:
+        for num, line in enumerate(lines):
             if line.startswith('tmp_directory'):
-                lines_modified.append('tmp_directory {}\n'.format(tmp_directory))
-            else:
-                lines_modified.append(line)
+                lines[num] = 'tmp_directory {tmp_directory}\n'.format(tmp_directory=tmp_directory)
+                break
 
-        hea_basename = os.path.splitext(os.path.basename(hea_filepath))[0]
-        temp_hea_filepath = os.path.join(self.daysimdir_tmp, hea_basename + "temp.hea")
+        hea_filename, _ = os.path.splitext(os.path.basename(hea_filepath))
+        temp_hea_filepath = os.path.join(self.daysimdir_tmp, hea_filename + "temp.hea")
 
         with open(temp_hea_filepath, "w") as temp_hea_file:
-            temp_hea_file.write('\n'.join(lines_modified))
+            temp_hea_file.write('\n'.join(lines))
 
         # execute gen_dc
         command1 = 'gen_dc "{}" -dir'.format(temp_hea_filepath)
