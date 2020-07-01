@@ -155,58 +155,36 @@ def calc_sensors_zone(building_names, locator, settings, geometry_pickle_dir):
     return sensors_coords_zone, sensors_dir_zone, sensors_total_number_list, names_zone, sensors_code_zone, sensor_intersection_zone
 
 
-def isolation_daysim(chunk_n, rad, building_names, locator, settings, max_global, weatherfile, geometry_pickle_dir):
-    # folder for data work
-    daysim_dir = locator.get_temporary_file("temp" + str(chunk_n))
-    print('isolation_daysim: daysim_dir={daysim_dir}'.format(daysim_dir=daysim_dir))
+def isolation_daysim(chunk_n, cea_daysim, building_names, locator, settings, max_global, weatherfile, geometry_pickle_dir):
 
-    # daysim_bin_directory might contain two paths (e.g. "C:\Daysim\bin;C:\Daysim\lib") - in which case, only
-    # use the "bin" folder
-    bin_directory = [d for d in settings.daysim_bin_directory.split(";") if not d.endswith("lib")][0]
-
-    rad.initialise_daysim(daysim_dir, os.path.join(bin_directory, ''))
-    print("\tisolation_daysim: rad.hea_file: {}".format(rad.hea_file))
-    print("\tisolation_daysim: rad.hea_filename: {}".format(rad.hea_filename))
-    print("\tisolation_daysim: rad.daysimdir_ies: {}".format(rad.daysimdir_ies))
-    print("\tisolation_daysim: rad.daysimdir_pts: {}".format(rad.daysimdir_pts))
-    print("\tisolation_daysim: rad.daysimdir_rad: {}".format(rad.daysimdir_rad))
-    print("\tisolation_daysim: rad.daysimdir_res: {}".format(rad.daysimdir_res))
-    print("\tisolation_daysim: rad.daysimdir_tmp: {}".format(rad.daysimdir_tmp))
-    print("\tisolation_daysim: rad.daysimdir_wea: {}".format(rad.daysimdir_wea))
+    # initialize daysim project
+    daysim_project = cea_daysim.initialize_daysim_project('chunk_{n}'.format(n=chunk_n))
+    print('Creating daysim project in: {daysim_dir}'.format(daysim_dir=daysim_project.project_path))
 
     # calculate sensors
     print("Calculating and sending sensor points")
-
     sensors_coords_zone, \
     sensors_dir_zone, \
     sensors_number_zone, \
     names_zone, \
     sensors_code_zone, \
     sensor_intersection_zone = calc_sensors_zone(building_names, locator, settings, geometry_pickle_dir)
-    rad.set_sensor_points(sensors_coords_zone, sensors_dir_zone)
-    create_sensor_input_file(rad, chunk_n)
-    print("\tisolation_daysim: rad.sensor_file_path: {}".format(rad.sensor_file_path))
+    daysim_project.create_sensor_input_file(sensors_coords_zone, sensors_dir_zone, "w/m2")
 
-    num_sensors = sum(sensors_number_zone)
     print("Starting Daysim simulation starts for buildings {buildings}".format(buildings=names_zone))
-    print("Total number of sensors:  {num_sensors}".format(num_sensors=num_sensors))
-    if num_sensors > 50000:
-        raise ValueError('You are sending more than 50000 sensors at the same time, this '
-                         'will eventually crash a daysim instance. To solve it, please reconfigure the radiation tool. '
-                         'Just reduce the number of buildings per chunk and try again')
+    print("Total number of sensors:  {num_sensors}".format(num_sensors=sum(sensors_number_zone)))
 
-    print('Transforming weather files to daysim format')
-    rad.execute_epw2wea(locator.get_weather_file(), ground_reflectance=settings.albedo)
-    print('Transforming radiance files to daysim format')
-    rad.execute_radfiles2daysim()
     print('Writing radiance parameters')
-    rad.write_radiance_parameters(settings.rad_ab, settings.rad_ad, settings.rad_as, settings.rad_ar, settings.rad_aa,
+    daysim_project.write_radiance_parameters(settings.rad_ab, settings.rad_ad, settings.rad_as, settings.rad_ar, settings.rad_aa,
                                   settings.rad_lr, settings.rad_st, settings.rad_sj, settings.rad_lw, settings.rad_dj,
                                   settings.rad_ds, settings.rad_dr, settings.rad_dp)
+
     print('Executing hourly solar isolation calculation')
-    rad.execute_gen_dc("w/m2")
-    rad.execute_ds_illum()
-    solar_res = rad.eval_ill_per_sensor()
+    daysim_project.execute_gen_dc()
+    daysim_project.execute_ds_illum()
+
+    print('Reading results...')
+    solar_res = daysim_project.eval_ill()
 
     # check inconsistencies and replace by max value of weather file
     print('Fixing inconsistencies, if any')
@@ -241,8 +219,8 @@ def isolation_daysim(chunk_n, rad, building_names, locator, settings, max_global
             write_sensor_results(building_name, items_sensor_name_and_result, locator)
 
     # erase daysim folder to avoid conflicts after every iteration
-    print('Removing results folder')
-    shutil.rmtree(daysim_dir)
+    # print('Removing results folder')
+    # shutil.rmtree(daysim_dir)
 
 
 def write_sensor_results(building_name, items_sensor_name_and_result, locator):
