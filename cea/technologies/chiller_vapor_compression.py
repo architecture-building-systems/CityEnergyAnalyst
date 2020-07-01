@@ -9,6 +9,8 @@ import numpy as np
 from cea.technologies.constants import G_VALUE_CENTRALIZED, G_VALUE_DECENTRALIZED, CHILLER_DELTA_T_HEX_CT, \
     CHILLER_DELTA_T_APPROACH, T_EVAP_AHU, T_EVAP_ARU, T_EVAP_SCU, DT_NETWORK_CENTRALIZED, CENTRALIZED_AUX_PERCENTAGE, \
     DECENTRALIZED_AUX_PERCENTAGE, COMPRESSOR_TYPE_LIMIT_LOW, COMPRESSOR_TYPE_LIMIT_HIGH, ASHRAE_CAPACITY_LIMIT
+
+from cea.optimization.constants import VCC_CODE_CENTRALIZED, VCC_CODE_DECENTRALIZED
 from cea.analysis.costs.equations import calc_capex_annualized, calc_opex_annualized
 from cea.utilities.physics import kelvin_to_fahrenheit
 
@@ -23,7 +25,7 @@ __status__ = "Production"
 
 
 # technical model
-def calc_VCC(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_chw_re_K, T_cw_in_K, g_value, min_chiller_size, max_chiller_size, scale):
+def calc_VCC(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_chw_re_K, T_cw_in_K, VCC_chiller):
     """
     For th e operation of a Vapor-compressor chiller between a district cooling network and a condenser with fresh water
     to a cooling tower following [D.J. Swider, 2003]_.
@@ -45,8 +47,7 @@ def calc_VCC(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_chw_re_K, T_cw_in_
         q_cw_W = 0.0
 
     elif q_chw_load_Wh > 0.0:
-        COP = calc_COP_with_carnot_efficiency(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, g_value,
-                                              min_chiller_size, max_chiller_size, scale)
+        COP = calc_COP_with_carnot_efficiency(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, VCC_chiller)
         if COP < 0.0:
             print ('Negative COP: ', COP, T_chw_sup_K, T_chw_re_K, q_chw_load_Wh)
 
@@ -70,11 +71,9 @@ def calc_COP(T_cw_in_K, T_chw_re_K, q_chw_load_Wh):
     return COP
 
 
-def calc_COP_with_carnot_efficiency(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, g_value,
-                                    min_chiller_size, max_chiller_size, scale):
-    PLF = calc_averaged_PLF(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K,
-                                              min_chiller_size, max_chiller_size, scale)  # calculates the weighted average Part load factor across all chillers based on load distribution
-    cop_chiller = g_value * T_chw_sup_K / (T_cw_in_K - T_chw_sup_K) * PLF
+def calc_COP_with_carnot_efficiency(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, VCC_chiller):
+    PLF = calc_averaged_PLF(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, VCC_chiller)  # calculates the weighted average Part load factor across all chillers based on load distribution
+    cop_chiller = VCC_chiller.g_value * T_chw_sup_K / (T_cw_in_K - T_chw_sup_K) * PLF
     return cop_chiller
 
 # Investment costs
@@ -186,7 +185,7 @@ def get_max_VCC_unit_size(locator, VCC_code='CH3'):
     max_VCC_unit_size_W = max(VCC_cost_data['cap_max'].values)
     return max_VCC_unit_size_W
 
-def calc_averaged_PLF(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, min_chiller_size, max_chiller_size, scale):
+def calc_averaged_PLF(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, VCC_chiller):
     """
     Calculates the part load factor of installed Vapor compression chillers for a given cooling load.
     Includes the design of the chillers based on peak load and chiller plant scale to define the part load ratio.
@@ -200,7 +199,7 @@ def calc_averaged_PLF(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, 
     :return float averaged_PLF: averaged part load factor over all chillers [0..1]
     """
     design_capacity = peak_cooling_load  # * 1.15 # for future implementation, a safety factor could be introduced. As of now this would be in conflict with the master_to_slave_variables.WS_BaseVCC_size_W
-    if scale == 'BUILDING':
+    if VCC_chiller.scale == 'BUILDING':
         if design_capacity <= COMPRESSOR_TYPE_LIMIT_LOW: # according to ASHRAE 90.1 Appendix G: if design cooling load smaller than lower limit, implement one screw chiller
             source_type = 'WATER'
             compressor_type = 'SCREW'
@@ -215,20 +214,20 @@ def calc_averaged_PLF(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, 
             n_units = ceil(design_capacity / ASHRAE_CAPACITY_LIMIT) # according to ASHRAE 90.1 Appendix G, chiller shall not be large then 800 tons (2813 kW)
         cooling_capacity_per_unit = design_capacity / n_units  # calculate the capacity per chiller installed
 
-    elif scale == 'DISTRICT':
+    elif VCC_chiller.scale == 'DISTRICT':
         source_type = 'WATER'
         compressor_type = 'CENTRIFUGAL'
-        if design_capacity <= (2*min_chiller_size): # design one chiller for small scale DCS
+        if design_capacity <= (2*VCC_chiller.min_VCC_capacity): # design one chiller for small scale DCS
             n_units = 1
-            cooling_capacity_per_unit = max(design_capacity, min_chiller_size)
-        elif (2*min_chiller_size) <= design_capacity <= max_chiller_size: # design two chillers above the twice the minimum chiller size
+            cooling_capacity_per_unit = max(design_capacity, VCC_chiller.min_VCC_capacity)
+        elif (2*VCC_chiller.min_VCC_capacity) <= design_capacity <= VCC_chiller.max_VCC_capacity: # design two chillers above the twice the minimum chiller size
             n_units = 2
             cooling_capacity_per_unit = design_capacity / n_units
-        elif design_capacity >= max_chiller_size: # design a minimum of 2 chillers if above the maximum chiller size
-            n_units = max(2, ceil(design_capacity / max_chiller_size)) # have minimum size of capacity to quailfy as DCS, have minimum of 2 chillers
+        elif design_capacity >= VCC_chiller.max_VCC_capacity: # design a minimum of 2 chillers if above the maximum chiller size
+            n_units = max(2, ceil(design_capacity / VCC_chiller.max_VCC_capacity)) # have minimum size of capacity to quailfy as DCS, have minimum of 2 chillers
             cooling_capacity_per_unit = design_capacity / n_units
     else:
-        raise AssertionError('No or unexpected scale was assigned even though this should never happen.', scale)
+        raise AssertionError('No or unexpected scale was assigned even though this should never happen.', VCC_chiller.scale)
 
     available_capacity_per_unit = calc_available_capacity(cooling_capacity_per_unit, source_type, compressor_type, T_chw_sup_K, T_cw_in_K) # calculate the available capacity(dependent on conditions)
 
@@ -301,18 +300,40 @@ def calc_available_capacity(rated_capacity, source_type, compressor_type, T_chw_
     return available_capacity
 
 
+
+class VaporCompressionChiller(object):
+    __slots__ = ["max_VCC_capacity", "min_VCC_capacity", "g_value", "scale", "locator"]
+
+    def __init__(self, locator, scale):
+        self.max_VCC_capacity = 0
+        self.min_VCC_capacity = 0
+        self.g_value = 0.0
+        self.scale = scale
+        self.locator = locator
+        self.setup()
+
+    def setup(self):
+        VCC_database = pd.read_excel(self.locator.get_database_conversion_systems(), sheet_name="Chiller")
+        if self.scale == 'DISTRICT':
+            technology_type = VCC_CODE_CENTRALIZED
+        elif self.scale == 'BUILDING':
+            technology_type = VCC_CODE_DECENTRALIZED
+        VCC_database = VCC_database[VCC_database['code'] == technology_type]
+        self.max_VCC_capacity = int(VCC_database['cap_max'])
+        self.min_VCC_capacity = int(VCC_database['cap_min'])
+        self.g_value = float(VCC_database['G_VALUE'])
+
 def main():
-    scale = 'DISTRICT'
+    VCC_chiller.scale = 'DISTRICT'
     peak_cooling_load = 40000000
     Qc_W = 25000000
-    max_chiller_size = 14000000
-    min_chiller_size = 1758000
+    VCC_chiller.max_VCC_capacity = 14000000
+    VCC_chiller.min_VCC_capacity = 1758000
     T_chw_sup_K = 273.15 + 6
     T_chw_re_K = 273.15 + 11
     T_cw_in_K = 273.15 + 28
-    g_value = G_VALUE_CENTRALIZED
-    chiller_operation = calc_VCC(peak_cooling_load, Qc_W, T_chw_sup_K, T_chw_re_K, T_cw_in_K, g_value, min_chiller_size,
-                                 max_chiller_size, scale)
+    VCC_chiller.g_value = G_VALUE_CENTRALIZED
+    chiller_operation = calc_VCC(peak_cooling_load, Qc_W, T_chw_sup_K, T_chw_re_K, T_cw_in_K, VCC_chiller)
     print chiller_operation
 
 
