@@ -15,7 +15,7 @@ import cea.config
 import cea.inputlocator
 from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_surroundings
 from cea.resources.radiation_daysim import daysim_main, geometry_generator
-from cea.resources.radiation_daysim.radiance import add_rad_mat, CEARad, create_rad_geometry
+from cea.resources.radiation_daysim.radiance import add_rad_mat, create_rad_geometry, CEADaySim
 from cea.utilities import epwreader
 
 __author__ = "Paul Neitzel, Kian Wee Chen"
@@ -55,7 +55,7 @@ def reader_surface_properties(locator):
     return surface_properties.set_index('Name').round(decimals=2)
 
 
-def radiation_singleprocessing(rad, zone_building_names, locator, settings, geometry_pickle_dir):
+def radiation_singleprocessing(cea_daysim, zone_building_names, locator, settings, geometry_pickle_dir):
 
     weather_path = locator.get_weather_file()
     # check inconsistencies and replace by max value of weather file
@@ -76,7 +76,7 @@ def radiation_singleprocessing(rad, zone_building_names, locator, settings, geom
 
     for chunk_n, building_names in enumerate(chunks):
         daysim_main.isolation_daysim(
-            chunk_n, rad, building_names, locator, settings, max_global, weatherfile, geometry_pickle_dir)
+            chunk_n, cea_daysim, building_names, locator, settings, max_global, weatherfile, geometry_pickle_dir)
 
 
 def check_daysim_bin_directory(path_hint):
@@ -196,25 +196,27 @@ def main(config):
     geometry_terrain, zone_building_names, surroundings_building_names = geometry_generator.geometry_main(
         locator, config, geometry_pickle_dir)
 
-    print("Sending the scene: geometry and materials to daysim")
-    # send materials
-    daysim_mat = locator.get_temporary_file('default_materials.rad')
-    rad = CEARad(daysim_mat, locator.get_temporary_folder(), debug=config.debug)
-    rad.rad_file_path = os.path.join(rad.data_folder_path, "geometry.rad")
-    print("\tradiation_main: rad.base_file_path: {}".format(rad.base_file_path))
-    print("\tradiation_main: rad.data_folder_path: {}".format(rad.data_folder_path))
-    print("\tradiation_main: rad.command_file: {}".format(rad.command_file))
-    print("\tradiation_main: rad.rad_file_path: {}".format(rad.rad_file_path))
+    # daysim_bin_directory might contain two paths (e.g. "C:\Daysim\bin;C:\Daysim\lib") - in which case, only
+    # use the "bin" folder
+    bin_directory = [d for d in config.radiation.daysim_bin_directory.split(";") if not d.endswith("lib")][0]
+    cea_daysim = CEADaySim(os.path.join(locator.get_temporary_folder(), 'cea_radiation'), bin_directory)
 
-    print("Creating rad materials")
-    add_rad_mat(daysim_mat, building_surface_properties)
+    # create radiance input files
+    print("Creating radiance material file")
+    cea_daysim.create_radiance_material(building_surface_properties)
+    print("Creating radiance geometry file")
+    cea_daysim.create_radiance_geometry(geometry_terrain, building_surface_properties, zone_building_names,
+                                        surroundings_building_names, geometry_pickle_dir)
 
-    print("Creating rad geometry")
-    create_rad_geometry(rad.rad_file_path, geometry_terrain, building_surface_properties, zone_building_names,
-                        surroundings_building_names, geometry_pickle_dir)
+    print("Converting files for DAYSIM")
+    weather_file = locator.get_weather_file()
+    print('Transforming weather files to daysim format')
+    cea_daysim.execute_epw2wea(weather_file)
+    print('Transforming radiance files to daysim format')
+    cea_daysim.execute_radfiles2daysim()
 
     time1 = time.time()
-    radiation_singleprocessing(rad, zone_building_names, locator, config.radiation, geometry_pickle_dir)
+    radiation_singleprocessing(cea_daysim, zone_building_names, locator, config.radiation, geometry_pickle_dir)
 
     print("Daysim simulation finished in %.2f mins" % ((time.time() - time1) / 60.0))
 

@@ -1,156 +1,16 @@
 import math
 import os
-import shutil
 import subprocess
 
+import pandas as pd
+
 from cea import suppres_3rd_party_debug_loggers
+from cea.resources.radiation_daysim.geometry_generator import BuildingGeometry
 
 suppres_3rd_party_debug_loggers()
 
-import pandas as pd
 import py4design.py2radiance as py2radiance
 from py4design.py3dmodel.fetch import points_frm_occface
-
-from cea.resources.radiation_daysim.geometry_generator import BuildingGeometry
-
-
-class CEARad(py2radiance.Rad):
-    """Overrides some methods of py4design.rad that run DAYSIM commands"""
-
-    def __init__(self, base_file_path, data_folder_path, debug=False):
-        super(CEARad, self).__init__(base_file_path, data_folder_path)
-        self.debug = debug
-
-    def run_cmd(self, cmd, cwd=None):
-        # Verbose output if debug is true
-        print('Running command `{}`{}'.format(cmd, '' if cwd is None else ' in `{}`'.format(cwd)))
-        try:
-            # Stops script if commands fail (i.e non-zero exit code)
-            subprocess.check_call(cmd, cwd=cwd, stderr=subprocess.STDOUT, env=os.environ)
-        except TypeError as error:
-            if error.message == "environment can only contain strings":
-                for key in os.environ.keys():
-                    value = os.environ[key]
-                    if not isinstance(value, str):
-                        print("Bad ENVIRON key: {key}={value} ({value_type})".format(
-                            key=key, value=value, value_type=type(value)))
-            raise error
-
-    def execute_epw2wea(self, epw_filepath, ground_reflectance=0.2):
-        daysimdir_wea = self.daysimdir_wea
-        hea_filepath = self.hea_file
-
-        epw_file_dir, epw_filename = os.path.split(epw_filepath)
-        wea_filename = epw_filename.replace(".epw", "_60min.wea")
-        wea_filepath = os.path.join(daysimdir_wea, wea_filename)
-        wea_short_filepath = os.path.join("wea", wea_filename)
-
-        command1 = 'epw2wea "{epw_filepath}" "{wea_filepath}"'.format(epw_filepath=epw_filepath,
-                                                                      wea_filepath=wea_filepath)
-        print('Running command `{command}`'.format(command=command1))
-        # get site information from stdout of epw2wea
-        proc = subprocess.Popen(command1, stdout=subprocess.PIPE)
-        site_headers = proc.stdout.read()
-        site_header_str = "\n".join(site_headers.split("\r\n"))
-
-        # write weather info to header file
-        with open(hea_filepath, "a") as hea_file:
-            weather_info = "\n" \
-                           "{site_header}\n" \
-                           "ground_reflectance {ground_reflectance}\n" \
-                           "time_step 60\n" \
-                           "wea_data_short_file {wea_short_filepath}\n" \
-                           "wea_data_short_file_units 1\n" \
-                           "lower_direct_threshold 2\n" \
-                           "lower_diffuse_threshold 2\n".format(site_header=site_header_str,
-                                                                ground_reflectance=ground_reflectance,
-                                                                wea_short_filepath=wea_short_filepath)
-            hea_file.write(weather_info)
-
-    def execute_radfiles2daysim(self):
-        hea_filepath = self.hea_file
-        rad_material_filepath = self.base_file_path
-        rad_geometry_filepath = self.rad_file_path
-
-        hea_file_dir, hea_filename = os.path.split(hea_filepath)
-        daysim_material_filename = hea_filename.replace(".hea", "_material.rad")
-        daysim_geometry_filename = hea_filename.replace(".hea", "_geometry.rad")
-
-        with open(hea_filepath, "a") as hea_file:
-            building_info = "\n" \
-                            "material_file {daysim_material_filepath}\n" \
-                            "geometry_file {daysim_geometry_filepath}\n" \
-                            "radiance_source_files 2, {rad_material_filepath}, {rad_geometry_filepath}\n".format(
-                daysim_material_filepath=os.path.join("rad", daysim_material_filename),
-                daysim_geometry_filepath=os.path.join("rad", daysim_geometry_filename),
-                rad_material_filepath=rad_material_filepath,
-                rad_geometry_filepath=rad_geometry_filepath
-            )
-
-            hea_file.write(building_info)
-
-        command1 = 'radfiles2daysim "{hea_filepath}" -g -m -d'.format(hea_filepath=hea_filepath)
-        self.run_cmd(command1)
-
-    def execute_gen_dc(self, output_unit):
-        hea_filepath = self.hea_file
-        daysim_pts_dir = self.daysimdir_pts
-        sensor_filepath = self.sensor_file_path
-
-        with open(hea_filepath, "a") as hea_file:
-            # first specify the sensor pts
-            sensor_filename = os.path.basename(sensor_filepath)
-            # move the pts file to the daysim folder
-            dest_filepath = os.path.join(daysim_pts_dir, sensor_filename)
-            shutil.move(sensor_filepath, dest_filepath)
-            # write the sensor file location into the .hea
-            hea_file.write("\nsensor_file {rel_sensor_filename}".format(
-                rel_sensor_filename=os.path.join("pts", sensor_filename)))
-            # write the shading header
-            self.write_static_shading(hea_file)
-
-            # write analysis result file
-            if output_unit == "w/m2":
-                hea_file.write("\noutput_units" + " " + "1")
-
-            if output_unit == "lux":
-                hea_file.write("\noutput_units" + " " + "2")
-
-        # copy the .hea file into the tmp directory
-        with open(hea_filepath, "r") as hea_file_read:
-            lines = hea_file_read.readlines()
-
-        tmp_directory = os.path.join(self.daysimdir_tmp, "")
-
-        # update path to tmp_directory in temp_hea_file
-        for num, line in enumerate(lines):
-            if line.startswith('tmp_directory'):
-                lines[num] = 'tmp_directory {tmp_directory}\n'.format(tmp_directory=tmp_directory)
-                break
-
-        hea_filename, _ = os.path.splitext(os.path.basename(hea_filepath))
-        temp_hea_filepath = os.path.join(self.daysimdir_tmp, hea_filename + "temp.hea")
-
-        with open(temp_hea_filepath, "w") as temp_hea_file:
-            temp_hea_file.write('\n'.join(lines))
-
-        # execute gen_dc
-        command1 = 'gen_dc "{}" -dir'.format(temp_hea_filepath)
-        command2 = 'gen_dc "{}" -dif'.format(temp_hea_filepath)
-        command3 = 'gen_dc "{}" -paste'.format(temp_hea_filepath)
-
-        self.run_cmd(command1)
-        self.run_cmd(command2)
-        self.run_cmd(command3)
-
-    def execute_ds_illum(self):
-        hea_filepath = self.hea_file
-        head, tail = os.path.split(hea_filepath)
-
-        # execute ds_illum
-        command1 = 'ds_illum "{}"'.format(hea_filepath)
-
-        self.run_cmd(command1)
 
 
 class CEADaySim(object):
@@ -178,8 +38,8 @@ class CEADaySim(object):
         if not os.path.exists(self.projects_dir):
             os.makedirs(self.projects_dir)
 
-    def initialize_daysim_project(self, project_name, project_directory):
-        return DaySimProject(project_name, project_directory, self.daysim_dir,
+    def initialize_daysim_project(self, project_name):
+        return DaySimProject(project_name, self.projects_dir, self.daysim_dir,
                              self.daysim_material_path, self.daysim_geometry_path, self.wea_weather_path,
                              self.site_info)
 
@@ -207,8 +67,7 @@ class CEADaySim(object):
             raise error
 
     @staticmethod
-    def generate_project_header(project_name, project_directory, daysim_bin_directory):
-        tmp_directory = os.path.join(project_directory, "tmp")
+    def generate_project_header(project_name, project_directory, tmp_directory, daysim_bin_directory):
         return "project_name {project_name}\n" \
                "project_directory {project_directory}\n" \
                "bin_directory {bin_directory}\n" \
@@ -242,8 +101,9 @@ class CEADaySim(object):
         site_headers = proc.stdout.read()
 
         self.site_info = "{epw2wea_output}\n" \
-                         "{ground_reflectance}\n".format(epw2wea_output="\n".join(site_headers.split("\r\n")),
-                                                         ground_reflectance=ground_reflectance)
+                         "ground_reflectance {ground_reflectance}\n".format(
+            epw2wea_output="\n".join(site_headers.split("\r\n")),
+            ground_reflectance=ground_reflectance)
 
         # Save info of original epw file
         weather_info_path = os.path.join(self.common_inputs, "weather_info.txt")
@@ -253,7 +113,8 @@ class CEADaySim(object):
 
     def execute_radfiles2daysim(self):
         hea_path = os.path.join(self.common_inputs, "rad2daysim.hea")
-        project_header = self.generate_project_header("rad2daysim", self.common_inputs, self.daysim_dir)
+        tmp_path = os.path.join(self.common_inputs, "tmp", "")
+        project_header = self.generate_project_header("rad2daysim", self.common_inputs, tmp_path, self.daysim_dir)
         geometry_header = self.generate_geometry_header(os.path.basename(self.daysim_material_path),
                                                         os.path.basename(self.daysim_geometry_path))
 
@@ -281,14 +142,11 @@ class DaySimProject(object):
         # Project info
         self.project_name = project_name
         self.project_directory = project_directory
-        self.project_path = os.path.join(project_directory, project_name)
-        self.daysim_bin_directory = daysim_bin_directory
+        # make sure folder paths have trailing slash (gen_dc will fail otherwise)
+        self.project_path = os.path.join(project_directory, project_name, "")
+        self.tmp_directory = os.path.join(self.project_path, "tmp", "")
+        self.daysim_bin_directory = os.path.join(daysim_bin_directory, "")
         self._create_folders()
-
-        self.hea_path = os.path.join(self.project_path, "{project_name}.hea".format(project_name=project_name))
-        # Header Properties
-        self.site_info = site_info
-        self._create_project_header_file()
 
         # Input files
         self.daysim_material_path = daysim_material_path
@@ -296,16 +154,23 @@ class DaySimProject(object):
         self.wea_weather_path = wea_weather_path
         self.sensor_path = os.path.join(self.project_path, "sensors.pts")
 
+        self.hea_path = os.path.join(self.project_path, "{project_name}.hea".format(project_name=project_name))
+        # Header Properties
+        self.site_info = site_info
+        self._create_project_header_file()
+
     def _create_folders(self):
         if not os.path.exists(self.project_path):
             os.makedirs(self.project_path)
+        if not os.path.exists(self.tmp_directory):
+            os.makedirs(self.tmp_directory)
 
     def _create_project_header_file(self):
         daysim_material_path = os.path.relpath(self.daysim_material_path, self.project_path)
         daysim_geometry_path = os.path.relpath(self.daysim_geometry_path, self.project_path)
         wea_weather_path = os.path.relpath(self.wea_weather_path, self.project_path)
 
-        project_header = CEADaySim.generate_project_header(self.project_name, self.project_directory,
+        project_header = CEADaySim.generate_project_header(self.project_name, self.project_path, self.tmp_directory,
                                                            self.daysim_bin_directory)
         geometry_header = CEADaySim.generate_geometry_header(daysim_material_path, daysim_geometry_path)
         site_info_header = CEADaySim.generate_site_info_header(self.site_info, wea_weather_path)
@@ -324,7 +189,7 @@ class DaySimProject(object):
         output_units <integrer n>
 
         n = 1 solar irradiance (W/m2)
-        n = 2 illumiance (lux) [default]
+        n = 2 illumiance (lux)
 
         :param sensor_positions:
         :param sensor_normals:
