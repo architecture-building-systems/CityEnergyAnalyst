@@ -5,7 +5,15 @@ from cea.technologies.chiller_vapor_compression import calc_averaged_PLF, calc_a
 
 class TestLoadDistribution(unittest.TestCase):
     def test_calc_averaged_PLF(self):
-        result = calc_averaged_PLF(40000000, 25000000, 279.15, 301.15, 1758000, 14000000, "DISTRICT")
+        class dummy_VCC_chiller(object):
+            def __init__(self):
+                self.max_VCC_capacity = 14000000
+                self.min_VCC_capacity = 1758000
+                self.scale = "DISTRICT"
+
+        VCC_chiller = dummy_VCC_chiller()
+
+        result = calc_averaged_PLF(40000000, 25000000, 279.15, 301.15, VCC_chiller)
         self.assertAlmostEqual(0.9735208306617418, result)
 
     def test_calc_available_capacity(self):
