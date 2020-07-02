@@ -152,7 +152,6 @@ def district_cooling_network(locator,
         master_to_slave_variables.NG_Trigen_CCGT_size_electrical_W = E_Trigen_NG_gen_W.max()
 
         # BACK-UPP VCC - AIR SOURCE
-        scale = 'DISTRICT'
         master_to_slave_variables.AS_BackupVCC_size_W = np.amax(Q_BackupVCC_AS_gen_W)
         size_chiller_CT = master_to_slave_variables.AS_BackupVCC_size_W
         if master_to_slave_variables.AS_BackupVCC_size_W != 0.0:
