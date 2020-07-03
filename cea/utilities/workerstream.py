@@ -1,9 +1,6 @@
 """
 This file implements ``WorkerStream`` for capturing stdout and stderr.
 """
-
-
-
 import queue
 import sys
 
@@ -44,9 +41,9 @@ class HttpWorkerStream(object):
 class QueueWorkerStream(object):
     """File-like object for wrapping the output of the scripts with queues - to be created in child process"""
 
-    def __init__(self, name, queue):
+    def __init__(self, name, q):
         self.name = name  # 'stdout' or 'stderr'
-        self.queue = queue
+        self.q = q
 
     def __repr__(self):
         return "QueueWorkerStream({name})".format(name=self.name)
@@ -55,7 +52,7 @@ class QueueWorkerStream(object):
         pass
 
     def write(self, str):
-        self.queue.put((self.name, str))
+        self.q.put((self.name, str))
 
     def isatty(self):
         return False
@@ -64,10 +61,10 @@ class QueueWorkerStream(object):
         pass
 
 
-def stream_from_queue(queue):
+def stream_from_queue(q):
     """Stream the contents from the queue to STDOUT / STDERR - to be called from parent process"""
     try:
-        stream, msg = queue.get(block=True, timeout=0.1)
+        stream, msg = q.get(block=True, timeout=0.1)
         if stream == 'stdout':
             sys.stdout.write(msg)
         elif stream == 'stderr':

@@ -2,8 +2,6 @@
 Tests to make sure the schemas.yml file is structurally sound.
 """
 
-
-
 import re
 import unittest
 
@@ -127,18 +125,19 @@ class TestSchemas(unittest.TestCase):
                     for col in ws_schema.keys():
                         self.assertIn("type", ws_schema[col],
                                       "Missing type definition for {lm}/{ws}/{col}".format(
-                                                lm=lm, ws=ws, col=col))
+                                          lm=lm, ws=ws, col=col))
                         col_type = ws_schema[col]["type"]
                         self.assertIn(col_type, valid_types,
                                       "Invalid type definition for {lm}/{ws}/{col}: {type}".format(
-                                                lm=lm, ws=ws, col=col, type=col_type))
+                                          lm=lm, ws=ws, col=col, type=col_type))
             elif schemas[lm]["file_type"] in {"shp", "dbf", "csv"}:
                 for col in schema["columns"].keys():
                     self.assertIn("type", schema["columns"][col],
                                   "Missing type definition for {lm}/{col}".format(lm=lm, col=col))
                     col_type = schema["columns"][col]["type"]
                     self.assertIn(col_type, valid_types,
-                                  "Invalid type definition for {lm}/{col}: {type}".format(lm=lm, col=col, type=col_type))
+                                  "Invalid type definition for {lm}/{col}: {type}".format(lm=lm, col=col,
+                                                                                          type=col_type))
 
     def test_each_lm_has_created_by(self):
         schemas = cea.schemas.schemas(plugins=[])
