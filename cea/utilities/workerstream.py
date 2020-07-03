@@ -4,7 +4,7 @@ This file implements ``WorkerStream`` for capturing stdout and stderr.
 
 
 
-import Queue
+import queue
 import sys
 
 
@@ -72,5 +72,5 @@ def stream_from_queue(queue):
             sys.stdout.write(msg)
         elif stream == 'stderr':
             sys.stderr.write(msg)
-    except Queue.Empty:
+    except queue.Empty:
         pass

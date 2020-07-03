@@ -98,7 +98,7 @@ def __multiprocess_wrapper(func, processes, on_complete):
         pool.close()
         pool.join()
 
-        # process the rest of the Queue
+        # process the rest of the queue
         while not queue.empty():
             stream_from_queue(queue)
         return result

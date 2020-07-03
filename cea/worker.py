@@ -16,7 +16,7 @@ as an URL for locating the /server/jobs api.
 import sys
 import requests
 import traceback
-import Queue
+import queue
 import threading
 import cea.config
 import cea.scripts
@@ -48,7 +48,7 @@ def consume_nowait(queue, msg):
                 msg = queue.get_nowait()
             # msg is now EOFError, put it back
             queue.put(EOFError)
-        except Queue.Empty:
+        except queue.Empty:
             # we have read all there is in the queue for now
             pass
         finally:
@@ -71,7 +71,7 @@ class JobServerStream(object):
         self.jobid = jobid
         self.server = server
         self.stream = stream  # keep the original STDOUT around for debugging purposes
-        self.queue = Queue.Queue()
+        self.queue = queue.Queue()
         self.stream_poster = threading.Thread(target=stream_poster, args=[jobid, server, self.queue])
         self.stream_poster.start()
 
