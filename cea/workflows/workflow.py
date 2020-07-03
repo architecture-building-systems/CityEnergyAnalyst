@@ -78,17 +78,21 @@ def main(config):
             if resume_mode_on and i <= resume_step:
                 # skip steps already completed while resuming
                 print("Skipping workflow step {i}: script={script}".format(i=i, script=step["script"]))
+                write_resume_info(resume_yml, resume_dict, workflow_yml, i)
                 continue
             do_script_step(config, i, step, trace_input)
         elif "config" in step:
             config = do_config_step(config, step)
         else:
             raise ValueError("Invalid step configuration: {i} - {step}".format(i=i, step=step))
+        write_resume_info(resume_yml, resume_dict, workflow_yml, i)
 
-        # write out information for resuming
-        resume_dict[workflow_yml] = i
-        with open(resume_yml, 'w') as resume_fp:
-            yaml.dump(resume_dict, resume_fp, indent=4)
+
+def write_resume_info(resume_yml, resume_dict, workflow_yml, i):
+    # write out information for resuming
+    resume_dict[workflow_yml] = i
+    with open(resume_yml, 'w') as resume_fp:
+        yaml.dump(resume_dict, resume_fp, indent=4)
 
 
 def read_resume_info(resume_yml, workflow_yml):
