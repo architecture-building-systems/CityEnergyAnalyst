@@ -283,11 +283,14 @@ def parse_numerical_range_value(value, num_type):
 
     num = r'-?\d+(?:.\d+)?'
     num_or_n = r'{num}|n'.format(num=num)
-    regex = r'{{({num_or_n})...({num_or_n})}}'.format(num_or_n=num_or_n)
+
+    # match {1...n}-style values
+    regex = r'{{(?P<first>{num_or_n})(...|,)(?P<second>{num_or_n})}}'.format(num_or_n=num_or_n)
     match = re.match(regex, value)
+
     if match is None:
         raise ValueError("values property not in '{{n...n}}' format. Got: '{value}'".format(value=value))
-    return parse_string_num(match.group(1)), parse_string_num(match.group(2))
+    return parse_string_num(match.group("first")), parse_string_num(match.group("second"))
 
 
 if __name__ == '__main__':
