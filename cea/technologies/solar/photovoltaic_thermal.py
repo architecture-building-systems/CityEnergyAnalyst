@@ -188,7 +188,7 @@ def calc_PVT_generation(sensor_groups, weather_data, date_local, solar_propertie
 
     list_results_from_PVT = list(range(number_groups))
 
-    potential = pd.DataFrame(index=[range(HOURS_IN_YEAR)])
+    potential = pd.DataFrame(index=range(HOURS_IN_YEAR))
     panel_orientations = ['walls_south', 'walls_north', 'roofs_top', 'walls_east', 'walls_west']
     for panel_orientation in panel_orientations:
         potential['PVT_' + panel_orientation + '_Q_kWh'] = 0.0

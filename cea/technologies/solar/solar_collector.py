@@ -176,7 +176,7 @@ def calc_SC_generation(sensor_groups, weather_data, date_local, solar_properties
     total_aux_el_kWh = [0 for i in range(number_groups)]
     total_Qh_output_kWh = [0 for i in range(number_groups)]
 
-    potential = pd.DataFrame(index=[range(HOURS_IN_YEAR)])
+    potential = pd.DataFrame(index=range(HOURS_IN_YEAR))
     panel_orientations = ['walls_south', 'walls_north', 'roofs_top', 'walls_east', 'walls_west']
     for panel_orientation in panel_orientations:
         potential['SC_'+ type_panel + '_' + panel_orientation + '_Q_kWh'] = 0
