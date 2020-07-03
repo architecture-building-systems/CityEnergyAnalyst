@@ -2,9 +2,9 @@
 """
 Heating and cooling coils of Air handling units
 """
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
+
+absolute_import
+
 import scipy.optimize as sopt
 import scipy
 import numpy as np

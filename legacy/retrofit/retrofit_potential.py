@@ -2,7 +2,7 @@
 """Building retrofit potential analysis
 """
 
-from __future__ import division
+
 
 import shutil
 import os

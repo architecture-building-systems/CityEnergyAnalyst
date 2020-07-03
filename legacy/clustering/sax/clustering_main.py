@@ -7,11 +7,11 @@ using SAX method for timeseries.
 J. Fonseca  script development          27.10.16
 
 """
-from __future__ import print_function
-from __future__ import division
 
 
-from __future__ import division
+
+
+
 
 import os
 import time

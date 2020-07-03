@@ -3,8 +3,8 @@ Install the grasshopper interface. This assumes that the python path for grassho
 ``%APPDATA%\McNeel\Rhinoceros\5.0\scripts``.
 """
 
-from __future__ import division
-from __future__ import print_function
+
+
 
 import os
 import sys

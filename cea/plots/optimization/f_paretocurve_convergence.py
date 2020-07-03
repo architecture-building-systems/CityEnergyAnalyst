@@ -2,9 +2,9 @@
 cehck perfromacne of pareto curve
 https://arxiv.org/pdf/1901.00577.pdf
 """
-from __future__ import division
-from __future__ import print_function
-from __future__ import absolute_import
+
+
+absolute_import
 
 import json
 

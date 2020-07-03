@@ -1,4 +1,4 @@
-from __future__ import division
+
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF, RationalQuadratic,WhiteKernel, ExpSineSquared
 import pickle

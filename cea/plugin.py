@@ -1,9 +1,9 @@
 """
 A base class for creating CEA plugins. Subclass this class in your own namespace to become a CEA plugin.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
+
+absolute_import
 
 import importlib
 import os

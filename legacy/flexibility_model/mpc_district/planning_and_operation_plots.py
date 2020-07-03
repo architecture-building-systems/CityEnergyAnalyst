@@ -1,4 +1,4 @@
-from __future__ import division
+
 import matplotlib
 import matplotlib.pyplot as plt
 import re

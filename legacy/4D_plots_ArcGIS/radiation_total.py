@@ -1,7 +1,7 @@
 """
 Total radiation calculator from the insolation files
 """
-from __future__ import division
+
 import pandas as pd
 from cea.utilities import dbf
 import cea.inputlocator

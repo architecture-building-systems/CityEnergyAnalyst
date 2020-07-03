@@ -1,7 +1,7 @@
 """
 Solar vertical insolation algorithm based on ArcGIS Solar Analyst
 """
-from __future__ import division
+
 
 import datetime
 import os

@@ -6,7 +6,7 @@
     (3) add delay to time-sensitive inputs
     (4) return the input and target matrices
 """
-from __future__ import division
+
 import pandas as pd
 import cea.inputlocator
 import cea.config

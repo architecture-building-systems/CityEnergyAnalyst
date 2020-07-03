@@ -5,9 +5,9 @@ building properties algorithm
 # HISTORY:
 # J. A. Fonseca  script development          22.03.15
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+absolute_import
+
+
 
 import warnings
 

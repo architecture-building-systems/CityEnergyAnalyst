@@ -4,7 +4,7 @@ Multi-objective optimization of the variables ``word_size`` and ``alphabet_size`
 
 Step required to get the right number of clusters in a semi - non-supervised manner.
 """
-from __future__ import division
+
 
 import math
 import pickle

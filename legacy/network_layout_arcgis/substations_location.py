@@ -4,7 +4,7 @@ it is estimated as the centroid of buildings.
 """
 
 
-from __future__ import division
+
 from geopandas import GeoDataFrame as gdf
 import cea.inputlocator
 import cea.config

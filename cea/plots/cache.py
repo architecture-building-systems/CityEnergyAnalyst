@@ -4,9 +4,9 @@ and dependencies (a list of files that are used to produce that data) as well as
 The cache object is passed to the `calc_graph` method and the plot is responsible for retrieving data from the cache.
 """
 
-from __future__ import division
-from __future__ import print_function
-from __future__ import absolute_import
+
+
+absolute_import
 
 import functools
 import hashlib

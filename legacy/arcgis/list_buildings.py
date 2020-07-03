@@ -4,7 +4,7 @@ List all the buildings in a scenario (using the locator)
 The reason for this script is that the ArcGIS interface is running with a different python and therefore we can't
 just use that locator - it does not have access to the geopandas library.
 """
-from __future__ import print_function
+
 
 import sys
 import cea.config

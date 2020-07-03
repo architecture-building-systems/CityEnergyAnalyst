@@ -5,7 +5,7 @@ then runs the demand calculation of CEA for all the samples. It delivers a json 
 the results of cv_rmse and rmse for each sample.
 """
 
-from __future__ import division
+
 import pandas as pd
 import cea
 import numpy as np

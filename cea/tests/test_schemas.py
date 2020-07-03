@@ -1,9 +1,9 @@
 """
 Tests to make sure the schemas.yml file is structurally sound.
 """
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import division
+
+absolute_import
+
 import re
 import unittest
 

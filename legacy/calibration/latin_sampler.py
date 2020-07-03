@@ -1,4 +1,4 @@
-from __future__ import division
+
 from scipy.stats import triang
 from scipy.stats import norm
 from scipy.stats import uniform

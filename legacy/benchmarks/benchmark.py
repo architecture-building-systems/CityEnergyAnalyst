@@ -2,7 +2,7 @@
 """
 Benchmark plots
 """
-from __future__ import division
+
 
 import os
 

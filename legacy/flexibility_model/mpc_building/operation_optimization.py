@@ -1,4 +1,4 @@
-from __future__ import division
+
 from pyomo.environ import *
 
 __author__ = "Sebastian Troitzsch"

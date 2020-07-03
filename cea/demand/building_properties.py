@@ -2,9 +2,9 @@
 Classes of building properties
 """
 
-from __future__ import division
-from __future__ import print_function
-from __future__ import absolute_import
+
+
+absolute_import
 
 
 import numpy as np

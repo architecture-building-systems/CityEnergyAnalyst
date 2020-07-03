@@ -4,7 +4,7 @@
     (1) activates multiprocessing for parallel computation
     (2) stacks the results into a single matrix
 """
-from __future__ import division
+
 import multiprocessing as mp
 import numpy as np
 from cea.demand.demand_main import properties_and_schedule

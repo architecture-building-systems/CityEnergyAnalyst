@@ -7,9 +7,9 @@ This script performs the following:
     - Opens the html files of the corresponding change files from Gitdiff (not yet functional)
 
 """
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import division
+
+absolute_import
+
 import cea.config
 import cea.inputlocator
 import os

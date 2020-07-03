@@ -9,7 +9,7 @@ J. Fonseca  script development          27.10.16
 
 """
 
-from __future__ import division
+
 
 # see https://github.com/Theano/Theano/issues/6568 for reasoning behind the following two lines
 import os
