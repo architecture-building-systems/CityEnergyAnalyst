@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
+
+absolute_import
+
 from cea.demand import control_heating_cooling_systems
 from cea.demand.constants import TEMPERATURE_ZONE_CONTROL_NIGHT_FLUSHING, DELTA_T_NIGHT_FLUSHING
 

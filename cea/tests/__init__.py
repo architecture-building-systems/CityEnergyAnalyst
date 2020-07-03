@@ -2,9 +2,9 @@
 Run the CEA scripts and unit tests as part of our CI efforts (cf. The Jenkins)
 """
 
-from __future__ import division
-from __future__ import print_function
-from __future__ import absolute_import
+
+
+absolute_import
 
 import os
 import shutil

@@ -1,6 +1,6 @@
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
+
+absolute_import
+
 
 
 def normalize_fitnesses(scaler_dict, fitnesses_population):

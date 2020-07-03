@@ -6,9 +6,9 @@ and .tiff (terrain)
 into 3D geometry with windows and roof equivalent to LOD3
 
 """
-from __future__ import division
-from __future__ import print_function
-from __future__ import absolute_import
+
+
+absolute_import
 
 import cea
 cea.suppres_3rd_party_debug_loggers()

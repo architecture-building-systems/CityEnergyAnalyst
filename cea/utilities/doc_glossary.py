@@ -5,9 +5,9 @@ Builds input_files.rst and output_files.rst using a jinja 2 template located in 
 and output_files.rst are referenced by glossary.rst.
 
 """
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import division
+
+absolute_import
+
 
 import os
 import cea.config

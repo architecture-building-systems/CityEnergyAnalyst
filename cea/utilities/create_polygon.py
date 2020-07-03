@@ -2,9 +2,9 @@
 Creates a polygon shapefile from a list of comma-separated coordinate tuples and places it in building geometry folder
 """
 
-from __future__ import division
-from __future__ import print_function
-from __future__ import absolute_import
+
+
+absolute_import
 
 import os
 

@@ -11,9 +11,9 @@ All results are saved in the folder of "locator.get_optimization_slave_results_f
 IMPORTANT : Storage is used for solar thermal energy ONLY!
 It is possible to turn off the plots by setting Tempplot = 0 and Qplot = 0
 """
-from __future__ import division
-from __future__ import print_function
-from __future__ import absolute_import
+
+
+absolute_import
 
 import os
 

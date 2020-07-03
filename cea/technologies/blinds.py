@@ -2,9 +2,9 @@
 """
 blinds
 """
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
+
+absolute_import
+
 
 
 def calc_blinds_activation(radiation, g_gl, Rf_sh):
