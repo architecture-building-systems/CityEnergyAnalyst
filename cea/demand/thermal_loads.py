@@ -108,7 +108,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, date_range, locator,
         tsd['x_int'] = np.vectorize(convert_rh_to_moisture_content)(tsd['rh_ext'], tsd['T_int'])
         tsd['E_cs'] = tsd['E_hs'] = np.zeros(HOURS_IN_YEAR)
         tsd['Eaux_cs'] = tsd['Eaux_hs'] = tsd['Ehs_lat_aux'] = np.zeros(HOURS_IN_YEAR)
-        print("building () does not have an air-conditioned area".format(bpr.name))
+        print(f"building {bpr.name} does not have an air-conditioned area")
     else:
         tsd = latent_loads.calc_Qgain_lat(tsd, schedules)
         tsd = calc_set_points(bpr, date_range, tsd, building_name, config, locator,
