@@ -39,7 +39,7 @@ def read_dashboards(config, cache):
     """
     try:
         with open(dashboard_yml_path(config), 'r') as f:
-            dashboards = [Dashboard(config, dashboard_dict, cache) for dashboard_dict in yaml.load(f)]
+            dashboards = [Dashboard(config, dashboard_dict, cache) for dashboard_dict in yaml.safe_load(f)]
             if not dashboards:
                 dashboards = [default_dashboard(config, cache)]
             return dashboards

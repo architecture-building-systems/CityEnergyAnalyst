@@ -41,7 +41,7 @@ class CeaPlugin(object):
         if not os.path.exists(scripts_yml):
             return {}
         with open(scripts_yml, "r") as scripts_yml_fp:
-            scripts = yaml.load(scripts_yml_fp, OrderedDictYAMLLoader)
+            scripts = yaml.safe_load(scripts_yml_fp, OrderedDictYAMLLoader)
         return scripts
 
     @property
