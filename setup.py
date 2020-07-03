@@ -17,25 +17,25 @@ __status__ = "Production"
 with open('README.rst', 'r') as f:
     LONG_DESCRIPTION = f.read()
 
-INSTALL_REQUIRES = ['SALib==1.2',  # last version to work with python2
+INSTALL_REQUIRES = ['SALib',
                     "cufflinks",
-                    'deap==1.3.0',
-                    'doit==0.29.0',
+                    'deap',
                     'ephem',
                     'flask-restplus',
                     'flask-socketio',
+                    "future",
                     'geopandas',
                     'gevent',
                     'ipython',
-                    'jupyter',
+                    # 'jupyter',
                     'mock',
                     'numba',
-                    'openpyxl==2.6.4',
-                    'osmnx==0.9',
-                    'plotly==4.6.0',
+                    'openpyxl',
+                    'osmnx',
+                    'plotly',
                     'psutil',
-                    'py4design==0.27',
-                    'pymc3==3.6',  # last version known to work with python2
+                    'py4design_cea',
+                    'pymc3',
                     'pysal',
                     'pyyaml',
                     'requests',
@@ -44,10 +44,10 @@ INSTALL_REQUIRES = ['SALib==1.2',  # last version to work with python2
                     'sphinx',
                     'staticmap',
                     'sympy',
-                    'timezonefinder==3.4.2',  # last version to work with python2
+                    'timezonefinder',
                     'twine',
                     'utm',
-                    'wntr==0.1.7',
+                    'wntr',
                     'xlrd',
                     'xlwt']
 
