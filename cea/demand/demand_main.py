@@ -3,9 +3,6 @@
 Analytical energy demand model algorithm
 """
 
-
-
-
 import os
 import time
 import warnings

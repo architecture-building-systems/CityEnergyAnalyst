@@ -7,7 +7,7 @@ import math
 import os
 
 import numpy as np
-import osmnx as ox
+import osmnx.footprints
 from geopandas import GeoDataFrame as Gdf
 import pandas as pd
 
@@ -27,6 +27,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+
 def check_if_float(x):
     y = 0.0
     try:
@@ -35,6 +36,7 @@ def check_if_float(x):
         if ',' in x:
             y = float(x.split(',')[-1])
     return y
+
 
 def clean_attributes(shapefile, buildings_height, buildings_floors, buildings_height_below_ground,
                      buildings_floors_below_ground, key):
@@ -55,15 +57,17 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, buildings_he
             shapefile['building:levels'] = [3] * no_buildings
             shapefile['REFERENCE'] = "CEA - assumption"
         else:
-            shapefile['REFERENCE'] = ["OSM - median values of all buildings" if x is np.nan else "OSM - as it is" for x in
-                                        shapefile['building:levels']]
+            shapefile['REFERENCE'] = ["OSM - median values of all buildings" if x is np.nan else "OSM - as it is" for x
+                                      in
+                                      shapefile['building:levels']]
         if 'roof:levels' not in list_of_columns:
             shapefile['roof:levels'] = [1] * no_buildings
 
         # get the median from the area:
         data_osm_floors1 = shapefile['building:levels'].fillna(0)
         data_osm_floors2 = shapefile['roof:levels'].fillna(0)
-        data_floors_sum = [x + y for x, y in zip([check_if_float(x) for x in data_osm_floors1], [check_if_float(x) for x in data_osm_floors2])]
+        data_floors_sum = [x + y for x, y in zip([check_if_float(x) for x in data_osm_floors1],
+                                                 [check_if_float(x) for x in data_osm_floors2])]
         data_floors_sum_with_nan = [np.nan if x < 1.0 else x for x in data_floors_sum]
         data_osm_floors_joined = int(
             math.ceil(np.nanmedian(data_floors_sum_with_nan)))  # median so we get close to the worse case
@@ -109,6 +113,7 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, buildings_he
 
     return result, shapefile
 
+
 def zone_helper(locator, config):
     """
     This script gets a polygon and calculates the zone.shp and the occupancy.dbf and age.dbf inputs files for CEA
@@ -139,8 +144,8 @@ def zone_helper(locator, config):
     # USE_A zone.shp file contents to get the contents of occupancy.dbf and age.dbf
     calculate_typology_file(locator, zone_df, year_construction, occupancy_type, typology_output_path)
 
-def calc_category(standard_DB, year_array):
 
+def calc_category(standard_DB, year_array):
     def category_assignment(year):
         return (standard_DB[(standard_DB['YEAR_START'] <= year) & (standard_DB['YEAR_END'] >= year)].STANDARD.values[0])
 
@@ -156,14 +161,14 @@ def calculate_typology_file(locator, zone_df, year_construction, occupancy_type,
     :param occupancy_output_path:
     :return:
     """
-    #calculate construction year
+    # calculate construction year
     typology_df = calculate_age(zone_df, year_construction)
 
-    #calculate the most likely construction standard
+    # calculate the most likely construction standard
     standard_database = pd.read_excel(locator.get_database_construction_standards(), sheet_name='STANDARD_DEFINITION')
     typology_df['STANDARD'] = calc_category(standard_database, typology_df['YEAR'].values)
 
-    #Calculate the most likely use type
+    # Calculate the most likely use type
     typology_df['1ST_USE'] = 'MULTI_RES'
     typology_df['1ST_USE_R'] = 1.0
     typology_df['2ND_USE'] = "NONE"
@@ -186,10 +191,12 @@ def calculate_typology_file(locator, zone_df, year_construction, occupancy_type,
             elif zone_df.loc[index, "category"] == "school":
                 typology_df.loc[index, "USE_A"] = "SCHOOL"
                 typology_df.loc[index, "REFERENCE"] = "OSM - as it is"
-            elif zone_df.loc[index, "category"] == "garage" or zone_df.loc[index, "category"] == "garages" or zone_df.loc[index, "category"] == "warehouse":
+            elif zone_df.loc[index, "category"] == "garage" or zone_df.loc[index, "category"] == "garages" or \
+                    zone_df.loc[index, "category"] == "warehouse":
                 typology_df.loc[index, "USE_A"] = "PARKING"
                 typology_df.loc[index, "REFERENCE"] = "OSM - as it is"
-            elif zone_df.loc[index, "category"] == "house" or zone_df.loc[index, "category"] == "terrace" or zone_df.loc[index, "category"] == "detached":
+            elif zone_df.loc[index, "category"] == "house" or zone_df.loc[index, "category"] == "terrace" or \
+                    zone_df.loc[index, "category"] == "detached":
                 typology_df.loc[index, "USE_A"] = "SINGLE_RES"
                 typology_df.loc[index, "REFERENCE"] = "OSM - as it is"
             elif zone_df.loc[index, "category"] == "retail":
@@ -206,7 +213,7 @@ def calculate_typology_file(locator, zone_df, year_construction, occupancy_type,
                 typology_df.loc[index, "REFERENCE"] = "CEA - assumption"
 
     fields = COLUMNS_ZONE_TYPOLOGY
-    dataframe_to_dbf(typology_df[fields+['REFERENCE']], occupancy_output_path)
+    dataframe_to_dbf(typology_df[fields + ['REFERENCE']], occupancy_output_path)
 
 
 def cast_year(year):
@@ -247,7 +254,8 @@ def calculate_age(zone_df, year_construction):
             zone_df['REFERENCE'] = ["OSM - median" if x is np.nan else "OSM - as it is" for x in zone_df['start_date']]
 
         data_floors_sum_with_nan = [np.nan if x is np.nan else int(cast_year(x)) for x in zone_df['start_date']]
-        data_osm_floors_joined = int(math.ceil(np.nanmedian(data_floors_sum_with_nan)))  # median so we get close to the worse case
+        data_osm_floors_joined = int(
+            math.ceil(np.nanmedian(data_floors_sum_with_nan)))  # median so we get close to the worse case
         zone_df["YEAR"] = [int(x) if x is not np.nan else data_osm_floors_joined for x in data_floors_sum_with_nan]
     else:
         zone_df['REFERENCE'] = "CEA - assumption"
@@ -261,10 +269,10 @@ def polygon_to_zone(buildings_floors, buildings_floors_below_ground, buildings_h
     lon = poly.geometry[0].centroid.coords.xy[0][0]
     lat = poly.geometry[0].centroid.coords.xy[1][0]
     # get footprints of all the district
-    poly = ox.footprints.create_footprints_gdf(polygon=poly['geometry'].values[0])
+    poly = osmnx.footprints.footprints_from_polygon(polygon=poly['geometry'].values[0])
     # clean attributes of height, name and number of floors
     result, result_allfields = clean_attributes(poly, buildings_height, buildings_floors, buildings_height_below_ground,
-                              buildings_floors_below_ground, key="B")
+                                                buildings_floors_below_ground, key="B")
     result = result.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
     # save to shapefile
     result.to_file(shapefile_out_path)
