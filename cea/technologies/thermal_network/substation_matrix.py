@@ -55,7 +55,7 @@ def substation_HEX_design_main(buildings_demands, substation_systems, thermal_ne
         buildings connected to the network.
     """
 
-    t0 = time.clock()
+    t0 = time.perf_counter()
 
     # Calculate disconnected buildings_demands files and substation operation.
     substations_HEX_specs = pd.DataFrame(columns=['HEX_areas', 'HEX_UA', 'HEX_Q'])
@@ -71,7 +71,7 @@ def substation_HEX_design_main(buildings_demands, substation_systems, thermal_ne
         else:
             substations_Q = pd.concat([substations_Q, substation_HEX[2]])
 
-    print(time.clock() - t0, "seconds process time for the Substation Routine \n")
+    print(time.perf_counter() - t0, "seconds process time for the Substation Routine \n")
     return substations_HEX_specs, substations_Q
 
 

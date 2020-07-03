@@ -58,7 +58,7 @@ def calc_SC(locator, config, latitude, longitude, weather_data, date_local, buil
     with sensor data of each SC panel
     """
 
-    t0 = time.clock()
+    t0 = time.perf_counter()
 
     type_panel = config.solar.type_SCpanel
 
@@ -106,7 +106,7 @@ def calc_SC(locator, config, latitude, longitude, weather_data, date_local, buil
                                     index_label='SURFACE',
                                     float_format='%.2f')  # print selected metadata of the selected sensors
 
-        print('Building', building_name, 'done - time elapsed:', (time.clock() - t0), ' seconds')
+        print('Building', building_name, 'done - time elapsed:', (time.perf_counter() - t0), ' seconds')
     else:  # This loop is activated when a building has not sufficient solar potential
         panel_type = panel_properties_SC['type']
         Final = pd.DataFrame(
@@ -1026,6 +1026,6 @@ def main(config):
 
 
 if __name__ == '__main__':
-    t0 = time.clock()
+    t0 = time.perf_counter()
     main(cea.config.Configuration())
-    print('Total time elapsed: %f seconds' % (time.clock() - t0))
+    print('Total time elapsed: %f seconds' % (time.perf_counter() - t0))

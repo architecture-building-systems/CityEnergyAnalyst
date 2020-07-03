@@ -39,7 +39,7 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
     :return: results of operation of buildings located in locator.get_optimization_decentralized_folder
     :rtype: Nonetype
     """
-    t0 = time.clock()
+    t0 = time.perf_counter()
     prop_geometry = Gdf.from_file(locator.get_zone_geometry())
     geometry = pd.DataFrame({'Name': prop_geometry.Name, 'Area': prop_geometry.area})
     geothermal_potential_data = dbf.dbf_to_dataframe(locator.get_building_supply())
@@ -65,7 +65,7 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
         repeat(locator, n),
         repeat(prices, n))
 
-    print(time.clock() - t0, "seconds process time for the Disconnected Building Routine \n")
+    print(time.perf_counter() - t0, "seconds process time for the Disconnected Building Routine \n")
 
 
 def disconnected_heating_for_building(building_name, supply_systems, T_ground_K, geothermal_potential_data, lca,
