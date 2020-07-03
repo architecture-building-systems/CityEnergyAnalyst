@@ -3,9 +3,6 @@ Run a workflow.yml file - this is like a cea-aware "batch" file for running mult
 ``cea workflow`` can also pick up from previous (failed?) runs, which can help in debugging.
 """
 
-
-
-
 import os
 import sys
 import datetime
@@ -74,7 +71,7 @@ def main(config):
         raise cea.ConfigError("Workflow YAML file not found: {workflow}".format(workflow=workflow_yml))
 
     with open(workflow_yml, 'r') as workflow_fp:
-        workflow = yaml.load(workflow_fp)
+        workflow = yaml.safe_load(workflow_fp)
 
     for i, step in enumerate(workflow):
         if "script" in step:
@@ -97,7 +94,7 @@ def main(config):
 def read_resume_info(resume_yml, workflow_yml):
     try:
         with open(resume_yml, 'r') as resume_fp:
-            resume_dict = yaml.load(resume_fp)
+            resume_dict = yaml.safe_load(resume_fp)
             if not resume_dict:
                 resume_dict = {workflow_yml: 0}
     except IOError:

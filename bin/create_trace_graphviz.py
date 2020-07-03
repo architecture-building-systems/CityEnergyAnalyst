@@ -16,7 +16,7 @@ from cea.tests.trace_inputlocator import create_graphviz_output
 
 def main(config):
     with open(config.trace_inputlocator.yaml_output_file, 'r') as f:
-        yaml_data = yaml.load(f)
+        yaml_data = yaml.safe_load(f)
 
     trace_data = []
     for script in yaml_data.keys():
