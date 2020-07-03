@@ -227,7 +227,7 @@ class TestSchemas(unittest.TestCase):
                         except ValueError as e:
                             col_label = ":".join([lm, ws, col])
                             print("Error in column {col_label}:\n{message}\n".format(col_label=col_label,
-                                                                                     message=e.message))
+                                                                                     message=e))
             else:
                 for col, col_schema in schemas[lm]["schema"]["columns"].items():
                     try:
@@ -235,7 +235,7 @@ class TestSchemas(unittest.TestCase):
                     except ValueError as e:
                         col_label = ":".join([lm, col])
                         print(
-                            "Error in column {col_label}:\n{message}\n".format(col_label=col_label, message=e.message))
+                            "Error in column {col_label}:\n{message}\n".format(col_label=col_label, message=e))
 
 
 def extract_locator_methods(locator):
