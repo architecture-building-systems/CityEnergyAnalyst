@@ -59,7 +59,7 @@ def moo_optimization(locator, weather_file, config):
     :returns: None
     :rtype: Nonetype
     '''
-    t0 = time.clock()
+    t0 = time.perf_counter()
 
     # read total demand file and names and number of all buildings
     total_demand = pd.read_csv(locator.get_total_demand())
@@ -106,7 +106,7 @@ def moo_optimization(locator, weather_file, config):
                                                         prices,
                                                         lca)
 
-    t1 = time.clock()
+    t1 = time.perf_counter()
     print('Centralized Optimization succeeded after %s seconds' % (t1 - t0))
 
 
