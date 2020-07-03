@@ -111,7 +111,7 @@ class TestSchemas(unittest.TestCase):
                                             "Missing description for {lm}/{col}/description".format(
                                                 lm=lm, col=col))
                     except BaseException as e:
-                        self.fail("Problem with lm={lm}, col={col}, message: {m}".format(lm=lm, col=col, m=e.message))
+                        self.fail("Problem with lm={lm}, col={col}, message: {m}".format(lm=lm, col=col, m=e))
 
     def test_each_column_has_type(self):
         schemas = cea.schemas.schemas(plugins=[])
