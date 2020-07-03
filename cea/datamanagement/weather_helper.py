@@ -3,7 +3,7 @@ The weather-helper script sets the weather data used (``inputs/weather.epw``) fo
 """
 
 
-absolute_import
+
 
 import os
 import cea.config

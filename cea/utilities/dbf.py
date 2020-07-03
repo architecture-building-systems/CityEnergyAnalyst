@@ -6,7 +6,7 @@
 A collection of utility functions for working with ``*.DBF`` (dBase database) files.
 
 """
-absolute_import
+
 
 import numpy as np
 import pandas as pd

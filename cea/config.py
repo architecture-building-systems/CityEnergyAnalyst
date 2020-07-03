@@ -4,7 +4,7 @@ in ``default.config``.
 """
 
 
-absolute_import
+
 
 import os
 import re

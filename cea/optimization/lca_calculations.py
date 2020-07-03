@@ -4,7 +4,7 @@ This file imports the price details from the cost database as a class. This help
 of the corresponding values in individual files.
 """
 
-absolute_import
+
 
 
 import warnings

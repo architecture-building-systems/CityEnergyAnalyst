@@ -1,5 +1,5 @@
 
-absolute_import
+
 
 import os
 from collections import OrderedDict

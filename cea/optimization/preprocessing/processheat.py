@@ -7,7 +7,7 @@ It is considered that whenever the case, the most competitive alternative is to 
 
 """
 
-absolute_import
+
 
 import pandas as pd
 from cea.technologies import boiler

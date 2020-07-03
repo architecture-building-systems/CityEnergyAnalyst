@@ -4,7 +4,7 @@ is to avoid reading this data (which is constant during the lifetime of a script
 """
 
 
-absolute_import
+
 
 import pandas as pd
 import cea.inputlocator

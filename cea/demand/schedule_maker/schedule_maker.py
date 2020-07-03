@@ -1,6 +1,6 @@
 
 
-absolute_import
+
 
 import os
 import random

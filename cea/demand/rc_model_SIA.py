@@ -2,7 +2,7 @@
 
 
 
-absolute_import
+
 
 import numpy as np
 from cea.demand import constants

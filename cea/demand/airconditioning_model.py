@@ -5,7 +5,7 @@ Air conditioning equipment component models
 """
 
 
-absolute_import
+
 
 import numpy as np
 from cea.demand import control_heating_cooling_systems, constants

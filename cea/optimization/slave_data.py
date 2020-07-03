@@ -4,7 +4,7 @@ Data required for Slave from Master
 This File sets all variables for the slave optimization, that have to be set by the Master
 """
 
-absolute_import
+
 
 import numpy as np
 

@@ -4,7 +4,7 @@ Creates a polygon shapefile from a list of comma-separated coordinate tuples and
 
 
 
-absolute_import
+
 
 import os
 

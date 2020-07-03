@@ -3,7 +3,7 @@ Radiation engine and geometry handler for CEA
 """
 
 
-absolute_import
+
 
 import os
 import shutil

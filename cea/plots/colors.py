@@ -4,7 +4,7 @@ This is the official list of CEA colors to use in plots
 
 
 
-absolute_import
+
 
 import os
 import pandas as pd

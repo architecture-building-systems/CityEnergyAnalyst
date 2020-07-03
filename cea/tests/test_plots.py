@@ -4,7 +4,7 @@
 """
 Unittests for the plots framework of the CEA.
 """
-absolute_import
+
 
 import unittest
 import cea.plots.categories

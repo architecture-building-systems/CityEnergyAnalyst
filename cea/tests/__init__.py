@@ -4,7 +4,7 @@ Run the CEA scripts and unit tests as part of our CI efforts (cf. The Jenkins)
 
 
 
-absolute_import
+
 
 import os
 import shutil

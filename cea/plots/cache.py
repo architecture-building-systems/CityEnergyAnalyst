@@ -6,7 +6,7 @@ The cache object is passed to the `calc_graph` method and the plot is responsibl
 
 
 
-absolute_import
+
 
 import functools
 import hashlib

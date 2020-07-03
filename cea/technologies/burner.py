@@ -4,7 +4,7 @@ gas burners
 """
 
 
-absolute_import
+
 
 
 from math import log, ceil

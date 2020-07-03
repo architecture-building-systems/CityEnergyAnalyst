@@ -3,7 +3,7 @@ A base class for creating CEA plugins. Subclass this class in your own namespace
 """
 
 
-absolute_import
+
 
 import importlib
 import os

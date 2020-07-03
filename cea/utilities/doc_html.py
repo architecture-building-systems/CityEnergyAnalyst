@@ -8,7 +8,7 @@ This script performs the following:
 
 """
 
-absolute_import
+
 
 import cea.config
 import cea.inputlocator

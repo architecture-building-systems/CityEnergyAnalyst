@@ -3,7 +3,7 @@ This script uses libraries in shapely to create connections from
 a series of points (buildings) to the closest street
 """
 
-absolute_import
+
 
 
 import os

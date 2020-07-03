@@ -3,7 +3,7 @@ Operation for decentralized buildings
 """
 
 
-absolute_import
+
 
 import time
 from math import ceil

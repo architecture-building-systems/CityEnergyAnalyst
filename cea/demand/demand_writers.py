@@ -5,7 +5,7 @@ the `MonthlyDemandWriter`.
 """
 
 
-absolute_import
+
 
 
 import numpy as np

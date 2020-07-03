@@ -6,7 +6,7 @@ parameter allows reading in schemas from ``schemas.yml`` files defined in plugin
 
 
 
-absolute_import
+
 
 import os
 import pickle

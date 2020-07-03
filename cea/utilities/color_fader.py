@@ -1,7 +1,7 @@
 """
 Interpolate colors to create a gradient. This is based on code from here: https://stackoverflow.com/a/50784012/2260
 """
-absolute_import
+
 
 
 

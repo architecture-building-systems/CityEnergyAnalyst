@@ -3,7 +3,7 @@ inputlocator.py - locate input files by name based on the reference folder struc
 """
 
 
-absolute_import
+
 
 import os
 import cea.schemas

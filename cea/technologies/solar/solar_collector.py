@@ -3,7 +3,7 @@ solar collectors
 """
 
 
-absolute_import
+
 
 import os
 import time

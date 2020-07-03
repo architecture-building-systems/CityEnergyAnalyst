@@ -5,7 +5,7 @@ NOTE: ADD YOUR SCRIPT'S DOCUMENTATION HERE (what, why, include literature refere
 """
 
 
-absolute_import
+
 
 import os
 import cea.config

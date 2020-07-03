@@ -8,7 +8,7 @@ respective folder
 """
 
 
-absolute_import
+
 
 import cea.config
 import cea.inputlocator

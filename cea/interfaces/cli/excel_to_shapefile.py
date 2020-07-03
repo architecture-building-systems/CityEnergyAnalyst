@@ -10,7 +10,7 @@ The geometry column is serialized to a nested list of coordinates using the JSON
 """
 
 
-absolute_import
+
 
 import os
 import shapely

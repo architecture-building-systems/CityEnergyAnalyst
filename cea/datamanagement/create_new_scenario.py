@@ -4,7 +4,7 @@ A tool to create a new project / scenario with the CEA.
 
 
 
-absolute_import
+
 
 import os
 from shutil import copyfile

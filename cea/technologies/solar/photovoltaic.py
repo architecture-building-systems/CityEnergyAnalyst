@@ -4,7 +4,7 @@ Photovoltaic
 
 
 
-absolute_import
+
 
 import os
 import time

@@ -3,7 +3,7 @@ Implements the Load Curve Supply plot.
 """
 
 
-absolute_import
+
 
 import plotly.graph_objs as go
 

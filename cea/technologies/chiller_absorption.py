@@ -2,7 +2,7 @@
 Absorption chillers
 """
 , print_function
-absolute_import
+
 import cea.config
 import cea.inputlocator
 import pandas as pd

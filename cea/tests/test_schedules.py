@@ -4,7 +4,7 @@ file `test_schedules.config` that can be created by running this file. Note, how
 test data - you should only do this if you are sure that the new data is correct.
 """
 
-absolute_import
+
 
 
 import configparser

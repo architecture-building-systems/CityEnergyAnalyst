@@ -3,7 +3,7 @@ Use the py:mod:`cea.utilities.dbf` module to convert an excel file to a dbf file
 """
 
 
-absolute_import
+
 
 import os
 import cea.config

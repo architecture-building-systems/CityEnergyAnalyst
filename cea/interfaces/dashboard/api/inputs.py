@@ -1,5 +1,5 @@
 
-absolute_import
+
 
 import json
 import os

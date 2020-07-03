@@ -11,7 +11,7 @@ and regulated by Esri as a (mostly) open specification for data
 interoperability among Esri and other software products."
 See https://en.wikipedia.org/wiki/Shapefile for additional information.
 """
-absolute_import
+
 
 
 #    Copyright (C) 2004-2019 by

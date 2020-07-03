@@ -6,7 +6,7 @@ NOTE: You'll still need to run the archetypes-mapper after this script has run.
 
 
 
-absolute_import
+
 
 import os
 import cea

@@ -1,6 +1,6 @@
 
 
-absolute_import
+
 
 import cea.plots.demand
 import cea.plots.cache

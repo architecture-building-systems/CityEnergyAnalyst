@@ -3,7 +3,7 @@ This script calculates the minimum spanning tree of a shapefile network
 """
 
 
-absolute_import
+
 
 import math
 import os

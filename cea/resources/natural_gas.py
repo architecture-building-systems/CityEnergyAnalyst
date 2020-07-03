@@ -5,7 +5,7 @@ natural gas
 
 
 
-absolute_import
+
 
 from cea.technologies.constants import GAS_CONNECTION_COST
 

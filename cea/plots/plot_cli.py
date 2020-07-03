@@ -8,7 +8,7 @@ Usage: cea-plot CATEGORY PLOT-ID [--PARAMETER VALUE]*
 
 
 
-absolute_import
+
 
 import sys
 import cea.config

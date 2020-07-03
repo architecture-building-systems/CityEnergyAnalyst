@@ -2,7 +2,7 @@
 """
 This file contains the constants used in objective function calculation in optimization
 """
-absolute_import
+
 
 
 

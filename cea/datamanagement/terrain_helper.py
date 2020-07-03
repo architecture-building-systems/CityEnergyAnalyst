@@ -4,7 +4,7 @@ https://www2.jpl.nasa.gov/srtm/
 """
 
 
-absolute_import
+
 
 import os
 

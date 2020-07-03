@@ -4,7 +4,7 @@ This tool is used as to check the format of each database
 """
 
 
-absolute_import
+
 from cea.schemas import schemas
 import pandas as pd
 import re

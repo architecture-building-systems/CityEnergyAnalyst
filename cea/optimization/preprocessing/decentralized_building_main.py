@@ -5,7 +5,7 @@ This computes the close-to-optimal supply system for single buildings.
 
 """
 
-absolute_import
+
 
 import cea.config
 import cea.inputlocator

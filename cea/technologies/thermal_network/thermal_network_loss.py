@@ -3,7 +3,7 @@ Hydraulic - thermal network
 """
 
 
-absolute_import
+
 
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 

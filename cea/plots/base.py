@@ -4,7 +4,7 @@ py:class:`cea.plots.base.PlotBase` to figure out the list of plots in a category
 """
 
 
-absolute_import
+
 
 import os
 import re

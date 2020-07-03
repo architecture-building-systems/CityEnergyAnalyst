@@ -4,7 +4,7 @@ Run all the unit tests in the cea/tests folder
 
 
 
-absolute_import
+
 
 import os
 import unittest

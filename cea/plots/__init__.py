@@ -12,7 +12,7 @@ Each module contained such a sub-package is considered a plot.
 
 The module ``cea.plots.categories`` contains helper-methods for dealing with the categories.
 """
-absolute_import
+
 
 import os
 import yaml

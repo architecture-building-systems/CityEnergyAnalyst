@@ -3,7 +3,7 @@ Implements the substation model.
 """
 
 
-absolute_import
+
 import pandas as pd
 import time
 import numpy as np

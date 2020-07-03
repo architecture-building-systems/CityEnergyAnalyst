@@ -4,7 +4,7 @@ Evaluation function of an individual
 """
 
 
-absolute_import
+
 
 import cea.inputlocator
 from cea.optimization.master import cost_model

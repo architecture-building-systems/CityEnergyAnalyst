@@ -4,7 +4,7 @@ hydraulic network
 
 
 
-absolute_import
+
 
 import cea.config
 import cea.inputlocator

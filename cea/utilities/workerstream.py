@@ -1,7 +1,7 @@
 """
 This file implements ``WorkerStream`` for capturing stdout and stderr.
 """
-absolute_import
+
 
 
 import Queue

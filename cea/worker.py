@@ -11,7 +11,7 @@ as an URL for locating the /server/jobs api.
 """
 
 
-absolute_import
+
 
 import sys
 import requests

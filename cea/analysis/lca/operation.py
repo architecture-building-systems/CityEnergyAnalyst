@@ -3,7 +3,7 @@ Non-renewable primary energy and GHG_kgCO2MJ emissions model algorithm for build
 """
 
 
-absolute_import
+
 
 import os
 

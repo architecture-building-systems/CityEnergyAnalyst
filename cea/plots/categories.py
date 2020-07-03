@@ -5,7 +5,7 @@ the conventions for adding new plots.
 
 
 
-absolute_import
+
 import pkgutil
 import importlib
 import inspect

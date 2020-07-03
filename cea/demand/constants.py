@@ -2,7 +2,7 @@
 """
 This file contains the constants used in the building energy demand calculations
 """
-absolute_import
+
 
 
 __author__ = "Gabriel Happle"

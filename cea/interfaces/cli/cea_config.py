@@ -4,7 +4,7 @@ Update the user configuration file and show the current settings.
 
 
 
-absolute_import
+
 
 import sys
 import cea.config

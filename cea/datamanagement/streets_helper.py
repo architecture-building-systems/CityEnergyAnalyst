@@ -3,7 +3,7 @@ This script extracts streets from Open street maps
 """
 
 
-absolute_import
+
 
 import os
 

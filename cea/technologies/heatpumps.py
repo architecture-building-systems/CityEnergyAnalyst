@@ -5,7 +5,7 @@ heatpumps
 
 
 
-absolute_import
+
 from math import floor, log, ceil
 import pandas as pd
 from cea.optimization.constants import HP_DELTA_T_COND, HP_DELTA_T_EVAP, HP_ETA_EX, HP_ETA_EX_COOL, HP_AUXRATIO, \

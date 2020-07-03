@@ -4,7 +4,7 @@ Run a workflow.yml file - this is like a cea-aware "batch" file for running mult
 """
 
 
-absolute_import
+
 
 import os
 import sys

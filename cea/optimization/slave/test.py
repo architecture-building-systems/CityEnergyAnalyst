@@ -1,5 +1,5 @@
 
-absolute_import
+
 
 # FIXME: what is this for? can we remove it?
 

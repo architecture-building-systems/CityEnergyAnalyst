@@ -4,7 +4,7 @@ This file contains the constants used in many folders in CEA. IF few constants a
 it is highly recommended to keep those constants in a separate file in the subfolder. This is to make sure we
 declare the constants closest to the point of usage.
 """
-absolute_import
+
 
 
 

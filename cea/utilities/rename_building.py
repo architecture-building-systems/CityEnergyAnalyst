@@ -8,7 +8,7 @@ This is the script behind ``cea rename-building --old <building> --new <building
 
 
 
-absolute_import
+
 
 import os
 import cea.config

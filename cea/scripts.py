@@ -2,7 +2,7 @@
 Provides the list of scripts known to the CEA - to be used by interfaces built on top of the CEA.
 """
 
-absolute_import
+
 
 
 import os

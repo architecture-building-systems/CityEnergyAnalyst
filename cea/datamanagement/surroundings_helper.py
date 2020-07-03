@@ -3,7 +3,7 @@ This script extracts surrounding buildings of the zone geometry from Open street
 """
 
 
-absolute_import
+
 
 import math
 import os

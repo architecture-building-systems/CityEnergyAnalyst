@@ -3,7 +3,7 @@ Trace the InputLocator calls in a selection of scripts.
 """
 
 
-absolute_import
+
 
 import sys
 import os

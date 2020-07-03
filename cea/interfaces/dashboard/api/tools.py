@@ -1,5 +1,5 @@
 
-absolute_import
+
 
 from flask import current_app
 from flask_restplus import Namespace, Resource, fields
