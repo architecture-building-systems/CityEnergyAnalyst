@@ -42,7 +42,7 @@ def create_trace_function(results_set):
             # decend into the stack...
             return trace_function
         elif event == 'return':
-            if isinstance(arg, basestring) and 'inputlocator' in filename.lower() and not func_name.startswith('_'):
+            if isinstance(arg, str) and 'inputlocator' in filename.lower() and not func_name.startswith('_'):
                 results_set.add((func_name, arg))
                 # print('%s => %s' % (func_name, arg))
         return

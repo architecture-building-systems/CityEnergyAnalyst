@@ -31,7 +31,7 @@ def run(script, args):
     """Run a script, given a config file.
 
     :param script: a script name, as defined in the ``scripts.yml`` file
-    :type script: basestring
+    :type script: str
 
     :param args: a dictionary consisting of ``name = value`` pairs, one per line, for each parameter to override
         the value should be formatted as it would be in the config file.

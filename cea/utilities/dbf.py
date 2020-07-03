@@ -42,11 +42,11 @@ def dataframe_to_dbf(df, dbf_path, specs=None):
     """Given a pandas Dataframe, write a dbase database to ``dbf_path``.
 
     :type df: pandas.Dataframe
-    :type dbf_path: basestring
+    :type dbf_path: str
     :param specs: A list of column specifications for the dbase table. Each column is specified by a tuple (datatype,
         size, decimal) - we support ``datatype in ('N', 'C')`` for strings, integers and floating point numbers, if
         no specs are provided (see ``TYPE_MAPPING``)
-    :type specs: list[tuple(basestring, int, int)]
+    :type specs: list[tuple(str, int, int)]
     """
     if specs is None:
         types = [type(df[i].iloc[0]) for i in df.columns]

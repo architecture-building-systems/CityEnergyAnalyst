@@ -149,7 +149,7 @@ def set_parameter(config, parameter, value):
     """Set a parameter to a value (expand with environment vars) without tripping the restricted_to part of config"""
     with config.ignore_restrictions():
         print("Setting {parameter}={value}".format(parameter=parameter.fqname, value=value))
-        if not isinstance(value, basestring):
+        if not isinstance(value, str):
             value = str(value)
         expanded_value = os.path.expandvars(value)
         parameter.set(parameter.decode(expanded_value))
