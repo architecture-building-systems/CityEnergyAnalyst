@@ -2,9 +2,6 @@
 This script extracts streets from Open street maps
 """
 
-
-
-
 import os
 
 import osmnx as ox
@@ -80,7 +77,7 @@ def geometry_extractor_osm(locator, config):
     #clean data and save to shapefile
     data.loc[:, "highway"] = [x[0] if type(x) == list else x for x in data["highway"].values]
     data.loc[:, "name"] = [x[0] if type(x) == list else x for x in data["name"].values]
-    data.fillna(value="Unknown", inplace=True)
+    data.fillna(value={"name": "Unknown", "highway": "Unknown", "geometry": None}, inplace=True)
     data[['geometry', "name", "highway"]].to_file(shapefile_out_path)
 
 

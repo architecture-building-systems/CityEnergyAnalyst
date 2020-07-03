@@ -3,9 +3,6 @@ This is a template script - an example of how a CEA script should be set up.
 NOTE: ADD YOUR SCRIPT'S DOCUMENTATION HERE (what, why, include literature references)
 """
 
-
-
-
 import math
 import os
 
@@ -215,7 +212,7 @@ def calculate_typology_file(locator, zone_df, year_construction, occupancy_type,
 def cast_year(year):
     import re
     # `start-date` formats can be found here https://wiki.openstreetmap.org/wiki/Key:start_date#Formatting
-    if type(year) == str or type(year) == unicode:
+    if type(year) == str:
         # For year in `C19`
         century_year = re.search(r'C(\d{2})', year)
         if century_year:
