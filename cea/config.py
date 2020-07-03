@@ -631,7 +631,7 @@ class ListParameter(Parameter):
     typename = 'ListParameter'
 
     def encode(self, value):
-        if isinstance(value, basestring):
+        if isinstance(value, str):
             # should be a list
             value = parse_string_to_list(value)
         strings = [str(s).strip() for s in value]
@@ -880,7 +880,7 @@ class MultiChoiceParameter(ChoiceParameter):
     typename = 'MultiChoiceParameter'
 
     def encode(self, value):
-        assert not isinstance(value, basestring), "Bad value for encode of parameter {pname}".format(pname=self.name)
+        assert not isinstance(value, str), "Bad value for encode of parameter {pname}".format(pname=self.name)
         for choice in value:
             assert str(choice) in self._choices, 'Invalid parameter value %s for %s, choose from: %s' % (
                 value, self.name, self._choices)
@@ -1032,7 +1032,7 @@ class CoordinateListParameter(ListParameter):
     typename = 'CoordinateListParameter'
 
     def encode(self, value):
-        if isinstance(value, basestring):
+        if isinstance(value, str):
             value = self.decode(value)
         strings = [str(validate_coord_tuple(coord_tuple)) for coord_tuple in value]
         return ', '.join(strings)

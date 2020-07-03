@@ -46,7 +46,7 @@ class TestSchemas(unittest.TestCase):
 
         for lm in schemas:
             self.assertIn("file_path", schemas[lm], "{lm} does not have a file_path".format(lm=lm))
-            self.assertIsInstance(schemas[lm]["file_path"], basestring, "{lm} does not have a file_path".format(lm=lm))
+            self.assertIsInstance(schemas[lm]["file_path"], str, "{lm} does not have a file_path".format(lm=lm))
             self.assertNotIn("\\", schemas[lm]["file_path"], "{lm} has backslashes in it's file_path".format(lm=lm))
 
     def test_all_columns_have_description(self):

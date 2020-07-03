@@ -229,7 +229,7 @@ def get_column_schema(df_series):
             column_schema['sample_data'] = value
             if is_date(value):
                 types_found.add('date')
-            elif isinstance(value, basestring):
+            elif isinstance(value, str):
                 column_schema['sample_data'] = value.encode('ascii', 'ignore')
                 types_found.add('string')
             else:
@@ -259,7 +259,7 @@ def lookup_column_type(df_series):
 
 
 def is_date(value):
-    if not isinstance(value, basestring):
+    if not isinstance(value, str):
         return False
     try:
         dateutil.parser.parse(value)
