@@ -50,7 +50,7 @@ def calc_VCC(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_chw_re_K, T_cw_in_
         COP = calc_COP_with_carnot_efficiency(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, g_value,
                                               min_chiller_size, max_chiller_size, scale)
         if COP < 0.0:
-            print(('Negative COP: ', COP, T_chw_sup_K, T_chw_re_K, q_chw_load_Wh))
+            print(f'Negative COP: {COP} {T_chw_sup_K} {T_chw_re_K} {q_chw_load_Wh}', )
 
         # calculate chiller outputs
         # print('COP is: ', COP)
