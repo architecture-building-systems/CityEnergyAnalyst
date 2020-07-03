@@ -2,6 +2,9 @@
 This script uses libraries in shapely to create connections from
 a series of points (buildings) to the closest street
 """
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
 
 import os
 

@@ -7,6 +7,8 @@ It is considered that whenever the case, the most competitive alternative is to 
 
 """
 from __future__ import division
+from __future__ import absolute_import
+from __future__ import print_function
 import pandas as pd
 from cea.technologies import boiler
 from cea.technologies.constants import BOILER_ETA_HP

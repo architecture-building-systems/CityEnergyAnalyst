@@ -7,6 +7,9 @@ Currently used for:
 
 In order to run this script, you will need to install Numba. Try: `conda install numba`
 """
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 from numba.pycc import CC
 import shutil
 import os

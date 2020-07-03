@@ -1,4 +1,6 @@
 from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import math
 import time
@@ -95,11 +97,11 @@ def extract_network_from_shapefile(edge_shapefile_df, node_shapefile_df):
         if start_node in node_dict.keys():
             edge_shapefile_df.loc[pipe, 'start node'] = node_dict[start_node]
         else:
-            print('The start node of ', pipe, 'has no match in node_dict, check precision of the coordinates.')
+            print(('The start node of ', pipe, 'has no match in node_dict, check precision of the coordinates.'))
         if end_node in node_dict.keys():
             edge_shapefile_df.loc[pipe, 'end node'] = node_dict[end_node]
         else:
-            print('The end node of ', pipe, 'has no match in node_dict, check precision of the coordinates.')
+            print(('The end node of ', pipe, 'has no match in node_dict, check precision of the coordinates.'))
 
     return node_shapefile_df, edge_shapefile_df
 
@@ -546,7 +548,7 @@ def main(config):
         thermal_network_simplified(locator, config, network_name)
 
     print('done.')
-    print('total time: ', time.time() - start)
+    print(('total time: ', time.time() - start))
 
 
 if __name__ == '__main__':

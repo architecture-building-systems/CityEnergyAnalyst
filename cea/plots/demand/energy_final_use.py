@@ -3,6 +3,7 @@ Implements the Energy Supply pot.
 """
 from __future__ import division
 from __future__ import print_function
+from __future__ import absolute_import
 
 import cea.plots.demand.energy_end_use
 import plotly.graph_objs as go

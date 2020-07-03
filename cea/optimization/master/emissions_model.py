@@ -1,3 +1,6 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 from cea.constants import WH_TO_J
 
 def calc_emissions_Whyr_to_tonCO2yr(E_Wh_yr, factor_kgCO2_to_MJ):

@@ -3,6 +3,8 @@
 Demand model of thermal loads
 """
 from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import numpy as np
 import pandas as pd
@@ -301,7 +303,7 @@ def calc_set_points(bpr, date, tsd, building_name, config, locator, schedules):
     else:
         tsd = control_heating_cooling_systems.get_temperature_setpoints_incl_seasonality(tsd, bpr, schedules)
 
-    t_prev = get_hours(bpr).next() - 1
+    t_prev = next(get_hours(bpr)) - 1
     tsd['T_int'][t_prev] = tsd['T_ext'][t_prev]
     tsd['x_int'][t_prev] = latent_loads.convert_rh_to_moisture_content(tsd['rh_ext'][t_prev], tsd['T_ext'][t_prev])
     return tsd

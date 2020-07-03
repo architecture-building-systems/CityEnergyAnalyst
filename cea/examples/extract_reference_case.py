@@ -2,6 +2,8 @@
 Extract the reference case (``cea/examples/reference-case-open.zip``).
 """
 from __future__ import division
+from __future__ import absolute_import
+from __future__ import print_function
 
 import os
 import zipfile

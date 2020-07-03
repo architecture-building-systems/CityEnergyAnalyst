@@ -9,13 +9,15 @@ Storage Design And Operation
 """
 
 from __future__ import division
+from __future__ import absolute_import
+from __future__ import print_function
 
 import os
 
 import numpy as np
 import pandas as pd
 
-import SolarPowerHandler_incl_Losses as SPH_fn
+from . import SolarPowerHandler_incl_Losses as SPH_fn
 from cea.constants import HOURS_IN_YEAR
 from cea.optimization.constants import *
 from cea.resources.geothermal import calc_ground_temperature

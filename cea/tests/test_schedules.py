@@ -3,6 +3,9 @@ This module contains unit tests for the schedules used by the CEA. The schedule 
 file `test_schedules.config` that can be created by running this file. Note, however, that this will overwrite the
 test data - you should only do this if you are sure that the new data is correct.
 """
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
 
 import configparser
 import json

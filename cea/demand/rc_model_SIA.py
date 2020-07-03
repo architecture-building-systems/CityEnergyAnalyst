@@ -2,6 +2,8 @@
 
 
 from __future__ import division
+from __future__ import absolute_import
+from __future__ import print_function
 import numpy as np
 from cea.demand import constants
 
@@ -874,7 +876,7 @@ def lookup_f_hc_cv_cooling(bpr):
 # use the optimized (numba_cc) versions of the functions in this module if available
 try:
     # import Numba AOT versions of the functions above, overwriting them
-    from rc_model_sia_cc import (calc_phi_m, calc_phi_c, calc_theta_c, calc_phi_m_tot, calc_phi_a, calc_theta_m,
+    from .rc_model_sia_cc import (calc_phi_m, calc_phi_c, calc_theta_c, calc_phi_m_tot, calc_phi_a, calc_theta_m,
                                  calc_h_ea, calc_theta_m_t, calc_theta_ea, calc_h_em, calc_h_3)
 except ImportError:
     # fall back to using the python version
