@@ -268,12 +268,12 @@ class CEARad(py2radiance.Rad):
             # Stops script if commands fail (i.e non-zero exit code)
             subprocess.check_call(cmd, cwd=cwd, stderr=subprocess.STDOUT, env=os.environ)
         except TypeError as error:
-            if error.message == "environment can only contain strings":
-                for key in os.environ.keys():
-                    value = os.environ[key]
-                    if not isinstance(value, str):
-                        print("Bad ENVIRON key: {key}={value} ({value_type})".format(
-                            key=key, value=value, value_type=type(value)))
+            # environment can only contain strings
+            for key in os.environ.keys():
+                value = os.environ[key]
+                if not isinstance(value, str):
+                    print("Bad ENVIRON key: {key}={value} ({value_type})".format(
+                        key=key, value=value, value_type=type(value)))
             raise error
 
 
@@ -292,7 +292,7 @@ class CEARad(py2radiance.Rad):
         f.close()
 
         # TODO: Might not need `shell`. Check on a Windows machine that has a space in the username
-        proc = subprocess.Popen(command1, stdout=subprocess.PIPE, shell=True)
+        proc = subprocess.Popen(command1, stdout=subprocess.PIPE, shell=True, encoding='utf-8')
         site_headers = proc.stdout.read()
         site_headers_list = site_headers.split("\r\n")
         hea_filepath = self.hea_file
