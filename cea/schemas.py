@@ -49,16 +49,24 @@ def schemas(plugins):
         schemas_yml = os.path.join(os.path.dirname(__file__), 'schemas.yml')
         schemas_pickle = os.path.expanduser("~/schemas.yml.pickle")
 
+        def load_schemas_dict_from_yaml():
+            schemas_dict = yaml.load(open(schemas_yml, "rb"), Loader=OrderedDictYAMLLoader)
+            # ... so write out a pickle for next time
+            with open(schemas_pickle, "wb") as schemas_pickle_fp:
+                pickle.dump(schemas_dict, schemas_pickle_fp)
+            return schemas_dict
+
         # compare the dates of the two files - use the pickle if it's newer
         if os.path.exists(schemas_pickle) and os.path.getmtime(schemas_pickle) > os.path.getmtime(schemas_yml):
-            with open(schemas_pickle, "r") as schemas_pickle_fp:
-                schemas_dict = pickle.load(schemas_pickle_fp)
+            try:
+                with open(schemas_pickle, "rb") as schemas_pickle_fp:
+                    schemas_dict = pickle.load(schemas_pickle_fp)
+            except:
+                # this could have failed for so many reasons - just fall back to loading it from the yaml
+                schemas_dict = load_schemas_dict_from_yaml()
         else:
             # ok. this will take a while to read...
-            schemas_dict = yaml.load(open(schemas_yml), Loader=OrderedDictYAMLLoader)
-            # ... so write out a pickle for next time
-            with open(schemas_pickle, "w") as schemas_pickle_fp:
-                pickle.dump(schemas_dict, schemas_pickle_fp)
+            schemas_dict = load_schemas_dict_from_yaml()
 
         __schemas[key] = schemas_dict
 
