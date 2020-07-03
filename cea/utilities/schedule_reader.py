@@ -34,7 +34,7 @@ COLUMNS_SCHEDULES = ['DAY',
                      'SERVERS']
 
 DAY = ['WEEKDAY'] * 24 + ['SATURDAY'] * 24 + ['SUNDAY'] * 24
-HOUR = range(1, 25) + range(1, 25) + range(1, 25)
+HOUR = list(range(1, 25))  + list(range(1, 25)) + list(range(1, 25))
 
 
 def read_cea_schedule(path_to_cea_schedule):
@@ -70,7 +70,7 @@ def save_cea_schedule(schedule_data, schedule_complementary_data, path_to_buildi
     MULTIPLIER = ['MONTHLY_MULTIPLIER'] + list(schedule_complementary_data['MONTHLY_MULTIPLIER'])
     COLUMNS_SCHEDULES = schedule_data.keys()
     RECORDS_SCHEDULES = map(list, zip(*schedule_data.values()))
-    with open(path_to_building_schedule, "wb") as csvfile:
+    with open(path_to_building_schedule, "w") as csvfile:
         csvwriter = csv.writer(csvfile, delimiter=',')
         csvwriter.writerow(METADATA)
         csvwriter.writerow(MULTIPLIER)
@@ -91,8 +91,8 @@ def schedule_to_dataframe(schedule_path):
 
     with open(schedule_path) as f:
         reader = csv.reader(f)
-        out['METADATA'] = pd.DataFrame({'metadata': [reader.next()[1]]})
-        out['MONTHLY_MULTIPLIER'] = pd.DataFrame({m + 1: [round(float(v), 2)] for m, v in enumerate(reader.next()[1:])},
+        out['METADATA'] = pd.DataFrame({'metadata': [next(reader)[1]]})
+        out['MONTHLY_MULTIPLIER'] = pd.DataFrame({m + 1: [round(float(v), 2)] for m, v in enumerate(next(reader)[1:])},
                                                  columns=[m for m in range(1, 13)])
         # Filter empty columns
         columns = [col for col in next(reader) if col != '']
@@ -109,7 +109,7 @@ def schedule_to_file(schedule, schedule_path):
     schedule_df = pd.DataFrame()
     metadata = ['METADATA']
     multiplier = ['MONTHLY_MULTIPLIER']
-    for key, data in schedule.iteritems():
+    for key, data in schedule.items():
         if key == 'METADATA':
             metadata += [schedule['METADATA']['metadata'].iloc[0]]
         elif key == 'MONTHLY_MULTIPLIER':
@@ -128,7 +128,6 @@ def schedule_to_file(schedule, schedule_path):
         for row in schedule_df.values:
             csv_writer.writerow(row)
     print('Schedule file written to {}'.format(schedule_path))
-
 
 
 def main(config):
