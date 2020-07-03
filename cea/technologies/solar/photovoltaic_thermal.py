@@ -4,7 +4,7 @@ Photovoltaic thermal panels
 
 
 
-absolute_import
+
 
 import os
 import time

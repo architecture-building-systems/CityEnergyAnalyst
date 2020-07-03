@@ -5,7 +5,7 @@ FIXME: when does this data get cleared?
 """
 
 
-absolute_import
+
 
 from flask import request, current_app
 from flask_restplus import Namespace, Resource, fields

@@ -14,7 +14,7 @@ This module exports the function `map` which is intended to replace both ``map_a
 """
 
 
-absolute_import
+
 
 import multiprocessing
 import sys

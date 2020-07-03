@@ -3,7 +3,7 @@ System Modeling: Cooling tower
 """
 
 
-absolute_import
+
 import pandas as pd
 from math import ceil, log
 from cea.technologies.constants import CT_MIN_PARTLOAD_RATIO

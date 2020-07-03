@@ -10,7 +10,7 @@ Excel as well as a serialized list of tuples.
 """
 
 
-absolute_import
+
 
 import os
 import shapely

@@ -3,7 +3,7 @@ List the fields that can be used for the demand-graphs ``--analysis-fields`` par
 """
 
 
-absolute_import
+
 
 import os
 import pandas as pd

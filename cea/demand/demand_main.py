@@ -4,7 +4,7 @@ Analytical energy demand model algorithm
 """
 
 
-absolute_import
+
 
 import os
 import time

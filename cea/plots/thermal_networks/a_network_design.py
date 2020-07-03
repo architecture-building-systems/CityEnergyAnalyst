@@ -6,7 +6,7 @@ Adapted from code by Lennart Rogenhofer.
 
 
 
-absolute_import
+
 
 from cea.plots.variable_naming import get_color_array
 import pandas as pd

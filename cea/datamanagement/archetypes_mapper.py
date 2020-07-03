@@ -5,7 +5,7 @@ building properties algorithm
 # HISTORY:
 # J. A. Fonseca  script development          22.03.15
 
-absolute_import
+
 
 
 

@@ -3,7 +3,7 @@ Embodied energy and related grey emissions model algorithm
 """
 
 
-absolute_import
+
 
 import os
 

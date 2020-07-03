@@ -4,7 +4,7 @@ Operation for decentralized buildings
 """
 
 
-absolute_import
+
 
 import time
 

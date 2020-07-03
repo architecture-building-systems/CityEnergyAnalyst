@@ -3,7 +3,7 @@ Crossover routines
 
 """
 
-absolute_import
+
 
 
 from deap import tools

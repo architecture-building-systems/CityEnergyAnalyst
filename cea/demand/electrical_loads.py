@@ -3,7 +3,7 @@
 Electrical loads
 """
 
-absolute_import
+
 
 
 import numpy as np

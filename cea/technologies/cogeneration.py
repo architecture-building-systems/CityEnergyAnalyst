@@ -3,7 +3,7 @@ cogeneration (combined heat and power)
 """
 
 
-absolute_import
+
 
 import numpy as np
 from scipy import interpolate

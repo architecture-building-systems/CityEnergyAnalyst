@@ -3,7 +3,7 @@ This script creates schedules per building in CEA
 """
 
 
-absolute_import
+
 
 import os
 

@@ -3,7 +3,7 @@ Energyplus file reader
 """
 
 
-absolute_import
+
 import pandas as pd
 import math
 import cea.inputlocator

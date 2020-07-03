@@ -5,7 +5,7 @@ History lesson: This is a first step at removing the `cea.globalvars.GlobalVaria
 """
 
 
-absolute_import
+
 
 
 # Heat Exchangers

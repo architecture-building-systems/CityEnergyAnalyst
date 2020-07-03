@@ -3,7 +3,7 @@ Create individuals
 
 """
 
-absolute_import
+
 
 
 import random

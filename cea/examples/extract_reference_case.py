@@ -2,7 +2,7 @@
 Extract the reference case (``cea/examples/reference-case-open.zip``).
 """
 
-absolute_import
+
 
 
 import os

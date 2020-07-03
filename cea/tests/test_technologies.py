@@ -1,7 +1,7 @@
 """
 Test cea.technologies
 """
-absolute_import
+
 
 
 

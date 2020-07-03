@@ -3,7 +3,7 @@ Contains some helper methods for working with glossary data
 """
 
 
-absolute_import
+
 
 import cea.schemas
 import pandas as pd

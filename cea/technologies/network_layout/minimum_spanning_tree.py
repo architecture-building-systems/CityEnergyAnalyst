@@ -1,7 +1,7 @@
 """
 This script calculates the minimum spanning tree of a shapefile network
 """
-absolute_import
+
 
 
 

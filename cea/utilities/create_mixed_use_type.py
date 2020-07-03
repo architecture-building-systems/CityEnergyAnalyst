@@ -3,7 +3,7 @@ This script creates a new use-type by aggregating values from a list of differen
 """
 
 
-absolute_import
+
 
 import os
 

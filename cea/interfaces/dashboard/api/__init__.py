@@ -1,4 +1,4 @@
-absolute_import
+
 
 
 from flask import Blueprint

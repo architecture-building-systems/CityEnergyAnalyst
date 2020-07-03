@@ -1,5 +1,5 @@
 """Test the cea.config.Configuration()"""
-absolute_import
+
 
 
 

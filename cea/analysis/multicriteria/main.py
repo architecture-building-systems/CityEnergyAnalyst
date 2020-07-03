@@ -3,7 +3,7 @@ Multi criteria decision analysis
 """
 
 
-absolute_import
+
 
 import pandas as pd
 

@@ -3,7 +3,7 @@ Provide access to the scripts exported by the City Energy Analyst.
 """
 
 
-absolute_import
+
 
 import datetime
 

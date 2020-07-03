@@ -13,7 +13,7 @@ It is possible to turn off the plots by setting Tempplot = 0 and Qplot = 0
 """
 
 
-absolute_import
+
 
 import os
 

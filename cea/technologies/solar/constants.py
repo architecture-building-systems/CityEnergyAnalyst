@@ -2,7 +2,7 @@
 """
 Parameters used for solar technologies
 """
-absolute_import
+
 
 
 

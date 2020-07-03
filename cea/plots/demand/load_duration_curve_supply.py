@@ -3,7 +3,7 @@ Implements the Load Duration Curve Supply plot.
 """
 
 
-absolute_import
+
 
 import cea.plots.demand.load_duration_curve
 import plotly.graph_objs as go

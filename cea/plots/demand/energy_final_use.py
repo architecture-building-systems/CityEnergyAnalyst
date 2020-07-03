@@ -3,7 +3,7 @@ Implements the Energy Supply pot.
 """
 
 
-absolute_import
+
 
 import cea.plots.demand.energy_end_use
 import plotly.graph_objs as go

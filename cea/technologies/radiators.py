@@ -3,7 +3,7 @@
 heating radiators
 """
 
-absolute_import
+
 
 from scipy.optimize import newton
 import math

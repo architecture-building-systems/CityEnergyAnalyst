@@ -4,7 +4,7 @@ Hotwater load (it also calculates fresh water needs)
 
 
 
-absolute_import
+
 from cea.constants import *
 import numpy as np
 import scipy

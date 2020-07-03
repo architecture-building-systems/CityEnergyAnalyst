@@ -1,4 +1,4 @@
-absolute_import
+
 
 
 from flask import Blueprint, render_template, current_app, abort, make_response

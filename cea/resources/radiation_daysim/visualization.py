@@ -27,7 +27,7 @@ SIDE EFFECTS
     - if no data file is given, the loaded geometry will not change color
 """
 
-absolute_import
+
 
 
 import os

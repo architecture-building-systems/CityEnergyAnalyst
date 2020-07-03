@@ -4,7 +4,7 @@ Run documentation scripts
 
 
 
-absolute_import
+
 
 import sys
 import datetime

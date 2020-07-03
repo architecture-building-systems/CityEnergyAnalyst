@@ -6,7 +6,7 @@ and output_files.rst are referenced by glossary.rst.
 
 """
 
-absolute_import
+
 
 
 import os

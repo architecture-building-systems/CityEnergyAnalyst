@@ -5,7 +5,7 @@ This script is used to calculate the LCA
 
 
 
-absolute_import
+
 
 import os
 

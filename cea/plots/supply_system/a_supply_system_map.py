@@ -3,7 +3,7 @@ Show a Pareto curve plot for individuals in a given generation.
 """
 
 
-absolute_import
+
 
 import os
 

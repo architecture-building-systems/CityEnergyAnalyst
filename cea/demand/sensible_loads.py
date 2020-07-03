@@ -4,7 +4,7 @@ Sensible space heating and space cooling loads
 EN-13970
 """
 
-absolute_import
+
 
 import numpy as np
 from cea.demand import control_heating_cooling_systems, constants

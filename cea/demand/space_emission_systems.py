@@ -10,7 +10,7 @@ prEN 15316-2:2014
 
 
 
-absolute_import
+
 import numpy as np
 from cea.demand.control_heating_cooling_systems import has_heating_system, has_cooling_system
 

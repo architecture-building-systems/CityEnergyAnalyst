@@ -6,7 +6,7 @@ Import Network Data:
     Namely : Thermal (J+) and Solar Data (J+) 
             
 """
-absolute_import
+
 
 
 import pandas as pd

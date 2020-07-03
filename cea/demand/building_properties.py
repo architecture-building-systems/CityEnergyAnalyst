@@ -4,7 +4,7 @@ Classes of building properties
 
 
 
-absolute_import
+
 
 
 import numpy as np

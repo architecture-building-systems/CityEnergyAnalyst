@@ -4,7 +4,7 @@ condensing boilers
 """
 
 
-absolute_import
+
 
 from scipy.interpolate import interp1d
 from math import log, ceil

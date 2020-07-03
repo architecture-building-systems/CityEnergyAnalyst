@@ -5,7 +5,7 @@ Initializes the database of cea
 # HISTORY:
 # J. A. Fonseca  script development          03.02.20
 
-absolute_import
+
 
 
 

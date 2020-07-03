@@ -7,7 +7,7 @@ NOTE: This is meant to help _write_ the schemas.yml file, not to CREATE it - you
 
 
 
-absolute_import
+
 
 import os
 import yaml

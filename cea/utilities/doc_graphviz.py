@@ -7,7 +7,7 @@ This file relies on the schemas.yml to create the graphviz plots.
 
 
 
-absolute_import
+
 
 import os
 import cea.config

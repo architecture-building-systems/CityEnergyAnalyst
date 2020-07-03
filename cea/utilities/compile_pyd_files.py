@@ -7,7 +7,7 @@ Currently used for:
 
 In order to run this script, you will need to install Numba. Try: `conda install numba`
 """
-absolute_import
+
 
 
 from numba.pycc import CC
