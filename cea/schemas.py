@@ -9,7 +9,7 @@ from __future__ import division
 from __future__ import absolute_import
 
 import os
-import cPickle
+import pickle
 import pandas as pd
 import geopandas
 import yaml
@@ -52,13 +52,13 @@ def schemas(plugins):
         # compare the dates of the two files - use the pickle if it's newer
         if os.path.exists(schemas_pickle) and os.path.getmtime(schemas_pickle) > os.path.getmtime(schemas_yml):
             with open(schemas_pickle, "r") as schemas_pickle_fp:
-                schemas_dict = cPickle.load(schemas_pickle_fp)
+                schemas_dict = pickle.load(schemas_pickle_fp)
         else:
             # ok. this will take a while to read...
             schemas_dict = yaml.load(open(schemas_yml), Loader=OrderedDictYAMLLoader)
             # ... so write out a pickle for next time
             with open(schemas_pickle, "w") as schemas_pickle_fp:
-                cPickle.dump(schemas_dict, schemas_pickle_fp)
+                pickle.dump(schemas_dict, schemas_pickle_fp)
 
         __schemas[key] = schemas_dict
 
