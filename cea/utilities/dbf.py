@@ -1,12 +1,6 @@
-
-
-
-
 """
 A collection of utility functions for working with ``*.DBF`` (dBase database) files.
-
 """
-
 
 import numpy as np
 import pandas as pd
@@ -15,6 +9,7 @@ import cea.config
 
 # import PySAL without the warning
 import warnings
+
 warnings.simplefilter('ignore', np.VisibleDeprecationWarning)
 import pysal
 
@@ -29,11 +24,9 @@ __status__ = "Production"
 
 TYPE_MAPPING = {
     int: ('N', 20, 0),
-    long: ('N', 20, 0),
     np.int64: ('N', 20, 0),
     float: ('N', 36, 15),
     np.float64: ('N', 36, 15),
-    unicode: ('C', 25, 0),
     str: ('C', 25, 0),
     np.bool_: ('L', 1, 0)}
 
@@ -59,7 +52,7 @@ def dataframe_to_dbf(df, dbf_path, specs=None):
             l = max(l, df[df.columns[i]].apply(len).max())
             specs[i] = t, l, d
 
-    dbf = pysal.open(dbf_path, 'w', 'dbf')
+    dbf = pysal.lib.io.open(dbf_path, 'w', 'dbf')
     dbf.header = list(df.columns)
     dbf.field_spec = specs
     for row in range(len(df)):
@@ -68,33 +61,33 @@ def dataframe_to_dbf(df, dbf_path, specs=None):
     return dbf_path
 
 
-def dbf_to_dataframe(dbf_path, index=None, cols=False, include_index=False):
-    db = pysal.open(dbf_path)
+def dbf_to_dataframe(dbf_path, index=None, cols=None, include_index=False):
+    dbf = pysal.lib.io.open(dbf_path)
     if cols:
         if include_index:
             cols.append(index)
         vars_to_read = cols
     else:
-        vars_to_read = db.header
-    data = dict([(var, db.by_col(var)) for var in vars_to_read])
+        vars_to_read = dbf.header
+    data = dict([(var, dbf.by_col(var)) for var in vars_to_read])
     if index:
-        index = db.by_col(index)
-        db.close()
+        index = dbf.by_col(index)
+        dbf.close()
         return pd.DataFrame(data, index=index)
     else:
-        db.close()
+        dbf.close()
         return pd.DataFrame(data)
 
 
 def xls_to_dbf(input_file, output_path, output_file_name):
     df = pd.read_excel(input_file)
-    output_file = os.path.join(output_path, output_file_name+".dbf")
+    output_file = os.path.join(output_path, output_file_name + ".dbf")
     dataframe_to_dbf(df, output_file)
 
 
 def dbf_to_xls(input_file, output_path, output_file_name):
     df = dbf_to_dataframe(input_file)
-    df.to_excel(os.path.join(output_path, output_file_name+".xlsx"), index=False)
+    df.to_excel(os.path.join(output_path, output_file_name + ".xlsx"), index=False)
 
 
 def main(config):
@@ -110,6 +103,6 @@ def main(config):
     else:
         print('input file type not supported')
 
+
 if __name__ == '__main__':
     main(cea.config.Configuration())
-
