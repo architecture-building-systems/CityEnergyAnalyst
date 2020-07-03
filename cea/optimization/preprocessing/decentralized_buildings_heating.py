@@ -3,6 +3,8 @@ Operation for decentralized buildings
 
 """
 from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import time
 
@@ -63,7 +65,7 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
         repeat(locator, n),
         repeat(prices, n))
 
-    print time.clock() - t0, "seconds process time for the Disconnected Building Routine \n"
+    print(time.clock() - t0, "seconds process time for the Disconnected Building Routine \n")
 
 
 def disconnected_heating_for_building(building_name, supply_systems, T_ground_K, geothermal_potential_data, lca,
@@ -101,7 +103,7 @@ def disconnected_heating_for_building(building_name, supply_systems, T_ground_K,
     Tsup_K = substation_results["T_supply_DH_result_K"].values
     mdot_kgpers = substation_results["mdot_DH_result_kgpers"].values
     ## Start Hourly calculation
-    print building_name, ' decentralized heating supply systems simulations...'
+    print(building_name, ' decentralized heating supply systems simulations...')
     Tret_K = np.where(Tret_K > 0.0, Tret_K, Tsup_K)
     ## 0: Boiler NG
     BoilerEff = np.vectorize(Boiler.calc_Cop_boiler)(q_load_Wh, Qnom_W, Tret_K)
@@ -164,7 +166,7 @@ def disconnected_heating_for_building(building_name, supply_systems, T_ground_K,
 
         # GHP Backup Boiler operation
         if max(qhot_missing_Wh) > 0.0:
-            print "GHP unable to cover the whole demand, boiler activated!"
+            print("GHP unable to cover the whole demand, boiler activated!")
             Qnom_GHP_Backup_Boiler_W = max(qhot_missing_Wh)
             BoilerEff = np.vectorize(Boiler.calc_Cop_boiler)(qhot_missing_Wh, Qnom_GHP_Backup_Boiler_W, Texit_GHP_K)
             Qgas_to_GHPBoiler_Wh = np.divide(qhot_missing_Wh, BoilerEff,

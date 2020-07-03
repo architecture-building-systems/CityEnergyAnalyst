@@ -5,6 +5,7 @@ FIXME: when does this data get cleared?
 """
 from __future__ import division
 from __future__ import print_function
+from __future__ import absolute_import
 
 from flask import request, current_app
 from flask_restplus import Namespace, Resource, fields

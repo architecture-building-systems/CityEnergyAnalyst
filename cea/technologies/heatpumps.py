@@ -4,6 +4,8 @@ heatpumps
 
 
 from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 from math import floor, log, ceil
 import pandas as pd
 from cea.optimization.constants import HP_DELTA_T_COND, HP_DELTA_T_EVAP, HP_ETA_EX, HP_ETA_EX_COOL, HP_AUXRATIO, \
@@ -270,7 +272,7 @@ def HPLake_Op(mdot_kgpers, t_sup_K, t_re_K, t_lake_K):
     q_hotdot_W = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (t_sup_K - t_re_K)
 
     if q_hotdot_W > HP_MAX_SIZE:
-        print "Qhot above max size on the market !"
+        print("Qhot above max size on the market !")
 
     wdot_W = q_hotdot_W / COP
     E_HPLake_req_W = wdot_W / HP_AUXRATIO     # compressor power [C. Montagud et al., 2014]_

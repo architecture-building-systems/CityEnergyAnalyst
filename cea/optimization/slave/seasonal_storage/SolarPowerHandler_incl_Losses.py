@@ -3,6 +3,9 @@ Slave Sub Function - Treat solar power!
 In this file, all sub-functions are stored that are used for storage design and operation. 
 They are called by either the operation or optimization of storage.
 """
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
 
 import numpy as np
 

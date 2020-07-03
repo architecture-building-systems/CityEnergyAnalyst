@@ -3,6 +3,8 @@
 Physical functions
 """
 from __future__ import division
+from __future__ import absolute_import
+from __future__ import print_function
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"

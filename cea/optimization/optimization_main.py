@@ -4,6 +4,7 @@ multi-objective optimization of supply systems for the CEA
 
 from __future__ import division
 from __future__ import print_function
+from __future__ import absolute_import
 
 import os
 import time
@@ -16,7 +17,7 @@ import cea.inputlocator
 from cea.optimization.master import master_main
 from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
 from cea.optimization.preprocessing.preprocessing_main import preproccessing
-from constants import DH_ACRONYM, DC_ACRONYM
+from .constants import DH_ACRONYM, DC_ACRONYM
 
 warnings.filterwarnings("ignore")
 

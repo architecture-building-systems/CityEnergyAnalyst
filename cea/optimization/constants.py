@@ -3,6 +3,8 @@
 This file contains the constants used in objective function calculation in optimization
 """
 from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"

@@ -1,3 +1,6 @@
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
 import hashlib
 
 from flask import current_app, request
@@ -5,7 +8,7 @@ from flask_restplus import Namespace, Resource
 
 import cea.config
 import cea.plots.cache
-from utils import deconstruct_parameters
+from .utils import deconstruct_parameters
 
 api = Namespace('Dashboard', description='Dashboard plots')
 

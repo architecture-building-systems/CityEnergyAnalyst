@@ -6,6 +6,7 @@ from __future__ import division
 A collection of utility functions for working with ``*.DBF`` (dBase database) files.
 
 """
+from __future__ import absolute_import
 
 import numpy as np
 import pandas as pd

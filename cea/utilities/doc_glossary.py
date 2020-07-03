@@ -6,6 +6,8 @@ and output_files.rst are referenced by glossary.rst.
 
 """
 from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
 
 import os
 import cea.config

@@ -4,6 +4,7 @@ Run a workflow.yml file - this is like a cea-aware "batch" file for running mult
 """
 from __future__ import division
 from __future__ import print_function
+from __future__ import absolute_import
 
 import os
 import sys

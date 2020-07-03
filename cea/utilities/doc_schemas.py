@@ -7,6 +7,7 @@ NOTE: This is meant to help _write_ the schemas.yml file, not to CREATE it - you
 
 from __future__ import division
 from __future__ import print_function
+from __future__ import absolute_import
 
 import os
 import yaml

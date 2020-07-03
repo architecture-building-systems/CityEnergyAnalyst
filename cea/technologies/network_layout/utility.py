@@ -11,6 +11,9 @@ and regulated by Esri as a (mostly) open specification for data
 interoperability among Esri and other software products."
 See https://en.wikipedia.org/wiki/Shapefile for additional information.
 """
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 #    Copyright (C) 2004-2019 by
 #    Ben Reilly <benwreilly@gmail.com>
 #    Aric Hagberg <hagberg@lanl.gov>

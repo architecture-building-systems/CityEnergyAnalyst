@@ -3,6 +3,8 @@ Hydraulic - thermal network
 
 """
 from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import math
 import time
@@ -251,7 +253,7 @@ def network_main(locator, buildings_in_this_network, ground_temp, num_tot_buildi
 
     results.to_csv(locator.get_optimization_network_results_summary(network_type, key), index=False, float_format='%.3f')
 
-    print time.clock() - t0, "seconds process time for Network summary for configuration", key
+    print(time.clock() - t0, "seconds process time for Network summary for configuration", key)
 
     return results
 

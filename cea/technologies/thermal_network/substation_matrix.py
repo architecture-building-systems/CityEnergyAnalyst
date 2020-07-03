@@ -2,6 +2,8 @@
 Implements the substation model.
 """
 from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 import pandas as pd
 import time
 import numpy as np
@@ -59,7 +61,7 @@ def substation_HEX_design_main(buildings_demands, substation_systems, thermal_ne
     substations_HEX_specs = pd.DataFrame(columns=['HEX_areas', 'HEX_UA', 'HEX_Q'])
     substations_Q = pd.DataFrame()
     for name in buildings_demands.keys():
-        print name
+        print(name)
         # calculate substation parameters (A,UA) per building and store to .csv (target)
         substation_HEX = substation_HEX_sizing(buildings_demands[name], substation_systems, thermal_network)
         # write into dataframe
@@ -69,7 +71,7 @@ def substation_HEX_design_main(buildings_demands, substation_systems, thermal_ne
         else:
             substations_Q = pd.concat([substations_Q, substation_HEX[2]])
 
-    print time.clock() - t0, "seconds process time for the Substation Routine \n"
+    print(time.clock() - t0, "seconds process time for the Substation Routine \n")
     return substations_HEX_specs, substations_Q
 
 

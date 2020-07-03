@@ -1,4 +1,6 @@
 from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import numpy as np
 import pandas as pd
@@ -158,7 +160,7 @@ def calc_Ctot_cooling_plants(network_info):
         else:
             plant_heat_peak_kW = plant_heat_peak_kW_list[0]
         plant_heat_yearly_kWh = plant_heat_sum_kWh_list[plant_number]
-        print 'Annual plant heat production:', round(plant_heat_yearly_kWh, 0), '[kWh]'
+        print('Annual plant heat production:', round(plant_heat_yearly_kWh, 0), '[kWh]')
 
         # Read in building demand
         building_demand = {}
@@ -173,7 +175,7 @@ def calc_Ctot_cooling_plants(network_info):
 
         if plant_heat_peak_kW > 0:  # we have non 0 demand
             peak_demand_W = plant_heat_peak_kW * 1000  # convert to W
-            print 'Calculating cost of heat production at plant number: ', (plant_number + 1)
+            print('Calculating cost of heat production at plant number: ', (plant_number + 1))
             if network_info.config.thermal_network_optimization.yearly_cost_calculations:
                 # calculates operation costs with yearly approximation
 
@@ -269,7 +271,7 @@ def calc_Ctot_cs_building_scale_loads(network_info):
                                 disconnected_demand_t = disconnected_demand_t + building_demand[system]
                         peak_demand_kW = disconnected_demand_t.abs().max()  # calculate peak demand of all disconnected systems
                         disconnected_demand_t_sum = disconnected_demand_t.abs().sum()
-                    print 'Calculate cost of disconnected loads in building ', building
+                    print('Calculate cost of disconnected loads in building ', building)
                     if network_info.yearly_cost_calculations:
                         supplied_systems = find_supplied_systems_annual(network_info,
                                                                         building_demand,
@@ -396,7 +398,7 @@ def calc_Ctot_cs_building_scale_buildings(network_info):
                                     building_demand['Qcs_sys_aru_kWh'].abs()
                 # calculate peak demand
                 peak_demand_kW = demand_hourly_kWh.abs().max()
-                print 'Calculate cost of disconnected building production at building ', building
+                print('Calculate cost of disconnected building production at building ', building)
                 if network_info.yearly_cost_calculations:
                     demand_annual_kWh = demand_hourly_kWh.sum()
                     # calculate plant COP according to the cold water supply temperature in SG context
@@ -529,9 +531,9 @@ def find_cooling_systems_string(disconnected_systems):
         if 'scu' in disconnected_systems:
             system_string.append(system_string_options[0])
     else:
-        print 'Error in disconnected buildings list. invalid number of elements.'
-        print disconnected_systems
-        print len(disconnected_systems)
+        print('Error in disconnected buildings list. invalid number of elements.')
+        print(disconnected_systems)
+        print(len(disconnected_systems))
     return system_string
 
 

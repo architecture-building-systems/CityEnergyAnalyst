@@ -1,3 +1,6 @@
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
 from flask import Flask
 from flask_socketio import SocketIO
 
@@ -17,9 +20,9 @@ def main(config):
     global socketio
     socketio = SocketIO(app)
 
-    import plots.routes
-    from server import blueprint as server_blueprint
-    from api import blueprint as api_blueprint
+    from . import plots.routes
+    from .server import blueprint as server_blueprint
+    from .api import blueprint as api_blueprint
     app.register_blueprint(plots.routes.blueprint)
     app.register_blueprint(api_blueprint)
     app.register_blueprint(server_blueprint)
