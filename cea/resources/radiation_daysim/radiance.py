@@ -1,5 +1,6 @@
 import math
 import os
+import shutil
 import subprocess
 
 import pandas as pd
@@ -181,6 +182,9 @@ class DaySimProject(object):
                      "{geometry_header}\n".format(project_header=project_header, geometry_header=geometry_header,
                                                   site_info_header=site_info_header)
             hea_file.write(header)
+
+    def cleanup_project(self):
+        shutil.rmtree(self.project_path)
 
     def create_sensor_input_file(self, sensor_positions, sensor_normals, sensor_file_unit):
         """
