@@ -7,6 +7,7 @@ from __future__ import print_function
 import os
 import sys
 import time
+from itertools import repeat
 
 import pandas as pd
 from geopandas import GeoDataFrame as gpdf
@@ -15,8 +16,9 @@ import cea.config
 import cea.inputlocator
 from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_surroundings
 from cea.resources.radiation_daysim import daysim_main, geometry_generator
-from cea.resources.radiation_daysim.radiance import add_rad_mat, create_rad_geometry, CEADaySim
+from cea.resources.radiation_daysim.radiance import CEADaySim
 from cea.utilities import epwreader
+from cea.utilities.parallel import vectorize
 
 __author__ = "Paul Neitzel, Kian Wee Chen"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -55,7 +57,7 @@ def reader_surface_properties(locator):
     return surface_properties.set_index('Name').round(decimals=2)
 
 
-def radiation_singleprocessing(cea_daysim, zone_building_names, locator, settings, geometry_pickle_dir):
+def radiation_singleprocessing(cea_daysim, zone_building_names, locator, settings, geometry_pickle_dir, num_processes):
 
     weather_path = locator.get_weather_file()
     # check inconsistencies and replace by max value of weather file
@@ -74,9 +76,33 @@ def radiation_singleprocessing(cea_daysim, zone_building_names, locator, setting
             if building_name in list_of_building_names:
                 chunks.append([building_name])
 
-    for chunk_n, building_names in enumerate(chunks):
-        daysim_main.isolation_daysim(
-            chunk_n, cea_daysim, building_names, locator, settings, max_global, weatherfile, geometry_pickle_dir)
+    write_sensor_data = settings.write_sensor_data
+    radiance_parameters = {"rad_ab": settings.rad_ab, "rad_ad": settings.rad_ad, "rad_as": settings.rad_as,
+                           "rad_ar": settings.rad_ar, "rad_aa": settings.rad_aa,
+                           "rad_lr": settings.rad_lr, "rad_st": settings.rad_st, "rad_sj": settings.rad_sj,
+                           "rad_lw": settings.rad_lw, "rad_dj": settings.rad_dj,
+                           "rad_ds": settings.rad_ds, "rad_dr": settings.rad_dr, "rad_dp": settings.rad_dp}
+    grid_size = {"walls_grid": settings.walls_grid, "roof_grid": settings.roof_grid}
+
+    num_chunks = len(chunks)
+    if num_chunks == 1:
+        for chunk_n, building_names in enumerate(chunks):
+            daysim_main.isolation_daysim(
+                chunk_n, cea_daysim, building_names, locator, radiance_parameters, write_sensor_data, grid_size,
+                max_global, weatherfile, geometry_pickle_dir)
+    else:
+        vectorize(daysim_main.isolation_daysim, num_processes)(
+            range(0, num_chunks),
+            repeat(cea_daysim, num_chunks),
+            chunks,
+            repeat(locator, num_chunks),
+            repeat(radiance_parameters, num_chunks),
+            repeat(write_sensor_data, num_chunks),
+            repeat(grid_size, num_chunks),
+            repeat(max_global, num_chunks),
+            repeat(weatherfile, num_chunks),
+            repeat(geometry_pickle_dir, num_chunks)
+        )
 
 
 def check_daysim_bin_directory(path_hint):
@@ -216,7 +242,8 @@ def main(config):
     cea_daysim.execute_radfiles2daysim()
 
     time1 = time.time()
-    radiation_singleprocessing(cea_daysim, zone_building_names, locator, config.radiation, geometry_pickle_dir)
+    radiation_singleprocessing(cea_daysim, zone_building_names, locator, config.radiation, geometry_pickle_dir,
+                               num_processes=config.get_number_of_processes())
 
     print("Daysim simulation finished in %.2f mins" % ((time.time() - time1) / 60.0))
 
