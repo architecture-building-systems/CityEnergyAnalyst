@@ -26,69 +26,70 @@ problem_dict = {
         'bounds': [[1,4], [1,4], [5, 15], [5, 15], [5, 15], [4, 7]]
     },
     "c_Networks": {
-        'num_vars': 15,
-        'names': ['dTn_1', 'dTn_2',
-                  'HOT_OAU_dT2', 'HOT_OAU_T1', 'HOT_RAU_dT2', 'HOT_RAU_T1',
-                  'N_dT2',
-                  'OFF_OAU_dT2', 'OFF_OAU_T1', 'OFF_RAU_dT2', 'OFF_RAU_T1',
-                  'RET_OAU_dT2', 'RET_OAU_T1', 'RET_RAU_dT2', 'RET_RAU_T1'],
-        'bounds': [[5, 15], [5, 15],
-                   [1, 3], [8,11], [1, 3], [8,11],
-                   [1, 3],
-                   [1, 3], [8, 11], [1, 3], [8, 11],
-                   [1, 3], [8, 11], [1, 3], [8, 11]]
-    },
-    "d_LT_Networks": {
         'num_vars': 18,
         'names': ['dTn_1', 'dTn_2',
-                  'HOT_OAU_dT2', 'HOT_OAU_T1', 'HOT_RAU_dT2', 'HOT_RAU_T1', 'HOT_T_HP',
+                  'HOT_OAU_dT2', 'HOT_OAU_T1', 'HOT_RAU_dT2', 'HOT_RAU_T1', 'HOT_SCU_T',
                   'N_dT2',
-                  'OFF_OAU_dT2', 'OFF_OAU_T1', 'OFF_RAU_dT2', 'OFF_RAU_T1', 'OFF_T_HP',
-                  'RET_OAU_dT2', 'RET_OAU_T1', 'RET_RAU_dT2', 'RET_RAU_T1', 'RET_T_HP'],
+                  'OFF_OAU_dT2', 'OFF_OAU_T1', 'OFF_RAU_dT2', 'OFF_RAU_T1', 'OFF_SCU_T',
+                  'RET_OAU_dT2', 'RET_OAU_T1', 'RET_RAU_dT2', 'RET_RAU_T1', 'RET_SCU_T'],
         'bounds': [[5, 15], [5, 15],
-                   [1, 3], [8, 11], [1, 3], [8, 11], [14,18],
+                   [1, 3], [8,11], [1, 3], [8,11], [16, 20],
                    [1, 3],
-                   [1, 3], [8, 11], [1, 3], [8, 11], [14,18],
-                   [1, 3], [8, 11], [1, 3], [8, 11], [14,18]]
+                   [1, 3], [8, 11], [1, 3], [8, 11], [16, 20],
+                   [1, 3], [8, 11], [1, 3], [8, 11], [16, 20]]
     },
-    "d_LT_Networks_dhw": {
+    "d_LT_Networks": {
         'num_vars': 21,
         'names': ['dTn_1', 'dTn_2',
-                  'HOT_dT1', 'HOT_dT2', 'HOT_dTsc', 'HOT_OAU_dT2', 'HOT_OAU_T1', 'HOT_RAU_dT2', 'HOT_RAU_T1', 'HOT_T_HP',
+                  'HOT_OAU_dT2', 'HOT_OAU_T1', 'HOT_RAU_dT2', 'HOT_RAU_T1', 'HOT_SCU_T', 'HOT_T_HP',
                   'N_dT2',
-                  'OFF_OAU_dT2', 'OFF_OAU_T1', 'OFF_RAU_dT2', 'OFF_RAU_T1', 'OFF_T_HP',
-                  'RET_OAU_dT2', 'RET_OAU_T1', 'RET_RAU_dT2', 'RET_RAU_T1', 'RET_T_HP'],
+                  'OFF_OAU_dT2', 'OFF_OAU_T1', 'OFF_RAU_dT2', 'OFF_RAU_T1', 'OFF_SCU_T', 'OFF_T_HP',
+                  'RET_OAU_dT2', 'RET_OAU_T1', 'RET_RAU_dT2', 'RET_RAU_T1', 'RET_SCU_T', 'RET_T_HP'],
         'bounds': [[5, 15], [5, 15],
-                   [10, 25], [5, 20], [0, 20], [1, 3], [8, 11], [1, 3], [8, 11], [14, 18],
+                   [1, 3], [8, 11], [1, 3], [8, 11], [16, 20], [14,18],
                    [1, 3],
-                   [1, 3], [8, 11], [1, 3], [8, 11], [14, 18],
-                   [1, 3], [8, 11], [1, 3], [8, 11], [14, 18]]
+                   [1, 3], [8, 11], [1, 3], [8, 11], [16, 20], [14,18],
+                   [1, 3], [8, 11], [1, 3], [8, 11], [16, 20], [14,18]]
+    },
+    "d_LT_Networks_dhw": {
+        'num_vars': 24,
+        'names': ['dTn_1', 'dTn_2',
+                  'HOT_dT1', 'HOT_dT2', 'HOT_dTsc', 'HOT_OAU_dT2', 'HOT_OAU_T1', 'HOT_RAU_dT2', 'HOT_RAU_T1', 'HOT_SCU_T', 'HOT_T_HP',
+                  'N_dT2',
+                  'OFF_OAU_dT2', 'OFF_OAU_T1', 'OFF_RAU_dT2', 'OFF_RAU_T1', 'OFF_SCU_T', 'OFF_T_HP',
+                  'RET_OAU_dT2', 'RET_OAU_T1', 'RET_RAU_dT2', 'RET_RAU_T1', 'RET_SCU_T', 'RET_T_HP',
+                  'T_SCU'],
+        'bounds': [[5, 15], [5, 15],
+                   [10, 25], [5, 20], [0, 20], [1, 3], [8, 11], [1, 3], [8, 11], [16, 20], [14, 18],
+                   [1, 3],
+                   [1, 3], [8, 11], [1, 3], [8, 11], [16, 20], [14, 18],
+                   [1, 3], [8, 11], [1, 3], [8, 11], [16, 20], [14, 18]]
     },
     "d_HT_Networks": {
-        'num_vars': 17,
+        'num_vars': 20,
         'names': ['dTn_1',
-                  'HOT_HP_dT2', 'HOT_OAU_dT2', 'HOT_OAU_T1', 'HOT_RAU_dT2', 'HOT_RAU_T1',
+                  'HOT_HP_dT2', 'HOT_OAU_dT2', 'HOT_OAU_T1', 'HOT_RAU_dT2', 'HOT_RAU_T1', 'HOT_SCU_T',
                   'N_Ts',
-                  'OFF_HP_dT2', 'OFF_OAU_dT2', 'OFF_OAU_T1', 'OFF_RAU_dT2', 'OFF_RAU_T1',
-                  'RET_HP_dT2', 'RET_OAU_dT2', 'RET_OAU_T1', 'RET_RAU_dT2', 'RET_RAU_T1'],
+                  'OFF_HP_dT2', 'OFF_OAU_dT2', 'OFF_OAU_T1', 'OFF_RAU_dT2', 'OFF_RAU_T1', 'OFF_SCU_T',
+                  'RET_HP_dT2', 'RET_OAU_dT2', 'RET_OAU_T1', 'RET_RAU_dT2', 'RET_RAU_T1', 'RET_SCU_T'],
         'bounds': [[5, 15],
-                   [2, 15], [1, 3], [8, 11], [1, 3], [8, 11],
+                   [2, 15], [1, 3], [8, 11], [1, 3], [8, 11], [16, 20],
                    [12, 20],
-                   [2, 15], [1, 3], [8, 11], [1, 3], [8, 11],
-                   [2, 15], [1, 3], [8, 11], [1, 3], [8, 11]]
+                   [2, 15], [1, 3], [8, 11], [1, 3], [8, 11], [16, 20],
+                   [2, 15], [1, 3], [8, 11], [1, 3], [8, 11], [16, 20]]
     },
     "d_HT_Networks_dhw": {
-        'num_vars': 19,
+        'num_vars': 22,
         'names': ['dTn_1',
-                  'HOT_HP_dT1', 'HOT_HP_dT2', 'HOT_HP_dTsc', 'HOT_OAU_dT2', 'HOT_OAU_T1', 'HOT_RAU_dT2', 'HOT_RAU_T1',
+                  'HOT_HP_dT1', 'HOT_HP_dT2', 'HOT_HP_dTsc', 'HOT_OAU_dT2', 'HOT_OAU_T1', 'HOT_RAU_dT2', 'HOT_RAU_T1', 'HOT_SCU_T',
                   'N_Ts',
-                  'OFF_HP_dT2', 'OFF_OAU_dT2', 'OFF_OAU_T1', 'OFF_RAU_dT2', 'OFF_RAU_T1',
-                  'RET_HP_dT2', 'RET_OAU_dT2', 'RET_OAU_T1', 'RET_RAU_dT2', 'RET_RAU_T1'],
+                  'OFF_HP_dT2', 'OFF_OAU_dT2', 'OFF_OAU_T1', 'OFF_RAU_dT2', 'OFF_RAU_T1', 'OFF_SCU_T',
+                  'RET_HP_dT2', 'RET_OAU_dT2', 'RET_OAU_T1', 'RET_RAU_dT2', 'RET_RAU_T1', 'RET_SCU_T'],
         'bounds': [[5, 15],
-                   [22, 30], [2, 30], [0, 20], [1, 3], [8, 11], [1, 3], [8, 11],
+                   [22, 30], [2, 30], [0, 20], [1, 3], [8, 11], [1, 3], [8, 11], [16, 20],
                    [12, 20],
-                   [2, 15], [1, 3], [8, 11], [1, 3], [8, 11],
-                   [2, 15], [1, 3], [8, 11], [1, 3], [8, 11]]
+                   [2, 15], [1, 3], [8, 11], [1, 3], [8, 11], [16, 20],
+                   [2, 15], [1, 3], [8, 11], [1, 3], [8, 11], [16, 20]]
     },
     "d_Networks_LT": {
         'num_vars': 20,
@@ -130,7 +131,7 @@ problem_dict = {
     },
 }
 
-problem_name = 'd_Buildings'
+problem_name = 'c_Networks'
 number_of_samples = 1000
 iterations = 10000   #10000 from Steffen
 
