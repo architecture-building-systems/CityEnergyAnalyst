@@ -1,7 +1,3 @@
-
-
-
-
 import os
 import random
 
@@ -48,7 +44,7 @@ def schedule_maker_main(locator, config, building=None):
     if buildings == []:
         buildings = locator.get_zone_building_names()
     if building != None:
-        buildings = [building] #this is to run the tests
+        buildings = [building]  # this is to run the tests
 
     # get variables of indoor comfort and internal loads
     internal_loads = dbf_to_dataframe(locator.get_building_internal()).set_index('Name')
@@ -72,7 +68,6 @@ def schedule_maker_main(locator, config, building=None):
 
     # create date range for the calculation year
     date_range = get_date_range_hours_from_year(year)
-
 
     # SCHEDULE MAKER
     n = len(buildings)
@@ -231,7 +226,7 @@ def calc_schedules(locator,
     occupant_load = array - base_load
     # this schedule is assumed to be independent of occupant presence
     yearly_array = get_yearly_vectors(date_range, days_in_schedule, occupant_load, monthly_multiplier) + base_load
-    final_schedule[variable] = yearly_array * internal_loads_building[variable] *1000 #convert to Wh
+    final_schedule[variable] = yearly_array * internal_loads_building[variable] * 1000  # convert to Wh
 
     # DATACENTRE AND PROCESS ENERGY DEMAND SCHEDULES
     for variable in ['Ed_Wm2', 'Epro_Wm2', 'Qcre_Wm2', 'Qhpro_Wm2', 'Qcpro_Wm2']:
@@ -466,7 +461,7 @@ def calc_hourly_value(date, array_week, array_sat, array_sun, norm_weekday_max, 
     dayofweek = date.dayofweek
     if 0 <= dayofweek < 5:  # weekday
         return array_week[hour_day] * month_year * norm_weekday_max  # normalized dhw demand flow rates
-    elif dayofweek is 5:  # saturday
+    elif dayofweek == 5:  # saturday
         return array_sat[hour_day] * month_year * norm_sat_max  # normalized dhw demand flow rates
     else:  # sunday
         return array_sun[hour_day] * month_year * norm_sun_max  # normalized dhw demand flow rates
