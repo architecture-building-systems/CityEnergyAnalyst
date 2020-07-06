@@ -179,13 +179,13 @@ class InputFileValidator(object):
                 column_errors = data[column].apply(ChoiceTypeValidator(col_schema, lookup_data).validate).dropna()
             else:
                 column_errors = data[column].apply(get_validator_func(col_schema)).dropna()
-            for index, error in column_errors.iteritems():
+            for index, error in column_errors.items():
                 errors.append([{'row': int(index) + 1, 'column': str(column)}, error])
 
             # Make sure values are unique
             if 'primary' in col_schema:
                 duplicates = data[column][data[column].duplicated(keep=False)]
-                for index, col_value in duplicates.iteritems():
+                for index, col_value in duplicates.items():
                     errors.append(
                         [{'row': int(index) + 1, 'column': str(column)}, 'value is not unique: {}'.format(col_value)])
         return errors
@@ -205,7 +205,7 @@ class InputFileValidator(object):
                     result = data.eval(constraint)
                     # Only process
                     if type(result) == pd.Series and result.dtype == 'bool':
-                        for index, error in result[~result].iteritems():
+                        for index, error in result[~result].items():
                             errors.append([{'row': int(index) + 1}, 'failed constraint: {}'.format(constraint)])
                 except Exception as e:
                     print(e)
