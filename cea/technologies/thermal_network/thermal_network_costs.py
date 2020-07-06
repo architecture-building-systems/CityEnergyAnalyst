@@ -596,7 +596,7 @@ def main(config):
         annual_demand_district_MWh = total_demand['Qcs_sys_MWhyr'].sum()
         annual_demand_building_scale_MWh = 0
         for building_index in disconnected_buildings_index:
-            annual_demand_building_scale_MWh += total_demand.ix[building_index, 'Qcs_sys_MWhyr']
+            annual_demand_building_scale_MWh += total_demand.iloc[building_index, 'Qcs_sys_MWhyr']
         annual_demand_network_MWh = annual_demand_district_MWh - annual_demand_building_scale_MWh
     else:
         raise ValueError('This optimization procedure is not ready for district heating yet!')

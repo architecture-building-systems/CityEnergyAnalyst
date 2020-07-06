@@ -343,7 +343,6 @@ if __name__ == '__main__':
         #data = data.as_matrix()
         #data_lib[name] = data
 
-
     # point example
     for name in sen_list:
 
@@ -351,7 +350,8 @@ if __name__ == '__main__':
         actor_lib['pt_'+name], polydata_lib['pt_'+name] = points2actor(xyz, apoint_size=8)
         count_lib['pt_'+name] = 1
         path = os.path.join(out_path, name, 'res')
-        data = pd.read_csv(os.path.join(path, name+'.ill'), sep=' ', skiprows=start_h, nrows=nr_hours, header=None).ix[: ,4:]
+        data = pd.read_csv(os.path.join(path, name+'.ill'),
+                           sep=' ', skiprows=start_h, nrows=nr_hours, header=None).iloc[:, 4:]
         data = data.astype(float)
         data = data.as_matrix()
         data_lib['pt_'+name] = data
