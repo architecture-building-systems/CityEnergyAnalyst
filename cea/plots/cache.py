@@ -25,7 +25,7 @@ class PlotCache(object):
         self.project = project
 
     def _parameter_hash(self, parameters):
-        return hashlib.md5(repr(sorted(parameters.items()))).hexdigest()
+        return hashlib.md5(repr(sorted(parameters.items())).encode("utf-8")).hexdigest()
 
     def _cached_data_file(self, data_path, parameters):
         return os.path.join(self.project, '.cache', data_path, self._parameter_hash(parameters))
