@@ -281,7 +281,7 @@ def disconnected_heating_for_building(building_name, supply_systems, T_ground_K,
     # Check the GHP area constraint
     for i in range(10):
         QGHP = (1 - i / 10.0) * Qnom_W
-        areaAvail = geothermal_potential.ix[building_name, 'Area_geo']
+        areaAvail = geothermal_potential.loc[building_name, 'Area_geo']
         Qallowed = np.ceil(areaAvail / GHP_A) * GHP_HMAX_SIZE  # [W_th]
         if Qallowed < QGHP:
             optsearch[i + 3] += 1

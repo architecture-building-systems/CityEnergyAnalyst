@@ -112,7 +112,7 @@ def face_points2actor(fps_df):
         polygon = vtk.vtkPolygon()
         polygon.GetPointIds().SetNumberOfIds(3)
         for n in range(3):
-            points.InsertNextPoint(fps_df.ix[i, 0+3*n], fps_df.ix[i, 1+3*n], fps_df.ix[i, 2+3*n])
+            points.InsertNextPoint(fps_df.iloc[i, 0+3*n], fps_df.iloc[i, 1+3*n], fps_df.iloc[i, 2+3*n])
             polygon.GetPointIds().SetId(n, point_id)
             point_id += 1
         cell_array.InsertNextCell(polygon)
