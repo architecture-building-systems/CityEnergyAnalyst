@@ -886,8 +886,8 @@ def create_windows(df_prop_surfaces, gdf_building_architecture):
             orientation_default = 0
 
         # get window-wall ratio of building from architecture geodataframe
-        win_wall_ratio = gdf_building_architecture.ix[name[i]]['win_wall']
-        win_op_ratio = gdf_building_architecture.ix[name[i]]['win_op']
+        win_wall_ratio = gdf_building_architecture.loc[name[i]]['win_wall']
+        win_op_ratio = gdf_building_architecture.loc[name[i]]['win_op']
 
         # for all levels in a facade
         for j in range(num_floors_free_height[i]):

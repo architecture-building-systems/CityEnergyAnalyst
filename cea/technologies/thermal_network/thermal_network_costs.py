@@ -495,22 +495,22 @@ def calc_Ctot_cs_district(network_info):
     Costs_total = Capex_a_netw + Capex_a_pump + Capex_a_chiller + Capex_a_CT + Capex_a_hex + \
                   Opex_fixed_pump + Opex_var_pump + Opex_var_plant + Ctot_dis_loads + Ctot_dis_buildings + \
                   Opex_fixed_plant + Opex_fixed_hex
-    cost_storage_df.ix['total'][0] = Capex_a_total + Opex_total
-    cost_storage_df.ix['opex'][0] = Opex_total
-    cost_storage_df.ix['capex'][0] = Capex_a_total
-    cost_storage_df.ix['capex_network'][0] = Capex_a_netw
-    cost_storage_df.ix['capex_pump'][0] = Capex_a_pump
-    cost_storage_df.ix['capex_hex'][0] = Capex_a_hex
-    cost_storage_df.ix['capex_dis_loads'][0] = Capex_a_dis_loads
-    cost_storage_df.ix['capex_dis_build'][0] = Capex_a_dis_buildings
-    cost_storage_df.ix['capex_chiller'][0] = Capex_a_chiller
-    cost_storage_df.ix['capex_CT'][0] = Capex_a_CT
-    cost_storage_df.ix['opex_plant'][0] = Opex_fixed_plant + Opex_var_plant
-    cost_storage_df.ix['opex_pump'][0] = Opex_fixed_pump + Opex_var_pump
-    cost_storage_df.ix['opex_hex'][0] = Opex_fixed_hex
-    cost_storage_df.ix['opex_dis_loads'][0] = Opex_tot_dis_loads
-    cost_storage_df.ix['opex_dis_build'][0] = Opex_tot_dis_buildings
-    cost_storage_df.ix['el_network_MWh'][0] = el_MWh
+    cost_storage_df.loc['total'][0] = Capex_a_total + Opex_total
+    cost_storage_df.loc['opex'][0] = Opex_total
+    cost_storage_df.loc['capex'][0] = Capex_a_total
+    cost_storage_df.loc['capex_network'][0] = Capex_a_netw
+    cost_storage_df.loc['capex_pump'][0] = Capex_a_pump
+    cost_storage_df.loc['capex_hex'][0] = Capex_a_hex
+    cost_storage_df.loc['capex_dis_loads'][0] = Capex_a_dis_loads
+    cost_storage_df.loc['capex_dis_build'][0] = Capex_a_dis_buildings
+    cost_storage_df.loc['capex_chiller'][0] = Capex_a_chiller
+    cost_storage_df.loc['capex_CT'][0] = Capex_a_CT
+    cost_storage_df.loc['opex_plant'][0] = Opex_fixed_plant + Opex_var_plant
+    cost_storage_df.loc['opex_pump'][0] = Opex_fixed_pump + Opex_var_pump
+    cost_storage_df.loc['opex_hex'][0] = Opex_fixed_hex
+    cost_storage_df.loc['opex_dis_loads'][0] = Opex_tot_dis_loads
+    cost_storage_df.loc['opex_dis_build'][0] = Opex_tot_dis_buildings
+    cost_storage_df.loc['el_network_MWh'][0] = el_MWh
 
     return Capex_a_total, Opex_total, Costs_total, cost_storage_df
 
@@ -604,25 +604,25 @@ def main(config):
 
     # write outputs
     cost_output = {}
-    cost_output['total_annual_cost'] = round(cost_storage_df.ix['total'][0], 2)
-    cost_output['annual_opex'] = round(cost_storage_df.ix['opex'][0], 2)
-    cost_output['annual_capex'] = round(cost_storage_df.ix['capex'][0], 2)
+    cost_output['total_annual_cost'] = round(cost_storage_df.loc['total'][0], 2)
+    cost_output['annual_opex'] = round(cost_storage_df.loc['opex'][0], 2)
+    cost_output['annual_capex'] = round(cost_storage_df.loc['capex'][0], 2)
     cost_output['total_cost_per_MWh'] = round(cost_output['total_annual_cost'] / annual_demand_district_MWh, 2)
     cost_output['opex_per_MWh'] = round(cost_output['annual_opex'] / annual_demand_district_MWh, 2)
     cost_output['capex_per_MWh'] = round(cost_output['annual_capex'] / annual_demand_district_MWh, 2)
     cost_output['annual_demand_district_MWh'] = round(annual_demand_district_MWh, 2)
     cost_output['annual_demand_building_scale_MWh'] = round(annual_demand_building_scale_MWh, 2)
     cost_output['annual_demand_network_MWh'] = round(annual_demand_network_MWh, 2)
-    cost_output['opex_plant'] = round(cost_storage_df.ix['opex_plant'][0], 2)
-    cost_output['opex_pump'] = round(cost_storage_df.ix['opex_pump'][0], 2)
-    cost_output['opex_hex'] = round(cost_storage_df.ix['opex_hex'][0], 2)
-    cost_output['el_network_MWh'] = round(cost_storage_df.ix['el_network_MWh'][0], 2)
+    cost_output['opex_plant'] = round(cost_storage_df.loc['opex_plant'][0], 2)
+    cost_output['opex_pump'] = round(cost_storage_df.loc['opex_pump'][0], 2)
+    cost_output['opex_hex'] = round(cost_storage_df.loc['opex_hex'][0], 2)
+    cost_output['el_network_MWh'] = round(cost_storage_df.loc['el_network_MWh'][0], 2)
     cost_output['el_price'] = network_info.prices.ELEC_PRICE
-    cost_output['capex_network'] = round(cost_storage_df.ix['capex_network'][0], 2)
-    cost_output['capex_pumps'] = round(cost_storage_df.ix['capex_pump'][0], 2)
-    cost_output['capex_hex'] = round(cost_storage_df.ix['capex_hex'][0], 2)
-    cost_output['capex_chiller'] = round(cost_storage_df.ix['capex_chiller'][0], 2)
-    cost_output['capex_CT'] = round(cost_storage_df.ix['capex_CT'][0], 2)
+    cost_output['capex_network'] = round(cost_storage_df.loc['capex_network'][0], 2)
+    cost_output['capex_pumps'] = round(cost_storage_df.loc['capex_pump'][0], 2)
+    cost_output['capex_hex'] = round(cost_storage_df.loc['capex_hex'][0], 2)
+    cost_output['capex_chiller'] = round(cost_storage_df.loc['capex_chiller'][0], 2)
+    cost_output['capex_CT'] = round(cost_storage_df.loc['capex_CT'][0], 2)
     cost_output['avg_diam_m'] = average_diameter_m
     cost_output['network_length_m'] = length_m
     cost_output = pd.DataFrame.from_dict(cost_output, orient='index').T
