@@ -1187,7 +1187,7 @@ def calc_assign_diameter(max_flow, pipe_catalog):
 
 def calc_max_diameter(volume_flow_m3s, pipe_catalog, velocity_ms):
     diameter_m = math.sqrt((volume_flow_m3s / velocity_ms) * (4 / math.pi))
-    selection_of_catalog = pipe_catalog.ix[(pipe_catalog['D_int_m'] - diameter_m).abs().argsort()[:1]]
+    selection_of_catalog = pipe_catalog.loc[(pipe_catalog['D_int_m'] - diameter_m).abs().argsort()[:1]]
     D_int_m = selection_of_catalog['D_int_m'].values[0]
     Pipe_DN = selection_of_catalog['Pipe_DN'].values[0]
     D_ext_m = selection_of_catalog['D_ext_m'].values[0]
