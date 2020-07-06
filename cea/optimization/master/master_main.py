@@ -297,6 +297,7 @@ def non_dominated_sorting_genetic_algorithm(locator,
                                                   repeat(column_names, len(invalid_ind))))
 
     # normalization of the first generation
+    fitnesses = list(fitnesses)  # fitnesses is a map object - store a copy for iterating over multiple times
     scaler_dict = scaler_for_normalization(NOBJ, fitnesses)
     fitnesses = normalize_fitnesses(scaler_dict, fitnesses)
 
@@ -348,6 +349,7 @@ def non_dominated_sorting_genetic_algorithm(locator,
                                     repeat(technologies_cooling_allowed, len(invalid_ind)),
                                     repeat(column_names, len(invalid_ind))))
         # normalization of the second generation on
+        fitnesses = list(fitnesses)  # fitnesses is a map object - store a copy for iterating over multiple times
         fitnesses = normalize_fitnesses(scaler_dict, fitnesses)
 
         for ind, fit in zip(invalid_ind, fitnesses):
@@ -475,27 +477,32 @@ def save_final_generation_pareto_individuals(toolbox,
 
     # evaluate once again and print results for the pareto curve
     print_final_results = True
-    toolbox.map(toolbox.evaluate, zip(individual_in_pareto_list,
-                                      individual_number_list,
-                                      generation_number_list,
-                                      repeat(building_names_all, len(individual_in_pareto_list)),
-                                      repeat(column_names_buildings_heating, len(individual_in_pareto_list)),
-                                      repeat(column_names_buildings_cooling, len(individual_in_pareto_list)),
-                                      repeat(building_names_heating, len(individual_in_pareto_list)),
-                                      repeat(building_names_cooling, len(individual_in_pareto_list)),
-                                      repeat(building_names_electricity, len(individual_in_pareto_list)),
-                                      repeat(locator, len(individual_in_pareto_list)),
-                                      repeat(network_features, len(individual_in_pareto_list)),
-                                      repeat(weather_features, len(individual_in_pareto_list)),
-                                      repeat(config, len(individual_in_pareto_list)),
-                                      repeat(prices, len(individual_in_pareto_list)),
-                                      repeat(lca, len(individual_in_pareto_list)),
-                                      repeat(district_heating_network, len(individual_in_pareto_list)),
-                                      repeat(district_cooling_network, len(individual_in_pareto_list)),
-                                      repeat(technologies_heating_allowed, len(individual_in_pareto_list)),
-                                      repeat(technologies_cooling_allowed, len(individual_in_pareto_list)),
-                                      repeat(column_names, len(individual_in_pareto_list)),
-                                      repeat(print_final_results, len(individual_in_pareto_list))))
+    fitnesses = toolbox.map(toolbox.evaluate, zip(individual_in_pareto_list,
+                                                  individual_number_list,
+                                                  generation_number_list,
+                                                  repeat(building_names_all, len(individual_in_pareto_list)),
+                                                  repeat(column_names_buildings_heating,
+                                                         len(individual_in_pareto_list)),
+                                                  repeat(column_names_buildings_cooling,
+                                                         len(individual_in_pareto_list)),
+                                                  repeat(building_names_heating, len(individual_in_pareto_list)),
+                                                  repeat(building_names_cooling, len(individual_in_pareto_list)),
+                                                  repeat(building_names_electricity, len(individual_in_pareto_list)),
+                                                  repeat(locator, len(individual_in_pareto_list)),
+                                                  repeat(network_features, len(individual_in_pareto_list)),
+                                                  repeat(weather_features, len(individual_in_pareto_list)),
+                                                  repeat(config, len(individual_in_pareto_list)),
+                                                  repeat(prices, len(individual_in_pareto_list)),
+                                                  repeat(lca, len(individual_in_pareto_list)),
+                                                  repeat(district_heating_network, len(individual_in_pareto_list)),
+                                                  repeat(district_cooling_network, len(individual_in_pareto_list)),
+                                                  repeat(technologies_heating_allowed, len(individual_in_pareto_list)),
+                                                  repeat(technologies_cooling_allowed, len(individual_in_pareto_list)),
+                                                  repeat(column_names, len(individual_in_pareto_list)),
+                                                  repeat(print_final_results, len(individual_in_pareto_list))))
+
+    # fitnesses is a map object of lazy results - iterate over it to actually evaluate
+    fitnesses = list(fitnesses)
 
     for individual_number, generation_number in zip(individual_number_list, generation_number_list):
         performance_totals_pareto = pd.concat([performance_totals_pareto,
