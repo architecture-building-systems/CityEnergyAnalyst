@@ -27,7 +27,8 @@ def scaler_for_normalization(number_of_objectives, fitnesses):
     for objective in range(number_of_objectives):
         list_fitness_objective = [x[objective] for x in fitnesses]
         max_ob.append(max(list_fitness_objective))
-        min_ob.append(min(list_fitness_objective, 0.0))  # in case there are negative, select the negative
+        min_ob.append(min(list_fitness_objective, default=0.0))
+        min_ob.append(min(min(list_fitness_objective), 0.0))  # select lowest negative value or 0.0 if only positives
 
     # Output to scale data inside the fitness funcion from the second generation on
     scaler_dict = {'max': max_ob, 'min': min_ob, 'NOBJ': number_of_objectives}
