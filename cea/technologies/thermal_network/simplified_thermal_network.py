@@ -143,8 +143,8 @@ def calc_max_diameter(volume_flow_m3s, pipe_catalog, velocity_ms, peak_load_perc
     return Pipe_DN, D_ext_m, D_int_m, D_ins_m
 
 
-def calc_head_loss_m(diamter_m, max_volume_flow_rates_m3s, coefficient_friction, length_m):
-    hf_L = (10.67 / (coefficient_friction ** 1.85)) * (max_volume_flow_rates_m3s ** 1.852) / (diamter_m ** 4.8704)
+def calc_head_loss_m(diameter_m, max_volume_flow_rates_m3s, coefficient_friction, length_m):
+    hf_L = (10.67 / (coefficient_friction ** 1.85)) * (max_volume_flow_rates_m3s ** 1.852) / (diameter_m ** 4.8704)
     head_loss_m = hf_L * length_m
     return head_loss_m
 
