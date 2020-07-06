@@ -638,8 +638,8 @@ def calc_Cinv_PVT(PVT_peak_W, locator, technology=0):
         PVT_cost_data = PVT_cost_data[PVT_cost_data['code'] == technology_code[technology]]
         # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
         # capacity for the corresponding technology from the database
-        if PVT_peak_W < PVT_cost_data['cap_min'][0]:
-            PVT_peak_W = PVT_cost_data['cap_min'][0]
+        if PVT_peak_W < PVT_cost_data['cap_min'].values[0]:
+            PVT_peak_W = PVT_cost_data['cap_min'].values[0]
         PVT_cost_data = PVT_cost_data[
             (PVT_cost_data['cap_min'] <= PVT_peak_W) & (PVT_cost_data['cap_max'] > PVT_peak_W)]
         Inv_a = PVT_cost_data.iloc[0]['a']
