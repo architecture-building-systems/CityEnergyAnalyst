@@ -76,6 +76,7 @@ Section "Base Installation" Base_Installation_Section
     SetOutPath "$INSTDIR"
 
     File "cea-icon.ico"
+    File "pip-install-cea.bat"
 
     # install cmder (incl. git and bash... woohoo!!)
     File /r "Dependencies"
@@ -96,7 +97,7 @@ Section "Base Installation" Base_Installation_Section
     FileWrite $0 "$\r$\n" ; we write a new line
     FileWrite $0 "SET RAYPATH=$INSTDIR\d\Daysim"
     FileWrite $0 "$\r$\n" ; we write a new line
-    FileWrite $0 "SET PROMPT=(CEA v${VER}) \$P\$G"
+    FileWrite $0 "SET PROMPT=(CEA v${VER}) $$P$$G"
     FileWrite $0 "$\r$\n" ; we write a new lin
     FileWrite $0 "ALIAS find=$\"$INSTDIR\Dependencies\cmder\vendor\git-for-windows\usr\bin\find.exe$\" $$*"
     FileClose $0
@@ -171,11 +172,8 @@ Section "Base Installation" Base_Installation_Section
     WriteINIStr "$INSTDIR\Dependencies\Python\qt.conf" Paths Libraries "$0/Dependencies/Python/Library/lib"
     WriteINIStr "$INSTDIR\Dependencies\Python\qt.conf" Paths Headers "$0/Dependencies/Python/Library/include/qt"
 
-    DetailPrint "Updating Pip"
-    nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip install -U --force-reinstall "pip>=2.20.2"'
-
     DetailPrint "Pip installing CityEnergyAnalyst==${VER}"
-    nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip install -U cityenergyanalyst==${VER}'
+    nsExec::ExecToLog '"$INSTDIR\pip-install-cea.bat" ${VER}'
 
     # make sure cea was installed
     Pop $0
@@ -184,15 +182,8 @@ Section "Base Installation" Base_Installation_Section
         Abort "Could not install CityEnergyAnalyst ${VER} - see Details"
     ${EndIf}
 
-
-    DetailPrint "Pip installing Jupyter"
-    nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip install --force-reinstall jupyter ipython'
-
-    DetailPrint "Pip installing Sphinx"
-    nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip install --force-reinstall --no-deps sphinx'
-
     # create cea.config file in the %userprofile% directory by calling `cea --help` and set daysim paths
-    nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\Scripts\cea.exe" --help'
+    ;nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\Scripts\cea.exe" --help'
     WriteINIStr "$PROFILE\cea.config" radiation daysim-bin-directory "$INSTDIR\Dependencies\Daysim"
 
     ;Create uninstaller
