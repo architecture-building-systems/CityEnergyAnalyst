@@ -2,9 +2,9 @@
 The /server api blueprint is used by cea-worker processes to manage jobs and files.
 """
 
-
-
-
+# bugfix for importing flask_restplus
+import werkzeug.utils
+werkzeug.cached_property = werkzeug.utils.cached_property
 
 from flask import Blueprint, current_app
 from flask_restplus import Api, Resource
@@ -19,7 +19,6 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
-
 
 blueprint = Blueprint('server', __name__, url_prefix='/server')
 api = Api(blueprint)
