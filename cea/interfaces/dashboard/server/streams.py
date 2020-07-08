@@ -4,12 +4,8 @@ streams: maintain a list of streams containing ``cea-worker`` output for jobs.
 FIXME: when does this data get cleared?
 """
 
-
-
-
 from flask import request, current_app
 from flask_restplus import Namespace, Resource, fields
-
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
@@ -38,7 +34,7 @@ class ReadStream(Resource):
 @api.route("/write/<int:jobid>")
 class WriteStream(Resource):
     def put(self, jobid):
-        msg = request.data
+        msg = request.get_data(as_text=True)
         streams.setdefault(jobid, []).append(msg)
 
         # emit the message using socket.io
