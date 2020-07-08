@@ -186,7 +186,7 @@ class DaySimProject(object):
     def cleanup_project(self):
         shutil.rmtree(self.project_path)
 
-    def create_sensor_input_file(self, sensor_positions, sensor_normals, sensor_file_unit):
+    def create_sensor_input_file(self, sensor_positions, sensor_normals, num_sensors, sensor_file_unit):
         """
         Creates sensor input file and writes its location to the header file
 
@@ -216,6 +216,16 @@ class DaySimProject(object):
                 hea_file.write("output_units 1\n")
             if sensor_file_unit == "lux":
                 hea_file.write("output_units 2\n")
+
+            # Write senor_file_unit to header file
+            # Fix to allow Daysim 5.2 binaries to work, not required for complied binaries from latest branch
+            sensor_str = ""
+            unit_num = "0" if sensor_file_unit == 'lux' else "2"
+            for scnt in range(num_sensors):
+                # 0 = lux, 2 = w/m2
+                sensor_str = sensor_str + unit_num + " "
+
+            hea_file.write("\nsensor_file_unit {sensor_str}\n".format(sensor_str=sensor_str))
 
     def write_radiance_parameters(self, rad_ab, rad_ad, rad_as, rad_ar, rad_aa, rad_lr, rad_st, rad_sj, rad_lw, rad_dj,
                                   rad_ds, rad_dr, rad_dp):
