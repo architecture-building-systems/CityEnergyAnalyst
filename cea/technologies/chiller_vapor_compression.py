@@ -224,7 +224,7 @@ def calc_averaged_PLF(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, 
     elif VCC_chiller.scale == 'DISTRICT':
         source_type = 'WATER'
         compressor_type = 'CENTRIFUGAL'
-        ch_configuration_values = VCC_chiller.configuration_values(source_type,compressor_type)
+        ch_configuration_values = VCC_chiller.configuration_values(source_type, compressor_type)
         if design_capacity <= (2*VCC_chiller.min_VCC_capacity):  # design one chiller for small scale DCS
             n_units = 1
             cooling_capacity_per_unit = max(design_capacity, VCC_chiller.min_VCC_capacity)
