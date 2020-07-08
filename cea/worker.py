@@ -10,9 +10,6 @@ integer argument, the jobid, that is used to fetch all other information from th
 as an URL for locating the /server/jobs api.
 """
 
-
-
-
 import sys
 import requests
 import traceback
@@ -34,20 +31,20 @@ __status__ = "Production"
 suppres_3rd_party_debug_loggers()
 
 
-def consume_nowait(queue, msg):
+def consume_nowait(q, msg):
     """
     Read from queue as much as possible and concatenate the results to ``msg``, returning that.
     If an ``EOFError`` is read from the queue, put it back and return the ``msg`` so far.
     """
-    if not queue.empty():
+    if not q.empty():
         messages = [msg]
         try:
-            msg = queue.get_nowait()
+            msg = q.get_nowait()
             while not msg is EOFError:
                 messages.append(msg)
-                msg = queue.get_nowait()
+                msg = q.get_nowait()
             # msg is now EOFError, put it back
-            queue.put(EOFError)
+            q.put(EOFError)
         except queue.Empty:
             # we have read all there is in the queue for now
             pass
@@ -59,6 +56,7 @@ def consume_nowait(queue, msg):
 def stream_poster(jobid, server, queue):
     """Post items from queue until a sentinel (the EOFError class object) is read."""
     msg = queue.get(block=True, timeout=None)  # block until first message
+
     while not msg is EOFError:
         msg = consume_nowait(queue, msg)
         requests.put("{server}/streams/write/{jobid}".format(**locals()), data=msg)
@@ -67,6 +65,7 @@ def stream_poster(jobid, server, queue):
 
 class JobServerStream(object):
     """A File-like object for capturing STDOUT and STDERR form cea-worker processes on the server."""
+
     def __init__(self, jobid, server, stream):
         self.jobid = jobid
         self.server = server
