@@ -1,6 +1,9 @@
 name: cea-3.5.0b0
 channels:
   - conda-forge
+  - dlr-sc
+  - pythonocc
+  - oce
   - defaults
 dependencies:
   - affine=2.3.0=py_0
@@ -104,7 +107,7 @@ dependencies:
   - osmnx=0.14.1=pyh9f0ad1d_0
   - pandas=1.0.4=py38he6e81aa_0
   - pcre=8.44=h6538335_0
-  - pip=20.1.1=py_1
+  - pip
   - poppler=0.87.0=h0cd1227_1
   - poppler-data=0.4.9=1
   - postgresql=12.2=he14cc48_1
