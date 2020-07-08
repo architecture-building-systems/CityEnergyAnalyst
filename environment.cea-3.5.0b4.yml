@@ -215,6 +215,7 @@ dependencies:
   - zope.interface=5.1.0=py38h9de7a3e_0
   - zstd=1.4.4=h9f78265_3
   - ipython==7.15.0
+  - numba
   - pip:
     - alabaster==0.7.12
     - aniso8601==8.0.0
@@ -249,7 +250,6 @@ dependencies:
     - mypy==0.780
     - mypy-extensions==0.4.3
     - netcdf4==1.5.3
-    - numba==0.50.0
     - openpyxl==3.0.3
     - pandocfilters==1.4.2
     - pillow==7.1.2
