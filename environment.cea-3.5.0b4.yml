@@ -215,7 +215,6 @@ dependencies:
   - zope.interface=5.1.0=py38h9de7a3e_0
   - zstd=1.4.4=h9f78265_3
   - ipython==7.15.0
-  - ipython-genutils==0.2.0
   - pip:
     - alabaster==0.7.12
     - aniso8601==8.0.0
@@ -244,7 +243,6 @@ dependencies:
     - keyring==21.2.1
     - libcst==0.3.6
     - libpysal==4.2.2
-    - llvmlite==0.33.0
     - lxml==4.5.1
     - monkeytype==20.5.0
     - mpmath==1.1.0
