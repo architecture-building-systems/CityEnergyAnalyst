@@ -225,7 +225,8 @@ def main(config):
     # daysim_bin_directory might contain two paths (e.g. "C:\Daysim\bin;C:\Daysim\lib") - in which case, only
     # use the "bin" folder
     bin_directory = [d for d in config.radiation.daysim_bin_directory.split(";") if not d.endswith("lib")][0]
-    cea_daysim = CEADaySim(os.path.join(locator.get_temporary_folder(), 'cea_radiation'), bin_directory)
+    daysim_staging_location = os.path.join(locator.get_temporary_folder(), 'cea_radiation')
+    cea_daysim = CEADaySim(daysim_staging_location, bin_directory)
 
     # create radiance input files
     print("Creating radiance material file")

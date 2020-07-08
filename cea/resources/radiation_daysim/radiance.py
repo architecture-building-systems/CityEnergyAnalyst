@@ -15,6 +15,21 @@ from py4design.py3dmodel.fetch import points_frm_occface
 
 
 class CEADaySim(object):
+    """
+    This class helps to initialize the Daysim folder structure in the `staging_path`
+    and encapsulates all the methods required to create the initial input files for Daysim
+    (i.e radiance material file, radiance geometry file and weather file) which are needed for Daysim projects.
+    It also initializes Daysim projects with the help of the `DaySimProject` class
+
+    The staging folder is split into 2 folders, 'common_inputs' and 'projects'.
+    'common_inputs' store the created input files which are shared among any running Daysim projects,
+    'projects' store the folders of any running Daysim projects
+
+    This splitting allows Daysim projects to be run parallel with multiprocessing
+
+    :param str staging_path: Path where to create Daysim Project
+    :param str daysim_dir: Directory where Daysim binaries are found
+    """
     def __init__(self, staging_path, daysim_dir):
         self.common_inputs = os.path.join(staging_path, 'common_inputs')
         self.projects_dir = os.path.join(staging_path, 'projects')
@@ -40,6 +55,12 @@ class CEADaySim(object):
             os.makedirs(self.projects_dir)
 
     def initialize_daysim_project(self, project_name):
+        """
+        Returns a DaySimProject object that initializes a Daysim project with the name `project_name`
+
+        :param str project_name: Name of Daysim project
+        :return DaySimProject:
+        """
         return DaySimProject(project_name, self.projects_dir, self.daysim_dir,
                              self.daysim_material_path, self.daysim_geometry_path, self.wea_weather_path,
                              self.site_info)
