@@ -1,6 +1,9 @@
-name: cea-3.5.0b2
+name: cea-3.5.0b3
 channels:
   - conda-forge
+  - dlr-sc
+  - pythonocc
+  - oce
   - defaults
 dependencies:
   - affine=2.3.0=py_0
