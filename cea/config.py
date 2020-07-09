@@ -546,8 +546,8 @@ class WorkflowParameter(Parameter):
             return value
         else:
             print("ERROR: Workflow not found: {workflow} - using {default}".format(
-                workflow=value, default=self.examples[self.examples.keys()[0]]))
-            return self.examples[self.examples.keys()[0]]
+                workflow=value, default=self.examples[next(iter(self.examples.keys()))]))
+            return self.examples[next(iter(self.examples.keys()))]
 
 
 class BooleanParameter(Parameter):
