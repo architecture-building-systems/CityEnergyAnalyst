@@ -179,7 +179,7 @@ def write_cea_demand_from_osmose(path_to_district_folder):
     Qmax_plant_columns = network_df.filter(like='locP').filter(like='Hin').columns if network_df.shape[1] > 0.0 else []
     if len(Qmax_plant_columns) > 0.0:
         # 2. calculate demand per m2 per function
-        cooling_loads = {}
+        DC_cooling_loads = {}
         T_net_df = pd.DataFrame()
         Af_total_m2 = {}
         network_lists = network_df.filter(like='locP').filter(like='Hin').filter(like='return').columns
@@ -199,8 +199,8 @@ def write_cea_demand_from_osmose(path_to_district_folder):
             Af_m2 = district_cooling_demand_df.filter(like='Af_m2').filter(like=building_function).iloc[0].values[0]
             Af_total_m2[building_function] = Af_m2
             specific_cooling_load = building_substation_demand_kWh / Af_m2
-            # cooling_loads[building_function] = specific_cooling_load.rename(columns={building_substation_demand_kWh.columns[0]:building_function})
-            cooling_loads[building_function] = specific_cooling_load
+            # DC_cooling_loads[building_function] = specific_cooling_load.rename(columns={building_substation_demand_kWh.columns[0]:building_function})
+            DC_cooling_loads[building_function] = specific_cooling_load
 
         # 3. calculate substation heat exchanger area
         U_substation = 800 # W/m2K # Celine Weber
@@ -220,7 +220,7 @@ def write_cea_demand_from_osmose(path_to_district_folder):
             # dTlm_dict[building_function], substation_Qmax_dict[building_function] = \
             #     calc_builing_substation_dTlm(Q_substation, building_function)  # FIXME: cant use it during optimization, no plots
 
-        # 4. allocate cooling loads and heat exchanger area to buildings
+        # 4. allocate DC cooling loads and heat exchanger area to buildings
         substation_A_hex.loc['plant'] = [A_hex_plant_m2]
         for building in building_info.index:
             building_function = building_info.loc[building][building_info.loc[building]==1].index.values[0]
@@ -231,7 +231,7 @@ def write_cea_demand_from_osmose(path_to_district_folder):
                 building_demand_df = pd.DataFrame(columns=BUILDINGS_DEMANDS_COLUMNS)
 
                 # cooling loads
-                building_demand_df['Qcs_sys_ahu_kWh'] = (cooling_loads[bui_func] * building_Af_m2)
+                building_demand_df['Qcs_sys_ahu_kWh'] = (DC_cooling_loads[bui_func] * building_Af_m2)
                 building_demand_df['mcpcs_sys_ahu_kWperC'] = building_demand_df['Qcs_sys_ahu_kWh'] / (T_net_df['Tr'] - T_net_df['Ts'])
                 substation_flow_rate_m3pers = building_demand_df['mcpcs_sys_ahu_kWperC'] / CP_KJPERKGK / P_WATER_KGPERM3
                 substation_flow_rate_m3pers_df[building] = substation_flow_rate_m3pers
