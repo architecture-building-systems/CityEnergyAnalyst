@@ -32,9 +32,9 @@ def extract_demand_output_district_to_osmose(path_to_district_folder, timesteps,
 
 def prepare_district_info(path_to_district_folder):
     # read building function and GFA from district
-    occupancy_df = reard_dbf_from_cea_input(path_to_district_folder, 'occupancy')
+    occupancy_df = read_dbf_from_cea_input(path_to_district_folder, 'occupancy')
     occupancy_df = occupancy_df.set_index('Name')
-    # calculate Aftech
+    # calculate Af
     geometry_df = get_building_Af_from_geometry(path_to_district_folder)
     # gather all info in district_df
     district_df = occupancy_df[['HOTEL', 'OFFICE', 'RETAIL']]
@@ -126,18 +126,18 @@ def calc_Af_per_function(geometry_df, occupancy_df):
 
 
 def get_building_Af_from_geometry(path_to_district_folder):
-    geometry_df = reard_dbf_from_cea_input(path_to_district_folder, 'geometry')
+    geometry_df = read_dbf_from_cea_input(path_to_district_folder, 'geometry')
     geometry_df['footprint'] = geometry_df.area
     geometry_df['GFA'] = geometry_df['footprint'] * (
             geometry_df['floors_bg'] + geometry_df['floors_ag'])  # gross floor area
     geometry_df = geometry_df.set_index('Name')
-    architecture_df = reard_dbf_from_cea_input(path_to_district_folder, 'architecture')
+    architecture_df = read_dbf_from_cea_input(path_to_district_folder, 'architecture')
     architecture_df = architecture_df.set_index('Name')
     geometry_df['Af'] = geometry_df['GFA'] * architecture_df['Hs_ag']
     return geometry_df
 
 
-def reard_dbf_from_cea_input(path_to_district_folder, file_name):
+def read_dbf_from_cea_input(path_to_district_folder, file_name):
     file_paths = {'occupancy': 'inputs\\building-properties\\occupancy.dbf',
                   'geometry': 'inputs\\building-geometry\\zone.dbf',
                   'architecture': 'inputs\\building-properties\\architecture.dbf'}
