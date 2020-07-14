@@ -24,11 +24,9 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calc_vcc_operation(Qc_from_VCC_W, T_DCN_re_K, T_DCN_sup_K, T_source_K, chiller_size, min_VCC_capacity, max_VCC_capacity, scale):
-    g_value = G_VALUE_CENTRALIZED # get the isentropic efficiency of the district cooling
+def calc_vcc_operation(Qc_from_VCC_W, T_DCN_re_K, T_DCN_sup_K, T_source_K, chiller_size, VCC_chiller):
     Qc_from_VCC_W = min(Qc_from_VCC_W, chiller_size) # The chiller can not supply more cooling than the installed capacity allows
-    VCC_operation = chiller_vapor_compression.calc_VCC(chiller_size, Qc_from_VCC_W, T_DCN_sup_K, T_DCN_re_K, T_source_K,
-                                                       g_value, min_VCC_capacity, max_VCC_capacity, scale)
+    VCC_operation = chiller_vapor_compression.calc_VCC(chiller_size, Qc_from_VCC_W, T_DCN_sup_K, T_DCN_re_K, T_source_K, VCC_chiller)
 
     # unpack outputs
     Qc_VCC_W = VCC_operation['q_chw_W']
@@ -42,13 +40,9 @@ def calc_vcc_CT_operation(Qc_from_VCC_W,
                           T_DCN_sup_K,
                           T_source_K,
                           size_chiller_CT,
-                          min_VCC_capacity,
-                          max_VCC_capacity,
-                          scale):
+                          VCC_chiller):
 
-    g_value = G_VALUE_CENTRALIZED
-    VCC_operation = chiller_vapor_compression.calc_VCC(size_chiller_CT, Qc_from_VCC_W, T_DCN_sup_K, T_DCN_re_K, T_source_K,
-                                                       g_value, min_VCC_capacity, max_VCC_capacity, scale)
+    VCC_operation = chiller_vapor_compression.calc_VCC(size_chiller_CT, Qc_from_VCC_W, T_DCN_sup_K, T_DCN_re_K, T_source_K, VCC_chiller)
 
     # unpack outputs
     Qc_CT_VCC_W = VCC_operation['q_cw_W']
@@ -100,8 +94,7 @@ def cooling_resource_activator(Q_thermal_req,
                                master_to_slave_variables,
                                absorption_chiller,
                                CCGT_operation_data,
-                               min_VCC_capacity,
-                               max_VCC_capacity):
+                               VCC_chiller):
     """
 
     :param Q_thermal_req:
@@ -116,7 +109,6 @@ def cooling_resource_activator(Q_thermal_req,
     :param CCGT_operation_data:
     :return:
     """
-    scale = 'DISTRICT'
     ## initializing unmet cooling load and requirements from daily storage for this hour
     Q_cooling_unmet_W = Q_thermal_req
     Q_DailyStorage_gen_directload_W = 0.0
@@ -222,9 +214,7 @@ def cooling_resource_activator(Q_thermal_req,
                                                     T_district_cooling_supply_K,
                                                     T_source_average_Lake_K,
                                                     WS_BaseVCC_capacity,
-                                                    min_VCC_capacity,
-                                                    max_VCC_capacity,
-                                                    scale)
+                                                    VCC_chiller)
 
             # Delta P from linearization after distribution optimization
             E_pump_WS_req_W = calc_water_body_uptake_pumping(Q_BaseVCC_WS_gen_W,
@@ -274,9 +264,7 @@ def cooling_resource_activator(Q_thermal_req,
                                                     T_district_cooling_supply_K,
                                                     T_source_average_Lake_K,
                                                     WS_PeakVCC_capacity,
-                                                    min_VCC_capacity,
-                                                    max_VCC_capacity,
-                                                    scale)
+                                                    VCC_chiller)
             E_pump_WS_req_W = calc_water_body_uptake_pumping(Q_PeakVCC_WS_gen_W,
                                                              T_district_cooling_return_K,
                                                              T_district_cooling_supply_K)
@@ -322,9 +310,7 @@ def cooling_resource_activator(Q_thermal_req,
                                                    T_district_cooling_supply_K,
                                                    VCC_T_COOL_IN,
                                                    size_AS_BaseVCC_W,
-                                                   min_VCC_capacity,
-                                                   max_VCC_capacity,
-                                                   scale)
+                                                   VCC_chiller)
         Q_cooling_unmet_W = Q_cooling_unmet_W - Q_BaseVCC_AS_gen_directload_W - Qc_from_storage_W
         Q_DailyStorage_gen_directload_W += Qc_from_storage_W
     else:
@@ -354,9 +340,7 @@ def cooling_resource_activator(Q_thermal_req,
                                                    T_district_cooling_supply_K,
                                                    VCC_T_COOL_IN,
                                                    size_AS_PeakVCC_W,
-                                                   min_VCC_capacity,
-                                                   max_VCC_capacity,
-                                                   scale)
+                                                   VCC_chiller)
 
         Q_cooling_unmet_W = Q_cooling_unmet_W - Q_PeakVCC_AS_gen_directload_W - Qc_from_storage_W
         Q_DailyStorage_gen_directload_W += Qc_from_storage_W
