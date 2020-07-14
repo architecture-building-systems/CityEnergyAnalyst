@@ -1,8 +1,14 @@
 REM script used to test the cea by the jenkins for each pull request
 SET CEA=C:\ProgramData\ceajenkins\ceatest-py3
-CALL %CEA%\Python\Scripts\activate.bat
+
+SET PATH=%CEA%\Python;%CEA%\Python\Scripts;%PATH%
+SET PATH=%CEA%\Python\Library\bin;%CEA%\Daysim;%PATH%
+
 SET PYTHONHOME=%CEA%\Python
 SET RAYPATH=%CEA%\Daysim
+SET GDAL_DATA=%CEA%\Python\Library\share\gdal
+SET PROJ_LIB=%CEA%\Python\Library\share
+
 "%CEA%\Python\python.exe" -u -m pip install --no-deps -e .
 
 REM: remove *.pyc files
