@@ -89,27 +89,33 @@ Section "Base Installation" Base_Installation_Section
     DetailPrint "Setting up CEA Console"
     CreateDirectory $INSTDIR\Dependencies\cmder\config\profile.d
     FileOpen $0 "$INSTDIR\Dependencies\cmder\config\profile.d\cea.bat" w
-    FileWrite $0 "CALL $INSTDIR\Dependencies\Python\Scripts\activate.bat"
-    FileWrite $0 "$\r$\n" ; we write a new line
-    FileWrite $0 "SET PATH=$INSTDIR\Dependencies\Daysim;%PATH%"
+    FileWrite $0 "SET PATH=$INSTDIR\Dependencies\Python;$INSTDIR\Dependencies\Python\Scripts;$INSTDIR\Dependencies\Daysim;%PATH%"
     FileWrite $0 "$\r$\n" ; we write a new line
     FileWrite $0 "SET PYTHONHOME=$INSTDIR\Dependencies\Python"
     FileWrite $0 "$\r$\n" ; we write a new line
-    FileWrite $0 "SET RAYPATH=$INSTDIR\d\Daysim"
+    FileWrite $0 "SET RAYPATH=$INSTDIR\Dependencies\Daysim"
+    FileWrite $0 "$\r$\n" ; we write a new line
+    FileWrite $0 "SET GDAL_DATA=$INSTDIR\Dependencies\Python\Library\share\gdal"
+    FileWrite $0 "$\r$\n" ; we write a new line
+    FileWrite $0 "SET PROJ_LIB=$INSTDIR\Dependencies\Python\Library\share"
+    FileWrite $0 "$\r$\n" ; we write a new line
+    FileWrite $0 "ALIAS find=$\"$INSTDIR\Dependencies\cmder\vendor\git-for-windows\usr\bin\find.exe$\" $$*"
     FileWrite $0 "$\r$\n" ; we write a new line
     FileWrite $0 "SET PROMPT=(CEA v${VER}) $$P$$G"
-    FileWrite $0 "$\r$\n" ; we write a new lin
-    FileWrite $0 "ALIAS find=$\"$INSTDIR\Dependencies\cmder\vendor\git-for-windows\usr\bin\find.exe$\" $$*"
     FileClose $0
 
     # create a batch file for running the dashboard with some environment variables set (for DAYSIM etc.)
     DetailPrint "Setting up CEA Dashboard"
     FileOpen $0 "$INSTDIR\dashboard.bat" w
-    FileWrite $0 "CALL $INSTDIR\Dependencies\Python\Scripts\activate.bat"
-    FileWrite $0 "$\r$\n" ; we write a new line
-    FileWrite $0 "SET PATH=$INSTDIR\Dependencies\Daysim;%PATH%"
+    FileWrite $0 "SET PATH=$INSTDIR\Dependencies\Python;$INSTDIR\Dependencies\Python\Scripts;$INSTDIR\Dependencies\Daysim;%PATH%"
     FileWrite $0 "$\r$\n" ; we write a new line
     FileWrite $0 "SET PYTHONHOME=$INSTDIR\Dependencies\Python"
+    FileWrite $0 "$\r$\n" ; we write a new line
+    FileWrite $0 "SET PYTHONHOME=$INSTDIR\Dependencies\Python"
+    FileWrite $0 "$\r$\n" ; we write a new line
+    FileWrite $0 "SET GDAL_DATA=$INSTDIR\Dependencies\Python\Library\share\gdal"
+    FileWrite $0 "$\r$\n" ; we write a new line
+    FileWrite $0 "SET PROJ_LIB=$INSTDIR\Dependencies\Python\Library\share"
     FileWrite $0 "$\r$\n" ; we write a new line
     FileWrite $0 "SET RAYPATH=$INSTDIR\Dependencies\Daysim"
     FileWrite $0 "$\r$\n" ; we write a new line
@@ -123,8 +129,8 @@ Section "Base Installation" Base_Installation_Section
         CONTROL|SHIFT|F10 "Launch the CEA Console"
 
     # create a shortcut in the $INSTDIR for launching the CEA dashboard
-    CreateShortcut "$INSTDIR\CEA Dashboard.lnk" "$INSTDIR\win-unpacked\CityEnergyAnalyst.exe" "" \
-        "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Dashboard"
+    CreateShortcut "$INSTDIR\CEA Dashboard.lnk" "cmd" "/c $INSTDIR\dashboard.bat"  \
+        "$INSTDIR\cea-icon.ico" 0 SW_SHOWMINIMIZED "" "Launch the CEA Dashboard"
 
     CreateShortcut "$INSTDIR\cea.config.lnk" "$WINDIR\notepad.exe" "$PROFILE\cea.config" \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Open CEA Configuration file"
@@ -172,8 +178,11 @@ Section "Base Installation" Base_Installation_Section
     WriteINIStr "$INSTDIR\Dependencies\Python\qt.conf" Paths Libraries "$0/Dependencies/Python/Library/lib"
     WriteINIStr "$INSTDIR\Dependencies\Python\qt.conf" Paths Headers "$0/Dependencies/Python/Library/include/qt"
 
+    DetailPrint "Updating Pip"
+    nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip install -U --force-reinstall "pip>=2.20.2"'
+
     DetailPrint "Pip installing CityEnergyAnalyst==${VER}"
-    nsExec::ExecToLog '"$INSTDIR\pip-install-cea.bat" ${VER}'
+    nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip install -U cityenergyanalyst==${VER}'
 
     # make sure cea was installed
     Pop $0
@@ -182,8 +191,15 @@ Section "Base Installation" Base_Installation_Section
         Abort "Could not install CityEnergyAnalyst ${VER} - see Details"
     ${EndIf}
 
+
+    DetailPrint "Pip installing Jupyter"
+    nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip install --force-reinstall jupyter ipython'
+
+    DetailPrint "Pip installing Sphinx"
+    nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip install --force-reinstall --no-deps sphinx'
+
     # create cea.config file in the %userprofile% directory by calling `cea --help` and set daysim paths
-    ;nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\Scripts\cea.exe" --help'
+    nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\Scripts\cea.exe" --help'
     WriteINIStr "$PROFILE\cea.config" radiation daysim-bin-directory "$INSTDIR\Dependencies\Daysim"
 
     ;Create uninstaller
