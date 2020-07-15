@@ -656,7 +656,8 @@ class PluginListParameter(ListParameter):
     def decode(self, value):
         from cea.plugin import instantiate_plugin
         plugin_fqnames = unique(parse_string_to_list(value))
-        return [instantiate_plugin(plugin_fqname) for plugin_fqname in plugin_fqnames]
+        plugins = [instantiate_plugin(plugin_fqname) for plugin_fqname in plugin_fqnames]
+        return [plugin for plugin in plugins if plugin is not None]
 
 
 class SubfoldersParameter(ListParameter):
