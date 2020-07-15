@@ -43,9 +43,12 @@ def main(config=None):
 
     # handle arguments
     args = sys.argv[1:]  # drop the script name from the arguments
-    if not len(args) or args[0].lower() == '--help':
+    if not len(args):
         print_help(config, args[1:])
         sys.exit(1)
+    if args[0].lower() == '--help':
+        print_help(config, args[1:])
+        sys.exit(0)
     if args[0].lower() == '--version':
         print('City Energy Analyst version %s' % cea.__version__)
         sys.exit(0)
