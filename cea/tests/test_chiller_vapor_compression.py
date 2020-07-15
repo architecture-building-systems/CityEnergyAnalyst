@@ -13,12 +13,12 @@ class TestLoadDistribution(unittest.TestCase):
 
         cls.plfs = {'plf_a': 0.17149273, 'plf_b': 0.58820208, 'plf_c': 0.23737257}
 
+        cls.
+
     def test_calc_averaged_PLF(self):
         # FIXME: Use python mock in python3
         class dummy_VCC_chiller(object):
             def __init__(self):
-                self.max_VCC_capacity = 14000000
-                self.min_VCC_capacity = 1758000
                 self.scale = "DISTRICT"
 
             def configuration_values(self, _source_type, _compressor_type):

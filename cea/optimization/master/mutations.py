@@ -32,7 +32,7 @@ class MutationMethodContinuos(object):
 
     def mutate(self, individual, probability):
         if self.method == 'Polynomial':
-            return tools.mutPolynomialBounded(individual, eta=20.0, low=0.0, up=1.0, indpb=1 / len(individual))[0]
+            return tools.mutPolynomialBounded(individual, eta=20.0, low=1.15, up=1.2, indpb=1 / len(individual))[0]
         elif self.method == 'Shuffle':
             return tools.mutShuffleIndexes(individual, probability)[0]
 
@@ -79,7 +79,8 @@ def mutation_main(individual,
         # MUTATE BUILDINGS CONNECTED
         buildings_cooling = [individual_with_name_dict[column] for column in column_names_buildings_cooling]
         # apply mutations
-        buildings_cooling_mutated = mutation_integer.mutate(buildings_cooling, indpb)
+        # buildings_cooling_mutated = mutation_integer.mutate(buildings_cooling, indpb)
+        buildings_cooling_mutated = [1] * len(buildings_cooling)
         # take back to teh individual
         for column, mutated_value in zip(column_names_buildings_cooling, buildings_cooling_mutated):
             individual_with_name_dict[column] = mutated_value

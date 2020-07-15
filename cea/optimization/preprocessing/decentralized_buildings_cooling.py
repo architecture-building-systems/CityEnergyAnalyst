@@ -24,12 +24,14 @@ import cea.technologies.solar.solar_collector as solar_collector
 import cea.technologies.substation as substation
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.optimization.constants import (T_GENERATOR_FROM_FP_C, T_GENERATOR_FROM_ET_C,
-                                        Q_LOSS_DISCONNECTED, ACH_TYPE_SINGLE, VCC_CODE_DECENTRALIZED)
+                                        Q_LOSS_DISCONNECTED, ACH_TYPE_SINGLE)
 from cea.optimization.lca_calculations import LcaCalculations
 from cea.technologies.thermal_network.thermal_network import calculate_ground_temperature
+from cea.technologies.thermal_network.thermal_network import get_drybulb_temperature
 from cea.technologies.supply_systems_database import SupplySystemsDatabase
 import cea.utilities.parallel
-
+from cea.technologies.direct_expansion_units import DirectExpansionUnit
+from cea.technologies.direct_expansion_units import direct_expansion_design
 
 def disconnected_buildings_cooling_main(locator, building_names, total_demand, config, prices, lca):
     """
@@ -64,8 +66,14 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
 
     n = len(building_names)
 
+    ### Number of households important for the DX design
+    NFA = total_demand['Af_m2']
+    area_per_household = 111
+    n_households = (np.ceil(NFA / area_per_household)).astype(int)
+
     cea.utilities.parallel.vectorize(disconnected_cooling_for_building, config.get_number_of_processes())(
         building_names,
+        n_households,
         repeat(supply_systems, n),
         repeat(lca, n),
         repeat(locator, n),
@@ -75,12 +83,13 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
     print(time.clock() - t0, "seconds process time for the decentralized Building Routine \n")
 
 
-def disconnected_cooling_for_building(building_name, supply_systems, lca, locator, prices, total_demand):
+def disconnected_cooling_for_building(building_name, n_households, supply_systems, lca, locator, prices, total_demand):
     chiller_prop = supply_systems.Absorption_chiller
     boiler_cost_data = supply_systems.Boiler
 
     scale = 'BUILDING'
     VCC_chiller = chiller_vapor_compression.VaporCompressionChiller(locator, scale)
+    DX_properties = DirectExpansionUnit(locator)
 
     ## Calculate cooling loads for different combinations
     # SENSIBLE COOLING UNIT
@@ -114,6 +123,9 @@ def disconnected_cooling_for_building(building_name, supply_systems, lca, locato
                                                                                       panel_type="ET")
     ## Calculate ground temperatures to estimate cold water supply temperatures for absorption chiller
     T_ground_K = calculate_ground_temperature(locator)  # FIXME: change to outlet temperature from the cooling towers
+    ## import outdoor air dry bulb temperatures
+    T_odb_K  = get_drybulb_temperature(locator)+273.15
+
     ## Initialize table to save results
     # save costs of all supply configurations
     operation_results = initialize_result_tables_for_supply_configurations(Qc_nom_SCU_W)
@@ -124,8 +136,18 @@ def disconnected_cooling_for_building(building_name, supply_systems, lca, locato
     T_re_AHU_ARU_SCU_K = np.where(T_re_AHU_ARU_SCU_K > 0.0, T_re_AHU_ARU_SCU_K, T_sup_AHU_ARU_SCU_K)
     ## 0. DX operation
     print('{building_name} Config 0: Direct Expansion Units -> AHU,ARU,SCU'.format(building_name=building_name))
-    el_DX_hourly_Wh, \
-    q_DX_chw_Wh = np.vectorize(dx.calc_DX)(mdot_AHU_ARU_SCU_kgpers, T_sup_AHU_ARU_SCU_K, T_re_AHU_ARU_SCU_K)
+
+    ## estimate thenumber of households in a building to calculate the number of DX installations
+    q_DX_chw_Wh = np.vectorize(dx.calc_DX_q)(mdot_AHU_ARU_SCU_kgpers, T_sup_AHU_ARU_SCU_K, T_re_AHU_ARU_SCU_K)
+    ## DX Design, before vectorized analysis to save time
+    peak_load = q_DX_chw_Wh.max()
+    Q_rated_W = peak_load * 1.5  # safety factor of 1.2
+    Q_rated_kW = Q_rated_W / 1000
+    Q_rated_kW_per_HH = Q_rated_kW / n_households
+    DX_configuration_values, n_units_per_HH, rated_capacity_per_unit, cop_rated = direct_expansion_design(
+        Q_rated_kW_per_HH, DX_properties)  # do this once for a building and you are set for all 8760 hours
+
+    el_DX_hourly_Wh = np.vectorize(dx.calc_DX_el)(q_DX_chw_Wh, T_odb_K, T_re_AHU_ARU_SCU_K, n_households, n_units_per_HH, rated_capacity_per_unit, cop_rated, DX_configuration_values)
     DX_Status = np.where(q_DX_chw_Wh > 0.0, 1, 0)
     # add electricity costs, CO2, PE
     operation_results[0][7] += sum(prices.ELEC_PRICE * el_DX_hourly_Wh)
@@ -138,7 +160,9 @@ def disconnected_cooling_for_building(building_name, supply_systems, lca, locato
     # capacity of cooling technologies
     operation_results[0][0] = Qc_nom_AHU_ARU_SCU_W
     operation_results[0][1] = Qc_nom_AHU_ARU_SCU_W  # 1: DX_AS
-    system_COP = np.nanmedian(np.divide(q_DX_chw_Wh[None, :], el_DX_hourly_Wh[None, :]).flatten())
+    system_COP_list = np.divide(q_DX_chw_Wh[None, :], el_DX_hourly_Wh[None, :]).flatten()
+    system_COP = np.nansum(q_DX_chw_Wh[None, :] * system_COP_list) / np.nansum(
+        q_DX_chw_Wh[None, :])  # weighted average of the system efficiency
     operation_results[0][9] += system_COP
     ## 1. VCC (AHU + ARU + SCU) + CT
     print('{building_name} Config 1: Vapor Compression Chillers -> AHU,ARU,SCU'.format(building_name=building_name))
@@ -448,7 +472,13 @@ def disconnected_cooling_for_building(building_name, supply_systems, lca, locato
     performance_results_df.to_csv(
         locator.get_optimization_decentralized_folder_building_result_cooling(building_name), index=False)
     # save activation for the best supply system configuration
-    best_activation_df = pd.DataFrame.from_dict(cooling_dispatch[indexBest])  #
+    # best_activation_df = pd.DataFrame.from_dict(cooling_dispatch)
+    # df = pd.DataFrame.from_dict(cooling_dispatch, orient="index").stack().to_frame()
+    # best_activation_df = pd.DataFrame(df[0].values.tolist(), index=df.index)
+
+    reform = {(outerKey, innerKey): values for outerKey, innerDict in cooling_dispatch.iteritems() for innerKey, values in
+              innerDict.iteritems()}
+    best_activation_df = pd.DataFrame(reform)
     best_activation_df.to_csv(
         locator.get_optimization_decentralized_folder_building_cooling_activation(building_name), index=False)
 

@@ -934,6 +934,18 @@ def calculate_ground_temperature(locator):
     T_ground_K = geothermal.calc_ground_temperature(locator, T_ambient_C.values, network_depth_m)
     return T_ground_K
 
+def get_drybulb_temperature(locator):
+    """
+    get outdoor air dry-bulb temperatures.
+    :param locator:
+    :return: list of air dry bulb temperatures, one for each hour of the year
+    :rtype: list[np.float64]
+    """
+    weather_file = locator.get_weather_file()
+    T_odb = epwreader.epw_reader(weather_file)['drybulb_C']
+
+    return T_odb.values
+
 
 def hourly_thermal_calculation(t, thermal_network):
     """

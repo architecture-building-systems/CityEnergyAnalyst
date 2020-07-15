@@ -435,8 +435,8 @@ def extract_electricity_demand_buildings(master_to_slave_vars, building_names, l
                 if name in building_names_cooling:
                     # if there is a decentralized cooling use it.
                     building_dencentralized_system = pd.read_csv(
-                        locator.get_optimization_decentralized_folder_building_cooling_activation(name))
-                    E_cs_cre_cdata_req_building_scale_W += building_dencentralized_system['E_cs_cre_cdata_req_W'].values
+                        locator.get_optimization_decentralized_folder_building_cooling_activation(name), header=[0, 1], skipinitialspace=True, tupleize_cols=True)
+                    E_cs_cre_cdata_req_building_scale_W += building_dencentralized_system.loc[:, ('1', 'E_cs_cre_cdata_req_W')].values
 
     E_req_buildings = {
         # end-use demands

@@ -5,6 +5,7 @@ from __future__ import division
 import pandas as pd
 from math import log, ceil
 import numpy as np
+import time
 
 from cea.technologies.constants import G_VALUE_CENTRALIZED, G_VALUE_DECENTRALIZED, CHILLER_DELTA_T_HEX_CT, \
     CHILLER_DELTA_T_APPROACH, T_EVAP_AHU, T_EVAP_ARU, T_EVAP_SCU, DT_NETWORK_CENTRALIZED, CENTRALIZED_AUX_PERCENTAGE, \
@@ -47,7 +48,7 @@ def calc_VCC(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_chw_re_K, T_cw_in_
         q_cw_W = 0.0
 
     elif q_chw_load_Wh > 0.0:
-        COP = calc_COP_with_carnot_efficiency(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, VCC_chiller)
+        COP = calc_adjusted_COP(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, VCC_chiller)
         if COP < 0.0:
             print ('Negative COP: ', COP, T_chw_sup_K, T_chw_re_K, q_chw_load_Wh)
 
@@ -71,9 +72,27 @@ def calc_COP(T_cw_in_K, T_chw_re_K, q_chw_load_Wh):
     return COP
 
 
-def calc_COP_with_carnot_efficiency(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, VCC_chiller):
-    PLF = calc_averaged_PLF(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, VCC_chiller)  # calculates the weighted average Part load factor across all chillers based on load distribution
-    cop_chiller = VCC_chiller.g_value * T_chw_sup_K / (T_cw_in_K - T_chw_sup_K) * PLF
+def calc_adjusted_COP(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, VCC_chiller):
+    """
+    Calculates the COP adjusting for part load efficiency and temperature.
+    :param float peak_cooling_load: in W
+    :param float q_chw_load_Wh: in W
+    :param float T_chw_sup_K: chilled water supply temperature
+    :param float T_cw_in_K: condenser water inlet temperature
+    :param VaporCompressionChiller VCC_chiller: VCC_chiller object containing scale, capacity and config properties
+    :return float cop_chiller: adjusted COP for a specific hour
+    """
+    vcc_configuration_values, n_units, rated_capacity_per_unit, cop_rated = vcc_plant_design(peak_cooling_load, VCC_chiller)
+    CAP_FT, EIR_FT = calculate_FT(T_cw_in_K, T_chw_sup_K, vcc_configuration_values)
+    available_capacity_per_unit = rated_capacity_per_unit * CAP_FT
+    EIR_FPLR = plant_EIR_FPLR(q_chw_load_Wh, available_capacity_per_unit, n_units,
+                                  vcc_configuration_values)
+
+    P_rated = q_chw_load_Wh / cop_rated
+    P_operating = P_rated * CAP_FT * EIR_FT * EIR_FPLR
+
+    cop_chiller = q_chw_load_Wh / P_operating
+
     return cop_chiller
 
 
@@ -181,146 +200,174 @@ def calc_VCC_COP(weather_data, load_types, centralized=True):
     return cop_system, cop_chiller
 
 
-def get_max_VCC_unit_size(locator, VCC_code='CH3'):
-    VCC_cost_data = pd.read_excel(locator.get_database_conversion_systems(), sheet_name="Chiller")
-    VCC_cost_data = VCC_cost_data[VCC_cost_data['code'] == VCC_code]
-    max_VCC_unit_size_W = max(VCC_cost_data['cap_max'].values)
-    return max_VCC_unit_size_W
+# def get_max_VCC_unit_size(locator, VCC_code='CH3'):
+#     VCC_cost_data = pd.read_excel(locator.get_database_conversion_systems(), sheet_name="Chiller")
+#     VCC_cost_data = VCC_cost_data[VCC_cost_data['code'] == VCC_code]
+#     max_VCC_unit_size_W = max(VCC_cost_data['cap_max'].values)
+#     return max_VCC_unit_size_W
 
-
-def calc_averaged_PLF(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, VCC_chiller):
+def vcc_plant_design(peak_cooling_load, VCC_chiller):
     """
-    Calculates the part load factor of installed Vapor compression chillers for a given cooling load.
-    Includes the design of the chillers based on peak load and chiller plant scale to define the part load ratio.
+    Creates a general chiller plant design according to ASHRAE 90.1 Appendix G,
+    with a certain amount of equally-sized chillers. (Source: https://comnet.org/index.php/382-chillers)
+    Depending on the design capacity, different VCC types are employed to increase the overall COP.
+    All chillers are currently water cooled (cooling towers), but could be easily extende to include air source chillers.
     :param float peak_cooling_load: in W
-    :param float q_chw_load_Wh: in W
-    :param float T_chw_sup_K: in Kelvin
-    :param float T_cw_in_K: in Kelvin
     :param VaporCompressionChiller VCC_chiller: VCC_chiller object containing scale, capacity and config properties
-    :param str scale: either "BUILDING" or "DISTRICT"
-    :return float averaged_PLF: averaged part load factor over all chillers [0..1]
+    :return dictionary vcc_configuration_values: dictionary with config information
+    :return integer n_units: number of equally sized chillers
+    :return float rated_capacity_per_unit: size of equally sized chillers
+    :return float cop_rated: rated cop of the chiller
     """
-    design_capacity = peak_cooling_load  # * 1.15 # for future implementation, a safety factor could be introduced. As of now this would be in conflict with the master_to_slave_variables.WS_BaseVCC_size_W
+    design_capacity = peak_cooling_load * 1.15 # for future implementation, a safety factor could be introduced. As of now this would be in conflict with the master_to_slave_variables.WS_BaseVCC_size_W
+    source_type = 'WATER'
     if VCC_chiller.scale == 'BUILDING':
         if design_capacity <= COMPRESSOR_TYPE_LIMIT_LOW:  # according to ASHRAE 90.1 Appendix G: if design cooling load smaller than lower limit, implement one screw chiller
-            source_type = 'WATER'
             compressor_type = 'SCREW'
-            ch_configuration_values = VCC_chiller.configuration_values(source_type, compressor_type)
+            vcc_configuration_values = VCC_chiller.configuration_values(source_type, compressor_type)
             n_units = 1
         elif COMPRESSOR_TYPE_LIMIT_LOW < design_capacity < COMPRESSOR_TYPE_LIMIT_HIGH:  # according to ASHRAE 90.1 Appendix G: if design cooling load between limits, implement two screw chillers
-            source_type = 'WATER'
             compressor_type = 'SCREW'
-            ch_configuration_values = VCC_chiller.configuration_values(source_type, compressor_type)
+            vcc_configuration_values = VCC_chiller.configuration_values(source_type, compressor_type)
             n_units = 2
         elif design_capacity >= COMPRESSOR_TYPE_LIMIT_HIGH:  # according to ASHRAE 90.1 Appendix G: if design cooling load larger than upper limit, implement centrifugal chillers
-            source_type = 'WATER'
             compressor_type = 'CENTRIFUGAL'
-            ch_configuration_values = VCC_chiller.configuration_values(source_type, compressor_type)
-            n_units = ceil(design_capacity / ASHRAE_CAPACITY_LIMIT)  # according to ASHRAE 90.1 Appendix G, chiller shall not be large then 800 tons (2813 kW)
+            vcc_configuration_values = VCC_chiller.configuration_values(source_type, compressor_type)
+            n_units = ceil(
+                design_capacity / ASHRAE_CAPACITY_LIMIT)  # according to ASHRAE 90.1 Appendix G, chiller shall not be large then 800 tons (2813 kW)
         else:
             raise ValueError('Unable to assign chiller type based on design capacity')
-        cooling_capacity_per_unit = design_capacity / n_units  # calculate the capacity per chiller installed
 
     elif VCC_chiller.scale == 'DISTRICT':
-        source_type = 'WATER'
-        compressor_type = 'CENTRIFUGAL'
-        ch_configuration_values = VCC_chiller.configuration_values(source_type, compressor_type)
-        if design_capacity <= (2*VCC_chiller.min_VCC_capacity):  # design one chiller for small scale DCS
+        if design_capacity <= COMPRESSOR_TYPE_LIMIT_LOW:  # according to ASHRAE 90.1 Appendix G: if design cooling load smaller than lower limit, implement one screw chiller
+            compressor_type = 'SCREW'
+            vcc_configuration_values = VCC_chiller.configuration_values(source_type, compressor_type)
             n_units = 1
-            cooling_capacity_per_unit = max(design_capacity, VCC_chiller.min_VCC_capacity)
-        elif (2*VCC_chiller.min_VCC_capacity) <= design_capacity <= VCC_chiller.max_VCC_capacity:  # design two chillers above the twice the minimum chiller size
+        elif COMPRESSOR_TYPE_LIMIT_LOW < design_capacity < COMPRESSOR_TYPE_LIMIT_HIGH:  # according to ASHRAE 90.1 Appendix G: if design cooling load between limits, implement two screw chillers
+            compressor_type = 'SCREW'
+            vcc_configuration_values = VCC_chiller.configuration_values(source_type, compressor_type)
             n_units = 2
-            cooling_capacity_per_unit = design_capacity / n_units
-        elif design_capacity >= VCC_chiller.max_VCC_capacity:  # design a minimum of 2 chillers if above the maximum chiller size
-            n_units = max(2, ceil(design_capacity / VCC_chiller.max_VCC_capacity))  # have minimum size of capacity to quailfy as DCS, have minimum of 2 chillers
-            cooling_capacity_per_unit = design_capacity / n_units
+        elif design_capacity >= COMPRESSOR_TYPE_LIMIT_HIGH:  # according to ASHRAE 90.1 Appendix G: if design cooling load larger than upper limit, implement centrifugal chillers
+            compressor_type = 'CENTRIFUGAL'
+            max_VCC_capacity = VCC_chiller.get_max_capacity(source_type, compressor_type)
+            vcc_configuration_values = VCC_chiller.configuration_values(source_type, compressor_type)
+            n_units = max(2, ceil(design_capacity / max_VCC_capacity))  # chiller shall not be large then 14000 kW
         else:
             raise ValueError('Unable to assign chiller type based on design capacity')
+
     else:
         raise ValueError('VCC_chiller scale can only be "BUILDING" or "DISTRICT" got: {scale}'.format(
             scale=VCC_chiller.scale))
 
-    available_capacity_per_unit = calc_available_capacity(cooling_capacity_per_unit, ch_configuration_values['Qs'], T_chw_sup_K, T_cw_in_K) # calculate the available capacity(dependent on conditions)
+    rated_capacity_per_unit = design_capacity / n_units  # calculate the capacity per chiller installed
+    cop_rated = VCC_chiller.get_rated_cop(source_type, compressor_type, rated_capacity_per_unit)
 
-    # calculate the load distribution across the chillers heuristically,
-    # assuming the PLF factor is monotonously increasing with increasing PLR. Filling one chiller after the other.
+    return vcc_configuration_values, n_units, rated_capacity_per_unit, cop_rated
+
+def plant_EIR_FPLR(q_chw_load_Wh, available_capacity_per_unit, n_units, vcc_configuration_values):
+    """
+    Calculates the part load factor of installed Vapor compression chillers for a given cooling load.
+    Includes the design of the chillers based on peak load and chiller plant scale to define the part load ratio.
+    :param float q_chw_load_Wh: in W
+    :param float available_capacity_per_unit: in W
+    :param float n_units: number of chillers per plant
+    :param dictionary vcc_configuration_values: contains config details
+    :return float EIR_FPLR:  electric input to cooling output factor for part-load function curve
+    """
     n_chillers_filled = int(q_chw_load_Wh // available_capacity_per_unit)
-    part_load_chiller = float(divmod(q_chw_load_Wh, available_capacity_per_unit)[1])/float(available_capacity_per_unit)
+    part_load_chiller = max(0.2,float(divmod(q_chw_load_Wh, available_capacity_per_unit)[1]) / float(
+        available_capacity_per_unit))
 
     load_distribution_list = []
     for i in range(n_chillers_filled):
         load_distribution_list.append(1)
     load_distribution_list.append(part_load_chiller)
-    for i in range(int(n_units)-n_chillers_filled-1):
+    for i in range(int(n_units) - n_chillers_filled - 1):
         load_distribution_list.append(0)
     load_distribution = np.array(load_distribution_list)
 
-    averaged_PLF = np.sum(calc_PLF(load_distribution, ch_configuration_values['PLFs']) * load_distribution * available_capacity_per_unit) / q_chw_load_Wh # calculates the weighted average PLF value
-    return averaged_PLF
+    EIR_FPLR = np.sum(calc_EIR_FPLR(load_distribution, vcc_configuration_values[
+        'PLFs']) * load_distribution * available_capacity_per_unit) / q_chw_load_Wh  # calculates the weighted average PLF value
+    return EIR_FPLR
 
 
-def calc_PLF(PLR, PLFs):
+def calc_EIR_FPLR(PLR, PLFs):
     """
-    takes the part load ratio as an input and outputs the part load factor
+    Electric Chiller Cooling Efficiency Adjustment Curves
     coefficients taken from https://comnet.org/index.php/382-chillers and only includes water source electrical chillers
-    :param np.array PLR: part load ratio for each chiller
-    :return np.array PLF: part load factor for each chiller
+    :param np.array PLR: part load ratio
+    :param np.array PLFs: part load factor coefficients
+    :return np.array EIR_FPLR: part load factor
     """
-    PLF = PLFs['plf_a'] + PLFs['plf_b'] * PLR + PLFs['plf_c'] * PLR ** 2
-    return PLF
+    EIR_FPLR = PLFs['plf_a'] + PLFs['plf_b'] * PLR + PLFs['plf_c'] * PLR ** 2
+
+    return EIR_FPLR
 
 
-def calc_available_capacity(rated_capacity, Qs, T_chw_sup_K, T_cw_in_K):
+def calculate_FT(T_cw_in_K, T_chw_sup_K, vcc_configuration_values):
     """
-    calculates the available Chiller capacity based on the rated capacity
+    calculates the Chiller Cooling Capacity Adjustment Curve
+    for both 'cooling capacity function of temperature curve' (CAP_FT)
+    and 'electric input to cooling output factor for temperature function curve'(EIR_FT)
     coefficients taken from https://comnet.org/index.php/382-chillers
-    :param float rated_capacity: rated capacity of chiller
-    :param float T_chw_sup_K: supplied chilled water temperature in Kelvin
     :param float T_cw_in_K: condenser water supply temperature in Kelvin
-    :return np.array PLF: part load factor for each chiller
+    :param float T_chw_sup_K: supplied chilled water temperature in Kelvin
+    :param dictionary vcc_configuration_values: dictionary containing config values
+    :return float CAP_FT: cooling capacity function of temperature curve
+    :return float EIR_FT: electric input to cooling output factor for temperature function curve
     """
     t_chws_F = kelvin_to_fahrenheit(T_chw_sup_K)
     t_cws_F = kelvin_to_fahrenheit(T_cw_in_K)
 
-    available_capacity = rated_capacity * (Qs['q_a'] + Qs['q_b']*t_chws_F + Qs['q_c']*t_chws_F**2 + Qs['q_d']*t_cws_F + Qs['q_e'] * t_cws_F**2 + Qs['q_f']*t_chws_F*t_cws_F)
-    return available_capacity
+    Cap_fts = vcc_configuration_values['Cap_fts']
+    CAP_FT = Cap_fts['cap_ft_a'] + Cap_fts['cap_ft_b'] * t_chws_F + Cap_fts['cap_ft_c'] * t_chws_F ** 2 + Cap_fts[
+        'cap_ft_d'] * t_cws_F + \
+             Cap_fts['cap_ft_e'] * t_cws_F ** 2 + Cap_fts['cap_ft_f'] * t_chws_F * t_cws_F
+    EIR_FTs = vcc_configuration_values['Eir_fts']
+    EIR_FT = EIR_FTs['eir_ft_a'] + EIR_FTs['eir_ft_b'] * t_chws_F + EIR_FTs['eir_ft_c'] * t_chws_F ** 2 + EIR_FTs[
+        'eir_ft_d'] * t_cws_F + \
+             EIR_FTs['eir_ft_e'] * t_cws_F ** 2 + EIR_FTs['eir_ft_f'] * t_chws_F * t_cws_F
+    return CAP_FT, EIR_FT
 
 
 class VaporCompressionChiller(object):
-    __slots__ = ["max_VCC_capacity", "min_VCC_capacity", "g_value", "scale", "locator", "chiller_configuration"]
+    __slots__ = ["locator","scale", "VCC_database", "chiller_configuration"]
 
     def __init__(self, locator, scale):
-        self.max_VCC_capacity = 0
-        self.min_VCC_capacity = 0
-        self.g_value = 0.0
-        self.scale = scale
         self.locator = locator
+        self.scale = scale
+        self.VCC_database = None
         self.chiller_configuration = None
         self.setup()
 
     def setup(self):
-        VCC_database = pd.read_excel(self.locator.get_database_conversion_systems(), sheet_name="Chiller")
-        if self.scale == 'DISTRICT':
-            technology_type = VCC_CODE_CENTRALIZED
-        elif self.scale == 'BUILDING':
-            technology_type = VCC_CODE_DECENTRALIZED
-        else:
-            raise ValueError('scale must be of type "DISTRICT" or "BUILDING"')
-
-        VCC_database = VCC_database[VCC_database['code'] == technology_type]
-        self.max_VCC_capacity = int(VCC_database['cap_max'])
-        self.min_VCC_capacity = int(VCC_database['cap_min'])
-        self.g_value = float(VCC_database['G_VALUE'])
+        self.VCC_database = pd.read_excel(self.locator.get_database_conversion_systems(), sheet_name="Chiller")
         self.chiller_configuration = pd.read_excel(self.locator.get_database_conversion_systems(),
                                                    sheet_name="Chiller_configuration")
+
+    def get_rated_cop(self, source_type, compressor_type, capacity):
+        df = self.VCC_database
+        df = df[(df['SOURCE'] == source_type) & (df['COMPRESSOR'] == compressor_type) \
+                & (df['cap_min'] <= capacity) & (capacity < df['cap_max'])]
+        rated_cop = float(df['COP'])
+        return rated_cop
+
+    def get_max_capacity(self, source_type, compressor_type):
+        df = self.VCC_database
+        df = df[(df['SOURCE'] == source_type) & (df['COMPRESSOR'] == compressor_type)]
+        max_capacity = float(df['cap_max'].max())
+        return max_capacity
 
     def configuration_values(self, source_type, compressor_type):
         df = self.chiller_configuration
         df = df[(df['SOURCE'] == source_type) & (df['COMPRESSOR'] == compressor_type)]
 
         filter_plfs = [col for col in df if col.startswith('plf')]
-        filter_qs = [col for col in df if col.startswith('q')]
+        filter_eir_ft = [col for col in df if col.startswith('eir_ft')]
+        filter_cap_ft = [col for col in df if col.startswith('cap_ft')]
 
         plfs = df[filter_plfs].to_dict('records')[0]
-        qs = df[filter_qs].to_dict('records')[0]
-        return {'PLFs': plfs, 'Qs': qs}
+        eir_fts = df[filter_eir_ft].to_dict('records')[0]
+        cap_fts = df[filter_cap_ft].to_dict('records')[0]
+
+        return {'PLFs': plfs, 'Eir_fts': eir_fts, 'Cap_fts' : cap_fts}
