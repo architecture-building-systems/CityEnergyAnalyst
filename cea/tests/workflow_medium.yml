@@ -20,7 +20,7 @@
     weather: Zug-inducity_1990_2010_TMY
 - script: archetypes-mapper
   parameters:
-      input-databases: []
+      input-databases: ['comfort', 'architecture', 'air-conditioning', 'internal-loads', 'supply', 'schedules']
       buildings: []
 - script: radiation
   parameters:
