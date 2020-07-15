@@ -79,6 +79,7 @@ Section "Base Installation" Base_Installation_Section
 
     File "cea-icon.ico"
     File "pip-install.bat"
+    File "cea-env-run.bat"
 
     # install cmder (incl. git and bash... woohoo!!)
     File /r "Dependencies"
@@ -199,7 +200,7 @@ Section "Base Installation" Base_Installation_Section
     nsExec::ExecToLog '${PIP_INSTALL} --force-reinstall --no-deps sphinx'
 
     # create cea.config file in the %userprofile% directory by calling `cea --help` and set daysim paths
-    nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\Scripts\cea.exe" --help'
+    nsExec::ExecToLog '"$INSTDIR\cea-env-run.bat" cea --help'
     Pop $0
     DetailPrint '"cea --help" returned $0'
     ${If} "$0" != "0"

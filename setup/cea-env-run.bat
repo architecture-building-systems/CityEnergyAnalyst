@@ -1,4 +1,4 @@
-REM Use the packed conda environment to pip install arguments
+REM Use the packed conda environment to run a command
 REM (makes sure the environment is set up properly before doing so)
 
 REM set up environment variables
@@ -9,5 +9,5 @@ SET GDAL_DATA=%~dp0Dependencies\Python\Library\share\gdal
 SET PROJ_LIB=%~dp0Dependencies\Python\Library\share
 SET RAYPATH=%~dp0Dependencies\Daysim
 
-REM call pip...
-CALL %~dp0Dependencies\Python\python.exe -m pip install %*
+REM run the command
+CALL %*
