@@ -15,6 +15,7 @@ import cea.schemas
 import cea.config
 import cea.plots.categories
 import cea.inputlocator
+import warnings
 from cea.utilities.yaml_ordered_dict import OrderedDictYAMLLoader
 from cea.utilities import identifier
 
@@ -265,8 +266,8 @@ def instantiate_plugin(plugin_fqname):
         instance = getattr(module, plugin_class)()
         return instance
     except BaseException as ex:
-        raise ValueError("Could not instantiate plugin {plugin_fqname} ({msg})".format(
-            plugin_fqname=plugin_fqname, msg=ex))
+        warnings.warn(f"Could not instantiate plugin {plugin_fqname} ({ex})")
+        return None
 
 
 def add_plugins(default_config, user_config):
@@ -280,6 +281,9 @@ def add_plugins(default_config, user_config):
     """
     plugin_fqnames = cea.config.parse_string_to_list(user_config.get("general", "plugins"))
     for plugin in [instantiate_plugin(plugin_fqname) for plugin_fqname in plugin_fqnames]:
+        if plugin is None:
+            # plugin could not be instantiated
+            continue
         for section_name in plugin.config.sections():
             if section_name in default_config.sections():
                 raise ValueError("Plugin tried to redefine config section {section_name}".format(
