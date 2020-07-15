@@ -39,7 +39,9 @@ class Configuration(object):
         self.user_config.read([DEFAULT_CONFIG, config_file])
 
         import cea.plugin
+        print(self.default_config.sections())
         cea.plugin.add_plugins(self.default_config, self.user_config)
+        print(self.default_config.sections())
 
         self.sections = collections.OrderedDict([(section_name, Section(section_name, self))
                                                  for section_name in self.default_config.sections()])

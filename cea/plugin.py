@@ -41,7 +41,7 @@ class CeaPlugin(object):
         if not os.path.exists(scripts_yml):
             return {}
         with open(scripts_yml, "r") as scripts_yml_fp:
-            scripts = yaml.safe_load(scripts_yml_fp, OrderedDictYAMLLoader)
+            scripts = yaml.safe_load(scripts_yml_fp)
         return scripts
 
     @property
@@ -266,7 +266,7 @@ def instantiate_plugin(plugin_fqname):
         return instance
     except BaseException as ex:
         raise ValueError("Could not instantiate plugin {plugin_fqname} ({msg})".format(
-            plugin_fqname=plugin_fqname, msg=ex.message))
+            plugin_fqname=plugin_fqname, msg=ex))
 
 
 def add_plugins(default_config, user_config):
@@ -292,5 +292,5 @@ def add_plugins(default_config, user_config):
                     raise ValueError("Plugin tried to redefine parameter {section_name}:{option_name}".format(
                         section_name=section_name, option_name=option_name))
                 default_config.set(section_name, option_name, plugin.config.get(section_name, option_name))
-                if not "." in option_name and not user_config.has_option(section_name, option_name):
+                if "." not in option_name and not user_config.has_option(section_name, option_name):
                     user_config.set(section_name, option_name, default_config.get(section_name, option_name))
