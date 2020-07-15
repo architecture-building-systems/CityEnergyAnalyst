@@ -25,6 +25,8 @@ ${StrRep}
 
 !define CEA_TITLE "City Energy Analyst"
 
+!define PIP_INSTALL '"$INSTDIR\Dependencies\Python\python.exe" -m pip install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org'
+
 # figure out the version based on cea\__init__.py
 !system "get_version.exe"
 !include "cea_version.txt"
@@ -76,7 +78,6 @@ Section "Base Installation" Base_Installation_Section
     SetOutPath "$INSTDIR"
 
     File "cea-icon.ico"
-    File "pip-install-cea.bat"
 
     # install cmder (incl. git and bash... woohoo!!)
     File /r "Dependencies"
@@ -182,7 +183,7 @@ Section "Base Installation" Base_Installation_Section
     WriteINIStr "$INSTDIR\Dependencies\Python\qt.conf" Paths Headers "$0/Dependencies/Python/Library/include/qt"
 
     DetailPrint "Pip installing CityEnergyAnalyst==${VER}"
-    nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip install -U cityenergyanalyst==${VER}'
+    nsExec::ExecToLog '${PIP_INSTALL} -U cityenergyanalyst==${VER}'
 
     # make sure cea was installed
     Pop $0
@@ -193,10 +194,10 @@ Section "Base Installation" Base_Installation_Section
 
 
     DetailPrint "Pip installing Jupyter"
-    nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip install --force-reinstall jupyter ipython'
+    nsExec::ExecToLog '${PIP_INSTALL} --force-reinstall jupyter ipython'
 
     DetailPrint "Pip installing Sphinx"
-    nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip install --force-reinstall --no-deps sphinx'
+    nsExec::ExecToLog '${PIP_INSTALL} --force-reinstall --no-deps sphinx'
 
     # create cea.config file in the %userprofile% directory by calling `cea --help` and set daysim paths
     nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\Scripts\cea.exe" --help'
@@ -231,7 +232,7 @@ Section /o "Developer version" Clone_Repository_Section
     DetailPrint "Cloning GitHub Repository ${CEA_REPO_URL}"
     nsExec::ExecToLog '"$INSTDIR\${RELATIVE_GIT_PATH}" clone ${CEA_REPO_URL}'
     DetailPrint "Binding CEA to repository"
-    nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip install -e "$INSTDIR\CityEnergyAnalyst"'
+    nsExec::ExecToLog '${PIP_INSTALL} -e "$INSTDIR\CityEnergyAnalyst"'
 
 SectionEnd
 
