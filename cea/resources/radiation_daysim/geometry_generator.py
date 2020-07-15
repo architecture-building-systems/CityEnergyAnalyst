@@ -8,7 +8,7 @@ into 3D geometry with windows and roof equivalent to LOD3
 """
 import cea
 
-cea.suppres_3rd_party_debug_loggers()
+cea.suppress_3rd_party_debug_loggers()
 
 import math
 import os
