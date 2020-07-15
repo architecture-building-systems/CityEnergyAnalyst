@@ -26,7 +26,7 @@ class InvalidOccupancyNameException(Exception):
     rc = 104
 
 
-def suppres_3rd_party_debug_loggers():
+def suppress_3rd_party_debug_loggers():
     """set logging level to WARN for fiona and shapely and others"""
     import logging
     loggers_to_silence = ["shapely", "Fiona", "fiona", "matplotlib", "urllib3.connectionpool"]

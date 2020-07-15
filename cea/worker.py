@@ -17,7 +17,7 @@ import queue
 import threading
 import cea.config
 import cea.scripts
-from cea import suppres_3rd_party_debug_loggers
+from cea import suppress_3rd_party_debug_loggers
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
@@ -28,7 +28,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-suppres_3rd_party_debug_loggers()
+suppress_3rd_party_debug_loggers()
 
 
 def consume_nowait(q, msg):
