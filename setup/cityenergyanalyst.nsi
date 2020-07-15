@@ -25,7 +25,7 @@ ${StrRep}
 
 !define CEA_TITLE "City Energy Analyst"
 
-!define PIP_INSTALL '"$INSTDIR\Dependencies\Python\python.exe" -m pip install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org'
+!define PIP_INSTALL '"$INSTDIR\pip-install.bat"'
 
 # figure out the version based on cea\__init__.py
 !system "get_version.exe"
@@ -78,6 +78,7 @@ Section "Base Installation" Base_Installation_Section
     SetOutPath "$INSTDIR"
 
     File "cea-icon.ico"
+    File "pip-install.bat"
 
     # install cmder (incl. git and bash... woohoo!!)
     File /r "Dependencies"
@@ -112,8 +113,6 @@ Section "Base Installation" Base_Installation_Section
     FileOpen $0 "$INSTDIR\dashboard.bat" w
     FileWrite $0 "SET PATH=$INSTDIR\Dependencies\Python;$INSTDIR\Dependencies\Python\Scripts;%PATH%"
     FileWrite $0 "SET PATH=$INSTDIR\Dependencies\Python\Library\bin;$INSTDIR\Dependencies\Daysim;%PATH%"
-    FileWrite $0 "$\r$\n" ; we write a new line
-    FileWrite $0 "SET PYTHONHOME=$INSTDIR\Dependencies\Python"
     FileWrite $0 "$\r$\n" ; we write a new line
     FileWrite $0 "SET PYTHONHOME=$INSTDIR\Dependencies\Python"
     FileWrite $0 "$\r$\n" ; we write a new line
@@ -201,6 +200,11 @@ Section "Base Installation" Base_Installation_Section
 
     # create cea.config file in the %userprofile% directory by calling `cea --help` and set daysim paths
     nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\Scripts\cea.exe" --help'
+    Pop $0
+    DetailPrint '"cea --help" returned $0'
+    ${If} "$0" != "0"
+        Abort "Installation failed - see Details"
+    ${EndIf}
     WriteINIStr "$PROFILE\cea.config" radiation daysim-bin-directory "$INSTDIR\Dependencies\Daysim"
 
     ;Create uninstaller
