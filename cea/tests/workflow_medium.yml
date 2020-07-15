@@ -18,6 +18,10 @@
 - script: weather-helper
   parameters:
     weather: Zug-inducity_1990_2010_TMY
+- script: archetypes-mapper
+  parameters:
+      input-databases: []
+      buildings: []
 - script: radiation
   parameters:
     consider-intersections: false

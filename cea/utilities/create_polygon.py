@@ -2,10 +2,6 @@
 Creates a polygon shapefile from a list of comma-separated coordinate tuples and places it in building geometry folder
 """
 
-
-
-
-
 import os
 
 import cea.config
