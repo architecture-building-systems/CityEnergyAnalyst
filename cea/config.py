@@ -1106,7 +1106,7 @@ def parse_string_coordinate_list(string_tuples):
 def validate_coord_tuple(coord_tuple):
     """Validates a (lat, long) tuple, throws exception if not valid"""
 
-    lat, lon = coord_tuple
+    lon, lat = coord_tuple
     if lat < -90 or lat > 90:
         raise ValueError('Latitude must be between -90 and 90. Got {}'.format(lat))
     if lon < -180 or lon > 180:
