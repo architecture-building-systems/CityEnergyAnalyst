@@ -141,7 +141,7 @@ def disconnected_cooling_for_building(building_name, n_households, supply_system
     q_DX_chw_Wh = np.vectorize(dx.calc_DX_q)(mdot_AHU_ARU_SCU_kgpers, T_sup_AHU_ARU_SCU_K, T_re_AHU_ARU_SCU_K)
     ## DX Design, before vectorized analysis to save time
     peak_load = q_DX_chw_Wh.max()
-    Q_rated_W = peak_load * 1.5  # safety factor of 1.2
+    Q_rated_W = peak_load * 1.2  # safety factor of 1.2
     Q_rated_kW = Q_rated_W / 1000
     Q_rated_kW_per_HH = Q_rated_kW / n_households
     DX_configuration_values, n_units_per_HH, rated_capacity_per_unit, cop_rated = direct_expansion_design(

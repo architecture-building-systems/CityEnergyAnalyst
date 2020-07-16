@@ -97,7 +97,7 @@ def calc_part_load_adjusted_COP(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T
     :param VaporCompressionChiller VCC_chiller: VCC_chiller object containing scale, capacity and config properties
     :return float cop_chiller: temperature and part load adjusted COP for a specific hour
     """
-    design_capacity = peak_cooling_load  # for future implementation, a safety factor could be introduced. As of now this would be in conflict with the master_to_slave_variables.WS_BaseVCC_size_W
+    design_capacity = peak_cooling_load * 1.2 # for future implementation, a safety factor could be introduced. As of now this would be in conflict with the master_to_slave_variables.WS_BaseVCC_size_W
     vcc_configuration_values, n_units, rated_capacity_per_unit, cop_rated = vcc_plant_design(design_capacity, VCC_chiller)
     CAP_FT, EIR_FT = calculate_FT(T_cw_in_K, T_chw_sup_K, vcc_configuration_values)
     available_capacity_per_unit = rated_capacity_per_unit * CAP_FT
@@ -385,20 +385,18 @@ def calculate_FT(T_cw_in_K, T_chw_sup_K, vcc_configuration_values):
     :return float EIR_FT: electric input to cooling output factor for temperature function curve
     """
     if vcc_configuration_values['IP_SI'] == 'SI':
-        t_chws_F = T_chw_sup_K - 273.15
-        t_cws_F = T_cw_in_K - 273.15
+        t_chws = T_chw_sup_K - 273.15
+        t_cws = T_cw_in_K - 273.15
     else:
-        t_chws_F = kelvin_to_fahrenheit(T_chw_sup_K)
-        t_cws_F = kelvin_to_fahrenheit(T_cw_in_K)
+        t_chws = kelvin_to_fahrenheit(T_chw_sup_K)
+        t_cws = kelvin_to_fahrenheit(T_cw_in_K)
 
     Cap_fts = vcc_configuration_values['Cap_fts']
-    CAP_FT = Cap_fts['cap_ft_a'] + Cap_fts['cap_ft_b'] * t_chws_F + Cap_fts['cap_ft_c'] * t_chws_F ** 2 + Cap_fts[
-        'cap_ft_d'] * t_cws_F + \
-             Cap_fts['cap_ft_e'] * t_cws_F ** 2 + Cap_fts['cap_ft_f'] * t_chws_F * t_cws_F
+    CAP_FT = Cap_fts['cap_ft_a'] + Cap_fts['cap_ft_b'] * t_chws + Cap_fts['cap_ft_c'] * t_chws ** 2 + Cap_fts[
+        'cap_ft_d'] * t_cws + Cap_fts['cap_ft_e'] * t_cws ** 2 + Cap_fts['cap_ft_f'] * t_chws * t_cws
     EIR_FTs = vcc_configuration_values['Eir_fts']
-    EIR_FT = EIR_FTs['eir_ft_a'] + EIR_FTs['eir_ft_b'] * t_chws_F + EIR_FTs['eir_ft_c'] * t_chws_F ** 2 + EIR_FTs[
-        'eir_ft_d'] * t_cws_F + \
-             EIR_FTs['eir_ft_e'] * t_cws_F ** 2 + EIR_FTs['eir_ft_f'] * t_chws_F * t_cws_F
+    EIR_FT = EIR_FTs['eir_ft_a'] + EIR_FTs['eir_ft_b'] * t_chws + EIR_FTs['eir_ft_c'] * t_chws ** 2 + EIR_FTs[
+        'eir_ft_d'] * t_cws + EIR_FTs['eir_ft_e'] * t_cws ** 2 + EIR_FTs['eir_ft_f'] * t_chws * t_cws
     return CAP_FT, EIR_FT
 
 
