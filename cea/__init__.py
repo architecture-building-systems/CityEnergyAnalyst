@@ -29,7 +29,8 @@ class InvalidOccupancyNameException(Exception):
 def suppress_3rd_party_debug_loggers():
     """set logging level to WARN for fiona and shapely and others"""
     import logging
-    loggers_to_silence = ["shapely", "Fiona", "fiona", "matplotlib", "urllib3.connectionpool"]
+    loggers_to_silence = ["shapely", "Fiona", "fiona", "matplotlib", "urllib3.connectionpool",
+                          "numba.core.ssa"]
     for log_name in loggers_to_silence:
         log = logging.getLogger(log_name)
         log.setLevel(logging.ERROR)

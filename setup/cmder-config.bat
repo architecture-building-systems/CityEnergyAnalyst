@@ -1,0 +1,3 @@
+REM This file is placed in $INSTDIR\Dependencies\cmder\config\profile.d...
+CALL %~dp0cea-env.bat
+ALIAS find="%~dp0Dependencies\cmder\vendor\git-for-windows\usr\bin\find.exe" $*
