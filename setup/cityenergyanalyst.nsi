@@ -78,8 +78,11 @@ Section "Base Installation" Base_Installation_Section
     SetOutPath "$INSTDIR"
 
     File "cea-icon.ico"
+    File "cea-env.bat"
     File "pip-install.bat"
     File "cea-env-run.bat"
+    File /oname=Dependencies\cmder\config\profile.d\cea.bat "cmder-config.bat"
+    File "dashboard.bat"
 
     # install cmder (incl. git and bash... woohoo!!)
     File /r "Dependencies"
@@ -89,42 +92,42 @@ Section "Base Installation" Base_Installation_Section
     SetOutPath "$INSTDIR"
 
     # make sure cmder can access our python (and the cea command)
-    DetailPrint "Setting up CEA Console"
-    CreateDirectory $INSTDIR\Dependencies\cmder\config\profile.d
-    FileOpen $0 "$INSTDIR\Dependencies\cmder\config\profile.d\cea.bat" w
-    FileWrite $0 "SET PATH=$INSTDIR\Dependencies\Python;$INSTDIR\Dependencies\Python\Scripts;%PATH%"
-    FileWrite $0 "$\r$\n" ; we write a new line
-    FileWrite $0 "SET PATH=$INSTDIR\Dependencies\Python\Library\bin;$INSTDIR\Dependencies\Daysim;%PATH%"
-    FileWrite $0 "$\r$\n" ; we write a new line
-    FileWrite $0 "SET PYTHONHOME=$INSTDIR\Dependencies\Python"
-    FileWrite $0 "$\r$\n" ; we write a new line
-    FileWrite $0 "SET RAYPATH=$INSTDIR\Dependencies\Daysim"
-    FileWrite $0 "$\r$\n" ; we write a new line
-    FileWrite $0 "SET GDAL_DATA=$INSTDIR\Dependencies\Python\Library\share\gdal"
-    FileWrite $0 "$\r$\n" ; we write a new line
-    FileWrite $0 "SET PROJ_LIB=$INSTDIR\Dependencies\Python\Library\share"
-    FileWrite $0 "$\r$\n" ; we write a new line
-    FileWrite $0 "ALIAS find=$\"$INSTDIR\Dependencies\cmder\vendor\git-for-windows\usr\bin\find.exe$\" $$*"
-    FileWrite $0 "$\r$\n" ; we write a new line
-    FileWrite $0 "SET PROMPT=(CEA v${VER}) $$P$$G"
-    FileClose $0
+    # DetailPrint "Setting up CEA Console"
+    # CreateDirectory $INSTDIR\Dependencies\cmder\config\profile.d
+    # FileOpen $0 "$INSTDIR\Dependencies\cmder\config\profile.d\cea.bat" w
+    # FileWrite $0 "SET PATH=$INSTDIR\Dependencies\Python;$INSTDIR\Dependencies\Python\Scripts;%PATH%"
+    # FileWrite $0 "$\r$\n" ; we write a new line
+    # FileWrite $0 "SET PATH=$INSTDIR\Dependencies\Python\Library\bin;$INSTDIR\Dependencies\Daysim;%PATH%"
+    # FileWrite $0 "$\r$\n" ; we write a new line
+    # FileWrite $0 "SET PYTHONHOME=$INSTDIR\Dependencies\Python"
+    # FileWrite $0 "$\r$\n" ; we write a new line
+    # FileWrite $0 "SET RAYPATH=$INSTDIR\Dependencies\Daysim"
+    # FileWrite $0 "$\r$\n" ; we write a new line
+    # FileWrite $0 "SET GDAL_DATA=$INSTDIR\Dependencies\Python\Library\share\gdal"
+    # FileWrite $0 "$\r$\n" ; we write a new line
+    # FileWrite $0 "SET PROJ_LIB=$INSTDIR\Dependencies\Python\Library\share"
+    # FileWrite $0 "$\r$\n" ; we write a new line
+    # FileWrite $0 "ALIAS find=$\"$INSTDIR\Dependencies\cmder\vendor\git-for-windows\usr\bin\find.exe$\" $$*"
+    # FileWrite $0 "$\r$\n" ; we write a new line
+    # FileWrite $0 "SET PROMPT=(CEA v${VER}) $$P$$G"
+    # FileClose $0
 
     # create a batch file for running the dashboard with some environment variables set (for DAYSIM etc.)
-    DetailPrint "Setting up CEA Dashboard"
-    FileOpen $0 "$INSTDIR\dashboard.bat" w
-    FileWrite $0 "SET PATH=$INSTDIR\Dependencies\Python;$INSTDIR\Dependencies\Python\Scripts;%PATH%"
-    FileWrite $0 "SET PATH=$INSTDIR\Dependencies\Python\Library\bin;$INSTDIR\Dependencies\Daysim;%PATH%"
-    FileWrite $0 "$\r$\n" ; we write a new line
-    FileWrite $0 "SET PYTHONHOME=$INSTDIR\Dependencies\Python"
-    FileWrite $0 "$\r$\n" ; we write a new line
-    FileWrite $0 "SET GDAL_DATA=$INSTDIR\Dependencies\Python\Library\share\gdal"
-    FileWrite $0 "$\r$\n" ; we write a new line
-    FileWrite $0 "SET PROJ_LIB=$INSTDIR\Dependencies\Python\Library\share"
-    FileWrite $0 "$\r$\n" ; we write a new line
-    FileWrite $0 "SET RAYPATH=$INSTDIR\Dependencies\Daysim"
-    FileWrite $0 "$\r$\n" ; we write a new line
-    FileWrite $0 "$\"$INSTDIR\Dependencies\Python\python.exe$\" -u -m cea.interfaces.cli.cli dashboard"
-    FileClose $0
+    # DetailPrint "Setting up CEA Dashboard"
+    # FileOpen $0 "$INSTDIR\dashboard.bat" w
+    # FileWrite $0 "SET PATH=$INSTDIR\Dependencies\Python;$INSTDIR\Dependencies\Python\Scripts;%PATH%"
+    # FileWrite $0 "SET PATH=$INSTDIR\Dependencies\Python\Library\bin;$INSTDIR\Dependencies\Daysim;%PATH%"
+    # FileWrite $0 "$\r$\n" ; we write a new line
+    # FileWrite $0 "SET PYTHONHOME=$INSTDIR\Dependencies\Python"
+    # FileWrite $0 "$\r$\n" ; we write a new line
+    # FileWrite $0 "SET GDAL_DATA=$INSTDIR\Dependencies\Python\Library\share\gdal"
+    # FileWrite $0 "$\r$\n" ; we write a new line
+    # FileWrite $0 "SET PROJ_LIB=$INSTDIR\Dependencies\Python\Library\share"
+    # FileWrite $0 "$\r$\n" ; we write a new line
+    # FileWrite $0 "SET RAYPATH=$INSTDIR\Dependencies\Daysim"
+    # FileWrite $0 "$\r$\n" ; we write a new line
+    # FileWrite $0 "$\"$INSTDIR\Dependencies\Python\python.exe$\" -u -m cea.interfaces.cli.cli dashboard"
+    # FileClose $0
 
 
     # create a shortcut in the $INSTDIR for launching the CEA console
