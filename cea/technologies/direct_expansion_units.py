@@ -25,12 +25,8 @@ __status__ = "Production"
 
 # FIXME: this model is simplified, and required update
 PRICE_DX_PER_W = 1.6  # USD FIXME: to be moved to database
-BTUh_per_W = 1000 * 3412.142
-HP_per_W = 1000 * 1.3410220888
 
 # operation costs
-
-
 def calc_DX_q(mdot_kgpers, T_sup_K, T_re_K):
     if np.isclose(mdot_kgpers, 0.0):
         q_chw_W = 0.0
@@ -65,10 +61,11 @@ def calc_cop_DX(q_DX_chw_Wh, T_odb_K, T_re_AHU_ARU_SCU_K, n_households, n_units_
     available_capacity_per_unit = rated_capacity_per_unit * CAP_FT
     EIR_FPLR = average_EIR_FPLR(q_DX_chw_kWh_per_HH, available_capacity_per_unit, n_units_per_HH,  DX_configuration_values)
 
-    P_rated = q_DX_chw_Wh/cop_rated
+    capacity_per_HH = rated_capacity_per_unit*n_units_per_HH
+    P_rated = capacity_per_HH/cop_rated
     P_operating = P_rated * CAP_FT * EIR_FT * EIR_FPLR
 
-    cop_DX = q_DX_chw_Wh / P_operating
+    cop_DX = q_DX_chw_kWh_per_HH / P_operating
 
     return cop_DX
 
@@ -142,19 +139,11 @@ def average_EIR_FPLR(q_DX_chw_kWh_per_HH, available_capacity_per_unit, n_units_p
     :param dictionary DX_configuration_values: contains config details
     :return float EIR_FPLR:  electric input to cooling output factor for part-load function curve
     """
-    n_chillers_filled = int(q_DX_chw_kWh_per_HH // available_capacity_per_unit)
-    part_load_chiller = max(0.2, float(divmod(q_DX_chw_kWh_per_HH, available_capacity_per_unit)[1]) / float(
-        available_capacity_per_unit))
+    Q_operating = q_DX_chw_kWh_per_HH
+    Q_available = available_capacity_per_unit * n_units_per_HH
+    PLR = Q_operating/Q_available
 
-    load_distribution_list = []
-    for i in range(n_chillers_filled):
-        load_distribution_list.append(1)
-    load_distribution_list.append(part_load_chiller)
-    for i in range(int(n_units_per_HH) - n_chillers_filled - 1):
-        load_distribution_list.append(0)
-    load_distribution = np.array(load_distribution_list)
-
-    EIR_FPLR = np.sum(calc_EIR_FPLR(load_distribution, DX_configuration_values['PLFs']) * load_distribution * available_capacity_per_unit) / q_DX_chw_kWh_per_HH  # calculates the weighted average PLF value
+    EIR_FPLR = calc_EIR_FPLR(PLR, DX_configuration_values['PLFs'])  # calculates the average PLF value EIR_FPLR
     return EIR_FPLR
 
 def calc_EIR_FPLR(PLR, PLFs):
