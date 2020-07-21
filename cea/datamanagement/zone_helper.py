@@ -29,14 +29,30 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-def check_if_float(x):
-    y = 0.0
+
+def parse_building_floors(floors):
+    """
+    Tries to parse string of `building:levels` from OSM data to get the number of floors as a float.
+    If the string is a list of numerical values separated by commas or semicolons, it will return the maximum value.
+    It returns NaN if it is unable to parse the value.
+
+    :param str floors: String representation of number of floors from OSM
+    :return: Number of floors as a float or NaN
+    """
+    import re
     try:
-        y = float(x)
-    except:
-        if ',' in x:
-            y = float(x.split(',')[-1])
-    return y
+        parsed_floors = float(floors)  # Try casting string to float
+    except ValueError:
+        separators = [',', ';']  # Try matching with different separators
+        separated_values = r'^(?:\d+(?:\.\d+)?(?:{separator}\s?)?)+$'
+        for separator in separators:
+            match = re.match(separated_values.format(separator=separator), floors)
+            if match:
+                return max([float(x.strip() or 0) for x in floors.split(separator)])
+        return np.nan
+    else:
+        return parsed_floors
+
 
 def clean_attributes(shapefile, buildings_height, buildings_floors, buildings_height_below_ground,
                      buildings_floors_below_ground, key):
