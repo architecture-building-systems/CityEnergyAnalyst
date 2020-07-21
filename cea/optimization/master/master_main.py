@@ -169,6 +169,12 @@ def non_dominated_sorting_genetic_algorithm(locator,
     crossover_method_integer = config.optimization.crossover_method_integer
     crossover_method_continuous = config.optimization.crossover_method_continuous
 
+    # Select all technologies if empty
+    if not technologies_heating_allowed:
+        technologies_heating_allowed = config.get_parameter('optimization:technologies-dh')._choices
+    if not technologies_cooling_allowed:
+        technologies_cooling_allowed = config.get_parameter('optimization:technologies-dc')._choices
+
     # SET-UP EVOLUTIONARY ALGORITHM
     # Hyperparameters
     P = 12
