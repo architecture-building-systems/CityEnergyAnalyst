@@ -1086,7 +1086,7 @@ def parse_string_to_list(line):
         return []
     line = line.replace('\n', ' ')
     line = line.replace('\r', ' ')
-    return [field.strip() for field in line.split(',') if field.strip()]
+    return [str(field.strip()) for field in line.split(',') if field.strip()]
 
 
 def parse_string_coordinate_list(string_tuples):
