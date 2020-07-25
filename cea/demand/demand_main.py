@@ -68,7 +68,7 @@ def demand_calculation(locator, config):
     t0 = time.clock()
 
     # LOCAL VARIABLES
-    building_names = config.demand.buildings or locator.get_zone_building_names()
+    building_names = config.demand.buildings
     use_dynamic_infiltration = config.demand.use_dynamic_infiltration_calculation
     resolution_output = config.demand.resolution_output
     loads_output = config.demand.loads_output
@@ -158,7 +158,7 @@ def radiation_files_exist(locator, config):
     def daysim_results_exist(building_name):
         return os.path.exists(locator.get_radiation_building(building_name))
 
-    building_names = config.demand.buildings or locator.get_zone_building_names()
+    building_names = config.demand.buildings
 
     return all(daysim_results_exist(building_name) for building_name in building_names)
 
