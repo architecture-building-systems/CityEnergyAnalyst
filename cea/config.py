@@ -878,6 +878,13 @@ class MultiChoiceParameter(ChoiceParameter):
     """Like ChoiceParameter, but multiple values from the choices list can be used"""
     typename = 'MultiChoiceParameter'
 
+    @property
+    def nullable(self):
+        try:
+            return self.config.default_config.getboolean(self.section.name, self.name + '.nullable')
+        except configparser.NoOptionError:
+            return False
+
     def encode(self, value):
         assert not isinstance(value, basestring), "Bad value for encode of parameter {pname}".format(pname=self.name)
         for choice in value:
@@ -886,6 +893,9 @@ class MultiChoiceParameter(ChoiceParameter):
         return ', '.join(map(str, value))
 
     def decode(self, value):
+        # Select all choices if empty value and not nullable (default is not nullable)
+        if not self.nullable and value == '':
+            return self._choices
         choices = parse_string_to_list(value)
         return [choice for choice in choices if choice in self._choices]
 
