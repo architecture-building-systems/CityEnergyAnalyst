@@ -57,14 +57,15 @@ def schemas(plugins):
             return schemas_dict
 
         # compare the dates of the two files - use the pickle if it's newer
+        schemas_dict = None
         if os.path.exists(schemas_pickle) and os.path.getmtime(schemas_pickle) > os.path.getmtime(schemas_yml):
-            try:
-                with open(schemas_pickle, "rb") as schemas_pickle_fp:
+            with open(schemas_pickle, "r") as schemas_pickle_fp:
+                try:
                     schemas_dict = pickle.load(schemas_pickle_fp)
-            except:
-                # this could have failed for so many reasons - just fall back to loading it from the yaml
-                schemas_dict = load_schemas_dict_from_yaml()
-        else:
+                except:
+                    schemas_dict = None
+
+        if not schemas_dict:
             # ok. this will take a while to read...
             schemas_dict = load_schemas_dict_from_yaml()
 

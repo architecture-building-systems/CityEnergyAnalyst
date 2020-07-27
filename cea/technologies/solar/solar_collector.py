@@ -968,8 +968,6 @@ def main(config):
     print('Running solar-collector with type-scpanel = %s' % config.solar.type_scpanel)
 
     building_names = config.solar.buildings
-    if not building_names:
-        building_names = locator.get_zone_building_names()
 
     zone_geometry = gdf.from_file(locator.get_zone_geometry())
     latitude, longitude = get_lat_lon_projected_shapefile(zone_geometry)

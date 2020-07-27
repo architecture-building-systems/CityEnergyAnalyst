@@ -28,14 +28,29 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def check_if_float(x):
-    y = 0.0
+def parse_building_floors(floors):
+    """
+    Tries to parse string of `building:levels` from OSM data to get the number of floors as a float.
+    If the string is a list of numerical values separated by commas or semicolons, it will return the maximum value.
+    It returns NaN if it is unable to parse the value.
+
+    :param str floors: String representation of number of floors from OSM
+    :return: Number of floors as a float or NaN
+    """
+    import re
     try:
-        y = float(x)
-    except:
-        if ',' in x:
-            y = float(x.split(',')[-1])
-    return y
+        parsed_floors = float(floors)  # Try casting string to float
+    except ValueError:
+        separators = [',', ';']  # Try matching with different separators
+        separated_values = r'^(?:\d+(?:\.\d+)?(?:{separator}\s?)?)+$'
+        for separator in separators:
+            match = re.match(separated_values.format(separator=separator), floors)
+            if match:
+                return max([float(x.strip() or 0) for x in floors.split(separator)])
+        return np.nan
+    else:
+        return parsed_floors
+
 
 
 def clean_attributes(shapefile, buildings_height, buildings_floors, buildings_height_below_ground,
@@ -58,16 +73,15 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, buildings_he
             shapefile['REFERENCE'] = "CEA - assumption"
         else:
             shapefile['REFERENCE'] = ["OSM - median values of all buildings" if x is np.nan else "OSM - as it is" for x
-                                      in
-                                      shapefile['building:levels']]
+                                      in shapefile['building:levels']]
         if 'roof:levels' not in list_of_columns:
             shapefile['roof:levels'] = [1] * no_buildings
 
         # get the median from the area:
         data_osm_floors1 = shapefile['building:levels'].fillna(0)
         data_osm_floors2 = shapefile['roof:levels'].fillna(0)
-        data_floors_sum = [x + y for x, y in zip([check_if_float(x) for x in data_osm_floors1],
-                                                 [check_if_float(x) for x in data_osm_floors2])]
+        data_floors_sum = [x + y for x, y in zip([parse_building_floors(x) for x in data_osm_floors1],
+                                                 [parse_building_floors(x) for x in data_osm_floors2])]
         data_floors_sum_with_nan = [np.nan if x < 1.0 else x for x in data_floors_sum]
         data_osm_floors_joined = int(
             math.ceil(np.nanmedian(data_floors_sum_with_nan)))  # median so we get close to the worse case
@@ -216,7 +230,7 @@ def calculate_typology_file(locator, zone_df, year_construction, occupancy_type,
     dataframe_to_dbf(typology_df[fields + ['REFERENCE']], occupancy_output_path)
 
 
-def cast_year(year):
+def parse_year(year):
     import re
     # `start-date` formats can be found here https://wiki.openstreetmap.org/wiki/Key:start_date#Formatting
     if type(year) == str:
@@ -253,10 +267,9 @@ def calculate_age(zone_df, year_construction):
         else:
             zone_df['REFERENCE'] = ["OSM - median" if x is np.nan else "OSM - as it is" for x in zone_df['start_date']]
 
-        data_floors_sum_with_nan = [np.nan if x is np.nan else int(cast_year(x)) for x in zone_df['start_date']]
-        data_osm_floors_joined = int(
-            math.ceil(np.nanmedian(data_floors_sum_with_nan)))  # median so we get close to the worse case
-        zone_df["YEAR"] = [int(x) if x is not np.nan else data_osm_floors_joined for x in data_floors_sum_with_nan]
+        data_age = [np.nan if x is np.nan else int(parse_year(x)) for x in zone_df['start_date']]
+        data_osm_floors_joined = int(math.ceil(np.nanmedian(data_age)))  # median so we get close to the worse case
+        zone_df["YEAR"] = [int(x) if x is not np.nan else data_osm_floors_joined for x in data_age]
     else:
         zone_df['REFERENCE'] = "CEA - assumption"
 
@@ -269,15 +282,52 @@ def polygon_to_zone(buildings_floors, buildings_floors_below_ground, buildings_h
     lon = poly.geometry[0].centroid.coords.xy[0][0]
     lat = poly.geometry[0].centroid.coords.xy[1][0]
     # get footprints of all the district
-    poly = osmnx.footprints.footprints_from_polygon(polygon=poly['geometry'].values[0])
+    poly = ox.footprints.footprints_from_polygon(polygon=poly['geometry'].values[0])
+
+    # clean geometries
+    poly = clean_geometries(poly)
+
     # clean attributes of height, name and number of floors
     result, result_allfields = clean_attributes(poly, buildings_height, buildings_floors, buildings_height_below_ground,
                                                 buildings_floors_below_ground, key="B")
     result = result.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
+
     # save to shapefile
     result.to_file(shapefile_out_path)
 
     return result_allfields
+
+
+def clean_geometries(gdf):
+    """
+    Takes in a GeoPandas DataFrame and making sure all geometries are of type 'Polygon' and remove any entries that do
+    not have any geometries
+    :param gdf: GeoPandas DataFrame containing geometries
+    :return:
+    """
+    def flatten_geometries(geometry):
+        """
+        Flatten polygon collections into a single polygon by using their union
+        :param geometry: Type of Shapely geometry
+        :return:
+        """
+        from shapely.ops import unary_union
+        if geometry.type == 'Polygon':  # ignore Polygons
+            return geometry
+        else:
+            joined = unary_union(list(geometry))
+            if joined.type == 'MultiPolygon':  # some Multipolygons could not be combined
+                return joined[0]  # just return first polygon
+            elif joined.type != 'Polygon':  # discard geometry if it is still not a Polygon
+                print('Discarding geometry of type: {geometry_type}'.format(geometry_type=joined.type))
+                return None
+            else:
+                return joined
+
+    gdf.geometry = gdf.geometry.map(flatten_geometries)
+    gdf = gdf[gdf.geometry.notnull()]  # remove None geometries
+
+    return gdf
 
 
 def main(config):
