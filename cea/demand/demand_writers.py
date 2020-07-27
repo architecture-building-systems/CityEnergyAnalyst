@@ -24,80 +24,10 @@ class DemandWriter(object):
 
         from cea.demand.thermal_loads import TSD_KEYS_ENERGY_BALANCE_DASHBOARD, TSD_KEYS_SOLAR
 
-        if not loads:
-            self.load_vars = ['PV', 'GRID',
-                              'GRID_a',
-                              'GRID_l',
-                              'GRID_v',
-                              'GRID_data',
-                              'GRID_pro',
-                              'GRID_aux',
-                              'GRID_ww',
-                              'GRID_hs',
-                              'GRID_cs',
-                              'GRID_cdata',
-                              'GRID_cre',
-                              'E_sys', 'Eal', 'Ea', 'El', 'Ev', 'Edata', 'Epro', 'Eaux',
-                              'E_ww', 'E_hs', 'E_cs', 'E_cre', 'E_cdata',
-                              'Qhs_sen_shu', 'Qhs_sen_ahu', 'Qhs_lat_ahu',
-                              'Qhs_sen_aru', 'Qhs_lat_aru', 'Qhs_sen_sys',
-                              'Qhs_lat_sys', 'Qhs_em_ls', 'Qhs_dis_ls',
-                              'Qhs_sys_shu', 'Qhs_sys_ahu', 'Qhs_sys_aru',
-                              'Qcs_sys_scu', 'Qcs_sys_ahu', 'Qcs_sys_aru',
-                              'DH_hs', 'Qhs_sys', 'Qhs',
-                              'DH_ww', 'Qww_sys', 'Qww',
-                              'DC_cs', 'Qcs_sys', 'Qcs',
-                              'DC_cre', 'Qcre_sys', 'Qcre',
-                              'DC_cdata', 'Qcdata_sys', 'Qcdata',
-                              'NG_hs',
-                              'COAL_hs',
-                              'OIL_hs',
-                              'WOOD_hs',
-                              'SOLAR_hs',
-                              'NG_ww',
-                              'COAL_ww',
-                              'OIL_ww',
-                              'WOOD_ww',
-                              'SOLAR_ww',
-                              'Qcs_sen_scu', 'Qcs_sen_ahu',
-                              'Qcs_lat_ahu', 'Qcs_sen_aru', 'Qcs_lat_aru',
-                              'Qcs_sen_sys', 'Qcs_lat_sys', 'Qcs_em_ls',
-                              'Qcs_dis_ls', 'Qhpro_sys', 'Qcpro_sys',
-                              'QH_sys', 'QC_sys']
-
-        else:
-            self.load_vars = loads
-
+        self.load_vars = loads
         self.load_plotting_vars = TSD_KEYS_ENERGY_BALANCE_DASHBOARD + TSD_KEYS_SOLAR
-
-        if not massflows:
-            self.mass_flow_vars = ['mcpww_sys',
-                                   'mcptw',
-                                   'mcpcs_sys',
-                                   'mcphs_sys',
-                                   'mcpcs_sys_ahu',
-                                   'mcpcs_sys_aru',
-                                   'mcpcs_sys_scu',
-                                   'mcphs_sys_ahu',
-                                   'mcphs_sys_aru',
-                                   'mcphs_sys_shu',
-                                   'mcpcre_sys',
-                                   'mcpcdata_sys']
-        else:
-            self.mass_flow_vars = massflows
-
-        if not temperatures:
-            self.temperature_vars = ['T_int', 'T_ext', 'theta_o',
-                                     'Tww_sys_sup', 'Tww_sys_re',
-                                     'Tcre_sys_re', 'Tcre_sys_sup',
-                                     'Tcdata_sys_re', 'Tcdata_sys_sup',
-                                     'Ths_sys_sup_aru', 'Ths_sys_sup_ahu', 'Ths_sys_sup_shu',
-                                     'Ths_sys_re_aru', 'Ths_sys_re_ahu', 'Ths_sys_re_shu',
-                                     'Tcs_sys_sup_aru', 'Tcs_sys_sup_ahu', 'Tcs_sys_sup_scu',
-                                     'Tcs_sys_re_aru', 'Tcs_sys_re_ahu', 'Tcs_sys_re_scu',
-                                     'Ths_sys_sup', 'Ths_sys_re', 'Tcs_sys_sup', 'Tcs_sys_re']
-        else:
-            self.temperature_vars = temperatures
+        self.mass_flow_vars = massflows
+        self.temperature_vars = temperatures
 
         self.OTHER_VARS = ['Name', 'Af_m2', 'Aroof_m2', 'GFA_m2', 'Aocc_m2', 'people0']
 
