@@ -1,3 +1,9 @@
+- 2020-07-27 - 3.4.0 - #2807 Select all technologies in optimization if none is selected
+- 2020-07-27 - 3.4.0 - #2806 Properly parse `building:levels` data from OSM
+- 2020-07-27 - 3.4.0 - #2767 Clean geometries from OpenStreetMap in zone-helper
+- 2020-07-09 - 3.4.0 - #2799 2751 cleanup hardcoded values
+- 2020-06-19 - 3.4.0 - #2780 Fix some timeseries plots not showing
+- 2020-06-12 - 3.4.0 - #2770 Release 3.4.0
 - 2020-06-12 - 3.3.0 - #2771 Update range values
 - 2020-06-12 - 3.3.0 - #2766 Return empty list if unable to find project
 - 2020-06-12 - 3.3.0 - #2768 Fixing electro-mobility documentation
