@@ -263,15 +263,52 @@ def polygon_to_zone(buildings_floors, buildings_floors_below_ground, buildings_h
     lon = poly.geometry[0].centroid.coords.xy[0][0]
     lat = poly.geometry[0].centroid.coords.xy[1][0]
     # get footprints of all the district
-    poly = ox.footprints.create_footprints_gdf(polygon=poly['geometry'].values[0])
+    poly = ox.footprints.footprints_from_polygon(polygon=poly['geometry'].values[0])
+
+    # clean geometries
+    poly = clean_geometries(poly)
+
     # clean attributes of height, name and number of floors
     result, result_allfields = clean_attributes(poly, buildings_height, buildings_floors, buildings_height_below_ground,
-                              buildings_floors_below_ground, key="B")
+                                                buildings_floors_below_ground, key="B")
     result = result.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
+
     # save to shapefile
     result.to_file(shapefile_out_path)
 
     return result_allfields
+
+
+def clean_geometries(gdf):
+    """
+    Takes in a GeoPandas DataFrame and making sure all geometries are of type 'Polygon' and remove any entries that do
+    not have any geometries
+    :param gdf: GeoPandas DataFrame containing geometries
+    :return:
+    """
+    def flatten_geometries(geometry):
+        """
+        Flatten polygon collections into a single polygon by using their union
+        :param geometry: Type of Shapely geometry
+        :return:
+        """
+        from shapely.ops import unary_union
+        if geometry.type == 'Polygon':  # ignore Polygons
+            return geometry
+        else:
+            joined = unary_union(list(geometry))
+            if joined.type == 'MultiPolygon':  # some Multipolygons could not be combined
+                return joined[0]  # just return first polygon
+            elif joined.type != 'Polygon':  # discard geometry if it is still not a Polygon
+                print('Discarding geometry of type: {geometry_type}'.format(geometry_type=joined.type))
+                return None
+            else:
+                return joined
+
+    gdf.geometry = gdf.geometry.map(flatten_geometries)
+    gdf = gdf[gdf.geometry.notnull()]  # remove None geometries
+
+    return gdf
 
 
 def main(config):
