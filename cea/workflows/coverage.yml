@@ -1,0 +1,159 @@
+# try to run as much of the CEA as possible for coverage / testing
+# (requires cea-workflow-utils plugin)
+- config: user
+  "general:multiprocessing": False
+  "general:project": "${userprofile}/Documents/CEA-Projects/testing"
+  "radiation:daysim-bin-directory": "${CEA_radiation_daysim-bin-directory}"
+- config: .
+  "general:scenario-name": "heating"
+- script: run-command
+  parameters:
+    command: 'if not exist "{general:project}\\{general:scenario-name}\\inputs\\building-geometry\\" mkdir "{general:project}\\{general:scenario-name}\\inputs\\building-geometry"'
+- script: data-initializer
+  parameters:
+    databases-path: CH
+- script: create-polygon
+  parameters:
+    # coordinates are kleinalbis, zurich, 4 buildings
+    coordinates: "(8.506395769175878, 47.35805575665319), (8.506760549601978, 47.35792978000122), (8.506581736104215, 47.35767782601688), (8.506395769175878, 47.35805575665319)"
+    filename: site
+- script: zone-helper
+- script: surroundings-helper
+- script: streets-helper
+- script: terrain-helper
+- script: weather-helper
+  parameters:
+    weather: Zuerich-Kloten_1990_2010_TMY
+- script: archetypes-mapper
+  parameters:
+      input-databases: ['comfort', 'architecture', 'air-conditioning', 'internal-loads', 'supply', 'schedules']
+      buildings: []
+- script: radiation
+  parameters:
+    consider-intersections: false
+- script: schedule-maker
+- script: demand
+- script: emissions
+- script: system-costs
+- script: water-body-potential
+- script: sewage-potential
+- script: shallow-geothermal-potential
+- script: photovoltaic
+- script: solar-collector
+  parameters:
+    type-scpanel: FP
+- script: solar-collector
+  parameters:
+    type-scpanel: ET
+- script: photovoltaic-thermal
+  parameters:
+    type-scpanel: FP
+- script: photovoltaic-thermal
+  parameters:
+    type-scpanel: ET
+- script: network-layout
+  parameters:
+    network-type: DH
+- script: thermal-network
+  parameters:
+    network-type: DH
+    network-model: detailed
+#    stop-t: 744 # run for one month
+    start-t: 0
+    stop-t: 24 # run for one day
+- script: thermal-network
+  parameters:
+    network-type: DH
+    network-model: simplified
+- script: decentralized
+- script: optimization
+  parameters:
+    network-type: DH
+    number-of-generations: 2
+    population-size: 5
+    random-seed: 100
+- script: multi-criteria-analysis
+  parameters:
+    generation: 2
+- script: run-all-plots
+  parameters:
+    network-type: DH
+    network-name: ""
+
+
+# Run cooling
+- config: .
+  "general:scenario-name": "cooling"
+- script: run-command
+  parameters:
+    command: 'if not exist "{general:project}\\{general:scenario-name}\\inputs\\building-geometry\\" mkdir "{general:project}\\{general:scenario-name}\\inputs\\building-geometry"'
+- script: data-initializer
+  parameters:
+    databases-path: SG
+- script: create-polygon
+  parameters:
+    # coordinates are singapore
+    coordinates: "(103.8276659476768, 1.355675107613739), (103.8280062305375, 1.355983066896414), (103.827873699494, 1.35553903230245), (103.8276659476768, 1.355675107613739)"
+    filename: site
+- script: zone-helper
+- script: surroundings-helper
+- script: streets-helper
+- script: terrain-helper
+- script: weather-helper
+  parameters:
+    weather: Singapore-Changi_1990_2010_TMY
+- script: archetypes-mapper
+  parameters:
+      input-databases: ['comfort', 'architecture', 'air-conditioning', 'internal-loads', 'supply', 'schedules']
+      buildings: []
+- script: radiation
+  parameters:
+    consider-intersections: false
+- script: schedule-maker
+- script: demand
+- script: emissions
+- script: system-costs
+- script: water-body-potential
+- script: sewage-potential
+- script: shallow-geothermal-potential
+- script: photovoltaic
+- script: solar-collector
+  parameters:
+    type-scpanel: FP
+- script: solar-collector
+  parameters:
+    type-scpanel: ET
+- script: photovoltaic-thermal
+  parameters:
+    type-scpanel: FP
+- script: photovoltaic-thermal
+  parameters:
+    type-scpanel: ET
+- script: network-layout
+  parameters:
+    network-type: DC
+- script: thermal-network
+  parameters:
+    network-type: DC
+    network-model: detailed
+#    stop-t: 744 # run for one month
+    start-t: 0
+    stop-t: 24 # run for one day
+- script: thermal-network
+  parameters:
+    network-type: DC
+    network-model: simplified
+- script: decentralized
+- script: optimization
+  parameters:
+    network-type: DC
+    number-of-generations: 2
+    population-size: 5
+    random-seed: 100
+- script: multi-criteria-analysis
+  parameters:
+    generation: 2
+- script: run-all-plots
+  parameters:
+    network-type: DC
+    network-name: ""
