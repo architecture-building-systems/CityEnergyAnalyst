@@ -41,8 +41,6 @@ def schedule_maker_main(locator, config, building=None):
     else:
         raise ValueError("Invalid schedule model: {schedule_model}".format(**locals()))
 
-    if buildings == []:
-        buildings = locator.get_zone_building_names()
     if building != None:
         buildings = [building]  # this is to run the tests
 

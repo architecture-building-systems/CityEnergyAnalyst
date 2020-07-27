@@ -83,12 +83,23 @@ def assert_input_geometry_acceptable_values_floor_height_surroundings(surroundin
                         'to simulate in CEA at the moment. Please verify your Zone or Surroundings shapefile file')
 
 
+def assert_input_geometry_only_polygon(buildings_df):
+    not_polygon = buildings_df.geometry.type != 'Polygon'
+    invalid_buildings = buildings_df[not_polygon]['Name'].values
+    if len(invalid_buildings):
+        raise Exception(
+            'Some buildings are not of type "Polygon": {buildings}'.format(buildings=', '.join(invalid_buildings)))
+
+
 def verify_input_geometry_zone(zone_df):
     # Verification 1. verify if all the column names are correct
     assert_columns_names(zone_df, COLUMNS_ZONE_GEOMETRY)
 
     # Verification 2. verify if the floor_height ratio is correct
     assert_input_geometry_acceptable_values_floor_height(zone_df)
+
+    # Verification 3. verify geometries only contain Polygon
+    assert_input_geometry_only_polygon(zone_df)
 
 
 def verify_input_geometry_surroundings(surroundings_df):
@@ -97,6 +108,9 @@ def verify_input_geometry_surroundings(surroundings_df):
 
     # Verification 2. verify if the floor_height ratio is correct
     assert_input_geometry_acceptable_values_floor_height_surroundings(surroundings_df)
+
+    # Verification 3. verify geometries only contain Polygon
+    assert_input_geometry_only_polygon(surroundings_df)
 
 
 def verify_input_typology(typology_df):

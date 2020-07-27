@@ -97,8 +97,6 @@ def archetypes_mapper(locator,
         internal_loads_mapper(list_uses, locator, occupant_densities, building_typology_df)
 
     if update_schedule_operation_cea:
-        if not buildings:
-            buildings = locator.get_zone_building_names()
         calc_mixed_schedule(locator, building_typology_df, buildings)
 
     if update_supply_systems_dbf:

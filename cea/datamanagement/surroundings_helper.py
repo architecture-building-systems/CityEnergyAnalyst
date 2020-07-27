@@ -16,6 +16,7 @@ import pandas as pd
 
 import cea.config
 import cea.inputlocator
+from cea.datamanagement.zone_helper import parse_building_floors
 from cea.demand import constants
 from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_geographic_coordinate_system
 
@@ -143,7 +144,8 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, key):
         data_osm_floors1 = shapefile['building:levels'].fillna(0)
         data_osm_floors2 = shapefile['roof:levels'].fillna(0)
         data_floors_sum = [x + y for x, y in
-                           zip([float(x) for x in data_osm_floors1], [float(x) for x in data_osm_floors2])]
+                           zip([parse_building_floors(x) for x in data_osm_floors1],
+                               [parse_building_floors(x) for x in data_osm_floors2])]
         data_floors_sum_with_nan = [np.nan if x < 1.0 else x for x in data_floors_sum]
         data_osm_floors_joined = int(
             math.ceil(np.nanmedian(data_floors_sum_with_nan)))  # median so we get close to the worse case

@@ -58,12 +58,8 @@ def layout_network(network_layout, locator, plant_building_names=None, output_na
     path_output_nodes_shp = locator.get_network_layout_nodes_shapefile(type_network, output_name_network)
     output_network_folder = locator.get_input_network_folder(type_network, output_name_network)
 
-    if list_district_scale_buildings != []:
-        building_names = locator.get_zone_building_names()
-        disconnected_building_names = [x for x in list_district_scale_buildings if x not in building_names]
-    else:
-        # if list_district_scale_buildings is left blank, we assume all buildings are connected (no disconnected buildings)
-        disconnected_building_names = []
+    disconnected_building_names = [x for x in list_district_scale_buildings if x not in list_district_scale_buildings]
+
     calc_steiner_spanning_tree(crs_projected,
                                temp_path_potential_network_shp,
                                output_network_folder,
