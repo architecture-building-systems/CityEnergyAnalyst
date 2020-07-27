@@ -55,12 +55,8 @@ def calc_area_buildings(locator, buildings_list):
     prop_geometry = Gdf.from_file(locator.get_zone_geometry())
     prop_geometry['footprint'] = prop_geometry.area
 
-    if buildings_list == []:  # the user selected all buildings
-        area_below_buildings = prop_geometry['footprint'].sum()
-
-    else:  # the user selected more buildings
-        areas = prop_geometry[prop_geometry["Name"].isin(buildings_list)]
-        area_below_buildings = areas.sum()
+    footprint = prop_geometry[prop_geometry["Name"].isin(buildings_list)]['footprint']
+    area_below_buildings = footprint.sum()
 
     return area_below_buildings
 
