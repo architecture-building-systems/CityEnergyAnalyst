@@ -675,8 +675,6 @@ def main(config):
     print('Running photovoltaic-thermal with type-pvpanel = %s' % config.solar.type_pvpanel)
 
     building_names = config.solar.buildings
-    if not building_names:
-        building_names = locator.get_zone_building_names()
 
     hourly_results_per_building = gdf.from_file(locator.get_zone_geometry())
     latitude, longitude = get_lat_lon_projected_shapefile(hourly_results_per_building)
