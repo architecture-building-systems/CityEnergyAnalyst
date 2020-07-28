@@ -16,7 +16,7 @@ ${StrRep}
 
 # download CEA conda env from here
 ;!define CEA_ENV_URL "https://github.com/architecture-building-systems/CityEnergyAnalyst/releases/download/v3.1.0/Dependencies.7z"
-!define CEA_ENV_URL "https://www.dropbox.com/s/8i8392arvh8bubo/Dependencies.7z?dl=1"
+!define CEA_ENV_URL "https://www.dropbox.com/s/z8v60euvoog2wb2/Dependencies.7z?dl=1"
 !define CEA_ENV_FILENAME "Dependencies.7z"
 !define RELATIVE_GIT_PATH "Dependencies\cmder\vendor\git-for-windows\bin\git.exe"
 !define CEA_REPO_URL "https://github.com/architecture-building-systems/CityEnergyAnalyst.git"
@@ -81,6 +81,7 @@ Section "Base Installation" Base_Installation_Section
     File "cea-env.bat"
     File "pip-install.bat"
     File "cea-env-run.bat"
+    CreateDirectory $INSTDIR\Dependencies\cmder\config\profile.d
     File /oname=Dependencies\cmder\config\profile.d\cea.bat "cmder-config.bat"
     File "dashboard.bat"
 
