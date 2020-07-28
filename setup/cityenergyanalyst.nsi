@@ -198,10 +198,10 @@ Section "Base Installation" Base_Installation_Section
 
 
     DetailPrint "Pip installing Jupyter"
-    nsExec::ExecToLog '${PIP_INSTALL} --force-reinstall jupyter ipython'
+    nsExec::ExecToLog '${PIP_INSTALL} jupyter ipython'
 
     DetailPrint "Pip installing Sphinx"
-    nsExec::ExecToLog '${PIP_INSTALL} --force-reinstall --no-deps sphinx'
+    nsExec::ExecToLog '${PIP_INSTALL} sphinx'
 
     # create cea.config file in the %userprofile% directory by calling `cea --help` and set daysim paths
     nsExec::ExecToLog '"$INSTDIR\cea-env-run.bat" cea --help'
