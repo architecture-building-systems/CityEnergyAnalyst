@@ -282,7 +282,7 @@ def polygon_to_zone(buildings_floors, buildings_floors_below_ground, buildings_h
     lon = poly.geometry[0].centroid.coords.xy[0][0]
     lat = poly.geometry[0].centroid.coords.xy[1][0]
     # get footprints of all the district
-    poly = ox.footprints.footprints_from_polygon(polygon=poly['geometry'].values[0])
+    poly = osmnx.footprints.footprints_from_polygon(polygon=poly['geometry'].values[0])
 
     # clean geometries
     poly = clean_geometries(poly)
