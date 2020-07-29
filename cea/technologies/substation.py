@@ -938,9 +938,9 @@ def calc_DH_return(t_0, t_1):
 
 def main(config):
     """
-    run the whole network summary routine
+    do some testing... (view this as a scratch-pad...
     """
-
+    calc_dTm_HEX(338.0, 281.728, 282.07, 333.0)
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
