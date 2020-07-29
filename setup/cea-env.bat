@@ -7,6 +7,6 @@
 @REM SET PYTHONHOME=%~dp0Dependencies\Python
 @REM SET GDAL_DATA=%~dp0Dependencies\Python\Library\share\gdal
 @REM SET PROJ_LIB=%~dp0Dependencies\Python\Library\share\proj
-@CALL %~dp0Dependencies\Python\Scripts\activate.bat
+@CALL "%~dp0Dependencies\Python\Scripts\activate.bat"
 @SET PROMPT=(CEA) $P$G
 @SET RAYPATH=%~dp0Dependencies\Daysim
