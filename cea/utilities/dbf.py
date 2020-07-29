@@ -24,6 +24,7 @@ __status__ = "Production"
 
 TYPE_MAPPING = {
     int: ('N', 20, 0),
+    np.int32: ('N', 20, 0),
     np.int64: ('N', 20, 0),
     float: ('N', 36, 15),
     np.float64: ('N', 36, 15),
