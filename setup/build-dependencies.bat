@@ -20,4 +20,4 @@ CALL conda-pack -n cea -j -1 --format zip
 DEL /F/Q/S "%USERPROFILE%\Downloads\Dependencies" > NUL
 RMDIR /Q/S "%USERPROFILE%\Downloads\Dependencies
 CALL 7z x cea.zip -oDependencies\Python -y
-CALL 7z a Dependencies.7z Dependencies\
+CALL 7z a Dependencies.7z Dependencies\ -x9 -sdel
