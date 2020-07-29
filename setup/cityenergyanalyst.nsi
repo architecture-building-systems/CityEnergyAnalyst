@@ -82,7 +82,7 @@ Section "Base Installation" Base_Installation_Section
     File "pip-install.bat"
     File "cea-env-run.bat"
     CreateDirectory $INSTDIR\Dependencies\cmder\config\profile.d
-    File /oname=Dependencies\cmder\config\profile.d\cea.bat "cmder-config.bat"
+    File /oname=Dependencies\cmder\config\profile.d\cea-cmder-config.bat "cmder-config.bat"
     File "dashboard.bat"
 
     # install cmder (incl. git and bash... woohoo!!)
