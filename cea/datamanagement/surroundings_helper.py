@@ -18,6 +18,7 @@ import pandas as pd
 
 import cea.config
 import cea.inputlocator
+from cea.datamanagement.zone_helper import parse_building_floors
 from cea.demand import constants
 from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_geographic_coordinate_system
 
@@ -136,17 +137,20 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, key):
             shapefile['building:levels'] = [3] * no_buildings
             shapefile['REFERENCE'] = "CEA - assumption"
         else:
-            shapefile['REFERENCE'] = ["OSM - median" if x is np.nan else "OSM - as it is" for x in shapefile['building:levels']]
+            shapefile['REFERENCE'] = ["OSM - median" if x is np.nan else "OSM - as it is" for x in
+                                      shapefile['building:levels']]
         if 'roof:levels' not in list_of_columns:
             shapefile['roof:levels'] = [1] * no_buildings
 
-        #get the median from the area:
+        # get the median from the area:
         data_osm_floors1 = shapefile['building:levels'].fillna(0)
         data_osm_floors2 = shapefile['roof:levels'].fillna(0)
         data_floors_sum = [x + y for x, y in
-                           zip([float(x) for x in data_osm_floors1], [float(x) for x in data_osm_floors2])]
+                           zip([parse_building_floors(x) for x in data_osm_floors1],
+                               [parse_building_floors(x) for x in data_osm_floors2])]
         data_floors_sum_with_nan = [np.nan if x < 1.0 else x for x in data_floors_sum]
-        data_osm_floors_joined = int(math.ceil(np.nanmedian(data_floors_sum_with_nan)))  # median so we get close to the worse case
+        data_osm_floors_joined = int(
+            math.ceil(np.nanmedian(data_floors_sum_with_nan)))  # median so we get close to the worse case
         shapefile["floors_ag"] = [int(x) if x is not np.nan else data_osm_floors_joined for x in
                                   data_floors_sum_with_nan]
         shapefile["height_ag"] = shapefile["floors_ag"] * constants.H_F
@@ -162,7 +166,7 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, key):
             shapefile["height_ag"] = [buildings_height] * no_buildings
             shapefile["floors_ag"] = [buildings_floors] * no_buildings
 
-    #add description
+    # add description
     if "description" in list_of_columns:
         shapefile["description"] = shapefile['description']
     elif 'addr:housename' in list_of_columns:
@@ -170,13 +174,13 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, key):
     elif 'amenity' in list_of_columns:
         shapefile["description"] = shapefile['amenity']
     else:
-        shapefile["description"] = [np.nan]*no_buildings
+        shapefile["description"] = [np.nan] * no_buildings
 
     shapefile["category"] = shapefile['building']
     shapefile["Name"] = [key + str(x + 1000) for x in
                          range(no_buildings)]  # start in a big number to avoid potential confusion\
     result = shapefile[
-        ["Name", "height_ag", "floors_ag", "description", "category", "geometry",  "REFERENCE"]]
+        ["Name", "height_ag", "floors_ag", "description", "category", "geometry", "REFERENCE"]]
 
     result.reset_index(inplace=True, drop=True)
 

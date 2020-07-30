@@ -184,10 +184,15 @@ class PlotBase(object):
         fig['layout']['font'].update(dict(size=10))
 
         if self.timeframe is not None:
+            import datetime
             # Try to get plot year from data
             try:
                 plot_year = fig['data'][0]['x'][0].year
-                fig['layout']['xaxis']['rangebreaks'] = [dict(values=["{year}-02-29".format(year=plot_year)])]
+                fig.update_xaxes(
+                    rangebreaks=[
+                        dict(values=[datetime.datetime(plot_year, 2, 29)])
+                    ]
+                )
             except Exception as e:
                 print(e)
 
