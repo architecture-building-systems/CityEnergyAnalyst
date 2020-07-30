@@ -51,7 +51,7 @@ problem_dict = {
                    [1, 3], [8, 11], [1, 3], [8, 11], [16, 20], [14,18],
                    [1, 3], [8, 11], [1, 3], [8, 11], [16, 20], [14,18]]
     },
-    "d_LT_Networks_dhw": {
+    "d_LT_Networks_dhw": { # in-use
         'num_vars': 24,
         'names': ['dTn_1', 'dTn_2',
                   'HOT_dT1', 'HOT_dT2', 'HOT_dTsc', 'HOT_OAU_dT2', 'HOT_OAU_T1', 'HOT_RAU_dT2', 'HOT_RAU_T1', 'HOT_SCU_T', 'HOT_T_HP',
@@ -78,7 +78,7 @@ problem_dict = {
                    [2, 15], [1, 3], [8, 11], [1, 3], [8, 11], [16, 20],
                    [2, 15], [1, 3], [8, 11], [1, 3], [8, 11], [16, 20]]
     },
-    "d_HT_Networks_dhw": {
+    "d_HT_Networks_dhw": { # in-use
         'num_vars': 22,
         'names': ['dTn_1',
                   'HOT_HP_dT1', 'HOT_HP_dT2', 'HOT_HP_dTsc', 'HOT_OAU_dT2', 'HOT_OAU_T1', 'HOT_RAU_dT2', 'HOT_RAU_T1', 'HOT_SCU_T',
@@ -119,20 +119,20 @@ problem_dict = {
         'names': ['capex_weight', 'dT1', 'dT2', 'dT3', 'dT4', 'dT_sc', 'dT5'],
         'bounds': [[0, 1], [20, 25], [10, 20], [2, 6], [2, 6], [0.01, 30], [4, 7]]
     },
-    'd_Buildings': {
+    'd_Buildings': { # in-use
         'num_vars': 6,
         'names': ['HP_dT', 'OAU_dT2', 'OAU_T1', 'RAU_dT2', 'RAU_T1', 'T_SCU'],
         'bounds': [[1, 15], [1, 3], [8, 11], [1, 3], [8, 11], [16, 20]]
     },
-    'd_Buildings_dhw': {
+    'd_Buildings_dhw': { # in-use
         'num_vars': 7,
         'names': ['dT_sc', 'HP_dT', 'OAU_dT2', 'OAU_T1', 'RAU_dT2', 'RAU_T1', 'T_SCU'],
         'bounds': [[0, 20], [1, 15], [1, 3], [8, 11], [1, 3], [8, 11], [16, 20]]
     },
 }
 
-problem_name = 'c_Networks'
-number_of_samples = 1000
+problem_name = 'd_HT_Networks_dhw'
+number_of_samples = 200
 iterations = 10000   #10000 from Steffen
 
 def main():
