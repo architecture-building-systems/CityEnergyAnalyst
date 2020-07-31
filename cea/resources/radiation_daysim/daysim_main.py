@@ -174,7 +174,7 @@ def isolation_daysim(chunk_n, cea_daysim, building_names, locator, radiance_para
     num_sensors = sum(sensors_number_zone)
     daysim_project.create_sensor_input_file(sensors_coords_zone, sensors_dir_zone, num_sensors, "w/m2")
 
-    print("Starting Daysim simulation starts for buildings {buildings}".format(buildings=names_zone))
+    print("Starting Daysim simulation for buildings: {buildings}".format(buildings=names_zone))
     print("Total number of sensors:  {num_sensors}".format(num_sensors=num_sensors))
 
     print('Writing radiance parameters')

@@ -159,7 +159,8 @@ def check_daysim_bin_directory(path_hint):
         if contains_binaries(path):
             # If path to binaries contains whitespace, provide a warning
             if contains_whitespace(path):
-                print("ATTENTION: Daysim binaries found in '{}', but its path contains whitespaces. Consider moving the binaries to another path to use them.")
+                print("ATTENTION: Daysim binaries found in '{}', but its path contains whitespaces. "
+                      "Consider moving the binaries to another path to use them.".format(path))
                 continue
 
             if contains_libs(path):
