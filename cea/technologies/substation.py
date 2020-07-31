@@ -251,6 +251,7 @@ def substation_model_cooling(name, building, T_DC_supply_to_cs_ref_C, T_DC_suppl
 
     ## SIZE FOR THE SPACE COOLING HEAT EXCHANGER
     if len(cs_configuration) == 0:
+        tci = 0
         t_DC_return_cs = 0
         mcp_DC_cs = 0
         A_hex_cs = 0
@@ -548,7 +549,7 @@ def substation_model_heating(name, building_demand_df, T_DH_supply_C, Ths_supply
                                           "Q_heating_W": Qhs_sys_W,
                                           "Q_dhw_W": Qww_sys_W})
 
-    substation_activation.to_csv(locator.get_optimization_substations_results_file(name, "DH" , DHN_barcode), sep=',',
+    substation_activation.to_csv(locator.get_optimization_substations_results_file(name, "DH", DHN_barcode), sep=',',
                                  index=False,
                                  float_format='%.3f')
 
@@ -746,20 +747,18 @@ def calc_HEX_mix_2_flows(Q1, Q2, m1, m2, t1, t2):
         - tavg: average out temperature.
 
     """
+    tavg = 0
     if (m1 + m2) > 0:
         if Q1 > 0 or Q2 > 0:
             tavg = (t1 * m1 + t2 * m2) / (m1 + m2)
-    else:
-        tavg = 0
     return np.float(tavg)
 
 
 def calc_HEX_mix_3_flows(Q1, Q2, Q3, m1, m2, m3, t1, t2, t3):
+    tavg = 0
     if (m1 + m2 + m3) > 0:
         if Q1 > 0 or Q2 > 0 or Q3 > 0:
             tavg = (t1 * m1 + t2 * m2 + t3 * m3) / (m1 + m2 + m3)
-    else:
-        tavg = 0
     return np.float(tavg)
 
 
@@ -788,7 +787,7 @@ def calc_HEX_heating(Q_heating_W, UA, thi_K, tco_K, tci_K, cc_kWperK):
         - ``ch``, capacity mass flow rate secondary side
 
     """
-
+    ch_kWperK = 0
     if Q_heating_W > 0.0:
         dT_primary = tco_K - tci_K if not isclose(tco_K,
                                                   tci_K) else 0.0001  # to avoid errors with temperature changes < 0.001
@@ -810,7 +809,6 @@ def calc_HEX_heating(Q_heating_W, UA, thi_K, tco_K, tci_K, cc_kWperK):
             current_efficiency = calc_shell_HEX(NTU, cr)
             cmin_kWperK = cc_kWperK * (dT_primary) / ((thi_K - tci_K) * current_efficiency)
             tho_K = thi_K - current_efficiency * cmin_kWperK * (thi_K - tci_K) / ch_kWperK
-
         tho_C = tho_K - 273
     else:
         tho_C = 0
