@@ -617,7 +617,7 @@ def calc_substation_heating(Q, thi, tco, tci, cc, cc_0, Qnom, thi_0, tci_0, tco_
         raise Exception("The temperature of the hot stream is lower than the cold stream, Please check inputs!")
 
     # nominal conditions network side
-    ch_0 = cc_0 * (tco_0 - tci_0) / ((thi_0 - tci_0) * 0.99)
+    ch_0 = cc_0 * (tco_0 - tci_0) / ((thi_0 - tci_0) * 0.9)
     tho_0 = thi_0 - Qnom / ch_0
     dTm_0 = calc_dTm_HEX(thi_0, tho_0, tci_0, tco_0)
     # Area heat excahnge and UA_heating
