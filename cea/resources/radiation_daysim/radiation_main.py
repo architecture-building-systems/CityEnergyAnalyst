@@ -64,17 +64,12 @@ def radiation_singleprocessing(cea_daysim, zone_building_names, locator, setting
     weatherfile = epwreader.epw_reader(weather_path)
     max_global = weatherfile['glohorrad_Whm2'].max()
 
-    if settings.buildings == []:
-        # get chunks of buildings to iterate
-        chunks = [zone_building_names[i:i + settings.n_buildings_in_chunk] for i in
-                  range(0, len(zone_building_names),
-                        settings.n_buildings_in_chunk)]
-    else:
-        list_of_building_names = settings.buildings
-        chunks = []
-        for building_name in zone_building_names:
-            if building_name in list_of_building_names:
-                chunks.append([building_name])
+    list_of_building_names = [building_name for building_name in settings.buildings
+                              if building_name in zone_building_names]
+    # get chunks of buildings to iterate
+    chunks = [list_of_building_names[i:i + settings.n_buildings_in_chunk] for i in
+              range(0, len(list_of_building_names),
+                    settings.n_buildings_in_chunk)]
 
     write_sensor_data = settings.write_sensor_data
     radiance_parameters = {"rad_ab": settings.rad_ab, "rad_ad": settings.rad_ad, "rad_as": settings.rad_as,
