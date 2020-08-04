@@ -253,6 +253,7 @@ def substation_model_cooling(name, building, T_DC_supply_to_cs_ref_C, T_DC_suppl
 
     ## SIZE FOR THE SPACE COOLING HEAT EXCHANGER
     if len(cs_configuration) == 0:
+        tci = 0
         t_DC_return_cs = 0
         mcp_DC_cs = 0
         A_hex_cs = 0
@@ -456,7 +457,8 @@ def substation_model_heating(name, building_demand_df, T_DH_supply_C, Ths_supply
     :param T_DC_sup_C: vector with hourly temperature of the district coolig network with losses
     :param t_HS: maximum hourly temperature for all buildings connected due to space heating
     :param t_WW: maximum hourly temperature for all buildings connected due to domestic hot water
-    :param DHN_barcode: this iis default to "" which means that it is created for decentralized buildings " 0101011001" is acommont type used during optimization
+    :param DHN_barcode: this iis default to "" which means that it is created for decentralized buildings " 0101011001"
+    is acommont type used during optimization
     :return:
         - Dataframe stored for every building with the mass flow rates and temperatures district heating and cooling
         - where fName_result: ID of the building accounting for the individual at which it belongs to.
@@ -507,7 +509,7 @@ def substation_model_heating(name, building_demand_df, T_DH_supply_C, Ths_supply
             A_hex_hs = 0
             tci = np.zeros(HOURS_IN_YEAR) + 273  # in K
 
-    # HEX FOR HOTWATER PRODUCTION, calculate t_DH_return_ww, mcp_DH_ww
+    # HEX FOR HOT WATER PRODUCTION, calculate t_DH_return_ww, mcp_DH_ww
     Qww_sys_W = building_demand_df.Qww_sys_kWh.values * 1000  # in W
     Qnom_W = max(Qww_sys_W)  # in W
     if Qnom_W > 0:
@@ -549,7 +551,7 @@ def substation_model_heating(name, building_demand_df, T_DH_supply_C, Ths_supply
                                           "Q_heating_W": Qhs_sys_W,
                                           "Q_dhw_W": Qww_sys_W})
 
-    substation_activation.to_csv(locator.get_optimization_substations_results_file(name, "DH" , DHN_barcode), sep=',',
+    substation_activation.to_csv(locator.get_optimization_substations_results_file(name, "DH", DHN_barcode), sep=',',
                                  index=False,
                                  float_format='%.3f')
 
@@ -560,7 +562,7 @@ def calc_substation_cooling(Q, thi, tho, tci, ch, ch_0, Qnom, thi_0, tci_0, tho_
     '''
     this function calculates the state of the heat exchanger at the substation of every customer with cooling needs
 
-    :param Q: cooling laad
+    :param Q: cooling load
     :param thi: in temperature of primary side
     :param tho: out temperature of primary side
     :param tci: in temperature of secondary side
@@ -574,7 +576,7 @@ def calc_substation_cooling(Q, thi, tho, tci, ch, ch_0, Qnom, thi_0, tci_0, tho_
     :return:
         - tco = out temperature of secondary side (district cooling network)
         - cc = capacity mass flow rate secondary side
-        - Area_HEX_cooling = are of heat excahnger.
+        - Area_HEX_cooling = area of heat exchanger.
 
     '''
 
@@ -610,17 +612,17 @@ def calc_substation_heating(Q, thi, tco, tci, cc, cc_0, Qnom, thi_0, tci_0, tco_
     :return:
         - tho = out temperature of secondary side (district cooling network)
         - ch = capacity mass flow rate secondary side
-        - Area_HEX_heating = are of heat excahnger.
+        - Area_HEX_heating = area of heat exchanger.
 
     '''
     if thi_0 <= tco_0:
         raise Exception("The temperature of the hot stream is lower than the cold stream, Please check inputs!")
 
-    # nominal conditions network side
-    ch_0 = cc_0 * (tco_0 - tci_0) / ((thi_0 - tci_0) * 0.9)
+    # nominal condition of the secondary side
+    ch_0 = cc_0 * (tco_0 - tci_0) / ((thi_0 - tci_0) * 0.9) # estimate ch_0 assuming effectiveness = 0.9
     tho_0 = thi_0 - Qnom / ch_0
     dTm_0 = calc_dTm_HEX(thi_0, tho_0, tci_0, tco_0)
-    # Area heat excahnge and UA_heating
+    # Area heat exchange and UA_heating
     Area_HEX_heating, UA_heating = calc_area_HEX(Qnom, dTm_0, U_HEAT)
     tho, ch = np.vectorize(calc_HEX_heating)(Q, UA_heating, thi, tco, tci, cc)
     return tho, ch, Area_HEX_heating
@@ -747,20 +749,18 @@ def calc_HEX_mix_2_flows(Q1, Q2, m1, m2, t1, t2):
         - tavg: average out temperature.
 
     """
+    tavg = 0
     if (m1 + m2) > 0:
         if Q1 > 0 or Q2 > 0:
             tavg = (t1 * m1 + t2 * m2) / (m1 + m2)
-    else:
-        tavg = 0
     return np.float(tavg)
 
 
 def calc_HEX_mix_3_flows(Q1, Q2, Q3, m1, m2, m3, t1, t2, t3):
+    tavg = 0
     if (m1 + m2 + m3) > 0:
         if Q1 > 0 or Q2 > 0 or Q3 > 0:
             tavg = (t1 * m1 + t2 * m2 + t3 * m3) / (m1 + m2 + m3)
-    else:
-        tavg = 0
     return np.float(tavg)
 
 
@@ -789,7 +789,7 @@ def calc_HEX_heating(Q_heating_W, UA, thi_K, tco_K, tci_K, cc_kWperK):
         - ``ch``, capacity mass flow rate secondary side
 
     """
-
+    ch_kWperK = 0
     if Q_heating_W > 0.0:
         dT_primary = tco_K - tci_K if not isclose(tco_K,
                                                   tci_K) else 0.0001  # to avoid errors with temperature changes < 0.001
@@ -811,7 +811,6 @@ def calc_HEX_heating(Q_heating_W, UA, thi_K, tco_K, tci_K, cc_kWperK):
             current_efficiency = calc_shell_HEX(NTU, cr)
             cmin_kWperK = cc_kWperK * (dT_primary) / ((thi_K - tci_K) * current_efficiency)
             tho_K = thi_K - current_efficiency * cmin_kWperK * (thi_K - tci_K) / ch_kWperK
-
         tho_C = tho_K - 273
     else:
         tho_C = 0
@@ -828,7 +827,7 @@ def calc_dTm_HEX(thi, tho, tci, tco):
     :param tci: in temperature cold stream
     :param tco: out temperature cold stream
     :return:
-        - dtm = logaritimic temperature difference
+        - dtm = logarithmic temperature difference
 
     '''
     dT1 = thi - tco
@@ -852,7 +851,7 @@ def calc_area_HEX(Qnom, dTm_0, U):
     :param dTm_0: nominal logarithmic temperature difference
     :param U: coeffiicent of transmissivity
     :return:
-        - ``area``, area of heat exchange
+        - ``area``, area of heat exchanger
         - ``UA``, coefficient representing the area of heat exchanger times the coefficient of transmittance of the
             heat exchanger
 
