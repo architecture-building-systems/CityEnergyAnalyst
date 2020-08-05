@@ -2,12 +2,14 @@
 Scenariocompare: compare two scenarios, concentrating on csv files in the outputs/data subfolders
 """
 
-import sys
 import os
+import pathlib
+import sys
+
 import numpy as np
 import pandas as pd
-import pathlib
 from sklearn.metrics import mean_squared_error
+
 
 def main(s1, s2):
     print(f"FILE, FIELD, RMSE, ERROR")
@@ -37,7 +39,6 @@ def main(s1, s2):
         if after_df is not None:
             after_df.to_csv(after, columns=before_df.columns, index=False)
 
-
         float_fields = [f for f in before_df.dtypes.index if before_df.dtypes[f] == "float64"]
         for f in float_fields:
             if after_df is None or not f in after_df:
@@ -60,9 +61,6 @@ def main(s1, s2):
         except FileNotFoundError:
             # just ignore this - folder might not exist if the after file was not written
             pass
-
-
-
 
 
 if __name__ == "__main__":
