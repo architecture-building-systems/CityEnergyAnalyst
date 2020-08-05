@@ -48,14 +48,18 @@ def main(s1, s2):
                 try:
                     error = "ok"
                     rmse = mean_squared_error(after_df[f], before_df[f])
-                    diff_df[f] = before_df[f] - after_df[f]
+                    diff_df[f] = round(before_df[f] - after_df[f], 5)
 
                 except Exception as e:
                     error = e
                     rmse = np.nan
-            print(f"{rel_path}, {f}, {rmse:.10f}, {error}")
+            print(f"{rel_path}, {f}, {rmse:.10f}, {str(error).replace(',', '_')}")
 
-        diff_df.to_csv(f"{after}-diff.csv", columns=before_df.columns, index=False)
+        try:
+            diff_df.to_csv(f"{after}-diff.csv", columns=before_df.columns, index=False)
+        except FileNotFoundError:
+            # just ignore this - folder might not exist if the after file was not written
+            pass
 
 
 
