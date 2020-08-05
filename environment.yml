@@ -85,8 +85,7 @@ dependencies:
   - jpeg=9d
   - jsoncpp=1.8.4
   - jsonschema=3.2.0
-  - jupyter_client=6.1.6
-  - jupyter_core=4.6.3
+  - jupyter
   - kealib=1.4.13
   - kiwisolver=1.2.0
   - krb5=1.17.1
