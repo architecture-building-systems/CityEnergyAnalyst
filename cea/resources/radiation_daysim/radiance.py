@@ -510,17 +510,20 @@ def surrounding_building_to_radiance(building_geometry):
 
 def create_rad_geometry(file_path, geometry_terrain, building_surface_properties, zone_building_names,
                         surroundings_building_names, geometry_pickle_dir):
+
+    out = []
+    for terrain_surface in terrain_to_radiance(geometry_terrain):
+        out.append(terrain_surface.rad())
+
+    for building_name in zone_building_names:
+        building_geometry = BuildingGeometry.load(os.path.join(geometry_pickle_dir, 'zone', building_name))
+        for building_surface in zone_building_to_radiance(building_geometry, building_surface_properties):
+            out.append(building_surface.rad())
+
+    for building_name in surroundings_building_names:
+        building_geometry = BuildingGeometry.load(os.path.join(geometry_pickle_dir, 'surroundings', building_name))
+        for building_surface in surrounding_building_to_radiance(building_geometry):
+            out.append(building_surface.rad())
+
     with open(file_path, "w") as rad_file:
-
-        for terrain_surface in terrain_to_radiance(geometry_terrain):
-            rad_file.write(terrain_surface.rad())
-
-        for building_name in zone_building_names:
-            building_geometry = BuildingGeometry.load(os.path.join(geometry_pickle_dir, 'zone', building_name))
-            for building_surface in zone_building_to_radiance(building_geometry, building_surface_properties):
-                rad_file.write(building_surface.rad())
-
-        for building_name in surroundings_building_names:
-            building_geometry = BuildingGeometry.load(os.path.join(geometry_pickle_dir, 'surroundings', building_name))
-            for building_surface in surrounding_building_to_radiance(building_geometry):
-                rad_file.write(building_surface.rad())
+        rad_file.write(''.join(out))
