@@ -188,8 +188,8 @@ def write_cea_demand_from_osmose(path_to_district_folder):
             Hin = network_df[network]
             Tout = network_df[network_name + '_Tout']
             Tin = network_df[network_name + '_Tin']
-            T_net_df[network_name + '_Ts'] = np.where(Hin >= 0.0, Tout, 0.0)
-            T_net_df[network_name + '_Tr'] = np.where(Hin >= 0.0, Tin, 0.0)
+            T_net_df[network_name + '_Ts'] = np.where(Hin > 0.0, Tout, 0.0)
+            T_net_df[network_name + '_Tr'] = np.where(Hin > 0.0, Tin, 0.0)
         T_net_df['Ts'] = T_net_df.filter(like='Ts').sum(axis=1)
         T_net_df['Tr'] = T_net_df.filter(like='Tr').sum(axis=1)
         T_supply_K = T_net_df['Ts'].mean() + 273.15
