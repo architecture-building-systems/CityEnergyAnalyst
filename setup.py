@@ -24,6 +24,7 @@ INSTALL_REQUIRES = ['SALib==1.2',  # last version to work with python2
                     'ephem',
                     'flask-restplus',
                     'flask-socketio',
+                    'gdal==2.4.4',
                     'geopandas',
                     'gevent',
                     'ipython',
