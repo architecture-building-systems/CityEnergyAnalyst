@@ -7130,7 +7130,7 @@ get_demand_results_file:
         min: 0.0
       E_sys_kWh:
         description: 'End-use total electricity system consumption = Ea + El + Edata
-          + Epro + Eaux '
+          + Epro + Eaux + Ev + Eve'
         type: float
         unit: '[kWh]'
         values: '{0.0...n}'
@@ -7167,6 +7167,18 @@ get_demand_results_file:
         min: 0.0
       El_kWh:
         description: End-use electricity for lights
+        type: float
+        unit: '[kWh]'
+        values: '{0.0...n}'
+        min: 0.0
+      Eve_kWh:
+        description: End-use electricity for ventilation
+        type: float
+        unit: '[kWh]'
+        values: '{0.0...n}'
+        min: 0.0
+      Ev_kWh:
+        description: End-use electricity for electric vehicles
         type: float
         unit: '[kWh]'
         values: '{0.0...n}'
@@ -7220,7 +7232,7 @@ get_demand_results_file:
         values: '{0.0...n}'
         min: 0.0
       GRID_kWh:
-        description: Grid total requirements of electricity = GRID_a + GRID_l + GRID_v
+        description: Grid total requirements of electricity = GRID_ve + GRID_a + GRID_l + GRID_v
           +GRID_data + GRID_pro + GRID_aux + GRID_cdata + GRID_cre + GRID_hs + GRID_ww
           + GRID_cs
         type: float
@@ -7229,6 +7241,12 @@ get_demand_results_file:
         min: 0.0
       GRID_l_kWh:
         description: Grid electricity requirements for lights
+        type: float
+        unit: '[kWh]'
+        values: '{0.0...n}'
+        min: 0.0
+      GRID_ve_kWh:
+        description: Grid electricity requirements for ventilation
         type: float
         unit: '[kWh]'
         values: '{0.0...n}'
