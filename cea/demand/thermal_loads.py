@@ -432,11 +432,13 @@ def initialize_timestep_data(bpr, weather_data):
 
     # fill data with nan values
 
-    nan_fields_electricity = ['Eaux', 'Eaux_ve', 'Eaux_hs', 'Eaux_cs', 'Eaux_ww', 'Eaux_fw', 'Ehs_lat_aux',
+    nan_fields_electricity = ['Eaux', 'Eaux_hs', 'Eaux_cs', 'Eaux_ww', 'Eaux_fw', 'Ehs_lat_aux',
+                              'Eve',
                               'GRID',
                               'GRID_a',
                               'GRID_l',
                               'GRID_v',
+                              'GRID_ve',
                               'GRID_data',
                               'GRID_pro',
                               'GRID_aux',
