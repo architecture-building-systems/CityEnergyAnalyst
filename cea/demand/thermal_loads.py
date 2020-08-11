@@ -116,7 +116,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, date_range, locator,
         tsd = sensible_loads.calc_Qhs_Qcs_loss(bpr, tsd)  # losses
         tsd = sensible_loads.calc_Qhs_sys_Qcs_sys(tsd)  # system (incl. losses)
         tsd = sensible_loads.calc_temperatures_emission_systems(bpr, tsd)  # calculate temperatures
-        tsd = electrical_loads.calc_Eauxf_ve(tsd)  # calc auxiliary loads ventilation
+        tsd = electrical_loads.calc_Eve(tsd)  # calc auxiliary loads ventilation
         tsd = electrical_loads.calc_Eaux_Qhs_Qcs(tsd, bpr)  # calc auxiliary loads heating and cooling
         tsd = calc_Qcs_sys(bpr, tsd)  # final : including fuels and renewables
         tsd = calc_Qhs_sys(bpr, tsd)  # final : including fuels and renewables
@@ -565,6 +565,7 @@ def update_timestep_data_no_conditioned_area(tsd):
                    'El',
                    'Eal',
                    'Ev',
+                   'Eve',
                    'mcphs_sys',
                    'mcpcs_sys',
                    'mcptw'
