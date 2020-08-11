@@ -77,6 +77,8 @@ class DemandPlotBase(cea.plots.PlotBase):
                                        "Eal_kWh",
                                        "El_kWh",
                                        "Ea_kWh",
+                                       "Eve_kWh",
+                                       "Ev_kWh",
                                        "Edata_kWh",
                                        "Epro_kWh",
                                        "Eaux_kWh",
