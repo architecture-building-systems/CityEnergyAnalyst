@@ -12,8 +12,11 @@ import numpy as np
 import pandas as pd
 from geopandas import GeoDataFrame as Gdf
 
+from cea.constants import HOURS_IN_YEAR
 from cea.demand import constants
+from cea.demand.sensible_loads import calc_hc, calc_hr
 from cea.utilities.dbf import dbf_to_dataframe
+from cea.utilities.epwreader import epw_reader
 
 # import constants
 H_F = constants.H_F
@@ -35,7 +38,7 @@ class BuildingProperties(object):
     G. Happle   BuildingPropsThermalLoads   27.05.2016
     """
 
-    def __init__(self, locator, use_daysim_radiation, region, override_variables=False):
+    def __init__(self, locator, use_daysim_radiation, config, override_variables=False):
         """
         Read building properties from input shape files and construct a new BuildingProperties object.
 
@@ -94,7 +97,7 @@ class BuildingProperties(object):
                                                 prop_geometry, prop_HVAC_result, use_daysim_radiation)
 
         # get solar properties
-        solar = get_prop_solar(locator, prop_rc_model, prop_envelope, use_daysim_radiation, region).set_index('Name')
+        solar = get_prop_solar(locator, prop_rc_model, prop_envelope, use_daysim_radiation, config).set_index('Name')
 
         # df_windows = geometry_reader.create_windows(surface_properties, prop_envelope)
         # TODO: to check if the Win_op and height of window is necessary.
@@ -879,7 +882,7 @@ def get_envelope_properties(locator, prop_architecture, region):
     return envelope_prop
 
 
-def get_prop_solar(locator, prop_rc_model, prop_envelope, use_daysim_radiation, region):
+def get_prop_solar(locator, prop_rc_model, prop_envelope, use_daysim_radiation, region, config):
     """
     Gets the sensible solar gains from calc_Isol_daysim and stores in a dataframe containing building 'Name' and
     I_sol (incident solar gains).
@@ -892,8 +895,8 @@ def get_prop_solar(locator, prop_rc_model, prop_envelope, use_daysim_radiation, 
     :rtype: Dataframe
     """
 
-    # load gv
-    thermal_resistance_surface = RSE
+    # # load gv
+    # thermal_resistance_surface = RSE
     if region in {'SG'}:
         window_frame_fraction = F_F_SG
     else:
@@ -906,7 +909,7 @@ def get_prop_solar(locator, prop_rc_model, prop_envelope, use_daysim_radiation, 
 
         # for every building
         for building_name in locator.get_zone_building_names():
-            I_sol = calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, thermal_resistance_surface,
+            I_sol = calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, config,
                                      window_frame_fraction)
             list_Isol.append(I_sol)
 
@@ -933,8 +936,7 @@ def get_prop_solar(locator, prop_rc_model, prop_envelope, use_daysim_radiation, 
     return result
 
 
-def calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, thermal_resistance_surface,
-                     window_frame_fraction):
+def calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, config, window_frame_fraction):
     """
     Reads Daysim geometry and radiation results and calculates the sensible solar heat loads based on the surface area
     and building envelope properties.
@@ -955,6 +957,25 @@ def calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, therm
     geometry_data = pd.read_csv(locator.get_radiation_metadata(building_name)).set_index('SURFACE')
     geometry_data_roofs = geometry_data[geometry_data.TYPE == 'roofs']
     geometry_data_walls = geometry_data[geometry_data.TYPE == 'walls']
+
+    if config.demand.use_dynamic_convective_heat_transfer_calculation:
+        # get weather data
+        weather_data = epw_reader(locator.get_weather_file())
+        if config.demand.use_microclimate_data:
+            microclimate_data = pd.read_csv(os.path.join(locator.get_microclimate_file(building_name)),
+                                            index_col='hoy')
+            weather_data.loc[microclimate_data.index, microclimate_data.columns] = microclimate_data.values
+        wind_speed = weather_data['windspd_ms'].values
+        h_c = np.vectorize(calc_hc)(wind_speed)
+        temp_s_prev = np.array([weather_data['drybulb_C'][0]] + list(weather_data['drybulb_C'][0:HOURS_IN_YEAR - 1]))
+        theta_ss = 0.5 * (weather_data['skytemp_C'].values + temp_s_prev)
+        thermal_resistance_surface_wall = (h_c + calc_hr(prop_envelope.ix[building_name, 'e_wall'], theta_ss)) ** -1
+        thermal_resistance_surface_win = (h_c + calc_hr(prop_envelope.ix[building_name, 'e_win'], theta_ss)) ** -1
+        thermal_resistance_surface_roof = (h_c + calc_hr(prop_envelope.ix[building_name, 'e_roof'], theta_ss)) ** -1
+        thermal_resistance_surface = [thermal_resistance_surface_wall, thermal_resistance_surface_win,
+                                      thermal_resistance_surface_roof]
+    else:
+        thermal_resistance_surface = [RSE, RSE, RSE]
 
     # do this in case the daysim radiation file did not included window
     if 'windows' in geometry_data.TYPE.values:
@@ -977,7 +998,7 @@ def calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, therm
         [geometry_data_walls.ix[surface, 'AREA_m2'] * multiplier_wall * radiation_data[surface] for surface in
          geometry_data_walls.index]).sum(axis=0)
     # sensible gain on all walls [W]
-    I_sol_wall = I_sol_wall * prop_envelope.ix[building_name, 'a_wall'] * thermal_resistance_surface * \
+    I_sol_wall = I_sol_wall * prop_envelope.ix[building_name, 'a_wall'] * thermal_resistance_surface[0] * \
                  prop_rc_model.ix[building_name, 'U_wall']
     # sum roof
 
@@ -985,7 +1006,7 @@ def calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, therm
     I_sol_roof = np.array([geometry_data_roofs.ix[surface, 'AREA_m2'] * radiation_data[surface] for surface in
                            geometry_data_roofs.index]).sum(axis=0)
     # sensible gain on all roofs [W]
-    I_sol_roof = I_sol_roof * prop_envelope.ix[building_name, 'a_roof'] * thermal_resistance_surface * \
+    I_sol_roof = I_sol_roof * prop_envelope.ix[building_name, 'a_roof'] * thermal_resistance_surface[2] * \
                  prop_rc_model.ix[building_name, 'U_roof']
     # sum window, considering shading
     from cea.technologies import blinds
