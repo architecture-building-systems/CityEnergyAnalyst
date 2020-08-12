@@ -188,6 +188,10 @@ def main(config):
     print('Running demand calculation for region %s' % config.region)
     print('Running demand calculation with dynamic infiltration=%s' %
           config.demand.use_dynamic_infiltration_calculation)
+    print('Running demand calculation with dynamic convective heat transfer=%s' %
+          config.demand.use_dynamic_convective_heat_transfer_calculation)
+    print('Running demand calculation with microclimate simulation data=%s' %
+          config.demand.use_microclimate_data)
     print('Running demand calculation with multiprocessing=%s' % config.multiprocessing)
     print('Running demand calculation with daysim radiation=%s' % config.demand.use_daysim_radiation)
     print('Running demand calculation with stochastic occupancy=%s' % config.demand.use_stochastic_occupancy)
