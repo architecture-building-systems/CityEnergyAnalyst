@@ -40,11 +40,11 @@ def calc_Qhs_Qcs_sys_max(Af, prop_HVAC):
 # solar and heat gains
 
 
-def calc_Qgain_sen(t, tsd, bpr):
+def calc_Qgain_sen(t, tsd, bpr, config):
     # TODO
 
     # internal loads
-    tsd['I_sol_and_I_rad'][t], tsd['I_rad'][t], tsd['I_sol'][t] = calc_I_sol(t, bpr, tsd)
+    tsd['I_sol_and_I_rad'][t], tsd['I_rad'][t], tsd['I_sol'][t] = calc_I_sol(t, bpr, tsd, config)
 
     return tsd
 
@@ -70,7 +70,7 @@ def calc_Qgain_lat(schedules, bpr):
     return w_int
 
 
-def calc_I_sol(t, bpr, tsd):
+def calc_I_sol(t, bpr, tsd, config):
     """
     This function calculates the net solar radiation (incident - reflected - re-irradiated) according to ISO 13790
     see Eq. (23) in 11.3.1
@@ -85,7 +85,7 @@ def calc_I_sol(t, bpr, tsd):
     """
 
     # calc irradiation to the sky
-    I_rad = calc_I_rad(t, tsd, bpr)  # according to section 11.3.2 in ISO 13790 I_rad is a positive term
+    I_rad = calc_I_rad(t, tsd, bpr, config)  # according to section 11.3.2 in ISO 13790 I_rad is a positive term
 
     # get incident radiation
     I_sol_gross = bpr.solar.I_sol[t]
@@ -95,7 +95,7 @@ def calc_I_sol(t, bpr, tsd):
     return I_sol_net, I_rad, I_sol_gross  # vector in W
 
 
-def calc_I_rad(t, tsd, bpr):
+def calc_I_rad(t, tsd, bpr, config):
     """
     This function calculates the solar radiation re-irradiated from a building to the sky according to ISO 13790
     See Eq. (46) in 11.3.5
@@ -118,12 +118,24 @@ def calc_I_rad(t, tsd, bpr):
     delta_theta_er = tsd['T_ext'][t] - tsd['T_sky'][t]  # [see 11.3.5 in ISO 13790]
 
     Fform_wall, Fform_win, Fform_roof = 0.5, 0.5, 1  # 50% re-irradiated by vertical surfaces and 100% by horizontal
-    I_rad_win = RSE * bpr.rc_model['U_win'] * calc_hr(bpr.architecture.e_win, theta_ss) * bpr.rc_model[
-        'Aw'] * delta_theta_er
-    I_rad_roof = RSE * bpr.rc_model['U_roof'] * calc_hr(bpr.architecture.e_roof, theta_ss) * bpr.rc_model[
-        'Aroof'] * delta_theta_er
-    I_rad_wall = RSE * bpr.rc_model['U_wall'] * calc_hr(bpr.architecture.e_wall, theta_ss) * bpr.rc_model[
-        'Aop_sup'] * delta_theta_er
+
+    if config.demand.use_convective_heat_transfer_calculation:
+        # calculate dynamic convective heat transfer coefficients
+        h_c = calc_hc(tsd['u_wind'][t])
+        thermal_resistance_surface_wall = (h_c + calc_hr(bpr.architecture.e_wall, theta_ss)) ** -1
+        thermal_resistance_surface_win = (h_c + calc_hr(bpr.architecture.e_win, theta_ss)) ** -1
+        thermal_resistance_surface_roof = (h_c + calc_hr(bpr.architecture.e_roof, theta_ss)) ** -1
+        thermal_resistance_surface = [thermal_resistance_surface_wall, thermal_resistance_surface_win,
+                                      thermal_resistance_surface_roof]
+    else:
+        thermal_resistance_surface = [RSE, RSE, RSE]
+
+    I_rad_win = thermal_resistance_surface[1] * bpr.rc_model['U_win'] * calc_hr(bpr.architecture.e_win, theta_ss) * \
+                bpr.rc_model['Aw'] * delta_theta_er
+    I_rad_roof = thermal_resistance_surface[2] * bpr.rc_model['U_roof'] * calc_hr(bpr.architecture.e_roof, theta_ss) * \
+                 bpr.rc_model['Aroof'] * delta_theta_er
+    I_rad_wall = thermal_resistance_surface[0] * bpr.rc_model['U_wall'] * calc_hr(bpr.architecture.e_wall, theta_ss) * \
+                 bpr.rc_model['Aop_sup'] * delta_theta_er
     I_rad = Fform_wall * I_rad_wall + Fform_win * I_rad_win + Fform_roof * I_rad_roof
 
     return I_rad
@@ -136,11 +148,18 @@ def calc_hr(emissivity, theta_ss):
 
     :param emissivity: emissivity of the considered surface
     :param theta_ss: delta of temperature between building surface and the sky.
-    :return:
-        hr:
-
+    :return: hr:
     """
+
     return 4.0 * emissivity * BOLTZMANN * (theta_ss + 273.0) ** 3.0
+
+def calc_hc(wind_speed):
+    """
+    This function calculates the external convective heat transfer coefficient according to ISO 6946
+    see Eq. (C.6) in section C.1
+    """
+
+    return 4.0 + 4.0 * wind_speed
 
 
 def calc_Qhs_sys_Qcs_sys(tsd):
