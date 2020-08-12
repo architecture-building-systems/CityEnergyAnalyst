@@ -82,20 +82,33 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 """
     actual_weather_data = weather_data.copy(deep=True)
 
-    # check if microclimate data is available
-    if os.path.isfile(os.path.join(locator.get_microclimate_folder(), 'T_ext.csv')):
-        print 'microclimate data found, replacing standard weather values'
-        drybulb_C = pd.read_csv(os.path.join(locator.get_microclimate_folder(), 'T_ext.csv')).set_index('hoy')
-        if building_name in drybulb_C.columns.values:
-            # import other microclimate data
-            relhum_percent = pd.read_csv(os.path.join(locator.get_microclimate_folder(), 'rh_ext.csv')).set_index('hoy')
-            windspd_ms = pd.read_csv(os.path.join(locator.get_microclimate_folder(), 'u_wind.csv')).set_index('hoy')
+    if config.demand.use_microclimate_data:
+        # check if microclimate data is available
+        # if os.path.isfile(os.path.join(locator.get_microclimate_folder(), building_name + '.csv')):
+        if os.path.isfile(os.path.join(locator.get_microclimate_file(building_name))):
+            print 'microclimate data for building {} found, replacing standard weather values'.format(building_name)
+            microclimate_data = pd.read_csv(os.path.join(locator.get_microclimate_file(building_name)),
+                                            index_col='hoy')
             # replace available microclimate data in building's weather data
-            actual_weather_data.loc[drybulb_C.index.values, 'drybulb_C'] = drybulb_C[building_name]
-            actual_weather_data.loc[drybulb_C.index.values, 'wetbulb_C'] = calc_wet_bulb_temperature(
-                drybulb_C[building_name],relhum_percent[building_name])
-            actual_weather_data.loc[relhum_percent.index.values, 'relhum_percent'] = relhum_percent[building_name]
-            actual_weather_data.loc[windspd_ms.index.values, 'windspd_ms'] = windspd_ms[building_name]
+            actual_weather_data.loc[microclimate_data.index, ['drybulb_C', 'relhum_percent', 'windspd_ms']] = \
+                microclimate_data[['drybulb_C', 'relhum_percent', 'windspd_ms']]
+            actual_weather_data.loc[microclimate_data.index, 'wetbulb_C'] = calc_wet_bulb_temperature(
+                microclimate_data['drybulb_C'], microclimate_data['relhum_percent'])
+
+    # # check if microclimate data is available
+    # if os.path.isfile(os.path.join(locator.get_microclimate_folder(), 'T_ext.csv')):
+    #     print 'microclimate data found, replacing standard weather values'
+    #     drybulb_C = pd.read_csv(os.path.join(locator.get_microclimate_folder(), 'T_ext.csv')).set_index('hoy')
+    #     if building_name in drybulb_C.columns.values:
+    #         # import other microclimate data
+    #         relhum_percent = pd.read_csv(os.path.join(locator.get_microclimate_folder(), 'rh_ext.csv')).set_index('hoy')
+    #         windspd_ms = pd.read_csv(os.path.join(locator.get_microclimate_folder(), 'u_wind.csv')).set_index('hoy')
+    #         # replace available microclimate data in building's weather data
+    #         actual_weather_data.loc[drybulb_C.index.values, 'drybulb_C'] = drybulb_C[building_name]
+    #         actual_weather_data.loc[drybulb_C.index.values, 'wetbulb_C'] = calc_wet_bulb_temperature(
+    #             drybulb_C[building_name],relhum_percent[building_name])
+    #         actual_weather_data.loc[relhum_percent.index.values, 'relhum_percent'] = relhum_percent[building_name]
+    #         actual_weather_data.loc[windspd_ms.index.values, 'windspd_ms'] = windspd_ms[building_name]
 
     schedules, tsd = initialize_inputs(bpr, usage_schedules, actual_weather_data, use_stochastic_occupancy)
 
@@ -132,7 +145,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
             tsd['Edata'] = tsd['E_cdata'] = np.zeros(8760)
 
         #CALCULATE HEATING AND COOLING DEMAND
-        tsd = calc_Qhs_Qcs(bpr, date, tsd, use_dynamic_infiltration_calculation, region)  # end-use demand latent and sensible + ventilation
+        tsd = calc_Qhs_Qcs(bpr, date, tsd, use_dynamic_infiltration_calculation, region, config)  # end-use demand latent and sensible + ventilation
         tsd = sensible_loads.calc_Qhs_Qcs_loss(bpr, tsd) # losses
         tsd = sensible_loads.calc_Qhs_sys_Qcs_sys(tsd) # system (incl. losses)
         tsd = sensible_loads.calc_temperatures_emission_systems(bpr, tsd) # calculate temperatures
@@ -344,7 +357,7 @@ def calc_Qhs_sys(bpr, tsd):
     return tsd
 
 
-def calc_Qhs_Qcs(bpr, date, tsd, use_dynamic_infiltration_calculation, region):
+def calc_Qhs_Qcs(bpr, date, tsd, use_dynamic_infiltration_calculation, region, config):
     # get ventilation flows
     ventilation_air_flows_simple.calc_m_ve_required(bpr, tsd, region)
     ventilation_air_flows_simple.calc_m_ve_leakage_simple(bpr, tsd)
@@ -358,7 +371,7 @@ def calc_Qhs_Qcs(bpr, date, tsd, use_dynamic_infiltration_calculation, region):
     for t in get_hours(bpr):
 
         # heat flows in [W]
-        tsd = sensible_loads.calc_Qgain_sen(t, tsd, bpr)
+        tsd = sensible_loads.calc_Qgain_sen(t, tsd, bpr, config)
 
         if use_dynamic_infiltration_calculation:
             # OVERWRITE STATIC INFILTRATION WITH DYNAMIC INFILTRATION RATE
