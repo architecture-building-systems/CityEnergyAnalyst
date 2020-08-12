@@ -119,7 +119,7 @@ def calc_I_rad(t, tsd, bpr, config):
 
     Fform_wall, Fform_win, Fform_roof = 0.5, 0.5, 1  # 50% re-irradiated by vertical surfaces and 100% by horizontal
 
-    if config.demand.use_convective_heat_transfer_calculation:
+    if config.demand.use_dynamic_convective_heat_transfer_calculation:
         # calculate dynamic convective heat transfer coefficients
         h_c = calc_hc(tsd['u_wind'][t])
         thermal_resistance_surface_wall = (h_c + calc_hr(bpr.architecture.e_wall, theta_ss)) ** -1

@@ -93,7 +93,7 @@ def demand_calculation(locator, config):
     year = weather_data['year'][0]
 
     # CALCULATE OBJECT WITH PROPERTIES OF ALL BUILDINGS
-    building_properties, schedules_dict, date = properties_and_schedule(locator, year, use_daysim_radiation,
+    building_properties, schedules_dict, date = properties_and_schedule(locator, year, use_daysim_radiation, config,
                                                                         override_variables)
     if use_transportation_population:
         schedules_dict['building_schedules'] = matsim_population_reader(locator, building_properties)
@@ -132,13 +132,13 @@ def demand_calculation(locator, config):
     return totals, time_series
 
 
-def properties_and_schedule(locator, year, use_daysim_radiation, override_variables=False):
+def properties_and_schedule(locator, year, use_daysim_radiation, config, override_variables=False):
     # this script is called from the Neural network please do not mess with it!
 
     date = pd.date_range(str(year) + '/01/01', periods=HOURS_IN_YEAR, freq='H')
     # building properties model
 
-    building_properties = BuildingProperties(locator, use_daysim_radiation, override_variables)
+    building_properties = BuildingProperties(locator, use_daysim_radiation, config, override_variables)
 
     # schedules model
     list_uses = list(building_properties._prop_occupancy.columns)

@@ -901,8 +901,7 @@ def get_prop_solar(locator, prop_rc_model, prop_envelope, use_daysim_radiation, 
 
         # for every building
         for building_name in locator.get_zone_building_names():
-            I_sol = calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, # thermal_resistance_surface,
-                                     config)
+            I_sol = calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, config) # thermal_resistance_surface,
             list_Isol.append(I_sol)
 
         result = pd.DataFrame({'Name': list(locator.get_zone_building_names()), 'I_sol': list_Isol})
@@ -949,7 +948,7 @@ def calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, confi
     geometry_data_roofs = geometry_data[geometry_data.TYPE == 'roofs']
     geometry_data_walls = geometry_data[geometry_data.TYPE == 'walls']
 
-    if config.demand.use_convective_heat_transfer_calculation:
+    if config.demand.use_dynamic_convective_heat_transfer_calculation:
         # get weather data
         weather_data = epw_reader(locator.get_weather_file())
         if config.demand.use_microclimate_data:
@@ -983,14 +982,14 @@ def calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, confi
 
     # read daysim radiation
     radiation_data = pd.read_json(locator.get_radiation_building(building_name))
-    # get ENVI-met solar data if available
-    if os.path.isfile(os.path.join(locator.get_microclimate_folder(), building_name + '.csv')):
-        print('ENVImet solar data for {} found, replacing DAYSIM values'.format(building_name))
-        microclimate_data_available = True
-        microclimate_data = pd.read_csv(os.path.join(locator.get_microclimate_folder(), building_name + '.csv'),
-                                        index_col='hoy')
-    else:
-        microclimate_data_available = False
+    # # get ENVI-met solar data if available
+    # if os.path.isfile(os.path.join(locator.get_microclimate_folder(), building_name + '.csv')):
+    #     print('ENVImet solar data for {} found, replacing DAYSIM values'.format(building_name))
+    #     microclimate_data_available = True
+    #     microclimate_data = pd.read_csv(os.path.join(locator.get_microclimate_folder(), building_name + '.csv'),
+    #                                     index_col='hoy')
+    # else:
+    #     microclimate_data_available = False
 
     # sum wall
     # solar incident on all walls [W]
