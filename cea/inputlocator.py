@@ -606,6 +606,11 @@ class InputLocator(object):
     def get_microclimate_folder(self):
         return self._ensure_folder(self.scenario, 'inputs', 'microclimate-data')
 
+    def get_microclimate_file(self, building_name):
+        file_path = os.path.join(self.get_microclimate_folder(), building_name + '.csv')
+        self.check_cpg(file_path)
+        return file_path
+
     def get_zone_geometry(self):
         """scenario/inputs/building-geometry/zone.shp"""
         shapefile_path =  os.path.join(self.get_building_geometry_folder(), 'zone.shp')
