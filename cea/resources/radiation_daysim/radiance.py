@@ -326,20 +326,14 @@ class DaySimProject(object):
 
     def eval_ill(self):
         """
-        This function reads the daysim result file from the simulation and returns the results as a dictionaries.
+        This function reads the output file from running `ds_illum`, parses the space separated values
+        and returns the values as a numpy array.
 
-        Returns
-        -------
-        hourly results: list of dictionaries
-            List of Dictionaries of hourly irradiance results (Wh/m2) or illuminance in (lux) that corresponds to the sensor points depending on the output parameter.
-            Each dictionary is an hour of results of all the sensor points. Each dictionary has key "date" and "result_list".
-            The "date" key points to a date string e.g. "12 31 23.500" which means Dec 31st 23hr indicating the date and hour of the result.
-            The "result_list" key points to a list of results, which is the result of all the sensor points.
-
+        :return: Numpy array of hourly irradiance results of sensor points
         """
 
         ill_path = os.path.join(self.project_path, "{file_name}.ill".format(file_name=self.project_name))
-        ill_result = pd.read_csv(ill_path, delimiter=' ', header=None).iloc[:, 4:].T.values.tolist()
+        ill_result = pd.read_csv(ill_path, delimiter=' ', header=None).iloc[:, 4:].T.values
 
         return ill_result
 
