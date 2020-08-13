@@ -66,9 +66,17 @@ demand,GRID_a_kWh,kWh,Grid electricity requirements for appliances,green
 demand,GRID_a_MWhyr,MWh/yr,Grid electricity requirements for appliances,green
 demand,GRID_a_kW,kW,Nominal Grid electricity requirements for appliances,green
 
-demand,GRID_l_kWh,kWh,Grid electricity requirements for lights,green_light
-demand,GRID_l_MWhyr,MWh/yr,Grid electricity requirements for lights,green_light
-demand,GRID_l_kW,kW,Nominal Grid electricity requirements for lights,green_light
+demand,GRID_l_kWh,kWh,Grid electricity requirements for lights,yellow_light
+demand,GRID_l_MWhyr,MWh/yr,Grid electricity requirements for lights,yellow_light
+demand,GRID_l_kW,kW,Nominal Grid electricity requirements for lights,yellow_light
+
+demand,GRID_v_kWh,kWh,Grid electricity requirements for electric vehicles,green_light
+demand,GRID_v_MWhyr,MWh/yr,Grid electricity requirements for  electric vehicles,green_light
+demand,GRID_v_kW,kW,Nominal Grid electricity requirements for  electric vehicles,green_light
+
+demand,GRID_ve_kWh,kWh,Grid electricity requirements for ventilation,yellow
+demand,GRID_ve_MWhyr,MWh/yr,Grid electricity requirements for ventilation,yellow
+demand,GRID_ve_kW,kW,Nominal Grid electricity requirements for ventilation,yellow
 
 demand,GRID_aux_kWh,kWh,Grid electricity requirements for auxiliary loads,grey
 demand,GRID_aux_MWhyr,MWh/yr,Grid electricity requirements for auxiliary loads,grey

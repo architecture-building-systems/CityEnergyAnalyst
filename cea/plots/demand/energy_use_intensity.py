@@ -17,6 +17,8 @@ class EnergySupplyIntensityPlot(cea.plots.demand.DemandPlotBase):
                                 'OIL_ww_MWhyr', 'WOOD_ww_MWhyr',
                                 'GRID_a_MWhyr',
                                 'GRID_l_MWhyr',
+                                'GRID_v_MWhyr',
+                                'GRID_ve_MWhyr',
                                 'GRID_cs_MWhyr',
                                 'GRID_aux_MWhyr',
                                 'GRID_data_MWhyr',
