@@ -577,7 +577,10 @@ def standardize_coordinate_systems(locator):
 def check_terrain_bounds(zone_df, surroundings_df, terrain_raster):
     # minx, miny, maxx, maxy
     zone_bounds = zone_df.geometry.total_bounds
-    surroundings_bounds = surroundings_df.geometry.total_bounds
+    if len(surroundings_df):
+        surroundings_bounds = surroundings_df.geometry.total_bounds
+    else:  # set bounds to zone if no surroundings
+        surroundings_bounds = zone_bounds
     geometry_bounds = (min(zone_bounds[0], surroundings_bounds[0]), min(zone_bounds[1], surroundings_bounds[1]),
                        max(zone_bounds[2], surroundings_bounds[2]), max(zone_bounds[3], surroundings_bounds[3]))
 
