@@ -309,7 +309,7 @@ def calc_set_points(bpr, date, tsd, building_name, config, locator, schedules):
 
 def calc_Qhs_Qcs(bpr, tsd, use_dynamic_infiltration_calculation):
     # get ventilation flows
-    ventilation_air_flows_simple.calc_m_ve_required(bpr, tsd)
+    ventilation_air_flows_simple.calc_m_ve_required(tsd)
     ventilation_air_flows_simple.calc_m_ve_leakage_simple(bpr, tsd)
 
     # end-use demand calculation
@@ -367,7 +367,7 @@ def initialize_inputs(bpr, weather_data, locator):
     occupancy_yearly_schedules = pd.read_csv(locator.get_schedule_model_file(building_name))
 
     tsd['people'] = occupancy_yearly_schedules['people_pax']
-    tsd['ve'] = occupancy_yearly_schedules['Ve_lps'] * 3.6  # m3/h
+    tsd['ve_lps'] = occupancy_yearly_schedules['Ve_lps']
     tsd['Qs'] = occupancy_yearly_schedules['Qs_W']
 
     return occupancy_yearly_schedules, tsd

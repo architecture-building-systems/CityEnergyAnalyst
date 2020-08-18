@@ -50,7 +50,7 @@ def calc_air_mass_flow_mechanical_ventilation(bpr, tsd, t):
 
         # mechanical ventilation fulfills requirement - ventilation provided by infiltration (similar to CO2 sensor)
 
-        m_ve_mech = max(tsd['m_ve_required'][t] - tsd['m_ve_inf'][t], 0)
+        m_ve_mech = max(tsd['m_ve_required'][t] - tsd['m_ve_inf'][t], 0.0)
         # TODO: check mech ventilation rule - maybe: required + infiltration
 
     elif control_ventilation_systems.has_mechanical_ventilation(bpr) \
@@ -70,7 +70,7 @@ def calc_air_mass_flow_mechanical_ventilation(bpr, tsd, t):
     elif not control_ventilation_systems.is_mechanical_ventilation_active(bpr, tsd, t):
 
         # mechanical ventilation is turned off
-        m_ve_mech = 0
+        m_ve_mech = 0.0
 
     else:
         raise ValueError
@@ -193,7 +193,7 @@ def calc_theta_ve_mech(bpr, tsd, t):
     return
 
 
-def calc_m_ve_required(bpr, tsd):
+def calc_m_ve_required(tsd):
     """
     Calculate required outdoor air ventilation rate according to occupancy
 
@@ -204,32 +204,7 @@ def calc_m_ve_required(bpr, tsd):
     :type tsd: Dict[str, numpy.ndarray]
     :return: updates tsd
     """
-
-    m_ve_required_people = (tsd['ve']/3.6) * physics.calc_rho_air(tsd['T_ext'][:]) * 0.001  # kg/s
-
-    if control_heating_cooling_systems.has_3for2_cooling_system(bpr) \
-            or control_heating_cooling_systems.has_central_ac_cooling_system(bpr):
-        # 0.6 l/s/m2 minimum ventilation rate according to Singapore standard SS 553
-        # air conditioning systems supply the higher rate between minimum flow per area and required ventilation for
-        #  people during occupied hours. The minimum flow rate ensures dilution of pollutants inside the building
-        # This applies to buildings with air-conditioning systems for cooling
-        # [https://escholarship.org/content/qt7k1796zv/qt7k1796zv.pdf]
-        m_ve_required_min = constants.MIN_VENTILATION_RATE * bpr.rc_model['Af'] * physics.calc_rho_air(tsd['T_ext'][:]) * 0.001  # kg/s
-        # we want this not to affect the air flows during the heating season
-        m_ve_required = []
-        for t in range(0, HOURS_IN_YEAR):
-            if 0.0 < m_ve_required_people[t] < m_ve_required_min[t] and \
-                control_heating_cooling_systems.is_cooling_season(t, bpr):
-                m_ve_required.append(m_ve_required_min[t])
-            else:
-                m_ve_required.append(m_ve_required_people[t])
-
-        #m_ve_required = [req_min if 0.0 < req_peop < req_min else req_peop for req_min, req_peop in zip(m_ve_required_min, m_ve_required_people)]
-        m_ve_required = np.asarray(m_ve_required) # convert list to array
-
-    else:
-        m_ve_required = m_ve_required_people
-
-    tsd['m_ve_required'] = m_ve_required
+    rho_kgm3 = physics.calc_rho_air(tsd['T_ext'][:])
+    tsd['m_ve_required'] = np.array(tsd['ve_lps']) * rho_kgm3 * 0.001  # kg/s
 
     return
