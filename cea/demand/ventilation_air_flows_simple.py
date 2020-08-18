@@ -58,14 +58,14 @@ def calc_air_mass_flow_mechanical_ventilation(bpr, tsd, t):
 
         # night flushing according to strategy
         # ventilation with maximum capacity = maximum required ventilation rate
-        m_ve_mech = tsd['m_ve_required'].max()  # TODO: some night flushing rule
+        m_ve_mech = max(tsd['m_ve_required'].max() - tsd['m_ve_inf'][t], 0)  # TODO: some night flushing rule
 
     elif control_ventilation_systems.has_mechanical_ventilation(bpr) \
             and control_ventilation_systems.is_economizer_active(bpr, tsd, t):
 
         # economizer according to strategy
         # ventilation with maximum capacity = maximum required ventilation rate
-        m_ve_mech = tsd['m_ve_required'].max()
+        m_ve_mech = max(tsd['m_ve_required'].max() - tsd['m_ve_inf'][t], 0)
 
     elif not control_ventilation_systems.is_mechanical_ventilation_active(bpr, tsd, t):
 
@@ -109,7 +109,7 @@ def calc_air_mass_flow_window_ventilation(bpr, tsd, t):
             and control_ventilation_systems.is_night_flushing_active(bpr, tsd, t):
 
         # ventilation with maximum capacity = maximum required ventilation rate
-        m_ve_window = max(tsd['m_ve_required'])  # TODO: implement some night flushing rule
+        m_ve_window = max(tsd['m_ve_required'] - tsd['m_ve_inf'][t], 0)  # TODO: implement some night flushing rule
 
     elif not control_ventilation_systems.is_window_ventilation_active(bpr, tsd, t):
 
