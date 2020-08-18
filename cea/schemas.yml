@@ -1823,11 +1823,11 @@ get_building_comfort:
         values: '{0.0...n}'
         min: 0.0
       Ve_lpspax:
-        description: Indoor quality requirements of indoor ventilation per person
+        description: Minimum outdoor air ventilation rate per person for Air Quality
         type: float
-        unit: '[lpspax]'  # FIXME: this unit is wrong!
+        unit: '[l/s/pax]'
         values: '{0.0...n}'
-        min: 0.0
+        min: 5.5 #accodding to this Singaporean Guidelinehttps://escholarship.org/content/qt7k1796zv/qt7k1796zv.pdf
   used_by:
   - demand
   - schedule_maker
