@@ -109,7 +109,7 @@ def calc_air_mass_flow_window_ventilation(bpr, tsd, t):
             and control_ventilation_systems.is_night_flushing_active(bpr, tsd, t):
 
         # ventilation with maximum capacity = maximum required ventilation rate
-        m_ve_window = max(tsd['m_ve_required'] - tsd['m_ve_inf'][t], 0)  # TODO: implement some night flushing rule
+        m_ve_window = max(tsd['m_ve_required'].max() - tsd['m_ve_inf'][t], 0)  # TODO: implement some night flushing rule
 
     elif not control_ventilation_systems.is_window_ventilation_active(bpr, tsd, t):
 
