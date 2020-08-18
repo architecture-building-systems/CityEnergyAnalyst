@@ -53,7 +53,7 @@ def main(output_file):
     print("data for test_calc_thermal_loads:")
     print(building_properties.list_building_names())
 
-    schedule_maker_main(locator, config, building=None)
+    schedule_maker_main(locator, config, building='B1011')
 
     bpr = building_properties['B1011']
     result = calc_thermal_loads('B1011', bpr, weather_data, date_range, locator,
@@ -101,6 +101,7 @@ def main(output_file):
                  ]
 
     results = {}
+
     for building in buildings:
         bpr = building_properties[building]
         b, qhs_sys_kwh, qcs_sys_kwh, qww_sys_kwh = run_for_single_building(building, bpr, weather_data,
@@ -124,6 +125,8 @@ def main(output_file):
 def run_for_single_building(building, bpr, weather_data, date_range, locator,
                             use_dynamic_infiltration_calculation, resolution_outputs, loads_output,
                             massflows_output, temperatures_output, config, debug):
+    config.multiprocessing = False
+    schedule_maker_main(locator, config, building=building)
     calc_thermal_loads(building, bpr, weather_data, date_range, locator,
                        use_dynamic_infiltration_calculation, resolution_outputs, loads_output, massflows_output,
                        temperatures_output, config, debug)
