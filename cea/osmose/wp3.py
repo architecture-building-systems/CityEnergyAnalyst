@@ -5,13 +5,17 @@ from geopandas import GeoDataFrame as Gdf
 from simpledbf import Dbf5
 from cea.osmose.extract_demand_outputs import extract_cea_outputs_to_osmose_main, path_to_osmose_project_bui, \
     path_to_osmose_project_hcs
-from cea.osmose.wp1 import write_string_to_txt, osmose_one_run, write_osmose_general_inputs
+from cea.osmose.wp1 import write_string_to_txt, osmose_one_run, write_osmose_general_inputs, write_value_to_csv
 from cea.osmose import settings
+
+## Read from settings
+timesteps = settings.timesteps
 osmose_project_data_path = settings.osmose_project_data_path
 path_to_district_folder = settings.path_to_district_folder
 result_destination = settings.result_destination
 
 RESET_INPUTS = True
+RUN = False
 
 def extract_demand_output_district_to_osmose(path_to_district_folder, timesteps, season, specified_building):
 
@@ -25,10 +29,11 @@ def extract_demand_output_district_to_osmose(path_to_district_folder, timesteps,
         write_osmose_general_inputs(result_destination, periods, timesteps_calc)
 
     ## 3. Run osmose
-    for tech in settings.TECHS:
-        # result_path, run_folder = osmose_one_run('N_base')
-        result_path, run_folder = osmose_one_run(tech)
-        print(result_path, run_folder)
+    if RUN:
+        for tech in settings.TECHS:
+            # result_path, run_folder = osmose_one_run('N_base')
+            result_path, run_folder = osmose_one_run(tech)
+            print(result_path, run_folder)
 
 def prepare_district_info(path_to_district_folder):
     # read building function and GFA from district
@@ -60,9 +65,11 @@ def write_input_parameter_to_osmose(geometry_df, occupancy_df, season, specified
         print(case)
         output_building, \
         output_hcs, \
-        timesteps_calc = extract_cea_outputs_to_osmose_main(case, timesteps, season,
+        timesteps_calc, \
+        Tamb_K = extract_cea_outputs_to_osmose_main(case, timesteps, season,
                                                             specified_building,
                                                             problem_type='district') #extrapolate demand from a specified building
+        write_value_to_csv(Tamb_K, osmose_project_data_path, "Tamb.csv")
         # get file and extrapolate
         building_Af_m2 = output_hcs['Af_m2'][0]
         Af_multiplication_factor = Af_per_function[case.split('_')[4]] / building_Af_m2
@@ -79,7 +86,7 @@ def write_input_parameter_to_osmose(geometry_df, occupancy_df, season, specified
         output_hcs_original = output_hcs.copy()
         T_OAU_offcoil_df = output_hcs_original[[column for column in output_hcs.columns if 'T_OAU_offcoil' in column]]
         output_hcs_original.drop(columns=[column for column in output_hcs.columns if 'T_OAU_offcoil' in column], inplace=True)
-        # save output_hcs for each T_OAU_offcoil
+        # save output_hcs for each T_OAU_offcoil #TODO: redundant????
         for i, column in enumerate(T_OAU_offcoil_df.columns):
             new_hcs_df = output_hcs_original.copy()
             new_hcs_df['T_OAU_offcoil'] = T_OAU_offcoil_df[column]
@@ -151,7 +158,6 @@ def read_dbf_from_cea_input(path_to_district_folder, file_name):
 
 
 if __name__ == '__main__':
-    timesteps = settings.timesteps
     season = 'Summer'
     specified_building = ['B005'] # building to get demand
     extract_demand_output_district_to_osmose(path_to_district_folder, timesteps, season, specified_building)
