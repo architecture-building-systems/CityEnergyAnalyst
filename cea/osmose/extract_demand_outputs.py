@@ -67,7 +67,6 @@ def extract_cea_outputs_to_osmose_main(case, timesteps, season, specified_buildi
 
     # GET start_t
     start_t, end_t, op_time, periods, timesteps = get_timesteps_info(case, season, timesteps)
-
     # output to osmose
     output_operatingcost_to_osmose(op_time, timesteps)
 
@@ -88,6 +87,7 @@ def extract_cea_outputs_to_osmose_main(case, timesteps, season, specified_buildi
     for building in building_names:
         # get reduced tsd according to the specified timesteps
         reduced_demand_df = get_reduced_demand_df(case, building, end_t, start_t)
+        reduced_PV_df = get_reduced_PV_df(case, building, end_t, start_t)
 
         # initializing df
         output_building = pd.DataFrame()
@@ -115,7 +115,9 @@ def extract_cea_outputs_to_osmose_main(case, timesteps, season, specified_buildi
         output_building['Tww_ret_C'] = reduced_demand_df['T_ext']   # to avoid heating from ambient air
         output_building = output_building.round(4)  # osmose does not read more decimals (observation)
         # output_building = output_building.drop(output_df.index[range(7)])
-
+        # PV potential
+        output_building['el_PV_kWh'] = reduced_PV_df['Wh_m2'] * total_demand_df['Aroof_m2'][building] * 0.9 / 1000
+        output_building['Aroof_m2'] = total_demand_df['Aroof_m2'][building] * 0.9
         ## output to hcs_out
         # change units
         output_hcs['T_ext'] = reduced_demand_df['T_ext']
@@ -167,15 +169,20 @@ def extract_cea_outputs_to_osmose_main(case, timesteps, season, specified_buildi
         output_hcs = output_hcs.round(4)  # osmose does not read more decimals (observation)
         # output_hcs = output_hcs.drop(output_df.index[range(7)])
 
+        # get Tamb/Twb
+        Tamb_K = reduced_demand_df['T_ext'].mean() + 273.15
+        print 'ambient average: ', Tamb_K
+        Twb_K = output_hcs['T_ext_wb'].mean() + 273.15
+        print 'wetbulb average: ', Twb_K
 
         ## WRITE OUTPUTS
-        # output a set of off coil temperatures for oau
-        generate_oau_temperature_sets(building, output_hcs, reduced_demand_df)
         if problem_type == 'building':
+            # output a set of off coil temperatures for oau
+            output_hcs = generate_oau_temperature_sets(building, output_hcs, reduced_demand_df)
             output_building.T.to_csv(path_to_osmose_project_bui(building), header=False)
             output_hcs.T.to_csv(path_to_osmose_project_hcs(building, 'hcs'), header=False)
         else:
-            return output_building, output_hcs, int(timesteps)
+            return output_building, output_hcs, int(timesteps), Tamb_K
 
         # output_df.loc[:, 'Mf_air_kg'] = output_df['Vf_m3']*calc_rho_air(24)
 
@@ -186,10 +193,7 @@ def extract_cea_outputs_to_osmose_main(case, timesteps, season, specified_buildi
         # output_df = output_df.reset_index()
         # output_df = output_df.drop(['index'], axis=1)
         # output_df = output_df.drop(output_df.index[range(7)])
-        Tamb_K = reduced_demand_df['T_ext'].mean() + 273.15
-        print 'ambient average: ', Tamb_K
-        Twb_K = output_hcs['T_ext_wb'].mean() + 273.15
-        print 'wetbulb average: ', Twb_K
+
     return building_names, Tamb_K, int(timesteps), int(periods)
 
 
@@ -229,6 +233,7 @@ def generate_oau_temperature_sets(building, output_hcs, reduced_demand_df):
     input_T0_df['T_ext_C'] = reduced_demand_df['T_ext']
     input_T0_df['OAU_T_SA'] = 12.6
     input_T0_df.T.to_csv(path_to_osmose_project_inputT(str(0)), header=False)
+    return output_hcs
 
 
 def get_humidity_ratio_assumptions(case):
@@ -259,6 +264,24 @@ def get_reduced_demand_df(case, building, end_t, start_t):
     else:
         raise ValueError('WRONG start_t: ', start_t)
     return reduced_demand_df
+
+
+def get_reduced_PV_df(case, building, end_t, start_t):
+    all_year_PV_per_m2_df = pd.read_csv(path_to_PV_df(case))
+    if type(start_t) is int:
+        PV_per_m2_df = all_year_PV_per_m2_df[start_t:end_t]
+        PV_per_m2_df = PV_per_m2_df.reset_index()
+    elif (type(start_t) is dict) or (type(start_t) is OrderedDict):
+        list_of_df = []
+        for interval in start_t.keys():
+            PV_per_m2_df = all_year_PV_per_m2_df[start_t[interval]:end_t[interval]]
+            list_of_df.append(PV_per_m2_df)
+            print 'interval', interval, ', hour:', start_t[interval]
+        PV_per_m2_df = pd.concat(list_of_df, ignore_index=True)
+        PV_per_m2_df = PV_per_m2_df.reset_index()
+    else:
+        raise ValueError('WRONG start_t: ', start_t)
+    return PV_per_m2_df
 
 
 def get_timesteps_info(case, season, timesteps):
@@ -472,6 +495,11 @@ def path_to_total_demand(case):
 def path_to_district_df(case):
     path_to_folder = 'C:\\CEA_cases\\HCS_cases_all\\%s\\outputs\\data\\demand' % case
     path_to_file = os.path.join(path_to_folder, 'Total_demand.%s' % ('csv'))
+    return path_to_file
+
+def path_to_PV_df(case):
+    path_to_folder = 'C:\\CEA_cases\\HCS_cases_all\\%s\\outputs\\data' % case
+    path_to_file = os.path.join(path_to_folder, 'PV_Wh_per_m2.%s' % ('csv'))
     return path_to_file
 
 def path_to_osmose_project_bui(building_name):
