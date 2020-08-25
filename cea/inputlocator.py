@@ -543,6 +543,21 @@ class InputLocator(object):
         check_cpg(shapefile_path)
         return shapefile_path
 
+    def outputdatafolder (self):
+        return self._ensure_folder(self.scenario,'outputs','data')
+
+    def get_calibrationresults(self):
+        """scenario/outputs/data/calibration_results/calibrationresults.csv"""
+        return os.path.join(self.scenario, 'outputs','data','calibration_results', 'calibrationresults.csv')
+
+    def get_project_calibrationresults(self):
+        """project/outputs/calibration_results/calibrationresults.csv"""
+        return os.path.join(self.project, 'outputs', 'calibration_results', 'calibrationresults.csv')
+
+    def get_totaloccupancy(self):
+        """scenario/outputs/data/totaloccupancy.csv"""
+        return os.path.join(self.scenario, "outputs", "data", "totaloccupancy.csv")
+
     def get_network_layout_nodes_shapefile(self, network_type, network_name=""):
         """scenario/outputs/thermal-network/DH or DC/network-nodes.shp"""
         shapefile_path = os.path.join(self.get_input_network_folder(network_type, network_name), 'nodes.shp')
@@ -864,6 +879,19 @@ class InputLocator(object):
         shapefile_path = os.path.join(self.get_networks_folder(), "streets.shp")
         check_cpg(shapefile_path)
         return shapefile_path
+
+    def get_measurements_folder(self):
+        return self._ensure_folder(self.scenario, 'inputs', 'measurements')
+
+    def get_annual_measurements(self):
+        return os.path.join(self.get_measurements_folder(), 'annual_measurements.csv')
+
+    def get_monthly_measurements(self):
+        return os.path.join(self.get_measurements_folder(), 'monthly_measurements.csv')
+
+    def get_global_monthly_measurements(self):
+
+        return os.path.join(self.get_measurements_folder(), 'monthly_measurements.csv')
 
     # OUTPUTS
 

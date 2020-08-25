@@ -37,6 +37,11 @@ DAYS_IN_YEAR = 365
 HOURS_IN_DAY = 24
 HOURS_IN_YEAR = 8760
 MONTHS_IN_YEAR = 12
+
+MONTHS_IN_YEAR_NAMES = ['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL',
+                        'MAY', 'JUNE', 'JULY', 'AUGUST', 'SEPTEMBER',
+                        'OCTOBER', 'NOVEMBER', 'DECEMBER']
+
 HOURS_PRE_CONDITIONING = 720  # number of hours that the building will be thermally pre-conditioned,
                                 # the results of these hours will be overwritten
 
@@ -63,12 +68,12 @@ MIN_FLOW_LPERS = 9  # in lps got from Rabtherm technology
 T_MIN = 8  # tmin of extraction got from Rabtherm technology
 H0_KWPERM2K = 1.5  # kW/m2K # heat trasnfer coefficient/ got from Rabtherm technology
 
-#ground temperature values
-SOIL_Cp_JkgK = 2000 # _[A. Kecebas et al., 2011]
+# ground temperature values
+SOIL_Cp_JkgK = 2000  # _[A. Kecebas et al., 2011]
 SOIL_lambda_WmK = 1.6
 SOIL_rho_kgm3 = 1600
 
-#insulation of pipes
+# insulation of pipes
 PUR_lambda_WmK = 0.023
 STEEL_lambda_WmK = 76
 

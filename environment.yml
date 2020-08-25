@@ -235,4 +235,5 @@ dependencies:
     - tables==3.4.4
     - simpledbf==0.2.6
     - pvlib==0.5.2
+    - hyperopt
 
