@@ -9,7 +9,7 @@ from hyperopt.pyll import scope
 import cea.config
 import cea.inputlocator
 from cea.utilities.dbf import dbf_to_dataframe, dataframe_to_dbf
-from cea.datamanagement import data_helper
+from cea.datamanagement import archetypes_mapper
 from cea.demand import demand_main, schedule_maker
 from cea.demand.schedule_maker import schedule_maker
 from cea.examples import validation
@@ -36,7 +36,7 @@ __status__ = "Production"
 
 def modify_monthly_multiplier(locator, config, measured_building_names):
     ##create building input schedules to set monthly multiplier
-    data_helper.data_helper(locator, config.data_helper.region, overwrite_technology_folder=False,
+    archetypes_mapper.archetypes_mapper(locator, config.archetypes_mapper.region, overwrite_technology_folder=False,
                             update_architecture_dbf=False, update_HVAC_systems_dbf=False,
                             update_indoor_comfort_dbf=False,
                             update_internal_loads_dbf=False, update_supply_systems_dbf=False,
