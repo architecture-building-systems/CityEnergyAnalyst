@@ -11,9 +11,8 @@ import numpy as np
 import osmnx as ox
 import shapely.geometry as geometry
 from geopandas import GeoDataFrame as Gdf
-from geopandas import overlay
 from scipy.spatial import Delaunay
-from shapely.ops import cascaded_union, polygonize
+from shapely.ops import unary_union, polygonize
 import pandas as pd
 
 import cea.config
@@ -32,7 +31,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def alpha_shape(points, alpha):
+def alpha_shape(points, alpha=0.01):
     """
     Compute the alpha shape (concave hull) of a set of points.
 
@@ -87,37 +86,18 @@ def alpha_shape(points, alpha):
 
     m = geometry.MultiLineString(edge_points)
     triangles = list(polygonize(m))
-    return cascaded_union(triangles), edge_points
+    return unary_union(triangles), edge_points
 
 
 def calc_surrounding_area(zone_gdf, buffer_m):
-    geometry_without_holes = zone_gdf.convex_hull
-    geometry_without_holes_gdf = Gdf(geometry=geometry_without_holes.values)
-    geometry_without_holes_gdf["one_class"] = "buildings"
-    geometry_merged = geometry_without_holes_gdf.dissolve(by='one_class', aggfunc='sum')
-    geometry_merged_final = Gdf(geometry=geometry_merged.convex_hull)
-    new_buffer = Gdf(geometry=geometry_merged_final.buffer(buffer_m))
-    area = overlay(geometry_merged_final, new_buffer, how='symmetric_difference')
-
-    # THIS IS ANOTHER METHOD, NOT FUNCTIONAL THOUGH
-    # from shapely.ops import Point
-    # # new GeoDataFrame with same columns
-    # points = []
-    # # Extraction of the polygon nodes and attributes values from polys and integration into the new GeoDataFrame
-    # for index, row in zone_gdf.iterrows():
-    #     for j in list(row['geometry'].exterior.coords):
-    #         points.append(Point(j))
-    #
-    # concave_hull, edge_points = alpha_shape(points, alpha=0.1)
-    # simple_polygons = [x for x in concave_hull]
-    # geometry_merged_final = Gdf(geometry=simple_polygons)
-    # geometry_merged_final.plot()
-    # plt.show()
-    # new_buffer = Gdf(geometry=geometry_merged_final.buffer(buffer_m))
-    # area = overlay(geometry_merged_final, new_buffer, how='symmetric_difference')
-    # area.plot()
-
-    return area, geometry_merged_final
+    points = []
+    for geom in zone_gdf.geometry:
+        for x, y in zip(geom.exterior.coords.xy[0], geom.exterior.coords.xy[1]):
+            points.append(geometry.Point(x, y))
+    zone_concave_hull, _ = alpha_shape(points)
+    zone_concave_hull_gdf = Gdf(geometry=[zone_concave_hull], crs=zone_gdf.crs)
+    surrounding_area = Gdf(geometry=[zone_concave_hull.buffer(buffer_m)], crs=zone_gdf.crs)
+    return surrounding_area, zone_concave_hull_gdf
 
 
 def clean_attributes(shapefile, buildings_height, buildings_floors, key):
@@ -187,11 +167,12 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, key):
     return result
 
 
-def erase_no_surrounding_areas(all_surroundings, area_buffer):
-    polygon = area_buffer.geometry[0]
-    all_surroundings.within(polygon)
-    subset = all_surroundings[all_surroundings.within(polygon)]
-    return subset
+def erase_no_surrounding_areas(all_surroundings, area_with_buffer, zone_convex_hull):
+    reprojected_area_with_buffer = area_with_buffer.to_crs(all_surroundings.crs).geometry.values[0]
+    reprojected_zone_convex_hull = zone_convex_hull.to_crs(all_surroundings.crs).geometry.values[0]
+    not_in_zone = [not geom.intersects(reprojected_zone_convex_hull) and geom.within(reprojected_area_with_buffer)
+                   for geom in all_surroundings.geometry]
+    return all_surroundings[not_in_zone].copy()
 
 
 def geometry_extractor_osm(locator, config):
@@ -214,15 +195,17 @@ def geometry_extractor_osm(locator, config):
     zone = zone.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
 
     # get a polygon of the surrounding area, and one polygon representative of the zone area
-    area_with_buffer, _ = calc_surrounding_area(zone, buffer_m)
+    print("Creating surrounding area")
+    area_with_buffer, zone_convex_hull = calc_surrounding_area(zone, buffer_m)
     area_with_buffer.crs = get_projected_coordinate_system(float(lat), float(lon))
     area_with_buffer = area_with_buffer.to_crs(get_geographic_coordinate_system())
 
     # get footprints of all the surroundings
+    print("Getting surrounding building footprints")
     all_surroundings = ox.footprints.create_footprints_gdf(polygon=area_with_buffer['geometry'].values[0])
 
     # erase overlapping area
-    surroundings = erase_no_surrounding_areas(all_surroundings.copy(), area_with_buffer)
+    surroundings = erase_no_surrounding_areas(all_surroundings, area_with_buffer, zone_convex_hull)
 
     assert surroundings.shape[0] > 0, 'No buildings were found within range based on buffer parameter.'
 
