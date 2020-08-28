@@ -89,21 +89,16 @@ def direct_expansion_design(Q_rated_kW_per_HH, DX_properties):
     if Q_rated_kW_per_HH <= SINGLE_max_cap/2:
         DX_type = 'SINGLE'
         n_units = 1
-        rated_capacity_per_unit = Q_rated_kW_per_HH/n_units
-        cop_rated = DX_properties.get_COP(source_type, DX_type, rated_capacity_per_unit)
-        DX_configuration_values = DX_properties.configuration_values(source_type, DX_type, rated_capacity_per_unit)
     elif SINGLE_max_cap/2 < Q_rated_kW_per_HH <= SINGLE_max_cap :
         DX_type = 'SPLIT'
         n_units = 2
-        rated_capacity_per_unit = Q_rated_kW_per_HH/n_units
-        cop_rated = DX_properties.get_COP(source_type, DX_type, rated_capacity_per_unit)
-        DX_configuration_values = DX_properties.configuration_values(source_type, DX_type, rated_capacity_per_unit)
-    elif SINGLE_max_cap < Q_rated_kW_per_HH <= SPLIT_max_cap:
+    elif SINGLE_max_cap < Q_rated_kW_per_HH:
         DX_type = 'SPLIT'
         n_units = max(2, Q_rated_kW_per_HH/SPLIT_max_cap)
-        rated_capacity_per_unit = Q_rated_kW_per_HH/n_units
-        cop_rated = DX_properties.get_COP(source_type, DX_type, rated_capacity_per_unit)
-        DX_configuration_values = DX_properties.configuration_values(source_type, DX_type, rated_capacity_per_unit)
+
+    rated_capacity_per_unit = Q_rated_kW_per_HH / n_units
+    cop_rated = DX_properties.get_COP(source_type, DX_type, rated_capacity_per_unit)
+    DX_configuration_values = DX_properties.configuration_values(source_type, DX_type, rated_capacity_per_unit)
 
     return DX_configuration_values, n_units, rated_capacity_per_unit, cop_rated
 

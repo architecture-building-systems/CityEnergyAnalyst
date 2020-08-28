@@ -121,7 +121,7 @@ def calc_Eaux(tsd):
     with contain the end-use demand,
 
     """
-    tsd['Eaux'] = tsd['Eaux_fw'] + tsd['Eaux_ww'] + tsd['Eaux_cs'] + tsd['Eaux_hs'] + tsd['Ehs_lat_aux']
+    tsd['Eaux'] = tsd['Eaux_ve'] + tsd['Eaux_fw'] + tsd['Eaux_ww'] + tsd['Eaux_cs'] + tsd['Eaux_hs'] + tsd['Ehs_lat_aux']
 
     return tsd
 
@@ -313,7 +313,7 @@ def calc_Eauxf_ve(tsd):
     q_ve_mech = tsd['m_ve_mech'] / physics.calc_rho_air(tsd['theta_ve_mech']) \
                 + tsd['m_ve_rec'] / physics.calc_rho_air(tsd['T_int'])
 
-    Eve_aux = fan_power * q_ve_mech * 3600
+    Eve_aux = fan_power * q_ve_mech * 3600 #q_ve_mech in m3/s
 
     tsd['Eaux_ve'] = np.nan_to_num(Eve_aux)
 

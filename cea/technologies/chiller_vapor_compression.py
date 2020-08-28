@@ -97,7 +97,7 @@ def calc_part_load_adjusted_COP(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T
     :param VaporCompressionChiller VCC_chiller: VCC_chiller object containing scale, capacity and config properties
     :return float cop_chiller: temperature and part load adjusted COP for a specific hour
     """
-    design_capacity = peak_cooling_load * 1.2 # for future implementation, a safety factor could be introduced. As of now this would be in conflict with the master_to_slave_variables.WS_BaseVCC_size_W
+    design_capacity = peak_cooling_load * 1.15 # for future implementation, a safety factor could be introduced. As of now this would be in conflict with the master_to_slave_variables.WS_BaseVCC_size_W
     vcc_configuration_values, n_units, rated_capacity_per_unit, cop_rated = vcc_plant_design(design_capacity, VCC_chiller)
     CAP_FT, EIR_FT = calculate_FT(T_cw_in_K, T_chw_sup_K, vcc_configuration_values)
     available_capacity_per_unit = rated_capacity_per_unit * CAP_FT
@@ -324,40 +324,46 @@ def staging_EIR_FPLR(q_chw_load_Wh, available_capacity_per_unit, n_units, vcc_co
     :param dictionary vcc_configuration_values: contains config details
     :return float EIR_FPLR:  electric input to cooling output factor for part-load function curve
     """
-    staging = 'SIMULTANEOUS'
-    if staging == 'SEQUENTIAL':
-        ### sequential staging
-        n_chillers_filled = int(q_chw_load_Wh // available_capacity_per_unit)
-        part_load_chiller = max(0.2,float(divmod(q_chw_load_Wh, available_capacity_per_unit)[1]) / float(
-            available_capacity_per_unit))
+    # staging = 'SIMULTANEOUS'
+    # if staging == 'SEQUENTIAL':
+    #     ### sequential staging
+    #     n_chillers_filled = int(q_chw_load_Wh // available_capacity_per_unit)
+    #     part_load_chiller = max(0.2,float(divmod(q_chw_load_Wh, available_capacity_per_unit)[1]) / float(
+    #         available_capacity_per_unit))
+    #
+    #     load_distribution_list = []
+    #     for i in range(n_chillers_filled):
+    #         load_distribution_list.append(1)
+    #     load_distribution_list.append(part_load_chiller)
+    #     for i in range(int(n_units) - n_chillers_filled - 1):
+    #         load_distribution_list.append(0)
+    #     load_distribution = np.array(load_distribution_list)
+    #
+    # elif staging == 'SIMULTANEOUS':
+    #     ### simultaneous staging
+    #     cutoff = 0.2
+    #     min_load_per_unit = cutoff*available_capacity_per_unit
+    #     units_on = max(1, min(int(floor(q_chw_load_Wh/min_load_per_unit)), n_units))
+    #
+    #     part_load = max(cutoff, q_chw_load_Wh/(units_on*available_capacity_per_unit))
+    #
+    #     load_distribution_list = []
+    #     for i in range(units_on):
+    #         load_distribution_list.append(part_load)
+    #     for i in range(int(n_units) - units_on):
+    #         load_distribution_list.append(0)
+    #     load_distribution = np.array(load_distribution_list)
+    #
+    # EIR_FPLR = np.sum(calc_EIR_FPLR(load_distribution, vcc_configuration_values[
+    #     'PLFs']) * load_distribution * available_capacity_per_unit) / q_chw_load_Wh  # calculates the average EIR_FPLR value
 
-        load_distribution_list = []
-        for i in range(n_chillers_filled):
-            load_distribution_list.append(1)
-        load_distribution_list.append(part_load_chiller)
-        for i in range(int(n_units) - n_chillers_filled - 1):
-            load_distribution_list.append(0)
-        load_distribution = np.array(load_distribution_list)
+    Q_operating = q_chw_load_Wh
+    Q_available = available_capacity_per_unit * n_units
+    PLR = Q_operating / Q_available
 
-    elif staging == 'SIMULTANEOUS':
-        ### simultaneous staging
-        cutoff = 0.2
-        min_load_per_unit = cutoff*available_capacity_per_unit
-        units_on = max(1, min(int(floor(q_chw_load_Wh/min_load_per_unit)), n_units))
+    EIR_FPLR = calc_EIR_FPLR(PLR, vcc_configuration_values['PLFs'])  # calculates the average PLF value EIR_FPLR
 
-        part_load = q_chw_load_Wh/(units_on*available_capacity_per_unit)
-
-        load_distribution_list = []
-        for i in range(units_on):
-            load_distribution_list.append(part_load)
-        for i in range(int(n_units) - units_on):
-            load_distribution_list.append(0)
-        load_distribution = np.array(load_distribution_list)
-
-    EIR_FPLR = np.sum(calc_EIR_FPLR(load_distribution, vcc_configuration_values[
-        'PLFs']) * load_distribution * available_capacity_per_unit) / q_chw_load_Wh  # calculates the average EIR_FPLR value
     return EIR_FPLR
-
 
 def calc_EIR_FPLR(PLR, PLFs):
     """
