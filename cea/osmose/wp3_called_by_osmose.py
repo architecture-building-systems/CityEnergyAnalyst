@@ -189,7 +189,7 @@ def write_cea_demand_from_osmose(path_to_district_folder):
             Tout = network_df[network_name + '_Tout']
             Tin = network_df[network_name + '_Tin']
             T_net_df[network_name + '_Ts'] = np.where(Hin > 0.0, Tout, 0.0)
-            T_net_df[network_name + '_Tr'] = np.where(Hin > 0.0, Tin, 0.0)
+            T_net_df[network_name + '_Tr'] = np.where(Hin > 0.0, Tin, 0.001) # set to 0.001 to avoid division by zero when calculating mass flow
         T_net_df['Ts'] = T_net_df.filter(like='Ts').sum(axis=1)
         T_net_df['Tr'] = T_net_df.filter(like='Tr').sum(axis=1)
         T_supply_K = T_net_df['Ts'].mean() + 273.15
@@ -231,7 +231,7 @@ def write_cea_demand_from_osmose(path_to_district_folder):
                 building_demand_df = pd.DataFrame(columns=BUILDINGS_DEMANDS_COLUMNS)
 
                 # cooling loads
-                building_demand_df['Qcs_sys_ahu_kWh'] = (DC_cooling_loads[bui_func] * building_Af_m2)
+                building_demand_df['Qcs_sys_ahu_kWh'] = (DC_cooling_loads[bui_func].values * building_Af_m2)
                 building_demand_df['mcpcs_sys_ahu_kWperC'] = building_demand_df['Qcs_sys_ahu_kWh'] / (T_net_df['Tr'] - T_net_df['Ts'])
                 substation_flow_rate_m3pers = building_demand_df['mcpcs_sys_ahu_kWperC'] / CP_KJPERKGK / P_WATER_KGPERM3
                 substation_flow_rate_m3pers_df[building] = substation_flow_rate_m3pers
@@ -358,6 +358,7 @@ def calc_Cinv_pumps(plant_pumping_kW):
         number_of_pumps = 1
         size_per_pump_W = pump_size_W
     # get price per pump
+    Cinv_per_pump = np.nan
     if size_per_pump_W <= 4000.0 :
         Cinv_per_pump = 29.314 * size_per_pump_W ** 0.5216
     elif(pump_size_W <= 37000.0) and (4000.0 < pump_size_W):
@@ -428,12 +429,16 @@ def calculate_flow_in_edges(edge_node_df, node_flowrates_at_substations_df, plan
     A = edge_node_df.drop(edge_node_df.index[plant_index]).values  # matrix A
     for index, row in node_flowrates_at_substations_df.iterrows():
         flows_in_edges.append(solve_Ax_b(A, row))
+        if np.isnan(solve_Ax_b(A, row)).any():
+            print('nan in', index, row)
     flows_in_edges_df = pd.DataFrame(flows_in_edges, columns=edge_node_df.columns)
     return flows_in_edges_df
 
 def solve_Ax_b(A, node_flows_at_substations_t):
     b = node_flows_at_substations_t.T
     flow_in_edges = np.linalg.solve(A, b)
+    if np.isnan(flow_in_edges).any():
+        print('nan in flow_in_edges', A, b)
     return flow_in_edges
 
 def get_pipe_sizes(all_nodes_df, edge_node_df, substation_flow_rate_m3pers_df, path_to_case):
