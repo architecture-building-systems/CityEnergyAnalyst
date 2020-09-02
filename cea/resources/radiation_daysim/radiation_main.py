@@ -170,17 +170,11 @@ def radiation_singleprocessing(rad, geometry_3D_zone, locator, settings):
     weatherfile = epwreader.epw_reader(weather_path)
     max_global = weatherfile['glohorrad_Whm2'].max()
 
-    if settings.buildings == []:
-        # get chunks of buildings to iterate
-        chunks = [geometry_3D_zone[i:i + settings.n_buildings_in_chunk] for i in
-                  range(0, len(geometry_3D_zone),
-                        settings.n_buildings_in_chunk)]
-    else:
-        list_of_building_names = settings.buildings
-        chunks = []
-        for bldg_dict in geometry_3D_zone:
-            if bldg_dict['name'] in list_of_building_names:
-                chunks.append([bldg_dict])
+    selected_buildings = [bldg_dict for bldg_dict in geometry_3D_zone if bldg_dict['name'] in settings.buildings]
+    # get chunks of buildings to iterate
+    chunks = [selected_buildings[i:i + settings.n_buildings_in_chunk] for i in
+              range(0, len(selected_buildings),
+                    settings.n_buildings_in_chunk)]
 
     for chunk_n, building_dict in enumerate(chunks):
         daysim_main.isolation_daysim(chunk_n, rad, building_dict, locator, settings, max_global, weatherfile)
