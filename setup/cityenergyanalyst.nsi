@@ -86,11 +86,11 @@ Section "Base Installation" Base_Installation_Section
     DetailPrint "Setting up CEA Console"
     CreateDirectory $INSTDIR\Dependencies\cmder\config\profile.d
     FileOpen $0 "$INSTDIR\Dependencies\cmder\config\profile.d\cea_path.bat" w
-    FileWrite $0 "SET PATH=$INSTDIR\Dependencies\Python;$INSTDIR\Dependencies\Python\Scripts;$INSTDIR\Dependencies\Daysim;%PATH%"
+    FileWrite $0 "SET PATH=$INSTDIR\Dependencies\Python;$INSTDIR\Dependencies\Python\Scripts;$INSTDIR\Dependencies\Daysim\bin64;%PATH%"
     FileWrite $0 "$\r$\n" ; we write a new line
     FileWrite $0 "SET PYTHONHOME=$INSTDIR\Dependencies\Python"
     FileWrite $0 "$\r$\n" ; we write a new line
-    FileWrite $0 "SET RAYPATH=$INSTDIR\Dependencies\Daysim"
+    FileWrite $0 "SET RAYPATH=$INSTDIR\Dependencies\Daysim\lib"
     FileWrite $0 "$\r$\n" ; we write a new line
     FileWrite $0 "SET GDAL_DATA=$INSTDIR\Dependencies\Python\Library\share\gdal"
     FileWrite $0 "$\r$\n" ; we write a new line
@@ -102,9 +102,7 @@ Section "Base Installation" Base_Installation_Section
     # create a batch file for running the dashboard with some environment variables set (for DAYSIM etc.)
     DetailPrint "Setting up CEA Dashboard"
     FileOpen $0 "$INSTDIR\dashboard.bat" w
-    FileWrite $0 "SET PATH=$INSTDIR\Dependencies\Python;$INSTDIR\Dependencies\Python\Scripts;$INSTDIR\Dependencies\Daysim;%PATH%"
-    FileWrite $0 "$\r$\n" ; we write a new line
-    FileWrite $0 "SET PYTHONHOME=$INSTDIR\Dependencies\Python"
+    FileWrite $0 "SET PATH=$INSTDIR\Dependencies\Python;$INSTDIR\Dependencies\Python\Scripts;$INSTDIR\Dependencies\Daysim\bin64;%PATH%"
     FileWrite $0 "$\r$\n" ; we write a new line
     FileWrite $0 "SET PYTHONHOME=$INSTDIR\Dependencies\Python"
     FileWrite $0 "$\r$\n" ; we write a new line
@@ -112,7 +110,7 @@ Section "Base Installation" Base_Installation_Section
     FileWrite $0 "$\r$\n" ; we write a new line
     FileWrite $0 "SET PROJ_LIB=$INSTDIR\Dependencies\Python\Library\share"
     FileWrite $0 "$\r$\n" ; we write a new line
-    FileWrite $0 "SET RAYPATH=$INSTDIR\Dependencies\Daysim"
+    FileWrite $0 "SET RAYPATH=$INSTDIR\Dependencies\Daysim\lib"
     FileWrite $0 "$\r$\n" ; we write a new line
     FileWrite $0 "$\"$INSTDIR\Dependencies\Python\python.exe$\" -u -m cea.interfaces.cli.cli dashboard"
     FileClose $0
