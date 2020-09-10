@@ -461,6 +461,7 @@ def main(config):
     # BUGFIX for #2447 (make sure the Daysim binaries are there before starting the simulation)
     daysim_bin_path, daysim_lib_path = check_daysim_bin_directory(config.radiation.daysim_bin_directory,
                                                                   config.radiation.use_latest_daysim_binaries)
+    print('Using Daysim binaries from path: {}'.format(daysim_bin_path))
     # Save daysim path to config
     config.radiation.daysim_bin_directory = daysim_bin_path
 
