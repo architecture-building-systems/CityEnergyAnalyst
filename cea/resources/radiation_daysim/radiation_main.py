@@ -235,8 +235,8 @@ def check_daysim_bin_directory(path_hint, latest_binaries):
     if sys.platform == "win32":
         folders_to_check.append(r"C:\Daysim\bin")
 
-    folders_to_check = list(set(os.path.abspath(os.path.normpath(os.path.normcase(p))) for p in folders_to_check))
-
+    folders_to_check = [os.path.abspath(os.path.normpath(os.path.normcase(p))) for p in folders_to_check]
+    print(folders_to_check)
     for possible_path in folders_to_check:
         if contains_binaries(possible_path):
             # If path to binaries contains whitespace, provide a warning
