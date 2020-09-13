@@ -511,11 +511,16 @@ class ElevationMap(object):
         self.y_coords = y_coords
 
     @classmethod
-    def read_raster(cls, raster):
+    def read_raster(cls, raster, raise_above_sea_level=True):
         band = raster.GetRasterBand(1)
         a = band.ReadAsArray()
-        (y, x) = np.shape(a)
+        if raise_above_sea_level and (a < 0).any():
+            print('Warning: Some heights are below sea level')
+            # if height is below sea level, the entire case study is lifted to the lowest point is at altitude 0
+            print('Adjusting elevation map to above sea level')
+            a -= a.min()
 
+        (y, x) = np.shape(a)
         (upper_left_x, x_size, x_rotation, upper_left_y, y_rotation, y_size) = raster.GetGeoTransform()
         x_coords = np.arange(start=0, stop=x) * x_size + upper_left_x + (x_size / 2)  # add half the cell size
         y_coords = np.arange(start=0, stop=y) * y_size + upper_left_y + (y_size / 2)  # to centre the point
@@ -542,13 +547,6 @@ class ElevationMap(object):
         return ElevationMap(new_elevation_map, new_x_coords, new_y_coords)
 
     def generate_tin(self):
-        below_sea_level = (self.elevation_map * (self.elevation_map > -1e3)).min() < 0
-        if below_sea_level:
-            print('Warning: Some heights are below sea level')
-            # if height is below sea level, the entire case study is lifted to the lowest point is at altitude 0
-            print('Adjusting elevation map to above sea level')
-            self.elevation_map -= (self.elevation_map * (self.elevation_map > -1e3)).min()
-
         (y_index, x_index) = np.nonzero(self.elevation_map >= 0)
         _x_coords = self.x_coords[x_index]
         _y_coords = self.y_coords[y_index]
