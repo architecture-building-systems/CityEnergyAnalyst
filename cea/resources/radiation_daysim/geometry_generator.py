@@ -568,8 +568,8 @@ def standardize_coordinate_systems(locator):
     # Get projection of terrain and apply to zone and surroundings
     terrian_projection = terrain_raster.GetProjection()
     proj4_str = osr.SpatialReference(wkt=terrian_projection).ExportToProj4()
-    zone_df.to_crs(proj4_str)
-    surroundings_df.to_crs(proj4_str)
+    zone_df = zone_df.to_crs(proj4_str)
+    surroundings_df = surroundings_df.to_crs(proj4_str)
 
     return zone_df, surroundings_df, terrain_raster
 
