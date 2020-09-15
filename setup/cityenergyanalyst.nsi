@@ -15,13 +15,13 @@ ${StrRep}
 
 
 # download CEA conda env from here
-!define CEA_ENV_URL "https://github.com/architecture-building-systems/CityEnergyAnalyst/releases/download/v${VER}/Dependencies.7z"
-;!define CEA_ENV_URL "https://www.dropbox.com/s/z8v60euvoog2wb2/Dependencies.7z?dl=1"
+;!define CEA_ENV_URL "https://github.com/architecture-building-systems/CityEnergyAnalyst/releases/download/v${VER}/Dependencies.7z"
+!define CEA_ENV_URL "https://www.dropbox.com/s/2tusftdoivvp9ox/Dependencies.7z?dl=1"
 !define CEA_ENV_FILENAME "Dependencies.7z"
 !define RELATIVE_GIT_PATH "Dependencies\cmder\vendor\git-for-windows\bin\git.exe"
 !define CEA_REPO_URL "https://github.com/architecture-building-systems/CityEnergyAnalyst.git"
-!define CEA_ELECTRON_URL "https://github.com/architecture-building-systems/CityEnergyAnalyst/releases/download/v${VER}/win-unpacked.7z"
-;!define CEA_ELECTRON_URL "https://www.dropbox.com/s/gun6bpj6lxjae7m/win-unpacked.7z?dl=1"
+;!define CEA_ELECTRON_URL "https://github.com/architecture-building-systems/CityEnergyAnalyst/releases/download/v${VER}/win-unpacked.7z"
+!define CEA_ELECTRON_URL "https://github.com/architecture-building-systems/CityEnergyAnalyst/releases/download/v3.8.0a0/win-unpacked.7z"
 
 !define CEA_TITLE "City Energy Analyst"
 
