@@ -1,3 +1,7 @@
+- 2020-09-14 - 3.7.0 - #2828 Introduce new Daysim binaries
+- 2020-08-18 - 3.7.0 - #2818 2817 ventilation rate
+- 2020-08-13 - 3.7.0 - #2814 Ventilation loads not present in the output, the issue was tested by @lguilhermers all works as expected
+- 2020-07-27 - 3.7.0 - #2809 Release 3.7.0
 - 2020-07-27 - 3.4.0 - #2807 Select all technologies in optimization if none is selected
 - 2020-07-27 - 3.4.0 - #2806 Properly parse `building:levels` data from OSM
 - 2020-07-27 - 3.4.0 - #2767 Clean geometries from OpenStreetMap in zone-helper
