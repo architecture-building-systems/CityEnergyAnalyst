@@ -65,7 +65,7 @@ def calc_E_sys(tsd):
     Calculate the compound of end use electrical loads
 
     """
-    tsd['E_sys'] = tsd['Ea'] + tsd['El'] + tsd['Edata'] + tsd['Epro'] + tsd['Eaux'] + tsd['Ev']  # assuming a small loss
+    tsd['E_sys'] =  tsd['Eve'] + tsd['Ea'] + tsd['El'] + tsd['Edata'] + tsd['Epro'] + tsd['Eaux'] + tsd['Ev']  # assuming a small loss
 
     return tsd
 
@@ -79,7 +79,7 @@ def calc_Ef(bpr, tsd):
     # GET SYSTEMS EFFICIENCIES
     energy_source = bpr.supply['source_el']
     scale_technology = bpr.supply['scale_el']
-    total_el_demand = (tsd['Ea'] + tsd['El'] + tsd['Edata'] + tsd['Epro'] + tsd['Eaux'] +
+    total_el_demand = (tsd['Eve'] + tsd['Ea'] + tsd['El'] + tsd['Edata'] + tsd['Epro'] + tsd['Eaux'] +
                        tsd['Ev'] + tsd['E_ww'] + tsd['E_cs'] + tsd['E_hs'] + tsd['E_cdata'] + tsd['E_cre'])
 
     if scale_technology == "CITY":
@@ -88,6 +88,7 @@ def calc_Ef(bpr, tsd):
             tsd['GRID_a'] = tsd['Ea']
             tsd['GRID_l'] = tsd['El']
             tsd['GRID_v'] = tsd['Ev']
+            tsd['GRID_ve'] = tsd['Eve']
             tsd['GRID_data'] = tsd['Edata']
             tsd['GRID_pro'] = tsd['Epro']
             tsd['GRID_aux'] = tsd['Eaux']
@@ -103,6 +104,7 @@ def calc_Ef(bpr, tsd):
         tsd['GRID_a'] = np.zeros(HOURS_IN_YEAR)
         tsd['GRID_l'] = np.zeros(HOURS_IN_YEAR)
         tsd['GRID_v'] = np.zeros(HOURS_IN_YEAR)
+        tsd['GRID_ve'] = np.zeros(HOURS_IN_YEAR)
         tsd['GRID_data'] = np.zeros(HOURS_IN_YEAR)
         tsd['GRID_pro'] = np.zeros(HOURS_IN_YEAR)
         tsd['GRID_aux'] = np.zeros(HOURS_IN_YEAR)
@@ -293,9 +295,9 @@ def calc_Eauxf_cs_dis(Qcs_sys, Qcs_sys0, deltaP_kPa, b, ts, tr):
     return Eaux_cs  # in #W
 
 
-def calc_Eauxf_ve(tsd):
+def calc_Eve(tsd):
     """
-    calculation of auxiliary electricity consumption of mechanical ventilation and AC fans
+    calculation of electricity consumption of mechanical ventilation and AC fans
     
     :param tsd: Time series data of building
     :type tsd: dict
@@ -315,9 +317,9 @@ def calc_Eauxf_ve(tsd):
     q_ve_mech = tsd['m_ve_mech'] / physics.calc_rho_air(tsd['theta_ve_mech']) \
                 + tsd['m_ve_rec'] / physics.calc_rho_air(tsd['T_int'])
 
-    Eve_aux = fan_power * q_ve_mech * 3600
+    Eve = fan_power * q_ve_mech * 3600
 
-    tsd['Eaux_ve'] = np.nan_to_num(Eve_aux)
+    tsd['Eve'] = np.nan_to_num(Eve)
 
     return tsd
 

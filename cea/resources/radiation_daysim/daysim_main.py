@@ -162,9 +162,7 @@ def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, settings, max_glob
     daysim_dir = locator.get_temporary_file("temp" + str(chunk_n))
     print('isolation_daysim: daysim_dir={daysim_dir}'.format(daysim_dir=daysim_dir))
 
-    # daysim_bin_directory might contain two paths (e.g. "C:\Daysim\bin;C:\Daysim\lib") - in which case, only
-    # use the "bin" folder
-    bin_directory = [d for d in settings.daysim_bin_directory.split(";") if not d.endswith("lib")][0]
+    bin_directory = settings.daysim_bin_directory
 
     rad.initialise_daysim(daysim_dir, os.path.join(bin_directory, ''))
     print("\tisolation_daysim: rad.hea_file: {}".format(rad.hea_file))

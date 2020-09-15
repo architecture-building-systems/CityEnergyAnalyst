@@ -41,6 +41,8 @@ demand,Edata_kWh,kWh,End-use servers electricity demand,brown
 demand,Eal_kWh,kWh,End-use appliances & lighting electricity demand,green
 demand,Ea_kWh,kWh,End-use appliances electricity demand,green
 demand,El_kWh,kWh,End-use lighting electricity demand,green_light
+demand,Eve_kWh,kWh,End-use ventilation electricity demand,yellow
+demand,Ev_kWh,kWh,End-use electric-vehicles electricity demand,grey
 demand,Eaux_kWh,kWh,End-use auxiliary electricity demand,blue
 
 Requirements curve,Epro_req_W,W,End-use processes electricity demand,brown_lighter
@@ -66,9 +68,17 @@ demand,GRID_a_kWh,kWh,Grid electricity requirements for appliances,green
 demand,GRID_a_MWhyr,MWh/yr,Grid electricity requirements for appliances,green
 demand,GRID_a_kW,kW,Nominal Grid electricity requirements for appliances,green
 
-demand,GRID_l_kWh,kWh,Grid electricity requirements for lights,green_light
-demand,GRID_l_MWhyr,MWh/yr,Grid electricity requirements for lights,green_light
-demand,GRID_l_kW,kW,Nominal Grid electricity requirements for lights,green_light
+demand,GRID_l_kWh,kWh,Grid electricity requirements for lights,yellow_light
+demand,GRID_l_MWhyr,MWh/yr,Grid electricity requirements for lights,yellow_light
+demand,GRID_l_kW,kW,Nominal Grid electricity requirements for lights,yellow_light
+
+demand,GRID_v_kWh,kWh,Grid electricity requirements for electric vehicles,green_light
+demand,GRID_v_MWhyr,MWh/yr,Grid electricity requirements for  electric vehicles,green_light
+demand,GRID_v_kW,kW,Nominal Grid electricity requirements for  electric vehicles,green_light
+
+demand,GRID_ve_kWh,kWh,Grid electricity requirements for ventilation,yellow
+demand,GRID_ve_MWhyr,MWh/yr,Grid electricity requirements for ventilation,yellow
+demand,GRID_ve_kW,kW,Nominal Grid electricity requirements for ventilation,yellow
 
 demand,GRID_aux_kWh,kWh,Grid electricity requirements for auxiliary loads,grey
 demand,GRID_aux_MWhyr,MWh/yr,Grid electricity requirements for auxiliary loads,grey
