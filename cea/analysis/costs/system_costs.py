@@ -44,7 +44,7 @@ def costs_main(locator, config):
     costs_cooling_services_dict = calc_costs_per_energy_service(cooling_db, cooling_final_services)
 
     # COSTS DUE TO ELECTRICITY SERVICES
-    electricity_final_services = ['GRID_pro', 'GRID_l', 'GRID_aux', 'GRID_v', 'GRID_a', 'GRID_data']
+    electricity_final_services = ['GRID_pro', 'GRID_l', 'GRID_aux', 'GRID_v', 'GRID_a', 'GRID_data', 'GRID_ve']
     costs_electricity_services_dict = calc_costs_per_energy_service(electricity_db, electricity_final_services)
 
     # COMBINE INTO ONE DICT
