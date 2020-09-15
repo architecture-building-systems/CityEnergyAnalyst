@@ -9,4 +9,5 @@
 @REM SET PROJ_LIB=%~dp0Dependencies\Python\Library\share\proj
 @CALL "%~dp0Dependencies\Python\Scripts\activate.bat"
 @SET PROMPT=(CEA) $P$G
-@SET RAYPATH=%~dp0Dependencies\Daysim
+@SET RAYPATH=%~dp0Dependencies\Daysim\lib
+@SET PATH=%~dp0Dependencies\Daysim\bin64;%PATH%
