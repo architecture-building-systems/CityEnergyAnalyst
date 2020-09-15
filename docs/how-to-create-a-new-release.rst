@@ -60,11 +60,28 @@ The repository admin merging a pull request to master is responsible for updatin
 .. _GitHub issues milestones list: https://github.com/architecture-building-systems/CityEnergyAnalyst/milestones
 
 
+Create a Release Branch
+-----------------------
+- Create a branch ``Release-x.x.x`` from master.
+
+
 Update the CREDITS.md file
 --------------------------
 
 For each minor release (2.2, 2.3, ...) the ``CREDITS.md`` file needs to be updated to include all the authors that
 worked on that release.
+
+
+Update CHANGELOG
+----------------
+
+- Run ``create-changelog.py`` in ``CityEnergyAnalyst\bin``
+
+
+Merge the Release Branch
+-------------------------
+
+- Merge the branch ``Release-x.x.x`` into master.
 
 
 Creating the installer
