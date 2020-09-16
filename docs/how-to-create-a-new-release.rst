@@ -84,6 +84,11 @@ Merge the Release Branch
 - Merge the branch ``Release-x.x.x`` into master.
 
 
+Create a Release Draft on GitHub
+--------------------------------
+- Tag the release with the correct version number.
+
+
 Creating the installer
 ----------------------
 
@@ -107,6 +112,26 @@ Creating the installer
 
 .. _7z: https://www.7-zip.org/7z.html
 
+
+Updating the CEA GUI interface
+------------------------------
+
+For the installer to be able to pick up the newest version of the CEA GUI interface, you need to build it,
+create a release and attach a ``win-unpacked.7z`` to the release. Here are the steps:
+
+- pull the newest version of the ``CityEnergyAnalyst-GUI`` repository
+- open CEA Console, navigate to the GitHub repo of the ``CityEnergyAnalyst-GUI`` repository
+- type ``yarn dist:dir``, wait for the command to complete
+- the subfolder ``dist`` will contain a folder ``win-unpacked``
+- compress the folder ``win-unpacked`` to ``win-unpacked.7z``
+- attach the ``win-unpacked.7z`` file to the CityEnergyAnalyst release
+
+
+Publish the Release on GitHub
+-----------------------------
+The release should be published so that it could be found on GitHub for testing (the next step).
+
+
 Testing in a virtual machine
 ----------------------------
 
@@ -116,6 +141,7 @@ is still working. This test goes a bit further than the regular test in that it 
 still work on a new installation. This is important because it can find missing packages in the dependency lists etc.
 
 .. _VirtualBox: https://www.virtualbox.org/
+
 
 Building the documentation
 --------------------------
@@ -145,6 +171,7 @@ For more information, check out the :doc:`how-to-document-cea`.
 .. _sphinx: https://www.sphinx-doc.org/en/master/usage/installation.html
 .. _GraphViz: http://www.graphviz.org/Download.php
 
+
 Uploading to PyPI
 -----------------
 
@@ -173,25 +200,12 @@ Uploading to PyPI
 
 .. _twine: https://pypi.python.org/pypi/twine
 
-Updating the CEA GUI interface
-------------------------------
 
-For the installer to be able to pick up the newest version of the CEA GUI interface, you need to build it,
-create a release and attach a ``win-unpacked.7z`` to the release. Here are the steps:
-
-- pull the newest version of the ``CityEnergyAnalyst-GUI`` repository
-- open CEA Console, navigate to the GitHub repo of the ``CityEnergyAnalyst-GUI`` repository
-- type ``yarn dist:dir``, wait for the command to complete
-- the subfolder ``dist`` will contain a folder ``win-unpacked``
-- compress the folder ``win-unpacked`` to ``win-unpacked.7z``
-- attach the ``win-unpacked.7z`` file to the CityEnergyAnalyst release
-
-
-Updating Link in www.cityenergyanalyst.com/tryit
+Updating Link in www.cityenergyanalyst.com/try-cea
 --------------------------------------------------
 
 - go to http://www.cityenergyanalyst.com
-- press Esc and try logging into squarespace (the credentials are here_)
+- press Esc and try logging into squarespace
 - go to Pages/Try CEA  (it is the last page in the list)
 - go to edit 'Page content'
 - go to edit 'Form'
