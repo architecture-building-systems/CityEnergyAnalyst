@@ -448,3 +448,18 @@ Documentation:
     interfaces: [doc]
     module: cea.utilities.doc_schemas
     parameters: ["general:scenario", schemas]
+
+Development:
+  - name: build
+    label: build
+    description: build a new installer for the current version
+    interfaces: [dev]
+    module: cea.dev.build
+    parameters: [development]
+
+  - name: conda-env-create
+    label: conda env create
+    description: create a new conda environment for the current version
+    interfaces: [dev]
+    module: cea.dev.conda_env_create
+    parameters: [development]
