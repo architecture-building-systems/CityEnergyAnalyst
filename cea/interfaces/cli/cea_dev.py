@@ -6,13 +6,25 @@ Some scripts to run for development
 - cea-dev build: This is the one-stop command for creating a new cea release
   - cea/__init__.py:__version__ is the name of the release being created
     - NOTE: maybe add a ``--version`` argument?
+    - NOTE: ``cea-dev version 3.10.0a0``
   - update ``CHANGELOG.md`` (prepend new text?)
-  -
+    - NOTE: ``cea-dev changelog``
+  - update ``CREDITS.md`` (I wonder if this should be automated?)
+    - NOTE: ``cea-dev credits``
+  - build the documentation (``cea-dev rtd``)
+  - create a conda environment for the release (named ``cea-{version}``)
+  - pip install to that environment, also pip install a list of standard plugins
+  - conda-pack the environment
+  - copy the environment to the setup/Dependencies/Python folder
+  - yarn dist:dir the GUI (expect the repository to be checked out to ``../CityEnergyAnalyst-GUI``)
+  - copy the GUI folder to the ``setup/win-unpacked`` folder
+  - run ``nsis`` to build the installer
+
+  Bonus steps: (maybe this isn't super necessary?)
+  - create a PR for the release with some text
+  - create a release on GitHub?
+  - update the cityenergyanalyst.com try-cea page?
 """
-
-
-
-
 
 import sys
 import datetime
@@ -23,7 +35,7 @@ import cea.scripts
 from cea import ScriptNotFoundException
 
 __author__ = "Daren Thomas"
-__copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
+__copyright__ = "Copyright 2020, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Daren Thomas"]
 __license__ = "MIT"
 __version__ = "0.1"
@@ -49,8 +61,8 @@ def main(config=None):
         sys.exit(1)
     script_name = args.pop(0)
     cea_script = cea.scripts.by_name(script_name, plugins=config.plugins)
-    if not 'doc' in cea_script.interfaces:
-        print('Invalid script for cea-doc')
+    if 'dev' not in cea_script.interfaces:
+        print('Invalid script for cea-dev')
         print_valid_script_names(config.plugins)
         sys.exit(ScriptNotFoundException.rc)
     config.restrict_to(cea_script.parameters)
@@ -70,8 +82,6 @@ def main(config=None):
     except cea.CustomDatabaseNotFound as error:
         print('ERROR: %s' % error)
         sys.exit(error.rc)
-    except:
-        raise
 
 
 def print_help(config, remaining_args):
@@ -93,9 +103,9 @@ def print_help(config, remaining_args):
             print("    %s" % parameter.help)
             print("    (default: %s)" % parameter.default)
     else:
-        print("usage: cea SCRIPT [OPTIONS]")
+        print("usage: cea-dev SCRIPT [OPTIONS]")
         print("       to run a specific script")
-        print("usage: cea --help SCRIPT")
+        print("usage: cea-dev --help SCRIPT")
         print("       to get additional help specific to a script")
         print_valid_script_names(plugins=config.plugins)
 
@@ -106,7 +116,7 @@ def print_valid_script_names(plugins):
     import itertools
     print("")
     print("SCRIPT can be one of:")
-    scripts = sorted(cea.scripts.for_interface('doc', plugins=plugins), key=lambda s: s.category)
+    scripts = sorted(cea.scripts.for_interface('dev', plugins=plugins), key=lambda s: s.category)
     for category, group in itertools.groupby(scripts, lambda s: s.category):
         print(textwrap.fill("[%s]:  %s" % (category, ', '.join(s.name for s in sorted(group, key=lambda s: s.name))),
                             subsequent_indent='    ', break_on_hyphens=False))
