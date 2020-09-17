@@ -214,9 +214,8 @@ def isolation_daysim(chunk_n, cea_daysim, building_names, locator, radiance_para
                                             sensor_intersection_zone):
         # select sensors data
         selection_of_results = solar_res[index:index + sensors_number_building]
-        result = [(array * (1.0 - intersection)).tolist() for array, intersection in
-                  zip(selection_of_results, sensor_intersection_building)]
-        items_sensor_name_and_result = dict(zip(sensor_code_building, result))
+        selection_of_results[np.array(sensor_intersection_building) == 1] = 0
+        items_sensor_name_and_result = dict(zip(sensor_code_building, selection_of_results.tolist()))
         index = index + sensors_number_building
 
         # create summary and save to disk
@@ -228,6 +227,7 @@ def isolation_daysim(chunk_n, cea_daysim, building_names, locator, radiance_para
     # erase daysim folder to avoid conflicts after every iteration
     print('Removing results folder')
     daysim_project.cleanup_project()
+
 
 def write_sensor_results(building_name, items_sensor_name_and_result, locator):
     with open(locator.get_radiation_building_sensors(building_name), 'w') as outfile:
@@ -256,6 +256,7 @@ def write_aggregated_results(building_name, items_sensor_name_and_result, locato
                                   'walls_north_m2',
                                   'roofs_top_m2']
     dict_not_aggregated = {}
+
     for field, field_area in zip(solar_analysis_fields, solar_analysis_fields_area):
         select_sensors = geometry.loc[geometry['code'] == field].set_index('SURFACE')
         area_m2 = select_sensors['AREA_m2'].sum()
@@ -264,6 +265,7 @@ def write_aggregated_results(building_name, items_sensor_name_and_result, locato
                                 for surface in select_sensors.index]).sum(axis=0)
         dict_not_aggregated[field] = array_field / 1000  # in kWh
         dict_not_aggregated[field_area] = area_m2
+
     data_aggregated_kW = (pd.DataFrame(dict_not_aggregated)).round(2)
     data_aggregated_kW["Date"] = weatherfile["date"]
     data_aggregated_kW.set_index('Date', inplace=True)
