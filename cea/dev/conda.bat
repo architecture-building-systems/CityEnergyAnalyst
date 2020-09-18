@@ -1,3 +1,4 @@
-@CALL %CEA_CONDA_PATH% activate base
-@CALL %CEA_CONDA_PATH% %*
-@CALL %CEA_CONDA_PATH% deactivate
+@ECHO OFF
+CALL %CEA_CONDA_PATH% activate %CEA_CONDA_ENV%
+CALL %*
+CALL %CEA_CONDA_PATH% deactivate
