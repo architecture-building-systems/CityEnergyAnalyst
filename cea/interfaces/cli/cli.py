@@ -70,7 +70,7 @@ def main(config=None):
 
     script_module = importlib.import_module(cea_script.module)
     try:
-        dev.build.main(config)
+        script_module.main(config)
         print("Execution time: %.2fs" % (datetime.datetime.now() - t0).total_seconds())
     except cea.ConfigError as config_error:
         print('ERROR: %s' % config_error)
