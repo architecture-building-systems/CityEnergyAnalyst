@@ -93,6 +93,9 @@ Section "Base Installation" Base_Installation_Section
     Delete "cmder.7z"
     SetOutPath "$INSTDIR"
 
+    # install the CEA-GUI
+    File /r "win-unpacked"
+
     # create a shortcut in the $INSTDIR for launching the CEA console
     CreateShortcut "$INSTDIR\CEA Console.lnk" "$INSTDIR\Dependencies\cmder\cmder.exe" "/single" \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL \
@@ -104,40 +107,7 @@ Section "Base Installation" Base_Installation_Section
 
     CreateShortcut "$INSTDIR\cea.config.lnk" "$WINDIR\notepad.exe" "$PROFILE\cea.config" \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Open CEA Configuration file"
-
-
-    # Download the CEA Electron interface
-    DetailPrint "Downloading CEA Electron interface"
-    inetc::get ${CEA_ELECTRON_URL} "win-unpacked.7z"
-    Pop $R0  # get the return value
-    StrCmp $R0 "OK" download_electron_ok
-        MessageBox MB_OK "Download failed: $R0"
-        Quit
-    download_electron_ok:
-        # get on with life...
-
-    # unzip the electron interface (note, expect a subdirectory called win-unpacked inside the archive)
-    DetailPrint "Extracting win-unpacked.7z"
-    SetOutPath "$INSTDIR"
-    Nsis7z::ExtractWithDetails "$INSTDIR\win-unpacked.7z" "Extracting Electron interface %s..."
-    Delete "$INSTDIR\win-unpacked.7z"
-    SetOutPath "$INSTDIR"
-
-    # Download the CityEnergyAnalyst conda environment
-#    DetailPrint "Downloading ${CEA_ENV_FILENAME}"
-#    inetc::get ${CEA_ENV_URL} ${CEA_ENV_FILENAME}
-#    Pop $R0  # Get the return value
-#    StrCmp $R0 "OK" download_python_ok
-#        MessageBox MB_OK "Download failed: $R0"
-#        Quit
-#    download_python_ok:
-#        # get on with life...
-
-    # unzip python environment to ${INSTDIR}\Dependencies
-    DetailPrint "Extracting ${CEA_ENV_FILENAME}"
-    Nsis7z::ExtractWithDetails ${CEA_ENV_FILENAME} "Installing Python %s..."
-    Delete ${CEA_ENV_FILENAME}
-
+    
     # make sure qt.conf has the correct paths
     DetailPrint "Updating qt.conf..."
     ${StrRep} $0 "$INSTDIR" "\" "/" # $0 now constains the $INSTDIR with forward slashes instead of backward slashes

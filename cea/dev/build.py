@@ -11,11 +11,10 @@ was used to install cityenergyanalyst from the repo.
 """
 import json
 import os
+import shutil
 import subprocess
 import tarfile
 
-import cea
-import cea.api
 import cea.config
 import cea.inputlocator
 
@@ -44,6 +43,8 @@ def main(config):
     pip_install(config, env_name, repo_folder)
     conda_pack(config, env_name, repo_folder)
     extract_tar_file(repo_folder)
+    yarn_dist_dir(config, repo_folder)
+    make_nsis(config, repo_folder)
 
 
 def conda():
@@ -59,7 +60,14 @@ def conda_env_exists(config, env_name):
     command = [conda(), "conda", "env", "list", "--json"]
     print("RUN: {command}".format(command=" ".join(command)))
     env = get_env(config, env_name)
-    completed_process = subprocess.run(command, capture_output=True, check=True, env=env, shell=True)
+
+    try:
+        completed_process = subprocess.run(command, capture_output=True, check=True, env=env, shell=True)
+    except subprocess.CalledProcessError:
+        print(completed_process.stdout)
+        print(completed_process.stderr)
+        raise
+
     stdout = completed_process.stdout.decode()
     # BUGFIX: noticed that stdout contained information after the last "}" character (\x1b[m... stuff)
     stdout = stdout[:stdout.rindex("}") + 1]
@@ -113,6 +121,28 @@ def extract_tar_file(repo_folder):
         tf.close()
     os.unlink(python_tar)
 
+
+def yarn_dist_dir(config, repo_folder):
+    cea_gui_folder = config.development.gui
+    if not os.path.exists(os.path.join(cea_gui_folder, "package.json")):
+        raise ValueError("Please configure the path to the CityEnergyAnalyst-GUI repository ({development:gui})")
+    if not os.path.exists(config.development.yarn):
+        raise ValueError("Please configure the path to yarn ({development:yarn})")
+    print("RUN yarn")
+    subprocess.run([config.development.yarn], cwd=cea_gui_folder)
+    print("RUN yarn dist:dir")
+    subprocess.run([config.development.yarn, "dist:dir"], cwd=cea_gui_folder, check=True)
+    print("COPY win-unpacked to setup/win-unpacked")
+    shutil.copytree(os.path.join(cea_gui_folder, "dist", "win-unpacked"), os.path.join(repo_folder,
+                                                                                       "setup", "win-unpacked"))
+
+
+def make_nsis(config, repo_folder):
+    if not os.path.exists(config.development.nsis):
+        raise ValueError("Please configure the path to the makensis.exe ({development:nsis})")
+    command = [config.development.nsis, os.path.join(repo_folder, "setup", "cityenergyanalyst.nsi")]
+    print("RUN {command}".format(command=" ".join(command)))
+    subprocess.run(command, check=True)
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
