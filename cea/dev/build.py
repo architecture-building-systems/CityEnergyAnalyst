@@ -59,13 +59,12 @@ def conda_env_exists(config, env_name):
     """Run ``conda env list`` and figure out if ``env_name`` already exists"""
     command = [conda(), "conda", "env", "list", "--json"]
     print("RUN: {command}".format(command=" ".join(command)))
-    env = get_env(config, env_name)
+    env = get_env(config, "base")
 
     try:
         completed_process = subprocess.run(command, capture_output=True, check=True, env=env, shell=True)
-    except subprocess.CalledProcessError:
-        print(completed_process.stdout)
-        print(completed_process.stderr)
+    except subprocess.CalledProcessError as cpe:
+        print(cpe.output)
         raise
 
     stdout = completed_process.stdout.decode()
@@ -133,8 +132,9 @@ def yarn_dist_dir(config, repo_folder):
     print("RUN yarn dist:dir")
     subprocess.run([config.development.yarn, "dist:dir"], cwd=cea_gui_folder, check=True)
     print("COPY win-unpacked to setup/win-unpacked")
-    shutil.copytree(os.path.join(cea_gui_folder, "dist", "win-unpacked"), os.path.join(repo_folder,
-                                                                                       "setup", "win-unpacked"))
+    destination = os.path.join(repo_folder, "setup", "win-unpacked")
+    shutil.rmtree(destination, ignore_errors=True, onerror=None)
+    shutil.copytree(os.path.join(cea_gui_folder, "dist", "win-unpacked"), destination)
 
 
 def make_nsis(config, repo_folder):
