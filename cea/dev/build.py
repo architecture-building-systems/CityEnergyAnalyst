@@ -4,8 +4,8 @@ CEA installer - it will run a long time. It _expects_ to be run in a development
 was used to install cityenergyanalyst from the repo.
 
 - create a conda environment for the version (unless already exists, then use that)
-- install cea to that environment
-- (bonus points: install a default list of cea plugins)
+    - install cea to that environment
+    - (bonus points: install a default list of cea plugins)
 - conda-pack that environment to the setup Dependencies folder
 - yarn dist:dir the GUI
 """

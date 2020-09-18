@@ -32,8 +32,10 @@ def main(config):
     env_name = "cea-{version}".format(version=cea.__version__)
     if not conda_env_exists(config, env_name):
         conda_env_create(config, env_name, os.path.join(repo_folder, "environment.yml"))
-
+    else:
+        print("NOTE: Using existing conda environment {env_name}".format(env_name=env_name))
     pip_install(config, env_name, repo_folder)
+    conda_pack(config, env_name, repo_folder)
 
 
 def conda():
@@ -83,6 +85,14 @@ def pip_install(config, env_name, repo_folder):
     command = [conda(), "pip", "install", "--force-reinstall", "--no-deps", repo_folder]
     print("RUN: {command}".format(command=" ".join(command)))
     subprocess.run(command, capture_output=False, check=True, env=get_env(config, env_name), shell=True)
+
+
+def conda_pack(config, env_name, repo_folder):
+    print("CONDA-PACK to Dependencies folder: {env_name}".format(env_name=env_name))
+    output_path = os.path.join(repo_folder, "setup", "Dependencies", "Python.tar")
+    command = [conda(), "conda-pack", "--name", env_name, "--output", output_path, "--n-threads", "-1", "--force"]
+    print("RUN: {command}".format(command=" ".join(command)))
+    subprocess.run(command, capture_output=False, check=True, env=get_env(config, "base"), shell=True)
 
 
 if __name__ == '__main__':
