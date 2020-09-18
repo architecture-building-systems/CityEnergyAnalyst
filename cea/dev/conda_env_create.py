@@ -33,7 +33,7 @@ def main(config):
     if not conda_env_exists(config, env_name):
         conda_env_create(config, env_name, os.path.join(repo_folder, "environment.yml"))
 
-    pip_install(config, repo_folder)
+    pip_install(config, env_name, repo_folder)
 
 
 def conda():
@@ -46,32 +46,43 @@ def conda():
 
 def conda_env_exists(config, env_name):
     """Run ``conda env list`` and figure out if ``env_name`` already exists"""
-    command = [conda(), "env", "list", "--json"]
+    command = [conda(), "conda", "env", "list", "--json"]
     print("RUN: {command}".format(command=" ".join(command)))
-    completed_process = subprocess.run(command, capture_output=True, check=True, env=get_env(config), shell=True)
+    env = get_env(config, env_name)
+    completed_process = subprocess.run(command, capture_output=True, check=True, env=env, shell=True)
     stdout = completed_process.stdout.decode()
     # BUGFIX: noticed that stdout contained information after the last "}" character (\x1b[m... stuff)
     stdout = stdout[:stdout.rindex("}") + 1]
-    return any(e.endswith(env_name) for e in json.loads(stdout)["envs"])
+    try:
+        env_names = json.loads(stdout)["envs"]
+        return any(e.endswith(env_name) for e in env_names)
+    except json.decoder.JSONDecodeError:
+        print("----")
+        print(stdout)
+        print("----")
+        raise
 
 
-def get_env(config):
+def get_env(config, conda_env):
     env = {k: v for k, v in os.environ.items()}
     env["CEA_CONDA_PATH"] = config.development.conda
+    env["CEA_CONDA_ENV"] = conda_env
     return env
 
 
 def conda_env_create(config, env_name, environment_yml):
     print("CREATE conda environment: {env_name}".format(env_name=env_name))
-    command = [conda(), "env", "create", "--name", env_name, "--file", environment_yml]
+    command = [conda(), "conda", "env", "create", "--name", env_name, "--file", environment_yml]
     print("RUN: {command}".format(command=" ".join(command)))
-    completed_process = subprocess.run(command, capture_output=False, check=True, env=get_env(config), shell=True)
+    subprocess.run(command, capture_output=False, check=True, env=get_env(config, "base"), shell=True)
     print("DONE")
 
 
-
-def pip_install(config, repo_folder):
-    pass
+def pip_install(config, env_name, repo_folder):
+    print("INSTALL cea to conda environment: {env_name} (repo={repo})".format(env_name=env_name, repo=repo_folder))
+    command = [conda(), "pip", "install", "--force-reinstall", "--no-deps", repo_folder]
+    print("RUN: {command}".format(command=" ".join(command)))
+    subprocess.run(command, capture_output=False, check=True, env=get_env(config, env_name), shell=True)
 
 
 if __name__ == '__main__':
