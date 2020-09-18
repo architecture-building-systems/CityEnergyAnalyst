@@ -456,10 +456,3 @@ Development:
     interfaces: [dev]
     module: cea.dev.build
     parameters: [development]
-
-  - name: conda-env-create
-    label: conda env create
-    description: create a new conda environment for the current version
-    interfaces: [dev]
-    module: cea.dev.conda_env_create
-    parameters: [development]

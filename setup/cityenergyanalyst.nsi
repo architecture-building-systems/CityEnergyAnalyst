@@ -1,4 +1,5 @@
 # NSIS script for creating the City Energy Analyst installer
+SetCompressor /FINAL lzma
 
 ; include logic library
 !include 'LogicLib.nsh'
@@ -92,45 +93,6 @@ Section "Base Installation" Base_Installation_Section
     Delete "cmder.7z"
     SetOutPath "$INSTDIR"
 
-    # make sure cmder can access our python (and the cea command)
-    # DetailPrint "Setting up CEA Console"
-    # CreateDirectory $INSTDIR\Dependencies\cmder\config\profile.d
-    # FileOpen $0 "$INSTDIR\Dependencies\cmder\config\profile.d\cea.bat" w
-    # FileWrite $0 "SET PATH=$INSTDIR\Dependencies\Python;$INSTDIR\Dependencies\Python\Scripts;%PATH%"
-    # FileWrite $0 "$\r$\n" ; we write a new line
-    # FileWrite $0 "SET PATH=$INSTDIR\Dependencies\Python\Library\bin;$INSTDIR\Dependencies\Daysim;%PATH%"
-    # FileWrite $0 "$\r$\n" ; we write a new line
-    # FileWrite $0 "SET PYTHONHOME=$INSTDIR\Dependencies\Python"
-    # FileWrite $0 "$\r$\n" ; we write a new line
-    # FileWrite $0 "SET RAYPATH=$INSTDIR\Dependencies\Daysim"
-    # FileWrite $0 "$\r$\n" ; we write a new line
-    # FileWrite $0 "SET GDAL_DATA=$INSTDIR\Dependencies\Python\Library\share\gdal"
-    # FileWrite $0 "$\r$\n" ; we write a new line
-    # FileWrite $0 "SET PROJ_LIB=$INSTDIR\Dependencies\Python\Library\share"
-    # FileWrite $0 "$\r$\n" ; we write a new line
-    # FileWrite $0 "ALIAS find=$\"$INSTDIR\Dependencies\cmder\vendor\git-for-windows\usr\bin\find.exe$\" $$*"
-    # FileWrite $0 "$\r$\n" ; we write a new line
-    # FileWrite $0 "SET PROMPT=(CEA v${VER}) $$P$$G"
-    # FileClose $0
-
-    # create a batch file for running the dashboard with some environment variables set (for DAYSIM etc.)
-    # DetailPrint "Setting up CEA Dashboard"
-    # FileOpen $0 "$INSTDIR\dashboard.bat" w
-    # FileWrite $0 "SET PATH=$INSTDIR\Dependencies\Python;$INSTDIR\Dependencies\Python\Scripts;%PATH%"
-    # FileWrite $0 "SET PATH=$INSTDIR\Dependencies\Python\Library\bin;$INSTDIR\Dependencies\Daysim;%PATH%"
-    # FileWrite $0 "$\r$\n" ; we write a new line
-    # FileWrite $0 "SET PYTHONHOME=$INSTDIR\Dependencies\Python"
-    # FileWrite $0 "$\r$\n" ; we write a new line
-    # FileWrite $0 "SET GDAL_DATA=$INSTDIR\Dependencies\Python\Library\share\gdal"
-    # FileWrite $0 "$\r$\n" ; we write a new line
-    # FileWrite $0 "SET PROJ_LIB=$INSTDIR\Dependencies\Python\Library\share"
-    # FileWrite $0 "$\r$\n" ; we write a new line
-    # FileWrite $0 "SET RAYPATH=$INSTDIR\Dependencies\Daysim"
-    # FileWrite $0 "$\r$\n" ; we write a new line
-    # FileWrite $0 "$\"$INSTDIR\Dependencies\Python\python.exe$\" -u -m cea.interfaces.cli.cli dashboard"
-    # FileClose $0
-
-
     # create a shortcut in the $INSTDIR for launching the CEA console
     CreateShortcut "$INSTDIR\CEA Console.lnk" "$INSTDIR\Dependencies\cmder\cmder.exe" "/single" \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL \
@@ -142,8 +104,6 @@ Section "Base Installation" Base_Installation_Section
 
     CreateShortcut "$INSTDIR\cea.config.lnk" "$WINDIR\notepad.exe" "$PROFILE\cea.config" \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Open CEA Configuration file"
-
-
 
 
     # Download the CEA Electron interface
@@ -164,14 +124,14 @@ Section "Base Installation" Base_Installation_Section
     SetOutPath "$INSTDIR"
 
     # Download the CityEnergyAnalyst conda environment
-    DetailPrint "Downloading ${CEA_ENV_FILENAME}"
-    inetc::get ${CEA_ENV_URL} ${CEA_ENV_FILENAME}
-    Pop $R0  # Get the return value
-    StrCmp $R0 "OK" download_python_ok
-        MessageBox MB_OK "Download failed: $R0"
-        Quit
-    download_python_ok:
-        # get on with life...
+#    DetailPrint "Downloading ${CEA_ENV_FILENAME}"
+#    inetc::get ${CEA_ENV_URL} ${CEA_ENV_FILENAME}
+#    Pop $R0  # Get the return value
+#    StrCmp $R0 "OK" download_python_ok
+#        MessageBox MB_OK "Download failed: $R0"
+#        Quit
+#    download_python_ok:
+#        # get on with life...
 
     # unzip python environment to ${INSTDIR}\Dependencies
     DetailPrint "Extracting ${CEA_ENV_FILENAME}"
