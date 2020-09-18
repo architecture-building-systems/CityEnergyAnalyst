@@ -7,6 +7,7 @@ Install the current repository into it (``pip install --force-reinstall --no-dep
 import json
 import os
 import subprocess
+import tarfile
 
 import cea
 import cea.api
@@ -25,7 +26,8 @@ __status__ = "Production"
 
 def main(config):
     """
-    Create a new conda environment based on the current cea version.
+    Create a new conda environment based on the current cea version. install cea into it, conda-pack it
+    and place it in the setup/Dependencies/Python folder ready for the installer to compress.
     """
     repo_folder = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
@@ -36,6 +38,7 @@ def main(config):
         print("NOTE: Using existing conda environment {env_name}".format(env_name=env_name))
     pip_install(config, env_name, repo_folder)
     conda_pack(config, env_name, repo_folder)
+    extract_tar_file(repo_folder)
 
 
 def conda():
@@ -93,6 +96,13 @@ def conda_pack(config, env_name, repo_folder):
     command = [conda(), "conda-pack", "--name", env_name, "--output", output_path, "--n-threads", "-1", "--force"]
     print("RUN: {command}".format(command=" ".join(command)))
     subprocess.run(command, capture_output=False, check=True, env=get_env(config, "base"), shell=True)
+
+
+def extract_tar_file(repo_folder):
+    python_tar = os.path.join(repo_folder, "setup", "Dependencies", "Python.tar")
+    print(f"EXTRACT tar file {python_tar}")
+    tf = tarfile.open(python_tar, "r")
+    tf.extractall(os.path.join(repo_folder, "setup", "Dependencies", "Python"))
 
 
 if __name__ == '__main__':
