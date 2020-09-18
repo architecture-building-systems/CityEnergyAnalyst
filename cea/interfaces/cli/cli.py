@@ -15,6 +15,8 @@ import cea.config
 import cea.scripts
 import cea
 from typing import List
+
+import dev.build
 from cea.plugin import CeaPlugin
 
 __author__ = "Daren Thomas"
@@ -68,7 +70,7 @@ def main(config=None):
 
     script_module = importlib.import_module(cea_script.module)
     try:
-        script_module.main(config)
+        dev.build.main(config)
         print("Execution time: %.2fs" % (datetime.datetime.now() - t0).total_seconds())
     except cea.ConfigError as config_error:
         print('ERROR: %s' % config_error)

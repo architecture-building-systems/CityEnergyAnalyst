@@ -7,6 +7,8 @@ Provide access to the scripts exported by the City Energy Analyst.
 
 import datetime
 
+import dev.build
+
 
 def register_scripts():
     import cea.config
@@ -37,7 +39,7 @@ def register_scripts():
                 raise cea.MissingInputDataException()
             t0 = datetime.datetime.now()
             # run the script
-            script_module.main(config)
+            dev.build.main(config)
 
             # print success message
             msg = "Script completed. Execution time: %.2fs" % (datetime.datetime.now() - t0).total_seconds()
