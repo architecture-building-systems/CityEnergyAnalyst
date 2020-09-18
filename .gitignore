@@ -122,3 +122,4 @@ CityEnergyAnalyst.srctrldb
 CityEnergyAnalyst.srctrldb_tmp
 CityEnergyAnalyst.srctrlprj
 *.~csv
+setup/Dependencies/Python.tar
