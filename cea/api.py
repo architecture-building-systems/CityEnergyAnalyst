@@ -34,7 +34,7 @@ def register_scripts():
                 raise cea.MissingInputDataException()
             t0 = datetime.datetime.now()
             # run the script
-            dev.build.main(config)
+            script_module.main(config)
 
             # print success message
             msg = "Script completed. Execution time: %.2fs" % (datetime.datetime.now() - t0).total_seconds()
