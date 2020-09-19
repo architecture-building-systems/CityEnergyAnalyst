@@ -115,18 +115,7 @@ Section "Base Installation" Base_Installation_Section
     WriteINIStr "$INSTDIR\Dependencies\Python\qt.conf" Paths Binaries "$0/Dependencies/Python/Library/bin"
     WriteINIStr "$INSTDIR\Dependencies\Python\qt.conf" Paths Libraries "$0/Dependencies/Python/Library/lib"
     WriteINIStr "$INSTDIR\Dependencies\Python\qt.conf" Paths Headers "$0/Dependencies/Python/Library/include/qt"
-
-    # note, all dependencies are already provided by Dependencies.7z - see build-dependencies.bat
-    DetailPrint "Pip installing CityEnergyAnalyst==${VER}"
-    nsExec::ExecToLog '${PIP_INSTALL} -U --force-reinstall --no-deps cityenergyanalyst==${VER}'
-
-    # make sure cea was installed
-    Pop $0
-    DetailPrint 'pip install cityenergyanalyst==${VER} returned $0'
-    ${If} "$0" != "0"
-        Abort "Could not install CityEnergyAnalyst ${VER} - see Details"
-    ${EndIf}
-
+    
     # create cea.config file in the %userprofile% directory by calling `cea --help` and set daysim paths
     nsExec::ExecToLog '"$INSTDIR\cea-env-run.bat" cea --help'
     Pop $0
