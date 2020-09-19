@@ -2,12 +2,7 @@
 Provide access to the scripts exported by the City Energy Analyst.
 """
 
-
-
-
 import datetime
-
-import dev.build
 
 
 def register_scripts():
@@ -46,6 +41,7 @@ def register_scripts():
             print("")
             print("-" * len(msg))
             print(msg)
+
         if script_module.__doc__:
             script_runner.__doc__ = script_module.__doc__.strip()
         else:
@@ -54,6 +50,7 @@ def register_scripts():
 
     class LazyLoader(object):
         """Allow lazy-loading of cea scripts"""
+
         def __init__(self, cea_script):
             self._cea_script = cea_script
             self._runner = None
@@ -78,7 +75,6 @@ def register_scripts():
 
 
 register_scripts()
-
 
 if __name__ == '__main__':
     print(demand.__doc__)
