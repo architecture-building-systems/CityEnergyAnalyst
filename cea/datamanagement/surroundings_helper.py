@@ -89,7 +89,7 @@ def alpha_shape(points, alpha=0.01):
             add_edge(edges, edge_points, coords, ic, ia)
 
     m = geometry.MultiLineString(edge_points)
-    triangles = list(polygonize(m))
+    triangles = [geom for geom in polygonize(m) if geom.is_valid]
     return unary_union(triangles), edge_points
 
 
