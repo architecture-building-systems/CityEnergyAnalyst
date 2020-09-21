@@ -40,9 +40,9 @@ def main(config):
         conda_env_create(config, env_name, os.path.join(repo_folder, "environment.yml"))
     else:
         print("NOTE: Using existing conda environment {env_name}".format(env_name=env_name))
-    pip_install(config, env_name, repo_folder)
     conda_pack(config, env_name, repo_folder)
     extract_tar_file(repo_folder)
+    python_setup_py_sdist(config, env_name, repo_folder)
     yarn_dist_dir(config, repo_folder)
     make_nsis(config, repo_folder)
 
@@ -95,11 +95,16 @@ def conda_env_create(config, env_name, environment_yml):
     print("DONE")
 
 
-def pip_install(config, env_name, repo_folder):
-    print("INSTALL cea to conda environment: {env_name} (repo={repo})".format(env_name=env_name, repo=repo_folder))
-    command = [conda(), "pip", "install", "--force-reinstall", "--no-deps", repo_folder]
+def python_setup_py_sdist(config, env_name, repo_folder):
+    print(f"CREATE sdist of CEA: (repo_folder={repo_folder})")
+    command = [conda(), "python", "setup.py", "sdist"]
     print("RUN: {command}".format(command=" ".join(command)))
-    subprocess.run(command, capture_output=False, check=True, env=get_env(config, env_name), shell=True)
+    subprocess.run(command, capture_output=False, check=True, env=get_env(config, env_name), shell=True,
+                   cwd=repo_folder)
+    # collect output and copy to setup/Dependencies
+    version = cea.__version__
+    shutil.copyfile(os.path.join(repo_folder, "dist", f"cityenergyanalyst-{version}.tar.gz"),
+                    os.path.join(repo_folder, "setup", "Dependencies", "cityenergyanalyst.tar.gz"))
 
 
 def conda_pack(config, env_name, repo_folder):
@@ -143,6 +148,7 @@ def make_nsis(config, repo_folder):
     command = [config.development.nsis, os.path.join(repo_folder, "setup", "cityenergyanalyst.nsi")]
     print("RUN {command}".format(command=" ".join(command)))
     subprocess.run(command, check=True)
+
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
