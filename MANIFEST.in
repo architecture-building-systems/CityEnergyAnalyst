@@ -21,3 +21,5 @@ recursive-include cea/plots *.html
 
 include cea/workflows/district_cooling_system.yml
 include cea/workflows/district_heating_system.yml
+
+include cea/dev/conda.bat
