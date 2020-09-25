@@ -125,3 +125,4 @@ CityEnergyAnalyst.srctrlprj
 setup/Dependencies/Python.tar
 setup/Dependencies/Python/*
 setup/win-unpacked/*
+setup/Dependencies/cityenergyanalyst.tar.gz

@@ -89,56 +89,62 @@ Create a Release Draft on GitHub
 - Tag the release with the correct version number.
 
 
+Updating the CEA GUI interface
+------------------------------
+
+You'll need yarn_ installed.
+
+.. _yarn: https://classic.yarnpkg.com/en/docs/install/#windows-stable
+
+For the installer to be able to pick up the newest version of the CEA GUI interface, make sure you
+
+- pull the newest version of the ``CityEnergyAnalyst-GUI`` repository
+- open CEA Console, navigate to the GitHub repo of the ``CityEnergyAnalyst-GUI`` repository
+- type ``yarn``, wait for the command to complete (this will update packages if necessary)
+
 Creating the installer
 ----------------------
 
 - first, make sure you have the Nullsoft Scriptable Installation System (NSIS) installed. See :doc:`how-to-set-up-nsis`
-- if the dependencies changed, you need to re-create the ``Dependencies.7z`` file and store it as a binary on the
-  release.
+- next, make sure the command `cea-dev build` is configured properly. The configuration should look something like this::
 
-  - Be sure to update the URL to ``Dependencies.7z`` in the file ``setup/cityenergyanalyst.nsi`` to the new release
-  - To create the ``Dependencies.7z`` file, follow these steps:
+    (CEA) λ cea-config build
+    City Energy Analyst version 3.11.0
+    Configuring `cea build` with the following parameters:
+    - development:nsis = C:\Program Files (x86)\NSIS\Bin\makensis.exe
+      (default: )
+    - development:conda = C:\Users\darthoma\Miniconda2\condabin\conda.bat
+      (default: )
+    - development:gui = c:\Users\darthoma\Documents\GitHub\CityEnergyAnalyst-GUI
+      (default: )
+    - development:yarn = C:\Users\darthoma\AppData\Roaming\npm\yarn.cmd
+      (default: )
 
-    - create an empty folder called ``Dependencies``
-    - locate the conda environment for the CEA (as created with ``environment.yml`` and copy it to the ``Dependencies``
-      folder.
-    - rename the environment folder to ``Python``
-    - use the 7z_ program to compress the ``Dependencies`` folder to ``Dependencies.7z``
+You can either edit the ``cea.config`` file directly or use ``cea-config build --nsis C:\...\makensis.exe --conda ...``.
+Note: The paths will be different on your system. Use the ``conda.bat`` in ``condabin`` of your Anaconda/Miniconda
+installation. The path to ``gui`` should be set to the repository folder of the CityEnergyAnalyst-GUI repository.
 
-- create the installer by right-clicking ``setup/cityenergyanalyst.nsi`` in Windows Explorer and choosing the "Compile
-  NSIS Script" option.
-- upload the installer to the Release page.
-- update the document :doc:`installation/installation-on-windows` to refer to the newest installer.
-
-.. _7z: https://www.7-zip.org/7z.html
-
-
-Updating the CEA GUI interface
-------------------------------
-
-For the installer to be able to pick up the newest version of the CEA GUI interface, you need to build it,
-create a release and attach a ``win-unpacked.7z`` to the release. Here are the steps:
-
-- pull the newest version of the ``CityEnergyAnalyst-GUI`` repository
-- open CEA Console, navigate to the GitHub repo of the ``CityEnergyAnalyst-GUI`` repository
-- type ``yarn dist:dir``, wait for the command to complete
-- the subfolder ``dist`` will contain a folder ``win-unpacked``
-- compress the folder ``win-unpacked`` to ``win-unpacked.7z``
-- attach the ``win-unpacked.7z`` file to the CityEnergyAnalyst release
+- creating the installer is then as easy as ``cea-dev build``. This will run quite some time as it will create
+  a new conda environment for the version, conda-pack it, and do a lot of compressing.
+- locate the installer in the CityEnergyAnalyst repository under ``setup/Output``.
 
 
 Publish the Release on GitHub
 -----------------------------
-The release should be published so that it could be found on GitHub for testing (the next step).
+The release should be published so that it could be found on GitHub for testing (the next step). Add the installer
+you created in the previous step.
 
 
 Testing in a virtual machine
 ----------------------------
 
 In order to test the release, it is a good idea to run the installation guide / installer on a clean virtual machine,
-e.g. with VirtualBox_. This test should go as far as running `cea test --reference-case open` just to be sure everything
+e.g. with VirtualBox_. This test should go as far as running `cea test --workflow slow` just to be sure everything
 is still working. This test goes a bit further than the regular test in that it makes sure the installation instructions
 still work on a new installation. This is important because it can find missing packages in the dependency lists etc.
+
+It's a good idea to use a different username on the VM as the one you used to create the installer - some ``pip`` bugs
+can be found that way.
 
 .. _VirtualBox: https://www.virtualbox.org/
 
@@ -175,12 +181,13 @@ For more information, check out the :doc:`how-to-document-cea`.
 Uploading to PyPI
 -----------------
 
+.. note:: This step is not really necessary anymore for installation.
+
 - check long-description with this commandline::
 
     python setup.py --long-description | for /f %i in ('where rst2html.py') do python %i > %temp%\ld.html && start %temp%\ld.html
 
   - make sure the output is valid / no errors, as this will be the text of the CEA on PyPI
-  - for ``rst2html.py`` to be installed, you will need to do a ``pip install sphinx``
 
 - delete any old distributions from dist folder (you can just delete the whole ``dist`` folder if you like)
 
