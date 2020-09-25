@@ -1,7 +1,9 @@
 """
 Implements the substation model.
 """
-from __future__ import division
+
+
+
 import pandas as pd
 import time
 import numpy as np
@@ -53,23 +55,23 @@ def substation_HEX_design_main(buildings_demands, substation_systems, thermal_ne
         buildings connected to the network.
     """
 
-    t0 = time.clock()
+    t0 = time.perf_counter()
 
     # Calculate disconnected buildings_demands files and substation operation.
     substations_HEX_specs = pd.DataFrame(columns=['HEX_areas', 'HEX_UA', 'HEX_Q'])
     substations_Q = pd.DataFrame()
     for name in buildings_demands.keys():
-        print name
+        print(name)
         # calculate substation parameters (A,UA) per building and store to .csv (target)
         substation_HEX = substation_HEX_sizing(buildings_demands[name], substation_systems, thermal_network)
         # write into dataframe
-        substations_HEX_specs.ix[name] = substation_HEX
+        substations_HEX_specs.loc[name] = substation_HEX
         if substations_Q.empty:
             substations_Q = pd.DataFrame(substation_HEX[2])
         else:
             substations_Q = pd.concat([substations_Q, substation_HEX[2]])
 
-    print time.clock() - t0, "seconds process time for the Substation Routine \n"
+    print(time.perf_counter() - t0, "seconds process time for the Substation Routine \n")
     return substations_HEX_specs, substations_Q
 
 
@@ -291,7 +293,7 @@ def substation_return_model_main(thermal_network, T_substation_supply, t, consum
             # calculate DH substation return temperature and substation flow rate
             T_substation_return_K, \
             mcp_sub, thermal_demand[name] = calc_substation_return_DH(building, T_substation_supply_K,
-                                                                      thermal_network.substations_HEX_specs.ix[name],
+                                                                      thermal_network.substations_HEX_specs.loc[name],
                                                                       thermal_network, name, t)
         else:
             for key in thermal_network.substation_cooling_systems:
@@ -299,11 +301,8 @@ def substation_return_model_main(thermal_network, T_substation_supply, t, consum
                 if not name in thermal_network.cc_old[key][t].columns:
                     thermal_network.cc_old[key][t][name] = 0.0
             # calculate DC substation return temperature and substation flow rate
-            T_substation_return_K, mcp_sub, thermal_demand[name] = calc_substation_return_DC(building,
-                                                                                             T_substation_supply_K,
-                                                                                             thermal_network.substations_HEX_specs.ix[
-                                                                                                 name],
-                                                                                             thermal_network, name, t)
+            T_substation_return_K, mcp_sub, thermal_demand[name] = calc_substation_return_DC(
+                building, T_substation_supply_K, thermal_network.substations_HEX_specs.loc[name], thermal_network, name, t)
 
         T_return_all_K[name] = [T_substation_return_K]
         mdot_sum_all_kgs[name] = [mcp_sub / (HEAT_CAPACITY_OF_WATER_JPERKGK / 1000)]  # [kg/s]

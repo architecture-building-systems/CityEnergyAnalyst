@@ -5,8 +5,9 @@ Creates the graphviz output used to visualize script dependencies.
 This file relies on the schemas.yml to create the graphviz plots.
 """
 
-from __future__ import print_function
-from __future__ import division
+
+
+
 
 import os
 import cea.config

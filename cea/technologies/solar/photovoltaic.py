@@ -2,8 +2,9 @@
 Photovoltaic
 """
 
-from __future__ import division
-from __future__ import print_function
+
+
+
 
 import os
 import time
@@ -60,7 +61,7 @@ def calc_PV(locator, config, latitude, longitude, weather_data, datetime_local, 
 
     """
 
-    t0 = time.clock()
+    t0 = time.perf_counter()
     radiation_path = locator.get_radiation_building_sensors(building_name)
     metadata_csv_path = locator.get_radiation_metadata(building_name)
 
@@ -99,7 +100,7 @@ def calc_PV(locator, config, latitude, longitude, weather_data, datetime_local, 
                                     index_label='SURFACE',
                                     float_format='%.2f')  # print selected metadata of the selected sensors
 
-        print(building_name, 'done - time elapsed: %.2f seconds' % (time.clock() - t0))
+        print(building_name, 'done - time elapsed: %.2f seconds' % (time.perf_counter() - t0))
     else:  # This loop is activated when a building has not sufficient solar potential
         final = pd.DataFrame(
             {'Date': datetime_local, 'PV_walls_north_E_kWh': 0, 'PV_walls_north_m2': 0, 'PV_walls_south_E_kWh': 0,
@@ -165,7 +166,7 @@ def calc_pv_generation(sensor_groups, weather_data, date_local, solar_properties
     total_el_output_PV_kWh = [0 for i in range(number_groups)]
     total_radiation_kWh = [0 for i in range(number_groups)]
 
-    potential = pd.DataFrame(index=[range(HOURS_IN_YEAR)])
+    potential = pd.DataFrame(index=range(HOURS_IN_YEAR))
     panel_orientations = ['walls_south', 'walls_north', 'roofs_top', 'walls_east', 'walls_west']
     for panel_orientation in panel_orientations:
         potential['PV_' + panel_orientation + '_E_kWh'] = 0
@@ -704,8 +705,8 @@ def calc_Cinv_pv(total_module_area_m2, locator, technology=0):
     P_nominal_W = total_module_area_m2 * (constants.STC_RADIATION_Wperm2 * nominal_efficiency)
     # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
     # capacity for the corresponding technology from the database
-    if P_nominal_W < PV_cost_data['cap_min'][0]:
-        P_nominal_W = PV_cost_data['cap_min'][0]
+    if P_nominal_W < PV_cost_data['cap_min'].values[0]:
+        P_nominal_W = PV_cost_data['cap_min'].values[0]
     PV_cost_data = PV_cost_data[
         (PV_cost_data['cap_min'] <= P_nominal_W) & (PV_cost_data['cap_max'] > P_nominal_W)]
     Inv_a = PV_cost_data.iloc[0]['a']
@@ -745,7 +746,7 @@ def calc_Crem_pv(E_nom):
     KEV_interpolated_kW = interpolate.interp1d(P_installed_in_kW, KEV_regime, kind="linear")
     KEV_obtained_in_RpPerkWh = 0
     if (E_nom / 1000) > P_installed_in_kW[-1]:
-        number_of_installations = int(math.ceil(E_nom / P_installed_in_kW[-1]))
+        number_of_installations = int(ceil(E_nom / P_installed_in_kW[-1]))
         E_nom_per_chiller = E_nom / number_of_installations
         for i in range(number_of_installations):
             KEV_obtained_in_RpPerkWh = KEV_obtained_in_RpPerkWh + KEV_interpolated_kW(E_nom_per_chiller / 1000.0)

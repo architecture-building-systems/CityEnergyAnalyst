@@ -1,5 +1,6 @@
-from __future__ import division
-from __future__ import print_function
+
+
+
 
 import pandas as pd
 import plotly.graph_objs as go
@@ -82,7 +83,7 @@ class EnergyLossBarPlot(cea.plots.thermal_networks.ThermalNetworksPlotBase):
             peak.append(round(merged_df[field].abs().max(), 2))  # calculate peak value
             local_total = round(merged_df[field].sum(), 2)  # calculate total for this building
             total_perc.append(str(local_total) + " (" + str(
-                min(round(local_total / total_df.sum().values * 100, 1),
+                min((local_total / total_df.sum().values * 100).round(1),
                     100.0)) + " %)")  # transform value to percentage
         column_names = ['Loss Name', 'Total [kWh/yr]', 'Peak [kWh/yr]', 'Median [kWh/yr]', 'Highest 3 Losses']
         column_values = [load_names, total_perc, peak, median, anchors]

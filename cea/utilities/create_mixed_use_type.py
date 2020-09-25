@@ -1,8 +1,9 @@
 """
 This script creates a new use-type by aggregating values from a list of different use-types
 """
-from __future__ import division
-from __future__ import print_function
+
+
+
 
 import os
 

@@ -3,6 +3,9 @@ This script uses libraries in shapely to create connections from
 a series of points (buildings) to the closest street
 """
 
+
+
+
 import os
 
 from geopandas import GeoDataFrame as gdf

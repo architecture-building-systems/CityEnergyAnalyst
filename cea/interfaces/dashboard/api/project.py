@@ -1,3 +1,6 @@
+
+
+
 import os
 import shutil
 import glob
@@ -304,7 +307,7 @@ class ScenarioImage(Resource):
                 with open(image_path, 'rb') as imgFile:
                     image = base64.b64encode(imgFile.read())
 
-                return {'image': image}
+                return {'image': image.decode("utf-8")}
             abort(400, 'Zone file not found')
         else:
             abort(400, 'Scenario does not exist', choices=choices)

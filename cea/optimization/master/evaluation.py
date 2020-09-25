@@ -2,7 +2,9 @@
 Evaluation function of an individual
 
 """
-from __future__ import division
+
+
+
 
 import cea.inputlocator
 from cea.optimization.master import cost_model

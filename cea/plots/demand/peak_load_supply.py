@@ -1,4 +1,6 @@
-from __future__ import division
+
+
+
 
 import plotly.graph_objs as go
 from plotly.offline import plot

@@ -2,8 +2,9 @@
 Photovoltaic thermal panels
 """
 
-from __future__ import division
-from __future__ import print_function
+
+
+
 
 import os
 import time
@@ -65,7 +66,7 @@ def calc_PVT(locator, config, latitude, longitude, weather_data, date_local, bui
     :return: Building_PVT.csv with solar collectors heat generation potential of each building, Building_PVT_sensors.csv
              with sensor data of each PVT panel.
     """
-    t0 = time.clock()
+    t0 = time.perf_counter()
 
     radiation_json_path = locator.get_radiation_building_sensors(building_name)
     metadata_csv_path = locator.get_radiation_metadata(building_name)
@@ -110,7 +111,7 @@ def calc_PVT(locator, config, latitude, longitude, weather_data, date_local, bui
                                     index_label='SURFACE',
                                     float_format='%.2f')  # print selected metadata of the selected sensors
 
-        print('Building', building_name, 'done - time elapsed:', (time.clock() - t0), ' seconds')
+        print('Building', building_name, 'done - time elapsed:', (time.perf_counter() - t0), ' seconds')
 
     else:  # This block is activated when a building has not sufficient solar potential
         Final = pd.DataFrame(
@@ -187,7 +188,7 @@ def calc_PVT_generation(sensor_groups, weather_data, date_local, solar_propertie
 
     list_results_from_PVT = list(range(number_groups))
 
-    potential = pd.DataFrame(index=[range(HOURS_IN_YEAR)])
+    potential = pd.DataFrame(index=range(HOURS_IN_YEAR))
     panel_orientations = ['walls_south', 'walls_north', 'roofs_top', 'walls_east', 'walls_west']
     for panel_orientation in panel_orientations:
         potential['PVT_' + panel_orientation + '_Q_kWh'] = 0.0
@@ -637,8 +638,8 @@ def calc_Cinv_PVT(PVT_peak_W, locator, technology=0):
         PVT_cost_data = PVT_cost_data[PVT_cost_data['code'] == technology_code[technology]]
         # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
         # capacity for the corresponding technology from the database
-        if PVT_peak_W < PVT_cost_data['cap_min'][0]:
-            PVT_peak_W = PVT_cost_data['cap_min'][0]
+        if PVT_peak_W < PVT_cost_data['cap_min'].values[0]:
+            PVT_peak_W = PVT_cost_data['cap_min'].values[0]
         PVT_cost_data = PVT_cost_data[
             (PVT_cost_data['cap_min'] <= PVT_peak_W) & (PVT_cost_data['cap_max'] > PVT_peak_W)]
         Inv_a = PVT_cost_data.iloc[0]['a']

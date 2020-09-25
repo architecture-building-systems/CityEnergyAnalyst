@@ -2,8 +2,9 @@
 cehck perfromacne of pareto curve
 https://arxiv.org/pdf/1901.00577.pdf
 """
-from __future__ import division
-from __future__ import print_function
+
+
+
 
 import json
 
@@ -37,7 +38,7 @@ class OptimizationPerformance(cea.plots.optimization.GenerationPlotBase):
     def calc_convergence_metrics(self):
         with open(self.locator.get_optimization_checkpoint(self.generation), 'rb') as f:
             data_checkpoint = json.load(f)
-        convergence_metrics = {'generation': range(1, int(self.generation) + 1),
+        convergence_metrics = {'generation': list(range(1, int(self.generation) + 1)),
                                'Generational Distance': data_checkpoint['generational_distances'],
                                'Delta of Generational Distance': data_checkpoint['difference_generational_distances']}
         return convergence_metrics

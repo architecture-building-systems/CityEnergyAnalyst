@@ -2,14 +2,12 @@
 This is a template script - an example of how a CEA script should be set up.
 NOTE: ADD YOUR SCRIPT'S DOCUMENTATION HERE (what, why, include literature references)
 """
-from __future__ import division
-from __future__ import print_function
 
 import math
 import os
 
 import numpy as np
-import osmnx as ox
+import osmnx.footprints
 from geopandas import GeoDataFrame as Gdf
 import pandas as pd
 
@@ -52,6 +50,7 @@ def parse_building_floors(floors):
         return np.nan
     else:
         return parsed_floors
+
 
 
 def clean_attributes(shapefile, buildings_height, buildings_floors, buildings_height_below_ground,
@@ -234,7 +233,7 @@ def calculate_typology_file(locator, zone_df, year_construction, occupancy_type,
 def parse_year(year):
     import re
     # `start-date` formats can be found here https://wiki.openstreetmap.org/wiki/Key:start_date#Formatting
-    if type(year) == str or type(year) == unicode:
+    if type(year) == str:
         # For year in `C19`
         century_year = re.search(r'C(\d{2})', year)
         if century_year:
@@ -283,7 +282,7 @@ def polygon_to_zone(buildings_floors, buildings_floors_below_ground, buildings_h
     lon = poly.geometry[0].centroid.coords.xy[0][0]
     lat = poly.geometry[0].centroid.coords.xy[1][0]
     # get footprints of all the district
-    poly = ox.footprints.footprints_from_polygon(polygon=poly['geometry'].values[0])
+    poly = osmnx.footprints.footprints_from_polygon(polygon=poly['geometry'].values[0])
 
     # clean geometries
     poly = clean_geometries(poly)

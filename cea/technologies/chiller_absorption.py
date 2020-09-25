@@ -1,7 +1,6 @@
 """
 Absorption chillers
 """
-from __future__ import division, print_function
 import cea.config
 import cea.inputlocator
 import pandas as pd

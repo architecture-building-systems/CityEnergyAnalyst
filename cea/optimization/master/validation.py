@@ -2,7 +2,9 @@
 Validation
 
 """
-from __future__ import division
+
+
+
 
 import random
 
@@ -39,7 +41,7 @@ def validation_main(individual_with_name_dict,
                                 column_names_buildings_heating)
 
         # FOR SUPPLY SYSTEMS SHARE - turn off if they are below the minimum (trick to avoid strings with on - off behavior
-        for technology_name, limits in DH_CONVERSION_TECHNOLOGIES_SHARE.iteritems():
+        for technology_name, limits in DH_CONVERSION_TECHNOLOGIES_SHARE.items():
             if technology_name in technologies_heating_allowed:
                 minimum = limits["minimum"]
                 if individual_with_name_dict[technology_name] < minimum:
@@ -49,7 +51,7 @@ def validation_main(individual_with_name_dict,
 
         # FOR SUPPLY SYSTEMS SHARE - The share of solar technologies should be 1 (because they share the same area)
         unit_name, unit_share = [], []
-        for technology_name, limits in DH_CONVERSION_TECHNOLOGIES_SHARE.iteritems():
+        for technology_name, limits in DH_CONVERSION_TECHNOLOGIES_SHARE.items():
             if technology_name in technologies_heating_allowed:
                 minimum = limits["minimum"]
                 if individual_with_name_dict[
@@ -83,7 +85,7 @@ def validation_main(individual_with_name_dict,
                                 column_names_buildings_cooling)
 
         # FOR SUPPLY SYSTEMS SHARE - turn off if they are below the minimum (trick to avoid strings with on - off behavior
-        for technology_name, limits in DC_CONVERSION_TECHNOLOGIES_SHARE.iteritems():
+        for technology_name, limits in DC_CONVERSION_TECHNOLOGIES_SHARE.items():
             if technology_name in technologies_cooling_allowed:
                 minimum = limits["minimum"]
                 if individual_with_name_dict[technology_name] < minimum:
@@ -91,7 +93,7 @@ def validation_main(individual_with_name_dict,
 
         # FOR SUPPLY SYSTEMS SHARE - The share of solar technologies should be 1 (because they share the same area)
         unit_name, unit_share = [], []
-        for technology_name, limits in DC_CONVERSION_TECHNOLOGIES_SHARE.iteritems():
+        for technology_name, limits in DC_CONVERSION_TECHNOLOGIES_SHARE.items():
             if technology_name in technologies_cooling_allowed:
                 minimum = limits["minimum"]
                 if individual_with_name_dict[

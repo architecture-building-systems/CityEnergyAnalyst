@@ -1,8 +1,9 @@
 """
 A base class for creating CEA plugins. Subclass this class in your own namespace to become a CEA plugin.
 """
-from __future__ import print_function
-from __future__ import division
+
+
+
 
 import importlib
 import os
@@ -14,6 +15,7 @@ import cea.schemas
 import cea.config
 import cea.plots.categories
 import cea.inputlocator
+import warnings
 from cea.utilities.yaml_ordered_dict import OrderedDictYAMLLoader
 from cea.utilities import identifier
 
@@ -40,7 +42,7 @@ class CeaPlugin(object):
         if not os.path.exists(scripts_yml):
             return {}
         with open(scripts_yml, "r") as scripts_yml_fp:
-            scripts = yaml.load(scripts_yml_fp, OrderedDictYAMLLoader)
+            scripts = yaml.safe_load(scripts_yml_fp)
         return scripts
 
     @property
@@ -264,8 +266,8 @@ def instantiate_plugin(plugin_fqname):
         instance = getattr(module, plugin_class)()
         return instance
     except BaseException as ex:
-        raise ValueError("Could not instantiate plugin {plugin_fqname} ({msg})".format(
-            plugin_fqname=plugin_fqname, msg=ex.message))
+        warnings.warn(f"Could not instantiate plugin {plugin_fqname} ({ex})")
+        return None
 
 
 def add_plugins(default_config, user_config):
@@ -279,6 +281,9 @@ def add_plugins(default_config, user_config):
     """
     plugin_fqnames = cea.config.parse_string_to_list(user_config.get("general", "plugins"))
     for plugin in [instantiate_plugin(plugin_fqname) for plugin_fqname in plugin_fqnames]:
+        if plugin is None:
+            # plugin could not be instantiated
+            continue
         for section_name in plugin.config.sections():
             if section_name in default_config.sections():
                 raise ValueError("Plugin tried to redefine config section {section_name}".format(
@@ -291,5 +296,5 @@ def add_plugins(default_config, user_config):
                     raise ValueError("Plugin tried to redefine parameter {section_name}:{option_name}".format(
                         section_name=section_name, option_name=option_name))
                 default_config.set(section_name, option_name, plugin.config.get(section_name, option_name))
-                if not "." in option_name and not user_config.has_option(section_name, option_name):
+                if "." not in option_name and not user_config.has_option(section_name, option_name):
                     user_config.set(section_name, option_name, default_config.get(section_name, option_name))

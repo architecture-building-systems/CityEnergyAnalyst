@@ -4,7 +4,9 @@ Air conditioning equipment component models
 
 """
 
-from __future__ import division
+
+
+
 import numpy as np
 from cea.demand import control_heating_cooling_systems, constants
 from cea.demand.latent_loads import convert_rh_to_moisture_content, total_moisture_in_zone

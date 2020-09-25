@@ -2,7 +2,9 @@
 Hydraulic - thermal network
 
 """
-from __future__ import division
+
+
+
 
 import math
 import time
@@ -47,7 +49,7 @@ def network_main(locator, buildings_in_this_network, ground_temp, num_tot_buildi
     """
 
     # local variables
-    t0 = time.clock()
+    t0 = time.perf_counter()
     num_buildings_network = len(buildings_in_this_network)
     date = pd.read_csv(locator.get_demand_results_file(buildings_in_this_network[0])).DATE.values
 
@@ -251,7 +253,7 @@ def network_main(locator, buildings_in_this_network, ground_temp, num_tot_buildi
 
     results.to_csv(locator.get_optimization_network_results_summary(network_type, key), index=False, float_format='%.3f')
 
-    print time.clock() - t0, "seconds process time for Network summary for configuration", key
+    print(time.perf_counter() - t0, "seconds process time for Network summary for configuration", key)
 
     return results
 

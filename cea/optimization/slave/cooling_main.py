@@ -5,7 +5,9 @@ Use free cooling from Lake as long as possible ( HP Lake operation from slave)
 If Lake exhausted, then use other supply technologies
 
 """
-from __future__ import division
+
+
+
 
 import numpy as np
 import pandas as pd

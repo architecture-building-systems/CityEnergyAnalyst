@@ -2,7 +2,9 @@
 Operation for decentralized buildings
 
 """
-from __future__ import division
+
+
+
 
 import time
 
@@ -37,7 +39,7 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
     :return: results of operation of buildings located in locator.get_optimization_decentralized_folder
     :rtype: Nonetype
     """
-    t0 = time.clock()
+    t0 = time.perf_counter()
     prop_geometry = Gdf.from_file(locator.get_zone_geometry())
     geometry = pd.DataFrame({'Name': prop_geometry.Name, 'Area': prop_geometry.area})
     geothermal_potential_data = dbf.dbf_to_dataframe(locator.get_building_supply())
@@ -63,7 +65,7 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
         repeat(locator, n),
         repeat(prices, n))
 
-    print time.clock() - t0, "seconds process time for the Disconnected Building Routine \n"
+    print(time.perf_counter() - t0, "seconds process time for the Disconnected Building Routine \n")
 
 
 def disconnected_heating_for_building(building_name, supply_systems, T_ground_K, geothermal_potential_data, lca,
@@ -101,7 +103,7 @@ def disconnected_heating_for_building(building_name, supply_systems, T_ground_K,
     Tsup_K = substation_results["T_supply_DH_result_K"].values
     mdot_kgpers = substation_results["mdot_DH_result_kgpers"].values
     ## Start Hourly calculation
-    print building_name, ' decentralized heating supply systems simulations...'
+    print(building_name, ' decentralized heating supply systems simulations...')
     Tret_K = np.where(Tret_K > 0.0, Tret_K, Tsup_K)
     ## 0: Boiler NG
     BoilerEff = np.vectorize(Boiler.calc_Cop_boiler)(q_load_Wh, Qnom_W, Tret_K)
@@ -164,7 +166,7 @@ def disconnected_heating_for_building(building_name, supply_systems, T_ground_K,
 
         # GHP Backup Boiler operation
         if max(qhot_missing_Wh) > 0.0:
-            print "GHP unable to cover the whole demand, boiler activated!"
+            print("GHP unable to cover the whole demand, boiler activated!")
             Qnom_GHP_Backup_Boiler_W = max(qhot_missing_Wh)
             BoilerEff = np.vectorize(Boiler.calc_Cop_boiler)(qhot_missing_Wh, Qnom_GHP_Backup_Boiler_W, Texit_GHP_K)
             Qgas_to_GHPBoiler_Wh = np.divide(qhot_missing_Wh, BoilerEff,
@@ -279,7 +281,7 @@ def disconnected_heating_for_building(building_name, supply_systems, T_ground_K,
     # Check the GHP area constraint
     for i in range(10):
         QGHP = (1 - i / 10.0) * Qnom_W
-        areaAvail = geothermal_potential.ix[building_name, 'Area_geo']
+        areaAvail = geothermal_potential.loc[building_name, 'Area_geo']
         Qallowed = np.ceil(areaAvail / GHP_A) * GHP_HMAX_SIZE  # [W_th]
         if Qallowed < QGHP:
             optsearch[i + 3] += 1

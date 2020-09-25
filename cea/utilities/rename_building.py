@@ -6,8 +6,9 @@ input editor) are changed.
 This is the script behind ``cea rename-building --old <building> --new <building>``
 """
 
-from __future__ import division
-from __future__ import print_function
+
+
+
 
 import os
 import cea.config
