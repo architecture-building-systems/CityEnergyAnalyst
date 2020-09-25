@@ -1,7 +1,9 @@
 """
 Substation Model
 """
-from __future__ import division
+
+
+
 
 import numpy as np
 import pandas as pd
@@ -639,7 +641,7 @@ def calc_plate_HEX(NTU, cr):
         - eff: efficiency of heat exchange
 
     """
-    efficiency = 1 - scipy.exp((1 / cr) * (NTU ** 0.22) * (scipy.exp(-cr * (NTU) ** 0.78) - 1))
+    efficiency = 1 - np.exp((1 / cr) * (NTU ** 0.22) * (np.exp(-cr * (NTU) ** 0.78) - 1))
     return efficiency
 
 
@@ -727,7 +729,7 @@ def calc_shell_HEX(NTU, cr):
 
     """
     efficiency = 2 * ((1 + cr + (1 + cr ** 2) ** (1 / 2)) * (
-            (1 + scipy.exp(-(NTU) * (1 + cr ** 2))) / (1 - scipy.exp(-(NTU) * (1 + cr ** 2))))) ** -1
+            (1 + np.exp(-(NTU) * (1 + cr ** 2))) / (1 - np.exp(-(NTU) * (1 + cr ** 2))))) ** -1
     return efficiency
 
 
@@ -832,7 +834,7 @@ def calc_dTm_HEX(thi, tho, tci, tco):
     dT2 = tho - tci if not isclose(tho, tci) else 0.0001  # to avoid errors with temperature changes < 0.001
 
     try:
-        dTm = (dT1 - dT2) / scipy.log(dT1 / dT2)
+        dTm = (dT1 - dT2) / np.log(dT1 / dT2)
     except ZeroDivisionError:
         raise Exception(thi, tco, tho, tci,
                         "Check the emission_system database, there might be a problem with the selection of nominal temperatures")
@@ -935,9 +937,9 @@ def calc_DH_return(t_0, t_1):
 
 def main(config):
     """
-    run the whole network summary routine
+    do some testing... (view this as a scratch-pad...
     """
-
+    calc_dTm_HEX(338.0, 281.728, 282.07, 333.0)
 
 if __name__ == '__main__':
     main(cea.config.Configuration())

@@ -2,8 +2,9 @@
 Databases verification
 This tool is used as to check the format of each database
 """
-from __future__ import division
-from __future__ import print_function
+
+
+
 from cea.schemas import schemas
 import pandas as pd
 import re
@@ -28,19 +29,20 @@ def assert_columns_names(zone_df, columns):
 
 def assert_input_geometry_acceptable_values_floor_height(zone_df):
     # Rule 0. nothing can be negative
-    rule0 = zone_df.where(zone_df < 0.0).any().any()
+    numeric_dtypes = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
+    zone_df_data = zone_df.select_dtypes(include=numeric_dtypes)
+    rule0 = zone_df_data.where(zone_df_data < 0.0).any().any()
     if rule0:
-        raise Exception(
-            'There are negative values in your geometry. This is not possible to simulate in CEA at the moment'
-            ' Please verify your Zone or Surroundings shapefile file')
+        raise Exception("There are negative values in your geometry. This is not possible to simulate in CEA at the "
+                        "moment Please verify your Zone or Surroundings shapefile file")
 
     # Rule 1. Floors above ground cannot be less than 1 or negative.
     rule1_1 = zone_df['floors_ag'].where(zone_df['floors_ag'] < 1).any()
     rule1_2 = zone_df['height_ag'].where(zone_df['height_ag'] < 1.0).any()
     if rule1_1 or rule1_2:
-        raise Exception(
-            'one of more buildings have less than one floor above ground or the height above ground is less than 1 meter.'
-            ' This is not possible to simulate in CEA at the moment. Please verify your Zone or Surroundings shapefile file')
+        raise Exception("one of more buildings have less than one floor above ground or the height above ground is "
+                        "less than 1 meter. This is not possible to simulate in CEA at the moment. Please verify your "
+                        "Zone or Surroundings shapefile file")
 
     # Rule 2. Where floor height is less than 1m on average above ground.
     zone_df['rule2'] = zone_df['height_ag'] / zone_df['floors_ag']
@@ -58,19 +60,20 @@ def assert_input_geometry_acceptable_values_floor_height(zone_df):
 
 def assert_input_geometry_acceptable_values_floor_height_surroundings(surroundings_df):
     # Rule 0. nothing can be negative
-    rule0 = surroundings_df.where(surroundings_df < 0.0).any().any()
+    numeric_dtypes = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
+    surroundings_df_data = surroundings_df.select_dtypes(include=numeric_dtypes)
+    rule0 = surroundings_df_data.where(surroundings_df_data < 0.0).any().any()
     if rule0:
-        raise Exception(
-            'There are negative values in your geometry. This is not possible to simulate in CEA at the moment'
-            ' Please verify your Zone or Surroundings shapefile file')
+        raise Exception("There are negative values in your geometry. This is not possible to simulate in CEA at the "
+                        "moment Please verify your Zone or Surroundings shapefile file")
 
     # Rule 1. Floors above ground cannot be less than 1 or negative.
     rule1_1 = surroundings_df['floors_ag'].where(surroundings_df['floors_ag'] < 1).any()
     rule1_2 = surroundings_df['height_ag'].where(surroundings_df['height_ag'] < 1.0).any()
     if rule1_1 or rule1_2:
-        raise Exception(
-            'one of more buildings have less than one floor above ground or the height above ground is less than 1 meter.'
-            ' This is not possible to simulate in CEA at the moment. Please verify your Zone or Surroundings shapefile file')
+        raise Exception("one of more buildings have less than one floor above ground or the height above ground is "
+                        "less than 1 meter. This is not possible to simulate in CEA at the moment. Please verify your "
+                        "Zone or Surroundings shapefile file")
 
     # Rule 2. Where floor height is less than 1m on average above ground.
     surroundings_df['rule2'] = surroundings_df['height_ag'] / surroundings_df['floors_ag']
@@ -190,13 +193,13 @@ class InputFileValidator(object):
                 column_errors = data[column].apply(ChoiceTypeValidator(col_schema, lookup_data).validate).dropna()
             else:
                 column_errors = data[column].apply(get_validator_func(col_schema)).dropna()
-            for index, error in column_errors.iteritems():
+            for index, error in column_errors.items():
                 errors.append([{'row': int(index) + 1, 'column': str(column)}, error])
 
             # Make sure values are unique
             if 'primary' in col_schema:
                 duplicates = data[column][data[column].duplicated(keep=False)]
-                for index, col_value in duplicates.iteritems():
+                for index, col_value in duplicates.items():
                     errors.append(
                         [{'row': int(index) + 1, 'column': str(column)}, 'value is not unique: {}'.format(col_value)])
         return errors
@@ -216,7 +219,7 @@ class InputFileValidator(object):
                     result = data.eval(constraint)
                     # Only process
                     if type(result) == pd.Series and result.dtype == 'bool':
-                        for index, error in result[~result].iteritems():
+                        for index, error in result[~result].items():
                             errors.append([{'row': int(index) + 1}, 'failed constraint: {}'.format(constraint)])
                 except Exception as e:
                     print(e)
@@ -312,7 +315,7 @@ class IntegerTypeValidator(NumericTypeValidator):
         super(IntegerTypeValidator, self).__init__(schema)
 
     def validate(self, value):
-        if type(value) not in (int, long):
+        if not type(value) is int:
             return 'value must be of type integer: got {}'.format(value)
         return super(IntegerTypeValidator, self).validate(value)
 
@@ -322,7 +325,7 @@ class FloatTypeValidator(NumericTypeValidator):
         super(FloatTypeValidator, self).__init__(schema)
 
     def validate(self, value):
-        if type(value) not in (int, long, float):
+        if not type(value) is float:
             return 'value must be of type float: got {}'.format(value)
         return super(FloatTypeValidator, self).validate(value)
 

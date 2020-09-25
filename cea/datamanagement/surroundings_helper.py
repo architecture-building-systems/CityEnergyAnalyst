@@ -1,14 +1,12 @@
 """
 This script extracts surrounding buildings of the zone geometry from Open street maps
 """
-from __future__ import division
-from __future__ import print_function
 
 import math
 import os
 
 import numpy as np
-import osmnx as ox
+import osmnx.footprints
 import shapely.geometry as geometry
 from geopandas import GeoDataFrame as Gdf
 from geopandas import overlay
@@ -219,7 +217,7 @@ def geometry_extractor_osm(locator, config):
     area_with_buffer = area_with_buffer.to_crs(get_geographic_coordinate_system())
 
     # get footprints of all the surroundings
-    all_surroundings = ox.footprints.create_footprints_gdf(polygon=area_with_buffer['geometry'].values[0])
+    all_surroundings = osmnx.footprints.footprints_from_polygon(polygon=area_with_buffer['geometry'].values[0])
 
     # erase overlapping area
     surroundings = erase_no_surrounding_areas(all_surroundings.copy(), area_with_buffer)

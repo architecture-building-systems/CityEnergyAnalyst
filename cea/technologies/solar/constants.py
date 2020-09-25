@@ -3,6 +3,9 @@
 Parameters used for solar technologies
 """
 
+
+
+
 # pressure losses in building pipes connecting to SC/PVT
 dpl_Paperm = 200
 fcr = 1.3

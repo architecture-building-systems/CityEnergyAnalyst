@@ -1,8 +1,9 @@
 """
 Show a Pareto curve plot for individuals in a given generation.
 """
-from __future__ import division
-from __future__ import print_function
+
+
+
 
 import plotly.graph_objs as go
 
@@ -94,7 +95,9 @@ class ParallelCoordinatesForOneGenerationPlot(cea.plots.optimization.GenerationP
         data = self.normalize_data(data, self.normalization, self.objectives)
         data = data.sort_values(['GHG_sys_tonCO2'])
 
-        dimensions = list([dict(label=label, values=data[field]) if field != 'individual_name' else dict(ticktext=data[field], label=label, tickvals = range(data.shape[0]), values= range(data.shape[0])) for field, label in zip(self.analysis_fields, self.titles) ])
+        dimensions = list([dict(label=label, values=data[field]) if field != 'individual_name' else dict(
+            ticktext=data[field], label=label, tickvals=list(range(data.shape[0])), values=list(range(data.shape[0])))
+                           for field, label in zip(self.analysis_fields, self.titles)])
         line = dict(color= data['Capex_total_sys_USD'], colorscale='Jet', showscale=True)
 
         trace = go.Parcoords(line=line, dimensions=dimensions, labelfont=dict(size=10), rangefont=dict(size=8), tickfont=dict(size=10))

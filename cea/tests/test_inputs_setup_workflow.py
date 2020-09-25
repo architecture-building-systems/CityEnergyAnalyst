@@ -23,7 +23,7 @@ class TestInputSetupWorkflowCase(unittest.TestCase):
 
         data_initializer.main(self.config)
         create_polygon.main(self.config)
-        # TODO: Mock osmnx.create_footprints_download
+        # TODO: Mock osmnx.footprints_from_polygon
         zone_helper.main(self.config)
         surroundings_helper.main(self.config)
         terrain_helper.main(self.config)

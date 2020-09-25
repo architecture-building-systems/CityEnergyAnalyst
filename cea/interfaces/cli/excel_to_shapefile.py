@@ -8,8 +8,9 @@ this does the same with a Shapefile.
 It uses the ``geopandas.GeoDataFrame`` class to read in the shapefile.
 The geometry column is serialized to a nested list of coordinates using the JSON notation.
 """
-from __future__ import division
-from __future__ import print_function
+
+
+
 
 import os
 import shapely

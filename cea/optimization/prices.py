@@ -3,7 +3,9 @@
 This file imports the price details from the cost database as a class. This helps in preventing multiple importing
 of the corresponding values in individual files.
 """
-from __future__ import division
+
+
+
 import numpy as np
 
 __author__ = "Jimeno A. Fonseca"

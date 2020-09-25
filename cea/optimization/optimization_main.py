@@ -2,8 +2,9 @@
 multi-objective optimization of supply systems for the CEA
 """
 
-from __future__ import division
-from __future__ import print_function
+
+
+
 
 import os
 import time
@@ -16,7 +17,7 @@ import cea.inputlocator
 from cea.optimization.master import master_main
 from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
 from cea.optimization.preprocessing.preprocessing_main import preproccessing
-from constants import DH_ACRONYM, DC_ACRONYM
+from .constants import DH_ACRONYM, DC_ACRONYM
 
 warnings.filterwarnings("ignore")
 
@@ -58,7 +59,7 @@ def moo_optimization(locator, weather_file, config):
     :returns: None
     :rtype: Nonetype
     '''
-    t0 = time.clock()
+    t0 = time.perf_counter()
 
     # read total demand file and names and number of all buildings
     total_demand = pd.read_csv(locator.get_total_demand())
@@ -105,7 +106,7 @@ def moo_optimization(locator, weather_file, config):
                                                         prices,
                                                         lca)
 
-    t1 = time.clock()
+    t1 = time.perf_counter()
     print('Centralized Optimization succeeded after %s seconds' % (t1 - t0))
 
 

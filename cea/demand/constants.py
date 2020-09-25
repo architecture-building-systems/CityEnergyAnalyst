@@ -2,6 +2,9 @@
 """
 This file contains the constants used in the building energy demand calculations
 """
+
+
+
 __author__ = "Gabriel Happle"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Gabriel Happle"]

@@ -4,11 +4,12 @@ Maintain access to the schemas (input- and output file descriptions) used by the
 parameter allows reading in schemas from ``schemas.yml`` files defined in plugins.
 """
 
-from __future__ import print_function
-from __future__ import division
+
+
+
 
 import os
-import cPickle
+import pickle
 import pandas as pd
 import geopandas
 import yaml
@@ -48,21 +49,25 @@ def schemas(plugins):
         schemas_yml = os.path.join(os.path.dirname(__file__), 'schemas.yml')
         schemas_pickle = os.path.expanduser("~/schemas.yml.pickle")
 
+        def load_schemas_dict_from_yaml():
+            schemas_dict = yaml.load(open(schemas_yml, "rb"), Loader=OrderedDictYAMLLoader)
+            # ... so write out a pickle for next time
+            with open(schemas_pickle, "wb") as schemas_pickle_fp:
+                pickle.dump(schemas_dict, schemas_pickle_fp)
+            return schemas_dict
+
         # compare the dates of the two files - use the pickle if it's newer
         schemas_dict = None
         if os.path.exists(schemas_pickle) and os.path.getmtime(schemas_pickle) > os.path.getmtime(schemas_yml):
             with open(schemas_pickle, "r") as schemas_pickle_fp:
                 try:
-                    schemas_dict = cPickle.load(schemas_pickle_fp)
+                    schemas_dict = pickle.load(schemas_pickle_fp)
                 except:
                     schemas_dict = None
 
         if not schemas_dict:
             # ok. this will take a while to read...
-            schemas_dict = yaml.load(open(schemas_yml), Loader=OrderedDictYAMLLoader)
-            # ... so write out a pickle for next time
-            with open(schemas_pickle, "w") as schemas_pickle_fp:
-                cPickle.dump(schemas_dict, schemas_pickle_fp)
+            schemas_dict = load_schemas_dict_from_yaml()
 
         __schemas[key] = schemas_dict
 
@@ -177,8 +182,8 @@ def create_locator_method(lm, schema):
     def locator_method(self, *args, **kwargs):
         return os.path.join(self.scenario, file_path.format(**kwargs).replace("/", os.path.sep))
 
-    locator_method.func_name = lm
-    locator_method.func_doc = file_path
+    locator_method.__name__ = lm
+    locator_method.__doc__ = file_path
     return locator_method
 
 
@@ -197,11 +202,11 @@ class SchemaIo(object):
 
     def __str__(self):
         return "<{class_name}({lm}): {doc}>".format(class_name=self.__class__.__name__, lm=self.lm,
-                                                    doc=self.original_function.func_doc)
+                                                    doc=self.original_function.__doc__)
 
     def __repr__(self):
         return "<{class_name}({lm}): {doc}>".format(class_name=self.__class__.__name__, lm=self.lm,
-                                                    doc=self.original_function.func_doc)
+                                                    doc=self.original_function.__doc__)
 
     def __call__(self, *args, **kwargs):
         return self.original_function(self.locator, *args, **kwargs)
@@ -258,7 +263,7 @@ class SchemaIo(object):
         Note that schemas.yml specifies colors using names taken from
         :type: Dict[str, str]
         """
-        from plots.colors import color_to_rgb
+        from .plots.colors import color_to_rgb
 
         result = {}
         columns = self.schema["schema"]["columns"]

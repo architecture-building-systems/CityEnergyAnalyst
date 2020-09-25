@@ -12,13 +12,11 @@ not applying this technique to the demand script.
 This module exports the function `map` which is intended to replace both ``map_async`` and the builtin ``map`` function
 (which was used when ``config.multiprocessing == False``). This simplifies multiprocessing.
 """
-from __future__ import division
-from __future__ import print_function
 
 import multiprocessing
 import sys
 import logging
-from itertools import repeat, izip
+from itertools import repeat
 from cea.utilities.workerstream import stream_from_queue, QueueWorkerStream
 
 __author__ = "Daren Thomas"
@@ -66,6 +64,7 @@ def vectorize(func, processes=1, on_complete=None):
 
 def __multiprocess_wrapper(func, processes, on_complete):
     """Create a worker pool to map the function, taking care to set up STDOUT and STDERR"""
+
     def wrapper(*args):
         print("Using {processes} CPU's".format(processes=processes))
         pool = multiprocessing.Pool(processes)
@@ -99,10 +98,11 @@ def __multiprocess_wrapper(func, processes, on_complete):
         pool.close()
         pool.join()
 
-        # process the rest of the Queue
+        # process the rest of the queue
         while not queue.empty():
             stream_from_queue(queue)
         return result
+
     return wrapper
 
 
@@ -117,8 +117,8 @@ def __apply_func_with_worker_stream(args):
     # set up logging
     logger = multiprocessing.log_to_stderr()
     logger.setLevel(logging.WARNING)
-    from cea import suppres_3rd_party_debug_loggers
-    suppres_3rd_party_debug_loggers()
+    from cea import suppress_3rd_party_debug_loggers
+    suppress_3rd_party_debug_loggers()
 
     # unpack the arguments
     func, queue, on_complete, i_queue, n, args = args[0], args[1], args[2], args[3], args[4], args[5:]
@@ -138,18 +138,20 @@ def __apply_func_with_worker_stream(args):
 
 def single_process_wrapper(func, on_complete):
     """The simplest form of vectorization: Just loop"""
+
     def wrapper(*args):
         print("Using single process")
 
         args = [list(a) for a in args]
         n = len(args[0])
         map_result = []
-        for i, instance_args in enumerate(izip(*args)):
+        for i, instance_args in enumerate(zip(*args)):
             result = func(*instance_args)
             if on_complete:
                 on_complete(i, n, instance_args, result)
             map_result.append(result)
         return map_result
+
     return wrapper
 
 
