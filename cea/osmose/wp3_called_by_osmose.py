@@ -361,9 +361,9 @@ def calc_Cinv_pumps(plant_pumping_kW):
     Cinv_per_pump = np.nan
     if size_per_pump_W <= 4000.0 :
         Cinv_per_pump = 29.314 * size_per_pump_W ** 0.5216
-    elif(pump_size_W <= 37000.0) and (4000.0 < pump_size_W):
+    elif(size_per_pump_W <= 37000.0) and (4000.0 < size_per_pump_W):
         Cinv_per_pump = 4.323 * size_per_pump_W ** 0.7464
-    elif pump_size_W <= max_size_W:
+    elif size_per_pump_W <= max_size_W:
         Cinv_per_pump = 1.0168 * size_per_pump_W ** 0.8873
     # outputs
     Cinv_pump = Cinv_per_pump * number_of_pumps
