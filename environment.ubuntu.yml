@@ -8,7 +8,8 @@ channels:
 dependencies:
   - geopandas
   - numba=0.42.0
-  - python=2.7
+  - python>=3.7
   - osmnx
+  - psutil
   - pythonocc-core
 
