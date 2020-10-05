@@ -163,8 +163,10 @@ def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, settings, max_glob
     print('isolation_daysim: daysim_dir={daysim_dir}'.format(daysim_dir=daysim_dir))
 
     bin_directory = settings.daysim_bin_directory
+    if not bin_directory.endswith(os.path.sep):
+        bin_directory += os.path.sep
 
-    rad.initialise_daysim(daysim_dir, os.path.join(bin_directory, ''))
+    rad.initialise_daysim(daysim_dir, bin_directory)
     print("\tisolation_daysim: rad.hea_file: {}".format(rad.hea_file))
     print("\tisolation_daysim: rad.hea_filename: {}".format(rad.hea_filename))
     print("\tisolation_daysim: rad.daysimdir_ies: {}".format(rad.daysimdir_ies))
