@@ -433,6 +433,75 @@ class CEARad(py2radiance.Rad):
         self.run_cmd(command2)
         self.run_cmd(command3)
 
+    def initialise_daysim(self, daysim_dir, bin_directory=r"C:\Daysim\bin"):
+        """
+        Run this method prior to running any Daysim simulation. This function creates the base .hea header file and all the neccessary
+        folders for the Daysim simulation.
+
+        Parameters
+        ----------
+        daysim_dir :  str
+            The directory to write all the daysim results file to.
+        """
+        # create the directory if its not existing
+        if not os.path.isdir(daysim_dir):
+            os.mkdir(daysim_dir)
+
+        if not daysim_dir.endswith(os.path.sep):
+            # make sure the daysim_dir has a "/" or "\" at the end - daysim commands expect this
+            daysim_dir += os.path.sep
+
+        if not bin_directory.endswith(os.path.sep):
+            bin_directory += os.path.sep
+
+        _, project_name = os.path.split(daysim_dir)  # name of the folder to initialize, normally "temp0"
+        # create an empty .hea file
+        hea_filepath = os.path.join(daysim_dir, project_name + ".hea")
+        with  open(hea_filepath, "w") as hea_file:
+            # the project name will take the name of the folder
+            hea_file.write(f"project_name {project_name}\n")
+            # write the project directory
+            hea_file.write(f"project_directory {daysim_dir}\n")
+            # bin directory
+            hea_file.write(f"bin_directory {bin_directory}\n")
+            # write tmp directory
+            hea_file.write("tmp_directory" + " " + os.path.join("tmp", "") + "\n")
+            # write material directory
+            hea_file.write("material_directory" + " " + os.path.join("c:/daysim", "") + "\n")
+            # write ies directory
+            hea_file.write("ies_directory" + " " + os.path.join("c:/daysim", "") + "\n")
+            hea_file.close()
+            self.hea_file = hea_filepath
+
+        # create all the subdirectory
+        sub_hea_folders = ["ies", "pts", "rad", "res", "tmp", "wea"]
+        for folder in range(len(sub_hea_folders)):
+            sub_hea_folder = sub_hea_folders[folder]
+            sub_hea_folders_path = os.path.join(daysim_dir, sub_hea_folder)
+            if folder == 0:
+                self.daysimdir_ies = sub_hea_folders_path
+            if folder == 1:
+                self.daysimdir_pts = sub_hea_folders_path
+            if folder == 2:
+                self.daysimdir_rad = sub_hea_folders_path
+            if folder == 3:
+                self.daysimdir_res = sub_hea_folders_path
+            if folder == 4:
+                self.daysimdir_tmp = sub_hea_folders_path
+            if folder == 5:
+                self.daysimdir_wea = sub_hea_folders_path
+
+            # if the directories are not existing create them
+            if not os.path.isdir(sub_hea_folders_path):
+                os.mkdir(sub_hea_folders_path)
+
+            # if they are existing delete all of the files
+            if os.path.isdir(sub_hea_folders_path):
+                files_in_dir = os.listdir(sub_hea_folders_path)
+                for filename in files_in_dir:
+                    rmv_path = os.path.join(sub_hea_folders_path, filename)
+                    os.remove(rmv_path)
+
     def execute_ds_illum(self):
         hea_filepath = self.hea_file
         head, tail = os.path.split(hea_filepath)
