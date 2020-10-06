@@ -2,13 +2,13 @@
 # (requires cea-workflow-utils plugin)
 - config: user
   "general:multiprocessing": False
-  "general:project": "${userprofile}/Documents/CEA-Projects/testing"
+  "general:project": "${CEA_general_project}/coverage"
   "radiation:daysim-bin-directory": "${CEA_radiation_daysim-bin-directory}"
 - config: .
   "general:scenario-name": "heating"
-- script: run-command
+- script: mkdir
   parameters:
-    command: 'if not exist "{general:project}\\{general:scenario-name}\\inputs\\building-geometry\\" mkdir "{general:project}\\{general:scenario-name}\\inputs\\building-geometry"'
+    directory: "{general:project}/{general:scenario-name}/inputs/building-geometry"
 - script: data-initializer
   parameters:
     databases-path: CH
@@ -84,9 +84,9 @@
 # Run cooling
 - config: .
   "general:scenario-name": "cooling"
-- script: run-command
+- script: mkdir
   parameters:
-    command: 'if not exist "{general:project}\\{general:scenario-name}\\inputs\\building-geometry\\" mkdir "{general:project}\\{general:scenario-name}\\inputs\\building-geometry"'
+    directory: "{general:project}/{general:scenario-name}/inputs/building-geometry"
 - script: data-initializer
   parameters:
     databases-path: SG
