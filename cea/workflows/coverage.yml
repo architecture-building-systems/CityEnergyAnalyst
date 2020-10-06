@@ -2,7 +2,7 @@
 # (requires cea-workflow-utils plugin)
 - config: user
   "general:multiprocessing": False
-  "general:project": "${CEA_general_project}/coverage"
+  "general:project": "${CEA_general_project}/../coverage"
   "radiation:daysim-bin-directory": "${CEA_radiation_daysim-bin-directory}"
 - config: .
   "general:scenario-name": "heating"
