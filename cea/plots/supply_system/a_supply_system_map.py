@@ -1,8 +1,6 @@
 """
 Show a Pareto curve plot for individuals in a given generation.
 """
-from __future__ import division
-from __future__ import print_function
 
 import os
 
@@ -111,9 +109,11 @@ class SupplySystemMapPlot(cea.plots.supply_system.SupplySystemPlotBase):
         dh = self.get_network_json(data['DH']['path_output_edges'], data['DH']['path_output_nodes'])
 
         # Generate div id using hash of parameters
-        div = Template(open(template).read()).render(hash=hashlib.md5(repr(sorted(data.items()))).hexdigest(),
-                                                     data=json.dumps(data), colors=json.dumps(COLORS),
-                                                     zone=zone, district=district, dc=dc, dh=dh)
+        with open(template, "r") as fp:
+            div = Template(fp.read()).render(hash=hashlib.md5(repr(sorted(data.items())).encode("utf-8")).hexdigest(),
+                                             data=json.dumps(data), colors=json.dumps(COLORS),
+                                             zone=zone,
+                                             district=district, dc=dc, dh=dh)
         return div
 
     def get_network_json(self, edges, nodes):
@@ -214,7 +214,8 @@ def newer_network_layout_exists(locator, network_type, network_name):
     no_network_file = not os.path.isfile(edges) or not os.path.isfile(nodes)
     supply_system_modified = os.path.getmtime(supply_system)
 
-    return no_network_file or supply_system_modified > os.path.getmtime(edges) or supply_system_modified > os.path.getmtime(nodes)
+    return no_network_file or supply_system_modified > os.path.getmtime(
+        edges) or supply_system_modified > os.path.getmtime(nodes)
 
 
 def main():

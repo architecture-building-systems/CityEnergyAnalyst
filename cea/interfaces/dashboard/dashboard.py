@@ -17,10 +17,11 @@ def main(config):
     global socketio
     socketio = SocketIO(app)
 
-    import plots.routes
-    from server import blueprint as server_blueprint
-    from api import blueprint as api_blueprint
-    app.register_blueprint(plots.routes.blueprint)
+    from .plots.routes import blueprint as plots_blueprint
+    from .server import blueprint as server_blueprint
+    from .api import blueprint as api_blueprint
+
+    app.register_blueprint(plots_blueprint)
     app.register_blueprint(api_blueprint)
     app.register_blueprint(server_blueprint)
 

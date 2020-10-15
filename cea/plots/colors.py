@@ -2,8 +2,9 @@
 This is the official list of CEA colors to use in plots
 """
 
-from __future__ import print_function
-from __future__ import division
+
+
+
 
 import os
 import pandas as pd

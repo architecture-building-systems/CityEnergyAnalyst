@@ -2,8 +2,9 @@
 Manage configuration information for the CEA. The Configuration class is built dynamically based on the type information
 in ``default.config``.
 """
-from __future__ import print_function
-from __future__ import division
+
+
+
 
 import os
 import re
@@ -72,21 +73,21 @@ class Configuration(object):
 
     def __getstate__(self):
         """when we pickle, we only really need to pickle the user_config"""
-        import StringIO
-        config_data = StringIO.StringIO()
+        import io
+        config_data = io.StringIO()
         self.user_config.write(config_data)
         return config_data.getvalue()
 
     def __setstate__(self, state):
         """read in the user_config and re-initialize the state (this basically follows the __init__)"""
-        import StringIO
+        import io
         import cea.plugin
 
         self.restricted_to = None
         self.default_config = configparser.ConfigParser()
         self.default_config.read(DEFAULT_CONFIG)
         self.user_config = configparser.ConfigParser()
-        self.user_config.readfp(StringIO.StringIO(state))
+        self.user_config.read_file(io.StringIO(state))
 
         cea.plugin.add_plugins(self.default_config, self.user_config)
 
@@ -545,8 +546,8 @@ class WorkflowParameter(Parameter):
             return value
         else:
             print("ERROR: Workflow not found: {workflow} - using {default}".format(
-                workflow=value, default=self.examples[self.examples.keys()[0]]))
-            return self.examples[self.examples.keys()[0]]
+                workflow=value, default=self.examples[next(iter(self.examples.keys()))]))
+            return self.examples[next(iter(self.examples.keys()))]
 
 
 class BooleanParameter(Parameter):
@@ -630,7 +631,7 @@ class ListParameter(Parameter):
     typename = 'ListParameter'
 
     def encode(self, value):
-        if isinstance(value, basestring):
+        if isinstance(value, str):
             # should be a list
             value = parse_string_to_list(value)
         strings = [str(s).strip() for s in value]
@@ -655,7 +656,8 @@ class PluginListParameter(ListParameter):
     def decode(self, value):
         from cea.plugin import instantiate_plugin
         plugin_fqnames = unique(parse_string_to_list(value))
-        return [instantiate_plugin(plugin_fqname) for plugin_fqname in plugin_fqnames]
+        plugins = [instantiate_plugin(plugin_fqname) for plugin_fqname in plugin_fqnames]
+        return [plugin for plugin in plugins if plugin is not None]
 
 
 class SubfoldersParameter(ListParameter):
@@ -886,7 +888,7 @@ class MultiChoiceParameter(ChoiceParameter):
             return False
 
     def encode(self, value):
-        assert not isinstance(value, basestring), "Bad value for encode of parameter {pname}".format(pname=self.name)
+        assert not isinstance(value, str), "Bad value for encode of parameter {pname}".format(pname=self.name)
         for choice in value:
             assert str(choice) in self._choices, 'Invalid parameter value %s for %s, choose from: %s' % (
                 value, self.name, self._choices)
@@ -1041,7 +1043,7 @@ class CoordinateListParameter(ListParameter):
     typename = 'CoordinateListParameter'
 
     def encode(self, value):
-        if isinstance(value, basestring):
+        if isinstance(value, str):
             value = self.decode(value)
         strings = [str(validate_coord_tuple(coord_tuple)) for coord_tuple in value]
         return ', '.join(strings)

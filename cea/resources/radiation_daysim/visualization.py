@@ -27,6 +27,9 @@ SIDE EFFECTS
     - if no data file is given, the loaded geometry will not change color
 """
 
+
+
+
 import os
 import math
 
@@ -109,7 +112,7 @@ def face_points2actor(fps_df):
         polygon = vtk.vtkPolygon()
         polygon.GetPointIds().SetNumberOfIds(3)
         for n in range(3):
-            points.InsertNextPoint(fps_df.ix[i, 0+3*n], fps_df.ix[i, 1+3*n], fps_df.ix[i, 2+3*n])
+            points.InsertNextPoint(fps_df.iloc[i, 0+3*n], fps_df.iloc[i, 1+3*n], fps_df.iloc[i, 2+3*n])
             polygon.GetPointIds().SetId(n, point_id)
             point_id += 1
         cell_array.InsertNextCell(polygon)
@@ -201,7 +204,7 @@ def visualize(arepeating_timer):
             self.timer_count = 0
 
         def execute(self, obj, event):
-            print "\r", self.timer_count,
+            print("\r", self.timer_count, end=' ')
             for name in data_lib:
                 data_array = data_lib[name][self.timer_count]
                 data_max = np.max(data)
@@ -340,7 +343,6 @@ if __name__ == '__main__':
         #data = data.as_matrix()
         #data_lib[name] = data
 
-
     # point example
     for name in sen_list:
 
@@ -348,7 +350,8 @@ if __name__ == '__main__':
         actor_lib['pt_'+name], polydata_lib['pt_'+name] = points2actor(xyz, apoint_size=8)
         count_lib['pt_'+name] = 1
         path = os.path.join(out_path, name, 'res')
-        data = pd.read_csv(os.path.join(path, name+'.ill'), sep=' ', skiprows=start_h, nrows=nr_hours, header=None).ix[: ,4:]
+        data = pd.read_csv(os.path.join(path, name+'.ill'),
+                           sep=' ', skiprows=start_h, nrows=nr_hours, header=None).iloc[:, 4:]
         data = data.astype(float)
         data = data.as_matrix()
         data_lib['pt_'+name] = data

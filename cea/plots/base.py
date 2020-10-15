@@ -2,8 +2,9 @@
 Implements base classes to derive plot classes from. The code in py:mod:`cea.plots.categories` uses
 py:class:`cea.plots.base.PlotBase` to figure out the list of plots in a category.
 """
-from __future__ import division
-from __future__ import print_function
+
+
+
 
 import os
 import re
@@ -149,7 +150,8 @@ class PlotBase(object):
                 "Following input files are missing: {input_files}".format(input_files=self.missing_input_files()))
         # PLOT
         template_path = os.path.join(os.path.dirname(__file__), 'plot.html')
-        template = jinja2.Template(open(template_path, 'r').read())
+        with open(template_path, "r") as fp:
+            template = jinja2.Template(fp.read())
         plot_html = template.render(plot_div=self.plot_div(), table_div=self.table_div(), title=self.title)
         with open(self.output_path, 'w') as f:
             f.write(plot_html)

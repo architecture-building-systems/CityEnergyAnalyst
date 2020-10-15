@@ -1,8 +1,9 @@
 """
 Multi criteria decision analysis
 """
-from __future__ import division
-from __future__ import print_function
+
+
+
 
 import pandas as pd
 

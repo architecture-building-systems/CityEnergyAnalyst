@@ -1,8 +1,11 @@
+
+
+
 from flask import current_app
 from flask_restplus import Namespace, Resource, fields
 
 import cea.scripts
-from utils import deconstruct_parameters
+from .utils import deconstruct_parameters
 
 api = Namespace('Tools', description='Scripts for CEA')
 

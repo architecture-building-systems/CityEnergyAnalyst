@@ -1,4 +1,6 @@
-from __future__ import division
+
+
+
 
 import json
 import os
@@ -160,9 +162,7 @@ def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, settings, max_glob
     daysim_dir = locator.get_temporary_file("temp" + str(chunk_n))
     print('isolation_daysim: daysim_dir={daysim_dir}'.format(daysim_dir=daysim_dir))
 
-    # daysim_bin_directory might contain two paths (e.g. "C:\Daysim\bin;C:\Daysim\lib") - in which case, only
-    # use the "bin" folder
-    bin_directory = [d for d in settings.daysim_bin_directory.split(";") if not d.endswith("lib")][0]
+    bin_directory = settings.daysim_bin_directory
 
     rad.initialise_daysim(daysim_dir, os.path.join(bin_directory, ''))
     print("\tisolation_daysim: rad.hea_file: {}".format(rad.hea_file))
@@ -276,7 +276,7 @@ def write_aggregated_results(building_name, items_sensor_name_and_result, locato
     for field, field_area in zip(solar_analysis_fields, solar_analysis_fields_area):
         select_sensors = geometry.loc[geometry['code'] == field].set_index('SURFACE')
         area_m2 = select_sensors['AREA_m2'].sum()
-        array_field = np.array([select_sensors.ix[surface, 'AREA_m2'] *
+        array_field = np.array([select_sensors.loc[surface, 'AREA_m2'] *
                                 np.array(items_sensor_name_and_result[surface])
                                 for surface in select_sensors.index]).sum(axis=0)
         dict_not_aggregated[field] = array_field / 1000  # in kWh

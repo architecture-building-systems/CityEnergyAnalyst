@@ -1,3 +1,6 @@
+
+
+
 import hashlib
 
 from flask import current_app, request
@@ -5,7 +8,7 @@ from flask_restplus import Namespace, Resource
 
 import cea.config
 import cea.plots.cache
-from utils import deconstruct_parameters
+from .utils import deconstruct_parameters
 
 api = Namespace('Dashboard', description='Dashboard plots')
 
@@ -25,7 +28,7 @@ def dashboard_to_dict(dashboard):
     out = dashboard.to_dict()
     for i, plot in enumerate(out['plots']):
         if plot['plot'] != 'empty':
-            plot['hash'] = hashlib.md5(repr(sorted(plot.items()))).hexdigest()
+            plot['hash'] = hashlib.md5(repr(sorted(plot.items())).encode("utf-8")).hexdigest()
             plot['title'] = dashboard.plots[i].title
     return out
 

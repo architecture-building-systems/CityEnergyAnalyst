@@ -1,8 +1,9 @@
 """
 The weather-helper script sets the weather data used (``inputs/weather.epw``) for simulations.
 """
-from __future__ import division
-from __future__ import print_function
+
+
+
 
 import os
 import cea.config

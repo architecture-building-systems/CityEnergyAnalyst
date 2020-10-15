@@ -1,7 +1,9 @@
 """
 List the fields that can be used for the demand-graphs ``--analysis-fields`` parameter given a scenario
 """
-from __future__ import division
+
+
+
 
 import os
 import pandas as pd

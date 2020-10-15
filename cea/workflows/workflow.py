@@ -2,8 +2,6 @@
 Run a workflow.yml file - this is like a cea-aware "batch" file for running multiple cea scripts including parameters.
 ``cea workflow`` can also pick up from previous (failed?) runs, which can help in debugging.
 """
-from __future__ import division
-from __future__ import print_function
 
 import os
 import sys
@@ -73,30 +71,34 @@ def main(config):
         raise cea.ConfigError("Workflow YAML file not found: {workflow}".format(workflow=workflow_yml))
 
     with open(workflow_yml, 'r') as workflow_fp:
-        workflow = yaml.load(workflow_fp)
+        workflow = yaml.safe_load(workflow_fp)
 
     for i, step in enumerate(workflow):
         if "script" in step:
             if resume_mode_on and i <= resume_step:
                 # skip steps already completed while resuming
                 print("Skipping workflow step {i}: script={script}".format(i=i, script=step["script"]))
+                write_resume_info(resume_yml, resume_dict, workflow_yml, i)
                 continue
             do_script_step(config, i, step, trace_input)
         elif "config" in step:
             config = do_config_step(config, step)
         else:
             raise ValueError("Invalid step configuration: {i} - {step}".format(i=i, step=step))
+        write_resume_info(resume_yml, resume_dict, workflow_yml, i)
 
-        # write out information for resuming
-        resume_dict[workflow_yml] = i
-        with open(resume_yml, 'w') as resume_fp:
-            yaml.dump(resume_dict, resume_fp, indent=4)
+
+def write_resume_info(resume_yml, resume_dict, workflow_yml, i):
+    # write out information for resuming
+    resume_dict[workflow_yml] = i
+    with open(resume_yml, 'w') as resume_fp:
+        yaml.dump(resume_dict, resume_fp, indent=4)
 
 
 def read_resume_info(resume_yml, workflow_yml):
     try:
         with open(resume_yml, 'r') as resume_fp:
-            resume_dict = yaml.load(resume_fp)
+            resume_dict = yaml.safe_load(resume_fp)
             if not resume_dict:
                 resume_dict = {workflow_yml: 0}
     except IOError:
@@ -148,7 +150,7 @@ def set_parameter(config, parameter, value):
     """Set a parameter to a value (expand with environment vars) without tripping the restricted_to part of config"""
     with config.ignore_restrictions():
         print("Setting {parameter}={value}".format(parameter=parameter.fqname, value=value))
-        if not isinstance(value, basestring):
+        if not isinstance(value, str):
             value = str(value)
         expanded_value = os.path.expandvars(value)
         parameter.set(parameter.decode(expanded_value))
@@ -161,7 +163,8 @@ def do_script_step(config, i, step, trace_input):
     print("=" * 80)
     print("Workflow step {i}: script={script}".format(i=i, script=script.name))
     print("=" * 80)
-    parameters = {p.name: p.get() for s, p in config.matching_parameters(script.parameters)}
+    with config.ignore_restrictions():
+        parameters = {p.name: p.get() for s, p in config.matching_parameters(script.parameters)}
     if "parameters" in step:
         parameters.update(step["parameters"])
     py_script = script.name.replace("-", "_")
