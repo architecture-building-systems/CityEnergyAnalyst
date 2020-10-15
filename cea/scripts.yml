@@ -338,7 +338,8 @@ Utilities:
     description: Run all the plots for test purposes
     interfaces: [test, cli]
     module: cea.tests.run_all_plots
-    parameters: ["general:project", "general:scenario", "plots", "plots-comparisons", "plots-optimization", "plots-supply-system"]
+    parameters: ["general:project", "general:scenario", "plots", "plots-comparisons", "plots-optimization",
+                 "plots-supply-system"]
 
 default:
 
@@ -447,3 +448,11 @@ Documentation:
     interfaces: [doc]
     module: cea.utilities.doc_schemas
     parameters: ["general:scenario", schemas]
+
+Development:
+  - name: build
+    label: build
+    description: build a new installer for the current version
+    interfaces: [dev]
+    module: cea.dev.build
+    parameters: [development]

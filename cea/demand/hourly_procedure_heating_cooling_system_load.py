@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
 
-from __future__ import division
+
+
+
 import warnings
 import numpy as np
 from cea.demand import airconditioning_model, rc_model_SIA, control_heating_cooling_systems, \

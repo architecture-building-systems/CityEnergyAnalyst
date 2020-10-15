@@ -5,8 +5,9 @@ This file takes in the values of the electricity activation pattern (which is on
 network and corresponding district energy systems) and adds in the electricity requirement of decentralized buildings
 and recalculates the imports from grid and exports to the grid
 """
-from __future__ import division
-from __future__ import print_function
+
+
+
 
 import os
 
@@ -330,7 +331,7 @@ def calc_district_system_electricity_requirements(master_to_slave_vars,
     # add those due to district heating and district cooling systems
     join1 = dict(electricity_demand_buildings, **DH_electricity_requirements)
     requirements_electricity = dict(join1, **DC_electricity_requirements)
-    E_sys_req_W = sum(requirements_electricity.itervalues())
+    E_sys_req_W = sum(requirements_electricity.values())
 
     # now get all the requirements
     requirements_electricity["E_electricalnetwork_sys_req_W"] = E_sys_req_W

@@ -3,8 +3,9 @@ natural gas
 """
 
 
-from __future__ import print_function
-from __future__ import division
+
+
+
 
 from cea.technologies.constants import GAS_CONNECTION_COST
 

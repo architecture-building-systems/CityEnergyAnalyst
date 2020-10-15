@@ -1,7 +1,9 @@
 """
 Embodied energy and related grey emissions model algorithm
 """
-from __future__ import division
+
+
+
 
 import os
 

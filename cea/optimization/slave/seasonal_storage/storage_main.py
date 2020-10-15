@@ -11,7 +11,9 @@ All results are saved in the folder of "locator.get_optimization_slave_results_f
 IMPORTANT : Storage is used for solar thermal energy ONLY!
 It is possible to turn off the plots by setting Tempplot = 0 and Qplot = 0
 """
-from __future__ import division
+
+
+
 
 import os
 
@@ -43,7 +45,7 @@ def storage_optimization(locator, master_to_slave_vars, config):
     :return: The function saves all files when it's done in the location locator.get_potentials_solar_folder()
     :rtype: Nonetype
     """
-    print "Storage Optimization Ready"
+    print("Storage Optimization Ready")
     T_storage_old_K = master_to_slave_vars.T_storage_zero
     Q_in_storage_old = master_to_slave_vars.Q_in_storage_zero
 

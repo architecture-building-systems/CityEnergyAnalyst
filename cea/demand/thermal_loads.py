@@ -2,7 +2,9 @@
 """
 Demand model of thermal loads
 """
-from __future__ import division
+
+
+
 
 import numpy as np
 import pandas as pd
@@ -106,7 +108,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, date_range, locator,
         tsd['x_int'] = np.vectorize(convert_rh_to_moisture_content)(tsd['rh_ext'], tsd['T_int'])
         tsd['E_cs'] = tsd['E_hs'] = np.zeros(HOURS_IN_YEAR)
         tsd['Eaux_cs'] = tsd['Eaux_hs'] = tsd['Ehs_lat_aux'] = np.zeros(HOURS_IN_YEAR)
-        print("building () does not have an air-conditioned area".format(bpr.name))
+        print(f"building {bpr.name} does not have an air-conditioned area")
     else:
         tsd = latent_loads.calc_Qgain_lat(tsd, schedules)
         tsd = calc_set_points(bpr, date_range, tsd, building_name, config, locator,
@@ -301,7 +303,7 @@ def calc_set_points(bpr, date, tsd, building_name, config, locator, schedules):
     else:
         tsd = control_heating_cooling_systems.get_temperature_setpoints_incl_seasonality(tsd, bpr, schedules)
 
-    t_prev = get_hours(bpr).next() - 1
+    t_prev = next(get_hours(bpr)) - 1
     tsd['T_int'][t_prev] = tsd['T_ext'][t_prev]
     tsd['x_int'][t_prev] = latent_loads.convert_rh_to_moisture_content(tsd['rh_ext'][t_prev], tsd['T_ext'][t_prev])
     return tsd
@@ -616,5 +618,5 @@ def get_hours(bpr):
     hour_start_simulation = hour_start_simulation - HOURS_PRE_CONDITIONING
 
     t = hour_start_simulation
-    for i in xrange(hours_simulation_total):
+    for i in range(hours_simulation_total):
         yield (t + i) % HOURS_IN_YEAR

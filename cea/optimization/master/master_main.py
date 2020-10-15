@@ -1,10 +1,8 @@
-from __future__ import division
-
 import json
 import multiprocessing
 import random
 import warnings
-from itertools import repeat, izip
+from itertools import repeat
 from math import factorial
 from math import sqrt
 
@@ -86,25 +84,25 @@ def objective_function(individual,
     district_electricity_capacity_installed, \
     buildings_building_scale_heating_capacities, \
     buildings_building_scale_cooling_capacities = evaluation.evaluation_main(individual,
-                                                             building_names_all,
-                                                             locator,
-                                                             network_features,
-                                                             weather_features,
-                                                             config,
-                                                             prices, lca,
-                                                             individual_number,
-                                                             generation_number,
-                                                             column_names,
-                                                             column_names_buildings_heating,
-                                                             column_names_buildings_cooling,
-                                                             building_names_heating,
-                                                             building_names_cooling,
-                                                             building_names_electricity,
-                                                             district_heating_network,
-                                                             district_cooling_network,
-                                                             technologies_heating_allowed,
-                                                             technologies_cooling_allowed,
-                                                             )
+                                                                             building_names_all,
+                                                                             locator,
+                                                                             network_features,
+                                                                             weather_features,
+                                                                             config,
+                                                                             prices, lca,
+                                                                             individual_number,
+                                                                             generation_number,
+                                                                             column_names,
+                                                                             column_names_buildings_heating,
+                                                                             column_names_buildings_cooling,
+                                                                             building_names_heating,
+                                                                             building_names_cooling,
+                                                                             building_names_electricity,
+                                                                             district_heating_network,
+                                                                             district_cooling_network,
+                                                                             technologies_heating_allowed,
+                                                                             technologies_cooling_allowed,
+                                                                             )
 
     if config.debug or print_final_results:  # print for the last generation and
         print("SAVING RESULTS TO DISK")
@@ -279,26 +277,27 @@ def non_dominated_sorting_genetic_algorithm(locator,
 
     # Evaluate the individuals with an invalid fitness
     invalid_ind = [ind for ind in pop if not ind.fitness.valid]
-    fitnesses = toolbox.map(toolbox.evaluate, izip(invalid_ind, range(len(invalid_ind)), repeat(0, len(invalid_ind)),
-                                                   repeat(building_names_all, len(invalid_ind)),
-                                                   repeat(column_names_buildings_heating, len(invalid_ind)),
-                                                   repeat(column_names_buildings_cooling, len(invalid_ind)),
-                                                   repeat(building_names_heating, len(invalid_ind)),
-                                                   repeat(building_names_cooling, len(invalid_ind)),
-                                                   repeat(building_names_electricity, len(invalid_ind)),
-                                                   repeat(locator, len(invalid_ind)),
-                                                   repeat(network_features, len(invalid_ind)),
-                                                   repeat(weather_features, len(invalid_ind)),
-                                                   repeat(config, len(invalid_ind)),
-                                                   repeat(prices, len(invalid_ind)),
-                                                   repeat(lca, len(invalid_ind)),
-                                                   repeat(district_heating_network, len(invalid_ind)),
-                                                   repeat(district_cooling_network, len(invalid_ind)),
-                                                   repeat(technologies_heating_allowed, len(invalid_ind)),
-                                                   repeat(technologies_cooling_allowed, len(invalid_ind)),
-                                                   repeat(column_names, len(invalid_ind))))
+    fitnesses = toolbox.map(toolbox.evaluate, zip(invalid_ind, range(len(invalid_ind)), repeat(0, len(invalid_ind)),
+                                                  repeat(building_names_all, len(invalid_ind)),
+                                                  repeat(column_names_buildings_heating, len(invalid_ind)),
+                                                  repeat(column_names_buildings_cooling, len(invalid_ind)),
+                                                  repeat(building_names_heating, len(invalid_ind)),
+                                                  repeat(building_names_cooling, len(invalid_ind)),
+                                                  repeat(building_names_electricity, len(invalid_ind)),
+                                                  repeat(locator, len(invalid_ind)),
+                                                  repeat(network_features, len(invalid_ind)),
+                                                  repeat(weather_features, len(invalid_ind)),
+                                                  repeat(config, len(invalid_ind)),
+                                                  repeat(prices, len(invalid_ind)),
+                                                  repeat(lca, len(invalid_ind)),
+                                                  repeat(district_heating_network, len(invalid_ind)),
+                                                  repeat(district_cooling_network, len(invalid_ind)),
+                                                  repeat(technologies_heating_allowed, len(invalid_ind)),
+                                                  repeat(technologies_cooling_allowed, len(invalid_ind)),
+                                                  repeat(column_names, len(invalid_ind))))
 
     # normalization of the first generation
+    fitnesses = list(fitnesses)  # fitnesses is a map object - store a copy for iterating over multiple times
     scaler_dict = scaler_for_normalization(NOBJ, fitnesses)
     fitnesses = normalize_fitnesses(scaler_dict, fitnesses)
 
@@ -323,7 +322,7 @@ def non_dominated_sorting_genetic_algorithm(locator,
     # Begin the generational process
     # Initialization of variables
     for gen in range(1, NGEN + 1):
-        print ("Evaluating Generation %s of %s generations" % (gen, NGEN + 1))
+        print("Evaluating Generation %s of %s generations" % (gen, NGEN + 1))
         # Select and clone the next generation individuals
         offspring = algorithms.varAnd(pop, toolbox, CXPB, MUTPB)
 
@@ -331,25 +330,26 @@ def non_dominated_sorting_genetic_algorithm(locator,
         invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
         invalid_ind = [ind for ind in invalid_ind if ind not in pop]
         fitnesses = toolbox.map(toolbox.evaluate,
-                                izip(invalid_ind, range(len(invalid_ind)), repeat(gen, len(invalid_ind)),
-                                     repeat(building_names_all, len(invalid_ind)),
-                                     repeat(column_names_buildings_heating, len(invalid_ind)),
-                                     repeat(column_names_buildings_cooling, len(invalid_ind)),
-                                     repeat(building_names_heating, len(invalid_ind)),
-                                     repeat(building_names_cooling, len(invalid_ind)),
-                                     repeat(building_names_electricity, len(invalid_ind)),
-                                     repeat(locator, len(invalid_ind)),
-                                     repeat(network_features, len(invalid_ind)),
-                                     repeat(weather_features, len(invalid_ind)),
-                                     repeat(config, len(invalid_ind)),
-                                     repeat(prices, len(invalid_ind)),
-                                     repeat(lca, len(invalid_ind)),
-                                     repeat(district_heating_network, len(invalid_ind)),
-                                     repeat(district_cooling_network, len(invalid_ind)),
-                                     repeat(technologies_heating_allowed, len(invalid_ind)),
-                                     repeat(technologies_cooling_allowed, len(invalid_ind)),
-                                     repeat(column_names, len(invalid_ind))))
+                                zip(invalid_ind, range(len(invalid_ind)), repeat(gen, len(invalid_ind)),
+                                    repeat(building_names_all, len(invalid_ind)),
+                                    repeat(column_names_buildings_heating, len(invalid_ind)),
+                                    repeat(column_names_buildings_cooling, len(invalid_ind)),
+                                    repeat(building_names_heating, len(invalid_ind)),
+                                    repeat(building_names_cooling, len(invalid_ind)),
+                                    repeat(building_names_electricity, len(invalid_ind)),
+                                    repeat(locator, len(invalid_ind)),
+                                    repeat(network_features, len(invalid_ind)),
+                                    repeat(weather_features, len(invalid_ind)),
+                                    repeat(config, len(invalid_ind)),
+                                    repeat(prices, len(invalid_ind)),
+                                    repeat(lca, len(invalid_ind)),
+                                    repeat(district_heating_network, len(invalid_ind)),
+                                    repeat(district_cooling_network, len(invalid_ind)),
+                                    repeat(technologies_heating_allowed, len(invalid_ind)),
+                                    repeat(technologies_cooling_allowed, len(invalid_ind)),
+                                    repeat(column_names, len(invalid_ind))))
         # normalization of the second generation on
+        fitnesses = list(fitnesses)  # fitnesses is a map object - store a copy for iterating over multiple times
         fitnesses = normalize_fitnesses(scaler_dict, fitnesses)
 
         for ind, fit in zip(invalid_ind, fitnesses):
@@ -385,50 +385,51 @@ def non_dominated_sorting_genetic_algorithm(locator,
             DHN_network_list_tested.append(DHN_barcode)
 
         if config.debug:
-            print "Saving results for generation", gen, "\n"
+            print("Saving results for generation", gen, "\n")
             valid_generation = [gen]
             save_generation_dataframes(gen, invalid_ind, locator, DCN_network_list_tested, DHN_network_list_tested)
             save_generation_individuals(column_names, gen, invalid_ind, locator)
-            systems_name_list = save_generation_pareto_individuals(locator, gen, record_individuals_tested, paretofrontier)
+            systems_name_list = save_generation_pareto_individuals(locator, gen, record_individuals_tested,
+                                                                   paretofrontier)
         else:
             systems_name_list = []
             valid_generation = []
 
         if gen == NGEN and config.debug == False:  # final generation re-evaluate paretofront
-            print "Saving results for generation", gen, "\n"
+            print("Saving results for generation", gen, "\n")
             valid_generation = [gen]
             systems_name_list = save_final_generation_pareto_individuals(toolbox,
-                                                     locator,
-                                                     gen,
-                                                     record_individuals_tested,
-                                                     paretofrontier,
-                                                     building_names_all,
-                                                     column_names_buildings_heating,
-                                                     column_names_buildings_cooling,
-                                                     building_names_heating,
-                                                     building_names_cooling,
-                                                     building_names_electricity,
-                                                     network_features,
-                                                     weather_features,
-                                                     config,
-                                                     prices,
-                                                     lca,
-                                                     district_heating_network,
-                                                     district_cooling_network,
-                                                     technologies_heating_allowed,
-                                                     technologies_cooling_allowed,
-                                                     column_names)
+                                                                         locator,
+                                                                         gen,
+                                                                         record_individuals_tested,
+                                                                         paretofrontier,
+                                                                         building_names_all,
+                                                                         column_names_buildings_heating,
+                                                                         column_names_buildings_cooling,
+                                                                         building_names_heating,
+                                                                         building_names_cooling,
+                                                                         building_names_electricity,
+                                                                         network_features,
+                                                                         weather_features,
+                                                                         config,
+                                                                         prices,
+                                                                         lca,
+                                                                         district_heating_network,
+                                                                         district_cooling_network,
+                                                                         technologies_heating_allowed,
+                                                                         technologies_cooling_allowed,
+                                                                         column_names)
 
         # Create Checkpoint if necessary
-        print "Creating CheckPoint", gen, "\n"
-        with open(locator.get_optimization_checkpoint(gen), "wb") as fp:
+        print("Creating CheckPoint", gen, "\n")
+        with open(locator.get_optimization_checkpoint(gen), "w") as fp:
             cp = dict(generation=gen,
                       selected_population=pop,
                       tested_population=invalid_ind,
                       generational_distances=generational_distances,
-                      difference_generational_distances = difference_generational_distances,
+                      difference_generational_distances=difference_generational_distances,
                       systems_to_show=systems_name_list,
-                      generation_to_show =valid_generation,
+                      generation_to_show=valid_generation,
                       )
             json.dump(cp, fp)
     if config.multiprocessing:
@@ -458,7 +459,7 @@ def save_final_generation_pareto_individuals(toolbox,
                                              technologies_heating_allowed,
                                              technologies_cooling_allowed,
                                              column_names):
-    #local variables
+    # local variables
     performance_totals_pareto = pd.DataFrame()
     individual_number_list = []
     generation_number_list = []
@@ -474,45 +475,50 @@ def save_final_generation_pareto_individuals(toolbox,
 
     save_generation_individuals(column_names, generation, individual_in_pareto_list, locator)
 
-    #evaluate once again and print results for the pareto curve
+    # evaluate once again and print results for the pareto curve
     print_final_results = True
-    toolbox.map(toolbox.evaluate, izip(individual_in_pareto_list,
-                                       individual_number_list,
-                                       generation_number_list,
-                                       repeat(building_names_all, len(individual_in_pareto_list)),
-                                       repeat(column_names_buildings_heating, len(individual_in_pareto_list)),
-                                       repeat(column_names_buildings_cooling, len(individual_in_pareto_list)),
-                                       repeat(building_names_heating, len(individual_in_pareto_list)),
-                                       repeat(building_names_cooling, len(individual_in_pareto_list)),
-                                       repeat(building_names_electricity, len(individual_in_pareto_list)),
-                                       repeat(locator, len(individual_in_pareto_list)),
-                                       repeat(network_features, len(individual_in_pareto_list)),
-                                       repeat(weather_features, len(individual_in_pareto_list)),
-                                       repeat(config, len(individual_in_pareto_list)),
-                                       repeat(prices, len(individual_in_pareto_list)),
-                                       repeat(lca, len(individual_in_pareto_list)),
-                                       repeat(district_heating_network, len(individual_in_pareto_list)),
-                                       repeat(district_cooling_network, len(individual_in_pareto_list)),
-                                       repeat(technologies_heating_allowed, len(individual_in_pareto_list)),
-                                       repeat(technologies_cooling_allowed, len(individual_in_pareto_list)),
-                                       repeat(column_names, len(individual_in_pareto_list)),
-                                       repeat(print_final_results, len(individual_in_pareto_list))))
+    fitnesses = toolbox.map(toolbox.evaluate, zip(individual_in_pareto_list,
+                                                  individual_number_list,
+                                                  generation_number_list,
+                                                  repeat(building_names_all, len(individual_in_pareto_list)),
+                                                  repeat(column_names_buildings_heating,
+                                                         len(individual_in_pareto_list)),
+                                                  repeat(column_names_buildings_cooling,
+                                                         len(individual_in_pareto_list)),
+                                                  repeat(building_names_heating, len(individual_in_pareto_list)),
+                                                  repeat(building_names_cooling, len(individual_in_pareto_list)),
+                                                  repeat(building_names_electricity, len(individual_in_pareto_list)),
+                                                  repeat(locator, len(individual_in_pareto_list)),
+                                                  repeat(network_features, len(individual_in_pareto_list)),
+                                                  repeat(weather_features, len(individual_in_pareto_list)),
+                                                  repeat(config, len(individual_in_pareto_list)),
+                                                  repeat(prices, len(individual_in_pareto_list)),
+                                                  repeat(lca, len(individual_in_pareto_list)),
+                                                  repeat(district_heating_network, len(individual_in_pareto_list)),
+                                                  repeat(district_cooling_network, len(individual_in_pareto_list)),
+                                                  repeat(technologies_heating_allowed, len(individual_in_pareto_list)),
+                                                  repeat(technologies_cooling_allowed, len(individual_in_pareto_list)),
+                                                  repeat(column_names, len(individual_in_pareto_list)),
+                                                  repeat(print_final_results, len(individual_in_pareto_list))))
+
+    # fitnesses is a map object of lazy results - iterate over it to actually evaluate
+    fitnesses = list(fitnesses)
 
     for individual_number, generation_number in zip(individual_number_list, generation_number_list):
         performance_totals_pareto = pd.concat([performance_totals_pareto,
-                                                   pd.read_csv(
-                                                       locator.get_optimization_slave_total_performance(
-                                                           individual_number, generation_number))],
-                                                  ignore_index=True)
+                                               pd.read_csv(
+                                                   locator.get_optimization_slave_total_performance(
+                                                       individual_number, generation_number))],
+                                              ignore_index=True)
 
     systems_name_list = ["sys_" + str(y) + "_" + str(x) for x, y in zip(individual_number_list, generation_number_list)]
     performance_totals_pareto['individual'] = individual_number_list
     performance_totals_pareto['individual_name'] = systems_name_list
     performance_totals_pareto['generation'] = generation_number_list
-    performance_totals_pareto.to_csv(locator.get_optimization_generation_total_performance_pareto(generation), index=False)
+    performance_totals_pareto.to_csv(locator.get_optimization_generation_total_performance_pareto(generation),
+                                     index=False)
 
     return systems_name_list
-
 
 
 def save_generation_pareto_individuals(locator, generation, record_individuals_tested, paretofrontier):
@@ -535,7 +541,8 @@ def save_generation_pareto_individuals(locator, generation, record_individuals_t
     performance_totals_pareto['individual'] = individual_list
     performance_totals_pareto['individual_name'] = systems_name_list
     performance_totals_pareto['generation'] = generation_list
-    performance_totals_pareto.to_csv(locator.get_optimization_generation_total_performance_pareto(generation), index=False)
+    performance_totals_pareto.to_csv(locator.get_optimization_generation_total_performance_pareto(generation),
+                                     index=False)
 
     return systems_name_list
 
@@ -553,7 +560,8 @@ def save_generation_dataframes(generation,
     for ind, DCN_barcode, DHN_barcode in zip(individual_list, DCN_network_list_selected, DHN_network_list_selected):
         performance_connected = pd.concat([performance_connected,
                                            pd.read_csv(
-                                               locator.get_optimization_slave_district_scale_performance(ind, generation))],
+                                               locator.get_optimization_slave_district_scale_performance(ind,
+                                                                                                         generation))],
                                           ignore_index=True)
 
         performance_disconnected = pd.concat([performance_disconnected, pd.read_csv(
@@ -574,8 +582,10 @@ def save_generation_dataframes(generation,
     performance_totals['generation'] = generation
 
     # save all results to disk
-    performance_disconnected.to_csv(locator.get_optimization_generation_building_scale_performance(generation), index=False)
-    performance_connected.to_csv(locator.get_optimization_generation_district_scale_performance(generation), index=False)
+    performance_disconnected.to_csv(locator.get_optimization_generation_building_scale_performance(generation),
+                                    index=False)
+    performance_connected.to_csv(locator.get_optimization_generation_district_scale_performance(generation),
+                                 index=False)
     performance_totals.to_csv(locator.get_optimization_generation_total_performance(generation), index=False)
 
 
@@ -601,9 +611,9 @@ def create_empty_individual(column_names,
                             technologies_cooling_allowed,
                             ):
     # local variables
-    heating_unit_names_share = [x[0] for x in DH_CONVERSION_TECHNOLOGIES_SHARE.iteritems() if
+    heating_unit_names_share = [x[0] for x in DH_CONVERSION_TECHNOLOGIES_SHARE.items() if
                                 x[0] in technologies_heating_allowed]
-    cooling_unit_names_share = [x[0] for x in DC_CONVERSION_TECHNOLOGIES_SHARE.iteritems() if
+    cooling_unit_names_share = [x[0] for x in DC_CONVERSION_TECHNOLOGIES_SHARE.items() if
                                 x[0] in technologies_cooling_allowed]
 
     heating_unit_share_float = [0.0] * len(heating_unit_names_share)
@@ -637,7 +647,7 @@ def get_column_names_individual(district_heating_network,
     # 2 cases are possible
     if district_heating_network:
         # local variables
-        heating_unit_names_share = [x[0] for x in DH_CONVERSION_TECHNOLOGIES_SHARE.iteritems() if
+        heating_unit_names_share = [x[0] for x in DH_CONVERSION_TECHNOLOGIES_SHARE.items() if
                                     x[0] in technologies_heating_allowed]
         column_names_buildings_heating = [x + "_" + DH_ACRONYM for x in building_names_heating]
         cooling_unit_names_share = []
@@ -646,7 +656,7 @@ def get_column_names_individual(district_heating_network,
                        column_names_buildings_heating
     elif district_cooling_network:
         # local variables
-        cooling_unit_names_share = [x[0] for x in DC_CONVERSION_TECHNOLOGIES_SHARE.iteritems() if
+        cooling_unit_names_share = [x[0] for x in DC_CONVERSION_TECHNOLOGIES_SHARE.items() if
                                     x[0] in technologies_cooling_allowed]
         column_names_buildings_cooling = [x + "_" + DC_ACRONYM for x in building_names_cooling]
         heating_unit_names_share = []

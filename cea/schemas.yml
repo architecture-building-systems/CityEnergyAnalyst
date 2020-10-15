@@ -8128,8 +8128,7 @@ get_lca_operation:
         values: '{0.0...n}'
         min: 0.0
       DH_hs_ghg_kgm2:
-        description: Operational emissions per unit of conditioned floor area of the
-          district heating system
+        description: Operational emissions per unit of conditioned floor area of the district heating system
         type: float
         unit: '[kg/m2yr]'
         values: '{0.0...n}'

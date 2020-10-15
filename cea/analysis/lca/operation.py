@@ -1,7 +1,9 @@
 """
 Non-renewable primary energy and GHG_kgCO2MJ emissions model algorithm for building operation
 """
-from __future__ import division
+
+
+
 
 import os
 

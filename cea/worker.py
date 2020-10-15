@@ -9,17 +9,15 @@ with it's own distutils entry-point (``cea-worker``) with it's own semantics for
 integer argument, the jobid, that is used to fetch all other information from the /server/jobs api, as well
 as an URL for locating the /server/jobs api.
 """
-from __future__ import division
-from __future__ import print_function
 
 import sys
 import requests
 import traceback
-import Queue
+import queue
 import threading
 import cea.config
 import cea.scripts
-from cea import suppres_3rd_party_debug_loggers
+from cea import suppress_3rd_party_debug_loggers
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
@@ -30,24 +28,24 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-suppres_3rd_party_debug_loggers()
+suppress_3rd_party_debug_loggers()
 
 
-def consume_nowait(queue, msg):
+def consume_nowait(q, msg):
     """
     Read from queue as much as possible and concatenate the results to ``msg``, returning that.
     If an ``EOFError`` is read from the queue, put it back and return the ``msg`` so far.
     """
-    if not queue.empty():
+    if not q.empty():
         messages = [msg]
         try:
-            msg = queue.get_nowait()
+            msg = q.get_nowait()
             while not msg is EOFError:
                 messages.append(msg)
-                msg = queue.get_nowait()
+                msg = q.get_nowait()
             # msg is now EOFError, put it back
-            queue.put(EOFError)
-        except Queue.Empty:
+            q.put(EOFError)
+        except queue.Empty:
             # we have read all there is in the queue for now
             pass
         finally:
@@ -58,6 +56,7 @@ def consume_nowait(queue, msg):
 def stream_poster(jobid, server, queue):
     """Post items from queue until a sentinel (the EOFError class object) is read."""
     msg = queue.get(block=True, timeout=None)  # block until first message
+
     while not msg is EOFError:
         msg = consume_nowait(queue, msg)
         requests.put("{server}/streams/write/{jobid}".format(**locals()), data=msg)
@@ -66,11 +65,12 @@ def stream_poster(jobid, server, queue):
 
 class JobServerStream(object):
     """A File-like object for capturing STDOUT and STDERR form cea-worker processes on the server."""
+
     def __init__(self, jobid, server, stream):
         self.jobid = jobid
         self.server = server
         self.stream = stream  # keep the original STDOUT around for debugging purposes
-        self.queue = Queue.Queue()
+        self.queue = queue.Queue()
         self.stream_poster = threading.Thread(target=stream_poster, args=[jobid, server, self.queue])
         self.stream_poster.start()
 

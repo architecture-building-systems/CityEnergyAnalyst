@@ -2,8 +2,9 @@
 This module provides an interface to the "supply_systems.xls" file (locator.get_database_supply_systems()) - the point
 is to avoid reading this data (which is constant during the lifetime of a script) again and again.
 """
-from __future__ import print_function
-from __future__ import division
+
+
+
 
 import pandas as pd
 import cea.inputlocator

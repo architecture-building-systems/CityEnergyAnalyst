@@ -6,7 +6,7 @@ Follow these instructions to install the CityEnergyAnalyst (CEA) on a Windows sy
 1. `Download the latest version of CEA in here`_.
 2. Open the installer and follow the instructions
 
-.. _`Download the latest version of CEA in here`: https://cityenergyanalyst.com/tryit
+.. _`Download the latest version of CEA in here`: https://cityenergyanalyst.com/try-cea
 
 .. note:: For installing the development version of CEA, tick the box "development version" during the installation.
 

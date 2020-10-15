@@ -6,8 +6,9 @@ It has two loops: one for each of heating network and cooling network
 This is then combined to calculate the total natural gas imports and the corresponding file is saved in the
 respective folder
 """
-from __future__ import division
-from __future__ import print_function
+
+
+
 
 import cea.config
 import cea.inputlocator

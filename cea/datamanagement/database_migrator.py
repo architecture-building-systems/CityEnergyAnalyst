@@ -4,8 +4,9 @@ This script checks a scenario for v2.29.0 format and migrates the input tables i
 NOTE: You'll still need to run the archetypes-mapper after this script has run.
 """
 
-from __future__ import division
-from __future__ import print_function
+
+
+
 
 import os
 import cea

@@ -1,6 +1,7 @@
 """
 Tests to make sure the schemas.yml file is structurally sound.
 """
+
 import re
 import unittest
 
@@ -43,7 +44,7 @@ class TestSchemas(unittest.TestCase):
 
         for lm in schemas:
             self.assertIn("file_path", schemas[lm], "{lm} does not have a file_path".format(lm=lm))
-            self.assertIsInstance(schemas[lm]["file_path"], basestring, "{lm} does not have a file_path".format(lm=lm))
+            self.assertIsInstance(schemas[lm]["file_path"], str, "{lm} does not have a file_path".format(lm=lm))
             self.assertNotIn("\\", schemas[lm]["file_path"], "{lm} has backslashes in it's file_path".format(lm=lm))
 
     def test_all_columns_have_description(self):
@@ -108,7 +109,7 @@ class TestSchemas(unittest.TestCase):
                                             "Missing description for {lm}/{col}/description".format(
                                                 lm=lm, col=col))
                     except BaseException as e:
-                        self.fail("Problem with lm={lm}, col={col}, message: {m}".format(lm=lm, col=col, m=e.message))
+                        self.fail("Problem with lm={lm}, col={col}, message: {m}".format(lm=lm, col=col, m=e))
 
     def test_each_column_has_type(self):
         schemas = cea.schemas.schemas(plugins=[])
@@ -124,18 +125,19 @@ class TestSchemas(unittest.TestCase):
                     for col in ws_schema.keys():
                         self.assertIn("type", ws_schema[col],
                                       "Missing type definition for {lm}/{ws}/{col}".format(
-                                                lm=lm, ws=ws, col=col))
+                                          lm=lm, ws=ws, col=col))
                         col_type = ws_schema[col]["type"]
                         self.assertIn(col_type, valid_types,
                                       "Invalid type definition for {lm}/{ws}/{col}: {type}".format(
-                                                lm=lm, ws=ws, col=col, type=col_type))
+                                          lm=lm, ws=ws, col=col, type=col_type))
             elif schemas[lm]["file_type"] in {"shp", "dbf", "csv"}:
                 for col in schema["columns"].keys():
                     self.assertIn("type", schema["columns"][col],
                                   "Missing type definition for {lm}/{col}".format(lm=lm, col=col))
                     col_type = schema["columns"][col]["type"]
                     self.assertIn(col_type, valid_types,
-                                  "Invalid type definition for {lm}/{col}: {type}".format(lm=lm, col=col, type=col_type))
+                                  "Invalid type definition for {lm}/{col}: {type}".format(lm=lm, col=col,
+                                                                                          type=col_type))
 
     def test_each_lm_has_created_by(self):
         schemas = cea.schemas.schemas(plugins=[])
@@ -224,7 +226,7 @@ class TestSchemas(unittest.TestCase):
                         except ValueError as e:
                             col_label = ":".join([lm, ws, col])
                             print("Error in column {col_label}:\n{message}\n".format(col_label=col_label,
-                                                                                     message=e.message))
+                                                                                     message=e))
             else:
                 for col, col_schema in schemas[lm]["schema"]["columns"].items():
                     try:
@@ -232,7 +234,7 @@ class TestSchemas(unittest.TestCase):
                     except ValueError as e:
                         col_label = ":".join([lm, col])
                         print(
-                            "Error in column {col_label}:\n{message}\n".format(col_label=col_label, message=e.message))
+                            "Error in column {col_label}:\n{message}\n".format(col_label=col_label, message=e))
 
 
 def extract_locator_methods(locator):
@@ -280,11 +282,14 @@ def parse_numerical_range_value(value, num_type):
 
     num = r'-?\d+(?:.\d+)?'
     num_or_n = r'{num}|n'.format(num=num)
-    regex = r'{{({num_or_n})...({num_or_n})}}'.format(num_or_n=num_or_n)
+
+    # match {1...n}-style values
+    regex = r'{{(?P<first>{num_or_n})(...|,)(?P<second>{num_or_n})}}'.format(num_or_n=num_or_n)
     match = re.match(regex, value)
+
     if match is None:
         raise ValueError("values property not in '{{n...n}}' format. Got: '{value}'".format(value=value))
-    return parse_string_num(match.group(1)), parse_string_num(match.group(2))
+    return parse_string_num(match.group("first")), parse_string_num(match.group("second"))
 
 
 if __name__ == '__main__':

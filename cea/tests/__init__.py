@@ -2,8 +2,9 @@
 Run the CEA scripts and unit tests as part of our CI efforts (cf. The Jenkins)
 """
 
-from __future__ import division
-from __future__ import print_function
+
+
+
 
 import os
 import shutil
