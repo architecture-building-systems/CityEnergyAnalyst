@@ -182,16 +182,21 @@ def write_cea_demand_from_osmose(path_to_district_folder):
         DC_cooling_loads = {}
         T_net_df = pd.DataFrame()
         Af_total_m2 = {}
-        network_lists = network_df.filter(like='locP').filter(like='Hin').filter(like='return').columns
+        # network_lists = network_df.filter(like='locP').filter(like='Hin').filter(like='return').columns # only plant
+        network_lists = network_df.filter(like='Hin').filter(like='return').columns # include all buildings as plant
         for network in network_lists:
             network_name = network.split('_Hin')[0]
             Hin = network_df[network]
             Tout = network_df[network_name + '_Tout']
             Tin = network_df[network_name + '_Tin']
             T_net_df[network_name + '_Ts'] = np.where(Hin > 0.0, Tout, 0.0)
-            T_net_df[network_name + '_Tr'] = np.where(Hin > 0.0, Tin, 0.001) # set to 0.001 to avoid division by zero when calculating mass flow
-        T_net_df['Ts'] = T_net_df.filter(like='Ts').sum(axis=1)
-        T_net_df['Tr'] = T_net_df.filter(like='Tr').sum(axis=1)
+            T_net_df[network_name + '_Tr'] = np.where(Hin > 0.0, Tin, 0.0) # set to 0.001 to avoid division by zero when calculating mass flow
+        # T_net_df['Ts'] = T_net_df.filter(like='Ts').sum(axis=1)
+        # T_net_df['Tr'] = T_net_df.filter(like='Tr').sum(axis=1)
+        T_net_df = T_net_df.replace(0.0, np.nan)
+        T_net_df['Ts'] = T_net_df.filter(like='Ts').mean(axis=1)
+        T_net_df['Tr'] = T_net_df.filter(like='Tr').mean(axis=1)
+        T_net_df = T_net_df.replace(np.nan, 0.001) # set to 0.001 to avoid division by zero when calculating mass flow
         T_supply_K = T_net_df['Ts'].mean() + 273.15
 
         for building_function in ['OFF', 'HOT', 'RET']:
@@ -221,7 +226,7 @@ def write_cea_demand_from_osmose(path_to_district_folder):
             #     calc_builing_substation_dTlm(Q_substation, building_function)  # FIXME: cant use it during optimization, no plots
 
         # 4. allocate DC cooling loads and heat exchanger area to buildings
-        substation_A_hex.loc['plant'] = [A_hex_plant_m2]
+        substation_A_hex.loc['plant'] = [A_hex_plant_m2] # TODO: add hotel if return
         for building in building_info.index:
             building_function = building_info.loc[building][building_info.loc[building]==1].index.values[0]
             bui_func = building_function[:3]
@@ -235,6 +240,7 @@ def write_cea_demand_from_osmose(path_to_district_folder):
                 building_demand_df['mcpcs_sys_ahu_kWperC'] = building_demand_df['Qcs_sys_ahu_kWh'] / (T_net_df['Tr'] - T_net_df['Ts'])
                 substation_flow_rate_m3pers = building_demand_df['mcpcs_sys_ahu_kWperC'] / CP_KJPERKGK / P_WATER_KGPERM3
                 substation_flow_rate_m3pers_df[building] = substation_flow_rate_m3pers
+                # TODO: add flow rate when HOT return is in use
 
                 # substation heat exchanger areas
                 substation_Qmax = substation_Qmax_dict[bui_func] * (building_Af_m2 / Af_total_m2[bui_func])
