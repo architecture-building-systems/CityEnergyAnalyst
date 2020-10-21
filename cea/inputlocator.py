@@ -960,7 +960,7 @@ class InputLocator(object):
                                    str(type_of_district_network))
 
     def get_predefined_hourly_setpoints(self, building, type_of_district_network):
-        """scenario/outputs/data/demand/{building}_.csv"""
+        """scenario/inputs/predefined-hourly-setpoints/{type_of_district_network}/{building}_temperature.csv"""
         return os.path.join(self.get_predefined_hourly_setpoints_folder(type_of_district_network),
                             str(building) + '_temperature.csv')
 
