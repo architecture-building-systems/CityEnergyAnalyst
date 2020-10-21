@@ -16,7 +16,6 @@ from cea.demand import latent_loads
 from cea.demand import sensible_loads, electrical_loads, hotwater_loads, refrigeration_loads, datacenter_loads
 from cea.demand import ventilation_air_flows_detailed, control_heating_cooling_systems
 from cea.demand.latent_loads import convert_rh_to_moisture_content
-from cea.demand.set_point_from_predefined_file import calc_set_point_from_predefined_file
 from cea.utilities import reporting
 
 
@@ -296,12 +295,7 @@ def calc_Qhs_sys(bpr, tsd):
 
 def calc_set_points(bpr, date, tsd, building_name, config, locator, schedules):
     # get internal comfort properties
-    # predefined set points for every given hour can be used to calculate the demand profile for a building
-    # a config flag is used for this, it is present in the config.demand section
-    if config.demand.predefined_hourly_setpoints:
-        tsd = calc_set_point_from_predefined_file(tsd, bpr, date.dayofweek, building_name, locator)
-    else:
-        tsd = control_heating_cooling_systems.get_temperature_setpoints_incl_seasonality(tsd, bpr, schedules)
+    tsd = control_heating_cooling_systems.get_temperature_setpoints_incl_seasonality(tsd, bpr, schedules)
 
     t_prev = next(get_hours(bpr)) - 1
     tsd['T_int'][t_prev] = tsd['T_ext'][t_prev]
