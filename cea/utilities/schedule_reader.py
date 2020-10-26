@@ -65,7 +65,7 @@ def save_cea_schedule(schedule_data, schedule_complementary_data, path_to_buildi
     MULTIPLIER = ['MONTHLY_MULTIPLIER'] + list(schedule_complementary_data['MONTHLY_MULTIPLIER'])
     COLUMNS_SCHEDULES = schedule_data.keys()
     RECORDS_SCHEDULES = map(list, zip(*schedule_data.values()))
-    with open(path_to_building_schedule, "w", newline='\n', encoding='utf-8') as csvfile:
+    with open(path_to_building_schedule, "w", newline="", encoding="utf-8") as csvfile:
         csvwriter = csv.writer(csvfile, delimiter=',')
         csvwriter.writerow(METADATA)
         csvwriter.writerow(MULTIPLIER)
@@ -116,7 +116,7 @@ def schedule_to_file(schedule, schedule_path):
             schedule_df[key] = schedule_column_data
     schedule_df = schedule_df.reset_index()
 
-    with open(schedule_path, "wb") as csv_file:
+    with open(schedule_path, "w", newline="", encoding="utf-8") as csv_file:
         csv_writer = csv.writer(csv_file, delimiter=',')
         csv_writer.writerow(metadata)
         csv_writer.writerow(multiplier)
