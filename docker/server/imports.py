@@ -64,7 +64,6 @@ import time
 import traceback
 import unittest
 import utm
-import vtk
 import warnings
 import werkzeug.utils
 import wntr
