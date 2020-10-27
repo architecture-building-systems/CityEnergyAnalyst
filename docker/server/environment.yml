@@ -67,6 +67,7 @@ dependencies:
 - twine
 - pymc3
 - python-cufflinks
+- gevent-websocket
 - pip:
   - opencv-contrib-python
   - staticmap
