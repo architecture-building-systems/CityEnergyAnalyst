@@ -955,15 +955,6 @@ class InputLocator(object):
         """scenario/outputs/data/demand/{building}.csv"""
         return os.path.join(self.get_demand_results_folder(), '%(building)s.%(format)s' % locals())
 
-    def get_predefined_hourly_setpoints_folder(self, type_of_district_network):
-        return self._ensure_folder(self.scenario, 'inputs', 'predefined-hourly-setpoints',
-                                   str(type_of_district_network))
-
-    def get_predefined_hourly_setpoints(self, building, type_of_district_network):
-        """scenario/outputs/data/demand/{building}_.csv"""
-        return os.path.join(self.get_predefined_hourly_setpoints_folder(type_of_district_network),
-                            str(building) + '_temperature.csv')
-
     # EMISSIONS
     def get_lca_emissions_results_folder(self):
         """scenario/outputs/data/emissions"""
