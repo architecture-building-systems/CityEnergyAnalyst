@@ -50,3 +50,7 @@ understand it well enough myself to feel confident enough to explain. But here a
 - If you browse to http://localhost:5050/api/ you will see a description of the api you can use. This is the same
   api used by the CityEnergyAnalyst-GUI project, so you can essentially do anything that can be done in the GUI
   programmatically using this api.
+- The ENTRYPOINT of the image is set to ``source /venv/bin/activate && cea dashboard``. You can change that if you
+  would like to play around in the container: ``docker container run -it --entrypoint /bin/bash`` will take you directly
+  to the shell. The ``-it`` parameter sets up interactive and tty so you can actually _do_ something there. Note,
+  in order to use any of the CEA functionality, you'll need to type ``source /venv/bin/activate``.
