@@ -83,11 +83,19 @@ def calc_SC(locator, config, latitude, longitude, weather_data, date_local, buil
     tot_bui_height_m = gpd.read_file(locator.get_zone_geometry())['height_ag'].sum()
 
     if not sensors_metadata_clean.empty:
-        # calculate optimal angle and tilt for panels
-        sensors_metadata_cat = solar_equations.optimal_angle_and_tilt(sensors_metadata_clean, latitude,
-                                                                      solar_properties, max_annual_radiation,
-                                                                      panel_properties_SC)
-        print('calculating optimal tilt angle and separation done for building %s' % building_name)
+        if config.solar.type_placement == 'OPT':
+            # calculate optimal angle and tilt for panels
+            sensors_metadata_cat = solar_equations.optimal_angle_and_tilt(sensors_metadata_clean, latitude,
+                                                                          solar_properties, max_annual_radiation,
+                                                                          panel_properties_SC)
+            print('calculating optimal tilt angle and separation done for building %s' % building_name)
+        else:
+            # calculate optimal angle and tilt for panels
+            sensors_metadata_cat = solar_equations.calc_spacing_user_angle(sensors_metadata_clean, solar_properties,
+                                                                           max_annual_radiation, panel_properties_PV,
+                                                                           config.solar.panel_tilt_angle,
+                                                                           config.solar.max_roof_coverage)
+            print('calculating separation for user-inputted tilt angle done')
 
         # group the sensors with the same tilt, surface azimuth, and total radiation
         sensor_groups = solar_equations.calc_groups(sensors_rad_clean, sensors_metadata_cat)
@@ -966,6 +974,10 @@ def main(config):
     print('Running solar-collector with solar-window-solstice = %s' % config.solar.solar_window_solstice)
     print('Running solar-collector with t-in-sc = %s' % config.solar.t_in_sc)
     print('Running solar-collector with type-scpanel = %s' % config.solar.type_scpanel)
+    print('Running solar-collector with type-placement = %s' % config.solar.type_placement)
+    if config.solar.type_placement != 'OPT':
+        print('Running solar-collector with panel-tilt-angle = %s' % config.solar.panel_tilt_angle)
+        print('Running solar-collector with max-roof-coverage = %s' % config.solar.max_roof_coverage)
 
     building_names = config.solar.buildings
 
