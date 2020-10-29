@@ -80,11 +80,20 @@ def calc_PV(locator, config, latitude, longitude, weather_data, datetime_local, 
     print('filtering low potential sensor points done')
 
     if not sensors_metadata_clean.empty:
-        # calculate optimal angle and tilt for panels
-        sensors_metadata_cat = solar_equations.optimal_angle_and_tilt(sensors_metadata_clean, latitude,
-                                                                      solar_properties,
-                                                                      max_annual_radiation, panel_properties_PV)
-        print('calculating optimal tile angle and separation done')
+        if config.solar.type_placement == 'OPT':
+            # calculate optimal angle and tilt for panels
+            sensors_metadata_cat = solar_equations.optimal_angle_and_tilt(sensors_metadata_clean, latitude,
+                                                                          solar_properties,
+                                                                          max_annual_radiation, panel_properties_PV)
+            print('calculating optimal tilt angle and separation done')
+        else:
+            # calculate optimal angle and tilt for panels
+            sensors_metadata_cat = solar_equations.calc_spacing_user_angle(sensors_metadata_clean, solar_properties,
+                                                                           max_annual_radiation, panel_properties_PV,
+                                                                           config.solar.panel_tilt_angle,
+                                                                           config.solar.max_roof_coverage)
+            print('calculating separation for user-inputted tilt angle done')
+
 
         # group the sensors with the same tilt, surface azimuth, and total radiation
         sensor_groups = solar_equations.calc_groups(sensors_rad_clean, sensors_metadata_cat)
@@ -765,6 +774,10 @@ def main(config):
     print('Running photovoltaic with panel-on-wall = %s' % config.solar.panel_on_wall)
     print('Running photovoltaic with solar-window-solstice = %s' % config.solar.solar_window_solstice)
     print('Running photovoltaic with type-pvpanel = %s' % config.solar.type_pvpanel)
+    print('Running photovoltaic with type-placement = %s' % config.solar.type_placement)
+    if config.solar.type_placement != 'OPT':
+        print('Running photovoltaic with panel-tilt-angle = %s' % config.solar.panel_tilt_angle)
+        print('Running photovoltaic with max-roof-coverage = %s' % config.solar.max_roof_coverage)
 
     buildings_names = locator.get_zone_building_names()
     zone_geometry_df = gdf.from_file(locator.get_zone_geometry())
