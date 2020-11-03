@@ -109,7 +109,7 @@ def calc_PVT(locator, config, latitude, longitude, weather_data, date_local, bui
         Final.to_csv(locator.PVT_results(building=building_name), index=True, float_format='%.2f')
         sensors_metadata_cat.to_csv(locator.PVT_metadata_results(building=building_name), index=True,
                                     index_label='SURFACE',
-                                    float_format='%.2f')  # print selected metadata of the selected sensors
+                                    float_format='%.2f',  na_rep='nan')  # print selected metadata of the selected sensors
 
         print('Building', building_name, 'done - time elapsed:', (time.perf_counter() - t0), ' seconds')
 
@@ -136,7 +136,7 @@ def calc_PVT(locator, config, latitude, longitude, weather_data, date_local, bui
              'array_spacing_m': 0, 'surface_azimuth_deg': 0, 'area_installed_module_m2': 0,
              'CATteta_z': 0, 'CATB': 0, 'CATGB': 0, 'type_orientation': 0}, index=range(2))
         sensors_metadata_cat.to_csv(locator.PVT_metadata_results(building=building_name), index=False,
-                                    float_format='%.2f')
+                                    float_format='%.2f', na_rep='nan')
 
     return
 
@@ -723,7 +723,7 @@ def main(config):
     aggregated_hourly_results_df.to_csv(locator.PVT_totals(), index=True, float_format='%.2f', na_rep='nan')
     # save annual results
     aggregated_annual_results_df = pd.DataFrame(aggregated_annual_results).T
-    aggregated_annual_results_df.to_csv(locator.PVT_total_buildings(), index=True, index_label="Name", float_format='%.2f')
+    aggregated_annual_results_df.to_csv(locator.PVT_total_buildings(), index=True, index_label="Name", float_format='%.2f', na_rep='nan')
 
 
 if __name__ == '__main__':
