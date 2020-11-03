@@ -95,7 +95,7 @@ def costs_main(locator, config):
     result_out = pd.DataFrame(result)
 
     # save dataframe
-    result_out.to_csv(locator.get_costs_operation_file(), index=False, float_format='%.2f')
+    result_out.to_csv(locator.get_costs_operation_file(), index=False, float_format='%.2f',  na_rep='nan')
 
 
 def calc_costs_per_energy_service(database, heating_services):
