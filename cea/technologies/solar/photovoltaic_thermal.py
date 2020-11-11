@@ -106,7 +106,7 @@ def calc_PVT(locator, config, latitude, longitude, weather_data, date_local, bui
         Final = calc_PVT_generation(sensor_groups, weather_data, date_local, solar_properties, latitude,
                                     tot_bui_height_m, panel_properties_SC, panel_properties_PV, config)
 
-        Final.to_csv(locator.PVT_results(building=building_name), index=True, float_format='%.2f')
+        Final.to_csv(locator.PVT_results(building=building_name), index=True, float_format='%.2f',  na_rep='nan')
         sensors_metadata_cat.to_csv(locator.PVT_metadata_results(building=building_name), index=True,
                                     index_label='SURFACE',
                                     float_format='%.2f',  na_rep='nan')  # print selected metadata of the selected sensors
