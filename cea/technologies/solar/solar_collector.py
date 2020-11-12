@@ -104,7 +104,7 @@ def calc_SC(locator, config, latitude, longitude, weather_data, date_local, buil
         Final.to_csv(locator.SC_results(building_name, panel_type), index=True, float_format='%.2f', na_rep='nan')
         sensors_metadata_cat.to_csv(locator.SC_metadata_results(building_name, panel_type), index=True,
                                     index_label='SURFACE',
-                                    float_format='%.2f')  # print selected metadata of the selected sensors
+                                    float_format='%.2f', na_rep='nan')  # print selected metadata of the selected sensors
 
         print('Building', building_name, 'done - time elapsed:', (time.perf_counter() - t0), ' seconds')
     else:  # This loop is activated when a building has not sufficient solar potential
@@ -125,14 +125,14 @@ def calc_SC(locator, config, latitude, longitude, weather_data, date_local, buil
              'Date':date_local},
             index=np.zeros(HOURS_IN_YEAR))
         Final.set_index('Date', inplace=True)
-        Final.to_csv(locator.SC_results(building_name, panel_type), index=True, float_format='%.2f')
+        Final.to_csv(locator.SC_results(building_name, panel_type), index=True, float_format='%.2f', na_rep='nan')
         sensors_metadata_cat = pd.DataFrame(
             {'SURFACE': 0, 'AREA_m2': 0, 'BUILDING': 0, 'TYPE': 0, 'Xcoor': 0, 'Xdir': 0, 'Ycoor': 0, 'Ydir': 0,
              'Zcoor': 0, 'Zdir': 0, 'orientation': 0, 'total_rad_Whm2': 0, 'tilt_deg': 0, 'B_deg': 0,
              'array_spacing_m': 0, 'surface_azimuth_deg': 0, 'area_installed_module_m2': 0,
              'CATteta_z': 0, 'CATB': 0, 'CATGB': 0, 'type_orientation': 0}, index=range(2))
         sensors_metadata_cat.to_csv(locator.SC_metadata_results(building_name, panel_type), index=True,
-                                    float_format='%.2f')
+                                    float_format='%.2f', na_rep="nan")
 
     return
 
@@ -1020,7 +1020,7 @@ def main(config):
     # save annual results
     aggregated_annual_results_df = pd.DataFrame(aggregated_annual_results).T
     aggregated_annual_results_df.to_csv(locator.SC_total_buildings(panel_type), index=True, index_label="Name",
-                                        float_format='%.2f')
+                                        float_format='%.2f', na_rep="nan")
 
 
 if __name__ == '__main__':
