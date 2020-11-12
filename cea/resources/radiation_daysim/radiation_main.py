@@ -343,12 +343,12 @@ class CEARad(py2radiance.Rad):
         hea_file.write("\nmaterial_file" + " " + os.path.join("rad", radfilename + "_material.rad"))
         hea_file.write("\ngeometry_file" + " " + os.path.join("rad", radfilename + "_geometry.rad"))
         hea_file.write("\nradiance_source_files 2," + radgeomfilepath + "," + radmaterialfile)
+        hea_file.write(f"\nsensor_file {self.sensor_file_path}")  # this will be overwritten in execute_gen_dc...
         hea_file.close()
-        command1 = 'radfiles2daysim "{}" -g -m -d'.format(hea_filepath)
-        f = open(self.command_file, "a")
-        f.write(command1)
-        f.write("\n")
-        f.close()
+        command1 = ["radfiles2daysim", hea_filepath, "-g", "-m", "-d"]  # 'radfiles2daysim "{}" -g -m -d'.format(hea_filepath)
+        with open(self.command_file, "a") as f:
+            f.write(" ".join(command1))
+            f.write("\n")
         self.run_cmd(command1)
 
     def execute_gen_dc(self, output_unit):
@@ -418,20 +418,90 @@ class CEARad(py2radiance.Rad):
             temp_hea_file.write('\n'.join(lines_modified))
 
         # execute gen_dc
-        command1 = 'gen_dc "{}" -dir'.format(temp_hea_filepath)
-        command2 = 'gen_dc "{}" -dif'.format(temp_hea_filepath)
-        command3 = 'gen_dc "{}" -paste'.format(temp_hea_filepath)
-        f = open(self.command_file, "a")
-        f.write(command1)
-        f.write("\n")
-        f.write(command2)
-        f.write("\n")
-        f.write(command3)
-        f.write("\n")
-        f.close()
+        command1 = ["gen_dc", temp_hea_filepath, "-dir"]  # 'gen_dc "{}" -dir'.format(temp_hea_filepath)
+        command2 = ["gen_dc", temp_hea_filepath, "-dif"]  # 'gen_dc "{}" -dif'.format(temp_hea_filepath)
+        command3 = ["gen_dc", temp_hea_filepath, "-paste"]  # 'gen_dc "{}" -paste'.format(temp_hea_filepath)
+        with open(self.command_file, "a") as f:
+            f.write(" ".join(command1))
+            f.write("\n")
+            f.write(" ".join(command2))
+            f.write("\n")
+            f.write(" ".join(command3))
+            f.write("\n")
         self.run_cmd(command1)
         self.run_cmd(command2)
         self.run_cmd(command3)
+
+    def initialise_daysim(self, daysim_dir, bin_directory=r"C:\Daysim\bin"):
+        """
+        Run this method prior to running any Daysim simulation. This function creates the base .hea header file and all the neccessary
+        folders for the Daysim simulation.
+
+        Parameters
+        ----------
+        daysim_dir :  str
+            The directory to write all the daysim results file to.
+        """
+        # create the directory if its not existing
+        if not os.path.isdir(daysim_dir):
+            os.mkdir(daysim_dir)
+
+        if daysim_dir.endswith(os.path.sep):
+            # e.g. daysim_dir= "/tmp/temp0/"
+            daysim_dir, _ = os.path.split(daysim_dir)
+        project_name = os.path.basename(daysim_dir)
+        # make sure the daysim_dir has a "/" or "\" at the end - daysim commands expect this
+        daysim_dir += os.path.sep
+
+        if not bin_directory.endswith(os.path.sep):
+            bin_directory += os.path.sep
+
+        # create an empty .hea file
+        hea_filepath = os.path.join(daysim_dir, project_name + ".hea")
+        with  open(hea_filepath, "w") as hea_file:
+            # the project name will take the name of the folder
+            hea_file.write(f"project_name {project_name}\n")
+            # write the project directory
+            hea_file.write(f"project_directory {daysim_dir}\n")
+            # bin directory
+            hea_file.write(f"bin_directory {bin_directory}\n")
+            # write tmp directory
+            hea_file.write("tmp_directory" + " " + os.path.join("tmp", "") + "\n")
+            # write material directory
+            hea_file.write("material_directory" + " " + os.path.join("c:/daysim", "") + "\n")
+            # write ies directory
+            hea_file.write("ies_directory" + " " + os.path.join("c:/daysim", "") + "\n")
+            hea_file.close()
+            self.hea_file = hea_filepath
+
+        # create all the subdirectory
+        sub_hea_folders = ["ies", "pts", "rad", "res", "tmp", "wea"]
+        for folder in range(len(sub_hea_folders)):
+            sub_hea_folder = sub_hea_folders[folder]
+            sub_hea_folders_path = os.path.join(daysim_dir, sub_hea_folder)
+            if folder == 0:
+                self.daysimdir_ies = sub_hea_folders_path
+            if folder == 1:
+                self.daysimdir_pts = sub_hea_folders_path
+            if folder == 2:
+                self.daysimdir_rad = sub_hea_folders_path
+            if folder == 3:
+                self.daysimdir_res = sub_hea_folders_path
+            if folder == 4:
+                self.daysimdir_tmp = sub_hea_folders_path
+            if folder == 5:
+                self.daysimdir_wea = sub_hea_folders_path
+
+            # if the directories are not existing create them
+            if not os.path.isdir(sub_hea_folders_path):
+                os.mkdir(sub_hea_folders_path)
+
+            # if they are existing delete all of the files
+            if os.path.isdir(sub_hea_folders_path):
+                files_in_dir = os.listdir(sub_hea_folders_path)
+                for filename in files_in_dir:
+                    rmv_path = os.path.join(sub_hea_folders_path, filename)
+                    os.remove(rmv_path)
 
     def execute_ds_illum(self):
         hea_filepath = self.hea_file
@@ -439,10 +509,10 @@ class CEARad(py2radiance.Rad):
 
         # execute ds_illum
         command1 = 'ds_illum "{}"'.format(hea_filepath)
-        f = open(self.command_file, "a")
-        f.write(command1)
-        f.write("\n")
-        f.close()
+        command1 = ["ds_illum", hea_filepath]
+        with open(self.command_file, "a") as f:
+            f.write(" ".join(command1))
+            f.write("\n")
         self.run_cmd(command1)
 
 
@@ -466,6 +536,7 @@ def main(config):
     daysim_bin_path, daysim_lib_path = check_daysim_bin_directory(config.radiation.daysim_bin_directory,
                                                                   config.radiation.use_latest_daysim_binaries)
     print('Using Daysim binaries from path: {}'.format(daysim_bin_path))
+    print('Using Daysim data from path: {}'.format(daysim_lib_path))
     # Save daysim path to config
     config.radiation.daysim_bin_directory = daysim_bin_path
 

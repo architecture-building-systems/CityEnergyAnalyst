@@ -1,27 +1,34 @@
-FROM continuumio/miniconda
+FROM continuumio/miniconda3 as cea-build
 COPY ./environment.yml /tmp/environment.yml
-RUN apt-get update -y && apt-get -y install gcc git libgl1-mesa-glx
 
+# create the conda environment and install cea...
 RUN conda env create -q -f /tmp/environment.yml -n cea
-RUN /bin/bash -c "source activate cea && \
-    pip install git+https://github.com/architecture-building-systems/CityEnergyAnalyst.git && \
-    cea extract-reference-case --destination ~/ && \
-    cea-config demand --scenario ~/reference-case-open/baseline && \
-    cea-config radiation --daysim-bin-directory /root/Daysim/bin"
+ENV PATH /opt/conda/envs/cea/bin:$PATH
+RUN /bin/bash -c "source activate cea && pip install --no-deps pip install --no-deps git+https://github.com/architecture-building-systems/CityEnergyAnalyst@2834-docker-container-for-remap#egg=cityenergyanalyst"
+
+# conda-pack the environment (with cea pre-installed)
+RUN conda install -c conda-forge conda-pack
+RUN conda-pack -n cea -o /tmp/env.tar && mkdir /venv && cd /venv && tar xf /tmp/env.tar && rm /tmp/env.tar
+RUN /venv/bin/conda-unpack
+
+# The runtime-stage image; we can use Debian as the
+# base image since the Conda env also includes Python
+# for us.
+FROM debian:buster AS cea-runtime
+
+COPY --from=cea-build /venv /venv
+COPY ./Daysim /Daysim
+COPY ./cea.config /root/cea.config
+
 
 # bugfix for matplotlib, see here: https://stackoverflow.com/questions/37604289/tkinter-tclerror-no-display-name-and-no-display-environment-variable
-RUN mkdir -p ~/.config/matplotlib && echo "backend: Agg" > ~/.config/matplotlib/matplotlibrc
+RUN mkdir -p /root/.config/matplotlib && echo "backend: Agg" > /root/.config/matplotlib/matplotlibrc
 
-# build the DAYSIM stuff
-# first: build radiance
-RUN apt-get -y install cmake build-essential libgl1-mesa-dev freeglut3-dev
-RUN git clone https://github.com/MITSustainableDesignLab/Daysim.git
-RUN mkdir build && cd build && cmake -DBUILD_HEADLESS=on -DCMAKE_INSTALL_PREFIX=$HOME/Daysim ../Daysim && make && make install
+# add a folder for projects
+RUN mkdir /projects
 
-# next: build the Daysim specific stuff
-COPY ./CMakeLists.txt /Daysim/CMakeLists.txt
-RUN cd build && cmake -DBUILD_HEADLESS=on -DCMAKE_INSTALL_PREFIX=$HOME/Daysim ../Daysim && make && mv ./bin/rtrace ./bin/rtrace_dc && cp ./bin/* /root/Daysim/bin
-
-# use the environment - no need to source because it's the only environment anyway...
-ENV PATH "/opt/conda/envs/cea/bin:/root/Daysim/bin:$PATH"
-CMD ipython
+# When image is run, run the code with the environment
+# activated:
+ENV PATH "/venv/cea/bin:/Daysim/bin:$PATH"
+SHELL ["/bin/bash", "-c"]
+ENTRYPOINT source /venv/bin/activate && cea dashboard
