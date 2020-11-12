@@ -61,6 +61,7 @@ def main(path_to_case):
         # electricity consumption
         plant_flow_rate_m3pers = substation_flow_rate_m3pers_df.sum(axis=1)
         plant_pumping_kW = (plant_pressure_losses_Pa / 1000) * plant_flow_rate_m3pers.values / PUMP_ETA
+        np.savetxt(os.path.join(*[path_to_case, 'pumping_kWh.csv']), plant_pumping_kW, delimiter=",")
         annual_pumping_energy_kWh = np.nansum(plant_pumping_kW*op_time) # match yearly hours
 
         # pump size
