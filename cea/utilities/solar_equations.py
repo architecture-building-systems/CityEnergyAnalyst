@@ -335,7 +335,7 @@ def calc_spacing_user_angle(sensors_metadata_clean, solar_properties, max_rad_Wh
 
     # calculate the pv/solar collector module area within the area of each sensor point
     sensors_metadata_clean['area_installed_module_m2'] = np.where(
-        sensors_metadata_clean['tilt_deg'] >= 5, roof_coverage * sensors_metadata_clean.AREA_m2,
+        sensors_metadata_clean['TYPE'] != 'roofs', sensors_metadata_clean.AREA_m2,
         area_per_module_m2 * (roof_coverage * sensors_metadata_clean.AREA_m2 / module_flat_surface_area_m2))
 
     # categorize the sensors by surface_azimuth, B, GB
