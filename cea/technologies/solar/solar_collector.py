@@ -82,19 +82,25 @@ def calc_SC(locator, config, latitude, longitude, weather_data, date_local, buil
     # Calculate the heights of all buildings for length of vertical pipes
     tot_bui_height_m = gpd.read_file(locator.get_zone_geometry())['height_ag'].sum()
 
+    # set the maximum roof coverage
+    if config.solar.custom_roof_coverage:
+        max_roof_coverage = config.solar.max_roof_coverage
+    else:
+        max_roof_coverage = 1.0
+
     if not sensors_metadata_clean.empty:
-        if config.solar.type_placement == 'OPT':
+        if not config.solar.custom_tilt_angle:
             # calculate optimal angle and tilt for panels
             sensors_metadata_cat = solar_equations.optimal_angle_and_tilt(sensors_metadata_clean, latitude,
                                                                           solar_properties, max_annual_radiation,
-                                                                          panel_properties_SC)
+                                                                          panel_properties_SC, max_roof_coverage)
             print('calculating optimal tilt angle and separation done for building %s' % building_name)
         else:
             # calculate spacing required by user-supplied tilt angle for panels
             sensors_metadata_cat = solar_equations.calc_spacing_user_angle(sensors_metadata_clean, solar_properties,
                                                                            max_annual_radiation, panel_properties_SC,
                                                                            config.solar.panel_tilt_angle,
-                                                                           config.solar.max_roof_coverage)
+                                                                           max_roof_coverage)
             print('calculating separation for user-inputted tilt angle done')
 
         # group the sensors with the same tilt, surface azimuth, and total radiation
@@ -975,9 +981,16 @@ def main(config):
     print('Running solar-collector with t-in-sc = %s' % config.solar.t_in_sc)
     print('Running solar-collector with type-scpanel = %s' % config.solar.type_scpanel)
     print('Running solar-collector with type-placement = %s' % config.solar.type_placement)
-    if config.solar.type_placement != 'OPT':
-        print('Running solar-collector with panel-tilt-angle = %s' % config.solar.panel_tilt_angle)
-        print('Running solar-collector with max-roof-coverage = %s' % config.solar.max_roof_coverage)
+    if config.solar.custom_tilt_angle:
+        print('Running photovoltaic with custom-tilt-angle = %s and panel-tilt-angle = %s' %
+              (config.solar.custom_tilt_angle, config.solar.panel_tilt_angle))
+    else:
+        print('Running photovoltaic with custom-tilt-angle = %s' % config.solar.custom_tilt_angle)
+    if config.solar.custom_roof_coverage:
+        print('Running photovoltaic with custom-roof-coverage = %s and max-roof-coverage = %s' %
+              (config.solar.custom_roof_coverage, config.solar.max_roof_coverage))
+    else:
+        print('Running photovoltaic with custom-roof-coverage = %s' % config.solar.custom_roof_coverage)
 
     building_names = config.solar.buildings
 
