@@ -688,7 +688,6 @@ def main(config):
     print('Running photovoltaic-thermal with solar-window-solstice = %s' % config.solar.solar_window_solstice)
     print('Running photovoltaic-thermal with t-in-pvt = %s' % config.solar.t_in_pvt)
     print('Running photovoltaic-thermal with type-pvpanel = %s' % config.solar.type_pvpanel)
-    print('Running photovoltaic-thermal with type-placement = %s' % config.solar.type_placement)
     if config.solar.custom_tilt_angle:
         print('Running photovoltaic with custom-tilt-angle = %s and panel-tilt-angle = %s' %
               (config.solar.custom_tilt_angle, config.solar.panel_tilt_angle))
