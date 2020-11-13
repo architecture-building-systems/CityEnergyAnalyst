@@ -273,7 +273,7 @@ def filter_low_potential(radiation_json_path, metadata_csv_path, config):
 
 # flat roof solar panels
 
-def calc_spacing_user_angle(sensors_metadata_clean, solar_properties, max_rad_Whperm2yr, panel_properties,
+def calc_spacing_custom_angle(sensors_metadata_clean, solar_properties, max_rad_Whperm2yr, panel_properties,
                             panel_tilt_angle, roof_coverage):
     """
     This function first determines the optimal tilt angle, row spacing and surface azimuth of panels installed at each
