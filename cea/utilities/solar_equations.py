@@ -271,7 +271,7 @@ def filter_low_potential(radiation_json_path, metadata_csv_path, config):
     return max_annual_radiation, annual_radiation_threshold_Whperm2, sensors_rad_clean, sensors_metadata_clean
 
 
-# flat roof solar panels
+# custom rooftop solar panel tilt angle
 
 def calc_spacing_custom_angle(sensors_metadata_clean, solar_properties, max_rad_Whperm2yr, panel_properties,
                             panel_tilt_angle, roof_coverage):
