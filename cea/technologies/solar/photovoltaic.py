@@ -99,7 +99,7 @@ def calc_PV(locator, config, latitude, longitude, weather_data, datetime_local, 
                                                                            max_annual_radiation, panel_properties_PV,
                                                                            config.solar.panel_tilt_angle,
                                                                            max_roof_coverage)
-            print('calculating separation for user-inputted tilt angle done')
+            print('calculating separation for custom tilt angle done')
 
 
         # group the sensors with the same tilt, surface azimuth, and total radiation
