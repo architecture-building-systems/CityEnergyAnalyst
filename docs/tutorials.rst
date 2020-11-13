@@ -18,6 +18,7 @@ These are a collection of tutorials we consider essential for any new developer 
 #. :doc:`how-to-publish-cea`
 #. :doc:`how-trace-inputlocator-works`
 #. :doc:`how-to-document-cea`
+#. :doc:`run-the-cea-in-docker`
 
 LEGACY
 ------

@@ -11,7 +11,7 @@ socketio = None
 def main(config):
     config.restricted_to = None  # allow access to the whole config file
     plot_cache = cea.plots.cache.MemoryPlotCache(config.project)
-    app = Flask(__name__, static_folder='base/static')
+    app = Flask(__name__, static_folder='base/static', )
     app.config.from_mapping({'SECRET_KEY': 'secret'})
 
     global socketio
@@ -31,7 +31,7 @@ def main(config):
     app.socketio = socketio
 
     print("start socketio.run")
-    socketio.run(app, host='localhost', port=5050)
+    socketio.run(app, host='0.0.0.0', port=5050)
     print("done socketio.run")
 
 

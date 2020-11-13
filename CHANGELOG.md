@@ -1,3 +1,7 @@
+- 2020-10-29 - 3.11.0 - #2850 2834 docker container for remap
+- 2020-10-29 - 3.11.0 - #2848 2844 database editor bug
+- 2020-10-28 - 3.11.0 - #2846 Predefined hourly setpoints definition
+- 2020-09-25 - 3.11.0 - #2837 Release 3.11.0
 - 2020-09-25 - 3.11.0a5 - #2802 2745 CEA Python3 port (expected release: v3.11.0)
 - 2020-09-16 - 3.10.0 - #2831 i2830 Update release documentation
 - 2020-09-16 - 3.10.0 - #2829 Release 3.10.0
