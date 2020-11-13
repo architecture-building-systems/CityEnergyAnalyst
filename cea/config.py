@@ -533,11 +533,12 @@ class WeatherPathParameter(Parameter):
 
 class WorkflowParameter(Parameter):
     typename = "WorkflowParameter"
-    examples = {
-        "district-heating-system": os.path.join(os.path.dirname(__file__), "workflows", "district_heating_system.yml"),
-        "district-cooling-system": os.path.join(os.path.dirname(__file__), "workflows", "district_cooling_system.yml"),
-        "trace-schemas": os.path.join(os.path.dirname(__file__), "workflows", "trace_schemas.yml")
-    }
+    workflows_path = os.path.join(os.path.dirname(__file__), "workflows")
+    examples = {}
+    for w in os.listdir(workflows_path):
+        example_name = os.path.splitext(w)[0].replace("_", "-")
+        example_path = os.path.join(workflows_path, w)
+        examples[example_name] = example_path
 
     def decode(self, value):
         if value in self.examples:
