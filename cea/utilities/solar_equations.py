@@ -335,7 +335,7 @@ def calc_spacing_user_angle(sensors_metadata_clean, solar_properties, max_rad_Wh
 
     # calculate the pv/solar collector module area within the area of each sensor point
     sensors_metadata_clean['area_installed_module_m2'] = np.where(
-        sensors_metadata_clean['TYPE'] != 'roofs', sensors_metadata_clean.AREA_m2,
+        sensors_metadata_clean['tilt_deg'] >= 5, sensors_metadata_clean.AREA_m2,
         area_per_module_m2 * (roof_coverage * sensors_metadata_clean.AREA_m2 / module_flat_surface_area_m2))
 
     # categorize the sensors by surface_azimuth, B, GB
@@ -349,7 +349,8 @@ def calc_spacing_user_angle(sensors_metadata_clean, solar_properties, max_rad_Wh
 
 # optimal tilt angle and spacing of solar panels
 
-def optimal_angle_and_tilt(sensors_metadata_clean, latitude, solar_properties, max_rad_Whperm2yr, panel_properties):
+def optimal_angle_and_tilt(sensors_metadata_clean, latitude, solar_properties, max_rad_Whperm2yr, panel_properties,
+                           roof_coverage):
     """
     This function first determines the optimal tilt angle, row spacing and surface azimuth of panels installed at each
     sensor point. Secondly, the installed PV module areas at each sensor point are calculated. Lastly, all the modules
@@ -414,9 +415,9 @@ def optimal_angle_and_tilt(sensors_metadata_clean, latitude, solar_properties, m
     # calculate the pv/solar collector module area within the area of each sensor point
     sensors_metadata_clean['area_installed_module_m2'] = np.where(sensors_metadata_clean['tilt_deg'] >= 5,
                                                                   sensors_metadata_clean.AREA_m2,
-                                                                  area_per_module_m2 *
-                                                                  (
-                                                                  sensors_metadata_clean.AREA_m2 / module_flat_surface_area_m2))
+                                                                  roof_coverage * area_per_module_m2 *
+                                                                  (sensors_metadata_clean.AREA_m2 /
+                                                                   module_flat_surface_area_m2))
 
     # categorize the sensors by surface_azimuth, B, GB
     result = np.vectorize(calc_categoriesroof)(sensors_metadata_clean.surface_azimuth_deg, sensors_metadata_clean.B_deg,
