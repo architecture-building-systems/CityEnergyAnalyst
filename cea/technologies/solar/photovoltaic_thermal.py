@@ -106,7 +106,7 @@ def calc_PVT(locator, config, latitude, longitude, weather_data, date_local, bui
             print('calculating optimal tile angle and separation done for building %s' % building_name)
         else:
             # calculate spacing required by user-supplied tilt angle for panels
-            sensors_metadata_cat = solar_equations.calc_spacing_user_angle(sensors_metadata_clean, solar_properties,
+            sensors_metadata_cat = solar_equations.calc_spacing_custom_angle(sensors_metadata_clean, solar_properties,
                                                                            max_annual_radiation, panel_properties_PV,
                                                                            config.solar.panel_tilt_angle,
                                                                            max_roof_coverage)
