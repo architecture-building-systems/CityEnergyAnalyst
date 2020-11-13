@@ -101,7 +101,7 @@ def calc_SC(locator, config, latitude, longitude, weather_data, date_local, buil
                                                                            max_annual_radiation, panel_properties_SC,
                                                                            config.solar.panel_tilt_angle,
                                                                            max_roof_coverage)
-            print('calculating separation for user-inputted tilt angle done')
+            print('calculating separation for custom tilt angle done')
 
         # group the sensors with the same tilt, surface azimuth, and total radiation
         sensor_groups = solar_equations.calc_groups(sensors_rad_clean, sensors_metadata_cat)
