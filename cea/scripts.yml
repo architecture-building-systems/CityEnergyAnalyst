@@ -157,13 +157,14 @@ Energy potentials:
                  'solar:buildings',
                  'solar:type-pvpanel',
                  'solar:type-scpanel',
-                 'solar:type-placement',
                  'solar:panel-on-roof',
                  'solar:panel-on-wall',
                  'solar:annual-radiation-threshold',
                  'solar:solar-window-solstice',
                  'solar:t-in-pvt',
+                 'solar:custom-tilt-angle',
                  'solar:panel-tilt-angle',
+                 'solar:custom-roof-coverage',
                  'solar:max-roof-coverage']
     input-files:
       - [get_radiation_metadata, building_name]
@@ -177,10 +178,11 @@ Energy potentials:
     description: Calculate electricity production from solar photovoltaic technologies
     interfaces: [cli, dashboard]
     module: cea.technologies.solar.photovoltaic
-    parameters: ['general:scenario', 'general:multiprocessing', 'solar:type-pvpanel', 'solar:type-placement',
+    parameters: ['general:scenario', 'general:multiprocessing', 'solar:type-pvpanel',
                  'general:number-of-cpus-to-keep-free',
                  'solar:panel-on-roof', 'solar:panel-on-wall', 'solar:annual-radiation-threshold',
-                 'solar:solar-window-solstice', 'solar:panel-tilt-angle', 'solar:max-roof-coverage']
+                 'solar:solar-window-solstice', 'solar:custom-tilt-angle', 'solar:panel-tilt-angle',
+                 'solar:custom-roof-coverage', 'solar:max-roof-coverage']
     input-files:
       - [get_radiation_metadata, building_name]
       - [get_zone_geometry]
