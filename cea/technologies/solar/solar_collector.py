@@ -90,7 +90,7 @@ def calc_SC(locator, config, latitude, longitude, weather_data, date_local, buil
                                                                           panel_properties_SC)
             print('calculating optimal tilt angle and separation done for building %s' % building_name)
         else:
-            # calculate optimal angle and tilt for panels
+            # calculate spacing required by user-supplied tilt angle for panels
             sensors_metadata_cat = solar_equations.calc_spacing_user_angle(sensors_metadata_clean, solar_properties,
                                                                            max_annual_radiation, panel_properties_SC,
                                                                            config.solar.panel_tilt_angle,
