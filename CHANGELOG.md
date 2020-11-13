@@ -1,3 +1,6 @@
+- 2020-11-13 - 3.13.0 - #2867 Add missing floor assemblies and update construction standards
+- 2020-11-11 - 3.13.0 - #2856 Empty columns fixed
+- 2020-11-02 - 3.13.0 - #2854 Release 3.13.0
 - 2020-10-29 - 3.11.0 - #2850 2834 docker container for remap
 - 2020-10-29 - 3.11.0 - #2848 2844 database editor bug
 - 2020-10-28 - 3.11.0 - #2846 Predefined hourly setpoints definition
