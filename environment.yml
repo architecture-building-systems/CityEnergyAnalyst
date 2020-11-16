@@ -246,6 +246,13 @@ dependencies:
   - zope.event=4.4
   - zope.interface=5.1.0
   - zstd=1.4.5
+  - sphinx
+  - sphinxcontrib-applehelp
+  - sphinxcontrib-devhelp
+  - sphinxcontrib-htmlhelp
+  - sphinxcontrib-jsmath
+  - sphinxcontrib-qthelp
+  - sphinxcontrib-serializinghtml
   - pip:
     - alabaster==0.7.12
     - aniso8601==8.0.0
@@ -291,13 +298,6 @@ dependencies:
     - rfc3986==1.4.0
     - salib==1.3.11
     - snowballstemmer==2.0.0
-    - sphinx==3.1.2
-    - sphinxcontrib-applehelp==1.0.2
-    - sphinxcontrib-devhelp==1.0.2
-    - sphinxcontrib-htmlhelp==1.0.3
-    - sphinxcontrib-jsmath==1.0.1
-    - sphinxcontrib-qthelp==1.0.3
-    - sphinxcontrib-serializinghtml==1.1.4
     - staticmap==0.5.4
     - theano==1.0.4
     - timezonefinder==4.4.0
