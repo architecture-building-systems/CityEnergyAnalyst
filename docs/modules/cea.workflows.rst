@@ -16,4 +16,3 @@ cea.workflows.workflow module
    :members:
    :undoc-members:
    :show-inheritance:
-

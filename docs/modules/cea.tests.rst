@@ -128,4 +128,3 @@ cea.tests.trace\_inputlocator module
    :members:
    :undoc-members:
    :show-inheritance:
-

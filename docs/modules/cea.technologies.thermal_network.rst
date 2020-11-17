@@ -56,4 +56,3 @@ cea.technologies.thermal\_network.thermal\_network\_optimization module
    :members:
    :undoc-members:
    :show-inheritance:
-

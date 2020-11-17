@@ -32,4 +32,3 @@ cea.analysis.lca.operation module
    :members:
    :undoc-members:
    :show-inheritance:
-

@@ -73,4 +73,3 @@ cea.optimization.slave.test module
    :members:
    :undoc-members:
    :show-inheritance:
-

@@ -26,4 +26,3 @@ cea.interfaces.dashboard.dashboard module
    :members:
    :undoc-members:
    :show-inheritance:
-

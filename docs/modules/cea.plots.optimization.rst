@@ -56,4 +56,3 @@ cea.plots.optimization.f\_paretocurve\_convergence module
    :members:
    :undoc-members:
    :show-inheritance:
-

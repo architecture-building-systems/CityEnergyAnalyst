@@ -112,4 +112,3 @@ cea.optimization.master.validation module
    :members:
    :undoc-members:
    :show-inheritance:
-

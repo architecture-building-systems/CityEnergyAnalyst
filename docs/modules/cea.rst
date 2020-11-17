@@ -100,4 +100,3 @@ cea.worker module
    :members:
    :undoc-members:
    :show-inheritance:
-

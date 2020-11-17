@@ -48,4 +48,3 @@ cea.resources.water\_body\_potential module
    :members:
    :undoc-members:
    :show-inheritance:
-

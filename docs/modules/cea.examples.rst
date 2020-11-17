@@ -24,4 +24,3 @@ cea.examples.template module
    :members:
    :undoc-members:
    :show-inheritance:
-

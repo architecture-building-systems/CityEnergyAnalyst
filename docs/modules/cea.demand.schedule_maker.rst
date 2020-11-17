@@ -16,4 +16,3 @@ cea.demand.schedule\_maker.schedule\_maker module
    :members:
    :undoc-members:
    :show-inheritance:
-

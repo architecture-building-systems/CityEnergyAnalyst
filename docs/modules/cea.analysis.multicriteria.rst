@@ -16,4 +16,3 @@ cea.analysis.multicriteria.main module
    :members:
    :undoc-members:
    :show-inheritance:
-

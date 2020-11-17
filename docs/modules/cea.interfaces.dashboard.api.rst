@@ -64,4 +64,3 @@ cea.interfaces.dashboard.api.utils module
    :members:
    :undoc-members:
    :show-inheritance:
-

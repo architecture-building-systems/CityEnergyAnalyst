@@ -24,4 +24,3 @@ cea.plots.comparisons.Annual\_emissions module
    :members:
    :undoc-members:
    :show-inheritance:
-

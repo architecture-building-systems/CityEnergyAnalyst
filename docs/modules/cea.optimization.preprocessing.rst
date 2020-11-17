@@ -48,4 +48,3 @@ cea.optimization.preprocessing.processheat module
    :members:
    :undoc-members:
    :show-inheritance:
-

@@ -40,4 +40,3 @@ cea.technologies.solar.solar\_collector module
    :members:
    :undoc-members:
    :show-inheritance:
-
