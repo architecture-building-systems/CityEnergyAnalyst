@@ -80,4 +80,3 @@ cea.interfaces.cli.shapefile\_to\_excel module
    :members:
    :undoc-members:
    :show-inheritance:
-

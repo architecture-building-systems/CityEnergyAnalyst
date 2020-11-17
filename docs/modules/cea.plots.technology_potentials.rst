@@ -32,4 +32,3 @@ cea.plots.technology\_potentials.c\_solar\_collector\_ET\_potential module
    :members:
    :undoc-members:
    :show-inheritance:
-

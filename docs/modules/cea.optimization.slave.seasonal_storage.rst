@@ -40,4 +40,3 @@ cea.optimization.slave.seasonal\_storage.storage\_main module
    :members:
    :undoc-members:
    :show-inheritance:
-

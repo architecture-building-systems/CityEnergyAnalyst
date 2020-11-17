@@ -112,4 +112,3 @@ cea.plots.demand.peak\_load\_supply module
    :members:
    :undoc-members:
    :show-inheritance:
-

@@ -186,4 +186,3 @@ cea.technologies.thermal\_storage module
    :members:
    :undoc-members:
    :show-inheritance:
-

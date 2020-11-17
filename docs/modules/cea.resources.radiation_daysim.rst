@@ -40,4 +40,3 @@ cea.resources.radiation\_daysim.visualization module
    :members:
    :undoc-members:
    :show-inheritance:
-

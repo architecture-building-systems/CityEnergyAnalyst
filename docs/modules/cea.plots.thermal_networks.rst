@@ -56,4 +56,3 @@ cea.plots.thermal\_networks.f\_pump\_duration\_curve module
    :members:
    :undoc-members:
    :show-inheritance:
-

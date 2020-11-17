@@ -70,4 +70,3 @@ cea.plots.variable\_naming module
    :members:
    :undoc-members:
    :show-inheritance:
-

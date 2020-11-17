@@ -64,4 +64,3 @@ cea.plots.supply\_system.g\_grid\_ramping\_capacity module
    :members:
    :undoc-members:
    :show-inheritance:
-

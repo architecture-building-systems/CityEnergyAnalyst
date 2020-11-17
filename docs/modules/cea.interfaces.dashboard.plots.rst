@@ -16,4 +16,3 @@ cea.interfaces.dashboard.plots.routes module
    :members:
    :undoc-members:
    :show-inheritance:
-

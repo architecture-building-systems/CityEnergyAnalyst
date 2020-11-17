@@ -139,6 +139,9 @@ Section "Base Installation" Base_Installation_Section
     # make sure jupyter has access to the ipython kernel
     nsExec::ExecToLog '"$INSTDIR\cea-env-run.bat" python -m ipykernel install --prefix $INSTDIR\Dependencies\Python'
 
+    # add sphinx so we can cea-doc html...
+    nsExec::ExecToLog '${PIP_INSTALL} sphinx'
+
     ;Create uninstaller
     WriteUninstaller "$INSTDIR\Uninstall_CityEnergyAnalyst_${VER}.exe"
 

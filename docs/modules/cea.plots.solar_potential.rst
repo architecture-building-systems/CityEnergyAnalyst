@@ -16,4 +16,3 @@ cea.plots.solar\_potential.a\_solar\_radiation module
    :members:
    :undoc-members:
    :show-inheritance:
-

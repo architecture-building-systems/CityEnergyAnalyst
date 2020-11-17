@@ -16,4 +16,3 @@ cea.optimization.slave.daily\_storage.load\_leveling module
    :members:
    :undoc-members:
    :show-inheritance:
-

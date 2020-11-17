@@ -59,4 +59,3 @@ cea.optimization.slave\_data module
    :members:
    :undoc-members:
    :show-inheritance:
-
