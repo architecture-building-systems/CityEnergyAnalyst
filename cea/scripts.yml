@@ -161,7 +161,11 @@ Energy potentials:
                  'solar:panel-on-wall',
                  'solar:annual-radiation-threshold',
                  'solar:solar-window-solstice',
-                 'solar:t-in-pvt']
+                 'solar:t-in-pvt',
+                 'solar:custom-tilt-angle',
+                 'solar:panel-tilt-angle',
+                 'solar:custom-roof-coverage',
+                 'solar:max-roof-coverage']
     input-files:
       - [get_radiation_metadata, building_name]
       - [get_zone_geometry]
@@ -177,7 +181,8 @@ Energy potentials:
     parameters: ['general:scenario', 'general:multiprocessing', 'solar:type-pvpanel',
                  'general:number-of-cpus-to-keep-free',
                  'solar:panel-on-roof', 'solar:panel-on-wall', 'solar:annual-radiation-threshold',
-                 'solar:solar-window-solstice']
+                 'solar:solar-window-solstice', 'solar:custom-tilt-angle', 'solar:panel-tilt-angle',
+                 'solar:custom-roof-coverage', 'solar:max-roof-coverage']
     input-files:
       - [get_radiation_metadata, building_name]
       - [get_zone_geometry]
@@ -356,6 +361,8 @@ default:
     interfaces: [cli]
     module: cea.datamanagement.zone_helper
     parameters: ['general:scenario', zone-helper]
+    input-files:
+      - [get_database_construction_standards]
 
   - name: create-polygon
     label: Create Polygon
