@@ -120,6 +120,7 @@ def write_input_parameter_to_osmose(geometry_df, occupancy_df, season, specified
             new_hcs_df.T.to_csv(path_to_osmose_project_hcs('B_' + case.split('_')[4], file_name_extension),
                                 header=False)
     m_ve_min_df.T.to_csv(path_to_osmose_project_hcs('m_ve_min', 'all'), header=False)
+    print('saved', path_to_osmose_project_hcs('m_ve_min', 'all'))
     return timesteps_calc
 
 def calc_Af_per_function(geometry_df, occupancy_df):
