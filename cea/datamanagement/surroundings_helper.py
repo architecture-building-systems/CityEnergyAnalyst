@@ -28,6 +28,13 @@ __status__ = "Production"
 
 
 def calc_surrounding_area(zone_gdf, buffer_m):
+    """
+    Adds buffer to zone to get surroundings area
+
+    :param geopandas.GeoDataFrame zone_gdf: Zone GeoDataFrame
+    :param float buffer_m: Buffer to add to zone building geometries
+    :return: Surrounding area GeoDataFrame
+    """
     surrounding_area = gdf(geometry=[zone_gdf.geometry.buffer(buffer_m).unary_union], crs=zone_gdf.crs)
     return surrounding_area
 
@@ -100,6 +107,14 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, key):
 
 
 def erase_no_surrounding_areas(all_surroundings, zone, area_with_buffer):
+    """
+    Remove buildings inside zone and outside of buffer from Surroundings GeoDataFrame
+
+    :param geopandas.GeoDataFrame all_surroundings: Surroundings GeoDataFrame
+    :param geopandas.GeoDataFrame zone: Zone GeoDataFrame
+    :param geopandas.GeoDataFrame area_with_buffer: Buffer area GeoDataFrame
+    :return: GeoDataFrame with surrounding buildings
+    """
     buffer_polygon = area_with_buffer.to_crs(zone.crs).geometry.values[0]
     zone_area = gdf(geometry=[zone.geometry.unary_union], crs=zone.crs)
 
