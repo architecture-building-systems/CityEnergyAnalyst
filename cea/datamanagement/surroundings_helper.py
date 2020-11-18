@@ -7,11 +7,9 @@ import os
 
 import numpy as np
 import osmnx.footprints
-import shapely.geometry as geometry
-from geopandas import GeoDataFrame as Gdf
-from scipy.spatial import Delaunay
-from shapely.ops import unary_union, polygonize
 import pandas as pd
+from geopandas import GeoDataFrame as gdf
+from geopandas.tools import sjoin as spatial_join
 
 import cea.config
 import cea.inputlocator
@@ -29,77 +27,9 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def alpha_shape(points, alpha=0.01):
-    """
-    Compute the alpha shape (concave hull) of a set of points.
-
-    :param points: Iterable container of points.
-    :param alpha: alpha value to influence the gooeyness of the border. Smaller
-                  numbers don't fall inward as much as larger numbers. Too large,
-                  and you lose everything!
-    """
-    if len(points) < 4:
-        # When you have a triangle, there is no sense in computing an alpha
-        # shape.
-        return geometry.MultiPoint(list(points)).convex_hull
-
-    def add_edge(edges, edge_points, coords, i, j):
-        """Add a line between the i-th and j-th points, if not in the list already"""
-        if (i, j) in edges or (j, i) in edges:
-            # already added
-            return
-        edges.add((i, j))
-        edge_points.append(coords[[i, j]])
-
-    coords = np.array([point.coords[0] for point in points])
-
-    tri = Delaunay(coords)
-    edges = set()
-    edge_points = []
-    # loop over triangles:
-    # ia, ib, ic = indices of corner points of the triangle
-    for ia, ib, ic in tri.vertices:
-        pa = coords[ia]
-        pb = coords[ib]
-        pc = coords[ic]
-
-        # Lengths of sides of triangle
-        a = math.sqrt((pa[0] - pb[0]) ** 2 + (pa[1] - pb[1]) ** 2)
-        b = math.sqrt((pb[0] - pc[0]) ** 2 + (pb[1] - pc[1]) ** 2)
-        c = math.sqrt((pc[0] - pa[0]) ** 2 + (pc[1] - pa[1]) ** 2)
-
-        # Semiperimeter of triangle
-        s = (a + b + c) / 2.0
-
-        # Area of triangle by Heron's formula
-        area = math.sqrt(s * (s - a) * (s - b) * (s - c))
-        # Ignore if area is zero i.e. triangle not possible (maybe due to float precision)
-        if area == 0.0:
-            continue
-
-        circum_r = a * b * c / (4.0 * area)
-
-        # Here's the radius filter.
-        # print circum_r
-        if circum_r < 1.0 / alpha:
-            add_edge(edges, edge_points, coords, ia, ib)
-            add_edge(edges, edge_points, coords, ib, ic)
-            add_edge(edges, edge_points, coords, ic, ia)
-
-    m = geometry.MultiLineString(edge_points)
-    triangles = [geom for geom in polygonize(m) if geom.is_valid]
-    return unary_union(triangles), edge_points
-
-
 def calc_surrounding_area(zone_gdf, buffer_m):
-    points = []
-    for geom in zone_gdf.geometry:
-        for x, y in zip(geom.exterior.coords.xy[0], geom.exterior.coords.xy[1]):
-            points.append(geometry.Point(x, y))
-    zone_concave_hull, _ = alpha_shape(points)
-    zone_concave_hull_gdf = Gdf(geometry=[zone_concave_hull], crs=zone_gdf.crs)
-    surrounding_area = Gdf(geometry=[zone_concave_hull.buffer(buffer_m)], crs=zone_gdf.crs)
-    return surrounding_area, zone_concave_hull_gdf
+    surrounding_area = gdf(geometry=[zone_gdf.geometry.buffer(buffer_m).unary_union], crs=zone_gdf.crs)
+    return surrounding_area
 
 
 def clean_attributes(shapefile, buildings_height, buildings_floors, key):
@@ -169,12 +99,16 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, key):
     return result
 
 
-def erase_no_surrounding_areas(all_surroundings, area_with_buffer, zone_convex_hull):
-    reprojected_area_with_buffer = area_with_buffer.to_crs(all_surroundings.crs).geometry.values[0]
-    reprojected_zone_convex_hull = zone_convex_hull.to_crs(all_surroundings.crs).geometry.values[0]
-    not_in_zone = [not geom.intersects(reprojected_zone_convex_hull) and geom.within(reprojected_area_with_buffer)
-                   for geom in all_surroundings.geometry]
-    return all_surroundings[not_in_zone].copy()
+def erase_no_surrounding_areas(all_surroundings, zone, area_with_buffer):
+    buffer_polygon = area_with_buffer.to_crs(zone.crs).geometry.values[0]
+    zone_area = gdf(geometry=[zone.geometry.unary_union], crs=zone.crs)
+
+    within_buffer = all_surroundings.geometry.intersects(buffer_polygon)
+    surroundings = all_surroundings[within_buffer]
+    rep_points = gdf(geometry=surroundings.geometry.representative_point(), crs=all_surroundings.crs)
+    not_in_zone = spatial_join(rep_points, zone_area, how='left')['index_right'].isna()
+
+    return surroundings[not_in_zone].copy()
 
 
 def geometry_extractor_osm(locator, config):
@@ -188,7 +122,7 @@ def geometry_extractor_osm(locator, config):
     buildings_height = config.surroundings_helper.height_ag
     buildings_floors = config.surroundings_helper.floors_ag
     shapefile_out_path = locator.get_surroundings_geometry()
-    zone = Gdf.from_file(locator.get_zone_geometry())
+    zone = gdf.from_file(locator.get_zone_geometry())
 
     # trnasform zone file to geographic coordinates
     zone = zone.to_crs(get_geographic_coordinate_system())
@@ -197,17 +131,18 @@ def geometry_extractor_osm(locator, config):
     zone = zone.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
 
     # get a polygon of the surrounding area, and one polygon representative of the zone area
-    print("Creating surrounding area")
-    area_with_buffer, zone_convex_hull = calc_surrounding_area(zone, buffer_m)
-    area_with_buffer.crs = get_projected_coordinate_system(float(lat), float(lon))
-    area_with_buffer = area_with_buffer.to_crs(get_geographic_coordinate_system())
+    print("Calculating surrounding area")
+    area_with_buffer = calc_surrounding_area(zone, buffer_m)
 
     # get footprints of all the surroundings
-    print("Getting surrounding building footprints")
-    all_surroundings = osmnx.footprints.footprints_from_polygon(polygon=area_with_buffer['geometry'].values[0])
+    print("Getting building footprints")
+    area_with_buffer_polygon = area_with_buffer.to_crs(get_geographic_coordinate_system()).geometry.values[0]
+    all_surroundings = osmnx.footprints.footprints_from_polygon(polygon=area_with_buffer_polygon)
+    all_surroundings = all_surroundings.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
 
     # erase overlapping area
-    surroundings = erase_no_surrounding_areas(all_surroundings, area_with_buffer, zone_convex_hull)
+    print("Removing unwanted buildings")
+    surroundings = erase_no_surrounding_areas(all_surroundings, zone, area_with_buffer)
 
     assert surroundings.shape[0] > 0, 'No buildings were found within range based on buffer parameter.'
 
