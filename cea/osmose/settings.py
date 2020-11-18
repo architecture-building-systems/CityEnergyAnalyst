@@ -6,11 +6,12 @@ T_b_CDD = 25.0
 # TECHS = ['HCS_LD', 'HCS_coil', 'HCS_ER0', 'HCS_3for2', 'HCS_IEHX']
 # TECHS = ['HCS_base_LD', 'HCS_base_coil', 'HCS_base_3for2', 'HCS_base_ER0', 'HCS_base_IEHX',  'HCS_base']
 # TECHS = ['HCS_base_LD', 'HCS_base_IEHX', 'HCS_base_ER0']
-TECHS = ['N_3for2'] # ONLY one tech if running moga via wp3
+TECHS = ['dN_HT_3for2'] # ONLY one tech if running moga via wp3
 # timesteps = [5136, 5144, 5145, 5147, 5148]  # 168 (week) [5389]
 # timesteps = [5145]  # 168 (week) [5389]
-timesteps = "typical hours"  # 168 (week) [5389]
-number_of_typical_hours = 46
+# timesteps = "typical hours"  # 168 (week) [5389] "typical hours"
+timesteps = 48
+# number_of_typical_hours = 46
 # timesteps = "typical days"  # 168 (week)
 # timesteps = 'dtw hours'
 
