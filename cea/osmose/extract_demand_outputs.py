@@ -118,6 +118,9 @@ def extract_cea_outputs_to_osmose_main(case, timesteps, season, specified_buildi
         # PV potential
         output_building['el_PV_kWh'] = reduced_PV_df['Wh_m2'] * total_demand_df['Aroof_m2'][building] * 0.9 / 1000
         output_building['Aroof_m2'] = total_demand_df['Aroof_m2'][building] * 0.9
+        # electricity consumption
+        output_building['E_sys_kWh'] = reduced_demand_df['E_sys']/1000
+
         ## output to hcs_out
         # change units
         output_hcs['T_ext'] = reduced_demand_df['T_ext']
@@ -287,7 +290,7 @@ def get_reduced_PV_df(case, building, end_t, start_t):
 def get_timesteps_info(case, season, timesteps):
     if type(timesteps) is int:
         # one fixed period (24 or 168 timesteps)
-        start_t = get_start_t(case, timesteps, season)
+        start_t = get_start_t(case, timesteps, season) # sharing the same start for 48
         end_t = (start_t + timesteps)
         op_time = np.ones(timesteps, dtype=int)
         periods = 1
