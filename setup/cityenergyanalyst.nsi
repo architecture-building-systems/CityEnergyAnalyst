@@ -140,7 +140,7 @@ Section "Base Installation" Base_Installation_Section
     nsExec::ExecToLog '"$INSTDIR\cea-env-run.bat" python -m ipykernel install --prefix $INSTDIR\Dependencies\Python'
 
     # add sphinx so we can cea-doc html...
-    nsExec::ExecToLog '${PIP_INSTALL} sphinx'
+    nsExec::ExecToLog '${PIP_INSTALL} --force-reinstall --no-deps sphinx'
 
     ;Create uninstaller
     WriteUninstaller "$INSTDIR\Uninstall_CityEnergyAnalyst_${VER}.exe"
