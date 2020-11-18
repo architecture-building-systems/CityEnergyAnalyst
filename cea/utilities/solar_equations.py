@@ -276,9 +276,9 @@ def filter_low_potential(radiation_json_path, metadata_csv_path, config):
 def calc_spacing_custom_angle(sensors_metadata_clean, solar_properties, max_rad_Whperm2yr, panel_properties,
                             panel_tilt_angle, roof_coverage):
     """
-    This function first determines the optimal tilt angle, row spacing and surface azimuth of panels installed at each
-    sensor point. Secondly, the installed PV module areas at each sensor point are calculated. Lastly, all the modules
-    are categorized with its surface azimuth, tilt angle, and yearly radiation. The output will then be used to
+    This function first determines the row spacing and surface azimuth of panels at a custom tilt angle installed at
+    each sensor point. Secondly, the installed PV module areas at each sensor point are calculated. Lastly, all the
+    modules are categorized by their surface azimuth, tilt angle, and yearly radiation. The output will then be used to
     calculate the absorbed radiation.
 
     :param sensors_metadata_clean: data of filtered sensor points measuring solar insulation of each building
@@ -292,6 +292,12 @@ def calc_spacing_custom_angle(sensors_metadata_clean, solar_properties, max_rad_
     :type module_length_m: float
     :param max_rad_Whperm2yr: max radiation received on surfaces [Wh/m2/year]
     :type max_rad_Whperm2yr: float
+    :param panel_properties: Properties of the PV/PVT/SC panels selected (from systems database)
+    :type panel_properties: dict
+    :param panel_tilt_angle: custom panel tilt angle to be used for the spacing calculation
+    :type panel_tilt_angle: float
+    :param roof_coverage: Maximum panel coverage of roof surfaces that reach minimum irradiation threshold. e.g., if 0.8 is selected, only 80% of the areas that reach the minimum irradiation threshold will be covered by PV.
+    :type roof_coverage: float
 
     :returns sensors_metadata_clean: data of filtered sensor points categorized with module tilt angle, array spacing,
         surface azimuth, installed PV module area of each sensor point and the categories
@@ -299,13 +305,12 @@ def calc_spacing_custom_angle(sensors_metadata_clean, solar_properties, max_rad_
 
     Assumptions:
 
-    #. Tilt angle: If the sensor is on tilted roof, the panel will have the same tilt as the roof. If the sensor is on
-       a wall, the tilt angle is 90 degree. Tilt angles for flat roof is determined using the method from Quinn et al.
     #. Row spacing: Determine the row spacing by minimizing the shadow according to the solar elevation and azimuth at
        the worst hour of the year. The worst hour is a global variable defined by users.
     #. Surface azimuth (orientation) of panels: If the sensor is on a tilted roof, the orientation of the panel is the
         same as the roof. Sensors on flat roofs are all south facing.
     """
+
     # calculate panel tilt angle (B) for flat roofs (tilt < 5 degrees), slope roofs and walls.
     input_angle_rad = radians(panel_tilt_angle)
     sensors_metadata_clean['tilt_deg'] = np.vectorize(acos)(sensors_metadata_clean['Zdir'])  # surface tilt angle in rad
@@ -369,6 +374,10 @@ def optimal_angle_and_tilt(sensors_metadata_clean, latitude, solar_properties, m
     :type module_length_m: float
     :param max_rad_Whperm2yr: max radiation received on surfaces [Wh/m2/year]
     :type max_rad_Whperm2yr: float
+    :param panel_properties: Properties of the PV/PVT/SC panels selected (from systems database)
+    :type panel_properties: dict
+    :param roof_coverage: Maximum panel coverage of roof surfaces that reach minimum irradiation threshold. e.g., if 0.8 is selected, only 80% of the areas that reach the minimum irradiation threshold will be covered by PV.
+    :type roof_coverage: float
 
     :returns sensors_metadata_clean: data of filtered sensor points categorized with module tilt angle, array spacing,
         surface azimuth, installed PV module area of each sensor point and the categories
