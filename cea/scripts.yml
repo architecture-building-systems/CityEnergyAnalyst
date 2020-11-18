@@ -356,6 +356,8 @@ default:
     interfaces: [cli]
     module: cea.datamanagement.zone_helper
     parameters: ['general:scenario', zone-helper]
+    input-files:
+      - [get_database_construction_standards]
 
   - name: create-polygon
     label: Create Polygon
