@@ -10,10 +10,11 @@ This script performs the following:
 
 
 
-import cea.config
-import cea.inputlocator
 import os
 import subprocess
+
+import cea.config
+import cea.inputlocator
 
 __author__ = "Jack Hawthorne"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -33,7 +34,8 @@ def preview_files(documentation_dir):
     """
     cea_path = os.path.dirname(cea.__file__)
 
-    gitdiff = subprocess.check_output('git diff --name-only', shell=True, cwd=cea_path, stderr=open(os.devnull, 'wb')).split('\n')
+    gitdiff = subprocess.check_output('git diff --name-only', shell=True, cwd=cea_path,
+                                      stderr=open(os.devnull, 'w')).decode().split('\n')
 
     preview_docs = set()
 
@@ -95,3 +97,5 @@ def main(_):
     preview_files(documentation_dir)
 
 
+if __name__ == "__main__":
+    main(None)
