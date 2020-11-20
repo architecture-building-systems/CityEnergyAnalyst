@@ -896,11 +896,12 @@ class MultiChoiceParameter(ChoiceParameter):
         return ', '.join(map(str, value))
 
     def decode(self, value):
+        _choices = self._choices
         # Select all choices if empty value and not nullable (default is not nullable)
         if not self.nullable and value == '':
-            return self._choices
+            return _choices
         choices = parse_string_to_list(value)
-        return [choice for choice in choices if choice in self._choices]
+        return [choice for choice in choices if choice in _choices]
 
 
 class SingleBuildingParameter(ChoiceParameter):
