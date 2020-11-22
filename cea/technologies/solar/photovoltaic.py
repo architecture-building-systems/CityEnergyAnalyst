@@ -18,6 +18,7 @@ from cea.utilities import solar_equations
 from cea.technologies.solar import constants
 import cea.config
 from cea.constants import HOURS_IN_YEAR
+import pvlib
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -184,10 +185,10 @@ def calc_pv_generation(sensor_groups, weather_data, date_local, solar_properties
         tilt_rad = radians(tilt_angle_deg)  # tilt angle
         teta_z_deg = radians(teta_z_deg)  # surface azimuth
 
-        # calculate effective indicent angles necessary
-        teta_rad = np.vectorize(solar_equations.calc_angle_of_incidence)(g_rad, lat, ha_rad, tilt_rad, teta_z_deg)
+        # calculate effective incident angles necessary
+        teta_deg = pvlib.irradiance.aoi(tilt_angle_deg, teta_z_deg, solar_properties.Sz, solar_properties.Az)
+        teta_rad = [radians(x) for x in teta_deg]
         teta_ed_rad, teta_eg_rad = calc_diffuseground_comp(tilt_rad)
-
         absorbed_radiation_Wperm2 = np.vectorize(calc_absorbed_radiation_PV)(radiation_Wperm2.I_sol,
                                                                              radiation_Wperm2.I_direct,
                                                                              radiation_Wperm2.I_diffuse, tilt_rad,
@@ -345,21 +346,20 @@ def calc_absorbed_radiation_PV(I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetae
     a4 = panel_properties_PV['PV_a4']
     L = panel_properties_PV['PV_th']
 
-    # calcualte ratio of beam radiation on a tilted plane
+    # calculate ratio of beam radiation on a tilted plane
     # to avoid inconvergence when I_sol = 0
-    lim1 = radians(0)
-    lim2 = radians(90)
-    lim3 = radians(89.999)
+    # lim1 = radians(0)
+    # lim2 = radians(90)
+    # lim3 = radians(89.999)
+    # if teta < lim1:
+    #     teta = min(lim3, abs(teta))
+    # if teta >= lim2:
+    #     teta = lim3
 
-    if teta < lim1:
-        teta = min(lim3, abs(teta))
-    if teta >= lim2:
-        teta = lim3
-
-    if Sz < lim1:
-        Sz = min(lim3, abs(Sz))
-    if Sz >= lim2:
-        Sz = lim3
+    # if Sz < lim1:
+    #     Sz = min(lim3, abs(Sz))
+    # if Sz >= lim2:
+    #     Sz = lim3
 
     # Rb: ratio of beam radiation of tilted surface to that on horizontal surface
     if Sz <= radians(85):  # Sz is Zenith angle   # TODO: FIND REFERENCE
@@ -370,6 +370,7 @@ def calc_absorbed_radiation_PV(I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetae
     # calculate air mass modifier
     m = 1 / cos(Sz)  # air mass
     M = a0 + a1 * m + a2 * m ** 2 + a3 * m ** 3 + a4 * m ** 4  # air mass modifier
+    M = np.clip(M, 0.001, 1.1) # De Soto et al., 2006
 
     # incidence angle modifier for direct (beam) radiation
     teta_r = asin(sin(teta) / n)  # refraction angle in radians(aproximation accrding to Soteris A.) (5.1.4)
@@ -400,9 +401,11 @@ def calc_absorbed_radiation_PV(I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetae
     kteta_eG = Ta_eG / Ta_n
 
     # absorbed solar radiation
-    absorbed_radiation_Wperm2 = M * Ta_n * (
-        kteta_B * I_direct * Rb + kteta_D * I_diffuse * (1 + cos(tilt)) / 2 + kteta_eG * I_sol * Pg * (
-            1 - cos(tilt)) / 2)  # [W/m2] (5.12.1)
+    absorbed_radiation_Wperm2 = \
+        M * Ta_n * (kteta_B * I_direct * Rb +
+        kteta_D * I_diffuse * (1 + cos(tilt)) / 2 +
+        kteta_eG * I_sol * Pg * (1 - cos(tilt)) / 2)  # [W/m2] (5.12.1)
+
     if absorbed_radiation_Wperm2 < 0:  # when points are 0 and too much losses
         #print ('the absorbed radiation', absorbed_radiation_Wperm2 ,'is negative, please check calc_absorbed_radiation_PVT')
         absorbed_radiation_Wperm2 = 0
