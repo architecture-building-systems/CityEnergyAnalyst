@@ -244,9 +244,6 @@ class Scenario(Resource):
         config = current_app.cea_config
         scenario_path = os.path.join(config.project, scenario)
         try:
-            if config.scenario_name == scenario:
-                config.scenario_name = ''
-                config.save()
             shutil.rmtree(scenario_path)
             return {'scenarios': list_scenario_names_for_project(config)}
         except OSError:
