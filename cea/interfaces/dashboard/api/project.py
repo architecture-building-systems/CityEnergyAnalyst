@@ -12,6 +12,7 @@ from flask import current_app, request
 from flask_restplus import Namespace, Resource, fields, abort
 from staticmap import StaticMap, Polygon
 from shapely.geometry import shape
+import json
 
 import cea.inputlocator
 import cea.api
@@ -205,6 +206,13 @@ def check_scenario_exists(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         config = current_app.cea_config
+        if len(request.data):
+            try:
+                # DELETE method might have a "project" payload...
+                data = json.loads(request.data.decode('utf-8'))
+                config.project = data["project"]
+            except:
+                pass
         choices = list_scenario_names_for_project(config)
         if kwargs['scenario'] not in choices:
             abort(400, 'Scenario does not exist', choices=choices)
@@ -247,6 +255,7 @@ class Scenario(Resource):
             shutil.rmtree(scenario_path)
             return {'scenarios': list_scenario_names_for_project(config)}
         except OSError:
+            traceback.print_exc()
             abort(400, 'Make sure that the scenario you are trying to delete is not open in any application. '
                        'Try and refresh the page again.')
 
