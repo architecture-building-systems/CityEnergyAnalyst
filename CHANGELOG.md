@@ -1,3 +1,9 @@
+- 2020-12-01 - 3.14.0 - #2873 2852 After merging docker image, change the url used to track master
+- 2020-11-19 - 3.14.0 - #2853 Add option for user-supplied PV tilt angle and maximum roof coverage
+- 2020-11-19 - 3.14.0 - #2857 cea-doc html now works again
+- 2020-11-18 - 3.14.0 - #2870 Add construction standards as input dependency of zone-helper
+- 2020-11-18 - 3.14.0 - #2824 Change surroundings-helper to use a concave instead of a convex hull
+- 2020-11-13 - 3.14.0 - #2866 CityEnergyAnalyst v3.14.0
 - 2020-11-13 - 3.13.0 - #2867 Add missing floor assemblies and update construction standards
 - 2020-11-11 - 3.13.0 - #2856 Empty columns fixed
 - 2020-11-02 - 3.13.0 - #2854 Release 3.13.0
