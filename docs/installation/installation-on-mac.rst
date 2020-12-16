@@ -36,15 +36,20 @@ Python library) and  1 hour of your time.
 	#. Paste the CEA GitHub address: https://github.com/architecture-building-systems/CityEnergyAnalyst
 	#. Click Clone, this will take ~ 5-10 minutes (Size 1.65 GB).
 #. Clone the CEA GUI repository:
-** Press Cmd+Shift+O (clone repository) and select the URL tab.
-** Paste the CEA GUI GitHub address: https://github.com/architecture-building-systems/CityEnergyAnalyst-GUI
-** Click Clone, this will take ~ 5 minutes (Size 600MB).
+	#. Press Cmd+Shift+O (clone repository) and select the URL tab.
+	#. Paste the CEA GUI GitHub address: https://github.com/architecture-building-systems/CityEnergyAnalyst-GUI
+	#. Click Clone, this will take ~ 5 minutes (Size 600MB).
 #. Open a Terminal console.
 #. Type ``cd Documents/GitHub/CityEnergyAnalyst`` and press ENTER.
 #. Type ``conda env create --name cea --file environment.osx.yml`` and press ENTER.
 #. Grab a cup of tea and some toast, this will take ~ 45 minutes.
 #. Type ``conda activate cea`` and press ENTER.
 #. Type ``pip install --no-deps -e .`` and press ENTER (mind the dot '.' included in this command!).
+#. Type ``cd ..`` and press ENTER, then type ``cd CityEnergyAnalyst-GUI`` and press ENTER.
+#. Install Yarn by typing ``brew install yarn`` and press ENTER.
+#. Type ``yarn`` and press ENTER.
+#. Type ``yarn dist:dir`` and press ENTER.
+#. Open Finder and go to ``/Users/your_name/Documents/GitHub/CityEnergyAnalyst-GUI/dist/mac``. You will find the CEA application there.
 
 Interfaces
 ~~~~~~~~~~
@@ -53,10 +58,10 @@ There are different ways in which you can interact with the code of CEA.
 
 #. The command line interface: This is the command line to all the commands of CEA from your computer terminal
 #. The dashboard: This a web-based interface to CEA, open source and developed by the CEA team.
-#. The pycharm interface: this interface provides access to all the source code of CEA.
+#. The Pycharm interface: this interface provides access to all the source code of CEA.
 
-While the command line interface, and dashboard interface are included during the installation of CEA, the rest of the interfaces
-require a few steps to get them up and running.
+While the command line and dashboard interfaces are included during the installation of CEA, the Pycharm interface
+requires a few steps to get it up and running.
 
 Pycharm
 -------
@@ -69,11 +74,11 @@ In order to access and work on the source code of CEA from pycharm do:
 #. Click on the settings button (it looks like a wheel) next to the current interpreter path, and click Add.
 #. Click ``Conda Environment`` from the left hand list and select existing environment.
 #. Point to the location of your conda environment. It should look something like
-   ``C:\Users\your_name\Miniconda2\envs\cea\python.exe`` or
-   ``C:\Users\your_name\AppData\Local\conda\conda\envs\cea\python.exe``.
+   ``Users/your_name/Miniconda2/envs/cea/python.exe`` or
+   ``Users/your_name/AppData/Local/conda/conda/envs/cea/python.exe``.
    Where 'your_name' represents your user name in windows.
 #. Click apply changes.
 
-.. attention:: We ended Support of Grashopper on 20.03.20. The legacy code can be found in our github repositry/legacy
+.. attention:: We ended Support of Grasshopper on 20.03.20. The legacy code can be found in our github repositry/legacy
 .. attention:: We ended Support of ArcGIS on 15.04.19. The legacy code can be found in our github repository/legacy
 
