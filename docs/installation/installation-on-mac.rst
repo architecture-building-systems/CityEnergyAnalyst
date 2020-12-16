@@ -31,8 +31,10 @@ Excluding the above software, CEA installation requires approximately 13 GB of s
 Python library) and  1 hour of your time.
 
 #. Open GitHub Desktop from the start menu.
-#. Clone the CEA repository: Press Cmd+Shift+O (clone repository), select the URL tab and paste the CEA GitHub address: https://github.com/architecture-building-systems/CityEnergyAnalyst
-#. Click Clone, this will take ~ 5-10 minutes (Size 1.65 GB).
+#. Clone the CEA repository:
+#.# Press Cmd+Shift+O (clone repository) and select the URL tab.
+#.# Paste the CEA GitHub address: https://github.com/architecture-building-systems/CityEnergyAnalyst
+#.# Click Clone, this will take ~ 5-10 minutes (Size 1.65 GB).
 #. Clone the CEA GUI repository:
 ** Press Cmd+Shift+O (clone repository) and select the URL tab.
 ** Paste the CEA GUI GitHub address: https://github.com/architecture-building-systems/CityEnergyAnalyst-GUI
