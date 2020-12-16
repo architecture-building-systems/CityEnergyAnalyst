@@ -1,20 +1,73 @@
 name: cea
 channels:
-  - conda-forge
-  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free
-  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main
-  - defaults
-  - dlr-sc
+- conda-forge
+- defaults
 dependencies:
-  - geopandas
-  - fiona
-  - python=2.7
-  - mkl-service
-  - pythonocc-core
-  - python.app
-  - networkx
-  - pip:
-    - numba
-    - flask
-    - sympy
-    - osmnx==0.9
+- cvxopt
+- deap
+- docutils
+- ephem
+- flask
+- flask-restplus
+- flask-socketio
+- gevent
+- h5py
+- ipykernel
+- ipython
+- jupyter
+- lxml
+- openpyxl
+- plotly
+- salib
+- sphinx
+- sympy
+- theano
+- utm
+- wntr
+- xlrd
+- xlwt
+- descartes
+- fiona
+- folium
+- gdal
+- geopandas
+- geopy
+- geos
+- hdf4
+- hdf5
+- jinja2
+- json-c
+- llvmlite
+- matplotlib
+- networkx
+- numba
+- numpy
+- osmnet
+- osmnx
+- pandana
+- pandas
+- pcre
+- pip
+- proj
+- psutil
+- pyproj
+- pysal<2.3.0
+- python>=3.7
+- pythonocc-core
+- pytz
+- pyyaml
+- scikit-learn
+- scipy
+- seaborn
+- setuptools
+- shapely
+- urbanaccess
+- yaml
+- timezonefinder
+- twine
+- pymc3
+- python-cufflinks
+- pip:
+  - opencv-contrib-python
+  - staticmap
+  - py4design-cea
