@@ -1,9 +1,9 @@
 :orphan:
 
-Installation guide for Windows (from the source)
-=================================================
+Installation guide for Mac
+===========================
 
-Follow these instructions to install the CityEnergyAnalyst (CEA) on a Windows system (tested with Windows 10) from the source
+Follow these instructions to install the CityEnergyAnalyst (CEA) on a Mac system (tested with macOS Mojave 10.14.6) from the source
 
 .. attention:: We advise to follow the above guide precisely:
 
@@ -78,7 +78,4 @@ In order to access and work on the source code of CEA from pycharm do:
    ``Users/your_name/AppData/Local/conda/conda/envs/cea/python.exe``.
    Where 'your_name' represents your user name in windows.
 #. Click apply changes.
-
-.. attention:: We ended Support of Grasshopper on 20.03.20. The legacy code can be found in our github repositry/legacy
-.. attention:: We ended Support of ArcGIS on 15.04.19. The legacy code can be found in our github repository/legacy
 
