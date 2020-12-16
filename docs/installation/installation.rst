@@ -8,3 +8,4 @@ The latter is only available for students and faculty  of the ETH Zurich.
 
     installation-on-windows
     installation-on-euler
+    installation-on-mac
