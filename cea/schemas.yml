@@ -1624,7 +1624,7 @@ get_building_architecture:
         values: alphanumeric
       void_deck:
         description: Number of floors (from the ground up) with an open envelope (default
-          = 0)
+          = 0, should be lower than floors_ag.)
         type: int
         unit: '[-]'
         values: '{0...n}'
@@ -2814,9 +2814,8 @@ get_database_construction_standards:
         void_deck:
           description: Number of floors (from the ground up) with an open envelope
             (default = 0)
-          max: null
           min: 0
-          type: float
+          type: int
           unit: '[-]'
           values: '{0...n}'
         wwr_east:
