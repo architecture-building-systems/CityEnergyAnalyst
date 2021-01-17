@@ -1,10 +1,5 @@
-
-
-
-
 import json
 import os
-import shutil
 
 import numpy as np
 import pandas as pd
@@ -23,9 +18,9 @@ __status__ = "Production"
 
 from cea.constants import HOURS_IN_YEAR
 from cea.resources.radiation_daysim.geometry_generator import BuildingGeometry
-from cea import suppres_3rd_party_debug_loggers
+from cea import suppress_3rd_party_debug_loggers
+suppress_3rd_party_debug_loggers()
 
-suppres_3rd_party_debug_loggers()
 
 def create_sensor_input_file(rad, chunk_n):
     sensor_file_path = os.path.join(rad.data_folder_path, "points_" + str(chunk_n) + ".pts")

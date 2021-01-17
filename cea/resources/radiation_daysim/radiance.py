@@ -5,10 +5,10 @@ import subprocess
 
 import pandas as pd
 
-from cea import suppres_3rd_party_debug_loggers
+from cea import suppress_3rd_party_debug_loggers
 from cea.resources.radiation_daysim.geometry_generator import BuildingGeometry
 
-suppres_3rd_party_debug_loggers()
+suppress_3rd_party_debug_loggers()
 
 import py4design.py2radiance as py2radiance
 from py4design.py3dmodel.fetch import points_frm_occface
@@ -30,6 +30,7 @@ class CEADaySim(object):
     :param str staging_path: Path where to create Daysim Project
     :param str daysim_dir: Directory where Daysim binaries are found
     """
+
     def __init__(self, staging_path, daysim_dir):
         self.common_inputs = os.path.join(staging_path, 'common_inputs')
         self.projects_dir = os.path.join(staging_path, 'projects')
@@ -501,7 +502,6 @@ def surrounding_building_to_radiance(building_geometry):
 
 def create_rad_geometry(file_path, geometry_terrain, building_surface_properties, zone_building_names,
                         surroundings_building_names, geometry_pickle_dir):
-
     out = []
     for terrain_surface in terrain_to_radiance(geometry_terrain):
         out.append(terrain_surface.rad())
