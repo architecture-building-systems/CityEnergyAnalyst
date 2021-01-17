@@ -6,8 +6,8 @@ and .tiff (terrain)
 into 3D geometry with windows and roof equivalent to LOD3
 
 """
-import cPickle
 import os
+import pickle
 from itertools import repeat
 
 import gdal
@@ -15,8 +15,7 @@ import geopandas as gpd
 import osr
 
 import cea
-
-cea.suppres_3rd_party_debug_loggers()
+cea.suppress_3rd_party_debug_loggers()
 
 import math
 import time
@@ -256,7 +255,7 @@ class BuildingGeometry(object):
     @classmethod
     def load(cls, pickle_location):
         with open(pickle_location, 'rb') as fp:
-            values = cPickle.load(fp)
+            values = pickle.load(fp)
             obj = cls()
             obj.__setstate__(values)
         return obj
@@ -267,7 +266,7 @@ class BuildingGeometry(object):
             os.makedirs(dir_name)
 
         with open(pickle_location, 'wb') as f:
-            cPickle.dump(self.__getstate__(), f)
+            pickle.dump(self.__getstate__(), f)
         return pickle_location
 
 
