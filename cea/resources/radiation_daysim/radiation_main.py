@@ -56,7 +56,6 @@ def reader_surface_properties(locator):
 
 
 def radiation_singleprocessing(cea_daysim, zone_building_names, locator, settings, geometry_pickle_dir, num_processes):
-
     weather_path = locator.get_weather_file()
     # check inconsistencies and replace by max value of weather file
     weatherfile = epwreader.epw_reader(weather_path)

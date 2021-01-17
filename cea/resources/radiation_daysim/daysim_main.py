@@ -19,6 +19,7 @@ __status__ = "Production"
 from cea.constants import HOURS_IN_YEAR
 from cea.resources.radiation_daysim.geometry_generator import BuildingGeometry
 from cea import suppress_3rd_party_debug_loggers
+
 suppress_3rd_party_debug_loggers()
 
 
@@ -154,7 +155,6 @@ def calc_sensors_zone(building_names, locator, grid_size, geometry_pickle_dir):
 
 def isolation_daysim(chunk_n, cea_daysim, building_names, locator, radiance_parameters, write_sensor_data, grid_size,
                      max_global, weatherfile, geometry_pickle_dir):
-
     # initialize daysim project
     daysim_project = cea_daysim.initialize_daysim_project('chunk_{n}'.format(n=chunk_n))
     print('Creating daysim project in: {daysim_dir}'.format(daysim_dir=daysim_project.project_path))

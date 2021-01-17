@@ -30,6 +30,7 @@ class CEADaySim(object):
     :param str staging_path: Path where to create Daysim Project
     :param str daysim_dir: Directory where Daysim binaries are found
     """
+
     def __init__(self, staging_path, daysim_dir):
         self.common_inputs = os.path.join(staging_path, 'common_inputs')
         self.projects_dir = os.path.join(staging_path, 'projects')
@@ -501,7 +502,6 @@ def surrounding_building_to_radiance(building_geometry):
 
 def create_rad_geometry(file_path, geometry_terrain, building_surface_properties, zone_building_names,
                         surroundings_building_names, geometry_pickle_dir):
-
     out = []
     for terrain_surface in terrain_to_radiance(geometry_terrain):
         out.append(terrain_surface.rad())
