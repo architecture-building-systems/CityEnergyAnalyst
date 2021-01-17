@@ -30,7 +30,6 @@ class CEADaySim(object):
     :param str staging_path: Path where to create Daysim Project
     :param str daysim_dir: Directory where Daysim binaries are found
     """
-
     def __init__(self, staging_path, daysim_dir):
         self.common_inputs = os.path.join(staging_path, 'common_inputs')
         self.projects_dir = os.path.join(staging_path, 'projects')
@@ -115,13 +114,13 @@ class CEADaySim(object):
                "lower_diffuse_threshold 2\n".format(site_info=site_info, wea_weather_path=wea_weather_path)
 
     def execute_epw2wea(self, epw_weather_path, ground_reflectance=0.2):
-        command1 = 'epw2wea "{epw_weather_path}" "{wea_weather_path}"'.format(epw_weather_path=epw_weather_path,
-                                                                              wea_weather_path=self.wea_weather_path)
-        print('Running command `{command}`'.format(command=command1))
+        command = 'epw2wea "{epw_weather_path}" "{wea_weather_path}"'.format(epw_weather_path=epw_weather_path,
+                                                                             wea_weather_path=self.wea_weather_path)
+        print(f'Running command `{command}`')
 
         # get site information from stdout of epw2wea
-        proc = subprocess.Popen(command1, stdout=subprocess.PIPE)
-        site_headers = proc.stdout.read()
+        epw2wea_result = subprocess.run(command, stdout=subprocess.PIPE)
+        site_headers = epw2wea_result.stdout.decode('utf-8')
 
         self.site_info = "{epw2wea_output}\n" \
                          "ground_reflectance {ground_reflectance}\n".format(
@@ -502,6 +501,7 @@ def surrounding_building_to_radiance(building_geometry):
 
 def create_rad_geometry(file_path, geometry_terrain, building_surface_properties, zone_building_names,
                         surroundings_building_names, geometry_pickle_dir):
+
     out = []
     for terrain_surface in terrain_to_radiance(geometry_terrain):
         out.append(terrain_surface.rad())
