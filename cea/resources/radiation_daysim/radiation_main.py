@@ -145,6 +145,7 @@ def check_daysim_bin_directory(path_hint, latest_binaries):
     lib_path = os.path.join(cea_daysim_folder, "lib")  # Use lib folder shipped with CEA
     folders_to_check = [
         path_hint,
+        os.path.join(path_hint, "bin64" if latest_binaries else "bin"),
         cea_daysim_bin_path,
         cea_daysim_folder  # Check binaries in Daysim folder, for backward capability
     ]
