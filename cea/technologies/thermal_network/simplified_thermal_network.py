@@ -1,4 +1,6 @@
-from __future__ import division
+
+
+
 
 import math
 import time
@@ -95,11 +97,11 @@ def extract_network_from_shapefile(edge_shapefile_df, node_shapefile_df):
         if start_node in node_dict.keys():
             edge_shapefile_df.loc[pipe, 'start node'] = node_dict[start_node]
         else:
-            print('The start node of ', pipe, 'has no match in node_dict, check precision of the coordinates.')
+            print(f"The start node of {pipe} has no match in node_dict, check precision of the coordinates.")
         if end_node in node_dict.keys():
             edge_shapefile_df.loc[pipe, 'end node'] = node_dict[end_node]
         else:
-            print('The end node of ', pipe, 'has no match in node_dict, check precision of the coordinates.')
+            print(f"The end node of {pipe} has no match in node_dict, check precision of the coordinates.")
 
     return node_shapefile_df, edge_shapefile_df
 
@@ -132,17 +134,17 @@ def get_thermal_network_from_shapefile(locator, network_type, network_name):
 def calc_max_diameter(volume_flow_m3s, pipe_catalog, velocity_ms, peak_load_percentage):
     volume_flow_m3s_corrected_to_design = volume_flow_m3s * peak_load_percentage / 100
     diameter_m = math.sqrt((volume_flow_m3s_corrected_to_design / velocity_ms) * (4 / math.pi))
-    slection_of_catalog = pipe_catalog.ix[(pipe_catalog['D_int_m'] - diameter_m).abs().argsort()[:1]]
-    D_int_m = slection_of_catalog['D_int_m'].values[0]
-    Pipe_DN = slection_of_catalog['Pipe_DN'].values[0]
-    D_ext_m = slection_of_catalog['D_ext_m'].values[0]
-    D_ins_m = slection_of_catalog['D_ins_m'].values[0]
+    selection_of_catalog = pipe_catalog.loc[(pipe_catalog['D_int_m'] - diameter_m).abs().argsort()[:1]]
+    D_int_m = selection_of_catalog['D_int_m'].values[0]
+    Pipe_DN = selection_of_catalog['Pipe_DN'].values[0]
+    D_ext_m = selection_of_catalog['D_ext_m'].values[0]
+    D_ins_m = selection_of_catalog['D_ins_m'].values[0]
 
     return Pipe_DN, D_ext_m, D_int_m, D_ins_m
 
 
-def calc_head_loss_m(diamter_m, max_volume_flow_rates_m3s, coefficient_friction, length_m):
-    hf_L = (10.67 / (coefficient_friction ** 1.85)) * (max_volume_flow_rates_m3s ** 1.852) / (diamter_m ** 4.8704)
+def calc_head_loss_m(diameter_m, max_volume_flow_rates_m3s, coefficient_friction, length_m):
+    hf_L = (10.67 / (coefficient_friction ** 1.85)) * (max_volume_flow_rates_m3s ** 1.852) / (diameter_m ** 4.8704)
     head_loss_m = hf_L * length_m
     return head_loss_m
 
@@ -545,8 +547,8 @@ def main(config):
     for network_name in network_names:
         thermal_network_simplified(locator, config, network_name)
 
-    print('done.')
-    print('total time: ', time.time() - start)
+    print("done.")
+    print(f"total time: {time.time() - start}")
 
 
 if __name__ == '__main__':

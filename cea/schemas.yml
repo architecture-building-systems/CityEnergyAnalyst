@@ -1624,7 +1624,7 @@ get_building_architecture:
         values: alphanumeric
       void_deck:
         description: Number of floors (from the ground up) with an open envelope (default
-          = 0)
+          = 0, should be lower than floors_ag.)
         type: int
         unit: '[-]'
         values: '{0...n}'
@@ -1823,11 +1823,11 @@ get_building_comfort:
         values: '{0.0...n}'
         min: 0.0
       Ve_lpspax:
-        description: Indoor quality requirements of indoor ventilation per person
+        description: Minimum outdoor air ventilation rate per person for Air Quality
         type: float
-        unit: '[lpspax]'  # FIXME: this unit is wrong!
+        unit: '[l/s/pax]'
         values: '{0.0...n}'
-        min: 0.0
+        min: 5.5 #accodding to this Singaporean Guidelinehttps://escholarship.org/content/qt7k1796zv/qt7k1796zv.pdf
   used_by:
   - demand
   - schedule_maker
@@ -2814,9 +2814,8 @@ get_database_construction_standards:
         void_deck:
           description: Number of floors (from the ground up) with an open envelope
             (default = 0)
-          max: null
           min: 0
-          type: float
+          type: int
           unit: '[-]'
           values: '{0...n}'
         wwr_east:
@@ -7130,7 +7129,7 @@ get_demand_results_file:
         min: 0.0
       E_sys_kWh:
         description: 'End-use total electricity system consumption = Ea + El + Edata
-          + Epro + Eaux '
+          + Epro + Eaux + Ev + Eve'
         type: float
         unit: '[kWh]'
         values: '{0.0...n}'
@@ -7167,6 +7166,18 @@ get_demand_results_file:
         min: 0.0
       El_kWh:
         description: End-use electricity for lights
+        type: float
+        unit: '[kWh]'
+        values: '{0.0...n}'
+        min: 0.0
+      Eve_kWh:
+        description: End-use electricity for ventilation
+        type: float
+        unit: '[kWh]'
+        values: '{0.0...n}'
+        min: 0.0
+      Ev_kWh:
+        description: End-use electricity for electric vehicles
         type: float
         unit: '[kWh]'
         values: '{0.0...n}'
@@ -7220,7 +7231,7 @@ get_demand_results_file:
         values: '{0.0...n}'
         min: 0.0
       GRID_kWh:
-        description: Grid total requirements of electricity = GRID_a + GRID_l + GRID_v
+        description: Grid total requirements of electricity = GRID_ve + GRID_a + GRID_l + GRID_v
           +GRID_data + GRID_pro + GRID_aux + GRID_cdata + GRID_cre + GRID_hs + GRID_ww
           + GRID_cs
         type: float
@@ -7229,6 +7240,12 @@ get_demand_results_file:
         min: 0.0
       GRID_l_kWh:
         description: Grid electricity requirements for lights
+        type: float
+        unit: '[kWh]'
+        values: '{0.0...n}'
+        min: 0.0
+      GRID_ve_kWh:
+        description: Grid electricity requirements for ventilation
         type: float
         unit: '[kWh]'
         values: '{0.0...n}'
@@ -8110,8 +8127,7 @@ get_lca_operation:
         values: '{0.0...n}'
         min: 0.0
       DH_hs_ghg_kgm2:
-        description: Operational emissions per unit of conditioned floor area of the
-          district heating system
+        description: Operational emissions per unit of conditioned floor area of the district heating system
         type: float
         unit: '[kg/m2yr]'
         values: '{0.0...n}'
@@ -11788,6 +11804,30 @@ get_optimization_substations_total_file:
         unit: '[MWh/yr]'
         values: '{0.0...n}'
         min: 0.0
+      Eve0_kW:
+        description: Nominal end-use electricity for ventilation
+        type: float
+        unit: '[kW]'
+        values: '{0.0...n}'
+        min: 0.0
+      Eve_MWhyr:
+        description: End-use electricity for ventilation
+        type: float
+        unit: '[MWh/yr]'
+        values: '{0.0...n}'
+        min: 0.0
+      Ev0_kW:
+        description: Nominal end-use electricity for electric vehicles
+        type: float
+        unit: '[kW]'
+        values: '{0.0...n}'
+        min: 0.0
+      Ev_MWhyr:
+        description: End-use electricity for electric vehicles
+        type: float
+        unit: '[MWh/yr]'
+        values: '{0.0...n}'
+        min: 0.0
       Epro0_kW:
         description: Nominal Industrial processes electricity consumption.
         type: float
@@ -11910,6 +11950,30 @@ get_optimization_substations_total_file:
         min: 0.0
       GRID_l_MWhyr:
         description: Grid electricity requirements for lights
+        type: float
+        unit: '[MWh/yr]'
+        values: '{0.0...n}'
+        min: 0.0
+      GRID_ve0_kW:
+        description: Nominal grid electricity consumption for ventilatioon
+        type: float
+        unit: '[kW]'
+        values: '{0.0...n}'
+        min: 0.0
+      GRID_ve_MWhyr:
+        description: Grid electricity requirements for ventilatioon
+        type: float
+        unit: '[MWh/yr]'
+        values: '{0.0...n}'
+        min: 0.0
+      GRID_v0_kW:
+        description: Nominal grid electricity consumption for electric vehicles
+        type: float
+        unit: '[kW]'
+        values: '{0.0...n}'
+        min: 0.0
+      GRID_v_MWhyr:
+        description: Grid electricity requirements for electric vehicles
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
@@ -13468,6 +13532,30 @@ get_total_demand:
         unit: '[MWh/yr]'
         values: '{0.0...n}'
         min: 0.0
+      Ev0_kW:
+        description: Nominal end-use electricity for electric vehicles
+        type: float
+        unit: '[kW]'
+        values: '{0.0...n}'
+        min: 0.0
+      Ev_MWhyr:
+        description: End-use electricity for electric vehicles
+        type: float
+        unit: '[MWh/yr]'
+        values: '{0.0...n}'
+        min: 0.0
+      Eve0_kW:
+        description: Nominal end-use electricity for ventilation
+        type: float
+        unit: '[kW]'
+        values: '{0.0...n}'
+        min: 0.0
+      Eve_MWhyr:
+        description: End-use electricity for ventilation
+        type: float
+        unit: '[MWh/yr]'
+        values: '{0.0...n}'
+        min: 0.0
       Epro0_kW:
         description: Nominal Industrial processes electricity consumption.
         type: float
@@ -13590,6 +13678,30 @@ get_total_demand:
         min: 0.0
       GRID_l_MWhyr:
         description: Grid electricity requirements for lights
+        type: float
+        unit: '[MWh/yr]'
+        values: '{0.0...n}'
+        min: 0.0
+      GRID_v0_kW:
+        description: Nominal grid electricity consumption for electric vehicles
+        type: float
+        unit: '[kW]'
+        values: '{0.0...n}'
+        min: 0.0
+      GRID_v_MWhyr:
+        description: Grid electricity requirements for electric vehicles
+        type: float
+        unit: '[MWh/yr]'
+        values: '{0.0...n}'
+        min: 0.0
+      GRID_ve0_kW:
+        description: Nominal grid electricity consumption for ventilation
+        type: float
+        unit: '[kW]'
+        values: '{0.0...n}'
+        min: 0.0
+      GRID_ve_MWhyr:
+        description: Grid electricity requirements for ventilation
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'

@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
 
-from __future__ import division
+
+
+
 from cea.demand import control_heating_cooling_systems
 from cea.demand.constants import TEMPERATURE_ZONE_CONTROL_NIGHT_FLUSHING, DELTA_T_NIGHT_FLUSHING
 

@@ -1,5 +1,6 @@
-from __future__ import division
-from __future__ import print_function
+
+
+
 
 import functools
 import os
@@ -59,6 +60,8 @@ class DemandPlotBase(cea.plots.PlotBase):
                                        'Q_loss_sen_ref_kWh',
                                        "GRID_kWh",
                                        'GRID_a_kWh',
+                                       'GRID_v_kWh',
+                                       'GRID_ve_kWh',
                                        'GRID_l_kWh',
                                        'GRID_data_kWh',
                                        'GRID_pro_kWh',
@@ -75,6 +78,8 @@ class DemandPlotBase(cea.plots.PlotBase):
                                        "Eal_kWh",
                                        "El_kWh",
                                        "Ea_kWh",
+                                       "Eve_kWh",
+                                       "Ev_kWh",
                                        "Edata_kWh",
                                        "Epro_kWh",
                                        "Eaux_kWh",

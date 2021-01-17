@@ -2,7 +2,6 @@
 """
 Analytical energy demand model algorithm
 """
-from __future__ import division
 
 import os
 import time
@@ -12,7 +11,7 @@ from itertools import repeat
 import cea.config
 import cea.inputlocator
 import cea.utilities.parallel
-import demand_writers
+from . import demand_writers
 from cea import MissingInputDataException
 from cea.demand import thermal_loads
 from cea.demand.building_properties import BuildingProperties
@@ -65,7 +64,7 @@ def demand_calculation(locator, config):
     """
 
     # INITIALIZE TIMER
-    t0 = time.clock()
+    t0 = time.perf_counter()
 
     # LOCAL VARIABLES
     building_names = config.demand.buildings
@@ -126,7 +125,7 @@ def demand_calculation(locator, config):
     # WRITE TOTAL YEARLY VALUES
     writer_totals = demand_writers.YearlyDemandWriter(loads_output, massflows_output, temperatures_output)
     totals, time_series = writer_totals.write_to_csv(building_names, locator)
-    time_elapsed = time.clock() - t0
+    time_elapsed = time.perf_counter() - t0
     print('done - time elapsed: %d.2 seconds' % time_elapsed)
 
     return totals, time_series

@@ -1,12 +1,11 @@
 """
 costs according to supply systems
 """
-from __future__ import division
 
 import numpy as np
 import pandas as pd
 from geopandas import GeoDataFrame as gpdf
-
+import itertools
 import cea.config
 import cea.inputlocator
 from cea.analysis.costs.equations import calc_capex_annualized, calc_opex_annualized
@@ -45,12 +44,12 @@ def costs_main(locator, config):
     costs_cooling_services_dict = calc_costs_per_energy_service(cooling_db, cooling_final_services)
 
     # COSTS DUE TO ELECTRICITY SERVICES
-    electricity_final_services = ['GRID_pro', 'GRID_l', 'GRID_aux', 'GRID_v', 'GRID_a', 'GRID_data']
+    electricity_final_services = ['GRID_pro', 'GRID_l', 'GRID_aux', 'GRID_v', 'GRID_a', 'GRID_data', 'GRID_ve']
     costs_electricity_services_dict = calc_costs_per_energy_service(electricity_db, electricity_final_services)
 
     # COMBINE INTO ONE DICT
-    result = dict(costs_heating_services_dict.items() + costs_hot_water_services_dict.items() +
-                  costs_cooling_services_dict.items() + costs_electricity_services_dict.items())
+    result = dict(itertools.chain(costs_heating_services_dict.items(), costs_hot_water_services_dict.items(),
+                                  costs_cooling_services_dict.items(), costs_electricity_services_dict.items()))
 
     # sum up for all fields
     # create a dict to map from the convention of fields to the final variables
@@ -96,7 +95,7 @@ def costs_main(locator, config):
     result_out = pd.DataFrame(result)
 
     # save dataframe
-    result_out.to_csv(locator.get_costs_operation_file(), index=False, float_format='%.2f')
+    result_out.to_csv(locator.get_costs_operation_file(), index=False, float_format='%.2f',  na_rep='nan')
 
 
 def calc_costs_per_energy_service(database, heating_services):

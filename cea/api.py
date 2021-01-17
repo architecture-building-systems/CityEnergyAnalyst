@@ -2,7 +2,6 @@
 Provide access to the scripts exported by the City Energy Analyst.
 """
 
-from __future__ import print_function
 import datetime
 
 
@@ -42,6 +41,7 @@ def register_scripts():
             print("")
             print("-" * len(msg))
             print(msg)
+
         if script_module.__doc__:
             script_runner.__doc__ = script_module.__doc__.strip()
         else:
@@ -50,6 +50,7 @@ def register_scripts():
 
     class LazyLoader(object):
         """Allow lazy-loading of cea scripts"""
+
         def __init__(self, cea_script):
             self._cea_script = cea_script
             self._runner = None
@@ -68,14 +69,12 @@ def register_scripts():
 
             return getattr(self._runner, item)
 
-    for cea_script in sorted(cea.scripts.list_scripts(cea.config.Configuration().plugins)):
-        # print("cea.api: loading cea_script: {script}".format(script=cea_script))
+    for cea_script in cea.scripts.list_scripts(cea.config.Configuration().plugins):
         script_py_name = cea_script.name.replace('-', '_')
         globals()[script_py_name] = LazyLoader(cea_script)
 
 
 register_scripts()
-
 
 if __name__ == '__main__':
     print(demand.__doc__)

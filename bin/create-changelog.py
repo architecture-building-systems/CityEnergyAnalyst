@@ -27,8 +27,8 @@ We need to grab:
 
 The output is written to ../CHANGELOG.md.
 """
-from __future__ import print_function
-from __future__ import division
+
+
 
 import subprocess
 import dateutil.parser
@@ -83,7 +83,7 @@ def read_title(git_output):
 def read_version(commit_id):
     """Try and parse the contents of cea/__init__.py for the version. return "0.1" if nothing is found"""
     try:
-        init_py = subprocess.check_output("git show {commit_id}:cea/__init__.py".format(commit_id=commit_id))
+        init_py = subprocess.check_output("git show {commit_id}:cea/__init__.py".format(commit_id=commit_id)).decode()
         match = re.search('__version__\s+=\s+"([^"]+)"', init_py)
         if not match:
             return "0.1"

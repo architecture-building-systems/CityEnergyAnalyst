@@ -7,10 +7,14 @@ This script performs the following:
     - Opens the html files of the corresponding change files from Gitdiff (not yet functional)
 
 """
-import cea.config
-import cea.inputlocator
+
+
+
 import os
 import subprocess
+
+import cea.config
+import cea.inputlocator
 
 __author__ = "Jack Hawthorne"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -30,7 +34,8 @@ def preview_files(documentation_dir):
     """
     cea_path = os.path.dirname(cea.__file__)
 
-    gitdiff = subprocess.check_output('git diff --name-only', shell=True, cwd=cea_path, stderr=open(os.devnull, 'wb')).split('\n')
+    gitdiff = subprocess.check_output('git diff --name-only', shell=True, cwd=cea_path,
+                                      stderr=open(os.devnull, 'w')).decode().split('\n')
 
     preview_docs = set()
 
@@ -45,7 +50,7 @@ def preview_files(documentation_dir):
             preview_docs.add(altered_file)
 
     for doc in preview_docs:
-        print doc
+        print(doc)
         if os.path.basename(os.path.dirname(doc)) != 'modules' and doc.rsplit('.')[-1] == 'py':
             preview_html = os.path.dirname(doc).replace('/', '.')+'.html'
             os.system(os.path.join(os.path.abspath(documentation_dir), '_build', 'html', 'modules', preview_html))
@@ -74,7 +79,7 @@ def rebuild_altered_module_documentation(documentation_dir):
     # if the rst exists but the module does not, delete the documentation for it
     for document in os.listdir(os.path.join(documentation_dir, 'modules')):
         if document not in module_rst_set and document != 'modules.rst':
-            print 'Removing %s documentation' % document
+            print('Removing %s documentation' % document)
             os.remove(os.path.join(documentation_dir, 'modules', document))
     subprocess.check_call(os.path.join(documentation_dir, 'make-api-doc.bat'), cwd=documentation_dir)
 
@@ -92,3 +97,5 @@ def main(_):
     preview_files(documentation_dir)
 
 
+if __name__ == "__main__":
+    main(None)

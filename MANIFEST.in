@@ -17,6 +17,8 @@ include cea/examples/*.zip
 recursive-include cea/interfaces/dashboard *.html *.js *.css *.otf *.eot *.svg *.ttf *.woff *.woff2 *.png *.jpg *.gif *.ico
 
 include cea/plots/naming.csv
+recursive-include cea/plots *.html
 
-include cea/workflows/district_cooling_system.yml
-include cea/workflows/district_heating_system.yml
+include cea/workflows/*.yml
+
+include cea/dev/conda.bat

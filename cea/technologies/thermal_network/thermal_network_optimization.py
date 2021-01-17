@@ -2,8 +2,9 @@
 hydraulic network
 """
 
-from __future__ import division
-from __future__ import print_function
+
+
+
 
 import cea.config
 import cea.inputlocator
@@ -259,19 +260,19 @@ def network_cost_calculation(population, network_info, network_layout):
             individual_outputs_df['total'] = total_cost
             individual_outputs_df['capex'] = capex_total
             individual_outputs_df['opex'] = opex_total
-            individual_outputs_df['el_network_MWh'] = cost_storage_df.ix['el_network_MWh'][0]
-            individual_outputs_df['opex_plant'] = cost_storage_df.ix['opex_plant'][0]
-            individual_outputs_df['opex_pump'] = cost_storage_df.ix['opex_pump'][0]
-            individual_outputs_df['opex_hex'] = cost_storage_df.ix['opex_hex'][0]
-            individual_outputs_df['opex_dis_loads'] = cost_storage_df.ix['opex_dis_loads'][0]
-            individual_outputs_df['opex_dis_build'] = cost_storage_df.ix['opex_dis_build'][0]
-            individual_outputs_df['capex_network'] = cost_storage_df.ix['capex_network'][0]
-            individual_outputs_df['capex_pump'] = cost_storage_df.ix['capex_pump'][0]
-            individual_outputs_df['capex_hex'] = cost_storage_df.ix['capex_hex'][0]
-            individual_outputs_df['capex_dis_loads'] = cost_storage_df.ix['capex_dis_loads'][0]
-            individual_outputs_df['capex_dis_build'] = cost_storage_df.ix['capex_dis_build'][0]
-            individual_outputs_df['capex_chiller'] = cost_storage_df.ix['capex_chiller'][0]
-            individual_outputs_df['capex_CT'] = cost_storage_df.ix['capex_CT'][0]
+            individual_outputs_df['el_network_MWh'] = cost_storage_df.loc['el_network_MWh'][0]
+            individual_outputs_df['opex_plant'] = cost_storage_df.loc['opex_plant'][0]
+            individual_outputs_df['opex_pump'] = cost_storage_df.loc['opex_pump'][0]
+            individual_outputs_df['opex_hex'] = cost_storage_df.loc['opex_hex'][0]
+            individual_outputs_df['opex_dis_loads'] = cost_storage_df.loc['opex_dis_loads'][0]
+            individual_outputs_df['opex_dis_build'] = cost_storage_df.loc['opex_dis_build'][0]
+            individual_outputs_df['capex_network'] = cost_storage_df.loc['capex_network'][0]
+            individual_outputs_df['capex_pump'] = cost_storage_df.loc['capex_pump'][0]
+            individual_outputs_df['capex_hex'] = cost_storage_df.loc['capex_hex'][0]
+            individual_outputs_df['capex_dis_loads'] = cost_storage_df.loc['capex_dis_loads'][0]
+            individual_outputs_df['capex_dis_build'] = cost_storage_df.loc['capex_dis_build'][0]
+            individual_outputs_df['capex_chiller'] = cost_storage_df.loc['capex_chiller'][0]
+            individual_outputs_df['capex_CT'] = cost_storage_df.loc['capex_CT'][0]
             individual_outputs_df['individual'] = str(individual)
             individual_outputs_df['number_of_plants'] = individual[LEN_INDIVIDUAL_HEADER:].count(INDIVIDUAL_PLANT)
             individual_outputs_df['has_loops'] = individual[LOOPS_INDEX]
@@ -297,7 +298,7 @@ def network_cost_calculation(population, network_info, network_layout):
                 network_info.populations[str(individual)] = total_cost
 
         for column in generation_outputs_df.columns:
-            generation_outputs_df.ix[individual_number][column] = individual_outputs_df[column][0]
+            generation_outputs_df.iloc[individual_number][column] = individual_outputs_df[column][0]
         # iterate to next individual
         individual_number += 1
     generation_outputs_df.to_csv(network_info.locator.get_optimization_network_generation_individuals_results_file(

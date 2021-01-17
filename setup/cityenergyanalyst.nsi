@@ -1,4 +1,5 @@
 # NSIS script for creating the City Energy Analyst installer
+SetCompressor /FINAL lzma
 
 ; include logic library
 !include 'LogicLib.nsh'
@@ -15,13 +16,17 @@ ${StrRep}
 
 
 # download CEA conda env from here
-!define CEA_ENV_URL "https://github.com/architecture-building-systems/CityEnergyAnalyst/releases/download/v3.1.0/Dependencies.7z"
+;!define CEA_ENV_URL "https://github.com/architecture-building-systems/CityEnergyAnalyst/releases/download/v${VER}/Dependencies.7z"
+!define CEA_ENV_URL "https://www.dropbox.com/s/2tusftdoivvp9ox/Dependencies.7z?dl=1"
 !define CEA_ENV_FILENAME "Dependencies.7z"
 !define RELATIVE_GIT_PATH "Dependencies\cmder\vendor\git-for-windows\bin\git.exe"
 !define CEA_REPO_URL "https://github.com/architecture-building-systems/CityEnergyAnalyst.git"
-!define CEA_ELECTRON_URL "https://github.com/architecture-building-systems/CityEnergyAnalyst/releases/download/v${VER}/win-unpacked.7z"
+;!define CEA_ELECTRON_URL "https://github.com/architecture-building-systems/CityEnergyAnalyst/releases/download/v${VER}/win-unpacked.7z"
+!define CEA_ELECTRON_URL "https://github.com/architecture-building-systems/CityEnergyAnalyst/releases/download/v3.8.0a0/win-unpacked.7z"
 
 !define CEA_TITLE "City Energy Analyst"
+
+!define PIP_INSTALL '"$INSTDIR\pip-install.bat"'
 
 # figure out the version based on cea\__init__.py
 !system "get_version.exe"
@@ -74,6 +79,12 @@ Section "Base Installation" Base_Installation_Section
     SetOutPath "$INSTDIR"
 
     File "cea-icon.ico"
+    File "cea-env.bat"
+    File "pip-install.bat"
+    File "cea-env-run.bat"
+    CreateDirectory $INSTDIR\Dependencies\cmder\config\profile.d
+    File /oname=Dependencies\cmder\config\profile.d\cea-cmder-config.bat "cmder-config.bat"
+    File "dashboard.bat"
 
     # install cmder (incl. git and bash... woohoo!!)
     File /r "Dependencies"
@@ -82,41 +93,8 @@ Section "Base Installation" Base_Installation_Section
     Delete "cmder.7z"
     SetOutPath "$INSTDIR"
 
-    # make sure cmder can access our python (and the cea command)
-    DetailPrint "Setting up CEA Console"
-    CreateDirectory $INSTDIR\Dependencies\cmder\config\profile.d
-    FileOpen $0 "$INSTDIR\Dependencies\cmder\config\profile.d\cea_path.bat" w
-    FileWrite $0 "SET PATH=$INSTDIR\Dependencies\Python;$INSTDIR\Dependencies\Python\Scripts;$INSTDIR\Dependencies\Daysim;%PATH%"
-    FileWrite $0 "$\r$\n" ; we write a new line
-    FileWrite $0 "SET PYTHONHOME=$INSTDIR\Dependencies\Python"
-    FileWrite $0 "$\r$\n" ; we write a new line
-    FileWrite $0 "SET RAYPATH=$INSTDIR\Dependencies\Daysim"
-    FileWrite $0 "$\r$\n" ; we write a new line
-    FileWrite $0 "SET GDAL_DATA=$INSTDIR\Dependencies\Python\Library\share\gdal"
-    FileWrite $0 "$\r$\n" ; we write a new line
-    FileWrite $0 "SET PROJ_LIB=$INSTDIR\Dependencies\Python\Library\share"
-    FileWrite $0 "$\r$\n" ; we write a new line
-    FileWrite $0 "ALIAS find=$\"$INSTDIR\Dependencies\cmder\vendor\git-for-windows\usr\bin\find.exe$\" $$*"
-    FileClose $0
-
-    # create a batch file for running the dashboard with some environment variables set (for DAYSIM etc.)
-    DetailPrint "Setting up CEA Dashboard"
-    FileOpen $0 "$INSTDIR\dashboard.bat" w
-    FileWrite $0 "SET PATH=$INSTDIR\Dependencies\Python;$INSTDIR\Dependencies\Python\Scripts;$INSTDIR\Dependencies\Daysim;%PATH%"
-    FileWrite $0 "$\r$\n" ; we write a new line
-    FileWrite $0 "SET PYTHONHOME=$INSTDIR\Dependencies\Python"
-    FileWrite $0 "$\r$\n" ; we write a new line
-    FileWrite $0 "SET PYTHONHOME=$INSTDIR\Dependencies\Python"
-    FileWrite $0 "$\r$\n" ; we write a new line
-    FileWrite $0 "SET GDAL_DATA=$INSTDIR\Dependencies\Python\Library\share\gdal"
-    FileWrite $0 "$\r$\n" ; we write a new line
-    FileWrite $0 "SET PROJ_LIB=$INSTDIR\Dependencies\Python\Library\share"
-    FileWrite $0 "$\r$\n" ; we write a new line
-    FileWrite $0 "SET RAYPATH=$INSTDIR\Dependencies\Daysim"
-    FileWrite $0 "$\r$\n" ; we write a new line
-    FileWrite $0 "$\"$INSTDIR\Dependencies\Python\python.exe$\" -u -m cea.interfaces.cli.cli dashboard"
-    FileClose $0
-
+    # install the CEA-GUI
+    File /r "win-unpacked"
 
     # create a shortcut in the $INSTDIR for launching the CEA console
     CreateShortcut "$INSTDIR\CEA Console.lnk" "$INSTDIR\Dependencies\cmder\cmder.exe" "/single" \
@@ -124,47 +102,12 @@ Section "Base Installation" Base_Installation_Section
         CONTROL|SHIFT|F10 "Launch the CEA Console"
 
     # create a shortcut in the $INSTDIR for launching the CEA dashboard
-    CreateShortcut "$INSTDIR\CEA Dashboard.lnk" "cmd" "/c $INSTDIR\dashboard.bat"  \
-        "$INSTDIR\cea-icon.ico" 0 SW_SHOWMINIMIZED "" "Launch the CEA Dashboard"
+    CreateShortcut "$INSTDIR\CEA Dashboard.lnk" "$INSTDIR\win-unpacked\CityEnergyAnalyst.exe" "" \
+        "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Dashboard"
 
     CreateShortcut "$INSTDIR\cea.config.lnk" "$WINDIR\notepad.exe" "$PROFILE\cea.config" \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Open CEA Configuration file"
-
-
-
-
-    # Download the CEA Electron interface
-    DetailPrint "Downloading CEA Electron interface"
-    inetc::get ${CEA_ELECTRON_URL} "win-unpacked.7z"
-    Pop $R0  # get the return value
-    StrCmp $R0 "OK" download_electron_ok
-        MessageBox MB_OK "Download failed: $R0"
-        Quit
-    download_electron_ok:
-        # get on with life...
-
-    # unzip the electron interface (note, expect a subdirectory called win-unpacked inside the archive)
-    DetailPrint "Extracting win-unpacked.7z"
-    SetOutPath "$INSTDIR"
-    Nsis7z::ExtractWithDetails "$INSTDIR\win-unpacked.7z" "Extracting Electron interface %s..."
-    Delete "$INSTDIR\win-unpacked.7z"
-    SetOutPath "$INSTDIR"
-
-    # Download the CityEnergyAnalyst conda environment
-    DetailPrint "Downloading ${CEA_ENV_FILENAME}"
-    inetc::get ${CEA_ENV_URL} ${CEA_ENV_FILENAME}
-    Pop $R0  # Get the return value
-    StrCmp $R0 "OK" download_python_ok
-        MessageBox MB_OK "Download failed: $R0"
-        Quit
-    download_python_ok:
-        # get on with life...
-
-    # unzip python environment to ${INSTDIR}\Dependencies
-    DetailPrint "Extracting ${CEA_ENV_FILENAME}"
-    Nsis7z::ExtractWithDetails ${CEA_ENV_FILENAME} "Installing Python %s..."
-    Delete ${CEA_ENV_FILENAME}
-
+    
     # make sure qt.conf has the correct paths
     DetailPrint "Updating qt.conf..."
     ${StrRep} $0 "$INSTDIR" "\" "/" # $0 now constains the $INSTDIR with forward slashes instead of backward slashes
@@ -173,11 +116,9 @@ Section "Base Installation" Base_Installation_Section
     WriteINIStr "$INSTDIR\Dependencies\Python\qt.conf" Paths Libraries "$0/Dependencies/Python/Library/lib"
     WriteINIStr "$INSTDIR\Dependencies\Python\qt.conf" Paths Headers "$0/Dependencies/Python/Library/include/qt"
 
-    DetailPrint "Updating Pip"
-    nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip install -U --force-reinstall "pip>=2.20.2"'
-
+    # install CEA from tarball
     DetailPrint "Pip installing CityEnergyAnalyst==${VER}"
-    nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip install -U cityenergyanalyst==${VER}'
+    nsExec::ExecToLog '${PIP_INSTALL} --force-reinstall --no-deps "$INSTDIR\Dependencies\cityenergyanalyst.tar.gz"'
 
     # make sure cea was installed
     Pop $0
@@ -185,17 +126,21 @@ Section "Base Installation" Base_Installation_Section
     ${If} "$0" != "0"
         Abort "Could not install CityEnergyAnalyst ${VER} - see Details"
     ${EndIf}
-
-
-    DetailPrint "Pip installing Jupyter"
-    nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip install --force-reinstall jupyter ipython'
-
-    DetailPrint "Pip installing Sphinx"
-    nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip install --force-reinstall --no-deps sphinx'
-
+    
     # create cea.config file in the %userprofile% directory by calling `cea --help` and set daysim paths
-    nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\Scripts\cea.exe" --help'
+    nsExec::ExecToLog '"$INSTDIR\cea-env-run.bat" cea --help'
+    Pop $0
+    DetailPrint '"cea --help" returned $0'
+    ${If} "$0" != "0"
+        Abort "Installation failed - see Details"
+    ${EndIf}
     WriteINIStr "$PROFILE\cea.config" radiation daysim-bin-directory "$INSTDIR\Dependencies\Daysim"
+
+    # make sure jupyter has access to the ipython kernel
+    nsExec::ExecToLog '"$INSTDIR\cea-env-run.bat" python -m ipykernel install --prefix $INSTDIR\Dependencies\Python'
+
+    # add sphinx so we can cea-doc html...
+    nsExec::ExecToLog '${PIP_INSTALL} --force-reinstall --no-deps sphinx'
 
     ;Create uninstaller
     WriteUninstaller "$INSTDIR\Uninstall_CityEnergyAnalyst_${VER}.exe"
@@ -226,7 +171,7 @@ Section /o "Developer version" Clone_Repository_Section
     DetailPrint "Cloning GitHub Repository ${CEA_REPO_URL}"
     nsExec::ExecToLog '"$INSTDIR\${RELATIVE_GIT_PATH}" clone ${CEA_REPO_URL}'
     DetailPrint "Binding CEA to repository"
-    nsExec::ExecToLog '"$INSTDIR\Dependencies\Python\python.exe" -m pip install -e "$INSTDIR\CityEnergyAnalyst"'
+    nsExec::ExecToLog '${PIP_INSTALL} -e "$INSTDIR\CityEnergyAnalyst"'
 
 SectionEnd
 

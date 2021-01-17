@@ -2,7 +2,9 @@
 """
 heating radiators
 """
-from __future__ import division
+
+
+
 from scipy.optimize import newton
 import math
 import numpy as np

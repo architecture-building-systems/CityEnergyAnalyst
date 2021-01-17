@@ -2,7 +2,9 @@
 Create individuals
 
 """
-from __future__ import division
+
+
+
 
 import random
 
@@ -85,7 +87,7 @@ def populate_individual(empty_individual_with_names_dict,
                         technologies_allowed,
                         columns_buildings_name):
     # do it for the share of the units that are activated
-    for column, limits in name_share_conversion_technologies.iteritems():
+    for column, limits in name_share_conversion_technologies.items():
         if column in technologies_allowed:
             empty_individual_with_names_dict[column] = round(random.uniform(0.0, 1.0),2)
 

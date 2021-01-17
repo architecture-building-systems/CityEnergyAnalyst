@@ -22,7 +22,7 @@ of the first open-source computational tools for the design of low-carbon and hi
 The CEA combines knowledge of urban planning and energy systems engineering in an integrated framework. This
 allows to study the effects, trade-offs and synergies of urban design options, building retrofits and energy infrastructure plans.
 
-* Click `here <http://city-energy-analyst.readthedocs.io/en/latest/getting-started.html>`__  for installation manual and tutorials
+* Click `here <https://city-energy-analyst.readthedocs.io/en/latest/index.html>`__  for installation manual and tutorials
 
 * Click `here <https://github.com/architecture-building-systems/CityEnergyAnalyst/issues>`__ to report an issue
 
@@ -37,8 +37,8 @@ allows to study the effects, trade-offs and synergies of urban design options, b
 Cite us:
 --------
 
-For V2.9.1 (stable):    |V2.9.1|
+For V3.10.0 (stable):    |V3.10.0|
 
-.. |V2.9.1| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.1487867.svg
-   :target: https://doi.org/10.5281/zenodo.1487867
+.. |V3.10.0| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.4032169.svg
+   :target: https://doi.org/10.5281/zenodo.4032169
 

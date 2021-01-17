@@ -1,5 +1,6 @@
-from __future__ import division
-from __future__ import print_function
+
+
+
 
 import plotly.graph_objs as go
 import cea.plots.demand
@@ -17,6 +18,8 @@ class EnergySupplyIntensityPlot(cea.plots.demand.DemandPlotBase):
                                 'OIL_ww_MWhyr', 'WOOD_ww_MWhyr',
                                 'GRID_a_MWhyr',
                                 'GRID_l_MWhyr',
+                                'GRID_v_MWhyr',
+                                'GRID_ve_MWhyr',
                                 'GRID_cs_MWhyr',
                                 'GRID_aux_MWhyr',
                                 'GRID_data_MWhyr',
@@ -58,7 +61,9 @@ class EnergySupplyIntensityPlot(cea.plots.demand.DemandPlotBase):
             for field in analysis_fields:
                 y = dataframe[field]
                 name = NAMING[field]
-                trace = go.Bar(x=dataframe["Name"], y=y, name=name, marker=dict(color=COLOR[field]))
+                total_percent = (y / dataframe['total'] * 100).round(2).values
+                total_percent_txt = ["(%.2f %%)" % x for x in total_percent]
+                trace = go.Bar(x=dataframe["Name"], y=y, name=name, text=total_percent_txt, marker=dict(color=COLOR[field]))
                 traces.append(trace)
             return traces
 

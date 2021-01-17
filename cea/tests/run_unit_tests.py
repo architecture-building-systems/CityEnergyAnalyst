@@ -2,8 +2,9 @@
 Run all the unit tests in the cea/tests folder
 """
 
-from __future__ import division
-from __future__ import print_function
+
+
+
 
 import os
 import unittest

@@ -6,9 +6,6 @@ and .tiff (terrain)
 into 3D geometry with windows and roof equivalent to LOD3
 
 """
-from __future__ import division
-from __future__ import print_function
-
 import cPickle
 import os
 from itertools import repeat
@@ -30,8 +27,8 @@ import py4design.py3dmodel.construct as construct
 import py4design.py3dmodel.fetch as fetch
 import py4design.py3dmodel.modify as modify
 import py4design.py3dmodel.utility as utility
-from OCC.IntCurvesFace import IntCurvesFace_ShapeIntersector
-from OCC.gp import gp_Pnt, gp_Lin, gp_Ax1, gp_Dir
+from OCC.Core.IntCurvesFace import IntCurvesFace_ShapeIntersector
+from OCC.Core.gp import gp_Pnt, gp_Lin, gp_Ax1, gp_Dir
 from geopandas import GeoDataFrame as gdf
 from py4design import urbangeom
 
@@ -624,7 +621,6 @@ if __name__ == '__main__':
     time1 = time.time()
     geometry_terrain, geometry_3D_zone, geometry_3D_surroundings = geometry_main(locator, config)
 
-
     # to visualize the results
     geometry_buildings = []
     geometry_buildings_nonop = []
@@ -657,4 +653,3 @@ if __name__ == '__main__':
 
     utility.visualise([windows],
                       ["RED"])
-

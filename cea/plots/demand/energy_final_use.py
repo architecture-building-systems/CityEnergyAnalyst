@@ -1,8 +1,9 @@
 """
 Implements the Energy Supply pot.
 """
-from __future__ import division
-from __future__ import print_function
+
+
+
 
 import cea.plots.demand.energy_end_use
 import plotly.graph_objs as go
@@ -22,6 +23,8 @@ class EnergySupplyPlot(cea.plots.demand.energy_end_use.EnergyDemandDistrictPlot)
                                 'OIL_ww_MWhyr', 'WOOD_ww_MWhyr',
                                 'GRID_a_MWhyr',
                                 'GRID_l_MWhyr',
+                                'GRID_v_MWhyr',
+                                'GRID_ve_MWhyr',
                                 'GRID_cs_MWhyr',
                                 'GRID_aux_MWhyr',
                                 'GRID_data_MWhyr',

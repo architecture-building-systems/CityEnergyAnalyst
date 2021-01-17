@@ -3,7 +3,9 @@
 Data required for Slave from Master
 This File sets all variables for the slave optimization, that have to be set by the Master
 """
-from __future__ import division
+
+
+
 import numpy as np
 
 __author__ = "Thuy-An Nguyen"
