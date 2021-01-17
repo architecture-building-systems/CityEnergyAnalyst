@@ -1,8 +1,6 @@
 """
 Radiation engine and geometry handler for CEA
 """
-from __future__ import division
-from __future__ import print_function
 
 import os
 import sys
@@ -100,7 +98,7 @@ def radiation_singleprocessing(cea_daysim, zone_building_names, locator, setting
         )
 
 
-def check_daysim_bin_directory(path_hint):
+def check_daysim_bin_directory(path_hint, latest_binaries):
     """
     Check for the Daysim bin directory based on ``path_hint`` and return it on success.
 
@@ -114,7 +112,8 @@ def check_daysim_bin_directory(path_hint):
     If the binaries can't be found anywhere, raise an exception.
 
     :param str path_hint: The path to check first, according to the `cea.config` file.
-    :return: path_hint, contains the Daysim binaries - otherwise an exception occurrs.
+    :param bool latest_binaries: Use latest Daysim binaries
+    :return: bin_path, lib_path: contains the Daysim binaries - otherwise an exception occurrs.
     """
     required_binaries = ["ds_illum", "epw2wea", "gen_dc", "oconv", "radfiles2daysim", "rtrace_dc"]
     required_libs = ["rayinit.cal", "isotrop_sky.cal"]
@@ -122,16 +121,16 @@ def check_daysim_bin_directory(path_hint):
     def contains_binaries(path):
         """True if all the required binaries are found in path - note that binaries might have an extension"""
         try:
-            found_binaries = set(bin for bin, _ in map(os.path.splitext, os.listdir(path)))
-        except:
+            found_binaries = set(binary for binary, _ in map(os.path.splitext, os.listdir(path)))
+        except OSError:
             # could not find the binaries, bogus path
             return False
-        return all(bin in found_binaries for bin in required_binaries)
+        return all(binary in found_binaries for binary in required_binaries)
 
     def contains_libs(path):
         try:
             found_libs = set(os.listdir(path))
-        except:
+        except OSError:
             # could not find the libs, bogus path
             return False
         return all(lib in found_libs for lib in required_libs)
@@ -140,31 +139,38 @@ def check_daysim_bin_directory(path_hint):
         """True if path contains whitespace"""
         return len(path.split()) > 1
 
+    # Path of daysim binaries shipped with CEA
+    cea_daysim_folder = os.path.join(os.path.dirname(sys.executable), "..", "Daysim")
+    cea_daysim_bin_path = os.path.join(cea_daysim_folder, "bin64" if latest_binaries else "bin")
+    lib_path = os.path.join(cea_daysim_folder, "lib")  # Use lib folder shipped with CEA
     folders_to_check = [
         path_hint,
-        os.path.join(os.path.dirname(sys.executable), "..", "Daysim"),
+        cea_daysim_bin_path,
+        cea_daysim_folder  # Check binaries in Daysim folder, for backward capability
     ]
+
     # user might have a DAYSIM installation
-    folders_to_check.extend(os.environ["RAYPATH"].split(";"))
     if sys.platform == "win32":
         folders_to_check.append(r"C:\Daysim\bin")
-    folders_to_check = list(set(os.path.abspath(os.path.normpath(os.path.normcase(p))) for p in folders_to_check))
 
-    for path in folders_to_check:
-        if contains_binaries(path):
+    folders_to_check = [os.path.abspath(os.path.normpath(os.path.normcase(p))) for p in folders_to_check]
+    for possible_path in folders_to_check:
+        if contains_binaries(possible_path):
             # If path to binaries contains whitespace, provide a warning
-            if contains_whitespace(path):
-                print("ATTENTION: Daysim binaries found in '{}', but its path contains whitespaces. "
-                      "Consider moving the binaries to another path to use them.".format(path))
+            if contains_whitespace(possible_path):
+                print(f"ATTENTION: Daysim binaries found in '{possible_path}', but its path contains whitespaces. "
+                      "Consider moving the binaries to another path to use them.")
                 continue
 
-            if contains_libs(path):
-                return str(path)
-            else:
-                # might be C:\Daysim\bin, try adding C:\Daysim\lib
-                lib_path = os.path.abspath(os.path.normpath(os.path.join(path, "..", "lib")))
-                if contains_libs(lib_path):
-                    return str(path + os.pathsep + lib_path)
+            # Use path lib folder if it exists
+            _lib_path = os.path.abspath(os.path.normpath(os.path.join(possible_path, "..", "lib")))
+            if contains_libs(_lib_path):
+                lib_path = _lib_path
+            # Check if lib files in binaries path, for backward capability
+            elif contains_libs(possible_path):
+                lib_path = possible_path
+
+            return str(possible_path), str(lib_path)
 
     raise ValueError("Could not find Daysim binaries - checked these paths: {}".format(", ".join(folders_to_check)))
 
@@ -186,12 +192,18 @@ def main(config):
     #  this is only activated when in default.config, run_all_buildings is set as 'False'
 
     # BUGFIX for #2447 (make sure the Daysim binaries are there before starting the simulation)
-    config.radiation.daysim_bin_directory = check_daysim_bin_directory(config.radiation.daysim_bin_directory)
+    daysim_bin_path, daysim_lib_path = check_daysim_bin_directory(config.radiation.daysim_bin_directory,
+                                                                  config.radiation.use_latest_daysim_binaries)
+    print('Using Daysim binaries from path: {}'.format(daysim_bin_path))
+    print('Using Daysim data from path: {}'.format(daysim_lib_path))
+    # Save daysim path to config
+    config.radiation.daysim_bin_directory = daysim_bin_path
 
     # BUGFIX for PyCharm: the PATH variable might not include the daysim-bin-directory, so we add it here
     os.environ["PATH"] = "{bin}{pathsep}{path}".format(bin=config.radiation.daysim_bin_directory, pathsep=os.pathsep,
                                                        path=os.environ["PATH"])
-    os.environ["RAYPATH"] = str(config.radiation.daysim_bin_directory)
+    os.environ["RAYPATH"] = daysim_lib_path
+
     if not "PROJ_LIB" in os.environ:
         os.environ["PROJ_LIB"] = os.path.join(os.path.dirname(sys.executable), "Library", "share")
     if not "GDAL_DATA" in os.environ:

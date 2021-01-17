@@ -1,3 +1,6 @@
+
+
+
 import json
 import os
 from collections import OrderedDict
@@ -19,6 +22,7 @@ from cea.technologies.network_layout.main import layout_network, NetworkLayout
 from cea.utilities.schedule_reader import schedule_to_file, get_all_schedule_names, schedule_to_dataframe, \
     read_cea_schedule, save_cea_schedule
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
+from fiona.errors import DriverError
 
 api = Namespace('Inputs', description='Input data for CEA')
 
@@ -253,7 +257,7 @@ def get_building_properties():
                 columns[column_name]['unit'] = column["unit"]
             store['columns'][db] = columns
 
-        except IOError as e:
+        except (IOError, DriverError) as e:
             print(e)
             store['tables'][db] = {}
             store['columns'][db] = {}
@@ -300,6 +304,7 @@ def get_network(config, network_type, trigger_abort=True):
 
 def df_to_json(file_location, bbox=False, trigger_abort=True):
     from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile, get_projected_coordinate_system
+
     try:
         table_df = geopandas.GeoDataFrame.from_file(file_location)
         # Save coordinate system
@@ -309,7 +314,7 @@ def df_to_json(file_location, bbox=False, trigger_abort=True):
         out = table_df.to_crs(get_geographic_coordinate_system())
         out = json.loads(out.to_json(show_bbox=bbox))
         return out, crs
-    except IOError as e:
+    except (IOError, DriverError) as e:
         print(e)
         if trigger_abort:
             abort(400, 'Input file not found: %s' % file_location)

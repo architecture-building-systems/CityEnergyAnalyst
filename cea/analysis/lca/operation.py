@@ -1,7 +1,9 @@
 """
 Non-renewable primary energy and GHG_kgCO2MJ emissions model algorithm for building operation
 """
-from __future__ import division
+
+
+
 
 import os
 
@@ -160,7 +162,7 @@ def lca_operation(locator):
     # export the total operational non-renewable energy demand and emissions for each building
     fields_to_plot = ['Name', 'GFA_m2', 'GHG_sys_tonCO2', 'GHG_sys_building_scale_tonCO2',
                       'GHG_sys_district_scale_tonCO2'] + fields_to_plot
-    result[fields_to_plot].to_csv(locator.get_lca_operation(), index=False, float_format='%.2f')
+    result[fields_to_plot].to_csv(locator.get_lca_operation(), index=False, float_format='%.2f', na_rep='nan')
 
 
 def main(config):

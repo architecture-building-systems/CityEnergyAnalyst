@@ -1,8 +1,9 @@
 """
 Implements the Load Duration Curve Supply plot.
 """
-from __future__ import division
-from __future__ import print_function
+
+
+
 
 import cea.plots.demand.load_duration_curve
 import plotly.graph_objs as go

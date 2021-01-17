@@ -3,7 +3,9 @@
 Extra costs to an individual
 
 """
-from __future__ import division
+
+
+
 
 from math import log
 

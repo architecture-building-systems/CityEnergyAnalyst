@@ -1,8 +1,9 @@
 """
 Implements the Load Curve Supply plot.
 """
-from __future__ import division
-from __future__ import print_function
+
+
+
 
 import plotly.graph_objs as go
 
@@ -34,6 +35,8 @@ class LoadCurveSupplyPlot(cea.plots.demand.DemandPlotBase):
                                 'WOOD_hs_kWh', 'NG_ww_kWh', 'COAL_ww_kWh', 'OIL_ww_kWh', 'WOOD_ww_kWh',
                                 'GRID_a_kWh',
                                 'GRID_l_kWh',
+                                'GRID_v_kWh',
+                                'GRID_ve_kWh',
                                 'GRID_cs_kWh',
                                 'GRID_aux_kWh',
                                 'GRID_data_kWh',

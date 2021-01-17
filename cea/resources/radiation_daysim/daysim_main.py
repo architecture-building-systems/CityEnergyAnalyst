@@ -1,4 +1,6 @@
-from __future__ import division
+
+
+
 
 import json
 import os
@@ -260,7 +262,7 @@ def write_aggregated_results(building_name, items_sensor_name_and_result, locato
     for field, field_area in zip(solar_analysis_fields, solar_analysis_fields_area):
         select_sensors = geometry.loc[geometry['code'] == field].set_index('SURFACE')
         area_m2 = select_sensors['AREA_m2'].sum()
-        array_field = np.array([select_sensors.ix[surface, 'AREA_m2'] *
+        array_field = np.array([select_sensors.loc[surface, 'AREA_m2'] *
                                 np.array(items_sensor_name_and_result[surface])
                                 for surface in select_sensors.index]).sum(axis=0)
         dict_not_aggregated[field] = array_field / 1000  # in kWh

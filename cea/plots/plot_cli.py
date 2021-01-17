@@ -6,8 +6,9 @@ Usage: cea-plot CATEGORY PLOT-ID [--PARAMETER VALUE]*
 (e.g. cea-plot energy-demand energy-balance --building B001 --scenario-name baseline)
 """
 
-from __future__ import print_function
-from __future__ import division
+
+
+
 
 import sys
 import cea.config

@@ -1,7 +1,9 @@
 """
 Vapor-compressor chiller
 """
-from __future__ import division
+
+
+
 import pandas as pd
 from math import log, ceil
 import numpy as np
@@ -49,7 +51,7 @@ def calc_VCC(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_chw_re_K, T_cw_in_
     elif q_chw_load_Wh > 0.0:
         COP = calc_COP_with_carnot_efficiency(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, VCC_chiller)
         if COP < 0.0:
-            print ('Negative COP: ', COP, T_chw_sup_K, T_chw_re_K, q_chw_load_Wh)
+            print(f'Negative COP: {COP} {T_chw_sup_K} {T_chw_re_K} {q_chw_load_Wh}', )
 
         # calculate chiller outputs
         # print('COP is: ', COP)
@@ -164,7 +166,7 @@ def calc_VCC_COP(weather_data, load_types, centralized=True):
         elif load_type == 'scu':
             T_evap_K = min(T_evap_K, T_EVAP_SCU)
         else:
-            print 'Undefined cooling load_type for chiller COP calculation.'
+            print('Undefined cooling load_type for chiller COP calculation.')
     if centralized == True:  # Todo: improve this to a better approximation than a static value DT_Network
         # for the centralized case we have to supply somewhat colder, currently based on CEA calculation for MIX_m case
         T_evap_K = T_evap_K - DT_NETWORK_CENTRALIZED
@@ -179,7 +181,6 @@ def calc_VCC_COP(weather_data, load_types, centralized=True):
         cop_system = 1 / (1 / cop_chiller * (1 + DECENTRALIZED_AUX_PERCENTAGE / 100))
 
     return cop_system, cop_chiller
-
 
 def get_max_VCC_unit_size(locator, VCC_code='CH3'):
     VCC_cost_data = pd.read_excel(locator.get_database_conversion_systems(), sheet_name="Chiller")

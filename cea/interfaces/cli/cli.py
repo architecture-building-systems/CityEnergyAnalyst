@@ -5,6 +5,9 @@ it to look up a module to import in ``scripts.yml``, imports that and then calls
 The rest of the command line arguments are passed to the ``cea.config.Configuration`` object for processing.
 """
 
+
+
+
 import sys
 import importlib
 import datetime
@@ -12,6 +15,7 @@ import cea.config
 import cea.scripts
 import cea
 from typing import List
+
 from cea.plugin import CeaPlugin
 
 __author__ = "Daren Thomas"
@@ -35,14 +39,17 @@ def main(config=None):
     if not config:
         config = cea.config.Configuration()
 
-    from cea import suppres_3rd_party_debug_loggers
-    suppres_3rd_party_debug_loggers()
+    from cea import suppress_3rd_party_debug_loggers
+    suppress_3rd_party_debug_loggers()
 
     # handle arguments
     args = sys.argv[1:]  # drop the script name from the arguments
-    if not len(args) or args[0].lower() == '--help':
+    if not len(args):
         print_help(config, args[1:])
         sys.exit(1)
+    if args[0].lower() == '--help':
+        print_help(config, args[1:])
+        sys.exit(0)
     if args[0].lower() == '--version':
         print('City Energy Analyst version %s' % cea.__version__)
         sys.exit(0)

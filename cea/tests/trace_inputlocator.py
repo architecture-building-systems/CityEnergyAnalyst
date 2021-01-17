@@ -1,8 +1,9 @@
 """
 Trace the InputLocator calls in a selection of scripts.
 """
-from __future__ import print_function
-from __future__ import division
+
+
+
 
 import sys
 import os
@@ -41,7 +42,7 @@ def create_trace_function(results_set):
             # decend into the stack...
             return trace_function
         elif event == 'return':
-            if isinstance(arg, basestring) and 'inputlocator' in filename.lower() and not func_name.startswith('_'):
+            if isinstance(arg, str) and 'inputlocator' in filename.lower() and not func_name.startswith('_'):
                 results_set.add((func_name, arg))
                 # print('%s => %s' % (func_name, arg))
         return
@@ -145,7 +146,7 @@ def meta_to_yaml(config, trace_data, meta_output_file):
     methods = sorted(set([lm[2] for lm in trace_data]))
     if os.path.exists(meta_output_file):
         with open(meta_output_file, 'r') as f:
-            old_meta_data = yaml.load(f)
+            old_meta_data = yaml.safe_load(f)
         for method in old_meta_data:
             if method in methods:
                 new_outputs = set(locator_meta[method]['created_by'])

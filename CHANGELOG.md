@@ -1,3 +1,23 @@
+- 2020-12-01 - 3.14.0 - #2873 2852 After merging docker image, change the url used to track master
+- 2020-11-19 - 3.14.0 - #2853 Add option for user-supplied PV tilt angle and maximum roof coverage
+- 2020-11-19 - 3.14.0 - #2857 cea-doc html now works again
+- 2020-11-18 - 3.14.0 - #2870 Add construction standards as input dependency of zone-helper
+- 2020-11-18 - 3.14.0 - #2824 Change surroundings-helper to use a concave instead of a convex hull
+- 2020-11-13 - 3.14.0 - #2866 CityEnergyAnalyst v3.14.0
+- 2020-11-13 - 3.13.0 - #2867 Add missing floor assemblies and update construction standards
+- 2020-11-11 - 3.13.0 - #2856 Empty columns fixed
+- 2020-11-02 - 3.13.0 - #2854 Release 3.13.0
+- 2020-10-29 - 3.11.0 - #2850 2834 docker container for remap
+- 2020-10-29 - 3.11.0 - #2848 2844 database editor bug
+- 2020-10-28 - 3.11.0 - #2846 Predefined hourly setpoints definition
+- 2020-09-25 - 3.11.0 - #2837 Release 3.11.0
+- 2020-09-25 - 3.11.0a5 - #2802 2745 CEA Python3 port (expected release: v3.11.0)
+- 2020-09-16 - 3.10.0 - #2831 i2830 Update release documentation
+- 2020-09-16 - 3.10.0 - #2829 Release 3.10.0
+- 2020-09-14 - 3.7.0 - #2828 Introduce new Daysim binaries
+- 2020-08-18 - 3.7.0 - #2818 2817 ventilation rate
+- 2020-08-13 - 3.7.0 - #2814 Ventilation loads not present in the output, the issue was tested by @lguilhermers all works as expected
+- 2020-07-27 - 3.7.0 - #2809 Release 3.7.0
 - 2020-07-27 - 3.4.0 - #2807 Select all technologies in optimization if none is selected
 - 2020-07-27 - 3.4.0 - #2806 Properly parse `building:levels` data from OSM
 - 2020-07-27 - 3.4.0 - #2767 Clean geometries from OpenStreetMap in zone-helper

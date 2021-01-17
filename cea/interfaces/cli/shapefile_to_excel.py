@@ -8,8 +8,9 @@ Similar to how ``dbf-to-excel`` takes a dBase database file (example.dbf) and co
 It uses the ``geopandas.GeoDataFrame`` class to read in the shapefile. And serializes the ``geometry`` column to
 Excel as well as a serialized list of tuples.
 """
-from __future__ import division
-from __future__ import print_function
+
+
+
 
 import os
 import shapely

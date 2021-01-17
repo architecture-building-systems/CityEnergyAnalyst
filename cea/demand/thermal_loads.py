@@ -2,7 +2,9 @@
 """
 Demand model of thermal loads
 """
-from __future__ import division
+
+
+
 
 import numpy as np
 import pandas as pd
@@ -14,7 +16,6 @@ from cea.demand import latent_loads
 from cea.demand import sensible_loads, electrical_loads, hotwater_loads, refrigeration_loads, datacenter_loads
 from cea.demand import ventilation_air_flows_detailed, control_heating_cooling_systems
 from cea.demand.latent_loads import convert_rh_to_moisture_content
-from cea.demand.set_point_from_predefined_file import calc_set_point_from_predefined_file
 from cea.utilities import reporting
 
 
@@ -106,7 +107,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, date_range, locator,
         tsd['x_int'] = np.vectorize(convert_rh_to_moisture_content)(tsd['rh_ext'], tsd['T_int'])
         tsd['E_cs'] = tsd['E_hs'] = np.zeros(HOURS_IN_YEAR)
         tsd['Eaux_cs'] = tsd['Eaux_hs'] = tsd['Ehs_lat_aux'] = np.zeros(HOURS_IN_YEAR)
-        print("building () does not have an air-conditioned area".format(bpr.name))
+        print(f"building {bpr.name} does not have an air-conditioned area")
     else:
         tsd = latent_loads.calc_Qgain_lat(tsd, schedules)
         tsd = calc_set_points(bpr, date_range, tsd, building_name, config, locator,
@@ -116,7 +117,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, date_range, locator,
         tsd = sensible_loads.calc_Qhs_Qcs_loss(bpr, tsd)  # losses
         tsd = sensible_loads.calc_Qhs_sys_Qcs_sys(tsd)  # system (incl. losses)
         tsd = sensible_loads.calc_temperatures_emission_systems(bpr, tsd)  # calculate temperatures
-        tsd = electrical_loads.calc_Eauxf_ve(tsd)  # calc auxiliary loads ventilation
+        tsd = electrical_loads.calc_Eve(tsd)  # calc auxiliary loads ventilation
         tsd = electrical_loads.calc_Eaux_Qhs_Qcs(tsd, bpr)  # calc auxiliary loads heating and cooling
         tsd = calc_Qcs_sys(bpr, tsd)  # final : including fuels and renewables
         tsd = calc_Qhs_sys(bpr, tsd)  # final : including fuels and renewables
@@ -294,14 +295,9 @@ def calc_Qhs_sys(bpr, tsd):
 
 def calc_set_points(bpr, date, tsd, building_name, config, locator, schedules):
     # get internal comfort properties
-    # predefined set points for every given hour can be used to calculate the demand profile for a building
-    # a config flag is used for this, it is present in the config.demand section
-    if config.demand.predefined_hourly_setpoints:
-        tsd = calc_set_point_from_predefined_file(tsd, bpr, date.dayofweek, building_name, locator)
-    else:
-        tsd = control_heating_cooling_systems.get_temperature_setpoints_incl_seasonality(tsd, bpr, schedules)
+    tsd = control_heating_cooling_systems.get_temperature_setpoints_incl_seasonality(tsd, bpr, schedules)
 
-    t_prev = get_hours(bpr).next() - 1
+    t_prev = next(get_hours(bpr)) - 1
     tsd['T_int'][t_prev] = tsd['T_ext'][t_prev]
     tsd['x_int'][t_prev] = latent_loads.convert_rh_to_moisture_content(tsd['rh_ext'][t_prev], tsd['T_ext'][t_prev])
     return tsd
@@ -309,7 +305,7 @@ def calc_set_points(bpr, date, tsd, building_name, config, locator, schedules):
 
 def calc_Qhs_Qcs(bpr, tsd, use_dynamic_infiltration_calculation):
     # get ventilation flows
-    ventilation_air_flows_simple.calc_m_ve_required(bpr, tsd)
+    ventilation_air_flows_simple.calc_m_ve_required(tsd)
     ventilation_air_flows_simple.calc_m_ve_leakage_simple(bpr, tsd)
 
     # end-use demand calculation
@@ -367,7 +363,7 @@ def initialize_inputs(bpr, weather_data, locator):
     occupancy_yearly_schedules = pd.read_csv(locator.get_schedule_model_file(building_name))
 
     tsd['people'] = occupancy_yearly_schedules['people_pax']
-    tsd['ve'] = occupancy_yearly_schedules['Ve_lps'] * 3.6  # m3/h
+    tsd['ve_lps'] = occupancy_yearly_schedules['Ve_lps']
     tsd['Qs'] = occupancy_yearly_schedules['Qs_W']
 
     return occupancy_yearly_schedules, tsd
@@ -432,11 +428,13 @@ def initialize_timestep_data(bpr, weather_data):
 
     # fill data with nan values
 
-    nan_fields_electricity = ['Eaux', 'Eaux_ve', 'Eaux_hs', 'Eaux_cs', 'Eaux_ww', 'Eaux_fw', 'Ehs_lat_aux',
+    nan_fields_electricity = ['Eaux', 'Eaux_hs', 'Eaux_cs', 'Eaux_ww', 'Eaux_fw', 'Ehs_lat_aux',
+                              'Eve',
                               'GRID',
                               'GRID_a',
                               'GRID_l',
                               'GRID_v',
+                              'GRID_ve',
                               'GRID_data',
                               'GRID_pro',
                               'GRID_aux',
@@ -565,6 +563,7 @@ def update_timestep_data_no_conditioned_area(tsd):
                    'El',
                    'Eal',
                    'Ev',
+                   'Eve',
                    'mcphs_sys',
                    'mcpcs_sys',
                    'mcptw'
@@ -613,5 +612,5 @@ def get_hours(bpr):
     hour_start_simulation = hour_start_simulation - HOURS_PRE_CONDITIONING
 
     t = hour_start_simulation
-    for i in xrange(hours_simulation_total):
+    for i in range(hours_simulation_total):
         yield (t + i) % HOURS_IN_YEAR

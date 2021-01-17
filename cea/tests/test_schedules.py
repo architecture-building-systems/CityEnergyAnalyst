@@ -12,7 +12,6 @@ import unittest
 import pandas as pd
 
 import cea.config
-from cea.constants import HOURS_IN_YEAR
 from cea.datamanagement.archetypes_mapper import calculate_average_multiuse
 from cea.demand.building_properties import BuildingProperties
 from cea.demand.schedule_maker.schedule_maker import schedule_maker_main
@@ -45,6 +44,7 @@ class TestScheduleCreation(unittest.TestCase):
         locator = ReferenceCaseOpenLocator()
         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         config.scenario = locator.scenario
+        config.multiprocessing = False
 
         building_properties = BuildingProperties(locator)
         bpr = building_properties['B1011']
@@ -55,13 +55,13 @@ class TestScheduleCreation(unittest.TestCase):
         schedule_maker_main(locator, config)
         calculated_schedules = pd.read_csv(locator.get_schedule_model_file('B1011')).set_index('DATE')
 
-        config = configparser.ConfigParser()
-        config.read(get_test_config_path())
-        reference_results = json.loads(config.get('test_mixed_use_schedules', 'reference_results'))
+        test_config = configparser.ConfigParser()
+        test_config.read(get_test_config_path())
+        reference_results = json.loads(test_config.get('test_mixed_use_schedules', 'reference_results'))
 
         for schedule in reference_results:
             if (isinstance(calculated_schedules[schedule][REFERENCE_TIME], str)) and (isinstance(
-                    reference_results[schedule], unicode)):
+                    reference_results[schedule], str)):
                 self.assertEqual(calculated_schedules[schedule][REFERENCE_TIME], reference_results[schedule],
                                  msg="Schedule '{}' at time {}, {} != {}".format(schedule, str(REFERENCE_TIME),
                                                                                  calculated_schedules[schedule][
@@ -86,10 +86,10 @@ def calculate_mixed_use_archetype_values_results(locator):
     config file."""
 
     occ_densities = pd.read_excel(locator.get_database_use_types_properties(), 'INTERNAL_LOADS').set_index('code')
-    office_occ = float(occ_densities.ix['OFFICE', 'Occ_m2pax'])
-    lab_occ = float(occ_densities.ix['LAB', 'Occ_m2pax'])
-    indus_occ = float(occ_densities.ix['INDUSTRIAL', 'Occ_m2pax'])
-    server_occ = float(occ_densities.ix['SERVERROOM', 'Occ_m2pax'])
+    office_occ = float(occ_densities.loc['OFFICE', 'Occ_m2pax'])
+    lab_occ = float(occ_densities.loc['LAB', 'Occ_m2pax'])
+    indus_occ = float(occ_densities.loc['INDUSTRIAL', 'Occ_m2pax'])
+    server_occ = float(occ_densities.loc['SERVERROOM', 'Occ_m2pax'])
     calculated_results = calculate_average_multiuse(
         fields=['X_ghpax', 'El_Wm2'],
         properties_df=pd.DataFrame(data=[['B1011', 'OFFICE', 0.5, 'SERVERROOM', 0.5, 'NONE', 0.0, 0.0, 0.0, 0.0], ['B1012', 'OFFICE', 0.6, 'LAB', 0.2, 'INDUSTRIAL', 0.2, 0.0, 0.0, 0.0]],

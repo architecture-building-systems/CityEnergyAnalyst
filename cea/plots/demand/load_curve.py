@@ -1,5 +1,6 @@
-from __future__ import division
-from __future__ import print_function
+
+
+
 
 import plotly.graph_objs as go
 
@@ -28,6 +29,8 @@ class LoadCurvePlot(cea.plots.demand.DemandPlotBase):
         super(LoadCurvePlot, self).__init__(project, parameters, cache)
         self.analysis_fields = ["Ea_kWh",
                                 "El_kWh",
+                                "Eve_kWh",
+                                "Ev_kWh",
                                 "Edata_kWh",
                                 "Epro_kWh",
                                 "Eaux_kWh",

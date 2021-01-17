@@ -1,6 +1,3 @@
-from __future__ import division
-from __future__ import print_function
-
 import collections
 import csv
 import glob
@@ -33,7 +30,7 @@ COLUMNS_SCHEDULES = ['DAY',
                      'SERVERS']
 
 DAY = ['WEEKDAY'] * 24 + ['SATURDAY'] * 24 + ['SUNDAY'] * 24
-HOUR = range(1, 25) + range(1, 25) + range(1, 25)
+HOUR = list(range(1, 25)) + list(range(1, 25)) + list(range(1, 25))
 
 
 def read_cea_schedule(path_to_cea_schedule):
@@ -64,12 +61,11 @@ def read_cea_schedule(path_to_cea_schedule):
 
 
 def save_cea_schedule(schedule_data, schedule_complementary_data, path_to_building_schedule):
-
-    METADATA = ['METADATA']+[schedule_complementary_data['METADATA']]
+    METADATA = ['METADATA'] + [schedule_complementary_data['METADATA']]
     MULTIPLIER = ['MONTHLY_MULTIPLIER'] + list(schedule_complementary_data['MONTHLY_MULTIPLIER'])
     COLUMNS_SCHEDULES = schedule_data.keys()
     RECORDS_SCHEDULES = map(list, zip(*schedule_data.values()))
-    with open(path_to_building_schedule, "wb") as csvfile:
+    with open(path_to_building_schedule, "w", newline="", encoding="utf-8") as csvfile:
         csvwriter = csv.writer(csvfile, delimiter=',')
         csvwriter.writerow(METADATA)
         csvwriter.writerow(MULTIPLIER)
@@ -90,13 +86,14 @@ def schedule_to_dataframe(schedule_path):
 
     with open(schedule_path) as f:
         reader = csv.reader(f)
-        out['METADATA'] = pd.DataFrame({'metadata': [reader.next()[1]]})
-        out['MONTHLY_MULTIPLIER'] = pd.DataFrame({m + 1: [round(float(v), 2)] for m, v in enumerate(reader.next()[1:])},
+        out['METADATA'] = pd.DataFrame({'metadata': [next(reader)[1]]})
+        out['MONTHLY_MULTIPLIER'] = pd.DataFrame({m + 1: [round(float(v), 2)] for m, v in enumerate(next(reader)[1:])},
                                                  columns=[m for m in range(1, 13)])
         # Filter empty columns
-        columns = [col for col in reader.next() if col != '']
+        columns = [col for col in next(reader) if col != '']
 
-    schedule_data = pd.read_csv(schedule_path, skiprows=2, usecols=columns).set_index(['DAY', 'HOUR']).unstack().reindex(['WEEKDAY', 'SATURDAY', 'SUNDAY'])
+    schedule_data = pd.read_csv(schedule_path, skiprows=2, usecols=columns).set_index(
+        ['DAY', 'HOUR']).unstack().reindex(['WEEKDAY', 'SATURDAY', 'SUNDAY'])
     for t, df in schedule_data.groupby(axis=1, level=0, sort=False):
         df.columns = [i for i in range(1, 25)]
         out[t] = df.reset_index()
@@ -108,7 +105,7 @@ def schedule_to_file(schedule, schedule_path):
     schedule_df = pd.DataFrame()
     metadata = ['METADATA']
     multiplier = ['MONTHLY_MULTIPLIER']
-    for key, data in schedule.iteritems():
+    for key, data in schedule.items():
         if key == 'METADATA':
             metadata += [schedule['METADATA']['metadata'].iloc[0]]
         elif key == 'MONTHLY_MULTIPLIER':
@@ -119,7 +116,7 @@ def schedule_to_file(schedule, schedule_path):
             schedule_df[key] = schedule_column_data
     schedule_df = schedule_df.reset_index()
 
-    with open(schedule_path, "wb") as csv_file:
+    with open(schedule_path, "w", newline="", encoding="utf-8") as csv_file:
         csv_writer = csv.writer(csv_file, delimiter=',')
         csv_writer.writerow(metadata)
         csv_writer.writerow(multiplier)
@@ -127,7 +124,6 @@ def schedule_to_file(schedule, schedule_path):
         for row in schedule_df.values:
             csv_writer.writerow(row)
     print('Schedule file written to {}'.format(schedule_path))
-
 
 
 def main(config):

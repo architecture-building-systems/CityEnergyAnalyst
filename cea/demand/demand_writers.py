@@ -4,7 +4,9 @@ that sums the values up monthly. See the `cea.analysis.sensitivity.sensitivity_d
 the `MonthlyDemandWriter`.
 """
 
-from __future__ import division
+
+
+
 
 import numpy as np
 import pandas as pd
@@ -54,7 +56,7 @@ class DemandWriter(object):
         # save to disc
         pd.DataFrame(data, index=[0]).to_csv(
             locator.get_temporary_file('%(building_name)sT.csv' % locals()),
-            index=False, columns=columns, float_format='%.3f')
+            index=False, columns=columns, float_format='%.3f', na_rep='nan')
 
     def calc_yearly_dataframe(self, bpr, building_name, tsd):
         # if printing total values is necessary
@@ -105,7 +107,7 @@ class HourlyDemandWriter(DemandWriter):
 
     def write_to_csv(self, building_name, columns, hourly_data, locator):
         hourly_data.to_csv(locator.get_demand_results_file(building_name, 'csv'), columns=columns,
-                           float_format=FLOAT_FORMAT)
+                           float_format=FLOAT_FORMAT, na_rep='nan')
 
     def write_to_hdf5(self, building_name, columns, hourly_data, locator):
         # fixing columns with strings
@@ -125,7 +127,7 @@ class MonthlyDemandWriter(DemandWriter):
         # get monthly totals and rename to MWhyr
         monthly_data_new = self.calc_monthly_dataframe(building_name, hourly_data)
         monthly_data_new.to_csv(locator.get_demand_results_file(building_name, 'csv'), index=False,
-                                float_format=FLOAT_FORMAT)
+                                float_format=FLOAT_FORMAT, na_rep='nan')
 
     def write_to_hdf5(self, building_name, columns, hourly_data, locator):
         # get monthly totals and rename to MWhyr
@@ -166,7 +168,7 @@ class YearlyDemandWriter(DemandWriter):
                 df = pd.read_csv(temporary_file)
             else:
                 df = df.append(pd.read_csv(temporary_file), ignore_index=True)
-        df.to_csv(locator.get_total_demand('csv'), index=False, float_format='%.3f')
+        df.to_csv(locator.get_total_demand('csv'), index=False, float_format='%.3f', na_rep='nan')
 
         """read saved data of monthly values and return as totals"""
         monthly_data_buildings = [pd.read_csv(locator.get_demand_results_file(building_name, 'csv')) for building_name
