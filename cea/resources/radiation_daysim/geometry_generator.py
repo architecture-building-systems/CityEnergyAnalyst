@@ -15,6 +15,7 @@ import geopandas as gpd
 import osr
 
 import cea
+
 cea.suppress_3rd_party_debug_loggers()
 
 import math
@@ -229,7 +230,7 @@ def are_buildings_close_to_eachother(x_1, y_1, solid2):
     box2 = calculate.get_bounding_box(solid2)
     x_2 = box2[0]
     y_2 = box2[1]
-    delta = math.sqrt((y_2 - y_1)**2 + (x_2-x_1)**2)
+    delta = math.sqrt((y_2 - y_1) ** 2 + (x_2 - x_1) ** 2)
     if delta <= 100:
         return True
     else:
@@ -305,7 +306,7 @@ def calc_building_geometry_zone(name, building_solid, all_building_solid_list, a
     wall_west, \
     normals_windows_west, \
     normals_walls_west, \
-    wall_intersects_west= calc_windows_walls(facade_list_west, wwr_west, potentially_intersecting_solids)
+    wall_intersects_west = calc_windows_walls(facade_list_west, wwr_west, potentially_intersecting_solids)
     if len(window_west) != 0:
         window_list.extend(window_west)
         orientation_win.extend(['west'] * len(window_west))
@@ -347,7 +348,7 @@ def calc_building_geometry_zone(name, building_solid, all_building_solid_list, a
     wall_south, \
     normals_windows_south, \
     normals_walls_south, \
-    wall_intersects_south= calc_windows_walls(facade_list_south, wwr_south, potentially_intersecting_solids)
+    wall_intersects_south = calc_windows_walls(facade_list_south, wwr_south, potentially_intersecting_solids)
     if len(window_south) != 0:
         window_list.extend(window_south)
         orientation_win.extend(['south'] * len(window_south))
