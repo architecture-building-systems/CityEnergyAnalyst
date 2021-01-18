@@ -264,6 +264,8 @@ class Scenario(Resource):
 class ScenarioImage(Resource):
     @api.doc(params={'project': 'Path of Project (Leave blank to use path in config)'})
     def get(self, scenario):
+        building_limit = 500
+
         project = request.args.get('project')
         if project is None:
             config = current_app.cea_config
@@ -297,11 +299,17 @@ class ScenarioImage(Resource):
                         zone_df = zone_df.to_crs(get_geographic_coordinate_system())
                         polygons = zone_df['geometry']
 
-                        polygons = [list(polygons.geometry.exterior[row_id].coords) for row_id in range(polygons.shape[0])]
-
                         m = StaticMap(256, 160)
-                        for polygon in polygons:
-                            out = Polygon(polygon, 'blue', 'black', False)
+                        if len(polygons) <= building_limit:
+                            polygons = [list(polygons.geometry.exterior[row_id].coords) for row_id in
+                                        range(polygons.shape[0])]
+                            for polygon in polygons:
+                                out = Polygon(polygon, 'blue', 'black', False)
+                                m.add_polygon(out)
+                        else:
+                            convex_hull = polygons.unary_union.convex_hull
+                            polygon = convex_hull.exterior.coords
+                            out = Polygon(polygon, None, 'black', False)
                             m.add_polygon(out)
 
                         image = m.render()
