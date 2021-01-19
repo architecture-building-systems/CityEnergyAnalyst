@@ -1,10 +1,5 @@
-
-
-
-
 import json
 import os
-import shutil
 
 import numpy as np
 import pandas as pd
@@ -22,6 +17,10 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 from cea.constants import HOURS_IN_YEAR
+from cea.resources.radiation_daysim.geometry_generator import BuildingGeometry
+from cea import suppress_3rd_party_debug_loggers
+
+suppress_3rd_party_debug_loggers()
 
 
 def create_sensor_input_file(rad, chunk_n):
@@ -55,7 +54,7 @@ def generate_sensor_surfaces(occface, wall_dim, roof_dim, srf_type, orientation,
     return sensor_dir, sensor_cord, sensor_type, sensor_area, sensor_orientation, sensor_intersection
 
 
-def calc_sensors_building(building_geometry_dict, settings, ):
+def calc_sensors_building(building_geometry, grid_size):
     sensor_dir_list = []
     sensor_cord_list = []
     sensor_type_list = []
@@ -63,22 +62,22 @@ def calc_sensors_building(building_geometry_dict, settings, ):
     sensor_orientation_list = []
     sensor_intersection_list = []
     surfaces_types = ['walls', 'windows', 'roofs']
-    sensor_vertical_grid_dim = settings.walls_grid
-    sensor_horizontal_grid_dim = settings.roof_grid
+    sensor_vertical_grid_dim = grid_size["walls_grid"]
+    sensor_horizontal_grid_dim = grid_size["roof_grid"]
     for srf_type in surfaces_types:
-        occface_list = building_geometry_dict[srf_type]
+        occface_list = getattr(building_geometry, srf_type)
         if srf_type == 'roofs':
             orientation_list = ['top'] * len(occface_list)
             normals_list = [(0.0, 0.0, 1.0)] * len(occface_list)
             interesection_list = [0] * len(occface_list)
         elif srf_type == 'windows':
-            orientation_list = building_geometry_dict["orientation_" + srf_type]
-            normals_list = building_geometry_dict["normals_" + srf_type]
+            orientation_list = getattr(building_geometry, "orientation_{srf_type}".format(srf_type=srf_type))
+            normals_list = getattr(building_geometry, "normals_{srf_type}".format(srf_type=srf_type))
             interesection_list = [0] * len(occface_list)
         else:
-            orientation_list = building_geometry_dict["orientation_" + srf_type]
-            normals_list = building_geometry_dict["normals_" + srf_type]
-            interesection_list = building_geometry_dict["intersect_" + srf_type]
+            orientation_list = getattr(building_geometry, "orientation_{srf_type}".format(srf_type=srf_type))
+            normals_list = getattr(building_geometry, "normals_{srf_type}".format(srf_type=srf_type))
+            interesection_list = getattr(building_geometry, "intersect_{srf_type}".format(srf_type=srf_type))
         for orientation, normal, face, intersection in zip(orientation_list, normals_list, occface_list,
                                                            interesection_list):
             sensor_dir, \
@@ -103,25 +102,22 @@ def calc_sensors_building(building_geometry_dict, settings, ):
     return sensor_dir_list, sensor_cord_list, sensor_type_list, sensor_area_list, sensor_orientation_list, sensor_intersection_list
 
 
-def calc_sensors_zone(geometry_3D_zone, locator, settings):
+def calc_sensors_zone(building_names, locator, grid_size, geometry_pickle_dir):
     sensors_coords_zone = []
     sensors_dir_zone = []
     sensors_total_number_list = []
     names_zone = []
     sensors_code_zone = []
     sensor_intersection_zone = []
-    for building_geometry in geometry_3D_zone:
-        # building name
-        building_name = building_geometry["name"]
+    for building_name in building_names:
+        building_geometry = BuildingGeometry.load(os.path.join(geometry_pickle_dir, 'zone', building_name))
         # get sensors in the building
         sensors_dir_building, \
         sensors_coords_building, \
         sensors_type_building, \
         sensors_area_building, \
         sensor_orientation_building, \
-        sensor_intersection_building = calc_sensors_building(building_geometry,
-                                                             settings,
-                                                             )
+        sensor_intersection_building = calc_sensors_building(building_geometry, grid_size)
 
         # get the total number of sensors and store in lst
         sensors_number = len(sensors_coords_building)
@@ -157,59 +153,42 @@ def calc_sensors_zone(geometry_3D_zone, locator, settings):
     return sensors_coords_zone, sensors_dir_zone, sensors_total_number_list, names_zone, sensors_code_zone, sensor_intersection_zone
 
 
-def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, settings, max_global, weatherfile):
-    # folder for data work
-    daysim_dir = locator.get_temporary_file("temp" + str(chunk_n))
-    print('isolation_daysim: daysim_dir={daysim_dir}'.format(daysim_dir=daysim_dir))
-
-    bin_directory = settings.daysim_bin_directory
-    if not bin_directory.endswith(os.path.sep):
-        bin_directory += os.path.sep
-
-    rad.initialise_daysim(daysim_dir, bin_directory)
-    print("\tisolation_daysim: rad.hea_file: {}".format(rad.hea_file))
-    print("\tisolation_daysim: rad.hea_filename: {}".format(rad.hea_filename))
-    print("\tisolation_daysim: rad.daysimdir_ies: {}".format(rad.daysimdir_ies))
-    print("\tisolation_daysim: rad.daysimdir_pts: {}".format(rad.daysimdir_pts))
-    print("\tisolation_daysim: rad.daysimdir_rad: {}".format(rad.daysimdir_rad))
-    print("\tisolation_daysim: rad.daysimdir_res: {}".format(rad.daysimdir_res))
-    print("\tisolation_daysim: rad.daysimdir_tmp: {}".format(rad.daysimdir_tmp))
-    print("\tisolation_daysim: rad.daysimdir_wea: {}".format(rad.daysimdir_wea))
+def isolation_daysim(chunk_n, cea_daysim, building_names, locator, radiance_parameters, write_sensor_data, grid_size,
+                     max_global, weatherfile, geometry_pickle_dir):
+    # initialize daysim project
+    daysim_project = cea_daysim.initialize_daysim_project('chunk_{n}'.format(n=chunk_n))
+    print('Creating daysim project in: {daysim_dir}'.format(daysim_dir=daysim_project.project_path))
 
     # calculate sensors
     print("Calculating and sending sensor points")
-
     sensors_coords_zone, \
     sensors_dir_zone, \
     sensors_number_zone, \
     names_zone, \
     sensors_code_zone, \
-    sensor_intersection_zone = calc_sensors_zone(geometry_3D_zone, locator, settings)
-    rad.set_sensor_points(sensors_coords_zone, sensors_dir_zone)
-    create_sensor_input_file(rad, chunk_n)
-    print("\tisolation_daysim: rad.sensor_file_path: {}".format(rad.sensor_file_path))
+    sensor_intersection_zone = calc_sensors_zone(building_names, locator, grid_size, geometry_pickle_dir)
 
     num_sensors = sum(sensors_number_zone)
-    print("Starting Daysim simulation starts for buildings {buildings}".format(buildings=names_zone))
-    print("Total number of sensors:  {num_sensors}".format(num_sensors=num_sensors))
-    if num_sensors > 50000:
-        raise ValueError('You are sending more than 50000 sensors at the same time, this '
-                         'will eventually crash a daysim instance. To solve it, please reconfigure the radiation tool. '
-                         'Just reduce the number of buildings per chunk and try again')
+    daysim_project.create_sensor_input_file(sensors_coords_zone, sensors_dir_zone, num_sensors, "w/m2")
 
-    # add_elevation_weather_file(weather_path)
-    print('Transforming weather files to daysim format')
-    rad.execute_epw2wea(locator.get_weather_file(), ground_reflectance=settings.albedo)
-    print('Transforming radiance files to daysim format')
-    rad.execute_radfiles2daysim()
+    print("Starting Daysim simulation for buildings: {buildings}".format(buildings=names_zone))
+    print("Total number of sensors:  {num_sensors}".format(num_sensors=num_sensors))
+
     print('Writing radiance parameters')
-    rad.write_radiance_parameters(settings.rad_ab, settings.rad_ad, settings.rad_as, settings.rad_ar, settings.rad_aa,
-                                  settings.rad_lr, settings.rad_st, settings.rad_sj, settings.rad_lw, settings.rad_dj,
-                                  settings.rad_ds, settings.rad_dr, settings.rad_dp)
+    daysim_project.write_radiance_parameters(radiance_parameters["rad_ab"], radiance_parameters["rad_ad"],
+                                             radiance_parameters["rad_as"], radiance_parameters["rad_ar"],
+                                             radiance_parameters["rad_aa"], radiance_parameters["rad_lr"],
+                                             radiance_parameters["rad_st"], radiance_parameters["rad_sj"],
+                                             radiance_parameters["rad_lw"], radiance_parameters["rad_dj"],
+                                             radiance_parameters["rad_ds"], radiance_parameters["rad_dr"],
+                                             radiance_parameters["rad_dp"])
+
     print('Executing hourly solar isolation calculation')
-    rad.execute_gen_dc("w/m2")
-    rad.execute_ds_illum()
-    solar_res = rad.eval_ill_per_sensor()
+    daysim_project.execute_gen_dc()
+    daysim_project.execute_ds_illum()
+
+    print('Reading results...')
+    solar_res = daysim_project.eval_ill()
 
     # check inconsistencies and replace by max value of weather file
     print('Fixing inconsistencies, if any')
@@ -232,20 +211,19 @@ def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, settings, max_glob
                                             sensor_intersection_zone):
         # select sensors data
         selection_of_results = solar_res[index:index + sensors_number_building]
-        result = [(array * (1.0 - intersection)).tolist() for array, intersection in
-                  zip(selection_of_results, sensor_intersection_building)]
-        items_sensor_name_and_result = dict(zip(sensor_code_building, result))
+        selection_of_results[np.array(sensor_intersection_building) == 1] = 0
+        items_sensor_name_and_result = dict(zip(sensor_code_building, selection_of_results.tolist()))
         index = index + sensors_number_building
 
         # create summary and save to disk
         write_aggregated_results(building_name, items_sensor_name_and_result, locator, weatherfile)
 
-        if settings.write_sensor_data:
+        if write_sensor_data:
             write_sensor_results(building_name, items_sensor_name_and_result, locator)
 
     # erase daysim folder to avoid conflicts after every iteration
     print('Removing results folder')
-    shutil.rmtree(daysim_dir)
+    daysim_project.cleanup_project()
 
 
 def write_sensor_results(building_name, items_sensor_name_and_result, locator):
@@ -275,6 +253,7 @@ def write_aggregated_results(building_name, items_sensor_name_and_result, locato
                                   'walls_north_m2',
                                   'roofs_top_m2']
     dict_not_aggregated = {}
+
     for field, field_area in zip(solar_analysis_fields, solar_analysis_fields_area):
         select_sensors = geometry.loc[geometry['code'] == field].set_index('SURFACE')
         area_m2 = select_sensors['AREA_m2'].sum()
@@ -283,6 +262,7 @@ def write_aggregated_results(building_name, items_sensor_name_and_result, locato
                                 for surface in select_sensors.index]).sum(axis=0)
         dict_not_aggregated[field] = array_field / 1000  # in kWh
         dict_not_aggregated[field_area] = area_m2
+
     data_aggregated_kW = (pd.DataFrame(dict_not_aggregated)).round(2)
     data_aggregated_kW["Date"] = weatherfile["date"]
     data_aggregated_kW.set_index('Date', inplace=True)
