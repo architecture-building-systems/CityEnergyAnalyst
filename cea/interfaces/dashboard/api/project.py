@@ -313,7 +313,7 @@ class ScenarioImage(Resource):
                             # Generate only the shape outline of the zone area
                             convex_hull = polygons.unary_union.convex_hull
                             polygon = convex_hull.exterior.coords
-                            out = Polygon(polygon, None, 'black', False)
+                            out = Polygon(polygon, None, 'blue', False)
                             m.add_polygon(out)
 
                         image = m.render()
