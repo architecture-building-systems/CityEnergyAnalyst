@@ -2,24 +2,21 @@
 Radiation engine and geometry handler for CEA
 """
 
-
-
-
 import os
-import shutil
 import sys
-import pandas as pd
 import time
-from cea.utilities import epwreader
-import math
-from cea.resources.radiation_daysim import daysim_main, geometry_generator
-import py4design.py3dmodel.fetch as fetch
-import py4design.py2radiance as py2radiance
-from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_surroundings
+from itertools import repeat
+
+import pandas as pd
 from geopandas import GeoDataFrame as gpdf
-import cea.inputlocator
+
 import cea.config
-import subprocess
+import cea.inputlocator
+from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_surroundings
+from cea.resources.radiation_daysim import daysim_main, geometry_generator
+from cea.resources.radiation_daysim.radiance import CEADaySim
+from cea.utilities import epwreader
+from cea.utilities.parallel import vectorize
 
 __author__ = "Paul Neitzel, Kian Wee Chen"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -31,123 +28,17 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def create_radiance_srf(occface, srfname, srfmat, rad):
-    bface_pts = fetch.points_frm_occface(occface)
-    py2radiance.RadSurface(srfname, bface_pts, srfmat, rad)
-
-
-def calc_transmissivity(G_value):
-    """
-    Calculate window transmissivity from its transmittance using an empirical equation from Radiance.
-
-    :param G_value: Solar energy transmittance of windows (dimensionless)
-    :return: Transmissivity
-
-    [RADIANCE, 2010] The Radiance 4.0 Synthetic Imaging System. Lawrence Berkeley National Laboratory.
-    """
-    return (math.sqrt(0.8402528435 + 0.0072522239 * G_value * G_value) - 0.9166530661) / 0.0036261119 / G_value
-
-
-def add_rad_mat(daysim_mat_file, ageometry_table):
-    file_path = daysim_mat_file
-    roughness = 0.02
-    specularity = 0.03
-    with open(file_path, 'w') as write_file:
-        # first write the material use for the terrain and surrounding buildings
-        string = "void plastic reflectance0.2\n0\n0\n5 0.5360 0.1212 0.0565 0 0"
-        write_file.writelines(string + '\n')
-
-        written_mat_name_list = []
-        for geo in ageometry_table.index.values:
-            mat_name = "wall" + str(ageometry_table['type_wall'][geo])
-            if mat_name not in written_mat_name_list:
-                mat_value1 = ageometry_table['r_wall'][geo]
-                mat_value2 = mat_value1
-                mat_value3 = mat_value1
-                mat_value4 = specularity
-                mat_value5 = roughness
-                string = "void plastic " + mat_name + "\n0\n0\n5 " + str(mat_value1) + " " + str(
-                    mat_value2) + " " + str(mat_value3) \
-                         + " " + str(mat_value4) + " " + str(mat_value5)
-
-                write_file.writelines('\n' + string + '\n')
-
-                written_mat_name_list.append(mat_name)
-
-            mat_name = "win" + str(ageometry_table['type_win'][geo])
-            if mat_name not in written_mat_name_list:
-                mat_value1 = calc_transmissivity(ageometry_table['G_win'][geo])
-                mat_value2 = mat_value1
-                mat_value3 = mat_value1
-
-                string = "void glass " + mat_name + "\n0\n0\n3 " + str(mat_value1) + " " + str(mat_value2) + " " + str(
-                    mat_value3)
-                write_file.writelines('\n' + string + '\n')
-                written_mat_name_list.append(mat_name)
-
-            mat_name = "roof" + str(ageometry_table['type_roof'][geo])
-            if mat_name not in written_mat_name_list:
-                mat_value1 = ageometry_table['r_roof'][geo]
-                mat_value2 = mat_value1
-                mat_value3 = mat_value1
-                mat_value4 = specularity
-                mat_value5 = roughness
-
-                string = "void plastic " + mat_name + "\n0\n0\n5 " + str(mat_value1) + " " + str(
-                    mat_value2) + " " + str(mat_value3) \
-                         + " " + str(mat_value4) + " " + str(mat_value5)
-                write_file.writelines('\n' + string + '\n')
-                written_mat_name_list.append(mat_name)
-
-        write_file.close()
-
-
-def terrain_to_radiance(rad, tin_occface_terrain):
-    for id, face in enumerate(tin_occface_terrain):
-        create_radiance_srf(face, "terrain_srf" + str(id), "reflectance0.2", rad)
-
-
-def buildings_to_radiance(rad, building_surface_properties, geometry_3D_zone, geometry_3D_surroundings):
-    # translate buildings into radiance surface
-    fcnt = 0
-    for bcnt, building_surfaces in enumerate(geometry_3D_zone):
-        building_name = building_surfaces['name']
-        for pypolygon in building_surfaces['windows']:
-            create_radiance_srf(pypolygon, "win" + str(bcnt) + str(fcnt),
-                                "win" + str(building_surface_properties['type_win'][building_name]), rad)
-            fcnt += 1
-        for pypolygon in building_surfaces['walls']:
-            create_radiance_srf(pypolygon, "wall" + str(bcnt) + str(fcnt),
-                                "wall" + str(building_surface_properties['type_wall'][building_name]), rad)
-            fcnt += 1
-        for pypolygon in building_surfaces['roofs']:
-            create_radiance_srf(pypolygon, "roof" + str(bcnt) + str(fcnt),
-                                "roof" + str(building_surface_properties['type_roof'][building_name]), rad)
-            fcnt += 1
-
-    for building_surfaces in geometry_3D_surroundings:
-        ## for the surrounding buildings only, walls and roofs
-        id = 0
-        for pypolygon in building_surfaces['walls']:
-            create_radiance_srf(pypolygon, "surroundingbuildings" + str(id), "reflectance0.2", rad)
-            id += 1
-        for pypolygon in building_surfaces['roofs']:
-            create_radiance_srf(pypolygon, "surroundingbuildings" + str(id), "reflectance0.2", rad)
-            id += 1
-
-    return
-
-
-def reader_surface_properties(locator, input_shp):
+def reader_surface_properties(locator):
     """
     This function returns a dataframe with the emissivity values of walls, roof, and windows
     of every building in the scene
-    :param input_shp:
-    :return:
+
+    :param cea.inputlocator.InputLocator locator: CEA InputLocator
+    :returns pd.DataFrame: Dataframe with the emissivity values
     """
 
     # local variables
-    architectural_properties = gpdf.from_file(input_shp).drop('geometry', axis=1)
+    architectural_properties = gpdf.from_file(locator.get_building_architecture())
     surface_database_windows = pd.read_excel(locator.get_database_envelope_systems(), "WINDOW")
     surface_database_roof = pd.read_excel(locator.get_database_envelope_systems(), "ROOF")
     surface_database_walls = pd.read_excel(locator.get_database_envelope_systems(), "WALL")
@@ -164,21 +55,46 @@ def reader_surface_properties(locator, input_shp):
     return surface_properties.set_index('Name').round(decimals=2)
 
 
-def radiation_singleprocessing(rad, geometry_3D_zone, locator, settings):
-
+def radiation_singleprocessing(cea_daysim, zone_building_names, locator, settings, geometry_pickle_dir, num_processes):
     weather_path = locator.get_weather_file()
     # check inconsistencies and replace by max value of weather file
     weatherfile = epwreader.epw_reader(weather_path)
     max_global = weatherfile['glohorrad_Whm2'].max()
 
-    selected_buildings = [bldg_dict for bldg_dict in geometry_3D_zone if bldg_dict['name'] in settings.buildings]
+    list_of_building_names = [building_name for building_name in settings.buildings
+                              if building_name in zone_building_names]
     # get chunks of buildings to iterate
-    chunks = [selected_buildings[i:i + settings.n_buildings_in_chunk] for i in
-              range(0, len(selected_buildings),
+    chunks = [list_of_building_names[i:i + settings.n_buildings_in_chunk] for i in
+              range(0, len(list_of_building_names),
                     settings.n_buildings_in_chunk)]
 
-    for chunk_n, building_dict in enumerate(chunks):
-        daysim_main.isolation_daysim(chunk_n, rad, building_dict, locator, settings, max_global, weatherfile)
+    write_sensor_data = settings.write_sensor_data
+    radiance_parameters = {"rad_ab": settings.rad_ab, "rad_ad": settings.rad_ad, "rad_as": settings.rad_as,
+                           "rad_ar": settings.rad_ar, "rad_aa": settings.rad_aa,
+                           "rad_lr": settings.rad_lr, "rad_st": settings.rad_st, "rad_sj": settings.rad_sj,
+                           "rad_lw": settings.rad_lw, "rad_dj": settings.rad_dj,
+                           "rad_ds": settings.rad_ds, "rad_dr": settings.rad_dr, "rad_dp": settings.rad_dp}
+    grid_size = {"walls_grid": settings.walls_grid, "roof_grid": settings.roof_grid}
+
+    num_chunks = len(chunks)
+    if num_chunks == 1:
+        for chunk_n, building_names in enumerate(chunks):
+            daysim_main.isolation_daysim(
+                chunk_n, cea_daysim, building_names, locator, radiance_parameters, write_sensor_data, grid_size,
+                max_global, weatherfile, geometry_pickle_dir)
+    else:
+        vectorize(daysim_main.isolation_daysim, num_processes)(
+            range(0, num_chunks),
+            repeat(cea_daysim, num_chunks),
+            chunks,
+            repeat(locator, num_chunks),
+            repeat(radiance_parameters, num_chunks),
+            repeat(write_sensor_data, num_chunks),
+            repeat(grid_size, num_chunks),
+            repeat(max_global, num_chunks),
+            repeat(weatherfile, num_chunks),
+            repeat(geometry_pickle_dir, num_chunks)
+        )
 
 
 def check_daysim_bin_directory(path_hint, latest_binaries):
@@ -228,6 +144,7 @@ def check_daysim_bin_directory(path_hint, latest_binaries):
     lib_path = os.path.join(cea_daysim_folder, "lib")  # Use lib folder shipped with CEA
     folders_to_check = [
         path_hint,
+        os.path.join(path_hint, "bin64" if latest_binaries else "bin"),
         cea_daysim_bin_path,
         cea_daysim_folder  # Check binaries in Daysim folder, for backward capability
     ]
@@ -241,7 +158,7 @@ def check_daysim_bin_directory(path_hint, latest_binaries):
         if contains_binaries(possible_path):
             # If path to binaries contains whitespace, provide a warning
             if contains_whitespace(possible_path):
-                print("ATTENTION: Daysim binaries found in '{}', but its path contains whitespaces. "
+                print(f"ATTENTION: Daysim binaries found in '{possible_path}', but its path contains whitespaces. "
                       "Consider moving the binaries to another path to use them.")
                 continue
 
@@ -256,264 +173,6 @@ def check_daysim_bin_directory(path_hint, latest_binaries):
             return str(possible_path), str(lib_path)
 
     raise ValueError("Could not find Daysim binaries - checked these paths: {}".format(", ".join(folders_to_check)))
-
-
-class CEARad(py2radiance.Rad):
-    """Overrides some methods of py4design.rad that run DAYSIM commands"""
-    def __init__(self, base_file_path, data_folder_path, debug=False):
-        super(CEARad, self).__init__(base_file_path, data_folder_path)
-        self.debug = debug
-
-    def run_cmd(self, cmd, cwd=None):
-        # Verbose output if debug is true
-        print('Running command `{}`{}'.format(cmd, '' if cwd is None else ' in `{}`'.format(cwd)))
-        try:
-            # Stops script if commands fail (i.e non-zero exit code)
-            subprocess.check_call(cmd, cwd=cwd, stderr=subprocess.STDOUT, env=os.environ)
-        except TypeError as error:
-            # environment can only contain strings
-            for key in os.environ.keys():
-                value = os.environ[key]
-                if not isinstance(value, str):
-                    print("Bad ENVIRON key: {key}={value} ({value_type})".format(
-                        key=key, value=value, value_type=type(value)))
-            raise error
-
-
-    def execute_epw2wea(self, epwweatherfile, ground_reflectance=0.2):
-        daysimdir_wea = self.daysimdir_wea
-        if daysimdir_wea == None:
-            raise NameError("run .initialise_daysim function before running execute_epw2wea")
-        head, tail = os.path.split(epwweatherfile)
-        wfilename_no_extension = tail.replace(".epw", "")
-        weaweatherfilename = wfilename_no_extension + "_60min.wea"
-        weaweatherfile = os.path.join(daysimdir_wea, weaweatherfilename)
-        command1 = 'epw2wea "{}" "{}"'.format(epwweatherfile, weaweatherfile)
-        f = open(self.command_file, "a")
-        f.write(command1)
-        f.write("\n")
-        f.close()
-
-        # TODO: Might not need `shell`. Check on a Windows machine that has a space in the username
-        proc = subprocess.Popen(command1, stdout=subprocess.PIPE, shell=True, encoding='utf-8')
-        site_headers = proc.stdout.read()
-        site_headers_list = site_headers.split("\r\n")
-        hea_filepath = self.hea_file
-        hea_file = open(hea_filepath, "a")
-        for site_header in site_headers_list:
-            if site_header:
-                hea_file.write("\n" + site_header)
-
-        hea_file.write("\nground_reflectance" + " " + str(ground_reflectance))
-        # get the directory of the long weatherfile
-        hea_file.write("\nwea_data_file" + " " + os.path.join(head, wfilename_no_extension + "_60min.wea"))
-        hea_file.write("\ntime_step" + " " + "60")
-        hea_file.write("\nwea_data_short_file" + " " + os.path.join("wea", wfilename_no_extension + "_60min.wea"))
-        hea_file.write("\nwea_data_short_file_units" + " " + "1")
-        hea_file.write("\nlower_direct_threshold" + " " + "2")
-        hea_file.write("\nlower_diffuse_threshold" + " " + "2")
-        hea_file.close()
-        # check for the sunuphours
-        results = open(weaweatherfile, "r")
-        result_lines = results.readlines()
-        result_lines = result_lines[6:]
-        sunuphrs = 0
-        for result in result_lines:
-            words = result.replace("\n", "")
-            words1 = words.split(" ")
-            direct = float(words1[-1])
-            diffuse = float(words1[-2])
-            total = direct + diffuse
-            if total > 0:
-                sunuphrs = sunuphrs + 1
-
-        results.close()
-        self.sunuphrs = sunuphrs
-
-    def execute_radfiles2daysim(self):
-        hea_filepath = self.hea_file
-        head, tail = os.path.split(hea_filepath)
-        radfilename = tail.replace(".hea", "")
-        radgeomfilepath = self.rad_file_path
-        radmaterialfile = self.base_file_path
-        if radgeomfilepath == None or radmaterialfile == None:
-            raise NameError("run .create_rad function before running radfiles2daysim")
-
-        hea_file = open(hea_filepath, "a")
-        hea_file.write("\nmaterial_file" + " " + os.path.join("rad", radfilename + "_material.rad"))
-        hea_file.write("\ngeometry_file" + " " + os.path.join("rad", radfilename + "_geometry.rad"))
-        hea_file.write("\nradiance_source_files 2," + radgeomfilepath + "," + radmaterialfile)
-        hea_file.write(f"\nsensor_file {self.sensor_file_path}")  # this will be overwritten in execute_gen_dc...
-        hea_file.close()
-        command1 = ["radfiles2daysim", hea_filepath, "-g", "-m", "-d"]  # 'radfiles2daysim "{}" -g -m -d'.format(hea_filepath)
-        with open(self.command_file, "a") as f:
-            f.write(" ".join(command1))
-            f.write("\n")
-        self.run_cmd(command1)
-
-    def execute_gen_dc(self, output_unit):
-        hea_filepath = self.hea_file
-        hea_file = open(hea_filepath, "a")
-        sensor_filepath = self.sensor_file_path
-        if sensor_filepath == None:
-            raise NameError(
-                "run .set_sensor_points and create_sensor_input_file function before running execute_gen_dc")
-
-        daysim_pts_dir = self.daysimdir_pts
-        if daysim_pts_dir == None:
-            raise NameError("run .initialise_daysim function before running execute_gen_dc")
-
-        # first specify the sensor pts
-        sensor_filename = os.path.basename(sensor_filepath)
-        # move the pts file to the daysim folder
-        dest_filepath = os.path.join(daysim_pts_dir, sensor_filename)
-        shutil.move(sensor_filepath, dest_filepath)
-        # write the sensor file location into the .hea
-        hea_file.write("\nsensor_file {rel_sensor_filename}".format(
-            rel_sensor_filename=os.path.join("pts", sensor_filename)))
-        # write the shading header
-        self.write_static_shading(hea_file)
-        # write analysis result file
-        nsensors = len(self.sensor_positions)
-        sensor_str = ""
-        if output_unit == "w/m2":
-            hea_file.write("\noutput_units" + " " + "1")
-            for scnt in range(nsensors):
-                # 0 = lux, 2 = w/m2
-                if scnt == nsensors - 1:
-                    sensor_str = sensor_str + "2"
-                else:
-                    sensor_str = sensor_str + "2 "
-
-        if output_unit == "lux":
-            hea_file.write("\noutput_units" + " " + "2")
-            for scnt in range(nsensors):
-                # 0 = lux, 2 = w/m2
-                if scnt == nsensors - 1:
-                    sensor_str = sensor_str + "0"
-                else:
-                    sensor_str = sensor_str + "0 "
-
-        hea_file.write("\nsensor_file_unit " + sensor_str)
-
-        hea_file.close()
-        # copy the .hea file into the tmp directory
-        with open(hea_filepath, "r") as hea_file_read:
-            lines = hea_file_read.readlines()
-
-        tmp_directory = os.path.join(self.daysimdir_tmp, "")
-
-        # update path to tmp_directory in temp_hea_file
-        lines_modified = []
-        for line in lines:
-            if line.startswith('tmp_directory'):
-                lines_modified.append('tmp_directory {}\n'.format(tmp_directory))
-            else:
-                lines_modified.append(line)
-
-        hea_basename = os.path.splitext(os.path.basename(hea_filepath))[0]
-        temp_hea_filepath = os.path.join(self.daysimdir_tmp, hea_basename + "temp.hea")
-
-        with open(temp_hea_filepath, "w") as temp_hea_file:
-            temp_hea_file.write('\n'.join(lines_modified))
-
-        # execute gen_dc
-        command1 = ["gen_dc", temp_hea_filepath, "-dir"]  # 'gen_dc "{}" -dir'.format(temp_hea_filepath)
-        command2 = ["gen_dc", temp_hea_filepath, "-dif"]  # 'gen_dc "{}" -dif'.format(temp_hea_filepath)
-        command3 = ["gen_dc", temp_hea_filepath, "-paste"]  # 'gen_dc "{}" -paste'.format(temp_hea_filepath)
-        with open(self.command_file, "a") as f:
-            f.write(" ".join(command1))
-            f.write("\n")
-            f.write(" ".join(command2))
-            f.write("\n")
-            f.write(" ".join(command3))
-            f.write("\n")
-        self.run_cmd(command1)
-        self.run_cmd(command2)
-        self.run_cmd(command3)
-
-    def initialise_daysim(self, daysim_dir, bin_directory=r"C:\Daysim\bin"):
-        """
-        Run this method prior to running any Daysim simulation. This function creates the base .hea header file and all the neccessary
-        folders for the Daysim simulation.
-
-        Parameters
-        ----------
-        daysim_dir :  str
-            The directory to write all the daysim results file to.
-        """
-        # create the directory if its not existing
-        if not os.path.isdir(daysim_dir):
-            os.mkdir(daysim_dir)
-
-        if daysim_dir.endswith(os.path.sep):
-            # e.g. daysim_dir= "/tmp/temp0/"
-            daysim_dir, _ = os.path.split(daysim_dir)
-        project_name = os.path.basename(daysim_dir)
-        # make sure the daysim_dir has a "/" or "\" at the end - daysim commands expect this
-        daysim_dir += os.path.sep
-
-        if not bin_directory.endswith(os.path.sep):
-            bin_directory += os.path.sep
-
-        # create an empty .hea file
-        hea_filepath = os.path.join(daysim_dir, project_name + ".hea")
-        with  open(hea_filepath, "w") as hea_file:
-            # the project name will take the name of the folder
-            hea_file.write(f"project_name {project_name}\n")
-            # write the project directory
-            hea_file.write(f"project_directory {daysim_dir}\n")
-            # bin directory
-            hea_file.write(f"bin_directory {bin_directory}\n")
-            # write tmp directory
-            hea_file.write("tmp_directory" + " " + os.path.join("tmp", "") + "\n")
-            # write material directory
-            hea_file.write("material_directory" + " " + os.path.join("c:/daysim", "") + "\n")
-            # write ies directory
-            hea_file.write("ies_directory" + " " + os.path.join("c:/daysim", "") + "\n")
-            hea_file.close()
-            self.hea_file = hea_filepath
-
-        # create all the subdirectory
-        sub_hea_folders = ["ies", "pts", "rad", "res", "tmp", "wea"]
-        for folder in range(len(sub_hea_folders)):
-            sub_hea_folder = sub_hea_folders[folder]
-            sub_hea_folders_path = os.path.join(daysim_dir, sub_hea_folder)
-            if folder == 0:
-                self.daysimdir_ies = sub_hea_folders_path
-            if folder == 1:
-                self.daysimdir_pts = sub_hea_folders_path
-            if folder == 2:
-                self.daysimdir_rad = sub_hea_folders_path
-            if folder == 3:
-                self.daysimdir_res = sub_hea_folders_path
-            if folder == 4:
-                self.daysimdir_tmp = sub_hea_folders_path
-            if folder == 5:
-                self.daysimdir_wea = sub_hea_folders_path
-
-            # if the directories are not existing create them
-            if not os.path.isdir(sub_hea_folders_path):
-                os.mkdir(sub_hea_folders_path)
-
-            # if they are existing delete all of the files
-            if os.path.isdir(sub_hea_folders_path):
-                files_in_dir = os.listdir(sub_hea_folders_path)
-                for filename in files_in_dir:
-                    rmv_path = os.path.join(sub_hea_folders_path, filename)
-                    os.remove(rmv_path)
-
-    def execute_ds_illum(self):
-        hea_filepath = self.hea_file
-        head, tail = os.path.split(hea_filepath)
-
-        # execute ds_illum
-        command1 = 'ds_illum "{}"'.format(hea_filepath)
-        command1 = ["ds_illum", hea_filepath]
-        with open(self.command_file, "a") as f:
-            f.write(" ".join(command1))
-            f.write("\n")
-        self.run_cmd(command1)
 
 
 def main(config):
@@ -551,38 +210,49 @@ def main(config):
         os.environ["GDAL_DATA"] = os.path.join(os.path.dirname(sys.executable), "Library", "share", "gdal")
 
     print("verifying geometry files")
-    print(locator.get_zone_geometry())
-    verify_input_geometry_zone(gpdf.from_file(locator.get_zone_geometry()))
-    verify_input_geometry_surroundings(gpdf.from_file(locator.get_surroundings_geometry()))
+    zone_path = locator.get_zone_geometry()
+    surroundings_path = locator.get_surroundings_geometry()
+    print("zone: {zone_path}\nsurroundings: {surroundings_path}".format(zone_path=zone_path,
+                                                                        surroundings_path=surroundings_path))
+    verify_input_geometry_zone(gpdf.from_file(zone_path))
+    verify_input_geometry_surroundings(gpdf.from_file(surroundings_path))
 
     # import material properties of buildings
-    print("getting geometry materials")
-    building_surface_properties = reader_surface_properties(locator=locator,
-                                                            input_shp=locator.get_building_architecture())
+    print("Getting geometry materials")
+    building_surface_properties = reader_surface_properties(locator)
     building_surface_properties.to_csv(locator.get_radiation_materials())
-    print("creating 3D geometry and surfaces")
-    # create geometrical faces of terrain and buildingsL
-    elevation, geometry_terrain, geometry_3D_zone, geometry_3D_surroundings = geometry_generator.geometry_main(locator,
-                                                                                                               config)
 
-    print("Sending the scene: geometry and materials to daysim")
-    # send materials
-    daysim_mat = locator.get_temporary_file('default_materials.rad')
-    rad = CEARad(daysim_mat, locator.get_temporary_folder(), debug=config.debug)
-    print("\tradiation_main: rad.base_file_path: {}".format(rad.base_file_path))
-    print("\tradiation_main: rad.data_folder_path: {}".format(rad.data_folder_path))
-    print("\tradiation_main: rad.command_file: {}".format(rad.command_file))
-    add_rad_mat(daysim_mat, building_surface_properties)
-    # send terrain
-    terrain_to_radiance(rad, geometry_terrain)
-    # send buildings
-    buildings_to_radiance(rad, building_surface_properties, geometry_3D_zone, geometry_3D_surroundings)
-    # create scene out of all this
-    rad.create_rad_input_file()
-    print("\tradiation_main: rad.rad_file_path: {}".format(rad.rad_file_path))
+    print("Creating 3D geometry and surfaces")
+    geometry_pickle_dir = os.path.join(
+        locator.get_temporary_folder(), "{}_radiation_geometry_pickle".format(config.scenario_name))
+    print("Saving geometry pickle files in: {}".format(geometry_pickle_dir))
+    # create geometrical faces of terrain and buildings
+    geometry_terrain, zone_building_names, surroundings_building_names = geometry_generator.geometry_main(
+        locator, config, geometry_pickle_dir)
+
+    # daysim_bin_directory might contain two paths (e.g. "C:\Daysim\bin;C:\Daysim\lib") - in which case, only
+    # use the "bin" folder
+    bin_directory = [d for d in config.radiation.daysim_bin_directory.split(";") if not d.endswith("lib")][0]
+    daysim_staging_location = os.path.join(locator.get_temporary_folder(), 'cea_radiation')
+    cea_daysim = CEADaySim(daysim_staging_location, bin_directory)
+
+    # create radiance input files
+    print("Creating radiance material file")
+    cea_daysim.create_radiance_material(building_surface_properties)
+    print("Creating radiance geometry file")
+    cea_daysim.create_radiance_geometry(geometry_terrain, building_surface_properties, zone_building_names,
+                                        surroundings_building_names, geometry_pickle_dir)
+
+    print("Converting files for DAYSIM")
+    weather_file = locator.get_weather_file()
+    print('Transforming weather files to daysim format')
+    cea_daysim.execute_epw2wea(weather_file)
+    print('Transforming radiance files to daysim format')
+    cea_daysim.execute_radfiles2daysim()
 
     time1 = time.time()
-    radiation_singleprocessing(rad, geometry_3D_zone, locator, config.radiation)
+    radiation_singleprocessing(cea_daysim, zone_building_names, locator, config.radiation, geometry_pickle_dir,
+                               num_processes=config.get_number_of_processes())
 
     print("Daysim simulation finished in %.2f mins" % ((time.time() - time1) / 60.0))
 
