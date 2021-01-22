@@ -1,3 +1,9 @@
+- 2021-01-20 - 3.15.0 - #2914 Simplify preview image for scenarios with large number of buildings
+- 2021-01-19 - 3.15.0 - #2913 Optimize radiation
+- 2021-01-18 - 3.15.0 - #2912 GUI: Removed odd parameter shown in OSM by updation databases_verification.py
+- 2021-01-03 - 3.15.0 - #2905 void_deck remove max: null and set type to int
+- 2020-12-07 - 3.15.0 - #2893 commit 148b8e24b4b6f7d5b8fd59a41c047dd23b8c1fbf
+- 2020-12-02 - 3.15.0 - #2894 CityEnergyAnalyst v3.15.0
 - 2020-12-01 - 3.14.0 - #2873 2852 After merging docker image, change the url used to track master
 - 2020-11-19 - 3.14.0 - #2853 Add option for user-supplied PV tilt angle and maximum roof coverage
 - 2020-11-19 - 3.14.0 - #2857 cea-doc html now works again
