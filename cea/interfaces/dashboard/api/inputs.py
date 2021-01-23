@@ -1,5 +1,6 @@
 import json
 import os
+import traceback
 from collections import OrderedDict
 
 import geopandas
@@ -296,6 +297,9 @@ def get_network(config, network_type):
     except IOError as e:
         print(e)
         return None, [], None
+    except Exception as e:
+        traceback.print_exc()
+        return None, [], None
 
 
 def df_to_json(file_location, bbox=False):
@@ -310,8 +314,11 @@ def df_to_json(file_location, bbox=False):
         out = table_df.to_crs(get_geographic_coordinate_system())
         out = json.loads(out.to_json(show_bbox=bbox))
         return out, crs
-    except (IOError, DriverError, ValueError) as e:
+    except (IOError, DriverError) as e:
         print(e)
+        return None, None
+    except Exception as e:
+        traceback.print_exc()
         return None, None
 
 
