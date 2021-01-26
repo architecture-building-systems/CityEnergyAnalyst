@@ -19,10 +19,7 @@ Prerequisites
 
 * Download and install `Git (64-bit) <https://git-scm.com/download/win>`__.
 * Download and install `Github Desktop (64-bit) <https://desktop.github.com/>`__.
-* Download and install `DAYSIM version >= 4.0 <https://daysim.ning.com/page/download>`__.
-* Download and install `Miniconda(64-bit) for Python 2.7 <https://conda.io/miniconda.html>`__.
-   .. note:: UNCHECK the "Register Anaconda as my default Python 2.7" option as ArcGIS integration
-      will not work otherwise.
+* Download and install `Miniconda(64-bit) for Python 3.8 <https://conda.io/miniconda.html>`__.
 
 Installation of the code base
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -39,7 +36,7 @@ Python library) and  1 hour of your time.
 #. Type ``conda env create`` and press ENTER.
 #. Grab a cup of tea and some toast, this will take ~ 45 minutes.
 #. Type ``activate cea`` and press ENTER.
-#. Type ``pip install -e .[dev]`` and press ENTER (mind the dot '.' included in this command!).
+#. Type ``pip install --no-deps -e .`` and press ENTER (mind the dot '.' included in this command!).
 
 Interfaces
 ~~~~~~~~~~
