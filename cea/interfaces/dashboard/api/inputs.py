@@ -1,8 +1,6 @@
-
-
-
 import json
 import os
+import traceback
 from collections import OrderedDict
 
 import geopandas
@@ -99,7 +97,7 @@ class InputGeojson(Resource):
             locator = cea.inputlocator.InputLocator(config.scenario)
             location = getattr(locator, db_info['location'])()
             if db_info['file_type'] != 'shp':
-                abort(400, 'Invalid database for geojson: %s' % location)
+                abort(500, 'Invalid database for geojson: %s' % location)
             return df_to_json(location, bbox=True)[0]
         elif kind in NETWORK_KEYS:
             return get_network(config, kind)[0]
@@ -124,16 +122,12 @@ class AllInputs(Resource):
         store['geojsons'] = {}
         store['connected_buildings'] = {}
         store['crs'] = {}
-        store['geojsons']['zone'], store['crs']['zone'] = df_to_json(
-            locator.get_zone_geometry(), bbox=True, trigger_abort=False)
+        store['geojsons']['zone'], store['crs']['zone'] = df_to_json(locator.get_zone_geometry(), bbox=True)
         store['geojsons']['surroundings'], store['crs']['surroundings'] = df_to_json(
-            locator.get_surroundings_geometry(), bbox=True, trigger_abort=False)
-        store['geojsons']['streets'], store['crs']['streets'] = df_to_json(
-            locator.get_street_network(), trigger_abort=False)
-        store['geojsons']['dc'], store['connected_buildings']['dc'], store['crs']['dc'] = get_network(
-            config, 'dc', trigger_abort=False)
-        store['geojsons']['dh'], store['connected_buildings']['dh'],  store['crs']['dh'] = get_network(
-            config, 'dh', trigger_abort=False)
+            locator.get_surroundings_geometry(), bbox=True)
+        store['geojsons']['streets'], store['crs']['streets'] = df_to_json(locator.get_street_network())
+        store['geojsons']['dc'], store['connected_buildings']['dc'], store['crs']['dc'] = get_network(config, 'dc')
+        store['geojsons']['dh'], store['connected_buildings']['dh'],  store['crs']['dh'] = get_network(config, 'dh')
         store['colors'] = COLORS
         store['schedules'] = {}
 
@@ -214,7 +208,7 @@ def get_building_properties():
     config = current_app.cea_config
 
     locator = cea.inputlocator.InputLocator(config.scenario)
-    store = {'tables': OrderedDict(), 'columns': OrderedDict()}
+    store = {'tables': {}, 'columns': {}}
     for db in INPUTS:
         db_info = INPUTS[db]
         locator_method = db_info['location']
@@ -240,7 +234,7 @@ def get_building_properties():
                 store['tables'][db] = json.loads(
                     table_df.set_index('Name').to_json(orient='index'))
 
-            columns = OrderedDict()
+            columns = {}
             for column_name, column in db_columns.items():
                 columns[column_name] = {}
                 if column_name == 'REFERENCE':
@@ -257,7 +251,7 @@ def get_building_properties():
                 columns[column_name]['unit'] = column["unit"]
             store['columns'][db] = columns
 
-        except (IOError, DriverError) as e:
+        except (IOError, DriverError, ValueError) as e:
             print(e)
             store['tables'][db] = {}
             store['columns'][db] = {}
@@ -265,7 +259,7 @@ def get_building_properties():
     return store
 
 
-def get_network(config, network_type, trigger_abort=True):
+def get_network(config, network_type):
     # TODO: Get a list of names and send all in the json
     try:
         locator = cea.inputlocator.InputLocator(config.scenario)
@@ -292,17 +286,23 @@ def get_network(config, network_type, trigger_abort=True):
         edges = locator.get_network_layout_edges_shapefile(network_type, network_name)
         nodes = locator.get_network_layout_nodes_shapefile(network_type, network_name)
 
-        network_json, crs = df_to_json(edges, trigger_abort=trigger_abort)
-        nodes_json, _ = df_to_json(nodes, trigger_abort=trigger_abort)
+        network_json, crs = df_to_json(edges)
+        if network_json is None:
+            return None, [], None
+
+        nodes_json, _ = df_to_json(nodes)
         network_json['features'].extend(nodes_json['features'])
         network_json['properties'] = {'connected_buildings': connected_buildings}
         return network_json, connected_buildings, crs
     except IOError as e:
         print(e)
         return None, [], None
+    except Exception as e:
+        traceback.print_exc()
+        return None, [], None
 
 
-def df_to_json(file_location, bbox=False, trigger_abort=True):
+def df_to_json(file_location, bbox=False):
     from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile, get_projected_coordinate_system
 
     try:
@@ -316,13 +316,10 @@ def df_to_json(file_location, bbox=False, trigger_abort=True):
         return out, crs
     except (IOError, DriverError) as e:
         print(e)
-        if trigger_abort:
-            abort(400, 'Input file not found: %s' % file_location)
         return None, None
-    except RuntimeError as e:
-        print(e)
-        if trigger_abort:
-            abort(400, e.message)
+    except Exception as e:
+        traceback.print_exc()
+        return None, None
 
 
 @api.route('/building-schedule/<string:building>')
@@ -357,8 +354,7 @@ class InputDatabaseData(Resource):
 
     def put(self):
         config = current_app.cea_config
-        # Preserve key order of json string (could be removed for python3)
-        payload = json.loads(request.data, object_pairs_hook=OrderedDict)
+        payload = json.loads(request.data)
         locator = cea.inputlocator.InputLocator(config.scenario)
 
         for db_type in payload:
