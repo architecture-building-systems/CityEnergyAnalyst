@@ -1,4 +1,4 @@
-:orphan:
+.. sectnum::
 
 How to create a new release?
 ============================
@@ -129,12 +129,6 @@ installation. The path to ``gui`` should be set to the repository folder of the 
 - locate the installer in the CityEnergyAnalyst repository under ``setup/Output``.
 
 
-Publish the Release on GitHub
------------------------------
-The release should be published so that it could be found on GitHub for testing (the next step). Add the installer
-you created in the previous step.
-
-
 Testing in a virtual machine
 ----------------------------
 
@@ -147,6 +141,12 @@ It's a good idea to use a different username on the VM as the one you used to cr
 can be found that way.
 
 .. _VirtualBox: https://www.virtualbox.org/
+
+
+Publish the Release on GitHub
+-----------------------------
+The release should be published so that it could be found on GitHub for testing (the next step). Add the installer
+you created in the previous step.
 
 
 Building the documentation
@@ -178,6 +178,24 @@ For more information, check out the :doc:`how-to-document-cea`.
 .. _GraphViz: http://www.graphviz.org/Download.php
 
 
+Updating Link in www.cityenergyanalyst.com/try-cea
+--------------------------------------------------
+
+- go to http://www.cityenergyanalyst.com
+- press Esc and try logging into squarespace
+- go to Pages/Try CEA  (it is the last page in the list)
+- go to edit 'Page content'
+- go to edit 'Form'
+- Change 'Form Name' to the name of the new version of CEA you just released
+- go to the tab 'Advanced'
+- Change 'POST-SUBMIT REDIRECT' to the link where the .exe of CEA can be downloaded from
+- Change 'POST-SUBMIT MESSAGE'/here, to the link where the .exe of CEA can be downloaded from
+- Click 'Apply'
+- Click 'Save'
+
+.. _here: https://city-energy-analyst.readthedocs.io/en/latest/communication.html#cea-website
+
+
 Uploading to PyPI
 -----------------
 
@@ -206,22 +224,3 @@ Uploading to PyPI
   - ask the repository admins for username and password
 
 .. _twine: https://pypi.python.org/pypi/twine
-
-
-Updating Link in www.cityenergyanalyst.com/try-cea
---------------------------------------------------
-
-- go to http://www.cityenergyanalyst.com
-- press Esc and try logging into squarespace
-- go to Pages/Try CEA  (it is the last page in the list)
-- go to edit 'Page content'
-- go to edit 'Form'
-- Change 'Form Name' to the name of the new version of CEA you just released
-- go to the tab 'Advanced'
-- Change 'POST-SUBMIT REDIRECT' to the link where the .exe of CEA can be downloaded from
-- Change 'POST-SUBMIT MESSAGE'/here, to the link where the .exe of CEA can be downloaded from
-- Click 'Apply'
-- Click 'Save'
-
-.. _here: https://city-energy-analyst.readthedocs.io/en/latest/communication.html#cea-website
-
