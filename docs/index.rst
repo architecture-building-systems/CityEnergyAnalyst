@@ -39,5 +39,5 @@ Visit www.cityenergyanalyst.com_ for more information on the CEA.
    agile-with-CEA
    how-to-contribute
    developer-walk-through
-   hot-to-create-a-new-release
+   how-to-create-a-new-release
    modules/modules
