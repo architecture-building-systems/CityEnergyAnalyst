@@ -1,9 +1,9 @@
+============================
 How to create a new release?
 ============================
 
 This section describes the steps necessary to create a new release of the City Energy Analyst (CEA).
 
-.. sectnum::
 
 Versioning
 ----------
@@ -35,10 +35,10 @@ Where to find the current version number
 
 The current version number can be found in the module :py:mod:`cea` (actually, since :py:mod:`cea` is a package, you
 need to look into the file ``__init__.py``) in the variable ``__version__``.
-All code requiring knowledge of the current version number should read the version from here. In python modules this can
-be achieved by:
 
-.. source: python
+All code requiring knowledge of the current version number should read the version from here.
+
+In python modules this can be achieved by::
 
     import cea
     version_number = cea.__version__
@@ -98,15 +98,15 @@ You'll need yarn_ installed.
 
 For the installer to be able to pick up the newest version of the CEA GUI interface, make sure you
 
-- pull the newest version of the ``CityEnergyAnalyst-GUI`` repository
-- open CEA Console, navigate to the GitHub repo of the ``CityEnergyAnalyst-GUI`` repository
-- type ``yarn``, wait for the command to complete (this will update packages if necessary)
+- Pull the newest version of the ``CityEnergyAnalyst-GUI`` repository
+- Open CEA Console, navigate to the GitHub repo of the ``CityEnergyAnalyst-GUI`` repository
+- Type ``yarn``, wait for the command to complete (this will update packages if necessary)
 
 Creating the installer
 ----------------------
 
-- first, make sure you have the Nullsoft Scriptable Installation System (NSIS) installed. See :doc:`how-to-set-up-nsis`
-- next, make sure the command `cea-dev build` is configured properly. The configuration should look something like this::
+- First, make sure you have the Nullsoft Scriptable Installation System (NSIS) installed. See :doc:`how-to-set-up-nsis`
+- Next, make sure the command `cea-dev build` is configured properly. The configuration should look something like this::
 
     (CEA) λ cea-config build
     City Energy Analyst version 3.11.0
@@ -121,19 +121,22 @@ Creating the installer
       (default: )
 
 You can either edit the ``cea.config`` file directly or use ``cea-config build --nsis C:\...\makensis.exe --conda ...``.
+
 Note: The paths will be different on your system. Use the ``conda.bat`` in ``condabin`` of your Anaconda/Miniconda
 installation. The path to ``gui`` should be set to the repository folder of the CityEnergyAnalyst-GUI repository.
 
-- creating the installer is then as easy as ``cea-dev build``. This will run quite some time as it will create
+- Creating the installer is then as easy as ``cea-dev build``. This will run quite some time as it will create
   a new conda environment for the version, conda-pack it, and do a lot of compressing.
-- locate the installer in the CityEnergyAnalyst repository under ``setup/Output``.
+- Locate the installer in the CityEnergyAnalyst repository under ``setup/Output``.
 
 
 Testing in a virtual machine
 ----------------------------
 
 In order to test the release, it is a good idea to run the installation guide / installer on a clean virtual machine,
-e.g. with VirtualBox_. This test should go as far as running `cea test --workflow slow` just to be sure everything
+e.g. with VirtualBox_.
+
+This test should go as far as running ``cea test --workflow slow`` just to be sure everything
 is still working. This test goes a bit further than the regular test in that it makes sure the installation instructions
 still work on a new installation. This is important because it can find missing packages in the dependency lists etc.
 
@@ -153,16 +156,17 @@ Building the documentation
 --------------------------
 
 Well documented code is an essential part of the release, allowing your code's legacy to only grow in glory and admiration.
+
 The documentation will be rendered via the readthedocs_ site, allowing future developers, practitioners, researchers and students
 to understand and build upon your work. CEA uses sphinx_ to document all module code, and GraphViz to render flow charts
 (please install Graphviz_ to view graphs).
-
 
 First, launch the CEA Console created by the installer and call (please address any errors (red text) which appears during the sphinx build)::
 
  cea-doc html
 
 This tool will:
+
 - Remove any outdated module rst files
 - Rebuild all module rst files
 - Render all rst files to html
@@ -181,13 +185,13 @@ For more information, check out the :doc:`how-to-document-cea`.
 Updating Link in www.cityenergyanalyst.com/try-cea
 --------------------------------------------------
 
-- go to http://www.cityenergyanalyst.com
-- press Esc and try logging into squarespace
-- go to Pages/Try CEA  (it is the last page in the list)
-- go to edit 'Page content'
-- go to edit 'Form'
+- Go to http://www.cityenergyanalyst.com
+- Press Esc and try logging into squarespace
+- Go to Pages/Try CEA  (it is the last page in the list)
+- Go to edit 'Page content'
+- Go to edit 'Form'
 - Change 'Form Name' to the name of the new version of CEA you just released
-- go to the tab 'Advanced'
+- Go to the tab 'Advanced'
 - Change 'POST-SUBMIT REDIRECT' to the link where the .exe of CEA can be downloaded from
 - Change 'POST-SUBMIT MESSAGE'/here, to the link where the .exe of CEA can be downloaded from
 - Click 'Apply'
@@ -201,22 +205,22 @@ Uploading to PyPI
 
 .. note:: This step is not really necessary anymore for installation.
 
-- check long-description with this commandline::
+- Check long-description with this commandline::
 
     python setup.py --long-description | for /f %i in ('where rst2html.py') do python %i > %temp%\ld.html && start %temp%\ld.html
 
   - make sure the output is valid / no errors, as this will be the text of the CEA on PyPI
 
-- delete any old distributions from dist folder (you can just delete the whole ``dist`` folder if you like)
+- Delete any old distributions from dist folder (you can just delete the whole ``dist`` folder if you like)
 
-- do ``python setup.py sdist bdist_wheel``
+- Do ``python setup.py sdist bdist_wheel``
 
   - this will recreate the ``dist`` folder with two files that look similar to these:
 
     - cityenergyanalyst-2.2-py2-none-any.whl
     - cityenergyanalyst-2.2.tar.gz
 
-- use twine to upload to PyPI (``twine upload dist/*``)
+- Use twine to upload to PyPI (``twine upload dist/*``)
 
   - you can get twine_ with ``pip install twine`` (it should be pre-installed in the CEA Console)
   - the command above assumes you have set the ``TWINE_PASSWORD`` and ``TWINE_USERNAME`` environment variables
