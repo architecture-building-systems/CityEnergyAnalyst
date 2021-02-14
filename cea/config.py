@@ -448,8 +448,11 @@ class FileParameter(Parameter):
         return str(value)
 
     def decode(self, value):
+        _KEYCRE = re.compile(r"\{([^}]+)\}")
         if not value and not self.nullable:
             raise ValueError("Can't decode value for non-nullable FileParameter %s." % self.name)
+        elif _KEYCRE.match(value):
+            return _KEYCRE.sub(lambda match: self.config.get(match.group(1)), value)
         else:
             return value
 
