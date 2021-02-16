@@ -203,7 +203,7 @@ Updating Link in www.cityenergyanalyst.com/try-cea
 Uploading to PyPI
 -----------------
 
-.. note:: This step is not really necessary anymore for installation.
+.. note:: This step is not necessary anymore for installation.
 
 - Check long-description with this commandline::
 
