@@ -57,7 +57,8 @@ class TestConfiguration(unittest.TestCase):
 
     def test_decode_fileparameter(self):
         config = cea.config.Configuration()
-        expected_output = "/projects/heating/inputs/building-geometry/zone.shp"
+        scenario = config.general.scenario
+        expected_output = f"{scenario}/inputs/building-geometry/zone.shp"
         self.assertEqual(config.create_new_scenario.zone, expected_output)
 
 if __name__ == "__main__":
