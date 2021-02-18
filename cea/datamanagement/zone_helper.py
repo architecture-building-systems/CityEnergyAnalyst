@@ -58,6 +58,7 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, buildings_he
     # local variables
     no_buildings = shapefile.shape[0]
     list_of_columns = shapefile.columns
+    print(list_of_columns)
     if buildings_height is None and buildings_floors is None:
         print('Warning! you have not indicated a height or number of floors above ground for the buildings, '
               'we are reverting to data stored in Open Street Maps (It might not be accurate at all),'
@@ -114,12 +115,19 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, buildings_he
     else:
         shapefile["description"] = [np.nan] * no_buildings
 
+    # add address
+    if ('addr:housenumber' in list_of_columns) & ('addr:street' in list_of_columns):
+        shapefile["address"] = [str(x) + str(" ") + str(y) for x,y in zip(shapefile['addr:street'].values, shapefile['addr:housenumber'].values)]
+    else:
+        print("no")
+        shapefile["address"] = "No address/incomplete address"
+
     shapefile["category"] = shapefile['building']
     shapefile["Name"] = [key + str(x + 1000) for x in
                          range(no_buildings)]  # start in a big number to avoid potential confusion
 
     result = shapefile[
-        ["Name", "height_ag", "floors_ag", "height_bg", "floors_bg", "description", "category", "geometry",
+        ["Name", "height_ag", "floors_ag", "height_bg", "floors_bg", "description", "category", "geometry", "address",
          "REFERENCE"]]
 
     result.reset_index(inplace=True, drop=True)

@@ -14758,6 +14758,12 @@ get_zone_geometry:
         unit: 'NA'
         values: alphanumeric
         nullable: true
+      address:
+        description: address to data (if any)
+        type: string
+        unit: '[-]'
+        values: alphanumeric
+        nullable: true
   used_by:
   - archetypes_mapper
   - decentralized
