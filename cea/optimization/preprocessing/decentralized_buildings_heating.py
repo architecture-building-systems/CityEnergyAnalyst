@@ -313,10 +313,25 @@ def disconnected_heating_for_building(building_name, supply_systems, T_ground_K,
     results_to_csv = pd.DataFrame(performance_results)
     fName_result = locator.get_optimization_decentralized_folder_building_result_heating(building_name)
     results_to_csv.to_csv(fName_result, sep=',', index=False)
-    # save activation for the best supply system configuration
-    best_activation_df = pd.DataFrame.from_dict(heating_dispatch[indexBest])  #
-    best_activation_df.to_csv(
+    # save heating activation for the best supply system configuration
+    best_activation_df = pd.DataFrame.from_dict(heating_dispatch[indexBest])
+    heating_dispatch_columns = get_unique_keys_from_dicts(heating_dispatch)
+    heating_dispatch_df = pd.DataFrame(columns=heating_dispatch_columns, index=range(8760))
+    heating_dispatch_df.update(best_activation_df)
+    heating_dispatch_df.to_csv(
         locator.get_optimization_decentralized_folder_building_result_heating_activation(building_name), index=False)
+
+
+def get_unique_keys_from_dicts(heating_dispatch):
+    """
+    Get unique keys from all dicts in heating_dispatch
+    """
+    unique_keys = []
+    for key in heating_dispatch.keys():
+        unique_keys.extend([*heating_dispatch[key]])
+    uniq_set = set()
+    unique_keys = [x for x in unique_keys if x not in uniq_set and not uniq_set.add(x)]
+    return unique_keys
 
 
 def calc_GHP_operation(QnomGHP_W, T_ground_K, Texit_GHP_nom_K, Tret_K, Tsup_K, mdot_kgpers, q_load_Wh):
