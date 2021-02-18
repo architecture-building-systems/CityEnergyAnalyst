@@ -25,6 +25,14 @@ cea.resources.radiation\_daysim.geometry\_generator module
    :undoc-members:
    :show-inheritance:
 
+cea.resources.radiation\_daysim.radiance module
+-----------------------------------------------
+
+.. automodule:: cea.resources.radiation_daysim.radiance
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 cea.resources.radiation\_daysim.radiation\_main module
 ------------------------------------------------------
 
