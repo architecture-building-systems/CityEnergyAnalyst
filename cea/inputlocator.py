@@ -240,8 +240,8 @@ class InputLocator(object):
         return os.path.join(self.get_optimization_decentralized_folder(),
                             building + '_' + configuration + '_result_cooling.csv')
 
-    def get_optimization_decentralized_folder_building_cooling_activation(self, building,
-                                                                          configuration='AHU_ARU_SCU'):
+    def get_optimization_decentralized_folder_building_result_cooling_activation(self, building,
+                                                                                 configuration='AHU_ARU_SCU'):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
 
         return os.path.join(self.get_optimization_decentralized_folder(),
