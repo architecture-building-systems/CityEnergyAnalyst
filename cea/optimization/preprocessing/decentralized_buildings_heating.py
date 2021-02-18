@@ -103,14 +103,13 @@ def disconnected_heating_for_building(building_name, supply_systems, T_ground_K,
     Tsup_K = substation_results["T_supply_DH_result_K"].values
     mdot_kgpers = substation_results["mdot_DH_result_kgpers"].values
     ## Start Hourly calculation
-    print(building_name, ' decentralized heating supply systems simulations...')
     Tret_K = np.where(Tret_K > 0.0, Tret_K, Tsup_K)
     ## 0: Boiler NG
     BoilerEff = np.vectorize(Boiler.calc_Cop_boiler)(q_load_Wh, Qnom_W, Tret_K)
     Qgas_to_Boiler_Wh = np.divide(q_load_Wh, BoilerEff, out=np.zeros_like(q_load_Wh), where=BoilerEff != 0.0)
     Boiler_Status = np.where(Qgas_to_Boiler_Wh > 0.0, 1, 0)
     # add costs
-    Opex_a_var_USD[0][4] += sum(prices.NG_PRICE * Qgas_to_Boiler_Wh)  # CHF
+    Opex_a_var_USD[0][4] += sum(prices.NG_PRICE * Qgas_to_Boiler_Wh)
     GHG_tonCO2[0][5] += sum(calc_emissions_Whyr_to_tonCO2yr(Qgas_to_Boiler_Wh, lca.NG_TO_CO2_EQ))  # ton CO2
     # add activation
     resourcesRes[0][0] += sum(q_load_Wh)  # q from NG
@@ -120,7 +119,7 @@ def disconnected_heating_for_building(building_name, supply_systems, T_ground_K,
                            'E_hs_ww_req_W': np.zeros(8760)}
     ## 1: Boiler BG
     # add costs
-    Opex_a_var_USD[1][4] += sum(prices.BG_PRICE * Qgas_to_Boiler_Wh)  # CHF
+    Opex_a_var_USD[1][4] += sum(prices.BG_PRICE * Qgas_to_Boiler_Wh)
     GHG_tonCO2[1][5] += sum(calc_emissions_Whyr_to_tonCO2yr(Qgas_to_Boiler_Wh, lca.NG_TO_CO2_EQ))  # ton CO2
     # add activation
     resourcesRes[1][1] += sum(q_load_Wh)  # q from BG
@@ -135,7 +134,7 @@ def disconnected_heating_for_building(building_name, supply_systems, T_ground_K,
     FC_Status = np.where(Qgas_to_FC_Wh > 0.0, 1, 0)
     # add variable costs, emissions and primary energy
     Opex_a_var_USD[2][4] += sum(
-        prices.NG_PRICE * Qgas_to_FC_Wh - prices.ELEC_PRICE_EXPORT * el_from_FC_Wh)  # CHF, extra electricity sold to grid
+        prices.NG_PRICE * Qgas_to_FC_Wh - prices.ELEC_PRICE_EXPORT * el_from_FC_Wh)  # extra electricity sold to grid
     GHG_tonCO2_from_FC = (0.0874 * Qgas_to_FC_Wh * 3600E-6 + 773 * 0.45 * el_from_FC_Wh * 1E-6 -
                           lca.EL_TO_CO2_EQ * el_from_FC_Wh * 3600E-6) / 1E3
     GHG_tonCO2[2][5] += sum(GHG_tonCO2_from_FC)  # tonCO2
@@ -186,11 +185,11 @@ def disconnected_heating_for_building(building_name, supply_systems, T_ground_K,
         # add costs
         # electricity
         el_total_Wh = el_GHP_Wh
-        Opex_a_var_USD[3 + i][4] += sum(prices.ELEC_PRICE * el_total_Wh)  # CHF
+        Opex_a_var_USD[3 + i][4] += sum(prices.ELEC_PRICE * el_total_Wh)
         GHG_tonCO2[3 + i][5] += sum(calc_emissions_Whyr_to_tonCO2yr(el_total_Wh, lca.EL_TO_CO2_EQ))  # ton CO2
         # gas
         Q_gas_total_Wh = Qgas_to_GHPBoiler_Wh + Qgas_to_Boiler_Wh
-        Opex_a_var_USD[3 + i][4] += sum(prices.NG_PRICE * Q_gas_total_Wh)  # CHF
+        Opex_a_var_USD[3 + i][4] += sum(prices.NG_PRICE * Q_gas_total_Wh)
         GHG_tonCO2[3 + i][5] += sum(calc_emissions_Whyr_to_tonCO2yr(Q_gas_total_Wh, lca.NG_TO_CO2_EQ))  # ton CO2
         # add activation
         resourcesRes[3 + i][0] = sum(qhot_missing_Wh + q_load_NG_Boiler_Wh)
@@ -276,7 +275,6 @@ def disconnected_heating_for_building(building_name, supply_systems, T_ground_K,
     Bestfound = False
     optsearch = np.empty(el)
     optsearch.fill(3)
-    indexBest = 0
     geothermal_potential = geothermal_potential_data.set_index('Name')
     # Check the GHP area constraint
     for i in range(10):
@@ -298,6 +296,7 @@ def disconnected_heating_for_building(building_name, supply_systems, T_ground_K,
         rank += 1
     # get the best option according to the ranking.
     Best[indexBest][0] = 1
+    print('best id', indexBest)
     # Save results in csv file
     performance_results = {
         "Nominal heating load": Qnom_W,
@@ -338,19 +337,19 @@ def calc_GHP_operation(QnomGHP_W, T_ground_K, Texit_GHP_nom_K, Tret_K, Tsup_K, m
     return el_GHP_Wh, q_load_NG_Boiler_Wh, qhot_missing_Wh, tsup2_K, q_from_GHP_Wh
 
 
-def calc_new_load(mdot_kgpers, TsupDH, Tret):
+def calc_new_load(mdot_kgpers, Tsup_K, Tret_K):
     """
     This function calculates the load distribution side of the district heating distribution.
     :param mdot_kgpers: mass flow
-    :param TsupDH: supply temeperature
-    :param Tret: return temperature
+    :param Tsup_K: supply temperature
+    :param Tret_K: return temperature
     :type mdot_kgpers: float
-    :type TsupDH: float
-    :type Tret: float
+    :type Tsup_K: float
+    :type Tret_K: float
     :return: Qload_W: load of the distribution
     :rtype: float
     """
-    Qload_W = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (TsupDH - Tret)
+    Qload_W = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (Tsup_K - Tret_K)
     if Qload_W < 0:
         Qload_W = 0
     return Qload_W
