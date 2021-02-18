@@ -170,7 +170,7 @@ def Storage_Design(T_storage_old_K, Q_in_storage_old_W, locator,
                                                        STORAGE_SIZE_m3,
                                                        master_to_slave_vars, P_HP_max_W, T_ground_K[HOUR])
 
-        ## Modify storage level according to temeprature
+        ## Modify storage level according to temperature
         if Q_in_storage_new_W < 0.0001:
             Q_in_storage_new_W = 0.0
 
