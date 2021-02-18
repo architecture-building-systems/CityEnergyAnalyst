@@ -116,7 +116,7 @@ def disconnected_heating_for_building(building_name, supply_systems, T_ground_K,
     heating_dispatch[0] = {'Q_Boiler_gen_directload_W': q_load_Wh,
                            'Boiler_Status': Boiler_Status,
                            'NG_Boiler_req_W': Qgas_to_Boiler_Wh,
-                           'E_hs_ww_req_W': np.zeros(8760)}
+                           'E_hs_ww_req_W': np.zeros(len(q_load_Wh))}
     ## 1: Boiler BG
     # add costs
     Opex_a_var_USD[1][4] += sum(prices.BG_PRICE * Qgas_to_Boiler_Wh)
@@ -126,7 +126,7 @@ def disconnected_heating_for_building(building_name, supply_systems, T_ground_K,
     heating_dispatch[1] = {'Q_Boiler_gen_directload_W': q_load_Wh,
                            'Boiler_Status': Boiler_Status,
                            'BG_Boiler_req_W': Qgas_to_Boiler_Wh,
-                           'E_hs_ww_req_W': np.zeros(8760)}
+                           'E_hs_ww_req_W': np.zeros(len(q_load_Wh))}
     ## 2: Fuel Cell
     (FC_Effel, FC_Effth) = np.vectorize(FC.calc_eta_FC)(q_load_Wh, Qnom_W, 1, "B")
     Qgas_to_FC_Wh = q_load_Wh / (FC_Effth + FC_Effel)  # FIXME: should be q_load_Wh/FC_Effth?
@@ -147,7 +147,7 @@ def disconnected_heating_for_building(building_name, supply_systems, T_ground_K,
                            'Fuelcell_Status': FC_Status,
                            'NG_FuelCell_req_W': Qgas_to_FC_Wh,
                            'E_Fuelcell_gen_export_W': el_from_FC_Wh,
-                           'E_hs_ww_req_W': np.zeros(8760)}
+                           'E_hs_ww_req_W': np.zeros(len(q_load_Wh))}
     # 3-13: Boiler NG + GHP
     for i in range(10):
         # set nominal size for Boiler and GHP
@@ -296,7 +296,6 @@ def disconnected_heating_for_building(building_name, supply_systems, T_ground_K,
         rank += 1
     # get the best option according to the ranking.
     Best[indexBest][0] = 1
-    print('best id', indexBest)
     # Save results in csv file
     performance_results = {
         "Nominal heating load": Qnom_W,
@@ -316,7 +315,7 @@ def disconnected_heating_for_building(building_name, supply_systems, T_ground_K,
     # save heating activation for the best supply system configuration
     best_activation_df = pd.DataFrame.from_dict(heating_dispatch[indexBest])
     heating_dispatch_columns = get_unique_keys_from_dicts(heating_dispatch)
-    heating_dispatch_df = pd.DataFrame(columns=heating_dispatch_columns, index=range(8760))
+    heating_dispatch_df = pd.DataFrame(columns=heating_dispatch_columns, index=range(len(best_activation_df)))
     heating_dispatch_df.update(best_activation_df)
     heating_dispatch_df.to_csv(
         locator.get_optimization_decentralized_folder_building_result_heating_activation(building_name), index=False)
