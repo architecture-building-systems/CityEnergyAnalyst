@@ -62,22 +62,26 @@ def dataframe_to_dbf(df, dbf_path, specs=None):
     return dbf_path
 
 
-def dbf_to_dataframe(dbf_path, index=None, cols=None, include_index=False):
-    dbf = pysal.lib.io.open(dbf_path)
-    if cols:
-        if include_index:
-            cols.append(index)
-        vars_to_read = cols
-    else:
-        vars_to_read = dbf.header
-    data = dict([(var, dbf.by_col(var)) for var in vars_to_read])
-    if index:
-        index = dbf.by_col(index)
-        dbf.close()
-        return pd.DataFrame(data, index=index)
-    else:
-        dbf.close()
-        return pd.DataFrame(data)
+def dbf_to_dataframe(dbf_path, index=None, cols=None, include_index=False, codec=None):
+    try:
+        dbf = pysal.lib.io.open(dbf_path)
+        if cols:
+            if include_index:
+                cols.append(index)
+            vars_to_read = cols
+        else:
+            vars_to_read = dbf.header
+        data = dict([(var, dbf.by_col(var)) for var in vars_to_read])
+        if index:
+            index = dbf.by_col(index)
+            dbf.close()
+            return pd.DataFrame(data, index=index)
+        else:
+            dbf.close()
+            return pd.DataFrame(data)
+    except:
+        import geopandas
+        return geopandas.read_file(dbf_path)
 
 
 def xls_to_dbf(input_file, output_path, output_file_name):
