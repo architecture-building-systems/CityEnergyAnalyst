@@ -27,6 +27,7 @@ from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.optimization.constants import (T_GENERATOR_FROM_FP_C, T_GENERATOR_FROM_ET_C,
                                         Q_LOSS_DISCONNECTED, ACH_TYPE_SINGLE, VCC_CODE_DECENTRALIZED)
 from cea.optimization.lca_calculations import LcaCalculations
+from cea.optimization.preprocessing.decentralized_buildings_heating import get_unique_keys_from_dicts
 from cea.technologies.thermal_network.thermal_network import calculate_ground_temperature
 from cea.technologies.supply_systems_database import SupplySystemsDatabase
 import cea.utilities.parallel
@@ -450,8 +451,12 @@ def disconnected_cooling_for_building(building_name, supply_systems, lca, locato
         locator.get_optimization_decentralized_folder_building_result_cooling(building_name), index=False)
     # save activation for the best supply system configuration
     best_activation_df = pd.DataFrame.from_dict(cooling_dispatch[indexBest])  #
-    best_activation_df.to_csv(
-        locator.get_optimization_decentralized_folder_building_result_cooling_activation(building_name), index=False)
+    cooling_dispatch_columns = get_unique_keys_from_dicts(cooling_dispatch)
+    cooling_dispatch_df = pd.DataFrame(columns=cooling_dispatch_columns, index=range(len(best_activation_df)))
+    cooling_dispatch_df.update(best_activation_df)
+    cooling_dispatch_df.to_csv(
+        locator.get_optimization_decentralized_folder_building_result_cooling_activation(building_name),
+        index=False, na_rep='nan')
 
 
 def calc_VCC_operation(T_chw_re_K, T_chw_sup_K, mdot_kgpers, VCC_chiller):

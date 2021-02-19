@@ -318,7 +318,8 @@ def disconnected_heating_for_building(building_name, supply_systems, T_ground_K,
     heating_dispatch_df = pd.DataFrame(columns=heating_dispatch_columns, index=range(len(best_activation_df)))
     heating_dispatch_df.update(best_activation_df)
     heating_dispatch_df.to_csv(
-        locator.get_optimization_decentralized_folder_building_result_heating_activation(building_name), index=False)
+        locator.get_optimization_decentralized_folder_building_result_heating_activation(building_name),
+        index=False, na_rep='nan')
 
 
 def get_unique_keys_from_dicts(heating_dispatch):
