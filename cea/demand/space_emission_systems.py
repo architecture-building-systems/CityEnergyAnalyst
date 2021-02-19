@@ -119,8 +119,8 @@ def calc_q_em_ls(q_em_out, delta_theta_int_inc, theta_int_inc, theta_e_comb, q_e
     """
     __author__ = "Gabriel Happle"
 
-    if abs(theta_int_inc-theta_e_comb) < 1e-6:
-        q_em_ls = 0.0  # prevent division by zero
+    if abs(theta_int_inc-theta_e_comb) < 0.5:
+        q_em_ls = 0.0  # prevent division by very small difference (less than 0.5C)
     else:
         q_em_ls = q_em_out * (delta_theta_int_inc / (theta_int_inc-theta_e_comb))
 
@@ -130,7 +130,7 @@ def calc_q_em_ls(q_em_out, delta_theta_int_inc, theta_int_inc, theta_e_comb, q_e
 
         if not np.sign(q_em_ls) == np.sign(q_em_out):
             q_em_ls = 0.0  # prevent form negative emission losses
-
+    print(q_em_ls, q_em_out, delta_theta_int_inc, theta_int_inc, theta_e_comb)
     return q_em_ls
 
 
