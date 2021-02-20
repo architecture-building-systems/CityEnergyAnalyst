@@ -202,8 +202,8 @@ def disconnected_heating_for_building(building_name, supply_systems, T_ground_K,
                                    'GHP_Status': GHP_Status,
                                    'BackupBoiler_Status': GHPbackupBoiler_Status,
                                    'Boiler_Status': Boiler_Status,
-                                   'NG_BackupBoiler_req_Wh': Qgas_to_GHPBoiler_Wh,
-                                   'NG_Boiler_req_Wh': Qgas_to_Boiler_Wh,
+                                   'NG_BackupBoiler_req_W': Qgas_to_GHPBoiler_Wh,
+                                   'NG_Boiler_req_W': Qgas_to_Boiler_Wh,
                                    'E_hs_ww_req_W': el_GHP_Wh}
     # Add all costs
     # 0: Boiler NG
