@@ -49,7 +49,12 @@ def read_schema(scenario, locator_method, args=None):
 
 
 def read_schema_details(abs_path, file_type, buildings):
-    """Read out the schema, based on the file_type"""
+    """
+    Returns schema as a dict, based on file_type
+
+    :return: schema of each file. E.g., schema = {columns : {Hs_ag: {...}, Hs_bg: {...}, ...}
+    :rtype: dict
+    """
     schema_readers = {
         "xls": get_xls_schema,
         "xlsx": get_xls_schema,
@@ -66,7 +71,7 @@ def read_schema_details(abs_path, file_type, buildings):
 
 
 def read_file_type(abs_path):
-    # remove "." at the beginning of extension
+    # removes "." at the beginning of extension
     _, ext = os.path.splitext(abs_path)
     if ext.startswith("."):
         ext = ext[1:]
@@ -74,7 +79,7 @@ def read_file_type(abs_path):
 
 
 def read_path(args, locator_method, scenario):
-    """Return the path, as returned by the locator method"""
+    """Returns the path, as returned by the locator method"""
     locator = cea.inputlocator.InputLocator(scenario=scenario)
     method = getattr(locator, locator_method)
     path = method(**args)
@@ -83,7 +88,7 @@ def read_path(args, locator_method, scenario):
 
 def read_file_path(abs_path, scenario, args):
     """
-    returns the path relative to scenario, with arguments replaced. This assumes that the values in args
+    Returns the path relative to scenario, with arguments replaced. This assumes that the values in args
     were substituted. this ends up in the "file_path" key in the schema
     """
     file_path = os.path.relpath(abs_path, scenario)
@@ -102,9 +107,8 @@ def get_csv_schema(filename, buildings):
     schema = {"columns": {}}
     for column_name in df.columns:
         column_name = replace_repetitive_column_names(column_name, buildings)
-        column_name = column_name.encode('ascii', 'ignore')
         schema["columns"][column_name] = get_column_schema(df[column_name])
-    return extract_df_schema(df, buildings)
+    return schema
 
 
 def replace_repetitive_column_names(column_name, buildings):
@@ -125,12 +129,19 @@ def replace_repetitive_column_names(column_name, buildings):
 
 
 def get_json_schema(filename, buildings):
-    with open(filename, 'r') as f:
-        df = json.load(f)
     schema = {}
-    for column_name in df.columns:
-        column_name = replace_repetitive_column_names(column_name, buildings)
-        schema[column_name.encode('ascii', 'ignore')] = get_column_schema(df[column_name])
+    with open(filename, 'r') as f:
+        json_file = json.load(f)
+        try:
+            df = pd.DataFrame(json_file)
+            for column_name in df.columns:
+                column_name = replace_repetitive_column_names(column_name, buildings)
+                schema[column_name.encode('ascii', 'ignore')] = get_column_schema(df[column_name])
+        except:
+            # in case json file has an odd shape, get a simplified schema
+            for key in json_file.keys():
+                print(type(json_file[key]).__name__)
+                schema[key] = {'type': type(json_file[key]).__name__}
     return schema
 
 
@@ -159,7 +170,7 @@ def get_epw_schema(filename, _):
     db = pd.read_csv(filename, skiprows=8, header=None, names=epw_labels)
     schema = {}
     for attr in db:
-        schema[attr.encode('ascii', 'ignore')] = get_column_schema(db[attr])
+        schema[attr] = get_column_schema(db[attr])
     return schema
 
 
@@ -175,7 +186,7 @@ def extract_df_schema(df, scenario):
         meta = get_column_schema(df[attr])
         if attr == 'geometry':
             meta['sample_data'] = '((x1 y1, x2 y2, ...))'
-        schema["columns"][attr.encode('ascii', 'ignore')] = meta
+        schema["columns"][attr] = meta
     return schema
 
 
@@ -203,8 +214,8 @@ def get_xls_schema(filename, _):
             # select only non-nan columns
             sheet_df = sheet_df[new_columns]
         for column_name in sheet_df.columns:
-            sheet_schema["columns"][column_name.encode('ascii', 'ignore')] = get_column_schema(sheet_df[column_name])
-        schema[sheet.encode('ascii', 'ignore')] = sheet_schema
+            sheet_schema["columns"][column_name] = get_column_schema(sheet_df[column_name])
+        schema[sheet] = sheet_schema
     return schema
 
 
@@ -222,6 +233,13 @@ def get_html_schema(_, __):
 
 
 def get_column_schema(df_series):
+    """
+    Returns schema of each column as a dict
+
+    :return: schema of each column. E.g., column_schema = {pandas: {desc: ... , kind: f, type: float64},
+    sample_data: 0.16, type: float, types_found: [float, ...]}
+    :rtype: dict
+    """
     types_found = set()
     column_schema = {}
     for value in df_series:
@@ -230,7 +248,7 @@ def get_column_schema(df_series):
             if is_date(value):
                 types_found.add('date')
             elif isinstance(value, str):
-                column_schema['sample_data'] = value.encode('ascii', 'ignore')
+                # column_schema['sample_data'] = value.encode('ascii', 'ignore') # TOOD: remove if not use
                 types_found.add('string')
             else:
                 types_found.add(type(value).__name__)
@@ -251,7 +269,7 @@ def get_column_schema(df_series):
 
 
 def lookup_column_type(df_series):
-    kind_map = {"f": "float", "i": "int", "s": "string", "O": "object"}
+    kind_map = {"f": "float", "i": "int", "s": "string", "O": "object", "b": "boolean"}
     column_type = kind_map[df_series.dtype.kind]
     if column_type == "object":
         column_type = type(df_series.values[0]).__name__
@@ -273,7 +291,7 @@ def main(config):
     """
     Read the schema entry for a locator method, compare it to the current entry and print out a new, updated version.
     """
-    print(yaml.safe_dump(read_schema(config.scenario, schemas.schemas.locator_method, schemas.schemas.args), default_flow_style=False))
+    print(yaml.safe_dump(read_schema(config.scenario, config.schemas.locator_method, config.schemas.args), default_flow_style=False))
 
 
 if __name__ == '__main__':
