@@ -310,7 +310,7 @@ class InputLocator(object):
         return self._ensure_folder(self.get_optimization_results_folder(), "decentralized")
 
     def get_optimization_checkpoint(self, generation):
-        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        """scenario/outputs/data/optimization/master/..."""
         return os.path.join(self.get_optimization_master_results_folder(),
                             'CheckPoint_' + str(generation)+".json")
 
