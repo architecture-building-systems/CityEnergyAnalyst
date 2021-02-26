@@ -314,6 +314,9 @@ def clean_geometries(gdf):
         from shapely.ops import unary_union
         if geometry.type == 'Polygon':  # ignore Polygons
             return geometry
+        elif geometry.type == 'Point':
+            print('Discarding geometry of type: Point')
+            return None # discard geometry if it is a Point
         else:
             joined = unary_union(list(geometry))
             if joined.type == 'MultiPolygon':  # some Multipolygons could not be combined
