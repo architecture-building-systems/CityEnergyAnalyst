@@ -5488,6 +5488,7 @@ get_database_standard_schedules_use:
           min: 0.0
           type: float
         DAY:
+          description: Day of the week (weekday, saturday, or sunday)
           choice:
             values:
             - WEEKDAY
@@ -5666,6 +5667,7 @@ get_database_standard_schedules_use:
             - SETPOINT
           type: string
         DAY:
+          description: Day of the week (weekday, saturday, or sunday)
           choice:
             values:
             - WEEKDAY
@@ -5796,6 +5798,7 @@ get_database_standard_schedules_use:
           min: 0
           type: int
         DAY:
+          description: Day of the week (weekday, saturday, or sunday)
           choice:
             values:
             - WEEKDAY
@@ -5974,6 +5977,7 @@ get_database_standard_schedules_use:
             - SETPOINT
           type: string
         DAY:
+          description: Day of the week (weekday, saturday, or sunday)
           choice:
             values:
             - WEEKDAY
@@ -6080,6 +6084,7 @@ get_database_standard_schedules_use:
           min: 0.0
           type: float
         DAY:
+          description: Day of the week (weekday, saturday, or sunday)
           choice:
             values:
             - WEEKDAY
@@ -6240,6 +6245,7 @@ get_database_standard_schedules_use:
           min: 0.0
           type: float
         DAY:
+          description: Day of the week (weekday, saturday, or sunday)
           choice:
             values:
             - WEEKDAY
@@ -6346,6 +6352,7 @@ get_database_standard_schedules_use:
           min: 0.0
           type: float
         DAY:
+          description: Day of the week (weekday, saturday, or sunday)
           choice:
             values:
             - WEEKDAY
@@ -6452,6 +6459,7 @@ get_database_standard_schedules_use:
           min: 0.0
           type: float
         DAY:
+          description: Day of the week (weekday, saturday, or sunday)
           choice:
             values:
             - WEEKDAY
@@ -6558,6 +6566,7 @@ get_database_standard_schedules_use:
           min: 0.0
           type: float
         DAY:
+          description: Day of the week (weekday, saturday, or sunday)
           choice:
             values:
             - WEEKDAY
@@ -6650,7 +6659,7 @@ get_database_supply_assemblies:
             - BUILDING
             - DISTRICT
             - CITY
-          description: whether the all in one system is used at the building, or the
+          description: whether the all in one system is used at the building or the
             district scale
           type: string
           unit: 'NA'
@@ -6732,7 +6741,7 @@ get_database_supply_assemblies:
             - BUILDING
             - DISTRICT
             - CITY
-          description: whether the all in one system is used at the building, or the
+          description: whether the all in one system is used at the building or the
             district scale
           type: string
           unit: 'NA'
@@ -6814,7 +6823,7 @@ get_database_supply_assemblies:
             - BUILDING
             - DISTRICT
             - CITY
-          description: whether the all in one system is used at the building, or the
+          description: whether the all in one system is used at the building or the
             district scale
           type: string
           unit: 'NA'
@@ -6896,7 +6905,7 @@ get_database_supply_assemblies:
             - BUILDING
             - DISTRICT
             - CITY
-          description: whether the all in one system is used at the building, or the
+          description: whether the all in one system is used at the building or the
             district scale
           type: string
           unit: 'NA'
