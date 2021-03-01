@@ -1047,7 +1047,7 @@ The following file is used by these scripts: ``archetypes_mapper``
     ``22``, 
     ``23``, 
     ``24``, 
-    ``DAY``, 
+    ``DAY``, Day of the week (weekday, saturday, or sunday)
     
 
 
@@ -1079,7 +1079,7 @@ The following file is used by these scripts: ``archetypes_mapper``
     ``22``, 
     ``23``, 
     ``24``, 
-    ``DAY``, 
+    ``DAY``, Day of the week (weekday, saturday, or sunday)
     
 
 
@@ -1111,7 +1111,7 @@ The following file is used by these scripts: ``archetypes_mapper``
     ``22``, Average number of electric vehicles in this hour
     ``23``, Average number of electric vehicles in this hour
     ``24``, Average number of electric vehicles in this hour
-    ``DAY``, 
+    ``DAY``, Day of the week (weekday, saturday, or sunday)
     
 
 
@@ -1143,7 +1143,7 @@ The following file is used by these scripts: ``archetypes_mapper``
     ``22``, 
     ``23``, 
     ``24``, 
-    ``DAY``, 
+    ``DAY``, Day of the week (weekday, saturday, or sunday)
     
 
 
@@ -1175,7 +1175,7 @@ The following file is used by these scripts: ``archetypes_mapper``
     ``22``, 
     ``23``, 
     ``24``, 
-    ``DAY``, 
+    ``DAY``, Day of the week (weekday, saturday, or sunday)
     
 
 
@@ -1234,7 +1234,7 @@ The following file is used by these scripts: ``archetypes_mapper``
     ``22``, 
     ``23``, 
     ``24``, 
-    ``DAY``, 
+    ``DAY``, Day of the week (weekday, saturday, or sunday)
     
 
 
@@ -1266,7 +1266,7 @@ The following file is used by these scripts: ``archetypes_mapper``
     ``22``, 
     ``23``, 
     ``24``, 
-    ``DAY``, 
+    ``DAY``, Day of the week (weekday, saturday, or sunday)
     
 
 
@@ -1298,7 +1298,7 @@ The following file is used by these scripts: ``archetypes_mapper``
     ``22``, 
     ``23``, 
     ``24``, 
-    ``DAY``, 
+    ``DAY``, Day of the week (weekday, saturday, or sunday)
     
 
 
@@ -1330,7 +1330,7 @@ The following file is used by these scripts: ``archetypes_mapper``
     ``22``, 
     ``23``, 
     ``24``, 
-    ``DAY``, 
+    ``DAY``, Day of the week (weekday, saturday, or sunday)
     
 
 
@@ -1358,7 +1358,7 @@ The following file is used by these scripts: ``demand``, ``emissions``, ``system
     ``LT_yr``, lifetime of assembly
     ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
     ``reference``, reference
-    ``scale``, whether the all in one system is used at the building, or the district scale
+    ``scale``, whether the all in one system is used at the building or the district scale
     
 
 
@@ -1375,7 +1375,7 @@ The following file is used by these scripts: ``demand``, ``emissions``, ``system
     ``LT_yr``, lifetime of assembly
     ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
     ``reference``, Reference of the data
-    ``scale``, whether the all in one system is used at the building, or the district scale
+    ``scale``, whether the all in one system is used at the building or the district scale
     
 
 
@@ -1392,7 +1392,7 @@ The following file is used by these scripts: ``demand``, ``emissions``, ``system
     ``LT_yr``, lifetime of assembly
     ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
     ``reference``, Reference of the data
-    ``scale``, whether the all in one system is used at the building, or the district scale
+    ``scale``, whether the all in one system is used at the building or the district scale
     
 
 
@@ -1409,7 +1409,7 @@ The following file is used by these scripts: ``demand``, ``emissions``, ``system
     ``LT_yr``, lifetime of assembly
     ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
     ``reference``, Reference of the data
-    ``scale``, whether the all in one system is used at the building, or the district scale
+    ``scale``, whether the all in one system is used at the building or the district scale
     
 
 
