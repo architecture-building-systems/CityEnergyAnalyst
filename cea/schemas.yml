@@ -5488,6 +5488,7 @@ get_database_standard_schedules_use:
           min: 0.0
           type: float
         DAY:
+          description: Day of the week (weekday, saturday, or sunday)
           choice:
             values:
             - WEEKDAY
@@ -5666,6 +5667,7 @@ get_database_standard_schedules_use:
             - SETPOINT
           type: string
         DAY:
+          description: Day of the week (weekday, saturday, or sunday)
           choice:
             values:
             - WEEKDAY
@@ -5796,6 +5798,7 @@ get_database_standard_schedules_use:
           min: 0
           type: int
         DAY:
+          description: Day of the week (weekday, saturday, or sunday)
           choice:
             values:
             - WEEKDAY
@@ -5974,6 +5977,7 @@ get_database_standard_schedules_use:
             - SETPOINT
           type: string
         DAY:
+          description: Day of the week (weekday, saturday, or sunday)
           choice:
             values:
             - WEEKDAY
@@ -6080,6 +6084,7 @@ get_database_standard_schedules_use:
           min: 0.0
           type: float
         DAY:
+          description: Day of the week (weekday, saturday, or sunday)
           choice:
             values:
             - WEEKDAY
@@ -6240,6 +6245,7 @@ get_database_standard_schedules_use:
           min: 0.0
           type: float
         DAY:
+          description: Day of the week (weekday, saturday, or sunday)
           choice:
             values:
             - WEEKDAY
@@ -6346,6 +6352,7 @@ get_database_standard_schedules_use:
           min: 0.0
           type: float
         DAY:
+          description: Day of the week (weekday, saturday, or sunday)
           choice:
             values:
             - WEEKDAY
@@ -6452,6 +6459,7 @@ get_database_standard_schedules_use:
           min: 0.0
           type: float
         DAY:
+          description: Day of the week (weekday, saturday, or sunday)
           choice:
             values:
             - WEEKDAY
@@ -6558,6 +6566,7 @@ get_database_standard_schedules_use:
           min: 0.0
           type: float
         DAY:
+          description: Day of the week (weekday, saturday, or sunday)
           choice:
             values:
             - WEEKDAY
@@ -6650,7 +6659,7 @@ get_database_supply_assemblies:
             - BUILDING
             - DISTRICT
             - CITY
-          description: whether the all in one system is used at the building, or the
+          description: whether the all in one system is used at the building or the
             district scale
           type: string
           unit: 'NA'
@@ -6732,7 +6741,7 @@ get_database_supply_assemblies:
             - BUILDING
             - DISTRICT
             - CITY
-          description: whether the all in one system is used at the building, or the
+          description: whether the all in one system is used at the building or the
             district scale
           type: string
           unit: 'NA'
@@ -6814,7 +6823,7 @@ get_database_supply_assemblies:
             - BUILDING
             - DISTRICT
             - CITY
-          description: whether the all in one system is used at the building, or the
+          description: whether the all in one system is used at the building or the
             district scale
           type: string
           unit: 'NA'
@@ -6896,7 +6905,7 @@ get_database_supply_assemblies:
             - BUILDING
             - DISTRICT
             - CITY
-          description: whether the all in one system is used at the building, or the
+          description: whether the all in one system is used at the building or the
             district scale
           type: string
           unit: 'NA'
@@ -9168,7 +9177,7 @@ get_optimization_district_scale_heating_capacity:
         values: '{0.0...n}'
         min: 0.0
   used_by: []
-get_optimization_decentralized_folder_building_cooling_activation:
+get_optimization_decentralized_folder_building_result_cooling_activation:
   created_by:
   - decentralized
   file_path: outputs/data/optimization/decentralized/{building}_{configuration}_cooling_activation.csv
@@ -9176,7 +9185,7 @@ get_optimization_decentralized_folder_building_cooling_activation:
   schema:
     columns:
       E_DX_AS_req_W:
-        description: Electricity requirements of Air-Source direct expansion chiller
+        description: Electricity requirements of Air-Source direct expansion chillers
         type: float
         unit: '[Wh]'
         values: '{0.0...n}'
@@ -9188,8 +9197,87 @@ get_optimization_decentralized_folder_building_cooling_activation:
         unit: '[Wh]'
         values: '{0.0...n}'
         min: 0.0
+      E_BaseVCC_AS_req_W:
+        description: Electricity requirements of Vapor Compression Chillers
+          and refrigeration
+        type: float
+        unit: '[Wh]'
+        values: '{0.0...n}'
+        min: 0.0
+      E_CT_req_W:
+        description: Electricity requirements of Cooling Towers
+        type: float
+        unit: '[Wh]'
+        values: '{0.0...n}'
+        min: 0.0
+      E_ACH_req_W:
+        description: Electricity requirements of Absorption Chillers
+        type: float
+        unit: '[Wh]'
+        values: '{0.0...n}'
+        min: 0.0
+      E_SC_FP_req_W:
+        description: Electricity requirements of Solar Collectors (flat-plate)
+        type: float
+        unit: '[Wh]'
+        values: '{0.0...n}'
+        min: 0.0
+      E_SC_ET_req_W:
+        description: Electricity requirements of Solar Collectors (evacuated-tubes)
+        type: float
+        unit: '[Wh]'
+        values: '{0.0...n}'
+        min: 0.0
       Q_DX_AS_gen_directload_W:
-        description: Thermal energy generated by Air-Source direct expansion chiller
+        description: Thermal energy generated by Air-Source direct expansion chillers
+        type: float
+        unit: '[Wh]'
+        values: '{0.0...n}'
+        min: 0.0
+      Q_BaseVCC_AS_gen_directload_W:
+        description: Thermal energy generated by Air-Source Vapor-compression chillers
+        type: float
+        unit: '[Wh]'
+        values: '{0.0...n}'
+        min: 0.0
+      Q_ACH_gen_directload_W:
+        description: Thermal energy generated by Absorption chillers
+        type: float
+        unit: '[Wh]'
+        values: '{0.0...n}'
+        min: 0.0
+      Q_Boiler_NG_ACH_W:
+        description: Thermal energy generated by Natural gas Boilers to Absorption chillers
+        type: float
+        unit: '[Wh]'
+        values: '{0.0...n}'
+        min: 0.0
+      Q_SC_FP_ACH_W:
+        description: Thermal energy generated by Solar Collectors (flat-plate) to Absorption chillers
+        type: float
+        unit: '[Wh]'
+        values: '{0.0...n}'
+        min: 0.0
+      Q_Burner_NG_ACH_W:
+        description: Thermal energy generated by Natural gas Burners to Absorption chillers
+        type: float
+        unit: '[Wh]'
+        values: '{0.0...n}'
+        min: 0.0
+      Q_SC_ET_ACH_W:
+        description: Thermal energy generated by Solar Collectors (evacuated-tubes) to Absorption chillers
+        type: float
+        unit: '[Wh]'
+        values: '{0.0...n}'
+        min: 0.0
+      NG_Burner_req:
+        description: Requirements of Natural Gas for Burners
+        type: float
+        unit: '[Wh]'
+        values: '{0.0...n}'
+        min: 0.0
+      NG_Boiler_req:
+        description: Requirements of Natural Gas for Boilers
         type: float
         unit: '[Wh]'
         values: '{0.0...n}'
@@ -9390,8 +9478,7 @@ get_optimization_decentralized_folder_building_result_heating_activation:
         min: 0
         max: 1
       E_hs_ww_req_W:
-        description: Electricity Requirements for hot water and space heating (if
-          required)
+        description: Electricity Requirements for heat pump compressor and auxiliary uses (if required)
         type: float
         unit: '[Wh]'
         values: '{0.0...n}'
@@ -9403,14 +9490,33 @@ get_optimization_decentralized_folder_building_result_heating_activation:
         values: '{0...1}'
         min: 0
         max: 1
-      NG_BackupBoiler_req_Wh:
+      Fuelcell_Status:
+        description: Status of the fuel cell (1=on, 0 =off)
+        type: int
+        unit: '[-]'
+        values: '{0...1}'
+        min: 0
+        max: 1
+      NG_BackupBoiler_req_W:
         description: Requirements of Natural Gas for Back-up Boiler
         type: float
         unit: '[Wh]'
         values: '{0.0...n}'
         min: 0.0
-      NG_Boiler_req_Wh:
+      NG_Boiler_req_W:
         description: Requirements of Natural Gas for Base load Boiler
+        type: float
+        unit: '[Wh]'
+        values: '{0.0...n}'
+        min: 0.0
+      BG_Boiler_req_W:
+        description: Requirements of Bio-gas for Base load Boiler
+        type: float
+        unit: '[Wh]'
+        values: '{0.0...n}'
+        min: 0.0
+      NG_FuelCell_req_W:
+        description: Requirements of Natural Gas for fuel cell
         type: float
         unit: '[Wh]'
         values: '{0.0...n}'
@@ -9429,6 +9535,18 @@ get_optimization_decentralized_folder_building_result_heating_activation:
         min: 0.0
       Q_GHP_gen_directload_W:
         description: Thermal generation of ground-source heat pump to direct load
+        type: float
+        unit: '[Wh]'
+        values: '{0.0...n}'
+        min: 0.0
+      Q_Fuelcell_gen_directload_W:
+        description: Thermal generation of fuel cell to direct load
+        type: float
+        unit: '[Wh]'
+        values: '{0.0...n}'
+        min: 0.0
+      E_Fuelcell_gen_export_W:
+        description: Electricity generation of fuel cell exported to the grid
         type: float
         unit: '[Wh]'
         values: '{0.0...n}'
