@@ -146,7 +146,7 @@ def meta_to_yaml(config, trace_data, meta_output_file):
     methods = sorted(set([lm[2] for lm in trace_data]))
     if os.path.exists(meta_output_file):
         with open(meta_output_file, 'r') as f:
-            old_meta_data = yaml.safe_load(f)
+            old_meta_data = yaml.load(f, Loader=yaml.BaseLoader)
         for method in old_meta_data:
             if method in methods:
                 new_outputs = set(locator_meta[method]['created_by'])
