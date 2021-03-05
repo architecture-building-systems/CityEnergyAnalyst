@@ -11970,7 +11970,7 @@ get_optimization_substations_total_file:
         values: '{0.0...n}'
         min: 0.0
       GRID_MWhyr:
-        description: Grid electricity consumption, GRID = GRID_a + GRID_l + GRID_v + GRID_ve + GRID_data + GRID_pro + GRID_aux + GRID_ww + GRID_cs + GRID_hs + GRID_cdata + GRID_cre
+        description: 'Grid electricity consumption, GRID = GRID_a + GRID_l + GRID_v + GRID_ve + GRID_data + GRID_pro + GRID_aux + GRID_ww + GRID_cs + GRID_hs + GRID_cdata + GRID_cre'
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
@@ -12191,7 +12191,7 @@ get_optimization_substations_total_file:
         values: '{0.0...n}'
         min: 0.0
       QC_sys_MWhyr:
-        description: Total system cooling demand, QC_sys = Qcs_sys + Qcdata_sys + Qcre_sys + Qcpro_sys
+        description: 'Total system cooling demand, QC_sys = Qcs_sys + Qcdata_sys + Qcre_sys + Qcpro_sys'
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
@@ -12395,7 +12395,7 @@ get_optimization_substations_total_file:
         values: '{0.0...n}'
         min: 0.0
       Qcs_sys_MWhyr:
-        description: End-use space cooling demand, Qcs_sys = Qcs_sen_sys + Qcs_lat_sys + Qcs_em_ls + Qcs_dis_ls
+        description: 'End-use space cooling demand, Qcs_sys = Qcs_sen_sys + Qcs_lat_sys + Qcs_em_ls + Qcs_dis_ls'
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
@@ -12575,7 +12575,7 @@ get_optimization_substations_total_file:
         values: '{0.0...n}'
         min: 0.0
       Qhs_sys_MWhyr:
-        description: End-use space heating demand, Qhs_sys = Qhs_sen_sys + Qhs_em_ls + Qhs_dis_ls
+        description: 'End-use space heating demand, Qhs_sys = Qhs_sen_sys + Qhs_em_ls + Qhs_dis_ls'
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
@@ -13487,7 +13487,7 @@ get_total_demand:
         values: '{0.0...n}'
         min: 0.0
       DC_cs_MWhyr:
-        description: Energy consumption of space cooling system (if supplied by District Cooling), DC_cs = Qcs_sys / eff_cs
+        description: 'Energy consumption of space cooling system (if supplied by District Cooling), DC_cs = Qcs_sys / eff_cs'
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
@@ -13548,7 +13548,7 @@ get_total_demand:
         values: '{0.0...n}'
         min: 0.0
       E_cs_MWhyr:
-        description: Energy consumption of cooling system (if supplied by electricity grid), E_cs = Qcs_sys / eff_cs
+        description: 'Energy consumption of cooling system (if supplied by electricity grid), E_cs = Qcs_sys / eff_cs'
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
@@ -13572,7 +13572,7 @@ get_total_demand:
         values: '{0.0...n}'
         min: 0.0
       E_sys_MWhyr:
-        description: End-use total electricity consumption, E_sys =  Eve + Ea + El + Edata + Epro + Eaux + Ev
+        description: 'End-use total electricity consumption, E_sys =  Eve + Ea + El + Edata + Epro + Eaux + Ev'
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
@@ -13608,7 +13608,7 @@ get_total_demand:
         values: '{0.0...n}'
         min: 0.0
       Eal_MWhyr:
-        description: End-use electricity consumption of appliances and lighting, Eal = El_W + Ea_W
+        description: 'End-use electricity consumption of appliances and lighting, Eal = El_W + Ea_W'
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
@@ -13620,7 +13620,7 @@ get_total_demand:
         values: '{0.0...n}'
         min: 0.0
       Eaux_MWhyr:
-        description: End-use auxiliary electricity consumption, Eaux = Eaux_fw + Eaux_ww + Eaux_cs + Eaux_hs + Ehs_lat_aux
+        description: 'End-use auxiliary electricity consumption, Eaux = Eaux_fw + Eaux_ww + Eaux_cs + Eaux_hs + Ehs_lat_aux'
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
@@ -13698,7 +13698,7 @@ get_total_demand:
         values: '{0.0...n}'
         min: 0.0
       GRID_MWhyr:
-        description: Grid electricity consumption, GRID_a + GRID_l + GRID_v + GRID_ve + GRID_data + GRID_pro + GRID_aux + GRID_ww + GRID_cs + GRID_hs + GRID_cdata + GRID_cre
+        description: 'Grid electricity consumption, GRID_a + GRID_l + GRID_v + GRID_ve + GRID_data + GRID_pro + GRID_aux + GRID_ww + GRID_cs + GRID_hs + GRID_cdata + GRID_cre'
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
@@ -13919,7 +13919,7 @@ get_total_demand:
         values: '{0.0...n}'
         min: 0.0
       QC_sys_MWhyr:
-        description: Total energy demand for cooling, QC_sys = Qcs_sys + Qcdata_sys + Qcre_sys + Qcpro_sys
+        description: 'Total energy demand for cooling, QC_sys = Qcs_sys + Qcdata_sys + Qcre_sys + Qcpro_sys'
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
@@ -14123,7 +14123,7 @@ get_total_demand:
         values: '{0.0...n}'
         min: 0.0
       Qcs_sys_MWhyr:
-        description: End-use space cooling demand, Qcs_sys = Qcs_sen_sys + Qcs_lat_sys + Qcs_em_ls + Qcs_dis_ls
+        description: 'End-use space cooling demand, Qcs_sys = Qcs_sen_sys + Qcs_lat_sys + Qcs_em_ls + Qcs_dis_ls'
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
@@ -14303,7 +14303,7 @@ get_total_demand:
         values: '{0.0...n}'
         min: 0.0
       Qhs_sys_MWhyr:
-        description: End-use space heating demand, Qhs_sys = Qhs_sen_sys + Qhs_em_ls + Qhs_dis_ls
+        description: 'End-use space heating demand, Qhs_sys = Qhs_sen_sys + Qhs_em_ls + Qhs_dis_ls'
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
