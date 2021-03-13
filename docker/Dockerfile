@@ -31,6 +31,12 @@ ENTRYPOINT conda activate cea
 # so can use in an image without conda installed
 FROM base as cea-build
 
+# Install latest CEA from Github
+RUN apt-get update \
+    && apt-get install -y git \
+    && source /venv/bin/activate \
+    && pip install --no-deps git+https://github.com/architecture-building-systems/CityEnergyAnalyst@master#egg=cityenergyanalyst
+    
 # conda-pack the environment (with cea pre-installed)
 RUN conda install -c conda-forge conda-pack
 RUN conda-pack -n cea -o /tmp/env.tar \
@@ -60,12 +66,6 @@ RUN mkdir /projects
 # executing commands with /bin/bash -c
 ENV BASH_ENV /root/.bashrc
 SHELL ["/bin/bash", "-c"]
-
-# Install latest CEA from Github
-RUN apt-get update \
-    && apt-get install -y git \
-    && source /venv/bin/activate \
-    && pip install --no-deps git+https://github.com/architecture-building-systems/CityEnergyAnalyst@master#egg=cityenergyanalyst
 
 # When image is run, run the code with the environment
 # activated:
