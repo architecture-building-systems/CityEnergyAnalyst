@@ -22,10 +22,13 @@ FROM base AS cea-dev
 RUN find /opt/conda/ -follow -type f -name '*.a' -delete \
     && find /opt/conda/ -follow -type f -name '*.pyc' -delete
 
-# When image is run, activate the environment
 ENV PATH "/Daysim/bin:$PATH"
+
+# When image is run, activate the environment
+RUN echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc && \
+    echo "conda activate cea" >> ~/.bashrc
 SHELL ["/bin/bash", "-c"]
-ENTRYPOINT conda activate cea
+CMD ["/bin/bash"] 
 
 # The build-stage image; package conda env
 # so can use in an image without conda installed
@@ -34,9 +37,8 @@ FROM base as cea-build
 # Install latest CEA from Github
 RUN apt-get update \
     && apt-get install -y git \
-    && source /venv/bin/activate \
     && pip install --no-deps git+https://github.com/architecture-building-systems/CityEnergyAnalyst@master#egg=cityenergyanalyst
-    
+
 # conda-pack the environment (with cea pre-installed)
 RUN conda install -c conda-forge conda-pack
 RUN conda-pack -n cea -o /tmp/env.tar \
@@ -44,6 +46,7 @@ RUN conda-pack -n cea -o /tmp/env.tar \
     && cd /venv \
     && tar xf /tmp/env.tar \
     && rm /tmp/env.tar
+
 RUN /venv/bin/conda-unpack
 
 # The runtime-stage image; we can use Debian as the
@@ -57,17 +60,13 @@ COPY ./Daysim /Daysim
 COPY ./cea.config /root/cea.config
 
 # Add venv & Daysim to Path
-ENV PATH "/venv/cea/bin:/Daysim/bin:$PATH"
+ENV PATH "/venv/bin:/Daysim/bin:$PATH"
 
 # add a folder for projects
 RUN mkdir /projects
 
-# Use bash in Dockerfile RUN commands and make sure bashrc is sourced when
-# executing commands with /bin/bash -c
-ENV BASH_ENV /root/.bashrc
-SHELL ["/bin/bash", "-c"]
-
 # When image is run, run the code with the environment
 # activated:
+SHELL ["/bin/bash", "-c"]
 ENTRYPOINT source /venv/bin/activate \
     && cea dashboard
