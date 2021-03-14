@@ -6,6 +6,14 @@ cea.tests package
    :undoc-members:
    :show-inheritance:
 
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   cea.tests.datamanagement
+
 Submodules
 ----------
 
