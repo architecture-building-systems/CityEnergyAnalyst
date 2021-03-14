@@ -2,8 +2,8 @@
 
 
 import utm
-import gdal
-import osr
+from osgeo import gdal
+from osgeo import osr
 import geopandas
 
 __author__ = "Jimeno A. Fonseca"

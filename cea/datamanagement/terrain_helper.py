@@ -8,7 +8,7 @@ https://www2.jpl.nasa.gov/srtm/
 
 import os
 
-import gdal
+from osgeo import gdal
 import numpy as np
 import pandas as pd
 import requests
