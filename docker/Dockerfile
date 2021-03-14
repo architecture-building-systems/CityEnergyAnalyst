@@ -1,6 +1,6 @@
 FROM continuumio/miniconda3:4.9.2 as base
 
-COPY ./environment.yml /tmp/environment.yml
+COPY ./docker/environment.yml /tmp/environment.yml
 
 # replace conda with C++ reimplementation mamba for faster builds
 RUN conda install mamba -n base -c conda-forge
@@ -27,17 +27,11 @@ ENV PATH "/Daysim/bin:$PATH"
 # When image is run, activate the environment
 RUN echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc && \
     echo "conda activate cea" >> ~/.bashrc
-SHELL ["/bin/bash", "-c"]
 CMD ["/bin/bash"] 
 
 # The build-stage image; package conda env
 # so can use in an image without conda installed
 FROM base as cea-build
-
-# Install latest CEA from Github
-RUN apt-get update \
-    && apt-get install -y git \
-    && pip install --no-deps git+https://github.com/architecture-building-systems/CityEnergyAnalyst@master#egg=cityenergyanalyst
 
 # conda-pack the environment (with cea pre-installed)
 RUN conda install -c conda-forge conda-pack
@@ -46,7 +40,6 @@ RUN conda-pack -n cea -o /tmp/env.tar \
     && cd /venv \
     && tar xf /tmp/env.tar \
     && rm /tmp/env.tar
-
 RUN /venv/bin/conda-unpack
 
 # The runtime-stage image; we can use Debian as the
@@ -56,17 +49,23 @@ FROM debian:buster AS cea-runtime
 
 COPY --from=base /root/.config/matplotlib /root/.config/matplotlib
 COPY --from=cea-build /venv /venv
-COPY ./Daysim /Daysim
-COPY ./cea.config /root/cea.config
+COPY ./docker/Daysim /Daysim
+COPY ./docker/cea.config /root/cea.config
 
 # Add venv & Daysim to Path
 ENV PATH "/venv/bin:/Daysim/bin:$PATH"
 
-# add a folder for projects
-RUN mkdir /projects
+# Activate cea venv during when launch bash shell
+RUN echo "source /venv/bin/activate" >> ~/.bashrc
+
+# Install latest CEA from cloned repo
+COPY cea/ /CityEnergyAnalyst/cea/
+COPY setup.py README.rst /CityEnergyAnalyst/
+WORKDIR /CityEnergyAnalyst/
+SHELL ["/bin/bash", "-c"]
+RUN pip install -e .
 
 # When image is run, run the code with the environment
 # activated:
 SHELL ["/bin/bash", "-c"]
-ENTRYPOINT source /venv/bin/activate \
-    && cea dashboard
+ENTRYPOINT cea dashboard
