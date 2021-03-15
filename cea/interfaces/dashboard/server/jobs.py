@@ -100,9 +100,8 @@ class NewJob(Resource):
 
 @api.route("/list")
 class ListJobs(Resource):
-    @api.marshal_with(job_info_model, as_list=True)
     def get(self):
-        return jobs.values()
+        return list(jobs.values())
 
 
 @api.route("/started/<int:jobid>")
@@ -143,7 +142,6 @@ class JobError(Resource):
 
 @api.route('/start/<int:jobid>')
 class JobStart(Resource):
-    @api.marshal_with(job_info_model)
     def post(self, jobid):
         """Start a ``cea-worker`` subprocess for the script. (FUTURE: add support for cloud-based workers"""
         print("tools/route_start: {jobid}".format(**locals()))
