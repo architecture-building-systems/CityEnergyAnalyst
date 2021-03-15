@@ -27,16 +27,14 @@ SIDE EFFECTS
     - if no data file is given, the loaded geometry will not change color
 """
 
-
-
-
-import os
 import math
+import os
 
 import matplotlib.cm as cm
-import pandas as pd
 import numpy as np
+import pandas as pd
 import vtk
+
 import cea.config
 import cea.inputlocator
 
@@ -50,13 +48,11 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-
 def stl2actor(ageometry_path, ageometry_name, ageometry_color):
-
     appendfilter = vtk.vtkAppendPolyData()
     render_lib = vtk.vtkSTLReader()
     polydata = vtk.vtkPolyData()
-    render_lib.SetFileName(os.path.join(ageometry_path, ageometry_name+".stl"))
+    render_lib.SetFileName(os.path.join(ageometry_path, ageometry_name + ".stl"))
     render_lib.Update()
     polydata.ShallowCopy(render_lib.GetOutput())
     appendfilter.AddInputConnection(polydata.GetProducerPort())
@@ -104,7 +100,6 @@ def points2actor(xyz, apoint_size):
 
 
 def face_points2actor(fps_df):
-
     cell_array = vtk.vtkCellArray()
     points = vtk.vtkPoints()
     point_id = 0
@@ -112,7 +107,7 @@ def face_points2actor(fps_df):
         polygon = vtk.vtkPolygon()
         polygon.GetPointIds().SetNumberOfIds(3)
         for n in range(3):
-            points.InsertNextPoint(fps_df.iloc[i, 0+3*n], fps_df.iloc[i, 1+3*n], fps_df.iloc[i, 2+3*n])
+            points.InsertNextPoint(fps_df.iloc[i, 0 + 3 * n], fps_df.iloc[i, 1 + 3 * n], fps_df.iloc[i, 2 + 3 * n])
             polygon.GetPointIds().SetId(n, point_id)
             point_id += 1
         cell_array.InsertNextCell(polygon)
@@ -130,7 +125,6 @@ def face_points2actor(fps_df):
 
 
 def xy_axis(apoints_path):
-
     # print a green y-positive and a x-positive line in the centre
     sensor = pd.read_csv(apoints_path)
     mid_x = sensor[['sen_x']].mean(axis=0)
@@ -174,7 +168,6 @@ def xy_axis(apoints_path):
 
 
 def get_colors(irradiance_array, min_irr, max_irr):
-
     rgb = np.zeros((len(irradiance_array), 3))
     # scale irradiance values
     n_col = irradiance_array / max_irr
@@ -182,21 +175,19 @@ def get_colors(irradiance_array, min_irr, max_irr):
     for k in range(0, len(irradiance_array)):
         col_map = cm.get_cmap('inferno')
 
-        rgb[k][0] = col_map(n_col[k])[0]*255
-        rgb[k][1] = col_map(n_col[k])[1]*255
-        rgb[k][2] = col_map(n_col[k])[2]*255
+        rgb[k][0] = col_map(n_col[k])[0] * 255
+        rgb[k][1] = col_map(n_col[k])[1] * 255
+        rgb[k][2] = col_map(n_col[k])[2] * 255
 
     return rgb
 
 
 def visualize(arepeating_timer):
-
     '''
     geometry_path: stl file directory or point and faces file path
     geometry_name: stl file list,
     data_path: data file path, txt document
     '''
-
 
     # =============================== timer event =============================== #
     class VtkTimerCallback:
@@ -221,11 +212,11 @@ def visualize(arepeating_timer):
                     polydata_lib[name].GetCellData().Update()
 
             if move_cam_bool is True:
-                camera.SetPosition(camera_xyz[self.timer_count%360])
+                camera.SetPosition(camera_xyz[self.timer_count % 360])
             camera.SetViewUp(0, 0, 1)
             camera.SetFocalPoint(mid_point[0], mid_point[1], mid_point[2])
 
-            txt.SetInput("time: "+str(self.timer_count))
+            txt.SetInput("time: " + str(self.timer_count))
 
             render_window.Render()
 
@@ -234,7 +225,7 @@ def visualize(arepeating_timer):
 
             imageFilter.Modified()
 
-            if self.timer_count < data_lib[name].shape[0]-1:
+            if self.timer_count < data_lib[name].shape[0] - 1:
                 self.timer_count += 1
             else:
                 self.timer_count = 0
@@ -247,8 +238,7 @@ def visualize(arepeating_timer):
             phi = i * step_size
             camera_xyz.append(
                 (mid_point[0] + radius * 6 * math.sin(phi), mid_point[1] + radius * 6 * math.cos(phi),
-                 cam_height+mid_point[2]))
-
+                 cam_height + mid_point[2]))
 
     # ============================== text ============================== #
     txt = vtk.vtkTextActor()
@@ -311,7 +301,7 @@ if __name__ == '__main__':
     end_angle = 360
     step_size = math.pi / 90
     repeating_timer = 20
-    #text properties
+    # text properties
     txt_font_size = 18
     txt_color = (0.4, 0.4, 0.4)
 
@@ -336,25 +326,24 @@ if __name__ == '__main__':
     for name in geo_list:
         actor_lib[name], polydata_lib[name] = stl2actor(in_path, name, [0.7, .7, .7])
         count_lib[name] = polydata_lib[name].GetNumberOfCells()
-        path = os.path.join(out_path, name,'res')
+        path = os.path.join(out_path, name, 'res')
 
-        #data = pd.read_csv(os.path.join(path, name+'.csv'), sep=',', skiprows=start_h, nrows=nr_hours, header=None)
-        #data = data.astype(float)
-        #data = data.as_matrix()
-        #data_lib[name] = data
+        # data = pd.read_csv(os.path.join(path, name+'.csv'), sep=',', skiprows=start_h, nrows=nr_hours, header=None)
+        # data = data.astype(float)
+        # data = data.as_matrix()
+        # data_lib[name] = data
 
     # point example
     for name in sen_list:
-
-        xyz = pd.read_csv(os.path.join(out_path, name+'_sen_df.csv'))[['sen_x', 'sen_y', 'sen_z']]
-        actor_lib['pt_'+name], polydata_lib['pt_'+name] = points2actor(xyz, apoint_size=8)
-        count_lib['pt_'+name] = 1
+        xyz = pd.read_csv(os.path.join(out_path, name + '_sen_df.csv'))[['sen_x', 'sen_y', 'sen_z']]
+        actor_lib['pt_' + name], polydata_lib['pt_' + name] = points2actor(xyz, apoint_size=8)
+        count_lib['pt_' + name] = 1
         path = os.path.join(out_path, name, 'res')
-        data = pd.read_csv(os.path.join(path, name+'.ill'),
+        data = pd.read_csv(os.path.join(path, name + '.ill'),
                            sep=' ', skiprows=start_h, nrows=nr_hours, header=None).iloc[:, 4:]
         data = data.astype(float)
         data = data.as_matrix()
-        data_lib['pt_'+name] = data
+        data_lib['pt_' + name] = data
     '''
     # face example
     for name in sen_list:
@@ -375,9 +364,7 @@ if __name__ == '__main__':
         data_lib['f_'+name] = data.T
     '''
     # give a path with "sen_x,..." columns to calculate where the camera focuses on
-    axes, mid_point = xy_axis(os.path.join(out_path, sen_list[0]+'_sen_df.csv'))
+    axes, mid_point = xy_axis(os.path.join(out_path, sen_list[0] + '_sen_df.csv'))
 
     point_size = 5
     visualize(repeating_timer)
-
-

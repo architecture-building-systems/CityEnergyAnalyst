@@ -55,6 +55,11 @@ class TestConfiguration(unittest.TestCase):
         config = pickle.loads(pickle.dumps(config))
         self.assertEquals(config.scenario, config.general.scenario)
 
+    def test_decode_fileparameter(self):
+        config = cea.config.Configuration()
+        scenario = config.general.scenario
+        expected_output = f"{scenario}/inputs/building-geometry/zone.shp"
+        self.assertEqual(os.path.normcase(config.create_new_scenario.zone), os.path.normcase(expected_output))
 
 if __name__ == "__main__":
     unittest.main()

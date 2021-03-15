@@ -47,7 +47,7 @@ The following file is used by these scripts: ``demand``, ``emissions``, ``radiat
     ``type_shade``, "Shading system assembly (relates to ""code"" in ENVELOPE assemblies)"
     ``type_wall``, "External wall construction assembly (relates to ""code"" in ENVELOPE assemblies)"
     ``type_win``, "Window assembly (relates to ""code"" in ENVELOPE assemblies)"
-    ``void_deck``, "Number of floors (from the ground up) with an open envelope (default = 0)"
+    ``void_deck``, "Number of floors (from the ground up) with an open envelope (default = 0, should be lower than floors_ag.)"
     ``wwr_east``, "Window to wall ratio in in facades facing east"
     ``wwr_north``, "Window to wall ratio in in facades facing north"
     ``wwr_south``, "Window to wall ratio in in facades facing south"
@@ -73,7 +73,7 @@ The following file is used by these scripts: ``demand``, ``schedule_maker``
     ``Tcs_setb_C``, "Setback point of temperature for cooling system"
     ``Ths_set_C``, "Setpoint temperature for heating system"
     ``Ths_setb_C``, "Setback point of temperature for heating system"
-    ``Ve_lpspax``, "Indoor quality requirements of indoor ventilation per person"
+    ``Ve_lpspax``, "Minimum outdoor air ventilation rate per person for Air Quality"
     
 
 
@@ -1047,7 +1047,7 @@ The following file is used by these scripts: ``archetypes_mapper``
     ``22``, 
     ``23``, 
     ``24``, 
-    ``DAY``, 
+    ``DAY``, Day of the week (weekday, saturday, or sunday)
     
 
 
@@ -1079,7 +1079,7 @@ The following file is used by these scripts: ``archetypes_mapper``
     ``22``, 
     ``23``, 
     ``24``, 
-    ``DAY``, 
+    ``DAY``, Day of the week (weekday, saturday, or sunday)
     
 
 
@@ -1111,7 +1111,7 @@ The following file is used by these scripts: ``archetypes_mapper``
     ``22``, Average number of electric vehicles in this hour
     ``23``, Average number of electric vehicles in this hour
     ``24``, Average number of electric vehicles in this hour
-    ``DAY``, 
+    ``DAY``, Day of the week (weekday, saturday, or sunday)
     
 
 
@@ -1143,7 +1143,7 @@ The following file is used by these scripts: ``archetypes_mapper``
     ``22``, 
     ``23``, 
     ``24``, 
-    ``DAY``, 
+    ``DAY``, Day of the week (weekday, saturday, or sunday)
     
 
 
@@ -1175,7 +1175,7 @@ The following file is used by these scripts: ``archetypes_mapper``
     ``22``, 
     ``23``, 
     ``24``, 
-    ``DAY``, 
+    ``DAY``, Day of the week (weekday, saturday, or sunday)
     
 
 
@@ -1234,7 +1234,7 @@ The following file is used by these scripts: ``archetypes_mapper``
     ``22``, 
     ``23``, 
     ``24``, 
-    ``DAY``, 
+    ``DAY``, Day of the week (weekday, saturday, or sunday)
     
 
 
@@ -1266,7 +1266,7 @@ The following file is used by these scripts: ``archetypes_mapper``
     ``22``, 
     ``23``, 
     ``24``, 
-    ``DAY``, 
+    ``DAY``, Day of the week (weekday, saturday, or sunday)
     
 
 
@@ -1298,7 +1298,7 @@ The following file is used by these scripts: ``archetypes_mapper``
     ``22``, 
     ``23``, 
     ``24``, 
-    ``DAY``, 
+    ``DAY``, Day of the week (weekday, saturday, or sunday)
     
 
 
@@ -1330,7 +1330,7 @@ The following file is used by these scripts: ``archetypes_mapper``
     ``22``, 
     ``23``, 
     ``24``, 
-    ``DAY``, 
+    ``DAY``, Day of the week (weekday, saturday, or sunday)
     
 
 
@@ -1358,7 +1358,7 @@ The following file is used by these scripts: ``demand``, ``emissions``, ``system
     ``LT_yr``, lifetime of assembly
     ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
     ``reference``, reference
-    ``scale``, whether the all in one system is used at the building, or the district scale
+    ``scale``, whether the all in one system is used at the building or the district scale
     
 
 
@@ -1375,7 +1375,7 @@ The following file is used by these scripts: ``demand``, ``emissions``, ``system
     ``LT_yr``, lifetime of assembly
     ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
     ``reference``, Reference of the data
-    ``scale``, whether the all in one system is used at the building, or the district scale
+    ``scale``, whether the all in one system is used at the building or the district scale
     
 
 
@@ -1392,7 +1392,7 @@ The following file is used by these scripts: ``demand``, ``emissions``, ``system
     ``LT_yr``, lifetime of assembly
     ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
     ``reference``, Reference of the data
-    ``scale``, whether the all in one system is used at the building, or the district scale
+    ``scale``, whether the all in one system is used at the building or the district scale
     
 
 
@@ -1409,7 +1409,7 @@ The following file is used by these scripts: ``demand``, ``emissions``, ``system
     ``LT_yr``, lifetime of assembly
     ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
     ``reference``, Reference of the data
-    ``scale``, whether the all in one system is used at the building, or the district scale
+    ``scale``, whether the all in one system is used at the building or the district scale
     
 
 
@@ -1478,32 +1478,35 @@ The following file is used by these scripts: ``decentralized``, ``optimization``
     ``DATE``, "Time stamp for each day of the year ascending in hour intervals."
     ``DC_cdata_kWh``, "District cooling for data center cooling demand"
     ``DC_cre_kWh``, "District cooling for refrigeration demand"
-    ``DC_cs_kWh``, "District cooling for space cooling demand"
+    ``DC_cs_kWh``, "Energy consumption of space cooling system (if supplied by District Cooling), DC_cs = Qcs_sys / eff_cs"
     ``DH_hs_kWh``, "Energy requirement by district heating (space heating supply)"
     ``DH_ww_kWh``, "Energy requirement by district heating (hotwater supply)"
     ``E_cdata_kWh``, "Data centre cooling specific electricity consumption."
     ``E_cre_kWh``, "Refrigeration system electricity consumption."
-    ``E_cs_kWh``, "Cooling system electricity consumption."
+    ``E_cs_kWh``, "Energy consumption of cooling system (if supplied by electricity grid), E_cs = Qcs_sys / eff_cs"
     ``E_hs_kWh``, "Heating system electricity consumption."
-    ``E_sys_kWh``, "End-use total electricity system consumption = Ea + El + Edata + Epro + Eaux "
+    ``E_sys_kWh``, "End-use total electricity consumption  = Ea + El + Edata + Epro + Eaux + Ev + Eve"
     ``E_ww_kWh``, "Hot water system electricity consumption."
     ``Ea_kWh``, "End-use electricity for appliances"
-    ``Eal_kWh``, "End-use electricity consumption of appliances and lights"
-    ``Eaux_kWh``, "End-use auxiliary electricity consumption."
+    ``Eal_kWh``, "End-use electricity consumption of appliances and lighting, Eal = El_W + Ea_W"
+    ``Eaux_kWh``, "End-use auxiliary electricity consumption, Eaux = Eaux_fw + Eaux_ww + Eaux_cs + Eaux_hs + Ehs_lat_aux"
     ``Edata_kWh``, "End-use data centre electricity consumption."
     ``El_kWh``, "End-use electricity for lights"
     ``Epro_kWh``, "End-use electricity consumption for industrial processes."
-    ``GRID_a_kWh``, "Grid electricity requirements for appliances"
-    ``GRID_aux_kWh``, "Grid electricity requirements for auxiliary loads"
-    ``GRID_cdata_kWh``, "Grid electricity requirements for servers cooling"
-    ``GRID_cre_kWh``, "Grid electricity requirements for refrigeration"
-    ``GRID_cs_kWh``, "Grid electricity requirements for space cooling"
-    ``GRID_data_kWh``, "Grid electricity requirements for servers"
-    ``GRID_hs_kWh``, "Grid electricity requirements for space heating"
-    ``GRID_kWh``, "Grid total requirements of electricity = GRID_a + GRID_l + GRID_v +GRID_data + GRID_pro + GRID_aux + GRID_cdata + GRID_cre + GRID_hs + GRID_ww + GRID_cs"
-    ``GRID_l_kWh``, "Grid electricity requirements for lights"
-    ``GRID_pro_kWh``, "Grid electricity requirements for industrial processes"
-    ``GRID_ww_kWh``, "Grid electricity requirements for hot water supply"
+    ``Ev_kWh``, "End-use electricity for electric vehicles"
+    ``Eve_kWh``, "End-use electricity for ventilation"
+    ``GRID_a_kWh``, "Grid electricity consumption for appliances"
+    ``GRID_aux_kWh``, "Grid electricity consumption for auxiliary loads"
+    ``GRID_cdata_kWh``, "Grid electricity consumption for servers cooling"
+    ``GRID_cre_kWh``, "Grid electricity consumption for refrigeration"
+    ``GRID_cs_kWh``, "Grid electricity consumption for space cooling"
+    ``GRID_data_kWh``, "Grid electricity consumption for servers"
+    ``GRID_hs_kWh``, "Grid electricity consumption for space heating"
+    ``GRID_kWh``, "Grid total electricity consumption, GRID_a + GRID_l + GRID_v + GRID_ve + GRID_data + GRID_pro + GRID_aux + GRID_ww + GRID_cs + GRID_hs + GRID_cdata + GRID_cre"
+    ``GRID_l_kWh``, "Grid electricity consumption for lighting"
+    ``GRID_pro_kWh``, "Grid electricity consumption for industrial processes"
+    ``GRID_ve_kWh``, "Grid electricity consumption for ventilation"
+    ``GRID_ww_kWh``, "Grid electricity consumption for hot water supply"
     ``I_rad_kWh``, "Radiative heat loss"
     ``I_sol_and_I_rad_kWh``, "Net radiative heat gain"
     ``I_sol_kWh``, "Solar heat gain"
@@ -1517,8 +1520,8 @@ The following file is used by these scripts: ``decentralized``, ``optimization``
     ``mcphs_sys_aru_kWperC``, "Capacity flow rate (mass flow* specific heat Capacity) of the warm water delivered to air recirculation units (space heating)."
     ``mcphs_sys_kWperC``, "Capacity flow rate (mass flow* specific heat Capacity) of the warm water delivered to space heating."
     ``mcphs_sys_shu_kWperC``, "Capacity flow rate (mass flow* specific heat Capacity) of the warm water delivered to sensible heating units (space heating)."
-    ``mcptw_kWperC``, "Capacity flow rate (mass flow* specific heat capaicty) of the fresh water"
-    ``mcpww_sys_kWperC``, "Capacity flow rate (mass flow* specific heat capaicty) of domestic hot water"
+    ``mcptw_kWperC``, "Capacity flow rate (mass flow* specific heat capacity) of the fresh water"
+    ``mcpww_sys_kWperC``, "Capacity flow rate (mass flow* specific heat capacity) of domestic hot water"
     ``Name``, "Unique building ID. It must start with a letter."
     ``NG_hs_kWh``, "NG requirement for space heating supply"
     ``NG_ww_kWh``, "NG requirement for hotwater supply"
@@ -1538,7 +1541,7 @@ The following file is used by these scripts: ``decentralized``, ``optimization``
     ``Q_gain_sen_wall_kWh``, "Sensible heat gain from transmission through the walls"
     ``Q_gain_sen_wind_kWh``, "Sensible heat gain from transmission through the windows"
     ``Q_loss_sen_ref_kWh``, "Sensible heat loss from refrigeration systems"
-    ``QC_sys_kWh``, "Total cool consumption"
+    ``QC_sys_kWh``, "Total energy demand for cooling, QC_sys = Qcs_sys + Qcdata_sys + Qcre_sys + Qcpro_sys"
     ``Qcdata_kWh``, "Data centre space cooling demand"
     ``Qcdata_sys_kWh``, "End-use data center cooling demand"
     ``Qcpro_sys_kWh``, "Process cooling demand"
@@ -1546,35 +1549,35 @@ The following file is used by these scripts: ``decentralized``, ``optimization``
     ``Qcre_sys_kWh``, "End-use refrigeration demand"
     ``Qcs_dis_ls_kWh``, "Cooling system distribution losses"
     ``Qcs_em_ls_kWh``, "Cooling system emission losses"
-    ``Qcs_kWh``, "Specific cool demand"
-    ``Qcs_lat_ahu_kWh``, "AHU latent cool demand"
-    ``Qcs_lat_aru_kWh``, "ARU latent cool demand"
-    ``Qcs_lat_sys_kWh``, "Total latent cool demand for all systems"
-    ``Qcs_sen_ahu_kWh``, "AHU sensible cool demand"
-    ``Qcs_sen_aru_kWh``, "ARU sensible cool demand"
-    ``Qcs_sen_scu_kWh``, "SHU sensible cool demand"
-    ``Qcs_sen_sys_kWh``, "Total sensible cool demand for all systems"
-    ``Qcs_sys_ahu_kWh``, "AHU system cool demand"
-    ``Qcs_sys_aru_kWh``, "ARU system cool demand"
-    ``Qcs_sys_kWh``, "End-use space cooling demand"
-    ``Qcs_sys_scu_kWh``, "SCU system cool demand"
-    ``QH_sys_kWh``, "Total heat consumption"
-    ``Qhpro_sys_kWh``, "Process heat demand"
+    ``Qcs_kWh``, "Specific cooling demand"
+    ``Qcs_lat_ahu_kWh``, "AHU latent cooling demand"
+    ``Qcs_lat_aru_kWh``, "ARU latent cooling demand"
+    ``Qcs_lat_sys_kWh``, "Total latent cooling demand for all systems"
+    ``Qcs_sen_ahu_kWh``, "AHU sensible cooling demand"
+    ``Qcs_sen_aru_kWh``, "ARU sensible cooling demand"
+    ``Qcs_sen_scu_kWh``, "SHU sensible cooling demand"
+    ``Qcs_sen_sys_kWh``, "Total sensible cooling demand for all systems"
+    ``Qcs_sys_ahu_kWh``, "AHU system cooling demand"
+    ``Qcs_sys_aru_kWh``, "ARU system cooling demand"
+    ``Qcs_sys_kWh``, "End-use space cooling demand, Qcs_sys = Qcs_sen_sys + Qcs_lat_sys + Qcs_em_ls + Qcs_dis_ls"
+    ``Qcs_sys_scu_kWh``, "SCU system cooling demand"
+    ``QH_sys_kWh``, "Total energy demand for heating, QH_sys = Qww_sys + Qhs_sys + Qhpro_sys"
+    ``Qhpro_sys_kWh``, "Process heating demand"
     ``Qhs_dis_ls_kWh``, "Heating system distribution losses"
     ``Qhs_em_ls_kWh``, "Heating system emission losses"
     ``Qhs_kWh``, "Sensible heating system demand"
-    ``Qhs_lat_ahu_kWh``, "AHU latent heat demand"
-    ``Qhs_lat_aru_kWh``, "ARU latent heat demand"
-    ``Qhs_lat_sys_kWh``, "Total latent heat demand for all systems"
-    ``Qhs_sen_ahu_kWh``, "AHU sensible heat demand"
-    ``Qhs_sen_aru_kWh``, "ARU sensible heat demand"
-    ``Qhs_sen_shu_kWh``, "SHU sensible heat demand"
-    ``Qhs_sen_sys_kWh``, "Total sensible heat demand for all systems"
-    ``Qhs_sys_ahu_kWh``, "AHU system heat demand"
-    ``Qhs_sys_aru_kWh``, "ARU system heat demand"
-    ``Qhs_sys_kWh``, "End-use space heating demand"
-    ``Qhs_sys_shu_kWh``, "SHU system heat demand"
-    ``Qww_kWh``, "DHW specific heat demand"
+    ``Qhs_lat_ahu_kWh``, "AHU latent heating demand"
+    ``Qhs_lat_aru_kWh``, "ARU latent heating demand"
+    ``Qhs_lat_sys_kWh``, "Total latent heating demand for all systems"
+    ``Qhs_sen_ahu_kWh``, "AHU sensible heating demand"
+    ``Qhs_sen_aru_kWh``, "ARU sensible heating demand"
+    ``Qhs_sen_shu_kWh``, "SHU sensible heating demand"
+    ``Qhs_sen_sys_kWh``, "Total sensible heating demand"
+    ``Qhs_sys_ahu_kWh``, "Space heating demand in AHU"
+    ``Qhs_sys_aru_kWh``, "Space heating demand in ARU"
+    ``Qhs_sys_kWh``, "End-use space heating demand, Qhs_sys = Qhs_sen_sys + Qhs_em_ls + Qhs_dis_ls"
+    ``Qhs_sys_shu_kWh``, "SHU system heating demand"
+    ``Qww_kWh``, "DHW specific heating demand"
     ``Qww_sys_kWh``, "End-use hotwater demand"
     ``SOLAR_hs_kWh``, "Solar thermal energy requirement for space heating supply"
     ``SOLAR_ww_kWh``, "Solar thermal energy requirement for hotwater supply"
@@ -2072,23 +2075,6 @@ The following file is used by these scripts:
     
 
 
-get_optimization_decentralized_folder_building_cooling_activation
------------------------------------------------------------------
-
-path: ``outputs/data/optimization/decentralized/{building}_{configuration}_cooling_activation.csv``
-
-The following file is used by these scripts: ``optimization``
-
-
-.. csv-table::
-    :header: "Variable", "Description"
-
-    ``E_cs_cre_cdata_req_W``, "Electricity requirements due to space cooling, servers cooling and refrigeration"
-    ``E_DX_AS_req_W``, "Electricity requirements of Air-Source direct expansion chiller"
-    ``Q_DX_AS_gen_directload_W``, "Thermal energy generated by Air-Source direct expansion chiller"
-    
-
-
 get_optimization_decentralized_folder_building_result_cooling
 -------------------------------------------------------------
 
@@ -2114,6 +2100,36 @@ The following file is used by these scripts: ``optimization``
     ``Opex_fixed_USD``, "Fixed Annual Operational Costs"
     ``Opex_var_USD``, "Variable Annual Operational Costs"
     ``TAC_USD``, "Total Annualized Costs"
+    
+
+
+get_optimization_decentralized_folder_building_result_cooling_activation
+------------------------------------------------------------------------
+
+path: ``outputs/data/optimization/decentralized/{building}_{configuration}_cooling_activation.csv``
+
+The following file is used by these scripts: ``optimization``
+
+
+.. csv-table::
+    :header: "Variable", "Description"
+
+    ``E_ACH_req_W``, "Electricity requirements of Absorption Chillers"
+    ``E_BaseVCC_AS_req_W``, "Electricity requirements of Vapor Compression Chillers and refrigeration"
+    ``E_cs_cre_cdata_req_W``, "Electricity requirements due to space cooling, servers cooling and refrigeration"
+    ``E_CT_req_W``, "Electricity requirements of Cooling Towers"
+    ``E_DX_AS_req_W``, "Electricity requirements of Air-Source direct expansion chillers"
+    ``E_SC_ET_req_W``, "Electricity requirements of Solar Collectors (evacuated-tubes)"
+    ``E_SC_FP_req_W``, "Electricity requirements of Solar Collectors (flat-plate)"
+    ``NG_Boiler_req``, "Requirements of Natural Gas for Boilers"
+    ``NG_Burner_req``, "Requirements of Natural Gas for Burners"
+    ``Q_ACH_gen_directload_W``, "Thermal energy generated by Absorption chillers"
+    ``Q_BaseVCC_AS_gen_directload_W``, "Thermal energy generated by Air-Source Vapor-compression chillers"
+    ``Q_Boiler_NG_ACH_W``, "Thermal energy generated by Natural gas Boilers to Absorption chillers"
+    ``Q_Burner_NG_ACH_W``, "Thermal energy generated by Natural gas Burners to Absorption chillers"
+    ``Q_DX_AS_gen_directload_W``, "Thermal energy generated by Air-Source direct expansion chillers"
+    ``Q_SC_ET_ACH_W``, "Thermal energy generated by Solar Collectors (evacuated-tubes) to Absorption chillers"
+    ``Q_SC_FP_ACH_W``, "Thermal energy generated by Solar Collectors (flat-plate) to Absorption chillers"
     
 
 
@@ -2154,13 +2170,18 @@ The following file is used by these scripts: ``optimization``
     :header: "Variable", "Description"
 
     ``BackupBoiler_Status``, "Status of the BackupBoiler (1=on, 0 =off)"
+    ``BG_Boiler_req_W``, "Requirements of Bio-gas for Base load Boiler"
     ``Boiler_Status``, "Status of the Base load Boiler (1=on, 0 =off)"
-    ``E_hs_ww_req_W``, "Electricity Requirements for hot water and space heating (if required)"
+    ``E_Fuelcell_gen_export_W``, "Electricity generation of fuel cell exported to the grid"
+    ``E_hs_ww_req_W``, "Electricity Requirements for heat pump compressor and auxiliary uses (if required)"
+    ``Fuelcell_Status``, "Status of the fuel cell (1=on, 0 =off)"
     ``GHP_Status``, "Status of the ground-source heat pump (1=on, 0 =off)"
-    ``NG_BackupBoiler_req_Wh``, "Requirements of Natural Gas for Back-up Boiler"
-    ``NG_Boiler_req_Wh``, "Requirements of Natural Gas for Base load Boiler"
+    ``NG_BackupBoiler_req_W``, "Requirements of Natural Gas for Back-up Boiler"
+    ``NG_Boiler_req_W``, "Requirements of Natural Gas for Base load Boiler"
+    ``NG_FuelCell_req_W``, "Requirements of Natural Gas for fuel cell"
     ``Q_BackupBoiler_gen_directload_W``, "Thermal generation of Back-up Boiler to direct load"
     ``Q_Boiler_gen_directload_W``, "Thermal generation of Base load Boiler to direct load"
+    ``Q_Fuelcell_gen_directload_W``, "Thermal generation of fuel cell to direct load"
     ``Q_GHP_gen_directload_W``, "Thermal generation of ground-source heat pump to direct load"
     
 
@@ -2783,7 +2804,7 @@ The following file is used by these scripts:
     ``DC_cre0_kW``, "Nominal district cooling for refrigeration demand"
     ``DC_cre_MWhyr``, "District cooling for refrigeration demand"
     ``DC_cs0_kW``, "Nominal district cooling for space cooling demand"
-    ``DC_cs_MWhyr``, "District cooling for space cooling demand"
+    ``DC_cs_MWhyr``, "Energy consumption of space cooling system (if supplied by District Cooling), DC_cs = Qcs_sys / eff_cs"
     ``DH_hs0_kW``, "Nominal energy requirement by district heating (space heating supply)"
     ``DH_hs_MWhyr``, "Energy requirement by district heating (space heating supply)"
     ``DH_ww0_kW``, "Nominal Energy requirement by district heating (hotwater supply)"
@@ -2793,25 +2814,29 @@ The following file is used by these scripts:
     ``E_cre0_kW``, "Nominal Refrigeration system electricity consumption."
     ``E_cre_MWhyr``, "Electricity consumption due to refrigeration"
     ``E_cs0_kW``, "Nominal Cooling system electricity consumption."
-    ``E_cs_MWhyr``, "Electricity consumption due to space cooling"
+    ``E_cs_MWhyr``, "Energy consumption of cooling system (if supplied by electricity grid), E_cs = Qcs_sys / eff_cs"
     ``E_hs0_kW``, "Nominal Heating system electricity consumption."
     ``E_hs_MWhyr``, "Electricity consumption due to space heating"
     ``E_sys0_kW``, "Nominal end-use electricity demand"
-    ``E_sys_MWhyr``, "End-use electricity demand"
+    ``E_sys_MWhyr``, "End-use total electricity consumption, E_sys =  Eve + Ea + El + Edata + Epro + Eaux + Ev"
     ``E_ww0_kW``, "Nominal Domestic hot water electricity consumption."
     ``E_ww_MWhyr``, "Electricity consumption due to hot water"
     ``Ea0_kW``, "Nominal end-use electricity for appliances"
     ``Ea_MWhyr``, "End-use electricity for appliances"
     ``Eal0_kW``, "Nominal Total net electricity for all sources and sinks."
-    ``Eal_MWhyr``, "Electricity consumption due to appliances and lighting"
+    ``Eal_MWhyr``, "End-use electricity consumption of appliances and lighting, Eal = El_W + Ea_W"
     ``Eaux0_kW``, "Nominal Auxiliary electricity consumption."
-    ``Eaux_MWhyr``, "Electricity consumption due to auxiliary equipment"
+    ``Eaux_MWhyr``, "End-use auxiliary electricity consumption, Eaux = Eaux_fw + Eaux_ww + Eaux_cs + Eaux_hs + Ehs_lat_aux"
     ``Edata0_kW``, "Nominal Data centre electricity consumption."
     ``Edata_MWhyr``, "Electricity consumption for data centers"
     ``El0_kW``, "Nominal end-use electricity for lights"
     ``El_MWhyr``, "End-use electricity for lights"
     ``Epro0_kW``, "Nominal Industrial processes electricity consumption."
     ``Epro_MWhyr``, "Electricity supplied to industrial processes"
+    ``Ev0_kW``, "Nominal end-use electricity for electric vehicles"
+    ``Ev_MWhyr``, "End-use electricity for electric vehicles"
+    ``Eve0_kW``, "Nominal end-use electricity for ventilation"
+    ``Eve_MWhyr``, "End-use electricity for ventilation"
     ``GFA_m2``, "Gross floor area"
     ``GRID0_kW``, "Nominal Grid electricity consumption"
     ``GRID_a0_kW``, "Nominal grid electricity requirements for appliances"
@@ -2830,9 +2855,13 @@ The following file is used by these scripts:
     ``GRID_hs_MWhyr``, "Grid electricity requirements for space heating"
     ``GRID_l0_kW``, "Nominal grid electricity consumption for lights"
     ``GRID_l_MWhyr``, "Grid electricity requirements for lights"
-    ``GRID_MWhyr``, "Grid electricity consumption"
+    ``GRID_MWhyr``, "Grid electricity consumption, GRID = GRID_a + GRID_l + GRID_v + GRID_ve + GRID_data + GRID_pro + GRID_aux + GRID_ww + GRID_cs + GRID_hs + GRID_cdata + GRID_cre"
     ``GRID_pro0_kW``, "Nominal grid electricity requirements for industrial processes"
     ``GRID_pro_MWhyr``, "Grid electricity requirements for industrial processes"
+    ``GRID_v0_kW``, "Nominal grid electricity consumption for electric vehicles"
+    ``GRID_v_MWhyr``, "Grid electricity requirements for electric vehicles"
+    ``GRID_ve0_kW``, "Nominal grid electricity consumption for ventilatioon"
+    ``GRID_ve_MWhyr``, "Grid electricity requirements for ventilatioon"
     ``GRID_ww0_kW``, "Nominal grid electricity requirements for hot water supply"
     ``GRID_ww_MWhyr``, "Grid electricity requirements for hot water supply"
     ``Name``, "Unique building ID. It must start with a letter."
@@ -2848,7 +2877,7 @@ The following file is used by these scripts:
     ``PV0_kW``, "Nominal PV electricity consumption"
     ``PV_MWhyr``, "PV electricity consumption"
     ``QC_sys0_kW``, "Nominal Total system cooling demand."
-    ``QC_sys_MWhyr``, "Total system cooling demand"
+    ``QC_sys_MWhyr``, "Total system cooling demand, QC_sys = Qcs_sys + Qcdata_sys + Qcre_sys + Qcpro_sys"
     ``Qcdata0_kW``, "Nominal Data centre cooling demand."
     ``Qcdata_MWhyr``, "Data centre cooling demand"
     ``Qcdata_sys0_kW``, "Nominal end-use data center cooling demand"
@@ -2860,67 +2889,67 @@ The following file is used by these scripts:
     ``Qcre_sys0_kW``, " Nominal refrigeration cooling demand"
     ``Qcre_sys_MWhyr``, "End-use refrigeration demand"
     ``Qcs0_kW``, "Nominal Total cooling demand."
-    ``Qcs_dis_ls0_kW``, "Nominal Cool distribution losses."
-    ``Qcs_dis_ls_MWhyr``, "Cool distribution losses"
-    ``Qcs_em_ls0_kW``, "Nominal Cool emission losses."
-    ``Qcs_em_ls_MWhyr``, "Cool emission losses"
-    ``Qcs_lat_ahu0_kW``, "Nominal AHU latent cool demand."
-    ``Qcs_lat_ahu_MWhyr``, "AHU latent cool demand"
-    ``Qcs_lat_aru0_kW``, "Nominal ARU latent cool demand."
-    ``Qcs_lat_aru_MWhyr``, "ARU latent cool demand"
-    ``Qcs_lat_sys0_kW``, "Nominal System latent cool demand."
-    ``Qcs_lat_sys_MWhyr``, "System latent cool demand"
-    ``Qcs_MWhyr``, "Total cool demand"
-    ``Qcs_sen_ahu0_kW``, "Nominal AHU system cool demand."
-    ``Qcs_sen_ahu_MWhyr``, "AHU system cool demand"
-    ``Qcs_sen_aru0_kW``, "Nominal ARU system cool demand."
-    ``Qcs_sen_aru_MWhyr``, "ARU system cool demand"
-    ``Qcs_sen_scu0_kW``, "Nominal SCU system cool demand."
-    ``Qcs_sen_scu_MWhyr``, "SCU system cool demand"
-    ``Qcs_sen_sys0_kW``, "Nominal Sensible system cool demand."
-    ``Qcs_sen_sys_MWhyr``, "Sensible system cool demand"
+    ``Qcs_dis_ls0_kW``, "Nominal Cooling distribution losses."
+    ``Qcs_dis_ls_MWhyr``, "Cooling distribution losses"
+    ``Qcs_em_ls0_kW``, "Nominal Cooling emission losses."
+    ``Qcs_em_ls_MWhyr``, "Cooling emission losses"
+    ``Qcs_lat_ahu0_kW``, "Nominal AHU latent cooling demand."
+    ``Qcs_lat_ahu_MWhyr``, "AHU latent cooling demand"
+    ``Qcs_lat_aru0_kW``, "Nominal ARU latent cooling demand."
+    ``Qcs_lat_aru_MWhyr``, "ARU latent cooling demand"
+    ``Qcs_lat_sys0_kW``, "Nominal System latent cooling demand."
+    ``Qcs_lat_sys_MWhyr``, "System latent cooling demand"
+    ``Qcs_MWhyr``, "Total cooling demand"
+    ``Qcs_sen_ahu0_kW``, "Nominal AHU system cooling demand."
+    ``Qcs_sen_ahu_MWhyr``, "Sensible cooling demand in AHU"
+    ``Qcs_sen_aru0_kW``, "Nominal ARU system cooling demand."
+    ``Qcs_sen_aru_MWhyr``, "ARU system cooling demand"
+    ``Qcs_sen_scu0_kW``, "Nominal SCU system cooling demand."
+    ``Qcs_sen_scu_MWhyr``, "SCU system cooling demand"
+    ``Qcs_sen_sys0_kW``, "Nominal Sensible system cooling demand."
+    ``Qcs_sen_sys_MWhyr``, "Total sensible cooling demand"
     ``Qcs_sys0_kW``, "Nominal end-use space cooling demand"
-    ``Qcs_sys_ahu0_kW``, "Nominal AHU system cool demand."
-    ``Qcs_sys_ahu_MWhyr``, "AHU system cool demand"
-    ``Qcs_sys_aru0_kW``, "Nominal ARU system cool demand."
-    ``Qcs_sys_aru_MWhyr``, "ARU system cool demand"
-    ``Qcs_sys_MWhyr``, "End-use space cooling demand"
-    ``Qcs_sys_scu0_kW``, "Nominal SCU system cool demand."
-    ``Qcs_sys_scu_MWhyr``, "SCU system cool demand"
+    ``Qcs_sys_ahu0_kW``, "Nominal AHU system cooling demand."
+    ``Qcs_sys_ahu_MWhyr``, "AHU system cooling demand"
+    ``Qcs_sys_aru0_kW``, "Nominal ARU system cooling demand."
+    ``Qcs_sys_aru_MWhyr``, "ARU system cooling demand"
+    ``Qcs_sys_MWhyr``, "End-use space cooling demand, Qcs_sys = Qcs_sen_sys + Qcs_lat_sys + Qcs_em_ls + Qcs_dis_ls"
+    ``Qcs_sys_scu0_kW``, "Nominal SCU system cooling demand."
+    ``Qcs_sys_scu_MWhyr``, "SCU system cooling demand"
     ``QH_sys0_kW``, "Nominal total building heating demand."
     ``QH_sys_MWhyr``, "Total building heating demand"
-    ``Qhpro_sys0_kW``, "Nominal process heat demand."
-    ``Qhpro_sys_MWhyr``, "Yearly processes heat demand."
+    ``Qhpro_sys0_kW``, "Nominal process heating demand."
+    ``Qhpro_sys_MWhyr``, "Yearly processes heating demand."
     ``Qhs0_kW``, "Nominal Total heating demand."
     ``Qhs_dis_ls0_kW``, "Nominal Heating system distribution losses."
     ``Qhs_dis_ls_MWhyr``, "Heating system distribution losses"
     ``Qhs_em_ls0_kW``, "Nominal Heating emission losses."
     ``Qhs_em_ls_MWhyr``, "Heating system emission losses"
-    ``Qhs_lat_ahu0_kW``, "Nominal AHU latent heat demand."
-    ``Qhs_lat_ahu_MWhyr``, "AHU latent heat demand"
-    ``Qhs_lat_aru0_kW``, "Nominal ARU latent heat demand."
-    ``Qhs_lat_aru_MWhyr``, "ARU latent heat demand"
-    ``Qhs_lat_sys0_kW``, "Nominal System latent heat demand."
-    ``Qhs_lat_sys_MWhyr``, "System latent heat demand"
+    ``Qhs_lat_ahu0_kW``, "Nominal AHU latent heating demand."
+    ``Qhs_lat_ahu_MWhyr``, "AHU latent heating demand"
+    ``Qhs_lat_aru0_kW``, "Nominal ARU latent heating demand."
+    ``Qhs_lat_aru_MWhyr``, "ARU latent heating demand"
+    ``Qhs_lat_sys0_kW``, "Nominal System latent heating demand."
+    ``Qhs_lat_sys_MWhyr``, "System latent heating demand"
     ``Qhs_MWhyr``, "Total heating demand"
-    ``Qhs_sen_ahu0_kW``, "Nominal AHU sensible heat demand."
-    ``Qhs_sen_ahu_MWhyr``, "AHU sensible heat demand"
-    ``Qhs_sen_aru0_kW``, "ARU sensible heat demand"
-    ``Qhs_sen_aru_MWhyr``, "ARU sensible heat demand"
-    ``Qhs_sen_shu0_kW``, "Nominal SHU sensible heat demand."
-    ``Qhs_sen_shu_MWhyr``, "SHU sensible heat demand"
-    ``Qhs_sen_sys0_kW``, "Nominal HVAC systems sensible heat demand."
-    ``Qhs_sen_sys_MWhyr``, "SHU sensible heat demand"
+    ``Qhs_sen_ahu0_kW``, "Nominal AHU sensible heating demand."
+    ``Qhs_sen_ahu_MWhyr``, "AHU sensible heating demand"
+    ``Qhs_sen_aru0_kW``, "ARU sensible heating demand"
+    ``Qhs_sen_aru_MWhyr``, "ARU sensible heating demand"
+    ``Qhs_sen_shu0_kW``, "Nominal SHU sensible heating demand."
+    ``Qhs_sen_shu_MWhyr``, "SHU sensible heating demand"
+    ``Qhs_sen_sys0_kW``, "Nominal HVAC systems sensible heating demand."
+    ``Qhs_sen_sys_MWhyr``, "SHU sensible heating demand"
     ``Qhs_sys0_kW``, "Nominal end-use space heating demand"
-    ``Qhs_sys_ahu0_kW``, "Nominal AHU sensible heat demand."
-    ``Qhs_sys_ahu_MWhyr``, "AHU system heat demand"
-    ``Qhs_sys_aru0_kW``, "Nominal ARU sensible heat demand."
-    ``Qhs_sys_aru_MWhyr``, "ARU sensible heat demand"
-    ``Qhs_sys_MWhyr``, "End-use space heating demand"
-    ``Qhs_sys_shu0_kW``, "Nominal SHU sensible heat demand."
-    ``Qhs_sys_shu_MWhyr``, "SHU sensible heat demand"
-    ``Qww0_kW``, "Nominal DHW heat demand."
-    ``Qww_MWhyr``, "DHW heat demand"
+    ``Qhs_sys_ahu0_kW``, "Nominal AHU sensible heating demand."
+    ``Qhs_sys_ahu_MWhyr``, "AHU system heating demand"
+    ``Qhs_sys_aru0_kW``, "Nominal ARU sensible heating demand."
+    ``Qhs_sys_aru_MWhyr``, "ARU sensible heating demand"
+    ``Qhs_sys_MWhyr``, "End-use space heating demand, Qhs_sys = Qhs_sen_sys + Qhs_em_ls + Qhs_dis_ls"
+    ``Qhs_sys_shu0_kW``, "Nominal SHU sensible heating demand."
+    ``Qhs_sys_shu_MWhyr``, "SHU sensible heating demand"
+    ``Qww0_kW``, "Nominal DHW heating demand."
+    ``Qww_MWhyr``, "DHW heating demand"
     ``Qww_sys0_kW``, "Nominal end-use hotwater demand"
     ``Qww_sys_MWhyr``, "End-use hotwater demand"
     ``SOLAR_hs0_kW``, "Nominal solar thermal energy requirement for space heating supply"
@@ -3262,7 +3291,7 @@ The following file is used by these scripts: ``decentralized``, ``emissions``, `
     ``DC_cre0_kW``, "Nominal district cooling for refrigeration demand"
     ``DC_cre_MWhyr``, "District cooling for refrigeration demand"
     ``DC_cs0_kW``, "Nominal district cooling for space cooling demand"
-    ``DC_cs_MWhyr``, "District cooling for space cooling demand"
+    ``DC_cs_MWhyr``, "Energy consumption of space cooling system (if supplied by District Cooling), DC_cs = Qcs_sys / eff_cs"
     ``DH_hs0_kW``, "Nominal energy requirement by district heating (space heating supply)"
     ``DH_hs_MWhyr``, "Energy requirement by district heating (space heating supply)"
     ``DH_ww0_kW``, "Nominal Energy requirement by district heating (hotwater supply)"
@@ -3272,25 +3301,29 @@ The following file is used by these scripts: ``decentralized``, ``emissions``, `
     ``E_cre0_kW``, "Nominal Refrigeration system electricity consumption."
     ``E_cre_MWhyr``, "Electricity consumption due to refrigeration"
     ``E_cs0_kW``, "Nominal Cooling system electricity consumption."
-    ``E_cs_MWhyr``, "Electricity consumption due to space cooling"
+    ``E_cs_MWhyr``, "Energy consumption of cooling system (if supplied by electricity grid), E_cs = Qcs_sys / eff_cs"
     ``E_hs0_kW``, "Nominal Heating system electricity consumption."
     ``E_hs_MWhyr``, "Electricity consumption due to space heating"
     ``E_sys0_kW``, "Nominal end-use electricity demand"
-    ``E_sys_MWhyr``, "End-use electricity demand"
+    ``E_sys_MWhyr``, "End-use total electricity consumption, E_sys =  Eve + Ea + El + Edata + Epro + Eaux + Ev"
     ``E_ww0_kW``, "Nominal Domestic hot water electricity consumption."
     ``E_ww_MWhyr``, "Electricity consumption due to hot water"
     ``Ea0_kW``, "Nominal end-use electricity for appliances"
     ``Ea_MWhyr``, "End-use electricity for appliances"
     ``Eal0_kW``, "Nominal Total net electricity for all sources and sinks."
-    ``Eal_MWhyr``, "Electricity consumption due to appliances and lighting"
+    ``Eal_MWhyr``, "End-use electricity consumption of appliances and lighting, Eal = El_W + Ea_W"
     ``Eaux0_kW``, "Nominal Auxiliary electricity consumption."
-    ``Eaux_MWhyr``, "Electricity consumption due to auxiliary equipment"
+    ``Eaux_MWhyr``, "End-use auxiliary electricity consumption, Eaux = Eaux_fw + Eaux_ww + Eaux_cs + Eaux_hs + Ehs_lat_aux"
     ``Edata0_kW``, "Nominal Data centre electricity consumption."
     ``Edata_MWhyr``, "Electricity consumption for data centers"
     ``El0_kW``, "Nominal end-use electricity for lights"
     ``El_MWhyr``, "End-use electricity for lights"
     ``Epro0_kW``, "Nominal Industrial processes electricity consumption."
     ``Epro_MWhyr``, "Electricity supplied to industrial processes"
+    ``Ev0_kW``, "Nominal end-use electricity for electric vehicles"
+    ``Ev_MWhyr``, "End-use electricity for electric vehicles"
+    ``Eve0_kW``, "Nominal end-use electricity for ventilation"
+    ``Eve_MWhyr``, "End-use electricity for ventilation"
     ``GFA_m2``, "Gross floor area"
     ``GRID0_kW``, "Nominal Grid electricity consumption"
     ``GRID_a0_kW``, "Nominal grid electricity requirements for appliances"
@@ -3309,9 +3342,13 @@ The following file is used by these scripts: ``decentralized``, ``emissions``, `
     ``GRID_hs_MWhyr``, "Grid electricity requirements for space heating"
     ``GRID_l0_kW``, "Nominal grid electricity consumption for lights"
     ``GRID_l_MWhyr``, "Grid electricity requirements for lights"
-    ``GRID_MWhyr``, "Grid electricity consumption"
+    ``GRID_MWhyr``, "Grid electricity consumption, GRID_a + GRID_l + GRID_v + GRID_ve + GRID_data + GRID_pro + GRID_aux + GRID_ww + GRID_cs + GRID_hs + GRID_cdata + GRID_cre"
     ``GRID_pro0_kW``, "Nominal grid electricity requirements for industrial processes"
     ``GRID_pro_MWhyr``, "Grid electricity requirements for industrial processes"
+    ``GRID_v0_kW``, "Nominal grid electricity consumption for electric vehicles"
+    ``GRID_v_MWhyr``, "Grid electricity requirements for electric vehicles"
+    ``GRID_ve0_kW``, "Nominal grid electricity consumption for ventilation"
+    ``GRID_ve_MWhyr``, "Grid electricity requirements for ventilation"
     ``GRID_ww0_kW``, "Nominal grid electricity requirements for hot water supply"
     ``GRID_ww_MWhyr``, "Grid electricity requirements for hot water supply"
     ``Name``, "Unique building ID. It must start with a letter."
@@ -3327,7 +3364,7 @@ The following file is used by these scripts: ``decentralized``, ``emissions``, `
     ``PV0_kW``, "Nominal PV electricity consumption"
     ``PV_MWhyr``, "PV electricity consumption"
     ``QC_sys0_kW``, "Nominal Total system cooling demand."
-    ``QC_sys_MWhyr``, "Total system cooling demand"
+    ``QC_sys_MWhyr``, "Total energy demand for cooling, QC_sys = Qcs_sys + Qcdata_sys + Qcre_sys + Qcpro_sys"
     ``Qcdata0_kW``, "Nominal Data centre cooling demand."
     ``Qcdata_MWhyr``, "Data centre cooling demand"
     ``Qcdata_sys0_kW``, "Nominal end-use data center cooling demand"
@@ -3339,67 +3376,67 @@ The following file is used by these scripts: ``decentralized``, ``emissions``, `
     ``Qcre_sys0_kW``, " Nominal refrigeration cooling demand"
     ``Qcre_sys_MWhyr``, "End-use refrigeration demand"
     ``Qcs0_kW``, "Nominal Total cooling demand."
-    ``Qcs_dis_ls0_kW``, "Nominal Cool distribution losses."
-    ``Qcs_dis_ls_MWhyr``, "Cool distribution losses"
-    ``Qcs_em_ls0_kW``, "Nominal Cool emission losses."
-    ``Qcs_em_ls_MWhyr``, "Cool emission losses"
-    ``Qcs_lat_ahu0_kW``, "Nominal AHU latent cool demand."
-    ``Qcs_lat_ahu_MWhyr``, "AHU latent cool demand"
-    ``Qcs_lat_aru0_kW``, "Nominal ARU latent cool demand."
-    ``Qcs_lat_aru_MWhyr``, "ARU latent cool demand"
-    ``Qcs_lat_sys0_kW``, "Nominal System latent cool demand."
-    ``Qcs_lat_sys_MWhyr``, "System latent cool demand"
-    ``Qcs_MWhyr``, "Total cool demand"
-    ``Qcs_sen_ahu0_kW``, "Nominal AHU system cool demand."
-    ``Qcs_sen_ahu_MWhyr``, "AHU system cool demand"
-    ``Qcs_sen_aru0_kW``, "Nominal ARU system cool demand."
-    ``Qcs_sen_aru_MWhyr``, "ARU system cool demand"
-    ``Qcs_sen_scu0_kW``, "Nominal SCU system cool demand."
-    ``Qcs_sen_scu_MWhyr``, "SCU system cool demand"
-    ``Qcs_sen_sys0_kW``, "Nominal Sensible system cool demand."
-    ``Qcs_sen_sys_MWhyr``, "Sensible system cool demand"
+    ``Qcs_dis_ls0_kW``, "Nominal Cooling distribution losses."
+    ``Qcs_dis_ls_MWhyr``, "Cooling distribution losses"
+    ``Qcs_em_ls0_kW``, "Nominal Cooling emission losses."
+    ``Qcs_em_ls_MWhyr``, "Cooling emission losses"
+    ``Qcs_lat_ahu0_kW``, "Nominal AHU latent cooling demand."
+    ``Qcs_lat_ahu_MWhyr``, "AHU latent cooling demand"
+    ``Qcs_lat_aru0_kW``, "Nominal ARU latent cooling demand."
+    ``Qcs_lat_aru_MWhyr``, "ARU latent cooling demand"
+    ``Qcs_lat_sys0_kW``, "Nominal System latent cooling demand."
+    ``Qcs_lat_sys_MWhyr``, "Latent cooling demand"
+    ``Qcs_MWhyr``, "Total cooling demand"
+    ``Qcs_sen_ahu0_kW``, "Nominal AHU system cooling demand."
+    ``Qcs_sen_ahu_MWhyr``, "AHU system cooling demand"
+    ``Qcs_sen_aru0_kW``, "Nominal ARU system cooling demand."
+    ``Qcs_sen_aru_MWhyr``, "ARU system cooling demand"
+    ``Qcs_sen_scu0_kW``, "Nominal SCU system cooling demand."
+    ``Qcs_sen_scu_MWhyr``, "SCU system cooling demand"
+    ``Qcs_sen_sys0_kW``, "Nominal Sensible system cooling demand."
+    ``Qcs_sen_sys_MWhyr``, "Sensible system cooling demand"
     ``Qcs_sys0_kW``, "Nominal end-use space cooling demand"
-    ``Qcs_sys_ahu0_kW``, "Nominal AHU system cool demand."
-    ``Qcs_sys_ahu_MWhyr``, "AHU system cool demand"
-    ``Qcs_sys_aru0_kW``, "Nominal ARU system cool demand."
-    ``Qcs_sys_aru_MWhyr``, "ARU system cool demand"
-    ``Qcs_sys_MWhyr``, "End-use space cooling demand"
-    ``Qcs_sys_scu0_kW``, "Nominal SCU system cool demand."
-    ``Qcs_sys_scu_MWhyr``, "SCU system cool demand"
+    ``Qcs_sys_ahu0_kW``, "Nominal AHU system cooling demand."
+    ``Qcs_sys_ahu_MWhyr``, "AHU system cooling demand"
+    ``Qcs_sys_aru0_kW``, "Nominal ARU system cooling demand."
+    ``Qcs_sys_aru_MWhyr``, "ARU system cooling demand"
+    ``Qcs_sys_MWhyr``, "End-use space cooling demand, Qcs_sys = Qcs_sen_sys + Qcs_lat_sys + Qcs_em_ls + Qcs_dis_ls"
+    ``Qcs_sys_scu0_kW``, "Nominal SCU system cooling demand."
+    ``Qcs_sys_scu_MWhyr``, "SCU system cooling demand"
     ``QH_sys0_kW``, "Nominal total building heating demand."
-    ``QH_sys_MWhyr``, "Total building heating demand"
-    ``Qhpro_sys0_kW``, "Nominal process heat demand."
-    ``Qhpro_sys_MWhyr``, "Yearly processes heat demand."
+    ``QH_sys_MWhyr``, "Total energy demand for heating"
+    ``Qhpro_sys0_kW``, "Nominal process heating demand."
+    ``Qhpro_sys_MWhyr``, "Yearly processes heating demand."
     ``Qhs0_kW``, "Nominal Total heating demand."
     ``Qhs_dis_ls0_kW``, "Nominal Heating system distribution losses."
     ``Qhs_dis_ls_MWhyr``, "Heating system distribution losses"
     ``Qhs_em_ls0_kW``, "Nominal Heating emission losses."
     ``Qhs_em_ls_MWhyr``, "Heating system emission losses"
-    ``Qhs_lat_ahu0_kW``, "Nominal AHU latent heat demand."
-    ``Qhs_lat_ahu_MWhyr``, "AHU latent heat demand"
-    ``Qhs_lat_aru0_kW``, "Nominal ARU latent heat demand."
-    ``Qhs_lat_aru_MWhyr``, "ARU latent heat demand"
-    ``Qhs_lat_sys0_kW``, "Nominal System latent heat demand."
-    ``Qhs_lat_sys_MWhyr``, "System latent heat demand"
+    ``Qhs_lat_ahu0_kW``, "Nominal AHU latent heating demand."
+    ``Qhs_lat_ahu_MWhyr``, "AHU latent heating demand"
+    ``Qhs_lat_aru0_kW``, "Nominal ARU latent heating demand."
+    ``Qhs_lat_aru_MWhyr``, "ARU latent heating demand"
+    ``Qhs_lat_sys0_kW``, "Nominal System latent heating demand."
+    ``Qhs_lat_sys_MWhyr``, "System latent heating demand"
     ``Qhs_MWhyr``, "Total heating demand"
-    ``Qhs_sen_ahu0_kW``, "Nominal AHU sensible heat demand."
-    ``Qhs_sen_ahu_MWhyr``, "AHU sensible heat demand"
-    ``Qhs_sen_aru0_kW``, "ARU sensible heat demand"
-    ``Qhs_sen_aru_MWhyr``, "ARU sensible heat demand"
-    ``Qhs_sen_shu0_kW``, "Nominal SHU sensible heat demand."
-    ``Qhs_sen_shu_MWhyr``, "SHU sensible heat demand"
-    ``Qhs_sen_sys0_kW``, "Nominal HVAC systems sensible heat demand."
-    ``Qhs_sen_sys_MWhyr``, "SHU sensible heat demand"
+    ``Qhs_sen_ahu0_kW``, "Nominal AHU sensible heating demand."
+    ``Qhs_sen_ahu_MWhyr``, "Sensible heating demand in AHU"
+    ``Qhs_sen_aru0_kW``, "ARU sensible heating demand"
+    ``Qhs_sen_aru_MWhyr``, "ARU sensible heating demand"
+    ``Qhs_sen_shu0_kW``, "Nominal SHU sensible heating demand."
+    ``Qhs_sen_shu_MWhyr``, "SHU sensible heating demand"
+    ``Qhs_sen_sys0_kW``, "Nominal HVAC systems sensible heating demand."
+    ``Qhs_sen_sys_MWhyr``, "Sensible heating demand"
     ``Qhs_sys0_kW``, "Nominal end-use space heating demand"
-    ``Qhs_sys_ahu0_kW``, "Nominal AHU sensible heat demand."
-    ``Qhs_sys_ahu_MWhyr``, "AHU system heat demand"
-    ``Qhs_sys_aru0_kW``, "Nominal ARU sensible heat demand."
-    ``Qhs_sys_aru_MWhyr``, "ARU sensible heat demand"
-    ``Qhs_sys_MWhyr``, "End-use space heating demand"
-    ``Qhs_sys_shu0_kW``, "Nominal SHU sensible heat demand."
-    ``Qhs_sys_shu_MWhyr``, "SHU sensible heat demand"
-    ``Qww0_kW``, "Nominal DHW heat demand."
-    ``Qww_MWhyr``, "DHW heat demand"
+    ``Qhs_sys_ahu0_kW``, "Nominal AHU sensible heating demand."
+    ``Qhs_sys_ahu_MWhyr``, "AHU system heating demand"
+    ``Qhs_sys_aru0_kW``, "Nominal ARU sensible heating demand."
+    ``Qhs_sys_aru_MWhyr``, "ARU sensible heating demand"
+    ``Qhs_sys_MWhyr``, "End-use space heating demand, Qhs_sys = Qhs_sen_sys + Qhs_em_ls + Qhs_dis_ls"
+    ``Qhs_sys_shu0_kW``, "Nominal SHU sensible heating demand."
+    ``Qhs_sys_shu_MWhyr``, "SHU sensible heating demand"
+    ``Qww0_kW``, "Nominal DHW heating demand."
+    ``Qww_MWhyr``, "DHW heating demand"
     ``Qww_sys0_kW``, "Nominal end-use hotwater demand"
     ``Qww_sys_MWhyr``, "End-use hotwater demand"
     ``SOLAR_hs0_kW``, "Nominal solar thermal energy requirement for space heating supply"

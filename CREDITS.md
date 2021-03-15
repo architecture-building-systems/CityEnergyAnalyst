@@ -9,6 +9,48 @@ The CEA team
 Starting from version 2.9.1 the credits are structured alphabetically (surname) and split into the categories of developers,
 scrum master, project owner, project sponsor and collaborators.
 
+- Version 3.18.0 - January 2021
+
+    Developers:
+    * [Amr Elesawy](https://systems.arch.ethz.ch/amr-elesawy)
+    * [Jimeno A. Fonseca](http://www.systems.arch.ethz.ch/about-us/team/team-singapore/jimeno-fonseca.html)
+    * [Gabriel Happle](http://www.systems.arch.ethz.ch/about-us/team/team-singapore/gabriel-happle.html)
+    * [Shanshan Hsieh](https://systems.arch.ethz.ch/shanshan-hsieh)
+    * [Reynold Mok](http://https://cityenergyanalyst.com/community)
+    * [Martín Mosteiro Romero](http://www.systems.arch.ethz.ch/about-us/team/team-zurich/martin-mosteiro-romero.html)
+    * [Anastasiya Popova](https://systems.arch.ethz.ch/anastasiya-popova)
+    * [Zhongming Shi](http://www.systems.arch.ethz.ch/about-us/team/team-singapore/zhongming-shi.html)
+    * [Bhargava Krishna Sreepathi](http://www.systems.arch.ethz.ch/about-us/team/team-singapore/sreepathi-bhargava-krishna.html)
+    * [Daren Thomas](https://systems.arch.ethz.ch/daren-thomas)
+
+    Scrum master:
+    * [Daren Thomas](http://www.systems.arch.ethz.ch/about-us/team/team-zurich/daren-thomas.html)
+
+    Project owner:
+    * [Shanshan Hsieh](http://www.systems.arch.ethz.ch/about-us/team/team-singapore/shanshan-hsieh.html)
+
+    Project sponsor:
+    * [Arno Schlueter](http://www.systems.arch.ethz.ch/about-us/team/arno-schlueter.html)
+    * [Jimeno A. Fonseca](http://www.systems.arch.ethz.ch/about-us/team/team-singapore/jimeno-fonseca.html)
+    * [Christian Schaffner](https://esc.ethz.ch/people/person-detail.schaffner.html)
+
+    Collaborators:
+    * Jose Bello
+    * Anastasiya Bosova
+    * Kian Wee Chen
+    * Jack Hawthorne
+    * Fazel Khayatian
+    * Victor Marty
+    * Paul Neitzel
+    * Thuy-An Nguyen
+    * Bo Lie Ong
+    * Emanuel Riegelbauer
+    * Lennart Rogenhofer
+    * Toivo Säwén
+    * Luis Santos
+    * Sebastian Troiztsch
+    * Tim Vollrath
+
 - Version 3.15.0 - November 2020
 
     Developers:
