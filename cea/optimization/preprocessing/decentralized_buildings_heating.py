@@ -103,31 +103,30 @@ def disconnected_heating_for_building(building_name, supply_systems, T_ground_K,
     Tsup_K = substation_results["T_supply_DH_result_K"].values
     mdot_kgpers = substation_results["mdot_DH_result_kgpers"].values
     ## Start Hourly calculation
-    print(building_name, ' decentralized heating supply systems simulations...')
     Tret_K = np.where(Tret_K > 0.0, Tret_K, Tsup_K)
     ## 0: Boiler NG
     BoilerEff = np.vectorize(Boiler.calc_Cop_boiler)(q_load_Wh, Qnom_W, Tret_K)
     Qgas_to_Boiler_Wh = np.divide(q_load_Wh, BoilerEff, out=np.zeros_like(q_load_Wh), where=BoilerEff != 0.0)
     Boiler_Status = np.where(Qgas_to_Boiler_Wh > 0.0, 1, 0)
     # add costs
-    Opex_a_var_USD[0][4] += sum(prices.NG_PRICE * Qgas_to_Boiler_Wh)  # CHF
+    Opex_a_var_USD[0][4] += sum(prices.NG_PRICE * Qgas_to_Boiler_Wh)
     GHG_tonCO2[0][5] += sum(calc_emissions_Whyr_to_tonCO2yr(Qgas_to_Boiler_Wh, lca.NG_TO_CO2_EQ))  # ton CO2
     # add activation
     resourcesRes[0][0] += sum(q_load_Wh)  # q from NG
     heating_dispatch[0] = {'Q_Boiler_gen_directload_W': q_load_Wh,
                            'Boiler_Status': Boiler_Status,
                            'NG_Boiler_req_W': Qgas_to_Boiler_Wh,
-                           'E_hs_ww_req_W': np.zeros(8760)}
+                           'E_hs_ww_req_W': np.zeros(len(q_load_Wh))}
     ## 1: Boiler BG
     # add costs
-    Opex_a_var_USD[1][4] += sum(prices.BG_PRICE * Qgas_to_Boiler_Wh)  # CHF
+    Opex_a_var_USD[1][4] += sum(prices.BG_PRICE * Qgas_to_Boiler_Wh)
     GHG_tonCO2[1][5] += sum(calc_emissions_Whyr_to_tonCO2yr(Qgas_to_Boiler_Wh, lca.NG_TO_CO2_EQ))  # ton CO2
     # add activation
     resourcesRes[1][1] += sum(q_load_Wh)  # q from BG
     heating_dispatch[1] = {'Q_Boiler_gen_directload_W': q_load_Wh,
                            'Boiler_Status': Boiler_Status,
                            'BG_Boiler_req_W': Qgas_to_Boiler_Wh,
-                           'E_hs_ww_req_W': np.zeros(8760)}
+                           'E_hs_ww_req_W': np.zeros(len(q_load_Wh))}
     ## 2: Fuel Cell
     (FC_Effel, FC_Effth) = np.vectorize(FC.calc_eta_FC)(q_load_Wh, Qnom_W, 1, "B")
     Qgas_to_FC_Wh = q_load_Wh / (FC_Effth + FC_Effel)  # FIXME: should be q_load_Wh/FC_Effth?
@@ -135,7 +134,7 @@ def disconnected_heating_for_building(building_name, supply_systems, T_ground_K,
     FC_Status = np.where(Qgas_to_FC_Wh > 0.0, 1, 0)
     # add variable costs, emissions and primary energy
     Opex_a_var_USD[2][4] += sum(
-        prices.NG_PRICE * Qgas_to_FC_Wh - prices.ELEC_PRICE_EXPORT * el_from_FC_Wh)  # CHF, extra electricity sold to grid
+        prices.NG_PRICE * Qgas_to_FC_Wh - prices.ELEC_PRICE_EXPORT * el_from_FC_Wh)  # extra electricity sold to grid
     GHG_tonCO2_from_FC = (0.0874 * Qgas_to_FC_Wh * 3600E-6 + 773 * 0.45 * el_from_FC_Wh * 1E-6 -
                           lca.EL_TO_CO2_EQ * el_from_FC_Wh * 3600E-6) / 1E3
     GHG_tonCO2[2][5] += sum(GHG_tonCO2_from_FC)  # tonCO2
@@ -148,7 +147,7 @@ def disconnected_heating_for_building(building_name, supply_systems, T_ground_K,
                            'Fuelcell_Status': FC_Status,
                            'NG_FuelCell_req_W': Qgas_to_FC_Wh,
                            'E_Fuelcell_gen_export_W': el_from_FC_Wh,
-                           'E_hs_ww_req_W': np.zeros(8760)}
+                           'E_hs_ww_req_W': np.zeros(len(q_load_Wh))}
     # 3-13: Boiler NG + GHP
     for i in range(10):
         # set nominal size for Boiler and GHP
@@ -186,11 +185,11 @@ def disconnected_heating_for_building(building_name, supply_systems, T_ground_K,
         # add costs
         # electricity
         el_total_Wh = el_GHP_Wh
-        Opex_a_var_USD[3 + i][4] += sum(prices.ELEC_PRICE * el_total_Wh)  # CHF
+        Opex_a_var_USD[3 + i][4] += sum(prices.ELEC_PRICE * el_total_Wh)
         GHG_tonCO2[3 + i][5] += sum(calc_emissions_Whyr_to_tonCO2yr(el_total_Wh, lca.EL_TO_CO2_EQ))  # ton CO2
         # gas
         Q_gas_total_Wh = Qgas_to_GHPBoiler_Wh + Qgas_to_Boiler_Wh
-        Opex_a_var_USD[3 + i][4] += sum(prices.NG_PRICE * Q_gas_total_Wh)  # CHF
+        Opex_a_var_USD[3 + i][4] += sum(prices.NG_PRICE * Q_gas_total_Wh)
         GHG_tonCO2[3 + i][5] += sum(calc_emissions_Whyr_to_tonCO2yr(Q_gas_total_Wh, lca.NG_TO_CO2_EQ))  # ton CO2
         # add activation
         resourcesRes[3 + i][0] = sum(qhot_missing_Wh + q_load_NG_Boiler_Wh)
@@ -203,8 +202,8 @@ def disconnected_heating_for_building(building_name, supply_systems, T_ground_K,
                                    'GHP_Status': GHP_Status,
                                    'BackupBoiler_Status': GHPbackupBoiler_Status,
                                    'Boiler_Status': Boiler_Status,
-                                   'NG_BackupBoiler_req_Wh': Qgas_to_GHPBoiler_Wh,
-                                   'NG_Boiler_req_Wh': Qgas_to_Boiler_Wh,
+                                   'NG_BackupBoiler_req_W': Qgas_to_GHPBoiler_Wh,
+                                   'NG_Boiler_req_W': Qgas_to_Boiler_Wh,
                                    'E_hs_ww_req_W': el_GHP_Wh}
     # Add all costs
     # 0: Boiler NG
@@ -276,7 +275,6 @@ def disconnected_heating_for_building(building_name, supply_systems, T_ground_K,
     Bestfound = False
     optsearch = np.empty(el)
     optsearch.fill(3)
-    indexBest = 0
     geothermal_potential = geothermal_potential_data.set_index('Name')
     # Check the GHP area constraint
     for i in range(10):
@@ -314,10 +312,26 @@ def disconnected_heating_for_building(building_name, supply_systems, T_ground_K,
     results_to_csv = pd.DataFrame(performance_results)
     fName_result = locator.get_optimization_decentralized_folder_building_result_heating(building_name)
     results_to_csv.to_csv(fName_result, sep=',', index=False)
-    # save activation for the best supply system configuration
-    best_activation_df = pd.DataFrame.from_dict(heating_dispatch[indexBest])  #
-    best_activation_df.to_csv(
-        locator.get_optimization_decentralized_folder_building_result_heating_activation(building_name), index=False)
+    # save heating activation for the best supply system configuration
+    best_activation_df = pd.DataFrame.from_dict(heating_dispatch[indexBest])
+    heating_dispatch_columns = get_unique_keys_from_dicts(heating_dispatch)
+    heating_dispatch_df = pd.DataFrame(columns=heating_dispatch_columns, index=range(len(best_activation_df)))
+    heating_dispatch_df.update(best_activation_df)
+    heating_dispatch_df.to_csv(
+        locator.get_optimization_decentralized_folder_building_result_heating_activation(building_name),
+        index=False, na_rep='nan')
+
+
+def get_unique_keys_from_dicts(heating_dispatch):
+    """
+    Get unique keys from all dicts in heating_dispatch
+    """
+    unique_keys = []
+    for key in heating_dispatch.keys():
+        unique_keys.extend([*heating_dispatch[key]])
+    uniq_set = set()
+    unique_keys = [x for x in unique_keys if x not in uniq_set and not uniq_set.add(x)]
+    return unique_keys
 
 
 def calc_GHP_operation(QnomGHP_W, T_ground_K, Texit_GHP_nom_K, Tret_K, Tsup_K, mdot_kgpers, q_load_Wh):
@@ -338,19 +352,19 @@ def calc_GHP_operation(QnomGHP_W, T_ground_K, Texit_GHP_nom_K, Tret_K, Tsup_K, m
     return el_GHP_Wh, q_load_NG_Boiler_Wh, qhot_missing_Wh, tsup2_K, q_from_GHP_Wh
 
 
-def calc_new_load(mdot_kgpers, TsupDH, Tret):
+def calc_new_load(mdot_kgpers, Tsup_K, Tret_K):
     """
     This function calculates the load distribution side of the district heating distribution.
     :param mdot_kgpers: mass flow
-    :param TsupDH: supply temeperature
-    :param Tret: return temperature
+    :param Tsup_K: supply temperature
+    :param Tret_K: return temperature
     :type mdot_kgpers: float
-    :type TsupDH: float
-    :type Tret: float
+    :type Tsup_K: float
+    :type Tret_K: float
     :return: Qload_W: load of the distribution
     :rtype: float
     """
-    Qload_W = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (TsupDH - Tret)
+    Qload_W = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (Tsup_K - Tret_K)
     if Qload_W < 0:
         Qload_W = 0
     return Qload_W
