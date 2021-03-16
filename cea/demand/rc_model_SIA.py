@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 
 
-
-
-
 import numpy as np
 from cea.demand import constants
 
@@ -611,8 +608,8 @@ def calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr, tsd, t):
 
     T_int, theta_c, theta_m, theta_o, theta_ea, theta_ec, theta_em, h_ea, h_ec, h_em, h_op_m \
         = _calc_rc_model_temperatures(Ea, El, Epro, Htr_op, Htr_w, I_sol, Qs, T_ext, a_m, a_t, a_w, c_m, m_ve_inf,
-                                                                     m_ve_mech, m_ve_window, phi_hc_cv,
-                                                                     phi_hc_r, theta_m_t_1, theta_ve_mech)
+                                      m_ve_mech, m_ve_window, phi_hc_cv,
+                                      phi_hc_r, theta_m_t_1, theta_ve_mech)
 
     if T_WARNING_LOW > T_int or T_WARNING_LOW > theta_c or T_WARNING_LOW > theta_m \
             or T_int > T_WARNING_HIGH or theta_c > T_WARNING_HIGH or theta_m > T_WARNING_HIGH:

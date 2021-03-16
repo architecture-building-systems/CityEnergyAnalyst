@@ -6,8 +6,11 @@ Demand model of thermal loads
 
 
 
+import math
+
 import numpy as np
 import pandas as pd
+import os
 
 from cea.constants import HOURS_IN_YEAR, HOURS_PRE_CONDITIONING
 from cea.demand import demand_writers
@@ -16,6 +19,8 @@ from cea.demand import latent_loads
 from cea.demand import sensible_loads, electrical_loads, hotwater_loads, refrigeration_loads, datacenter_loads
 from cea.demand import ventilation_air_flows_detailed, control_heating_cooling_systems
 from cea.demand.latent_loads import convert_rh_to_moisture_content
+from cea.utilities.physics import calc_wet_bulb_temperature
+from cea.technologies import heatpumps
 from cea.utilities import reporting
 
 
@@ -71,7 +76,22 @@ def calc_thermal_loads(building_name, bpr, weather_data, date_range, locator,
     :rtype: NoneType
 
 """
-    schedules, tsd = initialize_inputs(bpr, weather_data, locator)
+    actual_weather_data = weather_data.copy(deep=True)
+
+    if config.demand.use_microclimate_data:
+        # check if microclimate data is available
+        # if os.path.isfile(os.path.join(locator.get_microclimate_folder(), building_name + '.csv')):
+        if os.path.isfile(os.path.join(locator.get_microclimate_file(building_name))):
+            print('microclimate data for building {} found, replacing standard weather values'.format(building_name))
+            microclimate_data = pd.read_csv(os.path.join(locator.get_microclimate_file(building_name)),
+                                            index_col='hoy')
+            # replace available microclimate data in building's weather data
+            actual_weather_data.loc[microclimate_data.index, ['drybulb_C', 'relhum_percent', 'windspd_ms']] = \
+                microclimate_data[['drybulb_C', 'relhum_percent', 'windspd_ms']]
+            actual_weather_data.loc[microclimate_data.index, 'wetbulb_C'] = calc_wet_bulb_temperature(
+                microclimate_data['drybulb_C'], microclimate_data['relhum_percent'])
+
+    schedules, tsd = initialize_inputs(bpr, actual_weather_data, locator)
 
     # CALCULATE ELECTRICITY LOADS
     tsd = electrical_loads.calc_Eal_Epro(tsd, schedules)
@@ -110,10 +130,8 @@ def calc_thermal_loads(building_name, bpr, weather_data, date_range, locator,
         print(f"building {bpr.name} does not have an air-conditioned area")
     else:
         tsd = latent_loads.calc_Qgain_lat(tsd, schedules)
-        tsd = calc_set_points(bpr, date_range, tsd, building_name, config, locator,
-                              schedules)  # calculate the setpoints for every hour
-        tsd = calc_Qhs_Qcs(bpr, tsd,
-                           use_dynamic_infiltration_calculation)  # end-use demand latent and sensible + ventilation
+        tsd = calc_set_points(bpr, date_range, tsd, building_name, config, locator, schedules)  # calculate the setpoints for every hour
+        tsd = calc_Qhs_Qcs(bpr, tsd, use_dynamic_infiltration_calculation, config)  # end-use demand latent and sensible + ventilation
         tsd = sensible_loads.calc_Qhs_Qcs_loss(bpr, tsd)  # losses
         tsd = sensible_loads.calc_Qhs_sys_Qcs_sys(tsd)  # system (incl. losses)
         tsd = sensible_loads.calc_temperatures_emission_systems(bpr, tsd)  # calculate temperatures
@@ -303,7 +321,7 @@ def calc_set_points(bpr, date, tsd, building_name, config, locator, schedules):
     return tsd
 
 
-def calc_Qhs_Qcs(bpr, tsd, use_dynamic_infiltration_calculation):
+def calc_Qhs_Qcs(bpr, tsd, use_dynamic_infiltration_calculation, config):
     # get ventilation flows
     ventilation_air_flows_simple.calc_m_ve_required(tsd)
     ventilation_air_flows_simple.calc_m_ve_leakage_simple(bpr, tsd)
@@ -312,7 +330,7 @@ def calc_Qhs_Qcs(bpr, tsd, use_dynamic_infiltration_calculation):
     for t in get_hours(bpr):
 
         # heat flows in [W]
-        tsd = sensible_loads.calc_Qgain_sen(t, tsd, bpr)
+        tsd = sensible_loads.calc_Qgain_sen(t, tsd, bpr, config)
 
         if use_dynamic_infiltration_calculation:
             # OVERWRITE STATIC INFILTRATION WITH DYNAMIC INFILTRATION RATE
@@ -344,8 +362,6 @@ def initialize_inputs(bpr, weather_data, locator):
     :param weather_data: data from the .epw weather file. Each row represents an hour of the year. The columns are:
         ``drybulb_C``, ``relhum_percent``, and ``windspd_ms``
     :type weather_data: pandas.DataFrame
-    :param date_range: the pd.date_range of the calculation year
-    :type date_range: pd.date_range
     :param locator: the input locator
     :type locator: cea.inpultlocator.InputLocator
     :returns: one dict of schedules, one dict of time step data

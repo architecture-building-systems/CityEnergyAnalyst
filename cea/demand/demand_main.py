@@ -43,18 +43,6 @@ def demand_calculation(locator, config):
     :param locator: An InputLocator to locate input files
     :type locator: cea.inputlocator.InputLocator
 
-    :param weather_path: A path to the EnergyPlus weather data file (.epw)
-    :type weather_path: str
-
-    :param use_dynamic_infiltration_calculation: Set this to ``True`` if the (slower) dynamic infiltration
-        calculation method (:py:func:`cea.demand.ventilation_air_flows_detailed.calc_air_flows`) should be used instead
-        of the standard.
-    :type use_dynamic_infiltration_calculation: bool
-
-    :param multiprocessing: Set this to ``True`` if the :py:mod:`multiprocessing` module should be used to speed up
-        calculations by making use of multiple cores.
-    :type multiprocessing: bool
-
     :returns: None
     :rtype: NoneType
 
@@ -141,6 +129,10 @@ def main(config):
     print('Running demand calculation for scenario %s' % config.scenario)
     print('Running demand calculation with dynamic infiltration=%s' %
           config.demand.use_dynamic_infiltration_calculation)
+    print('Running demand calculation with dynamic convective heat transfer=%s' %
+          config.demand.use_dynamic_convective_heat_transfer_calculation)
+    print('Running demand calculation with microclimate simulation data=%s' %
+          config.demand.use_microclimate_data)
     print('Running demand calculation with multiprocessing=%s' % config.multiprocessing)
     if config.debug:
         print('Running demand in debug mode: Instant visualization of tsd activated.')
