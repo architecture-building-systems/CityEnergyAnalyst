@@ -32,7 +32,7 @@ H_MS = constants.H_MS
 H_IS = constants.H_IS
 B_F = constants.B_F
 LAMBDA_AT = constants.LAMBDA_AT
-
+MICROCLIMATE_DATA_COLUMNS = ['drybulb_C', 'wetbulb_C', 'relhum_percent', 'windspd_ms']
 
 class BuildingProperties(object):
     """
@@ -967,7 +967,7 @@ def calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, confi
         weather_data = epw_reader(locator.get_weather_file())
         if config.demand.use_microclimate_data:
             microclimate_data = pd.read_csv(os.path.join(locator.get_microclimate_file(building_name)),
-                                            index_col='hoy')
+                                            index_col='hoy')[MICROCLIMATE_DATA_COLUMNS]
             weather_data.loc[microclimate_data.index, microclimate_data.columns] = microclimate_data.values
         wind_speed = weather_data['windspd_ms'].values
         h_c = np.vectorize(calc_hc)(wind_speed)
