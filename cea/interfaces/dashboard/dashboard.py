@@ -31,7 +31,7 @@ def main(config):
     app.socketio = socketio
 
     print("start socketio.run")
-    socketio.run(app, host='0.0.0.0', port=5050)
+    socketio.run(app, host=config.server.host, port=config.server.port)
     print("done socketio.run")
 
 
