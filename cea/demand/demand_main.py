@@ -11,12 +11,12 @@ from itertools import repeat
 import cea.config
 import cea.inputlocator
 import cea.utilities.parallel
-from . import demand_writers
 from cea import MissingInputDataException
 from cea.demand import thermal_loads
 from cea.demand.building_properties import BuildingProperties
 from cea.utilities import epwreader
 from cea.utilities.date import get_date_range_hours_from_year
+from . import demand_writers
 
 warnings.filterwarnings("ignore")
 
@@ -101,7 +101,8 @@ def demand_calculation(locator, config):
 
     list_buildings_less_100m2 = calc_buildings_less_100m2(building_properties)
     if list_buildings_less_100m2 != []:
-        print('Warning! The following list of buildings have less than 100 m2 of gross floor area, CEA might fail: %s' % list_buildings_less_100m2)
+        print(
+            'Warning! The following list of buildings have less than 100 m2 of gross floor area, CEA might fail: %s' % list_buildings_less_100m2)
 
     # DEMAND CALCULATION
     n = len(building_names)
@@ -124,11 +125,9 @@ def demand_calculation(locator, config):
 
     # WRITE TOTAL YEARLY VALUES
     writer_totals = demand_writers.YearlyDemandWriter(loads_output, massflows_output, temperatures_output)
-    totals, time_series = writer_totals.write_to_csv(building_names, locator)
+    writer_totals.write_to_csv(building_names, locator)
     time_elapsed = time.perf_counter() - t0
     print('done - time elapsed: %d.2 seconds' % time_elapsed)
-
-    return totals, time_series
 
 
 def print_progress(i, n, args, _):
