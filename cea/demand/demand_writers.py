@@ -170,11 +170,11 @@ class YearlyDemandWriter(DemandWriter):
                 df = df.append(pd.read_csv(temporary_file), ignore_index=True)
         df.to_csv(locator.get_total_demand('csv'), index=False, float_format='%.3f', na_rep='nan')
 
-        """read saved data of monthly values and return as totals"""
-        monthly_data_buildings = [pd.read_csv(locator.get_demand_results_file(building_name, 'csv')) for building_name
-                                  in
-                                  list_buildings]
-        return df, monthly_data_buildings
+        # """read saved data of monthly values and return as totals"""
+        # monthly_data_buildings = [pd.read_csv(locator.get_demand_results_file(building_name, 'csv')) for building_name
+        #                           in
+        #                           list_buildings]
+        # return df, monthly_data_buildings
 
     def write_to_hdf5(self, list_buildings, locator):
         """read in the temporary results files and append them to the Totals.csv file."""

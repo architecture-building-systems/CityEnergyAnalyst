@@ -73,7 +73,8 @@ def schemas(plugins):
 
         # add the plugins - these don't use caches as their schemas.yml are (probably) much shorter
         for plugin in plugins:
-            __schemas[key].update(plugin.schemas)
+            if plugin.schemas is not None:
+                __schemas[key].update(plugin.schemas)
     return __schemas[key]
 
 

@@ -270,7 +270,7 @@ def calc_schedules(locator,
     yearly_occupancy_schedules.to_csv(locator.get_schedule_model_file(building), index=False, na_rep='OFF',
                                       float_format='%.3f')
 
-    return final_dict
+    # return final_dict
 
 
 def convert_schedule_string_to_temperature(schedule_string, schedule_type, Ths_set_C, Ths_setb_C, Tcs_set_C,
