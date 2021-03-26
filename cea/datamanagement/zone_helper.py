@@ -116,10 +116,9 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, buildings_he
         shapefile["description"] = [np.nan] * no_buildings
 
     shapefile["category"] = shapefile['building']
-    for index in shapefile.index:
-        # in OSM, "amenities" (where available) supersede "building" categories
-        if shapefile.loc[index, "amenity"] in OSM_BUILDING_CATEGORIES.keys():
-            shapefile.loc[index, "category"] = shapefile.loc[index, "amenity"]
+    # in OSM, "amenities" (where available) supersede "building" categories
+    in_categories = shapefile['amenity'].isin(OSM_BUILDING_CATEGORIES.keys())
+    shapefile.loc[in_categories, '1ST_USE'] = shapefile[in_categories]['amenity'].map(OSM_BUILDING_CATEGORIES)
 
     shapefile["Name"] = [key + str(x + 1000) for x in
                          range(no_buildings)]  # start in a big number to avoid potential confusion
@@ -195,21 +194,13 @@ def calculate_typology_file(locator, zone_df, year_construction, occupancy_type,
     typology_df['3RD_USE'] = "NONE"
     typology_df['3RD_USE_R'] = 0.0
     if occupancy_type == "Get it from open street maps":
-        no_buildings = typology_df.shape[0]
-        for index in range(no_buildings):
-            if zone_df.loc[index, "category"] in OSM_BUILDING_CATEGORIES.keys():
-                # for OSM building/amenity types with a clear CEA use type, this use type is assigned
-                typology_df.loc[index, '1ST_USE'] = OSM_BUILDING_CATEGORIES[zone_df.loc[index, "category"]]
-                typology_df.loc[index, "REFERENCE"] = "OSM - as it is"
-            elif (zone_df.loc[index, "category"] in OTHER_OSM_CATEGORIES_UNCONDITIONED) or \
-                    (zone_df.loc[index, "amenity"] in OTHER_OSM_CATEGORIES_UNCONDITIONED):
-                # for un-conditioned OSM building categories without a clear CEA use type, "PARKING" is assigned
-                typology_df.loc[index, '1ST_USE'] = "PARKING"
-                typology_df.loc[index, "REFERENCE"] = "CEA - assumption"
-            else:
-                # for all other OSM building categories (including "yes"), "MULTI_RES" is assigned
-                typology_df.loc[index, '1ST_USE'] = "MULTI_RES"
-                typology_df.loc[index, "REFERENCE"] = "CEA - assumption"
+        # for OSM building/amenity types with a clear CEA use type, this use type is assigned
+        in_categories = zone_df['category'].isin(OSM_BUILDING_CATEGORIES.keys())
+        zone_df.loc[in_categories, '1ST_USE'] = zone_df[in_categories]['category'].map(OSM_BUILDING_CATEGORIES)
+
+        # for un-conditioned OSM building categories without a clear CEA use type, "PARKING" is assigned
+        in_unconditioned_categories = zone_df['category'].isin(OTHER_OSM_CATEGORIES_UNCONDITIONED) | zone_df['amenity'].isin(OTHER_OSM_CATEGORIES_UNCONDITIONED)
+        zone_df.loc[in_unconditioned_categories, '1ST_USE'] = "PARKING"
 
     fields = COLUMNS_ZONE_TYPOLOGY
     dataframe_to_dbf(typology_df[fields + ['REFERENCE']], occupancy_output_path)
