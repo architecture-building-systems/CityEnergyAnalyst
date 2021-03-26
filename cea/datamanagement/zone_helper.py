@@ -14,8 +14,8 @@ import pandas as pd
 import cea.config
 import cea.inputlocator
 from cea.datamanagement.databases_verification import COLUMNS_ZONE_TYPOLOGY
-from cea.demand import constants
-from cea.datamanagement import constants
+from cea.demand import constants as demand_constants
+from cea.datamanagement import constants as data_contants
 from cea.utilities.dbf import dataframe_to_dbf
 from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_geographic_coordinate_system
 
@@ -88,15 +88,15 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, buildings_he
             math.ceil(np.nanmedian(data_floors_sum_with_nan)))  # median so we get close to the worse case
         shapefile["floors_ag"] = [int(x) if x is not np.nan else data_osm_floors_joined for x in
                                   data_floors_sum_with_nan]
-        shapefile["height_ag"] = shapefile["floors_ag"] * constants.H_F
+        shapefile["height_ag"] = shapefile["floors_ag"] * demand_constants.H_F
     else:
         shapefile['REFERENCE'] = "User - assumption"
         if buildings_height is None and buildings_floors is not None:
             shapefile["floors_ag"] = [buildings_floors] * no_buildings
-            shapefile["height_ag"] = shapefile["floors_ag"] * constants.H_F
+            shapefile["height_ag"] = shapefile["floors_ag"] * demand_constants.H_F
         elif buildings_height is not None and buildings_floors is None:
             shapefile["height_ag"] = [buildings_height] * no_buildings
-            shapefile["floors_ag"] = [int(math.floor(x)) for x in shapefile["height_ag"] / constants.H_F]
+            shapefile["floors_ag"] = [int(math.floor(x)) for x in shapefile["height_ag"] / demand_constants.H_F]
         else:  # both are not none
             shapefile["height_ag"] = [buildings_height] * no_buildings
             shapefile["floors_ag"] = [buildings_floors] * no_buildings
@@ -193,11 +193,11 @@ def calculate_typology_file(locator, zone_df, year_construction, occupancy_type,
     if occupancy_type == "Get it from open street maps":
         no_buildings = typology_df.shape[0]
         for index in range(no_buildings):
-            if zone_df.loc[index, "category"] in OSM_BUILDING_CATEGORIES.keys():
+            if zone_df.loc[index, "category"] in data_contants.OSM_BUILDING_CATEGORIES.keys():
                 # for known OSM building categories with a clear CEA use type, this use type is assigned
-                typology_df.loc[index, '1ST_USE'] = OSM_BUILDING_CATEGORIES[zone_df.loc[index, "category"]]
+                typology_df.loc[index, '1ST_USE'] = data_contants.OSM_BUILDING_CATEGORIES[zone_df.loc[index, "category"]]
                 typology_df.loc[index, "REFERENCE"] = "OSM - as it is"
-            elif zone_df.loc[index, "category"] in OTHER_UNHEATED_OSM_CATEGORIES:
+            elif zone_df.loc[index, "category"] in data_contants.OTHER_UNHEATED_OSM_CATEGORIES:
                 # for unheated OSM building categories without a clear CEA use type, "PARKING" is assigned
                 typology_df.loc[index, '1ST_USE'] = "PARKING"
                 typology_df.loc[index, "REFERENCE"] = "CEA - assumption"
