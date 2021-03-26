@@ -15,6 +15,7 @@ import cea.config
 import cea.inputlocator
 from cea.datamanagement.databases_verification import COLUMNS_ZONE_TYPOLOGY
 from cea.demand import constants
+from cea.datamanagement import constants
 from cea.utilities.dbf import dataframe_to_dbf
 from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_geographic_coordinate_system
 
@@ -192,36 +193,16 @@ def calculate_typology_file(locator, zone_df, year_construction, occupancy_type,
     if occupancy_type == "Get it from open street maps":
         no_buildings = typology_df.shape[0]
         for index in range(no_buildings):
-            if zone_df.loc[index, "category"] == "yes":
-                typology_df.loc[index, '1ST_USE'] = "MULTI_RES"
-                typology_df.loc[index, "REFERENCE"] = "CEA - assumption"
-            elif zone_df.loc[index, "category"] == "residential" or zone_df.loc[index, "category"] == "apartments":
-                typology_df.loc[index, '1ST_USE'] = "MULTI_RES"
+            if zone_df.loc[index, "category"] in OSM_BUILDING_CATEGORIES.keys():
+                # for known OSM building categories with a clear CEA use type, this use type is assigned
+                typology_df.loc[index, '1ST_USE'] = OSM_BUILDING_CATEGORIES[zone_df.loc[index, "category"]]
                 typology_df.loc[index, "REFERENCE"] = "OSM - as it is"
-            elif zone_df.loc[index, "category"] == "commercial" or zone_df.loc[index, "category"] == "civic":
-                typology_df.loc[index, '1ST_USE'] = "OFFICE"
-                typology_df.loc[index, "REFERENCE"] = "OSM - as it is"
-            elif zone_df.loc[index, "category"] == "school":
-                typology_df.loc[index, '1ST_USE'] = "SCHOOL"
-                typology_df.loc[index, "REFERENCE"] = "OSM - as it is"
-            elif zone_df.loc[index, "category"] == "garage" or zone_df.loc[index, "category"] == "garages" or \
-                    zone_df.loc[index, "category"] == "warehouse":
+            elif zone_df.loc[index, "category"] in OTHER_UNHEATED_OSM_CATEGORIES:
+                # for unheated OSM building categories without a clear CEA use type, "PARKING" is assigned
                 typology_df.loc[index, '1ST_USE'] = "PARKING"
-                typology_df.loc[index, "REFERENCE"] = "OSM - as it is"
-            elif zone_df.loc[index, "category"] == "house" or zone_df.loc[index, "category"] == "terrace" or \
-                    zone_df.loc[index, "category"] == "detached":
-                typology_df.loc[index, '1ST_USE'] = "SINGLE_RES"
-                typology_df.loc[index, "REFERENCE"] = "OSM - as it is"
-            elif zone_df.loc[index, "category"] == "retail":
-                typology_df.loc[index, '1ST_USE'] = "RETAIL"
-                typology_df.loc[index, "REFERENCE"] = "OSM - as it is"
-            elif zone_df.loc[index, "category"] == "industrial":
-                typology_df.loc[index, '1ST_USE'] = "INDUSTRIAL"
-                typology_df.loc[index, "REFERENCE"] = "OSM - as it is"
-            elif zone_df.loc[index, "category"] == "warehouse":
-                typology_df.loc[index, '1ST_USE'] = "INDUSTRIAL"
-                typology_df.loc[index, "REFERENCE"] = "OSM - as it is"
+                typology_df.loc[index, "REFERENCE"] = "CEA - assumption"
             else:
+                # for all other OSM building categories (including "yes"), "MULTI_RES" is assigned
                 typology_df.loc[index, '1ST_USE'] = "MULTI_RES"
                 typology_df.loc[index, "REFERENCE"] = "CEA - assumption"
 
