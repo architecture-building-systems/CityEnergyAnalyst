@@ -116,6 +116,11 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, buildings_he
         shapefile["description"] = [np.nan] * no_buildings
 
     shapefile["category"] = shapefile['building']
+    for index in shapefile.index:
+        # in OSM, "amenities" (where available) supersede "building" categories
+        if shapefile.loc[index, "amenity"] in OSM_BUILDING_CATEGORIES.keys():
+            shapefile.loc[index, "category"] = shapefile.loc[index, "amenity"]
+
     shapefile["Name"] = [key + str(x + 1000) for x in
                          range(no_buildings)]  # start in a big number to avoid potential confusion
 
@@ -193,11 +198,8 @@ def calculate_typology_file(locator, zone_df, year_construction, occupancy_type,
     if occupancy_type == "Get it from open street maps":
         no_buildings = typology_df.shape[0]
         for index in range(no_buildings):
-            if zone_df.loc[index, "amenity"] in OSM_BUILDING_CATEGORIES.keys():
-                # in OSM, "amenities" (where availabel) supersede "building" categories
-                typology_df.loc[index, "category"] = zone_df.loc[index, "amenity"]
             if zone_df.loc[index, "category"] in OSM_BUILDING_CATEGORIES.keys():
-                # for known OSM building/amenity categories with a clear CEA use type, this use type is assigned
+                # for OSM building/amenity types with a clear CEA use type, this use type is assigned
                 typology_df.loc[index, '1ST_USE'] = OSM_BUILDING_CATEGORIES[zone_df.loc[index, "category"]]
                 typology_df.loc[index, "REFERENCE"] = "OSM - as it is"
             elif (zone_df.loc[index, "category"] in OTHER_UNHEATED_OSM_CATEGORIES) or \
