@@ -192,38 +192,37 @@ def calculate_typology_file(locator, zone_df, year_construction, occupancy_type,
     if occupancy_type == "Get it from open street maps":
         no_buildings = typology_df.shape[0]
         for index in range(no_buildings):
-            typology_df.loc[index, "USE_A_R"] = 1.0
             if zone_df.loc[index, "category"] == "yes":
-                typology_df.loc[index, "USE_A"] = "MULTI_RES"
+                typology_df.loc[index, '1ST_USE'] = "MULTI_RES"
                 typology_df.loc[index, "REFERENCE"] = "CEA - assumption"
             elif zone_df.loc[index, "category"] == "residential" or zone_df.loc[index, "category"] == "apartments":
-                typology_df.loc[index, "USE_A"] = "MULTI_RES"
+                typology_df.loc[index, '1ST_USE'] = "MULTI_RES"
                 typology_df.loc[index, "REFERENCE"] = "OSM - as it is"
             elif zone_df.loc[index, "category"] == "commercial" or zone_df.loc[index, "category"] == "civic":
-                typology_df.loc[index, "USE_A"] = "OFFICE"
+                typology_df.loc[index, '1ST_USE'] = "OFFICE"
                 typology_df.loc[index, "REFERENCE"] = "OSM - as it is"
             elif zone_df.loc[index, "category"] == "school":
-                typology_df.loc[index, "USE_A"] = "SCHOOL"
+                typology_df.loc[index, '1ST_USE'] = "SCHOOL"
                 typology_df.loc[index, "REFERENCE"] = "OSM - as it is"
             elif zone_df.loc[index, "category"] == "garage" or zone_df.loc[index, "category"] == "garages" or \
                     zone_df.loc[index, "category"] == "warehouse":
-                typology_df.loc[index, "USE_A"] = "PARKING"
+                typology_df.loc[index, '1ST_USE'] = "PARKING"
                 typology_df.loc[index, "REFERENCE"] = "OSM - as it is"
             elif zone_df.loc[index, "category"] == "house" or zone_df.loc[index, "category"] == "terrace" or \
                     zone_df.loc[index, "category"] == "detached":
-                typology_df.loc[index, "USE_A"] = "SINGLE_RES"
+                typology_df.loc[index, '1ST_USE'] = "SINGLE_RES"
                 typology_df.loc[index, "REFERENCE"] = "OSM - as it is"
             elif zone_df.loc[index, "category"] == "retail":
-                typology_df.loc[index, "USE_A"] = "RETAIL"
+                typology_df.loc[index, '1ST_USE'] = "RETAIL"
                 typology_df.loc[index, "REFERENCE"] = "OSM - as it is"
             elif zone_df.loc[index, "category"] == "industrial":
-                typology_df.loc[index, "USE_A"] = "INDUSTRIAL"
+                typology_df.loc[index, '1ST_USE'] = "INDUSTRIAL"
                 typology_df.loc[index, "REFERENCE"] = "OSM - as it is"
             elif zone_df.loc[index, "category"] == "warehouse":
-                typology_df.loc[index, "USE_A"] = "INDUSTRIAL"
+                typology_df.loc[index, '1ST_USE'] = "INDUSTRIAL"
                 typology_df.loc[index, "REFERENCE"] = "OSM - as it is"
             else:
-                typology_df.loc[index, "USE_A"] = "MULTI_RES"
+                typology_df.loc[index, '1ST_USE'] = "MULTI_RES"
                 typology_df.loc[index, "REFERENCE"] = "CEA - assumption"
 
     fields = COLUMNS_ZONE_TYPOLOGY
