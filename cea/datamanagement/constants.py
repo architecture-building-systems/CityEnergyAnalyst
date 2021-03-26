@@ -66,7 +66,7 @@ OSM_BUILDING_CATEGORIES = {
     'kindergarten': 'SCHOOL',
     'childcare': 'SCHOOL',
     'driving_school': 'SCHOOL',
-    'language_school': 'SCHOOL', 
+    'language_school': 'SCHOOL',
     'music_school': 'SCHOOL',
     'university': 'UNIVERSITY',
     'college': 'UNIVERSITY',
@@ -92,7 +92,7 @@ OSM_BUILDING_CATEGORIES = {
     # most common OSM amenity and building categories according to wiki.openstreetmap.org converted to CEA building
     # use types the "yes" category is excluded so that the default CEA assumption is used instead
 
-OTHER_UNHEATED_OSM_CATEGORIES = ['warehouse', 'roof', 'transportation', 'train_station', 'hut', 'shed', 'service',
+OTHER_OSM_CATEGORIES_UNCONDITIONED = ['warehouse', 'roof', 'transportation', 'train_station', 'hut', 'shed', 'service',
                                  'transformer_tower', 'water_tower', 'bridge', 'bus_station', 'ferry_terminal', 'fuel',
                                  'shelter']
     # other unheated use types that don't have a specific CEA use type will be assigned as 'PARKING'

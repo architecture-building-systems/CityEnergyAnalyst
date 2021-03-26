@@ -15,7 +15,7 @@ import cea.config
 import cea.inputlocator
 from cea.datamanagement.databases_verification import COLUMNS_ZONE_TYPOLOGY
 from cea.demand import constants
-from cea.datamanagement.constants import OSM_BUILDING_CATEGORIES, OTHER_UNHEATED_OSM_CATEGORIES
+from cea.datamanagement.constants import OSM_BUILDING_CATEGORIES, OTHER_OSM_CATEGORIES_UNCONDITIONED
 from cea.utilities.dbf import dataframe_to_dbf
 from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_geographic_coordinate_system
 
@@ -202,9 +202,9 @@ def calculate_typology_file(locator, zone_df, year_construction, occupancy_type,
                 # for OSM building/amenity types with a clear CEA use type, this use type is assigned
                 typology_df.loc[index, '1ST_USE'] = OSM_BUILDING_CATEGORIES[zone_df.loc[index, "category"]]
                 typology_df.loc[index, "REFERENCE"] = "OSM - as it is"
-            elif (zone_df.loc[index, "category"] in OTHER_UNHEATED_OSM_CATEGORIES) or \
-                    (zone_df.loc[index, "amenity"] in OTHER_UNHEATED_OSM_CATEGORIES):
-                # for unheated OSM building categories without a clear CEA use type, "PARKING" is assigned
+            elif (zone_df.loc[index, "category"] in OTHER_OSM_CATEGORIES_UNCONDITIONED) or \
+                    (zone_df.loc[index, "amenity"] in OTHER_OSM_CATEGORIES_UNCONDITIONED):
+                # for un-conditioned OSM building categories without a clear CEA use type, "PARKING" is assigned
                 typology_df.loc[index, '1ST_USE'] = "PARKING"
                 typology_df.loc[index, "REFERENCE"] = "CEA - assumption"
             else:
