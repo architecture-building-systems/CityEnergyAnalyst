@@ -123,15 +123,14 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, buildings_he
 
     shapefile["Name"] = [key + str(x + 1000) for x in
                          range(no_buildings)]  # start in a big number to avoid potential confusion
-
-    result = shapefile[
+    cleaned_shapefile = shapefile[
         ["Name", "height_ag", "floors_ag", "height_bg", "floors_bg", "description", "category", "geometry",
          "REFERENCE"]]
 
-    result.reset_index(inplace=True, drop=True)
+    cleaned_shapefile.reset_index(inplace=True, drop=True)
     shapefile.reset_index(inplace=True, drop=True)
 
-    return result, shapefile
+    return cleaned_shapefile, shapefile
 
 
 def zone_helper(locator, config):
@@ -263,7 +262,7 @@ def calculate_age(zone_df, year_construction):
 
 
 def polygon_to_zone(buildings_floors, buildings_floors_below_ground, buildings_height, buildings_height_below_ground,
-                    poly, shapefile_out_path):
+                    poly, zone_out_path):
     poly = poly.to_crs(get_geographic_coordinate_system())
     lon = poly.geometry[0].centroid.coords.xy[0][0]
     lat = poly.geometry[0].centroid.coords.xy[1][0]
@@ -274,14 +273,14 @@ def polygon_to_zone(buildings_floors, buildings_floors_below_ground, buildings_h
     poly = clean_geometries(poly)
 
     # clean attributes of height, name and number of floors
-    result, result_allfields = clean_attributes(poly, buildings_height, buildings_floors, buildings_height_below_ground,
-                                                buildings_floors_below_ground, key="B")
-    result = result.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
+    cleaned_shapefile, shapefile = clean_attributes(poly, buildings_height, buildings_floors,
+                                                    buildings_height_below_ground,
+                                                    buildings_floors_below_ground, key="B")
+    cleaned_shapefile = cleaned_shapefile.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
+    # save shapefile to zone.shp
+    cleaned_shapefile.to_file(zone_out_path)
 
-    # save to shapefile
-    result.to_file(shapefile_out_path)
-
-    return result_allfields
+    return shapefile
 
 
 def clean_geometries(gdf):
