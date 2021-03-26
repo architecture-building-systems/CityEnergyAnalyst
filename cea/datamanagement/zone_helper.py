@@ -194,12 +194,10 @@ def calculate_typology_file(locator, zone_df, year_construction, occupancy_type,
         no_buildings = typology_df.shape[0]
         for index in range(no_buildings):
             if zone_df.loc[index, "amenity"] in OSM_BUILDING_CATEGORIES.keys():
-                # in OSM, "amenities" supersede "building" categories, so for known OSM amenity types
-                # with a clear CEA use type, this use type is assigned
-                typology_df.loc[index, '1ST_USE'] = OSM_BUILDING_CATEGORIES[zone_df.loc[index, "amenity"]]
-                typology_df.loc[index, "REFERENCE"] = "OSM - as it is"
-            elif zone_df.loc[index, "category"] in OSM_BUILDING_CATEGORIES.keys():
-                # for known OSM building categories with a clear CEA use type, this use type is assigned
+                # in OSM, "amenities" (where availabel) supersede "building" categories
+                typology_df.loc[index, "category"] = zone_df.loc[index, "amenity"]
+            if zone_df.loc[index, "category"] in OSM_BUILDING_CATEGORIES.keys():
+                # for known OSM building/amenity categories with a clear CEA use type, this use type is assigned
                 typology_df.loc[index, '1ST_USE'] = OSM_BUILDING_CATEGORIES[zone_df.loc[index, "category"]]
                 typology_df.loc[index, "REFERENCE"] = "OSM - as it is"
             elif (zone_df.loc[index, "category"] in OTHER_UNHEATED_OSM_CATEGORIES) or \
