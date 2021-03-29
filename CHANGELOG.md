@@ -1,3 +1,14 @@
+- 2021-03-26 - 3.18.0 - #2948 Fix code to get buildings' main uses from OSM
+- 2021-03-16 - 3.18.0 - #2941 Optimise demand and photovoltaic scripts
+- 2021-03-16 - 3.18.0 - #2875 2840 allow gui to connect to remote server
+- 2021-03-14 - 3.18.0 - #2937 2839 demand documentation improvement
+- 2021-03-04 - 3.18.0 - #2935 I2749 update schemas.yml for get optimization decentralized folder building result heating/cooling activation
+- 2021-02-26 - 3.18.0 - #2933 zone_helper.clean_geometries fails for Point
+- 2021-02-18 - 3.18.0 - #2932 Decode FileParameter via regex
+- 2021-02-18 - 3.18.0 - #2922 2769 document release
+- 2021-01-28 - 3.18.0 - #2917 Remove abort from exception handling
+- 2021-01-26 - 3.18.0 - #2916 Update installation-on-windows-manual.rst
+- 2021-01-22 - 3.18.0 - #2915 CityEnergyAnalyst release 3.18.0
 - 2021-01-20 - 3.15.0 - #2914 Simplify preview image for scenarios with large number of buildings
 - 2021-01-19 - 3.15.0 - #2913 Optimize radiation
 - 2021-01-18 - 3.15.0 - #2912 GUI: Removed odd parameter shown in OSM by updation databases_verification.py
