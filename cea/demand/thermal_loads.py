@@ -15,6 +15,7 @@ from cea.demand import hourly_procedure_heating_cooling_system_load, ventilation
 from cea.demand import latent_loads
 from cea.demand import sensible_loads, electrical_loads, hotwater_loads, refrigeration_loads, datacenter_loads
 from cea.demand import ventilation_air_flows_detailed, control_heating_cooling_systems
+from cea.demand.building_properties import get_thermal_resistance_surface
 from cea.demand.latent_loads import convert_rh_to_moisture_content
 from cea.utilities import reporting
 
@@ -109,6 +110,11 @@ def calc_thermal_loads(building_name, bpr, weather_data, date_range, locator,
         tsd['Eaux_cs'] = tsd['Eaux_hs'] = tsd['Ehs_lat_aux'] = np.zeros(HOURS_IN_YEAR)
         print(f"building {bpr.name} does not have an air-conditioned area")
     else:
+        # get hourly thermal resistances of external surfaces
+        tsd['RSE_wall'], \
+        tsd['RSE_roof'], \
+        tsd['RSE_win'] = get_thermal_resistance_surface(bpr.architecture, weather_data)
+        # calculate heat gains
         tsd = latent_loads.calc_Qgain_lat(tsd, schedules)
         tsd = calc_set_points(bpr, date_range, tsd, building_name, config, locator,
                               schedules)  # calculate the setpoints for every hour
