@@ -22,7 +22,6 @@ __status__ = "Production"
 B_F = constants.B_F
 D = constants.D
 C_A = constants.C_A
-RSE = constants.RSE
 
 
 # capacity of emission/control system
