@@ -85,7 +85,7 @@ def demand_calculation(locator, config):
     print('Running demand calculation for the following buildings=%s' % building_names)
 
     # CALCULATE OBJECT WITH PROPERTIES OF ALL BUILDINGS
-    building_properties = BuildingProperties(locator, config, weather_data, building_names)
+    building_properties = BuildingProperties(locator, weather_data, building_names)
 
     # add a message i2065 of warning. This needs a more elegant solution
     def calc_buildings_less_100m2(building_properties):

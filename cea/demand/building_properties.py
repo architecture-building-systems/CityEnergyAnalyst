@@ -25,7 +25,6 @@ __status__ = "Production"
 
 # import constants
 H_F = constants.H_F
-RSE = constants.RSE
 H_MS = constants.H_MS
 H_IS = constants.H_IS
 B_F = constants.B_F
@@ -40,7 +39,7 @@ class BuildingProperties(object):
     G. Happle   BuildingPropsThermalLoads   27.05.2016
     """
 
-    def __init__(self, locator, config, weather_data, building_names=None):
+    def __init__(self, locator, weather_data, building_names=None):
         """
         Read building properties from input shape files and construct a new BuildingProperties object.
 
@@ -88,7 +87,7 @@ class BuildingProperties(object):
                                                 prop_geometry, prop_HVAC_result)
 
         # get solar properties
-        solar = get_prop_solar(locator, config, building_names, prop_rc_model, prop_envelope, weather_data).set_index('Name')
+        solar = get_prop_solar(locator, building_names, prop_rc_model, prop_envelope, weather_data).set_index('Name')
 
         # df_windows = geometry_reader.create_windows(surface_properties, prop_envelope)
         # TODO: to check if the Win_op and height of window is necessary.
@@ -912,7 +911,7 @@ def get_envelope_properties(locator, prop_architecture):
     return envelope_prop
 
 
-def get_prop_solar(locator, config, building_names, prop_rc_model, prop_envelope, weather_data):
+def get_prop_solar(locator, building_names, prop_rc_model, prop_envelope, weather_data):
     """
     Gets the sensible solar gains from calc_Isol_daysim and stores in a dataframe containing building 'Name' and
     I_sol (incident solar gains).
@@ -925,15 +924,13 @@ def get_prop_solar(locator, config, building_names, prop_rc_model, prop_envelope
     :rtype: Dataframe
     """
 
-    # thermal_resistance_surface = RSE
-
     # create result data frame
     list_Isol = []
 
     # for every building
     for building_name in building_names:
         thermal_resistance_surface = dict(zip(['RSE_wall', 'RSE_roof', 'RSE_win'],
-            get_thermal_resistance_surface(config, prop_envelope.loc[building_name], weather_data)))
+            get_thermal_resistance_surface(prop_envelope.loc[building_name], weather_data)))
         I_sol = calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, thermal_resistance_surface)
         list_Isol.append(I_sol)
 
@@ -1005,26 +1002,20 @@ def calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, therm
 
     return I_sol
 
-
-def get_thermal_resistance_surface(config, prop_envelope, weather_data):
-    """
+def get_thermal_resistance_surface(prop_envelope, weather_data):
+    '''
     This function defines the surface resistance of external surfaces RSE according to ISO 6946 Eq. (A.1).
-    """
+    '''
 
-    if config.demand.use_dynamic_convective_heat_transfer_calculation:
-        # define surface thermal resistances according to ISO 6946
-        h_c = np.vectorize(calc_hc)(weather_data['windspd_ms'].values)
-        theta_ss = 0.5 * (
-                weather_data['skytemp_C'].values +
-                np.array([weather_data['drybulb_C'].values[0]] +
-                         list(weather_data['drybulb_C'].values[0:HOURS_IN_YEAR - 1])))
-        thermal_resistance_surface_wall = (h_c + calc_hr(prop_envelope.e_wall, theta_ss)) ** -1
-        thermal_resistance_surface_win = (h_c + calc_hr(prop_envelope.e_win, theta_ss)) ** -1
-        thermal_resistance_surface_roof = (h_c + calc_hr(prop_envelope.e_roof, theta_ss)) ** -1
-    else:
-        thermal_resistance_surface_wall = RSE * np.ones(HOURS_IN_YEAR)
-        thermal_resistance_surface_roof = RSE * np.ones(HOURS_IN_YEAR)
-        thermal_resistance_surface_win = RSE * np.ones(HOURS_IN_YEAR)
+    # define surface thermal resistances according to ISO 6946
+    h_c = np.vectorize(calc_hc)(weather_data['windspd_ms'].values)
+    theta_ss = 0.5 * (
+            weather_data['skytemp_C'].values +
+            np.array([weather_data['drybulb_C'].values[0]] +
+                     list(weather_data['drybulb_C'].values[0:HOURS_IN_YEAR - 1])))
+    thermal_resistance_surface_wall = (h_c + calc_hr(prop_envelope.e_wall, theta_ss)) ** -1
+    thermal_resistance_surface_win = (h_c + calc_hr(prop_envelope.e_win, theta_ss)) ** -1
+    thermal_resistance_surface_roof = (h_c + calc_hr(prop_envelope.e_roof, theta_ss)) ** -1
 
     return thermal_resistance_surface_wall, thermal_resistance_surface_roof, thermal_resistance_surface_win
 
