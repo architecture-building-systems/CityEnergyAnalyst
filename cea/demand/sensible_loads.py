@@ -116,19 +116,19 @@ def calc_hr(emissivity, theta_ss):
     :param emissivity: emissivity of the considered surface
     :param theta_ss: delta of temperature between building surface and the sky.
     :return:
-        hr: external radiative heat transfer coefficient
+        hr: radiative heat transfer coefficient of external surfaces
 
     """
     return 4.0 * emissivity * BOLTZMANN * (theta_ss + KELVIN_OFFSET) ** 3.0
 
 def calc_hc(wind_speed):
     """
-    This function calculates the external convective heat transfer coefficient according to ISO 6946
-    see Eq. (C.6) in section C.1
+    This function calculates the convective heat transfer coefficient for external surfaces according to ISO 6946
+    Eq. (C.6) in section C.1
 
     :param wind_speed: wind speed at this time step from weather file.
     :return:
-        hc: external convective heat transfer coefficient
+        hc: convective heat transfer coefficient of external surfaces
 
     """
     return 4.0 + 4.0 * wind_speed

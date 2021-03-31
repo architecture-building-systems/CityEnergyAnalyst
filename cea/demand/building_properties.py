@@ -1005,10 +1005,11 @@ def calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, therm
 
     return I_sol
 
+
 def get_thermal_resistance_surface(config, prop_envelope, weather_data):
-    '''
-    This function defines the thermal resistance of external surfaces RSE according to ISO 6946.
-    '''
+    """
+    This function defines the surface resistance of external surfaces RSE according to ISO 6946 Eq. (A.1).
+    """
 
     if config.demand.use_dynamic_convective_heat_transfer_calculation:
         # define surface thermal resistances according to ISO 6946
