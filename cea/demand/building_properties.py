@@ -932,8 +932,8 @@ def get_prop_solar(locator, building_names, prop_rc_model, prop_envelope, weathe
 
     # for every building
     for building_name in building_names:
-        thermal_resistance_surface = dict(zip(
-            ['wall', 'roof', 'win'], get_thermal_resistance_surface(building_name, prop_envelope, weather_data)))
+        thermal_resistance_surface = dict(zip(['RSE_wall', 'RSE_roof', 'RSE_win'],
+            get_thermal_resistance_surface(prop_envelope.loc[building_name], weather_data)))
         I_sol = calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, thermal_resistance_surface)
         list_Isol.append(I_sol)
 
@@ -971,7 +971,7 @@ def calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, therm
     # sensible gain on all walls [W]
     I_sol_wall = I_sol_wall * \
                  prop_envelope.loc[building_name, 'a_wall'] * \
-                 thermal_resistance_surface['wall'] * \
+                 thermal_resistance_surface['RSE_wall'] * \
                  prop_rc_model.loc[building_name, 'U_wall'] * \
                  prop_rc_model.loc[building_name, 'empty_envelope_ratio']
 
@@ -982,7 +982,7 @@ def calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, therm
     # sensible gain on all roofs [W]
     I_sol_roof = I_sol_roof * \
                  prop_envelope.loc[building_name, 'a_roof'] * \
-                 thermal_resistance_surface['roof'] * \
+                 thermal_resistance_surface['RSE_roof'] * \
                  prop_rc_model.loc[building_name, 'U_roof']
 
     # sum window, considering shading
@@ -1005,18 +1005,20 @@ def calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, therm
 
     return I_sol
 
-def get_thermal_resistance_surface(building_name, prop_envelope, weather_data):
+def get_thermal_resistance_surface(prop_envelope, weather_data):
     '''
     This function defines the thermal resistance of external surfaces RSE according to ISO 6946.
     '''
 
     # define surface thermal resistances according to ISO 6946
-    h_c = np.vectorize(calc_hc)(weather_data['windspd_ms'])
-    theta_ss = 0.5 * (weather_data['skytemp_C'].values +
-                      np.array([weather_data['drybulb_C'][0]] + list(weather_data['drybulb_C'][0:HOURS_IN_YEAR - 1])))
-    thermal_resistance_surface_wall = (h_c + calc_hr(prop_envelope.loc[building_name, 'e_wall'], theta_ss)) ** -1
-    thermal_resistance_surface_win = (h_c + calc_hr(prop_envelope.loc[building_name, 'e_win'], theta_ss)) ** -1
-    thermal_resistance_surface_roof = (h_c + calc_hr(prop_envelope.loc[building_name, 'e_roof'], theta_ss)) ** -1
+    h_c = np.vectorize(calc_hc)(weather_data['windspd_ms'].values)
+    theta_ss = 0.5 * (
+            weather_data['skytemp_C'].values +
+            np.array([weather_data['drybulb_C'].values[0]] +
+                     list(weather_data['drybulb_C'].values[0:HOURS_IN_YEAR - 1])))
+    thermal_resistance_surface_wall = (h_c + calc_hr(prop_envelope.e_wall, theta_ss)) ** -1
+    thermal_resistance_surface_win = (h_c + calc_hr(prop_envelope.e_win, theta_ss)) ** -1
+    thermal_resistance_surface_roof = (h_c + calc_hr(prop_envelope.e_roof, theta_ss)) ** -1
 
     return thermal_resistance_surface_wall, thermal_resistance_surface_roof, thermal_resistance_surface_win
 
