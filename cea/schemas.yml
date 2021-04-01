@@ -10056,7 +10056,7 @@ get_optimization_generation_district_scale_performance:
         values: '{0.0...n}'
         min: 0.0
       generation:
-        description: Number of the Generation or Iteration (Genetic algorithm)
+        description: 'No. of the Generation or Iteration (Genetic Algorithm)'
         type: int
         unit: '[-]'
         values: '{0...n}'
@@ -10141,7 +10141,7 @@ get_optimization_generation_building_scale_performance:
         values: '{0.0...n}'
         min: 0.0
       generation:
-        description: No. Generation or Iteration (genetic Algorithm)
+        description: No. Generation or Iteration (Genetic Algorithm)
         type: int
         unit: '[-]'
         values: '{0...n}'
@@ -10257,7 +10257,7 @@ get_optimization_generation_total_performance:
         values: '{0.0...n}'
         min: 0.0
       generation:
-        description: No. Generation or Iteration (genetic Algorithm)
+        description: No. Generation or Iteration (Genetic Algorithm)
         type: int
         unit: '[-]'
         values: '{0...n}'
@@ -10373,7 +10373,7 @@ get_optimization_generation_total_performance_pareto:
         values: '{0.0...n}'
         min: 0.0
       generation:
-        description: No. Generation or Iteration (genetic Algorithm)
+        description: No. Generation or Iteration (Genetic Algorithm)
         type: int
         unit: '[-]'
         values: '{0...n}'
@@ -10399,125 +10399,174 @@ get_optimization_individuals_in_generation:
   schema:
     columns:
       B01_DH:
-        description: TODO
+        description: 'flag to indicate whether this building is connected to DH (0: no intersection, 1: intersected)'
         type: int
-        unit: TODO
-        values: TODO
+        unit: '[-]'
+        values: '{0...1}'
+        min: 0
+        max: 1
       B02_DH:
-        description: TODO
+        description: 'flag to indicate whether this building is connected to DH (0: no intersection, 1: intersected)'
         type: int
-        unit: TODO
-        values: TODO
+        unit: '[-]'
+        values: '{0...1}'
+        min: 0
+        max: 1
       B03_DH:
-        description: TODO
+        description: 'flag to indicate whether this building is connected to DH (0: no intersection, 1: intersected)'
         type: int
-        unit: TODO
-        values: TODO
+        unit: '[-]'
+        values: '{0...1}'
+        min: 0
+        max: 1
       B04_DH:
-        description: TODO
+        description: 'flag to indicate whether this building is connected to DH (0: no intersection, 1: intersected)'
         type: int
-        unit: TODO
-        values: TODO
+        unit: '[-]'
+        values: '{0...1}'
+        min: 0
+        max: 1
       B05_DH:
-        description: TODO
+        description: 'flag to indicate whether this building is connected to DH (0: no intersection, 1: intersected)'
         type: int
-        unit: TODO
-        values: TODO
+        unit: '[-]'
+        values: '{0...1}'
+        min: 0
+        max: 1
       B06_DH:
-        description: TODO
+        description: 'flag to indicate whether this building is connected to DH (0: no intersection, 1: intersected)'
         type: int
-        unit: TODO
-        values: TODO
+        unit: '[-]'
+        values: '{0...1}'
+        min: 0
+        max: 1
       B07_DH:
-        description: TODO
+        description: 'flag to indicate whether this building is connected to DH (0: no intersection, 1: intersected)'
         type: int
-        unit: TODO
-        values: TODO
+        unit: '[-]'
+        values: '{0...1}'
+        min: 0
+        max: 1
       B08_DH:
-        description: TODO
+        description: 'flag to indicate whether this building is connected to DH (0: no intersection, 1: intersected)'
         type: int
-        unit: TODO
-        values: TODO
+        unit: '[-]'
+        values: '{0...1}'
+        min: 0
+        max: 1
       B09_DH:
-        description: TODO
+        description: 'flag to indicate whether this building is connected to DH (0: no intersection, 1: intersected)'
         type: int
-        unit: TODO
-        values: TODO
+        unit: '[-]'
+        values: '{0...1}'
+        min: 0
+        max: 1
       DB_Cogen:
-        description: TODO
+        description: 'Sizing ratio for Combined Heat and Power (Cogeneration) Plant with Dry Biomass,
+                             a fraction of peak district heating demand'
         type: float
-        unit: TODO
-        values: TODO
+        unit: '[-]'
+        values: '{0...1}'
+        min: 0
+        max: 1
       DS_HP:
-        description: TODO
+        description: 'Sizing ratio for Server-Source Heat Pump, a fraction of peak district heating demand'
         type: float
-        unit: TODO
-        values: TODO
+        unit: '[-]'
+        values: '{0...1}'
+        min: 0
+        max: 1
       GS_HP:
-        description: TODO
+        description: 'Sizing ratio for Ground-Source Heat Pump, a fraction of peak district heating demand'
         type: float
-        unit: TODO
-        values: TODO
+        unit: '[-]'
+        values: '{0...1}'
+        min: 0
+        max: 1
       NG_BaseBoiler:
-        description: TODO
+        description: 'Sizing ratio for Natural Gas Base Boiler, a fraction of peak district heating demand'
         type: float
-        unit: TODO
-        values: TODO
+        unit: '[-]'
+        values: '{0...1}'
+        min: 0
+        max: 1
       NG_Cogen:
-        description: TODO
+        description: 'Sizing ratio for Combined Heat and Power (Cogeneration) Plant with Natural Gas,
+                             a fraction of peak district heating demand'
         type: float
-        unit: TODO
-        values: TODO
+        unit: '[-]'
+        values: '{0...1}'
+        min: 0
+        max: 1
       NG_PeakBoiler:
-        description: TODO
+        description: 'Sizing ratio for Natural Gas Peak Boiler, a fraction of peak district heating demand'
         type: float
-        unit: TODO
-        values: TODO
+        unit: '[-]'
+        values: '{0...1}'
+        min: 0
+        max: 1
       PV:
-        description: TODO
+        description: 'Sizing ratio for PV, a fraction of total surface area available for installation'
         type: float
-        unit: TODO
-        values: TODO
+        unit: '[-]'
+        values: '{0...1}'
+        min: 0
+        max: 1
       PVT:
-        description: TODO
+        description: 'Sizing ratio for PVT, a fraction of total surface area available for installation'
         type: float
-        unit: TODO
-        values: TODO
+        unit: '[-]'
+        values: '{0...1}'
+        min: 0
+        max: 1
       SC_ET:
-        description: TODO
+        description: 'Sizing ratio for Solar Collectors (Evacuated Tube), a fraction of total surface area
+                             available for installation'
         type: float
-        unit: TODO
-        values: TODO
+        unit: '[-]'
+        values: '{0...1}'
+        min: 0
+        max: 1
       SC_FP:
-        description: TODO
+        description: 'Sizing ratio for Solar Collectors (Flate Plate), a fraction of total surface area
+                             available for installation'
         type: float
-        unit: TODO
-        values: TODO
+        unit: '[-]'
+        values: '{0...1}'
+        min: 0
+        max: 1
       SS_HP:
-        description: TODO
+        description: 'Sizing ratio for Sewage-Source Heat Pump, a fraction of peak district heating demand'
         type: float
-        unit: TODO
-        values: TODO
+        unit: '[-]'
+        values: '{0...1}'
+        min: 0
+        max: 1
       WB_Cogen:
-        description: TODO
+        description: 'Sizing ratio for Combined Heat and Power (Cogeneration) Plant with Wet Biomass,
+                             a fraction of peak district heating demand'
         type: float
-        unit: TODO
-        values: TODO
+        unit: '[-]'
+        values: '{0...1}'
+        min: 0
+        max: 1
       WS_HP:
-        description: TODO
+        description: 'Sizing ratio for Lake-Source Heat Pump, a fraction of peak district heating demand'
         type: float
-        unit: TODO
-        values: TODO
+        unit: '[-]'
+        values: '{0...1}'
+        min: 0
+        max: 1
       generation:
-        description: TODO
+        description: 'No. Generation or Iteration (Genetic Algorithm)'
         type: int
-        unit: TODO
-        values: TODO
+        unit: '[-]'
+        values: '{0...n}'
       individual:
-        description: TODO
+        description: 'No. of Individual (Genetic Algorithm)'
         type: int
-        unit: TODO
-        values: TODO
+        unit: '[-]'
+        values: '{0...n}'
   used_by: []
 get_optimization_network_results_summary:
   created_by:
@@ -10583,16 +10632,14 @@ get_optimization_slave_building_connectivity:
   schema:
     columns:
       DC_connectivity:
-        description: Flag to know if building is connected to District Heating or
-          not
+        description: Flag to know if building is connected to District Heating or not
         type: int
         unit: '[-]'
         values: '{0...1}'
         min: 0
         max: 1
       DH_connectivity:
-        description: Flag to know if building is connected to District Cooling or
-          not
+        description: Flag to know if building is connected to District Cooling or not
         type: int
         unit: '[-]'
         values: '{0...1}'
@@ -10644,7 +10691,7 @@ get_optimization_slave_district_scale_performance:
         values: '{0.0...n}'
         min: 0.0
       Capex_a_Furnace_wet_district_scale_USD:
-        description: Annualized Capital Costs of CHP Wet-Biomass in Central Plant
+        description: Annualized Capital Costs of CHP Wet Biomass in Central Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
@@ -10759,7 +10806,7 @@ get_optimization_slave_district_scale_performance:
         values: '{0.0...n}'
         min: 0.0
       Capex_total_Furnace_wet_district_scale_USD:
-        description: Total Capital Costs of CHP Wet-Biomass in Central Plant
+        description: Total Capital Costs of CHP Wet Biomass in Central Plant
         type: float
         unit: '[USD 2015]'
         values: '{0.0...n}'
@@ -10862,7 +10909,7 @@ get_optimization_slave_district_scale_performance:
         values: '{0.0...n}'
         min: 0.0
       GHG_WB_district_scale_tonCO2yr:
-        description: Green House Gas Emissions of Wet-Biomass in Central plant
+        description: Green House Gas Emissions of Wet Biomass in Central plant
         type: float
         unit: '[ton CO2-eq/yr]'
         values: '{0.0...n}'
@@ -10894,13 +10941,13 @@ get_optimization_slave_district_scale_performance:
         values: '{0.0...n}'
         min: 0.0
       Opex_fixed_Furnace_dry_district_scale_USD:
-        description: Fixed Operation Costs of CHP Dry-Biomass in Central Plant
+        description: Fixed Operation Costs of CHP Dry Biomass in Central Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
         min: 0.0
       Opex_fixed_Furnace_wet_district_scale_USD:
-        description: Fixed Operation Costs of CHP Wet-Biomass in Central Plant
+        description: Fixed Operation Costs of CHP Wet Biomass in Central Plant
         type: float
         unit: '[USD 2015/yr]'
         values: '{0.0...n}'
@@ -11390,13 +11437,13 @@ get_optimization_slave_heating_activation_pattern:
         values: '{0.0...n}'
         min: 0.0
       E_Furnace_dry_gen_W:
-        description: Electricity Generation by CHP Dry-Biomass
+        description: Electricity Generation by CHP Dry Biomass
         type: float
         unit: '[Wh]'
         values: '{0.0...n}'
         min: 0.0
       E_Furnace_wet_gen_W:
-        description: Electricity Generation by CHP Wet-Biomass
+        description: Electricity Generation by CHP Wet Biomass
         type: float
         unit: '[Wh]'
         values: '{0.0...n}'
@@ -11426,13 +11473,13 @@ get_optimization_slave_heating_activation_pattern:
         values: '{0.0...n}'
         min: 0.0
       Q_Furnace_dry_gen_directload_W:
-        description: Thermal generation of CHP Dry-Biomass to direct load
+        description: Thermal generation of CHP Dry Biomass to direct load
         type: float
         unit: '[Wh]'
         values: '{0.0...n}'
         min: 0.0
       Q_Furnace_wet_gen_directload_W:
-        description: Thermal generation of CHP Wet-Biomass to direct load
+        description: Thermal generation of CHP Wet Biomass to direct load
         type: float
         unit: '[Wh]'
         values: '{0.0...n}'
@@ -11469,13 +11516,13 @@ get_optimization_slave_heating_activation_pattern:
         values: '{0.0...n}'
         min: 0.0
       Q_PVT_gen_directload_W:
-        description: Thermal generation of PVT  to direct load
+        description: Thermal generation of PVT to direct load
         type: float
         unit: '[Wh]'
         values: '{0.0...n}'
         min: 0.0
       Q_PVT_gen_storage_W:
-        description: Thermal generation of PVT  to Seasonal Thermal Storage
+        description: Thermal generation of PVT to Seasonal Thermal Storage
         type: float
         unit: '[Wh]'
         values: '{0.0...n}'
