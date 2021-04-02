@@ -589,15 +589,14 @@ def save_generation_dataframes(generation,
     performance_totals.to_csv(locator.get_optimization_generation_total_performance(generation), index=False)
 
 
-def save_generation_individuals(columns_of_saved_files, generation, invalid_ind, locator):
+def save_generation_individuals(columns_of_saved_files, generation, list_of_individuals, locator):
     # now get information about individuals and save to disk
-    individual_list = range(len(invalid_ind))
     individuals_info = pd.DataFrame()
-    for ind in invalid_ind:
-        infividual_dict = pd.DataFrame(dict(zip(columns_of_saved_files, [[x] for x in ind])))
-        individuals_info = pd.concat([infividual_dict, individuals_info], ignore_index=True)
+    for ind in list_of_individuals:
+        individual_dict = pd.DataFrame(dict(zip(columns_of_saved_files, [[x] for x in ind])))
+        individuals_info = pd.concat([individual_dict, individuals_info], ignore_index=True)
 
-    individuals_info['individual'] = individual_list
+    individuals_info['individual'] = range(len(list_of_individuals)) # assign numbers to individuals
     individuals_info['generation'] = generation
     individuals_info.to_csv(locator.get_optimization_individuals_in_generation(generation), index=False)
 
