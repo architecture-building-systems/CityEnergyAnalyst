@@ -131,7 +131,8 @@ def objective_function(individual,
 
 def objective_function_wrapper(args):
     """
-    Wrap arguments because multiprocessing only accepts one argument for the function"""
+    Wrap arguments because multiprocessing only accepts one argument for the function
+    """
     return objective_function(*args)
 
 
@@ -168,7 +169,7 @@ def non_dominated_sorting_genetic_algorithm(locator,
     crossover_method_continuous = config.optimization.crossover_method_continuous
 
     # SET-UP EVOLUTIONARY ALGORITHM
-    # Hyperparameters
+    # Hyper-parameters
     P = 12
     ref_points = tools.uniform_reference_points(NOBJ, P)
     if MU is None:
@@ -177,7 +178,7 @@ def non_dominated_sorting_genetic_algorithm(locator,
     random.seed(RANDOM_SEED)
     np.random.seed(RANDOM_SEED)
 
-    # SET-UP INDIVIDUAL STRUCTURE INCLUIDING HOW EVERY POINT IS CALLED (COLUM_NAMES)
+    # SET-UP INDIVIDUAL STRUCTURE INCLUDING HOW EVERY POINT IS CALLED (column_names)
     column_names, \
     heating_unit_names_share, \
     cooling_unit_names_share, \
@@ -548,11 +549,11 @@ def save_generation_pareto_individuals(locator, generation, record_individuals_t
 
 
 def save_generation_dataframes(generation,
-                               slected_individuals,
+                               selected_individuals,
                                locator,
                                DCN_network_list_selected,
                                DHN_network_list_selected):
-    individual_list = range(len(slected_individuals))
+    individual_list = range(len(selected_individuals))
     individual_name_list = ["sys_" + str(generation) + "_" + str(x) for x in individual_list]
     performance_disconnected = pd.DataFrame()
     performance_connected = pd.DataFrame()
