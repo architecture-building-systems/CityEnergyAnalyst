@@ -171,7 +171,7 @@ def non_dominated_sorting_genetic_algorithm(locator,
     # Hyperparameters
     P = 12
     ref_points = tools.uniform_reference_points(NOBJ, P)
-    if MU == None:
+    if MU is None:
         H = factorial(NOBJ + P - 1) / (factorial(P) * factorial(NOBJ - 1))
         MU = int(H + (4 - H % 4))
     random.seed(RANDOM_SEED)
@@ -395,7 +395,7 @@ def non_dominated_sorting_genetic_algorithm(locator,
             systems_name_list = []
             valid_generation = []
 
-        if gen == NGEN and config.debug == False:  # final generation re-evaluate paretofront
+        if gen == NGEN and config.debug is False:  # final generation re-evaluate paretofront
             print("Saving results for generation", gen, "\n")
             valid_generation = [gen]
             systems_name_list = save_final_generation_pareto_individuals(toolbox,
@@ -596,7 +596,7 @@ def save_generation_individuals(columns_of_saved_files, generation, list_of_indi
         individual_dict = pd.DataFrame(dict(zip(columns_of_saved_files, [[x] for x in ind])))
         individuals_info = pd.concat([individual_dict, individuals_info], ignore_index=True)
 
-    individuals_info['individual'] = range(len(list_of_individuals)) # assign numbers to individuals
+    individuals_info['individual'] = range(len(list_of_individuals))  # assign numbers to individuals
     individuals_info['generation'] = generation
     individuals_info.to_csv(locator.get_optimization_individuals_in_generation(generation), index=False)
 
