@@ -104,7 +104,7 @@ def disconnected_cooling_for_building(building_name, supply_systems, lca, locato
     mdot_AHU_ARU_SCU_kgpers = calc_combined_cooling_loads(building_name, locator, total_demand,
                                                           cooling_configuration=['ahu', 'aru', 'scu'])
     ## Get hourly hot water supply condition of Solar Collectors (SC)
-    # Flate Plate Solar Collectors
+    # Flat Plate Solar Collectors
     SC_FP_data, T_hw_in_FP_C, el_aux_SC_FP_Wh, q_sc_gen_FP_Wh = get_SC_data(building_name, locator, panel_type="FP")
     Capex_a_SC_FP_USD, Opex_SC_FP_USD, Capex_SC_FP_USD = solar_collector.calc_Cinv_SC(SC_FP_data['Area_SC_m2'][0],
                                                                                       locator,
@@ -637,7 +637,7 @@ def calc_new_load(mdot_kgpers, T_sup_K, T_re_K):
     """
     This function calculates the load distribution side of the district heating distribution.
     :param mdot_kgpers: mass flow
-    :param T_sup_K: chilled water supply temperautre
+    :param T_sup_K: chilled water supply temperature
     :param T_re_K: chilled water return temperature
     :type mdot_kgpers: float
     :type TsupDH: float

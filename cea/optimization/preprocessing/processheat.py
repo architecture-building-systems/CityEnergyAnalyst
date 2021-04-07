@@ -32,10 +32,10 @@ def calc_pareto_Qhp(locator, total_demand, prices, lca):
 
     boiler_cost_data = pd.read_excel(locator.get_database_conversion_systems(), sheet_name="Boiler")
 
-    if total_demand["Qhpro_sys_MWhyr"].sum()>0:
+    if total_demand["Qhpro_sys_MWhyr"].sum() > 0:
         df = total_demand[total_demand.Qhpro_sys_MWhyr != 0]
 
-        for name in df.Name :
+        for name in df.Name:
             # Extract process heat needs
             Qhpro_sys_kWh = pd.read_csv(locator.get_demand_results_file(name), usecols=["Qhpro_sys_kWh"]).Qhpro_sys_kWh.values
 
@@ -43,15 +43,15 @@ def calc_pareto_Qhp(locator, total_demand, prices, lca):
             Qannual_Wh = 0
             # Operation costs / CO2 / Prim
             for i in range(HOURS_IN_YEAR):
-                Qgas_Wh = Qhpro_sys_kWh[i] * 1E3 / BOILER_ETA_HP # [Wh] Assumed 0.9 efficiency
+                Qgas_Wh = Qhpro_sys_kWh[i] * 1E3 / BOILER_ETA_HP  # [Wh] Assumed 0.9 efficiency
 
                 if Qgas_Wh < Qnom_Wh:
                     Qnom_Wh = Qgas_Wh
 
                 Qannual_Wh += Qgas_Wh
-                hpCosts += Qgas_Wh * prices.NG_PRICE # [CHF]
-                hpCO2 += Qgas_Wh * WH_TO_J / 1.0E6 * lca.NG_BACKUPBOILER_TO_CO2_STD / 1E3 # [ton CO2]
-                hpPrim += Qgas_Wh * WH_TO_J / 1.0E6 * lca.NG_BACKUPBOILER_TO_OIL_STD # [MJ-oil-eq]
+                hpCosts += Qgas_Wh * prices.NG_PRICE  # [CHF]
+                hpCO2 += Qgas_Wh * WH_TO_J / 1.0E6 * lca.NG_BACKUPBOILER_TO_CO2_STD / 1E3  # [ton CO2]
+                hpPrim += Qgas_Wh * WH_TO_J / 1.0E6 * lca.NG_BACKUPBOILER_TO_OIL_STD  # [MJ-oil-eq]
 
             # Investment costs
 

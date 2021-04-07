@@ -362,7 +362,7 @@ def calc_absorbed_radiation_PV(I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetae
     a4 = panel_properties_PV['PV_a4']
     L = panel_properties_PV['PV_th']
 
-    # calcualte ratio of beam radiation on a tilted plane
+    # calculate ratio of beam radiation on a tilted plane
     # to avoid inconvergence when I_sol = 0
     lim1 = radians(0)
     lim2 = radians(90)

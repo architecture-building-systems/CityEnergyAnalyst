@@ -160,8 +160,8 @@ def evaluation_main(individual,
                                                                                    buildings_building_scale_emissions)
 
 
-    print ('Total TAC in USD = ' + str(TAC_sys_USD))
-    print ('Total GHG emissions in tonCO2-eq = ' + str(GHG_sys_tonCO2))
+    print('Total TAC in USD = ' + str(TAC_sys_USD))
+    print('Total GHG emissions in tonCO2-eq = ' + str(GHG_sys_tonCO2))
 
     return TAC_sys_USD, \
            GHG_sys_tonCO2, \

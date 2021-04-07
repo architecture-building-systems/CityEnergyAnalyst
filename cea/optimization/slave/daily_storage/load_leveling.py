@@ -17,7 +17,7 @@ class LoadLevelingDailyStorage(object):
         self.V_tank_m3 = storage_tank.calc_storage_tank_volume(self.Qc_tank_charging_limit_W,
                                                                self.T_tank_fully_charged_K,
                                                                self.T_tank_fully_discharged_K)
-        self.Area_tank_surface_m2 = storage_tank.calc_tank_surface_area(self.V_tank_m3 )
+        self.Area_tank_surface_m2 = storage_tank.calc_tank_surface_area(self.V_tank_m3)
         self.Q_from_storage_W = 0.0
         self.Q_current_storage_empty_capacity_W = self.Qc_tank_charging_limit_W  # start with an empty tank
         self.Q_current_storage_filled_capacity_W = 0.0  # start with an empty tank

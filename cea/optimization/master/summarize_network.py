@@ -76,7 +76,7 @@ def network_main(locator, buildings_in_this_network, ground_temp, num_tot_buildi
     mdot_cool_space_cooling_and_refrigeration_netw_min_kgpers = np.zeros(HOURS_IN_YEAR) + 1E6
     mdot_cool_space_cooling_data_center_and_refrigeration_netw_min_kgpers = np.zeros(HOURS_IN_YEAR) + 1E6
 
-    #RUN FOR HEATING NETWORKS
+    # RUN FOR HEATING NETWORKS
     if network_type == "DH":
         iteration = 0
         for building_name in buildings_in_this_network:
@@ -138,15 +138,15 @@ def network_main(locator, buildings_in_this_network, ground_temp, num_tot_buildi
                                 "mcpdata_netw_total_kWperC": mcpdata_netw_total_kWperC,
                                 "Q_DH_losses_W": Q_DH_losses_W})
 
-    #RUN FOR COOLING NETWORKS
+    # RUN FOR COOLING NETWORKS
     if network_type == "DC":
         iteration = 0
         for building_name in buildings_in_this_network:
-            #get demand and substation file of buildings in this network
+            # get demand and substation file of buildings in this network
             demand_df = pd.read_csv(locator.get_demand_results_file(building_name))
             substation_df = pd.read_csv(locator.get_optimization_substations_results_file(building_name, network_type, key))
 
-            #add to demand of servers
+            # add to demand of servers
             Qcdata_netw_total_kWh += demand_df['Qcdata_sys_kWh'].values
             mcpdata_netw_total_kWperC += demand_df['mcpcdata_sys_kWperC'].values
 
@@ -354,7 +354,7 @@ def calc_piping_thermal_losses_heating(Tnet_K, m_max_kgpers, m_min_kgpers, L, Tg
     :type Tg: float
     :type K: float
     :type cp: float
-    :return: Qloss: thermal lossess in the pipe.
+    :return: Qloss: thermal losses in the pipe.
     :rtype: float
     """
     if m_min_kgpers != 1E6:  # control variable see function fn.calc_min_flow
@@ -383,7 +383,7 @@ def calc_piping_thermal_losses_cooling(Total_load_per_hour_W):
     :type Tg: float
     :type K: float
     :type cp: float
-    :return: Qloss: thermal lossess in the pipe.
+    :return: Qloss: thermal losses in the pipe.
     :rtype: float
     """
     Qloss = 0.05 * Total_load_per_hour_W  # FixMe: Link the value directly to the thermal network matrix

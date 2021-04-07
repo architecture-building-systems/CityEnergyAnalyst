@@ -68,8 +68,8 @@ def storage_optimization(locator, master_to_slave_vars, config):
     Q_uncontrollable_final_W = Optimized_Data0
 
     # FIXME: constant 1e12 is used as maximum discharging rate, to confirm
-    # Design HP for storage uptake - limit the maximum thermal power, Criterial: 2000h operation average of a year
-    # --> Oral Recommandation of Antonio (former Leibundgut Group)
+    # Design HP for storage uptake - limit the maximum thermal power, Criteria: 2000h operation average of a year
+    # --> Oral Recommendation of Antonio (former Leibundgut Group)
     P_HP_max = np.sum(Q_uncontrollable_final_W) / 2000.0  # W? TODO: CONFIRM
 
     ## Start optimizing the storage size
@@ -89,8 +89,8 @@ def storage_optimization(locator, master_to_slave_vars, config):
     Q_stored_max_opt_W, Q_rejected_fin_opt_W, Q_disc_seasonstart_opt_W, T_st_max_op_K, T_st_min_op_K, \
     Q_storage_content_fin_op_W, T_storage_fin_op_K, Q_loss1_W, mdot_DH_fin1_kgpers, Q_uncontrollable_final_W = Optimized_Data
 
-    # Design HP for storage uptake - limit the maximum thermal power, Criterial: 2000h operation average of a year
-    # --> Oral Recommandation of Antonio (former Leibundgut Group)
+    # Design HP for storage uptake - limit the maximum thermal power, Criteria: 2000h operation average of a year
+    # --> Oral Recomendation of Antonio (former Leibundgut Group)
     P_HP_max = np.sum(Q_uncontrollable_final_W) / 2000.0
 
     # Calculate if the initial and final storage levels are converged
@@ -188,7 +188,7 @@ def storage_optimization(locator, master_to_slave_vars, config):
                     #   Idea:     check the final to initial storage content with an allowed margin of 5%.
                     #             If this happens, a new storage optimization run will be performed (sixth round)
                     #
-                    #             If the 5% margin is still not maintined after round 6, cover / fill
+                    #             If the 5% margin is still not maintained after round 6, cover / fill
                     #             the storage with a conventional boiler up to it's final value. As this re-filling can happen during hours of low
                     #             consumption, no extra machinery will be required.
 

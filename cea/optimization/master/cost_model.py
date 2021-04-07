@@ -1,17 +1,12 @@
 # -*- coding: utf-8 -*-
 """
 Extra costs to an individual
-
 """
 
 
-
-
 from math import log
-
 import numpy as np
 import pandas as pd
-
 import cea.technologies.boiler as boiler
 import cea.technologies.chiller_absorption as chiller_absorption
 import cea.technologies.chiller_vapor_compression as VCCModel
@@ -32,6 +27,7 @@ from cea.technologies.pumps import calc_Cinv_pump
 from cea.technologies.supply_systems_database import SupplySystemsDatabase
 from cea.analysis.costs.equations import calc_capex_annualized, calc_opex_annualized
 
+
 __author__ = "Tim Vollrath"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Tim Vollrath", "Thuy-An Nguyen", "Jimeno A. Fonseca"]
@@ -42,8 +38,8 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def buildings_building_scale_costs_and_emissions(column_names_buildings_heating,
-                                               column_names_buildings_cooling, locator, master_to_slave_vars):
+def buildings_building_scale_costs_and_emissions(column_names_buildings_heating, column_names_buildings_cooling,
+                                                 locator, master_to_slave_vars):
     DHN_barcode = master_to_slave_vars.DHN_barcode
     DCN_barcode = master_to_slave_vars.DCN_barcode
 
@@ -90,7 +86,7 @@ def buildings_building_scale_costs_and_emissions(column_names_buildings_heating,
 
 
 def calc_network_costs_heating(locator, master_to_slave_vars, network_features, network_type):
-    # Intitialize class
+    # Initialize class
     pipesCosts_USD = network_features.pipesCosts_DHN_USD
     num_buildings_connected = master_to_slave_vars.number_of_buildings_district_scale_heating
 
@@ -279,7 +275,7 @@ def buildings_district_scale_costs_and_emissions(district_heating_costs,
                                             prices,
                                             lca
                                             ):
-    # SUMMARIZE IMPORST AND EXPORTS
+    # SUMMARIZE IMPORTS AND EXPORTS
     sum_natural_gas_imports_W, \
     sum_wet_biomass_imports_W, \
     sum_dry_biomass_imports_W, \
@@ -313,7 +309,7 @@ def buildings_district_scale_costs_and_emissions(district_heating_costs,
 
 
 def calc_network_costs_cooling(locator, master_to_slave_vars, network_features, network_type, prices):
-    # Intitialize class
+    # Initialize class
     pipesCosts_USD = network_features.pipesCosts_DCN_USD
     num_buildings_connected = master_to_slave_vars.number_of_buildings_district_scale_cooling
 
@@ -387,8 +383,8 @@ def calc_substations_costs_cooling(building_names, master_to_slave_vars, distric
             Q_max_W = np.amax(subsArray)
             HEX_cost_data = pd.read_excel(locator.get_database_conversion_systems(), sheet_name="HEX")
             HEX_cost_data = HEX_cost_data[HEX_cost_data['code'] == 'HEX1']
-            # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
-            # capacity for the corresponding technology from the database
+            # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the
+            # least capacity for the corresponding technology from the database
             if Q_max_W < HEX_cost_data.iloc[0]['cap_min']:
                 Q_max_W = HEX_cost_data.iloc[0]['cap_min']
             HEX_cost_data = HEX_cost_data[
@@ -448,7 +444,7 @@ def calc_generation_costs_capacity_installed_cooling(locator,
                                                      supply_systems,
                                                      mdotnMax_kgpers,
                                                      ):
-    # TRIGENERATION
+    # TRI-GENERATION
     if master_to_slave_variables.NG_Trigen_on == 1:
         Capacity_NG_Trigen_ACH_W = master_to_slave_variables.NG_Trigen_ACH_size_W
         Capacity_NG_Trigen_th_W = master_to_slave_variables.NG_Trigen_CCGT_size_thermal_W
@@ -473,7 +469,7 @@ def calc_generation_costs_capacity_installed_cooling(locator,
         Opex_fixed_Trigen_NG_USD = 0.0
         Capex_Trigen_NG_USD = 0.0
 
-    # WATER-SOURCE VAPOR COMPRESION CHILLER BASE
+    # WATER-SOURCE VAPOR COMPRESSION CHILLER BASE
     if master_to_slave_variables.WS_BaseVCC_on == 1:
         Capacity_BaseVCC_WS_W = master_to_slave_variables.WS_BaseVCC_size_W
         # VCC
@@ -504,7 +500,7 @@ def calc_generation_costs_capacity_installed_cooling(locator,
         Opex_fixed_BaseVCC_WS_USD = 0.0
         Capex_BaseVCC_WS_USD = 0.0
 
-    # WATER-SOURCE VAPOR COMPRESION CHILLER PEAK
+    # WATER-SOURCE VAPOR COMPRESSION CHILLER PEAK
     if master_to_slave_variables.WS_PeakVCC_on == 1:
         Capacity_PeakVCC_WS_W = master_to_slave_variables.WS_PeakVCC_size_W
         # VCC
@@ -536,7 +532,7 @@ def calc_generation_costs_capacity_installed_cooling(locator,
         Opex_fixed_PeakVCC_WS_USD = 0.0
         Capex_PeakVCC_WS_USD = 0.0
 
-    # AIR-SOURCE VAPOR COMPRESION CHILLER BASE
+    # AIR-SOURCE VAPOR COMPRESSION CHILLER BASE
     if master_to_slave_variables.AS_BaseVCC_on == 1:
         Capacity_BaseVCC_AS_W = master_to_slave_variables.AS_BaseVCC_size_W
         # VCC
@@ -556,7 +552,7 @@ def calc_generation_costs_capacity_installed_cooling(locator,
         Opex_fixed_BaseVCC_AS_USD = 0.0
         Capex_BaseVCC_AS_USD = 0.0
 
-    # AIR-SOURCE VAPOR COMPRESION CHILLER PEAK
+    # AIR-SOURCE VAPOR COMPRESSION CHILLER PEAK
     if master_to_slave_variables.AS_PeakVCC_on == 1:
         Capacity_PeakVCC_AS_W = master_to_slave_variables.AS_PeakVCC_size_W
         # VCC
@@ -647,7 +643,7 @@ def calc_generation_costs_capacity_installed_heating(locator,
                                                      mdotnMax_kgpers
                                                      ):
     """
-    Computes costs / GHG emisions / primary energy needs
+    Computes costs / GHG emissions / primary energy needs
     for the individual
     addCosts = additional costs
     addCO2 = GHG emissions
@@ -975,7 +971,7 @@ def calc_seasonal_storage_costs(config, locator, storage_activation_data):
         Capacity_seasonal_storage_m3,
         locator, config,
         'TES2')
-    # HEATPUMP FOR SEASONAL SOLAR STORAGE OPERATION (CHARING AND DISCHARGING) TO DH
+    # HEATPUMP FOR SEASONAL SOLAR STORAGE OPERATION (CHARGING AND DISCHARGING) TO DH
     storage_dispatch_df = pd.DataFrame(storage_activation_data)
     array = np.array(storage_dispatch_df[["E_Storage_charging_req_W",
                                           "E_Storage_discharging_req_W",

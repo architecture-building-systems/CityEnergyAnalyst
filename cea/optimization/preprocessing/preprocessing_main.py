@@ -1,10 +1,6 @@
 """
 Pre-processing algorithm
-
 """
-
-
-
 
 
 from cea.optimization.constants import Z0
@@ -28,6 +24,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
+
 class WeatherFeatures(object):
     def __init__(self, weather_file, locator):
         self.weather_data = epwreader.epw_reader(weather_file)
@@ -44,7 +41,7 @@ def preproccessing(locator, total_demand, buildings_heating_demand, buildings_co
     :param locator: path to locator function
     :param total_demand: dataframe with total demand and names of all building in the area
     :param building_names: dataframe with names of all buildings in the area
-    :param weather_file: path to wather file
+    :param weather_file: path to weather file
     :type locator: class
     :type total_demand: list
     :type building_names: list

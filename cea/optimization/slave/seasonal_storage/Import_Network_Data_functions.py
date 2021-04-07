@@ -22,6 +22,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
+
 def import_solar_thermal_data(fName):
     """
     importing and preparing raw data for analysis of the district distribution
@@ -49,7 +50,7 @@ def import_solar_thermal_data(fName):
         #print "PVT 35"
         
         # Replace by 0 if negative values
-        Tscs = np.array( pd.read_csv( fName, usecols=["T_PVT_sup_C"], nrows=1 ) ) [0][0]
+        Tscs = np.array(pd.read_csv(fName, usecols=["T_PVT_sup_C"], nrows=1))[0][0]
         
         for i in range(HOURS_IN_YEAR):
             if Solar_Q_th_kWh[i] < 0:
@@ -72,7 +73,7 @@ def import_solar_thermal_data(fName):
         PVT_kWh = np.zeros(HOURS_IN_YEAR)
 
         # Replace by 0 if negative values
-        Tscs = np.array( pd.read_csv( fName, usecols=["T_SC_sup_C"], nrows=1 ) ) [0][0]
+        Tscs = np.array(pd.read_csv(fName, usecols=["T_SC_sup_C"], nrows=1))[0][0]
         
         for i in range(HOURS_IN_YEAR):
             if Solar_Q_th_kWh[i] < 0:

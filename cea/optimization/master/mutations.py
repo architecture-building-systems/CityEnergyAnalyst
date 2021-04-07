@@ -25,10 +25,10 @@ class MutationMethodInteger(object):
         elif self.method == 'Flipbit':
             return tools.mutFlipBit(individual, probability)[0]
 
-class MutationMethodContinuos(object):
+class MutationMethodContinuous(object):
     """
-        mutation methods for continuos variables
-      """
+    mutation methods for continuous variables
+    """
     def __init__(self, mutation_method):
         self.method = mutation_method
 
@@ -54,7 +54,7 @@ def mutation_main(individual,
                   mutation_method_continuous
                   ):
     mutation_integer = MutationMethodInteger(mutation_method_integer)
-    mutation_continuous = MutationMethodContinuos(mutation_method_continuous)
+    mutation_continuous = MutationMethodContinuous(mutation_method_continuous)
     # create dict of individual with his/her name
     individual_with_name_dict = dict(zip(column_names, individual))
 

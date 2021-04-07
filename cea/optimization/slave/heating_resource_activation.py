@@ -34,11 +34,7 @@ def heating_source_activator(Q_therm_req_W,
                              tdhret_req_K):
     """
     :param Q_therm_req_W:
-    :param hour:
-    :param context:
     :type Q_therm_req_W: float
-    :type hour: int
-    :type context: list
     :return: cost_data_centralPlant_op, source_info, Q_source_data, E_coldsource_data, E_PP_el_data, E_gas_data, E_wood_data, Q_excess
     :rtype:
     """

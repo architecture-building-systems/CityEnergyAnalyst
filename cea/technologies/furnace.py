@@ -43,7 +43,7 @@ def calc_eta_furnace(Q_load, Q_design, T_return_to_boiler, MOIST_TYPE):
     :type T_return_to_boiler : float
     :param T_return_to_boiler: return temperature to the boiler
 
-    :type MOIST_TYPE : float
+    :type MOIST_TYPE : str
     :param MOIST_TYPE: moisture type of the fuel, set in MasterToSlaveVariables ('wet' or 'dry')
 
     up to 6MW_therm_out Capacity proven!
@@ -81,8 +81,6 @@ def calc_eta_furnace(Q_load, Q_design, T_return_to_boiler, MOIST_TYPE):
     # calculate plant electrical efficiency
     if phi < FURNACE_MIN_ELECTRIC:
         eta_el = 0
-
-
     else:
         x = [2 / 7.0, 3 / 7.0, 4 / 7.0, 5 / 7.0, 6 / 7.0, 1]  # part load regime, phi = Q / Q_max
         y = [0.025, 0.0625, 0.102, 0.127, 0.146, 0.147]
@@ -122,7 +120,7 @@ def furnace_op_cost(Q_therm_W, Q_design_W, T_return_to_boiler_K, MOIST_TYPE):
     :type T_return_to_boiler_K : float
     :param T_return_to_boiler_K: return temperature to the boiler
 
-    :type MOIST_TYPE : float
+    :type MOIST_TYPE : str
     :param MOIST_TYPE: moisture type of the fuel, set in MasterToSlaveVariables ('wet' or 'dry')
 
     :rtype C_furn : float
@@ -183,9 +181,6 @@ def calc_Cinv_furnace(Q_design_W, locator, technology_type):
 
     :type Q_design_W : float
     :param Q_design_W: Design Load of Boiler
-        
-    :type Q_annual_W : float
-    :param Q_annual_W: annual thermal Power output [Wh]
 
     :rtype InvC_return : float
     :returns InvC_return: total investment Cost for building the plant

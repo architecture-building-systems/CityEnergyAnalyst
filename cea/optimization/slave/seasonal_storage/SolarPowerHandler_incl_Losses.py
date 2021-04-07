@@ -47,7 +47,8 @@ def StorageGateway(Q_PVT_gen_W, Q_SC_ET_gen_W, Q_SC_FP_gen_W, Q_server_gen_W, Q_
 
     else:
         Q_network_demand_W = max(Q_network_demand_W - Q_server_gen_W, 0)
-        Q_to_storage_W = Q_to_storage_W + Q_server_gen_W - Q_network_demand_W  + Q_PVT_gen_W + Q_SC_ET_gen_W + Q_SC_FP_gen_W
+        Q_to_storage_W = Q_to_storage_W + Q_server_gen_W - Q_network_demand_W + \
+                         Q_PVT_gen_W + Q_SC_ET_gen_W + Q_SC_FP_gen_W
         storage_active_flag = 1
         Q_server_to_directload_W = Q_network_demand_W
         Q_server_to_storage_W = Q_server_gen_W - Q_network_demand_W
@@ -98,7 +99,7 @@ def StorageGateway(Q_PVT_gen_W, Q_SC_ET_gen_W, Q_SC_FP_gen_W, Q_server_gen_W, Q_
     Q_from_storage_W = Q_network_demand_W
 
     if Q_to_storage_W < (Q_PVT_to_storage_W + Q_SC_FP_to_storage_W + Q_SC_ET_to_storage_W):
-        print (Q_to_storage_W)
+        print(Q_to_storage_W)
 
     if STORAGE_MAX_UPTAKE_LIMIT_FLAG == 1:
         if Q_to_storage_W >= P_HP_max_W:

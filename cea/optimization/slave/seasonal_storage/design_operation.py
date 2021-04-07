@@ -202,7 +202,8 @@ def Storage_Design(T_storage_old_K, Q_in_storage_old_W, locator,
         E_aux_ch_final_Whr[HOUR] = E_aux_ch_W
         E_aux_dech_final_Whr[HOUR] = E_aux_dech_W
 
-        # scale to the fraction taht goes directly to the grid. the rest is considered in the storage charging and discharging
+        # scale to the fraction that goes directly to the grid,
+        # the rest is considered in the storage charging and discharging.
         E_HPSC_FP_final_req_Whr[HOUR] = E_HPSC_FP_req_W
         E_HPSC_ET_final_req_Whr[HOUR] = E_HPSC_ET_req_W
         E_HPPVT_final_req_Whr[HOUR] = E_HPPVT_reg_W
@@ -266,7 +267,7 @@ def Storage_Design(T_storage_old_K, Q_in_storage_old_W, locator,
         "Q_SC_FP_gen_storage_W": Q_SC_FP_to_storage_Whr,
         "Q_HP_Server_gen_storage_W": Q_server_to_storage_Whr,
 
-        # ENERGY COMMING FROM THE STORAGE
+        # ENERGY COMING FROM THE STORAGE
         "Q_Storage_gen_W": Q_from_storage_final_Whr,
 
         # AUXILIARY LOADS NEEDED TO CHARGE/DISCHARGE THE STORAGE
@@ -312,7 +313,7 @@ def get_heating_provided_by_onsite_energy_sources(Q_PVT_gen_W,
     # Check if each source needs a heat-pump, calculate the final energy required
     # server
     if master_to_slave_vars.WasteServersHeatRecovery == 1:
-        Q_Server_gen_W = Q_Server_gen_initial_W * ETA_SERVER_TO_HEAT  # accounting for innefficiencies
+        Q_Server_gen_W = Q_Server_gen_initial_W * ETA_SERVER_TO_HEAT  # accounting for inefficiencies
         E_HPServer_req_W = 0.0
         if T_DH_sup_K > T_FROM_SERVER - DT_HEAT:  # and checkpoint_QfromServer == 1:
             # use a heat pump to bring it to distribution temp

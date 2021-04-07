@@ -1,7 +1,7 @@
 """
-Disctrict Cooling Network Calculations.
+District Cooling Network Calculations.
 
-Use free cooling from Lake as long as possible ( HP Lake operation from slave)
+Use free cooling from Lake as long as possible (HP Lake operation from slave)
 If Lake exhausted, then use other supply technologies
 
 """
@@ -14,7 +14,7 @@ import pandas as pd
 import cea.inputlocator
 
 from cea.constants import HOURS_IN_YEAR
-from cea.optimization.constants import T_TANK_FULLY_DISCHARGED_K, DT_COOL, VCC_T_COOL_IN, ACH_T_IN_FROM_CHP_K, VCC_CODE_CENTRALIZED
+from cea.optimization.constants import T_TANK_FULLY_DISCHARGED_K, DT_COOL, VCC_T_COOL_IN, ACH_T_IN_FROM_CHP_K
 from cea.optimization.master import cost_model
 from cea.optimization.slave.cooling_resource_activation import calc_vcc_CT_operation, cooling_resource_activator
 from cea.optimization.slave.daily_storage.load_leveling import LoadLevelingDailyStorage
@@ -150,7 +150,7 @@ def district_cooling_network(locator,
 
                 NG_Trigen_req_W[hour] = gas_output['NG_Trigen_req_W']
 
-        #calculate the electrical capacity as a function of the peak produced by the turbine
+        # calculate the electrical capacity as a function of the peak produced by the turbine
         master_to_slave_variables.NG_Trigen_CCGT_size_electrical_W = E_Trigen_NG_gen_W.max()
 
         # BACK-UPP VCC - AIR SOURCE

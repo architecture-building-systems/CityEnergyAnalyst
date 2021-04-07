@@ -1,15 +1,10 @@
 """
 Evaluation function of an individual
-
 """
 
 
-
-
 import os
-
 import pandas as pd
-
 from cea.optimization import slave_data
 from cea.optimization.constants import *
 from cea.optimization.constants import DH_CONVERSION_TECHNOLOGIES_SHARE, DC_CONVERSION_TECHNOLOGIES_SHARE
@@ -159,7 +154,6 @@ def thermal_networks_in_individual(locator,
     else:
         DC_network_summary_individual = None
 
-
     return DH_network_summary_individual, DC_network_summary_individual
 
 
@@ -188,20 +182,20 @@ def calc_master_to_slave_variables(locator, gen,
     """
     This function reads the list encoding a configuration and implements the corresponding
     for the slave routine's to use
-    :param individual_with_names_dict: list with inidividual
-    :param Q_heating_max_W:  peak heating demand
+    :param individual_with_names_dict: list with individual
+    :param Q_heating_nom_W: peak/nominal heating demand
     :param locator: locator class
     :type individual_with_names_dict: list
-    :type Q_heating_max_W: float
+    :type Q_heating_nom_W: float
     :type locator: string
     :return: master_to_slave_vars : class MasterSlaveVariables
     :rtype: class
     """
 
-    # initialise class storing dynamic variables transfered from master to slave optimization
+    # initialise class storing dynamic variables transferred from master to slave optimization
     master_to_slave_vars = slave_data.SlaveData()
 
-    # Store information aobut individual regarding the configuration of the network and curstomers connected
+    # Store information about individual regarding the configuration of the network and customers/buildings connected
     if district_heating_network and DHN_barcode.count("1") > 0:
         master_to_slave_vars.DHN_exists = True
     if district_cooling_network and DCN_barcode.count("1") > 0:
@@ -212,12 +206,12 @@ def calc_master_to_slave_variables(locator, gen,
     master_to_slave_vars.number_of_buildings_district_scale_cooling = DCN_barcode.count("1")
 
     # store the names of the buildings connected to district heating or district cooling
-    master_to_slave_vars.buildings_district_scale_to_district_heating = calc_district_scale_names(building_names_heating,
-                                                                                        DHN_barcode)
-    master_to_slave_vars.buildings_district_scale_to_district_cooling = calc_district_scale_names(building_names_cooling,
-                                                                                        DCN_barcode)
+    master_to_slave_vars.buildings_district_scale_to_district_heating = \
+        calc_district_scale_names(building_names_heating, DHN_barcode)
+    master_to_slave_vars.buildings_district_scale_to_district_cooling = \
+        calc_district_scale_names(building_names_cooling, DCN_barcode)
 
-    #these are dataframes describing the opeartion of the thermal networks in the individual
+    # these are dataframes describing the operations of the thermal networks in the individual
     master_to_slave_vars.DH_network_summary_individual = DH_network_summary_individual
     master_to_slave_vars.DC_network_summary_individual = DC_network_summary_individual
 
@@ -225,7 +219,7 @@ def calc_master_to_slave_variables(locator, gen,
     master_to_slave_vars.technologies_heating_allowed = technologies_heating_allowed
     master_to_slave_vars.technologies_cooling_allowed = technologies_cooling_allowed
 
-    # store the barcode which identifies which buildings are connected and disconencted
+    # store the barcode which identifies which buildings are connected and disconnected
     master_to_slave_vars.DHN_barcode = DHN_barcode
     master_to_slave_vars.DCN_barcode = DCN_barcode
 
@@ -235,7 +229,7 @@ def calc_master_to_slave_variables(locator, gen,
     # store the name of all buildings in the district (independent of district cooling or heating)
     master_to_slave_vars.building_names_all = building_names
 
-    # store the name used to didentified the individual (this helps to know where is inside)
+    # store the name used to identify the individual (this helps to know where is inside)
     master_to_slave_vars.building_names_heating = building_names_heating
     master_to_slave_vars.building_names_cooling = building_names_cooling
     master_to_slave_vars.building_names_electricity = building_names_electricity
@@ -245,7 +239,7 @@ def calc_master_to_slave_variables(locator, gen,
     master_to_slave_vars.individual_number = ind_num
     master_to_slave_vars.generation_number = gen
 
-    # Store inforamtion about which units are activated
+    # Store information about which units are activated
     master_to_slave_vars = master_to_slave_electrical_technologies(individual_with_names_dict, locator,
                                                                    master_to_slave_vars,
                                                                    district_heating_network,
@@ -273,8 +267,8 @@ def master_to_slave_district_cooling_technologies(Q_cooling_nom_W,
                                                   master_to_slave_vars):
     # COOLING SYSTEMS
     technologies_cooling_allowed = master_to_slave_vars.technologies_cooling_allowed
-    # NG-Fired Trigen with Absorption Chiller
-    if 'NG_Trigen' in technologies_cooling_allowed and individual_with_names_dict['NG_Trigen'] >= mimimum_valuedc(
+    # NG-Fired Tri-gen with Absorption Chiller
+    if 'NG_Trigen' in technologies_cooling_allowed and individual_with_names_dict['NG_Trigen'] >= minimum_valuedc(
             'NG_Trigen'):
         master_to_slave_vars.NG_Trigen_on = 1
         master_to_slave_vars.NG_Trigen_ACH_size_W = individual_with_names_dict['NG_Trigen'] * Q_cooling_nom_W
@@ -282,47 +276,47 @@ def master_to_slave_district_cooling_technologies(Q_cooling_nom_W,
         # twice as big to allow for usage of absorption chiller
 
     # Water source base vapor compression chiller
-    if 'WS_BaseVCC' in technologies_cooling_allowed and individual_with_names_dict['WS_BaseVCC'] >= mimimum_valuedc(
+    if 'WS_BaseVCC' in technologies_cooling_allowed and individual_with_names_dict['WS_BaseVCC'] >= minimum_valuedc(
             'WS_BaseVCC'):
         master_to_slave_vars.WS_BaseVCC_on = 1
         master_to_slave_vars.WS_BaseVCC_size_W = individual_with_names_dict['WS_BaseVCC'] * Q_cooling_nom_W
 
     # Water source peak vapor compression chiller
-    if 'WS_PeakVCC' in technologies_cooling_allowed and individual_with_names_dict['WS_PeakVCC'] >= mimimum_valuedc(
+    if 'WS_PeakVCC' in technologies_cooling_allowed and individual_with_names_dict['WS_PeakVCC'] >= minimum_valuedc(
             'WS_PeakVCC'):
         master_to_slave_vars.WS_PeakVCC_on = 1
         master_to_slave_vars.WS_PeakVCC_size_W = individual_with_names_dict['WS_PeakVCC'] * Q_cooling_nom_W
 
     # Air source (Cooling Tower) base vapor compression chiller
-    if 'AS_BaseVCC' in technologies_cooling_allowed and individual_with_names_dict['AS_BaseVCC'] >= mimimum_valuedc(
+    if 'AS_BaseVCC' in technologies_cooling_allowed and individual_with_names_dict['AS_BaseVCC'] >= minimum_valuedc(
             'AS_BaseVCC'):
         master_to_slave_vars.AS_BaseVCC_on = 1
         master_to_slave_vars.AS_BaseVCC_size_W = individual_with_names_dict['AS_BaseVCC'] * Q_cooling_nom_W
 
     # Air source (Cooling Tower) peak vapor compression chiller
-    if 'AS_PeakVCC' in technologies_cooling_allowed and individual_with_names_dict['AS_PeakVCC'] >= mimimum_valuedc(
+    if 'AS_PeakVCC' in technologies_cooling_allowed and individual_with_names_dict['AS_PeakVCC'] >= minimum_valuedc(
             'AS_PeakVCC'):
         master_to_slave_vars.AS_PeakVCC_on = 1
         master_to_slave_vars.AS_PeakVCC_size_W = individual_with_names_dict['AS_PeakVCC'] * Q_cooling_nom_W
 
     # Storage Cooling
     flag = False
-    if 'WS_BaseVCC' in technologies_cooling_allowed and individual_with_names_dict['WS_BaseVCC'] >= mimimum_valuedc(
+    if 'WS_BaseVCC' in technologies_cooling_allowed and individual_with_names_dict['WS_BaseVCC'] >= minimum_valuedc(
             'WS_BaseVCC'):
         flag = True
-    elif 'WS_PeakVCC' in technologies_cooling_allowed and individual_with_names_dict['WS_PeakVCC'] >= mimimum_valuedc(
+    elif 'WS_PeakVCC' in technologies_cooling_allowed and individual_with_names_dict['WS_PeakVCC'] >= minimum_valuedc(
             'WS_PeakVCC'):
         flag = True
-    elif 'AS_BaseVCC' in technologies_cooling_allowed and individual_with_names_dict['AS_BaseVCC'] >= mimimum_valuedc(
+    elif 'AS_BaseVCC' in technologies_cooling_allowed and individual_with_names_dict['AS_BaseVCC'] >= minimum_valuedc(
             'AS_BaseVCC'):
         flag = True
-    elif 'AS_PeakVCC' in technologies_cooling_allowed and individual_with_names_dict['AS_PeakVCC'] >= mimimum_valuedc(
+    elif 'AS_PeakVCC' in technologies_cooling_allowed and individual_with_names_dict['AS_PeakVCC'] >= minimum_valuedc(
             'AS_PeakVCC'):
         flag = True
-    elif 'NG_Trigen' in technologies_cooling_allowed and individual_with_names_dict['NG_Trigen'] >= mimimum_valuedc(
+    elif 'NG_Trigen' in technologies_cooling_allowed and individual_with_names_dict['NG_Trigen'] >= minimum_valuedc(
             'NG_Trigen'):
         flag = True
-    if 'Storage' in technologies_cooling_allowed and individual_with_names_dict['Storage'] >= mimimum_valuedc(
+    if 'Storage' in technologies_cooling_allowed and individual_with_names_dict['Storage'] >= minimum_valuedc(
             'Storage') and flag:
         master_to_slave_vars.Storage_cooling_on = 1
         master_to_slave_vars.Storage_cooling_size_W = individual_with_names_dict['Storage'] * Q_cooling_nom_W
@@ -372,13 +366,13 @@ def calc_available_area_solar_collectors(locator, buildings, share_allowed, pane
     return area_m2 * share_allowed
 
 
-def mimimum_valuedh(technology):
+def minimum_valuedh(technology):
     data = DH_CONVERSION_TECHNOLOGIES_SHARE[technology]
     minimum = data['minimum']
     return minimum
 
 
-def mimimum_valuedc(technology):
+def minimum_valuedc(technology):
     data = DC_CONVERSION_TECHNOLOGIES_SHARE[technology]
     minimum = data['minimum']
     return minimum
@@ -390,47 +384,47 @@ def master_to_slave_district_heating_technologies(Q_heating_nom_W,
                                                   locator,
                                                   master_to_slave_vars):
     technologies_heating_allowed = master_to_slave_vars.technologies_heating_allowed
-    if 'NG_Trigen' in technologies_heating_allowed and individual_with_names_dict['NG_Cogen'] >= mimimum_valuedh(
+    if 'NG_Trigen' in technologies_heating_allowed and individual_with_names_dict['NG_Cogen'] >= minimum_valuedh(
             'NG_Cogen'):  # NG-fired CHPFurnace
         master_to_slave_vars.CC_on = 1
         master_to_slave_vars.CCGT_SIZE_W = individual_with_names_dict['NG_Cogen'] * Q_heating_nom_W
 
-    if 'WB_Cogen' in technologies_heating_allowed and individual_with_names_dict['WB_Cogen'] >= mimimum_valuedh(
+    if 'WB_Cogen' in technologies_heating_allowed and individual_with_names_dict['WB_Cogen'] >= minimum_valuedh(
             'WB_Cogen'):  # Wet-Biomass fired Furnace
         master_to_slave_vars.Furnace_wet_on = 1
         master_to_slave_vars.WBFurnace_Q_max_W = individual_with_names_dict['WB_Cogen'] * Q_heating_nom_W
 
-    if 'DB_Cogen' in technologies_heating_allowed and individual_with_names_dict['DB_Cogen'] >= mimimum_valuedh(
+    if 'DB_Cogen' in technologies_heating_allowed and individual_with_names_dict['DB_Cogen'] >= minimum_valuedh(
             'DB_Cogen'):  # Dry-Biomass fired Furnace
         master_to_slave_vars.Furnace_dry_on = 1
         master_to_slave_vars.DBFurnace_Q_max_W = individual_with_names_dict['DB_Cogen'] * Q_heating_nom_W
 
     # Base boiler
     if 'NG_BaseBoiler' in technologies_heating_allowed and individual_with_names_dict[
-        'NG_BaseBoiler'] >= mimimum_valuedh('NG_BaseBoiler'):  # NG-fired boiler
+        'NG_BaseBoiler'] >= minimum_valuedh('NG_BaseBoiler'):  # NG-fired boiler
         master_to_slave_vars.Boiler_on = 1
         master_to_slave_vars.Boiler_Q_max_W = individual_with_names_dict['NG_BaseBoiler'] * Q_heating_nom_W
 
     # peak boiler
     if 'NG_PeakBoiler' in technologies_heating_allowed and individual_with_names_dict[
-        'NG_PeakBoiler'] >= mimimum_valuedh('NG_PeakBoiler'):  # BG-fired boiler
+        'NG_PeakBoiler'] >= minimum_valuedh('NG_PeakBoiler'):  # BG-fired boiler
         master_to_slave_vars.BoilerPeak_on = 1
         master_to_slave_vars.BoilerPeak_Q_max_W = individual_with_names_dict['NG_PeakBoiler'] * Q_heating_nom_W
 
     # HPLake
-    if 'WS_HP' in technologies_heating_allowed and individual_with_names_dict['WS_HP'] >= mimimum_valuedh('WS_HP'):
+    if 'WS_HP' in technologies_heating_allowed and individual_with_names_dict['WS_HP'] >= minimum_valuedh('WS_HP'):
         master_to_slave_vars.HPLake_on = 1
         master_to_slave_vars.HPLake_maxSize_W = individual_with_names_dict['WS_HP'] * Q_heating_nom_W
     # HPSewage
-    if 'SS_HP' in technologies_heating_allowed and individual_with_names_dict['SS_HP'] >= mimimum_valuedh('SS_HP'):
+    if 'SS_HP' in technologies_heating_allowed and individual_with_names_dict['SS_HP'] >= minimum_valuedh('SS_HP'):
         master_to_slave_vars.HPSew_on = 1
         master_to_slave_vars.HPSew_maxSize_W = individual_with_names_dict['SS_HP'] * Q_heating_nom_W
     # GHP
-    if 'GS_HP' in technologies_heating_allowed and individual_with_names_dict['GS_HP'] >= mimimum_valuedh('GS_HP'):
+    if 'GS_HP' in technologies_heating_allowed and individual_with_names_dict['GS_HP'] >= minimum_valuedh('GS_HP'):
         master_to_slave_vars.GHP_on = 1
         master_to_slave_vars.GHP_maxSize_W = individual_with_names_dict['GS_HP'] * Q_heating_nom_W
     # HPServer
-    if 'DS_HP' in technologies_heating_allowed and individual_with_names_dict['DS_HP'] >= mimimum_valuedh('DS_HP'):
+    if 'DS_HP' in technologies_heating_allowed and individual_with_names_dict['DS_HP'] >= minimum_valuedh('DS_HP'):
         master_to_slave_vars.WasteServersHeatRecovery = 1
         master_to_slave_vars.HPServer_maxSize_W = Q_wasteheat_datacentre_nom_W
 
@@ -489,11 +483,12 @@ def master_to_slave_electrical_technologies(individual_with_names_dict,
 
 def createTotalNtwCsv(barcode, locator, building_names):
     """
-    Create and saves the total file for a specific DH or DC configuration
-    to make the distribution routine possible
-    :param indCombi: string of 0 and 1: 0 if the building is disconnected, 1 if connected
+    Creates and saves the total file for a specific DH or DC configuration
+    to make the distribution routine possible.
+
+    :param barcode: string of 0 and 1: 0 if the building is disconnected, 1 if connected
     :param locator: path to raw files
-    :type indCombi: string
+    :type barcode: string
     :type locator: string
     :return: name of the total file
     :rtype: string
@@ -504,7 +499,7 @@ def createTotalNtwCsv(barcode, locator, building_names):
         if index == '1':
             buildings_in_this_network_config.append(name)
 
-    # get total demand file fro selecte
+    # get total demand file of selected buildings
     df = pd.read_csv(locator.get_total_demand())
     dfRes = df[df.Name.isin(buildings_in_this_network_config)]
     dfRes = dfRes.reset_index(drop=True)

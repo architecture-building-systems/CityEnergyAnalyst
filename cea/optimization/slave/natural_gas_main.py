@@ -38,7 +38,6 @@ def fuel_imports(master_to_slave_vars, heating_dispatch,
         NG_used_PeakBoiler_W = np.zeros(8760)
         NG_used_BackupBoiler_W = np.zeros(8760)
 
-
     if master_to_slave_vars.DCN_exists:
         NG_used_CCGT_W = cooling_dispatch["NG_used_CCGT_W"]
     else:

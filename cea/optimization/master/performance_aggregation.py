@@ -88,7 +88,7 @@ def summarize_results_individual(buildings_district_scale_costs,
         "GHG_sys_building_scale_tonCO2": GHG_sys_building_scale_tonCO2,
     }
 
-    # return objectives and perfromance totals dict
+    # return objectives and performances totals dict
     TAC_sys_USD = np.float64(TAC_sys_USD)
     GHG_sys_tonCO2 = np.float64(GHG_sys_tonCO2)
 

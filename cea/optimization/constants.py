@@ -16,10 +16,10 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 # Length of entries of an individual and the name of every entry
-# this is the firts part of the individual and only considers technologies
+# this is the first part of the individual and only considers technologies
 # in the optimization algorithm we add more entries to specify network connections to buildings.
 DH_CONVERSION_TECHNOLOGIES_WITH_SPACE_RESTRICTIONS = ["PVT", "SC_ET", "SC_FP", "PV"]
-DH_CONVERSION_TECHNOLOGIES_WITH_SIZE_AGGREAGTION_NEEDED = ["NG_Cogen", "WB_Cogen", "DB_Cogen", "NG_BaseBoiler",
+DH_CONVERSION_TECHNOLOGIES_WITH_SIZE_AGGREGATION_NEEDED = ["NG_Cogen", "WB_Cogen", "DB_Cogen", "NG_BaseBoiler",
                                                            "NG_PeakBoiler", "WS_HP", "SS_HP", "GS_HP", "DS_HP"]
 DC_CONVERSION_TECHNOLOGIES_WITH_SPACE_RESTRICTIONS = []
 
@@ -58,7 +58,7 @@ Q_MARGIN_FOR_NETWORK = 0.01  # Reliability margin for the system nominal capacit
 Q_LOSS_DISCONNECTED = 0.05  # Heat losses within a disconnected building
 Q_MIN_SHARE = 0.1  # Minimum percentage for the installed capacity
 STORAGE_COOLING_SHARE_RESTRICTION = 0.3  # Maximum percentage of the nominal cooling load that is allowed
-K_DH = 0.25  # linear heat loss coefficient district heting network twin pipes groundfoss
+K_DH = 0.25  # linear heat loss coefficient district heating network twin pipes groundfoss
 # Svendsen (2012) "Energy and exergy analysis of low temperature district heating network")
 
 # pipes location properties

@@ -3,15 +3,10 @@ multi-objective optimization of supply systems for the CEA
 """
 
 
-
-
-
 import os
 import time
 import warnings
-
 import pandas as pd
-
 import cea.config
 import cea.inputlocator
 from cea.optimization.master import master_main
@@ -143,10 +138,12 @@ def check_input_files(config, locator):
         raise ValueError("Missing demand data of the scenario. Consider running demand script first.")
     if not os.path.exists(locator.SC_totals(panel_type='FP')):
         raise ValueError(
-            "Missing SC potential of panel type 'FP' of the scenario. Consider running solar-collector script first with panel_type as FP and t-in-SC as 75")
+            "Missing SC potential of panel type 'FP' of the scenario. "
+            "Consider running solar-collector script first with panel_type as FP and t-in-SC as 75")
     if not os.path.exists(locator.SC_totals(panel_type='ET')):
         raise ValueError(
-            "Missing SC potential of panel type 'ET' of the scenario. Consider running solar-collector script first with panel_type as ET and t-in-SC as 150")
+            "Missing SC potential of panel type 'ET' of the scenario. "
+            "Consider running solar-collector script first with panel_type as ET and t-in-SC as 150")
     if not os.path.exists(locator.get_thermal_network_edge_list_file(network_type, '')):
         raise ValueError(
             "Missing thermal network simulation results. Consider running thermal network simulation script first.")

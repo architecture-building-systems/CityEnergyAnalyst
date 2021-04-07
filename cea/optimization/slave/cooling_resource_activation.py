@@ -51,7 +51,7 @@ def calc_vcc_CT_operation(Qc_from_VCC_W,
     # calculate cooling tower
     wdot_CT_Wh = CTModel.calc_CT(Qc_CT_VCC_W, size_chiller_CT)
 
-    # calcualte energy consumption and variable costs
+    # calculate energy consumption and variable costs
     E_used_VCC_W = (VCC_operation['wdot_W'] + wdot_CT_Wh)
 
     return Qc_VCC_W, E_used_VCC_W
@@ -77,7 +77,7 @@ def calc_chiller_absorption_operation(Qc_ACH_req_W, T_DCN_re_K, T_DCN_sup_K, T_A
     # calculate cooling tower
     wdot_CT_Wh = CTModel.calc_CT(Qc_CT_ACH_W, size_ACH_W)
 
-    # calcualte energy consumption and variable costs
+    # calculate energy consumption and variable costs
     Qh_CHP_ACH_W = ACH_operation['q_hw_W']
     E_used_ACH_W = ACH_operation['wdot_W'] + wdot_CT_Wh
 
