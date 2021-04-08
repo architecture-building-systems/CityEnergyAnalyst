@@ -116,9 +116,10 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, buildings_he
         shapefile["description"] = [np.nan] * no_buildings
 
     shapefile["category"] = shapefile['building']
-    # in OSM, "amenities" (where available) supersede "building" categories
-    in_categories = shapefile['amenity'].isin(OSM_BUILDING_CATEGORIES.keys())
-    shapefile.loc[in_categories, '1ST_USE'] = shapefile[in_categories]['amenity'].map(OSM_BUILDING_CATEGORIES)
+    if 'amenity' in list_of_columns:
+        # in OSM, "amenities" (where available) supersede "building" categories
+        in_categories = shapefile['amenity'].isin(OSM_BUILDING_CATEGORIES.keys())
+        shapefile.loc[in_categories, '1ST_USE'] = shapefile[in_categories]['amenity'].map(OSM_BUILDING_CATEGORIES)
 
     shapefile["Name"] = [key + str(x + 1000) for x in
                          range(no_buildings)]  # start in a big number to avoid potential confusion
