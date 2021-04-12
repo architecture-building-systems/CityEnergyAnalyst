@@ -182,7 +182,7 @@ def calculate_typology_file(locator, zone_df, year_construction, occupancy_type,
     """
     # calculate construction year
     typology_df = calculate_age(zone_df, year_construction)
-
+    
     # calculate the most likely construction standard
     standard_database = pd.read_excel(locator.get_database_construction_standards(), sheet_name='STANDARD_DEFINITION')
     typology_df['STANDARD'] = calc_category(standard_database, typology_df['YEAR'].values)
@@ -200,7 +200,11 @@ def calculate_typology_file(locator, zone_df, year_construction, occupancy_type,
         zone_df.loc[in_categories, '1ST_USE'] = zone_df[in_categories]['category'].map(OSM_BUILDING_CATEGORIES)
 
         # for un-conditioned OSM building categories without a clear CEA use type, "PARKING" is assigned
-        in_unconditioned_categories = zone_df['category'].isin(OTHER_OSM_CATEGORIES_UNCONDITIONED) | zone_df['amenity'].isin(OTHER_OSM_CATEGORIES_UNCONDITIONED)
+        print(zone_df.columns)
+        if 'amenity' in zone_df.columns:
+            in_unconditioned_categories = zone_df['category'].isin(OTHER_OSM_CATEGORIES_UNCONDITIONED) | zone_df['amenity'].isin(OTHER_OSM_CATEGORIES_UNCONDITIONED)
+        else:
+            in_unconditioned_categories = zone_df['category'].isin(OTHER_OSM_CATEGORIES_UNCONDITIONED)
         zone_df.loc[in_unconditioned_categories, '1ST_USE'] = "PARKING"
 
     fields = COLUMNS_ZONE_TYPOLOGY
@@ -248,6 +252,7 @@ def calculate_age(zone_df, year_construction):
         data_osm_floors_joined = int(math.ceil(np.nanmedian(data_age)))  # median so we get close to the worse case
         zone_df["YEAR"] = [int(x) if x is not np.nan else data_osm_floors_joined for x in data_age]
     else:
+        zone_df['YEAR'] = year_construction
         zone_df['REFERENCE'] = "CEA - assumption"
 
     return zone_df
