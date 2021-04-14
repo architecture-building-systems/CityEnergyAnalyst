@@ -200,7 +200,6 @@ def calculate_typology_file(locator, zone_df, year_construction, occupancy_type,
         zone_df.loc[in_categories, '1ST_USE'] = zone_df[in_categories]['category'].map(OSM_BUILDING_CATEGORIES)
 
         # for un-conditioned OSM building categories without a clear CEA use type, "PARKING" is assigned
-        print(zone_df.columns)
         if 'amenity' in zone_df.columns:
             in_unconditioned_categories = zone_df['category'].isin(OTHER_OSM_CATEGORIES_UNCONDITIONED) | zone_df['amenity'].isin(OTHER_OSM_CATEGORIES_UNCONDITIONED)
         else:
