@@ -44,7 +44,7 @@ class TestCalcThermalLoads(unittest.TestCase):
         cea.datamanagement.archetypes_mapper.archetypes_mapper(cls.locator, True, True, True, True, True, True,
                                                          cls.locator.get_zone_building_names())
 
-        cls.building_properties = BuildingProperties(cls.locator)
+        cls.building_properties = BuildingProperties(cls.locator, epwreader.epw_reader(cls.locator.get_weather_file()))
 
         cls.use_dynamic_infiltration_calculation = cls.config.demand.use_dynamic_infiltration_calculation
         cls.resolution_output = cls.config.demand.resolution_output
