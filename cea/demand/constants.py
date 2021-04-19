@@ -21,9 +21,6 @@ __status__ = "Production"
 H_F = 3.0  # average height per floor in m
 D = 20.0  # in mm the diameter of the pipe to calculate losses
 
-# SOLAR
-RSE = 0.04  # thermal resistance of external surfaces according to ISO 6946
-
 # HVAC SYSTEMS & VENTILATION
 ETA_REC = 0.75  # constant efficiency of Heat recovery
 DELTA_P_DIM = 5.0  # (Pa) dimensioning differential pressure for multi-storey building shielded from wind,
