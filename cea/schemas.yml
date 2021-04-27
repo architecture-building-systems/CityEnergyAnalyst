@@ -1858,7 +1858,7 @@ get_building_internal:
       X_ghp:
         description: Moisture released by occupancy at peak conditions
         type: float
-        unit: '[ghp]'  # FIXME: this unit is wrong!
+        unit: '[ghp]'
         values: '{0.0...n}'
         min: 0.0
       Ea_Wm2:
