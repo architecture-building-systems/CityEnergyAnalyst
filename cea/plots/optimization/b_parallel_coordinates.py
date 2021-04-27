@@ -59,10 +59,10 @@ class ParallelCoordinatesForOneGenerationPlot(cea.plots.optimization.GenerationP
             titlez = 'Investment costs <br>[USD$(2015)/m2.yr]'
             titlel = 'Operation costs <br>[USD$(2015)/m2.yr]'
         elif self.normalization == "building occupancy":
-            titlex = 'Equivalent annual costs <br>[USD$(2015)/pax.yr]'
-            titley = 'GHG emissions <br>[kg CO2-eq/pax.yr]'
-            titlez = 'Investment costs <br>[USD$(2015)/pax]'
-            titlel = 'Operation costs <br>[USD$(2015)/pax.yr]'
+            titlex = 'Equivalent annual costs <br>[USD$(2015)/p.yr]'
+            titley = 'GHG emissions <br>[kg CO2-eq/p.yr]'
+            titlez = 'Investment costs <br>[USD$(2015)/p]'
+            titlel = 'Operation costs <br>[USD$(2015)/p.yr]'
         else:
             titlex = 'Equivalent annual costs <br>[USD$(2015)/yr]'
             titley = 'GHG emissions <br>[ton CO2-eq/yr]'

@@ -62,9 +62,9 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.GenerationPlotBase)
             titley = 'GHG emissions [kg CO2-eq/m2.yr]'
             titlez = 'Investment costs <br>[USD$(2015)/m2.yr]'
         elif self.normalization == "building occupancy":
-            titlex = 'Equivalent annual costs [USD$(2015)/pax.yr]'
-            titley = 'GHG emissions [kg CO2-eq/pax.yr]'
-            titlez = 'Investment costs <br>[USD$(2015)/pax]'
+            titlex = 'Equivalent annual costs [USD$(2015)/p.yr]'
+            titley = 'GHG emissions [kg CO2-eq/p.yr]'
+            titlez = 'Investment costs <br>[USD$(2015)/p]'
         else:
             titlex = 'Equivalent annual costs [USD$(2015)/yr]'
             titley = 'GHG emissions [ton CO2-eq/yr]'
