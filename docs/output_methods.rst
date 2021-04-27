@@ -73,7 +73,7 @@ The following file is used by these scripts: ``demand``, ``schedule_maker``
     ``Tcs_setb_C``, "Setback point of temperature for cooling system"
     ``Ths_set_C``, "Setpoint temperature for heating system"
     ``Ths_setb_C``, "Setback point of temperature for heating system"
-    ``Ve_lpspax``, "Minimum outdoor air ventilation rate per person for Air Quality"
+    ``Ve_lsp``, "Minimum outdoor air ventilation rate per person for Air Quality"
     
 
 
@@ -94,14 +94,14 @@ The following file is used by these scripts: ``demand``, ``schedule_maker``
     ``Epro_Wm2``, "Peak specific electrical load due to industrial processes"
     ``Ev_kWveh``, "Peak capacity of electric battery per vehicle"
     ``Name``, "Unique building ID. It must start with a letter."
-    ``Occ_m2pax``, "Occupancy density"
+    ``Occ_m2p``, "Occupancy density"
     ``Qcpro_Wm2``, "Peak specific process cooling load"
     ``Qcre_Wm2``, "Peak specific cooling load due to refrigeration (cooling rooms)"
     ``Qhpro_Wm2``, "Peak specific process heating load"
-    ``Qs_Wpax``, "Peak sensible heat load of people"
-    ``Vw_lpdpax``, "Peak specific fresh water consumption (includes cold and hot water)"
-    ``Vww_lpdpax``, "Peak specific daily hot water consumption"
-    ``X_ghpax``, "Moisture released by occupancy at peak conditions"
+    ``Qs_Wp``, "Peak sensible heat load of people"
+    ``Vw_ldp``, "Peak specific fresh water consumption (includes cold and hot water)"
+    ``Vww_ldp``, "Peak specific daily hot water consumption"
+    ``X_ghp``, "Moisture released by occupancy at peak conditions"
     
 
 
@@ -1435,7 +1435,7 @@ The following file is used by these scripts: ``archetypes_mapper``
     ``Tcs_setb_C``, Setback point of temperature for cooling system
     ``Ths_set_C``, Setpoint temperature for heating system
     ``Ths_setb_C``, Setback point of temperature for heating system
-    ``Ve_lpspax``, Indoor quality requirements of indoor ventilation per person
+    ``Ve_lsp``, Indoor quality requirements of indoor ventilation per person
     
 
 
@@ -1449,14 +1449,14 @@ The following file is used by these scripts: ``archetypes_mapper``
     ``El_Wm2``, Peak specific electrical load due to artificial lighting
     ``Epro_Wm2``, Peak specific electrical load due to industrial processes
     ``Ev_kWveh``, Peak capacity of electrical battery per vehicle
-    ``Occ_m2pax``, Occupancy density
+    ``Occ_m2p``, Occupancy density
     ``Qcpro_Wm2``, Peak specific process cooling load
     ``Qcre_Wm2``, Peak specific cooling load due to refrigeration (cooling rooms)
     ``Qhpro_Wm2``, Peak specific process heating load
-    ``Qs_Wpax``, Peak sensible heat load of people
-    ``Vw_lpdpax``, Peak specific fresh water consumption (includes cold and hot water)
-    ``Vww_lpdpax``, Peak specific daily hot water consumption
-    ``X_ghpax``, Moisture released by occupancy at peak conditions
+    ``Qs_Wp``, Peak sensible heat load of people
+    ``Vw_ldp``, Peak specific fresh water consumption (includes cold and hot water)
+    ``Vww_ldp``, Peak specific daily hot water consumption
+    ``X_ghp``, Moisture released by occupancy at peak conditions
     
 
 
@@ -3076,7 +3076,7 @@ The following file is used by these scripts: ``demand``
     ``Ed_W``, "Electrical load due to servers/data centers"
     ``El_W``, "Electrical load due to lighting"
     ``Epro_W``, "Electrical load due to processes"
-    ``people_pax``, "Number of people in the building"
+    ``people_p``, "Number of people in the building"
     ``Qcpro_W``, "Process cooling load"
     ``Qcre_W``, "Cooling load due to cool room refrigeration"
     ``Qhpro_W``, "Process heat load"

@@ -129,30 +129,30 @@ def calc_schedules(locator,
     days_in_schedule = len(list(set(daily_schedule_building['DAY'])))
 
     # SCHEDULE FOR PEOPLE OCCUPANCY
-    array = daily_schedule_building[VARIABLE_CEA_SCHEDULE_RELATION['Occ_m2pax']]
-    if internal_loads_building['Occ_m2pax'] > 0.0:
+    array = daily_schedule_building[VARIABLE_CEA_SCHEDULE_RELATION['Occ_m2p']]
+    if internal_loads_building['Occ_m2p'] > 0.0:
         yearly_array = get_yearly_vectors(date_range, days_in_schedule, array, monthly_multiplier)
-        number_of_occupants = np.int(1 / internal_loads_building['Occ_m2pax'] * prop_geometry_building['Aocc'])
+        number_of_occupants = np.int(1 / internal_loads_building['Occ_m2p'] * prop_geometry_building['Aocc'])
         if stochastic_schedule:
             # if the stochastic schedules are used, the stochastic schedule generator is called once for every occupant
-            final_schedule['Occ_m2pax'] = np.zeros(HOURS_IN_YEAR)
+            final_schedule['Occ_m2p'] = np.zeros(HOURS_IN_YEAR)
             for occupant in range(number_of_occupants):
-                final_schedule['Occ_m2pax'] += calc_individual_occupant_schedule(yearly_array)
+                final_schedule['Occ_m2p'] += calc_individual_occupant_schedule(yearly_array)
         else:
-            final_schedule['Occ_m2pax'] = np.round(yearly_array * number_of_occupants)
+            final_schedule['Occ_m2p'] = np.round(yearly_array * number_of_occupants)
     else:
         number_of_occupants = 0
-        final_schedule['Occ_m2pax'] = np.zeros(HOURS_IN_YEAR)
+        final_schedule['Occ_m2p'] = np.zeros(HOURS_IN_YEAR)
 
     # HEAT AND HUMIDITY GAINS FROM OCCUPANTS
-    for variable in ['Qs_Wpax', 'X_ghpax']:
-        final_schedule[variable] = final_schedule['Occ_m2pax'] * internal_loads_building[variable]
+    for variable in ['Qs_Wp', 'X_ghp']:
+        final_schedule[variable] = final_schedule['Occ_m2p'] * internal_loads_building[variable]
 
     # VENTILATION SCHEDULE
-    final_schedule['Ve_lpspax'] = final_schedule['Occ_m2pax'] * indoor_comfort_building['Ve_lpspax']
+    final_schedule['Ve_lsp'] = final_schedule['Occ_m2p'] * indoor_comfort_building['Ve_lsp']
 
     # SCHEDULE FOR WATER CONSUMPTION
-    for variable in ['Vww_lpdpax', 'Vw_lpdpax']:
+    for variable in ['Vww_ldp', 'Vw_ldp']:
         if internal_loads_building[variable] > 0.0:
             array = daily_schedule_building[VARIABLE_CEA_SCHEDULE_RELATION[variable]]
             yearly_array = get_yearly_vectors(date_range,
@@ -183,10 +183,10 @@ def calc_schedules(locator,
             # adjust the yearly array based on the number of occupants produced by the stochastic occupancy model
             deterministic_occupancy_array = np.round(
                 get_yearly_vectors(date_range, days_in_schedule,
-                                   daily_schedule_building[VARIABLE_CEA_SCHEDULE_RELATION['Occ_m2pax']],
-                                   monthly_multiplier) * 1 / internal_loads_building['Occ_m2pax'] *
+                                   daily_schedule_building[VARIABLE_CEA_SCHEDULE_RELATION['Occ_m2p']],
+                                   monthly_multiplier) * 1 / internal_loads_building['Occ_m2p'] *
                 prop_geometry_building['Aocc'])
-            adjusted_array = yearly_array * final_schedule['Occ_m2pax'] / deterministic_occupancy_array
+            adjusted_array = yearly_array * final_schedule['Occ_m2p'] / deterministic_occupancy_array
             # nan values correspond to time steps where both occupant schedules are 0
             adjusted_array[np.isnan(adjusted_array)] = 0.0
             # inf values correspond to time steps where the stochastic schedule has at least one occupant and the
@@ -194,7 +194,7 @@ def calc_schedules(locator,
             peak_hour = np.argmax(yearly_array)
             peak_load_occupancy = deterministic_occupancy_array[peak_hour]
             for t in np.where(np.isinf(adjusted_array)):
-                adjusted_array[t] = final_schedule['Occ_m2pax'][t] * np.max(yearly_array) / peak_load_occupancy
+                adjusted_array[t] = final_schedule['Occ_m2p'][t] * np.max(yearly_array) / peak_load_occupancy
 
             final_schedule[variable] = (adjusted_array + base_load) * internal_loads_building[variable] * \
                                        prop_geometry_building['Aef']
@@ -250,12 +250,12 @@ def calc_schedules(locator,
         'DATE': date_range,
         'Ths_set_C': final_schedule['Ths_set_C'],
         'Tcs_set_C': final_schedule['Tcs_set_C'],
-        'people_pax': final_schedule['Occ_m2pax'],
-        'Ve_lps': final_schedule['Ve_lpspax'],
-        'Qs_W': final_schedule['Qs_Wpax'],
-        'X_gh': final_schedule['X_ghpax'],
-        'Vww_lph': final_schedule['Vww_lpdpax'],
-        'Vw_lph': final_schedule['Vw_lpdpax'],
+        'people_p': final_schedule['Occ_m2p'],
+        'Ve_lps': final_schedule['Ve_lsp'],
+        'Qs_W': final_schedule['Qs_Wp'],
+        'X_gh': final_schedule['X_ghp'],
+        'Vww_lph': final_schedule['Vww_ldp'],
+        'Vw_lph': final_schedule['Vw_ldp'],
         'Ea_W': final_schedule['Ea_Wm2'],
         'El_W': final_schedule['El_Wm2'],
         'Ed_W': final_schedule['Ed_Wm2'],
