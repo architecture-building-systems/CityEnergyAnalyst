@@ -36,6 +36,7 @@ def find_migrators(scenario):
     migrations = collections.OrderedDict()
     migrations["v2.29.0 - v2.31.0"] = (is_2_29, migrate_2_29_to_2_31)
     migrations["v2.31.0 - v2.31.1"] = (is_2_31, migrate_2_31_to_2_31_1)
+    migrations["v3.22.0 - v3.22.1"] = (is_3_22, migrate_3_22_to_3_22_1)
 
     for key, migration_info in migrations.items():
         identifier, migrator = migration_info
@@ -142,6 +143,46 @@ def is_2_31(scenario):
 def migrate_2_31_to_2_31_1(scenario):
     # nothing needs to be done. this is just an example of a migration - add your own in this fashion
     print("- (nothing to do)")
+
+
+def is_3_22(scenario):
+    '''
+    Checks if "pax" is being used the indoor comfort dbf file.
+    '''
+
+    indoor_comfort = dbf_to_dataframe(os.path.join(scenario, "inputs", "building-properties", "indoor_comfort.dbf"))
+
+    if not 'Ve_lpspax' in indoor_comfort.columns:
+        return False
+    return True
+
+
+def migrate_3_22_to_3_22_1(scenario):
+    '''
+    Renames columns in `indoor_comfort.dbf` and `internal_loads.dbf` to remove the use of "pax" to mean "people".
+    '''
+    # import building properties
+    indoor_comfort = dbf_to_dataframe(os.path.join(scenario, 'inputs', 'building-properties', 'indoor_comfort.dbf'))
+    internal_loads = dbf_to_dataframe(os.path.join(scenario, 'inputs', 'building-properties', 'internal_loads.dbf'))
+
+    # make a backup copy of original data for user's own reference
+    os.rename(os.path.join(scenario, 'inputs', 'building-properties', 'indoor_comfort.dbf'),
+              os.path.join(scenario, 'inputs', 'building-properties', 'indoor_comfort_original.dbf'))
+    os.rename(os.path.join(scenario, 'inputs', 'building-properties', 'internal_loads.dbf'),
+              os.path.join(scenario, 'inputs', 'building-properties', 'internal_loads_original.dbf'))
+
+    # rename columns containing "pax" to mean "people"
+    indoor_comfort.rename(columns={'Ve_lpspax': 'Ve_lsp'}, inplace=True)
+    internal_loads.rename(columns={'Occ_m2pax': 'Occ_m2p', 'Qs_Wpax': 'Qs_Wp', 'Vw_lpdpax': 'Vw_ldp',
+                                   'Vww_lpdpax': 'Vww_ldp', 'X_ghpax': 'X_ghp'}, inplace=True)
+
+    # export dataframes to dbf files
+    print("- writing indoor_comfort.dbf")
+    dataframe_to_dbf(indoor_comfort, os.path.join(scenario, 'inputs', 'building-properties', 'indoor_comfort.dbf'))
+    print("- writing internal_loads.dbf")
+    dataframe_to_dbf(internal_loads, os.path.join(scenario, 'inputs', 'building-properties', 'internal_loads.dbf'))
+
+    print("- done")
 
 
 def main(config):
