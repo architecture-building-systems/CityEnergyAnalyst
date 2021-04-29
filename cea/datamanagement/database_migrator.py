@@ -159,28 +159,43 @@ def is_3_22(scenario):
 
 def migrate_3_22_to_3_22_1(scenario):
     '''
-    Renames columns in `indoor_comfort.dbf` and `internal_loads.dbf` to remove the use of "pax" to mean "people".
+    Renames columns in `indoor_comfort.dbf` and `internal_loads.dbf` to remove the use of "pax" meaning "people".
     '''
+
+    INDOOR_COMFORT_COLUMNS = {'Ve_lpspax': 'Ve_lsp'}
+    INTERNAL_LOADS_COLUMNS = {'Occ_m2pax': 'Occ_m2p', 'Qs_Wpax': 'Qs_Wp', 'Vw_lpdpax': 'Vw_ldp',
+                              'Vww_lpdpax': 'Vww_ldp', 'X_ghpax': 'X_ghp'}
+
     # import building properties
     indoor_comfort = dbf_to_dataframe(os.path.join(scenario, 'inputs', 'building-properties', 'indoor_comfort.dbf'))
     internal_loads = dbf_to_dataframe(os.path.join(scenario, 'inputs', 'building-properties', 'internal_loads.dbf'))
-
+    use_type_properties = pd.read_excel(os.path.join(scenario, 'inputs', 'technology', 'archetypes', 'use_types',
+                                                     'USE_TYPE_PROPERTIES.xlsx'), sheet_name=None)
     # make a backup copy of original data for user's own reference
     os.rename(os.path.join(scenario, 'inputs', 'building-properties', 'indoor_comfort.dbf'),
               os.path.join(scenario, 'inputs', 'building-properties', 'indoor_comfort_original.dbf'))
     os.rename(os.path.join(scenario, 'inputs', 'building-properties', 'internal_loads.dbf'),
               os.path.join(scenario, 'inputs', 'building-properties', 'internal_loads_original.dbf'))
+    os.rename(os.path.join(scenario, 'inputs', 'technology', 'archetypes', 'use_types', 'USE_TYPE_PROPERTIES.xlsx'),
+              os.path.join(scenario, 'inputs', 'technology', 'archetypes', 'use_types',
+                           'USE_TYPE_PROPERTIES_original.xlsx'))
 
-    # rename columns containing "pax" to mean "people"
-    indoor_comfort.rename(columns={'Ve_lpspax': 'Ve_lsp'}, inplace=True)
-    internal_loads.rename(columns={'Occ_m2pax': 'Occ_m2p', 'Qs_Wpax': 'Qs_Wp', 'Vw_lpdpax': 'Vw_ldp',
-                                   'Vww_lpdpax': 'Vww_ldp', 'X_ghpax': 'X_ghp'}, inplace=True)
+    # rename columns containing "pax"
+    indoor_comfort.rename(columns=INDOOR_COMFORT_COLUMNS, inplace=True)
+    internal_loads.rename(columns=INTERNAL_LOADS_COLUMNS, inplace=True)
+    use_type_properties['INDOOR_COMFORT'].rename(columns=INDOOR_COMFORT_COLUMNS, inplace=True)
+    use_type_properties['INTERNAL_LOADS'].rename(columns=INTERNAL_LOADS_COLUMNS, inplace=True)
 
     # export dataframes to dbf files
     print("- writing indoor_comfort.dbf")
     dataframe_to_dbf(indoor_comfort, os.path.join(scenario, 'inputs', 'building-properties', 'indoor_comfort.dbf'))
     print("- writing internal_loads.dbf")
     dataframe_to_dbf(internal_loads, os.path.join(scenario, 'inputs', 'building-properties', 'internal_loads.dbf'))
+    print("-writing USE_TYPE_PROPERTIES.xlsx")
+    with pd.ExcelWriter(os.path.join(scenario, 'inputs', 'technology', 'archetypes', 'use_types',
+                                     'USE_TYPE_PROPERTIES.xlsx')) as writer1:
+        for sheet_name in use_type_properties.keys():
+            use_type_properties[sheet_name].to_excel(writer1, sheet_name=sheet_name, index=False)
 
     print("- done")
 
