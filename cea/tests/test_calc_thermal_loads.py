@@ -31,6 +31,7 @@ class TestCalcThermalLoads(unittest.TestCase):
         import cea.examples
         cls.locator = cea.inputlocator.ReferenceCaseOpenLocator()
         cls.config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
+        cls.config.scenario = cls.locator.scenario
         weather_path = cls.locator.get_weather('Zug_inducity_2009')
         cls.weather_data = epwreader.epw_reader(weather_path)[
             ['year', 'drybulb_C', 'wetbulb_C', 'relhum_percent', 'windspd_ms', 'skytemp_C']]
