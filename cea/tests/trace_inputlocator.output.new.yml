@@ -900,7 +900,7 @@ get_database_construction_standards:
             Ths_setb_C:
                 sample_data: !!python/long '12'
                 types_found: [long]
-            Ve_lpspax:
+            Ve_lsp:
                 sample_data: 10.0
                 types_found: [float]
             RH_max_pc:
@@ -934,16 +934,16 @@ get_database_construction_standards:
             Qhpro_Wm2:
                 sample_data: !!python/long '0'
                 types_found: [long]
-            Qs_Wpax:
+            Qs_Wp:
                 sample_data: !!python/long '70'
                 types_found: [long]
-            Vw_lpdpax:
+            Vw_ldp:
                 sample_data: !!python/long '4'
                 types_found: [long]
-            Vww_lpdpax:
+            Vww_ldp:
                 sample_data: !!python/long '2'
                 types_found: [long]
-            X_ghpax:
+            X_ghp:
                 sample_data: !!python/long '80'
                 types_found: [long]
         SUPPLY:
@@ -1756,7 +1756,7 @@ get_building_comfort:
         Ths_setb_C:
             sample_data: 10
             types_found: [int]
-        Ve_lpspax:
+        Ve_lsp:
             sample_data: 13.528116605751025
             types_found: [float]
         RH_max_pc:

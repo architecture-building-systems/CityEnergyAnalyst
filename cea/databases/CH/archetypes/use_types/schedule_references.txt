@@ -31,7 +31,7 @@ HOSPITAL	: calculated as a combination of 43% Bettenzimmer (8.1), 1% Stationszim
 #######INDOOR_COMFORT#######
 Tcs_set_C and Ths_set_C : from SIA 2024
 Tcs_setb_C and Ths_setb_C : kept the same as the old CEA Database
-Ve_lpspax: from SIA 2024			< no value for SERVERROOM in SIA hence left unchanged from old CEA database value >
+Ve_lsp: from SIA 2024			< no value for SERVERROOM in SIA hence left unchanged from old CEA database value >
 RH_min_pc and RH_max_pc: taken from SIA 2024
 					< no value in SIA for PARKING and COOLROOM, assumed same as SIA Lager values >
 
