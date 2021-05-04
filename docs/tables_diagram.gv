@@ -60,7 +60,7 @@ get_building_comfort [shape=none, margin=0, label=<
         <tr><td port="Tcs_setb_C" align="left">float: Tcs_setb_C</td></tr>
         <tr><td port="RH_min_pc" align="left">float: RH_min_pc</td></tr>
         <tr><td port="RH_max_pc" align="left">float: RH_max_pc</td></tr>
-        <tr><td port="Ve_lpspax" align="left">float: Ve_lpspax</td></tr>
+        <tr><td port="Ve_lsp" align="left">float: Ve_lsp</td></tr>
         
     </table>>];
 
@@ -122,9 +122,9 @@ get_building_internal [shape=none, margin=0, label=<
     <table border="0" cellborder="1" cellspacing="0" cellpadding="4" >
         <tr><td bgcolor="lightblue">internal-loads</td></tr>
         <tr><td port="Name" align="left">str: Name</td></tr>
-        <tr><td port="Occ_m2pax" align="left">float: Occ_m2pax</td></tr>
-        <tr><td port="Qs_Wpax" align="left">float: Qs_Wpax</td></tr>
-        <tr><td port="X_ghpax" align="left">float: X_ghpax</td></tr>
+        <tr><td port="Occ_m2p" align="left">float: Occ_m2p</td></tr>
+        <tr><td port="Qs_Wp" align="left">float: Qs_Wp</td></tr>
+        <tr><td port="X_ghp" align="left">float: X_ghp</td></tr>
         <tr><td port="Ea_Wm2" align="left">float: Ea_Wm2</td></tr>
         <tr><td port="El_Wm2" align="left">float: El_Wm2</td></tr>
         <tr><td port="Epro_Wm2" align="left">float: Epro_Wm2</td></tr>
@@ -133,8 +133,8 @@ get_building_internal [shape=none, margin=0, label=<
         <tr><td port="Ev_kWveh" align="left">float: Ev_kWveh</td></tr>
         <tr><td port="Qcpro_Wm2" align="left">float: Qcpro_Wm2</td></tr>
         <tr><td port="Qhpro_Wm2" align="left">float: Qhpro_Wm2</td></tr>
-        <tr><td port="Vww_lpdpax" align="left">float: Vww_lpdpax</td></tr>
-        <tr><td port="Vw_lpdpax" align="left">float: Vw_lpdpax</td></tr>
+        <tr><td port="Vww_ldp" align="left">float: Vww_ldp</td></tr>
+        <tr><td port="Vw_ldp" align="left">float: Vw_ldp</td></tr>
         
     </table>>];
 
@@ -258,17 +258,17 @@ get_database_use_types_properties_INTERNAL_LOADS [shape=none, margin=0, label=<
         <tr><td bgcolor="lightgrey">USE_TYPE_PROPERTIES.xlsx:INTERNAL_LOADS</td></tr>
         <tr><td port="El_Wm2" align="left">float: El_Wm2</td></tr>
         <tr><td port="code" align="left">string: code</td></tr>
-        <tr><td port="Vww_lpdpax" align="left">float: Vww_lpdpax</td></tr>
-        <tr><td port="Occ_m2pax" align="left">float: Occ_m2pax</td></tr>
+        <tr><td port="Vww_ldp" align="left">float: Vww_ldp</td></tr>
+        <tr><td port="Occ_m2p" align="left">float: Occ_m2p</td></tr>
         <tr><td port="Ed_Wm2" align="left">float: Ed_Wm2</td></tr>
         <tr><td port="Ea_Wm2" align="left">float: Ea_Wm2</td></tr>
         <tr><td port="Qcre_Wm2" align="left">float: Qcre_Wm2</td></tr>
         <tr><td port="Ev_kWveh" align="left">float: Ev_kWveh</td></tr>
         <tr><td port="Epro_Wm2" align="left">float: Epro_Wm2</td></tr>
-        <tr><td port="X_ghpax" align="left">float: X_ghpax</td></tr>
+        <tr><td port="X_ghp" align="left">float: X_ghp</td></tr>
         <tr><td port="Qhpro_Wm2" align="left">float: Qhpro_Wm2</td></tr>
-        <tr><td port="Vw_lpdpax" align="left">float: Vw_lpdpax</td></tr>
-        <tr><td port="Qs_Wpax" align="left">float: Qs_Wpax</td></tr>
+        <tr><td port="Vw_ldp" align="left">float: Vw_ldp</td></tr>
+        <tr><td port="Qs_Wp" align="left">float: Qs_Wp</td></tr>
         <tr><td port="Qcpro_Wm2" align="left">float: Qcpro_Wm2</td></tr>
         
     </table>>];

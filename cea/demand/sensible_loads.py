@@ -22,7 +22,6 @@ __status__ = "Production"
 B_F = constants.B_F
 D = constants.D
 C_A = constants.C_A
-RSE = constants.RSE
 
 
 # capacity of emission/control system
@@ -97,11 +96,11 @@ def calc_I_rad(t, tsd, bpr):
     delta_theta_er = tsd['T_ext'][t] - tsd['T_sky'][t]  # [see 11.3.5 in ISO 13790]
 
     Fform_wall, Fform_win, Fform_roof = 0.5, 0.5, 1  # 50% re-irradiated by vertical surfaces and 100% by horizontal
-    I_rad_win = RSE * bpr.rc_model['U_win'] * calc_hr(bpr.architecture.e_win, theta_ss) * bpr.rc_model[
+    I_rad_win = tsd['RSE_win'][t] * bpr.rc_model['U_win'] * calc_hr(bpr.architecture.e_win, theta_ss) * bpr.rc_model[
         'Awin_ag'] * delta_theta_er
-    I_rad_roof = RSE * bpr.rc_model['U_roof'] * calc_hr(bpr.architecture.e_roof, theta_ss) * bpr.rc_model[
+    I_rad_roof = tsd['RSE_roof'][t] * bpr.rc_model['U_roof'] * calc_hr(bpr.architecture.e_roof, theta_ss) * bpr.rc_model[
         'Aroof'] * delta_theta_er
-    I_rad_wall = RSE * bpr.rc_model['U_wall'] * calc_hr(bpr.architecture.e_wall, theta_ss) * bpr.rc_model[
+    I_rad_wall = tsd['RSE_wall'][t] * bpr.rc_model['U_wall'] * calc_hr(bpr.architecture.e_wall, theta_ss) * bpr.rc_model[
         'Awall_ag'] * delta_theta_er
     I_rad = Fform_wall * I_rad_wall + Fform_win * I_rad_win + Fform_roof * I_rad_roof
 
@@ -116,11 +115,22 @@ def calc_hr(emissivity, theta_ss):
     :param emissivity: emissivity of the considered surface
     :param theta_ss: delta of temperature between building surface and the sky.
     :return:
-        hr:
+        hr: radiative heat transfer coefficient of external surfaces
 
     """
     return 4.0 * emissivity * BOLTZMANN * (theta_ss + KELVIN_OFFSET) ** 3.0
 
+def calc_hc(wind_speed):
+    """
+    This function calculates the convective heat transfer coefficient for external surfaces according to ISO 6946
+    Eq. (C.6) in section C.1
+
+    :param wind_speed: wind speed at this time step from weather file.
+    :return:
+        hc: convective heat transfer coefficient of external surfaces
+
+    """
+    return 4.0 + 4.0 * wind_speed
 
 def calc_Qhs_sys_Qcs_sys(tsd):
 

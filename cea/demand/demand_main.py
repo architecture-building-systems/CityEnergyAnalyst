@@ -11,12 +11,13 @@ from itertools import repeat
 import cea.config
 import cea.inputlocator
 import cea.utilities.parallel
-from . import demand_writers
 from cea import MissingInputDataException
 from cea.demand import thermal_loads
 from cea.demand.building_properties import BuildingProperties
 from cea.utilities import epwreader
 from cea.utilities.date import get_date_range_hours_from_year
+from cea.demand import demand_writers
+from cea.datamanagement.database_migrator import is_3_22
 
 warnings.filterwarnings("ignore")
 
@@ -63,6 +64,11 @@ def demand_calculation(locator, config):
         Applied Energy 142 (2015): 247–265.
     """
 
+    # CHECK DATABASE
+    if is_3_22(config.scenario):
+        raise ValueError("""The data format of indoor comfort has been changed after v3.22. 
+        Please run Database migrator in Utilities.""")
+
     # INITIALIZE TIMER
     t0 = time.perf_counter()
 
@@ -85,7 +91,7 @@ def demand_calculation(locator, config):
     print('Running demand calculation for the following buildings=%s' % building_names)
 
     # CALCULATE OBJECT WITH PROPERTIES OF ALL BUILDINGS
-    building_properties = BuildingProperties(locator, building_names)
+    building_properties = BuildingProperties(locator, weather_data, building_names)
 
     # add a message i2065 of warning. This needs a more elegant solution
     def calc_buildings_less_100m2(building_properties):
@@ -101,7 +107,8 @@ def demand_calculation(locator, config):
 
     list_buildings_less_100m2 = calc_buildings_less_100m2(building_properties)
     if list_buildings_less_100m2 != []:
-        print('Warning! The following list of buildings have less than 100 m2 of gross floor area, CEA might fail: %s' % list_buildings_less_100m2)
+        print(
+            'Warning! The following list of buildings have less than 100 m2 of gross floor area, CEA might fail: %s' % list_buildings_less_100m2)
 
     # DEMAND CALCULATION
     n = len(building_names)
@@ -124,11 +131,9 @@ def demand_calculation(locator, config):
 
     # WRITE TOTAL YEARLY VALUES
     writer_totals = demand_writers.YearlyDemandWriter(loads_output, massflows_output, temperatures_output)
-    totals, time_series = writer_totals.write_to_csv(building_names, locator)
+    writer_totals.write_to_csv(building_names, locator)
     time_elapsed = time.perf_counter() - t0
     print('done - time elapsed: %d.2 seconds' % time_elapsed)
-
-    return totals, time_series
 
 
 def print_progress(i, n, args, _):

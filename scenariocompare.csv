@@ -1271,7 +1271,7 @@ cooling\outputs\data\occupancy\B1000.csv, Ve_lps, 0.0000000000, ok
 cooling\outputs\data\occupancy\B1000.csv, Vw_lph, 0.0000000000, ok
 cooling\outputs\data\occupancy\B1000.csv, Vww_lph, 0.0000000000, ok
 cooling\outputs\data\occupancy\B1000.csv, X_gh, 0.0000000000, ok
-cooling\outputs\data\occupancy\B1000.csv, people_pax, 0.0000000000, ok
+cooling\outputs\data\occupancy\B1000.csv, people_p, 0.0000000000, ok
 cooling\outputs\data\occupancy\B1001.csv, Ea_W, 0.0000000000, ok
 cooling\outputs\data\occupancy\B1001.csv, Ed_W, 0.0000000000, ok
 cooling\outputs\data\occupancy\B1001.csv, El_W, 0.0000000000, ok
@@ -1286,7 +1286,7 @@ cooling\outputs\data\occupancy\B1001.csv, Ve_lps, 0.0000000000, ok
 cooling\outputs\data\occupancy\B1001.csv, Vw_lph, 0.0000000000, ok
 cooling\outputs\data\occupancy\B1001.csv, Vww_lph, 0.0000000000, ok
 cooling\outputs\data\occupancy\B1001.csv, X_gh, 0.0000000000, ok
-cooling\outputs\data\occupancy\B1001.csv, people_pax, 0.0000000000, ok
+cooling\outputs\data\occupancy\B1001.csv, people_p, 0.0000000000, ok
 cooling\outputs\data\occupancy\B1002.csv, Ea_W, 0.0000000000, ok
 cooling\outputs\data\occupancy\B1002.csv, Ed_W, 0.0000000000, ok
 cooling\outputs\data\occupancy\B1002.csv, El_W, 0.0000000000, ok
@@ -1301,7 +1301,7 @@ cooling\outputs\data\occupancy\B1002.csv, Ve_lps, 0.0000000000, ok
 cooling\outputs\data\occupancy\B1002.csv, Vw_lph, 0.0000000000, ok
 cooling\outputs\data\occupancy\B1002.csv, Vww_lph, 0.0000000000, ok
 cooling\outputs\data\occupancy\B1002.csv, X_gh, 0.0000000000, ok
-cooling\outputs\data\occupancy\B1002.csv, people_pax, 0.0000000000, ok
+cooling\outputs\data\occupancy\B1002.csv, people_p, 0.0000000000, ok
 cooling\outputs\data\occupancy\B1003.csv, Ea_W, 0.0000000000, ok
 cooling\outputs\data\occupancy\B1003.csv, Ed_W, 0.0000000000, ok
 cooling\outputs\data\occupancy\B1003.csv, El_W, 0.0000000000, ok
@@ -1316,7 +1316,7 @@ cooling\outputs\data\occupancy\B1003.csv, Ve_lps, 0.0000000000, ok
 cooling\outputs\data\occupancy\B1003.csv, Vw_lph, 0.0000000000, ok
 cooling\outputs\data\occupancy\B1003.csv, Vww_lph, 0.0000000000, ok
 cooling\outputs\data\occupancy\B1003.csv, X_gh, 0.0000000000, ok
-cooling\outputs\data\occupancy\B1003.csv, people_pax, 0.0000000000, ok
+cooling\outputs\data\occupancy\B1003.csv, people_p, 0.0000000000, ok
 cooling\outputs\data\optimization\decentralized\B1000_AHU_ARU_SCU_cooling_activation.csv, E_DX_AS_req_W, 355.8867164325, ok
 cooling\outputs\data\optimization\decentralized\B1000_AHU_ARU_SCU_cooling_activation.csv, E_cs_cre_cdata_req_W, 355.8867164325, ok
 cooling\outputs\data\optimization\decentralized\B1000_AHU_ARU_SCU_cooling_activation.csv, Q_DX_AS_gen_directload_W, 1882.6407299279, ok
@@ -5092,7 +5092,7 @@ heating\outputs\data\occupancy\B1000.csv, Ve_lps, 0.0000000000, ok
 heating\outputs\data\occupancy\B1000.csv, Vw_lph, 0.0000000000, ok
 heating\outputs\data\occupancy\B1000.csv, Vww_lph, 0.0000000000, ok
 heating\outputs\data\occupancy\B1000.csv, X_gh, 0.0000000000, ok
-heating\outputs\data\occupancy\B1000.csv, people_pax, 0.0000000000, ok
+heating\outputs\data\occupancy\B1000.csv, people_p, 0.0000000000, ok
 heating\outputs\data\occupancy\B1001.csv, Ea_W, 0.0000000000, ok
 heating\outputs\data\occupancy\B1001.csv, Ed_W, 0.0000000000, ok
 heating\outputs\data\occupancy\B1001.csv, El_W, 0.0000000000, ok
@@ -5108,7 +5108,7 @@ heating\outputs\data\occupancy\B1001.csv, Ve_lps, 0.0000000000, ok
 heating\outputs\data\occupancy\B1001.csv, Vw_lph, 0.0000000000, ok
 heating\outputs\data\occupancy\B1001.csv, Vww_lph, 0.0000000000, ok
 heating\outputs\data\occupancy\B1001.csv, X_gh, 0.0000000000, ok
-heating\outputs\data\occupancy\B1001.csv, people_pax, 0.0000000000, ok
+heating\outputs\data\occupancy\B1001.csv, people_p, 0.0000000000, ok
 heating\outputs\data\occupancy\B1002.csv, Ea_W, 0.0000000000, ok
 heating\outputs\data\occupancy\B1002.csv, Ed_W, 0.0000000000, ok
 heating\outputs\data\occupancy\B1002.csv, El_W, 0.0000000000, ok
@@ -5124,7 +5124,7 @@ heating\outputs\data\occupancy\B1002.csv, Ve_lps, 0.0000000000, ok
 heating\outputs\data\occupancy\B1002.csv, Vw_lph, 0.0000000000, ok
 heating\outputs\data\occupancy\B1002.csv, Vww_lph, 0.0000000000, ok
 heating\outputs\data\occupancy\B1002.csv, X_gh, 0.0000000000, ok
-heating\outputs\data\occupancy\B1002.csv, people_pax, 0.0000000000, ok
+heating\outputs\data\occupancy\B1002.csv, people_p, 0.0000000000, ok
 heating\outputs\data\occupancy\B1003.csv, Ea_W, 0.0000000000, ok
 heating\outputs\data\occupancy\B1003.csv, Ed_W, 0.0000000000, ok
 heating\outputs\data\occupancy\B1003.csv, El_W, 0.0000000000, ok
@@ -5140,7 +5140,7 @@ heating\outputs\data\occupancy\B1003.csv, Ve_lps, 0.0000000000, ok
 heating\outputs\data\occupancy\B1003.csv, Vw_lph, 0.0000000000, ok
 heating\outputs\data\occupancy\B1003.csv, Vww_lph, 0.0000000000, ok
 heating\outputs\data\occupancy\B1003.csv, X_gh, 0.0000000000, ok
-heating\outputs\data\occupancy\B1003.csv, people_pax, 0.0000000000, ok
+heating\outputs\data\occupancy\B1003.csv, people_p, 0.0000000000, ok
 heating\outputs\data\occupancy\B1004.csv, Ea_W, 0.0000000000, ok
 heating\outputs\data\occupancy\B1004.csv, Ed_W, 0.0000000000, ok
 heating\outputs\data\occupancy\B1004.csv, El_W, 0.0000000000, ok
@@ -5156,7 +5156,7 @@ heating\outputs\data\occupancy\B1004.csv, Ve_lps, 0.0000000000, ok
 heating\outputs\data\occupancy\B1004.csv, Vw_lph, 0.0000000000, ok
 heating\outputs\data\occupancy\B1004.csv, Vww_lph, 0.0000000000, ok
 heating\outputs\data\occupancy\B1004.csv, X_gh, 0.0000000000, ok
-heating\outputs\data\occupancy\B1004.csv, people_pax, 0.0000000000, ok
+heating\outputs\data\occupancy\B1004.csv, people_p, 0.0000000000, ok
 heating\outputs\data\occupancy\B1005.csv, Ea_W, 0.0000000000, ok
 heating\outputs\data\occupancy\B1005.csv, Ed_W, 0.0000000000, ok
 heating\outputs\data\occupancy\B1005.csv, El_W, 0.0000000000, ok
@@ -5172,7 +5172,7 @@ heating\outputs\data\occupancy\B1005.csv, Ve_lps, 0.0000000000, ok
 heating\outputs\data\occupancy\B1005.csv, Vw_lph, 0.0000000000, ok
 heating\outputs\data\occupancy\B1005.csv, Vww_lph, 0.0000000000, ok
 heating\outputs\data\occupancy\B1005.csv, X_gh, 0.0000000000, ok
-heating\outputs\data\occupancy\B1005.csv, people_pax, 0.0000000000, ok
+heating\outputs\data\occupancy\B1005.csv, people_p, 0.0000000000, ok
 heating\outputs\data\optimization\decentralized\DiscOp_B1000_result_heating.csv, Best configuration, 0.0000000000, ok
 heating\outputs\data\optimization\decentralized\DiscOp_B1000_result_heating.csv, Capacity_BaseBoiler_NG_W, 0.1361251374, ok
 heating\outputs\data\optimization\decentralized\DiscOp_B1000_result_heating.csv, Capacity_FC_NG_W, 0.0353571785, ok
