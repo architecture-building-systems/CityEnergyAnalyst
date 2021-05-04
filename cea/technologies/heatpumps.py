@@ -37,7 +37,7 @@ def HP_air_air(mdot_cp_WC, t_sup_K, t_re_K, tsource_K):
     :type t_sup_K : float
     :param t_sup_K: supply temperature to the minisplit unit (cold)
     :type t_re_K : float
-    :param t_re_K: return temeprature from the minisplit unit (hot)
+    :param t_re_K: return temperature from the minisplit unit (hot)
     :type tsource_K : float
     :param tsource_K: temperature of the source
     :rtype wdot_el : float
@@ -88,7 +88,7 @@ def calc_Cop_GHP(ground_temp_K, mdot_kgpers, T_DH_sup_K, T_re_K):
     :type T_DH_sup_K : float
     :param T_DH_sup_K: supply temperature to the DHN (hot)
     :type T_re_K : float
-    :param T_re_K: return temeprature from the DHN (cold)
+    :param T_re_K: return temperature from the DHN (cold)
 
     :rtype wdot_el : float
     :returns wdot_el: total electric power requirement for compressor and auxiliary el.
@@ -136,7 +136,7 @@ def GHP_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_GHP_K, Q_therm_GHP_W):
     :type t_sup_K : float
     :param t_sup_K: supply temperature to the DHN (hot)
     :type t_re_K : float
-    :param t_re_K: return temeprature from the DHN (cold)
+    :param t_re_K: return temperature from the DHN (cold)
     :type t_sup_GHP_K : float
     :param t_sup_GHP_K: sewage supply temperature
     :rtype C_HPSew_el_pure: float
@@ -210,7 +210,7 @@ def HPLake_op_cost(Q_gen_W, tsup_K, tret_K, tlake):
     :type tsup_K : float
     :param tsup_K: supply temperature to the DHN (hot)
     :type tret_K : float
-    :param tret_K: return temeprature from the DHN (cold)
+    :param tret_K: return temperature from the DHN (cold)
     :type tlake : float
     :param tlake: lake temperature
     :rtype C_HPL_el: float
@@ -245,7 +245,7 @@ def HPLake_Op(mdot_kgpers, t_sup_K, t_re_K, t_lake_K):
     :type t_sup_K : float
     :param t_sup_K: supply temperature to the DHN (hot)
     :type t_re_K : float
-    :param t_re_K: return temeprature from the DHN (cold)
+    :param t_re_K: return temperature from the DHN (cold)
     :type t_lake_K : float
     :param t_lake_K: lake temperature
     :rtype wdot_el : float
@@ -290,7 +290,7 @@ def HPSew_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_sew_K, Q_therm_Sew_W):
     :type t_sup_K : float
     :param t_sup_K: supply temperature to the DHN (hot)
     :type t_re_K : float
-    :param t_re_K: return temeprature from the DHN (cold)
+    :param t_re_K: return temperature from the DHN (cold)
     :type t_sup_sew_K : float
     :param t_sup_sew_K: sewage supply temperature
     :rtype C_HPSew_el_pure: float

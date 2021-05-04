@@ -21,9 +21,6 @@ __status__ = "Production"
 H_F = 3.0  # average height per floor in m
 D = 20.0  # in mm the diameter of the pipe to calculate losses
 
-# SOLAR
-RSE = 0.04  # thermal resistance of external surfaces according to ISO 6946
-
 # HVAC SYSTEMS & VENTILATION
 ETA_REC = 0.75  # constant efficiency of Heat recovery
 DELTA_P_DIM = 5.0  # (Pa) dimensioning differential pressure for multi-storey building shielded from wind,
@@ -83,15 +80,15 @@ T_C_REF_RE_0 = 5  # (°C) refactored from refrigeration loads, without original 
 T_C_DATA_RE_0 = 15  # (°C) refactored from data center loads, without original source
 T_C_DATA_SUP_0 = 7  # (°C) refactored from data center loads, without original source
 
-VARIABLE_CEA_SCHEDULE_RELATION = {'Occ_m2pax': 'OCCUPANCY',
-                                  'Qs_Wpax': 'OCCUPANCY',
-                                  'X_ghpax': 'OCCUPANCY',
-                                  'Ve_lpspax': 'OCCUPANCY',
+VARIABLE_CEA_SCHEDULE_RELATION = {'Occ_m2p': 'OCCUPANCY',
+                                  'Qs_Wp': 'OCCUPANCY',
+                                  'X_ghp': 'OCCUPANCY',
+                                  'Ve_lsp': 'OCCUPANCY',
                                   'Ea_Wm2': 'APPLIANCES',
                                   'El_Wm2': 'LIGHTING',
                                   'Ed_Wm2': 'SERVERS',
-                                  'Vww_lpdpax': 'WATER',
-                                  'Vw_lpdpax': 'WATER',
+                                  'Vww_ldp': 'WATER',
+                                  'Vw_ldp': 'WATER',
                                   'Ths_set_C': 'HEATING',
                                   'Tcs_set_C': 'COOLING',
                                   'Qcre_Wm2': 'PROCESSES',

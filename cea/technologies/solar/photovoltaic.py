@@ -2,14 +2,11 @@
 Photovoltaic
 """
 
-
-
-
-
 import os
 import time
 from itertools import repeat
 from math import *
+from multiprocessing import Pool
 
 import numpy as np
 import pandas as pd
@@ -19,12 +16,12 @@ from scipy import interpolate
 import cea.config
 import cea.inputlocator
 import cea.utilities.parallel
+from cea.analysis.costs.equations import calc_capex_annualized
 from cea.constants import HOURS_IN_YEAR
 from cea.technologies.solar import constants
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
 from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile
-from cea.analysis.costs.equations import calc_capex_annualized, calc_opex_annualized
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -96,11 +93,10 @@ def calc_PV(locator, config, latitude, longitude, weather_data, datetime_local, 
         else:
             # calculate spacing required by user-supplied tilt angle for panels
             sensors_metadata_cat = solar_equations.calc_spacing_custom_angle(sensors_metadata_clean, solar_properties,
-                                                                           max_annual_radiation, panel_properties_PV,
-                                                                           config.solar.panel_tilt_angle,
-                                                                           max_roof_coverage)
+                                                                             max_annual_radiation, panel_properties_PV,
+                                                                             config.solar.panel_tilt_angle,
+                                                                             max_roof_coverage)
             print('calculating separation for custom tilt angle done')
-
 
         # group the sensors with the same tilt, surface azimuth, and total radiation
         sensor_groups = solar_equations.calc_groups(sensors_rad_clean, sensors_metadata_cat)
@@ -114,7 +110,8 @@ def calc_PV(locator, config, latitude, longitude, weather_data, datetime_local, 
                      float_format='%.2f')  # print PV generation potential
         sensors_metadata_cat.to_csv(locator.PV_metadata_results(building=building_name), index=True,
                                     index_label='SURFACE',
-                                    float_format='%.2f', na_rep='nan')  # print selected metadata of the selected sensors
+                                    float_format='%.2f',
+                                    na_rep='nan')  # print selected metadata of the selected sensors
 
         print(building_name, 'done - time elapsed: %.2f seconds' % (time.perf_counter() - t0))
     else:  # This loop is activated when a building has not sufficient solar potential
@@ -132,8 +129,6 @@ def calc_PV(locator, config, latitude, longitude, weather_data, datetime_local, 
              'CATteta_z': 0, 'CATB': 0, 'CATGB': 0, 'type_orientation': 0}, index=range(2))
         sensors_metadata_cat.to_csv(locator.PV_metadata_results(building=building_name), index=False,
                                     float_format='%.2f', na_rep='nan')
-
-    return
 
 
 # =========================
@@ -771,6 +766,52 @@ def calc_Crem_pv(E_nom):
     return KEV_obtained_in_RpPerkWh
 
 
+def aggregate_results(locator, building_names):
+    aggregated_hourly_results_df = pd.DataFrame()
+    aggregated_annual_results = pd.DataFrame()
+
+    for i, building in enumerate(building_names):
+        hourly_results_per_building = pd.read_csv(locator.PV_results(building)).set_index('Date')
+        if i == 0:
+            aggregated_hourly_results_df = hourly_results_per_building
+        else:
+            aggregated_hourly_results_df = aggregated_hourly_results_df + hourly_results_per_building
+
+        annual_energy_production = hourly_results_per_building.filter(like='_kWh').sum()
+        panel_area_per_building = hourly_results_per_building.filter(like='_m2').iloc[0]
+        building_annual_results = annual_energy_production.append(panel_area_per_building)
+        aggregated_annual_results[building] = building_annual_results
+
+    return aggregated_hourly_results_df, aggregated_annual_results
+
+
+def aggregate_results_func(args):
+    return aggregate_results(args[0], args[1])
+
+
+def write_aggregate_results(locator, building_names, num_process=1):
+    aggregated_hourly_results_df = pd.DataFrame()
+    aggregated_annual_results = pd.DataFrame()
+
+    pool = Pool(processes=num_process)
+    args = [(locator, x) for x in np.array_split(building_names, num_process) if x.size != 0]
+    for i, x in enumerate(pool.map(aggregate_results_func, args)):
+        hourly_results_df, annual_results = x
+        if i == 0:
+            aggregated_hourly_results_df = hourly_results_df
+            aggregated_annual_results = annual_results
+        else:
+            aggregated_hourly_results_df = aggregated_hourly_results_df + hourly_results_df
+            aggregated_annual_results = pd.concat([aggregated_annual_results, annual_results], axis=1, sort=False)
+
+    # save hourly results
+    aggregated_hourly_results_df.to_csv(locator.PV_totals(), index=True, float_format='%.2f', na_rep='nan')
+    # save annual results
+    aggregated_annual_results_df = pd.DataFrame(aggregated_annual_results).T
+    aggregated_annual_results_df.to_csv(locator.PV_total_buildings(), index=True, index_label="Name",
+                                        float_format='%.2f', na_rep='nan')
+
+
 def main(config):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
@@ -792,7 +833,7 @@ def main(config):
     else:
         print('Running photovoltaic with custom-roof-coverage = %s' % config.solar.custom_roof_coverage)
 
-    buildings_names = locator.get_zone_building_names()
+    building_names = locator.get_zone_building_names()
     zone_geometry_df = gdf.from_file(locator.get_zone_geometry())
     latitude, longitude = get_lat_lon_projected_shapefile(zone_geometry_df)
 
@@ -800,35 +841,18 @@ def main(config):
     weather_data = epwreader.epw_reader(locator.get_weather_file())
     date_local = solar_equations.calc_datetime_local_from_weather_file(weather_data, latitude, longitude)
 
-    n = len(buildings_names)
-    cea.utilities.parallel.vectorize(calc_PV, config.get_number_of_processes())(repeat(locator, n),
-                                                                                repeat(config, n),
-                                                                                repeat(latitude, n),
-                                                                                repeat(longitude, n),
-                                                                                repeat(weather_data, n),
-                                                                                repeat(date_local, n),
-                                                                                buildings_names)
+    num_process = config.get_number_of_processes()
+    n = len(building_names)
+    cea.utilities.parallel.vectorize(calc_PV, num_process)(repeat(locator, n),
+                                                           repeat(config, n),
+                                                           repeat(latitude, n),
+                                                           repeat(longitude, n),
+                                                           repeat(weather_data, n),
+                                                           repeat(date_local, n),
+                                                           building_names)
 
     # aggregate results from all buildings
-    aggregated_annual_results = {}
-    for i, building in enumerate(buildings_names):
-        hourly_results_per_building = pd.read_csv(locator.PV_results(building))
-        if i == 0:
-            aggregated_hourly_results_df = hourly_results_per_building
-        else:
-            aggregated_hourly_results_df = aggregated_hourly_results_df + hourly_results_per_building
-
-        annual_energy_production = hourly_results_per_building.filter(like='_kWh').sum()
-        panel_area_per_building = hourly_results_per_building.filter(like='_m2').iloc[0]
-        building_annual_results = annual_energy_production.append(panel_area_per_building)
-        aggregated_annual_results[building] = building_annual_results
-
-    # save hourly results
-    aggregated_hourly_results_df = aggregated_hourly_results_df.set_index('Date')
-    aggregated_hourly_results_df.to_csv(locator.PV_totals(), index=True, float_format='%.2f', na_rep='nan')
-    # save annual results
-    aggregated_annual_results_df = pd.DataFrame(aggregated_annual_results).T
-    aggregated_annual_results_df.to_csv(locator.PV_total_buildings(), index=True, index_label="Name", float_format='%.2f', na_rep='nan')
+    write_aggregate_results(locator, building_names, num_process)
 
 
 if __name__ == '__main__':

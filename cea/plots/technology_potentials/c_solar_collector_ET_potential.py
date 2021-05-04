@@ -44,7 +44,7 @@ class SCETPotentialPlot(cea.plots.technology_potentials.SolarTechnologyPotential
         elif self.normalization == "surface area":
             titley = 'Thermal Energy[kWh/m2]'
         elif self.normalization == "building occupancy":
-            titley = 'Thermal Energy [kWh/pax]'
+            titley = 'Thermal Energy [kWh/p]'
         else:
             titley = 'Thermal Energy [MWh]'
         return titley

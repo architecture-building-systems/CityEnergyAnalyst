@@ -46,7 +46,7 @@ class TestScheduleCreation(unittest.TestCase):
         config.scenario = locator.scenario
         config.multiprocessing = False
 
-        building_properties = BuildingProperties(locator)
+        building_properties = BuildingProperties(locator, epwreader.epw_reader(locator.get_weather_file()))
         bpr = building_properties['B1011']
         bpr.occupancy = {'OFFICE': 0.5, 'SERVERROOM': 0.5}
         bpr.comfort['mainuse'] = 'OFFICE'
@@ -86,14 +86,14 @@ def calculate_mixed_use_archetype_values_results(locator):
     config file."""
 
     occ_densities = pd.read_excel(locator.get_database_use_types_properties(), 'INTERNAL_LOADS').set_index('code')
-    office_occ = float(occ_densities.loc['OFFICE', 'Occ_m2pax'])
-    lab_occ = float(occ_densities.loc['LAB', 'Occ_m2pax'])
-    indus_occ = float(occ_densities.loc['INDUSTRIAL', 'Occ_m2pax'])
-    server_occ = float(occ_densities.loc['SERVERROOM', 'Occ_m2pax'])
+    office_occ = float(occ_densities.loc['OFFICE', 'Occ_m2p'])
+    lab_occ = float(occ_densities.loc['LAB', 'Occ_m2p'])
+    indus_occ = float(occ_densities.loc['INDUSTRIAL', 'Occ_m2p'])
+    server_occ = float(occ_densities.loc['SERVERROOM', 'Occ_m2p'])
     calculated_results = calculate_average_multiuse(
-        fields=['X_ghpax', 'El_Wm2'],
+        fields=['X_ghp', 'El_Wm2'],
         properties_df=pd.DataFrame(data=[['B1011', 'OFFICE', 0.5, 'SERVERROOM', 0.5, 'NONE', 0.0, 0.0, 0.0, 0.0], ['B1012', 'OFFICE', 0.6, 'LAB', 0.2, 'INDUSTRIAL', 0.2, 0.0, 0.0, 0.0]],
-                                   columns=['Name', "1ST_USE", "1ST_USE_R", '2ND_USE', '2ND_USE_R', '3RD_USE', '3RD_USE_R', 'X_ghpax', 'El_Wm2', 'Occ_m2pax']),
+                                   columns=['Name', "1ST_USE", "1ST_USE_R", '2ND_USE', '2ND_USE_R', '3RD_USE', '3RD_USE_R', 'X_ghp', 'El_Wm2', 'Occ_m2p']),
         occupant_densities={'OFFICE': 1.0 / office_occ, 'LAB': 1.0 / lab_occ, 'INDUSTRIAL': 1.0 / indus_occ, 'SERVERRROOM': 1.0},
         list_uses=['OFFICE', 'LAB', 'INDUSTRIAL', 'SERVERRROOM'],
         properties_DB=pd.read_excel(locator.get_database_use_types_properties(), 'INTERNAL_LOADS')).set_index('Name')
@@ -116,7 +116,7 @@ def create_data():
     locator = ReferenceCaseOpenLocator()
 
     # calculate schedules
-    building_properties = BuildingProperties(locator)
+    building_properties = BuildingProperties(locator, epwreader.epw_reader(locator.get_weather_file()))
     bpr = building_properties['B1011']
     list_uses = ['OFFICE', 'LAB', 'INDUSTRIAL', 'SERVERRROOM']
     bpr.occupancy = {'OFFICE': 0.5, 'SERVERROOM': 0.5}

@@ -45,7 +45,7 @@ class PVPotentialPlot(cea.plots.technology_potentials.SolarTechnologyPotentialsP
         elif self.normalization == "surface area":
             titley = 'PV Electricity [kWh/m2]'
         elif self.normalization == "building occupancy":
-            titley = 'PV Electricity [kWh/pax]'
+            titley = 'PV Electricity [kWh/p]'
         else:
             titley = 'PV Electricity [MWh]'
         return titley

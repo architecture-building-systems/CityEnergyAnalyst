@@ -6,13 +6,12 @@ and output_files.rst are referenced by glossary.rst.
 
 """
 
-
-
-
 import os
+
+from jinja2 import Template, environment
+
 import cea.config
 import cea.schemas
-from jinja2 import Template, environment
 
 __author__ = "Jack Hawthorne"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -33,10 +32,23 @@ def add_backticks(s):
     return "``{s}``".format(s=s)
 
 
+def sort_dict(_dict):
+    """
+    Sort dicts according to keys. Works with keys of mixed type i.e int and str, by casting it to str (ignoring case)
+
+    :param dict _dict: dict to be sorted
+    :return: sorted dict by keys
+    """
+    return {key: _dict[key] for key in sorted(_dict.keys(),
+                                              key=lambda v: (
+                                              isinstance(v, str), v.lower() if isinstance(v, str) else v))}
+
+
 def main(_=None):
     schemas = cea.schemas.schemas(plugins=[])
     documentation_dir = os.path.join(os.path.dirname(cea.config.__file__), '..', 'docs')
     environment.DEFAULT_FILTERS['add_backticks'] = add_backticks
+    environment.DEFAULT_FILTERS['sort_dict'] = sort_dict
     template_path = os.path.join(documentation_dir, 'templates', 'glossary.rst')
     template = Template(open(template_path, 'r').read())
 

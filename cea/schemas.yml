@@ -1737,6 +1737,17 @@ get_building_architecture:
             path: get_database_envelope_systems
             sheet: WALL
             column: code
+      type_part:
+        description: Internal partitions construction assembly (relates to "code" in ENVELOPE
+          assemblies)
+        type: string
+        unit: '[-]'
+        values: alphanumeric
+        choice:
+          lookup:
+            path: get_database_envelope_systems
+            sheet: WALL
+            column: code
       type_floor:
         description: Internal floor construction assembly (relates to "code" in ENVELOPE
           assemblies)
@@ -1822,10 +1833,10 @@ get_building_comfort:
         unit: '[%]'
         values: '{0.0...n}'
         min: 0.0
-      Ve_lpspax:
+      Ve_lsp:
         description: Minimum outdoor air ventilation rate per person for Air Quality
         type: float
-        unit: '[l/s/pax]'
+        unit: '[l/s/p]'
         values: '{0.0...n}'
         min: 5.5 #accodding to this Singaporean Guidelinehttps://escholarship.org/content/qt7k1796zv/qt7k1796zv.pdf
   used_by:
@@ -1843,22 +1854,22 @@ get_building_internal:
         type: string
         unit: '[-]'
         values: alphanumeric
-      Occ_m2pax:
+      Occ_m2p:
         description: Occupancy density
         type: float
-        unit: '[m2/pax]'
+        unit: '[m2/p]'
         values: '{0.0...n}'
         min: 0.0
-      Qs_Wpax:
+      Qs_Wp:
         description: Peak sensible heat load of people
         type: float
-        unit: '[W/pax]'
+        unit: '[W/p]'
         values: '{0.0...n}'
         min: 0.0
-      X_ghpax:
+      X_ghp:
         description: Moisture released by occupancy at peak conditions
         type: float
-        unit: '[ghpax]'  # FIXME: this unit is wrong!
+        unit: '[ghp]'
         values: '{0.0...n}'
         min: 0.0
       Ea_Wm2:
@@ -1908,17 +1919,17 @@ get_building_internal:
         unit: '[W/m2]'
         values: '{0.0...n}'
         min: 0.0
-      Vww_lpdpax:
+      Vww_ldp:
         description: Peak specific daily hot water consumption
         type: float
-        unit: '[lpdpax]'
+        unit: '[ldp]'
         values: '{0.0...n}'
         min: 0.0
-      Vw_lpdpax:
+      Vw_ldp:
         description: Peak specific fresh water consumption (includes cold and hot
           water)
         type: float
-        unit: '[lpdpax]'
+        unit: '[ldp]'
         values: '{0.0...n}'
         min: 0.0
   used_by:
@@ -5488,6 +5499,7 @@ get_database_standard_schedules_use:
           min: 0.0
           type: float
         DAY:
+          description: Day of the week (weekday, saturday, or sunday)
           choice:
             values:
             - WEEKDAY
@@ -5666,6 +5678,7 @@ get_database_standard_schedules_use:
             - SETPOINT
           type: string
         DAY:
+          description: Day of the week (weekday, saturday, or sunday)
           choice:
             values:
             - WEEKDAY
@@ -5796,6 +5809,7 @@ get_database_standard_schedules_use:
           min: 0
           type: int
         DAY:
+          description: Day of the week (weekday, saturday, or sunday)
           choice:
             values:
             - WEEKDAY
@@ -5974,6 +5988,7 @@ get_database_standard_schedules_use:
             - SETPOINT
           type: string
         DAY:
+          description: Day of the week (weekday, saturday, or sunday)
           choice:
             values:
             - WEEKDAY
@@ -6080,6 +6095,7 @@ get_database_standard_schedules_use:
           min: 0.0
           type: float
         DAY:
+          description: Day of the week (weekday, saturday, or sunday)
           choice:
             values:
             - WEEKDAY
@@ -6240,6 +6256,7 @@ get_database_standard_schedules_use:
           min: 0.0
           type: float
         DAY:
+          description: Day of the week (weekday, saturday, or sunday)
           choice:
             values:
             - WEEKDAY
@@ -6346,6 +6363,7 @@ get_database_standard_schedules_use:
           min: 0.0
           type: float
         DAY:
+          description: Day of the week (weekday, saturday, or sunday)
           choice:
             values:
             - WEEKDAY
@@ -6452,6 +6470,7 @@ get_database_standard_schedules_use:
           min: 0.0
           type: float
         DAY:
+          description: Day of the week (weekday, saturday, or sunday)
           choice:
             values:
             - WEEKDAY
@@ -6558,6 +6577,7 @@ get_database_standard_schedules_use:
           min: 0.0
           type: float
         DAY:
+          description: Day of the week (weekday, saturday, or sunday)
           choice:
             values:
             - WEEKDAY
@@ -6650,7 +6670,7 @@ get_database_supply_assemblies:
             - BUILDING
             - DISTRICT
             - CITY
-          description: whether the all in one system is used at the building, or the
+          description: whether the all in one system is used at the building or the
             district scale
           type: string
           unit: 'NA'
@@ -6732,7 +6752,7 @@ get_database_supply_assemblies:
             - BUILDING
             - DISTRICT
             - CITY
-          description: whether the all in one system is used at the building, or the
+          description: whether the all in one system is used at the building or the
             district scale
           type: string
           unit: 'NA'
@@ -6814,7 +6834,7 @@ get_database_supply_assemblies:
             - BUILDING
             - DISTRICT
             - CITY
-          description: whether the all in one system is used at the building, or the
+          description: whether the all in one system is used at the building or the
             district scale
           type: string
           unit: 'NA'
@@ -6896,7 +6916,7 @@ get_database_supply_assemblies:
             - BUILDING
             - DISTRICT
             - CITY
-          description: whether the all in one system is used at the building, or the
+          description: whether the all in one system is used at the building or the
             district scale
           type: string
           unit: 'NA'
@@ -6948,7 +6968,7 @@ get_database_use_types_properties:
           type: float
           unit: '[C]'
           values: '{n...n}'
-        Ve_lpspax:
+        Ve_lsp:
           description: Indoor quality requirements of indoor ventilation per person
           type: float
           unit: '[l/s]'
@@ -6992,10 +7012,10 @@ get_database_use_types_properties:
           unit: '[kW/veh]'
           values: '{0.0...n}'
           min: 0.0
-        Occ_m2pax:
+        Occ_m2p:
           description: Occupancy density
           type: float
-          unit: '[m2/pax]'
+          unit: '[m2/p]'
           values: '{0.0...n}'
           min: 0.0
         Qcpro_Wm2:
@@ -7016,26 +7036,26 @@ get_database_use_types_properties:
           unit: '[W/m2]'
           values: '{0.0...n}'
           min: 0.0
-        Qs_Wpax:
+        Qs_Wp:
           description: Peak sensible heat load of people
           type: float
-          unit: '[W/pax]'
+          unit: '[W/p]'
           values: '{0.0...n}'
           min: 0.0
-        Vw_lpdpax:
+        Vw_ldp:
           description: Peak specific fresh water consumption (includes cold and hot
             water)
           type: float
           unit: '[lpd]'
           values: '{0.0...n}'
           min: 0.0
-        Vww_lpdpax:
+        Vww_ldp:
           description: Peak specific daily hot water consumption
           type: float
           unit: '[lpd]'
           values: '{0.0...n}'
           min: 0.0
-        X_ghpax:
+        X_ghp:
           description: Moisture released by occupancy at peak conditions
           type: float
           unit: '[g/h/p]'
@@ -7086,7 +7106,7 @@ get_demand_results_file:
         values: '{0.0...n}'
         min: 0.0
       DC_cs_kWh:
-        description: District cooling for space cooling demand
+        description: Energy consumption of space cooling system (if supplied by District Cooling), DC_cs = Qcs_sys / eff_cs
         type: float
         unit: '[kWh]'
         values: '{0.0...n}'
@@ -7116,7 +7136,7 @@ get_demand_results_file:
         values: '{0.0...n}'
         min: 0.0
       E_cs_kWh:
-        description: Cooling system electricity consumption.
+        description: Energy consumption of cooling system (if supplied by electricity grid), E_cs = Qcs_sys / eff_cs
         type: float
         unit: '[kWh]'
         values: '{0.0...n}'
@@ -7128,7 +7148,7 @@ get_demand_results_file:
         values: '{0.0...n}'
         min: 0.0
       E_sys_kWh:
-        description: 'End-use total electricity system consumption = Ea + El + Edata
+        description: 'End-use total electricity consumption  = Ea + El + Edata
           + Epro + Eaux + Ev + Eve'
         type: float
         unit: '[kWh]'
@@ -7147,13 +7167,13 @@ get_demand_results_file:
         values: '{0.0...n}'
         min: 0.0
       Eal_kWh:
-        description: End-use electricity consumption of appliances and lights
+        description: End-use electricity consumption of appliances and lighting, Eal = El_W + Ea_W
         type: float
         unit: '[kWh]'
         values: '{0.0...n}'
         min: 0.0
       Eaux_kWh:
-        description: End-use auxiliary electricity consumption.
+        description: End-use auxiliary electricity consumption, Eaux = Eaux_fw + Eaux_ww + Eaux_cs + Eaux_hs + Ehs_lat_aux
         type: float
         unit: '[kWh]'
         values: '{0.0...n}'
@@ -7189,75 +7209,73 @@ get_demand_results_file:
         values: '{0.0...n}'
         min: 0.0
       GRID_a_kWh:
-        description: Grid electricity requirements for appliances
+        description: Grid electricity consumption for appliances
         type: float
         unit: '[kWh]'
         values: '{0.0...n}'
         min: 0.0
       GRID_aux_kWh:
-        description: Grid electricity requirements for auxiliary loads
+        description: Grid electricity consumption for auxiliary loads
         type: float
         unit: '[kWh]'
         values: '{0.0...n}'
         min: 0.0
       GRID_cdata_kWh:
-        description: Grid electricity requirements for servers cooling
+        description: Grid electricity consumption for servers cooling
         type: float
         unit: '[kWh]'
         values: '{0.0...n}'
         min: 0.0
       GRID_cre_kWh:
-        description: Grid electricity requirements for refrigeration
+        description: Grid electricity consumption for refrigeration
         type: float
         unit: '[kWh]'
         values: '{0.0...n}'
         min: 0.0
       GRID_cs_kWh:
-        description: Grid electricity requirements for space cooling
+        description: Grid electricity consumption for space cooling
         type: float
         unit: '[kWh]'
         values: '{0.0...n}'
         min: 0.0
       GRID_data_kWh:
-        description: Grid electricity requirements for servers
+        description: Grid electricity consumption for servers
         type: float
         unit: '[kWh]'
         values: '{0.0...n}'
         min: 0.0
       GRID_hs_kWh:
-        description: Grid electricity requirements for space heating
+        description: Grid electricity consumption for space heating
         type: float
         unit: '[kWh]'
         values: '{0.0...n}'
         min: 0.0
       GRID_kWh:
-        description: Grid total requirements of electricity = GRID_ve + GRID_a + GRID_l + GRID_v
-          +GRID_data + GRID_pro + GRID_aux + GRID_cdata + GRID_cre + GRID_hs + GRID_ww
-          + GRID_cs
+        description: Grid total electricity consumption, GRID_a + GRID_l + GRID_v + GRID_ve + GRID_data + GRID_pro + GRID_aux + GRID_ww + GRID_cs + GRID_hs + GRID_cdata + GRID_cre
         type: float
         unit: '[kWh]'
         values: '{0.0...n}'
         min: 0.0
       GRID_l_kWh:
-        description: Grid electricity requirements for lights
+        description: Grid electricity consumption for lighting
         type: float
         unit: '[kWh]'
         values: '{0.0...n}'
         min: 0.0
       GRID_ve_kWh:
-        description: Grid electricity requirements for ventilation
+        description: Grid electricity consumption for ventilation
         type: float
         unit: '[kWh]'
         values: '{0.0...n}'
         min: 0.0
       GRID_pro_kWh:
-        description: Grid electricity requirements for industrial processes
+        description: Grid electricity consumption for industrial processes
         type: float
         unit: '[kWh]'
         values: '{0.0...n}'
         min: 0.0
       GRID_ww_kWh:
-        description: Grid electricity requirements for hot water supply
+        description: Grid electricity consumption for hot water supply
         type: float
         unit: '[kWh]'
         values: '{0.0...n}'
@@ -7316,13 +7334,13 @@ get_demand_results_file:
         values: '{0.0...n}'
         min: 0.0
       QC_sys_kWh:
-        description: Total cool consumption
+        description: Total energy demand for cooling, QC_sys = Qcs_sys + Qcdata_sys + Qcre_sys + Qcpro_sys
         type: float
         unit: '[kWh]'
         values: '{0.0...n}'
         min: 0.0
       QH_sys_kWh:
-        description: Total heat consumption
+        description: Total energy demand for heating, QH_sys = Qww_sys + Qhs_sys + Qhpro_sys
         type: float
         unit: '[kWh]'
         values: '{0.0...n}'
@@ -7442,79 +7460,80 @@ get_demand_results_file:
         values: '{0.0...n}'
         min: 0.0
       Qcs_kWh:
-        description: Specific cool demand
+        description: Specific cooling demand
         type: float
         unit: '[kWh]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_lat_ahu_kWh:
-        description: AHU latent cool demand
+        description: AHU latent cooling demand
         type: float
         unit: '[kWh]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_lat_aru_kWh:
-        description: ARU latent cool demand
+        description: ARU latent cooling demand
         type: float
         unit: '[kWh]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_lat_sys_kWh:
-        description: Total latent cool demand for all systems
+        description: Total latent cooling demand for all systems
         type: float
         unit: '[kWh]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_sen_ahu_kWh:
-        description: AHU sensible cool demand
+        description: AHU sensible cooling
+          demand
         type: float
         unit: '[kWh]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_sen_aru_kWh:
-        description: ARU sensible cool demand
+        description: ARU sensible cooling demand
         type: float
         unit: '[kWh]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_sen_scu_kWh:
-        description: SHU sensible cool demand
+        description: SHU sensible cooling demand
         type: float
         unit: '[kWh]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_sen_sys_kWh:
-        description: Total sensible cool demand for all systems
+        description: Total sensible cooling demand for all systems
         type: float
         unit: '[kWh]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_sys_ahu_kWh:
-        description: AHU system cool demand
+        description: AHU system cooling demand
         type: float
         unit: '[kWh]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_sys_aru_kWh:
-        description: ARU system cool demand
+        description: ARU system cooling demand
         type: float
         unit: '[kWh]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_sys_kWh:
-        description: End-use space cooling demand
+        description: End-use space cooling demand, Qcs_sys = Qcs_sen_sys + Qcs_lat_sys + Qcs_em_ls + Qcs_dis_ls
         type: float
         unit: '[kWh]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_sys_scu_kWh:
-        description: SCU system cool demand
+        description: SCU system cooling demand
         type: float
         unit: '[kWh]'
         values: '{0.0...n}'
         min: 0.0
       Qhpro_sys_kWh:
-        description: Process heat demand
+        description: Process heating demand
         type: float
         unit: '[kWh]'
         values: '{0.0...n}'
@@ -7538,73 +7557,73 @@ get_demand_results_file:
         values: '{0.0...n}'
         min: 0.0
       Qhs_lat_ahu_kWh:
-        description: AHU latent heat demand
+        description: AHU latent heating demand
         type: float
         unit: '[kWh]'
         values: '{0.0...n}'
         min: 0.0
       Qhs_lat_aru_kWh:
-        description: ARU latent heat demand
+        description: ARU latent heating demand
         type: float
         unit: '[kWh]'
         values: '{0.0...n}'
         min: 0.0
       Qhs_lat_sys_kWh:
-        description: Total latent heat demand for all systems
+        description: Total latent heating demand for all systems
         type: float
         unit: '[kWh]'
         values: '{0.0...n}'
         min: 0.0
       Qhs_sen_ahu_kWh:
-        description: AHU sensible heat demand
+        description: AHU sensible heating demand
         type: float
         unit: '[kWh]'
         values: '{0.0...n}'
         min: 0.0
       Qhs_sen_aru_kWh:
-        description: ARU sensible heat demand
+        description: ARU sensible heating demand
         type: float
         unit: '[kWh]'
         values: '{0.0...n}'
         min: 0.0
       Qhs_sen_shu_kWh:
-        description: SHU sensible heat demand
+        description: SHU sensible heating demand
         type: float
         unit: '[kWh]'
         values: '{0.0...n}'
         min: 0.0
       Qhs_sen_sys_kWh:
-        description: Total sensible heat demand for all systems
+        description: Total sensible heating demand
         type: float
         unit: '[kWh]'
         values: '{0.0...n}'
         min: 0.0
       Qhs_sys_ahu_kWh:
-        description: AHU system heat demand
+        description: Space heating demand in AHU
         type: float
         unit: '[kWh]'
         values: '{0.0...n}'
         min: 0.0
       Qhs_sys_aru_kWh:
-        description: ARU system heat demand
+        description: Space heating demand in ARU
         type: float
         unit: '[kWh]'
         values: '{0.0...n}'
         min: 0.0
       Qhs_sys_kWh:
-        description: End-use space heating demand
+        description: End-use space heating demand, Qhs_sys = Qhs_sen_sys + Qhs_em_ls + Qhs_dis_ls
         type: float
         unit: '[kWh]'
         values: '{0.0...n}'
         min: 0.0
       Qhs_sys_shu_kWh:
-        description: SHU system heat demand
+        description: SHU system heating demand
         type: float
         unit: '[kWh]'
         values: '{0.0...n}'
         min: 0.0
       Qww_kWh:
-        description: DHW specific heat demand
+        description: DHW specific heating demand
         type: float
         unit: '[kWh]'
         values: '{0.0...n}'
@@ -7854,14 +7873,14 @@ get_demand_results_file:
         values: '{0.0...n}'
         min: 0.0
       mcptw_kWperC:
-        description: Capacity flow rate (mass flow* specific heat capaicty) of the
+        description: Capacity flow rate (mass flow* specific heat capacity) of the
           fresh water
         type: float
         unit: '[kW/C]'
         values: '{0.0...n}'
         min: 0.0
       mcpww_sys_kWperC:
-        description: Capacity flow rate (mass flow* specific heat capaicty) of domestic
+        description: Capacity flow rate (mass flow* specific heat capacity) of domestic
           hot water
         type: float
         unit: '[kW/C]'
@@ -9168,7 +9187,7 @@ get_optimization_district_scale_heating_capacity:
         values: '{0.0...n}'
         min: 0.0
   used_by: []
-get_optimization_decentralized_folder_building_cooling_activation:
+get_optimization_decentralized_folder_building_result_cooling_activation:
   created_by:
   - decentralized
   file_path: outputs/data/optimization/decentralized/{building}_{configuration}_cooling_activation.csv
@@ -9176,7 +9195,7 @@ get_optimization_decentralized_folder_building_cooling_activation:
   schema:
     columns:
       E_DX_AS_req_W:
-        description: Electricity requirements of Air-Source direct expansion chiller
+        description: Electricity requirements of Air-Source direct expansion chillers
         type: float
         unit: '[Wh]'
         values: '{0.0...n}'
@@ -9188,8 +9207,87 @@ get_optimization_decentralized_folder_building_cooling_activation:
         unit: '[Wh]'
         values: '{0.0...n}'
         min: 0.0
+      E_BaseVCC_AS_req_W:
+        description: Electricity requirements of Vapor Compression Chillers
+          and refrigeration
+        type: float
+        unit: '[Wh]'
+        values: '{0.0...n}'
+        min: 0.0
+      E_CT_req_W:
+        description: Electricity requirements of Cooling Towers
+        type: float
+        unit: '[Wh]'
+        values: '{0.0...n}'
+        min: 0.0
+      E_ACH_req_W:
+        description: Electricity requirements of Absorption Chillers
+        type: float
+        unit: '[Wh]'
+        values: '{0.0...n}'
+        min: 0.0
+      E_SC_FP_req_W:
+        description: Electricity requirements of Solar Collectors (flat-plate)
+        type: float
+        unit: '[Wh]'
+        values: '{0.0...n}'
+        min: 0.0
+      E_SC_ET_req_W:
+        description: Electricity requirements of Solar Collectors (evacuated-tubes)
+        type: float
+        unit: '[Wh]'
+        values: '{0.0...n}'
+        min: 0.0
       Q_DX_AS_gen_directload_W:
-        description: Thermal energy generated by Air-Source direct expansion chiller
+        description: Thermal energy generated by Air-Source direct expansion chillers
+        type: float
+        unit: '[Wh]'
+        values: '{0.0...n}'
+        min: 0.0
+      Q_BaseVCC_AS_gen_directload_W:
+        description: Thermal energy generated by Air-Source Vapor-compression chillers
+        type: float
+        unit: '[Wh]'
+        values: '{0.0...n}'
+        min: 0.0
+      Q_ACH_gen_directload_W:
+        description: Thermal energy generated by Absorption chillers
+        type: float
+        unit: '[Wh]'
+        values: '{0.0...n}'
+        min: 0.0
+      Q_Boiler_NG_ACH_W:
+        description: Thermal energy generated by Natural gas Boilers to Absorption chillers
+        type: float
+        unit: '[Wh]'
+        values: '{0.0...n}'
+        min: 0.0
+      Q_SC_FP_ACH_W:
+        description: Thermal energy generated by Solar Collectors (flat-plate) to Absorption chillers
+        type: float
+        unit: '[Wh]'
+        values: '{0.0...n}'
+        min: 0.0
+      Q_Burner_NG_ACH_W:
+        description: Thermal energy generated by Natural gas Burners to Absorption chillers
+        type: float
+        unit: '[Wh]'
+        values: '{0.0...n}'
+        min: 0.0
+      Q_SC_ET_ACH_W:
+        description: Thermal energy generated by Solar Collectors (evacuated-tubes) to Absorption chillers
+        type: float
+        unit: '[Wh]'
+        values: '{0.0...n}'
+        min: 0.0
+      NG_Burner_req:
+        description: Requirements of Natural Gas for Burners
+        type: float
+        unit: '[Wh]'
+        values: '{0.0...n}'
+        min: 0.0
+      NG_Boiler_req:
+        description: Requirements of Natural Gas for Boilers
         type: float
         unit: '[Wh]'
         values: '{0.0...n}'
@@ -9390,8 +9488,7 @@ get_optimization_decentralized_folder_building_result_heating_activation:
         min: 0
         max: 1
       E_hs_ww_req_W:
-        description: Electricity Requirements for hot water and space heating (if
-          required)
+        description: Electricity Requirements for heat pump compressor and auxiliary uses (if required)
         type: float
         unit: '[Wh]'
         values: '{0.0...n}'
@@ -9403,14 +9500,33 @@ get_optimization_decentralized_folder_building_result_heating_activation:
         values: '{0...1}'
         min: 0
         max: 1
-      NG_BackupBoiler_req_Wh:
+      Fuelcell_Status:
+        description: Status of the fuel cell (1=on, 0 =off)
+        type: int
+        unit: '[-]'
+        values: '{0...1}'
+        min: 0
+        max: 1
+      NG_BackupBoiler_req_W:
         description: Requirements of Natural Gas for Back-up Boiler
         type: float
         unit: '[Wh]'
         values: '{0.0...n}'
         min: 0.0
-      NG_Boiler_req_Wh:
+      NG_Boiler_req_W:
         description: Requirements of Natural Gas for Base load Boiler
+        type: float
+        unit: '[Wh]'
+        values: '{0.0...n}'
+        min: 0.0
+      BG_Boiler_req_W:
+        description: Requirements of Bio-gas for Base load Boiler
+        type: float
+        unit: '[Wh]'
+        values: '{0.0...n}'
+        min: 0.0
+      NG_FuelCell_req_W:
+        description: Requirements of Natural Gas for fuel cell
         type: float
         unit: '[Wh]'
         values: '{0.0...n}'
@@ -9429,6 +9545,18 @@ get_optimization_decentralized_folder_building_result_heating_activation:
         min: 0.0
       Q_GHP_gen_directload_W:
         description: Thermal generation of ground-source heat pump to direct load
+        type: float
+        unit: '[Wh]'
+        values: '{0.0...n}'
+        min: 0.0
+      Q_Fuelcell_gen_directload_W:
+        description: Thermal generation of fuel cell to direct load
+        type: float
+        unit: '[Wh]'
+        values: '{0.0...n}'
+        min: 0.0
+      E_Fuelcell_gen_export_W:
+        description: Electricity generation of fuel cell exported to the grid
         type: float
         unit: '[Wh]'
         values: '{0.0...n}'
@@ -11642,7 +11770,7 @@ get_optimization_substations_total_file:
         values: '{0.0...n}'
         min: 0.0
       DC_cs_MWhyr:
-        description: District cooling for space cooling demand
+        description: Energy consumption of space cooling system (if supplied by District Cooling), DC_cs = Qcs_sys / eff_cs
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
@@ -11703,7 +11831,7 @@ get_optimization_substations_total_file:
         values: '{0.0...n}'
         min: 0.0
       E_cs_MWhyr:
-        description: Electricity consumption due to space cooling
+        description: Energy consumption of cooling system (if supplied by electricity grid), E_cs = Qcs_sys / eff_cs
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
@@ -11727,7 +11855,7 @@ get_optimization_substations_total_file:
         values: '{0.0...n}'
         min: 0.0
       E_sys_MWhyr:
-        description: End-use electricity demand
+        description: End-use total electricity consumption, E_sys =  Eve + Ea + El + Edata + Epro + Eaux + Ev
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
@@ -11763,7 +11891,7 @@ get_optimization_substations_total_file:
         values: '{0.0...n}'
         min: 0.0
       Eal_MWhyr:
-        description: Electricity consumption due to appliances and lighting
+        description: End-use electricity consumption of appliances and lighting, Eal = El_W + Ea_W
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
@@ -11775,7 +11903,7 @@ get_optimization_substations_total_file:
         values: '{0.0...n}'
         min: 0.0
       Eaux_MWhyr:
-        description: Electricity consumption due to auxiliary equipment
+        description: End-use auxiliary electricity consumption, Eaux = Eaux_fw + Eaux_ww + Eaux_cs + Eaux_hs + Ehs_lat_aux
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
@@ -11853,7 +11981,7 @@ get_optimization_substations_total_file:
         values: '{0.0...n}'
         min: 0.0
       GRID_MWhyr:
-        description: Grid electricity consumption
+        description: 'Grid electricity consumption, GRID = GRID_a + GRID_l + GRID_v + GRID_ve + GRID_data + GRID_pro + GRID_aux + GRID_ww + GRID_cs + GRID_hs + GRID_cdata + GRID_cre'
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
@@ -12074,7 +12202,7 @@ get_optimization_substations_total_file:
         values: '{0.0...n}'
         min: 0.0
       QC_sys_MWhyr:
-        description: Total system cooling demand
+        description: 'Total system cooling demand, QC_sys = Qcs_sys + Qcdata_sys + Qcre_sys + Qcpro_sys'
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
@@ -12158,115 +12286,115 @@ get_optimization_substations_total_file:
         values: '{0.0...n}'
         min: 0.0
       Qcs_MWhyr:
-        description: Total cool demand
+        description: Total cooling demand
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_dis_ls0_kW:
-        description: Nominal Cool distribution losses.
+        description: Nominal Cooling distribution losses.
         type: float
         unit: '[kW]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_dis_ls_MWhyr:
-        description: Cool distribution losses
+        description: Cooling distribution losses
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_em_ls0_kW:
-        description: Nominal Cool emission losses.
+        description: Nominal Cooling emission losses.
         type: float
         unit: '[kW]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_em_ls_MWhyr:
-        description: Cool emission losses
+        description: Cooling emission losses
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_lat_ahu0_kW:
-        description: Nominal AHU latent cool demand.
+        description: Nominal AHU latent cooling demand.
         type: float
         unit: '[kW]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_lat_ahu_MWhyr:
-        description: AHU latent cool demand
+        description: AHU latent cooling demand
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_lat_aru0_kW:
-        description: Nominal ARU latent cool demand.
+        description: Nominal ARU latent cooling demand.
         type: float
         unit: '[kW]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_lat_aru_MWhyr:
-        description: ARU latent cool demand
+        description: ARU latent cooling demand
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_lat_sys0_kW:
-        description: Nominal System latent cool demand.
+        description: Nominal System latent cooling demand.
         type: float
         unit: '[kW]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_lat_sys_MWhyr:
-        description: System latent cool demand
+        description: System latent cooling demand
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_sen_ahu0_kW:
-        description: Nominal AHU system cool demand.
+        description: Nominal AHU system cooling demand.
         type: float
         unit: '[kW]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_sen_ahu_MWhyr:
-        description: AHU system cool demand
+        description: Sensible cooling demand in AHU
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_sen_aru0_kW:
-        description: Nominal ARU system cool demand.
+        description: Nominal ARU system cooling demand.
         type: float
         unit: '[kW]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_sen_aru_MWhyr:
-        description: ARU system cool demand
+        description: ARU system cooling demand
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_sen_scu0_kW:
-        description: Nominal SCU system cool demand.
+        description: Nominal SCU system cooling demand.
         type: float
         unit: '[kW]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_sen_scu_MWhyr:
-        description: SCU system cool demand
+        description: SCU system cooling demand
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_sen_sys0_kW:
-        description: Nominal Sensible system cool demand.
+        description: Nominal Sensible system cooling demand.
         type: float
         unit: '[kW]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_sen_sys_MWhyr:
-        description: Sensible system cool demand
+        description: Total sensible cooling demand
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
@@ -12278,55 +12406,55 @@ get_optimization_substations_total_file:
         values: '{0.0...n}'
         min: 0.0
       Qcs_sys_MWhyr:
-        description: End-use space cooling demand
+        description: 'End-use space cooling demand, Qcs_sys = Qcs_sen_sys + Qcs_lat_sys + Qcs_em_ls + Qcs_dis_ls'
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_sys_ahu0_kW:
-        description: Nominal AHU system cool demand.
+        description: Nominal AHU system cooling demand.
         type: float
         unit: '[kW]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_sys_ahu_MWhyr:
-        description: AHU system cool demand
+        description: AHU system cooling demand
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_sys_aru0_kW:
-        description: Nominal ARU system cool demand.
+        description: Nominal ARU system cooling demand.
         type: float
         unit: '[kW]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_sys_aru_MWhyr:
-        description: ARU system cool demand
+        description: ARU system cooling demand
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_sys_scu0_kW:
-        description: Nominal SCU system cool demand.
+        description: Nominal SCU system cooling demand.
         type: float
         unit: '[kW]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_sys_scu_MWhyr:
-        description: SCU system cool demand
+        description: SCU system cooling demand
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
         min: 0.0
       Qhpro_sys0_kW:
-        description: Nominal process heat demand.
+        description: Nominal process heating demand.
         type: float
         unit: '[kW]'
         values: '{0.0...n}'
         min: 0.0
       Qhpro_sys_MWhyr:
-        description: Yearly processes heat demand.
+        description: Yearly processes heating demand.
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
@@ -12368,85 +12496,85 @@ get_optimization_substations_total_file:
         values: '{0.0...n}'
         min: 0.0
       Qhs_lat_ahu0_kW:
-        description: Nominal AHU latent heat demand.
+        description: Nominal AHU latent heating demand.
         type: float
         unit: '[kW]'
         values: '{0.0...n}'
         min: 0.0
       Qhs_lat_ahu_MWhyr:
-        description: AHU latent heat demand
+        description: AHU latent heating demand
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
         min: 0.0
       Qhs_lat_aru0_kW:
-        description: Nominal ARU latent heat demand.
+        description: Nominal ARU latent heating demand.
         type: float
         unit: '[kW]'
         values: '{0.0...n}'
         min: 0.0
       Qhs_lat_aru_MWhyr:
-        description: ARU latent heat demand
+        description: ARU latent heating demand
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
         min: 0.0
       Qhs_lat_sys0_kW:
-        description: Nominal System latent heat demand.
+        description: Nominal System latent heating demand.
         type: float
         unit: '[kW]'
         values: '{0.0...n}'
         min: 0.0
       Qhs_lat_sys_MWhyr:
-        description: System latent heat demand
+        description: System latent heating demand
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
         min: 0.0
       Qhs_sen_ahu0_kW:
-        description: Nominal AHU sensible heat demand.
+        description: Nominal AHU sensible heating demand.
         type: float
         unit: '[kW]'
         values: '{0.0...n}'
         min: 0.0
       Qhs_sen_ahu_MWhyr:
-        description: AHU sensible heat demand
+        description: AHU sensible heating demand
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
         min: 0.0
       Qhs_sen_aru0_kW:
-        description: ARU sensible heat demand
+        description: ARU sensible heating demand
         type: float
         unit: '[kW]'
         values: '{0.0...n}'
         min: 0.0
       Qhs_sen_aru_MWhyr:
-        description: ARU sensible heat demand
+        description: ARU sensible heating demand
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
         min: 0.0
       Qhs_sen_shu0_kW:
-        description: Nominal SHU sensible heat demand.
+        description: Nominal SHU sensible heating demand.
         type: float
         unit: '[kW]'
         values: '{0.0...n}'
         min: 0.0
       Qhs_sen_shu_MWhyr:
-        description: SHU sensible heat demand
+        description: SHU sensible heating demand
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
         min: 0.0
       Qhs_sen_sys0_kW:
-        description: Nominal HVAC systems sensible heat demand.
+        description: Nominal HVAC systems sensible heating demand.
         type: float
         unit: '[kW]'
         values: '{0.0...n}'
         min: 0.0
       Qhs_sen_sys_MWhyr:
-        description: SHU sensible heat demand
+        description: SHU sensible heating demand
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
@@ -12458,55 +12586,55 @@ get_optimization_substations_total_file:
         values: '{0.0...n}'
         min: 0.0
       Qhs_sys_MWhyr:
-        description: End-use space heating demand
+        description: 'End-use space heating demand, Qhs_sys = Qhs_sen_sys + Qhs_em_ls + Qhs_dis_ls'
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
         min: 0.0
       Qhs_sys_ahu0_kW:
-        description: Nominal AHU sensible heat demand.
+        description: Nominal AHU sensible heating demand.
         type: float
         unit: '[kW]'
         values: '{0.0...n}'
         min: 0.0
       Qhs_sys_ahu_MWhyr:
-        description: AHU system heat demand
+        description: AHU system heating demand
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
         min: 0.0
       Qhs_sys_aru0_kW:
-        description: Nominal ARU sensible heat demand.
+        description: Nominal ARU sensible heating demand.
         type: float
         unit: '[kW]'
         values: '{0.0...n}'
         min: 0.0
       Qhs_sys_aru_MWhyr:
-        description: ARU sensible heat demand
+        description: ARU sensible heating demand
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
         min: 0.0
       Qhs_sys_shu0_kW:
-        description: Nominal SHU sensible heat demand.
+        description: Nominal SHU sensible heating demand.
         type: float
         unit: '[kW]'
         values: '{0.0...n}'
         min: 0.0
       Qhs_sys_shu_MWhyr:
-        description: SHU sensible heat demand
+        description: SHU sensible heating demand
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
         min: 0.0
       Qww0_kW:
-        description: Nominal DHW heat demand.
+        description: Nominal DHW heating demand.
         type: float
         unit: '[kW]'
         values: '{0.0...n}'
         min: 0.0
       Qww_MWhyr:
-        description: DHW heat demand
+        description: DHW heating demand
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
@@ -12959,7 +13087,7 @@ get_schedule_model_file:
         unit: '[g]'
         values: '{0.0...n}'
         min: 0.0
-      people_pax:
+      people_p:
         description: Number of people in the building
         type: float
         unit: '[-]'
@@ -13370,7 +13498,7 @@ get_total_demand:
         values: '{0.0...n}'
         min: 0.0
       DC_cs_MWhyr:
-        description: District cooling for space cooling demand
+        description: 'Energy consumption of space cooling system (if supplied by District Cooling), DC_cs = Qcs_sys / eff_cs'
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
@@ -13431,7 +13559,7 @@ get_total_demand:
         values: '{0.0...n}'
         min: 0.0
       E_cs_MWhyr:
-        description: Electricity consumption due to space cooling
+        description: 'Energy consumption of cooling system (if supplied by electricity grid), E_cs = Qcs_sys / eff_cs'
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
@@ -13455,7 +13583,7 @@ get_total_demand:
         values: '{0.0...n}'
         min: 0.0
       E_sys_MWhyr:
-        description: End-use electricity demand
+        description: 'End-use total electricity consumption, E_sys =  Eve + Ea + El + Edata + Epro + Eaux + Ev'
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
@@ -13491,7 +13619,7 @@ get_total_demand:
         values: '{0.0...n}'
         min: 0.0
       Eal_MWhyr:
-        description: Electricity consumption due to appliances and lighting
+        description: 'End-use electricity consumption of appliances and lighting, Eal = El_W + Ea_W'
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
@@ -13503,7 +13631,7 @@ get_total_demand:
         values: '{0.0...n}'
         min: 0.0
       Eaux_MWhyr:
-        description: Electricity consumption due to auxiliary equipment
+        description: 'End-use auxiliary electricity consumption, Eaux = Eaux_fw + Eaux_ww + Eaux_cs + Eaux_hs + Ehs_lat_aux'
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
@@ -13581,7 +13709,7 @@ get_total_demand:
         values: '{0.0...n}'
         min: 0.0
       GRID_MWhyr:
-        description: Grid electricity consumption
+        description: 'Grid electricity consumption, GRID_a + GRID_l + GRID_v + GRID_ve + GRID_data + GRID_pro + GRID_aux + GRID_ww + GRID_cs + GRID_hs + GRID_cdata + GRID_cre'
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
@@ -13802,7 +13930,7 @@ get_total_demand:
         values: '{0.0...n}'
         min: 0.0
       QC_sys_MWhyr:
-        description: Total system cooling demand
+        description: 'Total energy demand for cooling, QC_sys = Qcs_sys + Qcdata_sys + Qcre_sys + Qcpro_sys'
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
@@ -13814,7 +13942,7 @@ get_total_demand:
         values: '{0.0...n}'
         min: 0.0
       QH_sys_MWhyr:
-        description: Total building heating demand
+        description: Total energy demand for heating
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
@@ -13886,115 +14014,115 @@ get_total_demand:
         values: '{0.0...n}'
         min: 0.0
       Qcs_MWhyr:
-        description: Total cool demand
+        description: Total cooling demand
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_dis_ls0_kW:
-        description: Nominal Cool distribution losses.
+        description: Nominal Cooling distribution losses.
         type: float
         unit: '[kW]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_dis_ls_MWhyr:
-        description: Cool distribution losses
+        description: Cooling distribution losses
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_em_ls0_kW:
-        description: Nominal Cool emission losses.
+        description: Nominal Cooling emission losses.
         type: float
         unit: '[kW]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_em_ls_MWhyr:
-        description: Cool emission losses
+        description: Cooling emission losses
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_lat_ahu0_kW:
-        description: Nominal AHU latent cool demand.
+        description: Nominal AHU latent cooling demand.
         type: float
         unit: '[kW]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_lat_ahu_MWhyr:
-        description: AHU latent cool demand
+        description: AHU latent cooling demand
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_lat_aru0_kW:
-        description: Nominal ARU latent cool demand.
+        description: Nominal ARU latent cooling demand.
         type: float
         unit: '[kW]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_lat_aru_MWhyr:
-        description: ARU latent cool demand
+        description: ARU latent cooling demand
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_lat_sys0_kW:
-        description: Nominal System latent cool demand.
+        description: Nominal System latent cooling demand.
         type: float
         unit: '[kW]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_lat_sys_MWhyr:
-        description: System latent cool demand
+        description: Latent cooling demand
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_sen_ahu0_kW:
-        description: Nominal AHU system cool demand.
+        description: Nominal AHU system cooling demand.
         type: float
         unit: '[kW]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_sen_ahu_MWhyr:
-        description: AHU system cool demand
+        description: AHU system cooling demand
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_sen_aru0_kW:
-        description: Nominal ARU system cool demand.
+        description: Nominal ARU system cooling demand.
         type: float
         unit: '[kW]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_sen_aru_MWhyr:
-        description: ARU system cool demand
+        description: ARU system cooling demand
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_sen_scu0_kW:
-        description: Nominal SCU system cool demand.
+        description: Nominal SCU system cooling demand.
         type: float
         unit: '[kW]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_sen_scu_MWhyr:
-        description: SCU system cool demand
+        description: SCU system cooling demand
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_sen_sys0_kW:
-        description: Nominal Sensible system cool demand.
+        description: Nominal Sensible system cooling demand.
         type: float
         unit: '[kW]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_sen_sys_MWhyr:
-        description: Sensible system cool demand
+        description: Sensible system cooling demand
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
@@ -14006,55 +14134,55 @@ get_total_demand:
         values: '{0.0...n}'
         min: 0.0
       Qcs_sys_MWhyr:
-        description: End-use space cooling demand
+        description: 'End-use space cooling demand, Qcs_sys = Qcs_sen_sys + Qcs_lat_sys + Qcs_em_ls + Qcs_dis_ls'
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_sys_ahu0_kW:
-        description: Nominal AHU system cool demand.
+        description: Nominal AHU system cooling demand.
         type: float
         unit: '[kW]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_sys_ahu_MWhyr:
-        description: AHU system cool demand
+        description: AHU system cooling demand
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_sys_aru0_kW:
-        description: Nominal ARU system cool demand.
+        description: Nominal ARU system cooling demand.
         type: float
         unit: '[kW]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_sys_aru_MWhyr:
-        description: ARU system cool demand
+        description: ARU system cooling demand
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_sys_scu0_kW:
-        description: Nominal SCU system cool demand.
+        description: Nominal SCU system cooling demand.
         type: float
         unit: '[kW]'
         values: '{0.0...n}'
         min: 0.0
       Qcs_sys_scu_MWhyr:
-        description: SCU system cool demand
+        description: SCU system cooling demand
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
         min: 0.0
       Qhpro_sys0_kW:
-        description: Nominal process heat demand.
+        description: Nominal process heating demand.
         type: float
         unit: '[kW]'
         values: '{0.0...n}'
         min: 0.0
       Qhpro_sys_MWhyr:
-        description: Yearly processes heat demand.
+        description: Yearly processes heating demand.
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
@@ -14096,85 +14224,85 @@ get_total_demand:
         values: '{0.0...n}'
         min: 0.0
       Qhs_lat_ahu0_kW:
-        description: Nominal AHU latent heat demand.
+        description: Nominal AHU latent heating demand.
         type: float
         unit: '[kW]'
         values: '{0.0...n}'
         min: 0.0
       Qhs_lat_ahu_MWhyr:
-        description: AHU latent heat demand
+        description: AHU latent heating demand
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
         min: 0.0
       Qhs_lat_aru0_kW:
-        description: Nominal ARU latent heat demand.
+        description: Nominal ARU latent heating demand.
         type: float
         unit: '[kW]'
         values: '{0.0...n}'
         min: 0.0
       Qhs_lat_aru_MWhyr:
-        description: ARU latent heat demand
+        description: ARU latent heating demand
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
         min: 0.0
       Qhs_lat_sys0_kW:
-        description: Nominal System latent heat demand.
+        description: Nominal System latent heating demand.
         type: float
         unit: '[kW]'
         values: '{0.0...n}'
         min: 0.0
       Qhs_lat_sys_MWhyr:
-        description: System latent heat demand
+        description: System latent heating demand
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
         min: 0.0
       Qhs_sen_ahu0_kW:
-        description: Nominal AHU sensible heat demand.
+        description: Nominal AHU sensible heating demand.
         type: float
         unit: '[kW]'
         values: '{0.0...n}'
         min: 0.0
       Qhs_sen_ahu_MWhyr:
-        description: AHU sensible heat demand
+        description: Sensible heating demand in AHU
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
         min: 0.0
       Qhs_sen_aru0_kW:
-        description: ARU sensible heat demand
+        description: ARU sensible heating demand
         type: float
         unit: '[kW]'
         values: '{0.0...n}'
         min: 0.0
       Qhs_sen_aru_MWhyr:
-        description: ARU sensible heat demand
+        description: ARU sensible heating demand
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
         min: 0.0
       Qhs_sen_shu0_kW:
-        description: Nominal SHU sensible heat demand.
+        description: Nominal SHU sensible heating demand.
         type: float
         unit: '[kW]'
         values: '{0.0...n}'
         min: 0.0
       Qhs_sen_shu_MWhyr:
-        description: SHU sensible heat demand
+        description: SHU sensible heating demand
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
         min: 0.0
       Qhs_sen_sys0_kW:
-        description: Nominal HVAC systems sensible heat demand.
+        description: Nominal HVAC systems sensible heating demand.
         type: float
         unit: '[kW]'
         values: '{0.0...n}'
         min: 0.0
       Qhs_sen_sys_MWhyr:
-        description: SHU sensible heat demand
+        description: Sensible heating demand
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
@@ -14186,55 +14314,55 @@ get_total_demand:
         values: '{0.0...n}'
         min: 0.0
       Qhs_sys_MWhyr:
-        description: End-use space heating demand
+        description: 'End-use space heating demand, Qhs_sys = Qhs_sen_sys + Qhs_em_ls + Qhs_dis_ls'
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
         min: 0.0
       Qhs_sys_ahu0_kW:
-        description: Nominal AHU sensible heat demand.
+        description: Nominal AHU sensible heating demand.
         type: float
         unit: '[kW]'
         values: '{0.0...n}'
         min: 0.0
       Qhs_sys_ahu_MWhyr:
-        description: AHU system heat demand
+        description: AHU system heating demand
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
         min: 0.0
       Qhs_sys_aru0_kW:
-        description: Nominal ARU sensible heat demand.
+        description: Nominal ARU sensible heating demand.
         type: float
         unit: '[kW]'
         values: '{0.0...n}'
         min: 0.0
       Qhs_sys_aru_MWhyr:
-        description: ARU sensible heat demand
+        description: ARU sensible heating demand
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
         min: 0.0
       Qhs_sys_shu0_kW:
-        description: Nominal SHU sensible heat demand.
+        description: Nominal SHU sensible heating demand.
         type: float
         unit: '[kW]'
         values: '{0.0...n}'
         min: 0.0
       Qhs_sys_shu_MWhyr:
-        description: SHU sensible heat demand
+        description: SHU sensible heating demand
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
         min: 0.0
       Qww0_kW:
-        description: Nominal DHW heat demand.
+        description: Nominal DHW heating demand.
         type: float
         unit: '[kW]'
         values: '{0.0...n}'
         min: 0.0
       Qww_MWhyr:
-        description: DHW heat demand
+        description: DHW heating demand
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'

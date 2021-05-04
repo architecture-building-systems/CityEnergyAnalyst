@@ -276,6 +276,16 @@ Optimization:
       - [PV_totals]
 
 Utilities:
+  - name: database-migrator
+    label: Database migrator
+    description: "Migrate older scenario inputs to the latest version.
+                  Please consider running this for scenario inputs created before v3.22.
+                  NOTE: This cannot be undone - save a copy of the scenario first."
+    interfaces: [cli, dashboard]
+    module: cea.datamanagement.database_migrator
+    parameters: ['general:scenario']
+    input-files:
+      - [get_database_construction_standards]
 
   - name: dbf-to-excel-to-dbf
     label: DBF to Excel to DBF
@@ -290,15 +300,6 @@ Utilities:
     interfaces: [cli, dashboard]
     module: cea.datamanagement.data_initializer
     parameters: ['general:scenario', data-initializer]
-
-  - name: database-migrator
-    label: Database migrator
-    description: "Migrate older scenario inputs to the newest version. NOTE: This cannot be undone - save a copy of the scenario first"
-    interfaces: [cli, dashboard]
-    module: cea.datamanagement.database_migrator
-    parameters: ['general:scenario']
-    input-files:
-      - [get_database_construction_standards]
 
   - name: create-new-scenario
     label: Create new scenario
@@ -384,7 +385,7 @@ default:
     description: dashboard
     interfaces: [cli]
     module: cea.interfaces.dashboard.dashboard
-    parameters: ['general:debug']
+    parameters: ['general:debug', 'server']
 
   - name: excel-to-shapefile
     label: excel-to-shapefile

@@ -15,6 +15,7 @@ import cea.config
 import cea.inputlocator
 from cea.datamanagement.databases_verification import COLUMNS_ZONE_TYPOLOGY
 from cea.demand import constants
+from cea.datamanagement.constants import OSM_BUILDING_CATEGORIES, OTHER_OSM_CATEGORIES_UNCONDITIONED
 from cea.utilities.dbf import dataframe_to_dbf
 from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_geographic_coordinate_system
 
@@ -124,17 +125,22 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, buildings_he
         shapefile["address"] = "No address/incomplete address"
 
     shapefile["category"] = shapefile['building']
+    if 'amenity' in list_of_columns:
+        # in OSM, "amenities" (where available) supersede "building" categories
+        in_categories = shapefile['amenity'].isin(OSM_BUILDING_CATEGORIES.keys())
+        shapefile.loc[in_categories, '1ST_USE'] = shapefile[in_categories]['amenity'].map(OSM_BUILDING_CATEGORIES)
+
     shapefile["Name"] = [key + str(x + 1000) for x in
                          range(no_buildings)]  # start in a big number to avoid potential confusion
 
-    result = shapefile[
+    cleaned_shapefile = shapefile[
         ["Name", "height_ag", "floors_ag", "height_bg", "floors_bg", "description", "category", "geometry", "address",
-         "REFERENCE"]]
 
-    result.reset_index(inplace=True, drop=True)
+
+    cleaned_shapefile.reset_index(inplace=True, drop=True)
     shapefile.reset_index(inplace=True, drop=True)
 
-    return result, shapefile
+    return cleaned_shapefile, shapefile
 
 
 def zone_helper(locator, config):
@@ -186,7 +192,7 @@ def calculate_typology_file(locator, zone_df, year_construction, occupancy_type,
     """
     # calculate construction year
     typology_df = calculate_age(zone_df, year_construction)
-
+    
     # calculate the most likely construction standard
     standard_database = pd.read_excel(locator.get_database_construction_standards(), sheet_name='STANDARD_DEFINITION')
     typology_df['STANDARD'] = calc_category(standard_database, typology_df['YEAR'].values)
@@ -199,41 +205,16 @@ def calculate_typology_file(locator, zone_df, year_construction, occupancy_type,
     typology_df['3RD_USE'] = "NONE"
     typology_df['3RD_USE_R'] = 0.0
     if occupancy_type == "Get it from open street maps":
-        no_buildings = typology_df.shape[0]
-        for index in range(no_buildings):
-            typology_df.loc[index, "USE_A_R"] = 1.0
-            if zone_df.loc[index, "category"] == "yes":
-                typology_df.loc[index, "USE_A"] = "MULTI_RES"
-                typology_df.loc[index, "REFERENCE"] = "CEA - assumption"
-            elif zone_df.loc[index, "category"] == "residential" or zone_df.loc[index, "category"] == "apartments":
-                typology_df.loc[index, "USE_A"] = "MULTI_RES"
-                typology_df.loc[index, "REFERENCE"] = "OSM - as it is"
-            elif zone_df.loc[index, "category"] == "commercial" or zone_df.loc[index, "category"] == "civic":
-                typology_df.loc[index, "USE_A"] = "OFFICE"
-                typology_df.loc[index, "REFERENCE"] = "OSM - as it is"
-            elif zone_df.loc[index, "category"] == "school":
-                typology_df.loc[index, "USE_A"] = "SCHOOL"
-                typology_df.loc[index, "REFERENCE"] = "OSM - as it is"
-            elif zone_df.loc[index, "category"] == "garage" or zone_df.loc[index, "category"] == "garages" or \
-                    zone_df.loc[index, "category"] == "warehouse":
-                typology_df.loc[index, "USE_A"] = "PARKING"
-                typology_df.loc[index, "REFERENCE"] = "OSM - as it is"
-            elif zone_df.loc[index, "category"] == "house" or zone_df.loc[index, "category"] == "terrace" or \
-                    zone_df.loc[index, "category"] == "detached":
-                typology_df.loc[index, "USE_A"] = "SINGLE_RES"
-                typology_df.loc[index, "REFERENCE"] = "OSM - as it is"
-            elif zone_df.loc[index, "category"] == "retail":
-                typology_df.loc[index, "USE_A"] = "RETAIL"
-                typology_df.loc[index, "REFERENCE"] = "OSM - as it is"
-            elif zone_df.loc[index, "category"] == "industrial":
-                typology_df.loc[index, "USE_A"] = "INDUSTRIAL"
-                typology_df.loc[index, "REFERENCE"] = "OSM - as it is"
-            elif zone_df.loc[index, "category"] == "warehouse":
-                typology_df.loc[index, "USE_A"] = "INDUSTRIAL"
-                typology_df.loc[index, "REFERENCE"] = "OSM - as it is"
-            else:
-                typology_df.loc[index, "USE_A"] = "MULTI_RES"
-                typology_df.loc[index, "REFERENCE"] = "CEA - assumption"
+        # for OSM building/amenity types with a clear CEA use type, this use type is assigned
+        in_categories = zone_df['category'].isin(OSM_BUILDING_CATEGORIES.keys())
+        zone_df.loc[in_categories, '1ST_USE'] = zone_df[in_categories]['category'].map(OSM_BUILDING_CATEGORIES)
+
+        # for un-conditioned OSM building categories without a clear CEA use type, "PARKING" is assigned
+        if 'amenity' in zone_df.columns:
+            in_unconditioned_categories = zone_df['category'].isin(OTHER_OSM_CATEGORIES_UNCONDITIONED) | zone_df['amenity'].isin(OTHER_OSM_CATEGORIES_UNCONDITIONED)
+        else:
+            in_unconditioned_categories = zone_df['category'].isin(OTHER_OSM_CATEGORIES_UNCONDITIONED)
+        zone_df.loc[in_unconditioned_categories, '1ST_USE'] = "PARKING"
 
     fields = COLUMNS_ZONE_TYPOLOGY
     dataframe_to_dbf(typology_df[fields + ['REFERENCE']], occupancy_output_path)
@@ -280,13 +261,14 @@ def calculate_age(zone_df, year_construction):
         data_osm_floors_joined = int(math.ceil(np.nanmedian(data_age)))  # median so we get close to the worse case
         zone_df["YEAR"] = [int(x) if x is not np.nan else data_osm_floors_joined for x in data_age]
     else:
+        zone_df['YEAR'] = year_construction
         zone_df['REFERENCE'] = "CEA - assumption"
 
     return zone_df
 
 
 def polygon_to_zone(buildings_floors, buildings_floors_below_ground, buildings_height, buildings_height_below_ground,
-                    poly, shapefile_out_path):
+                    poly, zone_out_path):
     poly = poly.to_crs(get_geographic_coordinate_system())
     lon = poly.geometry[0].centroid.coords.xy[0][0]
     lat = poly.geometry[0].centroid.coords.xy[1][0]
@@ -297,14 +279,14 @@ def polygon_to_zone(buildings_floors, buildings_floors_below_ground, buildings_h
     poly = clean_geometries(poly)
 
     # clean attributes of height, name and number of floors
-    result, result_allfields = clean_attributes(poly, buildings_height, buildings_floors, buildings_height_below_ground,
-                                                buildings_floors_below_ground, key="B")
-    result = result.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
+    cleaned_shapefile, shapefile = clean_attributes(poly, buildings_height, buildings_floors,
+                                                    buildings_height_below_ground,
+                                                    buildings_floors_below_ground, key="B")
+    cleaned_shapefile = cleaned_shapefile.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
+    # save shapefile to zone.shp
+    cleaned_shapefile.to_file(zone_out_path)
 
-    # save to shapefile
-    result.to_file(shapefile_out_path)
-
-    return result_allfields
+    return shapefile
 
 
 def clean_geometries(gdf):
@@ -323,6 +305,9 @@ def clean_geometries(gdf):
         from shapely.ops import unary_union
         if geometry.type == 'Polygon':  # ignore Polygons
             return geometry
+        elif geometry.type == 'Point':
+            print('Discarding geometry of type: Point')
+            return None # discard geometry if it is a Point
         else:
             joined = unary_union(list(geometry))
             if joined.type == 'MultiPolygon':  # some Multipolygons could not be combined
