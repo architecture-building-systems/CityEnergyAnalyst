@@ -884,12 +884,38 @@ class MultiChoiceParameter(ChoiceParameter):
     """Like ChoiceParameter, but multiple values from the choices list can be used"""
     typename = 'MultiChoiceParameter'
 
-    @property
-    def nullable(self):
+    def initialize(self, parser):
+        super().initialize(parser)
+        self._empty = False
+
+    # Does not make sense for MultiChoiceParameter to be null, there should be at least one choice
+    # @property
+    # def nullable(self):
+    #     try:
+    #         return self.config.default_config.getboolean(self.section.name, self.name + '.nullable')
+    #     except configparser.NoOptionError:
+    #         return False
+
+    def get(self):
+        """Return the value from the config file"""
+        encoded_value = self.get_raw()
+        encoded_value = self.replace_references(encoded_value)
+
+        if not encoded_value:  # Set _empty if value from config is empty
+            self._empty = True
+
+        if self._empty:
+            return self._choices
+
         try:
-            return self.config.default_config.getboolean(self.section.name, self.name + '.nullable')
-        except configparser.NoOptionError:
-            return False
+            return self.decode(encoded_value)
+        except ValueError as ex:
+            raise ValueError('%s:%s - %s' % (self.section.name, self.name, ex.message))
+
+    def set(self, value):
+        encoded_value = self.encode(value)
+        self._empty = not encoded_value
+        self.config.user_config.set(self.section.name, self.name, encoded_value)
 
     def encode(self, value):
         assert not isinstance(value, str), "Bad value for encode of parameter {pname}".format(pname=self.name)
@@ -899,9 +925,6 @@ class MultiChoiceParameter(ChoiceParameter):
         return ', '.join(map(str, value))
 
     def decode(self, value):
-        # Select all choices if empty value and not nullable (default is not nullable)
-        if not self.nullable and value == '':
-            return self._choices
         choices = parse_string_to_list(value)
         return [choice for choice in choices if choice in self._choices]
 
@@ -1034,7 +1057,7 @@ class BuildingsParameter(MultiChoiceParameter):
 
     def initialize(self, parser):
         # skip the default MultiChoiceParameter initialization of _choices
-        pass
+        self._empty = False
 
     @property
     def _choices(self):
