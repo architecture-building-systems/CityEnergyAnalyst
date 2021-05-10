@@ -31,7 +31,7 @@ class SolarRadiationPlot(cea.plots.solar_potential.SolarPotentialPlotBase):
         elif self.normalization == "surface area":
             titley = 'Solar radiation [kWh/m2]'
         elif self.normalization == "building occupancy":
-            titley = 'Solar radiation [kWh/pax]'
+            titley = 'Solar radiation [kWh/p]'
         else:
             titley = 'Solar radiation [MWh]'
         return titley

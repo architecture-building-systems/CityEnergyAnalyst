@@ -44,7 +44,7 @@ class InvestmentCostsPlot(cea.plots.optimization.GenerationPlotBase):
         elif self.normalization == "air conditioned floor area":
             titley = 'Investment cost [USD$(2015)/m2]'
         elif self.normalization == "building occupancy":
-            titley = 'Investment cost [USD$(2015)/pax]'
+            titley = 'Investment cost [USD$(2015)/p]'
         else:
             titley = 'Investment cost [USD$(2015)/m2]'
         return titley
