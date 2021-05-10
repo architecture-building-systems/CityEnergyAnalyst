@@ -103,8 +103,8 @@ def calculate_occupant_density(use_types, internal_loads_df):
     occupant_densities = {}
     internal_loads = internal_loads_df.copy().set_index('code')
     for use in use_types:
-        if internal_loads.loc[use, 'Occ_m2pax'] > 0.0:
-            occupant_densities[use] = 1.0 / internal_loads.loc[use, 'Occ_m2pax']
+        if internal_loads.loc[use, 'Occ_m2p'] > 0.0:
+            occupant_densities[use] = 1.0 / internal_loads.loc[use, 'Occ_m2p']
         else:
             occupant_densities[use] = 0.0
     return occupant_densities

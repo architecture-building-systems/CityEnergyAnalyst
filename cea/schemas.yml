@@ -1737,6 +1737,17 @@ get_building_architecture:
             path: get_database_envelope_systems
             sheet: WALL
             column: code
+      type_part:
+        description: Internal partitions construction assembly (relates to "code" in ENVELOPE
+          assemblies)
+        type: string
+        unit: '[-]'
+        values: alphanumeric
+        choice:
+          lookup:
+            path: get_database_envelope_systems
+            sheet: WALL
+            column: code
       type_floor:
         description: Internal floor construction assembly (relates to "code" in ENVELOPE
           assemblies)
@@ -1822,10 +1833,10 @@ get_building_comfort:
         unit: '[%]'
         values: '{0.0...n}'
         min: 0.0
-      Ve_lpspax:
+      Ve_lsp:
         description: Minimum outdoor air ventilation rate per person for Air Quality
         type: float
-        unit: '[l/s/pax]'
+        unit: '[l/s/p]'
         values: '{0.0...n}'
         min: 5.5 #accodding to this Singaporean Guidelinehttps://escholarship.org/content/qt7k1796zv/qt7k1796zv.pdf
   used_by:
@@ -1843,22 +1854,22 @@ get_building_internal:
         type: string
         unit: '[-]'
         values: alphanumeric
-      Occ_m2pax:
+      Occ_m2p:
         description: Occupancy density
         type: float
-        unit: '[m2/pax]'
+        unit: '[m2/p]'
         values: '{0.0...n}'
         min: 0.0
-      Qs_Wpax:
+      Qs_Wp:
         description: Peak sensible heat load of people
         type: float
-        unit: '[W/pax]'
+        unit: '[W/p]'
         values: '{0.0...n}'
         min: 0.0
-      X_ghpax:
+      X_ghp:
         description: Moisture released by occupancy at peak conditions
         type: float
-        unit: '[ghpax]'  # FIXME: this unit is wrong!
+        unit: '[ghp]'
         values: '{0.0...n}'
         min: 0.0
       Ea_Wm2:
@@ -1908,17 +1919,17 @@ get_building_internal:
         unit: '[W/m2]'
         values: '{0.0...n}'
         min: 0.0
-      Vww_lpdpax:
+      Vww_ldp:
         description: Peak specific daily hot water consumption
         type: float
-        unit: '[lpdpax]'
+        unit: '[ldp]'
         values: '{0.0...n}'
         min: 0.0
-      Vw_lpdpax:
+      Vw_ldp:
         description: Peak specific fresh water consumption (includes cold and hot
           water)
         type: float
-        unit: '[lpdpax]'
+        unit: '[ldp]'
         values: '{0.0...n}'
         min: 0.0
   used_by:
@@ -6957,7 +6968,7 @@ get_database_use_types_properties:
           type: float
           unit: '[C]'
           values: '{n...n}'
-        Ve_lpspax:
+        Ve_lsp:
           description: Indoor quality requirements of indoor ventilation per person
           type: float
           unit: '[l/s]'
@@ -7001,10 +7012,10 @@ get_database_use_types_properties:
           unit: '[kW/veh]'
           values: '{0.0...n}'
           min: 0.0
-        Occ_m2pax:
+        Occ_m2p:
           description: Occupancy density
           type: float
-          unit: '[m2/pax]'
+          unit: '[m2/p]'
           values: '{0.0...n}'
           min: 0.0
         Qcpro_Wm2:
@@ -7025,26 +7036,26 @@ get_database_use_types_properties:
           unit: '[W/m2]'
           values: '{0.0...n}'
           min: 0.0
-        Qs_Wpax:
+        Qs_Wp:
           description: Peak sensible heat load of people
           type: float
-          unit: '[W/pax]'
+          unit: '[W/p]'
           values: '{0.0...n}'
           min: 0.0
-        Vw_lpdpax:
+        Vw_ldp:
           description: Peak specific fresh water consumption (includes cold and hot
             water)
           type: float
           unit: '[lpd]'
           values: '{0.0...n}'
           min: 0.0
-        Vww_lpdpax:
+        Vww_ldp:
           description: Peak specific daily hot water consumption
           type: float
           unit: '[lpd]'
           values: '{0.0...n}'
           min: 0.0
-        X_ghpax:
+        X_ghp:
           description: Moisture released by occupancy at peak conditions
           type: float
           unit: '[g/h/p]'
@@ -13076,7 +13087,7 @@ get_schedule_model_file:
         unit: '[g]'
         values: '{0.0...n}'
         min: 0.0
-      people_pax:
+      people_p:
         description: Number of people in the building
         type: float
         unit: '[-]'

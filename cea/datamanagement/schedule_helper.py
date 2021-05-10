@@ -69,8 +69,8 @@ def calc_mixed_schedule(locator, building_typology_df, buildings, list_var_names
 
     occupant_densities = {}
     for use in list_uses:
-        if internal_loads.loc[use, 'Occ_m2pax'] > 0.0:
-            occupant_densities[use] = 1.0 / internal_loads.loc[use, 'Occ_m2pax']
+        if internal_loads.loc[use, 'Occ_m2p'] > 0.0:
+            occupant_densities[use] = 1.0 / internal_loads.loc[use, 'Occ_m2p']
         else:
             occupant_densities[use] = 0.0
 
@@ -134,11 +134,11 @@ def calc_single_mixed_schedule(list_uses, occupant_densities, building_typology_
                                                                           share_time_occupancy_density)
 
                         if schedule_type in ['WATER'] and occupant_densities[use] > 0.0 and (
-                                internal_loads_df.loc[use, 'Vw_lpdpax'] + internal_loads_df.loc[use, 'Vw_lpdpax']) > 0.0:
+                                internal_loads_df.loc[use, 'Vw_ldp'] + internal_loads_df.loc[use, 'Vw_ldp']) > 0.0:
                             # for variables that depend on the number of people, the schedule needs to be calculated by number
                             # of people for each use at each time step, not the share of the occupancy for each
                             share_time_occupancy_density = current_share_of_use * occupant_densities[use] * (
-                                    internal_loads_df.loc[use, 'Vw_lpdpax'] + internal_loads_df.loc[use, 'Vw_lpdpax'])
+                                    internal_loads_df.loc[use, 'Vw_ldp'] + internal_loads_df.loc[use, 'Vw_ldp'])
                             normalizing_value += share_time_occupancy_density
                             current_schedule = np.vectorize(calc_average)(current_schedule,
                                                                           schedule_data_all_uses.schedule_data[use][

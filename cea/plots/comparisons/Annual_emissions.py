@@ -40,7 +40,7 @@ class ComparisonsAnnualEmissionsPlot(cea.plots.comparisons.ComparisonsPlotBase):
         elif self.normalization == "air conditioned floor area":
             titley = 'Annual emissions [kg CO2-eq/m2.yr]'
         elif self.normalization == "building occupancy":
-            titley = 'Annual emissions [kg CO2-eq/pax.yr]'
+            titley = 'Annual emissions [kg CO2-eq/p.yr]'
         else:
             titley = 'Annual emissions [ton CO2-eq/yr]'
         return titley

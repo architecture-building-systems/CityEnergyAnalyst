@@ -43,7 +43,7 @@ class ComparisonsAnnualCostsPlot(cea.plots.comparisons.ComparisonsPlotBase):
         elif self.normalization == "air conditioned floor area":
             titley = 'Annualized cost [USD$(2015)/m2.yr]'
         elif self.normalization == "building occupancy":
-            titley = 'Annualized cost [USD$(2015)/pax.yr]'
+            titley = 'Annualized cost [USD$(2015)/p.yr]'
         else:
             titley = 'Annualized cost [USD$(2015)/yr]'
         return titley

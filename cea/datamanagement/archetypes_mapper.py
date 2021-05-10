@@ -77,8 +77,8 @@ def archetypes_mapper(locator,
     occupant_densities = {}
     occ_densities = pd.read_excel(locator.get_database_use_types_properties(), 'INTERNAL_LOADS').set_index('code')
     for use in list_uses:
-        if occ_densities.loc[use, 'Occ_m2pax'] > 0.0:
-            occupant_densities[use] = 1 / occ_densities.loc[use, 'Occ_m2pax']
+        if occ_densities.loc[use, 'Occ_m2p'] > 0.0:
+            occupant_densities[use] = 1 / occ_densities.loc[use, 'Occ_m2p']
         else:
             occupant_densities[use] = 0.0
 
@@ -113,7 +113,7 @@ def indoor_comfort_mapper(list_uses, locator, occupant_densities, building_typol
               'Ths_set_C',
               'Tcs_setb_C',
               'Ths_setb_C',
-              'Ve_lpspax',
+              'Ve_lsp',
               'RH_min_pc',
               'RH_max_pc']
     prop_comfort_df_merged = calculate_average_multiuse(fields,
@@ -130,16 +130,16 @@ def internal_loads_mapper(list_uses, locator, occupant_densities, building_typol
     prop_internal_df = building_typology_df.merge(internal_DB, left_on='1ST_USE', right_on='code')
     # write to shapefile
     fields = ['Name',
-              'Occ_m2pax',
-              'Qs_Wpax',
-              'X_ghpax',
+              'Occ_m2p',
+              'Qs_Wp',
+              'X_ghp',
               'Ea_Wm2',
               'El_Wm2',
               'Ed_Wm2',
               'Ev_kWveh',
               'Qcre_Wm2',
-              'Vww_lpdpax',
-              'Vw_lpdpax',
+              'Vww_ldp',
+              'Vw_ldp',
               'Qhpro_Wm2',
               'Qcpro_Wm2',
               'Epro_Wm2']
@@ -385,7 +385,7 @@ def calculate_average_multiuse(fields, properties_df, occupant_densities, list_u
 
     properties_DB = properties_DB.set_index('code')
     for column in fields:
-        if column in ['Ve_lpspax', 'Qs_Wpax', 'X_ghpax', 'Vww_lpdpax', 'Vw_lpdpax']:
+        if column in ['Ve_lsp', 'Qs_Wp', 'X_ghp', 'Vww_ldp', 'Vw_ldp']:
             # some properties are imported from the Excel files as int instead of float
             properties_df[column] = properties_df[column].astype(float)
             for building in properties_df.index:
@@ -403,7 +403,7 @@ def calculate_average_multiuse(fields, properties_df, occupant_densities, list_u
                 else:
                     properties_df.loc[building, column] = 0
 
-        elif column in ['Ea_Wm2', 'El_Wm2', 'Epro_Wm2', 'Qcre_Wm2', 'Ed_Wm2', 'Qhpro_Wm2', 'Qcpro_Wm2', 'Occ_m2pax']:
+        elif column in ['Ea_Wm2', 'El_Wm2', 'Epro_Wm2', 'Qcre_Wm2', 'Ed_Wm2', 'Qhpro_Wm2', 'Qcpro_Wm2', 'Occ_m2p']:
             for building in properties_df.index:
                 average = 0.0
                 for use in list_uses:
