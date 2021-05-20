@@ -1,5 +1,5 @@
 - 2021-05-11 - 3.22.0 - #2963 fixes in SG database: removing repeated STANDARDs in CONSTRUCTION_STANDARD.xlsx
-- 2021-05-01 - 3.22.0 - #2957 - added warning message
+- 2021-05-01 - 3.22.0 - #2957 "Pax" means passenger
 - 2021-04-30 - 3.22.0 - #2965 included partitions
 - 2021-04-19 - 3.22.0 - #2951 Make convective heat transfer calculation at building surface dynamic
 - 2021-04-14 - 3.22.0 - #2954 2953 zone helper
