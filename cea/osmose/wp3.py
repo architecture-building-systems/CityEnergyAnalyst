@@ -58,17 +58,18 @@ def prepare_district_info(path_to_district_folder):
 def write_input_parameter_to_osmose(geometry_df, occupancy_df, season, specified_building, timesteps):
     print('writing parameters to osmose')
 
-    Af_per_function, Af_buildings = calc_Af_per_function(geometry_df, occupancy_df)
+    Af_per_function, Af_buildings, A_footprint_per_function = calc_Af_per_function(geometry_df, occupancy_df)
     # write outputs for each function (input parameters to osmose)
     m_ve_min_df = pd.DataFrame()
     for case in ['WTP_CBD_m_WP1_OFF', 'WTP_CBD_m_WP1_HOT', 'WTP_CBD_m_WP1_RET']:
         print(case)
+        # extrapolate demand from a specified building
         output_building, \
         output_hcs, \
         timesteps_calc, \
         Tamb_K = extract_cea_outputs_to_osmose_main(case, timesteps, season,
                                                             specified_building,
-                                                            problem_type='district') #extrapolate demand from a specified building
+                                                            problem_type='district')
         write_value_to_csv(Tamb_K, osmose_project_data_path, "Tamb.csv")
         # get file and extrapolate
         building_Af_m2 = output_hcs['Af_m2'][0]
@@ -79,7 +80,6 @@ def write_input_parameter_to_osmose(geometry_df, occupancy_df, season, specified
         df_T = df.T
         file_path = os.path.join('',*[osmose_project_data_path, specified_building[0] + '_' + case.split('_')[4] + '_mult.csv'])
         df_T.to_csv(file_path, header=None, index=False)
-
         # save specified building original values
         output_building.T.to_csv(path_to_osmose_project_bui(specified_building[0] + '_' + case.split('_')[4]), header=False)  # save files
         output_hcs.T.to_csv(path_to_osmose_project_hcs(specified_building[0] + '_' + case.split('_')[4], 'hcs'), header=False)  # save files
@@ -95,9 +95,12 @@ def write_input_parameter_to_osmose(geometry_df, occupancy_df, season, specified
                                 header=False)
         ## TODO: this part might be redundant
         ## output_building (scaled to Af)
-        columns_with_scalar_values = [column for column in output_building.columns if 'Tww' not in column]
+        columns_with_scalar_values = [column for column in output_building.columns
+                                      if ('Tww' not in column) and ('perm2' not in column)]
         scalar_df = output_building[columns_with_scalar_values] * Af_multiplication_factor
         output_building.update(scalar_df)
+        # write roof area and PV production
+        output_building['Aroof_m2'] = A_footprint_per_function[case.split('_')[4]] * 0.9
         output_building.T.to_csv(path_to_osmose_project_bui('B_' + case.split('_')[4]), header=False)  # save files
         ## output_hcs (scaled to Af)
         columns_with_scalar_values = [column for column in output_hcs.columns
@@ -124,13 +127,17 @@ def write_input_parameter_to_osmose(geometry_df, occupancy_df, season, specified
     return timesteps_calc
 
 def calc_Af_per_function(geometry_df, occupancy_df):
-    Af_per_function = {}
+    Af_per_function, A_roof_per_function = {}, {}
     Af_buildings_per_function = {}
     for function in ['HOTEL', 'OFFICE', 'RETAIL']:
         buildings = occupancy_df[function][occupancy_df[function] == 1].index
         Af_per_function[function[:3]] = geometry_df['Af'][buildings].sum()
-        Af_buildings_per_function[function[:3]] = geometry_df.loc[buildings,'Af']
-    return Af_per_function, Af_buildings_per_function
+        Af_buildings_per_function[function[:3]] = geometry_df.loc[buildings, 'Af']
+        # footprint
+        if function == 'RETAIL':
+            buildings = ['B23','B26','B27']
+        A_roof_per_function[function[:3]] = geometry_df['footprint'][buildings].sum()
+    return Af_per_function, Af_buildings_per_function, A_roof_per_function
 
 
 def get_building_Af_from_geometry(path_to_district_folder):
