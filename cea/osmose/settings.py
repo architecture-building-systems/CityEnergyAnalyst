@@ -10,9 +10,11 @@ TECHS = ['dN_HT_3for2'] # ONLY one tech if running moga via wp3
 # timesteps = [5136, 5144, 5145, 5147, 5148]  # 168 (week) [5389]
 # timesteps = [5145]  # 168 (week) [5389]
 # timesteps = "typical hours"  # 168 (week) [5389] "typical hours"
-timesteps = 48
-# number_of_typical_hours = 46
+# timesteps = 48
+timesteps = "typical hours"
+number_of_typical_hours = 46
 # timesteps = "typical days"  # 168 (week)
+# number_of_typical_days = 3
 # timesteps = 'dtw hours'
 
 ## cluster evaluation ##
@@ -45,9 +47,9 @@ ampl_lic_path = "C:\\Users\\Shanshan\\Desktop\\ampl"
 # Branch mk
 osmose_project_path = "E:\\OSMOSE_projects\\HCS_mk\\Projects"
 osmose_project_data_path = osmose_project_path + '\\data'
-result_destination = "E:\\HCS_results_1015"
+result_destination = "E:\\HCS_results_1015" # save osmose results to here #FIXME: might be redundant
 # cluster evaluation
-# typical_days_path = "E:\\WP2\\Typical_hours"
+typical_days_path = "E:\\Typical_days"
 typical_hours_path = "E:\\WP2\\Typical_hours"
 
 
