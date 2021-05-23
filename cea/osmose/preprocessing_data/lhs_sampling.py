@@ -125,14 +125,14 @@ problem_dict = {
         'bounds': [[1, 15], [1, 3], [8, 11], [1, 3], [8, 11], [16, 20]]
     },
     'd_Buildings_dhw': { # in-use
-        'num_vars': 7,
-        'names': ['dT_sc', 'HP_dT', 'OAU_dT2', 'OAU_T1', 'RAU_dT2', 'RAU_T1', 'T_SCU'],
-        'bounds': [[0, 20], [1, 15], [1, 3], [8, 11], [1, 3], [8, 11], [16, 20]]
+        'num_vars': 8,
+        'names': ['dT_sc', 'HP_dT1', 'HP_dT2', 'OAU_dT2', 'OAU_T1', 'RAU_dT2', 'RAU_T1', 'T_SCU'],
+        'bounds': [[0, 20], [20, 40], [1, 15], [1, 3], [8, 11], [1, 3], [8, 11], [16, 20]]
     },
 }
 
-problem_name = 'd_HT_Networks_dhw'
-number_of_samples = 200
+problem_name = 'd_Buildings_dhw'
+number_of_samples = 300
 iterations = 10000   #10000 from Steffen
 
 def main():
