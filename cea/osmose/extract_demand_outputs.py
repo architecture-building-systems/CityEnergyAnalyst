@@ -87,7 +87,7 @@ def extract_cea_outputs_to_osmose_main(case, timesteps, season, specified_buildi
     for building in building_names:
         # get reduced tsd according to the specified timesteps
         reduced_demand_df = get_reduced_demand_df(case, building, end_t, start_t)
-        reduced_PV_df = get_reduced_PV_df(case, building, end_t, start_t)
+        reduced_PV_df = get_reduced_PV_df(case, building, end_t, start_t) # in kWh/m2
 
         # initializing df
         output_building = pd.DataFrame()
@@ -101,6 +101,9 @@ def extract_cea_outputs_to_osmose_main(case, timesteps, season, specified_buildi
         reduced_demand_df = calc_sensible_gains(reduced_demand_df)
         output_building['Q_gain_total_kWh'] = reduced_demand_df['Q_gain_total_kWh']
         output_building['Q_gain_occ_kWh'] = reduced_demand_df['Q_gain_occ_kWh']
+        # output_building['Q_gain_int_kWh'] = reduced_demand_df['Q_gain_int_kWh']
+        # output_building['Q_gain_rad_kWh'] = reduced_demand_df['Q_gain_rad_kWh']
+        # output_building['Q_gain_env_kWh'] = reduced_demand_df['Q_gain_env_kWh']
         Q_sen_gain_inf_kWh = np.vectorize(calc_Q_sen_gain_inf_kWh)(reduced_demand_df['T_ext'],
                                                                    reduced_demand_df['T_int'],
                                                                    reduced_demand_df['m_ve_inf'], w_RA_gperkg)
@@ -116,8 +119,10 @@ def extract_cea_outputs_to_osmose_main(case, timesteps, season, specified_buildi
         output_building = output_building.round(4)  # osmose does not read more decimals (observation)
         # output_building = output_building.drop(output_df.index[range(7)])
         # PV potential
-        output_building['el_PV_kWh'] = reduced_PV_df['Wh_m2'] * total_demand_df['Aroof_m2'][building] * 0.9 / 1000
-        output_building['Aroof_m2'] = total_demand_df['Aroof_m2'][building] * 0.9
+        if 'RET' in case:
+            output_building['rad_Whperm2'] = reduced_PV_df['Wh_m2']*0.8 ## SDC case
+        else:
+            output_building['rad_Whperm2'] = reduced_PV_df['Wh_m2']
         # electricity consumption
         output_building['E_sys_kWh'] = reduced_demand_df['E_sys']/1000
 
@@ -261,7 +266,7 @@ def get_reduced_demand_df(case, building, end_t, start_t):
             reduced_demand_df = building_demand_df[start_t[interval]:end_t[interval]]
             # reduced_demand_df = reduced_demand_df.reset_index()
             list_of_df.append(reduced_demand_df)
-            print 'interval', interval, ', hour:', start_t[interval]
+            print ('interval', interval, ', hour:', start_t[interval])
         reduced_demand_df = pd.concat(list_of_df, ignore_index=True)
         reduced_demand_df = reduced_demand_df.reset_index()
     else:
@@ -270,7 +275,7 @@ def get_reduced_demand_df(case, building, end_t, start_t):
 
 
 def get_reduced_PV_df(case, building, end_t, start_t):
-    all_year_PV_per_m2_df = pd.read_csv(path_to_PV_df(case))
+    all_year_PV_per_m2_df = pd.read_csv(path_to_rad_df(case))
     if type(start_t) is int:
         PV_per_m2_df = all_year_PV_per_m2_df[start_t:end_t]
         PV_per_m2_df = PV_per_m2_df.reset_index()
@@ -285,6 +290,7 @@ def get_reduced_PV_df(case, building, end_t, start_t):
     else:
         raise ValueError('WRONG start_t: ', start_t)
     return PV_per_m2_df
+
 
 
 def get_timesteps_info(case, season, timesteps):
@@ -302,25 +308,33 @@ def get_timesteps_info(case, season, timesteps):
         op_time = np.ones(timesteps, dtype=int)
         periods = 1
     elif timesteps == 'typical days':
-        cluster_numbers_df = pd.read_excel(path_to_number_of_k_file(settings.typical_day_path), sheet_name='number_of_clusters')
-        number_of_clusters = cluster_numbers_df[case.split('_')[4]][case.split('_')[0]]
+        # cluster_numbers_df = pd.read_excel(path_to_number_of_k_file(settings.typical_day_path), sheet_name='number_of_clusters')
+        # number_of_clusters = cluster_numbers_df[case.split('_')[4]][case.split('_')[0]]
+        number_of_clusters = settings.number_of_typical_days
         print('number of clusters: ', number_of_clusters)
-        day_count_df = pd.read_csv(path_to_cluster_files(settings.typical_hours_path, case, 'day_count', number_of_clusters))
-        typical_day_profiles = pd.read_csv(path_to_cluster_files(settings.typical_hours_path, case, 'profiles', number_of_clusters))
+        day_count_df = pd.read_csv(path_to_cluster_files(settings.typical_days_path, '', 'day_count', number_of_clusters))
+        # typical_day_profiles = pd.read_csv(path_to_cluster_files(settings.typical_days_path, '', 'profiles', number_of_clusters))
         number_of_typical_days = day_count_df.shape[0]
-        start_t, end_t = {}, {}
+        start_t, end_t = OrderedDict(), OrderedDict()
         op_time = []
         for d in range(number_of_typical_days):
             day = day_count_df['day'][d]
-            T_day = typical_day_profiles['typ_1'][d * 24:(d + 1) * 24]
-            T_md = (T_day.max() + T_day.min()) / 2  # ASHRAE method
-            if T_md > settings.T_b_CDD:  # filter out CDD
-                print 'day', day, 'T_md', T_md
-                start_t[int(day)] = (int(day) - 1) * 24
-                end_t[int(day)] = start_t[int(day)] + 24
-                count = day_count_df['count'][d]
-                op_time.extend(np.ones(24, dtype=int) * count)
-        periods = len(op_time) / 24
+            start_t[int(day)] = (int(day) - 1) * 24
+            end_t[int(day)] = start_t[int(day)] + 24
+            count = day_count_df['count'][d]
+            op_time.extend(np.ones(24, dtype=int) * count)
+        # for d in range(number_of_typical_days):
+        #     day = day_count_df['day'][d]
+        #     T_day = typical_day_profiles['typ_1'][d * 24:(d + 1) * 24]
+        #     T_md = (T_day.max() + T_day.min()) / 2  # ASHRAE method
+        #     if T_md > settings.T_b_CDD:  # filter out CDD
+        #         print 'day', day, 'T_md', T_md
+        #         start_t[int(day)] = (int(day) - 1) * 24
+        #         end_t[int(day)] = start_t[int(day)] + 24
+        #         count = day_count_df['count'][d]
+        #         op_time.extend(np.ones(24, dtype=int) * count)
+        # periods = len(op_time) / 24
+        periods = 1
         timesteps = len(op_time)
     elif timesteps == 'typical hours':
         number_of_clusters = settings.number_of_typical_hours
@@ -460,7 +474,7 @@ def get_start_t(case, timesteps, season):
                        'WTP': {'Summer': 5136},
                        'HKG': {'Summer': 4680, 'Winter': 168, 'Autumn': 7728, 'Spring': 2328},
                        'MDL': {'Wet': 5016, 'Dry': 8016}}
-    if timesteps == 168:
+    if timesteps == 168 or 48:
         for key in START_t_168_dict.keys():
             if key in case:
                 start_t = START_t_168_dict[key][season]
@@ -503,6 +517,11 @@ def path_to_district_df(case):
 def path_to_PV_df(case):
     path_to_folder = 'C:\\CEA_cases\\HCS_cases_all\\%s\\outputs\\data' % case
     path_to_file = os.path.join(path_to_folder, 'PV_Wh_per_m2.%s' % ('csv'))
+    return path_to_file
+
+def path_to_rad_df(case):
+    path_to_folder = 'C:\\CEA_cases\\HCS_cases_all\\%s\\outputs\\data' % case
+    path_to_file = os.path.join(path_to_folder, 'rad_Whm2.%s' % ('csv'))
     return path_to_file
 
 def path_to_osmose_project_bui(building_name):
