@@ -27,7 +27,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def lca_embodied(year_to_calculate, locator):
+def lca_embodied(locator, config):
     """
     Algorithm to calculate the embodied emissions and non-renewable primary energy of buildings according to the method
     of [Fonseca et al., 2015] and [Thoma et al., 2014]. The calculation method assumes a 60 year payoff for the embodied
@@ -98,6 +98,7 @@ def lca_embodied(year_to_calculate, locator):
         path to demand results folder emissions
     """
 
+
     # local variables
     age_df = dbf_to_dataframe(locator.get_building_typology())
     architecture_df = dbf_to_dataframe(locator.get_building_architecture())
@@ -155,17 +156,23 @@ def lca_embodied(year_to_calculate, locator):
     data_meged_df['windows_ag'] = data_meged_df['windows_ag'] * data_meged_df['empty_envelope_ratio']
     data_meged_df['area_walls_ext_ag'] = data_meged_df['area_walls_ext_ag'] * data_meged_df['empty_envelope_ratio']
 
+    ## excavation
+    data_meged_df['volume_excavation_bg'] = data_meged_df['footprint'] * data_meged_df['height_bg']
     ## wall area below ground
     data_meged_df['area_walls_ext_bg'] = data_meged_df['perimeter'] * data_meged_df['height_bg']
     ## floor area above ground
     data_meged_df['floor_area_ag'] = data_meged_df['footprint'] * data_meged_df['floors_ag']
     ## floor area below ground
     data_meged_df['floor_area_bg'] = data_meged_df['footprint'] * data_meged_df['floors_bg']
+    ## roof area:
+    data_meged_df['roof_area'] = data_meged_df['footprint']
+    ## fundations area:
+    data_meged_df['fundation_area'] = data_meged_df['footprint']
     ## total floor area
     data_meged_df['GFA_m2'] = data_meged_df['floor_area_ag'] + data_meged_df['floor_area_bg']
 
     result_emissions = calculate_contributions(data_meged_df,
-                                               year_to_calculate)
+                                               config)
 
     # export the results for embodied emissions (E_ghg_) and non-renewable primary energy (E_nre_pen_) for each
     # building, both total (in t CO2-eq. and GJ) and per square meter (in kg CO2-eq./m2 and MJ/m2)
@@ -175,7 +182,7 @@ def lca_embodied(year_to_calculate, locator):
     print('done!')
 
 
-def calculate_contributions(df, year_to_calculate):
+def calculate_contributions(df, config):
     """
     Calculate the embodied energy/emissions for each building based on their construction year, and the area and 
     renovation year of each building component.
@@ -200,29 +207,74 @@ def calculate_contributions(df, year_to_calculate):
         for each building)
     :rtype result: DataFrame
     """
+    ## default parameters:
+    excavation_GHG_kgm3 = 18 # average of excavation with and without grundwasser accroding to SIA 2032
+    fundations_GHG_kgm2 = 110  # average of fundations with and without grundwasser accroding to SIA 2032
+    supporting_structure_GHG_kgm2 = 55
+
+
+    #variables:
+    year_to_calculate = config.emissions.year_to_calculate
+    service_life_building = config.emissions.service_life_building
+    dismantling_parts_lifetime = config.emissions.dismantling_parts_lifetime
+    windows_doors_lifetime = config.emissions.windows_doors_lifetime
+    building_systems_lifetime = config.emissions.building_systems_lifetime
+    roof_construction_lifetime = config.emissions.roof_construction_lifetime
+    balconies_lifetime = config.emissions.balconies_lifetime
+    area_balconies = config.emissions.area_balconies
+    supporting_structure_lifetime = config.emissions.supporting_structure_lifetime
+    external_walls_above_terrain_lifetime = config.emissions.external_walls_above_terrain_lifetime
+    external_walls_below_terrain_lifetime = config.emissions.external_walls_below_terrain_lifetime
+    excavation_fundations_lifetime = config.emissions.excavation_fundations_lifetime
 
     # calculate the embodied energy/emissions due to construction
     total_column = 'saver'
     ## calculate how many years before the calculation year the building was built in
     df['delta_year'] = year_to_calculate - df['YEAR']
     ## if it was built more than 60 years before, the embodied energy/emissions have been "paid off" and are set to 0
-    df['confirm'] = df.apply(lambda x: calc_if_existing(x['delta_year'], SERVICE_LIFE_OF_BUILDINGS), axis=1)
-    ## if it was built less than 60 years before, the contribution from each building component is calculated
-    df[total_column] = ((df['GHG_WALL_kgCO2m2'] * (df['area_walls_ext_ag'] + df['area_walls_ext_bg']) +
-                         df['GHG_WIN_kgCO2m2'] * df['windows_ag'] +
-                         df['GHG_FLOOR_kgCO2m2'] * df['floor_area_ag'] +
-                         df['GHG_BASE_kgCO2m2'] * df['floor_area_bg'] +
-                         df['GHG_PART_kgCO2m2'] * (df['floor_area_ag']+df['floor_area_bg']) * CONVERSION_AREA_TO_FLOOR_AREA_RATIO +
-                         df['GHG_ROOF_kgCO2m2'] * df['footprint']) / SERVICE_LIFE_OF_BUILDINGS) * df['confirm']
+    df['confirm'] = df.apply(lambda x: calc_if_existing(x['delta_year'], service_life_building), axis=1)
 
-    df[total_column] += (((df['floor_area_ag'] + df['floor_area_bg']) * EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS) / SERVICE_LIFE_OF_TECHNICAL_SYSTEMS) * df['confirm']
+    ## if it was built less than the calculation date, the contribution from each building component is calculated
+    df['GHG_dismantling_parts_tonCO2'] = ((df['GHG_FLOOR_kgCO2m2'] * df['floor_area_ag']) + (df['GHG_PART_kgCO2m2'] * (df['floor_area_ag']+df['floor_area_bg']) * CONVERSION_AREA_TO_FLOOR_AREA_RATIO)) / dismantling_parts_lifetime
+    df['GHG_windows_doors_tonCO2'] = (df['GHG_WIN_kgCO2m2'] * df['windows_ag']) / windows_doors_lifetime
+    df['GHG_building_systems_tonCO2'] = ((df['floor_area_ag']+df['floor_area_bg']) * EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS) /  building_systems_lifetime
+    df['GHG_roof_construction_tonCO2'] = (df['GHG_ROOF_kgCO2m2'] * df['roof_area']) / roof_construction_lifetime
+    df['GHG_balconies_tonCO2'] = (df['GHG_ROOF_kgCO2m2'] * area_balconies) / balconies_lifetime
+    df['GHG_external_walls_above_terrain_tonCO2'] = (df['GHG_WALL_kgCO2m2'] * df['area_walls_ext_ag']) / external_walls_above_terrain_lifetime
+    df['GHG_external_walls_below_terrain_tonCO2'] = (df['GHG_WALL_kgCO2m2'] * df['area_walls_ext_bg']) / external_walls_below_terrain_lifetime
+
+    # Emissions that are offset after the service life.
+    df['GHG_supporting_structure_tonCO2'] = df['confirm'] * (df['floor_area_ag'] + df['floor_area_bg']) * supporting_structure_GHG_kgm2 / supporting_structure_lifetime
+    df['GHG_excavation_fundations_tonCO2'] = df['confirm'] * ((df['volume_excavation_bg'] * excavation_GHG_kgm3) + (df['fundation_area'] * fundations_GHG_kgm2)) / excavation_fundations_lifetime
+
+    df[total_column] =  df['GHG_dismantling_parts_tonCO2'] + \
+                        df['GHG_windows_doors_tonCO2'] + \
+                        df['GHG_building_systems_tonCO2'] + \
+                        df['GHG_roof_construction_tonCO2'] + \
+                        df['GHG_balconies_tonCO2'] + \
+                        df['GHG_external_walls_above_terrain_tonCO2'] + \
+                        df['GHG_external_walls_below_terrain_tonCO2'] + \
+                        df['GHG_supporting_structure_tonCO2'] + \
+                        df['GHG_excavation_fundations_tonCO2']
 
     # the total embodied energy/emissions are calculated as a sum of the contributions from construction and retrofits
     df['GHG_sys_embodied_tonCO2'] = df[total_column] / 1000  # kG-CO2 eq to ton
     df['GHG_sys_embodied_kgCO2m2'] = df[total_column] / df['GFA_m2']
 
     # the total and specific embodied energy/emissions are returned
-    result = df[['Name', 'GHG_sys_embodied_tonCO2', 'GHG_sys_embodied_kgCO2m2', 'GFA_m2']]
+    result = df[['Name',
+                 'GHG_sys_embodied_tonCO2',
+                 'GHG_sys_embodied_kgCO2m2',
+                 'GFA_m2',
+                 'GHG_dismantling_parts_tonCO2',
+                 'GHG_building_systems_tonCO2',
+                 'GHG_windows_doors_tonCO2',
+                 'GHG_roof_construction_tonCO2',
+                 'GHG_balconies_tonCO2',
+                 'GHG_external_walls_above_terrain_tonCO2',
+                 'GHG_external_walls_below_terrain_tonCO2',
+                 'GHG_supporting_structure_tonCO2',
+                 'GHG_excavation_fundations_tonCO2']]
 
     return result
 
@@ -261,7 +313,7 @@ def main(config):
     print('Running embodied-energy with scenario = %s' % config.scenario)
     print('Running embodied-energy with year-to-calculate = %s' % config.emissions.year_to_calculate)
 
-    lca_embodied(locator=locator, year_to_calculate=config.emissions.year_to_calculate)
+    lca_embodied(locator=locator, config=config)
 
 
 if __name__ == '__main__':
