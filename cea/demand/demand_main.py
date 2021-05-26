@@ -17,7 +17,7 @@ from cea.demand.building_properties import BuildingProperties
 from cea.utilities import epwreader
 from cea.utilities.date import get_date_range_hours_from_year
 from cea.demand import demand_writers
-from cea.datamanagement.database_migrator import is_3_22
+from cea.datamanagement.data_migrator import is_3_22
 
 warnings.filterwarnings("ignore")
 
@@ -67,7 +67,7 @@ def demand_calculation(locator, config):
     # CHECK DATABASE
     if is_3_22(config.scenario):
         raise ValueError("""The data format of indoor comfort has been changed after v3.22. 
-        Please run Database migrator in Utilities.""")
+        Please run Data migrator in Utilities.""")
 
     # INITIALIZE TIMER
     t0 = time.perf_counter()
