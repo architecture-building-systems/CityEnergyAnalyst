@@ -134,7 +134,7 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, buildings_he
                          range(no_buildings)]  # start in a big number to avoid potential confusion
 
     cleaned_shapefile = shapefile[
-        ["Name", "height_ag", "floors_ag", "height_bg", "floors_bg", "description", "category", "geometry", "address",
+        ["Name", "height_ag", "floors_ag", "height_bg", "floors_bg", "description", "category", "geometry", "address","REFERENCE"]]
 
 
     cleaned_shapefile.reset_index(inplace=True, drop=True)
