@@ -287,8 +287,6 @@ def convert_schedule_string_to_temperature(schedule_string, schedule_type, Ths_s
     :type schedule_string: list of strings
     :param schedule_type: type of the schedule, either 'Ths_set' or 'Tcs_set'
     :type schedule_type: str
-    :param bpr: BuildingPropertiesRow object, from here the setpoint and setback temperatures are extracted
-    :type bpr: BuildingPropoertiesRow
     :return: an array of temperatures containing np.nan when the system is OFF
     :rtype: numpy.array
     """
