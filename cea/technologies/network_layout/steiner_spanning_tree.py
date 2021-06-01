@@ -153,6 +153,7 @@ def calc_steiner_spanning_tree(crs_projected,
                                                                  type_mat_default, pipe_diameter_default)
 
     # GET COORDINATE AND SAVE FINAL VERSION TO DISK
+    print(crs_projected)
     mst_edges.crs = crs_projected
     mst_nodes.crs = crs_projected
     mst_edges['length_m'] = mst_edges['weight']

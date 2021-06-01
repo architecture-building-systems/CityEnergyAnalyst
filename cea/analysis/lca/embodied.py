@@ -13,8 +13,7 @@ import pandas as pd
 
 import cea.config
 import cea.inputlocator
-from cea.constants import SERVICE_LIFE_OF_BUILDINGS, SERVICE_LIFE_OF_TECHNICAL_SYSTEMS, \
-    CONVERSION_AREA_TO_FLOOR_AREA_RATIO, EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS
+from cea.constants import  CONVERSION_AREA_TO_FLOOR_AREA_RATIO, EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS_GHG_kgm2, EMISSIONS_EMBODIED_EXCAVATIONS_GHG_kgm3
 from cea.utilities.dbf import dbf_to_dataframe
 
 __author__ = "Jimeno A. Fonseca"
@@ -161,15 +160,13 @@ def lca_embodied(locator, config):
     ## wall area below ground
     data_meged_df['area_walls_ext_bg'] = data_meged_df['perimeter'] * data_meged_df['height_bg']
     ## floor area above ground
-    data_meged_df['floor_area_ag'] = data_meged_df['footprint'] * data_meged_df['floors_ag']
-    ## floor area below ground
-    data_meged_df['floor_area_bg'] = data_meged_df['footprint'] * data_meged_df['floors_bg']
+    data_meged_df['internal_floor_area'] = (data_meged_df['footprint'] * data_meged_df['floors_ag']) + (data_meged_df['footprint'] * (1 - data_meged_df['floors_bg']))
     ## roof area:
     data_meged_df['roof_area'] = data_meged_df['footprint']
     ## fundations area:
     data_meged_df['fundation_area'] = data_meged_df['footprint']
     ## total floor area
-    data_meged_df['GFA_m2'] = data_meged_df['floor_area_ag'] + data_meged_df['floor_area_bg']
+    data_meged_df['GFA_m2'] = data_meged_df['footprint'] * (data_meged_df['floors_ag'] + data_meged_df['floors_bg'])
 
     result_emissions = calculate_contributions(data_meged_df,
                                                config)
@@ -208,24 +205,21 @@ def calculate_contributions(df, config):
     :rtype result: DataFrame
     """
     ## default parameters:
-    excavation_GHG_kgm3 = 18 # average of excavation with and without grundwasser accroding to SIA 2032
-    fundations_GHG_kgm2 = 110  # average of fundations with and without grundwasser accroding to SIA 2032
-    supporting_structure_GHG_kgm2 = 55
-
+    factor_structure = 0.7
 
     #variables:
     year_to_calculate = config.emissions.year_to_calculate
     service_life_building = config.emissions.service_life_building
-    dismantling_parts_lifetime = config.emissions.dismantling_parts_lifetime
-    windows_doors_lifetime = config.emissions.windows_doors_lifetime
-    building_systems_lifetime = config.emissions.building_systems_lifetime
-    roof_construction_lifetime = config.emissions.roof_construction_lifetime
-    balconies_lifetime = config.emissions.balconies_lifetime
+    finishings_amortization_time = config.emissions.dismantling_parts_amortization_time
+    windows_doors_amortization_time = config.emissions.windows_doors_amortization_time
+    building_systems_amortization_time = config.emissions.building_systems_amortization_time
+    roof_construction_amortization_time = config.emissions.roof_construction_amortization_time
+    balconies_lifetime = config.emissions.balconies_amortization_time
     area_balconies = config.emissions.area_balconies
-    supporting_structure_lifetime = config.emissions.supporting_structure_lifetime
-    external_walls_above_terrain_lifetime = config.emissions.external_walls_above_terrain_lifetime
-    external_walls_below_terrain_lifetime = config.emissions.external_walls_below_terrain_lifetime
-    excavation_fundations_lifetime = config.emissions.excavation_fundations_lifetime
+    supporting_structure_amortization_time = config.emissions.supporting_structure_amortization_time
+    external_walls_above_terrain_amortization_time = config.emissions.external_walls_above_terrain_amortization_time
+    external_walls_below_terrain_amortization_time = config.emissions.external_walls_below_terrain_amortization_time
+    excavation_fundations_amortization_time = config.emissions.excavation_fundations_amortization_time
 
     # calculate the embodied energy/emissions due to construction
     total_column = 'saver'
@@ -234,28 +228,41 @@ def calculate_contributions(df, config):
     ## if it was built more than 60 years before, the embodied energy/emissions have been "paid off" and are set to 0
     df['confirm'] = df.apply(lambda x: calc_if_existing(x['delta_year'], service_life_building), axis=1)
 
-    ## if it was built less than the calculation date, the contribution from each building component is calculated
-    df['GHG_dismantling_parts_tonCO2'] = ((df['GHG_FLOOR_kgCO2m2'] * df['floor_area_ag']) + (df['GHG_PART_kgCO2m2'] * (df['floor_area_ag']+df['floor_area_bg']) * CONVERSION_AREA_TO_FLOOR_AREA_RATIO)) / dismantling_parts_lifetime
-    df['GHG_windows_doors_tonCO2'] = (df['GHG_WIN_kgCO2m2'] * df['windows_ag']) / windows_doors_lifetime
-    df['GHG_building_systems_tonCO2'] = ((df['floor_area_ag']+df['floor_area_bg']) * EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS) /  building_systems_lifetime
-    df['GHG_roof_construction_tonCO2'] = (df['GHG_ROOF_kgCO2m2'] * df['roof_area']) / roof_construction_lifetime
-    df['GHG_balconies_tonCO2'] = (df['GHG_ROOF_kgCO2m2'] * area_balconies) / balconies_lifetime
-    df['GHG_external_walls_above_terrain_tonCO2'] = (df['GHG_WALL_kgCO2m2'] * df['area_walls_ext_ag']) / external_walls_above_terrain_lifetime
-    df['GHG_external_walls_below_terrain_tonCO2'] = (df['GHG_WALL_kgCO2m2'] * df['area_walls_ext_bg']) / external_walls_below_terrain_lifetime
+    ## Calculation per main building components
+    df['G2_floor_finishing'] = (1 - factor_structure) * (df['GHG_FLOOR_kgCO2m2'] * df['internal_floor_area']) / finishings_amortization_time
+    df['G3_wall_finishing'] = (1 - factor_structure) * (df['GHG_PART_kgCO2m2'] * df['GFA_m2'] * CONVERSION_AREA_TO_FLOOR_AREA_RATIO) / finishings_amortization_time
+    df['G4_roof_internal_finishing'] = (1 - factor_structure) * (df['GHG_ROOF_kgCO2m2'] * df['roof_area']) / finishings_amortization_time
+    df['E3_windows_doors'] = (df['GHG_WIN_kgCO2m2'] * df['windows_ag']) / windows_doors_amortization_time
+    df['D_building_systems'] = (df['GFA_m2'] * EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS_GHG_kgm2) / building_systems_amortization_time
+    df['C4_4_F1_roof_Construction_and_external_finishing'] = factor_structure * (df['GHG_ROOF_kgCO2m2'] * df['roof_area']) / roof_construction_amortization_time
+    df['C4_3_balcony'] = (df['GHG_ROOF_kgCO2m2'] * area_balconies) / balconies_lifetime
+    df['C2_2_C3_structure_internal_walls_supporting'] = factor_structure * (df['GHG_PART_kgCO2m2'] * df['GFA_m2'] * CONVERSION_AREA_TO_FLOOR_AREA_RATIO) / supporting_structure_amortization_time
+    df['C4_1_structure_floors'] = factor_structure * (df['GHG_FLOOR_kgCO2m2'] * df['internal_floor_area']) / supporting_structure_amortization_time
+    df['C2_1B_E2_external_walls_above_terrain_incl_finishing'] = (df['GHG_WALL_kgCO2m2'] * df['area_walls_ext_ag']) / external_walls_above_terrain_amortization_time
+    df['C2_1A_E1_external_walls_below_terrain_incl_finishing'] = (df['GHG_WALL_kgCO2m2'] * df['area_walls_ext_bg']) / external_walls_below_terrain_amortization_time
+    df['B6_2_excavation'] = (df['volume_excavation_bg'] * EMISSIONS_EMBODIED_EXCAVATIONS_GHG_kgm3) / excavation_fundations_amortization_time
+    df['C1_fundations'] = (df['fundation_area'] * df['GHG_BASE_kgCO2m2']) / excavation_fundations_amortization_time
 
-    # Emissions that are offset after the service life.
-    df['GHG_supporting_structure_tonCO2'] = df['confirm'] * (df['floor_area_ag'] + df['floor_area_bg']) * supporting_structure_GHG_kgm2 / supporting_structure_lifetime
-    df['GHG_excavation_fundations_tonCO2'] = df['confirm'] * ((df['volume_excavation_bg'] * excavation_GHG_kgm3) + (df['fundation_area'] * fundations_GHG_kgm2)) / excavation_fundations_lifetime
+    # Categories according to SIA 2032
+    df['GHG_finishings_kgCO2'] = df['G2_floor_finishing'] + df['G3_wall_finishing'] + df['G4_roof_internal_finishing']
+    df['GHG_windows_doors_kgCO2'] = df['E3_windows_doors']
+    df['GHG_building_systems_kgCO2'] = df['D_building_systems']
+    df['GHG_roof_construction_kgCO2'] = df['C4_4_F1_roof_Construction_and_external_finishing']
+    df['GHG_balconies_kgCO2'] = df['C4_3_balcony']
+    df['GHG_external_walls_above_terrain_kgCO2'] = df['C2_1B_E2_external_walls_above_terrain_incl_finishing']
+    df['GHG_external_walls_below_terrain_kgCO2'] = df['C2_1A_E1_external_walls_below_terrain_incl_finishing']
+    df['GHG_structure_kgCO2'] = df['confirm'] * (df['C2_2_C3_structure_internal_walls_supporting'] + df['C4_1_structure_floors'])
+    df['GHG_excavation_fundations_kgCO2'] = df['confirm'] * (df['B6_2_excavation'] + df['C1_fundations'])
 
-    df[total_column] =  df['GHG_dismantling_parts_tonCO2'] + \
-                        df['GHG_windows_doors_tonCO2'] + \
-                        df['GHG_building_systems_tonCO2'] + \
-                        df['GHG_roof_construction_tonCO2'] + \
-                        df['GHG_balconies_tonCO2'] + \
-                        df['GHG_external_walls_above_terrain_tonCO2'] + \
-                        df['GHG_external_walls_below_terrain_tonCO2'] + \
-                        df['GHG_supporting_structure_tonCO2'] + \
-                        df['GHG_excavation_fundations_tonCO2']
+    df[total_column] =  df['GHG_finishings_kgCO2'] + \
+                        df['GHG_windows_doors_kgCO2'] + \
+                        df['GHG_building_systems_kgCO2'] + \
+                        df['GHG_roof_construction_kgCO2'] + \
+                        df['GHG_balconies_kgCO2'] + \
+                        df['GHG_external_walls_above_terrain_kgCO2'] + \
+                        df['GHG_external_walls_below_terrain_kgCO2'] + \
+                        df['GHG_structure_kgCO2'] + \
+                        df['GHG_excavation_fundations_kgCO2']
 
     # the total embodied energy/emissions are calculated as a sum of the contributions from construction and retrofits
     df['GHG_sys_embodied_tonCO2'] = df[total_column] / 1000  # kG-CO2 eq to ton
@@ -266,15 +273,15 @@ def calculate_contributions(df, config):
                  'GHG_sys_embodied_tonCO2',
                  'GHG_sys_embodied_kgCO2m2',
                  'GFA_m2',
-                 'GHG_dismantling_parts_tonCO2',
-                 'GHG_building_systems_tonCO2',
-                 'GHG_windows_doors_tonCO2',
-                 'GHG_roof_construction_tonCO2',
-                 'GHG_balconies_tonCO2',
-                 'GHG_external_walls_above_terrain_tonCO2',
-                 'GHG_external_walls_below_terrain_tonCO2',
-                 'GHG_supporting_structure_tonCO2',
-                 'GHG_excavation_fundations_tonCO2']]
+                 'GHG_finishings_kgCO2',
+                 'GHG_building_systems_kgCO2',
+                 'GHG_windows_doors_kgCO2',
+                 'GHG_roof_construction_kgCO2',
+                 'GHG_balconies_kgCO2',
+                 'GHG_external_walls_above_terrain_kgCO2',
+                 'GHG_external_walls_below_terrain_kgCO2',
+                 'GHG_structure_kgCO2',
+                 'GHG_excavation_fundations_kgCO2']]
 
     return result
 

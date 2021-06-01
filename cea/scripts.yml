@@ -115,7 +115,6 @@ Life Cycle Analysis:
     module: cea.analysis.lca.main
     parameters: ['general:scenario', emissions]
     input-files:
-      - [get_total_demand]
       - [get_building_architecture]
       - [get_building_typology]
       - [get_zone_geometry]

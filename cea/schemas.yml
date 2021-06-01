@@ -5397,7 +5397,7 @@ get_database_feedstocks:
 get_database_standard_schedules_use:
   created_by:
   - data_initializer
-  file_path: inputs/technology/archetypes/schedules/RESTAURANT.csv
+  file_path: inputs/technology/archetypes/use_types/RESTAURANT.csv
   file_type: schedule
   schema:
     APPLIANCES:
