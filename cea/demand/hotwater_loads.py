@@ -160,11 +160,13 @@ def calc_Qwwf(bpr, tsd):
             tsd['COAL_ww'] = np.zeros(HOURS_IN_YEAR)
             tsd['OIL_ww'] = np.zeros(HOURS_IN_YEAR)
             tsd['WOOD_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd['SOLAR_ww'] = np.zeros(HOURS_IN_YEAR)
         elif energy_source == "NATURALGAS":
             tsd['NG_ww'] = tsd['Qww_sys'] / efficiency_average_year
             tsd['COAL_ww'] = np.zeros(HOURS_IN_YEAR)
             tsd['OIL_ww'] = np.zeros(HOURS_IN_YEAR)
             tsd['WOOD_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd['SOLAR_ww'] = np.zeros(HOURS_IN_YEAR)
             tsd['DH_ww'] = np.zeros(HOURS_IN_YEAR)
             tsd['E_ww'] = np.zeros(HOURS_IN_YEAR)
         elif energy_source == "OIL":
@@ -172,6 +174,7 @@ def calc_Qwwf(bpr, tsd):
             tsd['COAL_ww'] = np.zeros(HOURS_IN_YEAR)
             tsd['OIL_ww'] = tsd['Qww_sys'] / efficiency_average_year
             tsd['WOOD_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd['SOLAR_ww'] = np.zeros(HOURS_IN_YEAR)
             tsd['DH_ww'] = np.zeros(HOURS_IN_YEAR)
             tsd['E_ww'] = np.zeros(HOURS_IN_YEAR)
         elif energy_source == "COAL":
@@ -179,6 +182,7 @@ def calc_Qwwf(bpr, tsd):
             tsd['COAL_ww'] = tsd['Qww_sys'] / efficiency_average_year
             tsd['OIL_ww'] = np.zeros(HOURS_IN_YEAR)
             tsd['WOOD_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd['SOLAR_ww'] = np.zeros(HOURS_IN_YEAR)
             tsd['DH_ww'] = np.zeros(HOURS_IN_YEAR)
             tsd['E_ww'] = np.zeros(HOURS_IN_YEAR)
         elif energy_source == "WOOD":
@@ -186,6 +190,7 @@ def calc_Qwwf(bpr, tsd):
             tsd['COAL_ww'] = np.zeros(HOURS_IN_YEAR)
             tsd['OIL_ww'] = np.zeros(HOURS_IN_YEAR)
             tsd['WOOD_ww'] = tsd['Qww_sys'] / efficiency_average_year
+            tsd['SOLAR_ww'] = np.zeros(HOURS_IN_YEAR)
             tsd['DH_ww'] = np.zeros(HOURS_IN_YEAR)
             tsd['E_ww'] = np.zeros(HOURS_IN_YEAR)
         elif energy_source == "SOLAR":
@@ -201,6 +206,7 @@ def calc_Qwwf(bpr, tsd):
             tsd['COAL_ww'] = np.zeros(HOURS_IN_YEAR)
             tsd['OIL_ww'] = np.zeros(HOURS_IN_YEAR)
             tsd['WOOD_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd['SOLAR_ww'] = np.zeros(HOURS_IN_YEAR)
             tsd['DH_ww'] = np.zeros(HOURS_IN_YEAR)
             tsd['E_ww'] = np.zeros(HOURS_IN_YEAR)
         else:
@@ -210,6 +216,7 @@ def calc_Qwwf(bpr, tsd):
             tsd['COAL_ww'] = np.zeros(HOURS_IN_YEAR)
             tsd['OIL_ww'] = np.zeros(HOURS_IN_YEAR)
             tsd['WOOD_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd['SOLAR_ww'] = np.zeros(HOURS_IN_YEAR)
             tsd['DH_ww'] = tsd['Qww_sys'] / efficiency_average_year
             tsd['E_ww'] = np.zeros(HOURS_IN_YEAR)
     elif scale_technology == "NONE":
@@ -217,6 +224,7 @@ def calc_Qwwf(bpr, tsd):
             tsd['COAL_ww'] = np.zeros(HOURS_IN_YEAR)
             tsd['OIL_ww'] = np.zeros(HOURS_IN_YEAR)
             tsd['WOOD_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd['SOLAR_ww'] = np.zeros(HOURS_IN_YEAR)
             tsd['DH_ww'] = np.zeros(HOURS_IN_YEAR)
             tsd['E_ww'] = np.zeros(HOURS_IN_YEAR)
     else:

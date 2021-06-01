@@ -431,10 +431,10 @@ Cost Analysis,Primary_Energy_GJ_per_yr,GJ/yr,Annual primary energy consumption.,
 Cost Analysis,Network_costs_USD,$USD(2015),Annualized CAPEX of installing the district network,red_light
 Cost Analysis,Substation_costs_USD,$USD(2015),Annualized CAPEX of substations in the district network,blue
 
-Emissions and Primary Energy,GHG_sys_building_scale_tonCO2,ton CO2-eq/yr,Annual emissions of building-scale systems,grey
-Emissions and Primary Energy,GHG_sys_district_scale_tonCO2,ton CO2-eq/yr,Annual emissions of district-scale system,black
-Emissions and Primary Energy,PEN_sys_building_scale_MJoil,MJ oil-eq/yr,Annual primary energy of building-scale systems,red_light
-Emissions and Primary Energy,PEN_sys_district_scale_MJoil,MJ oil-eq/yr,Annual primary energy of district-scale system,red
+Emissions and Primary Energy,GHG_sys_building_scale_tonCO2,ton CO2-eq/yr,Annual emissions of building-scale systems operation,grey
+Emissions and Primary Energy,GHG_sys_district_scale_tonCO2,ton CO2-eq/yr,Annual emissions of district-scale system operation,black
+Emissions and Primary Energy,PEN_sys_building_scale_MJoil,MJ oil-eq/yr,Annual primary energy of building-scale systems operation,red_light
+Emissions and Primary Energy,PEN_sys_district_scale_MJoil,MJ oil-eq/yr,Annual primary energy of district-scale system operation,red
 
 Emissions and Primary Energy,GHG_sys_embodied_tonCO2,ton CO2-eq/yr,Annual building Embodied Emissions,grey_light
 Emissions and Primary Energy,O_ghg_ton,ton CO2-eq/yr,Energy system operation,grey
