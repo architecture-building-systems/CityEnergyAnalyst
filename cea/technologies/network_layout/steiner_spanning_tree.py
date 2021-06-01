@@ -40,7 +40,6 @@ def calc_steiner_spanning_tree(crs_projected,
                                pipe_diameter_default,
                                type_network,
                                total_demand_location,
-                               create_plant,
                                allow_looped_networks,
                                optimization_flag,
                                plant_building_names,
@@ -141,16 +140,15 @@ def calc_steiner_spanning_tree(crs_projected,
                                                     pipe_diameter_default)
         # mst_edges.drop(['weight'], inplace=True, axis=1)
 
-    if create_plant:
-        if optimization_flag == False:
-            building_anchor = calc_coord_anchor(total_demand_location, mst_nodes, type_network)
+    if optimization_flag:
+        for building in plant_building_names:
+            building_anchor = building_node_from_name(building, mst_nodes)
             mst_nodes, mst_edges = add_plant_close_to_anchor(building_anchor, mst_nodes, mst_edges,
                                                              type_mat_default, pipe_diameter_default)
-        else:
-            for building in plant_building_names:
-                building_anchor = building_node_from_name(building, mst_nodes)
-                mst_nodes, mst_edges = add_plant_close_to_anchor(building_anchor, mst_nodes, mst_edges,
-                                                                 type_mat_default, pipe_diameter_default)
+    elif os.path.exists(total_demand_location):
+        building_anchor = calc_coord_anchor(total_demand_location, mst_nodes, type_network)
+        mst_nodes, mst_edges = add_plant_close_to_anchor(building_anchor, mst_nodes, mst_edges,
+                                                         type_mat_default, pipe_diameter_default)
 
     # GET COORDINATE AND SAVE FINAL VERSION TO DISK
     print(crs_projected)

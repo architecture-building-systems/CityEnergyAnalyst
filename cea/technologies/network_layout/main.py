@@ -19,8 +19,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def layout_network(network_layout, locator, plant_building_names=None, output_name_network="", optimization_flag=False,
-                   create_plant=True):
+def layout_network(network_layout, locator, plant_building_names=None, output_name_network="", optimization_flag=False):
 
     # Local variables
     if plant_building_names is None:
@@ -71,7 +70,6 @@ def layout_network(network_layout, locator, plant_building_names=None, output_na
                                pipe_diameter_default,
                                type_network,
                                total_demand_location,
-                               create_plant,
                                allow_looped_networks,
                                optimization_flag,
                                plant_building_names,
