@@ -109,6 +109,29 @@ class GenerationPlotBase(cea.plots.PlotBase):
 
         return data_processed
 
+    def normalize_data_pareto(self, data_processed, normalization, analysis_fields):
+        if normalization == "gross floor area":
+            data = pd.read_csv(self.locator.get_total_demand())
+            normalizatioon_factor = sum(data['GFA_m2'])
+            data_processed = data_processed.apply(
+                lambda x: x / normalizatioon_factor if x.name in analysis_fields else x)
+        elif normalization == "net floor area":
+            data = pd.read_csv(self.locator.get_total_demand())
+            normalizatioon_factor = sum(data['Aocc_m2'])
+            data_processed = data_processed.apply(
+                lambda x: x / normalizatioon_factor if x.name in analysis_fields else x)
+        elif normalization == "air conditioned floor area":
+            data = pd.read_csv(self.locator.get_total_demand())
+            normalizatioon_factor = sum(data['Af_m2'])
+            data_processed = data_processed.apply(
+                lambda x: x / normalizatioon_factor if x.name in analysis_fields else x)
+        elif normalization == "building occupancy":
+            data = pd.read_csv(self.locator.get_total_demand())
+            normalizatioon_factor = sum(data['people0'])
+            data_processed = data_processed.apply(
+                lambda x: x / normalizatioon_factor if x.name in analysis_fields else x)
+        return data_processed
+
 
 if __name__ == '__main__':
     # run all the plots in this category
