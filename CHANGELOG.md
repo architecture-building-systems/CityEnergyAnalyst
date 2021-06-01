@@ -1,3 +1,9 @@
+- 2021-05-11 - 3.22.0 - #2963 fixes in SG database: removing repeated STANDARDs in CONSTRUCTION_STANDARD.xlsx
+- 2021-05-01 - 3.22.0 - #2957 "Pax" means passenger
+- 2021-04-30 - 3.22.0 - #2965 included partitions
+- 2021-04-19 - 3.22.0 - #2951 Make convective heat transfer calculation at building surface dynamic
+- 2021-04-14 - 3.22.0 - #2954 2953 zone helper
+- 2021-03-29 - 3.18.0 - #2950 CityEnergyAnalyst Release-3.22.0
 - 2021-03-26 - 3.18.0 - #2948 Fix code to get buildings' main uses from OSM
 - 2021-03-16 - 3.18.0 - #2941 Optimise demand and photovoltaic scripts
 - 2021-03-16 - 3.18.0 - #2875 2840 allow gui to connect to remote server
