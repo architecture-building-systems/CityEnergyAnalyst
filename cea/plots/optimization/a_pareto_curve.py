@@ -97,7 +97,7 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.GenerationPlotBase)
 
         # This includes the point of today's emissions
         data_today = self.process_today_system_performance()
-        data_today = self.normalize_data(data_today, self.normalization, self.objectives)
+        data_today = self.normalize_data_pareto(data_today, self.normalization, self.objectives)
         xs = data_today[self.objectives[0]].values
         ys = data_today[self.objectives[1]].values
         name = "Today"
@@ -107,7 +107,7 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.GenerationPlotBase)
 
         # PUT THE PARETO CURVE INSIDE
         data = self.process_generation_total_performance_pareto_with_multi()
-        data = self.normalize_data(data, self.normalization, self.objectives)
+        data = self.normalize_data_pareto(data, self.normalization, self.objectives)
         xs = data[self.objectives[0]].values
         ys = data[self.objectives[1]].values
         zs = data[self.objectives[2]].values
