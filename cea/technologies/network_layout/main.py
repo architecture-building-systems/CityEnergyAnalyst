@@ -19,7 +19,8 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def layout_network(network_layout, locator, plant_building_names=None, output_name_network="", optimization_flag=False):
+def layout_network(network_layout, locator, plant_building_names=None, output_name_network="", optimization_flag=False,
+                   create_plant=True):
 
     # Local variables
     if plant_building_names is None:
@@ -32,7 +33,6 @@ def layout_network(network_layout, locator, plant_building_names=None, output_na
     type_mat_default = network_layout.type_mat
     pipe_diameter_default = network_layout.pipe_diameter
     type_network = network_layout.network_type
-    create_plant = True #always create a plant or there will be errors in the thermal network simulation...
     list_district_scale_buildings = network_layout.connected_buildings
     consider_only_buildings_with_demand = network_layout.consider_only_buildings_with_demand
     allow_looped_networks = network_layout.allow_looped_networks
