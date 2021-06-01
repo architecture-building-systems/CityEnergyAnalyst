@@ -209,13 +209,27 @@ def newer_network_layout_exists(locator, network_type, network_name):
         network_type, network_name)
     nodes = locator.get_network_layout_nodes_shapefile(
         network_type, network_name)
-    supply_system = locator.get_building_supply()
 
     no_network_file = not os.path.isfile(edges) or not os.path.isfile(nodes)
-    supply_system_modified = os.path.getmtime(supply_system)
 
-    return no_network_file or supply_system_modified > os.path.getmtime(
-        edges) or supply_system_modified > os.path.getmtime(nodes)
+    if no_network_file:
+        return True
+
+    network_layout_modified = max(os.path.getmtime(edges), os.path.getmtime(nodes))
+
+    def newer_demand_exists():
+        # Only True if demand file exists and is newer than the network layout
+        demand = locator.get_total_demand()
+        return os.path.isfile(demand) and os.path.getmtime(demand) > network_layout_modified
+
+    def newer_supply_system_configuration():
+        # Only True if is newer than the network layout
+        supply_system = locator.get_building_supply()
+        supply_system_modified = os.path.getmtime(supply_system)
+
+        return supply_system_modified > network_layout_modified
+
+    return newer_supply_system_configuration() or newer_demand_exists()
 
 
 def main():
