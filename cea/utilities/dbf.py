@@ -10,7 +10,7 @@ import cea.config
 # import PySAL without the warning
 import warnings
 
-warnings.simplefilter('ignore', np.VisibleDeprecationWarning)
+warnings.filterwarnings("ignore", category=UserWarning)
 import pysal
 
 __author__ = "Clayton Miller"
