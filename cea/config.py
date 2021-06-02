@@ -901,9 +901,6 @@ class MultiChoiceParameter(ChoiceParameter):
         encoded_value = self.get_raw()
         encoded_value = self.replace_references(encoded_value)
 
-        if not encoded_value:  # Set _empty if value from config is empty
-            self._empty = True
-
         if self._empty:
             return self._choices
 
