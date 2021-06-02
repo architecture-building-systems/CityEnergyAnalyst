@@ -3,18 +3,16 @@ Manage configuration information for the CEA. The Configuration class is built d
 in ``default.config``.
 """
 
-
-
-
-import os
-import re
-import json
-import configparser
-import cea.inputlocator
 import collections
+import configparser
 import datetime
 import glob
+import json
+import os
+import re
 import tempfile
+
+import cea.inputlocator
 from cea.utilities import unique
 
 __author__ = "Daren Thomas"
@@ -157,7 +155,8 @@ class Configuration(object):
                             parameter.replace_references(
                                 command_line_args[parameter.name])))
                 except:
-                    import traceback; traceback.print_exc()
+                    import traceback;
+                    traceback.print_exc()
                     raise ValueError('ERROR setting %s:%s to %s' % (
                         section.name, parameter.name, command_line_args[parameter.name]))
                 del command_line_args[parameter.name]
@@ -505,7 +504,7 @@ class WeatherPathParameter(Parameter):
     typename = 'WeatherPathParameter'
 
     def initialize(self, parser):
-        self._locator = None # cache the InputLocator in case we need it again as they can be expensive to create
+        self._locator = None  # cache the InputLocator in case we need it again as they can be expensive to create
         self._extensions = ['epw']
 
     @property
@@ -523,7 +522,8 @@ class WeatherPathParameter(Parameter):
             weather_path = value
         elif any(w.lower().startswith(value.lower()) for w in self.locator.get_weather_names()) and value.strip():
             # allow using shortcuts
-            weather_path = self.locator.get_weather([w for w in self.locator.get_weather_names() if w.lower().startswith(value.lower())][0])
+            weather_path = self.locator.get_weather(
+                [w for w in self.locator.get_weather_names() if w.lower().startswith(value.lower())][0])
         else:
             raise cea.ConfigError("Invalid weather path: {}".format(value))
         return weather_path
@@ -884,12 +884,37 @@ class MultiChoiceParameter(ChoiceParameter):
     """Like ChoiceParameter, but multiple values from the choices list can be used"""
     typename = 'MultiChoiceParameter'
 
+    def initialize(self, parser):
+        super().initialize(parser)
+
     @property
-    def nullable(self):
+    def default(self):
+        _default = self.config.default_config.get(self.section.name, self.name)
+        if _default == '':
+            return []
+        return self.decode(_default)
+
+    # Does not make sense for MultiChoiceParameter to be null, there should be at least one choice
+    # @property
+    # def nullable(self):
+    #     try:
+    #         return self.config.default_config.getboolean(self.section.name, self.name + '.nullable')
+    #     except configparser.NoOptionError:
+    #         return False
+
+    def get(self):
+        """Return the value from the config file"""
+        encoded_value = self.get_raw()
+        encoded_value = self.replace_references(encoded_value)
+
         try:
-            return self.config.default_config.getboolean(self.section.name, self.name + '.nullable')
-        except configparser.NoOptionError:
-            return False
+            return self.decode(encoded_value)
+        except ValueError as ex:
+            raise ValueError('%s:%s - %s' % (self.section.name, self.name, ex.message))
+
+    def set(self, value):
+        encoded_value = self.encode(value)
+        self.config.user_config.set(self.section.name, self.name, encoded_value)
 
     def encode(self, value):
         assert not isinstance(value, str), "Bad value for encode of parameter {pname}".format(pname=self.name)
@@ -899,8 +924,7 @@ class MultiChoiceParameter(ChoiceParameter):
         return ', '.join(map(str, value))
 
     def decode(self, value):
-        # Select all choices if empty value and not nullable (default is not nullable)
-        if not self.nullable and value == '':
+        if value == '':
             return self._choices
         choices = parse_string_to_list(value)
         return [choice for choice in choices if choice in self._choices]
@@ -928,6 +952,7 @@ class SingleBuildingParameter(ChoiceParameter):
             return self._choices[0]
         return str(value)
 
+
 class UseTypeRatioParameter(ListParameter):
     """A list of use-type names and ratios"""
     typename = 'UseTypeRatioParameter'
@@ -946,7 +971,7 @@ class GenerationParameter(ChoiceParameter):
         import glob
         # set the `._choices` attribute to the list buildings in the project
         locator = cea.inputlocator.InputLocator(self.config.scenario, plugins=[])
-        checkpoints = glob.glob(os.path.join(locator.get_optimization_master_results_folder(),"*.json"))
+        checkpoints = glob.glob(os.path.join(locator.get_optimization_master_results_folder(), "*.json"))
         interations = []
         for checkpoint in checkpoints:
             with open(checkpoint, 'rb') as f:
@@ -1016,8 +1041,8 @@ class MultiSystemParameter(MultiChoiceParameter):
         for scenario_name in scenarios_names_list:
             scenario_path = os.path.join(project_path, scenario_name)
             systems_scenario = get_systems_list(scenario_path)
-            unique_systems_scenarios_list.extend([scenario_name+"_sys_today_"])
-            unique_systems_scenarios_list.extend([scenario_name+"_"+x for x in systems_scenario])
+            unique_systems_scenarios_list.extend([scenario_name + "_sys_today_"])
+            unique_systems_scenarios_list.extend([scenario_name + "_" + x for x in systems_scenario])
         return unique_systems_scenarios_list
 
     def decode(self, value):
@@ -1025,7 +1050,8 @@ class MultiSystemParameter(MultiChoiceParameter):
         choices = parse_string_to_list(value)
         if not choices:  # Return default if choices is empty
             return self.default
-        return [self.replace_references(choice) for choice in choices if self.replace_references(choice) in self._choices]
+        return [self.replace_references(choice) for choice in choices if
+                self.replace_references(choice) in self._choices]
 
 
 class BuildingsParameter(MultiChoiceParameter):
@@ -1034,7 +1060,7 @@ class BuildingsParameter(MultiChoiceParameter):
 
     def initialize(self, parser):
         # skip the default MultiChoiceParameter initialization of _choices
-        pass
+        self._empty = False
 
     @property
     def _choices(self):
@@ -1127,6 +1153,6 @@ def validate_coord_tuple(coord_tuple):
         raise ValueError('Longitude must be between -180 and 180. Got {}'.format(lon))
     return coord_tuple
 
- 
+
 if __name__ == "__main__":
     config = Configuration()
