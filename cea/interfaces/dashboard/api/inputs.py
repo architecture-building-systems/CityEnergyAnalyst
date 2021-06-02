@@ -279,7 +279,6 @@ def get_network(config, network_type):
             config.network_layout.connected_buildings = connected_buildings
             # Ignore demand and creating plants for layout in map
             config.network_layout.consider_only_buildings_with_demand = False
-            config.network_layout.create_plant = False
             network_layout = NetworkLayout(network_layout=config.network_layout)
             layout_network(network_layout, locator, output_name_network=network_name)
 
