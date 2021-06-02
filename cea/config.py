@@ -886,7 +886,6 @@ class MultiChoiceParameter(ChoiceParameter):
 
     def initialize(self, parser):
         super().initialize(parser)
-        self._empty = False
 
     # Does not make sense for MultiChoiceParameter to be null, there should be at least one choice
     # @property
@@ -901,9 +900,6 @@ class MultiChoiceParameter(ChoiceParameter):
         encoded_value = self.get_raw()
         encoded_value = self.replace_references(encoded_value)
 
-        if self._empty:
-            return self._choices
-
         try:
             return self.decode(encoded_value)
         except ValueError as ex:
@@ -911,7 +907,6 @@ class MultiChoiceParameter(ChoiceParameter):
 
     def set(self, value):
         encoded_value = self.encode(value)
-        self._empty = not encoded_value
         self.config.user_config.set(self.section.name, self.name, encoded_value)
 
     def encode(self, value):
@@ -922,6 +917,8 @@ class MultiChoiceParameter(ChoiceParameter):
         return ', '.join(map(str, value))
 
     def decode(self, value):
+        if value == '':
+            return self._choices
         choices = parse_string_to_list(value)
         return [choice for choice in choices if choice in self._choices]
 
