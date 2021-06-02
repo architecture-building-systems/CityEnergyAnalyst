@@ -887,6 +887,13 @@ class MultiChoiceParameter(ChoiceParameter):
     def initialize(self, parser):
         super().initialize(parser)
 
+    @property
+    def default(self):
+        _default = self.config.default_config.get(self.section.name, self.name)
+        if _default == '':
+            return []
+        return self.decode(_default)
+
     # Does not make sense for MultiChoiceParameter to be null, there should be at least one choice
     # @property
     # def nullable(self):
