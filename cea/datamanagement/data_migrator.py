@@ -172,7 +172,7 @@ def internal_loads_is_3_22(scenario):
 
 
 def output_occupancy_is_3_22(scenario):
-    if os.path.isdir(os.path.join(scenario, 'outputs', 'data', 'occupancy')) and max(
+    if os.path.isdir(os.path.join(scenario, 'outputs', 'data', 'occupancy')) and any(
             ['people_pax' in pd.read_csv(os.path.join(scenario, 'outputs', 'data', 'occupancy', i)).columns for i in
              os.listdir(os.path.join(scenario, 'outputs', 'data', 'occupancy'))]):
         return True
