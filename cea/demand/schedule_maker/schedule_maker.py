@@ -13,7 +13,7 @@ import cea.inputlocator
 import cea.utilities.parallel
 from cea.constants import HOURS_IN_YEAR, MONTHS_IN_YEAR
 from cea.datamanagement.schedule_helper import read_cea_schedule
-from cea.datamanagement.database_migrator import is_3_22
+from cea.datamanagement.data_migrator import is_3_22
 from cea.demand.building_properties import calc_useful_areas
 from cea.demand.constants import VARIABLE_CEA_SCHEDULE_RELATION
 from cea.utilities import epwreader
@@ -48,7 +48,7 @@ def schedule_maker_main(locator, config, building=None):
     # CHECK DATABASE
     if is_3_22(config.scenario):
         raise ValueError("""The data format of indoor comfort has been changed after v3.22. 
-        Please run Database migrator in Utilities.""")
+        Please run Data migrator in Utilities.""")
 
     # get variables of indoor comfort and internal loads
     internal_loads = dbf_to_dataframe(locator.get_building_internal()).set_index('Name')
@@ -287,8 +287,6 @@ def convert_schedule_string_to_temperature(schedule_string, schedule_type, Ths_s
     :type schedule_string: list of strings
     :param schedule_type: type of the schedule, either 'Ths_set' or 'Tcs_set'
     :type schedule_type: str
-    :param bpr: BuildingPropertiesRow object, from here the setpoint and setback temperatures are extracted
-    :type bpr: BuildingPropoertiesRow
     :return: an array of temperatures containing np.nan when the system is OFF
     :rtype: numpy.array
     """
