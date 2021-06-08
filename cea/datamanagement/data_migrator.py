@@ -30,7 +30,7 @@ __status__ = "Production"
 def find_migrators(scenario):
     """
     Add new migrations here as they become necessary
-    the database-migrator will run these in sequence starting from the first migrator found
+    the data-migrator will run these in sequence starting from the first migrator found
     (NOTE: I've added a dummy migration - 2.31 - 2.31.1 - to show how the principle works)
     """
     migrations = collections.OrderedDict()
@@ -149,12 +149,36 @@ def is_3_22(scenario):
     '''
     Checks if "pax" is being used the indoor comfort dbf file.
     '''
+    if indoor_comfort_is_3_22(scenario) or internal_loads_is_3_22(scenario) or output_occupancy_is_3_22(scenario):
+        return True
+    else:
+        return False
 
+
+def indoor_comfort_is_3_22(scenario):
     indoor_comfort = dbf_to_dataframe(os.path.join(scenario, "inputs", "building-properties", "indoor_comfort.dbf"))
 
     if not 'Ve_lpspax' in indoor_comfort.columns:
         return False
     return True
+
+
+def internal_loads_is_3_22(scenario):
+    internal_loads = dbf_to_dataframe(os.path.join(scenario, "inputs", "building-properties", "internal_loads.dbf"))
+
+    if not 'Occ_m2pax' in internal_loads.columns:
+        return False
+    return True
+
+
+def output_occupancy_is_3_22(scenario):
+    if os.path.isdir(os.path.join(scenario, 'outputs', 'data', 'occupancy')) and any(
+            ['people_pax' in pd.read_csv(os.path.join(scenario, 'outputs', 'data', 'occupancy', i)).columns
+             and '_original' not in i for i in
+             os.listdir(os.path.join(scenario, 'outputs', 'data', 'occupancy'))]):
+        return True
+    else:
+        return False
 
 
 def migrate_3_22_to_3_22_1(scenario):
@@ -165,37 +189,61 @@ def migrate_3_22_to_3_22_1(scenario):
     INDOOR_COMFORT_COLUMNS = {'Ve_lpspax': 'Ve_lsp'}
     INTERNAL_LOADS_COLUMNS = {'Occ_m2pax': 'Occ_m2p', 'Qs_Wpax': 'Qs_Wp', 'Vw_lpdpax': 'Vw_ldp',
                               'Vww_lpdpax': 'Vww_ldp', 'X_ghpax': 'X_ghp'}
+    OCCUPANCY_COLUMNS = {'people_pax': 'people_p'}
+
+    if indoor_comfort_is_3_22(scenario):
+        # import building properties
+        indoor_comfort = dbf_to_dataframe(os.path.join(scenario, 'inputs', 'building-properties', 'indoor_comfort.dbf'))
+        # make a backup copy of original data for user's own reference
+        os.rename(os.path.join(scenario, 'inputs', 'building-properties', 'indoor_comfort.dbf'),
+                  os.path.join(scenario, 'inputs', 'building-properties', 'indoor_comfort_original.dbf'))
+        # rename columns containing "pax"
+        indoor_comfort.rename(columns=INDOOR_COMFORT_COLUMNS, inplace=True)
+        # export dataframes to dbf files
+        print("- writing indoor_comfort.dbf")
+        dataframe_to_dbf(indoor_comfort, os.path.join(scenario, 'inputs', 'building-properties', 'indoor_comfort.dbf'))
+
+    if internal_loads_is_3_22(scenario):
+        # import building properties
+        internal_loads = dbf_to_dataframe(os.path.join(scenario, 'inputs', 'building-properties', 'internal_loads.dbf'))
+        # make a backup copy of original data for user's own reference
+        os.rename(os.path.join(scenario, 'inputs', 'building-properties', 'internal_loads.dbf'),
+                  os.path.join(scenario, 'inputs', 'building-properties', 'internal_loads_original.dbf'))
+        # rename columns containing "pax"
+        internal_loads.rename(columns=INTERNAL_LOADS_COLUMNS, inplace=True)
+        # export dataframes to dbf files
+        print("- writing internal_loads.dbf")
+        dataframe_to_dbf(internal_loads, os.path.join(scenario, 'inputs', 'building-properties', 'internal_loads.dbf'))
 
     # import building properties
-    indoor_comfort = dbf_to_dataframe(os.path.join(scenario, 'inputs', 'building-properties', 'indoor_comfort.dbf'))
-    internal_loads = dbf_to_dataframe(os.path.join(scenario, 'inputs', 'building-properties', 'internal_loads.dbf'))
     use_type_properties = pd.read_excel(os.path.join(scenario, 'inputs', 'technology', 'archetypes', 'use_types',
                                                      'USE_TYPE_PROPERTIES.xlsx'), sheet_name=None)
-    # make a backup copy of original data for user's own reference
-    os.rename(os.path.join(scenario, 'inputs', 'building-properties', 'indoor_comfort.dbf'),
-              os.path.join(scenario, 'inputs', 'building-properties', 'indoor_comfort_original.dbf'))
-    os.rename(os.path.join(scenario, 'inputs', 'building-properties', 'internal_loads.dbf'),
-              os.path.join(scenario, 'inputs', 'building-properties', 'internal_loads_original.dbf'))
-    os.rename(os.path.join(scenario, 'inputs', 'technology', 'archetypes', 'use_types', 'USE_TYPE_PROPERTIES.xlsx'),
-              os.path.join(scenario, 'inputs', 'technology', 'archetypes', 'use_types',
-                           'USE_TYPE_PROPERTIES_original.xlsx'))
-
-    # rename columns containing "pax"
-    indoor_comfort.rename(columns=INDOOR_COMFORT_COLUMNS, inplace=True)
-    internal_loads.rename(columns=INTERNAL_LOADS_COLUMNS, inplace=True)
-    use_type_properties['INDOOR_COMFORT'].rename(columns=INDOOR_COMFORT_COLUMNS, inplace=True)
-    use_type_properties['INTERNAL_LOADS'].rename(columns=INTERNAL_LOADS_COLUMNS, inplace=True)
-
-    # export dataframes to dbf files
-    print("- writing indoor_comfort.dbf")
-    dataframe_to_dbf(indoor_comfort, os.path.join(scenario, 'inputs', 'building-properties', 'indoor_comfort.dbf'))
-    print("- writing internal_loads.dbf")
-    dataframe_to_dbf(internal_loads, os.path.join(scenario, 'inputs', 'building-properties', 'internal_loads.dbf'))
-    print("-writing USE_TYPE_PROPERTIES.xlsx")
-    with pd.ExcelWriter(os.path.join(scenario, 'inputs', 'technology', 'archetypes', 'use_types',
-                                     'USE_TYPE_PROPERTIES.xlsx')) as writer1:
-        for sheet_name in use_type_properties.keys():
-            use_type_properties[sheet_name].to_excel(writer1, sheet_name=sheet_name, index=False)
+    if max([i in use_type_properties['INTERNAL_LOADS'].columns for i in INTERNAL_LOADS_COLUMNS.keys()]) or max(
+            [i in use_type_properties['INDOOR_COMFORT'].columns for i in INDOOR_COMFORT_COLUMNS.keys()]):
+        os.rename(os.path.join(scenario, 'inputs', 'technology', 'archetypes', 'use_types', 'USE_TYPE_PROPERTIES.xlsx'),
+                  os.path.join(scenario, 'inputs', 'technology', 'archetypes', 'use_types',
+                               'USE_TYPE_PROPERTIES_original.xlsx'))
+        # rename columns containing "pax"
+        use_type_properties['INDOOR_COMFORT'].rename(columns=INDOOR_COMFORT_COLUMNS, inplace=True)
+        use_type_properties['INTERNAL_LOADS'].rename(columns=INTERNAL_LOADS_COLUMNS, inplace=True)
+        # export dataframes to dbf files
+        print("-writing USE_TYPE_PROPERTIES.xlsx")
+        with pd.ExcelWriter(os.path.join(scenario, 'inputs', 'technology', 'archetypes', 'use_types',
+                                         'USE_TYPE_PROPERTIES.xlsx')) as writer1:
+            for sheet_name in use_type_properties.keys():
+                use_type_properties[sheet_name].to_excel(writer1, sheet_name=sheet_name, index=False)
+    if output_occupancy_is_3_22(scenario):
+        # if occupancy schedule files are found in the outputs, these are also renamed
+        print("-writing schedules in ./outputs/data/occupancy")
+        for file_name in os.listdir(os.path.join(scenario, 'outputs', 'data', 'occupancy')):
+            schedule_df = pd.read_csv(os.path.join(scenario, 'outputs', 'data', 'occupancy', file_name))
+            if 'people_pax' in schedule_df.columns:
+                os.rename(os.path.join(scenario, 'outputs', 'data', 'occupancy', file_name),
+                          os.path.join(scenario, 'outputs', 'data', 'occupancy', file_name.split('.')[0] +
+                                       '_original.' + file_name.split('.')[1]))
+                schedule_df.rename(columns=OCCUPANCY_COLUMNS, inplace=True)
+                # export dataframes to dbf files
+                schedule_df.to_csv(os.path.join(scenario, 'outputs', 'data', 'occupancy', file_name))
 
     print("- done")
 
