@@ -19,7 +19,7 @@ $ docker push dockeruser/cityea:latest
 ```
 Log in to Euler
 ```
-$ ssh jarunanp@euler.ethz.ch
+$ ssh nethzuser@euler.ethz.ch
 ```
 
 ### On Euler
