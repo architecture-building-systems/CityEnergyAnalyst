@@ -92,7 +92,7 @@ class ParallelCoordinatesForOneGenerationPlot(cea.plots.optimization.GenerationP
         graph = []
         # PUT THE PARETO CURVE INSIDE
         data = self.process_generation_total_performance_pareto()
-        data = self.normalize_data(data, self.normalization, self.objectives)
+        data = self.normalize_data_pareto(data, self.normalization, self.objectives)
         data = data.sort_values(['GHG_sys_tonCO2'])
 
         dimensions = list([dict(label=label, values=data[field]) if field != 'individual_name' else dict(
