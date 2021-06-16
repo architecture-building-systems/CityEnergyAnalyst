@@ -164,7 +164,5 @@ def main():
                                      'annual-emissions': config.multi_criteria.annual_emissions,
                                      },
                                     cache).plot(auto_open=True)
-
-
 if __name__ == '__main__':
     main()
