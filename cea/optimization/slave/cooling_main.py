@@ -17,7 +17,7 @@ from cea.constants import HOURS_IN_YEAR
 from cea.optimization.constants import T_TANK_FULLY_DISCHARGED_K, DT_COOL, VCC_T_COOL_IN, ACH_T_IN_FROM_CHP_K, VCC_CODE_CENTRALIZED
 from cea.optimization.master import cost_model
 from cea.optimization.slave.cooling_resource_activation import calc_vcc_CT_operation, cooling_resource_activator
-from cea.optimization.slave.daily_storage.load_leveling import LoadLevelingDailyStorage
+from cea.technologies.storage_tank_pcm import Storage_tank_PCM
 from cea.technologies.chiller_vapor_compression import VaporCompressionChiller
 from cea.technologies.cogeneration import calc_cop_CCGT
 from cea.technologies.thermal_network.thermal_network import calculate_ground_temperature
@@ -60,14 +60,13 @@ def district_cooling_network(locator,
         mdot_kgpers = calc_network_summary_DCN(master_to_slave_variables)
 
         # Initialize daily storage calss
-        T_ground_K = calculate_ground_temperature(locator)
-        daily_storage = LoadLevelingDailyStorage(master_to_slave_variables.Storage_cooling_on,
-                                                 master_to_slave_variables.Storage_cooling_size_W,
-                                                 min(T_district_cooling_supply_K) - DT_COOL,
-                                                 max(T_district_cooling_return_K) - DT_COOL,
-                                                 T_TANK_FULLY_DISCHARGED_K,
-                                                 np.mean(T_ground_K)
-                                                 )
+        T_ground_K = np.average(calculate_ground_temperature(locator))
+        daily_storage = Storage_tank_PCM(available=master_to_slave_variables.Storage_cooling_on,
+                                         size_Wh=master_to_slave_variables.Storage_cooling_size_W,
+                                         properties = pd.read_excel(locator.get_database_conversion_systems(), sheet_name="TES"),
+                                         T_ambient_K = calculate_ground_temperature(locator) + 273.0,
+                                         code = "TES2"
+                                         )
 
         # Import Data - potentials lake heat
         if master_to_slave_variables.WS_BaseVCC_on == 1 or master_to_slave_variables.WS_PeakVCC_on == 1:
