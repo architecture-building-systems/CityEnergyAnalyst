@@ -95,6 +95,7 @@ def calc_hot_tank_heat_loss(Area_tank_surface_m2, T_tank_C, tamb):
     return q_loss_W
 
 
+
 def calc_cold_tank_heat_loss(Area_tank_surface_m2, T_tank_C, T_ambient_C):
     q_loss_W = U_DHWTANK * Area_tank_surface_m2 * (T_ambient_C - T_tank_C)  # tank heat gain from the room in [Wh]
     return q_loss_W
@@ -215,6 +216,15 @@ except ImportError:
 # cold water storage tank design
 # ================================
 
+def calc_storage_tank_mass(Qc_tank_capacity_Wh,
+                           T_tank_fully_charged_K,
+                           T_tank_fully_discharged_K):
+    # calculate tank volume
+    Q_tank_capacity_J = Qc_tank_capacity_Wh * WH_TO_J
+    m_tank_kg = Q_tank_capacity_J / (HEAT_CAPACITY_OF_WATER_JPERKGK *(T_tank_fully_discharged_K - T_tank_fully_charged_K))
+    V_tank_m3 = m_tank_kg / P_WATER_KGPERM3
+
+    return V_tank_m3
 
 def calc_storage_tank_volume(Qc_tank_capacity_Wh,
                              T_tank_fully_charged_K,
