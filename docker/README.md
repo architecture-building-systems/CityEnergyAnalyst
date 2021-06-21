@@ -2,10 +2,10 @@
 ### On your local computer
 Build a Docker image
 ```
-$ docker build -t dockeruser/cityea:latest .
+$ docker build -t dockeruser/cea:latest .
 $ docker images
 REPOSITORY                   TAG       IMAGE ID       CREATED          SIZE
-dockeruser/cityea:latest    latest    d639b6f22ee5   18 minutes ago   4.69GB
+dockeruser/cea:latest        latest    d639b6f22ee5   18 minutes ago   4.69GB
 ```
 Log in to Dockerhub before pushing the image to Dockerhub
 ```
@@ -15,7 +15,7 @@ password:
 ```
 Push the Docker image to Dockerhub
 ```
-$ docker push dockeruser/cityea:latest
+$ docker push dockeruser/cea:latest
 ```
 Log in to Euler
 ```
@@ -35,11 +35,11 @@ Pull the container image with Sigularity
 ```
 $ singularity pull docker://dockeruser/cityea
 $ ls
-cityea_latest.sif
+cea_latest.sif
 ```
 Run the container interactively as shell
 ```
-$ singularity shell -B $HOME cityea_latest.sif
+$ singularity shell -B $HOME cea_latest.sif
 Singularity> source /venv/bin/activate
 (venv) Singularity> cea test
 ```
