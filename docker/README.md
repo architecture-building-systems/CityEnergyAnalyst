@@ -33,13 +33,14 @@ $ module load eth_proxy
 ```
 Pull the container image with Sigularity
 ```
-$ singularity pull docker://dockeruser/cityea
+$ cd $SCRATCH
+$ singularity pull docker://dockeruser/cea
 $ ls
 cea_latest.sif
 ```
 Run the container interactively as shell
 ```
-$ singularity shell -B $HOME cea_latest.sif
+$ singularity shell -B $HOME -B $SCRATCH cea_latest.sif
 Singularity> source /venv/bin/activate
 (venv) Singularity> cea test
 ```
