@@ -11,7 +11,6 @@ parameter allows reading in schemas from ``schemas.yml`` files defined in plugin
 import os
 import pickle
 import pandas as pd
-import geopandas
 import yaml
 import warnings
 import functools
