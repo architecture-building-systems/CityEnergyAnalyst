@@ -1289,11 +1289,11 @@ weather_helper
     "weather_helper" -> get_weather_file[label="(get_weather_file)"];
     }
 
-database_migrator
+data_migrator
 -----------------
 .. graphviz::
 
-    digraph database_migrator {
+    digraph data_migrator {
     rankdir="LR";
     graph [overlap=false, fontname=arial];
     node [shape=box, style=filled, color=white, fontsize=15, fontname=arial, fixedsize=true, width=5];
@@ -1308,7 +1308,7 @@ database_migrator
         "inputs"->"process"[style=invis]
         "process"->"outputs"[style=invis]
     }
-    "database_migrator"[style=filled, color=white, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname=arial];
+    "data_migrator"[style=filled, color=white, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname=arial];
     subgraph cluster_0_out {
         style = filled;
         color = "#aadcdd";
@@ -1317,7 +1317,7 @@ database_migrator
         label="inputs/building-properties";
         get_building_typology[label="typology.dbf"];
     }
-    "database_migrator" -> get_building_typology[label="(get_building_typology)"];
+    "data_migrator" -> get_building_typology[label="(get_building_typology)"];
     }
 
 optimization
