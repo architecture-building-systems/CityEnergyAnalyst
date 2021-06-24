@@ -1996,7 +1996,7 @@ get_building_supply:
   - system_costs
 get_building_typology:
   created_by:
-  - database_migrator
+  - data_migrator
   file_path: inputs/building-properties/typology.dbf
   file_type: dbf
   schema:

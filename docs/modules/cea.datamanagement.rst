@@ -36,7 +36,7 @@ cea.datamanagement.data\_initializer module
 cea.datamanagement.database\_migrator module
 --------------------------------------------
 
-.. automodule:: cea.datamanagement.database_migrator
+.. automodule:: cea.datamanagement.data_migrator
    :members:
    :undoc-members:
    :show-inheritance:
