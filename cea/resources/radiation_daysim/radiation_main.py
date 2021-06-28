@@ -152,6 +152,8 @@ def check_daysim_bin_directory(path_hint, latest_binaries):
     # user might have a DAYSIM installation
     if sys.platform == "win32":
         folders_to_check.append(r"C:\Daysim\bin")
+    elif sys.platform == "linux":
+        folders_to_check.append(r"\Daysim\bin")
 
     folders_to_check = [os.path.abspath(os.path.normpath(os.path.normcase(p))) for p in folders_to_check]
     for possible_path in folders_to_check:
