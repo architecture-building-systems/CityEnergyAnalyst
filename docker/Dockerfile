@@ -21,7 +21,7 @@ RUN /venv/bin/conda-unpack
 # for us.
 FROM debian:buster AS cea-runtime
 
-RUN apt-get update && apt-get install -y libgl1
+RUN apt-get update && apt-get install -y libgl1 libc6
 COPY --from=cea-build /venv /venv
 COPY ./Daysim /Daysim
 COPY ./cea.config /root/cea.config
