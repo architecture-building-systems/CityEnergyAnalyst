@@ -34,7 +34,7 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def storage_optimization(locator, master_to_slave_vars, config):
+def storage_optimization(locator, master_to_slave_vars):
     """
     This function performs the storage optimization and stores the results in the designated folders
     :param locator: locator class

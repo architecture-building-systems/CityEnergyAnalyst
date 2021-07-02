@@ -19,7 +19,7 @@ from cea.technologies.boiler import cond_boiler_op_cost
 
 __author__ = "Tim Vollrath"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Sreepathi Bhargava Krishna", "Tim Vollrath", "Thuy-An Nguyen"]
+__credits__ = ["Sreepathi Bhargava Krishna", "Tim Vollrath", "Thuy-An Nguyen", "Jimeno Fonseca"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -33,7 +33,6 @@ __status__ = "Production"
 
 def district_heating_network(locator,
                              master_to_slave_variables,
-                             config,
                              network_features):
     """
     Computes the parameters for the heating of the complete DHN
@@ -59,7 +58,7 @@ def district_heating_network(locator,
         print("CALCULATING ECOLOGICAL COSTS OF SEASONAL STORAGE - DUE TO OPERATION (IF ANY)")
         storage_dispatch = storage_main.storage_optimization(locator,
                                                              master_to_slave_variables,
-                                                             config)
+                                                             )
         # Import data from storage optimization
         Q_DH_networkload_W = np.array(storage_dispatch['Q_DH_networkload_W'])
         Q_thermal_req_W = np.array(storage_dispatch['Q_req_after_storage_W'])

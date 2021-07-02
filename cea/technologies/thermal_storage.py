@@ -20,7 +20,7 @@ __status__ = "Production"
 
 # investment and maintenance costs
 
-def calc_Cinv_storage(V_tank_m3, locator, config, technology_type):
+def calc_Cinv_storage(V_tank_m3, locator, technology_type):
     """
     calculate the annualized investment cost of a thermal storage tank
 

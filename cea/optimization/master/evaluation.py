@@ -3,9 +3,6 @@ Evaluation function of an individual
 
 """
 
-
-
-
 import cea.inputlocator
 from cea.optimization.master import cost_model
 from cea.optimization.master import master_to_slave as master
@@ -65,13 +62,16 @@ def evaluation_main(individual,
     """
 
     # CREATE THE INDIVIDUAL BARCODE AND INDIVIDUAL WITH HER COLUMN NAME AS A DICT
-    DHN_barcode, DCN_barcode, individual_with_name_dict, building_connectivity_dict = individual_to_barcode(individual,
-                                                                                                            building_names_all,
-                                                                                                            building_names_heating,
-                                                                                                            building_names_cooling,
-                                                                                                            column_names_individual,
-                                                                                                            column_names_buildings_heating,
-                                                                                                            column_names_buildings_cooling)
+    DHN_barcode, \
+    DCN_barcode, \
+    individual_with_name_dict, \
+    building_connectivity_dict = individual_to_barcode(individual,
+                                                       building_names_all,
+                                                       building_names_heating,
+                                                       building_names_cooling,
+                                                       column_names_individual,
+                                                       column_names_buildings_heating,
+                                                       column_names_buildings_cooling)
 
     print("EVALUATING THE NEXT SYSTEM OPTION/INDIVIDUAL")
     print(individual_with_name_dict)
@@ -102,7 +102,6 @@ def evaluation_main(individual,
     district_heating_fuel_requirements_dispatch, \
     district_heating_capacity_installed = heating_main.district_heating_network(locator,
                                                                                 master_to_slave_vars,
-                                                                                config,
                                                                                 network_features,
                                                                                 )
 
@@ -114,8 +113,6 @@ def evaluation_main(individual,
     district_cooling_fuel_requirements_dispatch, \
     district_cooling_capacity_installed = cooling_main.district_cooling_network(locator,
                                                                                 master_to_slave_vars,
-                                                                                config,
-                                                                                prices,
                                                                                 network_features)
 
     # ELECTRICITY CONSUMPTION CALCULATIONS
@@ -133,15 +130,16 @@ def evaluation_main(individual,
     # electricity_main.extract_fuels_demand_buildings(master_to_slave_vars, building_names_all, locator)
     print("DISTRICT ENERGY SYSTEM - COSTS, PRIMARY ENERGY AND EMISSIONS OF CONNECTED BUILDINGS")
     buildings_district_scale_costs, \
-    buildings_district_scale_emissions = cost_model.buildings_district_scale_costs_and_emissions(district_heating_fixed_costs,
-                                                                                       district_cooling_fixed_costs,
-                                                                                       district_electricity_fixed_costs,
-                                                                                       district_electricity_dispatch,
-                                                                                       district_heating_fuel_requirements_dispatch,
-                                                                                       district_cooling_fuel_requirements_dispatch,
-                                                                                       district_electricity_demands,
-                                                                                       prices,
-                                                                                       lca)
+    buildings_district_scale_emissions = cost_model.buildings_district_scale_costs_and_emissions(
+        district_heating_fixed_costs,
+        district_cooling_fixed_costs,
+        district_electricity_fixed_costs,
+        district_electricity_dispatch,
+        district_heating_fuel_requirements_dispatch,
+        district_cooling_fuel_requirements_dispatch,
+        district_electricity_demands,
+        prices,
+        lca)
 
     print("DISTRICT ENERGY SYSTEM - COSTS, PRIMARY ENERGY AND EMISSIONS OF DISCONNECTED BUILDINGS")
     buildings_building_scale_costs, \
@@ -159,9 +157,8 @@ def evaluation_main(individual,
                                                                                    buildings_building_scale_costs,
                                                                                    buildings_building_scale_emissions)
 
-
-    print ('Total TAC in USD = ' + str(TAC_sys_USD))
-    print ('Total GHG emissions in tonCO2-eq = ' + str(GHG_sys_tonCO2))
+    print('Total TAC in USD = ' + str(TAC_sys_USD))
+    print('Total GHG emissions in tonCO2-eq = ' + str(GHG_sys_tonCO2))
 
     return TAC_sys_USD, \
            GHG_sys_tonCO2, \
@@ -180,4 +177,3 @@ def evaluation_main(individual,
            district_electricity_capacity_installed, \
            buildings_building_scale_heating_capacities, \
            buildings_building_scale_cooling_capacities
-
