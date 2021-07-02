@@ -25,7 +25,7 @@ from cea.technologies.chiller_absorption import AbsorptionChiller
 from cea.technologies.supply_systems_database import SupplySystemsDatabase
 
 __author__ = "Sreepathi Bhargava Krishna"
-__copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
+__copyright__ = "Copyright 2021, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Sreepathi Bhargava Krishna", "Shanshan Hsieh", "Thuy-An Nguyen", "Tim Vollrath", "Jimeno A. Fonseca"]
 __license__ = "MIT"
 __version__ = "0.1"
@@ -36,8 +36,6 @@ __status__ = "Production"
 
 def district_cooling_network(locator,
                              master_to_slave_variables,
-                             config,
-                             prices,
                              network_features):
     """
     Computes the parameters for the cooling of the complete DCN
@@ -61,11 +59,10 @@ def district_cooling_network(locator,
 
         # Initialize daily storage calss
         T_ground_K = np.average(calculate_ground_temperature(locator))
-        daily_storage = Storage_tank_PCM(available=master_to_slave_variables.Storage_cooling_on,
-                                         size_Wh=master_to_slave_variables.Storage_cooling_size_W,
+        daily_storage = Storage_tank_PCM(size_Wh=master_to_slave_variables.Storage_cooling_size_W,
                                          properties = pd.read_excel(locator.get_database_conversion_systems(), sheet_name="TES"),
                                          T_ambient_K = calculate_ground_temperature(locator) + 273.0,
-                                         code = "TES2"
+                                         type_storage = "TES2"
                                          )
 
         # Import Data - potentials lake heat
@@ -82,9 +79,7 @@ def district_cooling_network(locator,
         # get properties of technology used in this script
         absorption_chiller = AbsorptionChiller(pd.read_excel(locator.get_database_conversion_systems(), sheet_name="Absorption_chiller"), 'double')
         CCGT_prop = calc_cop_CCGT(master_to_slave_variables.NG_Trigen_ACH_size_W, ACH_T_IN_FROM_CHP_K, "NG")
-
-        scale = 'DISTRICT'
-        VCC_chiller = VaporCompressionChiller(locator, scale)
+        VCC_chiller = VaporCompressionChiller(locator, scale='DISTRICT')
 
         # initialize variables
         Q_Trigen_NG_gen_W = np.zeros(HOURS_IN_YEAR)
@@ -93,6 +88,8 @@ def district_cooling_network(locator,
         Q_BaseVCC_AS_gen_W = np.zeros(HOURS_IN_YEAR)
         Q_PeakVCC_AS_gen_W = np.zeros(HOURS_IN_YEAR)
         Q_DailyStorage_gen_directload_W = np.zeros(HOURS_IN_YEAR)
+        Q_DailyStorage_content_W = np.zeros(HOURS_IN_YEAR)
+        Q_DailyStorage_to_storage_W = np.zeros(HOURS_IN_YEAR)
 
         E_Trigen_NG_gen_W = np.zeros(HOURS_IN_YEAR)
         E_BaseVCC_AS_req_W = np.zeros(HOURS_IN_YEAR)
@@ -127,6 +124,8 @@ def district_cooling_network(locator,
                                                         VCC_chiller)
 
                 Q_DailyStorage_gen_directload_W[hour] = thermal_output['Q_DailyStorage_gen_directload_W']
+                Q_DailyStorage_content_W[hour] = thermal_output['Q_DailyStorage_content_W']
+                Q_DailyStorage_to_storage_W[hour] = thermal_output['Q_DailyStorage_to_storage_W']
                 Q_Trigen_NG_gen_directload_W[hour] = thermal_output['Q_Trigen_NG_gen_directload_W']
                 Q_BaseVCC_WS_gen_directload_W[hour] = thermal_output['Q_BaseVCC_WS_gen_directload_W']
                 Q_PeakVCC_WS_gen_directload_W[hour] = thermal_output['Q_PeakVCC_WS_gen_directload_W']
@@ -176,9 +175,7 @@ def district_cooling_network(locator,
                                                                                                           mdotnMax_kgpers
                                                                                                           )
         # CAPEX (ANNUAL, TOTAL) AND OPEX (FIXED, VAR, ANNUAL) STORAGE UNITS
-        performance_costs_storage = cost_model.calc_generation_costs_cooling_storage(locator,
-                                                                                     master_to_slave_variables,
-                                                                                     config,
+        performance_costs_storage = cost_model.calc_generation_costs_cooling_storage(master_to_slave_variables,
                                                                                      daily_storage
                                                                                      )
 
@@ -187,8 +184,7 @@ def district_cooling_network(locator,
         E_used_district_cooling_network_W = cost_model.calc_network_costs_cooling(locator,
                                                                                   master_to_slave_variables,
                                                                                   network_features,
-                                                                                  "DC",
-                                                                                  prices)
+                                                                                  "DC")
 
         # MERGE COSTS AND EMISSIONS IN ONE FILE
         performance = dict(performance_costs_generation, **performance_costs_storage)
@@ -196,6 +192,8 @@ def district_cooling_network(locator,
     else:
         Q_thermal_req_W = np.zeros(HOURS_IN_YEAR)
         Q_DailyStorage_gen_directload_W = np.zeros(HOURS_IN_YEAR)
+        Q_DailyStorage_content_W = np.zeros(HOURS_IN_YEAR)
+        Q_DailyStorage_to_storage_W = np.zeros(HOURS_IN_YEAR)
         Q_Trigen_NG_gen_directload_W = np.zeros(HOURS_IN_YEAR)
         Q_BaseVCC_WS_gen_directload_W = np.zeros(HOURS_IN_YEAR)
         Q_PeakVCC_WS_gen_directload_W = np.zeros(HOURS_IN_YEAR)
@@ -227,6 +225,9 @@ def district_cooling_network(locator,
         # ENERGY GENERATION TO DIRECT LOAD
         # from storage
         "Q_DailyStorage_gen_directload_W": Q_DailyStorage_gen_directload_W,
+        "Q_DailyStorage_content_W": Q_DailyStorage_content_W,
+        "Q_DailyStorage_to_storage_W": Q_DailyStorage_to_storage_W,
+
         # cooling
         "Q_Trigen_NG_gen_directload_W": Q_Trigen_NG_gen_directload_W,
         "Q_BaseVCC_WS_gen_directload_W": Q_BaseVCC_WS_gen_directload_W,

@@ -4,6 +4,8 @@ Water / Ice / PCM short-term thermal storage (for daily operation)
 
 import numpy as np
 from cea.technologies.storage_tank import calc_tank_surface_area, calc_cold_tank_heat_loss
+from math import log
+from cea.analysis.costs.equations import calc_capex_annualized
 
 __author__ = "Jimeno Fonseca"
 __copyright__ = "Copyright 2021, Cooling Singapore"
@@ -16,7 +18,7 @@ __status__ = "Production"
 
 
 class Storage_tank_PCM(object):
-    def __init__(self,  size_Wh, properties, T_ambient_K, type_storage, fixed_schedule=None):
+    def __init__(self,  size_Wh, properties, T_ambient_K, type_storage):
         self.size_Wh = size_Wh  # size of the storage in Wh
         self.T_ambient_K = T_ambient_K  # temperature outside the tank used to calculate thermal losses
         self.type_storage = type_storage  # code which refers to the type of storage to be used from the conversion database
@@ -239,6 +241,40 @@ class Storage_tank_PCM(object):
             self.current_storage_capacity_Wh / 1000, self.T_tank_K - 273, ))
         return final_load_to_storage_Wh, new_storage_capacity_wh
 
+    def costs_storage(self):
+        capacity_kWh = self.size_Wh / 1000
+        if capacity_kWh > 0.0:
+            storage_cost_data = self.storage_prop
+
+            # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
+            # capacity for the corresponding technology from the database
+            if capacity_kWh < storage_cost_data.iloc[0]['cap_min']:
+                capacity_kWh = storage_cost_data[0]['cap_min']
+
+            storage_cost_data = storage_cost_data[(storage_cost_data['cap_min'] <= capacity_kWh) & (storage_cost_data['cap_max'] > capacity_kWh)]
+
+            Inv_a = storage_cost_data.iloc[0]['a']
+            Inv_b = storage_cost_data.iloc[0]['b']
+            Inv_c = storage_cost_data.iloc[0]['c']
+            Inv_d = storage_cost_data.iloc[0]['d']
+            Inv_e = storage_cost_data.iloc[0]['e']
+            Inv_IR = storage_cost_data.iloc[0]['IR_%']
+            Inv_LT = storage_cost_data.iloc[0]['LT_yr']
+            Inv_mat_LT = storage_cost_data.iloc[0]['LT_mat_yr']
+            C_mat_LT = storage_cost_data.iloc[0]['C_mat_%'] / 100
+            Inv_OM = storage_cost_data.iloc[0]['O&M_%'] / 100
+
+            Capex_total_USD = Inv_a + Inv_b * (capacity_kWh) ** Inv_c + (Inv_d + Inv_e * capacity_kWh) * log(capacity_kWh)
+            Capex_a_storage_USD = calc_capex_annualized(Capex_total_USD, Inv_IR, Inv_LT)
+            Capex_a_storage_USD += calc_capex_annualized(Capex_total_USD * C_mat_LT, Inv_IR, Inv_mat_LT)
+            Opex_fixed_storage_USD = Capex_total_USD * Inv_OM
+        else:
+            Capex_a_storage_USD = 0.0
+            Opex_fixed_storage_USD = 0.0
+            Capex_total_USD = 0.0
+
+        return Capex_a_storage_USD, Opex_fixed_storage_USD, Capex_total_USD
+
 
 def calc_storage_tank_mass(size_Wh,
                            AT_solid_to_phase_K,
@@ -252,6 +288,9 @@ def calc_storage_tank_mass(size_Wh,
                                latent_heat_phase_change_kJ_kg)
     return mass_kg
 
+
+
+
 if __name__ == '__main__':
     ##### TEST  ######
     import pandas as pd
@@ -259,7 +298,7 @@ if __name__ == '__main__':
     from cea.plots.variable_naming import COLOR, NAMING
 
     #set up variables for test
-    code = "TES1"
+    code = "TES5"
     size_Wh = 3516852  # "1000 RTh or 3516 kWh"
     properties = pd.read_excel(r"C:\Users\jfo\OneDrive - EBP\Dokumente\CityEnergyAnalyst\CityEnergyAnalyst\cea\databases\SG\components\CONVERSION.xls","TES")
     T_ambient_K = 30 + 273
@@ -322,7 +361,7 @@ if __name__ == '__main__':
     fig.add_trace(go.Line(x=data.index, y=data["T_DailyStorage_C"], yaxis='y2', name=NAMING["T_DailyStorage_C"], line_shape='spline'))
     fig.update_layout(title=tank.description,
                         yaxis=dict(title='Load [kWh]'),
-                            yaxis2=dict(title='TankTemperature [C]', overlaying='y', side='right'))
+                            yaxis2=dict(title='Tank Temperature [C]', overlaying='y', side='right'))
     fig.show()
     print(data.head())
 
