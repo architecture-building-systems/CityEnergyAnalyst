@@ -3,7 +3,7 @@
 
 
 
-import numpy as np
+import numpy_financial as np
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2020, Architecture and Building Systems - ETH Zurich"
