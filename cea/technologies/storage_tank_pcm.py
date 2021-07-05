@@ -210,20 +210,17 @@ class Storage_tank_PCM(object):
         effective_load_from_storage_Wh = load_from_storage_Wh / self.charging_efficiency
         if np.isclose((self.current_storage_capacity_Wh - self.current_thermal_loss_Wh), 0.0, rtol=0.001):
             # Storage is empty, no discharge
-            print("1")
             effective_load_from_storage_Wh = 0.0
             new_storage_capacity_wh = self.current_storage_capacity_Wh - self.current_thermal_loss_Wh
             new_phase = self.new_phase_tank(new_storage_capacity_wh)
             new_T_tank_K = self.new_temperature_tank(new_phase, new_storage_capacity_wh, - self.current_thermal_loss_Wh)
 
         elif (self.current_storage_capacity_Wh - effective_load_from_storage_Wh - self.current_thermal_loss_Wh) < 0.0:
-            print("2")
             effective_load_from_storage_Wh = self.current_storage_capacity_Wh
             new_storage_capacity_wh = 0.0
             new_phase = self.new_phase_tank(new_storage_capacity_wh)
             new_T_tank_K = self.new_temperature_tank(new_phase, new_storage_capacity_wh, -effective_load_from_storage_Wh)
         else:
-            print("3")
             # charging is possible with the full request
             new_storage_capacity_wh = self.current_storage_capacity_Wh - effective_load_from_storage_Wh - self.current_thermal_loss_Wh
             new_phase = self.new_phase_tank(new_storage_capacity_wh)
