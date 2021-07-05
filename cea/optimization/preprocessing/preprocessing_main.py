@@ -10,7 +10,7 @@ Pre-processing algorithm
 from cea.optimization.constants import Z0
 from cea.optimization.distribution.network_optimization_features import NetworkOptimizationFeatures
 from cea.optimization.master import summarize_network
-from cea.resources.geothermal import calc_ground_temperature
+from cea.resources.geothermal import calc_ground_temperature_K
 from cea.technologies import substation
 from cea.utilities import epwreader
 from cea.technologies.supply_systems_database import SupplySystemsDatabase
@@ -33,7 +33,7 @@ class WeatherFeatures(object):
         self.weather_data = epwreader.epw_reader(weather_file)
         self.date = self.weather_data['date']
         self.T_ambient = self.weather_data['drybulb_C']
-        self.ground_temp = calc_ground_temperature(locator, self.T_ambient, depth_m=Z0)
+        self.ground_temp_K = calc_ground_temperature_K(locator, self.T_ambient, depth_m=Z0)
 
 
 def preproccessing(locator, total_demand, buildings_heating_demand, buildings_cooling_demand,
@@ -85,7 +85,7 @@ def preproccessing(locator, total_demand, buildings_heating_demand, buildings_co
         substation.substation_main_heating(locator, total_demand, buildings_heating_demand,
                                            DHN_barcode=DHN_barcode)
 
-        summarize_network.network_main(locator, buildings_heating_demand, weather_features.ground_temp, num_tot_buildings, "DH",
+        summarize_network.network_main(locator, buildings_heating_demand, weather_features.ground_temp_K, num_tot_buildings, "DH",
                                        DHN_barcode)
         # "_all" key for all buildings
     if district_cooling_network:
@@ -94,7 +94,7 @@ def preproccessing(locator, total_demand, buildings_heating_demand, buildings_co
         substation.substation_main_cooling(locator, total_demand, buildings_cooling_demand, DCN_barcode=DCN_barcode)
 
         summarize_network.network_main(locator, buildings_cooling_demand,
-                                       weather_features.ground_temp, num_tot_buildings, "DC",
+                                       weather_features.ground_temp_K, num_tot_buildings, "DC",
                                        DCN_barcode)  # "_all" key for all buildings
 
     network_features = NetworkOptimizationFeatures(district_heating_network, district_cooling_network, locator)

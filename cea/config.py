@@ -953,6 +953,29 @@ class SingleBuildingParameter(ChoiceParameter):
         return str(value)
 
 
+class SingleThermalStorageParameter(ChoiceParameter):
+    """A (single) building in the zone"""
+    typename = 'SingleThermalStorageParameter'
+
+    def initialize(self, parser):
+        # skip the default ChoiceParameter initialization of _choices
+        pass
+
+    @property
+    def _choices(self):
+        # set the `._choices` attribute to the list buildings in the project
+        locator = cea.inputlocator.InputLocator(self.config.scenario, plugins=[])
+        thermal_storage_names = locator.get_database_conversion_systems_thermal_storage_names()
+        if not thermal_storage_names:
+            raise cea.ConfigError("Either no thermal storage types or no database found - initialize databases")
+        return thermal_storage_names
+
+    def encode(self, value):
+        if not str(value) in self._choices:
+            return self._choices[0]
+        return str(value)
+
+
 class UseTypeRatioParameter(ListParameter):
     """A list of use-type names and ratios"""
     typename = 'UseTypeRatioParameter'

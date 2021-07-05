@@ -92,6 +92,7 @@ def evaluation_main(individual,
                                                                        technologies_heating_allowed,
                                                                        technologies_cooling_allowed,
                                                                        weather_features,
+                                                                       config
                                                                        )
 
     # DISTRICT HEATING NETWORK
@@ -113,7 +114,8 @@ def evaluation_main(individual,
     district_cooling_fuel_requirements_dispatch, \
     district_cooling_capacity_installed = cooling_main.district_cooling_network(locator,
                                                                                 master_to_slave_vars,
-                                                                                network_features)
+                                                                                network_features,
+                                                                                weather_features)
 
     # ELECTRICITY CONSUMPTION CALCULATIONS
     print("DISTRICT ELECTRICITY GRID OPERATION")
