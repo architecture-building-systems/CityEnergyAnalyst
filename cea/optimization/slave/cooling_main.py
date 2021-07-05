@@ -36,7 +36,8 @@ __status__ = "Production"
 
 def district_cooling_network(locator,
                              master_to_slave_variables,
-                             network_features):
+                             network_features,
+                             weather_features):
     """
     Computes the parameters for the cooling of the complete DCN
 
@@ -58,10 +59,10 @@ def district_cooling_network(locator,
         mdot_kgpers = calc_network_summary_DCN(master_to_slave_variables)
 
         # Initialize daily storage calss
-        T_ground_K = np.average(calculate_ground_temperature(locator))
+        T_ground_K = weather_features.ground_temp_K
         daily_storage = Storage_tank_PCM(size_Wh=master_to_slave_variables.Storage_cooling_size_W,
                                          properties = pd.read_excel(locator.get_database_conversion_systems(), sheet_name="TES"),
-                                         T_ambient_K = calculate_ground_temperature(locator) + 273.0,
+                                         T_ambient_K = np.average(T_ground_K),
                                          type_storage = "TES2"
                                          )
 

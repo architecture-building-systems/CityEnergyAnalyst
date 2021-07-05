@@ -24,7 +24,7 @@ class Storage_tank_PCM(object):
         self.type_storage = type_storage  # code which refers to the type of storage to be used from the conversion database
 
         # extract properties according to chosen technology from the conversion database
-        self.storage_prop = properties[properties['code'] == code]
+        self.storage_prop = properties[properties['code'] == type_storage]
         self.description = self.storage_prop['Description'].values[0]
         self.T_phase_change_K = self.storage_prop['T_PHCH_C'].values[0] + 273.0
         self.T_tank_fully_charged_K = self.storage_prop['T_min_C'].values[0] + 273.0
@@ -93,6 +93,7 @@ class Storage_tank_PCM(object):
         return self.current_storage_capacity_Wh
 
     def new_phase_tank(self, new_storage_capacity_wh):
+        tol = 0.000001
         # case 1: the storage tank is in liquid change
         if 0.0 <= new_storage_capacity_wh <= self.cap_liquid_phase_Wh:
             new_phase = 1
@@ -101,8 +102,10 @@ class Storage_tank_PCM(object):
             new_phase = 2
         # case 3: the storage tank is in the solid phase
         elif (self.cap_liquid_phase_Wh + self.cap_phase_change_Wh) < new_storage_capacity_wh <= (
-                self.cap_liquid_phase_Wh + self.cap_phase_change_Wh + self.cap_solid_phase_Wh):
+                self.cap_liquid_phase_Wh + self.cap_phase_change_Wh + self.cap_solid_phase_Wh + tol):
             new_phase = 3
+        else:
+            print("there was an error, the new capacity was {}".format(new_storage_capacity_wh))
         return new_phase
 
 
@@ -160,7 +163,7 @@ class Storage_tank_PCM(object):
         return T1
 
     def charge_storage(self, load_to_storage_Wh):
-
+        print("...charging...")
         print("The current capacity and temperature is {:.2f} kWh, and {:.2f} °C".format(
             self.current_storage_capacity_Wh / 1000, self.T_tank_K - 273))
         effective_load_to_storage_Wh = load_to_storage_Wh * self.charging_efficiency
@@ -171,7 +174,7 @@ class Storage_tank_PCM(object):
             new_phase = self.new_phase_tank(new_storage_capacity_wh)
             new_T_tank_K = self.new_temperature_tank(new_phase, new_storage_capacity_wh, - self.current_thermal_loss_Wh)
 
-        elif (self.current_storage_capacity_Wh + effective_load_to_storage_Wh) > self.size_Wh:
+        elif (self.current_storage_capacity_Wh + effective_load_to_storage_Wh + self.current_thermal_loss_Wh) > self.size_Wh:
             effective_load_to_storage_Wh = self.size_Wh - self.current_storage_capacity_Wh
             new_storage_capacity_wh = self.current_storage_capacity_Wh + effective_load_to_storage_Wh - self.current_thermal_loss_Wh
             new_phase = self.new_phase_tank(new_storage_capacity_wh)
@@ -201,23 +204,26 @@ class Storage_tank_PCM(object):
         return final_load_to_storage_Wh, new_storage_capacity_wh
 
     def discharge_storage(self, load_from_storage_Wh):
-
+        print("...discharging...")
         print("The current capacity and temperature is {:.2f} kWh, and {:.2f} °C".format(
             self.current_storage_capacity_Wh / 1000, self.T_tank_K - 273))
         effective_load_from_storage_Wh = load_from_storage_Wh / self.charging_efficiency
         if np.isclose((self.current_storage_capacity_Wh - self.current_thermal_loss_Wh), 0.0, rtol=0.001):
             # Storage is empty, no discharge
+            print("1")
             effective_load_from_storage_Wh = 0.0
             new_storage_capacity_wh = self.current_storage_capacity_Wh - self.current_thermal_loss_Wh
             new_phase = self.new_phase_tank(new_storage_capacity_wh)
             new_T_tank_K = self.new_temperature_tank(new_phase, new_storage_capacity_wh, - self.current_thermal_loss_Wh)
 
-        elif (self.current_storage_capacity_Wh - effective_load_from_storage_Wh) < 0.0:
+        elif (self.current_storage_capacity_Wh - effective_load_from_storage_Wh - self.current_thermal_loss_Wh) < 0.0:
+            print("2")
             effective_load_from_storage_Wh = self.current_storage_capacity_Wh
             new_storage_capacity_wh = 0.0
             new_phase = self.new_phase_tank(new_storage_capacity_wh)
             new_T_tank_K = self.new_temperature_tank(new_phase, new_storage_capacity_wh, -effective_load_from_storage_Wh)
         else:
+            print("3")
             # charging is possible with the full request
             new_storage_capacity_wh = self.current_storage_capacity_Wh - effective_load_from_storage_Wh - self.current_thermal_loss_Wh
             new_phase = self.new_phase_tank(new_storage_capacity_wh)
@@ -235,7 +241,7 @@ class Storage_tank_PCM(object):
         self.T_tank_K = new_T_tank_K
         self.current_storage_capacity_Wh = new_storage_capacity_wh
 
-        print("The requested load was {:.2f} kW, the possible load was {:.2f} kWh".format(
+        print("The requested load to discharge  was {:.2f} kW, the possible load to discharge was {:.2f} kWh".format(
             load_from_storage_Wh / 1000, final_load_to_storage_Wh / 1000))
         print("The new capacity and temperature is {:.2f} kWh, and {:.2f} °C".format(
             self.current_storage_capacity_Wh / 1000, self.T_tank_K - 273, ))

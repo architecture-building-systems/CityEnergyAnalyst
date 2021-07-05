@@ -3,9 +3,6 @@ Evaluation function of an individual
 
 """
 
-
-
-
 import os
 
 import pandas as pd
@@ -31,9 +28,10 @@ def export_data_to_master_to_slave_class(locator,
                                          district_cooling_network,
                                          technologies_heating_allowed,
                                          technologies_cooling_allowed,
-                                         weather_features
+                                         weather_features,
+                                         config
                                          ):
-    # get thermal network for this individual
+    # Calculate local variables
 
     # RECALCULATE THE NOMINAL LOADS FOR HEATING AND COOLING, INCL SOME NAMES OF FILES
     DH_network_summary_individual, \
@@ -73,7 +71,8 @@ def export_data_to_master_to_slave_class(locator,
                                                           building_names_cooling,
                                                           building_names_electricity,
                                                           DH_network_summary_individual,
-                                                          DC_network_summary_individual
+                                                          DC_network_summary_individual,
+                                                          config
                                                           )
     return master_to_slave_vars
 
@@ -116,7 +115,7 @@ def thermal_networks_in_individual(locator,
                                    column_names_buildings_cooling
                                    ):
     # local variables
-    ground_temp = weather_features.ground_temp
+    ground_temp_K = weather_features.ground_temp_K
 
     # EVALUATE CASES TO CREATE A NETWORK OR NOT
     if district_heating_network:  # network exists
@@ -131,7 +130,7 @@ def thermal_networks_in_individual(locator,
                                                DHN_barcode=DHN_barcode)
             DH_network_summary_individual = summarize_network.network_main(locator,
                                                                            buildings_in_heating_network,
-                                                                           ground_temp,
+                                                                           ground_temp_K,
                                                                            num_total_buildings,
                                                                            "DH", DHN_barcode)
         else:
@@ -150,7 +149,7 @@ def thermal_networks_in_individual(locator,
             substation.substation_main_cooling(locator, total_demand, buildings_in_cooling_network,
                                                DCN_barcode=DCN_barcode)
             DC_network_summary_individual = summarize_network.network_main(locator, buildings_in_cooling_network,
-                                                                           ground_temp,
+                                                                           ground_temp_K,
                                                                            num_total_buildings,
                                                                            'DC', DCN_barcode)
         else:
@@ -158,7 +157,6 @@ def thermal_networks_in_individual(locator,
                 locator.get_optimization_network_results_summary('DC', DCN_barcode))
     else:
         DC_network_summary_individual = None
-
 
     return DH_network_summary_individual, DC_network_summary_individual
 
@@ -183,7 +181,8 @@ def calc_master_to_slave_variables(locator, gen,
                                    building_names_cooling,
                                    building_names_electricity,
                                    DH_network_summary_individual,
-                                   DC_network_summary_individual
+                                   DC_network_summary_individual,
+                                   config
                                    ):
     """
     This function reads the list encoding a configuration and implements the corresponding
@@ -212,12 +211,14 @@ def calc_master_to_slave_variables(locator, gen,
     master_to_slave_vars.number_of_buildings_district_scale_cooling = DCN_barcode.count("1")
 
     # store the names of the buildings connected to district heating or district cooling
-    master_to_slave_vars.buildings_district_scale_to_district_heating = calc_district_scale_names(building_names_heating,
-                                                                                        DHN_barcode)
-    master_to_slave_vars.buildings_district_scale_to_district_cooling = calc_district_scale_names(building_names_cooling,
-                                                                                        DCN_barcode)
+    master_to_slave_vars.buildings_district_scale_to_district_heating = calc_district_scale_names(
+        building_names_heating,
+        DHN_barcode)
+    master_to_slave_vars.buildings_district_scale_to_district_cooling = calc_district_scale_names(
+        building_names_cooling,
+        DCN_barcode)
 
-    #these are dataframes describing the opeartion of the thermal networks in the individual
+    # these are dataframes describing the opeartion of the thermal networks in the individual
     master_to_slave_vars.DH_network_summary_individual = DH_network_summary_individual
     master_to_slave_vars.DC_network_summary_individual = DC_network_summary_individual
 
@@ -260,17 +261,20 @@ def calc_master_to_slave_variables(locator, gen,
                                                                              master_to_slave_vars)
 
     if master_to_slave_vars.DCN_exists:
+        storage_type = config.optimization.cold_storage_type
         master_to_slave_vars.Q_cooling_nom_W = Q_cooling_nom_W
         master_to_slave_vars = master_to_slave_district_cooling_technologies(Q_cooling_nom_W,
                                                                              individual_with_names_dict,
-                                                                             master_to_slave_vars)
+                                                                             master_to_slave_vars,
+                                                                             storage_type)
 
     return master_to_slave_vars
 
 
 def master_to_slave_district_cooling_technologies(Q_cooling_nom_W,
                                                   individual_with_names_dict,
-                                                  master_to_slave_vars):
+                                                  master_to_slave_vars,
+                                                  storage_type):
     # COOLING SYSTEMS
     technologies_cooling_allowed = master_to_slave_vars.technologies_cooling_allowed
     # NG-Fired Trigen with Absorption Chiller
@@ -326,6 +330,7 @@ def master_to_slave_district_cooling_technologies(Q_cooling_nom_W,
             'Storage') and flag:
         master_to_slave_vars.Storage_cooling_on = 1
         master_to_slave_vars.Storage_cooling_size_W = individual_with_names_dict['Storage'] * Q_cooling_nom_W
+        master_to_slave_vars.Storage_type = storage_type
 
     return master_to_slave_vars
 
