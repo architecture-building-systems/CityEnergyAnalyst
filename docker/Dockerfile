@@ -18,13 +18,15 @@ RUN /venv/bin/conda-unpack
 # Build Daysim in image to prevent errors in OS lib dependencies
 FROM debian:stable-slim AS daysim-build
 
-RUN apt update && apt install git cmake build-essential libgl1-mesa-dev freeglut3-dev -y
+RUN apt update && apt install git cmake build-essential libgl1-mesa-dev libglu1-mesa-dev -y
 RUN git clone https://github.com/MITSustainableDesignLab/Daysim.git
-RUN mkdir build && cd build && cmake -DBUILD_HEADLESS=on -DCMAKE_INSTALL_PREFIX=$HOME/Daysim ../Daysim && make && make install
+# uncommenting line in CMakeLists to install daysim binaries
+RUN sed -i 's/#//' /Daysim/src/daysim/CMakeLists.txt
+RUN mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_HEADLESS=ON -DCMAKE_INSTALL_PREFIX=$HOME/Daysim ../Daysim && make && make install
 
-# uncomment line to build rtrace_dc
+# uncommenting line CMakeLists to build rtrace_dc
 RUN sed -i 's/#add_definitions(-DDAYSIM)/add_definitions(-DDAYSIM)/' /Daysim/src/rt/CMakeLists.txt
-RUN cd build && cmake -DBUILD_HEADLESS=on ../Daysim && make rtrace && mv ./bin/rtrace $HOME/Daysim/bin/rtrace_dc
+RUN cd build && cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_HEADLESS=ON ../Daysim && make rtrace && mv ./bin/rtrace $HOME/Daysim/bin/rtrace_dc
 
 # The runtime-stage image; we can use Debian as the
 # base image since the Conda env also includes Python
