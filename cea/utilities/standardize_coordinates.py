@@ -1,10 +1,7 @@
-
-
-
-import utm
-import gdal
-import osr
 import geopandas
+import utm
+from osgeo import gdal, osr
+
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"

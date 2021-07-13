@@ -27,10 +27,10 @@ def main(config):
     workflow_yml = os.path.join(os.path.dirname(__file__), "workflow_{workflow}.yml".format(workflow=config.test.workflow))
 
     default_config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
-    default_config.project = os.path.expandvars("${TEMP}/reference-case-open")
+    default_config.project = os.path.join(tempfile.gettempdir(), "reference-case-open")
     default_config.workflow.workflow = workflow_yml
     default_config.workflow.resume = False
-    default_config.workflow.resume_file = tempfile.mktemp("resume.yml")  # force resume file to be temporary
+    default_config.workflow.resume_file = os.path.join(tempfile.gettempdir(), "resume.yml")  # force resume file to be temporary
 
     if os.path.exists(default_config.project):
         # make sure we're working on a clean slate
