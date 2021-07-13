@@ -37,14 +37,13 @@ RUN apt-get update && apt-get install -y libgl1
 
 COPY --from=cea-build /venv /venv
 COPY --from=daysim-build /root/Daysim/bin /venv/Daysim
-COPY ./cea.config /root/cea.config
-
 
 # bugfix for matplotlib, see here: https://stackoverflow.com/questions/37604289/tkinter-tclerror-no-display-name-and-no-display-environment-variable
 RUN mkdir -p /root/.config/matplotlib && echo "backend: Agg" > /root/.config/matplotlib/matplotlibrc
 
 # add a folder for projects
 RUN mkdir /projects
+RUN /bin/bash -c "source /venv/bin/activate && cea-config write --general:project /projects"
 
 # When image is run, run the code with the environment
 # activated:
