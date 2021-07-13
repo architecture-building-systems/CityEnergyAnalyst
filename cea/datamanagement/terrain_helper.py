@@ -8,13 +8,11 @@ https://www2.jpl.nasa.gov/srtm/
 
 import os
 
-import gdal
 import numpy as np
 import pandas as pd
 import requests
 from geopandas import GeoDataFrame as Gdf
-from osgeo import ogr
-from osgeo import osr
+from osgeo import gdal, ogr, osr
 from shapely.geometry import Polygon
 
 import cea.config
