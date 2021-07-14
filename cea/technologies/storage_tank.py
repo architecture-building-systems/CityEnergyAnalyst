@@ -13,7 +13,7 @@ from scipy.integrate import odeint
 
 from cea.constants import ASPECT_RATIO, HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3, WH_TO_J
 from cea.demand.constants import TWW_SETPOINT, B_F
-from cea.optimization.constants import T_TANK_FULLY_DISCHARGED_K, T_TANK_FULLY_CHARGED_K, DT_COOL
+from cea.optimization.constants import T_TANK_FULLY_DISCHARGED_K, T_TANK_FULLY_CHARGED_K, DT_COOL, U_DHWTANK
 from cea.technologies.constants import U_COOL, U_HEAT, TANK_HEX_EFFECTIVENESS
 from cea.technologies.thermal_network.substation_matrix import calc_area_HEX, calc_dTm_HEX
 
@@ -26,8 +26,6 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-# tank insulation heat transfer coefficient in W/m2-K, value taken from SIA 385
-U_DHWTANK = 0.225
 
 
 def calc_fully_mixed_tank(T_start_C, T_ambient_C, q_discharged_W, q_charged_W, V_tank_m3, Area_tank_surface_m2, tank_type):
