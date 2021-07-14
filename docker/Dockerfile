@@ -55,7 +55,7 @@ COPY --from=cea-build /venv /venv
 COPY --from=daysim-build /Daysim_build /venv/Daysim
 
 # bugfix for matplotlib, see here: https://stackoverflow.com/questions/37604289/tkinter-tclerror-no-display-name-and-no-display-environment-variable
-RUN mkdir -p /root/.config/matplotlib && echo "backend: Agg" > /root/.config/matplotlib/matplotlibrc
+RUN mkdir -p ~/.config/matplotlib && echo "backend: Agg" > ~/.config/matplotlib/matplotlibrc
 
 # add a folder for projects
 RUN mkdir /projects
