@@ -2,7 +2,7 @@ FROM continuumio/miniconda3 as cea-build
 COPY ./environment.yml /tmp/environment.yml
 
 # create the conda environment and install cea
-RUN conda env create -q -f /tmp/environment.yml -n cea
+RUN conda env create -q -f /tmp/environment.yml -n cea && conda clean -afy
 ENV PATH /opt/conda/envs/cea/bin:$PATH
 RUN /bin/bash -c "source activate cea && pip install --no-deps git+https://github.com/architecture-building-systems/CityEnergyAnalyst@master#egg=cityenergyanalyst"
 
