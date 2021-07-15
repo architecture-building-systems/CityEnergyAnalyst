@@ -63,6 +63,6 @@ RUN /bin/bash -c "source /venv/bin/activate && cea-config write --general:projec
 
 # When image is run, run the code with the environment
 # activated:
-ENV PATH "/venv/cea/bin:/venv/Daysim:$PATH"
+ENV PATH "/venv/bin:/venv/cea/bin:/venv/Daysim:$PATH"
 SHELL ["/bin/bash", "-c"]
-ENTRYPOINT source /venv/bin/activate && cea dashboard
+CMD cea dashboard
