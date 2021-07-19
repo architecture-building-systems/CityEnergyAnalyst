@@ -2,7 +2,7 @@
 ### On your local computer
 Build a Docker image
 ```
-$ docker build -t dockeruser/cea:latest .
+$ docker build -t dockeruser/cea:latest .. -f .
 $ docker images
 REPOSITORY                   TAG       IMAGE ID       CREATED          SIZE
 dockeruser/cea:latest        latest    d639b6f22ee5   18 minutes ago   4.69GB

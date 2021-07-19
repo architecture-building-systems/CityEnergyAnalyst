@@ -1,12 +1,10 @@
 FROM continuumio/miniconda3 as cea-build
-COPY ./environment.yml /tmp/environment.yml
 
 # create the conda environment and install cea
-RUN conda env create -q -f /tmp/environment.yml -n cea && conda clean -afy
-ENV PATH /opt/conda/envs/cea/bin:$PATH
-RUN /bin/bash -c "source activate cea && pip install --no-deps git+https://github.com/architecture-building-systems/CityEnergyAnalyst@master#egg=cityenergyanalyst"
+COPY ./docker/environment.yml /tmp/environment.yml
+RUN conda env create -f /tmp/environment.yml -n cea && conda clean -afy
 
-# conda-pack the environment (with cea pre-installed)
+# conda-pack the environment
 RUN conda install -c conda-forge conda-pack
 RUN conda-pack -n cea -o /tmp/env.tar \
 && mkdir /venv \
@@ -14,6 +12,10 @@ RUN conda-pack -n cea -o /tmp/env.tar \
 && tar xf /tmp/env.tar \
 && rm /tmp/env.tar
 RUN /venv/bin/conda-unpack
+
+# install cea after dependencies to avoid running conda too many times when rebuilding
+COPY . /cea
+RUN /bin/bash -c "source /venv/bin/activate && pip install /cea"
 
 # Build Daysim in image to prevent errors in OS lib dependencies
 FROM debian:stable-slim AS daysim-build
@@ -28,7 +30,8 @@ libglu1-mesa-dev
 RUN git clone https://github.com/MITSustainableDesignLab/Daysim.git
 
 # only build required binaries
-RUN mkdir build && cd build \
+RUN mkdir build \
+&& cd build \
 && cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_HEADLESS=ON ../Daysim \
 && make ds_illum \
 && make epw2wea \
@@ -49,6 +52,7 @@ RUN sed -i 's/#add_definitions(-DDAYSIM)/add_definitions(-DDAYSIM)/' /Daysim/src
 # for us.
 FROM debian:stable-slim AS cea-runtime
 
+# For pythonOCC to work (used by py4design)
 RUN apt-get update && apt-get install -y libgl1
 
 COPY --from=cea-build /venv /venv
