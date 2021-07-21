@@ -1,4 +1,4 @@
-import numpy_financial as np
+import numpy_financial as npf
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2020, Architecture and Building Systems - ETH Zurich"
@@ -15,7 +15,7 @@ def calc_opex_annualized(OpC_USDyr, Inv_IR_perc, Inv_LT_yr):
     Inv_IR = Inv_IR_perc / 100
     opex_list = [0.0]
     opex_list.extend(Inv_LT_yr * [OpC_USDyr])
-    opexnpv = np.npv(Inv_IR, opex_list)
+    opexnpv = npf.npv(Inv_IR, opex_list)
     EAC = ((opexnpv * Inv_IR) / (1 - (1 + Inv_IR) ** (-Inv_LT_yr)))  # calculate positive EAC
     return EAC
 
