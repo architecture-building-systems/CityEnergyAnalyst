@@ -97,8 +97,9 @@ on Euler, as the login nodes are not intended for running simulations. See clust
 - Upload your CEA projects to ``\cluster\scratch\username``
 
 - Upload a ``workflow.yml`` to ``\cluster\scratch\username``
-In ``workflow.yml``, point to the CEA project as well as the steps you wished to simulated.
-Here is an example:
+
+- In ``workflow.yml``, point to the CEA project as well as the steps you wished to simulated.
+Please refer to this `blog post <https://cityenergyanalyst.com/blog/2020/1/14/cea-workflow-how-to-automate-simulations>`_ on how to edit ``workflow.yml``.
 
 - Submit a batch job following this example command:
 
