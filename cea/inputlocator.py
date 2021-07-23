@@ -411,12 +411,14 @@ class InputLocator(object):
         to the scenario if they are not yet present, based on the configured region for the scenario."""
         return os.path.join(self.get_databases_folder(), 'components', 'CONVERSION.xls')
 
-    def get_database_conversion_systems_thermal_storage_names(self):
+    def get_database_conversion_systems_cold_thermal_storage_names(self):
         """Return the list of thermal storage tanks"""
         if not os.path.exists(self.get_database_conversion_systems()):
             return []
         import pandas as pd
-        names = sorted(pd.read_excel(self.get_database_conversion_systems(), sheet_name="TES")["code"])
+        data = pd.read_excel(self.get_database_conversion_systems(), sheet_name="TES")
+        data = data[data["Type"]== "COOLING"]
+        names = sorted(data["code"])
         return names
 
     def get_database_distribution_systems(self):

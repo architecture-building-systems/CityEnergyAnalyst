@@ -965,7 +965,7 @@ class SingleThermalStorageParameter(ChoiceParameter):
     def _choices(self):
         # set the `._choices` attribute to the list buildings in the project
         locator = cea.inputlocator.InputLocator(self.config.scenario, plugins=[])
-        thermal_storage_names = locator.get_database_conversion_systems_thermal_storage_names()
+        thermal_storage_names = locator.get_database_conversion_systems_cold_thermal_storage_names()
         if not thermal_storage_names:
             raise cea.ConfigError("Either no thermal storage types or no database found - initialize databases")
         return thermal_storage_names
