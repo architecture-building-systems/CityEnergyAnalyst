@@ -296,62 +296,24 @@ def calc_storage_tank_mass(size_Wh,
 
 if __name__ == '__main__':
     ##### TEST  ######
-    import pandas as pd
     import plotly.graph_objs as go
     from cea.plots.variable_naming import COLOR, NAMING
 
-    #set up variables for test
-    code = "TES5"
-    size_Wh = 3516852  # "1000 RTh or 3516 kWh"
-    properties = pd.read_excel(r"C:\Users\jfo\OneDrive - EBP\Dokumente\CityEnergyAnalyst\CityEnergyAnalyst\cea\databases\SG\components\CONVERSION.xls","TES")
-    T_ambient_K = 30 + 273
-    hours = list(range(48))
-    load = [size_Wh * 0.1] * 48
-    schedule = ["charge"] * 5 + ["nothing"] * 3 + ["discharge"] * 11 + ["charge"] * 5
-    schedule.extend(schedule)
-    unload = [size_Wh * 0.1] * 48
-    tank = Storage_tank_PCM(size_Wh=size_Wh,
-                            properties=properties,
-                            T_ambient_K=T_ambient_K,
-                            type_storage=code,
-                            )
+    # selct one tank to test
+    type_storage = "TES2"
 
-    #prepare dataframe for testing
-    data = pd.DataFrame({"Q_DailyStorage_gen_directload_W": np.zeros(48),
-                         "Q_DailyStorage_to_storage_W": np.zeros(48),
-                         "Q_DailyStorage_content_W": np.zeros(48),
-                         "T_DailyStorage_C": np.zeros(48),
-                         })
+    # test tank based in unittests (Check the unittests to see how this works)
+    from cea.tests.test_technologies import TestColdPcmThermalStorage
+    test = TestColdPcmThermalStorage()
+    TestColdPcmThermalStorage.setUpClass()
+    test.type_storage = type_storage
 
-    # prepare dataframe for testing
-    print("Initiating simulation....")
-    for hour, x, y, z in zip(hours, load, unload, schedule):
-        load_proposed_to_storage_Wh = x
-        load_proposed_from_storage_Wh = y
-        operation_mode = z
-        if operation_mode == "charge":
-            print("...Charging at hour {}...".format(hour))
-            load_to_storage_Wh, new_storage_capacity_wh = tank.charge_storage(load_proposed_to_storage_Wh)
-            data.loc[hour, "Q_DailyStorage_gen_directload_W"] = 0.0
-            data.loc[hour, "Q_DailyStorage_to_storage_W"] = load_to_storage_Wh
-            data.loc[hour, "Q_DailyStorage_content_W"] = new_storage_capacity_wh
-        elif operation_mode == "discharge":
-            print("...Disharging at hour {}...".format(hour))
-            load_from_storage_Wh, new_storage_capacity_wh = tank.discharge_storage(load_proposed_from_storage_Wh)
-            data.loc[hour, "Q_DailyStorage_gen_directload_W"] = - load_from_storage_Wh
-            data.loc[hour, "Q_DailyStorage_to_storage_W"] = 0.0
-            data.loc[hour, "Q_DailyStorage_content_W"] = new_storage_capacity_wh
-        else:
-            print("...Balancing at hour {}...".format(hour))
-            new_storage_capacity_wh = tank.balance_storage()
-            data.loc[hour, "Q_DailyStorage_gen_directload_W"] = 0.0
-            data.loc[hour, "Q_DailyStorage_to_storage_W"] = 0.0
-            data.loc[hour, "Q_DailyStorage_content_W"] = new_storage_capacity_wh
+    # the test returns a. results of the unittest, b. the data, c. a description of the tank.
+    # the first is used as reference parameter o fthe unittest. The B and C are used to make a plot as follows.
+    results, data, description = test.test_cold_pcm_thermal_storage(unittest=False)
+    print(results)
 
-        data.loc[hour, "T_DailyStorage_C"] = tank.T_tank_K - 273.0
-
-    print("Print Results....")
-
+    # plot results
     analysis_fields = ["Q_DailyStorage_gen_directload_W", "Q_DailyStorage_to_storage_W"]
     traces = []
     fig = go.Figure()
@@ -362,9 +324,8 @@ if __name__ == '__main__':
 
     fig.add_trace(go.Line(x=data.index, y=data["Q_DailyStorage_content_W"] / 1000, yaxis='y', name=NAMING["Q_DailyStorage_content_W"], line_shape='spline'))
     fig.add_trace(go.Line(x=data.index, y=data["T_DailyStorage_C"], yaxis='y2', name=NAMING["T_DailyStorage_C"], line_shape='spline'))
-    fig.update_layout(title=tank.description,
+    fig.update_layout(title=description,
                         yaxis=dict(title='Load [kWh]'),
                             yaxis2=dict(title='Tank Temperature [C]', overlaying='y', side='right'))
     fig.show()
-    print(data.head())
 
