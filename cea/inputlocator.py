@@ -417,7 +417,7 @@ class InputLocator(object):
             return []
         import pandas as pd
         data = pd.read_excel(self.get_database_conversion_systems(), sheet_name="TES")
-        data = data[data["Type"]== "COOLING"]
+        data = data[data["type"] == "COOLING"]
         names = sorted(data["code"])
         return names
 
