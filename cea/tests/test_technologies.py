@@ -35,10 +35,11 @@ class TestColdPcmThermalStorage(unittest.TestCase):
         cls.size_storage_Wh = json.loads(cls.test_config.get("test_storage_tank", "size_storage_Wh")) # the size of the storage to test
         cls.T_ambient_K = json.loads(cls.test_config.get("test_storage_tank", "T_ambient_K")) # the outdoor temperature of the storage
         cls.days_to_test = json.loads(cls.test_config.get("test_storage_tank", "days_to_test")) # the number of days to test the storage
-        cls.charging_rate_per_hour_perc = json.loads(cls.test_config.get("test_storage_tank", "charging_rate_per_hour_perc")) # the rate of charge per hour as a function of the size
-        cls.discharging_rate_per_hour_perc = json.loads(cls.test_config.get("test_storage_tank", "discharging_rate_per_hour_perc")) # the rate of discharge per hour as a function of the size
+        cls.charging_rate_per_hour_perc = json.loads(cls.test_config.get("test_storage_tank", "charging_fraction_per_hour_perc")) # the rate of charge per hour as a function of the size
+        cls.discharging_rate_per_hour_perc = json.loads(cls.test_config.get("test_storage_tank", "discharging_fraction_per_hour_perc")) # the rate of discharge per hour as a function of the size
         cls.hourly_operation_schedule_day = json.loads(cls.test_config.get("test_storage_tank", "hourly_operation_schedule_day")) # vector with tuples describing whether the storage is charging, balanced, or discharging and for how long. This is only for one day.
         cls.expected_results = json.loads(cls.test_config.get("test_storage_tank", "expected_results")) # vector storing the results expected of the test
+        cls.expected_results_costs = json.loads(cls.test_config.get("test_storage_tank", "expected_results_costs"))
 
         #getting the number of storage systems available
         cls.storage_properties = pd.read_excel(cls.locator.get_database_conversion_systems(), sheet_name="TES")
@@ -101,6 +102,23 @@ class TestColdPcmThermalStorage(unittest.TestCase):
             np.testing.assert_allclose(results, self.expected_results)
 
         return results, data, tank.description
+
+    def test_cold_pcm_thermal_storage_costs(self, unittest=True):
+        # initailize tank
+        tank = Storage_tank_PCM(size_Wh=self.size_storage_Wh,
+                                properties=self.storage_properties,
+                                T_ambient_K=self.T_ambient_K,
+                                type_storage=self.type_storage)
+        Capex_a_storage_USD, Opex_fixed_storage_USD, Capex_total_USD = tank.costs_storage()
+
+        # calculate results to assert
+        results = [tank.V_tank_m3, Capex_a_storage_USD, Opex_fixed_storage_USD, Capex_total_USD]
+        # Just for the unittest - check assertion
+        if unittest:
+            np.testing.assert_allclose(results, self.expected_results_costs)
+
+        return results
+
 
 class TestCoolingTower(unittest.TestCase):
     def test_CT_partload_factor(self):

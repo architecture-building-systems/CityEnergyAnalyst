@@ -300,7 +300,7 @@ if __name__ == '__main__':
     from cea.plots.variable_naming import COLOR, NAMING
 
     # selct one tank to test
-    type_storage = "TES2"
+    type_storage = "TES6"
 
     # test tank based in unittests (Check the unittests to see how this works)
     from cea.tests.test_technologies import TestColdPcmThermalStorage
@@ -311,6 +311,10 @@ if __name__ == '__main__':
     # the test returns a. results of the unittest, b. the data, c. a description of the tank.
     # the first is used as reference parameter o fthe unittest. The B and C are used to make a plot as follows.
     results, data, description = test.test_cold_pcm_thermal_storage(unittest=False)
+    print(results)
+
+    #here is the second test about volume and costs of the storage
+    results = test.test_cold_pcm_thermal_storage_costs(unittest=False)
     print(results)
 
     # plot results
@@ -326,6 +330,12 @@ if __name__ == '__main__':
     fig.add_trace(go.Line(x=data.index, y=data["T_DailyStorage_C"], yaxis='y2', name=NAMING["T_DailyStorage_C"], line_shape='spline'))
     fig.update_layout(title=description,
                         yaxis=dict(title='Load [kWh]'),
-                            yaxis2=dict(title='Tank Temperature [C]', overlaying='y', side='right'))
+                            yaxis2=dict(title='Tank Temperature [C]', overlaying='y', side='right', range=[-1, 14]))
+    fig.update_layout(legend=dict(
+        yanchor="top",
+        y=0.99,
+        xanchor="left",
+        x=0.01
+    ))
     fig.show()
 
