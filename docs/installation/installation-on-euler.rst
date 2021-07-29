@@ -62,21 +62,21 @@ Please login to Euler and conduct the following steps.
 
 ::
 
-    bsub -n 1 -R singularity -R light -Is bash
+    $ bsub -n 1 -R singularity -R light -Is bash
 
 - Load eth_proxy to connect to the internet from compute nodes
 
 ::
 
-    module load eth_proxy
+    $ module load eth_proxy
 
 
 - Pull the container image with Sigularity
 
 ::
 
-    cd $SCRATCH
-    singularity pull docker://cityenergyanalyst/cea
+    $ cd $SCRATCH
+    $ singularity pull docker://cityenergyanalyst/cea
 
 
 - Run the container interactively as shell
@@ -106,7 +106,7 @@ on Euler, as the login nodes are not intended for running simulations. See clust
 
 ::
 
-    bsub -n 1 -R singularity -R "rusage[mem=2048]" -W 1:00 "SINGULARITY_HOME=/projects singularity run -B $SCRATCH cea_latest.sif cea workflow --workflow /cluster/scratch/username/workflow.yml"
+    $ bsub -n 1 -R singularity -R "rusage[mem=2048]" -W 1:00 "SINGULARITY_HOME=/projects singularity run -B $SCRATCH cea_latest.sif cea workflow --workflow /cluster/scratch/username/workflow.yml"
 
 
 Other Commands
@@ -118,13 +118,13 @@ Before building a new singularity container, it is suggested to clean up the fol
 
 ::
 
-    cd $SCRATCH
-    rm cea_latest.sif
+    $ cd $SCRATCH
+    $ rm cea_latest.sif
 
 
 - To clean up cache files
 
 ::
 
-    singularity cache clean
+    $ singularity cache clean
 
