@@ -20,23 +20,23 @@ Building the image
 To build the docker image, navigate to the folder ``docker/`` in the CityEnergyAnalyst repository. Execute the
 following command::
 
-   $ docker build -t dockeruser/cea:latest .. -f .
+   > docker build -t dockeruser/cea:latest .. -f .
 
 Notice the ``.`` at the end of the command - be sure to include it, as it tells ``docker`` where to find the
 ``Dockerfile``.
 
 The docker image should show up in your local computer::
 
-    $ docker images
+    > docker images
     REPOSITORY                      TAG       IMAGE ID       CREATED          SIZE
     cityenergyanalyst/cea           latest    9963cd876a48   19 minutes ago   3.06GB
 
 To share the docker image, push the image to Dockerhub::
 
-    $ docker login
+    > docker login
         username: dockeruser
         password:
-    $ docker push dockeruser/cea:latest
+    > docker push dockeruser/cea:latest
 
 
 
@@ -45,8 +45,8 @@ Running the image in a new container
 
 The command::
 
-  docker run cityenergyanalyst/cea cea test
-  docker container run -t -p 5050:5050 cea-server
+  > docker run cityenergyanalyst/cea cea test
+  > docker container run -t -p 5050:5050 cea-server
 
 Will start the CEA server and display it's output. You should see something like this::
 
