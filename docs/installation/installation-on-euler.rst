@@ -94,17 +94,37 @@ Running the CEA
 You need to run the CEA scripts with their command line interface (CLI). Be sure to learn how to use the job system
 on Euler, as the login nodes are not intended for running simulations. See clusterwiki_.
 
-- Upload your CEA projects to ``\cluster\scratch\username``
+- Upload your CEA projects to ``\cluster\scratch\username``.
 
-- Upload a ``workflow.yml`` to ``\cluster\scratch\username``
+- Upload a ``workflow.yml`` to ``\cluster\scratch\username``.
 
-- In ``workflow.yml``, point to the CEA project as well as the steps you wished to simulated.
-Please refer to this `blog post <https://cityenergyanalyst.com/blog/2020/1/14/cea-workflow-how-to-automate-simulations>`_ on how to edit ``workflow.yml``.
+- Open ``workflow.yml``, point the project path to ``\cluster\scratch\username``.
+
+- In the same ``workflow.yml``, specify the steps you wish to simulate. Please refer to this `blog post <https://cityenergyanalyst.com/blog/2020/1/14/cea-workflow-how-to-automate-simulations>`_ on how to edit ``workflow.yml``.
 
 - Submit a batch job following this example command:
 
 ::
 
-    bsub -n 1 -R singularity -R "rusage[mem=2048]" -W 1:00 "singularity run -B $HOME -B $SCRATCH cea_latest.sif cea workflow --workflow /cluster/scratch/username/workflow.yml"
+    bsub -n 1 -R singularity -R "rusage[mem=2048]" -W 1:00 "SINGULARITY_HOME=/projects singularity run -B $SCRATCH cea_latest.sif cea workflow --workflow /cluster/scratch/username/workflow.yml"
 
+
+Other Commands
+---------------
+
+Before building a new singularity container, it is suggested to clean up the folder first.
+
+- To remove a singularity container (e.g., a container named ``cea_latest.sif`` that is installed in ``$SCRATCH``)
+
+::
+
+    cd $SCRATCH
+    rm cea_latest.sif
+
+
+- To clean up cache files
+
+::
+
+    singularity cache clean
 
