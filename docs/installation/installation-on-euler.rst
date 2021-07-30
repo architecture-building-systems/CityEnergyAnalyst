@@ -94,11 +94,11 @@ Running the CEA
 You need to run the CEA scripts with their command line interface (CLI). Be sure to learn how to use the job system
 on Euler, as the login nodes are not intended for running simulations. See clusterwiki_.
 
-- Upload your CEA projects to ``\cluster\scratch\username``.
+- Upload your CEA projects to ``\cluster\scratch\nethz-username``.
 
-- Upload a ``workflow.yml`` to ``\cluster\scratch\username``.
+- Upload a ``workflow.yml`` to ``\cluster\scratch\nethz-username``.
 
-- Open ``workflow.yml``, point the project path to ``\cluster\scratch\username``.
+- Open ``workflow.yml``, point the project path to ``\cluster\scratch\nethz-username``.
 
 - In the same ``workflow.yml``, specify the steps you wish to simulate. Please refer to this `blog post <https://cityenergyanalyst.com/blog/2020/1/14/cea-workflow-how-to-automate-simulations>`_ on how to edit ``workflow.yml``.
 
@@ -106,7 +106,7 @@ on Euler, as the login nodes are not intended for running simulations. See clust
 
 ::
 
-    $ bsub -n 1 -R singularity -R "rusage[mem=2048]" -W 1:00 "SINGULARITY_HOME=/projects singularity run -B $SCRATCH cea_latest.sif cea workflow --workflow /cluster/scratch/username/workflow.yml"
+    $ bsub -n 1 -R singularity -R "rusage[mem=2048]" -W 1:00 "SINGULARITY_HOME=/projects singularity run -B $SCRATCH cea_latest.sif cea workflow --workflow /cluster/scratch/nethz-username/workflow.yml"
 
 
 Other Commands
