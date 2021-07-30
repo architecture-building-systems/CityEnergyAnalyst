@@ -38,10 +38,15 @@ To share the docker image, push the image to Dockerhub::
         password:
     > docker push dockeruser/cea:latest
 
+To pull a docker image from Dockerhub::
 
+    > docker pull dockeruser/cea
 
 Running the image in a new container
 ------------------------------------
+
+
+
 
 The command::
 
