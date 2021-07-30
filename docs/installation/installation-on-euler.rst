@@ -114,7 +114,7 @@ Other Commands
 
 Before building a new singularity container, it is suggested to clean up the folders first.
 
-- To remove a singularity container (e.g., a container named ``cea_latest.sif`` that is installed in ``$SCRATCH``)
+- To remove a singularity container (e.g., a container named ``cea_latest.sif`` that is in ``$SCRATCH``)
 
 ::
 
