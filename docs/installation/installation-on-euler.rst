@@ -112,7 +112,7 @@ on Euler, as the login nodes are not intended for running simulations. See clust
 Other Commands
 ---------------
 
-Before building a new singularity container, it is suggested to clean up the folder first.
+Before building a new singularity container, it is suggested to clean up the folders first.
 
 - To remove a singularity container (e.g., a container named ``cea_latest.sif`` that is installed in ``$SCRATCH``)
 
