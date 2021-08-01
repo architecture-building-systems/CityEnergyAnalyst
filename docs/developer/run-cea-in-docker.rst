@@ -29,7 +29,7 @@ The docker image should show up in your local computer::
 
     > docker images
     REPOSITORY                      TAG       IMAGE ID       CREATED          SIZE
-    cityenergyanalyst/cea           latest    9963cd876a48   19 minutes ago   3.06GB
+    dockeruser/cea                  latest    9963cd876a48   19 minutes ago   3.06GB
 
 To share the docker image, push the image to Dockerhub::
 
@@ -50,7 +50,7 @@ Running the image in a new container
 
 The command::
 
-  > docker run cityenergyanalyst/cea cea test
+  > docker run dockeruser/cea cea test
   > docker container run -t -p 5050:5050 cea-server
 
 Will start the CEA server and display it's output. You should see something like this::
