@@ -1,7 +1,7 @@
 FROM continuumio/miniconda3 as cea-build
 
 # create the conda environment and install cea
-COPY ./docker/environment.yml /tmp/environment.yml
+COPY environment.yml /tmp/environment.yml
 RUN conda env create -f /tmp/environment.yml -n cea && conda clean -afy
 
 # conda-pack the environment
