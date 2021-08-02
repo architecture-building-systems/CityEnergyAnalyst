@@ -50,8 +50,8 @@ Running the image in a new container
 
 The command::
 
-  > docker run dockeruser/cea cea test
-  > docker container run -t -p 5050:5050 cea-server
+  > docker run --rm dockeruser/cea cea test
+  > docker run -t -p 5050:5050 cea-server
 
 Will start the CEA server and display it's output. You should see something like this::
 
@@ -64,14 +64,16 @@ Will start the CEA server and display it's output. You should see something like
 There's quite a lot going on here and if this is seems daunting, I suggest reading up on some Docker tutorials - I don't
 understand it well enough myself to feel confident enough to explain. But here are some observations:
 
-- The ``-t`` argument connects the container to your terminal, so you can see the output. You can drop this argument,
+- The ``--rm`` flag removes the container after it finishes running. This is useful when running the ``cea test`` command
+  so that the container does not persist after it exits after running the tests.
+- The ``-t`` flag connects the container to your terminal, so you can see the output. You can drop this argument,
   but then you'll not be able to see any error messages etc. of the backend.
-- The ``-p 5050:5050`` argument connects the port 5050 on the host machine (your computer) to the port 5050 in the
+- The ``-p 5050:5050`` flag connects the port 5050 on the host machine (your computer) to the port 5050 in the
   container (an instance of the cea-server docker image).
 - If you browse to http://localhost:5050/api/ you will see a description of the api you can use. This is the same
   api used by the CityEnergyAnalyst-GUI project, so you can essentially do anything that can be done in the GUI
   programmatically using this api.
 - The ENTRYPOINT of the image is set to ``source /venv/bin/activate && cea dashboard``. You can change that if you
-  would like to play around in the container: ``docker container run -it --entrypoint /bin/bash`` will take you directly
-  to the shell. The ``-it`` parameter sets up interactive and tty so you can actually _do_ something there. Note,
+  would like to play around in the container: ``docker run -it --entrypoint /bin/bash`` will take you directly
+  to the shell. The ``-it`` flag sets up interactive and tty so you can actually _do_ something there. Note,
   in order to use any of the CEA functionality, you'll need to type ``source /venv/bin/activate``.
