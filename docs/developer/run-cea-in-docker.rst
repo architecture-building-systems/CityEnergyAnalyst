@@ -20,7 +20,7 @@ Building the image
 To build the docker image, navigate to the folder ``docker/`` in the CityEnergyAnalyst repository. Execute the
 following command::
 
-   > docker build -t dockeruser/cea:latest .. -f .
+   > docker build -t dockeruser/cea:latest .
 
 Notice the ``.`` at the end of the command - be sure to include it, as it tells ``docker`` where to find the
 ``Dockerfile``.
