@@ -5,9 +5,11 @@ channels:
 dependencies:
 - deap
 - ephem
-- flask
+- flask=1.1.2
 - flask-restplus
-- flask-socketio
+- flask-socketio=4.3.2
+- gevent
+- gevent-websocket
 - ipykernel
 - ipython
 - jupyter
