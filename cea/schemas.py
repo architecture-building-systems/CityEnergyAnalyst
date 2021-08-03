@@ -4,12 +4,9 @@ Maintain access to the schemas (input- and output file descriptions) used by the
 parameter allows reading in schemas from ``schemas.yml`` files defined in plugins.
 """
 
-
-
-
-
 import os
 import pickle
+
 import pandas as pd
 import yaml
 import warnings
@@ -28,7 +25,6 @@ __status__ = "Production"
 # keep a cache of schemas.yml - this will never change so avoid re-reading it.
 # since we can actually call schemas with a varying list of plugins, store the resulting schemas dict
 # in a dict indexed by the
-from cea.utilities.yaml_ordered_dict import OrderedDictYAMLLoader
 
 __schemas = {}
 
@@ -49,7 +45,7 @@ def schemas(plugins):
         schemas_pickle = os.path.expanduser("~/schemas.yml.pickle")
 
         def load_schemas_dict_from_yaml():
-            schemas_dict = yaml.load(open(schemas_yml, "rb"), Loader=OrderedDictYAMLLoader)
+            schemas_dict = yaml.load(open(schemas_yml, "rb"), Loader=yaml.CLoader)
             # ... so write out a pickle for next time
             with open(schemas_pickle, "wb") as schemas_pickle_fp:
                 pickle.dump(schemas_dict, schemas_pickle_fp)
