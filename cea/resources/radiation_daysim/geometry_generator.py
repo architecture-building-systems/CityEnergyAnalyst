@@ -10,8 +10,8 @@ import os
 import pickle
 from itertools import repeat
 
-import geopandas as gpd
 from osgeo import gdal, osr
+import geopandas as gpd
 
 import cea
 
@@ -434,6 +434,11 @@ def calc_solid(face_footprint, range_floors, floor_to_floor_height):
     return bldg_solid
 
 
+class Points(object):
+    def __init__(self, point_to_evaluate):
+        self.point_to_evaluate = point_to_evaluate
+
+
 def calc_windows_walls(facade_list, wwr, potentially_intersecting_solids):
     window_list = []
     wall_list = []
@@ -448,13 +453,11 @@ def calc_windows_walls(facade_list, wwr, potentially_intersecting_solids):
 
         # evaluate if the surface intersects any other solid (important to erase non-active surfaces in the building
         # simulation model)
-        point_to_evaluate = modify.move_pt(ref_pypt, standard_normal, 0.1)  # tol of 10cm
+        data_point = Points(modify.move_pt(ref_pypt, standard_normal, 0.1))
 
         if number_intersecting_solids:
             # flag weather it intersects a surrounding geometry
-            intersects = np.vectorize(calc_intersection_face_solid)(
-                repeat(point_to_evaluate, number_intersecting_solids),
-                potentially_intersecting_solids)
+            intersects = np.vectorize(calc_intersection_face_solid)(potentially_intersecting_solids, data_point)
             intersects = sum(intersects)
         else:
             intersects = 0
@@ -488,9 +491,9 @@ def calc_windows_walls(facade_list, wwr, potentially_intersecting_solids):
     return window_list, wall_list, normals_win, normals_wall, wall_intersects
 
 
-def calc_intersection_face_solid(point_to_evaluate, potentially_intersecting_solid):
+def calc_intersection_face_solid(potentially_intersecting_solid, point):
     with cea.utilities.devnull():
-        point_in_solid = calculate.point_in_solid(point_to_evaluate, potentially_intersecting_solid)
+        point_in_solid = calculate.point_in_solid(point.point_to_evaluate, potentially_intersecting_solid)
     if point_in_solid:
         intersects = 1
     else:
