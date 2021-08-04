@@ -196,7 +196,7 @@ def thermal_network_simplified(locator, config, network_name):
                               node_df.Building.values]
             substation.substation_main_heating(locator, total_demand, building_names, DHN_barcode=DHN_barcode)
         else:
-            raise Exception('problem here')
+            raise Exception('There is no heating demand from any building. Please check the input files.')
 
         for building_name in building_names:
             substation_results = pd.read_csv(
