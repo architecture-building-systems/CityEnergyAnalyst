@@ -59,7 +59,9 @@ class TestConfiguration(unittest.TestCase):
         config = cea.config.Configuration()
         scenario = config.general.scenario
         expected_output = f"{scenario}/inputs/building-geometry/zone.shp"
-        self.assertEqual(os.path.normcase(config.create_new_scenario.zone), os.path.normcase(expected_output))
+        self.assertEqual(os.path.normcase(os.path.expanduser(config.create_new_scenario.zone)),
+                         os.path.normcase(os.path.expanduser(expected_output)))
+
 
 if __name__ == "__main__":
     unittest.main()
