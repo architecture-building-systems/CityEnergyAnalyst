@@ -25,6 +25,7 @@ __status__ = "Production"
 def calc_building_centroids(input_buildings_shp,
                             temp_path_building_centroids_shp,
                             list_district_scale_buildings,
+                            plant_buildings,
                             consider_only_buildings_with_demand=False,
                             type_network="DH",
                             total_demand=False):
@@ -40,10 +41,10 @@ def calc_building_centroids(input_buildings_shp,
             field = "QH_sys_MWhyr"
         elif type_network == "DC":
             field = "QC_sys_MWhyr"
-        buildings_with_load_df = total_demand[total_demand[field] > 0.0]
-        if buildings_with_load_df.shape[0] >= 2:
-            buildings_with_load = buildings_with_load_df['Name'].tolist()
-            zone_df = zone_df.loc[zone_df['Name'].isin(buildings_with_load)]
+        buildings_with_load = total_demand[total_demand[field] > 0.0].Name.tolist()
+        connected_buildings = buildings_with_load + plant_buildings
+        if len(connected_buildings) >= 2:
+            zone_df = zone_df.loc[zone_df['Name'].isin(connected_buildings)]
             zone_df = zone_df.reset_index(drop=True)
         else:
             raise Exception("We could not find two or more buildings with thermal energy demand the network layout "
