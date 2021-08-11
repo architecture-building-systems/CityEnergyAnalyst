@@ -146,7 +146,10 @@ def calc_steiner_spanning_tree(crs_projected,
             mst_nodes, mst_edges = add_plant_close_to_anchor(building_anchor, mst_nodes, mst_edges,
                                                              type_mat_default, pipe_diameter_default)
     elif os.path.exists(total_demand_location):
-        building_anchor = calc_coord_anchor(total_demand_location, mst_nodes, type_network)
+        if len(plant_building_names) > 0:
+            building_anchor = mst_nodes[mst_nodes['Building'].isin(plant_building_names)]
+        else:
+            building_anchor = calc_coord_anchor(total_demand_location, mst_nodes, type_network)
         mst_nodes, mst_edges = add_plant_close_to_anchor(building_anchor, mst_nodes, mst_edges,
                                                          type_mat_default, pipe_diameter_default)
 
