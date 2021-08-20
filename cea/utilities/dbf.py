@@ -11,7 +11,7 @@ import cea.config
 import warnings
 
 warnings.filterwarnings("ignore", category=UserWarning)
-import pysal
+import pysal.lib
 
 __author__ = "Clayton Miller"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"

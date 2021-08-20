@@ -1,0 +1,16 @@
+.git
+
+*.egg-info
+*.egg
+*.pyc
+*.swp
+
+__pycache__
+
+# Virtual environment
+.env
+.venv
+venv
+
+# PyCharm
+.idea

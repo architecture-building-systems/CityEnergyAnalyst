@@ -9,7 +9,7 @@ The CEA team
 Starting from version 2.9.1 the credits are structured alphabetically (surname) and split into the categories of developers,
 scrum master, project owner, project sponsor and collaborators.
 
-- Version 3.23.0 - May 2021
+- Version 3.24.0 - June 2021
 
     Developers:
     * [Amr Elesawy](https://systems.arch.ethz.ch/amr-elesawy)

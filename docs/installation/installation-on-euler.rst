@@ -19,6 +19,8 @@ Euler cluster.
 Logging on to the Euler cluster
 -------------------------------
 
+Estimated time: 1 hr
+
 You can login to the Euler cluster via the SSH protocol. If you use
 Linux or Mac OS X, then you can directly use SSH from within a shell as
 it is part of the operating system. If you are on Windows, you will need an ssh client. The CEA Console includes
@@ -41,30 +43,50 @@ After entering the above command in the shell, you will be asked for a
 password. Enter your nethz password. You are then greeted with the Euler
 welcome message.
 
-Installing dependencies
------------------------
+Detailed steps are described in the `Euler wiki <https://scicomp.ethz.ch/wiki/Getting_started_with_clusters>`_ of the Scientific Computing Service in ETHZ.
+For Windows users, it is recomendded to download WinSCP and MobaXterm.
+Please follow the steps in the wiki carefully, and consult the cluster support when Troubleshooting section (2.9) is not
+enough to solve your problwm.
 
-The Euler cluster has most of the dependencies for the CEA pre-installed. You just need to load the right module with
 
-::
+Build a CEA Singularity container
+---------------------------------
 
-    module load new gcc/4.8.2 python/2.7.14
+Estimated time: 20 mins
 
-You can add that to the file ``~/.bash_profile`` if you don't want to type it every time you log into Euler.
+You need to build a Singularity container via a cea docker image.
+The latest docker image of cea is published `here <https://hub.docker.com/u/cityenergyanalyst>`_.
+Please login to Euler and conduct the following steps.
 
-Install the CEA with the following command:
-
-::
-
-   pip install --user cityenergyanalyst
-
-This will install the ``cea`` command to ``~/.local/bin``, so add that to your PATH variable with
+- Request a compute node with Singularity
 
 ::
 
-   export PATH=~/.local/bin:$PATH
+    $ bsub -n 1 -R singularity -R light -Is bash
 
-You can add that to the file ``~/.bash_profile`` if you don't want to type it every time you log into Euler.
+- Load eth_proxy to connect to the internet from compute nodes
+
+::
+
+    $ module load eth_proxy
+
+
+- Pull the container image with Sigularity
+
+::
+
+    $ cd $SCRATCH
+    $ singularity pull docker://cityenergyanalyst/cea
+
+
+- Run the container interactively as shell
+
+::
+
+    $ singularity shell -B $HOME -B $SCRATCH cea_latest.sif
+    Singularity> source /venv/bin/activate
+    (venv) Singularity> cea test
+
 
 Running the CEA
 ---------------
@@ -72,4 +94,37 @@ Running the CEA
 You need to run the CEA scripts with their command line interface (CLI). Be sure to learn how to use the job system
 on Euler, as the login nodes are not intended for running simulations. See clusterwiki_.
 
+- Upload your CEA projects to ``\cluster\scratch\nethz-username``.
+
+- Upload a ``workflow.yml`` to ``\cluster\scratch\nethz-username``.
+
+- Open ``workflow.yml``, point the project path to ``\cluster\scratch\nethz-username``.
+
+- In the same ``workflow.yml``, specify the steps you wish to simulate. Please refer to this `blog post <https://cityenergyanalyst.com/blog/2020/1/14/cea-workflow-how-to-automate-simulations>`_ on how to edit ``workflow.yml``.
+
+- Submit a batch job following this example command:
+
+::
+
+    $ bsub -n 1 -R singularity -R "rusage[mem=2048]" -W 1:00 "SINGULARITY_HOME=/projects singularity run -B $SCRATCH cea_latest.sif cea workflow --workflow /cluster/scratch/nethz-username/workflow.yml"
+
+
+Other Commands
+---------------
+
+Before building a new singularity container, it is suggested to clean up the folders first.
+
+- To remove a singularity container (e.g., a container named ``cea_latest.sif`` that is in ``$SCRATCH``)
+
+::
+
+    $ cd $SCRATCH
+    $ rm cea_latest.sif
+
+
+- To clean up cache files
+
+::
+
+    $ singularity cache clean
 

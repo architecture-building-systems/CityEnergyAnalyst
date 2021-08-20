@@ -1,3 +1,7 @@
+- 2021-06-24 - 3.22.0 - #2992 Update gdal imports to use osgeo instead
+- 2021-06-23 - 3.22.0 - #2993 Remove unused import
+- 2021-06-08 - 3.22.0 - #2986 Update data migrator
+- 2021-06-02 - 3.22.0 - #2972 Add empty property to MultiChoice Parameter
 - 2021-05-11 - 3.22.0 - #2963 fixes in SG database: removing repeated STANDARDs in CONSTRUCTION_STANDARD.xlsx
 - 2021-05-01 - 3.22.0 - #2957 "Pax" means passenger
 - 2021-04-30 - 3.22.0 - #2965 included partitions
