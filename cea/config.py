@@ -39,8 +39,7 @@ class Configuration(object):
         import cea.plugin
         cea.plugin.add_plugins(self.default_config, self.user_config)
 
-        self.sections = collections.OrderedDict([(section_name, Section(section_name, self))
-                                                 for section_name in self.default_config.sections()])
+        self.sections = self._init_sections()
 
         # Only write user config if it does not exist
         if not os.path.exists(CEA_CONFIG):
@@ -91,6 +90,10 @@ class Configuration(object):
 
         self.sections = {section_name: Section(section_name, config=self)
                          for section_name in self.default_config.sections()}
+
+    def _init_sections(self):
+        return collections.OrderedDict([(section_name, Section(section_name, self))
+                                        for section_name in self.default_config.sections()])
 
     def restrict_to(self, option_list):
         """
@@ -229,6 +232,10 @@ class Configuration(object):
         except KeyError:
             raise KeyError(fqname)
 
+    def refresh_plugins(self):
+        import cea.plugin
+        cea.plugin.add_plugins(self.default_config, self.user_config)
+        self.sections = self._init_sections()
 
 def parse_command_line_args(args):
     """Group the arguments into a dictionary: parameter-name -> value"""
@@ -417,7 +424,7 @@ class PathParameter(Parameter):
 
     def decode(self, value):
         """Always return a canonical path"""
-        return str(os.path.normpath(os.path.abspath(value)))
+        return str(os.path.normpath(os.path.abspath(os.path.expanduser(value))))
 
 
 class FileParameter(Parameter):
@@ -651,6 +658,10 @@ class ListParameter(Parameter):
 class PluginListParameter(ListParameter):
     """A list of cea.plugin.Plugin instances"""
     typename = "PluginListParameter"
+
+    def set(self, value):
+        super(PluginListParameter, self).set(value)
+        self.config.refresh_plugins()
 
     def encode(self, list_of_plugins):
         """Make sure we don't duplicate any of the plugins"""

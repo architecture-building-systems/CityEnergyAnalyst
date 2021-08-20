@@ -1,4 +1,5 @@
 import os
+import tempfile
 import unittest
 
 import cea.config
@@ -15,7 +16,7 @@ POLYGON_COORDINATES = [(8.513465734818856, 47.178027239429234), (8.5154720271620
 class TestInputSetupWorkflowCase(unittest.TestCase):
     def setUp(self):
         self.config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
-        self.config.project = os.path.expandvars("${TEMP}/reference-case-open")
+        self.config.project = os.path.join(tempfile.gettempdir(), "reference-case-open")
 
     def test_input_setup_workflow(self):
         self.config.create_polygon.coordinates = POLYGON_COORDINATES
