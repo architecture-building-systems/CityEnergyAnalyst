@@ -897,12 +897,35 @@ class InputLocator(object):
         return os.path.join(self.solar_potential_folder(), "{building}_PV.csv".format(building=building))
 
     def PV_totals(self):
-        """scenario/outputs/data/potentials/solar/{building}_PV.csv"""
+        """scenario/outputs/data/potentials/solar/PV_total.csv"""
         return os.path.join(self.solar_potential_folder(), 'PV_total.csv')
 
     def PV_total_buildings(self):
-        """scenario/outputs/data/potentials/solar/{building}_PV.csv"""
+        """scenario/outputs/data/potentials/solar/PV_total_buildings.csv"""
         return os.path.join(self.solar_potential_folder(), 'PV_total_buildings.csv')
+
+    def BIA_potential_folder(self):
+        return self._ensure_folder(self.scenario, 'outputs', 'data', 'potentials', 'agriculture')
+
+    def BIA_daily_DLI(self, building):
+        """scenario/outputs/data/potentials/agriculture/{building}_DLI_daily.csv"""
+        return os.path.join(self.BIA_potential_folder(), "{building}_DLI_daily.csv".format(building=building))
+
+    def BIA_daily_DLI_totals(self, building):
+        """scenario/outputs/data/potentials/agriculture/DLI_daily_total.csv"""
+        return os.path.join(self.BIA_potential_folder(), 'DLI_daily_total.csv')
+
+    def BIA_results(self, building):
+        """scenario/outputs/data/potentials/agriculture/{building}_BIA.csv"""
+        return os.path.join(self.BIA_potential_folder(), "{building}_BIA.csv".format(building=building))
+
+    def BIA_totals(self):
+        """scenario/outputs/data/potentials/agriculture/{building}_BIA_total.csv"""
+        return os.path.join(self.BIA_potential_folder(), 'BIA_total.csv')
+
+    def BIA_total_buildings(self):
+        """scenario/outputs/data/potentials/agriculture/{building}_PV.csv"""
+        return os.path.join(self.BIA_potential_folder(), 'BIA_total_buildings.csv')
 
     def PV_metadata_results(self, building):
         """scenario/outputs/data/potentials/solar/{building}_PV_sensors.csv"""
