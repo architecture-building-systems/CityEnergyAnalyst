@@ -105,7 +105,7 @@ def filter_low_potential(radiation_json_path, metadata_csv_path, config):
     # set min yearly radiation threshold for sensor selection
     # keep sensors above min production in sensors_rad
     max_annual_radiation = sensors_rad_sum.max().values[0]
-    annual_radiation_threshold_Whperm2 = float(config.agriculture.annual_radiation_threshold)*1000
+    annual_radiation_threshold_Whperm2 = float(config.agriculture.annual_radiation_threshold_BIA)*1000
     sensors_metadata_clean = sensors_metadata[sensors_metadata.total_rad_Whm2 >= annual_radiation_threshold_Whperm2]
     sensors_rad_clean = sensors_rad[sensors_metadata_clean.index.tolist()]  # keep sensors above min radiation
 

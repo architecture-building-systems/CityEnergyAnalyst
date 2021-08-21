@@ -1,5 +1,6 @@
 """
-This script calculates the Daily Light Integral (DLI) in [mol/m2/day]
+This script calculates:
+the Daily Light Integral (DLI) in [mol/m2/day] for each sensor of solar radiation.
 """
 
 import os
@@ -8,21 +9,13 @@ from itertools import repeat
 from math import *
 from multiprocessing import Pool
 
-import numpy as np
 import pandas as pd
-from geopandas import GeoDataFrame as gdf
-from scipy import interpolate
 
 import cea.config
 import cea.inputlocator
 import cea.utilities.parallel
-from cea.analysis.costs.equations import calc_capex_annualized
 from cea.constants import HOURS_IN_YEAR
-from cea.technologies.solar import constants
-from cea.utilities import epwreader
-from cea.utilities import solar_equations
 from cea.utilities import agriculture_equations
-from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile
 from cea.resources.radiation_daysim import daysim_main, geometry_generator
 
 
@@ -90,7 +83,7 @@ def calc_DLI(locator, config, building_name):
                                     float_format='%.2f',
                                     na_rep=0)  # print sensors metadata and daily DLI
 
-        print('Calculations of (daily) DLI for each sensor on Building', building_name, 'done - time elapsed: %.2f seconds' % (time.perf_counter() - t0))
+        print('Calculations of DLI for each sensor on Building', building_name, 'done - time elapsed: %.2f seconds' % (time.perf_counter() - t0))
 
     else:  # This loop is activated when a building has not sufficient solar potential
         print("Unfortunately, Building", building_name, "has no BIA potential.")
@@ -269,20 +262,8 @@ def main(config):
 
     print('Running Day Light Integral with scenario = %s' % config.scenario)
     print('Running Day Light Integral with annual-radiation-threshold-kWh/m2 = %s' % config.agriculture.annual_radiation_threshold_BIA)
-    print('Running Day Light Integral with panel-on-roof = %s' % config.agriculture.crop_on_roof)
-    # print('Running Day Light Integral with panel-on-wall = %s' % config.agriculture.crop_on_wall)
-    # print('Running photovoltaic with solar-window-solstice = %s' % config.agriculture.solar_window_solstice)
-    # print('Running photovoltaic with type-crop = %s' % config.agriculture.type_crop)
-    # if config.agriculture.custom_tilt_angle:
-    #     print('Running Day Light Integral with custom-tilt-angle = %s and panel-tilt-angle = %s' %
-    #           (config.agriculture.custom_tilt_angle, config.agriculture.panel_tilt_angle))
-    # else:
-    #     print('Running Day Light Integral with custom-tilt-angle = %s' % config.agriculture.custom_tilt_angle)
-    # if config.agriculture.custom_roof_coverage:
-    #     print('Running Day Light Integral with custom-roof-coverage = %s and max-roof-coverage = %s' %
-    #           (config.agriculture.custom_roof_coverage, config.agriculture.max_roof_coverage))
-    # else:
-    #     print('Running Day Light Integral with custom-roof-coverage = %s' % config.agriculture.custom_roof_coverage)
+    print('Running Day Light Integral with crop-on-roof = %s' % config.agriculture.crop_on_roof)
+    print('Running Day Light Integral with crop-on-wall = %s' % config.agriculture.crop_on_wall)
 
     building_names = locator.get_zone_building_names()
     num_process = config.get_number_of_processes()
