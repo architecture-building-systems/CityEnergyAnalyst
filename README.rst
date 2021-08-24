@@ -37,8 +37,7 @@ allows to study the effects, trade-offs and synergies of urban design options, b
 Cite us:
 --------
 
-For V3.10.0 (stable):    |V3.10.0|
+For V3.24.0 (stable):    |V3.24.0|
 
-.. |V3.10.0| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.4032169.svg
-   :target: https://doi.org/10.5281/zenodo.4032169
+.. |V3.10.0| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.5037913.svg   :target: https://doi.org/10.5281/zenodo.5037913
 
