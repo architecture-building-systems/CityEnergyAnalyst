@@ -116,9 +116,7 @@ Life Cycle Analysis:
     parameters: ['general:scenario', emissions]
     input-files:
       - [get_building_architecture]
-      - [get_building_typology]
       - [get_zone_geometry]
-      - [get_building_supply]
 
   - name: system-costs
     label: System Costs

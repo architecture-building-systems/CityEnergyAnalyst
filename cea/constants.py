@@ -31,6 +31,7 @@ LATENT_HEAT_OF_AIR_KJPERKG = 2257  # latent heat of air kJ/kg
 CONVERSION_AREA_TO_FLOOR_AREA_RATIO = 1.5  # conversion component's area to floor area
 EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS_GHG_kgm2 = 43 #kg COs/m2 gross floor area
 EMISSIONS_EMBODIED_EXCAVATIONS_GHG_kgm3 = 18 # average of excavation with and without grundwasser accroding to SIA 2032
+EMISSIONS_EMBODIED_PV_GHG_kgm2 = 324 # average of PV according to SIA 2032
 
 # Date data
 DAYS_IN_YEAR = 365

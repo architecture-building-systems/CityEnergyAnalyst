@@ -1629,6 +1629,18 @@ get_building_architecture:
         unit: '[-]'
         values: '{0...n}'
         min: 0
+      area_pv:
+        description: Area with solar pv (for embodied emissions)
+        type: float
+        unit: '[m2]'
+        values: '{0...n}'
+        min: 0.0
+      area_balcon:
+        description: Area of balconies (for embodied emissions)
+        type: float
+        unit: '[m2]'
+        values: '{0...n}'
+        min: 0.0
       Es:
         description: Fraction of gross floor area with electrical demands.
         type: float
@@ -1727,7 +1739,18 @@ get_building_architecture:
             sheet: SHADING
             column: code
       type_wall:
-        description: External wall construction assembly (relates to "code" in ENVELOPE
+        description: External wall construction assembly above ground (relates to "code" in ENVELOPE
+          assemblies)
+        type: string
+        unit: '[-]'
+        values: alphanumeric
+        choice:
+          lookup:
+            path: get_database_envelope_systems
+            sheet: WALL
+            column: code
+      type_wall_b:
+        description: External wall construction assembly below ground (relates to "code" in ENVELOPE
           assemblies)
         type: string
         unit: '[-]'
@@ -2693,6 +2716,18 @@ get_database_construction_standards:
   schema:
     ENVELOPE_ASSEMBLIES:
       columns:
+        area_pv:
+          description: Area with solar pv (for embodied emissions)
+          type: float
+          unit: '[m2]'
+          values: '{0...n}'
+          min: 0.0
+        area_balcon:
+          description: Area of balconies (for embodied emissions)
+          type: float
+          unit: '[m2]'
+          values: '{0...n}'
+          min: 0.0
         Es:
           description: Fraction of gross floor area with electrical demands.
           max: 1.0
@@ -2807,7 +2842,18 @@ get_database_construction_standards:
               column: code
               path: get_database_envelope_systems
               sheet: WALL
-          description: External wall construction assembly (relates to "code" in ENVELOPE
+          description: External wall construction assembly above ground (relates to "code" in ENVELOPE
+            assemblies)
+          type: string
+          unit: 'NA'
+          values: alphanumeric
+        type_wall_b:
+          choice:
+            lookup:
+              column: code
+              path: get_database_envelope_systems
+              sheet: WALL
+          description: External wall construction assembly below ground (relates to "code" in ENVELOPE
             assemblies)
           type: string
           unit: 'NA'
@@ -12899,7 +12945,13 @@ get_radiation_materials:
         unit: 'NA'
         values: alphanumeric
       type_wall:
-        description: External wall construction assembly (relates to "code" in ENVELOPE
+        description: External wall construction assembly above ground (relates to "code" in ENVELOPE
+          assemblies)
+        type: string
+        unit: 'NA'
+        values: alphanumeric
+      type_wall_b:
+        description: External wall construction assembly below ground (relates to "code" in ENVELOPE
           assemblies)
         type: string
         unit: 'NA'
