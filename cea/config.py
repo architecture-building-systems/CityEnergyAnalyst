@@ -211,8 +211,8 @@ class Configuration(object):
         :return number_of_processes: Number of processes to use.
         """
         if self.multiprocessing:
-            import multiprocessing
-            number_of_processes = multiprocessing.cpu_count() - self.number_of_CPUs_to_keep_free
+            import psutil
+            number_of_processes = len(psutil.Process().cpu_affinity()) - self.number_of_CPUs_to_keep_free
             return max(1, number_of_processes)  # ensure that at least one process is being used
         else:
             return 1
