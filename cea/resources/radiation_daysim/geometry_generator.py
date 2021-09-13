@@ -10,9 +10,8 @@ import os
 import pickle
 from itertools import repeat
 
-import gdal
+from osgeo import gdal, osr
 import geopandas as gpd
-import osr
 
 import cea
 
