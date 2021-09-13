@@ -83,7 +83,7 @@ Please login to Euler and conduct the following steps.
 
 ::
 
-    $ singularity shell -B $HOME -B $SCRATCH cea_latest.sif
+    $ SINGULARITY_HOME=/projects singularity shell -B $SCRATCH cea_latest.sif
     Singularity> source /venv/bin/activate
     (venv) Singularity> cea test
 
