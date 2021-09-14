@@ -18,9 +18,9 @@ COPY . /cea
 RUN /bin/bash -c "source /venv/bin/activate && pip install /cea"
 
 # Build Daysim in image to prevent errors in OS lib dependencies
-FROM debian:stable-slim AS daysim-build
+FROM ubuntu:latest AS daysim-build
 
-RUN apt update && apt install -y \
+RUN apt update && DEBIAN_FRONTEND="noninteractive" apt install -y \
 git \
 cmake \
 build-essential \
@@ -32,7 +32,7 @@ RUN git clone https://github.com/MITSustainableDesignLab/Daysim.git
 # only build required binaries
 RUN mkdir build \
 && cd build \
-&& cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_HEADLESS=ON ../Daysim \
+&& cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_HEADLESS=ON -DOpenGL_GL_PREFERENCE=GLVND ../Daysim \
 && make ds_illum \
 && make epw2wea \
 && make gen_dc \
@@ -43,14 +43,14 @@ RUN mkdir build \
 # uncommenting line in CMakeLists to build rtrace_dc
 RUN sed -i 's/#add_definitions(-DDAYSIM)/add_definitions(-DDAYSIM)/' /Daysim/src/rt/CMakeLists.txt \
 && cd build \
-&& cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_HEADLESS=ON ../Daysim \
+&& cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_HEADLESS=ON -DOpenGL_GL_PREFERENCE=GLVND ../Daysim \
 && make rtrace \
 && mv ./bin/rtrace /Daysim_build/rtrace_dc
 
 # The runtime-stage image; we can use Debian as the
 # base image since the Conda env also includes Python
 # for us.
-FROM debian:stable-slim AS cea-runtime
+FROM ubuntu:latest AS cea-runtime
 
 # For pythonOCC to work (used by py4design)
 RUN apt-get update && apt-get install -y libgl1
