@@ -348,6 +348,13 @@ Utilities:
     parameters: ["general:project", "general:scenario", "plots", "plots-comparisons", "plots-optimization",
                  "plots-supply-system"]
 
+  - name: save-files-to-hdf5
+    label: Save files to hdf5
+    description: Compact files in the same folder into one hierarchical data format (hdf) file.
+    interfaces: [cli]
+    module: cea.utilities.save_files_to_hdf5
+    parameters: ['general:scenario']
+
 default:
 
   - name: multi-criteria-analysis

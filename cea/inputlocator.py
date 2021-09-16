@@ -130,6 +130,10 @@ class InputLocator(object):
         """Returns the inputs folder of a scenario"""
         return os.path.join(self.scenario, "inputs")
 
+    def get_outputs_data_folder(self):
+        """scenario/outputs/data"""
+        return self._ensure_folder(self.scenario, 'outputs', 'data')
+
     def get_optimization_results_folder(self):
         """Returns the folder containing the scenario's optimization results"""
         return self._ensure_folder(self.scenario, 'outputs', 'data', 'optimization')
