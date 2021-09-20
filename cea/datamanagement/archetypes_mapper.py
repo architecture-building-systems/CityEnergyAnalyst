@@ -188,6 +188,8 @@ def architecture_mapper(locator, typology_df):
               'Ns',
               'Es',
               'void_deck',
+              'area_pv',
+              'area_balcon',
               'wwr_north',
               'wwr_west',
               'wwr_east',
@@ -199,6 +201,7 @@ def architecture_mapper(locator, typology_df):
               'type_base',
               'type_roof',
               'type_wall',
+              'type_wall_b',
               'type_win',
               'type_shade']
     dataframe_to_dbf(prop_architecture_df[fields], locator.get_building_architecture())
