@@ -19,16 +19,20 @@ There are different ways in which you can interact with the code of CEA.
 #. The dashboard: This a web-based interface to CEA, open source and developed by the CEA team.
 
 In order to run the command line interface in Docker, you will need to open the Terminal (you can find it in your Mac's `Applications`) and run the following command:
-`> docker run --name cea_container -v path_to_your_cea_projects:/projects dockeruser/cea cea workflow --workflow /projects/workflow.yml`
+
+``docker run --name cea_container -v path_to_your_cea_projects:/projects dockeruser/cea cea workflow --workflow /projects/workflow.yml``
+
 That's it! `You can run the CEA command interface normally`_.
-.. _ `You can run the CEA command interface normally`: https://city-energy-analyst.readthedocs.io/en/latest/developer/interfaces.html#the-command-line-interface
+
+.. _`You can run the CEA command interface normally`: https://city-energy-analyst.readthedocs.io/en/latest/developer/interfaces.html#the-command-line-interface
 
 In order to run the dashboard, you will need to do the following:
-#. Open the Terminal (you can find it in your Mac's `Applications`) and run the following command: `docker run -t -p 5050:5050 -v path_to_your_cea_projects:/projects dockeruser/cea`
-#. Open a new tab on Terminal and type `cd Documents\GitHub\CityEnergyAnalyst-GUI`
-#. Run the command `yarn`
+
+#. Open the Terminal (you can find it in your Mac's *Applications* folder) and run the following command: ``docker run -t -p 5050:5050 -v path_to_your_cea_projects:/projects dockeruser/cea``
+#. Open a new tab on Terminal and type ``cd Documents\GitHub\CityEnergyAnalyst-GUI``
+#. Run the command ``yarn``
 #. The CEA dashboard should open.
 
-You can run the CEA dashboard interface normally... well, mostly. Note that you will not be running CEA directly on your computer, so you will need to select a project on your Docker container. So if your project is located, for example, in the directory `/Users/username/Documents/CEA_projects/my_project` you will need to select `projects/my_project` as your project in the CEA Dashboard. 
+You can run the CEA dashboard interface normally... well, mostly. Note that you will not be running CEA directly on your computer, so you will need to select a project on your Docker container. So if your project is located, for example, in the directory ``/Users/username/Documents/CEA_projects/my_project`` you will need to select ``/projects/my_project`` as your project in the CEA Dashboard. 
 
 Once your project is open, you can run the CEA dashboard normally. Note that your jobs in the dashboard might be listed as "pending" even when they have finished. If you would like to check if your job has finished, you can check the Terminal - it's still running in the background.
