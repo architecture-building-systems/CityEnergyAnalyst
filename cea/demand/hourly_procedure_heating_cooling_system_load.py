@@ -24,7 +24,7 @@ __status__ = "Production"
 B_F = constants.B_F
 
 
-def calc_heating_cooling_loads(bpr, tsd, t):
+def calc_heating_cooling_loads(bpr, tsd, t, config):
     """
 
     :param bpr:
@@ -46,13 +46,13 @@ def calc_heating_cooling_loads(bpr, tsd, t):
                 or not control_heating_cooling_systems.heating_system_is_active(tsd, t):
 
             # no system = no loads
-            rc_model_temperatures = calc_rc_no_loads(bpr, tsd, t)
+            rc_model_temperatures = calc_rc_no_loads(bpr, tsd, t, config)
 
         elif control_heating_cooling_systems.has_radiator_heating_system(bpr)\
                 or control_heating_cooling_systems.has_floor_heating_system(bpr):
 
             # radiator or floor heating
-            rc_model_temperatures = calc_heat_loads_radiator(bpr, t, tsd)
+            rc_model_temperatures = calc_heat_loads_radiator(bpr, t, tsd, config)
 
             tsd['Ehs_lat_aux'][t] = 0  # TODO
 
@@ -61,14 +61,14 @@ def calc_heating_cooling_loads(bpr, tsd, t):
 
         elif control_heating_cooling_systems.has_central_ac_heating_system(bpr):
 
-            rc_model_temperatures = calc_heat_loads_central_ac(bpr, t, tsd)
+            rc_model_temperatures = calc_heat_loads_central_ac(bpr, t, tsd, config)
 
         else:
             # message and no heating system
             warnings.warn('Unknown heating system. Calculation without system.')
 
             # no system = no loads
-            rc_model_temperatures = calc_rc_no_loads(bpr, tsd, t)
+            rc_model_temperatures = calc_rc_no_loads(bpr, tsd, t, config)
 
         # update tsd
         update_tsd_no_cooling(tsd, t)
@@ -88,7 +88,7 @@ def calc_heating_cooling_loads(bpr, tsd, t):
                 or not control_heating_cooling_systems.cooling_system_is_active(bpr, tsd, t)):
 
             # no system = no loads
-            rc_model_temperatures = calc_rc_no_loads(bpr, tsd, t)
+            rc_model_temperatures = calc_rc_no_loads(bpr, tsd, t, config)
 
         elif control_heating_cooling_systems.has_local_ac_cooling_system(bpr):
 
@@ -96,23 +96,23 @@ def calc_heating_cooling_loads(bpr, tsd, t):
 
         elif control_heating_cooling_systems.has_central_ac_cooling_system(bpr):
 
-            rc_model_temperatures = calc_cool_loads_central_ac(bpr, t, tsd)
+            rc_model_temperatures = calc_cool_loads_central_ac(bpr, t, tsd, config)
 
         elif control_heating_cooling_systems.has_3for2_cooling_system(bpr):
 
-            rc_model_temperatures = calc_cool_loads_3for2(bpr, t, tsd)
+            rc_model_temperatures = calc_cool_loads_3for2(bpr, t, tsd, config)
 
         elif control_heating_cooling_systems.has_ceiling_cooling_system(bpr) or \
                 control_heating_cooling_systems.has_floor_cooling_system(bpr):
 
-            rc_model_temperatures = calc_cool_loads_radiator(bpr, t, tsd)
+            rc_model_temperatures = calc_cool_loads_radiator(bpr, t, tsd, config)
 
         else:
             # message and no cooling system
             warnings.warn('Unknown cooling system. Calculation without system.')
 
             # no system = no loads
-            rc_model_temperatures = calc_rc_no_loads(bpr, tsd, t)
+            rc_model_temperatures = calc_rc_no_loads(bpr, tsd, t, config)
 
         # update tsd
         update_tsd_no_heating(tsd, t)
@@ -122,12 +122,12 @@ def calc_heating_cooling_loads(bpr, tsd, t):
 
     else:
         warnings.warn('Timestep %s not in heating season nor cooling season' % t)
-        calc_rc_no_loads(bpr, tsd, t)
+        calc_rc_no_loads(bpr, tsd, t, config)
 
     return
 
 
-def calc_heat_loads_radiator(bpr, t, tsd):
+def calc_heat_loads_radiator(bpr, t, tsd, config):
     """
     Procedure for hourly heating system load calculation for a building with a radiative heating system.
 
@@ -141,7 +141,7 @@ def calc_heat_loads_radiator(bpr, t, tsd):
 
     # (1) The RC-model gives the sensible energy demand for the hour
     # calc rc model sensible demand
-    qh_sen_rc_demand, rc_model_temperatures = calc_rc_heating_demand(bpr=bpr, tsd=tsd, t=t)
+    qh_sen_rc_demand, rc_model_temperatures = calc_rc_heating_demand(bpr=bpr, tsd=tsd, t=t, config=config)
 
     # (2) A radiative system does not act on humidity
     # no action on humidity
@@ -184,7 +184,7 @@ def calc_heat_loads_radiator(bpr, t, tsd):
     return rc_model_temperatures
 
 
-def calc_cool_loads_radiator(bpr, t, tsd):
+def calc_cool_loads_radiator(bpr, t, tsd, config):
     """
     Procedure for hourly cooling system load calculation for a building with a radiative cooling system.
 
@@ -198,7 +198,7 @@ def calc_cool_loads_radiator(bpr, t, tsd):
 
     # (1) The RC-model gives the sensible energy demand for the hour
     # calc rc model sensible demand
-    qc_sen_rc_demand, rc_model_temperatures = calc_rc_cooling_demand(bpr, tsd, t)
+    qc_sen_rc_demand, rc_model_temperatures = calc_rc_cooling_demand(bpr, tsd, t, config)
 
     # (2) A radiative system does not act on humidity
     # no action on humidity
@@ -243,7 +243,7 @@ def calc_cool_loads_radiator(bpr, t, tsd):
     return rc_model_temperatures
 
 
-def calc_heat_loads_central_ac(bpr, t, tsd):
+def calc_heat_loads_central_ac(bpr, t, tsd, config):
     """
     Procedure for hourly heating system load calculation for a building with a central AC heating system.
 
@@ -265,7 +265,7 @@ def calc_heat_loads_central_ac(bpr, t, tsd):
 
     # (1) The RC-model gives the sensible energy demand for the hour
     # calc rc model sensible demand
-    qh_sen_rc_demand, rc_model_temperatures = calc_rc_heating_demand(bpr, tsd, t)
+    qh_sen_rc_demand, rc_model_temperatures = calc_rc_heating_demand(bpr, tsd, t, config)
 
     # (2) The load of the central AC unit is determined by the air mass flows and fixed supply temperature
     # calc central ac unit load
@@ -281,7 +281,8 @@ def calc_heat_loads_central_ac(bpr, t, tsd):
         qh_sen_aru = 0.0  # no additional heating via air recirculation unit
 
         # update rc model temperatures
-        rc_model_temperatures = rc_model_SIA.calc_rc_model_temperatures_heating(qh_sen_central_ac_load, bpr, tsd, t)
+        rc_model_temperatures = rc_model_SIA.calc_rc_model_temperatures_heating(qh_sen_central_ac_load, bpr, tsd, t,
+                                                                                config)
 
         # ARU values to tsd
         ma_sup_hs_aru = 0.0
@@ -377,7 +378,7 @@ def calc_cool_loads_mini_split_ac(bpr, t, tsd):
 
     # (1) The RC-model gives the sensible energy demand for the hour
     # calculate rc model demand
-    qc_sen_rc_demand, rc_model_temperatures = calc_rc_cooling_demand(bpr, tsd, t)
+    qc_sen_rc_demand, rc_model_temperatures = calc_rc_cooling_demand(bpr, tsd, t, config)
 
     # (2) The demand is system load of air recirculation unit (ARU)
     qc_sen_aru = qc_sen_rc_demand
@@ -429,7 +430,7 @@ def calc_cool_loads_mini_split_ac(bpr, t, tsd):
     return rc_model_temperatures
 
 
-def calc_cool_loads_central_ac(bpr, t, tsd):
+def calc_cool_loads_central_ac(bpr, t, tsd, config):
     """
     Calculation procedure for cooling system loads of AHU and ARU subsystems of a central AC system
 
@@ -451,7 +452,7 @@ def calc_cool_loads_central_ac(bpr, t, tsd):
     # RC MODEL
     # ***
     # calculate rc model demand
-    qc_sen_rc_demand, rc_model_temperatures = calc_rc_cooling_demand(bpr=bpr, tsd=tsd, t=t)
+    qc_sen_rc_demand, rc_model_temperatures = calc_rc_cooling_demand(bpr=bpr, tsd=tsd, t=t, config=config)
     # ***
     # AHU
     # ***
@@ -484,7 +485,7 @@ def calc_cool_loads_central_ac(bpr, t, tsd):
     # TODO: check if it is smaller, something went wrong in the calculation
     qc_sen_total = qc_sen_ahu + qc_sen_aru
     # update rc model temperatures
-    rc_model_temperatures = rc_model_SIA.calc_rc_model_temperatures_cooling(qc_sen_total, bpr, tsd, t)
+    rc_model_temperatures = rc_model_SIA.calc_rc_model_temperatures_cooling(qc_sen_total, bpr, tsd, t, config)
     # ***
     # ZONE MOISTURE
     # ***
@@ -532,7 +533,7 @@ def calc_cool_loads_central_ac(bpr, t, tsd):
     return rc_model_temperatures
 
 
-def calc_cool_loads_3for2(bpr, t, tsd):
+def calc_cool_loads_3for2(bpr, t, tsd, config):
     """
     Calculation procedure for cooling system loads of AHU, ARU and SCU subsystems of 3for2 system
 
@@ -555,7 +556,7 @@ def calc_cool_loads_3for2(bpr, t, tsd):
     # RC MODEL
     # ***
     # calculate rc model demand
-    qc_sen_rc_demand, rc_model_temperatures = calc_rc_cooling_demand(bpr=bpr, tsd=tsd, t=t)
+    qc_sen_rc_demand, rc_model_temperatures = calc_rc_cooling_demand(bpr=bpr, tsd=tsd, t=t, config=config)
 
     # ***
     # AHU
@@ -595,7 +596,7 @@ def calc_cool_loads_3for2(bpr, t, tsd):
     # TODO: check, if it is smaller something went wrong in the calculation
     qc_sen_total = qc_sen_ahu + qc_sen_aru + qc_sen_scu
     # update rc model temperatures
-    rc_model_temperatures = rc_model_SIA.calc_rc_model_temperatures_cooling(qc_sen_total, bpr, tsd, t)
+    rc_model_temperatures = rc_model_SIA.calc_rc_model_temperatures_cooling(qc_sen_total, bpr, tsd, t, config)
     # ***
     # ZONE MOISTURE
     # ***
@@ -780,7 +781,7 @@ def detailed_thermal_balance_to_tsd(tsd, bpr, t, rc_model_temperatures):
     return
 
 
-def calc_rc_no_loads(bpr, tsd, t):
+def calc_rc_no_loads(bpr, tsd, t, config):
     """
        Crank-Nicholson Procedure to calculate heating / cooling demand of buildings
        following the procedure in 2.3.2 in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
@@ -803,7 +804,7 @@ def calc_rc_no_loads(bpr, tsd, t):
     # STEP 1
     # ******
     # calculate temperatures
-    rc_model_temperatures = rc_model_SIA.calc_rc_model_temperatures_no_heating_cooling(bpr, tsd, t)
+    rc_model_temperatures = rc_model_SIA.calc_rc_model_temperatures_no_heating_cooling(bpr, tsd, t, config)
 
     # calculate humidity
     tsd['g_hu_ld'][t] = 0.0  # no humidification or dehumidification
@@ -824,7 +825,7 @@ def calc_rc_no_loads(bpr, tsd, t):
     return rc_model_temperatures
 
 
-def calc_rc_heating_demand(bpr, tsd, t):
+def calc_rc_heating_demand(bpr, tsd, t, config):
     """
        Crank-Nicholson Procedure to calculate heating / cooling demand of buildings
        following the procedure in 2.3.2 in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
@@ -847,7 +848,7 @@ def calc_rc_heating_demand(bpr, tsd, t):
     # STEP 1
     # ******
     # calculate temperatures with 0 heating power
-    rc_model_temperatures_0 = rc_model_SIA.calc_rc_model_temperatures_no_heating_cooling(bpr, tsd, t)
+    rc_model_temperatures_0 = rc_model_SIA.calc_rc_model_temperatures_no_heating_cooling(bpr, tsd, t, config)
 
     t_int_0 = rc_model_temperatures_0['T_int']
 
@@ -865,7 +866,7 @@ def calc_rc_heating_demand(bpr, tsd, t):
         # ******
         # calculate temperatures with 10 W/m2 heating power
         phi_hc_10 = 10.0 * bpr.rc_model['Af']
-        rc_model_temperatures_10 = rc_model_SIA.calc_rc_model_temperatures_heating(phi_hc_10, bpr, tsd, t)
+        rc_model_temperatures_10 = rc_model_SIA.calc_rc_model_temperatures_heating(phi_hc_10, bpr, tsd, t, config)
 
         t_int_10 = rc_model_temperatures_10['T_int']
 
@@ -894,7 +895,7 @@ def calc_rc_heating_demand(bpr, tsd, t):
 
         # STEP 4
         # ******
-        rc_model_temperatures = rc_model_SIA.calc_rc_model_temperatures_heating(phi_h_act, bpr, tsd, t)
+        rc_model_temperatures = rc_model_SIA.calc_rc_model_temperatures_heating(phi_h_act, bpr, tsd, t, config)
 
     else:
         raise Exception("Unexpected status in 'calc_rc_heating_demand'")
@@ -902,7 +903,7 @@ def calc_rc_heating_demand(bpr, tsd, t):
     return phi_h_act, rc_model_temperatures
 
 
-def calc_rc_cooling_demand(bpr, tsd, t):
+def calc_rc_cooling_demand(bpr, tsd, t, config):
     """
        Crank-Nicholson Procedure to calculate heating / cooling demand of buildings
        following the procedure in 2.3.2 in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
@@ -931,7 +932,7 @@ def calc_rc_cooling_demand(bpr, tsd, t):
     # STEP 1
     # ******
     # calculate temperatures with 0 heating power
-    rc_model_temperatures_0 = rc_model_SIA.calc_rc_model_temperatures_no_heating_cooling(bpr, tsd, t)
+    rc_model_temperatures_0 = rc_model_SIA.calc_rc_model_temperatures_no_heating_cooling(bpr, tsd, t, config)
 
     t_int_0 = rc_model_temperatures_0['T_int']
 
@@ -949,7 +950,7 @@ def calc_rc_cooling_demand(bpr, tsd, t):
         # ******
         # calculate temperatures with 10 W/m2 cooling power
         phi_hc_10 = 10.0 * bpr.rc_model['Af']
-        rc_model_temperatures_10 = rc_model_SIA.calc_rc_model_temperatures_cooling(phi_hc_10, bpr, tsd, t)
+        rc_model_temperatures_10 = rc_model_SIA.calc_rc_model_temperatures_cooling(phi_hc_10, bpr, tsd, t, config)
 
         t_int_10 = rc_model_temperatures_10['T_int']
 
@@ -979,7 +980,7 @@ def calc_rc_cooling_demand(bpr, tsd, t):
 
         # STEP 4
         # ******
-        rc_model_temperatures = rc_model_SIA.calc_rc_model_temperatures_cooling(phi_c_act, bpr, tsd, t)
+        rc_model_temperatures = rc_model_SIA.calc_rc_model_temperatures_cooling(phi_c_act, bpr, tsd, t, config)
 
     else:
         raise Exception("Unexpected status in 'calc_rc_cooling_demand'")
