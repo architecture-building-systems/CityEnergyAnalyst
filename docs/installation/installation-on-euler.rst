@@ -70,16 +70,28 @@ Please login to Euler and conduct the following steps.
 
     $ module load eth_proxy
 
-
-- Pull the container image with Sigularity
+- Go to the scratch folder
 
 ::
 
     $ cd $SCRATCH
+
+- Build a Singularity container based on the cea docker image
+
+::
+
     $ singularity pull docker://cityenergyanalyst/cea
 
+- Check if Singularity has been built
 
-- Run the container interactively as shell
+::
+
+    $ ls
+
+You should find the CEA Singularity container, ``cea_latest.sif``, in the list of files.
+Congratulations! You can start running CEA on Euler!
+
+- If wish to run ``cea test`` to test the CEA Singularity container:
 
 ::
 
@@ -94,11 +106,11 @@ Running the CEA
 You need to run the CEA scripts with their command line interface (CLI). Be sure to learn how to use the job system
 on Euler, as the login nodes are not intended for running simulations. See clusterwiki_.
 
-- Upload your CEA projects to ``\cluster\scratch\nethz-username``.
+- Upload your CEA projects to ``/cluster/scratch/nethz-username``.
 
-- Upload a ``workflow.yml`` to ``\cluster\scratch\nethz-username``.
+- Upload a ``workflow.yml`` to ``/cluster/scratch/nethz-username``.
 
-- Open ``workflow.yml``, point the project path to ``\cluster\scratch\nethz-username``.
+- Open ``workflow.yml``, point the project path to ``/cluster/scratch/ethz-username/PATH_TO_PROJECT`` (be aware of the linux path format).
 
 - In the same ``workflow.yml``, specify the steps you wish to simulate. Please refer to this `blog post <https://cityenergyanalyst.com/blog/2020/1/14/cea-workflow-how-to-automate-simulations>`_ on how to edit ``workflow.yml``.
 

@@ -43,6 +43,7 @@ def layout_network(network_layout, locator, plant_building_names=None, output_na
     building_centroids_df = calc_building_centroids(path_zone_shp,
                                                     temp_path_building_centroids_shp,
                                                     list_district_scale_buildings,
+                                                    plant_building_names,
                                                     consider_only_buildings_with_demand,
                                                     type_network,
                                                     total_demand_location)
@@ -101,7 +102,9 @@ def main(config):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     network_layout = NetworkLayout(network_layout=config.network_layout)
-    layout_network(network_layout, locator)
+    plant_building_names = config.network_layout.plant_buildings
+
+    layout_network(network_layout, locator, plant_building_names=plant_building_names)
 
 
 if __name__ == '__main__':

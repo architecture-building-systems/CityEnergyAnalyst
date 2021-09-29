@@ -17,7 +17,7 @@ Note, that "CEA" in this context refers to the backend (server, cli) part of the
 Building the image
 ------------------
 
-To build the docker image, navigate to the folder ``docker/`` in the CityEnergyAnalyst repository. Execute the
+To build the docker image, navigate to CityEnergyAnalyst repository where the ``Dockerfile`` is located. Execute the
 following command::
 
     > docker build -t dockeruser/cea:latest .
