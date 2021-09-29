@@ -618,8 +618,10 @@ def calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr, tsd, t, config):
     if T_WARNING_LOW > T_int or T_WARNING_LOW > theta_c or T_WARNING_LOW > theta_m \
             or T_int > T_WARNING_HIGH or theta_c > T_WARNING_HIGH or theta_m > T_WARNING_HIGH:
         if config.demand.overheating_warning:
-            raise Exception("Temperature in RC-Model of building {} out of bounds! First occured at timestep = {}."
+            raise Exception(" Temperature in RC-Model of building {} out of bounds! First occured at timestep = {}."
                             " The results were Tint = {}, theta_c = {}, theta_m = {},"
+                            " If it's an expected behavior, consider turning off the over-heating flag in the config"
+                            " to continue the simulation."
                             " Check building geometry and internal loads! Building might be too small in size or"
                             " architecture parameter Hs_ag = {} might be too small for this geometry. Current bounds of range"
                             " for RC-model temperatures are between {} and {}.".format(bpr.name, t, T_int, theta_c,  theta_m, bpr.architecture.Hs_ag,
