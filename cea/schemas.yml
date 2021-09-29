@@ -12460,13 +12460,13 @@ get_optimization_substations_total_file:
         values: '{0.0...n}'
         min: 0.0
       Qhs0_kW:
-        description: Nominal Total heating demand.
+        description: Nominal space heating demand.
         type: float
         unit: '[kW]'
         values: '{0.0...n}'
         min: 0.0
       Qhs_MWhyr:
-        description: Total heating demand
+        description: Total space heating demand.
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'
