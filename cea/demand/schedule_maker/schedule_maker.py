@@ -138,7 +138,7 @@ def calc_schedules(locator,
     array = daily_schedule_building[VARIABLE_CEA_SCHEDULE_RELATION['Occ_m2p']]
     if internal_loads_building['Occ_m2p'] > 0.0:
         yearly_array = get_yearly_vectors(date_range, days_in_schedule, array, monthly_multiplier)
-        number_of_occupants = np.int(1 / internal_loads_building['Occ_m2p'] * prop_geometry_building['Aocc'])
+        number_of_occupants = int(1 / internal_loads_building['Occ_m2p'] * prop_geometry_building['Aocc'])
         if stochastic_schedule:
             # if the stochastic schedules are used, the stochastic schedule generator is called once for every occupant
             final_schedule['Occ_m2p'] = np.zeros(HOURS_IN_YEAR)
