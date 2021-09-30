@@ -1,0 +1,104 @@
+- config: .
+  "general:scenario-name": Altersheim
+- script: radiation
+  parameters:
+    consider-intersections: True
+    buildings: [B1000, B1001, B1002, B1003, B1004, B1005, B1006, B1007]
+- script: schedule-maker
+  parameters:
+    buildings: [B1000, B1001, B1002, B1003, B1004, B1005, B1006, B1007]
+- script: demand
+  parameters:
+    buildings: [B1000, B1001, B1002, B1003, B1004, B1005, B1006, B1007]
+
+- config: .
+  "general:scenario-name": Chratz_cluster
+- script: radiation
+  parameters:
+    consider-intersections: False
+    buildings: [B1000]
+- script: schedule-maker
+  parameters:
+    buildings: [B1000]
+- script: demand
+  parameters:
+    buildings: [B1000]
+
+- config: .
+  "general:scenario-name": Gelbes_schulhaus
+- script: radiation
+  parameters:
+    consider-intersections: False
+    buildings: [B1000, B1001]
+- script: schedule-maker
+  parameters:
+    buildings: [B1000, B1001]
+- script: demand
+  parameters:
+    buildings: [B1000, B1001]
+
+- config: .
+  "general:scenario-name": Hauptstrasse_2_effretikon
+- script: radiation
+  parameters:
+    consider-intersections: False
+    buildings: [B1000]
+- script: schedule-maker
+  parameters:
+    buildings: [B1000]
+- script: demand
+  parameters:
+    buildings: [B1000]
+
+- config: .
+  "general:scenario-name": kyburg_cluster
+- script: radiation
+  parameters:
+    consider-intersections: False
+    buildings: [B1000, B1001, B1002, B1003]
+- script: schedule-maker
+  parameters:
+    buildings: [B1000, B1001, B1002, B1003]
+- script: demand
+  parameters:
+    buildings: [B1000, B1001, B1002, B1003]
+
+- config: .
+  "general:scenario-name": Schlimperg_cluster
+- script: radiation
+  parameters:
+    consider-intersections: True
+    buildings: [B1000, B1001, B1002, B1003, B1004]
+- script: schedule-maker
+  parameters:
+    buildings: [B1000, B1001, B1002, B1003, B1004]
+- script: demand
+  parameters:
+    buildings: [B1000, B1001, B1002, B1003, B1004]
+
+- config: .
+  "general:scenario-name": schulhausstrasse_12_Effretikon
+- script: radiation
+  parameters:
+    consider-intersections: False
+    buildings: [B1000]
+- script: schedule-maker
+  parameters:
+    buildings: [B1000]
+- script: demand
+  parameters:
+    buildings: [B1000]
+
+- config: .
+  "general:scenario-name": Verwaltung_dezentral_cluster
+- script: radiation
+  parameters:
+    consider-intersections: False
+    buildings: [B1000, B1001]
+- script: schedule-maker
+  parameters:
+    consider-intersections: False
+    buildings: [B1000, B1001]
+- script: demand
+  parameters:
+    buildings: [B1000, B1001]

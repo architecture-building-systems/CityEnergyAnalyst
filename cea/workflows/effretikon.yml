@@ -1,0 +1,95 @@
+- config: .
+  "general:scenario-name": Altersheim
+- script: data-initializer
+  parameters:
+    databases-path: CH
+    databases: [archetypes, assemblies, components]
+- script: terrain-helper
+- script: archetypes-mapper
+- script: weather-helper
+  parameters:
+    weather: Zug-inducity_1990_2010_TMY
+
+- config: .
+  "general:scenario-name": Chratz_cluster
+- script: data-initializer
+  parameters:
+    databases-path: CH
+    databases: [archetypes, assemblies, components]
+- script: terrain-helper
+- script: archetypes-mapper
+- script: weather-helper
+  parameters:
+    weather: Zug-inducity_1990_2010_TMY
+
+- config: .
+  "general:scenario-name": Gelbes_schulhaus
+- script: data-initializer
+  parameters:
+    databases-path: CH
+    databases: [archetypes, assemblies, components]
+- script: terrain-helper
+- script: archetypes-mapper
+- script: weather-helper
+  parameters:
+    weather: Zug-inducity_1990_2010_TMY
+
+- config: .
+  "general:scenario-name": Hauptstrasse_2_effretikon
+- script: data-initializer
+  parameters:
+    databases-path: CH
+    databases: [archetypes, assemblies, components]
+- script: terrain-helper
+- script: archetypes-mapper
+- script: weather-helper
+  parameters:
+    weather: Zug-inducity_1990_2010_TMY
+
+- config: .
+  "general:scenario-name": kyburg_cluster
+- script: data-initializer
+  parameters:
+    databases-path: CH
+    databases: [archetypes, assemblies, components]
+- script: terrain-helper
+- script: archetypes-mapper
+- script: weather-helper
+  parameters:
+    weather: Zug-inducity_1990_2010_TMY
+
+- config: .
+  "general:scenario-name": Schlimperg_cluster
+- script: data-initializer
+  parameters:
+    databases-path: CH
+    databases: [archetypes, assemblies, components]
+- script: terrain-helper
+- script: archetypes-mapper
+- script: weather-helper
+  parameters:
+    weather: Zug-inducity_1990_2010_TMY
+
+- config: .
+  "general:scenario-name": schulhausstrasse_12_Effretikon
+- script: data-initializer
+  parameters:
+    databases-path: CH
+    databases: [archetypes, assemblies, components]
+- script: terrain-helper
+- script: archetypes-mapper
+- script: weather-helper
+  parameters:
+    weather: Zug-inducity_1990_2010_TMY
+
+- config: .
+  "general:scenario-name": Verwaltung_dezentral_cluster
+- script: data-initializer
+  parameters:
+    databases-path: CH
+    databases: [archetypes, assemblies, components]
+- script: terrain-helper
+- script: archetypes-mapper
+- script: weather-helper
+  parameters:
+    weather: Zug-inducity_1990_2010_TMY

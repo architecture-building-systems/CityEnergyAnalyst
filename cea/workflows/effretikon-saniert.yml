@@ -1,0 +1,47 @@
+- config: .
+  "general:scenario-name": Altersheim
+- script: archetypes-mapper
+  parameters:
+    input-databases: [architecture]
+
+- config: .
+  "general:scenario-name": Chratz_cluster
+- script: archetypes-mapper
+  parameters:
+    input-databases: [architecture]
+
+- config: .
+  "general:scenario-name": Gelbes_schulhaus
+- script: archetypes-mapper
+  parameters:
+    input-databases: [architecture]
+
+- config: .
+  "general:scenario-name": Hauptstrasse_2_effretikon
+- script: archetypes-mapper
+  parameters:
+    input-databases: [architecture]
+
+- config: .
+  "general:scenario-name": kyburg_cluster
+- script: archetypes-mapper
+  parameters:
+    input-databases: [architecture]
+
+- config: .
+  "general:scenario-name": Schlimperg_cluster
+- script: archetypes-mapper
+  parameters:
+    input-databases: [architecture]
+
+- config: .
+  "general:scenario-name": schulhausstrasse_12_Effretikon
+- script: archetypes-mapper
+  parameters:
+    input-databases: [architecture]
+
+- config: .
+  "general:scenario-name": Verwaltung_dezentral_cluster
+- script: archetypes-mapper
+  parameters:
+    input-databases: [architecture]

@@ -1,0 +1,47 @@
+- config: .
+  "general:scenario-name": Altersheim
+- script: demand
+  parameters:
+    buildings: [B1000, B1001, B1002, B1003, B1004, B1005, B1006, B1007]
+
+- config: .
+  "general:scenario-name": Chratz_cluster
+- script: demand
+  parameters:
+    buildings: [B1000]
+
+- config: .
+  "general:scenario-name": Gelbes_schulhaus
+- script: demand
+  parameters:
+    buildings: [B1000, B1001]
+
+- config: .
+  "general:scenario-name": Hauptstrasse_2_effretikon
+- script: demand
+  parameters:
+    buildings: [B1000]
+
+- config: .
+  "general:scenario-name": kyburg_cluster
+- script: demand
+  parameters:
+    buildings: [B1000, B1001, B1002, B1003]
+
+- config: .
+  "general:scenario-name": Schlimperg_cluster
+- script: demand
+  parameters:
+    buildings: [B1000, B1001, B1002, B1003, B1004]
+
+- config: .
+  "general:scenario-name": schulhausstrasse_12_Effretikon
+- script: demand
+  parameters:
+    buildings: [B1000]
+
+- config: .
+  "general:scenario-name": Verwaltung_dezentral_cluster
+- script: demand
+  parameters:
+    buildings: [B1000, B1001]
