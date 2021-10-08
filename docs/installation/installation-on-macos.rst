@@ -1,8 +1,15 @@
 Installation guide for Mac OS
 ==============================
 
-Working with the CityEnergyAnalyst (CEA) on a Mac OS system is a little bit messier than on Windows and requires using the Terminal to launch CEA. But don't worry - it works! 
-Follow these instructions to run CEA on a Mac OS system (tested with Mac OS Catalina).
+Working with the CityEnergyAnalyst (CEA) on a Mac OS system is a little bit messier than on Windows and requires using the Terminal to launch CEA. But don't worry - it works!
+There are two installation methods, choose the one that suits your habit!
+
+
+1. Use the CEA docker image
+----------------------------
+
+If you would like using docker containers, follow these instructions to run CEA on a Mac OS system (tested with Mac OS Catalina).
+This method is suitable for users, but not developers. For developers, please refer to the second method below.
 
 1. In order to access the full CEA functionality, you will need to run CEA in Docker. `You can find instructions on how to do that here`_. If you only plan to run CEA from the command line interface, you're done!
 2. If you would like to use the CEA dashboard, you will need to download and build it manually. `You can do so by following the instructions in this repository`_.
@@ -36,3 +43,10 @@ In order to run the dashboard, you will need to do the following:
 You can run the CEA dashboard interface normally... well, mostly. Note that you will not be running CEA directly on your computer, so you will need to select a project on your Docker container. So if your project is located, for example, in the directory ``/Users/username/Documents/CEA_projects/my_project`` you will need to select ``/projects/my_project`` as your project in the CEA Dashboard. 
 
 Once your project is open, you can run the CEA dashboard normally. Note that your jobs in the dashboard might be listed as "pending" even when they have finished. If you would like to check if your job has finished, you can check the Terminal - it's still running in the background.
+
+
+2. Use the CEA source code from GitHub
+---------------------------------------
+
+If you would like to develop CEA, this will be your method.
+We are currently at testing phase, instruction will come soon!
