@@ -1,0 +1,47 @@
+- config: .
+  "general:scenario-name": Bachtelstrasse_10_illnau
+- script: data-initializer
+  parameters:
+    databases-path: CH
+    databases: [archetypes, assemblies, components]
+- script: terrain-helper
+- script: archetypes-mapper
+- script: weather-helper
+  parameters:
+    weather: Zug-inducity_1990_2010_TMY
+
+- config: .
+  "general:scenario-name": Bannhaldenstrasse_8_effretikon
+- script: data-initializer
+  parameters:
+    databases-path: CH
+    databases: [archetypes, assemblies, components]
+- script: terrain-helper
+- script: archetypes-mapper
+- script: weather-helper
+  parameters:
+    weather: Zug-inducity_1990_2010_TMY
+
+- config: .
+  "general:scenario-name": Dorfstrasse_32_effretikon
+- script: data-initializer
+  parameters:
+    databases-path: CH
+    databases: [archetypes, assemblies, components]
+- script: terrain-helper
+- script: archetypes-mapper
+- script: weather-helper
+  parameters:
+    weather: Zug-inducity_1990_2010_TMY
+
+- config: .
+  "general:scenario-name": Rappenstrasse_13a_effretikon
+- script: data-initializer
+  parameters:
+    databases-path: CH
+    databases: [archetypes, assemblies, components]
+- script: terrain-helper
+- script: archetypes-mapper
+- script: weather-helper
+  parameters:
+    weather: Zug-inducity_1990_2010_TMY

@@ -1,0 +1,51 @@
+- config: .
+  "general:scenario-name": Bachtelstrasse_10_illnau
+- script: radiation
+  parameters:
+    consider-intersections: True
+    buildings: [B1000]
+- script: schedule-maker
+  parameters:
+    buildings: [B1000]
+- script: demand
+  parameters:
+    buildings: [B1000]
+
+- config: .
+  "general:scenario-name": Bannhaldenstrasse_8_effretikon
+- script: radiation
+  parameters:
+    consider-intersections: False
+    buildings: [B1000]
+- script: schedule-maker
+  parameters:
+    buildings: [B1000]
+- script: demand
+  parameters:
+    buildings: [B1000]
+
+- config: .
+  "general:scenario-name": Dorfstrasse_32_effretikon
+- script: radiation
+  parameters:
+    consider-intersections: False
+    buildings: [B1000]
+- script: schedule-maker
+  parameters:
+    buildings: [B1000]
+- script: demand
+  parameters:
+    buildings: [B1000]
+
+- config: .
+  "general:scenario-name": Rappenstrasse_13a_effretikon
+- script: radiation
+  parameters:
+    consider-intersections: False
+    buildings: [B1000]
+- script: schedule-maker
+  parameters:
+    buildings: [B1000]
+- script: demand
+  parameters:
+    buildings: [B1000]

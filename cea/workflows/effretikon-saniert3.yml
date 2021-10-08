@@ -1,0 +1,23 @@
+- config: .
+  "general:scenario-name": Bachtelstrasse_10_illnau
+- script: archetypes-mapper
+  parameters:
+    input-databases: [architecture]
+
+- config: .
+  "general:scenario-name": Bannhaldenstrasse_8_effretikon
+- script: archetypes-mapper
+  parameters:
+    input-databases: [architecture]
+
+- config: .
+  "general:scenario-name": Dorfstrasse_32_effretikon
+- script: archetypes-mapper
+  parameters:
+    input-databases: [architecture]
+
+- config: .
+  "general:scenario-name": Rappenstrasse_13a_effretikon
+- script: archetypes-mapper
+  parameters:
+    input-databases: [architecture]

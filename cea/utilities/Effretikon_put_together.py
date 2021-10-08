@@ -24,9 +24,11 @@ SCENARIOS = ["Altersheim",
 
 data = {}
 projects = [r"C:\Users\jfo\OneDrive - EBP\Dokumente\1_Projekte\22-Efreetikon-PV\Effretikon_PV",
-            r"C:\Users\jfo\OneDrive - EBP\Dokumente\1_Projekte\22-Efreetikon-PV\Effretikon_PV_saniert"]
-cases = ["heute_zustand",
-         "zukunft_saniert"]
+            r"C:\Users\jfo\OneDrive - EBP\Dokumente\1_Projekte\22-Efreetikon-PV\Effretikon_PV_saniert_1",
+            r"C:\Users\jfo\OneDrive - EBP\Dokumente\1_Projekte\22-Efreetikon-PV\Effretikon_PV_saniert_2"]
+cases = ["heutige_zustand",
+         "zukünftige_zustand_1_HeizungsSanierung",
+         "zukünftige_zustand_2_Gesamtsanierung"]
 for project, case in zip(projects, cases):
     for scenario in SCENARIOS:
         path = os.path.join(project,scenario,PATH_NAMES_ADDRESS_FILE)
