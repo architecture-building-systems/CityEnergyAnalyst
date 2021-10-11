@@ -618,14 +618,15 @@ def calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr, tsd, t, config):
     if T_WARNING_LOW > T_int or T_WARNING_LOW > theta_c or T_WARNING_LOW > theta_m \
             or T_int > T_WARNING_HIGH or theta_c > T_WARNING_HIGH or theta_m > T_WARNING_HIGH:
         if config.demand.overheating_warning:
-            raise Exception(" Temperature in RC-Model of building {} out of bounds! First occured at timestep = {}."
-                            " The results were Tint = {}, theta_c = {}, theta_m = {},"
-                            " If it's an expected behavior, consider turning off the over-heating flag in the config"
-                            " to continue the simulation."
-                            " Check building geometry and internal loads! Building might be too small in size or"
-                            " architecture parameter Hs_ag = {} might be too small for this geometry. Current bounds of range"
-                            " for RC-model temperatures are between {} and {}.".format(bpr.name, t, T_int, theta_c,  theta_m, bpr.architecture.Hs_ag,
-                                                                                       T_WARNING_LOW, T_WARNING_HIGH))
+            raise Exception("Temperature in RC-Model of building {} out of bounds! First occured at timestep = {}. "
+                            "The results were Tint = {}, theta_c = {}, theta_m = {}.\n"
+                            "If it is an expected behavior, consider turning off over-heating warning in the "
+                            "advanced parameters to continue the simulation.\n"
+                            "If it is not expected, check building geometry and internal loads.\n" 
+                            "Building might be too small in size or architecture parameter Hs_ag = {} might be too"
+                            "small for this geometry. Current bounds of range for RC-model temperatures are"
+                            "between {} and {}.".format(bpr.name, t, round(T_int), round(theta_c),  round(theta_m),
+                                                         bpr.architecture.Hs_ag, T_WARNING_LOW, T_WARNING_HIGH))
 
     rc_model_temp = {'theta_m': theta_m, 'theta_c': theta_c, 'T_int': T_int, 'theta_o': theta_o, 'theta_ea': theta_ea,
                      'theta_ec': theta_ec, 'theta_em': theta_em, 'h_ea': h_ea, 'h_ec': h_ec, 'h_em': h_em,
