@@ -118,7 +118,7 @@ on Euler, as the login nodes are not intended for running simulations. See clust
 
 ::
 
-    $ bsub -n 1 -R singularity -R "rusage[mem=2048]" -W 1:00 "SINGULARITY_HOME=/projects singularity run -B $SCRATCH cea_latest.sif cea workflow --workflow /cluster/scratch/nethz-username/workflow.yml"
+    $ bsub -n 1 -R "span[host=1]" -R singularity -R "rusage[mem=2048,scratch=2048]" -W 1:00 "SINGULARITY_HOME=/projects singularity run -B \$TMPDIR:/tmp -B $SCRATCH cea_latest.sif cea workflow --workflow /cluster/scratch/nethz-username/workflow.yml"
 
 
 Other Commands
