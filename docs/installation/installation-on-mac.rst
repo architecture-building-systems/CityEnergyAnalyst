@@ -21,6 +21,7 @@ Prerequisites
 * Download and install `Miniconda(64-bit) for Python 3.8 <https://conda.io/miniconda.html>`__.
 * Download and install `Homebrew <https://brew.sh/>`__.
 * Download and install `Xcode <https://developer.apple.com/xcode/>`__.
+(please ignore Daysim for now, and continue to "Installation of the code base".)
 * Download and install `DAYSIM version >= 4.0 <https://github.com/MITSustainableDesignLab/Daysim#readme>`__.
 * For the moment, the user has to manually change `this line <https://github.com/MITSustainableDesignLab/Daysim/blob/76caeb9f682ecb81de08f68db1cff70590b78842/src/daysim/gen_dc.c#L619>` of code in Daysim before compiling it. In this line, change `fclose` to `pclose`.
 
