@@ -6,6 +6,7 @@ dependencies:
 - deap
 - ephem
 - flask=1.1.2
+- flask-cors
 - flask-restplus
 - flask-socketio=4.3.2
 - gevent
