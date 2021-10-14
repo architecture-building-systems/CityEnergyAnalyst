@@ -1,4 +1,5 @@
 from flask import Flask
+from flask_cors import CORS
 from flask_socketio import SocketIO
 
 import cea.config
@@ -12,10 +13,11 @@ def main(config):
     config.restricted_to = None  # allow access to the whole config file
     plot_cache = cea.plots.cache.MemoryPlotCache(config.project)
     app = Flask(__name__, static_folder='base/static', )
+    CORS(app)
     app.config.from_mapping({'SECRET_KEY': 'secret'})
 
     global socketio
-    socketio = SocketIO(app)
+    socketio = SocketIO(app, cors_allowed_origins="*")
 
     from cea.interfaces.dashboard.plots.routes import blueprint as plots_blueprint
     from cea.interfaces.dashboard.server import blueprint as server_blueprint
