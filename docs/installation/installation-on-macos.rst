@@ -2,7 +2,7 @@ Installation guide for Mac OS
 ==============================
 
 Working with the CityEnergyAnalyst (CEA) on a Mac OS system is a little bit messier than on Windows and requires using the Terminal to launch CEA. But don't worry - it works!
-There are two installation methods, choose the one that suits your habit!
+There are two installation methods, choose the one that suits your habits!
 
 
 1. Use the CEA docker image
@@ -49,4 +49,4 @@ Once your project is open, you can run the CEA dashboard normally. Note that you
 ---------------------------------------
 
 If you would like to develop CEA, this will be your method.
-We are currently at testing phase, instruction will come soon!
+We are currently at testing phase, instructions will come soon!
