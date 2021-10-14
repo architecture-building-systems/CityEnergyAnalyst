@@ -1802,13 +1802,11 @@ get_building_comfort:
         type: float
         unit: '[C]'
         values: '{0.0...n}'
-        min: 0.0
       Tcs_setb_C:
         description: Setback point of temperature for cooling system
         type: float
         unit: '[C]'
         values: '{0.0...n}'
-        min: 0.0
       Ths_set_C:
         description: Setpoint temperature for heating system
         type: float
@@ -2394,7 +2392,6 @@ get_database_air_conditioning_systems:
           type: float
           unit: '[C]'
           values: '{0.0...n}'
-          min: 0.0
         dT_Qhs:
           description: correction temperature of emission losses due to control system
             of heating
@@ -6950,13 +6947,11 @@ get_database_use_types_properties:
           type: float
           unit: '[C]'
           values: '{0.0...n}'
-          min: 0.0
         Tcs_setb_C:
           description: Setback point of temperature for cooling system
           type: float
           unit: '[C]'
           values: '{0.0...n}'
-          min: 0.0
         Ths_set_C:
           description: Setpoint temperature for heating system
           type: float
