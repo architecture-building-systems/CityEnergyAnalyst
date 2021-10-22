@@ -48,10 +48,10 @@ Python library) and  1 hour of your time.
 #. Install CEA:
     #. Open a Terminal console (you can find it in your Mac's *Applications* folder).
     #. Type ``cd Documents/GitHub/CityEnergyAnalyst`` and press ENTER.
-    #. Type ``conda env create --name cea --file environment.osx.yml`` and press ENTER.
+    #. Type ``conda env create --name cea`` and press ENTER.
     #. Grab a cup of tea and some toast, this will take ~45 minutes.
     #. Type ``conda activate cea`` and press ENTER.
-    #. Type ``pip install --no-deps -e .`` and press ENTER *(mind the dot '.' included in this command!)*.
+    #. Type ``pip install -e .`` and press ENTER *(mind the dot '.' included in this command!)*.
 #. Build the CEA dashboard GUI:
     #. Type ``cd ..`` and press ENTER, then type ``cd cea-electron`` and press ENTER.
     #. Install Yarn by typing ``brew install yarn`` and press ENTER.
