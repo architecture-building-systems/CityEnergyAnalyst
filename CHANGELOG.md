@@ -1,3 +1,18 @@
+- 2021-10-20 - 3.24.0 - #3029 Update photovoltaic.py
+- 2021-10-15 - 3.24.0 - #3027 Send regex info to frontend
+- 2021-10-14 - 3.24.0 - #3045 remover min from possible negatives in the schemas
+- 2021-10-14 - 3.24.0 - #3046 Add CORS to flask
+- 2021-10-07 - 3.24.0 - #3036 #3026 change database xls to xlsx
+- 2021-09-29 - 3.24.0 - #3023 Change `np.int()` to `int()`
+- 2021-09-15 - 3.24.0 - #3013 Allow users to define heating/cooling plant location
+- 2021-08-25 - 3.24.0 - #3016 Update zenodo link in README.rst
+- 2021-08-24 - 3.24.0 - #3017 Use ubuntu instead of debian as base image
+- 2021-08-07 - 3.24.0 - #3011 Add plugins using cli
+- 2021-08-04 - 3.24.0 - #3007 Move Dockerfile to root of the repository
+- 2021-08-05 - 3.24.0 - #3010 Import gdal and osr from osgeo
+- 2021-08-03 - 3.24.0 - #3006 radiation script now work with "consider-interactions"=True
+- 2021-08-02 - 3.24.0 - #3000 - update dockerfile to run in Singularity
+- 2021-06-28 - 3.24.0 - #2997 Release-3.24.0
 - 2021-06-24 - 3.22.0 - #2992 Update gdal imports to use osgeo instead
 - 2021-06-23 - 3.22.0 - #2993 Remove unused import
 - 2021-06-08 - 3.22.0 - #2986 Update data migrator
