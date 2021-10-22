@@ -53,16 +53,16 @@ Python library) and  1 hour of your time.
     #. Type ``conda activate cea`` and press ENTER.
     #. Type ``pip install -e .`` and press ENTER *(mind the dot '.' included in this command!)*.
 #. Build the CEA dashboard GUI:
-    #. Type ``cd ..`` and press ENTER, then type ``cd cea-electron`` and press ENTER.
+    #. Type ``cd ..`` and press ENTER, then type ``cd CityEnergyAnalyst-GUI`` and press ENTER.
     #. Install Yarn by typing ``brew install yarn`` and press ENTER.
     #. Type ``yarn`` and press ENTER.
     #. Type ``yarn dist:dir`` and press ENTER.
-    #. You will find the CEA application in the folder ``/Users/your_name/Documents/GitHub/cea-electron/dist/mac``
+    #. You will find the CEA application in the folder ``/Users/your_name/Documents/GitHub/CityEnergyAnalyst-GUI/dist/mac``
 
 .. attention:: In order to run CEA on Mac, you will need to select the correct Daysim binaries:
 
         *   If you are running the *Building Solar radiation* tool  using the dashboard, make sure the parameter *daysim-bin-directory* (under *Advanced*) points to the correct Daysim binary folder (by default, this should be ``/Users/your_name/Documents/GitHub/CityEnergyAnalyst/setup/Dependencies/Daysim/mac``).
-        *   If you are using the command line interface or Pycharm, you will need to modify the same parameter (i.e., ``config.radiation.daysim_bin_directory``) in the config file (usually located in ``Users/your_name/cea.config``, where *your_name* ).
+        *   If you are using the command line interface or Pycharm, you will need to modify the same parameter (i.e., ``config.radiation.daysim_bin_directory``) in the config file (usually located in ``Users/your_name/cea.config``, where *your_name* represents your user name on your Mac).
 
 2. Use the CEA docker image
 ----------------------------
@@ -83,11 +83,11 @@ This method is suitable for users, but not developers. For developers, please re
 		#. Click Clone, this will take ~ 5 minutes (Size 600MB).
 	#. Build the CEA dashboard GUI:
 	    #. Open a Terminal console (you can find it in your Mac's *Applications* folder).
-	    #. Type ``cd Documents/GitHub/cea-electron`` and press ENTER.
+	    #. Type ``cd Documents/GitHub/CityEnergyAnalyst-GUI`` and press ENTER.
         #. Install Yarn by typing ``brew install yarn`` and press ENTER.
         #. Type ``yarn`` and press ENTER.
         #. Type ``yarn dist:dir`` and press ENTER.
-        #. You will find the CEA application in the folder ``/Users/your_name/Documents/GitHub/cea-electron/dist/mac``
+        #. You will find the CEA application in the folder ``/Users/your_name/Documents/GitHub/CityEnergyAnalyst-GUI/dist/mac``
 
 .. _`You can find instructions on how to do that here`: https://city-energy-analyst.readthedocs.io/en/latest/developer/run-cea-in-docker.html
 
