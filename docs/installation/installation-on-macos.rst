@@ -13,7 +13,7 @@ Choose the one that suits your needs!
 
 If you would like to develop CEA, this will be your method. Follow these instructions to install the CityEnergyAnalyst (CEA) on a Mac system (tested with macOS Mojave 10.14.6) from the source
 
-.. attention:: We advise to follow the above guide precisely:
+.. attention:: We advise to follow the guide precisely:
 
         *   Be sure to **USE** ``conda env create`` **NOT** ``conda create`` familiar to experienced conda users.
             This command not only creates an environment, but also reads the ``environment.yml`` file, containing a
@@ -26,9 +26,9 @@ Prerequisites
 ~~~~~~~~~~~~~
 
 * Download and install `Github Desktop (64-bit) <https://desktop.github.com/>`__.
-* Download and install `Miniconda(64-bit) for Python 3.8 <https://conda.io/miniconda.html>`__.
+* Download and install `Miniconda(64-bit) for Python 3.9 <https://conda.io/miniconda.html>`__.
 * Download and install `Homebrew <https://brew.sh/>`__.
-* Download and install `Xcode <https://developer.apple.com/xcode/>`__.
+* Download and install `Xcode <https://developer.apple.com/xcode/>`__. Make sure you install the command line tool (CLT).
 
 Installation of the code base
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
