@@ -119,14 +119,16 @@ def lca_embodied(locator, config):
     df4 = architecture_df.merge(surface_database_floors, left_on='type_floor', right_on='code')
     df5 = architecture_df.merge(surface_database_floors, left_on='type_base', right_on='code')
     df5.rename({'GHG_FLOOR_kgCO2m2': 'GHG_BASE_kgCO2m2'}, inplace=True, axis=1)
+    df5.rename({'GHG_FLOOR_STRUCTURE_RATIO': 'GHG_BASE_STRUCTURE_RATIO'}, inplace=True, axis=1)
     df6 = architecture_df.merge(surface_database_walls, left_on='type_part', right_on='code')
     df6.rename({'GHG_WALL_kgCO2m2': 'GHG_PART_kgCO2m2'}, inplace=True, axis=1)
+    df6.rename({'GHG_WALL_STRUCTURE_RATIO': 'GHG_PART_STRUCTURE_RATIO'}, inplace=True, axis=1)
     fields = ['Name', "GHG_WIN_kgCO2m2"]
-    fields2 = ['Name', "GHG_ROOF_kgCO2m2"]
-    fields3 = ['Name', "GHG_WALL_kgCO2m2"]
-    fields4 = ['Name', "GHG_FLOOR_kgCO2m2"]
-    fields5 = ['Name', "GHG_BASE_kgCO2m2"]
-    fields6 = ['Name', "GHG_PART_kgCO2m2"]
+    fields2 = ['Name', "GHG_ROOF_kgCO2m2", "GHG_ROOF_STRUCTURE_RATIO"]
+    fields3 = ['Name', "GHG_WALL_kgCO2m2", "GHG_WALL_STRUCTURE_RATIO"]
+    fields4 = ['Name', "GHG_FLOOR_kgCO2m2", "GHG_FLOOR_STRUCTURE_RATIO"]
+    fields5 = ['Name', "GHG_BASE_kgCO2m2", "GHG_BASE_STRUCTURE_RATIO"]
+    fields6 = ['Name', "GHG_PART_kgCO2m2", "GHG_PART_STRUCTURE_RATIO"]
     surface_properties = df[fields].merge(df2[fields2],
                                           on='Name').merge(df3[fields3],
                                           on='Name').merge(df4[fields4],
@@ -205,7 +207,7 @@ def calculate_contributions(df, config):
     :rtype result: DataFrame
     """
     ## default parameters:
-    factor_structure = 0.7
+    factor_finishing_roof = 0.7
 
     #variables:
     year_to_calculate = config.emissions.year_to_calculate
@@ -228,15 +230,15 @@ def calculate_contributions(df, config):
     df['confirm'] = df.apply(lambda x: calc_if_existing(x['delta_year'], service_life_building), axis=1)
 
     ## Calculation per main building components
-    df['G2_floor_finishing'] = (1 - factor_structure) * (df['GHG_FLOOR_kgCO2m2'] * df['internal_floor_area']) / finishings_amortization_time
-    df['G3_wall_finishing'] = (1 - factor_structure) * (df['GHG_PART_kgCO2m2'] * df['GFA_m2'] * CONVERSION_AREA_TO_FLOOR_AREA_RATIO) / finishings_amortization_time
-    df['G4_roof_internal_finishing'] = (1 - factor_structure) * (df['GHG_ROOF_kgCO2m2'] * df['roof_area']) / finishings_amortization_time
+    df['G2_floor_finishing'] = (1 - df['GHG_FLOOR_STRUCTURE_RATIO']) * (df['GHG_FLOOR_kgCO2m2'] * df['internal_floor_area']) / finishings_amortization_time
+    df['G3_wall_finishing'] = (1 - df['GHG_PART_STRUCTURE_RATIO']) * (df['GHG_PART_kgCO2m2'] * df['GFA_m2'] * CONVERSION_AREA_TO_FLOOR_AREA_RATIO) / finishings_amortization_time
+    df['G4_roof_internal_finishing'] = (1- df['GHG_ROOF_STRUCTURE_RATIO']) * (1-factor_finishing_roof) * (df['GHG_ROOF_kgCO2m2'] * df['roof_area']) / finishings_amortization_time
+    df['C4_4_F1_roof_Construction_and_external_finishing'] = (df['GHG_ROOF_STRUCTURE_RATIO'] + (1- df['GHG_ROOF_STRUCTURE_RATIO']) * factor_finishing_roof) * (df['GHG_ROOF_kgCO2m2'] * df['roof_area']) / roof_construction_amortization_time
     df['E3_windows_doors'] = (df['GHG_WIN_kgCO2m2'] * df['windows_ag']) / windows_doors_amortization_time
     df['D_building_systems'] = (df['GFA_m2'] * EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS_GHG_kgm2) / building_systems_amortization_time + (df['area_pv'] * EMISSIONS_EMBODIED_PV_GHG_kgm2) / building_systems_amortization_time
-    df['C4_4_F1_roof_Construction_and_external_finishing'] = factor_structure * (df['GHG_ROOF_kgCO2m2'] * df['roof_area']) / roof_construction_amortization_time
     df['C4_3_balcony'] = (df['GHG_ROOF_kgCO2m2'] * df['area_balcon'] ) / balconies_lifetime
-    df['C2_2_C3_structure_internal_walls_supporting'] = factor_structure * (df['GHG_PART_kgCO2m2'] * df['GFA_m2'] * CONVERSION_AREA_TO_FLOOR_AREA_RATIO) / supporting_structure_amortization_time
-    df['C4_1_structure_floors'] = factor_structure * (df['GHG_FLOOR_kgCO2m2'] * df['internal_floor_area']) / supporting_structure_amortization_time
+    df['C2_2_C3_structure_internal_walls_supporting_incl_columns'] = df['GHG_PART_STRUCTURE_RATIO'] * (df['GHG_PART_kgCO2m2'] * df['GFA_m2'] * CONVERSION_AREA_TO_FLOOR_AREA_RATIO) / supporting_structure_amortization_time
+    df['C4_1_structure_floors'] = df['GHG_FLOOR_STRUCTURE_RATIO'] * (df['GHG_FLOOR_kgCO2m2'] * df['internal_floor_area']) / supporting_structure_amortization_time
     df['C2_1B_E2_external_walls_above_terrain_incl_finishing'] = (df['GHG_WALL_kgCO2m2'] * df['area_walls_ext_ag']) / external_walls_above_terrain_amortization_time
     df['C2_1A_E1_external_walls_below_terrain_incl_finishing'] = (df['GHG_WALL_kgCO2m2'] * df['area_walls_ext_bg']) / external_walls_below_terrain_amortization_time
     df['B6_2_excavation'] = (df['volume_excavation_bg'] * EMISSIONS_EMBODIED_EXCAVATIONS_GHG_kgm3) / excavation_fundations_amortization_time
@@ -250,7 +252,7 @@ def calculate_contributions(df, config):
     df['GHG_balconies_kgCO2'] = df['C4_3_balcony']
     df['GHG_external_walls_above_terrain_kgCO2'] = df['C2_1B_E2_external_walls_above_terrain_incl_finishing']
     df['GHG_external_walls_below_terrain_kgCO2'] = df['C2_1A_E1_external_walls_below_terrain_incl_finishing']
-    df['GHG_structure_kgCO2'] = df['confirm'] * (df['C2_2_C3_structure_internal_walls_supporting'] + df['C4_1_structure_floors'])
+    df['GHG_structure_kgCO2'] = df['confirm'] * (df['C2_2_C3_structure_internal_walls_supporting_incl_columns'] + df['C4_1_structure_floors'])
     df['GHG_excavation_fundations_kgCO2'] = df['confirm'] * (df['B6_2_excavation'] + df['C1_fundations'])
 
     df[total_column] =  df['GHG_finishings_kgCO2'] + \
