@@ -94,9 +94,11 @@ In order to run the dashboard, you will need to do the following **each time you
 
 #. Open the Terminal (you can find it in your Mac's *Applications* folder) and run the following command depending on your installation type:
 #. Type ``conda activate cea`` and press ENTER, then type ``cea dashboard`` and press ENTER.
-#. Run the CEA dashboard application you created in the last step of the installation above.
+#. Run the CEA dashboard application you created in the last step of the installation above (``/Users/your_name/Documents/GitHub/CityEnergyAnalyst-GUI/dist/mac``).
 
 You can now run the CEA dashboard interface normally!
+
+..`Here you can find a series of blog to help you get started!`: https://cityenergyanalyst.com/blog/2019/6/28/getting-started-with-your-own-project-1
 
 
 Pycharm
