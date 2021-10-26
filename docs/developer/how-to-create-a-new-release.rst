@@ -75,7 +75,8 @@ worked on that release.
 Update CHANGELOG
 ----------------
 
-- Run ``create-changelog.py`` in ``CityEnergyAnalyst\bin``
+- Run ``create-changelog.py`` in ``CityEnergyAnalyst\bin``.
+- Update ``CHANGELOG.md`` with the latest changes from the outputs.
 
 
 Merge the Release Branch
@@ -86,6 +87,7 @@ Merge the Release Branch
 
 Create a Release Draft on GitHub
 --------------------------------
+
 - Tag the release with the correct version number.
 
 
@@ -125,6 +127,7 @@ You can either edit the ``cea.config`` file directly or use ``cea-config build -
 Note: The paths will be different on your system. Use the ``conda.bat`` in ``condabin`` of your Anaconda/Miniconda
 installation. The path to ``gui`` should be set to the repository folder of the CityEnergyAnalyst-GUI repository.
 
+- Install ``conda-pack`` by typing ``conda install conda-pack``.
 - Creating the installer is then as easy as ``cea-dev build``. This will run quite some time as it will create
   a new conda environment for the version, conda-pack it, and do a lot of compressing.
 - Locate the installer in the CityEnergyAnalyst repository under ``setup/Output``.
