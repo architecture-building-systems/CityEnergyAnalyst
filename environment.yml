@@ -21,7 +21,7 @@ dependencies:
 - utm
 - wntr=0.2.2.1
 - fiona
-- gdal
+- gdal=2.4.4
 - geopandas
 - jinja2
 - matplotlib
@@ -35,7 +35,7 @@ dependencies:
 - pip
 - psutil
 - pysal=2.1.0
-- python>=3.7
+- python=3.7
 - pythonocc-core
 - pytz
 - pvlib
@@ -51,4 +51,5 @@ dependencies:
   - xlwt
   - staticmap
   - py4design-cea
+  - pvlib
   - numpy_financial
