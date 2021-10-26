@@ -145,6 +145,8 @@ def yarn_dist_dir(config, repo_folder):
 def make_nsis(config, repo_folder):
     if not os.path.exists(config.development.nsis):
         raise ValueError("Please configure the path to the makensis.exe ({development:nsis})")
+    if not os.path.exists(os.path.join(repo_folder, "setup", "Output")):
+        os.mkdir(os.path.join(repo_folder, "setup", "Output"))
     command = [config.development.nsis, os.path.join(repo_folder, "setup", "cityenergyanalyst.nsi")]
     print("RUN {command}".format(command=" ".join(command)))
     subprocess.run(command, check=True)
