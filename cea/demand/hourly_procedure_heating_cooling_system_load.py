@@ -92,7 +92,7 @@ def calc_heating_cooling_loads(bpr, tsd, t, config):
 
         elif control_heating_cooling_systems.has_local_ac_cooling_system(bpr):
 
-            rc_model_temperatures = calc_cool_loads_mini_split_ac(bpr, t, tsd)
+            rc_model_temperatures = calc_cool_loads_mini_split_ac(bpr, t, tsd, config)
 
         elif control_heating_cooling_systems.has_central_ac_cooling_system(bpr):
 
@@ -361,7 +361,7 @@ def calc_heat_loads_central_ac(bpr, t, tsd, config):
     return rc_model_temperatures
 
 
-def calc_cool_loads_mini_split_ac(bpr, t, tsd):
+def calc_cool_loads_mini_split_ac(bpr, t, tsd, config):
     """
     Calculation procedure for cooling system loads of an ARU subsystem of a mini-split AC system
 
