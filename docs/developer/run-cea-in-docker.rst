@@ -17,6 +17,9 @@ Note, that "CEA" in this context refers to the backend (server, cli) part of the
 Building the image
 ------------------
 
+Set server host to ``0.0.0.0``. You can do it by editing ``default.config`` in the ``cea`` folder. In the ``[server]``
+section, change the default address from ``127.0.0.1`` to ``0.0.0.0``.
+
 To build the docker image, navigate to CityEnergyAnalyst repository where the ``Dockerfile`` is located. Execute the
 following command::
 
