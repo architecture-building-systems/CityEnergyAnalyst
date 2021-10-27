@@ -553,7 +553,7 @@ def calc_phi_m_tot_tabs():
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
-def calc_rc_model_temperatures_no_heating_cooling(bpr, tsd, t):
+def calc_rc_model_temperatures_no_heating_cooling(bpr, tsd, t, config):
     """
     Calculates R-C-Model temperatures are calculated with zero heating/cooling power according to SIA 2044 procedure.
 
@@ -577,12 +577,13 @@ def calc_rc_model_temperatures_no_heating_cooling(bpr, tsd, t):
     phi_hc_r = 0.0
 
     # calculate r-c-model node temperatures
-    rc_model_temp = calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr, tsd, t)
+    temperatures = calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr, tsd, t, config)
+    rc_model_temp = temperatures
 
     return rc_model_temp
 
 
-def calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr, tsd, t):
+def calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr, tsd, t, config):
     # calculate node temperatures of RC model
     theta_m_t_1 = tsd['theta_m'][t - 1]
     if np.isnan(theta_m_t_1):
@@ -616,12 +617,16 @@ def calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr, tsd, t):
 
     if T_WARNING_LOW > T_int or T_WARNING_LOW > theta_c or T_WARNING_LOW > theta_m \
             or T_int > T_WARNING_HIGH or theta_c > T_WARNING_HIGH or theta_m > T_WARNING_HIGH:
-        raise Exception("Temperature in RC-Model of building {} out of bounds! First occured at timestep = {}."
-                        " The results were Tint = {}, theta_c = {}, theta_m = {},"
-                        " Check building geometry and internal loads! Building might be too small in size or"
-                        " architecture parameter Hs_ag = {} might be too small for this geometry. Current bounds of range"
-                        " for RC-model temperatures are between {} and {}.".format(bpr.name, t, T_int, theta_c,  theta_m, bpr.architecture.Hs_ag,
-                                                                                   T_WARNING_LOW, T_WARNING_HIGH))
+        if config.demand.overheating_warning:
+            raise Exception("Temperature in RC-Model of building {} out of bounds! First occured at timestep = {}. "
+                            "The results were Tint = {}, theta_c = {}, theta_m = {}.\n"
+                            "If it is an expected behavior, consider turning off over-heating warning in the "
+                            "advanced parameters to continue the simulation.\n"
+                            "If it is not expected, check building geometry and internal loads.\n" 
+                            "Building might be too small in size or architecture parameter Hs_ag = {} might be too"
+                            "small for this geometry. Current bounds of range for RC-model temperatures are"
+                            "between {} and {}.".format(bpr.name, t, round(T_int, 2), round(theta_c, 2),  round(theta_m, 2),
+                                                         bpr.architecture.Hs_ag, T_WARNING_LOW, T_WARNING_HIGH))
 
     rc_model_temp = {'theta_m': theta_m, 'theta_c': theta_c, 'T_int': T_int, 'theta_o': theta_o, 'theta_ea': theta_ea,
                      'theta_ec': theta_ec, 'theta_em': theta_em, 'h_ea': h_ea, 'h_ec': h_ec, 'h_em': h_em,
@@ -664,7 +669,7 @@ def _calc_rc_model_temperatures(Eaf, Elf, Epro, Htr_op, Htr_w, I_sol, Qs, T_ext,
     return T_int, theta_c, theta_m, theta_o, theta_ea, theta_ec, theta_em, h_ea, h_ec, h_em, h_op_m
 
 
-def calc_rc_model_temperatures_heating(phi_hc, bpr, tsd, t):
+def calc_rc_model_temperatures_heating(phi_hc, bpr, tsd, t, config):
     """
     This function executes the equations of SIA 2044 R-C-Building-Model to calculate the node temperatures for a given
     heating energy demand
@@ -697,12 +702,12 @@ def calc_rc_model_temperatures_heating(phi_hc, bpr, tsd, t):
     phi_hc_r = calc_phi_hc_r(phi_hc, f_hc_cv)
 
     # calculating R-C-Model node temperatures
-    rc_model_temp = calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr, tsd, t)
+    rc_model_temp = calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr, tsd, t, config)
 
     return rc_model_temp
 
 
-def calc_rc_model_temperatures_cooling(phi_hc, bpr, tsd, t):
+def calc_rc_model_temperatures_cooling(phi_hc, bpr, tsd, t, config):
     """
     This function executes the equations of SIA 2044 R-C-Building-Model to calculate the node temperatures for a given
     cooling energy demand
@@ -735,12 +740,12 @@ def calc_rc_model_temperatures_cooling(phi_hc, bpr, tsd, t):
     phi_hc_r = calc_phi_hc_r(phi_hc, f_hc_cv)
 
     # calculating R-C-Model node temperatures
-    rc_model_temp = calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr, tsd, t)
+    rc_model_temp = calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr, tsd, t, config)
 
     return rc_model_temp
 
 
-def has_heating_demand(bpr, tsd, t):
+def has_heating_demand(bpr, tsd, t, config):
     """
     This function checks whether the building R-C-Model has a heating demand according to the procedure in SIA 2044.
     R-C-Model temperatures are calculated with zero heating power and checked versus the set-point temperature.
@@ -772,13 +777,13 @@ def has_heating_demand(bpr, tsd, t):
         return False
 
     # calculate temperatures
-    rc_model_temp = calc_rc_model_temperatures_no_heating_cooling(bpr, tsd, t)
+    rc_model_temp = calc_rc_model_temperatures_no_heating_cooling(bpr, tsd, t, config)
 
     # True, if T_int < ta_hs_set, False, if T_int >= ta_hs_set
     return rc_model_temp['T_int'] < ta_hs_set - temp_tolerance
 
 
-def has_cooling_demand(bpr, tsd, t):
+def has_cooling_demand(bpr, tsd, t, config):
     """
     This function checks whether the building R-C-Model has a cooling demand according to the procedure in SIA 2044.
     R-C-Model temperatures are calculated with zero cooling power and checked versus the set-point temperature.
@@ -810,7 +815,7 @@ def has_cooling_demand(bpr, tsd, t):
         return False
 
     # calculate temperatures
-    rc_model_temp = calc_rc_model_temperatures_no_heating_cooling(bpr, tsd, t)
+    rc_model_temp = calc_rc_model_temperatures_no_heating_cooling(bpr, tsd, t, config)
 
     # True, if temperature w/o conditioning is higher than cooling set point temperature, else False
     return rc_model_temp['T_int'] > ta_cs_set + temp_tolerance
