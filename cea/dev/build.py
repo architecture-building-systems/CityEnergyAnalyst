@@ -136,10 +136,10 @@ def yarn_package(config, repo_folder):
     subprocess.run([config.development.yarn], cwd=cea_gui_folder)
     print("RUN yarn package")
     subprocess.run([config.development.yarn, "package"], cwd=cea_gui_folder, check=True)
-    print("COPY win-unpacked to setup/win-unpacked")
-    destination = os.path.join(repo_folder, "setup", "CityEnergyAnalyst-win32-x64")
+    print("COPY CityEnergyAnalyst-GUI-win32-x64 to setup/CityEnergyAnalyst-GUI-win32-x64")
+    destination = os.path.join(repo_folder, "setup", "CityEnergyAnalyst-GUI-win32-x64")
     shutil.rmtree(destination, ignore_errors=True, onerror=None)
-    shutil.copytree(os.path.join(cea_gui_folder, "dist", "CityEnergyAnalyst-win32-x64"), destination)
+    shutil.copytree(os.path.join(cea_gui_folder, "out", "CityEnergyAnalyst-GUI-win32-x64"), destination)
 
 
 def make_nsis(config, repo_folder):
