@@ -98,7 +98,7 @@ In order to run the dashboard, you will need to do the following **each time you
 
 You can now run the CEA dashboard interface normally!
 
-..`Here you can find a series of blog to help you get started!`: https://cityenergyanalyst.com/blog/2019/6/28/getting-started-with-your-own-project-1
+Here you can find a series of `blog posts <https://cityenergyanalyst.com/blogs>`_ to help you get started!
 
 
 Pycharm
