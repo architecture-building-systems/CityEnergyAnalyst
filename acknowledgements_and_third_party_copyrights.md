@@ -1,6 +1,7 @@
 # Acknowledgements and Third-party Copyrights
 
-The CityEnergyAnalyst (CEA) is licensed under the terms of the MIT License.
+The CityEnergyAnalyst (CEA) is licensed under the terms of the 
+[MIT License](https://github.com/architecture-building-systems/CityEnergyAnalyst/blob/master/LICENSE).
 
 The CEA also utilizes third party software. These software are copyrighted by their owner as indicated in the copyright
 notices below.
