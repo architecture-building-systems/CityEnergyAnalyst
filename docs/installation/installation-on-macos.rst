@@ -140,7 +140,7 @@ This method is suitable for users, but not developers. For developers, please re
 	    #. Type ``cd Documents/GitHub/CityEnergyAnalyst-GUI`` and press ENTER.
         #. Install Yarn by typing ``brew install yarn`` and press ENTER.
         #. Type ``yarn`` and press ENTER.
-        #. Type ``yarn dist:dir`` and press ENTER.
+        #. Type ``yarn package`` and press ENTER.
         #. You will find the CEA application in the folder ``/Users/your_name/Documents/GitHub/CityEnergyAnalyst-GUI/dist/mac``
 #. Running CEA:
     * You can run CEA a couple of different ways (see `Docker Interfaces`_ below).
