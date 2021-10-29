@@ -1,5 +1,6 @@
 """
 Water / Ice / PCM short-term thermal storage (for daily operation)
+To be further developed in cooling Singapore
 """
 
 import numpy as np
