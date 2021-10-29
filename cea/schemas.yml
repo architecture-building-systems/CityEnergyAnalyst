@@ -1635,6 +1635,12 @@ get_building_architecture:
         unit: '[m2]'
         values: '{0...n}'
         min: 0.0
+      area_sc:
+        description: Area with solar collectors (for embodied emissions)
+        type: float
+        unit: '[m2]'
+        values: '{0...n}'
+        min: 0.0
       area_balcon:
         description: Area of balconies (for embodied emissions)
         type: float
@@ -2718,6 +2724,12 @@ get_database_construction_standards:
       columns:
         area_pv:
           description: Area with solar pv (for embodied emissions)
+          type: float
+          unit: '[m2]'
+          values: '{0...n}'
+          min: 0.0
+        area_sc:
+          description: Area with solar collectors (for embodied emissions)
           type: float
           unit: '[m2]'
           values: '{0...n}'

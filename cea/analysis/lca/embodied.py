@@ -13,7 +13,7 @@ import pandas as pd
 
 import cea.config
 import cea.inputlocator
-from cea.constants import  CONVERSION_AREA_TO_FLOOR_AREA_RATIO, EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS_GHG_kgm2, EMISSIONS_EMBODIED_EXCAVATIONS_GHG_kgm3, EMISSIONS_EMBODIED_PV_GHG_kgm2
+from cea.constants import EMISSIONS_EMBODIED_PV_GHG_kgm2, EMISSIONS_EMBODIED_SC_GHG_kgm2, EMISSIONS_EMBODIED_EXCAVATIONS_GHG_kgm3,  CONVERSION_AREA_TO_FLOOR_AREA_RATIO, EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS_HEATING_GHG_kgm2, EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS_COOLING_GHG_kgm2,  EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS_ELECTRICITY_GHG_kgm2, EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS_WATER_GHG_kgm2
 from cea.utilities.dbf import dbf_to_dataframe
 
 __author__ = "Jimeno A. Fonseca"
@@ -101,6 +101,7 @@ def lca_embodied(locator, config):
     # local variables
     age_df = dbf_to_dataframe(locator.get_building_typology())
     architecture_df = dbf_to_dataframe(locator.get_building_architecture())
+    air_conditioning_df = dbf_to_dataframe(locator.get_building_air_conditioning())
     geometry_df = Gdf.from_file(locator.get_zone_geometry())
     geometry_df['footprint'] = geometry_df.area
     geometry_df['perimeter'] = geometry_df.length
@@ -111,6 +112,8 @@ def lca_embodied(locator, config):
     surface_database_roof = pd.read_excel(locator.get_database_envelope_systems(), "ROOF")
     surface_database_walls = pd.read_excel(locator.get_database_envelope_systems(), "WALL")
     surface_database_floors = pd.read_excel(locator.get_database_envelope_systems(), "FLOOR")
+    surface_database_hvac_heating = pd.read_excel(locator.get_database_air_conditioning_systems(), "HEATING")
+    surface_database_hvac_cooling = pd.read_excel(locator.get_database_air_conditioning_systems(), "COOLING")
 
     # querry data
     df = architecture_df.merge(surface_database_windows, left_on='type_win', right_on='code')
@@ -123,17 +126,26 @@ def lca_embodied(locator, config):
     df6 = architecture_df.merge(surface_database_walls, left_on='type_part', right_on='code')
     df6.rename({'GHG_WALL_kgCO2m2': 'GHG_PART_kgCO2m2'}, inplace=True, axis=1)
     df6.rename({'GHG_WALL_STRUCTURE_RATIO': 'GHG_PART_STRUCTURE_RATIO'}, inplace=True, axis=1)
+
+    df7 = air_conditioning_df.merge(surface_database_hvac_heating, left_on='type_hs', right_on='code')
+    df8 = air_conditioning_df.merge(surface_database_hvac_cooling, left_on='type_cs', right_on='code')
+
     fields = ['Name', "GHG_WIN_kgCO2m2"]
     fields2 = ['Name', "GHG_ROOF_kgCO2m2", "GHG_ROOF_STRUCTURE_RATIO"]
     fields3 = ['Name', "GHG_WALL_kgCO2m2", "GHG_WALL_STRUCTURE_RATIO"]
     fields4 = ['Name', "GHG_FLOOR_kgCO2m2", "GHG_FLOOR_STRUCTURE_RATIO"]
     fields5 = ['Name', "GHG_BASE_kgCO2m2", "GHG_BASE_STRUCTURE_RATIO"]
     fields6 = ['Name', "GHG_PART_kgCO2m2", "GHG_PART_STRUCTURE_RATIO"]
+    fields7 = ['Name', "class_hs"]
+    fields8 = ['Name', "class_cs"]
+
     surface_properties = df[fields].merge(df2[fields2],
                                           on='Name').merge(df3[fields3],
                                           on='Name').merge(df4[fields4],
                                           on='Name').merge(df5[fields5],
-                                          on='Name').merge(df6[fields6], on='Name')
+                                          on='Name').merge(df6[fields6],
+                                          on='Name').merge(df7[fields7],
+                                          on='Name').merge(df8[fields8],on='Name')
 
     # DataFrame with joined data for all categories
     data_meged_df = geometry_df.merge(age_df, on='Name').merge(surface_properties, on='Name').merge(architecture_df, on='Name')
@@ -207,7 +219,7 @@ def calculate_contributions(df, config):
     :rtype result: DataFrame
     """
     ## default parameters:
-    factor_finishing_roof = 0.7
+    RATIO_EXTERNAL_FINISHING_ROOF_FROM_FINISHING = 0.7
 
     #variables:
     year_to_calculate = config.emissions.year_to_calculate
@@ -229,13 +241,16 @@ def calculate_contributions(df, config):
     ## if it was built more than 60 years before, the embodied energy/emissions have been "paid off" and are set to 0
     df['confirm'] = df.apply(lambda x: calc_if_existing(x['delta_year'], service_life_building), axis=1)
 
+    #calculate gebaudetechnick
+    df['GHG_BUILDING_SYSTEMS_kgCO2m2'] = df.apply(lambda x: calc_factor_technical_systems(x['class_cs'], x['class_hs']), axis=1)
+
     ## Calculation per main building components
     df['G2_floor_finishing'] = (1 - df['GHG_FLOOR_STRUCTURE_RATIO']) * (df['GHG_FLOOR_kgCO2m2'] * df['internal_floor_area']) / finishings_amortization_time
     df['G3_wall_finishing'] = (1 - df['GHG_PART_STRUCTURE_RATIO']) * (df['GHG_PART_kgCO2m2'] * df['GFA_m2'] * CONVERSION_AREA_TO_FLOOR_AREA_RATIO) / finishings_amortization_time
-    df['G4_roof_internal_finishing'] = (1- df['GHG_ROOF_STRUCTURE_RATIO']) * (1-factor_finishing_roof) * (df['GHG_ROOF_kgCO2m2'] * df['roof_area']) / finishings_amortization_time
-    df['C4_4_F1_roof_Construction_and_external_finishing'] = (df['GHG_ROOF_STRUCTURE_RATIO'] + (1- df['GHG_ROOF_STRUCTURE_RATIO']) * factor_finishing_roof) * (df['GHG_ROOF_kgCO2m2'] * df['roof_area']) / roof_construction_amortization_time
+    df['G4_roof_internal_finishing'] = (1- df['GHG_ROOF_STRUCTURE_RATIO']) * (1-RATIO_EXTERNAL_FINISHING_ROOF_FROM_FINISHING) * (df['GHG_ROOF_kgCO2m2'] * df['roof_area']) / finishings_amortization_time
+    df['C4_4_F1_roof_Construction_and_external_finishing'] = (df['GHG_ROOF_STRUCTURE_RATIO'] + (1- df['GHG_ROOF_STRUCTURE_RATIO']) * RATIO_EXTERNAL_FINISHING_ROOF_FROM_FINISHING) * (df['GHG_ROOF_kgCO2m2'] * df['roof_area']) / roof_construction_amortization_time
     df['E3_windows_doors'] = (df['GHG_WIN_kgCO2m2'] * df['windows_ag']) / windows_doors_amortization_time
-    df['D_building_systems'] = (df['GFA_m2'] * EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS_GHG_kgm2) / building_systems_amortization_time + (df['area_pv'] * EMISSIONS_EMBODIED_PV_GHG_kgm2) / building_systems_amortization_time
+    df['D_building_systems'] = (df['GFA_m2'] * df['GHG_BUILDING_SYSTEMS_kgCO2m2']) / building_systems_amortization_time + (df['area_pv'] * EMISSIONS_EMBODIED_PV_GHG_kgm2) / building_systems_amortization_time + (df['area_sc'] * EMISSIONS_EMBODIED_SC_GHG_kgm2) / building_systems_amortization_time
     df['C4_3_balcony'] = (df['GHG_ROOF_kgCO2m2'] * df['area_balcon'] ) / balconies_lifetime
     df['C2_2_C3_structure_internal_walls_supporting_incl_columns'] = df['GHG_PART_STRUCTURE_RATIO'] * (df['GHG_PART_kgCO2m2'] * df['GFA_m2'] * CONVERSION_AREA_TO_FLOOR_AREA_RATIO) / supporting_structure_amortization_time
     df['C4_1_structure_floors'] = df['GHG_FLOOR_STRUCTURE_RATIO'] * (df['GHG_FLOOR_kgCO2m2'] * df['internal_floor_area']) / supporting_structure_amortization_time
@@ -286,6 +301,17 @@ def calculate_contributions(df, config):
 
     return result
 
+
+def calc_factor_technical_systems(system_heating, system_cooling):
+
+    factor_kgm2 = EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS_ELECTRICITY_GHG_kgm2 + EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS_WATER_GHG_kgm2
+    if system_heating != "NONE":
+        factor_kgm2 += EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS_HEATING_GHG_kgm2
+
+    if system_cooling != "NONE":
+        factor_kgm2 += EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS_COOLING_GHG_kgm2
+    print(factor_kgm2)
+    return factor_kgm2
 
 def calc_if_existing(x, y):
     """

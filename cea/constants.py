@@ -29,9 +29,13 @@ LATENT_HEAT_OF_AIR_KJPERKG = 2257  # latent heat of air kJ/kg
 
 # grey emissions
 CONVERSION_AREA_TO_FLOOR_AREA_RATIO = 1.5  # conversion component's area to floor area
-EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS_GHG_kgm2 = 43 #kg COs/m2 gross floor area
+EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS_HEATING_GHG_kgm2 = 12 #kg COs/m2 gross floor area according to SIA 2032 anhang D (2021)
+EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS_COOLING_GHG_kgm2 = 10 #kg COs/m2 gross floor area according to SIA 2032 anhang D (2021)
+EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS_ELECTRICITY_GHG_kgm2 = 18.0 #kg COs/m2 gross floor area according to SIA 2032 anhang D (2021) average office and residential
+EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS_WATER_GHG_kgm2 = 11.36 #kg COs/m2 gross floor area according to SIA 2032 anhang D (2021)
 EMISSIONS_EMBODIED_EXCAVATIONS_GHG_kgm3 = 18 # average of excavation with and without grundwasser accroding to SIA 2032
-EMISSIONS_EMBODIED_PV_GHG_kgm2 = 324 # average of PV according to SIA 2032
+EMISSIONS_EMBODIED_PV_GHG_kgm2 = 324.8 # average of PV according to SIA 2032
+EMISSIONS_EMBODIED_SC_GHG_kgm2 = 155 # average of PV according to SIA 2032
 
 # Date data
 DAYS_IN_YEAR = 365
