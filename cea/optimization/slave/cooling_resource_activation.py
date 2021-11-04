@@ -113,6 +113,7 @@ def cooling_resource_activator(Q_thermal_req,
     Q_cooling_unmet_W = Q_thermal_req
     Q_DailyStorage_gen_directload_W = 0.0
     Q_DailyStorage_to_storage_W = 0.0
+    Q_DailyStorage_content_W = 0.0
 
     ## ACTIVATE THE TRIGEN
     if master_to_slave_variables.NG_Trigen_on == 1 and Q_cooling_unmet_W > 0.0 and not np.isclose(
