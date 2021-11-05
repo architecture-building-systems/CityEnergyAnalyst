@@ -29,6 +29,7 @@ class SlaveData(object):
         self.DHN_barcode = ""
         self.individual_number = ""
         self.generation_number = ""
+        self.debug = False # activates debugging behavior in some scripts inside the optimization
         self.num_total_buildings = 0
         self.DHN_exists = False
         self.DCN_exists = False
