@@ -60,10 +60,12 @@ def district_cooling_network(locator,
 
         # Initialize daily storage calss
         T_ground_K = weather_features.ground_temp_K
-        daily_storage = Storage_tank_PCM(size_Wh=master_to_slave_variables.Storage_cooling_size_W,
+        daily_storage = Storage_tank_PCM(activation=master_to_slave_variables.Storage_cooling_on,
+                                         size_Wh=master_to_slave_variables.Storage_cooling_size_W,
                                          properties = pd.read_excel(locator.get_database_conversion_systems(), sheet_name="TES"),
                                          T_ambient_K = np.average(T_ground_K),
-                                         type_storage = "TES2"
+                                         type_storage = "TES2",
+                                         debug = master_to_slave_variables.debug
                                          )
 
         # Import Data - potentials lake heat
@@ -108,7 +110,9 @@ def district_cooling_network(locator,
         Q_BackupVCC_AS_directload_W = np.zeros(HOURS_IN_YEAR)
 
         for hour in range(HOURS_IN_YEAR):  # cooling supply for all buildings excluding cooling loads from data centers
-            if Q_thermal_req_W[hour] > 0.0:  # only if there is a cooling load!
+            daily_storage.hour = hour
+            if Q_thermal_req_W[hour] > 0.0:
+                # only if there is a cooling load!
                 daily_storage, \
                 thermal_output, \
                 electricity_output, \
