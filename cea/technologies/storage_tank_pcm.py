@@ -3,7 +3,7 @@ Water / Ice / PCM short-term thermal storage (for daily operation)
 """
 
 import numpy as np
-from cea.technologies.storage_tank import calc_tank_surface_area, calc_cold_tank_heat_loss
+from cea.technologies.storage_tank import calc_tank_surface_area, calc_cold_tank_heat_gain
 from math import log
 from cea.analysis.costs.equations import calc_capex_annualized
 
@@ -59,7 +59,7 @@ class Storage_tank_PCM(object):
         self.T_tank_K = self.T_tank_fully_discharged_K
         self.current_phase = 1 #" 1= liquid, 2, phasechange, 3, solid"
         self.current_storage_capacity_Wh = 0.0 # since the simualtion start at mid-night it is considered that the storage is half full by then.
-        self.current_thermal_loss_Wh = self.current_storage_capacity_Wh * 0.1
+        self.current_thermal_gain_Wh = self.current_storage_capacity_Wh * 0.1
         if self.debug:
             print("...initializing the storage...")
             print("The type of storage is a {}".format(self.description))
@@ -78,16 +78,16 @@ class Storage_tank_PCM(object):
             if self.debug:
                 print("The current capacity and temperature is {:.2f} kWh, and {:.2f} °C".format(
                     self.current_storage_capacity_Wh / 1000, self.T_tank_K - 273))
-            new_storage_capacity_wh = self.current_storage_capacity_Wh - self.current_thermal_loss_Wh
+            new_storage_capacity_wh = self.current_storage_capacity_Wh - self.current_thermal_gain_Wh
             new_phase = self.new_phase_tank(new_storage_capacity_wh)
-            new_T_tank_K = self.new_temperature_tank(new_phase, new_storage_capacity_wh, self.current_thermal_loss_Wh)
-            new_thermal_loss_Wh = calc_cold_tank_heat_loss(self.Area_tank_surface_m2,
-                                                                    (new_T_tank_K + self.T_tank_K) / 2,
-                                                                    self.T_ambient_K)
+            new_T_tank_K = self.new_temperature_tank(new_phase, new_storage_capacity_wh, self.current_thermal_gain_Wh)
+            new_thermal_loss_Wh = calc_cold_tank_heat_gain(self.Area_tank_surface_m2,
+                                                           (new_T_tank_K + self.T_tank_K) / 2,
+                                                           self.T_ambient_K)
 
             # finally update all variables
             self.current_phase = new_phase
-            self.current_thermal_loss_Wh = new_thermal_loss_Wh
+            self.current_thermal_gain_Wh = new_thermal_loss_Wh
             self.T_tank_K = new_T_tank_K
             self.current_storage_capacity_Wh = new_storage_capacity_wh
             if self.debug:
@@ -109,7 +109,7 @@ class Storage_tank_PCM(object):
                 self.cap_liquid_phase_Wh + self.cap_phase_change_Wh + self.cap_solid_phase_Wh + tol):
             new_phase = 3
         else:
-            print("there was an error, the new capacity was {}".format(new_storage_capacity_wh))
+            print("there was an error, the new capacity was {} and the thermal loss was {}".format(new_storage_capacity_wh, self.current_thermal_gain_Wh))
         return new_phase
 
 
@@ -186,37 +186,47 @@ class Storage_tank_PCM(object):
                     self.current_storage_capacity_Wh / 1000, self.T_tank_K - 273))
                 print("The requested load was {:.2f} kW".format(
                     load_to_storage_Wh / 1000))
+                print("The current thermal gain is {:.2f} kW".format(
+                    self.current_thermal_gain_Wh / 1000))
 
             effective_load_to_storage_Wh = load_to_storage_Wh * self.charging_efficiency
-            if np.isclose((self.current_storage_capacity_Wh + self.current_thermal_loss_Wh), self.size_Wh, rtol=0.001) or np.isclose(self.current_storage_capacity_Wh, self.size_Wh, rtol=0.001) or effective_load_to_storage_Wh <=0.0:
-                # Storage is already full, no need to recharge.
-                print("0")
-                effective_load_to_storage_Wh = 0.0
-                new_storage_capacity_wh = self.current_storage_capacity_Wh - self.current_thermal_loss_Wh
-                new_phase = self.new_phase_tank(new_storage_capacity_wh)
-                new_T_tank_K = self.new_temperature_tank(new_phase, new_storage_capacity_wh, - self.current_thermal_loss_Wh)
-
-            elif (self.current_storage_capacity_Wh + effective_load_to_storage_Wh + self.current_thermal_loss_Wh) > self.size_Wh:
-                print("A")
-                effective_load_to_storage_Wh = self.size_Wh - self.current_storage_capacity_Wh
-                new_storage_capacity_wh = self.current_storage_capacity_Wh + effective_load_to_storage_Wh - self.current_thermal_loss_Wh
-                new_phase = self.new_phase_tank(new_storage_capacity_wh)
-                new_T_tank_K = self.new_temperature_tank(new_phase, new_storage_capacity_wh, effective_load_to_storage_Wh)
-            else:
-                # charging is possible with the full request
-                new_storage_capacity_wh = self.current_storage_capacity_Wh + effective_load_to_storage_Wh - self.current_thermal_loss_Wh
-                new_phase = self.new_phase_tank(new_storage_capacity_wh)
-                new_T_tank_K = self.new_temperature_tank(new_phase, new_storage_capacity_wh, effective_load_to_storage_Wh)
+            state_the_storage_after_thermal_gain = self.current_storage_capacity_Wh - self.current_thermal_gain_Wh
+            if state_the_storage_after_thermal_gain <= 0.0:
+                state_the_storage_after_thermal_gain = 0.0
+            # CASE 1 the storage is empty:
+            if state_the_storage_after_thermal_gain == 0.0:
+                #CASE 1.1 the storage can be partialy filled:
+                if effective_load_to_storage_Wh >= self.size_Wh:
+                    effective_load_to_storage_Wh = self.size_Wh
+                    new_storage_capacity_wh = self.size_Wh
+                    new_phase = self.new_phase_tank(new_storage_capacity_wh)
+                    new_T_tank_K = self.new_temperature_tank(new_phase, new_storage_capacity_wh, effective_load_to_storage_Wh)
+                elif effective_load_to_storage_Wh < self.size_Wh:
+                    new_storage_capacity_wh = effective_load_to_storage_Wh
+                    new_phase = self.new_phase_tank(new_storage_capacity_wh)
+                    new_T_tank_K = self.new_temperature_tank(new_phase, new_storage_capacity_wh, effective_load_to_storage_Wh)
+            # CASE 2 the storage is partialy full or full
+            elif 0.0 < state_the_storage_after_thermal_gain <= self.size_Wh:
+                if (state_the_storage_after_thermal_gain + effective_load_to_storage_Wh) >= self.size_Wh:
+                    effective_load_to_storage_Wh = self.size_Wh - state_the_storage_after_thermal_gain
+                    new_storage_capacity_wh = self.size_Wh
+                    new_phase = self.new_phase_tank(new_storage_capacity_wh)
+                    new_T_tank_K = self.new_temperature_tank(new_phase, new_storage_capacity_wh, effective_load_to_storage_Wh)
+                elif (state_the_storage_after_thermal_gain + effective_load_to_storage_Wh) < self.size_Wh:
+                    effective_load_to_storage_Wh = effective_load_to_storage_Wh
+                    new_storage_capacity_wh = state_the_storage_after_thermal_gain + effective_load_to_storage_Wh
+                    new_phase = self.new_phase_tank(new_storage_capacity_wh)
+                    new_T_tank_K = self.new_temperature_tank(new_phase, new_storage_capacity_wh, effective_load_to_storage_Wh)
 
             # recalculate the storage capacity after losses
             final_load_to_storage_Wh = effective_load_to_storage_Wh / self.charging_efficiency
-            new_thermal_loss_Wh = calc_cold_tank_heat_loss(self.Area_tank_surface_m2,
-                                                                    (new_T_tank_K + self.T_tank_K) / 2,
-                                                                    self.T_ambient_K)
+            new_thermal_loss_Wh = calc_cold_tank_heat_gain(self.Area_tank_surface_m2,
+                                                           (new_T_tank_K + self.T_tank_K) / 2,
+                                                           self.T_ambient_K)
 
             # finally update all variables
             self.current_phase = new_phase
-            self.current_thermal_loss_Wh = new_thermal_loss_Wh
+            self.current_thermal_gain_Wh = new_thermal_loss_Wh
             self.T_tank_K = new_T_tank_K
             self.current_storage_capacity_Wh = new_storage_capacity_wh
 
@@ -224,6 +234,7 @@ class Storage_tank_PCM(object):
                 print("The possible load was {:.2f} kWh".format(final_load_to_storage_Wh / 1000))
                 print("The new capacity and temperature is {:.2f} kWh, and {:.2f} °C".format(
                     self.current_storage_capacity_Wh / 1000, self.T_tank_K - 273, ))
+
             return final_load_to_storage_Wh, new_storage_capacity_wh
         else:
             return 0.0, 0.0
@@ -234,34 +245,45 @@ class Storage_tank_PCM(object):
                 print("...discharging...")
                 print("The current capacity and temperature is {:.2f} kWh, and {:.2f} °C".format(
                     self.current_storage_capacity_Wh / 1000, self.T_tank_K - 273))
-            effective_load_from_storage_Wh = load_from_storage_Wh / self.charging_efficiency
-            if np.isclose((self.current_storage_capacity_Wh - self.current_thermal_loss_Wh), 0.0, rtol=0.001):
-                # Storage is empty, no discharge
-                effective_load_from_storage_Wh = 0.0
-                new_storage_capacity_wh = self.current_storage_capacity_Wh - self.current_thermal_loss_Wh
-                new_phase = self.new_phase_tank(new_storage_capacity_wh)
-                new_T_tank_K = self.new_temperature_tank(new_phase, new_storage_capacity_wh, - self.current_thermal_loss_Wh)
+                print("The requested load was {:.2f} kW".format(
+                    load_from_storage_Wh / 1000))
+                print("The current thermal gain is {:.2f} kW".format(
+                    self.current_thermal_gain_Wh / 1000))
 
-            elif (self.current_storage_capacity_Wh - effective_load_from_storage_Wh - self.current_thermal_loss_Wh) < 0.0:
-                effective_load_from_storage_Wh = self.current_storage_capacity_Wh
-                new_storage_capacity_wh = 0.0
+            effective_load_from_storage_Wh = load_from_storage_Wh / self.discharging_efficiency
+            state_the_storage_after_thermal_gain = self.current_storage_capacity_Wh - self.current_thermal_gain_Wh
+            if state_the_storage_after_thermal_gain <= 0.0:
+                state_the_storage_after_thermal_gain = 0.0
+            print(state_the_storage_after_thermal_gain)
+            # CASE 1 the storage is empty:
+            if state_the_storage_after_thermal_gain == 0.0:
+                effective_load_from_storage_Wh = 0.0
+                new_storage_capacity_wh = state_the_storage_after_thermal_gain
                 new_phase = self.new_phase_tank(new_storage_capacity_wh)
-                new_T_tank_K = self.new_temperature_tank(new_phase, new_storage_capacity_wh, -effective_load_from_storage_Wh)
-            else:
-                # charging is possible with the full request
-                new_storage_capacity_wh = self.current_storage_capacity_Wh - effective_load_from_storage_Wh - self.current_thermal_loss_Wh
-                new_phase = self.new_phase_tank(new_storage_capacity_wh)
-                new_T_tank_K = self.new_temperature_tank(new_phase, new_storage_capacity_wh, - effective_load_from_storage_Wh)
+                new_T_tank_K = self.new_temperature_tank(new_phase, new_storage_capacity_wh, 0.0)
+
+            # CASE 2 the storage is partialy full or full
+            elif 0.0 < state_the_storage_after_thermal_gain <= self.size_Wh:
+                if (state_the_storage_after_thermal_gain - effective_load_from_storage_Wh) < 0.0:
+                    effective_load_from_storage_Wh = state_the_storage_after_thermal_gain
+                    new_storage_capacity_wh = 0.0
+                    new_phase = self.new_phase_tank(new_storage_capacity_wh)
+                    new_T_tank_K = self.new_temperature_tank(new_phase, new_storage_capacity_wh, -effective_load_from_storage_Wh)
+                elif (state_the_storage_after_thermal_gain - effective_load_from_storage_Wh) >= 0.0:
+                    effective_load_from_storage_Wh = effective_load_from_storage_Wh
+                    new_storage_capacity_wh = state_the_storage_after_thermal_gain - effective_load_from_storage_Wh
+                    new_phase = self.new_phase_tank(new_storage_capacity_wh)
+                    new_T_tank_K = self.new_temperature_tank(new_phase, new_storage_capacity_wh, -effective_load_from_storage_Wh)
 
             # recalculate the storage capacity after losses
-            final_load_to_storage_Wh = effective_load_from_storage_Wh * self.charging_efficiency
-            new_thermal_loss_Wh = calc_cold_tank_heat_loss(self.Area_tank_surface_m2,
-                                                                    (new_T_tank_K + self.T_tank_K) / 2,
-                                                                    self.T_ambient_K)
+            final_load_to_storage_Wh = effective_load_from_storage_Wh * self.discharging_efficiency
+            new_thermal_loss_Wh = calc_cold_tank_heat_gain(self.Area_tank_surface_m2,
+                                                           (new_T_tank_K + self.T_tank_K) / 2,
+                                                           self.T_ambient_K)
 
             # finally update all variables
             self.current_phase = new_phase
-            self.current_thermal_loss_Wh = new_thermal_loss_Wh
+            self.current_thermal_gain_Wh = new_thermal_loss_Wh
             self.T_tank_K = new_T_tank_K
             self.current_storage_capacity_Wh = new_storage_capacity_wh
 
