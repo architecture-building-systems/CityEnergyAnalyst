@@ -46,7 +46,7 @@ def calc_fully_mixed_tank(T_start_C, T_ambient_C, q_discharged_W, q_charged_W, V
     :param V_tank_m3: tank volume
     :return:
     """
-    q_loss_W = calc_cold_tank_heat_loss(Area_tank_surface_m2, T_start_C, T_ambient_C)
+    q_loss_W = calc_cold_tank_heat_gain(Area_tank_surface_m2, T_start_C, T_ambient_C)
     T_tank_C = calc_tank_temperature(T_start_C, q_loss_W, q_discharged_W, q_charged_W, V_tank_m3, tank_type)
     return T_tank_C
 
@@ -94,9 +94,12 @@ def calc_hot_tank_heat_loss(Area_tank_surface_m2, T_tank_C, tamb):
 
 
 
-def calc_cold_tank_heat_loss(Area_tank_surface_m2, T_tank_C, T_ambient_C):
-    q_loss_W = U_DHWTANK * Area_tank_surface_m2 * (T_ambient_C - T_tank_C)  # tank heat gain from the room in [Wh]
-    return q_loss_W
+def calc_cold_tank_heat_gain(Area_tank_surface_m2, T_tank_C, T_ambient_C):
+    if T_tank_C >= T_ambient_C:
+        q_gain_W = 0.0
+    else:
+        q_gain_W = U_DHWTANK * Area_tank_surface_m2 * (T_ambient_C - T_tank_C)  # tank heat gain from the room in [Wh]
+    return q_gain_W
 
 
 def calc_tank_surface_area(V_tank_m3):
