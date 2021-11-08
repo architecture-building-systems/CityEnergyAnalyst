@@ -254,7 +254,6 @@ class Storage_tank_PCM(object):
             state_the_storage_after_thermal_gain = self.current_storage_capacity_Wh - self.current_thermal_gain_Wh
             if state_the_storage_after_thermal_gain <= 0.0:
                 state_the_storage_after_thermal_gain = 0.0
-            print(state_the_storage_after_thermal_gain)
             # CASE 1 the storage is empty:
             if state_the_storage_after_thermal_gain == 0.0:
                 effective_load_from_storage_Wh = 0.0
