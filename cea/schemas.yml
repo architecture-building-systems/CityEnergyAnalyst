@@ -4789,10 +4789,11 @@ get_database_conversion_systems:
           values: '{0.0...n}'
         T_min_C:
           description: Minimum temperature of working fluid at full charge
-          min: 0.0
+          min: -10.0
+          max: 90.0
           type: float
           unit: '[-]'
-          values: '{0.0...n}'
+          values: '{-10.0...n}'
         T_max_C:
           description: Maximum temperature of working fluid at full discharge
           min: 0.0

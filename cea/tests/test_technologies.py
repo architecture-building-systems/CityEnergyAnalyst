@@ -50,7 +50,7 @@ class TestColdPcmThermalStorage(unittest.TestCase):
 
         # initailize tank
         tank = Storage_tank_PCM(size_Wh=self.size_storage_Wh,
-                                properties=self.storage_properties,
+                                database_model_parameters=self.storage_properties,
                                 T_ambient_K=self.T_ambient_K,
                                 type_storage=self.type_storage)
 
@@ -106,7 +106,7 @@ class TestColdPcmThermalStorage(unittest.TestCase):
     def test_cold_pcm_thermal_storage_costs(self, unittest=True):
         # initailize tank
         tank = Storage_tank_PCM(size_Wh=self.size_storage_Wh,
-                                properties=self.storage_properties,
+                                database_model_parameters=self.storage_properties,
                                 T_ambient_K=self.T_ambient_K,
                                 type_storage=self.type_storage)
         Capex_a_storage_USD, Opex_fixed_storage_USD, Capex_total_USD = tank.costs_storage()

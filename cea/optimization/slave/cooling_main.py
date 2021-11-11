@@ -62,9 +62,9 @@ def district_cooling_network(locator,
         T_ground_K = weather_features.ground_temp_K
         daily_storage = Storage_tank_PCM(activation=master_to_slave_variables.Storage_cooling_on,
                                          size_Wh=master_to_slave_variables.Storage_cooling_size_W,
-                                         properties = pd.read_excel(locator.get_database_conversion_systems(), sheet_name="TES"),
+                                         database_model_parameters= pd.read_excel(locator.get_database_conversion_systems(), sheet_name="TES"),
                                          T_ambient_K = np.average(T_ground_K),
-                                         type_storage = "TES2",
+                                         type_storage = config.optimization.cold_storage_type,
                                          debug = master_to_slave_variables.debug
                                          )
 
