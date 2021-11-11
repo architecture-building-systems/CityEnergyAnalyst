@@ -1011,7 +1011,11 @@ class InputLocator(object):
     # OTHER
     def get_temporary_folder(self):
         """Temporary folder as returned by `tempfile`."""
-        return tempfile.gettempdir()
+        #every scneario should have its temp folder, otherwise we will have problems with paralellization
+        temp_folder = os.path.join(tempfile.gettempdir(), self.scenario.split("\\")[-1])
+        if not os.path.exists(temp_folder):
+            os.makedirs(temp_folder)
+        return temp_folder
 
     def get_temporary_file(self, filename):
         """Returns the path to a file in the temporary folder with the name `filename`"""
