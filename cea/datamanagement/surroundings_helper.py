@@ -59,7 +59,7 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, key):
             shapefile['REFERENCE'] = ["OSM - median" if x is np.nan else "OSM - as it is" for x in
                                       shapefile['building:levels']]
         if 'roof:levels' not in list_of_columns:
-            shapefile['roof:levels'] = [1] * no_buildings
+            shapefile['roof:levels'] = 0
 
         # get the median from the area:
         data_osm_floors1 = shapefile['building:levels'].fillna(0)
