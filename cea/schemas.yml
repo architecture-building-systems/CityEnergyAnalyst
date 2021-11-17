@@ -1799,6 +1799,17 @@ get_building_architecture:
             path: get_database_envelope_systems
             sheet: FLOOR
             column: code
+      type_col:
+        description: Columns (vertical structural elements) assembly (relates to "code" in ENVELOPE
+          assemblies)
+        type: string
+        unit: '[-]'
+        values: alphanumeric
+        choice:
+          lookup:
+            path: get_database_envelope_systems
+            sheet: COLUMN
+            column: code
       type_win:
         description: Window assembly (relates to "code" in ENVELOPE assemblies)
         type: string
@@ -2781,6 +2792,17 @@ get_database_construction_standards:
               path: get_database_envelope_systems
               sheet: FLOOR
           description: Basement floor construction assembly (relates to "code" in
+            ENVELOPE assemblies)
+          type: string
+          unit: '[-]'
+          values: alphanumeric
+        type_col:
+          choice:
+            lookup:
+              column: code
+              path: get_database_envelope_systems
+              sheet: COLUMN
+          description: Columns (vertical structural elements) assembly (relates to "code" in
             ENVELOPE assemblies)
           type: string
           unit: '[-]'
@@ -12941,6 +12963,12 @@ get_radiation_materials:
         min: 0.0
       type_base:
         description: Basement floor construction assembly (relates to "code" in ENVELOPE
+          assemblies)
+        type: string
+        unit: 'NA'
+        values: alphanumeric
+      type_col:
+        description: Columns (vertical structural elements) assembly (relates to "code" in ENVELOPE
           assemblies)
         type: string
         unit: 'NA'
