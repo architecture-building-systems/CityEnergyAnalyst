@@ -35,6 +35,7 @@ __status__ = "Production"
 
 
 def district_cooling_network(locator,
+                             config,
                              master_to_slave_variables,
                              network_features,
                              weather_features):
@@ -42,6 +43,7 @@ def district_cooling_network(locator,
     Computes the parameters for the cooling of the complete DCN
 
     :param cea.inputlocator.InputLocator locator: path to res folder
+    :param config: configuration file
     :param network_features: network features
     :param prices: Prices imported from the database
     :type network_features: class
