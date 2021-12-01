@@ -113,6 +113,7 @@ def evaluation_main(individual,
     district_cooling_electricity_requirements_dispatch, \
     district_cooling_fuel_requirements_dispatch, \
     district_cooling_capacity_installed = cooling_main.district_cooling_network(locator,
+                                                                                config,
                                                                                 master_to_slave_vars,
                                                                                 network_features,
                                                                                 weather_features)
