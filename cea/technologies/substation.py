@@ -103,6 +103,7 @@ def substation_main_cooling(locator, total_demand, buildings_name_with_cooling,
         for name in buildings_name_with_cooling:
             buildings_dict[name] = pd.read_csv(locator.get_demand_results_file(name))
 
+            # Calculate Temperatures of supply in the cases of (1) space cooling, refrigeration (2) and data centers
             T_supply_to_cs_ref, T_supply_to_cs_ref_data, \
             Tcs_return_C, Tcs_supply_C = calc_temp_hex_building_side_cooling(buildings_dict[name],
                                                                              cooling_configuration)
