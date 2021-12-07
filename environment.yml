@@ -30,7 +30,6 @@ dependencies:
 - numpy=1.19.1
 - numpy-financial=1.0.0
 - osmnx=0.15.1
-#- pandana
 - pandas
 - pip
 - psutil
@@ -38,11 +37,10 @@ dependencies:
 - python>=3.7
 - pythonocc-core
 - pytz
-- pvlib
+- pvlib-python
 - scipy
 - setuptools
 - shapely
-#- urbanaccess
 - pyyaml
 - timezonefinder
 - python-cufflinks
