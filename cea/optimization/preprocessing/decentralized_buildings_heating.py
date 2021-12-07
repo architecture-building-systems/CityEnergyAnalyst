@@ -71,8 +71,8 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
 def disconnected_heating_for_building(building_name, supply_systems, T_ground_K, geothermal_potential_data, lca,
                                       locator, prices):
     print('{building_name} disconnected heating supply system simulations...'.format(building_name=building_name))
-    GHP_cost_data = supply_systems.HP
-    BH_cost_data = supply_systems.BH
+    GHP_cost_data = supply_systems.HP # heat pump
+    BH_cost_data = supply_systems.BH # borehole
     boiler_cost_data = supply_systems.Boiler
 
     # run substation model to derive temperatures of the building
@@ -261,7 +261,7 @@ def disconnected_heating_for_building(building_name, supply_systems, T_ground_K,
     # Best configuration
     Best = np.zeros((13, 1))
     indexBest = 0
-    TAC_USD = np.zeros((13, 2))
+    TAC_USD = np.zeros((13, 2)) #Total anualize costs -> we rank the system based on this metric and then based on Total CO2.
     TotalCO2 = np.zeros((13, 2))
     for i in range(13):
         TAC_USD[i][0] = TotalCO2[i][0]  = i
