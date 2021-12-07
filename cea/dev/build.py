@@ -43,7 +43,7 @@ def main(config):
     conda_pack(config, env_name, repo_folder)
     extract_tar_file(repo_folder)
     python_setup_py_sdist(config, env_name, repo_folder)
-    yarn_dist_dir(config, repo_folder)
+    yarn_package(config, repo_folder)
     make_nsis(config, repo_folder)
 
 
@@ -126,7 +126,7 @@ def extract_tar_file(repo_folder):
     os.unlink(python_tar)
 
 
-def yarn_dist_dir(config, repo_folder):
+def yarn_package(config, repo_folder):
     cea_gui_folder = config.development.gui
     if not os.path.exists(os.path.join(cea_gui_folder, "package.json")):
         raise ValueError("Please configure the path to the CityEnergyAnalyst-GUI repository ({development:gui})")
@@ -134,12 +134,12 @@ def yarn_dist_dir(config, repo_folder):
         raise ValueError("Please configure the path to yarn ({development:yarn})")
     print("RUN yarn")
     subprocess.run([config.development.yarn], cwd=cea_gui_folder)
-    print("RUN yarn dist:dir")
-    subprocess.run([config.development.yarn, "dist:dir"], cwd=cea_gui_folder, check=True)
-    print("COPY win-unpacked to setup/win-unpacked")
-    destination = os.path.join(repo_folder, "setup", "win-unpacked")
+    print("RUN yarn package")
+    subprocess.run([config.development.yarn, "package"], cwd=cea_gui_folder, check=True)
+    print("COPY CityEnergyAnalyst-GUI-win32-x64 to setup/CityEnergyAnalyst-GUI-win32-x64")
+    destination = os.path.join(repo_folder, "setup", "CityEnergyAnalyst-GUI-win32-x64")
     shutil.rmtree(destination, ignore_errors=True, onerror=None)
-    shutil.copytree(os.path.join(cea_gui_folder, "dist", "win-unpacked"), destination)
+    shutil.copytree(os.path.join(cea_gui_folder, "out", "CityEnergyAnalyst-GUI-win32-x64"), destination)
 
 
 def make_nsis(config, repo_folder):
