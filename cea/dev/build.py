@@ -88,8 +88,13 @@ def get_env(config, conda_env):
 
 
 def conda_env_create(config, env_name, environment_yml):
+    print("INSTALL mamba")
+    command = [conda(), "conda", "install", "mamba", "-c", "conda-forge", "-y"]
+    print("RUN: {command}".format(command=" ".join(command)))
+    subprocess.run(command, capture_output=False, check=True, env=get_env(config, "base"), shell=True)
+
     print("CREATE conda environment: {env_name}".format(env_name=env_name))
-    command = [conda(), "conda", "env", "create", "--name", env_name, "--file", environment_yml]
+    command = [conda(), "mamba", "env", "create", "--name", env_name, "--file", environment_yml]
     print("RUN: {command}".format(command=" ".join(command)))
     subprocess.run(command, capture_output=False, check=True, env=get_env(config, "base"), shell=True)
     print("DONE")
