@@ -888,7 +888,7 @@ class ScenarioParameter(Parameter):
 
     def decode(self, value):
         """Make sure the path is nicely formatted"""
-        return os.path.normpath(value)
+        return os.path.normpath((os.path.expanduser(value)))
 
 
 class MultiChoiceParameter(ChoiceParameter):
