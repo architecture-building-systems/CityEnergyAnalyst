@@ -22,6 +22,7 @@ If you would like to develop CEA, this will be your method. Follow these instruc
             ``name`` parameter: ``conda env create --name your-env-name-here``
 
         *   ``CONDA_SUBDIR=osx-64`` will be used when creating the CEA conda environment to support both Intel and Apple Silicon Macs (this will be removed once all dependencies have been ported to ARM). Instructions below will indicate where it is being used.
+        *   (Only applicable for Apple Silicon Macs) If at any point during installation or running CEA and it prompts you to install Rosetta, click install.
         *   This guide **SHOULD** work for both Intel and Apple Silicon Macs. If you encounter any issues when installing on either, help us report it as an issue on our `GitHub <https://github.com/architecture-building-systems/CityEnergyAnalyst/issues>`__ page.
 
 
