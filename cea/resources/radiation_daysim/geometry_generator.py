@@ -262,8 +262,7 @@ class BuildingGeometry(object):
 
     def save(self, pickle_location):
         dir_name = os.path.dirname(pickle_location)
-        if not os.path.exists(dir_name):
-            os.makedirs(dir_name)
+        os.makedirs(dir_name, exist_ok=True)
 
         with open(pickle_location, 'wb') as f:
             pickle.dump(self.__getstate__(), f)
