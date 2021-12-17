@@ -51,8 +51,7 @@ class PlotCache(object):
         if cache_timestamp < self.newest_dependency(plot.input_files):
             plot_div = producer()
             folder = os.path.dirname(div_file)
-            if not os.path.exists(folder):
-                os.makedirs(folder)
+            os.makedirs(folder, exist_ok=True)
             with open(div_file, 'w') as div_fp:
                 div_fp.write(plot_div)
         else:

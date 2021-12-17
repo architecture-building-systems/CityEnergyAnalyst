@@ -51,10 +51,8 @@ class CEADaySim(object):
         self.site_info = None
 
     def _create_folders(self):
-        if not os.path.exists(self.common_inputs):
-            os.makedirs(self.common_inputs)
-        if not os.path.exists(self.projects_dir):
-            os.makedirs(self.projects_dir)
+        os.makedirs(self.common_inputs, exist_ok=True)
+        os.makedirs(self.projects_dir, exist_ok=True)
 
     def initialize_daysim_project(self, project_name):
         """
