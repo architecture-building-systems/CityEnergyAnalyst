@@ -28,11 +28,9 @@ If you would like to develop CEA, this will be your method. Follow these instruc
 
 Prerequisites
 ~~~~~~~~~~~~~
-
-* Download and install `Github Desktop (64-bit) <https://desktop.github.com/>`__.
-* Download and install `Miniconda(64-bit) for Python 3.9 <https://conda.io/miniconda.html>`__.
 * Download and install `Homebrew <https://brew.sh/>`__.
 
+* (*Optional*) Download and install `Github Desktop (64-bit) <https://desktop.github.com/>`__. Only required if you are unfamiliar with using Terminal and/or git commands.
 * (*Optional*) Install `Mamba <https://mamba.readthedocs.io/en/latest/installation.html>`__. This will help to speed up the creation of the CEA conda environment.
 
 Installation of the code base
@@ -40,6 +38,9 @@ Installation of the code base
 
 Excluding the above software, CEA installation requires approximately 13 GB of storage (depending on your existing
 Python library) and  1 hour of your time.
+
+.. note:: (*Experimental*) We have a script that can automate the process below. Just open a Terminal console and enter ``/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/architecture-building-systems/CityEnergyAnalyst/update-mac-installation/install/mac_installation.sh)"`` Continue on the next section to find out how to interact with CEA.
+
 
 #. Open GitHub Desktop from the start menu.
 #. Clone the CEA repository:
