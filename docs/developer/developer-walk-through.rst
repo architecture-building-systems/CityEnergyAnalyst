@@ -14,3 +14,4 @@ Developer walkthrough
    how-to-create-a-new-release
    installing-the-jenkins
    run-cea-in-docker
+   repo-cleanup
