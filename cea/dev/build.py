@@ -113,6 +113,11 @@ def python_setup_py_sdist(config, env_name, repo_folder):
 
 
 def conda_pack(config, env_name, repo_folder):
+    print("Make sure conda-pack is installed")
+    command = [conda(), "conda", "install", "conda-pack", "-y"]
+    print("RUN: {command}".format(command=" ".join(command)))
+    subprocess.run(command, capture_output=False, check=True, env=get_env(config, "base"), shell=True)
+
     print("CONDA-PACK to Dependencies folder: {env_name}".format(env_name=env_name))
     output_path = os.path.join(repo_folder, "setup", "Dependencies", "Python.tar")
     command = [conda(), "conda-pack", "--name", env_name, "--output", output_path, "--n-threads", "-1", "--force"]
