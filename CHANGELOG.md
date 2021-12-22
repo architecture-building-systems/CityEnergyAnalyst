@@ -1,3 +1,12 @@
+- 2021-12-21 - 3.26.0 - #3075 Make sure conda-pack is installed when creating the installer
+- 2021-12-16 - 3.26.0 - #3074 Fix race condition when creating building geometries
+- 2021-12-16 - 3.26.0 - #3071 Add mamba to CEA installer build
+- 2021-12-16 - 3.26.0 - #3073 Create Jenkinsfile
+- 2021-12-07 - 3.26.0 - #3052 3048 migrate to electron forge
+- 2021-11-24 - 3.26.0 - #3063 Make `roof:levels` 0 by default
+- 2021-10-27 - 3.26.0 - #3028 Mac OS installation guide! So excited that CEA now works on Mac!
+- 2021-10-27 - 3.26.0 - #3041 3004 add option to continue demand sumulation when overheated
+- 2021-10-22 - 3.26.0 - #3049 update version, changelog, and credits 
 - 2021-10-20 - 3.24.0 - #3029 Update photovoltaic.py
 - 2021-10-15 - 3.24.0 - #3027 Send regex info to frontend
 - 2021-10-14 - 3.24.0 - #3045 remover min from possible negatives in the schemas
