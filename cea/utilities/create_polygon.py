@@ -26,8 +26,7 @@ def create_polygon(coordinate_tuple_list, output_path, filename):
     gdf = gpd.GeoDataFrame([{'geometry': poly}])
     gdf.crs = get_geographic_coordinate_system()
     # Make sure directory exists
-    if not os.path.exists(output_path):
-        os.makedirs(output_path)
+    os.makedirs(output_path, exist_ok=True)
     gdf.to_file(os.path.join(output_path, '{filename}.shp'.format(filename=filename)))
     print('Polygon `{filename}` created in {output_path}'.format(filename=filename, output_path=output_path))
 
