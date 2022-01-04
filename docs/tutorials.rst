@@ -6,7 +6,7 @@ Users
 
 General tutorials are constantly updated through blogs or videos.
 
-- `Blog posts <https://cityenergyanalyst.com/blog-1>`__
+- `Blog posts <https://cityenergyanalyst.com/blog>`__
 - `Video tutorials <https://youtube.com/playlist?list=PL4fIcvT_PXL0XYU_jPDKj50MSUc8GggFz>`__
 
 Developers
