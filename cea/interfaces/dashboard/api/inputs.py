@@ -1,5 +1,6 @@
 import json
 import os
+import shutil
 import traceback
 from collections import OrderedDict
 
@@ -378,6 +379,24 @@ class InputDatabaseData(Resource):
                     database_dict_to_file(payload[db_type][db_name], db_path)
 
         return payload
+
+
+@api.route('/databases/copy')
+class InputDatabaseCopy(Resource):
+    def put(self):
+        config = current_app.cea_config
+        payload = api.payload
+        locator = cea.inputlocator.InputLocator(config.scenario)
+
+        if payload and 'path' in payload and 'name' in payload:
+            copy_path = os.path.join(payload['path'], payload['name'])
+            if os.path.exists(copy_path):
+                abort(500, 'Copy path {} already exists. Choose a different path/name.'.format(copy_path))
+            locator.ensure_parent_folder_exists(copy_path)
+            shutil.copytree(locator.get_databases_folder(), copy_path)
+            return {'message': 'Database copied to {}'.format(copy_path)}
+        else:
+            abort(500, "'path' and 'name' required")
 
 
 @api.route('/databases/check')
