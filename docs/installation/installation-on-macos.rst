@@ -93,13 +93,14 @@ That's it! `You can run the CEA command interface normally`_.
 .. _`You can run the CEA command interface normally`: https://city-energy-analyst.readthedocs.io/en/latest/developer/interfaces.html#the-command-line-interface
 
 
-Dashboard
+Dashboard (GUI)
 _________
 
 In order to run the dashboard, you will need to do the following **each time you want to start the dashboard**:
 
 #. Open the Terminal (you can find it in your Mac's *Applications* folder) and run the following command depending on your installation type:
 #. Type ``conda activate cea`` and press ENTER, then type ``cea dashboard`` and press ENTER.
+#. Wait for ``start socketio.run`` to appear in the Terminal before proceeding to the next step. (This might take a while if you are running this for the first time, around 3-5 min)
 #. Run the CEA dashboard application you created in the last step of the installation above (``/Users/your_name/Documents/GitHub/CityEnergyAnalyst-GUI/out/CityEnergyAnalyst-GUI-darwin-*``).
 
 You can now run the CEA dashboard interface normally!
