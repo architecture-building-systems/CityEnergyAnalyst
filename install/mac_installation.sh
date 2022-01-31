@@ -22,7 +22,7 @@ fi
 conda install mamba -n base -c conda-forge -y
 eval "$(command conda 'shell.bash' 'hook' 2> /dev/null)"
 # Install environment
-CONDA_SUBDIR=osx-64 mamba env update --name $CEA_ENV_NAME --file ./cea_repo/CityEnergyAnalyst/environment.yml --prune
+CONDA_SUBDIR=osx-64 mamba env update --name $CEA_ENV_NAME --file ./CityEnergyAnalyst/environment.yml --prune
 # Install CEA
 conda activate $CEA_ENV_NAME
 pip install -e ./CityEnergyAnalyst
