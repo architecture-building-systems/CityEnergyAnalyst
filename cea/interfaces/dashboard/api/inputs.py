@@ -135,7 +135,7 @@ class AllInputs(Resource):
         return store
 
     def put(self):
-        form = api.payload
+        form = json.loads(request.data)
         config = current_app.cea_config
         locator = cea.inputlocator.InputLocator(config.scenario)
 
