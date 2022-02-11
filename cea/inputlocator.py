@@ -37,6 +37,8 @@ class InputLocator(object):
         self._wrap_locator_methods(plugins)
         self.plugins = plugins
 
+        self._temp_directory = None
+
     def __getstate__(self):
         """Make sure we can pickle an InputLocator..."""
         return {
@@ -1011,11 +1013,9 @@ class InputLocator(object):
     # OTHER
     def get_temporary_folder(self):
         """Temporary folder as returned by `tempfile`."""
-        # every scneario should have its temp folder, otherwise we will have problems with paralellization
-        temp_folder = os.path.join(tempfile.gettempdir(), self.scenario.split("\\")[-1])
-        if not os.path.exists(temp_folder):
-            os.makedirs(temp_folder)
-        return temp_folder
+        if self._temp_directory is None:
+            self._temp_directory = tempfile.TemporaryDirectory()
+        return self._temp_directory.name
 
     def get_temporary_file(self, filename):
         """Returns the path to a file in the temporary folder with the name `filename`"""
