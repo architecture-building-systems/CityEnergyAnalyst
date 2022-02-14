@@ -10,6 +10,7 @@ from multiprocessing import Pool
 
 import numpy as np
 import pandas as pd
+import pvlib
 from geopandas import GeoDataFrame as gdf
 from scipy import interpolate
 
@@ -41,16 +42,10 @@ def calc_PV(locator, config, latitude, longitude, weather_data, datetime_local, 
 
     :param locator: An InputLocator to locate input files
     :type locator: cea.inputlocator.InputLocator
-    :param radiation_path: solar insulation data on all surfaces of each building (path
-    :type radiation_path: String
-    :param metadata_csv: data of sensor points measuring solar insulation of each building
-    :type metadata_csv: .csv
     :param latitude: latitude of the case study location
     :type latitude: float
     :param longitude: longitude of the case study location
     :type longitude: float
-    :param weather_path: path to the weather data file of the case study location
-    :type weather_path: .epw
     :param building_name: list of building names in the case study
     :type building_name: Series
     :return: Building_PV.csv with PV generation potential of each building, Building_sensors.csv with sensor data of
@@ -138,26 +133,6 @@ def calc_PV(locator, config, latitude, longitude, weather_data, datetime_local, 
 def calc_pv_generation(sensor_groups, weather_data, date_local, solar_properties, latitude, panel_properties_PV):
     """
     To calculate the electricity generated from PV panels.
-
-    :param hourly_radiation: mean hourly radiation of sensors in each group [Wh/m2]
-    :type hourly_radiation: dataframe
-    :param number_groups: number of groups of sensor points
-    :type number_groups: float
-    :param number_points: number of sensor points in each group
-    :type number_points: float
-    :param prop_observers: mean values of sensor properties of each group of sensors
-    :type prop_observers: dataframe
-    :param weather_data: weather data read from the epw file
-    :type weather_data: dataframe
-    :param g: declination
-    :type g: float
-    :param Sz: zenith angle
-    :type Sz: float
-    :param Az: solar azimuth
-    :param ha: hour angle
-    :param latitude: latitude of the case study location
-    :return:
-
     """
 
     # local variables
@@ -188,7 +163,6 @@ def calc_pv_generation(sensor_groups, weather_data, date_local, solar_properties
     Bref = panel_properties_PV['PV_Bref']
 
     misc_losses = panel_properties_PV['misc_losses']  # cabling, resistances etc..
-
     for group in prop_observers.index.values:
         # calculate radiation types (direct/diffuse) in group
         radiation_Wperm2 = solar_equations.cal_radiation_type(group, hourly_radiation, weather_data)
@@ -201,8 +175,9 @@ def calc_pv_generation(sensor_groups, weather_data, date_local, solar_properties
         tilt_rad = radians(tilt_angle_deg)  # tilt angle
         teta_z_deg = radians(teta_z_deg)  # surface azimuth
 
-        # calculate effective indicent angles necessary
-        teta_rad = np.vectorize(solar_equations.calc_angle_of_incidence)(g_rad, lat, ha_rad, tilt_rad, teta_z_deg)
+        # calculate effective incident angles necessary
+        teta_deg = pvlib.irradiance.aoi(tilt_angle_deg, teta_z_deg, solar_properties.Sz, solar_properties.Az)
+        teta_rad = teta_rad = [radians(x) for x in teta_deg]
         teta_ed_rad, teta_eg_rad = calc_diffuseground_comp(tilt_rad)
 
         absorbed_radiation_Wperm2 = np.vectorize(calc_absorbed_radiation_PV)(radiation_Wperm2.I_sol,
@@ -349,7 +324,6 @@ def calc_absorbed_radiation_PV(I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetae
                  doi: 10.1002/9781118671603.ch5
 
     """
-
     # read variables
     n = constants.n  # refractive index of glass
     Pg = constants.Pg  # ground reflectance
@@ -387,6 +361,7 @@ def calc_absorbed_radiation_PV(I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetae
     # calculate air mass modifier
     m = 1 / cos(Sz)  # air mass
     M = a0 + a1 * m + a2 * m ** 2 + a3 * m ** 3 + a4 * m ** 4  # air mass modifier
+    M = np.clip(M, 0.001, 1.1)  # De Soto et al., 2006
 
     # incidence angle modifier for direct (beam) radiation
     teta_r = asin(sin(teta) / n)  # refraction angle in radians(aproximation accrding to Soteris A.) (5.1.4)

@@ -72,7 +72,7 @@ class Project(Resource):
         if project_name and project_root:
             project = os.path.join(project_root, project_name)
             try:
-                os.makedirs(project)
+                os.makedirs(project, exist_ok=True)
             except OSError as e:
                 abort(400, str(e))
 
@@ -118,7 +118,7 @@ class Scenarios(Resource):
             new_scenario_path = os.path.join(config.project, str(scenario_name).strip())
             # Make sure that the scenario folder exists
             try:
-                os.makedirs(new_scenario_path)
+                os.makedirs(new_scenario_path, exist_ok=True)
             except OSError as e:
                 trace = traceback.format_exc()
                 return {'message': e.message, 'trace': trace}, 500
@@ -292,8 +292,7 @@ class ScenarioImage(Resource):
                 if zone_modified > image_modified:
                     print(f'Generating preview image for scenario: {scenario}')
                     # Make sure .cache folder exists
-                    if not os.path.exists(cache_path):
-                        os.makedirs(cache_path)
+                    os.makedirs(cache_path, exist_ok=True)
 
                     try:
                         zone_df = geopandas.read_file(zone_path)

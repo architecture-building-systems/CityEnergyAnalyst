@@ -397,19 +397,19 @@ class InputLocator(object):
     def get_database_supply_assemblies(self):
         """Returns the database of supply components for cost analysis. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return os.path.join(self.get_databases_assemblies_folder(), 'SUPPLY.xls')
+        return os.path.join(self.get_databases_assemblies_folder(), 'SUPPLY.xlsx')
 
     def get_database_air_conditioning_systems(self):
-        return os.path.join(self.get_databases_assemblies_folder(), 'HVAC.xls')
+        return os.path.join(self.get_databases_assemblies_folder(), 'HVAC.xlsx')
 
     def get_database_envelope_systems(self):
         """databases/Systems/envelope_systems.csv"""
-        return os.path.join(self.get_databases_assemblies_folder(), 'ENVELOPE.xls')
+        return os.path.join(self.get_databases_assemblies_folder(), 'ENVELOPE.xlsx')
 
     def get_database_conversion_systems(self):
         """Returns the database of supply components for cost analysis. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return os.path.join(self.get_databases_folder(), 'components', 'CONVERSION.xls')
+        return os.path.join(self.get_databases_folder(), 'components', 'CONVERSION.xlsx')
 
     def get_database_conversion_systems_cold_thermal_storage_names(self):
         """Return the list of thermal storage tanks"""
@@ -424,12 +424,12 @@ class InputLocator(object):
     def get_database_distribution_systems(self):
         """Returns the database of supply components for cost analysis. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return os.path.join(self.get_databases_folder(), 'components', 'DISTRIBUTION.xls')
+        return os.path.join(self.get_databases_folder(), 'components', 'DISTRIBUTION.xlsx')
 
     def get_database_feedstocks(self):
         """Returns the database of supply components for cost analysis. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return os.path.join(self.get_databases_folder(), 'components', 'FEEDSTOCKS.xls')
+        return os.path.join(self.get_databases_folder(), 'components', 'FEEDSTOCKS.xlsx')
 
     def get_building_geometry_folder(self):
         """scenario/inputs/building-geometry/"""

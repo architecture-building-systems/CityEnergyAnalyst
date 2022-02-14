@@ -17,7 +17,7 @@ Some scripts to run for development
   - conda-pack the environment
   - copy the environment to the setup/Dependencies/Python folder
   - yarn dist:dir the GUI (expect the repository to be checked out to ``../CityEnergyAnalyst-GUI``)
-  - copy the GUI folder to the ``setup/win-unpacked`` folder
+  - copy the GUI folder to the ``setup/CityEnergyAnalyst-GUI-win32-x64`` folder
   - run ``nsis`` to build the installer
 
   Bonus steps: (maybe this isn't super necessary?)
