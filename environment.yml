@@ -6,6 +6,7 @@ dependencies:
 - deap
 - ephem
 - flask=1.1.2
+- flask-cors
 - flask-restplus
 - flask-socketio=4.3.2
 - gevent
@@ -29,7 +30,6 @@ dependencies:
 - numpy=1.19.1
 - numpy-financial=1.0.0
 - osmnx=0.15.1
-#- pandana
 - pandas
 - pip
 - psutil
@@ -37,10 +37,10 @@ dependencies:
 - python>=3.7
 - pythonocc-core
 - pytz
+- pvlib-python
 - scipy
 - setuptools
 - shapely
-#- urbanaccess
 - pyyaml
 - timezonefinder
 - python-cufflinks

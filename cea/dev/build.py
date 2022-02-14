@@ -43,7 +43,7 @@ def main(config):
     conda_pack(config, env_name, repo_folder)
     extract_tar_file(repo_folder)
     python_setup_py_sdist(config, env_name, repo_folder)
-    yarn_dist_dir(config, repo_folder)
+    yarn_package(config, repo_folder)
     make_nsis(config, repo_folder)
 
 
@@ -88,8 +88,13 @@ def get_env(config, conda_env):
 
 
 def conda_env_create(config, env_name, environment_yml):
+    print("INSTALL mamba")
+    command = [conda(), "conda", "install", "mamba", "-c", "conda-forge", "-y"]
+    print("RUN: {command}".format(command=" ".join(command)))
+    subprocess.run(command, capture_output=False, check=True, env=get_env(config, "base"), shell=True)
+
     print("CREATE conda environment: {env_name}".format(env_name=env_name))
-    command = [conda(), "conda", "env", "create", "--name", env_name, "--file", environment_yml]
+    command = [conda(), "mamba", "env", "create", "--name", env_name, "--file", environment_yml]
     print("RUN: {command}".format(command=" ".join(command)))
     subprocess.run(command, capture_output=False, check=True, env=get_env(config, "base"), shell=True)
     print("DONE")
@@ -108,6 +113,11 @@ def python_setup_py_sdist(config, env_name, repo_folder):
 
 
 def conda_pack(config, env_name, repo_folder):
+    print("Make sure conda-pack is installed")
+    command = [conda(), "conda", "install", "conda-pack", "-y"]
+    print("RUN: {command}".format(command=" ".join(command)))
+    subprocess.run(command, capture_output=False, check=True, env=get_env(config, "base"), shell=True)
+
     print("CONDA-PACK to Dependencies folder: {env_name}".format(env_name=env_name))
     output_path = os.path.join(repo_folder, "setup", "Dependencies", "Python.tar")
     command = [conda(), "conda-pack", "--name", env_name, "--output", output_path, "--n-threads", "-1", "--force"]
@@ -126,7 +136,7 @@ def extract_tar_file(repo_folder):
     os.unlink(python_tar)
 
 
-def yarn_dist_dir(config, repo_folder):
+def yarn_package(config, repo_folder):
     cea_gui_folder = config.development.gui
     if not os.path.exists(os.path.join(cea_gui_folder, "package.json")):
         raise ValueError("Please configure the path to the CityEnergyAnalyst-GUI repository ({development:gui})")
@@ -134,17 +144,19 @@ def yarn_dist_dir(config, repo_folder):
         raise ValueError("Please configure the path to yarn ({development:yarn})")
     print("RUN yarn")
     subprocess.run([config.development.yarn], cwd=cea_gui_folder)
-    print("RUN yarn dist:dir")
-    subprocess.run([config.development.yarn, "dist:dir"], cwd=cea_gui_folder, check=True)
-    print("COPY win-unpacked to setup/win-unpacked")
-    destination = os.path.join(repo_folder, "setup", "win-unpacked")
+    print("RUN yarn package")
+    subprocess.run([config.development.yarn, "package"], cwd=cea_gui_folder, check=True)
+    print("COPY CityEnergyAnalyst-GUI-win32-x64 to setup/CityEnergyAnalyst-GUI-win32-x64")
+    destination = os.path.join(repo_folder, "setup", "CityEnergyAnalyst-GUI-win32-x64")
     shutil.rmtree(destination, ignore_errors=True, onerror=None)
-    shutil.copytree(os.path.join(cea_gui_folder, "dist", "win-unpacked"), destination)
+    shutil.copytree(os.path.join(cea_gui_folder, "out", "CityEnergyAnalyst-GUI-win32-x64"), destination)
 
 
 def make_nsis(config, repo_folder):
     if not os.path.exists(config.development.nsis):
         raise ValueError("Please configure the path to the makensis.exe ({development:nsis})")
+    if not os.path.exists(os.path.join(repo_folder, "setup", "Output")):
+        os.mkdir(os.path.join(repo_folder, "setup", "Output"))
     command = [config.development.nsis, os.path.join(repo_folder, "setup", "cityenergyanalyst.nsi")]
     print("RUN {command}".format(command=" ".join(command)))
     subprocess.run(command, check=True)

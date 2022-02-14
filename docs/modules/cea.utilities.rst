@@ -168,11 +168,3 @@ cea.utilities.workerstream module
    :members:
    :undoc-members:
    :show-inheritance:
-
-cea.utilities.yaml\_ordered\_dict module
-----------------------------------------
-
-.. automodule:: cea.utilities.yaml_ordered_dict
-   :members:
-   :undoc-members:
-   :show-inheritance:

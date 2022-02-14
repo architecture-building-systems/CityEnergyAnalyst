@@ -1588,24 +1588,29 @@ get_building_air_conditioning:
       heat_starts:
         description: Start of the heating season - use 00|00 when there is none
         type: string
+        regex: ^(0[1-9]|[12][0-9]|3[01])\|(0[1-9]|1[012])$
+        example: '31|12'
         unit: '[DD|MM]'
         values: '{00|00...31|12}'
       heat_ends:
         description: End of the heating season - use 00|00 when there is none
         type: string
-        regex: ^\d{2}|\d{2}$
+        regex: ^(0[1-9]|[12][0-9]|3[01])\|(0[1-9]|1[012])$
+        example: '31|12'
         unit: '[DD|MM]'
         values: '{00|00...31|12}'
       cool_starts:
         description: Start of the cooling season - use 00|00 when there is none
         type: string
-        regex: ^\d{2}|\d{2}$
+        regex: ^(0[1-9]|[12][0-9]|3[01])\|(0[1-9]|1[012])$
+        example: '31|12'
         unit: '[DD|MM]'
         values: '{00|00...31|12}'
       cool_ends:
         description: End of the cooling season - use 00|00 when there is none
         type: string
-        regex: ^\d{2}|\d{2}$
+        regex: ^(0[1-9]|[12][0-9]|3[01])\|(0[1-9]|1[012])$
+        example: '31|12'
         unit: '[DD|MM]'
         values: '{00|00...31|12}'
   used_by:
@@ -1802,13 +1807,11 @@ get_building_comfort:
         type: float
         unit: '[C]'
         values: '{0.0...n}'
-        min: 0.0
       Tcs_setb_C:
         description: Setback point of temperature for cooling system
         type: float
         unit: '[C]'
         values: '{0.0...n}'
-        min: 0.0
       Ths_set_C:
         description: Setpoint temperature for heating system
         type: float
@@ -2372,7 +2375,7 @@ get_costs_operation_file:
 get_database_air_conditioning_systems:
   created_by:
   - data_initializer
-  file_path: inputs/technology/assemblies/HVAC.xls
+  file_path: inputs/technology/assemblies/HVAC.xlsx
   file_type: xls
   schema:
     CONTROLLER:
@@ -2394,7 +2397,6 @@ get_database_air_conditioning_systems:
           type: float
           unit: '[C]'
           values: '{0.0...n}'
-          min: 0.0
         dT_Qhs:
           description: correction temperature of emission losses due to control system
             of heating
@@ -3028,7 +3030,7 @@ get_database_construction_standards:
 get_database_conversion_systems:
   created_by:
   - data_initializer
-  file_path: inputs/technology/components/CONVERSION.xls
+  file_path: inputs/technology/components/CONVERSION.xlsx
   file_type: xls
   schema:
     Absorption_chiller:
@@ -4833,7 +4835,7 @@ get_database_conversion_systems:
 get_database_distribution_systems:
   created_by:
   - data_initializer
-  file_path: inputs/technology/components/DISTRIBUTION.xls
+  file_path: inputs/technology/components/DISTRIBUTION.xlsx
   file_type: xls
   schema:
     THERMAL_GRID:
@@ -4892,7 +4894,7 @@ get_database_distribution_systems:
 get_database_envelope_systems:
   created_by:
   - data_initializer
-  file_path: inputs/technology/assemblies/ENVELOPE.xls
+  file_path: inputs/technology/assemblies/ENVELOPE.xlsx
   file_type: xls
   schema:
     CONSTRUCTION:
@@ -5134,7 +5136,7 @@ get_database_envelope_systems:
 get_database_feedstocks:
   created_by:
   - data_initializer
-  file_path: inputs/technology/components/FEEDSTOCKS.xls
+  file_path: inputs/technology/components/FEEDSTOCKS.xlsx
   file_type: xls
   schema:
     BIOGAS:
@@ -6644,7 +6646,7 @@ get_database_standard_schedules_use:
 get_database_supply_assemblies:
   created_by:
   - data_initializer
-  file_path: inputs/technology/assemblies/SUPPLY.xls
+  file_path: inputs/technology/assemblies/SUPPLY.xlsx
   file_type: xls
   schema:
     COOLING:
@@ -7004,13 +7006,11 @@ get_database_use_types_properties:
           type: float
           unit: '[C]'
           values: '{0.0...n}'
-          min: 0.0
         Tcs_setb_C:
           description: Setback point of temperature for cooling system
           type: float
           unit: '[C]'
           values: '{0.0...n}'
-          min: 0.0
         Ths_set_C:
           description: Setpoint temperature for heating system
           type: float
@@ -12545,13 +12545,13 @@ get_optimization_substations_total_file:
         values: '{0.0...n}'
         min: 0.0
       Qhs0_kW:
-        description: Nominal Total heating demand.
+        description: Nominal space heating demand.
         type: float
         unit: '[kW]'
         values: '{0.0...n}'
         min: 0.0
       Qhs_MWhyr:
-        description: Total heating demand
+        description: Total space heating demand.
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'

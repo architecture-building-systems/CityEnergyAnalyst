@@ -158,6 +158,10 @@ def check_daysim_bin_directory(path_hint, latest_binaries):
     if sys.platform == "linux":
         folders_to_check.append(os.path.normpath(os.path.normcase(r"/Daysim/bin")))
 
+    if sys.platform == "darwin":
+        folders_to_check.append(os.path.normpath(os.path.normcase(os.path.join(
+            os.path.dirname(os.path.dirname(os.path.dirname(os.getcwd()))), 'setup', 'Dependencies', 'Daysim', 'mac'))))
+
     for possible_path in folders_to_check:
         if contains_binaries(possible_path):
             # If path to binaries contains whitespace, provide a warning
