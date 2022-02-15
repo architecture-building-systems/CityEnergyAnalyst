@@ -115,7 +115,7 @@ Creating the installer
     Configuring `cea build` with the following parameters:
     - development:nsis = C:\Program Files (x86)\NSIS\Bin\makensis.exe
       (default: )
-    - development:conda = C:\Users\darthoma\Miniconda2\condabin\conda.bat
+    - development:conda = C:\Users\darthoma\miniconda3\condabin\conda.bat
       (default: )
     - development:gui = c:\Users\darthoma\Documents\GitHub\CityEnergyAnalyst-GUI
       (default: )
