@@ -1,0 +1,6 @@
+- layout: row
+  name: Default Dashboard
+  plots:
+  - category: supply-system
+    parameters: {scenario-name: baseline, system: _sys_today_}
+    plot: supply_system_map
