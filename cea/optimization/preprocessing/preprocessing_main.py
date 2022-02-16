@@ -33,7 +33,7 @@ class WeatherFeatures(object):
         self.weather_data = epwreader.epw_reader(weather_file)
         self.date = self.weather_data['date']
         self.T_ambient = self.weather_data['drybulb_C']
-        self.ground_temp = calc_ground_temperature(locator, self.T_ambient, depth_m=Z0)
+        self.ground_temp = calc_ground_temperature(self.T_ambient, depth_m=Z0)
 
 
 def preproccessing(locator, total_demand, buildings_heating_demand, buildings_cooling_demand,
