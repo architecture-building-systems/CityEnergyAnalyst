@@ -3019,7 +3019,7 @@ def calc_t_out(node, edge, k_old, m_d, z, t_e_in, t_e_out, t_ground, z_note, the
 
     :param node: node index
     :param edge: edge indices
-    :param k: DataFrame of aggregated heat conduction coefficient for each pipe (exe)
+    :param k_old: DataFrame of aggregated heat conduction coefficient for each pipe (exe)
     :param m_d: DataFrame of pipe flow rate (exe)
     :param z: DataFrame of  edge_node_matrix (nxe)
     :param t_e_in: DataFrame of pipe inlet temperatures [K] in edge_node_matrix (nxe)
@@ -3029,7 +3029,7 @@ def calc_t_out(node, edge, k_old, m_d, z, t_e_in, t_e_out, t_ground, z_note, the
 
     :type node: float
     :type edge: np array
-    :type k: [kW/K]
+    :type k_old: [kW/K]
     :type m_d: DataFrame
     :type z: DataFrame
     :type t_e_in: DataFrame
@@ -3095,7 +3095,6 @@ def calc_aggregated_heat_conduction_coefficient(mass_flow, edge_df, pipe_propert
     from _[J.A. Fonseca et al., 2016] and _[isoplus].
 
     :param mass_flow: Vector with mass flows of each edge                           (e x 1)
-    :param locator: an InputLocator instance set to the scenario to work on
     :param pipe_properties_df: DataFrame containing the pipe properties for each edge in the network
     :param temperature__k: matrix containing the temperature of the water in each edge e at time t             (t x e)
     :param network_type: a string that defines whether the network is a district heating ('DH') or cooling ('DC')
@@ -3105,7 +3104,6 @@ def calc_aggregated_heat_conduction_coefficient(mass_flow, edge_df, pipe_propert
     :type temperature__k: list
     :type network_type: str
     :type mass_flow: DataFrame
-    :type locator: InputLocator
     :type pipe_properties_df: DataFrame
     :type edge_df: DataFrame
 
