@@ -392,15 +392,11 @@ TSD_KEYS_COOLING_TEMP = ['ta_re_cs_ahu', 'ta_sup_cs_ahu', 'ta_re_cs_aru', 'ta_su
 TSD_KEYS_COOLING_FLOWS = ['ma_sup_cs_ahu', 'ma_sup_cs_aru']
 TSD_KEYS_COOLING_SUPPLY_FLOWS = ['mcpcs_sys_ahu', 'mcpcs_sys_aru', 'mcpcs_sys_scu', 'mcpcs_sys']
 TSD_KEYS_COOLING_SUPPLY_TEMP = ['Tcs_sys_re_ahu', 'Tcs_sys_re_aru', 'Tcs_sys_re_scu', 'Tcs_sys_sup_ahu',
-                                'Tcs_sys_sup_aru',
-                                'Tcs_sys_sup_scu', 'Tcs_sys_sup', 'Tcs_sys_re',
-                                'Tcdata_sys_re', 'Tcdata_sys_sup',
-                                'Tcre_sys_re', 'Tcre_sys_sup']
+                                'Tcs_sys_sup_aru', 'Tcs_sys_sup_scu',
+                                'Tcdata_sys_re', 'Tcdata_sys_sup', 'Tcre_sys_re', 'Tcre_sys_sup']
 TSD_KEYS_HEATING_SUPPLY_FLOWS = ['mcphs_sys_ahu', 'mcphs_sys_aru', 'mcphs_sys_shu', 'mcphs_sys']
 TSD_KEYS_HEATING_SUPPLY_TEMP = ['Ths_sys_re_ahu', 'Ths_sys_re_aru', 'Ths_sys_re_shu', 'Ths_sys_sup_ahu',
-                                'Ths_sys_sup_aru',
-                                'Ths_sys_sup_shu', 'Ths_sys_sup', 'Ths_sys_re',
-                                'Tww_sys_sup', 'Tww_sys_re']
+                                'Ths_sys_sup_aru', 'Ths_sys_sup_shu', 'Tww_sys_sup', 'Tww_sys_re']
 TSD_KEYS_RC_TEMP = ['T_int', 'theta_m', 'theta_c', 'theta_o', 'theta_ve_mech']
 TSD_KEYS_MOISTURE = ['x_int', 'x_ve_inf', 'x_ve_mech', 'g_hu_ld', 'g_dhu_ld']
 TSD_KEYS_VENTILATION_FLOWS = ['m_ve_window', 'm_ve_mech', 'm_ve_rec', 'm_ve_inf', 'm_ve_required']
