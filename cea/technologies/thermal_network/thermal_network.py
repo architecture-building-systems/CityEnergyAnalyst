@@ -602,10 +602,10 @@ def calculate_pressure_loss_critical_path(dP_timestep, thermal_network):
 def output_hex_specs_at_nodes(substation_HEX_Q, thermal_network):
     # merge with nodes df
     substation_HEX_Q['Building'] = substation_HEX_Q.index
-    all_nodes_df_output = pd.DataFrame(thermal_network.all_nodes_df.sort_values(by=['coordinates'], ascending='True'))
+    all_nodes_df_output = pd.DataFrame(thermal_network.all_nodes_df.sort_values(by=['coordinates'], ascending=True))
     all_nodes_index = all_nodes_df_output.index
     all_nodes_df_output = pd.merge(all_nodes_df_output, substation_HEX_Q, on='Building', how='outer')
-    all_nodes_df_output = all_nodes_df_output.sort_values(by=['coordinates'], ascending='True')
+    all_nodes_df_output = all_nodes_df_output.sort_values(by=['coordinates'], ascending=True)
     all_nodes_df_output.index = all_nodes_index
     all_nodes_df_output.to_csv(
         thermal_network.locator.get_thermal_network_node_types_csv_file(thermal_network.network_type,
