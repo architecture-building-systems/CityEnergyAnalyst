@@ -616,9 +616,7 @@ def prepare_inputs_of_representative_weeks(thermal_network):
 
 def save_all_results_to_csv(csv_outputs, thermal_network):
     if thermal_network.use_representative_week_per_month:
-        # Flag indicating that we are running the representative week option, important for the creation of a subfolder with original results below
-        representative_week = True
-        # we need to extrapolate 8760 datapoints from 2016 points from our representative weeks.
+        # we need to extrapolate 8760 data points from 2016 points from our representative weeks.
         # To do this, the initial dataset is repeated 4 times, the remaining values are filled with the average values of all above.
         edge_mass_flows_for_csv = extrapolate_datapoints_for_representative_weeks(csv_outputs['edge_mass_flows'])
         node_mass_flows_for_csv = extrapolate_datapoints_for_representative_weeks(csv_outputs['node_mass_flows'])
@@ -655,7 +653,6 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
         edge_mass_flows_for_csv.to_csv(
             thermal_network.locator.get_thermal_network_layout_massflow_edges_file(thermal_network.network_type,
                                                                                    thermal_network.network_name),
-            # , representative_week),
             na_rep='NaN', index=False, float_format='%.3f')
 
         # Node Mass Flows
@@ -663,7 +660,6 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
         node_mass_flows_for_csv.to_csv(
             thermal_network.locator.get_thermal_network_layout_massflow_nodes_file(thermal_network.network_type,
                                                                                    thermal_network.network_name),
-            # , representative_week),
             na_rep='NaN', index=False, float_format='%.3f')
 
         # velocities in supply edges
@@ -671,7 +667,6 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
         velocities_in_supply_edges_mpers_for_csv.to_csv(
             thermal_network.locator.get_thermal_network_velocity_edges_file(thermal_network.network_type,
                                                                             thermal_network.network_name),
-            # , representative_week),
             na_rep='NaN', index=False, float_format='%.3f')
 
         # pressure at nodes in the supply pipes
@@ -688,7 +683,6 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
         pressure_loss_system_kW_for_csv.to_csv(
             thermal_network.locator.get_network_energy_pumping_requirements_file(thermal_network.network_type,
                                                                                  thermal_network.network_name),
-            # representative_week),
             index=False, float_format='%.3f')
 
         # pressure losses over substations of network
@@ -696,7 +690,6 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
         pressure_loss_substations_kW_for_csv.to_csv(
             thermal_network.locator.get_thermal_network_substation_ploss_file(thermal_network.network_type,
                                                                               thermal_network.network_name),
-            # , representative_week),
             index=False,
             float_format='%.3f')
 
