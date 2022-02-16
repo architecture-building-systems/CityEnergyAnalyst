@@ -2212,8 +2212,7 @@ def solve_network_temperatures(thermal_network, t):
         t_edge__k = calc_edge_temperatures(initial_guess_temp, edge_node_df.copy())
 
         # initialization of K_value
-        k = calc_aggregated_heat_conduction_coefficient(edge_mass_flow_df,
-                                                        thermal_network.locator, thermal_network.edge_df,
+        k = calc_aggregated_heat_conduction_coefficient(edge_mass_flow_df, thermal_network.edge_df,
                                                         thermal_network.pipe_properties, t_edge__k,
                                                         thermal_network.network_type)  # [kW/K]
 
@@ -2275,8 +2274,7 @@ def solve_network_temperatures(thermal_network, t):
                                                               edge_mass_flow_df_2_kgs, edge_flow_iteration_counter, t)
 
                 # calculate updated pipe aggregated heat conduction coefficient with new mass flows
-                k = calc_aggregated_heat_conduction_coefficient(edge_mass_flow_df_2_kgs, thermal_network.locator,
-                                                                thermal_network.edge_df,
+                k = calc_aggregated_heat_conduction_coefficient(edge_mass_flow_df_2_kgs, thermal_network.edge_df,
                                                                 thermal_network.pipe_properties, t_edge__k,
                                                                 thermal_network.network_type)  # [kW/K]
 
@@ -2385,9 +2383,7 @@ def solve_network_temperatures(thermal_network, t):
                 # calculate node temperatures on the return network
                 # calculate final edge temperature and heat transfer coefficient
                 # todo: suboptimal because using supply temperatures (limited effect since effects only water conductivity). Could be solved by iteration.
-                k = calc_aggregated_heat_conduction_coefficient(edge_mass_flow_df_2_kgs,
-                                                                thermal_network.locator,
-                                                                thermal_network.edge_df,
+                k = calc_aggregated_heat_conduction_coefficient(edge_mass_flow_df_2_kgs, thermal_network.edge_df,
                                                                 thermal_network.pipe_properties, t_edge__k,
                                                                 thermal_network.network_type)  # [kW/K]
 
@@ -3091,8 +3087,7 @@ def calc_t_out(node, edge, k_old, m_d, z, t_e_in, t_e_out, t_ground, z_note, the
             z_note[:, e] = 0.0
 
 
-def calc_aggregated_heat_conduction_coefficient(mass_flow, locator, edge_df, pipe_properties_df, temperature__k,
-                                                network_type):
+def calc_aggregated_heat_conduction_coefficient(mass_flow, edge_df, pipe_properties_df, temperature__k, network_type):
     """
     This function calculates the aggregated heat conduction coefficients of all the pipes.
     Following the reference from [Wang et al., 2016].
