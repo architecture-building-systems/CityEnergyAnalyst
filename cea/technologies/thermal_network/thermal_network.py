@@ -2,9 +2,6 @@
 Hydraulic - thermal network
 """
 
-
-
-
 import collections
 import math
 import os
@@ -67,7 +64,7 @@ class ThermalNetwork(object):
         self.network_name = network_name
 
         # some default values to be overwritten by the thermal_network_section:
-        self.network_type = "DC" # whether the network is a district heating ('DH') or cooling ('DC') network
+        self.network_type = "DC"  # whether the network is a district heating ('DH') or cooling ('DC') network
         self.network_names = [""]
         self.file_type = "shp"
         self.set_diameter = True
@@ -80,7 +77,7 @@ class ThermalNetwork(object):
         self.diameter_iteration_limit = 10
         self.substation_cooling_systems = ["ahu", "aru", "scu"]
         self.substation_heating_systems = ["ahu", "aru", "shu", "ww"]
-        self.temperature_control = "VT" # the control strategy of supply temperatures at plants ("CT" or "VT")
+        self.temperature_control = "VT"  # the control strategy of supply temperatures at plants ("CT" or "VT")
         self.plant_supply_temperature = 80
         self.equivalent_length_factor = 0.2
 
@@ -554,7 +551,7 @@ def calculate_pressure_loss_critical_path(dP_timestep, thermal_network):
     plant_node = thermal_network.all_nodes_df[thermal_network.all_nodes_df['Type'] == 'PLANT'].index[0]
     if max(dP_all_edges) > 0.0:
         pressure_losses_in_critical_paths = np.zeros(len(dP_all_edges))  # initialize array
-        G = nx.Graph() # initial networkx
+        G = nx.Graph()  # initial networkx
         G.add_nodes_from(thermal_network.all_nodes_df.index)
         for ix, edge_name in enumerate(thermal_network.edge_df.index):
             start_node = thermal_network.edge_df.loc[edge_name, 'start node']
@@ -569,7 +566,7 @@ def calculate_pressure_loss_critical_path(dP_timestep, thermal_network):
         for i in range(len(path_to_critical_node)):
             if i < len(path_to_critical_node) - 1:
                 start_node = path_to_critical_node[i]
-                end_node = path_to_critical_node[i+1]
+                end_node = path_to_critical_node[i + 1]
                 dP = G[start_node][end_node]['weight']
                 idx = int(G[start_node][end_node]['ix'])
                 pressure_losses_in_critical_paths[idx] = dP
@@ -625,20 +622,32 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
         # To do this, the initial dataset is repeated 4 times, the remaining values are filled with the average values of all above.
         edge_mass_flows_for_csv = extrapolate_datapoints_for_representative_weeks(csv_outputs['edge_mass_flows'])
         node_mass_flows_for_csv = extrapolate_datapoints_for_representative_weeks(csv_outputs['node_mass_flows'])
-        velocities_in_supply_edges_mpers_for_csv = extrapolate_datapoints_for_representative_weeks(csv_outputs['velocities_in_supply_edges_mpers'])
+        velocities_in_supply_edges_mpers_for_csv = extrapolate_datapoints_for_representative_weeks(
+            csv_outputs['velocities_in_supply_edges_mpers'])
         T_supply_nodes_for_csv = extrapolate_datapoints_for_representative_weeks(csv_outputs['T_supply_nodes'])
         T_return_nodes_for_csv = extrapolate_datapoints_for_representative_weeks(csv_outputs['T_return_nodes'])
-        temperatures_at_plants_K_for_csv = extrapolate_datapoints_for_representative_weeks(csv_outputs['temperatures_at_plant_K'])
-        q_loss_supply_edges_kW_for_csv = extrapolate_datapoints_for_representative_weeks(csv_outputs['q_loss_supply_edges_kW'])
-        linear_thermal_loss_supply_edges_Wperm_for_csv = extrapolate_datapoints_for_representative_weeks(csv_outputs['linear_thermal_loss_supply_edges_Wperm'])
-        thermal_losses_system_kW_for_csv = extrapolate_datapoints_for_representative_weeks(csv_outputs['thermal_losses_system_kW'])
-        plant_heat_requirement_for_csv = extrapolate_datapoints_for_representative_weeks(csv_outputs['plant_heat_requirement'])
-        pressure_at_supply_nodes_Pa_for_csv = extrapolate_datapoints_for_representative_weeks(csv_outputs['pressure_at_supply_nodes_Pa'])
-        pressure_loss_system_kW_for_csv = extrapolate_datapoints_for_representative_weeks(csv_outputs['pressure_loss_system_kW'])
-        pressure_loss_system_Pa_for_csv = extrapolate_datapoints_for_representative_weeks(csv_outputs['pressure_loss_system_Pa'])
-        pressure_loss_substations_kW_for_csv = extrapolate_datapoints_for_representative_weeks(csv_outputs['pressure_loss_substations_kW'])
-        linear_pressure_loss_supply_Paperm_for_csv = extrapolate_datapoints_for_representative_weeks(csv_outputs['linear_pressure_loss_supply_Paperm'])
-        pressure_loss_supply_edge_for_csv = extrapolate_datapoints_for_representative_weeks(csv_outputs['pressure_loss_supply_edge_kW'])
+        temperatures_at_plants_K_for_csv = extrapolate_datapoints_for_representative_weeks(
+            csv_outputs['temperatures_at_plant_K'])
+        q_loss_supply_edges_kW_for_csv = extrapolate_datapoints_for_representative_weeks(
+            csv_outputs['q_loss_supply_edges_kW'])
+        linear_thermal_loss_supply_edges_Wperm_for_csv = extrapolate_datapoints_for_representative_weeks(
+            csv_outputs['linear_thermal_loss_supply_edges_Wperm'])
+        thermal_losses_system_kW_for_csv = extrapolate_datapoints_for_representative_weeks(
+            csv_outputs['thermal_losses_system_kW'])
+        plant_heat_requirement_for_csv = extrapolate_datapoints_for_representative_weeks(
+            csv_outputs['plant_heat_requirement'])
+        pressure_at_supply_nodes_Pa_for_csv = extrapolate_datapoints_for_representative_weeks(
+            csv_outputs['pressure_at_supply_nodes_Pa'])
+        pressure_loss_system_kW_for_csv = extrapolate_datapoints_for_representative_weeks(
+            csv_outputs['pressure_loss_system_kW'])
+        pressure_loss_system_Pa_for_csv = extrapolate_datapoints_for_representative_weeks(
+            csv_outputs['pressure_loss_system_Pa'])
+        pressure_loss_substations_kW_for_csv = extrapolate_datapoints_for_representative_weeks(
+            csv_outputs['pressure_loss_substations_kW'])
+        linear_pressure_loss_supply_Paperm_for_csv = extrapolate_datapoints_for_representative_weeks(
+            csv_outputs['linear_pressure_loss_supply_Paperm'])
+        pressure_loss_supply_edge_for_csv = extrapolate_datapoints_for_representative_weeks(
+            csv_outputs['pressure_loss_supply_edge_kW'])
 
         # Output values
         # Edge Mass Flows
@@ -1177,15 +1186,15 @@ def assign_pipes_to_edges(thermal_network):
     pipe_catalog['mdot_min_kgs'] = pipe_catalog['Vdot_min_m3s'] * P_WATER_KGPERM3
     pipe_catalog['mdot_max_kgs'] = pipe_catalog['Vdot_max_m3s'] * P_WATER_KGPERM3
 
-    #necessary step to create dataframe and avoiding the presence of objects
+    # necessary step to create dataframe and avoiding the presence of objects
     series_max_mass_flow = pd.DataFrame(data=[(thermal_network.edge_mass_flow_df.abs()).max(axis=0)])
-    pipe_properties_df = series_max_mass_flow.T.rename(columns={0:'max_flow_kgs'})
+    pipe_properties_df = series_max_mass_flow.T.rename(columns={0: 'max_flow_kgs'})
     pipe_properties_df['Name'] = pipe_properties_df.index
     pipe_properties_df['Code'] = pipe_properties_df.apply(lambda x: calc_assign_diameter(x['max_flow_kgs'],
-                                                                                         pipe_catalog), axis =1)
+                                                                                         pipe_catalog), axis=1)
     pipe_properties_df = pipe_properties_df.merge(pipe_catalog, on='Code')
 
-    #save to the existing file:
+    # save to the existing file:
     network_edges_path = thermal_network.locator.get_network_layout_edges_shapefile(thermal_network.network_type,
                                                                                     thermal_network.network_name)
     if os.path.exists(network_edges_path):
@@ -1202,7 +1211,7 @@ def assign_pipes_to_edges(thermal_network):
             thermal_network.locator.get_network_layout_edges_shapefile(thermal_network.network_type,
                                                                        thermal_network.network_name))
 
-    #throw result in the specified format
+    # throw result in the specified format
     pipe_properties_df = pipe_properties_df.set_index('Name').T
 
     return pipe_properties_df
@@ -1253,7 +1262,8 @@ def calc_pressure_nodes(t_supply_node__k, t_return_node__k, thermal_network, t):
     linear_pressure_loss_supply_Paperm = pressure_loss_pipe_supply__pa / pipe_length
     pressure_loss_pipe_return__pa = calc_pressure_loss_pipe(pipe_diameter, pipe_length_equivalent, edge_mass_flow,
                                                             temperature_return_edges__k, 2)
-    pressure_loss_critical_path_return_pa, _ = calculate_pressure_loss_critical_path(pressure_loss_pipe_return__pa, thermal_network)
+    pressure_loss_critical_path_return_pa, _ = calculate_pressure_loss_critical_path(pressure_loss_pipe_return__pa,
+                                                                                     thermal_network)
     linear_pressure_loss_return_Paperm = pressure_loss_pipe_return__pa / pipe_length
 
     # get the pressure drop at substations
@@ -1269,7 +1279,8 @@ def calc_pressure_nodes(t_supply_node__k, t_return_node__k, thermal_network, t):
     pressure_loss_critical_supply_kW = pressure_loss_critical_path_supply_pa * edge_mass_flow / P_WATER_KGPERM3 / 1000 / PUMP_ETA
     pressure_loss_critical_return_kW = pressure_loss_critical_path_return_pa * edge_mass_flow / P_WATER_KGPERM3 / 1000 / PUMP_ETA
     pressure_loss_nodes_kW = pressure_loss_nodes_pa * node_mass_flow / P_WATER_KGPERM3 / 1000 / PUMP_ETA
-    pressure_loss_critical_substations_kW = pressure_loss_critical_substations_pa * abs(node_mass_flow) / P_WATER_KGPERM3 / 1000 / PUMP_ETA
+    pressure_loss_critical_substations_kW = pressure_loss_critical_substations_pa * abs(
+        node_mass_flow) / P_WATER_KGPERM3 / 1000 / PUMP_ETA
 
     pressure_loss_substations_pa = []
     pressure_loss_substations_kW = []
@@ -1307,7 +1318,8 @@ def calc_pressure_nodes(t_supply_node__k, t_return_node__k, thermal_network, t):
             np.linalg.lstsq(-edge_node_transpose, np.transpose(pressure_loss_pipe_return__pa) * (-1), rcond=-1)[0]),
         decimals=5)
     return pressure_nodes_supply__pa[0], linear_pressure_loss_supply_Paperm[0], linear_pressure_loss_return_Paperm[0], \
-           pressure_loss_system__pa, pressure_loss_total_kw, pressure_loss_pipe_supply_kW[0], pressure_loss_substations_kW
+           pressure_loss_system__pa, pressure_loss_total_kw, pressure_loss_pipe_supply_kW[
+               0], pressure_loss_substations_kW
 
 
 def calc_pressure_loss_substations(thermal_network, supply_temperature, t):
@@ -1780,7 +1792,8 @@ def calc_max_edge_flowrate(thermal_network, processes=1):
 def load_max_edge_flowrate_from_previous_run(thermal_network):
     """Bypass the calculation of calc_max_edge_flowrate and use the results form the previous run"""
     edge_mass_flow_df = pd.read_csv(
-        thermal_network.locator.get_nominal_edge_mass_flow_csv_file(thermal_network.network_type, thermal_network.network_name))
+        thermal_network.locator.get_nominal_edge_mass_flow_csv_file(thermal_network.network_type,
+                                                                    thermal_network.network_name))
     del edge_mass_flow_df['Unnamed: 0']
     # max_edge_mass_flow_df = pd.DataFrame(data=[(edge_mass_flow_df.abs()).max(axis=0)],
     #                                     columns=thermal_network.edge_node_df.columns)
@@ -1790,7 +1803,8 @@ def load_max_edge_flowrate_from_previous_run(thermal_network):
 def load_node_flowrate_from_previous_run(thermal_network):
     """Bypass the calculation of calc_max_edge_flowrate and use the results form the previous run"""
     node_mass_flow_df = pd.read_csv(
-        thermal_network.locator.get_nominal_node_mass_flow_csv_file(thermal_network.network_type, thermal_network.network_name))
+        thermal_network.locator.get_nominal_node_mass_flow_csv_file(thermal_network.network_type,
+                                                                    thermal_network.network_name))
     # max_edge_mass_flow_df = pd.DataFrame(data=[(edge_mass_flow_df.abs()).max(axis=0)],
     #                                     columns=thermal_network.edge_node_df.columns)
     return node_mass_flow_df
@@ -2253,7 +2267,7 @@ def solve_network_temperatures(thermal_network, t):
 
                 # write required flow rate to consumer substation nodes
                 mass_flow_substations_nodes_df_kgs = write_substation_values_to_nodes_df(thermal_network.all_nodes_df,
-                                                                                     mdot_all_kgs)
+                                                                                         mdot_all_kgs)
 
                 # solve for the required mass flow rate on each edge/pipe
                 edge_mass_flow_df_2_kgs = calc_mass_flow_edges(edge_node_df.copy(),
@@ -2306,7 +2320,7 @@ def solve_network_temperatures(thermal_network, t):
                         substations_nodes_df_old = mass_flow_substations_nodes_df_kgs.copy()
                         for node in nodes_insufficient:
                             mass_flow_substations_nodes_df_kgs[node] = substations_nodes_df_old[
-                                                                       node] * 1.1  # increase flow by 10%
+                                                                           node] * 1.1  # increase flow by 10%
                         # solve for the required mass flow rate on each edge/pipe
                         edge_mass_flow_df_2_kgs = calc_mass_flow_edges(edge_node_df.copy(),
                                                                        mass_flow_substations_nodes_df_kgs,
@@ -2364,13 +2378,13 @@ def solve_network_temperatures(thermal_network, t):
                 # calculate substation return temperatures according to supply temperatures
                 t_return_all_2, \
                 mdot_all_2_kgs, _ = substation_matrix.substation_return_model_main(thermal_network,
-                                                                               t_substation_supply_2, t,
-                                                                               thermal_network.building_names)
+                                                                                   t_substation_supply_2, t,
+                                                                                   thermal_network.building_names)
                 # write consumer substation return T and required flow rate to nodes
                 t_substation_return_df_2 = write_substation_temperatures_to_nodes_df(thermal_network.all_nodes_df,
                                                                                      t_return_all_2)  # (1xn)
                 mass_flow_substations_nodes_df_2_kgs = write_substation_values_to_nodes_df(thermal_network.all_nodes_df,
-                                                                                       mdot_all_2_kgs)
+                                                                                           mdot_all_2_kgs)
 
                 # exit iteration
                 flag = 1
@@ -3010,8 +3024,6 @@ def calc_return_node_temperature(index, m_d, t_e_out, t_return, z_pipe_out, m_su
     return t_node
 
 
-
-
 def calc_t_out(node, edge, k_old, m_d, z, t_e_in, t_e_out, t_ground, z_note, thermal_network):
     """
     Given the pipe inlet temperature, this function calculate the outlet temperature of the pipe.
@@ -3224,6 +3236,7 @@ def calc_thermal_loss_system(thermal_loss_pipe_supply, thermal_loss_pipe_return)
     thermal_loss_system[2] = thermal_loss_system[0] + thermal_loss_system[1]
     return thermal_loss_system
 
+
 # ============================
 # Other functions
 # ============================
@@ -3316,6 +3329,7 @@ def extract_network_from_shapefile(edge_shapefile_df, node_shapefile_df):
     #         edge_dict['EDGE' + str(j)] = [min_dist, node_dict[closest_node][0], node_dict[node][0]]
 
     return node_shapefile_df, edge_shapefile_df
+
 
 def write_substation_values_to_nodes_df(all_nodes_df, df_value):
     """
