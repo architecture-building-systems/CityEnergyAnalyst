@@ -67,7 +67,7 @@ class ThermalNetwork(object):
         self.network_name = network_name
 
         # some default values to be overwritten by the thermal_network_section:
-        self.network_type = "DC"
+        self.network_type = "DC" # whether the network is a district heating ('DH') or cooling ('DC') network
         self.network_names = [""]
         self.file_type = "shp"
         self.set_diameter = True
@@ -80,7 +80,7 @@ class ThermalNetwork(object):
         self.diameter_iteration_limit = 10
         self.substation_cooling_systems = ["ahu", "aru", "scu"]
         self.substation_heating_systems = ["ahu", "aru", "shu", "ww"]
-        self.temperature_control = "VT"
+        self.temperature_control = "VT" # the control strategy of supply temperatures at plants ("CT" or "VT")
         self.plant_supply_temperature = 80
         self.equivalent_length_factor = 0.2
 
@@ -96,7 +96,7 @@ class ThermalNetwork(object):
         self.buildings_demands = None  # to be filled by substation_matrix.determine_building_supply_temperatures
         self.substations_HEX_specs = None  # to be filled by substation_matrix.substation_HEX_design_main
         self.t_target_supply_C = None  # to be filled from buildings_demands properties
-        self.t_target_supply_df = None  # to be filled from all_nodes_df
+        self.t_target_supply_df = None  # target supply temperature of each node, to be filled from all_nodes_df
 
         self.edge_mass_flow_df = None
         self.node_mass_flow_df = None
@@ -170,12 +170,6 @@ class ThermalNetwork(object):
         This function reads the existing node and pipe network from a shapefile and produces an edge-node incidence matrix
         (as defined by Oppelt et al., 2016) as well as the edge properties (length, start node, and end node) and node
         coordinates.
-
-        :param locator: an InputLocator instance set to the scenario to work on
-        :param network_type: a string that defines whether the network is a district heating ('DH') or cooling ('DC')
-                             network
-        :type locator: InputLocator
-        :type network_type: str
 
         :return edge_node_df: DataFrame consisting of n rows (number of nodes) and e columns (number of edges)
                         and indicating the direction of flow of each edge e at node n: if e points to n,
@@ -384,15 +378,8 @@ def thermal_network_main(locator, thermal_network, processes=1):
     edge (heat at the pipe inlet equals heat at the outlet minus heat losses through the pipe). Finally, the pressure
     loss calculation is carried out based on Todini et al. (1987)
 
-    :param temperature_control: the control strategy of supply temperatures at plants
     :param locator: an InputLocator instance set to the scenario to work on
-    :param network_type: a string that defines whether the network is a district heating ('DH') or cooling ('DC')
-                         network
-    :param file_type: string that defines the type of source file for the network to be imported ('csv' or shapefile 'shp')
-
     :type locator: InputLocator
-    :type network_type: str
-    :type file_type: str
 
     The following files are created by this script, depending on the network type defined in the inputs:
 
@@ -938,28 +925,7 @@ def calculate_ground_temperature(locator):
 
 def hourly_thermal_calculation(t, thermal_network):
     """
-    :param network_type: a string that defines whether the network is a district heating ('DH') or cooling ('DC')
-                         network
-    :param network_name: 'DH' or 'DC' indicating district heating or cooling
     :param t: time step
-    :param locator: an InputLocator instance set to the scenario to work on
-    :param T_ground_K: Ground Temperature in Kelvin
-    :param edge_node_df: DataFrame consisting of n rows (number of nodes) and e columns (number of edges)
-                        and indicating the direction of flow of each edge e at node n: if e points to n,
-                        value is 1; if e leaves node n, -1; else, 0. E.g. a plant will only have exiting flows,
-                        so only negative values
-    :param all_nodes_df: list of plant nodes and consumer nodes and their corresponding building names
-    :param edge_mass_flow_df_kgs: Mass flow over every edge
-    :param t_target_supply_df: Target supply temperature of each node
-    :param buildings_demands: DataFrame of building demands
-    :param substations_HEX_specs: DataFrame with substation heat exchanger specs at each building
-    :param edge_df: list of edges and their corresponding lengths and start and end nodes
-    :param pipe_properties_df: DataFrame containing the pipe properties for each edge in the network
-    :param csv_outputs: Dictionary collecting all variables which are stored for all 8760 timesteps and
-        later written to csv files
-
-    :return csv_outputs: DataFrame with calculated values
-    :return edge_mass_flow_df_kgs: updated edge mass flows
     """
     print('calculating thermal hydraulic properties of', thermal_network.network_type, 'network',
           thermal_network.network_name, '...  time step', t)
@@ -1203,14 +1169,7 @@ def assign_pipes_to_edges(thermal_network):
     DN450-550 is 3 m/s; for DN600 is 3.5 m/s. min velocity for all pipes are 0.3 m/s.
 
     :param ThermalNetwork thermal_network: thermal network object
-    :param mass_flow_df: DataFrame containing the mass flow rate for each edge e at each time of the year t
-    :param locator: an InputLocator instance set to the scenario to work on
-    :type mass_flow_df: DataFrame
-    :type locator: InputLocator
-
     :return pipe_properties_df: DataFrame containing the pipe properties for each edge in the network
-
-
     """
 
     # import pipe catalog from Excel file
@@ -1256,19 +1215,8 @@ def calc_pressure_nodes(t_supply_node__k, t_return_node__k, thermal_network, t):
     & Pilati. Since the pressure is calculated after the mass flow rate (rather than concurrently) this is only a first
     step towards implementing the Gradient Method from Todini & Pilati used by EPANET et al.
 
-    :param edge_node_df: DataFrame consisting of n rows (number of nodes) and e columns (number of edges)
-                        and indicating the direction of flow of each edge e at node n: if e points to n,
-                        value is 1; if e leaves node n, -1; else, 0. E.g. a plant will only have exiting flows,
-                        so only negative values                                                                          (n x e)
-    :param pipe_diameter: vector containing the pipe diameter in m for each edge e in the network      (e x 1)
-    :param pipe_length: vector containing the length in m of each edge e in the network                (e x 1)
-    :param edge_mass_flow: matrix containing the mass flow rate in each edge e at time t               (1 x e)
     :param t_supply_node__k: array containing the temperature in each supply node n                       (1 x n)
     :param t_return_node__k: array containing the temperature in each return node n                       (1 x n)
-    :type edge_node_df: DataFrame
-    :type pipe_diameter: ndarray
-    :type pipe_length: ndarray
-    :type edge_mass_flow: ndarray
     :type t_supply_node__k: list
     :type t_return_node__k: list
 
@@ -1366,8 +1314,6 @@ def calc_pressure_loss_substations(thermal_network, supply_temperature, t):
     """
     This function calculates the pressure losses in substations assuming each substation to be modeled by a valve and HEX
     for each supplied heating or cooling load.
-    :param node_mass_flow:
-    :param thermal_network:
     :return:
 
 
@@ -1582,7 +1528,7 @@ def calc_darcy(pipe_diameter_m, reynolds, pipe_roughness_m):
 
     :param pipe_diameter_m: vector containing the pipe diameter in m for each edge e in the network           (e x 1)
     :param reynolds: vector containing the reynolds number of flows in each edge in that timestep	      (e x 1)
-    :param pipe roughness_m: float with pipe roughness
+    :param pipe_roughness_m: float with pipe roughness
     :type pipe_diameter_m: ndarray
     :type reynolds: ndarray
     :type pipe_roughness_m: float
@@ -1692,29 +1638,9 @@ def calc_max_edge_flowrate(thermal_network, processes=1):
     resulting necessary mass flow rate at each edge to satisfy this demand.
 
     :param ThermalNetwork thermal_network: contains information about the thermal network
-    :param all_nodes_df: DataFrame containing all nodes and whether a node n is a consumer or plant node
-                        (and if so, which building that node corresponds to), or neither.                   (2 x n)
-    :param buildings_demands: demand of each building in the scenario
-    :param edge_node_df: DataFrame consisting of n rows (number of nodes) and e columns (number of edges)
-                        and indicating the direction of flow of each edge e at node n: if e points to n,
-                        value is 1; if e leaves node n, -1; else, 0. E.g. a plant will only have exiting flows,
-                        so only negative values                                        (n x e)
-    :param locator: an InputLocator instance set to the scenario to work on
-    :param substations_hex_specs: DataFrame with substation heat exchanger specs at each building.
-    :param t_target_supply_C: target supply temperature at each substation
-    :param network_type: a string that defines whether the network is a district heating ('DH') or cooling
-                         ('DC') network
-    :param pipe_length: vector containing the length of each edge in the network
-    :type all_nodes_df: DataFrame
-    :type locator: InputLocator
-    :type substations_hex_specs: DataFrame
-    :type network_type: str
-    :type pipe_length: array
 
     :return edge_mass_flow_df: mass flow rate at each edge throughout the year
-    :return max_edge_mass_flow_df: maximum mass flow at each edge to be used for pipe sizing
     :rtype edge_mass_flow_df: DataFrame
-    :rtype max_edge_mass_flow_df: DataFrame
 
     """
 
@@ -1884,24 +1810,7 @@ def hourly_mass_flow_calculation(t, diameter_guess, thermal_network):
 
     :param ThermalNetwork thermal_network: object holding all the information about the thermal network
     :param t: timestep
-    :param t_target_supply_C: target temperature of nodes
-    :param network_type: 'DH' or 'DC'
-    :param locator: InputLocator
-    :param buildings_demands: DataFrame of Building demands
-    :param substations_hex_specs: DataFrame with substation heat exchanger specs at each building.
-    :param all_nodes_df: DataFrame containing all nodes and whether a node n is a consumer or plant node
-                        (and if so, which building that node corresponds to), or neither.                   (2 x n)
-    :param edge_node_df: DataFrame consisting of n rows (number of nodes) and e columns (number of edges)
-                        and indicating the direction of flow of each edge e at node n: if e points to n,
-                        value is 1; if e leaves node n, -1; else, 0. E.g. a plant will only have exiting flows,
-                        so only negative values                                       (n x e)
-    :param edge_mass_flow_df: Storage for edge mass flows of all hours of the year
     :param diameter_guess: Pipe diameter values
-    :param pipe_length:  Length of each edge
-
-    :param node_mass_flow_df:  Storage for node mass flows of all hours of the year
-    :return edge_mass_flow_df: Storage for edge mass flows of all hours of the year
-    :return node_mass_flow_df: Storage for node mass flows of all hours of the year
     """
 
     print('calculating mass flows in edges... time step', t)
@@ -1973,12 +1882,8 @@ def hourly_mass_flow_calculation(t, diameter_guess, thermal_network):
 def edge_mass_flow_iteration(thermal_network, edge_mass_flow_df, iteration_counter, t):
     """
 
-    :param network_type: string with network type, DH or DC
     :param edge_mass_flow_df: edge mass flows                       (1 x e)
     :param iteration_counter: iteration counter
-    :param cc_value_sh: capacity mass flow for space heating        (1 x e)
-    :param ch_value: capacity mass flow for cooling                 (1 x e)
-    :param cc_value_dhw: capacity mass flow for warm water          (1 x e)
 
     :return:
     """
@@ -2072,31 +1977,6 @@ def initial_diameter_guess(thermal_network):
     an initial guess for the iteration over all time steps in an attempt to reduce total runtime.
 
     :param ThermalNetwork thermal_network: object containing all the data of the thermal network.
-    :param all_nodes_df: DataFrame containing all nodes and whether a node n is a consumer or plant node
-                        (and if so, which building that node corresponds to), or neither.                   (2 x n)
-    :param buildings_demands: demand of each building in the scenario
-    :param edge_node_df: DataFrame consisting of n rows (number of nodes) and e columns (number of edges)
-                        and indicating the direction of flow of each edge e at node n: if e points to n,
-                        value is 1; if e leaves node n, -1; else, 0. E.g. a plant will only have exiting flows,
-                        so only negative values
-    :param locator: an InputLocator instance set to the scenario to work on
-    :param substations_hex_specs: DataFrame with substation heat exchanger specs at each building.
-    :param t_target_supply: target supply temperature at each substation
-    :param network_type: a string that defines whether the network is a district heating ('DH') or cooling
-                         ('DC') network
-    :param network_name: string with name of network
-    :param edge_df: list of edges and their corresponding lengths and start and end nodes
-    :param set_diameter: boolean if diameter needs to be set
-    :type all_nodes_df: DataFrame
-    :type buildings_demands: dict
-    :type edge_node_df: DataFrame
-    :type locator: InputLocator
-    :type substations_hex_specs: DataFrame
-    :type t_target_supply: list
-    :type network_type: str
-    :type network_name: str
-    :type edge_df: DataFrame
-    :type set_diameter: bool
 
     :return pipe_properties_df[:]['D_int_m':'D_int_m'].values: initial guess pipe diameters for all edges
     :rtype pipe_properties_df[:]['D_int_m':'D_int_m'].values: array
@@ -2309,36 +2189,7 @@ def solve_network_temperatures(thermal_network, t):
 
     Lastly, the plant heat requirements are calculated base on the plant supply/return temperatures and flow rates.
 
-    :param locator: an InputLocator instance set to the scenario to work on
-    :param t_ground: vector with ground temperatures in K
-    :param edge_node_df: DataFrame consisting of n rows (number of nodes) and e columns (number of edges)
-                        and indicating the direction of flow of each edge e at node n: if e points to n,
-                        value is 1; if e leaves node n, -1; else, 0. E.g. a plant will only have exiting flows,
-                        so only negative values                                          (n x e)
-    :param all_nodes_df: DataFrame containing all nodes and whether a node n is a consumer or plant node
-                        (and if so, which building that node corresponds to), or neither.                   (2 x n)
-    :param edge_mass_flow_df: mass flow rate at each edge throughout the year
-    :param t_target_supply_df: target supply temperature at each substation
-    :param buildings_demands: demand of each building in the scenario
-    :param substations_hex_specs: DataFrame with substation heat exchanger specs at each building.
-    :param t: current time step
-    :param network_type: a string that defines whether the network is a district heating ('DH') or cooling
-                        ('DC') network
-    :param edge_df: list of edges and their corresponding lengths and start and end nodes
-    :param pipe_properties_df: DataFrame containing the pipe properties for each edge in the network
-
     :param ThermalNetwork thermal_network: A container for all the thermal network data
-
-    :type locator: InputLocator
-    :type edge_node_df: DataFrame
-    :type all_nodes_df: DataFrame
-    :type edge_mass_flow_df: DataFrame
-    :type locator: InputLocator
-    :type substations_hex_specs: DataFrame
-    :type network_type: str
-    :type t_target_supply_df: DataFrame
-    :type edge_df: DataFrame
-    :type pipe_properties_df: DataFrame
 
     :returns T_supply_nodes: list of supply line node temperatures (nx1)
     :rtype T_supply_nodes: list of arrays
@@ -3481,7 +3332,6 @@ def write_substation_values_to_nodes_df(all_nodes_df, df_value):
     :param all_nodes_df: DataFrame containing all nodes and whether a node n is a consumer or plant node
                         (and if so, which building that node corresponds to), or neither.                   (2 x n)
     :param df_value: DataFrame of value of each substation
-    :param flag: flag == True if the values are temperatures ; flag == False if the value is mass flow
 
     :return nodes_df: DataFrame with values at each node (1xn)
     :rtype nodes_df: DataFrame
@@ -3535,7 +3385,6 @@ def write_substation_temperatures_to_nodes_df(all_nodes_df, df_value):
     :param all_nodes_df: DataFrame containing all nodes and whether a node n is a consumer or plant node
                         (and if so, which building that node corresponds to), or neither.                   (2 x n)
     :param df_value: DataFrame of value of each substation
-    :param flag: flag == True if the values are temperatures ; flag == False if the value is mass flow
 
     :return nodes_df: DataFrame with values at each node (1xn)
     :rtype nodes_df: DataFrame
