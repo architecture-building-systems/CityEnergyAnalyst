@@ -117,11 +117,24 @@ def cooling_resource_activator(Q_thermal_req,
     if master_to_slave_variables.NG_Trigen_on == 1 and Q_cooling_unmet_W > 0.0 and not np.isclose(
             T_district_cooling_supply_K,
             T_district_cooling_return_K):
+        # Check what the maximum cooling capacity of the
         size_trigen_W = master_to_slave_variables.NG_Trigen_ACH_size_W
+
+        # If the unmet cooling load exceeds the trigen-plant's maximum capacity,
+        #   try meeting the remaining cooling demand using the cold storage
         if Q_cooling_unmet_W > size_trigen_W:
-            Q_Trigen_gen_W = size_trigen_W
+            Q_Trigen_NG_gen_directload_W = size_trigen_W
+            Qc_Trigen_gen_storage_W = 0.0
+            Qc_from_storage_W = daily_storage_class.discharge_storage(Q_cooling_unmet_W - size_trigen_W)
+            Q_Trigen_gen_W = Q_Trigen_NG_gen_directload_W + Qc_Trigen_gen_storage_W
+
+        # If the unmet cooling load is smaller than the trigen-plant's maximum capacity,
+        #   use the available capacity to fill the cold storage
         else:
-            Q_Trigen_gen_W = Q_cooling_unmet_W
+            Q_Trigen_NG_gen_directload_W = Q_cooling_unmet_W
+            Qc_Trigen_gen_storage_W = daily_storage_class.charge_storage(size_trigen_W - Q_cooling_unmet_W)
+            Qc_from_storage_W = 0.0
+            Q_Trigen_gen_W = Q_Trigen_NG_gen_directload_W + Qc_Trigen_gen_storage_W
 
         # GET THE ABSORPTION CHILLER PERFORMANCE
         T_ACH_in_C = ACH_T_IN_FROM_CHP_K - 273
@@ -141,30 +154,9 @@ def cooling_resource_activator(Q_thermal_req,
         Q_output_CC_max_W = CCGT_operation_data['q_output_max_W']
         eta_elec_interpol = CCGT_operation_data['eta_el_fn_q_input']
 
-        # TODO: CONFIRM THAT THIS WORKS AS INTENDED
+        # operation of gas turbine possible if above minimum capacity
         if Qh_CCGT_req_W >= q_output_CC_min_W:
-            if Q_cooling_unmet_W > size_trigen_W:
-                Q_Trigen_NG_gen_directload_W = size_trigen_W
-                Qc_Trigen_gen_storage_W = 0.0
-                Qc_from_storage_W = daily_storage_class.discharge_storage(Q_cooling_unmet_W - size_trigen_W)
-                Q_Trigen_gen_W = Q_Trigen_NG_gen_directload_W + Qc_Trigen_gen_storage_W
-            else:
-                Q_Trigen_NG_gen_directload_W = Q_cooling_unmet_W
-                Qc_Trigen_gen_storage_W = daily_storage_class.charge_storage(size_trigen_W - Q_cooling_unmet_W)
-                Qc_from_storage_W = 0.0
-                Q_Trigen_gen_W = Q_Trigen_NG_gen_directload_W + Qc_Trigen_gen_storage_W
 
-            T_ACH_in_C = ACH_T_IN_FROM_CHP_K - 273
-            Qc_CT_ACH_W, \
-            Qh_CCGT_req_W, \
-            E_ACH_req_W = calc_chiller_absorption_operation(Q_Trigen_gen_W,
-                                                            T_district_cooling_return_K,
-                                                            T_district_cooling_supply_K,
-                                                            T_ACH_in_C,
-                                                            T_ground_K,
-                                                            absorption_chiller,
-                                                            size_trigen_W)
-            # operation Possible if above minimal load
             if Qh_CCGT_req_W <= Q_output_CC_max_W:  # Normal operation Possible within partload regime
                 Q_CHP_gen_W = float(Qh_CCGT_req_W)
                 NG_Trigen_req_W = Q_used_prim_CC_fn_W(Q_CHP_gen_W)
