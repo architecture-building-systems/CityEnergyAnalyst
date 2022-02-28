@@ -77,7 +77,7 @@ class ThermalNetwork(object):
         self.diameter_iteration_limit = 10
         self.substation_cooling_systems = ["ahu", "aru", "scu"]
         self.substation_heating_systems = ["ahu", "aru", "shu", "ww"]
-        self.temperature_control = "VT"  # the control strategy of supply temperatures at plants ("CT" or "VT")
+        self.temperature_control = "VT"  # the control strategy of supply temperatures at plants (constant tempearture "CT" or variable temperature "VT")
         self.plant_supply_temperature = 80
         self.equivalent_length_factor = 0.2
 
