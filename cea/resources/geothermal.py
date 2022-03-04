@@ -39,7 +39,7 @@ def calc_geothermal_potential(locator, config):
     # total area available
     area_geothermal = extra_area + area_below_buildings
 
-    T_ground_K = calc_ground_temperature(locator, T_ambient_C, depth_m)
+    T_ground_K = calc_ground_temperature(T_ambient_C, depth_m)
 
     # convert back to degrees C
     t_source_final = [x[0] - 273 for x in T_ground_K]
@@ -64,7 +64,7 @@ def calc_area_buildings(locator, buildings_list):
     return area_below_buildings
 
 
-def calc_ground_temperature(locator, T_ambient_C, depth_m):
+def calc_ground_temperature(T_ambient_C, depth_m):
     """
     Calculates hourly ground temperature fluctuation over a year following [Kusuda, T. et al., 1965]_.
 
