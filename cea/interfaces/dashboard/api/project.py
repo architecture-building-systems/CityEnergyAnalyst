@@ -4,6 +4,7 @@
 import os
 import shutil
 import glob
+import tempfile
 from functools import wraps
 import traceback
 
@@ -108,63 +109,53 @@ class Project(Resource):
 class Scenarios(Resource):
     def post(self):
         """Create new scenario"""
-        config = cea.config.Configuration()
-        project = api.payload.get('project')
-        if project is not None:
-            config.project = project
-
-        scenario_name = api.payload.get('scenario_name')
-        if scenario_name is not None:
-            new_scenario_path = os.path.join(config.project, str(scenario_name).strip())
-            # Make sure that the scenario folder exists
-            try:
-                os.makedirs(new_scenario_path, exist_ok=True)
-            except OSError as e:
-                trace = traceback.format_exc()
-                return {'message': str(e), 'trace': trace}, 500
-        else:
+        payload: dict = api.payload
+        project = payload.get('project')
+        scenario_name = payload.get('scenario_name')
+        if scenario_name is None:
             return {'message': 'scenario_name parameter cannot be empty'}, 500
 
-        locator = cea.inputlocator.InputLocator(new_scenario_path)
+        databases_path = payload.get('databases_path')
+        input_data = payload.get('input_data')
 
-        # Run database_initializer to copy databases to input
-        databases_path = api.payload.get('databases_path')
-        if databases_path is not None:
-            try:
-                cea.api.data_initializer(config, scenario=new_scenario_path, databases_path=databases_path)
-            except Exception as e:
-                trace = traceback.format_exc()
-                return {'message': 'data_initializer: {}'.format(str(e)), 'trace': trace}, 500
+        with tempfile.TemporaryDirectory() as tmp:
+            config = cea.config.Configuration()
+            config.project = tmp
+            config.scenario_name = "temp"
 
-        input_data = api.payload.get('input_data')
-        if input_data == 'import':
-            files = api.payload.get('files')
-            if files is not None:
+            _project = project or config.project
+
+            locator = cea.inputlocator.InputLocator(config.scenario)
+
+            # Run database_initializer to copy databases to input
+            if databases_path is not None:
                 try:
-                    cea.api.create_new_scenario(config,
-                                                scenario=new_scenario_path,
-                                                zone=files.get('zone'),
-                                                surroundings=files.get('surroundings'),
-                                                streets=files.get('streets'),
-                                                terrain=files.get('terrain'),
-                                                typology=files.get('typology'))
+                    cea.api.data_initializer(config, databases_path=databases_path)
                 except Exception as e:
-                    trace = traceback.format_exc()
-                    return {'message': 'create_new_scenario: {}'.format(str(e)), 'trace': trace}, 500
+                    raise Exception(f'data_initializer: {e}') from e
 
-        elif input_data == 'copy':
-            source_scenario_name = api.payload.get('copy_scenario')
-            try:
-                source_scenario = os.path.join(config.project, source_scenario_name)
+            if input_data == 'import':
+                files = payload.get('files')
+                if files is not None:
+                    try:
+                        cea.api.create_new_scenario(config,
+                                                    zone=files.get('zone'),
+                                                    surroundings=files.get('surroundings'),
+                                                    streets=files.get('streets'),
+                                                    terrain=files.get('terrain'),
+                                                    typology=files.get('typology'))
+                    except Exception as e:
+                        raise Exception(f'create_new_scenario: {e}') from e
+
+            elif input_data == 'copy':
+                source_scenario_name = payload.get('copy_scenario')
+                source_scenario = os.path.join(_project, source_scenario_name)
+                os.makedirs(locator.get_input_folder(), exist_ok=True)
                 shutil.copytree(cea.inputlocator.InputLocator(source_scenario).get_input_folder(),
                                 locator.get_input_folder())
-            except OSError as e:
-                trace = traceback.format_exc()
-                return {'message': str(e), 'trace': trace}, 500
 
-        elif input_data == 'generate':
-            tools = api.payload.get('tools')
-            if tools is not None:
+            elif input_data == 'generate':
+                tools = payload.get('tools', [])
                 for tool in tools:
                     try:
                         if tool == 'zone':
@@ -177,23 +168,25 @@ class Scenarios(Resource):
                             site_path = locator.get_site_polygon()
                             locator.ensure_parent_folder_exists(site_path)
                             site.to_file(site_path)
-                            print('site.shp file created at %s' % site_path)
-                            cea.api.zone_helper(config, scenario=new_scenario_path)
+                            print(f'site.shp file created at {site_path}')
+                            cea.api.zone_helper(config)
                         elif tool == 'surroundings':
-                            cea.api.surroundings_helper(config, scenario=new_scenario_path)
+                            cea.api.surroundings_helper(config)
                         elif tool == 'streets':
-                            cea.api.streets_helper(config, scenario=new_scenario_path)
+                            cea.api.streets_helper(config)
                         elif tool == 'terrain':
-                            cea.api.terrain_helper(config, scenario=new_scenario_path)
+                            cea.api.terrain_helper(config)
                         elif tool == 'weather':
-                            cea.api.weather_helper(config, scenario=new_scenario_path)
+                            cea.api.weather_helper(config)
                     except Exception as e:
-                        trace = traceback.format_exc()
-                        return {'message': '{}_helper: {}'.format(tool, str(e)), 'trace': trace}, 500
+                        raise Exception(f'{tool}_helper: {e}') from e
 
-        config.restricted_to = None
+            # Move temp scenario to correct path
+            new_scenario_path = os.path.join(_project, str(scenario_name).strip())
+            print(f"Moving from {config.scenario} to {new_scenario_path}")
+            shutil.move(config.scenario, new_scenario_path)
+
         return {'scenarios_list': list_scenario_names_for_project(config)}
-
 
 
 def glob_shapefile_auxilaries(shapefile_path):
@@ -331,5 +324,5 @@ class ScenarioImage(Resource):
 
 
 def list_scenario_names_for_project(config):
-    return config.get_parameter('general:scenario-name')._choices
-
+    with config.ignore_restrictions():
+        return config.get_parameter('general:scenario-name')._choices
