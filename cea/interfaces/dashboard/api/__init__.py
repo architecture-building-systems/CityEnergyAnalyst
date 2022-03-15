@@ -27,4 +27,4 @@ def default_error_handler(error):
     """Default error handler"""
     import traceback
     trace = traceback.format_exc()
-    return {'message': error.message, 'trace': trace}, 500
+    return {'message': str(error), 'trace': trace}, 500

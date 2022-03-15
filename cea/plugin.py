@@ -186,7 +186,7 @@ class PluginPlotBase(cea.plots.PlotBase):
             scenario = os.path.join(self.project, self.parameters['scenario-name'])
             return cea.inputlocator.InputLocator(scenario=scenario, plugins=[self.plugin])
         except KeyError as error:
-            raise KeyError("{key} not found in {parameters}".format(key=error.message, parameters=self.parameters))
+            raise KeyError("{key} not found in {parameters}".format(key=str(error), parameters=self.parameters))
 
     @property
     def layout(self):
