@@ -121,7 +121,7 @@ class Scenarios(Resource):
                 os.makedirs(new_scenario_path, exist_ok=True)
             except OSError as e:
                 trace = traceback.format_exc()
-                return {'message': e.message, 'trace': trace}, 500
+                return {'message': str(e), 'trace': trace}, 500
         else:
             return {'message': 'scenario_name parameter cannot be empty'}, 500
 
@@ -134,7 +134,7 @@ class Scenarios(Resource):
                 cea.api.data_initializer(config, scenario=new_scenario_path, databases_path=databases_path)
             except Exception as e:
                 trace = traceback.format_exc()
-                return {'message': 'data_initializer: {}'.format(e.message), 'trace': trace}, 500
+                return {'message': 'data_initializer: {}'.format(str(e)), 'trace': trace}, 500
 
         input_data = api.payload.get('input_data')
         if input_data == 'import':
@@ -150,7 +150,7 @@ class Scenarios(Resource):
                                                 typology=files.get('typology'))
                 except Exception as e:
                     trace = traceback.format_exc()
-                    return {'message': 'create_new_scenario: {}'.format(e.message), 'trace': trace}, 500
+                    return {'message': 'create_new_scenario: {}'.format(str(e)), 'trace': trace}, 500
 
         elif input_data == 'copy':
             source_scenario_name = api.payload.get('copy_scenario')
@@ -160,7 +160,7 @@ class Scenarios(Resource):
                                 locator.get_input_folder())
             except OSError as e:
                 trace = traceback.format_exc()
-                return {'message': e.message, 'trace': trace}, 500
+                return {'message': str(e), 'trace': trace}, 500
 
         elif input_data == 'generate':
             tools = api.payload.get('tools')
@@ -189,7 +189,7 @@ class Scenarios(Resource):
                             cea.api.weather_helper(config, scenario=new_scenario_path)
                     except Exception as e:
                         trace = traceback.format_exc()
-                        return {'message': '{}_helper: {}'.format(tool, e.message), 'trace': trace}, 500
+                        return {'message': '{}_helper: {}'.format(tool, str(e)), 'trace': trace}, 500
 
         config.restricted_to = None
         return {'scenarios_list': list_scenario_names_for_project(config)}
