@@ -80,7 +80,7 @@ class CEADaySim(object):
             # Stops script if commands fail (i.e non-zero exit code)
             subprocess.check_call(shlex.split(cmd), cwd=cwd, stderr=subprocess.STDOUT, env=os.environ)
         except TypeError as error:
-            if error.message == "environment can only contain strings":
+            if str(error) == "environment can only contain strings":
                 for key in os.environ.keys():
                     value = os.environ[key]
                     if not isinstance(value, str):
