@@ -525,20 +525,22 @@ def compile_TAC_CO2_Prim(Capex_a_USD, Opex_a_fixed_USD, number_of_configurations
 
 
 def rank_results(TAC_USD, TotalCO2, TotalPrim, number_of_configurations):
-    Best = np.zeros((number_of_configurations, 1))
-    # rank results
+    # sort TAC_USD and TotalCO2
     CostsS = TAC_USD[np.argsort(TAC_USD[:, 1])]
     CO2S = TotalCO2[np.argsort(TotalCO2[:, 1])]
-    el = len(CostsS)
+    # initialize optsearch array
+    optsearch = np.empty(number_of_configurations)
+    number_of_objectives = 2 # TAC_USD and TotalCO2
+    optsearch.fill(number_of_objectives)
+    # rank results
     rank = 0
     Bestfound = False
-    optsearch = np.empty(el)
-    optsearch.fill(3)
-    indexBest = 0
-    while not Bestfound and rank < el:
+    indexBest = None
+    Best = np.zeros((number_of_configurations, 1))
+    while not Bestfound and rank < number_of_configurations:
         optsearch[int(CostsS[rank][0])] -= 1
         optsearch[int(CO2S[rank][0])] -= 1
-        if np.count_nonzero(optsearch) != el:
+        if np.count_nonzero(optsearch) != number_of_configurations:
             Bestfound = True
             indexBest = np.where(optsearch == 0)[0][0]
         rank += 1
