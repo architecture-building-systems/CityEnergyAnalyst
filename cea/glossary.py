@@ -67,9 +67,7 @@ def glossary_row(script, file_path, col, lm, cd, worksheet):
             "FILE_NAME": ":".join((file_path, worksheet)) if worksheet else file_path
         }
     except KeyError as ex:
-        raise KeyError(
-            "Failed to create glossary_row({script}, {file_path}, {col}, {lm}, {cd}, {worksheet}: {ex.message}".format(
-                **locals()))
+        raise KeyError(f"Failed to create glossary_row({script}, {file_path}, {col}, {lm}, {cd}, {worksheet}): {ex}")
 
 
 if __name__ == "__main__":

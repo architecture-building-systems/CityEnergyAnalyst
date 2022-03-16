@@ -91,7 +91,7 @@ class DatabaseData(Resource):
             return read_all_databases(os.path.join(databases_folder_path, region))
         except IOError as e:
             print(e)
-            abort(500, e.message)
+            abort(500, str(e))
 
 
 def convert_path_to_name(schema_dict):
@@ -118,6 +118,5 @@ class DatabaseSchema(Resource):
                 try:
                     out[db_name].update(convert_path_to_name(schemas[db_schema_key]['schema']))
                 except KeyError as ex:
-                    raise KeyError("Could not convert_path_to_name for {db_name}/{db_schema_key}. {ex.message}".format(
-                        **locals()))
+                    raise KeyError(f"Could not convert_path_to_name for {db_name}/{db_schema_key}. {ex}")
         return out

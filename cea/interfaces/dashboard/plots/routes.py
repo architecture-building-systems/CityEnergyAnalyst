@@ -55,7 +55,7 @@ def route_div(dashboard_index, plot_index):
     except MissingInputDataException:
         return render_missing_data(plot.missing_input_files())
     except NotImplementedError as e:
-        return make_response('<p>{message}</p>'.format(message=e.message), 404)
+        return make_response('<p>{message}</p>'.format(message=str(e)), 404)
     # Remove parent <div> if exists due to plotly v4
     if plot_div.startswith("<div>"):
         plot_div = plot_div[5:-5].strip()
@@ -79,7 +79,7 @@ def route_plot(dashboard_index, plot_index):
     except MissingInputDataException:
         return render_missing_data(plot.missing_input_files())
     except NotImplementedError as e:
-        return make_response('<p>{message}</p>'.format(message=e.message), 404)
+        return make_response('<p>{message}</p>'.format(message=str(e)), 404)
     return render_template('plot.html', plot_div=plot_div, plot_title=plot_title)
 
 
