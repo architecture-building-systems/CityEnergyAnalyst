@@ -138,6 +138,8 @@ def calc_Eaux_fw(tsd, bpr, schedules):
     if nf_ag > 5:  # up to 5th floor no pumping needs
         # pressure losses
         effective_height = (bpr.geometry['height_ag'] - (5 * H_F))  # solo apartir de 5 pisos
+        if effective_height < 0.0:
+            raise ValueError(f"effective_height: {effective_height} is less than zero.")
         deltaP_kPa = DELTA_P_1 * effective_height
         b = 1  # assuming a good pumping system
         tsd['Eaux_fw'] = np.vectorize(calc_Eauxf_fw)(tsd['vfw_m3perh'], deltaP_kPa, b)
@@ -360,6 +362,8 @@ def calc_Eauxf_fw(Vfw_m3h, deltaP_kPa, b):
     # the power of the pump in Watts
     Cpump = 0.97
     if Vfw_m3h > 0.0:
+        if deltaP_kPa < 0.0:
+            raise ValueError(f"deltaP_kPa: {deltaP_kPa} is less than zero.")
         Phydr_kW = deltaP_kPa * Vfw_m3h * 1 / 3600
         feff = (1.5 * b) / (0.015 * (Phydr_kW) ** 0.74 + 0.4)
         epmp_eff = feff * Cpump * 1 ** -0.94
