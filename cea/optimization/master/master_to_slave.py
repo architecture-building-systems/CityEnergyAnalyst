@@ -198,10 +198,10 @@ def calc_master_to_slave_variables(locator, gen,
     :rtype: class
     """
 
-    # initialise class storing dynamic variables transfered from master to slave optimization
+    # initialise class storing dynamic variables transferred from master to slave optimization
     master_to_slave_vars = slave_data.SlaveData()
 
-    # Store information aobut individual regarding the configuration of the network and curstomers connected
+    # Store information about individual regarding the configuration of the network and customers connected
     if district_heating_network and DHN_barcode.count("1") > 0:
         master_to_slave_vars.DHN_exists = True
     if district_cooling_network and DCN_barcode.count("1") > 0:
@@ -217,7 +217,7 @@ def calc_master_to_slave_variables(locator, gen,
     master_to_slave_vars.buildings_district_scale_to_district_cooling = calc_district_scale_names(building_names_cooling,
                                                                                         DCN_barcode)
 
-    #these are dataframes describing the opeartion of the thermal networks in the individual
+    # these are dataframes describing the operation of the thermal networks in the individual
     master_to_slave_vars.DH_network_summary_individual = DH_network_summary_individual
     master_to_slave_vars.DC_network_summary_individual = DC_network_summary_individual
 
@@ -235,7 +235,7 @@ def calc_master_to_slave_variables(locator, gen,
     # store the name of all buildings in the district (independent of district cooling or heating)
     master_to_slave_vars.building_names_all = building_names
 
-    # store the name used to didentified the individual (this helps to know where is inside)
+    # store the name used to identify the individual (this helps to know where is inside)
     master_to_slave_vars.building_names_heating = building_names_heating
     master_to_slave_vars.building_names_cooling = building_names_cooling
     master_to_slave_vars.building_names_electricity = building_names_electricity
@@ -245,7 +245,7 @@ def calc_master_to_slave_variables(locator, gen,
     master_to_slave_vars.individual_number = ind_num
     master_to_slave_vars.generation_number = gen
 
-    # Store inforamtion about which units are activated
+    # Store information about which units are activated
     master_to_slave_vars = master_to_slave_electrical_technologies(individual_with_names_dict, locator,
                                                                    master_to_slave_vars,
                                                                    district_heating_network,
