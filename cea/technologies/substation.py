@@ -32,7 +32,7 @@ def substation_main_heating(locator, total_demand, buildings_name_with_heating, 
         for name in buildings_name_with_heating:
             buildings_dict[name] = pd.read_csv(locator.get_demand_results_file(name))
             print(name)
-            ## calculates the building side supply and return temperatures for each unit
+            # calculates the building side supply and return temperatures for each unit
             Ths_supply_C, Ths_re_C = calc_temp_hex_building_side_heating(buildings_dict[name],
                                                                          heating_configuration)
 
@@ -104,7 +104,7 @@ def substation_main_cooling(locator, total_demand, buildings_name_with_cooling,
             buildings_dict[name] = pd.read_csv(locator.get_demand_results_file(name))
 
             T_supply_to_cs_ref, T_supply_to_cs_ref_data, \
-            Tcs_return_C, Tcs_supply_C = calc_temp_hex_building_side_cooling(buildings_dict[name],
+                Tcs_return_C, Tcs_supply_C = calc_temp_hex_building_side_cooling(buildings_dict[name],
                                                                              cooling_configuration)
 
             # calculates the building side supply and return temperatures for each unit
@@ -142,7 +142,8 @@ def substation_main_cooling(locator, total_demand, buildings_name_with_cooling,
         for name in buildings_name_with_cooling:
             substation_demand = pd.read_csv(locator.get_demand_results_file(name))
             T_supply_to_cs_ref, T_supply_to_cs_ref_data, \
-            Tcs_return_C, Tcs_supply_C = calc_temp_hex_building_side_cooling(substation_demand, cooling_configuration)
+            Tcs_return_C, Tcs_supply_C = calc_temp_hex_building_side_cooling(substation_demand,
+                                                                             cooling_configuration)
 
             # calculates the building side supply and return temperatures for each unit
             T_DC_supply_to_cs_ref, T_DC_supply_to_cs_ref_data = calc_temp_this_building_cooling(T_supply_to_cs_ref,
@@ -250,7 +251,7 @@ def substation_model_cooling(name, building, T_DC_supply_to_cs_ref_C, T_DC_suppl
                              'aru': abs(building.mcpcs_sys_aru_kWperC.values),
                              'scu': abs(building.mcpcs_sys_scu_kWperC.values)}
 
-    ## SIZE FOR THE SPACE COOLING HEAT EXCHANGER
+    # SIZE FOR THE SPACE COOLING HEAT EXCHANGER
     if len(cs_configuration) == 0:
         tci = 0
         t_DC_return_cs = 0
@@ -271,7 +272,7 @@ def substation_model_cooling(name, building, T_DC_supply_to_cs_ref_C, T_DC_suppl
             mcpcs_sys_kWperC = 0.0
             for unit in cs_configuration:
                 mcpcs_sys_kWperC += mcpcs_sys_kWperC_dict[unit]
-            ch = (mcpcs_sys_kWperC) * 1000  # in W/K #fixme: recalculated with the Tsupply/return
+            ch = mcpcs_sys_kWperC * 1000  # in W/K #fixme: recalculated with the Tsupply/return
             index = np.where(Qcs_sys_W == Qnom_W)[0][0]
             tci_0 = tci[index]  # in K
             thi_0 = thi[index]
@@ -434,7 +435,6 @@ def calc_compound_Ths(building_demand_df,
                                                         mcphs_sys_kWperC_dict[3],
                                                         Ths_ahu_return, Ths_aru_return, Ths_shu_return
                                                         )
-
 
     elif heating_configuration == 0:  # when there is no heating requirement from the centralized plant
         Ths_supply = np.zeros(HOURS_IN_YEAR)

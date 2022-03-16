@@ -277,7 +277,7 @@ def district_cooling_network(locator,
 
 def calc_network_summary_DCN(master_to_slave_vars):
 
-    # if there is a district heating network on site and there is server_heating
+    # if there is a district cooling network on site and there is server_heating
     district_heating_network = master_to_slave_vars.DHN_exists
     df = master_to_slave_vars.DC_network_summary_individual
     df = df.fillna(0)
