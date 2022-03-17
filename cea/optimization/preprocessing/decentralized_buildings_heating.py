@@ -258,10 +258,8 @@ def disconnected_heating_for_building(building_name, supply_systems, T_ground_K,
         Capex_a_USD[3 + i][0] += Capex_a_GHP_USD
         Opex_a_fixed_USD[3 + i][0] += Opex_a_fixed_GHP_USD
         Capex_opex_a_fixed_only_USD[3 + i][0] += Capex_a_GHP_USD + Opex_a_fixed_GHP_USD  # TODO:variable price?
-    # Best configuration
+    # Compile Objectives
     number_of_configurations = len(GHG_tonCO2) # 13
-    Best = np.zeros((number_of_configurations, 1))
-    indexBest = None
     TAC_USD = np.zeros((number_of_configurations, 2))
     TotalCO2 = np.zeros((number_of_configurations, 2))
     for i in range(number_of_configurations):
@@ -269,16 +267,17 @@ def disconnected_heating_for_building(building_name, supply_systems, T_ground_K,
         Opex_a_USD[i][1] = Opex_a_fixed_USD[i][0] + Opex_a_var_USD[i][4]
         TAC_USD[i][1] = Capex_opex_a_fixed_only_USD[i][0] + Opex_a_var_USD[i][4]
         TotalCO2[i][1] = GHG_tonCO2[i][5]
+    # Rank results and find the best configuration
     # sort TAC_USD and TotalCO2
     CostsS = TAC_USD[np.argsort(TAC_USD[:, 1])]
     CO2S = TotalCO2[np.argsort(TotalCO2[:, 1])]
-    # rank results
-    rank = 0
-    Bestfound = False
+    # initialize optsearch array
+    number_of_objectives = 2  # TAC_USD and TotalCO2
     optsearch = np.empty(number_of_configurations)
-    optsearch.fill(3)
-    geothermal_potential = geothermal_potential_data.set_index('Name')
+    optsearch.fill(number_of_objectives)
+    Best = np.zeros((number_of_configurations, 1))
     # Check the GHP area constraint for configuration 4-13
+    geothermal_potential = geothermal_potential_data.set_index('Name')
     for i in range(10):
         QGHP = (1 - i / 10.0) * Qnom_W
         areaAvail = geothermal_potential.loc[building_name, 'Area_geo']
@@ -287,17 +286,22 @@ def disconnected_heating_for_building(building_name, supply_systems, T_ground_K,
             # disqualify the configuration if constraint not met
             optsearch[i + 3] += 1
             Best[i + 3][0] = - 1
+    # rank results
+    rank = 0
+    Bestfound = False
+    indexBest = None
     while not Bestfound and rank < number_of_configurations:
         optsearch[int(CostsS[rank][0])] -= 1
         optsearch[int(CO2S[rank][0])] -= 1
-        print(rank, optsearch)
         if np.count_nonzero(optsearch) != number_of_configurations:
             Bestfound = True
             indexBest = np.where(optsearch == 0)[0][0] #FIXME: it is possible to have more than one configuration that reaches zero here
-            print(indexBest)
         rank += 1
     # get the best option according to the ranking.
-    Best[indexBest][0] = 1
+    if indexBest is not None:
+        Best[indexBest][0] = 1
+    else:
+        raise('indexBest not found, please check the ranking process or report this issue on GitHub.')
     # Save results in csv file
     performance_results = {
         "Nominal heating load": Qnom_W,
