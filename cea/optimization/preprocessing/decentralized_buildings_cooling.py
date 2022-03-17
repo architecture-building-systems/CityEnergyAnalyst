@@ -545,7 +545,10 @@ def rank_results(TAC_USD, TotalCO2, TotalPrim, number_of_configurations):
             indexBest = np.where(optsearch == 0)[0][0] #FIXME: it is possible to have more than one configuration that reaches zero here
         rank += 1
     # get the best option according to the ranking.
-    Best[indexBest][0] = 1
+    if indexBest is not None:
+        Best[indexBest][0] = 1
+    else:
+        raise('indexBest not found, please check the ranking process or report this issue on GitHub.')
     return Best, indexBest
 
 
