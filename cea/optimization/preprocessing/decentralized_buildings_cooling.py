@@ -542,7 +542,7 @@ def rank_results(TAC_USD, TotalCO2, TotalPrim, number_of_configurations):
         optsearch[int(CO2S[rank][0])] -= 1
         if np.count_nonzero(optsearch) != number_of_configurations:
             Bestfound = True
-            indexBest = np.where(optsearch == 0)[0][0]
+            indexBest = np.where(optsearch == 0)[0][0] #FIXME: it is possible to have more than one configuration that reaches zero here
         rank += 1
     # get the best option according to the ranking.
     Best[indexBest][0] = 1
