@@ -90,13 +90,14 @@ def evaluation_main(individual,
     """
 
     # CREATE THE INDIVIDUAL BARCODE AND INDIVIDUAL WITH HER COLUMN NAME AS A DICT
-    DHN_barcode, DCN_barcode, individual_with_name_dict, building_connectivity_dict = individual_to_barcode(individual,
-                                                                                                            building_names_all,
-                                                                                                            building_names_heating,
-                                                                                                            building_names_cooling,
-                                                                                                            column_names_individual,
-                                                                                                            column_names_buildings_heating,
-                                                                                                            column_names_buildings_cooling)
+    DHN_barcode, DCN_barcode,\
+    individual_with_name_dict, building_connectivity_dict = individual_to_barcode(individual,
+                                                                                  building_names_all,
+                                                                                  building_names_heating,
+                                                                                  building_names_cooling,
+                                                                                  column_names_individual,
+                                                                                  column_names_buildings_heating,
+                                                                                  column_names_buildings_cooling)
 
     print("EVALUATING THE NEXT SYSTEM OPTION/INDIVIDUAL")
     print(individual_with_name_dict)
