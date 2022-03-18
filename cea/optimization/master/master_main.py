@@ -555,7 +555,9 @@ def save_final_generation_pareto_individuals(toolbox,
                                                        individual_number, generation_number))],
                                               ignore_index=True)
 
-    systems_name_list = ["sys_" + str(y) + "_" + str(x) for x, y in zip(individual_number_list, generation_number_list)]
+    systems_name_list = ["sys_" + str(genNum) + "_" + str(indNum) for
+                         indNum, genNum in
+                         zip(individual_number_list, generation_number_list)]
     performance_totals_pareto['individual'] = individual_number_list
     performance_totals_pareto['individual_name'] = systems_name_list
     performance_totals_pareto['generation'] = generation_number_list
@@ -581,7 +583,9 @@ def save_generation_pareto_individuals(locator, generation, record_individuals_t
                                                        locator.get_optimization_slave_total_performance(ind, gen))],
                                                   ignore_index=True)
 
-    systems_name_list = ["sys_" + str(y) + "_" + str(x) for x, y in zip(individual_list, generation_list)]
+    systems_name_list = ["sys_" + str(genNum) + "_" + str(indNum) 
+                         for indNum, genNum 
+                         in zip(individual_list, generation_list)]
     performance_totals_pareto['individual'] = individual_list
     performance_totals_pareto['individual_name'] = systems_name_list
     performance_totals_pareto['generation'] = generation_list
@@ -597,7 +601,7 @@ def save_generation_dataframes(generation,
                                DCN_network_list_selected,
                                DHN_network_list_selected):
     individual_list = range(len(slected_individuals))
-    individual_name_list = ["sys_" + str(generation) + "_" + str(x) for x in individual_list]
+    individual_name_list = ["sys_" + str(generation) + "_" + str(indNum) for indNum in individual_list]
     performance_disconnected = pd.DataFrame()
     performance_connected = pd.DataFrame()
     performance_totals = pd.DataFrame()
@@ -655,10 +659,10 @@ def create_empty_individual(column_names,
                             technologies_cooling_allowed,
                             ):
     # local variables
-    heating_unit_names_share = [x[0] for x in DH_CONVERSION_TECHNOLOGIES_SHARE.items() if
-                                x[0] in technologies_heating_allowed]
-    cooling_unit_names_share = [x[0] for x in DC_CONVERSION_TECHNOLOGIES_SHARE.items() if
-                                x[0] in technologies_cooling_allowed]
+    heating_unit_names_share = [tech[0] for tech in DH_CONVERSION_TECHNOLOGIES_SHARE.items() if
+                                tech[0] in technologies_heating_allowed]
+    cooling_unit_names_share = [tech[0] for tech in DC_CONVERSION_TECHNOLOGIES_SHARE.items() if
+                                tech[0] in technologies_cooling_allowed]
 
     heating_unit_share_float = [0.0] * len(heating_unit_names_share)
     cooling_unit_share_float = [0.0] * len(cooling_unit_names_share)
@@ -691,18 +695,18 @@ def get_column_names_individual(district_heating_network,
     # 2 cases are possible
     if district_heating_network:
         # local variables
-        heating_unit_names_share = [x[0] for x in DH_CONVERSION_TECHNOLOGIES_SHARE.items() if
-                                    x[0] in technologies_heating_allowed]
-        column_names_buildings_heating = [x + "_" + DH_ACRONYM for x in building_names_heating]
+        heating_unit_names_share = [tech[0] for tech in DH_CONVERSION_TECHNOLOGIES_SHARE.items() if
+                                    tech[0] in technologies_heating_allowed]
+        column_names_buildings_heating = [build + "_" + DH_ACRONYM for build in building_names_heating]
         cooling_unit_names_share = []
         column_names_buildings_cooling = []
         column_names = heating_unit_names_share + \
                        column_names_buildings_heating
     elif district_cooling_network:
         # local variables
-        cooling_unit_names_share = [x[0] for x in DC_CONVERSION_TECHNOLOGIES_SHARE.items() if
-                                    x[0] in technologies_cooling_allowed]
-        column_names_buildings_cooling = [x + "_" + DC_ACRONYM for x in building_names_cooling]
+        cooling_unit_names_share = [tech[0] for tech in DC_CONVERSION_TECHNOLOGIES_SHARE.items() if
+                                    tech[0] in technologies_cooling_allowed]
+        column_names_buildings_cooling = [build + "_" + DC_ACRONYM for build in building_names_cooling]
         heating_unit_names_share = []
         column_names_buildings_heating = []
         column_names = cooling_unit_names_share + \
@@ -730,8 +734,8 @@ def calc_gd(n, X2, Y2):
 
 def calc_performance_metrics(generational_distance_n_minus_1, paretofrontier):
     number_of_individuals = len([paretofrontier])
-    X2 = [paretofrontier[x].fitness.values[0] for x in range(number_of_individuals)]
-    Y2 = [paretofrontier[x].fitness.values[1] for x in range(number_of_individuals)]
+    X2 = [paretofrontier[ndInd].fitness.values[0] for ndInd in range(number_of_individuals)]
+    Y2 = [paretofrontier[ndInd].fitness.values[1] for ndInd in range(number_of_individuals)]
 
     generational_distance = calc_gd(number_of_individuals, X2, Y2)
     difference_generational_distance = abs(generational_distance_n_minus_1 - generational_distance)
