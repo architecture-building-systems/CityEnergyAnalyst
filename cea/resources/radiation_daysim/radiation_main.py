@@ -3,7 +3,6 @@ Radiation engine and geometry handler for CEA
 """
 
 import os
-import subprocess
 import sys
 import time
 from itertools import repeat
@@ -138,39 +137,30 @@ def check_daysim_bin_directory(path_hint, latest_binaries):
     def contains_whitespace(path):
         """True if path contains whitespace"""
         return len(path.split()) > 1
-    
-    def allow_run_on_mac(path):
-        """Remove unidentified developer warning when running binaries on mac"""
-        for binary in required_binaries:
-            binary_path = os.path.join(path, binary)
-            result = subprocess.run(["xattr", "−l", binary_path], capture_output=True)
-            if "com.apple.quarantine" in result.stdout.decode('utf-8'):
-                subprocess.run(["xattr", "-d", "com.apple.quarantine", binary_path])
 
     # Path of daysim binaries shipped with CEA
     cea_daysim_folder = os.path.join(os.path.dirname(sys.executable), "..", "Daysim")
+    cea_daysim_bin_path = os.path.join(cea_daysim_folder, "bin64" if latest_binaries else "bin")
     lib_path = os.path.join(cea_daysim_folder, "lib")  # Use lib folder shipped with CEA
     folders_to_check = [
         path_hint,
+        os.path.join(path_hint, "bin64" if latest_binaries else "bin"),
+        cea_daysim_bin_path,
         cea_daysim_folder  # Check binaries in Daysim folder, for backward capability
     ]
 
     # user might have a DAYSIM installation
     if sys.platform == "win32":
-        # latest binaries only applies to Windows
-        folders_to_check.append(os.path.join(cea_daysim_folder, "bin64" if latest_binaries else "bin"))
-        folders_to_check.append(os.path.join(path_hint, "bin64" if latest_binaries else "bin"))
-
         folders_to_check.append(r"C:\Daysim\bin")
 
+    folders_to_check = [os.path.abspath(os.path.normpath(os.path.normcase(p))) for p in folders_to_check]
+
     if sys.platform == "linux":
-        folders_to_check.append(os.path.normcase(r"/Daysim/bin"))
+        folders_to_check.append(os.path.normpath(os.path.normcase(r"/Daysim/bin")))
 
     if sys.platform == "darwin":
-        folders_to_check.append(os.path.join(
-            os.path.dirname(os.getcwd()), '..', '..', '..', 'setup', 'Dependencies', 'Daysim', 'mac'))
-
-    folders_to_check = [os.path.abspath(os.path.normpath(os.path.normcase(p))) for p in folders_to_check]
+        folders_to_check.append(os.path.normpath(os.path.normcase(os.path.join(
+            os.path.dirname(os.path.dirname(os.path.dirname(os.getcwd()))), 'setup', 'Dependencies', 'Daysim', 'mac'))))
 
     for possible_path in folders_to_check:
         if contains_binaries(possible_path):
@@ -187,9 +177,6 @@ def check_daysim_bin_directory(path_hint, latest_binaries):
             # Check if lib files in binaries path, for backward capability
             elif contains_libs(possible_path):
                 lib_path = possible_path
-            
-            if sys.platform == "darwin":
-                allow_run_on_mac(possible_path)
 
             return str(possible_path), str(lib_path)
 

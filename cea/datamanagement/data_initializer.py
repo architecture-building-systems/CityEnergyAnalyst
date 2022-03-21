@@ -38,19 +38,16 @@ def data_initializer(locator,
     if initialize_archetypes_database:
         complete_databases_path = os.path.join(databases_path, 'archetypes')
         complete_output_directory = locator.get_databases_archetypes_folder()
-        os.makedirs(complete_output_directory, exist_ok=True)
         copy_tree(complete_databases_path, complete_output_directory)
 
     if initialize_components_database:
         complete_databases_path = os.path.join(databases_path, 'components')
         complete_output_directory = locator.get_databases_systems_folder()
-        os.makedirs(complete_output_directory, exist_ok=True)
         copy_tree(complete_databases_path, complete_output_directory)
 
     if initialize_assemblies_database:
         complete_databases_path = os.path.join(databases_path, 'assemblies')
         complete_output_directory = locator.get_databases_assemblies_folder()
-        os.makedirs(complete_output_directory, exist_ok=True)
         copy_tree(complete_databases_path, complete_output_directory)
 
 def main(config):

@@ -126,7 +126,7 @@ def main(config):
         check_input_files(config, locator)
     except ValueError as err:
         import sys
-        print(err)
+        print(err.message)
         sys.exit(1)
     moo_optimization(locator=locator, weather_file=weather_file, config=config)
 
