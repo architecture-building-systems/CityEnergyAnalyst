@@ -76,7 +76,7 @@ class CeaScript(object):
             method_name, args = locator_spec[0], locator_spec[1:]
             method = getattr(locator, method_name)
             path = method(*self._lookup_args(config, locator, args))
-            if not os.path.exists(os.path.abspath(os.path.normpath(os.path.expanduser(path)))):
+            if not os.path.exists(path):
                 yield [method_name, path]
 
     def _lookup_args(self, config, locator, args):

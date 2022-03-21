@@ -94,7 +94,7 @@ Create a Release Draft on GitHub
 Updating the CEA GUI interface
 ------------------------------
 
-You'll need yarn_ and `Node.js <https://nodejs.org/en/>`_ installed.
+You'll need yarn_ installed.
 
 .. _yarn: https://classic.yarnpkg.com/en/docs/install/#windows-stable
 
@@ -115,7 +115,7 @@ Creating the installer
     Configuring `cea build` with the following parameters:
     - development:nsis = C:\Program Files (x86)\NSIS\Bin\makensis.exe
       (default: )
-    - development:conda = C:\Users\darthoma\miniconda3\condabin\conda.bat
+    - development:conda = C:\Users\darthoma\Miniconda2\condabin\conda.bat
       (default: )
     - development:gui = c:\Users\darthoma\Documents\GitHub\CityEnergyAnalyst-GUI
       (default: )
@@ -151,13 +151,8 @@ can be found that way.
 
 Publish the Release on GitHub
 -----------------------------
-- The release should be published so that it could be found on the CityEnergyAnalyst_ repository on GitHub. Add the
-installer you created in the previous step.
-- It is recommended to also publish a release on the CityEnergyAnalyst-GUI_ repository that corresponds to the version
-on the CityEnergyAnalyst_ repository.
-
-.. _CityEnergyAnalyst: https://github.com/architecture-building-systems/CityEnergyAnalyst
-.. _CityEnergyAnalyst-GUI: https://github.com/architecture-building-systems/CityEnergyAnalyst-GUI/releases
+The release should be published so that it could be found on GitHub for testing (the next step). Add the installer
+you created in the previous step.
 
 
 Building the documentation
