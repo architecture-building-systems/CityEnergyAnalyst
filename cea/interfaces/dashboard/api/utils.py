@@ -7,13 +7,9 @@ import cea.config
 import cea.inputlocator
 
 
-def deconstruct_parameters(p: cea.config.Parameter):
-    params = {'name': p.name, 'type': p.typename, 'help': p.help}
-    try:
-        params["value"] = p.get()
-    except cea.ConfigError as e:
-        print(e)
-        params["value"] = ""
+def deconstruct_parameters(p):
+    params = {'name': p.name, 'type': p.typename,
+              'value': p.get(), 'help': p.help}
     if isinstance(p, cea.config.ChoiceParameter):
         params['choices'] = p._choices
     if p.typename == 'WeatherPathParameter':
