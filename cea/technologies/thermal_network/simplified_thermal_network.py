@@ -42,7 +42,7 @@ def calculate_ground_temperature(locator):
     weather_file = locator.get_weather_file()
     T_ambient_C = epw_reader(weather_file)['drybulb_C']
     network_depth_m = NETWORK_DEPTH  # [m]
-    T_ground_K = geothermal.calc_ground_temperature_K(locator, T_ambient_C.values, network_depth_m)
+    T_ground_K = geothermal.calc_ground_temperature(T_ambient_C.values, network_depth_m)
     return T_ground_K
 
 

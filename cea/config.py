@@ -390,7 +390,7 @@ class Parameter(object):
         try:
             return self.decode(encoded_value)
         except ValueError as ex:
-            raise ValueError('%s:%s - %s' % (self.section.name, self.name, ex.message))
+            raise ValueError(f'{self.section.name}:{self.name} - {ex}')
 
     def get_raw(self):
         """Return the value from the config file, but without replacing references and also
@@ -888,7 +888,7 @@ class ScenarioParameter(Parameter):
 
     def decode(self, value):
         """Make sure the path is nicely formatted"""
-        return os.path.normpath(value)
+        return os.path.normpath((os.path.expanduser(value)))
 
 
 class MultiChoiceParameter(ChoiceParameter):
@@ -921,7 +921,7 @@ class MultiChoiceParameter(ChoiceParameter):
         try:
             return self.decode(encoded_value)
         except ValueError as ex:
-            raise ValueError('%s:%s - %s' % (self.section.name, self.name, ex.message))
+            raise ValueError(f'{self.section.name}:{self.name} - {ex}')
 
     def set(self, value):
         encoded_value = self.encode(value)
