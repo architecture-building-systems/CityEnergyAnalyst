@@ -1,3 +1,4 @@
+- 2022-01-04 - 3.26.0 - #3077 Add missing database export endpoint
 - 2021-12-21 - 3.26.0 - #3075 Make sure conda-pack is installed when creating the installer
 - 2021-12-16 - 3.26.0 - #3074 Fix race condition when creating building geometries
 - 2021-12-16 - 3.26.0 - #3071 Add mamba to CEA installer build
