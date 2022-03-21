@@ -46,14 +46,14 @@ class DemandWriter(object):
             locator.get_temporary_file('%(building_name)sT.hdf' % locals()),
             key='dataset')
 
-    def results_to_csv(self, tsd, bpr, locator, date, building_name):
-        # save hourly data
-        columns, hourly_data = self.calc_hourly_dataframe(building_name, date, tsd)
-        self.write_to_csv(building_name, columns, hourly_data, locator)
+    def results_to_csv(self, tsd, bpr, locator, date, building_name, debug):
+        if not debug:
+            # save hourly data
+            columns, hourly_data = self.calc_hourly_dataframe(building_name, date, tsd)
+            self.write_to_csv(building_name, columns, hourly_data, locator)
 
-        # save total for the year
+        # save annual values to a temp file for YearlyDemandWriter
         columns, data = self.calc_yearly_dataframe(bpr, building_name, tsd)
-        # save to disc
         pd.DataFrame(data, index=[0]).to_csv(
             locator.get_temporary_file('%(building_name)sT.csv' % locals()),
             index=False, columns=columns, float_format='%.3f', na_rep='nan')

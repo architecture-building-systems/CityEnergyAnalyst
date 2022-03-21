@@ -20,7 +20,7 @@ import pandas as pd
 from . import SolarPowerHandler_incl_Losses as SPH_fn
 from cea.constants import HOURS_IN_YEAR
 from cea.optimization.constants import *
-from cea.resources.geothermal import calc_ground_temperature_K
+from cea.resources.geothermal import calc_ground_temperature
 from cea.technologies.constants import DT_HEAT
 from cea.utilities import epwreader
 
@@ -63,7 +63,7 @@ def Storage_Design(T_storage_old_K, Q_in_storage_old_W, locator,
     weather_path = locator.get_weather_file()
     weather_data = epwreader.epw_reader(weather_path)[['year', 'drybulb_C', 'wetbulb_C', 'relhum_percent',
                                                        'windspd_ms', 'skytemp_C']]
-    T_ground_K = calc_ground_temperature_K(locator, weather_data['drybulb_C'], depth_m=10)
+    T_ground_K = calc_ground_temperature(weather_data['drybulb_C'], depth_m=10)
 
     # Calculate DH operation with on-site energy sources and storage
     T_amb_K = weather_data['drybulb_C'] + 273.15  # K
