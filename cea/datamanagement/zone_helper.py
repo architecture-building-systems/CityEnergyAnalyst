@@ -84,9 +84,9 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, buildings_he
         data_floors_sum = [x + y for x, y in zip([parse_building_floors(x) for x in data_osm_floors1],
                                                  [parse_building_floors(x) for x in data_osm_floors2])]
         data_floors_sum_with_nan = [np.nan if x < 1.0 else x for x in data_floors_sum]
-        data_osm_floors_joined = int(
-            math.ceil(np.nanmedian(data_floors_sum_with_nan)))  # median so we get close to the worse case
-        shapefile["floors_ag"] = [int(x) if x is not np.nan else data_osm_floors_joined for x in
+        data_osm_floors_joined = math.ceil(
+            np.nanmedian(data_floors_sum_with_nan))  # median so we get close to the worse case
+        shapefile["floors_ag"] = [int(x) if not np.isnan(x) else data_osm_floors_joined for x in
                                   data_floors_sum_with_nan]
         shapefile["height_ag"] = shapefile["floors_ag"] * constants.H_F
     else:
@@ -295,11 +295,9 @@ def clean_geometries(gdf):
         from shapely.ops import unary_union
         if geometry.type == 'Polygon':  # ignore Polygons
             return geometry
-        elif geometry.type == 'Point':
-            print('Discarding geometry of type: Point')
-            return None # discard geometry if it is a Point
-        elif geometry.type == 'LineString':
-            return geometry.convex_hull
+        elif geometry.type in ['Point', 'LineString']:
+            print('Discarding geometry of type: {}'.format(geometry.type))
+            return None # discard geometry if it is a Point or LineString
         else:
             joined = unary_union(list(geometry))
             if joined.type == 'MultiPolygon':  # some Multipolygons could not be combined
@@ -309,7 +307,6 @@ def clean_geometries(gdf):
                 return None
             else:
                 return joined
-
     gdf.geometry = gdf.geometry.map(flatten_geometries)
     gdf = gdf[gdf.geometry.notnull()]  # remove None geometries
 
