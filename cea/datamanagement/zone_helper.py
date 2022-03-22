@@ -298,6 +298,8 @@ def clean_geometries(gdf):
         elif geometry.type == 'Point':
             print('Discarding geometry of type: Point')
             return None # discard geometry if it is a Point
+        elif geometry.type == 'LineString':
+            return geometry.convex_hull
         else:
             joined = unary_union(list(geometry))
             if joined.type == 'MultiPolygon':  # some Multipolygons could not be combined
