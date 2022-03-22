@@ -296,7 +296,7 @@ def clean_geometries(gdf):
         if geometry.type == 'Polygon':  # ignore Polygons
             return geometry
         elif geometry.type in ['Point', 'LineString']:
-            print('Discarding geometry of type: {}'.format(geometry.type))
+            print(f'Discarding geometry of type: {geometry.type}')
             return None # discard geometry if it is a Point or LineString
         else:
             joined = unary_union(list(geometry))
