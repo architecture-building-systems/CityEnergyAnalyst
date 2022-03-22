@@ -296,14 +296,14 @@ def clean_geometries(gdf):
         if geometry.type == 'Polygon':  # ignore Polygons
             return geometry
         elif geometry.type in ['Point', 'LineString']:
-            print('Discarding geometry of type: {}'.format(geometry.type))
+            print(f'Discarding geometry of type: {geometry.type}')
             return None # discard geometry if it is a Point or LineString
         else:
             joined = unary_union(list(geometry))
             if joined.type == 'MultiPolygon':  # some Multipolygons could not be combined
                 return joined[0]  # just return first polygon
             elif joined.type != 'Polygon':  # discard geometry if it is still not a Polygon
-                print('Discarding geometry of type: {geometry_type}'.format(geometry_type=joined.type))
+                print(f'Discarding geometry of type: {joined.type}')
                 return None
             else:
                 return joined
