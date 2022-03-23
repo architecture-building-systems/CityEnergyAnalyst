@@ -102,6 +102,7 @@ def evaluation_main(individual,
     district_heating_electricity_requirements_dispatch, \
     district_heating_fuel_requirements_dispatch, \
     district_heating_capacity_installed = heating_main.district_heating_network(locator,
+                                                                                config,
                                                                                 master_to_slave_vars,
                                                                                 network_features,
                                                                                 )
