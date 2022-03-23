@@ -37,11 +37,8 @@ def calc_Eal_Epro(tsd, schedules):
     """
     Calculate final internal electrical loads (without auxiliary loads)
 
-    :param tsd: Timestep data
+    :param tsd: Time series data of building
     :type tsd: Dict[str, numpy.ndarray]
-
-    :param bpr: building properties
-    :type bpr: cea.demand.thermal_loads.BuildingPropertiesRow
 
     :param schedules: The list of schedules defined for the project - in the same order as `list_uses`
     :type schedules: List[numpy.ndarray]
@@ -64,6 +61,9 @@ def calc_E_sys(tsd):
     """
     Calculate the compound of end use electrical loads
 
+    :param tsd: Time series data of building
+    :type tsd: Dict[str, numpy.ndarray]
+
     """
     tsd['E_sys'] =  tsd['Eve'] + tsd['Ea'] + tsd['El'] + tsd['Edata'] + tsd['Epro'] + tsd['Eaux'] + tsd['Ev']  # assuming a small loss
 
@@ -74,6 +74,12 @@ def calc_Ef(bpr, tsd):
     """
     Calculate the compound of final electricity loads
     with contain the end-use demand,
+
+    :param tsd: Time series data of building
+    :type tsd: Dict[str, numpy.ndarray]
+
+    :param bpr: building properties
+    :type bpr: cea.demand.building_properties.BuildingProperties
 
     """
     # GET SYSTEMS EFFICIENCIES
@@ -121,8 +127,10 @@ def calc_Ef(bpr, tsd):
 
 def calc_Eaux(tsd):
     """
-    Calculate the compound of final electricity loads
-    with contain the end-use demand,
+    Calculate the compound of total auxiliary electricity loads
+
+    :param tsd: Time series data of building
+    :type tsd: Dict[str, numpy.ndarray]
 
     """
     tsd['Eaux'] = tsd['Eaux_fw'] + tsd['Eaux_ww'] + tsd['Eaux_cs'] + tsd['Eaux_hs'] + tsd['Ehs_lat_aux']
@@ -133,6 +141,12 @@ def calc_Eaux(tsd):
 def calc_Eaux_fw(tsd, bpr, schedules):
     """
     Calculate auxiliary electricity consumption (Eaux_fw) to distribute fresh water (fw) in the building.
+
+    :param tsd: Time series data of building
+    :type tsd: Dict[str, numpy.ndarray]
+
+    :param bpr: building properties
+    :type bpr: cea.demand.building_properties.BuildingProperties
     """
 
     tsd['vfw_m3perh'] = schedules['Vw_lph'] / 1000  # m3/h
@@ -150,6 +164,15 @@ def calc_Eaux_fw(tsd, bpr, schedules):
 
 
 def calc_Eaux_ww(tsd, bpr):
+    """
+    Calculate auxiliary electricity consumption (Eaux_ww) to distribute hot water (ww) in the building.
+
+    :param tsd: Time series data of building
+    :type tsd: Dict[str, numpy.ndarray]
+
+    :param bpr: building properties
+    :type bpr: cea.demand.building_properties.BuildingProperties
+    """
     Ll = bpr.geometry['Blength']
     Lw = bpr.geometry['Bwidth']
     Mww = tsd['mww_kgs']
@@ -179,9 +202,10 @@ def calc_Eaux_Qhs_Qcs(tsd, bpr):
     Following EN 15316-3-2:2007 Annex F
 
     :param tsd: Time series data of building
-    :type tsd: dict
-    :param bpr: Building Properties Row object
-    :type bpr: cea.demand.thermal_loads.BuildingPropertiesRow
+    :type tsd: Dict[str, numpy.ndarray]
+
+    :param bpr: building properties
+    :type bpr: cea.demand.building_properties.BuildingProperties
     :return:
     """
     # TODO: documentation
@@ -328,17 +352,13 @@ def calc_Eve(tsd):
 
 def calc_Eauxf_ww(Qww, deltaP_kPa, b, m_kgs):
     """
-    #Following EN 15316-3-2:2007 Annex F
-    :param Qww:
-    :param Qwwf:
-    :param Qwwf0:
-    :param Imax:
-    :param deltaP_kPa:
+    Following EN 15316-3-2:2007 Annex F
+
+    :param Qww: Hot water load
+    :param deltaP_kPa: Pressure loss in the distribution pipes
     :param b:
-    :param m_kgs:
-    :return:
+    :param m_kgs: How water mass flow
     """
-    # TODO: documentation
 
     # the power of the pump in Watts
     Cpump = 0.97
@@ -349,18 +369,16 @@ def calc_Eauxf_ww(Qww, deltaP_kPa, b, m_kgs):
         Eaux_ww = epmp_eff * Phydr_kW * 1000
     else:
         Eaux_ww = 0.0
-    return Eaux_ww  # in #W
+    return Eaux_ww  # [W]
 
 
 def calc_Eauxf_fw(Vfw_m3h, deltaP_kPa, b):
     """
-    #Following EN 15316-3-2:2007 Annex F
-    :param Vfw_m3h:
-    :param nf:
+    Following EN 15316-3-2:2007 Annex F
+    :param Vfw_m3h: Fresh water volumetric flow rate
+    :param deltaP_kPa: Pressure loss in the distribution pipes
     :return:
     """
-    # TODO: documentation
-    # the power of the pump in Watts
     Cpump = 0.97
     if Vfw_m3h > 0.0:
         if deltaP_kPa < 0.0:
@@ -371,4 +389,4 @@ def calc_Eauxf_fw(Vfw_m3h, deltaP_kPa, b):
         Eaux_fw = epmp_eff * Phydr_kW * 1000
     else:
         Eaux_fw = 0.0
-    return Eaux_fw
+    return Eaux_fw # [W]
