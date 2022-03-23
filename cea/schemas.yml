@@ -4690,7 +4690,7 @@ get_database_conversion_systems:
           unit: '[-]'
           values: 'NA'
         type:
-          description: code that identifies wheather the tank is used for heating or cooling (different properties of the transport media)
+          description: code that identifies whether the tank is used for heating or cooling (different properties of the transport media)
           type: string
           unit: '[-]'
           values: '{COOLING,HEATING}'
@@ -4765,7 +4765,7 @@ get_database_conversion_systems:
           unit: "[yr]"
           values: '{0...n}'
         O&M_%:
-          description: operation and maintanence cost factor (fraction of the investment
+          description: operation and maintnance cost factor (fraction of the investment
             cost)
           min: 0.0
           type: float

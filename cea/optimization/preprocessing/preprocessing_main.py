@@ -85,7 +85,7 @@ def preproccessing(locator, total_demand, buildings_heating_demand, buildings_co
         substation.substation_main_heating(locator, total_demand, buildings_heating_demand,
                                            DHN_barcode=DHN_barcode)
 
-        summarize_network.network_main(locator, buildings_heating_demand, weather_features.ground_temp_K, num_tot_buildings, "DH",
+        summarize_network.network_main(locator, buildings_heating_demand, weather_features.ground_temp, num_tot_buildings, "DH",
                                        DHN_barcode)
         # "_all" key for all buildings
     if district_cooling_network:
@@ -94,7 +94,7 @@ def preproccessing(locator, total_demand, buildings_heating_demand, buildings_co
         substation.substation_main_cooling(locator, total_demand, buildings_cooling_demand, DCN_barcode=DCN_barcode)
 
         summarize_network.network_main(locator, buildings_cooling_demand,
-                                       weather_features.ground_temp_K, num_tot_buildings, "DC",
+                                       weather_features.ground_temp, num_tot_buildings, "DC",
                                        DCN_barcode)  # "_all" key for all buildings
 
     network_features = NetworkOptimizationFeatures(district_heating_network, district_cooling_network, locator)

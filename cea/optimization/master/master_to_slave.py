@@ -115,7 +115,7 @@ def thermal_networks_in_individual(locator,
                                    column_names_buildings_cooling
                                    ):
     # local variables
-    ground_temp_K = weather_features.ground_temp_K
+    ground_temp = weather_features.ground_temp
 
     # EVALUATE CASES TO CREATE A NETWORK OR NOT
     if district_heating_network:  # network exists
@@ -130,7 +130,7 @@ def thermal_networks_in_individual(locator,
                                                DHN_barcode=DHN_barcode)
             DH_network_summary_individual = summarize_network.network_main(locator,
                                                                            buildings_in_heating_network,
-                                                                           ground_temp_K,
+                                                                           ground_temp,
                                                                            num_total_buildings,
                                                                            "DH", DHN_barcode)
         else:
@@ -149,7 +149,7 @@ def thermal_networks_in_individual(locator,
             substation.substation_main_cooling(locator, total_demand, buildings_in_cooling_network,
                                                DCN_barcode=DCN_barcode)
             DC_network_summary_individual = summarize_network.network_main(locator, buildings_in_cooling_network,
-                                                                           ground_temp_K,
+                                                                           ground_temp,
                                                                            num_total_buildings,
                                                                            'DC', DCN_barcode)
         else:
