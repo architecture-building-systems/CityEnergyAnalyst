@@ -60,8 +60,8 @@ def district_cooling_network(locator,
         T_district_cooling_supply_K, \
         mdot_kgpers = calc_network_summary_DCN(master_to_slave_variables)
 
-        # Initialize daily storage calss
-        T_ground_K = weather_features.ground_temp_K
+        # Initialize daily storage class
+        T_ground_K = weather_features.ground_temp
         daily_storage = Storage_tank_PCM(activation=master_to_slave_variables.Storage_cooling_on,
                                          size_Wh=master_to_slave_variables.Storage_cooling_size_W,
                                          database_model_parameters= pd.read_excel(locator.get_database_conversion_systems(), sheet_name="TES"),

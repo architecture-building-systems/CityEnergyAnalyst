@@ -32,6 +32,7 @@ __status__ = "Production"
 # ==============================
 
 def district_heating_network(locator,
+                             config,
                              master_to_slave_variables,
                              network_features):
     """
