@@ -131,15 +131,16 @@ def calc_Eaux(tsd):
 
 
 def calc_Eaux_fw(tsd, bpr, schedules):
+    """
+    Calculate auxiliary electricity consumption (Eaux_fw) to distribute fresh water (fw) in the building.
+    """
 
     tsd['vfw_m3perh'] = schedules['Vw_lph'] / 1000  # m3/h
 
-    nf_ag = bpr.geometry['floors_ag']
-    if nf_ag > 5:  # up to 5th floor no pumping needs
+    height_ag = bpr.geometry['height_ag']
+    if height_ag > 5 * H_F:  # pumping required for buildings above 15m (or 5 floors)
         # pressure losses
-        effective_height = (bpr.geometry['height_ag'] - (5 * H_F))  # solo apartir de 5 pisos
-        if effective_height < 0.0:
-            raise ValueError(f"effective_height: {effective_height} is less than zero.")
+        effective_height = (height_ag - (5 * H_F))
         deltaP_kPa = DELTA_P_1 * effective_height
         b = 1  # assuming a good pumping system
         tsd['Eaux_fw'] = np.vectorize(calc_Eauxf_fw)(tsd['vfw_m3perh'], deltaP_kPa, b)
