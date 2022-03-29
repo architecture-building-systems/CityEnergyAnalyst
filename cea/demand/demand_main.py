@@ -44,18 +44,6 @@ def demand_calculation(locator, config):
     :param locator: An InputLocator to locate input files
     :type locator: cea.inputlocator.InputLocator
 
-    :param weather_path: A path to the EnergyPlus weather data file (.epw)
-    :type weather_path: str
-
-    :param use_dynamic_infiltration_calculation: Set this to ``True`` if the (slower) dynamic infiltration
-        calculation method (:py:func:`cea.demand.ventilation_air_flows_detailed.calc_air_flows`) should be used instead
-        of the standard.
-    :type use_dynamic_infiltration_calculation: bool
-
-    :param multiprocessing: Set this to ``True`` if the :py:mod:`multiprocessing` module should be used to speed up
-        calculations by making use of multiple cores.
-    :type multiprocessing: bool
-
     :returns: None
     :rtype: NoneType
 
