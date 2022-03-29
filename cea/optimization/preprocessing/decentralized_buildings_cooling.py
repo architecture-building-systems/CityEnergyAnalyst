@@ -7,6 +7,7 @@ Operation for decentralized buildings
 
 import time
 from math import ceil
+import random
 
 import numpy as np
 import pandas as pd
@@ -525,25 +526,67 @@ def compile_TAC_CO2_Prim(Capex_a_USD, Opex_a_fixed_USD, number_of_configurations
 
 
 def rank_results(TAC_USD, TotalCO2, TotalPrim, number_of_configurations):
-    Best = np.zeros((number_of_configurations, 1))
-    # rank results
+    """
+    This function chooses the best configuration according to the configurations' ranking in terms of cost and
+    emissions.
+    If different configurations have the same rank, just across different objective functions:
+    e.g. config 1: 1st in emissions, 2nd in cost
+         config 2: 2nd in emissions, 1st in cost
+    the function chooses the config that has the lowest value in each of the objective functions, relative to
+    the mean of the all configs:
+    e.g. If config 1: 41000 kgCO2 per year and the mean across all configs is 50000 kgCO2 per year the relative
+         emissions value of config 1 would be 82%.
+         If config 2: 44000 kgCO2 per year its relative emissions value would be 88%.
+         Let's assume the relative cost values of config 1 and 2 are 78% and 75% respectively.
+         The compounded relative objective value (cROV) of config 1 would therefore be 160%,
+         the compounded relative objective value of config 2 would be 163%.
+         -> config 1 would be chosen as the best
+    In the rare case where multiple configurations have the exact same compounded relative objective value
+    one of them is selected at random.
+    """
+
+    # sort TAC_USD and TotalCO2
     CostsS = TAC_USD[np.argsort(TAC_USD[:, 1])]
     CO2S = TotalCO2[np.argsort(TotalCO2[:, 1])]
-    el = len(CostsS)
+    # initialize optSearch array
+    optSearch = np.empty(number_of_configurations)
+    number_of_objectives = 2  # TAC_USD and TotalCO2
+    optSearch.fill(number_of_objectives)
+    # rank results
     rank = 0
-    Bestfound = False
-    optsearch = np.empty(el)
-    optsearch.fill(3)
-    indexBest = 0
-    while not Bestfound and rank < el:
-        optsearch[int(CostsS[rank][0])] -= 1
-        optsearch[int(CO2S[rank][0])] -= 1
-        if np.count_nonzero(optsearch) != el:
-            Bestfound = True
-            indexBest = np.where(optsearch == 0)[0][0]
+    BestFound = False
+    indexBest = None
+    Best = np.zeros((number_of_configurations, 1))
+    while not BestFound and rank < number_of_configurations:
+        optSearch[int(CostsS[rank][0])] -= 1
+        optSearch[int(CO2S[rank][0])] -= 1
+
+        if np.count_nonzero(optSearch) != number_of_configurations:
+            BestFound = True
+            # in case only one best ranked configuration exists choose that one
+            if np.count_nonzero(optSearch) == number_of_configurations - 1:
+                indexBest = np.where(optSearch == 0)[0][0]
+            # in case different configurations have the same rank, evaluate their compounded relative objective values
+            else:
+                indexesSharedBest = np.where(optSearch == 0)[0]
+                relTAC_USD = TAC_USD[:, 1] / np.mean(TAC_USD[:, 1])
+                relTotalCO2 = TotalCO2[:, 1] / np.mean(TotalCO2[:, 1])
+                relTAC_USDSharedBest = relTAC_USD[indexesSharedBest]
+                relTotalCO2SharedBest = relTotalCO2[indexesSharedBest]
+                cROVsSharedBest = relTAC_USDSharedBest + relTotalCO2SharedBest
+                locBestCROV = np.where(cROVsSharedBest == np.min(cROVsSharedBest))[0]
+                if len(locBestCROV) == 1:
+                    indexBest = indexesSharedBest[locBestCROV[0]]
+                else:
+                    freeChoice = random.randint(0, len(locBestCROV) - 1)
+                    indexBest = indexesSharedBest[locBestCROV[freeChoice]]
+
         rank += 1
     # get the best option according to the ranking.
-    Best[indexBest][0] = 1
+    if indexBest is not None:
+        Best[indexBest][0] = 1
+    else:
+        raise ('indexBest not found, please check the ranking process or report this issue on GitHub.')
     return Best, indexBest
 
 
