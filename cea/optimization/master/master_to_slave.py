@@ -68,8 +68,9 @@ def export_data_to_master_to_slave_class(locator,
     :type technologies_cooling_allowed: list of str
     :type weather_features: cea.optimization.preprocessing.preprocessing_main.WeatherFeatures class object
 
-    :return:
-    :rtype:
+    :return: object containing all the important information on the energy system configuration of an individual
+            (buildings [connected, non-connected], heating technologies, cooling technologies, storage etc.)
+    :rtype: cea.optimization.slave_data.SlaveData class object
     """
     # get thermal network for this individual
 

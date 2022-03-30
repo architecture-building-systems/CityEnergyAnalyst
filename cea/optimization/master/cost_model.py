@@ -270,16 +270,16 @@ def summary_fuel_electricity_consumption(district_cooling_fuel_requirements_disp
 
 
 def buildings_district_scale_costs_and_emissions(district_heating_costs,
-                                            district_cooling_costs,
-                                            district_microgrid_costs,
-                                            district_microgrid_requirements_dispatch,
-                                            district_heating_fuel_requirements_dispatch,
-                                            district_cooling_fuel_requirements_dispatch,
-                                            district_electricity_demands,
-                                            prices,
-                                            lca
-                                            ):
-    # SUMMARIZE IMPORST AND EXPORTS
+                                                 district_cooling_costs,
+                                                 district_microgrid_costs,
+                                                 district_microgrid_requirements_dispatch,
+                                                 district_heating_fuel_requirements_dispatch,
+                                                 district_cooling_fuel_requirements_dispatch,
+                                                 district_electricity_demands,
+                                                 prices,
+                                                 lca
+                                                 ):
+    # SUMMARIZE IMPORTS AND EXPORTS
     sum_natural_gas_imports_W, \
     sum_wet_biomass_imports_W, \
     sum_dry_biomass_imports_W, \
@@ -291,12 +291,12 @@ def buildings_district_scale_costs_and_emissions(district_heating_costs,
 
     # CALCULATE all_COSTS
     district_variable_costs = calc_variable_costs_district_scale_buildings(sum_natural_gas_imports_W,
-                                                                      sum_wet_biomass_imports_W,
-                                                                      sum_dry_biomass_imports_W,
-                                                                      sum_electricity_imports_W,
-                                                                      sum_electricity_exports_W,
-                                                                      prices,
-                                                                      )
+                                                                           sum_wet_biomass_imports_W,
+                                                                           sum_dry_biomass_imports_W,
+                                                                           sum_electricity_imports_W,
+                                                                           sum_electricity_exports_W,
+                                                                           prices,
+                                                                           )
     # join all the costs
     join1 = dict(district_heating_costs, **district_cooling_costs)
     join2 = dict(join1, **district_microgrid_costs)
@@ -304,15 +304,15 @@ def buildings_district_scale_costs_and_emissions(district_heating_costs,
 
     # CALCULATE EMISSIONS
     connected_emissions = calc_emissions_district_scale_buildings(sum_natural_gas_imports_W,
-                                                             sum_wet_biomass_imports_W,
-                                                             sum_dry_biomass_imports_W,
-                                                             sum_electricity_imports_W,
-                                                             sum_electricity_exports_W,
-                                                             lca)
+                                                                  sum_wet_biomass_imports_W,
+                                                                  sum_dry_biomass_imports_W,
+                                                                  sum_electricity_imports_W,
+                                                                  sum_electricity_exports_W,
+                                                                  lca)
     return connected_costs, connected_emissions
 
 
-def calc_network_costs_cooling(locator, master_to_slave_vars, network_features, network_type, prices):
+def calc_network_costs_cooling(locator, master_to_slave_vars, network_features, network_type):
     # Intitialize class
     pipesCosts_USD = network_features.pipesCosts_DCN_USD
     num_buildings_connected = master_to_slave_vars.number_of_buildings_district_scale_cooling
