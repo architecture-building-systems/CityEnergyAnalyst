@@ -29,7 +29,7 @@ __status__ = "Production"
 # technical model
 def calc_VCC(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_chw_re_K, T_cw_in_K, VCC_chiller):
     """
-    For th e operation of a Vapor-compressor chiller between a district cooling network and a condenser with fresh water
+    For the operation of a Vapor-compressor chiller between a district cooling network and a condenser with fresh water
     to a cooling tower following [D.J. Swider, 2003]_.
     The physically based fundamental thermodynamic model(LR4) is implemented in this function.
     :type mdot_kgpers : float

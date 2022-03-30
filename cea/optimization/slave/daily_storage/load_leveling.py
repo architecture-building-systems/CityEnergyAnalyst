@@ -26,16 +26,16 @@ class LoadLevelingDailyStorage(object):
         T_tank_C = self.T_tank_K - 273
         T_ground_C = self.T_ground_average_K - 273
         if activation == "charge":
-            Qc_from_Tank_W = 0.0
+            Qc_from_tank_W = 0.0
             Qc_to_tank_W = Q_storage_possible_W
-            T_tank_K = storage_tank.calc_fully_mixed_tank(T_tank_C, T_ground_C, Qc_from_Tank_W, Qc_to_tank_W,
-                                               self.V_tank_m3, self.Area_tank_surface_m2, 'cold_water')
+            T_tank_K = storage_tank.calc_fully_mixed_tank(T_tank_C, T_ground_C, Qc_from_tank_W, Qc_to_tank_W,
+                                                          self.V_tank_m3, self.Area_tank_surface_m2, 'cold_water')
 
         elif activation == "discharge":
-            Qc_from_Tank_W = Q_storage_possible_W
+            Qc_from_tank_W = Q_storage_possible_W
             Qc_to_tank_W = 0.0
-            T_tank_K = storage_tank.calc_fully_mixed_tank(T_tank_C, T_ground_C, Qc_from_Tank_W, Qc_to_tank_W,
-                                               self.V_tank_m3, self.Area_tank_surface_m2, 'cold_water')
+            T_tank_K = storage_tank.calc_fully_mixed_tank(T_tank_C, T_ground_C, Qc_from_tank_W, Qc_to_tank_W,
+                                                          self.V_tank_m3, self.Area_tank_surface_m2, 'cold_water')
 
         return T_tank_K
 

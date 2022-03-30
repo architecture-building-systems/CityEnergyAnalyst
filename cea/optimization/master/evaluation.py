@@ -141,7 +141,6 @@ def evaluation_main(individual,
     district_cooling_capacity_installed = cooling_main.district_cooling_network(locator,
                                                                                 master_to_slave_vars,
                                                                                 config,
-                                                                                prices,
                                                                                 network_features)
 
     # ELECTRICITY CONSUMPTION CALCULATIONS
@@ -149,12 +148,13 @@ def evaluation_main(individual,
     district_electricity_fixed_costs, \
     district_electricity_dispatch, \
     district_electricity_demands, \
-    district_electricity_capacity_installed = electricity_main.electricity_calculations_of_all_buildings(locator,
-                                                                                                         master_to_slave_vars,
-                                                                                                         district_heating_generation_dispatch,
-                                                                                                         district_heating_electricity_requirements_dispatch,
-                                                                                                         district_cooling_generation_dispatch,
-                                                                                                         district_cooling_electricity_requirements_dispatch)
+    district_electricity_capacity_installed = electricity_main.electricity_calculations_of_all_buildings(
+        locator,
+        master_to_slave_vars,
+        district_heating_generation_dispatch,
+        district_heating_electricity_requirements_dispatch,
+        district_cooling_generation_dispatch,
+        district_cooling_electricity_requirements_dispatch)
 
     # electricity_main.extract_fuels_demand_buildings(master_to_slave_vars, building_names_all, locator)
     print("DISTRICT ENERGY SYSTEM - COSTS, PRIMARY ENERGY AND EMISSIONS OF CONNECTED BUILDINGS")
