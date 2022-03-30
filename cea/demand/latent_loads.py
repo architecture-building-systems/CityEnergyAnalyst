@@ -185,7 +185,7 @@ def calc_saturation_pressure(theta):
     :rtype: double
     """
 
-    p_sat_int = 611.2 * math.exp(17.62 * theta / (243.12 + theta))
+    p_sat_int = 611.2 * np.exp(17.62 * theta / (243.12 + theta))
 
     return p_sat_int
 
