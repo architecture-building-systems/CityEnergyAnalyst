@@ -24,11 +24,7 @@ class CrossOverMethodsInteger(object):
         elif self.method == 'TwoPoint':
             return tools.cxESTwoPoint(individual_1,
                                       individual_2)
-        elif self.method == 'PartialyMatched':
-            return tools.cxPartialyMatched(individual_1,
-                                           individual_2)
-        elif self.method == 'UniformPartialyMatched':
-            return tools.cxUniformPartialyMatched(individual_1, individual_2, probability)
+
 
 
 class CrossOverMethodsContinuous(object):
