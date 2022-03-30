@@ -3,9 +3,6 @@ Crossover routines
 
 """
 
-
-
-
 from deap import tools
 
 from cea.optimization.master.validation import validation_main
@@ -27,11 +24,7 @@ class CrossOverMethodsInteger(object):
         elif self.method == 'TwoPoint':
             return tools.cxESTwoPoint(individual_1,
                                       individual_2)
-        elif self.method == 'PartialyMatched':
-            return tools.cxPartialyMatched(individual_1,
-                                           individual_2)
-        elif self.method == 'UniformPartialyMatched':
-            return tools.cxUniformPartialyMatched(individual_1, individual_2, probability)
+
 
 class CrossOverMethodsContinuous(object):
     """
@@ -49,6 +42,7 @@ class CrossOverMethodsContinuous(object):
         elif self.method == 'TwoPoint':
             return tools.cxESTwoPoint(individual_1,
                                       individual_2)
+
 
 def crossover_main(ind1, ind2, indpb,
                    column_names,
