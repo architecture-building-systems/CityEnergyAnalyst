@@ -1,9 +1,8 @@
 """
 Disctrict Cooling Network Calculations.
 
-Use free cooling from Lake as long as possible ( HP Lake operation from slave)
-If Lake exhausted, then use other supply technologies
-
+Use free cooling from water bodies as long as possible (HP Lake operation from slave)
+If water body is exhausted, then use other supply technologies.
 """
 
 
@@ -37,18 +36,46 @@ __status__ = "Production"
 def district_cooling_network(locator,
                              master_to_slave_variables,
                              config,
-                             prices,
                              network_features):
     """
-    Computes the parameters for the cooling of the complete DCN
+    Computes the parameters for the cooling of the complete DCN, including:
+     - cost for cooling energy supply
+     - hourly cooling energy supply
+     - hourly electricity generation (from trigen) and demand (for VCCs)
+     - hourly combustion fuel demand (for trigen)
+     - installed capacity of each cooling technology
 
-    :param cea.inputlocator.InputLocator locator: path to res folder
-    :param network_features: network features
-    :param prices: Prices imported from the database
-    :type network_features: class
-    :type prices: class
-    :return: costs, co2, prim
-    :rtype: tuple
+    :param locator: paths to cea input files and results folders
+    :param master_to_slave_variables: all the important information on the energy system configuration of an individual
+                                      (buildings [connected, non-connected], heating technologies, cooling technologies,
+                                      storage etc.)
+    :param config: configurations of cea
+    :param network_features: characteristic parameters (pumping energy, mass flow rate, thermal losses & piping cost)
+                             of the district cooling/heating network
+
+    :type locator: cea.inputlocator.InputLocator class object
+    :type master_to_slave_variables: cea.optimization.slave_data.SlaveData class object
+    :type config: cea.config.Configuration class object
+    :type network_features: cea.optimization.distribution.network_optimization_features.NetworkOptimizationFeatures
+                            class object
+
+    :return district_cooling_costs: costs of all district cooling energy technologies (investment and operational costs
+                                    of generation, storage and network)
+    :return district_cooling_generation_dispatch: hourly thermal energy supply by each component of the district
+                                                  cooling energy system.
+    :return district_cooling_electricity_requirements_dispatch: hourly electricity demand of each component of the
+                                                                district cooling energy generation system.
+    :return district_cooling_fuel_requirements_dispatch: hourly combustion fuel demand of each component of the
+                                                         district cooling energy system (i.e. in the current setup only
+                                                         natural gas demand of the CCGT of the trigeneration system)
+    :return district_cooling_capacity_installed: capacity of each district-scale cooling technology installed
+                                                 (corresponding to the given individual)
+
+    :rtype district_cooling_costs: dict (27 x float)
+    :rtype district_cooling_generation_dispatch: dict (15 x 8760-ndarray)
+    :rtype district_cooling_electricity_requirements_dispatch: dict (6 x 8760-ndarray)
+    :rtype district_cooling_fuel_requirements_dispatch: dict (1 x 8760-ndarray)
+    :rtype district_cooling_capacity_installed: dict (9 x float)
     """
 
     if master_to_slave_variables.DCN_exists:
@@ -59,7 +86,7 @@ def district_cooling_network(locator,
         T_district_cooling_supply_K, \
         mdot_kgpers = calc_network_summary_DCN(master_to_slave_variables)
 
-        # Initialize daily storage calss
+        # Initialize daily storage class
         T_ground_K = calculate_ground_temperature(locator)
         daily_storage = LoadLevelingDailyStorage(master_to_slave_variables.Storage_cooling_on,
                                                  master_to_slave_variables.Storage_cooling_size_W,
@@ -71,14 +98,14 @@ def district_cooling_network(locator,
 
         # Import Data - potentials lake heat
         if master_to_slave_variables.WS_BaseVCC_on == 1 or master_to_slave_variables.WS_PeakVCC_on == 1:
-            HPlake_Data = pd.read_csv(locator.get_water_body_potential())
-            Q_therm_Lake = np.array(HPlake_Data['QLake_kW']) * 1E3
+            water_body_potential = pd.read_csv(locator.get_water_body_potential())
+            Q_therm_water_body = np.array(water_body_potential['QLake_kW']) * 1E3
             total_WS_VCC_installed = master_to_slave_variables.WS_BaseVCC_size_W + master_to_slave_variables.WS_PeakVCC_size_W
-            Q_therm_Lake_W = [x if x < total_WS_VCC_installed else total_WS_VCC_installed for x in Q_therm_Lake]
-            T_source_average_Lake_K = np.array(HPlake_Data['Ts_C']) + 273
+            Q_therm_water_body_W = [x if x < total_WS_VCC_installed else total_WS_VCC_installed for x in Q_therm_water_body]
+            T_source_average_water_body_K = np.array(water_body_potential['Ts_C']) + 273
         else:
-            Q_therm_Lake_W = np.zeros(HOURS_IN_YEAR)
-            T_source_average_Lake_K = np.zeros(HOURS_IN_YEAR)
+            Q_therm_water_body_W = np.zeros(HOURS_IN_YEAR)
+            T_source_average_water_body_K = np.zeros(HOURS_IN_YEAR)
 
         # get properties of technology used in this script
         absorption_chiller = AbsorptionChiller(pd.read_excel(locator.get_database_conversion_systems(), sheet_name="Absorption_chiller"), 'double')
@@ -118,14 +145,14 @@ def district_cooling_network(locator,
                 gas_output = cooling_resource_activator(Q_thermal_req_W[hour],
                                                         T_district_cooling_supply_K[hour],
                                                         T_district_cooling_return_K[hour],
-                                                        Q_therm_Lake_W[hour],
-                                                        T_source_average_Lake_K[hour],
-                                                        daily_storage,
+                                                        Q_therm_water_body_W[hour],
+                                                        T_source_average_water_body_K[hour],
                                                         T_ground_K[hour],
-                                                        master_to_slave_variables,
+                                                        daily_storage,
                                                         absorption_chiller,
+                                                        VCC_chiller,
                                                         CCGT_prop,
-                                                        VCC_chiller)
+                                                        master_to_slave_variables)
 
                 Q_DailyStorage_gen_directload_W[hour] = thermal_output['Q_DailyStorage_gen_directload_W']
                 Q_Trigen_NG_gen_directload_W[hour] = thermal_output['Q_Trigen_NG_gen_directload_W']
@@ -188,8 +215,7 @@ def district_cooling_network(locator,
         E_used_district_cooling_network_W = cost_model.calc_network_costs_cooling(locator,
                                                                                   master_to_slave_variables,
                                                                                   network_features,
-                                                                                  "DC",
-                                                                                  prices)
+                                                                                  "DC")
 
         # MERGE COSTS AND EMISSIONS IN ONE FILE
         performance = dict(performance_costs_generation, **performance_costs_storage)
