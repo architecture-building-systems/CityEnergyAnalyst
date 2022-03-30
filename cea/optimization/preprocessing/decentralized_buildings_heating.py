@@ -7,7 +7,7 @@ Operation for decentralized buildings
 
 
 import time
-
+import random
 import numpy as np
 import pandas as pd
 from geopandas import GeoDataFrame as Gdf
@@ -71,8 +71,8 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
 def disconnected_heating_for_building(building_name, supply_systems, T_ground_K, geothermal_potential_data, lca,
                                       locator, prices):
     print('{building_name} disconnected heating supply system simulations...'.format(building_name=building_name))
-    GHP_cost_data = supply_systems.HP # heat pump
-    BH_cost_data = supply_systems.BH # borehole
+    GHP_cost_data = supply_systems.HP
+    BH_cost_data = supply_systems.BH
     boiler_cost_data = supply_systems.Boiler
 
     # run substation model to derive temperatures of the building
@@ -258,44 +258,66 @@ def disconnected_heating_for_building(building_name, supply_systems, T_ground_K,
         Capex_a_USD[3 + i][0] += Capex_a_GHP_USD
         Opex_a_fixed_USD[3 + i][0] += Opex_a_fixed_GHP_USD
         Capex_opex_a_fixed_only_USD[3 + i][0] += Capex_a_GHP_USD + Opex_a_fixed_GHP_USD  # TODO:variable price?
-    # Best configuration
-    Best = np.zeros((13, 1))
-    indexBest = 0
-    TAC_USD = np.zeros((13, 2)) #Total anualize costs -> we rank the system based on this metric and then based on Total CO2.
-    TotalCO2 = np.zeros((13, 2))
-    for i in range(13):
-        TAC_USD[i][0] = TotalCO2[i][0]  = i
-        Opex_a_USD[i][1] = Opex_a_fixed_USD[i][0] + + Opex_a_var_USD[i][4]
+    # Compile Objectives
+    number_of_configurations = len(GHG_tonCO2) # 13
+    TAC_USD = np.zeros((number_of_configurations, 2))
+    TotalCO2 = np.zeros((number_of_configurations, 2))
+    for i in range(number_of_configurations):
+        TAC_USD[i][0] = TotalCO2[i][0] = i
+        Opex_a_USD[i][1] = Opex_a_fixed_USD[i][0] + Opex_a_var_USD[i][4]
         TAC_USD[i][1] = Capex_opex_a_fixed_only_USD[i][0] + Opex_a_var_USD[i][4]
         TotalCO2[i][1] = GHG_tonCO2[i][5]
+    # Rank results and find the best configuration
+    # sort TAC_USD and TotalCO2
     CostsS = TAC_USD[np.argsort(TAC_USD[:, 1])]
     CO2S = TotalCO2[np.argsort(TotalCO2[:, 1])]
-    el = len(CostsS)
-    rank = 0
-    Bestfound = False
-    optsearch = np.empty(el)
-    optsearch.fill(3)
+    # initialize optSearch array
+    number_of_objectives = 2  # TAC_USD and TotalCO2
+    optSearch = np.empty(number_of_configurations)
+    optSearch.fill(number_of_objectives)
+    Best = np.zeros((number_of_configurations, 1))
+    # Check the GHP area constraint for configuration 4-13
     geothermal_potential = geothermal_potential_data.set_index('Name')
-    # Check the GHP area constraint
     for i in range(10):
         QGHP = (1 - i / 10.0) * Qnom_W
         areaAvail = geothermal_potential.loc[building_name, 'Area_geo']
         Qallowed = np.ceil(areaAvail / GHP_A) * GHP_HMAX_SIZE  # [W_th]
         if Qallowed < QGHP:
-            optsearch[i + 3] += 1
+            # disqualify the configuration if constraint not met
+            optSearch[i + 3] += 1
             Best[i + 3][0] = - 1
-    while not Bestfound and rank < el:
-
-        optsearch[int(CostsS[rank][0])] -= 1
-        optsearch[int(CO2S[rank][0])] -= 1
-
-        if np.count_nonzero(optsearch) != el:
-            Bestfound = True
-            indexBest = np.where(optsearch == 0)[0][0]
-
+    # rank results
+    rank = 0
+    BestFound = False
+    indexBest = None
+    while not BestFound and rank < number_of_configurations:
+        optSearch[int(CostsS[rank][0])] -= 1
+        optSearch[int(CO2S[rank][0])] -= 1
+        if np.count_nonzero(optSearch) != number_of_configurations:
+            BestFound = True
+            # in case only one best ranked configuration exists choose that one
+            if np.count_nonzero(optSearch) == number_of_configurations - 1:
+                indexBest = np.where(optSearch == 0)[0][0]
+            # in case different configurations have the same rank, evaluate their compounded relative objective values
+            else:
+                indexesSharedBest = np.where(optSearch == 0)[0]
+                relTAC_USD = TAC_USD[:, 1] / np.mean(TAC_USD[:, 1])
+                relTotalCO2 = TotalCO2[:, 1] / np.mean(TotalCO2[:, 1])
+                relTAC_USDSharedBest = relTAC_USD[indexesSharedBest]
+                relTotalCO2SharedBest = relTotalCO2[indexesSharedBest]
+                cROVsSharedBest = relTAC_USDSharedBest + relTotalCO2SharedBest
+                locBestCROV = np.where(cROVsSharedBest == np.min(cROVsSharedBest))[0]
+                if len(locBestCROV) == 1:
+                    indexBest = indexesSharedBest[locBestCROV[0]]
+                else:
+                    freeChoice = random.randint(0, len(locBestCROV) - 1)
+                    indexBest = indexesSharedBest[locBestCROV[freeChoice]]
         rank += 1
     # get the best option according to the ranking.
-    Best[indexBest][0] = 1
+    if indexBest is not None:
+        Best[indexBest][0] = 1
+    else:
+        raise('indexBest not found, please check the ranking process or report this issue on GitHub.')
     # Save results in csv file
     performance_results = {
         "Nominal heating load": Qnom_W,
