@@ -63,6 +63,8 @@ class BuildingProperties(object):
         prop_geometry['Blength'], prop_geometry['Bwidth'] = self.calc_bounding_box_geom(locator.get_zone_geometry())
         prop_geometry = prop_geometry.drop('geometry', axis=1).set_index('Name')
         prop_hvac = dbf_to_dataframe(locator.get_building_air_conditioning())
+        prop_hvac = verify_hvac_system_combination(prop_hvac, building_names)
+
         prop_typology = dbf_to_dataframe(locator.get_building_typology()).set_index('Name')
         # Drop 'REFERENCE' column if it exists
         if 'REFERENCE' in prop_typology:
@@ -1019,3 +1021,12 @@ def get_thermal_resistance_surface(prop_envelope, weather_data):
 
     return thermal_resistance_surface_wall, thermal_resistance_surface_roof, thermal_resistance_surface_win
 
+def verify_hvac_system_combination(prop_hvac, building_names):
+    prop_hvac.set_index('Name', inplace=True)
+    for building in building_names:
+        if (prop_hvac.loc[building, 'type_cs'] in ['HVAC_COOLING_AS3', 'HVAC_COOLING_AS4']) & \
+                (prop_hvac.loc[building, 'type_vent'] == 'HVAC_VENTILATION_AS0'):
+            print(
+                f'Building {building} has central or hybrid AC but no ventilation system is assigned, assigning mechanical ventilation system HVAC_VENTILATION_AS1.')
+            prop_hvac.loc[building, 'type_vent'] = 'HVAC_VENTILATION_AS1'
+    return prop_hvac.reset_index()
