@@ -1022,6 +1022,10 @@ def get_thermal_resistance_surface(prop_envelope, weather_data):
     return thermal_resistance_surface_wall, thermal_resistance_surface_roof, thermal_resistance_surface_win
 
 def verify_hvac_system_combination(prop_hvac, building_names):
+    '''
+    This function verifies whether an infeasible combination of cooling and ventilation systems has been selected.
+    If an infeasible combination is selected, this issue is rectified and a warning is printed.
+    '''
     prop_hvac.set_index('Name', inplace=True)
     for building in building_names:
         if (prop_hvac.loc[building, 'type_cs'] in ['HVAC_COOLING_AS3', 'HVAC_COOLING_AS4']) & \
