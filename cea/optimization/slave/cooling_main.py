@@ -1,19 +1,15 @@
 """
 Disctrict Cooling Network Calculations.
 
-Use free cooling from water bodies as long as possible (HP Lake operation from slave)
-If water body is exhausted, then use other supply technologies.
+Calculate which technologies need to be activated to meet the cooling energy demand and determine the cost and emissions
+that result from the activation of these cooling technologies.
 """
-
-
-
 
 import numpy as np
 import pandas as pd
-import cea.inputlocator
 
 from cea.constants import HOURS_IN_YEAR
-from cea.optimization.constants import T_TANK_FULLY_DISCHARGED_K, DT_COOL, VCC_T_COOL_IN, ACH_T_IN_FROM_CHP_K, VCC_CODE_CENTRALIZED
+from cea.optimization.constants import T_TANK_FULLY_DISCHARGED_K, DT_COOL, VCC_T_COOL_IN, ACH_T_IN_FROM_CHP_K
 from cea.optimization.master import cost_model
 from cea.optimization.slave.cooling_resource_activation import calc_vcc_CT_operation, cooling_resource_activator
 from cea.optimization.slave.daily_storage.load_leveling import LoadLevelingDailyStorage
@@ -96,23 +92,26 @@ def district_cooling_network(locator,
                                                  np.mean(T_ground_K)
                                                  )
 
-        # Import Data - potentials lake heat
+        # Import Data - cooling energy potential from water bodies
         if master_to_slave_variables.WS_BaseVCC_on == 1 or master_to_slave_variables.WS_PeakVCC_on == 1:
             water_body_potential = pd.read_csv(locator.get_water_body_potential())
             Q_therm_water_body = np.array(water_body_potential['QLake_kW']) * 1E3
-            total_WS_VCC_installed = master_to_slave_variables.WS_BaseVCC_size_W + master_to_slave_variables.WS_PeakVCC_size_W
-            Q_therm_water_body_W = [x if x < total_WS_VCC_installed else total_WS_VCC_installed for x in Q_therm_water_body]
+            total_WS_VCC_installed = master_to_slave_variables.WS_BaseVCC_size_W + \
+                                     master_to_slave_variables.WS_PeakVCC_size_W
+            # TODO: the following line assumes that the thermal energy from the water body is used 1:1 by the VCC.
+            #  i.e. thermal_energy_in = thermal_energy_out for the VCC. Check if this assumption is correct.
+            Q_therm_water_body_W = [x if x < total_WS_VCC_installed else total_WS_VCC_installed for x in
+                                    Q_therm_water_body]
             T_source_average_water_body_K = np.array(water_body_potential['Ts_C']) + 273
         else:
             Q_therm_water_body_W = np.zeros(HOURS_IN_YEAR)
             T_source_average_water_body_K = np.zeros(HOURS_IN_YEAR)
 
         # get properties of technology used in this script
-        absorption_chiller = AbsorptionChiller(pd.read_excel(locator.get_database_conversion_systems(), sheet_name="Absorption_chiller"), 'double')
+        absorption_chiller = AbsorptionChiller(
+            pd.read_excel(locator.get_database_conversion_systems(), sheet_name="Absorption_chiller"), 'double')
         CCGT_prop = calc_cop_CCGT(master_to_slave_variables.NG_Trigen_ACH_size_W, ACH_T_IN_FROM_CHP_K, "NG")
-
-        scale = 'DISTRICT'
-        VCC_chiller = VaporCompressionChiller(locator, scale)
+        VC_chiller = VaporCompressionChiller(locator, 'DISTRICT')
 
         # initialize variables
         Q_Trigen_NG_gen_W = np.zeros(HOURS_IN_YEAR)
@@ -150,7 +149,7 @@ def district_cooling_network(locator,
                                                         T_ground_K[hour],
                                                         daily_storage,
                                                         absorption_chiller,
-                                                        VCC_chiller,
+                                                        VC_chiller,
                                                         CCGT_prop,
                                                         master_to_slave_variables)
 
@@ -177,7 +176,7 @@ def district_cooling_network(locator,
 
                 NG_Trigen_req_W[hour] = gas_output['NG_Trigen_req_W']
 
-        #calculate the electrical capacity as a function of the peak produced by the turbine
+        # calculate the electrical capacity as a function of the peak produced by the turbine
         master_to_slave_variables.NG_Trigen_CCGT_size_electrical_W = E_Trigen_NG_gen_W.max()
 
         # BACK-UPP VCC - AIR SOURCE
@@ -185,12 +184,13 @@ def district_cooling_network(locator,
         size_chiller_CT = master_to_slave_variables.AS_BackupVCC_size_W
         if master_to_slave_variables.AS_BackupVCC_size_W != 0.0:
             master_to_slave_variables.AS_BackupVCC_on = 1
-            Q_BackupVCC_AS_gen_W, E_BackupVCC_AS_req_W = np.vectorize(calc_vcc_CT_operation)(Q_BackupVCC_AS_gen_W,
-                                                                                             T_district_cooling_return_K,
-                                                                                             T_district_cooling_supply_K,
-                                                                                             VCC_T_COOL_IN,
-                                                                                             size_chiller_CT,
-                                                                                             VCC_chiller)
+            Q_BackupVCC_AS_gen_W, \
+            E_BackupVCC_AS_req_W = np.vectorize(calc_vcc_CT_operation)(Q_BackupVCC_AS_gen_W,
+                                                                       T_district_cooling_return_K,
+                                                                       T_district_cooling_supply_K,
+                                                                       VCC_T_COOL_IN,
+                                                                       size_chiller_CT,
+                                                                       VC_chiller)
         else:
             E_BackupVCC_AS_req_W = np.zeros(HOURS_IN_YEAR)
 
@@ -198,11 +198,12 @@ def district_cooling_network(locator,
         supply_systems = SupplySystemsDatabase(locator)
         mdotnMax_kgpers = np.amax(mdot_kgpers)
         performance_costs_generation, \
-        district_cooling_capacity_installed = cost_model.calc_generation_costs_capacity_installed_cooling(locator,
-                                                                                                          master_to_slave_variables,
-                                                                                                          supply_systems,
-                                                                                                          mdotnMax_kgpers
-                                                                                                          )
+        district_cooling_capacity_installed \
+            = cost_model.calc_generation_costs_capacity_installed_cooling(locator,
+                                                                          master_to_slave_variables,
+                                                                          supply_systems,
+                                                                          mdotnMax_kgpers
+                                                                          )
         # CAPEX (ANNUAL, TOTAL) AND OPEX (FIXED, VAR, ANNUAL) STORAGE UNITS
         performance_costs_storage = cost_model.calc_generation_costs_cooling_storage(locator,
                                                                                      master_to_slave_variables,
@@ -300,9 +301,7 @@ def district_cooling_network(locator,
            district_cooling_capacity_installed
 
 
-
 def calc_network_summary_DCN(master_to_slave_vars):
-
     # if there is a district cooling network on site and there is server_heating
     district_heating_network = master_to_slave_vars.DHN_exists
     df = master_to_slave_vars.DC_network_summary_individual
