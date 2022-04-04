@@ -42,8 +42,3 @@ For V3.24.0 (stable):    |V3.24.0|
 .. |V3.24.0| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.5037913.svg
    :target: https://doi.org/10.5281/zenodo.5037913
 
-
-
-.. image:: https://badges.gitter.im/CityEnergyAnalyst/community.svg
-   :alt: Join the chat at https://gitter.im/CityEnergyAnalyst/community
-   :target: https://gitter.im/CityEnergyAnalyst/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
