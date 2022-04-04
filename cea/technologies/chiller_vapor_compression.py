@@ -2,8 +2,6 @@
 Vapor-compressor chiller
 """
 
-
-
 import pandas as pd
 from math import log, ceil
 import numpy as np
@@ -27,7 +25,7 @@ __status__ = "Production"
 
 
 # technical model
-def calc_VCC(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_chw_re_K, T_cw_in_K, VCC_chiller):
+def calc_VCC(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_chw_re_K, T_cw_in_K, VC_chiller):
     """
     For the operation of a Vapor-compressor chiller between a district cooling network and a condenser with fresh water
     to a cooling tower following [D.J. Swider, 2003]_.
@@ -49,7 +47,7 @@ def calc_VCC(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_chw_re_K, T_cw_in_
         q_cw_W = 0.0
 
     elif q_chw_load_Wh > 0.0:
-        COP = calc_COP_with_carnot_efficiency(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, VCC_chiller)
+        COP = calc_COP_with_carnot_efficiency(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, VC_chiller)
         if COP < 0.0:
             print(f'Negative COP: {COP} {T_chw_sup_K} {T_chw_re_K} {q_chw_load_Wh}', )
 
@@ -74,7 +72,8 @@ def calc_COP(T_cw_in_K, T_chw_re_K, q_chw_load_Wh):
 
 
 def calc_COP_with_carnot_efficiency(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, VCC_chiller):
-    PLF = calc_averaged_PLF(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, VCC_chiller)  # calculates the weighted average Part load factor across all chillers based on load distribution
+    PLF = calc_averaged_PLF(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K,
+                            VCC_chiller)  # calculates the weighted average Part load factor across all chillers based on load distribution
     cop_chiller = VCC_chiller.g_value * T_chw_sup_K / (T_cw_in_K - T_chw_sup_K) * PLF
     return cop_chiller
 
@@ -182,6 +181,7 @@ def calc_VCC_COP(weather_data, load_types, centralized=True):
 
     return cop_system, cop_chiller
 
+
 def get_max_VCC_unit_size(locator, VCC_code='CH3'):
     VCC_cost_data = pd.read_excel(locator.get_database_conversion_systems(), sheet_name="Chiller")
     VCC_cost_data = VCC_cost_data[VCC_cost_data['code'] == VCC_code]
@@ -217,7 +217,8 @@ def calc_averaged_PLF(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, 
             source_type = 'WATER'
             compressor_type = 'CENTRIFUGAL'
             ch_configuration_values = VCC_chiller.configuration_values(source_type, compressor_type)
-            n_units = ceil(design_capacity / ASHRAE_CAPACITY_LIMIT)  # according to ASHRAE 90.1 Appendix G, chiller shall not be large then 800 tons (2813 kW)
+            n_units = ceil(
+                design_capacity / ASHRAE_CAPACITY_LIMIT)  # according to ASHRAE 90.1 Appendix G, chiller shall not be large then 800 tons (2813 kW)
         else:
             raise ValueError('Unable to assign chiller type based on design capacity')
         cooling_capacity_per_unit = design_capacity / n_units  # calculate the capacity per chiller installed
@@ -226,14 +227,16 @@ def calc_averaged_PLF(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, 
         source_type = 'WATER'
         compressor_type = 'CENTRIFUGAL'
         ch_configuration_values = VCC_chiller.configuration_values(source_type, compressor_type)
-        if design_capacity <= (2*VCC_chiller.min_VCC_capacity):  # design one chiller for small scale DCS
+        if design_capacity <= (2 * VCC_chiller.min_VCC_capacity):  # design one chiller for small scale DCS
             n_units = 1
             cooling_capacity_per_unit = max(design_capacity, VCC_chiller.min_VCC_capacity)
-        elif (2*VCC_chiller.min_VCC_capacity) <= design_capacity <= VCC_chiller.max_VCC_capacity:  # design two chillers above the twice the minimum chiller size
+        elif (
+                2 * VCC_chiller.min_VCC_capacity) <= design_capacity <= VCC_chiller.max_VCC_capacity:  # design two chillers above the twice the minimum chiller size
             n_units = 2
             cooling_capacity_per_unit = design_capacity / n_units
         elif design_capacity >= VCC_chiller.max_VCC_capacity:  # design a minimum of 2 chillers if above the maximum chiller size
-            n_units = max(2, ceil(design_capacity / VCC_chiller.max_VCC_capacity))  # have minimum size of capacity to quailfy as DCS, have minimum of 2 chillers
+            n_units = max(2, ceil(
+                design_capacity / VCC_chiller.max_VCC_capacity))  # have minimum size of capacity to quailfy as DCS, have minimum of 2 chillers
             cooling_capacity_per_unit = design_capacity / n_units
         else:
             raise ValueError('Unable to assign chiller type based on design capacity')
@@ -241,22 +244,26 @@ def calc_averaged_PLF(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, 
         raise ValueError('VCC_chiller scale can only be "BUILDING" or "DISTRICT" got: {scale}'.format(
             scale=VCC_chiller.scale))
 
-    available_capacity_per_unit = calc_available_capacity(cooling_capacity_per_unit, ch_configuration_values['Qs'], T_chw_sup_K, T_cw_in_K) # calculate the available capacity(dependent on conditions)
+    available_capacity_per_unit = calc_available_capacity(cooling_capacity_per_unit, ch_configuration_values['Qs'],
+                                                          T_chw_sup_K,
+                                                          T_cw_in_K)  # calculate the available capacity(dependent on conditions)
 
     # calculate the load distribution across the chillers heuristically,
     # assuming the PLF factor is monotonously increasing with increasing PLR. Filling one chiller after the other.
     n_chillers_filled = int(q_chw_load_Wh // available_capacity_per_unit)
-    part_load_chiller = float(divmod(q_chw_load_Wh, available_capacity_per_unit)[1])/float(available_capacity_per_unit)
+    part_load_chiller = float(divmod(q_chw_load_Wh, available_capacity_per_unit)[1]) / float(
+        available_capacity_per_unit)
 
     load_distribution_list = []
     for i in range(n_chillers_filled):
         load_distribution_list.append(1)
     load_distribution_list.append(part_load_chiller)
-    for i in range(int(n_units)-n_chillers_filled-1):
+    for i in range(int(n_units) - n_chillers_filled - 1):
         load_distribution_list.append(0)
     load_distribution = np.array(load_distribution_list)
 
-    averaged_PLF = np.sum(calc_PLF(load_distribution, ch_configuration_values['PLFs']) * load_distribution * available_capacity_per_unit) / q_chw_load_Wh # calculates the weighted average PLF value
+    averaged_PLF = np.sum(calc_PLF(load_distribution, ch_configuration_values[
+        'PLFs']) * load_distribution * available_capacity_per_unit) / q_chw_load_Wh  # calculates the weighted average PLF value
     return averaged_PLF
 
 
@@ -283,7 +290,9 @@ def calc_available_capacity(rated_capacity, Qs, T_chw_sup_K, T_cw_in_K):
     t_chws_F = kelvin_to_fahrenheit(T_chw_sup_K)
     t_cws_F = kelvin_to_fahrenheit(T_cw_in_K)
 
-    available_capacity = rated_capacity * (Qs['q_a'] + Qs['q_b']*t_chws_F + Qs['q_c']*t_chws_F**2 + Qs['q_d']*t_cws_F + Qs['q_e'] * t_cws_F**2 + Qs['q_f']*t_chws_F*t_cws_F)
+    available_capacity = rated_capacity * (
+                Qs['q_a'] + Qs['q_b'] * t_chws_F + Qs['q_c'] * t_chws_F ** 2 + Qs['q_d'] * t_cws_F + Qs[
+            'q_e'] * t_cws_F ** 2 + Qs['q_f'] * t_chws_F * t_cws_F)
     return available_capacity
 
 
