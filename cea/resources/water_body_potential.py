@@ -26,7 +26,7 @@ __status__ = "Production"
 def calc_lake_potential(locator, config):
     """
     Quick calculation of lake potential. This does not refer to CEA original publication.
-    In that case, the implementation of the Lake potential algorithm was carried out with another tool and then
+    In that case, the implementation of the lake potential algorithm was carried out with another tool and then
     the result was implemented in CEA for a specific case study.
     # TODO: create proper lake potential model
     """
