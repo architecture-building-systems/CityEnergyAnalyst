@@ -95,7 +95,7 @@ def preproccessing(locator, total_demand, buildings_heating_demand, buildings_co
         # "_all" key for all buildings
     if district_cooling_network:
         num_tot_buildings = len(buildings_cooling_demand)
-        DCN_barcode = ''.join([str(1)*num_tot_buildings])
+        DCN_barcode = ''.join([str(1) * num_tot_buildings])
         substation.substation_main_cooling(locator, total_demand, buildings_cooling_demand, DCN_barcode=DCN_barcode)
 
         summarize_network.network_main(locator, buildings_cooling_demand,
