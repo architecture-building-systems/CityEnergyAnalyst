@@ -63,7 +63,6 @@ class BuildingProperties(object):
         prop_geometry['Blength'], prop_geometry['Bwidth'] = self.calc_bounding_box_geom(locator.get_zone_geometry())
         prop_geometry = prop_geometry.drop('geometry', axis=1).set_index('Name')
         prop_hvac = dbf_to_dataframe(locator.get_building_air_conditioning())
-        prop_hvac = verify_hvac_system_combination(prop_hvac, building_names)
 
         prop_typology = dbf_to_dataframe(locator.get_building_typology()).set_index('Name')
         # Drop 'REFERENCE' column if it exists
@@ -79,7 +78,7 @@ class BuildingProperties(object):
             'Name')
 
         # get temperatures of operation
-        prop_HVAC_result = get_properties_technical_systems(locator, prop_hvac).set_index('Name')
+        prop_HVAC_result = get_properties_technical_systems(locator, prop_hvac, building_names).set_index('Name')
 
         # get envelope properties
         prop_envelope = get_envelope_properties(locator, prop_architectures).set_index('Name')
@@ -665,7 +664,7 @@ def get_properties_supply_sytems(locator, properties_supply):
     return result
 
 
-def get_properties_technical_systems(locator, prop_HVAC):
+def get_properties_technical_systems(locator, prop_HVAC, building_names):
     """
     Return temperature data per building based on the HVAC systems of the building. Uses the `emission_systems.xls`
     file to look up properties
@@ -731,7 +730,7 @@ def get_properties_technical_systems(locator, prop_HVAC):
     prop_emission_control_heating_and_cooling = pd.read_excel(locator.get_database_air_conditioning_systems(),
                                                               'CONTROLLER')
     prop_ventilation_system_and_control = pd.read_excel(locator.get_database_air_conditioning_systems(), 'VENTILATION')
-
+    verify_hvac_system_combination(prop_HVAC, prop_emission_cooling, prop_ventilation_system_and_control, building_names)
     df_emission_heating = prop_HVAC.merge(prop_emission_heating, left_on='type_hs', right_on='code')
     df_emission_cooling = prop_HVAC.merge(prop_emission_cooling, left_on='type_cs', right_on='code')
     df_emission_control_heating_and_cooling = prop_HVAC.merge(prop_emission_control_heating_and_cooling,
@@ -739,6 +738,7 @@ def get_properties_technical_systems(locator, prop_HVAC):
     df_emission_dhw = prop_HVAC.merge(prop_emission_dhw, left_on='type_dhw', right_on='code')
     df_ventilation_system_and_control = prop_HVAC.merge(prop_ventilation_system_and_control, left_on='type_vent',
                                                         right_on='code')
+
 
     fields_emission_heating = ['Name', 'type_hs', 'type_cs', 'type_dhw', 'type_ctrl', 'type_vent', 'heat_starts',
                                'heat_ends', 'cool_starts', 'cool_ends', 'class_hs', 'convection_hs',
@@ -1021,16 +1021,18 @@ def get_thermal_resistance_surface(prop_envelope, weather_data):
 
     return thermal_resistance_surface_wall, thermal_resistance_surface_roof, thermal_resistance_surface_win
 
-def verify_hvac_system_combination(prop_hvac, building_names):
+def verify_hvac_system_combination(prop_hvac, prop_emission_cooling, prop_ventilation_system_and_control, building_names):
     '''
     This function verifies whether an infeasible combination of cooling and ventilation systems has been selected.
     If an infeasible combination is selected, this issue is rectified and a warning is printed.
     '''
     prop_hvac.set_index('Name', inplace=True)
     for building in building_names:
-        if (prop_hvac.loc[building, 'type_cs'] in ['HVAC_COOLING_AS3', 'HVAC_COOLING_AS4']) & \
-                (prop_hvac.loc[building, 'type_vent'] == 'HVAC_VENTILATION_AS0'):
-            print(
-                f'Building {building} has central or hybrid AC but no ventilation system is assigned, assigning mechanical ventilation system HVAC_VENTILATION_AS1.')
-            prop_hvac.loc[building, 'type_vent'] = 'HVAC_VENTILATION_AS1'
-    return prop_hvac.reset_index()
+        type_cs = prop_hvac.loc[building, 'type_cs']
+        class_cs = prop_emission_cooling[prop_emission_cooling['code'] == type_cs]['class_cs'].values[0]
+        type_vent = prop_hvac.loc[building, 'type_vent']
+        have_mech_vent = prop_ventilation_system_and_control[prop_ventilation_system_and_control['code']==type_vent]['MECH_VENT'].values[0]
+        if (class_cs in ['CENTRAL_AC', 'HYBRID_AC']) & (not have_mech_vent):
+            raise Exception(
+                f'\nBuilding {building} has a cooling system as {class_cs} with a ventilation system {type_vent}.\nPlease re-assign a ventilation system from the technology database that includes mechanical ventilation (MECH_VENT=TRUE).')
+    return
