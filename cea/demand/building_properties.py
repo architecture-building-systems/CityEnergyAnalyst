@@ -307,11 +307,7 @@ class BuildingProperties(object):
 
         :param envelope: The contents of the `architecture.shp` file, indexed by building name.
 
-        :param typology: The contents of the `typology.shp` file, indexed by building name.
-
         :param geometry: The contents of the `zone.shp` file indexed by building name.
-
-        :param floor_height: Height of the floor in [m].
 
         :return: Adjusted Daysim geometry data containing the following:
 
@@ -663,7 +659,7 @@ def get_properties_supply_sytems(locator, properties_supply):
     return result
 
 
-def get_properties_technical_systems(locator, prop_HVAC):
+def get_properties_technical_systems(locator, prop_hvac):
     """
     Return temperature data per building based on the HVAC systems of the building. Uses the `emission_systems.xls`
     file to look up properties
@@ -671,9 +667,9 @@ def get_properties_technical_systems(locator, prop_HVAC):
     :param locator: an InputLocator for locating the input files
     :type locator: cea.inputlocator.InputLocator
 
-    :param prop_HVAC: HVAC properties for each building (type of cooling system, control system, domestic hot water
+    :param prop_hvac: HVAC properties for each building (type of cooling system, control system, domestic hot water
                       system and heating system.
-    :type prop_HVAC: geopandas.GeoDataFrame
+    :type prop_hvac: geopandas.GeoDataFrame
 
     Sample data (first 5 rows)::
 
@@ -729,13 +725,13 @@ def get_properties_technical_systems(locator, prop_HVAC):
     prop_emission_control_heating_and_cooling = pd.read_excel(locator.get_database_air_conditioning_systems(),
                                                               'CONTROLLER')
     prop_ventilation_system_and_control = pd.read_excel(locator.get_database_air_conditioning_systems(), 'VENTILATION')
-    verify_hvac_system_combination(prop_HVAC, prop_emission_cooling, prop_ventilation_system_and_control)
-    df_emission_heating = prop_HVAC.merge(prop_emission_heating, left_on='type_hs', right_on='code')
-    df_emission_cooling = prop_HVAC.merge(prop_emission_cooling, left_on='type_cs', right_on='code')
-    df_emission_control_heating_and_cooling = prop_HVAC.merge(prop_emission_control_heating_and_cooling,
+    verify_hvac_system_combination(prop_hvac, prop_emission_cooling, prop_ventilation_system_and_control)
+    df_emission_heating = prop_hvac.merge(prop_emission_heating, left_on='type_hs', right_on='code')
+    df_emission_cooling = prop_hvac.merge(prop_emission_cooling, left_on='type_cs', right_on='code')
+    df_emission_control_heating_and_cooling = prop_hvac.merge(prop_emission_control_heating_and_cooling,
                                                               left_on='type_ctrl', right_on='code')
-    df_emission_dhw = prop_HVAC.merge(prop_emission_dhw, left_on='type_dhw', right_on='code')
-    df_ventilation_system_and_control = prop_HVAC.merge(prop_ventilation_system_and_control, left_on='type_vent',
+    df_emission_dhw = prop_hvac.merge(prop_emission_dhw, left_on='type_dhw', right_on='code')
+    df_ventilation_system_and_control = prop_hvac.merge(prop_ventilation_system_and_control, left_on='type_vent',
                                                         right_on='code')
 
     fields_emission_heating = ['Name', 'type_hs', 'type_cs', 'type_dhw', 'type_ctrl', 'type_vent', 'heat_starts',
