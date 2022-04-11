@@ -291,9 +291,9 @@ class BuildingProperties(object):
         df['Htr_em'] = 1 / (1 / df['Htr_op'] - 1 / df['Htr_ms'])  # Coupling conductance 2 in W/K
         df['Htr_is'] = H_IS * df['Atot']
 
-        fields = ['Atot', 'Awin_ag', 'Am', 'Aef', 'Af', 'Cm', 'Htr_is', 'Htr_em', 'Htr_ms', 'Htr_op', 'Hg', 'HD', 'Aroof',
-                  'U_wall', 'U_roof', 'U_win', 'U_base', 'Htr_w', 'GFA_m2', 'Aocc', 'Aop_bg', 'empty_envelope_ratio',
-                  'Awall_ag', 'footprint']
+        fields = ['Atot', 'Awin_ag', 'Am', 'Aef', 'Af', 'Cm', 'Htr_is', 'Htr_em', 'Htr_ms', 'Htr_op', 'Hg', 'HD',
+                  'Aroof', 'U_wall', 'U_roof', 'U_win', 'U_base', 'Htr_w', 'GFA_m2', 'Aocc', 'Aop_bg',
+                  'empty_envelope_ratio', 'Awall_ag', 'footprint']
         result = df[fields]
 
         return result
@@ -345,13 +345,13 @@ class BuildingProperties(object):
         for building_name in self.building_names:
             geometry_data = pd.read_csv(locator.get_radiation_building(building_name))
             envelope.loc[building_name, 'Awall_ag'] = geometry_data['walls_east_m2'][0] + \
-                                                  geometry_data['walls_west_m2'][0] + \
-                                                  geometry_data['walls_south_m2'][0] +\
-                                                  geometry_data['walls_north_m2'][0]
+                                                      geometry_data['walls_west_m2'][0] + \
+                                                      geometry_data['walls_south_m2'][0] + \
+                                                      geometry_data['walls_north_m2'][0]
             envelope.loc[building_name, 'Awin_ag'] = geometry_data['windows_east_m2'][0] + \
-                                                  geometry_data['windows_west_m2'][0] + \
-                                                  geometry_data['windows_south_m2'][0] +\
-                                                  geometry_data['windows_north_m2'][0]
+                                                     geometry_data['windows_west_m2'][0] + \
+                                                     geometry_data['windows_south_m2'][0] + \
+                                                     geometry_data['windows_north_m2'][0]
             envelope.loc[building_name, 'Aroof'] = geometry_data['roofs_top_m2'][0]
 
         df = envelope.merge(geometry, left_index=True, right_index=True)
@@ -730,7 +730,8 @@ def get_properties_technical_systems(locator, prop_HVAC, building_names):
     prop_emission_control_heating_and_cooling = pd.read_excel(locator.get_database_air_conditioning_systems(),
                                                               'CONTROLLER')
     prop_ventilation_system_and_control = pd.read_excel(locator.get_database_air_conditioning_systems(), 'VENTILATION')
-    verify_hvac_system_combination(prop_HVAC, prop_emission_cooling, prop_ventilation_system_and_control, building_names)
+    verify_hvac_system_combination(prop_HVAC, prop_emission_cooling, prop_ventilation_system_and_control,
+                                   building_names)
     df_emission_heating = prop_HVAC.merge(prop_emission_heating, left_on='type_hs', right_on='code')
     df_emission_cooling = prop_HVAC.merge(prop_emission_cooling, left_on='type_cs', right_on='code')
     df_emission_control_heating_and_cooling = prop_HVAC.merge(prop_emission_control_heating_and_cooling,
@@ -738,7 +739,6 @@ def get_properties_technical_systems(locator, prop_HVAC, building_names):
     df_emission_dhw = prop_HVAC.merge(prop_emission_dhw, left_on='type_dhw', right_on='code')
     df_ventilation_system_and_control = prop_HVAC.merge(prop_ventilation_system_and_control, left_on='type_vent',
                                                         right_on='code')
-
 
     fields_emission_heating = ['Name', 'type_hs', 'type_cs', 'type_dhw', 'type_ctrl', 'type_vent', 'heat_starts',
                                'heat_ends', 'cool_starts', 'cool_ends', 'class_hs', 'convection_hs',
@@ -932,7 +932,8 @@ def get_prop_solar(locator, building_names, prop_rc_model, prop_envelope, weathe
     # for every building
     for building_name in building_names:
         thermal_resistance_surface = dict(zip(['RSE_wall', 'RSE_roof', 'RSE_win'],
-            get_thermal_resistance_surface(prop_envelope.loc[building_name], weather_data)))
+                                              get_thermal_resistance_surface(prop_envelope.loc[building_name],
+                                                                             weather_data)))
         I_sol = calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, thermal_resistance_surface)
         list_Isol.append(I_sol)
 
@@ -1004,6 +1005,7 @@ def calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, therm
 
     return I_sol
 
+
 def get_thermal_resistance_surface(prop_envelope, weather_data):
     '''
     This function defines the surface resistance of external surfaces RSE according to ISO 6946 Eq. (A.1).
@@ -1021,7 +1023,9 @@ def get_thermal_resistance_surface(prop_envelope, weather_data):
 
     return thermal_resistance_surface_wall, thermal_resistance_surface_roof, thermal_resistance_surface_win
 
-def verify_hvac_system_combination(prop_hvac, prop_emission_cooling, prop_ventilation_system_and_control, building_names):
+
+def verify_hvac_system_combination(prop_hvac, prop_emission_cooling, prop_ventilation_system_and_control,
+                                   building_names):
     '''
     This function verifies whether an infeasible combination of cooling and ventilation systems has been selected.
     If an infeasible combination is selected, this issue is rectified and a warning is printed.
@@ -1031,8 +1035,10 @@ def verify_hvac_system_combination(prop_hvac, prop_emission_cooling, prop_ventil
         type_cs = prop_hvac.loc[building, 'type_cs']
         class_cs = prop_emission_cooling[prop_emission_cooling['code'] == type_cs]['class_cs'].values[0]
         type_vent = prop_hvac.loc[building, 'type_vent']
-        have_mech_vent = prop_ventilation_system_and_control[prop_ventilation_system_and_control['code']==type_vent]['MECH_VENT'].values[0]
+        have_mech_vent = prop_ventilation_system_and_control[prop_ventilation_system_and_control['code'] == type_vent][
+            'MECH_VENT'].values[0]
         if (class_cs in ['CENTRAL_AC', 'HYBRID_AC']) & (not have_mech_vent):
             raise Exception(
-                f'\nBuilding {building} has a cooling system as {class_cs} with a ventilation system {type_vent}.\nPlease re-assign a ventilation system from the technology database that includes mechanical ventilation (MECH_VENT=TRUE).')
+                f'\nBuilding {building} has a cooling system as {class_cs} with a ventilation system {type_vent}.'
+                f'\nPlease re-assign a ventilation system from the technology database that includes mechanical ventilation (MECH_VENT=TRUE).')
     return
