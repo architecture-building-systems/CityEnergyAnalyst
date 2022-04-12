@@ -769,9 +769,9 @@ def get_properties_technical_systems(locator, prop_hvac):
     return result
 
 
-def verify_overlap_season(building_name, has_teating_season, has_cooling_season, heat_start, heat_end, cool_start,
+def verify_overlap_season(building_name, has_heating_season, has_cooling_season, heat_start, heat_end, cool_start,
                           cool_end):
-    if has_cooling_season and has_teating_season:
+    if has_cooling_season and has_heating_season:
         Range = namedtuple('Range', ['start', 'end'])
 
         # for heating
