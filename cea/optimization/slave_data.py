@@ -21,19 +21,19 @@ __status__ = "Production"
 class SlaveData(object):
     def __init__(self):
         # Name the file which should be loaded:
-        self.number_of_buildings_district_scale_heating = 0
-        self.number_of_buildings_district_scale_cooling = 0
+        self.number_of_buildings_district_scale_heating = 0  # number of buildings connected to DHN
+        self.number_of_buildings_district_scale_cooling = 0  # number of buildings connected to DCN
         self.total_csv_name_heating = ""
         self.total_csv_name_cooling = ""
-        self.DCN_barcode = ""
-        self.DHN_barcode = ""
-        self.individual_number = ""
-        self.generation_number = ""
-        self.num_total_buildings = 0
-        self.DHN_exists = False
-        self.DCN_exists = False
-        self.technologies_cooling_allowed = None
-        self.technologies_heating_allowed = None
+        self.DCN_barcode = ""  # barcode of 0s and 1s indicating which buildings are connected to DCN
+        self.DHN_barcode = ""  # barcode of 0s and 1s identifying which buildings are connected to DHN
+        self.individual_number = ""  # unique identifier of individual in generation
+        self.generation_number = ""  # unique identifier of generation
+        self.num_total_buildings = 0  # total number of buildings in identified district
+        self.DHN_exists = False  # boolean showing if a DHN exists in this district
+        self.DCN_exists = False  # boolean showing if a DCN exists (is investigated) in this district
+        self.technologies_cooling_allowed = None  # list of cooling technologies allowed in this optimization run
+        self.technologies_heating_allowed = None  # list of heating technologies allowed in this optimization run
         self.individual_with_names_dict= {}
         self.building_names_all = []
         self.building_names_heating = []
