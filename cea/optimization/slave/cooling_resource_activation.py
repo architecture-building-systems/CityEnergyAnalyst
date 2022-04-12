@@ -384,15 +384,15 @@ def calc_vcc_operation(Qc_from_VCC_W, T_DCN_re_K, T_DCN_sup_K, T_source_K, chill
     Calculate cooling energy supplied by the vapour compression chiller and the corresponding electrical energy
     required.
 
-    :param Qc_from_VCC_W: cooling supplied by the vapour compression chiller
-    :param T_DCN_re_K: return temperature of the district cooling network (chilled water cycle supply)
-    :param T_DCN_sup_K: supply temperature of the district cooling network (chilled water cycle supply)
-    :param T_source_K: temperature of the water body used for cooling (cooling water cycle supply)
-    :param chiller_size: capacity of vapor compression chiller
-    :param VC_chiller: eligible vapor compression chiller types
+    :param float Qc_from_VCC_W: cooling supplied by the vapour compression chiller
+    :param float T_DCN_re_K: return temperature of the district cooling network (chilled water cycle supply)
+    :param float T_DCN_sup_K: supply temperature of the district cooling network (chilled water cycle supply)
+    :param float T_source_K: temperature of the water body used for cooling (cooling water cycle supply)
+    :param float chiller_size: capacity of vapor compression chiller
+    :param VaporCompressionChiller class object VC_chiller: eligible vapor compression chiller types
 
-    :return Qc_VCC_W:
-    :return E_used_VCC_W:
+    :return float Qc_VCC_W: cold energy supply to the district cooling network (chilled water cycle supply)
+    :return float E_used_VCC_W: electrical energy required to operate the VCC to output Qc_VCC_W
     """
     Qc_from_VCC_W = min(Qc_from_VCC_W,
                         chiller_size)  # The chiller can not supply more cooling than the installed capacity allows
