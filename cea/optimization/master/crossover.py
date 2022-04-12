@@ -26,6 +26,7 @@ class CrossOverMethodsInteger(object):
                                       individual_2)
 
 
+
 class CrossOverMethodsContinuous(object):
     """
         mutation methods for integers
@@ -71,9 +72,9 @@ def crossover_main(ind1, ind2, indpb,
         buildings_heating_ind2 = [ind2_with_name_dict[column] for column in column_names_buildings_heating]
         # apply crossover
         buildings_heating_ind1, \
-        buildings_heating_ind2 = crossover_integer.crossover(buildings_heating_ind1,
-                                                             buildings_heating_ind2,
-                                                             indpb)
+            buildings_heating_ind2 = crossover_integer.crossover(buildings_heating_ind1,
+                                                                 buildings_heating_ind2,
+                                                                 indpb)
         # take back to the individual
         for column, cross_over_value in zip(column_names_buildings_heating, buildings_heating_ind1):
             ind1_with_name_dict[column] = cross_over_value
@@ -85,10 +86,10 @@ def crossover_main(ind1, ind2, indpb,
         heating_units_share_ind2 = [ind2_with_name_dict[column] for column in heating_unit_names_share]
         # apply crossover
         heating_units_share_ind1, \
-        heating_units_share_ind2 = crossover_continuous.crossover(heating_units_share_ind1,
-                                                                  heating_units_share_ind2,
-                                                                  indpb)
-        # takeback to the individual
+            heating_units_share_ind2 = crossover_continuous.crossover(heating_units_share_ind1,
+                                                                      heating_units_share_ind2,
+                                                                      indpb)
+        # take back to the individual
         for column, cross_over_value in zip(heating_unit_names_share, heating_units_share_ind1):
             ind1_with_name_dict[column] = cross_over_value
         for column, cross_over_value in zip(heating_unit_names_share, heating_units_share_ind2):
@@ -101,10 +102,10 @@ def crossover_main(ind1, ind2, indpb,
         buildings_cooling_ind2 = [ind2_with_name_dict[column] for column in column_names_buildings_cooling]
         # apply crossover
         buildings_cooling_ind1, \
-        buildings_cooling_ind2 = crossover_integer.crossover(buildings_cooling_ind1,
-                                                             buildings_cooling_ind2,
-                                                             indpb)
-        # take back to teh individual
+            buildings_cooling_ind2 = crossover_integer.crossover(buildings_cooling_ind1,
+                                                                 buildings_cooling_ind2,
+                                                                 indpb)
+        # take back to the individual
         for column, cross_over_value in zip(column_names_buildings_cooling, buildings_cooling_ind1):
             ind1_with_name_dict[column] = cross_over_value
         for column, cross_over_value in zip(column_names_buildings_cooling, buildings_cooling_ind2):
@@ -115,10 +116,10 @@ def crossover_main(ind1, ind2, indpb,
         cooling_units_share_ind2 = [ind2_with_name_dict[column] for column in cooling_unit_names_share]
         # apply crossover
         cooling_units_share_ind1, \
-        cooling_units_share_ind2 = crossover_continuous.crossover(cooling_units_share_ind1,
-                                                                  cooling_units_share_ind2,
-                                                                  indpb)
-        # takeback to teh individual
+            cooling_units_share_ind2 = crossover_continuous.crossover(cooling_units_share_ind1,
+                                                                      cooling_units_share_ind2,
+                                                                      indpb)
+        # take back to the individual
         for column, cross_over_value in zip(cooling_unit_names_share, cooling_units_share_ind1):
             ind1_with_name_dict[column] = cross_over_value
         for column, cross_over_value in zip(cooling_unit_names_share, cooling_units_share_ind2):

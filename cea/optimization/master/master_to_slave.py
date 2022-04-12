@@ -3,9 +3,6 @@ Evaluation function of an individual
 
 """
 
-
-
-
 import os
 
 import pandas as pd
@@ -33,6 +30,48 @@ def export_data_to_master_to_slave_class(locator,
                                          technologies_cooling_allowed,
                                          weather_features
                                          ):
+
+    """
+    This function ...
+
+    :param locator: paths to cea input files
+    :param gen: counter for generation of genetic optimization algorithm
+    :param ind_num: counter to identify individual within current generation of genetic optimization algorithm
+    :param individual_with_name_dict: individual's chromosome (including description of each parameter)
+    :param building_names: names of buildings in the analysed district
+    :param building_names_heating: names of all buildings that have a heating load (space heat, hot water etc.)
+    :param building_names_cooling: names of all buildings that have a cooling load
+    :param building_names_electricity: names of all buildings that have an electricity load
+    :param DHN_barcode: barcode identifying buildings are connected to the district heating network ('0' not connected,
+                        '1' connected)
+    :param DCN_barcode: barcode identifying buildings are connected to the district cooling network ('0' not connected,
+                        '1' connected)
+    :param district_heating_network: indicator defining if district heating networks should be analyzed
+    :param district_cooling_network: indicator defining if district heating networks should be analyzed
+    :param technologies_heating_allowed: district heating technologies to be considered in the optimization
+    :param technologies_cooling_allowed: district cooling technologies to be considered in the optimization
+    :param weather_features: weather data for the selected location (ambient temperature, ground temperature etc.)
+
+    :type locator: cea.inputlocator.InputLocator class object
+    :type gen: int
+    :type ind_num: int
+    :type individual_with_name_dict: dict
+    :type building_names: list of str
+    :type building_names_heating: list of str
+    :type building_names_cooling: list of str
+    :type building_names_electricity: list of str
+    :type DHN_barcode: str
+    :type DCN_barcode: str
+    :type district_heating_network: bool
+    :type district_cooling_network: bool
+    :type technologies_heating_allowed: list of str
+    :type technologies_cooling_allowed: list of str
+    :type weather_features: cea.optimization.preprocessing.preprocessing_main.WeatherFeatures class object
+
+    :return: object containing all the important information on the energy system configuration of an individual
+            (buildings [connected, non-connected], heating technologies, cooling technologies, storage etc.)
+    :rtype: cea.optimization.slave_data.SlaveData class object
+    """
     # get thermal network for this individual
 
     # RECALCULATE THE NOMINAL LOADS FOR HEATING AND COOLING, INCL SOME NAMES OF FILES
@@ -83,6 +122,17 @@ def extract_peak_loads(district_heating_network,
                        DH_network_summary_individual,
                        DC_network_summary_individual,
                        ):
+    """
+    This functions extracts peak loads of the district heating/cooling networks as well as the maximum waste heat
+    generated in data centers. These values are used to define nominal heating/cooling capacities required in the
+    thermal network.
+
+    :return Q_cooling_nom_W: Nominal cooling capacity required by the district cooling network
+    :return Q_heating_nom_W: Nominal heating capacity required by the district heating network
+    :return Q_wasteheat_datacentre_max_W: Maximum waste heat from data centers to be used in district cooling networks
+    :rtype Q_cooling_nom_W, Q_heating_nom_W, Q_wasteheat_datacentre_max_W: float
+    """
+
     if district_heating_network:
         Q_DHNf_W = DH_network_summary_individual['Q_DHNf_W'].values
         Q_heating_max_W = Q_DHNf_W.max()
@@ -115,6 +165,18 @@ def thermal_networks_in_individual(locator,
                                    column_names_buildings_heating,
                                    column_names_buildings_cooling
                                    ):
+    """
+    This function gets the district heating/cooling network properties for networks corresponding to the combination of
+    connected buildings as specified by DHN_barcode/DHN_barcode.
+    If the thermal network properties for this combination of buildings have not previously been calculated, this
+    function calls the substation_main and network_main functions to calculate these properties and saves them for
+    future individuals with the same combination of thermally connected buildings.
+
+    :return: Thermal network operation properties (mass flow rate, heating/cooling energy provided, supply & return
+             temperatures,  network losses) for each hour of the year.
+    :rtype: DataFrame
+    """
+
     # local variables
     ground_temp = weather_features.ground_temp
 
@@ -159,7 +221,6 @@ def thermal_networks_in_individual(locator,
     else:
         DC_network_summary_individual = None
 
-
     return DH_network_summary_individual, DC_network_summary_individual
 
 
@@ -186,22 +247,16 @@ def calc_master_to_slave_variables(locator, gen,
                                    DC_network_summary_individual
                                    ):
     """
-    This function reads the list encoding a configuration and implements the corresponding
-    for the slave routine's to use
-    :param individual_with_names_dict: list with inidividual
-    :param Q_heating_max_W:  peak heating demand
-    :param locator: locator class
-    :type individual_with_names_dict: list
-    :type Q_heating_max_W: float
-    :type locator: string
+    This function stores all the information on an individual and the corresponding thermal network in a class object.
+
     :return: master_to_slave_vars : class MasterSlaveVariables
     :rtype: class
     """
 
-    # initialise class storing dynamic variables transfered from master to slave optimization
+    # initialise class storing dynamic variables transferred from master to slave optimization
     master_to_slave_vars = slave_data.SlaveData()
 
-    # Store information aobut individual regarding the configuration of the network and curstomers connected
+    # Store information about individual regarding the configuration of the network and customers connected
     if district_heating_network and DHN_barcode.count("1") > 0:
         master_to_slave_vars.DHN_exists = True
     if district_cooling_network and DCN_barcode.count("1") > 0:
@@ -212,12 +267,14 @@ def calc_master_to_slave_variables(locator, gen,
     master_to_slave_vars.number_of_buildings_district_scale_cooling = DCN_barcode.count("1")
 
     # store the names of the buildings connected to district heating or district cooling
-    master_to_slave_vars.buildings_district_scale_to_district_heating = calc_district_scale_names(building_names_heating,
-                                                                                        DHN_barcode)
-    master_to_slave_vars.buildings_district_scale_to_district_cooling = calc_district_scale_names(building_names_cooling,
-                                                                                        DCN_barcode)
+    master_to_slave_vars.buildings_district_scale_to_district_heating = calc_district_scale_names(
+        building_names_heating,
+        DHN_barcode)
+    master_to_slave_vars.buildings_district_scale_to_district_cooling = calc_district_scale_names(
+        building_names_cooling,
+        DCN_barcode)
 
-    #these are dataframes describing the opeartion of the thermal networks in the individual
+    # these are dataframes describing the operation of the thermal networks in the individual
     master_to_slave_vars.DH_network_summary_individual = DH_network_summary_individual
     master_to_slave_vars.DC_network_summary_individual = DC_network_summary_individual
 
@@ -235,7 +292,7 @@ def calc_master_to_slave_variables(locator, gen,
     # store the name of all buildings in the district (independent of district cooling or heating)
     master_to_slave_vars.building_names_all = building_names
 
-    # store the name used to didentified the individual (this helps to know where is inside)
+    # store the name used to identify the individual (this helps to know where is inside)
     master_to_slave_vars.building_names_heating = building_names_heating
     master_to_slave_vars.building_names_cooling = building_names_cooling
     master_to_slave_vars.building_names_electricity = building_names_electricity
@@ -245,7 +302,7 @@ def calc_master_to_slave_variables(locator, gen,
     master_to_slave_vars.individual_number = ind_num
     master_to_slave_vars.generation_number = gen
 
-    # Store inforamtion about which units are activated
+    # Store information about which units are activated
     master_to_slave_vars = master_to_slave_electrical_technologies(individual_with_names_dict, locator,
                                                                    master_to_slave_vars,
                                                                    district_heating_network,
@@ -491,10 +548,12 @@ def createTotalNtwCsv(barcode, locator, building_names):
     """
     Create and saves the total file for a specific DH or DC configuration
     to make the distribution routine possible
-    :param indCombi: string of 0 and 1: 0 if the building is disconnected, 1 if connected
+    :param barcode: string of 0 and 1: 0 if the building is disconnected, 1 if connected
     :param locator: path to raw files
-    :type indCombi: string
+    :param building_names: list of all buildings in the selected district
+    :type barcode: string
     :type locator: string
+    :type building_names: list
     :return: name of the total file
     :rtype: string
     """
@@ -504,7 +563,7 @@ def createTotalNtwCsv(barcode, locator, building_names):
         if index == '1':
             buildings_in_this_network_config.append(name)
 
-    # get total demand file fro selecte
+    # get total demand file for buildings in the network
     df = pd.read_csv(locator.get_total_demand())
     dfRes = df[df.Name.isin(buildings_in_this_network_config)]
     dfRes = dfRes.reset_index(drop=True)
