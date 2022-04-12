@@ -40,7 +40,7 @@ def validation_main(individual_with_name_dict,
             candidate = ''.join(str(individual_with_name_dict[building_name]) for building_name in
                                 column_names_buildings_heating)
 
-        # FOR SUPPLY SYSTEMS SHARE - turn off if they are below the minimum (trick to avoid strings with on - off behavior
+        # FOR SUPPLY SYSTEMS SHARE - turn off if they are below the minimum (trick to avoid strings with on - off behavior)
         for technology_name, limits in DH_CONVERSION_TECHNOLOGIES_SHARE.items():
             if technology_name in technologies_heating_allowed:
                 minimum = limits["minimum"]
@@ -54,8 +54,8 @@ def validation_main(individual_with_name_dict,
         for technology_name, limits in DH_CONVERSION_TECHNOLOGIES_SHARE.items():
             if technology_name in technologies_heating_allowed:
                 minimum = limits["minimum"]
-                if individual_with_name_dict[
-                    technology_name] >= minimum and technology_name in DH_CONVERSION_TECHNOLOGIES_WITH_SPACE_RESTRICTIONS:  # only if the unit is activated
+                if individual_with_name_dict[technology_name] >= minimum and\
+                        technology_name in DH_CONVERSION_TECHNOLOGIES_WITH_SPACE_RESTRICTIONS:  # only if the unit is activated
                     unit_name.append(technology_name)
                     unit_share.append(individual_with_name_dict[technology_name])
         sum_shares = sum(unit_share)
@@ -84,7 +84,7 @@ def validation_main(individual_with_name_dict,
             candidate = ''.join(str(individual_with_name_dict[building_name]) for building_name in
                                 column_names_buildings_cooling)
 
-        # FOR SUPPLY SYSTEMS SHARE - turn off if they are below the minimum (trick to avoid strings with on - off behavior
+        # FOR SUPPLY SYSTEMS SHARE - turn off if they are below the minimum (trick to avoid strings with on - off behavior)
         for technology_name, limits in DC_CONVERSION_TECHNOLOGIES_SHARE.items():
             if technology_name in technologies_cooling_allowed:
                 minimum = limits["minimum"]
@@ -96,8 +96,8 @@ def validation_main(individual_with_name_dict,
         for technology_name, limits in DC_CONVERSION_TECHNOLOGIES_SHARE.items():
             if technology_name in technologies_cooling_allowed:
                 minimum = limits["minimum"]
-                if individual_with_name_dict[
-                    technology_name] >= minimum and technology_name in DC_CONVERSION_TECHNOLOGIES_WITH_SPACE_RESTRICTIONS:  # only if the unit is activated
+                if individual_with_name_dict[technology_name] >= minimum and \
+                        technology_name in DC_CONVERSION_TECHNOLOGIES_WITH_SPACE_RESTRICTIONS:  # only if the unit is activated
                     unit_name.append(technology_name)
                     unit_share.append(individual_with_name_dict[technology_name])
         sum_shares = sum(unit_share)
