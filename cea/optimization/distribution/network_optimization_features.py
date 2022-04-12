@@ -19,10 +19,10 @@ __status__ = "Production"
 
 class NetworkOptimizationFeatures(object):
     """
-    This class just sets-ip constants of the linear model of the distribution.
+    This class just sets up constants of the linear model of the distribution.
     These results are extracted from the work of Florian at the chair.
     Unfortunately his work only worked for this case study and could not be used else where
-    See the paper of Fonseca et al 2015 of the city energy analyst for more info on how that procedure used to work.
+    See the paper of Fonseca et al. 2015 of the city energy analyst for more info on how that procedure used to work.
     """
 
     def __init__(self, district_heating_network, district_cooling_network, locator):
