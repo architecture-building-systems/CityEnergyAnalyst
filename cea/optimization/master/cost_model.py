@@ -967,8 +967,9 @@ def calc_seasonal_storage_costs(config, locator, storage_activation_data):
     # costs of storage are already calculated
     Capacity_seasonal_storage_m3 = storage_activation_data['Storage_Size_m3']
     # Get results from storage operation
-    Capex_a_storage_USD, Opex_fixed_storage_USD, Capex_storage_USD = thermal_storage.calc_Cinv_storage(
-        Capacity_seasonal_storage_m3, locator, 'TES1')
+    Capex_a_storage_USD, \
+    Opex_fixed_storage_USD, \
+    Capex_storage_USD = thermal_storage.calc_Cinv_storage(Capacity_seasonal_storage_m3, locator, 'TES1')
     # HEATPUMP FOR SEASONAL SOLAR STORAGE OPERATION (CHARGING AND DISCHARGING) TO DH
     storage_dispatch_df = pd.DataFrame(storage_activation_data)
     array = np.array(storage_dispatch_df[["E_Storage_charging_req_W",
