@@ -78,14 +78,14 @@ def calc_COP(T_cw_in_K, T_chw_re_K, q_chw_load_Wh):
     return COP
 
 
-def calc_COP_with_carnot_efficiency(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, VCC_chiller):
+def calc_COP_with_carnot_efficiency(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, VC_chiller):
     """
     Calculate the weighted average Part load factor across all chillers based on load distribution and derive the
     COP based on that (while assuming carnot efficiency).
     """
-    PLF = calc_averaged_PLF(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, VCC_chiller)
+    PLF = calc_averaged_PLF(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, VC_chiller)
     # TODO: Update in documentation where the function below was taken from
-    cop_chiller = VCC_chiller.g_value * T_chw_sup_K / (T_cw_in_K - T_chw_sup_K) * PLF
+    cop_chiller = VC_chiller.g_value * T_chw_sup_K / (T_cw_in_K - T_chw_sup_K) * PLF
     return cop_chiller
 
 
@@ -200,7 +200,7 @@ def get_max_VCC_unit_size(locator, VCC_code='CH3'):
     return max_VCC_unit_size_W
 
 
-def calc_averaged_PLF(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, VCC_chiller):
+def calc_averaged_PLF(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, VC_chiller):
     """
     Calculates the part load factor of installed vapor compression chillers for a given cooling load.
     Includes the design of the chillers based on peak load and chiller plant scale to define the part load ratio.
@@ -213,7 +213,7 @@ def calc_averaged_PLF(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, 
     :param float q_chw_load_Wh: in W
     :param float T_chw_sup_K: in Kelvin
     :param float T_cw_in_K: in Kelvin
-    :param VaporCompressionChiller VCC_chiller: VCC_chiller object containing scale, capacity and config properties
+    :param VaporCompressionChiller VC_chiller: VC_chiller object containing scale, capacity and config properties
 
     :return float averaged_PLF: averaged part load factor over all chillers [0..1]
     """
@@ -221,53 +221,53 @@ def calc_averaged_PLF(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, 
     # For future implementation, a safety factor for the design capacity could be introduced.
     # As of now this would be in conflict with the master_to_slave_variables.WS_BaseVCC_size_W
     design_capacity = peak_cooling_load  # * 1.15
-    if VCC_chiller.scale == 'BUILDING':
+    if VC_chiller.scale == 'BUILDING':
         # according to ASHRAE 90.1 Appendix G: if design cooling load smaller than lower limit,
         # implement one screw chiller
         if design_capacity <= COMPRESSOR_TYPE_LIMIT_LOW:
             source_type = 'WATER'
             compressor_type = 'SCREW'
-            ch_configuration_values = VCC_chiller.configuration_values(source_type, compressor_type)
+            ch_configuration_values = VC_chiller.configuration_values(source_type, compressor_type)
             n_units = 1
         # according to ASHRAE 90.1 Appendix G: if design cooling load between limits, implement two screw chillers
         elif COMPRESSOR_TYPE_LIMIT_LOW < design_capacity < COMPRESSOR_TYPE_LIMIT_HIGH:
             source_type = 'WATER'
             compressor_type = 'SCREW'
-            ch_configuration_values = VCC_chiller.configuration_values(source_type, compressor_type)
+            ch_configuration_values = VC_chiller.configuration_values(source_type, compressor_type)
             n_units = 2
         # according to ASHRAE 90.1 Appendix G: if design cooling load larger than upper limit,
         # implement centrifugal chillers
         elif design_capacity >= COMPRESSOR_TYPE_LIMIT_HIGH:
             source_type = 'WATER'
             compressor_type = 'CENTRIFUGAL'
-            ch_configuration_values = VCC_chiller.configuration_values(source_type, compressor_type)
+            ch_configuration_values = VC_chiller.configuration_values(source_type, compressor_type)
             # according to ASHRAE 90.1 Appendix G, chiller shall not be large then 800 tons (2813 kW)
             n_units = ceil(design_capacity / ASHRAE_CAPACITY_LIMIT)
         else:
             raise ValueError('Unable to assign chiller type based on design capacity')
         cooling_capacity_per_unit = design_capacity / n_units  # calculate the capacity per chiller installed
 
-    elif VCC_chiller.scale == 'DISTRICT':
+    elif VC_chiller.scale == 'DISTRICT':
         source_type = 'WATER'
         compressor_type = 'CENTRIFUGAL'
-        ch_configuration_values = VCC_chiller.configuration_values(source_type, compressor_type)
-        if design_capacity <= (2 * VCC_chiller.min_VCC_capacity):  # design one chiller for small scale DCS
+        ch_configuration_values = VC_chiller.configuration_values(source_type, compressor_type)
+        if design_capacity <= (2 * VC_chiller.min_VCC_capacity):  # design one chiller for small scale DCS
             n_units = 1
-            cooling_capacity_per_unit = max(design_capacity, VCC_chiller.min_VCC_capacity)
+            cooling_capacity_per_unit = max(design_capacity, VC_chiller.min_VCC_capacity)
         # design two chillers above twice the minimum chiller size
-        elif (2 * VCC_chiller.min_VCC_capacity) <= design_capacity <= VCC_chiller.max_VCC_capacity:
+        elif (2 * VC_chiller.min_VCC_capacity) <= design_capacity <= VC_chiller.max_VCC_capacity:
             n_units = 2
             cooling_capacity_per_unit = design_capacity / n_units
         # design a minimum of 2 chillers if above the maximum chiller size
-        elif design_capacity >= VCC_chiller.max_VCC_capacity:
+        elif design_capacity >= VC_chiller.max_VCC_capacity:
             # have minimum size of capacity to qualify as DCS, have minimum of 2 chillers
-            n_units = max(2, ceil(design_capacity / VCC_chiller.max_VCC_capacity))
+            n_units = max(2, ceil(design_capacity / VC_chiller.max_VCC_capacity))
             cooling_capacity_per_unit = design_capacity / n_units
         else:
             raise ValueError('Unable to assign chiller type based on design capacity')
     else:
-        raise ValueError('VCC_chiller scale can only be "BUILDING" or "DISTRICT" got: {scale}'.format(
-            scale=VCC_chiller.scale))
+        raise ValueError('VC_chiller scale can only be "BUILDING" or "DISTRICT" got: {scale}'.format(
+            scale=VC_chiller.scale))
 
     # calculate the available capacity(dependent on conditions)
     available_capacity_per_unit = calc_available_capacity(cooling_capacity_per_unit, ch_configuration_values['Qs'],

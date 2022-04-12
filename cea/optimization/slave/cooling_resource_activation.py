@@ -206,7 +206,7 @@ def cooling_resource_activator(Q_thermal_req,
                                                              T_district_cooling_supply_K)
             E_BaseVCC_WS_req_W = E_pump_WS_req_W
         else:
-            print("no lake water source base load VCC was used")
+            print("no water body source base load VCC was used")
 
         # energy balance: calculate the remaining cooling potential of the water body, the remaining unmet cooling
         # demand (after contributions from VCC and storage) of the DCN and the cooling provided by the storage
@@ -263,7 +263,7 @@ def cooling_resource_activator(Q_thermal_req,
             E_PeakVCC_WS_req_W = E_pump_WS_req_W
 
         else:
-            print("no lake water source peak load VCC was used")
+            print("no water body source peak load VCC was used")
         # energy balance: calculate the remaining cooling potential of the water body, the remaining unmet cooling
         # demand (after contributions from VCC and storage) of the DCN and the cooling provided by the storage
         Q_therm_water_body_W -= Q_PeakVCC_WS_gen_W
@@ -411,9 +411,9 @@ def calc_vcc_CT_operation(Qc_from_VCC_W,
                           T_DCN_sup_K,
                           T_source_K,
                           size_chiller_CT,
-                          VCC_chiller):
+                          VC_chiller):
     VCC_operation = chiller_vapor_compression.calc_VCC(size_chiller_CT, Qc_from_VCC_W, T_DCN_sup_K, T_DCN_re_K,
-                                                       T_source_K, VCC_chiller)
+                                                       T_source_K, VC_chiller)
 
     # unpack outputs
     Qc_CT_VCC_W = VCC_operation['q_cw_W']
