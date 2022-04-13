@@ -107,7 +107,7 @@ For the installer to be able to pick up the newest version of the CEA GUI interf
 Creating the installer
 ----------------------
 
-- First, make sure you have the Nullsoft Scriptable Installation System (NSIS) installed. See :doc:`how-to-set-up-nsis`
+- First, make sure you have the Nullsoft Scriptable Installation System (NSIS) installed. See :docs:`how-to-set-up-nsis`
 - Next, make sure the command `cea-dev build` is configured properly. The configuration should look something like this::
 
     (CEA) λ cea-config build
