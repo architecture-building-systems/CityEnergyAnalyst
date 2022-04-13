@@ -1022,14 +1022,34 @@ def verify_hvac_system_combination(result, locator):
     This function verifies whether an infeasible combination of cooling and ventilation systems has been selected.
     If an infeasible combination is selected, a warning is printed and the simulation is stopped.
     '''
+
     needs_mech_vent = result.apply(lambda row: row.class_cs in ['CENTRAL_AC', 'HYBRID_AC'], axis=1)
+    list_exceptions = []
     for idx in result.loc[needs_mech_vent & (~ result.MECH_VENT)].index:
         building_name = result.loc[idx, 'Name']
         class_cs = result.loc[idx, 'class_cs']
         type_vent = result.loc[idx,'type_vent']
         hvac_database = pd.read_excel(locator.get_database_air_conditioning_systems(), sheet_name='VENTILATION')
         mechanical_ventilation_systems = list(hvac_database.loc[hvac_database['MECH_VENT'], 'code'])
-        raise Exception(
+        list_exceptions.append(Exception(
             f'\nBuilding {building_name} has a cooling system as {class_cs} with a ventilation system {type_vent}.'
-            f'\nPlease re-assign a ventilation system from the technology database that includes mechanical ventilation: {mechanical_ventilation_systems}')
+            f'\nPlease re-assign a ventilation system from the technology database that includes mechanical ventilation: {mechanical_ventilation_systems}'))
+    if len(list_exceptions) > 0:
+        raise_multiple(list_exceptions)
     return
+
+def raise_multiple(exceptions):
+    '''
+    This function raises multiple exceptions recursively. Exceptions in a list are raised one by one until the list
+    is empty.
+    '''
+
+    if not exceptions:
+        # if list of exceptions is empty, recursion ends
+        return
+    try:
+        # raise one exception, then remove it from list
+        raise exceptions.pop()
+    finally:
+        # repeat the process until list is empty
+        raise_multiple(exceptions)
