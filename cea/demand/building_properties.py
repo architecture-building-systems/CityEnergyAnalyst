@@ -749,7 +749,7 @@ def get_properties_technical_systems(locator, prop_hvac):
         on='Name').merge(df_emission_dhw[fields_emission_dhw],
                          on='Name').merge(df_ventilation_system_and_control[fields_system_ctrl_vent], on='Name')
     # verify hvac and ventilation combination
-    verify_hvac_system_combination(result)
+    verify_hvac_system_combination(result, locator)
     # read region-specific control parameters (identical for all buildings), i.e. heating and cooling season
     result['has-heating-season'] = result.apply(lambda x: verify_has_season(x['Name'],
                                                                             x['heat_starts'],
@@ -1017,10 +1017,10 @@ def get_thermal_resistance_surface(prop_envelope, weather_data):
     return thermal_resistance_surface_wall, thermal_resistance_surface_roof, thermal_resistance_surface_win
 
 
-def verify_hvac_system_combination(result):
+def verify_hvac_system_combination(result, locator):
     '''
     This function verifies whether an infeasible combination of cooling and ventilation systems has been selected.
-    If an infeasible combination is selected, this issue is rectified and a warning is printed.
+    If an infeasible combination is selected, a warning is printed and the simulation is stopped.
     '''
     needs_mech_vent = result.apply(lambda row: row.class_cs in ['CENTRAL_AC', 'HYBRID_AC'], axis=1)
     for idx in result.index:
@@ -1029,7 +1029,9 @@ def verify_hvac_system_combination(result):
             building_name = result.loc[idx, 'Name']
             class_cs = result.loc[idx, 'class_cs']
             type_vent = result.loc[idx,'type_vent']
+            hvac_database = pd.read_excel(locator.get_database_air_conditioning_systems(), sheet_name='VENTILATION')
+            mechanical_ventilation_systems = list(hvac_database.loc[hvac_database['MECH_VENT'], 'code'])
             raise Exception(
                 f'\nBuilding {building_name} has a cooling system as {class_cs} with a ventilation system {type_vent}.'
-                f'\nPlease re-assign a ventilation system from the technology database that includes mechanical ventilation (MECH_VENT=TRUE).')
+                f'\nPlease re-assign a ventilation system from the technology database that includes mechanical ventilation: {mechanical_ventilation_systems}')
     return
