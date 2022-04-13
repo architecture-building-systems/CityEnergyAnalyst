@@ -1023,15 +1023,13 @@ def verify_hvac_system_combination(result, locator):
     If an infeasible combination is selected, a warning is printed and the simulation is stopped.
     '''
     needs_mech_vent = result.apply(lambda row: row.class_cs in ['CENTRAL_AC', 'HYBRID_AC'], axis=1)
-    for idx in result.index:
-        have_mech_vent = result.loc[idx, 'MECH_VENT']
-        if needs_mech_vent[idx] & (not have_mech_vent):
-            building_name = result.loc[idx, 'Name']
-            class_cs = result.loc[idx, 'class_cs']
-            type_vent = result.loc[idx,'type_vent']
-            hvac_database = pd.read_excel(locator.get_database_air_conditioning_systems(), sheet_name='VENTILATION')
-            mechanical_ventilation_systems = list(hvac_database.loc[hvac_database['MECH_VENT'], 'code'])
-            raise Exception(
-                f'\nBuilding {building_name} has a cooling system as {class_cs} with a ventilation system {type_vent}.'
-                f'\nPlease re-assign a ventilation system from the technology database that includes mechanical ventilation: {mechanical_ventilation_systems}')
+    for idx in result.loc[needs_mech_vent & (~ result.MECH_VENT)].index:
+        building_name = result.loc[idx, 'Name']
+        class_cs = result.loc[idx, 'class_cs']
+        type_vent = result.loc[idx,'type_vent']
+        hvac_database = pd.read_excel(locator.get_database_air_conditioning_systems(), sheet_name='VENTILATION')
+        mechanical_ventilation_systems = list(hvac_database.loc[hvac_database['MECH_VENT'], 'code'])
+        raise Exception(
+            f'\nBuilding {building_name} has a cooling system as {class_cs} with a ventilation system {type_vent}.'
+            f'\nPlease re-assign a ventilation system from the technology database that includes mechanical ventilation: {mechanical_ventilation_systems}')
     return
