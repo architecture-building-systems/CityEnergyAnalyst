@@ -63,7 +63,6 @@ class BuildingProperties(object):
         prop_geometry['Blength'], prop_geometry['Bwidth'] = self.calc_bounding_box_geom(locator.get_zone_geometry())
         prop_geometry = prop_geometry.drop('geometry', axis=1).set_index('Name')
         prop_hvac = dbf_to_dataframe(locator.get_building_air_conditioning())
-
         prop_typology = dbf_to_dataframe(locator.get_building_typology()).set_index('Name')
         # Drop 'REFERENCE' column if it exists
         if 'REFERENCE' in prop_typology:
@@ -74,7 +73,8 @@ class BuildingProperties(object):
         prop_supply_systems_building = dbf_to_dataframe(locator.get_building_supply())
 
         # GET SYSTEMS EFFICIENCIES
-        prop_supply_systems = get_properties_supply_sytems(locator, prop_supply_systems_building).set_index('Name')
+        prop_supply_systems = get_properties_supply_sytems(locator, prop_supply_systems_building).set_index(
+            'Name')
 
         # get temperatures of operation
         prop_HVAC_result = get_properties_technical_systems(locator, prop_hvac).set_index('Name')
@@ -290,9 +290,9 @@ class BuildingProperties(object):
         df['Htr_em'] = 1 / (1 / df['Htr_op'] - 1 / df['Htr_ms'])  # Coupling conductance 2 in W/K
         df['Htr_is'] = H_IS * df['Atot']
 
-        fields = ['Atot', 'Awin_ag', 'Am', 'Aef', 'Af', 'Cm', 'Htr_is', 'Htr_em', 'Htr_ms', 'Htr_op', 'Hg', 'HD',
-                  'Aroof', 'U_wall', 'U_roof', 'U_win', 'U_base', 'Htr_w', 'GFA_m2', 'Aocc', 'Aop_bg',
-                  'empty_envelope_ratio', 'Awall_ag', 'footprint']
+        fields = ['Atot', 'Awin_ag', 'Am', 'Aef', 'Af', 'Cm', 'Htr_is', 'Htr_em', 'Htr_ms', 'Htr_op', 'Hg', 'HD', 'Aroof',
+                  'U_wall', 'U_roof', 'U_win', 'U_base', 'Htr_w', 'GFA_m2', 'Aocc', 'Aop_bg', 'empty_envelope_ratio',
+                  'Awall_ag', 'footprint']
         result = df[fields]
 
         return result
@@ -307,7 +307,11 @@ class BuildingProperties(object):
 
         :param envelope: The contents of the `architecture.shp` file, indexed by building name.
 
+        :param typology: The contents of the `typology.shp` file, indexed by building name.
+
         :param geometry: The contents of the `zone.shp` file indexed by building name.
+
+        :param floor_height: Height of the floor in [m].
 
         :return: Adjusted Daysim geometry data containing the following:
 
@@ -340,13 +344,13 @@ class BuildingProperties(object):
         for building_name in self.building_names:
             geometry_data = pd.read_csv(locator.get_radiation_building(building_name))
             envelope.loc[building_name, 'Awall_ag'] = geometry_data['walls_east_m2'][0] + \
-                                                      geometry_data['walls_west_m2'][0] + \
-                                                      geometry_data['walls_south_m2'][0] + \
-                                                      geometry_data['walls_north_m2'][0]
+                                                  geometry_data['walls_west_m2'][0] + \
+                                                  geometry_data['walls_south_m2'][0] +\
+                                                  geometry_data['walls_north_m2'][0]
             envelope.loc[building_name, 'Awin_ag'] = geometry_data['windows_east_m2'][0] + \
-                                                     geometry_data['windows_west_m2'][0] + \
-                                                     geometry_data['windows_south_m2'][0] + \
-                                                     geometry_data['windows_north_m2'][0]
+                                                  geometry_data['windows_west_m2'][0] + \
+                                                  geometry_data['windows_south_m2'][0] +\
+                                                  geometry_data['windows_north_m2'][0]
             envelope.loc[building_name, 'Aroof'] = geometry_data['roofs_top_m2'][0]
 
         df = envelope.merge(geometry, left_index=True, right_index=True)
@@ -659,7 +663,7 @@ def get_properties_supply_sytems(locator, properties_supply):
     return result
 
 
-def get_properties_technical_systems(locator, prop_hvac):
+def get_properties_technical_systems(locator, prop_HVAC):
     """
     Return temperature data per building based on the HVAC systems of the building. Uses the `emission_systems.xls`
     file to look up properties
@@ -667,9 +671,9 @@ def get_properties_technical_systems(locator, prop_hvac):
     :param locator: an InputLocator for locating the input files
     :type locator: cea.inputlocator.InputLocator
 
-    :param prop_hvac: HVAC properties for each building (type of cooling system, control system, domestic hot water
+    :param prop_HVAC: HVAC properties for each building (type of cooling system, control system, domestic hot water
                       system and heating system.
-    :type prop_hvac: geopandas.GeoDataFrame
+    :type prop_HVAC: geopandas.GeoDataFrame
 
     Sample data (first 5 rows)::
 
@@ -725,13 +729,15 @@ def get_properties_technical_systems(locator, prop_hvac):
     prop_emission_control_heating_and_cooling = pd.read_excel(locator.get_database_air_conditioning_systems(),
                                                               'CONTROLLER')
     prop_ventilation_system_and_control = pd.read_excel(locator.get_database_air_conditioning_systems(), 'VENTILATION')
-    df_emission_heating = prop_hvac.merge(prop_emission_heating, left_on='type_hs', right_on='code')
-    df_emission_cooling = prop_hvac.merge(prop_emission_cooling, left_on='type_cs', right_on='code')
-    df_emission_control_heating_and_cooling = prop_hvac.merge(prop_emission_control_heating_and_cooling,
+
+    df_emission_heating = prop_HVAC.merge(prop_emission_heating, left_on='type_hs', right_on='code')
+    df_emission_cooling = prop_HVAC.merge(prop_emission_cooling, left_on='type_cs', right_on='code')
+    df_emission_control_heating_and_cooling = prop_HVAC.merge(prop_emission_control_heating_and_cooling,
                                                               left_on='type_ctrl', right_on='code')
-    df_emission_dhw = prop_hvac.merge(prop_emission_dhw, left_on='type_dhw', right_on='code')
-    df_ventilation_system_and_control = prop_hvac.merge(prop_ventilation_system_and_control, left_on='type_vent',
+    df_emission_dhw = prop_HVAC.merge(prop_emission_dhw, left_on='type_dhw', right_on='code')
+    df_ventilation_system_and_control = prop_HVAC.merge(prop_ventilation_system_and_control, left_on='type_vent',
                                                         right_on='code')
+
     fields_emission_heating = ['Name', 'type_hs', 'type_cs', 'type_dhw', 'type_ctrl', 'type_vent', 'heat_starts',
                                'heat_ends', 'cool_starts', 'cool_ends', 'class_hs', 'convection_hs',
                                'Qhsmax_Wm2', 'dThs_C', 'Tshs0_ahu_C', 'dThs0_ahu_C', 'Th_sup_air_ahu_C', 'Tshs0_aru_C',
@@ -748,8 +754,7 @@ def get_properties_technical_systems(locator, prop_hvac):
         df_emission_control_heating_and_cooling[fields_emission_control_heating_and_cooling],
         on='Name').merge(df_emission_dhw[fields_emission_dhw],
                          on='Name').merge(df_ventilation_system_and_control[fields_system_ctrl_vent], on='Name')
-    # verify hvac and ventilation combination
-    verify_hvac_system_combination(result, locator)
+
     # read region-specific control parameters (identical for all buildings), i.e. heating and cooling season
     result['has-heating-season'] = result.apply(lambda x: verify_has_season(x['Name'],
                                                                             x['heat_starts'],
@@ -769,9 +774,9 @@ def get_properties_technical_systems(locator, prop_hvac):
     return result
 
 
-def verify_overlap_season(building_name, has_heating_season, has_cooling_season, heat_start, heat_end, cool_start,
+def verify_overlap_season(building_name, has_teating_season, has_cooling_season, heat_start, heat_end, cool_start,
                           cool_end):
-    if has_cooling_season and has_heating_season:
+    if has_cooling_season and has_teating_season:
         Range = namedtuple('Range', ['start', 'end'])
 
         # for heating
@@ -925,8 +930,7 @@ def get_prop_solar(locator, building_names, prop_rc_model, prop_envelope, weathe
     # for every building
     for building_name in building_names:
         thermal_resistance_surface = dict(zip(['RSE_wall', 'RSE_roof', 'RSE_win'],
-                                              get_thermal_resistance_surface(prop_envelope.loc[building_name],
-                                                                             weather_data)))
+            get_thermal_resistance_surface(prop_envelope.loc[building_name], weather_data)))
         I_sol = calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, thermal_resistance_surface)
         list_Isol.append(I_sol)
 
@@ -998,7 +1002,6 @@ def calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, therm
 
     return I_sol
 
-
 def get_thermal_resistance_surface(prop_envelope, weather_data):
     '''
     This function defines the surface resistance of external surfaces RSE according to ISO 6946 Eq. (A.1).
@@ -1016,22 +1019,3 @@ def get_thermal_resistance_surface(prop_envelope, weather_data):
 
     return thermal_resistance_surface_wall, thermal_resistance_surface_roof, thermal_resistance_surface_win
 
-
-def verify_hvac_system_combination(result, locator):
-    '''
-    This function verifies whether an infeasible combination of cooling and ventilation systems has been selected.
-    If an infeasible combination is selected, a warning is printed and the simulation is stopped.
-    '''
-    needs_mech_vent = result.apply(lambda row: row.class_cs in ['CENTRAL_AC', 'HYBRID_AC'], axis=1)
-    for idx in result.index:
-        have_mech_vent = result.loc[idx, 'MECH_VENT']
-        if needs_mech_vent[idx] & (not have_mech_vent):
-            building_name = result.loc[idx, 'Name']
-            class_cs = result.loc[idx, 'class_cs']
-            type_vent = result.loc[idx,'type_vent']
-            hvac_database = pd.read_excel(locator.get_database_air_conditioning_systems(), sheet_name='VENTILATION')
-            mechanical_ventilation_systems = list(hvac_database.loc[hvac_database['MECH_VENT'], 'code'])
-            raise Exception(
-                f'\nBuilding {building_name} has a cooling system as {class_cs} with a ventilation system {type_vent}.'
-                f'\nPlease re-assign a ventilation system from the technology database that includes mechanical ventilation: {mechanical_ventilation_systems}')
-    return
