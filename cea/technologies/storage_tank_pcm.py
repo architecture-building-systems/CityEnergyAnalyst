@@ -18,7 +18,8 @@ __status__ = "Production"
 
 
 class Storage_tank_PCM(object):
-    def __init__(self, activation:bool, size_Wh:float, database_model_parameters, T_ambient_K:float, type_storage:str, debug=False):
+    def __init__(self, size_Wh:float, database_model_parameters, T_ambient_K:float,
+                 type_storage:str, activation=True, debug=False):
         # INITIALIZING THE CLASS
         self.hour = 0  # this just to know when the storage is being run.
         self.debug = debug  # this is to show extra messages and debug the code easily
