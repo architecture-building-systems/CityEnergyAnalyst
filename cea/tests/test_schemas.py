@@ -251,6 +251,7 @@ def extract_locator_methods(locator):
         "get_optimization_network_individual_results_file",  # TODO: remove this when we know how
         "get_optimization_network_layout_costs_file",  # TODO: remove this when we know how
         "get_timeseries_plots_file",  # TODO: remove this when we know how
+        "get_database_conversion_systems_cold_thermal_storage_names",  # TODO: remove this when we know how
     }
     for m in dir(locator):
         if not callable(getattr(locator, m)):
