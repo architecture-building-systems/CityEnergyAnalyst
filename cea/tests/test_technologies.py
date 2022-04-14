@@ -46,7 +46,7 @@ class TestColdPcmThermalStorage(unittest.TestCase):
         cls.type_storage_list = cls.locator.get_database_conversion_systems_cold_thermal_storage_names()
         cls.type_storage = cls.type_storage_list[0]
 
-    def test_cold_pcm_thermal_storage(self, unittest=True):
+    def test_cold_pcm_thermal_storage(self, unittest=False):
 
         # initailize tank
         tank = Storage_tank_PCM(size_Wh=self.size_storage_Wh,
@@ -103,7 +103,7 @@ class TestColdPcmThermalStorage(unittest.TestCase):
 
         return results, data, tank.description
 
-    def test_cold_pcm_thermal_storage_costs(self, unittest=True):
+    def test_cold_pcm_thermal_storage_costs(self, unittest=False):
         # initailize tank
         tank = Storage_tank_PCM(size_Wh=self.size_storage_Wh,
                                 database_model_parameters=self.storage_properties,
