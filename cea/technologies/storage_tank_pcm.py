@@ -387,11 +387,11 @@ if __name__ == '__main__':
 
     # the test returns a. results of the unittest, b. the data, c. a description of the tank.
     # the first is used as reference parameter of the unittest. The B and C are used to make a plot as follows.
-    results, data, description = test.test_cold_pcm_thermal_storage(unittest=False)
+    results, data, description = test.test_cold_pcm_thermal_storage(unittest=True)
     print(results)
 
     # here is the second test about volume and costs of the storage
-    results = test.test_cold_pcm_thermal_storage_costs(unittest=False)
+    results = test.test_cold_pcm_thermal_storage_costs(unittest=True)
     print(results)
 
     # plot results
