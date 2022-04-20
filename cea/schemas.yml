@@ -4680,17 +4680,17 @@ get_database_conversion_systems:
     TES:
       columns:
         Description:
-          description: Describes the thermal storage tank
+          description: Describes the thermal energy storage technology
           type: string
           unit: '[-]'
           values: 'any'
         code:
-          description: Unique code that identifies the thermal storage tank
+          description: Unique code that identifies the thermal energy storage technology
           type: string
           unit: '[-]'
           values: 'NA'
         type:
-          description: code that identifies whether the tank is used for heating or cooling (different properties of the transport media)
+          description: code that identifies whether the storage is used for heating or cooling (different properties of the transport media)
           type: string
           unit: '[-]'
           values: '{COOLING,HEATING}'
@@ -4753,20 +4753,19 @@ get_database_conversion_systems:
           unit: '[-]'
           values: '{n...n}'
         LT_yr:
-          description: lifetime of this technology (tank)
+          description: lifetime of this storage technology
           min: 0
           type: int
           unit: "[yr]"
           values: '{0...n}'
         LT_mat_yr:
-          description: lifetime of the working fluid of this technology
+          description: lifetime of the working fluid of this storage technology
           min: 0
           type: int
           unit: "[yr]"
           values: '{0...n}'
         O&M_%:
-          description: operation and maintnance cost factor (fraction of the investment
-            cost)
+          description: operation and maintnance cost factor (fraction of the investment cost)
           min: 0.0
           type: float
           unit: '[-]'
@@ -4821,7 +4820,7 @@ get_database_conversion_systems:
           unit: '[kJ/kg.K]'
           values: '{0.0...n}'
         assumption:
-          description: items made by assumptions in this technology
+          description: items made by assumptions in this storage technology
           nullable: true
           type: string
           unit: 'NA'
