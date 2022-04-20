@@ -45,7 +45,7 @@ def storage_optimization(locator, master_to_slave_vars):
     :return: The function saves all files when it's done in the location locator.get_potentials_solar_folder()
     :rtype: Nonetype
     """
-    print("Storage Optimization Ready")
+    print("SEASONAL STORAGE OPTIMIZATION")
     T_storage_old_K = master_to_slave_vars.T_storage_zero
     Q_in_storage_old = master_to_slave_vars.Q_in_storage_zero
 

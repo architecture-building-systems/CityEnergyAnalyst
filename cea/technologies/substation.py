@@ -31,7 +31,6 @@ def substation_main_heating(locator, total_demand, buildings_name_with_heating, 
         T_DHN_supply = np.zeros(HOURS_IN_YEAR)
         for name in buildings_name_with_heating:
             buildings_dict[name] = pd.read_csv(locator.get_demand_results_file(name))
-            print(name)
             # calculates the building side supply and return temperatures for each unit
             Ths_supply_C, Ths_re_C = calc_temp_hex_building_side_heating(buildings_dict[name],
                                                                          heating_configuration)
