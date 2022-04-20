@@ -195,7 +195,7 @@ def cooling_resource_activator(Q_thermal_req,
                 daily_storage_class.discharge_storage(Q_cooling_unmet_W - Qc_output_BaseVCC_WS_max_W)
             Q_BaseVCC_WS_gen_W = Q_BaseVCC_WS_gen_directload_W + Qc_BaseVCC_WS_gen_storage_W
 
-        # Activation Case 1: The water temperature doesn't allow for free cooling, therefore the VCC is activated.
+        # Activation Case 2: The water temperature doesn't allow for free cooling, therefore the VCC is activated.
         # The maximum VCC output is larger than the unmet cooling demand, therefore the storage is charged.
         elif T_district_cooling_supply_K - T_source_average_water_body_K < DT_COOL \
                 and Q_cooling_unmet_W < Qc_output_BaseVCC_WS_max_W:
@@ -306,7 +306,7 @@ def cooling_resource_activator(Q_thermal_req,
                 daily_storage_class.discharge_storage(Q_cooling_unmet_W - Qc_output_PeakVCC_WS_max_W)
             Q_PeakVCC_WS_gen_W = Q_PeakVCC_WS_gen_directload_W + Qc_PeakVCC_WS_gen_storage_W
 
-        # Activation Case 1: The water temperature doesn't allow for free cooling, therefore the VCC is activated.
+        # Activation Case 2: The water temperature doesn't allow for free cooling, therefore the VCC is activated.
         # The maximum VCC output is larger than the unmet cooling demand, therefore the storage is charged.
         elif T_district_cooling_supply_K - T_source_average_water_body_K < DT_COOL \
                 and Q_cooling_unmet_W < Qc_output_PeakVCC_WS_max_W:
@@ -394,9 +394,9 @@ def cooling_resource_activator(Q_thermal_req,
 
     # ACTIVATE AIR SOURCE COOLING TECHNOLOGIES
     # Base VCC air-source with a cooling tower
-    if master_to_slave_variables.AS_BaseVCC_on == 1 and Q_cooling_unmet_W > 0.0 and not np.isclose(
-            T_district_cooling_supply_K,
-            T_district_cooling_return_K):
+    if master_to_slave_variables.AS_BaseVCC_on == 1 and Q_cooling_unmet_W > 0.0 \
+            and not np.isclose(T_district_cooling_supply_K, T_district_cooling_return_K):
+
         size_AS_BaseVCC_W = master_to_slave_variables.AS_BaseVCC_size_W
         if Q_cooling_unmet_W > size_AS_BaseVCC_W:
             Q_BaseVCC_AS_gen_directload_W = size_AS_BaseVCC_W
