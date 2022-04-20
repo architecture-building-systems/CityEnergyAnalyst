@@ -34,6 +34,7 @@ def electricity_calculations_of_all_buildings(locator, master_to_slave_vars,
                                               district_cooling_generation_dispatch,
                                               district_cooling_electricity_requirements_dispatch
                                               ):
+    print("DISTRICT ELECTRICITY GRID OPERATION")
     # local variables
     building_names = master_to_slave_vars.building_names_electricity
 

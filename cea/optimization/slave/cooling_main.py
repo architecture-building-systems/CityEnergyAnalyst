@@ -78,6 +78,7 @@ def district_cooling_network(locator,
     """
 
     if master_to_slave_variables.DCN_exists:
+        print("DISTRICT COOLING OPERATION")
         # THERMAL STORAGE + NETWORK
         # Import Temperatures from Network Summary:
         Q_thermal_req_W, \
