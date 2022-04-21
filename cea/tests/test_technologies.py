@@ -41,14 +41,14 @@ class TestColdPcmThermalStorage(unittest.TestCase):
         cls.expected_results = json.loads(cls.test_config.get("test_storage_tank", "expected_results")) # vector storing the results expected of the test
         cls.expected_results_costs = json.loads(cls.test_config.get("test_storage_tank", "expected_results_costs"))
 
-        #getting the number of storage systems available
+        # getting the number of storage systems available
         cls.storage_properties = pd.read_excel(cls.locator.get_database_conversion_systems(), sheet_name="TES")
         cls.type_storage_list = cls.locator.get_database_conversion_systems_cold_thermal_storage_names()
         cls.type_storage = cls.type_storage_list[0]
 
     def test_cold_pcm_thermal_storage(self, unittest=False):
 
-        # initailize tank
+        # initialize tank
         tank = Storage_tank_PCM(size_Wh=self.size_storage_Wh,
                                 database_model_parameters=self.storage_properties,
                                 T_ambient_K=self.T_ambient_K,
@@ -104,7 +104,7 @@ class TestColdPcmThermalStorage(unittest.TestCase):
         return results, data, tank.description
 
     def test_cold_pcm_thermal_storage_costs(self, unittest=False):
-        # initailize tank
+        # initialize tank
         tank = Storage_tank_PCM(size_Wh=self.size_storage_Wh,
                                 database_model_parameters=self.storage_properties,
                                 T_ambient_K=self.T_ambient_K,
