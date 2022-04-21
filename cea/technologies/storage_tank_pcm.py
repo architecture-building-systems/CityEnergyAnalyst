@@ -9,7 +9,7 @@ from cea.analysis.costs.equations import calc_capex_annualized
 
 __author__ = "Jimeno Fonseca"
 __copyright__ = "Copyright 2021, Cooling Singapore"
-__credits__ = ["Jimeno Fonseca"]
+__credits__ = ["Jimeno Fonseca, Mathias Niffeler"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "NA"
