@@ -385,13 +385,13 @@ if __name__ == '__main__':
     TestColdPcmThermalStorage.setUpClass()
     test.type_storage = type_storage
 
-    # the test returns a. results of the unittest, b. the data, c. a description of the tank.
-    # the first is used as reference parameter of the unittest. The B and C are used to make a plot as follows.
-    results, data, description = test.test_cold_pcm_thermal_storage(unittest=True)
+    # the test returns a. results of the checkResults, b. the data, c. a description of the tank.
+    # the first is used as reference parameter of the checkResults. The B and C are used to make a plot as follows.
+    results, data, description = test.test_cold_pcm_thermal_storage(checkResults=True)
     print(results)
 
     # here is the second test about volume and costs of the storage
-    results = test.test_cold_pcm_thermal_storage_costs(unittest=True)
+    results = test.test_cold_pcm_thermal_storage_costs(checkResults=True)
     print(results)
 
     # plot results
