@@ -1,3 +1,8 @@
+- 2022-04-20 - 3.28.0 - #3142 Remove unnecessary properties from streets geometry
+- 2022-04-13 - 3.28.0 - #3139 Fix Flask dependencies
+- 2022-04-13 - 3.28.0 - #3141 Finish #3124 to raise multiple exceptions
+- 2022-04-13 - 3.28.0 - #3130 3124 HVAC system combination check (cooling and mechanical ventilation)
+- 2022-04-12 - 3.28.0 - #3136 Release 3.28.0
 - 2022-04-12 - 3.27.0 - #3127 updated CH database to match SG database
 - 2022-04-12 - 3.27.0 - #3132 Refactoring of optimization algorithm - Part I
 - 2022-03-31 - 3.27.0 - #3122 changed math.exp solver to numpy
