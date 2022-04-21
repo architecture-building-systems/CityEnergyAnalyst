@@ -19,7 +19,7 @@ from cea.technologies.thermal_network.substation_matrix import calc_area_HEX, ca
 
 __author__ = "Shanshan Hsieh"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["ShanShan Hsieh"]
+__credits__ = ["Shanshan Hsieh"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
