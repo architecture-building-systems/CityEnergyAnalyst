@@ -1,3 +1,4 @@
+- 2022-04-25 - 3.28.0 - #3116 2973 thermal storage for cea development for duct
 - 2022-04-20 - 3.28.0 - #3142 Remove unnecessary properties from streets geometry
 - 2022-04-13 - 3.28.0 - #3139 Fix Flask dependencies
 - 2022-04-13 - 3.28.0 - #3141 Finish #3124 to raise multiple exceptions
