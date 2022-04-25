@@ -23,7 +23,7 @@ dependencies:
 - utm
 - wntr=0.2.2.1
 - fiona
-- gdal
+- gdal=3.4.0
 - geopandas
 - matplotlib
 - networkx
