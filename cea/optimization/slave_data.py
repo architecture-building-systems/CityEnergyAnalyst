@@ -4,8 +4,6 @@ Data required for Slave from Master
 This File sets all variables for the slave optimization, that have to be set by the Master
 """
 
-
-
 import numpy as np
 
 __author__ = "Thuy-An Nguyen"
@@ -21,20 +19,21 @@ __status__ = "Production"
 class SlaveData(object):
     def __init__(self):
         # Name the file which should be loaded:
-        self.number_of_buildings_district_scale_heating = 0
-        self.number_of_buildings_district_scale_cooling = 0
+        self.number_of_buildings_district_scale_heating = 0  # number of buildings connected to DHN
+        self.number_of_buildings_district_scale_cooling = 0  # number of buildings connected to DCN
         self.total_csv_name_heating = ""
         self.total_csv_name_cooling = ""
-        self.DCN_barcode = ""
-        self.DHN_barcode = ""
-        self.individual_number = ""
-        self.generation_number = ""
-        self.num_total_buildings = 0
-        self.DHN_exists = False
-        self.DCN_exists = False
-        self.technologies_cooling_allowed = None
-        self.technologies_heating_allowed = None
-        self.individual_with_names_dict= {}
+        self.DCN_barcode = ""  # barcode of 0s and 1s indicating which buildings are connected to DCN
+        self.DHN_barcode = ""  # barcode of 0s and 1s identifying which buildings are connected to DHN
+        self.individual_number = ""  # unique identifier of individual in generation
+        self.generation_number = ""  # unique identifier of generation
+        self.debug = False  # activates debugging behavior in some scripts inside the optimization
+        self.num_total_buildings = 0  # total number of buildings in identified district
+        self.DHN_exists = False  # boolean showing if a DHN exists in this district
+        self.DCN_exists = False  # boolean showing if a DCN exists (is investigated) in this district
+        self.technologies_cooling_allowed = None  # list of cooling technologies allowed in this optimization run
+        self.technologies_heating_allowed = None  # list of heating technologies allowed in this optimization run
+        self.individual_with_names_dict = {}
         self.building_names_all = []
         self.building_names_heating = []
         self.building_names_cooling = []
@@ -88,19 +87,19 @@ class SlaveData(object):
 
         # PVT
         self.PVT_on = 0
-        self.PVT_share = 0.0 # share of available building area
-        self.A_PVT_m2 = 0.0 # area installed of building area connected
+        self.PVT_share = 0.0  # share of available building area
+        self.A_PVT_m2 = 0.0  # area installed of building area connected
 
         # PV
         self.PV_on = 0
         self.A_PV_m2 = 0.0
         self.PV_share = 0.0
 
-        self.SC_ET_on   = 0
+        self.SC_ET_on = 0
         self.A_SC_ET_m2 = 0.0
         self.SC_ET_share = 0.0
 
-        self.SC_FP_on  = 0
+        self.SC_FP_on = 0
         self.A_SC_FP_m2 = 0.0
         self.SC_FP_share = 0.0
 
@@ -137,7 +136,7 @@ class SlaveData(object):
         self.STORAGE_HEIGHT = 3.0  # in m - height of hot water storage tank
         self.A_storage_outside = self.STORAGE_SIZE / self.STORAGE_HEIGHT + 2 * np.pi * \
                                  (self.STORAGE_SIZE / self.STORAGE_HEIGHT / np.pi) ** 0.5
-                                    # neglecting ground area for heat losses
+        # neglecting ground area for heat losses
         self.alpha_loss = 0.0111  # EnergyPRO: 0.3 * 0.037 ; \
         # Saplamidis: 0.293542 # Wh / h= 0( .005 / (math.log10(26/25.0) ) ,
         # from Vassilis-Storage Optimization Code ** ACHTUNG !! CHANGE - SCALES WITH SIZE (?!)
@@ -145,7 +144,7 @@ class SlaveData(object):
         self.T_storage_initial = 10 + 273.0  # initial Storage Temperature
         self.T_storage_zero = 10 + 273.0  # Reference Temperature Storage
         self.Q_in_storage_zero = self.STORAGE_SIZE * 1 / 3600 * 983.21 * 4185 * (
-                    self.T_storage_zero - self.T_storage_initial)
+                self.T_storage_zero - self.T_storage_initial)
         self.dT_buffer = 5  # maintain a buffer for "uncertainties", never go below this temperature
         # Storage is initially empty
 

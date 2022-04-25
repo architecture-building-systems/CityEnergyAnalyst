@@ -1,3 +1,24 @@
+- 2022-04-25 - 3.28.0 - #3116 2973 thermal storage for cea development for duct
+- 2022-04-20 - 3.28.0 - #3142 Remove unnecessary properties from streets geometry
+- 2022-04-13 - 3.28.0 - #3139 Fix Flask dependencies
+- 2022-04-13 - 3.28.0 - #3141 Finish #3124 to raise multiple exceptions
+- 2022-04-13 - 3.28.0 - #3130 3124 HVAC system combination check (cooling and mechanical ventilation)
+- 2022-04-12 - 3.28.0 - #3136 Release 3.28.0
+- 2022-04-12 - 3.27.0 - #3127 updated CH database to match SG database
+- 2022-04-12 - 3.27.0 - #3132 Refactoring of optimization algorithm - Part I
+- 2022-03-31 - 3.27.0 - #3122 changed math.exp solver to numpy
+- 2022-03-30 - 3.27.0 - #3118 3105 Remove Partially Matched CX
+- 2022-03-29 - 3.27.0 - #3115 3104 calc eauxf fw
+- 2022-03-29 - 3.27.0 - #3109 3102 Correct ranking for decentralized buildings cooling/heating
+- 2022-03-22 - 3.27.0 - #3114 `zone_helper` cannot import LineString geometry types
+- 2022-03-17 - 3.27.0 - #3108 set demand_writers to write temp file when debug=True
+- 2022-03-16 - 3.27.0 - #3106 Add log function
+- 2022-03-08 - 3.27.0 - #3095 Bugfix in cooling resources activation
+- 2022-03-04 - 3.27.0 - #3093 3091 thermal network
+- 2022-02-16 - 3.27.0 - #3072 Update CEA installation for Mac
+- 2022-02-16 - 3.27.0 - #3081 implement tempfile.TemporaryDirectory() to avoid naming errors
+- 2022-02-15 - 3.27.0 - #3089 Release 3.27.0
+- 2022-01-04 - 3.26.0 - #3077 Add missing database export endpoint
 - 2021-12-21 - 3.26.0 - #3075 Make sure conda-pack is installed when creating the installer
 - 2021-12-16 - 3.26.0 - #3074 Fix race condition when creating building geometries
 - 2021-12-16 - 3.26.0 - #3071 Add mamba to CEA installer build

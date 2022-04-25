@@ -30,10 +30,11 @@ __status__ = "Production"
 
 def electricity_calculations_of_all_buildings(locator, master_to_slave_vars,
                                               district_heating_generation_dispatch,
-                                              districy_heating_electricity_requirements_dispatch,
+                                              district_heating_electricity_requirements_dispatch,
                                               district_cooling_generation_dispatch,
-                                              districy_cooling_electricity_requirements_dispatch
+                                              district_cooling_electricity_requirements_dispatch
                                               ):
+    print("DISTRICT ELECTRICITY GRID OPERATION")
     # local variables
     building_names = master_to_slave_vars.building_names_electricity
 
@@ -46,8 +47,8 @@ def electricity_calculations_of_all_buildings(locator, master_to_slave_vars,
     E_sys_req_W = calc_district_system_electricity_requirements(master_to_slave_vars,
                                                                 building_names,
                                                                 locator,
-                                                                districy_heating_electricity_requirements_dispatch,
-                                                                districy_cooling_electricity_requirements_dispatch
+                                                                district_heating_electricity_requirements_dispatch,
+                                                                district_cooling_electricity_requirements_dispatch
                                                                 )
     # GET ACTIVATION CURVE
     # INITIALIZE VARIABLES:

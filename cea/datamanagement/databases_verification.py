@@ -121,7 +121,7 @@ def verify_input_typology(typology_df):
 def verify_input_terrain(terrain_raster):
     # Verification 1. verify that we can create the geometry
     if terrain_raster == None:
-        raise Exception("Yout input terrain file is corrupted. Please verify that you have a non-null raster,"
+        raise Exception("Your input terrain file is corrupted. Please verify that you have a non-null raster,"
                         "and that the grid of it be at least 5 X 5 meters, smaller grid sizes will drastically"
                         "make the solar radiation engine slow")
 

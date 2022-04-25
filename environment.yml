@@ -5,7 +5,9 @@ channels:
 dependencies:
 - deap
 - ephem
-- flask=1.1.2
+- flask=1.1.4
+- jinja2=2.11.3
+- itsdangerous=1.1.0
 - flask-cors
 - flask-restplus
 - flask-socketio=4.3.2
@@ -21,9 +23,8 @@ dependencies:
 - utm
 - wntr=0.2.2.1
 - fiona
-- gdal
+- gdal=3.4.0
 - geopandas
-- jinja2
 - matplotlib
 - networkx
 - numba

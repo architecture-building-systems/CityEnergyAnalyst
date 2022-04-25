@@ -270,16 +270,16 @@ def summary_fuel_electricity_consumption(district_cooling_fuel_requirements_disp
 
 
 def buildings_district_scale_costs_and_emissions(district_heating_costs,
-                                            district_cooling_costs,
-                                            district_microgrid_costs,
-                                            district_microgrid_requirements_dispatch,
-                                            district_heating_fuel_requirements_dispatch,
-                                            district_cooling_fuel_requirements_dispatch,
-                                            district_electricity_demands,
-                                            prices,
-                                            lca
-                                            ):
-    # SUMMARIZE IMPORST AND EXPORTS
+                                                 district_cooling_costs,
+                                                 district_microgrid_costs,
+                                                 district_microgrid_requirements_dispatch,
+                                                 district_heating_fuel_requirements_dispatch,
+                                                 district_cooling_fuel_requirements_dispatch,
+                                                 district_electricity_demands,
+                                                 prices,
+                                                 lca
+                                                 ):
+    # SUMMARIZE IMPORTS AND EXPORTS
     sum_natural_gas_imports_W, \
     sum_wet_biomass_imports_W, \
     sum_dry_biomass_imports_W, \
@@ -291,12 +291,12 @@ def buildings_district_scale_costs_and_emissions(district_heating_costs,
 
     # CALCULATE all_COSTS
     district_variable_costs = calc_variable_costs_district_scale_buildings(sum_natural_gas_imports_W,
-                                                                      sum_wet_biomass_imports_W,
-                                                                      sum_dry_biomass_imports_W,
-                                                                      sum_electricity_imports_W,
-                                                                      sum_electricity_exports_W,
-                                                                      prices,
-                                                                      )
+                                                                           sum_wet_biomass_imports_W,
+                                                                           sum_dry_biomass_imports_W,
+                                                                           sum_electricity_imports_W,
+                                                                           sum_electricity_exports_W,
+                                                                           prices,
+                                                                           )
     # join all the costs
     join1 = dict(district_heating_costs, **district_cooling_costs)
     join2 = dict(join1, **district_microgrid_costs)
@@ -304,15 +304,15 @@ def buildings_district_scale_costs_and_emissions(district_heating_costs,
 
     # CALCULATE EMISSIONS
     connected_emissions = calc_emissions_district_scale_buildings(sum_natural_gas_imports_W,
-                                                             sum_wet_biomass_imports_W,
-                                                             sum_dry_biomass_imports_W,
-                                                             sum_electricity_imports_W,
-                                                             sum_electricity_exports_W,
-                                                             lca)
+                                                                  sum_wet_biomass_imports_W,
+                                                                  sum_dry_biomass_imports_W,
+                                                                  sum_electricity_imports_W,
+                                                                  sum_electricity_exports_W,
+                                                                  lca)
     return connected_costs, connected_emissions
 
 
-def calc_network_costs_cooling(locator, master_to_slave_vars, network_features, network_type, prices):
+def calc_network_costs_cooling(locator, master_to_slave_vars, network_features, network_type):
     # Intitialize class
     pipesCosts_USD = network_features.pipesCosts_DCN_USD
     num_buildings_connected = master_to_slave_vars.number_of_buildings_district_scale_cooling
@@ -414,15 +414,11 @@ def calc_substations_costs_cooling(building_names, master_to_slave_vars, distric
     return Capex_Substations_USD, Capex_a_Substations_USD, Opex_fixed_Substations_USD, Opex_var_Substations_USD
 
 
-def calc_generation_costs_cooling_storage(locator,
-                                          master_to_slave_variables,
-                                          config,
+def calc_generation_costs_cooling_storage(master_to_slave_variables,
                                           daily_storage):
     # STORAGE TANK
     if master_to_slave_variables.Storage_cooling_on == 1:
-        V_tank_m3 = daily_storage.V_tank_m3
-        Capex_a_Tank_USD, Opex_fixed_Tank_USD, Capex_Tank_USD = thermal_storage.calc_Cinv_storage(V_tank_m3, locator,
-                                                                                                  config, 'TES2')
+        Capex_a_Tank_USD, Opex_fixed_Tank_USD, Capex_Tank_USD = daily_storage.costs_storage()
     else:
         Capex_a_Tank_USD = 0.0
         Opex_fixed_Tank_USD = 0.0
@@ -968,14 +964,12 @@ def calc_generation_costs_capacity_installed_heating(locator,
 
 def calc_seasonal_storage_costs(config, locator, storage_activation_data):
     # STORAGE
-    # costs of storage are already clculated
+    # costs of storage are already calculated
     Capacity_seasonal_storage_m3 = storage_activation_data['Storage_Size_m3']
     # Get results from storage operation
     Capex_a_storage_USD, Opex_fixed_storage_USD, Capex_storage_USD = thermal_storage.calc_Cinv_storage(
-        Capacity_seasonal_storage_m3,
-        locator, config,
-        'TES2')
-    # HEATPUMP FOR SEASONAL SOLAR STORAGE OPERATION (CHARING AND DISCHARGING) TO DH
+        Capacity_seasonal_storage_m3, locator, 'TES1')
+    # HEATPUMP FOR SEASONAL SOLAR STORAGE OPERATION (CHARGING AND DISCHARGING) TO DH
     storage_dispatch_df = pd.DataFrame(storage_activation_data)
     array = np.array(storage_dispatch_df[["E_Storage_charging_req_W",
                                           "E_Storage_discharging_req_W",

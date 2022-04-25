@@ -390,7 +390,7 @@ class Parameter(object):
         try:
             return self.decode(encoded_value)
         except ValueError as ex:
-            raise ValueError('%s:%s - %s' % (self.section.name, self.name, ex.message))
+            raise ValueError(f'{self.section.name}:{self.name} - {ex}')
 
     def get_raw(self):
         """Return the value from the config file, but without replacing references and also
@@ -888,7 +888,7 @@ class ScenarioParameter(Parameter):
 
     def decode(self, value):
         """Make sure the path is nicely formatted"""
-        return os.path.normpath(value)
+        return os.path.normpath((os.path.expanduser(value)))
 
 
 class MultiChoiceParameter(ChoiceParameter):
@@ -921,7 +921,7 @@ class MultiChoiceParameter(ChoiceParameter):
         try:
             return self.decode(encoded_value)
         except ValueError as ex:
-            raise ValueError('%s:%s - %s' % (self.section.name, self.name, ex.message))
+            raise ValueError(f'{self.section.name}:{self.name} - {ex}')
 
     def set(self, value):
         encoded_value = self.encode(value)
@@ -957,6 +957,29 @@ class SingleBuildingParameter(ChoiceParameter):
         if not building_names:
             raise cea.ConfigError("Either no buildings in zone or no zone geometry found.")
         return building_names
+
+    def encode(self, value):
+        if not str(value) in self._choices:
+            return self._choices[0]
+        return str(value)
+
+
+class SingleThermalStorageParameter(ChoiceParameter):
+    """A (single) building in the zone"""
+    typename = 'SingleThermalStorageParameter'
+
+    def initialize(self, parser):
+        # skip the default ChoiceParameter initialization of _choices
+        pass
+
+    @property
+    def _choices(self):
+        # set the `._choices` attribute to the list buildings in the project
+        locator = cea.inputlocator.InputLocator(self.config.scenario, plugins=[])
+        thermal_storage_names = locator.get_database_conversion_systems_cold_thermal_storage_names()
+        if not thermal_storage_names:
+            raise cea.ConfigError("Either no thermal storage types or no database found - initialize databases")
+        return thermal_storage_names
 
     def encode(self, value):
         if not str(value) in self._choices:

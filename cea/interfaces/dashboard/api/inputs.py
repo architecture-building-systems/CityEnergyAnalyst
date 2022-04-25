@@ -354,7 +354,7 @@ class InputDatabaseData(Resource):
             return read_all_databases(locator.get_databases_folder())
         except IOError as e:
             print(e)
-            abort(500, e.message)
+            abort(500, str(e))
 
     def put(self):
         config = current_app.cea_config
@@ -408,7 +408,7 @@ class InputDatabaseCheck(Resource):
             locator.verify_database_template()
         except IOError as e:
             print(e)
-            abort(500, e.message)
+            abort(500, str(e))
         return {'message': 'Database in path seems to be valid.'}
 
 
