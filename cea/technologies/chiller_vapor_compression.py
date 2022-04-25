@@ -54,7 +54,7 @@ def calc_VCC(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_chw_re_K, T_cw_in_
         q_cw_W = 0.0
 
     elif q_chw_load_Wh > 0.0:
-        COP = calc_COP_with_carnot_efficiency(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, VC_chiller)
+        COP = calc_COP_with_carnot_efficiency(T_chw_sup_K, T_cw_in_K, VC_chiller)
         if COP < 0.0:
             print(f'Negative COP: {COP} {T_chw_sup_K} {T_chw_re_K} {T_cw_in_K}, {q_chw_load_Wh}', )
         # calculate chiller outputs
@@ -77,14 +77,13 @@ def calc_COP(T_cw_in_K, T_chw_re_K, q_chw_load_Wh):
     return COP
 
 
-def calc_COP_with_carnot_efficiency(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, VC_chiller):
+def calc_COP_with_carnot_efficiency(T_chw_sup_K, T_cw_in_K, VC_chiller):
     """
-    Calculate the weighted average Part load factor across all chillers based on load distribution and derive the
-    COP based on that (while assuming carnot efficiency).
+    Calculate vapor compression chiller COP according to [Lee, 2010].
+
+    [Lee, 2010] Tzong-Shing Lee, 2010, Second-Law Analysis to Improve the Energy Efficiency of Screw Liquid Chillers
     """
-    PLF = calc_averaged_PLF(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, VC_chiller)
-    # TODO: Update in documentation where the function below was taken from
-    cop_chiller = VC_chiller.g_value * T_chw_sup_K / (T_cw_in_K - T_chw_sup_K) * PLF
+    cop_chiller = VC_chiller.g_value * T_chw_sup_K / (T_cw_in_K - T_chw_sup_K)
     return cop_chiller
 
 
