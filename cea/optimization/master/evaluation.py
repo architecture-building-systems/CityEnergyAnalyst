@@ -99,7 +99,7 @@ def evaluation_main(individual,
                                                                                   column_names_buildings_heating,
                                                                                   column_names_buildings_cooling)
 
-    print("EVALUATING THE NEXT SYSTEM OPTION/INDIVIDUAL")
+    print("\nEVALUATING THE NEXT SYSTEM OPTION/INDIVIDUAL")
     print(individual_with_name_dict)
     # CREATE CLASS AND PASS KEY CHARACTERISTICS OF INDIVIDUAL
     # THIS CLASS SHOULD CONTAIN ALL VARIABLES THAT MAKE AN INDIVIDUAL CONFIGURATION
@@ -118,33 +118,32 @@ def evaluation_main(individual,
                                                                        technologies_heating_allowed,
                                                                        technologies_cooling_allowed,
                                                                        weather_features,
+                                                                       config
                                                                        )
 
     # DISTRICT HEATING NETWORK
-    print("DISTRICT HEATING OPERATION")
     district_heating_fixed_costs, \
     district_heating_generation_dispatch, \
     district_heating_electricity_requirements_dispatch, \
     district_heating_fuel_requirements_dispatch, \
     district_heating_capacity_installed = heating_main.district_heating_network(locator,
-                                                                                master_to_slave_vars,
                                                                                 config,
+                                                                                master_to_slave_vars,
                                                                                 network_features,
                                                                                 )
 
     # DISTRICT COOLING NETWORK:
-    print("DISTRICT COOLING OPERATION")
     district_cooling_fixed_costs, \
     district_cooling_generation_dispatch, \
     district_cooling_electricity_requirements_dispatch, \
     district_cooling_fuel_requirements_dispatch, \
     district_cooling_capacity_installed = cooling_main.district_cooling_network(locator,
-                                                                                master_to_slave_vars,
                                                                                 config,
-                                                                                network_features)
+                                                                                master_to_slave_vars,
+                                                                                network_features,
+                                                                                weather_features)
 
-    # ELECTRICITY CONSUMPTION CALCULATIONS
-    print("DISTRICT ELECTRICITY GRID OPERATION")
+    # ELECTRICITY CONSUMPTION CALCULATION
     district_electricity_fixed_costs, \
     district_electricity_dispatch, \
     district_electricity_demands, \
@@ -155,8 +154,10 @@ def evaluation_main(individual,
         district_heating_electricity_requirements_dispatch,
         district_cooling_generation_dispatch,
         district_cooling_electricity_requirements_dispatch)
-
+    
     # electricity_main.extract_fuels_demand_buildings(master_to_slave_vars, building_names_all, locator)
+
+    # CALCULATE COSTS AND EMISSIONS
     print("DISTRICT ENERGY SYSTEM - COSTS, PRIMARY ENERGY AND EMISSIONS OF CONNECTED BUILDINGS")
     buildings_district_scale_costs, \
     buildings_district_scale_emissions = cost_model.buildings_district_scale_costs_and_emissions(
@@ -170,7 +171,6 @@ def evaluation_main(individual,
         prices,
         lca)
 
-    print("DISTRICT ENERGY SYSTEM - COSTS, PRIMARY ENERGY AND EMISSIONS OF DISCONNECTED BUILDINGS")
     buildings_building_scale_costs, \
     buildings_building_scale_emissions, \
     buildings_building_scale_heating_capacities, \
@@ -186,8 +186,8 @@ def evaluation_main(individual,
                                                                                    buildings_building_scale_costs,
                                                                                    buildings_building_scale_emissions)
 
-    print('Total TAC in USD = ' + str(TAC_sys_USD))
-    print('Total GHG emissions in tonCO2-eq = ' + str(GHG_sys_tonCO2))
+    print('Total TAC in USD = ' + str(round(TAC_sys_USD)))
+    print('Total GHG emissions in tonCO2-eq = ' + str(round(GHG_sys_tonCO2)))
 
     return TAC_sys_USD, \
            GHG_sys_tonCO2, \

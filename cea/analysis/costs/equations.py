@@ -1,4 +1,9 @@
+
+
+
+
 import numpy_financial as npf
+
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2020, Architecture and Building Systems - ETH Zurich"

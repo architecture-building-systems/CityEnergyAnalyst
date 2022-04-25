@@ -149,12 +149,12 @@ def calc_head_loss_m(diameter_m, max_volume_flow_rates_m3s, coefficient_friction
     return head_loss_m
 
 
-def calc_linear_thermal_loss_coefficient(diamter_ext_m, diamter_int_m, diameter_insulation_m):
-    r_out_m = diamter_ext_m / 2
-    r_in_m = diamter_int_m / 2
+def calc_linear_thermal_loss_coefficient(diameter_ext_m, diameter_int_m, diameter_insulation_m):
+    r_out_m = diameter_ext_m / 2
+    r_in_m = diameter_int_m / 2
     r_s_m = diameter_insulation_m / 2
     k_pipe_WpermK = 58.7  # steel pipe
-    k_ins_WpermK = 0.059  # scalcium silicate insulation
+    k_ins_WpermK = 0.059  # calcium silicate insulation
     resistance_mKperW = ((math.log(r_out_m / r_in_m) / k_pipe_WpermK) + (math.log(r_s_m / r_out_m) / k_ins_WpermK))
     K_WperKm = 2 * math.pi / resistance_mKperW
     return K_WperKm
@@ -230,7 +230,9 @@ def thermal_network_simplified(locator, config, network_name):
             Q_demand_kWh_building[building_name] = substation_results[
                                                        "Q_space_cooling_data_center_and_refrigeration_W"] / 1000
 
-
+    # Prepare the epanet simulation of the thermal network. To do so, as a first step, the epanet-library ist loaded
+    #   from within the set of utilities used by cea. In later steps, the contents of the nodes- and edges-shapefiles
+    #   are transformed in a way that they can be properly interpreted by epanet.
     import cea.utilities
     with cea.utilities.pushd(locator.get_thermal_network_folder()):
         # Create a water network model

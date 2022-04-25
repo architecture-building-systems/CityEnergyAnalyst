@@ -38,6 +38,8 @@ SPEC_VOLUME_STEAM = 0.0010  # m3/kg
 
 # Storage tank
 TANK_HEX_EFFECTIVENESS = 0.9 # assuming 90% effectiveness
+# tank insulation heat transfer coefficient in W/m2-K, value taken from SIA 385
+U_DHWTANK = 0.225
 
 #Chiller
 G_VALUE_CENTRALIZED = 0.47

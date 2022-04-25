@@ -12,7 +12,7 @@ from cea.constants import HOURS_IN_YEAR
 from cea.optimization.constants import T_TANK_FULLY_DISCHARGED_K, DT_COOL, VCC_T_COOL_IN, ACH_T_IN_FROM_CHP_K
 from cea.optimization.master import cost_model
 from cea.optimization.slave.cooling_resource_activation import calc_vcc_CT_operation, cooling_resource_activator
-from cea.optimization.slave.daily_storage.load_leveling import LoadLevelingDailyStorage
+from cea.technologies.storage_tank_pcm import Storage_tank_PCM
 from cea.technologies.chiller_vapor_compression import VaporCompressionChiller
 from cea.technologies.cogeneration import calc_cop_CCGT
 from cea.technologies.thermal_network.thermal_network import calculate_ground_temperature
@@ -20,7 +20,7 @@ from cea.technologies.chiller_absorption import AbsorptionChiller
 from cea.technologies.supply_systems_database import SupplySystemsDatabase
 
 __author__ = "Sreepathi Bhargava Krishna"
-__copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
+__copyright__ = "Copyright 2021, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Sreepathi Bhargava Krishna", "Shanshan Hsieh", "Thuy-An Nguyen", "Tim Vollrath", "Jimeno A. Fonseca"]
 __license__ = "MIT"
 __version__ = "0.1"
@@ -30,9 +30,10 @@ __status__ = "Production"
 
 
 def district_cooling_network(locator,
-                             master_to_slave_variables,
                              config,
-                             network_features):
+                             master_to_slave_variables,
+                             network_features,
+                             weather_features):
     """
     Computes the parameters for the cooling of the complete DCN, including:
      - cost for cooling energy supply
@@ -48,12 +49,14 @@ def district_cooling_network(locator,
     :param config: configurations of cea
     :param network_features: characteristic parameters (pumping energy, mass flow rate, thermal losses & piping cost)
                              of the district cooling/heating network
+    :param weather_features: important environmental parameters (e.g. ambient & ground temperature)
 
     :type locator: cea.inputlocator.InputLocator class object
     :type master_to_slave_variables: cea.optimization.slave_data.SlaveData class object
     :type config: cea.config.Configuration class object
     :type network_features: cea.optimization.distribution.network_optimization_features.NetworkOptimizationFeatures
                             class object
+    :type weather_features: cea.optimization.preprocessing.preprocessing_main.WeatherFeatures class object
 
     :return district_cooling_costs: costs of all district cooling energy technologies (investment and operational costs
                                     of generation, storage and network)
@@ -75,6 +78,7 @@ def district_cooling_network(locator,
     """
 
     if master_to_slave_variables.DCN_exists:
+        print("DISTRICT COOLING OPERATION")
         # THERMAL STORAGE + NETWORK
         # Import Temperatures from Network Summary:
         Q_thermal_req_W, \
@@ -83,14 +87,15 @@ def district_cooling_network(locator,
         mdot_kgpers = calc_network_summary_DCN(master_to_slave_variables)
 
         # Initialize daily storage class
-        T_ground_K = calculate_ground_temperature(locator)
-        daily_storage = LoadLevelingDailyStorage(master_to_slave_variables.Storage_cooling_on,
-                                                 master_to_slave_variables.Storage_cooling_size_W,
-                                                 min(T_district_cooling_supply_K) - DT_COOL,
-                                                 max(T_district_cooling_return_K) - DT_COOL,
-                                                 T_TANK_FULLY_DISCHARGED_K,
-                                                 np.mean(T_ground_K)
-                                                 )
+        T_ground_K = weather_features.ground_temp
+        daily_storage = Storage_tank_PCM(activation=master_to_slave_variables.Storage_cooling_on,
+                                         size_Wh=master_to_slave_variables.Storage_cooling_size_W,
+                                         database_model_parameters= pd.read_excel(locator.get_database_conversion_systems(), sheet_name="TES"),
+                                         T_ambient_K = np.average(T_ground_K),
+                                         type_storage = config.optimization.cold_storage_type,
+                                         debug = master_to_slave_variables.debug
+                                         )
+
 
         # Import Data - cooling energy potential from water bodies
         if master_to_slave_variables.WS_BaseVCC_on == 1 or master_to_slave_variables.WS_PeakVCC_on == 1:
@@ -111,7 +116,8 @@ def district_cooling_network(locator,
         absorption_chiller = AbsorptionChiller(
             pd.read_excel(locator.get_database_conversion_systems(), sheet_name="Absorption_chiller"), 'double')
         CCGT_prop = calc_cop_CCGT(master_to_slave_variables.NG_Trigen_ACH_size_W, ACH_T_IN_FROM_CHP_K, "NG")
-        VC_chiller = VaporCompressionChiller(locator, 'DISTRICT')
+        VC_chiller = VaporCompressionChiller(locator, scale='DISTRICT')
+
 
         # initialize variables
         Q_Trigen_NG_gen_W = np.zeros(HOURS_IN_YEAR)
@@ -120,6 +126,8 @@ def district_cooling_network(locator,
         Q_BaseVCC_AS_gen_W = np.zeros(HOURS_IN_YEAR)
         Q_PeakVCC_AS_gen_W = np.zeros(HOURS_IN_YEAR)
         Q_DailyStorage_gen_directload_W = np.zeros(HOURS_IN_YEAR)
+        Q_DailyStorage_content_W = np.zeros(HOURS_IN_YEAR)
+        Q_DailyStorage_to_storage_W = np.zeros(HOURS_IN_YEAR)
 
         E_Trigen_NG_gen_W = np.zeros(HOURS_IN_YEAR)
         E_BaseVCC_AS_req_W = np.zeros(HOURS_IN_YEAR)
@@ -137,7 +145,9 @@ def district_cooling_network(locator,
         Q_BackupVCC_AS_directload_W = np.zeros(HOURS_IN_YEAR)
 
         for hour in range(HOURS_IN_YEAR):  # cooling supply for all buildings excluding cooling loads from data centers
-            if Q_thermal_req_W[hour] > 0.0:  # only if there is a cooling load!
+            daily_storage.hour = hour
+            if Q_thermal_req_W[hour] > 0.0:
+                # only if there is a cooling load!
                 daily_storage, \
                 thermal_output, \
                 electricity_output, \
@@ -154,6 +164,8 @@ def district_cooling_network(locator,
                                                         master_to_slave_variables)
 
                 Q_DailyStorage_gen_directload_W[hour] = thermal_output['Q_DailyStorage_gen_directload_W']
+                Q_DailyStorage_content_W[hour] = thermal_output['Q_DailyStorage_content_W']
+                Q_DailyStorage_to_storage_W[hour] = thermal_output['Q_DailyStorage_to_storage_W']
                 Q_Trigen_NG_gen_directload_W[hour] = thermal_output['Q_Trigen_NG_gen_directload_W']
                 Q_BaseVCC_WS_gen_directload_W[hour] = thermal_output['Q_BaseVCC_WS_gen_directload_W']
                 Q_PeakVCC_WS_gen_directload_W[hour] = thermal_output['Q_PeakVCC_WS_gen_directload_W']
@@ -205,9 +217,7 @@ def district_cooling_network(locator,
                                                                           mdotnMax_kgpers
                                                                           )
         # CAPEX (ANNUAL, TOTAL) AND OPEX (FIXED, VAR, ANNUAL) STORAGE UNITS
-        performance_costs_storage = cost_model.calc_generation_costs_cooling_storage(locator,
-                                                                                     master_to_slave_variables,
-                                                                                     config,
+        performance_costs_storage = cost_model.calc_generation_costs_cooling_storage(master_to_slave_variables,
                                                                                      daily_storage
                                                                                      )
 
@@ -224,6 +234,8 @@ def district_cooling_network(locator,
     else:
         Q_thermal_req_W = np.zeros(HOURS_IN_YEAR)
         Q_DailyStorage_gen_directload_W = np.zeros(HOURS_IN_YEAR)
+        Q_DailyStorage_content_W = np.zeros(HOURS_IN_YEAR)
+        Q_DailyStorage_to_storage_W = np.zeros(HOURS_IN_YEAR)
         Q_Trigen_NG_gen_directload_W = np.zeros(HOURS_IN_YEAR)
         Q_BaseVCC_WS_gen_directload_W = np.zeros(HOURS_IN_YEAR)
         Q_PeakVCC_WS_gen_directload_W = np.zeros(HOURS_IN_YEAR)
@@ -255,6 +267,9 @@ def district_cooling_network(locator,
         # ENERGY GENERATION TO DIRECT LOAD
         # from storage
         "Q_DailyStorage_gen_directload_W": Q_DailyStorage_gen_directload_W,
+        "Q_DailyStorage_content_W": Q_DailyStorage_content_W,
+        "Q_DailyStorage_to_storage_W": Q_DailyStorage_to_storage_W,
+
         # cooling
         "Q_Trigen_NG_gen_directload_W": Q_Trigen_NG_gen_directload_W,
         "Q_BaseVCC_WS_gen_directload_W": Q_BaseVCC_WS_gen_directload_W,

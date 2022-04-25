@@ -24,7 +24,7 @@ SHAPEFILE_TOLERANCE = 6  # this is precision in millimeters
 SNAP_TOLERANCE = 0.1  # this is precision in meters increase if having problems.
 
 HEAT_CAPACITY_OF_WATER_VAPOR_JPERKGK = 1859  # specific heat capacity of water vapor in KJ/kgK
-ASPECT_RATIO = 3.3  # tank height aspect ratio, H=(4*V*AR^2/pi)^(1/3), taken from commercial tank geometry (jenni.ch)
+ASPECT_RATIO = 3.3  # tank height aspect ratio h/D -> H=(4*V*AR^2/pi)^(1/3); taken from com. tank geometry (jenni.ch)
 LATENT_HEAT_OF_AIR_KJPERKG = 2257  # latent heat of air kJ/kg
 
 # grey emissions
