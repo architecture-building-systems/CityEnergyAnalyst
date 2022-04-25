@@ -4680,29 +4680,44 @@ get_database_conversion_systems:
     TES:
       columns:
         Description:
-          description: Describes the source of the benchmark standards.
+          description: Describes the thermal energy storage technology
           type: string
-          unit: 'NA'
+          unit: '[-]'
+          values: 'any'
+        code:
+          description: Unique code that identifies the thermal energy storage technology
+          type: string
+          unit: '[-]'
           values: 'NA'
-        IR_%:
-          description: interest rate charged on the loan for the capital cost
-          min: 0.0
-          type: float
+        type:
+          description: code that identifies whether the storage is used for heating or cooling (different properties of the transport media)
+          type: string
           unit: '[-]'
-          values: '{0.0...n}'
-        LT_yr:
-          description: lifetime of this technology
-          min: 0
-          type: int
-          unit: "[yr]"
-          values: '{0...n}'
-        O&M_%:
-          description: operation and maintanence cost factor (fraction of the investment
-            cost)
-          min: 0.0
+          values: '{COOLING,HEATING}'
+        cap_min:
+          description: minimum capacity
           type: float
-          unit: '[-]'
+          unit: '[m3 or kWh]'
           values: '{0.0...n}'
+          min: 0.0
+        cap_max:
+          description: maximum capacity
+          type: float
+          unit: '[m3 or kWh]'
+          values: '{0.0...n}'
+          min: 0.0
+        unit:
+          description: unit which describes the minimum and maximum capacity
+          type: string
+          unit: NA
+          values: '{m3, kWh}'
+        currency:
+          description: currency-year information of the investment cost function,
+            should be unified to USD
+          regex: ^[A-Z]{3}-\d{4}$
+          type: string
+          unit: NA
+          values: '{"USD-2015"}'
         a:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
             + d*ln(x) + e*x*ln*(x), where x is the capacity '
@@ -4710,12 +4725,6 @@ get_database_conversion_systems:
           unit: '[-]'
           values: '{0.0...n}'
           min: 0.0
-        assumption:
-          description: items made by assumptions in this technology
-          nullable: true
-          type: string
-          unit: 'NA'
-          values: depends on the data availability
         b:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
             + d*ln(x) + e*x*ln*(x), where x is the capacity '
@@ -4730,30 +4739,6 @@ get_database_conversion_systems:
           unit: '[-]'
           values: '{0.0...n}'
           min: 0.0
-        cap_max:
-          description: 'maximum capacity '
-          type: float
-          unit: '[m3]'
-          values: '{0.0...n}'
-          min: 0.0
-        cap_min:
-          description: minimum capacity
-          type: float
-          unit: '[m3]'
-          values: '{0.0...n}'
-          min: 0.0
-        code:
-          description: identifier of each unique equipment
-          type: string
-          unit: 'NA'
-          values: alphanumeric
-        currency:
-          description: currency-year information of the investment cost function,
-            should be unified to USD
-          regex: ^[A-Z]{3}-\d{4}$
-          type: string
-          unit: NA
-          values: '{"USD-2015"}'
         d:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
             + d*ln(x) + e*x*ln*(x), where x is the capacity '
@@ -4767,11 +4752,79 @@ get_database_conversion_systems:
           type: float
           unit: '[-]'
           values: '{n...n}'
-        unit:
-          description: unit of the min/max capacity
+        LT_yr:
+          description: lifetime of this storage technology
+          min: 0
+          type: int
+          unit: "[yr]"
+          values: '{0...n}'
+        LT_mat_yr:
+          description: lifetime of the working fluid of this storage technology
+          min: 0
+          type: int
+          unit: "[yr]"
+          values: '{0...n}'
+        O&M_%:
+          description: operation and maintnance cost factor (fraction of the investment cost)
+          min: 0.0
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+        IR_%:
+          description: interest rate charged on the loan for the capital cost
+          min: 0.0
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+        C_mat_%:
+          description: Working fluid replacement cost factor (fraction of the investment cost)
+          min: 0.0
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+        T_PHCH_C:
+          description: Phase change temperature of working fluid
+          min: 0.0
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+        T_min_C:
+          description: Minimum temperature of working fluid at full charge
+          min: -10.0
+          max: 90.0
+          type: float
+          unit: '[-]'
+          values: '{-10.0...n}'
+        T_max_C:
+          description: Maximum temperature of working fluid at full discharge
+          min: 0.0
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+        HL_kJkg:
+          description: Lantent heat of working fluid at phase change temperature
+          min: 0.0
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+        Rho_T_PHCH_kgm3:
+          description: Density of working fluid at phase change temperature
+          min: 0.0
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+        Cp_kJkgK:
+          description: heat capacity of working fluid
+          min: 0.0
+          type: float
+          unit: '[kJ/kg.K]'
+          values: '{0.0...n}'
+        assumption:
+          description: items made by assumptions in this storage technology
+          nullable: true
           type: string
           unit: 'NA'
-          values: '{"m3"}'
+          values: depends on the data availability
   used_by:
   - decentralized
   - optimization
@@ -11026,12 +11079,43 @@ get_optimization_slave_cooling_activation_pattern:
   file_type: csv
   schema:
     columns:
-      DATE:
-        description: TODO
-        type: date
-        unit: TODO
-        values: TODO
-  used_by: []
+      Q_DailyStorage_gen_directload_W:
+        description: Thermal energy supplied from the short-term thermal storage
+        type: float
+        unit: '[W]'
+        values: '{0.0...n}'
+        min: 0.0
+      Q_DailyStorage_content_W:
+        description: Thermal energy content of the short-term thermal storage
+        type: float
+        unit: '[W]'
+        values: '{0.0...n}'
+        min: 0.0
+      Capacity_DailyStorage_WS_cool_district_scale_W:
+        description: Installed capacity of the short-term thermal storage
+        type: float
+        unit: '[W]'
+        values: '{0.0...n}'
+        min: 0.0
+      Capex_total_DailyStorage_WS_cool_district_scale_USD:
+        description: Total capital costs of the short-term thermal storage
+        type: float
+        unit: '[USD-2015]'
+        values: '{0.0...n}'
+        min: 0.0
+      Capex_a_DailyStorage_WS_cool_district_scale_USD:
+        description: Annualized capital costs of the short-term thermal storage
+        type: float
+        unit: '[USD-2015/yr]'
+        values: '{0.0...n}'
+        min: 0.0
+      Opex_fixed_DailyStorage_WS_cool_district_scale_USD:
+        description: Fixed operational costs of the short-term thermal storage
+        type: float
+        unit: '[USD-2015]'
+        values: '{0.0...n}'
+        min: 0.0
+  used_by: [optimization]
 get_optimization_slave_building_scale_performance:
   created_by:
   - optimization

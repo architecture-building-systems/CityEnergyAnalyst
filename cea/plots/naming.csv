@@ -279,7 +279,10 @@ Activation curve,Q_BackupBoiler_gen_directload_W,W,Back-up boiler generation,gre
 Activation curve,Q_Storage_gen_directload_W,W,Seasonal thermal storage to direct load,red_light
 Activation curve,Q_districtheating_sys_req_W,W,Final heating load of the district heating network,grey_light
 
+Activation curve,Q_DailyStorage_to_storage_W,W,Daily thermal storage charge received,blue
+Activation curve,T_DailyStorage_C,W,Daily thermal storage Temperature,orange
 Activation curve,Q_DailyStorage_gen_directload_W,W,Daily thermal storage to direct load,red_light
+Activation curve,Q_DailyStorage_content_W,W,Daily thermal storage content,grey
 Activation curve,Q_Trigen_NG_gen_directload_W,W,NG-fired trigeneration to direct load,blue
 Activation curve,Q_BaseVCC_WS_gen_directload_W,W,Water-source Base VCC to direct load,blue_light
 Activation curve,Q_PeakVCC_WS_gen_directload_W,W,Water-source Peak VCC to direct load,blue_lighter
