@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Sewage source heat exchanger
+Water body potential
 """
 
 
@@ -25,9 +25,9 @@ __status__ = "Production"
 
 def calc_lake_potential(locator, config):
     """
-    Wuick calcualtion of lake potential. THis does nore refere to CEA original publication.
-    In that case, the implementation of the Lkae potential algorithm was carried out with another tool and then
-    the resutls was implemented in CEA for a specific case study
+    Quick calculation of lake potential. This does not refer to CEA original publication.
+    In that case, the implementation of the lake potential algorithm was carried out with another tool and then
+    the result was implemented in CEA for a specific case study.
     # TODO: create proper lake potential model
     """
     # local variables

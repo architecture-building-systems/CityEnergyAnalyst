@@ -75,12 +75,7 @@ def geometry_extractor_osm(locator, config):
 
     # project coordinate system
     data = data.to_crs(get_projected_coordinate_system(float(lat_min), float(lon_min)))
-
-    # clean data and save to shapefile
-    data.loc[:, "highway"] = [x[0] if type(x) == list else x for x in data["highway"].values]
-    data.loc[:, "name"] = [x[0] if type(x) == list else x for x in data["name"].values]
-    data.fillna(value={"name": "Unknown", "highway": "Unknown", "geometry": None}, inplace=True)
-    data[['geometry', "name", "highway"]].to_file(shapefile_out_path)
+    data[['geometry']].to_file(shapefile_out_path)
 
 
 def main(config):

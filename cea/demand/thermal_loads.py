@@ -187,8 +187,9 @@ def write_results(bpr, building_name, date, loads_output, locator, massflows_out
         print('Writing detailed demand results of {} to .xls file.'.format(building_name))
         reporting.quick_visualization_tsd(tsd, locator.get_demand_results_folder(), building_name)
         reporting.full_report_to_xls(tsd, locator.get_demand_results_folder(), building_name)
+        writer.results_to_csv(tsd, bpr, locator, date, building_name, debug=True)
     else:
-        writer.results_to_csv(tsd, bpr, locator, date, building_name)
+        writer.results_to_csv(tsd, bpr, locator, date, building_name, debug=False)
 
 
 def calc_Qcs_sys(bpr, tsd):

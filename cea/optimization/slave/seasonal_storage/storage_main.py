@@ -34,7 +34,7 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def storage_optimization(locator, master_to_slave_vars, config):
+def storage_optimization(locator, master_to_slave_vars):
     """
     This function performs the storage optimization and stores the results in the designated folders
     :param locator: locator class
@@ -45,7 +45,7 @@ def storage_optimization(locator, master_to_slave_vars, config):
     :return: The function saves all files when it's done in the location locator.get_potentials_solar_folder()
     :rtype: Nonetype
     """
-    print("Storage Optimization Ready")
+    print("SEASONAL STORAGE OPTIMIZATION")
     T_storage_old_K = master_to_slave_vars.T_storage_zero
     Q_in_storage_old = master_to_slave_vars.Q_in_storage_zero
 

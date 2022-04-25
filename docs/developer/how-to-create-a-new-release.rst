@@ -69,7 +69,7 @@ Update the CREDITS.md file
 --------------------------
 
 For each minor release (2.2, 2.3, ...) the ``CREDITS.md`` file needs to be updated to include all the authors that
-worked on that release.
+worked on that release. Update the "How to Cite" section with the Zenodo link to the correct version and doi.
 
 
 Update CHANGELOG
@@ -79,22 +79,10 @@ Update CHANGELOG
 - Update ``CHANGELOG.md`` with the latest changes from the outputs.
 
 
-Merge the Release Branch
--------------------------
-
-- Merge the branch ``Release-x.x.x`` into master.
-
-
-Create a Release Draft on GitHub
---------------------------------
-
-- Tag the release with the correct version number.
-
-
 Updating the CEA GUI interface
 ------------------------------
 
-You'll need yarn_ installed.
+You'll need yarn_ and `Node.js <https://nodejs.org/en/>`_ installed.
 
 .. _yarn: https://classic.yarnpkg.com/en/docs/install/#windows-stable
 
@@ -107,7 +95,7 @@ For the installer to be able to pick up the newest version of the CEA GUI interf
 Creating the installer
 ----------------------
 
-- First, make sure you have the Nullsoft Scriptable Installation System (NSIS) installed. See :doc:`how-to-set-up-nsis`
+- First, make sure you have the Nullsoft Scriptable Installation System (NSIS) installed. See :docs:`how-to-set-up-nsis`
 - Next, make sure the command `cea-dev build` is configured properly. The configuration should look something like this::
 
     (CEA) λ cea-config build
@@ -115,7 +103,7 @@ Creating the installer
     Configuring `cea build` with the following parameters:
     - development:nsis = C:\Program Files (x86)\NSIS\Bin\makensis.exe
       (default: )
-    - development:conda = C:\Users\darthoma\Miniconda2\condabin\conda.bat
+    - development:conda = C:\Users\darthoma\miniconda3\condabin\conda.bat
       (default: )
     - development:gui = c:\Users\darthoma\Documents\GitHub\CityEnergyAnalyst-GUI
       (default: )
@@ -132,6 +120,10 @@ installation. The path to ``gui`` should be set to the repository folder of the 
   a new conda environment for the version, conda-pack it, and do a lot of compressing.
 - Locate the installer in the CityEnergyAnalyst repository under ``setup/Output``.
 
+Create a Release Draft on GitHub
+--------------------------------
+
+- Tag the release with the correct version number.
 
 Testing in a virtual machine
 ----------------------------
@@ -148,11 +140,20 @@ can be found that way.
 
 .. _VirtualBox: https://www.virtualbox.org/
 
+Merge the Release Branch
+-------------------------
+- Update the "How to Cite" section inside CREDITS.md with the Zenodo link to the correct version and doi.
+- Merge the branch ``Release-x.x.x`` into master.
 
 Publish the Release on GitHub
 -----------------------------
-The release should be published so that it could be found on GitHub for testing (the next step). Add the installer
-you created in the previous step.
+- The release should be published so that it could be found on the CityEnergyAnalyst_ repository on GitHub. Add the
+installer you created in the previous step.
+- It is recommended to also publish a release on the CityEnergyAnalyst-GUI_ repository that corresponds to the version
+on the CityEnergyAnalyst_ repository.
+
+.. _CityEnergyAnalyst: https://github.com/architecture-building-systems/CityEnergyAnalyst
+.. _CityEnergyAnalyst-GUI: https://github.com/architecture-building-systems/CityEnergyAnalyst-GUI/releases
 
 
 Building the documentation
