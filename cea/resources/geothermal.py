@@ -64,6 +64,7 @@ def calc_area_buildings(locator, buildings_list):
     return area_below_buildings
 
 
+
 def calc_ground_temperature(T_ambient_C, depth_m):
     """
     Calculates hourly ground temperature fluctuation over a year following [Kusuda, T. et al., 1965]_.
