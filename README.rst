@@ -1,6 +1,6 @@
 |pic1| |pic2| |pic3|
 
-.. |pic1| image:: https://img.shields.io/github/license/architecture-building-systems/CityEnergyAnalyst
+.. |pic1| image:: https://img.shields.io/badge/License-MIT-blue.svg
     :alt: GitHub license
 .. |pic2| image:: https://img.shields.io/github/repo-size/architecture-building-systems/CityEnergyAnalyst
     :alt: Repo Size
@@ -37,7 +37,7 @@ allows to study the effects, trade-offs and synergies of urban design options, b
 Cite us:
 --------
 
-For V3.29.0 (stable):    |V3.29.0|
+For V3.30.0 (stable):    |V3.30.0|
 
-.. |V3.29.0| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.6483965.svg
-   :target: https://doi.org/10.5281/zenodo.6483965
+.. |V3.30.0| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.6494266.svg
+   :target: https://doi.org/10.5281/zenodo.6494266
