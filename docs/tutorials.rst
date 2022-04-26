@@ -21,15 +21,12 @@ These are a collection of tutorials we consider essential for any new developer 
 #. :doc:`how-to-name-variables`
 #. :doc:`how-to-add-a-new-script-to-the-cea`
 #. :doc:`how-to-test-the-cea`
-#. :doc:`how-to-review-a-pull-request`
 #. :doc:`how-to-set-up-nsis`
-#. :doc:`how-to-create-a-new-release`
 #. :doc:`how-to-publish-cea`
 #. :doc:`how-trace-inputlocator-works`
 #. :doc:`how-to-document-cea`
-#. :doc:`run-the-cea-in-docker`
 
-LEGACY
+Legacy
 ------
 
 Collection of outdated information about past functionality of CEA (use at your own risk)
