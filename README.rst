@@ -1,6 +1,6 @@
 |pic1| |pic2| |pic3|
 
-.. |pic1| image:: https://img.shields.io/github/license/architecture-building-systems/CityEnergyAnalyst
+.. |pic1| image:: https://img.shields.io/badge/License-MIT-blue.svg
     :alt: GitHub license
 .. |pic2| image:: https://img.shields.io/github/repo-size/architecture-building-systems/CityEnergyAnalyst
     :alt: Repo Size
