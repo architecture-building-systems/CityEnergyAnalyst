@@ -12,7 +12,6 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
-   cea.optimization.slave.daily_storage
    cea.optimization.slave.seasonal_storage
 
 Submodules

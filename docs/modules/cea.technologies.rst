@@ -147,6 +147,14 @@ cea.technologies.storage\_tank module
    :undoc-members:
    :show-inheritance:
 
+cea.technologies.storage\_tank\_pcm module
+------------------------------------------
+
+.. automodule:: cea.technologies.storage_tank_pcm
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 cea.technologies.storagetank\_cc module
 ---------------------------------------
 
