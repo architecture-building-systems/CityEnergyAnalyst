@@ -69,7 +69,7 @@ Update the CREDITS.md file
 --------------------------
 
 For each minor release (2.2, 2.3, ...) the ``CREDITS.md`` file needs to be updated to include all the authors that
-worked on that release.
+worked on that release. Update the "How to Cite" section with the Zenodo link to the correct version and doi.
 
 
 Update CHANGELOG
@@ -77,18 +77,6 @@ Update CHANGELOG
 
 - Run ``create-changelog.py`` in ``CityEnergyAnalyst\bin``.
 - Update ``CHANGELOG.md`` with the latest changes from the outputs.
-
-
-Merge the Release Branch
--------------------------
-
-- Merge the branch ``Release-x.x.x`` into master.
-
-
-Create a Release Draft on GitHub
---------------------------------
-
-- Tag the release with the correct version number.
 
 
 Updating the CEA GUI interface
@@ -132,6 +120,10 @@ installation. The path to ``gui`` should be set to the repository folder of the 
   a new conda environment for the version, conda-pack it, and do a lot of compressing.
 - Locate the installer in the CityEnergyAnalyst repository under ``setup/Output``.
 
+Create a Release Draft on GitHub
+--------------------------------
+
+- Tag the release with the correct version number.
 
 Testing in a virtual machine
 ----------------------------
@@ -148,6 +140,10 @@ can be found that way.
 
 .. _VirtualBox: https://www.virtualbox.org/
 
+Merge the Release Branch
+-------------------------
+- Update the "How to Cite" section inside CREDITS.md with the Zenodo link to the correct version and doi.
+- Merge the branch ``Release-x.x.x`` into master.
 
 Publish the Release on GitHub
 -----------------------------
