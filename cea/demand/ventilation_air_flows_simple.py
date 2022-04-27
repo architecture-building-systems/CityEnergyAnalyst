@@ -25,7 +25,6 @@ __status__ = "Production"
 # get values of global variables
 ETA_REC = constants.ETA_REC  # constant efficiency of Heat recovery
 DELTA_P_DIM = constants.DELTA_P_DIM
-H_F = constants.H_F
 
 
 def calc_air_mass_flow_mechanical_ventilation(bpr, tsd, t):
@@ -148,7 +147,7 @@ def calc_m_ve_leakage_simple(bpr, tsd):
 
     # estimation of infiltration air volume flow rate according to Eq. (3) in DIN 1946-6
     n_inf = 0.5 * n50 * (DELTA_P_DIM / 50) ** (2 / 3)  # [air changes per hour] m3/h.m2
-    infiltration = H_F * area_f * n_inf * 0.000277778  # m3/s
+    infiltration = bpr.geometry['floor_height'] * area_f * n_inf * 0.000277778  # m3/s
 
     tsd['m_ve_inf'] = infiltration * physics.calc_rho_air(tsd['T_ext'][:])  # (kg/s)
 
