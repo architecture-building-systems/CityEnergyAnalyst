@@ -113,6 +113,32 @@ class Configuration(object):
             self.restricted_to.append('general:project')
             self.restricted_to.append('general:scenario-name')
 
+    def temp_restrictions(self, parameters):
+        """
+        Apply temporary restricts to script using context manager
+        """
+
+        class TempRestrictions:
+            def __init__(self, _config, _parameters):
+                self.config = _config
+                self.parameters = _parameters
+                self.old_restrictions = None
+
+            def apply(self):
+                self.old_restrictions = self.config.restricted_to
+                self.config.restrict_to(self.parameters)
+
+            def clear(self):
+                self.config.restricted_to = self.old_restrictions
+
+            def __enter__(self):
+                self.apply()
+
+            def __exit__(self, exc_type, exc_val, exc_tb):
+                self.clear()
+
+        return TempRestrictions(self, parameters)
+
     def ignore_restrictions(self):
         """Create a ``with`` block where the config file restrictions are not kept. Usage::
 
