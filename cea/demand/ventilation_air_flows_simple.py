@@ -147,7 +147,7 @@ def calc_m_ve_leakage_simple(bpr, tsd):
 
     # estimation of infiltration air volume flow rate according to Eq. (3) in DIN 1946-6
     n_inf = 0.5 * n50 * (DELTA_P_DIM / 50) ** (2 / 3)  # [air changes per hour] m3/h.m2
-    infiltration = bpr.geometry['floor_height'] * area_f * n_inf * 0.000277778  # m3/s
+    infiltration = bpr.geometry['floor_height'] * area_f * n_inf / 3600  # m3/s
 
     tsd['m_ve_inf'] = infiltration * physics.calc_rho_air(tsd['T_ext'][:])  # (kg/s)
 
