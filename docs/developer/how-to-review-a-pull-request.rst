@@ -43,7 +43,7 @@ Additionally, it is always a good idea to run a complete test (``cea test --work
 If Jenkins encounter any errors, you can also reproduce those errors by running ``cea test --workflow quick`` locally.
 See here_ for more information on ``cea test``.
 
-.. _here: :doc:`how-to-test-the-cea`
+.. _here: https://city-energy-analyst.readthedocs.io/en/latest/how-to-test-the-cea.html
 .. _Jenkins: https://jenkins.io/
 
 Once ``cea test`` is passed, the reviewer may proceed to the last step!
