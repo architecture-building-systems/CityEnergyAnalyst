@@ -3,13 +3,13 @@ How to review a pull request
 
 Code review could be time-consuming, but it is extremely important.
 All pull requests (PR) to the CEA should be reviewed by at least one contributor with maintanence right.
-The reviewer needs to ensure the changes in the code are align with the authors' description and does not compromise
+The reviewer needs to ensure the changes in the code are aligned with the authors' description and do not compromise
 the existing functionalities in the CEA.
 
 1. Read the PR description and follow the test
 ----------------------------------------------
 
-The author of the PR should provide the instruction on how to test the implementation of the new changes.
+The author of the PR should provide an instruction on how to test the implementation of the new changes.
 As the reviewer, you should be able to follow the instruction provided by the PR's author, or provide feedback if the
 instruction is unclear.
 Once the test provided by the author has passed, the reviewer may proceed to the next step.
@@ -26,9 +26,9 @@ During this process, the reviewer should check for:
 
  - Conflicts with master. Make sure the branch is updated with the latest master, and all conflicts are resolved.
  - Sufficient documentation. Check if the documentation_ is sufficient for the next person to understand the code.
- - Hard-coded values. All hard-coded values should be avoid if possible.
- - Unit tests to implement. The reviewer should decide whether a unit test should be implemented, and request the PR author accordingly.
- - Changes that might affect other existing functions. In this case, the reviewer should come up with a test to ensure the existing functions are still function as intended.
+ - Hard-coded values. All hard-coded values should be avoided if possible.
+ - Unit tests to implement. The reviewer should decide whether a unit test should be implemented, and request the PR author to implement one accordingly.
+ - Changes that might affect other existing functions. In this case, the reviewer should come up with a test to ensure the existing functions are still working as intended.
 
 .. _documentation: :doc:`how-to-document-cea`
 
@@ -36,11 +36,11 @@ Once all the points are checked out, the reviewer may proceed to the next step.
 
 3. Run tests
 ------------
-All PR is automatically sent to test by the Jenkins_, it executes ``cea test --workflow quick`` on a remote computer.
-The test results is directly shown in the PR page on GitHub.
+All PRs are automatically sent to test by Jenkins_, it executes ``cea test --workflow quick`` on a remote computer.
+The test result is directly shown in the PR page on GitHub.
 
 Additionally, it is always a good idea to run a complete test (``cea test --workflow slow``) on your local computer.
-If Jenkins encounter any errors, you can also reproduce those errors by running ``cea test --workflow quick`` locally.
+If Jenkins encounters any errors, you can also reproduce those errors by running ``cea test --workflow quick`` locally.
 See here_ for more information on ``cea test``.
 
 .. _here: https://city-energy-analyst.readthedocs.io/en/latest/how-to-test-the-cea.html
@@ -53,5 +53,5 @@ Once ``cea test`` is passed, the reviewer may proceed to the last step!
 
 Now you have made sure the PR is going to improve the CEA, thank you for your time!
 You may go ahead and merge the PR.
-If the new changes would affect many users, you might consider publish it on the #_critical_updates channel on Slack.
+If the new changes would affect many users, you might want to consider publishing it on the #_critical_updates channel on Slack.
 
