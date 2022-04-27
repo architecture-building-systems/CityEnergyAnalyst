@@ -52,6 +52,7 @@ DELTA_P_1 = 0.1  # delta of pressure
 F_SR = 0.3  # factor for pressure calculation
 HOURS_OP = 5  # assuming around 2000 hours of operation per year. It is charged to the electrical system from 11 am to 4 pm
 EFFI = 0.6  # efficiency of pumps
+BUILDING_HEIGHT_PUMPING_REQUIRED = 15 # m pumping required for buildings above 15 m
 
 # WATER
 FLOWTAP = 0.036  # in m3 == 12 l/min during 3 min every tap opening
