@@ -20,7 +20,7 @@ Once the test provided by the author has passed, the reviewer may proceed to the
 It is always a good idea to go through all the changes at least once.
 Please follow this guide_ to review the file changes on GitHub.
 
-_guide: https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/reviewing-changes-in-pull-requests/reviewing-proposed-changes-in-a-pull-request
+.. _guide: https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/reviewing-changes-in-pull-requests/reviewing-proposed-changes-in-a-pull-request
 
 During this process, the reviewer should check for:
 
