@@ -27,7 +27,10 @@ class TestDistrictCooling(unittest.TestCase):
     locator = None
 
     @classmethod
-    def setUpClass(cls):
+    def setUpClass(cls, debug=False):
+        # set debugging variable. Set to True if you wish to analyse details of the district cooling activation script
+        cls.debug = debug
+
         # get locator and config variables for the reference case, which will also be used to test the
         # district cooling operation functions
         cls.locator = cea.inputlocator.ReferenceCaseOpenLocator()
@@ -51,7 +54,9 @@ class TestDistrictCooling(unittest.TestCase):
         cls.test_config.read(os.path.join(os.path.dirname(__file__), 'test_district_cooling.config'))
 
         # GENERAL
-        cls.slave_variables.debug = False
+        # Setting the slave variable debug variable equal to cls.debug allows testing of specific functionalities within
+        # the cooling_main script
+        cls.slave_variables.debug = cls.debug
 
         # DISTRICT COOLING
         # buildings connected
@@ -171,13 +176,13 @@ class TestDistrictCooling(unittest.TestCase):
                                    district_cooling_generation_dispatch,
                                    district_cooling_electricity_requirements_dispatch,
                                    district_cooling_fuel_requirements_dispatch,
-                                   district_cooling_fixed_costs]
+                                   district_cooling_capacity_installed]
 
         expected_value_dictionaries = [expected_district_cooling_fixed_costs,
                                        expected_district_cooling_generation_dispatch,
                                        expected_district_cooling_electricity_requirements_dispatch,
                                        expected_district_cooling_fuel_requirements_dispatch,
-                                       expected_district_cooling_fixed_costs]
+                                       expected_district_cooling_capacity_installed]
 
         for test_value_dict, expected_value_dict in zip(test_value_dictionaries, expected_value_dictionaries):
             test_values = []
