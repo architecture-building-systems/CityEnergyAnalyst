@@ -24,17 +24,18 @@ def register_scripts():
                 config = cea.config.Configuration()
 
             option_list = cea_script.parameters
-            config.restrict_to(option_list)
-            for section, parameter in config.matching_parameters(option_list):
-                if parameter.py_name in kwargs:
-                    parameter.set(kwargs[parameter.py_name])
-            cea_script.print_script_configuration(config)
-            if list(cea_script.missing_input_files(config)):
-                cea_script.print_missing_input_files(config)
-                raise cea.MissingInputDataException()
-            t0 = datetime.datetime.now()
-            # run the script
-            script_module.main(config)
+
+            with config.temp_restrictions(option_list):
+                for section, parameter in config.matching_parameters(option_list):
+                    if parameter.py_name in kwargs:
+                        parameter.set(kwargs[parameter.py_name])
+                cea_script.print_script_configuration(config)
+                if list(cea_script.missing_input_files(config)):
+                    cea_script.print_missing_input_files(config)
+                    raise cea.MissingInputDataException()
+                t0 = datetime.datetime.now()
+                # run the script
+                script_module.main(config)
 
             # print success message
             msg = "Script completed. Execution time: %.2fs" % (datetime.datetime.now() - t0).total_seconds()
