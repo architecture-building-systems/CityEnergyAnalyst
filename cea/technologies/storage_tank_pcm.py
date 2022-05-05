@@ -211,12 +211,12 @@ class Storage_tank_PCM(object):
                     effective_load_to_storage_Wh = self.size_Wh
                     new_storage_capacity_Wh = self.size_Wh
                     new_phase = self.new_phase_tank(new_storage_capacity_Wh)
-                    new_T_tank_K = self.new_temperature_tank(new_phase, new_storage_capacity_Wh, -effective_load_to_storage_Wh)
+                    new_T_tank_K = self.new_temperature_tank(new_phase, new_storage_capacity_Wh, self.current_thermal_gain_Wh-effective_load_to_storage_Wh)
                 # CASE 1.2 the effective load is smaller than the capacity of the storage
                 elif effective_load_to_storage_Wh < self.size_Wh:
                     new_storage_capacity_Wh = effective_load_to_storage_Wh
                     new_phase = self.new_phase_tank(new_storage_capacity_Wh)
-                    new_T_tank_K = self.new_temperature_tank(new_phase, new_storage_capacity_Wh, -effective_load_to_storage_Wh)
+                    new_T_tank_K = self.new_temperature_tank(new_phase, new_storage_capacity_Wh, self.current_thermal_gain_Wh-effective_load_to_storage_Wh)
 
             # CASE 2 the storage is partially full or full
             elif 0.0 < state_the_storage_after_thermal_gain <= self.size_Wh:
@@ -225,13 +225,13 @@ class Storage_tank_PCM(object):
                     effective_load_to_storage_Wh = self.size_Wh - state_the_storage_after_thermal_gain
                     new_storage_capacity_Wh = self.size_Wh
                     new_phase = self.new_phase_tank(new_storage_capacity_Wh)
-                    new_T_tank_K = self.new_temperature_tank(new_phase, new_storage_capacity_Wh, -effective_load_to_storage_Wh)
+                    new_T_tank_K = self.new_temperature_tank(new_phase, new_storage_capacity_Wh, self.current_thermal_gain_Wh-effective_load_to_storage_Wh)
                 # CASE 2.2 the effective load + the storage capacity now is lower than the total capacity
                 elif (state_the_storage_after_thermal_gain + effective_load_to_storage_Wh) < self.size_Wh:
                     effective_load_to_storage_Wh = effective_load_to_storage_Wh
                     new_storage_capacity_Wh = state_the_storage_after_thermal_gain + effective_load_to_storage_Wh
                     new_phase = self.new_phase_tank(new_storage_capacity_Wh)
-                    new_T_tank_K = self.new_temperature_tank(new_phase, new_storage_capacity_Wh, -effective_load_to_storage_Wh)
+                    new_T_tank_K = self.new_temperature_tank(new_phase, new_storage_capacity_Wh, self.current_thermal_gain_Wh-effective_load_to_storage_Wh)
 
             # recalculate the storage capacity after losses
             final_load_to_storage_Wh = effective_load_to_storage_Wh / self.charging_efficiency
@@ -288,13 +288,13 @@ class Storage_tank_PCM(object):
                     effective_load_from_storage_Wh = state_the_storage_after_thermal_gain
                     new_storage_capacity_Wh = 0.0
                     new_phase = self.new_phase_tank(new_storage_capacity_Wh)
-                    new_T_tank_K = self.new_temperature_tank(new_phase, new_storage_capacity_Wh, effective_load_from_storage_Wh)
+                    new_T_tank_K = self.new_temperature_tank(new_phase, new_storage_capacity_Wh, self.current_thermal_gain_Wh + effective_load_from_storage_Wh)
                 # CASE 2.2 the request is just right and it will not empty the storage
                 elif (state_the_storage_after_thermal_gain - effective_load_from_storage_Wh) >= 0.0:
                     effective_load_from_storage_Wh = effective_load_from_storage_Wh
                     new_storage_capacity_Wh = state_the_storage_after_thermal_gain - effective_load_from_storage_Wh
                     new_phase = self.new_phase_tank(new_storage_capacity_Wh)
-                    new_T_tank_K = self.new_temperature_tank(new_phase, new_storage_capacity_Wh, effective_load_from_storage_Wh)
+                    new_T_tank_K = self.new_temperature_tank(new_phase, new_storage_capacity_Wh, self.current_thermal_gain_Wh + effective_load_from_storage_Wh)
 
             # recalculate the storage capacity after losses
             final_load_from_storage_Wh = effective_load_from_storage_Wh * self.discharging_efficiency
