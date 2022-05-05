@@ -96,7 +96,7 @@ class TestColdPcmThermalStorage(unittest.TestCase):
 
         # calculate results to assert
         results = data.sum().values
-        # Just for the checkResults - check assertion
+        # Just for the result comparison - check assertion
         if checkResults:
             np.testing.assert_allclose(results, self.expected_results)
 
@@ -112,7 +112,7 @@ class TestColdPcmThermalStorage(unittest.TestCase):
 
         # calculate results to assert
         results = [tank.V_tank_m3, Capex_a_storage_USD, Opex_fixed_storage_USD, Capex_total_USD]
-        # Just for the checkResults - check assertion
+        # Just for the result comparison - check assertion
         if checkResults:
             np.testing.assert_allclose(results, self.expected_results_costs)
 
