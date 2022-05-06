@@ -282,6 +282,12 @@ def cooling_resource_activator(Q_thermal_req,
 
     # IN DEBUG-MODE: Check how much of the available water body potential was used in this timestep and display it
     if master_to_slave_variables.debug is True:
+        # TODO: Remove this section after merging with branch 3131 ----------------------------------------------------
+        if not 'Qc_water_body_potential_W' in locals():
+            Qc_water_body_potential_W = 1050000.00
+        if 'Q_therm_water_body_W' in locals():
+            Qc_water_body_remaining_W = Q_therm_water_body_W
+        # -------------------------------------------------------------------------------------------------------------
         Qc_water_body_used = 1 - Qc_water_body_remaining_W / Qc_water_body_potential_W
         print("__WATER BODY USAGE__")
         print("The total water body potential for this hour was {:.2f} kWh,".format(Qc_water_body_potential_W / 1000))
@@ -292,10 +298,6 @@ def cooling_resource_activator(Q_thermal_req,
     if master_to_slave_variables.AS_BaseVCC_on == 1 and Q_cooling_unmet_W > 0.0 \
             and not np.isclose(T_district_cooling_supply_K, T_district_cooling_return_K):
 
-    # Base VCC air-source with a cooling tower
-    if master_to_slave_variables.AS_BaseVCC_on == 1 and Q_cooling_unmet_W > 0.0 and not np.isclose(
-            T_district_cooling_supply_K,
-            T_district_cooling_return_K):
         size_AS_BaseVCC_W = master_to_slave_variables.AS_BaseVCC_size_W
         if Q_cooling_unmet_W > size_AS_BaseVCC_W:
             Q_BaseVCC_AS_gen_directload_W = size_AS_BaseVCC_W
