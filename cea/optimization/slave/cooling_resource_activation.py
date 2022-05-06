@@ -525,8 +525,7 @@ def calc_vcc_operation(Qc_from_VCC_W, T_DCN_re_K, T_DCN_sup_K, T_source_K, chill
     """
     Qc_from_VCC_W = min(Qc_from_VCC_W,
                         chiller_size)  # The chiller can not supply more cooling than the installed capacity allows
-    VCC_operation = chiller_vapor_compression.calc_VCC(chiller_size, Qc_from_VCC_W, T_DCN_sup_K, T_DCN_re_K, T_source_K,
-                                                       VC_chiller)
+    VCC_operation = chiller_vapor_compression.calc_VCC(Qc_from_VCC_W, T_DCN_sup_K, T_DCN_re_K, T_source_K, VC_chiller)
 
     # unpack outputs
     Qc_VCC_W = VCC_operation['q_chw_W']
@@ -541,8 +540,7 @@ def calc_vcc_CT_operation(Qc_from_VCC_W,
                           T_source_K,
                           size_chiller_CT,
                           VC_chiller):
-    VCC_operation = chiller_vapor_compression.calc_VCC(size_chiller_CT, Qc_from_VCC_W, T_DCN_sup_K, T_DCN_re_K,
-                                                       T_source_K, VC_chiller)
+    VCC_operation = chiller_vapor_compression.calc_VCC(Qc_from_VCC_W, T_DCN_sup_K, T_DCN_re_K, T_source_K, VC_chiller)
 
     # unpack outputs
     Qc_CT_VCC_W = VCC_operation['q_cw_W']
