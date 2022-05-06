@@ -100,11 +100,14 @@ to tunnel webhooks triggered by GitHub back to the Jenkins server.
     - if you haven't checked out the CEA, download it from the `CEA GitHub repository`_
 
 - copy the CEA Dependencies folder (after installing CEA, it should be in
-  ``%USERPROFILE%\Documents\CityEnergyAnalysts\Dependencies``) twice
+  ``%USERPROFILE%\Documents\CityEnergyAnalysts\Dependencies``) twice.
 
-  - once to ``C:\ProgramData\ceajenkins\ceatest``
-  - once to ``C:\ProgramData\ceajenkins\ceatestall``
-  - (actually rename the folder ``Dependencies`` to ``ceatest`` and ``ceatestall`` respectively)
+  - once to ``C:\ProgramData\ceajenkins\ceatest-py3``
+  - once to ``C:\ProgramData\ceajenkins\ceatestall-py3``
+  Actually, you could just rename the folder ``Dependencies`` to ``ceatest-py3`` and ``ceatestall-py3`` respectively.
+  The folder names should be consistent with the path specified in ``bin\ceatest.bat`` and ``bin\ceatestall.bat``.
+
+.. note:: Repeat this step to update python environment when needed!
 
 - in order for the service to find required DLL's, ensure the PATH includes the following folders (use the windows
   search function to find the control panel item "Edit System Environment Variables"):
