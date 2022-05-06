@@ -54,7 +54,7 @@ def calc_VCC(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_chw_re_K, T_cw_in_
         q_cw_W = 0.0
 
     elif q_chw_load_Wh > 0.0:
-        COP = calc_COP_with_carnot_efficiency(T_chw_sup_K, T_cw_in_K, VC_chiller)
+        COP = calc_COP_g(T_chw_sup_K, T_cw_in_K, VC_chiller)
         if COP < 0.0:
             print(f'Negative COP: {COP} {T_chw_sup_K} {T_chw_re_K} {T_cw_in_K}, {q_chw_load_Wh}', )
         # calculate chiller outputs
@@ -77,14 +77,33 @@ def calc_COP(T_cw_in_K, T_chw_re_K, q_chw_load_Wh):
     return COP
 
 
-def calc_COP_with_carnot_efficiency(T_chw_sup_K, T_cw_in_K, VC_chiller):
+def calc_COP_g(T_evap_K, T_cond_K, VC_chiller):
     """
-    Calculate vapor compression chiller COP according to [Lee, 2010].
+    Calculate the approximate COP at rated operating conditions using the g-value (sometimes also called
+    the second-law efficiency [Bejan, 2016]).
+    Assuming a rated COP for all calculations is a strong simplification, but accurate enough for most cases in CEA.
 
-    [Lee, 2010] Tzong-Shing Lee, 2010, Second-Law Analysis to Improve the Energy Efficiency of Screw Liquid Chillers
+    [Bejan, 2016] Adrian Bejan, 2016, Andvanced engineering thermodynamics (p. 106)
     """
-    cop_chiller = VC_chiller.g_value * T_chw_sup_K / (T_cw_in_K - T_chw_sup_K)
+    cop_chiller = VC_chiller.g_value * T_evap_K / (T_cond_K - T_evap_K)
     return cop_chiller
+
+
+def eta_th_vcc_g(T_evap_K, T_cond_K, VC_chiller):
+    """
+    Calculate vapour compression chiller's thermal efficiency (= Qc_evap / Qc_cond,
+    i.e. heat_from_DC / heat_to_waterORair ) in accordance with the g-value VCC model.
+    This calculation also assumes that all heat from the VCC is directed to the heat sink
+    (i.e. Qc_evap + P_el = Qc_cond).
+
+    eta_th = Qc_evap / Qc_cond
+           = Qc_evap / (Qc_evap + P_el)
+           = 1 / (1 + P_el/Qc_evap)
+           = 1 / (1 + 1/COP)
+    """
+    thermal_efficiency = 1 / (1 + 1 / calc_COP_g(T_evap_K, T_cond_K, VC_chiller))
+
+    return thermal_efficiency
 
 
 # Investment costs

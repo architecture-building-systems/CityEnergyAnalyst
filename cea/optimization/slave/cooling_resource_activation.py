@@ -179,8 +179,9 @@ def cooling_resource_activator(Q_thermal_req,
         BaseVCC_WS_activated = False
         FreeCooling_WS_activated = False
         Q_BaseVCC_WS_gen_directload_W = 0.0
-        # TODO: Replace the current calculation of the thermal efficiency (Carnot efficiency) to a more realistic value
-        thermal_efficiency_VCC = T_district_cooling_supply_K / T_source_average_water_body_K
+        thermal_efficiency_VCC = chiller_vapor_compression.eta_th_vcc_g(T_district_cooling_supply_K,
+                                                                        T_source_average_water_body_K,
+                                                                        VC_chiller)
         capacity_BaseVCC_WS_W = master_to_slave_variables.WS_BaseVCC_size_W
         Qc_output_BaseVCC_WS_max_W = min(capacity_BaseVCC_WS_W, thermal_efficiency_VCC * Q_water_body_potential_W)
 
@@ -230,8 +231,6 @@ def cooling_resource_activator(Q_thermal_req,
 
         # Determine the electricity needed for the hydraulic pumps and the VCC if the latter is activated...
         if BaseVCC_WS_activated:
-            # TODO: Make sure the water source Base VCC's cooling output returned from the function below is in
-            #       accordance with the thermal efficiency definition above
             Q_BaseVCC_WS_gen_W, \
             E_BaseVCC_WS_req_W = calc_vcc_operation(Q_BaseVCC_WS_gen_W,
                                                     T_district_cooling_return_K,
@@ -290,8 +289,9 @@ def cooling_resource_activator(Q_thermal_req,
         PeakVCC_WS_activated = False
         FreeCooling_WS_activated = False
         Q_PeakVCC_WS_gen_directload_W = 0.0
-        # TODO: Replace the current calculation of the thermal efficiency (Carnot efficiency) to a more realistic value
-        thermal_efficiency_VCC = T_district_cooling_supply_K / T_source_average_water_body_K
+        thermal_efficiency_VCC = chiller_vapor_compression.eta_th_vcc_g(T_district_cooling_supply_K,
+                                                                        T_source_average_water_body_K,
+                                                                        VC_chiller)
         capacity_PeakVCC_WS_W = master_to_slave_variables.WS_PeakVCC_size_W
         Qc_output_PeakVCC_WS_max_W = min(capacity_PeakVCC_WS_W, thermal_efficiency_VCC * Q_water_body_potential_W)
 
@@ -341,8 +341,6 @@ def cooling_resource_activator(Q_thermal_req,
 
         # Determine the electricity needed for the hydraulic pumps and the VCC if the latter is activated...
         if PeakVCC_WS_activated:
-            # TODO: Make sure the water source Peak VCC's cooling output returned from the function below is in
-            #       accordance with the thermal efficiency definition above
             Q_PeakVCC_WS_gen_W, \
             E_PeakVCC_WS_req_W = calc_vcc_operation(Q_PeakVCC_WS_gen_W,
                                                     T_district_cooling_return_K,
@@ -584,3 +582,4 @@ def calc_chiller_absorption_operation(Qc_ACH_req_W, T_DCN_re_K, T_DCN_sup_K, T_A
     E_used_ACH_W = ACH_operation['wdot_W'] + wdot_CT_Wh
 
     return Qc_CT_ACH_W, Qh_CHP_ACH_W, E_used_ACH_W
+
