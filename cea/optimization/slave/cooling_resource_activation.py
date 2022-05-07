@@ -393,7 +393,7 @@ def cooling_resource_activator(Q_thermal_req,
 
         else:
             print("no water body source peak load VCC was used")
-        # energy balance: calculate the remaining cooling potential of the water body, the remaining unmet cooling
+        # energy balance: calculate the remaining cooling potential of the water body, the remaining unmet cooling 
         # demand (after contributions from VCC and storage) of the DCN and the cooling provided by the storage
         Qc_water_body_remaining_W -= Qc_from_water_body_W
         Q_cooling_unmet_W = Q_cooling_unmet_W - Qc_from_activated_cooling_system_W - Qc_from_storage_W
