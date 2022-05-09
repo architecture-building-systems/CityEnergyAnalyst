@@ -10,6 +10,7 @@ from collections import namedtuple
 from cea.constants import HOURS_IN_YEAR
 from cea.demand import constants
 from cea.demand.sensible_loads import calc_hr, calc_hc
+from cea.resources.radiation_daysim.geometry_generator import calc_floor_to_floor_height
 from cea.utilities.dbf import dbf_to_dataframe
 from cea.technologies import blinds
 from typing import List
@@ -439,7 +440,8 @@ class BuildingPropertiesRow(object):
 
         self.name = name
         self.geometry = geometry
-        self.geometry['floor_height'] = self.geometry['height_ag'] / self.geometry['floors_ag']
+        self.geometry['floor_height'] = calc_floor_to_floor_height(self.geometry['height_ag'],
+                                                                   self.geometry['floors_ag'])
         self.architecture = EnvelopeProperties(envelope)
         self.typology = typology  # FIXME: rename to uses!
         self.hvac = hvac
