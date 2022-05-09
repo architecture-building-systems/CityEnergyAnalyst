@@ -30,11 +30,12 @@ def main(output_file):
     import cea.examples
     archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
     archive.extractall(tempfile.gettempdir())
-    reference_case = os.path.join(tempfile.gettempdir(), 'reference-case-open', 'baseline')
 
-    locator = InputLocator(reference_case)
     config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
+    config.project = os.path.join(tempfile.gettempdir(), 'reference-case-open')
+    config.scenario_name = 'baseline'
 
+    locator = InputLocator(config.scenario)
     weather_path = locator.get_weather('Zug_inducity_2009')
     weather_data = epwreader.epw_reader(weather_path)[
         ['year', 'drybulb_C', 'wetbulb_C', 'relhum_percent', 'windspd_ms', 'skytemp_C']]
