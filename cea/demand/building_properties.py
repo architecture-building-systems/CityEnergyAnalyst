@@ -10,6 +10,7 @@ from collections import namedtuple
 from cea.constants import HOURS_IN_YEAR
 from cea.demand import constants
 from cea.demand.sensible_loads import calc_hr, calc_hc
+from cea.resources.radiation_daysim.geometry_generator import calc_floor_to_floor_height
 from cea.utilities.dbf import dbf_to_dataframe
 from cea.technologies import blinds
 from typing import List
@@ -24,7 +25,6 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 # import constants
-H_F = constants.H_F
 H_MS = constants.H_MS
 H_IS = constants.H_IS
 B_F = constants.B_F
@@ -440,6 +440,8 @@ class BuildingPropertiesRow(object):
 
         self.name = name
         self.geometry = geometry
+        self.geometry['floor_height'] = calc_floor_to_floor_height(self.geometry['height_ag'],
+                                                                   self.geometry['floors_ag'])
         self.architecture = EnvelopeProperties(envelope)
         self.typology = typology  # FIXME: rename to uses!
         self.hvac = hvac
@@ -543,10 +545,10 @@ class BuildingPropertiesRow(object):
             Lcww_dis = 0
             Lvww_c = 0
         else:
-            Lcww_dis = 2 * (Ll + 2.5 + nf_ag * H_F) * fforma  # length hot water piping circulation circuit
+            Lcww_dis = 2 * (Ll + 2.5 + nf_ag * self.geometry['floor_height']) * fforma  # length hot water piping circulation circuit
             Lvww_c = (2 * Ll + 0.0125 * Ll * Lw) * fforma  # length piping heating system circulation circuit
 
-        Lsww_dis = 0.038 * Ll * Lw * nf_ag * H_F * fforma  # length hot water piping distribution circuit
+        Lsww_dis = 0.038 * Ll * Lw * nf_ag * self.geometry['floor_height'] * fforma  # length hot water piping distribution circuit
         Lvww_dis = (Ll + 0.0625 * Ll * Lw) * fforma  # length piping heating system distribution circuit
 
         building_systems = pd.Series({'Lcww_dis': Lcww_dis,

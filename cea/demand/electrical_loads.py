@@ -23,7 +23,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 # import constants
-H_F = constants.H_F
+MIN_HEIGHT_THAT_REQUIRES_PUMPING = constants.MIN_HEIGHT_THAT_REQUIRES_PUMPING
 P_WATER = P_WATER_KGPERM3
 P_FAN = constants.P_FAN
 F_SR = constants.F_SR
@@ -152,9 +152,9 @@ def calc_Eaux_fw(tsd, bpr, schedules):
     tsd['vfw_m3perh'] = schedules['Vw_lph'] / 1000  # m3/h
 
     height_ag = bpr.geometry['height_ag']
-    if height_ag > 5 * H_F:  # pumping required for buildings above 15m (or 5 floors)
+    if height_ag > MIN_HEIGHT_THAT_REQUIRES_PUMPING:  # pumping required for buildings above 15m (or 5 floors)
         # pressure losses
-        effective_height = (height_ag - (5 * H_F))
+        effective_height = (height_ag - MIN_HEIGHT_THAT_REQUIRES_PUMPING)
         deltaP_kPa = DELTA_P_1 * effective_height
         b = 1  # assuming a good pumping system
         tsd['Eaux_fw'] = np.vectorize(calc_Eauxf_fw)(tsd['vfw_m3perh'], deltaP_kPa, b)
@@ -183,7 +183,7 @@ def calc_Eaux_ww(tsd, bpr):
 
     # pressure losses
     deltaP_fittings_gen_kPa = 16  # equation F.4 -standard values
-    l_w_dis_col = 2 * (max(Ll, Lw) + 2.5 + nf_ag * H_F) * fforma  # equation F.5
+    l_w_dis_col = 2 * (max(Ll, Lw) + 2.5 + nf_ag * bpr.geometry['floor_height']) * fforma  # equation F.5
     deltaP_kPa = DELTA_P_1 * l_w_dis_col + deltaP_fittings_gen_kPa
     if Year >= 2000:
         b = 1
@@ -253,7 +253,7 @@ def calc_Eaux_Qhs_Qcs(tsd, bpr):
 
     # pressure losses
     deltaP_fittings_gen_kPa = 16  # equation F.4 -standard values
-    l_w_dis_col = 2 * (max(Ll, Lw) + 2.5 + nf_ag * H_F) * fforma  # equation F.5
+    l_w_dis_col = 2 * (max(Ll, Lw) + 2.5 + nf_ag * bpr.geometry['floor_height']) * fforma  # equation F.5
     deltaP_kPa = DELTA_P_1 * l_w_dis_col + deltaP_fittings_gen_kPa
     if Year >= 2000:
         b = 1
