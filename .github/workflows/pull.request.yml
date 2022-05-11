@@ -1,4 +1,4 @@
-name: Pull Request test
+name: Pull Request Tests
 
 on:
   pull_request:
@@ -6,7 +6,7 @@ on:
     branches: [master]
 
 jobs:
-  test:
+  build:
     runs-on: ubuntu-latest
 
     steps:
@@ -18,7 +18,7 @@ jobs:
           miniforge-version: latest
           environment-file: environment.yml
           activate-environment: cea
-      - name: Install cea
+      - name: Install CEA
         shell: bash -l {0}
         run: pip install .
       - name: Run tests
