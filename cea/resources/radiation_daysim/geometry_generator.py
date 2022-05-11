@@ -127,13 +127,20 @@ def calc_building_solids(buildings_df, geometry_simplification, elevation_map, n
     height = buildings_df[height_col_name].astype(float)
     nfloors = buildings_df[nfloor_col_name].astype(int)
     range_floors = nfloors.map(lambda floors: range(floors + 1))
-    floor_to_floor_height = height / nfloors
+    floor_to_floor_height = calc_floor_to_floor_height(height, nfloors)
 
     n = len(geometries)
     out = cea.utilities.parallel.vectorize(process_geometries, num_processes,
                                            on_complete=print_terrain_intersection_progress)(
         geometries, repeat(elevation_map, n), range_floors, floor_to_floor_height)
     return out
+
+
+def calc_floor_to_floor_height(building_height, number_of_floors):
+    '''
+    This function calculates the floor to floor height for a building.
+    '''
+    return building_height / number_of_floors
 
 
 def process_geometries(geometry, elevation_map, range_floors, floor_to_floor_height):
