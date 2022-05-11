@@ -28,9 +28,9 @@ def export_data_to_master_to_slave_class(locator,
                                          district_cooling_network,
                                          technologies_heating_allowed,
                                          technologies_cooling_allowed,
-                                         weather_features
+                                         weather_features,
+                                         config
                                          ):
-
     """
     This function ...
 
@@ -73,7 +73,6 @@ def export_data_to_master_to_slave_class(locator,
     :rtype: cea.optimization.slave_data.SlaveData class object
     """
     # get thermal network for this individual
-
     # RECALCULATE THE NOMINAL LOADS FOR HEATING AND COOLING, INCL SOME NAMES OF FILES
     DH_network_summary_individual, \
     DC_network_summary_individual = thermal_networks_in_individual(locator,
@@ -112,7 +111,8 @@ def export_data_to_master_to_slave_class(locator,
                                                           building_names_cooling,
                                                           building_names_electricity,
                                                           DH_network_summary_individual,
-                                                          DC_network_summary_individual
+                                                          DC_network_summary_individual,
+                                                          config
                                                           )
     return master_to_slave_vars
 
@@ -244,7 +244,8 @@ def calc_master_to_slave_variables(locator, gen,
                                    building_names_cooling,
                                    building_names_electricity,
                                    DH_network_summary_individual,
-                                   DC_network_summary_individual
+                                   DC_network_summary_individual,
+                                   config
                                    ):
     """
     This function stores all the information on an individual and the corresponding thermal network in a class object.
@@ -255,6 +256,7 @@ def calc_master_to_slave_variables(locator, gen,
 
     # initialise class storing dynamic variables transferred from master to slave optimization
     master_to_slave_vars = slave_data.SlaveData()
+    master_to_slave_vars.debug = config.general.debug
 
     # Store information about individual regarding the configuration of the network and customers connected
     if district_heating_network and DHN_barcode.count("1") > 0:
@@ -317,17 +319,20 @@ def calc_master_to_slave_variables(locator, gen,
                                                                              master_to_slave_vars)
 
     if master_to_slave_vars.DCN_exists:
+        storage_type = config.optimization.cold_storage_type
         master_to_slave_vars.Q_cooling_nom_W = Q_cooling_nom_W
         master_to_slave_vars = master_to_slave_district_cooling_technologies(Q_cooling_nom_W,
                                                                              individual_with_names_dict,
-                                                                             master_to_slave_vars)
+                                                                             master_to_slave_vars,
+                                                                             storage_type)
 
     return master_to_slave_vars
 
 
 def master_to_slave_district_cooling_technologies(Q_cooling_nom_W,
                                                   individual_with_names_dict,
-                                                  master_to_slave_vars):
+                                                  master_to_slave_vars,
+                                                  storage_type):
     # COOLING SYSTEMS
     technologies_cooling_allowed = master_to_slave_vars.technologies_cooling_allowed
     # NG-Fired Trigen with Absorption Chiller
@@ -383,6 +388,7 @@ def master_to_slave_district_cooling_technologies(Q_cooling_nom_W,
             'Storage') and flag:
         master_to_slave_vars.Storage_cooling_on = 1
         master_to_slave_vars.Storage_cooling_size_W = individual_with_names_dict['Storage'] * Q_cooling_nom_W
+        master_to_slave_vars.Storage_type = storage_type
 
     return master_to_slave_vars
 

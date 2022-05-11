@@ -13,21 +13,19 @@ from scipy.integrate import odeint
 
 from cea.constants import ASPECT_RATIO, HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3, WH_TO_J
 from cea.demand.constants import TWW_SETPOINT, B_F
-from cea.optimization.constants import T_TANK_FULLY_DISCHARGED_K, T_TANK_FULLY_CHARGED_K, DT_COOL
+from cea.technologies.constants import U_DHWTANK
 from cea.technologies.constants import U_COOL, U_HEAT, TANK_HEX_EFFECTIVENESS
 from cea.technologies.thermal_network.substation_matrix import calc_area_HEX, calc_dTm_HEX
 
 __author__ = "Shanshan Hsieh"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["ShanShan Hsieh"]
+__credits__ = ["Shanshan Hsieh"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-# tank insulation heat transfer coefficient in W/m2-K, value taken from SIA 385
-U_DHWTANK = 0.225
 
 
 def calc_fully_mixed_tank(T_start_C, T_ambient_C, q_discharged_W, q_charged_W, V_tank_m3, Area_tank_surface_m2, tank_type):
@@ -48,7 +46,7 @@ def calc_fully_mixed_tank(T_start_C, T_ambient_C, q_discharged_W, q_charged_W, V
     :param V_tank_m3: tank volume
     :return:
     """
-    q_loss_W = calc_cold_tank_heat_loss(Area_tank_surface_m2, T_start_C, T_ambient_C)
+    q_loss_W = calc_cold_tank_heat_gain(Area_tank_surface_m2, T_start_C, T_ambient_C)
     T_tank_C = calc_tank_temperature(T_start_C, q_loss_W, q_discharged_W, q_charged_W, V_tank_m3, tank_type)
     return T_tank_C
 
@@ -95,9 +93,13 @@ def calc_hot_tank_heat_loss(Area_tank_surface_m2, T_tank_C, tamb):
     return q_loss_W
 
 
-def calc_cold_tank_heat_loss(Area_tank_surface_m2, T_tank_C, T_ambient_C):
-    q_loss_W = U_DHWTANK * Area_tank_surface_m2 * (T_ambient_C - T_tank_C)  # tank heat gain from the room in [Wh]
-    return q_loss_W
+
+def calc_cold_tank_heat_gain(Area_tank_surface_m2, T_tank_C, T_ambient_C):
+    if T_tank_C >= T_ambient_C:
+        q_gain_W = 0.0
+    else:
+        q_gain_W = U_DHWTANK * Area_tank_surface_m2 * (T_ambient_C - T_tank_C)  # tank heat gain from the room in [Wh]
+    return q_gain_W
 
 
 def calc_tank_surface_area(V_tank_m3):
@@ -215,13 +217,12 @@ except ImportError:
 # cold water storage tank design
 # ================================
 
-
 def calc_storage_tank_volume(Qc_tank_capacity_Wh,
                              T_tank_fully_charged_K,
                              T_tank_fully_discharged_K):
     # calculate tank volume
     Q_tank_capacity_J = Qc_tank_capacity_Wh * WH_TO_J
-    m_tank_kg = Q_tank_capacity_J / (HEAT_CAPACITY_OF_WATER_JPERKGK *(T_tank_fully_discharged_K - T_tank_fully_charged_K))
+    m_tank_kg = Q_tank_capacity_J / (HEAT_CAPACITY_OF_WATER_JPERKGK * (T_tank_fully_discharged_K - T_tank_fully_charged_K))
     V_tank_m3 = m_tank_kg / P_WATER_KGPERM3
 
     return V_tank_m3

@@ -89,6 +89,8 @@ def cooling_resource_activator(Q_thermal_req,
     # initializing unmet cooling load and requirements from daily storage for this hour
     Q_cooling_unmet_W = Q_thermal_req
     Q_DailyStorage_gen_directload_W = 0.0
+    Q_DailyStorage_to_storage_W = 0.0
+    Q_DailyStorage_content_W = 0.0
 
     # ACTIVATE THE TRIGEN
     if master_to_slave_variables.NG_Trigen_on == 1 and Q_cooling_unmet_W > 0.0 \
@@ -102,14 +104,16 @@ def cooling_resource_activator(Q_thermal_req,
         if Q_cooling_unmet_W > size_trigen_W:
             Q_Trigen_NG_gen_directload_W = size_trigen_W
             Qc_Trigen_gen_storage_W = 0.0
-            Qc_from_storage_W = daily_storage_class.discharge_storage(Q_cooling_unmet_W - size_trigen_W)
+            Qc_from_storage_W, Q_DailyStorage_content_W = \
+                daily_storage_class.discharge_storage(Q_cooling_unmet_W - size_trigen_W)
             Q_Trigen_gen_W = Q_Trigen_NG_gen_directload_W + Qc_Trigen_gen_storage_W
 
         # If the unmet cooling load is smaller than the trigen-plant's maximum capacity,
         #   use the available capacity to fill the cold storage
         else:
             Q_Trigen_NG_gen_directload_W = Q_cooling_unmet_W
-            Qc_Trigen_gen_storage_W = daily_storage_class.charge_storage(size_trigen_W - Q_cooling_unmet_W)
+            Qc_Trigen_gen_storage_W, Q_DailyStorage_content_W = \
+                daily_storage_class.charge_storage(size_trigen_W - Q_cooling_unmet_W)
             Qc_from_storage_W = 0.0
             Q_Trigen_gen_W = Q_Trigen_NG_gen_directload_W + Qc_Trigen_gen_storage_W
 
@@ -145,6 +149,7 @@ def cooling_resource_activator(Q_thermal_req,
                 E_Trigen_NG_gen_W = np.float(eta_elec_interpol(NG_Trigen_req_W)) * NG_Trigen_req_W
         else:
             Q_Trigen_gen_W = 0.0
+            Qc_Trigen_gen_storage_W = 0.0
             NG_Trigen_req_W = 0.0
             E_Trigen_NG_gen_W = 0.0
             Q_Trigen_NG_gen_directload_W = 0.0
@@ -152,6 +157,7 @@ def cooling_resource_activator(Q_thermal_req,
 
         # update unmet cooling load
         Q_cooling_unmet_W = Q_cooling_unmet_W - Q_Trigen_NG_gen_directload_W - Qc_from_storage_W
+        Q_DailyStorage_to_storage_W += Qc_Trigen_gen_storage_W
         Q_DailyStorage_gen_directload_W += Qc_from_storage_W
     else:
         Q_Trigen_gen_W = 0.0
@@ -165,20 +171,18 @@ def cooling_resource_activator(Q_thermal_req,
             and not np.isclose(T_district_cooling_supply_K, T_district_cooling_return_K):
 
         size_WS_BaseVCC_W = master_to_slave_variables.WS_BaseVCC_size_W
-        if Q_cooling_unmet_W > min(size_WS_BaseVCC_W,
-                                   Q_therm_water_body_W):  # min function to deal with both constraints at the same time, limiting factors being the size and the thermal capacity of lake
+        if Q_cooling_unmet_W > min(size_WS_BaseVCC_W, Q_therm_water_body_W):  # min function to deal with both constraints at the same time, limiting factors being the size and the thermal capacity of lake
             Q_BaseVCC_WS_gen_directload_W = min(size_WS_BaseVCC_W, Q_therm_water_body_W)
             Qc_BaseVCC_WS_gen_storage_W = 0.0
-            Qc_from_storage_W = daily_storage_class.discharge_storage(Q_cooling_unmet_W -
-                                                                      min(size_WS_BaseVCC_W, Q_therm_water_body_W))
+            Qc_from_storage_W, Q_DailyStorage_content_W = \
+                daily_storage_class.discharge_storage(Q_cooling_unmet_W - min(size_WS_BaseVCC_W, Q_therm_water_body_W))
             Q_BaseVCC_WS_gen_W = Q_BaseVCC_WS_gen_directload_W + Qc_BaseVCC_WS_gen_storage_W
         else:
             Q_BaseVCC_WS_gen_directload_W = Q_cooling_unmet_W
-            Qc_BaseVCC_WS_gen_storage_W = daily_storage_class.charge_storage(
-                min(size_WS_BaseVCC_W, Q_therm_water_body_W) - Q_cooling_unmet_W)
+            Qc_BaseVCC_WS_gen_storage_W, Q_DailyStorage_content_W = \
+                daily_storage_class.charge_storage(min(size_WS_BaseVCC_W, Q_therm_water_body_W) - Q_cooling_unmet_W)
             Qc_from_storage_W = 0.0
             Q_BaseVCC_WS_gen_W = Q_BaseVCC_WS_gen_directload_W + Qc_BaseVCC_WS_gen_storage_W
-
         # If water body temperature is higher than the temperature required in the district cooling network's heat
         # exchanger, use the vapour compression chiller to bridge the temperature difference...
         if (T_district_cooling_supply_K - DT_COOL) < T_source_average_water_body_K:
@@ -212,6 +216,7 @@ def cooling_resource_activator(Q_thermal_req,
         # demand (after contributions from VCC and storage) of the DCN and the cooling provided by the storage
         Q_therm_water_body_W -= Q_BaseVCC_WS_gen_W
         Q_cooling_unmet_W = Q_cooling_unmet_W - (Q_BaseVCC_WS_gen_W - Qc_BaseVCC_WS_gen_storage_W) - Qc_from_storage_W
+        Q_DailyStorage_to_storage_W += Qc_BaseVCC_WS_gen_storage_W
         Q_DailyStorage_gen_directload_W += Qc_from_storage_W
     else:
         Q_BaseVCC_WS_gen_W = 0.0
@@ -227,13 +232,13 @@ def cooling_resource_activator(Q_thermal_req,
         if Q_cooling_unmet_W > min(size_WS_PeakVCC_W, Q_therm_water_body_W):
             Q_PeakVCC_WS_gen_directload_W = min(size_WS_PeakVCC_W, Q_therm_water_body_W)
             Qc_PeakVCC_WS_gen_storage_W = 0.0
-            Qc_from_storage_W = daily_storage_class.discharge_storage(Q_cooling_unmet_W
-                                                                      - min(size_WS_PeakVCC_W, Q_therm_water_body_W))
+            Qc_from_storage_W, Q_DailyStorage_content_W = \
+                daily_storage_class.discharge_storage(Q_cooling_unmet_W - min(size_WS_PeakVCC_W, Q_therm_water_body_W))
             Q_PeakVCC_WS_gen_W = Q_PeakVCC_WS_gen_directload_W + Qc_PeakVCC_WS_gen_storage_W
         else:
             Q_PeakVCC_WS_gen_directload_W = Q_cooling_unmet_W
-            Qc_PeakVCC_WS_gen_storage_W = daily_storage_class.charge_storage(
-                min(size_WS_PeakVCC_W, Q_therm_water_body_W) - Q_cooling_unmet_W)
+            Qc_PeakVCC_WS_gen_storage_W, Q_DailyStorage_content_W = \
+                daily_storage_class.charge_storage(min(size_WS_PeakVCC_W, Q_therm_water_body_W) - Q_cooling_unmet_W)
             Qc_from_storage_W = 0.0
             Q_PeakVCC_WS_gen_W = Q_PeakVCC_WS_gen_directload_W + Qc_PeakVCC_WS_gen_storage_W
 
@@ -268,6 +273,7 @@ def cooling_resource_activator(Q_thermal_req,
         # demand (after contributions from VCC and storage) of the DCN and the cooling provided by the storage
         Q_therm_water_body_W -= Q_PeakVCC_WS_gen_W
         Q_cooling_unmet_W = Q_cooling_unmet_W - (Q_PeakVCC_WS_gen_W - Qc_PeakVCC_WS_gen_storage_W) - Qc_from_storage_W
+        Q_DailyStorage_to_storage_W += Qc_PeakVCC_WS_gen_storage_W
         Q_DailyStorage_gen_directload_W += Qc_from_storage_W
 
     else:
@@ -283,11 +289,13 @@ def cooling_resource_activator(Q_thermal_req,
         if Q_cooling_unmet_W > size_AS_BaseVCC_W:
             Q_BaseVCC_AS_gen_directload_W = size_AS_BaseVCC_W
             Q_BaseVCC_AS_gen_storage_W = 0.0
-            Qc_from_storage_W = daily_storage_class.discharge_storage(Q_cooling_unmet_W - size_AS_BaseVCC_W)
+            Qc_from_storage_W, Q_DailyStorage_content_W = \
+                daily_storage_class.discharge_storage(Q_cooling_unmet_W - size_AS_BaseVCC_W)
             Q_BaseVCC_AS_gen_W = Q_BaseVCC_AS_gen_directload_W + Q_BaseVCC_AS_gen_storage_W
         else:
             Q_BaseVCC_AS_gen_directload_W = Q_cooling_unmet_W
-            Q_BaseVCC_AS_gen_storage_W = daily_storage_class.charge_storage(size_AS_BaseVCC_W - Q_cooling_unmet_W)
+            Q_BaseVCC_AS_gen_storage_W, Q_DailyStorage_content_W = \
+                daily_storage_class.charge_storage(size_AS_BaseVCC_W - Q_cooling_unmet_W)
             Qc_from_storage_W = 0.0
             Q_BaseVCC_AS_gen_W = Q_BaseVCC_AS_gen_directload_W + Q_BaseVCC_AS_gen_storage_W
 
@@ -299,6 +307,7 @@ def cooling_resource_activator(Q_thermal_req,
                                                    size_AS_BaseVCC_W,
                                                    VC_chiller)
         Q_cooling_unmet_W = Q_cooling_unmet_W - Q_BaseVCC_AS_gen_directload_W - Qc_from_storage_W
+        Q_DailyStorage_to_storage_W += Q_BaseVCC_AS_gen_storage_W
         Q_DailyStorage_gen_directload_W += Qc_from_storage_W
     else:
         Q_BaseVCC_AS_gen_W = 0.0
@@ -313,11 +322,13 @@ def cooling_resource_activator(Q_thermal_req,
         if Q_cooling_unmet_W > size_AS_PeakVCC_W:
             Q_PeakVCC_AS_gen_directload_W = size_AS_PeakVCC_W
             Q_PeakVCC_AS_gen_storage_W = 0.0
-            Qc_from_storage_W = daily_storage_class.discharge_storage(Q_cooling_unmet_W - size_AS_PeakVCC_W)
+            Qc_from_storage_W, Q_DailyStorage_content_W = \
+                daily_storage_class.discharge_storage(Q_cooling_unmet_W - size_AS_PeakVCC_W)
             Q_PeakVCC_AS_gen_W = Q_PeakVCC_AS_gen_directload_W + Q_PeakVCC_AS_gen_storage_W
         else:
             Q_PeakVCC_AS_gen_directload_W = Q_cooling_unmet_W
-            Q_PeakVCC_AS_gen_storage_W = daily_storage_class.charge_storage(size_AS_PeakVCC_W - Q_cooling_unmet_W)
+            Q_PeakVCC_AS_gen_storage_W, Q_DailyStorage_content_W = \
+                daily_storage_class.charge_storage(size_AS_PeakVCC_W - Q_cooling_unmet_W)
             Qc_from_storage_W = 0.0
             Q_PeakVCC_AS_gen_W = Q_PeakVCC_AS_gen_directload_W + Q_PeakVCC_AS_gen_storage_W
 
@@ -330,6 +341,7 @@ def cooling_resource_activator(Q_thermal_req,
                                                    VC_chiller)
 
         Q_cooling_unmet_W = Q_cooling_unmet_W - Q_PeakVCC_AS_gen_directload_W - Qc_from_storage_W
+        Q_DailyStorage_to_storage_W += Q_PeakVCC_AS_gen_storage_W
         Q_DailyStorage_gen_directload_W += Qc_from_storage_W
     else:
         Q_PeakVCC_AS_gen_W = 0.0
@@ -361,6 +373,10 @@ def cooling_resource_activator(Q_thermal_req,
         'Q_BaseVCC_AS_gen_W': Q_BaseVCC_AS_gen_W,
         'Q_PeakVCC_AS_gen_W': Q_PeakVCC_AS_gen_W,
         'Q_BackupVCC_AS_gen_W': Q_BackupVCC_AS_gen_W,
+
+        #daily storage
+        'Q_DailyStorage_content_W': Q_DailyStorage_content_W,
+        'Q_DailyStorage_to_storage_W': Q_DailyStorage_to_storage_W,
 
         # cooling to direct load
         'Q_DailyStorage_gen_directload_W': Q_DailyStorage_gen_directload_W,

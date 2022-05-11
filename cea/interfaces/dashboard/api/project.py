@@ -121,7 +121,7 @@ class Scenarios(Resource):
         with tempfile.TemporaryDirectory() as tmp:
             config = cea.config.Configuration()
             config.project = tmp
-            config.scenario_name = "temp"
+            config.scenario_name = "temp_scenario"
 
             _project = project or config.project
 
@@ -138,7 +138,11 @@ class Scenarios(Resource):
                 files = payload.get('files')
                 if files is not None:
                     try:
+                        output_path, project_name = os.path.split(config.project)
                         cea.api.create_new_scenario(config,
+                                                    output_path=output_path,
+                                                    project=project_name,
+                                                    scenario=config.scenario_name,
                                                     zone=files.get('zone'),
                                                     surroundings=files.get('surroundings'),
                                                     streets=files.get('streets'),
