@@ -11,25 +11,34 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - name: Cache conda
+
+      - name: Setup Mambaforge
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          python-version: 3.8
+          miniforge-variant: Mambaforge
+          miniforge-version: latest
+          use-mamba: true
+          activate-environment: cea
+
+      - name: Cache conda env
         uses: actions/cache@v3
         env:
           # Increase this value to reset cache if etc/example-environment.yml has not changed
           CACHE_NUMBER: 0
         with:
-          path: ~/conda_pkgs_dir
-          key: ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles('environment.yml') }}
-      - uses: conda-incubator/setup-miniconda@v2
-        with:
-          python-version: 3.8
-          miniforge-variant: Mambaforge
-          miniforge-version: latest
-          environment-file: environment.yml
-          activate-environment: cea
-          use-only-tar-bz2: true # IMPORTANT: This needs to be set for caching to work properly!
+          path: ${{ env.CONDA }}/envs
+          key: conda-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('environment.yml') }}-${{ env.CACHE_NUMBER }}
+        id: cache
+
+      - name: Update environment
+        run: mamba env update -n cea -f environment.yml
+        if: steps.cache.outputs.cache-hit != 'true'
+
       - name: Install CEA
         shell: bash -l {0}
         run: pip install .
+
       - name: Run tests
         shell: bash -l {0}
         run: cea test --workflow quick
