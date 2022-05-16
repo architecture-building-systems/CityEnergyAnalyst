@@ -9,6 +9,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Install Dependencies
+        run: apt update && apt install -y libgl1
+
       - uses: actions/checkout@v3
 
       - name: Setup Mambaforge
