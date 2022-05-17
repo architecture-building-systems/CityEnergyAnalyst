@@ -1,11 +1,11 @@
-FROM continuumio/miniconda3 as cea-build
+FROM condaforge/mambaforge:latest as cea-build
 
 # create the conda environment and install cea
 COPY environment.yml /tmp/environment.yml
-RUN conda env create -f /tmp/environment.yml -n cea && conda clean -afy
+RUN mamba env create -f /tmp/environment.yml -n cea && mamba clean -afy
 
 # conda-pack the environment
-RUN conda install -c conda-forge conda-pack
+RUN mamba install -c conda-forge conda-pack
 RUN conda-pack -n cea -o /tmp/env.tar \
 && mkdir /venv \
 && cd /venv \
