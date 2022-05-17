@@ -27,12 +27,14 @@ build-essential \
 libgl1-mesa-dev \
 libglu1-mesa-dev
 
-RUN git clone https://github.com/MITSustainableDesignLab/Daysim.git
+RUN git clone https://github.com/reyery/Daysim /Daysim \
+&& cd /Daysim \
+&& git checkout a09990f
 
 # only build required binaries
 RUN mkdir build \
 && cd build \
-&& cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_HEADLESS=ON -DOpenGL_GL_PREFERENCE=GLVND ../Daysim \
+&& cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_HEADLESS=ON -DOpenGL_GL_PREFERENCE=GLVND /Daysim \
 && make ds_illum \
 && make epw2wea \
 && make gen_dc \
@@ -43,7 +45,7 @@ RUN mkdir build \
 # uncommenting line in CMakeLists to build rtrace_dc
 RUN sed -i 's/#add_definitions(-DDAYSIM)/add_definitions(-DDAYSIM)/' /Daysim/src/rt/CMakeLists.txt \
 && cd build \
-&& cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_HEADLESS=ON -DOpenGL_GL_PREFERENCE=GLVND ../Daysim \
+&& cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_HEADLESS=ON -DOpenGL_GL_PREFERENCE=GLVND /Daysim \
 && make rtrace \
 && mv ./bin/rtrace /Daysim_build/rtrace_dc
 
