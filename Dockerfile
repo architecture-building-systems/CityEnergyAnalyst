@@ -27,9 +27,7 @@ build-essential \
 libgl1-mesa-dev \
 libglu1-mesa-dev
 
-RUN git clone https://github.com/reyery/Daysim /Daysim \
-&& cd /Daysim \
-&& git checkout a09990f
+RUN git clone https://github.com/MITSustainableDesignLab/Daysim.git /Daysim 
 
 # only build required binaries
 RUN mkdir build \
