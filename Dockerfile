@@ -18,7 +18,7 @@ COPY . /cea
 RUN /bin/bash -c "source /venv/bin/activate && pip install /cea"
 
 # Build Daysim in image to prevent errors in OS lib dependencies
-FROM ubuntu:latest AS daysim-build
+FROM ubuntu:focal AS daysim-build
 
 RUN apt update && DEBIAN_FRONTEND="noninteractive" apt install -y \
 git \
@@ -49,9 +49,7 @@ RUN sed -i 's/#add_definitions(-DDAYSIM)/add_definitions(-DDAYSIM)/' /Daysim/src
 && make rtrace \
 && mv ./bin/rtrace /Daysim_build/rtrace_dc
 
-# The runtime-stage image; we can use Debian as the
-# base image since the Conda env also includes Python
-# for us.
+
 FROM ubuntu:latest AS cea-runtime
 
 # For pythonOCC to work (used by py4design)
