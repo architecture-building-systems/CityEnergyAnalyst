@@ -23,3 +23,5 @@ recursive-include cea/plots *.html
 include cea/workflows/*.yml
 
 include cea/dev/conda.bat
+
+graft cea/resources/radiation_daysim/bin
