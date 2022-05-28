@@ -9,10 +9,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Install Dependencies
-        run: apt update && apt install -y libgl1
-
       - uses: actions/checkout@v3
+      
+      - name: Install Dependencies
+        run: |
+          export DEBIAN_FRONTEND=noninteractive
+          sudo apt-get clean && sudo apt-get update
+          sudo apt-get install -y libgl1
 
       - name: Setup Mambaforge
         uses: conda-incubator/setup-miniconda@v2
