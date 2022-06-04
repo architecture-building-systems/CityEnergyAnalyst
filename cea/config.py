@@ -2,6 +2,7 @@
 Manage configuration information for the CEA. The Configuration class is built dynamically based on the type information
 in ``default.config``.
 """
+from __future__ import annotations
 
 import configparser
 import datetime
@@ -10,6 +11,7 @@ import json
 import os
 import re
 import tempfile
+from typing import Dict, List, Union, Any
 
 import cea.inputlocator
 from cea.utilities import unique
@@ -113,56 +115,39 @@ class Configuration:
             self.restricted_to.append('general:project')
             self.restricted_to.append('general:scenario-name')
 
-    def temp_restrictions(self, parameters):
+    class RestrictionContextManager:
+        def __init__(self, config, parameters: List[Parameter] = None):
+            self.config = config
+            self.parameters = parameters
+            self.old_restrictions = None
+
+        def apply(self):
+            self.old_restrictions = self.config.restricted_to
+            self.config.restrict_to(self.parameters)
+
+        def clear(self):
+            self.config.restricted_to = self.old_restrictions
+
+        def __enter__(self):
+            self.apply()
+
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            self.clear()
+
+    def temp_restrictions(self, parameters: List[Parameter]):
         """
         Apply temporary restricts to script using context manager
         """
-
-        class TempRestrictions:
-            def __init__(self, _config, _parameters):
-                self.config = _config
-                self.parameters = _parameters
-                self.old_restrictions = None
-
-            def apply(self):
-                self.old_restrictions = self.config.restricted_to
-                self.config.restrict_to(self.parameters)
-
-            def clear(self):
-                self.config.restricted_to = self.old_restrictions
-
-            def __enter__(self):
-                self.apply()
-
-            def __exit__(self, exc_type, exc_val, exc_tb):
-                self.clear()
-
-        return TempRestrictions(self, parameters)
+        return self.RestrictionContextManager(self, parameters)
 
     def ignore_restrictions(self):
         """
-        Create a ``with`` block where the config file restrictions are not kept. Usage::
-
+        Create a ``with`` block where the config file restrictions are not kept.
+        Usage::
             with config.ignore_restrictions():
                 config.my_section.my_property = value
-
-        .. note: this will produce a warning in the output.
         """
-
-        class RestrictionsIgnorer(object):
-            def __init__(self, config):
-                self.config = config
-                self.old_restrictions = None
-
-            def __enter__(self):
-                # print("WARNING: Ignoring config file restrictions. Consider refactoring the code.")
-                self.old_restrictions = self.config.restricted_to
-                self.config.restricted_to = None
-
-            def __exit__(self, exc_type, exc_val, exc_tb):
-                self.config.restricted_to = self.old_restrictions
-
-        return RestrictionsIgnorer(self)
+        return self.RestrictionContextManager(self)
 
     def apply_command_line_args(self, args, option_list):
         """
