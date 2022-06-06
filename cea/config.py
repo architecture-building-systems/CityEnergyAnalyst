@@ -97,7 +97,7 @@ class Configuration:
     def _init_sections(self):
         return {section_name: Section(section_name, self) for section_name in self.default_config.sections()}
 
-    def restrict_to(self, option_list):
+    def restrict_to(self, option_list: List[str]) -> None:
         """
         Restrict the config object to only allowing parameters as defined in the ``option_list`` parameter.
         `option_list` is a list of strings of the form `section` or `section:parameter` as used in the ``scripts.yml``
@@ -116,10 +116,10 @@ class Configuration:
             self.restricted_to.append('general:scenario-name')
 
     class RestrictionContextManager:
-        def __init__(self, config, parameters: List[Parameter] = None):
+        def __init__(self, config, parameters: List[str]):
             self.config = config
             self.parameters = parameters
-            self.old_restrictions = None
+            self.old_restrictions = []
 
         def apply(self):
             self.old_restrictions = self.config.restricted_to
@@ -134,7 +134,7 @@ class Configuration:
         def __exit__(self, exc_type, exc_val, exc_tb):
             self.clear()
 
-    def temp_restrictions(self, parameters: List[Parameter]):
+    def temp_restrictions(self, parameters: List[str]):
         """
         Apply temporary restricts to script using context manager
         """
@@ -147,7 +147,7 @@ class Configuration:
             with config.ignore_restrictions():
                 config.my_section.my_property = value
         """
-        return self.RestrictionContextManager(self)
+        return self.RestrictionContextManager(self, [])
 
     def apply_command_line_args(self, args, option_list):
         """
