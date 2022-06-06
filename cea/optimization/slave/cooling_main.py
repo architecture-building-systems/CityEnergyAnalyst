@@ -269,7 +269,7 @@ def district_cooling_network(locator,
         # from storage
         "Q_DailyStorage_content_W": Q_DailyStorage_content_W,
         "Q_DailyStorage_to_storage_W": Q_DailyStorage_to_storage_W,
-        "Q_DailyStorage_from_storage_W": Q_DailyStorage_from_storage_W,
+        "Q_DailyStorage_gen_directload_W": Q_DailyStorage_from_storage_W,
 
         # cooling
         "Q_Trigen_NG_gen_directload_W": Q_Trigen_NG_gen_directload_W,
