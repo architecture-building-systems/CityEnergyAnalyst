@@ -692,9 +692,8 @@ class PluginListParameter(ListParameter):
         return super().encode(unique_plugins)
 
     def decode(self, value):
-        from cea.plugin import instantiate_plugin
         plugin_fqnames = unique(parse_string_to_list(value))
-        plugins = [instantiate_plugin(plugin_fqname) for plugin_fqname in plugin_fqnames]
+        plugins = [cea.plugin.instantiate_plugin(plugin_fqname) for plugin_fqname in plugin_fqnames]
         return [plugin for plugin in plugins if plugin is not None]
 
 
@@ -870,7 +869,7 @@ class ScenarioNameParameter(ChoiceParameter):
         if value == '':
             raise ValueError('scenario-name cannot be empty')
         elif self._choices and value not in self._choices:
-            print(f'WARNING: Scenario "{value}" does not exist. Valid choices: {",".join(self._choices)}')
+            print(f'WARNING: Scenario "{value}" does not exist. Valid choices: {", ".join(self._choices)}')
         return str(value)
 
     def decode(self, value):
@@ -1110,19 +1109,23 @@ class CoordinateListParameter(ListParameter):
         return coord_list
 
 
-def get_scenarios_list(project_path):
+def get_scenarios_list(project_path: str) -> List[str]:
     # return empty list if project path does not exist
     if not os.path.exists(project_path):
         return []
 
-    def is_valid_scenario(path, folder_name):
-        folder_path = os.path.join(path, folder_name)
-        # a scenario must be a valid path
-        # a scenario can't start with a `.` like `.config`
-        return all([os.path.isdir(folder_path), not folder_name.startswith('.')])
+    def is_valid_scenario(folder_name):
+        """
+        A scenario must be a valid path
+        A scenario can't start with a `.` like `.config`
+        """
+        folder_path = os.path.join(project_path, folder_name)
 
-    return [folder_name for folder_name in os.listdir(project_path)
-            if is_valid_scenario(project_path, folder_name)]
+        return all([os.path.isdir(folder_path),
+                    not folder_name.startswith('.'),
+                    folder_name != "__pycache__"])
+
+    return [folder_name for folder_name in os.listdir(project_path) if is_valid_scenario(folder_name)]
 
 
 def get_systems_list(scenario_path):
