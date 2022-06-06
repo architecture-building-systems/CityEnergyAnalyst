@@ -298,14 +298,9 @@ class Section:
         :type config: Configuration
         """
 
-        if name != name.lower():
-            raise ValueError('Section names must be lowercase')
-
         self.name = name
         self.config = config
-        self.parameters = {pn.lower(): Parameter.construct_parameter(pn.lower(), self, config)
-                           for pn in config.default_config.options(self.name)
-                           if '.' not in pn}
+        self.parameters = self._init_parameters()
 
     def __getattr__(self, item):
         """Return the value of the parameter with that name."""
@@ -336,6 +331,36 @@ class Section:
     def __repr__(self):
         return f"[{self.name}]({', '.join(self.parameters.keys())})"
 
+    def _init_parameters(self) -> Dict[str, Parameter]:
+        def construct_parameter(name: str, section: Section, config: Configuration):
+            """Create the appropriate subtype of ``Parameter`` based on the .type option in the default.config file.
+            :param name: The name of the parameter (as it appears in the configuration file, all lowercase)
+            :type name: str
+            :param section: The section this parameter is to be defined for
+            :type section: Section
+            :param config: The Configuration instance this parameter belongs to
+            :type config: Configuration
+            """
+
+            if name != name.lower():
+                raise ValueError("Parameter names must be lowercase")
+
+            try:
+                parameter_type = config.default_config.get(section.name, f"{name}.type")
+            except configparser.NoOptionError:
+                parameter_type = 'StringParameter'
+
+            if parameter_type not in globals():
+                raise ValueError(
+                    f"Bad parameter type in default.config: {section.name}/{name}={parameter_type}"
+                )
+
+            return globals()[parameter_type](name, section, config)
+
+        return {parameter_name.lower(): construct_parameter(parameter_name.lower(), self, self.config)
+                for parameter_name in self.config.default_config.options(self.name)
+                if '.' not in parameter_name}
+
 
 class Parameter:
     def __init__(self, name, section, config):
@@ -365,32 +390,6 @@ class Parameter:
         # FIXME: REMOVE THIS
         # give subclasses a chance to specialize their behavior
         self.initialize(config.default_config)
-
-    @classmethod
-    def construct_parameter(cls, name, section, config):
-        """Create the appropriate subtype of ``Parameter`` based on the .type option in the default.config file.
-        :param name: The name of the parameter (as it appears in the configuration file, all lowercase)
-        :type name: str
-        :param section: The section this parameter is to be defined for
-        :type section: Section
-        :param config: The Configuration instance this parameter belongs to
-        :type config: Configuration
-        """
-
-        if name != name.lower():
-            raise ValueError("Parameter names must be lowercase")
-
-        try:
-            parameter_type = config.default_config.get(section.name, f"{name}.type")
-        except configparser.NoOptionError:
-            parameter_type = 'StringParameter'
-
-        if parameter_type not in globals():
-            raise ValueError(
-                f"Bad parameter type in default.config: {section.name}/{name}={parameter_type}"
-            )
-
-        return globals()[parameter_type](name, section, config)
 
     @property
     def default(self):
