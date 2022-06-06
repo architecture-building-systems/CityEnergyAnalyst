@@ -7,13 +7,15 @@ from __future__ import annotations
 import configparser
 import datetime
 import glob
+import io
 import json
 import os
 import re
 import tempfile
-from typing import Dict, List, Union, Any
+from typing import Dict, List, Union, Any, Generator, Tuple
 
 import cea.inputlocator
+import cea.plugin
 from cea.utilities import unique
 
 __author__ = "Daren Thomas"
@@ -30,7 +32,7 @@ CEA_CONFIG = os.path.expanduser('~/cea.config')
 
 
 class Configuration:
-    def __init__(self, config_file=CEA_CONFIG):
+    def __init__(self, config_file: str = CEA_CONFIG):
         self.restricted_to = None
 
         self.default_config = configparser.ConfigParser()
@@ -39,7 +41,6 @@ class Configuration:
         self.user_config = configparser.ConfigParser()
         self.user_config.read([DEFAULT_CONFIG, config_file])
 
-        import cea.plugin
         cea.plugin.add_plugins(self.default_config, self.user_config)
 
         self.sections = self._init_sections()
@@ -48,8 +49,8 @@ class Configuration:
         if not os.path.exists(CEA_CONFIG):
             self.save(config_file)
 
-    def __getattr__(self, item):
-        """Return either a Section object or the value of a Parameter"""
+    def __getattr__(self, item: str) -> Union[Section, Parameter]:
+        """Return either a Section object or the value of a Parameter from `general`"""
         cid = config_identifier(item)
         if cid in self.sections:
             return self.sections[cid]
@@ -58,7 +59,7 @@ class Configuration:
         else:
             raise AttributeError(f"Section or Parameter not found: {item}")
 
-    def __setattr__(self, key, value):
+    def __setattr__(self, key: str, value: Any):
         """Set the value on a parameter in the general section"""
         if key in {'default_config', 'user_config', 'sections', 'restricted_to'}:
             # make sure the __init__ method doesn't trigger this
@@ -69,33 +70,35 @@ class Configuration:
         if cid in general_section.parameters:
             return general_section.parameters[cid].set(value)
         else:
-            return super().__setattr__(key, value)
+            raise AttributeError(f"Parameter not found in general section: {cid}")
 
-    def __getstate__(self):
+    def __getstate__(self) -> str:
         """when we pickle, we only really need to pickle the user_config"""
-        import io
         config_data = io.StringIO()
         self.user_config.write(config_data)
         return config_data.getvalue()
 
-    def __setstate__(self, state):
+    def __setstate__(self, state: str):
         """read in the user_config and re-initialize the state (this basically follows the __init__)"""
-        import io
-        import cea.plugin
-
         self.restricted_to = None
+
         self.default_config = configparser.ConfigParser()
         self.default_config.read(DEFAULT_CONFIG)
+
         self.user_config = configparser.ConfigParser()
         self.user_config.read_file(io.StringIO(state))
 
         cea.plugin.add_plugins(self.default_config, self.user_config)
 
-        self.sections = {section_name: Section(section_name, config=self)
-                         for section_name in self.default_config.sections()}
+        self.sections = self._init_sections()
 
-    def _init_sections(self):
-        return {section_name: Section(section_name, self) for section_name in self.default_config.sections()}
+    def _init_sections(self) -> Dict[str, Section]:
+        def construct_section(name: str, config: Configuration):
+            if name != name.lower():
+                raise ValueError('Section names must be lowercase')
+            return Section(name, config)
+
+        return {name: construct_section(name, self) for name in self.default_config.sections()}
 
     def restrict_to(self, option_list: List[str]) -> None:
         """
@@ -134,13 +137,13 @@ class Configuration:
         def __exit__(self, exc_type, exc_val, exc_tb):
             self.clear()
 
-    def temp_restrictions(self, parameters: List[str]):
+    def temp_restrictions(self, parameters: List[str]) -> RestrictionContextManager:
         """
         Apply temporary restricts to script using context manager
         """
         return self.RestrictionContextManager(self, parameters)
 
-    def ignore_restrictions(self):
+    def ignore_restrictions(self) -> RestrictionContextManager:
         """
         Create a ``with`` block where the config file restrictions are not kept.
         Usage::
@@ -149,7 +152,7 @@ class Configuration:
         """
         return self.RestrictionContextManager(self, [])
 
-    def apply_command_line_args(self, args, option_list):
+    def apply_command_line_args(self, args: List[str], option_list: List[str]) -> None:
         """
         Apply the command line args as passed to cea.interfaces.cli.cli (the ``cea`` command). Each argument
         is assumed to follow this pattern: ``--PARAMETER-NAME VALUE``,  with ``PARAMETER-NAME`` being one of the options
@@ -179,7 +182,7 @@ class Configuration:
         if len(command_line_args) != 0:
             raise ValueError(f"Unexpected parameters: {command_line_args}")
 
-    def matching_parameters(self, option_list):
+    def matching_parameters(self, option_list: List[str]) -> Generator[Tuple[Section, Parameter]]:
         """
         Return a tuple (Section, Parameter) for all parameters that match the parameters in the ``option_list``.
         ``option_list`` is a sequence of parameter names in the form ``section[:parameter]``
@@ -200,7 +203,7 @@ class Configuration:
                 for parameter in section.parameters.values():
                     yield section, parameter
 
-    def save(self, config_file=CEA_CONFIG):
+    def save(self, config_file: str = CEA_CONFIG) -> None:
         """
         Save the current configuration to a file. By default, the configuration is saved to the user configuration
         file (``~/cea.config``). If ``config_file`` is set to the default configuration file
@@ -221,7 +224,7 @@ class Configuration:
         with open(config_file, 'w') as f:
             parser.write(f)
 
-    def get_number_of_processes(self):
+    def get_number_of_processes(self) -> int:
         """
         Returns the number of processes to use for multiprocessing.
 
@@ -234,11 +237,11 @@ class Configuration:
         else:
             return 1
 
-    def get(self, fqname):
+    def get(self, fqname: str) -> Parameter:
         """Given a string of the form "section:parameter", return the value of that parameter"""
         return self.get_parameter(fqname).get()
 
-    def get_parameter(self, fqname):
+    def get_parameter(self, fqname: str) -> Parameter:
         """
         Given a string of the form "section:parameter", return the parameter object
 
@@ -250,8 +253,7 @@ class Configuration:
         except KeyError:
             raise KeyError(fqname)
 
-    def refresh_plugins(self):
-        import cea.plugin
+    def refresh_plugins(self) -> None:
         cea.plugin.add_plugins(self.default_config, self.user_config)
         self.sections = self._init_sections()
 
@@ -277,7 +279,7 @@ def parse_command_line_args(args):
     return parameters
 
 
-def config_identifier(python_identifier):
+def config_identifier(python_identifier: str) -> str:
     """
     For vanity, keep keys and section names in the config file with dashes instead of underscores and
     all-lowercase
@@ -288,7 +290,7 @@ def config_identifier(python_identifier):
 class Section:
     """Instances of ``Section`` describe a section in the configuration file."""
 
-    def __init__(self, name, config):
+    def __init__(self, name: str, config: Configuration) -> None:
         """
         :param name: The name of the section (as it appears in the configuration file, all lowercase)
         :type name: str
