@@ -145,6 +145,7 @@ def district_cooling_network(locator,
 
         for hour in range(HOURS_IN_YEAR):  # cooling supply for all buildings excluding cooling loads from data centers
             daily_storage.hour = hour
+            if master_to_slave_variables.debug is True: print("\nHour {:.0f}".format(hour))
             if Q_thermal_req_W[hour] > 0.0:
                 # only if there is a cooling load!
                 daily_storage, \

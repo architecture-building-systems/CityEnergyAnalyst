@@ -1,3 +1,7 @@
+- 2022-05-10 - 3.30.0 - #3151 how-to-review-a-pull-request
+- 2022-05-10 - 3.30.0 - #3154 Remove hardcoded floor height from calculations
+- 2022-04-27 - 3.30.0 - #3155 Fix import input files on dashboard
+- 2022-04-27 - 3.30.0 - #3152 release-3.30.0
 - 2022-04-26 - 3.29.0 - #3076 Clean up GitHub repository
 - 2022-04-25 - 3.29.0 - #3148 Release 3.29.0
 - 2022-04-25 - 3.28.0 - #3116 2973 thermal storage for cea development for duct
