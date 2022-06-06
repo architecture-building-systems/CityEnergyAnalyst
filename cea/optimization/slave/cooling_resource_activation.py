@@ -526,7 +526,10 @@ def activate_AS_VCC(activation,
                     capacity_VCC_AS_W,
                     daily_storage_class):
     """
-
+    This function activates air source vapour compression chillers (i.e. VCC connected to cooling towers in the cold
+    water loop). In case the cooling capacity of the VCC is insufficient the cold storage is discharged to try to
+    cover the unmet cooling demand. If the capacity of the VCC is greater than the unmet cooling demand, the remaining
+    capacity is used to charge the thermal storage.
     """
     Qc_VCC_AS_gen_W = 0.0
     Qc_VCC_AS_gen_directload_W = 0.0
