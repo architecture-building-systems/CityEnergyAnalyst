@@ -404,7 +404,7 @@ def activate_WS_VCC(activation,
     Qc_VCC_WS_gen_storage_W = 0.0
     E_VCC_WS_req_W = 0.0
 
-    # Peak VCC water-source OR free cooling using water body
+    # VCC water-source OR free cooling using water body
     if activation == 1 and Q_cooling_unmet_W > 0.0 \
             and T_source_average_water_body_K < VCC_T_COOL_IN \
             and not np.isclose(T_district_cooling_supply_K, T_district_cooling_return_K):
@@ -501,7 +501,7 @@ def activate_WS_VCC(activation,
 
         else:
             print("no water body source peak load VCC was used")
-        # energy balance: calculate the remaining cooling potential of the water body, the remaining unmet cooling
+        # energy balance: calculate the remaining cooling potential of the water body, the remaining unmet cooling 
         # demand (after contributions from VCC and storage) of the DCN and the cooling provided by the storage
         Qc_water_body_remaining_W -= Qc_from_water_body_W
         Q_cooling_unmet_W = Q_cooling_unmet_W - Qc_from_activated_cooling_system_W - Qc_from_storage_W
