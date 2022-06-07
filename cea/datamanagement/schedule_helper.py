@@ -11,6 +11,7 @@ import cea
 import cea.config
 import cea.inputlocator
 from cea.demand.constants import VARIABLE_CEA_SCHEDULE_RELATION
+from cea.utilities.dbf import dbf_to_dataframe
 from cea.utilities.schedule_reader import read_cea_schedule, save_cea_schedule
 
 __author__ = "Jimeno Fonseca"
@@ -51,14 +52,12 @@ def calc_mixed_schedule(locator, building_typology_df, buildings, list_var_names
     :return:
     """
 
-    if list_var_names is None:
-        list_var_names = ["1ST_USE", '2ND_USE', '3RD_USE']
-    if list_var_values is None:
-        list_var_values = ["1ST_USE_R", '2ND_USE_R', '3RD_USE_R']
-
     metadata = 'mixed-schedule'
     schedule_data_all_uses = ScheduleData(locator)
     building_typology_df = building_typology_df.loc[building_typology_df['Name'].isin(buildings)]
+    list_var_names, list_var_values = get_lists_of_var_names_and_var_values(list_var_names,
+                                                                            list_var_values,
+                                                                            building_typology_df)
 
     # get list of uses only with a valid value in building_occupancy_df
     list_uses = get_list_of_uses_in_case_study(building_typology_df)
@@ -209,8 +208,9 @@ def get_list_of_uses_in_case_study(building_typology_df):
     :return: list of uses in case study
     :rtype: pandas.DataFrame.Index
     """
-    list_var_names = ["1ST_USE", '2ND_USE', '3RD_USE']
-    list_var_values = ["1ST_USE_R", '2ND_USE_R', '3RD_USE_R']
+    list_var_names, list_var_values = get_lists_of_var_names_and_var_values(
+        list_var_names=["1ST_USE", '2ND_USE', '3RD_USE'], list_var_values=["1ST_USE_R", '2ND_USE_R', '3RD_USE_R'],
+        building_typology_df=building_typology_df)
 
     # validate list of uses
     list_uses = set()
@@ -222,6 +222,23 @@ def get_list_of_uses_in_case_study(building_typology_df):
 
     unique_uses = list(list_uses)
     return unique_uses
+
+
+def get_lists_of_var_names_and_var_values(list_var_names, list_var_values, building_typology_df):
+    '''
+    This script checks whether there are more var names in the building typology than the default number, and if so,
+    it allows more than the default number of var names to be processed.
+    '''
+
+    if list_var_names is None:
+        list_var_names = ["1ST_USE", '2ND_USE', '3RD_USE']
+    if list_var_values is None:
+        list_var_values = ["1ST_USE_R", '2ND_USE_R', '3RD_USE_R']
+    if len([c for c in building_typology_df.columns if '_USE_R' in c]) > len(list_var_values):
+        list_var_values = [c for c in building_typology_df.columns if '_USE_R' in c]
+        list_var_names = ['_'.join(c.split('_')[0:2]) for c in list_var_values]
+
+    return list_var_names, list_var_values
 
 
 def calc_average(last, current, share_of_use):
@@ -261,8 +278,15 @@ class ScheduleData(object):
 
 def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    path_to_building_schedule = locator.get_database_standard_schedules_use('MULTI_RES')
 
+    # get occupancy and age files
+    building_typology_df = dbf_to_dataframe(locator.get_building_typology())
+
+    # validate list of uses in case study
+    get_list_of_uses_in_case_study(building_typology_df)
+
+    # calculate mixed schedules
+    calc_mixed_schedule(locator, building_typology_df, buildings=config.archetypes_mapper.buildings)
 
 if __name__ == '__main__':
     main(cea.config.Configuration())

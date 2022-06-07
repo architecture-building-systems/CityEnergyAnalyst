@@ -92,7 +92,7 @@ def cooling_resource_activator(Q_thermal_req,
     Q_DailyStorage_to_storage_W = 0.0
     Q_DailyStorage_content_W = 0.0
 
-    # ACTIVATE THE TRIGEN
+    # ACTIVATE THE TRI-GENERATION PROCESS
     if master_to_slave_variables.NG_Trigen_on == 1 and Q_cooling_unmet_W > 0.0 \
             and not np.isclose(T_district_cooling_supply_K, T_district_cooling_return_K):
 
@@ -384,7 +384,6 @@ def cooling_resource_activator(Q_thermal_req,
         Q_cooling_unmet_W = Q_cooling_unmet_W - Qc_from_activated_cooling_system_W - Qc_from_storage_W
         Q_DailyStorage_to_storage_W += Qc_to_storage_W
         Q_DailyStorage_gen_directload_W += Qc_from_storage_W
-
     else:
         Q_PeakVCC_WS_gen_directload_W = 0.0
         Q_PeakVCC_WS_gen_W = 0.0

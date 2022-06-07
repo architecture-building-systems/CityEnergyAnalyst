@@ -27,9 +27,9 @@ class TestDistrictCooling(unittest.TestCase):
     locator = None
 
     @classmethod
-    def setUpClass(cls, debug=False):
+    def setUpClass(cls):
         # set debugging variable. Set to True if you wish to analyse details of the district cooling activation script
-        cls.debug = debug
+        cls.debug = False
 
         # get locator and config variables for the reference case, which will also be used to test the
         # district cooling operation functions
@@ -135,7 +135,7 @@ class TestDistrictCooling(unittest.TestCase):
     def test_cooling_main(self):
         # config-project directory to the reference case
         project_reference_case = os.path.join(tempfile.gettempdir(), 'reference-case-open')
-        self.config.__setattr__('project', project_reference_case)
+        self.config.project = project_reference_case
 
         # run district cooling activation script (and calculate all the costs, capacities and energy demands)
         district_cooling_fixed_costs, \
@@ -149,15 +149,11 @@ class TestDistrictCooling(unittest.TestCase):
                                                                                     self.weather_features)
 
         # aggregate dispatch curves to obtain annual values (simplifying the comparison of values)
-        for dispatch_curve in district_cooling_generation_dispatch.keys():
-            district_cooling_generation_dispatch[dispatch_curve] = \
-                district_cooling_generation_dispatch[dispatch_curve].sum()
-        for dispatch_curve in district_cooling_electricity_requirements_dispatch.keys():
-            district_cooling_electricity_requirements_dispatch[dispatch_curve] = \
-                district_cooling_electricity_requirements_dispatch[dispatch_curve].sum()
-        for dispatch_curve in district_cooling_fuel_requirements_dispatch.keys():
-            district_cooling_fuel_requirements_dispatch[dispatch_curve] = \
-                district_cooling_fuel_requirements_dispatch[dispatch_curve].sum()
+        district_cooling_generation_dispatch = {k: v.sum() for k, v in district_cooling_generation_dispatch.items()}
+        district_cooling_electricity_requirements_dispatch = \
+            {k: v.sum() for k, v in district_cooling_electricity_requirements_dispatch.items()}
+        district_cooling_fuel_requirements_dispatch = \
+            {k: v.sum() for k, v in district_cooling_fuel_requirements_dispatch.items()}
 
         # fetch stored data for comparison
         expected_district_cooling_fixed_costs = \
