@@ -92,7 +92,7 @@ def cooling_resource_activator(Q_thermal_req,
     Qc_DailyStorage_to_storage_W = 0.0
     Qc_DailyStorage_content_W = 0.0
 
-    # ACTIVATE THE TRIGEN
+    # ACTIVATE THE TRI-GENERATION PROCESS
     if master_to_slave_variables.NG_Trigen_on == 1 and Q_cooling_unmet_W > 0.0 \
             and not np.isclose(T_district_cooling_supply_K, T_district_cooling_return_K):
 
@@ -393,12 +393,26 @@ def cooling_resource_activator(Q_thermal_req,
 
         else:
             print("no water body source peak load VCC was used")
+
         # energy balance: calculate the remaining cooling potential of the water body, the remaining unmet cooling 
         # demand (after contributions from VCC and storage) of the DCN and the cooling provided by the storage
         Qc_water_body_remaining_W -= Qc_from_water_body_W
         Q_cooling_unmet_W = Q_cooling_unmet_W - Qc_from_activated_cooling_system_W - Qc_from_storage_W
         Qc_DailyStorage_to_storage_W += Qc_to_storage_W
         Qc_DailyStorage_gen_directload_W += Qc_from_storage_W
+
+    # IN DEBUG-MODE: Check how much of the available water body potential was used in this timestep and display it
+    if master_to_slave_variables.debug is True:
+        # TODO: Remove this section after merging with branch 3131 ----------------------------------------------------
+        if not 'Qc_water_body_potential_W' in locals():
+            Qc_water_body_potential_W = 1050000.00
+        if 'Q_therm_water_body_W' in locals():
+            Qc_water_body_remaining_W = Qc_from_water_body_W
+        # -------------------------------------------------------------------------------------------------------------
+        Qc_water_body_used = 1 - Qc_water_body_remaining_W / Qc_water_body_potential_W
+        print("__WATER BODY USAGE__")
+        print("The total water body potential for this hour was {:.2f} kWh,".format(Qc_water_body_potential_W / 1000))
+        print("...of which {:.0f}% were used for storage or to meet cooling demand.".format(Qc_water_body_used * 100))
 
     # ACTIVATE AIR SOURCE COOLING TECHNOLOGIES
     # Base VCC air-source with a cooling tower
