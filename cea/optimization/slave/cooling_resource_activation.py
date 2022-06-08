@@ -341,14 +341,14 @@ def activate_CCandACH_trigen(Q_cooling_unmet_W,
             E_ACH_req_W = 0.0
             Qc_CT_ACH_W = 0.0
 
-            if Qc_from_storage_W > 0.0:
-                Qc_storage_correction, Qc_DailyStorage_content_W = \
-                    daily_storage_class.discharge_storage(Qc_from_storage_W)
-                Qc_from_storage_W -= Qc_storage_correction
-            if Qc_to_storage_W > 0.0:
-                Qc_storage_correction, Qc_DailyStorage_content_W = \
-                    daily_storage_class.discharge_storage(Qc_to_storage_W)
-                Qc_to_storage_W -= Qc_storage_correction
+            # if Qc_from_storage_W > 0.0:
+            #     Qc_storage_correction, Qc_DailyStorage_content_W = \
+            #         daily_storage_class.discharge_storage(Qc_from_storage_W)
+            #     Qc_from_storage_W -= Qc_storage_correction
+            # if Qc_to_storage_W > 0.0:
+            #     Qc_storage_correction, Qc_DailyStorage_content_W = \
+            #         daily_storage_class.discharge_storage(Qc_to_storage_W)
+            #     Qc_to_storage_W -= Qc_storage_correction
 
         # calculate heat losses (i.e. anthropogenic heat emissions) from Trigen
         Q_loss_CC = NG_Trigen_req_W - Q_CHP_gen_W - E_Trigen_NG_gen_W
