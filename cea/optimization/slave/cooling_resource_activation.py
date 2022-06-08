@@ -341,6 +341,9 @@ def activate_CCandACH_trigen(Q_cooling_unmet_W,
             E_ACH_req_W = 0.0
             Qc_CT_ACH_W = 0.0
 
+            Qc_from_storage_W = 0.0         # TODO: Remove this section after merging the pull request for this branch
+            Qc_to_storage_W = 0.0
+
             # if Qc_from_storage_W > 0.0:
             #     Qc_storage_correction, Qc_DailyStorage_content_W = \
             #         daily_storage_class.discharge_storage(Qc_from_storage_W)
