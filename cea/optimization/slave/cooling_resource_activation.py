@@ -480,7 +480,6 @@ def cooling_resource_activator(Q_thermal_req,
     else:
         Qc_PeakVCC_AS_gen_W = 0.0
         E_PeakVCC_AS_req_W = 0.0
-        Qc_BaseVCC_AS_gen_directload_W = 0.0
         Qc_PeakVCC_AS_gen_directload_W = 0.0
 
     if Q_cooling_unmet_W > 1.0E-3:
