@@ -25,7 +25,7 @@ __status__ = "Production"
 
 
 # technical model
-def calc_VCC(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_chw_re_K, T_cw_in_K, VC_chiller):
+def calc_VCC(q_chw_load_Wh, T_chw_sup_K, T_chw_re_K, T_cw_in_K, VC_chiller):
     """
     For the operation of a vapor compression chiller between a district cooling network and a condenser with fresh water
     to a cooling tower following [D.J. Swider, 2003]_.
@@ -54,7 +54,7 @@ def calc_VCC(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_chw_re_K, T_cw_in_
         q_cw_W = 0.0
 
     elif q_chw_load_Wh > 0.0:
-        COP = calc_COP_with_carnot_efficiency(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, VC_chiller)
+        COP = calc_COP_g(T_chw_sup_K, T_cw_in_K, VC_chiller)
         if COP < 0.0:
             print(f'Negative COP: {COP} {T_chw_sup_K} {T_chw_re_K} {T_cw_in_K}, {q_chw_load_Wh}', )
         # calculate chiller outputs
@@ -77,20 +77,33 @@ def calc_COP(T_cw_in_K, T_chw_re_K, q_chw_load_Wh):
     return COP
 
 
-def calc_COP_with_carnot_efficiency(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, VC_chiller):
+def calc_COP_g(T_evap_K, T_cond_K, VC_chiller):
     """
-    Calculate the weighted average part load factor across all chillers based on the load distribution and derive the
-    COP based on that. This way of calculating the chiller COP resembles the approach described in EN 14511-2:2018 and
-    EN 14825:2018. The latter is illustrated in [P. Conti et al., 2020]
+    Calculate the approximate COP at rated operating conditions using the g-value (sometimes also called
+    the second-law efficiency [Bejan, 2016]).
+    Assuming a rated COP for all calculations is a strong simplification, but accurate enough for most cases in CEA.
 
-    ..[P. Conti et al., 2020] P. Conti, C. Bartoli, A. Franco and D. Testi (2020). Experimental Analysis of an Air Heat
-    Pump for Heating Service Using a “Hardware-In-The-Loop” System
-    TODO: Continue looking for a better source or change the formula (possibly check ASHRAE Standard 90.1-2001 on
-          chiller rated efficiency if available)
+    [Bejan, 2016] Adrian Bejan, 2016, Andvanced engineering thermodynamics (p. 106)
     """
-    PLF = calc_averaged_PLF(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, VC_chiller)
-    cop_chiller = VC_chiller.g_value * T_chw_sup_K / (T_cw_in_K - T_chw_sup_K) * PLF
+    cop_chiller = VC_chiller.g_value * T_evap_K / (T_cond_K - T_evap_K)
     return cop_chiller
+
+
+def eta_th_vcc_g(T_evap_K, T_cond_K, VC_chiller):
+    """
+    Calculate vapour compression chiller's thermal efficiency (= Qc_evap / Qc_cond,
+    i.e. heat_from_DC / heat_to_waterORair ) in accordance with the g-value VCC model.
+    This calculation also assumes that all heat from the VCC is directed to the heat sink
+    (i.e. Qc_evap + P_el = Qc_cond).
+
+    eta_th = Qc_evap / Qc_cond
+           = Qc_evap / (Qc_evap + P_el)
+           = 1 / (1 + P_el/Qc_evap)
+           = 1 / (1 + 1/COP)
+    """
+    thermal_efficiency = 1 / (1 + 1 / calc_COP_g(T_evap_K, T_cond_K, VC_chiller))
+
+    return thermal_efficiency
 
 
 # Investment costs
@@ -211,8 +224,7 @@ def calc_averaged_PLF(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, 
     This calculation is based on the 'Electric Chiller Cooling Efficiency Adjustment Curves' as defined by COMNET
     (https://comnet.org/index.php/382-chillers). The part load factor returned by this function corresponds to a
     cooling load weighted average of the expression 'EIR_FPLR×EIR_FT×CAP_FT = P_operating/P_rated' across
-    all active chiller units. P_operating in this function corresponds to the electrical power demand of the VCC at the
-     given operating point and P_rated is the rated electrical power demand of the VCC.
+    all active chiller units.
 
     :param float peak_cooling_load: in W
     :param float q_chw_load_Wh: in W

@@ -463,9 +463,7 @@ def disconnected_cooling_for_building(building_name, supply_systems, lca, locato
 def calc_VCC_operation(T_chw_re_K, T_chw_sup_K, mdot_kgpers, VCC_chiller):
     from cea.optimization.constants import VCC_T_COOL_IN
     q_chw_Wh = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_chw_re_K - T_chw_sup_K)
-    peak_cooling_load = np.nanmax(q_chw_Wh)
-    VCC_operation = np.vectorize(chiller_vapor_compression.calc_VCC)(peak_cooling_load,
-                                                                     q_chw_Wh,
+    VCC_operation = np.vectorize(chiller_vapor_compression.calc_VCC)(q_chw_Wh,
                                                                      T_chw_sup_K,
                                                                      T_chw_re_K,
                                                                      VCC_T_COOL_IN,
