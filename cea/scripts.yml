@@ -164,8 +164,7 @@ Energy potentials:
                  'solar:t-in-pvt',
                  'solar:custom-tilt-angle',
                  'solar:panel-tilt-angle',
-                 'solar:custom-roof-coverage',
-                 'solar:max-roof-coverage']
+                 'solar:roof-coverage']
     input-files:
       - [get_radiation_metadata, building_name]
       - [get_zone_geometry]
@@ -182,7 +181,7 @@ Energy potentials:
                  'general:number-of-cpus-to-keep-free',
                  'solar:panel-on-roof', 'solar:panel-on-wall', 'solar:annual-radiation-threshold',
                  'solar:solar-window-solstice', 'solar:custom-tilt-angle', 'solar:panel-tilt-angle',
-                 'solar:custom-roof-coverage', 'solar:max-roof-coverage']
+                 'solar:roof-coverage']
     input-files:
       - [get_radiation_metadata, building_name]
       - [get_zone_geometry]
@@ -209,7 +208,7 @@ Energy potentials:
                  'general:number-of-cpus-to-keep-free', 'solar:type-scpanel',
                  'solar:panel-on-roof', 'solar:panel-on-wall', 'solar:annual-radiation-threshold',
                  'solar:solar-window-solstice', 'solar:t-in-sc', 'solar:buildings', 'solar:custom-tilt-angle',
-                 'solar:custom-roof-coverage']
+                 'solar:roof-coverage']
     input-files:
       - [get_radiation_metadata, building_name]
       - [get_zone_geometry]
