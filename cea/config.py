@@ -12,7 +12,7 @@ import json
 import os
 import re
 import tempfile
-from typing import Dict, List, Union, Any, Generator, Tuple
+from typing import Dict, List, Union, Any, Generator, Tuple, Optional
 
 import cea.inputlocator
 import cea.plugin
@@ -110,6 +110,10 @@ class Configuration:
         scripts. This only solves half of the possible issues with :py:class:`cea.config.Configuration`: the other is
         that a script creates it's own config file somewhere down the line. This is hard to check anyway.
         """
+        if option_list is None:
+            self.restricted_to = None
+            return
+
         self.restricted_to = [p.fqname for s, p in self.matching_parameters(option_list)]
         self.restricted_to.append("general:plugins")
         if 'general:scenario' in self.restricted_to:
@@ -119,10 +123,10 @@ class Configuration:
             self.restricted_to.append('general:scenario-name')
 
     class RestrictionContextManager:
-        def __init__(self, config, parameters: List[str]):
+        def __init__(self, config, parameters: Optional[List[str]]):
             self.config = config
             self.parameters = parameters
-            self.old_restrictions = []
+            self.old_restrictions = None
 
         def apply(self):
             self.old_restrictions = self.config.restricted_to
@@ -150,7 +154,7 @@ class Configuration:
             with config.ignore_restrictions():
                 config.my_section.my_property = value
         """
-        return self.RestrictionContextManager(self, [])
+        return self.RestrictionContextManager(self, None)
 
     def apply_command_line_args(self, args: List[str], option_list: List[str]) -> None:
         """
