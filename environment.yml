@@ -30,7 +30,7 @@ dependencies:
 - numba
 - numpy
 - numpy-financial
-- osmnx=0.15.1
+- osmnx
 - pandas
 - pip
 - psutil
