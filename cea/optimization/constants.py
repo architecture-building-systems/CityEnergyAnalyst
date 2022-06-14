@@ -151,6 +151,10 @@ VCC_ALLOWED = True
 ABSORPTION_CHILLER_ALLOWED = True
 STORAGE_COOLING_ALLOWED = True
 
+# Direct expansion unit
+DX_COP = 2.3  # [-]
+PRICE_DX_PER_W = 1.6  # USD
+
 # Vapor compressor chiller
 VCC_T_COOL_IN = 30 + 273.0  # entering condenser water temperature [K]
 VCC_MIN_LOAD = 0.1  # min load for cooling power
