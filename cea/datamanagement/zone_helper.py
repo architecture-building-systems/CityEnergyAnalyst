@@ -165,11 +165,19 @@ def zone_helper(locator, config):
     calculate_typology_file(locator, zone_df, year_construction, occupancy_type, typology_output_path)
 
 
-def calc_category(standard_DB, year_array):
+def calc_category(standard_db, year_array):
     def category_assignment(year):
-        return (standard_DB[(standard_DB['YEAR_START'] <= year) & (standard_DB['YEAR_END'] >= year)].STANDARD.values[0])
+        within_year = (standard_db['YEAR_START'] <= year) & (standard_db['YEAR_END'] >= year)
+        standards = standard_db.STANDARD.values
 
-    category = np.vectorize(category_assignment)(year_array)
+        # Filter standards if found
+        if within_year.any():
+            standards = standards[within_year]
+
+        # Just return first value
+        return standards[0]
+
+    category = np.array([category_assignment(y) for y in year_array])
     return category
 
 
