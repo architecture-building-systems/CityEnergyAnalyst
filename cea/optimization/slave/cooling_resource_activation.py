@@ -88,400 +88,101 @@ def cooling_resource_activator(Q_thermal_req,
 
     # initializing unmet cooling load and requirements from daily storage for this hour
     Q_cooling_unmet_W = Q_thermal_req
-    Qc_DailyStorage_gen_directload_W = 0.0
+    Qc_DailyStorage_from_storage_W = 0.0
     Qc_DailyStorage_to_storage_W = 0.0
-    Qc_DailyStorage_content_W = 0.0
+    Qc_water_body_remaining_W = Qc_water_body_potential_W
 
-    # ACTIVATE THE TRI-GENERATION PROCESS
-    if master_to_slave_variables.NG_Trigen_on == 1 and Q_cooling_unmet_W > 0.0 \
-            and not np.isclose(T_district_cooling_supply_K, T_district_cooling_return_K):
-
-        # Check what the maximum cooling capacity of the trigeneration plant can be for this individual
-        size_trigen_W = master_to_slave_variables.NG_Trigen_ACH_size_W
-
-        # If the unmet cooling load exceeds the trigen-plant's maximum capacity,
-        #   try meeting the remaining cooling demand using the cold storage
-        if Q_cooling_unmet_W > size_trigen_W:
-            Qc_Trigen_NG_gen_directload_W = size_trigen_W
-            Qc_Trigen_gen_storage_W = 0.0
-            Qc_from_storage_W, Qc_DailyStorage_content_W = \
-                daily_storage_class.discharge_storage(Q_cooling_unmet_W - size_trigen_W)
-            Qc_Trigen_gen_W = Qc_Trigen_NG_gen_directload_W + Qc_Trigen_gen_storage_W
-
-        # If the unmet cooling load is smaller than the trigen-plant's maximum capacity,
-        #   use the available capacity to fill the cold storage
-        else:
-            Qc_Trigen_NG_gen_directload_W = Q_cooling_unmet_W
-            Qc_Trigen_gen_storage_W, Qc_DailyStorage_content_W = \
-                daily_storage_class.charge_storage(size_trigen_W - Q_cooling_unmet_W)
-            Qc_from_storage_W = 0.0
-            Qc_Trigen_gen_W = Qc_Trigen_NG_gen_directload_W + Qc_Trigen_gen_storage_W
-
-        # GET THE ABSORPTION CHILLER PERFORMANCE
-        T_ACH_in_C = ACH_T_IN_FROM_CHP_K - 273
-        Qc_CT_ACH_W, \
-        Qh_CCGT_req_W, \
-        E_ACH_req_W = calc_chiller_absorption_operation(Qc_Trigen_gen_W,
-                                                        T_district_cooling_return_K,
-                                                        T_district_cooling_supply_K,
-                                                        T_ACH_in_C,
-                                                        T_ground_K,
-                                                        absorption_chiller,
-                                                        size_trigen_W)
-
-        # operation of the CCGT
-        Q_used_prim_CC_fn_W = CCGT_operation_data['q_input_fn_q_output_W']
-        q_output_CC_min_W = CCGT_operation_data['q_output_min_W']
-        Q_output_CC_max_W = CCGT_operation_data['q_output_max_W']
-        eta_elec_interpol = CCGT_operation_data['eta_el_fn_q_input']
-
-        # operation of gas turbine possible if above minimum capacity
-        if Qh_CCGT_req_W >= q_output_CC_min_W:
-
-            if Qh_CCGT_req_W <= Q_output_CC_max_W:  # Normal operation possible within part load regime
-                Q_CHP_gen_W = float(Qh_CCGT_req_W)
-                NG_Trigen_req_W = Q_used_prim_CC_fn_W(Q_CHP_gen_W)
-                E_Trigen_NG_gen_W = np.float(eta_elec_interpol(NG_Trigen_req_W)) * NG_Trigen_req_W
-
-            else:  # Only part of the demand can be delivered as 100% load achieved
-                Q_CHP_gen_W = Q_output_CC_max_W
-                NG_Trigen_req_W = Q_used_prim_CC_fn_W(Q_CHP_gen_W)
-                E_Trigen_NG_gen_W = np.float(eta_elec_interpol(NG_Trigen_req_W)) * NG_Trigen_req_W
-        else:
-            Qc_Trigen_gen_W = 0.0
-            Qc_Trigen_gen_storage_W = 0.0
-            NG_Trigen_req_W = 0.0
-            E_Trigen_NG_gen_W = 0.0
-            Qc_Trigen_NG_gen_directload_W = 0.0
-            Qc_from_storage_W = 0.0
-
-        # update unmet cooling load
-        Q_cooling_unmet_W = Q_cooling_unmet_W - Qc_Trigen_NG_gen_directload_W - Qc_from_storage_W
-        Qc_DailyStorage_to_storage_W += Qc_Trigen_gen_storage_W
-        Qc_DailyStorage_gen_directload_W += Qc_from_storage_W
-    else:
-        Qc_Trigen_gen_W = 0.0
-        NG_Trigen_req_W = 0.0
-        E_Trigen_NG_gen_W = 0.0
-        Qc_Trigen_NG_gen_directload_W = 0.0
+    # ACTIVATE THE TRIGEN
+    Q_cooling_unmet_W, \
+    Qc_DailyStorage_content_W, Qc_DailyStorage_to_storage_W, Qc_DailyStorage_from_storage_W, \
+    Qc_Trigen_gen_W, Qc_Trigen_NG_gen_directload_W, \
+    E_Trigen_NG_gen_W, E_ACH_req_W, NG_Trigen_req_W, \
+    Q_loss_CC, Q_loss_ACH_CT, Q_loss_Trigen = activate_CCandACH_trigen(Q_cooling_unmet_W,
+                                                                       Qc_DailyStorage_to_storage_W,
+                                                                       Qc_DailyStorage_from_storage_W,
+                                                                       T_district_cooling_supply_K,
+                                                                       T_district_cooling_return_K,
+                                                                       T_ground_K,
+                                                                       CCGT_operation_data,
+                                                                       absorption_chiller,
+                                                                       daily_storage_class,
+                                                                       master_to_slave_variables)
 
     # ACTIVATE WATER SOURCE COOLING TECHNOLOGIES
-    # Initialise variables for water source cooling systems
-    Qc_water_body_remaining_W = Qc_water_body_potential_W
-    Qc_from_water_body_W = 0.0
-    Qc_from_activated_cooling_system_W = 0.0
-    Qc_water_body_to_storage_W = 0.0
+    # Base VCC water-source OR first activation of free cooling using water body
+    Q_cooling_unmet_W, Qc_water_body_remaining_W, \
+    Qc_DailyStorage_content_W, Qc_DailyStorage_to_storage_W, Qc_DailyStorage_from_storage_W, \
+    Qc_BaseVCC_WS_gen_W, Qc_BaseVCC_WS_gen_directload_W, \
+    Qc_1st_FreeCooling_and_DirectStorage_WS_W, Qc_1st_FreeCooling_WS_directload_W, \
+    E_BaseVCC_WS_req_W, E_1st_FreeCooling_req_W, \
+    Qc_1st_from_water_body_W = activate_WS_VCC(master_to_slave_variables.WS_BaseVCC_on,
+                                               Q_cooling_unmet_W,
+                                               Qc_water_body_remaining_W,
+                                               Qc_DailyStorage_to_storage_W,
+                                               Qc_DailyStorage_from_storage_W,
+                                               T_district_cooling_supply_K,
+                                               T_district_cooling_return_K,
+                                               T_source_average_water_body_K,
+                                               VC_chiller,
+                                               master_to_slave_variables.WS_BaseVCC_size_W,
+                                               daily_storage_class)
 
-    Qc_from_storage_W = 0.0
-    Qc_to_storage_W = 0.0
+    # Peak VCC water-source OR second activation of free cooling using water body
+    Q_cooling_unmet_W, Qc_water_body_remaining_W, \
+    Qc_DailyStorage_content_W, Qc_DailyStorage_to_storage_W, Qc_DailyStorage_from_storage_W, \
+    Qc_PeakVCC_WS_gen_W, Qc_PeakVCC_WS_gen_directload_W, \
+    Qc_2nd_FreeCooling_and_DirectStorage_WS_W, Qc_2nd_FreeCooling_WS_directload_W, \
+    E_PeakVCC_WS_req_W, E_2nd_FreeCooling_req_W, \
+    Qc_2nd_from_water_body_W = activate_WS_VCC(master_to_slave_variables.WS_PeakVCC_on,
+                                               Q_cooling_unmet_W,
+                                               Qc_water_body_remaining_W,
+                                               Qc_DailyStorage_to_storage_W,
+                                               Qc_DailyStorage_from_storage_W,
+                                               T_district_cooling_supply_K,
+                                               T_district_cooling_return_K,
+                                               T_source_average_water_body_K,
+                                               VC_chiller,
+                                               master_to_slave_variables.WS_PeakVCC_size_W,
+                                               daily_storage_class)
 
-    Qc_FreeCooling_WS_directload_W = 0.0
-    Qc_FreeCooling_and_DirectStorage_WS_W = 0.0
-    E_FreeCooling_req_W = 0.0
-
-    Qc_BaseVCC_WS_gen_directload_W = 0.0
-    Qc_BaseVCC_WS_gen_W = 0.0
-    Qc_BaseVCC_WS_gen_storage_W = 0.0
-    E_BaseVCC_WS_req_W = 0.0
-
-    Qc_PeakVCC_WS_gen_directload_W = 0.0
-    Qc_PeakVCC_WS_gen_W = 0.0
-    Qc_PeakVCC_WS_gen_storage_W = 0.0
-    E_PeakVCC_WS_req_W = 0.0
-
-    # Base VCC water-source OR free cooling using water body
-    if master_to_slave_variables.WS_BaseVCC_on == 1 and Q_cooling_unmet_W > 0.0 \
-            and T_source_average_water_body_K < VCC_T_COOL_IN \
-            and not np.isclose(T_district_cooling_supply_K, T_district_cooling_return_K):
-
-        # initialise variables for the water source vapour compression chiller and free cooling calculation
-        BaseVCC_WS_activated = False
-        FreeCooling_WS_activated = False
-        # TODO: Replace the current calculation of the thermal efficiency (Carnot efficiency) by a more realistic value
-        thermal_efficiency_VCC = T_district_cooling_supply_K / T_source_average_water_body_K
-        capacity_BaseVCC_WS_W = master_to_slave_variables.WS_BaseVCC_size_W
-        Qc_output_BaseVCC_WS_max_W = min(capacity_BaseVCC_WS_W, thermal_efficiency_VCC * Qc_water_body_remaining_W)
-
-        # Activation Case 1: The water temperature doesn't allow for free cooling, therefore the VCC is activated.
-        # The unmet cooling demand is larger than the maximum VCC output, therefore the storage is discharged.
-        if T_district_cooling_supply_K - T_source_average_water_body_K < DT_COOL \
-                and Q_cooling_unmet_W >= Qc_output_BaseVCC_WS_max_W:
-            BaseVCC_WS_activated = True
-            Qc_BaseVCC_WS_gen_directload_W = Qc_output_BaseVCC_WS_max_W
-            Qc_BaseVCC_WS_gen_storage_W = 0.0
-            Qc_from_storage_W, Qc_DailyStorage_content_W = \
-                daily_storage_class.discharge_storage(Q_cooling_unmet_W - Qc_output_BaseVCC_WS_max_W)
-            Qc_BaseVCC_WS_gen_W = Qc_BaseVCC_WS_gen_directload_W + Qc_BaseVCC_WS_gen_storage_W
-
-        # Activation Case 2: The water temperature doesn't allow for free cooling, therefore the VCC is activated.
-        # The maximum VCC output is larger than the unmet cooling demand, therefore the storage is charged.
-        elif T_district_cooling_supply_K - T_source_average_water_body_K < DT_COOL \
-                and Q_cooling_unmet_W < Qc_output_BaseVCC_WS_max_W:
-            BaseVCC_WS_activated = True
-            Qc_BaseVCC_WS_gen_directload_W = Q_cooling_unmet_W
-            Qc_BaseVCC_WS_gen_storage_W, Qc_DailyStorage_content_W = \
-                daily_storage_class.charge_storage(Qc_output_BaseVCC_WS_max_W - Q_cooling_unmet_W)
-            Qc_from_storage_W = 0.0
-            Qc_BaseVCC_WS_gen_W = Qc_BaseVCC_WS_gen_directload_W + Qc_BaseVCC_WS_gen_storage_W
-
-        # Activation Case 3: The water temperature allows for free cooling, therefore the VCC is bypassed.
-        # The unmet cooling demand is larger than the water body's cooling potential, hence the storage is discharged.
-        elif T_district_cooling_supply_K - T_source_average_water_body_K >= DT_COOL \
-                and Q_cooling_unmet_W >= Qc_water_body_remaining_W:
-            FreeCooling_WS_activated = True
-            Qc_FreeCooling_WS_directload_W = Qc_water_body_remaining_W
-            Qc_water_body_to_storage_W = 0.0
-            Qc_from_storage_W, Qc_DailyStorage_content_W = \
-                daily_storage_class.discharge_storage(Q_cooling_unmet_W - Qc_water_body_remaining_W)
-            Qc_FreeCooling_and_DirectStorage_WS_W = Qc_FreeCooling_WS_directload_W + Qc_water_body_to_storage_W
-
-        # Activation Case 4: The water temperature allows for free cooling, therefore the VCC is bypassed.
-        # The water body's cooling potential is larger than the unmet cooling demand, therefore the storage is charged.
-        elif T_district_cooling_supply_K - T_source_average_water_body_K >= DT_COOL \
-                and Q_cooling_unmet_W < Qc_water_body_remaining_W:
-            FreeCooling_WS_activated = True
-            Qc_FreeCooling_WS_directload_W = Q_cooling_unmet_W
-            Qc_water_body_to_storage_W, Qc_DailyStorage_content_W = \
-                daily_storage_class.charge_storage(Qc_water_body_remaining_W - Q_cooling_unmet_W)
-            Qc_from_storage_W = 0.0
-            Qc_FreeCooling_and_DirectStorage_WS_W = Qc_FreeCooling_WS_directload_W + Qc_water_body_to_storage_W
-
-        # Determine the electricity needed for the hydraulic pumps and the VCC if the latter is activated...
-        if BaseVCC_WS_activated:
-            # TODO: Make sure the water source Base VCC's cooling output returned from the function below is in
-            #       accordance with the thermal efficiency definition above
-            Qc_BaseVCC_WS_gen_W, \
-            E_BaseVCC_WS_req_W = calc_vcc_operation(Qc_BaseVCC_WS_gen_W,
-                                                    T_district_cooling_return_K,
-                                                    T_district_cooling_supply_K,
-                                                    T_source_average_water_body_K,
-                                                    capacity_BaseVCC_WS_W,
-                                                    VC_chiller)
-
-            # Delta P from linearisation after distribution optimization
-            E_pump_WS_req_W = calc_water_body_uptake_pumping(Qc_BaseVCC_WS_gen_W,
-                                                             T_district_cooling_return_K,
-                                                             T_district_cooling_supply_K)
-
-            E_BaseVCC_WS_req_W += E_pump_WS_req_W
-
-            # Calculate metrics for energy balancing
-            # The first expression below corresponds to the second law of thermodynamics, assuming that there are no
-            # losses to the air (i.e. the water in the VCC is thermally sealed from the surrounding air)
-            Qc_from_water_body_W = Qc_BaseVCC_WS_gen_W + E_BaseVCC_WS_req_W
-            Qc_from_activated_cooling_system_W = Qc_BaseVCC_WS_gen_W - Qc_BaseVCC_WS_gen_storage_W
-            Qc_to_storage_W = Qc_BaseVCC_WS_gen_storage_W
-
-        # ...determine the electricity needed for only the pumps if the systems runs on free cooling.
-        elif FreeCooling_WS_activated:
-            E_pump_WS_req_W = calc_water_body_uptake_pumping(Qc_FreeCooling_and_DirectStorage_WS_W,
-                                                             T_district_cooling_return_K,
-                                                             T_district_cooling_supply_K)
-            E_FreeCooling_req_W = E_pump_WS_req_W
-            E_BaseVCC_WS_req_W = E_pump_WS_req_W  # TODO: Check if direct water body cooling can be displayed separately
-
-            # Calculate metrics for energy balancing
-            Qc_from_water_body_W = Qc_FreeCooling_and_DirectStorage_WS_W
-            Qc_from_activated_cooling_system_W = Qc_FreeCooling_and_DirectStorage_WS_W - Qc_water_body_to_storage_W
-            Qc_to_storage_W = Qc_water_body_to_storage_W
-
-        else:
-            print("no water body source base load VCC was used")
-
-        # energy balance: calculate the remaining cooling potential of the water body, the remaining unmet cooling
-        # demand (after contributions from VCC and storage) of the DCN and the cooling provided by the storage
-        Qc_water_body_remaining_W -= Qc_from_water_body_W
-        Q_cooling_unmet_W = Q_cooling_unmet_W - Qc_from_activated_cooling_system_W - Qc_from_storage_W
-        Qc_DailyStorage_to_storage_W += Qc_to_storage_W
-        Qc_DailyStorage_gen_directload_W += Qc_from_storage_W
-
-    # Peak VCC water-source OR free cooling using water body
-    if master_to_slave_variables.WS_PeakVCC_on == 1 and Q_cooling_unmet_W > 0.0 \
-            and T_source_average_water_body_K < VCC_T_COOL_IN \
-            and not np.isclose(T_district_cooling_supply_K, T_district_cooling_return_K):
-
-        # initialise variables for the wator source vapour compression chiller and free cooling calculation
-        PeakVCC_WS_activated = False
-        FreeCooling_WS_activated = False
-        # TODO: Replace the current calculation of the thermal efficiency (Carnot efficiency) to a more realistic value
-        thermal_efficiency_VCC = T_district_cooling_supply_K / T_source_average_water_body_K
-        capacity_PeakVCC_WS_W = master_to_slave_variables.WS_PeakVCC_size_W
-        Qc_output_PeakVCC_WS_max_W = min(capacity_PeakVCC_WS_W, thermal_efficiency_VCC * Qc_water_body_remaining_W)
-
-        # Activation Case 1: The water temperature doesn't allow for free cooling, therefore the VCC is activated.
-        # The unmet cooling demand is larger than the maximum VCC output, therefore the storage is discharged.
-        if T_district_cooling_supply_K - T_source_average_water_body_K < DT_COOL \
-                and Q_cooling_unmet_W >= Qc_output_PeakVCC_WS_max_W:
-            PeakVCC_WS_activated = True
-            Qc_PeakVCC_WS_gen_directload_W = Qc_output_PeakVCC_WS_max_W
-            Qc_PeakVCC_WS_gen_storage_W = 0.0
-            Qc_from_storage_W, Qc_DailyStorage_content_W = \
-                daily_storage_class.discharge_storage(Q_cooling_unmet_W - Qc_output_PeakVCC_WS_max_W)
-            Qc_PeakVCC_WS_gen_W = Qc_PeakVCC_WS_gen_directload_W + Qc_PeakVCC_WS_gen_storage_W
-
-        # Activation Case 2: The water temperature doesn't allow for free cooling, therefore the VCC is activated.
-        # The maximum VCC output is larger than the unmet cooling demand, therefore the storage is charged.
-        elif T_district_cooling_supply_K - T_source_average_water_body_K < DT_COOL \
-                and Q_cooling_unmet_W < Qc_output_PeakVCC_WS_max_W:
-            PeakVCC_WS_activated = True
-            Qc_PeakVCC_WS_gen_directload_W = Q_cooling_unmet_W
-            Qc_PeakVCC_WS_gen_storage_W, Qc_DailyStorage_content_W = \
-                daily_storage_class.charge_storage(Qc_output_PeakVCC_WS_max_W - Q_cooling_unmet_W)
-            Qc_from_storage_W = 0.0
-            Qc_PeakVCC_WS_gen_W = Qc_PeakVCC_WS_gen_directload_W + Qc_PeakVCC_WS_gen_storage_W
-
-        # Activation Case 3: The water temperature allows for free cooling, therefore the VCC is bypassed.
-        # The unmet cooling demand is larger than the water body's cooling potential, hence the storage is discharged.
-        elif T_district_cooling_supply_K - T_source_average_water_body_K >= DT_COOL \
-                and Q_cooling_unmet_W >= Qc_water_body_remaining_W:
-            FreeCooling_WS_activated = True
-            Qc_FreeCooling_WS_directload_W = Qc_water_body_remaining_W
-            Qc_water_body_to_storage_W = 0.0
-            Qc_from_storage_W, Qc_DailyStorage_content_W = \
-                daily_storage_class.discharge_storage(Q_cooling_unmet_W - Qc_water_body_remaining_W)
-            Qc_FreeCooling_and_DirectStorage_WS_W = Qc_FreeCooling_WS_directload_W + Qc_water_body_to_storage_W
-
-        # Activation Case 4: The water temperature allows for free cooling, therefore the VCC is bypassed.
-        # The water body's cooling potential is larger than the unmet cooling demand, therefore the storage is charged.
-        elif T_district_cooling_supply_K - T_source_average_water_body_K >= DT_COOL \
-                and Q_cooling_unmet_W < Qc_water_body_remaining_W:
-            FreeCooling_WS_activated = True
-            Qc_FreeCooling_WS_directload_W = Q_cooling_unmet_W
-            Qc_water_body_to_storage_W, Qc_DailyStorage_content_W = \
-                daily_storage_class.charge_storage(Qc_water_body_remaining_W - Q_cooling_unmet_W)
-            Qc_from_storage_W = 0.0
-            Qc_FreeCooling_and_DirectStorage_WS_W = Qc_FreeCooling_WS_directload_W + Qc_water_body_to_storage_W
-
-        # Determine the electricity needed for the hydraulic pumps and the VCC if the latter is activated...
-        if PeakVCC_WS_activated:
-            # TODO: Make sure the water source Peak VCC's cooling output returned from the function below is in
-            #       accordance with the thermal efficiency definition above
-            Qc_PeakVCC_WS_gen_W, \
-            E_PeakVCC_WS_req_W = calc_vcc_operation(Qc_PeakVCC_WS_gen_W,
-                                                    T_district_cooling_return_K,
-                                                    T_district_cooling_supply_K,
-                                                    T_source_average_water_body_K,
-                                                    capacity_PeakVCC_WS_W,
-                                                    VC_chiller)
-
-            # Delta P from linearization after distribution optimization
-            E_pump_WS_req_W = calc_water_body_uptake_pumping(Qc_PeakVCC_WS_gen_W,
-                                                             T_district_cooling_return_K,
-                                                             T_district_cooling_supply_K)
-
-            E_PeakVCC_WS_req_W += E_pump_WS_req_W
-
-            # Calculate metrics for energy balancing
-            # The first expression below corresponds to the second law of thermodynamics, assuming that there are no
-            # losses to the air (i.e. the water in the VCC is thermally sealed from the surrounding air)
-            Qc_from_water_body_W = Qc_PeakVCC_WS_gen_W + E_PeakVCC_WS_req_W
-            Qc_from_activated_cooling_system_W = Qc_PeakVCC_WS_gen_W - Qc_PeakVCC_WS_gen_storage_W
-            Qc_to_storage_W = Qc_PeakVCC_WS_gen_storage_W
-
-            # ...determine the electricity needed for only the pumps if the systems runs on free cooling.
-        elif FreeCooling_WS_activated:
-            E_pump_WS_req_W = calc_water_body_uptake_pumping(Qc_FreeCooling_and_DirectStorage_WS_W,
-                                                             T_district_cooling_return_K,
-                                                             T_district_cooling_supply_K)
-            E_FreeCooling_req_W = E_pump_WS_req_W
-            E_BaseVCC_WS_req_W = E_pump_WS_req_W  # TODO: Check if direct water body cooling can be displayed separately
-
-            # Calculate metrics for energy balancing
-            Qc_from_water_body_W = Qc_FreeCooling_and_DirectStorage_WS_W
-            Qc_from_activated_cooling_system_W = Qc_FreeCooling_and_DirectStorage_WS_W - Qc_water_body_to_storage_W
-            Qc_to_storage_W = Qc_water_body_to_storage_W
-
-        else:
-            print("no water body source peak load VCC was used")
-
-        # energy balance: calculate the remaining cooling potential of the water body, the remaining unmet cooling 
-        # demand (after contributions from VCC and storage) of the DCN and the cooling provided by the storage
-        Qc_water_body_remaining_W -= Qc_from_water_body_W
-        Q_cooling_unmet_W = Q_cooling_unmet_W - Qc_from_activated_cooling_system_W - Qc_from_storage_W
-        Qc_DailyStorage_to_storage_W += Qc_to_storage_W
-        Qc_DailyStorage_gen_directload_W += Qc_from_storage_W
-
-    # IN DEBUG-MODE: Check how much of the available water body potential was used in this timestep and display it
-    if master_to_slave_variables.debug is True:
-        # TODO: Remove this section after merging with branch 3131 ----------------------------------------------------
-        if not 'Qc_water_body_potential_W' in locals():
-            Qc_water_body_potential_W = 1050000.00
-        if 'Q_therm_water_body_W' in locals():
-            Qc_water_body_remaining_W = Qc_from_water_body_W
-        # -------------------------------------------------------------------------------------------------------------
-        Qc_water_body_used = 1 - Qc_water_body_remaining_W / Qc_water_body_potential_W
-        print("__WATER BODY USAGE__")
-        print("The total water body potential for this hour was {:.2f} kWh,".format(Qc_water_body_potential_W / 1000))
-        print("...of which {:.0f}% were used for storage or to meet cooling demand.".format(Qc_water_body_used * 100))
+    # Sum up first and second activation of free cooling
+    Qc_FreeCooling_WS_directload_W = Qc_1st_FreeCooling_WS_directload_W + Qc_2nd_FreeCooling_WS_directload_W
+    Qc_FreeCooling_and_DirectStorage_WS_W = Qc_1st_FreeCooling_and_DirectStorage_WS_W + Qc_2nd_FreeCooling_and_DirectStorage_WS_W
+    E_FreeCooling_req_W = E_1st_FreeCooling_req_W + E_2nd_FreeCooling_req_W
+    Qc_from_water_body_W = Qc_1st_from_water_body_W + Qc_2nd_from_water_body_W
 
     # ACTIVATE AIR SOURCE COOLING TECHNOLOGIES
     # Base VCC air-source with a cooling tower
-    if master_to_slave_variables.AS_BaseVCC_on == 1 and Q_cooling_unmet_W > 0.0 \
-            and not np.isclose(T_district_cooling_supply_K, T_district_cooling_return_K):
-
-        size_AS_BaseVCC_W = master_to_slave_variables.AS_BaseVCC_size_W
-        if Q_cooling_unmet_W > size_AS_BaseVCC_W:
-            Qc_BaseVCC_AS_gen_directload_W = size_AS_BaseVCC_W
-            Q_BaseVCC_AS_gen_storage_W = 0.0
-            Qc_from_storage_W, Qc_DailyStorage_content_W = \
-                daily_storage_class.discharge_storage(Q_cooling_unmet_W - size_AS_BaseVCC_W)
-            Qc_BaseVCC_AS_gen_W = Qc_BaseVCC_AS_gen_directload_W + Q_BaseVCC_AS_gen_storage_W
-        else:
-            Qc_BaseVCC_AS_gen_directload_W = Q_cooling_unmet_W
-            Q_BaseVCC_AS_gen_storage_W, Qc_DailyStorage_content_W = \
-                daily_storage_class.charge_storage(size_AS_BaseVCC_W - Q_cooling_unmet_W)
-            Qc_from_storage_W = 0.0
-            Qc_BaseVCC_AS_gen_W = Qc_BaseVCC_AS_gen_directload_W + Q_BaseVCC_AS_gen_storage_W
-
-        Qc_BaseVCC_AS_gen_W, \
-        E_BaseVCC_AS_req_W = calc_vcc_CT_operation(Qc_BaseVCC_AS_gen_W,
-                                                   T_district_cooling_return_K,
-                                                   T_district_cooling_supply_K,
-                                                   VCC_T_COOL_IN,
-                                                   size_AS_BaseVCC_W,
-                                                   VC_chiller)
-        Q_cooling_unmet_W = Q_cooling_unmet_W - Qc_BaseVCC_AS_gen_directload_W - Qc_from_storage_W
-        Qc_DailyStorage_to_storage_W += Q_BaseVCC_AS_gen_storage_W
-        Qc_DailyStorage_gen_directload_W += Qc_from_storage_W
-    else:
-        Qc_BaseVCC_AS_gen_W = 0.0
-        E_BaseVCC_AS_req_W = 0.0
-        Qc_BaseVCC_AS_gen_directload_W = 0.0
+    Q_cooling_unmet_W, \
+    Qc_DailyStorage_content_W, Qc_DailyStorage_to_storage_W, Qc_DailyStorage_from_storage_W, \
+    Qc_BaseVCC_AS_gen_W, Qc_BaseVCC_AS_gen_directload_W, \
+    E_BaseVCC_AS_req_W, \
+    Qc_from_CT_W = activate_AS_VCC(master_to_slave_variables.AS_BaseVCC_on,
+                                   Q_cooling_unmet_W,
+                                   Qc_DailyStorage_to_storage_W,
+                                   Qc_DailyStorage_from_storage_W,
+                                   T_district_cooling_supply_K,
+                                   T_district_cooling_return_K,
+                                   VC_chiller,
+                                   master_to_slave_variables.AS_BaseVCC_size_W,
+                                   daily_storage_class)
 
     # Peak VCC air-source with a cooling tower
-    if master_to_slave_variables.AS_PeakVCC_on == 1 and Q_cooling_unmet_W > 0.0 and not np.isclose(
-            T_district_cooling_supply_K,
-            T_district_cooling_return_K):
-        size_AS_PeakVCC_W = master_to_slave_variables.AS_PeakVCC_size_W
-        if Q_cooling_unmet_W > size_AS_PeakVCC_W:
-            Qc_PeakVCC_AS_gen_directload_W = size_AS_PeakVCC_W
-            Q_PeakVCC_AS_gen_storage_W = 0.0
-            Qc_from_storage_W, Qc_DailyStorage_content_W = \
-                daily_storage_class.discharge_storage(Q_cooling_unmet_W - size_AS_PeakVCC_W)
-            Qc_PeakVCC_AS_gen_W = Qc_PeakVCC_AS_gen_directload_W + Q_PeakVCC_AS_gen_storage_W
-        else:
-            Qc_PeakVCC_AS_gen_directload_W = Q_cooling_unmet_W
-            Q_PeakVCC_AS_gen_storage_W, Qc_DailyStorage_content_W = \
-                daily_storage_class.charge_storage(size_AS_PeakVCC_W - Q_cooling_unmet_W)
-            Qc_from_storage_W = 0.0
-            Qc_PeakVCC_AS_gen_W = Qc_PeakVCC_AS_gen_directload_W + Q_PeakVCC_AS_gen_storage_W
+    Q_cooling_unmet_W, \
+    Qc_DailyStorage_content_W, Qc_DailyStorage_to_storage_W, Qc_DailyStorage_from_storage_W, \
+    Qc_PeakVCC_AS_gen_W, Qc_PeakVCC_AS_gen_directload_W, \
+    E_PeakVCC_AS_req_W, \
+    Qc_from_CT_W = activate_AS_VCC(master_to_slave_variables.AS_PeakVCC_on,
+                                   Q_cooling_unmet_W,
+                                   Qc_DailyStorage_to_storage_W,
+                                   Qc_DailyStorage_from_storage_W,
+                                   T_district_cooling_supply_K,
+                                   T_district_cooling_return_K,
+                                   VC_chiller,
+                                   master_to_slave_variables.AS_PeakVCC_size_W,
+                                   daily_storage_class)
 
-        Qc_PeakVCC_AS_gen_W, \
-        E_PeakVCC_AS_req_W = calc_vcc_CT_operation(Qc_PeakVCC_AS_gen_W,
-                                                   T_district_cooling_return_K,
-                                                   T_district_cooling_supply_K,
-                                                   VCC_T_COOL_IN,
-                                                   size_AS_PeakVCC_W,
-                                                   VC_chiller)
-
-        Q_cooling_unmet_W = Q_cooling_unmet_W - Qc_PeakVCC_AS_gen_directload_W - Qc_from_storage_W
-        Qc_DailyStorage_to_storage_W += Q_PeakVCC_AS_gen_storage_W
-        Qc_DailyStorage_gen_directload_W += Qc_from_storage_W
-    else:
-        Qc_PeakVCC_AS_gen_W = 0.0
-        E_PeakVCC_AS_req_W = 0.0
-        Qc_PeakVCC_AS_gen_directload_W = 0.0
-
+    # IN CASE COOLING DEMAND IS STILL NOT FULLY MET: ACTIVATE BACKUP-VCC
     if Q_cooling_unmet_W > 1.0E-3:
         Qc_BackupVCC_AS_gen_W = Q_cooling_unmet_W  # this will become the back-up chiller
         Qc_BackupVCC_AS_directload_W = Q_cooling_unmet_W
@@ -489,7 +190,7 @@ def cooling_resource_activator(Q_thermal_req,
         Qc_BackupVCC_AS_gen_W = 0.0
         Qc_BackupVCC_AS_directload_W = 0.0
 
-    # writing outputs
+    # WRITE OUTPUTS
     electricity_output = {
         'E_BaseVCC_WS_req_W': E_BaseVCC_WS_req_W,
         'E_PeakVCC_WS_req_W': E_PeakVCC_WS_req_W,
@@ -512,9 +213,9 @@ def cooling_resource_activator(Q_thermal_req,
         # daily storage
         'Qc_DailyStorage_content_W': Qc_DailyStorage_content_W,
         'Qc_DailyStorage_to_storage_W': Qc_DailyStorage_to_storage_W,
+        'Qc_DailyStorage_from_storage_W': Qc_DailyStorage_from_storage_W,
 
         # cooling to direct load
-        'Qc_DailyStorage_gen_directload_W': Qc_DailyStorage_gen_directload_W,
         "Qc_Trigen_NG_gen_directload_W": Qc_Trigen_NG_gen_directload_W,
         "Qc_BaseVCC_WS_gen_directload_W": Qc_BaseVCC_WS_gen_directload_W,
         "Qc_PeakVCC_WS_gen_directload_W": Qc_PeakVCC_WS_gen_directload_W,
@@ -529,6 +230,357 @@ def cooling_resource_activator(Q_thermal_req,
     }
 
     return daily_storage_class, thermal_output, electricity_output, gas_output
+
+
+def activate_CCandACH_trigen(Q_cooling_unmet_W,
+                             Qc_DailyStorage_to_storage_W,
+                             Qc_DailyStorage_from_storage_W,
+                             T_district_cooling_supply_K,
+                             T_district_cooling_return_K,
+                             T_ground_K,
+                             CCGT_operation_data,
+                             absorption_chiller,
+                             daily_storage_class,
+                             master_to_slave_variables):
+    """
+    This function activates a tri-generation plant composed of a combined cycle (CC) power plant (i.e. gas + steam
+    turbine) and an absorption chiller powered by the heat generated in the CC. In the activation of the technology,
+    this function:
+        1. assesses the cooling demand that can be met according to maximum capacity of the tri-generation
+            plant (for the investigated DCN configuration) and the available storage capacity.
+        2. calculates the necessary heat (from CC), electricity (from grid) and cold water (from cooling tower CT) to
+            provide the required amount of chilled water (i.e. cooling energy).
+        3. calculates the amount of natural gas (NG) needed to provide the necessary heat in the CC and the electricity
+            that is produced as a result.
+            TODO: Handle the scenario where the CC dimensions don't allow for this heat to be produced.
+    For the tri-generation plant to produce cooling energy certain conditions need to be met:
+        - cooling demand must not be fully met yet in the current timestep
+        - tri-generation needs to be among the eligible technologies for the investigated DCN configuration
+        - the district cooling network's supply and return temperatures must not be equal
+    """
+    # initialise variables for tri-generation activation
+    Qc_DailyStorage_content_W = daily_storage_class.current_storage_capacity_Wh
+    Qc_Trigen_gen_W = 0.0
+    Qc_Trigen_NG_gen_directload_W = 0.0
+
+    E_Trigen_NG_gen_W = 0.0
+    E_ACH_req_W = 0.0
+    NG_Trigen_req_W = 0.0
+
+    Q_loss_CC = 0.0
+    Q_loss_ACH_CT = 0.0
+    Q_loss_Trigen = 0.0
+
+    if master_to_slave_variables.NG_Trigen_on == 1 and Q_cooling_unmet_W > 0.0 \
+            and not np.isclose(T_district_cooling_supply_K, T_district_cooling_return_K):
+
+        # Check what the maximum cooling capacity of the trigeneration plant can be for this individual
+        size_trigen_W = master_to_slave_variables.NG_Trigen_ACH_size_W
+
+        # If the unmet cooling load exceeds the trigen-plant's maximum capacity,
+        #   try meeting the remaining cooling demand using the cold storage
+        if Q_cooling_unmet_W > size_trigen_W:
+            Qc_Trigen_NG_gen_directload_W = size_trigen_W
+            Qc_to_storage_W = 0.0
+            Qc_from_storage_W, Qc_DailyStorage_content_W = \
+                daily_storage_class.discharge_storage(Q_cooling_unmet_W - size_trigen_W)
+            Qc_Trigen_gen_W = Qc_Trigen_NG_gen_directload_W + Qc_to_storage_W
+
+        # If the unmet cooling load is smaller than the trigen-plant's maximum capacity,
+        #   use the available capacity to fill the cold storage
+        else:
+            Qc_Trigen_NG_gen_directload_W = Q_cooling_unmet_W
+            Qc_to_storage_W, Qc_DailyStorage_content_W = \
+                daily_storage_class.charge_storage(size_trigen_W - Q_cooling_unmet_W)
+            Qc_from_storage_W = 0.0
+            Qc_Trigen_gen_W = Qc_Trigen_NG_gen_directload_W + Qc_to_storage_W
+
+        # GET THE ABSORPTION CHILLER PERFORMANCE
+        T_ACH_in_C = ACH_T_IN_FROM_CHP_K - 273
+        Qc_CT_ACH_W, \
+        Qh_CCGT_req_W, \
+        E_ACH_req_W = calc_chiller_absorption_operation(Qc_Trigen_gen_W,
+                                                        T_district_cooling_return_K,
+                                                        T_district_cooling_supply_K,
+                                                        T_ACH_in_C,
+                                                        T_ground_K,
+                                                        absorption_chiller,
+                                                        size_trigen_W)
+
+        # operation of the CCGT
+        Q_used_prim_CC_fn_W = CCGT_operation_data['q_input_fn_q_output_W']
+        q_output_CC_min_W = CCGT_operation_data['q_output_min_W']
+        Q_output_CC_max_W = CCGT_operation_data['q_output_max_W']
+        eta_elec_interpol = CCGT_operation_data['eta_el_fn_q_input']
+
+        # operation of combined cycle (gas + steam turbine) possible if above minimum capacity
+        if Qh_CCGT_req_W >= q_output_CC_min_W:
+
+            if Qh_CCGT_req_W <= Q_output_CC_max_W:  # Normal operation possible within part load regime
+                Q_CHP_gen_W = float(Qh_CCGT_req_W)
+                NG_Trigen_req_W = Q_used_prim_CC_fn_W(Q_CHP_gen_W)
+                E_Trigen_NG_gen_W = np.float(eta_elec_interpol(NG_Trigen_req_W)) * NG_Trigen_req_W
+
+            else:  # Only part of the demand can be delivered as 100% load achieved
+                # This case should never occur, since it means that another heat source would be required to run
+                # the absorption chiller at the required capacity.
+                print("WARNING: Gas turbine can not output enough heat to power the absorption chiller!")
+                Q_CHP_gen_W = Q_output_CC_max_W
+                NG_Trigen_req_W = Q_used_prim_CC_fn_W(Q_CHP_gen_W)
+                E_Trigen_NG_gen_W = np.float(eta_elec_interpol(NG_Trigen_req_W)) * NG_Trigen_req_W
+
+        # if the operation of the combined cycle is not possible due to its limited capacity, the absorption chiller
+        # (i.e. the cooling technology of the tri-generation plant) can not be powered either
+        else:
+            Qc_Trigen_gen_W = 0.0
+            Qc_Trigen_NG_gen_directload_W = 0.0
+            Q_CHP_gen_W = 0.0
+            NG_Trigen_req_W = 0.0
+            E_Trigen_NG_gen_W = 0.0
+
+            E_ACH_req_W = 0.0
+            Qc_CT_ACH_W = 0.0
+
+            Qc_from_storage_W = 0.0         # TODO: Remove this section after merging the pull request for this branch
+            Qc_to_storage_W = 0.0
+
+            # if Qc_from_storage_W > 0.0:
+            #     Qc_storage_correction, Qc_DailyStorage_content_W = \
+            #         daily_storage_class.discharge_storage(Qc_from_storage_W)
+            #     Qc_from_storage_W -= Qc_storage_correction
+            # if Qc_to_storage_W > 0.0:
+            #     Qc_storage_correction, Qc_DailyStorage_content_W = \
+            #         daily_storage_class.discharge_storage(Qc_to_storage_W)
+            #     Qc_to_storage_W -= Qc_storage_correction
+
+        # calculate heat losses (i.e. anthropogenic heat emissions) from Trigen
+        Q_loss_CC = NG_Trigen_req_W - Q_CHP_gen_W - E_Trigen_NG_gen_W
+        Q_loss_ACH_CT = Qc_CT_ACH_W
+        Q_loss_Trigen = Q_loss_CC + Q_loss_ACH_CT
+
+        # update unmet cooling load
+        Q_cooling_unmet_W = Q_cooling_unmet_W - Qc_Trigen_NG_gen_directload_W - Qc_from_storage_W
+        Qc_DailyStorage_to_storage_W += Qc_to_storage_W
+        Qc_DailyStorage_from_storage_W += Qc_from_storage_W
+
+    return Q_cooling_unmet_W, \
+           Qc_DailyStorage_content_W, Qc_DailyStorage_to_storage_W, Qc_DailyStorage_from_storage_W, \
+           Qc_Trigen_gen_W, Qc_Trigen_NG_gen_directload_W, \
+           E_Trigen_NG_gen_W, E_ACH_req_W, NG_Trigen_req_W,\
+           Q_loss_CC, Q_loss_ACH_CT, Q_loss_Trigen
+
+
+def activate_WS_VCC(activation,
+                    Q_cooling_unmet_W,
+                    Qc_water_body_remaining_W,
+                    Qc_DailyStorage_to_storage_W,
+                    Qc_DailyStorage_from_storage_W,
+                    T_district_cooling_supply_K,
+                    T_district_cooling_return_K,
+                    T_source_average_water_body_K,
+                    VC_chiller,
+                    capacity_VCC_WS_W,
+                    daily_storage_class):
+    """
+    This function activates water source cooling technologies. In case the temperature of the water body is low enough
+    (i.e. T_district_cooling_supply_K - DeltaT) the water is used directly for free cooling. If the temperature of the
+    water body is higher a water source vapour compression chiller is activated.
+    In both cases the available cooling potential is compared with the demand. If the cooling potential is higher than
+    the demand the thermal storage is charged, otherwise the storage is discharged.
+    """
+
+    # Initialise variables for water source cooling (VCC or FreeCooling) activation
+    Qc_from_water_body_W = 0.0
+    Qc_from_activated_cooling_system_W = 0.0
+    Qc_water_body_to_storage_W = 0.0
+
+    Qc_DailyStorage_content_W = daily_storage_class.current_storage_capacity_Wh
+    Qc_to_storage_W = 0.0
+    Qc_from_storage_W = 0.0
+
+    Qc_FreeCooling_WS_directload_W = 0.0
+    Qc_FreeCooling_and_DirectStorage_WS_W = 0.0
+    E_FreeCooling_req_W = 0.0
+
+    Qc_VCC_WS_gen_directload_W = 0.0
+    Qc_VCC_WS_gen_W = 0.0
+    Qc_VCC_WS_gen_storage_W = 0.0
+    E_VCC_WS_req_W = 0.0
+
+    # VCC water-source OR free cooling using water body
+    if activation == 1 and Q_cooling_unmet_W > 0.0 \
+            and T_source_average_water_body_K < VCC_T_COOL_IN \
+            and not np.isclose(T_district_cooling_supply_K, T_district_cooling_return_K):
+
+        # initialise variables for the water source vapour compression chiller and free cooling calculation
+        VCC_WS_activated = False
+        FreeCooling_WS_activated = False
+        # TODO: Replace the current calculation of the thermal efficiency (Carnot efficiency) to a more realistic value
+        thermal_efficiency_VCC = T_district_cooling_supply_K / T_source_average_water_body_K
+        Qc_output_VCC_WS_max_W = min(capacity_VCC_WS_W, thermal_efficiency_VCC * Qc_water_body_remaining_W)
+
+        # Activation Case 1: The water temperature doesn't allow for free cooling, therefore the VCC is activated.
+        # The unmet cooling demand is larger than the maximum VCC output, therefore the storage is discharged.
+        if T_district_cooling_supply_K - T_source_average_water_body_K < DT_COOL \
+                and Q_cooling_unmet_W >= Qc_output_VCC_WS_max_W:
+            VCC_WS_activated = True
+            Qc_VCC_WS_gen_directload_W = Qc_output_VCC_WS_max_W
+            Qc_VCC_WS_gen_storage_W = 0.0
+            Qc_from_storage_W, Qc_DailyStorage_content_W = \
+                daily_storage_class.discharge_storage(Q_cooling_unmet_W - Qc_output_VCC_WS_max_W)
+            Qc_VCC_WS_gen_W = Qc_VCC_WS_gen_directload_W + Qc_VCC_WS_gen_storage_W
+
+        # Activation Case 2: The water temperature doesn't allow for free cooling, therefore the VCC is activated.
+        # The maximum VCC output is larger than the unmet cooling demand, therefore the storage is charged.
+        elif T_district_cooling_supply_K - T_source_average_water_body_K < DT_COOL \
+                and Q_cooling_unmet_W < Qc_output_VCC_WS_max_W:
+            VCC_WS_activated = True
+            Qc_VCC_WS_gen_directload_W = Q_cooling_unmet_W
+            Qc_VCC_WS_gen_storage_W, Qc_DailyStorage_content_W = \
+                daily_storage_class.charge_storage(Qc_output_VCC_WS_max_W - Q_cooling_unmet_W)
+            Qc_from_storage_W = 0.0
+            Qc_VCC_WS_gen_W = Qc_VCC_WS_gen_directload_W + Qc_VCC_WS_gen_storage_W
+
+        # Activation Case 3: The water temperature allows for free cooling, therefore the VCC is bypassed.
+        # The unmet cooling demand is larger than the water body's cooling potential, hence the storage is discharged.
+        elif T_district_cooling_supply_K - T_source_average_water_body_K >= DT_COOL \
+                and Q_cooling_unmet_W >= Qc_water_body_remaining_W:
+            FreeCooling_WS_activated = True
+            Qc_FreeCooling_WS_directload_W = Qc_water_body_remaining_W
+            Qc_water_body_to_storage_W = 0.0
+            Qc_from_storage_W, Qc_DailyStorage_content_W = \
+                daily_storage_class.discharge_storage(Q_cooling_unmet_W - Qc_water_body_remaining_W)
+            Qc_FreeCooling_and_DirectStorage_WS_W = Qc_FreeCooling_WS_directload_W + Qc_water_body_to_storage_W
+
+        # Activation Case 4: The water temperature allows for free cooling, therefore the VCC is bypassed.
+        # The water body's cooling potential is larger than the unmet cooling demand, therefore the storage is charged.
+        elif T_district_cooling_supply_K - T_source_average_water_body_K >= DT_COOL \
+                and Q_cooling_unmet_W < Qc_water_body_remaining_W:
+            FreeCooling_WS_activated = True
+            Qc_FreeCooling_WS_directload_W = Q_cooling_unmet_W
+            Qc_water_body_to_storage_W, Qc_DailyStorage_content_W = \
+                daily_storage_class.charge_storage(Qc_water_body_remaining_W - Q_cooling_unmet_W)
+            Qc_from_storage_W = 0.0
+            Qc_FreeCooling_and_DirectStorage_WS_W = Qc_FreeCooling_WS_directload_W + Qc_water_body_to_storage_W
+
+        # Determine the electricity needed for the hydraulic pumps and the VCC if the latter is activated...
+        if VCC_WS_activated:
+            # TODO: Make sure the water source Peak VCC's cooling output returned from the function below is in
+            #       accordance with the thermal efficiency definition above
+            Qc_VCC_WS_gen_W, \
+            E_VCC_WS_req_W = calc_vcc_operation(Qc_VCC_WS_gen_W,
+                                                T_district_cooling_return_K,
+                                                T_district_cooling_supply_K,
+                                                T_source_average_water_body_K,
+                                                capacity_VCC_WS_W,
+                                                VC_chiller)
+
+            # Delta P from linearization after distribution optimization
+            E_pump_WS_req_W = calc_water_body_uptake_pumping(Qc_VCC_WS_gen_W,
+                                                             T_district_cooling_return_K,
+                                                             T_district_cooling_supply_K)
+
+            E_VCC_WS_req_W += E_pump_WS_req_W
+
+            # Calculate metrics for energy balancing
+            # The first expression below corresponds to the second law of thermodynamics, assuming that there are no
+            # losses to the air (i.e. the water in the VCC is thermally sealed from the surrounding air)
+            Qc_from_water_body_W = Qc_VCC_WS_gen_W + E_VCC_WS_req_W
+            Qc_from_activated_cooling_system_W = Qc_VCC_WS_gen_W - Qc_VCC_WS_gen_storage_W
+            Qc_to_storage_W = Qc_VCC_WS_gen_storage_W
+
+        # ...determine the electricity needed for only the pumps if the systems runs on free cooling.
+        elif FreeCooling_WS_activated:
+            E_pump_WS_req_W = calc_water_body_uptake_pumping(Qc_FreeCooling_and_DirectStorage_WS_W,
+                                                             T_district_cooling_return_K,
+                                                             T_district_cooling_supply_K)
+            E_FreeCooling_req_W = E_pump_WS_req_W
+            E_VCC_WS_req_W = E_pump_WS_req_W  # TODO: Check if direct water body cooling can be displayed separately
+
+            # Calculate metrics for energy balancing
+            Qc_from_water_body_W = Qc_FreeCooling_and_DirectStorage_WS_W
+            Qc_from_activated_cooling_system_W = Qc_FreeCooling_and_DirectStorage_WS_W - Qc_water_body_to_storage_W
+            Qc_to_storage_W = Qc_water_body_to_storage_W
+
+        else:
+            print("no water body source peak load VCC was used")
+        # energy balance: calculate the remaining cooling potential of the water body, the remaining unmet cooling 
+        # demand (after contributions from VCC and storage) of the DCN and the cooling provided by the storage
+        Qc_water_body_remaining_W -= Qc_from_water_body_W
+        Q_cooling_unmet_W = Q_cooling_unmet_W - Qc_from_activated_cooling_system_W - Qc_from_storage_W
+        Qc_DailyStorage_to_storage_W += Qc_to_storage_W
+        Qc_DailyStorage_from_storage_W += Qc_from_storage_W
+
+    return Q_cooling_unmet_W, Qc_water_body_remaining_W, \
+           Qc_DailyStorage_content_W, Qc_DailyStorage_to_storage_W, Qc_DailyStorage_from_storage_W, \
+           Qc_VCC_WS_gen_W, Qc_VCC_WS_gen_directload_W, \
+           Qc_FreeCooling_and_DirectStorage_WS_W, Qc_FreeCooling_WS_directload_W, \
+           E_VCC_WS_req_W, E_FreeCooling_req_W, \
+           Qc_from_water_body_W
+
+
+def activate_AS_VCC(activation,
+                    Q_cooling_unmet_W,
+                    Qc_DailyStorage_to_storage_W,
+                    Qc_DailyStorage_from_storage_W,
+                    T_district_cooling_supply_K,
+                    T_district_cooling_return_K,
+                    VC_chiller,
+                    capacity_VCC_AS_W,
+                    daily_storage_class):
+    """
+    This function activates air source vapour compression chillers (i.e. VCC connected to cooling towers in the cold
+    water loop). In case the cooling capacity of the VCC is insufficient the cold storage is discharged to try to
+    cover the unmet cooling demand. If the capacity of the VCC is greater than the unmet cooling demand, the remaining
+    capacity is used to charge the thermal storage.
+    """
+    Qc_VCC_AS_gen_W = 0.0
+    Qc_VCC_AS_gen_directload_W = 0.0
+    E_VCC_AS_req_W = 0.0
+
+    Qc_DailyStorage_content_W = daily_storage_class.current_storage_capacity_Wh
+    Qc_to_storage_W = 0.0
+    Qc_from_storage_W = 0.0
+
+    if activation == 1 and Q_cooling_unmet_W > 0.0 \
+            and not np.isclose(T_district_cooling_supply_K, T_district_cooling_return_K):
+
+        # Activation Case 1: The cooling demand exceeds the maximum capacity of the air-source VCC, therefore the cold
+        # storage is discharged to try to cover the unmet demand.
+        if Q_cooling_unmet_W > capacity_VCC_AS_W:
+            Qc_VCC_AS_gen_directload_W = capacity_VCC_AS_W
+            Qc_to_storage_W = 0.0
+            Qc_from_storage_W, Qc_DailyStorage_content_W = \
+                daily_storage_class.discharge_storage(Q_cooling_unmet_W - capacity_VCC_AS_W)
+            Qc_VCC_AS_gen_W = Qc_VCC_AS_gen_directload_W + Qc_to_storage_W
+        # Activation Case 2: The VCC's capacity exceeds the demand, therefore the storage is charged using the excess
+        # cooling supply.
+        else:
+            Qc_VCC_AS_gen_directload_W = Q_cooling_unmet_W
+            Qc_to_storage_W, Qc_DailyStorage_content_W = \
+                daily_storage_class.charge_storage(capacity_VCC_AS_W - Q_cooling_unmet_W)
+            Qc_from_storage_W = 0.0
+            Qc_VCC_AS_gen_W = Qc_VCC_AS_gen_directload_W + Qc_to_storage_W
+
+        # Determine the electricity demand needed to operate the VCC and cooling tower (CT)
+        Qc_VCC_AS_gen_W, \
+        E_VCC_AS_req_W = calc_vcc_CT_operation(Qc_VCC_AS_gen_W,
+                                               T_district_cooling_return_K,
+                                               T_district_cooling_supply_K,
+                                               VCC_T_COOL_IN,
+                                               capacity_VCC_AS_W,
+                                               VC_chiller)
+
+    Q_cooling_unmet_W = Q_cooling_unmet_W - Qc_VCC_AS_gen_directload_W - Qc_from_storage_W
+    Qc_DailyStorage_to_storage_W += Qc_to_storage_W
+    Qc_DailyStorage_from_storage_W += Qc_from_storage_W
+    Qc_from_CT_W = Qc_VCC_AS_gen_W + E_VCC_AS_req_W
+
+    return Q_cooling_unmet_W, \
+           Qc_DailyStorage_content_W, Qc_DailyStorage_to_storage_W, Qc_DailyStorage_from_storage_W, \
+           Qc_VCC_AS_gen_W, Qc_VCC_AS_gen_directload_W, \
+           E_VCC_AS_req_W, \
+           Qc_from_CT_W
 
 
 def calc_vcc_operation(Qc_from_VCC_W, T_DCN_re_K, T_DCN_sup_K, T_source_K, chiller_size, VC_chiller):

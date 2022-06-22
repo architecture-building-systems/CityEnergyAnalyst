@@ -2,13 +2,8 @@
 cogeneration (combined heat and power)
 """
 
-
-
-
 import numpy as np
 from scipy import interpolate
-import scipy
-import pandas as pd
 from math import log
 from cea.optimization.constants import GT_MIN_PART_LOAD, LHV_NG, LHV_BG, GT_MAX_SIZE, CC_AIRRATIO, CC_EXIT_T_BG, \
     CC_EXIT_T_NG, ST_DELTA_T, CC_DELTA_T_DH, ST_GEN_ETA
@@ -180,7 +175,7 @@ def calc_GT_operation_fullload(gt_size_W, fuel_type):
         if gt_size_W == 0:
             eta0 = 0.01
         else:
-            eta0 = 0.0196 * scipy.log(gt_size_W * 1E-3) + 0.1317  # (4.4) [C. Weber, 2008]_
+            eta0 = 0.0196 * np.lib.scimath.log(gt_size_W * 1E-3) + 0.1317  # (4.4) [C. Weber, 2008]_
 
         LHV = LHV_NG if fuel_type == 'NG' else LHV_BG  # read LHV of NG or BG
         mdot_fuel_kgpers = gt_size_W / (eta0 * LHV)
@@ -198,7 +193,7 @@ def calc_GT_operation_fullload(gt_size_W, fuel_type):
         if gt_size_W == 0:
             eta0 = 0.01
         else:
-            eta0 = 0.0196 * scipy.log(gt_size_W * 1E-3) + 0.1317  # [C. Weber, 2008]_
+            eta0 = 0.0196 * np.lib.scimath.log(gt_size_W * 1E-3) + 0.1317  # [C. Weber, 2008]_
 
         LHV = LHV_NG if fuel_type == 'NG' else LHV_BG  # read LHV of NG or BG
         mdot_fuel_kgpers = gt_size_W / (eta0 * LHV)
