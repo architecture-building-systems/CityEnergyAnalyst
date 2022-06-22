@@ -412,7 +412,7 @@ def activate_WS_VCC(activation,
             and T_source_average_water_body_K < VCC_T_COOL_IN \
             and not np.isclose(T_district_cooling_supply_K, T_district_cooling_return_K):
 
-        # initialise variables for the wator source vapour compression chiller and free cooling calculation
+        # initialise variables for the water source vapour compression chiller and free cooling calculation
         VCC_WS_activated = False
         FreeCooling_WS_activated = False
         # TODO: Replace the current calculation of the thermal efficiency (Carnot efficiency) to a more realistic value
@@ -489,7 +489,7 @@ def activate_WS_VCC(activation,
             Qc_from_activated_cooling_system_W = Qc_VCC_WS_gen_W - Qc_VCC_WS_gen_storage_W
             Qc_to_storage_W = Qc_VCC_WS_gen_storage_W
 
-            # ...determine the electricity needed for only the pumps if the systems runs on free cooling.
+        # ...determine the electricity needed for only the pumps if the systems runs on free cooling.
         elif FreeCooling_WS_activated:
             E_pump_WS_req_W = calc_water_body_uptake_pumping(Qc_FreeCooling_and_DirectStorage_WS_W,
                                                              T_district_cooling_return_K,
