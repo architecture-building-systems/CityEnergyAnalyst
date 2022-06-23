@@ -57,7 +57,8 @@ def district_heating_network(locator,
     if master_to_slave_variables.DHN_exists:
         print("DISTRICT HEATING OPERATION")
         # THERMAL STORAGE + NETWORK
-        storage_dispatch = storage_main.storage_optimization(locator, master_to_slave_variables)
+        storage_dispatch = storage_main.storage_optimization(locator,
+                                                             master_to_slave_variables)
         # Import data from storage optimization
         Q_DH_networkload_W = np.array(storage_dispatch['Q_DH_networkload_W'])
         Q_thermal_req_W = np.array(storage_dispatch['Q_req_after_storage_W'])

@@ -79,11 +79,16 @@ def calc_COP(T_cw_in_K, T_chw_re_K, q_chw_load_Wh):
 
 def calc_COP_with_carnot_efficiency(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, VC_chiller):
     """
-    Calculate the weighted average Part load factor across all chillers based on load distribution and derive the
-    COP based on that (while assuming carnot efficiency).
+    Calculate the weighted average part load factor across all chillers based on the load distribution and derive the
+    COP based on that. This way of calculating the chiller COP resembles the approach described in EN 14511-2:2018 and
+    EN 14825:2018. The latter is illustrated in [P. Conti et al., 2020]
+
+    ..[P. Conti et al., 2020] P. Conti, C. Bartoli, A. Franco and D. Testi (2020). Experimental Analysis of an Air Heat
+    Pump for Heating Service Using a “Hardware-In-The-Loop” System
+    TODO: Continue looking for a better source or change the formula (possibly check ASHRAE Standard 90.1-2001 on
+          chiller rated efficiency if available)
     """
     PLF = calc_averaged_PLF(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, VC_chiller)
-    # TODO: Update in documentation where the function below was taken from
     cop_chiller = VC_chiller.g_value * T_chw_sup_K / (T_cw_in_K - T_chw_sup_K) * PLF
     return cop_chiller
 
@@ -206,7 +211,8 @@ def calc_averaged_PLF(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, 
     This calculation is based on the 'Electric Chiller Cooling Efficiency Adjustment Curves' as defined by COMNET
     (https://comnet.org/index.php/382-chillers). The part load factor returned by this function corresponds to a
     cooling load weighted average of the expression 'EIR_FPLR×EIR_FT×CAP_FT = P_operating/P_rated' across
-    all active chiller units.
+    all active chiller units. P_operating in this function corresponds to the electrical power demand of the VCC at the
+     given operating point and P_rated is the rated electrical power demand of the VCC.
 
     :param float peak_cooling_load: in W
     :param float q_chw_load_Wh: in W

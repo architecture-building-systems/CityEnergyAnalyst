@@ -138,7 +138,7 @@ def check_daysim_bin_directory(path_hint, latest_binaries):
     def contains_whitespace(path):
         """True if path contains whitespace"""
         return len(path.split()) > 1
-    
+
     def allow_run_on_mac(path):
         """Remove unidentified developer warning when running binaries on mac"""
         for binary in required_binaries:
@@ -147,28 +147,37 @@ def check_daysim_bin_directory(path_hint, latest_binaries):
             if "com.apple.quarantine" in result.stdout.decode('utf-8'):
                 subprocess.run(["xattr", "-d", "com.apple.quarantine", binary_path])
 
-    # Path of daysim binaries shipped with CEA
-    cea_daysim_folder = os.path.join(os.path.dirname(sys.executable), "..", "Daysim")
-    lib_path = os.path.join(cea_daysim_folder, "lib")  # Use lib folder shipped with CEA
     folders_to_check = [
         path_hint,
-        cea_daysim_folder  # Check binaries in Daysim folder, for backward capability
     ]
 
-    # user might have a DAYSIM installation
+    # Path of shipped binaries
+    shipped_daysim = os.path.join(os.path.dirname(__file__), "bin", sys.platform)
+    folders_to_check.append(shipped_daysim)
+
+    lib_path = None
     if sys.platform == "win32":
-        # latest binaries only applies to Windows
-        folders_to_check.append(os.path.join(cea_daysim_folder, "bin64" if latest_binaries else "bin"))
+        # Path of binaries from windows installer
+        win_installer_daysim = os.path.join(os.path.dirname(sys.executable), "..", "Daysim")
+        # lib_path = os.path.join(win_installer_daysim, "lib")  # Use lib folder shipped with CEA
+
+        # Check binaries in Daysim folder, for backward capability
+        folders_to_check.append(win_installer_daysim)
+
+        # Check latest binaries only applies to Windows
+        folders_to_check.append(os.path.join(shipped_daysim, "bin64" if latest_binaries else "bin"))
+        folders_to_check.append(os.path.join(win_installer_daysim, "bin64" if latest_binaries else "bin"))
         folders_to_check.append(os.path.join(path_hint, "bin64" if latest_binaries else "bin"))
 
+        # User might have a default DAYSIM installation
         folders_to_check.append(r"C:\Daysim\bin")
 
-    if sys.platform == "linux":
+    elif sys.platform == "linux":
+        # For docker
         folders_to_check.append(os.path.normcase(r"/Daysim/bin"))
 
-    if sys.platform == "darwin":
-        folders_to_check.append(os.path.join(
-            os.path.dirname(os.getcwd()), '..', '..', '..', 'setup', 'Dependencies', 'Daysim', 'mac'))
+    elif sys.platform == "darwin":
+        pass
 
     folders_to_check = [os.path.abspath(os.path.normpath(os.path.normcase(p))) for p in folders_to_check]
 
@@ -180,15 +189,16 @@ def check_daysim_bin_directory(path_hint, latest_binaries):
                       "Consider moving the binaries to another path to use them.")
                 continue
 
-            # Use path lib folder if it exists
-            _lib_path = os.path.abspath(os.path.normpath(os.path.join(possible_path, "..", "lib")))
-            if contains_libs(_lib_path):
-                lib_path = _lib_path
-            # Check if lib files in binaries path, for backward capability
-            elif contains_libs(possible_path):
-                lib_path = possible_path
+            if sys.platform == "win32":
+                # Use path lib folder if it exists
+                _lib_path = os.path.abspath(os.path.normpath(os.path.join(possible_path, "..", "lib")))
+                if contains_libs(_lib_path):
+                    lib_path = _lib_path
+                # Check if lib files in binaries path, for backward capability
+                elif contains_libs(possible_path):
+                    lib_path = possible_path
             
-            if sys.platform == "darwin":
+            elif sys.platform == "darwin":
                 allow_run_on_mac(possible_path)
 
             return str(possible_path), str(lib_path)
@@ -223,7 +233,8 @@ def main(config):
     # BUGFIX for PyCharm: the PATH variable might not include the daysim-bin-directory, so we add it here
     os.environ["PATH"] = "{bin}{pathsep}{path}".format(bin=config.radiation.daysim_bin_directory, pathsep=os.pathsep,
                                                        path=os.environ["PATH"])
-    os.environ["RAYPATH"] = daysim_lib_path
+    if not daysim_lib_path:
+        os.environ["RAYPATH"] = daysim_lib_path
 
     if not "PROJ_LIB" in os.environ:
         os.environ["PROJ_LIB"] = os.path.join(os.path.dirname(sys.executable), "Library", "share")
