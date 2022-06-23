@@ -45,11 +45,6 @@ def schedule_maker_main(locator, config, building=None):
     if building != None:
         buildings = [building]  # this is to run the tests
 
-    # CHECK DATABASE
-    if is_3_22(config.scenario):
-        raise ValueError("""The data format of indoor comfort has been changed after v3.22. 
-        Please run Data migrator in Utilities.""")
-
     # get variables of indoor comfort and internal loads
     internal_loads = dbf_to_dataframe(locator.get_building_internal()).set_index('Name')
     indoor_comfort = dbf_to_dataframe(locator.get_building_comfort()).set_index('Name')
@@ -474,6 +469,10 @@ def main(config):
     print('Running occupancy model for scenario %s' % config.scenario)
     print('Running occupancy model  with schedule model=%s' % config.schedule_maker.schedule_model)
     locator = cea.inputlocator.InputLocator(config.scenario)
+    # CHECK DATABASE
+    if is_3_22(config.scenario):
+        raise ValueError("""The data format of indoor comfort has been changed after v3.22. 
+        Please run Data migrator in Utilities.""")
     schedule_maker_main(locator, config)
 
 

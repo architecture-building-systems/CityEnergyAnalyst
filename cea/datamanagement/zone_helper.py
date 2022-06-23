@@ -5,6 +5,7 @@ NOTE: ADD YOUR SCRIPT'S DOCUMENTATION HERE (what, why, include literature refere
 
 import math
 import os
+from typing import Union
 
 import numpy as np
 import osmnx.footprints
@@ -164,11 +165,19 @@ def zone_helper(locator, config):
     calculate_typology_file(locator, zone_df, year_construction, occupancy_type, typology_output_path)
 
 
-def calc_category(standard_DB, year_array):
+def calc_category(standard_db, year_array):
     def category_assignment(year):
-        return (standard_DB[(standard_DB['YEAR_START'] <= year) & (standard_DB['YEAR_END'] >= year)].STANDARD.values[0])
+        within_year = (standard_db['YEAR_START'] <= year) & (standard_db['YEAR_END'] >= year)
+        standards = standard_db.STANDARD.values
 
-    category = np.vectorize(category_assignment)(year_array)
+        # Filter standards if found
+        if within_year.any():
+            standards = standards[within_year]
+
+        # Just return first value
+        return standards[0]
+
+    category = np.array([category_assignment(y) for y in year_array])
     return category
 
 
@@ -210,21 +219,30 @@ def calculate_typology_file(locator, zone_df, year_construction, occupancy_type,
     dataframe_to_dbf(typology_df[fields + ['REFERENCE']], occupancy_output_path)
 
 
-def parse_year(year):
+def parse_year(year: Union[str, int]) -> int:
     import re
     # `start-date` formats can be found here https://wiki.openstreetmap.org/wiki/Key:start_date#Formatting
     if type(year) == str:
-        # For year in `C19`
+        # For year in "century" format e.g. `C19`
         century_year = re.search(r'C(\d{2})', year)
         if century_year:
-            return "{}00".format(century_year.group(1))
-        # For any four digits
+            return int(f"{century_year.group(1)}00")
+
+        # For any four digits in a string e.g. `1860s` or `late 1920s`
         four_digit = re.search(r'\d{4}', year)
         if four_digit:
-            return four_digit.group(0)
+            return int(four_digit.group(0))
+
+        # Finally try to cast string to int
+        try:
+            return int(year)
+        except ValueError:
+            # Raise error later
+            pass
+
+        raise ValueError(f"Invalid year format found `{year}`")
     else:
         return year
-    raise ValueError("We could not cast the value", year)
 
 
 def calculate_age(zone_df, year_construction):
@@ -247,7 +265,7 @@ def calculate_age(zone_df, year_construction):
         else:
             zone_df['REFERENCE'] = ["OSM - median" if x is np.nan else "OSM - as it is" for x in zone_df['start_date']]
 
-        data_age = [np.nan if x is np.nan else int(parse_year(x)) for x in zone_df['start_date']]
+        data_age = [np.nan if x is np.nan else parse_year(x) for x in zone_df['start_date']]
         data_osm_floors_joined = int(math.ceil(np.nanmedian(data_age)))  # median so we get close to the worse case
         zone_df["YEAR"] = [int(x) if x is not np.nan else data_osm_floors_joined for x in data_age]
     else:

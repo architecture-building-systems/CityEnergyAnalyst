@@ -9,13 +9,12 @@ import numpy as np
 import pandas as pd
 
 from cea.constants import HOURS_IN_YEAR
-from cea.optimization.constants import T_TANK_FULLY_DISCHARGED_K, DT_COOL, VCC_T_COOL_IN, ACH_T_IN_FROM_CHP_K
+from cea.optimization.constants import VCC_T_COOL_IN, ACH_T_IN_FROM_CHP_K
 from cea.optimization.master import cost_model
 from cea.optimization.slave.cooling_resource_activation import calc_vcc_CT_operation, cooling_resource_activator
 from cea.technologies.storage_tank_pcm import Storage_tank_PCM
 from cea.technologies.chiller_vapor_compression import VaporCompressionChiller
 from cea.technologies.cogeneration import calc_cop_CCGT
-from cea.technologies.thermal_network.thermal_network import calculate_ground_temperature
 from cea.technologies.chiller_absorption import AbsorptionChiller
 from cea.technologies.supply_systems_database import SupplySystemsDatabase
 
@@ -125,9 +124,9 @@ def district_cooling_network(locator,
         Q_PeakVCC_WS_gen_W = np.zeros(HOURS_IN_YEAR)
         Q_BaseVCC_AS_gen_W = np.zeros(HOURS_IN_YEAR)
         Q_PeakVCC_AS_gen_W = np.zeros(HOURS_IN_YEAR)
-        Q_DailyStorage_gen_directload_W = np.zeros(HOURS_IN_YEAR)
         Q_DailyStorage_content_W = np.zeros(HOURS_IN_YEAR)
         Q_DailyStorage_to_storage_W = np.zeros(HOURS_IN_YEAR)
+        Q_DailyStorage_from_storage_W = np.zeros(HOURS_IN_YEAR)
 
         E_Trigen_NG_gen_W = np.zeros(HOURS_IN_YEAR)
         E_BaseVCC_AS_req_W = np.zeros(HOURS_IN_YEAR)
@@ -146,6 +145,7 @@ def district_cooling_network(locator,
 
         for hour in range(HOURS_IN_YEAR):  # cooling supply for all buildings excluding cooling loads from data centers
             daily_storage.hour = hour
+            if master_to_slave_variables.debug is True: print("\nHour {:.0f}".format(hour))
             if Q_thermal_req_W[hour] > 0.0:
                 # only if there is a cooling load!
                 daily_storage, \
@@ -163,22 +163,23 @@ def district_cooling_network(locator,
                                                         CCGT_prop,
                                                         master_to_slave_variables)
 
-                Q_DailyStorage_gen_directload_W[hour] = thermal_output['Q_DailyStorage_gen_directload_W']
-                Q_DailyStorage_content_W[hour] = thermal_output['Q_DailyStorage_content_W']
-                Q_DailyStorage_to_storage_W[hour] = thermal_output['Q_DailyStorage_to_storage_W']
-                Q_Trigen_NG_gen_directload_W[hour] = thermal_output['Q_Trigen_NG_gen_directload_W']
-                Q_BaseVCC_WS_gen_directload_W[hour] = thermal_output['Q_BaseVCC_WS_gen_directload_W']
-                Q_PeakVCC_WS_gen_directload_W[hour] = thermal_output['Q_PeakVCC_WS_gen_directload_W']
-                Q_BaseVCC_AS_gen_directload_W[hour] = thermal_output['Q_BaseVCC_AS_gen_directload_W']
-                Q_PeakVCC_AS_gen_directload_W[hour] = thermal_output['Q_PeakVCC_AS_gen_directload_W']
-                Q_BackupVCC_AS_directload_W[hour] = thermal_output['Q_BackupVCC_AS_directload_W']
+                Q_DailyStorage_content_W[hour] = thermal_output['Qc_DailyStorage_content_W']
+                Q_DailyStorage_to_storage_W[hour] = thermal_output['Qc_DailyStorage_to_storage_W']
+                Q_DailyStorage_from_storage_W[hour] = thermal_output['Qc_DailyStorage_from_storage_W']
 
-                Q_Trigen_NG_gen_W[hour] = thermal_output['Q_Trigen_NG_gen_W']
-                Q_BaseVCC_WS_gen_W[hour] = thermal_output['Q_BaseVCC_WS_gen_W']
-                Q_PeakVCC_WS_gen_W[hour] = thermal_output['Q_PeakVCC_WS_gen_W']
-                Q_BaseVCC_AS_gen_W[hour] = thermal_output['Q_BaseVCC_AS_gen_W']
-                Q_PeakVCC_AS_gen_W[hour] = thermal_output['Q_PeakVCC_AS_gen_W']
-                Q_BackupVCC_AS_gen_W[hour] = thermal_output['Q_BackupVCC_AS_gen_W']
+                Q_Trigen_NG_gen_directload_W[hour] = thermal_output['Qc_Trigen_NG_gen_directload_W']
+                Q_BaseVCC_WS_gen_directload_W[hour] = thermal_output['Qc_BaseVCC_WS_gen_directload_W']
+                Q_PeakVCC_WS_gen_directload_W[hour] = thermal_output['Qc_PeakVCC_WS_gen_directload_W']
+                Q_BaseVCC_AS_gen_directload_W[hour] = thermal_output['Qc_BaseVCC_AS_gen_directload_W']
+                Q_PeakVCC_AS_gen_directload_W[hour] = thermal_output['Qc_PeakVCC_AS_gen_directload_W']
+                Q_BackupVCC_AS_directload_W[hour] = thermal_output['Qc_BackupVCC_AS_directload_W']
+
+                Q_Trigen_NG_gen_W[hour] = thermal_output['Qc_Trigen_NG_gen_W']
+                Q_BaseVCC_WS_gen_W[hour] = thermal_output['Qc_BaseVCC_WS_gen_W']
+                Q_PeakVCC_WS_gen_W[hour] = thermal_output['Qc_PeakVCC_WS_gen_W']
+                Q_BaseVCC_AS_gen_W[hour] = thermal_output['Qc_BaseVCC_AS_gen_W']
+                Q_PeakVCC_AS_gen_W[hour] = thermal_output['Qc_PeakVCC_AS_gen_W']
+                Q_BackupVCC_AS_gen_W[hour] = thermal_output['Qc_BackupVCC_AS_gen_W']
 
                 E_BaseVCC_WS_req_W[hour] = electricity_output['E_BaseVCC_WS_req_W']
                 E_PeakVCC_WS_req_W[hour] = electricity_output['E_PeakVCC_WS_req_W']
@@ -233,7 +234,7 @@ def district_cooling_network(locator,
         district_cooling_costs = dict(performance, **performance_costs_network)
     else:
         Q_thermal_req_W = np.zeros(HOURS_IN_YEAR)
-        Q_DailyStorage_gen_directload_W = np.zeros(HOURS_IN_YEAR)
+        Q_DailyStorage_from_storage_W = np.zeros(HOURS_IN_YEAR)
         Q_DailyStorage_content_W = np.zeros(HOURS_IN_YEAR)
         Q_DailyStorage_to_storage_W = np.zeros(HOURS_IN_YEAR)
         Q_Trigen_NG_gen_directload_W = np.zeros(HOURS_IN_YEAR)
@@ -266,9 +267,9 @@ def district_cooling_network(locator,
 
         # ENERGY GENERATION TO DIRECT LOAD
         # from storage
-        "Q_DailyStorage_gen_directload_W": Q_DailyStorage_gen_directload_W,
         "Q_DailyStorage_content_W": Q_DailyStorage_content_W,
         "Q_DailyStorage_to_storage_W": Q_DailyStorage_to_storage_W,
+        "Q_DailyStorage_gen_directload_W": Q_DailyStorage_from_storage_W,
 
         # cooling
         "Q_Trigen_NG_gen_directload_W": Q_Trigen_NG_gen_directload_W,
