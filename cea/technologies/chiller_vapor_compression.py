@@ -52,7 +52,6 @@ def calc_VCC(q_chw_load_Wh, T_chw_sup_K, T_chw_re_K, T_cw_in_K, VC_chiller):
     if q_chw_load_Wh == 0.0:
         wdot_W = 0.0
         q_cw_W = 0.0
-
     elif q_chw_load_Wh > 0.0:
         COP = calc_COP_g(T_chw_sup_K, T_cw_in_K, VC_chiller)
         if COP < 0.0:

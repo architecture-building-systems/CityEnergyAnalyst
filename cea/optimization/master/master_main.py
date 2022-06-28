@@ -11,6 +11,7 @@ import pandas as pd
 from deap import algorithms
 from deap import tools, creator, base
 
+import cea.config
 from cea.optimization.constants import DH_CONVERSION_TECHNOLOGIES_SHARE, DC_CONVERSION_TECHNOLOGIES_SHARE, DH_ACRONYM, \
     DC_ACRONYM
 from cea.optimization.master import evaluation
@@ -31,7 +32,13 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 warnings.filterwarnings("ignore")
-NOBJ = 2  # number of objectives
+ceaConfig = cea.config.Configuration()
+objective_function_selection = []
+if ceaConfig.optimization.network_type == DC_ACRONYM:
+    objective_function_selection = ceaConfig.optimization.objective_functions_DC
+elif ceaConfig.optimization.network_type == DH_ACRONYM:
+    objective_function_selection = ['cost', 'GHG_emissions']
+NOBJ = len(objective_function_selection)
 creator.create("FitnessMin", base.Fitness, weights=(-1.0,) * NOBJ)
 creator.create("Individual", list, typecode='d', fitness=creator.FitnessMin)
 
@@ -39,6 +46,7 @@ creator.create("Individual", list, typecode='d', fitness=creator.FitnessMin)
 def objective_function(individual,
                        individual_number,
                        generation_number,
+                       objective_function_selection,
                        building_names_all,
                        column_names_buildings_heating,
                        column_names_buildings_cooling,
@@ -113,10 +121,16 @@ def objective_function(individual,
 
     TAC_sys_USD, \
     GHG_sys_tonCO2, \
+    HR_sys_MWh, \
+    SED_sys_MWh, \
     buildings_district_scale_costs, \
     buildings_district_scale_emissions, \
+    buildings_district_scale_heat, \
+    buildings_district_scale_sed, \
     buildings_building_scale_costs, \
     buildings_building_scale_emissions, \
+    buildings_building_scale_heat, \
+    buildings_building_scale_sed, \
     district_heating_generation_dispatch, \
     district_cooling_generation_dispatch, \
     district_electricity_dispatch, \
@@ -148,6 +162,18 @@ def objective_function(individual,
                                                                              technologies_cooling_allowed,
                                                                              )
 
+    objective_function_results = []
+    objective_function_handles = ["cost", "GHG_emissions", "system_energy_demand", "anthropogenic_heat"]
+
+    if objective_function_handles[0] in objective_function_selection:
+        objective_function_results.append(TAC_sys_USD)
+    if objective_function_handles[1] in objective_function_selection:
+        objective_function_results.append(GHG_sys_tonCO2)
+    if objective_function_handles[2] in objective_function_selection:
+        objective_function_results.append(HR_sys_MWh)
+    if objective_function_handles[3] in objective_function_selection:
+        objective_function_results.append(SED_sys_MWh)
+
     if config.debug or print_final_results:  # print for the last generation and
         print("SAVING RESULTS TO DISK")
         save_results(locator,
@@ -156,8 +182,12 @@ def objective_function(individual,
                      generation_number,
                      buildings_district_scale_costs,
                      buildings_district_scale_emissions,
+                     buildings_district_scale_heat,
+                     buildings_district_scale_sed,
                      buildings_building_scale_costs,
                      buildings_building_scale_emissions,
+                     buildings_building_scale_heat,
+                     buildings_building_scale_sed,
                      district_heating_generation_dispatch,
                      district_cooling_generation_dispatch,
                      district_electricity_dispatch,
@@ -170,7 +200,7 @@ def objective_function(individual,
                      buildings_building_scale_heating_capacities,
                      buildings_building_scale_cooling_capacities)
 
-    return TAC_sys_USD, GHG_sys_tonCO2
+    return objective_function_results
 
 
 def objective_function_wrapper(args):
@@ -320,7 +350,10 @@ def non_dominated_sorting_genetic_algorithm(locator,
 
     # Evaluate the individuals with an invalid fitness
     invalid_ind = [ind for ind in pop if not ind.fitness.valid]
-    fitnesses = toolbox.map(toolbox.evaluate, zip(invalid_ind, range(len(invalid_ind)), repeat(0, len(invalid_ind)),
+    fitnesses = toolbox.map(toolbox.evaluate, zip(invalid_ind,
+                                                  range(len(invalid_ind)),
+                                                  repeat(0, len(invalid_ind)),
+                                                  repeat(objective_function_selection, len(invalid_ind)),
                                                   repeat(building_names_all, len(invalid_ind)),
                                                   repeat(column_names_buildings_heating, len(invalid_ind)),
                                                   repeat(column_names_buildings_cooling, len(invalid_ind)),
@@ -373,7 +406,10 @@ def non_dominated_sorting_genetic_algorithm(locator,
         invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
         invalid_ind = [ind for ind in invalid_ind if ind not in pop]
         fitnesses = toolbox.map(toolbox.evaluate,
-                                zip(invalid_ind, range(len(invalid_ind)), repeat(gen, len(invalid_ind)),
+                                zip(invalid_ind,
+                                    range(len(invalid_ind)),
+                                    repeat(gen, len(invalid_ind)),
+                                    repeat(objective_function_selection, len(invalid_ind)),
                                     repeat(building_names_all, len(invalid_ind)),
                                     repeat(column_names_buildings_heating, len(invalid_ind)),
                                     repeat(column_names_buildings_cooling, len(invalid_ind)),

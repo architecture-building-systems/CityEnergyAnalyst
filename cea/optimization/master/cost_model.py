@@ -42,8 +42,8 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def buildings_building_scale_costs_and_emissions(column_names_buildings_heating,
-                                               column_names_buildings_cooling, locator, master_to_slave_vars):
+def buildings_building_scale_objective_functions(column_names_buildings_heating,
+                                                 column_names_buildings_cooling, locator, master_to_slave_vars):
     DHN_barcode = master_to_slave_vars.DHN_barcode
     DCN_barcode = master_to_slave_vars.DCN_barcode
 
@@ -63,9 +63,12 @@ def buildings_building_scale_costs_and_emissions(column_names_buildings_heating,
     Capex_a_cooling_sys_building_scale_USD, \
     Opex_var_cooling_sys_disconnected, \
     Opex_fixed_cooling_sys_building_scale_USD, \
-    capacity_installed_cooling_sys_df = calc_costs_emissions_decentralized_DC(DCN_barcode,
-                                                                              column_names_buildings_cooling,
-                                                                              locator)
+    Qh_sys_release_Wh, \
+    NG_sys_req_Wh, \
+    E_sys_req_Wh, \
+    capacity_installed_cooling_sys_df = calc_objective_functions_decentralized_DC(DCN_barcode,
+                                                                                  column_names_buildings_cooling,
+                                                                                  locator)
 
     disconnected_costs = {
         # heating
@@ -86,7 +89,20 @@ def buildings_building_scale_costs_and_emissions(column_names_buildings_heating,
         "GHG_cooling_building_scale_tonCO2": GHG_cooling_sys_building_scale_tonCO2yr,
     }
 
-    return disconnected_costs, disconnected_emissions, capacity_installed_heating_sys_df, capacity_installed_cooling_sys_df
+    disconnected_heat_rejection = {
+        # rejected (anthropogenic) heat from cooling systems
+        "DC_HR_cooling_building_scale_Wh": Qh_sys_release_Wh,
+    }
+
+    disconnected_system_energy_demand = {
+        # energy demand of cooling system
+        "SED_NG_cooling_building_scale_Wh": NG_sys_req_Wh,
+        "SED_E_cooling_building_scale_Wh": E_sys_req_Wh,
+    }
+
+    return disconnected_costs, disconnected_emissions, \
+           disconnected_heat_rejection, disconnected_system_energy_demand, \
+           capacity_installed_heating_sys_df, capacity_installed_cooling_sys_df
 
 
 def calc_network_costs_heating(locator, master_to_slave_vars, network_features, network_type):
@@ -207,11 +223,11 @@ def calc_variable_costs_district_scale_buildings(sum_natural_gas_imports_W,
 
 
 def calc_emissions_district_scale_buildings(sum_natural_gas_imports_W,
-                                       sum_wet_biomass_imports_W,
-                                       sum_dry_biomass_imports_W,
-                                       sum_electricity_imports_W,
-                                       sum_electricity_exports_W,
-                                       lca):
+                                            sum_wet_biomass_imports_W,
+                                            sum_dry_biomass_imports_W,
+                                            sum_electricity_imports_W,
+                                            sum_electricity_exports_W,
+                                            lca):
     # SUMMARIZE
     GHG_NG_district_scale_tonCO2yr = sum(calc_emissions_Whyr_to_tonCO2yr(sum_natural_gas_imports_W, lca.NG_TO_CO2_EQ))
     GHG_WB_district_scale_tonCO2yr = sum(calc_emissions_Whyr_to_tonCO2yr(sum_wet_biomass_imports_W, lca.WETBIOMASS_TO_CO2_EQ))
@@ -228,6 +244,43 @@ def calc_emissions_district_scale_buildings(sum_natural_gas_imports_W,
     }
 
     return buildings_district_scale_emissions_primary_energy
+
+
+def calc_heat_release_district_scale_buildings(district_cooling_heat_release):
+
+    # SUMMARIZE
+    district_cooling_sensible_heat_release_W = sum(district_cooling_heat_release['Q_release_Trigen_NG_W'])
+    district_cooling_latent_heat_release_W = (sum(district_cooling_heat_release['Q_release_BaseVCC_WS_W']) +
+                                              sum(district_cooling_heat_release['Q_release_PeakVCC_WS_W']) +
+                                              sum(district_cooling_heat_release['Q_release_FreeCooling_W']) +
+                                              sum(district_cooling_heat_release['Q_release_BaseVCC_AS_W']) +
+                                              sum(district_cooling_heat_release['Q_release_PeakVCC_AS_W']) +
+                                              sum(district_cooling_heat_release['Q_release_BackupVCC_AS_W']))
+
+    district_cooling_heat_release_summary = {"DC_HR_sensible_district_scale_Wh": district_cooling_sensible_heat_release_W,
+                                             "DC_HR_latent_district_scale_Wh": district_cooling_latent_heat_release_W}
+
+    return district_cooling_heat_release_summary
+
+
+def calc_system_energy_demand_district_scale_buildings(sum_natural_gas_imports_W,
+                                                       sum_wet_biomass_imports_W,
+                                                       sum_dry_biomass_imports_W,
+                                                       sum_electricity_imports_W,
+                                                       sum_electricity_exports_W):
+
+    # SUMMARIZE
+    SED_natural_gas_W = sum(sum_natural_gas_imports_W)
+    SED_wet_biomass_W = sum(sum_wet_biomass_imports_W)
+    SED_dry_biomass_W = sum(sum_dry_biomass_imports_W)
+    SED_electricity_W = sum(sum_electricity_imports_W) - sum(sum_electricity_exports_W)
+
+    district_system_energy_demand = {"SED_natural_gas_district_scale_Wh": SED_natural_gas_W,
+                                     "SED_wet_biomass_district_scale_Wh": SED_wet_biomass_W,
+                                     "SED_dry_biomass_district_scale_Wh": SED_dry_biomass_W,
+                                     "SED_electricity_district_scale_Wh": SED_electricity_W}
+
+    return district_system_energy_demand
 
 
 def summary_fuel_electricity_consumption(district_cooling_fuel_requirements_dispatch,
@@ -269,13 +322,14 @@ def summary_fuel_electricity_consumption(district_cooling_fuel_requirements_disp
            sum_electricity_exports_W
 
 
-def buildings_district_scale_costs_and_emissions(district_heating_costs,
+def buildings_district_scale_objective_functions(district_heating_costs,
                                                  district_cooling_costs,
                                                  district_microgrid_costs,
                                                  district_microgrid_requirements_dispatch,
                                                  district_heating_fuel_requirements_dispatch,
                                                  district_cooling_fuel_requirements_dispatch,
                                                  district_electricity_demands,
+                                                 district_cooling_heat_release,
                                                  prices,
                                                  lca
                                                  ):
@@ -309,7 +363,18 @@ def buildings_district_scale_costs_and_emissions(district_heating_costs,
                                                                   sum_electricity_imports_W,
                                                                   sum_electricity_exports_W,
                                                                   lca)
-    return connected_costs, connected_emissions
+
+    # CALCULATE (ANTHROPOGENIC) HEAT RELEASE
+    connected_heat_release = calc_heat_release_district_scale_buildings(district_cooling_heat_release)
+
+    # CALCULATE SYSTEM ENERGY DEMAND
+    connected_system_energy_demand = calc_system_energy_demand_district_scale_buildings(sum_natural_gas_imports_W,
+                                                                                        sum_wet_biomass_imports_W,
+                                                                                        sum_dry_biomass_imports_W,
+                                                                                        sum_electricity_imports_W,
+                                                                                        sum_electricity_exports_W)
+
+    return connected_costs, connected_emissions, connected_heat_release, connected_system_energy_demand
 
 
 def calc_network_costs_cooling(locator, master_to_slave_vars, network_features, network_type):
@@ -995,13 +1060,16 @@ def calc_seasonal_storage_costs(config, locator, storage_activation_data):
     return performance_costs
 
 
-def calc_costs_emissions_decentralized_DC(DCN_barcode, buildings_names_with_cooling_load, locator,
-                                          ):
+def calc_objective_functions_decentralized_DC(DCN_barcode, buildings_names_with_cooling_load, locator,
+                                              ):
     GHG_sys_building_scale_tonCO2yr = 0.0
     Capex_a_sys_building_scale_USD = 0.0
     Opex_var_sys_disconnected = 0.0
     Capex_total_sys_building_scale_USD = 0.0
     Opex_fixed_sys_building_scale_USD = 0.0
+    Qh_sys_release_Wh = 0.0
+    NG_sys_req_Wh = 0.0
+    E_sys_req_Wh = 0.0
     capacity_installed_df = pd.DataFrame()
     for (index, building_name) in zip(DCN_barcode, buildings_names_with_cooling_load):
         if index == "0":  # choose the best decentralized configuration
@@ -1013,6 +1081,9 @@ def calc_costs_emissions_decentralized_DC(DCN_barcode, buildings_names_with_cool
             Capex_a_sys_building_scale_USD += dfBest["Capex_a_USD"].iloc[0]
             Opex_var_sys_disconnected += dfBest["Opex_var_USD"].iloc[0]
             Opex_fixed_sys_building_scale_USD += dfBest["Opex_fixed_USD"].iloc[0]
+            Qh_sys_release_Wh += dfBest["Qh_sys_release_Wh"].iloc[0]
+            NG_sys_req_Wh += dfBest["NG_sys_req_Wh"].iloc[0]
+            E_sys_req_Wh += dfBest["E_sys_req_Wh"].iloc[0]
 
             data = pd.DataFrame({'Name': building_name,
                                  'Capacity_DX_AS_cool_building_scale_W': dfBest["Capacity_DX_AS_W"].iloc[0],
@@ -1029,6 +1100,9 @@ def calc_costs_emissions_decentralized_DC(DCN_barcode, buildings_names_with_cool
            Capex_a_sys_building_scale_USD, \
            Opex_var_sys_disconnected, \
            Opex_fixed_sys_building_scale_USD, \
+           Qh_sys_release_Wh, \
+           NG_sys_req_Wh, \
+           E_sys_req_Wh, \
            capacity_installed_df
 
 
