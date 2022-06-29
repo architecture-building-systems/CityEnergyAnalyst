@@ -83,7 +83,7 @@ def calc_SC(locator, config, latitude, longitude, weather_data, date_local, buil
     tot_bui_height_m = gpd.read_file(locator.get_zone_geometry())['height_ag'].sum()
 
     # set the maximum roof coverage
-    max_roof_coverage = config.solar.roof_coverage
+    max_roof_coverage = config.solar.max_roof_coverage
 
     if not sensors_metadata_clean.empty:
         if not config.solar.custom_tilt_angle:
