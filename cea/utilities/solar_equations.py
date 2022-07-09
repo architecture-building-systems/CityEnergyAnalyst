@@ -727,9 +727,9 @@ def calc_groups(radiation_of_sensors_clean, sensors_metadata_cat):
         # write group properties
         group_key = pd.Series({'CATB': key[0], 'CATGB': key[1], 'CATteta_z': key[2], 'type_orientation': key[3]})
         group_info = pd.Series({'number_srfs': number_points, 'srfs': (''.join(surfaces_in_group))})
-        group_prop_sum = sensor_groups_ob.sum().loc[key,:][['AREA_m2','area_installed_module_m2']]
-        group_prop_mean =  sensor_groups_ob.mean().loc[key,:].drop(['area_installed_module_m2', 'AREA_m2'])
-        group_properties[group_count] = group_key.append(group_prop_mean).append(group_prop_sum).append(group_info)
+        group_prop_sum = sensor_groups_ob.sum().loc[key][['AREA_m2', 'area_installed_module_m2']]
+        group_prop_mean = sensor_groups_ob.mean().loc[key].drop(['area_installed_module_m2', 'AREA_m2'])
+        group_properties[group_count] = pd.concat([group_key, group_prop_mean, group_prop_sum, group_info])
         # calculate mean radiation among surfaces in group
         group_mean_radiations[group_count] = radiation_of_sensors_clean[surfaces_in_group].mean(axis=1).values
 

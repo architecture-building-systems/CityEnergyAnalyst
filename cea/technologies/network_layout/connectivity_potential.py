@@ -8,6 +8,7 @@ a series of points (buildings) to the closest street
 
 import os
 
+import pandas as pd
 from geopandas import GeoDataFrame as gdf
 from shapely.geometry import Point, LineString, MultiPoint, box
 from shapely.ops import split, linemerge, snap
@@ -372,13 +373,13 @@ def create_terminals(buiding_centroids, crs, street_network):
     # get list of nearest points
     near_points = near_analysis(buiding_centroids, street_network, crs)
     # extend to the buiding centroids
-    all_points = near_points.append(buiding_centroids)
+    all_points = pd.concat([near_points, buiding_centroids])
     all_points.crs = crs
     # Aggregate these points with the GroupBy
     lines_to_buildings = all_points.groupby(['Name'])['geometry'].apply(lambda x: LineString(x.tolist()))
     lines_to_buildings = gdf(lines_to_buildings, geometry='geometry', crs=crs)
 
-    lines_to_buildings = lines_to_buildings.append(street_network).reset_index(drop=True)
+    lines_to_buildings = pd.concat([lines_to_buildings, street_network]).reset_index(drop=True)
     lines_to_buildings.crs = crs
     return lines_to_buildings
 
