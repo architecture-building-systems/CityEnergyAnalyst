@@ -137,7 +137,7 @@ The following file is used by these scripts: ``demand``, ``schedule_maker``
     :header: "Variable", "Description"
 
     ``METADATA``, "TODO"
-    ``MONTHLY_MULTIPLIER``, "TODO"
+    ``MONTHLY_MULTIPLIER``, "Monthly probabilities of occupancy throughout the year"
     
 
 
@@ -339,7 +339,7 @@ The following file is used by these scripts: ``decentralized``, ``optimization``
     ``LT_yr``, lifetime of this technology
     ``m_cw``, external flow rate of cooling water at the condenser and absorber
     ``m_hw``, external flow rate of hot water at the generator
-    ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
+    ``O&M_%``, operation and maintenance cost factor (fraction of the investment cost)
     ``r_e``, parameter in the characteristic equations to calculate the evaporator side 
     ``r_g``, parameter in the characteristic equations to calculate the generator side
     ``s_e``, parameter in the characteristic equations to calculate the evaporator side 
@@ -366,7 +366,7 @@ The following file is used by these scripts: ``decentralized``, ``optimization``
     ``e``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)  
     ``IR_%``, interest rate charged on the loan for the capital cost
     ``LT_yr``, lifetime of this technology
-    ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
+    ``O&M_%``, operation and maintenance cost factor (fraction of the investment cost)
     ``unit``, unit of the min/max capacity
     
 
@@ -388,7 +388,7 @@ The following file is used by these scripts: ``decentralized``, ``optimization``
     ``e``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)  
     ``IR_%``, interest rate charged on the loan for the capital cost
     ``LT_yr``, lifetime of this technology
-    ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
+    ``O&M_%``, operation and maintenance cost factor (fraction of the investment cost)
     ``unit``, unit of the min/max capacity
     
 
@@ -410,7 +410,7 @@ The following file is used by these scripts: ``decentralized``, ``optimization``
     ``e``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)  
     ``IR_%``, interest rate charged on the loan for the capital cost
     ``LT_yr``, lifetime of this technology
-    ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
+    ``O&M_%``, operation and maintenance cost factor (fraction of the investment cost)
     ``unit``, unit of the min/max capacity
     
 
@@ -432,7 +432,7 @@ The following file is used by these scripts: ``decentralized``, ``optimization``
     ``e``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)  
     ``IR_%``, interest rate charged on the loan for the capital cost
     ``LT_yr``, lifetime of this technology
-    ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
+    ``O&M_%``, operation and maintenance cost factor (fraction of the investment cost)
     ``unit``, unit of the min/max capacity
     
 
@@ -454,7 +454,7 @@ The following file is used by these scripts: ``decentralized``, ``optimization``
     ``e``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)  
     ``IR_%``, interest rate charged on the loan for the capital cost
     ``LT_yr``, lifetime of this technology
-    ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
+    ``O&M_%``, operation and maintenance cost factor (fraction of the investment cost)
     ``unit``, unit of the min/max capacity
     
 
@@ -476,7 +476,7 @@ The following file is used by these scripts: ``decentralized``, ``optimization``
     ``e``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)  
     ``IR_%``, interest rate charged on the loan for the capital cost
     ``LT_yr``, lifetime of this technology
-    ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
+    ``O&M_%``, operation and maintenance cost factor (fraction of the investment cost)
     ``unit``, unit of the min/max capacity
     
 
@@ -498,7 +498,7 @@ The following file is used by these scripts: ``decentralized``, ``optimization``
     ``e``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)  
     ``IR_%``, interest rate charged on the loan for the capital cost
     ``LT_yr``, lifetime of this technology
-    ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
+    ``O&M_%``, operation and maintenance cost factor (fraction of the investment cost)
     ``unit``, unit of the min/max capacity
     
 
@@ -525,7 +525,7 @@ The following file is used by these scripts: ``decentralized``, ``optimization``
     ``e_p``, parameter in the pressure loss function, f(x) = a_p + b_p*x^c_p + d_p*ln(x) + e_p*x*ln*(x),  where x is the capacity mass flow rate [W/K] 
     ``IR_%``, interest rate charged on the loan for the capital cost
     ``LT_yr``, lifetime of this technology
-    ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
+    ``O&M_%``, operation and maintenance cost factor (fraction of the investment cost)
     ``unit``, unit of the min/max capacity
     
 
@@ -547,7 +547,7 @@ The following file is used by these scripts: ``decentralized``, ``optimization``
     ``e``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity 
     ``IR_%``, interest rate charged on the loan for the capital cost
     ``LT_yr``, lifetime of this technology
-    ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
+    ``O&M_%``, operation and maintenance cost factor (fraction of the investment cost)
     ``unit``, unit of the min/max capacity
     
 
@@ -569,7 +569,7 @@ The following file is used by these scripts: ``decentralized``, ``optimization``
     ``e``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity 
     ``IR_%``, interest rate charged on the loan for the capital cost
     ``LT_yr``, lifetime of this technology
-    ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
+    ``O&M_%``, operation and maintenance cost factor (fraction of the investment cost)
     ``unit``, unit of the min/max capacity
     
 
@@ -593,7 +593,7 @@ The following file is used by these scripts: ``decentralized``, ``optimization``
     ``LT_yr``, lifetime of this technology
     ``misc_losses``, losses from cabling, resistances etc...
     ``module_length_m``, lengh of the PV module
-    ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
+    ``O&M_%``, operation and maintenance cost factor (fraction of the investment cost)
     ``PV_a0``, parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  + a3*x**3 + a4*x**4, where  x is the relative air mass
     ``PV_a1``, parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  + a3*x**3 + a4*x**4, where  x is the relative air mass
     ``PV_a2``, parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  + a3*x**3 + a4*x**4, where  x is the relative air mass
@@ -625,7 +625,7 @@ The following file is used by these scripts: ``decentralized``, ``optimization``
     ``e``, parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity 
     ``IR_%``, interest rate charged on the loan for the capital cost
     ``LT_yr``, lifetime of this technology
-    ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
+    ``O&M_%``, operation and maintenance cost factor (fraction of the investment cost)
     ``unit``, unit of the min/max capacity
     
 
@@ -663,7 +663,7 @@ The following file is used by these scripts: ``decentralized``, ``optimization``
     ``module_area_m2``, module area of a solar collector
     ``module_length_m``, lengh of a solar collector module
     ``n0``, zero loss efficiency at normal incidence
-    ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
+    ``O&M_%``, operation and maintenance cost factor (fraction of the investment cost)
     ``t_max``, maximum operating temperature
     ``type``, type of the solar collector (FP: flate-plate or ET: evacuated-tube)
     ``unit``, unit of the min/max capacity
@@ -1288,7 +1288,7 @@ The following file is used by these scripts: ``demand``, ``emissions``, ``system
     ``feedstock``, feedstock used by the the all in one system (refers to the FEEDSTOCK database)
     ``IR_%``, interest rate charged on the loan for the capital cost
     ``LT_yr``, lifetime of assembly
-    ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
+    ``O&M_%``, operation and maintenance cost factor (fraction of the investment cost)
     ``reference``, reference
     ``scale``, whether the all in one system is used at the building or the district scale
     
@@ -1305,7 +1305,7 @@ The following file is used by these scripts: ``demand``, ``emissions``, ``system
     ``feedstock``, feedstock used by the the all in one system (refers to the FEEDSTOCK database)
     ``IR_%``, interest rate charged on the loan for the capital cost
     ``LT_yr``, lifetime of assembly
-    ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
+    ``O&M_%``, operation and maintenance cost factor (fraction of the investment cost)
     ``reference``, Reference of the data
     ``scale``, whether the all in one system is used at the building or the district scale
     
@@ -1322,7 +1322,7 @@ The following file is used by these scripts: ``demand``, ``emissions``, ``system
     ``feedstock``, feedstock used by the the all in one system (refers to the FEEDSTOCK database)
     ``IR_%``, interest rate charged on the loan for the capital cost
     ``LT_yr``, lifetime of assembly
-    ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
+    ``O&M_%``, operation and maintenance cost factor (fraction of the investment cost)
     ``reference``, Reference of the data
     ``scale``, whether the all in one system is used at the building or the district scale
     
@@ -1339,7 +1339,7 @@ The following file is used by these scripts: ``demand``, ``emissions``, ``system
     ``feedstock``, feedstock used by the the all in one system (refers to the FEEDSTOCK database)
     ``IR_%``, interest rate charged on the loan for the capital cost
     ``LT_yr``, lifetime of assembly
-    ``O&M_%``, operation and maintanence cost factor (fraction of the investment cost)
+    ``O&M_%``, operation and maintenance cost factor (fraction of the investment cost)
     ``reference``, Reference of the data
     ``scale``, whether the all in one system is used at the building or the district scale
     

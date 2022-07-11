@@ -2101,10 +2101,10 @@ get_building_weekly_schedules:
         unit: TODO
         values: TODO
       MONTHLY_MULTIPLIER:
-        description: TODO
+        description: Monthly probabilities of occupancy throughout the year
         type: float
-        unit: TODO
-        values: TODO
+        unit: '[-]'
+        values: '{0.0...n}'
   used_by:
   - demand
   - schedule_maker
@@ -3053,7 +3053,7 @@ get_database_conversion_systems:
           unit: "[yr]"
           values: '{0...n}'
         O&M_%:
-          description: operation and maintanence cost factor (fraction of the investment
+          description: operation and maintenance cost factor (fraction of the investment
             cost)
           min: 0.0
           type: float
@@ -3223,7 +3223,7 @@ get_database_conversion_systems:
           unit: "[yr]"
           values: '{0...n}'
         O&M_%:
-          description: operation and maintanence cost factor (fraction of the investment
+          description: operation and maintenance cost factor (fraction of the investment
             cost)
           min: 0.0
           type: float
@@ -3318,7 +3318,7 @@ get_database_conversion_systems:
           unit: "[yr]"
           values: '{0...n}'
         O&M_%:
-          description: operation and maintanence cost factor (fraction of the investment
+          description: operation and maintenance cost factor (fraction of the investment
             cost)
           min: 0.0
           type: float
@@ -3413,7 +3413,7 @@ get_database_conversion_systems:
           unit: "[yr]"
           values: '{0...n}'
         O&M_%:
-          description: operation and maintanence cost factor (fraction of the investment
+          description: operation and maintenance cost factor (fraction of the investment
             cost)
           min: 0.0
           type: float
@@ -3509,7 +3509,7 @@ get_database_conversion_systems:
           unit: "[yr]"
           values: '{0...n}'
         O&M_%:
-          description: operation and maintanence cost factor (fraction of the investment
+          description: operation and maintenance cost factor (fraction of the investment
             cost)
           min: 0.0
           type: float
@@ -3605,7 +3605,7 @@ get_database_conversion_systems:
           unit: "[yr]"
           values: '{0...n}'
         O&M_%:
-          description: operation and maintanence cost factor (fraction of the investment
+          description: operation and maintenance cost factor (fraction of the investment
             cost)
           min: 0.0
           type: float
@@ -3701,7 +3701,7 @@ get_database_conversion_systems:
           unit: "[yr]"
           values: '{0...n}'
         O&M_%:
-          description: operation and maintanence cost factor (fraction of the investment
+          description: operation and maintenance cost factor (fraction of the investment
             cost)
           min: 0.0
           type: float
@@ -3797,7 +3797,7 @@ get_database_conversion_systems:
           unit: "[yr]"
           values: '{0...n}'
         O&M_%:
-          description: operation and maintanence cost factor (fraction of the investment
+          description: operation and maintenance cost factor (fraction of the investment
             cost)
           min: 0.0
           type: float
@@ -3893,7 +3893,7 @@ get_database_conversion_systems:
           unit: "[yr]"
           values: '{0...n}'
         O&M_%:
-          description: operation and maintanence cost factor (fraction of the investment
+          description: operation and maintenance cost factor (fraction of the investment
             cost)
           min: 0.0
           type: float
@@ -4022,7 +4022,7 @@ get_database_conversion_systems:
           unit: "[yr]"
           values: '{0...n}'
         O&M_%:
-          description: operation and maintanence cost factor (fraction of the investment
+          description: operation and maintenance cost factor (fraction of the investment
             cost)
           min: 0.0
           type: float
@@ -4117,7 +4117,7 @@ get_database_conversion_systems:
           unit: "[yr]"
           values: '{0...n}'
         O&M_%:
-          description: operation and maintanence cost factor (fraction of the investment
+          description: operation and maintenance cost factor (fraction of the investment
             cost)
           min: 0.0
           type: float
@@ -4297,7 +4297,7 @@ get_database_conversion_systems:
           unit: "[yr]"
           values: '{0...n}'
         O&M_%:
-          description: operation and maintanence cost factor (fraction of the investment
+          description: operation and maintenance cost factor (fraction of the investment
             cost)
           min: 0.0
           type: float
@@ -4393,7 +4393,7 @@ get_database_conversion_systems:
           unit: "[yr]"
           values: '{0...n}'
         O&M_%:
-          description: operation and maintanence cost factor (fraction of the investment
+          description: operation and maintenance cost factor (fraction of the investment
             cost)
           min: 0.0
           type: float
@@ -4507,7 +4507,7 @@ get_database_conversion_systems:
           unit: "[yr]"
           values: '{0...n}'
         O&M_%:
-          description: operation and maintanence cost factor (fraction of the investment
+          description: operation and maintenance cost factor (fraction of the investment
             cost)
           min: 0.0
           type: float
@@ -6675,7 +6675,7 @@ get_database_supply_assemblies:
           unit: '[yr]'
           values: '{0...n}'
         O&M_%:
-          description: operation and maintanence cost factor (fraction of the investment
+          description: operation and maintenance cost factor (fraction of the investment
             cost)
           min: 0.0
           type: float
@@ -6757,7 +6757,7 @@ get_database_supply_assemblies:
           unit: '[yr]'
           values: '{0...n}'
         O&M_%:
-          description: operation and maintanence cost factor (fraction of the investment
+          description: operation and maintenance cost factor (fraction of the investment
             cost)
           min: 0.0
           type: float
@@ -6839,7 +6839,7 @@ get_database_supply_assemblies:
           unit: '[yr]'
           values: '{0...n}'
         O&M_%:
-          description: operation and maintanence cost factor (fraction of the investment
+          description: operation and maintenance cost factor (fraction of the investment
             cost)
           min: 0.0
           type: float
@@ -6921,7 +6921,7 @@ get_database_supply_assemblies:
           unit: '[yr]'
           values: '{0...n}'
         O&M_%:
-          description: operation and maintanence cost factor (fraction of the investment
+          description: operation and maintenance cost factor (fraction of the investment
             cost)
           min: 0.0
           type: float
