@@ -32,15 +32,18 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 warnings.filterwarnings("ignore")
-ceaConfig = cea.config.Configuration()
-objective_function_selection = []
-if ceaConfig.optimization.network_type == DC_ACRONYM:
-    objective_function_selection = ceaConfig.optimization.objective_functions_DC
-elif ceaConfig.optimization.network_type == DH_ACRONYM:
-    objective_function_selection = ['cost', 'GHG_emissions']
-NOBJ = len(objective_function_selection)
-creator.create("FitnessMin", base.Fitness, weights=(-1.0,) * NOBJ)
-creator.create("Individual", list, typecode='d', fitness=creator.FitnessMin)
+
+
+def create_individual_class(ceaConfig):
+    objective_function_selection = []
+    if ceaConfig.optimization.network_type == DC_ACRONYM:
+        objective_function_selection = ceaConfig.optimization.objective_functions_DC
+    elif ceaConfig.optimization.network_type == DH_ACRONYM:
+        objective_function_selection = ['cost', 'GHG_emissions']
+    NOBJ = len(objective_function_selection)
+    creator.create("FitnessMin", base.Fitness, weights=(-1.0,) * NOBJ)
+    creator.create("Individual", list, typecode='d', fitness=creator.FitnessMin)
+    return NOBJ, objective_function_selection
 
 
 def objective_function(individual,
@@ -242,6 +245,8 @@ def non_dominated_sorting_genetic_algorithm(locator,
     crossover_method_continuous = config.optimization.crossover_method_continuous
 
     # SET-UP EVOLUTIONARY ALGORITHM
+    # Adapt the conversion classes to the current config (for cases where dashboard is used)
+    NOBJ, objective_function_selection = create_individual_class(config)
     # Hyperparameters
     P = 12
     ref_points = tools.uniform_reference_points(NOBJ, P)
@@ -481,6 +486,7 @@ def non_dominated_sorting_genetic_algorithm(locator,
             systems_name_list = save_final_generation_pareto_individuals(toolbox,
                                                                          locator,
                                                                          gen,
+                                                                         objective_function_selection,
                                                                          record_individuals_tested,
                                                                          paretofrontier,
                                                                          building_names_all,
@@ -521,6 +527,7 @@ def non_dominated_sorting_genetic_algorithm(locator,
 def save_final_generation_pareto_individuals(toolbox,
                                              locator,
                                              generation,
+                                             objective_function_selection,
                                              record_individuals_tested,
                                              paretofrontier,
                                              building_names_all,
@@ -560,6 +567,7 @@ def save_final_generation_pareto_individuals(toolbox,
     fitnesses = toolbox.map(toolbox.evaluate, zip(individual_in_pareto_list,
                                                   individual_number_list,
                                                   generation_number_list,
+                                                  repeat(objective_function_selection, len(individual_in_pareto_list)),
                                                   repeat(building_names_all, len(individual_in_pareto_list)),
                                                   repeat(column_names_buildings_heating,
                                                          len(individual_in_pareto_list)),
