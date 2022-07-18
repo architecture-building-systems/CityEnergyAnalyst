@@ -1588,24 +1588,28 @@ get_building_air_conditioning:
       heat_starts:
         description: Start of the heating season - use 00|00 when there is none
         type: string
+        regex: ^(0[1-9]|[12][0-9]|3[01])\|(0[1-9]|1[012])|00\|00$
         example: '31|12'
         unit: '[DD|MM]'
         values: '{00|00...31|12}'
       heat_ends:
         description: End of the heating season - use 00|00 when there is none
         type: string
+        regex: ^(0[1-9]|[12][0-9]|3[01])\|(0[1-9]|1[012])|00\|00$
         example: '31|12'
         unit: '[DD|MM]'
         values: '{00|00...31|12}'
       cool_starts:
         description: Start of the cooling season - use 00|00 when there is none
         type: string
+        regex: ^(0[1-9]|[12][0-9]|3[01])\|(0[1-9]|1[012])|00\|00$
         example: '31|12'
         unit: '[DD|MM]'
         values: '{00|00...31|12}'
       cool_ends:
         description: End of the cooling season - use 00|00 when there is none
         type: string
+        regex: ^(0[1-9]|[12][0-9]|3[01])\|(0[1-9]|1[012])|00\|00$
         example: '31|12'
         unit: '[DD|MM]'
         values: '{00|00...31|12}'
