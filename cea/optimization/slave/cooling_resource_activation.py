@@ -8,7 +8,7 @@ import numpy as np
 
 import cea.technologies.chiller_absorption as chiller_absorption
 import cea.technologies.chiller_vapor_compression as chiller_vapor_compression
-import cea.technologies.cooling_tower as CTModel
+import cea.technologies.cooling_tower as ct_model
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.optimization.constants import VCC_T_COOL_IN, DT_COOL, ACH_T_IN_FROM_CHP_K
 from cea.technologies.pumps import calc_water_body_uptake_pumping
@@ -415,8 +415,9 @@ def activate_WS_VCC(activation,
         # initialise variables for the water source vapour compression chiller and free cooling calculation
         VCC_WS_activated = False
         FreeCooling_WS_activated = False
-        # TODO: Replace the current calculation of the thermal efficiency (Carnot efficiency) to a more realistic value
-        thermal_efficiency_VCC = T_district_cooling_supply_K / T_source_average_water_body_K
+        thermal_efficiency_VCC = chiller_vapor_compression.eta_th_vcc_g(T_district_cooling_supply_K,
+                                                                        T_source_average_water_body_K,
+                                                                        VC_chiller)
         Qc_output_VCC_WS_max_W = min(capacity_VCC_WS_W, thermal_efficiency_VCC * Qc_water_body_remaining_W)
 
         # Activation Case 1: The water temperature doesn't allow for free cooling, therefore the VCC is activated.
@@ -465,8 +466,6 @@ def activate_WS_VCC(activation,
 
         # Determine the electricity needed for the hydraulic pumps and the VCC if the latter is activated...
         if VCC_WS_activated:
-            # TODO: Make sure the water source Peak VCC's cooling output returned from the function below is in
-            #       accordance with the thermal efficiency definition above
             Qc_VCC_WS_gen_W, \
             E_VCC_WS_req_W = calc_vcc_operation(Qc_VCC_WS_gen_W,
                                                 T_district_cooling_return_K,
@@ -600,8 +599,7 @@ def calc_vcc_operation(Qc_from_VCC_W, T_DCN_re_K, T_DCN_sup_K, T_source_K, chill
     """
     Qc_from_VCC_W = min(Qc_from_VCC_W,
                         chiller_size)  # The chiller can not supply more cooling than the installed capacity allows
-    VCC_operation = chiller_vapor_compression.calc_VCC(chiller_size, Qc_from_VCC_W, T_DCN_sup_K, T_DCN_re_K, T_source_K,
-                                                       VC_chiller)
+    VCC_operation = chiller_vapor_compression.calc_VCC(Qc_from_VCC_W, T_DCN_sup_K, T_DCN_re_K, T_source_K, VC_chiller)
 
     # unpack outputs
     Qc_VCC_W = VCC_operation['q_chw_W']
@@ -616,15 +614,14 @@ def calc_vcc_CT_operation(Qc_from_VCC_W,
                           T_source_K,
                           size_chiller_CT,
                           VC_chiller):
-    VCC_operation = chiller_vapor_compression.calc_VCC(size_chiller_CT, Qc_from_VCC_W, T_DCN_sup_K, T_DCN_re_K,
-                                                       T_source_K, VC_chiller)
+    VCC_operation = chiller_vapor_compression.calc_VCC(Qc_from_VCC_W, T_DCN_sup_K, T_DCN_re_K, T_source_K, VC_chiller)
 
     # unpack outputs
     Qc_CT_VCC_W = VCC_operation['q_cw_W']
     Qc_VCC_W = VCC_operation['q_chw_W']
 
     # calculate cooling tower
-    wdot_CT_Wh = CTModel.calc_CT(Qc_CT_VCC_W, size_chiller_CT)
+    wdot_CT_Wh = ct_model.calc_CT(Qc_CT_VCC_W, size_chiller_CT)
 
     # calcualte energy consumption and variable costs
     E_used_VCC_W = (VCC_operation['wdot_W'] + wdot_CT_Wh)
@@ -650,7 +647,7 @@ def calc_chiller_absorption_operation(Qc_ACH_req_W, T_DCN_re_K, T_DCN_sup_K, T_A
     Qc_CT_ACH_W = ACH_operation['q_cw_W']
 
     # calculate cooling tower
-    wdot_CT_Wh = CTModel.calc_CT(Qc_CT_ACH_W, size_ACH_W)
+    wdot_CT_Wh = ct_model.calc_CT(Qc_CT_ACH_W, size_ACH_W)
 
     # calcualte energy consumption and variable costs
     Qh_CHP_ACH_W = ACH_operation['q_hw_W']
