@@ -23,13 +23,13 @@ dependencies:
 - utm
 - wntr=0.2.2.1
 - fiona
-- gdal=3.4.0
+- gdal=3.3.*
 - geopandas
 - matplotlib
 - networkx
 - numba
-- numpy=1.19.1
-- numpy-financial=1.0.0
+- numpy
+- numpy-financial
 - osmnx=0.15.1
 - pandas
 - pip
@@ -50,4 +50,3 @@ dependencies:
   - xlwt
   - staticmap
   - py4design-cea
-  - numpy_financial

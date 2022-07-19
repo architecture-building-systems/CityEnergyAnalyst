@@ -2,7 +2,7 @@ How to review a pull request
 ============================
 
 Code review could be time-consuming, but it is extremely important.
-All pull requests (PR) to the CEA should be reviewed by at least one contributor with maintanence right.
+All pull requests (PR) to the CEA should be reviewed by at least one contributor with maintenance right.
 The reviewer needs to ensure the changes in the code are aligned with the authors' description and do not compromise
 the existing functionalities in the CEA.
 

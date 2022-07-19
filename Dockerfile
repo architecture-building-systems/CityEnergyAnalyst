@@ -1,11 +1,11 @@
-FROM continuumio/miniconda3 as cea-build
+FROM condaforge/mambaforge:latest as cea-build
 
 # create the conda environment and install cea
 COPY environment.yml /tmp/environment.yml
-RUN conda env create -f /tmp/environment.yml -n cea && conda clean -afy
+RUN mamba env create -f /tmp/environment.yml -n cea && mamba clean -afy
 
 # conda-pack the environment
-RUN conda install -c conda-forge conda-pack
+RUN mamba install -c conda-forge conda-pack
 RUN conda-pack -n cea -o /tmp/env.tar \
 && mkdir /venv \
 && cd /venv \
@@ -18,7 +18,7 @@ COPY . /cea
 RUN /bin/bash -c "source /venv/bin/activate && pip install /cea"
 
 # Build Daysim in image to prevent errors in OS lib dependencies
-FROM ubuntu:latest AS daysim-build
+FROM ubuntu:focal AS daysim-build
 
 RUN apt update && DEBIAN_FRONTEND="noninteractive" apt install -y \
 git \
@@ -27,12 +27,12 @@ build-essential \
 libgl1-mesa-dev \
 libglu1-mesa-dev
 
-RUN git clone https://github.com/MITSustainableDesignLab/Daysim.git
+RUN git clone https://github.com/MITSustainableDesignLab/Daysim.git /Daysim 
 
 # only build required binaries
 RUN mkdir build \
 && cd build \
-&& cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_HEADLESS=ON -DOpenGL_GL_PREFERENCE=GLVND ../Daysim \
+&& cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_HEADLESS=ON -DOpenGL_GL_PREFERENCE=GLVND /Daysim \
 && make ds_illum \
 && make epw2wea \
 && make gen_dc \
@@ -43,13 +43,11 @@ RUN mkdir build \
 # uncommenting line in CMakeLists to build rtrace_dc
 RUN sed -i 's/#add_definitions(-DDAYSIM)/add_definitions(-DDAYSIM)/' /Daysim/src/rt/CMakeLists.txt \
 && cd build \
-&& cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_HEADLESS=ON -DOpenGL_GL_PREFERENCE=GLVND ../Daysim \
+&& cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_HEADLESS=ON -DOpenGL_GL_PREFERENCE=GLVND /Daysim \
 && make rtrace \
 && mv ./bin/rtrace /Daysim_build/rtrace_dc
 
-# The runtime-stage image; we can use Debian as the
-# base image since the Conda env also includes Python
-# for us.
+
 FROM ubuntu:latest AS cea-runtime
 
 # For pythonOCC to work (used by py4design)
