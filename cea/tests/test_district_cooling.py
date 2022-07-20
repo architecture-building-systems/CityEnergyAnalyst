@@ -142,6 +142,7 @@ class TestDistrictCooling(unittest.TestCase):
         district_cooling_generation_dispatch, \
         district_cooling_electricity_requirements_dispatch, \
         district_cooling_fuel_requirements_dispatch, \
+        district_cooling_heat_release, \
         district_cooling_capacity_installed = cooling_main.district_cooling_network(self.locator,
                                                                                     self.config,
                                                                                     self.slave_variables,
@@ -154,6 +155,7 @@ class TestDistrictCooling(unittest.TestCase):
             {k: v.sum() for k, v in district_cooling_electricity_requirements_dispatch.items()}
         district_cooling_fuel_requirements_dispatch = \
             {k: v.sum() for k, v in district_cooling_fuel_requirements_dispatch.items()}
+        district_cooling_heat_release = {k: v.sum() for k, v in district_cooling_heat_release.items()}
 
         # fetch stored data for comparison
         expected_district_cooling_fixed_costs = \
@@ -164,6 +166,8 @@ class TestDistrictCooling(unittest.TestCase):
             json.loads(self.test_config.get("output_expected", "expected_district_cooling_electricity_requirements_dispatch"))
         expected_district_cooling_fuel_requirements_dispatch = \
             json.loads(self.test_config.get("output_expected", "expected_district_cooling_fuel_requirements_dispatch"))
+        expected_district_cooling_heat_release = \
+            json.loads(self.test_config.get("output_expected", "expected_district_cooling_heat_release"))
         expected_district_cooling_capacity_installed = \
             json.loads(self.test_config.get("output_expected", "expected_district_cooling_capacity_installed"))
 
@@ -172,12 +176,14 @@ class TestDistrictCooling(unittest.TestCase):
                                    district_cooling_generation_dispatch,
                                    district_cooling_electricity_requirements_dispatch,
                                    district_cooling_fuel_requirements_dispatch,
+                                   district_cooling_heat_release,
                                    district_cooling_capacity_installed]
 
         expected_value_dictionaries = [expected_district_cooling_fixed_costs,
                                        expected_district_cooling_generation_dispatch,
                                        expected_district_cooling_electricity_requirements_dispatch,
                                        expected_district_cooling_fuel_requirements_dispatch,
+                                       expected_district_cooling_heat_release,
                                        expected_district_cooling_capacity_installed]
 
         for test_value_dict, expected_value_dict in zip(test_value_dictionaries, expected_value_dictionaries):
