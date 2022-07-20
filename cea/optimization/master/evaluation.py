@@ -156,11 +156,6 @@ def evaluation_main(individual,
         district_cooling_generation_dispatch,
         district_cooling_electricity_requirements_dispatch)
 
-    # FUELS CONSUMPTION CALCULATION FOR MINOR SYSTEMS (e.g. heating when DC is installed)
-    district_natural_gas_demand = electricity_main.extract_fuels_demand_buildings(master_to_slave_vars,
-                                                                                  building_names_all,
-                                                                                  locator)
-
     # CALCULATE COSTS AND EMISSIONS
     print("DISTRICT ENERGY SYSTEM - COSTS, PRIMARY ENERGY AND EMISSIONS OF CONNECTED BUILDINGS")
     buildings_district_scale_costs, \
