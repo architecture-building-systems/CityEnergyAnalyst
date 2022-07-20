@@ -36,7 +36,7 @@ def cooling_resource_activator(Q_thermal_req,
                                master_to_slave_variables):
     """
     This function checks which cooling technologies need to be activated to meet the energy demand for a given hour.
-    The technology activation chain set to be the following:
+    The technology activation chain is set to be the following:
         1. Trigeneration plant (combined cycle gas turbine [heat + electricity] & absorption chiller [cooling])
         2. Base vapour compression chiller water source or free cooling using water body
         3. Peak vapour compression chiller water source or free cooling using water body

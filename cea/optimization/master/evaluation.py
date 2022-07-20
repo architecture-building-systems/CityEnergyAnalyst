@@ -4,7 +4,7 @@ Evaluation function of an individual
 """
 
 import cea.inputlocator
-from cea.optimization.master import cost_model
+from cea.optimization.master import objective_function_calculator
 from cea.optimization.master import master_to_slave as master
 from cea.optimization.master.generation import individual_to_barcode
 from cea.optimization.master.performance_aggregation import summarize_results_individual
@@ -39,7 +39,7 @@ def evaluation_main(individual,
                     technologies_cooling_allowed
                     ):
     """
-    This function evaluates an individual
+    This function evaluates an individual in terms of all possible objective functions.
 
     :param individual: Input individual
     :param building_names_all: names of buildings in the analysed district
@@ -166,7 +166,7 @@ def evaluation_main(individual,
     buildings_district_scale_costs, \
     buildings_district_scale_emissions, \
     buildings_district_scale_heat, \
-    buildings_district_scale_sed = cost_model.buildings_district_scale_objective_functions(
+    buildings_district_scale_sed = objective_function_calculator.buildings_district_scale_objective_functions(
         district_heating_fixed_costs,
         district_cooling_fixed_costs,
         district_electricity_fixed_costs,
@@ -183,7 +183,7 @@ def evaluation_main(individual,
     buildings_building_scale_heat, \
     buildings_building_scale_sed, \
     buildings_building_scale_heating_capacities, \
-    buildings_building_scale_cooling_capacities = cost_model.buildings_building_scale_objective_functions(
+    buildings_building_scale_cooling_capacities = objective_function_calculator.buildings_building_scale_objective_functions(
         building_names_heating,
         building_names_cooling,
         locator,

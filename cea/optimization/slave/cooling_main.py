@@ -10,7 +10,7 @@ import pandas as pd
 
 from cea.constants import HOURS_IN_YEAR
 from cea.optimization.constants import VCC_T_COOL_IN, ACH_T_IN_FROM_CHP_K
-from cea.optimization.master import cost_model
+from cea.optimization.master import objective_function_calculator
 from cea.optimization.slave.cooling_resource_activation import calc_vcc_CT_operation, cooling_resource_activator
 from cea.technologies.storage_tank_pcm import Storage_tank_PCM
 from cea.technologies.chiller_vapor_compression import VaporCompressionChiller
@@ -39,6 +39,7 @@ def district_cooling_network(locator,
      - hourly cooling energy supply
      - hourly electricity generation (from trigen) and demand (for VCCs)
      - hourly combustion fuel demand (for trigen)
+     - hourly heat release of the cooling generation
      - installed capacity of each cooling technology
 
     :param locator: paths to cea input files and results folders
@@ -237,22 +238,24 @@ def district_cooling_network(locator,
         mdotnMax_kgpers = np.amax(mdot_kgpers)
         performance_costs_generation, \
         district_cooling_capacity_installed \
-            = cost_model.calc_generation_costs_capacity_installed_cooling(locator,
-                                                                          master_to_slave_variables,
-                                                                          supply_systems,
-                                                                          mdotnMax_kgpers
-                                                                          )
+            = objective_function_calculator.calc_generation_costs_capacity_installed_cooling(locator,
+                                                                                             master_to_slave_variables,
+                                                                                             supply_systems,
+                                                                                             mdotnMax_kgpers
+                                                                                             )
         # CAPEX (ANNUAL, TOTAL) AND OPEX (FIXED, VAR, ANNUAL) STORAGE UNITS
-        performance_costs_storage = cost_model.calc_generation_costs_cooling_storage(master_to_slave_variables,
-                                                                                     daily_storage
-                                                                                     )
+        performance_costs_storage = \
+            objective_function_calculator.calc_generation_costs_cooling_storage(master_to_slave_variables,
+                                                                                daily_storage
+                                                                                )
 
         # CAPEX (ANNUAL, TOTAL) AND OPEX (FIXED, VAR, ANNUAL) NETWORK
         performance_costs_network, \
-        E_used_district_cooling_network_W = cost_model.calc_network_costs_cooling(locator,
-                                                                                  master_to_slave_variables,
-                                                                                  network_features,
-                                                                                  "DC")
+        E_used_district_cooling_network_W = \
+            objective_function_calculator.calc_network_costs_cooling(locator,
+                                                                     master_to_slave_variables,
+                                                                     network_features,
+                                                                     "DC")
 
         # MERGE COSTS AND EMISSIONS IN ONE FILE
         performance = dict(performance_costs_generation, **performance_costs_storage)

@@ -69,8 +69,9 @@ def objective_function(individual,
                        column_names,
                        print_final_results=False):
     """
-    Objective function is used to calculate the costs, CO2, primary energy and the variables corresponding to the
-    individual
+    Objective function is used to calculate and return the costs, CO2, system energy demand and heat release and
+    simultaneously store all other variables corresponding to the individual.
+
     :param individual: Input individual
     :param individual_number: unique identifier of the individual in that generation
     :param generation_number: unique identifier of the generation in this optimization run
@@ -117,7 +118,7 @@ def objective_function(individual,
     :type column_names: list of str
     :type print_final_results: bool
 
-    :return: returns costs, CO2, primary energy and the master_to_slave_vars
+    :return dict objective_function_results
     """
     print('cea optimization progress: individual ' + str(individual_number) + ' and generation ' + str(
         generation_number) + '/' + str(config.optimization.number_of_generations))
