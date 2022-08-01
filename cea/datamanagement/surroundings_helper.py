@@ -39,6 +39,19 @@ def calc_surrounding_area(zone_gdf, buffer_m):
     return surrounding_area
 
 
+def crs_matching(locator):
+    # generate GeoDataFrames from files
+    zone_gdf = gdf.from_file(locator.get_zone_geometry())
+    surroundings_gdf = gdf.from_file(locator.get_surroundings_geometry())
+    # check if the coordinate reference systems (crs) of the zone and its surroundings match
+    if zone_gdf.crs != surroundings_gdf.crs:
+        # if they don't match project the surroundings onto the zone's crs...
+        surroundings_gdf.crs = zone_gdf.crs
+        # and save the projected gdf to the surroundings shapefile
+        surroundings_gdf.to_file(locator.get_surroundings_geometry())
+    return zone_gdf, surroundings_gdf
+
+
 def clean_attributes(shapefile, buildings_height, buildings_floors, key):
     # local variables
     no_buildings = shapefile.shape[0]
