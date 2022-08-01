@@ -388,8 +388,10 @@ def polygon_to_zone(buildings_floors, buildings_floors_below_ground, buildings_h
         print("Fixing overlapping geometries.")
         cleaned_shapefile['geometry'], shapefile = fix_overlapping_geoms(shapefile, poly)
 
-        # Clean up geometries that are no longer in use (i.e. buildings that have empty geometry)
+        # Clean up geometries that are no longer in use (i.e. buildings that have empty geometry) and split up
+        #  multipolygons that might have been created due to one building cutting another one into pieces.
         cleaned_shapefile = cleaned_shapefile[~cleaned_shapefile.geometry.is_empty]
+        cleaned_shapefile = cleaned_shapefile.explode()
         cleaned_shapefile = cleaned_shapefile.reset_index(drop=True)
         cleaned_shapefile["Name"] = ["B" + str(x + 1000) for x in range(cleaned_shapefile.shape[0])]
 
