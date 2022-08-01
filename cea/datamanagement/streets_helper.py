@@ -25,10 +25,11 @@ __status__ = "Production"
 def calc_bounding_box(shapefile_surroundings, shapefile_zone):
     # connect both files and avoid repetition
     data_zone = Gdf.from_file(shapefile_zone)
+    data_zone = data_zone.to_crs(get_geographic_coordinate_system())
     data_dis = Gdf.from_file(shapefile_surroundings)
     data_dis = data_dis.loc[~data_dis["Name"].isin(data_zone["Name"])]
-    data = data_dis.append(data_zone, ignore_index=True, sort=True)
-    data = data.to_crs(get_geographic_coordinate_system())
+    data_dis = data_dis.to_crs(get_geographic_coordinate_system())
+    data = data_zone.append(data_dis, ignore_index=True, sort=True)
     result = data.total_bounds  # in float
     return result
 
