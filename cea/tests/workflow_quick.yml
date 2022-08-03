@@ -1,5 +1,6 @@
-- config: .
-  "general:multiprocessing": on
+- config: default
+  "general:multiprocessing": False
+  "general:project": "${CEA_general_project}/../reference-case-open"
   "radiation:daysim-bin-directory": "${CEA_radiation_daysim-bin-directory}"
 - script: run-unit-tests
 - script: extract-reference-case
