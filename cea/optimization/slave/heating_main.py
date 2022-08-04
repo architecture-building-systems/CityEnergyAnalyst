@@ -198,8 +198,7 @@ def district_heating_network(locator,
                                                                                            )
 
         # CAPEX (ANNUAL, TOTAL) AND OPEX (FIXED, VAR) SEASONAL STORAGE
-        performance_costs_storage = objective_function_calculator.calc_seasonal_storage_costs(config,
-                                                                                              locator,
+        performance_costs_storage = objective_function_calculator.calc_seasonal_storage_costs(locator,
                                                                                               storage_dispatch)
 
         # CAPEX (ANNUAL, TOTAL) AND OPEX (FIXED, VAR) NETWORK
