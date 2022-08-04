@@ -174,8 +174,8 @@ def internal_loads_is_3_22(scenario):
 def output_occupancy_is_3_22(scenario):
     if os.path.isdir(os.path.join(scenario, 'outputs', 'data', 'occupancy')) and any(
             ['people_pax' in pd.read_csv(os.path.join(scenario, 'outputs', 'data', 'occupancy', i)).columns
-             and '_original' not in i for i in
-             os.listdir(os.path.join(scenario, 'outputs', 'data', 'occupancy'))]):
+             for i in os.listdir(os.path.join(scenario, 'outputs', 'data', 'occupancy'))
+             if os.path.splitext(i)[1] == '.csv']):
         return True
     else:
         return False
