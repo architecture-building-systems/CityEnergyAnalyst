@@ -39,15 +39,19 @@ def calc_surrounding_area(zone_gdf, buffer_m):
     return surrounding_area
 
 
-def get_zone_and_surr_in_geographic_crs(locator):
+def get_zone_and_surr_in_projected_crs(locator):
     # generate GeoDataFrames from files
     zone_gdf = gdf.from_file(locator.get_zone_geometry())
     surroundings_gdf = gdf.from_file(locator.get_surroundings_geometry())
+    # get longitude and latitude of zone centroid
+    zone_gdf_in_geographic_crs = zone_gdf.to_crs(get_geographic_coordinate_system())
+    lon = zone_gdf_in_geographic_crs.geometry[0].centroid.coords.xy[0][0]
+    lat = zone_gdf_in_geographic_crs.geometry[0].centroid.coords.xy[1][0]
     # check if the coordinate reference systems (crs) of the zone and its surroundings match
-    if zone_gdf.crs != surroundings_gdf.crs or zone_gdf.crs != get_geographic_coordinate_system():
+    if zone_gdf.crs != surroundings_gdf.crs or zone_gdf.crs != get_projected_coordinate_system(lat=lat, lon=lon):
         # if they don't match project the zone and its surroundings to the global crs...
-        zone_gdf = zone_gdf.to_crs(get_geographic_coordinate_system())
-        surroundings_gdf = surroundings_gdf.to_crs(get_geographic_coordinate_system())
+        zone_gdf = zone_gdf.to_crs(get_projected_coordinate_system(lat=lat, lon=lon))
+        surroundings_gdf = surroundings_gdf.to_crs(get_projected_coordinate_system(lat=lat, lon=lon))
         # and save the projected GDFs to their corresponding shapefiles
         zone_gdf.to_file(locator.get_zone_geometry())
         surroundings_gdf.to_file(locator.get_surroundings_geometry())
