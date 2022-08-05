@@ -54,7 +54,6 @@ def parse_building_floors(floors):
         return parsed_floors
 
 
-
 def clean_attributes(shapefile, buildings_height, buildings_floors, buildings_height_below_ground,
                      buildings_floors_below_ground, key):
     # local variables
