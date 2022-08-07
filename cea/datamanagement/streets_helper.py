@@ -10,7 +10,7 @@ from geopandas import GeoDataFrame as Gdf
 
 import cea.config
 import cea.inputlocator
-from cea.datamanagement.surroundings_helper import get_zone_and_surr_in_geographic_crs
+from cea.datamanagement.surroundings_helper import get_zone_and_surr_in_projected_crs
 from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_geographic_coordinate_system
 
 __author__ = "Jimeno Fonseca"
@@ -25,7 +25,7 @@ __status__ = "Production"
 
 def calc_bounding_box(locator):
     # connect both files and avoid repetition
-    data_zone, data_dis = get_zone_and_surr_in_geographic_crs(locator)
+    data_zone, data_dis = get_zone_and_surr_in_projected_crs(locator)
     data_dis = data_dis.loc[~data_dis["Name"].isin(data_zone["Name"])]
     data = data_zone.append(data_dis, ignore_index=True, sort=True)
     data = data.to_crs(get_geographic_coordinate_system())
