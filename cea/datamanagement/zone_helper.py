@@ -91,8 +91,7 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, buildings_he
         shapefile["floors_ag"] = [int(x) if not np.isnan(x) else data_osm_floors_joined for x in
                                   data_floors_sum_with_nan]
         if 'height' in list_of_columns:
-            shapefile["height_ag"] = shapefile['height'].fillna('0')
-            shapefile["height_ag"] = shapefile["height_ag"].where(shapefile["height_ag"]==0,shapefile["floors_ag"] * constants.H_F)
+            shapefile["height_ag"] = shapefile['height'].fillna(shapefile["floors_ag"] * constants.H_F)
         else:
             shapefile["height_ag"] = shapefile["floors_ag"] * constants.H_F
     else:
