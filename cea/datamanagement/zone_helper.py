@@ -10,13 +10,15 @@ from typing import Union
 import numpy as np
 import osmnx.footprints
 from geopandas import GeoDataFrame as Gdf
+from geopandas.tools import overlay
+from shapely.geometry import Polygon
 import pandas as pd
 
 import cea.config
 import cea.inputlocator
 from cea.datamanagement.databases_verification import COLUMNS_ZONE_TYPOLOGY
 from cea.demand import constants
-from cea.datamanagement.constants import OSM_BUILDING_CATEGORIES, OTHER_OSM_CATEGORIES_UNCONDITIONED
+from cea.datamanagement.constants import OSM_BUILDING_CATEGORIES, OTHER_OSM_CATEGORIES_UNCONDITIONED, GRID_SIZE_M, EARTH_RADIUS_M
 from cea.utilities.dbf import dataframe_to_dbf
 from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_geographic_coordinate_system
 
@@ -82,7 +84,7 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, buildings_he
         data_osm_floors1 = shapefile['building:levels'].fillna(0)
         data_osm_floors2 = shapefile['roof:levels'].fillna(0)
         data_floors_sum = [x + y for x, y in zip([parse_building_floors(x) for x in data_osm_floors1],
-                                                 [parse_building_floors(x) for x in data_osm_floors2])]
+                                                 [parse_building_floors(y) for y in data_osm_floors2])]
         data_floors_sum_with_nan = [np.nan if x < 1.0 else x for x in data_floors_sum]
         data_osm_floors_joined = math.ceil(
             np.nanmedian(data_floors_sum_with_nan))  # median so we get close to the worse case
@@ -137,6 +139,95 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, buildings_he
     return cleaned_shapefile, shapefile
 
 
+def fix_overlapping_geoms(buildings, zone):
+    """
+    This function eliminates overlapping geometries. To decide which portions of two overlapping geometries to
+    eliminate, the functions abides by the following rules:
+        1. If two buildings' footprints overlap, check if they also overlap vertically, i.e. height of ground surface
+            of building A < height of roof of building B (this is only really relevant for buildings that have
+            'floating' elements, e.g. Marina Bay Sands 'boat').
+        2. If they also overlap vertically, cut the overlapping portion of the taller building's footprint out of the
+            lower building's footprint-polygon.
+
+    As a preprocessing step the OSM-information on "min_heights" and "min_levels" gets assigned to the building's
+    height and levels below ground (introduced in the zone-helper.clean_attributes() function) as negative values.
+    """
+    # PREPROCESSING OF BUILDING ATTRIBUTES
+    # get relevant components from buildings attribute table and the zone's geometry
+    list_of_attributes = buildings.columns.values
+    geometries = buildings.geometry
+
+    # Correct levels below ground if a minimum floor level or height is indicated
+    if 'building:min_level' in list_of_attributes:
+        has_min_floor = buildings["building:min_level"] == buildings["building:min_level"]
+        buildings[has_min_floor].floors_bg = [- int(x) for x in buildings[has_min_floor]["building:min_level"]]
+        buildings[has_min_floor].height_bg = buildings[has_min_floor].floors_bg * constants.H_F
+    if 'min_height' in list_of_attributes:
+        has_min_height = buildings["min_height"] == buildings["min_height"]
+        buildings[has_min_height].height_bg = [- int(x) for x in buildings[has_min_height]["min_height"]]
+
+    # CREATE GRID TO PARTITION THE BUILDINGS (more efficient - hopefully)
+    # calculate grid-parameters based on the zone polygon dimensions
+    [[west_bound_long, south_bound_lat, east_bound_long, north_bound_lat]] = zone.bounds.to_numpy()
+    [(centroid_long, centroid_lat)] = zone.centroid.get(0).coords[:]
+    grid_size_long = 180 * GRID_SIZE_M / (np.pi * EARTH_RADIUS_M * np.cos(centroid_lat * np.pi / 180))
+    grid_size_lat = 180 * GRID_SIZE_M / (np.pi * EARTH_RADIUS_M)
+    n_grid_cells_long = math.ceil((east_bound_long - west_bound_long) / grid_size_long)
+    n_grid_cells_lat = math.ceil((north_bound_lat - south_bound_lat) / grid_size_lat)
+    grid_cells = []
+
+    # create 500m * 500m grid
+    for i in range(n_grid_cells_lat):
+        for j in range(n_grid_cells_long):
+            dx_0 = j * grid_size_long
+            dx_1 = (j + 1) * grid_size_long
+            dy_0 = i * grid_size_lat
+            dy_1 = (i+1) * grid_size_lat
+            cell_vertices = [(west_bound_long + dx_0, north_bound_lat - dy_0),
+                             (west_bound_long + dx_1, north_bound_lat - dy_0),
+                             (west_bound_long + dx_1, north_bound_lat - dy_1),
+                             (west_bound_long + dx_0, north_bound_lat - dy_1),
+                             (west_bound_long + dx_0, north_bound_lat - dy_0)]
+            grid_cells.append(Polygon(cell_vertices))
+    grid = Gdf(geometry=grid_cells, crs="EPSG:4326")
+
+    # FIX OVERLAYS IN THE BUILDING GEOMETRIES
+    # overlay the grid with the zone polygon, retaining the overlapping grid cells, and ...
+    grid = zone.overlay(grid, how="intersection")
+
+    # iterate through the grid cells, overlaying them with the buildings, retaining the buildings
+    for cell_index in range(grid.geometry.size):
+        cell = Gdf(geometry=[grid.geometry[cell_index]], crs="EPSG:4326")
+        is_intersecting = geometries.intersects(cell.geometry[0])
+        buildings_in_cell = buildings[is_intersecting]
+
+        # check each building for intersections with other buildings - if intersection is found:
+        for building_index in buildings_in_cell.index:
+            is_overlapping = buildings_in_cell.geometry.intersects(buildings_in_cell.geometry[building_index])
+            overlapping_buildings = buildings_in_cell[is_overlapping]
+
+            # cut out the higher building's footprint-polygon out the lower buildings footprint-polygon
+            for ovrlp_bldg_index in overlapping_buildings.index:
+                if ovrlp_bldg_index == building_index:
+                    pass  # same building -> doesn't count as overlap
+                elif buildings.height_ag[ovrlp_bldg_index] <= -buildings.height_bg[building_index] or \
+                   buildings.height_ag[building_index] <= -buildings.height_bg[ovrlp_bldg_index]:
+                    pass  # no vertical overlap
+                elif (buildings.height_ag[building_index] + buildings.height_bg[building_index]) <= \
+                        (buildings.height_ag[ovrlp_bldg_index] + buildings.height_bg[ovrlp_bldg_index]):
+                    buildings.geometry[building_index] = \
+                        buildings.geometry[building_index].difference(buildings.geometry[ovrlp_bldg_index])
+                elif (buildings.height_ag[building_index] + buildings.height_bg[building_index]) > \
+                        (buildings.height_ag[ovrlp_bldg_index] + buildings.height_bg[ovrlp_bldg_index]):
+                    buildings.geometry[ovrlp_bldg_index] = \
+                        buildings.geometry[ovrlp_bldg_index].difference(buildings.geometry[building_index])
+
+    # CALCULATE OUTPUT VARIABLES
+    fixed_geometries = buildings.geometry
+
+    return fixed_geometries, buildings
+
+
 def zone_helper(locator, config):
     """
     This script gets a polygon and calculates the zone.shp and the occupancy.dbf and age.dbf inputs files for CEA
@@ -152,6 +243,7 @@ def zone_helper(locator, config):
     buildings_floors_below_ground = config.zone_helper.floors_bg
     occupancy_type = config.zone_helper.occupancy_type
     year_construction = config.zone_helper.year_construction
+    fix_overlapping = config.zone_helper.fix_overlapping_geometries
     zone_output_path = locator.get_zone_geometry()
     typology_output_path = locator.get_building_typology()
 
@@ -162,6 +254,7 @@ def zone_helper(locator, config):
     # get zone.shp file and save in folder location
     zone_df = polygon_to_zone(buildings_floors, buildings_floors_below_ground, buildings_height,
                               buildings_height_below_ground,
+                              fix_overlapping,
                               poly, zone_output_path)
 
     # USE_A zone.shp file contents to get the contents of occupancy.dbf and age.dbf
@@ -279,20 +372,32 @@ def calculate_age(zone_df, year_construction):
 
 
 def polygon_to_zone(buildings_floors, buildings_floors_below_ground, buildings_height, buildings_height_below_ground,
-                    poly, zone_out_path):
+                    fix_overlapping, poly, zone_out_path):
     poly = poly.to_crs(get_geographic_coordinate_system())
     lon = poly.geometry[0].centroid.coords.xy[0][0]
     lat = poly.geometry[0].centroid.coords.xy[1][0]
     # get footprints of all the district
-    poly = osmnx.footprints.footprints_from_polygon(polygon=poly['geometry'].values[0])
+    shapefile = osmnx.footprints.footprints_from_polygon(polygon=poly['geometry'].values[0])
 
     # clean geometries
-    poly = clean_geometries(poly)
+    shapefile = clean_geometries(shapefile)
 
     # clean attributes of height, name and number of floors
-    cleaned_shapefile, shapefile = clean_attributes(poly, buildings_height, buildings_floors,
+    cleaned_shapefile, shapefile = clean_attributes(shapefile, buildings_height, buildings_floors,
                                                     buildings_height_below_ground,
                                                     buildings_floors_below_ground, key="B")
+    # fix geometries of buildings with overlapping polygons
+    if fix_overlapping is True:
+        print("Fixing overlapping geometries.")
+        cleaned_shapefile['geometry'], shapefile = fix_overlapping_geoms(shapefile, poly)
+
+        # Clean up geometries that are no longer in use (i.e. buildings that have empty geometry) and split up
+        #  multipolygons that might have been created due to one building cutting another one into pieces.
+        cleaned_shapefile = cleaned_shapefile[~cleaned_shapefile.geometry.is_empty]
+        cleaned_shapefile = cleaned_shapefile.explode()
+        cleaned_shapefile = cleaned_shapefile.reset_index(drop=True)
+        cleaned_shapefile["Name"] = ["B" + str(x + 1000) for x in range(cleaned_shapefile.shape[0])]
+
     cleaned_shapefile = cleaned_shapefile.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
     # save shapefile to zone.shp
     cleaned_shapefile.to_file(zone_out_path)
