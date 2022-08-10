@@ -90,8 +90,9 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, buildings_he
             np.nanmedian(data_floors_sum_with_nan))  # median so we get close to the worse case
         shapefile["floors_ag"] = [int(x) if not np.isnan(x) else data_osm_floors_joined for x in
                                   data_floors_sum_with_nan]
+        print(shapefile.info())
         if 'height' in list_of_columns:
-            shapefile["height_ag"] = shapefile['height'].fillna(shapefile["floors_ag"] * constants.H_F)
+            shapefile["height_ag"] = shapefile["height"].fillna(shapefile["floors_ag"] * constants.H_F).astype(float)
         else:
             shapefile["height_ag"] = shapefile["floors_ag"] * constants.H_F
     else:
