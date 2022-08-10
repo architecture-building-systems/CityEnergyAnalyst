@@ -96,3 +96,7 @@ OTHER_OSM_CATEGORIES_UNCONDITIONED = ['warehouse', 'roof', 'transportation', 'tr
                                  'transformer_tower', 'water_tower', 'bridge', 'bus_station', 'ferry_terminal', 'fuel',
                                  'shelter']
     # other unheated use types that don't have a specific CEA use type will be assigned as 'PARKING'
+
+# parameters for grid division used to accelerate OSM operations
+GRID_SIZE_M = 500  # meters
+EARTH_RADIUS_M = 6.3781e6  # meters
