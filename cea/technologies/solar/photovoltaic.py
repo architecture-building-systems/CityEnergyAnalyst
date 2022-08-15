@@ -72,10 +72,7 @@ def calc_PV(locator, config, latitude, longitude, weather_data, datetime_local, 
     print('filtering low potential sensor points done')
 
     # set the maximum roof coverage
-    if config.solar.custom_roof_coverage:
-        max_roof_coverage = config.solar.max_roof_coverage
-    else:
-        max_roof_coverage = 1.0
+    max_roof_coverage = config.solar.max_roof_coverage
 
     if not sensors_metadata_clean.empty:
         if not config.solar.custom_tilt_angle:
@@ -802,11 +799,7 @@ def main(config):
               (config.solar.custom_tilt_angle, config.solar.panel_tilt_angle))
     else:
         print('Running photovoltaic with custom-tilt-angle = %s' % config.solar.custom_tilt_angle)
-    if config.solar.custom_roof_coverage:
-        print('Running photovoltaic with custom-roof-coverage = %s and max-roof-coverage = %s' %
-              (config.solar.custom_roof_coverage, config.solar.max_roof_coverage))
-    else:
-        print('Running photovoltaic with custom-roof-coverage = %s' % config.solar.custom_roof_coverage)
+    print('Running photovoltaic with maximum roof-coverage = %s' % config.solar.max_roof_coverage)
 
     building_names = locator.get_zone_building_names()
     zone_geometry_df = gdf.from_file(locator.get_zone_geometry())

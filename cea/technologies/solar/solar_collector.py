@@ -83,10 +83,7 @@ def calc_SC(locator, config, latitude, longitude, weather_data, date_local, buil
     tot_bui_height_m = gpd.read_file(locator.get_zone_geometry())['height_ag'].sum()
 
     # set the maximum roof coverage
-    if config.solar.custom_roof_coverage:
-        max_roof_coverage = config.solar.max_roof_coverage
-    else:
-        max_roof_coverage = 1.0
+    max_roof_coverage = config.solar.max_roof_coverage
 
     if not sensors_metadata_clean.empty:
         if not config.solar.custom_tilt_angle:
@@ -985,11 +982,7 @@ def main(config):
               (config.solar.custom_tilt_angle, config.solar.panel_tilt_angle))
     else:
         print('Running photovoltaic with custom-tilt-angle = %s' % config.solar.custom_tilt_angle)
-    if config.solar.custom_roof_coverage:
-        print('Running photovoltaic with custom-roof-coverage = %s and max-roof-coverage = %s' %
-              (config.solar.custom_roof_coverage, config.solar.max_roof_coverage))
-    else:
-        print('Running photovoltaic with custom-roof-coverage = %s' % config.solar.custom_roof_coverage)
+    print('Running photovoltaic with maximum roof-coverage = %s' % config.solar.max_roof_coverage)
 
     building_names = config.solar.buildings
 
