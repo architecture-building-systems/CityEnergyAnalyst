@@ -155,10 +155,12 @@ def fix_overlapping_geoms(buildings, zone):
 
     # Correct levels below ground if a minimum floor level or height is indicated
     if 'building:min_level' in list_of_attributes:
+        buildings["building:min_level"] = buildings["building:min_level"].astype(float)
         has_min_floor = buildings["building:min_level"] == buildings["building:min_level"]
         buildings[has_min_floor].floors_bg = [- int(x) for x in buildings[has_min_floor]["building:min_level"]]
         buildings[has_min_floor].height_bg = buildings[has_min_floor].floors_bg * constants.H_F
     if 'min_height' in list_of_attributes:
+        buildings["min_height"] = buildings["min_height"].astype(float)
         has_min_height = buildings["min_height"] == buildings["min_height"]
         buildings[has_min_height].height_bg = [- int(x) for x in buildings[has_min_height]["min_height"]]
 
@@ -373,10 +375,10 @@ def polygon_to_zone(buildings_floors, buildings_floors_below_ground, buildings_h
     lon = poly.geometry[0].centroid.coords.xy[0][0]
     lat = poly.geometry[0].centroid.coords.xy[1][0]
     # get all footprints in the district tagged as 'building' or 'building:part' in OSM
-    shapefile = osmnx.footprints.footprints_from_polygon(polygon=poly['geometry'].values[0], footprint_type='building')\
-        .append(osmnx.footprints.footprints_from_polygon(polygon=poly['geometry'].values[0],
-                                                         footprint_type='building:part'))
-    shapefile.index = range(len(shapefile.index))
+    shapefile = pd.concat(
+        [osmnx.footprints.footprints_from_polygon(polygon=poly['geometry'].values[0], footprint_type='building'),
+         osmnx.footprints.footprints_from_polygon(polygon=poly['geometry'].values[0], footprint_type='building:part')],
+        ignore_index=True)
 
     # clean geometries
     shapefile = clean_geometries(shapefile)
