@@ -372,11 +372,10 @@ def polygon_to_zone(buildings_floors, buildings_floors_below_ground, buildings_h
     poly = poly.to_crs(get_geographic_coordinate_system())
     lon = poly.geometry[0].centroid.coords.xy[0][0]
     lat = poly.geometry[0].centroid.coords.xy[1][0]
-    # get both footprints in the district tagged as 'building' in OSM
-    shapefile = osmnx.footprints.footprints_from_polygon(polygon=poly['geometry'].values[0], footprint_type='building')
-    # get both footprints in the district tagged as 'building:part' in OSM
-    shapefile.append(osmnx.footprints.footprints_from_polygon(polygon=poly['geometry'].values[0],
-                                                              footprint_type='building:part'), inplace=True)
+    # get all footprints in the district tagged as 'building' or 'building:part' in OSM
+    shapefile = osmnx.footprints.footprints_from_polygon(polygon=poly['geometry'].values[0], footprint_type='building')\
+        .append(osmnx.footprints.footprints_from_polygon(polygon=poly['geometry'].values[0],
+                                                         footprint_type='building:part'))
     shapefile.index = range(len(shapefile.index))
 
     # clean geometries
