@@ -155,10 +155,12 @@ def fix_overlapping_geoms(buildings, zone):
 
     # Correct levels below ground if a minimum floor level or height is indicated
     if 'building:min_level' in list_of_attributes:
+        buildings["building:min_level"] = buildings["building:min_level"].astype(float)
         has_min_floor = buildings["building:min_level"] == buildings["building:min_level"]
         buildings[has_min_floor].floors_bg = [- int(x) for x in buildings[has_min_floor]["building:min_level"]]
         buildings[has_min_floor].height_bg = buildings[has_min_floor].floors_bg * constants.H_F
     if 'min_height' in list_of_attributes:
+        buildings["min_height"] = buildings["min_height"].astype(float)
         has_min_height = buildings["min_height"] == buildings["min_height"]
         buildings[has_min_height].height_bg = [- int(x) for x in buildings[has_min_height]["min_height"]]
 
