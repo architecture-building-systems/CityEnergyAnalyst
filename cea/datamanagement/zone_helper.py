@@ -100,6 +100,9 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, buildings_he
             #  Replaces 'nan' values with CEA assumption
             shapefile["height_ag"] = shapefile["height"].fillna(shapefile["floors_ag"] * constants.H_F).astype(float)
             #  Replaces values of height = 0 with CEA assumption
+            # TODO: Check whether buildings with height between 0 and 1 meter are actually mostly underground
+            #  The radiation script cannot process buildings with height 0m (underground buildings) those at the moment.
+            #  Once the radiation script can process underground buildings, this step might need to be revised.
             shapefile["height_ag"] = shapefile["height_ag"].where(shapefile["height_ag"] != 0,
                                                                   shapefile["floors_ag"] * constants.H_F).astype(float)
 
