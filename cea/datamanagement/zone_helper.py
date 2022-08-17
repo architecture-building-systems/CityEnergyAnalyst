@@ -410,33 +410,37 @@ def clean_geometries(gdf):
     :param gdf: GeoPandas DataFrame containing geometries
     :return:
     """
-    def flatten_geometries(geometry):
+    def flatten_geometries(gdf):
         """
         Flatten polygon collections into a single polygon by using their union
         :param geometry: Type of Shapely geometry
         :return:
         """
         from shapely.ops import unary_union
+        import string
         DISCARDED_GEOMETRY_TYPES = ['Point', 'LineString']
-        # convert 'GeometryCollection' geometries into polygons
-        if geometry.type == 'GeometryCollection':
-            geometry = unary_union([x for x in geometry.explode() if x.type not in ['Point', 'LineString']])
 
-        if geometry.type == 'Polygon':  # ignore Polygons
-            return geometry
-        elif geometry.type in DISCARDED_GEOMETRY_TYPES:
-            print(f'Discarding geometry of type: {geometry.type}')
-            return None # discard geometry if it is a Point or LineString
-        else:
-            joined = unary_union(list(geometry))
-            if joined.type == 'MultiPolygon':  # some Multipolygons could not be combined
-                return joined[0]  # just return first polygon # TODO: return each polygon as a line in the shapefile
-            elif joined.type != 'Polygon':  # discard geometry if it is still not a Polygon
-                print(f'Discarding geometry of type: {joined.type}')
-                return None
+        # Explode MultiPolygon and GeometryCollection data types
+        gdf = gdf.explode()
+        # Drop geometry types that cannot be processed by CEA
+        gdf = gdf.loc[~ gdf.geometry.geom_type.isin(DISCARDED_GEOMETRY_TYPES)]
+        # Process individual geometries in MultiPolygon and GeometryCollection data types
+        for i in gdf.loc[gdf.index.get_level_values(1) == 1].index.get_level_values(0):
+            # if polygons can be joined into one Polygon, keep the joined Polygon
+            if unary_union(list(gdf.loc[gdf.index.get_level_values(0) == i].geometry)) == 'Polygon':
+                gdf.loc[gdf.index.get_level_values(0) == i].geometry = unary_union(list(
+                    gdf.loc[gdf.index.get_level_values(0) == i].geometry))
+                gdf.drop(gdf.loc[(gdf.index.get_level_values(0) == i) &
+                                 (gdf.index.get_level_values(1) == 0)], inplace=True)
             else:
-                return joined
-    gdf.geometry = gdf.geometry.map(flatten_geometries)
+                # if polygons are joined into a MultiPolygon, keep each individual Polygon as a separate building
+                n = 0
+                for j in gdf.loc[gdf.index.get_level_values(0) == i].index.get_level_values(1):
+                    gdf.loc[(i, j), 'Name'] = gdf.loc[(i, j), 'Name'] + string.ascii_letters[n]
+                    n += 1
+        return gdf.set_index('Name').reset_index()
+
+    gdf = flatten_geometries(gdf)
     gdf = gdf[gdf.geometry.notnull()]  # remove None geometries
 
     return gdf
