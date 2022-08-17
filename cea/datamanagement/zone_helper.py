@@ -394,7 +394,7 @@ def polygon_to_zone(buildings_floors, buildings_floors_below_ground, buildings_h
         cleaned_shapefile = cleaned_shapefile[~cleaned_shapefile.geometry.is_empty]
         cleaned_shapefile = cleaned_shapefile.explode()
         cleaned_shapefile = cleaned_shapefile.reset_index(drop=True)
-        cleaned_shapefile["Name"] = ["B" + str(x + 1000) for x in range(cleaned_shapefile.shape[0])]
+        cleaned_shapefile = flatten_geometries(cleaned_shapefile)
 
     cleaned_shapefile = cleaned_shapefile.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
     # save shapefile to zone.shp
@@ -410,41 +410,38 @@ def clean_geometries(gdf):
     :param gdf: GeoPandas DataFrame containing geometries
     :return:
     """
-    def flatten_geometries(gdf):
-        """
-        Flatten polygon collections into a single polygon by using their union
-        :param geometry: Type of Shapely geometry
-        :return:
-        """
-        from shapely.ops import unary_union
-        import string
-        DISCARDED_GEOMETRY_TYPES = ['Point', 'LineString']
-
-        # Explode MultiPolygon and GeometryCollection data types
-        gdf = gdf.explode()
-        # Drop geometry types that cannot be processed by CEA
-        gdf = gdf.loc[~ gdf.geometry.geom_type.isin(DISCARDED_GEOMETRY_TYPES)]
-        # Process individual geometries in MultiPolygon and GeometryCollection data types
-        for i in gdf.loc[gdf.index.get_level_values(1) == 1].index.get_level_values(0):
-            # if polygons can be joined into one Polygon, keep the joined Polygon
-            if unary_union(list(gdf.loc[gdf.index.get_level_values(0) == i].geometry)) == 'Polygon':
-                gdf.loc[gdf.index.get_level_values(0) == i].geometry = unary_union(list(
-                    gdf.loc[gdf.index.get_level_values(0) == i].geometry))
-                gdf.drop(gdf.loc[(gdf.index.get_level_values(0) == i) &
-                                 (gdf.index.get_level_values(1) == 0)], inplace=True)
-            else:
-                # if polygons are joined into a MultiPolygon, keep each individual Polygon as a separate building
-                n = 0
-                for j in gdf.loc[gdf.index.get_level_values(0) == i].index.get_level_values(1):
-                    gdf.loc[(i, j), 'Name'] = gdf.loc[(i, j), 'Name'] + string.ascii_letters[n]
-                    n += 1
-        return gdf.set_index('Name').reset_index()
-
     gdf = flatten_geometries(gdf)
     gdf = gdf[gdf.geometry.notnull()]  # remove None geometries
 
     return gdf
 
+def flatten_geometries(gdf):
+    """
+    Flatten polygon collections into a single polygon by using their union
+    :param gdf: GeoDataFrame
+    :return:
+    """
+    from shapely.ops import unary_union
+    import string
+    DISCARDED_GEOMETRY_TYPES = ['Point', 'LineString']
+
+    # Explode MultiPolygons and GeometryCollections
+    gdf = gdf.explode()
+    # Drop geometry types that cannot be processed by CEA
+    gdf = gdf.loc[~ gdf.geometry.geom_type.isin(DISCARDED_GEOMETRY_TYPES)]
+    # Process individual geometries in MultiPolygon and GeometryCollection data types
+    for i in gdf.loc[gdf.index.get_level_values(1) == 1].index.get_level_values(0):
+        # if polygons can be joined into one Polygon, keep the joined Polygon
+        if unary_union(list(gdf.loc[gdf.index.get_level_values(0) == i].geometry)) == 'Polygon':
+            gdf.loc[gdf.index.get_level_values(0) == i].geometry = unary_union(list(
+                gdf.loc[gdf.index.get_level_values(0) == i].geometry))
+            gdf.drop(gdf.loc[(gdf.index.get_level_values(0) == i) &
+                             (gdf.index.get_level_values(1) == 0)].index, inplace=True)
+        # else, polygons are joined into a MultiPolygon, keep each individual Polygon as a separate building
+    # rename buildings
+    gdf["Name"] = ["B" + str(x + 1000) for x in range(gdf.shape[0])]
+
+    return gdf
 
 def main(config):
     """
