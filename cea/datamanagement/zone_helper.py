@@ -417,15 +417,20 @@ def clean_geometries(gdf):
         :return:
         """
         from shapely.ops import unary_union
+        DISCARDED_GEOMETRY_TYPES = ['Point', 'LineString']
+        # convert 'GeometryCollection' geometries into polygons
+        if geometry.type == 'GeometryCollection':
+            geometry = unary_union([x for x in geometry.explode() if x.type not in ['Point', 'LineString']])
+
         if geometry.type == 'Polygon':  # ignore Polygons
             return geometry
-        elif geometry.type in ['Point', 'LineString']:
+        elif geometry.type in DISCARDED_GEOMETRY_TYPES:
             print(f'Discarding geometry of type: {geometry.type}')
             return None # discard geometry if it is a Point or LineString
         else:
             joined = unary_union(list(geometry))
             if joined.type == 'MultiPolygon':  # some Multipolygons could not be combined
-                return joined[0]  # just return first polygon
+                return joined[0]  # just return first polygon # TODO: return each polygon as a line in the shapefile
             elif joined.type != 'Polygon':  # discard geometry if it is still not a Polygon
                 print(f'Discarding geometry of type: {joined.type}')
                 return None
