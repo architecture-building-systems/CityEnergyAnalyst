@@ -439,6 +439,7 @@ def flatten_geometries(gdf):
                              (gdf.index.get_level_values(1) == 0)].index, inplace=True)
         # else, polygons are joined into a MultiPolygon, keep each individual Polygon as a separate building
     # rename buildings
+    gdf = gdf.reset_index().drop(['level_0', 'level_1'], axis=1)
     gdf["Name"] = ["B" + str(x + 1000) for x in range(gdf.shape[0])]
 
     return gdf
