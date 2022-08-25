@@ -36,7 +36,7 @@ dependencies:
 - psutil
 - pysal=2.1.0
 - python>=3.7
-- pythonocc-core
+- pythonocc-core=7.4.1
 - pytz
 - pvlib-python
 - scipy
