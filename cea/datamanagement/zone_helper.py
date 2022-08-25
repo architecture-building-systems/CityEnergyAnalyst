@@ -391,7 +391,7 @@ def polygon_to_zone(buildings_floors, buildings_floors_below_ground, buildings_h
 
         # Clean up geometries that are no longer in use (i.e. buildings that have empty geometry)
         cleaned_shapefile = cleaned_shapefile[~cleaned_shapefile.geometry.is_empty]
-        # Pass the Gdt back to flatten_geometries to split MultiPolygons that might have been created due to one
+        # Pass the Gdf back to flatten_geometries to split MultiPolygons that might have been created due to one
         # building cutting another one into pieces and remove any unusable geometry types (e.g., LineString)
         cleaned_shapefile = flatten_geometries(cleaned_shapefile)
         cleaned_shapefile["Name"] = ["B" + str(x + 1000) for x in range(cleaned_shapefile.shape[0])]
