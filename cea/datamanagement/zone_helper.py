@@ -62,10 +62,15 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, buildings_he
     no_buildings = shapefile.shape[0]
     list_of_columns = shapefile.columns
     if buildings_height is None and buildings_floors is None:
-        print('Warning! you have not indicated a height or number of floors above ground for the buildings, '
+        print('Warning! you have not indicated number of floors above ground for the buildings, '
               'we are reverting to data stored in Open Street Maps (It might not be accurate at all),'
               'if we do not find data in OSM for a particular building, we get the median in the surroundings, '
               'if we do not get any data we assume 4 floors per building')
+
+        print('Warning! you have not indicated height above ground for the buildings, '
+              'we are reverting to data stored in Open Street Maps (It might not be accurate at all),'
+              'if we do not find data in OSM for a particular building, we estimate it based on the number of floors,'
+              'multiplied by a pre-defined floor-to-floor height')
 
         # Check which attributes the OSM has, Sometimes it does not have any and indicate the data source
         if 'building:levels' not in list_of_columns:
@@ -90,7 +95,20 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, buildings_he
             np.nanmedian(data_floors_sum_with_nan))  # median so we get close to the worse case
         shapefile["floors_ag"] = [int(x) if not np.isnan(x) else data_osm_floors_joined for x in
                                   data_floors_sum_with_nan]
-        shapefile["height_ag"] = shapefile["floors_ag"] * constants.H_F
+
+        if 'height' in list_of_columns:
+            #  Replaces 'nan' values with CEA assumption
+            shapefile["height_ag"] = shapefile["height"].fillna(shapefile["floors_ag"] * constants.H_F).astype(float)
+            #  Replaces values of height = 0 with CEA assumption
+            # TODO: Check whether buildings with height between 0 and 1 meter are actually mostly underground
+            #  These might not be errors, but rather partially or fully underground buildings. This should be verified.
+            #  Also, the radiation script cannot process buildings with height 0 m at the moment.
+            #  Once the radiation script can process underground buildings, this step might need to be revised.
+            shapefile["height_ag"] = shapefile["height_ag"].where(shapefile["height_ag"] != 0,
+                                                                  shapefile["floors_ag"] * constants.H_F).astype(float)
+
+        else:
+            shapefile["height_ag"] = shapefile["floors_ag"] * constants.H_F
     else:
         shapefile['REFERENCE'] = "User - assumption"
         if buildings_height is None and buildings_floors is not None:
@@ -103,7 +121,7 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, buildings_he
             shapefile["height_ag"] = [buildings_height] * no_buildings
             shapefile["floors_ag"] = [buildings_floors] * no_buildings
 
-    # add fields for floorsa and height below ground
+    # add fields for floors and height below ground
     shapefile["height_bg"] = [buildings_height_below_ground] * no_buildings
     shapefile["floors_bg"] = [buildings_floors_below_ground] * no_buildings
 
