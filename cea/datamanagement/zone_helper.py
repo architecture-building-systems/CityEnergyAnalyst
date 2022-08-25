@@ -394,6 +394,7 @@ def polygon_to_zone(buildings_floors, buildings_floors_below_ground, buildings_h
         # Pass the Gdt back to flatten_geometries to split MultiPolygons that might have been created due to one
         # building cutting another one into pieces and remove any unusable geometry types (e.g., LineString)
         cleaned_shapefile = flatten_geometries(cleaned_shapefile)
+        cleaned_shapefile["Name"] = ["B" + str(x + 1000) for x in range(cleaned_shapefile.shape[0])]
 
     cleaned_shapefile = cleaned_shapefile.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
     # save shapefile to zone.shp
@@ -439,7 +440,6 @@ def flatten_geometries(gdf):
         # else, polygons are joined into a MultiPolygon, keep each individual Polygon as a separate building
     # rename buildings
     gdf = gdf.reset_index(drop=True)
-    gdf["Name"] = ["B" + str(x + 1000) for x in range(gdf.shape[0])]
 
     return gdf
 
