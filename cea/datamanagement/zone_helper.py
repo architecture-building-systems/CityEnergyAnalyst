@@ -389,11 +389,10 @@ def polygon_to_zone(buildings_floors, buildings_floors_below_ground, buildings_h
         print("Fixing overlapping geometries.")
         cleaned_shapefile['geometry'], shapefile = fix_overlapping_geoms(shapefile, poly)
 
-        # Clean up geometries that are no longer in use (i.e. buildings that have empty geometry) and split up
-        #  multipolygons that might have been created due to one building cutting another one into pieces.
+        # Clean up geometries that are no longer in use (i.e. buildings that have empty geometry)
         cleaned_shapefile = cleaned_shapefile[~cleaned_shapefile.geometry.is_empty]
-        cleaned_shapefile = cleaned_shapefile.explode()
-        cleaned_shapefile = cleaned_shapefile.reset_index(drop=True)
+        # Pass the Gdt back to flatten_geometries to split MultiPolygons that might have been created due to one
+        # building cutting another one into pieces and remove any unusable geometry types (e.g., LineString)
         cleaned_shapefile = flatten_geometries(cleaned_shapefile)
 
     cleaned_shapefile = cleaned_shapefile.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
@@ -439,7 +438,7 @@ def flatten_geometries(gdf):
                              (gdf.index.get_level_values(1) == 0)].index, inplace=True)
         # else, polygons are joined into a MultiPolygon, keep each individual Polygon as a separate building
     # rename buildings
-    gdf = gdf.reset_index().drop(['level_0', 'level_1'], axis=1)
+    gdf = gdf.reset_index(drop=True)
     gdf["Name"] = ["B" + str(x + 1000) for x in range(gdf.shape[0])]
 
     return gdf
