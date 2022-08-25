@@ -259,6 +259,7 @@ def zone_helper(locator, config):
     buildings_floors_below_ground = config.zone_helper.floors_bg
     occupancy_type = config.zone_helper.occupancy_type
     year_construction = config.zone_helper.year_construction
+    include_building_parts = config.zone_helper.include_building_parts
     fix_overlapping = config.zone_helper.fix_overlapping_geometries
     zone_output_path = locator.get_zone_geometry()
     typology_output_path = locator.get_building_typology()
@@ -388,15 +389,22 @@ def calculate_age(zone_df, year_construction):
 
 
 def polygon_to_zone(buildings_floors, buildings_floors_below_ground, buildings_height, buildings_height_below_ground,
-                    fix_overlapping, poly, zone_out_path):
+                    fix_overlapping, include_building_parts, poly, zone_out_path):
     poly = poly.to_crs(get_geographic_coordinate_system())
     lon = poly.geometry[0].centroid.coords.xy[0][0]
     lat = poly.geometry[0].centroid.coords.xy[1][0]
     # get all footprints in the district tagged as 'building' or 'building:part' in OSM
-    shapefile = pd.concat(
-        [osmnx.footprints.footprints_from_polygon(polygon=poly['geometry'].values[0], footprint_type='building'),
-         osmnx.footprints.footprints_from_polygon(polygon=poly['geometry'].values[0], footprint_type='building:part')],
-        ignore_index=True)
+    shapefile = osmnx.footprints.footprints_from_polygon(polygon=poly['geometry'].values[0], footprint_type='building')
+    if include_building_parts:
+        # get all footprints in the district tagged as 'building' or 'building:part' in OSM
+        shapefile = pd.concat(
+            [shapefile,
+             osmnx.footprints.footprints_from_polygon(polygon=poly['geometry'].values[0], footprint_type='building:part')],
+            ignore_index=True)
+        # using building:part tags requires fixing overlapping polygons
+        if not fix_overlapping:
+            print('Building parts included, fixing overlapping geometries activated.')
+            fix_overlapping = True
 
     # clean geometries
     shapefile = clean_geometries(shapefile)
