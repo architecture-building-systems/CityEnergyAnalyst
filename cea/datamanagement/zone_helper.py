@@ -271,7 +271,7 @@ def zone_helper(locator, config):
     # get zone.shp file and save in folder location
     zone_df = polygon_to_zone(buildings_floors, buildings_floors_below_ground, buildings_height,
                               buildings_height_below_ground,
-                              fix_overlapping,
+                              fix_overlapping, include_building_parts,
                               poly, zone_output_path)
 
     # USE_A zone.shp file contents to get the contents of occupancy.dbf and age.dbf
