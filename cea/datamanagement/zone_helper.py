@@ -63,7 +63,7 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, buildings_he
     list_of_columns = shapefile.columns
     if buildings_height is None and buildings_floors is None:
         print('Warning! you have not indicated a height or number of floors above ground for the buildings, '
-              'we are reverting to data stored in Open Street Maps (It might not be accurate at all),'
+              'we are importing data from Open Street Maps (It might not be accurate at all),'
               'if we do not find data in OSM for a particular building, we get the median in the surroundings, '
               'if we do not get any data we assume 4 floors per building')
 
@@ -349,7 +349,7 @@ def calculate_age(zone_df, year_construction):
     """
     if year_construction is None:
         print('Warning! you have not indicated a year of construction for the buildings, '
-              'we are reverting to data stored in Open Street Maps (It might not be accurate at all),'
+              'we are importing data from Open Street Maps (It might not be accurate at all),'
               'if we do not find data in OSM for a particular building, we get the median in the surroundings, '
               'if we do not get any data we assume all buildings being constructed in the year 2000')
         list_of_columns = zone_df.columns
