@@ -62,8 +62,8 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, buildings_he
     no_buildings = shapefile.shape[0]
     list_of_columns = shapefile.columns
     if buildings_height is None and buildings_floors is None:
-        print('Warning! you have not indicated number of floors above ground for the buildings, '
-              'we are reverting to data stored in Open Street Maps (It might not be accurate at all),'
+        print('Warning! you have not indicated a height or number of floors above ground for the buildings, '
+              'we are importing data from Open Street Maps (It might not be accurate at all),'
               'if we do not find data in OSM for a particular building, we get the median in the surroundings, '
               'if we do not get any data we assume 4 floors per building')
 
@@ -367,7 +367,7 @@ def calculate_age(zone_df, year_construction):
     """
     if year_construction is None:
         print('Warning! you have not indicated a year of construction for the buildings, '
-              'we are reverting to data stored in Open Street Maps (It might not be accurate at all),'
+              'we are importing data from Open Street Maps (It might not be accurate at all),'
               'if we do not find data in OSM for a particular building, we get the median in the surroundings, '
               'if we do not get any data we assume all buildings being constructed in the year 2000')
         list_of_columns = zone_df.columns
@@ -410,11 +410,11 @@ def polygon_to_zone(buildings_floors, buildings_floors_below_ground, buildings_h
         print("Fixing overlapping geometries.")
         cleaned_shapefile['geometry'], shapefile = fix_overlapping_geoms(shapefile, poly)
 
-        # Clean up geometries that are no longer in use (i.e. buildings that have empty geometry) and split up
-        #  multipolygons that might have been created due to one building cutting another one into pieces.
+        # Clean up geometries that are no longer in use (i.e. buildings that have empty geometry)
         cleaned_shapefile = cleaned_shapefile[~cleaned_shapefile.geometry.is_empty]
-        cleaned_shapefile = cleaned_shapefile.explode()
-        cleaned_shapefile = cleaned_shapefile.reset_index(drop=True)
+        # Pass the Gdf back to flatten_geometries to split MultiPolygons that might have been created due to one
+        # building cutting another one into pieces and remove any unusable geometry types (e.g., LineString)
+        cleaned_shapefile = flatten_geometries(cleaned_shapefile)
         cleaned_shapefile["Name"] = ["B" + str(x + 1000) for x in range(cleaned_shapefile.shape[0])]
 
     cleaned_shapefile = cleaned_shapefile.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
@@ -431,32 +431,38 @@ def clean_geometries(gdf):
     :param gdf: GeoPandas DataFrame containing geometries
     :return:
     """
-    def flatten_geometries(geometry):
-        """
-        Flatten polygon collections into a single polygon by using their union
-        :param geometry: Type of Shapely geometry
-        :return:
-        """
-        from shapely.ops import unary_union
-        if geometry.type == 'Polygon':  # ignore Polygons
-            return geometry
-        elif geometry.type in ['Point', 'LineString']:
-            print(f'Discarding geometry of type: {geometry.type}')
-            return None # discard geometry if it is a Point or LineString
-        else:
-            joined = unary_union(list(geometry))
-            if joined.type == 'MultiPolygon':  # some Multipolygons could not be combined
-                return joined[0]  # just return first polygon
-            elif joined.type != 'Polygon':  # discard geometry if it is still not a Polygon
-                print(f'Discarding geometry of type: {joined.type}')
-                return None
-            else:
-                return joined
-    gdf.geometry = gdf.geometry.map(flatten_geometries)
+    gdf = flatten_geometries(gdf)
     gdf = gdf[gdf.geometry.notnull()]  # remove None geometries
 
     return gdf
 
+def flatten_geometries(gdf):
+    """
+    Flatten polygon collections into a single polygon by using their union
+    :param gdf: GeoDataFrame
+    :return:
+    """
+    from shapely.ops import unary_union
+    import string
+    DISCARDED_GEOMETRY_TYPES = ['Point', 'LineString']
+
+    # Explode MultiPolygons and GeometryCollections
+    gdf = gdf.explode()
+    # Drop geometry types that cannot be processed by CEA
+    gdf = gdf.loc[~ gdf.geometry.geom_type.isin(DISCARDED_GEOMETRY_TYPES)]
+    # Process individual geometries in MultiPolygon and GeometryCollection data types
+    for i in gdf.loc[gdf.index.get_level_values(1) == 1].index.get_level_values(0):
+        # if polygons can be joined into one Polygon, keep the joined Polygon
+        if unary_union(list(gdf.loc[gdf.index.get_level_values(0) == i].geometry)) == 'Polygon':
+            gdf.loc[gdf.index.get_level_values(0) == i].geometry = unary_union(list(
+                gdf.loc[gdf.index.get_level_values(0) == i].geometry))
+            gdf.drop(gdf.loc[(gdf.index.get_level_values(0) == i) &
+                             (gdf.index.get_level_values(1) == 0)].index, inplace=True)
+        # else, polygons are joined into a MultiPolygon, keep each individual Polygon as a separate building
+    # rename buildings
+    gdf = gdf.reset_index(drop=True)
+
+    return gdf
 
 def main(config):
     """
