@@ -336,6 +336,10 @@ def calculate_typology_file(locator, zone_df, year_construction, occupancy_type,
         # for OSM building/amenity types with a clear CEA use type, this use type is assigned
         in_categories = zone_df['category'].isin(OSM_BUILDING_CATEGORIES.keys())
         zone_df.loc[in_categories, '1ST_USE'] = zone_df[in_categories]['category'].map(OSM_BUILDING_CATEGORIES)
+        if 'amenity' in zone_df.columns:
+            # assign use type by building category first, then by amenity (more specific)
+            in_categories = zone_df['amenity'].isin(OSM_BUILDING_CATEGORIES.keys())
+            zone_df.loc[in_categories, '1ST_USE'] = zone_df[in_categories]['amenity'].map(OSM_BUILDING_CATEGORIES)
 
         # for un-conditioned OSM building categories without a clear CEA use type, "PARKING" is assigned
         if 'amenity' in zone_df.columns:
@@ -344,6 +348,7 @@ def calculate_typology_file(locator, zone_df, year_construction, occupancy_type,
             in_unconditioned_categories = zone_df['category'].isin(OTHER_OSM_CATEGORIES_UNCONDITIONED)
         zone_df.loc[in_unconditioned_categories, '1ST_USE'] = "PARKING"
 
+    # export typology.dbf
     fields = COLUMNS_ZONE_TYPOLOGY
     dataframe_to_dbf(typology_df[fields + ['REFERENCE']], occupancy_output_path)
 
