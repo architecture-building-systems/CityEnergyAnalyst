@@ -222,6 +222,11 @@ def fix_overlapping_geoms(buildings, zone):
             is_overlapping = buildings_in_cell.geometry.intersects(buildings_in_cell.geometry[building_index])
             overlapping_buildings = buildings_in_cell[is_overlapping]
 
+            # check if all overlapping buildings have building use type information from OSM, if not
+            for col in ['building', 'amenity', "description", "category"]:
+                if np.any(overlapping_buildings[col].isna()) & ~np.all(overlapping_buildings[col].isna()):
+                    buildings.loc[overlapping_buildings.loc[overlapping_buildings[col].isna()].index, col] = \
+                        overlapping_buildings[col].dropna().mode()[0]
             # cut out the higher building's footprint-polygon out the lower buildings footprint-polygon
             for ovrlp_bldg_index in overlapping_buildings.index:
                 if ovrlp_bldg_index == building_index:
@@ -301,7 +306,7 @@ def calc_category(standard_db, year_array):
 
 def calculate_typology_file(locator, zone_df, year_construction, occupancy_type, occupancy_output_path):
     """
-    This script fills in the occupancy.dbf file with one occupancy type
+    This script fills in the typology.dbf file with one occupancy type
     :param zone_df:
     :param occupancy_type:
     :param occupancy_output_path:
@@ -316,6 +321,8 @@ def calculate_typology_file(locator, zone_df, year_construction, occupancy_type,
 
     # Calculate the most likely use type
     typology_df['1ST_USE'] = 'MULTI_RES'
+    # TODO: replace with mode of case study?
+    #  shapefile.loc[shapefile['building'].isin(OSM_BUILDING_CATEGORIES.keys()), 'building'].mode()[0]
     typology_df['1ST_USE_R'] = 1.0
     typology_df['2ND_USE'] = "NONE"
     typology_df['2ND_USE_R'] = 0.0
@@ -428,6 +435,7 @@ def polygon_to_zone(buildings_floors, buildings_floors_below_ground, buildings_h
         # Pass the Gdf back to flatten_geometries to split MultiPolygons that might have been created due to one
         # building cutting another one into pieces and remove any unusable geometry types (e.g., LineString)
         shapefile = flatten_geometries(shapefile)
+        # reassign building names to account for exploded MultiPolygons
         shapefile["Name"] = ["B" + str(x + 1000) for x in range(shapefile.shape[0])]
 
     # clean up attributes
