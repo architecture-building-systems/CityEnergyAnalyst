@@ -324,9 +324,7 @@ def calculate_typology_file(locator, zone_df, year_construction, occupancy_type,
     typology_df['STANDARD'] = calc_category(standard_database, typology_df['YEAR'].values)
 
     # Calculate the most likely use type
-    typology_df['1ST_USE'] = 'MULTI_RES'
-    # TODO: replace with mode of case study?
-    #  shapefile.loc[shapefile['building'].isin(OSM_BUILDING_CATEGORIES.keys()), 'building'].mode()[0]
+    typology_df['1ST_USE'] = "NONE"
     typology_df['1ST_USE_R'] = 1.0
     typology_df['2ND_USE'] = "NONE"
     typology_df['2ND_USE_R'] = 0.0
@@ -347,6 +345,10 @@ def calculate_typology_file(locator, zone_df, year_construction, occupancy_type,
         else:
             in_unconditioned_categories = zone_df['category'].isin(OTHER_OSM_CATEGORIES_UNCONDITIONED)
         zone_df.loc[in_unconditioned_categories, '1ST_USE'] = "PARKING"
+
+    # all remaining building use types are assigned by the mode of the use types in the entire case study
+    typology_df.loc[typology_df['1ST_USE'] == "NONE", '1ST_USE'] = \
+        typology_df.loc[~typology_df['1ST_USE'].isin(['NONE', 'PARKING']), '1ST_USE'].mode()[0]
 
     # export typology.dbf
     fields = COLUMNS_ZONE_TYPOLOGY
