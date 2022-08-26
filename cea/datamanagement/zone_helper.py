@@ -225,8 +225,7 @@ def fix_overlapping_geoms(buildings, zone):
         for building_index in buildings_in_cell.index:
             is_overlapping = buildings_in_cell.geometry.intersects(buildings_in_cell.geometry[building_index])
             overlapping_buildings = buildings_in_cell[is_overlapping]
-
-            # check if all overlapping buildings have building use type information from OSM, if not
+            # check if all overlapping buildings have building use type information from OSM, if not assign mode of all overlapping buildings
             for col in ['building', 'amenity', "description", "category"]:
                 if np.any(overlapping_buildings[col].isna()) & ~np.all(overlapping_buildings[col].isna()):
                     buildings.loc[overlapping_buildings.loc[overlapping_buildings[col].isna()].index, col] = \
