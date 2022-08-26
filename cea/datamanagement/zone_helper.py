@@ -93,10 +93,14 @@ def assign_attributes(shapefile, buildings_height, buildings_floors, buildings_h
             # if 'building:levels' are all NaN, make an assumption
             shapefile['building:levels'] = [3] * no_buildings
             shapefile['REFERENCE'] = "CEA - assumption"
-        else:
+        elif 'height' in list_of_columns:
             # if either the 'building:levels' or the building 'height' are available, take them from OSM
             shapefile['REFERENCE'] = ["OSM - as it is" if x else "OSM - median values of all buildings" for x in
                                       (~shapefile['building:levels'].isna()) | (shapefile['height'] > 0)]
+        else:
+            # if only the 'building:levels' are available, take them from OSM
+            shapefile['REFERENCE'] = ["OSM - as it is" if x else "OSM - median values of all buildings" for x in
+                                      ~shapefile['building:levels'].isna()]
         if 'roof:levels' not in list_of_columns:
             shapefile['roof:levels'] = 0
 
