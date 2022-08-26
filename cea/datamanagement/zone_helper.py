@@ -72,21 +72,25 @@ def assign_attributes(shapefile, buildings_height, buildings_floors, buildings_h
               'if we do not find data in OSM for a particular building, we estimate it based on the number of floors,'
               'multiplied by a pre-defined floor-to-floor height')
 
-        # Check which attributes OSM has (sometimes it does not have any) and indicate the data source
-        if 'building:levels' not in list_of_columns:
-            shapefile['building:levels'] = [3] * no_buildings
-            shapefile['REFERENCE'] = "CEA - assumption"
-        elif pd.isnull(shapefile['building:levels']).all():
-            shapefile['building:levels'] = [3] * no_buildings
-            shapefile['REFERENCE'] = "CEA - assumption"
-        else:
-            shapefile['REFERENCE'] = ["OSM - median values of all buildings" if x is np.nan else "OSM - as it is" for x
-                                      in shapefile['building:levels']]
-        if 'roof:levels' not in list_of_columns:
-            shapefile['roof:levels'] = 0
+        # Make sure relevant OSM parameters (if available) are passed as floats, not strings
         for col in ['building:min_level', 'min_height', 'building:levels', 'height']:
             if col in list_of_columns:
                 shapefile[col] = shapefile[col].astype(float)
+        # Check which attributes OSM has (sometimes it does not have any) and indicate the data source
+        if 'building:levels' not in list_of_columns:
+            # if 'building:levels' is not in the database, make an assumption
+            shapefile['building:levels'] = [3] * no_buildings
+            shapefile['REFERENCE'] = "CEA - assumption"
+        elif pd.isnull(shapefile['building:levels']).all():
+            # if 'building:levels' are all NaN, make an assumption
+            shapefile['building:levels'] = [3] * no_buildings
+            shapefile['REFERENCE'] = "CEA - assumption"
+        else:
+            # if either the 'building:levels' or the building 'height' are available, take them from OSM
+            shapefile['REFERENCE'] = ["OSM - as it is" if x else "OSM - median values of all buildings" for x in
+                                      (~shapefile['building:levels'].isna()) | (shapefile['height'] > 0)]
+        if 'roof:levels' not in list_of_columns:
+            shapefile['roof:levels'] = 0
 
         # get the median from the area:
         data_osm_floors1 = shapefile['building:levels'].fillna(0)
