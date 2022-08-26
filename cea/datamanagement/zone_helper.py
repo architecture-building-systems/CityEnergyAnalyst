@@ -56,8 +56,8 @@ def parse_building_floors(floors):
         return parsed_floors
 
 
-def clean_attributes(shapefile, buildings_height, buildings_floors, buildings_height_below_ground,
-                     buildings_floors_below_ground, key):
+def assign_attributes(shapefile, buildings_height, buildings_floors, buildings_height_below_ground,
+                      buildings_floors_below_ground, key):
     # local variables
     no_buildings = shapefile.shape[0]
     list_of_columns = shapefile.columns
@@ -68,11 +68,11 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, buildings_he
               'if we do not get any data we assume 4 floors per building')
 
         print('Warning! you have not indicated height above ground for the buildings, '
-              'we are reverting to data stored in Open Street Maps (It might not be accurate at all),'
+              'we are importing data from Open Street Maps (It might not be accurate at all),'
               'if we do not find data in OSM for a particular building, we estimate it based on the number of floors,'
               'multiplied by a pre-defined floor-to-floor height')
 
-        # Check which attributes the OSM has, Sometimes it does not have any and indicate the data source
+        # Check which attributes OSM has (sometimes it does not have any) and indicate the data source
         if 'building:levels' not in list_of_columns:
             shapefile['building:levels'] = [3] * no_buildings
             shapefile['REFERENCE'] = "CEA - assumption"
@@ -84,6 +84,9 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, buildings_he
                                       in shapefile['building:levels']]
         if 'roof:levels' not in list_of_columns:
             shapefile['roof:levels'] = 0
+        for col in ['building:min_level', 'min_height', 'building:levels', 'height']:
+            if col in list_of_columns:
+                shapefile[col] = shapefile[col].astype(float)
 
         # get the median from the area:
         data_osm_floors1 = shapefile['building:levels'].fillna(0)
@@ -106,9 +109,24 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, buildings_he
             #  Once the radiation script can process underground buildings, this step might need to be revised.
             shapefile["height_ag"] = shapefile["height_ag"].where(shapefile["height_ag"] != 0,
                                                                   shapefile["floors_ag"] * constants.H_F).astype(float)
-
         else:
             shapefile["height_ag"] = shapefile["floors_ag"] * constants.H_F
+
+        # add fields for floors and height below ground
+        shapefile["height_bg"] = None
+        shapefile["floors_bg"] = None
+
+        # Correct levels below ground if a minimum floor level or height is indicated
+        if 'building:min_level' in list_of_columns:
+            has_min_floor = shapefile["building:min_level"] == shapefile["building:min_level"]
+            shapefile[has_min_floor].floors_bg = [- int(x) for x in shapefile[has_min_floor]["building:min_level"]]
+            shapefile[has_min_floor].height_bg = shapefile[has_min_floor].floors_bg * constants.H_F
+        if 'min_height' in list_of_columns:
+            has_min_height = shapefile["min_height"] == shapefile["min_height"]
+            shapefile[has_min_height].height_bg = [- int(x) for x in shapefile[has_min_height]["min_height"]]
+        # add missing floors and height below ground
+        shapefile.loc[shapefile.height_bg.isna(), "height_bg"] = [buildings_height_below_ground] * no_buildings
+        shapefile.loc[shapefile.floors_bg.isna(), "floors_bg"] = [buildings_floors_below_ground] * no_buildings
     else:
         shapefile['REFERENCE'] = "User - assumption"
         if buildings_height is None and buildings_floors is not None:
@@ -120,10 +138,9 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, buildings_he
         else:  # both are not none
             shapefile["height_ag"] = [buildings_height] * no_buildings
             shapefile["floors_ag"] = [buildings_floors] * no_buildings
-
-    # add fields for floors and height below ground
-    shapefile["height_bg"] = [buildings_height_below_ground] * no_buildings
-    shapefile["floors_bg"] = [buildings_floors_below_ground] * no_buildings
+        # add fields for floors and height below ground
+        shapefile["height_bg"] = [buildings_height_below_ground] * no_buildings
+        shapefile["floors_bg"] = [buildings_floors_below_ground] * no_buildings
 
     # add description
     if "description" in list_of_columns:
@@ -143,14 +160,9 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, buildings_he
 
     shapefile["Name"] = [key + str(x + 1000) for x in
                          range(no_buildings)]  # start in a big number to avoid potential confusion
-    cleaned_shapefile = shapefile[
-        ["Name", "height_ag", "floors_ag", "height_bg", "floors_bg", "description", "category", "geometry",
-         "REFERENCE"]]
-
-    cleaned_shapefile.reset_index(inplace=True, drop=True)
     shapefile.reset_index(inplace=True, drop=True)
 
-    return cleaned_shapefile, shapefile
+    return shapefile
 
 
 def fix_overlapping_geoms(buildings, zone):
@@ -164,23 +176,11 @@ def fix_overlapping_geoms(buildings, zone):
             lower building's footprint-polygon.
 
     As a preprocessing step the OSM-information on "min_heights" and "min_levels" gets assigned to the building's
-    height and levels below ground (introduced in the zone-helper.clean_attributes() function) as negative values.
+    height and levels below ground (introduced in the zone-helper.assign_attributes() function) as negative values.
     """
     # PREPROCESSING OF BUILDING ATTRIBUTES
-    # get relevant components from buildings attribute table and the zone's geometry
-    list_of_attributes = buildings.columns.values
+    # get zone's geometry
     geometries = buildings.geometry
-
-    # Correct levels below ground if a minimum floor level or height is indicated
-    if 'building:min_level' in list_of_attributes:
-        buildings["building:min_level"] = buildings["building:min_level"].astype(float)
-        has_min_floor = buildings["building:min_level"] == buildings["building:min_level"]
-        buildings[has_min_floor].floors_bg = [- int(x) for x in buildings[has_min_floor]["building:min_level"]]
-        buildings[has_min_floor].height_bg = buildings[has_min_floor].floors_bg * constants.H_F
-    if 'min_height' in list_of_attributes:
-        buildings["min_height"] = buildings["min_height"].astype(float)
-        has_min_height = buildings["min_height"] == buildings["min_height"]
-        buildings[has_min_height].height_bg = [- int(x) for x in buildings[has_min_height]["min_height"]]
 
     # CREATE GRID TO PARTITION THE BUILDINGS (more efficient - hopefully)
     # calculate grid-parameters based on the zone polygon dimensions
@@ -226,9 +226,17 @@ def fix_overlapping_geoms(buildings, zone):
             for ovrlp_bldg_index in overlapping_buildings.index:
                 if ovrlp_bldg_index == building_index:
                     pass  # same building -> doesn't count as overlap
-                elif buildings.height_ag[ovrlp_bldg_index] <= -buildings.height_bg[building_index] or \
-                   buildings.height_ag[building_index] <= -buildings.height_bg[ovrlp_bldg_index]:
+                elif (buildings.height_ag[ovrlp_bldg_index] <= -buildings.height_bg[building_index]) or \
+                    (buildings.height_ag[building_index] <= -buildings.height_bg[ovrlp_bldg_index]):
                     pass  # no vertical overlap
+                elif (buildings.REFERENCE[ovrlp_bldg_index] == "OSM - as it is") & \
+                     (buildings.REFERENCE[building_index] != "OSM - as it is"):  # Give OSM priority
+                    buildings.geometry[building_index] = \
+                        buildings.geometry[building_index].difference(buildings.geometry[ovrlp_bldg_index])
+                elif (buildings.REFERENCE[building_index] == "OSM - as it is") & \
+                     (buildings.REFERENCE[ovrlp_bldg_index] != "OSM - as it is"):  # Give OSM priority
+                    buildings.geometry[ovrlp_bldg_index] = \
+                        buildings.geometry[ovrlp_bldg_index].difference(buildings.geometry[building_index])
                 elif (buildings.height_ag[building_index] + buildings.height_bg[building_index]) <= \
                         (buildings.height_ag[ovrlp_bldg_index] + buildings.height_bg[ovrlp_bldg_index]):
                     buildings.geometry[building_index] = \
@@ -238,10 +246,7 @@ def fix_overlapping_geoms(buildings, zone):
                     buildings.geometry[ovrlp_bldg_index] = \
                         buildings.geometry[ovrlp_bldg_index].difference(buildings.geometry[building_index])
 
-    # CALCULATE OUTPUT VARIABLES
-    fixed_geometries = buildings.geometry
-
-    return fixed_geometries, buildings
+    return buildings
 
 
 def zone_helper(locator, config):
@@ -410,22 +415,27 @@ def polygon_to_zone(buildings_floors, buildings_floors_below_ground, buildings_h
     shapefile = clean_geometries(shapefile)
 
     # clean attributes of height, name and number of floors
-    cleaned_shapefile, shapefile = clean_attributes(shapefile, buildings_height, buildings_floors,
-                                                    buildings_height_below_ground,
-                                                    buildings_floors_below_ground, key="B")
+    shapefile = assign_attributes(shapefile, buildings_height, buildings_floors,
+                                 buildings_height_below_ground, buildings_floors_below_ground, key="B")
+
     # fix geometries of buildings with overlapping polygons
     if fix_overlapping is True:
         print("Fixing overlapping geometries.")
-        cleaned_shapefile['geometry'], shapefile = fix_overlapping_geoms(shapefile, poly)
+        shapefile = fix_overlapping_geoms(shapefile, poly)
 
         # Clean up geometries that are no longer in use (i.e. buildings that have empty geometry)
-        cleaned_shapefile = cleaned_shapefile[~cleaned_shapefile.geometry.is_empty]
+        shapefile = shapefile[~shapefile.geometry.is_empty]
         # Pass the Gdf back to flatten_geometries to split MultiPolygons that might have been created due to one
         # building cutting another one into pieces and remove any unusable geometry types (e.g., LineString)
-        cleaned_shapefile = flatten_geometries(cleaned_shapefile)
-        cleaned_shapefile["Name"] = ["B" + str(x + 1000) for x in range(cleaned_shapefile.shape[0])]
+        shapefile = flatten_geometries(shapefile)
+        shapefile["Name"] = ["B" + str(x + 1000) for x in range(shapefile.shape[0])]
 
+    # clean up attributes
+    cleaned_shapefile = shapefile[
+        ["Name", "height_ag", "floors_ag", "height_bg", "floors_bg", "description", "category", "geometry",
+         "REFERENCE"]]
     cleaned_shapefile = cleaned_shapefile.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
+    
     # save shapefile to zone.shp
     cleaned_shapefile.to_file(zone_out_path)
 
