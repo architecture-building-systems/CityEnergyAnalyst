@@ -75,7 +75,15 @@ def assign_attributes(shapefile, buildings_height, buildings_floors, buildings_h
         # Make sure relevant OSM parameters (if available) are passed as floats, not strings
         for col in ['building:min_level', 'min_height', 'building:levels', 'height']:
             if col in list_of_columns:
-                shapefile[col] = shapefile[col].astype(float)
+                try:
+                    shapefile[col] = shapefile[col].astype(float)
+                except ValueError:
+                    for i in shapefile[col].dropna().index:
+                        try:
+                            shapefile.loc[i, col] = float(shapefile.loc[i, col])
+                        except ValueError:
+                            print(f'{col} = {shapefile.loc[i, col]} in building {i} cannot be interpreted, replacing with NaN.')
+                            shapefile.loc[i, col] = None
         # Check which attributes OSM has (sometimes it does not have any) and indicate the data source
         if 'building:levels' not in list_of_columns:
             # if 'building:levels' is not in the database, make an assumption
