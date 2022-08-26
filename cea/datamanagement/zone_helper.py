@@ -68,7 +68,7 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, buildings_he
               'if we do not get any data we assume 4 floors per building')
 
         print('Warning! you have not indicated height above ground for the buildings, '
-              'we are reverting to data stored in Open Street Maps (It might not be accurate at all),'
+              'we are importing data from Open Street Maps (It might not be accurate at all),'
               'if we do not find data in OSM for a particular building, we estimate it based on the number of floors,'
               'multiplied by a pre-defined floor-to-floor height')
 
