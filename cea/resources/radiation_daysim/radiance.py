@@ -1,10 +1,12 @@
+import csv
 import math
 import os
 import shutil
 import subprocess
 import shlex
+from datetime import datetime
 
-import pandas as pd
+import numpy as np
 
 from cea import suppress_3rd_party_debug_loggers
 from cea.resources.radiation_daysim.geometry_generator import BuildingGeometry
@@ -15,7 +17,7 @@ import py4design.py2radiance as py2radiance
 from py4design.py3dmodel.fetch import points_frm_occface
 
 
-class CEADaySim(object):
+class CEADaySim:
     """
     This class helps to initialize the Daysim folder structure in the `staging_path`
     and encapsulates all the methods required to create the initial input files for Daysim
@@ -329,13 +331,17 @@ class DaySimProject(object):
         This function reads the output file from running `ds_illum`, parses the space separated values
         and returns the values as a numpy array.
 
+        Values in the file only have 2 decimal places, so we are using float32 to save memory
+
         :return: Numpy array of hourly irradiance results of sensor points
         """
 
         ill_path = os.path.join(self.project_path, "{file_name}.ill".format(file_name=self.project_name))
-        ill_result = pd.read_csv(ill_path, delimiter=' ', header=None).iloc[:, 4:].T.values
+        with open(ill_path) as f:
+            reader = csv.reader(f, delimiter=' ')
+            data = np.array([np.array(row[4:], dtype=np.float32) for row in reader])
 
-        return ill_result
+        return data
 
 
 class RadSurface(object):
