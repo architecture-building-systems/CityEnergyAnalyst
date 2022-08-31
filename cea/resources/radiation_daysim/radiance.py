@@ -449,58 +449,51 @@ def add_rad_mat(daysim_mat_file, ageometry_table):
         write_file.close()
 
 
-def terrain_to_radiance(tin_occface_terrain):
-    return [RadSurface("terrain_srf" + str(num), face, "reflectance0.2")
-            for num, face in enumerate(tin_occface_terrain)]
-
-
-def zone_building_to_radiance(building_geometry, building_surface_properties):
-    building_name = building_geometry.name
-    building_surfaces = []
-
-    # windows
-    for num, occ_face in enumerate(building_geometry.windows):
-        material = building_surface_properties['type_win'][building_name]
-        surface_name = f"win_{building_name}_{num}"
-        material_name = f"win_{material}"
-        building_surfaces.append(RadSurface(surface_name, occ_face, material_name))
-
-    # walls
-    for num, occ_face in enumerate(building_geometry.walls):
-        material = building_surface_properties['type_wall'][building_name]
-        surface_name = f"wall_{building_name}_{num}"
-        material_name = f"wall_{material}"
-        building_surfaces.append(RadSurface(surface_name, occ_face, material_name))
-
-    # roofs
-    for num, occ_face in enumerate(building_geometry.roofs):
-        material = building_surface_properties['type_roof'][building_name]
-        surface_name = f"roof_{building_name}_{num}"
-        material_name = f"roof_{material}"
-        building_surfaces.append(RadSurface(surface_name, occ_face, material_name))
-
-    return building_surfaces
-
-
-def surrounding_building_to_radiance(building_geometry):
-    building_name = building_geometry.name
-    building_surfaces = []
-
-    # walls
-    for num, occ_face in enumerate(building_geometry.walls):
-        surface_name = f"surrounding_buildings_wall_{building_name}_{num}"
-        building_surfaces.append(RadSurface(surface_name, occ_face, "reflectance0.2"))
-
-    # roofs
-    for num, occ_face in enumerate(building_geometry.roofs):
-        surface_name = f"surrounding_buildings_roof_{building_name}_{num}"
-        building_surfaces.append(RadSurface(surface_name, occ_face, "reflectance0.2"))
-
-    return building_surfaces
-
-
 def create_rad_geometry(file_path, geometry_terrain, building_surface_properties, zone_building_names,
                         surroundings_building_names, geometry_pickle_dir):
+    def terrain_to_radiance(tin_occface_terrain):
+        for num, occ_face in enumerate(tin_occface_terrain):
+            surface_name = f"terrain_srf{num}"
+            material_name = "reflectance0.2"
+            yield RadSurface(surface_name, occ_face, material_name)
+
+    def zone_building_to_radiance(building_properties, surface_properties):
+        name = building_properties.name
+
+        # windows
+        for num, occ_face in enumerate(building_properties.windows):
+            material = surface_properties['type_win'][name]
+            surface_name = f"win_{name}_{num}"
+            material_name = f"win_{material}"
+            yield RadSurface(surface_name, occ_face, material_name)
+
+        # walls
+        for num, occ_face in enumerate(building_properties.walls):
+            material = surface_properties['type_wall'][name]
+            surface_name = f"wall_{name}_{num}"
+            material_name = f"wall_{material}"
+            yield RadSurface(surface_name, occ_face, material_name)
+
+        # roofs
+        for num, occ_face in enumerate(building_properties.roofs):
+            material = surface_properties['type_roof'][name]
+            surface_name = f"roof_{name}_{num}"
+            material_name = f"roof_{material}"
+            yield RadSurface(surface_name, occ_face, material_name)
+
+    def surrounding_building_to_radiance(building_properties):
+        name = building_properties.name
+
+        # walls
+        for num, occ_face in enumerate(building_properties.walls):
+            surface_name = f"surrounding_buildings_wall_{name}_{num}"
+            yield RadSurface(surface_name, occ_face, "reflectance0.2")
+
+        # roofs
+        for num, occ_face in enumerate(building_properties.roofs):
+            surface_name = f"surrounding_buildings_roof_{name}_{num}"
+            yield RadSurface(surface_name, occ_face, "reflectance0.2")
+
     with open(file_path, "w") as rad_file:
         for terrain_surface in terrain_to_radiance(geometry_terrain):
             rad_file.write(terrain_surface.rad())
