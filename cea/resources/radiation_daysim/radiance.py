@@ -4,7 +4,6 @@ import os
 import shutil
 import subprocess
 import shlex
-from datetime import datetime
 
 import numpy as np
 
@@ -92,47 +91,41 @@ class CEADaySim:
 
     @staticmethod
     def generate_project_header(project_name, project_directory, tmp_directory, daysim_bin_directory):
-        return "project_name {project_name}\n" \
-               "project_directory {project_directory}\n" \
-               "bin_directory {bin_directory}\n" \
-               "tmp_directory {tmp_directory}\n".format(project_name=project_name,
-                                                        project_directory=project_directory,
-                                                        bin_directory=daysim_bin_directory,
-                                                        tmp_directory=tmp_directory)
+        return f"project_name {project_name}\n" \
+               f"project_directory {project_directory}\n" \
+               f"bin_directory {daysim_bin_directory}\n" \
+               f"tmp_directory {tmp_directory}\n"
 
     @staticmethod
     def generate_geometry_header(daysim_material_path, daysim_geometry_path):
-        return "material_file {daysim_material_path}\n" \
-               "geometry_file {daysim_geometry_path}\n".format(daysim_material_path=daysim_material_path,
-                                                               daysim_geometry_path=daysim_geometry_path)
+        return f"material_file {daysim_material_path}\n" \
+               f"geometry_file {daysim_geometry_path}\n"
 
     @staticmethod
     def generate_site_info_header(site_info, wea_weather_path):
-        return "{site_info}" \
+        return f"{site_info}\n" \
                "time_step 60\n" \
-               "wea_data_short_file {wea_weather_path}\n" \
+               f"wea_data_short_file {wea_weather_path}\n" \
                "wea_data_short_file_units 1\n" \
                "lower_direct_threshold 2\n" \
-               "lower_diffuse_threshold 2\n".format(site_info=site_info, wea_weather_path=wea_weather_path)
+               "lower_diffuse_threshold 2\n"
 
     def execute_epw2wea(self, epw_weather_path, ground_reflectance=0.2):
-        command = 'epw2wea "{epw_weather_path}" "{wea_weather_path}"'.format(epw_weather_path=epw_weather_path,
-                                                                             wea_weather_path=self.wea_weather_path)
+        command = f'epw2wea "{epw_weather_path}" "{self.wea_weather_path}"'
         print(f'Running command `{command}`')
 
         # get site information from stdout of epw2wea
         epw2wea_result = subprocess.run(shlex.split(command), stdout=subprocess.PIPE)
         site_headers = epw2wea_result.stdout.decode('utf-8')
 
-        self.site_info = "{epw2wea_output}\n" \
-                         "ground_reflectance {ground_reflectance}\n".format(
-            epw2wea_output="\n".join(site_headers.split("\r\n")),
-            ground_reflectance=ground_reflectance)
+        epw2wea_output = site_headers.replace('\r', '')
+        self.site_info = f"{epw2wea_output}\n" \
+                         f"ground_reflectance {ground_reflectance}\n"
 
         # Save info of original epw file
         weather_info_path = os.path.join(self.common_inputs, "weather_info.txt")
         with open(weather_info_path, "w") as weather_info:
-            weather_info.write('# Original epw file: {epw_weather_path}'.format(epw_weather_path=epw_weather_path))
+            weather_info.write(f'# Original epw file: {epw_weather_path}')
             weather_info.write(self.site_info)
 
     def execute_radfiles2daysim(self):
@@ -144,17 +137,13 @@ class CEADaySim:
 
         # create header file for radfiles2daysim
         with open(hea_path, "w") as hea_file:
-            building_info = "{project_header}\n" \
-                            "{geometry_header}\n" \
-                            "radiance_source_files 2, {rad_material_path}, {rad_geometry_path}\n".format(
-                project_header=project_header,
-                geometry_header=geometry_header,
-                rad_material_path=self.rad_material_path,
-                rad_geometry_path=self.rad_geometry_path)
+            building_info = f"{project_header}\n" \
+                            f"{geometry_header}\n" \
+                            f"radiance_source_files 2, {self.rad_material_path}, {self.rad_geometry_path}\n"
 
             hea_file.write(building_info)
 
-        command1 = 'radfiles2daysim "{hea_path}" -g -m -d'.format(hea_path=hea_path)
+        command1 = f'radfiles2daysim "{hea_path}" -g -m -d'
         self.run_cmd(command1)
 
 
@@ -178,7 +167,7 @@ class DaySimProject(object):
         self.wea_weather_path = wea_weather_path
         self.sensor_path = os.path.join(self.project_path, "sensors.pts")
 
-        self.hea_path = os.path.join(self.project_path, "{project_name}.hea".format(project_name=project_name))
+        self.hea_path = os.path.join(self.project_path, f"{project_name}.hea")
         # Header Properties
         self.site_info = site_info
         self._create_project_header_file()
@@ -200,10 +189,10 @@ class DaySimProject(object):
         site_info_header = CEADaySim.generate_site_info_header(self.site_info, wea_weather_path)
 
         with open(self.hea_path, "w") as hea_file:
-            header = "{project_header}\n" \
-                     "{site_info_header}\n" \
-                     "{geometry_header}\n".format(project_header=project_header, geometry_header=geometry_header,
-                                                  site_info_header=site_info_header)
+            header = f"{project_header}\n" \
+                     f"{site_info_header}\n" \
+                     f"{geometry_header}\n"
+
             hea_file.write(header)
 
     def cleanup_project(self):
@@ -232,7 +221,7 @@ class DaySimProject(object):
         with open(self.hea_path, "a") as hea_file:
             # write the sensor file location into the .hea
             sensor_path = os.path.relpath(self.sensor_path, self.project_path)
-            hea_file.write("sensor_file {sensor_path}\n".format(sensor_path=sensor_path))
+            hea_file.write(f"sensor_file {sensor_path}\n")
 
             # write unit for sensor points
             if sensor_file_unit == "w/m2":
@@ -245,7 +234,7 @@ class DaySimProject(object):
             unit_num = "0" if sensor_file_unit == 'lux' else "2"  # 0 = lux, 2 = w/m2
             sensor_str = (unit_num + " ") * num_sensors
 
-            hea_file.write("\nsensor_file_unit {sensor_str}\n".format(sensor_str=sensor_str))
+            hea_file.write(f"\nsensor_file_unit {sensor_str}\n")
 
     def write_radiance_parameters(self, rad_ab, rad_ad, rad_as, rad_ar, rad_aa, rad_lr, rad_st, rad_sj, rad_lw, rad_dj,
                                   rad_ds, rad_dr, rad_dp):
@@ -268,22 +257,19 @@ class DaySimProject(object):
         """
 
         with open(self.hea_path, "a") as hea_file:
-            radiance_parameters = "ab {rad_ab}\n" \
-                                  "ad {rad_ad}\n" \
-                                  "as {rad_as}\n" \
-                                  "ar {rad_ar}\n" \
-                                  "aa {rad_aa}\n" \
-                                  "lr {rad_lr}\n" \
-                                  "st {rad_st}\n" \
-                                  "sj {rad_sj}\n" \
-                                  "lw {rad_lw}\n" \
-                                  "dj {rad_dj}\n" \
-                                  "ds {rad_ds}\n" \
-                                  "dr {rad_dr}\n" \
-                                  "dp {rad_dp}\n".format(rad_ab=rad_ab, rad_ad=rad_ad, rad_as=rad_as, rad_ar=rad_ar,
-                                                         rad_aa=rad_aa, rad_lr=rad_lr, rad_st=rad_st, rad_sj=rad_sj,
-                                                         rad_lw=rad_lw, rad_dj=rad_dj, rad_ds=rad_ds, rad_dr=rad_dr,
-                                                         rad_dp=rad_dp)
+            radiance_parameters = f"ab {rad_ab}\n" \
+                                  f"ad {rad_ad}\n" \
+                                  f"as {rad_as}\n" \
+                                  f"ar {rad_ar}\n" \
+                                  f"aa {rad_aa}\n" \
+                                  f"lr {rad_lr}\n" \
+                                  f"st {rad_st}\n" \
+                                  f"sj {rad_sj}\n" \
+                                  f"lw {rad_lw}\n" \
+                                  f"dj {rad_dj}\n" \
+                                  f"ds {rad_ds}\n" \
+                                  f"dr {rad_dr}\n" \
+                                  f"dp {rad_dp}\n"
 
             hea_file.write(radiance_parameters)
 
@@ -295,10 +281,10 @@ class DaySimProject(object):
 
         The integer 1 represents static/no shading
         """
-        dc_file = "{file_name}.dc".format(file_name=self.project_name)
-        ill_file = "{file_name}.ill".format(file_name=self.project_name)
+        dc_file = f"{self.project_name}.dc"
+        ill_file = f"{self.project_name}.ill"
         with open(self.hea_path, "a") as hea_file:
-            static_shading = "shading 1 static_system {dc_file} {ill_file}\n".format(dc_file=dc_file, ill_file=ill_file)
+            static_shading = f"shading 1 static_system {dc_file} {ill_file}\n"
             hea_file.write(static_shading)
 
     def execute_gen_dc(self):
@@ -314,16 +300,16 @@ class DaySimProject(object):
         # write the shading header
         self.write_static_shading()
 
-        command1 = 'gen_dc "{hea_path}" -dir'.format(hea_path=self.hea_path)
-        command2 = 'gen_dc "{hea_path}" -dif'.format(hea_path=self.hea_path)
-        command3 = 'gen_dc "{hea_path}" -paste'.format(hea_path=self.hea_path)
+        command1 = f'gen_dc "{self.hea_path}" -dir'
+        command2 = f'gen_dc "{self.hea_path}" -dif'
+        command3 = f'gen_dc "{self.hea_path}" -paste'
 
         CEADaySim.run_cmd(command1)
         CEADaySim.run_cmd(command2)
         CEADaySim.run_cmd(command3)
 
     def execute_ds_illum(self):
-        command1 = 'ds_illum "{hea_path}"'.format(hea_path=self.hea_path)
+        command1 = f'ds_illum "{self.hea_path}"'
         CEADaySim.run_cmd(command1)
 
     def eval_ill(self):
@@ -337,7 +323,7 @@ class DaySimProject(object):
         :return: Numpy array of hourly irradiance results of sensor points
         """
 
-        ill_path = os.path.join(self.project_path, "{file_name}.ill".format(file_name=self.project_name))
+        ill_path = os.path.join(self.project_path, f"{self.project_name}.ill")
         with open(ill_path) as f:
             reader = csv.reader(f, delimiter=' ')
             data = np.array([np.array(row[4:], dtype=np.float32) for row in reader]).T
@@ -380,16 +366,13 @@ class RadSurface(object):
         """
 
         num_of_points = len(self.points) * 3
-        points = ""
-        for point in self.points:
-            points = points + "{point_x}  {point_y}  {point_z}\n".format(point_x=point[0], point_y=point[1],
-                                                                         point_z=point[2])
-        surface = "{material} polygon {name}\n" \
-                  "0\n" \
-                  "0\n" \
-                  "{num_of_points}\n" \
-                  "{points}\n".format(material=self.material, name=self.name, num_of_points=num_of_points,
-                                      points=points)
+        points = "\n".join([f"{point[0]}  {point[1]}  {point[2]}" for point in self.points])
+
+        surface = f"{self.material} polygon {self.name}\n" \
+                  f"0\n" \
+                  f"0\n" \
+                  f"{num_of_points}\n" \
+                  f"{points}\n"
         return surface
 
 
@@ -411,38 +394,44 @@ def add_rad_mat(daysim_mat_file, ageometry_table):
     specularity = 0.03
     with open(file_path, 'w') as write_file:
         # first write the material use for the terrain and surrounding buildings
-        string = "void plastic reflectance0.2\n0\n0\n5 0.5360 0.1212 0.0565 0 0"
+        string = "void plastic reflectance0.2\n" \
+                 "0\n" \
+                 "0\n" \
+                 "5 0.5360 0.1212 0.0565 0 0"
         write_file.writelines(string + '\n')
 
-        written_mat_name_list = []
+        written_mat_name_list = set()
         for geo in ageometry_table.index.values:
-            mat_name = "wall_" + str(ageometry_table['type_wall'][geo])
+            # Wall material
+            mat_name = f"wall_{ageometry_table['type_wall'][geo]}"
             if mat_name not in written_mat_name_list:
                 mat_value1 = ageometry_table['r_wall'][geo]
                 mat_value2 = mat_value1
                 mat_value3 = mat_value1
                 mat_value4 = specularity
                 mat_value5 = roughness
-                string = "void plastic " + mat_name + "\n0\n0\n5 " + str(mat_value1) + " " + str(
-                    mat_value2) + " " + str(mat_value3) \
-                         + " " + str(mat_value4) + " " + str(mat_value5)
-
+                string = f"void plastic {mat_name}\n" \
+                         f"0\n" \
+                         f"0\n" \
+                         f"5 {mat_value1} {mat_value2} {mat_value3} {mat_value4} {mat_value5}"
                 write_file.writelines('\n' + string + '\n')
+                written_mat_name_list.add(mat_name)
 
-                written_mat_name_list.append(mat_name)
-
-            mat_name = "win_" + str(ageometry_table['type_win'][geo])
+            # Window material
+            mat_name = f"win_{ageometry_table['type_win'][geo]}"
             if mat_name not in written_mat_name_list:
                 mat_value1 = calc_transmissivity(ageometry_table['G_win'][geo])
                 mat_value2 = mat_value1
                 mat_value3 = mat_value1
-
-                string = "void glass " + mat_name + "\n0\n0\n3 " + str(mat_value1) + " " + str(mat_value2) + " " + str(
-                    mat_value3)
+                string = f"void glass {mat_name}\n" \
+                         f"0\n" \
+                         f"0\n" \
+                         f"3 {mat_value1} {mat_value2} {mat_value3}"
                 write_file.writelines('\n' + string + '\n')
-                written_mat_name_list.append(mat_name)
+                written_mat_name_list.add(mat_name)
 
-            mat_name = "roof_" + str(ageometry_table['type_roof'][geo])
+            # Roof material
+            mat_name = f"roof_{ageometry_table['type_roof'][geo]}"
             if mat_name not in written_mat_name_list:
                 mat_value1 = ageometry_table['r_roof'][geo]
                 mat_value2 = mat_value1
@@ -450,11 +439,12 @@ def add_rad_mat(daysim_mat_file, ageometry_table):
                 mat_value4 = specularity
                 mat_value5 = roughness
 
-                string = "void plastic " + mat_name + "\n0\n0\n5 " + str(mat_value1) + " " + str(
-                    mat_value2) + " " + str(mat_value3) \
-                         + " " + str(mat_value4) + " " + str(mat_value5)
+                string = f"void plastic {mat_name}\n" \
+                         f"0\n" \
+                         f"0\n" \
+                         f"5 {mat_value1} {mat_value2} {mat_value3} {mat_value4} {mat_value5}"
                 write_file.writelines('\n' + string + '\n')
-                written_mat_name_list.append(mat_name)
+                written_mat_name_list.add(mat_name)
 
         write_file.close()
 
@@ -470,20 +460,23 @@ def zone_building_to_radiance(building_geometry, building_surface_properties):
 
     # windows
     for num, occ_face in enumerate(building_geometry.windows):
-        surface_name = "win_{building_name}_{num}".format(building_name=building_name, num=num)
-        material_name = "win_{material}".format(material=building_surface_properties['type_win'][building_name])
+        material = building_surface_properties['type_win'][building_name]
+        surface_name = f"win_{building_name}_{num}"
+        material_name = f"win_{material}"
         building_surfaces.append(RadSurface(surface_name, occ_face, material_name))
 
     # walls
     for num, occ_face in enumerate(building_geometry.walls):
-        surface_name = "wall_{building_name}_{num}".format(building_name=building_name, num=num)
-        material_name = "wall_{material}".format(material=building_surface_properties['type_wall'][building_name])
+        material = building_surface_properties['type_wall'][building_name]
+        surface_name = f"wall_{building_name}_{num}"
+        material_name = f"wall_{material}"
         building_surfaces.append(RadSurface(surface_name, occ_face, material_name))
 
     # roofs
     for num, occ_face in enumerate(building_geometry.roofs):
-        surface_name = "roof_{building_name}_{num}".format(building_name=building_name, num=num)
-        material_name = "roof_{material}".format(material=building_surface_properties['type_roof'][building_name])
+        material = building_surface_properties['type_roof'][building_name]
+        surface_name = f"roof_{building_name}_{num}"
+        material_name = f"roof_{material}"
         building_surfaces.append(RadSurface(surface_name, occ_face, material_name))
 
     return building_surfaces
@@ -495,12 +488,12 @@ def surrounding_building_to_radiance(building_geometry):
 
     # walls
     for num, occ_face in enumerate(building_geometry.walls):
-        surface_name = "surrounding_buildings_wall_{building_name}_{num}".format(building_name=building_name, num=num)
+        surface_name = f"surrounding_buildings_wall_{building_name}_{num}"
         building_surfaces.append(RadSurface(surface_name, occ_face, "reflectance0.2"))
 
     # roofs
     for num, occ_face in enumerate(building_geometry.roofs):
-        surface_name = "surrounding_buildings_roof_{building_name}_{num}".format(building_name=building_name, num=num)
+        surface_name = f"surrounding_buildings_roof_{building_name}_{num}"
         building_surfaces.append(RadSurface(surface_name, occ_face, "reflectance0.2"))
 
     return building_surfaces
