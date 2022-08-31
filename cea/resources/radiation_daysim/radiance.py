@@ -332,6 +332,7 @@ class DaySimProject(object):
         and returns the values as a numpy array.
 
         Values in the file only have 2 decimal places, so we are using float32 to save memory
+        Rows are hours, Columns are sensor. Transpose output to make rows sensors
 
         :return: Numpy array of hourly irradiance results of sensor points
         """
@@ -339,7 +340,7 @@ class DaySimProject(object):
         ill_path = os.path.join(self.project_path, "{file_name}.ill".format(file_name=self.project_name))
         with open(ill_path) as f:
             reader = csv.reader(f, delimiter=' ')
-            data = np.array([np.array(row[4:], dtype=np.float32) for row in reader])
+            data = np.array([np.array(row[4:], dtype=np.float32) for row in reader]).T
 
         return data
 
