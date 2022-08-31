@@ -3,6 +3,7 @@ Radiation engine and geometry handler for CEA
 """
 
 import os
+import shutil
 import subprocess
 import sys
 import time
@@ -254,9 +255,11 @@ def main(config):
     building_surface_properties = reader_surface_properties(locator)
     building_surface_properties.to_csv(locator.get_radiation_materials())
 
+    daysim_staging_location = os.path.join(locator.get_solar_radiation_folder(), 'daysim_files')
+    os.makedirs(daysim_staging_location, exist_ok=True)
+
     print("Creating 3D geometry and surfaces")
-    geometry_pickle_dir = os.path.join(
-        locator.get_temporary_folder(), "{}_radiation_geometry_pickle".format(config.scenario_name))
+    geometry_pickle_dir = os.path.join(daysim_staging_location, "radiance_geometry_pickle")
     print("Saving geometry pickle files in: {}".format(geometry_pickle_dir))
     # create geometrical faces of terrain and buildings
     geometry_terrain, zone_building_names, surroundings_building_names = geometry_generator.geometry_main(
@@ -265,7 +268,6 @@ def main(config):
     # daysim_bin_directory might contain two paths (e.g. "C:\Daysim\bin;C:\Daysim\lib") - in which case, only
     # use the "bin" folder
     bin_directory = [d for d in config.radiation.daysim_bin_directory.split(";") if not d.endswith("lib")][0]
-    daysim_staging_location = os.path.join(locator.get_temporary_folder(), 'cea_radiation')
     cea_daysim = CEADaySim(daysim_staging_location, bin_directory)
 
     # create radiance input files
@@ -285,6 +287,9 @@ def main(config):
     time1 = time.time()
     radiation_singleprocessing(cea_daysim, zone_building_names, locator, config.radiation, geometry_pickle_dir,
                                num_processes=config.get_number_of_processes())
+
+    # Remove staging location after everything is successful
+    shutil.rmtree(daysim_staging_location)
 
     print("Daysim simulation finished in %.2f mins" % ((time.time() - time1) / 60.0))
 
