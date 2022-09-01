@@ -72,6 +72,12 @@ def assign_attributes(shapefile, buildings_height, buildings_floors, buildings_h
               'if we do not find data in OSM for a particular building, we estimate it based on the number of floors,'
               'multiplied by a pre-defined floor-to-floor height (set to 3m by default)')
 
+        # Make sure relevant OSM parameters (if available) are passed as floats, not strings
+        OSM_COLUMNS = ['building:min_level', 'min_height', 'building:levels', 'height']
+        shapefile[[c for c in OSM_COLUMNS if c in list_of_columns]] = \
+            shapefile[[c for c in OSM_COLUMNS if c in list_of_columns]].fillna(1) \
+                .apply(lambda x: pd.to_numeric(x, errors='coerce'))
+
         # Check which attributes OSM has (sometimes it does not have any) and indicate the data source
         if 'building:levels' not in list_of_columns:
             shapefile['building:levels'] = [3] * no_buildings
@@ -84,9 +90,6 @@ def assign_attributes(shapefile, buildings_height, buildings_floors, buildings_h
                                       in shapefile['building:levels']]
         if 'roof:levels' not in list_of_columns:
             shapefile['roof:levels'] = 0
-        for col in ['building:min_level', 'min_height', 'building:levels', 'height']:
-            if col in list_of_columns:
-                shapefile[col] = shapefile[col].astype(float)
 
         # get the median from the area:
         data_osm_floors1 = shapefile['building:levels'].fillna(0)
