@@ -63,20 +63,20 @@ def assign_attributes(shapefile, buildings_height, buildings_floors, buildings_h
     list_of_columns = shapefile.columns
     if buildings_height is None and buildings_floors is None:
         print('Warning! You have not indicated number of floors above ground for the buildings, '
-              'we are importing data from Open Street Maps (It might not be accurate at all),'
+              'we are importing data from Open Street Maps (It might not be accurate at all), '
               'if we do not find data in OSM for a particular building, we get the median in the surroundings, '
               'if we do not get any data we assume 4 floors per building (3 above, 1 below ground)')
 
         print('Warning! You have not indicated height above ground for the buildings, '
-              'we are importing data from Open Street Maps (It might not be accurate at all),'
-              'if we do not find data in OSM for a particular building, we estimate it based on the number of floors,'
+              'we are importing data from Open Street Maps (It might not be accurate at all), '
+              'if we do not find data in OSM for a particular building, we estimate it based on the number of floors, '
               'multiplied by a pre-defined floor-to-floor height (set to 3m by default)')
 
         # Make sure relevant OSM parameters (if available) are passed as floats, not strings
         OSM_COLUMNS = ['building:min_level', 'min_height', 'building:levels', 'height']
-        shapefile[[c for c in OSM_COLUMNS if c in list_of_columns]] = \
-            shapefile[[c for c in OSM_COLUMNS if c in list_of_columns]].fillna(1) \
-                .apply(lambda x: pd.to_numeric(x, errors='coerce'))
+        selected_columns = list(set(list_of_columns).intersection(set(OSM_COLUMNS)))
+        shapefile[selected_columns] = shapefile[selected_columns] \
+            .fillna(1).apply(lambda x: pd.to_numeric(x, errors='coerce'))
 
         # Check which attributes OSM has (sometimes it does not have any) and indicate the data source
         if 'building:levels' not in list_of_columns:
@@ -375,7 +375,7 @@ def calculate_age(zone_df, year_construction):
     """
     if year_construction is None:
         print('Warning! you have not indicated a year of construction for the buildings, '
-              'we are importing data from Open Street Maps (It might not be accurate at all),'
+              'we are importing data from Open Street Maps (It might not be accurate at all), '
               'if we do not find data in OSM for a particular building, we get the median in the surroundings, '
               'if we do not get any data we assume all buildings being constructed in the year 2000')
         list_of_columns = zone_df.columns
