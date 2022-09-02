@@ -57,7 +57,7 @@ def reader_surface_properties(locator):
     return surface_properties.set_index('Name').round(decimals=2)
 
 
-def radiation_singleprocessing(cea_daysim, zone_building_names, locator, settings, geometry_pickle_dir, num_processes):
+def run_daysim_simulation(cea_daysim, zone_building_names, locator, settings, geometry_pickle_dir, num_processes):
     weather_path = locator.get_weather_file()
     # check inconsistencies and replace by max value of weather file
     weatherfile = epwreader.epw_reader(weather_path)
@@ -285,8 +285,8 @@ def main(config):
     cea_daysim.execute_radfiles2daysim()
 
     time1 = time.time()
-    radiation_singleprocessing(cea_daysim, zone_building_names, locator, config.radiation, geometry_pickle_dir,
-                               num_processes=config.get_number_of_processes())
+    run_daysim_simulation(cea_daysim, zone_building_names, locator, config.radiation, geometry_pickle_dir,
+                          num_processes=config.get_number_of_processes())
 
     # Remove staging location after everything is successful
     shutil.rmtree(daysim_staging_location)
