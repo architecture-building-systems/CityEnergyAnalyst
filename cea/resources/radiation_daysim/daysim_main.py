@@ -3,9 +3,7 @@ import os
 
 import numpy as np
 import pandas as pd
-import py4design.py2radiance as py2radiance
-import py4design.py3dmodel.calculate as calculate
-from py4design import py3dmodel
+from py4design import py3dmodel, py2radiance
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -49,7 +47,8 @@ def generate_sensor_surfaces(occface, wall_dim, roof_dim, srf_type, orientation,
     sensor_cord = [py3dmodel.calculate.face_midpt(x) for x in sensor_surfaces]
     sensor_type = [srf_type for x in sensor_surfaces]
     sensor_orientation = [orientation for x in sensor_surfaces]
-    sensor_area = [calculate.face_area(x) * (1.0 - scalar) for x, scalar in zip(sensor_surfaces, sensor_intersection)]
+    sensor_area = [py3dmodel.calculate.face_area(x) * (1.0 - scalar)
+                   for x, scalar in zip(sensor_surfaces, sensor_intersection)]
 
     return sensor_dir, sensor_cord, sensor_type, sensor_area, sensor_orientation, sensor_intersection
 
