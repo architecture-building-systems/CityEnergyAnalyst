@@ -102,7 +102,7 @@ def electricity_calculations_of_all_buildings(locator, master_to_slave_vars,
                                      'E_GRID_directload_W': E_GRID_directload_W
                                      }
 
-    # CALC COSTS and Capacities
+    # CALC COSTS and Capacities (for local renewable generation, i.e. PV, and the grid itself)
     district_microgrid_costs, \
     district_electricity_capacity_installed = calc_electricity_performance_costs(locator,
                                                                                  E_GRID_directload_W,
@@ -293,7 +293,8 @@ def electricity_activation_curve(E_CHP_gen_W,
 
 def calc_district_system_electricity_generated(locator,
                                                master_to_slave_vars):
-    # TECHNOLOGEIS THAT ONLY GENERATE ELECTRICITY
+    # TODO: Handle the case where no PV potential has been calculated (assuming no PV capacity is installed)
+    # TECHNOLOGIES THAT ONLY GENERATE ELECTRICITY
     E_PV_gen_W = calc_available_generation_PV(locator, master_to_slave_vars.building_names_all,
                                               master_to_slave_vars.PV_share)
 
@@ -345,7 +346,7 @@ def extract_electricity_demand_buildings(master_to_slave_vars, building_names, l
     buildings_district_scale_to_district_heating = master_to_slave_vars.buildings_district_scale_to_district_heating
     buildings_district_scale_to_district_cooling = master_to_slave_vars.buildings_district_scale_to_district_cooling
 
-    # these are all the buildngs with heating and cooling demand
+    # these are all the buildings with heating and cooling demand
     building_names_heating = master_to_slave_vars.building_names_heating
     building_names_cooling = master_to_slave_vars.building_names_cooling
 
@@ -462,7 +463,7 @@ def extract_fuels_demand_buildings(master_to_slave_vars, building_names, locator
     buildings_district_scale_to_district_heating = master_to_slave_vars.buildings_district_scale_to_district_heating
     buildings_district_scale_to_district_cooling = master_to_slave_vars.buildings_district_scale_to_district_cooling
 
-    # these are all the buildngs with heating and cooling demand
+    # these are all the buildings with heating and cooling demand
     building_names_heating = master_to_slave_vars.building_names_heating
 
     # system requirements
