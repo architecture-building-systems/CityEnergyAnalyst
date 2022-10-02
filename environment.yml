@@ -10,6 +10,7 @@ dependencies:
 - itsdangerous=1.1.0
 - flask-cors
 - flask-restplus
+- Werkzeug=2.0.1
 - flask-socketio=4.3.2
 - gevent
 - gevent-websocket
