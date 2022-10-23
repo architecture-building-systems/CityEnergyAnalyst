@@ -7,7 +7,7 @@
 .. |pic3| image:: https://raw.githubusercontent.com/architecture-building-systems/CityEnergyAnalyst/image-data/badge-lines-of-code.svg
     :alt: Lines of code
 
-.. image:: https://static1.squarespace.com/static/587d65bdbebafb893ba24447/t/587d845d29687f2d2febee75/1492591264954/?format=1500w
+.. image:: cea_logo.png
     :height: 420 px
     :width: 1500 px
     :scale: 25 %
