@@ -5,12 +5,10 @@ channels:
 dependencies:
 - deap
 - ephem
-- flask=1.1.4
-- jinja2=2.11.3
-- itsdangerous=1.1.0
+- flask
 - flask-cors
-- flask-restplus
-- flask-socketio=4.3.2
+- flask-restx
+- flask-socketio=4.3.*
 - werkzeug==2.0.*
 - gevent
 - gevent-websocket

@@ -8,7 +8,7 @@ jobs: maintain a list of jobs to be simulated.
 import subprocess
 import psutil
 
-from flask_restplus import Namespace, Resource, fields, reqparse
+from flask_restx import Namespace, Resource, fields, reqparse
 from flask import request, current_app
 
 __author__ = "Daren Thomas"
