@@ -11,6 +11,7 @@ dependencies:
 - flask-cors
 - flask-restplus
 - flask-socketio=4.3.2
+- werkzeug==2.0.*
 - gevent
 - gevent-websocket
 - ipykernel
