@@ -1,0 +1,30 @@
+name: Build CEA Windows setup
+
+on:
+  pull_request:
+    types:
+      - opened
+    branches:
+      - 'release-**'
+
+jobs:
+  build:
+    runs-on: "windows-latest"
+        
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          cache: 'yarn'
+      
+      - name: Install makensis
+        run: winget install NSIS.NSIS
+
+      - name: Install Conda environment with Micromamba
+        uses: mamba-org/provision-with-micromamba@main
+        with:
+          cache-env: true
+
+      - name: Install CEA
+        shell: bash -l {0}
+        run: pip install .
