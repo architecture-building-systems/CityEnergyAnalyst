@@ -2,8 +2,7 @@ name: Build CEA Windows setup
 
 on:
   pull_request:
-    types:
-      - opened
+    types: [opened, synchronize]
     branches:
       - 'release-**'
 
