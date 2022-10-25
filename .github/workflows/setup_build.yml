@@ -1,11 +1,11 @@
 name: Build CEA Windows setup
 
 on:
-  pull_request:
-    types:
-      - opened
-    branches:
-      - 'release-**'
+  workflow_dispatch:
+    inputs:
+      version:
+        required: true
+        type: string
 
 jobs:
   build:
