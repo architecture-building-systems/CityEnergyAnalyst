@@ -13,9 +13,6 @@ jobs:
         
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          cache: 'yarn'
       
       - name: Install makensis
         run: winget install NSIS.NSIS
