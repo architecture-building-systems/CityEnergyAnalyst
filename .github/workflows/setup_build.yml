@@ -40,4 +40,4 @@ jobs:
           cea-config build \
             --yarn ${{ steps.exe_locations.outputs.yarn }} \
             --nsis ${{ steps.exe_locations.outputs.nsis }} \
-            --gui ${{ GITHUB_WORKSPACE }}
+            --gui $GITHUB_WORKSPACE
