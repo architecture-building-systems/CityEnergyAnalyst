@@ -14,8 +14,16 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       
-      - name: Install makensis
-        run: choco install nsis
+      - name: Clone GUI repo
+        uses: actions/checkout@v3
+        with:
+          repository: architecture-building-systems/CityEnergyAnalyst-GUI 
+      
+      - name: Get exe locations
+        id: exe_locations
+        run: |
+          echo "yarn=$(which yarn)" >> $GITHUB_OUTPUT
+          echo "nsis=$(which makensis)" >> $GITHUB_OUTPUT
 
       - name: Install Conda environment with Micromamba
         uses: mamba-org/provision-with-micromamba@main
@@ -25,3 +33,11 @@ jobs:
       - name: Install CEA
         shell: bash -l {0}
         run: pip install .
+      
+      - name: Set cea config
+        shell: bash -l {0}
+        run: |
+          cea-config build \
+            --yarn ${{ steps.exe_locations.outputs.yarn }} \
+            --nsis ${{ steps.exe_locations.outputs.nsis }} \
+            --gui ${{ GITHUB_WORKSPACE }}
