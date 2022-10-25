@@ -14,11 +14,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       
-      - name: Clone GUI repo
-        uses: actions/checkout@v3
-        with:
-          repository: architecture-building-systems/CityEnergyAnalyst-GUI 
-      
       - name: Get exe locations
         id: exe_locations
         run: |
@@ -33,6 +28,11 @@ jobs:
       - name: Install CEA
         shell: bash -l {0}
         run: pip install .
+      
+      - name: Clone GUI repo
+        uses: actions/checkout@v3
+        with:
+          repository: architecture-building-systems/CityEnergyAnalyst-GUI 
       
       - name: Set cea config
         shell: bash -l {0}
