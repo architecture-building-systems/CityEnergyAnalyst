@@ -41,5 +41,5 @@ jobs:
           cea-config build
           --yarn "${{ steps.exe_locations.outputs.yarn }}"
           --nsis "${{ steps.exe_locations.outputs.nsis }}"
-          --gui "$GITHUB_WORKSPACE/GUI"
-          --conda "$MAMBA_EXE"
+          --gui $GITHUB_WORKSPACE/GUI
+          --conda $MAMBA_EXE
