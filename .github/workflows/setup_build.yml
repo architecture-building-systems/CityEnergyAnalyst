@@ -16,10 +16,9 @@ jobs:
       
       - name: Get exe locations
         id: exe_locations
-        shell: bash -l {0}
         run: |
-          echo "yarn=$(which yarn)" >> $GITHUB_OUTPUT
-          echo "nsis=$(which makensis)" >> $GITHUB_OUTPUT
+          echo "yarn=$((get-command yarn).Path)" >> $GITHUB_OUTPUT
+          echo "nsis=$((get-command makensis).Path)" >> $GITHUB_OUTPUT
 
       - name: Install Conda environment with Micromamba
         uses: mamba-org/provision-with-micromamba@main
@@ -41,4 +40,5 @@ jobs:
           cea-config build \
             --yarn ${{ steps.exe_locations.outputs.yarn }} \
             --nsis ${{ steps.exe_locations.outputs.nsis }} \
-            --gui $GITHUB_WORKSPACE
+            --gui $GITHUB_WORKSPACE \
+            --conda $MAMBA_EXE
