@@ -41,5 +41,15 @@ jobs:
           cea-config build
           --yarn "${{ steps.exe_locations.outputs.yarn }}"
           --nsis "${{ steps.exe_locations.outputs.nsis }}"
-          --gui $GITHUB_WORKSPACE/GUI
+          --gui $GITHUB_WORKSPACE\GUI
           --conda $MAMBA_EXE
+        
+      - name: Build setup
+        shell: powershell
+        run: cea-dev build
+      
+      - name: Upload setup
+        uses: actions/upload-artifact@v3
+        with:
+          name: setup
+          path: $GITHUB_WORKSPACE\setup\Output
