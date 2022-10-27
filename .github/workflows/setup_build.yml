@@ -17,8 +17,8 @@ jobs:
       - name: Get exe locations
         id: exe_locations
         run: |
-          echo "yarn=$((get-command yarn).Path)" >> $GITHUB_OUTPUT
-          echo "nsis=$((get-command makensis).Path)" >> $GITHUB_OUTPUT
+          "yarn=$((get-command yarn).Path)" >> $env:GITHUB_OUTPUT
+          "nsis=$((get-command makensis).Path)" >> $env:GITHUB_OUTPUT
 
       - name: Install Conda environment with Micromamba
         uses: mamba-org/provision-with-micromamba@main
