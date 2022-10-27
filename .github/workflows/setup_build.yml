@@ -26,7 +26,7 @@ jobs:
           cache-env: true
 
       - name: Install CEA
-        shell: bash -l {0}
+        shell: powershell
         run: pip install .
       
       - name: Clone GUI repo
@@ -36,7 +36,7 @@ jobs:
           path: GUI
       
       - name: Set cea config
-        shell: bash -l {0}
+        shell: powershell
         run: |
           cea-config build \
             --yarn ${{ steps.exe_locations.outputs.yarn }} \
