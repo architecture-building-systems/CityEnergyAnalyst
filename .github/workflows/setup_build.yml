@@ -16,6 +16,7 @@ jobs:
       
       - name: Get exe locations
         id: exe_locations
+        shell: bash -l {0}
         run: |
           echo "yarn=$(which yarn)" >> $GITHUB_OUTPUT
           echo "nsis=$(which makensis)" >> $GITHUB_OUTPUT
