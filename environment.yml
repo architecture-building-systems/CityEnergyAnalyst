@@ -8,7 +8,6 @@ dependencies:
 - flask
 - flask-cors
 - flask-restx
-- flask-socketio=4.3.*
 - werkzeug==2.0.*
 - gevent
 - gevent-websocket
