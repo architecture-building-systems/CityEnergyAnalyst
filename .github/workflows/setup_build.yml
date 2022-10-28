@@ -45,7 +45,7 @@ jobs:
           --yarn "${{ steps.exe_locations.outputs.yarn }}"
           --nsis "${{ steps.exe_locations.outputs.nsis }}"
           --gui $env:GITHUB_WORKSPACE\GUI
-          --conda $env:CONDA\bin\conda
+          --conda $env:CONDA\condabin\conda.bat
         
       - name: Build setup
         shell: powershell
