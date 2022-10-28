@@ -30,7 +30,7 @@ jobs:
 
       - name: Install CEA
         shell: powershell
-        run: pip install .
+        run: pip install -e .
       
       - name: Clone GUI repo
         uses: actions/checkout@v3
