@@ -18,7 +18,9 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: 3.8
-          cache: 'pip
+          cache: 'pip'
+          cache-dependency-path: |
+            setup.py
 
       - name: Get exe locations
         id: exe_locations
