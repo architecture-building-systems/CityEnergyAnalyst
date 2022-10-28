@@ -137,12 +137,21 @@ def extract_tar_file(repo_folder):
     os.unlink(python_tar)
 
 
+def check_yarn_exists(yarn_location):
+    try:
+        subprocess.run([yarn_location, "-v"], check=True)
+        return True
+    except subprocess.CalledProcessError:
+        return False
+
+
 def yarn_package(config, repo_folder):
     cea_gui_folder = config.development.gui
     if not os.path.exists(os.path.join(cea_gui_folder, "package.json")):
         raise ValueError("Please configure the path to the CityEnergyAnalyst-GUI repository ({development:gui})")
-    if not os.path.exists(config.development.yarn):
+    if not config.development.yarn or not check_yarn_exists(config.development.yarn):
         raise ValueError("Please configure the path to yarn ({development:yarn})")
+
     print("RUN yarn")
     subprocess.run([config.development.yarn], cwd=cea_gui_folder)
     print("RUN yarn package")
