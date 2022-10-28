@@ -13,17 +13,17 @@ jobs:
         
     steps:
       - uses: actions/checkout@v3
+
+      - name: Set up Python 3.8
+          uses: actions/setup-python@v2
+          with:
+            python-version: 3.8
       
       - name: Get exe locations
         id: exe_locations
         run: |
           "yarn=$((get-command yarn).Path)" >> $env:GITHUB_OUTPUT
           "nsis=$((get-command makensis).Path)" >> $env:GITHUB_OUTPUT
-
-      - name: Install Conda environment with Micromamba
-        uses: mamba-org/provision-with-micromamba@main
-        with:
-          cache-env: true
 
       - name: Install CEA
         shell: powershell
@@ -42,7 +42,7 @@ jobs:
           --yarn "${{ steps.exe_locations.outputs.yarn }}"
           --nsis "${{ steps.exe_locations.outputs.nsis }}"
           --gui $GITHUB_WORKSPACE\GUI
-          --conda $MAMBA_EXE
+          --conda $CONDA\bin\conda
         
       - name: Build setup
         shell: powershell
