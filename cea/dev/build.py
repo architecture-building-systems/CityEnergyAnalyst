@@ -139,7 +139,7 @@ def extract_tar_file(repo_folder):
 
 def check_yarn_exists(yarn_location):
     try:
-        subprocess.run([yarn_location, "-v"], check=True)
+        subprocess.run(f"{yarn_location} -v", check=True)
         return True
     except subprocess.CalledProcessError:
         return False

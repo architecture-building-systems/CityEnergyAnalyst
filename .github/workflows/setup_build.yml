@@ -10,10 +10,6 @@ on:
 jobs:
   build:
     runs-on: "windows-latest"
-        
-    steps:
-      - run: yarn -v
-        shell: powershell
 
       - uses: actions/checkout@v3
 
