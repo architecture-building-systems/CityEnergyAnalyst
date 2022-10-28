@@ -86,6 +86,7 @@ def get_env(config, conda_env):
     env["CEA_CONDA_PATH"] = config.development.conda
     env["CEA_CONDA_ENV"] = conda_env
 
+    print(os.listdir(env["CONDA"]))
     print(os.listdir(os.path.dirname(config.development.conda)))
 
     return env
