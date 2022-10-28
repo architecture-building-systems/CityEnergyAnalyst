@@ -25,7 +25,6 @@ jobs:
       - name: Get exe locations
         id: exe_locations
         run: |
-          "yarn=$((get-command yarn).Path)" >> $env:GITHUB_OUTPUT
           "nsis=$((get-command makensis).Path)" >> $env:GITHUB_OUTPUT
 
       - name: Install CEA
@@ -42,7 +41,7 @@ jobs:
         shell: powershell
         run: >
           cea-config build
-          --yarn "${{ steps.exe_locations.outputs.yarn }}"
+          --yarn yarn
           --nsis "${{ steps.exe_locations.outputs.nsis }}"
           --gui $env:GITHUB_WORKSPACE\GUI
           --conda $env:CONDA\condabin\conda.bat
