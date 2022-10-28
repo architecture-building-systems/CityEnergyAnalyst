@@ -62,10 +62,10 @@ def conda_env_exists(config, env_name):
     env = get_env(config, "base")
 
     try:
-        completed_process = subprocess.run(command, capture_output=True, stderr=subprocess.STDOUT,
-                                           check=True, env=env, shell=True)
+        completed_process = subprocess.run(command, capture_output=True, check=True, env=env, shell=True)
     except subprocess.CalledProcessError as cpe:
         print(cpe.output)
+        print(cpe.stderr)
         raise
 
     stdout = completed_process.stdout.decode()
