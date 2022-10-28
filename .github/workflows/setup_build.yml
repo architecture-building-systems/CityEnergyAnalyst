@@ -12,6 +12,9 @@ jobs:
     runs-on: "windows-latest"
         
     steps:
+      - run: yarn -v
+        shell: powershell
+
       - uses: actions/checkout@v3
 
       - name: Set up Python 3.8
