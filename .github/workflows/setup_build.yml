@@ -31,8 +31,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           cache: 'yarn'
-          cache-dependency-path: |
-            ${{ env.GITHUB_WORKSPACE }}\GUI\yarn.lock
+          cache-dependency-path: '**/yarn.lock'
 
       - name: Get exe locations
         id: exe_locations
