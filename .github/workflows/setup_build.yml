@@ -21,6 +21,17 @@ jobs:
           cache-dependency-path: |
             setup.py
 
+      - name: Clone GUI repo
+        uses: actions/checkout@v3
+        with:
+          repository: architecture-building-systems/CityEnergyAnalyst-GUI
+          path: GUI
+
+      - name: Set up Node
+        uses: actions/setup-node@v3
+        with:
+          cache: 'yarn'
+
       - name: Get exe locations
         id: exe_locations
         run: |
@@ -30,13 +41,7 @@ jobs:
         shell: powershell
         run: pip install -e .
       
-      - name: Clone GUI repo
-        uses: actions/checkout@v3
-        with:
-          repository: architecture-building-systems/CityEnergyAnalyst-GUI
-          path: GUI
-      
-      - name: Set cea config
+      - name: Set CEA build script config
         shell: powershell
         run: >
           cea-config build
@@ -45,7 +50,7 @@ jobs:
           --gui $env:GITHUB_WORKSPACE\GUI
           --conda $env:CONDA\condabin\conda.bat
         
-      - name: Build setup
+      - name: Build CEA setup
         shell: powershell
         run: cea-dev build
       
