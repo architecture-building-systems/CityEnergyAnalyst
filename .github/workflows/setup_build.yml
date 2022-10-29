@@ -32,7 +32,7 @@ jobs:
         with:
           cache: 'yarn'
           cache-dependency-path: |
-            $GITHUB_WORKSPACE\GUI\yarn.lock
+            ${{ env.GITHUB_WORKSPACE }}\GUI\yarn.lock
 
       - name: Get exe locations
         id: exe_locations
