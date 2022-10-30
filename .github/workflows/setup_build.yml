@@ -30,13 +30,13 @@ jobs:
         shell: bash -l {0}
         run: |
           micromamba activate conda-pack
-          conda-pack -p $MAMBA_ROOT_PREFIX/envs/cea -o $GITHUB_WORKSPACE/cea.tar.gz
+          conda-pack -p $MAMBA_ROOT_PREFIX/envs/cea -o $GITHUB_WORKSPACE/cea.tar.gz --n-threads -1
 
       - name: Extract tar
         shell: bash
         run: |
-          mkdir $GITHUB_WORKSPACE/setup/Dependencies/Python
-          tar -xzf $GITHUB_WORKSPACE\cea.tar.gz -C $GITHUB_WORKSPACE\setup\Dependencies\Python --force-local
+          mkdir -p $GITHUB_WORKSPACE/setup/Dependencies/Python
+          tar -xvzf $GITHUB_WORKSPACE/cea.tar.gz -C $GITHUB_WORKSPACE/setup/Dependencies/Python --force-local
 
       - name: Create sdist of CEA
         shell: bash
