@@ -13,11 +13,15 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Install Conda environment from environment.yml
+      - name: Install conda environment from environment.yml
         uses: mamba-org/provision-with-micromamba@main
         with:
           cache-env: true
           environment-name: cea
+
+      - name: Install CEA to conda environment
+        shell: bash -l {0}
+        run: pip install .
 
       - name: Install conda-pack
         run: micromamba create -n conda-pack conda-pack
