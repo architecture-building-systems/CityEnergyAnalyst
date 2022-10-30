@@ -37,13 +37,14 @@ jobs:
         run: |
           mkdir -p $GITHUB_WORKSPACE/setup/Dependencies/Python
           cd $GITHUB_WORKSPACE/setup/Dependencies/Python
-          tar -xvzf $GITHUB_WORKSPACE/cea.tar.gz --force-local
+          tar -xzf $GITHUB_WORKSPACE/cea.tar.gz --force-local
 
       - name: Create sdist of CEA
         shell: bash
         run: |
+          CEA_VERSION=$(python -c "import cea; print(cea.__version__)")
           python setup.py sdist
-          mv $GITHUB_WORKSPACE/dist/cityenergyanalyst-*.tar.gz $GITHUB_WORKSPACE/setup/Dependencies/cityenergyanalyst.tar.gz
+          mv $GITHUB_WORKSPACE/dist/cityenergyanalyst-$CEA_VERSION.tar.gz $GITHUB_WORKSPACE/setup/Dependencies/cityenergyanalyst.tar.gz
 
       - name: Clone GUI repo
         uses: actions/checkout@v3
