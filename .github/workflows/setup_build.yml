@@ -34,7 +34,7 @@ jobs:
 
       - name: Extract tar
         shell: bash
-        working-directory: $GITHUB_WORKSPACE
+        working-directory: ${{ GITHUB_WORKSPACE }}
         run: tar -xzf cea.tar.gz -C setup/Dependencies/Python
 
       - name: Create sdist of CEA
@@ -57,7 +57,7 @@ jobs:
 
       - name: Package CEA GUI
         shell: bash
-        working-directory: $GITHUB_WORKSPACE/GUI
+        working-directory: ${{ GITHUB_WORKSPACE }}/GUI
         run: |
           yarn package
           mv out/CityEnergyAnalyst-GUI-win32-x64 $GITHUB_WORKSPACE/setup/CityEnergyAnalyst-GUI-win32-x64
