@@ -33,9 +33,9 @@ jobs:
           conda-pack -p $MAMBA_ROOT_PREFIX/envs/cea -o $GITHUB_WORKSPACE/cea.tar.gz
 
       - name: Extract tar
-        shell: powershell
+        shell: bash
         run: |
-          tar -xzf $env:$GITHUB_WORKSPACE\cea.tar.gz -C $env:$GITHUB_WORKSPACE\setup\Dependencies\Python
+          tar -xzf $GITHUB_WORKSPACE/cea.tar.gz -C $GITHUB_WORKSPACE/setup/Dependencies/Python --force-local
 
       - name: Create sdist of CEA
         shell: bash
