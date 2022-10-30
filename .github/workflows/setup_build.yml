@@ -46,7 +46,7 @@ jobs:
         shell: powershell
         run: >
           cea-config build
-          --yarn "powershell -command yarn"
+          --yarn yarn
           --nsis "${{ steps.exe_locations.outputs.nsis }}"
           --gui $env:GITHUB_WORKSPACE\GUI
           --conda $env:CONDA\condabin\conda.bat
