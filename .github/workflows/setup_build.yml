@@ -26,7 +26,7 @@ jobs:
         shell: bash -l {0}
         run: |
           micromamba activate conda-pack
-          conda pack -n cea -o $GITHUB_WORKSPACE/cea.tar.gz
+          conda-pack -n cea -o $GITHUB_WORKSPACE/cea.tar.gz
 
       - name: Extract tar
         shell: bash
