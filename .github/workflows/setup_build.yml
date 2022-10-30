@@ -36,7 +36,8 @@ jobs:
         shell: bash
         run: |
           mkdir -p $GITHUB_WORKSPACE/setup/Dependencies/Python
-          tar -xvzf $GITHUB_WORKSPACE/cea.tar.gz -C $GITHUB_WORKSPACE/setup/Dependencies/Python --force-local
+          cd $GITHUB_WORKSPACE/setup/Dependencies/Python
+          tar -xvzf $GITHUB_WORKSPACE/cea.tar.gz --force-local
 
       - name: Create sdist of CEA
         shell: bash
