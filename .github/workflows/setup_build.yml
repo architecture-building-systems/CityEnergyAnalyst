@@ -66,6 +66,12 @@ jobs:
           yarn package
           mv out/CityEnergyAnalyst-GUI-win32-x64 $GITHUB_WORKSPACE/setup/CityEnergyAnalyst-GUI-win32-x64
 
+      - name: Make setup
+        shell: bash
+        run: |
+          mkdir -p $GITHUB_WORKSPACE/setup/Output
+          makensis $GITHUB_WORKSPACE/setup/cityenergyanalyst.nsi
+
       - name: Upload setup
         uses: actions/upload-artifact@v3
         with:
