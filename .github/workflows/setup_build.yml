@@ -35,6 +35,7 @@ jobs:
       - name: Extract tar
         shell: bash
         run: |
+          mkdir $GITHUB_WORKSPACE/setup/Dependencies/Python
           tar -xzf $GITHUB_WORKSPACE/cea.tar.gz -C $GITHUB_WORKSPACE/setup/Dependencies/Python --force-local
 
       - name: Create sdist of CEA
