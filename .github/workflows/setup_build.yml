@@ -13,13 +13,30 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Set up Python 3.8
-        uses: actions/setup-python@v4
+      - name: Install Conda environment from environment.yml
+        uses: mamba-org/provision-with-micromamba@main
         with:
-          python-version: 3.8
-          cache: 'pip'
-          cache-dependency-path: |
-            setup.py
+          cache-env: true
+          environment-name: cea
+
+      - name: Install conda-pack
+        run: micromamba create -n conda-pack conda-pack
+
+      - name: Pack conda environment
+        shell: bash -l {0}
+        run: |
+          micromamba activate conda-pack
+          conda pack -n cea -o $GITHUB_WORKSPACE/cea.tar.gz
+
+      - name: Extract tar
+        shell: bash
+        run: tar -xzf $GITHUB_WORKSPACE/cea.tar.gz -C $GITHUB_WORKSPACE/setup/Dependencies/Python
+
+      - name: Create sdist of CEA
+        shell: bash
+        run: |
+          python setup.py sdist
+          mv $GITHUB_WORKSPACE/dist/cityenergyanalyst-*.tar.gz $GITHUB_WORKSPACE/setup/Dependencies/cityenergyanalyst.tar.gz
 
       - name: Clone GUI repo
         uses: actions/checkout@v3
@@ -33,28 +50,13 @@ jobs:
           cache: 'yarn'
           cache-dependency-path: '**/yarn.lock'
 
-      - name: Get exe locations
-        id: exe_locations
+      - name: Package CEA GUI
+        shell: bash
+        working-directory: $GITHUB_WORKSPACE/GUI
         run: |
-          "nsis=$((get-command makensis).Path)" >> $env:GITHUB_OUTPUT
+          yarn package
+          mv out/CityEnergyAnalyst-GUI-win32-x64 $GITHUB_WORKSPACE/setup/CityEnergyAnalyst-GUI-win32-x64
 
-      - name: Install CEA
-        shell: powershell
-        run: pip install -e .
-      
-      - name: Set CEA build script config
-        shell: powershell
-        run: >
-          cea-config build
-          --yarn yarn
-          --nsis "${{ steps.exe_locations.outputs.nsis }}"
-          --gui $env:GITHUB_WORKSPACE\GUI
-          --conda $env:CONDA\condabin\conda.bat
-        
-      - name: Build CEA setup
-        shell: powershell
-        run: cea-dev build
-      
       - name: Upload setup
         uses: actions/upload-artifact@v3
         with:
