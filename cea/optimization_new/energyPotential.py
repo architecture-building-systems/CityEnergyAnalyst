@@ -64,98 +64,130 @@ class EnergyPotential(object):
     def load_PV_potential(self, locator, building_codes):
         self.type = 'SolarPV'
         self.scale = 'Building'
-        self.main_potential = pd.DataFrame(0.0, index=np.arange(self.time_frame),
-                                           columns=pd.concat([pd.Series(['domain_potential']), building_codes]))
         pv_potential_files = np.vectorize(locator.PV_results)(building_codes)
-        i = 0
-        for file in pv_potential_files:
-            if exists(file):
-                self.main_potential[building_codes[i]] = pd.read_csv(file).E_PV_gen_kWh
-            else:
-                self.main_potential[building_codes[i]] = pd.Series(0.0)
-            i += 1
-        self.main_potential['domain_potential'] = self.main_potential[building_codes].sum(axis=1)
-        self.main_energy_carrier = 'Electricity'
+        self._get_building_potentials(pv_potential_files, building_codes, 'E_PV_gen_kWh')
+        self.main_energy_carrier = 'E230AC'
         return self
 
-    def load_PVT_potential(self, locator, building_codes):
+    def load_PVT_potential(self, locator, building_codes, thermal_energy_carriers):
         self.type = 'SolarPVT'
         self.scale = 'Building'
-        self.main_potential = pd.DataFrame(0.0, index=np.arange(self.time_frame),
-                                           columns=pd.concat([pd.Series(['domain_potential']), building_codes]))
-        self.auxiliary_potential = pd.DataFrame(0.0, index=np.arange(self.time_frame),
-                                                columns=pd.concat([pd.Series(['domain_potential']), building_codes]))
         pvt_potential_files = np.vectorize(locator.PVT_results)(building_codes)
-        i = 0
-        for file in pvt_potential_files:
-            if exists(file):
-                pvt_potential = pd.read_csv(file)
-                self.main_potential[building_codes[i]] = pvt_potential.E_PVT_gen_kWh
-                self.auxiliary_potential[building_codes[i]] = pvt_potential.Q_PVT_gen_kWh
-            else:
-                self.main_potential[building_codes[i]] = pd.Series(0.0)
-                self.auxiliary_potential[building_codes[i]] = pd.Series(0.0)
-            i += 1
-        self.main_potential['domain_potential'] = self.main_potential[building_codes].sum(axis=1)
-        self.auxiliary_potential['domain_potential'] = self.auxiliary_potential[building_codes].sum(axis=1)
-        self.main_energy_carrier = 'Electricity'
-        self.auxiliary_energy_carrier = 'Thermal'
+        average_return_temperature = self._get_building_potentials(pvt_potential_files, building_codes,
+                                                                  'E_PVT_gen_kWh', 'T_PVT_re_C', 'Q_PVT_gen_kWh')
+        self.main_energy_carrier = 'E230AC'
+        self.auxiliary_energy_carrier = self._temp_to_thermal_ec(average_return_temperature, thermal_energy_carriers)
         return self
 
-    def load_SCET_potential(self, locator, building_codes):
+    def load_SCET_potential(self, locator, building_codes, thermal_energy_carriers):
         self.type = 'SolarCollectorET'
         self.scale = 'Building'
-        self.main_potential = pd.DataFrame(0.0, index=np.arange(self.time_frame),
-                                           columns=pd.concat([pd.Series(['domain_potential']), building_codes]))
         scet_potential_files = np.vectorize(locator.SC_results)(building_codes, "ET")
-        i = 0
-        for file in scet_potential_files:
-            if exists(file):
-                self.main_potential[building_codes[i]] = pd.read_csv(file).Q_SC_gen_kWh
-            else:
-                self.main_potential[building_codes[i]] = pd.Series(0.0)
-            i += 1
-        self.main_potential['domain_potential'] = self.main_potential[building_codes].sum(axis=1)
-        self.main_energy_carrier = 'Thermal'
+        average_return_temperature = self._get_building_potentials(scet_potential_files, building_codes,
+                                                                  'Q_SC_gen_kWh', 'T_SC_re_C')
+        self.main_energy_carrier = self._temp_to_thermal_ec(average_return_temperature, thermal_energy_carriers)
         return self
 
-    def load_SCFP_potential(self, locator, building_codes):
+    def load_SCFP_potential(self, locator, building_codes, thermal_energy_carriers):
         self.type = 'SolarCollectorFP'
         self.scale = 'Building'
-        self.main_potential = pd.DataFrame(0.0, index=np.arange(self.time_frame),
-                                           columns=pd.concat([pd.Series(['domain_potential']), building_codes]))
-        scfp_potential_files = np.vectorize(locator.SC_results)(building_codes, "ET")
-        i = 0
-        for file in scfp_potential_files:
-            if exists(file):
-                self.main_potential[building_codes[i]] = pd.read_csv(file).Q_SC_gen_kWh
-            else:
-                self.main_potential[building_codes[i]] = pd.Series(0.0)
-            i += 1
-        self.main_potential['domain_potential'] = self.main_potential[building_codes].sum(axis=1)
-        self.main_energy_carrier = 'Thermal'
+        scfp_potential_files = np.vectorize(locator.SC_results)(building_codes, "FP")
+        average_return_temperature = self._get_building_potentials(scfp_potential_files, building_codes,
+                                                                  'Q_SC_gen_kWh', 'T_SC_re_C')
+        self.main_energy_carrier = self._temp_to_thermal_ec(average_return_temperature, thermal_energy_carriers)
         return self
 
-    def load_geothermal_potential(self, geothermal_potential_file):
+    def load_geothermal_potential(self, geothermal_potential_file, thermal_energy_carriers):
         self.type = 'Geothermal'
         self.scale = 'Domain'
         if exists(geothermal_potential_file):
-            self.main_potential = pd.read_csv(geothermal_potential_file).QGHP_kW
-        self.main_energy_carrier = 'Thermal'
-        return self
+            geothermal_potential = pd.read_csv(geothermal_potential_file)
+            self.main_potential = geothermal_potential.QGHP_kW
+            average_return_temperature = self._get_average_temp(geothermal_potential.Ts_C)
+            self.main_energy_carrier = self._temp_to_thermal_ec(average_return_temperature, thermal_energy_carriers)
+            return self
+        else:
+            return None
 
-    def load_water_body_potential(self, water_body_potential_file):
+    def load_water_body_potential(self, water_body_potential_file, thermal_energy_carriers):
         self.type = 'WaterBody'
         self.scale = 'Domain'
         if exists(water_body_potential_file):
-            self.main_potential = pd.read_csv(water_body_potential_file).QLake_kW
-        self.main_energy_carrier = 'Thermal'
-        return self
+            water_body_potential = pd.read_csv(water_body_potential_file)
+            self.main_potential = water_body_potential.QLake_kW
+            average_return_temperature = self._get_average_temp(water_body_potential.Ts_C)
+            self.main_energy_carrier = self._temp_to_thermal_ec(average_return_temperature, thermal_energy_carriers)
+            return self
+        else:
+            return None
 
-    def load_sewage_potential(self, sewage_potential_file):
+    def load_sewage_potential(self, sewage_potential_file, thermal_energy_carriers):
         self.type = 'Sewage'
         self.scale = 'Domain'
         if exists(sewage_potential_file):
-            self.main_potential = pd.read_csv(sewage_potential_file).Qsw_kW
-        self.main_energy_carrier = 'Thermal'
-        return self
+            sewage_potential = pd.read_csv(sewage_potential_file)
+            self.main_potential = sewage_potential.Qsw_kW
+            average_return_temperature = self._get_average_temp(sewage_potential.Ts_C)
+            self.main_energy_carrier = self._temp_to_thermal_ec(average_return_temperature, thermal_energy_carriers)
+            return self
+        else:
+            return None
+
+    def _get_building_potentials(self, energy_potential_files, building_codes, main_potential_column_name,
+                                 temperature_column_name=None, auxiliary_potential_column_name=None):
+        """
+        Gets main and auxiliary potentials from the stored energy potential files and stores them in the corresponding
+        object attributes. In case a temperature column name is indicated, the average temperature (when operating
+        the corresponding component at maximum potential) is returned.
+        """
+        # check if there are potential files for any of the buildings
+        if not any([exists(file) for file in energy_potential_files]):
+            print(f"No {self.type} potentials could be found for the indicated buildings.")
+            return np.nan
+        # initialise necessary variables
+        nbr_of_files = len(energy_potential_files)
+        average_temps = [np.nan] * nbr_of_files
+        self.main_potential = pd.DataFrame(0.0, index=np.arange(self.time_frame),
+                                           columns=pd.concat([pd.Series(['domain_potential']), building_codes]))
+        if auxiliary_potential_column_name is not None:
+            self.auxiliary_potential = pd.DataFrame(0.0, index=np.arange(self.time_frame),
+                                                    columns=pd.concat([pd.Series(['domain_potential']), building_codes]))
+        # if specific potential file for a building exists, save potential to object attribute (pd.Dataframe)
+        for (file, i) in zip(energy_potential_files, np.arange(nbr_of_files)):
+            if exists(file):
+                pvt_potential = pd.read_csv(file)
+                self.main_potential[building_codes[i]] = pvt_potential[main_potential_column_name]
+                if temperature_column_name is not None:
+                    average_temps[i] = self._get_average_temp(pvt_potential[temperature_column_name], building_codes[i])
+                if auxiliary_potential_column_name is not None:
+                    self.auxiliary_potential[building_codes[i]] = pvt_potential[auxiliary_potential_column_name]
+        # calculate total potential across the domain
+        self.main_potential['domain_potential'] = self.main_potential[building_codes].sum(axis=1)
+        if auxiliary_potential_column_name is not None:
+            self.auxiliary_potential['domain_potential'] = self.auxiliary_potential[building_codes].sum(axis=1)
+        # if thermal(!) energy potential: return average return temperature
+        if temperature_column_name is not None:
+            average_temperature = np.nanmean(average_temps)
+            return average_temperature
+
+    def _get_average_temp(self, temperature_series, building_code=None):
+        average_temp = np.mean(temperature_series)
+        if all(np.isnan(temperature_series)):
+            if building_code is None:
+                print(f"There seems to be a problem with the {self.type} potential! "
+                      f"Please check the corresponding .csv-file.")
+            else:
+                print(f"There seems to be a problem with the {self.type} potential of building {building_code}! "
+                      f"Please check the corresponding .csv-file.")
+        elif average_temp == 0:
+            average_temp = np.nan
+        return average_temp
+
+    @staticmethod
+    def _temp_to_thermal_ec(temperature, thermal_energy_carriers):
+        if not np.isnan(temperature):
+            index_closest_mean_temp = (thermal_energy_carriers['mean_qual'] - temperature).abs().nsmallest(n=1).index[0]
+            energy_carrier_code = thermal_energy_carriers['code'].iloc[index_closest_mean_temp]
+        else:
+            energy_carrier_code = "T???"
+        return energy_carrier_code
