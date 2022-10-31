@@ -83,4 +83,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: setup
-          path: $GITHUB_WORKSPACE\setup\Output
+          path: ${{ GITHUB_WORKSPACE }}\setup\Output
