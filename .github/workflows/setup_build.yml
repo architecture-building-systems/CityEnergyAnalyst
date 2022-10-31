@@ -77,7 +77,7 @@ jobs:
         shell: bash
         run: |
           mkdir -p $GITHUB_WORKSPACE/setup/Output
-          makensis /V4 $GITHUB_WORKSPACE/setup/cityenergyanalyst.nsi
+          makensis $GITHUB_WORKSPACE/setup/cityenergyanalyst.nsi
 
       - name: Upload setup
         uses: actions/upload-artifact@v3
