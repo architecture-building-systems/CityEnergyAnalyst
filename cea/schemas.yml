@@ -90,7 +90,7 @@ PVT_metadata_results:
         min: -1.0
         max: 1.0
       area_installed_module_m2:
-        description: The area of the building suface covered by one solar panel
+        description: The area of the building surface covered by one solar panel
         type: float
         unit: '[m2]'
         values: '{0.0...n}'
@@ -4890,6 +4890,65 @@ get_database_distribution_systems:
   used_by:
   - optimization
   - thermal_network
+get_database_energy_carriers:
+  created_by:
+  - data_initializer
+  file_path: inputs/technology/components/ENERGY_CARRIERS.xlsx
+  file_type: xls
+  schema:
+    ENERGY_CARRIERS:
+      columns:
+        description:
+          description: written description of the energy carrier
+          type: string
+          unit: 'NA'
+          values: 'NA'
+        code:
+          description: short code summarising the type (e.g. 'T') + the mean qualifier (e.g. '100') + descriptor (e.g. 'H')
+          primary: true
+          type: string
+          unit: 'NA'
+          values: alphanumeric
+        type:
+          description: type of energy characterising the energy carrier
+          type: string
+          unit: 'NA'
+          values: '{"chemical", "electrical", "radiation", "thermal"}'
+        qualifier:
+          description: criterion differentiating energy carriers of the same type
+          type: string
+          unit: 'NA'
+          values: '{"chemical composition", "voltage", "wavelength", "temperature"}'
+        unit_qual:
+          description: SI unit of the qualifier (if any)
+          type: string
+          unit: 'NA'
+          values: '{"", "V", "nm", "°C"}'
+        mean_qual:
+          description: mean value of the qualifier corresponding to the respective energy carrier
+          type: float
+          unit: 'NA'
+          values: '{-273.15...n}'
+        unit_cost_USD.kWh:
+          description: unit cost of the energy carrier
+          type: float
+          unit: '[USD/kWh]'
+          values: '{0.0...n}'
+          min: 0.0
+        unit_ghg_kgCO2.kWh:
+          description: green house gas intensity of the energy carrier
+          type: float
+          unit: '[kgCO2/kWh]'
+          values: '{0.0...n}'
+          min: 0.0
+        reference:
+          description: references to documents and articles values in the table were taken from
+          type: string
+          unit: 'NA'
+          values: 'NA'
+  used_by:
+  - decentralised
+  - optimization
 get_database_envelope_systems:
   created_by:
   - data_initializer
