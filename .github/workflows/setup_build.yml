@@ -98,18 +98,20 @@ jobs:
     needs: [prepare_cea_environment, prepare_cea_gui]
     runs-on: "windows-latest"
     steps:
+      - uses: actions/checkout@v3
+
       - name: Cache Windows setup
         id: cache-win-setup
         uses: actions/cache@v3
         with:
-          path: ${{ github.workspace }}/setup/Dependencies/cityenergyanalyst.tar.gz
+          path: setup/Dependencies/cityenergyanalyst.tar.gz
           key: ${{ runner.os }}-${{ needs.prepare_cea_environment.outputs.cache-key }}-win-setup
 
       - name: Cache GUI
         id: cache-gui
         uses: actions/cache@v3
         with:
-          path: ${{ github.workspace }}/setup/CityEnergyAnalyst-GUI-win32-x64
+          path: setup/CityEnergyAnalyst-GUI-win32-x64
           key: ${{ runner.os }}-${{ needs.prepare_cea_gui.outputs.cache-key }}-gui-setup
 
       - name: Install setup plugin
