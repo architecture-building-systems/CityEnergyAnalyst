@@ -18,7 +18,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: setup/Dependencies/cityenergyanalyst.tar.gz
-          key: ${{ runner.os }}-${{ hashFiles('environment.yml') }}-win-setup
+          key: ${{ runner.os }}-${{ hashFiles('cea', 'environment.yml') }}-win-setup
 
       - name: Install conda environment from environment.yml
         if: steps.cache-win-setup.outputs.cache-hit != 'true'
@@ -70,7 +70,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: out/CityEnergyAnalyst-GUI-win32-x64
-          key: ${{ runner.os }}-${{ hashFiles('yarn.lock') }}-gui-setup
+          key: ${{ runner.os }}-${{ hashFiles('src', 'yarn.lock') }}-gui-setup
 
       - name: Package CEA GUI
         if: steps.cache-gui-setup.outputs.cache-hit != 'true'
