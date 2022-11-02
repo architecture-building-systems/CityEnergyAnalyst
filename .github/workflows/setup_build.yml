@@ -84,10 +84,10 @@ jobs:
           yarn
           yarn package
 
-    build_windows_setup:
-      needs: [prepare_cea_environment, prepare_cea_gui]
-      runs-on: "windows-latest"
-      steps:
+  build_windows_setup:
+    needs: [prepare_cea_environment, prepare_cea_gui]
+    runs-on: "windows-latest"
+    steps:
       - name: Cache Windows setup
         id: cache-win-setup
         uses: actions/cache@v3
