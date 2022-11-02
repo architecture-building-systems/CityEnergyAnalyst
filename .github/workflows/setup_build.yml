@@ -63,6 +63,8 @@ jobs:
     runs-on: "windows-latest"
     steps:
       - uses: actions/checkout@v3
+        with:
+          repository: architecture-building-systems/CityEnergyAnalyst-GUI
 
       - name: Cache GUI setup
         id: cache-gui-setup
