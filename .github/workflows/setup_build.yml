@@ -24,7 +24,9 @@ jobs:
         id: cache-win-setup
         uses: actions/cache@v3
         with:
-          path: setup/Dependencies/cityenergyanalyst.tar.gz
+          path: |
+            setup/Dependencies/Python
+            setup/Dependencies/cityenergyanalyst.tar.gz
           key: ${{ runner.os }}-${{ steps.cache-win-key.outputs.key }}-win-setup
 
       - name: Install conda environment from environment.yml
@@ -64,7 +66,7 @@ jobs:
         run: |
           CEA_VERSION=$(python -c "import cea; print(cea.__version__)")
           python setup.py sdist
-          mv $GITHUB_WORKSPACE/dist/cityenergyanalyst-$CEA_VERSION.tar.gz $GITHUB_WORKSPACE/setup/Dependencies/cityenergyanalyst.tar.gz
+          mv dist/cityenergyanalyst-$CEA_VERSION.tar.gz setup/Dependencies/cityenergyanalyst.tar.gz
 
   prepare_cea_gui:
     runs-on: "windows-latest"
@@ -104,7 +106,9 @@ jobs:
         id: cache-win-setup
         uses: actions/cache@v3
         with:
-          path: setup/Dependencies/cityenergyanalyst.tar.gz
+          path: |
+            setup/Dependencies/Python
+            setup/Dependencies/cityenergyanalyst.tar.gz
           key: ${{ runner.os }}-${{ needs.prepare_cea_environment.outputs.cache-key }}-win-setup
 
       - name: Cache GUI
