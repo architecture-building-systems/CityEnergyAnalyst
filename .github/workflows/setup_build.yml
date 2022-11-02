@@ -17,14 +17,13 @@ jobs:
         id: cache-win-setup
         uses: actions/cache@v3
         with:
-          path: ${{ github.workspace }}/setup/Dependencies/cityenergyanalyst.tar.gz
-          key: ${{ runner.os }}-${{ hashFiles('**/environment.yml') }}-win-setup
+          path: setup/Dependencies/cityenergyanalyst.tar.gz
+          key: ${{ runner.os }}-${{ hashFiles('environment.yml') }}-win-setup
 
       - name: Install conda environment from environment.yml
         if: steps.cache-win-setup.outputs.cache-hit != 'true'
         uses: mamba-org/provision-with-micromamba@main
         with:
-          cache-env: true
           environment-name: cea
 
       - name: Install CEA to conda environment
@@ -71,13 +70,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: out/CityEnergyAnalyst-GUI-win32-x64
-          key: ${{ runner.os }}-${{ hashFiles('**/yarn.lock') }}-gui-setup
-
-      - name: Set up Node
-        if: steps.cache-gui-setup.outputs.cache-hit != 'true'
-        uses: actions/setup-node@v3
-        with:
-          cache: 'yarn'
+          key: ${{ runner.os }}-${{ hashFiles('yarn.lock') }}-gui-setup
 
       - name: Package CEA GUI
         if: steps.cache-gui-setup.outputs.cache-hit != 'true'
