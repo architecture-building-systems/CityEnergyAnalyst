@@ -25,8 +25,8 @@ jobs:
         uses: actions/cache@v3
         with:
           path: |
-            setup/Dependencies/Python
-            setup/Dependencies/cityenergyanalyst.tar.gz
+            ${{ github.workspace }}/setup/Dependencies/Python
+            ${{ github.workspace }}/setup/Dependencies/cityenergyanalyst.tar.gz
           key: ${{ runner.os }}-${{ steps.cache-win-key.outputs.key }}-win-setup
 
       - name: Install conda environment from environment.yml
@@ -86,7 +86,7 @@ jobs:
         id: cache-gui
         uses: actions/cache@v3
         with:
-          path: out/CityEnergyAnalyst-GUI-win32-x64
+          path: ${{ github.workspace }}/setup/CityEnergyAnalyst-GUI-win32-x64
           key: ${{ runner.os }}-${{ steps.cache-gui-key.outputs.key }}-gui-setup
 
       - name: Package CEA GUI
@@ -95,6 +95,7 @@ jobs:
         run: |
           yarn
           yarn package
+          mv out/CityEnergyAnalyst-GUI-win32-x64 $GITHUB_WORKSPACE/setup/CityEnergyAnalyst-GUI-win32-x64
 
   build_windows_setup:
     needs: [prepare_cea_environment, prepare_cea_gui]
@@ -107,15 +108,15 @@ jobs:
         uses: actions/cache@v3
         with:
           path: |
-            setup/Dependencies/Python
-            setup/Dependencies/cityenergyanalyst.tar.gz
+            ${{ github.workspace }}/setup/Dependencies/Python
+            ${{ github.workspace }}/setup/Dependencies/cityenergyanalyst.tar.gz
           key: ${{ runner.os }}-${{ needs.prepare_cea_environment.outputs.cache-key }}-win-setup
 
       - name: Cache GUI
         id: cache-gui
         uses: actions/cache@v3
         with:
-          path: setup/CityEnergyAnalyst-GUI-win32-x64
+          path: ${{ github.workspace }}/setup/CityEnergyAnalyst-GUI-win32-x64
           key: ${{ runner.os }}-${{ needs.prepare_cea_gui.outputs.cache-key }}-gui-setup
 
       - name: Install setup plugin
