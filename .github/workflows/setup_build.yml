@@ -10,15 +10,8 @@ on:
 jobs:
   prepare_cea_environment:
     runs-on: "windows-latest"
-    outputs:
-      cache-key: ${{ steps.cache-win-key.outputs.key }}
     steps:
       - uses: actions/checkout@v3
-
-      - name: Get cache key
-        id: cache-win-key
-        shell: bash
-        run: echo "key=${{ hashFiles('cea', 'environment.yml') }}" >> $GITHUB_OUTPUT
 
       - name: Cache Windows setup
         id: cache-win-setup
@@ -27,7 +20,7 @@ jobs:
           path: |
             ${{ github.workspace }}/setup/Dependencies/Python
             ${{ github.workspace }}/setup/Dependencies/cityenergyanalyst.tar.gz
-          key: ${{ runner.os }}-${{ steps.cache-win-key.outputs.key }}-win-setup
+          key: ${{ runner.os }}-${{ hashFiles('cea', 'environment.yml') }}-win-setup
 
       - name: Install conda environment from environment.yml
         if: steps.cache-win-setup.outputs.cache-hit != 'true'
@@ -68,57 +61,26 @@ jobs:
           python setup.py sdist
           mv dist/cityenergyanalyst-$CEA_VERSION.tar.gz setup/Dependencies/cityenergyanalyst.tar.gz
 
-  prepare_cea_gui:
-    runs-on: "windows-latest"
-    outputs:
-      cache-key: ${{ steps.cache-gui-key.outputs.key }}
-    steps:
       - uses: actions/checkout@v3
         with:
+          path: gui
           repository: architecture-building-systems/CityEnergyAnalyst-GUI
-
-      - name: Get cache key
-        id: cache-gui-key
-        shell: bash
-        run: echo "key=${{ hashFiles('src', 'yarn.lock') }}" >> $GITHUB_OUTPUT
 
       - name: Cache GUI
         id: cache-gui
         uses: actions/cache@v3
         with:
           path: ${{ github.workspace }}/setup/CityEnergyAnalyst-GUI-win32-x64
-          key: ${{ runner.os }}-${{ steps.cache-gui-key.outputs.key }}-gui-setup
+          key: ${{ runner.os }}-${{ hashFiles('gui/src', 'gui/yarn.lock') }}-gui-setup
 
       - name: Package CEA GUI
         if: steps.cache-gui.outputs.cache-hit != 'true'
         shell: bash
         run: |
+          cd $GITHUB_WORKSPACE/gui
           yarn
           yarn package
-          mkdir -p $GITHUB_WORKSPACE/setup
-          mv $GITHUB_WORKSPACE/out/CityEnergyAnalyst-GUI-win32-x64 $GITHUB_WORKSPACE/setup/CityEnergyAnalyst-GUI-win32-x64
-
-  build_windows_setup:
-    needs: [prepare_cea_environment, prepare_cea_gui]
-    runs-on: "windows-latest"
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Cache Windows setup
-        id: cache-win-setup
-        uses: actions/cache@v3
-        with:
-          path: |
-            ${{ github.workspace }}/setup/Dependencies/Python
-            ${{ github.workspace }}/setup/Dependencies/cityenergyanalyst.tar.gz
-          key: ${{ runner.os }}-${{ needs.prepare_cea_environment.outputs.cache-key }}-win-setup
-
-      - name: Cache GUI
-        id: cache-gui
-        uses: actions/cache@v3
-        with:
-          path: ${{ github.workspace }}/setup/CityEnergyAnalyst-GUI-win32-x64
-          key: ${{ runner.os }}-${{ needs.prepare_cea_gui.outputs.cache-key }}-gui-setup
+          mv out/CityEnergyAnalyst-GUI-win32-x64 $GITHUB_WORKSPACE/setup/CityEnergyAnalyst-GUI-win32-x64
 
       - name: Install setup plugin
         shell: bash
