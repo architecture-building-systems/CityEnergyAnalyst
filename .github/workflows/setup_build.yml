@@ -95,7 +95,8 @@ jobs:
         run: |
           yarn
           yarn package
-          mv out/CityEnergyAnalyst-GUI-win32-x64 $GITHUB_WORKSPACE/setup/CityEnergyAnalyst-GUI-win32-x64
+          mkdir -p $GITHUB_WORKSPACE/setup
+          mv $GITHUB_WORKSPACE/out/CityEnergyAnalyst-GUI-win32-x64 $GITHUB_WORKSPACE/setup/CityEnergyAnalyst-GUI-win32-x64
 
   build_windows_setup:
     needs: [prepare_cea_environment, prepare_cea_gui]
