@@ -16,7 +16,7 @@ jobs:
           path: |
             ${{ github.workspace }}/setup/Dependencies/Python
             ${{ github.workspace }}/setup/Dependencies/cityenergyanalyst.tar.gz
-          key: ${{ runner.os }}-${{ hashFiles('cea', 'environment.yml') }}-win-setup
+          key: ${{ hashFiles('cea', 'environment.yml') }}-win-setup
 
       - name: Install conda environment from environment.yml
         if: steps.cache-win-setup.outputs.cache-hit != 'true'
