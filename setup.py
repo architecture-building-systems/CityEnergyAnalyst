@@ -20,7 +20,7 @@ with open('README.rst', 'r') as f:
 INSTALL_REQUIRES = ["cufflinks",
                     'deap',
                     'ephem',
-                    'flask-restplus',
+                    'flask-restx',
                     'flask-cors',
                     'flask-socketio',
                     'geopandas',
