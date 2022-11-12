@@ -9,6 +9,7 @@ The CEA team
 Starting from version 2.9.1 the credits are structured alphabetically (surname) and split into the categories of developers,
 scrum master, project owner, project sponsor and collaborators.
 
+<!-- credits -->
 - Version 3.31.0 - May 2022
 
     Developers:
