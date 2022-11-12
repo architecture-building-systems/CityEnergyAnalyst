@@ -29,7 +29,6 @@ The output is written to ../CHANGELOG.md.
 """
 
 
-
 import subprocess
 import dateutil.parser
 import re
@@ -83,8 +82,8 @@ def read_title(git_output):
 def read_version(commit_id):
     """Try and parse the contents of cea/__init__.py for the version. return "0.1" if nothing is found"""
     try:
-        init_py = subprocess.check_output("git show {commit_id}:cea/__init__.py".format(commit_id=commit_id)).decode()
-        match = re.search('__version__\s+=\s+"([^"]+)"', init_py)
+        init_py = subprocess.run(["git", "show", f"{commit_id}:cea/__init__.py"], check=True, capture_output=True)
+        match = re.search(r'__version__\s+=\s+"([^"]+)"', init_py.stdout.decode())
         if not match:
             return "0.1"
         return match.group(1)
@@ -93,8 +92,8 @@ def read_version(commit_id):
 
 
 def main():
-    git = subprocess.Popen("git log origin/master --merges --first-parent master", shell=True, bufsize=1,
-                             stdout=subprocess.PIPE, universal_newlines=True)
+    git = subprocess.Popen(["git", "log", "origin/master", "--merges", "--first-parent", "master"],
+                           bufsize=1, stdout=subprocess.PIPE, universal_newlines=True)
     git_output = git.stdout
     try:
         commit_id = read_commit_id(git_output)
@@ -107,12 +106,7 @@ def main():
                 continue
             title = read_title(git_output)
             version = read_version(commit_id)
-            print('- {date} - {version} - {pr} {title}'.format(
-                date=date,
-                version=version,
-                pr=pr,
-                title=title
-            ))
+            print(f'- {date} - {version} - {pr} {title}')
             commit_id = read_commit_id(git_output)
     except EOFError:
         # we're done now
