@@ -16,17 +16,20 @@ __email__ = "mathias.niffeler@sec.ethz.ch"
 __status__ = "Production"
 
 from os.path import exists
-import geopandas as gpd
-import numpy as np
 import time
-
+import numpy as np
 import pandas as pd
+import networkx as nx
+import geopandas as gpd
 
 import cea.config
 from cea.inputlocator import InputLocator
 from cea.optimization_new.energyPotential import EnergyPotential
 from cea.optimization_new.building import Building
+from cea.optimization_new.network import Network
 from cea.technologies.supply_systems_database import SupplySystemsDatabase
+from cea.technologies.network_layout.connectivity_potential import calc_connectivity_network
+from cea.constants import SHAPEFILE_TOLERANCE
 
 
 class Domain(object):
@@ -36,7 +39,7 @@ class Domain(object):
         self._available_energy_carriers = None
         self.geography = 'xxx'
         self.buildings = []
-        self.network_grid = 'xxx'
+        self.potential_network_graph = nx.Graph()
         self.energy_potentials = None
 
     @property
@@ -72,7 +75,6 @@ class Domain(object):
         :return self.buildings: list of buildings with their demands and footprints
         :rtype self.buildings: list of <cea.optimization_new.building>-Building objects
         """
-        start_time = time.time()
         shp_file = gpd.read_file(self.locator.get_zone_geometry())
         if buildings_in_domain is None:
             buildings_in_domain = shp_file.Name
@@ -85,8 +87,6 @@ class Domain(object):
                 building.load_building_location(shp_file)
                 self.buildings.append(building)
 
-        end_time = time.time()
-        print(f"Time elapsed for loading buildings in domain: {end_time - start_time} s")
         return self.buildings
 
     def load_potentials(self, buildings_in_domain=None):
@@ -98,7 +98,6 @@ class Domain(object):
         :return self.energy_potentials: list of energy potentials with the scale they apply to (building or domain)
         :rtype self.energy_potentials: list of <cea.optimization_new.energyPotential>-EnergyPotential objects
         """
-        start_time = time.time()
         shp_file = gpd.read_file(self.locator.get_zone_geometry())
         if buildings_in_domain is None:
             buildings_in_domain = shp_file.Name
@@ -117,19 +116,50 @@ class Domain(object):
         water_body_potential = EnergyPotential().load_water_body_potential(self.locator.get_water_body_potential(), thermal_ec)
         sewage_potential = EnergyPotential().load_sewage_potential(self.locator.get_sewage_heat_potential(), thermal_ec)
 
-        end_time = time.time()
-        print(f"Time elapsed for loading energy potentials: {end_time - start_time} s")
-
         self.energy_potentials = [pv_potential, pvt_potential, scet_potential, scfp_potential, geothermal_potential, water_body_potential, sewage_potential]
         return self.energy_potentials
 
     def load_pot_network(self):
+        """
+        Create potential network graph based on streets network .shp-file and the location of the buildings in the
+        domain.
 
-        return self.network_grid
+        :return self.potential_network_graph: Graph of potential network paths including roads and links to buildings.
+        :rtype self.potential_network_graph: <networkx.Graph>-object
+        """
+        if not self.buildings:
+            return self.potential_network_graph
+
+        # join building locations (shapely.POINTS) and the corresponding identifiers in a DataFrame
+        building_identifiers = [building.identifier for building in self.buildings]
+        building_locations = [building.location for building in self.buildings]
+        buildings_df = pd.DataFrame(list(zip(building_locations, building_identifiers)), columns=['geometry', 'Name'])
+
+        # create a potential network grid with orthogonal connections between buildings and their closest street
+        network_grid_shp = calc_connectivity_network(self.locator.get_street_network(),
+                                                     buildings_df,
+                                                     optimisation_flag=True)
+
+        # convert the GeoDataFrame network grid to a Graph
+        for (line_string, length) in network_grid_shp.itertuples(index=False):
+            line_start = line_string.coords[0]
+            line_end = line_string.coords[-1]
+            edge_start = (round(line_start[0], SHAPEFILE_TOLERANCE), round(line_start[1], SHAPEFILE_TOLERANCE))
+            edge_end = (round(line_end[0], SHAPEFILE_TOLERANCE), round(line_end[1], SHAPEFILE_TOLERANCE))
+            self.potential_network_graph.add_edge(edge_start, edge_end, weight=length)
+
+        return self.potential_network_graph
 
     def optimize_domain(self):
-        optimal_district_cooling_systems = 'xxx'
+        individual_network = Network(domain=self)
 
+        # calculate status quo
+        connected_buildings = self.config.network_layout.connected_buildings
+        individual_network.run_steiner_tree_optimisation(connected_buildings)
+        individual_network.calculate_operational_conditions()
+
+        # calculate
+        optimal_district_cooling_systems = 'xxx'
         return optimal_district_cooling_systems
 
 
@@ -139,12 +169,28 @@ def main(config):
     """
     locator = InputLocator(scenario=config.scenario)
     current_domain = Domain(config, locator)
-    # current_domain.load_supply_system_database()
-    # current_domain.load_buildings()
-    current_domain.load_potentials()
-    current_domain.optimize_domain()
 
-    print(locator.PV_results('B1000'))
+    # current_domain.load_supply_system_database()
+
+    start_time = time.time()
+    current_domain.load_buildings()
+    end_time = time.time()
+    print(f"Time elapsed for loading buildings in domain: {end_time - start_time} s")
+
+    # start_time = time.time()
+    # current_domain.load_potentials()
+    # end_time = time.time()
+    # print(f"Time elapsed for loading energy potentials: {end_time - start_time} s")
+
+    start_time = time.time()
+    current_domain.load_pot_network()
+    end_time = time.time()
+    print(f"Time elapsed for loading the potential network of the domain: {end_time - start_time} s")
+
+    start_time = time.time()
+    current_domain.optimize_domain()
+    end_time = time.time()
+    print(f"Time elapsed to create and calculate individual network: {end_time - start_time} s")
 
 
 if __name__ == '__main__':

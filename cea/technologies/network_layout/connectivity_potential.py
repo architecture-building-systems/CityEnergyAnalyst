@@ -396,13 +396,14 @@ def simplify_liness_accurracy(lines, decimals, crs):
     return df
 
 
-def calc_connectivity_network(path_streets_shp, building_centroids_df, temp_path_potential_network_shp):
+def calc_connectivity_network(path_streets_shp, building_centroids_df, optimisation_flag=False, path_potential_network=None):
     """
     This script outputs a potential network connecting a series of building points to the closest street network
     the street network is assumed to be a good path to the district heating or cooling network
 
     :param path_streets_shp: path to street shapefile
     :param building_centroids_df: path to substations in buildings (or close by)
+    :param optimisation_flag: boolean indicator of whether the function is called from within the optimisation
     :param path_potential_network: output path shapefile
     :return:
     """
@@ -443,9 +444,11 @@ def calc_connectivity_network(path_streets_shp, building_centroids_df, temp_path
     # calculate Shape_len field
     potential_network_df["Shape_Leng"] = potential_network_df["geometry"].apply(lambda x: x.length)
 
-    potential_network_df.to_file(temp_path_potential_network_shp, driver='ESRI Shapefile')
-
-    return crs
+    if optimisation_flag is True:
+        return potential_network_df
+    else:
+        potential_network_df.to_file(path_potential_network, driver='ESRI Shapefile')
+        return crs
 
 
 def main(config):
@@ -457,7 +460,7 @@ def main(config):
         "nodes_buildings.shp")  # substation, it can be the centroid of the building
     path_potential_network = locator.get_temporary_file("potential_network.shp")  # shapefile, location of output.
     calc_connectivity_network(path_streets_shp, path_connection_point_buildings_shp,
-                              path_potential_network)
+                              path_potential_network=path_potential_network)
 
 
 if __name__ == '__main__':

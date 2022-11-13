@@ -51,7 +51,7 @@ def layout_network(network_layout, locator, plant_building_names=None, output_na
     # Calculate potential network
     crs_projected = calc_connectivity_network(path_streets_shp,
                                               building_centroids_df,
-                                              temp_path_potential_network_shp)
+                                              path_potential_network=temp_path_potential_network_shp)
 
     # calc minimum spanning tree and save results to disk
     path_output_edges_shp = locator.get_network_layout_edges_shapefile(type_network, output_name_network)
@@ -82,7 +82,8 @@ class NetworkLayout(object):
 
     def __init__(self, network_layout=None):
         self.network_type = "DC"
-        self.connected_buildings = []
+        # self.connected_buildings = []
+        self.connected_buildings = network_layout.connected_buildings
         self.disconnected_buildings = []
         self.pipe_diameter = 150
         self.type_mat = "T1"
@@ -90,8 +91,10 @@ class NetworkLayout(object):
         self.allow_looped_networks = False
         self.consider_only_buildings_with_demand = False
 
+        # attributes = ["network_type", "pipe_diameter", "type_mat", "create_plant", "allow_looped_networks",
+        #               "consider_only_buildings_with_demand", "connected_buildings", "disconnected_buildings"]
         attributes = ["network_type", "pipe_diameter", "type_mat", "create_plant", "allow_looped_networks",
-                      "consider_only_buildings_with_demand", "connected_buildings", "disconnected_buildings"]
+                      "consider_only_buildings_with_demand", "disconnected_buildings"]
         for attr in attributes:
             # copy any matching attributes in network_layout (because it could be an instance of NetworkInfo)
             if hasattr(network_layout, attr):
