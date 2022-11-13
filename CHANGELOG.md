@@ -1,3 +1,30 @@
+- 2022-11-10 - 3.31.0 - #3262 CEA installation fix
+- 2022-11-09 - 3.31.0 - #3261 Automate windows setup build
+- 2022-10-25 - 3.31.0 - #3258 Create setup_build.yml
+- 2022-09-02 - 3.31.0 - #3204 3163 new objective functions for dc
+- 2022-08-17 - 3.31.0 - #3222 Gets building height from OSM in zone helper
+- 2022-08-16 - 3.31.0 - #3227 Use micromamba instead of miniforge
+- 2022-08-10 - 3.31.0 - #3208 fixing overlapping geometries
+- 2022-08-08 - 3.31.0 - #3216 Fix CRS change
+- 2022-08-05 - 3.31.0 - #3212 Handling potential CRS mismatch
+- 2022-08-03 - 3.31.0 - #3209 Fix memory error when writing radiance surfaces
+- 2022-08-03 - 3.31.0 - #3185 -remove custom-roof-coverage parameter
+- 2022-07-19 - 3.31.0 - #3187 3137 VCC model update
+- 2022-07-19 - 3.31.0 - #3196 Update schemas.yml
+- 2022-07-12 - 3.31.0 - #3190 Update glossary documentation
+- 2022-06-23 - 3.31.0 - #3172 Docker daysim fix
+- 2022-06-22 - 3.31.0 - #3188 Fix error when no standards are found
+- 2022-06-22 - 3.31.0 - #3181 Refactoring of optimization algorithm - Part II
+- 2022-06-21 - 3.31.0 - #3161 3131 capacity correction for vcc & free cooling
+- 2022-06-10 - 3.31.0 - #3182 Add os matrix to test workflow
+- 2022-06-09 - 3.31.0 - #3184 Fix parsing years with numeric string
+- 2022-06-06 - 3.31.0 - #3175 Move daysim binaries
+- 2022-06-03 - 3.31.0 - #3160 3159 unit test for district cooling activation
+- 2022-05-31 - 3.31.0 - #3174 Allow more than three use types
+- 2022-05-28 - 3.31.0 - #3168 Run tests when pushed to master
+- 2022-05-13 - 3.31.0 - #3165 Create GitHub Actions to trigger `cea test --workflow quick` for PRs
+- 2022-05-12 - 3.31.0 - #3167 Release 3.31.0
+- 2022-05-11 - 3.30.0 - #3157 create .csv demand file with debugging on
 - 2022-05-10 - 3.30.0 - #3151 how-to-review-a-pull-request
 - 2022-05-10 - 3.30.0 - #3154 Remove hardcoded floor height from calculations
 - 2022-04-27 - 3.30.0 - #3155 Fix import input files on dashboard
@@ -12,6 +39,7 @@
 - 2022-04-12 - 3.28.0 - #3136 Release 3.28.0
 - 2022-04-12 - 3.27.0 - #3127 updated CH database to match SG database
 - 2022-04-12 - 3.27.0 - #3132 Refactoring of optimization algorithm - Part I
+- 2022-04-04 - 3.27.0 - #3134 Add a Gitter chat badge to README.rst
 - 2022-03-31 - 3.27.0 - #3122 changed math.exp solver to numpy
 - 2022-03-30 - 3.27.0 - #3118 3105 Remove Partially Matched CX
 - 2022-03-29 - 3.27.0 - #3115 3104 calc eauxf fw
@@ -33,7 +61,7 @@
 - 2021-11-24 - 3.26.0 - #3063 Make `roof:levels` 0 by default
 - 2021-10-27 - 3.26.0 - #3028 Mac OS installation guide! So excited that CEA now works on Mac!
 - 2021-10-27 - 3.26.0 - #3041 3004 add option to continue demand sumulation when overheated
-- 2021-10-22 - 3.26.0 - #3049 update version, changelog, and credits 
+- 2021-10-22 - 3.26.0 - #3049 update version, changelog, and credits
 - 2021-10-20 - 3.24.0 - #3029 Update photovoltaic.py
 - 2021-10-15 - 3.24.0 - #3027 Send regex info to frontend
 - 2021-10-14 - 3.24.0 - #3045 remover min from possible negatives in the schemas
@@ -51,10 +79,11 @@
 - 2021-06-28 - 3.24.0 - #2997 Release-3.24.0
 - 2021-06-24 - 3.22.0 - #2992 Update gdal imports to use osgeo instead
 - 2021-06-23 - 3.22.0 - #2993 Remove unused import
-- 2021-06-08 - 3.22.0 - #2986 Update data migrator
+- 2021-06-08 - 3.22.0 - #2986 2977 data migrator
 - 2021-06-02 - 3.22.0 - #2972 Add empty property to MultiChoice Parameter
+- 2021-05-21 - 3.22.0 - #2980 Release 3.23.0
 - 2021-05-11 - 3.22.0 - #2963 fixes in SG database: removing repeated STANDARDs in CONSTRUCTION_STANDARD.xlsx
-- 2021-05-01 - 3.22.0 - #2957 "Pax" means passenger
+- 2021-05-01 - 3.22.0 - #2957 - added warning message
 - 2021-04-30 - 3.22.0 - #2965 included partitions
 - 2021-04-19 - 3.22.0 - #2951 Make convective heat transfer calculation at building surface dynamic
 - 2021-04-14 - 3.22.0 - #2954 2953 zone helper
@@ -74,7 +103,7 @@
 - 2021-01-19 - 3.15.0 - #2913 Optimize radiation
 - 2021-01-18 - 3.15.0 - #2912 GUI: Removed odd parameter shown in OSM by updation databases_verification.py
 - 2021-01-03 - 3.15.0 - #2905 void_deck remove max: null and set type to int
-- 2020-12-07 - 3.15.0 - #2893 commit 148b8e24b4b6f7d5b8fd59a41c047dd23b8c1fbf
+- 2020-12-07 - 3.15.0 - #2893 commit 3265c70bd57787d87b3764c6cd0c846e0471ce1c
 - 2020-12-02 - 3.15.0 - #2894 CityEnergyAnalyst v3.15.0
 - 2020-12-01 - 3.14.0 - #2873 2852 After merging docker image, change the url used to track master
 - 2020-11-19 - 3.14.0 - #2853 Add option for user-supplied PV tilt angle and maximum roof coverage
@@ -140,7 +169,7 @@
 - 2020-04-09 - 3.0.2 - #2677 Plot data export
 - 2020-04-09 - 3.0.2 - #2666 Remove leap day from weather data
 - 2020-04-08 - 3.0.2 - #2633 2561 cea workflow resume-file now defaults to temp folder
-- 2020-04-01 - 3.0.2 - #2668 Rename optimization plot titles
+- 2020-04-01 - 3.0.2 - #2668 Rename optimization plot titiles
 - 2020-03-25 - 3.0.2 - #2669 Release 3.0.2
 - 2020-03-23 - 3.0.1 - #2654 End of support for Grasshopper
 - 2020-03-23 - 3.0.1 - #2652 Clean up unused javascript files
@@ -258,7 +287,7 @@
 - 2019-10-02 - 2.22 - #2338 Moving flexibility (concept project) to legacy
 - 2019-10-02 - 2.22 - #2353 Project api for electron application
 - 2019-10-02 - 2.22 - #2337 fix to network layout script (EL is not implemented yet) @daren-thomas thanks for checking this out
-- 2019-09-24 - 2.21 - #2335 Bugfix: Edit selection in input editor does not work if some old values is equal to the new value
+- 2019-09-24 - 2.22 - #2335 Bugfix: Edit selection in input editor does not work if some old values is equal to the new value
 - 2019-09-24 - 2.21 - #2334 Show Es and Ns variable for architecture in dashboard
 - 2019-09-24 - 2.21 - #2320 BUG: fixed default value for workflow parameter
 - 2019-09-23 - 2.21 - #2303 CEA Occupancy-Schedule Updates
@@ -326,8 +355,6 @@
 - 2019-07-08 - 2.17.1 - #2145 remove faulty input requests
 - 2019-07-05 - 2.17.1 - #2085 1971 check input files
 - 2019-07-03 - 2.17.1 - #2134 Bugfix: Allow decimal values for number inputs
-- 2019-07-03 - 2.17.1 - #2129 Fix to known issues
-- 2019-07-03 - 2.17.1 - #2133 FEATURE: New 500 status error page
 - 2019-07-03 - 2.17.1 - #2128 Minor bugfix for glossary frontend
 - 2019-07-02 - 2.17.1 - #2071 I2015 constant supply temperature at plants
 - 2019-07-02 - 2.17.1 - #2125 FEATURE: Add Glossary Search to Dashboard
@@ -390,7 +417,6 @@
 - 2019-05-07 - 2.13 - #1943 Update installer to retrieve CEA environment from a known location
 - 2019-05-06 - 2.13 - #1936 Updating credits and version number for 2.13
 - 2019-05-06 - 2.12.0a3 - #1941 Update inputs.yml
-- 2019-05-06 - 2.12.0a3 - #1940 1938 relocate side panel links @reyery thanks, it works as expected
 - 2019-05-06 - 2.12.0a3 - #1939 Split coordinates to lat lon input
 - 2019-05-06 - 2.12.0a3 - #1931 1917 create zone shapfile from map
 - 2019-05-06 - 2.12.0a3 - #1905 Add floor cooling to CEA systems
@@ -494,7 +520,7 @@
 - 2018-10-08 - 2.9.0 - #1629 1625 figure out why the radiation daysim tool hangs on sabines scenario
 - 2018-10-04 - 2.9.0 - #1615 This is a first stab to updating the documentation
 - 2018-10-02 - 2.9.0 - #1618 967 dashboard - changes so far It runs so I am merging. I guess we can talk about the changes on the presentation of the 18th.
-- 2018-09-20 - 2.7.22 - #1624 Fixing the pyliburo / radiation geometry problems
+- 2018-09-20 - 2.7.22 - #1624 Fixing the pyliburo / radiation-daysim geometry problems
 - 2018-09-18 - 2.7.22 - #1608 this solves issue #1351
 - 2018-09-08 - 2.7.22 - #1614 Typos and cleanup
 - 2018-09-04 - 2.7.22 - #1603 @daren-thomas great thanks!
@@ -645,7 +671,6 @@
 - 2018-03-12 - 2.7 - #1118 I1099 change temperature outputs in sc total and pvt total
 - 2018-03-12 - 2.7 - #1096 Cea open case study updated
 - 2018-03-09 - 2.7 - #1119 Update README.rst
-- 2018-03-08 - 2.7 - #1098 fixes bug with jenkins tests on master (updates radiation data for zurich reference cases)
 - 2018-03-05 - 2.7 - #1097 fixes #1094 @daren-thomas great fix!
 - 2018-03-05 - 2.7 - #1095 fixing path so Singapore case study works
 - 2018-03-05 - 2.7 - #1062 I1018 simple indoor humidity
@@ -664,7 +689,6 @@
 - 2018-02-08 - 2.6 - #1038 I 974 review thermal network
 - 2018-02-07 - 2.6 - #1030 1013 cea launch tool
 - 2018-02-07 - 2.6 - #1037 994 dashboard building does not work for reference case zug
-- 2018-02-07 - 2.6 - #995 I982 update network shp files
 - 2018-02-05 - 2.6 - #1019 I1015 tutorials movement
 - 2018-02-05 - 2.6 - #1028 Use appropriate InputLocator to list building names
 - 2018-02-02 - 2.6 - #1026 I1014 fix shapefiles create new project
@@ -740,87 +764,7 @@
 - 2017-10-02 - 2.4a4 - #760 I351 calibrator cea
 - 2017-09-27 - 2.4a4 - #788 711 launch tool energy potential analysis
 - 2017-09-27 - 2.4a4 - #791 684 launch tool urban solar radiation
-- 2017-09-27 - 2.4a4 - #784 I268 technology cost database
-- 2017-09-27 - 2.4a4 - #793 723 grasshopper modules for cea
-- 2017-09-27 - 2.4a4 - #725 i636 connect solar collector and pvt with new radiation results. test pass so merging it
-- 2017-09-27 - 2.4a4 - #826 825 test failing in master
-- 2017-09-26 - 2.4a4 - #796 Readthedocs - fix build errors in rtd
-- 2017-09-25 - 2.4a4 - #795 adding guide
-- 2017-08-28 - 2.4a4 - #778 Refactoring labels in saved files to include units
-- 2017-08-22 - 2.4a4 - #779 updates to the documentation - sphinx now builds without warnings
-- 2017-08-16 - 2.4a4 - #777 731 port cea to arcgis 10 5 for computerroom hil e65
-- 2017-08-11 - 2.4a2 - #780 2017 08 09 easier installation guide
-- 2017-07-31 - 2.4a2 - #767 I766 Remove unnecessary error message
-- 2017-07-31 - 2.3 - #765 761 port cea to 64 bit python
-- 2017-07-27 - 2.3 - #763 I672 xls2dbf
-- 2017-07-26 - 2.3 - #716 Adding solution for case when V=0
-- 2017-07-20 - 2.3a1 - #700 I694 archetype application
-- 2017-07-20 - 2.3a1 - #741 I733 cooling conditioned buildings
-- 2017-07-19 - 2.3a1 - #740 I649 decentralized buildings preprocessing
-- 2017-07-14 - 2.3a1 - #686 642 arcgis remember last options
-- 2017-07-14 - 2.3a1 - #732 changes to dhw in database
-- 2017-07-14 - 2.3a1 - #678 I633 interface for solar potential @shanshanhsieh good job!!
-- 2017-07-14 - 2.3a1 - #685 radiation arcgis for ecocampus - giving up, we need this only for the ecocampus case.
-- 2017-07-12 - 2.3a1 - #728 I643 retrofit analysis
-- 2017-07-05 - 2.3a1 - #708 I663 lca tools subfolders
-- 2017-07-05 - 2.3a1 - #707 I383 process heat
-- 2017-07-05 - 2.3a1 - #690 I673 cea optimization workflow
-- 2017-06-30 - 2.3a1 - #680 566 code the program to call cea from gh
-- 2017-06-30 - 2.3a1 - #715 Revert "xls2dbf_new_branch"
-- 2017-06-30 - 2.3a1 - #714 @Khayatian thanks and congrats on your first contrib to CEA!
-- 2017-06-30 - 2.3a1 - #677 I662 ciao citygml
-- 2017-06-29 - 2.3a1 - #702 fixing special case radiation
-- 2017-06-27 - 2.3a1 - #696 cool stuff!, thanks for this, it is much clear
-- 2017-06-23 - 2.3a1 - #693 I372 data helper discrepancy
-- 2017-06-22 - 2.3a1 - #689 I688 fix broken build
-- 2017-06-20 - 2.3a1 - #675 I612 preprocessing multiuse buildings
-- 2017-06-15 - 2.3a1 - #674 645 switch between infiltration models, working like a charm
-- 2017-06-12 - 2.3a1 - #671 Cascading config files
-- 2017-06-12 - 2.3a1 - #656 I655 ctrl vent changes
-- 2017-05-25 - 2.3a1 - #659 minimalistic first stab at a documentation guide
-- 2017-05-24 - 2.3a1 - #653 I648 radaition working
-- 2017-05-19 - 2.3a1 - #627 I613 guide on how files are saved
-- 2017-05-18 - 2.3a1 - #624 607 document steps to create arelease
-- 2017-05-15 - 2.2 - #635 correct conversion of string to integer if dbf file is defined as double accidentally
-- 2017-05-15 - 2.2 - #616 I615 modifying import of dataframes
-- 2017-05-10 - 2.2 - #623 I526 archetypes singapore
-- 2017-05-10 - 2.2 - #629 updated installation-guide because new pandas version breaks geopandas
-- 2017-05-09 - 2.2 - #424 I336 add pv script to the core. @shanshanhsieh great refactoring, I also created a technology database in databases/CH/systems which helps to take out the constant variables of PV technologies, in this way we can try many other PV technologies. Please check it out. Could you also apply this for the sollar collector and PVT script? are there issues already created for this?
-- 2017-05-09 - 2.2 - #631 :-D so the line was just commented...
-- 2017-05-03 - 2.2 - #625 I622 data cleaning ipynb
-- 2017-04-26 - 2.2 - #621 Singapore weather 2015 ok
-- 2017-04-26 - 2.2 - #619 changes naming
-- 2017-04-25 - 2.2 - #567 I9 new radiation engine daysim by paul
-- 2017-04-21 - 2.2 - #611 removing NUS_weather file
-- 2017-04-19 - 2.2a4 - #572 Uncertainty analysis and individual evaluation
-- 2017-04-19 - 2.2a4 - #597 I596 occupancy density
-- 2017-04-18 - 2.2 - #602 I601 installation guide doc
-- 2017-04-18 - 2.2 - #595 I573 fix sax opt
-- 2017-04-18 - 2.2 - #553 Fix errors caused by tank size 0
-- 2017-04-18 - 2.2 - #600 fix environment for running fiona.ogrext - this should fix a lot of installation problems
-- 2017-04-11 - 2.2 - #594 proposal for fixing credits/licenses
-- 2017-04-05 - 2.1 - #588 I587 ventilation bugfix for cisbat
-- 2017-04-03 - 2.1 - #580 i558 Recirculation error fix - replaces PR #559
-- 2017-04-03 - 2.1 - #581 i560 RC model inconsistent inputes - replaces PR #561
-- 2017-04-03 - 2.1 - #579 Replacing #576
-- 2017-04-03 - 2.1 - #582 fixing the arcgis toolbox (import arcpy)
-- 2017-03-31 - 2.1a5 - #578 small fix to sensitivity
-- 2017-03-31 - 2.1a5 - #577 Adding more info on running on Euler
-- 2017-03-31 - 2.1a5 - #557 Adding ETH heating network
-- 2017-03-31 - 2.1a5 - #574 added clarification as per issue #571
-- 2017-03-31 - 2.1a5 - #545 changes to getting started documentation
-- 2017-03-28 - 2.1a5 - #564 Adding missing libraries to the documentation on Euler
-- 2017-03-27 - 2.1a5 - #565 Revert "I9 new radiation engine daysim by paul"
-- 2017-03-27 - 2.1a5 - #500 I9 new radiation engine daysim by paul
-- 2017-03-27 - 2.1a5 - #563 556 fix broken build on master
-- 2017-03-23 - 1.1a7 - #554 403 conda install cea
-- 2017-03-22 - 0.1 - #551 Correcting weather file path in the euler readme
-- 2017-03-22 - 0.1 - #549 I531 new database structure
-- 2017-03-22 - 0.1 - #548 I529 hideblenght bwidth
-- 2017-03-21 - 0.1 - #547 I529 hideblenght bwidth
-- 2017-03-21 - 0.1 - #523 add schedule of Library
-- 2017-03-21 - 0.1 - #546 Wrong filepath for the weather in the final example
-- 2017-03-15 - 0.1 - #534 Singapore weather file 2016
+- 2017-03-15 - 2.4a4 - #534 Singapore weather file 2016
 - 2017-03-08 - 0.1 - #497 Bhargava and daren refactoring
 - 2017-03-06 - 0.1 - #491 Changing 'DEPO' occupancy to 'PARKING'
 - 2017-03-03 - 0.1 - #490 I472 sensitivity
@@ -828,7 +772,6 @@
 - 2017-02-24 - 0.1 - #503 Added `LAB` and `MUSEUM` archetypes
 - 2017-02-24 - 0.1 - #493 Correcting citation
 - 2017-02-24 - 0.1 - #502 I486 small load bug
-- 2017-02-23 - 0.1 - #501 added grasshopper file
 - 2017-02-22 - 0.1 - #499 Fix import arcpy error in ScenarioPlotsTool
 - 2017-02-10 - 0.1 - #485 I464 analysis
 - 2017-02-09 - 0.1 - #477 386 create readthedocs style api documentation
@@ -881,7 +824,6 @@
 - 2016-08-15 - 0.1 - #278 I277 bugfix thermal load
 - 2016-08-15 - 0.1 - #266 Port to ArcGIS 10.4
 - 2016-08-08 - 0.1 - #265 I 262 tds creating high overhead
-- 2016-08-08 - 0.1 - #263 I 262 tds creating high overhead
 - 2016-07-22 - 0.1 - #260 final remarks in refactoring
 - 2016-07-22 - 0.1 - #259 I258 refactor functions
 - 2016-07-18 - 0.1 - #252 Thermal loads with dataframes (and parallelization)
@@ -889,6 +831,7 @@
 - 2016-06-07 - 0.1 - #226 I016 thermal loads new ventilation
 - 2016-06-07 - 0.1 - #229 Scenario plots @daren-thomas great work
 - 2016-06-07 - 0.1 - #230 I182 benchmark plots @martin-mosteiro great graphs buddy and super interface @daren-thomas
+- 2016-06-07 - 0.1 - #231 Fix units and results for dhw storage
 - 2016-06-07 - 0.1 - #232 Igraphs totals
 - 2016-06-06 - 0.1 - #227 I064 1 update results on emission and control system
 - 2016-06-01 - 0.1 - #225 Changes to reference case folder structure
@@ -910,16 +853,13 @@
 - 2016-05-04 - 0.1 - #170 implemented toolbox for heatmaps
 - 2016-05-04 - 0.1 - #168 I157 update toolbox for graphs
 - 2016-05-02 - 0.1 - #167 i163-fix-heatmaps (toolbox still needs to be implemented)
-- 2016-04-25 - 0.1 - #155 I06 archetypes shading fw - with some changes (@JIMENOFONSECA can you check these?)
-- 2016-04-25 - 0.1 - #153 I027 seperate dhw and sh supply
+- 2016-04-26 - 0.1 - #162 I159 controlsystems
+- 2016-04-26 - 0.1 - #158 i157- graphs of demand are fixed
 - 2016-04-22 - 0.1 - #152 this should solve the MemoryError shanshan is having
 - 2016-04-21 - 0.1 - #151 I135 update toolbox new reference case
 - 2016-04-20 - 0.1 - #150 I114 update scripts
 - 2016-04-20 - 0.1 - #149 I114 update scripts
-- 2016-04-13 - 0.1 - #140 Fixed paths to new reference case location
-- 2016-04-11 - 0.1 - #133 folder 3
 - 2016-04-11 - 0.1 - #132 folders 2nd modification
-- 2016-04-11 - 0.1 - #131 folders
 - 2016-04-08 - 0.1 - #129 delete sensible files
 - 2016-04-01 - 0.1 - #116 Merge remote-tracking branch 'refs/remotes/origin/master' into i37_Extract_PropertiesTool_etc
 - 2016-04-01 - 0.1 - #115 I37 extract properties tool etc
