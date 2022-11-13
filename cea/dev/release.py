@@ -13,6 +13,9 @@ version_pattern = re.compile(r'__version__ = "(\d+\.\d+\.\d+)"')
 def replace_version(new_version: str):
     with open(init_path) as f:
         init = f.read()
+
+    if not version_pattern.search(init):
+        raise ValueError("Unable to find match, check if __version__ is found in cea/__init__.py")
     result = version_pattern.sub(f'__version__ = "{new_version}"', init)
 
     with open(init_path, "w") as f:
@@ -37,6 +40,9 @@ def update_credits(current_version: str, new_version: str):
 
     with open(credits_path, "r") as f:
         _credits = f.read()
+
+    if not credits_pattern.search(_credits):
+        raise ValueError("Unable to find match, check if <!-- credits --> is found in CREDITS.md")
     result = credits_pattern.sub(replacement, _credits, count=1)
 
     with open(credits_path, "w") as f:
