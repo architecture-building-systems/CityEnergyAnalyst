@@ -32,7 +32,7 @@ dependencies:
 - pandas
 - pip
 - psutil
-- pysal=2.1.0
+- libpysal
 - pythonocc-core
 - pytz
 - pvlib-python
