@@ -6,8 +6,8 @@
     :alt: Repo Size
 .. |lines_of_code| image:: https://raw.githubusercontent.com/architecture-building-systems/CityEnergyAnalyst/image-data/badge-lines-of-code.svg
     :alt: Lines of code
-.. |zenodo| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.6494266.svg
-   :target: https://doi.org/10.5281/zenodo.6494266
+.. |zenodo| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.7317134.svg
+   :target: https://doi.org/10.5281/zenodo.7317134
 
 .. image:: cea_logo.png
     :height: 420 px
@@ -40,4 +40,4 @@ allows to study the effects, trade-offs and synergies of urban design options, b
 Cite us:
 --------
 
-For V3.30.0 (stable): https://doi.org/10.5281/zenodo.6494266
+For V3.32.0 (stable): https://doi.org/10.5281/zenodo.7317134
