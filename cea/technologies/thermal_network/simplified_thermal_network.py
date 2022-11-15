@@ -166,7 +166,7 @@ def calc_thermal_loss_per_pipe(T_in_K, m_kgpers, T_ground_K, k_kWperK):
 
     return Q_loss_kWh
 
-def thermal_network_simplified(locator, config, network_name='', optimisation_flag=False, nodes_data=None, edges_data=None):
+def thermal_network_simplified(locator, config, network_name=''):
     # local variables
     network_type = config.thermal_network.network_type
     min_head_substation_kPa = config.thermal_network.min_head_substation
@@ -177,14 +177,7 @@ def thermal_network_simplified(locator, config, network_name='', optimisation_fl
     peak_load_percentage = config.thermal_network.peak_load_percentage
 
     # GET INFORMATION ABOUT THE NETWORK
-    if optimisation_flag:
-        if nodes_data is None or edges_data is None:
-            raise TypeError("If the physical thermal network calculation is called for optimisation, "
-                            "appropriate edges and nodes DataFrames need to be provided.")
-        else:
-            edge_df, node_df = edges_data, nodes_data
-    else:
-        edge_df, node_df = get_thermal_network_from_shapefile(locator, network_type, network_name)
+    edge_df, node_df = get_thermal_network_from_shapefile(locator, network_type, network_name)
 
     # GET INFORMATION ABOUT THE DEMAND OF BUILDINGS AND CONNECT TO THE NODE INFO
     # calculate substations for all buildings

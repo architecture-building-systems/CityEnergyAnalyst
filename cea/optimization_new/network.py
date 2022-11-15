@@ -28,25 +28,26 @@ import wntr
 import cea.technologies.substation as substation
 from cea.technologies.network_layout.steiner_spanning_tree import add_loops_to_network
 from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
-from cea.technologies.thermal_network.simplified_thermal_network import calculate_ground_temperature, calc_linear_thermal_loss_coefficient, calc_thermal_loss_per_pipe, calc_max_diameter
+from cea.technologies.thermal_network.simplified_thermal_network import calculate_ground_temperature, \
+    calc_linear_thermal_loss_coefficient, calc_thermal_loss_per_pipe, calc_max_diameter
 from cea.constants import P_WATER_KGPERM3, FT_WATER_TO_PA, FT_TO_M, M_WATER_TO_PA, SHAPEFILE_TOLERANCE
 from cea.technologies.constants import TYPE_MAT_DEFAULT, PIPE_DIAMETER_DEFAULT
 from cea.optimization.constants import PUMP_ETA
 
 
 class Network(object):
-    domain_potential_network_graph = nx.Graph()
-    domain_potential_network_terminals_df = pd.DataFrame()
-    domain_buildings_flow_rate_m3pers = pd.DataFrame()
-    domain_buildings_supply_temp_K = pd.DataFrame()
-    domain_buildings_return_temp_K = pd.DataFrame()
-    domain_locator = None
-    configuration_defaults = {'network_type': None,
-                              'thermal_transfer_unit_design_head_m': None,
-                              'hazen_williams_friction_coefficient': None,
-                              'peak_load_velocity_ms': None,
-                              'equivalent_length_factor': None,
-                              'peak_load_percentage': None}
+    _domain_potential_network_graph = nx.Graph()
+    _domain_potential_network_terminals_df = pd.DataFrame()
+    _domain_buildings_flow_rate_m3pers = pd.DataFrame()
+    _domain_buildings_supply_temp_K = pd.DataFrame()
+    _domain_buildings_return_temp_K = pd.DataFrame()
+    _domain_locator = None
+    _configuration_defaults = {'network_type': None,
+                               'thermal_transfer_unit_design_head_m': None,
+                               'hazen_williams_friction_coefficient': None,
+                               'peak_load_velocity_ms': None,
+                               'equivalent_length_factor': None,
+                               'peak_load_percentage': None}
 
     def __init__(self, domain=None):
         self._configure_network_defaults(domain)
@@ -71,13 +72,13 @@ class Network(object):
         :type plant_terminal: str (e.g. 'B1082')
         """
         self.connected_buildings = connected_buildings
-        is_connected = self.domain_potential_network_terminals_df['building'].isin(connected_buildings).to_list()
-        connected_terminals = self.domain_potential_network_terminals_df[is_connected]
+        is_connected = self._domain_potential_network_terminals_df['building'].isin(connected_buildings).to_list()
+        connected_terminals = self._domain_potential_network_terminals_df[is_connected]
         connected_terminal_coord = connected_terminals['coordinates'].tolist()
 
         # calculate steiner spanning tree of undirected potential_network_graph
         try:
-            network_graph = nx.Graph(steiner_tree(self.domain_potential_network_graph, connected_terminal_coord))
+            network_graph = nx.Graph(steiner_tree(self._domain_potential_network_graph, connected_terminal_coord))
             self.network_edges = Gdf([[LineString([edge_start, edge_end]), data.get('weight')]
                                       for edge_start, edge_end, data in network_graph.edges(data=True)],
                                      columns=['geometry', 'length_m'])
@@ -91,8 +92,8 @@ class Network(object):
                              'Otherwise, try using the Feature to Line tool of ArcMap with a tolerance of around 10m to solve the issue.')
 
         # build edge and node dataframes
-        domain_buildings_list = self.domain_potential_network_terminals_df['building'].to_list()
-        domain_buildings_coordinates_list = self.domain_potential_network_terminals_df['coordinates'].to_list()
+        domain_buildings_list = self._domain_potential_network_terminals_df['building'].to_list()
+        domain_buildings_coordinates_list = self._domain_potential_network_terminals_df['coordinates'].to_list()
         self._complete_graph_dataframes(connected_terminal_coord,
                                         domain_buildings_list,
                                         domain_buildings_coordinates_list)
@@ -105,7 +106,7 @@ class Network(object):
 
         if allow_looped_networks:
             # add loops to the network by connecting None nodes that exist in the potential network
-            self.network_edges, self.network_nodes = add_loops_to_network(self.domain_potential_network_graph,
+            self.network_edges, self.network_nodes = add_loops_to_network(self._domain_potential_network_graph,
                                                                           network_graph,
                                                                           self.network_edges,
                                                                           self.network_nodes,
@@ -154,24 +155,26 @@ class Network(object):
         pipe_names = self.network_edges.index.values
         thermal_losses_supply_kWh = wnm_results.link['headloss'].copy()
         thermal_losses_supply_kWh.reset_index(inplace=True, drop=True)
-        temperature_of_the_ground_K = calculate_ground_temperature(self.domain_locator)
-        thermal_coefficient_WperKm = pd.Series(np.vectorize(calc_linear_thermal_loss_coefficient)(wnm_pipe_diameters['D_ext_m'],
-                                                                                                  wnm_pipe_diameters['D_int_m'],
-                                                                                                  wnm_pipe_diameters['D_ins_m']),
-                                               pipe_names)
-        average_temperature_supply_K = self.domain_buildings_supply_temp_K[self.connected_buildings].mean(axis=1)
+        temperature_of_the_ground_K = calculate_ground_temperature(self._domain_locator)
+        thermal_coefficient_WperKm = pd.Series(
+            np.vectorize(calc_linear_thermal_loss_coefficient)(wnm_pipe_diameters['D_ext_m'],
+                                                               wnm_pipe_diameters['D_int_m'],
+                                                               wnm_pipe_diameters['D_ins_m']),
+            pipe_names)
+        average_temperature_supply_K = self._domain_buildings_supply_temp_K[self.connected_buildings].mean(axis=1)
         for pipe in pipe_names:
             length_m = self.network_edges.loc[pipe]['length_m']
             massflow_kgs = massflow_supply_kgs[pipe]
             k_WperKm_pipe = thermal_coefficient_WperKm[pipe]
             k_kWperK = k_WperKm_pipe * length_m / 1000
-            thermal_losses_supply_kWh[pipe] = np.vectorize(calc_thermal_loss_per_pipe)(average_temperature_supply_K.values,
-                                                                                       massflow_kgs.values,
-                                                                                       temperature_of_the_ground_K,
-                                                                                       k_kWperK,
-                                                                                       )
+            thermal_losses_supply_kWh[pipe] = np.vectorize(calc_thermal_loss_per_pipe)(
+                average_temperature_supply_K.values,
+                massflow_kgs.values,
+                temperature_of_the_ground_K,
+                k_kWperK,
+            )
         # ... the return pipes
-        average_temperature_return_K = self.domain_buildings_return_temp_K[self.connected_buildings].mean(axis=1)
+        average_temperature_return_K = self._domain_buildings_return_temp_K[self.connected_buildings].mean(axis=1)
         thermal_losses_return_kWh = wnm_results.link['headloss'].copy()
         thermal_losses_return_kWh.reset_index(inplace=True, drop=True)
         for pipe in pipe_names:
@@ -179,15 +182,17 @@ class Network(object):
             massflow_kgs = massflow_supply_kgs[pipe]
             k_WperKm_pipe = thermal_coefficient_WperKm[pipe]
             k_kWperK = k_WperKm_pipe * length_m / 1000
-            thermal_losses_return_kWh[pipe] = np.vectorize(calc_thermal_loss_per_pipe)(average_temperature_return_K.values,
-                                                                                       massflow_kgs.values,
-                                                                                       temperature_of_the_ground_K,
-                                                                                       k_kWperK,
-                                                                                       )
+            thermal_losses_return_kWh[pipe] = np.vectorize(calc_thermal_loss_per_pipe)(
+                average_temperature_return_K.values,
+                massflow_kgs.values,
+                temperature_of_the_ground_K,
+                k_kWperK,
+            )
 
         # accumulate pressure across the network for each timestep
         flow_rate_substations_m3s = wnm_results.node['demand'][consumer_nodes].abs()
-        pressure_loss_supply_edge_kW = (head_loss_supply_network_Pa * (flow_rate_supply_m3s * 3600)) / (3.6E6 * PUMP_ETA)
+        pressure_loss_supply_edge_kW = (head_loss_supply_network_Pa * (flow_rate_supply_m3s * 3600)) / (
+                3.6E6 * PUMP_ETA)
         head_loss_return_kW = pressure_loss_supply_edge_kW.copy()
         head_loss_substations_kW = (head_loss_substations_Pa * (flow_rate_substations_m3s * 3600)) / (3.6E6 * PUMP_ETA)
         accumulated_head_loss_supply_kW = pressure_loss_supply_edge_kW.sum(axis=1)
@@ -199,6 +204,7 @@ class Network(object):
 
         # calculate total network losses (2 x thermal losses of supply to account for return pipes)
         self.network_losses = thermal_losses_supply_kWh.sum(axis=1) * 2 - accumulated_head_loss_total_kW.values
+        # @lguilhermers, @shanshanhsieh --- please review the line above ---
 
         # aggregate network piping information
         self.network_piping = self.network_edges[['Type_mat', 'Pipe_DN']].drop_duplicates()
@@ -217,10 +223,10 @@ class Network(object):
         Gets the network related configurations from the domain's configs and stores them in class variables
         (accessible by all instances).
         """
-        if (domain is None) & (None in Network.configuration_defaults):
+        if (domain is None) & (None in Network._configuration_defaults):
             raise ValueError("The network calculation needs configuration before it can analyse any networks.")
         elif domain is not None:
-            Network.domain_locator = domain.locator
+            Network._domain_locator = domain.locator
             network_type = domain.config.thermal_network.network_type
             min_head_substation_kPa = domain.config.thermal_network.min_head_substation
             thermal_transfer_unit_design_head_m = min_head_substation_kPa * 1000 / M_WATER_TO_PA
@@ -228,12 +234,12 @@ class Network(object):
             peak_load_velocity_ms = domain.config.thermal_network.peak_load_velocity
             equivalent_length_factor = domain.config.thermal_network.equivalent_length_factor
             peak_load_percentage = domain.config.thermal_network.peak_load_percentage
-            Network.configuration_defaults = {'network_type': network_type,
-                                              'thermal_transfer_unit_design_head_m': thermal_transfer_unit_design_head_m,
-                                              'hazen_williams_friction_coefficient': hazen_williams_friction_coefficient,
-                                              'peak_load_velocity_ms': peak_load_velocity_ms,
-                                              'equivalent_length_factor': equivalent_length_factor,
-                                              'peak_load_percentage': peak_load_percentage}
+            Network._configuration_defaults = {'network_type': network_type,
+                                               'thermal_transfer_unit_design_head_m': thermal_transfer_unit_design_head_m,
+                                               'hazen_williams_friction_coefficient': hazen_williams_friction_coefficient,
+                                               'peak_load_velocity_ms': peak_load_velocity_ms,
+                                               'equivalent_length_factor': equivalent_length_factor,
+                                               'peak_load_percentage': peak_load_percentage}
 
     @staticmethod
     def _set_potential_network(domain):
@@ -241,19 +247,19 @@ class Network(object):
         Gets the potential network graph from domain and stores the important information in class variables
         (accessible by all instances).
         """
-        if (domain is None) & (nx.is_empty(Network.domain_potential_network_graph)):
+        if (domain is None) & (nx.is_empty(Network._domain_potential_network_graph)):
             raise ValueError("The network object requires a potential network graph for the domain to be set.")
         elif domain is not None:
-            Network.domain_potential_network_graph = domain.potential_network_graph
+            Network._domain_potential_network_graph = domain.potential_network_graph
             network_terminal_coordinates = [building.location.coords[0] for building in domain.buildings]
             network_terminal_coordinates = [(round(x, SHAPEFILE_TOLERANCE), round(y, SHAPEFILE_TOLERANCE))
                                             for x, y in network_terminal_coordinates]
             network_terminal_identifier = [building.identifier for building in domain.buildings]
             network_terminal_demand = [building.demand_profile.sum() for building in domain.buildings]
-            Network.domain_potential_network_terminals_df = pd.DataFrame(list(zip(network_terminal_identifier,
-                                                                                  network_terminal_coordinates,
-                                                                                  network_terminal_demand)),
-                                                                         columns=['building', 'coordinates', 'demand'])
+            Network._domain_potential_network_terminals_df = pd.DataFrame(list(zip(network_terminal_identifier,
+                                                                                   network_terminal_coordinates,
+                                                                                   network_terminal_demand)),
+                                                                          columns=['building', 'coordinates', 'demand'])
 
     @staticmethod
     def _set_building_operation_parameters(domain):
@@ -261,9 +267,9 @@ class Network(object):
         Calculates required mass flow rate and supply temperatures (+return temperature) for each building in the domain
         and stores this information in class variables (accessible by all instances).
         """
-        if (domain is None) and (any([Network.domain_buildings_flow_rate_m3pers.empty,
-                                      Network.domain_buildings_supply_temp_K.empty,
-                                      Network.domain_buildings_return_temp_K.empty])):
+        if (domain is None) and (any([Network._domain_buildings_flow_rate_m3pers.empty,
+                                      Network._domain_buildings_supply_temp_K.empty,
+                                      Network._domain_buildings_return_temp_K.empty])):
             raise ValueError("The supply and return temperatures as well as the mass flows required by each building "
                              "need to be calculates before analysing any possible network options.")
         elif domain is not None:
@@ -271,26 +277,27 @@ class Network(object):
             # GET INFORMATION ABOUT THE DEMAND OF BUILDINGS AND CONNECT TO THE NODE INFO
             # calculate substations for all buildings
             # local variables
-            total_demand = pd.read_csv(Network.domain_locator.get_total_demand())
+            total_demand = pd.read_csv(Network._domain_locator.get_total_demand())
             network_type = domain.config.thermal_network.network_type
 
             if network_type == "DH":
                 buildings_name_with_heating = get_building_names_with_load(total_demand, load_name='QH_sys_MWhyr')
-                buildings_name_with_space_heating = get_building_names_with_load(total_demand, load_name='Qhs_sys_MWhyr')
+                buildings_name_with_space_heating = get_building_names_with_load(total_demand,
+                                                                                 load_name='Qhs_sys_MWhyr')
                 if buildings_name_with_heating and buildings_name_with_space_heating:
                     building_names = [building for building in buildings_name_with_heating]
-                    substation.substation_main_heating(Network.domain_locator, total_demand, building_names,
+                    substation.substation_main_heating(Network._domain_locator, total_demand, building_names,
                                                        DHN_barcode="0")
                 else:
                     raise Exception('There is no heating demand from any building. Please check the input files.')
 
                 for building_name in building_names:
                     substation_results = pd.read_csv(
-                        Network.domain_locator.get_optimization_substations_results_file(building_name, "DH", "0"))
-                    Network.domain_buildings_flow_rate_m3pers[building_name] = \
+                        Network._domain_locator.get_optimization_substations_results_file(building_name, "DH", "0"))
+                    Network._domain_buildings_flow_rate_m3pers[building_name] = \
                         substation_results["mdot_DH_result_kgpers"] / P_WATER_KGPERM3
-                    Network.domain_buildings_supply_temp_K[building_name] = substation_results["T_supply_DH_result_K"]
-                    Network.domain_buildings_return_temp_K[building_name] = \
+                    Network._domain_buildings_supply_temp_K[building_name] = substation_results["T_supply_DH_result_K"]
+                    Network._domain_buildings_return_temp_K[building_name] = \
                         np.where(substation_results["T_return_DH_result_K"] > 273.15,
                                  substation_results["T_return_DH_result_K"], np.nan)
 
@@ -298,19 +305,20 @@ class Network(object):
                 buildings_name_with_cooling = get_building_names_with_load(total_demand, load_name='QC_sys_MWhyr')
                 if buildings_name_with_cooling:
                     building_names = [building for building in buildings_name_with_cooling]
-                    substation.substation_main_cooling(Network.domain_locator, total_demand, building_names,
+                    substation.substation_main_cooling(Network._domain_locator, total_demand, building_names,
                                                        DCN_barcode="0")
                 else:
                     raise Exception('There is no cooling demand for any building. Please check the input files.')
 
                 for building_name in building_names:
                     substation_results = pd.read_csv(
-                        Network.domain_locator.get_optimization_substations_results_file(building_name, "DC", "0"))
-                    Network.domain_buildings_flow_rate_m3pers[building_name] = \
-                        substation_results["mdot_space_cooling_data_center_and_refrigeration_result_kgpers"] / P_WATER_KGPERM3
-                    Network.domain_buildings_supply_temp_K[building_name] = \
+                        Network._domain_locator.get_optimization_substations_results_file(building_name, "DC", "0"))
+                    Network._domain_buildings_flow_rate_m3pers[building_name] = \
+                        substation_results[
+                            "mdot_space_cooling_data_center_and_refrigeration_result_kgpers"] / P_WATER_KGPERM3
+                    Network._domain_buildings_supply_temp_K[building_name] = \
                         substation_results["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K"]
-                    Network.domain_buildings_return_temp_K[building_name] = \
+                    Network._domain_buildings_return_temp_K[building_name] = \
                         substation_results["T_return_DC_space_cooling_data_center_and_refrigeration_result_K"]
 
     def _complete_graph_dataframes(self, connected_buildings_coords_list, buildings_list, building_coordinates_list):
@@ -325,6 +333,7 @@ class Network(object):
                                     ['geometry', 'coordinates', 'Building', 'Type']
                                     index: NODEi
         """
+
         def populate_fields(coordinate):
             if coordinate in connected_buildings_coords_list:
                 return buildings_list[building_coordinates_list.index(coordinate)]
@@ -359,12 +368,12 @@ class Network(object):
             end_node = (round(edge_coords[1][0], SHAPEFILE_TOLERANCE), round(edge_coords[1][1], SHAPEFILE_TOLERANCE))
             try:
                 self.network_edges.loc[pipe, 'start node'] = \
-                self.network_nodes[self.network_nodes['coordinates'] == start_node].index[0]
+                    self.network_nodes[self.network_nodes['coordinates'] == start_node].index[0]
             except IndexError:
                 print(f"The start node of {pipe} has no match in node_dict, check precision of the coordinates.")
             try:
                 self.network_edges.loc[pipe, 'end node'] = \
-                self.network_nodes[self.network_nodes['coordinates'] == end_node].index[0]
+                    self.network_nodes[self.network_nodes['coordinates'] == end_node].index[0]
             except IndexError:
                 print(f"The end node of {pipe} has no match in node_dict, check precision of the coordinates.")
 
@@ -403,7 +412,7 @@ class Network(object):
         plant_to_network = pd.DataFrame({'geometry': line, 'length_m': line.length, 'Type_mat': TYPE_MAT_DEFAULT,
                                          'Pipe_DN': PIPE_DIAMETER_DEFAULT, 'start node': network_anchor_node,
                                          'end node': plant_terminal_node},
-                                        index=['PIPE'+str(len(self.network_edges.index))])
+                                        index=['PIPE' + str(len(self.network_edges.index))])
         self.network_edges = self.network_edges.append(plant_to_network)
 
     def _run_water_network_model(self):
@@ -423,7 +432,7 @@ class Network(object):
         """
         # BUILD WATER NETWORK
         import cea.utilities
-        with cea.utilities.pushd(self.domain_locator.get_thermal_network_folder()):
+        with cea.utilities.pushd(self._domain_locator.get_thermal_network_folder()):
 
             # Create a water network model instance
             wn = wntr.network.WaterNetworkModel()
@@ -431,8 +440,8 @@ class Network(object):
             # add loads
             building_base_demand_m3s = {}
             for building in self.connected_buildings:
-                building_base_demand_m3s[building] = self.domain_buildings_flow_rate_m3pers[building].max()
-                pattern_demand = (self.domain_buildings_flow_rate_m3pers[building].values /
+                building_base_demand_m3s[building] = self._domain_buildings_flow_rate_m3pers[building].max()
+                pattern_demand = (self._domain_buildings_flow_rate_m3pers[building].values /
                                   building_base_demand_m3s[building]).tolist()
                 wn.add_pattern(building, pattern_demand)
 
@@ -446,10 +455,10 @@ class Network(object):
                     wn.add_junction(node[0],
                                     base_demand=base_demand_m3s,
                                     demand_pattern=demand_pattern,
-                                    elevation=self.configuration_defaults['thermal_transfer_unit_design_head_m'],
+                                    elevation=self._configuration_defaults['thermal_transfer_unit_design_head_m'],
                                     coordinates=node[1]["coordinates"])
                 elif node[1]["Type"] == "PLANT":
-                    base_head = int(self.configuration_defaults['thermal_transfer_unit_design_head_m'] * 1.2)
+                    base_head = int(self._configuration_defaults['thermal_transfer_unit_design_head_m'] * 1.2)
                     start_node = node[0]
                     name_node_plant = start_node
                     wn.add_reservoir(start_node,
@@ -466,13 +475,13 @@ class Network(object):
                 edge_name = edge[0]
                 wn.add_pipe(edge_name, edge[1]["start node"],
                             edge[1]["end node"],
-                            length=length_m * (1 + self.configuration_defaults['equivalent_length_factor']),
-                            roughness=self.configuration_defaults['hazen_williams_friction_coefficient'],
+                            length=length_m * (1 + self._configuration_defaults['equivalent_length_factor']),
+                            roughness=self._configuration_defaults['hazen_williams_friction_coefficient'],
                             minor_loss=0.0,
                             status='OPEN')
 
             # add options
-            nbr_time_steps = len(self.domain_buildings_flow_rate_m3pers)
+            nbr_time_steps = len(self._domain_buildings_flow_rate_m3pers)
             wn.options.time.duration = (nbr_time_steps - 1) * 3600  # this indicates epanet to do one year simulation
             wn.options.time.hydraulic_timestep = 60 * 60
             wn.options.time.pattern_timestep = 60 * 60
@@ -485,13 +494,13 @@ class Network(object):
             wnm_results = sim.run_sim()
             max_volume_flow_rates_m3s = wnm_results.link['flowrate'].abs().max()
             pipe_names = max_volume_flow_rates_m3s.index.values
-            pipe_catalog = pd.read_excel(self.domain_locator.get_database_distribution_systems(),
+            pipe_catalog = pd.read_excel(self._domain_locator.get_database_distribution_systems(),
                                          sheet_name='THERMAL_GRID')
             Pipe_DN, D_ext_m, D_int_m, D_ins_m = zip(*[calc_max_diameter(flow, pipe_catalog,
-                                                                         velocity_ms=self.configuration_defaults[
+                                                                         velocity_ms=self._configuration_defaults[
                                                                              'peak_load_velocity_ms'],
                                                                          peak_load_percentage=
-                                                                         self.configuration_defaults[
+                                                                         self._configuration_defaults[
                                                                              'peak_load_percentage'])
                                                        for flow in max_volume_flow_rates_m3s])
             pipe_dn = pd.Series(Pipe_DN, pipe_names)
@@ -518,8 +527,9 @@ class Network(object):
                 length_m = self.network_edges.loc[column]['length_m']
                 head_loss_m[column] = head_loss_m[column] * length_m
             reservoir_head_loss_m = head_loss_m.sum(axis=1) + \
-                                    self.configuration_defaults[
+                                    self._configuration_defaults[
                                         'thermal_transfer_unit_design_head_m'] * 1.2  # fixme: only one thermal_transfer_unit_design_head_m from one substation?
+            # @lguilhermers, @shanshanhsieh --- please review the 3 lines above ---
 
             # apply this pattern to the reservoir and get results
             base_head = reservoir_head_loss_m.max()

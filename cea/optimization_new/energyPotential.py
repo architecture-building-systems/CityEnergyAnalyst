@@ -142,7 +142,8 @@ class EnergyPotential(object):
         """
         # check if there are potential files for any of the buildings
         if not any([exists(file) for file in energy_potential_files]):
-            print(f"No {self.type} potentials could be found for the indicated buildings.")
+            print(f"No {self.type} potentials could be found for the indicated buildings. If you would like to include "
+                  f"potentials, consider running potentials scripts and then rerun the optimisation.")
             return np.nan
         # initialise necessary variables
         nbr_of_files = len(energy_potential_files)

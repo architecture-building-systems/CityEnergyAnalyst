@@ -81,6 +81,6 @@ BOILER_ETA_HP = 0.9
 GAS_CONNECTION_COST = 15.5 / 1000  # CHF / W, from  Energie360 15.5 CHF / kW
 
 # Thermal Network
-TYPE_MAT_DEFAULT = 'T1'
+TYPE_MAT_DEFAULT = 'T1'  # Pipe material default
 PIPE_DIAMETER_DEFAULT = 150
 
