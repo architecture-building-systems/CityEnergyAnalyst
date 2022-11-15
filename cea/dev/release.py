@@ -1,8 +1,9 @@
-import argparse
 import datetime
 import os.path
 import re
 import subprocess
+
+import cea.config
 
 init_path = os.path.join(os.path.dirname(__file__), "..", "__init__.py")
 credits_path = os.path.join(os.path.dirname(__file__), "..", "..", "CREDITS.md")
@@ -49,7 +50,7 @@ def update_credits(current_version: str, new_version: str):
         f.write(result)
 
 
-def update_changelog():
+def update_changelog() -> None:
     changelog_script_path = os.path.join(os.path.dirname(__file__), "..", "..", "bin", "create-changelog.py")
     result = subprocess.run(["python", changelog_script_path], check=True, capture_output=True)
     changelog = result.stdout.decode()
@@ -58,12 +59,17 @@ def update_changelog():
         f.write(changelog)
 
 
-def main(new_version: str):
+def main(config: cea.config.Configuration) -> None:
     from cea import __version__
     current_version = __version__
 
+    new_version = config.development.release_version
+
     if not re.match(r"\d+\.\d+\.\d+", new_version):
         raise ValueError("Version number needs to be in Semantic Versioning format. e.g., 1.0.0")
+    if current_version == new_version:
+        print(f"New version is the same as the current version ({new_version}). Ignoring update.")
+        return
 
     print("Updating Changelog")
     update_changelog()
@@ -76,8 +82,7 @@ def main(new_version: str):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Script to update required files when doing a release')
-    parser.add_argument('version', type=str, help='new version number for release')
-    version = parser.parse_args().version
+    cea_config = cea.config.Configuration()
+    version = cea_config.development.release_version
 
     main(version)

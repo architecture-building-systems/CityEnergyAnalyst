@@ -54,7 +54,7 @@ def update_credits(version: str, doi: str) -> None:
         f.write(result)
 
 
-def main() -> None:
+def main(*args) -> None:
     current_version = __version__
 
     # Fetch the new zenodo id for current version
