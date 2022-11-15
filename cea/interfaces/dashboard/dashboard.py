@@ -6,8 +6,6 @@ import cea.config
 import cea.plots
 import cea.plots.cache
 
-socketio = None
-
 
 def main(config):
     config.restricted_to = None  # allow access to the whole config file
@@ -15,8 +13,6 @@ def main(config):
     app = Flask(__name__, static_folder='base/static', )
     CORS(app)
     app.config.from_mapping({'SECRET_KEY': 'secret'})
-
-    global socketio
     socketio = SocketIO(app, cors_allowed_origins="*")
 
     from cea.interfaces.dashboard.plots.routes import blueprint as plots_blueprint
@@ -33,7 +29,7 @@ def main(config):
     app.socketio = socketio
 
     print("start socketio.run")
-    socketio.run(app, host=config.server.host, port=config.server.port)
+    socketio.run(app, host=config.server.host, port=config.server.port, allow_unsafe_werkzeug=True)
     print("done socketio.run")
 
 

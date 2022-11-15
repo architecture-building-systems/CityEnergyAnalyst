@@ -10,8 +10,6 @@ dependencies:
 - flask-restx
 - flask-socketio
 - werkzeug==2.0.*
-- gevent
-- gevent-websocket
 - ipykernel
 - ipython
 - jupyter
@@ -49,4 +47,5 @@ dependencies:
   - staticmap
   - wntr==0.2.*
   - git+https:///github.com/reyery/py4design.git@cea # modified p4design to remove deprecated functions
+  - simple-websocket
 
