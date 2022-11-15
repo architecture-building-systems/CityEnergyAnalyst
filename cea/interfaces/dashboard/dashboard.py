@@ -28,9 +28,9 @@ def main(config):
     app.plot_cache = plot_cache
     app.socketio = socketio
 
-    print("start socketio.run")
+    print("start CEA dashboard server")
     socketio.run(app, host=config.server.host, port=config.server.port, allow_unsafe_werkzeug=True)
-    print("done socketio.run")
+    print("server exited")
 
 
 if __name__ == '__main__':
