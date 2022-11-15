@@ -8,6 +8,7 @@ dependencies:
 - flask
 - flask-cors
 - flask-restx
+- flask-socketio
 - werkzeug==2.0.*
 - gevent
 - gevent-websocket
@@ -19,9 +20,8 @@ dependencies:
 - sphinx
 - sympy
 - utm
-- wntr=0.2.2.1
 - fiona
-- gdal=3.3.*
+- gdal
 - geopandas
 - matplotlib
 - networkx
@@ -33,8 +33,7 @@ dependencies:
 - pip
 - psutil
 - pysal=2.1.0
-- python>=3.7
-- pythonocc-core=7.4.1
+- pythonocc-core
 - pytz
 - pvlib-python
 - scipy
@@ -43,8 +42,11 @@ dependencies:
 - pyyaml
 - timezonefinder
 - python-cufflinks
+- cvxopt # For wntr
 - pip:
   - xlrd
   - xlwt
   - staticmap
-  - py4design-cea
+  - wntr==0.2.*
+  - git+https:///github.com/reyery/py4design.git@cea # modified p4design to remove deprecated functions
+
