@@ -4,7 +4,7 @@
 import hashlib
 
 from flask import current_app, request
-from flask_restplus import Namespace, Resource
+from flask_restx import Namespace, Resource
 
 import cea.config
 import cea.plots.cache

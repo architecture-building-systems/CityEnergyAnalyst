@@ -122,6 +122,11 @@ def disconnected_cooling_for_building(building_name, supply_systems, lca, locato
     operation_results = initialize_result_tables_for_supply_configurations(Qc_nom_SCU_W)
     # save supply system activation of all supply configurations
     cooling_dispatch = {}
+    number_of_configurations = len(operation_results)
+    # save (anthropogenic) heat release and system energy demands
+    Qh_sys_release_Wh = np.zeros((number_of_configurations, 1))
+    NG_sys_req_Wh = np.zeros((number_of_configurations, 1))
+    E_sys_req_Wh = np.zeros((number_of_configurations, 1))
     ## HOURLY OPERATION
     print('{building_name} decentralized cooling supply system simulations...'.format(building_name=building_name))
     T_re_AHU_ARU_SCU_K = np.where(T_re_AHU_ARU_SCU_K > 0.0, T_re_AHU_ARU_SCU_K, T_sup_AHU_ARU_SCU_K)
@@ -133,6 +138,10 @@ def disconnected_cooling_for_building(building_name, supply_systems, lca, locato
     # add electricity costs, CO2, PE
     operation_results[0][7] += sum(prices.ELEC_PRICE * el_DX_hourly_Wh)
     operation_results[0][8] += sum(calc_emissions_Whyr_to_tonCO2yr(el_DX_hourly_Wh, lca.EL_TO_CO2_EQ))  # ton CO2
+    # determine yearly (anthropogenic) heat release
+    Qh_sys_release_Wh[0][0] = sum(q_DX_chw_Wh + el_DX_hourly_Wh)
+    # determine yearly system energy demand
+    E_sys_req_Wh[0][0] = sum(el_DX_hourly_Wh)
     # activation
     cooling_dispatch[0] = {'Q_DX_AS_gen_directload_W': q_DX_chw_Wh,
                            'E_DX_AS_req_W': el_DX_hourly_Wh,
@@ -156,10 +165,15 @@ def disconnected_cooling_for_building(building_name, supply_systems, lca, locato
     el_total_Wh = el_VCC_Wh + el_CT_Wh
     operation_results[1][7] += sum(prices.ELEC_PRICE * el_total_Wh)  # CHF
     operation_results[1][8] += sum(calc_emissions_Whyr_to_tonCO2yr(el_total_Wh, lca.EL_TO_CO2_EQ))  # ton CO2
+    # calculate COP
     system_COP_list = np.divide(q_VCC_chw_Wh[None, :], el_total_Wh[None, :]).flatten()
     system_COP = np.nansum(q_VCC_chw_Wh[None, :] * system_COP_list) / np.nansum(
         q_VCC_chw_Wh[None, :])  # weighted average of the system efficiency
     operation_results[1][9] += system_COP
+    # determine (anthropogenic) heat release
+    Qh_sys_release_Wh[1][0] = sum(q_CT_VCC_to_AHU_ARU_SCU_Wh)
+    # determine system energy demand
+    E_sys_req_Wh[1][0] = sum(el_total_Wh)
     cooling_dispatch[1] = {'Q_BaseVCC_AS_gen_directload_W': q_VCC_chw_Wh,
                            'E_BaseVCC_AS_req_W': el_VCC_Wh,
                            'E_CT_req_W': el_CT_Wh,
@@ -199,6 +213,13 @@ def disconnected_cooling_for_building(building_name, supply_systems, lca, locato
     q_gas_total_Wh = q_gas_Boiler_FP_to_single_ACH_to_AHU_ARU_SCU_Wh
     operation_results[2][7] += sum(prices.NG_PRICE * q_gas_total_Wh)  # CHF
     operation_results[2][8] += sum(calc_emissions_Whyr_to_tonCO2yr(q_gas_total_Wh, lca.NG_TO_CO2_EQ))  # ton CO2
+    # determine (anthropogenic) heat release
+    Qh_sys_release_Wh[2][0] = sum(q_CT_FP_to_single_ACH_to_AHU_ARU_SCU_Wh +
+                                   (q_gas_Boiler_FP_to_single_ACH_to_AHU_ARU_SCU_Wh -
+                                    q_load_Boiler_FP_to_single_ACH_to_AHU_ARU_SCU_Wh))
+    # determine system energy demand
+    NG_sys_req_Wh[2][0] = sum(q_gas_total_Wh)
+    E_sys_req_Wh[2][0] = sum(el_total_Wh)
     # add activation
     cooling_dispatch[2] = {'Q_ACH_gen_directload_W': q_chw_single_ACH_Wh,
                            'Q_Boiler_NG_ACH_W': q_load_Boiler_FP_to_single_ACH_to_AHU_ARU_SCU_Wh,
@@ -245,6 +266,11 @@ def disconnected_cooling_for_building(building_name, supply_systems, lca, locato
     # add gas costs
     operation_results[3][7] += sum(prices.NG_PRICE * q_gas_for_burner_Wh)  # CHF
     operation_results[3][8] += sum(calc_emissions_Whyr_to_tonCO2yr(q_gas_for_burner_Wh, lca.NG_TO_CO2_EQ))  # ton CO2
+    # determine (anthropogenic) heat release
+    Qh_sys_release_Wh[3][0] = sum(q_CT_ET_to_single_ACH_to_AHU_ARU_SCU_W + (q_gas_for_burner_Wh - q_burner_load_Wh))
+    # determine system energy demand
+    NG_sys_req_Wh[3][0] = sum(q_gas_for_burner_Wh)
+    E_sys_req_Wh[3][0] = sum(el_total_Wh)
     # add activation
     cooling_dispatch[3] = {'Q_ACH_gen_directload_W': q_chw_single_ACH_Wh,
                            'Q_Burner_NG_ACH_W': q_burner_load_Wh,
@@ -287,6 +313,10 @@ def disconnected_cooling_for_building(building_name, supply_systems, lca, locato
         el_total_Wh = el_VCC_to_AHU_ARU_Wh + el_VCC_to_SCU_Wh + el_CT_Wh
         operation_results[4][7] += sum(prices.ELEC_PRICE * el_total_Wh)  # CHF
         operation_results[4][8] += sum(calc_emissions_Whyr_to_tonCO2yr(el_total_Wh, lca.EL_TO_CO2_EQ))  # ton CO2
+        # determine (anthropogenic) heat release
+        Qh_sys_release_Wh[4][0] = sum(q_CT_VCC_to_AHU_ARU_and_VCC_to_SCU_W)
+        # determine system energy demand
+        E_sys_req_Wh[4][0] = sum(el_total_Wh)
         # add activation
         cooling_dispatch[4] = {'Q_BaseVCC_AS_gen_directload_W': q_chw_VCC_to_AHU_ARU_Wh,
                                'Q_BaseVCCHT_AS_gen_directload_W': q_chw_VCC_to_SCU_Wh,
@@ -304,7 +334,7 @@ def disconnected_cooling_for_building(building_name, supply_systems, lca, locato
             q_CT_VCC_to_AHU_ARU_and_VCC_to_SCU_W[None, :])  # weighted average of the system efficiency
         operation_results[4][9] += system_COP
 
-        # 5: VCC (AHU + ARU) + ACH (SCU) + CT
+        # 5: VCC (AHU + ARU) + ACH (SCU) + CT + Boiler
         print(
             '{building_name} Config 5: Vapor Compression Chillers(LT) -> AHU,ARU & Flate-place SC + Absorption Chillers(HT) -> SCU'.format(
                 building_name=building_name))
@@ -334,6 +364,12 @@ def disconnected_cooling_for_building(building_name, supply_systems, lca, locato
         q_gas_total_Wh = q_gas_for_boiler_Wh
         operation_results[5][7] += sum(prices.NG_PRICE * q_gas_total_Wh)  # CHF
         operation_results[5][8] += sum(calc_emissions_Whyr_to_tonCO2yr(q_gas_total_Wh, lca.NG_TO_CO2_EQ))  # ton CO2
+        # determine (anthropogenic) heat release
+        Qh_sys_release_Wh[5][0] = sum(q_CT_VCC_to_AHU_ARU_and_single_ACH_to_SCU_Wh +
+                                      (q_gas_for_boiler_Wh - q_load_from_boiler_Wh))
+        # determine system energy demand
+        NG_sys_req_Wh[5][0] = sum(q_gas_for_boiler_Wh)
+        E_sys_req_Wh[5][0] = sum(el_total_Wh)
         # add activation
         cooling_dispatch[5] = {'Q_BaseVCC_AS_gen_directload_W': q_chw_VCC_to_AHU_ARU_Wh,
                                'Q_ACHHT_AS_gen_directload_W': q_chw_FP_ACH_to_SCU_Wh,
@@ -444,6 +480,9 @@ def disconnected_cooling_for_building(building_name, supply_systems, lca, locato
         "Opex_var_USD": operation_results[:, 7],
         "GHG_tonCO2": operation_results[:, 8],
         "TAC_USD": TAC_USD[:, 1],
+        "Qh_sys_release_Wh": Qh_sys_release_Wh[:, 0],
+        "NG_sys_req_Wh": NG_sys_req_Wh[:, 0],
+        "E_sys_req_Wh": E_sys_req_Wh[:, 0],
         "Best configuration": Best[:, 0],
         "system_COP": operation_results[:, 9],
     }
@@ -482,6 +521,7 @@ def calc_CT_operation(q_CT_load_Wh):
 def calc_boiler_operation(Q_ACH_size_W, T_hw_out_from_ACH_K, q_hw_single_ACH_Wh, q_sc_gen_FP_Wh):
     if not np.isclose(Q_ACH_size_W, 0.0):
         q_boiler_load_Wh = q_hw_single_ACH_Wh - q_sc_gen_FP_Wh
+        q_boiler_load_Wh = np.where(q_boiler_load_Wh < 0.0, 0.0, q_boiler_load_Wh)
         Q_nom_Boilers_W = np.max(q_boiler_load_Wh)
         T_re_boiler_K = T_hw_out_from_ACH_K
         boiler_eff = np.vectorize(boiler.calc_Cop_boiler)(q_boiler_load_Wh, Q_nom_Boilers_W, T_re_boiler_K)
@@ -497,16 +537,17 @@ def calc_boiler_operation(Q_ACH_size_W, T_hw_out_from_ACH_K, q_hw_single_ACH_Wh,
 def calc_burner_operation(Q_ACH_size_W, q_hw_single_ACH_Wh, q_sc_gen_ET_Wh):
     if not np.isclose(Q_ACH_size_W, 0.0):
         q_burner_load_Wh = q_hw_single_ACH_Wh - q_sc_gen_ET_Wh
+        q_burner_load_Wh = np.where(q_burner_load_Wh < 0.0, 0.0, q_burner_load_Wh)
         Q_nom_Burners_W = np.max(q_burner_load_Wh)
         burner_eff = np.vectorize(burner.calc_cop_burner)(q_burner_load_Wh, Q_nom_Burners_W)
-        q_gas_for_burber_Wh = np.divide(q_burner_load_Wh, burner_eff,
+        q_gas_for_burner_Wh = np.divide(q_burner_load_Wh, burner_eff,
                                         out=np.zeros_like(q_burner_load_Wh), where=burner_eff != 0)
     else:
         q_burner_load_Wh = 0.0
         Q_nom_Burners_W = 0.0
-        q_gas_for_burber_Wh = np.zeros(len(q_hw_single_ACH_Wh))
+        q_gas_for_burner_Wh = np.zeros(len(q_hw_single_ACH_Wh))
 
-    return q_gas_for_burber_Wh, Q_nom_Burners_W, q_burner_load_Wh
+    return q_gas_for_burner_Wh, Q_nom_Burners_W, q_burner_load_Wh
 
 
 def compile_TAC_CO2_Prim(Capex_a_USD, Opex_a_fixed_USD, number_of_configurations, operation_results):

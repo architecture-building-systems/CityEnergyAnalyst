@@ -10,7 +10,7 @@ import traceback
 
 import geopandas
 from flask import current_app, request
-from flask_restplus import Namespace, Resource, fields, abort
+from flask_restx import Namespace, Resource, fields, abort
 from staticmap import StaticMap, Polygon
 from shapely.geometry import shape
 import json

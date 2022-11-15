@@ -7,7 +7,7 @@ from collections import OrderedDict
 import geopandas
 import pandas
 from flask import current_app, request
-from flask_restplus import Namespace, Resource, abort
+from flask_restx import Namespace, Resource, abort
 
 import cea.inputlocator
 import cea.utilities.dbf

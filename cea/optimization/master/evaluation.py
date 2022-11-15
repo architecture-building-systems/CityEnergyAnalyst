@@ -4,7 +4,7 @@ Evaluation function of an individual
 """
 
 import cea.inputlocator
-from cea.optimization.master import cost_model
+from cea.optimization.master import objective_function_calculator
 from cea.optimization.master import master_to_slave as master
 from cea.optimization.master.generation import individual_to_barcode
 from cea.optimization.master.performance_aggregation import summarize_results_individual
@@ -39,7 +39,7 @@ def evaluation_main(individual,
                     technologies_cooling_allowed
                     ):
     """
-    This function evaluates an individual
+    This function evaluates an individual in terms of all possible objective functions.
 
     :param individual: Input individual
     :param building_names_all: names of buildings in the analysed district
@@ -137,6 +137,7 @@ def evaluation_main(individual,
     district_cooling_generation_dispatch, \
     district_cooling_electricity_requirements_dispatch, \
     district_cooling_fuel_requirements_dispatch, \
+    district_cooling_heat_release, \
     district_cooling_capacity_installed = cooling_main.district_cooling_network(locator,
                                                                                 config,
                                                                                 master_to_slave_vars,
@@ -154,13 +155,13 @@ def evaluation_main(individual,
         district_heating_electricity_requirements_dispatch,
         district_cooling_generation_dispatch,
         district_cooling_electricity_requirements_dispatch)
-    
-    # electricity_main.extract_fuels_demand_buildings(master_to_slave_vars, building_names_all, locator)
 
     # CALCULATE COSTS AND EMISSIONS
     print("DISTRICT ENERGY SYSTEM - COSTS, PRIMARY ENERGY AND EMISSIONS OF CONNECTED BUILDINGS")
     buildings_district_scale_costs, \
-    buildings_district_scale_emissions = cost_model.buildings_district_scale_costs_and_emissions(
+    buildings_district_scale_emissions, \
+    buildings_district_scale_heat, \
+    buildings_district_scale_sed = objective_function_calculator.buildings_district_scale_objective_functions(
         district_heating_fixed_costs,
         district_cooling_fixed_costs,
         district_electricity_fixed_costs,
@@ -168,33 +169,49 @@ def evaluation_main(individual,
         district_heating_fuel_requirements_dispatch,
         district_cooling_fuel_requirements_dispatch,
         district_electricity_demands,
+        district_cooling_heat_release,
         prices,
         lca)
 
     buildings_building_scale_costs, \
     buildings_building_scale_emissions, \
+    buildings_building_scale_heat, \
+    buildings_building_scale_sed, \
     buildings_building_scale_heating_capacities, \
-    buildings_building_scale_cooling_capacities = cost_model.buildings_building_scale_costs_and_emissions(
+    buildings_building_scale_cooling_capacities = objective_function_calculator.buildings_building_scale_objective_functions(
         building_names_heating,
         building_names_cooling,
         locator,
         master_to_slave_vars)
 
     print("AGGREGATING RESULTS")
-    TAC_sys_USD, GHG_sys_tonCO2, performance_totals = summarize_results_individual(buildings_district_scale_costs,
-                                                                                   buildings_district_scale_emissions,
-                                                                                   buildings_building_scale_costs,
-                                                                                   buildings_building_scale_emissions)
+    TAC_sys_USD, GHG_sys_tonCO2, HR_sys_MWh, SED_sys_MWh, performance_totals = summarize_results_individual(
+        buildings_district_scale_costs,
+        buildings_district_scale_emissions,
+        buildings_district_scale_heat,
+        buildings_district_scale_sed,
+        buildings_building_scale_costs,
+        buildings_building_scale_emissions,
+        buildings_building_scale_heat,
+        buildings_building_scale_sed)
 
     print('Total TAC in USD = ' + str(round(TAC_sys_USD)))
     print('Total GHG emissions in tonCO2-eq = ' + str(round(GHG_sys_tonCO2)))
+    print('Total heat rejection in MWh = ' + str(round(HR_sys_MWh)))
+    print('Total system energy demand in MWh = ' + str(round(SED_sys_MWh)))
 
     return TAC_sys_USD, \
            GHG_sys_tonCO2, \
+           HR_sys_MWh, \
+           SED_sys_MWh, \
            buildings_district_scale_costs, \
            buildings_district_scale_emissions, \
+           buildings_district_scale_heat, \
+           buildings_district_scale_sed, \
            buildings_building_scale_costs, \
            buildings_building_scale_emissions, \
+           buildings_building_scale_heat, \
+           buildings_building_scale_sed, \
            district_heating_generation_dispatch, \
            district_cooling_generation_dispatch, \
            district_electricity_dispatch, \
