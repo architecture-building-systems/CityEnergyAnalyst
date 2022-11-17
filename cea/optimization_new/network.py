@@ -255,7 +255,7 @@ class Network(object):
             network_terminal_coordinates = [(round(x, SHAPEFILE_TOLERANCE), round(y, SHAPEFILE_TOLERANCE))
                                             for x, y in network_terminal_coordinates]
             network_terminal_identifier = [building.identifier for building in domain.buildings]
-            network_terminal_demand = [building.demand_profile.sum() for building in domain.buildings]
+            network_terminal_demand = [building.demand_flow.profile.sum() for building in domain.buildings]
             Network._domain_potential_network_terminals_df = pd.DataFrame(list(zip(network_terminal_identifier,
                                                                                    network_terminal_coordinates,
                                                                                    network_terminal_demand)),

@@ -16,15 +16,8 @@ __maintainer__ = "NA"
 __email__ = "mathias.niffeler@sec.ethz.ch"
 __status__ = "Production"
 
-# imports
-# standard libraries
 import pandas as pd
-import time
-# third party libraries
-import geopandas as gpd
-# other files (modules) of this project
-from cea.inputlocator import InputLocator
-from cea.config import Configuration
+from cea.optimization_new.energyFlow import EnergyFlow
 
 
 class Building(object):
@@ -32,19 +25,19 @@ class Building(object):
     def __init__(self, identifier, demands_file_path):
         self.identifier = identifier
         self.demands_file_path = demands_file_path
-        self._demand_profile = None
+        self._demand_flow = EnergyFlow()
         self._footprint = None
         self._location = None
 
     @property
-    def demand_profile(self):
+    def demand_flow(self):
 
-        return self._demand_profile
+        return self._demand_flow
 
-    @demand_profile.setter
-    def demand_profile(self, new_demand_profile):
-        if isinstance(new_demand_profile, pd.Series):
-            self._demand_profile = new_demand_profile
+    @demand_flow.setter
+    def demand_flow(self, new_demand_flow):
+        if isinstance(new_demand_flow, EnergyFlow):
+            self._demand_flow = new_demand_flow
         else:
             raise ValueError("Please, make sure you're assigning a valid demand profile. "
                              "Try assigning demand profiles using the load_demand_profile method.")
@@ -80,13 +73,13 @@ class Building(object):
         demand_dataframe = pd.read_csv(self.demands_file_path)
 
         if energy_system_type == 'DC':
-            self.demand_profile = demand_dataframe['QC_sys_kWh']
+            self.demand_flow = EnergyFlow().generate('primary', 'consumer', 'T10C', demand_dataframe['QC_sys_kWh'])
         elif energy_system_type == 'DH':
-            self.demand_profile = demand_dataframe['QH_sys_kWh']
+            self.demand_flow = EnergyFlow().generate('primary', 'consumer', 'T60C', demand_dataframe['QH_sys_kWh'])
         else:
             print('Please indicate a valid energy system type.')
 
-        return self.demand_profile
+        return self.demand_flow
 
     def load_building_location(self, domain_shp_file):
 

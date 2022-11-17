@@ -27,6 +27,7 @@ from cea.inputlocator import InputLocator
 from cea.optimization_new.energyPotential import EnergyPotential
 from cea.optimization_new.building import Building
 from cea.optimization_new.network import Network
+from cea.optimization_new.energyCarrier import EnergyCarrier
 from cea.technologies.supply_systems_database import SupplySystemsDatabase
 from cea.technologies.network_layout.connectivity_potential import calc_connectivity_network
 from cea.constants import SHAPEFILE_TOLERANCE
@@ -36,30 +37,12 @@ class Domain(object):
     def __init__(self, config, locator):
         self.config = config
         self.locator = locator
-        self._available_energy_carriers = None
         self.geography = 'xxx'
         self.buildings = []
         self.potential_network_graph = nx.Graph()
-        self.energy_potentials = None
-
-    @property
-    def available_energy_carriers(self):
-
-        return self._available_energy_carriers
-
-    @available_energy_carriers.setter
-    def available_energy_carriers(self, new_energy_carriers):
-        if not isinstance(new_energy_carriers, pd.DataFrame):
-            raise TypeError("The available energy carriers database does not seem to be provided in the correct format.")
-        if any(new_energy_carriers.columns != ['description', 'code', 'type', 'qualifier', 'unit_qual', 'mean_qual',
-                                               'unit_cost_USD.kWh', 'unit_ghg_kgCO2.kWh', 'reference']):
-            raise AttributeError("The attributes of the energy carriers database does not seem to correspond to the "
-                                 "required list: \n'description', 'code', 'type', 'qualifier', 'unit_qual', "
-                                 "'mean_qual', 'unit_cost_USD.kWh', 'unit_ghg_kgCO2.kWh', 'reference'")
-        if not all(i in ['thermal', 'electrical', 'combustible', 'radiation'] for i in new_energy_carriers.type):
-            raise ValueError("The energy carrier data base contains an invalid energy type. Valid energy carrier "
-                             "types are: \n 'thermal', 'electrical', 'combustible', 'radiation'")
-        self._available_energy_carriers = new_energy_carriers
+        self.energy_potentials = []
+        self.available_energy_carriers = None
+        EnergyCarrier._load_energy_carriers(self.locator)
 
     def load_supply_system_database(self):
         supply_systems = SupplySystemsDatabase(self.locator)
@@ -101,22 +84,22 @@ class Domain(object):
         shp_file = gpd.read_file(self.locator.get_zone_geometry())
         if buildings_in_domain is None:
             buildings_in_domain = shp_file.Name
-        if self.available_energy_carriers is None:
-            self.load_supply_system_database()
-        thermal_ec = self.available_energy_carriers[self.available_energy_carriers.type == 'thermal']
 
         # building-specific potentials
         pv_potential = EnergyPotential().load_PV_potential(self.locator, buildings_in_domain)
-        pvt_potential = EnergyPotential().load_PVT_potential(self.locator, buildings_in_domain, thermal_ec)
-        scet_potential = EnergyPotential().load_SCET_potential(self.locator, buildings_in_domain, thermal_ec)
-        scfp_potential = EnergyPotential().load_SCFP_potential(self.locator, buildings_in_domain, thermal_ec)
+        pvt_potential = EnergyPotential().load_PVT_potential(self.locator, buildings_in_domain)
+        scet_potential = EnergyPotential().load_SCET_potential(self.locator, buildings_in_domain)
+        scfp_potential = EnergyPotential().load_SCFP_potential(self.locator, buildings_in_domain)
 
         # domain-wide potentials
-        geothermal_potential = EnergyPotential().load_geothermal_potential(self.locator.get_geothermal_potential(), thermal_ec)
-        water_body_potential = EnergyPotential().load_water_body_potential(self.locator.get_water_body_potential(), thermal_ec)
-        sewage_potential = EnergyPotential().load_sewage_potential(self.locator.get_sewage_heat_potential(), thermal_ec)
+        geothermal_potential = EnergyPotential().load_geothermal_potential(self.locator.get_geothermal_potential())
+        water_body_potential = EnergyPotential().load_water_body_potential(self.locator.get_water_body_potential())
+        sewage_potential = EnergyPotential().load_sewage_potential(self.locator.get_sewage_heat_potential())
 
-        self.energy_potentials = [pv_potential, pvt_potential, scet_potential, scfp_potential, geothermal_potential, water_body_potential, sewage_potential]
+        for potential in [pv_potential, pvt_potential, scet_potential, scfp_potential, geothermal_potential, water_body_potential, sewage_potential]:
+            if potential:
+                self.energy_potentials.append(potential)
+
         return self.energy_potentials
 
     def load_pot_network(self):
@@ -170,17 +153,15 @@ def main(config):
     locator = InputLocator(scenario=config.scenario)
     current_domain = Domain(config, locator)
 
-    # current_domain.load_supply_system_database()
-
     start_time = time.time()
     current_domain.load_buildings()
     end_time = time.time()
     print(f"Time elapsed for loading buildings in domain: {end_time - start_time} s")
 
-    # start_time = time.time()
-    # current_domain.load_potentials()
-    # end_time = time.time()
-    # print(f"Time elapsed for loading energy potentials: {end_time - start_time} s")
+    start_time = time.time()
+    current_domain.load_potentials()
+    end_time = time.time()
+    print(f"Time elapsed for loading energy potentials: {end_time - start_time} s")
 
     start_time = time.time()
     current_domain.load_pot_network()
