@@ -77,7 +77,7 @@ class ThermalNetwork(object):
         self.diameter_iteration_limit = 10
         self.substation_cooling_systems = ["ahu", "aru", "scu"]
         self.substation_heating_systems = ["ahu", "aru", "shu", "ww"]
-        self.temperature_control = "VT"  # the control strategy of supply temperatures at plants (constant tempearture "CT" or variable temperature "VT")
+        self.temperature_control = "VT"  # the control strategy of supply temperatures at plants (constant temperature "CT" or variable temperature "VT")
         self.plant_supply_temperature = 80
         self.equivalent_length_factor = 0.2
 
@@ -1585,7 +1585,7 @@ def calc_reynolds(mass_flow_rate_kgs, temperature__k, pipe_diameter_m):
 
     reynolds = np.nan_to_num(
         4 * (abs(mass_flow_rate_kgs) / P_WATER_KGPERM3) / (math.pi * kinematic_viscosity_m2s * pipe_diameter_m))
-    # necessary if statement to make sure ouput is an array type, as input formats of files can vary
+    # necessary if statement to make sure output is an array type, as input formats of files can vary
     if hasattr(reynolds[0], '__len__'):
         reynolds = reynolds[0]
     return reynolds
@@ -1895,7 +1895,7 @@ def edge_mass_flow_iteration(thermal_network, edge_mass_flow_df, iteration_count
     :return:
     """
     if thermal_network.no_convergence_flag == True:
-        pipe_min_mass_flow = thermal_network.minimum_edge_mass_flow / 2  # there are problems with convergence so reduce the minium edge mass flow
+        pipe_min_mass_flow = thermal_network.minimum_edge_mass_flow / 2  # there are problems with convergence so reduce the minimum edge mass flow
     else:
         pipe_min_mass_flow = thermal_network.minimum_edge_mass_flow  # minimum acceptable mass flow defined in our constants file
     if isinstance(edge_mass_flow_df, pd.DataFrame):  # make sure we have a pd Dataframe
@@ -1930,7 +1930,7 @@ def edge_mass_flow_iteration(thermal_network, edge_mass_flow_df, iteration_count
                     # if not, identify closest  building
                     steps = 0
                     while (not any(node_type[node] in s for s in thermal_network.building_names)) and steps < 5:
-                        # our node is not a bulding so we find an edge connected to our node
+                        # our node is not a building so we find an edge connected to our node
                         node_name = str(thermal_network.edge_node_df.index.values[node])
                         if len(np.where(thermal_network.edge_node_df.loc[node_name] == -1)[
                                    0]) > 1:  # we have more than one flow and all flows are incoming! Chose one randomly
@@ -2190,7 +2190,7 @@ def solve_network_temperatures(thermal_network, t):
     cohesive. It is done as follow: The substation supply temperatures (T_substation_supply) are calculated based on the
     nominal edge flow rate (see `calc_max_edge_flowrate`), and then the substation mass flow requirements
     (mass_flow_substation_nodes_df) and pipe mass flows (edge_mass_flow_df_2) are updated accordingly. Following, the
-    substation supply temperatures(T_substation_supply_2) are recalcuated with the updated pipe mass flow.
+    substation supply temperatures(T_substation_supply_2) are recalculated with the updated pipe mass flow.
 
     The iteration continues until the substation supply temperatures converged.
 
@@ -2504,7 +2504,7 @@ def write_nodes_values_to_substations(t_supply_nodes, all_nodes_df):
     """
     all_nodes_df['T_supply'] = t_supply_nodes
     if 'coordinates' in all_nodes_df.columns:
-        # drop column with coordinates fom all_nodes_df
+        # drop column with coordinates from all_nodes_df
         all_nodes_df = all_nodes_df.drop('coordinates', axis=1)
     t_substation_supply = all_nodes_df[all_nodes_df.Building != 'NONE'].set_index(['Building'])
     t_substation_supply = t_substation_supply.drop('Type', axis=1)

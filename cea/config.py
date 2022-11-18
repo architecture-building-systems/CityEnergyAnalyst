@@ -334,7 +334,7 @@ class Section(object):
 
 
 def construct_parameter(parameter_name, section, config):
-    """Create the approriate subtype of ``Parameter`` based on the .type option in the default.config file.
+    """Create the appropriate subtype of ``Parameter`` based on the .type option in the default.config file.
     :param parameter_name: The name of the parameter (as it appears in the configuration file, all lowercase)
     :type parameter_name: str
     :param section: The section this parameter is to be defined for

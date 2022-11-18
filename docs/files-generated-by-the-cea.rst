@@ -786,7 +786,7 @@ simulated year. It has 20 columns corresponding to the following fields:
 
 
 **Total_linkedbuildings** a ``csv`` file has two rows (including header) and
-62 columns (first column corresponding to indes) which include the following fields:
+62 columns (first column corresponding to index) which include the following fields:
 
 - ``Name``
 - ``Af_m2``

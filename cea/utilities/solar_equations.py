@@ -656,7 +656,7 @@ def calc_angle_of_incidence(g, lat, ha, tilt, teta_z):
     To calculate angle of incidence from solar vector and surface normal vector.
     (Validated with Sandia pvlib.irrandiance.aoi)
 
-    :param lat: latitude of the loacation of case study [radians]
+    :param lat: latitude of the location of case study [radians]
     :param g: declination of the solar position [radians]
     :param ha: hour angle [radians]
     :param tilt: panel surface tilt angle [radians]

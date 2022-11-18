@@ -371,7 +371,7 @@ def calculate_end_points_intersections(prototype_network, crs):
 def create_terminals(buiding_centroids, crs, street_network):
     # get list of nearest points
     near_points = near_analysis(buiding_centroids, street_network, crs)
-    # extend to the buiding centroids
+    # extend to the building centroids
     all_points = near_points.append(buiding_centroids)
     all_points.crs = crs
     # Aggregate these points with the GroupBy
