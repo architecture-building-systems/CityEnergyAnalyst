@@ -2,7 +2,7 @@
 
 
 from flask import Blueprint
-from flask_restplus import Api
+from flask_restx import Api
 from .tools import api as tools
 from .project import api as project
 from .inputs import api as inputs

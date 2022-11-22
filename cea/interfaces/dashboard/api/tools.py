@@ -2,7 +2,7 @@
 
 
 from flask import current_app
-from flask_restplus import Namespace, Resource, fields
+from flask_restx import Namespace, Resource, fields
 
 import cea.scripts
 from .utils import deconstruct_parameters
