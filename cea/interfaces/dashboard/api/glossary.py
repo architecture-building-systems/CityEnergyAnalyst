@@ -1,7 +1,7 @@
 
 
 
-from flask_restplus import Namespace, Resource
+from flask_restx import Namespace, Resource
 from flask import current_app
 
 from cea.glossary import read_glossary_df
