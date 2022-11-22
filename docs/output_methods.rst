@@ -401,7 +401,7 @@ The following file is used by these scripts:
     ``TAC_sys_building_scale_USD``, "Equivalent annual costs of building-scale systems"
     ``TAC_sys_district_scale_USD``, "Equivalent annual of district-scale systems"
     ``TAC_sys_USD``, "Equivalent annual costs of all systems"
-    ``user_MCDA``, "Best system according to user mult-criteria weights"
+    ``user_MCDA``, "Best system according to user multi-criteria weights"
     ``user_MCDA_rank``, "Rank of Best system according to user mult-criteria weights"
     
 
