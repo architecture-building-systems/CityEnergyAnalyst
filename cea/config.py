@@ -967,7 +967,7 @@ class MultiChoiceParameter(ChoiceParameter):
         return [choice for choice in choices if choice in self._choices]
 
 
-class OrderedMultiChoiceParameter(ChoiceParameter):
+class OrderedMultiChoiceParameter(MultiChoiceParameter):
     """Like MultiChoiceParameter, but it should TODO: display with selectable order in the dashboard"""
     typename = 'OrderedMultiChoiceParameter'
 
