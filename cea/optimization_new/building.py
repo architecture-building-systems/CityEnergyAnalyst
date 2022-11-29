@@ -73,9 +73,9 @@ class Building(object):
         demand_dataframe = pd.read_csv(self.demands_file_path)
 
         if energy_system_type == 'DC':
-            self.demand_flow = EnergyFlow().generate('primary', 'consumer', 'T10C', demand_dataframe['QC_sys_kWh'])
+            self.demand_flow = EnergyFlow('primary', 'consumer', 'T10C', demand_dataframe['QC_sys_kWh'])
         elif energy_system_type == 'DH':
-            self.demand_flow = EnergyFlow().generate('primary', 'consumer', 'T60C', demand_dataframe['QH_sys_kWh'])
+            self.demand_flow = EnergyFlow('primary', 'consumer', 'T60C', demand_dataframe['QH_sys_kWh'])
         else:
             print('Please indicate a valid energy system type.')
 

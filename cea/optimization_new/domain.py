@@ -17,9 +17,9 @@ __status__ = "Production"
 
 from os.path import exists
 import time
+import random
 import numpy as np
 import pandas as pd
-import networkx as nx
 import geopandas as gpd
 
 import cea.config
@@ -28,9 +28,11 @@ from cea.optimization_new.energyPotential import EnergyPotential
 from cea.optimization_new.building import Building
 from cea.optimization_new.network import Network
 from cea.optimization_new.energyCarrier import EnergyCarrier
+from cea.optimization_new.energyFlow import EnergyFlow
+from cea.optimization_new.supplySystem import SupplySystem
+from cea.optimization_new.component import Component
+from cea.optimization_new.districtEnergySystem import DistrictEnergySystem
 from cea.technologies.supply_systems_database import SupplySystemsDatabase
-from cea.technologies.network_layout.connectivity_potential import calc_connectivity_network
-from cea.constants import SHAPEFILE_TOLERANCE
 
 
 class Domain(object):
@@ -39,10 +41,10 @@ class Domain(object):
         self.locator = locator
         self.geography = 'xxx'
         self.buildings = []
-        self.potential_network_graph = nx.Graph()
         self.energy_potentials = []
         self.available_energy_carriers = None
-        EnergyCarrier._load_energy_carriers(self.locator)
+
+        self._initialise_domain_descriptor_classes()
 
     def load_supply_system_database(self):
         supply_systems = SupplySystemsDatabase(self.locator)
@@ -102,48 +104,38 @@ class Domain(object):
 
         return self.energy_potentials
 
-    def load_pot_network(self):
-        """
-        Create potential network graph based on streets network .shp-file and the location of the buildings in the
-        domain.
-
-        :return self.potential_network_graph: Graph of potential network paths including roads and links to buildings.
-        :rtype self.potential_network_graph: <networkx.Graph>-object
-        """
-        if not self.buildings:
-            return self.potential_network_graph
-
-        # join building locations (shapely.POINTS) and the corresponding identifiers in a DataFrame
-        building_identifiers = [building.identifier for building in self.buildings]
-        building_locations = [building.location for building in self.buildings]
-        buildings_df = pd.DataFrame(list(zip(building_locations, building_identifiers)), columns=['geometry', 'Name'])
-
-        # create a potential network grid with orthogonal connections between buildings and their closest street
-        network_grid_shp = calc_connectivity_network(self.locator.get_street_network(),
-                                                     buildings_df,
-                                                     optimisation_flag=True)
-
-        # convert the GeoDataFrame network grid to a Graph
-        for (line_string, length) in network_grid_shp.itertuples(index=False):
-            line_start = line_string.coords[0]
-            line_end = line_string.coords[-1]
-            edge_start = (round(line_start[0], SHAPEFILE_TOLERANCE), round(line_start[1], SHAPEFILE_TOLERANCE))
-            edge_end = (round(line_end[0], SHAPEFILE_TOLERANCE), round(line_end[1], SHAPEFILE_TOLERANCE))
-            self.potential_network_graph.add_edge(edge_start, edge_end, weight=length)
-
-        return self.potential_network_graph
-
     def optimize_domain(self):
-        individual_network = Network(domain=self)
+        """
+        Build district energy system and...
+        TODO: determine for which combinations of connectivity vectors and capacity indicator matrices the best performance is achieved.
+        """
+        self._initialize_energy_system_descriptor_classes()
 
-        # calculate status quo
-        connected_buildings = self.config.network_layout.connected_buildings
-        individual_network.run_steiner_tree_optimisation(connected_buildings)
-        individual_network.calculate_operational_conditions()
+        max_nbr_networks = 2  # TODO: make this part of the config
+        connectivity = np.array([random.randint(0, max_nbr_networks) for _ in range(len(self.buildings))])
+        # impose constraints on connectivity vector
+        zeros_profile = pd.Series(0.0, index=np.arange(EnergyFlow.time_frame))
+        no_load_buildings = np.array([all(building.demand_flow.profile == zeros_profile) for building in self.buildings])
+        connectivity[no_load_buildings] = 0
+
+        new_district_cooling_system = DistrictEnergySystem(connectivity)
+        new_district_cooling_system.generate_networks()
+        new_district_cooling_system.aggregate_demand(self.buildings)
+        new_district_cooling_system.distribute_potentials()
+        new_district_cooling_system.generate_supply_systems()
 
         # calculate
         optimal_district_cooling_systems = 'xxx'
         return optimal_district_cooling_systems
+
+    def _initialise_domain_descriptor_classes(self):
+        EnergyCarrier.initialize_class_variables(self)
+
+    def _initialize_energy_system_descriptor_classes(self):
+        Component.initialize_class_variables(self)
+        Network.initialize_class_variables(self)
+        DistrictEnergySystem.initialize_class_variables(self)
+        SupplySystem.initialize_class_variables(self)
 
 
 def main(config):
@@ -162,11 +154,6 @@ def main(config):
     current_domain.load_potentials()
     end_time = time.time()
     print(f"Time elapsed for loading energy potentials: {end_time - start_time} s")
-
-    start_time = time.time()
-    current_domain.load_pot_network()
-    end_time = time.time()
-    print(f"Time elapsed for loading the potential network of the domain: {end_time - start_time} s")
 
     start_time = time.time()
     current_domain.optimize_domain()

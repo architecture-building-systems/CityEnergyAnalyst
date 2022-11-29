@@ -19,8 +19,10 @@ __status__ = "Production"
 
 # imports
 # standard libraries
+import pandas as pd
 # third party libraries
 # other files (modules) of this project
+
 
 class Component(object):
     """
@@ -29,14 +31,22 @@ class Component(object):
     :param name: technical name of the component (e.g. "phase-change thermal storage"), defaults to 'xxx'
     :type name: str, optional
     """
+    components_database = None
+
     def __init__(self, name, category):
         self.name = name
         self.category = category
+        self.operating_mode = 'efficiencyModel+mainEC'
         self.main_energy_carrier = 'xxx'
         self.input_energy_carriers = 2
         self.output_energy_carriers = 'xxx'
         self.conversion_efficiencies = 'xxx'
         self.capacity = 12
+
+    @staticmethod
+    def initialize_class_variables(domain):
+        """ Fetch components database from file and save it as a class variable (dict of pd.DataFrames)"""
+        Component.components_database = pd.read_excel(domain.locator.get_database_conversion_systems_new(), None)
 
 
 class AbsorptionChiller(Component):

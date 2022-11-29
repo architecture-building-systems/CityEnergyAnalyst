@@ -28,6 +28,7 @@ import wntr
 import cea.technologies.substation as substation
 from cea.technologies.network_layout.steiner_spanning_tree import add_loops_to_network
 from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
+from cea.technologies.network_layout.connectivity_potential import calc_connectivity_network
 from cea.technologies.thermal_network.simplified_thermal_network import calculate_ground_temperature, \
     calc_linear_thermal_loss_coefficient, calc_thermal_loss_per_pipe, calc_max_diameter
 from cea.constants import P_WATER_KGPERM3, FT_WATER_TO_PA, FT_TO_M, M_WATER_TO_PA, SHAPEFILE_TOLERANCE
@@ -49,17 +50,15 @@ class Network(object):
                                'equivalent_length_factor': None,
                                'peak_load_percentage': None}
 
-    def __init__(self, domain=None):
-        self._configure_network_defaults(domain)
-        self._set_potential_network(domain)
-        self._set_building_operation_parameters(domain)
-        self.connected_buildings = []
+    def __init__(self, network_id, connected_buildings):
+        self.identifier = network_id
+        self.connected_buildings = connected_buildings
         self.network_edges = Gdf()
         self.network_nodes = Gdf()
         self.network_piping = pd.DataFrame()
         self.network_losses = pd.Series()
 
-    def run_steiner_tree_optimisation(self, connected_buildings, allow_looped_networks=False, plant_terminal=None):
+    def run_steiner_tree_optimisation(self, allow_looped_networks=False, plant_terminal=None):
         """
         Finds the shortest possible network for a given selection of connected buildings using the steiner tree
         optimisation algorithm.
@@ -71,8 +70,7 @@ class Network(object):
         :param plant_terminal: building name where plant should be built, plant is built next to the largest consumer otherwise
         :type plant_terminal: str (e.g. 'B1082')
         """
-        self.connected_buildings = connected_buildings
-        is_connected = self._domain_potential_network_terminals_df['building'].isin(connected_buildings).to_list()
+        is_connected = self._domain_potential_network_terminals_df['building'].isin(self.connected_buildings).to_list()
         connected_terminals = self._domain_potential_network_terminals_df[is_connected]
         connected_terminal_coord = connected_terminals['coordinates'].tolist()
 
@@ -218,6 +216,45 @@ class Network(object):
         return self.network_losses, self.network_piping
 
     @staticmethod
+    def initialize_class_variables(domain):
+        Network._configure_network_defaults(domain)
+        Network._load_pot_network(domain)
+        Network._set_potential_network_terminals(domain)
+        Network._set_building_operation_parameters(domain)
+
+    @staticmethod
+    def _load_pot_network(domain):
+        """
+        Create potential network graph based on streets network .shp-file and the location of the buildings in the
+        domain.
+
+        :return domain.potential_network_graph: Graph of potential network paths including roads and links to buildings.
+        :rtype domain.potential_network_graph: <networkx.Graph>-object
+        """
+        if not domain.buildings:
+            return nx.Graph()
+
+        # join building locations (shapely.POINTS) and the corresponding identifiers in a DataFrame
+        building_identifiers = [building.identifier for building in domain.buildings]
+        building_locations = [building.location for building in domain.buildings]
+        buildings_df = pd.DataFrame(list(zip(building_locations, building_identifiers)), columns=['geometry', 'Name'])
+
+        # create a potential network grid with orthogonal connections between buildings and their closest street
+        network_grid_shp = calc_connectivity_network(domain.locator.get_street_network(),
+                                                     buildings_df,
+                                                     optimisation_flag=True)
+
+        # convert the GeoDataFrame network grid to a Graph
+        for (line_string, length) in network_grid_shp.itertuples(index=False):
+            line_start = line_string.coords[0]
+            line_end = line_string.coords[-1]
+            edge_start = (round(line_start[0], SHAPEFILE_TOLERANCE), round(line_start[1], SHAPEFILE_TOLERANCE))
+            edge_end = (round(line_end[0], SHAPEFILE_TOLERANCE), round(line_end[1], SHAPEFILE_TOLERANCE))
+            Network._domain_potential_network_graph.add_edge(edge_start, edge_end, weight=length)
+
+        return Network._domain_potential_network_graph
+
+    @staticmethod
     def _configure_network_defaults(domain):
         """
         Gets the network related configurations from the domain's configs and stores them in class variables
@@ -242,7 +279,7 @@ class Network(object):
                                                'peak_load_percentage': peak_load_percentage}
 
     @staticmethod
-    def _set_potential_network(domain):
+    def _set_potential_network_terminals(domain):
         """
         Gets the potential network graph from domain and stores the important information in class variables
         (accessible by all instances).
@@ -250,7 +287,6 @@ class Network(object):
         if (domain is None) & (nx.is_empty(Network._domain_potential_network_graph)):
             raise ValueError("The network object requires a potential network graph for the domain to be set.")
         elif domain is not None:
-            Network._domain_potential_network_graph = domain.potential_network_graph
             network_terminal_coordinates = [building.location.coords[0] for building in domain.buildings]
             network_terminal_coordinates = [(round(x, SHAPEFILE_TOLERANCE), round(y, SHAPEFILE_TOLERANCE))
                                             for x, y in network_terminal_coordinates]

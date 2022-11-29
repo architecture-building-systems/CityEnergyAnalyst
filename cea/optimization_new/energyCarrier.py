@@ -137,13 +137,22 @@ class EnergyCarrier(object):
             self.unit_ghg = energy_carrier['unit_ghg_kgCO2.kWh'].iloc[0]
 
     @staticmethod
+    def initialize_class_variables(domain):
+        """
+        Load energy carriers from database and determine which of the energy carriers are of type thermal. Save both
+        data sets as class variables.
+        """
+        EnergyCarrier._load_energy_carriers(domain.locator)
+        EnergyCarrier._extract_thermal_energy_carriers()
+
+    @staticmethod
     def _load_energy_carriers(locator):
         EnergyCarrier._available_energy_carriers = pd.read_excel(locator.get_database_energy_carriers())
 
     @staticmethod
     def _extract_thermal_energy_carriers():
         if EnergyCarrier._available_energy_carriers.empty:
-            raise AttributeError('The energy carrier database has not been loaded extracting thermal energy carriers.')
+            raise AttributeError('The energy carrier database has not been loaded or was not found.')
         EnergyCarrier._thermal_energy_carriers = \
             EnergyCarrier._available_energy_carriers[EnergyCarrier._available_energy_carriers['type'] == 'thermal']
         if len(EnergyCarrier._thermal_energy_carriers) == 0:
@@ -151,6 +160,14 @@ class EnergyCarrier(object):
 
     @staticmethod
     def temp_to_thermal_ec(temperature):
+        """
+        Determine which thermal energy carrier corresponds to a given temperature.
+
+        :param temperature: temperature in °C
+        :type temperature: float
+        :return energy_carrier_code: code of the corresponding thermal energy carrier
+        :rtype energy_carrier_code: str
+        """
         if EnergyCarrier._thermal_energy_carriers.empty:
             EnergyCarrier._extract_thermal_energy_carriers()
 
