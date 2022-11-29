@@ -4831,6 +4831,1875 @@ get_database_conversion_systems:
   - photovoltaic
   - photovoltaic_thermal
   - solar_collector
+get_database_conversion_systems_new:
+  created_by:
+  - data_initializer
+  file_path: inputs/technology/components/CONVERSION_NEW.xlsx
+  file_type: xls
+  schema:
+    Absorption_chiller:
+      columns:
+        Description:
+          description: Describes the Type of Absorption Chiller
+          type: string
+          unit: 'NA'
+          values: 'NA'
+        IR_%:
+          description: interest rate charged on the loan for the capital cost
+          min: 0.0
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+        LT_yr:
+          description: lifetime of this technology
+          min: 0
+          type: int
+          unit: "[yr]"
+          values: '{0...n}'
+        O&M_%:
+          description: operation and maintenance cost factor (fraction of the investment
+            cost)
+          min: 0.0
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+        a:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x), where x is the capacity '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        a_e:
+          description: 'parameter in the characteristic equations to calculate the
+            evaporator side '
+          type: float
+          unit: '[-]'
+          values: '{n...n}'
+        a_g:
+          description: parameter in the characteristic equations to calculate the
+            generator side
+          type: float
+          unit: '[-]'
+          values: '{n...n}'
+        assumption:
+          description: items made by assumptions in this technology
+          nullable: true
+          type: string
+          unit: '[-]'
+          values: depends on the data availability
+        b:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x), where x is the capacity '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        c:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x), where x is the capacity '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        cap_max:
+          description: 'maximum capacity '
+          type: float
+          unit: '[W]'
+          values: '{0.0...n}'
+          min: 0.0
+        cap_min:
+          description: minimum capacity
+          type: float
+          unit: '[W]'
+          values: '{0.0...n}'
+          min: 0.0
+        code:
+          description: identifier of each unique equipment
+          type: string
+          unit: 'NA'
+          values: alphanumeric
+        currency:
+          description: currency-year information of the investment cost function,
+            should be unified to USD
+          regex: ^[A-Z]{3}-\d{4}$
+          type: string
+          unit: NA
+          values: '{"USD-2015"}'
+        d:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x), where x is the capacity '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        e:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x), where x is the capacity '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        e_e:
+          description: 'parameter in the characteristic equations to calculate the
+            evaporator side '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        e_g:
+          description: parameter in the characteristic equations to calculate the
+            generator side
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        m_cw:
+          description: external flow rate of cooling water at the condenser and absorber
+          type: float
+          unit: '[kg/s]'
+          values: '{0.0...n}'
+          min: 0.0
+        m_hw:
+          description: external flow rate of hot water at the generator
+          type: float
+          unit: '[kg/s]'
+          values: '{0.0...n}'
+          min: 0.0
+        main_EC_out:
+          description: main energy carrier output, dictating the operating point/mode of this supply system component
+          type: string
+          unit: 'NA'
+          values: alphanumeric
+        r_e:
+          description: 'parameter in the characteristic equations to calculate the
+            evaporator side '
+          type: float
+          unit: '[-]'
+          values: '{n...n}'
+        r_g:
+          description: parameter in the characteristic equations to calculate the
+            generator side
+          type: float
+          unit: '[-]'
+          values: '{n...n}'
+        s_e:
+          description: 'parameter in the characteristic equations to calculate the
+            evaporator side '
+          type: float
+          unit: '[kW/K]'
+          values: '{0.0...n}'
+          min: 0.0
+        s_g:
+          description: parameter in the characteristic equations to calculate the
+            generator side
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        type:
+          choice:
+            values:
+            - single
+            - double
+            - triple
+          description: 'type of absorption chiller '
+          type: string
+          unit: 'NA'
+          values: '{"single", "double", "triple"}'
+        unit:
+          description: unit of the min/max capacity
+          type: string
+          unit: 'NA'
+          values: '{"W"}'
+    BH:
+      columns:
+        Description:
+          description: Describes the type of borehole heat exchanger
+          type: string
+          unit: 'NA'
+          values: 'NA'
+        IR_%:
+          description: interest rate charged on the loan for the capital cost
+          min: 0.0
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+        LT_yr:
+          description: lifetime of this technology
+          min: 0
+          type: int
+          unit: "[yr]"
+          values: '{0...n}'
+        O&M_%:
+          description: operation and maintenance cost factor (fraction of the investment
+            cost)
+          min: 0.0
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+        a:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x)  '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        assumption:
+          description: items made by assumptions in this technology
+          nullable: true
+          type: string
+          unit: 'NA'
+          values: depends on the data availability
+        b:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x)  '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        c:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x)  '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        cap_max:
+          description: 'maximum capacity '
+          type: float
+          unit: '[W]'
+          values: '{0.0...n}'
+          min: 0.0
+        cap_min:
+          description: minimum capacity
+          type: float
+          unit: '[W]'
+          values: '{0.0...n}'
+          min: 0.0
+        code:
+          description: identifier of each unique equipment
+          type: string
+          unit: 'NA'
+          values: alphanumeric
+        currency:
+          description: currency-year information of the investment cost function
+          regex: ^[A-Z]{3}-\d{4}$
+          type: string
+          unit: NA
+          values: '{"USD-2015"}'
+        d:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x)  '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        e:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x)  '
+          type: float
+          unit: NA
+          values: '{0.0...n}'
+          min: 0.0
+        unit:
+          description: unit of the min/max capacity
+          type: string
+          unit: NA
+          values: '{"W"}'
+    Boiler:
+      columns:
+        Description:
+          description: Describes the type of boiler
+          type: string
+          unit: 'NA'
+          values: 'NA'
+        IR_%:
+          description: interest rate charged on the loan for the capital cost
+          min: 0.0
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+        LT_yr:
+          description: lifetime of this technology
+          min: 0
+          type: int
+          unit: "[yr]"
+          values: '{0...n}'
+        O&M_%:
+          description: operation and maintenance cost factor (fraction of the investment
+            cost)
+          min: 0.0
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+        a:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x)  '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        assumption:
+          description: items made by assumptions in this technology
+          nullable: true
+          type: string
+          unit: 'NA'
+          values: depends on the data availability
+        b:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x)  '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        c:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x)  '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        cap_max:
+          description: 'maximum capacity '
+          type: float
+          unit: '[W]'
+          values: '{0.0...n}'
+          min: 0.0
+        cap_min:
+          description: minimum capacity
+          type: float
+          unit: '[W]'
+          values: '{0.0...n}'
+          min: 0.0
+        code:
+          description: identifier of each unique equipment
+          type: string
+          unit: 'NA'
+          values: alphanumeric
+        currency:
+          description: currency-year information of the investment cost function
+          regex: ^[A-Z]{3}-\d{4}$
+          type: string
+          unit: NA
+          values: '{"USD-2015"}'
+        d:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x)  '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        e:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x)  '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        main_EC_out:
+          description: main energy carrier output, dictating the operating point/mode of this supply system component
+          type: string
+          unit: 'NA'
+          values: alphanumeric
+        unit:
+          description: unit of the min/max capacity
+          type: string
+          unit: NA
+          values: '{"W"}'
+    CCGT:
+      columns:
+        Description:
+          description: Describes the type of combined-cycle gas turbine
+          type: string
+          unit: 'NA'
+          values: 'NA'
+        IR_%:
+          description: interest rate charged on the loan for the capital cost
+          min: 0.0
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+        LT_yr:
+          description: lifetime of this technology
+          min: 0
+          type: int
+          unit: "[yr]"
+          values: '{0...n}'
+        O&M_%:
+          description: operation and maintenance cost factor (fraction of the investment
+            cost)
+          min: 0.0
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+        a:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x)  '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        assumption:
+          description: items made by assumptions in this technology
+          nullable: true
+          type: string
+          unit: 'NA'
+          values: depends on the data availability
+        b:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x)  '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        c:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x)  '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        cap_max:
+          description: 'maximum capacity '
+          type: float
+          unit: '[W]'
+          values: '{0.0...n}'
+          min: 0.0
+        cap_min:
+          description: minimum capacity
+          type: float
+          unit: '[W]'
+          values: '{0.0...n}'
+          min: 0.0
+        code:
+          description: identifier of each unique equipment
+          type: string
+          unit: 'NA'
+          values: alphanumeric
+        currency:
+          description: currency-year information of the investment cost function,
+            should be unified to USD
+          regex: ^[A-Z]{3}-\d{4}$
+          type: string
+          unit: NA
+          values: '{"USD-2015"}'
+        d:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x)  '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        e:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x)  '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        main_EC_out:
+          description: main energy carrier output, dictating the operating point/mode of this supply system component
+          type: string
+          unit: 'NA'
+          values: alphanumeric
+        unit:
+          description: unit of the min/max capacity
+          type: string
+          unit: NA
+          values: '{"W"}'
+    CT:
+      columns:
+        Description:
+          description: Describes the type of cooling tower
+          type: string
+          unit: 'NA'
+          values: 'NA'
+        IR_%:
+          description: interest rate charged on the loan for the capital cost
+          min: 0.0
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+        LT_yr:
+          description: lifetime of this technology
+          min: 0
+          type: int
+          unit: "[yr]"
+          values: '{0...n}'
+        O&M_%:
+          description: operation and maintenance cost factor (fraction of the investment
+            cost)
+          min: 0.0
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+        a:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x)  '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        assumption:
+          description: items made by assumptions in this technology
+          nullable: true
+          type: string
+          unit: 'NA'
+          values: depends on the data availability
+        b:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x)  '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        c:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x)  '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        cap_max:
+          description: 'maximum capacity '
+          type: float
+          unit: '[W]'
+          values: '{0.0...n}'
+          min: 0.0
+        cap_min:
+          description: minimum capacity
+          type: float
+          unit: '[W]'
+          values: '{0.0...n}'
+          min: 0.0
+        code:
+          description: identifier of each unique equipment
+          type: string
+          unit: 'NA'
+          values: alphanumeric
+        currency:
+          description: currency-year information of the investment cost function,
+            should be unified to USD
+          regex: ^[A-Z]{3}-\d{4}$
+          type: string
+          unit: NA
+          values: '{"USD-2015"}'
+        d:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x)  '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        e:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x)  '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        main_EC_in:
+          description: main energy carrier input, dictating the operating point/mode of this supply system component
+          type: string
+          unit: 'NA'
+          values: alphanumeric
+        unit:
+          description: unit of the min/max capacity
+          type: string
+          unit: NA
+          values: '{"W"}'
+    Chiller:
+      columns:
+        Description:
+          description: Describes the source of the benchmark standards.
+          type: string
+          unit: 'NA'
+          values: 'NA'
+        IR_%:
+          description: interest rate charged on the loan for the capital cost
+          min: 0.0
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+        LT_yr:
+          description: lifetime of this technology
+          min: 0
+          type: int
+          unit: "[yr]"
+          values: '{0...n}'
+        O&M_%:
+          description: operation and maintenance cost factor (fraction of the investment
+            cost)
+          min: 0.0
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+        a:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x)  '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        assumption:
+          description: items made by assumptions in this technology
+          nullable: true
+          type: string
+          unit: 'NA'
+          values: depends on the data availability
+        b:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x)  '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        c:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x)  '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        cap_max:
+          description: 'maximum capacity '
+          type: float
+          unit: '[W]'
+          values: '{0.0...n}'
+          min: 0.0
+        cap_min:
+          description: minimum capacity
+          type: float
+          unit: '[W]'
+          values: '{0.0...n}'
+          min: 0.0
+        code:
+          description: identifier of each unique equipment
+          type: string
+          unit: 'NA'
+          values: alphanumeric
+        currency:
+          description: currency-year information of the investment cost function,
+            should be unified to USD
+          regex: ^[A-Z]{3}-\d{4}$
+          type: string
+          unit: NA
+          values: '{"USD-2015"}'
+        d:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x)  '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        e:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x)  '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        main_EC_out:
+          description: main energy carrier output, dictating the operating point/mode of this supply system component
+          type: string
+          unit: 'NA'
+          values: alphanumeric
+        unit:
+          description: unit of the min/max capacity
+          type: string
+          unit: NA
+          values: '{"W"}'
+    FC:
+      columns:
+        Description:
+          description: Describes the type of fuel cell
+          type: string
+          unit: 'NA'
+          values: 'NA'
+        IR_%:
+          description: interest rate charged on the loan for the capital cost
+          min: 0.0
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+        LT_yr:
+          description: lifetime of this technology
+          min: 0
+          type: int
+          unit: "[yr]"
+          values: '{0...n}'
+        O&M_%:
+          description: operation and maintenance cost factor (fraction of the investment
+            cost)
+          min: 0.0
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+        a:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x)  '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        assumption:
+          description: items made by assumptions in this technology
+          nullable: true
+          type: string
+          unit: 'NA'
+          values: depends on the data availability
+        b:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x)  '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        c:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x)  '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        cap_max:
+          description: 'maximum capacity '
+          type: float
+          unit: '[W]'
+          values: '{0.0...n}'
+          min: 0.0
+        cap_min:
+          description: minimum capacity
+          type: float
+          unit: '[W]'
+          values: '{0.0...n}'
+          min: 0.0
+        code:
+          description: identifier of each unique equipment
+          type: string
+          unit: 'NA'
+          values: alphanumeric
+        currency:
+          description: currency-year information of the investment cost function,
+            should be unified to USD
+          regex: ^[A-Z]{3}-\d{4}$
+          type: string
+          unit: NA
+          values: '{"USD-2015"}'
+        d:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x)  '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        e:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x)  '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        main_EC_out:
+          description: main energy carrier output, dictating the operating point/mode of this supply system component
+          type: string
+          unit: 'NA'
+          values: alphanumeric
+        unit:
+          description: unit of the min/max capacity
+          type: string
+          unit: NA
+          values: '{"W"}'
+    Furnace:
+      columns:
+        Description:
+          description: Describes the type of furnace
+          type: string
+          unit: 'NA'
+          values: 'NA'
+        IR_%:
+          description: interest rate charged on the loan for the capital cost
+          min: 0.0
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+        LT_yr:
+          description: lifetime of this technology
+          min: 0
+          type: int
+          unit: "[yr]"
+          values: '{0...n}'
+        O&M_%:
+          description: operation and maintenance cost factor (fraction of the investment
+            cost)
+          min: 0.0
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+        a:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x)  '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        assumption:
+          description: items made by assumptions in this technology
+          nullable: true
+          type: string
+          unit: 'NA'
+          values: depends on the data availability
+        b:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x)  '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        c:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x)  '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        cap_max:
+          description: 'maximum capacity '
+          type: float
+          unit: '[W]'
+          values: '{0.0...n}'
+          min: 0.0
+        cap_min:
+          description: minimum capacity
+          type: float
+          unit: '[W]'
+          values: '{0.0...n}'
+          min: 0.0
+        code:
+          description: identifier of each unique equipment
+          type: string
+          unit: 'NA'
+          values: alphanumeric
+        currency:
+          description: currency-year information of the investment cost function,
+            should be unified to USD
+          regex: ^[A-Z]{3}-\d{4}$
+          type: string
+          unit: NA
+          values: '{"USD-2015"}'
+        d:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x)  '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        e:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x)  '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        main_EC_out:
+          description: main energy carrier output, dictating the operating point/mode of this supply system component
+          type: string
+          unit: 'NA'
+          values: alphanumeric
+        unit:
+          description: unit of the min/max capacity
+          type: string
+          unit: NA
+          values: '{"W"}'
+    HEX:
+      columns:
+        Description:
+          description: Describes the type of heat exchanger
+          type: string
+          unit: 'NA'
+          values: 'NA'
+        IR_%:
+          description: interest rate charged on the loan for the capital cost
+          min: 0.0
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+        LT_yr:
+          description: lifetime of this technology
+          min: 0
+          type: int
+          unit: "[yr]"
+          values: '{0...n}'
+        O&M_%:
+          description: operation and maintenance cost factor (fraction of the investment
+            cost)
+          min: 0.0
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+        a:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x)  '
+          type: float
+          unit: '[-]'
+          values: '{n...n}'
+        a_p:
+          description: 'parameter in the pressure loss function, f(x) = a_p + b_p*x^c_p
+            + d_p*ln(x) + e_p*x*ln*(x),  where x is the capacity mass flow rate [W/K] '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        assumption:
+          description: items made by assumptions in this technology
+          nullable: true
+          type: string
+          unit: 'NA'
+          values: depends on the data availability
+        b:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x)  '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        b_p:
+          description: 'parameter in the pressure loss function, f(x) = a_p + b_p*x^c_p
+            + d_p*ln(x) + e_p*x*ln*(x),  where x is the capacity mass flow rate [W/K] '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        c:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x)  '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        c_p:
+          description: 'parameter in the pressure loss function, f(x) = a_p + b_p*x^c_p
+            + d_p*ln(x) + e_p*x*ln*(x),  where x is the capacity mass flow rate [W/K] '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        cap_max:
+          description: 'maximum capacity '
+          type: float
+          unit: NA  # [W] or [m2]
+          values: '{0.0...n}'
+          min: 0.0
+        cap_min:
+          description: minimum capacity
+          type: float
+          unit: NA  # [W] or [m2]
+          values: '{0.0...n}'
+          min: 0.0
+        code:
+          description: identifier of each unique equipment
+          type: string
+          unit: 'NA'
+          values: alphanumeric
+        currency:
+          description: currency-year information of the investment cost function,
+            should be unified to USD
+          regex: ^[A-Z]{3}-\d{4}$
+          type: string
+          unit: NA
+          values: '{"USD-2015"}'
+        d:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x)  '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        d_p:
+          description: 'parameter in the pressure loss function, f(x) = a_p + b_p*x^c_p
+            + d_p*ln(x) + e_p*x*ln*(x),  where x is the capacity mass flow rate [W/K] '
+          type: float
+          unit: '[-]'
+          values: '{n...n}'
+        e:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x)  '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        e_p:
+          description: 'parameter in the pressure loss function, f(x) = a_p + b_p*x^c_p
+            + d_p*ln(x) + e_p*x*ln*(x),  where x is the capacity mass flow rate [W/K] '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        main_EC_out:
+          description: main energy carrier output, dictating the operating point/mode of this supply system component
+          type: string
+          unit: 'NA'
+          values: alphanumeric
+        unit:
+          description: unit of the min/max capacity
+          type: string
+          unit: 'NA'
+          values: '{"W","m2"}'
+    HP:
+      columns:
+        Description:
+          description: Describes the source of the heat pump
+          type: string
+          unit: 'NA'
+          values: 'NA'
+        IR_%:
+          description: interest rate charged on the loan for the capital cost
+          min: 0.0
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+        LT_yr:
+          description: lifetime of this technology
+          min: 0
+          type: int
+          unit: "[yr]"
+          values: '{0...n}'
+        O&M_%:
+          description: operation and maintenance cost factor (fraction of the investment
+            cost)
+          min: 0.0
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+        a:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x), where x is the capacity '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        assumption:
+          description: items made by assumptions in this technology
+          nullable: true
+          type: string
+          unit: 'NA'
+          values: depends on the data availability
+        b:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x), where x is the capacity '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        c:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x), where x is the capacity '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        cap_max:
+          description: 'maximum capacity '
+          type: float
+          unit: '[W]'
+          values: '{0.0...n}'
+          min: 0.0
+        cap_min:
+          description: minimum capacity
+          type: float
+          unit: '[W]'
+          values: '{0.0...n}'
+          min: 0.0
+        code:
+          description: identifier of each unique equipment
+          type: string
+          unit: 'NA'
+          values: alphanumeric
+        currency:
+          description: currency-year information of the investment cost function,
+            should be unified to USD
+          regex: ^[A-Z]{3}-\d{4}$
+          type: string
+          unit: NA
+          values: '{"USD-2015"}'
+        d:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x), where x is the capacity '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        e:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x), where x is the capacity '
+          type: float
+          unit: '[-]'
+          values: '{n...n}'
+        main_EC_out:
+          description: main energy carrier output, dictating the operating point/mode of this supply system component
+          type: string
+          unit: 'NA'
+          values: alphanumeric
+        unit:
+          description: unit of the min/max capacity
+          type: string
+          unit: 'NA'
+          values: '{"W"}'
+    PV:
+      columns:
+        Description:
+          description: Describes the source of the benchmark standards.
+          type: string
+          unit: 'NA'
+          values: 'NA'
+        IR_%:
+          description: interest rate charged on the loan for the capital cost
+          min: 0.0
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+        LT_yr:
+          description: lifetime of this technology
+          min: 0
+          type: int
+          unit: "[yr]"
+          values: '{0...n}'
+        O&M_%:
+          description: operation and maintenance cost factor (fraction of the investment
+            cost)
+          min: 0.0
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+        PV_Bref:
+          description: cell maximum power temperature coefficient
+          type: float
+          unit: '[1/C]'
+          values: '{0.0...1}'
+          min: 0.0
+          max: 1.0
+        PV_a0:
+          description: parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  +
+            a3*x**3 + a4*x**4, where  x is the relative air mass
+          type: float
+          unit: '[-]'
+          values: '{n...n}'
+        PV_a1:
+          description: parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  +
+            a3*x**3 + a4*x**4, where  x is the relative air mass
+          type: float
+          unit: '[-]'
+          values: '{-0.1...0.1}'
+          min: -0.1
+          max: 0.1
+        PV_a2:
+          description: parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  +
+            a3*x**3 + a4*x**4, where  x is the relative air mass
+          type: float
+          unit: '[-]'
+          values: '{-0.1...0.1}'
+          min: -0.1
+          max: 0.1
+        PV_a3:
+          description: parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  +
+            a3*x**3 + a4*x**4, where  x is the relative air mass
+          type: float
+          unit: '[-]'
+          values: '{-0.1...0.1}'
+          min: -0.1
+          max: 0.1
+        PV_a4:
+          description: parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  +
+            a3*x**3 + a4*x**4, where  x is the relative air mass
+          type: float
+          unit: '[-]'
+          values: '{-0.1...0.1}'
+          min: -0.1
+          max: 0.1
+        PV_n:
+          description: nominal efficiency
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        PV_noct:
+          description: nominal operating cell temperature
+          type: float
+          unit: '[C]'
+          values: '{0.0...n}'
+          min: 0.0
+        PV_th:
+          description: glazing thickness
+          type: float
+          unit: '[m]'
+          values: '{0.0...n}'
+          min: 0.0
+        a:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x), where x is the capacity '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        assumption:
+          description: items made by assumptions in this technology
+          nullable: true
+          type: string
+          unit: 'NA'
+          values: depends on the data availability
+        b:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x), where x is the capacity '
+          type: float
+          unit: 'NA'
+          values: '{0.0...n}'
+          min: 0.0
+        c:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x), where x is the capacity '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        cap_max:
+          description: 'maximum capacity '
+          type: float
+          unit: '[W]'
+          values: '{0...n}'
+          min: 0.0
+        cap_min:
+          description: minimum capacity
+          type: float
+          unit: '[W]'
+          values: '{0.0...n}'
+          min: 0.0
+        code:
+          description: identifier of each unique equipment
+          type: string
+          unit: 'NA'
+          values: alphanumeric
+        currency:
+          description: currency-year information of the investment cost function,
+            should be unified to USD
+          regex: ^[A-Z]{3}-\d{4}$
+          type: string
+          unit: NA
+          values: '{"USD-2015"}'
+        d:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x), where x is the capacity '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        e:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x), where x is the capacity '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        main_EC_out:
+          description: main energy carrier output, dictating the operating point/mode of this supply system component
+          type: string
+          unit: 'NA'
+          values: alphanumeric
+        misc_losses:
+          description: losses from cabling, resistances etc...
+          type: float
+          unit: '[-]'
+          values: '{0.0...1}'
+          min: 0.0
+          max: 1.0
+        module_length_m:
+          description: lengh of the PV module
+          min: 0.0
+          type: float
+          unit: '[m]'
+          values: '{0...n}'
+        type:
+          choice:
+            values:
+            - PV
+          description: redundant
+          type: string
+          unit: 'NA'
+          values: '{"PV"}'
+        unit:
+          description: unit of the min/max capacity
+          type: string
+          unit: 'NA'
+          values: '{"W"}'
+    PVT:
+      columns:
+        Description:
+          description: Describes the type of photovoltaic thermal technology
+          type: string
+          unit: 'NA'
+          values: 'NA'
+        IR_%:
+          description: interest rate charged on the loan for the capital cost
+          min: 0.0
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+        LT_yr:
+          description: lifetime of this technology
+          min: 0
+          type: int
+          unit: "[yr]"
+          values: '{0...n}'
+        O&M_%:
+          description: operation and maintenance cost factor (fraction of the investment
+            cost)
+          min: 0.0
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+        a:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x), where x is the capacity '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        assumption:
+          description: items made by assumptions in this technology
+          nullable: true
+          type: string
+          unit: 'NA'
+          values: depends on the data availability
+        b:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x), where x is the capacity '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        c:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x), where x is the capacity '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        cap_max:
+          description: 'maximum capacity '
+          type: float
+          unit: '[W]'
+          values: '{0.0...n}'
+          min: 0.0
+        cap_min:
+          description: minimum capacity
+          type: float
+          unit: '[W]'
+          values: '{0.0...n}'
+          min: 0.0
+        code:
+          description: identifier of each unique equipment
+          type: string
+          unit: 'NA'
+          values: alphanumeric
+        currency:
+          description: currency-year information of the investment cost function,
+            should be unified to USD
+          regex: ^[A-Z]{3}-\d{4}$
+          type: string
+          unit: NA
+          values: '{"USD-2015"}'
+        d:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x), where x is the capacity '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        e:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x), where x is the capacity '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        unit:
+          description: unit of the min/max capacity
+          type: string
+          unit: 'NA'
+          values: '{"W"}'
+    Pump:
+      columns:
+        Description:
+          description: Describes the source of the benchmark standards.
+          type: string
+          unit: 'NA'
+          values: 'NA'
+        IR_%:
+          description: interest rate charged on the loan for the capital cost
+          min: 0.0
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+        LT_yr:
+          description: lifetime of this technology
+          min: 0
+          type: int
+          unit: "[yr]"
+          values: '{0...n}'
+        O&M_%:
+          description: operation and maintenance cost factor (fraction of the investment
+            cost)
+          min: 0.0
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+        a:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x), where x is the capacity '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        assumption:
+          description: items made by assumptions in this technology
+          nullable: true
+          type: string
+          unit: 'NA'
+          values: depends on the data availability
+        b:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x), where x is the capacity '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        c:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x), where x is the capacity '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        cap_max:
+          description: 'maximum capacity '
+          type: float
+          unit: '[W]'
+          values: '{0.0...n}'
+          min: 0.0
+        cap_min:
+          description: minimum capacity
+          type: float
+          unit: '[W]'
+          values: '{0.0...n}'
+          min: 0.0
+        code:
+          description: identifier of each unique equipment
+          type: string
+          unit: 'NA'
+          values: alphanumeric
+        currency:
+          description: currency-year information of the investment cost function,
+            should be unified to USD
+          regex: ^[A-Z]{3}-\d{4}$
+          type: string
+          unit: NA
+          values: '{"USD-2015"}'
+        d:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x), where x is the capacity '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        e:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x), where x is the capacity '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        main_EC_out:
+          description: main energy carrier output, dictating the operating point/mode of this supply system component
+          type: string
+          unit: 'NA'
+          values: alphanumeric
+        unit:
+          description: unit of the min/max capacity
+          type: string
+          unit: 'NA'
+          values: '{"W"}'
+    SC:
+      columns:
+        C_eff:
+          description: 'thermal capacity of module '
+          type: float
+          unit: '[J/m2k]'
+          values: '{0.0...n}'
+          min: 0.0
+        Cp_fluid:
+          description: heat capacity of the heat transfer fluid
+          type: float
+          unit: '[J/kgK]'
+          values: '{0.0...n}'
+          min: 0.0
+        Description:
+          description: Describes the type of solar collector
+          type: string
+          unit: 'NA'
+          values: 'NA'
+        IAM_d:
+          description: incident angle modifier for diffuse radiation
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        IR_%:
+          description: interest rate charged on the loan for the capital cost
+          min: 0.0
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+        LT_yr:
+          description: lifetime of this technology
+          min: 0
+          type: int
+          unit: "[yr]"
+          values: '{0...n}'
+        O&M_%:
+          description: operation and maintenance cost factor (fraction of the investment
+            cost)
+          min: 0.0
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+        a:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x), where x is the capacity '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        aperture_area_ratio:
+          description: ratio of aperture area to panel area
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        assumption:
+          description: items made by assumptions in this technology
+          nullable: true
+          type: string
+          unit: 'NA'
+          values: depends on the data availability
+        b:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x), where x is the capacity '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        c:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x), where x is the capacity '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        c1:
+          description: collector heat loss coefficient at zero temperature difference
+            and wind speed
+          type: float
+          unit: '[W/M2k]'
+          values: '{0.0...n}'
+          min: 0.0
+        c2:
+          description: ctemperature difference dependency of the heat loss coefficient
+          type: float
+          unit: '[W/m2K2]'
+          values: '{0.0...n}'
+          min: 0.0
+        cap_max:
+          description: 'maximum capacity '
+          type: float
+          unit: '[m2]'
+          values: '{0.0...n}'
+          min: 0.0
+        cap_min:
+          description: minimum capacity
+          type: float
+          unit: '[m2]'
+          values: '{0.0...n}'
+          min: 0.0
+        code:
+          description: identifier of each unique equipment
+          type: string
+          unit: 'NA'
+          values: alphanumeric
+        currency:
+          description: currency-year information of the investment cost function,
+            should be unified to USD
+          regex: ^[A-Z]{3}-\d{4}$
+          type: string
+          unit: NA
+          values: '{"USD-2015"}'
+        d:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x), where x is the capacity '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        dP1:
+          description: pressure drop at zero flow rate
+          type: float
+          unit: '[Pa/m2]'
+          values: '{0.0...n}'
+          min: 0.0
+        dP2:
+          description: pressure drop at nominal flow rate (mB0)
+          type: float
+          unit: '[Pa/m2]'
+          values: '{0.0...n}'
+          min: 0.0
+        dP3:
+          description: pressure drop at maximum flow rate (mB_max)
+          type: float
+          unit: '[Pa/m2]'
+          values: '{0.0...n}'
+          min: 0.0
+        dP4:
+          description: pressure drop at minimum flow rate (mB_min)
+          type: float
+          unit: '[Pa/m2]'
+          values: '{0.0...n}'
+          min: 0.0
+        e:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x), where x is the capacity '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        main_EC_out:
+          description: main energy carrier output, dictating the operating point/mode of this supply system component
+          type: string
+          unit: 'NA'
+          values: alphanumeric
+        mB0_r:
+          description: nominal flow rate per aperture area
+          type: float
+          unit: '[kg/m2/hr]'
+          values: '{0.0...n}'
+          min: 0.0
+        mB_max_r:
+          description: maximum flow rate per aperture area
+          type: float
+          unit: '[kg/m2/hr]'
+          values: '{0.0...n}'
+          min: 0.0
+        mB_min_r:
+          description: minimum flow rate per aperture area
+          type: float
+          unit: '[kg/m2/hr]'
+          values: '{0.0...n}'
+          min: 0.0
+        module_area_m2:
+          description: module area of a solar collector
+          type: float
+          unit: '[m2]'
+          values: '{0.0...n}'
+          min: 0.0
+        module_length_m:
+          description: lengh of a solar collector module
+          type: float
+          unit: '[m]'
+          values: '{0.0...n}'
+          min: 0.0
+        n0:
+          description: zero loss efficiency at normal incidence
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        t_max:
+          description: maximum operating temperature
+          type: float
+          unit: '[C]'
+          values: '{0.0...n}'
+          min: 0.0
+        type:
+          choice:
+            values:
+            - FP
+            - ET
+          description: 'type of the solar collector (FP: flate-plate or ET: evacuated-tube)'
+          type: string
+          unit: 'NA'
+          values: '{"FP","ET"}'
+        unit:
+          description: unit of the min/max capacity
+          type: string
+          unit: 'NA'
+          values: '{"m2"}'
+    TES:
+      columns:
+        Description:
+          description: Describes the thermal energy storage technology
+          type: string
+          unit: '[-]'
+          values: 'any'
+        code:
+          description: Unique code that identifies the thermal energy storage technology
+          type: string
+          unit: '[-]'
+          values: 'NA'
+        type:
+          description: code that identifies whether the storage is used for heating or cooling (different properties of the transport media)
+          type: string
+          unit: '[-]'
+          values: '{COOLING,HEATING}'
+        cap_min:
+          description: minimum capacity
+          type: float
+          unit: '[m3 or kWh]'
+          values: '{0.0...n}'
+          min: 0.0
+        cap_max:
+          description: maximum capacity
+          type: float
+          unit: '[m3 or kWh]'
+          values: '{0.0...n}'
+          min: 0.0
+        unit:
+          description: unit which describes the minimum and maximum capacity
+          type: string
+          unit: NA
+          values: '{m3, kWh}'
+        currency:
+          description: currency-year information of the investment cost function,
+            should be unified to USD
+          regex: ^[A-Z]{3}-\d{4}$
+          type: string
+          unit: NA
+          values: '{"USD-2015"}'
+        a:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x), where x is the capacity '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        b:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x), where x is the capacity '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        c:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x), where x is the capacity '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        d:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x), where x is the capacity '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        e:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+            + d*ln(x) + e*x*ln*(x), where x is the capacity '
+          type: float
+          unit: '[-]'
+          values: '{n...n}'
+        LT_yr:
+          description: lifetime of this storage technology
+          min: 0
+          type: int
+          unit: "[yr]"
+          values: '{0...n}'
+        LT_mat_yr:
+          description: lifetime of the working fluid of this storage technology
+          min: 0
+          type: int
+          unit: "[yr]"
+          values: '{0...n}'
+        main_EC_out:
+          description: main energy carrier output, dictating the operating point/mode of this supply system component
+          type: string
+          unit: 'NA'
+          values: alphanumeric
+        O&M_%:
+          description: operation and maintnance cost factor (fraction of the investment cost)
+          min: 0.0
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+        IR_%:
+          description: interest rate charged on the loan for the capital cost
+          min: 0.0
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+        C_mat_%:
+          description: Working fluid replacement cost factor (fraction of the investment cost)
+          min: 0.0
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+        T_PHCH_C:
+          description: Phase change temperature of working fluid
+          min: 0.0
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+        T_min_C:
+          description: Minimum temperature of working fluid at full charge
+          min: -10.0
+          max: 90.0
+          type: float
+          unit: '[-]'
+          values: '{-10.0...n}'
+        T_max_C:
+          description: Maximum temperature of working fluid at full discharge
+          min: 0.0
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+        HL_kJkg:
+          description: Lantent heat of working fluid at phase change temperature
+          min: 0.0
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+        Rho_T_PHCH_kgm3:
+          description: Density of working fluid at phase change temperature
+          min: 0.0
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+        Cp_kJkgK:
+          description: heat capacity of working fluid
+          min: 0.0
+          type: float
+          unit: '[kJ/kg.K]'
+          values: '{0.0...n}'
+        assumption:
+          description: items made by assumptions in this storage technology
+          nullable: true
+          type: string
+          unit: 'NA'
+          values: depends on the data availability
+  used_by:
+  - decentralized
+  - optimization
+  - photovoltaic
+  - photovoltaic_thermal
+  - solar_collector
 get_database_distribution_systems:
   created_by:
   - data_initializer

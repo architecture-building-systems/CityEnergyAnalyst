@@ -274,6 +274,21 @@ Optimization:
       - [get_geothermal_potential]
       - [PV_totals]
 
+  - name: optimization-new
+    label: Supply System Part II (centralized-new)
+    description: Run optimization for centralized operation
+    interfaces: [cli, dashboard]
+    module: cea.optimization_new.domain
+    parameters: ['general:debug', 'general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free',
+                 optimization-new]
+    input-files:
+      - [get_street_network]
+      - [get_total_demand]
+      - [get_water_body_potential]
+      - [get_sewage_heat_potential]
+      - [get_geothermal_potential]
+      - [PV_totals]
+
 Utilities:
   - name: data-migrator
     label: Data migrator
