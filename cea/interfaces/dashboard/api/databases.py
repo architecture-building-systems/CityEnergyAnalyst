@@ -4,7 +4,7 @@
 import os
 from collections import OrderedDict
 
-from flask_restplus import Namespace, Resource, abort
+from flask_restx import Namespace, Resource, abort
 import pandas as pd
 
 import cea.schemas

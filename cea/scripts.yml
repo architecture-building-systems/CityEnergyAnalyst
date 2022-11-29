@@ -479,3 +479,17 @@ Development:
     interfaces: [dev]
     module: cea.dev.build
     parameters: [development]
+
+  - name: release
+    label: release
+    description: build a new installer for the current version
+    interfaces: [ dev ]
+    module: cea.dev.release
+    parameters: [ "development:release-version" ]
+
+  - name: update-zenodo
+    label: update-zenodo
+    description: Updates relevant Zenodo references to the latest available online
+    interfaces: [ dev ]
+    module: cea.dev.update_zenodo
+    parameters: []
