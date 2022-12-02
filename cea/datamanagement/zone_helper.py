@@ -129,8 +129,8 @@ def assign_attributes(shapefile, buildings_height, buildings_floors, buildings_h
             shapefile["height_ag"] = shapefile["floors_ag"] * constants.H_F
 
         # add fields for floors and height below ground
-        shapefile["height_bg"] = None
-        shapefile["floors_bg"] = None
+        shapefile["height_bg"] = pd.Series(np.nan)
+        shapefile["floors_bg"] = pd.Series(np.nan)
 
         # Correct levels below ground if a minimum floor level or height is indicated
         if 'building:min_level' in list_of_columns:
@@ -143,6 +143,7 @@ def assign_attributes(shapefile, buildings_height, buildings_floors, buildings_h
         # add missing floors and height below ground
         shapefile.loc[shapefile.height_bg.isna(), "height_bg"] = [buildings_height_below_ground] * no_buildings
         shapefile.loc[shapefile.floors_bg.isna(), "floors_bg"] = [buildings_floors_below_ground] * no_buildings
+        shapefile["floors_bg"] = shapefile["floors_bg"].astype(int)
     else:
         shapefile['REFERENCE'] = "User - assumption"
         if buildings_height is None and buildings_floors is not None:
