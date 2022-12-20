@@ -16,7 +16,6 @@ dependencies:
 - openpyxl
 - plotly
 - sphinx
-- sympy
 - utm
 - fiona
 - gdal
@@ -26,7 +25,7 @@ dependencies:
 - numba
 - numpy
 - numpy-financial
-- osmnx=0.15.1
+- osmnx==0.15.1
 - pandas
 - pip
 - psutil
@@ -35,7 +34,6 @@ dependencies:
 - pytz
 - pvlib-python
 - scipy
-- setuptools
 - shapely
 - pyyaml
 - timezonefinder
