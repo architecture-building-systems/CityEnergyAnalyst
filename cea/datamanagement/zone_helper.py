@@ -359,11 +359,16 @@ def calculate_typology_file(locator, zone_df, year_construction, occupancy_type,
         else:
             in_unconditioned_categories = zone_df['category'].isin(OTHER_OSM_CATEGORIES_UNCONDITIONED)
         zone_df.loc[in_unconditioned_categories, '1ST_USE'] = "PARKING"
+    else:
+        typology_df['1ST_USE'] = occupancy_type
 
     # all remaining building use types are assigned by the mode of the use types in the entire case study
-    typology_df.loc[typology_df['1ST_USE'] == "NONE", '1ST_USE'] = \
-        typology_df.loc[~typology_df['1ST_USE'].isin(['NONE', 'PARKING']), '1ST_USE'].mode()[0]
-
+    try:
+        typology_df.loc[typology_df['1ST_USE'] == "NONE", '1ST_USE'] = \
+            typology_df.loc[~typology_df['1ST_USE'].isin(['NONE', 'PARKING']), '1ST_USE'].mode()[0]
+    except KeyError:
+        raise KeyError('No building type could be found in the OSM-database, for the selected zone. Please assign  an occupancy '
+                       'type in the zone-helper settings.')
     # export typology.dbf
     fields = COLUMNS_ZONE_TYPOLOGY
     dataframe_to_dbf(typology_df[fields + ['REFERENCE']], occupancy_output_path)
