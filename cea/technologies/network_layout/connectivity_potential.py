@@ -242,32 +242,6 @@ def split_line_by_nearest_points(gdf_line, gdf_points, tolerance_grid_snap, crs)
     return gdf_segments
 
 
-def nearest_neighbor_within(others, point, max_distance):
-    """Find nearest point among others up to a maximum distance.
-
-    Args:
-        others: a list of Points or a MultiPoint
-        point: a Point
-        max_distance: maximum distance to search for the nearest neighbor
-
-    Returns:
-        A shapely Point if one is within max_distance, None otherwise
-    """
-    search_region = point.buffer(max_distance)
-    interesting_points = search_region.intersection(MultiPoint(others))
-
-    if not interesting_points:
-        closest_point = None
-    elif isinstance(interesting_points, Point):
-        closest_point = interesting_points
-    else:
-        distances = [point.distance(ip) for ip in interesting_points
-                     if point.distance(ip) > 0]
-        closest_point = interesting_points[distances.index(min(distances))]
-
-    return closest_point
-
-
 def near_analysis(building_centroids, street_network, crs):
     # Get the nearest edge for each building centroid
     nearest_indexes = street_network.sindex.nearest(building_centroids.geometry, return_all=False)[1]
