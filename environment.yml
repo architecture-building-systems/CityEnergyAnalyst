@@ -26,7 +26,7 @@ dependencies:
 - matplotlib
 - networkx
 - numba
-- numpy<=1.24
+- numpy<1.24
 - numpy-financial
 - osmnx
 - pandas
