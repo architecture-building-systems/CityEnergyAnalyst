@@ -171,7 +171,8 @@ def geometry_extractor_osm(locator, config):
     # get footprints of all the surroundings
     print("Getting building footprints")
     area_with_buffer_polygon = area_with_buffer.to_crs(get_geographic_coordinate_system()).geometry.values[0]
-    all_surroundings = osmnx.geometries_from_polygon(polygon=area_with_buffer_polygon, tags={"building": True})
+    all_surroundings = osmnx.geometries.geometries_from_polygon(polygon=area_with_buffer_polygon,
+                                                                tags={"building": True})
     all_surroundings = all_surroundings.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
 
     # erase overlapping area
