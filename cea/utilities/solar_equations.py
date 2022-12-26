@@ -146,7 +146,7 @@ def calc_sun_properties(latitude, longitude, weather_data, datetime_local, confi
     # mean transmissivity
     weather_data['diff'] = weather_data.difhorrad_Whm2 / weather_data.glohorrad_Whm2
     T_G_hour = weather_data[np.isfinite(weather_data['diff'])]
-    T_G_day = np.round(T_G_hour.groupby(['dayofyear']).mean(), 2)
+    T_G_day = np.round(T_G_hour.groupby(['dayofyear']).mean(numeric_only=True), 2)
     T_G_day['diff'] = T_G_day['diff'].replace(1, 0.90)
     transmittivity = (1 - T_G_day['diff']).mean()
 
@@ -727,8 +727,8 @@ def calc_groups(radiation_of_sensors_clean, sensors_metadata_cat):
         # write group properties
         group_key = pd.Series({'CATB': key[0], 'CATGB': key[1], 'CATteta_z': key[2], 'type_orientation': key[3]})
         group_info = pd.Series({'number_srfs': number_points, 'srfs': (''.join(surfaces_in_group))})
-        group_prop_sum = sensor_groups_ob.sum().loc[key][['AREA_m2', 'area_installed_module_m2']]
-        group_prop_mean = sensor_groups_ob.mean().loc[key].drop(['area_installed_module_m2', 'AREA_m2'])
+        group_prop_sum = sensor_groups_ob.sum(numeric_only=True).loc[key][['AREA_m2', 'area_installed_module_m2']]
+        group_prop_mean = sensor_groups_ob.mean(numeric_only=True).loc[key].drop(['area_installed_module_m2', 'AREA_m2'])
         group_properties[group_count] = pd.concat([group_key, group_prop_mean, group_prop_sum, group_info])
         # calculate mean radiation among surfaces in group
         group_mean_radiations[group_count] = radiation_of_sensors_clean[surfaces_in_group].mean(axis=1).values

@@ -60,9 +60,9 @@ def lca_operation(locator):
 
     # get the mean of all values for this
     factors_resources_simple = [(name, values['GHG_kgCO2MJ'].mean()) for name, values in factors_resources.items()]
-    factors_resources_simple = pd.DataFrame(factors_resources_simple, columns=['code', 'GHG_kgCO2MJ']).append(
-        # append NONE choice with zero values
-        {'code': 'NONE'}, ignore_index=True).fillna(0)
+    factors_resources_simple = pd.concat([pd.DataFrame(factors_resources_simple, columns=['code', 'GHG_kgCO2MJ']),
+                                          pd.DataFrame([{'code': 'NONE'}])],  # append NONE choice with zero values
+                                         ignore_index=True).fillna(0)
 
     # local variables
     Qhs_flag = Qww_flag = Qcs_flag = E_flag = True
