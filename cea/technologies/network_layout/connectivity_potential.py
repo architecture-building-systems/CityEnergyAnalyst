@@ -8,6 +8,7 @@ a series of points (buildings) to the closest street
 
 import os
 
+import pandas as pd
 from geopandas import GeoDataFrame as gdf
 from shapely.geometry import Point, LineString, MultiPoint, box
 from shapely.ops import split, linemerge, snap
@@ -36,7 +37,7 @@ def compute_intersections(lines, crs):
             if "Point" == inter.type:
                 inters.append(inter)
             elif "MultiPoint" == inter.type:
-                inters.extend([pt for pt in inter])
+                inters.extend([pt for pt in inter.geoms])
             elif "MultiLineString" == inter.type:
                 multiLine = [line for line in inter]
                 first_coords = multiLine[0].coords[0]
@@ -141,7 +142,7 @@ def bend_towards(line, where, to):
     coords = line.coords[:]
     # easy case: where is (within numeric precision) a vertex of line
     for k, vertex in enumerate(coords):
-        if where.almost_equals(Point(vertex)):
+        if where.equals_exact(Point(vertex), tolerance=1e-6):
             # move coordinates of the vertex to destination
             coords[k] = to.coords[0]
             return LineString(coords)
@@ -234,7 +235,7 @@ def split_line_by_nearest_points(gdf_line, gdf_points, tolerance_grid_snap, crs)
     # snap_points._crs = crs
     split_line = split(line, snap(snap_points, line, tolerance_grid_snap))
     split_line._crs = crs
-    segments = [feature for feature in split_line if feature.length > 0.01]
+    segments = [feature for feature in split_line.geoms if feature.length > 0.01]
 
     gdf_segments = gdf(geometry=segments, crs=crs)
     # gdf_segments.columns = ['index', 'geometry']
@@ -261,9 +262,9 @@ def nearest_neighbor_within(others, point, max_distance):
     elif isinstance(interesting_points, Point):
         closest_point = interesting_points
     else:
-        distances = [point.distance(ip) for ip in interesting_points
+        distances = [point.distance(ip) for ip in interesting_points.geoms
                      if point.distance(ip) > 0]
-        closest_point = interesting_points[distances.index(min(distances))]
+        closest_point = interesting_points.geoms[distances.index(min(distances))]
 
     return closest_point
 
@@ -308,11 +309,11 @@ def snap_points(points, lines, tolerance, crs):
                     ### Split the line on the buffer
                     geometry = split(line, buff)
                     geometry._crs = crs
-                    line_1_points = [tuple(xy) for xy in geometry[0].coords[:-1]]
+                    line_1_points = [tuple(xy) for xy in geometry.geoms[0].coords[:-1]]
                     line_1_points.append((point.x, point.y))
                     line_2_points = []
                     line_2_points.append((point.x, point.y))
-                    line_2_points.extend([x for x in geometry[-1].coords[1:]])
+                    line_2_points.extend([x for x in geometry.geoms[-1].coords[1:]])
                     ### Stitch together the first segment, the interpolated point, and the last segment
                     new_line = linemerge((LineString(line_1_points), LineString(line_2_points)))
                     lines.loc[i, "geometry"] = new_line
@@ -352,7 +353,7 @@ def one_linestring_per_intersection(lines, crs):
     # merge the result
     lines_merged = linemerge(lines_merged)
 
-    lines = [line for line in lines_merged]
+    lines = [line for line in lines_merged.geoms]
     df = gdf(geometry=lines, crs=crs)
     return df
 
@@ -362,7 +363,7 @@ def calculate_end_points_intersections(prototype_network, crs):
     gdf_points = computer_end_points(prototype_network.geometry, crs)
     # compute intersections
     gdf_intersections = compute_intersections(prototype_network.geometry, crs)
-    gdf_points_snapped = gdf_points.append(gdf_intersections).reset_index(drop=True)
+    gdf_points_snapped = pd.concat([gdf_points, gdf_intersections], ignore_index=True)
     G = gdf_points_snapped["geometry"].apply(lambda geom: geom.wkb)
     gdf_points_snapped = gdf_points_snapped.loc[G.drop_duplicates().index]
     return gdf_points_snapped
@@ -372,13 +373,13 @@ def create_terminals(buiding_centroids, crs, street_network):
     # get list of nearest points
     near_points = near_analysis(buiding_centroids, street_network, crs)
     # extend to the buiding centroids
-    all_points = near_points.append(buiding_centroids)
+    all_points = pd.concat([near_points, buiding_centroids])
     all_points.crs = crs
     # Aggregate these points with the GroupBy
     lines_to_buildings = all_points.groupby(['Name'])['geometry'].apply(lambda x: LineString(x.tolist()))
     lines_to_buildings = gdf(lines_to_buildings, geometry='geometry', crs=crs)
 
-    lines_to_buildings = lines_to_buildings.append(street_network).reset_index(drop=True)
+    lines_to_buildings = pd.concat([lines_to_buildings, street_network]).reset_index(drop=True)
     lines_to_buildings.crs = crs
     return lines_to_buildings
 

@@ -166,7 +166,7 @@ class YearlyDemandWriter(DemandWriter):
             if df is None:
                 df = pd.read_csv(temporary_file)
             else:
-                df = df.append(pd.read_csv(temporary_file), ignore_index=True)
+                df = pd.concat([df, pd.read_csv(temporary_file)], ignore_index=True)
         df.to_csv(locator.get_total_demand('csv'), index=False, float_format='%.3f', na_rep='nan')
 
         # """read saved data of monthly values and return as totals"""
