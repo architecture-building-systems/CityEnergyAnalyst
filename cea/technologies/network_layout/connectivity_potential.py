@@ -10,7 +10,7 @@ import os
 
 import pandas as pd
 from geopandas import GeoDataFrame as gdf
-from shapely.geometry import Point, LineString, MultiPoint, box
+from shapely.geometry import Point, LineString, MultiLineString, MultiPoint, box
 from shapely.ops import split, linemerge, snap
 
 import cea.config
@@ -49,9 +49,9 @@ def compute_intersections(lines, crs):
                     if "Point" == geom.type:
                         inters.append(geom)
                     elif "MultiPoint" == geom.type:
-                        inters.extend([pt for pt in geom])
+                        inters.extend([pt for pt in geom.geoms])
                     elif "MultiLineString" == geom.type:
-                        multiLine = [line for line in geom]
+                        multiLine = [line for line in geom.geoms]
                         first_coords = multiLine[0].coords[0]
                         last_coords = multiLine[len(multiLine) - 1].coords[1]
                         inters.append(Point(first_coords[0], first_coords[1]))
@@ -94,9 +94,9 @@ def nearest_neighbor_within(others, point, max_distance):
     elif isinstance(interesting_points, Point):
         closest_point = interesting_points
     else:
-        distances = [point.distance(ip) for ip in interesting_points
+        distances = [point.distance(ip) for ip in interesting_points.geoms
                      if point.distance(ip) > 0]
-        closest_point = interesting_points[distances.index(min(distances))]
+        closest_point = interesting_points.geoms[distances.index(min(distances))]
 
     return closest_point
 
@@ -225,16 +225,13 @@ def split_line_by_nearest_points(gdf_line, gdf_points, tolerance_grid_snap, crs)
 
     # union all geometries
     line = gdf_line.geometry.unary_union
-    line._crs = crs
     snap_points = gdf_points.geometry.unary_union
-    snap_points._crs = crs
 
     # snap and split coords on line
     # returns GeometryCollection
     # snap_points = snap(coords, line, tolerance)
     # snap_points._crs = crs
     split_line = split(line, snap(snap_points, line, tolerance_grid_snap))
-    split_line._crs = crs
     segments = [feature for feature in split_line.geoms if feature.length > 0.01]
 
     gdf_segments = gdf(geometry=segments, crs=crs)
@@ -255,15 +252,12 @@ def near_analysis(building_centroids, street_network, crs):
     return df
 
 
-def snap_points(points, lines, tolerance, crs):
+def snap_points(points, lines, tolerance):
     length = lines.shape[0]
     for i in range(length):
         for point in points.geometry:
             line = lines.loc[i, "geometry"]
-            line._crs = crs
-            point._crs = crs
             point_inline_projection = line.interpolate(line.project(point))
-            point_inline_projection._crs = crs
             distance_to_line = point.distance(point_inline_projection)
             if (point.x, point.y) in line.coords:
                 x = "nothing"
@@ -272,7 +266,6 @@ def snap_points(points, lines, tolerance, crs):
                     buff = point.buffer(0.1)
                     ### Split the line on the buffer
                     geometry = split(line, buff)
-                    geometry._crs = crs
                     line_1_points = [tuple(xy) for xy in geometry.geoms[0].coords[:-1]]
                     line_1_points.append((point.x, point.y))
                     line_2_points = []
@@ -389,8 +382,7 @@ def calc_connectivity_network(path_streets_shp, building_centroids_df, temp_path
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
     # first split in intersections
-    prototype_network = one_linestring_per_intersection(prototype_network.geometry.values,
-                                                        crs)
+    prototype_network = one_linestring_per_intersection(prototype_network.geometry.tolist(), crs)
     # snap endings of all vectors to ending of all other vectors
     prototype_network = snappy_endings(prototype_network.geometry.values, SNAP_TOLERANCE, crs)
 
@@ -398,7 +390,7 @@ def calc_connectivity_network(path_streets_shp, building_centroids_df, temp_path
     gdf_points_snapped = calculate_end_points_intersections(prototype_network, crs)
 
     # snap these points to the lines and transform lines
-    gdf_points_snapped, prototype_network = snap_points(gdf_points_snapped, prototype_network, SNAP_TOLERANCE, crs)
+    gdf_points_snapped, prototype_network = snap_points(gdf_points_snapped, prototype_network, SNAP_TOLERANCE)
 
     # save for verification purposes
     prototype_network.to_file(locator.get_temporary_file("prototype_network.shp"), driver='ESRI Shapefile')

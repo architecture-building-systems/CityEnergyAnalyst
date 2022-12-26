@@ -284,6 +284,8 @@ def add_plant_close_to_anchor(building_anchor, new_mst_nodes, mst_edges, type_ma
     x1 = building_coordinates[0][0]
     y1 = building_coordinates[0][1]
     delta = 10E24  # big number
+    node_id = None
+
     for node in copy_of_new_mst_nodes.iterrows():
         if node[1]['Type'] == 'NONE':
             x2 = node[1].geometry.coords[0][0]
@@ -292,19 +294,22 @@ def add_plant_close_to_anchor(building_anchor, new_mst_nodes, mst_edges, type_ma
             if 0 < distance < delta:
                 delta = distance
                 node_id = node[1].Name
-    pd.options.mode.chained_assignment = None  # avoid warning
+
+    if node_id is None:
+        raise ValueError("Could not find closest node.")
+
     # create copy of selected node and add to list of all nodes
     copy_of_new_mst_nodes.geometry = copy_of_new_mst_nodes.translate(xoff=1, yoff=1)
-    selected_node = copy_of_new_mst_nodes[copy_of_new_mst_nodes["Name"] == node_id]
-    selected_node.loc[:, "Name"] = "NODE" + str(new_mst_nodes.Name.count())
-    selected_node.loc[:, "Type"] = "PLANT"
-    new_mst_nodes = pd.concat([new_mst_nodes, selected_node])
+    selected_node = copy_of_new_mst_nodes[copy_of_new_mst_nodes["Name"] == node_id].iloc[0]
+    selected_node["Name"] = "NODE" + str(new_mst_nodes.Name.count())
+    selected_node["Type"] = "PLANT"
+    new_mst_nodes = new_mst_nodes.append(selected_node)
     new_mst_nodes.reset_index(inplace=True, drop=True)
 
     # create new edge
     point1 = (selected_node.geometry.x, selected_node.geometry.y)
-    point2 = (new_mst_nodes[new_mst_nodes["Name"] == node_id].geometry.x,
-              new_mst_nodes[new_mst_nodes["Name"] == node_id].geometry.y)
+    point2 = (new_mst_nodes[new_mst_nodes["Name"] == node_id].iloc[0].geometry.x,
+              new_mst_nodes[new_mst_nodes["Name"] == node_id].iloc[0].geometry.y)
     line = LineString((point1, point2))
     mst_edges = pd.concat([mst_edges,
                            pd.DataFrame([{"geometry": line, "Pipe_DN": pipe_dn, "Type_mat": type_mat,
