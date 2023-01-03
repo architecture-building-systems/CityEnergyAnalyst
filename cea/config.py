@@ -782,7 +782,7 @@ class DatabasePathParameter(Parameter):
     def initialize(self, parser):
         self.locator = cea.inputlocator.InputLocator(None, [])
         self._choices = {p: os.path.join(self.locator.db_path, p) for p in os.listdir(self.locator.db_path)
-                         if os.path.isdir(os.path.join(self.locator.db_path, p)) and p != 'weather'}
+                         if os.path.isdir(os.path.join(self.locator.db_path, p)) and p not in ['weather', '__pycache__']}
 
     def encode(self, value):
         return str(value)
