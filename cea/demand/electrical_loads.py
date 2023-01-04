@@ -65,10 +65,8 @@ def calc_E_sys(tsd):
     :type tsd: Dict[str, numpy.ndarray]
 
     """
-    tsd['E_sys'] =  np.nan_to_num(tsd['Eve'],0) + np.nan_to_num(tsd['Ea'],0) + np.nan_to_num(tsd['El'],0) + \
-                    np.nan_to_num(tsd['Edata'],0) + np.nan_to_num(tsd['Epro'],0) + np.nan_to_num(tsd['Eaux'],0) + \
-                    np.nan_to_num(tsd['Ev'],0)  # assuming a small loss
-
+    tsd['E_sys'] = np.nansum([tsd['Eve'], tsd['Ea'], tsd['El'], tsd['Edata'], tsd['Epro'],tsd['Eaux'],tsd['Ev']],0)
+    # assuming a small loss
     return tsd
 
 
@@ -87,10 +85,8 @@ def calc_Ef(bpr, tsd):
     # GET SYSTEMS EFFICIENCIES
     energy_source = bpr.supply['source_el']
     scale_technology = bpr.supply['scale_el']
-    total_el_demand = (np.nan_to_num(tsd['Eve'],0) + np.nan_to_num(tsd['Ea'],0) + np.nan_to_num(tsd['El'],0) +
-                       np.nan_to_num(tsd['Edata'],0) + np.nan_to_num(tsd['Epro'],0) + np.nan_to_num(tsd['Eaux'],0) +
-                       np.nan_to_num(tsd['Ev'],0) + np.nan_to_num(tsd['E_ww'],0) + np.nan_to_num(tsd['E_cs'],0) +
-                       np.nan_to_num(tsd['E_hs'],0) + np.nan_to_num(tsd['E_cdata'],0) + np.nan_to_num(tsd['E_cre'],0))
+    total_el_demand = np.nansum([tsd['Eve'],tsd['Ea'],tsd['El'],tsd['Edata'],tsd['Epro'],tsd['Eaux'],tsd['Ev'],
+                                    tsd['E_ww'], tsd['E_cs'],tsd['E_hs'], tsd['E_cdata'], tsd['E_cre']],0)
 
     if scale_technology == "CITY":
         if energy_source == "GRID":
@@ -137,8 +133,7 @@ def calc_Eaux(tsd):
     :type tsd: Dict[str, numpy.ndarray]
 
     """
-    tsd['Eaux'] = np.nan_to_num(tsd['Eaux_fw'],0) + np.nan_to_num(tsd['Eaux_ww'],0) + np.nan_to_num(tsd['Eaux_cs'],0) \
-                  + np.nan_to_num(tsd['Eaux_hs'],0) + np.nan_to_num(tsd['Ehs_lat_aux'],0)
+    tsd['Eaux'] = np.nansum([tsd['Eaux_fw'], tsd['Eaux_ww'], tsd['Eaux_cs'], tsd['Eaux_hs'], tsd['Ehs_lat_aux']],0)
 
     return tsd
 
