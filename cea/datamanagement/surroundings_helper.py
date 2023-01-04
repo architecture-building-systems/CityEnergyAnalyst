@@ -147,7 +147,7 @@ def erase_no_surrounding_areas(all_surroundings, zone, area_with_buffer):
 
 def geometry_extractor_osm(locator, config):
     """this is where the action happens if it is more than a few lines in ``main``.
-    NOTE: ADD YOUR SCRIPT'S DOCUMENATION HERE (how)
+    NOTE: ADD YOUR SCRIPT'S DOCUMENTATION HERE (how)
     NOTE: RENAME THIS FUNCTION (SHOULD PROBABLY BE THE SAME NAME AS THE MODULE)
     """
 

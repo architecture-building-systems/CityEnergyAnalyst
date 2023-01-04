@@ -1,6 +1,6 @@
 """
 Geometry generator from
-Shapefiles (buiding footprint)
+Shapefiles (building footprint)
 and .tiff (terrain)
 
 into 3D geometry with windows and roof equivalent to LOD3

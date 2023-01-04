@@ -354,7 +354,7 @@ def calc_piping_thermal_losses_heating(Tnet_K, m_max_kgpers, m_min_kgpers, L, Tg
     :type Tg: float
     :type K: float
     :type cp: float
-    :return: Qloss: thermal lossess in the pipe.
+    :return: Qloss: thermal losses in the pipe.
     :rtype: float
     """
     if m_min_kgpers != 1E6:  # control variable see function fn.calc_min_flow
@@ -383,7 +383,7 @@ def calc_piping_thermal_losses_cooling(Total_load_per_hour_W):
     :type Tg: float
     :type K: float
     :type cp: float
-    :return: Qloss: thermal lossess in the pipe.
+    :return: Qloss: thermal losses in the pipe.
     :rtype: float
     """
     Qloss = 0.05 * Total_load_per_hour_W  # FixMe: Link the value directly to the thermal network matrix

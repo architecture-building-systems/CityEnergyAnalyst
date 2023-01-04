@@ -6,7 +6,7 @@ Configuration File Details
 Let's explore the details of how the configuration file works!
 
 The configuration file edited by the user (``~/cea.config``) is only the tip of the iceberg, resting on a foundation
-of the default configuraiton file ``default.config`` file and the class :py:class:`cea.config.Configuration`, which
+of the default configuration file ``default.config`` file and the class :py:class:`cea.config.Configuration`, which
 reads in the default configuration file as well as the user configuration file and makes those parameters available to
 the scripts. Each script is provided with an instance of :py:class:`cea.config.Configuration` called ``config``.
 

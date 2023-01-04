@@ -284,7 +284,7 @@ def calc_master_to_slave_variables(locator, gen,
     master_to_slave_vars.technologies_heating_allowed = technologies_heating_allowed
     master_to_slave_vars.technologies_cooling_allowed = technologies_cooling_allowed
 
-    # store the barcode which identifies which buildings are connected and disconencted
+    # store the barcode which identifies which buildings are connected and disconnected
     master_to_slave_vars.DHN_barcode = DHN_barcode
     master_to_slave_vars.DCN_barcode = DCN_barcode
 

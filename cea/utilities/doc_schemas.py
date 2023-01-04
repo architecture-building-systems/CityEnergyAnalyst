@@ -248,7 +248,7 @@ def get_column_schema(df_series):
             if is_date(value):
                 types_found.add('date')
             elif isinstance(value, str):
-                # column_schema['sample_data'] = value.encode('ascii', 'ignore') # TOOD: remove if not use
+                # column_schema['sample_data'] = value.encode('ascii', 'ignore') # TODO: remove if not use
                 types_found.add('string')
             else:
                 types_found.add(type(value).__name__)

@@ -592,7 +592,7 @@ The following file is used by these scripts: ``decentralized``, ``optimization``
     ``IR_%``, interest rate charged on the loan for the capital cost
     ``LT_yr``, lifetime of this technology
     ``misc_losses``, losses from cabling, resistances etc...
-    ``module_length_m``, lengh of the PV module
+    ``module_length_m``, length of the PV module
     ``O&M_%``, operation and maintenance cost factor (fraction of the investment cost)
     ``PV_a0``, parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  + a3*x**3 + a4*x**4, where  x is the relative air mass
     ``PV_a1``, parameters for air mass modifier, f(x) = a0 + a1*x + a2*x**2  + a3*x**3 + a4*x**4, where  x is the relative air mass
@@ -661,7 +661,7 @@ The following file is used by these scripts: ``decentralized``, ``optimization``
     ``mB_max_r``, maximum flow rate per aperture area
     ``mB_min_r``, minimum flow rate per aperture area
     ``module_area_m2``, module area of a solar collector
-    ``module_length_m``, lengh of a solar collector module
+    ``module_length_m``, length of a solar collector module
     ``n0``, zero loss efficiency at normal incidence
     ``O&M_%``, operation and maintenance cost factor (fraction of the investment cost)
     ``t_max``, maximum operating temperature
@@ -716,7 +716,7 @@ The following file is used by these scripts: ``optimization``, ``thermal_network
 .. csv-table:: Worksheet: ``THERMAL_GRID``
     :header: "Variable", "Description"
 
-    ``Code``, pipe ID from the manufacterer
+    ``Code``, pipe ID from the manufacturer
     ``D_ext_m``, external pipe diameter tolerance for the nominal diameter (DN)
     ``D_ins_m``, maximum pipe diameter tolerance for the nominal diameter (DN)
     ``D_int_m``, internal pipe diameter tolerance for the nominal diameter (DN)

@@ -16,5 +16,5 @@ Ex. So I could visualize/understand/know/apply etc..
 **Describe the end-user of this feature**
 Ex. A Researcher, a Student, or a Practitioner.
 
-**Provide Aditional information if possible**
+**Provide Additional information if possible**
 EX. Screenshots, Links, Methods

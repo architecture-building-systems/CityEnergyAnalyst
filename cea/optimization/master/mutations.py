@@ -27,7 +27,7 @@ class MutationMethodInteger(object):
 
 class MutationMethodContinuos(object):
     """
-        mutation methods for continuos variables
+        mutation methods for continuous variables
       """
     def __init__(self, mutation_method):
         self.method = mutation_method
@@ -72,7 +72,7 @@ def mutation_main(individual,
         heating_units_share = [individual_with_name_dict[column] for column in heating_unit_names_share]
         # apply mutations
         heating_units_share_mutated = mutation_continuous.mutate(heating_units_share, indpb)
-        # takeback to teh individual
+        # takeback to the individual
         for column, mutated_value in zip(heating_unit_names_share, heating_units_share_mutated):
             individual_with_name_dict[column] = mutated_value
 
@@ -82,7 +82,7 @@ def mutation_main(individual,
         buildings_cooling = [individual_with_name_dict[column] for column in column_names_buildings_cooling]
         # apply mutations
         buildings_cooling_mutated = mutation_integer.mutate(buildings_cooling, indpb)
-        # take back to teh individual
+        # take back to the individual
         for column, mutated_value in zip(column_names_buildings_cooling, buildings_cooling_mutated):
             individual_with_name_dict[column] = mutated_value
 
@@ -91,7 +91,7 @@ def mutation_main(individual,
         NDIM = len(cooling_units_share)
         # apply mutations
         cooling_units_share_mutated = mutation_continuous.mutate(cooling_units_share, indpb)
-        # takeback to teh individual
+        # takeback to the individual
         for column, mutated_value in zip(cooling_unit_names_share, cooling_units_share_mutated):
             individual_with_name_dict[column] = mutated_value
 

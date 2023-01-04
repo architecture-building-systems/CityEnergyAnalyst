@@ -46,7 +46,7 @@ def read_shp(path, simplify=True, geom_attrs=True, strict=True):
                             NOTE:  if these attributes are available, write_shp will use them
                             to write the geometry.  If nodes store the underlying coordinates for
                             the edge geometry as well (as they do when they are read via
-                            this method) and they change, your geomety will be out of sync.
+                            this method) and they change, your geometry will be out of sync.
 
     :param bool strict: If True, raise NetworkXError when feature geometry is missing or
                         GeometryType is not supported.

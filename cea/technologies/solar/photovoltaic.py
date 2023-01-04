@@ -200,7 +200,7 @@ def calc_pv_generation(sensor_groups, weather_data, date_local, solar_properties
         total_el_output_PV_kWh[group] = el_output_PV_kW
         total_radiation_kWh[group] = (radiation_Wperm2['I_sol'] * tot_module_area_m2 / 1000)  # kWh
 
-    # check for missing groups and asign 0 as el_output_PV_kW
+    # check for missing groups and assign 0 as el_output_PV_kW
     # panel_orientations = ['walls_south', 'walls_north', 'roofs_top', 'walls_east', 'walls_west']
     # for panel_orientation in panel_orientations:
     #     if panel_orientation not in prop_observers['type_orientation'].values:
@@ -226,7 +226,7 @@ def calc_cell_temperature(absorbed_radiation_Wperm2, T_external_C, panel_propert
     :type T_external_C: series
     :param panel_properties_PV: panel property from the supply system database
     :type panel_properties_PV: dataframe
-    :return T_cell_C: cell temprature of PV panels
+    :return T_cell_C: cell temperature of PV panels
     :rtype T_cell_C: series
     """
 
@@ -242,7 +242,7 @@ def calc_angle_of_incidence(g, lat, ha, tilt, teta_z):
     To calculate angle of incidence from solar vector and surface normal vector.
     (Validated with Sandia pvlib.irrandiance.aoi)
 
-    :param lat: latitude of the loacation of case study [radians]
+    :param lat: latitude of the location of case study [radians]
     :param g: declination of the solar position [radians]
     :param ha: hour angle [radians]
     :param tilt: panel surface tilt angle [radians]
@@ -333,7 +333,7 @@ def calc_absorbed_radiation_PV(I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetae
     a4 = panel_properties_PV['PV_a4']
     L = panel_properties_PV['PV_th']
 
-    # calcualte ratio of beam radiation on a tilted plane
+    # calculate ratio of beam radiation on a tilted plane
     # to avoid inconvergence when I_sol = 0
     lim1 = radians(0)
     lim2 = radians(90)
@@ -361,7 +361,7 @@ def calc_absorbed_radiation_PV(I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetae
     M = np.clip(M, 0.001, 1.1)  # De Soto et al., 2006
 
     # incidence angle modifier for direct (beam) radiation
-    teta_r = asin(sin(teta) / n)  # refraction angle in radians(aproximation accrding to Soteris A.) (5.1.4)
+    teta_r = asin(sin(teta) / n)  # refraction angle in radians(approximation according to Soteris A.) (5.1.4)
     Ta_n = exp(-K * L) * (1 - ((n - 1) / (n + 1)) ** 2)
     if teta < radians(90):  # 90 degrees in radians
         part1 = teta_r + teta

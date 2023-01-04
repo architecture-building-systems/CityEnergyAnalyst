@@ -44,7 +44,7 @@ def reader_surface_properties(locator):
     surface_database_roof = pd.read_excel(locator.get_database_envelope_systems(), "ROOF")
     surface_database_walls = pd.read_excel(locator.get_database_envelope_systems(), "WALL")
 
-    # querry data
+    # query data
     df = architectural_properties.merge(surface_database_windows, left_on='type_win', right_on='code')
     df2 = architectural_properties.merge(surface_database_roof, left_on='type_roof', right_on='code')
     df3 = architectural_properties.merge(surface_database_walls, left_on='type_wall', right_on='code')
@@ -113,7 +113,7 @@ def check_daysim_bin_directory(path_hint, latest_binaries):
 
     :param str path_hint: The path to check first, according to the `cea.config` file.
     :param bool latest_binaries: Use latest Daysim binaries
-    :return: bin_path, lib_path: contains the Daysim binaries - otherwise an exception occurrs.
+    :return: bin_path, lib_path: contains the Daysim binaries - otherwise an exception occurs.
     """
     required_binaries = ["ds_illum", "epw2wea", "gen_dc", "oconv", "radfiles2daysim", "rtrace_dc"]
     required_libs = ["rayinit.cal", "isotrop_sky.cal"]
@@ -213,7 +213,7 @@ def main(config):
     are generated automatically.
 
     :param config: Configuration object with the settings (genera and radiation)
-    :type config: cea.config.Configuartion
+    :type config: cea.config.Configuration
     :return:
     """
 
