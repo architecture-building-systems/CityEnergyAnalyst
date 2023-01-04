@@ -747,11 +747,11 @@ def aggregate_results(locator, building_names):
         if i == 0:
             aggregated_hourly_results_df = hourly_results_per_building
         else:
-            aggregated_hourly_results_df = aggregated_hourly_results_df + hourly_results_per_building
+            aggregated_hourly_results_df += hourly_results_per_building
 
         annual_energy_production = hourly_results_per_building.filter(like='_kWh').sum()
         panel_area_per_building = hourly_results_per_building.filter(like='_m2').iloc[0]
-        building_annual_results = annual_energy_production.append(panel_area_per_building)
+        building_annual_results = pd.concat([annual_energy_production, panel_area_per_building])
         aggregated_annual_results[building] = building_annual_results
 
     return aggregated_hourly_results_df, aggregated_annual_results

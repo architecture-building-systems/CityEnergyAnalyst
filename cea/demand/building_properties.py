@@ -67,7 +67,7 @@ class BuildingProperties(object):
         prop_typology = dbf_to_dataframe(locator.get_building_typology()).set_index('Name')
         # Drop 'REFERENCE' column if it exists
         if 'REFERENCE' in prop_typology:
-            prop_typology.drop('REFERENCE', 1, inplace=True)
+            prop_typology.drop('REFERENCE', axis=1, inplace=True)
         prop_architectures = dbf_to_dataframe(locator.get_building_architecture())
         prop_comfort = dbf_to_dataframe(locator.get_building_comfort()).set_index('Name')
         prop_internal_loads = dbf_to_dataframe(locator.get_building_internal()).set_index('Name')

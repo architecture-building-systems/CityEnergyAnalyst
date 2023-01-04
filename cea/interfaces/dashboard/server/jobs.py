@@ -2,10 +2,9 @@
 jobs: maintain a list of jobs to be simulated.
 """
 
-
-
-
 import subprocess
+from dataclasses import dataclass, asdict
+
 import psutil
 
 from flask_restx import Namespace, Resource, fields, reqparse
@@ -59,14 +58,14 @@ def next_id():
 
 
 # FIXME: replace with database or similar solution
-class JobInfo(object):
+@dataclass
+class JobInfo:
     """Store all the information required to run a job"""
-    def __init__(self, id, script, parameters):
-        self.id = id
-        self.script = script
-        self.parameters = parameters
-        self.state = JOB_STATE_PENDING
-        self.error = None
+    id: str
+    script: str
+    parameters: dict
+    state: int = JOB_STATE_PENDING
+    error: str = None
 
     def __repr__(self):
         return "<JobInfo(id={id}, script={script}, state={state}>".format(**self.__dict__)
@@ -101,7 +100,7 @@ class NewJob(Resource):
 @api.route("/list")
 class ListJobs(Resource):
     def get(self):
-        return list(jobs.values())
+        return [asdict(job) for job in jobs.values()]
 
 
 @api.route("/started/<int:jobid>")

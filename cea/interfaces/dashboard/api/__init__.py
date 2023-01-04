@@ -1,6 +1,3 @@
-
-
-
 from flask import Blueprint
 from flask_restx import Api
 from .tools import api as tools
@@ -9,6 +6,7 @@ from .inputs import api as inputs
 from .dashboard import api as dashboard
 from .glossary import api as glossary
 from .databases import api as databases
+from .contents import api as contents
 
 blueprint = Blueprint('api', __name__, url_prefix='/api')
 api = Api(blueprint)
@@ -20,6 +18,7 @@ api.add_namespace(inputs, path='/inputs')
 api.add_namespace(dashboard, path='/dashboards')
 api.add_namespace(glossary, path='/glossary')
 api.add_namespace(databases, path='/databases')
+api.add_namespace(contents, path='/contents')
 
 
 @api.errorhandler

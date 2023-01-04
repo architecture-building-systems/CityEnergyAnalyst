@@ -6,7 +6,7 @@ import math
 import os
 
 import numpy as np
-import osmnx.footprints
+import osmnx
 import pandas as pd
 from geopandas import GeoDataFrame as gdf
 from geopandas.tools import sjoin as spatial_join
@@ -171,7 +171,8 @@ def geometry_extractor_osm(locator, config):
     # get footprints of all the surroundings
     print("Getting building footprints")
     area_with_buffer_polygon = area_with_buffer.to_crs(get_geographic_coordinate_system()).geometry.values[0]
-    all_surroundings = osmnx.footprints.footprints_from_polygon(polygon=area_with_buffer_polygon)
+    all_surroundings = osmnx.geometries.geometries_from_polygon(polygon=area_with_buffer_polygon,
+                                                                tags={"building": True})
     all_surroundings = all_surroundings.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
 
     # erase overlapping area

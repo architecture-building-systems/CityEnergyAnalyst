@@ -298,7 +298,7 @@ def add_plant_close_to_anchor(building_anchor, new_mst_nodes, mst_edges, type_ma
     selected_node = copy_of_new_mst_nodes[copy_of_new_mst_nodes["Name"] == node_id]
     selected_node.loc[:, "Name"] = "NODE" + str(new_mst_nodes.Name.count())
     selected_node.loc[:, "Type"] = "PLANT"
-    new_mst_nodes = new_mst_nodes.append(selected_node)
+    new_mst_nodes = pd.concat([new_mst_nodes, selected_node])
     new_mst_nodes.reset_index(inplace=True, drop=True)
 
     # create new edge
@@ -306,9 +306,9 @@ def add_plant_close_to_anchor(building_anchor, new_mst_nodes, mst_edges, type_ma
     point2 = (new_mst_nodes[new_mst_nodes["Name"] == node_id].geometry.x,
               new_mst_nodes[new_mst_nodes["Name"] == node_id].geometry.y)
     line = LineString((point1, point2))
-    mst_edges = mst_edges.append({"geometry": line, "Pipe_DN": pipe_dn, "Type_mat": type_mat,
-                                  "Name": "PIPE" + str(mst_edges.Name.count())
-                                  }, ignore_index=True)
+    mst_edges = pd.concat([mst_edges,
+                           pd.DataFrame([{"geometry": line, "Pipe_DN": pipe_dn, "Type_mat": type_mat,
+                                         "Name": "PIPE" + str(mst_edges.Name.count())}])], ignore_index=True)
     mst_edges.reset_index(inplace=True, drop=True)
     return new_mst_nodes, mst_edges
 
