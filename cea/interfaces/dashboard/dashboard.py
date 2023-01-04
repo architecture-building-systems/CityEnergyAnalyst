@@ -19,8 +19,9 @@ def main(config):
     global socketio
     socketio = SocketIO(app, cors_allowed_origins="*")
 
-    from cea.interfaces.dashboard.frontend import blueprint as frontend
-    app.register_blueprint(frontend)
+    if config.server.browser:
+        from cea.interfaces.dashboard.frontend import blueprint as frontend
+        app.register_blueprint(frontend)
 
     from cea.interfaces.dashboard.plots.routes import blueprint as plots_blueprint
     from cea.interfaces.dashboard.server import blueprint as server_blueprint
