@@ -1,4 +1,5 @@
 import signal
+import webbrowser
 
 from flask import Flask
 from flask_cors import CORS
@@ -44,6 +45,13 @@ def main(config):
     app.socketio = socketio
 
     print("start socketio.run")
+
+    if config.server.browser:
+        url = f"http://{config.server.host}:{config.server.port}"
+        print(f"Open {url} in your browser to access the GUI")
+        webbrowser.open(url)
+
+    print("Press Ctrl+C to stop server")
     socketio.run(app, host=config.server.host, port=config.server.port)
     print("done socketio.run")
 
