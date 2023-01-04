@@ -269,10 +269,10 @@ def nearest_neighbor_within(others, point, max_distance):
     return closest_point
 
 
-def near_analysis(buiding_centroids, street_network, crs):
+def near_analysis(building_centroids, street_network, crs):
     near_point = []
     building_name = []
-    for point, name in zip(buiding_centroids.geometry, buiding_centroids.Name):
+    for point, name in zip(building_centroids.geometry, building_centroids.Name):
         point._crs = crs
         distance = 10e10
         for line in street_network.geometry:
@@ -369,11 +369,11 @@ def calculate_end_points_intersections(prototype_network, crs):
     return gdf_points_snapped
 
 
-def create_terminals(buiding_centroids, crs, street_network):
+def create_terminals(building_centroids, crs, street_network):
     # get list of nearest points
-    near_points = near_analysis(buiding_centroids, street_network, crs)
-    # extend to the buiding centroids
-    all_points = pd.concat([near_points, buiding_centroids])
+    near_points = near_analysis(building_centroids, street_network, crs)
+    # extend to the building centroids
+    all_points = pd.concat([near_points, building_centroids])
     all_points.crs = crs
     # Aggregate these points with the GroupBy
     lines_to_buildings = all_points.groupby(['Name'])['geometry'].apply(lambda x: LineString(x.tolist()))
