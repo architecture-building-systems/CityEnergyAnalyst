@@ -1,3 +1,5 @@
+import signal
+
 from flask import Flask
 from flask_cors import CORS
 from flask_socketio import SocketIO
@@ -18,6 +20,11 @@ def main(config):
 
     global socketio
     socketio = SocketIO(app, cors_allowed_origins="*")
+
+    def shutdown(signum, frame):
+        print("Shutting Down...")
+        socketio.stop()
+    signal.signal(signal.SIGINT, shutdown)
 
     if config.server.browser:
         from cea.interfaces.dashboard.frontend import blueprint as frontend
