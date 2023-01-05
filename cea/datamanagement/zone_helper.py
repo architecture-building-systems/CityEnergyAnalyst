@@ -8,9 +8,8 @@ import os
 from typing import Union
 
 import numpy as np
-import osmnx.footprints
+import osmnx
 from geopandas import GeoDataFrame as Gdf
-from geopandas.tools import overlay
 from shapely.geometry import Polygon
 import pandas as pd
 
@@ -48,7 +47,8 @@ def parse_building_floors(floors):
         separators = [',', ';']  # Try matching with different separators
         separated_values = r'^(?:\d+(?:\.\d+)?(?:{separator}\s?)?)+$'
         for separator in separators:
-            match = re.match(separated_values.format(separator=separator), floors)
+            match = re.match(separated_values.format(
+                separator=separator), floors)
             if match:
                 return max([float(x.strip() or 0) for x in floors.split(separator)])
         return np.nan
@@ -109,7 +109,8 @@ def assign_attributes(shapefile, buildings_height, buildings_floors, buildings_h
         data_osm_floors2 = shapefile['roof:levels'].fillna(0)
         data_floors_sum = [x + y for x, y in zip([parse_building_floors(x) for x in data_osm_floors1],
                                                  [parse_building_floors(y) for y in data_osm_floors2])]
-        data_floors_sum_with_nan = [np.nan if x < 1.0 else x for x in data_floors_sum]
+        data_floors_sum_with_nan = [np.nan if x <
+                                    1.0 else x for x in data_floors_sum]
         data_osm_floors_joined = math.ceil(
             np.nanmedian(data_floors_sum_with_nan))  # median so we get close to the worse case
         shapefile["floors_ag"] = [int(x) if not np.isnan(x) else data_osm_floors_joined for x in
@@ -117,7 +118,8 @@ def assign_attributes(shapefile, buildings_height, buildings_floors, buildings_h
 
         if 'height' in list_of_columns:
             #  Replaces 'nan' values with CEA assumption
-            shapefile["height_ag"] = shapefile["height"].fillna(shapefile["floors_ag"] * constants.H_F).astype(float)
+            shapefile["height_ag"] = shapefile["height"].fillna(
+                shapefile["floors_ag"] * constants.H_F).astype(float)
             #  Replaces values of height = 0 with CEA assumption
             # TODO: Check whether buildings with height between 0 and 1 meter are actually mostly underground
             #  These might not be errors, but rather partially or fully underground buildings. This should be verified.
@@ -151,7 +153,8 @@ def assign_attributes(shapefile, buildings_height, buildings_floors, buildings_h
             shapefile["height_ag"] = shapefile["floors_ag"] * constants.H_F
         elif buildings_height is not None and buildings_floors is None:
             shapefile["height_ag"] = [buildings_height] * no_buildings
-            shapefile["floors_ag"] = [int(math.floor(x)) for x in shapefile["height_ag"] / constants.H_F]
+            shapefile["floors_ag"] = [
+                int(math.floor(x)) for x in shapefile["height_ag"] / constants.H_F]
         else:  # both are not none
             shapefile["height_ag"] = [buildings_height] * no_buildings
             shapefile["floors_ag"] = [buildings_floors] * no_buildings
@@ -172,8 +175,10 @@ def assign_attributes(shapefile, buildings_height, buildings_floors, buildings_h
     shapefile["category"] = shapefile['building']
     if 'amenity' in list_of_columns:
         # in OSM, "amenities" (where available) supersede "building" categories
-        in_categories = shapefile['amenity'].isin(OSM_BUILDING_CATEGORIES.keys())
-        shapefile.loc[in_categories, '1ST_USE'] = shapefile[in_categories]['amenity'].map(OSM_BUILDING_CATEGORIES)
+        in_categories = shapefile['amenity'].isin(
+            OSM_BUILDING_CATEGORIES.keys())
+        shapefile.loc[in_categories, '1ST_USE'] = shapefile[in_categories]['amenity'].map(
+            OSM_BUILDING_CATEGORIES)
 
     shapefile["Name"] = [key + str(x + 1000) for x in
                          range(no_buildings)]  # start in a big number to avoid potential confusion
@@ -201,12 +206,16 @@ def fix_overlapping_geoms(buildings, zone):
 
     # CREATE GRID TO PARTITION THE BUILDINGS (more efficient - hopefully)
     # calculate grid-parameters based on the zone polygon dimensions
-    [[west_bound_long, south_bound_lat, east_bound_long, north_bound_lat]] = zone.bounds.to_numpy()
+    [[west_bound_long, south_bound_lat, east_bound_long,
+        north_bound_lat]] = zone.bounds.to_numpy()
     [(centroid_long, centroid_lat)] = zone.centroid.get(0).coords[:]
-    grid_size_long = 180 * GRID_SIZE_M / (np.pi * EARTH_RADIUS_M * np.cos(centroid_lat * np.pi / 180))
+    grid_size_long = 180 * GRID_SIZE_M / \
+        (np.pi * EARTH_RADIUS_M * np.cos(centroid_lat * np.pi / 180))
     grid_size_lat = 180 * GRID_SIZE_M / (np.pi * EARTH_RADIUS_M)
-    n_grid_cells_long = math.ceil((east_bound_long - west_bound_long) / grid_size_long)
-    n_grid_cells_lat = math.ceil((north_bound_lat - south_bound_lat) / grid_size_lat)
+    n_grid_cells_long = math.ceil(
+        (east_bound_long - west_bound_long) / grid_size_long)
+    n_grid_cells_lat = math.ceil(
+        (north_bound_lat - south_bound_lat) / grid_size_lat)
     grid_cells = []
 
     # create 500m * 500m grid
@@ -236,7 +245,8 @@ def fix_overlapping_geoms(buildings, zone):
 
         # check each building for intersections with other buildings - if intersection is found:
         for building_index in buildings_in_cell.index:
-            is_overlapping = buildings_in_cell.geometry.intersects(buildings_in_cell.geometry[building_index])
+            is_overlapping = buildings_in_cell.geometry.intersects(
+                buildings_in_cell.geometry[building_index])
             overlapping_buildings = buildings_in_cell[is_overlapping]
             # check if all overlapping buildings have building use type information from OSM, if not assign mode of all overlapping buildings
             critical_columns = ['building', 'amenity', "description", "category"]
@@ -263,11 +273,13 @@ def fix_overlapping_geoms(buildings, zone):
                 elif (buildings.height_ag[building_index] + buildings.height_bg[building_index]) <= \
                         (buildings.height_ag[ovrlp_bldg_index] + buildings.height_bg[ovrlp_bldg_index]):
                     buildings.geometry[building_index] = \
-                        buildings.geometry[building_index].difference(buildings.geometry[ovrlp_bldg_index])
+                        buildings.geometry[building_index].difference(
+                            buildings.geometry[ovrlp_bldg_index])
                 elif (buildings.height_ag[building_index] + buildings.height_bg[building_index]) > \
                         (buildings.height_ag[ovrlp_bldg_index] + buildings.height_bg[ovrlp_bldg_index]):
                     buildings.geometry[ovrlp_bldg_index] = \
-                        buildings.geometry[ovrlp_bldg_index].difference(buildings.geometry[building_index])
+                        buildings.geometry[ovrlp_bldg_index].difference(
+                            buildings.geometry[building_index])
 
     return buildings
 
@@ -303,12 +315,14 @@ def zone_helper(locator, config):
                               poly, zone_output_path)
 
     # USE_A zone.shp file contents to get the contents of occupancy.dbf and age.dbf
-    calculate_typology_file(locator, zone_df, year_construction, occupancy_type, typology_output_path)
+    calculate_typology_file(
+        locator, zone_df, year_construction, occupancy_type, typology_output_path)
 
 
 def calc_category(standard_db, year_array):
     def category_assignment(year):
-        within_year = (standard_db['YEAR_START'] <= year) & (standard_db['YEAR_END'] >= year)
+        within_year = (standard_db['YEAR_START'] <= year) & (
+            standard_db['YEAR_END'] >= year)
         standards = standard_db.STANDARD.values
 
         # Filter standards if found
@@ -332,10 +346,12 @@ def calculate_typology_file(locator, zone_df, year_construction, occupancy_type,
     """
     # calculate construction year
     typology_df = calculate_age(zone_df, year_construction)
-    
+
     # calculate the most likely construction standard
-    standard_database = pd.read_excel(locator.get_database_construction_standards(), sheet_name='STANDARD_DEFINITION')
-    typology_df['STANDARD'] = calc_category(standard_database, typology_df['YEAR'].values)
+    standard_database = pd.read_excel(
+        locator.get_database_construction_standards(), sheet_name='STANDARD_DEFINITION')
+    typology_df['STANDARD'] = calc_category(
+        standard_database, typology_df['YEAR'].values)
 
     # Calculate the most likely use type
     typology_df['1ST_USE'] = "NONE"
@@ -355,9 +371,11 @@ def calculate_typology_file(locator, zone_df, year_construction, occupancy_type,
 
         # for un-conditioned OSM building categories without a clear CEA use type, "PARKING" is assigned
         if 'amenity' in zone_df.columns:
-            in_unconditioned_categories = zone_df['category'].isin(OTHER_OSM_CATEGORIES_UNCONDITIONED) | zone_df['amenity'].isin(OTHER_OSM_CATEGORIES_UNCONDITIONED)
+            in_unconditioned_categories = zone_df['category'].isin(
+                OTHER_OSM_CATEGORIES_UNCONDITIONED) | zone_df['amenity'].isin(OTHER_OSM_CATEGORIES_UNCONDITIONED)
         else:
-            in_unconditioned_categories = zone_df['category'].isin(OTHER_OSM_CATEGORIES_UNCONDITIONED)
+            in_unconditioned_categories = zone_df['category'].isin(
+                OTHER_OSM_CATEGORIES_UNCONDITIONED)
         zone_df.loc[in_unconditioned_categories, '1ST_USE'] = "PARKING"
     else:
         typology_df['1ST_USE'] = occupancy_type
@@ -371,7 +389,8 @@ def calculate_typology_file(locator, zone_df, year_construction, occupancy_type,
                        'type in the zone-helper settings.')
     # export typology.dbf
     fields = COLUMNS_ZONE_TYPOLOGY
-    dataframe_to_dbf(typology_df[fields + ['REFERENCE']], occupancy_output_path)
+    dataframe_to_dbf(
+        typology_df[fields + ['REFERENCE']], occupancy_output_path)
 
 
 def parse_year(year: Union[str, int]) -> int:
@@ -418,11 +437,15 @@ def calculate_age(zone_df, year_construction):
             zone_df["start_date"] = 2000
             zone_df['REFERENCE'] = "CEA - assumption"
         else:
-            zone_df['REFERENCE'] = ["OSM - median" if x is np.nan else "OSM - as it is" for x in zone_df['start_date']]
+            zone_df['REFERENCE'] = [
+                "OSM - median" if x is np.nan else "OSM - as it is" for x in zone_df['start_date']]
 
-        data_age = [np.nan if x is np.nan else parse_year(x) for x in zone_df['start_date']]
-        data_osm_floors_joined = int(math.ceil(np.nanmedian(data_age)))  # median so we get close to the worse case
-        zone_df["YEAR"] = [int(x) if x is not np.nan else data_osm_floors_joined for x in data_age]
+        data_age = [np.nan if x is np.nan else parse_year(
+            x) for x in zone_df['start_date']]
+        # median so we get close to the worse case
+        data_osm_floors_joined = int(math.ceil(np.nanmedian(data_age)))
+        zone_df["YEAR"] = [
+            int(x) if x is not np.nan else data_osm_floors_joined for x in data_age]
     else:
         zone_df['YEAR'] = year_construction
         zone_df['REFERENCE'] = "CEA - assumption"
@@ -436,13 +459,12 @@ def polygon_to_zone(buildings_floors, buildings_floors_below_ground, buildings_h
     lon = poly.geometry[0].centroid.coords.xy[0][0]
     lat = poly.geometry[0].centroid.coords.xy[1][0]
     # get all footprints in the district tagged as 'building' or 'building:part' in OSM
-    shapefile = osmnx.footprints.footprints_from_polygon(polygon=poly['geometry'].values[0], footprint_type='building')
+    shapefile = osmnx.geometries.geometries_from_polygon(polygon=poly['geometry'].values[0], tags={"building": True})
     if include_building_parts:
         # get all footprints in the district tagged as 'building' or 'building:part' in OSM
-        shapefile = pd.concat(
-            [shapefile,
-             osmnx.footprints.footprints_from_polygon(polygon=poly['geometry'].values[0], footprint_type='building:part')],
-            ignore_index=True)
+        building_parts = osmnx.geometries.geometries_from_polygon(polygon=poly['geometry'].values[0],
+                                                                  tags={"building": ["part"]})
+        shapefile = pd.concat([shapefile, building_parts], ignore_index=True)
         # using building:part tags requires fixing overlapping polygons
         if not fix_overlapping:
             print('Building parts included, fixing overlapping geometries activated.')
@@ -524,7 +546,8 @@ def main(config):
     """
     This script gets a polygon and calculates the zone.shp and the occupancy.dbf and age.dbf inputs files for CEA
     """
-    assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
+    assert os.path.exists(
+        config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(config.scenario)
 
     zone_helper(locator, config)

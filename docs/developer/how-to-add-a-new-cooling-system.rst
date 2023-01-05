@@ -46,7 +46,7 @@ Step 2: Add the new system to the options
 Step 3: Add a new function to model new technologies
 ----------------------------------------------------
 
-Currently, there are models for AHU, ARU, SCU running wiht heating/cooling coil.
+Currently, there are models for AHU, ARU, SCU running with heating/cooling coil.
 If the new systems is utilizing different technologies, the models should be added to `airconditioning_model.py`.
 
 

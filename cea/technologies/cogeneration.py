@@ -29,7 +29,7 @@ __status__ = "Production"
 
 def calc_cop_CCGT(GT_size_W, T_sup_K, fuel_type):
     """
-    This function calcualates the COP of a combined cycle, the gas turbine (GT) exhaust gas is used by
+    This function calculates the COP of a combined cycle, the gas turbine (GT) exhaust gas is used by
     the steam turbine (ST) to generate electricity and heat.
     This function iterates the combined cycle operation between its nominal capacity and minimum load and generate
     linear functions of the GT operation.

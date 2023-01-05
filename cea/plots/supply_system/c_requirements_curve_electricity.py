@@ -76,7 +76,7 @@ class RequirementsCurveDistrictElectricityPlot(cea.plots.supply_system.SupplySys
 
     @property
     def title(self):
-        return "Requirements curve electrical fro %s (%s)" % (self.system, self.timeframe)
+        return "Requirements curve electrical for %s (%s)" % (self.system, self.timeframe)
 
     @property
     def output_path(self):

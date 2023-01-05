@@ -422,7 +422,7 @@ default:
     parameters: ['general:scenario', trace-inputlocator]
 
   - name: workflow
-    lable: Workflow
+    label: Workflow
     description: Run a workflow.yml file from start to end
     interfaces: [cli]
     module: cea.workflows.workflow

@@ -239,7 +239,7 @@ class DaySimProject(object):
                 hea_file.write("output_units 2\n")
 
             # Write senor_file_unit to header file
-            # Fix to allow Daysim 5.2 binaries to work, not required for complied binaries from latest branch
+            # Fix to allow Daysim 5.2 binaries to work, not required for compiled binaries from latest branch
             unit_num = "0" if sensor_file_unit == 'lux' else "2"  # 0 = lux, 2 = w/m2
             sensor_str = (unit_num + " ") * num_sensors
 

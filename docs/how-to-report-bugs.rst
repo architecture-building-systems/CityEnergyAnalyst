@@ -25,6 +25,6 @@ Now it is time to submit a bug in CEA. For this:
 
 1. Go to the CEA repository in Github.
 2. Click `New Issue`
-3. in Title, add a title indicating what the problem was  adn the CEA version you used for this (e.g., I could not run optimization in CEA V2.9)
+3. in Title, add a title indicating what the problem was and the CEA version you used for this (e.g., I could not run optimization in CEA V2.9)
 4. in the description, add the bug report (step 1.)
 5. In the description you can directly connect to other user stories using *#* or connect to other people using *@* in the text.

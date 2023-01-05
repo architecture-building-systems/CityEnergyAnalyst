@@ -67,7 +67,7 @@ class BuildingProperties(object):
         prop_typology = dbf_to_dataframe(locator.get_building_typology()).set_index('Name')
         # Drop 'REFERENCE' column if it exists
         if 'REFERENCE' in prop_typology:
-            prop_typology.drop('REFERENCE', 1, inplace=True)
+            prop_typology.drop('REFERENCE', axis=1, inplace=True)
         prop_architectures = dbf_to_dataframe(locator.get_building_architecture())
         prop_comfort = dbf_to_dataframe(locator.get_building_comfort()).set_index('Name')
         prop_internal_loads = dbf_to_dataframe(locator.get_building_internal()).set_index('Name')
@@ -515,7 +515,7 @@ class BuildingPropertiesRow(object):
 
         # Refactored from CalcThermalLoads
 
-        # gemoetry properties.
+        # geometry properties.
 
         Ll = self.geometry['Blength']
         Lw = self.geometry['Bwidth']
@@ -538,7 +538,7 @@ class BuildingPropertiesRow(object):
         Tcs_re_scu_0 = Tcs_sup_scu_0 + self.hvac['dTcs0_scu_C']
 
         Tww_sup_0 = self.hvac['Tsww0_C']
-        # Identification of equivalent lenghts
+        # Identification of equivalent lengths
         fforma = self._calc_form()  # factor form comparison real surface and rectangular
         Lv = (2 * Ll + 0.0325 * Ll * Lw + 6) * fforma  # length vertical lines
         if nf_ag < 2 and nf_bg < 2:  # it is assumed that building with less than a floor and less than 2 floors udnerground do not have

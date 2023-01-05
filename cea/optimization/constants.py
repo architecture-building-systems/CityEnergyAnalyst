@@ -118,7 +118,7 @@ GHP_WMAX_SIZE = 1E3  # max electrical design size [Wel] FOR ONE PROBE
 GHP_ETA_EX = 0.677  # exergetic efficiency [O. Ozgener et al., 2005]_
 GHP_AUXRATIO = 0.83  # Wdot_comp / Wdot_total (circulating pumps)
 
-GHP_A = 25  # [m^2] area occupancy of one borehole Gultekin et al. 5 m separation at a penalty of 10% less efficeincy
+GHP_A = 25  # [m^2] area occupancy of one borehole Gultekin et al. 5 m separation at a penalty of 10% less efficiency
 
 # Combined cycle
 

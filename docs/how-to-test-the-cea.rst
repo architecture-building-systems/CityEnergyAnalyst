@@ -46,7 +46,7 @@ the command line interface (CLI) or using the unit test functionality in PyCharm
 To run the tests from the command line interface, use the command ``cea test``. This will run the unit tests as well
 as the integration test with the reference case that ships with the CEA. To test the other reference cases, run the
 command like this: ``cea test --reference-case all`` - note, that you will need to set up authentication to the private
-repository to do this. First, `Generate a personal access token on GitHub`_, then create a text file in your `%USERPROFILE%` (home for POSIX systems) folder called `cea_github.auth` with two lines: The first is your GitHub user name, the second contains the personall access token you just generated.
+repository to do this. First, `Generate a personal access token on GitHub`_, then create a text file in your `%USERPROFILE%` (home for POSIX systems) folder called `cea_github.auth` with two lines: The first is your GitHub user name, the second contains the personal access token you just generated.
 
 .. _Generate a personal access token on GitHub: https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/
 

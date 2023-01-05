@@ -53,7 +53,7 @@ def calc_sewage_heat_exchanger(locator, config):
         counter = counter +1
     mcpwaste_zone = np.sum(mcpwaste, axis =0)
     mXt_zone = np.sum(mXt, axis =0)
-    twaste_zone = [x * (y**-1) * 0.8 if y != 0 else 0 for x,y in zip (mXt_zone, mcpwaste_zone)] # lossess in the grid of 20%
+    twaste_zone = [x * (y**-1) * 0.8 if y != 0 else 0 for x,y in zip (mXt_zone, mcpwaste_zone)] # losses in the grid of 20%
 
     Q_source, t_source, t_out, tin_e, tout_e, mcpwaste_total = np.vectorize(calc_sewageheat)(mcpwaste_zone, twaste_zone, HEX_WIDTH_M,
                                                                               VEL_FLOW_MPERS, H0_KWPERM2K, MIN_FLOW_LPERS,
@@ -102,7 +102,7 @@ def calc_Sewagetemperature(Qwwf, Qww, tsww, trww, mcptw, mcpww, SW_ratio):
         m_TW = mcptw * SW_ratio
         mcp_combi = m_DHW + m_TW
         t_combi = ( m_DHW * t_spur + m_TW * trww ) / mcp_combi
-        t_to_sewage = 0.90 * t_combi                  # assuming 10% thermal loss throuhg piping
+        t_to_sewage = 0.90 * t_combi                  # assuming 10% thermal loss through piping
     else:
         t_to_sewage = trww
         mcp_combi = mcptw * SW_ratio  # in [kW_K]

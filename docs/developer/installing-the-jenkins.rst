@@ -6,7 +6,7 @@ How to set up the Jenkins server on a new PC
 .. note:: you only need to do this when the current Jenkins server dies
 
 .. note:: this guide assumes you are installing on a Windows 10 Professional system. Adjust accordingly for other
-    systems, but keep in mind that some functionality of the CEA is dependant on Windows.
+    systems, but keep in mind that some functionality of the CEA is dependent on Windows.
 
 There are a few steps to take to setting up a Jenkins server:
 
@@ -23,7 +23,7 @@ There are a few steps to take to setting up a Jenkins server:
 Installation of some prerequisites
 ----------------------------------
 
-You will need to install these softwares:
+You will need to install these software:
 
 - `CityEnergyAnalyst <https://github.com/architecture-building-systems/CityEnergyAnalyst/releases/latest>`_
   (install with the ``Setup_CityEnergyAnalyst_<VERSION>.exe`` installer)
@@ -179,7 +179,7 @@ https://github.com/jenkinsci/ghprb-plugin
 - scroll down to the "GitHub Pull Request Builder" section
 
   - leave the GitHub Server API URL: ``https://api.github.com``
-  - set the Jenkins URL overrride: ``https://ceajenkins.ngrok.io``
+  - set the Jenkins URL override: ``https://ceajenkins.ngrok.io``
   - leave the Shared secret: (bunch of \*'s... idk...)
   - select the credentials (This should be the GitHub auto generated token credentials you created above)
   - select Auto-manage webhooks

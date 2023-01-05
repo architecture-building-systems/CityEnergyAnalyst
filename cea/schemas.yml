@@ -90,7 +90,7 @@ PVT_metadata_results:
         min: -1.0
         max: 1.0
       area_installed_module_m2:
-        description: The area of the building suface covered by one solar panel
+        description: The area of the building surface covered by one solar panel
         type: float
         unit: '[m2]'
         values: '{0.0...n}'
@@ -704,7 +704,7 @@ PV_metadata_results:
         min: -1.0
         max: 1.0
       area_installed_module_m2:
-        description: The area of the building suface covered by one solar panel
+        description: The area of the building surface covered by one solar panel
         type: float
         unit: '[m2]'
         values: '{0.0...n}'
@@ -1121,7 +1121,7 @@ SC_metadata_results:
         min: -1.0
         max: 1.0
       area_installed_module_m2:
-        description: The area of the building suface covered by one solar panel
+        description: The area of the building surface covered by one solar panel
         type: float
         unit: '[m2]'
         values: '{0.0...n}'
@@ -4259,7 +4259,7 @@ get_database_conversion_systems:
           min: 0.0
           max: 1.0
         module_length_m:
-          description: lengh of the PV module
+          description: length of the PV module
           min: 0.0
           type: float
           unit: '[m]'
@@ -4646,7 +4646,7 @@ get_database_conversion_systems:
           values: '{0.0...n}'
           min: 0.0
         module_length_m:
-          description: lengh of a solar collector module
+          description: length of a solar collector module
           type: float
           unit: '[m]'
           values: '{0.0...n}'
@@ -4840,7 +4840,7 @@ get_database_distribution_systems:
     THERMAL_GRID:
       columns:
         Code:
-          description: pipe ID from the manufacterer
+          description: pipe ID from the manufacturer
           primary: true
           type: string
           unit: 'NA'
@@ -8005,13 +8005,13 @@ get_lca_embodied:
         min: 0.0
       GHG_sys_embodied_kgCO2m2:
         description: Embodied emissions per conditioned floor area due to building
-          construction and decomissioning
+          construction and decommissioning
         type: float
         unit: "[kg CO2-eq/m2.yr]"
         values: '{0.0...n}'
         min: 0.0
       GHG_sys_embodied_tonCO2:
-        description: Embodied emissions due to building construction and decomissioning
+        description: Embodied emissions due to building construction and decommissioning
         type: float
         unit: "[ton CO2-eq/yr]"
         values: '{0.0...n}'
@@ -8698,7 +8698,7 @@ get_multi_criteria_analysis:
         values: '{0.0...n}'
         min: 0.0
       user_MCDA:
-        description: Best system accoridng to user mult-criteria weights
+        description: Best system according to user mult-criteria weights
         type: float
         unit: '[-]'
         values: '{0...n}'
@@ -8774,7 +8774,7 @@ get_network_layout_edges_shapefile:
         unit: 'NA'
         values: 'NA'
       length_m:
-        description: lenth of this edge
+        description: length of this edge
         type: float
         unit: '[m]'
         values: '{0.0...n}'
@@ -8832,7 +8832,7 @@ get_network_linear_thermal_loss_edges_file:
   schema:
     columns:
       PIPE0:
-        description: linear thermal losses in thie pipe section
+        description: linear thermal losses in this pipe section
         type: float
         unit: '[Wh/m]'
         values: '{0.0...n}'
@@ -10626,7 +10626,7 @@ get_optimization_network_results_summary:
         values: '{0.0...n}'
         min: 0.0
       mcpdata_netw_total_kWperC:
-        description: Capacity mass flow reate for server cooling of this network
+        description: Capacity mass flow rate for server cooling of this network
         type: float
         unit: '[kW/C]'
         values: '{0.0...n}'
