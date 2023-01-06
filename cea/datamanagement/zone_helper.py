@@ -131,8 +131,8 @@ def assign_attributes(shapefile, buildings_height, buildings_floors, buildings_h
             shapefile["height_ag"] = shapefile["floors_ag"] * constants.H_F
 
         # add fields for floors and height below ground
-        shapefile["height_bg"] = None
-        shapefile["floors_bg"] = None
+        shapefile["height_bg"] = pd.Series(np.nan)
+        shapefile["floors_bg"] = pd.Series(np.nan)
 
         # Correct levels below ground if a minimum floor level or height is indicated
         if 'building:min_level' in list_of_columns:
@@ -145,6 +145,7 @@ def assign_attributes(shapefile, buildings_height, buildings_floors, buildings_h
         # add missing floors and height below ground
         shapefile.loc[shapefile.height_bg.isna(), "height_bg"] = [buildings_height_below_ground] * no_buildings
         shapefile.loc[shapefile.floors_bg.isna(), "floors_bg"] = [buildings_floors_below_ground] * no_buildings
+        shapefile["floors_bg"] = shapefile["floors_bg"].astype(int)
     else:
         shapefile['REFERENCE'] = "User - assumption"
         if buildings_height is None and buildings_floors is not None:
@@ -248,7 +249,9 @@ def fix_overlapping_geoms(buildings, zone):
                 buildings_in_cell.geometry[building_index])
             overlapping_buildings = buildings_in_cell[is_overlapping]
             # check if all overlapping buildings have building use type information from OSM, if not assign mode of all overlapping buildings
-            for col in ['building', 'amenity', "description", "category"]:
+            critical_columns = ['building', 'amenity', "description", "category"]
+            appearing_critical_columns = [col for col in critical_columns if col in overlapping_buildings.columns]
+            for col in appearing_critical_columns:
                 if np.any(overlapping_buildings[col].isna()) & ~np.all(overlapping_buildings[col].isna()):
                     buildings.loc[overlapping_buildings.loc[overlapping_buildings[col].isna()].index, col] = \
                         overlapping_buildings[col].dropna().mode()[0]
@@ -374,11 +377,16 @@ def calculate_typology_file(locator, zone_df, year_construction, occupancy_type,
             in_unconditioned_categories = zone_df['category'].isin(
                 OTHER_OSM_CATEGORIES_UNCONDITIONED)
         zone_df.loc[in_unconditioned_categories, '1ST_USE'] = "PARKING"
+    else:
+        typology_df['1ST_USE'] = occupancy_type
 
     # all remaining building use types are assigned by the mode of the use types in the entire case study
-    typology_df.loc[typology_df['1ST_USE'] == "NONE", '1ST_USE'] = \
-        typology_df.loc[~typology_df['1ST_USE'].isin(['NONE', 'PARKING']), '1ST_USE'].mode()[0]
-
+    try:
+        typology_df.loc[typology_df['1ST_USE'] == "NONE", '1ST_USE'] = \
+            typology_df.loc[~typology_df['1ST_USE'].isin(['NONE', 'PARKING']), '1ST_USE'].mode()[0]
+    except KeyError:
+        raise KeyError('No building type could be found in the OSM-database, for the selected zone. Please assign  an occupancy '
+                       'type in the zone-helper settings.')
     # export typology.dbf
     fields = COLUMNS_ZONE_TYPOLOGY
     dataframe_to_dbf(
