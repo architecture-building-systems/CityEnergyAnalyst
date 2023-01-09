@@ -3,7 +3,6 @@ Radiation engine and geometry handler for CEA
 """
 
 import os
-import subprocess
 import sys
 import time
 from itertools import repeat
@@ -15,6 +14,7 @@ import cea.config
 import cea.inputlocator
 from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_surroundings
 from cea.resources.radiation import daysim, geometry_generator
+from cea.resources.radiation.daysim import check_daysim_bin_directory
 from cea.resources.radiation.radiance import CEADaySim
 from cea.utilities import epwreader
 from cea.utilities.parallel import vectorize
@@ -98,114 +98,6 @@ def radiation_singleprocessing(cea_daysim, zone_building_names, locator, setting
         )
 
 
-def check_daysim_bin_directory(path_hint, latest_binaries):
-    """
-    Check for the Daysim bin directory based on ``path_hint`` and return it on success.
-
-    If the binaries could not be found there, check in a folder `Depencencies/Daysim` of the installation - this will
-    catch installations on Windows that used the official CEA installer.
-
-    Check the RAYPATH environment variable. Return that.
-
-    Check for ``C:\Daysim\bin`` - it might be there?
-
-    If the binaries can't be found anywhere, raise an exception.
-
-    :param str path_hint: The path to check first, according to the `cea.config` file.
-    :param bool latest_binaries: Use latest Daysim binaries
-    :return: bin_path, lib_path: contains the Daysim binaries - otherwise an exception occurs.
-    """
-    required_binaries = ["ds_illum", "epw2wea", "gen_dc", "oconv", "radfiles2daysim", "rtrace_dc"]
-    required_libs = ["rayinit.cal", "isotrop_sky.cal"]
-
-    def contains_binaries(path):
-        """True if all the required binaries are found in path - note that binaries might have an extension"""
-        try:
-            found_binaries = set(binary for binary, _ in map(os.path.splitext, os.listdir(path)))
-        except OSError:
-            # could not find the binaries, bogus path
-            return False
-        return all(binary in found_binaries for binary in required_binaries)
-
-    def contains_libs(path):
-        try:
-            found_libs = set(os.listdir(path))
-        except OSError:
-            # could not find the libs, bogus path
-            return False
-        return all(lib in found_libs for lib in required_libs)
-
-    def contains_whitespace(path):
-        """True if path contains whitespace"""
-        return len(path.split()) > 1
-
-    def allow_run_on_mac(path):
-        """Remove unidentified developer warning when running binaries on mac"""
-        for binary in required_binaries:
-            binary_path = os.path.join(path, binary)
-            result = subprocess.run(["xattr", "−l", binary_path], capture_output=True)
-            if "com.apple.quarantine" in result.stdout.decode('utf-8'):
-                subprocess.run(["xattr", "-d", "com.apple.quarantine", binary_path])
-
-    folders_to_check = [
-        path_hint,
-    ]
-
-    # Path of shipped binaries
-    shipped_daysim = os.path.join(os.path.dirname(__file__), "bin", sys.platform)
-    folders_to_check.append(shipped_daysim)
-
-    lib_path = None
-    if sys.platform == "win32":
-        # Path of binaries from windows installer
-        win_installer_daysim = os.path.join(os.path.dirname(sys.executable), "..", "Daysim")
-        # lib_path = os.path.join(win_installer_daysim, "lib")  # Use lib folder shipped with CEA
-
-        # Check binaries in Daysim folder, for backward capability
-        folders_to_check.append(win_installer_daysim)
-
-        # Check latest binaries only applies to Windows
-        folders_to_check.append(os.path.join(shipped_daysim, "bin64" if latest_binaries else "bin"))
-        folders_to_check.append(os.path.join(win_installer_daysim, "bin64" if latest_binaries else "bin"))
-        folders_to_check.append(os.path.join(path_hint, "bin64" if latest_binaries else "bin"))
-
-        # User might have a default DAYSIM installation
-        folders_to_check.append(r"C:\Daysim\bin")
-
-    elif sys.platform == "linux":
-        # For docker
-        folders_to_check.append(os.path.normcase(r"/Daysim/bin"))
-
-    elif sys.platform == "darwin":
-        pass
-
-    folders_to_check = [os.path.abspath(os.path.normpath(os.path.normcase(p))) for p in folders_to_check]
-
-    for possible_path in folders_to_check:
-        if contains_binaries(possible_path):
-            # If path to binaries contains whitespace, provide a warning
-            if contains_whitespace(possible_path):
-                print(f"ATTENTION: Daysim binaries found in '{possible_path}', but its path contains whitespaces. "
-                      "Consider moving the binaries to another path to use them.")
-                continue
-
-            if sys.platform == "win32":
-                # Use path lib folder if it exists
-                _lib_path = os.path.abspath(os.path.normpath(os.path.join(possible_path, "..", "lib")))
-                if contains_libs(_lib_path):
-                    lib_path = _lib_path
-                # Check if lib files in binaries path, for backward capability
-                elif contains_libs(possible_path):
-                    lib_path = possible_path
-            
-            elif sys.platform == "darwin":
-                allow_run_on_mac(possible_path)
-
-            return str(possible_path), str(lib_path)
-
-    raise ValueError("Could not find Daysim binaries - checked these paths: {}".format(", ".join(folders_to_check)))
-
-
 def main(config):
     """
     This function makes the calculation of solar insolation in X sensor points for every building in the zone
@@ -225,27 +117,24 @@ def main(config):
     # BUGFIX for #2447 (make sure the Daysim binaries are there before starting the simulation)
     daysim_bin_path, daysim_lib_path = check_daysim_bin_directory(config.radiation.daysim_bin_directory,
                                                                   config.radiation.use_latest_daysim_binaries)
-    print('Using Daysim binaries from path: {}'.format(daysim_bin_path))
-    print('Using Daysim data from path: {}'.format(daysim_lib_path))
-    # Save daysim path to config
-    config.radiation.daysim_bin_directory = daysim_bin_path
+    print(f'Using Daysim binaries from path: {daysim_bin_path}')
+    print(f'Using Daysim data from path: {daysim_lib_path}')
 
-    # BUGFIX for PyCharm: the PATH variable might not include the daysim-bin-directory, so we add it here
-    os.environ["PATH"] = "{bin}{pathsep}{path}".format(bin=config.radiation.daysim_bin_directory, pathsep=os.pathsep,
-                                                       path=os.environ["PATH"])
-    if not daysim_lib_path:
+    # # BUGFIX for PyCharm: the PATH variable might not include the daysim-bin-directory, so we add it here
+    os.environ["PATH"] = f'{daysim_bin_path}{os.pathsep}{os.environ["PATH"]}'
+    if daysim_lib_path is not None:
         os.environ["RAYPATH"] = daysim_lib_path
-
-    if not "PROJ_LIB" in os.environ:
+    if "PROJ_LIB" not in os.environ:
         os.environ["PROJ_LIB"] = os.path.join(os.path.dirname(sys.executable), "Library", "share")
-    if not "GDAL_DATA" in os.environ:
+    if "GDAL_DATA" not in os.environ:
         os.environ["GDAL_DATA"] = os.path.join(os.path.dirname(sys.executable), "Library", "share", "gdal")
 
     print("verifying geometry files")
     zone_path = locator.get_zone_geometry()
     surroundings_path = locator.get_surroundings_geometry()
-    print("zone: {zone_path}\nsurroundings: {surroundings_path}".format(zone_path=zone_path,
-                                                                        surroundings_path=surroundings_path))
+    print(f"zone: {zone_path}")
+    print(f"surroundings: {surroundings_path}")
+
     verify_input_geometry_zone(gpdf.from_file(zone_path))
     verify_input_geometry_surroundings(gpdf.from_file(surroundings_path))
 
@@ -256,17 +145,14 @@ def main(config):
 
     print("Creating 3D geometry and surfaces")
     geometry_pickle_dir = os.path.join(
-        locator.get_temporary_folder(), "{}_radiation_geometry_pickle".format(config.scenario_name))
-    print("Saving geometry pickle files in: {}".format(geometry_pickle_dir))
+        locator.get_temporary_folder(), f"{config.scenario_name}_radiation_geometry_pickle")
+    print(f"Saving geometry pickle files in: {geometry_pickle_dir}")
     # create geometrical faces of terrain and buildings
     geometry_terrain, zone_building_names, surroundings_building_names = geometry_generator.geometry_main(
         locator, config, geometry_pickle_dir)
 
-    # daysim_bin_directory might contain two paths (e.g. "C:\Daysim\bin;C:\Daysim\lib") - in which case, only
-    # use the "bin" folder
-    bin_directory = [d for d in config.radiation.daysim_bin_directory.split(";") if not d.endswith("lib")][0]
     daysim_staging_location = os.path.join(locator.get_temporary_folder(), 'cea_radiation')
-    cea_daysim = CEADaySim(daysim_staging_location, bin_directory)
+    cea_daysim = CEADaySim(daysim_staging_location, daysim_bin_path)
 
     # create radiance input files
     print("Creating radiance material file")
