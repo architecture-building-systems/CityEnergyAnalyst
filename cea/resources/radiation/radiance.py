@@ -177,10 +177,8 @@ class DaySimProject(object):
         self._create_project_header_file()
 
     def _create_folders(self):
-        if not os.path.exists(self.project_path):
-            os.makedirs(self.project_path)
-        if not os.path.exists(self.tmp_directory):
-            os.makedirs(self.tmp_directory)
+        os.makedirs(self.project_path, exist_ok=True)
+        os.makedirs(self.tmp_directory, exist_ok=True)
 
     def _create_project_header_file(self):
         daysim_material_path = os.path.relpath(self.daysim_material_path, self.project_path)
