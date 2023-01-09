@@ -7,7 +7,7 @@ import shlex
 import pandas as pd
 
 from cea import suppress_3rd_party_debug_loggers
-from cea.resources.radiation_daysim.geometry_generator import BuildingGeometry
+from cea.resources.radiation.geometry_generator import BuildingGeometry
 
 suppress_3rd_party_debug_loggers()
 

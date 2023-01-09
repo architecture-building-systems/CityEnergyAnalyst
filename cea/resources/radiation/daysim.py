@@ -17,7 +17,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 from cea.constants import HOURS_IN_YEAR
-from cea.resources.radiation_daysim.geometry_generator import BuildingGeometry
+from cea.resources.radiation.geometry_generator import BuildingGeometry
 from cea import suppress_3rd_party_debug_loggers
 
 suppress_3rd_party_debug_loggers()

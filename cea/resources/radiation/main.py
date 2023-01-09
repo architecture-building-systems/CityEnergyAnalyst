@@ -14,8 +14,8 @@ from geopandas import GeoDataFrame as gpdf
 import cea.config
 import cea.inputlocator
 from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_surroundings
-from cea.resources.radiation_daysim import daysim_main, geometry_generator
-from cea.resources.radiation_daysim.radiance import CEADaySim
+from cea.resources.radiation import daysim, geometry_generator
+from cea.resources.radiation.radiance import CEADaySim
 from cea.utilities import epwreader
 from cea.utilities.parallel import vectorize
 
@@ -80,11 +80,11 @@ def radiation_singleprocessing(cea_daysim, zone_building_names, locator, setting
     num_chunks = len(chunks)
     if num_chunks == 1:
         for chunk_n, building_names in enumerate(chunks):
-            daysim_main.isolation_daysim(
+            daysim.isolation_daysim(
                 chunk_n, cea_daysim, building_names, locator, radiance_parameters, write_sensor_data, grid_size,
                 max_global, weatherfile, geometry_pickle_dir)
     else:
-        vectorize(daysim_main.isolation_daysim, num_processes)(
+        vectorize(daysim.isolation_daysim, num_processes)(
             range(0, num_chunks),
             repeat(cea_daysim, num_chunks),
             chunks,
