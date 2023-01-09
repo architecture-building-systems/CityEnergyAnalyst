@@ -3,6 +3,7 @@ Radiation engine and geometry handler for CEA
 """
 
 import os
+import shutil
 import time
 from itertools import repeat
 
