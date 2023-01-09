@@ -55,7 +55,7 @@ def reader_surface_properties(locator):
     return surface_properties.set_index('Name').round(decimals=2)
 
 
-def radiation_singleprocessing(cea_daysim, zone_building_names, locator, settings, geometry_pickle_dir, num_processes):
+def run_daysim_simulation(cea_daysim, zone_building_names, locator, settings, geometry_pickle_dir, num_processes):
     weather_path = locator.get_weather_file()
     # check inconsistencies and replace by max value of weather file
     weatherfile = epwreader.epw_reader(weather_path)
@@ -132,10 +132,12 @@ def main(config):
     building_surface_properties = reader_surface_properties(locator)
     building_surface_properties.to_csv(locator.get_radiation_materials())
 
+    daysim_staging_location = os.path.join(locator.get_solar_radiation_folder(), 'daysim_files')
+    os.makedirs(daysim_staging_location, exist_ok=True)
+
     print("Creating 3D geometry and surfaces")
-    geometry_pickle_dir = os.path.join(
-        locator.get_temporary_folder(), f"{config.scenario_name}_radiation_geometry_pickle")
-    print(f"Saving geometry pickle files in: {geometry_pickle_dir}")
+    geometry_pickle_dir = os.path.join(daysim_staging_location, "radiance_geometry_pickle")
+    print("Saving geometry pickle files in: {}".format(geometry_pickle_dir))
     # create geometrical faces of terrain and buildings
     geometry_terrain, zone_building_names, surroundings_building_names = geometry_generator.geometry_main(
         locator, config, geometry_pickle_dir)
@@ -158,8 +160,11 @@ def main(config):
     cea_daysim.execute_radfiles2daysim()
 
     time1 = time.time()
-    radiation_singleprocessing(cea_daysim, zone_building_names, locator, config.radiation, geometry_pickle_dir,
-                               num_processes=config.get_number_of_processes())
+    run_daysim_simulation(cea_daysim, zone_building_names, locator, config.radiation, geometry_pickle_dir,
+                          num_processes=config.get_number_of_processes())
+
+    # Remove staging location after everything is successful
+    shutil.rmtree(daysim_staging_location)
 
     print("Daysim simulation finished in %.2f mins" % ((time.time() - time1) / 60.0))
 
