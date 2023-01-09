@@ -6,10 +6,7 @@ import shlex
 
 import pandas as pd
 
-from cea import suppress_3rd_party_debug_loggers
 from cea.resources.radiation.geometry_generator import BuildingGeometry
-
-suppress_3rd_party_debug_loggers()
 
 import py4design.py2radiance as py2radiance
 from py4design.py3dmodel.fetch import points_frm_occface
@@ -32,10 +29,11 @@ class CEADaySim(object):
     :param str daysim_dir: Directory where Daysim binaries are found
     """
 
-    def __init__(self, staging_path, daysim_dir):
+    def __init__(self, staging_path, daysim_dir, daysim_lib):
         self.common_inputs = os.path.join(staging_path, 'common_inputs')
         self.projects_dir = os.path.join(staging_path, 'projects')
         self.daysim_dir = daysim_dir
+        self.daysim_lib = daysim_lib
         self._create_folders()
 
         # Raw input files (radiance material and geometry)
@@ -61,7 +59,7 @@ class CEADaySim(object):
         :param str project_name: Name of Daysim project
         :return DaySimProject:
         """
-        return DaySimProject(project_name, self.projects_dir, self.daysim_dir,
+        return DaySimProject(project_name, self.projects_dir, self.daysim_dir, self.daysim_lib,
                              self.daysim_material_path, self.daysim_geometry_path, self.wea_weather_path,
                              self.site_info)
 
@@ -74,19 +72,25 @@ class CEADaySim(object):
                             surroundings_building_names, geometry_pickle_dir)
 
     @staticmethod
-    def run_cmd(cmd, cwd=None):
-        print('Running command `{}`{}'.format(cmd, '' if cwd is None else ' in `{}`'.format(cwd)))
-        try:
-            # Stops script if commands fail (i.e non-zero exit code)
-            subprocess.check_call(shlex.split(cmd), cwd=cwd, stderr=subprocess.STDOUT, env=os.environ)
-        except TypeError as error:
-            if str(error) == "environment can only contain strings":
-                for key in os.environ.keys():
-                    value = os.environ[key]
-                    if not isinstance(value, str):
-                        print("Bad ENVIRON key: {key}={value} ({value_type})".format(
-                            key=key, value=value, value_type=type(value)))
-            raise error
+    def run_cmd(cmd, daysim_dir, daysim_lib):
+        print(f'Running command `{cmd}`')
+
+        # Add daysim directory to path
+        env = {
+            "PATH": f'{daysim_dir}{os.pathsep}{os.environ["PATH"]}',
+            "RAYPATH": daysim_lib
+        }
+
+        process = subprocess.run(shlex.split(cmd), capture_output=True, env=env)
+        output = process.stdout.decode('utf-8')
+        print(output)
+
+        # Stops script if commands fail (i.e non-zero exit code)
+        if process.returncode != 0:
+            print(process.stderr)
+            raise subprocess.CalledProcessError
+
+        return output
 
     @staticmethod
     def generate_project_header(project_name, project_directory, tmp_directory, daysim_bin_directory):
@@ -116,11 +120,9 @@ class CEADaySim(object):
     def execute_epw2wea(self, epw_weather_path, ground_reflectance=0.2):
         command = 'epw2wea "{epw_weather_path}" "{wea_weather_path}"'.format(epw_weather_path=epw_weather_path,
                                                                              wea_weather_path=self.wea_weather_path)
-        print(f'Running command `{command}`')
-
         # get site information from stdout of epw2wea
-        epw2wea_result = subprocess.run(shlex.split(command), stdout=subprocess.PIPE)
-        site_headers = epw2wea_result.stdout.decode('utf-8')
+        epw2wea_result = self.run_cmd(command, self.daysim_dir, self.daysim_lib)
+        site_headers = epw2wea_result
 
         self.site_info = "{epw2wea_output}\n" \
                          "ground_reflectance {ground_reflectance}\n".format(
@@ -153,11 +155,11 @@ class CEADaySim(object):
             hea_file.write(building_info)
 
         command1 = 'radfiles2daysim "{hea_path}" -g -m -d'.format(hea_path=hea_path)
-        self.run_cmd(command1)
+        self.run_cmd(command1, self.daysim_dir, self.daysim_lib)
 
 
 class DaySimProject(object):
-    def __init__(self, project_name, project_directory, daysim_bin_directory,
+    def __init__(self, project_name, project_directory, daysim_bin_directory, daysim_lib_directory,
                  daysim_material_path, daysim_geometry_path, wea_weather_path,
                  site_info):
 
@@ -168,6 +170,7 @@ class DaySimProject(object):
         self.project_path = os.path.join(project_directory, project_name, "")
         self.tmp_directory = os.path.join(self.project_path, "tmp", "")
         self.daysim_bin_directory = os.path.join(daysim_bin_directory, "")
+        self.daysim_lib_directory = os.path.join(daysim_lib_directory)
         self._create_folders()
 
         # Input files
@@ -316,13 +319,13 @@ class DaySimProject(object):
         command2 = 'gen_dc "{hea_path}" -dif'.format(hea_path=self.hea_path)
         command3 = 'gen_dc "{hea_path}" -paste'.format(hea_path=self.hea_path)
 
-        CEADaySim.run_cmd(command1)
-        CEADaySim.run_cmd(command2)
-        CEADaySim.run_cmd(command3)
+        CEADaySim.run_cmd(command1, self.daysim_bin_directory, self.daysim_lib_directory)
+        CEADaySim.run_cmd(command2, self.daysim_bin_directory, self.daysim_lib_directory)
+        CEADaySim.run_cmd(command3, self.daysim_bin_directory, self.daysim_lib_directory)
 
     def execute_ds_illum(self):
         command1 = 'ds_illum "{hea_path}"'.format(hea_path=self.hea_path)
-        CEADaySim.run_cmd(command1)
+        CEADaySim.run_cmd(command1, self.daysim_bin_directory, self.daysim_lib_directory)
 
     def eval_ill(self):
         """

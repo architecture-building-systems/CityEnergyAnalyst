@@ -3,7 +3,6 @@ Radiation engine and geometry handler for CEA
 """
 
 import os
-import sys
 import time
 from itertools import repeat
 
@@ -114,20 +113,10 @@ def main(config):
     #  the selected buildings are the ones for which the individual radiation script is run for
     #  this is only activated when in default.config, run_all_buildings is set as 'False'
 
-    # BUGFIX for #2447 (make sure the Daysim binaries are there before starting the simulation)
     daysim_bin_path, daysim_lib_path = check_daysim_bin_directory(config.radiation.daysim_bin_directory,
                                                                   config.radiation.use_latest_daysim_binaries)
     print(f'Using Daysim binaries from path: {daysim_bin_path}')
     print(f'Using Daysim data from path: {daysim_lib_path}')
-
-    # # BUGFIX for PyCharm: the PATH variable might not include the daysim-bin-directory, so we add it here
-    os.environ["PATH"] = f'{daysim_bin_path}{os.pathsep}{os.environ["PATH"]}'
-    if daysim_lib_path is not None:
-        os.environ["RAYPATH"] = daysim_lib_path
-    if "PROJ_LIB" not in os.environ:
-        os.environ["PROJ_LIB"] = os.path.join(os.path.dirname(sys.executable), "Library", "share")
-    if "GDAL_DATA" not in os.environ:
-        os.environ["GDAL_DATA"] = os.path.join(os.path.dirname(sys.executable), "Library", "share", "gdal")
 
     print("verifying geometry files")
     zone_path = locator.get_zone_geometry()
@@ -152,7 +141,7 @@ def main(config):
         locator, config, geometry_pickle_dir)
 
     daysim_staging_location = os.path.join(locator.get_temporary_folder(), 'cea_radiation')
-    cea_daysim = CEADaySim(daysim_staging_location, daysim_bin_path)
+    cea_daysim = CEADaySim(daysim_staging_location, daysim_bin_path, daysim_lib_path)
 
     # create radiance input files
     print("Creating radiance material file")
