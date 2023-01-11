@@ -83,11 +83,11 @@ def run_daysim_simulation(cea_daysim, zone_building_names, locator, settings, ge
     grid_size = {"walls_grid": settings.walls_grid, "roof_grid": settings.roof_grid}
 
     num_chunks = len(chunks)
+
     if num_chunks == 1:
-        for chunk_n, building_names in enumerate(chunks):
-            daysim.isolation_daysim(
-                chunk_n, cea_daysim, building_names, locator, radiance_parameters, write_sensor_data, grid_size,
-                max_global, weatherfile, geometry_pickle_dir)
+        daysim.isolation_daysim(
+            0, cea_daysim, chunks[0], locator, radiance_parameters, write_sensor_data, grid_size,
+            max_global, weatherfile, geometry_pickle_dir)
     else:
         vectorize(daysim.isolation_daysim, num_processes)(
             range(0, num_chunks),
