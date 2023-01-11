@@ -89,7 +89,7 @@ class CEADaySim:
         # Stops script if commands fail (i.e non-zero exit code)
         if process.returncode != 0:
             print(process.stderr)
-            raise subprocess.CalledProcessError
+            raise subprocess.CalledProcessError(process.returncode, cmd)
 
         return output
 
@@ -163,7 +163,6 @@ class DaySimProject(object):
         self.tmp_directory = os.path.join(self.project_path, "tmp", "")
         self.daysim_bin_directory = os.path.join(daysim_bin_directory, "")
         self.daysim_lib_directory = os.path.join(daysim_lib_directory)
-        self._create_folders()
 
         # Input files
         self.daysim_material_path = daysim_material_path
@@ -176,11 +175,22 @@ class DaySimProject(object):
         self.site_info = site_info
         self._create_project_header_file()
 
-    def _create_folders(self):
+    def _ensure_exist(self):
+        # Ensure input files exist
+        required = [self.daysim_material_path, self.daysim_geometry_path, self.wea_weather_path]
+        missing = [file for file in required if not os.path.exists(file)]
+        if len(missing):
+            raise OSError(
+                f"Could not find required input files for Daysim in the following paths: {', '.join(missing)}"
+            )
+
+        # Create required folders
         os.makedirs(self.project_path, exist_ok=True)
         os.makedirs(self.tmp_directory, exist_ok=True)
 
     def _create_project_header_file(self):
+        self._ensure_exist()
+
         daysim_material_path = os.path.relpath(self.daysim_material_path, self.project_path)
         daysim_geometry_path = os.path.relpath(self.daysim_geometry_path, self.project_path)
         wea_weather_path = os.path.relpath(self.wea_weather_path, self.project_path)
