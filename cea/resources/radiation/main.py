@@ -14,7 +14,6 @@ import cea.config
 import cea.inputlocator
 from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_surroundings
 from cea.resources.radiation import daysim, geometry_generator
-from cea.resources.radiation.daysim import check_daysim_bin_directory
 from cea.resources.radiation.radiance import CEADaySim
 from cea.utilities import epwreader
 from cea.utilities.parallel import vectorize
@@ -29,7 +28,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def reader_surface_properties(locator):
+def read_surface_properties(locator) -> pd.DataFrame:
     """
     This function returns a dataframe with the emissivity values of walls, roof, and windows
     of every building in the scene
@@ -40,18 +39,24 @@ def reader_surface_properties(locator):
 
     # local variables
     architectural_properties = gpdf.from_file(locator.get_building_architecture())
-    surface_database_windows = pd.read_excel(locator.get_database_envelope_systems(), "WINDOW")
-    surface_database_roof = pd.read_excel(locator.get_database_envelope_systems(), "ROOF")
-    surface_database_walls = pd.read_excel(locator.get_database_envelope_systems(), "WALL")
+    surface_database_windows = pd.read_excel(locator.get_database_envelope_systems(), "WINDOW").set_index("code")
+    surface_database_roof = pd.read_excel(locator.get_database_envelope_systems(), "ROOF").set_index("code")
+    surface_database_walls = pd.read_excel(locator.get_database_envelope_systems(), "WALL").set_index("code")
+
+    def match_code(property_code_column: str, code_value_df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Matches envelope code in building properties with code in the database and retrieves its values
+        """
+        df = pd.merge(architectural_properties[[property_code_column]], code_value_df,
+                      left_on=property_code_column, right_on="code", how="left")
+        return df
 
     # query data
-    df = architectural_properties.merge(surface_database_windows, left_on='type_win', right_on='code')
-    df2 = architectural_properties.merge(surface_database_roof, left_on='type_roof', right_on='code')
-    df3 = architectural_properties.merge(surface_database_walls, left_on='type_wall', right_on='code')
-    fields = ['Name', 'G_win', "type_win"]
-    fields2 = ['Name', 'r_roof', "type_roof"]
-    fields3 = ['Name', 'r_wall', "type_wall"]
-    surface_properties = df[fields].merge(df2[fields2], on='Name').merge(df3[fields3], on='Name')
+    building_names = architectural_properties['Name']
+    df1 = match_code('type_win', surface_database_windows[['G_win']])
+    df2 = match_code('type_roof', surface_database_roof[['r_roof']])
+    df3 = match_code('type_wall', surface_database_walls[['r_wall']])
+    surface_properties = pd.concat([building_names, df1, df2, df3], axis=1)
 
     return surface_properties.set_index('Name').round(decimals=2)
 
@@ -114,8 +119,8 @@ def main(config):
     #  the selected buildings are the ones for which the individual radiation script is run for
     #  this is only activated when in default.config, run_all_buildings is set as 'False'
 
-    daysim_bin_path, daysim_lib_path = check_daysim_bin_directory(config.radiation.daysim_bin_directory,
-                                                                  config.radiation.use_latest_daysim_binaries)
+    daysim_bin_path, daysim_lib_path = daysim.check_daysim_bin_directory(config.radiation.daysim_bin_directory,
+                                                                         config.radiation.use_latest_daysim_binaries)
     print(f'Using Daysim binaries from path: {daysim_bin_path}')
     print(f'Using Daysim data from path: {daysim_lib_path}')
 
@@ -125,12 +130,15 @@ def main(config):
     print(f"zone: {zone_path}")
     print(f"surroundings: {surroundings_path}")
 
-    verify_input_geometry_zone(gpdf.from_file(zone_path))
-    verify_input_geometry_surroundings(gpdf.from_file(surroundings_path))
+    zone_df = gpdf.from_file(zone_path)
+    surroundings_df = gpdf.from_file(surroundings_path)
+
+    verify_input_geometry_zone(zone_df)
+    verify_input_geometry_surroundings(surroundings_df)
 
     # import material properties of buildings
     print("Getting geometry materials")
-    building_surface_properties = reader_surface_properties(locator)
+    building_surface_properties = read_surface_properties(locator)
     building_surface_properties.to_csv(locator.get_radiation_materials())
 
     daysim_staging_location = os.path.join(locator.get_solar_radiation_folder(), 'daysim_files')
