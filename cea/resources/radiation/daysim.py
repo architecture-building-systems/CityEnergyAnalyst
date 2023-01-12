@@ -20,6 +20,7 @@ __status__ = "Production"
 
 from cea.constants import HOURS_IN_YEAR
 from cea.resources.radiation.geometry_generator import BuildingGeometry
+from cea.resources.radiation.main import GridSize
 
 REQUIRED_BINARIES = {"ds_illum", "epw2wea", "gen_dc", "oconv", "radfiles2daysim", "rtrace_dc"}
 REQUIRED_LIBS = {"rayinit.cal", "isotrop_sky.cal"}
@@ -157,7 +158,7 @@ def generate_sensor_surfaces(occface, wall_dim, roof_dim, srf_type, orientation,
     return sensor_dir, sensor_cord, sensor_type, sensor_area, sensor_orientation, sensor_intersection
 
 
-def calc_sensors_building(building_geometry, grid_size):
+def calc_sensors_building(building_geometry: BuildingGeometry, grid_size: GridSize):
     sensor_dir_list = []
     sensor_cord_list = []
     sensor_type_list = []
@@ -165,8 +166,8 @@ def calc_sensors_building(building_geometry, grid_size):
     sensor_orientation_list = []
     sensor_intersection_list = []
     surfaces_types = ['walls', 'windows', 'roofs']
-    sensor_vertical_grid_dim = grid_size["walls_grid"]
-    sensor_horizontal_grid_dim = grid_size["roof_grid"]
+    sensor_vertical_grid_dim = grid_size.walls
+    sensor_horizontal_grid_dim = grid_size.roof
     for srf_type in surfaces_types:
         occface_list = getattr(building_geometry, srf_type)
         if srf_type == 'roofs':
@@ -205,7 +206,7 @@ def calc_sensors_building(building_geometry, grid_size):
     return sensor_dir_list, sensor_cord_list, sensor_type_list, sensor_area_list, sensor_orientation_list, sensor_intersection_list
 
 
-def calc_sensors_zone(building_names, locator, grid_size, geometry_pickle_dir):
+def calc_sensors_zone(building_names, locator, grid_size: GridSize, geometry_pickle_dir):
     sensors_coords_zone = []
     sensors_dir_zone = []
     sensors_total_number_list = []
@@ -256,7 +257,8 @@ def calc_sensors_zone(building_names, locator, grid_size, geometry_pickle_dir):
     return sensors_coords_zone, sensors_dir_zone, sensors_total_number_list, names_zone, sensors_code_zone, sensor_intersection_zone
 
 
-def isolation_daysim(chunk_n, cea_daysim, building_names, locator, radiance_parameters, write_sensor_data, grid_size,
+def isolation_daysim(chunk_n, cea_daysim, building_names, locator, radiance_parameters, write_sensor_data,
+                     grid_size: GridSize,
                      max_global, weatherfile, geometry_pickle_dir):
     # initialize daysim project
     daysim_project = cea_daysim.initialize_daysim_project('chunk_{n}'.format(n=chunk_n))

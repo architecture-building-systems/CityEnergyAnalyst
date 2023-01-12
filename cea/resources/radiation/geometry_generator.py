@@ -614,6 +614,7 @@ def geometry_main(locator, config, geometry_pickle_dir):
 
     # transform buildings 2D to 3D and add windows
     print("Creating 3D building surfaces")
+    os.makedirs(geometry_pickle_dir, exist_ok=True)
     geometry_3D_zone, geometry_3D_surroundings = building_2d_to_3d(locator, zone_df, surroundings_df, elevation_map,
                                                                    config, geometry_pickle_dir)
 

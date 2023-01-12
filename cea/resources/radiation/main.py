@@ -6,6 +6,7 @@ import os
 import shutil
 import time
 from itertools import repeat
+from typing import NamedTuple
 
 import pandas as pd
 from geopandas import GeoDataFrame as gpdf
@@ -26,6 +27,11 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
+
+
+class GridSize(NamedTuple):
+    roof: int
+    walls: int
 
 
 def read_surface_properties(locator) -> pd.DataFrame:
@@ -61,7 +67,7 @@ def read_surface_properties(locator) -> pd.DataFrame:
     return surface_properties.set_index('Name').round(decimals=2)
 
 
-def run_daysim_simulation(cea_daysim, zone_building_names, locator, settings, geometry_pickle_dir, num_processes):
+def run_daysim_simulation(cea_daysim: CEADaySim, zone_building_names, locator, settings, geometry_pickle_dir, num_processes):
     weather_path = locator.get_weather_file()
     # check inconsistencies and replace by max value of weather file
     weatherfile = epwreader.epw_reader(weather_path)
@@ -80,7 +86,8 @@ def run_daysim_simulation(cea_daysim, zone_building_names, locator, settings, ge
                            "rad_lr": settings.rad_lr, "rad_st": settings.rad_st, "rad_sj": settings.rad_sj,
                            "rad_lw": settings.rad_lw, "rad_dj": settings.rad_dj,
                            "rad_ds": settings.rad_ds, "rad_dr": settings.rad_dr, "rad_dp": settings.rad_dp}
-    grid_size = {"walls_grid": settings.walls_grid, "roof_grid": settings.roof_grid}
+
+    grid_size = GridSize(walls=settings.walls_grid, roof=settings.roof_grid)
 
     num_chunks = len(chunks)
 
@@ -141,15 +148,13 @@ def main(config):
     building_surface_properties = read_surface_properties(locator)
     building_surface_properties.to_csv(locator.get_radiation_materials())
 
-    daysim_staging_location = os.path.join(locator.get_solar_radiation_folder(), 'daysim_files')
-    os.makedirs(daysim_staging_location, exist_ok=True)
+    geometry_staging_location = os.path.join(locator.get_solar_radiation_folder(), "radiance_geometry_pickle")
 
     print("Creating 3D geometry and surfaces")
-    geometry_pickle_dir = os.path.join(daysim_staging_location, "radiance_geometry_pickle")
-    print("Saving geometry pickle files in: {}".format(geometry_pickle_dir))
+    print(f"Saving geometry pickle files in: {geometry_staging_location}")
     # create geometrical faces of terrain and buildings
     geometry_terrain, zone_building_names, surroundings_building_names = geometry_generator.geometry_main(
-        locator, config, geometry_pickle_dir)
+        locator, config, geometry_staging_location)
 
     daysim_staging_location = os.path.join(locator.get_temporary_folder(), 'cea_radiation')
     cea_daysim = CEADaySim(daysim_staging_location, daysim_bin_path, daysim_lib_path)
@@ -159,7 +164,7 @@ def main(config):
     cea_daysim.create_radiance_material(building_surface_properties)
     print("Creating radiance geometry file")
     cea_daysim.create_radiance_geometry(geometry_terrain, building_surface_properties, zone_building_names,
-                                        surroundings_building_names, geometry_pickle_dir)
+                                        surroundings_building_names, geometry_staging_location)
 
     print("Converting files for DAYSIM")
     weather_file = locator.get_weather_file()
@@ -169,7 +174,7 @@ def main(config):
     cea_daysim.execute_radfiles2daysim()
 
     time1 = time.time()
-    run_daysim_simulation(cea_daysim, zone_building_names, locator, config.radiation, geometry_pickle_dir,
+    run_daysim_simulation(cea_daysim, zone_building_names, locator, config.radiation, geometry_staging_location,
                           num_processes=config.get_number_of_processes())
 
     # Remove staging location after everything is successful
