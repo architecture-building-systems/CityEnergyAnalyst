@@ -4,6 +4,7 @@ import os
 import shutil
 import subprocess
 import shlex
+import sys
 
 import numpy as np
 
@@ -82,7 +83,13 @@ class CEADaySim:
             "RAYPATH": daysim_lib
         }
 
-        process = subprocess.run(shlex.split(cmd), capture_output=True, env=env)
+        _cmd = shlex.split(cmd)
+        if sys.platform == "win32":
+            # Prepend daysim directory to binary for windows since PATH cannot be changed using env
+            # Refer to https://docs.python.org/3/library/subprocess.html#popen-constructor
+            _cmd[0] = f"{daysim_dir}\\{_cmd[0]}"
+
+        process = subprocess.run(_cmd, capture_output=True, env=env)
         output = process.stdout.decode('utf-8')
         print(output)
 
