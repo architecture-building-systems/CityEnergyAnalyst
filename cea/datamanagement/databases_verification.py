@@ -45,8 +45,7 @@ def assert_input_geometry_acceptable_values_floor_height(zone_df):
                         "Zone or Surroundings shapefile file")
 
     # Rule 2. Where floor height is less than 1m on average above ground.
-    floor_height_check = zone_df['height_ag'] / zone_df['floors_ag']
-    rule2 = (floor_height_check <= 1.0).any()
+    rule2 = (zone_df['height_ag'] < zone_df['floors_ag']).any()
     if rule2:
         raise Exception('one of more buildings have less report less than 1m height per floor. This is not possible'
                         'to simulate in CEA at the moment. Please verify your Zone or Surroundings shapefile file')
