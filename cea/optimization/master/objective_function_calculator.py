@@ -139,7 +139,7 @@ def calc_network_costs_heating(locator, master_to_slave_vars, network_features, 
     :return float64 P_motor_tot_W: Power of pumps installed in the network
     """
 
-    # Intitialize class
+    # Initialize class
     pipesCosts_USD = network_features.pipesCosts_DHN_USD
     num_buildings_connected = master_to_slave_vars.number_of_buildings_district_scale_heating
 
@@ -430,7 +430,7 @@ def buildings_district_scale_objective_functions(district_heating_costs,
 
 
 def calc_network_costs_cooling(locator, master_to_slave_vars, network_features, network_type):
-    # Intitialize class
+    # Initialize class
     pipesCosts_USD = network_features.pipesCosts_DCN_USD
     num_buildings_connected = master_to_slave_vars.number_of_buildings_district_scale_cooling
 
@@ -610,7 +610,7 @@ def calc_generation_costs_capacity_installed_cooling(locator,
         Opex_fixed_Trigen_NG_USD = 0.0
         Capex_Trigen_NG_USD = 0.0
 
-    # WATER-SOURCE VAPOR COMPRESION CHILLER BASE
+    # WATER-SOURCE VAPOR COMPRESSION CHILLER BASE
     if master_to_slave_variables.WS_BaseVCC_on == 1:
         Capacity_BaseVCC_WS_W = master_to_slave_variables.WS_BaseVCC_size_W
         # VCC
@@ -641,7 +641,7 @@ def calc_generation_costs_capacity_installed_cooling(locator,
         Opex_fixed_BaseVCC_WS_USD = 0.0
         Capex_BaseVCC_WS_USD = 0.0
 
-    # WATER-SOURCE VAPOR COMPRESION CHILLER PEAK
+    # WATER-SOURCE VAPOR COMPRESSION CHILLER PEAK
     if master_to_slave_variables.WS_PeakVCC_on == 1:
         Capacity_PeakVCC_WS_W = master_to_slave_variables.WS_PeakVCC_size_W
         # VCC
@@ -673,7 +673,7 @@ def calc_generation_costs_capacity_installed_cooling(locator,
         Opex_fixed_PeakVCC_WS_USD = 0.0
         Capex_PeakVCC_WS_USD = 0.0
 
-    # AIR-SOURCE VAPOR COMPRESION CHILLER BASE
+    # AIR-SOURCE VAPOR COMPRESSION CHILLER BASE
     if master_to_slave_variables.AS_BaseVCC_on == 1:
         Capacity_BaseVCC_AS_W = master_to_slave_variables.AS_BaseVCC_size_W
         # VCC
@@ -693,7 +693,7 @@ def calc_generation_costs_capacity_installed_cooling(locator,
         Opex_fixed_BaseVCC_AS_USD = 0.0
         Capex_BaseVCC_AS_USD = 0.0
 
-    # AIR-SOURCE VAPOR COMPRESION CHILLER PEAK
+    # AIR-SOURCE VAPOR COMPRESSION CHILLER PEAK
     if master_to_slave_variables.AS_PeakVCC_on == 1:
         Capacity_PeakVCC_AS_W = master_to_slave_variables.AS_PeakVCC_size_W
         # VCC

@@ -182,10 +182,10 @@ def get_databases(demand, locator):
     # get the mean of all values for this
     factors_resources_simple = [(name, values['Opex_var_buy_USD2015kWh'].mean()) for name, values in
                                 factors_resources.items()]
-    factors_resources_simple = pd.DataFrame(factors_resources_simple,
-                                            columns=['code', 'Opex_var_buy_USD2015kWh']).append(
-        # append NONE choice with zero values
-        {'code': 'NONE'}, ignore_index=True).fillna(0)
+    factors_resources_simple = pd.concat([pd.DataFrame(factors_resources_simple,
+                                                       columns=['code', 'Opex_var_buy_USD2015kWh']),
+                                          pd.DataFrame([{'code': 'NONE'}])],  # append NONE choice with zero values
+                                         ignore_index=True).fillna(0)
     # local variables
     # calculate the total operational non-renewable primary energy demand and CO2 emissions
     ## create data frame for each type of end use energy containing the type of supply system use, the final energy

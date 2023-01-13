@@ -346,7 +346,7 @@ def calculate_average_multiuse(fields, properties_df, occupant_densities, list_u
     :param properties_DB: DataFrame containing each occupancy type's indoor comfort properties or internal loads based
         on the corresponding archetypes
     :type properties_DB: DataFrame
-    :param list_var_names: List of column names in properties_df that contain the names of use-types being caculated
+    :param list_var_names: List of column names in properties_df that contain the names of use-types being calculated
     :type: list_var_names: list[str]
     :param list_var_values: List of column names in properties_df that contain values of use-type ratio in respect to list_var_names
     :type: list_var_values: list[str]

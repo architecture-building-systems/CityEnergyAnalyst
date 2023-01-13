@@ -33,7 +33,7 @@ the ``config`` parameter. We call this the "core" function of your script. You s
 the core function - ideally to the name of the script / module it resides in. The ``InputLocator`` object (by convention
 called ``locator``) is used by nearly every single CEA script.
 
-The other parameters are much more dependant on the requirements of your script. If you find yourself adding more
+The other parameters are much more dependent on the requirements of your script. If you find yourself adding more
 than a few parameters, consider just passing in the ``config`` variable instead, as long parameter lists in functions
 can make your code hard to read.
 
@@ -58,7 +58,7 @@ Each script is unique. But to fit nicely into the CEA ecosystem, pay attention t
 
   - as a general rule, don't use abbreviations other than as loop indices (they're just hard to communicate later on)
 
-    - beginners often think using short names and abreviations is "cool" - this is probably the fault of decades and
+    - beginners often think using short names and abbreviations is "cool" - this is probably the fault of decades and
       decades of bad examples in code. There used to be a time when it mattered, but nobody uses those languages
       anymore. It's a lot easier to read real words.
 

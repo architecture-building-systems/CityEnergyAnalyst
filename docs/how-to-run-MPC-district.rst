@@ -2,7 +2,7 @@
 
 How to Run MPC District Toolbox
 ===============================
-The MPC District Toolbox finds the micro-grid design with the lowest investment and operaiton costs. 
+The MPC District Toolbox finds the micro-grid design with the lowest investment and operation costs. 
 The optimization in done in two stages, first, the planning (or design) of the electrical network, and second, the optimization of building temperature setpoints in order to decrease electricity costs. A detailed workflow is shown in the bottom of this page.
 
 
@@ -15,7 +15,7 @@ The Optimization Problem
 Objective
 """""""""
 Minimize annual investment and operation costs of a micro-grid.
-The investment costs of a micro-grid include: the substations, electricity grid(line), transformers. The operation costs include the maintanence costs of the equiment and electricity costs for cooling in buildings.
+The investment costs of a micro-grid include: the substations, electricity grid(line), transformers. The operation costs include the maintenance costs of the equiment and electricity costs for cooling in buildings.
 
 Constraints
 """""""""""

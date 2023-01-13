@@ -68,7 +68,7 @@ class InputLocator(object):
                 # allow cea.inputlocator.InputLocator to define locator methods
                 setattr(self, lm, cea.schemas.create_schema_io(self, lm, schemas[lm], getattr(self.__class__, lm)))
             else:
-                # create locator methods based on schemas if not overriden in InputLocator
+                # create locator methods based on schemas if not overridden in InputLocator
                 setattr(self, lm, cea.schemas.create_schema_io(self, lm, schemas[lm]))
 
     @staticmethod
@@ -476,7 +476,7 @@ class InputLocator(object):
 
     def get_surroundings_geometry(self):
         """scenario/inputs/building-geometry/surroundings.shp"""
-        # NOTE: we renamed district.shp to surroundings.shp - this code will automaticaly upgrade old scenarios
+        # NOTE: we renamed district.shp to surroundings.shp - this code will automatically upgrade old scenarios
         shapefile_path = os.path.join(self.get_building_geometry_folder(), 'surroundings.shp')
         check_cpg(shapefile_path)
         return shapefile_path

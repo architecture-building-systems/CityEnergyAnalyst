@@ -69,7 +69,7 @@ def storage_optimization(locator, master_to_slave_vars):
 
     # FIXME: constant 1e12 is used as maximum discharging rate, to confirm
     # Design HP for storage uptake - limit the maximum thermal power, Criterial: 2000h operation average of a year
-    # --> Oral Recommandation of Antonio (former Leibundgut Group)
+    # --> Oral Recommendation of Antonio (former Leibundgut Group)
     P_HP_max = np.sum(Q_uncontrollable_final_W) / 2000.0  # W? TODO: CONFIRM
 
     ## Start optimizing the storage size
@@ -90,7 +90,7 @@ def storage_optimization(locator, master_to_slave_vars):
     Q_storage_content_fin_op_W, T_storage_fin_op_K, Q_loss1_W, mdot_DH_fin1_kgpers, Q_uncontrollable_final_W = Optimized_Data
 
     # Design HP for storage uptake - limit the maximum thermal power, Criterial: 2000h operation average of a year
-    # --> Oral Recommandation of Antonio (former Leibundgut Group)
+    # --> Oral Recommendation of Antonio (former Leibundgut Group)
     P_HP_max = np.sum(Q_uncontrollable_final_W) / 2000.0
 
     # Calculate if the initial and final storage levels are converged

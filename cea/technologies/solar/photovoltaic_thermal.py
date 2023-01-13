@@ -728,7 +728,7 @@ def main(config):
 
         annual_energy_production = hourly_results_per_building.filter(like='_kWh').sum()
         panel_area_per_building = hourly_results_per_building.filter(like='_m2').iloc[0]
-        building_annual_results = annual_energy_production.append(panel_area_per_building)
+        building_annual_results = pd.concat([annual_energy_production, panel_area_per_building])
         aggregated_annual_results[building] = building_annual_results
 
     # save hourly results

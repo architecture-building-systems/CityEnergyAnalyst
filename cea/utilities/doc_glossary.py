@@ -69,7 +69,7 @@ def main(_=None):
         output_methods_fp.write(template.render(schemas=output_locators))
     # error check
     if len(schemas) - (len(input_locators) + len(intermediate_input_locators) + len(output_locators)) > 0:
-        raise ('Number of locators not matched! Please review lines before this error messege in doc_glossray.py.')
+        raise ('Number of locators not matched! Please review lines before this error message in doc_glossray.py.')
 
 
 if __name__ == "__main__":
