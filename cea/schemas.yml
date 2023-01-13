@@ -5779,7 +5779,7 @@ get_database_conversion_systems_new:
           description: voltage level of the power supply required by the heat pump
           type: float
           unit: '[V]'
-          value: '{0.0...n}'
+          values: '{0.0...n}'
           min: 0.0
         a:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
