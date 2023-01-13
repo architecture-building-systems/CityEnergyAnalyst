@@ -11,6 +11,15 @@ PERFORMANCE
 - system energy demand (i.e. power inputs to the supply system)
 - heat rejection of the system (losses + exhausts)
 - greenhouse gas emissions of the system
+
+GENERALISED SUPPLY SYSTEM LAYOUT:
+ _________       ____________       __________       __________       ___________
+| source | ---> | secondary | ---> | primary | ---> | storage | ---> | consumer |
+‾‾‾‾‾‾‾‾‾       ‾‾‾‾‾‾‾‾‾‾‾‾       ‾‾‾‾‾‾‾‾‾‾       ‾‾‾‾‾‾‾‾‾‾       ‾‾‾‾‾‾‾‾‾‾‾
+                                       ↓
+             ______________       ___________
+            | environment | <--- | tertiary |
+            ‾‾‾‾‾‾‾‾‾‾‾‾‾‾       ‾‾‾‾‾‾‾‾‾‾‾
 """
 
 __author__ = "Mathias Niffeler"
@@ -116,8 +125,8 @@ class SupplySystem(object):
             raise ValueError("The only accepted values for the network type are 'DH' and 'DC'.")
         # Get and concatenate components database from Component-class
         components_database_df = pd.DataFrame()
-        for key in Component.components_database.keys():
-            components_database_df = pd.concat([components_database_df, Component.components_database[key]])
+        for key in Component._components_database.keys():
+            components_database_df = pd.concat([components_database_df, Component._components_database[key]])
         # Determine main components, supply components and supply energy carriers
         main_output_energy_carrier_codes = components_database_df['main_EC_out'].dropna().unique()
         SupplySystem._supply_energy_carriers = tuple([EnergyCarrier(code) for code in main_output_energy_carrier_codes

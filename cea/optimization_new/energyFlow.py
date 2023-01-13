@@ -2,8 +2,8 @@
 Energy Flow Class:
 defines all properties of energy flows between components of district cooling systems:
 CHARACTERISTICS:
-- Input category: category of the DCS-component the flow originates from
-- Output category: category of the DCS-component the energy flows to
+- Input category: placement of the DCS-component the flow originates from
+- Output category: placement of the DCS-component the energy flows to
 - Energy carrier the flow consists of
 VALUES:
 - Quantity of energy that is transferred at tech time step
@@ -55,7 +55,7 @@ class EnergyFlow(object):
     def input_category(self, new_input_category):
         allowed_input_categories = ['source', 'primary', 'secondary', 'tertiary', 'storage']
         if not (new_input_category in allowed_input_categories):
-            raise ValueError('An invalid input category was specified for an energy flow.')
+            raise ValueError('An invalid component-placement was specified as the origin of energy flow.')
         else:
             self._input_category = new_input_category
 
@@ -67,7 +67,7 @@ class EnergyFlow(object):
     def output_category(self, new_output_category):
         allowed_output_categories = ['primary', 'secondary', 'tertiary', 'storage', 'consumer', 'environment']
         if not (new_output_category in allowed_output_categories):
-            raise ValueError('An invalid output category was specified for an energy flow.')
+            raise ValueError('An invalid component-placement was specified as the target an energy flow.')
         else:
             self._output_category = new_output_category
 
@@ -93,11 +93,11 @@ class EnergyFlow(object):
 
     @profile.setter
     def profile(self, new_profile):
-        if not (isinstance(new_profile, pd.Series) and (len(new_profile) == self.time_frame)):
-            raise ValueError(f'The energy flow profile does not have the correct format, i.e. numerical series of '
-                             f'{self.time_frame} time steps.')
-        else:
+        if isinstance(new_profile, pd.Series) and (len(new_profile) in [1, self.time_frame]):
             self._profile = new_profile
+        else:
+            raise ValueError(f'The energy flow profile does not have the correct format, '
+                             f'i.e. numerical series of {self.time_frame} time steps or single numerical value.')
 
     def generate(self, input_category, output_category, energy_carrier_code, energy_flow_profile):
         """
@@ -144,7 +144,7 @@ class EnergyFlow(object):
         output_categories = np.unique(np.array([flow.output_category for flow in energy_flow_list]))
         if len(input_categories) != 1 or len(output_categories) != 1:
             raise TypeError("All energy flows passed to the 'aggregate'-method need to have the same input and output "
-                            "categories have been passed.")
+                            "categories. Please check the energy flows you are trying to aggregate.")
 
         building_energy_carriers = np.array([flow.energy_carrier.code for flow in energy_flow_list])
         unique_energy_carriers = np.unique(building_energy_carriers)

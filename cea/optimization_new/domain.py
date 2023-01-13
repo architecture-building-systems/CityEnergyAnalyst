@@ -31,6 +31,9 @@ from cea.optimization_new.energyCarrier import EnergyCarrier
 from cea.optimization_new.energyFlow import EnergyFlow
 from cea.optimization_new.supplySystem import SupplySystem
 from cea.optimization_new.component import Component
+from cea.optimization_new.component import VapourCompressionChiller, AbsorptionChiller, AirConditioner
+from cea.optimization_new.component import HeatExchanger, CoolingTower
+from cea.optimization_new.component import Boiler, HeatPump, CogenPlant
 from cea.optimization_new.districtEnergySystem import DistrictEnergySystem
 from cea.technologies.supply_systems_database import SupplySystemsDatabase
 
@@ -142,23 +145,68 @@ def main(config):
     """
     run the whole optimization routine
     """
+    # initialise variables and define cooling demand
     locator = InputLocator(scenario=config.scenario)
     current_domain = Domain(config, locator)
+    Component.initialize_class_variables(current_domain)
 
-    start_time = time.time()
-    current_domain.load_buildings()
-    end_time = time.time()
-    print(f"Time elapsed for loading buildings in domain: {end_time - start_time} s")
+    cooling_demand_DC = pd.Series([120000 + 50000 * np.sin((i % 6)*2*np.pi/6) for i in range(8760)])
+    cooling_demand_building = pd.Series([3000 + 2000 * np.sin((i % 24)*2*np.pi/24) for i in range(8760)])
+    heating_demand_building = pd.Series([2000 + 1500 * np.sin((i % 12)*2*np.pi/24) for i in range(8760)])
+    cooling_demand_DC = EnergyFlow('primary', 'consumer', 'T10W', cooling_demand_DC)
+    cooling_demand_building = EnergyFlow('primary', 'consumer', 'T25A', cooling_demand_building)
+    heating_demand_building = EnergyFlow('primary', 'consumer', 'T25A', heating_demand_building)
 
-    start_time = time.time()
-    current_domain.load_potentials()
-    end_time = time.time()
-    print(f"Time elapsed for loading energy potentials: {end_time - start_time} s")
+    # build and operate primary energy system components (cooling components)
+    ach = AbsorptionChiller('ACH1', 'primary', 200000)
+    vcc = VapourCompressionChiller('CH2', 'primary', 200000)
+    ac = AirConditioner('AC1', 'primary', 10000)
+    hp = HeatPump('HP2', 'primary', 10000)
 
-    start_time = time.time()
-    current_domain.optimize_domain()
-    end_time = time.time()
-    print(f"Time elapsed to create and calculate individual network: {end_time - start_time} s")
+    input_energy_dict_vcc, output_energy_dict_vcc = vcc.operate(cooling_demand_DC)
+    input_energy_dict_ach, output_energy_dict_ach = ach.operate(cooling_demand_DC)
+    input_energy_dict_ac, output_energy_dict_ac = ac.operate(cooling_demand_building)
+    input_energy_dict_hp, output_energy_dict_hp = hp.operate(heating_demand_building)
+
+    # build and operate secondary energy system components (supply components)
+    heating_load = input_energy_dict_ach['T100W']
+
+    cp = CogenPlant('OEHR2', 'secondary', 400000)
+    blr = Boiler('BO1', 'secondary', 400000)
+
+    input_energy_dict_cp, output_energy_dict_cp = cp.operate(heating_load)
+    input_energy_dict_blr, output_energy_dict_blr = blr.operate(heating_load)
+
+    # build and operate tertiary energy system components (heat rejection components)
+    heat_rejection_load = output_energy_dict_vcc['T30W']
+
+    ct = CoolingTower('CT1', 'tertiary', 250000)
+    he = HeatExchanger('HEX2', 'tertiary', 250000)
+
+    input_energy_dict_ct, output_energy_dict_ct = ct.operate(heat_rejection_load)
+    input_energy_dict_he, output_energy_dict_he = he.operate(heat_rejection_load, heat_sink_temp=14)
+
+    elec_in = input_energy_dict_vcc['E230AC']
+    elec_in_ach = input_energy_dict_ach['E230AC']
+    elec_in_ac = input_energy_dict_ac['E230AC']
+    print(elec_in.profile.values)
+    print(elec_in_ach.profile.values)
+    print(elec_in_ac.profile.values)
+
+    # start_time = time.time()
+    # current_domain.load_buildings()
+    # end_time = time.time()
+    # print(f"Time elapsed for loading buildings in domain: {end_time - start_time} s")
+    #
+    # start_time = time.time()
+    # current_domain.load_potentials()
+    # end_time = time.time()
+    # print(f"Time elapsed for loading energy potentials: {end_time - start_time} s")
+    #
+    # start_time = time.time()
+    # current_domain.optimize_domain()
+    # end_time = time.time()
+    # print(f"Time elapsed to create and calculate individual network: {end_time - start_time} s"
 
 
 if __name__ == '__main__':

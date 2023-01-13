@@ -26,12 +26,14 @@ import numpy as np
 
 class EnergyCarrier(object):
     _available_energy_carriers = pd.DataFrame
-    _thermal_energy_carriers = pd.DataFrame
+    _thermal_energy_carriers = {}
+    _electrical_energy_carriers = pd.DataFrame
 
     def __init__(self, code=None):
         self._code = None
         self._description = 'some description'
         self._type = 'e.g. thermal'
+        self._subtype = 'e.g. water'
         self._qualifier = 'e.g. temperature'
         self._qual_unit = 'e.g. °C'
         self._mean_qual = 0.0
@@ -65,6 +67,23 @@ class EnergyCarrier(object):
                              "types are: \n 'thermal', 'electrical', 'combustible', 'radiation'")
         else:
             self._type = new_type
+
+    @property
+    def subtype(self):
+        return self._subtype
+
+    @subtype.setter
+    def subtype(self, new_subtype):
+        allowed_subtypes = {'thermal': ['water', 'air', 'brine'],
+                            'electrical': ['AC', 'DC'],
+                            'combustible': ['fossil', 'biofuel'],
+                            'radiation': ['-']}
+        if not (new_subtype in allowed_subtypes[self.type]):
+            raise ValueError("The energy carrier data base contains an invalid energy type. The only valid subtypes "
+                             f"for energy carriers of type '{self.type}' are {allowed_subtypes[self.type]} for the "
+                             "moment. \n Including further subtypes would require changes to be made to the code of "
+                             "the supply system components that should take the new type into account.")
+        return
 
     @property
     def qualifier(self):
@@ -130,6 +149,7 @@ class EnergyCarrier(object):
             self.code = code
             self._description = energy_carrier['description'].iloc[0]
             self.type = energy_carrier['type'].iloc[0]
+            self.subtype = energy_carrier['subtype'].iloc[0]
             self.qualifier = energy_carrier['qualifier'].iloc[0]
             self.qual_unit = energy_carrier['unit_qual'].iloc[0]
             self.mean_qual = energy_carrier['mean_qual'].iloc[0]
@@ -153,31 +173,101 @@ class EnergyCarrier(object):
     def _extract_thermal_energy_carriers():
         if EnergyCarrier._available_energy_carriers.empty:
             raise AttributeError('The energy carrier database has not been loaded or was not found.')
-        EnergyCarrier._thermal_energy_carriers = \
+        all_thermal_energy_carriers = \
             EnergyCarrier._available_energy_carriers[EnergyCarrier._available_energy_carriers['type'] == 'thermal']
+        thermal_ec_subtypes = all_thermal_energy_carriers['subtype'].unique()
+        for subtype in thermal_ec_subtypes:
+            EnergyCarrier._thermal_energy_carriers[subtype] = \
+                all_thermal_energy_carriers[all_thermal_energy_carriers['subtype'] == subtype]
         if len(EnergyCarrier._thermal_energy_carriers) == 0:
             raise ValueError('No thermal energy carriers could be found in the energy carriers data base.')
 
     @staticmethod
-    def temp_to_thermal_ec(temperature):
+    def _extract_electrical_energy_carriers():
+        if EnergyCarrier._available_energy_carriers.empty:
+            raise AttributeError('The energy carrier database has not been loaded or was not found.')
+        EnergyCarrier._electrical_energy_carriers = \
+            EnergyCarrier._available_energy_carriers[EnergyCarrier._available_energy_carriers['type'] == 'electrical']
+        if len(EnergyCarrier._electrical_energy_carriers) == 0:
+            raise ValueError('No electrical energy carriers could be found in the energy carriers data base.')
+
+    @staticmethod
+    def temp_to_thermal_ec(energy_carrier_subtype, temperature):
         """
         Determine which thermal energy carrier corresponds to a given temperature.
 
+        :param energy_carrier_subtype: type of the thermal energy carrier
+        :type energy_carrier_subtype: str
         :param temperature: temperature in °C
         :type temperature: float
         :return energy_carrier_code: code of the corresponding thermal energy carrier
         :rtype energy_carrier_code: str
         """
-        if EnergyCarrier._thermal_energy_carriers.empty:
+        if not EnergyCarrier._thermal_energy_carriers:
             EnergyCarrier._extract_thermal_energy_carriers()
 
-        thermal_ec_mean_quals = pd.to_numeric(EnergyCarrier._thermal_energy_carriers['mean_qual'])
+        thermal_ecs_of_subtype = EnergyCarrier._thermal_energy_carriers[energy_carrier_subtype]
+        thermal_ec_mean_quals = pd.to_numeric(thermal_ecs_of_subtype['mean_qual'])
         if not np.isnan(temperature):
             index_closest_mean_temp = (thermal_ec_mean_quals - temperature).abs().nsmallest(n=1).index[0]
-            energy_carrier_code = EnergyCarrier._thermal_energy_carriers['code'].iloc[index_closest_mean_temp]
+            energy_carrier_code = thermal_ecs_of_subtype['code'].loc[index_closest_mean_temp]
         else:
-            energy_carrier_code = EnergyCarrier._thermal_energy_carriers['code'][0]
+            energy_carrier_code = thermal_ecs_of_subtype['code'][0]
             print(f'The temperature level of a renewable energy potential was not available. '
                   f'We assume that the following energy carrier is output: '
-                  f'{EnergyCarrier._thermal_energy_carriers["description"][0]}')
+                  f'{thermal_ecs_of_subtype["description"][0]}')
+        return energy_carrier_code
+
+    @staticmethod
+    def all_thermal_ecs_between_temps(energy_carrier_subtype, high_temperature, low_temperature):
+        """
+        Get all thermal energy carriers that either fall in the range of or between two predetermined temperatures
+        for a given thermal energy carrier type.
+
+        :param energy_carrier_subtype: type of the thermal energy carrier (usually thermal energy carrier medium)
+        :type energy_carrier_subtype: str
+        :param high_temperature: higher one of the two temperatures defining the range, in °C
+        :type high_temperature: float
+        :param low_temperature: lower one of the two temperatures defining the range, in °C
+        :type low_temperature: float
+        :return thermal_ecs_between_temps: list of codes of the corresponding thermal energy carriers that correspond to
+                                           the prescribed range.
+        :rtype thermal_ecs_between_temps: list of str
+        """
+        if np.isnan(high_temperature) and np.isnan(low_temperature):
+            thermal_ecs_between_temps = []
+        elif not np.isnan(high_temperature) and not np.isnan(low_temperature):
+            top_of_range_ec = EnergyCarrier(EnergyCarrier.temp_to_thermal_ec(energy_carrier_subtype, high_temperature))
+            bottom_of_range_ec = EnergyCarrier(EnergyCarrier.temp_to_thermal_ec(energy_carrier_subtype, low_temperature))
+            thermal_ecs_of_subtype = EnergyCarrier._thermal_energy_carriers[energy_carrier_subtype]
+            thermal_ecs_between_temps = [energy_carrier['code']
+                                         for row, energy_carrier in thermal_ecs_of_subtype.iterrows()
+                                         if (top_of_range_ec.mean_qual >= energy_carrier['mean_qual'] >= bottom_of_range_ec.mean_qual)]
+        else:
+            raise ValueError('Please make sure the boundaries of the indicated temperature range are valid.')
+
+        return thermal_ecs_between_temps
+
+    @staticmethod
+    def volt_to_electrical_ec(voltage):
+        """
+        Determine which electrical energy carrier corresponds to a given voltage.
+
+        :param voltage: voltage in V
+        :type voltage: float
+        :return energy_carrier_code: code of the corresponding electrical energy carrier
+        :rtype energy_carrier_code: str
+        """
+        if EnergyCarrier._electrical_energy_carriers.empty:
+            EnergyCarrier._extract_electrical_energy_carriers()
+
+        electrical_ec_mean_quals = pd.to_numeric(EnergyCarrier._electrical_energy_carriers['mean_qual'])
+        if not np.isnan(voltage):
+            index_closest_mean_voltage = (electrical_ec_mean_quals - voltage).abs().nsmallest(n=1).index[0]
+            energy_carrier_code = EnergyCarrier._electrical_energy_carriers['code'].loc[index_closest_mean_voltage]
+        else:
+            energy_carrier_code = EnergyCarrier._electrical_energy_carriers['code'][0]
+            print(f'The voltage of a renewable energy potential was not available. '
+                  f'We assume that the following energy carrier is output: '
+                  f'{EnergyCarrier._electrical_energy_carriers["description"][0]}')
         return energy_carrier_code
