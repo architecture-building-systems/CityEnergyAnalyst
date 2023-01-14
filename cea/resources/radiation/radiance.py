@@ -5,13 +5,17 @@ import shutil
 import subprocess
 import shlex
 import sys
+from enum import Enum
 
 import numpy as np
 
 from cea.resources.radiation.geometry_generator import BuildingGeometry
-
-import py4design.py2radiance as py2radiance
 from py4design.py3dmodel.fetch import points_frm_occface
+
+
+class SensorOutputUnit(Enum):
+    w_m2 = 1
+    lux = 2
 
 
 class CEADaySim:
@@ -217,7 +221,8 @@ class DaySimProject(object):
     def cleanup_project(self):
         shutil.rmtree(self.project_path)
 
-    def create_sensor_input_file(self, sensor_positions, sensor_normals, num_sensors, sensor_file_unit):
+    def create_sensor_input_file(self, sensor_positions, sensor_normals,
+                                 sensor_output_unit: SensorOutputUnit = SensorOutputUnit.w_m2):
         """
         Creates sensor input file and writes its location to the header file
 
@@ -228,13 +233,13 @@ class DaySimProject(object):
 
         :param sensor_positions:
         :param sensor_normals:
-        :param str sensor_file_unit: the unit for all sensor points (w/m2 or lux)
+        :param sensor_output_unit: the unit for all sensor points (w/m2 or lux)
         """
-        sensor_pts_data = py2radiance.write_rad.sensor_file(sensor_positions, sensor_normals)
-
         # create sensor file
         with open(self.sensor_path, "w") as sensor_file:
-            sensor_file.write(sensor_pts_data)
+            sensors = "".join(f"{pos[0]} {pos[1]} {pos[2]} {norm[0]} {norm[1]} {norm[2]}\n"
+                              for pos, norm in zip(sensor_positions, sensor_normals))
+            sensor_file.write(sensors)
 
         # add sensor file location to header file
         with open(self.hea_path, "a") as hea_file:
@@ -243,16 +248,15 @@ class DaySimProject(object):
             hea_file.write(f"sensor_file {sensor_path}\n")
 
             # write unit for sensor points
-            if sensor_file_unit == "w/m2":
-                hea_file.write("output_units 1\n")
-            if sensor_file_unit == "lux":
-                hea_file.write("output_units 2\n")
+            hea_file.write(f"output_units {sensor_output_unit.value}\n")
 
             # Write senor_file_unit to header file
             # Fix to allow Daysim 5.2 binaries to work, not required for compiled binaries from latest branch
-            unit_num = "0" if sensor_file_unit == 'lux' else "2"  # 0 = lux, 2 = w/m2
-            sensor_str = (unit_num + " ") * num_sensors
-
+            unit_code = {  # 0 = lux, 2 = w/m2
+                SensorOutputUnit.lux: "0",
+                SensorOutputUnit.w_m2: "2"
+            }
+            sensor_str = f"{unit_code[sensor_output_unit]} " * len(sensor_positions)
             hea_file.write(f"\nsensor_file_unit {sensor_str}\n")
 
     def write_radiance_parameters(self, rad_ab, rad_ad, rad_as, rad_ar, rad_aa, rad_lr, rad_st, rad_sj, rad_lw, rad_dj,
