@@ -17,6 +17,7 @@ __status__ = "Production"
 with open('README.rst', 'r') as f:
     LONG_DESCRIPTION = f.read()
 
+# TODO: Only install the bare minimum deps here, since it might modify any versions installed using conda
 INSTALL_REQUIRES = ["cufflinks",
                     'deap',
                     'ephem',
@@ -27,6 +28,7 @@ INSTALL_REQUIRES = ["cufflinks",
                     'ipython',
                     'mock',
                     'numba',
+                    'numpy<1.24.0'
                     'openpyxl',
                     'osmnx',
                     'plotly',
