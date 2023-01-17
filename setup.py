@@ -19,30 +19,18 @@ with open('README.rst', 'r') as f:
 
 # TODO: Only install the bare minimum deps here, since it might modify any versions installed using conda
 INSTALL_REQUIRES = ["cufflinks",
-                    'deap',
-                    'ephem',
                     'flask-restx',
                     'flask-cors',
                     'flask-socketio',
-                    'geopandas',
                     'ipython',
                     'mock',
-                    'numba',
-                    'numpy<1.24.0'
-                    'openpyxl',
-                    'osmnx',
                     'plotly',
                     'psutil',
-                    'py4design_cea',
                     'pyyaml',
                     'requests',
                     'setuptools',
                     'sphinx',
                     'staticmap',
-                    'sympy',
-                    'timezonefinder',
-                    'utm',
-                    'wntr',
                     'xlrd',
                     'xlwt']
 
