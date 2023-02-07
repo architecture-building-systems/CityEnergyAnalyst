@@ -135,16 +135,13 @@ def create_sensor_input_file(rad, chunk_n):
     rad.sensor_file_path = sensor_file_path
 
 
-def generate_sensor_surfaces(occface, wall_dim, roof_dim, srf_type, orientation, normal, intersection):
+def generate_sensor_surfaces(occface, grid_size, srf_type, orientation, normal, intersection):
     mid_pt = py3dmodel.calculate.face_midpt(occface)
     location_pt = py3dmodel.modify.move_pt(mid_pt, normal, 0.01)
     moved_oface = py3dmodel.fetch.topo2topotype(py3dmodel.modify.move(mid_pt, location_pt, occface))
-    if srf_type == 'roofs':
-        xdim = ydim = roof_dim
-    else:
-        xdim = ydim = wall_dim
+
     # put it into occ and subdivide surfaces
-    sensor_surfaces = py3dmodel.construct.grid_face(moved_oface, xdim, ydim)
+    sensor_surfaces = py3dmodel.construct.grid_face(moved_oface, grid_size, grid_size)
 
     # calculate list of properties per surface
     sensor_intersection = [intersection for x in sensor_surfaces]
@@ -166,8 +163,7 @@ def calc_sensors_building(building_geometry: BuildingGeometry, grid_size: GridSi
     sensor_orientation_list = []
     sensor_intersection_list = []
     surfaces_types = ['walls', 'windows', 'roofs']
-    sensor_vertical_grid_dim = grid_size.walls
-    sensor_horizontal_grid_dim = grid_size.roof
+
     for srf_type in surfaces_types:
         occface_list = getattr(building_geometry, srf_type)
         if srf_type == 'roofs':
@@ -190,8 +186,7 @@ def calc_sensors_building(building_geometry: BuildingGeometry, grid_size: GridSi
             sensor_area, \
             sensor_orientation, \
             sensor_intersection = generate_sensor_surfaces(face,
-                                                           sensor_vertical_grid_dim,
-                                                           sensor_horizontal_grid_dim,
+                                                           grid_size.roof if srf_type == "roof" else grid_size.walls,
                                                            srf_type,
                                                            orientation,
                                                            normal,
@@ -273,11 +268,10 @@ def isolation_daysim(chunk_n, cea_daysim, building_names, locator, radiance_para
     sensors_code_zone, \
     sensor_intersection_zone = calc_sensors_zone(building_names, locator, grid_size, geometry_pickle_dir)
 
-    num_sensors = sum(sensors_number_zone)
-    daysim_project.create_sensor_input_file(sensors_coords_zone, sensors_dir_zone, num_sensors, "w/m2")
+    daysim_project.create_sensor_input_file(sensors_coords_zone, sensors_dir_zone)
 
     print(f"Starting Daysim simulation for buildings: {names_zone}")
-    print(f"Total number of sensors: {num_sensors}")
+    print(f"Total number of sensors: {len(sensors_coords_zone)}")
 
     print('Writing radiance parameters')
     daysim_project.write_radiance_parameters(**radiance_parameters)
