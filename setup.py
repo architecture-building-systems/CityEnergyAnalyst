@@ -17,30 +17,20 @@ __status__ = "Production"
 with open('README.rst', 'r') as f:
     LONG_DESCRIPTION = f.read()
 
+# TODO: Only install the bare minimum deps here, since it might modify any versions installed using conda
 INSTALL_REQUIRES = ["cufflinks",
-                    'deap',
-                    'ephem',
                     'flask-restx',
                     'flask-cors',
                     'flask-socketio',
-                    'geopandas',
                     'ipython',
                     'mock',
-                    'numba',
-                    'openpyxl',
-                    'osmnx',
                     'plotly',
                     'psutil',
-                    'py4design_cea',
                     'pyyaml',
                     'requests',
                     'setuptools',
                     'sphinx',
                     'staticmap',
-                    'sympy',
-                    'timezonefinder',
-                    'utm',
-                    'wntr',
                     'xlrd',
                     'xlwt']
 
