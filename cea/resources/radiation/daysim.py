@@ -3,7 +3,7 @@ import os
 import subprocess
 import sys
 import warnings
-from typing import Optional, Tuple
+from typing import Optional, Tuple, NamedTuple
 
 import numpy as np
 import pandas as pd
@@ -20,10 +20,14 @@ __status__ = "Production"
 
 from cea.constants import HOURS_IN_YEAR
 from cea.resources.radiation.geometry_generator import BuildingGeometry
-from cea.resources.radiation.main import GridSize
 
 REQUIRED_BINARIES = {"ds_illum", "epw2wea", "gen_dc", "oconv", "radfiles2daysim", "rtrace_dc"}
 REQUIRED_LIBS = {"rayinit.cal", "isotrop_sky.cal"}
+
+
+class GridSize(NamedTuple):
+    roof: int
+    walls: int
 
 
 def check_daysim_bin_directory(path_hint: Optional[str] = None, latest_binaries: bool = True) -> Tuple[str, Optional[str]]:

@@ -6,7 +6,6 @@ import os
 import shutil
 import time
 from itertools import repeat
-from typing import NamedTuple
 
 import pandas as pd
 from geopandas import GeoDataFrame as gpdf
@@ -15,6 +14,7 @@ import cea.config
 import cea.inputlocator
 from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_surroundings
 from cea.resources.radiation import daysim, geometry_generator
+from cea.resources.radiation.daysim import GridSize
 from cea.resources.radiation.radiance import CEADaySim
 from cea.utilities import epwreader
 from cea.utilities.parallel import vectorize
@@ -27,11 +27,6 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
-
-
-class GridSize(NamedTuple):
-    roof: int
-    walls: int
 
 
 def read_surface_properties(locator) -> pd.DataFrame:
