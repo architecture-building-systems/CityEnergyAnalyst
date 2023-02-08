@@ -10,7 +10,7 @@ from collections import namedtuple
 from cea.constants import HOURS_IN_YEAR
 from cea.demand import constants
 from cea.demand.sensible_loads import calc_hr, calc_hc
-from cea.resources.radiation_daysim.geometry_generator import calc_floor_to_floor_height
+from cea.resources.radiation.geometry_generator import calc_floor_to_floor_height
 from cea.utilities.dbf import dbf_to_dataframe
 from cea.technologies import blinds
 from typing import List
