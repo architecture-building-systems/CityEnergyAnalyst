@@ -27,32 +27,31 @@ def assert_columns_names(zone_df, columns):
             " names comply with:", columns)
 
 
-def assert_input_geometry_acceptable_values_floor_height(zone_df):
+def assert_input_geometry_acceptable_values_floor_height(zone_df: pd.DataFrame):
     # Rule 0. nothing can be negative
     numeric_dtypes = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
     zone_df_data = zone_df.select_dtypes(include=numeric_dtypes)
-    rule0 = zone_df_data.where(zone_df_data < 0.0).any().any()
+    rule0 = (zone_df_data < 0.0).any().any()
     if rule0:
         raise Exception("There are negative values in your geometry. This is not possible to simulate in CEA at the "
                         "moment Please verify your Zone or Surroundings shapefile file")
 
     # Rule 1. Floors above ground cannot be less than 1 or negative.
-    rule1_1 = zone_df['floors_ag'].where(zone_df['floors_ag'] < 1).any()
-    rule1_2 = zone_df['height_ag'].where(zone_df['height_ag'] < 1.0).any()
+    rule1_1 = (zone_df['floors_ag'] < 1).any()
+    rule1_2 = (zone_df['height_ag'] < 1.0).any()
     if rule1_1 or rule1_2:
         raise Exception("one of more buildings have less than one floor above ground or the height above ground is "
                         "less than 1 meter. This is not possible to simulate in CEA at the moment. Please verify your "
                         "Zone or Surroundings shapefile file")
 
     # Rule 2. Where floor height is less than 1m on average above ground.
-    floor_height_check = zone_df['height_ag'] / zone_df['floors_ag']
-    rule2 = (floor_height_check <= 1.0).any()
+    rule2 = (zone_df['height_ag'] < zone_df['floors_ag']).any()
     if rule2:
         raise Exception('one of more buildings have less report less than 1m height per floor. This is not possible'
                         'to simulate in CEA at the moment. Please verify your Zone or Surroundings shapefile file')
 
     # Rule 3. floors below ground cannot be negative
-    rule3 = zone_df['floors_bg'].where(zone_df['floors_bg'] < 0).any()
+    rule3 = (zone_df['floors_bg'] < 0).any()
     if rule3:
         raise Exception('one of more buildings have a negative floor below ground. This is not possible'
                         'to simulate in CEA at the moment. Please verify your Zone or Surroundings file')

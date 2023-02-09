@@ -51,7 +51,7 @@ Demand forecasting:
     label: Building Solar radiation
     description: Use Daysim to calculate solar radiation for a scenario
     interfaces: [cli, dashboard]
-    module: cea.resources.radiation_daysim.radiation_main
+    module: cea.resources.radiation.main
     parameters: ['general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free', 'general:debug',
                  radiation]
     input-files:
@@ -422,7 +422,7 @@ default:
     parameters: ['general:scenario', trace-inputlocator]
 
   - name: workflow
-    lable: Workflow
+    label: Workflow
     description: Run a workflow.yml file from start to end
     interfaces: [cli]
     module: cea.workflows.workflow

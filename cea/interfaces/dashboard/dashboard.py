@@ -1,3 +1,6 @@
+import signal
+import webbrowser
+
 from flask import Flask
 from flask_cors import CORS
 from flask_socketio import SocketIO
@@ -15,6 +18,15 @@ def main(config):
     app.config.from_mapping({'SECRET_KEY': 'secret'})
     socketio = SocketIO(app, cors_allowed_origins="*")
 
+    def shutdown(signum, frame):
+        print("Shutting Down...")
+        socketio.stop()
+    signal.signal(signal.SIGINT, shutdown)
+
+    if config.server.browser:
+        from cea.interfaces.dashboard.frontend import blueprint as frontend
+        app.register_blueprint(frontend)
+
     from cea.interfaces.dashboard.plots.routes import blueprint as plots_blueprint
     from cea.interfaces.dashboard.server import blueprint as server_blueprint
     from cea.interfaces.dashboard.api import blueprint as api_blueprint
@@ -29,7 +41,15 @@ def main(config):
     app.socketio = socketio
 
     print("start CEA dashboard server")
+    
+    if config.server.browser:
+        url = f"http://{config.server.host}:{config.server.port}"
+        print(f"Open {url} in your browser to access the GUI")
+        webbrowser.open(url)
+
+    print("Press Ctrl+C to stop server")
     socketio.run(app, host=config.server.host, port=config.server.port, allow_unsafe_werkzeug=True)
+
     print("server exited")
 
 

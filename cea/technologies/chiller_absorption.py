@@ -402,7 +402,7 @@ def main(config):
 
     chiller_operation = calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_ground_K, chiller_prop)
     print(chiller_operation)
-    print('test_decentralized_buildings_cooling() succeeded. Please doubel check results in the description.')
+    print('test_decentralized_buildings_cooling() succeeded. Please double check results in the description.')
 
 
 if __name__ == '__main__':

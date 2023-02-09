@@ -10,7 +10,7 @@ from collections import namedtuple
 from cea.constants import HOURS_IN_YEAR
 from cea.demand import constants
 from cea.demand.sensible_loads import calc_hr, calc_hc
-from cea.resources.radiation_daysim.geometry_generator import calc_floor_to_floor_height
+from cea.resources.radiation.geometry_generator import calc_floor_to_floor_height
 from cea.utilities.dbf import dbf_to_dataframe
 from cea.technologies import blinds
 from typing import List
@@ -515,7 +515,7 @@ class BuildingPropertiesRow(object):
 
         # Refactored from CalcThermalLoads
 
-        # gemoetry properties.
+        # geometry properties.
 
         Ll = self.geometry['Blength']
         Lw = self.geometry['Bwidth']
@@ -538,7 +538,7 @@ class BuildingPropertiesRow(object):
         Tcs_re_scu_0 = Tcs_sup_scu_0 + self.hvac['dTcs0_scu_C']
 
         Tww_sup_0 = self.hvac['Tsww0_C']
-        # Identification of equivalent lenghts
+        # Identification of equivalent lengths
         fforma = self._calc_form()  # factor form comparison real surface and rectangular
         Lv = (2 * Ll + 0.0325 * Ll * Lw + 6) * fforma  # length vertical lines
         if nf_ag < 2 and nf_bg < 2:  # it is assumed that building with less than a floor and less than 2 floors udnerground do not have

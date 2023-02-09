@@ -97,7 +97,7 @@ class InstalledCapacities(cea.plots.supply_system.SupplySystemPlotBase):
         data_connected = self.process_district_scale_capacities_kW()
         data_disconnected = self.process_building_scale_capacities_kW()
 
-        # organize fiels according to heating, cooling and electricity
+        # organize files according to heating, cooling and electricity
         analysis_fields_district_scale_heating = self.analysis_fields_district_scale_heating
         analysis_fields_district_scale_cooling = self.analysis_fields_district_scale_cooling
         analysis_fields_district_scale_electricity = self.analysis_fields_district_scale_electricity

@@ -153,7 +153,7 @@ class MonthlyDemandWriter(DemandWriter):
 
 
 class YearlyDemandWriter(DemandWriter):
-    """Write out the hourly demand results"""
+    """Write out the yearly demand results"""
 
     def __init__(self, loads, massflows, temperatures):
         super(YearlyDemandWriter, self).__init__(loads, massflows, temperatures)

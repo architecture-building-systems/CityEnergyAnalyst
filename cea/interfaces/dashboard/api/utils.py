@@ -8,7 +8,7 @@ import cea.inputlocator
 
 
 def deconstruct_parameters(p: cea.config.Parameter):
-    params = {'name': p.name, 'type': p.typename, 'help': p.help}
+    params = {'name': p.name, 'type': type(p).__name__, 'help': p.help}
     try:
         params["value"] = p.get()
     except cea.ConfigError as e:
