@@ -337,6 +337,22 @@ def write_aggregated_results(building_name, sensor_values, locator, date):
     labels = geometry['TYPE'] + '_' + geometry['orientation']
     group_dict = labels.to_dict()
 
+    # Ensure surface columns (sometimes windows do not exist)
+    surfaces = {'windows_east',
+                'windows_west',
+                'windows_south',
+                'windows_north',
+                'walls_east',
+                'walls_west',
+                'walls_south',
+                'walls_north',
+                'roofs_top'}
+
+    for label in labels.unique():
+        if label not in surfaces:
+            raise ValueError(f"Unrecognized surface name {label}")
+        surfaces.remove(label)
+
     # Transform data
     sensor_values_kw = sensor_values.multiply(geometry['AREA_m2'], axis="index") / 1000
     data = sensor_values_kw.groupby(group_dict).sum().T.add_suffix('_kW')
@@ -346,6 +362,11 @@ def write_aggregated_results(building_name, sensor_values, locator, date):
     area = geometry['AREA_m2'].groupby(group_dict).sum().add_suffix('_m2')
     area_cols = pd.concat([area] * len(data), axis=1).T.set_index(data.index)
     data = pd.concat([data, area_cols], axis=1)
+
+    # Add missing surfaces to output
+    for surface in surfaces:
+        data[f"{surface}_kW"] = 0.0
+        data[f"{surface}_m2"] = 0.0
 
     # Round values and add date index
     data = data.round(2)
