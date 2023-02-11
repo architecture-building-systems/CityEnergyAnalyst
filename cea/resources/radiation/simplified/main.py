@@ -20,16 +20,18 @@ from cea.utilities import epwreader
 def generate_sensor_data(sample_values, geometry_data):
     def map_value(row):
         surface = f"{row['TYPE']}_{row['orientation']}"
-        print(sample_values[surface], row['AREA_m2'])
-        value = sample_values[surface] * row['AREA_m2']
+        value = sample_values[surface]
         return value
 
     sensor_data = geometry_data.apply(map_value, axis=1)
 
-    print(sensor_data)
+    return sensor_data
 
 
 def generate_sample_data(locator, sample_buildings):
+    """
+    returns sample data for each surface in W/m2
+    """
     surfaces = {'windows_east',
                 'windows_west',
                 'windows_south',
@@ -45,8 +47,12 @@ def generate_sample_data(locator, sample_buildings):
     for building in sample_buildings:
         data = pd.read_csv(locator.get_radiation_building(building))
         for surface in sample_data.keys():
-            # Convert to W
-            sample_data[surface].append(data[f"{surface}_kW"]/data[f"{surface}_m2"]/1000)
+            # Convert to W/m2
+            sample_data[surface].append(data[f"{surface}_kW"]*1000/data[f"{surface}_m2"])
+
+    # Get mean of samples
+    for k, v in sample_data.items():
+        sample_data[k] = sum(v) / len(v)
 
     return sample_data
 
@@ -68,6 +74,7 @@ def main(config):
     print(f"surroundings: {surroundings_path}")
 
     zone_df = gpd.GeoDataFrame.from_file(zone_path)
+    # Ignore surrounding buildings
     surroundings_df = gpd.GeoDataFrame.from_file(surroundings_path)[0:0]
 
     verify_input_geometry_zone(zone_df)
@@ -100,7 +107,7 @@ def main(config):
     print("Creating radiance material file")
     cea_daysim.create_radiance_material(building_surface_properties)
     print("Creating radiance geometry file")
-    cea_daysim.create_radiance_geometry(geometry_terrain, building_surface_properties, zone_building_names,
+    cea_daysim.create_radiance_geometry(geometry_terrain, building_surface_properties, sample_buildings,
                                         surroundings_building_names, geometry_staging_location)
 
     print("Converting files for DAYSIM")
@@ -116,6 +123,9 @@ def main(config):
 
     # Remove staging location after everything is successful
     shutil.rmtree(daysim_staging_location)
+
+    # Generate sample values
+    sample_values = generate_sample_data(locator, sample_buildings)
 
     sensors_coords_zone, \
         sensors_dir_zone, \
