@@ -62,6 +62,21 @@ Demand forecasting:
       - [get_terrain]
       - [get_weather_file]
 
+  - name: radiation-simplified
+    label: Building Solar radiation (Simplified)
+    description: Use Daysim to calculate solar radiation from a sample of buildings in a scenario
+    interfaces: [ cli, dashboard ]
+    module: cea.resources.radiation.simplified.main
+    parameters: [ 'general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free', 'general:debug',
+                  radiation, radiation-simplified ]
+    input-files:
+      - [ get_database_envelope_systems ]
+      - [ get_surroundings_geometry ]
+      - [ get_building_architecture ]
+      - [ get_zone_geometry ]
+      - [ get_terrain ]
+      - [ get_weather_file ]
+
   - name: schedule-maker
     label: Building Schedules
     description: Use CEA models and input schedules to estimate the occupancy profile of buildings

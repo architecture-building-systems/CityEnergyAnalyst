@@ -58,7 +58,7 @@ def generate_sample_data(locator, sample_buildings):
 
 
 def main(config):
-    sample_buildings = ["B1000"]
+    sample_buildings = config.radiation_simplified.sample_buildings
 
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     daysim_bin_path, daysim_lib_path = daysim.check_daysim_bin_directory(config.radiation.daysim_bin_directory,
@@ -74,6 +74,10 @@ def main(config):
     print(f"surroundings: {surroundings_path}")
 
     zone_df = gpd.GeoDataFrame.from_file(zone_path)
+    if len(sample_buildings) == len(zone_df):
+        raise ValueError("List of sample buildings is the same as all buildings. "
+                         "Consider selecting a subset of buildings instead.")
+
     # Ignore surrounding buildings
     surroundings_df = gpd.GeoDataFrame.from_file(surroundings_path)[0:0]
 
